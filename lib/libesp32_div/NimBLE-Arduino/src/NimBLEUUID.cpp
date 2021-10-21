@@ -277,10 +277,6 @@ std::string NimBLEUUID::toString() const {
  */
 bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
     if(m_valueSet && rhs.m_valueSet) {
-        NIMBLE_LOGD(LOG_TAG,"Comparing UUIDs; type %u to %u; UUID %s to %s",
-                            m_uuid.u.type, rhs.m_uuid.u.type,
-                            this->toString().c_str(), rhs.toString().c_str());
-
         if(m_uuid.u.type != rhs.m_uuid.u.type) {
             uint8_t uuidBase[16] = {
                 0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80,

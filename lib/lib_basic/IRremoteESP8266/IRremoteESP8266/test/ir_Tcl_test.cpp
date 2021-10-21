@@ -1,6 +1,7 @@
 // Copyright 2019 David Conran
 
 #include "ir_Tcl.h"
+#include "IRac.h"
 #include "IRrecv.h"
 #include "IRrecv_test.h"
 #include "IRsend.h"
@@ -17,8 +18,8 @@ TEST(TestTcl112Ac, Housekeeping) {
 
 // Decode a real Tcl112Ac A/C example from Issue #619
 TEST(TestDecodeTcl112Ac, DecodeRealExample) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -61,19 +62,17 @@ TEST(TestDecodeTcl112Ac, DecodeRealExample) {
   ASSERT_EQ(TCL112AC, irsend.capture.decode_type);
   EXPECT_EQ(kTcl112AcBits, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
-
-  IRTcl112Ac ac(0);
-  ac.setRaw(irsend.capture.state);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 24C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
-      ac.toString());
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 24C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
+      IRAcUtils::resultAcToString(&irsend.capture));
 }
 
 // Decode a synthetic Tcl112Ac A/C example from Issue #619
 TEST(TestDecodeTcl112Ac, DecodeSyntheticExample) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -104,26 +103,30 @@ TEST(TestTcl112AcClass, Temperature) {
   const uint8_t temp31C[kTcl112AcStateLength] = {
       0x23, 0xCB, 0x26, 0x01, 0x00, 0x24, 0x03,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBC};
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.setRaw(temp16C);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 16C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 16C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
   ac.setRaw(temp16point5C);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 16.5C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 16.5C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
   ac.setRaw(temp19point5C);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 19.5C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 19.5C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
   ac.setRaw(temp31C);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 31C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 31C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
 
   ac.setTemp(kTcl112AcTempMin);
@@ -161,7 +164,7 @@ TEST(TestTcl112AcClass, Temperature) {
 }
 
 TEST(TestTcl112AcClass, OperatingMode) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setMode(kTcl112AcAuto);
@@ -203,13 +206,14 @@ TEST(TestTcl112AcClass, OperatingMode) {
       0x07, 0x00, 0x00, 0x00, 0x00, 0x80, 0x48};
   ac.setRaw(automode);
   EXPECT_EQ(
-      "Power: On, Mode: 8 (Auto), Temp: 24C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 8 (Auto), Temp: 24C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
 }
 
 TEST(TestTcl112AcClass, Power) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setPower(true);
@@ -232,8 +236,9 @@ TEST(TestTcl112AcClass, Power) {
       0x0F, 0x00, 0x00, 0x00, 0x00, 0x80, 0xCB};
   ac.setRaw(on);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 16C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 16C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
 
   const uint8_t off[kTcl112AcStateLength] = {
@@ -241,8 +246,9 @@ TEST(TestTcl112AcClass, Power) {
       0x07, 0x40, 0x00, 0x00, 0x00, 0x80, 0xCB};
   ac.setRaw(off);
   EXPECT_EQ(
-      "Power: Off, Mode: 3 (Cool), Temp: 24C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: Off, Mode: 3 (Cool), Temp: 24C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
 }
 
@@ -253,17 +259,19 @@ TEST(TestTcl112AcClass, Checksum) {
   uint8_t temp31C[kTcl112AcStateLength] = {
       0x23, 0xCB, 0x26, 0x01, 0x00, 0x24, 0x03,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBC};
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   EXPECT_EQ(0xCB, ac.calcChecksum(temp16C));
   ac.setRaw(temp16C);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 16C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 16C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
   ac.setRaw(temp31C);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 31C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 31C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
   EXPECT_EQ(0xBC, ac.calcChecksum(temp31C));
 
@@ -278,7 +286,7 @@ TEST(TestTcl112AcClass, Checksum) {
 }
 
 TEST(TestTcl112AcClass, Econo) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setEcono(true);
@@ -290,7 +298,7 @@ TEST(TestTcl112AcClass, Econo) {
 }
 
 TEST(TestTcl112AcClass, Health) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setHealth(true);
@@ -302,7 +310,7 @@ TEST(TestTcl112AcClass, Health) {
 }
 
 TEST(TestTcl112AcClass, Light) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setLight(true);
@@ -314,7 +322,7 @@ TEST(TestTcl112AcClass, Light) {
 }
 
 TEST(TestTcl112AcClass, SwingHorizontal) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setSwingHorizontal(true);
@@ -326,7 +334,7 @@ TEST(TestTcl112AcClass, SwingHorizontal) {
 }
 
 TEST(TestTcl112AcClass, SwingVertical) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setSwingVertical(true);
@@ -338,7 +346,7 @@ TEST(TestTcl112AcClass, SwingVertical) {
 }
 
 TEST(TestTcl112AcClass, Turbo) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   ac.setFan(kTcl112AcFanLow);
@@ -361,7 +369,7 @@ TEST(TestTcl112AcClass, Turbo) {
 }
 
 TEST(TestTcl112AcClass, FanSpeed) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.begin();
 
   // Unexpected value should default to Auto.
@@ -382,9 +390,21 @@ TEST(TestTcl112AcClass, FanSpeed) {
   EXPECT_EQ(kTcl112AcFanAuto, ac.getFan());
 }
 
+TEST(TestTcl112AcClass, Quiet_Mute) {
+  IRTcl112Ac ac(kGpioUnused);
+  ac.begin();
+
+  EXPECT_FALSE(ac.getQuiet());
+  EXPECT_FALSE(ac.getQuiet(false));
+  EXPECT_TRUE(ac.getQuiet(true));
+  ac.setQuiet(true);
+  EXPECT_TRUE(ac.getQuiet());
+  ac.setQuiet(false);
+  EXPECT_FALSE(ac.getQuiet());
+}
 
 TEST(TestTcl112AcClass, toCommon) {
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.setPower(true);
   ac.setMode(kTcl112AcCool);
   ac.setTemp(20);
@@ -395,6 +415,7 @@ TEST(TestTcl112AcClass, toCommon) {
   ac.setHealth(true);
   ac.setEcono(true);
   ac.setLight(true);
+  ac.setQuiet(false);
   // Now test it.
   ASSERT_EQ(decode_type_t::TCL112AC, ac.toCommon().protocol);
   ASSERT_EQ(-1, ac.toCommon().model);
@@ -409,17 +430,25 @@ TEST(TestTcl112AcClass, toCommon) {
   ASSERT_TRUE(ac.toCommon().econo);
   ASSERT_TRUE(ac.toCommon().light);
   ASSERT_TRUE(ac.toCommon().filter);
+  ASSERT_FALSE(ac.toCommon().quiet);
   // Unsupported.
   ASSERT_FALSE(ac.toCommon().clean);
   ASSERT_FALSE(ac.toCommon().beep);
-  ASSERT_FALSE(ac.toCommon().quiet);
   ASSERT_EQ(-1, ac.toCommon().sleep);
   ASSERT_EQ(-1, ac.toCommon().clock);
+
+  // Tests for the quiet setting.
+  stdAc::state_t prev = ac.toCommon();
+  prev.quiet = true;
+  ASSERT_FALSE(ac.toCommon(&prev).quiet);
+  ac.stateReset();
+  // If the current quiet setting hasn't been explicitly set, use the previous.
+  ASSERT_TRUE(ac.toCommon(&prev).quiet);
 }
 
 TEST(TestDecodeTcl112Ac, Issue744) {
-  IRsendTest irsend(0);
-  IRrecv irrecv(0);
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
   irsend.begin();
 
   irsend.reset();
@@ -453,10 +482,93 @@ TEST(TestDecodeTcl112Ac, Issue744) {
   EXPECT_EQ(kTcl112AcBits, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
 
-  IRTcl112Ac ac(0);
+  IRTcl112Ac ac(kGpioUnused);
   ac.setRaw(irsend.capture.state);
   EXPECT_EQ(
-      "Power: On, Mode: 3 (Cool), Temp: 23C, Fan: 0 (Auto), Econo: Off, "
-      "Health: Off, Light: On, Turbo: Off, Swing(H): Off, Swing(V): Off",
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 23C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: On",
       ac.toString());
+}
+
+TEST(TestDecodeTcl112Ac, Issue1528) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  irsend.reset();
+  const uint16_t rawData[227] = {
+      3040, 1632, 500, 1084, 502, 1084, 500, 318, 474, 344, 474, 344, 472, 1110,
+      474, 344, 474, 344, 472, 1110, 474, 1110, 474, 344, 472, 1112, 474, 344,
+      472, 346, 470, 1112, 472, 1112, 472, 346, 470, 1114, 470, 1114, 470, 348,
+      468, 348, 468, 1116, 470, 348, 468, 350, 464, 354, 424, 1158, 426, 392,
+      424, 394, 424, 394, 424, 392, 424, 392, 424, 394, 424, 392, 424, 392, 424,
+      394, 424, 392, 424, 392, 424, 394, 424, 392, 460, 358, 460, 358, 458, 358,
+      458, 358, 460, 358, 460, 358, 460, 1124, 460, 1124, 460, 358, 460, 358,
+      458, 358, 458, 360, 482, 334, 484, 334, 484, 334, 484, 334, 484, 334, 484,
+      334, 484, 334, 486, 332, 484, 334, 484, 332, 484, 334, 484, 332, 484, 334,
+      484, 332, 484, 332, 484, 332, 486, 332, 484, 332, 484, 334, 484, 334, 484,
+      332, 484, 334, 484, 334, 484, 332, 484, 332, 486, 332, 484, 334, 484, 334,
+      484, 334, 484, 334, 484, 334, 484, 334, 484, 334, 484, 334, 482, 334, 482,
+      334, 482, 336, 482, 336, 482, 336, 482, 336, 482, 336, 482, 336, 482, 336,
+      482, 336, 480, 336, 480, 338, 480, 338, 480, 338, 480, 336, 480, 338, 480,
+      338, 480, 338, 480, 338, 478, 1104, 478, 340, 478, 1104, 480, 338, 478,
+      340, 478, 340, 476, 340, 476, 1106, 478};  // UNKNOWN 2757C6B2
+
+  uint8_t expectedState[kTcl112AcStateLength] = {
+      0x23, 0xCB, 0x26, 0x02, 0x00, 0x60, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x85};
+
+  irsend.sendRaw(rawData, 227, 38000);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(TCL112AC, irsend.capture.decode_type);
+  EXPECT_EQ(kTcl112AcBits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "Type: 2, Quiet: On",
+      IRAcUtils::resultAcToString(&irsend.capture));
+}
+
+// Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1528#issuecomment-877640837
+TEST(TestTcl112AcClass, SendingQuiet) {
+  IRTcl112Ac ac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+
+
+  ac.begin();
+  ac.on();
+  ac.setTemp(24);
+  ac.setLight(false);
+  ac.setSwingHorizontal(true);
+  ac.send();
+  ac.setSwingHorizontal(false);
+  EXPECT_FALSE(ac.getQuiet());
+  ac.send();
+  ac._irsend.reset();
+  ac.setQuiet(true);
+  EXPECT_TRUE(ac.getQuiet());
+  ac.send();
+  EXPECT_TRUE(ac.getQuiet());
+  ac._irsend.makeDecodeResult();
+  // We are expecting two messages, confirm we got at least that much data.
+  EXPECT_EQ(1 + 228 + 228, ac._irsend.capture.rawlen);
+  // First message.
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(TCL112AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kTcl112AcBits, ac._irsend.capture.bits);
+  ASSERT_EQ(
+      "Type: 2, Quiet: On",
+      IRAcUtils::resultAcToString(&ac._irsend.capture));
+  // Second message.
+  // TCL112 uses the Mitsubishi112 decoder.
+  // Skip first message.
+  EXPECT_TRUE(capture.decodeMitsubishi112(&ac._irsend.capture, 229));
+  ASSERT_EQ(TCL112AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kTcl112AcBits, ac._irsend.capture.bits);
+  ASSERT_EQ(
+      "Type: 1, Power: On, Mode: 3 (Cool), Temp: 24C, Fan: 0 (Auto), "
+      "Econo: Off, Health: Off, Turbo: Off, Swing(H): Off, Swing(V): Off, "
+      "Light: Off", IRAcUtils::resultAcToString(&ac._irsend.capture));
 }

@@ -111,18 +111,18 @@ void DeviceGroupsInit(void)
   if (!device_group_count) {
 
     // If relays in separate device groups is enabled, set the device group count to highest numbered
-    // relay.
+    // button.
     if (Settings->flag4.multiple_device_groups) {  // SetOption88 - Enable relays in separate device groups
       for (uint32_t relay_index = 0; relay_index < MAX_RELAYS; relay_index++) {
         if (PinUsed(GPIO_REL1, relay_index)) device_group_count = relay_index + 1;
       }
-      if (device_group_count > MAX_DEV_GROUP_NAMES) device_group_count = MAX_DEV_GROUP_NAMES;
     }
 
-    // Otherwise, set the device group count to 1.
-    else {
+    // Set up a minimum of one device group.
+    if (!device_group_count)
       device_group_count = 1;
-    }
+    else if (device_group_count > MAX_DEV_GROUP_NAMES)
+      device_group_count = MAX_DEV_GROUP_NAMES;
   }
 
   // If there are more device group names set than the number of device groups needed by the

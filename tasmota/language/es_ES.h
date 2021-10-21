@@ -1,5 +1,5 @@
 /*
-  es-ES.h - localization for Spanish - Spain for Tasmota (International Spanish valid for all latinamerica)
+  es-ES.h - Tasmota localization for Spanish (International Spanish valid for all latinamerica)
 
   Copyright (C) 2021  Adrian Scillato
 
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1
+ * Updated until v9.5.0.9
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -194,10 +194,12 @@
 #define D_UV_POWER "UV Power"
 #define D_VERSION "Versión"
 #define D_VOLTAGE "Tensión"
-#define D_VOLUME "Volume"
+#define D_VOLUME "Volumen"
 #define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Cálida"
 #define D_WEB_SERVER "Servidor Web"
+#define D_SOC "Estado de Carga"
+#define D_SOH "Estado de Salud"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "Cuidado, esta versión no guarda los cambios"
@@ -326,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Clave Administrador Web"
 #define D_MQTT_ENABLE "Habilitar MQTT"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "Habilitar HTTP API"
 #define D_FRIENDLY_NAME "Nombre Amigable"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
@@ -706,6 +710,9 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -831,6 +838,10 @@
 #define D_SENSOR_ZEROCROSS     "Cruce por cero"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -936,10 +947,11 @@
 #define D_MANAGE_FILE_SYSTEM   "Explorar Archivos"
 #define D_FS_SIZE              "Tamaño"
 #define D_FS_FREE              "Libre"
-#define D_NEW_FILE             "nuevo.txt"
-#define D_CREATE_NEW_FILE      "Crear y editar un archivo nuevo"
+#define D_NEW_FILE             "Nuevo.txt"
+#define D_CREATE_NEW_FILE      "Crear un archivo nuevo"
 #define D_EDIT_FILE            "Editar Archivo"
-#define D_CONFIRM_FILE_DEL     "Confirmar la eliminación del archivo"
+#define D_CONFIRM_FILE_DEL     "Confirmar eliminación del archivo"
+#define D_SHOW_HIDDEN_FILES    "Mostrar archivos ocultos"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Ganancia:"
@@ -1052,16 +1064,17 @@
 #define D_NEOPOOL_RELAY_CD                "Bomba de Salmuera"
 #define D_NEOPOOL_TIME                    "Tiempo"
 #define D_NEOPOOL_FILT_MODE               "Filtrado"
+#define D_NEOPOOL_CELL_RUNTIME            "Tiempo de actividad"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
 #define D_NEOPOOL_COVER                   "Cover"
 #define D_NEOPOOL_SHOCK                   "Golpe"
-#define D_NEOPOOL_STATUS_ON               "ON"
-#define D_NEOPOOL_STATUS_OFF              "OFF"
-#define D_NEOPOOL_STATUS_WAIT             "WAIT"
-#define D_NEOPOOL_STATUS_TANK             "TANK"
-#define D_NEOPOOL_STATUS_FLOW             "Flow"
+#define D_NEOPOOL_STATUS_ON               "Encendido"
+#define D_NEOPOOL_STATUS_OFF              "Apagado"
+#define D_NEOPOOL_STATUS_WAIT             "Espera"
+#define D_NEOPOOL_STATUS_TANK             "Tanque"
+#define D_NEOPOOL_STATUS_FLOW             "Flujo"
 #define D_NEOPOOL_LOW                     "Bajo"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"

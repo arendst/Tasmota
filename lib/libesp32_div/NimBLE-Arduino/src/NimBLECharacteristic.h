@@ -59,12 +59,26 @@ class NimBLECharacteristicCallbacks;
  */
 class NimBLECharacteristic {
 public:
+    NimBLECharacteristic(const char* uuid,
+                         uint16_t properties =
+                         NIMBLE_PROPERTY::READ |
+                         NIMBLE_PROPERTY::WRITE,
+                         NimBLEService* pService = nullptr);
+    NimBLECharacteristic(const NimBLEUUID &uuid,
+                         uint16_t properties =
+                         NIMBLE_PROPERTY::READ |
+                         NIMBLE_PROPERTY::WRITE,
+                         NimBLEService* pService = nullptr);
+
+    ~NimBLECharacteristic();
 
     uint16_t          getHandle();
     NimBLEUUID        getUUID();
     std::string       toString();
 
     void              setCallbacks(NimBLECharacteristicCallbacks* pCallbacks);
+    NimBLECharacteristicCallbacks*
+                      getCallbacks();
 
     void              indicate();
     void              notify(bool is_notification = true);
@@ -81,9 +95,11 @@ public:
                                        NIMBLE_PROPERTY::WRITE,
                                        uint16_t max_len = 100);
 
+    void              addDescriptor(NimBLEDescriptor *pDescriptor);
     NimBLEDescriptor* getDescriptorByUUID(const char* uuid);
     NimBLEDescriptor* getDescriptorByUUID(const NimBLEUUID &uuid);
     NimBLEDescriptor* getDescriptorByHandle(uint16_t handle);
+    void              removeDescriptor(NimBLEDescriptor *pDescriptor, bool deleteDsc = false);
 
     std::string       getValue(time_t *timestamp = nullptr);
     size_t            getDataLength();
@@ -115,30 +131,15 @@ public:
         setValue((uint8_t*)&s, sizeof(T));
     }
 
-
-
-
+    NimBLEService*    getService();
+    uint16_t          getProperties();
 
 private:
 
-    friend class      NimBLEServer;
-    friend class      NimBLEService;
+    friend class    NimBLEServer;
+    friend class    NimBLEService;
 
-    NimBLECharacteristic(const char* uuid,
-                         uint16_t properties =
-                         NIMBLE_PROPERTY::READ |
-                         NIMBLE_PROPERTY::WRITE,
-                         NimBLEService* pService = nullptr);
-    NimBLECharacteristic(const NimBLEUUID &uuid,
-                         uint16_t properties =
-                         NIMBLE_PROPERTY::READ |
-                         NIMBLE_PROPERTY::WRITE,
-                         NimBLEService* pService = nullptr);
-
-    ~NimBLECharacteristic();
-
-    NimBLEService*  getService();
-    uint16_t        getProperties();
+    void            setService(NimBLEService *pService);
     void            setSubscribe(struct ble_gap_event *event);
     static int      handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
                                    struct ble_gatt_access_ctxt *ctxt, void *arg);
@@ -150,9 +151,9 @@ private:
     NimBLEService*                 m_pService;
     std::string                    m_value;
     std::vector<NimBLEDescriptor*> m_dscVec;
-    ble_task_data_t                *m_pTaskData;
     portMUX_TYPE                   m_valMux;
     time_t                         m_timestamp;
+    uint8_t                        m_removed;
 
     std::vector<std::pair<uint16_t, uint16_t>>  m_subscribedVec;
 }; // NimBLECharacteristic

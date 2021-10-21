@@ -8,6 +8,7 @@
 #include "be_libs.h"
 
 extern void be_load_baselib(bvm *vm);
+extern void be_load_baselib_call(bvm *vm);
 extern void be_load_listlib(bvm *vm);
 extern void be_load_maplib(bvm *vm);
 extern void be_load_rangelib(bvm *vm);
@@ -23,5 +24,6 @@ void be_loadlibs(bvm *vm)
     be_load_rangelib(vm);
     be_load_filelib(vm);
     be_load_byteslib(vm);
+    be_load_baselib_call(vm);
 #endif
 }

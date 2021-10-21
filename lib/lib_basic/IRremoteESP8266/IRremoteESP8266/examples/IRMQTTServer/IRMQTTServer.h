@@ -1,6 +1,6 @@
 /*
  * Send & receive arbitrary IR codes via a web server or MQTT.
- * Copyright David Conran 2016, 2017, 2018, 2019, 2020
+ * Copyright David Conran 2016-2021
  */
 #ifndef EXAMPLES_IRMQTTSERVER_IRMQTTSERVER_H_
 #define EXAMPLES_IRMQTTSERVER_IRMQTTSERVER_H_
@@ -101,8 +101,9 @@ const IPAddress kSubnetMask = IPAddress(255, 255, 255, 0);
                                    // The unset default is 8%.
                                    // (Uncomment to enable)
 // Do you want/need mdns enabled? (https://en.wikipedia.org/wiki/Multicast_DNS)
+#ifndef MDNS_ENABLE
 #define MDNS_ENABLE true  // `false` to disable and save ~21k of program space.
-
+#endif  // MDNS_ENABLE
 // ----------------------- HTTP Related Settings -------------------------------
 #define FIRMWARE_OTA true  // Allow remote update of the firmware via http.
                            // Less secure if enabled.
@@ -197,7 +198,9 @@ const uint16_t kMinUnknownSize = 2 * 10;
 // can understand the individual settings of the remote.
 // e.g. Aquire the A/C settings from an actual A/C IR remote and override
 //      any local settings set via MQTT/HTTP etc.
+#ifndef USE_DECODED_AC_SETTINGS
 #define USE_DECODED_AC_SETTINGS true  // `false` to disable. `true` to enable.
+#endif  // USE_DECODED_AC_SETTINGS
 // Should we allow or ignore an A/C IR remote to override the A/C protocol/model
 // as set via MQTT or HTTP?
 // e.g. If `true`, you can use any fully supported A/C remote to control

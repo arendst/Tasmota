@@ -27,32 +27,7 @@ extern int w_webserver_arg(bvm *vm);
 extern int w_webserver_arg_name(bvm *vm);
 extern int w_webserver_has_arg(bvm *vm);
 
-#if !BE_USE_PRECOMPILED_OBJECT
-be_native_module_attr_table(webserver) {
-    be_native_module_function("member", w_webserver_member),
 
-    be_native_module_function("on", w_webserver_on),
-    be_native_module_function("state", w_webserver_state),
-
-    be_native_module_function("check_privileged_access", w_webserver_check_privileged_access),
-    be_native_module_function("redirect", w_webserver_redirect),
-    be_native_module_function("content_start", w_webserver_content_start),
-    be_native_module_function("content_send", w_webserver_content_send),
-    be_native_module_function("content_send_style", w_webserver_content_send_style),
-    be_native_module_function("content_flush", w_webserver_content_flush),
-    be_native_module_function("content_start", w_webserver_content_start),
-    be_native_module_function("content_stop", w_webserver_content_stop),
-    be_native_module_function("content_button", w_webserver_content_button),
-
-    be_native_module_function("arg_size", w_webserver_argsize),
-    be_native_module_function("arg", w_webserver_arg),
-    be_native_module_function("arg_name", w_webserver_arg_name),
-    be_native_module_function("has_arg", w_webserver_has_arg),
-
-};
-
-be_define_native_module(webserver, NULL);
-#else
 /* @const_object_info_begin
 module webserver (scope: global) {
     member, func(w_webserver_member)
@@ -62,7 +37,6 @@ module webserver (scope: global) {
 
     check_privileged_access, func(w_webserver_check_privileged_access)
     redirect, func(w_webserver_redirect)
-    content_start, func(w_webserver_content_start)
     content_send, func(w_webserver_content_send)
     content_send_style, func(w_webserver_content_send_style)
     content_flush, func(w_webserver_content_flush)
@@ -77,6 +51,5 @@ module webserver (scope: global) {
 }
 @const_object_info_end */
 #include "../generate/be_fixed_webserver.h"
-#endif
 
 #endif // USE_WEBSERVER

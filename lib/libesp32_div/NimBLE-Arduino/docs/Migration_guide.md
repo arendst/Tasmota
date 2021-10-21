@@ -69,8 +69,6 @@ For example `BLEServer::createService(SERVICE_UUID)` will work just as it did be
 
 <a name="characteristics"></a>
 ### Characteristics
-The constructor for `(Nim)BLECharacteristic` is now private, so if you currently subclass it to add logic you should switch to use `NimBLEService::createCharacteristic` instead.  Any custom processing logic previously in a `BLECharacteristic` subclass should be moved to a `NimBLECharacteristicCallbacks` subclass instead, and passed into `NimBLECharacteristic::setCallbacks`.
-
 `BLEService::createCharacteristic` (`NimBLEService::createCharacteristic`) is used the same way as originally except the properties parameter has changed.  
 
 When creating a characteristic the properties are now set with `NIMBLE_PROPERTY::XXXX` instead of `BLECharacteristic::XXXX`.

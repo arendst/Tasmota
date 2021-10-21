@@ -100,7 +100,6 @@ struct SOLAXX1 {
   float dc2_voltage = 0;
   float dc1_current = 0;
   float dc2_current = 0;
-  uint32_t energy_total = 0;
   uint32_t runtime_total = 0;
   float dc1_power = 0;
   float dc2_power = 0;
@@ -272,7 +271,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
         Energy.frequency[0] =    (float)((value[25] << 8) | value[26]) * 0.01f; // AC Frequency
         Energy.active_power[0] = (float)((value[27] << 8) | value[28]); // AC Power
         //temporal = (float)((value[29] << 8) | value[30]) * 0.1f; // Not Used
-        solaxX1.energy_total =   ((value[31] << 24) | (value[32] << 16) | (value[33] << 8) | value[34]); // Energy Total
+        Energy.import_active[0] = (float)((value[31] << 24) | (value[32] << 16) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
         solaxX1.runtime_total =  ((value[35] << 24) | (value[36] << 16) | (value[37] << 8) | value[38]); // Work Time Total
         solaxX1.status =         (uint8_t)((value[39] << 8) | value[40]); // Work mode
         //temporal = (float)((value[41] << 8) | value[42]); // Grid voltage fault value 0.1V
@@ -287,7 +286,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
         solaxX1.dc1_power = solaxX1.dc1_voltage * solaxX1.dc1_current;
         solaxX1.dc2_power = solaxX1.dc2_voltage * solaxX1.dc2_current;
 
-        EnergyUpdateTotal((float)solaxX1.energy_total * 0.1f, true);  // 484.708 kWh
+        EnergyUpdateTotal();  // 484.708 kWh
       }
     } else { // end hasAddress
       // check address confirmation from inverter
@@ -365,7 +364,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
 
       solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
       solaxX1.dc2_power = solaxX1.status = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
-      //solaxX1.energy_today = solaxX1.energy_total = solaxX1.runtime_total = 0;
+      //solaxX1.energy_today = solaxX1.runtime_total = 0;
     } else {
       if (protocolStatus.queryOfflineSend) {
         protocolStatus.status = 0b00001000; // queryOffline

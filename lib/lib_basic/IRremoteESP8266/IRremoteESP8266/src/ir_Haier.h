@@ -179,6 +179,7 @@ union HaierYRW02Protocol{
 };
 
 const uint8_t kHaierAcYrw02Prefix = 0xA6;
+const uint8_t kHaierAc176Prefix = 0xB7;
 
 const uint8_t kHaierAcYrw02SwingOff = 0x0;
 const uint8_t kHaierAcYrw02SwingTop = 0x1;
@@ -190,7 +191,7 @@ const uint8_t kHaierAcYrw02SwingAuto = 0xC;  // Airflow
 const uint8_t kHaierAcYrw02FanHigh = 0b001;
 const uint8_t kHaierAcYrw02FanMed =  0b010;
 const uint8_t kHaierAcYrw02FanLow =  0b011;
-const uint8_t kHaierAcYrw02FanAuto = 0b101;
+const uint8_t kHaierAcYrw02FanAuto = 0b101;  // HAIER_AC176 uses `0` in Fan2
 
 const uint8_t kHaierAcYrw02TurboOff = 0x0;
 const uint8_t kHaierAcYrw02TurboHigh = 0x1;
@@ -211,6 +212,76 @@ const uint8_t kHaierAcYrw02ButtonMode = 0x6;
 const uint8_t kHaierAcYrw02ButtonHealth = 0x7;
 const uint8_t kHaierAcYrw02ButtonTurbo = 0x8;
 const uint8_t kHaierAcYrw02ButtonSleep = 0xB;
+
+const uint8_t kHaierAcYrw02NoTimers       = 0b000;
+const uint8_t kHaierAcYrw02OffTimer       = 0b001;
+const uint8_t kHaierAcYrw02OnTimer        = 0b010;
+const uint8_t kHaierAcYrw02OnThenOffTimer = 0b100;
+const uint8_t kHaierAcYrw02OffThenOnTimer = 0b101;
+
+/// Native representation of a Haier 176 bit A/C message.
+union HaierAc176Protocol{
+  uint8_t raw[kHaierAC176StateLength];  ///< The state in native form
+  struct {
+    // Byte 0
+    uint8_t Prefix      :8;
+    // Byte 1
+    uint8_t Swing       :4;
+    uint8_t Temp        :4;  // 16C~30C
+    // Byte 2
+    uint8_t             :8;
+    // Byte 3
+    uint8_t             :1;
+    uint8_t Health      :1;
+    uint8_t             :3;
+    uint8_t TimerMode   :3;
+    // Byte 4
+    uint8_t             :6;
+    uint8_t Power       :1;
+    uint8_t             :1;
+    // Byte 5
+    uint8_t OffTimerHrs :5;
+    uint8_t Fan         :3;
+    // Byte 6
+    uint8_t OffTimerMins:6;
+    uint8_t Turbo:2;
+    // Byte 7
+    uint8_t OnTimerHrs  :5;
+    uint8_t Mode        :3;
+    // Byte 8
+    uint8_t OnTimerMins :6;
+    uint8_t             :1;
+    uint8_t Sleep       :1;
+    // Byte 9
+    uint8_t             :8;
+    // Byte 10
+    uint8_t             :8;
+    // Byte 11
+    uint8_t             :8;
+    // Byte 12
+    uint8_t Button      :4;
+    uint8_t             :4;
+    // Byte 13
+    uint8_t Sum         :8;
+    // Byte 14
+    uint8_t Prefix2     :8;
+    // Byte 15
+    uint8_t             :8;
+    // Byte 16
+    uint8_t             :6;
+    uint8_t Fan2        :2;
+    // Byte 17
+    uint8_t             :8;
+    // Byte 18
+    uint8_t             :8;
+    // Byte 19
+    uint8_t             :8;
+    // Byte 20
+    uint8_t             :8;
+    // Byte 21
+    uint8_t Sum2        :8;
+  };
+};
 
 // Legacy Haier YRW02 remote defines.
 #define HAIER_AC_YRW02_SWING_OFF kHaierAcYrw02SwingOff
@@ -256,6 +327,7 @@ class IRHaierAC {
   int8_t calibrate(void) { return _irsend.calibrate(); }
 #endif  // SEND_HAIER_AC
   void begin(void);
+  void stateReset(void);
 
   void setCommand(const uint8_t command);
   uint8_t getCommand(void) const;
@@ -308,24 +380,25 @@ class IRHaierAC {
   /// @endcond
 #endif
   HaierProtocol _;
-  void stateReset(void);
   void checksum(void);
 };
 
-/// Class for handling detailed Haier ACYRW02 A/C messages.
-class IRHaierACYRW02 {
+/// Class for handling detailed Haier 176 bit A/C messages.
+class IRHaierAC176 {
+  friend class IRHaierACYRW02;
  public:
-  explicit IRHaierACYRW02(const uint16_t pin, const bool inverted = false,
-                          const bool use_modulation = true);
-#if SEND_HAIER_AC_YRW02
-  void send(const uint16_t repeat = kHaierAcYrw02DefaultRepeat);
+  explicit IRHaierAC176(const uint16_t pin, const bool inverted = false,
+                        const bool use_modulation = true);
+#if SEND_HAIER_AC176
+  virtual void send(const uint16_t repeat = kHaierAc176DefaultRepeat);
   /// Run the calibration to calculate uSec timing offsets for this platform.
   /// @return The uSec timing offset needed per modulation of the IR Led.
   /// @note This will produce a 65ms IR signal pulse at 38kHz.
   ///   Only ever needs to be run once per object instantiation, if at all.
   int8_t calibrate(void) { return _irsend.calibrate(); }
-#endif  // SEND_HAIER_AC_YRW02
+#endif  // SEND_HAIER_AC176
   void begin(void);
+  void stateReset(void);
 
   void setButton(const uint8_t button);
   uint8_t getButton(void) const;
@@ -355,10 +428,17 @@ class IRHaierACYRW02 {
   uint8_t getSwing(void) const;
   void setSwing(const uint8_t pos);
 
+  void setTimerMode(const uint8_t setting);
+  uint8_t getTimerMode(void) const;
+  void setOnTimer(const uint16_t mins);
+  uint16_t getOnTimer(void) const;
+  void setOffTimer(const uint16_t mins);
+  uint16_t getOffTimer(void) const;
+
   uint8_t* getRaw(void);
-  void setRaw(const uint8_t new_code[]);
-  static bool validChecksum(uint8_t state[],
-                            const uint16_t length = kHaierACYRW02StateLength);
+  virtual void setRaw(const uint8_t new_code[]);
+  static bool validChecksum(const uint8_t state[],
+                            const uint16_t length = kHaierAC176StateLength);
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(const stdAc::fanspeed_t speed);
   static uint8_t convertSwingV(const stdAc::swingv_t position);
@@ -376,8 +456,26 @@ class IRHaierACYRW02 {
   IRsendTest _irsend;  ///< Instance of the testing IR send class
   /// @endcond
 #endif  // UNIT_TEST
-  HaierYRW02Protocol _;
-  void stateReset(void);
+  HaierAc176Protocol _;
   void checksum(void);
+};
+
+/// Class for handling detailed Haier ACYRW02 A/C messages.
+class IRHaierACYRW02 : public IRHaierAC176 {
+ public:
+  explicit IRHaierACYRW02(const uint16_t pin, const bool inverted = false,
+                          const bool use_modulation = true);
+#if SEND_HAIER_AC_YRW02
+  void send(const uint16_t repeat = kHaierAcYrw02DefaultRepeat) override;
+  /// Run the calibration to calculate uSec timing offsets for this platform.
+  /// @return The uSec timing offset needed per modulation of the IR Led.
+  /// @note This will produce a 65ms IR signal pulse at 38kHz.
+  ///   Only ever needs to be run once per object instantiation, if at all.
+  int8_t calibrate(void) { return _irsend.calibrate(); }
+#endif  // SEND_HAIER_AC_YRW02
+  void setRaw(const uint8_t new_code[]) override;
+  static bool validChecksum(
+      const uint8_t state[],
+      const uint16_t length = kHaierACYRW02StateLength);
 };
 #endif  // IR_HAIER_H_

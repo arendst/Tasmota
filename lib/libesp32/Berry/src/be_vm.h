@@ -10,6 +10,20 @@
 
 #include "be_object.h"
 
+#define comp_is_named_gbl(vm)       ((vm)->compopt & (1<<COMP_NAMED_GBL))
+#define comp_set_named_gbl(vm)      ((vm)->compopt |= (1<<COMP_NAMED_GBL))
+#define comp_clear_named_gbl(vm)    ((vm)->compopt &= ~(1<<COMP_NAMED_GBL))
+
+#define comp_is_strict(vm)       ((vm)->compopt & (1<<COMP_STRICT))
+#define comp_set_strict(vm)      ((vm)->compopt |= (1<<COMP_STRICT))
+#define comp_clear_strict(vm)    ((vm)->compopt &= ~(1<<COMP_STRICT))
+
+/* Compilation options */
+typedef enum {
+    COMP_NAMED_GBL = 0x00, /* compile with named globals */
+    COMP_STRICT = 0x01, /* compile with named globals */
+} compoptmask;
+
 typedef struct {
     struct {
         bmap *vtab; /* global variable index table */
@@ -86,8 +100,18 @@ struct bvm {
     bmap *ntvclass; /* native class table */
     blist *registry; /* registry list */
     struct bgc gc;
+    bbyte compopt; /* compilation options */
 #if BE_USE_OBSERVABILITY_HOOK
     bobshook obshook;
+#endif
+#if BE_USE_PERF_COUNTERS
+    uint32_t counter_ins; /* instructions counter */
+    uint32_t counter_enter; /* counter for times the VM was entered */
+    uint32_t counter_call; /* counter for calls, VM or native */
+    uint32_t counter_get; /* counter for GETMBR or GETMET */
+    uint32_t counter_set; /* counter for SETMBR */
+    uint32_t counter_try; /* counter for `try` statement */
+    uint32_t counter_exc; /* counter for raised exceptions */
 #endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;

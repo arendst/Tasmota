@@ -4,7 +4,7 @@
       "ldscript": "esp32_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DARDUINO_M5STACK_Core2 -DBOARD_HAS_PSRAM -mfix-esp32-psram-cache-issue",
+    "extra_flags": "-DARDUINO_M5STACK_Core2 -DBOARD_HAS_PSRAM",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "dout",
@@ -18,6 +18,9 @@
     "ethernet",
     "can"
   ],
+  "debug": {
+    "openocd_target": "esp32.cfg"
+  },
   "frameworks": [
     "arduino",
     "espidf"

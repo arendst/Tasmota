@@ -329,7 +329,7 @@ typedef struct bntvmodule {
   }
 
 /* new version for more compact literals */
-#define be_nested_proto(_nstack, _argc, _has_upval, _upvals, _has_subproto, _protos, _has_const, _ktab, _fname, _source, _code)     \
+#define be_nested_proto(_nstack, _argc, _varg, _has_upval, _upvals, _has_subproto, _protos, _has_const, _ktab, _fname, _source, _code)     \
   & (const bproto) {                                                              \
     NULL,                       /* bgcobject *next */                             \
     BE_PROTO,                   /* type BE_PROTO */                               \
@@ -337,7 +337,7 @@ typedef struct bntvmodule {
     (_nstack),                  /* nstack */                                      \
     BE_IIF(_has_upval)(sizeof(*_upvals)/sizeof(bupvaldesc),0),  /* nupvals */     \
     (_argc),                    /* argc */                                        \
-    0,                          /* varg */                                        \
+    (_varg),                    /* varg */                                        \
     NULL,                       /* bgcobject *gray */                             \
     (bupvaldesc*) _upvals,      /* bupvaldesc *upvals */                          \
     (bvalue*) _ktab,            /* ktab */                                        \
@@ -365,7 +365,7 @@ typedef struct bntvmodule {
 
 /* new version for more compact literals */
 #define be_local_closure(_name, _proto)       \
-  const bclosure _name##_closure = {          \
+  static const bclosure _name##_closure = {   \
     NULL,           /* bgcobject *next */     \
     BE_CLOSURE,     /* type BE_CLOSURE */     \
     GC_CONST,       /* marked GC_CONST */     \
@@ -403,8 +403,9 @@ typedef void(*bntvhook)(bvm *vm, bhookinfo *info);
 
 typedef void(*bobshook)(bvm *vm, int event, ...);
 enum beobshookevents {
-  BE_OBS_GC_START,        // start of GC, arg = allocated size
-  BE_OBS_GC_END,          // end of GC, arg = allocated size
+  BE_OBS_GC_START,        /* start of GC, arg = allocated size */
+  BE_OBS_GC_END,          /* end of GC, arg = allocated size */
+  BE_OBS_VM_HEARTBEAT,    /* VM heartbeat called every million instructions */
 };
 
 /* FFI functions */
@@ -449,11 +450,13 @@ BERRY_API bbool be_isfunction(bvm *vm, int index);
 BERRY_API bbool be_isproto(bvm *vm, int index);
 BERRY_API bbool be_isclass(bvm *vm, int index);
 BERRY_API bbool be_isinstance(bvm *vm, int index);
+BERRY_API bbool be_ismodule(bvm *vm, int index);
 BERRY_API bbool be_islist(bvm *vm, int index);
 BERRY_API bbool be_ismap(bvm *vm, int index);
 BERRY_API bbool be_iscomptr(bvm *vm, int index);
 BERRY_API bbool be_iscomobj(bvm *vm, int index);
 BERRY_API bbool be_isderived(bvm *vm, int index);
+BERRY_API bbool be_isbytes(bvm *vm, int index);
 
 BERRY_API bint be_toint(bvm *vm, int index);
 BERRY_API breal be_toreal(bvm *vm, int index);
@@ -512,6 +515,7 @@ BERRY_API bbool be_refcontains(bvm *vm, int index);
 BERRY_API void be_refpush(bvm *vm, int index);
 BERRY_API void be_refpop(bvm *vm);
 BERRY_API void be_stack_require(bvm *vm, int count);
+BERRY_API bbool be_getmodule(bvm *vm, const char *k);
 
 /* relop operation APIs */
 BERRY_API bbool be_iseq(bvm *vm);

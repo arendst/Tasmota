@@ -65,6 +65,20 @@ extern "C" {
     if (v > 0xFF) { return 0xFF; }
     return v;
   }
+
+  // variant of be_raise with string format
+  [[ noreturn ]] void be_raisef(bvm *vm, const char *except, const char *msg, ...) {
+    // To save stack space support logging for max text length of 128 characters
+    char log_data[128];
+
+    va_list arg;
+    va_start(arg, msg);
+    uint32_t len = ext_vsnprintf_P(log_data, sizeof(log_data)-3, msg, arg);
+    va_end(arg);
+    if (len+3 > sizeof(log_data)) { strcat(log_data, "..."); }  // Actual data is more
+    be_raise(vm, except, log_data);
+  }
+
   static void map_insert_int(bvm *vm, const char *key, int value)
   {
     be_pushstring(vm, key);
@@ -165,6 +179,37 @@ extern "C" {
     be_pop(vm, 3);                  // stack = instance
   }
 
+  extern void berry_log_C(const char * berry_buf, ...);
+  // Create a class given a global name or a name within a module
+  // Case 1: (no dot in name) `lv_wifi_bars` will look for a global variable `lv_wifi_bars`
+  // Case 2: (dot in name) `lvgl.lv_obj` will import `lvgl` and look for `lv_obj` within this module
+  // returns true if successful and result is top of stack, or false if not found and `nil` is at top of stack
+  bbool be_find_class(bvm *vm, const char * cl_name);
+  bbool be_find_class(bvm *vm, const char * cl_name) {
+    char *saveptr;
+    bbool ret = false;
+
+    if (cl_name == NULL) {
+      be_pushnil(vm);
+      return ret;
+    }
+    // berry_log_C(">> be_find_class %s", cl_name);
+    char cl_name_buf[strlen(cl_name)+1];
+    strcpy(cl_name_buf, cl_name);
+
+    char * prefix = strtok_r(cl_name_buf, ".", &saveptr);
+    char * suffix = strtok_r(NULL, ".", &saveptr);
+    if (suffix) {
+    // berry_log_C(">> be_find_class %s - %s", prefix, suffix);
+      be_getmodule(vm, prefix);
+      ret = be_getmember(vm, -1, suffix);
+      // berry_log_C(">> be_find_class ret=%i", ret);
+      be_remove(vm, -2);
+    } else {
+      ret = be_getglobal(vm, prefix);
+    }
+    return ret;
+  }
 }
 
 /*********************************************************************************************\
@@ -175,6 +220,9 @@ extern "C" {
 // binary search within an array of sorted strings
 // the first 4 bytes are a pointer to a string
 // returns 0..total_elements-1 or -1 if not found
+//
+// This version skips the first character of the string if it's not a letter,
+// the first character is used to indicate the type of the value associated to the key
 extern "C" {
   int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements);
   int32_t bin_search(const char * needle, const void * table, size_t elt_size, size_t total_elements) {
@@ -184,6 +232,10 @@ extern "C" {
     // start a dissect
     while (low <= high) {
       const char * elt = *(const char **) ( ((uint8_t*)table) + mid * elt_size );
+      char first_char = elt[0];
+      if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
+        elt++;  // skip first char
+      }
       int32_t comp = strcmp(needle, elt);
       if (comp < 0) {
         high = mid - 1;
@@ -209,6 +261,7 @@ extern "C" {
 extern "C" {
   
   typedef int32_t (*berry_callback_t)(int32_t v0, int32_t v1, int32_t v2, int32_t v3);
+  extern void BerryDumpErrorAndClear(bvm *vm, bool berry_console);
 
   int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, int32_t v3) {
     // call berry cb dispatcher
@@ -227,7 +280,11 @@ extern "C" {
         be_pushint(berry.vm, v2);
         be_pushint(berry.vm, v3);
 
-        be_pcall(berry.vm, 6);   // 5 arguments
+        ret = be_pcall(berry.vm, 6);   // 5 arguments
+        if (ret != 0) {
+          BerryDumpErrorAndClear(berry.vm, false);  // log in Tasmota console only
+          return 0;
+        }
         be_pop(berry.vm, 6);
 
         if (be_isint(berry.vm, -1) || be_isnil(berry.vm, -1)) {  // sanity check
@@ -296,6 +353,7 @@ extern "C" {
 
 
 #define LV_OBJ_CLASS    "lv_obj"
+#define LV_MODULE       "lvgl"    // name of the lvgl module
 
 /*********************************************************************************************\
  * Automatically parse Berry stack and call the C function accordingly
@@ -305,7 +363,7 @@ extern "C" {
  * - be_int -> int32_t
  * - be_bool -> int32_t with value 0/1
  * - be_string -> const char *
- * - be_instance -> gets the member ".p" and pushes as void*
+ * - be_instance -> gets the member "_p" and pushes as void*
  * 
  * This works because C silently ignores any unwanted arguments.
  * There is a strong requirements that all ints and pointers are 32 bits.
@@ -314,11 +372,10 @@ extern "C" {
  * Optional argument:
  * - return_type: the C function return value is int32_t and is converted to the
  *   relevant Berry object depending on this char:
- *   '0' (default): nil, no value
+ *   '' (default): nil, no value
  *   'i' be_int
- *   'b' be_boot
+ *   'b' be_bool
  *   's' be_str
- *   'o' instance of `lv_obj` (needs to be improved)
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
  *   string of argument types, '+' marks optional arguments
@@ -326,123 +383,46 @@ extern "C" {
  *   'i' be_int
  *   'b' be_bool
  *   's' be_string
+ *   'c' C callback
  *   'lv_obj' be_instance of type or subtype
- *   '0'..'5' callback
+ *   '^lv_event_cb' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self, lv native pointer)` and expects a callback address in return
  * 
  * Ex: "oii+s" takes 3 mandatory arguments (obj_instance, int, int) and an optional fourth one [,string]
 \*********************************************************************************************/
 // general form of lv_obj_t* function, up to 4 parameters
 // We can only send 32 bits arguments (no 64 bits nor double) and we expect pointers to be 32 bits
 
-#define LVBE_MAX_CALLBACK     6   // max 6 callbackss
-#define LVBE_LVGL_CB          "_lvgl_cb"
-#define LVBE_LVGL_CB_OBJ      "_lvgl_cb_obj"        // remember which object it was linked to
-#define LVBE_LVGL_CB_DISPATCH "_lvgl_cb_dispatch"
-
-// General form of callback
-typedef int32_t (*lvbe_callback)(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
-int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4);
-
-// We define 6 callback vectors, this may need to be raised
-int32_t lvbe_callback_0(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(0, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_1(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(1, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_2(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(2, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_3(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(3, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_4(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(4, obj, v1, v2, v3, v4);
-}
-int32_t lvbe_callback_5(struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  return lvbe_callback_x(5, obj, v1, v2, v3, v4);
-}
-
-const lvbe_callback lvbe_callbacks[LVBE_MAX_CALLBACK] = {
-  lvbe_callback_0,
-  lvbe_callback_1,
-  lvbe_callback_2,
-  lvbe_callback_3,
-  lvbe_callback_4,
-  lvbe_callback_5,
-};
-
-int32_t lvbe_callback_x(uint32_t n, struct _lv_obj_t * obj, int32_t v1, int32_t v2, int32_t v3, int32_t v4) {
-  // berry_log_P(">>>: Callback called n=%i obj=0x%08X v1=%i v2=%i", n, obj, v1, v2);
-  be_getglobal(berry.vm, LVBE_LVGL_CB_DISPATCH); // stack: List
-  be_pushint(berry.vm, n);
-  be_pushint(berry.vm, (int32_t) obj);
-  be_pushint(berry.vm, v1);
-  be_pushint(berry.vm, v2);
-  be_pushint(berry.vm, v3);
-  be_pushint(berry.vm, v4);
-  be_pcall(berry.vm, 6);
-  int32_t ret = be_toint(berry.vm, -7);
-  be_pop(berry.vm, 7);
-  // berry_log_P(">>>: Callback called out %d ret=%i", n, ret);
-  return ret;
-}
+#define LVBE_LVGL_GLOB        "_lvgl"
+#define LVBE_LVGL_CB_GEN      "gen_cb"
 
 // read a single value at stack position idx, convert to int.
-// if object instance, get `.p` member and convert it recursively
+// if object instance, get `_p` member and convert it recursively
 int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = nullptr, int32_t lv_obj_cb = 0) {
   int32_t ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
+  
+  // berry_log_C(">> 0 idx=%i arg_type=%s", idx, arg_type ? arg_type : "NULL");
   if (arg_type == nullptr) { arg_type = "."; }    // if no type provided, replace with wildchar
   size_t arg_type_len = strlen(arg_type);
 
   // handle callbacks first, since a wrong parameter will always yield to a crash
-  if (arg_type_len == 1 && arg_type[0] >= '0' && arg_type[0] < '0' + LVBE_MAX_CALLBACK) {
+  if (arg_type_len > 1 && arg_type[0] == '^') {     // it is a callback
+    arg_type++;   // skip first character
     if (be_isclosure(vm, idx)) {
-      // we're good
-      // berry_log_P(">> closure found idx %d", idx);
-      uint32_t cb_index = arg_type[0] - '0';
-      lvbe_callback func = lvbe_callbacks[cb_index];
-      // register the object
+      be_getglobal(vm, LVBE_LVGL_GLOB);
+      be_getmethod(vm, -1, LVBE_LVGL_CB_GEN);
+      be_pushvalue(vm, -2);
+      be_remove(vm, -3);  // stack contains method + instance
+      be_pushstring(vm, arg_type);
+      be_pushvalue(vm, idx);
+      be_pushvalue(vm, 1);
+      be_pushint(vm, lv_obj_cb);
+      be_call(vm, 5);
+      const void * func = be_tocomptr(vm, -6);
+      be_pop(vm, 6);
 
-      // record the closure
-      be_getglobal(vm, LVBE_LVGL_CB);
-      be_getmember(vm, -1, ".p");
-      be_pushint(vm, cb_index);
-      be_getindex(vm, -2);
-      // be_dumpstack(vm);
-      // stack: _lvgl_cb, list.p, index, map
-      be_moveto(vm, -1, -4);
-      be_pop(vm, 3);
-      // be_dumpstack(vm);
-      // stack: map
-      be_getmember(vm, -1, ".p");
-      be_pushint(vm, lv_obj_cb);  // key - lv_obj
-      be_pushvalue(vm, idx);      // value - closure
-      // stack map, map.p, key, value
-      be_setindex(vm, -3);
-      // be_dumpstack(vm);
-      // stack map, map.p, key, value
-      be_pop(vm, 4);      // clean
-      // be_dumpstack(vm);
-
-      // record the object, it is always index #1
-      be_getglobal(vm, LVBE_LVGL_CB_OBJ);
-      be_getmember(vm, -1, ".p");
-      be_pushint(vm, cb_index);
-      be_getindex(vm, -2);
-      be_moveto(vm, -1, -4);
-      be_pop(vm, 3);
-      // stack: map
-      be_getmember(vm, -1, ".p");
-      be_pushint(vm, lv_obj_cb);  // key - lv_obj as int
-      be_pushvalue(vm, 1);  // value - lv_obj
-      // stack map, map.p, key, value
-      be_setindex(vm, -3);
-      be_pop(vm, 4);      // clean
-
-
+      // berry_log_P("func=%p", func);
       return (int32_t) func;
     } else {
       be_raise(vm, kTypeError, "Closure expected for callback type");
@@ -453,7 +433,7 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
   if      (be_isint(vm, idx))     { ret = be_toint(vm, idx); provided_type = 'i'; }
   else if (be_isbool(vm, idx))    { ret = be_tobool(vm, idx); provided_type = 'b'; }
   else if (be_isstring(vm, idx))  { ret = (int32_t) be_tostring(vm, idx); provided_type = 's'; }
-  else if (be_iscomptr(vm, idx))  { ret = (int32_t) be_tocomptr(vm, idx); provided_type = 'i'; }
+  else if (be_iscomptr(vm, idx))  { ret = (int32_t) be_tocomptr(vm, idx); provided_type = 'c'; }
 
   // check if simple type was a match
   if (provided_type) {
@@ -470,36 +450,68 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
 
   // non-simple type
   if (be_isinstance(vm, idx))  {
-    be_getmember(vm, idx, ".p");
-    int32_t ret = be_convert_single_elt(vm, -1, nullptr);   // recurse
-    be_pop(vm, 1);
-
-    if (arg_type_len > 1) {
-      // Check type
-      be_classof(vm, idx);
-      bool class_found = be_getglobal(vm, arg_type);
-      // Stack: class_of_idx, class_of_target (or nil)
-      if (class_found) {
-        if (!be_isderived(vm, -2)) {
-          berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
-        }
-      } else {
-        berry_log_P("Unable to find class '%s' (%d)", arg_type, arg_type_len);
-      }
+    // check if the instance is a subclass of `bytes()``
+    be_getbuiltin(vm, "bytes");    // add "list" class
+    if (be_isderived(vm, idx)) {
+      be_pop(vm, 1);
+      be_getmember(vm, idx, "_buffer");
+      be_pushvalue(vm, idx);
+      be_call(vm, 1);
+      int32_t ret = (int32_t) be_tocomptr(vm, -2);
       be_pop(vm, 2);
-    } else if (arg_type[0] != '.') {
-      berry_log_P("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
-    }
+      return ret;
+    } else {
+      be_pop(vm, 1);
+      be_getmember(vm, idx, "_p");
+      int32_t ret = be_convert_single_elt(vm, -1, nullptr);   // recurse
+      be_pop(vm, 1);
 
-    return ret;
+      if (arg_type_len > 1) {
+        // Check type
+        be_classof(vm, idx);
+        bool class_found = be_find_class(vm, arg_type);
+        // Stack: class_of_idx, class_of_target (or nil)
+        if (class_found) {
+          if (!be_isderived(vm, -2)) {
+            berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
+          }
+        } else {
+          berry_log_P("Unable to find class '%s' (%d)", arg_type, arg_type_len);
+        }
+        be_pop(vm, 2);
+      } else if (arg_type[0] != '.') {
+        berry_log_P("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
+      }
+
+      return ret;
+    }
   } else {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // 
-
   return ret;
 }
 
+/*********************************************************************************************\
+ * Manage timeout for Berry code
+ *
+\*********************************************************************************************/
+void BrTimeoutStart(void)  {
+  berry.timeout = millis() + USE_BERRY_TIMEOUT;
+  if (0 == berry.timeout) {
+    berry.timeout = 1;    // rare case when value accidentally computes to zero
+  }
+
+}
+
+void BrTimeoutYield(void) {
+  if (0 != berry.timeout) {
+    BrTimeoutStart();
+  }
+}
+
+void BrTimeoutReset(void)  {
+  berry.timeout = 0;      // remove timer
+}
 
 #endif  // USE_BERRY

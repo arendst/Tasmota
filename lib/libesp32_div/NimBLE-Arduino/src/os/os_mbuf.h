@@ -614,6 +614,25 @@ struct os_mbuf *os_mbuf_pullup(struct os_mbuf *om, uint16_t len);
  */
 struct os_mbuf *os_mbuf_trim_front(struct os_mbuf *om);
 
+/**
+ * Creates a single chained mbuf from m1 and m2 utilizing all
+ * the available buffer space in all mbufs in the resulting
+ * chain. In other words, ensures there is no leading space in
+ * any mbuf in the resulting chain and trailing space only in
+ * the last mbuf in the chain. Mbufs from either chain may be
+ * freed if not needed. No mbufs are allocated. Note that mbufs
+ * from m2 are added to the end of m1. If m1 has a packet
+ * header, it is retained and length updated. If m2 has a packet
+ * header it is discarded. If m1 is NULL, NULL is returned and
+ * m2 is left untouched.
+ *
+ * @param m1 Pointer to first mbuf chain to pack
+ * @param m2 Pointer to second mbuf chain to pack
+ *
+ * @return struct os_mbuf* Pointer to resulting mbuf chain
+ */
+struct os_mbuf *os_mbuf_pack_chains(struct os_mbuf *m1, struct os_mbuf *m2);
+
 #ifdef __cplusplus
 }
 #endif

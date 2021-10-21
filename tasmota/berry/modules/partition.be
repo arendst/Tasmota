@@ -44,7 +44,7 @@ def crc32_create_table()
   return a
 end
 
-crc32_table = crc32_create_table()
+var crc32_table = crc32_create_table()
 
 def crc32_update(buf, crc)
   crc ^= 0xffffffff
@@ -137,7 +137,6 @@ class Partition_info
       # print("Segment count", seg_count)
       
       var seg_offset = addr + 0x20 # sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) = 24 + 8
-      var seg_size = 0
 
       for seg_num:0..seg_count-1
         # print(string.format("Reading 0x%08X", seg_offset))
@@ -160,6 +159,7 @@ class Partition_info
   end
 
   def tostring()
+    import string
     var type_s = ""
     var subtype_s = ""
     if   self.type == 0  type_s = "app"
@@ -374,7 +374,6 @@ class Partition
 
   #- parse the raw bytes to a structured list of partition items -#
   def parse()
-    var i
     for i:0..94       # there are maximum 95 slots + md5 (0xC00)
       var item_raw = self.raw[i*32..(i+1)*32-1]
       var magic = item_raw.get(0,2)
@@ -753,7 +752,7 @@ class Partition_manager : Driver
 end
 
 #- create and register driver in Tasmota -#
-partition_manager = Partition_manager()
+var partition_manager = Partition_manager()
 tasmota.add_driver(partition_manager)
 ## can be removed if put in 'autoexec.bat'
 partition_manager.web_add_handler()

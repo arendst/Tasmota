@@ -18,6 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if defined(ESP32) || defined(ESP8266)
+
 #include "AudioFileSourceHTTPStream.h"
 
 AudioFileSourceHTTPStream::AudioFileSourceHTTPStream()
@@ -40,7 +42,7 @@ bool AudioFileSourceHTTPStream::open(const char *url)
   http.begin(client, url);
   http.setReuse(true);
 #ifndef ESP32
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 #endif
   int code = http.GET();
   if (code != HTTP_CODE_OK) {
@@ -84,7 +86,7 @@ retry:
     cb.st(STATUS_DISCONNECTED, PSTR("Stream disconnected"));
     http.end();
     for (int i = 0; i < reconnectTries; i++) {
-      char buff[32];
+      char buff[64];
       sprintf_P(buff, PSTR("Attempting to reconnect, try %d"), i);
       cb.st(STATUS_RECONNECTING, buff);
       delay(reconnectDelayMs);
@@ -152,3 +154,5 @@ uint32_t AudioFileSourceHTTPStream::getPos()
 {
   return pos;
 }
+
+#endif

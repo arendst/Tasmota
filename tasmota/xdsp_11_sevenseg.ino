@@ -76,7 +76,7 @@ void SevensegLog(void)
   int16_t valueDecimal = 0;
   double valueFloat = 0;
   uint8 fDigits = 0;
-  String jsonStr = TasmotaGlobal.mqtt_data;  // Move from stack to heap to fix watchdogs (20180626)
+  String jsonStr = ResponseData();  // Move from stack to heap to fix watchdogs (20180626)
   JsonParser parser((char*)jsonStr.c_str());
   JsonParserObject object_root = parser.getRootObject();
   if (object_root) {
@@ -106,7 +106,7 @@ void SevensegLog(void)
 void SevensegDim(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
-    sevenseg[i]->setBrightness(Settings->display_dimmer);
+    sevenseg[i]->setBrightness(GetDisplayDimmer16());
   }
 }
 
@@ -130,7 +130,7 @@ void SevensegClear(void)
 void SevensegInitMode(void)
 {
   for (uint32_t i = 0; i < sevensegs; i++) {
-    sevenseg[i]->setBrightness(Settings->display_dimmer);
+    sevenseg[i]->setBrightness(GetDisplayDimmer16());
     sevenseg[i]->blinkRate(0);
   }
   SevensegClear();

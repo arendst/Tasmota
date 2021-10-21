@@ -32,6 +32,7 @@ struct bt_mesh_net;
 #define OP_LIGHT_LIGHTNESS_GET		BT_MESH_MODEL_OP_2(0x82, 0x4b)
 #define OP_LIGHT_LIGHTNESS_SET		BT_MESH_MODEL_OP_2(0x82, 0x4c)
 #define OP_LIGHT_LIGHTNESS_SET_UNACK	BT_MESH_MODEL_OP_2(0x82, 0x4d)
+#define OP_LIGHT_LIGHTNESS_STATUS	BT_MESH_MODEL_OP_2(0x82, 0x4e)
 
 bool bt_mesh_is_provisioned(void);
 

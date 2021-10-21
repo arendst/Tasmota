@@ -39,6 +39,9 @@ class ServerCallbacks: public NimBLEServerCallbacks {
         Serial.println("Client disconnected - start advertising");
         NimBLEDevice::startAdvertising();
     };
+    void onMTUChange(uint16_t MTU, ble_gap_conn_desc* desc) {
+        Serial.printf("MTU updated: %u for connection ID: %u\n", MTU, desc->conn_handle);
+    };
     
 /********************* Security handled here **********************
 ****** Note: these are the same return values as defaults ********/

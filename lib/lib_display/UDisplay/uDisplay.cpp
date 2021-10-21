@@ -70,6 +70,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   bg_col = 0;
   splash_font = -1;
   rotmap_xmin = -1;
+  bpanel = -1;
   allcmd_mode = 0;
   startline = 0xA1;
   uint8_t section = 0;
@@ -380,6 +381,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
 
 
 Renderer *uDisplay::Init(void) {
+  extern bool UsePSRAM(void);
 
   // for any bpp below native 16 bits, we allocate a local framebuffer to copy into
   if (ep_mode || bpp < 16) {
@@ -387,7 +389,7 @@ Renderer *uDisplay::Init(void) {
 #ifdef ESP8266
     framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
 #else
-    if (psramFound()) {
+    if (UsePSRAM()) {
       framebuffer = (uint8_t*)heap_caps_malloc((gxs * gys * bpp) / 8, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     } else {
       framebuffer = (uint8_t*)calloc((gxs * gys * bpp) / 8, 1);
@@ -422,9 +424,9 @@ Renderer *uDisplay::Init(void) {
 
     if (bpanel >= 0) {
 #ifdef ESP32
-        ledcSetup(ESP32_PWM_CHANNEL, 4000, 8);
+        ledcSetup(ESP32_PWM_CHANNEL, 977, 8);   // use 10 bits resolution like in Light
         ledcAttachPin(bpanel, ESP32_PWM_CHANNEL);
-        ledcWrite(ESP32_PWM_CHANNEL, 128);
+        ledcWrite(ESP32_PWM_CHANNEL, 8);        // 38/255 correspond roughly to 50% visual brighness (with Gamma)
 #else
         pinMode(bpanel, OUTPUT);
         digitalWrite(bpanel, HIGH);
@@ -901,8 +903,13 @@ void uDisplay::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   SPI_END_TRANSACTION
 }
 
+//#define CD_XS gxs
+//#define CD_YS gys
+#define CD_XS width()
+#define CD_YS height()
+
 void uDisplay::fillScreen(uint16_t color) {
-  fillRect(0, 0,  gxs, gys, color);
+  fillRect(0, 0,  CD_XS, CD_YS, color);
 }
 
 // fill a rectangle
@@ -919,9 +926,9 @@ void uDisplay::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     return;
   }
 
-  if((x >= gxs) || (y >= gys)) return;
-  if((x + w - 1) >= gxs)  w = gxs  - x;
-  if((y + h - 1) >= gys) h = gys - y;
+  if((x >= CD_XS) || (y >= CD_YS)) return;
+  if((x + w - 1) >= CD_XS)  w = CD_XS  - x;
+  if((y + h - 1) >= CD_YS) h = CD_YS - y;
 
 
   SPI_BEGIN_TRANSACTION
@@ -1342,7 +1349,7 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_on != 0xff) spi_command_one(dsp_on);
       if (bpanel >= 0) {
 #ifdef ESP32
-        ledcWrite(ESP32_PWM_CHANNEL, dimmer);
+        ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
 #else
         digitalWrite(bpanel, HIGH);
 #endif
@@ -1385,52 +1392,61 @@ void uDisplay::invertDisplay(boolean i) {
 
 void udisp_dimm(uint8_t dim);
 
-void uDisplay::dim(uint8_t dim) {
-  dimmer = dim;
+// input value is 0..15
+// void uDisplay::dim(uint8_t dim) {
+//   dim8(((uint32_t)dim * 255) / 15);
+// }
 
+// dim is 0..255
+void uDisplay::dim8(uint8_t dim, uint8_t dim_gamma) {           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
+  dimmer8 = dim;
+  dimmer8_gamma = dim_gamma;
   if (ep_mode) {
     return;
   }
 
-  if (interface == _UDSP_SPI) {
-    if (dimmer > 15) dimmer = 15;
-    dimmer = ((float)dimmer / 15.0) * 255.0;
-#ifdef ESP32
-    if (bpanel >= 0) {
-      ledcWrite(ESP32_PWM_CHANNEL, dimmer);
-    } else {
-      //udisp_dimm(dim);
-      if (dim_cbp) {
-        dim_cbp(dim);
-      }
-    }
+#ifdef ESP32              // TODO should we also add a ESP8266 version for bpanel?
+  if (bpanel >= 0) {      // is the BaclPanel GPIO configured
+    ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+  } else if (dim_cbp) {
+    dim_cbp(dim);
+  }
 #endif
-
-    if (dim_op != 0xff) {
+  if (interface == _UDSP_SPI) {
+    if (dim_op != 0xff) {   // send SPI command if dim configured
       SPI_BEGIN_TRANSACTION
       SPI_CS_LOW
       spi_command(dim_op);
-      spi_data8(dim);
+      spi_data8(dimmer8);
       SPI_CS_HIGH
       SPI_END_TRANSACTION
     }
   }
 }
 
-
 // the cases are PSEUDO_OPCODES from MODULE_DESCRIPTOR
 // and may be exapnded with more opcodes
 void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
   int16_t temp;
 
+  if (rot_t[cur_rot] & 0x80) {
+    temp = *y;
+    *y = *x;
+    *x = temp;
+  }
+
   if (rotmap_xmin >= 0) {
     *y = map(*y, rotmap_ymin, rotmap_ymax, 0, gys);
     *x = map(*x, rotmap_xmin, rotmap_xmax, 0, gxs);
+    *x = constrain(*x, 0, gxs);
+    *y = constrain(*y, 0, gys);
   }
-  *x = constrain(*x, 0, gxs);
-  *y = constrain(*y, 0, gys);
+//  *x = constrain(*x, 0, gxs);
+//  *y = constrain(*y, 0, gys);
 
-  switch (rot_t[cur_rot]) {
+  //Serial.printf("rot 1 %d - %d\n",*x,*y );
+
+  switch (rot_t[cur_rot] & 0xf) {
     case 0:
       break;
     case 1:
@@ -1447,7 +1463,15 @@ void uDisplay::TS_RotConvert(int16_t *x, int16_t *y) {
       *y = *x;
       *x = width() - temp;
       break;
+    case 4:
+      *x = width() - *x;
+      break;
+    case 5:
+      *y = height() - *y;
+      break;
   }
+
+  //Serial.printf("rot 2 %d - %d\n",*x,*y );
 }
 
 uint8_t uDisplay::strlen_ln(char *str) {

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1
+ * Updated until v9.5.0.9
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -198,6 +198,8 @@
 #define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Luz quente"
 #define D_WEB_SERVER "Servidor WEB"
+#define D_SOC "Estado de Carga"
+#define D_SOH "Estado de Saúde"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "AVISO: esta versão não supporta configurações persistentes"
@@ -326,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Senha de WEB Admin"
 #define D_MQTT_ENABLE "MQTT habilitado"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "HTTP API habilitado"
 #define D_FRIENDLY_NAME "Nome amigável"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
@@ -706,6 +710,9 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -831,6 +838,10 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "Efeito Hall"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -933,13 +944,14 @@
 #define D_SCRIPT_UPLOAD_FILES  "Enviar arquivos"
 
 //xdrv_50_filesystem.ino
-#define D_MANAGE_FILE_SYSTEM   "Manage File system"
+#define D_MANAGE_FILE_SYSTEM   "Gerenciar sistema de arquivos"
 #define D_FS_SIZE              "Tamanho"
 #define D_FS_FREE              "Livre"
-#define D_NEW_FILE             "newfile.txt"
-#define D_CREATE_NEW_FILE      "Criar e editar um novo arquivo"
+#define D_NEW_FILE             "Newfile.txt"
+#define D_CREATE_NEW_FILE      "Criar um novo arquivo"
 #define D_EDIT_FILE            "Editar arquivo"
 #define D_CONFIRM_FILE_DEL     "Confirmar remoção do arquivo"
+#define D_SHOW_HIDDEN_FILES    "Mostrar arquivos ocultos"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "ganho:"
@@ -1015,13 +1027,13 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (yellow)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blue)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (green)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (light blue)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (red)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
-#define D_NEOPOOL_MACH_STATION            "Station (orange)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (amarelo)"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (azul)"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (verde)"
+#define D_NEOPOOL_MACH_BIONET             "Bionet (azul claro)"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (vermelho)"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilás)"
+#define D_NEOPOOL_MACH_STATION            "Station (laranja)"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
 #define D_NEOPOOL_MACH_GENERIC            "Genérico"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
@@ -1045,18 +1057,19 @@
 #define D_NEOPOOL_RELAY                   "Relé"
 #define D_NEOPOOL_RELAY_FILTRATION        "Filtragem"
 #define D_NEOPOOL_RELAY_LIGHT             "Luz"
-#define D_NEOPOOL_RELAY_PH_ACID           "bomba de ácidos"
-#define D_NEOPOOL_RELAY_PH_BASE           "bomba de bases"
+#define D_NEOPOOL_RELAY_PH_ACID           "Bomba de ácidos"
+#define D_NEOPOOL_RELAY_PH_BASE           "Bomba de bases"
 #define D_NEOPOOL_RELAY_RX                "Nível de Redox"
 #define D_NEOPOOL_RELAY_CL                "Bomba de cloro"
 #define D_NEOPOOL_RELAY_CD                "Bomba de salmora"
-#define D_NEOPOOL_TIME                    "Time"
+#define D_NEOPOOL_TIME                    "Tempo"
 #define D_NEOPOOL_FILT_MODE               "Filtragem"
+#define D_NEOPOOL_CELL_RUNTIME            "Tempo de atividade"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
-#define D_NEOPOOL_COVER                   "Cover"
-#define D_NEOPOOL_SHOCK                   "Boost"
+#define D_NEOPOOL_COVER                   "Cobrir"
+#define D_NEOPOOL_SHOCK                   "Impulsionar"
 #define D_NEOPOOL_STATUS_ON               "LIGADO"
 #define D_NEOPOOL_STATUS_OFF              "DESLIGADO"
 #define D_NEOPOOL_STATUS_WAIT             "AGUARDE"

@@ -217,7 +217,7 @@ static __inline int CLZ(int x)
 	return numZeros;
 }
 
-#elif defined ARM_ADS
+#elif defined XXXARM_ADS
 
 static __inline int MULSHIFT32(int x, int y)
 {
@@ -267,7 +267,7 @@ static __inline int CLZ(int x)
 	return numZeros;
 }
 
-#elif defined(__GNUC__) && defined(__thumb__)
+#elif defined(__GNUC__) && defined(XXXX__thumb__)
 
 
 static __inline int MULSHIFT32(int x, int y)

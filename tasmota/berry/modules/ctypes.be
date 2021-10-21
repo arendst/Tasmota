@@ -40,6 +40,14 @@ ctypes.be_u32 =  -4
 ctypes.be_u16 =  -2
 ctypes.be_u8  =  -1
 
+# floating point
+ctypes.float  = 5
+ctypes.double = 10
+
+# pointer
+ctypes.ptr32  =  9
+ctypes.ptr64  = -9
+
 ctypes.bf_x   = 0 # generic bitfield
 # bitfields (always unsigned)
 ctypes.bf_0   = 100 # serves as base
@@ -58,7 +66,46 @@ ctypes.bf_12  = 112
 ctypes.bf_13  = 113
 ctypes.bf_14  = 114
 ctypes.bf_15  = 115
+ctypes.bf_16  = 116
 
+ctypes.type_mapping = {
+  14: "ctypes_i32",
+  12: "ctypes_i16",
+  11: "ctypes_i8",
+   4: "ctypes_u32",
+   2: "ctypes_u16",
+   1: "ctypes_u8",
+
+  -14:"ctypes_be_i32",  # big endian
+  -12:"ctypes_be_i16",
+  -11:"ctypes_be_i8",
+  -4: "ctypes_be_u32",
+  -2: "ctypes_be_u16",
+  -1: "ctypes_be_u8",
+
+   5: "ctypes_float",
+  10: "ctypes_double",
+   9: "ctypes_ptr32",
+  -9: "ctypes_ptr64",
+
+   0: "ctypes_bf"       # bitfield
+}
+
+ctypes.type_to_str = def (type_num)
+  var type_name = ctypes.type_mapping.find(type_num)
+  if type_name == nil
+    return str(type_num)
+  end
+  return type_name
+end
+
+def findinlist(l, x)
+  for i:0..size(l)-1
+    if l[i] == x
+      return i
+    end
+  end
+end
 
 #-------------------------------------------------------------
 #- 'get_bits' function
@@ -151,62 +198,53 @@ end
 
 #- print the C types -#1
 ctypes.print_types = def ()
-  print("enum {")
-  print("  ctypes_ptr = 0,")
-  print("  ctypes_uint = 1,")
-  print("  ctypes_int = 2,")
-  print("  ctypes_str = 3,")
-  print("};")
+  print("/********************************************************************")
+  print(" * Generated code, don't edit")
+  print(" *******************************************************************/")
   print()
-  print("typedef struct be_ctypes_structure_item_t {")
-  print("  const char * name;")
-  print("  uint16_t  offset_bits;")
-  print("  uint16_t  len_bits : 13;")
-  print("  uint16_t  type : 3;")
-  print("} be_ctypes_structure_item_t;")
-  print()
-  print("typedef struct be_ctypes_structure_t {")
-  print("  uint16_t  size_bytes;       /* size in bytes */")
-  print("  uint16_t  size_elt;         /* number of elements */")
-  print("  const be_ctypes_structure_item_t * items;")
-  print("} be_ctypes_structure_t;")
+  print("static const char * be_ctypes_instance_mappings[];    /* forward definition */")
   print()
 end
 
-global_classes = []   # track the list of all classes and 
-ctypes.print_classes = def ()
+global_classes = []   # track the list of all classes and
+global_mappings = []  # mapping to Berry classes, ex: lv_color
+
+ctypes.print_classes = def (module_name)
+  # print mappings
+  if size(global_mappings) > 7
+    raise "internal_error", "too many mappings, 7 max"
+  end
+  print("static const char * be_ctypes_instance_mappings[] = {")
+  for n:global_mappings.iter()
+    print(string.format("  \"%s\",", n))
+  end
+  print("  NULL")
+  print("};")
+  print()
+
   ctypes.sort(global_classes)
 
-  print("const be_ctypes_classes_t be_ctypes_classes[] = {")
-  print(string.format("  %i,", size(global_classes)))
-  print(string.format("  (const be_ctypes_class_t[%i]) {", size(global_classes)))
-
   for elt:global_classes
-    print(string.format("    { \"%s\", &be_%s },", elt, elt))
+    print(string.format("static be_define_ctypes_class(%s, &be_%s, &be_class_ctypes, \"%s\");", elt, elt, elt))
   end
 
-  print("}};")
   print()
-  print("/* @const_object_info_begin")
-  print("class be_class_ctypes_classes (scope: global) {")
+  print(string.format("void be_load_ctypes_%s_definitions_lib(bvm *vm) {", module_name))
   for elt:global_classes
-    print(string.format("    %s, int(0)", elt))
-  end
-  print("}")
-  print("@const_object_info_end */")
-  print()
-
-  print("void be_load_ctypes_definitions_lib(bvm *vm) {")
-  print("  be_pushcomptr(vm, (void*) be_ctypes_classes);")
-  print("  be_setglobal(vm, \".ctypes_classes\");")
-  print("  be_pop(vm, 1);")
-  print()
-  for elt:global_classes
-    print(string.format("  static be_define_const_empty_class(be_class_%s, &be_class_lv_ctypes, %s);", elt, elt))
     print(string.format("  ctypes_register_class(vm, &be_class_%s, &be_%s);", elt, elt))
   end
   print("}")
+  print()
+  print("be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {")
+  for elt:global_classes
+    print(string.format("  { \"%s\", &be_class_%s },", elt, elt))
+  end
+  print("};")
+  print("const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);")
+  print()
 
+  print("/********************************************************************/")
+  print()
 end
 
 #-------------------------------------------------------------
@@ -254,6 +292,7 @@ class structure
       print(string.format("const be_ctypes_structure_t be_%s = {", name))
       print(string.format("  %i,  /* size in bytes */", self.size_bytes))
       print(string.format("  %i,  /* number of elements */", size(self.mapping)))
+      print(string.format("  be_ctypes_instance_mappings,"))
       print(string.format("  (const be_ctypes_structure_item_t[%i]) {", size(self.mapping)))
       # list keys for future binary search
       var names = []
@@ -261,7 +300,7 @@ class structure
       ctypes.sort(names)
       for n:names
         var args = self.mapping[n]
-        print(string.format("    { \"%s\", %i, %i, %i, %i },", n, args[0], args[1], args[2], args[3]))
+        print(string.format("    { \"%s\", %i, %i, %i, %s, %i },", n, args[0], args[1], args[2], ctypes.type_to_str(args[3]), args[4]))
       end
       print("}};")
       print()
@@ -280,19 +319,40 @@ class structure
     var type_obj = map_line[0]
     var name = map_line[1]
     var bits = 0
-    if size(map_line) >= 3 bits = map_line[2] end
+    if size(map_line) >= 3   bits = map_line[2] end
 
     if isinstance(type_obj, ctypes.structure)
       # nested structure
       self.nested(name, type_obj)
-    elif type(type_obj) == 'int'
+    end
+
+    var mapping_idx = 0   # mapping starts at 1
+    if isinstance(type_obj, list)
+      # it may be a list to denote a mapping to an instance
+      var mapping_name = type_obj[1]
+      if findinlist(global_mappings, mapping_name) == nil
+        global_mappings.push(mapping_name)
+      end
+      mapping_idx = findinlist(global_mappings, mapping_name) + 1
+
+      type_obj = type_obj[0]  # take the simple value of first element in the list
+    end
+
+    if type(type_obj) == 'int'
+      # simple attibute
       # TODO check actual type
       if type_obj > ctypes.bf_0
         # bit field
-        self.get_bitfield_closure(name, type_obj - ctypes.bf_0)
+        self.get_bitfield_closure(name, type_obj - ctypes.bf_0, mapping_idx)
+      elif (type_obj == ctypes.ptr32) || (type_obj == ctypes.ptr64)
+        # pointer
+        self.get_ptr_closure(name, type_obj, mapping_idx)
+      elif (type_obj == ctypes.float) || (type_obj == ctypes.double)
+        # multi-bytes
+        self.get_float_closure(name, type_obj, mapping_idx)
       else
         # multi-bytes
-        self.get_int_closure(name, type_obj)
+        self.get_int_closure(name, type_obj, mapping_idx)
       end
     end
   end
@@ -306,12 +366,12 @@ class structure
       #- we are not byte aligned, let's re-aling -#
       self.cur_offset += 1
       self.bit_offset = 0
+    end
 
-      #- check 2/4 bytes alignment -#
-      if self.cur_offset % n != 0
-        # we are not aligned with current size
-        self.cur_offset += n - self.cur_offset % n
-      end
+    #- check 2/4 bytes alignment -#
+    if self.cur_offset % n != 0
+      # we are not aligned with current size
+      self.cur_offset += n - self.cur_offset % n
     end
   end
 
@@ -329,7 +389,7 @@ class structure
     # include nested
     for subname:type_obj.mapping.keys()
       var val = type_obj.mapping[subname]
-      self.mapping[name+"_"+subname] = [val[0] + offset, val[1], val[2], val[3]]
+      self.mapping[name+"_"+subname] = [val[0] + offset, val[1], val[2], val[3], val[4]]
     end
     # self.mapping[name] = [offset << 3, sub_size << 3]
 
@@ -339,7 +399,7 @@ class structure
     self.cur_offset += sub_size
   end
 
-  def get_int_closure(name, type)  # can be 1/2/4
+  def get_int_closure(name, type, instance_mapping)  # can be 1/2/4
     #- abs size -#
     var size_in_bytes = type < 0 ? - type : type
     var signed = size_in_bytes > 10
@@ -349,7 +409,7 @@ class structure
     self.align(size_in_bytes)       # force alignment
     var offset = self.cur_offset    # prepare variable for capture in closure
     
-    self.mapping[name] = [offset, 0, 0, type]
+    self.mapping[name] = [offset, 0, 0, type, instance_mapping]
 
     #- add closures -#
     if signed
@@ -362,15 +422,56 @@ class structure
     self.cur_offset += size_in_bytes    # next offset
   end
 
+  def get_ptr_closure(name, type, instance_mapping)  # can be 1/2/4
+    #- actual size -#
+    import introspect
+    var size_in_bytes = (type == ctypes.ptr32) ? 4 : 8
 
-  def get_bitfield_closure(name, size_in_bits)  # can be 1..32
+    self.align(size_in_bytes)       # force alignment
+    var offset = self.cur_offset    # prepare variable for capture in closure
+    
+    self.mapping[name] = [offset, 0, 0, type, instance_mapping]
+
+    #- add closures -#
+    # TODO no closure yet, anyways need to rethink closures, they are too heavy
+    # if signed
+    #   self.get_closures[name] = def (b, p) return b.geti(offset + p, size_in_bytes_le_be) end
+    # else
+    #   self.get_closures[name] = def (b, p) return b.get(offset + p, size_in_bytes_le_be) end
+    # end
+    # self.set_closures[name] = def (b, p, v) return b.set(offset+ p, v, size_in_bytes_le_be) end
+    
+    self.cur_offset += size_in_bytes    # next offset
+  end
+
+  def get_float_closure(name, type, instance_mapping)  # can be 1/2/4
+    #- actual size -#
+    var size_in_bytes = (type == ctypes.float) ? 4 : 8
+
+    self.align(size_in_bytes)       # force alignment
+    var offset = self.cur_offset    # prepare variable for capture in closure
+    
+    self.mapping[name] = [offset, 0, 0, type, instance_mapping]
+
+    #- add closures -#
+    # TODO no closure yet, anyways need to rethink closures, they are too heavy
+    # if signed
+    #   self.get_closures[name] = def (b, p) return b.geti(offset + p, size_in_bytes_le_be) end
+    # else
+    #   self.get_closures[name] = def (b, p) return b.get(offset + p, size_in_bytes_le_be) end
+    # end
+    # self.set_closures[name] = def (b, p, v) return b.set(offset+ p, v, size_in_bytes_le_be) end
+    
+    self.cur_offset += size_in_bytes    # next offset
+  end
+
+  def get_bitfield_closure(name, size_in_bits, instance_mapping)  # can be 1..32
     var cur_offset = self.cur_offset    # prepare variable for capture in closure
     var bit_offset = self.bit_offset
-    self.mapping[name] = [cur_offset, bit_offset, size_in_bits, 0]
+    self.mapping[name] = [cur_offset, bit_offset, size_in_bits, 0, instance_mapping]
     self.get_closures[name] = def (b, p) return ctypes.get_bits(b, cur_offset + p, bit_offset, size_in_bits) end
     self.set_closures[name] = def (b, p, v) return ctypes.set_bits(b, cur_offset+ p, bit_offset, size_in_bits, v) end
 
-    self.cur_offset += size_in_bits / 8
     self.cur_offset += (self.bit_offset + size_in_bits) / 8
     self.bit_offset = (self.bit_offset + size_in_bits) % 8
   end
@@ -520,93 +621,3 @@ return ctypes
 16777472
 
 -#
-
-# def get_bits(b, offset_bytes, offset_bits, len_bits)
-#   if !isinstance(b, bytes) raise "value_error", "first argument must be of type 'bytes'" end
-#   if offset_bits < 0 || offset_bits > 7 raise "value_error", "offset_bits must be between 0 and 7" end
-#   if len_bits <= 0 || len_bits > 32 raise "value_error", "length in bits must be between 0 and 32" end
-#   var ret = 0
-
-#   var bit_shift = 0                   # bit number to wrtie to
-
-#   while (len_bits > 0)
-#     var block_bits = 8 - offset_bits    # bit number to read in current block (block = byte)
-#     if block_bits > len_bits  block_bits = len_bits end
-
-#     var mask = ( (1<<block_bits) - 1) << offset_bits
-#     # print(string.format("mask = %02X", mask))
-#     ret = ret | ( ((b[offset_bytes] & mask) >> offset_bits) << bit_shift)
-
-#     # move the input window
-#     bit_shift += block_bits
-#     len_bits -= block_bits
-#     offset_bits = 0                   # start at full next byte
-#     offset_bytes += 1
-#   end
-
-#   return ret
-# end
-
-# Test
-
-# b=bytes("AAFF10")
-# assert(get_bits(b, 0, 0, 1) == 0)
-# assert(get_bits(b, 0, 1, 1) == 1)
-# assert(get_bits(b, 0, 2, 1) == 0)
-# assert(get_bits(b, 0, 3, 1) == 1)
-
-# assert(get_bits(b, 0, 0, 2) == 2)
-# assert(get_bits(b, 0, 1, 2) == 1)
-# assert(get_bits(b, 0, 2, 2) == 2)
-
-# assert(get_bits(b, 0, 0, 8) == 0xAA)
-# assert(get_bits(b, 0, 0, 10) == 0x3AA)
-# assert(get_bits(b, 0, 2, 8) == 0xEA)
-
-# assert(get_bits(b, 1, 0, 8) == 0xFF)
-# assert(get_bits(b, 1, 0, 10) == 0x0FF)
-
-# assert(get_bits(b, 1, 0, 16) == 0x10FF)
-
-
-# assert(get_bits(b, 1, 7, 4) == 0x01)
-# assert(get_bits(b, 1, 7, 6) == 0x21)
-
-# def set_bits(b, offset_bytes, offset_bits, len_bits, val)
-#   if !isinstance(b, bytes) raise "value_error", "first argument must be of type 'bytes'" end
-#   if offset_bits < 0 || offset_bits > 7 raise "value_error", "offset_bits must be between 0 and 7" end
-#   if len_bits <= 0 || len_bits > 32 raise "value_error", "length in bits must be between 0 and 32" end
-
-#   while (len_bits > 0)
-#     var block_bits = 8 - offset_bits    # how many bits to write in the current block (block = byte)
-#     if block_bits > len_bits  block_bits = len_bits end
-
-#     var mask_val = (1<<block_bits) - 1  # mask to the n bits to get for this block
-#     var mask_b_inv = 0xFF - (mask_val << offset_bits)
-#     b[offset_bytes] = (b[offset_bytes] & mask_b_inv) | ((val & mask_val) << offset_bits)
-
-#     # move the input window
-#     val >>= block_bits
-#     len_bits -= block_bits
-#     offset_bits = 0                   # start at full next byte
-#     offset_bytes += 1
-#   end
-#   return b
-# end
-
-# b=bytes("00000000")
-
-# assert(set_bits(b,0,0,1,1) == bytes('01000000'))
-# assert(set_bits(b,1,0,1,1) == bytes('01010000'))
-# assert(set_bits(b,0,0,1,2) == bytes('00010000'))
-# assert(set_bits(b,0,4,1,1) == bytes('10010000'))
-# assert(set_bits(b,0,4,1,0) == bytes('00010000'))
-
-# b=bytes("FF000000")
-# assert(set_bits(b,0,4,1,0) == bytes('EF000000'))
-# assert(set_bits(b,0,4,1,1) == bytes('FF000000'))
-
-# b=bytes("00000000")
-# assert(set_bits(b,2,6,1,-1) == bytes('00004000'))
-# b=bytes("00000000")
-# assert(set_bits(b,2,1,6,-1) == bytes('00007E00'))

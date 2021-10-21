@@ -45,7 +45,7 @@
  * Use precompiled objects to avoid creating these objects at
  * runtime. Enable this macro can greatly optimize RAM usage.
  * Default: 1
-//  **/
+ **/
 #define BE_USE_PRECOMPILED_OBJECT       1
 
 /* Macro: BE_DEBUG_RUNTIME_INFO
@@ -71,6 +71,21 @@
  **/
 #define BE_USE_OBSERVABILITY_HOOK       1
 
+/* Macro: BE_USE_OBSERVABILITY_HOOK
+ * Use the obshook function to report low-level actions.
+ * Default: 0
+ **/
+#define BE_USE_PERF_COUNTERS            1
+
+/* Macro: BE_VM_OBSERVABILITY_SAMPLING
+ * If BE_USE_OBSERVABILITY_HOOK == 1 and BE_USE_PERF_COUNTERS == 1
+ * then the observability hook is called regularly in the VM loop
+ * allowing to stop infinite loops or too-long running code.
+ * The value is a power of 2.
+ * Default: 20 - which translates to 2^20 or ~1 million instructions
+ **/
+#define BE_VM_OBSERVABILITY_SAMPLING    20
+
 /* Macro: BE_STACK_TOTAL_MAX
  * Set the maximum total stack size.
  * Default: 20000
@@ -83,7 +98,17 @@
  * expanded if the number of free is less than BE_STACK_FREE_MIN.
  * Default: 10
  **/
-#define BE_STACK_FREE_MIN               10
+#define BE_STACK_FREE_MIN               20
+
+/* Macro: BE_CONST_SEARCH_SIZE
+ * Constants in function are limited to 255. However the compiler
+ * will look for a maximum of pre-existing constants to avoid
+ * performance degradation. This may cause the number of constants
+ * to be higher than required.
+ * Increase is you need to solidify functions.
+ * Default: 50
+ **/
+#define BE_CONST_SEARCH_SIZE            150
 
 /* Macro: BE_STACK_FREE_MIN
  * The short string will hold the hash value when the value is
@@ -142,6 +167,14 @@
  **/
 #define BE_USE_DEBUG_HOOK               0
 
+/* Macro: BE_USE_DEBUG_GC
+ * Enable GC debug mode. This causes an actual gc after each
+ * allocation. It's much slower and should not be used
+ * in production code.
+ * Default: 0
+ **/
+#define BE_USE_DEBUG_GC                  0
+
 /* Macro: BE_USE_XXX_MODULE
  * These macros control whether the related module is compiled.
  * When they are true, they will enable related modules. At this
@@ -158,6 +191,8 @@
 #define BE_USE_DEBUG_MODULE             1
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          1
+#define BE_USE_INTROSPECT_MODULE        1
+#define BE_USE_STRICT_MODULE            1
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will
@@ -195,5 +230,11 @@ extern "C" {
  * Default: use the assert() function of the standard library.
  **/
 #define be_assert(expr)                 assert(expr)
+
+/* Tasmota debug specific */
+#ifdef USE_BERRY_DEBUG
+  #undef BE_DEBUG_RUNTIME_INFO
+  #define BE_DEBUG_RUNTIME_INFO 2 /* record line information in 16 bits */
+#endif // USE_BERRY_DEBUG
 
 #endif

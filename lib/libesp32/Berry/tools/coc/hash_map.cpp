@@ -128,7 +128,7 @@ hash_map::entry hash_map::entry_modify(entry entry, int *var_count)
 {
     entry.key = coc::escape_operator(entry.key);
     if (entry.value == "var") {
-        entry.value = "be_const_int("
+        entry.value = "be_const_var("
                 + std::to_string(*var_count) + ")";
         ++(*var_count);
     } else {

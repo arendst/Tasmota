@@ -179,7 +179,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
 
     switch (status)
     {
-    case OpenThermResponseStatus::SUCCESS:
+    case OpenThermResponseStatus::OPTH_SUCCESS:
         if (sns_ot_master->isValidResponse(response))
         {
             sns_opentherm_process_success_response(&sns_ot_boiler_status, response);
@@ -188,7 +188,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
         sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
         break;
 
-    case OpenThermResponseStatus::INVALID:
+    case OpenThermResponseStatus::OPTH_INVALID:
         sns_opentherm_check_retry_request();
         sns_ot_connection_status = OpenThermConnectionStatus::OTC_READY;
         sns_ot_timeout_before_disconnect = SNS_OT_MAX_TIMEOUTS_BEFORE_DISCONNECT;
@@ -198,7 +198,7 @@ void sns_opentherm_processResponseCallback(unsigned long response, int st)
     // In this case we do reconnect.
     // If this command will timeout multiple times, it will be excluded from the rotation later on
     // after couple of failed attempts. See sns_opentherm_check_retry_request logic
-    case OpenThermResponseStatus::TIMEOUT:
+    case OpenThermResponseStatus::OPTH_TIMEOUT:
         sns_opentherm_check_retry_request();
         if (--sns_ot_timeout_before_disconnect == 0)
         {
@@ -235,9 +235,7 @@ void sns_opentherm_stat(bool json)
 
     if (json)
     {
-        ResponseAppend_P(PSTR(",\"OPENTHERM\":{"));
-        ResponseAppend_P(PSTR("\"conn\":\"%s\","), statusStr);
-        ResponseAppend_P(PSTR("\"settings\":%d,"), Settings->ot_flags);
+        ResponseAppend_P(PSTR(",\"OPENTHERM\":{\"conn\":\"%s\",\"settings\":%d"), statusStr, Settings->ot_flags);
         sns_opentherm_dump_telemetry();
         ResponseJsonEnd();
 #ifdef USE_WEBSERVER
@@ -317,7 +315,7 @@ void sns_ot_start_handshake()
     sns_opentherm_protocol_reset();
 
     sns_ot_master->sendRequestAync(
-        OpenTherm::buildRequest(OpenThermMessageType::READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
+        OpenTherm::buildRequest(OpenThermMessageType::OPTH_READ_DATA, OpenThermMessageID::SConfigSMemberIDcode, 0));
 
     sns_ot_connection_status = OpenThermConnectionStatus::OTC_HANDSHAKE;
 }
@@ -326,7 +324,7 @@ void sns_ot_process_handshake(unsigned long response, int st)
 {
     OpenThermResponseStatus status = (OpenThermResponseStatus)st;
 
-    if (status != OpenThermResponseStatus::SUCCESS || !sns_ot_master->isValidResponse(response))
+    if (status != OpenThermResponseStatus::OPTH_SUCCESS || !sns_ot_master->isValidResponse(response))
     {
         AddLog(LOG_LEVEL_ERROR,
                   PSTR("[OTH]: getSlaveConfiguration failed. Status=%s"),

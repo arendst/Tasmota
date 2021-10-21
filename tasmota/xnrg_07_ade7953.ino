@@ -21,7 +21,10 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy (Shelly 2.5)
+ * ADE7953 - Energy used in Shelly 2.5 (model 0) and Shelly EM (model 1)
+ *
+ * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,0,1],"FLAG":0,"BASE":18}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
@@ -37,17 +40,30 @@
 
 #define ADE7953_ADDR            0x38
 
+// 24-bit data registers
 const uint16_t Ade7953Registers[] {
-  0x31B,  // RMS current channel B (Relay 1)
-  0x313,  // Active power channel B
-  0x311,  // Apparent power channel B
-  0x315,  // Reactive power channel B
-  0x31A,  // RMS current channel A (Relay 2)
-  0x312,  // Active power channel A
-  0x310,  // Apparent power channel A
-  0x314,  // Reactive power channel A
-  0x31C,  // RMS voltage (Both relays)
-  0x10E   // 16-bit unsigned period register
+  0x31B,  // IRMSB - RMS current channel B (Relay 1)
+  0x313,  // BWATT - Active power channel B
+  0x311,  // BVA - Apparent power channel B
+  0x315,  // BVAR - Reactive power channel B
+  0x31A,  // IRMSA - RMS current channel A (Relay 2)
+  0x312,  // AWATT - Active power channel A
+  0x310,  // AVA - Apparent power channel A
+  0x314,  // AVAR - Reactive power channel A
+  0x31C,  // VRMS - RMS voltage (Both relays)
+  0x10E,  // Period - 16-bit unsigned period register
+  0x301   // ACCMODE - Accumulation mode
+};
+
+// Active power
+const uint16_t APSIGN[] {
+  0x800, //Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x400  //Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+};
+// Reactive power
+const uint16_t VARSIGN[] {
+  0x200, //Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x100  //Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
 };
 
 struct Ade7953 {
@@ -56,6 +72,7 @@ struct Ade7953 {
   uint32_t current_rms[2] = { 0, 0 };
   uint32_t active_power[2] = { 0, 0 };
   uint8_t init_step = 0;
+  uint8_t model = 0;          // 0 = Shelly 2.5, 1 = Shelly EM
 } Ade7953;
 
 int Ade7953RegSize(uint16_t reg)
@@ -120,13 +137,24 @@ void Ade7953Init(void)
 
 void Ade7953GetData(void)
 {
+  uint32_t acc_mode;
   int32_t reg[2][4];
   for (uint32_t i = 0; i < sizeof(Ade7953Registers)/sizeof(uint16_t); i++) {
     int32_t value = Ade7953Read(Ade7953Registers[i]);
     if (8 == i) {
       Ade7953.voltage_rms = value;  // RMS voltage (Both relays)
     } else if (9 == i) {
-      Ade7953.period = value;  // period
+      Ade7953.period = value;       // Period
+    } else if (10 == i) {
+      acc_mode = value;             // Accumulation mode
+/*
+      if (0 == Ade7953.model) {     // Shelly 2.5 - Swap channel B values due to hardware connection
+//        if (acc_mode & APSIGN[0]) { acc_mode &= ~APSIGN[0]; } else { acc_mode |= APSIGN[0]; }
+//        if (acc_mode & VARSIGN[0]) { acc_mode &= ~VARSIGN[0]; } else { acc_mode |= VARSIGN[0]; }
+        acc_mode ^= (APSIGN[0] | VARSIGN[0]);
+//        acc_mode ^= 0xA00;
+      }
+*/
     } else {
       reg[i >> 2][i &3] = value;
     }
@@ -152,12 +180,11 @@ void Ade7953GetData(void)
   }
 
   uint32_t current_rms_sum = Ade7953.current_rms[0] + Ade7953.current_rms[1];
-  uint32_t active_power_sum = Ade7953.active_power[0] + Ade7953.active_power[1];
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d = %d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d"),
     Ade7953.voltage_rms, Ade7953.period,
     Ade7953.current_rms[0], Ade7953.current_rms[1], current_rms_sum,
-    Ade7953.active_power[0], Ade7953.active_power[1], active_power_sum);
+    Ade7953.active_power[0], Ade7953.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Ade7953.voltage_rms / Settings->energy_voltage_calibration;
@@ -167,23 +194,28 @@ void Ade7953GetData(void)
       Energy.data_valid[channel] = 0;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
       Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
+      if (1 == Ade7953.model) {  // Shelly EM
+        if ((acc_mode & APSIGN[channel]) != 0) {
+          Energy.active_power[channel] = Energy.active_power[channel] * -1;
+        }
+        if ((acc_mode & VARSIGN[channel]) != 0) {
+          Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
+        }
+      }
       Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
         Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings->energy_current_calibration * 10);
+        Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
       }
     }
+    EnergyUpdateToday();
 /*
   } else {  // Powered off
     Energy.data_valid[0] = ENERGY_WATCHDOG;
     Energy.data_valid[1] = ENERGY_WATCHDOG;
 */
-  }
-
-  if (active_power_sum) {
-    Energy.kWhtoday_delta += ((active_power_sum * (100000 / (Settings->energy_power_calibration / 10))) / 3600);
-    EnergyUpdateToday();
   }
 }
 
@@ -201,8 +233,10 @@ void Ade7953EnergyEverySecond(void)
 
 void Ade7953DrvInit(void)
 {
-  if (PinUsed(GPIO_ADE7953_IRQ)) {                // Irq on GPIO16 is not supported...
-    pinMode(Pin(GPIO_ADE7953_IRQ), INPUT);        // Related to resetPins() - Must be set to input
+  if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
+    uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
+    pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
+    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 .. 1 ;
     delay(100);                                   // Need 100mS to init ADE7953
     if (I2cSetDevice(ADE7953_ADDR)) {
       if (HLW_PREF_PULSE == Settings->energy_power_calibration) {

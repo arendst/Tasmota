@@ -274,7 +274,7 @@ unsigned long sns_opentherm_set_slave_flags(struct OpenThermCommandT *self, stru
 
     data <<= 8;
 
-    return OpenTherm::buildRequest(OpenThermRequestType::READ, OpenThermMessageID::Status, data);
+    return OpenTherm::buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::Status, data);
 }
 
 void sns_opentherm_parse_slave_flags(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
@@ -320,7 +320,7 @@ unsigned long sns_opentherm_set_boiler_temperature(struct OpenThermCommandT *sel
     self->m_results[0].m_float = status->m_boilerSetpoint;
 
     unsigned int data = OpenTherm::temperatureToData(status->m_boilerSetpoint);
-    return OpenTherm::buildRequest(OpenThermMessageType::WRITE_DATA, OpenThermMessageID::TSet, data);
+    return OpenTherm::buildRequest(OpenThermMessageType::OPTH_WRITE_DATA, OpenThermMessageID::TSet, data);
 }
 void sns_opentherm_parse_set_boiler_temperature(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
 {
@@ -360,7 +360,7 @@ unsigned long sns_opentherm_set_boiler_dhw_temperature(struct OpenThermCommandT 
     self->m_results[0].m_float = status->m_hotWaterSetpoint;
 
     unsigned int data = OpenTherm::temperatureToData(status->m_hotWaterSetpoint);
-    return OpenTherm::buildRequest(OpenThermMessageType::WRITE_DATA, OpenThermMessageID::TdhwSet, data);
+    return OpenTherm::buildRequest(OpenThermMessageType::OPTH_WRITE_DATA, OpenThermMessageID::TdhwSet, data);
 }
 void sns_opentherm_parse_boiler_dhw_temperature(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
 {
@@ -381,7 +381,7 @@ void sns_opentherm_tele_boiler_dhw_temperature(struct OpenThermCommandT *self)
 /////////////////////////////////// App Specific Fault Flags //////////////////////////////////////////////////
 unsigned long sns_opentherm_get_flags(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *)
 {
-    return OpenTherm::buildRequest(OpenThermRequestType::READ, OpenThermMessageID::ASFflags, 0);
+    return OpenTherm::buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::ASFflags, 0);
 }
 
 void sns_opentherm_parse_flags(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
@@ -416,7 +416,7 @@ void sns_opentherm_tele_u16(struct OpenThermCommandT *self)
 /////////////////////////////////// OEM Diag Code //////////////////////////////////////////////////
 unsigned long sns_opentherm_get_oem_diag(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *)
 {
-    return OpenTherm::buildRequest(OpenThermRequestType::READ, OpenThermMessageID::OEMDiagnosticCode, 0);
+    return OpenTherm::buildRequest(OpenThermRequestType::OPTH_READ, OpenThermMessageID::OEMDiagnosticCode, 0);
 }
 
 void sns_opentherm_parse_oem_diag(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
@@ -434,7 +434,7 @@ void sns_opentherm_tele_oem_diag(struct OpenThermCommandT *self)
 /////////////////////////////////// Generic Single Float /////////////////////////////////////////////////
 unsigned long sns_opentherm_get_generic_float(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *)
 {
-    return OpenTherm::buildRequest(OpenThermRequestType::READ, (OpenThermMessageID)self->m_command_code, 0);
+    return OpenTherm::buildRequest(OpenThermRequestType::OPTH_READ, (OpenThermMessageID)self->m_command_code, 0);
 }
 
 void sns_opentherm_parse_generic_float(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
@@ -452,7 +452,7 @@ void sns_opentherm_tele_generic_float(struct OpenThermCommandT *self)
 /////////////////////////////////// Generic U16 /////////////////////////////////////////////////
 unsigned long sns_opentherm_get_generic_u16(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *)
 {
-    return OpenTherm::buildRequest(OpenThermRequestType::READ, (OpenThermMessageID)self->m_command_code, 0);
+    return OpenTherm::buildRequest(OpenThermRequestType::OPTH_READ, (OpenThermMessageID)self->m_command_code, 0);
 }
 
 void sns_opentherm_parse_generic_u16(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *boilerStatus, unsigned long response)
@@ -549,7 +549,6 @@ void sns_opentherm_process_success_response(struct OT_BOILER_STATUS_T *boilerSta
 
 void sns_opentherm_dump_telemetry()
 {
-    bool add_coma = false;
     for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
     {
         struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
@@ -558,11 +557,8 @@ void sns_opentherm_dump_telemetry()
             continue;
         }
 
-        ResponseAppend_P(PSTR("%s\"%s\":"), add_coma ? "," : "", cmd->m_command_name);
-
+        ResponseAppend_P(PSTR(",\"%s\":"), cmd->m_command_name);
         cmd->m_ot_appent_telemetry(cmd);
-
-        add_coma = true;
     }
 }
 

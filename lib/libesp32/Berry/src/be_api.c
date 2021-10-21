@@ -36,7 +36,7 @@ static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
             if (lib->function) { /* method */
                 be_prim_method_bind(vm, c, s, lib->function);
             } else {
-                be_member_bind(vm, c, s); /* member */
+                be_member_bind(vm, c, s, btrue); /* member */
             }
             ++lib;
         }
@@ -206,6 +206,12 @@ BERRY_API bbool be_isinstance(bvm *vm, int index)
 {
     bvalue *v = be_indexof(vm, index);
     return var_isinstance(v);
+}
+
+BERRY_API bbool be_ismodule(bvm *vm, int index)
+{
+    bvalue *v = be_indexof(vm, index);
+    return var_ismodule(v);
 }
 
 BERRY_API bbool be_islist(bvm *vm, int index)
@@ -602,23 +608,18 @@ BERRY_API bbool be_getbuiltin(bvm *vm, const char *name)
 
 BERRY_API bbool be_setmember(bvm *vm, int index, const char *k)
 {
-    int res = BE_NIL;
     bvalue *o = be_indexof(vm, index);
+    bvalue *v = be_indexof(vm, -1);
     if (var_isinstance(o)) {
         bstring *key = be_newstr(vm, k);
-        bvalue *v = be_indexof(vm, -1);
         binstance *obj = var_toobj(o);
-        res = be_instance_setmember(vm, obj, key, v);
+        return be_instance_setmember(vm, obj, key, v);
     } else if (var_ismodule(o)) {
         bstring *key = be_newstr(vm, k);
         bmodule *mod = var_toobj(o);
-        bvalue *v = be_module_bind(vm, mod, key);
-        if (v) {
-            *v = *be_indexof(vm, -1);
-            return btrue;
-        }
+        return be_module_setmember(vm, mod, key, v);
     }
-    return res != BE_NIL;
+    return bfalse;
 }
 
 BERRY_API bbool be_copy(bvm *vm, int index)
@@ -634,7 +635,8 @@ BERRY_API bbool be_copy(bvm *vm, int index)
     return bfalse;
 }
 
-static int ins_member(bvm *vm, int index, const char *k)
+/* `onlyins` limits the search to instance, and discards module. Makes sure getmethod does not return anything for module. */
+static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
 {
     int type = BE_NIL;
     bvalue *o = be_indexof(vm, index);
@@ -643,18 +645,27 @@ static int ins_member(bvm *vm, int index, const char *k)
     if (var_isinstance(o)) {
         binstance *obj = var_toobj(o);
         type = be_instance_member(vm, obj, be_newstr(vm, k), top);
+    } else if (var_isclass(o) && !onlyins) {
+        bclass *cl = var_toobj(o);
+        type = be_class_member(vm, cl, be_newstr(vm, k), top);
+    } else if (var_ismodule(o) && !onlyins) {
+        bmodule *module = var_toobj(o);
+        type = be_module_attr(vm, module, be_newstr(vm, k), top);
+    }
+    if (type == BE_NONE) {
+        type = BE_NIL;
     }
     return type;
 }
 
 BERRY_API bbool be_getmember(bvm *vm, int index, const char *k)
 {
-    return ins_member(vm, index, k) != BE_NIL;
+    return ins_member(vm, index, k, bfalse) != BE_NIL;
 }
 
 BERRY_API bbool be_getmethod(bvm *vm, int index, const char *k)
 {
-    return basetype(ins_member(vm, index, k)) == BE_FUNCTION;
+    return basetype(ins_member(vm, index, k, btrue)) == BE_FUNCTION;
 }
 
 BERRY_API bbool be_getindex(bvm *vm, int index)

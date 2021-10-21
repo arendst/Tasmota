@@ -21,8 +21,12 @@
 #include <Arduino.h>
 #ifdef ESP32
   #include "driver/i2s.h"
-#else
-  #include <i2s.h>
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ESP8266)
+  #ifdef ARDUINO_ESP8266_MAJOR    //this define was added in ESP8266 Arduino Core version v3.0.1
+    #include "core_esp8266_i2s.h" //for Arduino core >= 3.0.1
+  #else
+    #include "i2s.h"              //for Arduino core <= 3.0.0
+  #endif
 #endif
 #include "AudioOutputI2SNoDAC.h"
 
@@ -32,7 +36,7 @@ AudioOutputI2SNoDAC::AudioOutputI2SNoDAC(int port) : AudioOutputI2S(port, false)
   SetOversampling(32);
   lastSamp = 0;
   cumErr = 0;
-#ifndef ESP32
+#ifdef ESP8266
   WRITE_PERI_REG(PERIPHS_IO_MUX_MTDO_U, orig_bck);
   WRITE_PERI_REG(PERIPHS_IO_MUX_GPIO2_U, orig_ws);
 #endif
@@ -95,19 +99,23 @@ bool AudioOutputI2SNoDAC::ConsumeSample(int16_t sample[2])
 
   // Either send complete pulse stream or nothing
 #ifdef ESP32
-
 // Deprecated. Use i2s_write
 //  if (!i2s_write_bytes((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), 0))
   size_t bytes_written;
   i2s_write((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), &bytes_written, 0);
   if (!bytes_written)
     return false;
-#else
+#elif defined(ESP8266)
   if (!i2s_write_sample_nb(dsBuff[0])) return false; // No room at the inn
   // At this point we've sent in first of possibly 8 32-bits, need to send
   // remaining ones even if they block.
   for (int i = 32; i < oversample; i+=32)
     i2s_write_sample( dsBuff[i / 32]);
+#elif defined(ARDUINO_ARCH_RP2040)
+  int16_t *p = (int16_t *) dsBuff;
+  for (int i = 0; i < oversample / 16; i++) {
+    I2S.write(*(p++));
+  }
 #endif
   return true;
 }

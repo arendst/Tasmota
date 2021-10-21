@@ -109,8 +109,8 @@ void UfsInitOnce(void) {
 
 #ifdef ESP32
   // try lfs first
-  ffsp = &LITTLEFS;
-  if (!LITTLEFS.begin(true)) {
+  ffsp = &LittleFS;
+  if (!LittleFS.begin(true)) {
     // ffat is second
     ffsp = &FFat;
     if (!FFat.begin(true)) {
@@ -145,6 +145,7 @@ void UfsCheckSDCardInit(void) {
     if (PinUsed(GPIO_SDCARD_CS)) {
       cs = Pin(GPIO_SDCARD_CS);
     }
+
 
 #ifdef EPS8266
     SPI.begin();
@@ -223,9 +224,9 @@ uint32_t UfsInfo(uint32_t sel, uint32_t type) {
 #endif  // ESP8266
 #ifdef ESP32
       if (sel == 0) {
-        result = LITTLEFS.totalBytes();
+        result = LittleFS.totalBytes();
       } else {
-        result = LITTLEFS.totalBytes() - LITTLEFS.usedBytes();
+        result = LittleFS.totalBytes() - LittleFS.usedBytes();
       }
 #endif  // ESP32
       break;
@@ -259,7 +260,6 @@ uint8_t UfsReject(char *name) {
   }
 
   while (*name=='/') { name++; }
-  if (*name=='_') { return 1; }
   if (*name=='.') { return 1; }
 
   if (!strncasecmp(name, "SPOTLI~1", REJCMPL)) { return 1; }
@@ -560,24 +560,30 @@ const char UFS_FORM_SDC_DIRa[] PROGMEM =
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-#ifdef GUI_EDIT_FILE
   "<form method='get' action='ufse'><input type='hidden' file='" D_NEW_FILE "'>"
-  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>"
-#endif
+  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
+const char UFS_FORM_FILE_UPGb1[] PROGMEM =
+  "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>";
+
+const char UFS_FORM_FILE_UPGb2[] PROGMEM =
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+const char UFS_FORM_SDC_DIR_NORMAL[] PROGMEM =
+  "";
+const char UFS_FORM_SDC_DIR_HIDDABLE[] PROGMEM =
+  " class='hf'";
 const char UFS_FORM_SDC_DIRd[] PROGMEM =
   "<pre><a href='%s' file='%s'>%s</a></pre>";
 const char UFS_FORM_SDC_DIRb[] PROGMEM =
-  "<pre><a href='%s' file='%s'>%s</a> %s %8d %s %s</pre>";
+  "<pre%s><a href='%s' file='%s'>%s</a> %s %8d %s %s</pre>";
 const char UFS_FORM_SDC_HREF[] PROGMEM =
   "ufsd?download=%s/%s";
 
 #ifdef GUI_TRASH_FILE
 const char UFS_FORM_SDC_HREFdel[] PROGMEM =
   //"<a href=ufsd?delete=%s/%s>&#128465;</a>"; // 🗑️
-  "<a href=ufsd?delete=%s/%s onclick=\"return confirm('" D_CONFIRM_FILE_DEL "')\">&#128293;</a>"; // 🔥
+  "<a href='ufsd?delete=%s/%s' onclick=\"return confirm('" D_CONFIRM_FILE_DEL "')\">&#128293;</a>"; // 🔥
 #endif // GUI_TRASH_FILE
 
 #ifdef GUI_EDIT_FILE
@@ -585,13 +591,13 @@ const char UFS_FORM_SDC_HREFdel[] PROGMEM =
 #define FILE_BUFFER_SIZE  1024
 
 const char UFS_FORM_SDC_HREFedit[] PROGMEM =
-  "<a href=ufse?file=%s/%s>&#x1F4DD;</a>"; // 📝
+  "<a href='ufse?file=%s/%s'>&#x1F4DD;</a>"; // 📝
 
 const char HTTP_EDITOR_FORM_START[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
   "<form>"
   "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
-  "<textarea id='content' name='content' rows='8' cols='80' style='font-size: 12pt'>";
+  "<textarea id='content' name='content' wrap='off' rows='8' cols='80' style='font-size: 12pt'>";
 
 const char HTTP_EDITOR_FORM_END[] PROGMEM =
   "</textarea>"
@@ -660,15 +666,33 @@ void UfsDirectory(void) {
     UfsListDir(ufs_path, depth);
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
+#ifdef GUI_EDIT_FILE
   WSContentSend_P(UFS_FORM_FILE_UPGb);
+#endif
+  if (!isSDC()) {
+    WSContentSend_P(UFS_FORM_FILE_UPGb1);
+  }
+  WSContentSend_P(UFS_FORM_FILE_UPGb2);
+
   WSContentSpaceButton(BUTTON_MANAGEMENT);
   WSContentStop();
 
   Web.upload_file_type = UPL_UFSFILE;
 }
 
+// return true if SDC
+bool isSDC(void) {
+#ifndef SDC_HIDE_INVISIBLES
+  return false;
+#else
+  if (((uint32_t)ufsp != (uint32_t)ffsp) && ((uint32_t)ffsp == (uint32_t)dfsp)) return false;
+  if (((uint32_t)ufsp == (uint32_t)ffsp) && (ufs_type != UFS_TSDC)) return false;
+  return true;
+#endif
+}
+
 void UfsListDir(char *path, uint8_t depth) {
-  char name[32];
+  char name[48];
   char npath[128];
   char format[12];
   sprintf(format, PSTR("%%-%ds"), 24 - depth);
@@ -711,44 +735,48 @@ void UfsListDir(char *path, uint8_t depth) {
       if (!*(pp + 1)) { pp++; }
       char *cp = name;
       // osx formatted disks contain a lot of stuff we dont want
-      if (!UfsReject((char*)ep)) {
+      bool hiddable = UfsReject((char*)ep);
 
-        for (uint8_t cnt = 0; cnt<depth; cnt++) {
-          *cp++ = '-';
+      if (!hiddable || !isSDC() ) {
+
+      for (uint8_t cnt = 0; cnt<depth; cnt++) {
+        *cp++ = '-';
+      }
+
+      sprintf(cp, format, ep);
+      if (entry.isDirectory()) {
+        ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
+        WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
+        uint8_t plen = strlen(path);
+        if (plen > 1) {
+          strcat(path, "/");
         }
-
-        sprintf(cp, format, ep);
-        if (entry.isDirectory()) {
-          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
-          uint8_t plen = strlen(path);
-          if (plen > 1) {
-            strcat(path, "/");
-          }
-          strcat(path, ep);
-          UfsListDir(path, depth + 4);
-          path[plen] = 0;
-        } else {
+        strcat(path, ep);
+        UfsListDir(path, depth + 4);
+        path[plen] = 0;
+      } else {
 #ifdef GUI_TRASH_FILE
-          char delpath[128];
-          ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, pp, ep);
+        char delpath[128];
+        ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, pp, ep);
 #else
-          char delpath[2];
-          delpath[0]=0;
+        char delpath[2];
+        delpath[0]=0;
 #endif // GUI_TRASH_FILE
 #ifdef GUI_EDIT_FILE
-          char editpath[128];
-          ext_snprintf_P(editpath, sizeof(editpath), UFS_FORM_SDC_HREFedit, pp, ep);
+        char editpath[128];
+        ext_snprintf_P(editpath, sizeof(editpath), UFS_FORM_SDC_HREFedit, pp, ep);
 #else
-          char editpath[2];
-          editpath[0]=0;
+        char editpath[2];
+        editpath[0]=0;
 #endif // GUI_TRASH_FILE
-          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
-          WSContentSend_P(UFS_FORM_SDC_DIRb, npath, ep, name, tstr.c_str(), entry.size(), delpath, editpath);
-        }
+        ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
+        WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, ep, name, tstr.c_str(), entry.size(), delpath, editpath);
       }
       entry.close();
     }
+
+  }
+
     dir.close();
   }
 }

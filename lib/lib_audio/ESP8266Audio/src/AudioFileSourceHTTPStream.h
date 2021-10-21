@@ -1,7 +1,7 @@
 /*
   AudioFileSourceHTTPStream
   Connect to a HTTP based streaming service
-
+  
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCEHTTPSTREAM_H
-#define _AUDIOFILESOURCEHTTPSTREAM_H
+#if defined(ESP32) || defined(ESP8266)
+#pragma once
 
 #include <Arduino.h>
 #ifdef ESP32
   #include <HTTPClient.h>
 #else
-  #include <WiFiClient.h>
   #include <ESP8266HTTPClient.h>
 #endif
 #include "AudioFileSource.h"
@@ -38,7 +37,7 @@ class AudioFileSourceHTTPStream : public AudioFileSource
     AudioFileSourceHTTPStream();
     AudioFileSourceHTTPStream(const char *url);
     virtual ~AudioFileSourceHTTPStream() override;
-
+    
     virtual bool open(const char *url) override;
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual uint32_t readNonBlock(void *data, uint32_t len) override;
@@ -48,6 +47,7 @@ class AudioFileSourceHTTPStream : public AudioFileSource
     virtual uint32_t getSize() override;
     virtual uint32_t getPos() override;
     bool SetReconnect(int tries, int delayms) { reconnectTries = tries; reconnectDelayMs = delayms; return true; }
+    void useHTTP10 () { http.useHTTP10(true); }
 
     enum { STATUS_HTTPFAIL=2, STATUS_DISCONNECTED, STATUS_RECONNECTING, STATUS_RECONNECTED, STATUS_NODATA };
 
@@ -64,3 +64,4 @@ class AudioFileSourceHTTPStream : public AudioFileSource
 
 
 #endif
+

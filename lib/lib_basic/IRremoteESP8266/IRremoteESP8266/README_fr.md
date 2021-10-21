@@ -1,16 +1,17 @@
 ![IRremoteESP8266 Library](./assets/images/banner.svg)
 
-[![Build Status](https://travis-ci.com/crankyoldgit/IRremoteESP8266.svg?branch=master)](https://travis-ci.com/crankyoldgit/IRremoteESP8266)
+[![Construire](https://github.com/crankyoldgit/IRremoteESP8266/actions/workflows/Build.yml/badge.svg)](../../actions/workflows/Build.yml)
+[![Charbon de code](https://github.com/crankyoldgit/IRremoteESP8266/actions/workflows/Lint.yml/badge.svg)](../../actions/workflows/Lint.yml)
+[![Essais](https://github.com/crankyoldgit/IRremoteESP8266/actions/workflows/UnitTests.yml/badge.svg)](../../actions/workflows/UnitTests.yml)
+[![Documentation](https://github.com/crankyoldgit/IRremoteESP8266/actions/workflows/Documentation.yml/badge.svg)](../../actions/workflows/Documentation.yml)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/IRremoteESP8266.svg?)](https://www.ardu-badge.com/IRremoteESP8266)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/crankyoldgit/IRremoteESP8266.svg)](http://isitmaintained.com/project/crankyoldgit/IRremoteESP8266 "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/crankyoldgit/IRremoteESP8266.svg)](http://isitmaintained.com/project/crankyoldgit/IRremoteESP8266 "Percentage of issues still open")
-[![GitLicense](https://gitlicense.com/badge/crankyoldgit/IRremoteESP8266)](https://gitlicense.com/license/crankyoldgit/IRremoteESP8266)
+[![LicenseGit](https://gitlicense.com/badge/crankyoldgit/IRremoteESP8266)](https://gitlicense.com/license/crankyoldgit/IRremoteESP8266)
 
 Cette librairie vous permetra de **recevoir et d'envoyer des signaux** infrarouge sur le protocole [ESP8266](https://github.com/esp8266/Arduino) ou sur le protocole
 [ESP32](https://github.com/espressif/arduino-esp32) en utilisant le [Arduino framework](https://www.arduino.cc/) qui utilise la norme 940nm IR LEDs et le module basique de reception d'onde IR. Exemple : TSOP{17,22,24,36,38,44,48}* modules etc.
 
-## v2.7.19 disponible
-Version 2.7.19 de la libraire est maintenant [disponible](https://github.com/crankyoldgit/IRremoteESP8266/releases/latest). Vous pouvez voir le [Release Notes](ReleaseNotes.md) pour tous les changements importants.
+## v2.7.20 disponible
+Version 2.7.20 de la libraire est maintenant [disponible](https://github.com/crankyoldgit/IRremoteESP8266/releases/latest). Vous pouvez voir le [Release Notes](ReleaseNotes.md) pour tous les changements importants.
 
 #### mise à jour depuis pre-v2.0
 L'utilisation de la librairie à un peu changer depuis la version in v2.0. Si vous voulez l'utiliser vous devrez changer votre utilisation aussi. Vous pouvez vous renseigner sur les précondition d'utilisation ici : [Upgrade to v2.0](https://github.com/crankyoldgit/IRremoteESP8266/wiki/Upgrading-to-v2.0) page.

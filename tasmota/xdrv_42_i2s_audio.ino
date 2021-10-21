@@ -280,12 +280,12 @@ void I2S_Init(void) {
   mp3ram = nullptr;
 
 #ifdef ESP32
-  if (psramFound()) {
+  if (UsePSRAM()) {
     mp3ram = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   }
 
 #ifdef USE_I2S_WEBRADIO
-  if (psramFound()) {
+  if (UsePSRAM()) {
     preallocateBuffer = heap_caps_malloc(preallocateBufferSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     preallocateCodec = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   } else {

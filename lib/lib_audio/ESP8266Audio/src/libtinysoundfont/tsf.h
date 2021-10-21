@@ -486,16 +486,17 @@ struct tsf_stream_memory { const char* buffer; unsigned int total, pos; };
 static int tsf_stream_memory_read(struct tsf_stream_memory* m, void* ptr, unsigned int size) { if (size > m->total - m->pos) size = m->total - m->pos; TSF_MEMCPY(ptr, m->buffer+m->pos, size); m->pos += size; return size; }
 static int tsf_stream_memory_tell(struct tsf_stream_memory* m) { return m->pos; }
 static int tsf_stream_memory_size(struct tsf_stream_memory* m) { return m->total; }
-static int tsf_stream_memory_skip(struct tsf_stream_memory* m, unsigned int count) { if (m->pos + count > m->total) return 0; m->pos += count; return 1; }
+static int tsf_stream_memory_skip(struct tsf_stream_memory* m, unsigned int count) { if (m->pos + count > m->total) count = m->total - m->pos; m->pos += count; return 1; }
 static int tsf_stream_memory_seek(struct tsf_stream_memory* m, unsigned int pos) { if (pos > m->total) return 0; else m->pos = pos; return 1; }
-static int tsf_stream_memory_close(struct tsf_stream_memory* m) { (void)m; return 1; }
+static int tsf_stream_memory_close(struct tsf_stream_memory* m) { TSF_FREE(m); return 1; }
 TSFDEF tsf* tsf_load_memory(const void* buffer, int size)
 {
 	struct tsf_stream stream = { TSF_NULL, (int(*)(void*,void*,unsigned int))&tsf_stream_memory_read, (int(*)(void*))&tsf_stream_memory_tell, (int(*)(void*,unsigned int))&tsf_stream_memory_skip, (int(*)(void*,unsigned int))&tsf_stream_memory_seek, (int(*)(void*))&tsf_stream_memory_close, (int(*)(void*))&tsf_stream_memory_size };
-	struct tsf_stream_memory f = { 0, 0, 0 };
-	f.buffer = (const char*)buffer;
-	f.total = size;
-	stream.data = &f;
+	struct tsf_stream_memory* f = (struct tsf_stream_memory*)TSF_MALLOC(sizeof(struct tsf_stream_memory));
+	f->pos = 0;
+	f->buffer = (const char*)buffer;
+	f->total = size;
+	stream.data = f;
 	return tsf_load(&stream);
 }
 

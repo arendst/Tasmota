@@ -48,6 +48,7 @@ struct PMS5003 {
   uint8_t valid = 0;
   uint8_t wake_mode = 1;
   uint8_t ready = 1;
+  bool discovery_triggered = false;
 } Pms;
 
 enum PmsCommands
@@ -155,6 +156,11 @@ bool PmsReadData(void)
   memcpy((void *)&pms_data, (void *)buffer_u16, 30);
 #endif  // PMS_MODEL_PMS3003
   Pms.valid = 10;
+
+  if (!Pms.discovery_triggered) {
+    TasmotaGlobal.discovery_counter = 1;      // Force discovery
+    Pms.discovery_triggered = true;
+  }
 
   return true;
 }

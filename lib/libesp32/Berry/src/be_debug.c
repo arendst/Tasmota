@@ -60,13 +60,20 @@ void be_print_inst(binstruction ins, int pc)
     case OP_GETMBR: case OP_SETMBR:  case OP_GETMET:
     case OP_GETIDX: case OP_SETIDX: case OP_AND:
     case OP_OR: case OP_XOR: case OP_SHL: case OP_SHR:
-        logbuf("%s\tR%d\tR%d\tR%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins), IGET_RKC(ins));
+        logbuf("%s\tR%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),
+                isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK,
+                isKC(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
+        break;
+    case OP_GETNGBL: case OP_SETNGBL:
+        logbuf("%s\tR%d\t%c%d", opc2str(op), IGET_RA(ins),
+                isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK);
         break;
     case OP_GETGBL: case OP_SETGBL:
         logbuf("%s\tR%d\tG%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
         break;
     case OP_MOVE: case OP_SETSUPER: case OP_NEG: case OP_FLIP: case OP_IMPORT:
-        logbuf("%s\tR%d\tR%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins));
+        logbuf("%s\tR%d\t%c%d", opc2str(op), IGET_RA(ins),
+                isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK);
         break;
     case OP_JMP:
         logbuf("%s\t\t#%.4X", opc2str(op), IGET_sBx(ins) + pc + 1);
@@ -81,7 +88,12 @@ void be_print_inst(binstruction ins, int pc)
         logbuf("%s\tR%d\t%d\t%d", opc2str(op),  IGET_RA(ins), IGET_RKB(ins), IGET_RKC(ins));
         break;
     case OP_RET:
-        logbuf("%s\t%d\tR%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins));
+        if (IGET_RA(ins)) {
+            logbuf("%s\t%d\t%c%d", opc2str(op), IGET_RA(ins),
+                isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK);
+        } else {
+            logbuf("%s\t%d", opc2str(op), IGET_RA(ins)); /* RET 0 does not take an additional parameter */
+        }
         break;
     case OP_GETUPV: case OP_SETUPV:
         logbuf("%s\tR%d\tU%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
@@ -99,10 +111,12 @@ void be_print_inst(binstruction ins, int pc)
         logbuf("%s\tK%d", opc2str(op), IGET_Bx(ins));
         break;
     case OP_CLOSE: case OP_LDNIL:
-        logbuf("%s\t%d", opc2str(op), IGET_RA(ins));
+        logbuf("%s\tR%d", opc2str(op), IGET_RA(ins));
         break;
     case OP_RAISE:
-        logbuf("%s\t%d\tR%d\tR%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins), IGET_RKC(ins));
+        logbuf("%s\t%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),
+                isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK,
+                isKC(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
         break;
     case OP_EXBLK:
         if (IGET_RA(ins)) {
@@ -164,11 +178,11 @@ static void sourceinfo(bproto *proto, binstruction *ip)
         be_writestring(str(proto->source));
         be_writestring(buf);
     } else {
-        be_writestring("<unknow source>:");
+        be_writestring("<unknown source>:");
     }
 #else
     (void)proto; (void)ip;
-    be_writestring("<unknow source>:");
+    be_writestring("<unknown source>:");
 #endif
 }
 

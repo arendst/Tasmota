@@ -51,8 +51,18 @@ const uint16_t Iem3000_start_addresses[] {
   0x0bef,   //  7 . IEM3000_P2_POWER      (2/Float32)             [KW]   Active Power Phase 2
   0x0bf1,   //  8 . IEM3000_P3_POWER      (2/Float32)             [KW]   Active Power Phase 3
   0x0c25,   //  9 . IEM3000_FREQUENCY     (2/Float32)             [Hz]   Frequency
+#ifdef IEM3000_IEM3155
+  0xb02b,   // 10 . IEM3000_TOTAL_ACTIVE  (2/Float32)             [Wh]   Total Active Energy Import
+#else
   0xb02b,   // 10 . IEM3000_TOTAL_ACTIVE  (4/Int64)               [Wh]   Total Active Energy Import
+#endif 
 };
+
+#ifdef IEM3000_IEM3155
+  #define FLOAT_ParamLimit 11
+#else
+  #define FLOAT_ParamLimit 10
+#endif 
 
 struct IEM3000 {
   uint8_t read_state = 0;
@@ -65,12 +75,12 @@ void IEM3000Every250ms(void)
 {
   bool data_ready = Iem3000Modbus->ReceiveReady();
   uint8_t reg_count = 4;
-  if (Iem3000.read_state < 10) {
+  if (Iem3000.read_state < FLOAT_ParamLimit) {
     reg_count = 2;
   }
 
   if (data_ready) {
-    uint8_t buffer[14];  // At least 5 + sizeof(int64_t) = 13
+    uint8_t buffer[16];  // At least 5 + sizeof(int64_t) = 13
 
     uint32_t error = Iem3000Modbus->ReceiveBuffer(buffer, reg_count);
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Iem3000Modbus->ReceiveCount());
@@ -85,7 +95,7 @@ void IEM3000Every250ms(void)
       // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt
       float value;
       int64_t value64;
-      if(Iem3000.read_state >= 0 && Iem3000.read_state < 10) {
+      if(Iem3000.read_state >= 0 && Iem3000.read_state < FLOAT_ParamLimit) {
         ((uint8_t*)&value)[3] = buffer[3];   // Get float values
         ((uint8_t*)&value)[2] = buffer[4];
         ((uint8_t*)&value)[1] = buffer[5];
@@ -127,15 +137,27 @@ void IEM3000Every250ms(void)
           break;
 
         case 6:
+#ifdef IEM3000_IEM3155
+          Energy.active_power[0] = value*1000;
+#else
           Energy.active_power[0] = value;
+#endif 
           break;
 
         case 7:
+#ifdef IEM3000_IEM3155
+          Energy.active_power[1] = value*1000;
+#else
           Energy.active_power[1] = value;
+#endif 
           break;
 
         case 8:
+#ifdef IEM3000_IEM3155
+          Energy.active_power[2] = value*1000;
+#else
           Energy.active_power[2] = value;
+#endif 
           break;
 
         case 9:
@@ -143,7 +165,12 @@ void IEM3000Every250ms(void)
           break;
 
         case 10:
-          EnergyUpdateTotal(value64  * 0.001f, true); // 1125 => 1.125
+#ifdef IEM3000_IEM3155
+          Energy.import_active[0] = value;
+#else
+          Energy.import_active[0] = value64 * 0.001f;  // 1125 => 1.125
+#endif 
+          EnergyUpdateTotal();
           break;
       }
 

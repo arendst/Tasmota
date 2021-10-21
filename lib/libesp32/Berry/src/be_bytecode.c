@@ -23,7 +23,7 @@
 #define MAGIC_NUMBER1       0xBE
 #define MAGIC_NUMBER2       0xCD
 #define MAGIC_NUMBER3       0xFE
-#define BYTECODE_VERSION    1
+#define BYTECODE_VERSION    2
 
 #define USE_64BIT_INT       (BE_INTGER_TYPE == 2 \
     || BE_INTGER_TYPE == 1 && LONG_MAX == 9223372036854775807L)
@@ -129,7 +129,7 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
     }
     while ((node = be_map_next(members, &iter)) != NULL) {
         be_assert(var_isstr(&node->key));
-        if (var_isint(&node->value)) { /* cache member name */
+        if (var_isindex(&node->value)) { /* cache member name */
             if (vars == NULL) {
                 return NULL; /* should never be executed */
             }
@@ -137,14 +137,21 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
         } else { /* save method's name and function */
             bproto *proto;
             bvalue *value = &node->value;
-            be_assert(var_isclosure(value) || var_isproto(value));
+            be_assert(var_isclosure(value) || var_isproto(value) || var_isnil(value));
             save_string(fp, var_tostr(&node->key)); /* save method name */
             if (var_isproto(value)) { /* the method is a prototype */
                 proto = var_toobj(value);
-            } else { /* the method is a closure */
-                proto = cast(bclosure *, var_toobj(value))->proto;
+                save_proto(vm, fp, proto); /* only save prototype */
+            } else if (var_isclosure(value)) { /* the method is a closure */
+                proto = cast(bclosure *, var_toobj(value))->proto;            
+                save_proto(vm, fp, proto); /* only save prototype */
+            } else if (var_isnil(value)) {
+                /* this is a static member (nil default) */
+                save_word(fp, 0);  /* store a zero byte that will be seen as a zero length method name which is invalid */
+            } else {
+                be_raise(vm, "internal_error", "unsupported member in class");
+                return NULL; /* should never be executed */
             }
-            save_proto(vm, fp, proto); /* only save prototype */
         }
     }
     return vars;
@@ -179,12 +186,18 @@ static void save_value(bvm *vm, void *fp, bvalue *v)
     }
 }
 
-static void save_bytecode(void *fp, bproto *proto)
+static void save_bytecode(bvm *vm, void *fp, bproto *proto)
 {
+    int forbid_gbl = comp_is_named_gbl(vm);
     binstruction *code = proto->code, *end;
     save_long(fp, (uint32_t)proto->codesize);
     for (end = code + proto->codesize; code < end; ++code) {
         save_long(fp, (uint32_t)*code);
+        if (forbid_gbl) {   /* we are saving only named globals, so make sure we don't save OP_GETGBL or OP_SETGBL */
+            if ((uint32_t)*code == OP_GETGBL || (uint32_t)*code == OP_SETGBL) {
+                be_raise(vm, "internal_error", "GETGBL/SETGBL found when saving with named globals");
+            }
+        }
     }
 }
 
@@ -223,7 +236,9 @@ static void save_proto(bvm *vm, void *fp, bproto *proto)
         save_string(fp, proto->source); /* source */
         save_byte(fp, proto->argc); /* argc */
         save_byte(fp, proto->nstack); /* nstack */
-        save_bytecode(fp, proto); /* bytecode */
+        save_byte(fp, proto->varg); /* varg */
+        save_byte(fp, 0x00); /* reserved */
+        save_bytecode(vm, fp, proto); /* bytecode */
         save_constants(vm, fp, proto); /* constant */
         save_proto_table(vm, fp, proto); /* proto table */
         save_upvals(fp, proto); /* upvals description table */
@@ -253,8 +268,13 @@ static void save_globals(bvm *vm, void *fp)
 static void save_global_info(bvm *vm, void *fp)
 {
     save_long(fp, be_builtin_count(vm));
-    save_long(fp, be_global_count(vm));
-    save_globals(vm, fp);
+    if (comp_is_named_gbl(vm)) {
+        /* named globals only so no need to save current globals */
+        save_long(fp, 0);
+    } else {
+        save_long(fp, be_global_count(vm));
+        save_globals(vm, fp);
+    }
 }
 
 void be_bytecode_save(bvm *vm, const char *filename, bproto *proto)
@@ -273,7 +293,7 @@ void be_bytecode_save(bvm *vm, const char *filename, bproto *proto)
 #endif /* BE_USE_BYTECODE_SAVER */
 
 #if BE_USE_BYTECODE_LOADER
-static void load_proto(bvm *vm, void *fp, bproto **proto, int info);
+static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version);
 
 static uint8_t load_byte(void *fp)
 {
@@ -313,9 +333,13 @@ static int load_head(void *fp)
     res = buffer[0] == MAGIC_NUMBER1 &&
           buffer[1] == MAGIC_NUMBER2 &&
           buffer[2] == MAGIC_NUMBER3 &&
-          buffer[3] == BYTECODE_VERSION &&
+          buffer[3] <= BYTECODE_VERSION &&
           buffer[4] == vm_sizeinfo();
-    return res;
+    if (res) {
+        return buffer[3];
+    } else {
+        return 0;
+    }
 }
 
 bbool be_bytecode_check(const char *path)
@@ -385,7 +409,7 @@ static bstring* cache_string(bvm *vm, void *fp)
     return str;
 }
 
-static void load_class(bvm *vm, void *fp, bvalue *v)
+static void load_class(bvm *vm, void *fp, bvalue *v, int version)
 {
     int nvar, count;
     bclass *c = be_newclass(vm, NULL, NULL);
@@ -399,24 +423,29 @@ static void load_class(bvm *vm, void *fp, bvalue *v)
         value = vm->top;
         var_setproto(value, NULL);
         be_incrtop(vm);
-        load_proto(vm, fp, (bproto**)&var_toobj(value), -3);
-        be_method_bind(vm, c, name, var_toobj(value));
+        if (load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version)) {
+            /* actual method */
+            be_method_bind(vm, c, name, var_toobj(value));
+        } else {
+            /* no proto, static member set to nil */
+            be_member_bind(vm, c, name, bfalse);
+        }
         be_stackpop(vm, 2); /* pop the cached string and proto */
     }
     for (count = 0; count < nvar; ++count) { /* load member-variable table */
         bstring *name = cache_string(vm, fp);
-        be_member_bind(vm, c, name);
+        be_member_bind(vm, c, name, btrue);
         be_stackpop(vm, 1); /* pop the cached string */
     }
 }
 
-static void load_value(bvm *vm, void *fp, bvalue *v)
+static void load_value(bvm *vm, void *fp, bvalue *v, int version)
 {
     switch (load_byte(fp)) {
     case BE_INT: var_setint(v, load_int(fp)); break;
     case BE_REAL: var_setreal(v, load_real(fp)); break;
     case BE_STRING: var_setstr(v, load_string(vm, fp)); break;
-    case BE_CLASS: load_class(vm, fp, v); break;
+    case BE_CLASS: load_class(vm, fp, v, version); break;
     default: break;
     }
 }
@@ -449,7 +478,7 @@ static void load_bytecode(bvm *vm, void *fp, bproto *proto, int info)
     }
 }
 
-static void load_constant(bvm *vm, void *fp, bproto *proto)
+static void load_constant(bvm *vm, void *fp, bproto *proto, int version)
 {
     int size = (int)load_long(fp); /* nconst */
     if (size) {
@@ -458,12 +487,12 @@ static void load_constant(bvm *vm, void *fp, bproto *proto)
         proto->ktab = v;
         proto->nconst = size;
         for (end = v + size; v < end; ++v) {
-            load_value(vm, fp, v);
+            load_value(vm, fp, v, version);
         }
     }
 }
 
-static void load_proto_table(bvm *vm, void *fp, bproto *proto)
+static void load_proto_table(bvm *vm, void *fp, bproto *proto, int version)
 {
     int size = (int)load_long(fp); /* proto count */
     if (size) {
@@ -472,7 +501,7 @@ static void load_proto_table(bvm *vm, void *fp, bproto *proto)
         proto->ptab = p;
         proto->nproto = size;
         while (size--) {
-            load_proto(vm, fp, p++, -1);
+            load_proto(vm, fp, p++, -1, version);
         }
     }
 }
@@ -492,17 +521,28 @@ static void load_upvals(bvm *vm, void *fp, bproto *proto)
     }
 }
 
-static void load_proto(bvm *vm, void *fp, bproto **proto, int info)
+static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version)
 {
-    *proto = be_newproto(vm);
-    (*proto)->name = load_string(vm, fp);
-    (*proto)->source = load_string(vm, fp);
-    (*proto)->argc = load_byte(fp);
-    (*proto)->nstack = load_byte(fp);
-    load_bytecode(vm, fp, *proto, info);
-    load_constant(vm, fp, *proto);
-    load_proto_table(vm, fp, *proto);
-    load_upvals(vm, fp, *proto);
+    /* first load the name */
+    /* if empty, it's a static member so don't allocate an actual proto */
+    bstring *name = load_string(vm, fp);
+    if (str_len(name)) {
+        *proto = be_newproto(vm);
+        (*proto)->name = name;
+        (*proto)->source = load_string(vm, fp);
+        (*proto)->argc = load_byte(fp);
+        (*proto)->nstack = load_byte(fp);
+        if (version > 1) {
+            (*proto)->varg = load_byte(fp);
+            load_byte(fp); /* discard reserved byte */
+        }
+        load_bytecode(vm, fp, *proto, info);
+        load_constant(vm, fp, *proto, version);
+        load_proto_table(vm, fp, *proto, version);
+        load_upvals(vm, fp, *proto);
+        return btrue;
+    }
+    return bfalse;  /* no proto read */
 }
 
 void load_global_info(bvm *vm, void *fp)
@@ -510,7 +550,7 @@ void load_global_info(bvm *vm, void *fp)
     int i;
     int bcnt = (int)load_long(fp); /* builtin count */
     int gcnt = (int)load_long(fp); /* global count */
-    if (bcnt != be_builtin_count(vm)) {
+    if (bcnt > be_builtin_count(vm)) {
         bytecode_error(vm, be_pushfstring(vm,
             "inconsistent number of builtin objects."));
     }
@@ -530,15 +570,18 @@ bclosure* be_bytecode_load(bvm *vm, const char *filename)
     if (fp == NULL) {
         bytecode_error(vm, be_pushfstring(vm,
             "can not open file '%s'.", filename));
-    } else if (load_head(fp)) {
-        bclosure *cl = be_newclosure(vm, 0);
-        var_setclosure(vm->top, cl);
-        be_stackpush(vm);
-        load_global_info(vm, fp);
-        load_proto(vm, fp, &cl->proto, -1);
-        be_stackpop(vm, 2); /* pop the closure and list */
-        be_fclose(fp);
-        return cl;
+    } else {
+        int version = load_head(fp);
+        if (version) {
+            bclosure *cl = be_newclosure(vm, 0);
+            var_setclosure(vm->top, cl);
+            be_stackpush(vm);
+            load_global_info(vm, fp);
+            load_proto(vm, fp, &cl->proto, -1, version);
+            be_stackpop(vm, 2); /* pop the closure and list */
+            be_fclose(fp);
+            return cl;
+        }
     }
     bytecode_error(vm, be_pushfstring(vm,
         "invalid bytecode file '%s'.", filename));

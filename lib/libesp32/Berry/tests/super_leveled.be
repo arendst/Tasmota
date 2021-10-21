@@ -26,10 +26,9 @@ assert(classname(super(super(C))) == 'A')
 assert(super(super(super(C))) == nil)
 
 #- super() levele -#
-assert(super(a,A) == a)
-assert(classname(super(a,A)) == 'A')
-assert(classname(super(b,B)) == 'B')
-assert(classname(super(c,C)) == 'C')
+assert(super(a,A) == nil)
+assert(super(b,B) == nil)
+assert(super(c,C) == nil)
 assert(classname(super(c,B)) == 'B')
 assert(classname(super(c,A)) == 'A')
 assert(super(c,map) == nil) #- not a parent class -#

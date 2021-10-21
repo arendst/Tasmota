@@ -120,9 +120,10 @@
 
 
 
-  DisplayScrollText     text
+  DisplayScrollText     text [, num_loops]
 
-                              Displays scrolling text.
+                              Displays scrolling text indefinitely, until another Display- command (other than DisplayScrollText 
+                              or DisplayScrollDelay is issued). Optionally, stop scrolling after num_loops iterations.
 
 
 
@@ -189,6 +190,8 @@ struct
   uint8_t scroll_delay = 4;
   uint8_t scroll_index = 0;
   uint8_t iteration = 0;
+  uint8_t scroll_counter = 0;
+  uint8_t scroll_counter_max = 3;
   uint8_t display_type = TM1637;
   uint8_t digit_order[6] = { 0, 1, 2, 3, 4, 5 };
 
@@ -233,7 +236,8 @@ void TM1637Init(void)
   Settings->display_cols[0] = Settings->display_width;
   Settings->display_height = 1;
   Settings->display_rows = Settings->display_height;
-  if(!Settings->display_dimmer || Settings->display_dimmer < 2 || Settings->display_dimmer > 15) Settings->display_dimmer = 8;
+  uint8_t dimmer16 = GetDisplayDimmer16();
+  if(!dimmer16 || dimmer16 < 2 || dimmer16 > 15) SetDisplayDimmer(50);
 
   if (TM1637 == TM1637Data.display_type)
   {
@@ -560,9 +564,27 @@ void TM1637ClearDisplay(void)
 bool CmndTM1637ScrollText(void)
 {
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: Text %s"), XdrvMailbox.data);
+  char sString[SCROLL_MAX_LEN + 1];
+  char sMaxLoopCount[CMD_MAX_LEN];
+  uint8_t maxLoopCount = 0;
 
-  if (XdrvMailbox.data_len > SCROLL_MAX_LEN)
+  switch (ArgC())
+  {
+  case 2:
+    subStr(sMaxLoopCount, XdrvMailbox.data, ",", 2);
+    maxLoopCount = atoi(sMaxLoopCount);
+  case 1:
+    subStr(sString, XdrvMailbox.data, ",", 1);
+  }
+
+  if (maxLoopCount < 0)
+    maxLoopCount = 0;
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("TM7: sString %s, maxLoopCount %d"), sString, maxLoopCount);
+
+  TM1637Data.scroll_counter_max = maxLoopCount;
+
+  if (strlen(sString) > SCROLL_MAX_LEN)
   {
     snprintf(TM1637Data.msg, sizeof(TM1637Data.msg), PSTR("Text too long. Length should be less than %d"), SCROLL_MAX_LEN);
     XdrvMailbox.data = TM1637Data.msg;
@@ -570,11 +592,12 @@ bool CmndTM1637ScrollText(void)
   }
   else
   {
-    snprintf(TM1637Data.scroll_text, sizeof(TM1637Data.scroll_text), PSTR("                                                       "));
-    snprintf(TM1637Data.scroll_text, sizeof(TM1637Data.scroll_text), PSTR("%s"), XdrvMailbox.data);
-    TM1637Data.scroll_text[XdrvMailbox.data_len] = 0;
+    snprintf(TM1637Data.scroll_text, sizeof(TM1637Data.scroll_text), PSTR("                                                               "));
+    snprintf(TM1637Data.scroll_text, Settings->display_width + sizeof(TM1637Data.scroll_text), PSTR("        %s"), &sString);
+    TM1637Data.scroll_text[strlen(sString) + Settings->display_width] = 0;
     TM1637Data.scroll_index = 0;
     TM1637Data.scroll = true;
+    TM1637Data.scroll_counter = 0;
     return true;
   }
 }
@@ -601,6 +624,7 @@ bool CmndTM1637ScrollDelay(void)
 \*********************************************************************************************/
 void TM1637ScrollText(void)
 {
+  if(!TM1637Data.scroll) return;
   TM1637Data.iteration++;
   if (TM1637Data.scroll_delay)
     TM1637Data.iteration = TM1637Data.iteration % TM1637Data.scroll_delay;
@@ -611,9 +635,12 @@ void TM1637ScrollText(void)
 
   if (TM1637Data.scroll_index > strlen(TM1637Data.scroll_text))
   {
-    TM1637Data.scroll = false;
     TM1637Data.scroll_index = 0;
-    return;
+    TM1637Data.scroll_counter++;
+    if(TM1637Data.scroll_counter_max != 0 && (TM1637Data.scroll_counter >= TM1637Data.scroll_counter_max)) {
+      TM1637Data.scroll = false;
+      return;
+    }    
   }
   uint8_t rawBytes[1];
   for (uint32_t i = 0, j = TM1637Data.scroll_index; i < 1 + strlen(TM1637Data.scroll_text); i++, j++)
@@ -1022,7 +1049,7 @@ void TM1637ShowTime()
 bool TM1637MainFunc(uint8_t fn)
 {
   bool result = false;
-
+  if(fn != FUNC_DISPLAY_SCROLLDELAY) TM1637Data.scroll = false;
   if (XdrvMailbox.data_len > CMD_MAX_LEN)
   {
     Response_P(PSTR("{\"Error\":\"Command text too long. Please limit it to %d characters\"}"), CMD_MAX_LEN);
@@ -1074,8 +1101,8 @@ bool TM1637MainFunc(uint8_t fn)
 
 void TM1637Dim(void)
 {
-  // Settings->display_dimmer = 0 - 15
-  uint8_t brightness = Settings->display_dimmer >> 1; // 0 - 7
+  // GetDisplayDimmer16() = 0 - 15
+  uint8_t brightness = GetDisplayDimmer16() >> 1; // 0 - 7
 
   if (TM1637 == TM1637Data.display_type)
   {

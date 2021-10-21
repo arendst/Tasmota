@@ -82,6 +82,8 @@ void be_throw(bvm *vm, int errorcode)
     }
 }
 
+/* Fatal error Exit */
+/* Raise a BE_EXIT exception if within a try/catch block, or exit VM */
 BERRY_API void be_exit(bvm *vm, int status)
 {
     if (vm->errjmp) {
@@ -99,6 +101,8 @@ void be_throw_message(bvm *vm, int errorcode, const char *msg)
     be_throw(vm, errorcode);
 }
 
+/* Exec protected: exec function and capture any exception and contain it within call */
+/* Exceptions or fatal errors are not propagated */
 int be_execprotected(bvm *vm, bpfunc f, void *data)
 {
     struct blongjmp jmp;
@@ -292,6 +296,7 @@ static void m_pcall(bvm *vm, void *data)
     be_dofunc(vm, p->v, p->argc);
 }
 
+/* Protected call: contain any exception of fatal error and restore context if something went wrong */
 int be_protectedcall(bvm *vm, bvalue *v, int argc)
 {
     int res;
@@ -308,7 +313,8 @@ int be_protectedcall(bvm *vm, bvalue *v, int argc)
 }
 
 #if BE_DEBUG && defined(be_assert)
-/* increase top register */
+/* increase top register and return new top */
+/* Does not expand the stack if there is not enough room, but may corrupt memory */
 bvalue* be_incrtop(bvm *vm)
 {
     bvalue *top = vm->top++;
@@ -317,6 +323,7 @@ bvalue* be_incrtop(bvm *vm)
 }
 #endif
 
+/* TODO what is the difference with be_stack_push? */
 void be_stackpush(bvm *vm)
 {
     /* make sure there is enough stack space */
@@ -324,6 +331,7 @@ void be_stackpush(bvm *vm)
     be_incrtop(vm);
 }
 
+/* check that the stack is able to store `count` items, and increase stack if needed */
 void be_stack_require(bvm *vm, int count)
 {
     if (vm->top + count >= vm->stacktop) {
@@ -331,6 +339,7 @@ void be_stack_require(bvm *vm, int count)
     }
 }
 
+/* Scan the entire callstack and adjust all pointer by `offset` */
 static void update_callstack(bvm *vm, intptr_t offset)
 {
     bcallframe *cf = be_stack_top(&vm->callstack);
@@ -353,20 +362,25 @@ static void update_upvalues(bvm *vm, intptr_t offset)
     }
 }
 
+/* Resize the stack to new `size` as number of elements */
+/* Then update all pointers in callstack and upvalues with the new stack address */
 static void stack_resize(bvm *vm, size_t size)
 {
     intptr_t offset;
-    bvalue *old = vm->stack;
-    size_t os = (vm->stacktop - old) * sizeof(bvalue);
-    vm->stack = be_realloc(vm, old, os, sizeof(bvalue) * size);
-    vm->stacktop = vm->stack + size;
-    offset = ptr_offset(vm->stack, old);
+    bvalue *old = vm->stack;  /* save original pointer of stack before resize */
+    size_t os = (vm->stacktop - old) * sizeof(bvalue);  /* size of current stack allocated in bytes */
+    vm->stack = be_realloc(vm, old, os, sizeof(bvalue) * size);  /* reallocate with the new size */
+    vm->stacktop = vm->stack + size;  /* compute new stacktop */
+    offset = ptr_offset(vm->stack, old);  /* compute the address difference between old and ne stack addresses */
     /* update callframes */
     update_callstack(vm, offset);
     /* update open upvalues */
     update_upvalues(vm, offset);
 }
 
+/* Stack resize internal API */
+/* Increases the stack by `n` elements, reallocate stack if needed and update all callstacks and upvals */
+/* Check if we are above the max allowed stack */
 void be_stack_expansion(bvm *vm, int n)
 {
     size_t size = vm->stacktop - vm->stack;

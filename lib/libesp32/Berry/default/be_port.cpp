@@ -60,12 +60,10 @@ extern "C" {
 #ifndef BERRY_LOGSZ
 #define BERRY_LOGSZ 700
 #endif
-extern "C" {
-    extern void *berry_malloc(size_t size);
-}
+
 static char * log_berry_buffer = nullptr;
 static_block {
-    log_berry_buffer = (char*) berry_malloc(BERRY_LOGSZ);
+    log_berry_buffer = (char*) malloc(BERRY_LOGSZ);
     if (log_berry_buffer) log_berry_buffer[0] = 0;
 }
 extern void berry_log(const char * berry_buf);
@@ -250,7 +248,33 @@ size_t be_fsize(void *hfile)
     return 0;
 }
 
+extern "C" time_t be_last_modified(void *hfile)
+{
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr && hfile != nullptr) {
+        File * f_ptr = (File*) hfile;
+        return f_ptr->getLastWrite();
+    }
+#endif // USE_UFILESYS
+    return 0;
+}
 
+int be_isexist(const char *filename)
+{
+#ifdef USE_UFILESYS
+    if (ufsp != nullptr) {
+        char fname2[strlen(filename) + 2];
+        if (filename[0] == '/') {
+            strcpy(fname2, filename);   // copy unchanged
+        } else {
+            fname2[0] = '/';
+            strcpy(fname2 + 1, filename);   // prepend with '/'
+        }
+        return ufsp->exists(fname2);
+    }
+#endif // USE_UFILESYS
+    return 0;
+}
 
 #if BE_USE_FILE_SYSTEM
 #if defined(USE_FATFS) /* FatFs */

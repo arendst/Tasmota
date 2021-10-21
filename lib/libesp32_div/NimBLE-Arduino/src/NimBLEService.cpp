@@ -35,7 +35,7 @@ static const char* LOG_TAG = "NimBLEService"; // Tag for logging.
  * @brief Construct an instance of the NimBLEService
  * @param [in] uuid The UUID of the service.
  * @param [in] numHandles The maximum number of handles associated with the service.
- * @param [in] a pointer to the server instance that this service belongs to.
+ * @param [in] pServer A pointer to the server instance that this service belongs to.
  */
 NimBLEService::NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer* pServer)
 : NimBLEService(NimBLEUUID(uuid), numHandles, pServer) {
@@ -46,7 +46,7 @@ NimBLEService::NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer
  * @brief Construct an instance of the BLEService
  * @param [in] uuid The UUID of the service.
  * @param [in] numHandles The maximum number of handles associated with the service.
- * @param [in] a pointer to the server instance that this service belongs to.
+ * @param [in] pServer A pointer to the server instance that this service belongs to.
  */
 NimBLEService::NimBLEService(const NimBLEUUID &uuid, uint16_t numHandles, NimBLEServer* pServer) {
     m_uuid         = uuid;
@@ -118,7 +118,12 @@ NimBLEUUID NimBLEService::getUUID() {
  */
 bool NimBLEService::start() {
     NIMBLE_LOGD(LOG_TAG, ">> start(): Starting service: %s", toString().c_str());
-    int rc = 0;
+
+    // Rebuild the service definition if the server attributes have changed.
+    if(getServer()->m_svcChanged && m_pSvcDef != nullptr) {
+        delete(m_pSvcDef);
+        m_pSvcDef = nullptr;
+    }
 
     if(m_pSvcDef == nullptr) {
         // Nimble requires an array of services to be sent to the api
@@ -132,8 +137,23 @@ bool NimBLEService::start() {
         svc[0].uuid = &m_uuid.getNative()->u;
         svc[0].includes = NULL;
 
-        size_t numChrs = m_chrVec.size();
+        int removedCount = 0;
+        for(auto it = m_chrVec.begin(); it != m_chrVec.end(); ) {
+            if ((*it)->m_removed > 0) {
+                if ((*it)->m_removed == NIMBLE_ATT_REMOVE_DELETE) {
+                    delete *it;
+                    it = m_chrVec.erase(it);
+                } else {
+                    ++removedCount;
+                    ++it;
+                }
+                continue;
+            }
 
+            ++it;
+        }
+
+        size_t numChrs = m_chrVec.size() - removedCount;
         NIMBLE_LOGD(LOG_TAG,"Adding %d characteristics for service %s", numChrs, toString().c_str());
 
         if(!numChrs){
@@ -142,40 +162,60 @@ bool NimBLEService::start() {
             // Nimble requires the last characteristic to have it's uuid = 0 to indicate the end
             // of the characteristics for the service. We create 1 extra and set it to null
             // for this purpose.
-            pChr_a = new ble_gatt_chr_def[numChrs+1];
-            NimBLECharacteristic* pCharacteristic = *m_chrVec.begin();
+            pChr_a = new ble_gatt_chr_def[numChrs + 1];
+            uint8_t i = 0;
+            for(auto chr_it = m_chrVec.begin(); chr_it != m_chrVec.end(); ++chr_it) {
+                if((*chr_it)->m_removed > 0) {
+                    continue;
+                }
 
-            for(uint8_t i=0; i < numChrs;) {
-                uint8_t numDscs = pCharacteristic->m_dscVec.size();
+                removedCount = 0;
+                for(auto it = (*chr_it)->m_dscVec.begin(); it != (*chr_it)->m_dscVec.end(); ) {
+                    if ((*it)->m_removed > 0) {
+                        if ((*it)->m_removed == NIMBLE_ATT_REMOVE_DELETE) {
+                            delete *it;
+                            it = (*chr_it)->m_dscVec.erase(it);
+                        } else {
+                            ++removedCount;
+                            ++it;
+                        }
+                        continue;
+                    }
+
+                    ++it;
+                }
+
+                size_t numDscs = (*chr_it)->m_dscVec.size() - removedCount;
 
                 if(!numDscs){
                     pChr_a[i].descriptors = NULL;
                 } else {
                     // Must have last descriptor uuid = 0 so we have to create 1 extra
                     pDsc_a = new ble_gatt_dsc_def[numDscs+1];
-                    NimBLEDescriptor* pDescriptor = *pCharacteristic->m_dscVec.begin();
-                    for(uint8_t d=0; d < numDscs;) {
-                        pDsc_a[d].uuid = &pDescriptor->m_uuid.getNative()->u;
-                        pDsc_a[d].att_flags = pDescriptor->m_properties;
+                    uint8_t d = 0;
+                    for(auto dsc_it = (*chr_it)->m_dscVec.begin(); dsc_it != (*chr_it)->m_dscVec.end(); ++dsc_it ) {
+                        if((*dsc_it)->m_removed > 0) {
+                            continue;
+                        }
+                        pDsc_a[d].uuid = &(*dsc_it)->m_uuid.getNative()->u;
+                        pDsc_a[d].att_flags = (*dsc_it)->m_properties;
                         pDsc_a[d].min_key_size = 0;
                         pDsc_a[d].access_cb = NimBLEDescriptor::handleGapEvent;
-                        pDsc_a[d].arg = pDescriptor;
-                        d++;
-                        pDescriptor = *(pCharacteristic->m_dscVec.begin() + d);
+                        pDsc_a[d].arg = (*dsc_it);
+                        ++d;
                     }
 
                     pDsc_a[numDscs].uuid = NULL;
                     pChr_a[i].descriptors = pDsc_a;
                 }
 
-                pChr_a[i].uuid = &pCharacteristic->m_uuid.getNative()->u;
+                pChr_a[i].uuid = &(*chr_it)->m_uuid.getNative()->u;
                 pChr_a[i].access_cb = NimBLECharacteristic::handleGapEvent;
-                pChr_a[i].arg = pCharacteristic;
-                pChr_a[i].flags = pCharacteristic->m_properties;
+                pChr_a[i].arg = (*chr_it);
+                pChr_a[i].flags = (*chr_it)->m_properties;
                 pChr_a[i].min_key_size = 0;
-                pChr_a[i].val_handle = &pCharacteristic->m_handle;
-                i++;
-                pCharacteristic = *(m_chrVec.begin() + i);
+                pChr_a[i].val_handle = &(*chr_it)->m_handle;
+                ++i;
             }
 
             pChr_a[numChrs].uuid = NULL;
@@ -187,7 +227,7 @@ bool NimBLEService::start() {
         m_pSvcDef = svc;
     }
 
-    rc = ble_gatts_count_cfg((const ble_gatt_svc_def*)m_pSvcDef);
+    int rc = ble_gatts_count_cfg((const ble_gatt_svc_def*)m_pSvcDef);
     if (rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "ble_gatts_count_cfg failed, rc= %d, %s", rc, NimBLEUtils::returnCodeToString(rc));
         return false;
@@ -239,11 +279,62 @@ NimBLECharacteristic* NimBLEService::createCharacteristic(const NimBLEUUID &uuid
                              std::string(uuid).c_str());
     }
 
-    // Remember this characteristic in our vector of characteristics.
-    m_chrVec.push_back(pCharacteristic);
-
+    addCharacteristic(pCharacteristic);
     return pCharacteristic;
 } // createCharacteristic
+
+
+/**
+ * @brief Add a characteristic to the service.
+ * @param[in] pCharacteristic A pointer to the characteristic instance to add to the service.
+ */
+void NimBLEService::addCharacteristic(NimBLECharacteristic* pCharacteristic) {
+    bool foundRemoved = false;
+
+    if(pCharacteristic->m_removed > 0) {
+        for(auto& it : m_chrVec) {
+            if(it == pCharacteristic) {
+                foundRemoved = true;
+                pCharacteristic->m_removed = 0;
+            }
+        }
+    }
+
+    if(!foundRemoved) {
+        m_chrVec.push_back(pCharacteristic);
+    }
+
+    pCharacteristic->setService(this);
+    getServer()->serviceChanged();
+} // addCharacteristic
+
+
+/**
+ * @brief Remove a characteristic from the service.
+ * @param[in] pCharacteristic A pointer to the characteristic instance to remove from the service.
+ * @param[in] deleteChr If true it will delete the characteristic instance and free it's resources.
+ */
+void NimBLEService::removeCharacteristic(NimBLECharacteristic* pCharacteristic, bool deleteChr) {
+    // Check if the characteristic was already removed and if so, check if this
+    // is being called to delete the object and do so if requested.
+    // Otherwise, ignore the call and return.
+    if(pCharacteristic->m_removed > 0) {
+        if(deleteChr) {
+            for(auto it = m_chrVec.begin(); it != m_chrVec.end(); ++it) {
+                if ((*it) == pCharacteristic) {
+                    m_chrVec.erase(it);
+                    delete *it;
+                    break;
+                }
+            }
+        }
+
+        return;
+    }
+
+    pCharacteristic->m_removed = deleteChr ? NIMBLE_ATT_REMOVE_DELETE : NIMBLE_ATT_REMOVE_HIDE;
+    getServer()->serviceChanged();
+} // removeCharacteristic
 
 
 /**

@@ -1,35 +1,18 @@
-name: Build_firmware
+name: Build_firmware_master
 
 on:
   push:
     branches: master
+    paths-ignore:
+    - '.github/**' # Ignore changes towards the .github directory
 
 jobs:
-  tasmota_pull:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-    - uses: actions/checkout@v1
-    - name: Use Tasmota master
-      run: |
-        git config --local user.name "Platformio BUILD"
-        git switch -c work
-        git remote add -f Tasmota "https://github.com/arendst/Tasmota.git"
-        git merge Tasmota/master --allow-unrelated-histories
-    - name: Push Tasmota   # Push updates of latest Tasmota master to repo
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'master'
-        force: true
-
 
   tasmota:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -45,11 +28,10 @@ jobs:
 
 
   tasmota-minimal:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -65,11 +47,10 @@ jobs:
 
 
   tasmota-lite:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -85,11 +66,10 @@ jobs:
 
 
   tasmota-knx:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -105,11 +85,10 @@ jobs:
 
 
   tasmota-sensors:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -125,11 +104,10 @@ jobs:
 
 
   tasmota-display:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -145,11 +123,10 @@ jobs:
 
 
   tasmota-ir:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -165,11 +142,10 @@ jobs:
 
 
   tasmota-zbbridge:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -185,11 +161,10 @@ jobs:
 
 
   tasmota-zigbee:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -205,11 +180,10 @@ jobs:
 
 
   tasmota-AF:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -225,11 +199,10 @@ jobs:
 
 
   tasmota-BG:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -245,11 +218,10 @@ jobs:
 
 
   tasmota-BR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -265,11 +237,10 @@ jobs:
 
 
   tasmota-CN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -285,11 +256,10 @@ jobs:
 
 
   tasmota-CZ:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -305,11 +275,10 @@ jobs:
 
 
   tasmota-DE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -325,11 +294,10 @@ jobs:
 
 
   tasmota-ES:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -345,11 +313,10 @@ jobs:
 
 
   tasmota-FR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -365,11 +332,10 @@ jobs:
 
 
   tasmota-FY:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -385,11 +351,10 @@ jobs:
 
 
   tasmota-GR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -405,11 +370,10 @@ jobs:
 
 
   tasmota-HE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -425,11 +389,10 @@ jobs:
 
 
   tasmota-HU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -445,11 +408,10 @@ jobs:
 
 
   tasmota-IT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -465,11 +427,10 @@ jobs:
 
 
   tasmota-KO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -485,11 +446,10 @@ jobs:
 
 
   tasmota-NL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -505,11 +465,10 @@ jobs:
 
 
   tasmota-PL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -525,11 +484,10 @@ jobs:
 
 
   tasmota-PT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -545,11 +503,10 @@ jobs:
 
 
   tasmota-RO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -565,11 +522,10 @@ jobs:
 
 
   tasmota-RU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -585,11 +541,10 @@ jobs:
 
 
   tasmota-SE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -605,11 +560,10 @@ jobs:
 
 
   tasmota-SK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -625,11 +579,10 @@ jobs:
 
 
   tasmota-TR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -645,11 +598,10 @@ jobs:
 
 
   tasmota-TW:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -665,11 +617,10 @@ jobs:
 
 
   tasmota-UK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -685,11 +636,10 @@ jobs:
 
 
   tasmota-VN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -705,11 +655,10 @@ jobs:
 
 
   tasmota32:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -725,11 +674,10 @@ jobs:
 
 
   tasmota32solo1:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -745,11 +693,10 @@ jobs:
 
 
   tasmota32-webcam:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -765,11 +712,10 @@ jobs:
 
 
   tasmota32-odroidgo:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -785,11 +731,10 @@ jobs:
 
 
   tasmota32-core2:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -805,11 +750,10 @@ jobs:
 
 
   tasmota32-bluetooth:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -825,11 +769,10 @@ jobs:
 
 
   tasmota32-display:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -845,11 +788,10 @@ jobs:
 
 
   tasmota32-lvgl:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -865,11 +807,10 @@ jobs:
 
 
   tasmota32-ir:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -883,13 +824,29 @@ jobs:
         name: firmware
         path: ./build_output
 
-
-  tasmota32-AF:
-    needs: tasmota_pull
+  tasmota32c3:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32c3
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+  tasmota32-AF:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -905,11 +862,10 @@ jobs:
 
 
   tasmota32-BG:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -925,11 +881,10 @@ jobs:
 
 
   tasmota32-BR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -945,11 +900,10 @@ jobs:
 
 
   tasmota32-CN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -965,11 +919,10 @@ jobs:
 
 
   tasmota32-CZ:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -985,11 +938,10 @@ jobs:
 
 
   tasmota32-DE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1005,11 +957,10 @@ jobs:
 
 
   tasmota32-ES:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1025,11 +976,10 @@ jobs:
 
 
   tasmota32-FR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1045,11 +995,10 @@ jobs:
 
 
   tasmota32-FY:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1065,11 +1014,10 @@ jobs:
 
 
   tasmota32-GR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1085,11 +1033,10 @@ jobs:
 
 
   tasmota32-HE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1105,11 +1052,10 @@ jobs:
 
 
   tasmota32-HU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1125,11 +1071,10 @@ jobs:
 
 
   tasmota32-IT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1145,11 +1090,10 @@ jobs:
 
 
   tasmota32-KO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1165,11 +1109,10 @@ jobs:
 
 
   tasmota32-NL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1185,11 +1128,10 @@ jobs:
 
 
   tasmota32-PL:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1205,11 +1147,10 @@ jobs:
 
 
   tasmota32-PT:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1225,11 +1166,10 @@ jobs:
 
 
   tasmota32-RO:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1245,11 +1185,10 @@ jobs:
 
 
   tasmota32-RU:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1265,11 +1204,10 @@ jobs:
 
 
   tasmota32-SE:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1285,11 +1223,10 @@ jobs:
 
 
   tasmota32-SK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1305,11 +1242,10 @@ jobs:
 
 
   tasmota32-TR:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1325,11 +1261,10 @@ jobs:
 
 
   tasmota32-TW:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1345,11 +1280,10 @@ jobs:
 
 
   tasmota32-UK:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1365,11 +1299,10 @@ jobs:
 
 
   tasmota32-VN:
-    needs: tasmota_pull
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v1
     - name: Install dependencies
@@ -1389,7 +1322,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/download-artifact@v2
       with:
         name: firmware
@@ -1404,48 +1337,56 @@ jobs:
         files: ./mv_firmware/firmware/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: Move firmware files in sub-folders
       run: |
-        mkdir -p ./firmware/tasmota/languages
-        mkdir -p ./firmware/tasmota32/languages
-        mkdir -p ./firmware/tasmota32/ESP32_needed_files/
-        mkdir -p ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
-        mkdir -p ./firmware/map
-        [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
-        [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32solo1*.* ] || mv ./mv_firmware/firmware/tasmota32solo1*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/languages/
-        [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
-        [ ! -f ./tools/Esptool/ESP32/*.* ] || mv ./tools/Esptool/ESP32/*.* ./firmware/tasmota32/ESP32_needed_files/
-        [ ! -f ./tools/Esptool/Odroid_go_and_core2/*.* ] || mv ./tools/Esptool/Odroid_go_and_core2/*.* ./firmware/tasmota32/Odroid_go_and_core2_needed_files/
-        [ ! -f ./FIRMWARE.md ] || mv -f ./RELEASENOTES.md ./README.md
-    - name: Commit files  # transfer the new binaries back into the repository
-      run: |
-        git config --local user.name "Platformio BUILD"
-        git rm -r --cached .
-        git add ./README.md
-        git add -f ./firmware/*.*
-        git commit -m "Tasmota ESP Binaries http://tasmota.com"
-    - name: Push changes  # push the firmware files to branch firmware
-      uses: ad-m/github-push-action@master
+        mkdir -p ./release-firmware/tasmota/languages
+        mkdir -p ./release-firmware/tasmota32/languages
+        mkdir -p ./release-firmware/map
+        [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./release-firmware/map/
+        [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./release-firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32solo1*.* ] || mv ./mv_firmware/firmware/tasmota32solo1*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32c3*.* ] || mv ./mv_firmware/firmware/tasmota32c3*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./release-firmware/tasmota32/languages/
+        [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./release-firmware/tasmota/languages/
+    - name: Display files
+      run: ls -R ./*
+    - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
+      uses: Jason2866/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'release-firmware'
-        force: true
+        source_file: 'release-firmware'
+        destination_repo: 'arendst/Tasmota-firmware'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'
+    - name: Creat trigger.txt
+      run: |
+         echo ${GITHUB_SHA}  &> trigger.txt
+         echo "$(<trigger.txt)"
+    - name: Push trigger.txt to start workflow in repo https://github.com/arendst/Tasmota-firmware
+      uses: Jason2866/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'trigger.txt'
+        destination_repo: 'arendst/Tasmota-firmware'
+        destination_branch: 'action-master'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'

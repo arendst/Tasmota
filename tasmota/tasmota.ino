@@ -1,5 +1,5 @@
 /*
-  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos, NodeMCU, ESP8266 and ESP32 hardwares
 
   Copyright (C) 2021  Theo Arends
 
@@ -66,7 +66,7 @@
 #endif  // USE_SDCARD
 #endif  // ESP8266
 #ifdef ESP32
-#include <LITTLEFS.h>
+#include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
 #endif  // USE_SDCARD
@@ -78,6 +78,10 @@
 // Structs
 #include "settings.h"
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#include "soc/efuse_reg.h"
+#endif
+
 /*********************************************************************************************\
  * Global variables
 \*********************************************************************************************/
@@ -86,7 +90,7 @@ const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A }
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
-struct {
+struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t baudrate;                        // Current Serial baudrate
   uint32_t pulse_timer[MAX_PULSETIMERS];    // Power off timer
@@ -133,7 +137,7 @@ struct {
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
 #ifdef ESP32
-  bool i2c_enabled_2;                        // I2C configured, second controller on ESP32, Wire1
+  bool i2c_enabled_2;                       // I2C configured, second controller on ESP32, Wire1
 #endif
   bool ntp_force_sync;                      // Force NTP sync
   bool skip_light_fade;                     // Temporarily skip light fading
@@ -141,6 +145,7 @@ struct {
   bool module_changed;                      // Indicate module changed since last restart
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
+  bool enable_logging;                      // Enable logging
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t spi_enabled;                      // SPI configured
@@ -193,15 +198,11 @@ struct {
   char mqtt_client[99];                     // Composed MQTT Clientname
   char mqtt_topic[TOPSZ];                   // Composed MQTT topic
 
-#ifdef ESP8266
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   char* log_buffer = nullptr;               // Log buffer in IRAM
 #else
   char log_buffer[LOG_BUFFER_SIZE];         // Log buffer in DRAM
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
-#else   // Not ESP8266
-  char log_buffer[LOG_BUFFER_SIZE];         // Log buffer in DRAM
-#endif  // ESP8266
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;
@@ -225,8 +226,24 @@ void setup(void) {
 #endif
 #endif
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+  // restore GPIO16/17 if no PSRAM is found
+  if (!FoundPSRAM()) {
+    // test if the CPU is not pico
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
+    uint32_t pkg_version = chip_ver & 0x7;
+    if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+      gpio_reset_pin(GPIO_NUM_16);
+      gpio_reset_pin(GPIO_NUM_17);
+    }
+  }
+#endif
   RtcPreInit();
   SettingsInit();
+
+#ifdef USE_EMERGENCY_RESET
+  EmergencyReset();
+#endif  // USE_EMERGENCY_RESET
 
   memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
@@ -237,6 +254,7 @@ void setup(void) {
   TasmotaGlobal.tele_period = 9999;
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+  TasmotaGlobal.enable_logging = 1;
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -262,7 +280,6 @@ void setup(void) {
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
   TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
-#ifdef ESP8266
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   ESP.setIramHeap();
   Settings = (TSettings*)malloc(sizeof(TSettings));             // Allocate in "new" 16k heap space
@@ -275,13 +292,23 @@ void setup(void) {
     TasmotaGlobal.log_buffer[0] = '\0';
   }
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
-#endif  // ESP8266
   if (Settings == nullptr) {
     Settings = (TSettings*)malloc(sizeof(TSettings));
   }
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
+#ifdef ESP32
+  AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s %s"), GetDeviceHardware().c_str(),
+            FoundPSRAM() ? (CanUsePSRAM() ? "(PSRAM)" : "(PSRAM disabled)") : "" );
+  AddLog(LOG_LEVEL_DEBUG, PSTR("HDW: FoundPSRAM=%i CanUsePSRAM=%i"), FoundPSRAM(), CanUsePSRAM());
+  #if !defined(HAS_PSRAM_FIX)
+  if (FoundPSRAM() && !CanUsePSRAM()) {
+    AddLog(LOG_LEVEL_INFO, PSTR("HDW: PSRAM is disabled, requires specific compilation on this hardware (see doc)"));
+  }
+  #endif
+#else // ESP32
   AddLog(LOG_LEVEL_INFO, PSTR("HDW: %s"), GetDeviceHardware().c_str());
+#endif // ESP32
 
 #ifdef USE_UFILESYS
   UfsInit();  // xdrv_50_filesystem.ino
@@ -290,6 +317,9 @@ void setup(void) {
   SettingsLoad();
   SettingsDelta();
 
+#ifdef ESP32
+  TWDTInit();  // Start Task WDT for ESP32 - FreeRTOS only
+#endif
   OsWatchInit();
 
   TasmotaGlobal.seriallog_level = Settings->seriallog_level;
@@ -378,6 +408,13 @@ void setup(void) {
   } else {
     snprintf_P(TasmotaGlobal.hostname, sizeof(TasmotaGlobal.hostname)-1, SettingsText(SET_HOSTNAME));
   }
+  char *s = TasmotaGlobal.hostname;
+  while (*s) {
+    if (!(isalnum(*s) || ('.' == *s))) { *s = '-'; }                 // Valid hostname chars are A..Z, a..z, 0..9, . and -
+    if ((s == TasmotaGlobal.hostname) && ('-' == *s)) { *s = 'x'; }  // First char cannot be a dash so replace by an x
+    s++;
+  }
+  snprintf_P(TasmotaGlobal.mqtt_topic, sizeof(TasmotaGlobal.mqtt_topic), ResolveToken(TasmotaGlobal.mqtt_topic).c_str());
 
   RtcInit();
   GpioInit();
@@ -396,7 +433,7 @@ void setup(void) {
   SetPowerOnState();
   WifiConnect();
 
-  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
+  AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
     PSTR(PROJECT), SettingsText(SET_DEVICENAME), TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str());
 #ifdef FIRMWARE_MINIMAL
   AddLog(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
@@ -475,6 +512,9 @@ void Scheduler(void) {
 #endif  // USE_DISCOVERY
 #endif  // ESP8266
 
+#ifdef ESP32
+  TWDTLoop();
+#endif
   OsWatchLoop();
   ButtonLoop();
   SwitchLoop();
@@ -539,7 +579,7 @@ void loop(void) {
       SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
     } else {
       if (TasmotaGlobal.global_state.network_down) {
-        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/2 of my_activity period
       }
     }
   }

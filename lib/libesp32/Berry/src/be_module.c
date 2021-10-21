@@ -252,6 +252,22 @@ static void cache_module(bvm *vm, bstring *name)
     *v = vm->top[-1];
 }
 
+/* Try to run '()' function of module. Module is already loaded. */
+static void module_init(bvm *vm) {
+    if (be_ismodule(vm, -1)) {
+        if (be_getmember(vm, -1, "init")) {
+            /* found, call it with current module as parameter */
+            be_pushvalue(vm, -2);
+            be_call(vm, 1);
+            /* the result of init() is cached and returned */
+            be_pop(vm, 1);
+            be_remove(vm, -2);  /* remove initial module */
+        } else {
+            be_pop(vm, 1);
+        }
+    }
+}
+
 /* load module to vm->top */
 int be_module_load(bvm *vm, bstring *path)
 {
@@ -260,10 +276,19 @@ int be_module_load(bvm *vm, bstring *path)
         res = load_native(vm, path);
         if (res == BE_IO_ERROR)
             res = load_package(vm, path);
-        if (res == BE_OK)
+        if (res == BE_OK) {
+            /* on first load of the module, try running the '()' function */
+            module_init(vm);
             cache_module(vm, path);
+        }
     }
     return res;
+}
+
+BERRY_API bbool be_getmodule(bvm *vm, const char *k)
+{
+    int res = be_module_load(vm, be_newstr(vm, k));
+    return res == BE_OK;
 }
 
 bmodule* be_module_new(bvm *vm)
@@ -286,22 +311,58 @@ void be_module_delete(bvm *vm, bmodule *module)
     be_free(vm, module, sizeof(bmodule));
 }
 
-bvalue* be_module_attr(bvm *vm, bmodule *module, bstring *attr)
+int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
 {
-    return be_map_findstr(vm, module->table, attr);
+    bvalue *member = be_map_findstr(vm, module->table, attr);
+    if (!member) {  /* try the 'member' function */
+        member = be_map_findstr(vm, module->table, str_literal(vm, "member"));
+        if (member && var_basetype(member) == BE_FUNCTION) {
+            bvalue *top = vm->top;
+            top[0] = *member;
+            var_setstr(&top[1], attr);
+            vm->top += 2;   /* prevent collection results */
+            be_dofunc(vm, top, 1); /* call method 'method' */
+            vm->top -= 2;
+            *dst = *vm->top;   /* copy result to R(A) */
+            if (var_basetype(dst) != BE_NIL) {
+                return var_type(dst);
+            }
+        }
+        return BE_NONE;
+    } else {
+        *dst = *member;
+        return var_type(dst);
+    }
 }
 
-bvalue* be_module_bind(bvm *vm, bmodule *module, bstring *attr)
+bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
 {
+    assert(src);
     bmap *attrs = module->table;
     if (!gc_isconst(attrs)) {
         bvalue *v = be_map_findstr(vm, attrs, attr);
         if (v == NULL) {
             v = be_map_insertstr(vm, attrs, attr, NULL);
         }
-        return v;
+        if (v) {
+            *v = *src;
+            return btrue;
+        }
+    } else {
+        /* if not writable, try 'setmember' */
+        int type = be_module_attr(vm, module, str_literal(vm, "setmember"), vm->top);
+        if (basetype(type) == BE_FUNCTION) {
+            bvalue *top = vm->top;
+            // top[0] already has 'member'
+            var_setstr(&top[1], attr);  /* attribute name */
+            top[2] = *src;  /* new value */
+            vm->top += 3;   /* prevent collection results */
+            be_dofunc(vm, top, 2); /* call method 'setmember' */
+            vm->top -= 3;
+            return btrue;
+        }
     }
-    return NULL;
+    return bfalse;
 }
 
 const char* be_module_name(bmodule *module)

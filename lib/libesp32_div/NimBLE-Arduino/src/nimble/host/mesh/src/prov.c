@@ -5,13 +5,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
 #include "syscfg/syscfg.h"
+#define MESH_LOG_MODULE BLE_MESH_PROV_LOG
+
 #if MYNEWT_VAL(BLE_MESH_PROV)
 
 #include <errno.h>
-
-#define BT_DBG_ENABLED (MYNEWT_VAL(BLE_MESH_DEBUG_PROV))
-#include "host/ble_hs_log.h"
 
 #include "mesh/mesh.h"
 #include "mesh_priv.h"
@@ -25,6 +25,8 @@
 #include "proxy.h"
 #include "prov.h"
 #include "testing.h"
+#include "settings.h"
+#include "nodes.h"
 
 /* 3 transmissions, 20ms interval */
 #define PROV_XMIT              BT_MESH_TRANSMIT(2, 20)
@@ -69,6 +71,8 @@
 #define PROV_COMPLETE          0x08
 #define PROV_FAILED            0x09
 
+#define PROV_NO_PDU            0xff
+
 #define PROV_ALG_P256          0x00
 
 #define GPCF(gpc)              (gpc & 0x03)
@@ -98,15 +102,31 @@
 #define XACT_NVAL              0xff
 
 enum {
-	REMOTE_PUB_KEY,        /* Remote key has been received */
+	WAIT_PUB_KEY,          /* Waiting for local PubKey to be generated */
 	LINK_ACTIVE,           /* Link has been opened */
-	HAVE_DHKEY,            /* DHKey has been calculated */
-	SEND_CONFIRM,          /* Waiting to send Confirm value */
+	LINK_ACK_RECVD,        /* Ack for link has been received */
+	LINK_CLOSING,          /* Link is closing down */
+	SEND_PUB_KEY,          /* Waiting to send PubKey */
 	WAIT_NUMBER,           /* Waiting for number input from user */
 	WAIT_STRING,           /* Waiting for string input from user */
+	NOTIFY_INPUT_COMPLETE, /* Notify that input has been completed. */
 	LINK_INVALID,          /* Error occurred during provisioning */
+	PROVISIONER,           /* The link was opened as provisioner */
 
 	NUM_FLAGS,
+};
+
+#if MYNEWT_VAL(BLE_MESH_PROVISIONER)
+#define PROVISIONER_LINK 1
+#else
+#define PROVISIONER_LINK 0
+#endif
+
+struct provisioner_link {
+	struct bt_mesh_node *node;
+	u16_t addr;
+	u16_t net_idx;
+	u8_t  attention_duration;
 };
 
 struct prov_link {
@@ -114,6 +134,8 @@ struct prov_link {
 #if (MYNEWT_VAL(BLE_MESH_PB_GATT))
 	uint16_t conn_handle;    /* GATT connection */
 #endif
+	struct provisioner_link provisioner[PROVISIONER_LINK];
+
 	u8_t  dhkey[32];         /* Calculated DHKey */
 	u8_t  expect;            /* Next expected PDU */
 
@@ -168,6 +190,7 @@ struct prov_rx {
 
 #define RETRANSMIT_TIMEOUT   K_MSEC(500)
 #define BUF_TIMEOUT          K_MSEC(400)
+#define CLOSING_TIMEOUT      K_SECONDS(3)
 #define TRANSACTION_TIMEOUT  K_SECONDS(30)
 #define PROTOCOL_TIMEOUT     K_SECONDS(60)
 
@@ -200,6 +223,11 @@ static int reset_state(void)
 		bt_mesh_attention(NULL, 0);
 	}
 
+	if (IS_ENABLED(CONFIG_BT_MESH_PROVISIONER) &&
+	    link.provisioner->node != NULL) {
+		bt_mesh_node_del(link.provisioner->node, false);
+	}
+
 #if (MYNEWT_VAL(BLE_MESH_PB_ADV))
 	/* Clear everything except the retransmit and protocol timer
 	 * delayed work objects.
@@ -210,6 +238,9 @@ static int reset_state(void)
 #if (MYNEWT_VAL(BLE_MESH_PB_GATT))
 	link.rx.buf = bt_mesh_proxy_get_buf();
 #else
+	if (!rx_buf) {
+	    rx_buf = NET_BUF_SIMPLE(65);
+	}
 	net_buf_simple_init(rx_buf, 0);
 	link.rx.buf = rx_buf;
 #endif /* PB_GATT */
@@ -364,7 +395,7 @@ static void send_reliable(void)
 	}
 }
 
-static int bearer_ctl_send(u8_t op, void *data, u8_t data_len)
+static int bearer_ctl_send(u8_t op, const void *data, u8_t data_len)
 {
 	struct os_mbuf *buf;
 
@@ -402,11 +433,20 @@ static u8_t last_seg(u8_t len)
 
 static inline u8_t next_transaction_id(void)
 {
-	if (link.tx.id != 0 && link.tx.id != 0xFF) {
-		return ++link.tx.id;
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		if (link.tx.id != 0x7F) {
+			link.tx.id++;
+		} else {
+			link.tx.id = 0;
+		}
+	} else {
+		if (link.tx.id != 0U && link.tx.id != 0xFF) {
+			link.tx.id++;
+		} else {
+			link.tx.id = 0x80;
+		}
 	}
 
-	link.tx.id = 0x80;
 	return link.tx.id;
 }
 
@@ -576,9 +616,62 @@ done:
 	os_mbuf_free_chain(buf);
 }
 
+#if MYNEWT_VAL(BLE_MESH_PB_ADV)
+static void send_invite(void)
+{
+	struct os_mbuf *inv = PROV_BUF(2);
+
+	BT_DBG("");
+
+	prov_buf_init(inv, PROV_INVITE);
+	net_buf_simple_add_u8(inv, link.provisioner->attention_duration);
+
+	link.conf_inputs[0] = link.provisioner->attention_duration;
+
+	if (prov_send(inv)) {
+		BT_ERR("Failed to send invite");
+		goto done;
+	}
+
+	link.expect = PROV_CAPABILITIES;
+
+done:
+	os_mbuf_free_chain(inv);
+}
+#endif
+
+static void send_start(void)
+{
+	struct os_mbuf *start = PROV_BUF(6);
+
+	BT_DBG("");
+
+	prov_buf_init(start, PROV_START);
+
+	net_buf_simple_add_u8(start, PROV_ALG_P256);
+	net_buf_simple_add_u8(start, PUB_KEY_NO_OOB);
+	net_buf_simple_add_u8(start, AUTH_METHOD_NO_OOB);
+	memset(link.auth, 0, sizeof(link.auth));
+
+	net_buf_simple_add_u8(start, 0); /* Auth Action */
+	net_buf_simple_add_u8(start, 0); /* Auth Size */
+
+	memcpy(&link.conf_inputs[12], &start->om_data[1], 5);
+
+	if (prov_send(start)) {
+		BT_ERR("Failed to send start");
+	}
+
+	os_mbuf_free_chain(start);
+}
+
 static void prov_capabilities(const u8_t *data)
 {
 	u16_t algorithms, output_action, input_action;
+
+	if (!IS_ENABLED(CONFIG_BT_MESH_PROVISIONER)) {
+		return;
+	}
 
 	BT_DBG("Elements: %u", data[0]);
 
@@ -596,6 +689,26 @@ static void prov_capabilities(const u8_t *data)
 
 	input_action = sys_get_be16(&data[9]);
 	BT_DBG("Input OOB Action:  0x%04x", input_action);
+
+	if (data[0] == 0) {
+		BT_ERR("Invalid number of elements");
+		prov_send_fail_msg(PROV_ERR_NVAL_FMT);
+		return;
+	}
+
+	link.provisioner->node = bt_mesh_node_alloc(link.provisioner->addr,
+						    data[0],
+						    link.provisioner->net_idx);
+	if (link.provisioner->node == NULL) {
+		prov_send_fail_msg(PROV_ERR_RESOURCES);
+		return;
+	}
+
+	memcpy(&link.conf_inputs[1], data, 11);
+
+	atomic_set_bit(link.flags, SEND_PUB_KEY);
+
+	send_start();
 }
 
 static bt_mesh_output_action_t output_action(u8_t action)
@@ -668,6 +781,8 @@ static int prov_auth(u8_t method, u8_t action, u8_t size)
 		if (size > prov->output_size) {
 			return -EINVAL;
 		}
+
+		atomic_set_bit(link.flags, NOTIFY_INPUT_COMPLETE);
 
 		if (output == BT_MESH_DISPLAY_STRING) {
 			unsigned char str[9];
@@ -810,7 +925,11 @@ static void send_confirm(void)
 		goto done;
 	}
 
-	link.expect = PROV_RANDOM;
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		link.expect = PROV_CONFIRM;
+	} else {
+		link.expect = PROV_RANDOM;
+	}
 
 done:
 	os_mbuf_free_chain(cfm);
@@ -824,6 +943,7 @@ static void send_input_complete(void)
 	if (prov_send(buf)) {
 		BT_ERR("Failed to send Provisioning Input Complete");
 	}
+	link.expect = PROV_CONFIRM;
 
 	os_mbuf_free_chain(buf);
 }
@@ -840,14 +960,6 @@ int bt_mesh_input_number(u32_t num)
 
 	send_input_complete();
 
-	if (!atomic_test_bit(link.flags, HAVE_DHKEY)) {
-		return 0;
-	}
-
-	if (atomic_test_and_clear_bit(link.flags, SEND_CONFIRM)) {
-		send_confirm();
-	}
-
 	return 0;
 }
 
@@ -863,41 +975,7 @@ int bt_mesh_input_string(const char *str)
 
 	send_input_complete();
 
-	if (!atomic_test_bit(link.flags, HAVE_DHKEY)) {
-		return 0;
-	}
-
-	if (atomic_test_and_clear_bit(link.flags, SEND_CONFIRM)) {
-		send_confirm();
-	}
-
 	return 0;
-}
-
-static void prov_dh_key_cb(const u8_t key[32])
-{
-	BT_DBG("%p", key);
-
-	if (!key) {
-		BT_ERR("DHKey generation failed");
-		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
-		return;
-	}
-
-	sys_memcpy_swap(link.dhkey, key, 32);
-
-	BT_DBG("DHkey: %s", bt_hex(link.dhkey, 32));
-
-	atomic_set_bit(link.flags, HAVE_DHKEY);
-
-	if (atomic_test_bit(link.flags, WAIT_NUMBER) ||
-	    atomic_test_bit(link.flags, WAIT_STRING)) {
-		return;
-	}
-
-	if (atomic_test_and_clear_bit(link.flags, SEND_CONFIRM)) {
-		send_confirm();
-	}
 }
 
 static void send_pub_key(void)
@@ -914,56 +992,112 @@ static void send_pub_key(void)
 
 	BT_DBG("Local Public Key: %s", bt_hex(key, 64));
 
-	/* Copy remote key in little-endian for bt_dh_key_gen().
-	 * X and Y halves are swapped independently. Use response
-	 * buffer as a temporary storage location. The bt_dh_key_gen()
-	 * will also take care of validating the remote public key.
-	 */
-	sys_memcpy_swap(buf->om_data, &link.conf_inputs[17], 32);
-	sys_memcpy_swap(&buf->om_data[32], &link.conf_inputs[49], 32);
-
-	if (bt_dh_key_gen(buf->om_data, prov_dh_key_cb)) {
-		BT_ERR("Failed to generate DHKey");
-		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
-		return;
-	}
-
 	prov_buf_init(buf, PROV_PUB_KEY);
 
 	/* Swap X and Y halves independently to big-endian */
 	sys_memcpy_swap(net_buf_simple_add(buf, 32), key, 32);
 	sys_memcpy_swap(net_buf_simple_add(buf, 32), &key[32], 32);
 
-	memcpy(&link.conf_inputs[81], &buf->om_data[1], 64);
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		/* PublicKeyProvisioner */
+		memcpy(&link.conf_inputs[17], &buf->om_data[1], 64);
+	} else {
+		/* PublicKeyRemote */
+		memcpy(&link.conf_inputs[81], &buf->om_data[1], 64);
+	}
 
 	if (prov_send(buf)) {
 		BT_ERR("Failed to send Public Key");
-		return;
+		goto done;
 	}
 
-	link.expect = PROV_CONFIRM;
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		link.expect = PROV_PUB_KEY;
+	} else {
+		if (atomic_test_bit(link.flags, WAIT_NUMBER) ||
+		    atomic_test_bit(link.flags, WAIT_STRING)) {
+			link.expect = PROV_NO_PDU; /* Wait for input */
+		} else {
+			link.expect = PROV_CONFIRM;
+		}
+	}
 
 done:
 	os_mbuf_free_chain(buf);
+}
+
+static void prov_dh_key_cb(const u8_t dhkey[32])
+{
+	BT_DBG("%p", dhkey);
+
+	if (!dhkey) {
+		BT_ERR("DHKey generation failed");
+		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
+		return;
+	}
+
+	sys_memcpy_swap(link.dhkey, dhkey, 32);
+
+	BT_DBG("DHkey: %s", bt_hex(link.dhkey, 32));
+
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		send_confirm();
+	} else {
+		send_pub_key();
+	}
+}
+
+static void prov_dh_key_gen(void)
+{
+	u8_t remote_pk_le[64], *remote_pk;
+
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		remote_pk = &link.conf_inputs[81];
+	} else {
+		remote_pk = &link.conf_inputs[17];
+	}
+
+	/* Copy remote key in little-endian for bt_dh_key_gen().
+	 * X and Y halves are swapped independently. The bt_dh_key_gen()
+	 * will also take care of validating the remote public key.
+	 */
+	sys_memcpy_swap(remote_pk_le, remote_pk, 32);
+	sys_memcpy_swap(&remote_pk_le[32], &remote_pk[32], 32);
+
+	if (bt_dh_key_gen(remote_pk_le, prov_dh_key_cb)) {
+		BT_ERR("Failed to generate DHKey");
+		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
+	}
 }
 
 static void prov_pub_key(const u8_t *data)
 {
 	BT_DBG("Remote Public Key: %s", bt_hex(data, 64));
 
-	memcpy(&link.conf_inputs[17], data, 64);
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		/* PublicKeyDevice */
+		memcpy(&link.conf_inputs[81], data, 64);
 
-	if (!bt_pub_key_get()) {
-		/* Clear retransmit timer */
 #if (MYNEWT_VAL(BLE_MESH_PB_ADV))
 		prov_clear_tx();
 #endif
-		atomic_set_bit(link.flags, REMOTE_PUB_KEY);
-		BT_WARN("Waiting for local public key");
-		return;
+	} else {
+		/* PublicKeyProvisioner */
+		memcpy(&link.conf_inputs[17], data, 64);
+
+		if (!bt_pub_key_get()) {
+			/* Clear retransmit timer */
+#if (MYNEWT_VAL(BLE_MESH_PB_ADV))
+			prov_clear_tx();
+#endif
+
+			atomic_set_bit(link.flags, WAIT_PUB_KEY);
+			BT_WARN("Waiting for local public key");
+			return;
+		}
 	}
 
-	send_pub_key();
+	prov_dh_key_gen();
 }
 
 static void pub_key_ready(const u8_t *pkey)
@@ -975,52 +1109,144 @@ static void pub_key_ready(const u8_t *pkey)
 
 	BT_DBG("Local public key ready");
 
-	if (atomic_test_and_clear_bit(link.flags, REMOTE_PUB_KEY)) {
-		send_pub_key();
+	if (atomic_test_and_clear_bit(link.flags, WAIT_PUB_KEY)) {
+		if (atomic_test_bit(link.flags, PROVISIONER)) {
+			send_pub_key();
+		} else {
+			prov_dh_key_gen();
+		}
+	}
+}
+
+static void notify_input_complete(void)
+{
+	if (atomic_test_and_clear_bit(link.flags, NOTIFY_INPUT_COMPLETE) &&
+	    prov->input_complete) {
+		prov->input_complete();
 	}
 }
 
 static void prov_input_complete(const u8_t *data)
 {
 	BT_DBG("");
+	notify_input_complete();
 }
 
-static void prov_confirm(const u8_t *data)
+static void send_prov_data(void)
 {
-	BT_DBG("Remote Confirm: %s", bt_hex(data, 16));
+	struct os_mbuf *pdu = PROV_BUF(34);
+	struct bt_mesh_subnet *sub;
+	u8_t session_key[16];
+	u8_t nonce[13];
+	int err;
 
-	memcpy(link.conf, data, 16);
-
-	if (!atomic_test_bit(link.flags, HAVE_DHKEY)) {
-#if (MYNEWT_VAL(BLE_MESH_PB_ADV))
-		prov_clear_tx();
-#endif
-		atomic_set_bit(link.flags, SEND_CONFIRM);
-	} else {
-		send_confirm();
-	}
-}
-
-static void prov_random(const u8_t *data)
-{
-	struct os_mbuf *rnd = PROV_BUF(16);
-	u8_t conf_verify[16];
-
-	BT_DBG("Remote Random: %s", bt_hex(data, 16));
-
-	if (bt_mesh_prov_conf(link.conf_key, data, link.auth, conf_verify)) {
-		BT_ERR("Unable to calculate confirmation verification");
+	err = bt_mesh_session_key(link.dhkey, link.prov_salt, session_key);
+	if (err) {
+		BT_ERR("Unable to generate session key");
 		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
 		goto done;
 	}
 
-	if (memcmp(conf_verify, link.conf, 16)) {
-		BT_ERR("Invalid confirmation value");
-		BT_DBG("Received:   %s", bt_hex(link.conf, 16));
-		BT_DBG("Calculated: %s",  bt_hex(conf_verify, 16));
-		prov_send_fail_msg(PROV_ERR_CFM_FAILED);
+	BT_DBG("SessionKey: %s", bt_hex(session_key, 16));
+
+	err = bt_mesh_prov_nonce(link.dhkey, link.prov_salt, nonce);
+	if (err) {
+		BT_ERR("Unable to generate session nonce");
+		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
 		goto done;
 	}
+
+	BT_DBG("Nonce: %s", bt_hex(nonce, 13));
+
+	err = bt_mesh_dev_key(link.dhkey, link.prov_salt,
+			      link.provisioner->node->dev_key);
+	if (err) {
+		BT_ERR("Unable to generate device key");
+		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
+		goto done;
+	}
+
+	BT_DBG("DevKey: %s", bt_hex(link.provisioner->node->dev_key, 16));
+
+	sub = bt_mesh_subnet_get(link.provisioner->node->net_idx);
+	if (sub == NULL) {
+		BT_ERR("No subnet with net_idx %u",
+		       link.provisioner->node->net_idx);
+		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
+		goto done;
+	}
+
+	prov_buf_init(pdu, PROV_DATA);
+	net_buf_simple_add_mem(pdu, sub->keys[sub->kr_flag].net, 16);
+	net_buf_simple_add_be16(pdu, link.provisioner->node->net_idx);
+	net_buf_simple_add_u8(pdu, bt_mesh_net_flags(sub));
+	net_buf_simple_add_be32(pdu, bt_mesh.iv_index);
+	net_buf_simple_add_be16(pdu, link.provisioner->node->addr);
+	net_buf_simple_add(pdu, 8); /* For MIC */
+
+	BT_DBG("net_idx %u, iv_index 0x%08x, addr 0x%04x",
+	       link.provisioner->node->net_idx, bt_mesh.iv_index,
+	       link.provisioner->node->addr);
+
+	err = bt_mesh_prov_encrypt(session_key, nonce, &pdu->om_data[1],
+				   &pdu->om_data[1]);
+	if (err) {
+		BT_ERR("Unable to encrypt provisioning data");
+		prov_send_fail_msg(PROV_ERR_DECRYPT);
+		goto done;
+	}
+
+	if (prov_send(pdu)) {
+		BT_ERR("Failed to send Provisioning Data");
+		goto done;
+	}
+
+	link.expect = PROV_COMPLETE;
+
+done:
+	os_mbuf_free_chain(pdu);
+}
+
+static void prov_complete(const u8_t *data)
+{
+	if (!IS_ENABLED(CONFIG_BT_MESH_PROVISIONER)) {
+		return;
+	}
+
+	struct bt_mesh_node *node = link.provisioner->node;
+#if MYNEWT_VAL(BLE_MESH_PB_ADV)
+	u8_t reason = CLOSE_REASON_SUCCESS;
+#endif
+
+	BT_DBG("key %s, net_idx %u, num_elem %u, addr 0x%04x",
+	       bt_hex(node->dev_key, 16), node->net_idx, node->num_elem,
+	       node->addr);
+
+	if (IS_ENABLED(CONFIG_BT_SETTINGS)) {
+		bt_mesh_store_node(node);
+	}
+
+	link.provisioner->node = NULL;
+	link.expect = PROV_NO_PDU;
+	atomic_set_bit(link.flags, LINK_CLOSING);
+
+#if MYNEWT_VAL(BLE_MESH_PB_ADV)
+	bearer_ctl_send(LINK_CLOSE, &reason, sizeof(reason));
+#endif
+
+	bt_mesh_prov_node_added(node->net_idx, node->addr, node->num_elem);
+
+	/*
+	 * According to mesh profile spec (5.3.1.4.3), the close message should
+	 * be restransmitted at least three times. Retransmit the LINK_CLOSE
+	 * message until CLOSING_TIMEOUT has elapsed instead of resetting the
+	 * link here.
+	 */
+}
+
+static void send_random(void)
+{
+	struct os_mbuf *rnd = PROV_BUF(17);
 
 	prov_buf_init(rnd, PROV_RANDOM);
 	net_buf_simple_add_mem(rnd, link.rand, 16);
@@ -1030,19 +1256,75 @@ static void prov_random(const u8_t *data)
 		goto done;
 	}
 
-	if (bt_mesh_prov_salt(link.conf_salt, data, link.rand,
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		link.expect = PROV_RANDOM;
+	} else {
+		link.expect = PROV_DATA;
+	}
+
+done:
+	os_mbuf_free_chain(rnd);
+}
+
+static void prov_random(const u8_t *data)
+{
+	u8_t conf_verify[16];
+	const u8_t *prov_rand, *dev_rand;
+
+	BT_DBG("Remote Random: %s", bt_hex(data, 16));
+
+	if (bt_mesh_prov_conf(link.conf_key, data, link.auth, conf_verify)) {
+		BT_ERR("Unable to calculate confirmation verification");
+		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
+		return;
+	}
+
+	if (memcmp(conf_verify, link.conf, 16)) {
+		BT_ERR("Invalid confirmation value");
+		BT_DBG("Received:   %s", bt_hex(link.conf, 16));
+		BT_DBG("Calculated: %s",  bt_hex(conf_verify, 16));
+		prov_send_fail_msg(PROV_ERR_CFM_FAILED);
+		return;
+	}
+
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		prov_rand = link.rand;
+		dev_rand = data;
+	} else {
+		prov_rand = data;
+		dev_rand = link.rand;
+	}
+
+	if (bt_mesh_prov_salt(link.conf_salt, prov_rand, dev_rand,
 			      link.prov_salt)) {
 		BT_ERR("Failed to generate provisioning salt");
 		prov_send_fail_msg(PROV_ERR_UNEXP_ERR);
-		goto done;
+		return;
 	}
 
 	BT_DBG("ProvisioningSalt: %s", bt_hex(link.prov_salt, 16));
 
-	link.expect = PROV_DATA;
+	if (IS_ENABLED(CONFIG_BT_MESH_PROVISIONER) &&
+	    atomic_test_bit(link.flags, PROVISIONER)) {
+		send_prov_data();
+	} else {
+		send_random();
+	}
+}
 
-done:
-    os_mbuf_free_chain(rnd);
+static void prov_confirm(const u8_t *data)
+{
+	BT_DBG("Remote Confirm: %s", bt_hex(data, 16));
+
+	memcpy(link.conf, data, 16);
+
+	notify_input_complete();
+
+	if (atomic_test_bit(link.flags, PROVISIONER)) {
+		send_random();
+	} else {
+		send_confirm();
+	}
 }
 
 static inline bool is_pb_gatt(void)
@@ -1119,7 +1401,7 @@ static void prov_data(const u8_t *data)
 	}
 
 	/* Ignore any further PDUs on this link */
-	link.expect = 0;
+	link.expect = PROV_NO_PDU;
 
 	/* Store info, since bt_mesh_provision() will end up clearing it */
 	if (IS_ENABLED(CONFIG_BT_MESH_GATT_PROXY)) {
@@ -1143,11 +1425,6 @@ static void prov_data(const u8_t *data)
 
 done:
 	os_mbuf_free_chain(msg);
-}
-
-static void prov_complete(const u8_t *data)
-{
-	BT_DBG("");
 }
 
 static void prov_failed(const u8_t *data)
@@ -1174,7 +1451,7 @@ static const struct {
 #if (MYNEWT_VAL(BLE_MESH_PB_ADV))
 static void prov_retransmit(struct ble_npl_event *work)
 {
-	int i;
+	int i, timeout;
 
 	BT_DBG("");
 
@@ -1183,7 +1460,13 @@ static void prov_retransmit(struct ble_npl_event *work)
 		return;
 	}
 
-	if (k_uptime_get() - link.tx.start > TRANSACTION_TIMEOUT) {
+	if (atomic_test_bit(link.flags, LINK_CLOSING)) {
+		timeout = CLOSING_TIMEOUT;
+	} else {
+		timeout = TRANSACTION_TIMEOUT;
+	}
+
+	if (k_uptime_get() - link.tx.start > timeout) {
 		BT_WARN("Giving up transaction");
 		reset_adv_link();
 		return;
@@ -1248,12 +1531,26 @@ static void link_open(struct prov_rx *rx, struct os_mbuf *buf)
 	bearer_ctl_send(LINK_ACK, NULL, 0);
 
 	link.expect = PROV_INVITE;
-
 }
 
 static void link_ack(struct prov_rx *rx, struct os_mbuf *buf)
 {
 	BT_DBG("Link ack: len %u", buf->om_len);
+
+	if (IS_ENABLED(CONFIG_BT_MESH_PROVISIONER) &&
+	    atomic_test_bit(link.flags, PROVISIONER)) {
+		if (atomic_test_and_set_bit(link.flags, LINK_ACK_RECVD)) {
+			return;
+		}
+
+		prov_clear_tx();
+
+		if (prov->link_open) {
+			prov->link_open(BT_MESH_PROV_ADV);
+		}
+
+		send_invite();
+	}
 }
 
 static void link_close(struct prov_rx *rx, struct os_mbuf *buf)
@@ -1398,7 +1695,21 @@ static void gen_prov_ack(struct prov_rx *rx, struct os_mbuf *buf)
 	}
 
 	if (rx->xact_id == link.tx.id) {
-		prov_clear_tx();
+		/* Don't clear resending of LINK_CLOSE messages */
+		if (!atomic_test_bit(link.flags, LINK_CLOSING)) {
+			prov_clear_tx();
+		}
+
+		/* Send the PubKey when the the Start message is ACK'ed */
+		if (IS_ENABLED(CONFIG_BT_MESH_PROVISIONER) &&
+		    atomic_test_and_clear_bit(link.flags, SEND_PUB_KEY)) {
+			if (!bt_pub_key_get()) {
+				atomic_set_bit(link.flags, WAIT_PUB_KEY);
+				BT_WARN("Waiting for local public key");
+			} else {
+				send_pub_key();
+			}
+		}
 	}
 }
 
@@ -1456,9 +1767,9 @@ static void gen_prov_start(struct prov_rx *rx, struct os_mbuf *buf)
 }
 
 static const struct {
-	void (*const func)(struct prov_rx *rx, struct os_mbuf *buf);
-	const u8_t require_link;
-	const u8_t min_len;
+	void (*func)(struct prov_rx *rx, struct os_mbuf *buf);
+	bool require_link;
+	u8_t min_len;
 } gen_prov[] = {
 	{ gen_prov_start, true, 3 },
 	{ gen_prov_ack, true, 0 },
@@ -1510,6 +1821,31 @@ void bt_mesh_pb_adv_recv(struct os_mbuf *buf)
 
 	gen_prov_recv(&rx, buf);
 }
+
+int bt_mesh_pb_adv_open(const u8_t uuid[16], u16_t net_idx, u16_t addr,
+			u8_t attention_duration)
+{
+	BT_DBG("uuid %s", bt_hex(uuid, 16));
+
+	if (atomic_test_and_set_bit(link.flags, LINK_ACTIVE)) {
+		return -EBUSY;
+	}
+
+	atomic_set_bit(link.flags, PROVISIONER);
+
+	bt_rand(&link.id, sizeof(link.id));
+	link.tx.id = 0x7F;
+	link.provisioner->addr = addr;
+	link.provisioner->net_idx = net_idx;
+	link.provisioner->attention_duration = attention_duration;
+
+	net_buf_simple_init(link.rx.buf, 0);
+
+	bearer_ctl_send(LINK_OPEN, uuid, 16);
+
+	return 0;
+}
+
 #endif /* MYNEWT_VAL(BLE_MESH_PB_ADV) */
 
 #if (MYNEWT_VAL(BLE_MESH_PB_GATT))
@@ -1652,6 +1988,13 @@ void bt_mesh_prov_complete(u16_t net_idx, u16_t addr)
 {
 	if (prov->complete) {
 		prov->complete(net_idx, addr);
+	}
+}
+
+void bt_mesh_prov_node_added(u16_t net_idx, u16_t addr, u8_t num_elem)
+{
+	if (prov->node_added) {
+		prov->node_added(net_idx, addr, num_elem);
 	}
 }
 

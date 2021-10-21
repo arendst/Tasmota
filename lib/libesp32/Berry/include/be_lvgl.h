@@ -24,6 +24,7 @@ extern "C" {
     // list of classes and function tables
     typedef struct lvbe_call_c_classes_t {
         const char * name;
+        const bclass * cl;
         const lvbe_call_c_t * func_table;
         size_t size;
     } lvbe_call_c_classes_t;

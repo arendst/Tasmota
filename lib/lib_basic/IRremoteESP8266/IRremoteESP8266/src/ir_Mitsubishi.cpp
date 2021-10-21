@@ -257,120 +257,49 @@ void IRsend::sendMitsubishiAC(const unsigned char data[], const uint16_t nbytes,
 bool IRrecv::decodeMitsubishiAC(decode_results *results, uint16_t offset,
                                 const uint16_t nbits,
                                 const bool strict) {
-  if (results->rawlen <= ((kMitsubishiACBits * 2) + 2) + offset) {
-    DPRINTLN("Shorter than shortest possibly expected.");
-    return false;  // Shorter than shortest possibly expected.
-  }
-  if (strict && nbits != kMitsubishiACBits) {
-    DPRINTLN("Request is out of spec.");
-    return false;  // Request is out of spec.
-  }
-  for (uint8_t i = 0; i < kMitsubishiACStateLength; i++) results->state[i] = 0;
-  bool failure = false;
-  uint8_t rep = 0;
-  do {
-    failure = false;
-    // Header:
-    //  Sometime happens that junk signals arrives before the real message
-    bool headerFound = false;
-    while (!headerFound &&
-           offset < (results->rawlen - (kMitsubishiACBits * 2 + 2))) {
-      headerFound =
-          matchMark(results->rawbuf[offset], kMitsubishiAcHdrMark) &&
-          matchSpace(results->rawbuf[offset + 1], kMitsubishiAcHdrSpace);
-      offset += 2;
-    }
-    if (!headerFound) {
-      DPRINTLN("Header mark not found.");
-      return false;
-    }
-    DPRINT("Header mark found at #");
-    DPRINTLN(offset - 2);
-    // Decode byte-by-byte:
-    match_result_t data_result;
-    for (uint8_t i = 0; i < kMitsubishiACStateLength && !failure; i++) {
-      results->state[i] = 0;
-      data_result =
-          matchData(&(results->rawbuf[offset]), 8, kMitsubishiAcBitMark,
-                    kMitsubishiAcOneSpace, kMitsubishiAcBitMark,
-                    kMitsubishiAcZeroSpace,
-                    _tolerance + kMitsubishiAcExtraTolerance, 0, false);
-      if (data_result.success == false) {
-        failure = true;
-        DPRINT("Byte decode failed at #");
-        DPRINTLN((uint16_t)i);
-      } else {
-        results->state[i] = data_result.data;
-        offset += data_result.used;
-        DPRINT((uint16_t)results->state[i]);
-        DPRINT(",");
+  // Compliance
+  if (strict && nbits != kMitsubishiACBits) return false;  // Out of spec.
+  // Do we need to look for a repeat?
+  const uint16_t expected_repeats = strict ? kMitsubishiACMinRepeat : kNoRepeat;
+  // Enough data?
+  if (results->rawlen <= (nbits * 2 + kHeader + kFooter) *
+                         (expected_repeats + 1) + offset - 1) return false;
+  uint16_t save[kStateSizeMax];
+  // Handle repeats if we need too.
+  for (uint16_t r = 0; r <= expected_repeats; r++) {
+    // Header + Data + Footer
+    uint16_t used = matchGeneric(results->rawbuf + offset, results->state,
+                                 results->rawlen - offset, nbits,
+                                 kMitsubishiAcHdrMark, kMitsubishiAcHdrSpace,
+                                 kMitsubishiAcBitMark, kMitsubishiAcOneSpace,
+                                 kMitsubishiAcBitMark, kMitsubishiAcZeroSpace,
+                                 kMitsubishiAcRptMark, kMitsubishiAcRptSpace,
+                                 r < expected_repeats,  // At least?
+                                 _tolerance + kMitsubishiAcExtraTolerance,
+                                 0, false);
+    if (!used) return false;  // No match.
+    offset += used;
+    if (r) {  // Is this a repeat?
+      // Repeats are expected to be exactly the same.
+      if (std::memcmp(save, results->state, nbits / 8) != 0) return false;
+    } else {  // It is the first message.
+      // Compliance
+      if (strict) {
+        // Data signature check.
+        static const uint8_t signature[5] = {0x23, 0xCB, 0x26, 0x01, 0x00};
+        if (std::memcmp(results->state, signature, 5) != 0) return false;
+        // Checksum verification.
+        if (!IRMitsubishiAC::validChecksum(results->state)) return false;
       }
-      DPRINTLN("");
+      // Save a copy of the state to compare with.
+      std::memcpy(save, results->state, nbits / 8);
     }
-    // HEADER validation:
-    if (failure || results->state[0] != 0x23 || results->state[1] != 0xCB ||
-        results->state[2] != 0x26 || results->state[3] != 0x01 ||
-        results->state[4] != 0x00) {
-      DPRINTLN("Header mismatch.");
-      failure = true;
-    } else {
-      // DATA part:
+  }
 
-      // FOOTER checksum:
-      if (!IRMitsubishiAC::validChecksum(results->state)) {
-        DPRINTLN("Checksum error.");
-        failure = true;
-      }
-    }
-    if (rep != kMitsubishiACMinRepeat && failure) {
-      bool repeatMarkFound = false;
-      while (!repeatMarkFound &&
-             offset < (results->rawlen - (kMitsubishiACBits * 2 + 4))) {
-        repeatMarkFound =
-            matchMark(results->rawbuf[offset], kMitsubishiAcRptMark) &&
-            matchSpace(results->rawbuf[offset + 1], kMitsubishiAcRptSpace);
-            offset += 2;
-      }
-      if (!repeatMarkFound) {
-        DPRINTLN("First attempt failure and repeat mark not found.");
-        return false;
-      }
-    }
-    rep++;
-    // Check if the repeat is correct if we need strict decode:
-    if (strict && !failure) {
-      DPRINTLN("Strict repeat check enabled.");
-      // Repeat mark and space:
-      if (!matchMark(results->rawbuf[offset++], kMitsubishiAcRptMark) ||
-          !matchSpace(results->rawbuf[offset++], kMitsubishiAcRptSpace)) {
-        DPRINTLN("Repeat mark error.");
-        return false;
-      }
-      // Header mark and space:
-      if (!matchMark(results->rawbuf[offset++], kMitsubishiAcHdrMark) ||
-          !matchSpace(results->rawbuf[offset++], kMitsubishiAcHdrSpace)) {
-        DPRINTLN("Repeat header error.");
-        return false;
-      }
-      // Payload:
-      for (uint8_t i = 0; i < kMitsubishiACStateLength; i++) {
-        data_result =
-            matchData(&(results->rawbuf[offset]), 8, kMitsubishiAcBitMark,
-                      kMitsubishiAcOneSpace, kMitsubishiAcBitMark,
-                      kMitsubishiAcZeroSpace,
-                      _tolerance + kMitsubishiAcExtraTolerance, 0, false);
-        if (data_result.success == false ||
-            data_result.data != results->state[i]) {
-          DPRINTLN("Repeat payload error.");
-          return false;
-        }
-        offset += data_result.used;
-      }
-    }  // strict repeat check
-  } while (failure && rep <= kMitsubishiACMinRepeat);
+  // Success.
   results->decode_type = MITSUBISHI_AC;
   results->bits = nbits;
-  return !failure;
+  return true;
 }
 #endif  // DECODE_MITSUBISHI_AC
 
@@ -516,6 +445,7 @@ void IRMitsubishiAC::setMode(const uint8_t mode) {
     case kMitsubishiAcCool: _.raw[8] = 0b00110110; break;
     case kMitsubishiAcDry:  _.raw[8] = 0b00110010; break;
     case kMitsubishiAcHeat: _.raw[8] = 0b00110000; break;
+    case kMitsubishiAcFan:  _.raw[8] = 0b00110111; break;
     default:
       _.raw[8] = 0b00110000;
       _.Mode = kMitsubishiAcAuto;
@@ -525,6 +455,7 @@ void IRMitsubishiAC::setMode(const uint8_t mode) {
 }
 
 /// Set the requested vane (Vertical Swing) operation mode of the a/c unit.
+/// @note On some models, this represents the Right vertical vane.
 /// @param[in] position The position/mode to set the vane to.
 void IRMitsubishiAC::setVane(const uint8_t position) {
   uint8_t pos = std::min(position, kMitsubishiAcVaneAutoMove);  // bounds check
@@ -539,6 +470,7 @@ void IRMitsubishiAC::setWideVane(const uint8_t position) {
 }
 
 /// Get the Vane (Vertical Swing) mode of the A/C.
+/// @note On some models, this represents the Right vertical vane.
 /// @return The native position/mode setting.
 uint8_t IRMitsubishiAC::getVane(void) const {
   return _.Vane;
@@ -549,6 +481,16 @@ uint8_t IRMitsubishiAC::getVane(void) const {
 uint8_t IRMitsubishiAC::getWideVane(void) const {
   return _.WideVane;
 }
+
+/// Set the requested Left Vane (Vertical Swing) operation mode of the a/c unit.
+/// @param[in] position The position/mode to set the vane to.
+void IRMitsubishiAC::setVaneLeft(const uint8_t position) {
+  _.VaneLeft = std::min(position, kMitsubishiAcVaneAutoMove);  // bounds check
+}
+
+/// Get the Left Vane (Vertical Swing) mode of the A/C.
+/// @return The native position/mode setting.
+uint8_t IRMitsubishiAC::getVaneLeft(void) const { return _.VaneLeft; }
 
 /// Get the clock time of the A/C unit.
 /// @return Nr. of 10 minute increments past midnight.
@@ -612,6 +554,7 @@ uint8_t IRMitsubishiAC::convertMode(const stdAc::opmode_t mode) {
     case stdAc::opmode_t::kCool: return kMitsubishiAcCool;
     case stdAc::opmode_t::kHeat: return kMitsubishiAcHeat;
     case stdAc::opmode_t::kDry:  return kMitsubishiAcDry;
+    case stdAc::opmode_t::kFan:  return kMitsubishiAcFan;
     default:                     return kMitsubishiAcAuto;
   }
 }
@@ -679,6 +622,7 @@ stdAc::opmode_t IRMitsubishiAC::toCommonMode(const uint8_t mode) {
     case kMitsubishiAcCool: return stdAc::opmode_t::kCool;
     case kMitsubishiAcHeat: return stdAc::opmode_t::kHeat;
     case kMitsubishiAcDry:  return stdAc::opmode_t::kDry;
+    case kMitsubishiAcFan:  return stdAc::opmode_t::kFan;
     default:                return stdAc::opmode_t::kAuto;
   }
 }
@@ -780,7 +724,7 @@ String IRMitsubishiAC::toString(void) const {
   result += addBoolToString(_.Power, kPowerStr, false);
   result += addModeToString(_.Mode, kMitsubishiAcAuto, kMitsubishiAcCool,
                             kMitsubishiAcHeat, kMitsubishiAcDry,
-                            kMitsubishiAcAuto);
+                            kMitsubishiAcFan);
   result += addTempFloatToString(getTemp());
   result += addFanToString(getFan(), kMitsubishiAcFanRealMax,
                            kMitsubishiAcFanRealMax - 3,

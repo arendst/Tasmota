@@ -42,7 +42,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
@@ -74,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -432,7 +432,7 @@ void CmndStatusResponse(uint32_t index) {
       all_status = (const char*) nullptr;
     } else {
       if (0 == index) { all_status = ""; }
-      all_status += TasmotaGlobal.mqtt_data;
+      all_status += ResponseData();
     }
   }
   else if (index < 99) {
@@ -560,18 +560,18 @@ void CmndStatus(void)
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
-    XsnsSensorState();
+    XsnsSensorState(0);
     ResponseJsonEndEnd();
     CmndStatusResponse(4);
   }
 
   if ((0 == payload) || (5 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\""
-                          D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
+                          D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
+                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           NetworkHostname(), (uint32_t)NetworkAddress(),
-                          Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3],
-                          NetworkMacAddress().c_str(), Settings->webserver, Settings->sta_config, WifiGetOutputPower().c_str());
+                          Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3], Settings->ipv4_address[4],
+                          NetworkMacAddress().c_str(), Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
     CmndStatusResponse(5);
   }
 
@@ -908,7 +908,7 @@ bool SetoptionDecode(uint32_t index, uint32_t *ptype, uint32_t *pindex) {
       *ptype = 4;
       *pindex = index -82;      // 0 .. 31
     }
-    else {                                 // SetOption114 .. 145 = Settings->flag5
+    else {                      // SetOption114 .. 145 = Settings->flag5
       *ptype = 5;
       *pindex = index -114;     // 0 .. 31
     }
@@ -1450,6 +1450,10 @@ void CmndPwmfrequency(void)
   if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload >= PWM_MIN) && (XdrvMailbox.payload <= PWM_MAX))) {
     Settings->pwm_frequency = (1 == XdrvMailbox.payload) ? PWM_FREQ : XdrvMailbox.payload;
     analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
+#ifdef USE_LIGHT
+    LightReapplyColor();
+    LightAnimate();
+#endif // USE_LIGHT
   }
   ResponseCmndNumber(Settings->pwm_frequency);
 }
@@ -1642,12 +1646,12 @@ void CmndLogport(void)
 
 void CmndIpAddress(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     char network_address[22];
     ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)NetworkAddress());
     if (!XdrvMailbox.usridx) {
       ResponseClear();
-      for (uint32_t i = 0; i < 4; i++) {
+      for (uint32_t i = 0; i < 5; i++) {
         ResponseAppend_P(PSTR("%c\"%s%d\":\"%_I%s\""), (i)?',':'{', XdrvMailbox.command, i +1, Settings->ipv4_address[i], (0 == i)?network_address:"");
       }
       ResponseJsonEnd();
@@ -2265,6 +2269,21 @@ void CmndDevGroupTie(void)
   }
 }
 #endif  // USE_DEVICE_GROUPS
+
+void CmndSetSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings->sensors[0][XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) {
+        TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+      }
+    }
+    Response_P(PSTR("{\"" D_CMND_SETSENSOR "\":"));
+    XsnsSensorState(0);
+    ResponseJsonEnd();
+  }
+}
 
 void CmndSensor(void)
 {

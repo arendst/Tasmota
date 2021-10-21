@@ -47,7 +47,7 @@ const char * hap_platform_keystore_get_factory_nvs_partition_name() {
 
 #ifdef HAP_USE_LITTLEFS
 
-#include <LITTLEFS.h>
+#include <LittleFS.h>
 
 extern FS *ffsp;
 

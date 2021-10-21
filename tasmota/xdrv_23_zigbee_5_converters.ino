@@ -448,6 +448,11 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx0102, 0x0017,  Z_(Mode),                 Cm1, 0 },
   { Zoctstr,  Cx0102, 0x0018,  Z_(IntermediateSetpointsLift),Cm1, 0 },
   { Zoctstr,  Cx0102, 0x0019,  Z_(IntermediateSetpointsTilt),Cm1, 0 },
+  // Tuya specific, from Zigbee2MQTT https://github.com/Koenkk/zigbee-herdsman/blob/4fed7310d1e1e9d81e5148cf5b4d8ec98d03c687/src/zcl/definition/cluster.ts#L1772
+  { Zenum8,   Cx0102, 0xF000,  Z_(TuyaMovingState),Cm1, 0 },
+  { Zenum8,   Cx0102, 0xF001,  Z_(TuyaCalibration),Cm1, 0 },
+  { Zenum8,   Cx0102, 0xF002,  Z_(TuyaMotorReversal),Cm1, 0 },
+  { Zuint16,  Cx0102, 0xF003,  Z_(TuyaCalibrationTime),Cm1, 0 },
 
   // Thermostat
   { Zint16,   Cx0201, 0x0000,  Z_(LocalTemperature),  Cm_100, Z_MAPPING(Z_Data_Thermo, temperature) },
@@ -751,11 +756,7 @@ public:
     if (Settings->flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
-#ifdef MQTT_DATA_STRING
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data.c_str());
-#else
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), TasmotaGlobal.mqtt_data);
-#endif      
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), ResponseData());
     }
   }
 

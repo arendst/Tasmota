@@ -11,14 +11,15 @@
 #include "berry.h"
 
 /* basic types, do not change value */
-#define BE_NONE         (-1)    /* unknow type */
+#define BE_NONE         (-1)    /* unknown type */
 #define BE_COMPTR       (-2)    /* common pointer */
+#define BE_INDEX        (-3)    /* index for instance variable, previously BE_INT */
 #define BE_NIL          0
 #define BE_INT          1
 #define BE_REAL         2
 #define BE_BOOL         3
 #define BE_FUNCTION     4
-#define BE_STRING       5
+#define BE_STRING       5       /* from this type can be gced, see BE_GCOBJECT */
 #define BE_CLASS        6
 #define BE_INSTANCE     7
 #define BE_PROTO        8
@@ -207,6 +208,8 @@ typedef const char* (*breader)(void*, size_t*);
 #define var_islist(_v)          var_istype(_v, BE_LIST)
 #define var_ismap(_v)           var_istype(_v, BE_MAP)
 #define var_ismodule(_v)        var_istype(_v, BE_MODULE)
+#define var_isindex(_v)         var_istype(_v, BE_INDEX)
+#define var_iscomptr(_v)        var_istype(_v, BE_COMPTR)
 #define var_isnumber(_v)        (var_isint(_v) || var_isreal(_v))
 
 #define var_setnil(_v)          var_settype(_v, BE_NIL)
@@ -223,6 +226,7 @@ typedef const char* (*breader)(void*, size_t*);
 #define var_setlist(_v, _o)     var_setobj(_v, BE_LIST, _o)
 #define var_setmap(_v, _o)      var_setobj(_v, BE_MAP, _o)
 #define var_setmodule(_v, _o)   var_setobj(_v, BE_MODULE, _o)
+#define var_setindex(_v, _i)      { var_settype(_v, BE_INDEX); (_v)->v.i = (_i); }
 #define var_setproto(_v, _o)    var_setobj(_v, BE_PROTO, _o)
 
 #define var_tobool(_v)          ((_v)->v.b)

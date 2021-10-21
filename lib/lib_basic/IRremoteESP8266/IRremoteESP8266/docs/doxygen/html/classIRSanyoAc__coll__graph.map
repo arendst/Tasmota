@@ -1,5 +1,0 @@
-<map id="IRSanyoAc" name="IRSanyoAc">
-<area shape="rect" id="node1" title="Class for handling detailed Sanyo A/C messages." alt="" coords="51,95,141,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
-<area shape="rect" id="node3" href="$unionSanyoProtocol.html" title="Native representation of a Sanyo A/C message." alt="" coords="96,5,211,32"/>
-</map>

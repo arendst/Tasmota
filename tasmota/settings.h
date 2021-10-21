@@ -28,7 +28,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0              - SetOption0   - (Settings) Save power state (1) and use after restart
     uint32_t button_restrict : 1;          // bit 1              - SetOption1   - (Button) Control button single press (1) or multipress (0)
-    uint32_t ex_value_units : 1;           // bit 2              - SetOption2   - (not used) Add units to JSON status messages - removed 6.6.0.21
+    uint32_t mqtt_add_global_info : 1;     // bit 2              - SetOption2   - (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
     uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3   - (MQTT) Enable (1)
     uint32_t mqtt_response : 1;            // bit 4              - SetOption4   - (MQTT) Switch between RESULT (0) or COMMAND (1)
     uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN
@@ -157,9 +157,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t zigbee_hide_bridge_topic : 1; // bit 11 (v9.3.1.1)  - SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
     uint32_t ds18x20_mean : 1;             // bit 12 (v9.3.1.2)  - SetOption126 - (DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)
     uint32_t wifi_no_sleep : 1;            // bit 13 (v9.5.0.2)  - SetOption127 - (Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness
-    uint32_t spare14 : 1;                  // bit 14
-    uint32_t spare15 : 1;                  // bit 15
-    uint32_t spare16 : 1;                  // bit 16
+    uint32_t disable_referer_chk : 1;      // bit 14 (v9.5.0.5)  - SetOption128 - (Web) Allow access without referer check
+    uint32_t energy_phase : 1;             // bit 15 (v9.5.0.9)  - SetOption129 - (Energy) Show phase information
+    uint32_t show_heap_with_timestamp : 1; // bit 16 (v9.5.0.9)  - SetOption130 - (Debug) Show heap with logging timestamp
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
     uint32_t spare19 : 1;                  // bit 19
@@ -245,11 +245,11 @@ typedef union {
     uint32_t telegram_send_enable : 1;     // bit 0  (v9.4.0.3) - CMND_TMSTATE 0/1 - Enable Telegram send
     uint32_t telegram_recv_enable : 1;     // bit 1  (v9.4.0.3) - CMND_TMSTATE 2/3 - Enable Telegram receive
     uint32_t telegram_echo_enable : 1;     // bit 2  (v9.4.0.3) - CMND_TMSTATE 4/5 - Enable Telegram echo
-    uint32_t spare03 : 1;                  // bit 3
-    uint32_t spare04 : 1;                  // bit 4
-    uint32_t spare05 : 1;                  // bit 5
-    uint32_t spare06 : 1;                  // bit 6
-    uint32_t spare07 : 1;                  // bit 7
+    uint32_t range_extender : 1;           // bit 3  (v9.5.0.5) - CMND_RGXSTATE - Enable range extender
+    uint32_t range_extender_napt : 1;      // bit 4  (v9.5.0.5) - CMND_RGXNAPT - Enable range extender NAPT
+    uint32_t sonoff_l1_music_sync : 1;     // bit 5  (v9.5.0.5) - CMND_L1MUSICSYNC - Enable sync to music
+    uint32_t influxdb_default : 1;         // bit 6  (v9.5.0.5) - Set influxdb initial defaults if 0
+    uint32_t influxdb_state : 1;           // bit 7  (v9.5.0.5) - CMND_IFX - Enable influxdb support
     uint32_t spare08 : 1;                  // bit 8
     uint32_t spare09 : 1;                  // bit 9
     uint32_t spare10 : 1;                  // bit 10
@@ -441,8 +441,8 @@ const uint8_t MAX_TUYA_FUNCTIONS = 16;
 typedef struct {
   uint16_t      cfg_holder;                // 000  v6 header
   uint16_t      cfg_size;                  // 002
-  unsigned long save_flag;                 // 004
-  unsigned long version;                   // 008
+  uint32_t      save_flag;                 // 004
+  uint32_t      version;                   // 008
   uint16_t      bootcount;                 // 00C
   uint16_t      cfg_crc;                   // 00E
   SOBitfield    flag;                      // 010
@@ -469,7 +469,7 @@ typedef struct {
   uint8_t       display_rows;              // 2D5
   uint8_t       display_cols[2];           // 2D6
   uint8_t       display_address[8];        // 2D8
-  uint8_t       display_dimmer;            // 2E0
+  int8_t        display_dimmer_protected;  // 2E0 - if positive range 0..15, if negative range 0..100 (neg) - don't use directly
   uint8_t       display_size;              // 2E1
   TimeRule      tflag[2];                  // 2E2
   uint16_t      pwm_frequency;             // 2E6
@@ -483,19 +483,22 @@ typedef struct {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   DisplayOptions  display_options;         // 313
+  int32_t       energy_kWhtoday_ph[3];     // 314
+  int32_t       energy_kWhyesterday_ph[3]; // 320
+  int32_t       energy_kWhtotal_ph[3];     // 32C
 
-  uint8_t       free_314[43];              // 314
+  uint8_t       free_338[7];               // 338
 
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
-  unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
-  unsigned long domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
-  unsigned long energy_power_calibration;    // 364
-  unsigned long energy_voltage_calibration;  // 368
-  unsigned long energy_current_calibration;  // 36C
-  unsigned long energy_kWhtoday;           // 370
-  unsigned long energy_kWhyesterday;       // 374
+  uint32_t      domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
+  uint32_t      domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
+  uint32_t      energy_power_calibration;    // 364
+  uint32_t      energy_voltage_calibration;  // 368
+  uint32_t      energy_current_calibration;  // 36C
+  uint32_t      energy_kWhtoday;           // 370
+  uint32_t      energy_kWhyesterday;       // 374
   uint16_t      energy_kWhdoy;             // 378
   uint16_t      energy_min_power;          // 37A
   uint16_t      energy_max_power;          // 37C
@@ -583,11 +586,9 @@ typedef struct {
   uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A9
 
   uint8_t       free_4c5[5];               // 4C5
-
   uint8_t       ex_interlock[4];           // 4CA MAX_INTERLOCKS = MAX_RELAYS / 2 (Legacy)
 
-  uint8_t       free_4ce[2];               // 4CE
-
+  uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
 
   uint8_t       free_508[36];              // 508
@@ -598,13 +599,14 @@ typedef struct {
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
   uint16_t      button_debounce;           // 542
-  uint32_t      ipv4_address[4];           // 544
-  unsigned long energy_kWhtotal;           // 554
+  uint32_t      ipv4_address[5];           // 544
+  uint32_t      ipv4_rgx_address;          // 558
+  uint32_t      ipv4_rgx_subnetmask;       // 55C
 
-  uint8_t       free_558[100];             // 558
+  uint8_t       free_560[92];              // 560
 
   SysMBitfield1 flag2;                     // 5BC
-  unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
+  uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
@@ -642,26 +644,17 @@ typedef struct {
   uint16_t      baudrate;                  // 778
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-
-  uint32_t      ex_adc_param1;             // 794  Free since 9.0.0.1
-  uint32_t      ex_adc_param2;             // 798  Free since 9.0.0.1
-  int           ex_adc_param3;             // 79C  Free since 9.0.0.1
-
-  uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[3];                // 7A4  Normal WebSensor, Debug SetSensor
-  uint32_t      displays;                  // 7B0
+  uint32_t      sensors[2][4];             // 794  Disable individual (0) sensor drivers / (1) GUI sensor output
   uint32_t      energy_kWhtotal_time;      // 7B4
-  unsigned long weight_item;               // 7B8  Weight of one item in gram * 10
+  uint32_t      weight_item;               // 7B8  Weight of one item in gram * 10
   uint16_t      ledmask;                   // 7BC
   uint16_t      weight_max;                // 7BE  Total max weight in kilogram
-  unsigned long weight_reference;          // 7C0  Reference weight in gram
-  unsigned long weight_calibration;        // 7C4
-  unsigned long energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
+  uint32_t      weight_reference;          // 7C0  Reference weight in gram
+  uint32_t      weight_calibration;        // 7C4
+  uint32_t      energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          script_pram[5][10];        // 7CE
-
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800  Uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00  32 bytes
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
@@ -697,9 +690,7 @@ typedef struct {
   uint8_t       webserver;                 // ECD
   uint8_t       weblog_level;              // ECE
   uint8_t       mqtt_fingerprint[2][20];   // ECF
-
-  uint8_t       ex_adc_param_type;         // EF7  Free since 9.0.0.1
-
+  uint8_t       influxdb_version;          // EF7
   SOBitfield4   flag4;                     // EF8
   uint16_t      mqtt_port;                 // EFC
   uint8_t       serial_config;             // EFE
@@ -743,10 +734,11 @@ typedef struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
 
-  uint8_t       free_f5f[65];              // F5F - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f5f[61];              // F5F - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  uint32_t      energy_kWhtotal;           // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8
@@ -782,19 +774,22 @@ typedef struct {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
-  unsigned long energy_kWhtoday;           // 294
-  unsigned long energy_kWhtotal;           // 298
-  volatile unsigned long pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
+  uint32_t      energy_kWhtoday;           // 294
+  uint32_t      energy_kWhtotal;           // 298
+  volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
-  unsigned long nextwakeup;                // 2C8
+  uint32_t      nextwakeup;                // 2C8
   uint32_t      baudrate;                  // 2CC
   uint32_t      ultradeepsleep;            // 2D0
   uint16_t      deepsleep_slip;            // 2D4
 
-  uint8_t       free_2d6[22];              // 2D6
+  uint8_t       free_2d6[2];               // 2D6
 
-                                           // 2EC - 2FF free locations
+  int32_t       energy_kWhtoday_ph[3];     // 2D8
+  int32_t       energy_kWhtotal_ph[3];     // 2E4
+
+                                           // 2F0 - 2FF free locations
 } TRtcSettings;
 TRtcSettings RtcSettings;
 #ifdef ESP32
@@ -811,8 +806,8 @@ struct TIME_T {
   char          name_of_month[4];
   uint16_t      day_of_year;
   uint16_t      year;
-  unsigned long days;
-  unsigned long valid;
+  uint32_t      days;
+  uint32_t      valid;
 } RtcTime;
 
 struct XDRVMAILBOX {

@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_PWM_DIMMER
+#ifdef USE_LIGHT
 
 /*********************************************************************************************\
 * Support for Martin Jerry/acenx/Tessan/NTONPOWER SD0x PWM dimmer switches. The brightness of
@@ -270,7 +271,8 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
 {
   bool handle_tap = false;
   bool state_updated = false;
-  int32_t bri_offset = 0;
+  int8_t bri_hold = 0;
+  int8_t bri_tap = 0;
   uint8_t power_on_bri = 0;
   uint8_t dgr_item = 0;
   uint8_t dgr_value = 0;
@@ -293,7 +295,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     uint32_t now = millis();
 
     // If the button was pressed and released but was not processed by support_button because the
-    // button interval had not elapsed,
+    // button interval had not elapsed, publish an MQTT message.
     if (button_unprocessed[button_index]) {
       mqtt_trigger = 5;
 #ifdef USE_PWM_DIMMER_REMOTE
@@ -313,9 +315,9 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
         // The new brightness will be calculated below.
         if (power_is_on) {
 #ifdef USE_PWM_DIMMER_REMOTE
-          bri_offset = (active_remote_pwm_dimmer ? (active_remote_pwm_dimmer->power_button_increases_bri ? 1 : -1) : (power_button_increases_bri ? 1 : -1));
+          bri_hold = (active_remote_pwm_dimmer ? (active_remote_pwm_dimmer->power_button_increases_bri ? 1 : -1) : (power_button_increases_bri ? 1 : -1));
 #else // USE_PWM_DIMMER_REMOTE
-          bri_offset = (power_button_increases_bri ? 1 : -1);
+          bri_hold = (power_button_increases_bri ? 1 : -1);
 #endif  // USE_PWM_DIMMER_REMOTE
           invert_power_button_bri_direction = true;
         }
@@ -350,7 +352,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
         // Otherwise, if the power is on and remote mode is enabled, adjust the brightness. Set the
         // direction based on which button is pressed. The new brightness will be calculated below.
         else if (power_is_on && Settings->flag4.multiple_device_groups) {
-          bri_offset = (is_down_button ? -1 : 1);
+          bri_hold = (is_down_button ? -1 : 1);
         }
 
         // Otherwise, publish MQTT Event Trigger#.
@@ -364,7 +366,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
       // Otherwise, if the power is on, adjust the brightness. Set the direction based on which
       // button is pressed. The new brightness will be calculated below.
       else if (power_is_on && !button_tapped) {
-        bri_offset = (is_down_button ? -1 : 1);
+        bri_hold = (is_down_button ? -1 : 1);
       }
     }
   }
@@ -464,7 +466,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
           // If the button was not held, adjust the brightness. Set the direction based on which
           // button is pressed. The new brightness will be calculated below.
           if (!button_was_held) {
-            bri_offset = (is_down_button ? -5 : 5);
+            bri_tap = (is_down_button ? -1 : 1);
             dgr_more_to_come = false;
             state_updated = true;
           }
@@ -493,7 +495,7 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
 
   // If we need to adjust the brightness, do it.
   int32_t negated_device_group_index = -power_button_index;
-  if (bri_offset) {
+  if (bri_hold || bri_tap) {
     int32_t bri;
 #ifdef USE_PWM_DIMMER_REMOTE
     if (active_remote_pwm_dimmer)
@@ -501,8 +503,16 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
     else
 #endif  // USE_PWM_DIMMER_REMOTE
       bri = light_state.getBri();
-    int32_t new_bri = bri + bri_offset * (Settings->light_correction ? 4 : bri / 16 + 1);
-
+    int32_t bri_offset = Settings->dimmer_step;
+    if (bri_tap)
+      bri_offset *= bri_tap;
+    else {
+      bri_offset /= 5;
+      if (!Settings->light_correction) bri_offset *= bri / 32;
+      if (bri_offset < 1) bri_offset = 1;
+      bri_offset *= bri_hold;
+    }
+    int32_t new_bri = bri + bri_offset;
     if (bri_offset > 0) {
       if (new_bri > 255) new_bri = 255;
     }
@@ -886,4 +896,5 @@ bool Xdrv35(uint8_t function)
   return result;
 }
 
+#endif  // USE_LIGHT
 #endif  // USE_PWM_DIMMER

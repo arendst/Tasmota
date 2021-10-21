@@ -2,7 +2,7 @@
 
 static be_define_const_map_slots(be_class_tasmota_wire_map) {
     { be_const_key(_end_transmission, 10), be_const_func(b_wire_endtransmission) },
-    { be_const_key(bus, -1), be_const_int(0) },
+    { be_const_key(bus, -1), be_const_var(0) },
     { be_const_key(_read, 7), be_const_func(b_wire_read) },
     { be_const_key(read, -1), be_const_func(b_wire_validread) },
     { be_const_key(_request_from, -1), be_const_func(b_wire_requestfrom) },

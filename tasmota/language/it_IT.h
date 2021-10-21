@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 28.05.2021
+ * Updated until v9.5.0.9 - Last update 16.10.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -198,6 +198,8 @@
 #define D_WEIGHT               "Peso"
 #define D_WARMLIGHT            "Calda"
 #define D_WEB_SERVER           "Server web"
+#define D_SOC                  "Stato di carica"
+#define D_SOH                  "State di salute"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION  "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
@@ -326,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD  "Password amministratore web"
 #define D_MQTT_ENABLE         "Abilita MQTT"
 #define D_MQTT_TLS_ENABLE     "MQTT TLS"
+#define D_HTTP_API            "API HTTP"
+#define D_HTTP_API_ENABLE     "Abilita API HTTP"
 #define D_FRIENDLY_NAME       "Nome amichevole"
 #define D_BELKIN_WEMO         "Belkin WeMo"
 #define D_HUE_BRIDGE          "Bridge Hue"
@@ -706,6 +710,7 @@
 #define D_SENSOR_CSE7761_RX             "CSE7761 - RX"
 #define D_SENSOR_CSE7766_TX             "CSE7766 - TX"
 #define D_SENSOR_CSE7766_RX             "CSE7766 - RX"
+#define D_SENSOR_HM330X_SET             "HM330X - SET"
 #define D_SENSOR_PN532_TX               "PN532 - TX"
 #define D_SENSOR_PN532_RX               "PN532 - RX"
 #define D_SENSOR_SM16716_CLK            "SM16716 - CLK"
@@ -760,6 +765,8 @@
 #define D_SENSOR_LE01MR_RX              "LE-01MR - RX"
 #define D_SENSOR_LE01MR_TX              "LE-01MR - TX"
 #define D_SENSOR_BL0940_RX              "BL0940 - RX"
+#define D_SENSOR_BL0939_RX              "BL0939 - RX"
+#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_CC1101_GDO0            "CC1101 - GDO0"
 #define D_SENSOR_CC1101_GDO2            "CC1101 - GDO2"
 #define D_SENSOR_HRXL_RX                "HRXL - RX"
@@ -831,6 +838,10 @@
 #define D_SENSOR_ZEROCROSS              "Impulsi ZC"
 #define D_SENSOR_HALLEFFECT             "Effetto hall"
 #define D_SENSOR_EPD_DATA               "EPD - Dati"
+#define D_SENSOR_MCP2515_CS             "MCP2515 - CS"
+#define D_SENSOR_HRG15_RX               "HRG15 - RX"
+#define D_SENSOR_HRG15_TX               "HRG15 - TX"
+#define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -940,6 +951,7 @@
 #define D_CREATE_NEW_FILE      "Crea e modifica nuovo file"
 #define D_EDIT_FILE            "Modifica file"
 #define D_CONFIRM_FILE_DEL     "Conferma eliminazione file"
+#define D_SHOW_HIDDEN_FILES    "Visualizza file nascosti"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN       "guadagno:"
@@ -1052,6 +1064,7 @@
 #define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
 #define D_NEOPOOL_TIME                    "Orario"
 #define D_NEOPOOL_FILT_MODE               "Filtrazione"
+#define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "OK"

@@ -1,6 +1,6 @@
 // Copyright 2016 sillyfrog
 // Copyright 2017 sillyfrog, crankyoldgit
-// Copyright 2018-2020 crankyoldgit
+// Copyright 2018-2021 crankyoldgit
 // Copyright 2019 pasna (IRDaikin160 class / Daikin176 class)
 
 /// @file
@@ -16,6 +16,7 @@
 /// @see Daikin160 https://github.com/crankyoldgit/IRremoteESP8266/issues/731
 /// @see Daikin2 https://docs.google.com/spreadsheets/d/1f8EGfIbBUo2B-CzUFdrgKQprWakoYNKM80IKZN4KXQE/edit#gid=236366525&range=B25:D32
 /// @see Daikin2 https://github.com/crankyoldgit/IRremoteESP8266/issues/582
+/// @see Daikin2 https://github.com/crankyoldgit/IRremoteESP8266/issues/1535
 /// @see Daikin2 https://www.daikin.co.nz/sites/default/files/daikin-split-system-US7-FTXZ25-50NV1B.pdf
 /// @see Daikin216 https://github.com/crankyoldgit/IRremoteESP8266/issues/689
 /// @see Daikin216 https://github.com/danny-source/Arduino_DY_IRDaikin
@@ -795,15 +796,11 @@ void IRDaikin2::setPower(const bool on) {
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getPower(void) const {
-  return _.Power && !_.Power2;
-}
+bool IRDaikin2::getPower(void) const { return _.Power && !_.Power2; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin2::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin2::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] desired_mode The desired operating mode.
@@ -819,6 +816,7 @@ void IRDaikin2::setMode(const uint8_t desired_mode) {
   _.Mode = mode;
   // Redo the temp setting as Cool mode has a different min temp.
   if (mode == kDaikinCool) setTemp(getTemp());
+  setHumidity(getHumidity());  // Make sure the humidity is okay for this mode.
 }
 
 /// Set the temperature.
@@ -829,6 +827,8 @@ void IRDaikin2::setTemp(const uint8_t desired) {
       (_.Mode == kDaikinCool) ? kDaikin2MinCoolTemp : kDaikinMinTemp,
       desired);
   _.Temp = std::min(kDaikinMaxTemp, temp);
+  // If the humidity setting is in use, the temp is a fixed value.
+  if (_.HumidOn) _.Temp = kDaikinMaxTemp;
 }
 
 /// Get the current temperature setting.
@@ -880,9 +880,7 @@ void IRDaikin2::setSwingVertical(const uint8_t position) {
 
 /// Get the Vertical Swing mode of the A/C.
 /// @return The native position/mode setting.
-uint8_t IRDaikin2::getSwingVertical(void) const {
-  return _.SwingV;
-}
+uint8_t IRDaikin2::getSwingVertical(void) const { return _.SwingV; }
 
 /// Convert a stdAc::swingv_t enum into it's native setting.
 /// @param[in] position The enum to be converted.
@@ -938,9 +936,7 @@ void IRDaikin2::setCurrentTime(const uint16_t numMins) {
 
 /// Get the clock time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin2::getCurrentTime(void) const {
-  return _.CurrentTime;
-}
+uint16_t IRDaikin2::getCurrentTime(void) const { return _.CurrentTime; }
 
 /// Set the enable status & time of the On Timer.
 /// @param[in] starttime The number of minutes past midnight.
@@ -952,9 +948,7 @@ void IRDaikin2::enableOnTimer(const uint16_t starttime) {
 }
 
 /// Clear the On Timer flag.
-void IRDaikin2::clearOnTimerFlag(void) {
-  _.OnTimer = false;
-}
+void IRDaikin2::clearOnTimerFlag(void) { _.OnTimer = false; }
 
 /// Disable the On timer.
 void IRDaikin2::disableOnTimer(void) {
@@ -965,15 +959,11 @@ void IRDaikin2::disableOnTimer(void) {
 
 /// Get the On Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin2::getOnTime(void) const {
-  return _.OnTime;
-}
+uint16_t IRDaikin2::getOnTime(void) const { return _.OnTime; }
 
 /// Get the enable status of the On Timer.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getOnTimerEnabled(void) const {
-  return _.OnTimer;
-}
+bool IRDaikin2::getOnTimerEnabled(void) const { return _.OnTimer; }
 
 /// Set the enable status & time of the Off Timer.
 /// @param[in] endtime The number of minutes past midnight.
@@ -992,123 +982,83 @@ void IRDaikin2::disableOffTimer(void) {
 
 /// Get the Off Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin2::getOffTime(void) const {
-  return _.OffTime;
-}
+uint16_t IRDaikin2::getOffTime(void) const { return _.OffTime; }
 
 /// Get the enable status of the Off Timer.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getOffTimerEnabled(void) const {
-  return _.OffTimer;
-}
+bool IRDaikin2::getOffTimerEnabled(void) const { return _.OffTimer; }
 
 /// Get the Beep status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-uint8_t IRDaikin2::getBeep(void) const {
-  return _.Beep;
-}
+uint8_t IRDaikin2::getBeep(void) const { return _.Beep; }
 
 /// Set the Beep mode of the A/C.
 /// @param[in] beep true, the setting is on. false, the setting is off.
-void IRDaikin2::setBeep(const uint8_t beep) {
-  _.Beep = beep;
-}
+void IRDaikin2::setBeep(const uint8_t beep) { _.Beep = beep; }
 
 /// Get the Light status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-uint8_t IRDaikin2::getLight(void) const {
-  return _.Light;
-}
+uint8_t IRDaikin2::getLight(void) const { return _.Light; }
 
 /// Set the Light (LED) mode of the A/C.
 /// @param[in] light true, the setting is on. false, the setting is off.
-void IRDaikin2::setLight(const uint8_t light) {
-  _.Light = light;
-}
+void IRDaikin2::setLight(const uint8_t light) { _.Light = light; }
 
 /// Set the Mould (filter) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setMold(const bool on) {
-  _.Mold = on;
-}
+void IRDaikin2::setMold(const bool on) { _.Mold = on; }
 
 /// Get the Mould (filter) mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getMold(void) const {
-  return _.Mold;
-}
+bool IRDaikin2::getMold(void) const { return _.Mold; }
 
 /// Set the Auto clean mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setClean(const bool on) {
-  _.Clean = on;
-}
+void IRDaikin2::setClean(const bool on) { _.Clean = on; }
 
 /// Get the Auto Clean mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getClean(void) const {
-  return _.Clean;
-}
+bool IRDaikin2::getClean(void) const { return _.Clean; }
 
 /// Set the Fresh Air mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setFreshAir(const bool on) {
-  _.FreshAir = on;
-}
+void IRDaikin2::setFreshAir(const bool on) { _.FreshAir = on; }
 
 /// Get the Fresh Air mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getFreshAir(void) const {
-  return _.FreshAir;
-}
+bool IRDaikin2::getFreshAir(void) const { return _.FreshAir; }
 
 /// Set the (High) Fresh Air mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setFreshAirHigh(const bool on) {
-  _.FreshAirHigh = on;
-}
+void IRDaikin2::setFreshAirHigh(const bool on) { _.FreshAirHigh = on; }
 
 /// Get the (High) Fresh Air mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getFreshAirHigh(void) const {
-  return _.FreshAirHigh;
-}
+bool IRDaikin2::getFreshAirHigh(void) const { return _.FreshAirHigh; }
 
 /// Set the Automatic Eye (Sensor) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setEyeAuto(bool on) {
-  _.EyeAuto = on;
-}
+void IRDaikin2::setEyeAuto(bool on) { _.EyeAuto = on; }
 
 /// Get the Automaitc Eye (Sensor) mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getEyeAuto(void) const {
-  return _.EyeAuto;
-}
+bool IRDaikin2::getEyeAuto(void) const { return _.EyeAuto; }
 
 /// Set the Eye (Sensor) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setEye(bool on) {
-  _.Eye = on;
-}
+void IRDaikin2::setEye(bool on) { _.Eye = on; }
 
 /// Get the Eye (Sensor) mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getEye(void) const {
-  return _.Eye;
-}
+bool IRDaikin2::getEye(void) const { return _.Eye; }
 
 /// Set the Economy mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setEcono(bool on) {
-  _.Econo = on;
-}
+void IRDaikin2::setEcono(bool on) { _.Econo = on; }
 
 /// Get the Economical mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getEcono(void) const {
-  return _.Econo;
-}
+bool IRDaikin2::getEcono(void) const { return _.Econo; }
 
 /// Set the enable status & time of the Sleep Timer.
 /// @param[in] sleeptime The number of minutes past midnight.
@@ -1120,26 +1070,18 @@ void IRDaikin2::enableSleepTimer(const uint16_t sleeptime) {
 }
 
 /// Clear the sleep timer flag.
-void IRDaikin2::clearSleepTimerFlag(void) {
-  _.SleepTimer = false;
-}
+void IRDaikin2::clearSleepTimerFlag(void) { _.SleepTimer = false; }
 
 /// Disable the sleep timer.
-void IRDaikin2::disableSleepTimer(void) {
-  disableOnTimer();
-}
+void IRDaikin2::disableSleepTimer(void) { disableOnTimer(); }
 
 /// Get the Sleep Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin2::getSleepTime(void) const {
-  return getOnTime();
-}
+uint16_t IRDaikin2::getSleepTime(void) const { return getOnTime(); }
 
 /// Get the Sleep timer enabled status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getSleepTimerEnabled(void) const {
-  return _.SleepTimer;
-}
+bool IRDaikin2::getSleepTimerEnabled(void) const { return _.SleepTimer; }
 
 /// Set the Quiet mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -1151,9 +1093,7 @@ void IRDaikin2::setQuiet(const bool on) {
 
 /// Get the Quiet mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getQuiet(void) const {
-  return _.Quiet;
-}
+bool IRDaikin2::getQuiet(void) const { return _.Quiet; }
 
 /// Set the Powerful (Turbo) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -1165,20 +1105,49 @@ void IRDaikin2::setPowerful(const bool on) {
 
 /// Get the Powerful (Turbo) mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getPowerful(void) const {
-  return _.Powerful;
-}
+bool IRDaikin2::getPowerful(void) const { return _.Powerful; }
 
 /// Set the Purify (Filter) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin2::setPurify(const bool on) {
-  _.Purify = on;
-}
+void IRDaikin2::setPurify(const bool on) { _.Purify = on; }
 
 /// Get the Purify (Filter) mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin2::getPurify(void) const {
-  return _.Purify;
+bool IRDaikin2::getPurify(void) const { return _.Purify; }
+
+/// Get the Humidity percentage setting of the A/C.
+/// @return The setting percentage. 255 is Automatic. 0 is Off.
+uint8_t IRDaikin2::getHumidity(void) const { return _.Humidity; }
+
+/// Set the Humidity percentage setting of the A/C.
+/// @param[in] percent Percentage humidty. 255 is Auto. 0 is Off.
+/// @note Only available in Dry & Heat modes, otherwise it is Off.
+void IRDaikin2::setHumidity(const uint8_t percent) {
+  _.Humidity = kDaikin2HumidityOff;  // Default to off.
+  switch (getMode()) {
+    case kDaikinHeat:
+      switch (percent) {
+        case kDaikin2HumidityOff:
+        case kDaikin2HumidityHeatLow:
+        case kDaikin2HumidityHeatMedium:
+        case kDaikin2HumidityHeatHigh:
+        case kDaikin2HumidityAuto:
+          _.Humidity = percent;
+      }
+      break;
+    case kDaikinDry:
+      switch (percent) {
+        case kDaikin2HumidityOff:
+        case kDaikin2HumidityDryLow:
+        case kDaikin2HumidityDryMedium:
+        case kDaikin2HumidityDryHigh:
+        case kDaikin2HumidityAuto:
+          _.Humidity = percent;
+      }
+      break;
+  }
+  _.HumidOn = (_.Humidity != kDaikin2HumidityOff);  // Enabled?
+  setTemp(getTemp());  // Adjust the temperature if we need to.
 }
 
 /// Convert a stdAc::opmode_t enum into its native mode.
@@ -1257,7 +1226,7 @@ stdAc::state_t IRDaikin2::toCommon(void) const {
 /// @return A human readable string.
 String IRDaikin2::toString(void) const {
   String result = "";
-  result.reserve(310);  // Reserve some heap for the string to reduce fragging.
+  result.reserve(330);  // Reserve some heap for the string to reduce fragging.
   result += addBoolToString(getPower(), kPowerStr, false);
   result += addModeToString(_.Mode, kDaikinAuto, kDaikinCool, kDaikinHeat,
                             kDaikinDry, kDaikinFan);
@@ -1336,6 +1305,17 @@ String IRDaikin2::toString(void) const {
   result += addBoolToString(_.Powerful, kPowerfulStr);
   result += addBoolToString(_.Purify, kPurifyStr);
   result += addBoolToString(_.Econo, kEconoStr);
+  result += addIntToString(_.Humidity, kHumidStr);
+  switch (_.Humidity) {
+    case kDaikin2HumidityOff:
+    case kDaikin2HumidityAuto:
+      result += kSpaceLBraceStr;
+      result += _.Humidity ? kAutoStr : kOffStr;
+      result += ')';
+      break;
+    default:
+      result += '%';
+  }
   return result;
 }
 
@@ -1513,21 +1493,15 @@ void IRDaikin216::off(void) { setPower(false); }
 
 /// Change the power setting.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin216::setPower(const bool on) {
-  _.Power = on;
-}
+void IRDaikin216::setPower(const bool on) { _.Power = on; }
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin216::getPower(void) const {
-  return _.Power;
-}
+bool IRDaikin216::getPower(void) const { return _.Power; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin216::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin216::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -1562,9 +1536,7 @@ void IRDaikin216::setTemp(const uint8_t temp) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRDaikin216::getTemp(void) const {
-  return _.Temp;
-}
+uint8_t IRDaikin216::getTemp(void) const { return _.Temp; }
 
 /// Set the speed of the fan.
 /// @param[in] fan The desired setting.
@@ -1604,9 +1576,7 @@ void IRDaikin216::setSwingVertical(const bool on) {
 
 /// Get the Vertical Swing mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin216::getSwingVertical(void) const {
-  return _.SwingV;
-}
+bool IRDaikin216::getSwingVertical(void) const { return _.SwingV; }
 
 /// Set the Horizontal Swing mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -1616,9 +1586,7 @@ void IRDaikin216::setSwingHorizontal(const bool on) {
 
 /// Get the Horizontal Swing mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin216::getSwingHorizontal(void) const {
-  return _.SwingH;
-}
+bool IRDaikin216::getSwingHorizontal(void) const { return _.SwingH; }
 
 /// Set the Quiet mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -1636,9 +1604,7 @@ void IRDaikin216::setQuiet(const bool on) {
 /// Get the Quiet mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
 /// @note This is a horrible hack till someone works out the quiet mode bit.
-bool IRDaikin216::getQuiet(void) const {
-  return getFan() == kDaikinFanQuiet;
-}
+bool IRDaikin216::getQuiet(void) const { return getFan() == kDaikinFanQuiet; }
 
 /// Set the Powerful (Turbo) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -1650,9 +1616,7 @@ void IRDaikin216::setPowerful(const bool on) {
 
 /// Get the Powerful (Turbo) mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin216::getPowerful(void) const {
-  return _.Powerful;
-}
+bool IRDaikin216::getPowerful(void) const { return _.Powerful; }
 
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
@@ -1872,21 +1836,15 @@ void IRDaikin160::off(void) { setPower(false); }
 
 /// Change the power setting.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin160::setPower(const bool on) {
-  _.Power = on;
-}
+void IRDaikin160::setPower(const bool on) { _.Power = on; }
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin160::getPower(void) const {
-  return _.Power;
-}
+bool IRDaikin160::getPower(void) const { return _.Power; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin160::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin160::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -1920,9 +1878,7 @@ void IRDaikin160::setTemp(const uint8_t temp) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRDaikin160::getTemp(void) const {
-  return _.Temp + 10;
-}
+uint8_t IRDaikin160::getTemp(void) const { return _.Temp + 10; }
 
 /// Set the speed of the fan.
 /// @param[in] fan The desired setting.
@@ -1979,9 +1935,7 @@ void IRDaikin160::setSwingVertical(const uint8_t position) {
 
 /// Get the Vertical Swing mode of the A/C.
 /// @return The native position/mode setting.
-uint8_t IRDaikin160::getSwingVertical(void) const {
-  return _.SwingV;
-}
+uint8_t IRDaikin160::getSwingVertical(void) const { return _.SwingV; }
 
 /// Convert a stdAc::swingv_t enum into it's native setting.
 /// @param[in] position The enum to be converted.
@@ -2244,15 +2198,11 @@ void IRDaikin176::setPower(const bool on) {
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin176::getPower(void) const {
-  return _.Power;
-}
+bool IRDaikin176::getPower(void) const { return _.Power; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin176::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin176::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -2320,9 +2270,7 @@ void IRDaikin176::setTemp(const uint8_t temp) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRDaikin176::getTemp(void) const {
-  return _.Temp + 9;
-}
+uint8_t IRDaikin176::getTemp(void) const { return _.Temp + 9; }
 
 /// Set the speed of the fan.
 /// @param[in] fan The desired setting.
@@ -2342,9 +2290,7 @@ void IRDaikin176::setFan(const uint8_t fan) {
 
 /// Get the current fan speed setting.
 /// @return The current fan speed.
-uint8_t IRDaikin176::getFan(void) const {
-  return _.Fan;
-}
+uint8_t IRDaikin176::getFan(void) const { return _.Fan; }
 
 /// Convert a stdAc::fanspeed_t enum into it's native speed.
 /// @param[in] speed The enum to be converted.
@@ -2371,9 +2317,16 @@ void IRDaikin176::setSwingHorizontal(const uint8_t position) {
 
 /// Get the Horizontal Swing mode of the A/C.
 /// @return The native position/mode setting.
-uint8_t IRDaikin176::getSwingHorizontal(void) const {
-  return _.SwingH;
-}
+uint8_t IRDaikin176::getSwingHorizontal(void) const { return _.SwingH; }
+
+/// Get the Unit Id of the A/C.
+/// @return The Unit Id the A/C is to use.
+uint8_t IRDaikin176::getId(void) const { return _.Id1; }
+
+/// Set the Unit Id of the A/C.
+/// @param[in] num The Unit Id the A/C is to use.
+/// @note 0 for Unit A; 1 for Unit B
+void IRDaikin176::setId(const uint8_t num) { _.Id1 = _.Id2 = num; }
 
 /// Convert a stdAc::swingh_t enum into it's native setting.
 /// @param[in] position The enum to be converted.
@@ -2437,7 +2390,7 @@ stdAc::state_t IRDaikin176::toCommon(void) const {
 /// @return A human readable string.
 String IRDaikin176::toString(void) const {
   String result = "";
-  result.reserve(80);  // Reserve some heap for the string to reduce fragging.
+  result.reserve(90);  // Reserve some heap for the string to reduce fragging.
   result += addBoolToString(_.Power, kPowerStr, false);
   result += addModeToString(_.Mode, kDaikin176Auto, kDaikin176Cool,
                             kDaikin176Heat, kDaikin176Dry, kDaikin176Fan);
@@ -2456,6 +2409,7 @@ String IRDaikin176::toString(void) const {
                               kDaikin176SwingHAuto,
                               kDaikin176SwingHAuto,
                               kDaikin176SwingHAuto);
+  result += addIntToString(_.Id1, kIdStr);
   return result;
 }
 
@@ -2622,21 +2576,15 @@ void IRDaikin128::send(const uint16_t repeat) {
 
 /// Set the Power toggle setting of the A/C.
 /// @param[in] toggle true, the setting is on. false, the setting is off.
-void IRDaikin128::setPowerToggle(const bool toggle) {
-  _.Power = toggle;
-}
+void IRDaikin128::setPowerToggle(const bool toggle) { _.Power = toggle; }
 
 /// Get the Power toggle setting of the A/C.
 /// @return The current operating mode setting.
-bool IRDaikin128::getPowerToggle(void) const {
-  return _.Power;
-}
+bool IRDaikin128::getPowerToggle(void) const { return _.Power; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin128::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin128::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -2693,15 +2641,11 @@ void IRDaikin128::setTemp(const uint8_t temp) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRDaikin128::getTemp(void) const {
-  return bcdToUint8(_.Temp);
-}
+uint8_t IRDaikin128::getTemp(void) const { return bcdToUint8(_.Temp); }
 
 /// Get the current fan speed setting.
 /// @return The current fan speed.
-uint8_t IRDaikin128::getFan(void) const {
-  return _.Fan;
-}
+uint8_t IRDaikin128::getFan(void) const { return _.Fan; }
 
 /// Set the speed of the fan.
 /// @param[in] speed The desired setting.
@@ -2755,27 +2699,19 @@ stdAc::fanspeed_t IRDaikin128::toCommonFanSpeed(const uint8_t speed) {
 
 /// Set the Vertical Swing mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin128::setSwingVertical(const bool on) {
-  _.SwingV = on;
-}
+void IRDaikin128::setSwingVertical(const bool on) { _.SwingV = on; }
 
 /// Get the Vertical Swing mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin128::getSwingVertical(void) const {
-  return _.SwingV;
-}
+bool IRDaikin128::getSwingVertical(void) const { return _.SwingV; }
 
 /// Set the Sleep mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin128::setSleep(const bool on) {
-  _.Sleep = on;
-}
+void IRDaikin128::setSleep(const bool on) { _.Sleep = on; }
 
 /// Get the Sleep mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin128::getSleep(void) const {
-  return _.Sleep;
-}
+bool IRDaikin128::getSleep(void) const { return _.Sleep; }
 
 /// Set the Economy mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -2786,9 +2722,7 @@ void IRDaikin128::setEcono(const bool on) {
 
 /// Get the Economical mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin128::getEcono(void) const {
-  return _.Econo;
-}
+bool IRDaikin128::getEcono(void) const { return _.Econo; }
 
 /// Set the Quiet mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -2802,9 +2736,7 @@ void IRDaikin128::setQuiet(const bool on) {
 
 /// Get the Quiet mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin128::getQuiet(void) const {
-  return _.Fan == kDaikin128FanQuiet;
-}
+bool IRDaikin128::getQuiet(void) const { return _.Fan == kDaikin128FanQuiet; }
 
 /// Set the Powerful (Turbo) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -2841,15 +2773,11 @@ uint16_t IRDaikin128::getClock(void) const {
 
 /// Set the enable status of the On Timer.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin128::setOnTimerEnabled(const bool on) {
-  _.OnTimer = on;
-}
+void IRDaikin128::setOnTimerEnabled(const bool on) { _.OnTimer = on; }
 
 /// Get the enable status of the On Timer.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin128::getOnTimerEnabled(void) const {
-  return _.OnTimer;
-}
+bool IRDaikin128::getOnTimerEnabled(void) const { return _.OnTimer; }
 
 #define SETTIME(x, n) do { \
   uint16_t mins = n;\
@@ -2868,21 +2796,15 @@ void IRDaikin128::setOnTimer(const uint16_t mins_since_midnight) {
 
 /// Get the On Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin128::getOnTimer(void) const {
-  return GETTIME(On);
-}
+uint16_t IRDaikin128::getOnTimer(void) const { return GETTIME(On); }
 
 /// Set the enable status of the Off Timer.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin128::setOffTimerEnabled(const bool on) {
-  _.OffTimer = on;
-}
+void IRDaikin128::setOffTimerEnabled(const bool on) { _.OffTimer = on; }
 
 /// Get the enable status of the Off Timer.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin128::getOffTimerEnabled(void) const {
-  return _.OffTimer;
-}
+bool IRDaikin128::getOffTimerEnabled(void) const { return _.OffTimer; }
 
 /// Set the Off Timer time for the A/C unit.
 /// @param[in] mins_since_midnight Nr. of minutes past midnight.
@@ -2892,9 +2814,7 @@ void IRDaikin128::setOffTimer(const uint16_t mins_since_midnight) {
 
 /// Get the Off Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin128::getOffTimer(void) const {
-  return GETTIME(Off);
-}
+uint16_t IRDaikin128::getOffTimer(void) const { return GETTIME(Off); }
 
 /// Set the Light toggle setting of the A/C.
 /// @param[in] unit Device to show the LED (Light) Display info about.
@@ -3202,21 +3122,15 @@ void IRDaikin152::off(void) { setPower(false); }
 
 /// Change the power setting.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin152::setPower(const bool on) {
-  _.Power = on;
-}
+void IRDaikin152::setPower(const bool on) { _.Power = on; }
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getPower(void) const {
-  return _.Power;
-}
+bool IRDaikin152::getPower(void) const { return _.Power; }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin152::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin152::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -3258,9 +3172,7 @@ void IRDaikin152::setTemp(const uint8_t temp) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRDaikin152::getTemp(void) const {
-  return _.Temp;
-}
+uint8_t IRDaikin152::getTemp(void) const { return _.Temp; }
 
 /// Set the speed of the fan.
 /// @param[in] fan The desired setting.
@@ -3303,9 +3215,7 @@ void IRDaikin152::setSwingV(const bool on) {
 
 /// Get the Vertical Swing mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getSwingV(void) const {
-  return _.SwingV;
-}
+bool IRDaikin152::getSwingV(void) const { return _.SwingV; }
 
 /// Set the Quiet mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -3317,9 +3227,7 @@ void IRDaikin152::setQuiet(const bool on) {
 
 /// Get the Quiet mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getQuiet(void) const {
-  return _.Quiet;
-}
+bool IRDaikin152::getQuiet(void) const { return _.Quiet; }
 
 /// Set the Powerful (Turbo) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -3335,9 +3243,7 @@ void IRDaikin152::setPowerful(const bool on) {
 
 /// Get the Powerful (Turbo) mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getPowerful(void) const {
-  return _.Powerful;
-}
+bool IRDaikin152::getPowerful(void) const { return _.Powerful; }
 
 /// Set the Economy mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -3349,21 +3255,15 @@ void IRDaikin152::setEcono(const bool on) {
 
 /// Get the Economical mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getEcono(void) const {
-  return _.Econo;
-}
+bool IRDaikin152::getEcono(void) const { return _.Econo; }
 
 /// Set the Sensor mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin152::setSensor(const bool on) {
-  _.Sensor = on;
-}
+void IRDaikin152::setSensor(const bool on) { _.Sensor = on; }
 
 /// Get the Sensor mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getSensor(void) const {
-  return _.Sensor;
-}
+bool IRDaikin152::getSensor(void) const { return _.Sensor; }
 
 /// Set the Comfort mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -3380,9 +3280,7 @@ void IRDaikin152::setComfort(const bool on) {
 
 /// Get the Comfort mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin152::getComfort(void) const {
-  return _.Comfort;
-}
+bool IRDaikin152::getComfort(void) const { return _.Comfort; }
 
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
@@ -3551,14 +3449,10 @@ bool IRDaikin64::validChecksum(const uint64_t state) {
 }
 
 /// Calculate and set the checksum values for the internal state.
-void IRDaikin64::checksum(void) {
-  _.Sum = calcChecksum(_.raw);
-}
+void IRDaikin64::checksum(void) { _.Sum = calcChecksum(_.raw); }
 
 /// Reset the internal state to a fixed known good state.
-void IRDaikin64::stateReset(void) {
-  _.raw = kDaikin64KnownGoodState;
-}
+void IRDaikin64::stateReset(void) { _.raw = kDaikin64KnownGoodState; }
 
 /// Get a copy of the internal state as a valid code for this protocol.
 /// @return A valid code for this protocol based on the current internal state.
@@ -3573,15 +3467,11 @@ void IRDaikin64::setRaw(const uint64_t new_state) { _.raw = new_state; }
 
 /// Set the Power toggle setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin64::setPowerToggle(const bool on) {
-  _.Power = on;
-}
+void IRDaikin64::setPowerToggle(const bool on) { _.Power = on; }
 
 /// Get the Power toggle setting of the A/C.
 /// @return The current operating mode setting.
-bool IRDaikin64::getPowerToggle(void) const {
-  return _.Power;
-}
+bool IRDaikin64::getPowerToggle(void) const { return _.Power; }
 
 /// Set the temperature.
 /// @param[in] temp The temperature in degrees celsius.
@@ -3593,15 +3483,11 @@ void IRDaikin64::setTemp(const uint8_t temp) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRDaikin64::getTemp(void) const {
-  return bcdToUint8(_.Temp);
-}
+uint8_t IRDaikin64::getTemp(void) const { return bcdToUint8(_.Temp); }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRDaikin64::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRDaikin64::getMode(void) const { return _.Mode; }
 
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
@@ -3645,9 +3531,7 @@ stdAc::opmode_t IRDaikin64::toCommonMode(const uint8_t mode) {
 
 /// Get the current fan speed setting.
 /// @return The current fan speed.
-uint8_t IRDaikin64::getFan(void) const {
-  return _.Fan;
-}
+uint8_t IRDaikin64::getFan(void) const { return _.Fan; }
 
 /// Set the speed of the fan.
 /// @param[in] speed The desired setting.
@@ -3696,9 +3580,7 @@ stdAc::fanspeed_t IRDaikin64::toCommonFanSpeed(const uint8_t speed) {
 
 /// Get the Turbo (Powerful) mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin64::getTurbo(void) const {
-  return _.Fan == kDaikin64FanTurbo;
-}
+bool IRDaikin64::getTurbo(void) const { return _.Fan == kDaikin64FanTurbo; }
 
 /// Set the Turbo (Powerful) mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -3712,9 +3594,7 @@ void IRDaikin64::setTurbo(const bool on) {
 
 /// Get the Quiet mode status of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin64::getQuiet(void) const {
-  return _.Fan == kDaikin64FanQuiet;
-}
+bool IRDaikin64::getQuiet(void) const { return _.Fan == kDaikin64FanQuiet; }
 
 /// Set the Quiet mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -3728,27 +3608,19 @@ void IRDaikin64::setQuiet(const bool on) {
 
 /// Set the Vertical Swing mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin64::setSwingVertical(const bool on) {
-  _.SwingV = on;
-}
+void IRDaikin64::setSwingVertical(const bool on) { _.SwingV = on; }
 
 /// Get the Vertical Swing mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin64::getSwingVertical(void) const {
-  return _.SwingV;
-}
+bool IRDaikin64::getSwingVertical(void) const { return _.SwingV; }
 
 /// Set the Sleep mode of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin64::setSleep(const bool on) {
-  _.Sleep = on;
-}
+void IRDaikin64::setSleep(const bool on) { _.Sleep = on; }
 
 /// Get the Sleep mode of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin64::getSleep(void) const {
-  return _.Sleep;
-}
+bool IRDaikin64::getSleep(void) const { return _.Sleep; }
 
 /// Set the clock on the A/C unit.
 /// @param[in] mins_since_midnight Nr. of minutes past midnight.
@@ -3767,21 +3639,15 @@ uint16_t IRDaikin64::getClock(void) const {
 
 /// Set the enable status of the On Timer.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin64::setOnTimeEnabled(const bool on) {
-  _.OnTimer = on;
-}
+void IRDaikin64::setOnTimeEnabled(const bool on) { _.OnTimer = on; }
 
 /// Get the enable status of the On Timer.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin64::getOnTimeEnabled(void) const {
-  return _.OnTimer;
-}
+bool IRDaikin64::getOnTimeEnabled(void) const { return _.OnTimer; }
 
 /// Get the On Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin64::getOnTime(void) const {
-  return GETTIME(On);
-}
+uint16_t IRDaikin64::getOnTime(void) const { return GETTIME(On); }
 
 /// Set the On Timer time for the A/C unit.
 /// @param[in] mins_since_midnight Nr. of minutes past midnight.
@@ -3791,21 +3657,15 @@ void IRDaikin64::setOnTime(const uint16_t mins_since_midnight) {
 
 /// Set the enable status of the Off Timer.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRDaikin64::setOffTimeEnabled(const bool on) {
-  _.OffTimer = on;
-}
+void IRDaikin64::setOffTimeEnabled(const bool on) { _.OffTimer = on; }
 
 /// Get the enable status of the Off Timer.
 /// @return true, the setting is on. false, the setting is off.
-bool IRDaikin64::getOffTimeEnabled(void) const {
-  return _.OffTimer;
-}
+bool IRDaikin64::getOffTimeEnabled(void) const { return _.OffTimer; }
 
 /// Get the Off Timer time to be sent to the A/C unit.
 /// @return The number of minutes past midnight.
-uint16_t IRDaikin64::getOffTime(void) const {
-  return GETTIME(Off);
-}
+uint16_t IRDaikin64::getOffTime(void) const { return GETTIME(Off); }
 
 /// Set the Off Timer time for the A/C unit.
 /// @param[in] mins_since_midnight Nr. of minutes past midnight.

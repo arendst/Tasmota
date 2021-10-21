@@ -4,183 +4,154 @@
 # To generate C bindings, do:
 # > compile("lvgl_ctypes.be","file")()
 #
-# and copy/paste output in C format
+# and copy/paste output in C format in `be_lvgl_ctypes_definitions.c`
 #
 import ctypes
 
 ctypes.print_types()
 
-lv_style_int_t = ctypes.i16
-lv_color_t = ctypes.u16        # depends on colors
-lv_grad_dir_t = ctypes.u8
-lv_opa_t = ctypes.u8
-lv_blend_mode_t = ctypes.u8
-lv_align_t = ctypes.u8
-lv_coord_t = ctypes.i16
-lv_bidi_dir_t = ctypes.u8
-lv_txt_flag_t = ctypes.u8
-lv_text_decor_t = ctypes.u8
-lv_font_t = ctypes.u32
+lv_style_int = ctypes.i16
+lv_color = [ctypes.u16, "lv_color"]        # cast to the class instance, constructor is called with 2 args: (nil, value)
+lv_grad_dir = ctypes.u8
+lv_meter_indicator_type_t = ctypes.u8
+lv_opa = ctypes.u8
+lv_blend_mode = ctypes.u8
+lv_align = ctypes.u8
+lv_coord = ctypes.i16
+lv_bidi_dir = ctypes.u8
+lv_txt_flag = ctypes.u8
+lv_text_decor = ctypes.u8
+lv_font = ctypes.u32
+lv_blend_mode = ctypes.u8
+lv_draw_mask_line_side = ctypes.u8
 uint8_t_1 = ctypes.bf_1
 uint8_t_2 = ctypes.bf_2
+uint8_t_3 = ctypes.bf_3
+uint8_t_4 = ctypes.bf_4
+uint8_t_5 = ctypes.bf_5
 uint8_t = ctypes.u8
+int16_t = ctypes.i16
 uint16_t = ctypes.u16
+uint16_t_16 = ctypes.bf_16
 uint32_t = ctypes.u32
 int32_t = ctypes.i32
-ptr = ctypes.u32
+ptr = ctypes.ptr32
 
-lv_point_t = [
-    [lv_coord_t, "x"],
-    [lv_coord_t, "y"],
+lv_point = [            # valid LVGL8
+    [lv_coord, "x"],
+    [lv_coord, "y"],
 ]
-lv_point_t = ctypes.structure(lv_point_t, "lv_point_t")
+lv_point = ctypes.structure(lv_point, "lv_point")
 
-lv_area_t = [
-    [lv_coord_t, "x1"],
-    [lv_coord_t, "y1"],
-    [lv_coord_t, "x2"],
-    [lv_coord_t, "y2"],
+lv_area = [            # valid LVGL8
+    [lv_coord, "x1"],
+    [lv_coord, "y1"],
+    [lv_coord, "x2"],
+    [lv_coord, "y2"],
 ]
-lv_area_t = ctypes.structure(lv_area_t, "lv_area_t")
+lv_area = ctypes.structure(lv_area, "lv_area")
 
-# test_t = [
-#     [lv_area_t, "a"],
-#     [lv_area_t, "b"]
-# ]
-# test_t = ctypes.structure(test_t, "test_t")
-
-lv_draw_rect_dsc_t = [
-    [lv_style_int_t, "radius"],
+lv_draw_rect_dsc = [            # valid LVGL8
+    [lv_coord, "radius"],
+    [lv_blend_mode, "blend_mode"],
 
     #/*Background*/
-    [lv_color_t, "bg_color"],
-    [lv_color_t, "bg_grad_color"],
-    [lv_grad_dir_t, "bg_grad_dir"],
-    [lv_style_int_t, "bg_main_color_stop"],
-    [lv_style_int_t, "bg_grad_color_stop"],
-    [lv_opa_t, "bg_opa"],
-    [lv_blend_mode_t, "bg_blend_mode"],
+    [lv_color, "bg_color"],
+    [lv_color, "bg_grad_color"],
+    [uint8_t, "bg_main_color_stop"],
+    [uint8_t, "bg_grad_color_stop"],
+    [lv_opa, "bg_opa"],
+    [uint8_t_3, "bg_grad_dir"],
+
+    #/*Background img*/
+    [ptr, "bg_img_src"],
+    [ptr, "bg_img_symbol_font"],
+    [lv_color, "bg_img_recolor"],
+    [lv_opa, "bg_img_opa"],
+    [lv_opa, "bg_img_recolor_opa"],
+    [uint8_t, "bg_img_tiled"],
 
     #/*Border*/
-    [lv_color_t, "border_color"],
-    [lv_style_int_t, "border_width"],
-    [lv_style_int_t, "border_side"],
-    [lv_opa_t, "border_opa"],
-    [lv_blend_mode_t, "border_blend_mode"],
+    [lv_color, "border_color"],
+    [lv_coord, "border_width"],
+    [lv_opa, "border_opa"],
     [uint8_t_1, "border_post"],
+    [uint8_t_5, "border_side"],
 
     #/*Outline*/
-    [lv_color_t, "outline_color"],
-    [lv_style_int_t, "outline_width"],
-    [lv_style_int_t, "outline_pad"],
-    [lv_opa_t, "outline_opa"],
-    [lv_blend_mode_t, "outline_blend_mode"],
+    [lv_color, "outline_color"],
+    [lv_coord, "outline_width"],
+    [lv_coord, "outline_pad"],
+    [lv_opa, "outline_opa"],
 
     #/*Shadow*/
-    [lv_color_t, "shadow_color"],
-    [lv_style_int_t, "shadow_width"],
-    [lv_style_int_t, "shadow_ofs_x"],
-    [lv_style_int_t, "shadow_ofs_y"],
-    [lv_style_int_t, "shadow_spread"],
-    [lv_opa_t, "shadow_opa"],
-    [lv_blend_mode_t, "shadow_blend_mode"],
-
-    #/*Pattern*/
-    [ptr, "pattern_image"],
-    [ptr, "pattern_font"],
-    [lv_color_t, "pattern_recolor"],
-    [lv_opa_t, "pattern_opa"],
-    [lv_opa_t, "pattern_recolor_opa"],
-    [uint8_t_1, "pattern_repeat"],
-    [lv_blend_mode_t, "pattern_blend_mode"],
-
-    #/*Value*/
-    [ptr, "value_str"],
-    [ptr, "value_font"],
-    [lv_opa_t, "value_opa"],
-    [lv_color_t, "value_color"],
-    [lv_style_int_t, "value_ofs_x"],
-    [lv_style_int_t, "value_ofs_y"],
-    [lv_style_int_t, "value_letter_space"],
-    [lv_style_int_t, "value_line_space"],
-    [lv_align_t, "value_align"],
-    [lv_blend_mode_t, "value_blend_mode"],
+    [lv_color, "shadow_color"],
+    [lv_coord, "shadow_width"],
+    [lv_coord, "shadow_ofs_x"],
+    [lv_coord, "shadow_ofs_y"],
+    [lv_coord, "shadow_spread"],
+    [lv_opa, "shadow_opa"],
 ]
-lv_draw_rect_dsc_t = ctypes.structure(lv_draw_rect_dsc_t, "lv_draw_rect_dsc_t")
+lv_draw_rect_dsc = ctypes.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 
-lv_draw_line_dsc_t = [
-    [lv_color_t, "color"],
-    [lv_style_int_t, "width"],
-    [lv_style_int_t, "dash_width"],
-    [lv_style_int_t, "dash_gap"],
-    [lv_opa_t, "opa"],
+lv_draw_line_dsc = [            # valid LVGL8
+    [lv_color, "color"],
+    [lv_coord, "width"],
+    [lv_coord, "dash_width"],
+    [lv_coord, "dash_gap"],
+    [lv_opa, "opa"],
     [uint8_t_2, "blend_mode"],
     [uint8_t_1, "round_start"],
     [uint8_t_1, "round_end"],
     [uint8_t_1, "raw_end"],
 ]
-lv_draw_line_dsc_t = ctypes.structure(lv_draw_line_dsc_t, "lv_draw_line_dsc_t")
+lv_draw_line_dsc = ctypes.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 
-lv_draw_img_dsc_t = [
-    [lv_opa_t, "opa"],
+lv_draw_img_dsc = [            # valid LVGL8
     [uint16_t, "angle"],
-    [lv_point_t, "pivot"],
     [uint16_t, "zoom"],
-    [lv_opa_t, "recolor_opa"],
-    [lv_color_t, "recolor"],
-    [lv_blend_mode_t, "blend_mode"],
+    [lv_point, "pivot"],
+
+    [lv_color, "recolor"],
+    [lv_opa, "recolor_opa"],
+
+    [lv_opa, "opa"],
+    [uint8_t_4, "blend_mode"],
+
+    [int32_t, "frame_id"],
     [uint8_t_1, "antialias"],
 ]
-lv_draw_img_dsc_t = ctypes.structure(lv_draw_img_dsc_t, "lv_draw_img_dsc_t")
-
-lv_draw_label_dsc_t = [
-    [lv_color_t, "color"],
-    [lv_color_t, "sel_color"],
-    [lv_color_t, "sel_bg_color"],
-    [lv_font_t, "font"],
-    [lv_opa_t, "opa"],
-    [lv_style_int_t, "line_space"],
-    [lv_style_int_t, "letter_space"],
-    [uint32_t, "sel_start"],
-    [uint32_t, "sel_end"],
-    [lv_coord_t, "ofs_x"],
-    [lv_coord_t, "ofs_y"],
-    [lv_bidi_dir_t, "bidi_dir"],
-    [lv_txt_flag_t, "flag"],
-    [lv_text_decor_t, "decor"],
-    [lv_blend_mode_t, "blend_mode"],
-]
-lv_draw_label_dsc_t = ctypes.structure(lv_draw_label_dsc_t, "lv_draw_label_dsc_t")
+lv_draw_img_dsc = ctypes.structure(lv_draw_img_dsc, "lv_draw_img_dsc")
 
 #- --------- lv_mask --------- -#
-lv_draw_mask_xcb_t = ptr    # callback
-lv_draw_mask_type_t = ctypes.u8
-lv_draw_mask_line_side_t = ctypes.u8
+lv_draw_mask_xcb = ptr    # callback
+lv_draw_mask_type = ctypes.u8
+lv_draw_mask_line_side = ctypes.u8
 
-lv_draw_mask_common_dsc_t = [
-    [lv_draw_mask_xcb_t, "cb"],
-    [lv_draw_mask_type_t, "type"],
+lv_draw_mask_common_dsc = [            # valid LVGL8
+    [lv_draw_mask_xcb, "cb"],
+    [lv_draw_mask_type, "type"],
 ]
-lv_draw_mask_common_dsc_t = ctypes.structure(lv_draw_mask_common_dsc_t, "lv_draw_mask_common_dsc_t")
+lv_draw_mask_common_dsc = ctypes.structure(lv_draw_mask_common_dsc, "lv_draw_mask_common_dsc")
 
-lv_draw_mask_line_param_cfg_t = [
+lv_draw_mask_line_param_cfg = [            # valid LVGL8
     #/*First point */
-    [lv_point_t, "p1"],
+    [lv_point, "p1"],
 
     #/*Second point*/
-    [lv_point_t, "p2"],
+    [lv_point, "p2"],
 
     #/*Which side to keep?*/
     [uint8_t_2, "side"],
 ]
-lv_draw_mask_line_param_cfg_t = ctypes.structure(lv_draw_mask_line_param_cfg_t, "lv_draw_mask_line_param_cfg_t")
+lv_draw_mask_line_param_cfg = ctypes.structure(lv_draw_mask_line_param_cfg, "lv_draw_mask_line_param_cfg")
 
-lv_draw_mask_line_param_t = [
+lv_draw_mask_line_param = [            # valid LVGL8
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_line_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_line_param_cfg, "cfg"],
     #/*A point of the line*/
-    [lv_point_t, "origo"],
+    [lv_point, "origo"],
     #/* X / (1024*Y) steepness (X is 0..1023 range). What is the change of X in 1024 Y?*/
     [int32_t, "xy_steep"],
     #/* Y / (1024*X) steepness (Y is 0..1023 range). What is the change of Y in 1024 X?*/
@@ -195,88 +166,211 @@ lv_draw_mask_line_param_t = [
     # * It is used to select left/right/top/bottom*/
     [uint8_t_1, "inv"],
 ]
-lv_draw_mask_line_param_t = ctypes.structure(lv_draw_mask_line_param_t, "lv_draw_mask_line_param_t")
+lv_draw_mask_line_param = ctypes.structure(lv_draw_mask_line_param, "lv_draw_mask_line_param")
 
-lv_draw_mask_angle_param_cfg_t = [
-    [lv_point_t, "vertex_p"],
-    [lv_coord_t, "start_angle"],
-    [lv_coord_t, "end_angle"],
+lv_draw_mask_angle_param_cfg = [            # valid LVGL8
+    [lv_point, "vertex_p"],
+    [lv_coord, "start_angle"],
+    [lv_coord, "end_angle"],
 ]
-lv_draw_mask_angle_param_cfg_t = ctypes.structure(lv_draw_mask_angle_param_cfg_t, "lv_draw_mask_angle_param_cfg_t")
+lv_draw_mask_angle_param_cfg = ctypes.structure(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg")
 
-lv_draw_mask_angle_param_t = [
+lv_draw_mask_angle_param = [            # valid LVGL8
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_angle_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_angle_param_cfg, "cfg"],
 
-    [lv_draw_mask_line_param_t, "start_line"],
-    [lv_draw_mask_line_param_t, "end_line"],
+    [lv_draw_mask_line_param, "start_line"],
+    [lv_draw_mask_line_param, "end_line"],
     [uint16_t, "delta_deg"],
 ]
-lv_draw_mask_angle_param_t = ctypes.structure(lv_draw_mask_angle_param_t, "lv_draw_mask_angle_param_t")
+lv_draw_mask_angle_param = ctypes.structure(lv_draw_mask_angle_param, "lv_draw_mask_angle_param")
 
 
-lv_draw_mask_radius_param_cfg_t = [
-    [lv_area_t, "rect"],
-    [lv_coord_t, "radius"],
+lv_draw_mask_radius_param_cfg = [            # valid LVGL8
+    [lv_area, "rect"],
+    [lv_coord, "radius"],
     [uint8_t_1, "outer"],
 ]
-lv_draw_mask_radius_param_cfg_t = ctypes.structure(lv_draw_mask_radius_param_cfg_t, "lv_draw_mask_radius_param_cfg_t")
+lv_draw_mask_radius_param_cfg = ctypes.structure(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg")
 
-lv_sqrt_res_t = [
+lv_sqrt_res = [            # valid LVGL8
     [uint16_t, "i"],
     [uint16_t, "f"],
 ]
-lv_sqrt_res_t = ctypes.structure(lv_sqrt_res_t, "lv_sqrt_res_t")
+lv_sqrt_res = ctypes.structure(lv_sqrt_res, "lv_sqrt_res")
 
-lv_draw_mask_radius_param_t = [
+lv_draw_mask_radius_param = [            # valid LVGL8
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_radius_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_radius_param_cfg, "cfg"],
     [int32_t, "y_prev"],
-    [lv_sqrt_res_t, "y_prev_x"],
+    [lv_sqrt_res, "y_prev_x"],
 ]
-lv_draw_mask_radius_param_t = ctypes.structure(lv_draw_mask_radius_param_t, "lv_draw_mask_radius_param_t")
+lv_draw_mask_radius_param = ctypes.structure(lv_draw_mask_radius_param, "lv_draw_mask_radius_param")
 
 
-lv_draw_mask_fade_param_cfg_t = [
-    [lv_area_t, "coords"],
-    [lv_coord_t, "y_top"],
-    [lv_coord_t, "y_bottom"],
-    [lv_opa_t, "opa_top"],
-    [lv_opa_t, "opa_bottom"],
+lv_draw_mask_fade_param_cfg = [            # valid LVGL8
+    [lv_area, "coords"],
+    [lv_coord, "y_top"],
+    [lv_coord, "y_bottom"],
+    [lv_opa, "opa_top"],
+    [lv_opa, "opa_bottom"],
 ]
-lv_draw_mask_fade_param_cfg_t = ctypes.structure(lv_draw_mask_fade_param_cfg_t, "lv_draw_mask_fade_param_cfg_t")
+lv_draw_mask_fade_param_cfg = ctypes.structure(lv_draw_mask_fade_param_cfg, "lv_draw_mask_fade_param_cfg")
 
-lv_draw_mask_fade_param_t = [
+lv_draw_mask_fade_param = [            # valid LVGL8
     # /*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_fade_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_fade_param_cfg, "cfg"],
 ]
-lv_draw_mask_fade_param_t = ctypes.structure(lv_draw_mask_fade_param_t, "lv_draw_mask_fade_param_t")
+lv_draw_mask_fade_param = ctypes.structure(lv_draw_mask_fade_param, "lv_draw_mask_fade_param")
 
 
-lv_draw_mask_map_param_cfg_t = [
-    [lv_area_t, "coords"],
+lv_draw_mask_map_param_cfg = [            # valid LVGL8
+    [lv_area, "coords"],
     [ptr, "map"],
 ]
-lv_draw_mask_map_param_cfg_t = ctypes.structure(lv_draw_mask_map_param_cfg_t, "lv_draw_mask_map_param_cfg_t")
+lv_draw_mask_map_param_cfg = ctypes.structure(lv_draw_mask_map_param_cfg, "lv_draw_mask_map_param_cfg")
 
-lv_draw_mask_map_param_t = [
+lv_draw_mask_map_param = [            # valid LVGL8
     #/*The first element must be the common descriptor*/
-    [lv_draw_mask_common_dsc_t, "dsc"],
-    [lv_draw_mask_map_param_cfg_t, "cfg"],
+    [lv_draw_mask_common_dsc, "dsc"],
+    [lv_draw_mask_map_param_cfg, "cfg"],
 ]
-lv_draw_mask_map_param_t = ctypes.structure(lv_draw_mask_map_param_t, "lv_draw_mask_map_param_t")
+lv_draw_mask_map_param = ctypes.structure(lv_draw_mask_map_param, "lv_draw_mask_map_param")
 
-lv_draw_mask_saved_t = [
+lv_draw_mask_saved = [            # valid LVGL8
     [ptr, "param"],
     [ptr, "custom_id"],
 ]
-lv_draw_mask_saved_t = ctypes.structure(lv_draw_mask_saved_t, "lv_draw_mask_saved_t")
+lv_draw_mask_saved = ctypes.structure(lv_draw_mask_saved, "lv_draw_mask_saved")
+
+# lv_meter
+
+# lv_meter_scale_t
+lv_meter_scale = [            # valid LVGL8
+    [lv_color, "tick_color"],
+    [uint16_t, "tick_cnt"],
+    [uint16_t, "tick_length"],
+    [uint16_t, "tick_width"],
+
+    [lv_color, "tick_major_color"],
+    [uint16_t, "tick_major_nth"],
+    [uint16_t, "tick_major_length"],
+    [uint16_t, "tick_major_width"],
+
+    [int16_t, "label_gap"],
+    [int16_t, "label_color"],
+
+    [int32_t, "min"],
+    [int32_t, "max"],
+    [int16_t, "r_mod"],
+    [uint16_t, "angle_range"],
+    [int16_t, "rotation"],
+]
+lv_meter_scale = ctypes.structure(lv_meter_scale, "lv_meter_scale")
+
+# lv_meter_indicator_t
+lv_meter_indicator = [            # valid LVGL8
+    [ptr, "scale"],
+    [lv_meter_indicator_type_t, "type"],
+    [lv_opa, "opa"],
+    [int32_t, "start_value"],
+    [int32_t, "end_value"],
+]
+lv_meter_indicator = ctypes.structure(lv_meter_indicator, "lv_meter_indicator")
+
+# variants
+lv_meter_indicator_needle_img = [            # valid LVGL8
+    [ptr, "scale"],
+    [lv_meter_indicator_type_t, "type"],
+    [lv_opa, "opa"],
+    [int32_t, "start_value"],
+    [int32_t, "end_value"],
+    # specifc portion
+    [ptr, "src"],
+    [lv_point, "pivot"],
+]
+lv_meter_indicator_needle_img = ctypes.structure(lv_meter_indicator_needle_img, "lv_meter_indicator_needle_img")
+
+lv_meter_indicator_needle_line = [            # valid LVGL8
+    [ptr, "scale"],
+    [lv_meter_indicator_type_t, "type"],
+    [lv_opa, "opa"],
+    [int32_t, "start_value"],
+    [int32_t, "end_value"],
+    # specifc portion
+    [uint16_t, "width"],
+    [int16_t, "r_mod"],
+    [lv_color, "color"],
+]
+lv_meter_indicator_needle_line = ctypes.structure(lv_meter_indicator_needle_line, "lv_meter_indicator_needle_line")
+
+lv_meter_indicator_arc = [            # valid LVGL8
+    [ptr, "scale"],
+    [lv_meter_indicator_type_t, "type"],
+    [lv_opa, "opa"],
+    [int32_t, "start_value"],
+    [int32_t, "end_value"],
+    # specifc portion
+    [uint16_t, "width"],
+    [ptr, "src"],
+    [lv_color, "color"],
+    [int16_t, "r_mod"],
+]
+lv_meter_indicator_arc = ctypes.structure(lv_meter_indicator_arc, "lv_meter_indicator_arc")
+
+lv_meter_indicator_scale_lines = [            # valid LVGL8
+    [ptr, "scale"],
+    [lv_meter_indicator_type_t, "type"],
+    [lv_opa, "opa"],
+    [int32_t, "start_value"],
+    [int32_t, "end_value"],
+    # specifc portion
+    [int16_t, "width_mod"],
+    [lv_color, "color_start"],
+    [lv_color, "color_end"],
+    [uint8_t_1, "local_grad"],
+]
+lv_meter_indicator_scale_lines = ctypes.structure(lv_meter_indicator_scale_lines, "lv_meter_indicator_scale_lines")
+
+#- --------- class system --------- -#
+lv_obj_class_ptr = ptr
+lv_obj_ptr = ptr
+lv_event_ptr = ptr
+constructor_cb = ptr    # callback
+destructor_cb = ptr    # callback
+event_cb = ptr    # callback
+lv_event_code = ctypes.i32
+
+lv_obj_class = [            # valid LVGL8
+    [lv_obj_class_ptr, "base_class"],
+    [constructor_cb, "constructor_cb"],
+    [destructor_cb, "destructor_cb"],
+    [ptr, "user_data"],
+    [event_cb, "event_cb"],
+    [lv_coord, "width_def"],
+    [lv_coord, "height_def"],
+    [uint8_t_2, "editable"],
+    [uint8_t_2, "group_def"],
+    [uint16_t_16, "instance_size"],
+]
+lv_obj_class = ctypes.structure(lv_obj_class, "lv_obj_class")
+
+lv_event = [            # valid LVGL8
+    [lv_obj_ptr, "target"],
+    [lv_obj_ptr, "current_target"],
+    [lv_event_code, "code"],
+    [ptr, "user_data"],
+    [ptr, "param"],
+    [lv_event_ptr, "prev"],
+    [uint8_t_1, "deleted"],
+]
+lv_event = ctypes.structure(lv_event, "lv_event")
 
 #
-ctypes.print_classes()
+ctypes.print_classes("lvgl")
 
 # Ex:
 # bb = ctypes.buffer(test_t, bytes("0101020203030404FFFFFEFEFCFC8080"))
@@ -286,7 +380,7 @@ ctypes.print_classes()
 
 #- Ex
 
-bb=ctypes.buffer(lv_draw_line_dsc_t)
+bb=ctypes.buffer(lv_draw_line_dsc)
 bb.color
 bb.blend_mode
 
@@ -302,12 +396,12 @@ bb.raw_end = 1
 bb.blend_mode=0
 - bytes('FFFF0000000000000010')
 
-lv_draw_line_dsc_t = [
-    [lv_color_t, "color"],
-    [lv_style_int_t, "width"],
-    [lv_style_int_t, "dash_width"],
-    [lv_style_int_t, "dash_gap"],
-    [lv_opa_t, "opa"],
+lv_draw_line_dsc = [
+    [lv_color, "color"],
+    [lv_style_int, "width"],
+    [lv_style_int, "dash_width"],
+    [lv_style_int, "dash_gap"],
+    [lv_opa, "opa"],
     [uint8_t_2, "blend_mode"],
     [uint8_t_1, "round_start"],
     [uint8_t_1, "round_end"],

@@ -53,7 +53,6 @@
 #define D_CMND_FREEMEM   "FreeMem"
 #define D_CMND_HELP      "Help"
 #define D_CMND_RTCDUMP   "RtcDump"
-#define D_CMND_SETSENSOR "SetSensor"
 #define D_CMND_I2CWRITE  "I2CWrite"
 #define D_CMND_I2CREAD   "I2CRead"
 #define D_CMND_I2CSTRETCH "I2CStretch"
@@ -69,7 +68,7 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
 #ifdef DEBUG_THEO
   D_CMND_EXCEPTION "|"
 #endif
-  D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|"
+  D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|"
 #ifdef USE_I2C
   D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK
 #endif
@@ -84,7 +83,7 @@ void (* const DebugCommand[])(void) PROGMEM = {
 #ifdef DEBUG_THEO
   &CmndException,
 #endif
-  &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump, &CmndSetSensor,
+  &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump,
 #ifdef USE_I2C
   &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock
 #endif
@@ -556,21 +555,6 @@ void CmndFreemem(void)
     CPU_show_freemem = XdrvMailbox.payload;
   }
   ResponseCmndNumber(CPU_show_freemem);
-}
-
-void CmndSetSensor(void)
-{
-  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
-    if (XdrvMailbox.payload >= 0) {
-      bitWrite(Settings->sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
-      if (1 == XdrvMailbox.payload) {
-        TasmotaGlobal.restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
-      }
-    }
-    Response_P(PSTR("{\"" D_CMND_SETSENSOR "\":"));
-    XsnsSensorState();
-    ResponseJsonEnd();
-  }
 }
 
 void CmndFlashMode(void)

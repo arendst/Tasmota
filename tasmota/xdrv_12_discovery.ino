@@ -75,22 +75,28 @@ void TasDiscoverMessage(void) {
                    TasmotaGlobal.version,
                    TasmotaGlobal.mqtt_topic,
                    SettingsText(SET_MQTT_FULLTOPIC),
-                   PSTR(SUB_PREFIX),
-                   PSTR(PUB_PREFIX),
-                   PSTR(PUB_PREFIX2));
+                   SettingsText(SET_MQTTPREFIX1),
+                   SettingsText(SET_MQTTPREFIX2),
+                   SettingsText(SET_MQTTPREFIX3));
 
-  uint8_t lightidx = MAX_RELAYS + 1;                           // Will store the starting position of the lights
-  if (Light.subtype > LST_NONE) {
-    if (!light_controller.isCTRGBLinked()) {                   // One or two lights present
-      lightidx = TasmotaGlobal.devices_present - 2;
+  uint8_t light_idx = MAX_RELAYS + 1;                          // Will store the starting position of the lights
+  uint8_t light_subtype = 0;
+  bool light_controller_isCTRGBLinked = false;
+#ifdef USE_LIGHT
+  light_subtype = Light.subtype;
+  if (light_subtype > LST_NONE) {
+    light_controller_isCTRGBLinked = light_controller.isCTRGBLinked();
+    if (!light_controller_isCTRGBLinked) {                     // One or two lights present
+      light_idx = TasmotaGlobal.devices_present - 2;
     } else {
-      lightidx = TasmotaGlobal.devices_present - 1;
+      light_idx = TasmotaGlobal.devices_present - 1;
     }
   }
 
   if ((Light.device > 0) && Settings->flag3.pwm_multi_channels) {  // How many relays are light devices?
-    lightidx = TasmotaGlobal.devices_present - Light.subtype;
+    light_idx = TasmotaGlobal.devices_present - light_subtype;
   }
+#endif  // USE_LIGHT
 
   uint16_t Relay[MAX_RELAYS] = { 0 };                          // Base array to store the relay type
   uint16_t Shutter[MAX_RELAYS] = { 0 };                        // Array to store a temp list for shutters
@@ -114,7 +120,7 @@ void TasDiscoverMessage(void) {
       if (Shutter[i] != 0) {                                   // Check if there are shutters present
         Relay[i] = 3;                                          // Relay is a shutter
       } else {
-        if (i >= lightidx || (iFanMod && (0 == i))) {          // First relay on Ifan controls the light
+        if (i >= light_idx || (iFanMod && (0 == i))) {          // First relay on Ifan controls the light
           Relay[i] = 2;                                        // Relay is a light
         } else {
           if (!iFanMod) {                                      // Relays 2-4 for ifan are controlled by FANSPEED and don't need to be present if TasmotaGlobal.module_type = SONOFF_IFAN02 or SONOFF_IFAN03
@@ -182,8 +188,8 @@ void TasDiscoverMessage(void) {
                         Settings->flag4.alexa_ct_range,
                         Settings->flag5.mqtt_switches,
                         Settings->flag5.fade_fixed_duration,
-                        light_controller.isCTRGBLinked(),
-                        Light.subtype);
+                        light_controller_isCTRGBLinked,
+                        light_subtype);
 
   for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
 #ifdef USE_SHUTTER

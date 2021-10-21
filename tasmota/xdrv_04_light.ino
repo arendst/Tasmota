@@ -1656,6 +1656,13 @@ uint8_t LightGetSpeedSetting(void) {
   return Settings->light_speed;
 }
 
+// Force to reapply color, for example when PWM Frequency changed
+void LightReapplyColor(void) {
+  for (uint32_t i = 0; i < LST_MAX; i++) {
+    Light.last_color[i] = 0;
+  }
+}
+
 // On entry Light.new_color[5] contains the color to be displayed
 // and Light.last_color[5] the color currently displayed
 // Light.power tells which lights or channels (SetOption68) are on/off
@@ -1811,6 +1818,7 @@ void LightAnimate(void)
         memcpy(Light.fade_start_10, cur_col_10, sizeof(Light.fade_start_10));
         // push the final values at 8 and 10 bits resolution to the PWMs
         LightSetOutputs(cur_col_10);
+        LightStopFade();
         Light.fade_initialized = true;      // it is now ok to fade
         Light.fade_once_enabled = false;    // light has been set, reset fade_once_enabled
         Light.speed_once_enabled = false;   // light has been set, reset speed_once_enabled
@@ -1835,10 +1843,6 @@ void LightAnimate(void)
         LightSetOutputs(Light.fade_cur_10);
       }
     }
-#ifdef USE_PWM_DIMMER
-    // If the power is off and the fade is done, turn the relay off.
-    if (PWM_DIMMER == TasmotaGlobal.module_type && !Light.power && !Light.fade_running) PWMDimmerSetPower();
-#endif  // USE_PWM_DIMMER
     // For WYZE bulbs we must set the CT pin (PWM2) to INPUT to fully turn it off
     if (TasmotaGlobal.gpio_optiona.pwm1_input && !Light.power && !Light.fade_running) {  // GPIO Option_A1
       if (PinUsed(GPIO_PWM1, 1)) { pinMode(Pin(GPIO_PWM1, 1), INPUT); }
@@ -1895,6 +1899,14 @@ uint8_t LightGetCurFadeBri(void) {
   return max_bri;
 }
 
+void LightStopFade(void) {
+  Light.fade_running = false;
+#ifdef USE_PWM_DIMMER
+  // If the power is off and the fade is done, turn the relay off.
+  if (PWM_DIMMER == TasmotaGlobal.module_type && !Light.power) PWMDimmerSetPower();
+#endif  // USE_PWM_DIMMER
+}
+
 bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
   static uint32_t last_millis = 0;
   uint32_t now = millis();
@@ -1933,7 +1945,7 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
       }
     } else {
       // no fade needed, we keep the duration at zero, it will fallback directly to end of fade
-      Light.fade_running = false;
+      LightStopFade();
     }
   }
 
@@ -1953,7 +1965,7 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
   } else {
     // stop fade
 //AddLop_P2(LOG_LEVEL_DEBUG, PSTR("Stop fade"));
-    Light.fade_running = false;
+    LightStopFade();
     Light.fade_start = 0;
     Light.fade_duration = 0;
     // set light to target value
@@ -2000,7 +2012,14 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+#ifdef USE_PWM_DIMMER
+    uint16_t max_col = 0;
+#endif  // USE_PWM_DIMMER
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
+      uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
+#ifdef USE_PWM_DIMMER
+      if (cur_col > max_col) max_col = cur_col;
+#endif  // USE_PWM_DIMMER
       if (PinUsed(GPIO_PWM1, i)) {
         //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
@@ -2010,12 +2029,12 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         if (!Settings->flag4.zerocross_dimmer) {
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
         }
-#ifdef USE_PWM_DIMMER
-        // Animate brightness LEDs to follow PWM dimmer brightness
-        if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(cur_col));
-#endif  // USE_PWM_DIMMER
       }
     }
+#ifdef USE_PWM_DIMMER
+    // Animate brightness LEDs to follow PWM dimmer brightness
+    if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(max_col));
+#endif  // USE_PWM_DIMMER
   }
 //  char msg[24];
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"), ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
@@ -2923,7 +2942,7 @@ void CmndFade(void)
   #ifdef USE_DEVICE_GROUPS
     if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 2) SendDeviceGroupMessage(Light.device, DGR_MSGTYP_UPDATE, DGR_ITEM_LIGHT_FADE, Settings->light_fade);
   #endif  // USE_DEVICE_GROUPS
-    if (!Settings->light_fade) { Light.fade_running = false; }
+    if (!Settings->light_fade) { LightStopFade(); }
   }
   ResponseCmndStateText(Settings->light_fade);
 }
@@ -2937,7 +2956,7 @@ void CmndSpeed(void)
       Light.fade_once_value = (XdrvMailbox.payload > 0);
       Light.speed_once_enabled = true;
       Light.speed_once_value = XdrvMailbox.payload;
-      if (!Light.fade_once_value) { Light.fade_running = false; }
+      if (!Light.fade_once_value) { LightStopFade(); }
     }
     ResponseCmndIdxNumber(Light.speed_once_value);
   } else {

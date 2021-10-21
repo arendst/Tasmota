@@ -239,21 +239,30 @@ opus_int32 opus_repacketizer_out(OpusRepacketizer *rp, unsigned char *data, opus
 
 int opus_packet_pad(unsigned char *data, opus_int32 len, opus_int32 new_len)
 {
-   OpusRepacketizer rp;
+   OpusRepacketizer *rp = (OpusRepacketizer*)malloc(sizeof(OpusRepacketizer));
    opus_int32 ret;
-   if (len < 1)
+   if (len < 1) {
+	   free(rp);
       return OPUS_BAD_ARG;
-   if (len==new_len)
+   }
+   if (len==new_len) {
+	   free(rp);
       return OPUS_OK;
-   else if (len > new_len)
+   }
+   else if (len > new_len) {
+	   free(rp);
       return OPUS_BAD_ARG;
-   opus_repacketizer_init(&rp);
+   }
+   opus_repacketizer_init(rp);
    /* Moving payload to the end of the packet so we can do in-place padding */
    OPUS_MOVE(data+new_len-len, data, len);
-   ret = opus_repacketizer_cat(&rp, data+new_len-len, len);
-   if (ret != OPUS_OK)
+   ret = opus_repacketizer_cat(rp, data+new_len-len, len);
+   if (ret != OPUS_OK) {
+	   free(rp);
       return ret;
-   ret = opus_repacketizer_out_range_impl(&rp, 0, rp.nb_frames, data, new_len, 0, 1);
+   }
+   ret = opus_repacketizer_out_range_impl(rp, 0, rp->nb_frames, data, new_len, 0, 1);
+   free(rp);
    if (ret > 0)
       return OPUS_OK;
    else
@@ -262,15 +271,20 @@ int opus_packet_pad(unsigned char *data, opus_int32 len, opus_int32 new_len)
 
 opus_int32 opus_packet_unpad(unsigned char *data, opus_int32 len)
 {
-   OpusRepacketizer rp;
+   OpusRepacketizer *rp = (OpusRepacketizer*)malloc(sizeof(OpusRepacketizer));
    opus_int32 ret;
-   if (len < 1)
+   if (len < 1) {
+	   free(rp);
       return OPUS_BAD_ARG;
-   opus_repacketizer_init(&rp);
-   ret = opus_repacketizer_cat(&rp, data, len);
-   if (ret < 0)
+   }
+   opus_repacketizer_init(rp);
+   ret = opus_repacketizer_cat(rp, data, len);
+   if (ret < 0) {
+	   free(rp);
       return ret;
-   ret = opus_repacketizer_out_range_impl(&rp, 0, rp.nb_frames, data, len, 0, 0);
+   }
+   ret = opus_repacketizer_out_range_impl(rp, 0, rp->nb_frames, data, len, 0, 0);
+   free(rp);
    celt_assert(ret > 0 && ret <= len);
    return ret;
 }
@@ -312,12 +326,14 @@ opus_int32 opus_multistream_packet_unpad(unsigned char *data, opus_int32 len, in
    unsigned char toc;
    opus_int16 size[48];
    opus_int32 packet_offset;
-   OpusRepacketizer rp;
+   OpusRepacketizer *rp = (OpusRepacketizer*)malloc(sizeof(OpusRepacketizer));
    unsigned char *dst;
    opus_int32 dst_len;
 
-   if (len < 1)
+   if (len < 1){
+	   free(rp);
       return OPUS_BAD_ARG;
+   }
    dst = data;
    dst_len = 0;
    /* Unpad all frames */
@@ -325,25 +341,34 @@ opus_int32 opus_multistream_packet_unpad(unsigned char *data, opus_int32 len, in
    {
       opus_int32 ret;
       int self_delimited = s!=nb_streams-1;
-      if (len<=0)
+      if (len<=0) {
+	      free(rp);
          return OPUS_INVALID_PACKET;
-      opus_repacketizer_init(&rp);
+      }
+      opus_repacketizer_init(rp);
       ret = opus_packet_parse_impl(data, len, self_delimited, &toc, NULL,
                                      size, NULL, &packet_offset);
-      if (ret<0)
+      if (ret<0) {
+	      free(rp);
          return ret;
-      ret = opus_repacketizer_cat_impl(&rp, data, packet_offset, self_delimited);
-      if (ret < 0)
+      }
+      ret = opus_repacketizer_cat_impl(rp, data, packet_offset, self_delimited);
+      if (ret < 0) {
+	      free(rp);
          return ret;
-      ret = opus_repacketizer_out_range_impl(&rp, 0, rp.nb_frames, dst, len, self_delimited, 0);
-      if (ret < 0)
+      }
+      ret = opus_repacketizer_out_range_impl(rp, 0, rp->nb_frames, dst, len, self_delimited, 0);
+      if (ret < 0) {
+	      free(rp);
          return ret;
+      }
       else
          dst_len += ret;
       dst += ret;
       data += packet_offset;
       len -= packet_offset;
    }
+   free(rp);
    return dst_len;
 }
 

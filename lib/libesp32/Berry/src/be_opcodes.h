@@ -51,5 +51,7 @@ OPCODE(CLOSE),      /*  A        |   close upvalues */
 OPCODE(IMPORT),     /*  A, B, C  |   IF (A == C) import module name as RK(B) to RK(A), ELSE from module RK(C) import name as RK(B) to RK(A) */
 OPCODE(EXBLK),      /*  A, Bx    |   ... */
 OPCODE(CATCH),      /*  A, B, C  |   ... */
-OPCODE(RAISE),      /*  A, B, C  |   ... */
-OPCODE(CLASS)       /*  Bx       |   init class in K[Bx] */
+OPCODE(RAISE),      /*  A, B, C  |   RAISE(B,C) B is code, C is description. A==0 only B provided, A==1 B and C are provided, A==2 rethrow with both parameters already on stack */
+OPCODE(CLASS),      /*  Bx       |   init class in K[Bx] */
+OPCODE(GETNGBL),    /*  A, B     |   R(A) <- GLOBAL[RK(B)] by name */
+OPCODE(SETNGBL)     /*  A, B     |   R(A) -> GLOBAL[RK(B)] by name */

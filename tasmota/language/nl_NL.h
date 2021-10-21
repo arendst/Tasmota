@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.3.1.1
+ * Updated until v10.0.0
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -67,7 +67,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanaal"
-#define D_CO2 "Koolstofdioxide"
+#define D_CO2 "CO₂"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Koud"
 #define D_COMMAND "Opdracht"
@@ -155,7 +155,7 @@
 #define D_RESTARTING "Herstarten"
 #define D_RESTART_REASON "Reden herstart"
 #define D_RESTORE "herstellen"
-#define D_RETAINED "retained"
+#define D_RETAINED "behouden"
 #define D_RULE "Regel"
 #define D_SAVE "Opslaan"
 #define D_SENSOR "Sensor"
@@ -198,13 +198,15 @@
 #define D_WEIGHT "Gewicht"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Webserver"
+#define D_SOC "Laadtoestand"
+#define D_SOH "Gezondheid"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "WAARSCHUWING Deze versie bewaart geen instellingen"
 #define D_LEVEL_10 "niveau 1-0"
 #define D_LEVEL_01 "niveau 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Serieel logging uitgeschakeld"
-#define D_SYSLOG_LOGGING_REENABLED "Syslog logging weer ingeschakeld"
+#define D_SYSLOG_LOGGING_REENABLED "Syslog logging ingeschakeld"
 
 #define D_SET_BAUDRATE_TO "Zet baudrate op"
 #define D_RECEIVED_TOPIC "Ontvangen topic"
@@ -291,23 +293,23 @@
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
 #define D_WPA2_PSK "WPA2 PSK"
-#define D_AP1_SSID "WiFi Network"
-#define D_AP1_SSID_HELP "Type or Select your WiFi Network"
-#define D_AP2_SSID "WiFi Network 2"
-#define D_AP2_SSID_HELP "Type your Alternative WiFi Network"
-#define D_AP_PASSWORD "WiFi Wachtwoord"
-#define D_AP_PASSWORD_HELP "Enter your WiFi Password"
-#define D_SELECT_YOUR_WIFI_NETWORK "Select your WiFi Network"
-#define D_SHOW_MORE_WIFI_NETWORKS "Scan for all WiFi Networks"
-#define D_SHOW_MORE_OPTIONS "More Options"
-#define D_CHECK_CREDENTIALS "Please, check your credentials"
-#define D_SUCCESSFUL_WIFI_CONNECTION "Successful WiFi Connection"
-#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Now you can close this window"
-#define D_REDIRECTING_TO_NEW_IP "Redirecting to new device's IP address"
+#define D_AP1_SSID "WiFi netwerk"
+#define D_AP1_SSID_HELP "WiFi netwerk kiezen op ingeven"
+#define D_AP2_SSID "WiFi netwerk 2"
+#define D_AP2_SSID_HELP "Alternatief WiFi netwerk ingeven"
+#define D_AP_PASSWORD "WiFi wachtwoord"
+#define D_AP_PASSWORD_HELP "WiFi wachtwoord ingeven"
+#define D_SELECT_YOUR_WIFI_NETWORK "Kies je WiFi netwerk"
+#define D_SHOW_MORE_WIFI_NETWORKS "Zoek alle WiFi netwerken"
+#define D_SHOW_MORE_OPTIONS "Meer mogelijkheden"
+#define D_CHECK_CREDENTIALS "Controleer je gegevens"
+#define D_SUCCESSFUL_WIFI_CONNECTION "WiFi verbinding gelukt"
+#define D_NOW_YOU_CAN_CLOSE_THIS_WINDOW "Dit venster kan worden gesloten"
+#define D_REDIRECTING_TO_NEW_IP "Omleiden naar nieuw IP adres"
 
 #define D_MQTT_PARAMETERS "MQTT parameters"
 #define D_CLIENT "Client"
-#define D_FULL_TOPIC "Volledig Topic"
+#define D_FULL_TOPIC "Volledig topic"
 
 #define D_LOGGING_PARAMETERS "Logging parameters"
 #define D_SERIAL_LOG_LEVEL "Serieel log niveau"
@@ -317,7 +319,7 @@
 #define D_MORE_DEBUG "Meer debug"
 #define D_SYSLOG_HOST "Syslog host"
 #define D_SYSLOG_PORT "Syslog poort"
-#define D_TELEMETRY_PERIOD "Telemetry periode"
+#define D_TELEMETRY_PERIOD "Telemetrie periode"
 
 #define D_OTHER_PARAMETERS "Overige parameters"
 #define D_TEMPLATE "Sjabloon"
@@ -326,6 +328,8 @@
 #define D_WEB_ADMIN_PASSWORD "Web Admin Wachtwoord"
 #define D_MQTT_ENABLE "MQTT ingeschakeld"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
+#define D_HTTP_API "HTTP API"
+#define D_HTTP_API_ENABLE "HTTP API ingeschakeld"
 #define D_FRIENDLY_NAME "Beschrijvende naam"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
@@ -369,8 +373,8 @@
 #define D_UPLOAD_STARTED "Verzending gestart"
 #define D_UPGRADE_STARTED "Opwaarderen gestart"
 #define D_UPLOAD_DONE "Opwaarderen klaar"
-#define D_UPLOAD_TRANSFER "Upload transfer"
-#define D_TRANSFER_STARTED "Transfer started"
+#define D_UPLOAD_TRANSFER "Opwaarderen overdracht"
+#define D_TRANSFER_STARTED "Overdracht begonnen"
 #define D_UPLOAD_ERR_1 "Geen bestand gekozen"
 #define D_UPLOAD_ERR_2 "Onvoldoende geheugen ruimte"
 #define D_UPLOAD_ERR_3 "Ongeldig bestandssoort"
@@ -473,30 +477,30 @@
 #define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_23_zigbee
-#define D_ZIGBEE_PERMITJOIN_ACTIVE "Devices allowed to join"
-#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Mapping"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
-#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Mapping in progress (%d s. remaining)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "No mapping"
-#define D_ZIGBEE_MAP_REFRESH "Zigbee Map Refresh"
-#define D_ZIGBEE_MAP   "Zigbee Map"
-#define D_ZIGBEE_PERMITJOIN "Zigbee Permit Join"
-#define D_ZIGBEE_GENERATE_KEY "generating random Zigbee network key"
-#define D_ZIGBEE_UNKNOWN_DEVICE "Unknown device"
-#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unknown attribute"
-#define D_ZIGBEE_INVALID_PARAM "Invalid parameter"
-#define D_ZIGBEE_MISSING_PARAM "Missing parameters"
-#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unknown attribute name (ignored): %s"
-#define D_ZIGBEE_TOO_MANY_CLUSTERS "No more than one cluster id per command"
-#define D_ZIGBEE_WRONG_DELIMITER "Wrong delimiter for payload"
-#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unrecognized zigbee command: %s"
-#define D_ZIGBEE_TOO_MANY_COMMANDS "Only 1 command allowed (%d)"
-#define D_ZIGBEE_NO_ATTRIBUTE "No attribute in list"
-#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Unsupported attribute type"
-#define D_ZIGBEE_JSON_REQUIRED "Config requires JSON objects"
-#define D_ZIGBEE_RESET_1_OR_2 "1 or 2 to reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM found at address"
-#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Randomizing Zigbee parameters, please check with 'ZbConfig'"
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Apparaatkoppeling mogelijk"
+#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Overzicht"
+#define D_ZIGBEE_NOT_STARTED "Zigbee niet gestart"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Overzicht wordt gemaakt (%d s resterend)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "Geen overzicht"
+#define D_ZIGBEE_MAP_REFRESH "Zigbee overzicht verversen"
+#define D_ZIGBEE_MAP "Zigbee overzicht"
+#define D_ZIGBEE_PERMITJOIN "Zigbee koppeling actief"
+#define D_ZIGBEE_GENERATE_KEY "willekeurig Zigbee netwerk sleutel maken"
+#define D_ZIGBEE_UNKNOWN_DEVICE "Onbekend apparaat"
+#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Onbekende attribuut"
+#define D_ZIGBEE_INVALID_PARAM "Ongeldige parameter"
+#define D_ZIGBEE_MISSING_PARAM "Ontbrekende parameters"
+#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Onbekend attribuut naam: %s"
+#define D_ZIGBEE_TOO_MANY_CLUSTERS "Max een cluster id per opdracht"
+#define D_ZIGBEE_WRONG_DELIMITER "Fout scheidingsteken voor payload"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Onbekende zigbee opdracht: %s"
+#define D_ZIGBEE_TOO_MANY_COMMANDS "Maar een opdracht toegestaan (%d)"
+#define D_ZIGBEE_NO_ATTRIBUTE "Attributenlijst leeg"
+#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Niet ondersteund soort attribuut"
+#define D_ZIGBEE_JSON_REQUIRED "Ongeldige JSON"
+#define D_ZIGBEE_RESET_1_OR_2 "1 of 2 om te herstellen"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM aanwezig op adres"
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Willekeurige Zigbee parameters gemaakt, controleer met 'ZbConfig'"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Verbruik vandaag"
@@ -572,8 +576,8 @@
 #define D_TX20_WIND_SPEED_MIN "Windsnelheid minimum"
 #define D_TX20_WIND_SPEED_MAX "Windsnelheid maximaal"
 #define D_TX20_NORTH "N"
-#define D_TX20_EAST "E"
-#define D_TX20_SOUTH "S"
+#define D_TX20_EAST "O"
+#define D_TX20_SOUTH "Z"
 #define D_TX20_WEST "W"
 
 // xsns_53_sml.ino
@@ -605,19 +609,19 @@
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Geen"
 #define D_SENSOR_USER          "Gebruiker"
-#define D_SENSOR_OPTION        "Option"
+#define D_SENSOR_OPTION        "Optie"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCL"
 #define D_SENSOR_I2C_SDA       "I2C SDA"
-#define D_SENSOR_I2S_OUT_DATA  "I2S Out Data"
-#define D_SENSOR_I2S_OUT_CLK   "I2S Out Clk"
-#define D_SENSOR_I2S_OUT_SLCT  "I2S Out Slct"
-#define D_SENSOR_I2S_IN_DATA   "I2S In Data"
-#define D_SENSOR_I2S_IN_CLK    "I2S In Clk"
-#define D_SENSOR_I2S_IN_SLCT   "I2S In Slct"
+#define D_SENSOR_I2S_OUT_DATA  "I2S uit Data"
+#define D_SENSOR_I2S_OUT_CLK   "I2S uit Clk"
+#define D_SENSOR_I2S_OUT_SLCT  "I2S uit Slct"
+#define D_SENSOR_I2S_IN_DATA   "I2S in Data"
+#define D_SENSOR_I2S_IN_CLK    "I2S in Clk"
+#define D_SENSOR_I2S_IN_SLCT   "I2S in Slct"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Speler"
 #define D_SENSOR_IRSEND        "IRsend"
@@ -668,9 +672,9 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
-#define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
+#define D_SENSOR_MAX7219_DIN   "MAX7219 DIN"
 #define D_SENSOR_MAX7219_CS    "MAX7219 CS"
-#define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
+#define D_SENSOR_MAX7219_CLK   "MAX7219 CLK"
 #define D_SENSOR_HX711_SCK     "HX711 SCK"
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_FTC532        "FTC532"
@@ -706,6 +710,9 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0939_RX     "BL0939 Rx"
+#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_HM330X_SET    "HM330X SET"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
 #define D_SENSOR_SM16716_CLK   "SM16716 CLK"
@@ -831,6 +838,10 @@
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
 #define D_SENSOR_HALLEFFECT    "HallEffect"
 #define D_SENSOR_EPD_DATA      "EPD Data"
+#define D_SENSOR_MCP2515_CS    "MCP2515 CS"
+#define D_SENSOR_HRG15_RX      "HRG15 Rx"
+#define D_SENSOR_HRG15_TX      "HRG15 Tx"
+#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -878,9 +889,9 @@
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
-#define D_NEW_ADDRESS          "Setting address to"
-#define D_OUT_OF_RANGE         "Out of Range"
-#define D_SENSOR_DETECTED      "detected"
+#define D_NEW_ADDRESS     "Nieuw adres"
+#define D_OUT_OF_RANGE    "Buiten beriek"
+#define D_SENSOR_DETECTED "herkend"
 
 //SDM220, SDM120, SDM72, LE01MR
 #define D_EXPORT_POWER    "Export vermogen"
@@ -920,51 +931,52 @@
 #define D_SOLAX_ERROR_8   "Overige"
 
 //xdrv_10_scripter.ino
-#define D_CONFIGURE_SCRIPT     "Edit script"
-#define D_SCRIPT               "edit script"
-#define D_SDCARD_UPLOAD        "file upload"
-#define D_UFSDIR               "ufs directory"
-#define D_UPL_DONE             "Done"
-#define D_SCRIPT_CHARS_LEFT    "chars left"
-#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_CONFIGURE_SCRIPT     "Wijzig script"
+#define D_SCRIPT               "wijzig script"
+#define D_SDCARD_UPLOAD        "bestand opslaan"
+#define D_UFSDIR               "ufs map"
+#define D_UPL_DONE             "Klaar"
+#define D_SCRIPT_CHARS_LEFT    "letters over"
+#define D_SCRIPT_CHARS_NO_MORE "geen letters meer"
 #define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_ENABLE        "script activeren"
 #define D_SCRIPT_UPLOAD        "Upload"
-#define D_SCRIPT_UPLOAD_FILES  "Upload files"
+#define D_SCRIPT_UPLOAD_FILES  "Upload bestanden"
 
 //xdrv_50_filesystem.ino
 #define D_MANAGE_FILE_SYSTEM   "Bestandsbeheer"
 #define D_FS_SIZE              "Grootte"
 #define D_FS_FREE              "Vrij"
 #define D_NEW_FILE             "newfile.txt"
-#define D_CREATE_NEW_FILE      "Create and edit new file"
-#define D_EDIT_FILE            "Edit File"
-#define D_CONFIRM_FILE_DEL     "Confirm file deletion"
+#define D_CREATE_NEW_FILE      "Maak en wijzig nieuw bestand"
+#define D_EDIT_FILE            "Wijzig bestand"
+#define D_CONFIRM_FILE_DEL     "Bevestig verwijderen bestand"
+#define D_SHOW_HIDDEN_FILES    "Toon verborgen bestanden"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "gain:"
-#define D_AS3935_ENERGY "energy:"
-#define D_AS3935_DISTANCE "distance:"
-#define D_AS3935_DISTURBER "disturber:"
+#define D_AS3935_GAIN "winst:"
+#define D_AS3935_ENERGY "energie:"
+#define D_AS3935_DISTANCE "afstand:"
+#define D_AS3935_DISTURBER "verstoring:"
 #define D_AS3935_VRMS "µVrms:"
-#define D_AS3935_APRX "aprx.:"
-#define D_AS3935_AWAY "away"
-#define D_AS3935_LIGHT "lightning"
-#define D_AS3935_OUT "lightning out of range"
-#define D_AS3935_NOT "distance not determined"
-#define D_AS3935_ABOVE "lightning overhead"
-#define D_AS3935_NOISE "noise detected"
-#define D_AS3935_DISTDET "disturber detected"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
+#define D_AS3935_APRX "ca:"
+#define D_AS3935_AWAY "weg"
+#define D_AS3935_LIGHT "bliksem"
+#define D_AS3935_OUT "bliksem buiten bereik"
+#define D_AS3935_NOT "afstand niet bepaald"
+#define D_AS3935_ABOVE "bliksem lokaal"
+#define D_AS3935_NOISE "ruis geconstateerd"
+#define D_AS3935_DISTDET "verstoring geconstateerd"
+#define D_AS3935_INTNOEV "Onderbreking zonder aanleiding!"
 #define D_AS3935_FLICKER "IRQ flicker!"
-#define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
-#define D_AS3935_ON "On"
-#define D_AS3935_OFF "Off"
-#define D_AS3935_INDOORS "Indoors"
-#define D_AS3935_OUTDOORS "Outdoors"
-#define D_AS3935_CAL_FAIL "calibration failed"
-#define D_AS3935_CAL_OK "calibration set to:"
+#define D_AS3935_POWEROFF "Uitgeschakeld"
+#define D_AS3935_NOMESS "luisteren..."
+#define D_AS3935_ON "Aan"
+#define D_AS3935_OFF "Uit"
+#define D_AS3935_INDOORS "Binnen"
+#define D_AS3935_OUTDOORS "Buiten"
+#define D_AS3935_CAL_FAIL "kalibratie mislukt"
+#define D_AS3935_CAL_OK "gekalibreerd op:"
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
@@ -972,56 +984,56 @@
 
 // xnrg_15_teleinfo Denky (Teleinfo)
 #define D_CONTRACT        "Contract"
-#define D_POWER_LOAD      "Power load"
-#define D_CURRENT_TARIFF  "Current Tariff"
-#define D_TARIFF          "Tariff"
+#define D_POWER_LOAD      "Belasting"
+#define D_CURRENT_TARIFF  "Huidig tarief"
+#define D_TARIFF          "Tarief"
 #define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "Max Power"
-#define D_MAX_CURRENT     "Max Current"
+#define D_MAX_POWER       "Max belasting"
+#define D_MAX_CURRENT     "Max stroom"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
-#define D_FP_ENROLL_RESTART "Restart"
-#define D_FP_ENROLL_ERROR "Error"
-#define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_PLACEFINGER "Plaats vinger"
+#define D_FP_ENROLL_REMOVEFINGER "Verwijder vinger"
+#define D_FP_ENROLL_PLACESAMEFINGER "Plaats dezelfde vinger"
+#define D_FP_ENROLL_RETRY "Fout dus opnieuw"
+#define D_FP_ENROLL_RESTART "Herstart"
+#define D_FP_ENROLL_ERROR "Fout"
+#define D_FP_ENROLL_RESET "Herstel"
+#define D_FP_ENROLL_ACTIVE "Actief"
+#define D_FP_ENROLL_INACTIVE "Niet actief"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
+#define D_FP_PACKETRECIEVEERR "Communicatiefout" // 0x01 Error when receiving data package
 #define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Error"              // Any other error
+#define D_FP_IMAGEFAIL "Beeldfout"             // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Wazig beeld"           // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Vingerafdruk te klein" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Komt niet overeen"       // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Geen overeenkomst gevonden" // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Vingerafdruk komt niet overeen" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Buiten bereik"       // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Bestand bereikfout"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Template uploadfout" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Pakketfout"   // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Upload fout"          // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Verwijderingsfout"    // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "DB schoningsfout"    // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Wachtwoord fout"        // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Ongeldig beeld"     // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Flash schrijffout"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Ongeldig nummer"      // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Adres code"             // 0x20 Address code
+#define D_FP_PASSVERIFY "Wachtwoord herkend"   // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Fout"               // Any other error
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (yellow)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blue)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (green)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (light blue)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (red)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
-#define D_NEOPOOL_MACH_STATION            "Station (orange)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (geel)"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blauw)"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (groen)"
+#define D_NEOPOOL_MACH_BIONET             "Bionet (licht blauw)"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (rood)"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (paars)"
+#define D_NEOPOOL_MACH_STATION            "Station (oranje)"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
 #define D_NEOPOOL_MACH_GENERIC            "Generic"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
@@ -1033,40 +1045,41 @@
 #define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
 #define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
 #define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
-#define D_NEOPOOL_FILTRATION_SLOW         "slow"
+#define D_NEOPOOL_FILTRATION_SLOW         "traag"
 #define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
-#define D_NEOPOOL_FILTRATION_FAST         "fast"
+#define D_NEOPOOL_FILTRATION_FAST         "snel"
 #define D_NEOPOOL_TYPE                    "Type"              // Sensor & relais names
 #define D_NEOPOOL_REDOX                   "Redox"
-#define D_NEOPOOL_CHLORINE                "Chlorine"
-#define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
-#define D_NEOPOOL_IONIZATION              "Ionization"
-#define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
-#define D_NEOPOOL_RELAY                   "Relay"
-#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"
-#define D_NEOPOOL_RELAY_LIGHT             "Light"
-#define D_NEOPOOL_RELAY_PH_ACID           "Acid pump"
-#define D_NEOPOOL_RELAY_PH_BASE           "Base pump"
-#define D_NEOPOOL_RELAY_RX                "Redox level"
-#define D_NEOPOOL_RELAY_CL                "Chlorine pump"
-#define D_NEOPOOL_RELAY_CD                "Brine pump"
-#define D_NEOPOOL_TIME                    "Time"
-#define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_CHLORINE                "Chloor"
+#define D_NEOPOOL_CONDUCTIVITY            "Geleidbaarheid"
+#define D_NEOPOOL_IONIZATION              "Ionizatie"
+#define D_NEOPOOL_HYDROLYSIS              "Hydrolyse"
+#define D_NEOPOOL_RELAY                   "Relais"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtratie"
+#define D_NEOPOOL_RELAY_LIGHT             "Licht"
+#define D_NEOPOOL_RELAY_PH_ACID           "Zuurpomp"
+#define D_NEOPOOL_RELAY_PH_BASE           "Basepomp"
+#define D_NEOPOOL_RELAY_RX                "Redox peil"
+#define D_NEOPOOL_RELAY_CL                "Chloorpomp"
+#define D_NEOPOOL_RELAY_CD                "Pekelpomp"
+#define D_NEOPOOL_TIME                    "Tijd"
+#define D_NEOPOOL_FILT_MODE               "Filtratie"
+#define D_NEOPOOL_CELL_RUNTIME            "Cel looptijd"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
-#define D_NEOPOOL_PR_OFF                  "PrOff"
+#define D_NEOPOOL_PR_OFF                  "PrUit"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
-#define D_NEOPOOL_COVER                   "Cover"
+#define D_NEOPOOL_COVER                   "Hoes"
 #define D_NEOPOOL_SHOCK                   "Boost"
-#define D_NEOPOOL_STATUS_ON               "ON"
-#define D_NEOPOOL_STATUS_OFF              "OFF"
-#define D_NEOPOOL_STATUS_WAIT             "WAIT"
+#define D_NEOPOOL_STATUS_ON               "AAN"
+#define D_NEOPOOL_STATUS_OFF              "UIT"
+#define D_NEOPOOL_STATUS_WAIT             "WACHT"
 #define D_NEOPOOL_STATUS_TANK             "TANK"
 #define D_NEOPOOL_STATUS_FLOW             "Flow"
-#define D_NEOPOOL_LOW                     "Low"
+#define D_NEOPOOL_LOW                     "Laag"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
-#define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
-#define D_NEOPOOL_PH_LOW                  "too low"
-#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
+#define D_NEOPOOL_PH_HIGH                 "te hoog"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "te laag"
+#define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pomptijd bereikt"
 
 #endif  // _LANGUAGE_NL_NL_H_

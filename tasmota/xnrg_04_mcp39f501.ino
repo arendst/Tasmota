@@ -534,7 +534,7 @@ void McpEverySecond(void)
   }
 
   if (mcp_active_power) {
-    Energy.kWhtoday_delta += ((mcp_active_power * 10) / 36);
+    Energy.kWhtoday_delta[0] += ((mcp_active_power * 10) / 36);
     EnergyUpdateToday();
   }
 

@@ -197,8 +197,8 @@ void MqttInit(void) {
   Settings->mqtt_port = 8883;
 #endif //USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
-  if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port)) {
-    // Turn on TLS for port 8883 (TLS) and 8884 (TLS, client certificate)
+  if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
+    // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
     Settings->flag4.mqtt_tls = true;
   }
   Mqtt.mqtt_tls = Settings->flag4.mqtt_tls;   // this flag should not change even if we change the SetOption (until reboot)
@@ -670,16 +670,12 @@ void MqttPublishPayload(const char* topic, const char* payload) {
 }
 
 void MqttPublish(const char* topic, bool retained) {
-  // Publish <topic> default TasmotaGlobal.mqtt_data string with optional retained
-#ifdef MQTT_DATA_STRING
-  MqttPublishPayload(topic, TasmotaGlobal.mqtt_data.c_str(), 0, retained);
-#else
-  MqttPublishPayload(topic, TasmotaGlobal.mqtt_data, 0, retained);
-#endif
+  // Publish <topic> default ResponseData string with optional retained
+  MqttPublishPayload(topic, ResponseData(), 0, retained);
 }
 
 void MqttPublish(const char* topic) {
-  // Publish <topic> default TasmotaGlobal.mqtt_data string no retained
+  // Publish <topic> default ResponseData string no retained
   MqttPublish(topic, false);
 }
 
@@ -750,40 +746,36 @@ void MqttPublishPayloadPrefixTopicRulesProcess_P(uint32_t prefix, const char* su
 }
 
 void MqttPublishPayloadPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, const char* payload) {
-  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string no retained
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string no retained
   //   then process rules
   MqttPublishPayloadPrefixTopicRulesProcess_P(prefix, subtopic, payload, false);
 }
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
-  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string with optional retained
-#ifdef MQTT_DATA_STRING
-  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, TasmotaGlobal.mqtt_data.c_str(), 0, retained);
-#else
-  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, TasmotaGlobal.mqtt_data, 0, retained);
-#endif
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string with optional retained
+  MqttPublishPayloadPrefixTopic_P(prefix, subtopic, ResponseData(), 0, retained);
 }
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic) {
-  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string no retained
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string no retained
   MqttPublishPrefixTopic_P(prefix, subtopic, false);
 }
 
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained) {
-  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string with optional retained
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string with optional retained
   //   then process rules
   MqttPublishPrefixTopic_P(prefix, subtopic, retained);
   XdrvRulesProcess(0);
 }
 
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic) {
-  // Publish <prefix>/<device>/<RESULT or <subtopic>> default TasmotaGlobal.mqtt_data string no retained
+  // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string no retained
   //   then process rules
   MqttPublishPrefixTopicRulesProcess_P(prefix, subtopic, false);
 }
 
 void MqttPublishTeleSensor(void) {
-  // Publish tele/<device>/SENSOR default TasmotaGlobal.mqtt_data string with optional retained
+  // Publish tele/<device>/SENSOR default ResponseData string with optional retained
   //   then process rules
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 }
@@ -817,6 +809,11 @@ void MqttPublishPowerState(uint32_t device) {
       Response_P(GetStateText(bitRead(TasmotaGlobal.power, device -1)));
       MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
     }
+
+#ifdef USE_INFLUXDB
+    InfluxDbPublishPowerState(device);
+#endif
+
 #ifdef USE_SONOFF_IFAN
   }
 #endif  // USE_SONOFF_IFAN
@@ -858,8 +855,11 @@ void MqttDisconnected(int state) {
   }
 
   MqttClient.disconnect();
+  // Check if this solves intermittent MQTT re-connection failures when broker is restarted
+  EspClient.stop();
 
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_MQTT_HOST), Settings->mqtt_port, state, Mqtt.retry_counter);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
+    SettingsText(SET_MQTT_HOST), Settings->mqtt_port, state, Mqtt.retry_counter);
   TasmotaGlobal.rules_flag.mqtt_disconnected = 1;
 }
 
@@ -1072,17 +1072,9 @@ void MqttReconnect(void) {
   }
 
   String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
-#ifdef MQTT_DATA_STRING
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data.c_str(), MQTT_CLEAN_SESSION)) {
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, ResponseData(), MQTT_CLEAN_SESSION)) {
 #else
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
-#endif
-#else
-#ifdef MQTT_DATA_STRING
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data.c_str(), MQTT_CLEAN_SESSION)) {
-#else
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, TasmotaGlobal.mqtt_data, MQTT_CLEAN_SESSION)) {
-#endif
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, ResponseData(), MQTT_CLEAN_SESSION)) {
 #endif  // USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
@@ -1131,10 +1123,116 @@ void MqttReconnect(void) {
   } else {
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
+/*
+      getLastError codes as documented in lib\lib_ssl\bearssl-esp8266\src\t_bearssl_ssl.h
+      SSL-level error codes
+      |    Receive Fatal Alert
+      |    |     Send Fatal Alert
+      |    |     |
+       0 : 256 : 512 : BR_ERR_OK
+       1 : 257 : 513 : BR_ERR_BAD_PARAM           - caller-provided parameter is incorrect
+       2 : 258 : 514 : BR_ERR_BAD_STATE           - operation requested by the caller cannot be applied with the current context state (e.g. reading data while outgoing data is waiting to be sent)
+       3 : 259 : 515 : BR_ERR_UNSUPPORTED_VERSION - incoming protocol or record version is unsupported
+       4 : 260 : 516 : BR_ERR_BAD_VERSION         - incoming record version does not match the expected version
+       5 : 261 : 517 : BR_ERR_BAD_LENGTH          - incoming record length is invalid
+       6 : 262 : 518 : BR_ERR_TOO_LARGE           - incoming record is too large to be processed, or buffer is too small for the handshake message to send
+       7 : 263 : 519 : BR_ERR_BAD_MAC             - decryption found an invalid padding, or the record MAC is not correct
+       8 : 264 : 520 : BR_ERR_NO_RANDOM           - no initial entropy was provided, and none can be obtained from the OS
+       9 : 265 : 521 : BR_ERR_UNKNOWN_TYPE        - incoming record type is unknown
+      10 : 266 : 522 : BR_ERR_UNEXPECTED          - incoming record or message has wrong type with regards to the current engine state
+      12 : 268 : 524 : BR_ERR_BAD_CCS             - ChangeCipherSpec message from the peer has invalid contents
+      13 : 269 : 525 : BR_ERR_BAD_ALERT           - alert message from the peer has invalid contents (odd length)
+      14 : 270 : 526 : BR_ERR_BAD_HANDSHAKE       - incoming handshake message decoding failed
+      15 : 271 : 527 : BR_ERR_OVERSIZED_ID        - ServerHello contains a session ID which is larger than 32 bytes
+      16 : 272 : 528 : BR_ERR_BAD_CIPHER_SUITE    - server wants to use a cipher suite that we did not claim to support. This is also reported if we tried to advertise a cipher suite that we do not support
+      17 : 273 : 529 : BR_ERR_BAD_COMPRESSION     - server wants to use a compression that we did not claim to support
+      18 : 274 : 530 : BR_ERR_BAD_FRAGLEN         - server's max fragment length does not match client's
+      19 : 275 : 531 : BR_ERR_BAD_SECRENEG        - secure renegotiation failed
+      20 : 276 : 532 : BR_ERR_EXTRA_EXTENSION     - server sent an extension type that we did not announce, or used the same extension type several times in a single ServerHello
+      21 : 277 : 533 : BR_ERR_BAD_SNI             - invalid Server Name Indication contents (when used by the server, this extension shall be empty)
+      22 : 278 : 534 : BR_ERR_BAD_HELLO_DONE      - invalid ServerHelloDone from the server (length is not 0)
+      23 : 279 : 535 : BR_ERR_LIMIT_EXCEEDED      - internal limit exceeded (e.g. server's public key is too large)
+      24 : 280 : 536 : BR_ERR_BAD_FINISHED        - Finished message from peer does not match the expected value
+      25 : 281 : 537 : BR_ERR_RESUME_MISMATCH     - session resumption attempt with distinct version or cipher suite
+      26 : 282 : 538 : BR_ERR_INVALID_ALGORITHM   - unsupported or invalid algorithm (ECDHE curve, signature algorithm, hash function)
+      27 : 283 : 539 : BR_ERR_BAD_SIGNATURE       - invalid signature (on ServerKeyExchange from server, or in CertificateVerify from client)
+      28 : 284 : 540 : BR_ERR_WRONG_KEY_USAGE     - peer's public key does not have the proper type or is not allowed for requested operation
+      29 : 285 : 541 : BR_ERR_NO_CLIENT_AUTH      - client did not send a certificate upon request, or the client certificate could not be validated
+      31 : 287 : 543 : BR_ERR_IO                  - I/O error or premature close on underlying transport stream. This error code is set only by the simplified I/O API ("br_sslio_*")
+
+      getLastError codes as documented in lib\lib_ssl\bearssl-esp8266\src\t_bearssl_x509.h
+      32 : BR_ERR_X509_OK                  - validation was successful; this is not actually an error
+      33 : BR_ERR_X509_INVALID_VALUE       - invalid value in an ASN.1 structure
+      34 : BR_ERR_X509_TRUNCATED           - truncated certificate
+      35 : BR_ERR_X509_EMPTY_CHAIN         - empty certificate chain (no certificate at all)
+      36 : BR_ERR_X509_INNER_TRUNC         - decoding error: inner element extends beyond outer element size
+      37 : BR_ERR_X509_BAD_TAG_CLASS       - decoding error: unsupported tag class (application or private)
+      38 : BR_ERR_X509_BAD_TAG_VALUE       - decoding error: unsupported tag value
+      39 : BR_ERR_X509_INDEFINITE_LENGTH   - decoding error: indefinite length
+      40 : BR_ERR_X509_EXTRA_ELEMENT       - decoding error: extraneous element
+      41 : BR_ERR_X509_UNEXPECTED          - decoding error: unexpected element
+      42 : BR_ERR_X509_NOT_CONSTRUCTED     - decoding error: expected constructed element, but is primitive
+      43 : BR_ERR_X509_NOT_PRIMITIVE       - decoding error: expected primitive element, but is constructed
+      44 : BR_ERR_X509_PARTIAL_BYTE        - decoding error: BIT STRING length is not multiple of 8
+      45 : BR_ERR_X509_BAD_BOOLEAN         - decoding error: BOOLEAN value has invalid length
+      46 : BR_ERR_X509_OVERFLOW            - decoding error: value is off-limits
+      47 : BR_ERR_X509_BAD_DN              - invalid distinguished name
+      48 : BR_ERR_X509_BAD_TIME            - invalid date/time representation
+      49 : BR_ERR_X509_UNSUPPORTED         - certificate contains unsupported features that cannot be ignored
+      50 : BR_ERR_X509_LIMIT_EXCEEDED      - key or signature size exceeds internal limits
+      51 : BR_ERR_X509_WRONG_KEY_TYPE      - key type does not match that which was expected
+      52 : BR_ERR_X509_BAD_SIGNATURE       - signature is invalid
+      53 : BR_ERR_X509_TIME_UNKNOWN        - validation time is unknown
+      54 : BR_ERR_X509_EXPIRED             - certificate is expired or not yet valid
+      55 : BR_ERR_X509_DN_MISMATCH         - issuer/subject DN mismatch in the chain
+      56 : BR_ERR_X509_BAD_SERVER_NAME     - expected server name was not found in the chain
+      57 : BR_ERR_X509_CRITICAL_EXTENSION  - unknown critical extension in certificate
+      58 : BR_ERR_X509_NOT_CA              - not a CA, or path length constraint violation
+      59 : BR_ERR_X509_FORBIDDEN_KEY_USAGE - Key Usage extension prohibits intended usage
+      60 : BR_ERR_X509_WEAK_PUBLIC_KEY     - public key found in certificate is too small
+      62 : BR_ERR_X509_NOT_TRUSTED         - chain could not be linked to a trust anchor
+
+      getLastError codes as documented in lib\lib_ssl\bearssl-esp8266\src\t_bearssl_ssl.h
+       10 : 266 : BR_ALERT_UNEXPECTED_MESSAGE
+       20 : 276 : BR_ALERT_BAD_RECORD_MAC
+       22 : 278 : BR_ALERT_RECORD_OVERFLOW
+       30 : 286 : BR_ALERT_DECOMPRESSION_FAILURE
+       40 : 296 : BR_ALERT_HANDSHAKE_FAILURE
+       42 : 298 : BR_ALERT_BAD_CERTIFICATE
+       43 : 299 : BR_ALERT_UNSUPPORTED_CERTIFICATE
+       44 : 300 : BR_ALERT_CERTIFICATE_REVOKED
+       45 : 301 : BR_ALERT_CERTIFICATE_EXPIRED
+       46 : 302 : BR_ALERT_CERTIFICATE_UNKNOWN
+       47 : 303 : BR_ALERT_ILLEGAL_PARAMETER
+       48 : 304 : BR_ALERT_UNKNOWN_CA
+       49 : 305 : BR_ALERT_ACCESS_DENIED
+       50 : 306 : BR_ALERT_DECODE_ERROR
+       51 : 307 : BR_ALERT_DECRYPT_ERROR
+       70 : 326 : BR_ALERT_PROTOCOL_VERSION
+       71 : 327 : BR_ALERT_INSUFFICIENT_SECURITY
+       80 : 336 : BR_ALERT_INTERNAL_ERROR
+       90 : 346 : BR_ALERT_USER_CANCELED
+      100 : 356 : BR_ALERT_NO_RENEGOTIATION
+      110 : 366 : BR_ALERT_UNSUPPORTED_EXTENSION
+      120 : 376 : BR_ALERT_NO_APPLICATION_PROTOCOL
+*/
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
     }
 #endif
-    MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
+/*
+    State codes as documented here http://pubsubclient.knolleary.net/api.html#state
+    -4 : MQTT_CONNECTION_TIMEOUT      - the server didn't respond within the keepalive time
+    -3 : MQTT_CONNECTION_LOST         - the network connection was broken
+    -2 : MQTT_CONNECT_FAILED          - the network connection failed
+    -1 : MQTT_DISCONNECTED            - the client is disconnected cleanly
+     0 : MQTT_CONNECTED               - the client is connected
+     1 : MQTT_CONNECT_BAD_PROTOCOL    - the server doesn't support the requested version of MQTT
+     2 : MQTT_CONNECT_BAD_CLIENT_ID   - the server rejected the client identifier
+     3 : MQTT_CONNECT_UNAVAILABLE     - the server was unable to accept the connection
+     4 : MQTT_CONNECT_BAD_CREDENTIALS - the username/password were rejected
+     5 : MQTT_CONNECT_UNAUTHORIZED    - the client was not authorized to connect
+*/
+    MqttDisconnected(MqttClient.state());
   }
 }
 

@@ -100,6 +100,7 @@ void EthernetEvent(WiFiEvent_t event) {
       Settings->ipv4_address[1] = (uint32_t)ETH.gatewayIP();
       Settings->ipv4_address[2] = (uint32_t)ETH.subnetMask();
       Settings->ipv4_address[3] = (uint32_t)ETH.dnsIP();
+      Settings->ipv4_address[4] = (uint32_t)ETH.dnsIP(1);
       TasmotaGlobal.global_state.eth_down = 0;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
