@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - File editor no-wrap (#13427)
 
+### Fixed
+- Initial reset RTC memory based variables like EnergyToday and EnergyTotal
+
 ## [Released]
 
 ## [10.0.0] 20211019

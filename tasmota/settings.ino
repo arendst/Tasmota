@@ -38,28 +38,8 @@ uint32_t GetRtcSettingsCrc(void) {
 void RtcSettingsSave(void) {
   RtcSettings.baudrate = Settings->baudrate * 300;
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
-    RtcSettings.valid = RTC_MEM_VALID;
-#ifdef ESP8266
-    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
-#endif  // ESP8266
-#ifdef ESP32
-    RtcDataSettings = RtcSettings;
-#endif  // ESP32
-    rtc_settings_crc = GetRtcSettingsCrc();
-  }
-}
 
-bool RtcSettingsLoad(uint32_t update) {
-#ifdef ESP8266
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
-#endif  // ESP8266
-#ifdef ESP32
-  RtcSettings = RtcDataSettings;
-#endif  // ESP32
-
-  bool read_valid = (RTC_MEM_VALID == RtcSettings.valid);
-  if (update) {
-    if (!read_valid) {
+    if (RTC_MEM_VALID != RtcSettings.valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
       RtcSettings.energy_kWhtoday = Settings->energy_kWhtoday;
@@ -75,9 +55,32 @@ bool RtcSettingsLoad(uint32_t update) {
       RtcSettings.power = Settings->power;
   //    RtcSettings.baudrate = Settings->baudrate * 300;
       RtcSettings.baudrate = APP_BAUDRATE;
+    }
+
+#ifdef ESP8266
+    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
+#endif  // ESP8266
+#ifdef ESP32
+    RtcDataSettings = RtcSettings;
+#endif  // ESP32
+
+    rtc_settings_crc = GetRtcSettingsCrc();
+  }
+}
+
+bool RtcSettingsLoad(uint32_t update) {
+#ifdef ESP8266
+  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
+#endif  // ESP8266
+#ifdef ESP32
+  RtcSettings = RtcDataSettings;
+#endif  // ESP32
+
+  bool read_valid = (RTC_MEM_VALID == RtcSettings.valid);
+  if (update) {
+    if (!read_valid) {
       RtcSettingsSave();
     }
-    rtc_settings_crc = GetRtcSettingsCrc();
   }
   return read_valid;
 }
