@@ -20,6 +20,9 @@
 //#ifdef USE_SPI
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
+#ifdef USE_DISPLAY_ST7735
+#define USE_DISPLAY_ST7789
+#endif
 #ifdef USE_DISPLAY_ST7789
 
 #define XDSP_12                12
@@ -67,12 +70,19 @@ void ST7789_InitDriver(void) {
     Settings->display_model = XDSP_12;
 
     if (!Settings->display_width) {
+#ifdef USE_DISPLAY_ST7735
+      Settings->display_width = ST7735_TFTWIDTH;
+#else
       Settings->display_width = 240;
+#endif
     }
     if (!Settings->display_height) {
+#ifdef USE_DISPLAY_ST7735
+      Settings->display_height = ST7735_TFTHEIGHT;
+#else
       Settings->display_height = 240;
+#endif
     }
-
     // default colors
     fg_color = ST7789_WHITE;
     bg_color = ST7789_BLACK;

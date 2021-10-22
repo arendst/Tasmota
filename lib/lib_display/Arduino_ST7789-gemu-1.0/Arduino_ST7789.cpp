@@ -31,20 +31,20 @@ uint16_t Arduino_ST7789::GetColorFromIndex(uint8_t index) {
 static const uint8_t PROGMEM
   init_cmd[] = {                 		    // Initialization commands for 7789 screens
     10,                       				// 9 commands in list:
-    ST7789_SWRESET,   ST_CMD_DELAY,  		// 1: Software reset, no args, w/delay
+    ST77XX_SWRESET,   ST_CMD_DELAY,  		// 1: Software reset, no args, w/delay
       150,                     				// 150 ms delay
-    ST7789_SLPOUT ,   ST_CMD_DELAY,  		// 2: Out of sleep mode, no args, w/delay
+    ST77XX_SLPOUT ,   ST_CMD_DELAY,  		// 2: Out of sleep mode, no args, w/delay
       255,                    				// 255 = 500 ms delay
-    ST7789_COLMOD , 1+ST_CMD_DELAY,  		// 3: Set color mode, 1 arg + delay:
+    ST77XX_COLMOD , 1+ST_CMD_DELAY,  		// 3: Set color mode, 1 arg + delay:
       0x55,                   				// 16-bit color
       10,                     				// 10 ms delay
-    ST7789_MADCTL , 1,  					// 4: Memory access ctrl (directions), 1 arg:
+    ST77XX_MADCTL , 1,  					// 4: Memory access ctrl (directions), 1 arg:
       0x00,                   				// Row addr/col addr, bottom to top refresh
-    ST7789_INVON ,   ST_CMD_DELAY,  		// 7: Inversion ON
+    ST77XX_INVOFF ,   ST_CMD_DELAY,  		// 7: Inversion ON
       10,
-    ST7789_NORON  ,   ST_CMD_DELAY,  		// 8: Normal display on, no args, w/delay
+    ST77XX_NORON  ,   ST_CMD_DELAY,  		// 8: Normal display on, no args, w/delay
       10,                     				// 10 ms delay
-    ST7789_DISPON ,   ST_CMD_DELAY,  		// 9: Main screen turn on, no args, w/delay
+    ST77XX_DISPON ,   ST_CMD_DELAY,  		// 9: Main screen turn on, no args, w/delay
     255 };                  				// 255 = 500 ms delay
 
 inline uint16_t swapcolor(uint16_t x) {
@@ -98,7 +98,8 @@ Arduino_ST7789::Arduino_ST7789(int8_t dc, int8_t rst, int8_t cs, int8_t bp)
 
 void Arduino_ST7789::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
   setRotation(rot);
-  if (_width==320 || _height==320) {
+  if (_width==320 || _height==320 ||
+      (_width==ST7735_TFTWIDTH && _height==ST7735_TFTHEIGHT)) {
     invertDisplay(false);
   } else {
     invertDisplay(true);
@@ -202,7 +203,6 @@ void Arduino_ST7789::writedata(uint8_t c) {
   SPI_BEGIN_TRANSACTION();
   DC_HIGH();
   CS_LOW();
-
   spiwrite(c);
 
   CS_HIGH();
@@ -282,7 +282,7 @@ void Arduino_ST7789::commonInit(const uint8_t *cmdList) {
   if(_hwSPI) { // Using hardware SPI
 #if defined (SPI_HAS_TRANSACTION)
     SPI.begin();
-  //  ST7789_SPISettings = SPISettings(24000000, MSBFIRST, SPI_MODE2);
+    //  ST7789_SPISettings = SPISettings(24000000, MSBFIRST, SPI_MODE2);
     ST7789_SPISettings = SPISettings(1000000, MSBFIRST, SPI_MODE2);
 #elif defined (__AVR__) || defined(CORE_TEENSY)
     SPCRbackup = SPCR;
@@ -327,12 +327,11 @@ void Arduino_ST7789::commonInit(const uint8_t *cmdList) {
 }
 
 void Arduino_ST7789::setRotation(uint8_t m) {
-
-  writecommand(ST7789_MADCTL);
+  writecommand(ST77XX_MADCTL);
   rotation = m % 4; // can't be higher than 3
   switch (rotation) {
    case 0:
-     writedata(ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_RGB);
+     writedata(ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB);
 
      _xstart = 0;
      _ystart = 0;
@@ -346,8 +345,7 @@ void Arduino_ST7789::setRotation(uint8_t m) {
      }
      break;
    case 1:
-     writedata(ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
-
+     writedata(ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB);
      _ystart = 0;
      _xstart = 0;
      if (_width==240 && _height==240) {
@@ -360,7 +358,7 @@ void Arduino_ST7789::setRotation(uint8_t m) {
      }
      break;
   case 2:
-     writedata(ST7789_MADCTL_RGB);
+     writedata(ST77XX_MADCTL_RGB);
 
      _xstart = 0;
      _ystart = 0;
@@ -375,7 +373,7 @@ void Arduino_ST7789::setRotation(uint8_t m) {
      break;
 
    case 3:
-     writedata(ST7789_MADCTL_MX | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
+     writedata(ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB);
 
      _xstart = 0;
      _ystart = 0;
@@ -399,19 +397,19 @@ void Arduino_ST7789::setAddrWindow_int(uint16_t x0, uint16_t y0, uint16_t x1, ui
   uint16_t x_start = x0 + _xstart, x_end = x1 + _xstart;
   uint16_t y_start = y0 + _ystart, y_end = y1 + _ystart;
 
-  writecommand(ST7789_CASET); // Column addr set
+  writecommand(ST77XX_CASET); // Column addr set
   writedata(x_start >> 8);
   writedata(x_start & 0xFF);     // XSTART
   writedata(x_end >> 8);
   writedata(x_end & 0xFF);     // XEND
 
-  writecommand(ST7789_RASET); // Row addr set
+  writecommand(ST77XX_RASET); // Row addr set
   writedata(y_start >> 8);
   writedata(y_start & 0xFF);     // YSTART
   writedata(y_end >> 8);
   writedata(y_end & 0xFF);     // YEND
 
-  writecommand(ST7789_RAMWR); // write to RAM
+  writecommand(ST77XX_RAMWR); // write to RAM
 }
 
 void Arduino_ST7789::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -515,7 +513,7 @@ uint16_t Arduino_ST7789::Color565(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Arduino_ST7789::invertDisplay(boolean i) {
-  writecommand(i ? ST7789_INVON : ST7789_INVOFF);
+  writecommand(i ? ST77XX_INVON : ST77XX_INVOFF);
 }
 
 /******** low level bit twiddling **********/
@@ -565,14 +563,12 @@ void Arduino_ST7789::init(uint16_t width, uint16_t height) {
   _width = width;
 
   displayInit(init_cmd);
-
   setRotation(2);
-
 }
 
 void Arduino_ST7789::DisplayOnff(int8_t on) {
   if (on) {
-    writecommand(ST7789_DISPON);    //Display on
+    writecommand(ST77XX_DISPON);    //Display on
     if (_bp>=0) {
 #ifdef ST7789_DIMMER
       ledcWrite(ESP32_PWM_CHANNEL,dimmer);
@@ -581,7 +577,7 @@ void Arduino_ST7789::DisplayOnff(int8_t on) {
 #endif
     }
   } else {
-    writecommand(ST7789_DISPOFF);
+    writecommand(ST77XX_DISPOFF);
     if (_bp>=0) {
 #ifdef ST7789_DIMMER
       ledcWrite(ESP32_PWM_CHANNEL,0);
