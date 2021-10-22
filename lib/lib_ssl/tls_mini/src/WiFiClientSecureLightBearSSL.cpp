@@ -303,7 +303,7 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port, int32_t timeout
   }
   return _connectSSL(nullptr);
 }
-#else // ESP32
+#endif // ESP32
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)", ip.toString().c_str(), port);
   clearLastError();
@@ -313,7 +313,6 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
   }
   return _connectSSL(nullptr);
 }
-#endif
 
 #ifdef ESP32
 int WiFiClientSecure_light::connect(const char* name, uint16_t port, int32_t timeout) {
@@ -334,7 +333,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port, int32_t tim
   LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
-#else // ESP32
+#endif // ESP32
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
@@ -353,7 +352,6 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
-#endif
 
 void WiFiClientSecure_light::_freeSSL() {
   _ctx_present = false;
