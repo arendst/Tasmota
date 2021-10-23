@@ -2620,6 +2620,18 @@ init10:
 
 
 #ifdef USE_SML_SCRIPT_CMD
+uint32_t sml_getv(uint32_t sel) {
+  if (!sel) {
+    for (uint8_t cnt = 0; cnt < SML_MAX_VARS; cnt++) {
+      dvalid[cnt] = 0;
+    }
+    sel = 0;
+  } else {
+    if (sel < 1) sel = 1;
+    sel = dvalid[sel - 1];
+  }
+  return sel;
+}
 uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
