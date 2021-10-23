@@ -242,8 +242,6 @@ enum LegacyUserSelectablePins {
   GPI8_IEM3000_RX,     // IEM3000 Serial interface
   GPI8_ZIGBEE_RST,     // Zigbee reset
   GPI8_DYP_RX,
-  GPI8_SDM230_TX,      // SDM230 Serial interface
-  GPI8_SDM230_RX,      // SDM230 Serial interface
   GPI8_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -473,9 +471,7 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_IEM3000_TX),     // IEM3000 Serial interface
   AGPIO(GPIO_IEM3000_RX),     // IEM3000 Serial interface
   AGPIO(GPIO_ZIGBEE_RST),     // Zigbee reset
-  AGPIO(GPIO_DYP_RX),
-  AGPIO(GPIO_SDM230_TX),      // SDM230 Serial interface
-  AGPIO(GPIO_SDM230_RX)       // SDM230 Serial interface
+  AGPIO(GPIO_DYP_RX)
 };
 
 /********************************************************************************************/
