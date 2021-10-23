@@ -1,3 +1,4 @@
+/*
   tasmota_configurations_ESP32.h - ESP32 only Configurations for Tasmota
 
   Copyright (C) 2021  Theo Arends
