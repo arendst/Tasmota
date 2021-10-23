@@ -19,4 +19,4 @@ static be_define_const_module(
     "debug"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(debug, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(debug);

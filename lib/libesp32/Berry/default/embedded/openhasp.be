@@ -1,6 +1,44 @@
-
 import string
 import json
+
+# lv.start()
+# scr = lv.scr_act()            # default screean object
+# scr.set_style_bg_color(lv.color(0x0000A0), lv.PART_MAIN | lv.STATE_DEFAULT)
+
+lv.start()
+
+hres = lv.get_hor_res()       # should be 320
+vres = lv.get_ver_res()       # should be 240
+
+scr = lv.scr_act()            # default screean object
+f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
+
+th2 = lv.theme_openhasp_init(0, lv.color(0xFF0000), lv.color(0xFFFF00), true, f20)
+scr.get_disp().set_theme(th2)
+# apply theme to layer_top, but keep it transparent
+lv.theme_apply(lv.layer_top())
+lv.layer_top().set_style_bg_opa(0,0)
+
+
+# parse hex string
+def parse_hex(s)
+  import string
+  s = string.toupper(s)   # turn to uppercase
+  var val = 0
+  for i:0..size(s)-1
+    var c = s[i]
+    # var c_int = string.byte(c)
+    if c == "#"             continue end  # skip '#' prefix if any
+    if c == "x" || c == "X" continue end  # skip 'x' or 'X'
+
+    if c >= "A" && c <= "F"
+      val = (val << 4) | string.byte(c) - 55
+    elif c >= "0" && c <= "9"
+      val = (val << 4) | string.byte(c) - 48
+    end
+  end
+  return val
+end
 
 #- ------------------------------------------------------------
   Class `lvh_obj` encapsulating `lv_obj``
@@ -11,7 +49,9 @@ import json
   Adds specific virtual members used by OpenHASP
 - ------------------------------------------------------------ -#
 class lvh_obj
-  static _lv_class = lv_obj
+  # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
+  static _lv_class = lv.obj
+
   #- mapping from OpenHASP attribute to LVGL attribute -#
   #- if mapping is null, we use set_X and get_X from our own class -#
   static _attr_map = {
@@ -25,22 +65,28 @@ class lvh_obj
     "hidden": nil,    # apply to self
     "enabled": nil,    # apply to self
     "toggle": nil,
+    "bg_color": nil,
+    "align": nil,
   }
 
   var _lv_obj     # native lvgl object
   var _lv_label   # sub-label if exists
 
+  # init
+  # - create the LVGL encapsulated object
   def init(parent)
-    var obj_class = self._lv_class    # need to copy to a var to distinguish from method call
-    self._lv_obj = obj_class(parent)
+    var obj_class = self._lv_class    # need to assign to a var to distinguish from method call
+    self._lv_obj = obj_class(parent)  # instanciate LVGL object
+    self.post_init()
   end
 
-  def obj()
+  # post-init, to be overriden
+  def post_init()
+  end
+
+  # get LVGL encapsulated object
+  def get_obj()
     return self._lv_obj
-  end
-
-  def tostring()
-    return "<instance "+classname(self)+"()>"
   end
 
   #- ------------------------------------------------------------
@@ -49,7 +95,7 @@ class lvh_obj
     - hidden
     - enabled
   - ------------------------------------------------------------ -#
-  #- `hidden` attributes mapped to LV_OBJ_FLAG_HIDDEN -#
+  #- `hidden` attributes mapped to OBJ_FLAG_HIDDEN -#
   def set_hidden(h)
     if h
       self._lv_obj.add_flag(lv.OBJ_FLAG_HIDDEN)
@@ -62,6 +108,7 @@ class lvh_obj
     return self._lv_obj.has_flag(lv.OBJ_FLAG_HIDDEN)
   end
 
+  #- `enabled` attributes mapped to OBJ_FLAG_CLICKABLE -#
   def set_enabled(h)
     if h
       self._lv_obj.add_flag(lv.OBJ_FLAG_CLICKABLE)
@@ -74,9 +121,10 @@ class lvh_obj
     return self._lv_obj.has_flag(lv.OBJ_FLAG_CLICKABLE)
   end
 
+  #- `toggle` attributes mapped to STATE_CHECKED -#
   def set_toggle(t)
     if t == "TRUE"  t = true end
-    if t == "FASLE" t = false end
+    if t == "FALSE" t = false end
     if t
       self._lv_obj.add_state(lv.STATE_CHECKED)
     else
@@ -90,24 +138,67 @@ class lvh_obj
 
   #- set_text: create a `lv_label` sub object to the current object -#
   #- (default case, may be overriden by object that directly take text) -#
-  def set_text(t)
+  def check_label()
     if self._lv_label == nil
-      self._lv_label = lv_label(self.obj())
+      self._lv_label = lv.label(self.get_obj())
     end
+  end
+  def set_text(t)
+    self.check_label()
     self._lv_label.set_text(t)
   end
 
   def get_text()
-    if self._lv_label == nil
+    if self._lv_label == nil return nil end
+    return self._lv_label.get_text()
+  end
+
+  def set_align(t)
+    var align
+    self.check_label()
+
+    if t == 0 || t == "left"
+      align = lv.TEXT_ALIGN_LEFT
+    elif t == 1 || t == "center"
+      align = lv.TEXT_ALIGN_CENTER
+    elif t == 2 || t == "right"
+      align = lv.TEXT_ALIGN_RIGHT
+    else
+      align = lv.TEXT_ALIGN_auto
+    end
+    self._lv_label.set_style_text_align(align, lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+
+  def get_align()
+    if self._lv_label == nil return nil end
+    var align self._lv_label.get_style_text_align(lv.PART_MAIN | lv.STATE_DEFAULT)
+    if align == lv.TEXT_ALIGN_LEFT
+      return "left"
+    elif align == lv.TEXT_ALIGN_CENTER
+      return "center"
+    elif align == lv.TEXT_ALIGN_RIGHT
+      return "right"
+    else
       return nil
     end
-    return self._lv_label.get_text()
+  end
+
+  def set_bg_color(t)
+    var color = lv.color(parse_hex(t))
+    self._lv_obj.set_style_bg_color(color, lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+
+  def get_bg_color()
+    return self._lv_obj.get_style_bg_color(lv.PART_MAIN | lv.STATE_DEFAULT)
   end
 
   #- ------------------------------------------------------------
     Mapping of virtual attributes
   - ------------------------------------------------------------ -#
   def member(k)
+    # tostring is a special case, we shouldn't raise an exception for it
+    if k == 'tostring' return nil end
+    #
     if self._attr_map.has(k)
       import introspect
       if self._attr_map[k]
@@ -153,34 +244,42 @@ class lvh_obj
   end
 end
 
-#- creat sub-classes of lvh_obj and map the LVGL class in static '_lv_class' attribute -#
-class lvh_arc : lvh_obj       static _lv_class = lv_arc end
-class lvh_bar : lvh_obj       static _lv_class = lv_bar end
-class lvh_btn : lvh_obj       static _lv_class = lv_btn end
-class lvh_btnmatrix : lvh_obj static _lv_class = lv_btnmatrix end
-class lvh_checkbox : lvh_obj  static _lv_class = lv_checkbox end
-class lvh_dropdown : lvh_obj  static _lv_class = lv_dropdown end
-class lvh_img : lvh_obj       static _lv_class = lv_img end
-class lvh_label : lvh_obj     static _lv_class = lv_label end
-class lvh_line : lvh_obj      static _lv_class = lv_line end
-class lvh_roller : lvh_obj    static _lv_class = lv_roller end
-class lvh_slider : lvh_obj    static _lv_class = lv_slider end
-class lvh_slider : lvh_obj    static _lv_class = lv_slider end
-class lvh_switch : lvh_obj    static _lv_class = lv_switch end
-class lvh_textarea : lvh_obj  static _lv_class = lv_textarea end
+class lvh_label : lvh_obj
+  static _lv_class = lv.label
+  # label do not need a sub-label
+  def post_init()
+    self._lv_label = self._lv_obj
+    # label don't have opaque background by default
+    self._lv_obj.set_style_bg_opa(lv.OPA_COVER, lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+end
 
-#- ------------------------------------------------------------
-  Class `lvh_page` encapsulating `lv_obj` as screen (created with lv_obj(0))
-- ------------------------------------------------------------ -#
+#- creat sub-classes of lvh_obj and map the LVGL class in static '_lv_class' attribute -#
+class lvh_arc : lvh_obj       static _lv_class = lv.arc end
+class lvh_bar : lvh_obj       static _lv_class = lv.bar end
+class lvh_btn : lvh_obj       static _lv_class = lv.btn end
+class lvh_btnmatrix : lvh_obj static _lv_class = lv.btnmatrix end
+class lvh_checkbox : lvh_obj  static _lv_class = lv.checkbox end
+class lvh_dropdown : lvh_obj  static _lv_class = lv.dropdown end
+class lvh_img : lvh_obj       static _lv_class = lv.img end
+class lvh_line : lvh_obj      static _lv_class = lv.line end
+class lvh_roller : lvh_obj    static _lv_class = lv.roller end
+class lvh_slider : lvh_obj    static _lv_class = lv.slider end
+class lvh_slider : lvh_obj    static _lv_class = lv.slider end
+class lvh_switch : lvh_obj    static _lv_class = lv.switch end
+class lvh_textarea : lvh_obj  static _lv_class = lv.textarea end
+
+#- ----------------------------------------------------------------------------
+  Class `lvh_page` encapsulating `lv_obj` as screen (created with lv.obj(0))
+- ----------------------------------------------------------------------------- -#
 # ex of transition: lv.scr_load_anim(scr, lv.SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false)
 class lvh_page
-  var _obj_id        # list of objects by id numbers
-  var _page_id
-  var _lv_scr       # lvgl screen object
+  var _obj_id       # (map) of objects by id numbers
+  var _page_id      # (int) id number of the page
+  var _lv_scr       # (lv_obj) lvgl screen object
 
   #- init(page_number) -#
   def init(page_number)
-    import string
     import global
 
     # if no parameter, default to page #1
@@ -190,8 +289,10 @@ class lvh_page
     self._obj_id = {}               # init list of objects
     if page_number == 1
       self._lv_scr = lv.scr_act()   # default screen
+    elif page_number == 0
+      self._lv_scr = lv.layer_top() # top layer, visible over all screens
     else
-      self._lv_scr = lv_obj(0)      # allocate a new screen
+      self._lv_scr = lv.obj(0)      # allocate a new screen
       self._lv_scr.set_style_bg_color(lv_color(0x000000), lv.PART_MAIN | lv.STATE_DEFAULT) # set black background
     end
 
@@ -217,6 +318,8 @@ class lvh_page
 
   #- show this page, with animation -#
   def show(anim, duration)
+    # ignore if there is no screen, like for id 0
+    if self._lv_scr == nil return nil end
     # ignore if the screen is already active
     if self._lv_scr._p == lv.scr_act()._p return end    # do nothing
 
@@ -289,11 +392,11 @@ def parse_obj(jline, page)
 
     # add object to page object
     lvh_page_cur.set_obj(obj_id, obj)
-
     # set attributes
     # try every attribute, if not supported it is silently ignored
     for k:jline.keys()
-      obj.(k) = jline[k]
+      introspect.set(obj, k, jline[k])
+      # obj.(k) = jline[k]
     end
 
     # create a global variable for this object of form p<page>b<id>, ex p1b2
@@ -314,8 +417,10 @@ for j:jsonl
   var jline = json.load(j)
 
   # parse page first
-  parse_page(jline)
-  parse_obj(jline, lvh_page_cur)
+  if type(jline) == 'instance'
+    parse_page(jline)
+    parse_obj(jline, lvh_page_cur)
+  end
 end
 
 print(lvh_pages[1]._obj_id)

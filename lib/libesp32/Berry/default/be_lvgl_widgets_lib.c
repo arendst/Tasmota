@@ -28,6 +28,7 @@ extern int lvs_tostring(bvm *vm);
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 
 extern int lvbe_font_create(bvm *vm);
+extern int lvbe_theme_create(bvm *vm);
 
 
 /* `lv_style` external functions definitions */
@@ -125,6 +126,8 @@ extern int lvbe_style_set_arc_img_src(bvm *vm);
 
 /* `lv_color` external functions definitions */
 
+/* `lv_theme` external functions definitions */
+
 /* `lv_img` external functions definitions */
 extern int lvbe_img_set_tasmota_logo(bvm *vm);
 extern int lvbe_img_create(bvm *vm);
@@ -142,6 +145,22 @@ extern int lvbe_img_get_angle(bvm *vm);
 extern int lvbe_img_get_pivot(bvm *vm);
 extern int lvbe_img_get_zoom(bvm *vm);
 extern int lvbe_img_get_antialias(bvm *vm);
+
+/* `lv_disp` external functions definitions */
+extern int lvbe_disp_get_scr_act(bvm *vm);
+extern int lvbe_disp_get_scr_prev(bvm *vm);
+extern int lvbe_disp_load_scr(bvm *vm);
+extern int lvbe_disp_get_layer_top(bvm *vm);
+extern int lvbe_disp_get_layer_sys(bvm *vm);
+extern int lvbe_disp_set_theme(bvm *vm);
+extern int lvbe_disp_get_theme(bvm *vm);
+extern int lvbe_disp_set_bg_color(bvm *vm);
+extern int lvbe_disp_set_bg_image(bvm *vm);
+extern int lvbe_disp_set_bg_opa(bvm *vm);
+extern int lvbe_disp_get_inactive_time(bvm *vm);
+extern int lvbe_disp_trig_activity(bvm *vm);
+extern int lvbe_disp_clean_dcache(bvm *vm);
+extern int lvbe_disp_dpx(bvm *vm);
 
 /* `lv_obj` external functions definitions */
 extern int lvbe_obj_add_event_cb(bvm *vm);
@@ -439,6 +458,7 @@ extern int lvbe_obj_set_parent(bvm *vm);
 extern int lvbe_obj_move_foreground(bvm *vm);
 extern int lvbe_obj_move_background(bvm *vm);
 extern int lvbe_obj_get_screen(bvm *vm);
+extern int lvbe_obj_get_disp(bvm *vm);
 extern int lvbe_obj_get_parent(bvm *vm);
 extern int lvbe_obj_get_child(bvm *vm);
 extern int lvbe_obj_get_child_cnt(bvm *vm);
@@ -786,7 +806,9 @@ extern int lvbe_textarea_cursor_up(bvm *vm);
 extern int be_ntv_lv_style_init(bvm *vm);
 extern int be_ntv_lv_font_init(bvm *vm);
 extern int be_ntv_lv_color_init(bvm *vm);
+extern int be_ntv_lv_theme_init(bvm *vm);
 extern int be_ntv_lv_img_init(bvm *vm);
+extern int be_ntv_lv_disp_init(bvm *vm);
 extern int be_ntv_lv_obj_init(bvm *vm);
 extern int be_ntv_lv_group_init(bvm *vm);
 extern int be_ntv_lv_indev_init(bvm *vm);
@@ -883,6 +905,23 @@ be_local_class(lv_indev,
 /*******************************************************************/
 
 /********************************************************************
+** Solidified class: lv_disp
+********************************************************************/
+be_local_class(lv_disp,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_disp", 609712084, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
 ** Solidified class: lv_font
 ********************************************************************/
 be_local_class(lv_font,
@@ -895,6 +934,22 @@ be_local_class(lv_font,
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_font", 1550958453, 7))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_theme
+********************************************************************/
+be_local_class(lv_theme,
+    1,
+    NULL,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_theme_create) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+    })),
+    (be_nested_const_str("lv_theme", 1550958453, 7))
 );
 /*******************************************************************/
 
@@ -933,6 +988,12 @@ void be_load_lv_color_class(bvm *vm) {
     be_pop(vm, 1);
 }
 
+void be_load_lv_theme_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_theme);
+    be_setglobal(vm, "lv_theme");
+    be_pop(vm, 1);
+}
+
 /********************************************************************
 ** Solidified class: lv_img
 ********************************************************************/
@@ -952,6 +1013,12 @@ be_local_class(lv_img,
 void be_load_lv_img_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_img);
     be_setglobal(vm, "lv_img");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_disp_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_disp);
+    be_setglobal(vm, "lv_disp");
     be_pop(vm, 1);
 }
 

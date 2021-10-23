@@ -16,4 +16,4 @@ static be_define_const_module(
     "global"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(global, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(global);

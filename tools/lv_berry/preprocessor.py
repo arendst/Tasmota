@@ -59,6 +59,7 @@ lv_fun_globs = [
                   "extra/widgets/meter/*.h",
                   "extra/widgets/msgbox/*.h",
                   "extra/widgets/spinbox/*.h",
+                  "extra/themes/default/*.h",
                   "core/*.h",
                   "draw/*.h",
                   "misc/lv_style_gen.h",
@@ -66,6 +67,7 @@ lv_fun_globs = [
                   #"**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
+headers_names += list_files("../../lib/libesp32_lvgl/LVGL_assets/src/", ["lv_theme_openhasp.h"])
 # headers_names += ["lv_pre_style.h"] # for LVGL v7, add pre-generated style functions from C preprocessor
 
 # unit test
@@ -143,7 +145,7 @@ for header_name in headers_names:
               "^lv_templ_",
               "^lv_imgbtn_get_src_",    # LV_IMGBTN_TILED == 0
               "^lv_imgbtn_set_src_tiled",# !LV_IMGBTN_TILED
-              "^lv_disp_",
+              #"^lv_disp_",
               "^lv_refr_get_fps_",      # no LV_USE_PERF_MONITOR
               "^lv_img_cache_",
               "^lv_img_decoder_",

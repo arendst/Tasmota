@@ -14,4 +14,4 @@ static be_define_const_module(
     "persist"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(persist, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(persist);

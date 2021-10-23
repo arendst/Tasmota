@@ -138,13 +138,12 @@ const bvector _name = {                                         \
     .end = (void*)(_data + (_size) - 1)                         \
 }
 
-#define be_define_const_native_module(_module, _init)           \
+#define be_define_const_native_module(_module)                  \
 const bntvmodule be_native_module(_module) = {                  \
     .name = #_module,                                           \
     .attrs = NULL,                                              \
     .size = 0,                                                  \
-    .module = (bmodule*)&(m_lib##_module),                      \
-    .init = _init                                               \
+    .module = (bmodule*)&(m_lib##_module)                       \
 }
 
 /* defines needed for solidified classes */
