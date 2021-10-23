@@ -20,6 +20,7 @@ extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder lo
 
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
+extern int lv0_load_robotocondensed_latin1_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
 extern int lv0_load_freetype_font(bvm *vm);
 
@@ -660,6 +661,9 @@ const be_constint_t lv0_constants[] = {
     { "TEXT_FLAG_FIT", LV_TEXT_FLAG_FIT },
     { "TEXT_FLAG_NONE", LV_TEXT_FLAG_NONE },
     { "TEXT_FLAG_RECOLOR", LV_TEXT_FLAG_RECOLOR },
+    { "&font_montserrat", (int32_t) &lv0_load_montserrat_font },
+    { "&font_robotocondensed_latin1", (int32_t) &lv0_load_robotocondensed_latin1_font },
+    { "&font_seg7", (int32_t) &lv0_load_seg7_font },
     { "&load_font", (int32_t) &lv0_load_font },
     { "&load_freetype_font", (int32_t) &lv0_load_freetype_font },
     { "&montserrat_font", (int32_t) &lv0_load_montserrat_font },

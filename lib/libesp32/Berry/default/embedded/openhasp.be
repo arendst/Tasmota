@@ -11,9 +11,10 @@ hres = lv.get_hor_res()       # should be 320
 vres = lv.get_ver_res()       # should be 240
 
 scr = lv.scr_act()            # default screean object
-f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
+#f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
+r20 = lv.font_robotocondensed_latin1(20)
 
-th2 = lv.theme_openhasp_init(0, lv.color(0xFF0000), lv.color(0xFFFF00), true, f20)
+th2 = lv.theme_openhasp_init(0, lv.color(0xFF0000), lv.color(0xFFFF00), true, r20)
 scr.get_disp().set_theme(th2)
 # apply theme to layer_top, but keep it transparent
 lv.theme_apply(lv.layer_top())
@@ -422,5 +423,3 @@ for j:jsonl
     parse_obj(jline, lvh_page_cur)
   end
 end
-
-print(lvh_pages[1]._obj_id)

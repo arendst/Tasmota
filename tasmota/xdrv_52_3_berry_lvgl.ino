@@ -645,6 +645,68 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  int lv0_load_robotocondensed_latin1_font(bvm *vm) {
+    int argc = be_top(vm);
+    if (argc == 1 && be_isint(vm, 1)) {
+      const lv_font_t * font = nullptr;
+      int32_t   font_size = be_toindex(vm, 1);
+
+      switch (font_size) {
+#if ROBOTOCONDENSED_REGULAR_12_LATIN1
+        case 12: font = &robotocondensed_regular_12_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_14_LATIN1
+        case 14: font = &robotocondensed_regular_14_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_16_LATIN1
+        case 16: font = &robotocondensed_regular_16_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_20_LATIN1
+        case 20: font = &robotocondensed_regular_20_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_22_LATIN1
+        case 22: font = &robotocondensed_regular_22_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_24_LATIN1
+        case 24: font = &robotocondensed_regular_24_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_28_LATIN1
+        case 28: font = &robotocondensed_regular_28_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_32_LATIN1
+        case 32: font = &robotocondensed_regular_32_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_36_LATIN1
+        case 36: font = &robotocondensed_regular_36_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_38_LATIN1
+        case 38: font = &robotocondensed_regular_38_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_40_LATIN1
+        case 40: font = &robotocondensed_regular_40_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_44_LATIN1
+        case 44: font = &robotocondensed_regular_44_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_48_LATIN1
+        case 48: font = &robotocondensed_regular_48_latin1; break;
+#endif
+        default: break;
+      }
+
+      if (font != nullptr) {
+        be_find_class(vm, "lv.lv_font");
+        be_pushcomptr(vm, (void*)font);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   #include "lvgl_berry/tasmota_logo_64_truecolor_alpha.h"
 
   void lv_img_set_tasmota_logo(lv_obj_t * img) {
