@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
+- added support (POC) for Eastron SDM230 ModBus (based on existing drivers SDM120 and SDM630) - suggestion for future versions: 
+use the same pin names for all SDM(72|120|220|230|630) drivers, e.g.: GPIO_SDMxxx_TX and GPIO_SDMxxx_RX and integrate 
+all drivers into one (xnrg_xx_SDM-ModBus.ino)
 
 ## [2022.01.2]
 ### Added

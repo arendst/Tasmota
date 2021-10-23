@@ -1108,7 +1108,7 @@ void EnergyShow(bool json) {
       EnergyFormatSum(value2_chr, Energy.daily, Settings->flag2.energy_resolution, json));
 
 /*
- #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
+ #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP) || defined(SDM230_IMPORT)
     if (!isnan(Energy.import_active[0])) {
       ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s"),
         EnergyFormat(value_chr, Energy.import_active, Settings->flag2.energy_resolution, json));
@@ -1117,7 +1117,7 @@ void EnergyShow(bool json) {
           EnergyFormatIndex(value_chr, energy_return, Settings->flag2.energy_resolution, json, 2));
       }
     }
-#endif  // SDM630_IMPORT || SDM72_IMPEXP
+#endif  // SDM630_IMPORT || SDM72_IMPEXP || SDM230_IMPORT
 */
 
     if (!isnan(Energy.export_active[0])) {

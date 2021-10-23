@@ -321,6 +321,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_TM1638
     feature3 |= 0x80000000;  // xsns_28_tm1638.ino
 #endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_SDM230)
+    feature3 |= 0x100000000;  // xnrg_21_sdm230.ino
+#endif
   }
 
   static uint32_t feature4 = 0x00000000;
