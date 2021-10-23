@@ -653,6 +653,7 @@ extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder lo
 
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
+extern int lv0_load_robotocondensed_latin1_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
 extern int lv0_load_freetype_font(bvm *vm);
 
