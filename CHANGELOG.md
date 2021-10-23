@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
+- GUI checkbox MQTT TLS not saved regression from v9.2.0.3 (#13442)
 
 ## [Released]
 

@@ -110,3 +110,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
+- GUI checkbox MQTT TLS not saved regression from v9.2.0.3 [#13442](https://github.com/arendst/Tasmota/issues/13442)
