@@ -97,6 +97,7 @@ return_types = {
   "lv_img_src_t": "i",
   "lv_colorwheel_mode_t": "i",
   "lv_scr_load_anim_t": "i",
+  "lv_style_selector_t": "i",
 
   "_lv_event_dsc_t *": "i",
 
@@ -117,6 +118,9 @@ return_types = {
   "lv_style_t *": "lv_style",
   "lv_group_t *": "lv_group",
   "lv_font_t *": "lv_font",
+  "lv_theme_t *": "lv_theme",
+  "lv_disp_t *": "lv_disp",
+  "lv_indev_t *": "lv_indev",
   #"lv_disp_t*": "lv_disp",
   #"lv_style_list_t*": "",
 
@@ -137,10 +141,11 @@ lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb',
                ]
 # list of callback types that will need each a separate C callback
 
-# For LVGL8, need to add synthetic lv_style, lv_font, lv_color
+# For LVGL8, need to add synthetic lv_style, lv_font, lv_color, lv_theme
 lv['style'] = []
 lv['font'] = []
 lv['color'] = []
+lv['theme'] = []
 
 # standard widgets
 lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
@@ -149,7 +154,7 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
 # extra widgets
 
 lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox' ]
-lv_prefix = ['obj', 'group', 'style', 'indev', ] + lv_widgets
+lv_prefix = ['obj', 'group', 'style', 'indev', 'disp'] + lv_widgets
 
 def try_int(s):
   try:
@@ -383,7 +388,8 @@ for subtype, flv in lv.items():
 
 print("""
 // create font either empty or from parameter on stack
-int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_group", ""); }
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_font", ""); }
+int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_theme", ""); }
 """)
 
 print()
@@ -425,6 +431,7 @@ extern int lvs_tostring(bvm *vm);
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 
 extern int lvbe_font_create(bvm *vm);
+extern int lvbe_theme_create(bvm *vm);
 
 """)
 
@@ -522,6 +529,23 @@ be_local_class(lv_indev,
 /*******************************************************************/
 
 /********************************************************************
+** Solidified class: lv_disp
+********************************************************************/
+be_local_class(lv_disp,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_disp", 609712084, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
 ** Solidified class: lv_font
 ********************************************************************/
 be_local_class(lv_font,
@@ -534,6 +558,22 @@ be_local_class(lv_font,
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_font", 1550958453, 7))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_theme
+********************************************************************/
+be_local_class(lv_theme,
+    1,
+    NULL,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_theme_create) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+    })),
+    (be_nested_const_str("lv_theme", 1550958453, 7))
 );
 /*******************************************************************/
 
@@ -603,6 +643,7 @@ print("""/********************************************************************
 
 #include "lvgl.h"
 #include "be_lvgl.h"
+#include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 
@@ -721,7 +762,7 @@ be_local_module(lv,
         { be_nested_key("start", 1697318111, 5, 0), be_const_func(lv0_start) },
     }))
 );
-BE_EXPORT_VARIABLE be_define_const_native_module(lv, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(lv);
 
 #endif // USE_LVGL
 """)

@@ -28,4 +28,4 @@ static be_define_const_module(
     "webserver"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(webserver, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(webserver);

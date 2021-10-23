@@ -15,4 +15,4 @@ static be_define_const_module(
     "gc"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(gc, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(gc);

@@ -283,4 +283,4 @@ static be_define_const_module(
     "gpio"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(gpio, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(gpio);

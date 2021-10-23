@@ -16,4 +16,4 @@ static be_define_const_module(
     "flash"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(flash, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(flash);

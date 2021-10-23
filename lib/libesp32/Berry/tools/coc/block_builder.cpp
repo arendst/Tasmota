@@ -143,8 +143,7 @@ std::string block_builder::module_tostring(const block &block)
     if (scp != "static") { /* extern */
         ostr << "\n" << scp
              << " be_define_const_native_module("
-             << block.name << ", "
-             << init(block) << ");" << std::endl;
+             << block.name << ");" << std::endl;
     }
     return ostr.str();
 }
@@ -166,12 +165,6 @@ std::string block_builder::name(const block &block)
 {
     auto it = block.attr.find("name");
     return it == block.attr.end() ? block.name : it->second;
-}
-
-std::string block_builder::init(const block &block)
-{
-    auto it = block.attr.find("init");
-    return it == block.attr.end() ? "NULL" : it->second;
 }
 
 void block_builder::writefile(const std::string &filename, const std::string &text)

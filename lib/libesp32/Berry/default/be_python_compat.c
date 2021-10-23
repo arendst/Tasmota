@@ -54,5 +54,5 @@ be_local_module(python_compat,
         { be_nested_key("init", 380752755, 4, -1), be_const_closure(_anonymous__closure) },
     }))
 );
-BE_EXPORT_VARIABLE be_define_const_native_module(python_compat, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(python_compat);
 /********************************************************************/
