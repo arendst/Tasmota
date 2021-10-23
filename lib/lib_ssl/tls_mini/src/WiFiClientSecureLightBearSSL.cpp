@@ -334,7 +334,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port, int32_t tim
   LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
-#endif // ESP32
+#else // ESP32
 int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   DEBUG_BSSL("connect(%s,%d)\n", name, port);
   IPAddress remote_addr;
@@ -353,6 +353,7 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
 }
+#endif
 
 void WiFiClientSecure_light::_freeSSL() {
   _ctx_present = false;
