@@ -163,7 +163,6 @@ void Script_ticker4_end(void) {
 
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
 extern uint8_t sml_json_enable;
-extern uint8_t dvalid[SML_MAX_VARS];
 #endif
 
 #if defined(EEP_SCRIPT_SIZE) && !defined(ESP32)
@@ -3171,15 +3170,7 @@ chknext:
         }
         if (!strncmp(vname, "smlv[", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
-          if (!fvar) {
-            for (uint8_t cnt = 0; cnt < SML_MAX_VARS; cnt++) {
-              dvalid[cnt] = 0;
-            }
-            fvar = 0;
-          } else {
-            if (fvar < 1) fvar = 1;
-            fvar = dvalid[(uint32_t)fvar - 1];
-          }
+          fvar = sml_getv(fvar);
           lp++;
           len = 0;
           goto exit;
@@ -8047,6 +8038,8 @@ int32_t lvgl_test(char **lpp, int32_t p) {
   lv_obj_t *obj;
   lv_obj_t *label;
   float xp, yp, xs, ys, min, max;
+  lv_meter_scale_t * scale;
+  lv_meter_indicator_t * indic;
   char str[SCRIPT_MAXSSIZE];
   int32_t res = 0;
 
@@ -8119,6 +8112,10 @@ int32_t lvgl_test(char **lpp, int32_t p) {
       obj = lv_meter_create(lv_scr_act());
       lv_obj_set_pos(obj, xp, yp);
       lv_obj_set_size(obj, xs, ys);
+      scale = lv_meter_add_scale(obj);
+      /*Add a needle line indicator*/
+      indic = lv_meter_add_needle_line(obj, scale, 4, lv_palette_main(LV_PALETTE_GREY), -10);
+
       // lv_gauge_set_range(obj, min, max);   // TODO LVGL8
       lvgl_StoreObj(obj);
       break;
@@ -8234,6 +8231,7 @@ void lvgl_setup(void) {
   lv_style_set_pad_right(&tab_background_style, 2);
   lv_style_set_pad_bottom(&tab_background_style, 0);
   // lv_obj_add_style(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style); // LVGL8 TODO
+  //lv_tabview_add_tab(tabview, LV_TABVIEW_PART_TAB_BG, &tab_background_style); // LVGL8 TODO
 
   // Style for tabs. Active tab is white with opaque background, inactive
   // tabs are transparent so the background shows through (only the white
