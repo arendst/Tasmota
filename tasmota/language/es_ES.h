@@ -663,6 +663,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -899,7 +901,7 @@
 #define D_OUT_OF_RANGE         "Fuera de Rango"
 #define D_SENSOR_DETECTED      "detectado"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Pot. Exportada"
 #define D_IMPORT_POWER 	  "Pot. Importada"
 #define D_PHASE_ANGLE     "Ángulo de Fase"
@@ -911,6 +913,7 @@
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
 #define D_TOTAL_ACTIVE    "P. Total Activa"
+#define D_RESETTABLE_TOTAL_ACTIVE    "P. Total Activa (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltaje"
