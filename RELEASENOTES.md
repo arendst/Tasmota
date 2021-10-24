@@ -107,7 +107,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Changed
 - File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
 - ESP32 core library from v1.0.7.4 to v1.0.7.5
+- ESP32C3 core library from v2.0.0-post to v2.0.1-rc1
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
+- ESP32 Telegram compile error [#13435](https://github.com/arendst/Tasmota/issues/13435)
+- SML compile error [#13441](https://github.com/arendst/Tasmota/issues/13441)
 - GUI checkbox MQTT TLS not saved regression from v9.2.0.3 [#13442](https://github.com/arendst/Tasmota/issues/13442)

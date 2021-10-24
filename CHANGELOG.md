@@ -10,9 +10,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - File editor no-wrap (#13427)
 - ESP32 core library from v1.0.7.4 to v1.0.7.5
+- ESP32C3 core library from v2.0.0-post to v2.0.1-rc1
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
+- ESP32 Telegram compile error (#13435)
+- SML compile error (#13441)
 - GUI checkbox MQTT TLS not saved regression from v9.2.0.3 (#13442)
 
 ## [Released]
