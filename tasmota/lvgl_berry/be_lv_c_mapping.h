@@ -615,6 +615,12 @@ const lvbe_call_c_t lv_spinbox_func[] = {
 };
 #endif // BE_LV_WIDGET_SPINBOX
 
+/* `lv_spinner` methods */
+#ifdef BE_LV_WIDGET_SPINNER
+const lvbe_call_c_t lv_spinner_func[] = {
+};
+#endif // BE_LV_WIDGET_SPINNER
+
 /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
 const lvbe_call_c_t lv_arc_func[] = {
@@ -886,6 +892,7 @@ extern const bclass be_class_lv_obj;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_spinbox;
+extern const bclass be_class_lv_spinner;
 extern const bclass be_class_lv_style;
 extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
@@ -958,6 +965,9 @@ const lvbe_call_c_classes_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_SPINBOX
   { "lv_spinbox", &be_class_lv_spinbox, lv_spinbox_func, sizeof(lv_spinbox_func) / sizeof(lv_spinbox_func[0]) },
 #endif // BE_LV_WIDGET_SPINBOX
+#ifdef BE_LV_WIDGET_SPINNER
+  { "lv_spinner", &be_class_lv_spinner, lv_spinner_func, sizeof(lv_spinner_func) / sizeof(lv_spinner_func[0]) },
+#endif // BE_LV_WIDGET_SPINNER
   { "lv_style", &be_class_lv_style, lv_style_func, sizeof(lv_style_func) / sizeof(lv_style_func[0]) },
 #ifdef BE_LV_WIDGET_SWITCH
   { "lv_switch", &be_class_lv_switch, lv_switch_func, sizeof(lv_switch_func) / sizeof(lv_switch_func[0]) },
@@ -1014,6 +1024,10 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_SPINBOX
   int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+lv.lv_spinbox", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SPINBOX
+  /* `lv_spinner` methods */
+#ifdef BE_LV_WIDGET_SPINNER
+  int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+lv.lv_spinner", "(lv.lv_obj)ii"); }
+#endif // BE_LV_WIDGET_SPINNER
   /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
   int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+lv.lv_arc", "(lv.lv_obj)"); }

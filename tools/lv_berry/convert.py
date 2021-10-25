@@ -153,7 +153,7 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
               'switch', 'table', 'textarea' ]
 # extra widgets
 
-lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox' ]
+lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
 lv_prefix = ['obj', 'group', 'style', 'indev', 'disp'] + lv_widgets
 
 def try_int(s):

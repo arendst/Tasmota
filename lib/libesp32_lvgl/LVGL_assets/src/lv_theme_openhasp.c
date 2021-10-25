@@ -35,6 +35,66 @@
 #define PAD_SMALL   (disp_size == DISP_LARGE ? lv_disp_dpx(theme.disp, 14) : disp_size == DISP_MEDIUM ? lv_disp_dpx(theme.disp, 12) : lv_disp_dpx(theme.disp, 10))
 #define PAD_TINY   (disp_size == DISP_LARGE ? lv_disp_dpx(theme.disp, 8) : disp_size == DISP_MEDIUM ? lv_disp_dpx(theme.disp, 6) : lv_disp_dpx(theme.disp, 2))
 
+// OpenHASP specific
+/*BUTTON*/
+#define COLOR_BTN (lv_color_lighten(HUE_COLOR, LV_OPA_30))
+#define COLOR_BTN_GRAD (lv_color_darken(HUE_COLOR, LV_OPA_30))
+#define COLOR_BTN_PR (lv_color_darken(COLOR_BTN_CHK, LV_OPA_20))
+#define COLOR_BTN_PR_GRAD lv_color_darken(COLOR_BTN_GRAD, LV_OPA_20)
+#define COLOR_BTN_CHK lv_color_darken(COLOR_BTN_GRAD, LV_OPA_20)
+#define COLOR_BTN_CHK_GRAD lv_color_darken(COLOR_BTN_GRAD, LV_OPA_10)
+#define COLOR_BTN_CHK_PR (lv_color_darken(COLOR_BTN_CHK, LV_OPA_20))
+#define COLOR_BTN_CHK_PR_GRAD (lv_color_darken(COLOR_BTN_CHK_GRAD, LV_OPA_30))
+#define COLOR_BTN_DIS (IS_LIGHT ? lv_color_hex3(0xccc) : lv_color_hex3(0x888))
+
+#define COLOR_BTN_BORDER (IS_LIGHT ? (lv_color_darken(HUE_COLOR, LV_OPA_50)) : (lv_color_lighten(HUE_COLOR, LV_OPA_40)))
+#define COLOR_BTN_BORDER_PR (IS_LIGHT ? lv_color_hex3(0xccc) : lv_color_hex(0x5f656e))
+#define COLOR_BTN_BORDER_CHK (IS_LIGHT ? lv_color_hex(0x3b3e42) : lv_color_hex(0x5f656e))
+#define COLOR_BTN_BORDER_CHK_PR (IS_LIGHT ? lv_color_hex(0x3b3e42) : lv_color_hex(0x5f656e))
+#define COLOR_BTN_BORDER_INA (IS_LIGHT ? lv_color_hex3(0x888) : lv_color_hex(0x404040))
+
+/*BACKGROUND*/
+#define COLOR_BG COLOR_BTN
+#define COLOR_BG_PR COLOR_BTN_PR
+#define COLOR_BG_CHK COLOR_BTN_CHK
+#define COLOR_BG_PR_CHK COLOR_BTN_CHK_PR
+#define COLOR_BG_DIS COLOR_BG
+
+#define COLOR_BG_BORDER (IS_LIGHT ? lv_color_hex(0xd6dde3) : lv_color_hex(0x808a97)) /*dfe7ed*/
+#define COLOR_BG_BORDER_PR (IS_LIGHT ? lv_color_hex3(0xccc) : lv_color_hex(0x5f656e))
+#define COLOR_BG_BORDER_CHK (IS_LIGHT ? lv_color_hex(0x3b3e42) : lv_color_hex(0x5f656e))
+#define COLOR_BG_BORDER_CHK_PR (IS_LIGHT ? lv_color_hex(0x3b3e42) : lv_color_hex(0x5f656e))
+#define COLOR_BG_BORDER_DIS (IS_LIGHT ? lv_color_hex(0xd6dde3) : lv_color_hex(0x5f656e))
+
+#define COLOR_BG_TEXT lv_color_hex(0xeeeeee)
+#define COLOR_BG_TEXT_PR LV_COLOR_WHITE
+#define COLOR_BG_TEXT_CHK LV_COLOR_WHITE
+#define COLOR_BG_TEXT_CHK_PR LV_COLOR_WHITE
+#define COLOR_BG_TEXT_DIS (IS_LIGHT ? lv_color_hex3(0xaaa) : lv_color_hex3(0x999))
+
+/*SECONDARY BACKGROUND*/
+#define COLOR_BG_SEC lv_color_lighten(theme.color_primary, LV_OPA_30)
+#define COLOR_BG_GRAD COLOR_BTN_GRAD
+#define COLOR_BG_SEC_BORDER (IS_LIGHT ? lv_color_hex(0xdfe7ed) : lv_color_hex(0x404040))
+#define COLOR_BG_SEC_TEXT (IS_LIGHT ? lv_color_hex(0x31404f) : lv_color_hex(0xa5a8ad))
+#define COLOR_BG_SEC_TEXT_DIS (IS_LIGHT ? lv_color_hex(0xaaaaaa) : lv_color_hex(0xa5a8ad))
+
+// #define TRANSITION_TIME 0 /*((theme.flags & LV_THEME_HASP_FLAG_NO_TRANSITION) ? 0 : 150)*/
+// #define BORDER_WIDTH HASP_DPX(2)
+// #define BORDER_COLOR ((theme.flags & IS_LIGHT) ? lv_color_make(0x40, 0x40, 0x40) : lv_color_make(0xb0, 0xb0, 0xb0))
+// #define OUTLINE_WIDTH ((theme.flags & LV_THEME_HASP_FLAG_NO_FOCUS) ? 0 : HASP_DPX(3))
+// #define OUTLINE_COLOR ((theme.flags & LV_THEME_HASP_FLAG_NO_FOCUS) ? BORDER_COLOR : theme.color_secondary)
+
+// #define IS_LIGHT (theme.flags & LV_THEME_HASP_FLAG_LIGHT)
+// #define NO_FOCUS (theme.flags & LV_THEME_HASP_FLAG_NO_FOCUS)
+
+// #define PAD_DEF (lv_disp_get_size_category(NULL) <= 720 ? HASP_DPX(15) : (HASP_DPX(30)))    // TODO
+
+/*SCROLLBAR*/
+#define SCROLLBAR_COLOR                                                                                                \
+    (IS_LIGHT ? lv_color_mix(theme.color_primary, lv_color_hex3(0x999), LV_OPA_10)                                     \
+              : lv_color_mix(theme.color_primary, lv_color_hex3(0x999), LV_OPA_10))
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -80,6 +140,7 @@ typedef struct {
 #if LV_USE_ARC
     lv_style_t arc_indic;
     lv_style_t arc_indic_primary;
+    lv_style_t arc_knob;        // knob for arc with zero
 #endif
 
 #if LV_USE_CHART
@@ -245,7 +306,7 @@ static void style_init(void)
 
     style_init_reset(&styles->card);
     lv_style_set_radius(&styles->card, RADIUS_DEFAULT);
-    lv_style_set_bg_opa(&styles->card, LV_OPA_COVER);
+    lv_style_set_bg_opa(&styles->card, LV_OPA_TRANSP);  // OpenHASP
     lv_style_set_bg_color(&styles->card, color_card);
     lv_style_set_border_color(&styles->card, color_grey);
     lv_style_set_border_width(&styles->card, BORDER_WIDTH);
@@ -272,11 +333,11 @@ static void style_init(void)
     lv_style_set_radius(&styles->btn, (disp_size == DISP_LARGE ? lv_disp_dpx(theme.disp, 16) : disp_size == DISP_MEDIUM ? lv_disp_dpx(theme.disp, 12) : lv_disp_dpx(theme.disp, 8)));
     lv_style_set_bg_opa(&styles->btn, LV_OPA_COVER);
     lv_style_set_bg_color(&styles->btn, color_grey);
-    if(!(theme.flags & MODE_DARK)) {
-        lv_style_set_shadow_color(&styles->btn, lv_palette_lighten(LV_PALETTE_GREY, 3));
-        lv_style_set_shadow_width(&styles->btn, 1);
-        lv_style_set_shadow_ofs_y(&styles->btn, lv_disp_dpx(theme.disp, 4));
-    }
+    // if(!(theme.flags & MODE_DARK)) {     // OpenHASP
+    //     lv_style_set_shadow_color(&styles->btn, lv_palette_lighten(LV_PALETTE_GREY, 3));
+    //     lv_style_set_shadow_width(&styles->btn, 1);
+    //     lv_style_set_shadow_ofs_y(&styles->btn, lv_disp_dpx(theme.disp, 4));
+    // }
     lv_style_set_text_color(&styles->btn, color_text);
     lv_style_set_pad_hor(&styles->btn, PAD_DEF);
     lv_style_set_pad_ver(&styles->btn, PAD_SMALL);
@@ -384,11 +445,18 @@ static void style_init(void)
 #if LV_USE_ARC
     style_init_reset(&styles->arc_indic);
     lv_style_set_arc_color(&styles->arc_indic, color_grey);
-    lv_style_set_arc_width(&styles->arc_indic, lv_disp_dpx(theme.disp, 15));
+    lv_style_set_arc_width(&styles->arc_indic, lv_disp_dpx(theme.disp, 18));    // OpenHASP
     lv_style_set_arc_rounded(&styles->arc_indic, true);
 
     style_init_reset(&styles->arc_indic_primary);
     lv_style_set_arc_color(&styles->arc_indic_primary, theme.color_primary);
+
+    // OpenHASP
+    style_init_reset(&styles->arc_knob);
+    lv_style_set_bg_color(&styles->arc_knob, theme.color_primary);
+    lv_style_set_bg_opa(&styles->arc_knob, LV_OPA_COVER);
+    lv_style_set_pad_all(&styles->arc_knob, lv_disp_dpx(theme.disp, 4));
+    lv_style_set_radius(&styles->arc_knob, LV_RADIUS_CIRCLE);
 #endif
 
 #if LV_USE_DROPDOWN
@@ -840,7 +908,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &styles->arc_indic, 0);
         lv_obj_add_style(obj, &styles->arc_indic, LV_PART_INDICATOR);
         lv_obj_add_style(obj, &styles->arc_indic_primary, LV_PART_INDICATOR);
-        lv_obj_add_style(obj, &styles->knob, LV_PART_KNOB);
+        lv_obj_add_style(obj, &styles->arc_knob, LV_PART_KNOB);     // OpenHASP
     }
 #endif
 
