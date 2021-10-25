@@ -2,6 +2,9 @@ name: Tasmota ESP32 CI
 
 on:
   pull_request:
+    paths-ignore:
+    - '.github/**' # Ignore changes towards the .github directory
+    - '**.md' # Do no build if *.md files changes
 
 jobs:
   tasmota32:
