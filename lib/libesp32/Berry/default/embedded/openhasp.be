@@ -13,9 +13,13 @@ vres = lv.get_ver_res()       # should be 240
 scr = lv.scr_act()            # default screean object
 #f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
 r20 = lv.font_robotocondensed_latin1(20)
+r16 = lv.font_robotocondensed_latin1(16)
 
-th2 = lv.theme_openhasp_init(0, lv.color(0xFF0000), lv.color(0xFFFF00), true, r20)
+th2 = lv.theme_openhasp_init(0, lv.color(0xFF00FF), lv.color(0x303030), false, r16)
 scr.get_disp().set_theme(th2)
+# TODO
+scr.set_style_bg_color(lv.color(lv.COLOR_WHITE),0)
+
 # apply theme to layer_top, but keep it transparent
 lv.theme_apply(lv.layer_top())
 lv.layer_top().set_style_bg_opa(0,0)
@@ -41,6 +45,23 @@ def parse_hex(s)
   return val
 end
 
+def parse_color(s)
+  s = str(s)
+  if s[0] == '#'
+    return lv.color(parse_hex(s))
+  else
+    import string
+    import introspect
+    var col_name = "COLOR_" + string.toupper(s)
+    var col_try = introspect.get(lv, col_name)
+    if col_try != nil
+      return lv.color(col_try)
+    end
+  end
+  # fail safe with black color
+  return lv.color(0x000000)
+end
+
 #- ------------------------------------------------------------
   Class `lvh_obj` encapsulating `lv_obj``
 
@@ -52,7 +73,15 @@ end
 class lvh_obj
   # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
   static _lv_class = lv.obj
+  static _lv_part2_selector    # selector for secondary part (like knob of arc)
 
+  # attributes to ignore when set at object level (they are managed by page)
+  static _attr_ignore = [
+    "id",
+    "obj",
+    "page",
+    "comment",
+  ]
   #- mapping from OpenHASP attribute to LVGL attribute -#
   #- if mapping is null, we use set_X and get_X from our own class -#
   static _attr_map = {
@@ -60,18 +89,56 @@ class lvh_obj
     "y": "y",
     "w": "width",
     "h": "height",
-    "radius": "radius",
-    "border_side": "border_side",
-    "text": nil,    # apply to self
+    # arc
+    "asjustable": nil,
+    "mode": nil,
+    "start_angle": "bg_start_angle",
+    "start_angle1": "start_angle",
+    "end_angle": "bg_end_angle",
+    "end_angle1": "end_angle",
+    "radius": "style_radius",
+    "border_side": "style_border_side",
+    "bg_opa": "style_bg_opa",
+    "border_width": "style_border_width",
+    "action": nil,    # store the action in self._action
     "hidden": nil,    # apply to self
-    "enabled": nil,    # apply to self
+    "enabled": nil,   # apply to self
+    "click": nil,     # synonym to enabled
     "toggle": nil,
-    "bg_color": nil,
+    "bg_color": "style_bg_color",
+    "bg_grad_color": "style_bg_grad_color",
+    "type": nil,
+    # below automatically create a sub-label
+    "text": nil,      # apply to self
+    "value_str": nil, # synonym to 'text'
     "align": nil,
+    "text_font": nil,
+    "value_font": nil,  # synonym to text_font
+    "text_color": nil,
+    "value_color": nil, # synonym to text_color
+    "value_ofs_x": nil,
+    "value_ofs_y": nil,
+    #
+    "min": nil,
+    "max": nil,
+    "val": "value",
+    "rotation": "rotation",
+    # img
+    "src": "src",
+    "image_recolor": "style_img_recolor",
+    "image_recolor_opa": "style_img_recolor_opa",
+    # padding of knob
+    "pad_top2": nil,
+    "pad_bottom2": nil,
+    "pad_left2": nil,
+    "pad_right2": nil,
+    "pad_all2": nil,
+    "radius2": nil,
   }
 
   var _lv_obj     # native lvgl object
   var _lv_label   # sub-label if exists
+  var _action     # action for OpenHASP
 
   # init
   # - create the LVGL encapsulated object
@@ -88,6 +155,13 @@ class lvh_obj
   # get LVGL encapsulated object
   def get_obj()
     return self._lv_obj
+  end
+
+  def set_action(t)
+    self._action = str(t)
+  end
+  def get_action()
+    return self._action()
   end
 
   #- ------------------------------------------------------------
@@ -121,6 +195,9 @@ class lvh_obj
   def get_enabled()
     return self._lv_obj.has_flag(lv.OBJ_FLAG_CLICKABLE)
   end
+  # click is synonym to enabled
+  def set_click(t) self.set_enabled(t) end
+  def get_click() return self.get_enabled() end
 
   #- `toggle` attributes mapped to STATE_CHECKED -#
   def set_toggle(t)
@@ -137,35 +214,47 @@ class lvh_obj
     return self._lv_obj.has_state(lv.STATE_CHECKED)
   end
 
+  def set_adjustable(t)
+    if t
+      self._lv_obj.add_flag(lv.OBJ_FLAG_CLICKABLE)
+    else
+      self._lv_obj.clear_flag(lv.OBJ_FLAG_CLICKABLE)
+    end
+  end
+  def get_adjustable()
+    return self._lv_obj.has_flag(lv.OBJ_FLAG_CLICKABLE)
+  end
+
   #- set_text: create a `lv_label` sub object to the current object -#
   #- (default case, may be overriden by object that directly take text) -#
   def check_label()
     if self._lv_label == nil
       self._lv_label = lv.label(self.get_obj())
+      self._lv_label.set_align(lv.ALIGN_CENTER);
     end
   end
+
   def set_text(t)
     self.check_label()
     self._lv_label.set_text(t)
   end
+  def set_value_str(t) self.set_text(t) end
 
   def get_text()
     if self._lv_label == nil return nil end
     return self._lv_label.get_text()
   end
+  def get_value_str() return self.get_text() end
 
   def set_align(t)
     var align
     self.check_label()
-
     if t == 0 || t == "left"
       align = lv.TEXT_ALIGN_LEFT
     elif t == 1 || t == "center"
       align = lv.TEXT_ALIGN_CENTER
     elif t == 2 || t == "right"
       align = lv.TEXT_ALIGN_RIGHT
-    else
-      align = lv.TEXT_ALIGN_auto
     end
     self._lv_label.set_style_text_align(align, lv.PART_MAIN | lv.STATE_DEFAULT)
   end
@@ -184,13 +273,105 @@ class lvh_obj
     end
   end
 
-  def set_bg_color(t)
-    var color = lv.color(parse_hex(t))
-    self._lv_obj.set_style_bg_color(color, lv.PART_MAIN | lv.STATE_DEFAULT)
+  def set_text_font(t)
+    self.check_label()
+    var f = lv.font_robotocondensed_latin1(int(t))
+    if f != nil
+      self._lv_label.set_style_text_font(f, lv.PART_MAIN | lv.STATE_DEFAULT)
+    else
+      print("HSP: Unsupported font size: robotocondensed-latin1", self._text_font)
+    end
+  end
+  def get_text_font()
+    return self._text_font
+  end
+  def set_value_font(t) self.set_text_font(t) end
+  def get_value_font() return self.get_text_font() end
+
+  def set_text_color(t)
+    self.check_label()
+    self._lv_label.set_style_text_color(parse_color(t), lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+  def get_text_color()
+    return self._text_color
+  end
+  def set_value_color(t) self.set_text_color(t) end
+  def get_value_color() return self.get_value_color() end
+
+  def set_value_ofs_x(t)
+    self.check_label()
+    self._lv_label.set_x(int(t))
+  end
+  def get_value_ofs_x()
+    return self._lv_label.get_x()
+  end
+  def set_value_ofs_y(t)
+    self.check_label()
+    self._lv_label.set_y(int(t))
+  end
+  def get_value_ofs_y()
+    return self._lv_label.get_y()
   end
 
-  def get_bg_color()
-    return self._lv_obj.get_style_bg_color(lv.PART_MAIN | lv.STATE_DEFAULT)
+  # secondary element
+  def set_pad_top2(t)
+    if self._lv_part2_selector != nil
+      self._lv_obj.set_style_pad_top(int(t), self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def set_pad_bottom2(t)
+    if self._lv_part2_selector != nil
+      self._lv_obj.set_style_pad_bottom(int(t), self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def set_pad_left2(t)
+    if self._lv_part2_selector != nil
+      self._lv_obj.set_style_pad_left(int(t), self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def set_pad_right2(t)
+    if self._lv_part2_selector != nil
+      self._lv_obj.set_style_pad_right(int(t), self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def set_pad_all2(t)
+    if self._lv_part2_selector != nil
+      self._lv_obj.set_style_pad_all(int(t), self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+
+  def get_pad_top()
+    if self._lv_part2_selector != nil
+      return self._lv_obj.get_style_pad_top(self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def get_pad_bottomo()
+    if self._lv_part2_selector != nil
+      return self._lv_obj.get_style_pad_bottom(self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def get_pad_left()
+    if self._lv_part2_selector != nil
+      return self._lv_obj.get_style_pad_left(self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def get_pad_right()
+    if self._lv_part2_selector != nil
+      return self._lv_obj.get_style_pad_right(self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def get_pad_all()
+  end
+
+  def set_radius2(t)
+    if self._lv_part2_selector != nil
+      self._lv_obj.set_style_radius(int(t), self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
+  end
+  def get_radius2()
+    if self._lv_part2_selector != nil
+      return self._lv_obj.get_style_radius(self._lv_part2_selector | lv.STATE_DEFAULT)
+    end
   end
 
   #- ------------------------------------------------------------
@@ -202,8 +383,9 @@ class lvh_obj
     #
     if self._attr_map.has(k)
       import introspect
-      if self._attr_map[k]
-        var f = introspect.get(self._lv_obj, "get_" + self._attr_map[k])
+      var kv = self._attr_map[k]
+      if kv
+        var f = introspect.get(self._lv_obj, "get_" + kv)
         if type(f) == 'function'
           return f(self._lv_obj)
         end
@@ -219,16 +401,31 @@ class lvh_obj
   end
 
   def setmember(k, v)
+    import string
     # print(">> setmember", k, v)
     # print(">>", classname(self), self._attr_map)
-    if self._attr_map.has(k)
+    if self._attr_ignore.find(k) != nil
+      return
+    elif self._attr_map.has(k)
       import introspect
-      if self._attr_map[k]
-        var f = introspect.get(self._lv_obj, "set_" + self._attr_map[k])
-        # print("f=", f)
+      var kv = self._attr_map[k]
+      if kv
+        var f = introspect.get(self._lv_obj, "set_" + kv)
+        # if the attribute contains 'color', convert to lv_color
+        if type(kv) == 'string' && string.find(kv, "color") + 5 == size(kv)  # endswith 'color'
+          v = parse_color(v)
+        end
+        # print("f=", f, v, kv, self._lv_obj, self)
         if type(f) == 'function'
-          f(self._lv_obj, v)
+          if string.find(kv, "style_") == 0
+            # style function need a selector as second parameter
+            f(self._lv_obj, v, lv.PART_MAIN | lv.STATE_DEFAULT)
+          else
+            f(self._lv_obj, v)
+          end
           return
+        else
+          print("HSP: Could not find function set_"+kv)
         end
       else
         # call self method
@@ -240,6 +437,8 @@ class lvh_obj
         end
       end
       
+    else
+      print("HSP: unknown attribute:", k)
     end
     # silently ignore if the attribute name is not supported
   end
@@ -250,13 +449,63 @@ class lvh_label : lvh_obj
   # label do not need a sub-label
   def post_init()
     self._lv_label = self._lv_obj
-    # label don't have opaque background by default
-    self._lv_obj.set_style_bg_opa(lv.OPA_COVER, lv.PART_MAIN | lv.STATE_DEFAULT)
   end
 end
 
+class lvh_arc : lvh_obj
+  static _lv_class = lv.arc
+  static _lv_part2_selector = lv.PART_KNOB
+
+  def set_min(t)
+    self._lv_obj.set_range(int(t), self.get_max())
+  end
+  def set_max(t)
+    self._lv_obj.set_range(self.get_min(), int(t))
+  end
+  def get_min()
+    return self._lv_obj.get_min_value()
+  end
+  def get_max()
+    return self._lv_obj.get_max_value()
+  end
+  def set_type(t)
+    var mode
+    if   t == 0  mode = lv.ARC_MODE_NORMAL
+    elif t == 1  mode = lv.ARC_MODE_REVERSE
+    elif t == 2  mode = lv.ARC_MODE_SYMMETRICAL
+    end
+    if mode != nil
+      self._lv_obj.set_mode(mode)
+    end
+  end
+  def get_type()
+    return self._lv_obj.get_mode()
+  end
+  # mode
+  def set_mode(t)
+    var mode
+    if    mode == "expand" self._lv_obj.set_width(lv.SIZE_CONTENT)
+    elif  mode == "break"  mode = lv.LABEL_LONG_WRAP
+    elif  mode == "dots"   mode = lv.LABEL_LONG_DOT
+    elif  mode == "scroll" mode = lv.LABEL_LONG_SCROLL
+    elif  mode == "loop"   mode = lv.LABEL_LONG_SCROLL_CIRCULAR
+    elif  mode == "crop"   mode = lv.LABEL_LONG_CLIP
+    end
+    if mode != nil
+      self._lv_obj.lv_label_set_long_mode(mode)
+    end
+  end
+  def get_mode()
+  end
+
+end
+
+class lvh_switch : lvh_obj
+  static _lv_class = lv.switch
+  static _lv_part2_selector = lv.PART_KNOB
+end
+
 #- creat sub-classes of lvh_obj and map the LVGL class in static '_lv_class' attribute -#
-class lvh_arc : lvh_obj       static _lv_class = lv.arc end
 class lvh_bar : lvh_obj       static _lv_class = lv.bar end
 class lvh_btn : lvh_obj       static _lv_class = lv.btn end
 class lvh_btnmatrix : lvh_obj static _lv_class = lv.btnmatrix end
@@ -266,8 +515,7 @@ class lvh_img : lvh_obj       static _lv_class = lv.img end
 class lvh_line : lvh_obj      static _lv_class = lv.line end
 class lvh_roller : lvh_obj    static _lv_class = lv.roller end
 class lvh_slider : lvh_obj    static _lv_class = lv.slider end
-class lvh_slider : lvh_obj    static _lv_class = lv.slider end
-class lvh_switch : lvh_obj    static _lv_class = lv.switch end
+class lvh_spinner : lvh_obj   static _lv_class = lv.spinner end
 class lvh_textarea : lvh_obj  static _lv_class = lv.textarea end
 
 #- ----------------------------------------------------------------------------
@@ -294,7 +542,7 @@ class lvh_page
       self._lv_scr = lv.layer_top() # top layer, visible over all screens
     else
       self._lv_scr = lv.obj(0)      # allocate a new screen
-      self._lv_scr.set_style_bg_color(lv_color(0x000000), lv.PART_MAIN | lv.STATE_DEFAULT) # set black background
+      self._lv_scr.set_style_bg_color(lv.color(0x000000), lv.PART_MAIN | lv.STATE_DEFAULT) # set black background
     end
 
     # create a global for this page of form p<page_number>, ex p1
@@ -310,6 +558,9 @@ class lvh_page
   #- add an object to this page -#
   def set_obj(id, o)
     self._obj_id[id] = o
+  end
+  def get_obj(id)
+    return self._obj_id.find(id)
   end
 
   #- return id of this page -#
@@ -382,6 +633,19 @@ def parse_obj(jline, page)
     # extract openhasp class, prefix with `lvh_`. Ex: `btn` becomes `lvh_btn`
     var obj_type = jline["obj"]
 
+    # extract parent
+    var parent
+    var parent_id = int(jline.find("parentid"))
+    if parent_id != nil
+      var parent_obj = lvh_page_cur.get_obj(parent_id)
+      if parent_obj != nil
+        parent = parent_obj._lv_obj
+      end
+    end
+    if parent == nil
+      parent = page.get_scr()
+    end
+
     # check if a class with the requested name exists
     var obj_class = introspect.get(global, "lvh_" + obj_type)
     if obj_class == nil
@@ -389,15 +653,15 @@ def parse_obj(jline, page)
     end
 
     # instanciate the object, passing the lvgl screen as paren object
-    var obj = obj_class(page.get_scr())
+    var obj = obj_class(parent)
 
     # add object to page object
     lvh_page_cur.set_obj(obj_id, obj)
     # set attributes
     # try every attribute, if not supported it is silently ignored
     for k:jline.keys()
-      introspect.set(obj, k, jline[k])
-      # obj.(k) = jline[k]
+      # introspect.set(obj, k, jline[k])
+      obj.(k) = jline[k]
     end
 
     # create a global variable for this object of form p<page>b<id>, ex p1b2

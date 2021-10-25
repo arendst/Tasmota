@@ -646,6 +646,7 @@ extern "C" {
   }
 
   int lv0_load_robotocondensed_latin1_font(bvm *vm) {
+#ifdef USE_LVGL_OPENHASP
     int argc = be_top(vm);
     if (argc == 1 && be_isint(vm, 1)) {
       const lv_font_t * font = nullptr;
@@ -704,6 +705,7 @@ extern "C" {
         be_return_nil(vm);
       }
     }
+#endif // USE_LVGL_OPENHASP
     be_raise(vm, kTypeError, nullptr);
   }
 

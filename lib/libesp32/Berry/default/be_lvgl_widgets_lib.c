@@ -599,6 +599,9 @@ extern int lvbe_spinbox_step_prev(bvm *vm);
 extern int lvbe_spinbox_increment(bvm *vm);
 extern int lvbe_spinbox_decrement(bvm *vm);
 
+/* `lv_spinner` external functions definitions */
+extern int lvbe_spinner_create(bvm *vm);
+
 /* `lv_arc` external functions definitions */
 extern int lvbe_arc_create(bvm *vm);
 extern int lvbe_arc_set_start_angle(bvm *vm);
@@ -819,6 +822,7 @@ extern int be_ntv_lv_led_init(bvm *vm);
 extern int be_ntv_lv_meter_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_spinbox_init(bvm *vm);
+extern int be_ntv_lv_spinner_init(bvm *vm);
 extern int be_ntv_lv_arc_init(bvm *vm);
 extern int be_ntv_lv_bar_init(bvm *vm);
 extern int be_ntv_lv_btn_init(bvm *vm);
@@ -1191,6 +1195,28 @@ be_local_class(lv_spinbox,
 void be_load_lv_spinbox_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_spinbox);
     be_setglobal(vm, "lv_spinbox");
+    be_pop(vm, 1);
+}
+
+/********************************************************************
+** Solidified class: lv_spinner
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_spinner,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_spinner_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_spinner_init) },
+    })),
+    (be_nested_const_str("lv_spinner", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_spinner_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_spinner);
+    be_setglobal(vm, "lv_spinner");
     be_pop(vm, 1);
 }
 

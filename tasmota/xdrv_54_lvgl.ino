@@ -411,7 +411,7 @@ void start_lvgl(const char * uconfig) {
 
 #ifdef USE_UFILESYS
   // Add file system mapping
-  lv_fs_drv_t drv;      // can be on heap, LVGL creates a copy
+  static lv_fs_drv_t drv;      // LVGL8, needs to be static and not on stack
   lv_fs_drv_init(&drv);                     /*Basic initialization*/
 
   drv.letter = 'A';                         /*An uppercase letter to identify the drive */

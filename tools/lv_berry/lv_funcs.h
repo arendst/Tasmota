@@ -601,6 +601,9 @@ void lv_spinbox_step_prev(lv_obj_t * obj)
 void lv_spinbox_increment(lv_obj_t * obj)
 void lv_spinbox_decrement(lv_obj_t * obj)
 
+// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/spinner/lv_spinner.h
+lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
+
 // ../../lib/libesp32_lvgl/LVGL8/src/misc/lv_style_gen.h
 void lv_style_set_width(lv_style_t * style, lv_coord_t value)
 void lv_style_set_min_width(lv_style_t * style, lv_coord_t value)

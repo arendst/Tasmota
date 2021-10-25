@@ -59,6 +59,7 @@ lv_fun_globs = [
                   "extra/widgets/meter/*.h",
                   "extra/widgets/msgbox/*.h",
                   "extra/widgets/spinbox/*.h",
+                  "extra/widgets/spinner/*.h",
                   "extra/themes/default/*.h",
                   "core/*.h",
                   "draw/*.h",
