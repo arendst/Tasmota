@@ -32,10 +32,13 @@
 #ifndef WIFI_RESCAN_MINUTES
 #define WIFI_RESCAN_MINUTES     44         // Number of minutes between wifi network rescan
 #endif
+#ifndef WIFI_RETRY_SECONDS
+#define WIFI_RETRY_SECONDS      12         // Number of seconds connection to wifi network will retry
+#endif
 
 const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
 const uint8_t WIFI_CHECK_SEC = 20;         // seconds
-const uint8_t WIFI_RETRY_OFFSET_SEC = 12;  // seconds
+const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #if LWIP_IPV6
