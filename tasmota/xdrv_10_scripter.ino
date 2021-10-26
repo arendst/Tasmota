@@ -5448,7 +5448,7 @@ void ScriptSaveSettings(void) {
 //
 uint32_t script_compress(char *dest, uint32_t size) {
   //AddLog(LOG_LEVEL_INFO,PSTR("in string: %s len = %d"),glob_script_mem.script_ram,strlen(glob_script_mem.script_ram));
-  uint32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), dest, size);
+  int32_t len_compressed = SCRIPT_COMPRESS(glob_script_mem.script_ram, strlen(glob_script_mem.script_ram), dest, size);
   if (len_compressed > 0) {
     dest[len_compressed] = 0;
     AddLog(LOG_LEVEL_INFO,PSTR("script compressed to %d bytes = %d %%"),len_compressed,len_compressed * 100 / strlen(glob_script_mem.script_ram));
