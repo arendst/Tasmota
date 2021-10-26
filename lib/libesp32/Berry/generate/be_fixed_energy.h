@@ -18,4 +18,4 @@ static be_define_const_module(
     "energy"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(energy, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(energy);

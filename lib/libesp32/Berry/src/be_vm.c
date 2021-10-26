@@ -87,7 +87,7 @@
         res = ibinop(op, a, b); \
     } else if (var_isnumber(a) && var_isnumber(b)) { \
         res = var2real(a) op var2real(b); \
-    } else if (var_isinstance(a)) { \
+    } else if (var_isinstance(a) && !var_isnil(b)) { \
         res = object_eqop(vm, #op, iseq, a, b); \
     } else if (var_type(a) == var_type(b)) { /* same types */ \
         if (var_isnil(a)) { /* nil op nil */ \
@@ -882,28 +882,34 @@ newframe: /* a new call frame */
                 binstance *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 if (!be_instance_setmember(vm, obj, attr, c)) {
+                    reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to attribute '%s'",
                         str(be_instance_name(obj)), str(attr));
                 }
+                reg = vm->reg;
                 dispatch();
             }
             if (var_isclass(a) && var_isstr(b)) {
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 if (!be_class_setmember(vm, obj, attr, c)) {
+                    reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",
                         str(be_class_name(obj)), str(attr));
                 }
+                reg = vm->reg;
                 dispatch();
             }
             if (var_ismodule(a) && var_isstr(b)) {
                 bmodule *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 if (be_module_setmember(vm, obj, attr, c)) {
+                    reg = vm->reg;
                     dispatch();
                 } else {
+                    reg = vm->reg;
                     // fall through exception below
                 }
             }

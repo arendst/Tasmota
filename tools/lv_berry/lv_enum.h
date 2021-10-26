@@ -6,6 +6,9 @@ register_button_encoder=&lv0_register_button_encoder
 
 montserrat_font=&lv0_load_montserrat_font
 seg7_font=&lv0_load_seg7_font
+font_montserrat=&lv0_load_montserrat_font
+font_seg7=&lv0_load_seg7_font
+font_robotocondensed_latin1=&lv0_load_robotocondensed_latin1_font
 load_font=&lv0_load_font
 load_freetype_font=&lv0_load_freetype_font
 

@@ -8,6 +8,8 @@
 
 See [migration path](https://tasmota.github.io/docs/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
+**Do not upgrade from minimal to minimal version. It will most likely fail at some point and will require flashing via serial.** If you do have to use minimal versions, always OTA to a full version of the same release before applying next minimal version.
+
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
@@ -107,6 +109,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Changed
 - File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
 - ESP32 core library from v1.0.7.4 to v1.0.7.5
+- ESP32C3 core library from v2.0.0-post to v2.0.1-rc1
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
+- ESP32 Telegram compile error [#13435](https://github.com/arendst/Tasmota/issues/13435)
+- SML compile error [#13441](https://github.com/arendst/Tasmota/issues/13441)
+- GUI checkbox MQTT TLS not saved regression from v9.2.0.3 [#13442](https://github.com/arendst/Tasmota/issues/13442)
