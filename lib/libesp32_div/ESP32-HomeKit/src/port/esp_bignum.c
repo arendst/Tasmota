@@ -151,7 +151,7 @@ cleanup:
 
 
 
-
+#if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 /* Z = (X * Y) mod M
 
    Not an mbedTLS function
@@ -192,6 +192,8 @@ cleanup:
 
     return ret;
 }
+
+#endif // ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 
 #if defined(MBEDTLS_MPI_EXP_MOD_ALT)
 
@@ -374,6 +376,7 @@ cleanup:
 static int mpi_mult_mpi_failover_mod_mult( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t z_words);
 static int mpi_mult_mpi_overlong(mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t y_words, size_t z_words);
 
+#if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 /* Z = X * Y */
 int mbedtls_mpi_mul_mpi( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y )
 {
@@ -447,6 +450,7 @@ int mbedtls_mpi_mul_mpi( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi
 cleanup:
     return ret;
 }
+#endif //ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 
 
 
