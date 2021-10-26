@@ -392,7 +392,7 @@ void be_stack_expansion(bvm *vm, int n)
     }
 #if BE_USE_OBSERVABILITY_HOOK
     if (vm->obshook != NULL)
-        (*vm->obshook)(vm, BE_OBS_STACK_RESIZE_START, size, size + n);
+        (*vm->obshook)(vm, BE_OBS_STACK_RESIZE_START, size * sizeof(bvalue), (size + n) * sizeof(bvalue));
 #endif
     stack_resize(vm, size + n);
 }
