@@ -18,7 +18,6 @@ extern int lco_init(bvm *vm);           // generic function
 extern int lco_tostring(bvm *vm);       // generic function
 extern int lco_toint(bvm *vm);          // generic function
 
-extern int lvx_init_ctor(bvm *vm, void * func);
 extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
@@ -838,6 +837,38 @@ extern int be_ntv_lv_switch_init(bvm *vm);
 extern int be_ntv_lv_table_init(bvm *vm);
 extern int be_ntv_lv_textarea_init(bvm *vm);
 
+extern const bclass be_class_lv_arc;
+extern const bclass be_class_lv_bar;
+extern const bclass be_class_lv_btn;
+extern const bclass be_class_lv_btnmatrix;
+extern const bclass be_class_lv_canvas;
+extern const bclass be_class_lv_chart;
+extern const bclass be_class_lv_checkbox;
+extern const bclass be_class_lv_color;
+extern const bclass be_class_lv_colorwheel;
+extern const bclass be_class_lv_disp;
+extern const bclass be_class_lv_dropdown;
+extern const bclass be_class_lv_font;
+extern const bclass be_class_lv_group;
+extern const bclass be_class_lv_img;
+extern const bclass be_class_lv_imgbtn;
+extern const bclass be_class_lv_indev;
+extern const bclass be_class_lv_label;
+extern const bclass be_class_lv_led;
+extern const bclass be_class_lv_line;
+extern const bclass be_class_lv_meter;
+extern const bclass be_class_lv_msgbox;
+extern const bclass be_class_lv_obj;
+extern const bclass be_class_lv_roller;
+extern const bclass be_class_lv_slider;
+extern const bclass be_class_lv_spinbox;
+extern const bclass be_class_lv_spinner;
+extern const bclass be_class_lv_style;
+extern const bclass be_class_lv_switch;
+extern const bclass be_class_lv_table;
+extern const bclass be_class_lv_textarea;
+extern const bclass be_class_lv_theme;
+
 
 /********************************************************************
 ** Solidified class: lv_style
@@ -1182,7 +1213,7 @@ void be_load_lv_msgbox_class(bvm *vm) {
 extern const bclass be_class_lv_obj;
 be_local_class(lv_spinbox,
     0,
-    &be_class_lv_obj,
+    &be_class_lv_textarea,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_spinbox_class) },
@@ -1204,7 +1235,7 @@ void be_load_lv_spinbox_class(bvm *vm) {
 extern const bclass be_class_lv_obj;
 be_local_class(lv_spinner,
     0,
-    &be_class_lv_obj,
+    &be_class_lv_arc,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_spinner_class) },
@@ -1314,7 +1345,7 @@ void be_load_lv_btnmatrix_class(bvm *vm) {
 extern const bclass be_class_lv_obj;
 be_local_class(lv_canvas,
     0,
-    &be_class_lv_obj,
+    &be_class_lv_img,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_canvas_class) },

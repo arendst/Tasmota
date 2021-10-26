@@ -25,6 +25,14 @@ lv.theme_apply(lv.layer_top())
 lv.layer_top().set_style_bg_opa(0,0)
 
 
+# takes an attribute name and responds if it needs color conversion
+def is_color_attribute(t)
+  import string
+  t = str(t)
+  # contains `color` but does not contain `color_`
+  return (string.find(t, "color") >= 0) && (string.find(t, "color_") < 0)
+end
+
 # parse hex string
 def parse_hex(s)
   import string
@@ -81,6 +89,8 @@ class lvh_obj
     "obj",
     "page",
     "comment",
+    "parentid",
+    "auto_size",    # TODO not sure it's still needed in LVGL8
   ]
   #- mapping from OpenHASP attribute to LVGL attribute -#
   #- if mapping is null, we use set_X and get_X from our own class -#
@@ -100,6 +110,8 @@ class lvh_obj
     "border_side": "style_border_side",
     "bg_opa": "style_bg_opa",
     "border_width": "style_border_width",
+    "line_width": nil,  # depebds on class
+    "line_width1": nil,  # depebds on class
     "action": nil,    # store the action in self._action
     "hidden": nil,    # apply to self
     "enabled": nil,   # apply to self
@@ -127,6 +139,9 @@ class lvh_obj
     "src": "src",
     "image_recolor": "style_img_recolor",
     "image_recolor_opa": "style_img_recolor_opa",
+    # spinner
+    "angle": nil,
+    "speed": nil,
     # padding of knob
     "pad_top2": nil,
     "pad_bottom2": nil,
@@ -142,7 +157,9 @@ class lvh_obj
 
   # init
   # - create the LVGL encapsulated object
-  def init(parent)
+  # arg1: parent object
+  # arg2: json line object
+  def init(parent, jline)
     var obj_class = self._lv_class    # need to assign to a var to distinguish from method call
     self._lv_obj = obj_class(parent)  # instanciate LVGL object
     self.post_init()
@@ -162,6 +179,13 @@ class lvh_obj
   end
   def get_action()
     return self._action()
+  end
+
+  def set_line_width(t)
+    self._lv_obj.set_style_line_width(int(t), lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+  def get_line_width()
+    return self._lv_obj.get_style_line_width(lv.PART_MAIN | lv.STATE_DEFAULT)
   end
 
   #- ------------------------------------------------------------
@@ -236,7 +260,7 @@ class lvh_obj
 
   def set_text(t)
     self.check_label()
-    self._lv_label.set_text(t)
+    self._lv_label.set_text(str(t))
   end
   def set_value_str(t) self.set_text(t) end
 
@@ -279,11 +303,10 @@ class lvh_obj
     if f != nil
       self._lv_label.set_style_text_font(f, lv.PART_MAIN | lv.STATE_DEFAULT)
     else
-      print("HSP: Unsupported font size: robotocondensed-latin1", self._text_font)
+      print("HSP: Unsupported font size: robotocondensed-latin1", t)
     end
   end
   def get_text_font()
-    return self._text_font
   end
   def set_value_font(t) self.set_text_font(t) end
   def get_value_font() return self.get_text_font() end
@@ -412,7 +435,7 @@ class lvh_obj
       if kv
         var f = introspect.get(self._lv_obj, "set_" + kv)
         # if the attribute contains 'color', convert to lv_color
-        if type(kv) == 'string' && string.find(kv, "color") + 5 == size(kv)  # endswith 'color'
+        if type(kv) == 'string' && is_color_attribute(kv)
           v = parse_color(v)
         end
         # print("f=", f, v, kv, self._lv_obj, self)
@@ -444,6 +467,13 @@ class lvh_obj
   end
 end
 
+#- ------------------------------------------------------------
+  Other widgets
+- ------------------------------------------------------------ -#
+
+#- ------------------------------------------------------------
+   label
+#- ------------------------------------------------------------#
 class lvh_label : lvh_obj
   static _lv_class = lv.label
   # label do not need a sub-label
@@ -452,9 +482,26 @@ class lvh_label : lvh_obj
   end
 end
 
+#- ------------------------------------------------------------
+   arc
+#- ------------------------------------------------------------#
 class lvh_arc : lvh_obj
   static _lv_class = lv.arc
   static _lv_part2_selector = lv.PART_KNOB
+
+  # line_width converts to arc_width
+  def set_line_width(t)
+    self._lv_obj.set_style_arc_width(int(t), lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+  def get_line_width()
+    return self._lv_obj.get_arc_line_width(lv.PART_MAIN | lv.STATE_DEFAULT)
+  end
+  def set_line_width1(t)
+    self._lv_obj.set_style_arc_width(int(t), lv.PART_INDICATOR | lv.STATE_DEFAULT)
+  end
+  def get_line_width1()
+    return self._lv_obj.get_arc_line_width(lv.PART_INDICATOR | lv.STATE_DEFAULT)
+  end
 
   def set_min(t)
     self._lv_obj.set_range(int(t), self.get_max())
@@ -500,9 +547,36 @@ class lvh_arc : lvh_obj
 
 end
 
+#- ------------------------------------------------------------
+   switch
+#- ------------------------------------------------------------#
 class lvh_switch : lvh_obj
   static _lv_class = lv.switch
   static _lv_part2_selector = lv.PART_KNOB
+end
+
+#- ------------------------------------------------------------
+   spinner
+#- ------------------------------------------------------------#
+class lvh_spinner : lvh_arc
+  static _lv_class = lv.spinner
+
+  # init
+  # - create the LVGL encapsulated object
+  # arg1: parent object
+  # arg2: json line object
+  def init(parent, jline)
+    var angle = jline.find("angle", 60)
+    var speed = jline.find("speed", 1000)
+    self._lv_obj = lv.spinner(parent, speed, angle)
+    self.post_init()
+  end
+
+  # ignore attributes, spinner can't be changed once created
+  def set_angle(t) end
+  def get_angle() end
+  def set_speed(t) end
+  def get_speed() end
 end
 
 #- creat sub-classes of lvh_obj and map the LVGL class in static '_lv_class' attribute -#
@@ -515,7 +589,6 @@ class lvh_img : lvh_obj       static _lv_class = lv.img end
 class lvh_line : lvh_obj      static _lv_class = lv.line end
 class lvh_roller : lvh_obj    static _lv_class = lv.roller end
 class lvh_slider : lvh_obj    static _lv_class = lv.slider end
-class lvh_spinner : lvh_obj   static _lv_class = lv.spinner end
 class lvh_textarea : lvh_obj  static _lv_class = lv.textarea end
 
 #- ----------------------------------------------------------------------------
@@ -542,7 +615,8 @@ class lvh_page
       self._lv_scr = lv.layer_top() # top layer, visible over all screens
     else
       self._lv_scr = lv.obj(0)      # allocate a new screen
-      self._lv_scr.set_style_bg_color(lv.color(0x000000), lv.PART_MAIN | lv.STATE_DEFAULT) # set black background
+      # self._lv_scr.set_style_bg_color(lv.color(0x000000), lv.PART_MAIN | lv.STATE_DEFAULT) # set black background
+      self._lv_scr.set_style_bg_color(lv.color(0xFFFFFF), lv.PART_MAIN | lv.STATE_DEFAULT) # set white background
     end
 
     # create a global for this page of form p<page_number>, ex p1
@@ -651,9 +725,9 @@ def parse_obj(jline, page)
     if obj_class == nil
       raise "value error", "cannot find object of type " + str(obj_type)
     end
-
+    
     # instanciate the object, passing the lvgl screen as paren object
-    var obj = obj_class(parent)
+    var obj = obj_class(parent, jline)
 
     # add object to page object
     lvh_page_cur.set_obj(obj_id, obj)
@@ -678,6 +752,7 @@ end
   Parse jsonl file line by line
 
 - ------------------------------------------------------------ -#
+tasmota.yield()
 for j:jsonl
   var jline = json.load(j)
 
