@@ -12,6 +12,7 @@ on:
       - '**.json'
       - '**.properties'
       - 'pio-tools/*.py'
+      - '**.ini'
 
 jobs:
   base-images:
