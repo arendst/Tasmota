@@ -156,6 +156,19 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
 lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
 lv_prefix = ['obj', 'group', 'style', 'indev', 'disp'] + lv_widgets
 
+# define here widget inheritance because it's hard to deduce from source
+lv_widget_inheritance = {
+  "animing": "img",
+  "calendar": "btnmatrix",
+  "keyboard": "btnmatrix",
+  "list_btn": "btn",
+  "list_text": "label",
+  "spinbox": "textarea",
+  "spinner": "arc",             # lv_spinner is a subclass of lv_arc
+  "canvas": "img",
+  "roller_label": "label",
+}
+
 def try_int(s):
   try:
     v = int(s)
@@ -378,7 +391,7 @@ for subtype, flv in lv.items():
     if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
 
     if c_func_name.endswith("_create"):
-      c_ret_type = f"+lv.lv_{subtype}"
+      c_ret_type = "+"  # constructor, init method does not return any value
       if subtype in lv_widgets:
         print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
         print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
@@ -421,7 +434,6 @@ extern int lco_init(bvm *vm);           // generic function
 extern int lco_tostring(bvm *vm);       // generic function
 extern int lco_toint(bvm *vm);          // generic function
 
-extern int lvx_init_ctor(bvm *vm, void * func);
 extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
 
@@ -454,6 +466,11 @@ for subtype, flv in lv.items():
 for subtype, flv in lv.items():
   print(f"""extern int be_ntv_lv_{subtype}_init(bvm *vm);""")
 
+print()
+
+# extern classes
+for subtype in sorted(lv):
+  print(f"extern const bclass be_class_lv_{subtype};");
 print()
 
 # Define specific classes for lv_obj
@@ -599,13 +616,14 @@ be_local_class(lv_color,
 for subtype, flv in lv.items():
   # special version for widgets
   if subtype in lv_widgets:
+    super_class = lv_widget_inheritance.get(subtype, "obj")    # get superclass, default to lv_obj
     print(f"""/********************************************************************
 ** Solidified class: lv_{subtype}
 ********************************************************************/
 extern const bclass be_class_lv_obj;
 be_local_class(lv_{subtype},
     0,
-    &be_class_lv_obj,
+    &be_class_lv_{super_class},
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {{
         {{ be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_{subtype}_class) }},

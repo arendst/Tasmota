@@ -1,0 +1,61 @@
+{"page":1,"comment":"---------- Page 1 ----------"}
+{"page":1,"id":0,"bg_color":"#FFFFFF","bg_grad_color":"#FFFFFF","text_color":"#000000","radius":0,"border_side":0}
+{"page":1,"id":1,"obj":"btn","x":0,"y":0,"w":240,"h":30,"text":"LIVING ROOM","value_font":24,"bg_color":"#2C3E50","bg_grad_color":"#2C3E50","text_color":"#FFFFFF","radius":0,"border_side":0}
+
+{"page":1,"id":2,"obj":"arc","x":20,"y":65,"w":80,"h":100,"max":40,"border_side":0,"type":0,"rotation":0,"start_angle":180,"end_angle":0,"start_angle1":180,"value_font":12,"value_ofs_x":0,"value_ofs_y":-14,"bg_opa":0,"text":"21.2°C","min":-20,"max":50,"val":21}
+
+{"page":1,"id":3,"obj":"arc","x":140,"y":65,"w":80,"h":100,"max":100,"border_side":0,"type":0,"start_angle":180,"end_angle":0,"start_angle1":180,"value_font":12,"value_color":"#000000","value_ofs_x":0,"value_ofs_y":-14,"bg_opa":0,"text":"44%","val":44}
+
+{"page":1,"id":4,"obj":"label","x":0,"y":120,"w":240,"h":20,"text":"CO2 levels: 1483 ppm","radius":0,"border_side":0,"align":1}
+{"page":1,"id":5,"obj":"label","x":2,"y":35,"w":140,"text":"Temperature","align":1}
+{"page":1,"id":6,"obj":"label","x":140,"y":35,"w":95,"text":"Humidity","align":1}
+{"page":1,"id":7,"obj":"btn","x":0,"y":160,"w":240,"h":20,"text":"LIGHTS","bg_color":"#F1C40F","text_color":"#FFFFFF","radius":0,"border_side":0}
+{"page":1,"id":8,"obj":"label","x":20,"y":190,"w":140,"h":20,"text":"Ceiling Light"}
+{"page":1,"id":9,"obj":"switch","x":160,"y":190,"w":40,"h":20,"toggle":"TRUE"}
+{"page":1,"id":10,"obj":"label","x":20,"y":215,"w":140,"h":20,"text":"Wall Light"}
+{"page":1,"id":11,"obj":"switch","x":160,"y":215,"w":40,"h":20,"toggle":"TRUE"}
+{"page":1,"id":12,"obj":"label","x":20,"y":240,"w":200,"h":20,"text":"Ambient Light"}
+{"page":1,"id":13,"obj":"slider","x":30,"y":265,"w":200,"h":10}
+
+{"page":2,"comment":"---------- Page 2 ----------"}
+{"page":2,"id":1,"obj":"btn","x":0,"y":0,"w":240,"h":30,"text":"ENTITIES","value_font":24,"bg_color":"#2C3E50","text_color":"#FFFFFF","radius":0,"border_side":0,"click":0}
+{"page":2,"id":2,"obj":"obj","x":5,"y":35,"w":230,"h":250,"click":0}
+
+{"page":2,"id":11,"obj":"label","x":8,"y":33,"w":35,"h":35,"text":"\uE004","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":12,"obj":"label","x":48,"y":43,"w":130,"h":30,"text":"Presence override","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":13,"obj":"switch","x":177,"y":40,"w":50,"h":25,"radius":25,"radius2":15}
+
+{"page":2,"id":21,"obj":"label","x":8,"y":69,"w":35,"h":35,"text":"\uF020","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":22,"obj":"label","x":48,"y":79,"w":130,"h":30,"text":"Front door light","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":23,"obj":"switch","x":177,"y":74,"w":50,"h":25,"radius":25,"radius2":15}
+
+{"page":2,"id":31,"obj":"label","x":8,"y":103,"w":35,"h":35,"text":"\uF054","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":32,"obj":"label","x":48,"y":113,"w":130,"h":30,"text":"Back yard lights","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":33,"obj":"switch","x":177,"y":110,"w":50,"h":25,"radius":25,"radius2":15}
+
+{"page":2,"id":41,"obj":"label","x":8,"y":138,"w":35,"h":35,"text":"\uEA7A","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":42,"obj":"label","x":48,"y":148,"w":130,"h":30,"text":"Trash service","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":43,"obj":"label","x":97,"y":148,"w":130,"h":30,"text":"in 6 days","align":2,"text_color":"black"}
+
+{"page":2,"id":51,"obj":"label","x":8,"y":173,"w":35,"h":35,"text":"\uF39D","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":52,"obj":"label","x":48,"y":183,"w":130,"h":30,"text":"Selective trash","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":53,"obj":"label","x":97,"y":183,"w":130,"h":30,"text":"in 10 days","align":2,"text_color":"black"}
+
+{"page":2,"id":61,"obj":"label","x":8,"y":208,"w":35,"h":35,"text":"\uE32A","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":62,"obj":"label","x":48,"y":218,"w":130,"h":30,"text":"Green energy active","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":63,"obj":"label","x":97,"y":218,"w":130,"h":30,"text":"Yes :)","align":2,"text_color":"black"}
+
+{"page":2,"id":71,"obj":"label","x":8,"y":243,"w":35,"h":35,"text":"\uE957","align":1,"text_font":32,"text_color":"black"}
+{"page":2,"id":72,"obj":"label","x":48,"y":253,"w":130,"h":30,"text":"Air quality","align":0,"text_font":16,"text_color":"black"}
+{"page":2,"id":73,"obj":"label","x":97,"y":253,"w":130,"h":30,"text":"OK (29.58 µg/m³)","align":2,"text_color":"black"}
+
+{"page":3,"comment":"---------- Page 3 ----------"}
+{"page":3,"id":1,"obj":"btn","x":0,"y":0,"w":240,"h":30,"text":"FAN STATUS","text_font":16,"bg_color":"#2C3E50","text_color":"#FFFFFF","radius":0,"border_side":0,"click":0}
+
+{"page":3,"id":11,"obj":"img","src":"A:/noun_Fan_35097_140.png","auto_size":1,"w":140,"h":140,"x":50,"y":75,"image_recolor":"lime","image_recolor_opa":150}
+{"page":3,"id":12,"obj":"spinner","parentid":11,"x":7,"y":6,"w":126,"h":126,"bg_opa":0,"border_width":0,"line_width":7,"line_width1":7,"type":2,"angle":120,"speed":1000,"value_str":3,"value_font":24}
+
+{"page":0,"comment":"---------- All pages ----------"}
+{"page":0,"id":11,"obj":"btn","action":"prev","x":0,"y":290,"w":79,"h":32,"bg_color":"#34495E","text":"\uE141","text_color":"#CCCCCC","radius":0,"border_side":0,"text_font":32}
+{"page":0,"id":12,"obj":"btn","action":"back","x":80,"y":290,"w":80,"h":32,"bg_color":"#34495E","text":"\uE2DC","text_color":"#CCCCCC","radius":0,"border_side":0,"text_font":24}
+{"page":0,"id":13,"obj":"btn","action":"next","x":161,"y":290,"w":79,"h":32,"bg_color":"#34495E","text":"\uE142","text_color":"#CCCCCC","radius":0,"border_side":0,"text_font":32}

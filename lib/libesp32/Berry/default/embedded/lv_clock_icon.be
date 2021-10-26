@@ -5,8 +5,8 @@
 class lv_clock_icon: lv.label
   var hour, minute, sec
 
-  def init(parent, copy)
-    super(self).init(parent, copy)
+  def init(parent)
+    super(self).init(parent)
     var f_s7_16 = lv.seg7_font(16)
     if f_s7_16 != nil  self.set_style_text_font(f_s7_16, lv.PART_MAIN | lv.STATE_DEFAULT) end
 

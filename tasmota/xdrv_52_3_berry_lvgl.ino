@@ -117,8 +117,8 @@ extern void lv_ex_get_started_1(void);
 //   - '(lv_button)' -> lv_button class or derived
 //   - '[lv_event_cb]' -> callback type, still prefixed with '^' to mark that it is cb
 //
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]);
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]) {
+void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * arg_type, int32_t p[8]);
+void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * arg_type, int32_t p[8]) {
   bool arg_type_check = (arg_type != nullptr);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
   char type_short_name[32];
@@ -161,8 +161,8 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8
           break;
       }
     }
-    // berry_log_P(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[i] = be_convert_single_elt(vm, i+1, arg_type_check ? type_short_name : nullptr, p[0]);
+    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
+    p[i] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : nullptr, p[0]);
   }
 
   // check if we are missing arguments
@@ -177,32 +177,6 @@ extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
   
-  // called programmatically, when an object is construced
-  // LVGL8: constructor now has only 1 parameter (parent)
-  // If arg1 is comptr, then just encapsulate
-  int lvx_init_ctor(bvm *vm, void * func);
-  int lvx_init_ctor(bvm *vm, void * func) {
-    int argc = be_top(vm);
-    lv_obj_t * obj = nullptr;
-
-    if ((argc > 1) && be_iscomptr(vm, 2)) {
-      obj = (lv_obj_t*) be_tocomptr(vm, 2);
-    } else {
-      lv_obj_t * obj1 = nullptr;
-      if (argc > 1) {
-        obj1 = (lv_obj_t*) be_convert_single_elt(vm, 2);
-      }
-      // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
-      fn_any_callable f = (fn_any_callable) func;
-      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
-      if (f) {  // if f is null, just store 0x00000000
-        obj = (lv_obj_t*) (*f)((int32_t)obj1, 0, 0, 0, 0, 0, 0, 0);
-      }
-    }
-    lv_init_set_member(vm, 1, obj);
-    be_return_nil(vm);
-  }
-
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
 
   // native closure to call `be_call_c_func`
@@ -273,21 +247,41 @@ extern "C" {
   }
 
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
+    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, func=%p, return_type=%s, arg_type=%s", func, return_type ? return_type : "", arg_type ? arg_type : "");
     int32_t p[8] = {0,0,0,0,0,0,0,0};
     int32_t argc = be_top(vm); // Get the number of arguments
 
+    // the following describe the active payload for the C function (start and count)
+    // this is because the `init()` constructor first arg is not passed to the C function
+    int32_t arg_start = 1;      // start with standard values
+    int32_t arg_count = argc;
+
     // check if we call a constructor, in this case we store the return type into the new object
+    // check if we call a constructor with a comptr as first arg
     if (return_type && return_type[0] == '+') {
-      return_type++;    // skip the leading '+'
-      return lvx_init_ctor(vm, func);
+      if (argc > 1 && be_iscomptr(vm, 2)) {
+        lv_obj_t * obj = (lv_obj_t*) be_tocomptr(vm, 2);
+        lv_init_set_member(vm, 1, obj);
+        be_return_nil(vm);
+      } else {
+        // we need to discard the first arg
+        arg_start++;
+        arg_count--;
+      }
     }
 
     fn_any_callable f = (fn_any_callable) func;
-    be_check_arg_type(vm, argc, arg_type, p);
-    // berry_log_C(">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
+    // AddLog(LOG_LEVEL_INFO, ">> before be_check_arg_type argc=%i - %i", arg_count, arg_start);
+    be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
+    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
     int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
+    else if (return_type[0] == '+') {
+      lv_obj_t * obj = (lv_obj_t*) ret;
+      lv_init_set_member(vm, 1, obj);
+      be_return_nil(vm);
+    }
     else if (strlen(return_type) == 1) {
       switch (return_type[0]) {
         case '.':   // fallback next

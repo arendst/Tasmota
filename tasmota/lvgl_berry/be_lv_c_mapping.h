@@ -988,101 +988,101 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
   /* `lv_theme` methods */
   /* `lv_img` methods */
 #ifdef BE_LV_WIDGET_IMG
-  int be_ntv_lv_img_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_img_create, "+lv.lv_img", "(lv.lv_obj)"); }
+  int be_ntv_lv_img_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_img_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMG
   /* `lv_disp` methods */
   /* `lv_obj` methods */
-  int be_ntv_lv_obj_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_create, "+lv.lv_obj", "(lv.lv_obj)"); }
+  int be_ntv_lv_obj_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_create, "+", "(lv.lv_obj)"); }
   /* `lv_group` methods */
-  int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+lv.lv_group", ""); }
+  int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+", ""); }
   /* `lv_indev` methods */
   /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
-  int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+lv.lv_chart", "(lv.lv_obj)"); }
+  int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CHART
   /* `lv_colorwheel` methods */
 #ifdef BE_LV_WIDGET_COLORWHEEL
-  int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+lv.lv_colorwheel", "(lv.lv_obj)b"); }
+  int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+", "(lv.lv_obj)b"); }
 #endif // BE_LV_WIDGET_COLORWHEEL
   /* `lv_imgbtn` methods */
 #ifdef BE_LV_WIDGET_IMGBTN
-  int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+lv.lv_imgbtn", "(lv.lv_obj)"); }
+  int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMGBTN
   /* `lv_led` methods */
 #ifdef BE_LV_WIDGET_LED
-  int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+lv.lv_led", "(lv.lv_obj)"); }
+  int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LED
   /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
-  int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+lv.lv_meter", "(lv.lv_obj)"); }
+  int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_METER
   /* `lv_msgbox` methods */
 #ifdef BE_LV_WIDGET_MSGBOX
-  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+lv.lv_msgbox", "(lv.lv_obj)sssb"); }
+  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+", "(lv.lv_obj)sssb"); }
 #endif // BE_LV_WIDGET_MSGBOX
   /* `lv_spinbox` methods */
 #ifdef BE_LV_WIDGET_SPINBOX
-  int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+lv.lv_spinbox", "(lv.lv_obj)"); }
+  int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SPINBOX
   /* `lv_spinner` methods */
 #ifdef BE_LV_WIDGET_SPINNER
-  int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+lv.lv_spinner", "(lv.lv_obj)ii"); }
+  int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+", "(lv.lv_obj)ii"); }
 #endif // BE_LV_WIDGET_SPINNER
   /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
-  int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+lv.lv_arc", "(lv.lv_obj)"); }
+  int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_ARC
   /* `lv_bar` methods */
 #ifdef BE_LV_WIDGET_BAR
-  int be_ntv_lv_bar_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_bar_create, "+lv.lv_bar", "(lv.lv_obj)"); }
+  int be_ntv_lv_bar_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_bar_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BAR
   /* `lv_btn` methods */
 #ifdef BE_LV_WIDGET_BTN
-  int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+lv.lv_btn", "(lv.lv_obj)"); }
+  int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTN
   /* `lv_btnmatrix` methods */
 #ifdef BE_LV_WIDGET_BTNMATRIX
-  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+lv.lv_btnmatrix", "(lv.lv_obj)"); }
+  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTNMATRIX
   /* `lv_canvas` methods */
 #ifdef BE_LV_WIDGET_CANVAS
-  int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+lv.lv_canvas", "(lv.lv_obj)"); }
+  int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CANVAS
   /* `lv_checkbox` methods */
 #ifdef BE_LV_WIDGET_CHECKBOX
-  int be_ntv_lv_checkbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_checkbox_create, "+lv.lv_checkbox", "(lv.lv_obj)"); }
+  int be_ntv_lv_checkbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_checkbox_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CHECKBOX
   /* `lv_dropdown` methods */
 #ifdef BE_LV_WIDGET_DROPDOWN
-  int be_ntv_lv_dropdown_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_dropdown_create, "+lv.lv_dropdown", "(lv.lv_obj)"); }
+  int be_ntv_lv_dropdown_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_dropdown_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_DROPDOWN
   /* `lv_label` methods */
 #ifdef BE_LV_WIDGET_LABEL
-  int be_ntv_lv_label_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, "+lv.lv_label", "(lv.lv_obj)"); }
+  int be_ntv_lv_label_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LABEL
   /* `lv_line` methods */
 #ifdef BE_LV_WIDGET_LINE
-  int be_ntv_lv_line_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_line_create, "+lv.lv_line", "(lv.lv_obj)"); }
+  int be_ntv_lv_line_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_line_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LINE
   /* `lv_roller` methods */
 #ifdef BE_LV_WIDGET_ROLLER
-  int be_ntv_lv_roller_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_roller_create, "+lv.lv_roller", "(lv.lv_obj)"); }
+  int be_ntv_lv_roller_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_roller_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_ROLLER
   /* `lv_slider` methods */
 #ifdef BE_LV_WIDGET_SLIDER
-  int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+lv.lv_slider", "(lv.lv_obj)"); }
+  int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SLIDER
   /* `lv_switch` methods */
 #ifdef BE_LV_WIDGET_SWITCH
-  int be_ntv_lv_switch_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_switch_create, "+lv.lv_switch", "(lv.lv_obj)"); }
+  int be_ntv_lv_switch_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_switch_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SWITCH
   /* `lv_table` methods */
 #ifdef BE_LV_WIDGET_TABLE
-  int be_ntv_lv_table_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_table_create, "+lv.lv_table", "(lv.lv_obj)"); }
+  int be_ntv_lv_table_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_table_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_TABLE
   /* `lv_textarea` methods */
 #ifdef BE_LV_WIDGET_TEXTAREA
-  int be_ntv_lv_textarea_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_textarea_create, "+lv.lv_textarea", "(lv.lv_obj)"); }
+  int be_ntv_lv_textarea_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_textarea_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_TEXTAREA
 
 // create font either empty or from parameter on stack
