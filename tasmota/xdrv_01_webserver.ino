@@ -2795,7 +2795,7 @@ void HandleUploadLoop(void) {
       return;
     }
 #ifdef ESP32
-    TWDTLoop();
+//    TWDTLoop();
 #endif
     if (upload.totalSize && !(upload.totalSize % 102400)) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), upload.totalSize / 1024);

@@ -318,7 +318,7 @@ void setup(void) {
   SettingsDelta();
 
 #ifdef ESP32
-  TWDTInit();  // Start Task WDT for ESP32 - FreeRTOS only
+//  TWDTInit();  // Start Task WDT for ESP32 - FreeRTOS only
 #endif
   OsWatchInit();
 
@@ -513,7 +513,7 @@ void Scheduler(void) {
 #endif  // ESP8266
 
 #ifdef ESP32
-  TWDTLoop();
+//  TWDTLoop();
 #endif
   OsWatchLoop();
   ButtonLoop();
