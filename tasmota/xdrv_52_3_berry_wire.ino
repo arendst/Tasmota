@@ -31,6 +31,7 @@ TwoWire & getWire(bvm *vm) {
   be_getmember(vm, 1, "bus");
   int32_t bus = be_toint(vm, -1); // bus is 1 or 2
   be_pop(vm, 1);
+  if (!TasmotaGlobal.i2c_enabled_2) { bus = 1; }
   if (2 != bus) {
     return Wire;
   } else {
@@ -47,11 +48,11 @@ int32_t getBus(bvm *vm) {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import wire
- * 
+ *
  * wire.get_free_heap() -> int
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: `init([bus:int = 0]) -> nil
@@ -105,7 +106,7 @@ extern "C" {
   int32_t b_wire_requestfrom(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
     TwoWire & myWire = getWire(vm);
-    if ( (top == 3 || (top == 4 && be_isbool(vm, 4))) 
+    if ( (top == 3 || (top == 4 && be_isbool(vm, 4)))
          && be_isint(vm, 2) && be_isint(vm, 3) ) {
       int32_t address = be_toint(vm, 2);
       int32_t quantity = be_toint(vm, 3);
