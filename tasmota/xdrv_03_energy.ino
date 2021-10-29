@@ -100,8 +100,8 @@ struct ENERGY {
   uint8_t data_valid[ENERGY_MAX_PHASES];
 
   uint8_t phase_count;                          // Number of phases active
-  bool voltage_common;                          // Use single voltage
-  bool frequency_common;                        // Use single frequency
+  bool voltage_common;                          // Use common voltage
+  bool frequency_common;                        // Use common frequency
   bool use_overtemp;                            // Use global temperature as overtemp trigger on internal energy monitor hardware
   bool kWhtoday_offset_init;
 
