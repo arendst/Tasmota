@@ -1997,22 +1997,25 @@ const uint8_t I2C_RETRY_COUNTER = 3;
 uint32_t i2c_active[4] = { 0 };
 uint32_t i2c_buffer = 0;
 
-void I2cBegin(int sda, int scl, uint32_t frequency = 100000);
-void I2cBegin(int sda, int scl, uint32_t frequency) {
+bool I2cBegin(int sda, int scl, uint32_t frequency = 100000);
+bool I2cBegin(int sda, int scl, uint32_t frequency) {
+  bool result = true;
 #ifdef ESP8266
   Wire.begin(sda, scl);
 #endif
 #ifdef ESP32
-  bool result = Wire.begin(sda, scl, frequency);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Begin %d"), result);
+  result = Wire.begin(sda, scl, frequency);
 #endif
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus1 %d"), result);
+  return result;
 }
 
 #ifdef ESP32
-void I2c2Begin(int sda, int scl, uint32_t frequency = 100000);
-void I2c2Begin(int sda, int scl, uint32_t frequency) {
+bool I2c2Begin(int sda, int scl, uint32_t frequency = 100000);
+bool I2c2Begin(int sda, int scl, uint32_t frequency) {
   bool result = Wire1.begin(sda, scl, frequency);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus 2 begin %d"), result);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus2 %d"), result);
+  return result;
 }
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus = 0);

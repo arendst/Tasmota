@@ -1135,10 +1135,17 @@ bool XdrvCall(uint8_t Function)
 {
   bool result = false;
 
-  DEBUG_TRACE_LOG(PSTR("DRV: %d"), Function);
+//  DEBUG_TRACE_LOG(PSTR("DRV: %d"), Function);
+
+  uint32_t profile_driver_start = millis();
 
   for (uint32_t x = 0; x < xdrv_present; x++) {
+
+    uint32_t profile_function_start = millis();
+
     result = xdrv_func_ptr[x](Function);
+
+    PROFILE_FUNCTION(PSTR("xdrv"), kXdrvList[x], Function, profile_function_start);
 
     if (result && ((FUNC_COMMAND == Function) ||
                    (FUNC_COMMAND_DRIVER == Function) ||
@@ -1154,6 +1161,8 @@ bool XdrvCall(uint8_t Function)
       break;
     }
   }
+
+  PROFILE_DRIVER(PSTR("xdrv"), Function, profile_driver_start);
 
   return result;
 }
