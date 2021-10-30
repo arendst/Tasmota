@@ -261,6 +261,36 @@ struct PVVXPacket_t {
 	uint8_t		flags;
 };
 
+struct MiScaleV1Packet_t {
+	//uint8_t		size;	// = 14
+	//uint8_t		uid;	// = 0x16, 16-bit UUID
+	//uint16_t	UUID;	// = 0x181D
+	uint8_t		status; // bit 0 lbs, 4 jin, 5, stabilized, 7, weight removed
+	uint16_t	weight;
+	uint16_t	year;
+	uint8_t		month;
+	uint8_t		day;
+	uint8_t		hour;
+	uint8_t		minute;
+	uint8_t		second;
+};
+
+struct MiScaleV2Packet_t {
+	//uint8_t		size;	// = 17
+	//uint8_t		uid;	// = 0x16, 16-bit UUID
+	//uint16_t	UUID;	// = 0x181B
+	uint8_t		weight_unit;
+	uint8_t		status;
+	uint16_t	year;
+	uint8_t		month;
+	uint8_t		day;
+	uint8_t		hour;
+	uint8_t		minute;
+	uint8_t		second;
+	uint16_t	impedance;
+	uint16_t	weight;
+};
+
 #pragma pack(0)
 
 struct mi_sensor_t{
@@ -286,6 +316,7 @@ struct mi_sensor_t{
       uint32_t events:1;
       uint32_t pairing:1;
       uint32_t light:1; // binary light sensor
+      uint32_t scale:1;
     };
     uint32_t raw;
   } feature;
@@ -304,6 +335,7 @@ struct mi_sensor_t{
       uint32_t Btn:1;
       uint32_t PairBtn:1;
       uint32_t light:1; // binary light sensor
+      uint32_t scale:1;
     };
     uint32_t raw;
   } eventType;
@@ -332,6 +364,16 @@ struct mi_sensor_t{
   };
   union {
       uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
+  };
+  union {
+    struct {
+      uint8_t has_impedance;
+      uint8_t stabilized;
+      uint8_t weight_removed;
+      char weight_unit[4]; // kg, lbs, jin or empty when unknown
+      float weight;
+      uint16_t impedance;
+    };
   };
 };
 
@@ -380,8 +422,10 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define MI_MHOC303     12
 #define MI_ATC         13
 #define MI_DOOR        14
+#define MI_SCALE_V1    15
+#define MI_SCALE_V2    16
 
-#define MI_MI32_TYPES    14 //count this manually
+#define MI_MI32_TYPES    16 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -396,8 +440,10 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0153, // yee-rc
   0x0387, // MHO-C401
   0x06d3, // MHO-C303
-  0x0a1c,  // ATC -> this is a fake ID
-  0x098b  // door/window sensor
+  0x0a1c, // ATC -> this is a fake ID
+  0x098b, // door/window sensor
+  0x181d, // Mi Scale V1
+  0x181b  // Mi Scale V2
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -414,7 +460,9 @@ const char kMI32DeviceType10[] PROGMEM ="MHOC401";
 const char kMI32DeviceType11[] PROGMEM ="MHOC303";
 const char kMI32DeviceType12[] PROGMEM ="ATC";
 const char kMI32DeviceType13[] PROGMEM ="DOOR";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13};
+const char kMI32DeviceType14[] PROGMEM ="MISCALEV1";
+const char kMI32DeviceType15[] PROGMEM ="MISCALEV2";
+const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0,kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -987,6 +1035,11 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
       case 0x181a: { //ATC
         MI32ParseATCPacket(ServiceData, ServiceDataLength, addr, RSSI);
       } break;
+      case 0x181d: // Mi Scale V1
+      case 0x181b: // Mi Scale V2
+      {
+        MI32ParseMiScalePacket(ServiceData, ServiceDataLength, addr, RSSI, UUID);
+      } break;
 
       default:{
       } break;
@@ -1438,6 +1491,10 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       _newSensor.feature.light=1;
       _newSensor.feature.bat=1;
       break;
+    case MI_SCALE_V1:
+    case MI_SCALE_V2:
+      _newSensor.feature.scale=1;
+      break;
     default:
       _newSensor.hum=NAN;
       _newSensor.feature.temp=1;
@@ -1636,6 +1693,87 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
     }
   } else {
 
+  }
+}
+
+void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID){
+  MiScaleV1Packet_t *_packetV1 = (MiScaleV1Packet_t*)_buf;
+  MiScaleV2Packet_t *_packetV2 = (MiScaleV2Packet_t*)_buf;
+
+  // Mi Scale V1
+  if (length == 10 && UUID == 0x181d){ // 14-1-1-2
+    uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
+    if(_slot==0xff) return;
+
+    if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
+      if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
+      MIBLEsensors[_slot].RSSI=RSSI;
+      MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+      MIBLEsensors[_slot].eventType.scale = 1;
+
+      MIBLEsensors[_slot].stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
+      MIBLEsensors[_slot].weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
+      
+      if (_packetV1->status & (1 << 0)) {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+        MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
+      } else if(_packetV1->status & (1 << 4)) {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+        MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
+      } else {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+        MIBLEsensors[_slot].weight = (float)_packetV1->weight / 200.0f;
+      }
+
+      if (MIBLEsensors[_slot].weight_removed) {
+        MIBLEsensors[_slot].weight = 0.0f;
+      }
+
+      if(MI32.option.directBridgeMode) {
+        MIBLEsensors[_slot].shallSendMQTT = 1;
+        MI32.mode.shallTriggerTele = 1;
+      }
+    }
+  }
+
+  // Mi Scale V2
+  else if (length == 13 && UUID == 0x181b){ // 17-1-1-2
+    uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
+    if(_slot==0xff) return;
+
+    if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
+      if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
+      MIBLEsensors[_slot].RSSI=RSSI;
+      MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+      MIBLEsensors[_slot].eventType.scale = 1;
+
+      MIBLEsensors[_slot].has_impedance = (_packetV2->status & (1 << 1)) ? 1 : 0;
+      MIBLEsensors[_slot].stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
+      MIBLEsensors[_slot].weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
+
+      if (_packetV2->weight_unit & (1 << 4)) {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
+      } else if(_packetV2->weight_unit == 3) {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
+      } else if(_packetV2->weight_unit == 2) {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 200.0f;
+      } else {
+        strcpy(MIBLEsensors[_slot].weight_unit, PSTR(""));
+        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
+      }
+
+      if (MIBLEsensors[_slot].weight_removed) {
+        MIBLEsensors[_slot].weight = 0.0f;
+      }
+
+      if(MI32.option.directBridgeMode) {
+        MIBLEsensors[_slot].shallSendMQTT = 1;
+        MI32.mode.shallTriggerTele = 1;
+      }
+    }
   }
 }
 
@@ -2380,6 +2518,10 @@ const char HTTP_NMT[] PROGMEM = "{s}%s No motion{m}> %u seconds{e}";
 const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 const char HTTP_MI32_LIGHT[] PROGMEM = "{s}%s" " Light" "{m}%d{e}";
+const char HTTP_MISCALE_WEIGHT[] PROGMEM = "{s}%s" " Weight" "{m}%*_f %s{e}";
+const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s" " Impedance" "{m}%u{e}";
+const char HTTP_MISCALE_WEIGHT_REMOVED[] PROGMEM = "{s}%s" " Weight removed" "{m}%s{e}";
+const char HTTP_MISCALE_STABILIZED[] PROGMEM = "{s}%s" " Stabilized" "{m}%s{e}";
 
 //const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
 //  "https://atc1441.github.io/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
@@ -2576,6 +2718,22 @@ void MI32GetOneSensorJson(int slot, int hidename){
 #endif //USE_HOME_ASSISTANT
         ) {
           ResponseAppend_P(PSTR(",\"Fertility\":%u"), p->fertility);
+        }
+      }
+    }
+    if (p->feature.scale){
+      if(p->eventType.scale || !MI32.mode.triggeredTele || MI32.option.allwaysAggregate
+#ifdef USE_HOME_ASSISTANT
+          ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+      ){
+        ResponseAppend_P(PSTR(",\"weight_removed\":%u"), p->weight_removed);
+        ResponseAppend_P(PSTR(",\"stabilized\":%u"), p->stabilized);
+        ResponseAppend_P(PSTR(",\"weight_unit\":\"%s\""), p->weight_unit);
+        ResponseAppend_P(PSTR(",\"weight\":%*_f"),
+          Settings->flag2.weight_resolution, &p->weight);
+        if (p->has_impedance){
+          ResponseAppend_P(PSTR(",\"impedance\":%u"), p->impedance);
         }
       }
     }
@@ -3204,6 +3362,14 @@ void MI32Show(bool json)
       }
       if (p->feature.light){
         WSContentSend_PD(HTTP_MI32_LIGHT, typeName, p->light);
+      }
+      if (p->feature.scale){
+        WSContentSend_PD(HTTP_MISCALE_WEIGHT, typeName, Settings->flag2.weight_resolution, &p->weight, p->weight_unit);
+        if (p->has_impedance) {
+          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, typeName, p->impedance);
+        }
+        WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, typeName, p->weight_removed? PSTR("yes") : PSTR("no"));
+        WSContentSend_PD(HTTP_MISCALE_STABILIZED, typeName, p->stabilized ? PSTR("yes") : PSTR("no"));
       }
 
       if(p->bat!=0x00){
