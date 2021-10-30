@@ -51,7 +51,7 @@ public:
     uint32_t getBatteryRaw();
     uint32_t getBatteryVoltage();
 
-  //  void shutdown();
+    void shutdown();
   //  int shutdown( int seconds );
   //  int shutdown( const rtc_time_t &RTC_TimeStruct);
   //  int shutdown( const rtc_date_t &RTC_DateStruct, const rtc_time_t &RTC_TimeStruct);

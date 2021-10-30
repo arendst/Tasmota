@@ -22,17 +22,10 @@
 /*********************************************************************************************\
  * M5Stack Epaper 47 support
  *
- * Module 7
- * Template {"NAME":"M5M5EPD","GPIO":[1,1,1,1,6720,6368,0,0,0,1,1,6400,0,0,736,1,0,0,0,704,0,1,1,1,0,0,0,0,640,608,1,1,1,0,672,0],"FLAG":0,"BASE":7}
- *
- * Initial commands:
- * - DisplayType 2
- * - DisplayCols 27
- * - (optional) DisplayMode 2
- * - Power on
- * - Voltres 3
- * - Ampres 1
- *
+ * Module 19
+
+ {"NAME":"M5Stack_EPD47","GPIO":[6210,1,1,1,6720,1,1,1,704,672,736,1,1,1,1,1,0,640,608,1,0,641,1,0,0,0,0,0,609,1,1,1,0,0,0,1],"FLAG":0,"BASE":1}
+
 \*********************************************************************************************/
 
 #define XDRV_86        86
@@ -64,6 +57,8 @@ void M5EPDDoShutdown(void) {
     wut.Minutes = M5EPD_globs.wakeup_minute;
     M5EPD_globs.Rtc->SetAlarmIRQ(wut);
   }
+  delay(10);
+  M5EPD_globs.m5epd.shutdown();
 }
 
 /*********************************************************************************************/

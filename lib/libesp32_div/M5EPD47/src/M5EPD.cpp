@@ -79,6 +79,11 @@ uint32_t M5EPD::getBatteryVoltage() {
     return voltage;
 }
 
+
+void M5EPD::shutdown() {
+    this->disableMainPower();
+}
+
 /** @brief Update button status
   */
 
@@ -91,10 +96,7 @@ void M5EPD::update()
     BtnR.read();
 }
 
-void M5EPD::shutdown()
-{
-    this->disableMainPower();
-}
+
 int M5EPD::shutdown(int seconds)
 {
     RTC.clearIRQ();
