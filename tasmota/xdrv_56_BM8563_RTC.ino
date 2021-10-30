@@ -33,7 +33,7 @@ struct {
 } bm8563_driver;
 
 /*********************************************************************************************\
- * 
+ *
  *
 \*********************************************************************************************/
 void BM8563Detect(void) {
@@ -52,6 +52,14 @@ void BM8563Detect(void) {
 
   bm8563_driver.Rtc.begin();
   bm8563_driver.rtc_ready = true;
+}
+
+BM8563 *Get_BM8563() {
+  if (bm8563_driver.rtc_ready) {
+    return &bm8563_driver.Rtc;
+  } else {
+    return 0;
+  }
 }
 
 
@@ -133,7 +141,7 @@ bool Xdrv56(uint8_t function)
 
   switch (function) {
     // case FUNC_PRE_INIT: // we start Berry in pre_init so that other modules can call Berry in their init methods
-    case FUNC_INIT:  
+    case FUNC_INIT:
         BM8563Detect();
         InitTimeFromRTC();
       break;

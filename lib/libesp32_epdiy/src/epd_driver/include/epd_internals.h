@@ -86,7 +86,7 @@ typedef struct {
 
 
 
-
+extern const EpdWaveform ed047tc2;
 extern const EpdWaveform epdiy_ED060SC4;
 extern const EpdWaveform epdiy_ED097OC4;
 extern const EpdWaveform epdiy_ED047TC1;
@@ -96,7 +96,8 @@ extern const EpdWaveform epdiy_ED060SCT;
 extern const EpdWaveform epdiy_ED133UT2;
 
 #if defined(CONFIG_EPD_DISPLAY_TYPE_ED047TC1)
-#define EPD_BUILTIN_WAVEFORM &epdiy_ED047TC1
+//#define EPD_BUILTIN_WAVEFORM &epdiy_ED047TC1
+#define EPD_BUILTIN_WAVEFORM &ed047tc2
 #elif defined(CONFIG_EPD_DISPLAY_TYPE_ED060SC4)
 #define EPD_BUILTIN_WAVEFORM &epdiy_ED060SC4
 #elif defined(CONFIG_EPD_DISPLAY_TYPE_ED060XC3)
@@ -143,5 +144,3 @@ typedef struct {
 
 
 #endif // EPD_INTERNALS_H
-
-

@@ -1,0 +1,16 @@
+{
+  "name": "M5EPD",
+  "description": "An ESP32 Arduino board",
+  "keywords": "M5EPD",
+  "authors": {
+    "name": "m5stack, M5EPD",
+    "url": "http://www.m5stack.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/m5stack/M5EPD.git"
+  },
+  "version": "0.1.1",
+  "frameworks": "arduino",
+  "platforms": "esp32"
+}
