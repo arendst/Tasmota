@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <Wire.h>
 #include <stdint.h>
 #include "GT911.h"
 
@@ -33,20 +32,21 @@ void ICACHE_RAM_ATTR ___GT911IRQ___()
     interrupts();
 }
 
-esp_err_t GT911::begin(uint8_t pin_sda, uint8_t pin_scl, uint8_t pin_int)
+esp_err_t GT911::begin(TwoWire *use_wire, uint8_t pin_int)
 {
     log_d("GT911: Initialization");
     pinMode(pin_int, INPUT); // Startup sequence PIN part
+    wire = use_wire;
 
-    Wire.setClock(400000);
-    Wire.begin(pin_sda, pin_scl);
-    delay(100);
+  //  wire->setClock(400000);
+  //  wire->begin(pin_sda, pin_scl);
+  //  delay(100);
 
-    Wire.beginTransmission(0x14);
-    if (Wire.endTransmission())
+    wire->beginTransmission(0x14);
+    if (wire->endTransmission())
     {
-        Wire.beginTransmission(0x5D);
-        if (Wire.endTransmission())
+        wire->beginTransmission(0x5D);
+        if (wire->endTransmission())
         {
             log_e("Touch screen IIC connection error");
             return ESP_FAIL;
@@ -74,42 +74,42 @@ esp_err_t GT911::begin(uint8_t pin_sda, uint8_t pin_scl, uint8_t pin_int)
 
 void GT911::write(uint16_t addr, uint8_t data)
 {
-    Wire.beginTransmission(_iic_addr);
-    Wire.write((uint8_t)(addr >> 8));
-    Wire.write((uint8_t)addr);
-    Wire.write(data);
-    Wire.endTransmission(true);
+    wire->beginTransmission(_iic_addr);
+    wire->write((uint8_t)(addr >> 8));
+    wire->write((uint8_t)addr);
+    wire->write(data);
+    wire->endTransmission(true);
 }
 
 void GT911::write(uint16_t addr, const uint8_t *data, uint16_t len)
 {
-    Wire.beginTransmission(_iic_addr);
-    Wire.write((uint8_t)(addr >> 8));
-    Wire.write((uint8_t)addr);
-    Wire.write(data, len);
-    Wire.endTransmission(true);
+    wire->beginTransmission(_iic_addr);
+    wire->write((uint8_t)(addr >> 8));
+    wire->write((uint8_t)addr);
+    wire->write(data, len);
+    wire->endTransmission(true);
 }
 
 uint8_t GT911::read(uint16_t addr)
 {
-    Wire.flush();
-    Wire.beginTransmission(_iic_addr);
-    Wire.write((uint8_t)(addr >> 8));
-    Wire.write((uint8_t)addr);
-    Wire.endTransmission(false);
-    Wire.requestFrom((uint8_t)_iic_addr, (uint8_t)1);
-    return Wire.read();
+    wire->flush();
+    wire->beginTransmission(_iic_addr);
+    wire->write((uint8_t)(addr >> 8));
+    wire->write((uint8_t)addr);
+    wire->endTransmission(false);
+    wire->requestFrom((uint8_t)_iic_addr, (uint8_t)1);
+    return wire->read();
 }
 
 void GT911::read(uint16_t addr, uint8_t *buf, uint16_t len)
 {
-    Wire.flush();
-    Wire.beginTransmission(_iic_addr);
-    Wire.write((uint8_t)(addr >> 8));
-    Wire.write((uint8_t)addr);
-    Wire.endTransmission(false);
-    Wire.requestFrom((int)_iic_addr, (int)len);
-    Wire.readBytes(buf, len);
+    wire->flush();
+    wire->beginTransmission(_iic_addr);
+    wire->write((uint8_t)(addr >> 8));
+    wire->write((uint8_t)addr);
+    wire->endTransmission(false);
+    wire->requestFrom((int)_iic_addr, (int)len);
+    wire->readBytes(buf, len);
 }
 
 uint8_t calcChecksum(const uint8_t *buf, uint8_t len)

@@ -2,6 +2,7 @@
 #define GT911_H
 
 #include <stdint.h>
+#include <Wire.h>
 
 typedef struct
 {
@@ -21,7 +22,7 @@ public:
 
 public:
     GT911();
-    esp_err_t begin(uint8_t pin_sda, uint8_t pin_scl, uint8_t pin_int);
+    esp_err_t begin(TwoWire *use_wire, uint8_t pin_int);
     bool avaliable();
     void update();
     void SetRotation(uint16_t rotate);
@@ -48,6 +49,7 @@ private:
     uint8_t _rotate = ROTATE_0;
     tp_finger_t _fingers[2];
     uint8_t _iic_addr = 0x14;
+    TwoWire *wire;
 };
 
 #endif

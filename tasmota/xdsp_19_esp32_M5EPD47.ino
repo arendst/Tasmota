@@ -96,7 +96,7 @@ void M5EPD47_Touch_Init(void) {
 FT5206_found = false;
 M5EPD47_touchp = new GT911();
 
-if (ESP_OK == M5EPD47_touchp->begin(21, 22, 36)) {
+if (ESP_OK == M5EPD47_touchp->begin(&Wire1, 36)) {
     I2cSetActiveFound(M5EPD47_address, "M5EPD47");
     FT5206_found = true;
   }
