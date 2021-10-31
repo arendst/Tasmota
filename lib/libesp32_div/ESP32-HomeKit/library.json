@@ -1,5 +1,5 @@
 {
-  "name":"HomeKit",
+  "name":"ESP32-HomeKit",
   "version": "1.0.0",
   "description":"Apple HomeKit for ESP32",
   "keywords":"HomeKit",
