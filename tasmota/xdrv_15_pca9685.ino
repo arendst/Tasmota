@@ -45,7 +45,7 @@ uint16_t pca9685_pin_pwm_value[16];
 
 void PCA9685_Detect(void)
 {
-  if (I2cActive(USE_PCA9685_ADDR)) { return; }
+  if (!I2cSetDevice(USE_PCA9685_ADDR)) { return; }
 
   uint8_t buffer;
   if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {

@@ -80,7 +80,7 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
 void Sht3xDetect(void)
 {
   for (uint32_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
-    if (I2cActive(sht3x_addresses[i])) { continue; }
+    if (!I2cSetDevice(sht3x_addresses[i])) { continue; }
     float t;
     float h;
     if (Sht3xRead(t, h, sht3x_addresses[i])) {

@@ -69,7 +69,7 @@ bool Dht12Read(void)
 
 void Dht12Detect(void)
 {
-  if (I2cActive(DHT12_ADDR)) { return; }
+  if (!I2cSetDevice(DHT12_ADDR)) { return; }
 
   if (Dht12Read()) {
     I2cSetActiveFound(DHT12_ADDR, Dht12.name);

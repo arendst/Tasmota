@@ -200,7 +200,7 @@ bool VEML6075init(void)
 }
 
 void VEML6075Detect(void) {
-  if (I2cActive(veml6075_sensor.address)) return;
+  if (!I2cSetDevice(veml6075_sensor.address)) return;
 
   if (VEML6075init()) {
     I2cSetActiveFound(veml6075_sensor.address, veml6075_sensor.types);

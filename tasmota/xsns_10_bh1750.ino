@@ -115,7 +115,7 @@ bool Bh1750Read(uint32_t sensor_index) {
 
 void Bh1750Detect(void) {
   for (uint32_t i = 0; i < sizeof(Bh1750.addresses); i++) {
-    if (I2cActive(Bh1750.addresses[i])) { continue; }
+    if (!I2cSetDevice(Bh1750.addresses[i])) { continue; }
 
     Bh1750_sensors[Bh1750.count].address = Bh1750.addresses[i];
     if (Bh1750SetMTreg(Bh1750.count)) {

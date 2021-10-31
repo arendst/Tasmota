@@ -115,10 +115,7 @@ float scd40_Temp = 0.0;
 
 void Scd40Detect(void)
 {
-  if (I2cActive(SCD40_ADDRESS)) { 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SCD40 I2c already active in Scd40Detect()") );
-    return; 
-  }
+  if (!I2cSetDevice(SCD40_ADDRESS)) { return; }
 
   scd40.begin();
 
