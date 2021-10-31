@@ -12,5 +12,5 @@
   },
   "version": "0.1.1",
   "frameworks": "arduino",
-  "platforms": "esp32"
+  "platforms": "*"
 }
