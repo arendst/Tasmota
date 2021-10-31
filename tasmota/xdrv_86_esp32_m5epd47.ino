@@ -1,5 +1,5 @@
 /*
-  xdrv_86_esp32_m5epd47.ino - ESP32 m5stack EPD47 support for Tasmota
+  xdrv_86_esp32_m5epd47.ino - ESP32 M5Stack M5Paper EPD47 support for Tasmota
 
   Copyright (C) 2021  Gerhard Mutz and Theo Arends
 
@@ -20,21 +20,21 @@
 #ifdef ESP32
 #ifdef USE_M5EPD47
 /*********************************************************************************************\
- * M5Stack Epaper 47 support
+ * M5Stack M5Paper 4.7" support
  *
  * Module 19
 
-  {"NAME":"M5Stack_EPD47","GPIO":[6210,1,1,1,6720,1,1,1,704,672,736,1,1,1,1,1,0,641,609,1,0,640,1,0,0,0,0,0,608,1,1,1,0,0,0,1],"FLAG":0,"BASE":1}
+  {"NAME":"M5Paper","GPIO":[6210,1,1,1,6720,1,1,1,704,672,736,1,1,1,1,1,0,641,609,1,0,640,1,0,0,0,0,0,608,1,1,1,0,0,0,1],"FLAG":0,"BASE":1}
 
 
 internal i2c use port 2
 external use port 1
 
 internal I2C devices
- 0x50 ???
- RTC = 0x51
+ FM24C02 = 0x50
+ BM8563 RTC = 0x51
  STH3X = 0x44
- touch = 0x5d
+ GT911 touch = 0x5d
 
 
 \*********************************************************************************************/
@@ -106,7 +106,7 @@ void M5EPDShow(uint32_t json) {
   if (json) {
     ResponseAppend_P(PSTR(",\"M5EPD\":{\"BV\":%1.3f}"), bvolt);
   } else {
-    WSContentSend_Voltage("Batterie", bvolt);
+    WSContentSend_Voltage("Battery", bvolt);
   }
 }
 
