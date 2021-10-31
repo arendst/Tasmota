@@ -1,3 +1,0 @@
-(sym_lib_table
-  (lib (name epd_breakout)(type Legacy)(uri /home/vroland/dev/misc/epaper-breakout/hardware/epaper-breakout/epd_breakout.lib)(options "")(descr ""))
-)
