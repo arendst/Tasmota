@@ -68,7 +68,7 @@ void AddLogDriver(const char *driver, uint8_t function, uint32_t start) {
   uint32_t profile_millis = millis() - start;
   if (profile_millis > PROFILE_THRESHOLD) {
     char stemp1[20];
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** %s FUNC_%s (%d ms)"), driver, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** x%s FUNC_%s (%d ms)"), driver, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
   }
 }
 #endif  // USE_PROFILE_DRIVER
@@ -78,7 +78,7 @@ void AddLogFunction(const char *driver, uint8_t index, uint8_t function, uint32_
   uint32_t profile_millis = millis() - start;
   if (profile_millis > PROFILE_THRESHOLD) {
     char stemp1[20];
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** %s_%02d FUNC_%s (%d ms)"), driver, index, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** x%s_%02d FUNC_%s (%d ms)"), driver, index, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
   }
 }
 #endif  // USE_PROFILE_DRIVER
