@@ -459,7 +459,7 @@ void BmpDetect(void)
   memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
-    if (I2cActive(bmp_addresses[i])) { continue; }
+    if (!I2cSetDevice(bmp_addresses[i])) { continue; }
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];

@@ -251,7 +251,7 @@ void MCP230xx_ApplySettings(void)
 
 void MCP230xx_Detect(void)
 {
-  if (I2cActive(USE_MCP230xx_ADDR)) { return; }
+  if (!I2cSetDevice(USE_MCP230xx_ADDR)) { return; }
 
   uint8_t buffer;
 

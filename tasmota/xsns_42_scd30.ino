@@ -79,7 +79,7 @@ float scd30_Temp = 0.0;
 
 void Scd30Detect(void)
 {
-  if (I2cActive(SCD30_ADDRESS)) { return; }
+  if (!I2cSetDevice(SCD30_ADDRESS)) { return; }
 
   scd30.begin();
 

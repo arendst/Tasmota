@@ -43,7 +43,7 @@ float sgp30_abshum;
 
 void sgp30_Init(void)
 {
-  if (I2cActive(SGP30_ADDRESS)) { return; }
+  if (!I2cSetDevice(SGP30_ADDRESS)) { return; }
 
   if (sgp.begin()) {
     sgp30_type = true;

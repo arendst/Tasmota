@@ -128,7 +128,7 @@ char       str_uvrisk_text[10];
 
 void Veml6070Detect(void)
 {
-  if (I2cActive(VEML6070_ADDR_L)) { return; }
+  if (!I2cSetDevice(VEML6070_ADDR_L)) { return; }
 
   // init the UV sensor
   Wire.beginTransmission(VEML6070_ADDR_L);

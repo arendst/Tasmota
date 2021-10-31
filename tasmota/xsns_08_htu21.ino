@@ -204,7 +204,7 @@ bool HtuRead(void)
 void HtuDetect(void)
 {
   Htu.address = HTU21_ADDR;
-  if (I2cActive(Htu.address)) { return; }
+  if (!I2cSetDevice(Htu.address)) { return; }
 
   Htu.type = HtuReadDeviceId();
   if (Htu.type) {

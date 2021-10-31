@@ -1806,7 +1806,7 @@ void APDS9960_loop(void) {
 #endif  // USE_APDS9960_GESTURE
 
 void APDS9960_detect(void) {
-  if (APDS9960_type || I2cActive(APDS9960_I2C_ADDR)) { return; }
+  if (APDS9960_type || !I2cSetDevice(APDS9960_I2C_ADDR)) { return; }
 
   APDS9960_type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
 
