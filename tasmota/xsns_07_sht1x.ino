@@ -165,6 +165,7 @@ void ShtDetect(void)
     sht_type = 1;
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SHT1X_FOUND));
   } else {
+    I2cEnd();
     I2cBegin(sht_sda_pin, sht_scl_pin);
     sht_type = 0;
   }

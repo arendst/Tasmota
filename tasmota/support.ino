@@ -2010,6 +2010,16 @@ bool I2cBegin(int sda, int scl, uint32_t frequency) {
   return result;
 }
 
+bool I2cEnd(void) {
+  bool result = true;
+#ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR > 3
+  result = Wire.end();
+#endif
+#endif
+  return result;
+}
+
 #ifdef ESP32
 bool I2c2Begin(int sda, int scl, uint32_t frequency = 100000);
 bool I2c2Begin(int sda, int scl, uint32_t frequency) {
