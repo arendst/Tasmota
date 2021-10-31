@@ -117,6 +117,7 @@ print("".join(pin))
 
 
 
+#if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 
 //#define VSCODE_DEV
 
@@ -1760,8 +1761,9 @@ bool Xdrv85(uint8_t function)
     }
   return result;
 }
-#endif  // 
+#endif  //
 #endif  // ESP32
 
 #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
