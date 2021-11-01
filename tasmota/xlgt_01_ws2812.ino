@@ -40,10 +40,10 @@
 const uint8_t WS2812_SCHEMES = 8;      // Number of WS2812 schemes
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
-  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH ;
+  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
 
 void (* const Ws2812Command[])(void) PROGMEM = {
-  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth };
+  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth, &CmndStepPixels };
 
 #include <NeoPixelBus.h>
 
@@ -567,6 +567,17 @@ void CmndPixels(void)
   }
   ResponseCmndNumber(Settings->light_pixels);
 }
+
+void CmndStepPixels(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
+    Settings->light_step_pixels = XdrvMailbox.payload;
+    Ws2812Clear();
+    Light.update = true;
+  }
+  ResponseCmndNumber(Settings->light_step_pixels);
+}
+
 
 void CmndRotation(void)
 {

@@ -477,6 +477,7 @@
 #define D_CMND_FADE "Fade"
 #define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
+#define D_CMND_STEPPIXELS "StepPixels"
 #define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
