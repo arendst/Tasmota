@@ -782,7 +782,7 @@
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
   #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
 //#define USE_SDM230                               // Add support for Eastron SDM230-Modbus energy monitor (+?? code)
-  #define SDM230_SPEED         2400              // SDM230-Modbus RS485 serial speed (default: 9600 baud)
+  #define SDM230_SPEED         9600              // SDM230-Modbus RS485 serial speed (default: 9600 baud)
 //  #define SDM230_IMPORT                          // Show import active energy in MQTT and Web (+0k3 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)

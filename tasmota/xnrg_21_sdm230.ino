@@ -29,7 +29,7 @@
 
 // can be user defined in my_user_config.h
 #ifndef SDM230_SPEED
-  #define SDM230_SPEED      2400    // default SDM230 Modbus address
+  #define SDM230_SPEED      9600    // default SDM230 Modbus baudrate
 #endif
 // can be user defined in my_user_config.h
 #ifndef SDM230_ADDR
