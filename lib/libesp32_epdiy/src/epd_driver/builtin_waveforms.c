@@ -1,6 +1,6 @@
 #include "epd_driver.h"
 
-
+#include "waveforms/ED047TC2.h"
 #include "waveforms/epdiy_ED047TC1.h"
 #include "waveforms/epdiy_ED060SC4.h"
 #include "waveforms/epdiy_ED060XC3.h"
