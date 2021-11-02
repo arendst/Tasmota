@@ -17,4 +17,4 @@
 *.RTF	 diff=astextplain
 
 # Apply Python syntax highlighting to berry (.be) files
-* .be linguist-language=Python
+*.be linguist-language=Python
