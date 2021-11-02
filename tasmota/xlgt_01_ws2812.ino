@@ -37,7 +37,7 @@
 
 #define XLGT_01             1
 
-const uint8_t WS2812_SCHEMES = 8;      // Number of WS2812 schemes
+const uint8_t WS2812_SCHEMES = 9;      // Number of WS2812 schemes
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
   D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
@@ -166,6 +166,7 @@ WsColor kHanukkah[2] = { 0,0,255, 255,255,255 };
 WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
 WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
+WsColor kStairs[2] = { 0,0,0, 255,255,255 };
 ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
   kIncandescent, 2,
   kRgb, 3,
@@ -173,7 +174,8 @@ ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
   kHanukkah, 2,
   kwanzaa, 3,
   kRainbow, 7,
-  kFire, 3 };
+  kFire, 3, 
+  kStairs, 2 };
 
 uint8_t kWidth[5] = {
     1,     // Small
@@ -399,6 +401,106 @@ void Ws2812Bars(uint32_t schemenr)
   Ws2812StripShow();
 }
 
+void Ws2812Steps(uint32_t schemenr)
+{
+#if (USE_WS2812_CTYPE > NEO_3LED)
+  RgbwColor c;
+  c.W = 0;
+#else
+  RgbColor c;
+#endif
+
+  ColorScheme scheme = kSchemes[schemenr];
+	if(0==scheme.colors[0].blue && 0==scheme.colors[0].red && 0==scheme.colors[0].green && scheme.count==2){
+		scheme.colors[1].red = Settings->light_color[0];
+		scheme.colors[1].green = Settings->light_color[1];
+		scheme.colors[1].blue = Settings->light_color[2];
+	}
+	uint8_t scheme_count=scheme.count;
+
+	if(Settings->light_fade){
+		scheme_count=Settings->ws_width[WS_HOUR];//Width4
+	}
+
+  WsColor mcolor[scheme_count];
+	uint8_t color_start=0;
+	uint8_t color_end=1;
+
+	if(Settings->light_rotation & 0x01){
+		color_start=1;
+		color_end=0;
+	}
+
+	if(Settings->light_fade){
+
+		for(uint32_t i=1; i < scheme_count - 1; i++){
+			mcolor[i].red = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].red, scheme.colors[color_end].red);
+			mcolor[i].green = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].green, scheme.colors[color_end].green);
+			mcolor[i].blue = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].blue, scheme.colors[color_end].blue);
+		}
+	} else {
+		memcpy(mcolor, scheme.colors, sizeof(mcolor));
+	}
+	mcolor[0].red=scheme.colors[color_start].red;
+	mcolor[0].green=scheme.colors[color_start].green;
+	mcolor[0].blue=scheme.colors[color_start].blue;
+	mcolor[scheme_count-1].red=scheme.colors[color_end].red;
+	mcolor[scheme_count-1].green=scheme.colors[color_end].green;
+	mcolor[scheme_count-1].blue=scheme.colors[color_end].blue;
+
+
+  float dimmer = 100 / (float)Settings->light_dimmer;
+  for (uint32_t i = 0; i < scheme_count; i++) {
+    float fmyRed = (float)mcolor[i].red / dimmer;
+    float fmyGrn = (float)mcolor[i].green / dimmer;
+    float fmyBlu = (float)mcolor[i].blue / dimmer;
+    mcolor[i].red = (uint8_t)fmyRed;
+    mcolor[i].green = (uint8_t)fmyGrn;
+    mcolor[i].blue = (uint8_t)fmyBlu;
+  }
+
+  uint32_t speed = Settings->light_speed;
+	int32_t current_position = Light.strip_timer_counter / speed;
+
+	//all is shown already
+	if(current_position >  Settings->light_pixels / Settings->light_step_pixels + scheme_count ) {
+//		AddLog(LOG_LEVEL_INFO, PSTR("spd:%d cpos:%d tc:%d"), speed,current_position,Light.strip_timer_counter);
+		return;
+	}
+
+  int32_t colorIndex;
+  //int32_t leading_step = current_position / Settings->light_step_pixels;
+  int32_t step_nr;
+	/*if( Light.strip_timer_counter % speed == 0){
+		AddLog(LOG_LEVEL_INFO, PSTR("spd:%d cpos:%d lead:%d tc:%d"), speed,current_position,leading_step,Light.strip_timer_counter);
+	}*/
+	
+  for (uint32_t i = 0; i < Settings->light_pixels; i++) {
+		step_nr = i / Settings->light_step_pixels;
+		colorIndex =  current_position - step_nr;
+	  if(colorIndex < 0) colorIndex = 0;
+		if(colorIndex > scheme_count - 1) colorIndex = scheme_count - 1;
+    c.R = mcolor[colorIndex].red;
+    c.G = mcolor[colorIndex].green;
+    c.B = mcolor[colorIndex].blue;
+		if( current_position % 3 == 0){
+			//AddLog(LOG_LEVEL_INFO, PSTR("spd:%d cpos:%d lead:%d tc:%d"), speed,current_position,leading_step,Light.strip_timer_counter);
+			if(i < 15){
+			//	AddLog(LOG_LEVEL_INFO, PSTR("s_n:%d cidx:%d "), step_nr, colorIndex);
+			}
+		}
+/*		if(i < 2){
+			AddLog(LOG_LEVEL_INFO, PSTR("s_n:%d cidx:%d "), step_nr, colorIndex);
+		}*/
+		if(Settings->light_rotation & 0x02){
+			strip->SetPixelColor(Settings->light_pixels - i - 1, c);
+		} else {
+			strip->SetPixelColor(i, c);
+		}
+  }
+  Ws2812StripShow();
+}
+
 void Ws2812Clear(void)
 {
   strip->ClearTo(0);
@@ -496,10 +598,14 @@ void Ws2812ShowScheme(void)
       }
       break;
     default:
-      if (1 == Settings->light_fade) {
-        Ws2812Gradient(scheme -1);
-      } else {
-        Ws2812Bars(scheme -1);
+			if(Settings->light_step_pixels > 0){
+				Ws2812Steps(scheme -1);
+			} else {
+				if (1 == Settings->light_fade) {
+					Ws2812Gradient(scheme -1);
+				} else {
+					Ws2812Bars(scheme -1);
+				}
       }
       Ws2812.show_next = 1;
       break;
