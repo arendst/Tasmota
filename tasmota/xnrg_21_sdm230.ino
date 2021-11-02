@@ -22,7 +22,13 @@
 /*********************************************************************************************\
  * Eastron SDM230 Modbus energy meter
  *
- * Based on: https://github.com/reaper7/SDM_Energy_Meter and https://github.com/nmakel/sdm_modbus
+ * Based on: existing tasmota drivers for SDM120 and SDM630,
+ * https://github.com/reaper7/SDM_Energy_Meter and https://github.com/nmakel/sdm_modbus
+ 
+ * manuals can be found here:
+ * German:  https://bg-etech.de/download/manual/SDM230-Modbus.pdf
+ * English: https://www.eastroneurope.com/images/uploads/products/manuals/SDM230_Sereis_Manual.pdf
+ * Protocol Spec: https://www.eastroneurope.com/images/uploads/products/protocol/Correct_SDM230_Protocol.pdf
 \*********************************************************************************************/
 
 #define XNRG_21             21
