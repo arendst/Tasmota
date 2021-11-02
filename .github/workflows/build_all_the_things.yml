@@ -30,6 +30,7 @@ jobs:
           - tasmota-zbbridge
           - tasmota-zigbee
           - tasmota32
+          - tasmota32-webcam
           - tasmota32-bluetooth
           - tasmota32-core2
           - tasmota32-display
