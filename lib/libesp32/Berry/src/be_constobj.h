@@ -15,6 +15,7 @@ extern "C" {
 #include "be_object.h"
 #include "be_gc.h"
 #include "be_map.h"
+#include "be_list.h"
 #include "be_class.h"
 #include "be_string.h"
 #include "be_module.h"
@@ -92,6 +93,21 @@ extern "C" {
     .type = BE_MODULE                                           \
 }
 
+#define be_const_simple_instance(_instance) {                   \
+    .v.c = (_instance),                                         \
+    .type = BE_INSTANCE                                         \
+}
+
+#define be_const_map(_map) {                                    \
+    .v.c = &(_map),                                             \
+    .type = BE_MAP                                              \
+}
+
+#define be_const_list(_list) {                                  \
+    .v.c = &(_list),                                            \
+    .type = BE_LIST                                             \
+}
+
 #define be_define_const_map_slots(_name)                        \
 const bmapnode _name##_slots[] =
 
@@ -164,6 +180,26 @@ const bntvmodule be_native_module(_module) = {                  \
     .info.name = _module_name                                   \
 }
 
+/* only instances with no super and no sub instance are supported */
+/* primarily for `list` and `map`*/
+#define be_nested_simple_instance(_class_ptr, _members)         \
+  & (const binstance)  {                                        \
+    be_const_header(BE_INSTANCE),                               \
+    .super = NULL,                                              \
+    .sub = NULL,                                                \
+    ._class = (bclass*) _class_ptr,                             \
+    .members = _members                                         \
+  }
+
+// #define be_local_instance(_name, _class_ptr, _members)          \
+//   static const binstance i_##_name = {                          \
+//     be_const_header(BE_INSTANCE),                               \
+//     .super = NULL,                                              \
+//     .sub = NULL,                                                \
+//     ._class = (bclass*) _class_ptr,                             \
+//     .members = _members                                         \
+//   }
+
 #define be_nested_map(_size, _slots)                            \
   & (const bmap) {                                              \
     be_const_header(BE_MAP),                                    \
@@ -171,6 +207,14 @@ const bntvmodule be_native_module(_module) = {                  \
     .lastfree = NULL,                                           \
     .size = _size,                                              \
     .count = _size                                              \
+  }
+
+#define be_nested_list(_size, _items)                           \
+  & (const blist) {                                             \
+    be_const_header(BE_LIST),                                   \
+    .count = _size,                                             \
+    .capacity = _size,                                          \
+    .data = _items                                              \
   }
 
 #define be_nested_string(_str, _hash, _len)                     \
@@ -284,15 +328,18 @@ const bvector _name = {                                         \
     (void*)_data, (void*)(_data + (_size) - 1)                  \
 }
 
-#define be_define_const_native_module(_module, _init)           \
+#define be_define_const_native_module(_module)                  \
 const bntvmodule be_native_module(_module) = {                  \
     #_module,                                                   \
     0, 0,                                                       \
-    (bmodule*)&(m_lib##_module),                                \
-    _init                                                       \
+    (bmodule*)&(m_lib##_module)                                 \
 }
 
 #endif
+
+/* provide pointers to map and list classes for solidified code */
+extern const bclass be_class_list;
+extern const bclass be_class_map;
 
 #ifdef __cplusplus
 }

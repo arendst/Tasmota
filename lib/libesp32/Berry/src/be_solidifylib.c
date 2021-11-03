@@ -10,12 +10,16 @@
 #include "be_string.h"
 #include "be_vector.h"
 #include "be_class.h"
+#include "be_list.h"
 #include "be_debug.h"
 #include "be_map.h"
 #include "be_vm.h"
 #include "be_decoder.h"
 #include <string.h>
 #include <stdio.h>
+
+extern const bclass be_class_list;
+extern const bclass be_class_map;
 
 #if BE_USE_SOLIDIFY_MODULE
 #include <inttypes.h>
@@ -32,6 +36,50 @@
         logbuf(__VA_ARGS__);            \
         be_writestring(__lbuf);         \
     } while (0)
+
+static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, const char *key);
+
+static void m_solidify_map(bvm *vm, bmap * map, const char *class_name)
+{
+    logfmt("    be_nested_map(%i,\n", map->count);
+
+    logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
+    for (int i = 0; i < map->size; i++) {
+        bmapnode * node = &map->slots[i];
+        if (node->key.type == BE_NIL) {
+            continue;   /* key not used */
+        }
+        if (node->key.type != BE_STRING) {
+            char error[64];
+            snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
+            be_raise(vm, "internal_error", error);
+        }
+        int key_next = node->key.next;
+        size_t len = strlen(str(node->key.v.s));
+        if (0xFFFFFF == key_next) {
+            key_next = -1;      /* more readable */
+        }
+        logfmt("        { be_nested_key(\"%s\", %i, %zu, %i), ", str(node->key.v.s), be_strhash(node->key.v.s), len >= 255 ? 255 : len, key_next);
+        m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
+
+        logfmt(" },\n");
+    }
+    logfmt("    }))");        // TODO need terminal comma?
+
+}
+
+static void m_solidify_list(bvm *vm, blist * list, const char *class_name)
+{
+    logfmt("    be_nested_list(%i,\n", list->count);
+
+    logfmt("    ( (struct bvalue*) &(const bvalue[]) {\n");
+    for (int i = 0; i < list->count; i++) {
+        logfmt("        ");
+        m_solidify_bvalue(vm, &list->data[i], class_name, "");
+        logfmt(",\n");
+    }
+    logfmt("    }))");        // TODO need terminal comma?
+}
 
 // pass key name in case of class, or NULL if none
 static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, const char *key)
@@ -87,6 +135,35 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_NTVFUNC:
         logfmt("be_const_func(be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
+        break;
+    case BE_INSTANCE:
+    {
+        binstance * ins = (binstance *) var_toobj(value);
+        bclass * cl = ins->_class;
+        if (ins->super || ins->sub) {
+            be_raise(vm, "internal_error", "instance must not have a super/sub class");
+        } else if (cl->nvar != 1) {
+            be_raise(vm, "internal_error", "instance must have only one instance variable");
+        } else if ((cl != &be_class_map && cl != &be_class_list) || 1) {   // TODO
+            const char * cl_ptr = "";
+            if (cl == &be_class_map) { cl_ptr = "map"; }
+            if (cl == &be_class_list) { cl_ptr = "list"; }
+            logfmt("be_const_simple_instance(be_nested_simple_instance(&be_class_%s, {\n", cl_ptr);
+            if (cl == &be_class_map) {
+                logfmt("        be_const_map( * ");
+            } else {
+                logfmt("        be_const_list( * ");
+            }
+            m_solidify_bvalue(vm, &ins->members[0], classname, key);
+            logfmt("    ) } ))");
+        }
+    }
+        break;
+    case BE_MAP:
+        m_solidify_map(vm, (bmap *) var_toobj(value), classname);
+        break;
+    case BE_LIST:
+        m_solidify_list(vm, (blist *) var_toobj(value), classname);
         break;
     default:
         {
@@ -253,27 +330,8 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
     }
 
     if (cl->members) {
-        logfmt("    be_nested_map(%i,\n", cl->members->count);
-
-        logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
-        for (int i = 0; i < cl->members->count; i++) {
-            bmapnode * node = &cl->members->slots[i];
-            if (node->key.type != BE_STRING) {
-                char error[64];
-                snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
-                be_raise(vm, "internal_error", error);
-            }
-            int key_next = node->key.next;
-            size_t len = strlen(str(node->key.v.s));
-            if (0xFFFFFF == key_next) {
-                key_next = -1;      /* more readable */
-            }
-            logfmt("        { be_nested_key(\"%s\", %i, %zu, %i), ", str(node->key.v.s), be_strhash(node->key.v.s), len >= 255 ? 255 : len, key_next);
-            m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
-
-            logfmt(" },\n");
-        }
-        logfmt("    })),\n");
+        m_solidify_map(vm, cl->members, class_name);
+        logfmt(",\n");
     } else {
         logfmt("    NULL,\n");
     }
@@ -299,7 +357,8 @@ static void m_solidify_class(bvm *vm, bclass *cl, int builtins)
 
 static void m_solidify_module(bvm *vm, bmodule *ml, int builtins)
 {
-    const char * module_name = ml->info.name;
+    const char * module_name = be_module_name(ml);
+    if (!module_name) { module_name = ""; }
 
     /* iterate on members to dump closures */
     if (ml->table) {
@@ -323,33 +382,14 @@ static void m_solidify_module(bvm *vm, bmodule *ml, int builtins)
     logfmt("    \"%s\",\n", module_name);
 
     if (ml->table) {
-        logfmt("    be_nested_map(%i,\n", ml->table->count);
-
-        logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
-        for (int i = 0; i < ml->table->count; i++) {
-            bmapnode * node = &ml->table->slots[i];
-            if (node->key.type != BE_STRING) {
-                char error[64];
-                snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
-                be_raise(vm, "internal_error", error);
-            }
-            int key_next = node->key.next;
-            size_t len = strlen(str(node->key.v.s));
-            if (0xFFFFFF == key_next) {
-                key_next = -1;      /* more readable */
-            }
-            logfmt("        { be_nested_key(\"%s\", %i, %zu, %i), ", str(node->key.v.s), be_strhash(node->key.v.s), len >= 255 ? 255 : len, key_next);
-            m_solidify_bvalue(vm, &node->value, module_name, str(node->key.v.s));
-
-            logfmt(" },\n");
-        }
-        logfmt("    }))\n");
+        m_solidify_map(vm, ml->table, module_name);
+        logfmt("\n");
     } else {
         logfmt("    NULL,\n");
     }
     logfmt(");\n");
     logfmt("BE_EXPORT_VARIABLE be_define_const_native_module(%s, NULL);\n", module_name);
-    logfmt("/********************************************************************\n");
+    logfmt("/********************************************************************/\n");
 
 }
 
@@ -366,6 +406,8 @@ static int m_dump(bvm *vm)
             m_solidify_class(vm, var_toobj(v), be_builtin_count(vm));
         } else if (var_ismodule(v)) {
             m_solidify_module(vm, var_toobj(v), be_builtin_count(vm));
+        } else {
+            be_raise(vm, "value_error", "unsupported type");
         }
     }
     be_return_nil(vm);
