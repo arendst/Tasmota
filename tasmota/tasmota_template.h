@@ -394,19 +394,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0939_RX "|"
   D_SENSOR_BL0942_RX "|"
   D_SENSOR_HM330X_SET "|"
-<<<<<<< HEAD
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
-<<<<<<< HEAD
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
   D_SENSOR_SOLAXX1_RTS "|"
   D_SENSOR_OPTION " E|"
-;
-=======
-=======
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX
->>>>>>> 	changed:       BUILDS.md
-  ;
->>>>>>> 	changed:       BUILDS.md
+;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
