@@ -130,7 +130,7 @@ be_local_closure(lvgl_event_dispatch,   /* name */
     }),
     (be_nested_const_str("lvgl_event_dispatch", 2104396622, 19)),
     (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[18]) {  /* code */
+    ( &(const binstruction[20]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0xB80E0200,  //  0001  GETNGBL	R3	K1
       0x8C0C0702,  //  0002  GETMET	R3	R3	K2
@@ -138,17 +138,19 @@ be_local_closure(lvgl_event_dispatch,   /* name */
       0x5C1C0200,  //  0004  MOVE	R7	R1
       0x7C140400,  //  0005  CALL	R5	2
       0x7C0C0400,  //  0006  CALL	R3	2
-      0x88100704,  //  0007  GETMBR	R4	R3	K4
-      0x88140105,  //  0008  GETMBR	R5	R0	K5
-      0x94140A04,  //  0009  GETIDX	R5	R5	R4
-      0x8C180106,  //  000A  GETMET	R6	R0	K6
-      0x5C200800,  //  000B  MOVE	R8	R4
-      0x7C180400,  //  000C  CALL	R6	2
-      0x5C1C0A00,  //  000D  MOVE	R7	R5
-      0x5C200C00,  //  000E  MOVE	R8	R6
-      0x5C240600,  //  000F  MOVE	R9	R3
-      0x7C1C0400,  //  0010  CALL	R7	2
-      0x80000000,  //  0011  RET	0
+      0x60100009,  //  0007  GETGBL	R4	G9
+      0x88140704,  //  0008  GETMBR	R5	R3	K4
+      0x7C100200,  //  0009  CALL	R4	1
+      0x88140105,  //  000A  GETMBR	R5	R0	K5
+      0x94140A04,  //  000B  GETIDX	R5	R5	R4
+      0x8C180106,  //  000C  GETMET	R6	R0	K6
+      0x5C200800,  //  000D  MOVE	R8	R4
+      0x7C180400,  //  000E  CALL	R6	2
+      0x5C1C0A00,  //  000F  MOVE	R7	R5
+      0x5C200C00,  //  0010  MOVE	R8	R6
+      0x5C240600,  //  0011  MOVE	R9	R3
+      0x7C1C0400,  //  0012  CALL	R7	2
+      0x80000000,  //  0013  RET	0
     })
   )
 );
