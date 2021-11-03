@@ -45,6 +45,7 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *Sdm230Modbus;
 
+// read all default registers for generic energy driver
 const uint16_t sdm230_start_addresses[] {
   0x0000,   // SDM230_VOLTAGE                             [V]
   0x0006,   // SDM230_CURRENT                             [A]
@@ -53,15 +54,18 @@ const uint16_t sdm230_start_addresses[] {
   0x0018,   // SDM230_POWER (Reactive)                    [VAr]
   0x001E,   // SDM230_POWER_FACTOR 
   0x0046,   // SDM230_FREQUENCY                           [Hz]
-  0X004A,   // SDM230_EXPORT_ACTIVE                       [kWh]
-  0X0180,   // SDM230_RESETTABLE_TOTAL_ENERGY_ACTIVE      [kWh]
-  0X0056,   // SDM230_MAXIMUM_TOTAL_DEMAND_POWER_ACTIVE   [W]
-  0x0024,   // SDM230_PHASE ANGLE                         [Degree]
-#ifdef SDM230_IMPORT
   0X0048,   // SDM230_IMPORT_ACTIVE                       [kWh]
-#endif  // SDM230_IMPORT
-  0X0156,   // SDM230_TOTAL_ENERGY_ACTIVE                 [kWh]
+  0X004A,   // SDM230_EXPORT_ACTIVE                       [kWh]
+//  0X0156,   // SDM230_TOTAL_ENERGY_ACTIVE                 [kWh] // = SDM230_IMPORT_ACTIVE = Energy.total
 
+// read more registers offered by SDM230 (may cause timing issues)
+#ifdef SDM230_MORE_REGS
+  0x0024,   // SDM230_PHASE ANGLE                         [Degree]
+  0X0056,   // SDM230_MAXIMUM_TOTAL_DEMAND_POWER_ACTIVE   [W]
+  0X0180,   // SDM230_RESETTABLE_TOTAL_ENERGY_ACTIVE      [kWh]
+#endif // SDM230_MORE_REGS
+
+// for documentation / further use or implementation
 //  0X0158,   // SDM230_TOTAL_ENERGY_REACTIVE               [kVArh]
 //  0X0182,   // SDM230_RESETTABLE_TOTAL_ENERGY_REACTIVE    [kVArh]
 //  0X004C,   // SDM230_IMPORT_REACTIVE                     [kVArh]
@@ -76,9 +80,11 @@ const uint16_t sdm230_start_addresses[] {
 };
 
 struct SDM230 {
-  float resettable_total_energy = 0;
-  float maximum_total_demand_power = 0;
+#ifdef SDM230_MORE_REGS
   float phase_angle = 0;
+  float maximum_total_demand_power_active = 0;
+  float resettable_total_energy = 0;
+#endif // SDM230_MORE_REGS
   uint8_t read_state = 0;
   uint8_t send_retry = 0;
 } Sdm230;
@@ -139,35 +145,34 @@ void SDM230Every250ms(void)
           break;
 
         case 7:
-          Energy.export_active[0] = value;    // 478.492 kWh
+          Energy.import_active[0] = value;     // 6.216 kWh => used in EnergyUpdateTotal()
           break;
 
         case 8:
-          Sdm230.resettable_total_energy = value;  
+          Energy.export_active[0] = value;    // 478.492 kWh
           break;
 
+        #ifdef SDM230_MORE_REGS 
         case 9:
-          Sdm230.maximum_total_demand_power  = value;  
-          break;
-
-        case 10:
           Sdm230.phase_angle = value;      // 0.00 Deg
           break;
 
-        case 11:
-          Energy.import_active[0] = value;     // 6.216 kWh 
+        case 10:
+          Sdm230.maximum_total_demand_power_active  = value;  
           break;
 
-        case 12:
-          EnergyUpdateTotal();
-          //Energy.export_active[0] = value;    // 484.708 kWh = import_active + export_active
+        case 11:
+          Sdm230.resettable_total_energy = value;  
           break;
+        #endif // SDM230_MORE_REGS
       }
 
       Sdm230.read_state++;
       if (sizeof(sdm230_start_addresses)/2 == Sdm230.read_state) {
         Sdm230.read_state = 0;
+        EnergyUpdateTotal();                 // update every cycle after all registers have been read 
       }
+      
     }
   } // end data ready
 
@@ -199,36 +204,42 @@ void Sdm230DrvInit(void)
 
 void Sdm230Reset(void)
 {
-  Sdm230.resettable_total_energy = 0;
-  Sdm230.maximum_total_demand_power = 0;
+  #ifdef SDM230_MORE_REGS
   Sdm230.phase_angle = 0;
+  Sdm230.maximum_total_demand_power_active = 0;
+  Sdm230.resettable_total_energy = 0;
+  #endif // SDM230_MORE_REGS
 }
 
+#ifdef SDM230_MORE_REGS
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_SDM230[] PROGMEM =
-  "{s}" D_RESETTABLE_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}"
   "{s}" D_MAX_POWER "{m}%s " D_UNIT_WATT "{e}"
-  "{s}" D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}";
+  "{s}" D_RESETTABLE_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
+#endif  // SDM230_MORE_REGS
 
+#ifdef SDM230_MORE_REGS
 void Sdm230Show(bool json)
 {
-  char resettable_energy_chr[FLOATSZ];
-  dtostrfd(Sdm230.resettable_total_energy, Settings->flag2.energy_resolution, resettable_energy_chr);
-  char maximum_demand_chr[FLOATSZ];
-  dtostrfd(Sdm230.maximum_total_demand_power, Settings->flag2.wattage_resolution, maximum_demand_chr);
   char phase_angle_chr[FLOATSZ];
   dtostrfd(Sdm230.phase_angle, 2, phase_angle_chr);
+  char maximum_demand_chr[FLOATSZ];
+  dtostrfd(Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution, maximum_demand_chr);
+  char resettable_energy_chr[FLOATSZ];
+  dtostrfd(Sdm230.resettable_total_energy, Settings->flag2.energy_resolution, resettable_energy_chr);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_RESETTABLE_TOTAL_ACTIVE "\":%s,\"" D_JSON_POWERMAX "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s"),
-      resettable_energy_chr, maximum_demand_chr, phase_angle_chr);
+    ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_POWERMAX "\":%s,\"" D_JSON_RESETTABLE_TOTAL_ACTIVE "\":%s"),
+      phase_angle_chr, maximum_demand_chr, resettable_energy_chr);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SDM230, resettable_energy_chr, maximum_demand_chr, phase_angle_chr);
+    WSContentSend_PD(HTTP_ENERGY_SDM230, phase_angle_chr, maximum_demand_chr, resettable_energy_chr);
 #endif  // USE_WEBSERVER
   }
 }
+#endif  // SDM230_MORE_REGS
 
 /*********************************************************************************************\
  * Interface
@@ -242,6 +253,7 @@ bool Xnrg21(uint8_t function)
     case FUNC_EVERY_250_MSECOND:
       SDM230Every250ms();
       break;
+#ifdef SDM230_MORE_REGS
     case FUNC_JSON_APPEND:
       Sdm230Show(1);
       break;
@@ -250,6 +262,7 @@ bool Xnrg21(uint8_t function)
       Sdm230Show(0);
       break;
 #endif  // USE_WEBSERVER
+#endif  // SDM230_MORE_REGS
     case FUNC_ENERGY_RESET:
       Sdm230Reset();
       break;
