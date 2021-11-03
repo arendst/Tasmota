@@ -81,8 +81,17 @@
 #include "esp_camera.h"
 #include "sensor.h"
 #include "fb_gfx.h"
-#include "fd_forward.h"
-#include "fr_forward.h"
+
+#ifdef USE_FACE_DETECT
+  #if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
+    #include "fd_forward.h"
+    #include "fr_forward.h"
+//    #pragma message("Face detection enabled")
+  #else
+    #pragma message("Face detection not supported from Tasmota with Arduino Core 2.0.x. Disabling")
+    #undef USE_FACE_DETECT
+  #endif
+#endif
 
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
