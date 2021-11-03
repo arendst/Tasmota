@@ -842,6 +842,7 @@
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
 #define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
+#define D_SENSOR_HEARTBEAT     "Heartbeat"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

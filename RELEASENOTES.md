@@ -102,6 +102,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v10.0.0.1
 ### Added
+- 1 second heartbeat GPIO
 - ESP32 Berry add module ``python_compat`` to be closer to Python syntax [#13428](https://github.com/arendst/Tasmota/issues/13428)
 
 ### Breaking Changed
