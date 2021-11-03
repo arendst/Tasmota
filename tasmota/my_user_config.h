@@ -1054,6 +1054,15 @@
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
 
 /*********************************************************************************************\
+ * Profiling features
+\*********************************************************************************************/
+
+//#define USE_PROFILING                            // Enable profiling
+//#define PROFILE_THRESHOLD            70          // Minimum duration in milliseconds to start logging
+//#define USE_PROFILE_DRIVER                       // Enable driver profiling
+//#define USE_PROFILE_FUNCTION                     // Enable driver function profiling
+
+/*********************************************************************************************\
  * Optional firmware configurations
  * Select none or just one for optional features and sensors as configured in tasmota_configurations.h
  * See RELEASENOTES.md for selected features
