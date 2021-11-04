@@ -23,6 +23,7 @@ extern int b_wire_scan(bvm *vm);
 extern int b_wire_validwrite(bvm *vm);
 extern int b_wire_validread(bvm *vm);
 extern int b_wire_detect(bvm *vm);
+extern int b_wire_enabled(bvm *vm);
 
 /********************************************************************
 ** Solidified function: write_bytes
@@ -140,6 +141,7 @@ class be_class_tasmota_wire (scope: global, name: Wire) {
     write, func(b_wire_validwrite)
     read, func(b_wire_validread)
     detect, func(b_wire_detect)
+    enabled, func(b_wire_enabled)
 
     read_bytes, closure(read_bytes_closure)
     write_bytes, closure(write_bytes_closure)
