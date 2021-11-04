@@ -2,7 +2,8 @@ be_define_const_str(KEY1_PD, "KEY1_PD", 3934075620u, 0, 7, &be_const_str_set_aut
 be_define_const_str(set_auth, "set_auth", 1057170930u, 0, 8, NULL);
 be_define_const_str(HIGH, "HIGH", 2066738941u, 0, 4, &be_const_str_depower);
 be_define_const_str(depower, "depower", 3563819571u, 0, 7, NULL);
-be_define_const_str(exec_rules, "exec_rules", 1445221092u, 0, 10, NULL);
+be_define_const_str(exec_rules, "exec_rules", 1445221092u, 0, 10, &be_const_str_kv);
+be_define_const_str(kv, "kv", 1497177492u, 0, 2, NULL);
 be_define_const_str(SERIAL_8E2, "SERIAL_8E2", 2421454473u, 0, 10, &be_const_str___upper__);
 be_define_const_str(__upper__, "__upper__", 3612202883u, 0, 9, &be_const_str_ctypes_bytes);
 be_define_const_str(ctypes_bytes, "ctypes_bytes", 3879019703u, 0, 12, &be_const_str_get_option);
@@ -896,6 +897,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 290,
-    .count = 580,
+    .count = 581,
     .table = m_string_table
 };
