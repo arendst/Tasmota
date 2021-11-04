@@ -305,16 +305,14 @@ void BerryInit(void) {
   bool berry_init_ok = false;
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
-    be_set_obs_hook(berry.vm, &BerryObservability);
+    be_set_obs_hook(berry.vm, &BerryObservability);  /* attach observability hook */
     comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
-    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler */
-    be_load_custom_libs(berry.vm);
+    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler, equivalent of `import strict` */
 
-    // Register functions
-    // be_regfunc(berry.vm, PSTR("log"), l_logInfo);
-    // be_regfunc(berry.vm, PSTR("save"), l_save);
+    be_load_custom_libs(berry.vm);  // load classes and modules
 
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry function registered, RAM used=%u"), be_gc_memcount(berry.vm));
+    // Set the GC threshold to 3584 bytes to avoid the first useless GC
+    berry.vm->gc.threshold = 3584;
 
     ret_code1 = be_loadstring(berry.vm, berry_prog);
     if (ret_code1 != 0) {

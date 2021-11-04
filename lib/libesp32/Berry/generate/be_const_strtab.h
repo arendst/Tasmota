@@ -3,6 +3,7 @@ extern const bcstring be_const_str_set_auth;
 extern const bcstring be_const_str_HIGH;
 extern const bcstring be_const_str_depower;
 extern const bcstring be_const_str_exec_rules;
+extern const bcstring be_const_str_kv;
 extern const bcstring be_const_str_SERIAL_8E2;
 extern const bcstring be_const_str___upper__;
 extern const bcstring be_const_str_ctypes_bytes;
