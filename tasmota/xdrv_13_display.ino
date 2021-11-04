@@ -1861,6 +1861,10 @@ void DisplaySetPower(void)
       XdspCall(FUNC_DISPLAY_POWER);
     } else {
       renderer->DisplayOnff(disp_power);
+#ifdef USE_BERRY
+      // still call Berry virtual display in case it is not managed entirely by renderer
+      Xdsp18(FUNC_DISPLAY_POWER);
+#endif // USE_BERRY
     }
   }
 }
@@ -1961,6 +1965,10 @@ void ApplyDisplayDimmer(void) {
   }
   if (renderer) {
     renderer->dim8(dimmer8, dimmer8_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
+#ifdef USE_BERRY
+    // still call Berry virtual display in case it is not managed entirely by renderer
+    Xdsp18(FUNC_DISPLAY_DIM);
+#endif // USE_BERRY
   } else {
     XdspCall(FUNC_DISPLAY_DIM);
   }

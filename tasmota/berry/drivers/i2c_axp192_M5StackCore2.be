@@ -3,7 +3,7 @@
  -------------------------------------------------------------#
 class AXP192_M5Stack_Core2 : AXP192
   def init()
-    super(self, AXP192).init()
+    super(self).init()
 
     if self.wire
       # Disable vbus hold limit
@@ -116,6 +116,20 @@ class AXP192_M5Stack_Core2 : AXP192
       self.write8(0x12, self.read8(0x12) | 0x40)          # set EXTEN to enable 5v boost
     end
   end
+
+  # Dimmer in percentage
+  def set_displaydimmer(x)
+    var v = tasmota.scale_uint(x, 0, 100, 2500, 3300)
+    self.set_lcd_voltage(v)
+  end
+
+  # respond to display events
+  def display(cmd, idx, payload, raw)
+    if cmd == "dim" || cmd == "power"
+      self.set_displaydimmer(idx)
+    end
+  end
+
 end
 
 axp = AXP192_M5Stack_Core2()
