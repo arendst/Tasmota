@@ -1818,7 +1818,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
  * Serial
 \*********************************************************************************************/
 
-String GetSerialConfig(void) {
+String GetSerialConfig(uint8_t serial_config) {
   // Settings->serial_config layout
   // b000000xx - 5, 6, 7 or 8 data bits
   // b00000x00 - 1 or 2 stop bits
@@ -1827,12 +1827,48 @@ String GetSerialConfig(void) {
   const static char kParity[] PROGMEM = "NEOI";
 
   char config[4];
-  config[0] = '5' + (Settings->serial_config & 0x3);
-  config[1] = pgm_read_byte(&kParity[(Settings->serial_config >> 3) & 0x3]);
-  config[2] = '1' + ((Settings->serial_config >> 2) & 0x1);
+  config[0] = '5' + (serial_config & 0x3);
+  config[1] = pgm_read_byte(&kParity[(serial_config >> 3) & 0x3]);
+  config[2] = '1' + ((serial_config >> 2) & 0x1);
   config[3] = '\0';
   return String(config);
 }
+
+String GetSerialConfig(void) {
+  return GetSerialConfig(Settings->serial_config);
+}
+
+int8_t ParseSerialConfig(const char *pstr)
+{
+  if (strlen(pstr) < 3)
+    return -1;
+
+  int8_t serial_config = (uint8_t)atoi(pstr);
+  if (serial_config < 5 || serial_config > 8)
+    return -1;
+  serial_config -= 5;
+
+  char parity = (pstr[1] & 0xdf);
+  if ('E' == parity) {
+    serial_config += 0x08;                         // Even parity
+  }
+  else if ('O' == parity) {
+    serial_config += 0x10;                         // Odd parity
+  }
+  else if ('N' != parity) {
+    return -1;
+  }
+
+  if ('2' == pstr[2]) {
+    serial_config += 0x04;                         // Stop bits 2
+  }
+  else if ('1' != pstr[2]) {
+    return -1;
+  }
+
+  return serial_config;
+}
+
 
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
 // temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
