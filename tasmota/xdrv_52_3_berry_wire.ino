@@ -26,18 +26,36 @@
 #include <Wire.h>
 
 // read the `bus` attribute and return `Wire` or `Wire1`
+// Can return nullptr reference if the bus is not initialized
 TwoWire & getWire(bvm *vm);
 TwoWire & getWire(bvm *vm) {
   be_getmember(vm, 1, "bus");
   int32_t bus = be_toint(vm, -1); // bus is 1 or 2
   be_pop(vm, 1);
-  if (!TasmotaGlobal.i2c_enabled_2) { bus = 1; }
-  if (2 != bus) {
+  if (1 == bus && TasmotaGlobal.i2c_enabled) {
     return Wire;
-  } else {
+  } else if (2 == bus && TasmotaGlobal.i2c_enabled_2) {
     return Wire1;
+  } else {
+    be_raise(vm, "configuration_error", "I2C bus not initiliazedd");
+    return *(TwoWire*)nullptr;
   }
 }
+
+bool I2cEnabled(bvm *vm);
+bool I2cEnabled(bvm *vm) {
+  be_getmember(vm, 1, "bus");
+  int32_t bus = be_toint(vm, -1); // bus is 1 or 2
+  be_pop(vm, 1);
+  if (1 == bus && TasmotaGlobal.i2c_enabled) {
+    return true;
+  } else if (2 == bus && TasmotaGlobal.i2c_enabled_2) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 int32_t getBus(bvm *vm);    // 1 or 2
 int32_t getBus(bvm *vm) {
   be_getmember(vm, 1, "bus");
@@ -242,6 +260,14 @@ extern "C" {
       be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: `enabled() -> bool` true if I2C bus is enabled
+  int32_t b_wire_enabled(struct bvm *vm);
+  int32_t b_wire_enabled(struct bvm *vm) {
+    bool en = I2cEnabled(vm);
+    be_pushbool(vm, en);
+    be_return(vm);
   }
 }
 

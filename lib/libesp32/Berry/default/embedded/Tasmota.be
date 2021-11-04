@@ -309,8 +309,8 @@ class Tasmota
   def wire_scan(addr,idx)
     # skip if the I2C index is disabled
     if idx != nil && !self.i2c_enabled(idx) return nil end
-    if self.wire1.detect(addr) return self.wire1 end
-    if self.wire2.detect(addr) return self.wire2 end
+    if self.wire1.enabled() && self.wire1.detect(addr) return self.wire1 end
+    if self.wire2.enabled() && self.wire2.detect(addr) return self.wire2 end
     return nil
   end
 
