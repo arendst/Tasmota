@@ -319,9 +319,6 @@ void setup(void) {
   SettingsLoad();
   SettingsDelta();
 
-#ifdef ESP32
-//  TWDTInit();  // Start Task WDT for ESP32 - FreeRTOS only
-#endif
   OsWatchInit();
 
   TasmotaGlobal.seriallog_level = Settings->seriallog_level;
@@ -516,9 +513,6 @@ void Scheduler(void) {
 #endif  // USE_DISCOVERY
 #endif  // ESP8266
 
-#ifdef ESP32
-//  TWDTLoop();
-#endif
   OsWatchLoop();
   ButtonLoop();
   SwitchLoop();

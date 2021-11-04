@@ -348,7 +348,6 @@
 #define ZIGBEE_DISTINCT_TOPICS false             // [SetOption89] Enable unique device topic based on Zigbee device ShortAddr
 #define ZIGBEE_RMV_ZBRECEIVED  false             // [SetOption100] Remove ZbReceived form JSON message
 #define ZIGBEE_INDEX_EP        false             // [SetOption101] Add the source endpoint as suffix to attributes, ex `Power3` instead of `Power` if sent from endpoint 3
-#define WATCHDOG_TASK_SECONDS  10                // [ESP32 only] Task Watchdog Timer (TWDT) time in seconds - detecting Tasmota running for a prolonged period of time without yielding with `esp_task_wdt_reset()`
 
 /*********************************************************************************************\
  * END OF SECTION 1
