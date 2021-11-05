@@ -1525,28 +1525,8 @@ void CmndSerialConfig(void)
       }
     }
     else if ((XdrvMailbox.payload >= 5) && (XdrvMailbox.payload <= 8)) {
-      uint8_t serial_config = XdrvMailbox.payload -5;  // Data bits 5, 6, 7 or 8, No parity and 1 stop bit
-
-      bool valid = true;
-      char parity = (XdrvMailbox.data[1] & 0xdf);
-      if ('E' == parity) {
-        serial_config += 0x08;                         // Even parity
-      }
-      else if ('O' == parity) {
-        serial_config += 0x10;                         // Odd parity
-      }
-      else if ('N' != parity) {
-        valid = false;
-      }
-
-      if ('2' == XdrvMailbox.data[2]) {
-        serial_config += 0x04;                         // Stop bits 2
-      }
-      else if ('1' != XdrvMailbox.data[2]) {
-        valid = false;
-      }
-
-      if (valid) {
+      int8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
+      if (serial_config >= 0) {
         SetSerialConfig(serial_config);
       }
     }
