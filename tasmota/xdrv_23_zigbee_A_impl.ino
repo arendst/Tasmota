@@ -108,11 +108,13 @@ void ZigbeeInit(void)
 
 #ifdef USE_ZIGBEE_EZSP
     // Check the I2C EEprom
-    Wire.beginTransmission(USE_ZIGBEE_ZBBRIDGE_EEPROM);
-    uint8_t error = Wire.endTransmission();
-    if (0 == error) {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS " 0x%02X"), USE_ZIGBEE_ZBBRIDGE_EEPROM);
-      zigbee.eeprom_present = true;
+    if (TasmotaGlobal.i2c_enabled) {
+      Wire.beginTransmission(USE_ZIGBEE_ZBBRIDGE_EEPROM);
+      uint8_t error = Wire.endTransmission();
+      if (0 == error) {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS " 0x%02X"), USE_ZIGBEE_ZBBRIDGE_EEPROM);
+        zigbee.eeprom_present = true;
+      }
     }
 #endif
   }
