@@ -796,7 +796,7 @@ String Z_Devices::dumpCoordinator(void) const {
 String Z_Devices::dumpDevice(uint32_t dump_mode, const Z_Device & device) const {
   JsonGeneratorArray json_arr;
 
-  if (&device == nullptr) {
+  if (&device == &device_unk) {
     if (dump_mode < 2) {
       // dump light mode for all devices
       for (const auto & device2 : _devices) {

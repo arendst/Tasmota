@@ -152,21 +152,22 @@ void ZigbeeHueGroups(String * lights) {
 }
 
 void ZigbeeSendHue(uint16_t shortaddr, uint16_t cluster, uint8_t cmd, const SBuffer & s) {
-  ZCLMessage zcl(&s ? s.len() : 0);
+  ZCLMessage zcl(s.len());
   zcl.shortaddr = shortaddr;
   zcl.cluster = cluster;
   zcl.cmd = cmd;
   zcl.clusterSpecific = true;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
-  if (&s) { zcl.buf.replace(s); }
+  zcl.buf.replace(s);
   zigbeeZCLSendCmd(zcl);
 }
 
 // Send commands
 // Power On/Off
 void ZigbeeHuePower(uint16_t shortaddr, bool power) {
-  ZigbeeSendHue(shortaddr, 0x0006, power ? 1 : 0, *(SBuffer*)nullptr);
+  SBuffer s(0);
+  ZigbeeSendHue(shortaddr, 0x0006, power ? 1 : 0, s);
   zigbee_devices.getShortAddr(shortaddr).setPower(power, 0);
 }
 
