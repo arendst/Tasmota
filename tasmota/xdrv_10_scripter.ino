@@ -3382,7 +3382,7 @@ chknext:
           goto exit;
         }
 #endif // USE_TTGO_WATCH
-#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47)
+#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_M5EPD47)
         if (!strncmp(vname, "wtch(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = Touch_Status(fvar);
@@ -5440,6 +5440,8 @@ void ScriptSaveSettings(void) {
 
     SaveScript();
 
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("script memory error"));
   }
 
   SaveScriptEnd();
@@ -6529,7 +6531,6 @@ char buff[512];
 
   if (sflg) {
 #ifdef USE_DISPLAY_DUMP
-
 #include <renderer.h>
 extern Renderer *renderer;
 
