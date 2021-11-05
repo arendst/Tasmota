@@ -99,6 +99,7 @@ const lvbe_call_c_t lv_func[] = {
   { "theme_get_font_normal", (void*) &lv_theme_get_font_normal, "lv.lv_font", "(lv.lv_obj)" },
   { "theme_get_font_small", (void*) &lv_theme_get_font_small, "lv.lv_font", "(lv.lv_obj)" },
   { "theme_get_from_obj", (void*) &lv_theme_get_from_obj, "lv.lv_theme", "(lv.lv_obj)" },
+  { "theme_mono_init", (void*) &lv_theme_mono_init, "lv.lv_theme", "(lv.lv_disp)b(lv.lv_font)" },
   { "theme_openhasp_init", (void*) &lv_theme_openhasp_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" },
   { "theme_openhasp_is_inited", (void*) &lv_theme_openhasp_is_inited, "b", "" },
   { "theme_set_apply_cb", (void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" },
