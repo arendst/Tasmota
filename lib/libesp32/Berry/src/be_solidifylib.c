@@ -243,7 +243,9 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
     }
 
     logfmt("%*s(be_nested_const_str(\"%s\", %i, %i)),\n", indent, "", str(pr->name), be_strhash(pr->name), str_len(pr->name));
-    logfmt("%*s(be_nested_const_str(\"%s\", %i, %i)),\n", indent, "", func_source, be_strhash(pr->source), str_len(pr->source));
+    // logfmt("%*s(be_nested_const_str(\"%s\", %i, %i)),\n", indent, "", func_source, be_strhash(pr->source), str_len(pr->source));
+    // hard-code source as "input" for solidified
+    logfmt("%*s((bstring*) &be_const_str_input),\n");
 
     logfmt("%*s( &(const binstruction[%2d]) {  /* code */\n", indent, "", pr->codesize);
     for (int pc = 0; pc < pr->codesize; pc++) {

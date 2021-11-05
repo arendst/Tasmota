@@ -68,8 +68,8 @@ be_local_closure(kv_init,   /* name */
     /* K0   */  be_nested_string("k", -301188886, 1),
     /* K1   */  be_nested_string("v", -217300791, 1),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 3]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x90020202,  //  0001  SETMBR	R0	K1	R2
@@ -112,7 +112,7 @@ be_local_closure(kv,   /* name */
     /* K0   */  be_const_class(be_class_KV),
     }),
     (be_nested_const_str("kv", 1497177492, 2)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0x580C0000,  //  0000  LDCONST	R3	K0
       0xB4000000,  //  0001  CLASS	K0
@@ -153,7 +153,7 @@ be_local_closure(init,   /* name */
     /* K9   */  be_nested_string("toptr", -915119842, 5),
     /* K10  */  be_nested_string("_settings_def", -519406989, 13),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
+    ((bstring*) &be_const_str_init),
     (be_nested_const_str("tasmota.be", 1128870755, 10)),
     ( &(const binstruction[23]) {  /* code */
       0xB8060200,  //  0000  GETNGBL	R1	K1
@@ -202,7 +202,7 @@ be_local_closure(add_driver,   /* name */
     /* K1   */  be_nested_string("push", -2022703139, 4),
     }),
     (be_nested_const_str("add_driver", 1654458371, 10)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR R2  R0  K0
       0x780A0004,  //  0001  JMPF R2  #0007
@@ -245,7 +245,7 @@ be_local_closure(gen_cb,   /* name */
     /* K6   */  be_nested_string("No callback available", 633786138, 21),
     }),
     (be_nested_const_str("gen_cb", -1049739745, 6)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[34]) {  /* code */
       0x88080100,  //  0000  GETMBR R2  R0  K0
       0x4C0C0000,  //  0001  LDNIL  R3
@@ -306,7 +306,7 @@ be_local_closure(set_light,   /* name */
     /* K2   */  be_nested_string("set", -970520829, 3),
     }),
     (be_nested_const_str("set_light", -1118891144, 9)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[18]) {  /* code */
       0x600C0001,  //  0000  GETGBL R3  G1
       0x58100000,  //  0001  LDCONST  R4  K0
@@ -353,7 +353,7 @@ be_local_closure(remove_rule,   /* name */
     /* K4   */  be_const_int(1),
     }),
     (be_nested_const_str("remove_rule", -838755968, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[21]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x780A0011,  //  0001  JMPF	R2	#0014
@@ -402,7 +402,7 @@ be_local_closure(add_cmd,   /* name */
     /* K3   */  be_nested_string("the second argument is not a function", -340392827, 37),
     }),
     (be_nested_const_str("add_cmd", -933336417, 7)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[15]) {  /* code */
       0x880C0100,  //  0000  GETMBR R3  R0  K0
       0x740E0002,  //  0001  JMPT R3  #0005
@@ -446,7 +446,7 @@ be_local_closure(wire_scan,   /* name */
     /* K4   */  be_nested_string("wire2", -1065468258, 5),
     }),
     (be_nested_const_str("wire_scan", -1623691416, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[33]) {  /* code */
       0x4C0C0000,  //  0000  LDNIL	R3
       0x200C0403,  //  0001  NE	R3	R2	R3
@@ -508,7 +508,7 @@ be_local_closure(find_key_i,   /* name */
     /* K4   */  be_nested_string("stop_iteration", -121173395, 14),
     }),
     (be_nested_const_str("find_key_i", 850136726, 10)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[30]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0x8C100701,  //  0001  GETMET	R4	R3	K1
@@ -564,7 +564,7 @@ be_local_closure(chars_in_string,   /* name */
     /* K1   */  be_const_int(1),
     }),
     (be_nested_const_str("chars_in_string", -1146182164, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[31]) {  /* code */
       0x780E0001,  //  0000  JMPF	R3	#0003
       0x50100200,  //  0001  LDBOOL	R4	1	0
@@ -623,7 +623,7 @@ be_local_closure(set_timer,   /* name */
     /* K3   */  be_nested_string("millis", 1214679063, 6),
     }),
     (be_nested_const_str("set_timer", 2135414533, 9)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[16]) {  /* code */
       0x88100100,  //  0000  GETMBR R4  R0  K0
       0x74120002,  //  0001  JMPT R4  #0005
@@ -669,7 +669,7 @@ be_local_closure(add_rule,   /* name */
     /* K5   */  be_nested_string("the second argument is not a function", -340392827, 37),
     }),
     (be_nested_const_str("add_rule", 596540743, 8)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[20]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x740E0002,  //  0001  JMPT	R3	#0005
@@ -721,7 +721,7 @@ be_local_closure(run_deferred,   /* name */
     /* K7   */  be_const_int(1),
     }),
     (be_nested_const_str("run_deferred", 371594696, 12)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[27]) {  /* code */
       0x88040100,  //  0000  GETMBR R1  R0  K0
       0x78060017,  //  0001  JMPF R1  #001A
@@ -822,7 +822,7 @@ be_local_closure(time_str,   /* name */
     /* K9   */  be_nested_string("sec", -1155074638, 3),
     }),
     (be_nested_const_str("time_str", -1681139684, 8)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[14]) {  /* code */
       0xA40A0000,  //  0000  IMPORT R2  K0
       0x8C0C0101,  //  0001  GETMET R3  R0  K1
@@ -878,7 +878,7 @@ be_local_closure(load,   /* name */
     /* K17  */  be_nested_string("BRY: could not save compiled file %s (%s)", 736659787, 41),
     }),
     (be_nested_const_str("load", -435725847, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[87]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0xA40E0200,  //  0001  IMPORT	R3	K1
@@ -995,7 +995,7 @@ be_local_closure(find_op,   /* name */
     /* K5   */  be_const_int(1),
     }),
     (be_nested_const_str("find_op", -528253920, 7)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[42]) {  /* code */
       0xA40A0000,  //  0000  IMPORT R2  K0
       0x580C0001,  //  0001  LDCONST  R3  K1
@@ -1068,7 +1068,7 @@ be_local_closure(remove_timer,   /* name */
     /* K6   */  be_const_int(1),
     }),
     (be_nested_const_str("remove_timer", -153495081, 12)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[23]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL  R2  K0
       0x88080501,  //  0001  GETMBR R2  R2  K1
@@ -1118,7 +1118,7 @@ be_local_closure(get_light,   /* name */
     /* K2   */  be_nested_string("get", 1410115415, 3),
     }),
     (be_nested_const_str("get_light", 381930476, 9)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[16]) {  /* code */
       0x60080001,  //  0000  GETGBL R2  G1
       0x580C0000,  //  0001  LDCONST  R3  K0
@@ -1170,7 +1170,7 @@ be_local_closure(exec_rules,   /* name */
     /* K11  */  be_const_int(1),
     }),
     (be_nested_const_str("exec_rules", 1445221092, 10)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[48]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x740A0003,  //  0001  JMPT	R2	#0006
@@ -1254,7 +1254,7 @@ be_local_closure(exec_tele,   /* name */
     /* K11  */  be_const_int(1),
     }),
     (be_nested_const_str("exec_tele", 1020751601, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[41]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x780A0024,  //  0001  JMPF	R2	#0027
@@ -1322,7 +1322,7 @@ be_local_closure(remove_driver,   /* name */
     /* K2   */  be_nested_string("pop", 1362321360, 3),
     }),
     (be_nested_const_str("remove_driver", 1030243768, 13)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[14]) {  /* code */
       0x88080100,  //  0000  GETMBR R2  R0  K0
       0x780A000A,  //  0001  JMPF R2  #000D
@@ -1376,7 +1376,7 @@ be_local_closure(try_rule,   /* name */
     /* K15  */  be_nested_string("<=", -1795743310, 2),
     }),
     (be_nested_const_str("try_rule", 1986449405, 8)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[141]) {  /* code */
       0xA4120000,  //  0000  IMPORT	R4	K0
       0x8C140101,  //  0001  GETMET	R5	R0	K1
@@ -1544,7 +1544,7 @@ be_local_closure(cb_dispatch,   /* name */
     /* K2   */  be_nested_string("find", -1108310694, 4),
     }),
     (be_nested_const_str("cb_dispatch", 1741510499, 11)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[20]) {  /* code */
       0x88180100,  //  0000  GETMBR R6  R0  K0
       0x4C1C0000,  //  0001  LDNIL  R7
@@ -1591,7 +1591,7 @@ be_local_closure(gc,   /* name */
     /* K2   */  be_nested_string("allocated", 429986098, 9),
     }),
     (be_nested_const_str("gc", 1042313471, 2)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 6]) {  /* code */
       0xA4060000,  //  0000  IMPORT R1  K0
       0x8C080301,  //  0001  GETMET R2  R1  K1
@@ -1761,7 +1761,7 @@ be_local_closure(remove_cmd,   /* name */
     /* K1   */  be_nested_string("remove", -611183107, 6),
     }),
     (be_nested_const_str("remove_cmd", -462651594, 10)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR R2  R0  K0
       0x780A0003,  //  0001  JMPF R2  #0006
@@ -1797,7 +1797,7 @@ be_local_closure(exec_cmd,   /* name */
     /* K4   */  be_nested_string("resolvecmnd", 993361485, 11),
     }),
     (be_nested_const_str("exec_cmd", 493567399, 8)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[27]) {  /* code */
       0x88100100,  //  0000  GETMBR R4  R0  K0
       0x78120016,  //  0001  JMPF R4  #0019

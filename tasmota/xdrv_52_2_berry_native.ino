@@ -494,6 +494,49 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
   return ret;
 }
 
+extern "C" {
+
+  /*********************************************************************************************\
+   * Generalized virtual members for modules
+   * 
+   * Takes a pointer to be_constint_t array and size
+   * Returns true if a match was found. In such case the result is on Berry stack
+   * 
+   * Encoding depend on prefix (which is skipped when matching names):
+   * 1. `COLOR_WHITE` int value
+   * 3. `$SYMBOL_OK"` string pointer
+   * 4. `&seg7_font` comptr
+  \*********************************************************************************************/
+  bool be_module_member(bvm *vm, const be_constint_t * definitions, size_t def_len);
+  bool be_module_member(bvm *vm, const be_constint_t * definitions, size_t def_len) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 1 && be_isstring(vm, 1)) {
+      const char * needle = be_tostring(vm, 1);
+      int32_t idx;
+
+      idx = bin_search(needle, &definitions[0].name, sizeof(definitions[0]), def_len);
+      if (idx >= 0) {
+        // we did have a match
+        const char * key = definitions[idx].name;
+        switch (key[0]) {
+          // switch depending on the first char of the key, indicating the type
+          case '$': // string
+            be_pushstring(vm, (const char*) definitions[idx].value);
+            break;
+          case '&': // native function
+            be_pushntvfunction(vm, (bntvfunc) definitions[idx].value);
+            break;
+          default:  // int
+            be_pushint(vm, definitions[idx].value);
+            break;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
 /*********************************************************************************************\
  * Manage timeout for Berry code
  *

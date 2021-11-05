@@ -33,7 +33,7 @@ be_local_closure(set_time,   /* name */
     /* K9   */  be_nested_string("set_text", 1849641155, 8),
     }),
     (be_nested_const_str("set_time", 900236405, 8)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[27]) {  /* code */
       0xA4120000,  //  0000  IMPORT	R4	K0
       0x88140101,  //  0001  GETMBR	R5	R0	K1
@@ -93,7 +93,7 @@ be_local_closure(every_second,   /* name */
     /* K8   */  be_nested_string("sec", -1155074638, 3),
     }),
     (be_nested_const_str("every_second", 2075451465, 12)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[17]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -155,8 +155,8 @@ be_local_closure(init,   /* name */
     /* K20  */  be_nested_string("tasmota", 424643812, 7),
     /* K21  */  be_nested_string("add_driver", 1654458371, 10),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[82]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
@@ -265,7 +265,7 @@ be_local_closure(del,   /* name */
     /* K2   */  be_nested_string("remove_driver", 1030243768, 13),
     }),
     (be_nested_const_str("del", -816214454, 3)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[10]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0

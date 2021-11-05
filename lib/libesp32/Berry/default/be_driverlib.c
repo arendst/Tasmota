@@ -20,8 +20,8 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
     })
@@ -47,7 +47,7 @@ be_local_closure(get_tasmota,   /* name */
     /* K0   */  be_nested_string("tasmota", 424643812, 7),
     }),
     (be_nested_const_str("get_tasmota", 334356779, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 2]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x80040200,  //  0001  RET	1	R1
@@ -83,7 +83,7 @@ be_local_closure(add_cmd,   /* name */
         0,                          /* has constants */
         NULL,                       /* no const */
         (be_nested_const_str("<lambda>", 607256038, 8)),
-        (be_nested_const_str("input", -103256197, 5)),
+        ((bstring*) &be_const_str_input),
         ( &(const binstruction[ 8]) {  /* code */
           0x68100000,  //  0000  GETUPV	R4	U0
           0x68140001,  //  0001  GETUPV	R5	U1
@@ -102,7 +102,7 @@ be_local_closure(add_cmd,   /* name */
     /* K1   */  be_nested_string("add_cmd", -933336417, 7),
     }),
     (be_nested_const_str("add_cmd", -933336417, 7)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
