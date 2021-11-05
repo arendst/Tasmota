@@ -1841,19 +1841,20 @@ int8_t ParseSerialConfig(const char *pstr)
 }
 
 
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+// workaround disabled 05.11.2021 solved with https://github.com/espressif/arduino-esp32/pull/5549
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
 // temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
-#include <driver/uart.h>
-uint32_t GetSerialBaudrate(void) {
-  uint32_t br;
-  uart_get_baudrate(0, &br);
-  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
-}
-#else
+//#include <driver/uart.h>
+//uint32_t GetSerialBaudrate(void) {
+//  uint32_t br;
+//  uart_get_baudrate(0, &br);
+//  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+//}
+//#else
 uint32_t GetSerialBaudrate(void) {
   return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
 }
-#endif
+//#endif
 
 #ifdef ESP8266
 void SetSerialSwap(void) {
