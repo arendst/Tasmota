@@ -1766,6 +1766,10 @@ void GpioInit(void)
         TasmotaGlobal.ledlnk_inverted = 1;
         mpin -= (AGPIO(GPIO_LEDLNK_INV) - AGPIO(GPIO_LEDLNK));
       }
+      else if (mpin == AGPIO(GPIO_HEARTBEAT_INV)) {
+        TasmotaGlobal.heartbeat_inverted = 1;
+        mpin -= (AGPIO(GPIO_HEARTBEAT_INV) - AGPIO(GPIO_HEARTBEAT));
+      }
       else if ((mpin >= AGPIO(GPIO_PWM1_INV)) && (mpin < (AGPIO(GPIO_PWM1_INV) + MAX_PWMS))) {
         bitSet(TasmotaGlobal.pwm_inverted, mpin - AGPIO(GPIO_PWM1_INV));
         mpin -= (AGPIO(GPIO_PWM1_INV) - AGPIO(GPIO_PWM1));
@@ -1889,6 +1893,11 @@ void GpioInit(void)
       }
     }
 #endif  // ESP8266
+  }
+
+  if (PinUsed(GPIO_HEARTBEAT)) {
+    pinMode(Pin(GPIO_HEARTBEAT), OUTPUT);
+    digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
   }
 
   // Digital input

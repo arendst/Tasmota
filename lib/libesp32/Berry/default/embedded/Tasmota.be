@@ -38,6 +38,20 @@ class Tasmota
     end
   end
 
+  # create a specific sub-class for rules: pattern(string) -> closure
+  # Classs KV has two members k and v
+  def kv(k, v)
+    class KV
+      var k, v
+      def init(k,v)
+        self.k = k
+        self.v = v
+      end
+    end
+
+    return KV(k, v)
+  end
+
   # add `chars_in_string(s:string,c:string) -> int``
   # looks for any char in c, and return the position of the first char
   # or -1 if not found
@@ -98,10 +112,10 @@ class Tasmota
   # Rules
   def add_rule(pat,f)
     if !self._rules
-      self._rules={}
+      self._rules=[]
     end
     if type(f) == 'function'
-      self._rules[pat] = f
+      self._rules.push(self.kv(pat, f))
     else
       raise 'value_error', 'the second argument is not a function'
     end
@@ -109,7 +123,14 @@ class Tasmota
 
   def remove_rule(pat)
     if self._rules
-      self._rules.remove(pat)
+      var i = 0
+      while i < size(self._rules)
+        if self._rules[i].k == pat
+          self._rules.remove(i)  #- don't increment i since we removed the object -#
+        else
+          i += 1
+        end
+      end
     end
   end
 
@@ -170,10 +191,11 @@ class Tasmota
       end
       # try all rule handlers
       if self._rules
-        try
-          ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
-        except "stop_iteration"
-          # silence stop_iteration which means that the map was resized during iteration
+        var i = 0
+        while i < size(self._rules)
+          var kv = self._rules[i]
+          ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut if ret is already true -#
+          i += 1
         end
       end
       return ret
@@ -193,10 +215,12 @@ class Tasmota
       end
       # insert tele prefix
       ev = { "Tele": ev }
-      try
-        ret = self._rules.reduce( /k,v,r-> self.try_rule(ev,k,v) || r, nil, false)
-      except "stop_iteration"
-        # silence stop_iteration which means that the map was resized during iteration
+
+      var i = 0
+      while i < size(self._rules)
+        var kv = self._rules[i]
+        ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut -#
+        i += 1
       end
       return ret
     end
@@ -285,8 +309,8 @@ class Tasmota
   def wire_scan(addr,idx)
     # skip if the I2C index is disabled
     if idx != nil && !self.i2c_enabled(idx) return nil end
-    if self.wire1.detect(addr) return self.wire1 end
-    if self.wire2.detect(addr) return self.wire2 end
+    if self.wire1.enabled() && self.wire1.detect(addr) return self.wire1 end
+    if self.wire2.enabled() && self.wire2.detect(addr) return self.wire2 end
     return nil
   end
 

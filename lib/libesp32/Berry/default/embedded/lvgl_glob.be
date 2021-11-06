@@ -38,7 +38,7 @@ class LVGL_glob
 
     var event = lv.lv_event(introspect.toptr(event_ptr))
 
-    var target = event.target
+    var target = int(event.target)
     var f = self.cb_event_closure[target]
     var obj = self.get_object_from_ptr(target)
     #print('>> lvgl_event_dispatch', f, obj, event)

@@ -175,6 +175,7 @@ enum UserSelectablePins {
   GPIO_BL0939_RX,                      // BL0939 Serial interface (Dual R3 v2)
   GPIO_BL0942_RX,                      // BL0942 Serial interface
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
+  GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -369,7 +370,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_VINDRIKTNING_RX "|"
   D_SENSOR_BL0939_RX "|"
   D_SENSOR_BL0942_RX "|"
-  D_SENSOR_HM330X_SET
+  D_SENSOR_HM330X_SET "|"
+  D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -428,6 +430,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
+  AGPIO(GPIO_HEARTBEAT),                 // Every second pulsed high
+  AGPIO(GPIO_HEARTBEAT_INV),             // Every second pulsed low
 #ifdef USE_FTC532
   AGPIO(GPIO_FTC532),                   // FTC532 touch input
 #endif

@@ -726,29 +726,15 @@ extern "C" {
 
   int lv0_member(bvm *vm);
   int lv0_member(bvm *vm) {
+    // first try the standard way
+    if (be_module_member(vm, lv0_constants, lv0_constants_size)) {
+      be_return(vm);
+    }
+    // try alternative members
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 1 && be_isstring(vm, 1)) {
       const char * needle = be_tostring(vm, 1);
       int32_t idx;
-
-      idx = bin_search(needle, &lv0_constants[0].name, sizeof(lv0_constants[0]), lv0_constants_size);
-      if (idx >= 0) {
-        // we did have a match
-        const char * key = lv0_constants[idx].name;
-        switch (key[0]) {
-          // switch depending on the first char of the key, indicating the type
-          case '$': // string
-            be_pushstring(vm, (const char*) lv0_constants[idx].value);
-            break;
-          case '&': // native function
-            be_pushntvfunction(vm, (bntvfunc) lv0_constants[idx].value);
-            break;
-          default:  // int
-            be_pushint(vm, lv0_constants[idx].value);
-            break;
-        }
-        be_return(vm);
-      }
 
       // search for a class with this name
       char cl_prefixed[32];

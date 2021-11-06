@@ -26,7 +26,7 @@ be_local_closure(set_percentage,   /* name */
     /* K2   */  be_nested_string("invalidate", -1645232368, 10),
     }),
     (be_nested_const_str("set_percentage", -1342944572, 14)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[18]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x540E0013,  //  0001  LDINT	R3	20
@@ -77,8 +77,8 @@ be_local_closure(init,   /* name */
     /* K8   */  be_nested_string("line_dsc", -200476318, 8),
     /* K9   */  be_nested_string("draw_line_dsc", -74291093, 13),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[24]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -135,7 +135,7 @@ be_local_closure(widget_event,   /* name */
         /* K0   */  be_const_int(1),
         }),
         (be_nested_const_str("atleast1", 1956331672, 8)),
-        (be_nested_const_str("input", -103256197, 5)),
+        ((bstring*) &be_const_str_input),
         ( &(const binstruction[ 6]) {  /* code */
           0x28040100,  //  0000  GE	R1	R0	K0
           0x78060001,  //  0001  JMPF	R1	#0004
@@ -187,7 +187,7 @@ be_local_closure(widget_event,   /* name */
     /* K36  */  be_nested_string("EVENT_DRAW_PART_END", -993342004, 19),
     }),
     (be_nested_const_str("widget_event", 1951408186, 12)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[138]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
@@ -350,7 +350,7 @@ be_local_closure(get_percentage,   /* name */
     /* K0   */  be_nested_string("percentage", -1756136011, 10),
     }),
     (be_nested_const_str("get_percentage", -1414483304, 14)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x80040200,  //  0001  RET	1	R1

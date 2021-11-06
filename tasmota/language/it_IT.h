@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 16.10.2021
+ * Updated until v9.5.0.9 - Last update 03.11.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -842,6 +842,7 @@
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
 #define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
+#define D_SENSOR_HEARTBEAT              "Battito cardiaco"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

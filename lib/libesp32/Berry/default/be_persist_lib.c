@@ -31,7 +31,7 @@ be_local_closure(save,   /* name */
     /* K7   */  be_nested_string("_dirty", 283846766, 6),
     }),
     (be_nested_const_str("save", -855671224, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[30]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x4C080000,  //  0001  LDNIL	R2
@@ -87,7 +87,7 @@ be_local_closure(setmember,   /* name */
     /* K1   */  be_nested_string("_dirty", 283846766, 6),
     }),
     (be_nested_const_str("setmember", 1432909441, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x980C0202,  //  0001  SETIDX	R3	R1	R2
@@ -121,8 +121,8 @@ be_local_closure(init,   /* name */
     /* K4   */  be_nested_string("load", -435725847, 4),
     /* K5   */  be_nested_string("_dirty", 283846766, 6),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[20]) {  /* code */
       0x90020101,  //  0000  SETMBR	R0	K0	K1
       0x6008000F,  //  0001  GETGBL	R2	G15
@@ -176,7 +176,7 @@ be_local_closure(load,   /* name */
     /* K9   */  be_nested_string("_dirty", 283846766, 6),
     }),
     (be_nested_const_str("load", -435725847, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[37]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -239,7 +239,7 @@ be_local_closure(has,   /* name */
     /* K1   */  be_nested_string("has", -306245661, 3),
     }),
     (be_nested_const_str("has", -306245661, 3)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -270,7 +270,7 @@ be_local_closure(zero,   /* name */
     /* K1   */  be_nested_string("_dirty", 283846766, 6),
     }),
     (be_nested_const_str("zero", -1955600541, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 6]) {  /* code */
       0x60040013,  //  0000  GETGBL	R1	G19
       0x7C040000,  //  0001  CALL	R1	0
@@ -302,7 +302,7 @@ be_local_closure(member,   /* name */
     /* K1   */  be_nested_string("find", -1108310694, 4),
     }),
     (be_nested_const_str("member", 719708611, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -334,7 +334,7 @@ be_local_closure(remove,   /* name */
     /* K2   */  be_nested_string("_dirty", 283846766, 6),
     }),
     (be_nested_const_str("remove", -611183107, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -367,7 +367,7 @@ be_local_closure(find,   /* name */
     /* K1   */  be_nested_string("find", -1108310694, 4),
     }),
     (be_nested_const_str("find", -1108310694, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 6]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
@@ -422,7 +422,7 @@ be_local_closure(_anonymous_,   /* name */
     /* K0   */  be_const_class(be_class_Persist),
     }),
     (be_nested_const_str("_anonymous_", 1957281476, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x58040000,  //  0000  LDCONST	R1	K0
       0xB4000000,  //  0001  CLASS	K0

@@ -32,19 +32,19 @@ bool Xdsp18(uint8_t function) {
   switch (function) {
 
     case FUNC_DISPLAY_INIT_DRIVER:
-      result = callBerryEventDispatcher(PSTR("display"), PSTR("init_driver"), function, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("display"), PSTR("init_driver"), 0, nullptr);
       break;
     case FUNC_DISPLAY_INIT:
-      result = callBerryEventDispatcher(PSTR("display"), PSTR("init_driver"), function, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("display"), PSTR("init_driver"), 0, nullptr);
       break;
     case FUNC_DISPLAY_MODEL:
-      result = callBerryEventDispatcher(PSTR("display"), PSTR("model"), function, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("display"), PSTR("model"), 0, nullptr);
       break;
     case FUNC_DISPLAY_DIM:
-      result = callBerryEventDispatcher(PSTR("display"), PSTR("dim"), function, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("display"), PSTR("dim"), GetDisplayDimmer(), nullptr);
       break;
     case FUNC_DISPLAY_POWER:
-      result = callBerryEventDispatcher(PSTR("display"), PSTR("power"), function, XdrvMailbox.data);
+      result = callBerryEventDispatcher(PSTR("display"), PSTR("power"), disp_power ? GetDisplayDimmer() : 0, nullptr);
       break;
   }
   return result;

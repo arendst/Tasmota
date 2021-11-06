@@ -733,9 +733,10 @@ typedef struct {
   uint8_t       shd_leading_edge;          // F5B
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
-  uint8_t       light_step_pixels;				 // F5F
+  uint8_t       tcp_config;                // F5F
+  uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f5f[60];              // F60 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f60[5f];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 

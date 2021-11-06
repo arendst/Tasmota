@@ -2741,7 +2741,7 @@ void MI32ShowOneMISensor(){
     sprintf(SensorTopic, "tele/tasmota_ble/%s",
       id);
 
-    MqttPublish(SensorTopic);
+    MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
     //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
   }
   MI32.mqttCurrentSingleSlot++;

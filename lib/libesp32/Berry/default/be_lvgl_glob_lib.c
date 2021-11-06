@@ -25,7 +25,7 @@ be_local_closure(get_object_from_ptr,   /* name */
     /* K1   */  be_nested_string("find", -1108310694, 4),
     }),
     (be_nested_const_str("get_object_from_ptr", -1949948095, 19)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[10]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -68,7 +68,7 @@ be_local_closure(widget_event_impl,   /* name */
     /* K8   */  be_nested_string("widget_event", 1951408186, 12),
     }),
     (be_nested_const_str("widget_event_impl", -2116536735, 17)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[30]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
@@ -129,8 +129,8 @@ be_local_closure(lvgl_event_dispatch,   /* name */
     /* K6   */  be_nested_string("get_object_from_ptr", -1949948095, 19),
     }),
     (be_nested_const_str("lvgl_event_dispatch", 2104396622, 19)),
-    (be_nested_const_str("input", -103256197, 5)),
-    ( &(const binstruction[18]) {  /* code */
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[20]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0xB80E0200,  //  0001  GETNGBL	R3	K1
       0x8C0C0702,  //  0002  GETMET	R3	R3	K2
@@ -138,17 +138,19 @@ be_local_closure(lvgl_event_dispatch,   /* name */
       0x5C1C0200,  //  0004  MOVE	R7	R1
       0x7C140400,  //  0005  CALL	R5	2
       0x7C0C0400,  //  0006  CALL	R3	2
-      0x88100704,  //  0007  GETMBR	R4	R3	K4
-      0x88140105,  //  0008  GETMBR	R5	R0	K5
-      0x94140A04,  //  0009  GETIDX	R5	R5	R4
-      0x8C180106,  //  000A  GETMET	R6	R0	K6
-      0x5C200800,  //  000B  MOVE	R8	R4
-      0x7C180400,  //  000C  CALL	R6	2
-      0x5C1C0A00,  //  000D  MOVE	R7	R5
-      0x5C200C00,  //  000E  MOVE	R8	R6
-      0x5C240600,  //  000F  MOVE	R9	R3
-      0x7C1C0400,  //  0010  CALL	R7	2
-      0x80000000,  //  0011  RET	0
+      0x60100009,  //  0007  GETGBL	R4	G9
+      0x88140704,  //  0008  GETMBR	R5	R3	K4
+      0x7C100200,  //  0009  CALL	R4	1
+      0x88140105,  //  000A  GETMBR	R5	R0	K5
+      0x94140A04,  //  000B  GETIDX	R5	R5	R4
+      0x8C180106,  //  000C  GETMET	R6	R0	K6
+      0x5C200800,  //  000D  MOVE	R8	R4
+      0x7C180400,  //  000E  CALL	R6	2
+      0x5C1C0A00,  //  000F  MOVE	R7	R5
+      0x5C200C00,  //  0010  MOVE	R8	R6
+      0x5C240600,  //  0011  MOVE	R9	R3
+      0x7C1C0400,  //  0012  CALL	R7	2
+      0x80000000,  //  0013  RET	0
     })
   )
 );
@@ -178,7 +180,7 @@ be_local_closure(widget_dtor_impl,   /* name */
     /* K6   */  be_nested_string("widget_destructor", -87578951, 17),
     }),
     (be_nested_const_str("widget_dtor_impl", 520430610, 16)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[22]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
@@ -226,7 +228,7 @@ be_local_closure(register_obj,   /* name */
     /* K1   */  be_nested_string("_p", 1594591802, 2),
     }),
     (be_nested_const_str("register_obj", -312352526, 12)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[13]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -274,7 +276,7 @@ be_local_closure(gen_cb,   /* name */
         /* K0   */  be_nested_string("lvgl_event_dispatch", 2104396622, 19),
         }),
         (be_nested_const_str("<lambda>", 607256038, 8)),
-        (be_nested_const_str("input", -103256197, 5)),
+        ((bstring*) &be_const_str_input),
         ( &(const binstruction[ 5]) {  /* code */
           0x68040000,  //  0000  GETUPV	R1	U0
           0x8C040300,  //  0001  GETMET	R1	R1	K0
@@ -296,7 +298,7 @@ be_local_closure(gen_cb,   /* name */
     /* K7   */  be_nested_string("cb_do_nothing", 1488730702, 13),
     }),
     (be_nested_const_str("gen_cb", -1049739745, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[41]) {  /* code */
       0x1C140300,  //  0000  EQ	R5	R1	K0
       0x78160018,  //  0001  JMPF	R5	#001B
@@ -364,7 +366,7 @@ be_local_closure(deregister_obj,   /* name */
     /* K2   */  be_nested_string("cb_event_closure", -466699971, 16),
     }),
     (be_nested_const_str("deregister_obj", -385000303, 14)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[17]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -416,7 +418,7 @@ be_local_closure(widget_cb,   /* name */
         /* K0   */  be_nested_string("widget_ctor_impl", 194252479, 16),
         }),
         (be_nested_const_str("<lambda>", 607256038, 8)),
-        (be_nested_const_str("input", -103256197, 5)),
+        ((bstring*) &be_const_str_input),
         ( &(const binstruction[ 6]) {  /* code */
           0x68080000,  //  0000  GETUPV	R2	U0
           0x8C080500,  //  0001  GETMET	R2	R2	K0
@@ -441,7 +443,7 @@ be_local_closure(widget_cb,   /* name */
         /* K0   */  be_nested_string("widget_dtor_impl", 520430610, 16),
         }),
         (be_nested_const_str("<lambda>", 607256038, 8)),
-        (be_nested_const_str("input", -103256197, 5)),
+        ((bstring*) &be_const_str_input),
         ( &(const binstruction[ 6]) {  /* code */
           0x68080000,  //  0000  GETUPV	R2	U0
           0x8C080500,  //  0001  GETMET	R2	R2	K0
@@ -466,7 +468,7 @@ be_local_closure(widget_cb,   /* name */
         /* K0   */  be_nested_string("widget_event_impl", -2116536735, 17),
         }),
         (be_nested_const_str("<lambda>", 607256038, 8)),
-        (be_nested_const_str("input", -103256197, 5)),
+        ((bstring*) &be_const_str_input),
         ( &(const binstruction[ 6]) {  /* code */
           0x68080000,  //  0000  GETUPV	R2	U0
           0x8C080500,  //  0001  GETMET	R2	R2	K0
@@ -496,7 +498,7 @@ be_local_closure(widget_cb,   /* name */
     /* K14  */  be_nested_string("event_cb", -1166269279, 8),
     }),
     (be_nested_const_str("widget_cb", -1531384241, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[56]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x4C080000,  //  0001  LDNIL	R2
@@ -577,7 +579,7 @@ be_local_closure(_anonymous_,   /* name */
     /* K0   */  be_nested_string("LVG: call to unsupported callback", 504176819, 33),
     }),
     (be_nested_const_str("_anonymous_", 1957281476, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
       0x60000001,  //  0000  GETGBL	R0	G1
       0x58040000,  //  0001  LDCONST	R1	K0
@@ -632,7 +634,7 @@ be_local_closure(create_custom_widget,   /* name */
     /* K26  */  be_nested_string("class_init_obj", 178410604, 14),
     }),
     (be_nested_const_str("create_custom_widget", 1140594778, 20)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[86]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0x6010000F,  //  0001  GETGBL	R4	G15
@@ -751,7 +753,7 @@ be_local_closure(widget_ctor_impl,   /* name */
     /* K8   */  be_nested_string("widget_constructor", -1751181362, 18),
     }),
     (be_nested_const_str("widget_ctor_impl", 194252479, 16)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[29]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1

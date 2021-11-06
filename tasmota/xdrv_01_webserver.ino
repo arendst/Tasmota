@@ -2794,9 +2794,6 @@ void HandleUploadLoop(void) {
       Web.upload_error = 2;  // Not enough space
       return;
     }
-#ifdef ESP32
-//    TWDTLoop();
-#endif
     if (upload.totalSize && !(upload.totalSize % 102400)) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), upload.totalSize / 1024);
     }

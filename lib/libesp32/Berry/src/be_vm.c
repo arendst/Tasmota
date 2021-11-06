@@ -821,7 +821,6 @@ newframe: /* a new call frame */
             vm->counter_get++;
 #endif
             bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
-            // bvalue *a = RA(), *b = RKB(), *c = RKC();
             bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
                 obj_attribute(vm, b, var_tostr(c), &a_temp);
@@ -834,6 +833,7 @@ newframe: /* a new call frame */
                 reg = vm->reg;
             } else {
                 attribute_error(vm, "attribute", b, c);
+                a_temp = *RA();     /* avoid gcc warning for uninitialized variable a_temp, this code is never reached */
             }
             bvalue *a = RA();
             *a = a_temp;    /* assign the resul to the specified register on the updated stack */

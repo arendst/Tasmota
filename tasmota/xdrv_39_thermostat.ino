@@ -1379,7 +1379,7 @@ void CmndThermostatModeSet(void)
         Thermostat[ctr_output].timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.thermostat_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.thermostat_mode);
   }
 }
 
@@ -1395,7 +1395,7 @@ void CmndClimateModeSet(void)
         Thermostat[ctr_output].time_ctr_checkpoint = TasmotaGlobal.uptime;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.climate_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.climate_mode);
   }
 }
 
@@ -1422,7 +1422,7 @@ void CmndTempFrostProtectSet(void)
     else {
       value = Thermostat[ctr_output].temp_frost_protect;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1444,7 +1444,7 @@ void CmndControllerModeSet(void)
         Thermostat[ctr_output].time_ctr_checkpoint = 0;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.controller_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.controller_mode);
   }
 }
 
@@ -1459,7 +1459,7 @@ void CmndInputSwitchSet(void)
         Thermostat[ctr_output].timestamp_input_on = TasmotaGlobal.uptime;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.input_switch_number);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.input_switch_number);
   }
 }
 
@@ -1470,7 +1470,7 @@ void CmndInputSwitchUse(void)
     if (XdrvMailbox.data_len > 0) {
       Thermostat[ctr_output].status.use_input = (uint32_t)(XdrvMailbox.payload);
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.use_input);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.use_input);
   }
 }
 
@@ -1484,7 +1484,7 @@ void CmndSensorInputSet(void)
         Thermostat[ctr_output].status.sensor_type = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.sensor_type);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.sensor_type);
   }
 }
 
@@ -1498,7 +1498,7 @@ void CmndOutputRelaySet(void)
         Thermostat[ctr_output].status.output_relay_number = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.output_relay_number);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.output_relay_number);
   }
 }
 
@@ -1512,7 +1512,7 @@ void CmndTimeAllowRampupSet(void)
         Thermostat[ctr_output].time_allow_rampup = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_allow_rampup));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_allow_rampup));
   }
 }
 
@@ -1526,7 +1526,7 @@ void CmndTempFormatSet(void)
         Thermostat[ctr_output].status.temp_format = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.temp_format);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.temp_format);
   }
 }
 
@@ -1564,7 +1564,7 @@ void CmndTempMeasuredSet(void)
     else {
       value = Thermostat[ctr_output].temp_measured;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1592,7 +1592,7 @@ void CmndTempTargetSet(void)
     else {
       value = Thermostat[ctr_output].temp_target_level;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1607,7 +1607,7 @@ void CmndTempMeasuredGrdRead(void)
     else {
       value = Thermostat[ctr_output].temp_measured_gradient;
     }
-    ResponseCmndFloat(((float)value) / 1000, 1);
+    ResponseCmndIdxFloat(((float)value) / 1000, 1);
   }
 }
 
@@ -1621,7 +1621,7 @@ void CmndStateEmergencySet(void)
         Thermostat[ctr_output].diag.state_emergency = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].diag.state_emergency);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].diag.state_emergency);
   }
 }
 
@@ -1635,7 +1635,7 @@ void CmndTimeManualToAutoSet(void)
         Thermostat[ctr_output].time_manual_to_auto = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_manual_to_auto));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_manual_to_auto));
   }
 }
 
@@ -1649,7 +1649,7 @@ void CmndPropBandSet(void)
         Thermostat[ctr_output].val_prop_band = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].val_prop_band);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].val_prop_band);
   }
 }
 
@@ -1663,7 +1663,7 @@ void CmndTimeResetSet(void)
         Thermostat[ctr_output].time_reset = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_reset);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_reset);
   }
 }
 
@@ -1671,7 +1671,7 @@ void CmndTimePiProportRead(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_proportional_pi);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_proportional_pi);
   }
 }
 
@@ -1679,7 +1679,7 @@ void CmndTimePiIntegrRead(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_integral_pi);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_integral_pi);
   }
 }
 
@@ -1693,7 +1693,7 @@ void CmndTimePiCycleSet(void)
         Thermostat[ctr_output].time_pi_cycle = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle));
   }
 }
 
@@ -1720,7 +1720,7 @@ void CmndTempAntiWindupResetSet(void)
     else {
       value = Thermostat[ctr_output].temp_reset_anti_windup;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1747,7 +1747,7 @@ void CmndTempHystSet(void)
     else {
       value = Thermostat[ctr_output].temp_hysteresis;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1762,7 +1762,7 @@ void CmndPerfLevelAutotune(void)
         Thermostat[ctr_output].status.autotune_perf_mode = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.autotune_perf_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.autotune_perf_mode);
   }
 }
 #endif // USE_PI_AUTOTUNING
@@ -1777,7 +1777,7 @@ void CmndTimeMaxActionSet(void)
         Thermostat[ctr_output].time_max_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_max_action));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_max_action));
   }
 }
 
@@ -1791,7 +1791,7 @@ void CmndTimeMinActionSet(void)
         Thermostat[ctr_output].time_min_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_action));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_min_action));
   }
 }
 
@@ -1805,7 +1805,7 @@ void CmndTimeSensLostSet(void)
         Thermostat[ctr_output].time_sens_lost = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_sens_lost));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_sens_lost));
   }
 }
 
@@ -1819,7 +1819,7 @@ void CmndTimeMinTurnoffActionSet(void)
         Thermostat[ctr_output].time_min_turnoff_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_turnoff_action));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_min_turnoff_action));
   }
 }
 
@@ -1846,7 +1846,7 @@ void CmndTempRupDeltInSet(void)
     else {
       value = Thermostat[ctr_output].temp_rampup_delta_in;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1873,7 +1873,7 @@ void CmndTempRupDeltOutSet(void)
     else {
       value = Thermostat[ctr_output].temp_rampup_delta_out;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1887,7 +1887,7 @@ void CmndTimeRampupMaxSet(void)
         Thermostat[ctr_output].time_rampup_max = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_rampup_max));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_rampup_max));
   }
 }
 
@@ -1901,7 +1901,7 @@ void CmndTimeRampupCycleSet(void)
         Thermostat[ctr_output].time_rampup_cycle = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_rampup_cycle);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_rampup_cycle);
   }
 }
 
@@ -1928,7 +1928,7 @@ void CmndTempRampupPiAccErrSet(void)
     else {
       value = Thermostat[ctr_output].temp_rampup_pi_acc_error;
     }
-    ResponseCmndFloat((float)value / 100, 1);
+    ResponseCmndIdxFloat((float)value / 100, 1);
   }
 }
 
@@ -1942,7 +1942,7 @@ void CmndDiagnosticModeSet(void)
         Thermostat[ctr_output].diag.diagnostic_mode = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].diag.diagnostic_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].diag.diagnostic_mode);
   }
 }
 
@@ -1966,7 +1966,7 @@ void CmndCtrDutyCycleRead(void)
         value = 0;
       }
     }
-    ResponseCmndNumber((int)value);
+    ResponseCmndIdxNumber((int)value);
   }
 }
 
@@ -1980,7 +1980,7 @@ void CmndEnableOutputSet(void)
         Thermostat[ctr_output].status.enable_output = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.enable_output);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.enable_output);
   }
 }
 
