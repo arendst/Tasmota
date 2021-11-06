@@ -1997,12 +1997,18 @@ void CmndEnableOutputSet(void)
  * Web UI
 \*********************************************************************************************/
 
+
+// To be done, add all of this defines in according languages file when all will be finished
+// Avoid multiple changes on all language files during developement
+// --------------------------------------------------
 // xdrv_39_thermostat.ino
 #define D_THERMOSTAT             "Thermostat"
 #define D_THERMOSTAT_SET_POINT   "Set Point"
 #define D_THERMOSTAT_SENSOR      "Sensor"
 #define D_THERMOSTAT_GRADIENT    "Gradient"
 #define D_THERMOSTAT_DUTY_CYCLE  "Duty Cycle"
+// --------------------------------------------------
+
 
 #ifdef USE_WEBSERVER
 const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
