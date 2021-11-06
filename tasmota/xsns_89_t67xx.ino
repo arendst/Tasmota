@@ -137,7 +137,7 @@ uint16_t T67XX::getFirmwareVersion(void)
 
 void T67XX::detect(void)
 {
-  if (I2cActive(T67XX_I2C_ADDR))
+  if (!I2cSetDevice(T67XX_I2C_ADDR))
   {
     return;
   }

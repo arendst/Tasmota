@@ -24,6 +24,7 @@
 #include <berry.h>
 #include "lvgl.h"
 #include "be_lvgl.h"
+#include "be_ctypes.h"
 #include "Adafruit_LvGL_Glue.h"
 
 #ifdef USE_LVGL_FREETYPE
@@ -116,8 +117,8 @@ extern void lv_ex_get_started_1(void);
 //   - '(lv_button)' -> lv_button class or derived
 //   - '[lv_event_cb]' -> callback type, still prefixed with '^' to mark that it is cb
 //
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]);
-void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8]) {
+void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * arg_type, int32_t p[8]);
+void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * arg_type, int32_t p[8]) {
   bool arg_type_check = (arg_type != nullptr);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
   char type_short_name[32];
@@ -160,8 +161,8 @@ void be_check_arg_type(bvm *vm, int32_t argc, const char * arg_type, int32_t p[8
           break;
       }
     }
-    // berry_log_P(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[i] = be_convert_single_elt(vm, i+1, arg_type_check ? type_short_name : nullptr, p[0]);
+    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
+    p[i] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : nullptr, p[0]);
   }
 
   // check if we are missing arguments
@@ -176,32 +177,6 @@ extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
   
-  // called programmatically, when an object is construced
-  // LVGL8: constructor now has only 1 parameter (parent)
-  // If arg1 is comptr, then just encapsulate
-  int lvx_init_ctor(bvm *vm, void * func);
-  int lvx_init_ctor(bvm *vm, void * func) {
-    int argc = be_top(vm);
-    lv_obj_t * obj = nullptr;
-
-    if ((argc > 1) && be_iscomptr(vm, 2)) {
-      obj = (lv_obj_t*) be_tocomptr(vm, 2);
-    } else {
-      lv_obj_t * obj1 = nullptr;
-      if (argc > 1) {
-        obj1 = (lv_obj_t*) be_convert_single_elt(vm, 2);
-      }
-      // AddLog(LOG_LEVEL_INFO, "argc %d obj1 %p obj2 %p", argc, obj1, obj2);
-      fn_any_callable f = (fn_any_callable) func;
-      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p", f, p[0], p[1], p[2], p[3], p[4]);
-      if (f) {  // if f is null, just store 0x00000000
-        obj = (lv_obj_t*) (*f)((int32_t)obj1, 0, 0, 0, 0, 0, 0, 0);
-      }
-    }
-    lv_init_set_member(vm, 1, obj);
-    be_return_nil(vm);
-  }
-
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
 
   // native closure to call `be_call_c_func`
@@ -272,21 +247,41 @@ extern "C" {
   }
 
   int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
+    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, func=%p, return_type=%s, arg_type=%s", func, return_type ? return_type : "", arg_type ? arg_type : "");
     int32_t p[8] = {0,0,0,0,0,0,0,0};
     int32_t argc = be_top(vm); // Get the number of arguments
 
+    // the following describe the active payload for the C function (start and count)
+    // this is because the `init()` constructor first arg is not passed to the C function
+    int32_t arg_start = 1;      // start with standard values
+    int32_t arg_count = argc;
+
     // check if we call a constructor, in this case we store the return type into the new object
+    // check if we call a constructor with a comptr as first arg
     if (return_type && return_type[0] == '+') {
-      return_type++;    // skip the leading '+'
-      return lvx_init_ctor(vm, func);
+      if (argc > 1 && be_iscomptr(vm, 2)) {
+        lv_obj_t * obj = (lv_obj_t*) be_tocomptr(vm, 2);
+        lv_init_set_member(vm, 1, obj);
+        be_return_nil(vm);
+      } else {
+        // we need to discard the first arg
+        arg_start++;
+        arg_count--;
+      }
     }
 
     fn_any_callable f = (fn_any_callable) func;
-    be_check_arg_type(vm, argc, arg_type, p);
-    // berry_log_C(">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
+    // AddLog(LOG_LEVEL_INFO, ">> before be_check_arg_type argc=%i - %i", arg_count, arg_start);
+    be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
+    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
     int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
     if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
+    else if (return_type[0] == '+') {
+      lv_obj_t * obj = (lv_obj_t*) ret;
+      lv_init_set_member(vm, 1, obj);
+      be_return_nil(vm);
+    }
     else if (strlen(return_type) == 1) {
       switch (return_type[0]) {
         case '.':   // fallback next
@@ -298,8 +293,8 @@ extern "C" {
       }
       be_return(vm);
     } else { // class name
-      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj", ret);
-      be_getglobal(vm, return_type);  // stack = class
+      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj ret=%i return_type=%s", ret, return_type);
+      be_find_class(vm, return_type);
       be_pushcomptr(vm, (void*) ret);         // stack = class, ptr
       be_pushcomptr(vm, (void*) -1);         // stack = class, ptr, -1
       be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, -1, ptr
@@ -401,7 +396,7 @@ extern "C" {
   typedef lv_obj_t* (*fn_lvobj__void)(void);  // f() -> newly created lv_obj()
   int lv0_lvobj__void_call(bvm *vm, fn_lvobj__void func) {
     lv_obj_t * obj = (*func)();
-    be_getglobal(vm, LV_OBJ_CLASS); // stack = class
+    be_find_class(vm, "lv.lv_obj");
     be_pushcomptr(vm, (void*) -1);         // stack = class, -1
     be_pushcomptr(vm, (void*) obj);         // stack = class, -1, ptr
     be_call(vm, 2);                 // instanciate, stack = instance (don't call init() )
@@ -414,7 +409,7 @@ extern "C" {
     if (argc == 1 && be_isstring(vm, 1)) {
       lv_font_t * font = lv_font_load(be_tostring(vm, 1));
       if (font != nullptr) {
-        be_getglobal(vm, "lv_font");
+        be_find_class(vm, "lv.lv_font");
         be_pushcomptr(vm, font);
         be_call(vm, 1);
         be_pop(vm, 1);
@@ -438,7 +433,7 @@ extern "C" {
       lv_font_t * font = info.font;
 
       if (font != nullptr) {
-        be_getglobal(vm, "lv_font");
+        be_find_class(vm, "lv.lv_font");
         be_pushcomptr(vm, font);
         be_call(vm, 1);
         be_pop(vm, 1);
@@ -598,7 +593,7 @@ extern "C" {
       }
 
       if (font != nullptr) {
-        be_getglobal(vm, "lv_font");
+        be_find_class(vm, "lv.lv_font");
         be_pushcomptr(vm, (void*)font);
         be_call(vm, 1);
         be_pop(vm, 1);
@@ -632,7 +627,7 @@ extern "C" {
       }
 
       if (font != nullptr) {
-        be_getglobal(vm, "lv_font");
+        be_find_class(vm, "lv.lv_font");
         be_pushcomptr(vm, (void*)font);
         be_call(vm, 1);
         be_pop(vm, 1);
@@ -641,6 +636,70 @@ extern "C" {
         be_return_nil(vm);
       }
     }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int lv0_load_robotocondensed_latin1_font(bvm *vm) {
+#ifdef USE_LVGL_OPENHASP
+    int argc = be_top(vm);
+    if (argc == 1 && be_isint(vm, 1)) {
+      const lv_font_t * font = nullptr;
+      int32_t   font_size = be_toindex(vm, 1);
+
+      switch (font_size) {
+#if ROBOTOCONDENSED_REGULAR_12_LATIN1
+        case 12: font = &robotocondensed_regular_12_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_14_LATIN1
+        case 14: font = &robotocondensed_regular_14_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_16_LATIN1
+        case 16: font = &robotocondensed_regular_16_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_20_LATIN1
+        case 20: font = &robotocondensed_regular_20_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_22_LATIN1
+        case 22: font = &robotocondensed_regular_22_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_24_LATIN1
+        case 24: font = &robotocondensed_regular_24_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_28_LATIN1
+        case 28: font = &robotocondensed_regular_28_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_32_LATIN1
+        case 32: font = &robotocondensed_regular_32_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_36_LATIN1
+        case 36: font = &robotocondensed_regular_36_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_38_LATIN1
+        case 38: font = &robotocondensed_regular_38_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_40_LATIN1
+        case 40: font = &robotocondensed_regular_40_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_44_LATIN1
+        case 44: font = &robotocondensed_regular_44_latin1; break;
+#endif
+#if ROBOTOCONDENSED_REGULAR_48_LATIN1
+        case 48: font = &robotocondensed_regular_48_latin1; break;
+#endif
+        default: break;
+      }
+
+      if (font != nullptr) {
+        be_find_class(vm, "lv.lv_font");
+        be_pushcomptr(vm, (void*)font);
+        be_call(vm, 1);
+        be_pop(vm, 1);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+#endif // USE_LVGL_OPENHASP
     be_raise(vm, kTypeError, nullptr);
   }
 
@@ -662,43 +721,65 @@ extern "C" {
   extern const be_constint_t lv0_constants[];
   extern const size_t lv0_constants_size;
 
+  extern const be_ctypes_class_by_name_t be_ctypes_lvgl_classes[];
+  extern const size_t be_ctypes_lvgl_classes_size;
+
   int lv0_member(bvm *vm);
   int lv0_member(bvm *vm) {
+    // first try the standard way
+    if (be_module_member(vm, lv0_constants, lv0_constants_size)) {
+      be_return(vm);
+    }
+    // try alternative members
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 1 && be_isstring(vm, 1)) {
       const char * needle = be_tostring(vm, 1);
+      int32_t idx;
 
-      int32_t constant_idx = bin_search(needle, &lv0_constants[0].name, sizeof(lv0_constants[0]), lv0_constants_size);
-    
-      if (constant_idx >= 0) {
-        // we did have a match, low == high
-        be_pushint(vm, lv0_constants[constant_idx].value);
+      // search for a class with this name
+      char cl_prefixed[32];
+      snprintf(cl_prefixed, sizeof(cl_prefixed), "lv_%s", needle);    // we try both actual name and prefixed with `lv_` so both `lv.obj` and `lv.lv_obj` work
+      idx = bin_search(cl_prefixed, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
+      if (idx < 0) {
+        idx = bin_search(needle, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
+      }
+      if (idx >= 0) {
+        // we did have a match
+        be_pushntvclass(vm, lv_classes[idx].cl);
         be_return(vm);
-      } else {
-        // search for a method with this name
+      }
+      // same search for ctypes
+      idx = bin_search(cl_prefixed, &be_ctypes_lvgl_classes[0].name, sizeof(be_ctypes_lvgl_classes[0]), be_ctypes_lvgl_classes_size);
+      if (idx < 0) {
+        idx = bin_search(needle, &be_ctypes_lvgl_classes[0].name, sizeof(be_ctypes_lvgl_classes[0]), be_ctypes_lvgl_classes_size);
+      }
+      if (idx >= 0) {
+        // we did have a match
+        be_pushntvclass(vm, be_ctypes_lvgl_classes[idx].cl);
+        be_return(vm);
+      }
 
-        int32_t method_idx = bin_search(needle, &lv_func[0].name, sizeof(lv_func[0]), lv_func_size);
+      // search for a method with this name
+      idx = bin_search(needle, &lv_func[0].name, sizeof(lv_func[0]), lv_func_size);
+      if (idx >= 0) {
+        const lvbe_call_c_t * method = &lv_func[idx];
+        // push native closure
+        be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
 
-        if (method_idx >= 0) {
-          const lvbe_call_c_t * method = &lv_func[method_idx];
-          // push native closure
-          be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
+        be_pushcomptr(vm, method->func);
+        be_setupval(vm, -2, 0);
+        be_pop(vm, 1);
 
-          be_pushcomptr(vm, method->func);
-          be_setupval(vm, -2, 0);
-          be_pop(vm, 1);
+        be_pushstring(vm, method->return_type);
+        be_setupval(vm, -2, 1);
+        be_pop(vm, 1);
 
-          be_pushstring(vm, method->return_type);
-          be_setupval(vm, -2, 1);
-          be_pop(vm, 1);
+        be_pushstring(vm, method->arg_type);
+        be_setupval(vm, -2, 2);
+        be_pop(vm, 1);
 
-          be_pushstring(vm, method->arg_type);
-          be_setupval(vm, -2, 2);
-          be_pop(vm, 1);
-
-          // all good
-          be_return(vm);
-        }
+        // all good
+        be_return(vm);
       }
     }
     be_return_nil(vm);
@@ -763,7 +844,7 @@ extern "C" {
     lv_indev_t * indev = lv_indev_drv_register(&lvbe.indev_drv);
     lvbe.indev_list.addHead(indev);   // keep track of indevs
 
-    be_getglobal(vm, "lv_indev");   // create an object of class lv_indev with the pointer
+    be_find_class(vm, "lv.lv_indev");
     be_pushint(vm, (int32_t) indev);
     be_call(vm, 1);
     be_pop(vm, 1);

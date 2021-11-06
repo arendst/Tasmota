@@ -1114,29 +1114,26 @@ bool XsnsNextCall(uint8_t Function, uint8_t &xsns_index) {
 bool XsnsCall(uint8_t Function) {
   bool result = false;
 
-  DEBUG_TRACE_LOG(PSTR("SNS: %d"), Function);
+//  DEBUG_TRACE_LOG(PSTR("SNS: %d"), Function);
 
-#ifdef PROFILE_XSNS_EVERY_SECOND
-  uint32_t profile_start_millis = millis();
-#endif  // PROFILE_XSNS_EVERY_SECOND
+  uint32_t profile_driver_start = millis();
 
   for (uint32_t x = 0; x < xsns_present; x++) {
     if (XsnsEnabled(0, x)) {  // Skip disabled sensor
       if ((FUNC_WEB_SENSOR == Function) && !XsnsEnabled(1, x)) { continue; }  // Skip web info for disabled sensors
 
-#ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-      uint32_t profile_start_millis = millis();
-#endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
+      uint32_t profile_function_start = millis();
+
       result = xsns_func_ptr[x](Function);
 
-#ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-      uint32_t profile_millis = millis() - profile_start_millis;
-      if (profile_millis) {
-        if (FUNC_EVERY_SECOND == Function) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), TasmotaGlobal.uptime, Function, x, profile_millis);
-        }
-      }
-#endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
+#ifdef USE_PROFILE_FUNCTION
+#ifdef XFUNC_PTR_IN_ROM
+      uint32_t index = pgm_read_byte(kXsnsList + x);
+#else
+      uint32_t index = kXsnsList[x];
+#endif
+      PROFILE_FUNCTION("sns", index, Function, profile_function_start);
+#endif  // USE_PROFILE_FUNCTION
 
       if (result && ((FUNC_COMMAND == Function) ||
                      (FUNC_PIN_STATE == Function) ||
@@ -1147,14 +1144,7 @@ bool XsnsCall(uint8_t Function) {
     }
   }
 
-#ifdef PROFILE_XSNS_EVERY_SECOND
-  uint32_t profile_millis = millis() - profile_start_millis;
-  if (profile_millis) {
-    if (FUNC_EVERY_SECOND == Function) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d took %u mS"), TasmotaGlobal.uptime, Function, profile_millis);
-    }
-  }
-#endif  // PROFILE_XSNS_EVERY_SECOND
+  PROFILE_DRIVER("sns", Function, profile_driver_start);
 
   return result;
 }

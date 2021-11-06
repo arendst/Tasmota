@@ -161,11 +161,11 @@ uDisplay *udisp;
       replacepin(&cp, Pin(GPIO_OLED_RESET));
 
       if (wire_n == 1) {
-        Wire.begin(sda, scl);
+        I2cBegin(sda, scl);
       }
 #ifdef ESP32
       if (wire_n == 2) {
-        Wire1.begin(sda, scl);
+        I2c2Begin(sda, scl);
       }
       if (I2cSetDevice(i2caddr, wire_n - 1)) {
         I2cSetActiveFound(i2caddr, "DSP-I2C", wire_n - 1);
@@ -257,11 +257,11 @@ uDisplay *udisp;
       scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
       sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
       if (wire_n == 0) {
-        Wire.begin(sda, scl);
+        I2cBegin(sda, scl);
       }
 #ifdef ESP32
       if (wire_n == 1) {
-        Wire1.begin(sda, scl, 400000);
+        I2c2Begin(sda, scl, 400000);
       }
       if (I2cSetDevice(i2caddr, wire_n)) {
         I2cSetActiveFound(i2caddr, "FT5206", wire_n);

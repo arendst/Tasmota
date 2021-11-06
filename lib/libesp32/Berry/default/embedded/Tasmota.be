@@ -17,11 +17,39 @@ end
 
 tasmota = nil
 class Tasmota
+  var _rules
+  var _timers
+  var _ccmd
+  var _drivers
+  var _cb
+  var wire1
+  var wire2
+  var cmd_res     # store the command result, nil if disables, true if capture enabled, contains return value
   var global      # mapping to TasmotaGlobal
+  var settings
 
   def init()
     # instanciate the mapping object to TasmotaGlobal
     self.global = ctypes_bytes_dyn(self._global_addr, self._global_def)
+    import introspect
+    var settings_addr = bytes(self._settings_ptr, 4).get(0,4)
+    if settings_addr
+      self.settings = ctypes_bytes_dyn(introspect.toptr(settings_addr), self._settings_def)
+    end
+  end
+
+  # create a specific sub-class for rules: pattern(string) -> closure
+  # Classs KV has two members k and v
+  def kv(k, v)
+    class KV
+      var k, v
+      def init(k,v)
+        self.k = k
+        self.v = v
+      end
+    end
+
+    return KV(k, v)
   end
 
   # add `chars_in_string(s:string,c:string) -> int``
@@ -50,7 +78,7 @@ class Tasmota
   def find_key_i(m,keyi)
     import string
     var keyu = string.toupper(keyi)
-    if classof(m) == map
+    if isinstance(m, map)
       for k:m.keys()
         if string.toupper(k)==keyu || keyi=='?'
           return k
@@ -84,10 +112,10 @@ class Tasmota
   # Rules
   def add_rule(pat,f)
     if !self._rules
-      self._rules={}
+      self._rules=[]
     end
     if type(f) == 'function'
-      self._rules[pat] = f
+      self._rules.push(self.kv(pat, f))
     else
       raise 'value_error', 'the second argument is not a function'
     end
@@ -95,7 +123,14 @@ class Tasmota
 
   def remove_rule(pat)
     if self._rules
-      self._rules.remove(pat)
+      var i = 0
+      while i < size(self._rules)
+        if self._rules[i].k == pat
+          self._rules.remove(i)  #- don't increment i since we removed the object -#
+        else
+          i += 1
+        end
+      end
     end
   end
 
@@ -142,16 +177,50 @@ class Tasmota
   # Run rules, i.e. check each individual rule
   # Returns true if at least one rule matched, false if none
   def exec_rules(ev_json)
-    if self._rules
+    if self._rules || self.cmd_res != nil  # if there is a rule handler, or we record rule results
       import json
-      var ev = json.load(ev_json)
+      var ev = json.load(ev_json)   # returns nil if invalid JSON
       var ret = false
       if ev == nil
-        print('BRY: ERROR, bad json: '+ev_json, 3)
-      else
-        for r: self._rules.keys()
-          ret = self.try_rule(ev,r,self._rules[r]) || ret
+        self.log('BRY: ERROR, bad json: '+ev_json, 3)
+        ev = ev_json                # revert to string
+      end
+      # record the rule payload for tasmota.cmd()
+      if self.cmd_res != nil
+        self.cmd_res = ev
+      end
+      # try all rule handlers
+      if self._rules
+        var i = 0
+        while i < size(self._rules)
+          var kv = self._rules[i]
+          ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut if ret is already true -#
+          i += 1
         end
+      end
+      return ret
+    end
+    return false
+  end
+
+  # Run tele rules
+  def exec_tele(ev_json)
+    if self._rules
+      import json
+      var ev = json.load(ev_json)   # returns nil if invalid JSON
+      var ret = false
+      if ev == nil
+        self.log('BRY: ERROR, bad json: '+ev_json, 3)
+        ev = ev_json                # revert to string
+      end
+      # insert tele prefix
+      ev = { "Tele": ev }
+
+      var i = 0
+      while i < size(self._rules)
+        var kv = self._rules[i]
+        ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut -#
+        i += 1
       end
       return ret
     end
@@ -240,8 +309,8 @@ class Tasmota
   def wire_scan(addr,idx)
     # skip if the I2C index is disabled
     if idx != nil && !self.i2c_enabled(idx) return nil end
-    if self.wire1.detect(addr) return self.wire1 end
-    if self.wire2.detect(addr) return self.wire2 end
+    if self.wire1.enabled() && self.wire1.detect(addr) return self.wire1 end
+    if self.wire2.enabled() && self.wire2.detect(addr) return self.wire2 end
     return nil
   end
 
@@ -300,10 +369,13 @@ class Tasmota
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
+    import debug
+    import string
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
     var done = false
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
+    elif event_type=='tele' return self.exec_tele(payload)
     elif event_type=='rule' return self.exec_rules(payload)
     elif event_type=='gc' return self.gc()
     elif self._drivers
@@ -317,8 +389,8 @@ class Tasmota
             done = f(d, cmd, idx, payload, raw)
             if done break end
           except .. as e,m
-            import string
             print(string.format("BRY: Exception> '%s' - %s", e, m))
+            debug.traceback()
           end
         end
         i += 1
@@ -353,14 +425,17 @@ class Tasmota
 
   # cmd high-level function
   def cmd(command)
-    import json
-    var ret = self._cmd(command)
-    var j = json.load(ret)
-    if type(j) == 'instance'
-      return j
-    else
-      return {'response':j}
+    self.cmd_res = true      # signal buffer capture
+
+    self._cmd(command)
+    
+    var ret = nil
+    if self.cmd_res != true       # unchanged
+      ret = self.cmd_res
     end
+    self.cmd_res = nil       # clear buffer
+    
+    return ret
   end
 
   # set_light and get_light deprecetaion

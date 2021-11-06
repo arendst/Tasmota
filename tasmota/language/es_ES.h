@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.3
+ * Updated until v9.5.0.9
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -842,6 +842,7 @@
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
 #define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
+#define D_SENSOR_HEARTBEAT     "Heartbeat"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -947,11 +948,11 @@
 #define D_MANAGE_FILE_SYSTEM   "Explorar Archivos"
 #define D_FS_SIZE              "Tamaño"
 #define D_FS_FREE              "Libre"
-#define D_NEW_FILE             "nuevo.txt"
-#define D_CREATE_NEW_FILE      "Crear y editar un archivo nuevo"
+#define D_NEW_FILE             "Nuevo.txt"
+#define D_CREATE_NEW_FILE      "Crear un archivo nuevo"
 #define D_EDIT_FILE            "Editar Archivo"
-#define D_CONFIRM_FILE_DEL     "Confirmar la eliminación del archivo"
-#define D_SHOW_HIDDEN_FILES    "Show hidden files"
+#define D_CONFIRM_FILE_DEL     "Confirmar eliminación del archivo"
+#define D_SHOW_HIDDEN_FILES    "Mostrar archivos ocultos"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "Ganancia:"
@@ -1064,16 +1065,17 @@
 #define D_NEOPOOL_RELAY_CD                "Bomba de Salmuera"
 #define D_NEOPOOL_TIME                    "Tiempo"
 #define D_NEOPOOL_FILT_MODE               "Filtrado"
+#define D_NEOPOOL_CELL_RUNTIME            "Tiempo de actividad"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
 #define D_NEOPOOL_COVER                   "Cover"
 #define D_NEOPOOL_SHOCK                   "Golpe"
-#define D_NEOPOOL_STATUS_ON               "ON"
-#define D_NEOPOOL_STATUS_OFF              "OFF"
-#define D_NEOPOOL_STATUS_WAIT             "WAIT"
-#define D_NEOPOOL_STATUS_TANK             "TANK"
-#define D_NEOPOOL_STATUS_FLOW             "Flow"
+#define D_NEOPOOL_STATUS_ON               "Encendido"
+#define D_NEOPOOL_STATUS_OFF              "Apagado"
+#define D_NEOPOOL_STATUS_WAIT             "Espera"
+#define D_NEOPOOL_STATUS_TANK             "Tanque"
+#define D_NEOPOOL_STATUS_FLOW             "Flujo"
 #define D_NEOPOOL_LOW                     "Bajo"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"

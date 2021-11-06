@@ -78,6 +78,10 @@
 // Structs
 #include "settings.h"
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#include "soc/efuse_reg.h"
+#endif
+
 /*********************************************************************************************\
  * Global variables
 \*********************************************************************************************/
@@ -144,6 +148,8 @@ struct TasmotaGlobal_t {
   bool enable_logging;                      // Enable logging
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint8_t init_state;                       // Tasmota init state
+  uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
   uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
@@ -222,6 +228,18 @@ void setup(void) {
 #endif
 #endif
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+  // restore GPIO16/17 if no PSRAM is found
+  if (!FoundPSRAM()) {
+    // test if the CPU is not pico
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
+    uint32_t pkg_version = chip_ver & 0x7;
+    if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+      gpio_reset_pin(GPIO_NUM_16);
+      gpio_reset_pin(GPIO_NUM_17);
+    }
+  }
+#endif
   RtcPreInit();
   SettingsInit();
 
@@ -411,6 +429,8 @@ void setup(void) {
   XdrvCall(FUNC_PRE_INIT);
   XsnsCall(FUNC_PRE_INIT);
 
+  TasmotaGlobal.init_state = INIT_GPIOS;
+
   SetPowerOnState();
   WifiConnect();
 
@@ -557,7 +577,7 @@ void loop(void) {
       SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
     } else {
       if (TasmotaGlobal.global_state.network_down) {
-        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/2 of my_activity period
       }
     }
   }

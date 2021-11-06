@@ -1789,7 +1789,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
  * Serial
 \*********************************************************************************************/
 
-String GetSerialConfig(void) {
+String GetSerialConfig(uint8_t serial_config) {
   // Settings->serial_config layout
   // b000000xx - 5, 6, 7 or 8 data bits
   // b00000x00 - 1 or 2 stop bits
@@ -1798,26 +1798,63 @@ String GetSerialConfig(void) {
   const static char kParity[] PROGMEM = "NEOI";
 
   char config[4];
-  config[0] = '5' + (Settings->serial_config & 0x3);
-  config[1] = pgm_read_byte(&kParity[(Settings->serial_config >> 3) & 0x3]);
-  config[2] = '1' + ((Settings->serial_config >> 2) & 0x1);
+  config[0] = '5' + (serial_config & 0x3);
+  config[1] = pgm_read_byte(&kParity[(serial_config >> 3) & 0x3]);
+  config[2] = '1' + ((serial_config >> 2) & 0x1);
   config[3] = '\0';
   return String(config);
 }
 
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
-#include <driver/uart.h>
-uint32_t GetSerialBaudrate(void) {
-  uint32_t br;
-  uart_get_baudrate(0, &br);
-  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+String GetSerialConfig(void) {
+  return GetSerialConfig(Settings->serial_config);
 }
-#else
+
+int8_t ParseSerialConfig(const char *pstr)
+{
+  if (strlen(pstr) < 3)
+    return -1;
+
+  int8_t serial_config = (uint8_t)atoi(pstr);
+  if (serial_config < 5 || serial_config > 8)
+    return -1;
+  serial_config -= 5;
+
+  char parity = (pstr[1] & 0xdf);
+  if ('E' == parity) {
+    serial_config += 0x08;                         // Even parity
+  }
+  else if ('O' == parity) {
+    serial_config += 0x10;                         // Odd parity
+  }
+  else if ('N' != parity) {
+    return -1;
+  }
+
+  if ('2' == pstr[2]) {
+    serial_config += 0x04;                         // Stop bits 2
+  }
+  else if ('1' != pstr[2]) {
+    return -1;
+  }
+
+  return serial_config;
+}
+
+
+// workaround disabled 05.11.2021 solved with https://github.com/espressif/arduino-esp32/pull/5549
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
+//#include <driver/uart.h>
+//uint32_t GetSerialBaudrate(void) {
+//  uint32_t br;
+//  uart_get_baudrate(0, &br);
+//  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+//}
+//#else
 uint32_t GetSerialBaudrate(void) {
   return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
 }
-#endif
+//#endif
 
 #ifdef ESP8266
 void SetSerialSwap(void) {
@@ -1968,7 +2005,34 @@ const uint8_t I2C_RETRY_COUNTER = 3;
 uint32_t i2c_active[4] = { 0 };
 uint32_t i2c_buffer = 0;
 
+bool I2cBegin(int sda, int scl, uint32_t frequency = 100000);
+bool I2cBegin(int sda, int scl, uint32_t frequency) {
+  bool result = true;
+#ifdef ESP8266
+  Wire.begin(sda, scl);
+#endif
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
+  static bool reinit = false;
+  if (reinit) { Wire.end(); }
+#endif  // ESP_IDF_VERSION_MAJOR > 3
+  result = Wire.begin(sda, scl, frequency);
+#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
+  reinit = result;
+#endif  // ESP_IDF_VERSION_MAJOR > 3
+#endif
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus1 %d"), result);
+  return result;
+}
+
+#ifdef ESP32
+bool I2c2Begin(int sda, int scl, uint32_t frequency = 100000);
+bool I2c2Begin(int sda, int scl, uint32_t frequency) {
+  bool result = Wire1.begin(sda, scl, frequency);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus2 %d"), result);
+  return result;
+}
+
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus = 0);
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size, uint32_t bus)
 #else
@@ -1978,6 +2042,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
   uint8_t retry = I2C_RETRY_COUNTER;
   bool status = false;
 #ifdef ESP32
+  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
   TwoWire & myWire = Wire;
@@ -2092,6 +2157,7 @@ bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
   uint8_t x = I2C_RETRY_COUNTER;
 
 #ifdef ESP32
+  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
   TwoWire & myWire = Wire;
@@ -2162,6 +2228,7 @@ void I2cScan(uint32_t bus) {
   Response_P(PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
 #ifdef ESP32
+    if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
     TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
     TwoWire & myWire = Wire;
@@ -2240,6 +2307,7 @@ bool I2cSetDevice(uint32_t addr)
 #endif
 {
 #ifdef ESP32
+  if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;
 #else
   TwoWire & myWire = Wire;

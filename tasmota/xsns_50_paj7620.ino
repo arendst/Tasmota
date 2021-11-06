@@ -309,7 +309,7 @@ void PAJ7620ReadGesture(void)
 
 void PAJ7620Detect(void)
 {
-  if (I2cActive(PAJ7620_ADDR)) { return; }
+  if (!I2cSetDevice(PAJ7620_ADDR)) { return; }
 
   PAJ7620SelectBank(0);
   PAJ7620SelectBank(0); // do it twice

@@ -2,11 +2,11 @@
  -
 --#
 
-class lv_clock_icon: lv_label
+class lv_clock_icon: lv.label
   var hour, minute, sec
 
-  def init(parent, copy)
-    super(self).init(parent, copy)
+  def init(parent)
+    super(self).init(parent)
     var f_s7_16 = lv.seg7_font(16)
     if f_s7_16 != nil  self.set_style_text_font(f_s7_16, lv.PART_MAIN | lv.STATE_DEFAULT) end
 
@@ -22,7 +22,7 @@ class lv_clock_icon: lv_label
       self.set_x(parent.get_width() - w - pad_right - 3)
       parent.set_style_pad_right(pad_right + w + 6, lv.PART_MAIN | lv.STATE_DEFAULT)
 
-      self.set_style_bg_color(lv_color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
+      self.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
     end
 
     tasmota.add_driver(self)

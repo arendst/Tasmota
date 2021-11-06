@@ -34,7 +34,7 @@ be_local_closure(read32,   /* name */
     /* K6   */  be_const_int(3),
     }),
     (be_nested_const_str("read32", 1741276240, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[20]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -82,7 +82,7 @@ be_local_closure(write8,   /* name */
     /* K3   */  be_const_int(1),
     }),
     (be_nested_const_str("write8", -1160975764, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 8]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
@@ -120,7 +120,7 @@ be_local_closure(read12,   /* name */
     /* K5   */  be_const_int(1),
     }),
     (be_nested_const_str("read12", -3890326, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -160,7 +160,7 @@ be_local_closure(write_bit,   /* name */
     /* K3   */  be_nested_string("read8", -1492179129, 5),
     }),
     (be_nested_const_str("write_bit", -1633976860, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[26]) {  /* code */
       0x14100500,  //  0000  LT	R4	R2	K0
       0x74120002,  //  0001  JMPT	R4	#0005
@@ -217,7 +217,7 @@ be_local_closure(read24,   /* name */
     /* K6   */  be_const_int(2),
     }),
     (be_nested_const_str("read24", 1808533811, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[16]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -261,7 +261,7 @@ be_local_closure(read8,   /* name */
     /* K3   */  be_const_int(1),
     }),
     (be_nested_const_str("read8", -1492179129, 5)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -301,8 +301,8 @@ be_local_closure(init,   /* name */
     /* K8   */  be_nested_string("detected on bus", 1432002650, 15),
     /* K9   */  be_nested_string("bus", 1607822841, 3),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[44]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x7C100200,  //  0001  CALL	R4	1
@@ -376,7 +376,7 @@ be_local_closure(read13,   /* name */
     /* K5   */  be_const_int(1),
     }),
     (be_nested_const_str("read13", 12887293, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1

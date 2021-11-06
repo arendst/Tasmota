@@ -128,6 +128,7 @@ print("".join(pin))
 
 // for testing of BLE_ESP32, we remove xsns_62_MI_ESP32.ino completely, and instead add this modified xsns_52_ibeacon_BLE_ESP32.ino
 #if CONFIG_IDF_TARGET_ESP32
+#if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 #ifdef USE_EQ3_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 #ifdef USE_BLE_ESP32
@@ -1760,8 +1761,9 @@ bool Xdrv85(uint8_t function)
     }
   return result;
 }
-#endif  // 
+#endif  //
 #endif  // ESP32
 
 #endif
+#endif  // ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 #endif  // CONFIG_IDF_TARGET_ESP32

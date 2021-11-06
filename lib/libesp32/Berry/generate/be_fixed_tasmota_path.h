@@ -15,4 +15,4 @@ static be_define_const_module(
     "path"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(path, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(path);

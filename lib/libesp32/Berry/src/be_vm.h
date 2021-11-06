@@ -104,6 +104,15 @@ struct bvm {
 #if BE_USE_OBSERVABILITY_HOOK
     bobshook obshook;
 #endif
+#if BE_USE_PERF_COUNTERS
+    uint32_t counter_ins; /* instructions counter */
+    uint32_t counter_enter; /* counter for times the VM was entered */
+    uint32_t counter_call; /* counter for calls, VM or native */
+    uint32_t counter_get; /* counter for GETMBR or GETMET */
+    uint32_t counter_set; /* counter for SETMBR */
+    uint32_t counter_try; /* counter for `try` statement */
+    uint32_t counter_exc; /* counter for raised exceptions */
+#endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;
     bbyte hookmask;

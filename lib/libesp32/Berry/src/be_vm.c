@@ -48,9 +48,28 @@
   #define DEBUG_HOOK()
 #endif
 
+#if BE_USE_PERF_COUNTERS
+  #define COUNTER_HOOK() \
+    vm->counter_ins++;
+#else
+  #define COUNTER_HOOK()
+#endif
+
+#if BE_USE_PERF_COUNTERS && BE_USE_OBSERVABILITY_HOOK
+  #define VM_HEARTBEAT() \
+    if ((vm->counter_ins & ((1<<(BE_VM_OBSERVABILITY_SAMPLING - 1))-1) ) == 0) { /* call every 2^BE_VM_OBSERVABILITY_SAMPLING instructions */    \
+        if (vm->obshook != NULL)                                                    \
+            (*vm->obshook)(vm, BE_OBS_VM_HEARTBEAT, vm->counter_ins);               \
+    }
+#else
+  #define VM_HEARTBEAT()
+#endif
+
 #define vm_exec_loop() \
     loop: \
         DEBUG_HOOK(); \
+        COUNTER_HOOK(); \
+        VM_HEARTBEAT(); \
         switch (IGET_OP(ins = *vm->ip++))
 
 #if BE_USE_SINGLE_FLOAT
@@ -68,7 +87,7 @@
         res = ibinop(op, a, b); \
     } else if (var_isnumber(a) && var_isnumber(b)) { \
         res = var2real(a) op var2real(b); \
-    } else if (var_isinstance(a)) { \
+    } else if (var_isinstance(a) && !var_isnil(b)) { \
         res = object_eqop(vm, #op, iseq, a, b); \
     } else if (var_type(a) == var_type(b)) { /* same types */ \
         if (var_isnil(a)) { /* nil op nil */ \
@@ -445,6 +464,15 @@ BERRY_API bvm* be_vm_new(void)
 #if BE_USE_OBSERVABILITY_HOOK
     vm->obshook = NULL;
 #endif
+#if BE_USE_PERF_COUNTERS
+    vm->counter_ins = 0;
+    vm->counter_enter = 0;
+    vm->counter_call = 0;
+    vm->counter_get = 0;
+    vm->counter_set = 0;
+    vm->counter_try = 0;
+    vm->counter_exc = 0;
+#endif
     return vm;
 }
 
@@ -478,6 +506,9 @@ newframe: /* a new call frame */
     clos = var_toobj(vm->cf->func);  /* `clos` is the current function/closure */
     ktab = clos->proto->ktab;  /* `ktab` is the current constant table */
     reg = vm->reg;  /* `reg` is the current stack base for the callframe */
+#if BE_USE_PERF_COUNTERS
+    vm->counter_enter++;
+#endif
     vm_exec_loop() {
         opcase(LDNIL): {
             var_setnil(RA());
@@ -786,27 +817,40 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(GETMBR): {
-            bvalue *a = RA(), *b = RKB(), *c = RKC();
+#if BE_USE_PERF_COUNTERS
+            vm->counter_get++;
+#endif
+            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
-                obj_attribute(vm, b, var_tostr(c), a);
+                obj_attribute(vm, b, var_tostr(c), &a_temp);
                 reg = vm->reg;
             } else if (var_isclass(b) && var_isstr(c)) {
-                class_attribute(vm, b, c, a);
+                class_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, a);
+                module_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
             } else {
                 attribute_error(vm, "attribute", b, c);
+                a_temp = *RA();     /* avoid gcc warning for uninitialized variable a_temp, this code is never reached */
             }
+            bvalue *a = RA();
+            *a = a_temp;    /* assign the resul to the specified register on the updated stack */
             dispatch();
         }
         opcase(GETMET): {
-            bvalue *a = RA(), *b = RKB(), *c = RKC();
+#if BE_USE_PERF_COUNTERS
+            vm->counter_get++;
+#endif
+            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
                 binstance *obj = var_toobj(b);
-                int type = obj_attribute(vm, b, var_tostr(c), a);
+                int type = obj_attribute(vm, b, var_tostr(c), &a_temp);
                 reg = vm->reg;
+                bvalue *a = RA();
+                *a = a_temp;
                 if (basetype(type) == BE_FUNCTION) {
                     /* check if the object is a superinstance, if so get the lowest possible subclass */
                     while (obj->sub) {
@@ -819,7 +863,10 @@ newframe: /* a new call frame */
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, &a[1]);
+                module_attribute(vm, b, c, &a_temp);
+                reg = vm->reg;
+                bvalue *a = RA();
+                a[1] = a_temp;
                 var_settype(a, NOT_METHOD);
             } else {
                 attribute_error(vm, "method", b, c);
@@ -827,33 +874,42 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(SETMBR): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_set++;
+#endif
             bvalue *a = RA(), *b = RKB(), *c = RKC();
             if (var_isinstance(a) && var_isstr(b)) {
                 binstance *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 if (!be_instance_setmember(vm, obj, attr, c)) {
+                    reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to attribute '%s'",
                         str(be_instance_name(obj)), str(attr));
                 }
+                reg = vm->reg;
                 dispatch();
             }
             if (var_isclass(a) && var_isstr(b)) {
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 if (!be_class_setmember(vm, obj, attr, c)) {
+                    reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",
                         str(be_class_name(obj)), str(attr));
                 }
+                reg = vm->reg;
                 dispatch();
             }
             if (var_ismodule(a) && var_isstr(b)) {
                 bmodule *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 if (be_module_setmember(vm, obj, attr, c)) {
+                    reg = vm->reg;
                     dispatch();
                 } else {
+                    reg = vm->reg;
                     // fall through exception below
                 }
             }
@@ -961,6 +1017,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(RAISE): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_exc++;
+#endif
             if (IGET_RA(ins) < 2) {  /* A==2 means no arguments are passed to RAISE, i.e. rethrow with current exception */
                 bvalue *top = vm->top;
                 top[0] = *RKB(); /* push the exception value to top */
@@ -975,6 +1034,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(EXBLK): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_try++;
+#endif
             if (!IGET_RA(ins)) {
                 be_except_block_setup(vm);
                 if (be_setjmp(vm->errjmp->b)) {
@@ -988,6 +1050,9 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(CALL): {
+#if BE_USE_PERF_COUNTERS
+            vm->counter_call++;
+#endif
             bvalue *var = RA();  /* `var` is the register for the call followed by arguments */
             int mode = 0, argc = IGET_RKB(ins);  /* B contains number of arguments pushed on stack */
         recall: /* goto: instantiation class and call constructor */

@@ -14,4 +14,4 @@ static be_define_const_module(
     "solidify"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(solidify, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(solidify);

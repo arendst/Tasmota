@@ -11,7 +11,7 @@
 #include "berry.h"
 
 /* basic types, do not change value */
-#define BE_NONE         (-1)    /* unknow type */
+#define BE_NONE         (-1)    /* unknown type */
 #define BE_COMPTR       (-2)    /* common pointer */
 #define BE_INDEX        (-3)    /* index for instance variable, previously BE_INT */
 #define BE_NIL          0

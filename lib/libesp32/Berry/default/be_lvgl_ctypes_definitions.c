@@ -6,6 +6,7 @@
 #ifdef USE_LVGL
 
 #include "lvgl.h"
+#include "be_lvgl.h"
 
 /********************************************************************
  * Generated code, don't edit
@@ -494,6 +495,37 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_point, &be_lv_point);
   ctypes_register_class(vm, &be_class_lv_sqrt_res, &be_lv_sqrt_res);
 }
+
+be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
+  { "lv_area", &be_class_lv_area },
+  { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
+  { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
+  { "lv_draw_mask_angle_param", &be_class_lv_draw_mask_angle_param },
+  { "lv_draw_mask_angle_param_cfg", &be_class_lv_draw_mask_angle_param_cfg },
+  { "lv_draw_mask_common_dsc", &be_class_lv_draw_mask_common_dsc },
+  { "lv_draw_mask_fade_param", &be_class_lv_draw_mask_fade_param },
+  { "lv_draw_mask_fade_param_cfg", &be_class_lv_draw_mask_fade_param_cfg },
+  { "lv_draw_mask_line_param", &be_class_lv_draw_mask_line_param },
+  { "lv_draw_mask_line_param_cfg", &be_class_lv_draw_mask_line_param_cfg },
+  { "lv_draw_mask_map_param", &be_class_lv_draw_mask_map_param },
+  { "lv_draw_mask_map_param_cfg", &be_class_lv_draw_mask_map_param_cfg },
+  { "lv_draw_mask_radius_param", &be_class_lv_draw_mask_radius_param },
+  { "lv_draw_mask_radius_param_cfg", &be_class_lv_draw_mask_radius_param_cfg },
+  { "lv_draw_mask_saved", &be_class_lv_draw_mask_saved },
+  { "lv_draw_rect_dsc", &be_class_lv_draw_rect_dsc },
+  { "lv_event", &be_class_lv_event },
+  { "lv_meter_indicator", &be_class_lv_meter_indicator },
+  { "lv_meter_indicator_arc", &be_class_lv_meter_indicator_arc },
+  { "lv_meter_indicator_needle_img", &be_class_lv_meter_indicator_needle_img },
+  { "lv_meter_indicator_needle_line", &be_class_lv_meter_indicator_needle_line },
+  { "lv_meter_indicator_scale_lines", &be_class_lv_meter_indicator_scale_lines },
+  { "lv_meter_scale", &be_class_lv_meter_scale },
+  { "lv_obj_class", &be_class_lv_obj_class },
+  { "lv_point", &be_class_lv_point },
+  { "lv_sqrt_res", &be_class_lv_sqrt_res },
+};
+const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);
+
 /********************************************************************/
 
 #endif // USE_LVGL

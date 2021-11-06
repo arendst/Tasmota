@@ -123,8 +123,7 @@ extern "C" {
       const char * command = be_tostring(vm, 2);
       be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
-      be_pushstring(vm, ResponseData());
-      be_return(vm); // Return
+      be_return_nil(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -309,7 +308,7 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-    optimistic_yield(10);
+    BrTimeoutYield();   // reset timeout
     be_return_nil(vm);
   }
 

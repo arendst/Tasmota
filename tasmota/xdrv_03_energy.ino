@@ -90,18 +90,18 @@ struct ENERGY {
   float total_sum;                              // 12345.12345 kWh total energy
   float yesterday_sum;                          // 123.123 kWh
 
-  uint32_t kWhtoday_delta[ENERGY_MAX_PHASES];   // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
-  uint32_t kWhtoday_offset[ENERGY_MAX_PHASES];  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
-  uint32_t kWhtoday[ENERGY_MAX_PHASES];         // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
-  uint32_t period[ENERGY_MAX_PHASES];           // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
+  int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
+  int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
+  int32_t kWhtoday[ENERGY_MAX_PHASES];          // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
+  int32_t period[ENERGY_MAX_PHASES];            // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
 
   uint8_t fifth_second;
   uint8_t command_code;
   uint8_t data_valid[ENERGY_MAX_PHASES];
 
   uint8_t phase_count;                          // Number of phases active
-  bool voltage_common;                          // Use single voltage
-  bool frequency_common;                        // Use single frequency
+  bool voltage_common;                          // Use common voltage
+  bool frequency_common;                        // Use common frequency
   bool use_overtemp;                            // Use global temperature as overtemp trigger on internal energy monitor hardware
   bool kWhtoday_offset_init;
 
@@ -200,8 +200,8 @@ void EnergyUpdateToday(void) {
   Energy.daily_sum = 0.0;
 
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
-    if (Energy.kWhtoday_delta[i] > 1000) {
-      uint32_t delta = Energy.kWhtoday_delta[i] / 1000;
+    if (abs(Energy.kWhtoday_delta[i]) > 1000) {
+      int32_t delta = Energy.kWhtoday_delta[i] / 1000;
       Energy.kWhtoday_delta[i] -= (delta * 1000);
       Energy.kWhtoday[i] += delta;
     }
@@ -255,12 +255,12 @@ void EnergyUpdateTotal(void) {
       Energy.start_energy[i] = Energy.import_active[i];  // Init after restart and handle roll-over if any
     }
     else if (Energy.import_active[i] != Energy.start_energy[i]) {
-      Energy.kWhtoday[i] = (uint32_t)((Energy.import_active[i] - Energy.start_energy[i]) * 100000);
+      Energy.kWhtoday[i] = (int32_t)((Energy.import_active[i] - Energy.start_energy[i]) * 100000);
     }
 
     if ((Energy.total[i] < (Energy.import_active[i] - 0.01)) &&   // We subtract a little offset to avoid continuous updates
         Settings->flag3.hardware_energy_total) {    // SetOption72 - Enable hardware energy total counter as reference (#6561)
-      RtcSettings.energy_kWhtotal_ph[i] = (unsigned long)((Energy.import_active[i] * 100000) - Energy.kWhtoday_offset[i] - Energy.kWhtoday[i]);
+      RtcSettings.energy_kWhtotal_ph[i] = (int32_t)((Energy.import_active[i] * 100000) - Energy.kWhtoday_offset[i] - Energy.kWhtoday[i]);
       Settings->energy_kWhtotal_ph[i] = RtcSettings.energy_kWhtotal_ph[i];
       Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + Energy.kWhtoday_offset[i] + Energy.kWhtoday[i]) / 100000;
       Settings->energy_kWhtotal_time = (!Energy.kWhtoday_offset[i]) ? LocalTime() : Midnight();

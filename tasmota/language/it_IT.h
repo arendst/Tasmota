@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.3 - Last update 31.08.2021
+ * Updated until v9.5.0.9 - Last update 03.11.2021
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -766,7 +766,7 @@
 #define D_SENSOR_LE01MR_TX              "LE-01MR - TX"
 #define D_SENSOR_BL0940_RX              "BL0940 - RX"
 #define D_SENSOR_BL0939_RX              "BL0939 - RX"
-#define D_SENSOR_BL0942_RX     "BL0942 Rx"
+#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_CC1101_GDO0            "CC1101 - GDO0"
 #define D_SENSOR_CC1101_GDO2            "CC1101 - GDO2"
 #define D_SENSOR_HRXL_RX                "HRXL - RX"
@@ -842,6 +842,7 @@
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
 #define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
+#define D_SENSOR_HEARTBEAT              "Battito cardiaco"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -951,7 +952,7 @@
 #define D_CREATE_NEW_FILE      "Crea e modifica nuovo file"
 #define D_EDIT_FILE            "Modifica file"
 #define D_CONFIRM_FILE_DEL     "Conferma eliminazione file"
-#define D_SHOW_HIDDEN_FILES    "Show hidden files"
+#define D_SHOW_HIDDEN_FILES    "Visualizza file nascosti"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN       "guadagno:"
@@ -1064,6 +1065,7 @@
 #define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
 #define D_NEOPOOL_TIME                    "Orario"
 #define D_NEOPOOL_FILT_MODE               "Filtrazione"
+#define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "OK"

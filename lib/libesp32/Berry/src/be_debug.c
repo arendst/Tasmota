@@ -178,11 +178,11 @@ static void sourceinfo(bproto *proto, binstruction *ip)
         be_writestring(str(proto->source));
         be_writestring(buf);
     } else {
-        be_writestring("<unknow source>:");
+        be_writestring("<unknown source>:");
     }
 #else
     (void)proto; (void)ip;
-    be_writestring("<unknow source>:");
+    be_writestring("<unknown source>:");
 #endif
 }
 

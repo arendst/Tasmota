@@ -71,7 +71,7 @@ void Max4409Detect(void)
   for (uint32_t i = 0; 0 != max44009_addresses[i]; i++) {
 
     max44009_address = max44009_addresses[i];
-    if (I2cActive(max44009_address)) { continue; }
+    if (!I2cSetDevice(max44009_address)) { continue; }
 
     if ((I2cValidRead8(&buffer1, max44009_address, REG_LOWER_THRESHOLD)) &&
         (I2cValidRead8(&buffer2, max44009_address, REG_THRESHOLD_TIMER))) {

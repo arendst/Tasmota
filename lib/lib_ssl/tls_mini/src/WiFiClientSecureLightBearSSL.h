@@ -38,9 +38,9 @@ class WiFiClientSecure_light : public WiFiClient {
 
     void allocateBuffers(void);
 
-  #ifdef ESP32  // the method to override in ESP32 has timeout argument
-    int connect(IPAddress ip, uint16_t port, int32_t timeout) override;
-    int connect(const char* name, uint16_t port, int32_t timeout) override;
+  #ifdef ESP32  // the method to override in ESP32 has timeout argument default #define WIFI_CLIENT_DEF_CONN_TIMEOUT_MS  (3000)
+    int connect(IPAddress ip, uint16_t port, int32_t timeout = 3000) override;
+    int connect(const char* name, uint16_t port, int32_t timeout = 3000) override;
   #else
     int connect(IPAddress ip, uint16_t port) override;
     int connect(const char* name, uint16_t port) override;

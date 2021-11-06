@@ -39,7 +39,6 @@ private:
     std::string scope(const block &block);
     std::string super(const block &block);
     std::string name(const block &block);
-    std::string init(const block &block);
     void writefile(const std::string &filename, const std::string &text);
 
 private:

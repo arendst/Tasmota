@@ -24,6 +24,7 @@ be_extern_native_module(introspect);
 be_extern_native_module(strict);
 
 /* Tasmota specific */
+be_extern_native_module(python_compat);
 be_extern_native_module(persist);
 be_extern_native_module(light);
 be_extern_native_module(gpio);
@@ -31,8 +32,9 @@ be_extern_native_module(energy);
 be_extern_native_module(webserver);
 be_extern_native_module(flash);
 be_extern_native_module(path);
+be_extern_native_module(unishox);
 #ifdef USE_LVGL
-be_extern_native_module(lvgl);
+be_extern_native_module(lv);
 #endif // USE_LVGL
 
 /* user-defined modules declare start */
@@ -80,6 +82,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
     /* user-defined modules register start */
     
+    &be_native_module(python_compat),
     &be_native_module(path),
     &be_native_module(persist),
     &be_native_module(gpio),
@@ -87,8 +90,12 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(light),
 #endif
 
+#ifdef USE_UNISHOX_COMPRESSION
+    &be_native_module(unishox),
+#endif // USE_UNISHOX_COMPRESSION
+
 #ifdef USE_LVGL
-    &be_native_module(lvgl),
+    &be_native_module(lv),
 #endif // USE_LVGL
 #ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),
@@ -124,10 +131,8 @@ extern void be_load_driver_audio_lib(bvm *vm);
 #endif
 
 #ifdef USE_LVGL
-extern void be_load_lvgl_color_lib(bvm *vm);
-extern void be_load_lvgl_font_lib(bvm *vm);
-extern void be_load_lv_all_lib(bvm *vm);
-extern void be_load_ctypes_lvgl_definitions_lib(bvm *vm);
+extern void be_load_lv_color_class(bvm *vm);
+extern void be_load_lv_font_class(bvm *vm);
 extern void be_load_LVGL_glob_class(bvm *vm);
 // custom widgets
 extern void be_load_lv_signal_bars_class(bvm *vm);
@@ -176,11 +181,9 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif
 #ifdef USE_LVGL
     // LVGL
-    be_load_lvgl_color_lib(vm);
-    be_load_lvgl_font_lib(vm);
+    be_load_lv_color_class(vm);
+    be_load_lv_font_class(vm);
 
-    be_load_lv_all_lib(vm);
-    be_load_ctypes_lvgl_definitions_lib(vm);
     be_load_LVGL_glob_class(vm);
     // custom widgets
     be_load_lv_signal_bars_class(vm);

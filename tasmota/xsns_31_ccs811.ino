@@ -46,7 +46,7 @@ uint8_t ecnt = 0;
 
 void CCS811Detect(void)
 {
-  if (I2cActive(CCS811_ADDRESS)) { return; }
+  if (!I2cSetDevice(CCS811_ADDRESS)) { return; }
 
   if (!ccs.begin(CCS811_ADDRESS)) {
     CCS811_type = 1;

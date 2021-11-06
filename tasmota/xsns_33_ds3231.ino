@@ -72,7 +72,7 @@ bool DS3231chipDetected = false;
   ----------------------------------------------------------------------*/
 void DS3231Detect(void)
 {
-  if (I2cActive(USE_RTC_ADDR)) { return; }
+  if (!I2cSetDevice(USE_RTC_ADDR)) { return; }
 
   if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1)) {
     I2cSetActiveFound(USE_RTC_ADDR, "DS3231");

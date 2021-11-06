@@ -22,7 +22,12 @@
 /*********************************************************************************************\
  * Provides dummy energy monitoring for up to three channels based on relay count
  *
- * User is supposed to enter valid data for Voltage, Current and Power
+ * User is supposed to enter valid data for Voltage, Current and Power using commands
+ *   VoltageSet 240 (= 240V), CurrentSet 0.417 (= 417mA) and PowerSet 100 (= 100W) or
+ *   VoltageCal 24000 (= 240V), CurrentCal 41666 (= 0.417A) and PowerCal 10000 (= 100W)
+ * Each phase or channel can be set using commands overriding above commands
+ *   EnergyConfig1, EnergyConfig2 and EnergyConfig3 for Current phases (0.417 = 417mA)
+ *   EnergyConfig4, EnergyConfig5 and EnergyConfig6 for Active Power phases (100 = 100W)
  * Active Power is adjusted to calculated Apparent Power (=U*I) if the latter is smaller than the first
  *
  * Enable by selecting any GPIO as Option A2
@@ -42,17 +47,22 @@
 
 /********************************************************************************************/
 
+struct {
+  int32_t current[3] = { 0 };
+  int32_t power[3] = { 0 };
+} NrgDummy;
+
 void NrgDummyEverySecond(void) {
   if (Energy.power_on) {  // Powered on
     for (uint32_t channel = 0; channel < Energy.phase_count; channel++) {
       Energy.voltage[channel] = ((float)Settings->energy_voltage_calibration / 100);       // V
       Energy.frequency[channel] = ((float)Settings->energy_frequency_calibration / 100);   // Hz
       if (bitRead(TasmotaGlobal.power, channel)) {  // Emulate power read only if device is powered on
-        Energy.active_power[channel] = ((float)Settings->energy_power_calibration / 100);    // W
+        Energy.active_power[channel] = (NrgDummy.power[channel]) ? ((float)NrgDummy.power[channel] / 1000) : ((float)Settings->energy_power_calibration / 100);    // W
         if (0 == Energy.active_power[channel]) {
           Energy.current[channel] = 0;
         } else {
-          Energy.current[channel] = ((float)Settings->energy_current_calibration / 100000);  // A
+          Energy.current[channel] = (NrgDummy.current[channel]) ? ((float)NrgDummy.current[channel] / 1000) : ((float)Settings->energy_current_calibration / 100000);  // A
           Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
         }
         Energy.data_valid[channel] = 0;
@@ -65,39 +75,52 @@ void NrgDummyEverySecond(void) {
 bool NrgDummyCommand(void) {
   bool serviced = true;
 
-  uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
+  int32_t value = (int32_t)(CharToFloat(XdrvMailbox.data) * 1000);  // 1.234 = 1234, -1.234 = -1234
+  uint32_t abs_value = abs(value) / 10;                             // 1.23 = 123,   -1.23 = 123
 
-  if (CMND_POWERSET == Energy.command_code) {
+  if ((CMND_POWERCAL == Energy.command_code) || (CMND_VOLTAGECAL == Energy.command_code) || (CMND_CURRENTCAL == Energy.command_code)) {
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((value > 100) && (value < 200000)) {    // Between 1.00 and 2000.00 W
-        Settings->energy_power_calibration = value;
+      if ((abs_value > 100) && (abs_value < 200000)) {    // Between 1.00 and 2000.00 W
+        Settings->energy_power_calibration = abs_value;
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((value > 10000) && (value < 26000)) {   // Between 100.00 and 260.00 V
-        Settings->energy_voltage_calibration = value;
+      if ((abs_value > 10000) && (abs_value < 26000)) {   // Between 100.00 and 260.00 V
+        Settings->energy_voltage_calibration = abs_value;
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((value > 1000) && (value < 1000000)) {  // Between 10.00 mA and 10.00000 A
-        Settings->energy_current_calibration = value;
+      if ((abs_value > 1000) && (abs_value < 1000000)) {  // Between 10.00 mA and 10.00000 A
+        Settings->energy_current_calibration = abs_value;
       }
     }
   }
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((value > 4500) && (value < 6500)) {     // Between 45.00 and 65.00 Hz
-        Settings->energy_frequency_calibration = value;
+      if ((abs_value > 4500) && (abs_value < 6500)) {     // Between 45.00 and 65.00 Hz
+        Settings->energy_frequency_calibration = abs_value;
       }
     }
   }
   else if (CMND_ENERGYCONFIG == Energy.command_code) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, data '%s'"),
-      XdrvMailbox.index, XdrvMailbox.payload, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, value %d, data '%s'"),
+      XdrvMailbox.index, XdrvMailbox.payload, value, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+
+    // EnergyConfig1 to 3 = Set Energy.current[channel] in A like 0.417 for 417mA
+    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < 4)) {
+      NrgDummy.current[XdrvMailbox.index -1] = value;
+    }
+    // EnergyConfig4 to 6 = Set Energy.active_power[channel] in W like 100 for 100W
+    if ((XdrvMailbox.index > 3) && (XdrvMailbox.index < 7)) {
+      NrgDummy.power[XdrvMailbox.index -4] = value;
+    }
   }
   else serviced = false;  // Unknown command
 

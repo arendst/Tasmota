@@ -4,9 +4,9 @@
 #- this limits the globals to a single value '_lvgl' -#
 class LVGL_glob
   # all variables are lazily initialized to reduce the memory pressure. Until they are used, they consume zero memory
-  var cb_obj                # map between a native C pointer (as int) and the corresponding lv_* berry object, also helps marking the objects as non-gc-able
+  var cb_obj                # map between a native C pointer (as int) and the corresponding lv.lv_* berry object, also helps marking the objects as non-gc-able
   var cb_event_closure      # mapping for event closures per LVGL native pointer (int)
-  var event_cb              # native callback for lv_event
+  var event_cb              # native callback for lv.lv_event
 
   #- below are native callbacks mapped to a closure to a method of this instance -#
   var null_cb               # cb called if type is not supported
@@ -20,7 +20,7 @@ class LVGL_glob
   #- this is the fallback callback, if the event is unknown or unsupported -#
   static cb_do_nothing = def() print("LVG: call to unsupported callback") end
 
-  #- register an lv_* object in the mapping -#
+  #- register an lv.lv_* object in the mapping -#
   def register_obj(obj)
     if self.cb_obj == nil    self.cb_obj = {} end
     var native_ptr = int(obj._p)
@@ -36,9 +36,9 @@ class LVGL_glob
   def lvgl_event_dispatch(event_ptr)
     import introspect
 
-    var event = lv_event(introspect.toptr(event_ptr))
+    var event = lv.lv_event(introspect.toptr(event_ptr))
 
-    var target = event.target
+    var target = int(event.target)
     var f = self.cb_event_closure[target]
     var obj = self.get_object_from_ptr(target)
     #print('>> lvgl_event_dispatch', f, obj, event)
@@ -65,7 +65,7 @@ class LVGL_glob
 
   def widget_ctor_impl(cl_ptr, obj_ptr)
     import introspect
-    var cl = lv_obj_class(cl_ptr)
+    var cl = lv.lv_obj_class(cl_ptr)
     var obj = self.get_object_from_ptr(obj_ptr)
     if self.cb_obj.find(obj)  obj = self.cb_obj[obj]  end
     # print("widget_ctor_impl", cl, obj)
@@ -75,7 +75,7 @@ class LVGL_glob
   end
   def widget_dtor_impl(cl_ptr, obj_ptr)
     import introspect
-    var cl = lv_obj_class(cl_ptr)
+    var cl = lv.lv_obj_class(cl_ptr)
     var obj = self.get_object_from_ptr(obj_ptr)
     # print("widget_dtor_impl", cl, obj)
     if type(obj) == 'instance' && introspect.get(obj, 'widget_destructor')
@@ -84,8 +84,8 @@ class LVGL_glob
   end
   def widget_event_impl(cl_ptr, e_ptr)
     import introspect
-    var cl = lv_obj_class(cl_ptr)
-    var event = lv_event(e_ptr)
+    var cl = lv.lv_obj_class(cl_ptr)
+    var event = lv.lv_event(e_ptr)
     var obj_ptr = event.target
     var obj = self.get_object_from_ptr(int(obj_ptr))
     if type(obj) == 'instance' && introspect.get(obj, 'widget_event')
@@ -101,8 +101,8 @@ class LVGL_glob
     if self.widget_event_cb == nil          self.widget_event_cb = tasmota.gen_cb(/ cl, e -> self.widget_event_impl(cl, e)) end
 
     if self.widget_struct_default == nil
-      self.widget_struct_default = lv_obj_class(lv_obj._class).copy()
-      self.widget_struct_default.base_class = lv_obj._class               # by default, inherit from base class `lv_obj`, this can be overriden
+      self.widget_struct_default = lv.lv_obj_class(lv.lv_obj._class).copy()
+      self.widget_struct_default.base_class = lv.lv_obj._class               # by default, inherit from base class `lv_obj`, this can be overriden
       self.widget_struct_default.constructor_cb = self.widget_ctor_cb     # set the berry cb dispatchers
       self.widget_struct_default.destructor_cb = self.widget_dtor_cb
       self.widget_struct_default.event_cb = self.widget_event_cb
@@ -116,11 +116,11 @@ class LVGL_glob
   end
 
   #- initialize a custom widget -#
-  #- arg must be a subclass of lv_obj -#
+  #- arg must be a subclass of lv.lv_obj -#
   def create_custom_widget(obj, parent)
     import introspect
 
-    if !isinstance(obj, lv_obj)   raise "value_error", "arg must be a subclass of lv_obj" end
+    if !isinstance(obj, lv.lv_obj)   raise "value_error", "arg must be a subclass of lv_obj" end
     if self.widget_struct_by_class == nil     self.widget_struct_by_class = {} end
 
     var obj_classname = classname(obj)
@@ -150,7 +150,7 @@ end
 
 _lvgl = LVGL_glob()
 
-# class lv_custom_widget : lv_obj
+# class lv_custom_widget : lv.lv_obj
 #   # static widget_width_def
 #   # static widget_height_def
 #   # static widget_editable
@@ -165,10 +165,10 @@ _lvgl = LVGL_glob()
 #     # own values
 #     self.percentage = 100
 #     # pre-allocate buffers
-#     self.p1 = lv_point()
-#     self.p2 = lv_point()
-#     self.area = lv_area()
-#     self.line_dsc = lv_draw_line_dsc()
+#     self.p1 = lv.lv_point()
+#     self.p2 = lv.lv_point()
+#     self.area = lv.lv_area()
+#     self.line_dsc = lv.lv_draw_line_dsc()
 #   end
 
 #   # def widget_constructor(cl)
@@ -194,7 +194,7 @@ _lvgl = LVGL_glob()
 
 #     var code = event.code
 #     if code == lv.EVENT_DRAW_MAIN
-#       var clip_area = lv_area(event.param)
+#       var clip_area = lv.lv_area(event.param)
 #       print("widget_event DRAW", clip_area.tomap())
 #       # lv.event_send(self, lv.EVENT_DRAW_MAIN, clip_area)
 
@@ -203,7 +203,7 @@ _lvgl = LVGL_glob()
 #       var x_ofs = self.area.x1
 #       var y_ofs = self.area.y1
 
-#       lv.draw_line_dsc_init(self.line_dsc)          # initialize lv_draw_line_dsc structure
+#       lv.draw_line_dsc_init(self.line_dsc)          # initialize lv.lv_draw_line_dsc structure
 #       self.init_draw_line_dsc(lv.PART_MAIN, self.line_dsc)
 
 #       self.line_dsc.round_start = 1
@@ -252,6 +252,6 @@ _lvgl = LVGL_glob()
 # scr = lv.scr_act()            # default screean object
 # f20 = lv.montserrat_font(20)  # load embedded Montserrat 20
 
-# scr.set_style_bg_color(lv_color(0x0000A0), lv.PART_MAIN | lv.STATE_DEFAULT)
+# scr.set_style_bg_color(lv.lv_color(0x0000A0), lv.PART_MAIN | lv.STATE_DEFAULT)
 
 # w = lv_custom_widget(scr)

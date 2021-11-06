@@ -40,4 +40,4 @@ static be_define_const_module(
     "math"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(math, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(math);

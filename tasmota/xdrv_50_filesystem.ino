@@ -146,6 +146,7 @@ void UfsCheckSDCardInit(void) {
       cs = Pin(GPIO_SDCARD_CS);
     }
 
+
 #ifdef EPS8266
     SPI.begin();
 #endif // EPS8266
@@ -559,11 +560,12 @@ const char UFS_FORM_SDC_DIRa[] PROGMEM =
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-#ifdef GUI_EDIT_FILE
   "<form method='get' action='ufse'><input type='hidden' file='" D_NEW_FILE "'>"
-  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>"
-#endif
-  "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>"
+  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
+const char UFS_FORM_FILE_UPGb1[] PROGMEM =
+  "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>";
+
+const char UFS_FORM_FILE_UPGb2[] PROGMEM =
   "</fieldset>"
   "</div>"
   "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
@@ -595,7 +597,7 @@ const char HTTP_EDITOR_FORM_START[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
   "<form>"
   "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
-  "<textarea id='content' name='content' rows='8' cols='80' style='font-size: 12pt'>";
+  "<textarea id='content' name='content' wrap='off' rows='8' cols='80' style='font-size: 12pt'>";
 
 const char HTTP_EDITOR_FORM_END[] PROGMEM =
   "</textarea>"
@@ -664,15 +666,33 @@ void UfsDirectory(void) {
     UfsListDir(ufs_path, depth);
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
+#ifdef GUI_EDIT_FILE
   WSContentSend_P(UFS_FORM_FILE_UPGb);
+#endif
+  if (!isSDC()) {
+    WSContentSend_P(UFS_FORM_FILE_UPGb1);
+  }
+  WSContentSend_P(UFS_FORM_FILE_UPGb2);
+
   WSContentSpaceButton(BUTTON_MANAGEMENT);
   WSContentStop();
 
   Web.upload_file_type = UPL_UFSFILE;
 }
 
+// return true if SDC
+bool isSDC(void) {
+#ifndef SDC_HIDE_INVISIBLES
+  return false;
+#else
+  if (((uint32_t)ufsp != (uint32_t)ffsp) && ((uint32_t)ffsp == (uint32_t)dfsp)) return false;
+  if (((uint32_t)ufsp == (uint32_t)ffsp) && (ufs_type != UFS_TSDC)) return false;
+  return true;
+#endif
+}
+
 void UfsListDir(char *path, uint8_t depth) {
-  char name[32];
+  char name[48];
   char npath[128];
   char format[12];
   sprintf(format, PSTR("%%-%ds"), 24 - depth);
@@ -717,6 +737,8 @@ void UfsListDir(char *path, uint8_t depth) {
       // osx formatted disks contain a lot of stuff we dont want
       bool hiddable = UfsReject((char*)ep);
 
+      if (!hiddable || !isSDC() ) {
+
       for (uint8_t cnt = 0; cnt<depth; cnt++) {
         *cp++ = '-';
       }
@@ -752,6 +774,9 @@ void UfsListDir(char *path, uint8_t depth) {
       }
       entry.close();
     }
+
+  }
+
     dir.close();
   }
 }

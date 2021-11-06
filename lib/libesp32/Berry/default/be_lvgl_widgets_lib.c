@@ -11,12 +11,12 @@
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-#include "be_lvgl.h"
 
 extern int lv0_init(bvm *vm);
 
-extern int lco_init(bvm *vm);
-extern int lco_tostring(bvm *vm);
+extern int lco_init(bvm *vm);           // generic function
+extern int lco_tostring(bvm *vm);       // generic function
+extern int lco_toint(bvm *vm);          // generic function
 
 extern int lvx_member(bvm *vm);
 extern int lvx_tostring(bvm *vm);       // generic function
@@ -25,6 +25,10 @@ extern int lvs_init(bvm *vm);
 extern int lvs_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
+
+extern int lvbe_font_create(bvm *vm);
+extern int lvbe_theme_create(bvm *vm);
+
 
 /* `lv_style` external functions definitions */
 extern int lvbe_style_set_width(bvm *vm);
@@ -117,6 +121,12 @@ extern int lvbe_style_set_arc_color_filtered(bvm *vm);
 extern int lvbe_style_set_arc_opa(bvm *vm);
 extern int lvbe_style_set_arc_img_src(bvm *vm);
 
+/* `lv_font` external functions definitions */
+
+/* `lv_color` external functions definitions */
+
+/* `lv_theme` external functions definitions */
+
 /* `lv_img` external functions definitions */
 extern int lvbe_img_set_tasmota_logo(bvm *vm);
 extern int lvbe_img_create(bvm *vm);
@@ -134,6 +144,22 @@ extern int lvbe_img_get_angle(bvm *vm);
 extern int lvbe_img_get_pivot(bvm *vm);
 extern int lvbe_img_get_zoom(bvm *vm);
 extern int lvbe_img_get_antialias(bvm *vm);
+
+/* `lv_disp` external functions definitions */
+extern int lvbe_disp_get_scr_act(bvm *vm);
+extern int lvbe_disp_get_scr_prev(bvm *vm);
+extern int lvbe_disp_load_scr(bvm *vm);
+extern int lvbe_disp_get_layer_top(bvm *vm);
+extern int lvbe_disp_get_layer_sys(bvm *vm);
+extern int lvbe_disp_set_theme(bvm *vm);
+extern int lvbe_disp_get_theme(bvm *vm);
+extern int lvbe_disp_set_bg_color(bvm *vm);
+extern int lvbe_disp_set_bg_image(bvm *vm);
+extern int lvbe_disp_set_bg_opa(bvm *vm);
+extern int lvbe_disp_get_inactive_time(bvm *vm);
+extern int lvbe_disp_trig_activity(bvm *vm);
+extern int lvbe_disp_clean_dcache(bvm *vm);
+extern int lvbe_disp_dpx(bvm *vm);
 
 /* `lv_obj` external functions definitions */
 extern int lvbe_obj_add_event_cb(bvm *vm);
@@ -431,6 +457,7 @@ extern int lvbe_obj_set_parent(bvm *vm);
 extern int lvbe_obj_move_foreground(bvm *vm);
 extern int lvbe_obj_move_background(bvm *vm);
 extern int lvbe_obj_get_screen(bvm *vm);
+extern int lvbe_obj_get_disp(bvm *vm);
 extern int lvbe_obj_get_parent(bvm *vm);
 extern int lvbe_obj_get_child(bvm *vm);
 extern int lvbe_obj_get_child_cnt(bvm *vm);
@@ -570,6 +597,9 @@ extern int lvbe_spinbox_step_next(bvm *vm);
 extern int lvbe_spinbox_step_prev(bvm *vm);
 extern int lvbe_spinbox_increment(bvm *vm);
 extern int lvbe_spinbox_decrement(bvm *vm);
+
+/* `lv_spinner` external functions definitions */
+extern int lvbe_spinner_create(bvm *vm);
 
 /* `lv_arc` external functions definitions */
 extern int lvbe_arc_create(bvm *vm);
@@ -775,471 +805,759 @@ extern int lvbe_textarea_cursor_left(bvm *vm);
 extern int lvbe_textarea_cursor_down(bvm *vm);
 extern int lvbe_textarea_cursor_up(bvm *vm);
 
-#include "../generate/be_fixed_be_class_lv_style.h"
-#include "../generate/be_fixed_be_class_lv_img.h"
-#include "../generate/be_fixed_be_class_lv_obj.h"
-#include "../generate/be_fixed_be_class_lv_group.h"
-#include "../generate/be_fixed_be_class_lv_indev.h"
-#include "../generate/be_fixed_be_class_lv_chart.h"
-#include "../generate/be_fixed_be_class_lv_colorwheel.h"
-#include "../generate/be_fixed_be_class_lv_imgbtn.h"
-#include "../generate/be_fixed_be_class_lv_led.h"
-#include "../generate/be_fixed_be_class_lv_meter.h"
-#include "../generate/be_fixed_be_class_lv_msgbox.h"
-#include "../generate/be_fixed_be_class_lv_spinbox.h"
-#include "../generate/be_fixed_be_class_lv_arc.h"
-#include "../generate/be_fixed_be_class_lv_bar.h"
-#include "../generate/be_fixed_be_class_lv_btn.h"
-#include "../generate/be_fixed_be_class_lv_btnmatrix.h"
-#include "../generate/be_fixed_be_class_lv_canvas.h"
-#include "../generate/be_fixed_be_class_lv_checkbox.h"
-#include "../generate/be_fixed_be_class_lv_dropdown.h"
-#include "../generate/be_fixed_be_class_lv_label.h"
-#include "../generate/be_fixed_be_class_lv_line.h"
-#include "../generate/be_fixed_be_class_lv_roller.h"
-#include "../generate/be_fixed_be_class_lv_slider.h"
-#include "../generate/be_fixed_be_class_lv_switch.h"
-#include "../generate/be_fixed_be_class_lv_table.h"
-#include "../generate/be_fixed_be_class_lv_textarea.h"
+extern int be_ntv_lv_style_init(bvm *vm);
+extern int be_ntv_lv_font_init(bvm *vm);
+extern int be_ntv_lv_color_init(bvm *vm);
+extern int be_ntv_lv_theme_init(bvm *vm);
+extern int be_ntv_lv_img_init(bvm *vm);
+extern int be_ntv_lv_disp_init(bvm *vm);
+extern int be_ntv_lv_obj_init(bvm *vm);
+extern int be_ntv_lv_group_init(bvm *vm);
+extern int be_ntv_lv_indev_init(bvm *vm);
+extern int be_ntv_lv_chart_init(bvm *vm);
+extern int be_ntv_lv_colorwheel_init(bvm *vm);
+extern int be_ntv_lv_imgbtn_init(bvm *vm);
+extern int be_ntv_lv_led_init(bvm *vm);
+extern int be_ntv_lv_meter_init(bvm *vm);
+extern int be_ntv_lv_msgbox_init(bvm *vm);
+extern int be_ntv_lv_spinbox_init(bvm *vm);
+extern int be_ntv_lv_spinner_init(bvm *vm);
+extern int be_ntv_lv_arc_init(bvm *vm);
+extern int be_ntv_lv_bar_init(bvm *vm);
+extern int be_ntv_lv_btn_init(bvm *vm);
+extern int be_ntv_lv_btnmatrix_init(bvm *vm);
+extern int be_ntv_lv_canvas_init(bvm *vm);
+extern int be_ntv_lv_checkbox_init(bvm *vm);
+extern int be_ntv_lv_dropdown_init(bvm *vm);
+extern int be_ntv_lv_label_init(bvm *vm);
+extern int be_ntv_lv_line_init(bvm *vm);
+extern int be_ntv_lv_roller_init(bvm *vm);
+extern int be_ntv_lv_slider_init(bvm *vm);
+extern int be_ntv_lv_switch_init(bvm *vm);
+extern int be_ntv_lv_table_init(bvm *vm);
+extern int be_ntv_lv_textarea_init(bvm *vm);
 
-void be_load_lv_style_lib(bvm *vm) {
+extern const bclass be_class_lv_arc;
+extern const bclass be_class_lv_bar;
+extern const bclass be_class_lv_btn;
+extern const bclass be_class_lv_btnmatrix;
+extern const bclass be_class_lv_canvas;
+extern const bclass be_class_lv_chart;
+extern const bclass be_class_lv_checkbox;
+extern const bclass be_class_lv_color;
+extern const bclass be_class_lv_colorwheel;
+extern const bclass be_class_lv_disp;
+extern const bclass be_class_lv_dropdown;
+extern const bclass be_class_lv_font;
+extern const bclass be_class_lv_group;
+extern const bclass be_class_lv_img;
+extern const bclass be_class_lv_imgbtn;
+extern const bclass be_class_lv_indev;
+extern const bclass be_class_lv_label;
+extern const bclass be_class_lv_led;
+extern const bclass be_class_lv_line;
+extern const bclass be_class_lv_meter;
+extern const bclass be_class_lv_msgbox;
+extern const bclass be_class_lv_obj;
+extern const bclass be_class_lv_roller;
+extern const bclass be_class_lv_slider;
+extern const bclass be_class_lv_spinbox;
+extern const bclass be_class_lv_spinner;
+extern const bclass be_class_lv_style;
+extern const bclass be_class_lv_switch;
+extern const bclass be_class_lv_table;
+extern const bclass be_class_lv_textarea;
+extern const bclass be_class_lv_theme;
+
+
+/********************************************************************
+** Solidified class: lv_style
+********************************************************************/
+be_local_class(lv_style,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvs_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvs_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_style", -143355747, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_obj
+********************************************************************/
+be_local_class(lv_obj,
+    1,
+    NULL,
+    be_nested_map(5,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("tostring", -1995258651, 8, 3), be_const_func(lvx_tostring) },
+        { be_nested_key("member", 719708611, 6, -1), be_const_func(lvx_member) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("init", 380752755, 4, 4), be_const_func(be_ntv_lv_obj_init) },
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_obj_class) },
+    })),
+    (be_nested_const_str("lv_obj", -37134147, 6))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_group
+********************************************************************/
+be_local_class(lv_group,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_group_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_group", -442928277, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_indev
+********************************************************************/
+be_local_class(lv_indev,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_indev", 225602374, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_disp
+********************************************************************/
+be_local_class(lv_disp,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+    })),
+    (be_nested_const_str("lv_disp", 609712084, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_font
+********************************************************************/
+be_local_class(lv_font,
+    1,
+    NULL,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_font_create) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+    })),
+    (be_nested_const_str("lv_font", 1550958453, 7))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_theme
+********************************************************************/
+be_local_class(lv_theme,
+    1,
+    NULL,
+    be_nested_map(3,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_theme_create) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+    })),
+    (be_nested_const_str("lv_theme", 1550958453, 7))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_color
+********************************************************************/
+be_local_class(lv_color,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("toint", -681784387, 5, -1), be_const_func(lco_toint) },
+        { be_nested_key("tostring", -1995258651, 8, 0), be_const_func(lco_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lco_init) },
+    })),
+    (be_nested_const_str("lv_color", 1419148319, 8))
+);
+/*******************************************************************/
+
+void be_load_lv_style_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_style);
     be_setglobal(vm, "lv_style");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_style (scope: global, name: lv_style) {
-    _p, var
-    init, func(lvs_init)
-    tostring, func(lvs_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_img_lib(bvm *vm) {
+void be_load_lv_font_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_font);
+    be_setglobal(vm, "lv_font");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_color_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_color);
+    be_setglobal(vm, "lv_color");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_theme_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_theme);
+    be_setglobal(vm, "lv_theme");
+    be_pop(vm, 1);
+}
+
+/********************************************************************
+** Solidified class: lv_img
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_img,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_img_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_img_init) },
+    })),
+    (be_nested_const_str("lv_img", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_img_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_img);
     be_setglobal(vm, "lv_img");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_img (scope: global, name: lv_img, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_img_class)
-    init, func(lvbe_img_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_obj_lib(bvm *vm) {
+void be_load_lv_disp_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_disp);
+    be_setglobal(vm, "lv_disp");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_obj_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_obj);
     be_setglobal(vm, "lv_obj");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_obj (scope: global, name: lv_obj) {
-    _p, var
-    _class, int(&lv_obj_class)
-    init, func(lvbe_obj_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_group_lib(bvm *vm) {
+void be_load_lv_group_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_group);
     be_setglobal(vm, "lv_group");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_group (scope: global, name: lv_group) {
-    _p, var
-    init, func(lvbe_group_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_indev_lib(bvm *vm) {
+void be_load_lv_indev_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_indev);
     be_setglobal(vm, "lv_indev");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_indev (scope: global, name: lv_indev) {
-    _p, var
-    init, func(lv0_init)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_chart_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_chart
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_chart,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_chart_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_chart_init) },
+    })),
+    (be_nested_const_str("lv_chart", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_chart_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_chart);
     be_setglobal(vm, "lv_chart");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_chart (scope: global, name: lv_chart, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_chart_class)
-    init, func(lvbe_chart_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_colorwheel_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_colorwheel
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_colorwheel,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_colorwheel_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_colorwheel_init) },
+    })),
+    (be_nested_const_str("lv_colorwheel", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_colorwheel_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_colorwheel);
     be_setglobal(vm, "lv_colorwheel");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_colorwheel (scope: global, name: lv_colorwheel, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_colorwheel_class)
-    init, func(lvbe_colorwheel_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_imgbtn_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_imgbtn
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_imgbtn,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_imgbtn_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_imgbtn_init) },
+    })),
+    (be_nested_const_str("lv_imgbtn", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_imgbtn_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_imgbtn);
     be_setglobal(vm, "lv_imgbtn");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_imgbtn (scope: global, name: lv_imgbtn, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_imgbtn_class)
-    init, func(lvbe_imgbtn_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_led_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_led
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_led,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_led_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_led_init) },
+    })),
+    (be_nested_const_str("lv_led", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_led_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_led);
     be_setglobal(vm, "lv_led");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_led (scope: global, name: lv_led, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_led_class)
-    init, func(lvbe_led_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_meter_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_meter
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_meter,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_meter_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_meter_init) },
+    })),
+    (be_nested_const_str("lv_meter", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_meter_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_meter);
     be_setglobal(vm, "lv_meter");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_meter (scope: global, name: lv_meter, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_meter_class)
-    init, func(lvbe_meter_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_msgbox_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_msgbox
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_msgbox,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_msgbox_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_msgbox_init) },
+    })),
+    (be_nested_const_str("lv_msgbox", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_msgbox_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_msgbox);
     be_setglobal(vm, "lv_msgbox");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_msgbox (scope: global, name: lv_msgbox, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_msgbox_class)
-    init, func(lvbe_msgbox_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_spinbox_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_spinbox
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_spinbox,
+    0,
+    &be_class_lv_textarea,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_spinbox_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_spinbox_init) },
+    })),
+    (be_nested_const_str("lv_spinbox", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_spinbox_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_spinbox);
     be_setglobal(vm, "lv_spinbox");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_spinbox (scope: global, name: lv_spinbox, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_spinbox_class)
-    init, func(lvbe_spinbox_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_arc_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_spinner
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_spinner,
+    0,
+    &be_class_lv_arc,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_spinner_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_spinner_init) },
+    })),
+    (be_nested_const_str("lv_spinner", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_spinner_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_spinner);
+    be_setglobal(vm, "lv_spinner");
+    be_pop(vm, 1);
+}
+
+/********************************************************************
+** Solidified class: lv_arc
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_arc,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_arc_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_arc_init) },
+    })),
+    (be_nested_const_str("lv_arc", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_arc_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_arc);
     be_setglobal(vm, "lv_arc");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_arc (scope: global, name: lv_arc, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_arc_class)
-    init, func(lvbe_arc_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_bar_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_bar
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_bar,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_bar_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_bar_init) },
+    })),
+    (be_nested_const_str("lv_bar", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_bar_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_bar);
     be_setglobal(vm, "lv_bar");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_bar (scope: global, name: lv_bar, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_bar_class)
-    init, func(lvbe_bar_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_btn_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_btn
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_btn,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_btn_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_btn_init) },
+    })),
+    (be_nested_const_str("lv_btn", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_btn_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_btn);
     be_setglobal(vm, "lv_btn");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_btn (scope: global, name: lv_btn, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_btn_class)
-    init, func(lvbe_btn_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_btnmatrix_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_btnmatrix
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_btnmatrix,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_btnmatrix_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_btnmatrix_init) },
+    })),
+    (be_nested_const_str("lv_btnmatrix", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_btnmatrix_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_btnmatrix);
     be_setglobal(vm, "lv_btnmatrix");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_btnmatrix (scope: global, name: lv_btnmatrix, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_btnmatrix_class)
-    init, func(lvbe_btnmatrix_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_canvas_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_canvas
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_canvas,
+    0,
+    &be_class_lv_img,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_canvas_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_canvas_init) },
+    })),
+    (be_nested_const_str("lv_canvas", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_canvas_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_canvas);
     be_setglobal(vm, "lv_canvas");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_canvas (scope: global, name: lv_canvas, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_canvas_class)
-    init, func(lvbe_canvas_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_checkbox_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_checkbox
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_checkbox,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_checkbox_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_checkbox_init) },
+    })),
+    (be_nested_const_str("lv_checkbox", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_checkbox_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_checkbox);
     be_setglobal(vm, "lv_checkbox");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_checkbox (scope: global, name: lv_checkbox, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_checkbox_class)
-    init, func(lvbe_checkbox_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_dropdown_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_dropdown
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_dropdown,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_dropdown_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_dropdown_init) },
+    })),
+    (be_nested_const_str("lv_dropdown", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_dropdown_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_dropdown);
     be_setglobal(vm, "lv_dropdown");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_dropdown (scope: global, name: lv_dropdown, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_dropdown_class)
-    init, func(lvbe_dropdown_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_label_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_label
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_label,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_label_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_label_init) },
+    })),
+    (be_nested_const_str("lv_label", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_label_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_label);
     be_setglobal(vm, "lv_label");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_label (scope: global, name: lv_label, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_label_class)
-    init, func(lvbe_label_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_line_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_line
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_line,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_line_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_line_init) },
+    })),
+    (be_nested_const_str("lv_line", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_line_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_line);
     be_setglobal(vm, "lv_line");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_line (scope: global, name: lv_line, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_line_class)
-    init, func(lvbe_line_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_roller_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_roller
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_roller,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_roller_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_roller_init) },
+    })),
+    (be_nested_const_str("lv_roller", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_roller_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_roller);
     be_setglobal(vm, "lv_roller");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_roller (scope: global, name: lv_roller, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_roller_class)
-    init, func(lvbe_roller_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_slider_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_slider
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_slider,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_slider_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_slider_init) },
+    })),
+    (be_nested_const_str("lv_slider", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_slider_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_slider);
     be_setglobal(vm, "lv_slider");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_slider (scope: global, name: lv_slider, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_slider_class)
-    init, func(lvbe_slider_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_switch_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_switch
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_switch,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_switch_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_switch_init) },
+    })),
+    (be_nested_const_str("lv_switch", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_switch_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_switch);
     be_setglobal(vm, "lv_switch");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_switch (scope: global, name: lv_switch, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_switch_class)
-    init, func(lvbe_switch_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_table_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_table
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_table,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_table_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_table_init) },
+    })),
+    (be_nested_const_str("lv_table", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_table_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_table);
     be_setglobal(vm, "lv_table");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_table (scope: global, name: lv_table, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_table_class)
-    init, func(lvbe_table_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
-void be_load_lv_textarea_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: lv_textarea
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_textarea,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_textarea_class) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_textarea_init) },
+    })),
+    (be_nested_const_str("lv_textarea", 1612829968, 6))
+);
+/*******************************************************************/
+
+void be_load_lv_textarea_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_textarea);
     be_setglobal(vm, "lv_textarea");
     be_pop(vm, 1);
-};
-
-/* @const_object_info_begin
-class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv_obj) {
-    _p, var
-    _class, int(&lv_textarea_class)
-    init, func(lvbe_textarea_create)
-    tostring, func(lvx_tostring)
-    member, func(lvx_member)
-
 }
-@const_object_info_end */
 
 
 #endif // USE_LVGL

@@ -69,7 +69,6 @@ static int m_findmember(bvm *vm)
     if (top >= 2 && (be_isinstance(vm, 1) || be_ismodule(vm, 1) || be_isclass(vm, 1)) && be_isstring(vm, 2)) {
         int ret = be_execprotected(vm, &m_findmember_protected, (void*) be_tostring(vm, 2));
         if (ret == BE_OK) {
-            // be_getmember(vm, 1, be_tostring(vm, 2));
             be_return(vm);
         }
     }

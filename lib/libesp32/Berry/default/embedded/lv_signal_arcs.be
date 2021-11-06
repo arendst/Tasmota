@@ -2,7 +2,7 @@
  -
 --#
 
-class lv_signal_arcs : lv_obj
+class lv_signal_arcs : lv.obj
   var percentage          # value to display, range 0..100
   var p1, p2, area, line_dsc    # instances of objects kept to avoid re-instanciating at each call
 
@@ -12,10 +12,10 @@ class lv_signal_arcs : lv_obj
     # own values
     self.percentage = 100
     # pre-allocate buffers
-    self.p1 = lv_point()
-    self.p2 = lv_point()
-    self.area = lv_area()
-    self.line_dsc = lv_draw_line_dsc()
+    self.p1 = lv.point()
+    self.p2 = lv.point()
+    self.area = lv.area()
+    self.line_dsc = lv.draw_line_dsc()
   end
 
   def widget_event(cl, event)
@@ -35,14 +35,14 @@ class lv_signal_arcs : lv_obj
     #print("inter_bar", inter_bar, "bar", bar, "bar_offset", bar_offset)
 
     if code == lv.EVENT_DRAW_MAIN
-      var clip_area = lv_area(event.param)
+      var clip_area = lv.area(event.param)
     
       # get coordinates of object
       self.get_coords(self.area)
       var x_ofs = self.area.x1
       var y_ofs = self.area.y1
 
-      lv.draw_line_dsc_init(self.line_dsc)                  # initialize lv_draw_line_dsc structure
+      lv.draw_line_dsc_init(self.line_dsc)                  # initialize lv.draw_line_dsc structure
       self.init_draw_line_dsc(lv.PART_MAIN, self.line_dsc)  # copy the current values
 
       self.line_dsc.round_start = 1
@@ -118,8 +118,8 @@ end
 class lv_wifi_arcs_icon: lv_wifi_arcs
   def init(parent)
     super(self).init(parent)
-    self.set_style_line_color(lv_color(lv.COLOR_WHITE), lv.PART_MAIN | lv.STATE_DEFAULT)
-    self.set_style_bg_color(lv_color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
+    self.set_style_line_color(lv.color(lv.COLOR_WHITE), lv.PART_MAIN | lv.STATE_DEFAULT)
+    self.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
     if parent != nil
       var parent_height = parent.get_height()
       var pad_right = parent.get_style_pad_right(lv.PART_MAIN | lv.STATE_DEFAULT)

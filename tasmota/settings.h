@@ -483,9 +483,9 @@ typedef struct {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   DisplayOptions  display_options;         // 313
-  uint32_t      energy_kWhtoday_ph[3];     // 314
-  uint32_t      energy_kWhyesterday_ph[3]; // 320
-  uint32_t      energy_kWhtotal_ph[3];     // 32C
+  int32_t       energy_kWhtoday_ph[3];     // 314
+  int32_t       energy_kWhyesterday_ph[3]; // 320
+  int32_t       energy_kWhtotal_ph[3];     // 32C
 
   uint8_t       free_338[7];               // 338
 
@@ -733,8 +733,9 @@ typedef struct {
   uint8_t       shd_leading_edge;          // F5B
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
+  uint8_t       tcp_config;                // F5F
 
-  uint8_t       free_f5f[61];              // F5F - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f60[60];              // F60 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
@@ -786,8 +787,8 @@ typedef struct {
 
   uint8_t       free_2d6[2];               // 2D6
 
-  uint32_t      energy_kWhtoday_ph[3];     // 2D8
-  uint32_t      energy_kWhtotal_ph[3];     // 2E4
+  int32_t       energy_kWhtoday_ph[3];     // 2D8
+  int32_t       energy_kWhtotal_ph[3];     // 2E4
 
                                            // 2F0 - 2FF free locations
 } TRtcSettings;

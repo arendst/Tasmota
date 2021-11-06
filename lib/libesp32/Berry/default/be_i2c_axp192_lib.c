@@ -21,7 +21,7 @@ be_local_closure(get_warning_level,   /* name */
     /* K1   */  be_const_int(1),
     }),
     (be_nested_const_str("get_warning_level", 1737834441, 17)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0046,  //  0001  LDINT	R3	71
@@ -52,7 +52,7 @@ be_local_closure(get_vbus_current,   /* name */
     /* K1   */  be_const_real_hex(0x3EC00000),
     }),
     (be_nested_const_str("get_vbus_current", 1205347942, 16)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E005B,  //  0001  LDINT	R3	92
@@ -83,7 +83,7 @@ be_local_closure(set_chg_current,   /* name */
     /* K1   */  be_nested_string("read8", -1492179129, 5),
     }),
     (be_nested_const_str("set_chg_current", 336304386, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[12]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
       0x54120032,  //  0001  LDINT	R4	51
@@ -121,7 +121,7 @@ be_local_closure(get_bat_current,   /* name */
     /* K1   */  be_const_real_hex(0x3F000000),
     }),
     (be_nested_const_str("get_bat_current", 1912106073, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 9]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0079,  //  0001  LDINT	R3	122
@@ -156,7 +156,7 @@ be_local_closure(get_bat_power,   /* name */
     /* K1   */  be_const_real_hex(0x3A102DE1),
     }),
     (be_nested_const_str("get_bat_power", -1227592443, 13)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E006F,  //  0001  LDINT	R3	112
@@ -186,7 +186,7 @@ be_local_closure(json_append,   /* name */
     /* K0   */  be_nested_string("wire", -212213352, 4),
     }),
     (be_nested_const_str("json_append", -1292948012, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x74060001,  //  0001  JMPT	R1	#0004
@@ -217,7 +217,7 @@ be_local_closure(get_vbus_voltage,   /* name */
     /* K1   */  be_const_real_hex(0x3ADED28A),
     }),
     (be_nested_const_str("get_vbus_voltage", -1896756895, 16)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0059,  //  0001  LDINT	R3	90
@@ -249,7 +249,7 @@ be_local_closure(get_temp,   /* name */
     /* K2   */  be_const_real_hex(0x4310B333),
     }),
     (be_nested_const_str("get_temp", -924047810, 8)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 6]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E005D,  //  0001  LDINT	R3	94
@@ -283,7 +283,7 @@ be_local_closure(battery_present,   /* name */
     /* K3   */  be_const_int(1),
     }),
     (be_nested_const_str("battery_present", -706570238, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[15]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -324,7 +324,7 @@ be_local_closure(get_aps_voltage,   /* name */
     /* K1   */  be_const_real_hex(0x3AB78035),
     }),
     (be_nested_const_str("get_aps_voltage", -2001930861, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E007D,  //  0001  LDINT	R3	126
@@ -358,7 +358,7 @@ be_local_closure(set_dcdc_enable,   /* name */
     /* K4   */  be_const_int(3),
     }),
     (be_nested_const_str("set_dcdc_enable", 1594690786, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[22]) {  /* code */
       0x1C0C0300,  //  0000  EQ	R3	R1	K0
       0x780E0004,  //  0001  JMPF	R3	#0007
@@ -408,7 +408,7 @@ be_local_closure(set_ldo_voltage,   /* name */
     /* K3   */  be_const_int(3),
     }),
     (be_nested_const_str("set_ldo_voltage", -204466136, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[39]) {  /* code */
       0x540E0CE3,  //  0000  LDINT	R3	3300
       0x240C0403,  //  0001  GT	R3	R2	R3
@@ -473,8 +473,8 @@ be_local_closure(init,   /* name */
     /* K1   */  be_nested_string("init", 380752755, 4),
     /* K2   */  be_nested_string("AXP192", 757230128, 6),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 9]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
@@ -509,7 +509,7 @@ be_local_closure(get_bat_voltage,   /* name */
     /* K1   */  be_const_real_hex(0x3A902DE0),
     }),
     (be_nested_const_str("get_bat_voltage", 706676538, 15)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0077,  //  0001  LDINT	R3	120
@@ -541,7 +541,7 @@ be_local_closure(set_ldo_enable,   /* name */
     /* K2   */  be_const_int(3),
     }),
     (be_nested_const_str("set_ldo_enable", -1378465255, 14)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[15]) {  /* code */
       0x1C0C0300,  //  0000  EQ	R3	R1	K0
       0x780E0004,  //  0001  JMPF	R3	#0007
@@ -586,7 +586,7 @@ be_local_closure(set_dc_voltage,   /* name */
     /* K5   */  be_nested_string("read8", -1492179129, 5),
     }),
     (be_nested_const_str("set_dc_voltage", -2112985360, 14)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[48]) {  /* code */
       0x140C0300,  //  0000  LT	R3	R1	K0
       0x740E0001,  //  0001  JMPT	R3	#0004
@@ -662,7 +662,7 @@ be_local_closure(write_gpio,   /* name */
     /* K3   */  be_const_int(3),
     }),
     (be_nested_const_str("write_gpio", -2027026962, 10)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[21]) {  /* code */
       0x280C0300,  //  0000  GE	R3	R1	K0
       0x780E0007,  //  0001  JMPF	R3	#000A
@@ -721,7 +721,7 @@ be_local_closure(web_sensor,   /* name */
     /* K13  */  be_nested_string("web_send_decimal", 1407210204, 16),
     }),
     (be_nested_const_str("web_sensor", -1394870324, 10)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[26]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x74060001,  //  0001  JMPT	R1	#0004
@@ -773,7 +773,7 @@ be_local_closure(get_bat_charge_current,   /* name */
     /* K1   */  be_const_real_hex(0x3F000000),
     }),
     (be_nested_const_str("get_bat_charge_current", 1385293050, 22)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0079,  //  0001  LDINT	R3	122
@@ -806,7 +806,7 @@ be_local_closure(get_battery_chargin_status,   /* name */
     /* K3   */  be_const_int(1),
     }),
     (be_nested_const_str("get_battery_chargin_status", -2061725725, 26)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -842,7 +842,7 @@ be_local_closure(get_input_power_status,   /* name */
     /* K4   */  be_const_int(1),
     }),
     (be_nested_const_str("get_input_power_status", -192138119, 22)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1

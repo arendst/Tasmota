@@ -29,7 +29,7 @@
 
 // can be user defined in my_user_config.h
 #ifndef SDM120_SPEED
-  #define SDM120_SPEED      2400    // default SDM120 Modbus address
+  #define SDM120_SPEED      2400    // default SDM120 Modbus baud rate
 #endif
 // can be user defined in my_user_config.h
 #ifndef SDM120_ADDR

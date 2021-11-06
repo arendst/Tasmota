@@ -285,6 +285,12 @@ int be_module_load(bvm *vm, bstring *path)
     return res;
 }
 
+BERRY_API bbool be_getmodule(bvm *vm, const char *k)
+{
+    int res = be_module_load(vm, be_newstr(vm, k));
+    return res == BE_OK;
+}
+
 bmodule* be_module_new(bvm *vm)
 {
     bgcobject *gco = be_gcnew(vm, BE_MODULE, bmodule);

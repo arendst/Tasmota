@@ -59,6 +59,9 @@ lv_fun_globs = [
                   "extra/widgets/meter/*.h",
                   "extra/widgets/msgbox/*.h",
                   "extra/widgets/spinbox/*.h",
+                  "extra/widgets/spinner/*.h",
+                  "extra/themes/default/*.h",
+                  "extra/themes/mono/*.h",
                   "core/*.h",
                   "draw/*.h",
                   "misc/lv_style_gen.h",
@@ -66,6 +69,7 @@ lv_fun_globs = [
                   #"**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
+headers_names += list_files("../../lib/libesp32_lvgl/LVGL_assets/src/", ["lv_theme_openhasp.h"])
 # headers_names += ["lv_pre_style.h"] # for LVGL v7, add pre-generated style functions from C preprocessor
 
 # unit test
@@ -143,7 +147,7 @@ for header_name in headers_names:
               "^lv_templ_",
               "^lv_imgbtn_get_src_",    # LV_IMGBTN_TILED == 0
               "^lv_imgbtn_set_src_tiled",# !LV_IMGBTN_TILED
-              "^lv_disp_",
+              #"^lv_disp_",
               "^lv_refr_get_fps_",      # no LV_USE_PERF_MONITOR
               "^lv_img_cache_",
               "^lv_img_decoder_",
@@ -171,7 +175,25 @@ headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
 output_filename = "lv_enum.h"
 sys.stdout = open(output_filename, 'w')
-print("""
+print("""// ======================================================================
+// Functions
+// ======================================================================
+
+register_button_encoder=&lv0_register_button_encoder
+
+montserrat_font=&lv0_load_montserrat_font
+seg7_font=&lv0_load_seg7_font
+font_montserrat=&lv0_load_montserrat_font
+font_seg7=&lv0_load_seg7_font
+font_robotocondensed_latin1=&lv0_load_robotocondensed_latin1_font
+load_font=&lv0_load_font
+load_freetype_font=&lv0_load_freetype_font
+
+screenshot=&lv0_screenshot
+
+// ======================================================================
+// Colors
+// ======================================================================
 // LV Colors - we store in 24 bits format and will convert at runtime
 // This is specific treatment because we keep colors in 24 bits format
 COLOR_WHITE=0xFFFFFF
@@ -198,6 +220,76 @@ LV_TEXTAREA_CURSOR_LAST
 LV_STYLE_PROP_ANY
 
 LV_SIZE_CONTENT
+
+// ======================================================================
+// Symbols
+// ======================================================================
+
+SYMBOL_AUDIO="\\xef\\x80\\x81"
+SYMBOL_VIDEO="\\xef\\x80\\x88"
+SYMBOL_LIST="\\xef\\x80\\x8b"
+SYMBOL_OK="\\xef\\x80\\x8c"
+SYMBOL_CLOSE="\\xef\\x80\\x8d"
+SYMBOL_POWER="\\xef\\x80\\x91"
+SYMBOL_SETTINGS="\\xef\\x80\\x93"
+SYMBOL_HOME="\\xef\\x80\\x95"
+SYMBOL_DOWNLOAD="\\xef\\x80\\x99"
+SYMBOL_DRIVE="\\xef\\x80\\x9c"
+SYMBOL_REFRESH="\\xef\\x80\\xa1"
+SYMBOL_MUTE="\\xef\\x80\\xa6"
+SYMBOL_VOLUME_MID="\\xef\\x80\\xa7"
+SYMBOL_VOLUME_MAX="\\xef\\x80\\xa8"
+SYMBOL_IMAGE="\\xef\\x80\\xbe"
+SYMBOL_EDIT="\\xef\\x8C\\x84"
+SYMBOL_PREV="\\xef\\x81\\x88"
+SYMBOL_PLAY="\\xef\\x81\\x8b"
+SYMBOL_PAUSE="\\xef\\x81\\x8c"
+SYMBOL_STOP="\\xef\\x81\\x8d"
+SYMBOL_NEXT="\\xef\\x81\\x91"
+SYMBOL_EJECT="\\xef\\x81\\x92"
+SYMBOL_LEFT="\\xef\\x81\\x93"
+SYMBOL_RIGHT="\\xef\\x81\\x94"
+SYMBOL_PLUS="\\xef\\x81\\xa7"
+SYMBOL_MINUS="\\xef\\x81\\xa8"
+SYMBOL_EYE_OPEN="\\xef\\x81\\xae"
+SYMBOL_EYE_CLOSE="\\xef\\x81\\xb0"
+SYMBOL_WARNING="\\xef\\x81\\xb1"
+SYMBOL_SHUFFLE="\\xef\\x81\\xb4"
+SYMBOL_UP="\\xef\\x81\\xb7"
+SYMBOL_DOWN="\\xef\\x81\\xb8"
+SYMBOL_LOOP="\\xef\\x81\\xb9"
+SYMBOL_DIRECTORY="\\xef\\x81\\xbb"
+SYMBOL_UPLOAD="\\xef\\x82\\x93"
+SYMBOL_CALL="\\xef\\x82\\x95"
+SYMBOL_CUT="\\xef\\x83\\x84"
+SYMBOL_COPY="\\xef\\x83\\x85"
+SYMBOL_SAVE="\\xef\\x83\\x87"
+SYMBOL_CHARGE="\\xef\\x83\\xa7"
+SYMBOL_PASTE="\\xef\\x83\\xAA"
+SYMBOL_BELL="\\xef\\x83\\xb3"
+SYMBOL_KEYBOARD="\\xef\\x84\\x9c"
+SYMBOL_GPS="\\xef\\x84\\xa4"
+SYMBOL_FILE="\\xef\\x85\\x9b"
+SYMBOL_WIFI="\\xef\\x87\\xab"
+SYMBOL_BATTERY_FULL="\\xef\\x89\\x80"
+SYMBOL_BATTERY_3="\\xef\\x89\\x81"
+SYMBOL_BATTERY_2="\\xef\\x89\\x82"
+SYMBOL_BATTERY_1="\\xef\\x89\\x83"
+SYMBOL_BATTERY_EMPTY="\\xef\\x89\\x84"
+SYMBOL_USB="\\xef\\x8a\\x87"
+SYMBOL_BLUETOOTH="\\xef\\x8a\\x93"
+SYMBOL_TRASH="\\xef\\x8B\\xAD"
+SYMBOL_BACKSPACE="\\xef\\x95\\x9A"
+SYMBOL_SD_CARD="\\xef\\x9F\\x82"
+SYMBOL_NEW_LINE="\\xef\\xA2\\xA2"
+
+SYMBOL_DUMMY="\\xEF\\xA3\\xBF"
+
+SYMBOL_BULLET="\\xE2\\x80\\xA2"
+
+// ======================================================================
+// Generated from headers
+// ======================================================================
 """)
 
 

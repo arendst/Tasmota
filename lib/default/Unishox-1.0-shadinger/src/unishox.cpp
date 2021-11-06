@@ -76,13 +76,6 @@ static char sets[][11] PROGMEM =
                    {'.', ',', '-', '/', '?', '+', ' ', '(', ')', '$', '@'},
                    {';', '#', ':', '<', '^', '*', '"', '{', '}', '[', ']'},
                    {'=', '%', '\'', '>', '&', '_', '!', '\\', '|', '~', '`'}};
-                  // {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
-                  //  {  0, 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
-                  //  {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},
-                  //  {  0, '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
-                  //  {'.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%'},
-                  //  {'&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']'},
-                  //  {'@', '?', '\'', '^', '#', '_', '!', '\\', '|', '~', '`'}};
 
 // Decoder is designed for using less memory, not speed
 // Decode lookup table for code index and length
@@ -117,28 +110,16 @@ static const uint16_t DICT_CODE = 0x0000;
 static const uint16_t DICT_CODE_LEN = 5;
 static const uint16_t DICT_OTHER_CODE = 0x0000; // not used
 static const uint16_t DICT_OTHER_CODE_LEN = 6;
-// const uint16_t RPT_CODE = 0x2370;
-// const uint16_t RPT_CODE_LEN = 13;
 static const uint16_t RPT_CODE_TASMOTA = 0x3780;
 static const uint16_t RPT_CODE_TASMOTA_LEN = 10;
 static const uint16_t BACK2_STATE1_CODE = 0x2000;    // 0010 = back to lower case
 static const uint16_t BACK2_STATE1_CODE_LEN = 4;
 static const uint16_t BACK_FROM_UNI_CODE = 0xFE00;
 static const uint16_t BACK_FROM_UNI_CODE_LEN = 8;
-// const uint16_t CRLF_CODE = 0x3780;
-// const uint16_t CRLF_CODE_LEN = 10;
 static const uint16_t LF_CODE = 0x3700;
 static const uint16_t LF_CODE_LEN = 9;
 static const uint16_t TAB_CODE = 0x2400;
 static const uint16_t TAB_CODE_LEN = 7;
-// const uint16_t UNI_CODE = 0x8000;        // Unicode disabled
-// const uint16_t UNI_CODE_LEN = 3;
-// const uint16_t UNI_STATE_SPL_CODE = 0xF800;
-// const uint16_t UNI_STATE_SPL_CODE_LEN = 5;
-// const uint16_t UNI_STATE_DICT_CODE = 0xFC00;
-// const uint16_t UNI_STATE_DICT_CODE_LEN = 7;
-// const uint16_t CONT_UNI_CODE = 0x2800;
-// const uint16_t CONT_UNI_CODE_LEN = 7;
 static const uint16_t ALL_UPPER_CODE = 0x2200;
 static const uint16_t ALL_UPPER_CODE_LEN = 8;
 static const uint16_t SW2_STATE2_CODE = 0x3800;
@@ -147,8 +128,6 @@ static const uint16_t ST2_SPC_CODE = 0x3B80;
 static const uint16_t ST2_SPC_CODE_LEN = 11;
 static const uint16_t BIN_CODE_TASMOTA = 0x8000;
 static const uint16_t BIN_CODE_TASMOTA_LEN = 3;
-// const uint16_t BIN_CODE = 0x2000;
-// const uint16_t BIN_CODE_LEN = 9;
 
 #define NICE_LEN 5
 
@@ -467,9 +446,9 @@ void Unishox::decodeRepeat(void) {
   uint32_t dict_len = readCount() + NICE_LEN;
   uint32_t dist = readCount() + NICE_LEN - 1;
   if (ol + dict_len <= len_out) {
-  memcpy(out + ol, out + ol - dist, dict_len);
-  ol += dict_len;
-}
+    memcpy(out + ol, out + ol - dist, dict_len);
+    ol += dict_len;
+  }
 }
 
 int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out, size_t p_len_out) {
@@ -485,10 +464,10 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
   dstate = SHX_SET1;
   is_all_upper = 0;
 
-  out[ol] = 0;
+  if (out) out[ol] = 0;
   // while ((byte_no << 3) + bit_no - 8 < len) {
   while (!in_eof) {
-    if (ol >= len_out) {
+    if (out && ol >= len_out) {
       break;
     }
     int32_t h, v;
@@ -535,7 +514,8 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
 
     if (v == 0 && h == SHX_SET1A) {
       if (is_upper) {
-        out[ol++] = 255 - readCount();    // binary
+        if (out) out[ol] = 255 - readCount();    // binary
+        ol++;
       } else {
         decodeRepeat();   // dist
       }
@@ -544,7 +524,8 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
 
     if (h == SHX_SET1 && v == 3) {
       // was Unicode, will do Binary instead
-      out[ol++] = 255 - readCount();    // binary
+      if (out) out[ol] = 255 - readCount();    // binary
+      ol++;
       continue;
     }
     if (h < 7 && v < 11)     // TODO: are these the actual limits? Not 11x7 ?
@@ -557,17 +538,22 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
         c = '\t';     // If UpperCase Space, change to TAB
       if (h == SHX_SET1B) {
         if (8 == v) {   // was LF or RPT, now only LF
-          out[ol++] = '\n';
+          if (out) out[ol] = '\n';
+          ol++;
           continue;
         }
         if (9 == v) {           // was CRLF, now RPT
           uint32_t count = readCount() + 4;
-          if (ol + count >= len_out) {
+          if (out && ol + count >= len_out) {
             return -1;        // overflow
           }
-          char rpt_c = out[ol - 1];
-          while (count--)
-            out[ol++] = rpt_c;
+          if (out) {
+            char rpt_c = out[ol - 1];
+            while (count--)
+              out[ol++] = rpt_c;
+          } else {
+            ol += count;
+          }
           continue;
         }
         if (10 == v) {
@@ -576,10 +562,11 @@ int32_t Unishox::unishox_decompress(const char *p_in, size_t p_len, char *p_out,
       }
     }
     // Serial.printf(">>>>>>>>>>>>>>>>>>>>>> Out = %c\n", c);
-    out[ol++] = c;
+    if (out) out[ol] = c;
+    ol++;
   }
 
-  if (ol > len_out) {
+  if (out && ol > len_out) {
     return -1;    // overflow
   } else {
     return ol;
