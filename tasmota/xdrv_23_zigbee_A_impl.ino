@@ -68,10 +68,6 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
 // Initialize internal structures
 void ZigbeeInit(void)
 {
-// #pragma GCC diagnostic push
-// #pragma GCC diagnostic ignored "-Winvalid-offsetof"
-// Serial.printf(">>> offset %d %d %d\n", Z_offset(Z_Data_Light, dimmer), Z_offset(Z_Data_Light, x), Z_offset(Z_Data_Thermo, temperature));
-// #pragma GCC diagnostic pop
   // Check if settings in Flash are set
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
     if (0 == Settings->zb_channel) {
