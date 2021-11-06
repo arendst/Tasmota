@@ -1,5 +1,5 @@
 /*
-  support_light_list.ino - Lightweight Linked List for simple objects - optimized for low code size and low memory
+  LList.h - Lightweight Linked List for simple objects - optimized for low code size and low memory
 
   Copyright (C) 2021  Theo Arends and Stephan Hadinger
 
@@ -16,6 +16,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef __LLIST__
+#define __LLIST__
+
+#include <cstddef>
 
 /*********************************************************************************************\
  *
@@ -206,3 +211,5 @@ T & LList<T>::addToLast(LList_elt<T> * elt) {
   elt->_next = nullptr;
   return elt->_val;
 }
+
+#endif // __LLIST__
