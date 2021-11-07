@@ -16,6 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#define USE_OPENTHERM  
 
 #ifdef USE_OPENTHERM
 
@@ -243,6 +244,14 @@ OpenThermCommand sns_opentherm_commands[] = {
      .m_ot_make_request = sns_opentherm_get_generic_u16,
      .m_ot_parse_response = sns_opentherm_parse_generic_u16,
      .m_ot_appent_telemetry = sns_opentherm_tele_generic_u16},
+    {// Boiler Lock-out Reset command
+     .m_command_name = "BLOR",
+     .m_command_code = (uint8_t)OpenThermMessageID::Command,
+     .m_flags = {.notSupported = 1},
+     .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
+     .m_ot_make_request = sns_opentherm_send_blor,
+     .m_ot_parse_response = sns_opentherm_parse_generic_u16,
+     .m_ot_appent_telemetry = sns_opentherm_tele_u8_u8},
 };
 
 /////////////////////////////////// Process Slave Status Flags & Control //////////////////////////////////////////////////
@@ -429,6 +438,26 @@ void sns_opentherm_parse_oem_diag(struct OpenThermCommandT *self, struct OT_BOIL
 void sns_opentherm_tele_oem_diag(struct OpenThermCommandT *self)
 {
     ResponseAppend_P(PSTR("%d"), (int)self->m_results[0].m_u16);
+}
+
+/////////////////////////////////// Boiler Boiler Lock-out Reset  //////////////////////////////////////////////////
+unsigned long sns_opentherm_send_blor(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *status)
+{
+    AddLog(LOG_LEVEL_ERROR, PSTR("[OTH]: Boiler Boiler Lock-out Reset"));
+    
+    self->m_flags.notSupported = true; // Disable future calls of this command
+
+    unsigned int data = 1; //1 : “BLOR”= Boiler Lock-out Reset command
+    return OpenTherm::buildRequest(OpenThermMessageType::WRITE_DATA, OpenThermMessageID::Command, data);
+}
+bool sns_opentherm_call_blor() 
+{
+    /*
+    OpenThermCommandT *cmd = &sns_opentherm_commands[sns_opentherm_current_command-1];
+    if (strcmp(cmd->m_command_name, "BLOR")) return false;
+    cmd->m_flags.notSupported = false;
+    return true;
+    */
 }
 
 /////////////////////////////////// Generic Single Float /////////////////////////////////////////////////
