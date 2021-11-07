@@ -462,18 +462,13 @@ void Ws2812Steps(uint32_t schemenr)
   uint32_t speed = Settings->light_speed;
 	int32_t current_position = Light.strip_timer_counter / speed;
 
-	//all is shown already
+	//all pixels are shown already
 	if(current_position >  Settings->light_pixels / Settings->light_step_pixels + scheme_count ) {
-//		AddLog(LOG_LEVEL_INFO, PSTR("spd:%d cpos:%d tc:%d"), speed,current_position,Light.strip_timer_counter);
 		return;
 	}
 
   int32_t colorIndex;
-  //int32_t leading_step = current_position / Settings->light_step_pixels;
   int32_t step_nr;
-	/*if( Light.strip_timer_counter % speed == 0){
-		AddLog(LOG_LEVEL_INFO, PSTR("spd:%d cpos:%d lead:%d tc:%d"), speed,current_position,leading_step,Light.strip_timer_counter);
-	}*/
 	
   for (uint32_t i = 0; i < Settings->light_pixels; i++) {
 		step_nr = i / Settings->light_step_pixels;
@@ -483,15 +478,6 @@ void Ws2812Steps(uint32_t schemenr)
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
     c.B = mcolor[colorIndex].blue;
-		if( current_position % 3 == 0){
-			//AddLog(LOG_LEVEL_INFO, PSTR("spd:%d cpos:%d lead:%d tc:%d"), speed,current_position,leading_step,Light.strip_timer_counter);
-			if(i < 15){
-			//	AddLog(LOG_LEVEL_INFO, PSTR("s_n:%d cidx:%d "), step_nr, colorIndex);
-			}
-		}
-/*		if(i < 2){
-			AddLog(LOG_LEVEL_INFO, PSTR("s_n:%d cidx:%d "), step_nr, colorIndex);
-		}*/
 		if(Settings->light_rotation & 0x02){
 			strip->SetPixelColor(Settings->light_pixels - i - 1, c);
 		} else {
