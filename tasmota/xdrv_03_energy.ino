@@ -600,7 +600,7 @@ void ResponseCmndEnergyTotalYesterdayToday(void) {
     Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + Energy.kWhtoday_offset[i] + Energy.kWhtoday[i]) / 100000;
   }
 
-  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}"),
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
     XdrvMailbox.command,
     EnergyFormat(value_chr, Energy.total, Settings->flag2.energy_resolution, true),
     EnergyFormat(value2_chr, energy_yesterday_ph, Settings->flag2.energy_resolution, true),
