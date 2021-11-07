@@ -2106,7 +2106,7 @@ void ZigbeeShowMap(void) {
   if (zigbee.init_phase) {
     WSContentSend_P(PSTR(D_ZIGBEE_NOT_STARTED));
   } else if (zigbee.mapping_in_progress) {
-    int32_t mapping_remaining = 1 + (zigbee.mapping_end_time - millis()) / 1000;
+    int32_t mapping_remaining = 1 + ((int32_t) zigbee.mapping_end_time - millis()) / 1000;
     if (mapping_remaining < 0) { mapping_remaining = 0; }
     WSContentSend_P(PSTR(D_ZIGBEE_MAPPING_IN_PROGRESS_SEC), mapping_remaining);
     WSContentSend_P(msg[ZB_WEB_AUTO_REFRESH]);
