@@ -1419,7 +1419,18 @@ void CmndShutterSetTilt(void)
       Shutter[XdrvMailbox.index -1].tilt_target_pos = XdrvMailbox.payload;
       XdrvMailbox.payload = -99;
     }
+    if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) ) {
+        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[3]; // open position
+        XdrvMailbox.payload = -99;
+      }
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) ) {
+        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[4];  // close position
+        XdrvMailbox.payload = -99;
+      }
+    }
   }
+  XdrvMailbox.data[0] = '\0';
   ResponseCmndNumber(Shutter[XdrvMailbox.index -1].tilt_target_pos);
   CmndShutterPosition();
 }
