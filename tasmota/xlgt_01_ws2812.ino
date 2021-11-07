@@ -411,7 +411,8 @@ void Ws2812Steps(uint32_t schemenr)
 #endif
 
   ColorScheme scheme = kSchemes[schemenr];
-	if(0==scheme.colors[0].blue && 0==scheme.colors[0].red && 0==scheme.colors[0].green && scheme.count==2){
+	// apply main color if current sheme == kStairs
+	if(scheme.colors == kStairs){
 		scheme.colors[1].red = Settings->light_color[0];
 		scheme.colors[1].green = Settings->light_color[1];
 		scheme.colors[1].blue = Settings->light_color[2];
@@ -432,7 +433,7 @@ void Ws2812Steps(uint32_t schemenr)
 	}
 
 	if(Settings->light_fade){
-
+		// generate gradient (width = Width4)
 		for(uint32_t i=1; i < scheme_count - 1; i++){
 			mcolor[i].red = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].red, scheme.colors[color_end].red);
 			mcolor[i].green = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].green, scheme.colors[color_end].green);
@@ -441,6 +442,7 @@ void Ws2812Steps(uint32_t schemenr)
 	} else {
 		memcpy(mcolor, scheme.colors, sizeof(mcolor));
 	}
+	// repair first & last color in gradient; apply scheme rotation if fade==0
 	mcolor[0].red=scheme.colors[color_start].red;
 	mcolor[0].green=scheme.colors[color_start].green;
 	mcolor[0].blue=scheme.colors[color_start].blue;
@@ -449,6 +451,7 @@ void Ws2812Steps(uint32_t schemenr)
 	mcolor[scheme_count-1].blue=scheme.colors[color_end].blue;
 
 
+	// Adjust to dimmer value
   float dimmer = 100 / (float)Settings->light_dimmer;
   for (uint32_t i = 0; i < scheme_count; i++) {
     float fmyRed = (float)mcolor[i].red / dimmer;
@@ -462,7 +465,7 @@ void Ws2812Steps(uint32_t schemenr)
   uint32_t speed = Settings->light_speed;
 	int32_t current_position = Light.strip_timer_counter / speed;
 
-	//all pixels are shown already
+	//all pixels are shown already | rotation change will not change current state
 	if(current_position >  Settings->light_pixels / Settings->light_step_pixels + scheme_count ) {
 		return;
 	}
@@ -478,6 +481,7 @@ void Ws2812Steps(uint32_t schemenr)
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
     c.B = mcolor[colorIndex].blue;
+		// Adjust the scheme rotation
 		if(Settings->light_rotation & 0x02){
 			strip->SetPixelColor(Settings->light_pixels - i - 1, c);
 		} else {
