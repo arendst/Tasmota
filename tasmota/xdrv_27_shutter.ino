@@ -534,6 +534,8 @@ void ShutterUpdatePosition(void)
         Shutter[i].start_position = Shutter[i].real_position;
 
         // manage venetian blinds
+	Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
+        Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 100 ? Shutter[i].tilt_config[1] : Shutter[i].tilt_target_pos;
         if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > 10) {
           AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Tilt does not match akt %d, target %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
           XdrvMailbox.payload = -99;
