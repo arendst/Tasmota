@@ -325,7 +325,7 @@ void ShutterInit(void)
         Shutter[i].tilt_config[k] =  Settings->shutter_tilt_config[k][i];
       }
       Shutter[i].tilt_real_pos = Settings->shutter_tilt_pos[i];
-      Shutter[i].tilt_velocity = Shutter[i].tilt_config[2] > 0 ? (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])/Shutter[i].tilt_config[2] : 0;
+      Shutter[i].tilt_velocity = Shutter[i].tilt_config[2] > 0 ? (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])/Shutter[i].tilt_config[2] : 1;
 
 
       switch (ShutterGlobal.position_mode) {
@@ -534,7 +534,7 @@ void ShutterUpdatePosition(void)
         Shutter[i].start_position = Shutter[i].real_position;
 
         // manage venetian blinds
-	Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
+        Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
         Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 100 ? Shutter[i].tilt_config[1] : Shutter[i].tilt_target_pos;
         if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > 10) {
           AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Tilt does not match akt %d, target %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
@@ -610,10 +610,12 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterGlobal.start_reported = 0;
     Shutter[i].tilt_real_pos = tmax(tmin(Shutter[i].tilt_real_pos,Shutter[i].tilt_config[1]),Shutter[i].tilt_config[0]);
     Shutter[i].tilt_start_pos =  Shutter[i].tilt_real_pos;
-    Shutter[i].venetian_delay = (Shutter[i].direction > 0 ? Shutter[i].tilt_config[1]-Shutter[i].tilt_real_pos : Shutter[i].tilt_real_pos-Shutter[i].tilt_config[0]) * Shutter[i].tilt_config[2] / (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]);
-    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , Shutter[i].direction ,ShutterGlobal.open_velocity_max );
-    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: %d VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Durat: %d, Start: %d, Target: %d"),
-    //i, Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,Shutter[i].direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
+    if (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0] != 0) {
+      Shutter[i].venetian_delay = (Shutter[i].direction > 0 ? Shutter[i].tilt_config[1]-Shutter[i].tilt_real_pos : Shutter[i].tilt_real_pos-Shutter[i].tilt_config[0]) * Shutter[i].tilt_config[2] / (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]);
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , Shutter[i].direction ,ShutterGlobal.open_velocity_max );
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: %d VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Durat: %d, Start: %d, Target: %d"),
+      //i, Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,Shutter[i].direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
+    }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in direction %d"), i, Shutter[i].start_position, Shutter[i].target_position, Shutter[i].direction);
 }
@@ -629,7 +631,7 @@ int32_t ShutterCalculatePosition(uint32_t i)
       case SHT_TIME:
       case SHT_TIME_UP_DOWN:
       case SHT_TIME_GARAGE:
-        if (Shutter[i].time <= Shutter[i].venetian_delay ) {
+        if (Shutter[i].time <= Shutter[i].venetian_delay && Shutter[i].tilt_config[2] > 0) {
           Shutter[i].tilt_real_pos = (Shutter[i].tilt_start_pos + ((Shutter[i].direction * (int16_t)Shutter[i].time * (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])) / Shutter[i].tilt_config[2]));
         }
         return Shutter[i].start_position + ( (Shutter[i].time - tmin(Shutter[i].venetian_delay+Shutter[i].motordelay, Shutter[i].time)) * (Shutter[i].direction > 0 ? RESOLUTION : -Shutter[i].close_velocity));
