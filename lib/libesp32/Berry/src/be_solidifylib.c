@@ -390,7 +390,7 @@ static void m_solidify_module(bvm *vm, bmodule *ml, int builtins)
         logfmt("    NULL,\n");
     }
     logfmt(");\n");
-    logfmt("BE_EXPORT_VARIABLE be_define_const_native_module(%s, NULL);\n", module_name);
+    logfmt("BE_EXPORT_VARIABLE be_define_const_native_module(%s);\n", module_name);
     logfmt("/********************************************************************/\n");
 
 }
