@@ -265,7 +265,7 @@ void Core2EverySecond(void) {
   if (core2_globs.ready) {
     Core2GetADC();
 
-    if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs(Rtc.utc_time - Core2GetUtc()) > 3) {
+    if (Rtc.utc_time > START_VALID_TIME && core2_globs.tset==false && abs((int32_t)Rtc.utc_time - (int32_t)Core2GetUtc()) > 3) {
       Core2SetUtc(Rtc.utc_time);
       AddLog(LOG_LEVEL_INFO, PSTR("CR2: Write Time TO BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                   GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
