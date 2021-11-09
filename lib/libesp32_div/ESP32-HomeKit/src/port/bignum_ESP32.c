@@ -21,6 +21,7 @@
  *
  */
 
+#if CONFIG_IDF_TARGET_ESP32
 #if __has_include("esp_idf_version.h")
 #include "esp_idf_version.h"
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0)
@@ -35,6 +36,9 @@
 #include "bignum_impl.h"
 #include <sys/param.h>
 #include <sys/lock.h>
+#if CONFIG_IDF_TARGET_ESP32C3
+#include "esp32c3/dport_access.h"
+#endif 
 
 static _lock_t mpi_lock;
 
@@ -284,3 +288,4 @@ void esp_mpi_mult_mpi_failover_mod_mult_hw_op(const mbedtls_mpi *X, const mbedtl
     start_op(RSA_MULT_START_REG);
 
 }
+#endif //CONFIG_IDF_TARGET_ESP32
