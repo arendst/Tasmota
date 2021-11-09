@@ -758,7 +758,7 @@ bool Xdrv35(uint8_t function)
 
     case FUNC_BUTTON_PRESSED:
       // If the button is pressed or was just released, ...
-      if (!XdrvMailbox.payload || button_pressed[XdrvMailbox.index]) {
+      if (!Settings->flag3.mqtt_buttons && (!XdrvMailbox.payload || button_pressed[XdrvMailbox.index])) {
         uint32_t button_index = XdrvMailbox.index;
         uint32_t now = millis();
 
