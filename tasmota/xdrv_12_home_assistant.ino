@@ -128,6 +128,24 @@ const char HASS_DISCOVER_SHUTTER_POS[] PROGMEM =
   "\"pos_open\":100,"
   "\"set_pos_t\":\"%s%d\"";                       // cmnd/%topic%/ShutterPosition1
 
+const char HASS_DISCOVER_SHUTTER_TILT[] PROGMEM =
+ ",\"tilt_cmd_t\":\"%s%d\","           // cmnd/%topic%/ShutterTilt1
+ "\"tilt_opnd_val\":%d,"
+ "\"tilt_clsd_val\":%d";
+
+/*
+"tilt_clsd_val": "tilt_closed_value",
+"tilt_cmd_t": "tilt_command_topic",
+"tilt_cmd_tpl": "tilt_command_template",
+"tilt_inv_stat": "tilt_invert_state",
+"tilt_max": "tilt_max",
+"tilt_min": "tilt_min",
+"tilt_opnd_val": "tilt_opened_value",
+"tilt_opt": "tilt_optimistic",
+"tilt_status_t": "tilt_status_topic",
+"tilt_status_tpl": "tilt_status_template",
+*/
+
 const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
   ",\"json_attr_t\":\"%s\","
   "\"unit_of_meas\":\"%%\","
@@ -1020,7 +1038,10 @@ void HAssAnnounceShutters(void)
       GetTopic_P(stemp1, STAT, TasmotaGlobal.mqtt_topic, PSTR("SHUTTER"));
       GetTopic_P(stemp2, CMND, TasmotaGlobal.mqtt_topic, PSTR("ShutterPosition"));
       TryResponseAppend_P(HASS_DISCOVER_SHUTTER_POS, stemp1, i + 1, stemp2, i + 1);
-
+      
+      GetTopic_P(stemp1, CMND, TasmotaGlobal.mqtt_topic, PSTR("ShutterTilt"));
+      TryResponseAppend_P(HASS_DISCOVER_SHUTTER_TILT, stemp1, i + 1, Settings->shutter_tilt_config[3][i], Settings->shutter_tilt_config[4][i]);
+      
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
       TryResponseAppend_P(PSTR("}"));
     } else {
