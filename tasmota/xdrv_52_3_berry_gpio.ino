@@ -173,7 +173,12 @@ extern "C" {
       if (argc == 2 && be_isint(vm, 2)) {
         index = be_toint(vm, 2);
       }
-      bool ret = PinUsed(pin, index);
+      bool ret;
+      if (pin == GPIO_OPTION_A) {
+        ret = bitRead(TasmotaGlobal.gpio_optiona.data, index);
+      } else  {
+        ret = PinUsed(pin, index);
+      }
       be_pushbool(vm, ret);
       be_return(vm);
     }
