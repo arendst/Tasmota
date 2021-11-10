@@ -519,6 +519,14 @@ extern "C" {
     be_return(vm);
   }
 
+  // Berry: `arvh() -> string`
+  // ESP object
+  int32_t l_arch(bvm *vm);
+  int32_t l_arch(bvm *vm) {
+    be_pushstring(vm, ESP32_ARCH);
+    be_return(vm);
+  }
+
   // Berry: `save(file:string, f:closure) -> bool`
   int32_t l_save(struct bvm *vm);
   int32_t l_save(struct bvm *vm) {

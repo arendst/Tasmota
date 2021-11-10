@@ -293,6 +293,7 @@ be_define_const_str(print, "print", 372738696u, 0, 5, &be_const_str_run_deferred
 be_define_const_str(run_deferred, "run_deferred", 371594696u, 0, 12, &be_const_str_scan);
 be_define_const_str(scan, "scan", 3974641896u, 0, 4, &be_const_str_settings);
 be_define_const_str(settings, "settings", 1745255176u, 0, 8, NULL);
+be_define_const_str(arch, "arch", 2952804297u, 0, 4, &be_const_str_open);
 be_define_const_str(open, "open", 3546203337u, 0, 4, NULL);
 be_define_const_str(cmd, "cmd", 4136785899u, 0, 3, &be_const_str_loop);
 be_define_const_str(loop, "loop", 3723446379u, 0, 4, &be_const_str_wire1);
@@ -479,7 +480,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_SERIAL_7O2,
     NULL,
     (const bstring *)&be_const_str__ptr,
-    (const bstring *)&be_const_str_open,
+    (const bstring *)&be_const_str_arch,
     NULL,
     (const bstring *)&be_const_str_cmd,
     (const bstring *)&be_const_str_nil,
@@ -506,6 +507,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 160,
-    .count = 320,
+    .count = 321,
     .table = m_string_table
 };
