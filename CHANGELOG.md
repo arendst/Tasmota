@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [10.0.0.2]
+### Changed
+- ESP32 core library from v1.0.7.5 to v2.0.1
+
 ## [10.0.0.1]
 ### Added
 - Berry add module ``python_compat`` to be closer to Python syntax (#13428)
