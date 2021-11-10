@@ -313,7 +313,7 @@ extern "C" {
       int ret = -1;
       if (f) {
         File * fptr = be_get_arduino_file(f);
-        int ret = cl->writeToStream(fptr);
+        ret = cl->writeToStream(fptr);
       }
       be_fclose(f);
       be_pushint(vm, ret);
