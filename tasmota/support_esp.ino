@@ -111,7 +111,7 @@ String GetDeviceHardware(void) {
 #elif CONFIG_IDF_TARGET_ESP32S3
   #define ESP32_ARCH              "esp32s3"
 #elif CONFIG_IDF_TARGET_ESP32C3
-  #define ESP32_ARCH              "esp32s2"
+  #define ESP32_ARCH              "esp32c3"
 #else
   #define ESP32_ARCH              ""
 #endif
