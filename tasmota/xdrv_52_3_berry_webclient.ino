@@ -24,6 +24,10 @@
 
 #include <berry.h>
 #include "HttpClientLight.h"
+#include "be_sys.h"
+
+// Tasmota extension
+extern File * be_get_arduino_file(void *hfile);
 
 String wc_UrlEncode(const String& text) {
   const char hex[] = "0123456789ABCDEF";
@@ -296,6 +300,26 @@ extern "C" {
     be_pushstring(vm, payload.c_str());
     cl->end();  // free allocated memory ~16KB
     be_return(vm);  /* return code */
+  }
+
+  int32_t wc_writefile(struct bvm *vm);
+  int32_t wc_writefile(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isstring(vm, 2)) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      const char * fname = be_tostring(vm, 2);
+
+      void * f = be_fopen(fname, "w");
+      int ret = -1;
+      if (f) {
+        File * fptr = be_get_arduino_file(f);
+        ret = cl->writeToStream(fptr);
+      }
+      be_fclose(f);
+      be_pushint(vm, ret);
+      be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
   }
 
   int32_t wc_getsize(struct bvm *vm);
