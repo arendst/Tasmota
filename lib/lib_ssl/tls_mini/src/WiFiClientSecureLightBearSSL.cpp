@@ -204,6 +204,8 @@ void WiFiClientSecure_light::_clear() {
   _ta_P = nullptr;
   _ta_size = 0;
   _max_thunkstack_use = 0;
+  _alpn_names = nullptr;
+  _alpn_num = 0;
 }
 
 // Constructor
@@ -949,8 +951,6 @@ extern "C" {
     // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
     br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15); // TODO
 #endif
-    static const char * alpn_mqtt = "mqtt";
-    br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
   }
 }
 
@@ -983,6 +983,9 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
 
     br_ssl_client_base_init(_sc.get());
+    if (_alpn_names && _alpn_num > 0) {
+      br_ssl_engine_set_protocol_names(_eng, _alpn_names, _alpn_num);
+    }
 
     // ============================================================
     // Allocatte and initialize Decoder Context

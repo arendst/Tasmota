@@ -216,6 +216,12 @@ void MqttInit(void) {
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 #endif
 
+#ifdef USE_MQTT_AWS_IOT_LIGHT
+    if (443 == Settings->mqtt_port) {
+      static const char * alpn_mqtt = "mqtt";   // needs to be static
+      tlsClient->setALPN(&alpn_mqtt, 1);         // need to set alpn to 'mqtt' for AWS IoT
+    }
+#endif
 #ifdef USE_MQTT_AWS_IOT
     loadTlsDir();   // load key and certificate data from Flash
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
