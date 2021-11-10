@@ -12,6 +12,7 @@ extern struct dummy_struct be_tasmota_global_struct;
 extern struct dummy_struct be_tasmota_settings_struct;
 
 extern int l_getFreeHeap(bvm *vm);
+extern int l_arch(bvm *vm);
 extern int l_publish(bvm *vm);
 extern int l_publish_result(bvm *vm);
 extern int l_cmd(bvm *vm);
@@ -1865,6 +1866,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     kv, closure(kv_closure)
 
     get_free_heap, func(l_getFreeHeap)
+    arch, func(l_arch)
     publish, func(l_publish)
     publish_result, func(l_publish_result)
     _cmd, func(l_cmd)
