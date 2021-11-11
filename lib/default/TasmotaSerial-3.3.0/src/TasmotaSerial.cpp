@@ -38,6 +38,8 @@ TasmotaSerial *tms_obj_list[16];
 #endif  // ESP8266
 #ifdef ESP32
 
+#include "driver/uart.h"
+
 #if CONFIG_IDF_TARGET_ESP32           // ESP32/PICO-D4
 static int tasmota_serial_index = 2;  // Allow UART2 and UART1 only
 #elif CONFIG_IDF_TARGET_ESP32S2       // ESP32-S2
@@ -154,6 +156,14 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
       TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
       if (serial_buffer_size > 256) {
         TSerial->setRxBufferSize(serial_buffer_size);
+      }
+      // For low bit rate, below 9600, set the Full RX threshold at 10 bytes instead of the default 120
+      if (speed <= 9600) {
+        uart_set_rx_full_threshold(m_uart, 10);
+      }
+      // For bitrate below 115200, set the Rx time out to 5 chars instead of the default 10
+      if (speed < 115200) {
+        uart_set_rx_timeout(m_uart, 5);
       }
     } else {
       m_valid = false;
