@@ -1253,6 +1253,7 @@ void ThermostatTimerDisarm(uint8_t ctr_output)
 }
 
 #ifdef DEBUG_THERMOSTAT
+
 void ThermostatVirtualSwitch(uint8_t ctr_output)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
@@ -1268,28 +1269,6 @@ void ThermostatVirtualSwitchCtrState(uint8_t ctr_output)
   Response_P(DOMOTICZ_MES, DOMOTICZ_IDX2, (0 == Thermostat[0].status.phase_hybrid_ctr) ? 0 : 1, "");
   MqttPublish(domoticz_in_topic);
 }
-
-uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
-{
-  uint8_t value = 0;
-  if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
-    || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
-      &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
-    value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
-  }
-  else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
-        || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
-          &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
-    if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
-      value = 100;
-    }
-    else {
-      value = 0;
-    }
-  }
-  return value;
-}
-
 
 void ThermostatDebug(uint8_t ctr_output)
 {
@@ -1348,6 +1327,27 @@ void ThermostatDebug(uint8_t ctr_output)
   AddLog(LOG_LEVEL_DEBUG, PSTR(""));
 }
 #endif // DEBUG_THERMOSTAT
+
+uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
+{
+  uint8_t value = 0;
+  if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
+    || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+      &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
+    value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
+  }
+  else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
+        || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+          &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
+    if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
+      value = 100;
+    }
+    else {
+      value = 0;
+    }
+  }
+  return value;
+}
 
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
   String buf = ResponseData();   // copy the string into a new buffer that will be modified
