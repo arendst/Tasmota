@@ -1840,6 +1840,16 @@ int8_t ParseSerialConfig(const char *pstr)
   return serial_config;
 }
 
+#ifdef ESP8266
+SerConfu8 ConvertSerialConfig(uint8_t serial_config) {
+  return (SerConfu8)pgm_read_byte(kTasmotaSerialConfig + serial_config);
+}
+#endif  // ESP8266
+#ifdef ESP32
+uint32_t ConvertSerialConfig(uint8_t serial_config) {
+  return (uint32_t)pgm_read_dword(kTasmotaSerialConfig + serial_config);
+}
+#endif  // ESP32
 
 // workaround disabled 05.11.2021 solved with https://github.com/espressif/arduino-esp32/pull/5549
 //#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
