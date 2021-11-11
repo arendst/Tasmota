@@ -98,3 +98,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   62  | USE_SCD40           | xsns_92 | SCD40    | 0x62        | CO2 sensor Sensirion SCD40/SCD41
   63  | USE_HM330X          | xsns_93 | HM330X   | 0x40        | Particule sensor
   64  | USE_HDC2010         | xsns_94 | HDC2010  | 0x40        | Temperature and Humidity sensor  
+  66  | USE_AT42QT1070      | xsns_96 |AT42QT1070| 0x1B        | Touch Button Sensor
