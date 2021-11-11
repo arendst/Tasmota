@@ -2006,7 +2006,9 @@ void CmndEnableOutputSet(void)
 #define D_THERMOSTAT_SET_POINT   "Set Point"
 #define D_THERMOSTAT_SENSOR      "Current"
 #define D_THERMOSTAT_GRADIENT    "Gradient"
-#define D_THERMOSTAT_DUTY_CYCLE  "Duty Cycle"
+#define D_THERMOSTAT_DUTY_CYCLE  "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME  "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE "PI Auto tuning"
 // --------------------------------------------------
 
 
@@ -2014,12 +2016,17 @@ void CmndEnableOutputSet(void)
 const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
 const char HTTP_THERMOSTAT_TEMPERATURE[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}";
 const char HTTP_THERMOSTAT_DUTY_CYCLE[]  PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_THERMOSTAT_CYCLE_TIME[]  PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
+const char HTTP_THERMOSTAT_PI_AUTOTUNE[] PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
+const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 #endif  // USE_WEBSERVER
 
 void ThermostatShow(uint8_t ctr_output)
 {
 #ifdef USE_WEBSERVER
+
+  WSContentSend_P(HTTP_THERMOSTAT_HL);
 
   if (Thermostat[ctr_output].status.thermostat_mode == THERMOSTAT_OFF) {
     WSContentSend_P(HTTP_THERMOSTAT_INFO, D_DISABLED );
@@ -2043,6 +2050,14 @@ void ThermostatShow(uint8_t ctr_output)
     f_temperature = value / 1000.0f;
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
     WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
+    WSContentSend_P(HTTP_THERMOSTAT_CYCLE_TIME, Thermostat[ctr_output].time_pi_cycle );
+
+  #ifdef USE_PI_AUTOTUNING
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_ENABLED  );
+  #else
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_DISABLED );
+  #endif
+
   }
 
 #endif  // USE_WEBSERVER
