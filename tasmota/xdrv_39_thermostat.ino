@@ -2004,7 +2004,7 @@ void CmndEnableOutputSet(void)
 // xdrv_39_thermostat.ino
 #define D_THERMOSTAT             "Thermostat"
 #define D_THERMOSTAT_SET_POINT   "Set Point"
-#define D_THERMOSTAT_SENSOR      "Sensor"
+#define D_THERMOSTAT_SENSOR      "Current"
 #define D_THERMOSTAT_GRADIENT    "Gradient"
 #define D_THERMOSTAT_DUTY_CYCLE  "Duty Cycle"
 // --------------------------------------------------
@@ -2044,7 +2044,6 @@ void ThermostatShow(uint8_t ctr_output)
     WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
     WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
   }
-
 
 #endif  // USE_WEBSERVER
 }
