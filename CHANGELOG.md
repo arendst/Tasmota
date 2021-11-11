@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [10.0.0.2]
+### Added
+- Support for HDC2010 temperature/humidity sensor by Luc Boudreau (#13633)
+
 ### Changed
 - ESP32 core library from v1.0.7.5 to v2.0.1
 

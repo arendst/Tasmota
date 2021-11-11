@@ -293,6 +293,7 @@ extern const bcstring be_const_str_print;
 extern const bcstring be_const_str_run_deferred;
 extern const bcstring be_const_str_scan;
 extern const bcstring be_const_str_settings;
+extern const bcstring be_const_str_arch;
 extern const bcstring be_const_str_open;
 extern const bcstring be_const_str_cmd;
 extern const bcstring be_const_str_loop;
