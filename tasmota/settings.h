@@ -763,6 +763,8 @@ typedef struct {
   uint32_t      cfg_crc32;                 // FFC
 } TSettings;
 
+static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");
+
 typedef struct {
   uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282
