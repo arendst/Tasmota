@@ -10,7 +10,7 @@
    exponentiation instead.
 */
 
-#define CONFIG_IDF_TARGET_ESP32  1
+// #define CONFIG_IDF_TARGET_ESP32  1
 
 #if CONFIG_IDF_TARGET_ESP32
 #define ESP_MPI_USE_MONT_EXP
@@ -19,7 +19,7 @@
 //#define MBEDTLS_MPI_MUL_MPI_ALT
 #endif
 
-
+#if CONFIG_IDF_TARGET_ESP32
 int esp_mpi_exp_mod( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, mbedtls_mpi *_Rinv );
 
 /**
@@ -86,7 +86,11 @@ int esp_mont_hw_op(mbedtls_mpi* Z, const mbedtls_mpi* X, const mbedtls_mpi* Y, c
  *
  */
 void esp_mpi_exp_mpi_mod_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, const mbedtls_mpi *Rinv, mbedtls_mpi_uint Mprime, size_t hw_words);
-
+#endif //CONFIG_IDF_TARGET_ESP32
 #endif //ESP_MPI_USE_MONT_EXP
+
+#if CONFIG_IDF_TARGET_ESP32C3
+void esp_mpi_exp_mpi_mod_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, const mbedtls_mpi *Rinv, mbedtls_mpi_uint Mprime, size_t num_words);
+#endif //CONFIG_IDF_TARGET_ESP32C3
 
 #endif

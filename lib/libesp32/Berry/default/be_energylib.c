@@ -53,8 +53,8 @@ be_local_closure(init,   /* name */
     /* K2   */  be_nested_string("energy_struct", 1655792843, 13),
     /* K3   */  be_nested_string("_ptr", 306235816, 4),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 6]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xB80A0400,  //  0001  GETNGBL	R2	K2
@@ -86,7 +86,7 @@ be_local_closure(read,   /* name */
     /* K1   */  be_nested_string("tomap", 612167626, 5),
     }),
     (be_nested_const_str("<anonymous>", 1160973142, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
       0xB8020000,  //  0000  GETNGBL	R0	K0
       0x8C000101,  //  0001  GETMET	R0	R0	K1
@@ -114,7 +114,7 @@ be_local_closure(member,   /* name */
     /* K0   */  be_nested_string("_energy", 535372070, 7),
     }),
     (be_nested_const_str("member", 719708611, 6)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 3]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x88040200,  //  0001  GETMBR	R1	R1	R0
@@ -142,7 +142,7 @@ be_local_closure(setmember,   /* name */
     /* K0   */  be_nested_string("_energy", 535372070, 7),
     }),
     (be_nested_const_str("setmember", 1432909441, 9)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 3]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x90080001,  //  0001  SETMBR	R2	R0	R1

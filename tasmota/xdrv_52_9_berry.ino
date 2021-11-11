@@ -24,6 +24,7 @@
 
 #include <berry.h>
 #include "be_vm.h"
+#include "ZipReadFS.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);

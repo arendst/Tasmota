@@ -27,7 +27,7 @@ be_local_closure(tostring,   /* name */
     /* K5   */  be_nested_string("id", 926444256, 2),
     }),
     (be_nested_const_str("tostring", -1995258651, 8)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[19]) {  /* code */
       0xA4060000,  //  0000  IMPORT R1  K0
       0x8C080301,  //  0001  GETMET R2  R1  K1
@@ -72,8 +72,8 @@ be_local_closure(init,   /* name */
     /* K1   */  be_nested_string("f", -485742695, 1),
     /* K2   */  be_nested_string("id", 926444256, 2),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("Tasmota.be", 825809411, 10)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
       0x90020001,  //  0000  SETMBR R0  K0  R1
       0x90020202,  //  0001  SETMBR R0  K1  R2

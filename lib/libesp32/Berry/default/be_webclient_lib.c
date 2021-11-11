@@ -21,6 +21,7 @@ extern int wc_addheader(bvm *vm);
 extern int wc_GET(bvm *vm);
 extern int wc_POST(bvm *vm);
 extern int wc_getstring(bvm *vm);
+extern int wc_writefile(bvm *vm);
 extern int wc_getsize(bvm *vm);
 
 #include "../generate/be_fixed_be_class_webclient.h"
@@ -48,6 +49,7 @@ class be_class_webclient (scope: global, name: webclient) {
     GET, func(wc_GET)
     POST, func(wc_POST)
     get_string, func(wc_getstring)
+    write_file, func(wc_writefile)
     get_size, func(wc_getsize)
 }
 @const_object_info_end */

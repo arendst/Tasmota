@@ -103,6 +103,19 @@ String GetDeviceHardware(void) {
 
 #ifdef ESP32
 
+// ESP32_ARCH contains the name of the architecture (used by autoconf)
+#if CONFIG_IDF_TARGET_ESP32
+  #define ESP32_ARCH              "esp32"
+#elif CONFIG_IDF_TARGET_ESP32S2
+  #define ESP32_ARCH              "esp32s2"
+#elif CONFIG_IDF_TARGET_ESP32S3
+  #define ESP32_ARCH              "esp32s3"
+#elif CONFIG_IDF_TARGET_ESP32C3
+  #define ESP32_ARCH              "esp32c3"
+#else
+  #define ESP32_ARCH              ""
+#endif
+
 // Handle 20k of NVM
 
 #include <nvs.h>

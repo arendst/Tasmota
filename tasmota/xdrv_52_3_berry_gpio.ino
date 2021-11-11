@@ -34,6 +34,18 @@
 \*********************************************************************************************/
 extern "C" {
 
+  #include "berry/include/be_gpio_defines.h"
+
+  // virtual member
+  int gp_member(bvm *vm);
+  int gp_member(bvm *vm) {
+    if (be_module_member(vm, lv_gpio_constants, lv_gpio_constants_size)) {
+      be_return(vm);
+    } else {
+      be_return_nil(vm);
+    }
+  }
+
   int gp_pin_mode(bvm *vm);
   int gp_pin_mode(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
@@ -161,7 +173,12 @@ extern "C" {
       if (argc == 2 && be_isint(vm, 2)) {
         index = be_toint(vm, 2);
       }
-      bool ret = PinUsed(pin, index);
+      bool ret;
+      if (pin == GPIO_OPTION_A) {
+        ret = bitRead(TasmotaGlobal.gpio_optiona.data, index);
+      } else  {
+        ret = PinUsed(pin, index);
+      }
       be_pushbool(vm, ret);
       be_return(vm);
     }

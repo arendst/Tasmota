@@ -692,6 +692,8 @@
 #define D_CMND_SHUTTER_INVERTWEBBUTTONS "InvertWebButtons"
 #define D_CMND_SHUTTER_PWMRANGE "PWMRange"
 #define D_CMND_SHUTTER_UNITTEST "UnitTest"
+#define D_CMND_SHUTTER_TILTCONFIG "TiltConfig"
+#define D_CMND_SHUTTER_SETTILT "Tilt"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"

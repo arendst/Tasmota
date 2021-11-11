@@ -778,7 +778,7 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
   // Minimum action limiter
   // If result is less than the minimum action time, adjust to minimum value
-  if ((Thermostat[ctr_output].time_total_pi <= abs(((uint32_t)Thermostat[ctr_output].time_min_action * 60)))
+  if ((Thermostat[ctr_output].time_total_pi <= abs(((int32_t)Thermostat[ctr_output].time_min_action * 60)))
     && (Thermostat[ctr_output].time_total_pi != 0)) {
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_min_action * 60);
   }
