@@ -772,10 +772,12 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x00004000;  // xsns_92_scd40.ino
 #endif
 #if defined(USE_I2C) && defined(USE_HM330X)
-    feature8 |= 0x00008000;
+    feature8 |= 0x00008000;  // xsns_93_hm330x.ino
 #endif
 
-//    feature8 |= 0x00010000;
+#if defined(USE_I2C) && defined(USE_HDC2010)
+    feature8 |= 0x00010000;  // xsns_94_hdc2010.ino
+#endif
 //    feature8 |= 0x00020000;
 //    feature8 |= 0x00040000;
 //    feature8 |= 0x00080000;
