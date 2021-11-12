@@ -153,10 +153,10 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
       m_uart = tasmota_serial_index;
       tasmota_serial_index--;
       TSerial = new HardwareSerial(m_uart);
-      TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
-      if (serial_buffer_size > 256) {
+      if (serial_buffer_size > 256) {  // RX Buffer can't be resized when Serial is already running (HardwareSerial.cpp)
         TSerial->setRxBufferSize(serial_buffer_size);
       }
+      TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
       // For low bit rate, below 9600, set the Full RX threshold at 10 bytes instead of the default 120
       if (speed <= 9600) {
         // At 9600, 10 chars are ~10ms
