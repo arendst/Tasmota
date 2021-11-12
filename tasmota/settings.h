@@ -763,7 +763,10 @@ typedef struct {
   uint32_t      cfg_crc32;                 // FFC
 } TSettings;
 
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+// For the ESP32-S2 the settings area has been made larger than 4096 by accident in order to support more GPIO's
 static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");
+#endif
 
 typedef struct {
   uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
