@@ -31,6 +31,10 @@
 
 #define D_SHUTTER "SHUTTER"
 
+#include "tasmota_shutter.h"
+
+
+
 const uint16_t MOTOR_STOP_TIME = 500;   // in mS
 const uint16_t RESOLUTION = 1000;       // incresed to 1000 in 8.5 to ramp servos
 const uint8_t  STEPS_PER_SECOND = 20;   // FUNC_EVERY_50_MSECOND
@@ -75,31 +79,6 @@ void (* const ShutterCommand[])(void) PROGMEM = {
 #include <Ticker.h>
 
 Ticker TickerShutter;
-
-struct SHUTTER {
-  uint32_t time;               // operating time of the shutter in 0.05sec
-  int32_t  open_max;           // max value on maximum open calculated
-  int32_t  target_position;    // position to go to
-  int32_t  start_position;     // position before a movement is started. init at start
-  int32_t  real_position;      // value between 0 and Shutter[i].open_max
-  uint16_t open_time;          // duration to open the Shutter[i]. 112 = 11.2sec
-  uint16_t close_time;         // duration to close the Shutter[i]. 112 = 11.2sec
-  uint16_t close_velocity;     // in relation to open velocity. higher value = faster
-  int8_t   direction;          // 1 == UP , 0 == stop; -1 == down
-  int8_t   lastdirection;      // last direction (1 == UP , -1 == down)
-  uint8_t  switch_mode;        // how to switch relays: SHT_SWITCH, SHT_PULSE
-  int8_t   motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos, negative if motor stops late
-  int16_t  pwm_velocity;       // frequency of PWN for stepper motors or PWM duty cycle change for PWM servo
-  uint16_t pwm_value;          // dutyload of PWM 0..1023 on ESP8266
-  uint16_t close_velocity_max; // maximum of PWM change during closeing. Defines velocity on opening. Steppers and Servos only
-  int32_t  accelerator;        // speed of ramp-up, ramp down of shutters with velocity control. Steppers and Servos only
-  int8_t   tilt_config[5];     // tilt_min, tilt_max, duration, tilt_closed_value, tilt_opened_value
-  int8_t  tilt_real_pos;       // -90 to 90
-  int16_t  tilt_target_pos;
-  int16_t  tilt_start_pos;
-  uint8_t  tilt_velocity;      // degree rotation per step 0.05sec
-  uint16_t venetian_delay = 0;  // Delay in steps before venetian shutter start physical moving. Based on tilt position
-} Shutter[MAX_SHUTTERS];
 
 struct SHUTTERGLOBAL {
   power_t  RelayShutterMask = 0;             // bit mask with 11 at the position of relays that belong to at least ONE shutter

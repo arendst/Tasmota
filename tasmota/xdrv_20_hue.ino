@@ -32,6 +32,10 @@
 
 #include "UnishoxStrings.h"
 
+#ifdef USE_SHUTTER
+#include "tasmota_shutter.h"
+#endif
+
 const char HUE_RESP_MSG_U[] PROGMEM =
   //=HUE_RESP_RESPONSE
   "HTTP/1.1 200 OK\r\n"
@@ -506,14 +510,25 @@ void HueLightStatus1(uint8_t device, String *response)
   uint8_t local_light_subtype = getLocalLightSubtype(device);
 
   bri = LightGetBri(device);   // get Dimmer corrected with SetOption68
-  if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
-  if (bri < 1)    bri = 1;
 
 #ifdef USE_SHUTTER
-  if (ShutterState(device)) {
-    bri = (float)((Settings->shutter_options[device-1] & 1) ? 100 - Settings->shutter_position[device-1] : Settings->shutter_position[device-1]) / 100;
+  uint8_t shutter = ShutterId(device);
+  if (ShutterState(shutter)) {
+  //  bri = (float)((Settings->shutter_options[device-1] & 1) ? 100 - Settings->shutter_position[device-1] : Settings->shutter_position[device-1]) / 100;
+  
+  // if shutter is moving send the target position instead of the real position. 
+  // This will prevent Alexa to say the device is not working properly when shutter is still moving
+  if (Shutter[shutter-1].direction != 0) { // shutter is moving
+      bri = changeUIntScale(ShutterRealToPercentPosition(Shutter[shutter-1].target_position, shutter-1), 0, 100, 1,254);
+    }
+    else{
+      bri = changeUIntScale((Settings->shutter_options[shutter-1] & 1) ? 100 - Settings->shutter_position[shutter-1] : Settings->shutter_position[shutter-1], 0, 100, 1,254);
+    }
   }
 #endif
+
+  if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
+  if (bri < 1)    bri = 1;
 
   if (TasmotaGlobal.light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
@@ -720,6 +735,10 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
   bool change = false;  // need to change a parameter to the light
   uint8_t local_light_subtype = getLocalLightSubtype(device); // get the subtype for this device
 
+  #ifdef USE_SHUTTER
+      uint8_t shutter = ShutterId(device);
+  #endif
+
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
   UnishoxStrings msg(HUE_LIGHTS);
@@ -742,8 +761,10 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
                  msg[HUE_RESP_ON],
                  device_id, on ? PSTR("true") : PSTR("false"));
 
+      ExecuteCommandPower(device, (on) ? POWER_ON : POWER_OFF, SRC_HUE);
+
 #ifdef USE_SHUTTER
-      if (ShutterState(device)) {
+      if (ShutterState(shutter)) {
         if (!change) {
           bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
           change = true;
@@ -752,7 +773,6 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
         }
       } else {
 #endif
-        ExecuteCommandPower(device, (on) ? POWER_ON : POWER_OFF, SRC_HUE);
         response += buf;
         resp = true;
 #ifdef USE_SHUTTER
@@ -878,9 +898,10 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
 
     if (change) {
 #ifdef USE_SHUTTER
-      if (ShutterState(device)) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("Settings->shutter_invert: %d"), Settings->shutter_options[device-1] & 1);
-        ShutterSetPosition(device, bri * 100.0f );
+      if (ShutterState(shutter)) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("Settings->shutter_invert: %d bri: %d"), Settings->shutter_options[shutter-1] & 1, bri);
+        // ShutterSetPosition(shutter, bri * 100.0f);
+        ShutterSetPosition(shutter, changeUIntScale(bri, 1, 254, 0, 100));
       } else
 #endif
       if (TasmotaGlobal.light_type && (local_light_subtype > LST_NONE)) {   // not relay
@@ -1075,6 +1096,34 @@ void HandleHueApi(String *path)
   else if (path->endsWith(msg[HUE_RESOURCELINKS])) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
+
+#ifdef USE_SHUTTER
+///  converts the fake pwd id to a real shutter id
+uint8_t ShutterId(uint8_t device){
+  uint8_t shutter_num = device;
+  if( TasmotaGlobal.shutters_present>0 && Settings->flag3.shutter_mode){ // <--- should add a SetOption configuration bit? (e.g. Settings->flagXXX.use_fake_pwm_for_shutters &&)
+    switch(Settings->shutter_mode){ 
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+          if(shutter_num> (TasmotaGlobal.shutters_present * 2) + TasmotaGlobal.shutters_present) return device;
+          shutter_num = device -  TasmotaGlobal.shutters_present * 2; // subtract the used shutters relays from the device id
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HUE: Changed device id from %d to %d"),device , shutter_num);
+          break;
+      case 4:
+      case 5:
+          if(shutter_num> (TasmotaGlobal.shutters_present * 3) + TasmotaGlobal.shutters_present) return device;
+          shutter_num = device -  TasmotaGlobal.shutters_present * 3; // subtract the used shutters relays and pwm from the device id
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HUE: Changed device id from %d to %d"),device , shutter_num);
+          break;
+      default:
+        break;
+    }
+  }
+  return shutter_num;
+}
+#endif
 
 /*********************************************************************************************\
  * Interface
