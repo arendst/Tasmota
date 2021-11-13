@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for HDC2010 temperature/humidity sensor by Luc Boudreau (#13633)
 
+### Breaking Changed
+- ESP32-S2 TSettings memory usage fixed to 4096 bytes regression from v9.5.0.8
+
 ### Changed
 - ESP32 core library from v1.0.7.5 to v2.0.1
 
