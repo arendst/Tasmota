@@ -524,7 +524,7 @@ typedef struct {
 
   uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
 
-  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32) / 2 x 22 bytes (ESP32-C3)
+  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x22 bytes (ESP32-C3) / 2x47 bytes (ESP32-S2)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
@@ -534,7 +534,7 @@ typedef struct {
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
 #endif  // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
-  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32) / 2 x 23 bytes (ESP32-C3)
+  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x23 bytes (ESP32-C3) / 2x37 bytes (ESP32-S2)
 #ifdef ESP8266
   uint8_t       free_esp8266_41A[55];      // 41A
 #endif  // ESP8266
@@ -546,6 +546,9 @@ typedef struct {
   uint8_t       eth_clk_mode;              // 447
 
   uint8_t       free_esp32_448[4];         // 448
+#ifdef CONFIG_IDF_TARGET_ESP32S2
+  uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
+#endif
 
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
@@ -563,9 +566,11 @@ typedef struct {
   myio8         ex_my_gp8;                 // 484 17 bytes (ESP8266) - Free since 9.0.0.1
 #endif  // ESP8266
 #ifdef ESP32
-
+#ifdef CONFIG_IDF_TARGET_ESP32S2
+  uint8_t       free_esp32s2_494[1];       // 494 - 2 bytes extra because of WebCamCfg 32-bit offset
+#else
   uint8_t       free_esp32_484[17];        // 484
-
+#endif
 #endif  // ESP32
 
   uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1
@@ -634,9 +639,7 @@ typedef struct {
   mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
 #endif  // ESP8266
 #ifdef ESP32
-
   uint8_t       free_esp32_72f[14];        // 72F
-
 #endif  // ESP32
 
   uint8_t       novasds_startingoffset;    // 73D

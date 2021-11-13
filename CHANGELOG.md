@@ -3,9 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.0.0.2]
+## [10.0.0.3]
+### Changed
+- ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
+
+## [10.0.0.2] 20211113
 ### Added
 - Support for HDC2010 temperature/humidity sensor by Luc Boudreau (#13633)
+
+### Breaking Changed
+- ESP32-S2 TSettings memory usage fixed to 4096 bytes regression from v9.5.0.8
 
 ### Changed
 - ESP32 core library from v1.0.7.5 to v2.0.1
