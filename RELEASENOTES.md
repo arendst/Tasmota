@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v10.0.0.2
+## Changelog v10.0.0.3
 ### Added
 - 1 second heartbeat GPIO
 - ESP32 Berry add module ``python_compat`` to be closer to Python syntax [#13428](https://github.com/arendst/Tasmota/issues/13428)
@@ -111,9 +111,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32-S2 TSettings memory usage fixed to 4096 bytes regression from v9.5.0.8
 
 ### Changed
-- File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
 - ESP32 core library from v1.0.7.4 to v2.0.1
-- ESP32-C3 core library from v2.0.0-post to v2.0.1-rc1
+- ESP32-C3 core library from v2.0.0-post to v2.0.1
+- File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
+- ESP8266 Gratuitous ARP enabled and set to 60 seconds [#13623](https://github.com/arendst/Tasmota/issues/13623)
 
 ### Fixed
 - Initial reset RTC memory based variables like EnergyToday and EnergyTotal
