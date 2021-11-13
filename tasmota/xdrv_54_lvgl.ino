@@ -364,9 +364,6 @@ extern "C" {
  * display ecosystem.
  ************************************************************/
 
-Renderer *Init_uDisplay(const char *desc, int8_t cs);
-
-
 void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
 
@@ -377,7 +374,7 @@ void start_lvgl(const char * uconfig) {
 
   if (!renderer || uconfig) {
 #ifdef USE_UNIVERSAL_DISPLAY    // TODO - we will probably support only UNIV_DISPLAY
-    renderer  = Init_uDisplay((char*)uconfig, -1);
+    renderer  = Init_uDisplay((char*)uconfig);
     if (!renderer) return;
 #else
     return;

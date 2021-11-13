@@ -21,6 +21,7 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
+#include <LList.h>
 
 #define BERRY_CONSOLE_CMD_DELIMITER   "\x01"
 

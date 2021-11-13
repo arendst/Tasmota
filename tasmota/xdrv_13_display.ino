@@ -67,7 +67,7 @@ struct MULTI_DISP {
   uint8_t used;
 } displays[MAX_MULTI_DISPLAYS];
 uint8_t cur_display;
-Renderer *Init_uDisplay(const char *desc, int8_t cs);
+Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
 
 void Set_display(uint8_t index) {
   displays[index].display = renderer;
@@ -631,7 +631,7 @@ void DisplayText(void)
                           srot = Settings->display_rotate;
                           Settings->display_rotate = rot;
                         }
-                        renderer = Init_uDisplay(fdesc, -1);
+                        renderer = Init_uDisplay(fdesc);
                         if (rot >= 0) {
                           Settings->display_rotate = srot;
                         }

@@ -25,7 +25,7 @@ extern const bclass be_class_map;
 #include <inttypes.h>
 
 #ifndef INST_BUF_SIZE
-#define INST_BUF_SIZE   96
+#define INST_BUF_SIZE   288
 #endif
 
 #define logbuf(...)     snprintf(__lbuf, sizeof(__lbuf), __VA_ARGS__)
@@ -115,13 +115,15 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_STRING:
         {
-            logfmt("be_nested_string(\"");
-            be_writestring(str(var_tostr(value)));
             size_t len = strlen(str(var_tostr(value)));
             if (len >= 255) {
                 be_raise(vm, "internal_error", "Strings greater than 255 chars not supported yet");
             }
-            logfmt("\", %i, %zu)", be_strhash(var_tostr(value)), len >= 255 ? 255 : len);
+            be_pushstring(vm, str(var_tostr(value)));
+            be_toescape(vm, -1, 'u');
+            logfmt("be_nested_string(%s", be_tostring(vm, -1));
+            be_pop(vm, 1);
+            logfmt(", %i, %zu)", be_strhash(var_tostr(value)), len >= 255 ? 255 : len);
         }
         break;
     case BE_CLOSURE:
