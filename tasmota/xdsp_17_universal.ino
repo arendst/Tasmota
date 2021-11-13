@@ -433,7 +433,7 @@ bool Xdsp17(uint8_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    Init_uDisplay(0, -1);
+    Init_uDisplay(nullptr);
   }
   else if (udisp_init_done && (XDSP_17 == Settings->display_model)) {
     switch (function) {

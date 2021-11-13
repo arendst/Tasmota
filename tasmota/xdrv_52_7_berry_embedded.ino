@@ -43,6 +43,11 @@ const char berry_prog[] =
   "def log(m,l) tasmota.log(m,l) end "
   "def load(f) return tasmota.load(f) end "
 
+#ifdef USE_AUTOCONF
+  // autoconf
+  "import autoconf "
+#endif // USE_AUTOCONF
+
 #ifdef USE_LVGL
   "import lv "
   // create the '_lvgl' global singleton

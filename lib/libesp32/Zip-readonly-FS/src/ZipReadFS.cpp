@@ -371,7 +371,7 @@ bool ZipArchive::parse(void) {
     entry.last_mod = dos2unixtime((header.last_mod_date << 16) | header.last_mod_time);
     offset += header.size_uncompressed;
 
-    AddLog(LOG_LEVEL_DEBUG, "ZIP: found file '%s' (%i bytes - offset %i) - next entry %i", &fname[0], header.size_uncompressed, entry.file_start, offset);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "ZIP: found file '%s' (%i bytes - offset %i) - next entry %i", &fname[0], header.size_uncompressed, entry.file_start, offset);
   }
 
   return true;

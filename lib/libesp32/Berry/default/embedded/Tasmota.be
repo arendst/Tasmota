@@ -27,6 +27,7 @@ class Tasmota
   var cmd_res     # store the command result, nil if disables, true if capture enabled, contains return value
   var global      # mapping to TasmotaGlobal
   var settings
+  var wd          # last working directory
 
   def init()
     # instanciate the mapping object to TasmotaGlobal
@@ -36,6 +37,7 @@ class Tasmota
     if settings_addr
       self.settings = ctypes_bytes_dyn(introspect.toptr(settings_addr), self._settings_def)
     end
+    self.wd = ""
   end
 
   # create a specific sub-class for rules: pattern(string) -> closure
@@ -324,21 +326,39 @@ class Tasmota
     import string
     import path
 
-    # if the filename has no '.' append '.be'
-    if string.find(f, '.') < 0
+    # fail if empty string
+    if size(f) == 0 return false end
+    # Ex: f = 'app.zip#autoexec'
+
+    # add leading '/' if absent
+    if f[0] != '/'   f = '/' + f end
+    # Ex: f = '/app.zip#autoexec'
+
+    var f_items = string.split(f, '#')
+    var f_prefix = f_items[0]
+    var f_suffix = f_items[-1]          # last token
+    var f_archive = size(f_items) > 1   # is the file in an archive
+
+    # if no dot, add the default '.be' extension
+    if string.find(f_suffix, '.') < 0   # does the final file has a '.'
       f += ".be"
+      f_suffix += ".be"
     end
+    # Ex: f = '/app.zip#autoexec.be'
+
+    # if the filename has no '.' append '.be'
+    var suffix_be  = f_suffix[-3..-1] == '.be'
+    var suffix_bec = f_suffix[-4..-1] == '.bec'
+    # Ex: f = '/app.zip#autoexec.be', f_suffix = 'autoexec.be', suffix_be = true, suffix_bec = false
 
     # check that the file ends with '.be' of '.bec'
-    var fl = string.split(f,'.')
-    if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec'))
+    if !suffix_be && !suffix_bec
       raise "io_error", "file extension is not '.be' or '.bec'"
     end
 
-    var is_bytecode = f[-1] == 'c'            # file is Berry source and not bytecode
-    var f_time = path.last_modified(f)
+    var f_time = path.last_modified(f_prefix)
 
-    if is_bytecode
+    if suffix_bec
       if f_time == nil  return false end      # file does not exist
       # f is the right file, continue
     else
@@ -348,13 +368,20 @@ class Tasmota
         # bytecode exists and is more recent than berry source, use bytecode
         ##### temporarily disable loading from bec file
         # f = f + "c"   # use bytecode name
-        is_bytecode = true
+        suffix_bec = true
       end
     end
     
+    # recall the working directory
+    if f_archive
+      self.wd = f_prefix + "#"
+    else
+      self.wd = ""
+    end
+
     var c = compile(f, 'file')
     # save the compiled bytecode
-    if !is_bytecode
+    if !suffix_bec && !f_archive
       try
         self.save(f + 'c', c)
       except .. as e
