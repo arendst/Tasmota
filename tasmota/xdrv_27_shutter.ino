@@ -509,7 +509,7 @@ void ShutterPowerOff(uint8_t i)
   #else
       snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d %d" ), i+1,Shutter[i].pwm_value);
   #endif
-      //ExecuteCommand(scmnd, SRC_BUTTON);
+      ExecuteCommand(scmnd, SRC_BUTTON);
       break;
   }
   if (Shutter[i].direction !=0) {
