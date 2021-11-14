@@ -569,7 +569,7 @@ static void unaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e)
 /* Apply not to conditional expression */
 /* If literal compute the value */
 /* Or invert t/f subexpressions */
-static void code_not(bexpdesc *e)
+static void code_not(bfuncinfo *finfo, bexpdesc *e)
 {
     switch (e->type) {
     case ETINT: e->v.i = e->v.i == 0; break;
@@ -578,6 +578,7 @@ static void code_not(bexpdesc *e)
     case ETBOOL: e->v.i = !e->v.i; break;
     case ETSTRING: e->v.i = 0; break;
     default: {
+        unaryexp(finfo, OP_MOVE, e);
         int temp = e->t;
         e->t = e->f;
         e->f = temp;
@@ -620,7 +621,7 @@ int be_code_unop(bfuncinfo *finfo, int op, bexpdesc *e)
 {
     switch (op) {
     case OptNot:
-        code_not(e); break;
+        code_not(finfo, e); break;
     case OptFlip: /* do nothing */
         return code_flip(finfo, e);
     case OptSub:
