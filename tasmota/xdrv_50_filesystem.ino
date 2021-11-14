@@ -102,7 +102,7 @@ void UfsInitOnce(void) {
 #ifdef ESP8266
   ffsp = &LittleFS;
   if (!LittleFS.begin()) {
-    ffsp = 0;
+    ffsp = nullptr;
     return;
   }
 #endif  // ESP8266
@@ -114,6 +114,7 @@ void UfsInitOnce(void) {
     // ffat is second
     ffsp = &FFat;
     if (!FFat.begin(true)) {
+      ffsp = nullptr;
       return;
     }
     ffs_type = UFS_TFAT;
