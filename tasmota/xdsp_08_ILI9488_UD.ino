@@ -26,7 +26,7 @@
 
 bool ili9488_init_done = false;
 
-Renderer *Init_uDisplay(const char *desc, int8_t cs);
+Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
 void udisp_CheckTouch(void);
 
 /*********************************************************************************************/

@@ -241,6 +241,34 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
   return ret;
 }
 
+// call a method in autoconf
+int32_t callBerryAutoconf(const char * method) {
+  int32_t ret = 0;
+  bvm *vm = berry.vm;
+
+  if (nullptr == vm) { return ret; }
+  checkBeTop();
+  be_getglobal(vm, "autoconf");
+  if (!be_isnil(vm, -1)) {
+    be_getmethod(vm, -1, method);
+    if (!be_isnil(vm, -1)) {
+      be_pushvalue(vm, -2);
+      BrTimeoutStart();
+      ret = be_pcall(vm, 1);   // 1 arg
+      BrTimeoutReset();
+      if (ret != 0) {
+        BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
+        return ret;
+      }
+      be_pop(vm, 1);  // remove instance
+    }
+    be_pop(vm, 1);  // remove method
+  }
+  be_pop(vm, 1);  // remove instance object
+  checkBeTop();
+  return ret;
+}
+
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
@@ -335,6 +363,9 @@ void BerryInit(void) {
 
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     berry_init_ok = true;
+
+    // Run 'autoconf.preinit()'
+    callBerryAutoconf("preinit");
 
     // Run pre-init
     BrLoad("preinit.be");    // run 'preinit.be' if present
@@ -759,6 +790,9 @@ bool Xdrv52(uint8_t function)
     //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
+        // Run 'autoconf.preinit()'
+        callBerryAutoconf("autoexec");
+
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }

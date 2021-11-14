@@ -990,6 +990,7 @@
 //#define USE_IBEACON_ESP32
 //#define USE_WEBCAM                               // Add support for webcam
 
+// #define USE_AUTOCONF                             // Enable Esp32 autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
 #define USE_BERRY                                // Enable Berry scripting language
   #define USE_BERRY_PYTHON_COMPAT                // Enable by default `import python_compat`
   #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
@@ -1090,6 +1091,19 @@
 #if defined(USE_RULES) && defined(USE_SCRIPT)
   #error "Select either USE_RULES or USE_SCRIPT. They can't both be used at the same time"
 #endif
+
+/*********************************************************************************************\
+ * Post-process compile options for Autoconf
+\*********************************************************************************************/
+
+#if defined(USE_AUTOCONF)
+  #ifndef USE_BERRY
+    #define USE_BERRY
+  #endif
+  #ifndef USE_WEBCLIENT_HTTPS
+    #define USE_WEBCLIENT_HTTPS
+  #endif
+#endif // USE_AUTOCONF
 
 /*********************************************************************************************\
  * Post-process compile options for TLS
