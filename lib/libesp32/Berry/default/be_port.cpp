@@ -19,8 +19,8 @@
 #ifdef USE_UFILESYS
     #include <FS.h>
     #include "ZipReadFS.h"
-    extern FS *ufsp;
-    FS zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ufsp)));
+    extern FS *ffsp;
+    FS zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ffsp)));
 #endif // USE_UFILESYS
 
 /* this file contains configuration for the file system. */
@@ -105,7 +105,7 @@ extern "C" {
             const char *path = be_tostring(vm, 1);
             be_newobject(vm, "list");
 
-            File dir = ufsp->open(path, "r");
+            File dir = ffsp->open(path, "r");
             if (dir) {
                 dir.rewindDirectory();
                 while (1) {
