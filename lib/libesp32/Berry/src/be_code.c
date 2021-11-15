@@ -565,7 +565,10 @@ static void unaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e)
 {
     int src = exp2anyreg(finfo, e);
     int dst = e->type == ETREG ? src : be_code_allocregs(finfo, 1);
-    codeABC(finfo, op, dst, src, 0);
+    if (!(op == OP_MOVE && src == dst)) {
+        /* skip if MOVE from same src / dst */
+        codeABC(finfo, op, dst, src, 0);
+    }
     e->type = ETREG;
     e->v.idx = dst;
 }
