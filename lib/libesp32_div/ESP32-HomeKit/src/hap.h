@@ -234,23 +234,23 @@ typedef int (*hap_identify_routine_t) (hap_acc_t *acc);
 /** HAP Accessory configuration */
 typedef struct {
     /** Name (Mandatory) */
-	char *name;
+	const char *name;
     /** Model (Mandatory) */
-	char *model;
+	const char *model;
     /** Manufacturer (Mandatory) */
-	char *manufacturer;
+	const char *manufacturer;
     /** Serial Number (Mandatory) */
-	char *serial_num;
+	const char *serial_num;
     /** Firmware Revision number in format x[.y[.z]] (Mandatory) */
-	char *fw_rev;
+	const char *fw_rev;
     /** Hardware revision number in format x[.y[.z]] (Optional. Can be NULL )*/
-	char *hw_rev;
+	const char *hw_rev;
     /** HAP Protocol version supported by the accessory. Should be set to "1.1"
      * @note The value set here will currently be ignored and assumed to be 1.1
      * as it is the only protocol version currently supported.
      * This is valid only for the Primary accessory.
      */
-    char *pv;
+    const char *pv;
     /** Category Identifier for the Accessory. This is valid only for the
      * primary accessory
      */
@@ -640,7 +640,7 @@ hap_serv_t *hap_acc_get_first_serv(hap_acc_t *ha);
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_bool_create(char *type_uuid, uint16_t perms, bool val);
+hap_char_t *hap_char_bool_create(const char *type_uuid, uint16_t perms, bool val);
 
 /**
  * @brief Create an 8-bit unsigned integer Characteristic Object
@@ -652,7 +652,7 @@ hap_char_t *hap_char_bool_create(char *type_uuid, uint16_t perms, bool val);
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_uint8_create(char *type_uuid, uint16_t perms, uint8_t val);
+hap_char_t *hap_char_uint8_create(const char *type_uuid, uint16_t perms, uint8_t val);
 
 /**
  * @brief Create a 16-bit unsigned integer Characteristic Object
@@ -664,7 +664,7 @@ hap_char_t *hap_char_uint8_create(char *type_uuid, uint16_t perms, uint8_t val);
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_uint16_create(char *type_uuid, uint16_t perms, uint16_t val);
+hap_char_t *hap_char_uint16_create(const char *type_uuid, uint16_t perms, uint16_t val);
 
 /**
  * @brief Create a 32-bit unsigned integer Characteristic Object
@@ -676,7 +676,7 @@ hap_char_t *hap_char_uint16_create(char *type_uuid, uint16_t perms, uint16_t val
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_uint32_create(char *type_uuid, uint16_t perms, uint32_t val);
+hap_char_t *hap_char_uint32_create(const char *type_uuid, uint16_t perms, uint32_t val);
 
 /**
  * @brief Create a 64-bit unsigned integer Characteristic Object
@@ -688,7 +688,7 @@ hap_char_t *hap_char_uint32_create(char *type_uuid, uint16_t perms, uint32_t val
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_uint64_create(char *type_uuid, uint16_t perms, uint64_t val);
+hap_char_t *hap_char_uint64_create(const char *type_uuid, uint16_t perms, uint64_t val);
 
 /**
  * @brief Create a 32-bit signed integer Characteristic Object
@@ -700,7 +700,7 @@ hap_char_t *hap_char_uint64_create(char *type_uuid, uint16_t perms, uint64_t val
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_int_create(char *type_uuid, uint16_t perms, int val);
+hap_char_t *hap_char_int_create(const char *type_uuid, uint16_t perms, int val);
 
 /**
  * @brief Create a Floating point Characteristic Object
@@ -712,7 +712,7 @@ hap_char_t *hap_char_int_create(char *type_uuid, uint16_t perms, int val);
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_float_create(char *type_uuid, uint16_t perms, float val);
+hap_char_t *hap_char_float_create(const char *type_uuid, uint16_t perms, float val);
 
 /**
  * @brief Create a String Characteristic Object
@@ -724,7 +724,7 @@ hap_char_t *hap_char_float_create(char *type_uuid, uint16_t perms, float val);
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_string_create(char *type_uuid, uint16_t perms, char *val);
+hap_char_t *hap_char_string_create(const char *type_uuid, uint16_t perms, const char *val);
 
 /**
  * @brief Create a Data Characteristic Object
@@ -736,7 +736,7 @@ hap_char_t *hap_char_string_create(char *type_uuid, uint16_t perms, char *val);
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_data_create(char *type_uuid, uint16_t perms, hap_data_val_t *val);
+hap_char_t *hap_char_data_create(const char *type_uuid, uint16_t perms, hap_data_val_t *val);
 
 /**
  * @brief Create a TLV8 Characteristic Object
@@ -748,7 +748,7 @@ hap_char_t *hap_char_data_create(char *type_uuid, uint16_t perms, hap_data_val_t
  * @return Handle for the characteristic object created
  * @return NULL on error
  */
-hap_char_t *hap_char_tlv8_create(char *type_uuid, uint16_t perms, hap_tlv8_val_t *val);
+hap_char_t *hap_char_tlv8_create(const char *type_uuid, uint16_t perms, hap_tlv8_val_t *val);
 
 /**
  * @brief Delete a characteristic object
@@ -765,7 +765,7 @@ void hap_char_delete(hap_char_t *hc);
  * @return Handle for the service object created
  * @return NULL on error
  */
-hap_serv_t *hap_serv_create(char *type_uuid);
+hap_serv_t *hap_serv_create(const char *type_uuid);
 
 /**
  * @brief Delete a service object
@@ -884,7 +884,7 @@ uint32_t hap_serv_get_iid(hap_serv_t *hs);
  *
  * @return Type UUID for the service
  */
-char *hap_serv_get_type_uuid(hap_serv_t *hs);
+const char *hap_serv_get_type_uuid(hap_serv_t *hs);
 /**
  * @brief Get parent Service for given Characteristic
  *

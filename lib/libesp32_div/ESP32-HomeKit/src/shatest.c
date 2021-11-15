@@ -781,11 +781,11 @@ void printstr(const char *str, int len)
  */
 void printxstr(const char *str, int len)
 {
-  char *sep = "";
+  char sep[2] = {0};
   for ( ; len-- > 0; str++) {
     printf("%s%c%c", sep, hexdigits[(*str >> 4) & 0xF],
       hexdigits[*str & 0xF]);
-    sep = " ";
+    sep[0] = ' ';
   }
 }
 
@@ -866,7 +866,7 @@ void printResult(uint8_t *Message_Digest, int hashsize,
     putchar('\n');
   } else if (printResults == PRINTBASE64) {
     unsigned char b;
-    char *sm = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    const char *sm = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
                "0123456789+/";
     for (i = 0; i < hashsize; i += 3) {
       putchar(sm[Message_Digest[i] >> 2]);

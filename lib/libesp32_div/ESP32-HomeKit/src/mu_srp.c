@@ -447,7 +447,7 @@ int mu_srp_get_session_key(mu_srp_handle_t *hd, char *bytes_A, int len_A, char *
 	return -1;
 }
 
-int mu_srp_exchange_proofs(mu_srp_handle_t *hd, char *username, char *bytes_user_proof, char *bytes_host_proof)
+int mu_srp_exchange_proofs(mu_srp_handle_t *hd, const char *username, char *bytes_user_proof, char *bytes_host_proof)
 {
 	/* First calculate M */
 	unsigned char hash_n[SHA512HashSize];
