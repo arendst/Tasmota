@@ -1253,6 +1253,7 @@ void ThermostatTimerDisarm(uint8_t ctr_output)
 }
 
 #ifdef DEBUG_THERMOSTAT
+
 void ThermostatVirtualSwitch(uint8_t ctr_output)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
@@ -1326,6 +1327,27 @@ void ThermostatDebug(uint8_t ctr_output)
   AddLog(LOG_LEVEL_DEBUG, PSTR(""));
 }
 #endif // DEBUG_THERMOSTAT
+
+uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
+{
+  uint8_t value = 0;
+  if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
+    || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+      &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
+    value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
+  }
+  else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
+        || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+          &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
+    if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
+      value = 100;
+    }
+    else {
+      value = 0;
+    }
+  }
+  return value;
+}
 
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
   String buf = ResponseData();   // copy the string into a new buffer that will be modified
@@ -1950,23 +1972,8 @@ void CmndCtrDutyCycleRead(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
-    uint8_t value = 0;
-    if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
-      || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
-        &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
-      value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
-    }
-    else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
-          || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
-            &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
-      if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
-        value = 100;
-      }
-      else {
-        value = 0;
-      }
-    }
-    ResponseCmndIdxNumber((int)value);
+
+        ResponseCmndIdxNumber((int)ThermostatGetDutyCycle(ctr_output) );
   }
 }
 
@@ -1983,6 +1990,80 @@ void CmndEnableOutputSet(void)
     ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.enable_output);
   }
 }
+
+
+
+/*********************************************************************************************\
+ * Web UI
+\*********************************************************************************************/
+
+
+// To be done, add all of this defines in according languages file when all will be finished
+// Avoid multiple changes on all language files during developement
+// --------------------------------------------------
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT             "Thermostat"
+#define D_THERMOSTAT_SET_POINT   "Set Point"
+#define D_THERMOSTAT_SENSOR      "Current"
+#define D_THERMOSTAT_GRADIENT    "Gradient"
+#define D_THERMOSTAT_DUTY_CYCLE  "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME  "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE "PI Auto tuning"
+// --------------------------------------------------
+
+
+#ifdef USE_WEBSERVER
+const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
+const char HTTP_THERMOSTAT_TEMPERATURE[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}";
+const char HTTP_THERMOSTAT_DUTY_CYCLE[]  PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_THERMOSTAT_CYCLE_TIME[]  PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
+const char HTTP_THERMOSTAT_PI_AUTOTUNE[] PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
+const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
+
+#endif  // USE_WEBSERVER
+
+void ThermostatShow(uint8_t ctr_output)
+{
+#ifdef USE_WEBSERVER
+
+  WSContentSend_P(HTTP_THERMOSTAT_HL);
+
+  if (Thermostat[ctr_output].status.thermostat_mode == THERMOSTAT_OFF) {
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_DISABLED );
+
+  } else {
+    char c_unit = Thermostat[ctr_output].status.temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
+    float f_temperature ;
+
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_ENABLED );
+
+    f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f ;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+
+    f_temperature = Thermostat[ctr_output].temp_measured / 10.0f;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SENSOR, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+
+    int16_t value = Thermostat[ctr_output].temp_measured_gradient;
+    if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
+      value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_measured_gradient, TEMP_CONV_RELATIVE);
+    } 
+    f_temperature = value / 1000.0f;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+    WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
+    WSContentSend_P(HTTP_THERMOSTAT_CYCLE_TIME, Thermostat[ctr_output].time_pi_cycle );
+
+  #ifdef USE_PI_AUTOTUNING
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_ENABLED  );
+  #else
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_DISABLED );
+  #endif
+
+  }
+
+#endif  // USE_WEBSERVER
+}
+
+
 
 /*********************************************************************************************\
  * Interface
@@ -2029,6 +2110,15 @@ bool Xdrv39(uint8_t function)
         }
       }
       break;
+
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      for (ctr_output = 0; ctr_output < THERMOSTAT_CONTROLLER_OUTPUTS; ctr_output++) {
+        ThermostatShow(ctr_output);
+      }
+      break;
+#endif  // USE_WEBSERVER
+
     case FUNC_COMMAND:
       result = DecodeCommand(kThermostatCommands, ThermostatCommand);
       break;
