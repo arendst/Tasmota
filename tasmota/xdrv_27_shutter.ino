@@ -557,8 +557,7 @@ void ShutterUpdatePosition(void)
           CmndShutterPosition();
           return;
         } else {
-          Settings->shutter_tilt_pos[i] = Shutter[i].tilt_real_pos;
-          Shutter[i].tiltmoving = 0;
+          Settings->shutter_tilt_pos[i] = Shutter[i].tilt_real_pos;        
         }
         ShutterLogPos(i);
 
@@ -1151,8 +1150,10 @@ void CmndShutterPosition(void)
         int8_t new_shutterdirection;
         if (abs(Shutter[index].target_position - Shutter[index].real_position ) > Shutter[index].min_realPositionChange) {
           new_shutterdirection = Shutter[index].real_position < Shutter[index].target_position ? 1 : -1;
+          Shutter[i].tiltmoving = 0;
         } else {
           new_shutterdirection = Shutter[index].tilt_real_pos < Shutter[index].tilt_target_pos ? 1 : -1;
+          Shutter[i].tiltmoving = 1;
         }
 
         if (Shutter[index].direction == -new_shutterdirection) {
