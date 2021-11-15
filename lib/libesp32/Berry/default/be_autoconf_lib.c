@@ -40,10 +40,10 @@ be_local_closure(page_autoconf_ctl,   /* name */
     /* K16  */  be_nested_string("arg", 1047474471, 3),
     /* K17  */  be_nested_string("reset", 1695364032, 5),
     /* K18  */  be_nested_string("format", -1180859054, 6),
-    /* K19  */  be_nested_string("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s_autoconf.zip", 2084253523, 74),
+    /* K19  */  be_nested_string("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s.autoconf", -1551440987, 70),
     /* K20  */  be_nested_string("arch", -1342162999, 4),
     /* K21  */  be_nested_string("CFG: downloading '%s'", 589480701, 21),
-    /* K22  */  be_nested_string("%s_autoconf.zip", -1148460718, 15),
+    /* K22  */  be_nested_string("%s.autoconf", -734583772, 11),
     /* K23  */  be_nested_string("webclient", -218578150, 9),
     /* K24  */  be_nested_string("begin", 1748273790, 5),
     /* K25  */  be_nested_string("GET", -1763262857, 3),
@@ -453,7 +453,7 @@ be_local_closure(page_autoconf_mgr,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[38]) {     /* constants */
+    ( &(const bvalue[39]) {     /* constants */
     /* K0   */  be_nested_string("webserver", 1572454038, 9),
     /* K1   */  be_nested_string("string", 398550328, 6),
     /* K2   */  be_nested_string("check_privileged_access", -602033328, 23),
@@ -464,34 +464,35 @@ be_local_closure(page_autoconf_mgr,   /* name */
     /* K7   */  be_nested_string("<p><small>&nbsp;(This feature requires an internet connection)</small></p>", -1575700810, 74),
     /* K8   */  be_nested_string("get_current_module_path", -1088293888, 23),
     /* K9   */  be_nested_string("tr", 1195724803, 2),
-    /* K10  */  be_nested_string("_", -636741266, 1),
-    /* K11  */  be_nested_string(" ", 621580159, 1),
-    /* K12  */  be_nested_string("_error", 1132109656, 6),
-    /* K13  */  be_nested_string("&lt;Error: apply new or remove&gt;", -1439459347, 34),
-    /* K14  */  be_nested_string("&lt;None&gt;", -1692801798, 12),
-    /* K15  */  be_nested_string("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>", 842307168, 77),
-    /* K16  */  be_nested_string("format", -1180859054, 6),
-    /* K17  */  be_nested_string("<legend><b title='Autoconfiguration'>&nbsp;Current auto-configuration</b></legend>", -82466516, 82),
-    /* K18  */  be_nested_string("<p>Current configuration: </p><p><b>%s</b></p>", -179311535, 46),
-    /* K19  */  be_nested_string("<p><form id=reapply style='display: block;' action='/ac' method='post' ", 546993478, 71),
-    /* K20  */  be_nested_string("onsubmit='return confirm(\"This will cause a restart.\");'>", 232646018, 57),
-    /* K21  */  be_nested_string("<button name='reapply' class='button bgrn'>Re-apply current configuration</button>", -1147033080, 82),
-    /* K22  */  be_nested_string("</form></p>", -748395557, 11),
-    /* K23  */  be_nested_string("<p></p></fieldset><p></p>", 2052843416, 25),
-    /* K24  */  be_nested_string("<legend><b title='New autoconf'>&nbsp;Select new auto-configuration</b></legend>", 1926223891, 80),
-    /* K25  */  be_nested_string("<p><form id=zip style='display: block;' action='/ac' method='post' ", -261345130, 67),
-    /* K26  */  be_nested_string("onsubmit='return confirm(\"This will change the current configuration and cause a restart.\");'>", -502554737, 94),
-    /* K27  */  be_nested_string("<label>Choose a device configuration:</label><br>", 1336654704, 49),
-    /* K28  */  be_nested_string("<select name='zip'>", -47042760, 19),
-    /* K29  */  be_nested_string("load_templates", -781097163, 14),
-    /* K30  */  be_nested_string("<option value='reset'>&lt;Remove autoconf&gt;</option>", -300347541, 54),
-    /* K31  */  be_nested_string("<option value='%s'>%s</option>", 510303524, 30),
-    /* K32  */  be_nested_string("stop_iteration", -121173395, 14),
-    /* K33  */  be_nested_string("</select><p></p>", 1863865923, 16),
-    /* K34  */  be_nested_string("<button name='zipapply' class='button bgrn'>Apply configuration</button>", 1205771629, 72),
-    /* K35  */  be_nested_string("content_button", 1956476087, 14),
-    /* K36  */  be_nested_string("BUTTON_CONFIGURATION", 70820856, 20),
-    /* K37  */  be_nested_string("content_stop", 658554751, 12),
+    /* K10  */  be_nested_string("get_current_module_name", -1915696556, 23),
+    /* K11  */  be_nested_string("_", -636741266, 1),
+    /* K12  */  be_nested_string(" ", 621580159, 1),
+    /* K13  */  be_nested_string("_error", 1132109656, 6),
+    /* K14  */  be_nested_string("&lt;Error: apply new or remove&gt;", -1439459347, 34),
+    /* K15  */  be_nested_string("&lt;None&gt;", -1692801798, 12),
+    /* K16  */  be_nested_string("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>", 842307168, 77),
+    /* K17  */  be_nested_string("format", -1180859054, 6),
+    /* K18  */  be_nested_string("<legend><b title='Autoconfiguration'>&nbsp;Current auto-configuration</b></legend>", -82466516, 82),
+    /* K19  */  be_nested_string("<p>Current configuration: </p><p><b>%s</b></p>", -179311535, 46),
+    /* K20  */  be_nested_string("<p><form id=reapply style='display: block;' action='/ac' method='post' ", 546993478, 71),
+    /* K21  */  be_nested_string("onsubmit='return confirm(\"This will cause a restart.\");'>", 232646018, 57),
+    /* K22  */  be_nested_string("<button name='reapply' class='button bgrn'>Re-apply current configuration</button>", -1147033080, 82),
+    /* K23  */  be_nested_string("</form></p>", -748395557, 11),
+    /* K24  */  be_nested_string("<p></p></fieldset><p></p>", 2052843416, 25),
+    /* K25  */  be_nested_string("<legend><b title='New autoconf'>&nbsp;Select new auto-configuration</b></legend>", 1926223891, 80),
+    /* K26  */  be_nested_string("<p><form id=zip style='display: block;' action='/ac' method='post' ", -261345130, 67),
+    /* K27  */  be_nested_string("onsubmit='return confirm(\"This will change the current configuration and cause a restart.\");'>", -502554737, 94),
+    /* K28  */  be_nested_string("<label>Choose a device configuration:</label><br>", 1336654704, 49),
+    /* K29  */  be_nested_string("<select name='zip'>", -47042760, 19),
+    /* K30  */  be_nested_string("load_templates", -781097163, 14),
+    /* K31  */  be_nested_string("<option value='reset'>&lt;Remove autoconf&gt;</option>", -300347541, 54),
+    /* K32  */  be_nested_string("<option value='%s'>%s</option>", 510303524, 30),
+    /* K33  */  be_nested_string("stop_iteration", -121173395, 14),
+    /* K34  */  be_nested_string("</select><p></p>", 1863865923, 16),
+    /* K35  */  be_nested_string("<button name='zipapply' class='button bgrn'>Apply configuration</button>", 1205771629, 72),
+    /* K36  */  be_nested_string("content_button", 1956476087, 14),
+    /* K37  */  be_nested_string("BUTTON_CONFIGURATION", 70820856, 20),
+    /* K38  */  be_nested_string("content_stop", 658554751, 12),
     }),
     (be_nested_const_str("page_autoconf_mgr", -651030265, 17)),
     ((bstring*) &be_const_str_input),
@@ -515,71 +516,71 @@ be_local_closure(page_autoconf_mgr,   /* name */
       0x7C0C0200,  //  0010  CALL	R3	1
       0x780E0006,  //  0011  JMPF	R3	#0019
       0x8C100509,  //  0012  GETMET	R4	R2	K9
-      0x8C180108,  //  0013  GETMET	R6	R0	K8
+      0x8C18010A,  //  0013  GETMET	R6	R0	K10
       0x7C180200,  //  0014  CALL	R6	1
-      0x581C000A,  //  0015  LDCONST	R7	K10
-      0x5820000B,  //  0016  LDCONST	R8	K11
+      0x581C000B,  //  0015  LDCONST	R7	K11
+      0x5820000C,  //  0016  LDCONST	R8	K12
       0x7C100800,  //  0017  CALL	R4	4
       0x70020004,  //  0018  JMP		#001E
-      0x8810010C,  //  0019  GETMBR	R4	R0	K12
+      0x8810010D,  //  0019  GETMBR	R4	R0	K13
       0x78120001,  //  001A  JMPF	R4	#001D
-      0x5810000D,  //  001B  LDCONST	R4	K13
+      0x5810000E,  //  001B  LDCONST	R4	K14
       0x70020000,  //  001C  JMP		#001E
-      0x5810000E,  //  001D  LDCONST	R4	K14
+      0x5810000F,  //  001D  LDCONST	R4	K15
       0x8C140306,  //  001E  GETMET	R5	R1	K6
-      0x581C000F,  //  001F  LDCONST	R7	K15
+      0x581C0010,  //  001F  LDCONST	R7	K16
       0x7C140400,  //  0020  CALL	R5	2
       0x8C140306,  //  0021  GETMET	R5	R1	K6
-      0x8C1C0510,  //  0022  GETMET	R7	R2	K16
-      0x58240011,  //  0023  LDCONST	R9	K17
+      0x8C1C0511,  //  0022  GETMET	R7	R2	K17
+      0x58240012,  //  0023  LDCONST	R9	K18
       0x7C1C0400,  //  0024  CALL	R7	2
       0x7C140400,  //  0025  CALL	R5	2
       0x8C140306,  //  0026  GETMET	R5	R1	K6
-      0x8C1C0510,  //  0027  GETMET	R7	R2	K16
-      0x58240012,  //  0028  LDCONST	R9	K18
+      0x8C1C0511,  //  0027  GETMET	R7	R2	K17
+      0x58240013,  //  0028  LDCONST	R9	K19
       0x5C280800,  //  0029  MOVE	R10	R4
       0x7C1C0600,  //  002A  CALL	R7	3
       0x7C140400,  //  002B  CALL	R5	2
       0x780E000B,  //  002C  JMPF	R3	#0039
       0x8C140306,  //  002D  GETMET	R5	R1	K6
-      0x581C0013,  //  002E  LDCONST	R7	K19
+      0x581C0014,  //  002E  LDCONST	R7	K20
       0x7C140400,  //  002F  CALL	R5	2
       0x8C140306,  //  0030  GETMET	R5	R1	K6
-      0x581C0014,  //  0031  LDCONST	R7	K20
+      0x581C0015,  //  0031  LDCONST	R7	K21
       0x7C140400,  //  0032  CALL	R5	2
       0x8C140306,  //  0033  GETMET	R5	R1	K6
-      0x581C0015,  //  0034  LDCONST	R7	K21
+      0x581C0016,  //  0034  LDCONST	R7	K22
       0x7C140400,  //  0035  CALL	R5	2
       0x8C140306,  //  0036  GETMET	R5	R1	K6
-      0x581C0016,  //  0037  LDCONST	R7	K22
+      0x581C0017,  //  0037  LDCONST	R7	K23
       0x7C140400,  //  0038  CALL	R5	2
       0x8C140306,  //  0039  GETMET	R5	R1	K6
-      0x581C0017,  //  003A  LDCONST	R7	K23
+      0x581C0018,  //  003A  LDCONST	R7	K24
       0x7C140400,  //  003B  CALL	R5	2
       0x8C140306,  //  003C  GETMET	R5	R1	K6
-      0x581C000F,  //  003D  LDCONST	R7	K15
+      0x581C0010,  //  003D  LDCONST	R7	K16
       0x7C140400,  //  003E  CALL	R5	2
       0x8C140306,  //  003F  GETMET	R5	R1	K6
-      0x8C1C0510,  //  0040  GETMET	R7	R2	K16
-      0x58240018,  //  0041  LDCONST	R9	K24
+      0x8C1C0511,  //  0040  GETMET	R7	R2	K17
+      0x58240019,  //  0041  LDCONST	R9	K25
       0x7C1C0400,  //  0042  CALL	R7	2
       0x7C140400,  //  0043  CALL	R5	2
       0x8C140306,  //  0044  GETMET	R5	R1	K6
-      0x581C0019,  //  0045  LDCONST	R7	K25
+      0x581C001A,  //  0045  LDCONST	R7	K26
       0x7C140400,  //  0046  CALL	R5	2
       0x8C140306,  //  0047  GETMET	R5	R1	K6
-      0x581C001A,  //  0048  LDCONST	R7	K26
+      0x581C001B,  //  0048  LDCONST	R7	K27
       0x7C140400,  //  0049  CALL	R5	2
       0x8C140306,  //  004A  GETMET	R5	R1	K6
-      0x581C001B,  //  004B  LDCONST	R7	K27
+      0x581C001C,  //  004B  LDCONST	R7	K28
       0x7C140400,  //  004C  CALL	R5	2
       0x8C140306,  //  004D  GETMET	R5	R1	K6
-      0x581C001C,  //  004E  LDCONST	R7	K28
+      0x581C001D,  //  004E  LDCONST	R7	K29
       0x7C140400,  //  004F  CALL	R5	2
-      0x8C14011D,  //  0050  GETMET	R5	R0	K29
+      0x8C14011E,  //  0050  GETMET	R5	R0	K30
       0x7C140200,  //  0051  CALL	R5	1
       0x8C180306,  //  0052  GETMET	R6	R1	K6
-      0x5820001E,  //  0053  LDCONST	R8	K30
+      0x5820001F,  //  0053  LDCONST	R8	K31
       0x7C180400,  //  0054  CALL	R6	2
       0x60180010,  //  0055  GETGBL	R6	G16
       0x5C1C0A00,  //  0056  MOVE	R7	R5
@@ -588,36 +589,36 @@ be_local_closure(page_autoconf_mgr,   /* name */
       0x5C1C0C00,  //  0059  MOVE	R7	R6
       0x7C1C0000,  //  005A  CALL	R7	0
       0x8C200306,  //  005B  GETMET	R8	R1	K6
-      0x8C280510,  //  005C  GETMET	R10	R2	K16
-      0x5830001F,  //  005D  LDCONST	R12	K31
+      0x8C280511,  //  005C  GETMET	R10	R2	K17
+      0x58300020,  //  005D  LDCONST	R12	K32
       0x5C340E00,  //  005E  MOVE	R13	R7
       0x8C380509,  //  005F  GETMET	R14	R2	K9
       0x5C400E00,  //  0060  MOVE	R16	R7
-      0x5844000A,  //  0061  LDCONST	R17	K10
-      0x5848000B,  //  0062  LDCONST	R18	K11
+      0x5844000B,  //  0061  LDCONST	R17	K11
+      0x5848000C,  //  0062  LDCONST	R18	K12
       0x7C380800,  //  0063  CALL	R14	4
       0x7C280800,  //  0064  CALL	R10	4
       0x7C200400,  //  0065  CALL	R8	2
       0x7001FFF1,  //  0066  JMP		#0059
-      0x58180020,  //  0067  LDCONST	R6	K32
+      0x58180021,  //  0067  LDCONST	R6	K33
       0xAC180200,  //  0068  CATCH	R6	1	0
       0xB0080000,  //  0069  RAISE	2	R0	R0
       0x8C180306,  //  006A  GETMET	R6	R1	K6
-      0x58200021,  //  006B  LDCONST	R8	K33
+      0x58200022,  //  006B  LDCONST	R8	K34
       0x7C180400,  //  006C  CALL	R6	2
       0x8C180306,  //  006D  GETMET	R6	R1	K6
-      0x58200022,  //  006E  LDCONST	R8	K34
+      0x58200023,  //  006E  LDCONST	R8	K35
       0x7C180400,  //  006F  CALL	R6	2
       0x8C180306,  //  0070  GETMET	R6	R1	K6
-      0x58200016,  //  0071  LDCONST	R8	K22
+      0x58200017,  //  0071  LDCONST	R8	K23
       0x7C180400,  //  0072  CALL	R6	2
       0x8C180306,  //  0073  GETMET	R6	R1	K6
-      0x58200017,  //  0074  LDCONST	R8	K23
+      0x58200018,  //  0074  LDCONST	R8	K24
       0x7C180400,  //  0075  CALL	R6	2
-      0x8C180323,  //  0076  GETMET	R6	R1	K35
-      0x88200324,  //  0077  GETMBR	R8	R1	K36
+      0x8C180324,  //  0076  GETMET	R6	R1	K36
+      0x88200325,  //  0077  GETMBR	R8	R1	K37
       0x7C180400,  //  0078  CALL	R6	2
-      0x8C180325,  //  0079  GETMET	R6	R1	K37
+      0x8C180326,  //  0079  GETMET	R6	R1	K38
       0x7C180200,  //  007A  CALL	R6	1
       0x80000000,  //  007B  RET	0
     })
@@ -646,7 +647,7 @@ be_local_closure(get_current_module_name,   /* name */
     (be_nested_const_str("get_current_module_name", -1915696556, 23)),
     ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 5]) {  /* code */
-      0x5405FFF2,  //  0000  LDINT	R1	-13
+      0x5405FFF5,  //  0000  LDINT	R1	-10
       0x40060201,  //  0001  CONNECT	R1	K1	R1
       0x88080100,  //  0002  GETMBR	R2	R0	K0
       0x94040401,  //  0003  GETIDX	R1	R2	R1
@@ -676,7 +677,7 @@ be_local_closure(delete_all_configs,   /* name */
     /* K2   */  be_nested_string("listdir", 2005220720, 7),
     /* K3   */  be_nested_string("/", 705468254, 1),
     /* K4   */  be_nested_string("find", -1108310694, 4),
-    /* K5   */  be_nested_string("_autoconf.zip", 1641927766, 13),
+    /* K5   */  be_nested_string(".autoconf", -1770288208, 9),
     /* K6   */  be_const_int(0),
     /* K7   */  be_nested_string("remove", -611183107, 6),
     /* K8   */  be_nested_string("stop_iteration", -121173395, 14),
@@ -782,7 +783,7 @@ be_local_closure(load_templates,   /* name */
     /* K16  */  be_nested_string("load", -435725847, 4),
     /* K17  */  be_nested_string("CFG: loaded '%s'", 1699028828, 16),
     /* K18  */  be_nested_string("find", -1108310694, 4),
-    /* K19  */  be_nested_string("zip", -1417514060, 3),
+    /* K19  */  be_nested_string("files", 1055342736, 5),
     /* K20  */  be_nested_string("CFG: exception '%s' - '%s'", -199559383, 26),
     }),
     (be_nested_const_str("load_templates", -781097163, 14)),
@@ -969,12 +970,12 @@ be_local_closure(init,   /* name */
     /* K5   */  be_nested_string("add_driver", 1654458371, 10),
     /* K6   */  be_const_int(0),
     /* K7   */  be_nested_string("find", -1108310694, 4),
-    /* K8   */  be_nested_string("_autoconf.zip", 1641927766, 13),
+    /* K8   */  be_nested_string(".autoconf", -1770288208, 9),
     /* K9   */  be_nested_string("format", -1180859054, 6),
     /* K10  */  be_nested_string("CFG: multiple autoconf files found, aborting ('%s' + '%s')", 197663371, 58),
     /* K11  */  be_nested_string("_error", 1132109656, 6),
     /* K12  */  be_const_int(1),
-    /* K13  */  be_nested_string("CFG: no '*_autoconf.zip' file found", -1047382425, 35),
+    /* K13  */  be_nested_string("CFG: no '*.autoconf' file found", 127493957, 31),
     /* K14  */  be_nested_string("_archive", -290407892, 8),
     }),
     (be_nested_const_str("init", 380752755, 4)),
@@ -1115,7 +1116,7 @@ be_local_closure(reset,   /* name */
     /* K3   */  be_nested_string("/", 705468254, 1),
     /* K4   */  be_const_int(0),
     /* K5   */  be_nested_string("find", -1108310694, 4),
-    /* K6   */  be_nested_string("_autoconf.zip", 1641927766, 13),
+    /* K6   */  be_nested_string(".autoconf", -1770288208, 9),
     /* K7   */  be_nested_string("remove", -611183107, 6),
     /* K8   */  be_nested_string("format", -1180859054, 6),
     /* K9   */  be_nested_string("CFG: removed file '%s'", 2048602473, 22),
