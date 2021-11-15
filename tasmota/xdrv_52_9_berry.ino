@@ -793,6 +793,9 @@ bool Xdrv52(uint8_t function)
         // Run 'autoconf.preinit()'
         callBerryAutoconf("autoexec");
 
+        // we generate a synthetic event `autoexec` 
+        callBerryEventDispatcher(PSTR("autoexec"), nullptr, 0, nullptr);
+
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
