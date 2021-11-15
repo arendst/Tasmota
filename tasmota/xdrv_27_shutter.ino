@@ -328,7 +328,7 @@ void ShutterInit(void)
         Shutter[i].tilt_config[k] =  Settings->shutter_tilt_config[k][i];
       }
       Shutter[i].tilt_real_pos = Settings->shutter_tilt_pos[i];
-      Shutter[i].tilt_velocity = Shutter[i].tilt_config[2] > 0 ? (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])/Shutter[i].tilt_config[2] : 1;
+      Shutter[i].tilt_velocity = Shutter[i].tilt_config[2] > 0 ? ((Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])/Shutter[i].tilt_config[2])+1  : 1;
 
       Shutter[i].close_velocity_max = ShutterGlobal.open_velocity_max*Shutter[i].open_time / Shutter[i].close_time;
 
@@ -472,8 +472,11 @@ void ShutterDecellerateForStop(uint8_t i)
 
 void ShutterPowerOff(uint8_t i)
 {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i+1,Shutter[i].switch_mode); // fix log to indicate correct shutter number
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d. Mode %d, time:%d"), i+1,Shutter[i].switch_mode, Shutter[i].time); // fix log to indicate correct shutter number
   ShutterDecellerateForStop(i);
+  if (Shutter[i].direction !=0) {
+    Shutter[i].direction = 0;
+  }
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
       if ((1 << (Settings->shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
@@ -513,10 +516,7 @@ void ShutterPowerOff(uint8_t i)
       ExecuteCommand(scmnd, SRC_BUTTON);
       break;
   }
-  if (Shutter[i].direction !=0) {
-    Shutter[i].direction = 0;
-    delay(MOTOR_STOP_TIME);
-  }
+  delay(MOTOR_STOP_TIME);
 }
 
 void ShutterUpdatePosition(void)
@@ -632,8 +632,8 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     if (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0] != 0) {
       Shutter[i].venetian_delay = (Shutter[i].direction > 0 ? Shutter[i].tilt_config[1]-Shutter[i].tilt_real_pos : Shutter[i].tilt_real_pos-Shutter[i].tilt_config[0]) * Shutter[i].tilt_config[2] / (Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]);
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , Shutter[i].direction ,ShutterGlobal.open_velocity_max );
-      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: %d VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Durat: %d, Start: %d, Target: %d"),
-      //  i, Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,Shutter[i].direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: %d VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Durat: %d, Start: %d, Target: %d"),
+        i, Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,Shutter[i].direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
     }
   }
   AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in direction %d"), i, Shutter[i].start_position, Shutter[i].target_position, Shutter[i].direction);
@@ -686,7 +686,7 @@ void ShutterRelayChanged(void)
     // SRC_IGNORE added because INTERLOCK function bite causes this as last source for changing the relay.
 		//uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings->shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != TasmotaGlobal.last_source && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
     uint8   manual_relays_changed = ((ShutterGlobal.RelayCurrentMask >> (Settings->shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != TasmotaGlobal.last_source && SRC_PULSETIMER != TasmotaGlobal.last_source ;
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Source %s, Powerstate %ld, RelayMask %d, ManualChange %d"),
+    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Source %s, Powerstate %ld, RelayMask %d, ManualChange %d"),
       i+1, GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource), powerstate_local,ShutterGlobal.RelayCurrentMask,manual_relays_changed);
     if (manual_relays_changed) {
       //ShutterGlobal.skip_relay_change = true;
