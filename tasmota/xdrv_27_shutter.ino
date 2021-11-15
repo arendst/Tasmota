@@ -345,7 +345,7 @@ void ShutterInit(void)
         break;
       }
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d min realpos_chg: %d, min tilt_chg %d"),i+1,Shutter[i].min_realPositionChange,Shutter[i].min_TiltChange);
-      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"),i, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d Openvel %d, Closevel: %d"),i, ShutterGlobal.open_velocity_max, Shutter[i].close_velocity_max);
       AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Init. Pos %d, Inv %d, Locked %d, Endstop enab %d, webButt inv %d, Motordel: %d"),
         i+1,  Shutter[i].real_position,
         (Settings->shutter_options[i]&1) ? 1 : 0, (Settings->shutter_options[i]&2) ? 1 : 0, (Settings->shutter_options[i]&4) ? 1 : 0, (Settings->shutter_options[i]&8) ? 1 : 0, Shutter[i].motordelay);
@@ -529,11 +529,11 @@ void ShutterUpdatePosition(void)
         XdrvRulesProcess(0);
         ShutterGlobal.start_reported = 1;
       }
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d, cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
-        Shutter[i].time, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
+        Shutter[i].time, Shutter[i].time-Shutter[i].pwm_value,current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
          Shutter[i].tiltmoving);
-
+      Shutter[i].pwm_value = Shutter[i].time;
       if ( ((Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction &&  Shutter[i].tiltmoving==0) ||
            ((int16_t)Shutter[i].tilt_real_pos * Shutter[i].direction * Shutter[i].tilt_config[2] >= (int16_t)Shutter[i].tilt_target_pos * Shutter[i].direction * Shutter[i].tilt_config[2] && Shutter[i].tiltmoving==1))
            || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
@@ -587,14 +587,14 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 {
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. var%d <99>=<%s>, max10s?"),i+1, rules_vars[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i+1, rules_vars[i]);
   TasmotaGlobal.rules_flag.shutter_moving = 1;
   XdrvRulesProcess(0);
   uptime_Local = TasmotaGlobal.uptime;
   while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
     loop();
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
 #endif  // USE_RULES
 }
 
