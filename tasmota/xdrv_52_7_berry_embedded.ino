@@ -48,6 +48,8 @@ const char berry_prog[] =
   "import autoconf "
 #endif // USE_AUTOCONF
 
+  "import tapp "
+
 #ifdef USE_LVGL
   "import lv "
   // create the '_lvgl' global singleton
