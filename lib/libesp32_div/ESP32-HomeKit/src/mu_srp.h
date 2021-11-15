@@ -84,7 +84,7 @@ int mu_srp_get_session_key(mu_srp_handle_t *hd, char *bytes_A, int len_A, char *
  * bytes_user_proof is parameter in
  * bytes_host_proof is parameter out (should be SHA512_DIGEST_LENGTH) bytes in size
  */
-int mu_srp_exchange_proofs(mu_srp_handle_t *hd, char *username, char *bytes_user_proof, char *bytes_host_proof);
+int mu_srp_exchange_proofs(mu_srp_handle_t *hd, const char *username, char *bytes_user_proof, char *bytes_host_proof);
 
 
 

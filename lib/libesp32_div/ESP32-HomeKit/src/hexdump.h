@@ -13,6 +13,6 @@
 // limitations under the License.
 #ifndef _HEXDUMP_H_
 #define _HEXDUMP_H_
-void hex_dbg_with_name(char *name, unsigned char *buf, int buf_len);
+void hex_dbg_with_name(const char *name, unsigned char *buf, int buf_len);
 
 #endif /* _HEXDUMP_H_ */

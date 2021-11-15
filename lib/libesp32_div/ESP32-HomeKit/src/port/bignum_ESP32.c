@@ -25,7 +25,7 @@
 #if __has_include("esp_idf_version.h")
 #include "esp_idf_version.h"
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0)
-#warning("IDF is 4 or later")
+// #warning("IDF is 4 or later")
 #include "soc/hwcrypto_periph.h"
 #endif
 #endif

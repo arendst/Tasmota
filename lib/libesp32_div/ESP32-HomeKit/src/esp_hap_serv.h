@@ -44,7 +44,7 @@ typedef struct hap_linked_serv hap_linked_serv_t;
  * HAP service information
  */
 typedef struct {
-    char                *type_uuid;      /* String that defines the type of the service. */
+    const char           *type_uuid;      /* String that defines the type of the service. */
 
     uint32_t             iid;        /* service instance ID */
 
@@ -69,8 +69,8 @@ typedef struct {
 bool hap_serv_get_hidden(hap_serv_t *hs);
 bool hap_serv_get_primary(hap_serv_t *hs);
 hap_char_t *hap_serv_get_char_by_iid(hap_serv_t *hs, int32_t iid);
- char *hap_serv_get_uuid(hap_serv_t *hs);
-hap_serv_t *hap_serv_create(char *type_uuid);
+const char *hap_serv_get_uuid(hap_serv_t *hs);
+hap_serv_t *hap_serv_create(const char *type_uuid);
 void hap_serv_delete(hap_serv_t *hs);
 int hap_serv_add_char(hap_serv_t *hs, hap_char_t *hc);
 #ifdef __cplusplus

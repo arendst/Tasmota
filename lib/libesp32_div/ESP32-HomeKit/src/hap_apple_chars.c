@@ -128,7 +128,7 @@ hap_char_t *hap_char_current_temperature_create(float curr_temp)
 }
 
 /* Char: Firmware Revision */
-hap_char_t *hap_char_firmware_revision_create(char *fw_rev)
+hap_char_t *hap_char_firmware_revision_create(const char *fw_rev)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_FIRMWARE_REVISION,
                                             HAP_CHAR_PERM_PR, fw_rev);
@@ -139,7 +139,7 @@ hap_char_t *hap_char_firmware_revision_create(char *fw_rev)
 }
 
 /* Char: Hardware Revision */
-hap_char_t *hap_char_hardware_revision_create(char *hw_rev)
+hap_char_t *hap_char_hardware_revision_create(const char *hw_rev)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_HARDWARE_REVISION,
                                             HAP_CHAR_PERM_PR, hw_rev);
@@ -218,7 +218,7 @@ hap_char_t *hap_char_lock_target_state_create(uint8_t lock_targ_state)
 }
 
 /* Char: Manufacturer */
-hap_char_t *hap_char_manufacturer_create(char *manufacturer)
+hap_char_t *hap_char_manufacturer_create(const char *manufacturer)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_MANUFACTURER,
                                             HAP_CHAR_PERM_PR, manufacturer);
@@ -229,7 +229,7 @@ hap_char_t *hap_char_manufacturer_create(char *manufacturer)
 }
 
 /* Char: Model */
-hap_char_t *hap_char_model_create(char *model)
+hap_char_t *hap_char_model_create(const char *model)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_MODEL,
                                             HAP_CHAR_PERM_PR, model);
@@ -252,7 +252,7 @@ hap_char_t *hap_char_motion_detected_create(bool motion_detected)
 }
 
 /* Char: Name */
-hap_char_t *hap_char_name_create(char *name)
+hap_char_t *hap_char_name_create(const char *name)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_NAME,
                                             HAP_CHAR_PERM_PR, name);
@@ -341,7 +341,7 @@ hap_char_t *hap_char_saturation_create(float saturation)
 }
 
 /* Char: Serial Number */
-hap_char_t *hap_char_serial_number_create(char *serial_num)
+hap_char_t *hap_char_serial_number_create(const char *serial_num)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_SERIAL_NUMBER,
                                             HAP_CHAR_PERM_PR, serial_num);
@@ -424,7 +424,7 @@ hap_char_t *hap_char_temperature_display_units_create(uint8_t temp_disp_units)
 }
 
 /* Char: Version */
-hap_char_t *hap_char_version_create(char *version)
+hap_char_t *hap_char_version_create(const char *version)
 {
     hap_char_t *hc = hap_char_string_create(HAP_CHAR_UUID_VERSION,
                                             HAP_CHAR_PERM_PR, version);
