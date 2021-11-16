@@ -43,7 +43,7 @@
 
 // Parameters for equation
 #define ANALOG_V33                    3.3              // ESP8266 / ESP32 Analog voltage
-#define ANALOG_T0                     TO_KELVIN(25.0)  // 25 degrees Celcius in Kelvin (= 298.15)
+#define ANALOG_T0                     TO_KELVIN(25.0)  // 25 degrees Celsius in Kelvin (= 298.15)
 
 // Shelly 2.5 NTC Thermistor
 // 3V3 --- ANALOG_NTC_BRIDGE_RESISTANCE ---v--- NTC --- Gnd
@@ -409,8 +409,15 @@ void AdcEverySecond(void) {
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
     if (ADC_TEMP == Adc[idx].type) {
       int adc = AdcRead(Adc[idx].pin, 2);
-      // Steinhart-Hart equation for thermistor as temperature sensor
+      // Steinhart-Hart equation for thermistor as temperature sensor:
+      // double Rt = (adc * Adc[idx].param1 * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (double)adc * MAX_ADC_V);
+      // MAX_ADC_V in ESP8266 is 1
+      // MAX_ADC_V in ESP32 is 3.3
+#ifdef ESP8266
       double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE * ANALOG_V33 - (double)adc);  // Shelly param1 = 32000 (ANALOG_NTC_BRIDGE_RESISTANCE)
+#else
+      double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE - (double)adc);
+#endif      
       double BC = (double)Adc[idx].param3 / 10000;                                      // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
       double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Adc[idx].param2));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
       Adc[idx].temperature = ConvertTemp(TO_CELSIUS(T));
