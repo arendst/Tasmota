@@ -366,7 +366,6 @@ void ShutterInit(void)
 void ShutterReportPosition(bool always, uint32_t index)
 {
   Response_P(PSTR("{"));
-  //TasmotaGlobal.rules_flag.shutter_moving = 0;
   uint32_t i = 0;
   uint32_t n = TasmotaGlobal.shutters_present;
   if( index != MAX_SHUTTERS) {
@@ -377,7 +376,6 @@ void ShutterReportPosition(bool always, uint32_t index)
     //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real Pos %d"), i+1,Shutter[i].real_position);
     uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     if (Shutter[i].direction != 0) {
-      //TasmotaGlobal.rules_flag.shutter_moving = 1;
       ShutterLogPos(i);
     }
     if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
@@ -385,7 +383,7 @@ void ShutterReportPosition(bool always, uint32_t index)
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100-target : target, Shutter[i].tilt_real_pos );
   }
   ResponseJsonEnd();
-  if (always || (TasmotaGlobal.rules_flag.shutter_moving)) {
+  if (always || Shutter[i].direction != 0) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), TasmotaGlobal.rules_flag.shutter_moving, TasmotaGlobal.rules_flag.shutter_moved);
@@ -480,7 +478,7 @@ void ShutterPowerOff(uint8_t i)
   if (Shutter[i].direction !=0) {
     Shutter[i].direction = 0;
   }
-  TasmotaGlobal.rules_flag.shutter_moving = 0;
+  TasmotaGlobal.rules_flag.shutter_moved = 1;
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
       if ((1 << (Settings->shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
@@ -598,7 +596,6 @@ void ShutterAllowPreStartProcedure(uint8_t i)
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i+1, rules_vars[i]);
-  //TasmotaGlobal.rules_flag.shutter_moving = 1;
   XdrvRulesProcess(0);
   uptime_Local = TasmotaGlobal.uptime;
   while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
@@ -637,6 +634,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     // avoid file system writes during move to minimize missing steps
     savedata_original = Settings->save_data;
     Settings->save_data = 0; // will be restored after movement
+
     TasmotaGlobal.save_data_counter = Settings->save_data;
     ShutterGlobal.skip_relay_change = 0;
     TasmotaGlobal.rules_flag.shutter_moved  = 0;
@@ -1664,12 +1662,9 @@ bool Xdrv27(uint8_t function)
       case FUNC_PRE_INIT:
         ShutterInit();
         break;
-      case FUNC_LOOP:
+      case FUNC_EVERY_50_MSECOND:
         ShutterUpdatePosition();
         break;
-//      case FUNC_EVERY_50_MSECOND:
-//        ShutterUpdatePosition();
-//        break;
       case FUNC_EVERY_SECOND:
       //case FUNC_EVERY_250_MSECOND:
         ShutterReportPosition(false, MAX_SHUTTERS);
