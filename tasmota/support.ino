@@ -2328,6 +2328,44 @@ bool I2cSetDevice(uint32_t addr)
   myWire.beginTransmission((uint8_t)addr);
   return (0 == myWire.endTransmission());
 }
+
+
+TwoWire *I2C_Check_Device(uint32_t addr) {
+TwoWire *wire = nullptr;
+
+#ifdef ESP8266
+  if (I2cActive(addr)) { return wire; }  // already active
+  if (!I2cSetDevice(addr)) { return wire; } // not found
+  wire = &Wire;
+#endif // ESP8266
+
+#ifdef ESP32
+  if (I2cActive(addr)) { return wire; }  // already active
+  if (!I2cSetDevice(addr, 0)) {
+    if (!I2cSetDevice(addr, 1)) { return wire; }
+    wire = &Wire1;
+  } else {
+    wire = &Wire;
+  }
+#endif // ESP32
+
+  return wire;
+}
+
+void I2cSetActiveFound(TwoWire *wire, uint32_t addr, char *name) {
+#ifdef ESP8266
+  I2cSetActiveFound(addr, name);
+#endif // ESP8266
+
+#ifdef ESP32
+  if ((uint32_t)wire == (uint32_t)&Wire) {
+    I2cSetActiveFound(addr, name, 0);
+  } else {
+    I2cSetActiveFound(addr, name, 1);
+  }
+#endif // ESP32
+}
+
 #endif  // USE_I2C
 
 /*********************************************************************************************\
