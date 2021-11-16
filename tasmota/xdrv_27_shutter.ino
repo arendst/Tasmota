@@ -328,7 +328,8 @@ void ShutterInit(void)
       for (uint8_t k=0; k<5; k++) {
         Shutter[i].tilt_config[k] =  Settings->shutter_tilt_config[k][i];
       }
-      Shutter[i].tilt_real_pos = Settings->shutter_tilt_pos[i];
+      Shutter[i].tilt_target_pos = Shutter[i].tilt_real_pos = Settings->shutter_tilt_pos[i];
+
       Shutter[i].tilt_velocity = Shutter[i].tilt_config[2] > 0 ? ((Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0])/Shutter[i].tilt_config[2])+1  : 1;
 
       Shutter[i].close_velocity_max = ShutterGlobal.open_velocity_max*Shutter[i].open_time / Shutter[i].close_time;
@@ -553,7 +554,8 @@ void ShutterUpdatePosition(void)
         // manage venetian blinds
         Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
         Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 100 ? Shutter[i].tilt_config[1] : Shutter[i].tilt_target_pos;
-        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange) {
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
+        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
           AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
           XdrvMailbox.payload = -99;
           XdrvMailbox.index = i+1;
