@@ -59,7 +59,7 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
-  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|";
+  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|";
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -67,7 +67,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt};
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec};
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
   const char JSON_SHUTTER_BUTTON[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Button%d\":%d}";
@@ -102,7 +102,7 @@ struct SHUTTER {
   uint16_t venetian_delay = 0; // Delay in steps before venetian shutter start physical moving. Based on tilt position
   uint16_t min_realPositionChange = 0; // minimum change of the position before the shutter operates. different for PWM and time based operations
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
-  uint16_t missed_steps =0;
+  uint16_t last_reported_time =0;
 } Shutter[MAX_SHUTTERS];
 
 struct SHUTTERGLOBAL {
@@ -530,11 +530,12 @@ void ShutterUpdatePosition(void)
         XdrvRulesProcess(0);
         ShutterGlobal.start_reported = 1;
       }
+      int32_t deltatime = Shutter[i].time-Shutter[i].last_reported_time;
+      Shutter[i].last_reported_time = Shutter[i].time+1;
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
-        Shutter[i].time, Shutter[i].time-Shutter[i].missed_steps,current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
+        Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
         next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
          Shutter[i].tiltmoving);
-      Shutter[i].missed_steps = Shutter[i].time+1;
       if ( ((Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction &&  Shutter[i].tiltmoving==0) ||
            ((int16_t)Shutter[i].tilt_real_pos * Shutter[i].direction * Shutter[i].tilt_config[2] >= (int16_t)Shutter[i].tilt_target_pos * Shutter[i].direction * Shutter[i].tilt_config[2] && Shutter[i].tiltmoving==1))
            || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
@@ -623,7 +624,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterAllowPreStartProcedure(i);
     Shutter[i].time = 0;
     Shutter[i].direction = direction;
-    Shutter[i].missed_steps = 1;
+    Shutter[i].last_reported_time = 1;
     ShutterGlobal.skip_relay_change = 0;
     TasmotaGlobal.rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
@@ -1447,30 +1448,6 @@ void CmndShutterSetHalfway(void)
   }
 }
 
-void CmndShutterSetTilt(void)
-{
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
-    if (XdrvMailbox.payload != -99 ) {
-      Shutter[XdrvMailbox.index -1].tilt_target_pos = tmin(tmax(XdrvMailbox.payload, Shutter[XdrvMailbox.index -1].tilt_config[0]), Shutter[XdrvMailbox.index -1].tilt_config[1]);
-      XdrvMailbox.payload = -99;
-    }
-    if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) ) {
-        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[3]; // open position
-        XdrvMailbox.payload = -99;
-      }
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) ) {
-        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[4];  // close position
-        XdrvMailbox.payload = -99;
-      }
-    }
-  }
-  XdrvMailbox.data[0] = '\0';
-  ResponseCmndNumber(Shutter[XdrvMailbox.index -1].tilt_target_pos);
-  Shutter[XdrvMailbox.index -1].tiltmoving = 1;
-  CmndShutterPosition();
-}
-
 void CmndShutterFrequency(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 20000)) {
@@ -1569,7 +1546,8 @@ void CmndShutterCalibration(void)
   }
 }
 
-void ShutterOptionsSetHelper(uint16_t option){
+void ShutterOptionsSetHelper(uint16_t option)
+{
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     if (XdrvMailbox.payload == 0) {
       Settings->shutter_options[XdrvMailbox.index -1] &= ~(option);
@@ -1580,23 +1558,52 @@ void ShutterOptionsSetHelper(uint16_t option){
   }
 }
 
-void CmndShutterInvert(void) {
+void CmndShutterInvert(void)
+{
   ShutterOptionsSetHelper(1);
 }
 
-void CmndShutterLock(void) {
+void CmndShutterLock(void)
+{
   ShutterOptionsSetHelper(2);
 }
 
-void CmndShutterEnableEndStopTime(void) {
+void CmndShutterEnableEndStopTime(void)
+{
   ShutterOptionsSetHelper(4);
 }
 
-void CmndShutterInvertWebButtons(void) {
+void CmndShutterInvertWebButtons(void)
+{
   ShutterOptionsSetHelper(8);
 }
 
-void CmndShutterTiltConfig(void) {
+void CmndShutterSetTilt(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
+    if (XdrvMailbox.payload != -99 ) {
+      Shutter[XdrvMailbox.index -1].tilt_target_pos = tmin(tmax(XdrvMailbox.payload, Shutter[XdrvMailbox.index -1].tilt_config[0]), Shutter[XdrvMailbox.index -1].tilt_config[1]);
+      XdrvMailbox.payload = -99;
+    }
+    if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) ) {
+        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[3]; // open position
+        XdrvMailbox.payload = -99;
+      }
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) ) {
+        Shutter[XdrvMailbox.index -1].tilt_target_pos = Shutter[XdrvMailbox.index -1].tilt_config[4];  // close position
+        XdrvMailbox.payload = -99;
+      }
+    }
+  }
+  XdrvMailbox.data[0] = '\0';
+  ResponseCmndNumber(Shutter[XdrvMailbox.index -1].tilt_target_pos);
+  Shutter[XdrvMailbox.index -1].tiltmoving = 1;
+  CmndShutterPosition();
+}
+
+void CmndShutterTiltConfig(void)
+{
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
       uint8_t i = 0;
@@ -1616,6 +1623,18 @@ void CmndShutterTiltConfig(void) {
     }
       AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltConfig %d, min: %d, max %d, runtime %d, close_pos: %d, open_pos: %d"), XdrvMailbox.index ,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
   }
+}
+
+void  CmndShutterTiltIncDec(void)
+{
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Change in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
+    if (XdrvMailbox.data_len > 0) {
+      XdrvMailbox.payload = Shutter[XdrvMailbox.index -1].tilt_target_pos+XdrvMailbox.payload;
+      CmndShutterSetTilt();
+    }
+  }
+  ResponseCmndNumber(Shutter[XdrvMailbox.index -1].tilt_target_pos);
 }
 
 /*********************************************************************************************\
