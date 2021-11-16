@@ -36,7 +36,7 @@ autoconf_module.init = def (m)
 
       var i = 0
       while i < size(dir)
-        if string.find(dir[i], "_autoconf.zip") > 0   # does the file contain '*_autoconf.zip'
+        if string.find(dir[i], ".autoconf") > 0   # does the file contain '*.autoconf', >0 to skip `.autoconf`
           if entry != nil
             # we have multiple configuration files, not allowed
             print(string.format("CFG: multiple autoconf files found, aborting ('%s' + '%s')", entry, dir[i]))
@@ -49,7 +49,7 @@ autoconf_module.init = def (m)
       end
 
       if entry == nil
-        print("CFG: no '*_autoconf.zip' file found")
+        print("CFG: no '*.autoconf' file found")
         return nil
       end
 
@@ -82,7 +82,7 @@ autoconf_module.init = def (m)
       var dir = path.listdir("/")
 
       for d:dir
-        if string.find(d, "_autoconf.zip") > 0   # does the file contain '*_autoconf.zip'
+        if string.find(d, ".autoconf") > 0   # does the file contain '*.autoconf'
           path.remove(d)
         end
       end
@@ -90,14 +90,14 @@ autoconf_module.init = def (m)
 
     # ####################################################################################################
     # Get current module
-    # contains the name of the archive without leading `/`, ex: `M5Stack_Fire_autoconf.zip`
+    # contains the name of the archive without leading `/`, ex: `M5Stack_Fire.autoconf`
     # or `nil` if none
     # ####################################################################################################
     def get_current_module_path()
       return self._archive
     end
     def get_current_module_name()
-      return self._archive[0..-13]
+      return self._archive[0..-10]
     end
 
     # ####################################################################################################
@@ -123,7 +123,7 @@ autoconf_module.init = def (m)
         var j = json.load(s)
         tasmota.log(string.format("CFG: loaded '%s'", str(j)), 3)
 
-        var t = j.find("zip")
+        var t = j.find("files")
         if isinstance(t, list)
           return t
         end
@@ -156,7 +156,7 @@ autoconf_module.init = def (m)
       webserver.content_send("<p><small>&nbsp;(This feature requires an internet connection)</small></p>")
       
       var cur_module = self.get_current_module_path()
-      var cur_module_display = cur_module ? string.tr(self.get_current_module_path(), "_", " ") : self._error ? "&lt;Error: apply new or remove&gt;" : "&lt;None&gt;"
+      var cur_module_display = cur_module ? string.tr(self.get_current_module_name(), "_", " ") : self._error ? "&lt;Error: apply new or remove&gt;" : "&lt;None&gt;"
 
       webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
       webserver.content_send(string.format("<legend><b title='Autoconfiguration'>&nbsp;Current auto-configuration</b></legend>"))
@@ -227,10 +227,10 @@ autoconf_module.init = def (m)
           var arch_name = webserver.arg("zip")
 
           if arch_name != "reset"
-            var url = string.format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s_autoconf.zip", tasmota.arch(), arch_name)
+            var url = string.format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s.autoconf", tasmota.arch(), arch_name)
             tasmota.log(string.format("CFG: downloading '%s'", url), 2);
 
-            var local_file = string.format("%s_autoconf.zip", arch_name)
+            var local_file = string.format("%s.autoconf", arch_name)
 
             # download file and write directly to file system
             var cl = webclient()
@@ -282,7 +282,7 @@ autoconf_module.init = def (m)
       var i = 0
       while i < size(dir)
         var fname = dir[i]
-        if string.find(fname, "_autoconf.zip") > 0   # does the file contain '*_autoconf.zip'
+        if string.find(fname, ".autoconf") > 0   # does the file contain '*.autoconf'
           path.remove(fname)
           print(string.format("CFG: removed file '%s'", fname))
         end
