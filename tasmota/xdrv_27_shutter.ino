@@ -368,6 +368,7 @@ void ShutterReportPosition(bool always, uint32_t index)
   Response_P(PSTR("{"));
   uint32_t i = 0;
   uint32_t n = TasmotaGlobal.shutters_present;
+  uint8_t shutter_running = 0;
   if( index != MAX_SHUTTERS) {
     i = index;
     n = index+1;
@@ -377,13 +378,14 @@ void ShutterReportPosition(bool always, uint32_t index)
     uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     if (Shutter[i].direction != 0) {
       ShutterLogPos(i);
+      shutter_running++;
     }
     if (i && index == MAX_SHUTTERS) { ResponseAppend_P(PSTR(",")); }
     uint32_t target = ShutterRealToPercentPosition(Shutter[i].target_position, i);
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100-position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100-target : target, Shutter[i].tilt_real_pos );
   }
   ResponseJsonEnd();
-  if (always || Shutter[i].direction != 0) {
+  if (always || shutter_running) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));  // RulesProcess() now re-entry protected
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), TasmotaGlobal.rules_flag.shutter_moving, TasmotaGlobal.rules_flag.shutter_moved);
