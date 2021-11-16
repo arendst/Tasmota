@@ -626,15 +626,12 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     Shutter[i].start_position = Shutter[i].real_position;
     TasmotaGlobal.rules_flag.shutter_moving = 1;
     ShutterAllowPreStartProcedure(i);
-    Shutter[i].time = 0;
+    Shutter[i].time = Shutter[i].last_reported_time = 0;
 
     // avoid file system writes during move to minimize missing steps
     savedata_original = Settings->save_data;
     Settings->save_data = 0; // will be restored after movement
     TasmotaGlobal.save_data_counter = Settings->save_data;
-
-    Shutter[i].direction = direction;
-    Shutter[i].last_reported_time = 1;
     ShutterGlobal.skip_relay_change = 0;
     TasmotaGlobal.rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
