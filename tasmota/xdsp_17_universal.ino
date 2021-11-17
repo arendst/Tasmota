@@ -64,8 +64,8 @@ const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC
 /*********************************************************************************************/
 
 // The declaration with the default value can only be declared once.
-// should be here and not in other files.
-// default values are not supported very well.
+// Should be here and not in other files.
+// Default values are not supported very well.
 Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
 
 Renderer *Init_uDisplay(const char *desc, int8_t cs) {
