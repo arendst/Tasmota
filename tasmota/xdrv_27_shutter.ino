@@ -125,7 +125,6 @@ void ShutterLogPos(uint32_t i)
   AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real %d, Start %d, Stop %d, Dir %d, Delay %d, Rtc %s [s], Freq %d, PWM %d, Tilt %d"),
     i+1, Shutter[i].real_position, Shutter[i].start_position, Shutter[i].target_position, Shutter[i].direction, Shutter[i].motordelay, stemp2,
     Shutter[i].pwm_velocity, Shutter[i].pwm_value,Shutter[i].tilt_real_pos);
-  yield();
 }
 
 void ExecuteCommandPowerShutter(uint32_t device, uint32_t state, uint32_t source)
@@ -537,48 +536,46 @@ void ShutterUpdatePosition(void)
         ShutterGlobal.start_reported = 1;
       }
       int32_t deltatime = Shutter[i].time-Shutter[i].last_reported_time;
-      if (deltatime >= 0) {
-        Shutter[i].last_reported_time = Shutter[i].time+1;
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
-          Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
-          next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
-           Shutter[i].tiltmoving);
-        if ( ((Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction &&  Shutter[i].tiltmoving==0) ||
-             ((int16_t)Shutter[i].tilt_real_pos * Shutter[i].direction * Shutter[i].tilt_config[2] >= (int16_t)Shutter[i].tilt_target_pos * Shutter[i].direction * Shutter[i].tilt_config[2] && Shutter[i].tiltmoving==1))
-             || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
-          if (Shutter[i].direction != 0) {
-            Shutter[i].lastdirection = Shutter[i].direction;
-          }
-          ShutterPowerOff(i);
-          ShutterLimitRealAndTargetPositions(i);
-          Settings->shutter_position[i] = ShutterRealToPercentPosition(Shutter[i].real_position, i);
-          Shutter[i].start_position = Shutter[i].real_position;
+      Shutter[i].last_reported_time = Shutter[i].time+1;
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Time %d(%d), cStop %d, cVelo %d, mVelo %d, aVelo %d, mRun %d, aPos %d, aPos2 %d, nStop %d, Trgt %d, mVelo %d, Dir %d, Tilt %d, TrgtTilt: %d, Tiltmove: %d"),
+        Shutter[i].time, deltatime, current_stop_way, current_pwm_velocity, velocity_max, Shutter[i].accelerator, min_runtime_ms, current_real_position,Shutter[i].real_position,
+        next_possible_stop_position, Shutter[i].target_position, velocity_change_per_step_max, Shutter[i].direction,Shutter[i].tilt_real_pos, Shutter[i].tilt_target_pos,
+         Shutter[i].tiltmoving);
+      if ( ((Shutter[i].real_position * Shutter[i].direction >= Shutter[i].target_position * Shutter[i].direction &&  Shutter[i].tiltmoving==0) ||
+           ((int16_t)Shutter[i].tilt_real_pos * Shutter[i].direction * Shutter[i].tilt_config[2] >= (int16_t)Shutter[i].tilt_target_pos * Shutter[i].direction * Shutter[i].tilt_config[2] && Shutter[i].tiltmoving==1))
+           || (ShutterGlobal.position_mode == SHT_COUNTER && Shutter[i].accelerator <0 && Shutter[i].pwm_velocity+Shutter[i].accelerator<PWM_MIN)) {
+        if (Shutter[i].direction != 0) {
+          Shutter[i].lastdirection = Shutter[i].direction;
+        }
+        ShutterPowerOff(i);
+        ShutterLimitRealAndTargetPositions(i);
+        Settings->shutter_position[i] = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+        Shutter[i].start_position = Shutter[i].real_position;
 
-          // manage venetian blinds
-          Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
-          Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 100 ? Shutter[i].tilt_config[1] : Shutter[i].tilt_target_pos;
-          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
-          if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
-            AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
-            XdrvMailbox.payload = -99;
-            XdrvMailbox.index = i+1;
-            Shutter[i].tiltmoving = 1;
-            CmndShutterPosition();
-            return;
-          } else {
-            Settings->shutter_tilt_pos[i] = Shutter[i].tilt_real_pos;
-          }
-          ShutterLogPos(i);
+        // manage venetian blinds
+        Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
+        Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 100 ? Shutter[i].tilt_config[1] : Shutter[i].tilt_target_pos;
+        //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
+        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
+          AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
+          XdrvMailbox.payload = -99;
+          XdrvMailbox.index = i+1;
+          Shutter[i].tiltmoving = 1;
+          CmndShutterPosition();
+          return;
+        } else {
+          Settings->shutter_tilt_pos[i] = Shutter[i].tilt_real_pos;
+        }
+        ShutterLogPos(i);
 
-          // sending MQTT result to broker
-          snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
-          GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-          Response_P("%d", (Settings->shutter_options[i] & 1) ? 100 - Settings->shutter_position[i]: Settings->shutter_position[i]);
-          MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
-          ShutterReportPosition(true, i);
-          TasmotaGlobal.rules_flag.shutter_moved = 1;
-          XdrvRulesProcess(0);
-        } // timeloop
+        // sending MQTT result to broker
+        snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
+        GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
+        Response_P("%d", (Settings->shutter_options[i] & 1) ? 100 - Settings->shutter_position[i]: Settings->shutter_position[i]);
+        MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
+        ShutterReportPosition(true, i);
+        TasmotaGlobal.rules_flag.shutter_moved = 1;
+        XdrvRulesProcess(0);
       }
     }
   }
