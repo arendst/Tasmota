@@ -24,7 +24,7 @@
 #include <berry.h>
 
 #ifdef USE_UNIVERSAL_DISPLAY
-Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
+Renderer *Init_uDisplay(const char *desc, int8_t cs);
 #endif //  USE_UNIVERSAL_DISPLAY
 
 /*********************************************************************************************\
@@ -44,7 +44,7 @@ extern "C" {
       const char * desc = be_tostring(vm, 1);
       // remove all objects on stack to avoid warnings in subsequent calls to Berry
       be_pop(vm, argc);
-      Renderer * renderer = Init_uDisplay(desc);
+      Renderer * renderer = Init_uDisplay(desc, -1);
       if (renderer) {
         be_pushcomptr(vm, renderer);
       } else {

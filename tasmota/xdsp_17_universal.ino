@@ -62,7 +62,9 @@ void Core2DisplayDim(uint8_t dim);
 const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
-Renderer *Init_uDisplay(const char *desc, int8_t cs = -1) {
+Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
+
+Renderer *Init_uDisplay(const char *desc, int8_t cs) {
 char *ddesc = 0;
 char *fbuff;
 uDisplay *udisp;
