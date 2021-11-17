@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [10.0.0.3]
 ### Added
 - Autoconfiguration for ESP32 and variants
+- ESP32 fix leftover GPIO configuration after restart
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
