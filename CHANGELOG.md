@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
+- Removed ILI9488 driver in favor of Unversal Display Driver
 
 ## [10.0.0.2] 20211113
 ### Added

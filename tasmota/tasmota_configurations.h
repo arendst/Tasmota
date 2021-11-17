@@ -330,7 +330,7 @@
   #define USE_DISPLAY_ILI9341                    // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
   #define USE_DISPLAY_EPAPER_29                  // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
   #define USE_DISPLAY_EPAPER_42                  // [DisplayModel 6] Enable e-paper 4.2 inch display
-  #define USE_DISPLAY_ILI9488                    // [DisplayModel 8]
+  // #define USE_DISPLAY_ILI9488                    // [DisplayModel 8]
   #define USE_DISPLAY_SSD1351                    // [DisplayModel 9]
   #define USE_DISPLAY_RA8876                     // [DisplayModel 10]
   #define USE_DISPLAY_ST7789                     // [DisplayModel 12] Enable ST7789 module

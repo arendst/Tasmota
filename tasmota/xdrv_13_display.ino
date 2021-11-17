@@ -67,7 +67,7 @@ struct MULTI_DISP {
   uint8_t used;
 } displays[MAX_MULTI_DISPLAYS];
 uint8_t cur_display;
-Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
+Renderer *Init_uDisplay(const char *desc);
 
 void Set_display(uint8_t index) {
   displays[index].display = renderer;

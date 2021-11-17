@@ -62,10 +62,11 @@ void Core2DisplayDim(uint8_t dim);
 const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
-Renderer *Init_uDisplay(const char *desc, int8_t cs) {
+Renderer *Init_uDisplay(const char *desc) {
 char *ddesc = 0;
 char *fbuff;
 uDisplay *udisp;
+int8_t cs;
 
   if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
 
@@ -185,18 +186,16 @@ uDisplay *udisp;
       cp += 4;
       //; 7 params nr,cs,sclk,mosi,dc,bl,reset,miso
       //SPI,*,*,*,*,*,*,*
-      if (cs < 0) {
-        switch (*cp) {
-          case '1':
-            cs = Pin(GPIO_SPI_CS);
-            break;
-          case '2':
-            cs = Pin(GPIO_SPI_CS, 1);
-            break;
-          default:
-            cs = Pin(GPIO_SSPI_CS);
-            break;
-        }
+      switch (*cp) {
+        case '1':
+          cs = Pin(GPIO_SPI_CS);
+          break;
+        case '2':
+          cs = Pin(GPIO_SPI_CS, 1);
+          break;
+        default:
+          cs = Pin(GPIO_SSPI_CS);
+          break;
       }
       if (*cp == '1') {
         cp+=2;
