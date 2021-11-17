@@ -453,8 +453,8 @@ BERRY_API bvm* be_vm_new(void)
     be_stack_init(vm, &vm->refstack, sizeof(binstance*));
     be_stack_init(vm, &vm->exceptstack, sizeof(struct bexecptframe));
     be_stack_init(vm, &vm->tracestack, sizeof(bcallsnapshot));
-    vm->stack = be_malloc(vm, sizeof(bvalue) * BE_STACK_FREE_MIN);
-    vm->stacktop = vm->stack + BE_STACK_FREE_MIN;
+    vm->stack = be_malloc(vm, sizeof(bvalue) * BE_STACK_START);
+    vm->stacktop = vm->stack + BE_STACK_START;
     vm->reg = vm->stack;
     vm->top = vm->reg;
     be_globalvar_init(vm);
