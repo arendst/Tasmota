@@ -68,10 +68,12 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 
 #define SPI_BEGIN_TRANSACTION if (spi_nr <= 2) beginTransaction(spiSettings);
 #define SPI_END_TRANSACTION if (spi_nr <= 2) endTransaction();
-#define SPI_CS_LOW if (spi_cs >= 0) GPIO_CLR(spi_cs);
-#define SPI_CS_HIGH if (spi_cs >= 0) GPIO_SET(spi_cs);
-#define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR(spi_dc);
-#define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET(spi_dc);
+
+#define SPI_CS_LOW if (spi_cs >= 0) GPIO_CLR_SLOW(spi_cs);
+#define SPI_CS_HIGH if (spi_cs >= 0) GPIO_SET_SLOW(spi_cs);
+#define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR_SLOW(spi_dc);
+#define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET_SLOW(spi_dc);
+
 
 #define ESP32_PWM_CHANNEL 1
 

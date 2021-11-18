@@ -293,6 +293,7 @@ autoconf_module.init = def (m)
       self._error = nil
     end
 
+    # called by the synthetic event `preinit`
     def preinit()
       if self._archive == nil  return end
       # try to launch `preinit.be`
@@ -327,6 +328,7 @@ autoconf_module.init = def (m)
       end
     end
 
+    # called by the synthetic event `autoexec`
     def autoexec()
       if self._archive == nil  return end
       # try to launch `preinit.be`
