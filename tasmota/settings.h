@@ -739,8 +739,9 @@ typedef struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
   uint8_t       tcp_config;                // F5F
+  uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f60[60];              // F60 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f59[59];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 

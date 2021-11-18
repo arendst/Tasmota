@@ -633,6 +633,12 @@ LVGL_PARAMS *Renderer::lvgl_pars(void) {
   return &lvgl_param;
 }
 
+void Renderer::ep_update_mode(uint8_t mode) {
+}
+
+void Renderer::ep_update_area(uint16_t xp, uint16_t yp, uint16_t width, uint16_t height, uint8_t mode) {
+}
+
 
 // #ifndef USE_DISPLAY_LVGL_ONLY
 
@@ -640,6 +646,18 @@ void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
   drawButton(inverted);
   wr_redir=0;
+}
+
+void VButton::xinitButtonUL(Renderer *renderer, int16_t gxp, int16_t gyp, uint16_t gxs, uint16_t gys, uint16_t outline,\
+  uint16_t fill, uint16_t textcolor , char *label, uint8_t textsize) {
+
+  initButtonUL(renderer, gxp, gyp, gxs, gys, outline, fill, textcolor, label, textsize);
+
+  spars.xp = gxp;
+  spars.yp = gyp;
+  spars.xs = gxs;
+  spars.ys = gys;
+
 }
 
 boolean VButton::didhit(int16_t x, int16_t y) {

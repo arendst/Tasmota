@@ -673,9 +673,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_42)
     feature7 |= 0x00008000;  // xdsp_06_epaper_42.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
-    feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
-#endif
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
+//     feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
+// #endif
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
     feature7 |= 0x00020000;  // xdsp_09_SSD1351.ino
 #endif
