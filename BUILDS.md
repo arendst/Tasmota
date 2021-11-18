@@ -218,7 +218,6 @@ m = minimal, l = lite, t = tasmota, k = knx, s = sensors, i = ir, d = display
 | USE_DISPLAY_ILI9341   | - | - | - / - | - | - | - | x |
 | USE_DISPLAY_EPAPER_29 | - | - | - / - | - | - | - | x |
 | USE_DISPLAY_EPAPER_42 | - | - | - / - | - | - | - | x |
-| USE_DISPLAY_ILI9488   | - | - | - / - | - | - | - | x |
 | USE_DISPLAY_SSD1351   | - | - | - / - | - | - | - | x |
 | USE_DISPLAY_RA8876    | - | - | - / - | - | - | - | x |
 | USE_DISPLAY_ST7789    | - | - | - / - | - | - | - | x |

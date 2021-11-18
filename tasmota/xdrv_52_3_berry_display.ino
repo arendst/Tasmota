@@ -24,7 +24,7 @@
 #include <berry.h>
 
 #ifdef USE_UNIVERSAL_DISPLAY
-Renderer *Init_uDisplay(const char *desc, int8_t cs = -1);
+Renderer *Init_uDisplay(const char *desc);
 #endif //  USE_UNIVERSAL_DISPLAY
 
 /*********************************************************************************************\
