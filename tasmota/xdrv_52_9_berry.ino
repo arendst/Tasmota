@@ -780,9 +780,6 @@ bool Xdrv52(uint8_t function)
     case FUNC_MQTT_DATA:
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
       break;
-    case FUNC_EVERY_50_MSECOND:
-      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
-      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kBrCommands, BerryCommand);
       if (!result) {
@@ -791,6 +788,9 @@ bool Xdrv52(uint8_t function)
       break;
 
     // Module specific events
+    case FUNC_EVERY_50_MSECOND:
+      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
+      break;
     case FUNC_EVERY_100_MSECOND:
       callBerryEventDispatcher(PSTR("every_100ms"), nullptr, 0, nullptr);
       break;

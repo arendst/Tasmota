@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Autoconfiguration for ESP32 and variants
 - ESP32 fix leftover GPIO configuration after restart
 - ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) (#13447)
+- Preliminary support for Tasmota Apps (.tapp extesions)
+- Berry support for neopixel (WS2812, SK6812)
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)

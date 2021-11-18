@@ -569,7 +569,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_P9813_CLK),      // P9813 CLOCK
   AGPIO(GPIO_P9813_DAT),      // P9813 DATA
 #else
-  AGPIO(GPIO_WS2812),         // WS2812 Led string
+  AGPIO(GPIO_WS2812) + MAX_RMT,// WS2812 Led string, using RMT on ESP32
 #endif  // NEO_HW_P9813
 #endif
 #ifdef USE_ARILUX_RF
