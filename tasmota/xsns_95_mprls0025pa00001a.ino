@@ -1,7 +1,7 @@
-#include <SparkFun_MicroPressure.h>
-
 #ifdef USE_I2C
 #ifdef USE_MPR
+
+#include <SparkFun_MicroPressure.h>
 
 #define XSNS_95                          95
 #define XI2C_65                          65
