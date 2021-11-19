@@ -127,7 +127,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         }
         break;
     case BE_CLOSURE:
-        logfmt("be_const_closure(%s_closure)", str(((bclosure*) var_toobj(value))->proto->name));
+        logfmt("be_const_closure(%s%s%s_closure)",
+            classname ? classname : "", classname ? "_" : "",
+            str(((bclosure*) var_toobj(value))->proto->name));
         break;
     case BE_CLASS:
         logfmt("be_const_class(be_class_%s)", str(((bclass*) var_toobj(value))->name));
@@ -271,7 +273,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
 
 }
 
-static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
+static void m_solidify_closure(bvm *vm, bclosure *cl, const char * classname, int builtins)
 {   
     bproto *pr = cl->proto;
     const char * func_name = str(pr->name);
@@ -289,7 +291,9 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
     logfmt("** Solidified function: %s\n", func_name);
     logfmt("********************************************************************/\n");
 
-    logfmt("be_local_closure(%s,   /* name */\n", func_name);
+    logfmt("be_local_closure(%s%s%s,   /* name */\n",
+        classname ? classname : "", classname ? "_" : "",
+        func_name);
 
     m_solidify_proto(vm, pr, func_name, builtins, indent);
     logfmt("\n");
@@ -310,7 +314,7 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
         while ((node = be_map_next(cl->members, &iter)) != NULL) {
             if (var_isstr(&node->key) && var_isclosure(&node->value)) {
                 bclosure *f = var_toobj(&node->value);
-                m_solidify_closure(vm, f, builtins);
+                m_solidify_closure(vm, f, class_name, builtins);
             }
         }
     }
@@ -364,14 +368,18 @@ static void m_solidify_module(bvm *vm, bmodule *ml, int builtins)
     const char * module_name = be_module_name(ml);
     if (!module_name) { module_name = ""; }
 
-    /* iterate on members to dump closures */
+    /* iterate on members to dump closures and classes */
     if (ml->table) {
         bmapnode *node;
         bmapiter iter = be_map_iter();
         while ((node = be_map_next(ml->table, &iter)) != NULL) {
             if (var_isstr(&node->key) && var_isclosure(&node->value)) {
                 bclosure *f = var_toobj(&node->value);
-                m_solidify_closure(vm, f, builtins);
+                m_solidify_closure(vm, f, NULL, builtins);
+            }
+            if (var_isstr(&node->key) && var_isclass(&node->value)) {
+                bclass *cl = var_toobj(&node->value);
+                m_solidify_subclass(vm, cl, builtins);
             }
         }
     }
@@ -405,7 +413,7 @@ static int m_dump(bvm *vm)
     if (be_top(vm) >= 1) {
         bvalue *v = be_indexof(vm, 1);
         if (var_isclosure(v)) {
-            m_solidify_closure(vm, var_toobj(v), be_builtin_count(vm));
+            m_solidify_closure(vm, var_toobj(v), NULL, be_builtin_count(vm));
         } else if (var_isclass(v)) {
             m_solidify_class(vm, var_toobj(v), be_builtin_count(vm));
         } else if (var_ismodule(v)) {

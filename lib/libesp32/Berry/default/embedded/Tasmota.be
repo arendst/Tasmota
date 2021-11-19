@@ -509,4 +509,52 @@ class Tasmota
     raise "internal_error", "No callback available"
   end
 
+  #- convert hue/sat to rgb -#
+  #- hue:int in range 0..359 -#
+  #- sat:int (optional) in range 0..255 -#
+  #- returns int: 0xRRGGBB -#
+  def hs2rgb(hue,sat)
+    if sat == nil  sat = 255 end
+    var r = 255   # default to white
+    var b = 255
+    var g = 255
+    # we take brightness at 100%, brightness should be set separately
+    hue = hue % 360   # normalize to 0..359
+  
+    if sat > 0
+      var i = hue / 60    # quadrant 0..5
+      var f = hue % 60    # 0..59
+      var p = 255 - sat
+      var q = tasmota.scale_uint(f, 0, 60, 255, p)    # 0..59
+      var t = tasmota.scale_uint(f, 0, 60, p, 255)
+  
+      if   i == 0
+        # r = 255
+        g = t
+        b = p
+      elif i == 1
+        r = q
+        # g = 255
+        b = p
+      elif i == 2
+        r = p
+        #g = 255
+        b = t
+      elif i == 3
+        r = p
+        g = q
+        #b = 255
+      elif i == 4
+        r = t
+        g = p
+        #b = 255
+      else
+        #r = 255
+        g = p
+        b = q
+      end
+    end
+  
+    return (r << 16) | (g << 8) | b
+  end
 end

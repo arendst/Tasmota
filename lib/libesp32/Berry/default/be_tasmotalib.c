@@ -1859,6 +1859,102 @@ be_local_closure(exec_cmd,   /* name */
 );
 /*******************************************************************/
 
+/********************************************************************
+** Solidified function: hs2rgb
+********************************************************************/
+be_local_closure(hs2rgb,   /* name */
+  be_nested_proto(
+    17,                          /* nstack */
+    3,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_string("tasmota", 424643812, 7),
+    /* K2   */  be_nested_string("scale_uint", -1204156202, 10),
+    /* K3   */  be_const_int(1),
+    /* K4   */  be_const_int(2),
+    /* K5   */  be_const_int(3),
+    }),
+    (be_nested_const_str("hs2rgb", 1040816349, 6)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[68]) {  /* code */
+      0x4C0C0000,  //  0000  LDNIL	R3
+      0x1C0C0403,  //  0001  EQ	R3	R2	R3
+      0x780E0000,  //  0002  JMPF	R3	#0004
+      0x540A00FE,  //  0003  LDINT	R2	255
+      0x540E00FE,  //  0004  LDINT	R3	255
+      0x541200FE,  //  0005  LDINT	R4	255
+      0x541600FE,  //  0006  LDINT	R5	255
+      0x541A0167,  //  0007  LDINT	R6	360
+      0x10040206,  //  0008  MOD	R1	R1	R6
+      0x24180500,  //  0009  GT	R6	R2	K0
+      0x781A0031,  //  000A  JMPF	R6	#003D
+      0x541A003B,  //  000B  LDINT	R6	60
+      0x0C180206,  //  000C  DIV	R6	R1	R6
+      0x541E003B,  //  000D  LDINT	R7	60
+      0x101C0207,  //  000E  MOD	R7	R1	R7
+      0x542200FE,  //  000F  LDINT	R8	255
+      0x04201002,  //  0010  SUB	R8	R8	R2
+      0xB8260200,  //  0011  GETNGBL	R9	K1
+      0x8C241302,  //  0012  GETMET	R9	R9	K2
+      0x5C2C0E00,  //  0013  MOVE	R11	R7
+      0x58300000,  //  0014  LDCONST	R12	K0
+      0x5436003B,  //  0015  LDINT	R13	60
+      0x543A00FE,  //  0016  LDINT	R14	255
+      0x5C3C1000,  //  0017  MOVE	R15	R8
+      0x7C240C00,  //  0018  CALL	R9	6
+      0xB82A0200,  //  0019  GETNGBL	R10	K1
+      0x8C281502,  //  001A  GETMET	R10	R10	K2
+      0x5C300E00,  //  001B  MOVE	R12	R7
+      0x58340000,  //  001C  LDCONST	R13	K0
+      0x543A003B,  //  001D  LDINT	R14	60
+      0x5C3C1000,  //  001E  MOVE	R15	R8
+      0x544200FE,  //  001F  LDINT	R16	255
+      0x7C280C00,  //  0020  CALL	R10	6
+      0x1C2C0D00,  //  0021  EQ	R11	R6	K0
+      0x782E0002,  //  0022  JMPF	R11	#0026
+      0x5C141400,  //  0023  MOVE	R5	R10
+      0x5C101000,  //  0024  MOVE	R4	R8
+      0x70020016,  //  0025  JMP		#003D
+      0x1C2C0D03,  //  0026  EQ	R11	R6	K3
+      0x782E0002,  //  0027  JMPF	R11	#002B
+      0x5C0C1200,  //  0028  MOVE	R3	R9
+      0x5C101000,  //  0029  MOVE	R4	R8
+      0x70020011,  //  002A  JMP		#003D
+      0x1C2C0D04,  //  002B  EQ	R11	R6	K4
+      0x782E0002,  //  002C  JMPF	R11	#0030
+      0x5C0C1000,  //  002D  MOVE	R3	R8
+      0x5C101400,  //  002E  MOVE	R4	R10
+      0x7002000C,  //  002F  JMP		#003D
+      0x1C2C0D05,  //  0030  EQ	R11	R6	K5
+      0x782E0002,  //  0031  JMPF	R11	#0035
+      0x5C0C1000,  //  0032  MOVE	R3	R8
+      0x5C141200,  //  0033  MOVE	R5	R9
+      0x70020007,  //  0034  JMP		#003D
+      0x542E0003,  //  0035  LDINT	R11	4
+      0x1C2C0C0B,  //  0036  EQ	R11	R6	R11
+      0x782E0002,  //  0037  JMPF	R11	#003B
+      0x5C0C1400,  //  0038  MOVE	R3	R10
+      0x5C141000,  //  0039  MOVE	R5	R8
+      0x70020001,  //  003A  JMP		#003D
+      0x5C141000,  //  003B  MOVE	R5	R8
+      0x5C101200,  //  003C  MOVE	R4	R9
+      0x541A000F,  //  003D  LDINT	R6	16
+      0x38180606,  //  003E  SHL	R6	R3	R6
+      0x541E0007,  //  003F  LDINT	R7	8
+      0x381C0A07,  //  0040  SHL	R7	R5	R7
+      0x30180C07,  //  0041  OR	R6	R6	R7
+      0x30180C04,  //  0042  OR	R6	R6	R4
+      0x80040C00,  //  0043  RET	1	R6
+    })
+  )
+);
+/*******************************************************************/
 
 #include "../generate/be_fixed_be_class_tasmota.h"
 
@@ -1953,6 +2049,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     load, closure(load_closure)
     wire_scan, closure(wire_scan_closure)
     time_str, closure(time_str_closure)
+
+    hs2rgb, closure(hs2rgb_closure)
 
     cb_dispatch, closure(cb_dispatch_closure)
     gen_cb, closure(gen_cb_closure)
