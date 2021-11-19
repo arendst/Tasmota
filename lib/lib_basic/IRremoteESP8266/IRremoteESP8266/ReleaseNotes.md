@@ -1,5 +1,73 @@
 # Release Notes
 
+## _v2.8.0 (20211119)_
+
+**[Bug Fixes]**
+- Fix compilation issue when using old 8266 Arduino Frameworks. (#1639 #1640)
+- Fix potential security issue with `scrape_supported_devices.py` (#1616 #1619)
+
+**[Features]**
+- SAMSUNG_AC
+  - Change `clean` setting to a toggle. (#1676 #1677)
+  - Highest fan speed is available without Powerful setting. (#1675 #1678)
+  - Change `beep` setting to a toggle. (#1669 #1671)
+  - Fix Beep for AR12TXEAAWKNEU (#1668 #1669)
+  - Add support for Horizontal Swing & Econo (#1277 #1667)
+  - Add support for On, Off, & Sleep Timers (#1277 #1662)
+  - Fix power control. Clean-up code & bitmaps from Checksum changes. (#1277 #1648 #1650)
+- HAIER_AC176/HAIER_AC_YRW02
+  - Add support A/B unit setting (#1672)
+  - Add support degree Fahrenheit (#1659)
+  - Add support `Lock` function (#1652)
+  - Implement horizontal swing feature (#1641)
+  - Implement Quiet setting. (#1634 #1635)
+- Basic support for Airton Protocol (#1670 #1681)
+- HAIER_AC176: Add Turbo and Quiet settings (#1634)
+- Gree: Add `SwingH` & `Econo` control. (#1587 #1653)
+- MIRAGE
+  - Add experimental detailed support. (#1573 #1615)
+  - Experimental detailed support for KKG29A-C1 remote. (#1573 #1660)
+- ELECTRA_AC: Add support for "IFeel" & Sensor settings. (#1644 #1645)
+- Add Russian translation (#1649)
+- Add Swedish translation (#1627)
+- Reduce flash space used. (#1633)
+- Strings finally in Flash! (#1493 #1614 #1623)
+- Add support for Rhoss Idrowall MPCV 20-30-35-40 A/C protocol (#1630)
+- Make `IRAc::opmodeToString()` output nicer for humans. (#1613)
+- TCL112AC/TEKNOPOINT: Add support for `GZ055BE1` model (#1486 #1602)
+- Support for Arris protocol. (#1598)
+- SharpAc: Allow position control of SwingV (#1590 #1594)
+
+**[Misc]**
+- HAIER_AC176/HAIER_AC_YRW02
+  - Replace some magic numbers with constants (#1679)
+  - Small fix `Quiet` and `Turbo` test (#1674)
+  - Fix `IRHaierAC176::getTemp()` return value description (#1663)
+- Security Policy creation and changes. (#1616 #1617 #1618 #1621 #1680)
+- IRrecvDumpV2/3: Update PlatformIO envs for missing languages (#1661)
+- IRMQTTServer
+  - Use the correct string for Fan mode in Home Assistant. (#1610 #1657)
+  - Move a lot of the strings/text to flash. (#1638)
+- Minor code style improvements. (#1656)
+- Update Supported Devices
+  - HAIER_AC176 (#1673)
+  - LG A/C (#1651 #1655)
+  - Symphony (#1603 #1605)
+  - Epson (#1574 #1601)
+  - GREE (#1587 #1588)
+  - SharpAc (#1590 #1591)
+- Add extra tests for LG2 protocol (#1654)
+- Fix parameter expansion in several macros.
+- Move some strings to `IRtext.cpp` & `locale/default.h` (#1637)
+- RHOSS: Move include and defines to their correct places (#1636)
+- Make makefile only build required files when running `run-%` target (#1632)
+- Update Portuguese translation (#1628)
+- Add possibility to run specific test case (#1625)
+- Change `googletest` library ignore (#1626)
+- Re-work "Fan Only" strings & matching. (#1610)
+- Address `C0209` pylint warnings. (#1608)
+
+
 ## _v2.7.20 (20210828)_
 
 **[Bug Fixes]**

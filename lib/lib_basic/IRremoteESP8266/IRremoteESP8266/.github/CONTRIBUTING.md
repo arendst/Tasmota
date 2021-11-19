@@ -71,7 +71,7 @@ Include details about your configuration, circuit and environment:
 * Avoid platform-dependent code.
 * Use c98 types where possible for better portablity.
 * In almost all cases, code & documentation should be peer-reviewed by at least one other contributor.
-* The code should pass all the existing testing infrastructure in Travis. e.g. Unit tests, cpplint, and basic compilation.
+* The code should pass all the existing testing infrastructure in GitHub Actions. e.g. Unit tests, cpplint, and basic compilation etc.
 * State if you have tested this under real conditions if you have, and what other tests you may have carried out.
 
 ### Git Commit Messages

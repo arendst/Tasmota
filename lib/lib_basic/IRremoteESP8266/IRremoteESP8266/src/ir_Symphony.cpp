@@ -18,6 +18,15 @@
 //   Brand: Satellite Electronic,  Model: ID6 Remote
 //   Brand: Satellite Electronic,  Model: JY199I Fan driver
 //   Brand: Satellite Electronic,  Model: JY199I-L Fan driver
+//   Brand: SilverCrest,  Model: SSVS 85 A1 Fan
+
+// Known Codes:
+//   SilverCrest SSVS 85 A1 Fan:
+//     0x581 - On/Off
+//     0x582 - Speed
+//     0x584 - Mist
+//     0x588 - Timer
+//     0x590 - OSC
 
 #include <algorithm>
 #include "IRrecv.h"
