@@ -194,11 +194,18 @@
 #define BE_USE_OS_MODULE                0
 #define BE_USE_GLOBAL_MODULE            1
 #define BE_USE_SYS_MODULE               0
-#define BE_USE_DEBUG_MODULE             1
+#define BE_USE_DEBUG_MODULE             0
 #define BE_USE_GC_MODULE                1
-#define BE_USE_SOLIDIFY_MODULE          1
+#define BE_USE_SOLIDIFY_MODULE          0
 #define BE_USE_INTROSPECT_MODULE        1
 #define BE_USE_STRICT_MODULE            1
+
+#ifdef USE_BERRY_DEBUG
+  #undef BE_USE_DEBUG_MODULE
+  #undef BE_USE_SOLIDIFY_MODULE
+  #define BE_USE_DEBUG_MODULE             1
+  #define BE_USE_SOLIDIFY_MODULE          1
+#endif // USE_BERRY_DEBUG
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will
