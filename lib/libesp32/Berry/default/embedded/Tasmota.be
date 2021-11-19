@@ -396,7 +396,6 @@ class Tasmota
 
   def event(event_type, cmd, idx, payload, raw)
     import introspect
-    import debug
     import string
     if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
 
@@ -417,6 +416,7 @@ class Tasmota
             if done break end
           except .. as e,m
             print(string.format("BRY: Exception> '%s' - %s", e, m))
+            import debug
             debug.traceback()
           end
         end
