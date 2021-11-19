@@ -9,6 +9,8 @@ rainbow.start()
 
 -#
 
+import animate
+
 # https://stackoverflow.com/questions/34187171/fast-integer-square-root-approximation
 def fast_sqrt_int(val)
   var a, b
@@ -42,13 +44,14 @@ class Rainbow : Leds_animator
                      0xEE82EE, #- violet -#
                   ]
 
-  def init(strip)
+  def init(strip, duration)
     super(self).init(strip)
     self.cur_offset = 0
+    # add an animator to change `self.cur_offset` to each value of the palette
+    self.add_anim(animate.rotate(def(v) self.cur_offset = v end, 0, size(self.palette), int(duration * 1000)))
   end
 
   def animate()
-    var i = 0
     # move instance variables to registers to avoid GETMBR inside the loop
     var cur_offset = self.cur_offset
     var modulus = size(self.palette)
@@ -57,17 +60,24 @@ class Rainbow : Leds_animator
     var bri = self.bri
     var set_pixel_color = strip.set_pixel_color
 
+    var i = 0
     while i < self.pixel_count    # doing a loop rather than a `for` prevents from allocating a new object
       var col = palette[(cur_offset + i) % modulus]
       set_pixel_color(strip, i, col, bri)   # simulate the method call without GETMET
       i += 1
     end
     strip.show()
-    # advance to next color
-    self.cur_offset = (self.cur_offset + 1) % modulus
   end
 
 end
+
+#-
+
+var strip = Leds_matrix(5,5, gpio.pin(gpio.WS2812, 1))
+var r = Rainbow(strip, 1.0)
+r.start()
+
+-#
 
 class Rainbow_Matrix : Leds_animator
   var cur_offset     # current offset in the palette
@@ -80,9 +90,11 @@ class Rainbow_Matrix : Leds_animator
                      0xEE82EE, #- violet -#
                   ]
 
-  def init(strip)
+  def init(strip, duration)
     super(self).init(strip)
     self.cur_offset = 0
+    # add an animator to change `self.cur_offset` to each value of the palette
+    self.add_anim(animate.rotate(def(v) self.cur_offset = v end, 0, size(self.palette), int(duration * 1000)))
   end
 
   def animate()
@@ -107,24 +119,31 @@ class Rainbow_Matrix : Leds_animator
       y += 1
     end
     strip.show()
-    # advance to next color
-    self.cur_offset = (self.cur_offset + 1) % modulus
   end
 
 end
 
+#-
+
+var strip = Leds_matrix(5,5, gpio.pin(gpio.WS2812, 1))
+var r = Rainbow_Matrix(strip, 0.5)
+r.start()
+
+-#
 
 class Round : Leds_animator
   var cur_val
   var min_val, max_val
   var incr_val
+  var h
 
-  def init(strip)
+  def init(strip, glow_duration, color_duration)
     super(self).init(strip)
     self.cur_val = 5 << 8
-    self.min_val = 2 << 8
-    self.max_val = 6 << 8
-    self.incr_val = 50
+    self.h = 0          # start with hue = 0 (red)
+    # add animator for color over 30 colors
+    self.add_anim(animate.rotate(def(h) self.h = h end, 0, 359, int(color_duration * 1000)))
+    self.add_anim(animate.back_forth(def(v) self.cur_val = v end, 2 << 8, 6 << 8, int(glow_duration * 1000)))
   end
 
   def animate()
@@ -136,12 +155,13 @@ class Round : Leds_animator
     var w = self.strip.w
     var ch = h / 2
     var cw = w / 2
+    var col_ref = tasmota.hs2rgb(self.h)
 
     var y = 0
     while y < h
       var x = 0
       while x < w
-        var col = 0xFF0000      # red
+        var col = col_ref
         var dist = fast_sqrt_int( ((y - ch)*(y - ch) + (x - cw)*(x - cw)) << 16)
         var rel_bri = tasmota.scale_uint(dist, 0, self.cur_val, bri, 0)
         set_matrix_pixel_color(strip, x, y, col, rel_bri)   # simulate the method call without GETMET
@@ -150,10 +170,14 @@ class Round : Leds_animator
       y += 1
     end
     strip.show()
-    #
-    self.cur_val += self.incr_val
-    if self.cur_val > self.max_val  self.cur_val = self.max_val  self.incr_val = -self.incr_val end
-    if self.cur_val < self.min_val  self.cur_val = self.min_val  self.incr_val = -self.incr_val end
   end
 
 end
+
+#-
+
+var strip = Leds_matrix(5,5, gpio.pin(gpio.WS2812, 1))
+var r = Round(strip, 2, 30)
+r.start()
+
+-#

@@ -84,6 +84,7 @@ extern const bcstring be_const_str_false;
 extern const bcstring be_const_str_add_rule;
 extern const bcstring be_const_str_setbits;
 extern const bcstring be_const_str_write_file;
+extern const bcstring be_const_str_hs2rgb;
 extern const bcstring be_const_str_SERIAL_8O1;
 extern const bcstring be_const_str_wd;
 extern const bcstring be_const_str_wire_scan;

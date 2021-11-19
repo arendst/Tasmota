@@ -84,6 +84,7 @@ be_define_const_str(false, "false", 184981848u, 62, 5, NULL);
 be_define_const_str(add_rule, "add_rule", 596540743u, 0, 8, &be_const_str_setbits);
 be_define_const_str(setbits, "setbits", 2762408167u, 0, 7, &be_const_str_write_file);
 be_define_const_str(write_file, "write_file", 3177658879u, 0, 10, NULL);
+be_define_const_str(hs2rgb, "hs2rgb", 1040816349u, 0, 6, NULL);
 be_define_const_str(SERIAL_8O1, "SERIAL_8O1", 289122742u, 0, 10, &be_const_str_wd);
 be_define_const_str(wd, "wd", 1531424278u, 0, 2, &be_const_str_wire_scan);
 be_define_const_str(wire_scan, "wire_scan", 2671275880u, 0, 9, NULL);
@@ -391,7 +392,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_chars_in_string,
     (const bstring *)&be_const_str_add_rule,
     NULL,
-    NULL,
+    (const bstring *)&be_const_str_hs2rgb,
     (const bstring *)&be_const_str_SERIAL_8O1,
     (const bstring *)&be_const_str_AudioFileSourceFS,
     (const bstring *)&be_const_str_AudioGenerator,
@@ -512,6 +513,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 162,
-    .count = 324,
+    .count = 325,
     .table = m_string_table
 };
