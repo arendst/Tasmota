@@ -40,10 +40,10 @@ class Animate_engine
   var pc                # program-counter
   var ins_time          # absolute time when the current instruction started
   var running           # is the animation running? allows fast return
+  var value             # current value
 
   def init()
     self.code = []
-    self.closure = def (v) print("Animate next value:", v) end  # default to debug function
     self.pc = 0         # start at instruction 0
     self.ins_time = 0
     self.running = false # not running by default
@@ -51,8 +51,11 @@ class Animate_engine
   end
 
   # run but needs external calls to `animate()`
-  def run(cur_time)
+  # cur_time:int (opt) current timestamp in ms, defaults to `tasmota.millis()`
+  # val:int (opt) starting value, default to `nil`
+  def run(cur_time, val)
     if cur_time == nil   cur_time = tasmota.millis() end
+    if (val != nil) self.value = val end
     self.ins_time = cur_time
 
     self.running = true
@@ -60,8 +63,8 @@ class Animate_engine
   end
 
   # runs autonomously in the Tasmota event loop
-  def autorun(cur_time)
-    self.run(cur_time)
+  def autorun(cur_time, val)
+    self.run(cur_time, val)
     tasmota.add_driver(self)
   end
 
@@ -96,15 +99,16 @@ class Animate_engine
 
       # Instruction Ramp
       if   isinstance(ins, animate.ins_ramp)
-        var f = self.closure      # assign to a local variable to not call a method
+        var f = self.closure        # assign to a local variable to not call a method
         if sub_index < ins.duration
           # we're still in the ramp
-          var v = tasmota.scale_uint(sub_index, 0, ins.duration, ins.a, ins.b)
+          self.value = tasmota.scale_uint(sub_index, 0, ins.duration, ins.a, ins.b)
           # call closure
-          f(v)                      # call closure, need try? TODO
+          if f   f(self.value) end  # call closure, need try? TODO
           break
         else
-          f(ins.b)                  # set to last value
+          self.value = ins.b
+          if f   f(self.value) end  # set to last value
           self.pc += 1              # next instruction
           self.ins_time = cur_time - (sub_index - ins.duration)
         end
@@ -127,6 +131,7 @@ class Animate_engine
         raise "internal_error", "unknown instruction"
       end
     end
+    return self.value
 
   end
 end
@@ -136,7 +141,7 @@ class Animate_from_to : Animate_engine
 
   def init(closure, from, to, duration)
     super(self).init()
-    if closure != nil  self.closure = closure end
+    self.closure = closure
     self.code.push(animate.ins_ramp(from, to, duration))
   end
 
@@ -152,7 +157,7 @@ class Animate_rotate : Animate_engine
 
   def init(closure, from, to, duration)
     super(self).init()
-    if closure != nil  self.closure = closure end
+    self.closure = closure
     self.code.push(animate.ins_ramp(from, to, duration))
     self.code.push(animate.ins_goto(0, 0, 0))   # goto abs pc = 0 without any pause
   end
@@ -169,7 +174,7 @@ class Animate_back_forth : Animate_engine
 
   def init(closure, from, to, duration)
     super(self).init()
-    if closure != nil  self.closure = closure end
+    self.closure = closure
     self.code.push(animate.ins_ramp(from, to, duration / 2))
     self.code.push(animate.ins_ramp(to, from, duration / 2))
     self.code.push(animate.ins_goto(0, 0, 0))   # goto abs pc = 0 without any pause
