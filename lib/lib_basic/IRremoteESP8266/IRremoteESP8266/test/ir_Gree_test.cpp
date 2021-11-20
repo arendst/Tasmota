@@ -303,9 +303,10 @@ TEST(TestGreeClass, Temperature) {
   EXPECT_EQ(63, ac.getTemp());
   EXPECT_EQ(
       "Model: 2 (YBOFB), Power: On, Mode: 1 (Cool), Temp: 63F, Fan: 0 (Auto), "
-      "Turbo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, Sleep: Off, "
-      "Swing(V) Mode: Manual, Swing(V): 0 (Last), Timer: Off, "
-      "Display Temp: 0 (Off)", ac.toString());
+      "Turbo: Off, Econo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, "
+      "Sleep: Off, "
+      "Swing(V) Mode: Manual, Swing(V): 0 (Last), Swing(H): 0 (Off), "
+      "Timer: Off, Display Temp: 0 (Off)", ac.toString());
 }
 
 TEST(TestGreeClass, OperatingMode) {
@@ -383,6 +384,20 @@ TEST(TestGreeClass, Turbo) {
 
   ac.setTurbo(true);
   EXPECT_TRUE(ac.getTurbo());
+}
+
+TEST(TestGreeClass, Econo) {
+  IRGreeAC ac(kGpioUnused);
+  ac.begin();
+
+  ac.setEcono(true);
+  EXPECT_TRUE(ac.getEcono());
+
+  ac.setEcono(false);
+  EXPECT_FALSE(ac.getEcono());
+
+  ac.setEcono(true);
+  EXPECT_TRUE(ac.getEcono());
 }
 
 TEST(TestGreeClass, IFeel) {
@@ -506,6 +521,24 @@ TEST(TestGreeClass, VerticalSwing) {
   EXPECT_EQ(kGreeSwingAuto, ac.getSwingVerticalPosition());
 }
 
+TEST(TestGreeClass, HorizontalSwing) {
+  IRGreeAC ac(kGpioUnused);
+  ac.begin();
+
+  ac.setSwingHorizontal(kGreeSwingHAuto);
+  EXPECT_EQ(kGreeSwingHAuto, ac.getSwingHorizontal());
+
+  ac.setSwingHorizontal(kGreeSwingHMiddle);
+  EXPECT_EQ(kGreeSwingHMiddle, ac.getSwingHorizontal());
+
+  ac.setSwingHorizontal(kGreeSwingHMaxRight);
+  EXPECT_EQ(kGreeSwingHMaxRight, ac.getSwingHorizontal());
+
+  // Out of bounds.
+  ac.setSwingHorizontal(kGreeSwingHMaxRight + 1);
+  EXPECT_EQ(kGreeSwingHOff, ac.getSwingHorizontal());
+}
+
 TEST(TestGreeClass, SetAndGetRaw) {
   IRGreeAC ac(kGpioUnused);
   uint8_t initialState[kGreeStateLength] = {0x00, 0x09, 0x20, 0x50,
@@ -543,8 +576,9 @@ TEST(TestGreeClass, HumanReadable) {
 
   EXPECT_EQ(
       "Model: 1 (YAW1F), Power: Off, Mode: 0 (Auto), Temp: 25C, Fan: 0 (Auto), "
-      "Turbo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, Sleep: Off, "
-      "Swing(V) Mode: Manual, Swing(V): 0 (Last), "
+      "Turbo: Off, Econo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, "
+      "Sleep: Off, "
+      "Swing(V) Mode: Manual, Swing(V): 0 (Last), Swing(H): 0 (Off), "
       "Timer: Off, Display Temp: 0 (Off)",
       ac.toString());
   ac.on();
@@ -562,9 +596,10 @@ TEST(TestGreeClass, HumanReadable) {
   ac.setDisplayTempSource(3);
   EXPECT_EQ(
       "Model: 1 (YAW1F), Power: On, Mode: 1 (Cool), Temp: 16C, Fan: 3 (High), "
-      "Turbo: On, IFeel: On, WiFi: On, XFan: On, Light: Off, Sleep: On, "
-      "Swing(V) Mode: Auto, Swing(V): 1 (Auto), Timer: 12:30, "
-      "Display Temp: 3 (Outside)",
+      "Turbo: On, Econo: Off, IFeel: On, WiFi: On, XFan: On, Light: Off, "
+      "Sleep: On, "
+      "Swing(V) Mode: Auto, Swing(V): 1 (Auto), Swing(H): 0 (Off), "
+      "Timer: 12:30, Display Temp: 3 (Outside)",
       ac.toString());
 }
 
@@ -623,9 +658,10 @@ TEST(TestDecodeGree, NormalRealExample) {
   ac.setRaw(irsend.capture.state);
   EXPECT_EQ(
       "Model: 1 (YAW1F), Power: On, Mode: 1 (Cool), Temp: 26C, Fan: 1 (Low), "
-      "Turbo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, Sleep: Off, "
-      "Swing(V) Mode: Manual, Swing(V): 2 (UNKNOWN), Timer: Off, "
-      "Display Temp: 3 (Outside)",
+      "Turbo: Off, Econo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, "
+      "Sleep: Off, "
+      "Swing(V) Mode: Manual, Swing(V): 2 (UNKNOWN), Swing(H): 0 (Off), "
+      "Timer: Off, Display Temp: 3 (Outside)",
       IRAcUtils::resultAcToString(&irsend.capture));
   stdAc::state_t r, p;
   ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &r, &p));
@@ -681,8 +717,9 @@ TEST(TestGreeClass, Issue814Power) {
   EXPECT_EQ(gree_ac_remote_model_t::YBOFB, ac.getModel());
   EXPECT_EQ(
       "Model: 2 (YBOFB), Power: On, Mode: 1 (Cool), Temp: 23C, Fan: 1 (Low), "
-      "Turbo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, Sleep: Off, "
-      "Swing(V) Mode: Auto, Swing(V): 1 (Auto), Timer: Off, "
+      "Turbo: Off, Econo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, "
+      "Sleep: Off, "
+      "Swing(V) Mode: Auto, Swing(V): 1 (Auto), Swing(H): 0 (Off), Timer: Off, "
       "Display Temp: 0 (Off)",
       ac.toString());
   ac.off();
