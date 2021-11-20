@@ -24,15 +24,15 @@
  *
  * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
  * ------------  ------  ---------  ----------  -----------------
- *  0            yes     no         no          Clock
- *  1            yes     no         no          Incandescent
- *  2            yes     no         no          RGB
- *  3            yes     no         no          Christmas
- *  4            yes     no         no          Hanukkah
- *  5            yes     no         no          Kwanzaa
- *  6            yes     no         no          Rainbow
- *  7            yes     no         no          Fire
- *
+ *  0 (5)        yes     no         no          Clock
+ *  1 (6)        yes     no         no          Incandescent
+ *  2 (7)        yes     no         no          RGB
+ *  3 (8)        yes     no         no          Christmas
+ *  4 (9)        yes     no         no          Hanukkah
+ *  5 (10)       yes     no         no          Kwanzaa
+ *  6 (11)       yes     no         no          Rainbow
+ *  7 (12)       yes     no         no          Fire
+ *  8 (13)       yes     no         no          Stairs
 \*********************************************************************************************/
 
 #define XLGT_01             1
@@ -174,7 +174,7 @@ ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
   kHanukkah, 2,
   kwanzaa, 3,
   kRainbow, 7,
-  kFire, 3, 
+  kFire, 3,
   kStairs, 2 };
 
 uint8_t kWidth[5] = {
@@ -401,8 +401,7 @@ void Ws2812Bars(uint32_t schemenr)
   Ws2812StripShow();
 }
 
-void Ws2812Steps(uint32_t schemenr)
-{
+void Ws2812Steps(uint32_t schemenr) {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor c;
   c.W = 0;
@@ -412,29 +411,32 @@ void Ws2812Steps(uint32_t schemenr)
 
   ColorScheme scheme = kSchemes[schemenr];
 	// apply main color if current sheme == kStairs
-	if(scheme.colors == kStairs){
+	if (scheme.colors == kStairs) {
 		scheme.colors[1].red = Settings->light_color[0];
 		scheme.colors[1].green = Settings->light_color[1];
 		scheme.colors[1].blue = Settings->light_color[2];
 	}
-	uint8_t scheme_count=scheme.count;
 
-	if(Settings->light_fade){
-		scheme_count=Settings->ws_width[WS_HOUR];//Width4
+	uint8_t scheme_count = scheme.count;
+	if (Settings->light_fade) {
+		scheme_count = Settings->ws_width[WS_HOUR];  // Width4
 	}
+  if (scheme_count < 2) {
+    scheme_count = 2;
+  }
 
   WsColor mcolor[scheme_count];
-	uint8_t color_start=0;
-	uint8_t color_end=1;
 
-	if(Settings->light_rotation & 0x01){
-		color_start=1;
-		color_end=0;
+	uint8_t color_start = 0;
+	uint8_t color_end = 1;
+	if (Settings->light_rotation & 0x01) {
+		color_start = 1;
+		color_end = 0;
 	}
 
-	if(Settings->light_fade){
+	if (Settings->light_fade) {
 		// generate gradient (width = Width4)
-		for(uint32_t i=1; i < scheme_count - 1; i++){
+		for (uint32_t i = 1; i < scheme_count - 1; i++) {
 			mcolor[i].red = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].red, scheme.colors[color_end].red);
 			mcolor[i].green = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].green, scheme.colors[color_end].green);
 			mcolor[i].blue = (uint8_t) wsmap(i, 0, scheme_count, scheme.colors[color_start].blue, scheme.colors[color_end].blue);
@@ -442,14 +444,13 @@ void Ws2812Steps(uint32_t schemenr)
 	} else {
 		memcpy(mcolor, scheme.colors, sizeof(mcolor));
 	}
-	// repair first & last color in gradient; apply scheme rotation if fade==0
-	mcolor[0].red=scheme.colors[color_start].red;
-	mcolor[0].green=scheme.colors[color_start].green;
-	mcolor[0].blue=scheme.colors[color_start].blue;
-	mcolor[scheme_count-1].red=scheme.colors[color_end].red;
-	mcolor[scheme_count-1].green=scheme.colors[color_end].green;
-	mcolor[scheme_count-1].blue=scheme.colors[color_end].blue;
-
+	// Repair first & last color in gradient; apply scheme rotation if fade==0
+	mcolor[0].red = scheme.colors[color_start].red;
+	mcolor[0].green = scheme.colors[color_start].green;
+	mcolor[0].blue = scheme.colors[color_start].blue;
+	mcolor[scheme_count-1].red = scheme.colors[color_end].red;
+	mcolor[scheme_count-1].green = scheme.colors[color_end].green;
+	mcolor[scheme_count-1].blue = scheme.colors[color_end].blue;
 
 	// Adjust to dimmer value
   float dimmer = 100 / (float)Settings->light_dimmer;
@@ -466,23 +467,23 @@ void Ws2812Steps(uint32_t schemenr)
 	int32_t current_position = Light.strip_timer_counter / speed;
 
 	//all pixels are shown already | rotation change will not change current state
-	if(current_position >  Settings->light_pixels / Settings->light_step_pixels + scheme_count ) {
+	if (current_position >  Settings->light_pixels / Settings->light_step_pixels + scheme_count ) {
 		return;
 	}
 
   int32_t colorIndex;
   int32_t step_nr;
-	
+
   for (uint32_t i = 0; i < Settings->light_pixels; i++) {
 		step_nr = i / Settings->light_step_pixels;
-		colorIndex =  current_position - step_nr;
-	  if(colorIndex < 0) colorIndex = 0;
-		if(colorIndex > scheme_count - 1) colorIndex = scheme_count - 1;
+		colorIndex = current_position - step_nr;
+	  if (colorIndex < 0) { colorIndex = 0; }
+		if (colorIndex > scheme_count - 1) { colorIndex = scheme_count - 1; }
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
     c.B = mcolor[colorIndex].blue;
 		// Adjust the scheme rotation
-		if(Settings->light_rotation & 0x02){
+		if (Settings->light_rotation & 0x02) {
 			strip->SetPixelColor(Settings->light_pixels - i - 1, c);
 		} else {
 			strip->SetPixelColor(i, c);
