@@ -40,6 +40,7 @@ class Animate_engine
   var pc                # program-counter
   var ins_time          # absolute time when the current instruction started
   var running           # is the animation running? allows fast return
+  var value             # current value
 
   def init()
     self.code = []
@@ -51,8 +52,11 @@ class Animate_engine
   end
 
   # run but needs external calls to `animate()`
-  def run(cur_time)
+  # cur_time:int (opt) current timestamp in ms, defaults to `tasmota.millis()`
+  # val:int (opt) starting value, default to `nil`
+  def run(cur_time, val)
     if cur_time == nil   cur_time = tasmota.millis() end
+    if (val != nil) self.value = val end
     self.ins_time = cur_time
 
     self.running = true
@@ -60,8 +64,8 @@ class Animate_engine
   end
 
   # runs autonomously in the Tasmota event loop
-  def autorun(cur_time)
-    self.run(cur_time)
+  def autorun(cur_time, val)
+    self.run(cur_time, val)
     tasmota.add_driver(self)
   end
 
@@ -96,15 +100,16 @@ class Animate_engine
 
       # Instruction Ramp
       if   isinstance(ins, animate.ins_ramp)
-        var f = self.closure      # assign to a local variable to not call a method
+        var f = self.closure        # assign to a local variable to not call a method
         if sub_index < ins.duration
           # we're still in the ramp
-          var v = tasmota.scale_uint(sub_index, 0, ins.duration, ins.a, ins.b)
+          self.value = tasmota.scale_uint(sub_index, 0, ins.duration, ins.a, ins.b)
           # call closure
-          f(v)                      # call closure, need try? TODO
+          if f   f(self.value) end  # call closure, need try? TODO
           break
         else
-          f(ins.b)                  # set to last value
+          self.value = ins.b
+          if f   f(self.value) end  # set to last value
           self.pc += 1              # next instruction
           self.ins_time = cur_time - (sub_index - ins.duration)
         end
@@ -127,6 +132,7 @@ class Animate_engine
         raise "internal_error", "unknown instruction"
       end
     end
+    return self.value
 
   end
 end
