@@ -142,11 +142,14 @@ static char* conpath(bvm *vm, bstring *path1, bstring *path2, size_t *size)
 {
     char *buffer;
     int len1 = str_len(path1);
-    *size = (size_t)len1 + (size_t)str_len(path2) + 1 + SUFFIX_LEN;
+    int sep_needed = (str(path1)[len1-1] != '/') && (str(path1)[len1-1] != '#'); /* don't append '/' if suffix is already '/' or '#' */
+    *size = (size_t)len1 + (size_t)str_len(path2) + sep_needed + SUFFIX_LEN;
     buffer = be_malloc(vm, *size);
     strcpy(buffer, str(path1));
-    buffer[len1] = '/';
-    strcpy(buffer + len1 + 1, str(path2));
+    if (sep_needed) {
+        buffer[len1] = '/';
+    }
+    strcpy(buffer + len1 + sep_needed, str(path2));
     return buffer;
 }
 
