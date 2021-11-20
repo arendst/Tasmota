@@ -363,6 +363,8 @@ extern "C" {
  * We use Adafruit_LvGL_Glue to leverage the Adafruit
  * display ecosystem.
  ************************************************************/
+extern Renderer *Init_uDisplay(const char *desc);
+
 
 void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
