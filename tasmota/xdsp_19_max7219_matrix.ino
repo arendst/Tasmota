@@ -133,70 +133,45 @@ and setting it to 3 alternates between time and date.
 #define XDSP_19 19
 #define CMD_MAX_LEN 55
 
+#include <LedMatrix.h>
 
-#include <LedControl.h>
-
-LedControl *max7219_Matrix;
+LedMatrix *max7219_Matrix;
 bool max2791Matrix_init_done = false;
 byte modulesPerRow = 4;
-
+byte modulesPerCol = 1;
 
 bool MAX7291Matrix_init(void)
 {
     if (!PinUsed(GPIO_MAX7219DIN) || !PinUsed(GPIO_MAX7219CLK) || !PinUsed(GPIO_MAX7219CS))
     {
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: MAX7291Matrix_init GPIO pins missing DIN, CLK or CS"));
+        AddLog(LOG_LEVEL_INFO, PSTR("DSP: MAX7291Matrix_init GPIO pins missing DIN:%d, CLK:%d, CS:%d"), Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS)  );
         return false; // ensure necessariy pins are configurated
     }
 
     Settings->display_model = XDSP_19;
+    if (Settings->display_width) // [pixel]
+    {
+        modulesPerRow = (Settings->display_width - 1) / 8 + 1;
+    }
+    Settings->display_width = 8 * modulesPerRow;
     Settings->display_cols[0] = Settings->display_width;
-    Settings->display_height = 1;
+    if (Settings->display_height) // [pixel]
+    {
+        modulesPerCol = (Settings->display_height - 1) / 8 + 1;
+    }
+    Settings->display_height = 8 * modulesPerCol;
     Settings->display_rows = Settings->display_height;
-    max7219_Matrix = new LedControl(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), modulesPerRow);
-    MAX7291Matrix_On(true);
-    MAX7291Matrix_Clear();
-    MAX7291Matrix_Dim();
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: MAX7291Matrix_init"));
+    Settings->display_cols[1] = Settings->display_height;
+    max7219_Matrix = new LedMatrix(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), modulesPerRow, modulesPerCol);
+    int intensity = GetDisplayDimmer16(); // 0..15
+    max7219_Matrix->setIntensity(intensity);
+    int orientation = Settings->display_rotate;
+    max7219_Matrix->setOrientation((LedMatrix::ModuleOrientation)orientation );
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: MAX7291Matrix_init %dx%d modules, orientation: %d, intensity: %d"), modulesPerRow , modulesPerCol, orientation, intensity);
     max2791Matrix_init_done = true;
 
-    max7219_Matrix->setLed(0, 3, 3, true);
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: setLed 3,3"));
-    return true;
-}
-
-bool MAX7291Matrix_On( bool on )
-{
-    for (int addr = 0; addr < modulesPerRow; addr++)
-    {
-        max7219_Matrix->shutdown (addr, !on); // false: on, true: off
-    }
-    AddLog(LOG_LEVEL_INFO, PSTR("MTX: On %d"), on);
-    return true;
-
-}
-
-bool MAX7291Matrix_Dim(void)
-{
-    int dim = GetDisplayDimmer16();
-    for (int addr = 0; addr < modulesPerRow; addr++)
-    {
-        max7219_Matrix->setIntensity(addr, dim); // 1..15
-    }
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: Dim %d"), dim);
-    return true;
-}
-
-// /*********************************************************************************************\
-// * Clears the display
-// * Command:  DisplayClear
-// \*********************************************************************************************/
-bool MAX7291Matrix_Clear(void)
-{
-    for(int addr=0; addr<modulesPerRow; addr++){
-        max7219_Matrix->clearDisplay(addr);
-    }
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: Clear"));
+    max7219_Matrix->test();
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: display test"));
     return true;
 }
 
@@ -208,17 +183,18 @@ bool MAX7291Matrix_Text()
 {
     char sString[CMD_MAX_LEN + 1];
     subStr(sString, XdrvMailbox.data, ",", 1);
-    MAX7291Matrix_Clear;
+    max7219_Matrix->clear();
     AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: sString %s"), sString);
 
     // test
     uint8_t length = strlen(sString);
-    //if(length > modulesPerRow) 
-        length = modulesPerRow;
+    //if(length > modulesPerRow)
+    length = modulesPerRow;
 
-    for(int addr = 0; addr<length; addr++ ){
-        max7219_Matrix->setLed(addr, 0, 1, true);
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: setLed() %d, 0, 1)"), addr);
+    for (int addr = 0; addr < length; addr++)
+    {
+        max7219_Matrix->setPixel(addr, addr, true);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: setPixel() %d, %d)"), addr, addr);
     }
 
     return true;
@@ -226,50 +202,48 @@ bool MAX7291Matrix_Text()
 
 bool Xdsp19(uint8_t function)
 {
-  bool result = false;
-
+    bool result = false;
 
     if (FUNC_DISPLAY_INIT_DRIVER == function)
     {
         result = MAX7291Matrix_init();
     }
-    else{
-    //if (max2791Matrix_init_done && (XDSP_19 == Settings->display_model)) {
-        switch (function) {
-            case FUNC_DISPLAY_MODEL:
-                result = true;
-                break;
-            case FUNC_DISPLAY_CLEAR:
-                result = MAX7291Matrix_Clear();
-                break;
-            case FUNC_DISPLAY_DIM:
-                result = MAX7291Matrix_Dim();
-                break;
-            case FUNC_DISPLAY_SEVENSEG_TEXT:
-            case FUNC_DISPLAY_SEVENSEG_TEXTNC:
-            case FUNC_DISPLAY_NUMBER:
-            case FUNC_DISPLAY_NUMBERNC:
-            case FUNC_DISPLAY_FLOAT:
-            case FUNC_DISPLAY_FLOATNC:
-            case FUNC_DISPLAY_RAW:
-            case FUNC_DISPLAY_LEVEL:
-            case FUNC_DISPLAY_SCROLLTEXT:
-            case FUNC_DISPLAY_CLOCK:
-            case FUNC_DISPLAY_DRAW_STRING:
-                result = MAX7291Matrix_Text();
-                break;
-            case FUNC_DISPLAY_EVERY_50_MSECOND:
-            case FUNC_DISPLAY_EVERY_SECOND:
-                // ignore
-                return false;
-            default:
-                result = false;
+    else if (max7219_Matrix && (XDSP_19 == Settings->display_model))
+    {
+        switch (function)
+        {
+        case FUNC_DISPLAY_MODEL:
+            result = true;
+            break;
+        case FUNC_DISPLAY_CLEAR:
+            result = max7219_Matrix->clear();
+            break;
+        case FUNC_DISPLAY_DIM:
+            result = max7219_Matrix->setIntensity(GetDisplayDimmer16());
+            break;
+        case FUNC_DISPLAY_SEVENSEG_TEXT:
+        case FUNC_DISPLAY_SEVENSEG_TEXTNC:
+        case FUNC_DISPLAY_NUMBER:
+        case FUNC_DISPLAY_NUMBERNC:
+        case FUNC_DISPLAY_FLOAT:
+        case FUNC_DISPLAY_FLOATNC:
+        case FUNC_DISPLAY_RAW:
+        case FUNC_DISPLAY_LEVEL:
+        case FUNC_DISPLAY_SCROLLTEXT:
+        case FUNC_DISPLAY_CLOCK:
+        case FUNC_DISPLAY_DRAW_STRING:
+            result = MAX7291Matrix_Text();
+            break;
+        case FUNC_DISPLAY_EVERY_50_MSECOND:
+        case FUNC_DISPLAY_EVERY_SECOND:
+            // ignore
+            return false;
+        default:
+            result = false;
         }
     }
     return result;
 }
-
-
 
 #endif // USE_DISPLAY_MAX7219_MATRIX
 #endif // USE_DISPLAY
