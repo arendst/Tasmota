@@ -44,7 +44,6 @@ class Animate_engine
 
   def init()
     self.code = []
-    self.closure = def (v) print("Animate next value:", v) end  # default to debug function
     self.pc = 0         # start at instruction 0
     self.ins_time = 0
     self.running = false # not running by default
@@ -142,7 +141,7 @@ class Animate_from_to : Animate_engine
 
   def init(closure, from, to, duration)
     super(self).init()
-    if closure != nil  self.closure = closure end
+    self.closure = closure
     self.code.push(animate.ins_ramp(from, to, duration))
   end
 
@@ -158,7 +157,7 @@ class Animate_rotate : Animate_engine
 
   def init(closure, from, to, duration)
     super(self).init()
-    if closure != nil  self.closure = closure end
+    self.closure = closure
     self.code.push(animate.ins_ramp(from, to, duration))
     self.code.push(animate.ins_goto(0, 0, 0))   # goto abs pc = 0 without any pause
   end
@@ -175,7 +174,7 @@ class Animate_back_forth : Animate_engine
 
   def init(closure, from, to, duration)
     super(self).init()
-    if closure != nil  self.closure = closure end
+    self.closure = closure
     self.code.push(animate.ins_ramp(from, to, duration / 2))
     self.code.push(animate.ins_ramp(to, from, duration / 2))
     self.code.push(animate.ins_goto(0, 0, 0))   # goto abs pc = 0 without any pause
