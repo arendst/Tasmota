@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Autoconfiguration for ESP32 and variants
 - ESP32 fix leftover GPIO configuration after restart
 - ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) (#13447)
+- WS2812 scheme 13 stairs effect (#13595)
 - Preliminary support for Tasmota Apps (.tapp extesions)
 - Berry support for neopixel (WS2812, SK6812)
 
@@ -15,6 +16,12 @@ All notable changes to this project will be documented in this file.
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
 - Removed ILI9488 driver in favor of Unversal Display Driver
 - IRremoteESP8266 library from v2.7.20 to v2.8.0 (#13738)
+
+### Fixed
+- ESP32 analog NTC temperature calculation (#13703)
+
+### Removed
+- ILI9488 driver in favour of Universal Display driver (#13719)
 
 ## [10.0.0.2] 20211113
 ### Added
