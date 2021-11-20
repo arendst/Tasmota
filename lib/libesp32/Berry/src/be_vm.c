@@ -472,6 +472,8 @@ BERRY_API bvm* be_vm_new(void)
     vm->counter_set = 0;
     vm->counter_try = 0;
     vm->counter_exc = 0;
+    vm->counter_gc_scanned = 0;
+    vm->counter_gc_freed = 0;
 #endif
     return vm;
 }
