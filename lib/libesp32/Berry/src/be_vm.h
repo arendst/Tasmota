@@ -112,6 +112,8 @@ struct bvm {
     uint32_t counter_set; /* counter for SETMBR */
     uint32_t counter_try; /* counter for `try` statement */
     uint32_t counter_exc; /* counter for raised exceptions */
+    uint32_t counter_gc_scanned; /* counter for objects scanned by last gc */
+    uint32_t counter_gc_freed; /* counter for objects freed by last gc */
 #endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;

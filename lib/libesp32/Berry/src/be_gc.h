@@ -37,7 +37,11 @@ if (!gc_isconst(o)) { \
 
 #define gc_setwhite(o)      gc_setmark((o), GC_WHITE)
 #define gc_setgray(o)       gc_setmark((o), GC_GRAY)
-#define gc_setdark(o)       gc_setmark((o), GC_DARK)
+#if BE_USE_PERF_COUNTERS
+    #define gc_setdark(o)       { vm->counter_gc_scanned++; gc_setmark((o), GC_DARK); }
+#else
+    #define gc_setdark(o)       gc_setmark((o), GC_DARK)
+#endif
 #define gc_isfixed(o)       (((o)->marked & GC_FIXED) != 0)
 #define gc_setfixed(o)      ((o)->marked |= GC_FIXED)
 #define gc_clearfixed(o)    ((o)->marked &= ~GC_FIXED)

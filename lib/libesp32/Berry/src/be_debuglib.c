@@ -169,6 +169,7 @@ static int m_counters(bvm *vm)
     map_insert(vm, "set", vm->counter_set);
     map_insert(vm, "try", vm->counter_try);
     map_insert(vm, "raise", vm->counter_exc);
+    map_insert(vm, "objects", vm->counter_gc_scanned);
     be_pop(vm, 1);
     be_return(vm);
 }

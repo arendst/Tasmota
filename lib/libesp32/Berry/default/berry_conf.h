@@ -193,7 +193,7 @@
 #define BE_USE_TIME_MODULE              0
 #define BE_USE_OS_MODULE                0
 #define BE_USE_GLOBAL_MODULE            1
-#define BE_USE_SYS_MODULE               0
+#define BE_USE_SYS_MODULE               1
 #define BE_USE_DEBUG_MODULE             0
 #define BE_USE_GC_MODULE                1
 #define BE_USE_SOLIDIFY_MODULE          0

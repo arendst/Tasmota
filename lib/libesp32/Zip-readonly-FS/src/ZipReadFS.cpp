@@ -400,6 +400,8 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
     char *tok;
     char *prefix = strtok_r(sub_path, "#", &tok);
     char *suffix = strtok_r(NULL, "", &tok);
+    // if suffix starts with '/', skip the first char
+    if (*suffix == '/') { suffix++; }
     AddLog(LOG_LEVEL_DEBUG, "ZIP: prefix=%s suffix=%s", prefix, suffix);
     // parse ZIP archive
     File zipfile = (*_fs)->open(prefix, "r", false);

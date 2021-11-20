@@ -262,7 +262,10 @@ void BerryObservability(bvm *vm, int event...) {
       {
         int32_t vm_usage2 = va_arg(param, int32_t);
         uint32_t gc_elapsed = millis() - gc_time;
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+        uint32_t vm_scanned = va_arg(param, uint32_t);
+        uint32_t vm_freed = va_arg(param, uint32_t);
+        AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
+                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
