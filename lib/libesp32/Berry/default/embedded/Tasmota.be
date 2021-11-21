@@ -24,10 +24,11 @@ class Tasmota
   var _cb
   var wire1
   var wire2
-  var cmd_res     # store the command result, nil if disables, true if capture enabled, contains return value
-  var global      # mapping to TasmotaGlobal
+  var cmd_res         # store the command result, nil if disables, true if capture enabled, contains return value
+  var global          # mapping to TasmotaGlobal
   var settings
-  var wd          # last working directory
+  var wd              # when load() is called, `tasmota.wd` contains the name of the archive. Ex: `/M5StickC.autoconf#`
+  var _debug_present  # is `import debug` present?
 
   def init()
     # instanciate the mapping object to TasmotaGlobal
@@ -38,6 +39,12 @@ class Tasmota
       self.settings = ctypes_bytes_dyn(introspect.toptr(settings_addr), self._settings_def)
     end
     self.wd = ""
+    self._debug_present = false
+    try
+      import debug
+      self._debug_present = true
+    except .. 
+    end
   end
 
   # create a specific sub-class for rules: pattern(string) -> closure
@@ -416,8 +423,10 @@ class Tasmota
             if done break end
           except .. as e,m
             print(string.format("BRY: Exception> '%s' - %s", e, m))
-            import debug
-            debug.traceback()
+            if self._debug_present
+              import debug
+              debug.traceback()
+            end
           end
         end
         i += 1
