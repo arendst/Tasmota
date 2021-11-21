@@ -74,6 +74,9 @@ struct filebuf {
 
 void be_throw(bvm *vm, int errorcode)
 {
+#if BE_USE_PERF_COUNTERS
+    vm->counter_exc++;
+#endif
     if (vm->errjmp) {
         vm->errjmp->status = errorcode;
         exec_throw(vm->errjmp);
