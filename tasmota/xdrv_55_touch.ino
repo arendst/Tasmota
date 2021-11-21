@@ -322,4 +322,4 @@ bool Xdrv55(uint8_t function) {
 uint32_t Touch_Status(uint32_t sel) {
 return 0;
 }
-#endif  // USE_TOUCH
+#endif  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
