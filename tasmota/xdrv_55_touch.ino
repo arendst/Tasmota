@@ -21,9 +21,9 @@
 
 #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
 
-// #ifdef USE_DISPLAY_LVGL_ONLY
-// #undef USE_TOUCH_BUTTONS
-// #endif
+#ifdef USE_DISPLAY_LVGL_ONLY
+#undef USE_TOUCH_BUTTONS
+#endif
 
 #include <renderer.h>
 
