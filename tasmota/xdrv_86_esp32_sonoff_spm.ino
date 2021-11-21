@@ -24,7 +24,10 @@
 /*********************************************************************************************\
  * Sonoff Stackable Power Manager (Current state: PROOF OF CONCEPT)
  *
+ * Initial POC template:
  * {"NAME":"Sonoff SPM (POC1)","GPIO":[1,1,1,1,3200,1,1,1,1,1,1,1,3232,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
+ * Add ethernet support:
+ * {"NAME":"Sonoff SPM (POC2)","GPIO":[1,0,1,0,3200,5536,0,0,1,1,1,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
  *
  * Things to know:
  * Bulk of the action is handled by ARM processors present in every unit communicating over modbus RS-485.
@@ -40,8 +43,10 @@
  * Button on SPM-Main initiates re-scan of SPM-4Relay units.
  * Blue led equals Tasmota WiFi status.
  *
+ * Tasmota POC2:
+ * Ethernet support.
+ *
  * Todo:
- * Ethernet support (Find correct MDIO, MDC, POWER GPIO's and ETH_ parameters).
  * Gui optimization for energy display.
  * Gui for Overload Protection entry (is handled by ARM processor).
  * Gui for Scheduling entry (is handled by ARM processor).
@@ -56,26 +61,26 @@
  * GPIO01 - Serial console TX (921600bps8N1 originally)
  * GPIO03 - Serial console RX
  * GPIO04 - ARM processor TX (115200bps8N1)
+ * GPIO05 - ETH POWER
  * GPIO12 - SPI MISO ARM pulsetrain code (input?)
  * GPIO13 - SPI CLK
  * GPIO14 - SPI CS ARM pulsetrain eoc (input?)
  * GPIO15 - ARM reset (output) - 18ms low active 125ms after restart esp32
  * GPIO16 - ARM processor RX
  * GPIO17 - EMAC_CLK_OUT_180
- * GPIO18 - ??ETH MDIO
+ * GPIO18 - ETH MDIO
  * GPIO19 - EMAC_TXD0(RMII)
  * GPIO21 - EMAC_TX_EN(RMII)
  * GPIO22 - EMAC_TXD1(RMII)
- * GPIO23 - ??ETH MDC
+ * GPIO23 - ETH MDC
  * GPIO25 - EMAC_RXD0(RMII)
  * GPIO26 - EMAC_RXD1(RMII)
  * GPIO27 - EMAC_RX_CRS_DV
- * GPIO?? - ??ETH POWER
  * GPIO32 - Blue status led2
  * GPIO33 - Yellow error led3
  * GPIO35 - Button
  * #define ETH_TYPE          ETH_PHY_LAN8720
- * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
+ * #define ETH_CLKMODE       ETH_CLOCK_GPIO17_OUT
  * #define ETH_ADDRESS       0
  *
  * Variables used:
@@ -103,7 +108,6 @@
 #define SSPM_FUNC_GET_ENERGY_TOTAL   22      // 0x16
 #define SSPM_FUNC_GET_ENERGY         24      // 0x18
 #define SSPM_FUNC_GET_LOG            26      // 0x1A
-
 #define SSPM_FUNC_ENERGY_PERIOD      27      // 0x1B
 
 // Receive
@@ -829,7 +833,8 @@ void SSPMSerialInput(void) {
 }
 
 void SSPMInit(void) {
-  if (!ValidTemplate(PSTR("Sonoff SPM (POC1)"))) { return; }
+  if (!ValidTemplate(PSTR("Sonoff SPM (POC1)")) &&
+      !ValidTemplate(PSTR("Sonoff SPM (POC2)"))) { return; }
   if (!PinUsed(GPIO_RXD) || !PinUsed(GPIO_TXD)) { return; }
 
   Sspm = (TSspm*)calloc(sizeof(TSspm), 1);
@@ -855,6 +860,14 @@ void SSPMInit(void) {
     Settings->flag2.wattage_resolution = 2;   // SPM has only 2 decimals
     Settings->flag2.energy_resolution = 0;    // SPM has no decimals on total energy
   }
+
+#if CONFIG_IDF_TARGET_ESP32
+#ifdef USE_ETHERNET
+  Settings->eth_address = 0;                      // EthAddress
+  Settings->eth_type = ETH_PHY_LAN8720;           // EthType
+  Settings->eth_clk_mode = ETH_CLOCK_GPIO17_OUT;  // EthClockMode
+#endif
+#endif
 
   Sspm->old_power = TasmotaGlobal.power;
   Sspm->mstate = SPM_WAIT;                    // Start init sequence
