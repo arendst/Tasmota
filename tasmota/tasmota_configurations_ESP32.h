@@ -83,7 +83,6 @@
   #define USE_LVGL
   #define USE_LVGL_FREETYPE
 //  #define USE_DISPLAY_LVGL_ONLY
-  #define USE_TOUCH_BUTTONS                        // Dummy Touch sensor to avoid linking error
 #else
   #define USE_DISPLAY_ILI9341                      // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
   #define USE_DISPLAY_MODES1TO5
