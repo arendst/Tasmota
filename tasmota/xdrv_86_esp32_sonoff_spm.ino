@@ -1039,7 +1039,7 @@ void SSPMEnergyShow(bool json) {
   if (json) {
     ResponseAppend_P(PSTR(",\"SPM\":{\"" D_JSON_TOTAL "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", 0, &Sspm->total[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->total[i >>2][i &3]);
     }
     ResponseAppend_P(PSTR("],\"" D_JSON_POWERUSAGE "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
