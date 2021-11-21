@@ -307,6 +307,7 @@ extern const bcstring be_const_str_SERIAL_8N1;
 extern const bcstring be_const_str_pi;
 extern const bcstring be_const_str_add_header;
 extern const bcstring be_const_str_list;
+extern const bcstring be_const_str_read_sensors;
 extern const bcstring be_const_str_super;
 extern const bcstring be_const_str_has;
 extern const bcstring be_const_str___upper__;

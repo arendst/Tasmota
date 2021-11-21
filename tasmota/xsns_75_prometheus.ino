@@ -282,7 +282,7 @@ void HandleMetrics(void) {
   }
 
   ResponseClear();
-  MqttShowSensor(); //Pull sensor data
+  MqttShowSensor(true); //Pull sensor data
   String jsonStr = ResponseData();
   JsonParser parser((char *)jsonStr.c_str());
   JsonParserObject root = parser.getRootObject();

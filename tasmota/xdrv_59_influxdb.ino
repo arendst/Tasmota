@@ -387,7 +387,7 @@ void InfluxDbLoop(void) {
 
         // {"Time":"2021-08-14T17:19:33","Switch1":"ON","Switch2":"OFF","ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":27.50},"HTU21":{"Temperature":28.23,"Humidity":39.7,"DewPoint":13.20},"Global":{"Temperature":27.50,"Humidity":39.7,"DewPoint":12.55},"TempUnit":"C"}
         ResponseClear();
-        if (MqttShowSensor()) {   // Pull sensor data
+        if (MqttShowSensor(true)) {   // Pull sensor data
           InfluxDbProcessJson();
         };
 

@@ -835,7 +835,7 @@ String GetSwitchText(uint32_t i) {
   return switch_text;
 }
 
-bool MqttShowSensor(void)
+bool MqttShowSensor(bool call_show_sensor)
 {
   ResponseAppendTime();
 
@@ -894,20 +894,20 @@ bool MqttShowSensor(void)
   }
   ResponseJsonEnd();
 
-  if (json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
+  if (call_show_sensor && json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
   return json_data_available;
 }
 
 void MqttPublishSensor(void) {
   ResponseClear();
-  if (MqttShowSensor()) {
+  if (MqttShowSensor(true)) {
     MqttPublishTeleSensor();
   }
 }
 
 void MqttPublishTeleperiodSensor(void) {
   ResponseClear();
-  if (MqttShowSensor()) {
+  if (MqttShowSensor(true)) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
     XdrvRulesProcess(1);
   }

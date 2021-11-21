@@ -382,7 +382,7 @@ void NewHAssDiscovery(void) {
 
   if (!Settings->flag.hass_discovery) {                         // SetOption19 - Clear retained message
     Response_P(PSTR("{\"sn\":"));
-    MqttShowSensor();
+    MqttShowSensor(true);
     ResponseAppend_P(PSTR(",\"ver\":1}"));
   }
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/sensors"), NetworkUniqueId().c_str());
