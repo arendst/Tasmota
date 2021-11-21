@@ -294,11 +294,6 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
     touch_yp = 0;
   }
 }
-#else
-// dummy for LVGL without a touch controller
-uint32_t Touch_Status(uint32_t sel) {
-return 0;
-}
 #endif // USE_TOUCH_BUTTONS
 
 void TS_RotConvert(int16_t *x, int16_t *y) {
@@ -322,5 +317,9 @@ bool Xdrv55(uint8_t function) {
   }
   return result;
 }
-
+#else
+// dummy for LVGL without a touch controller
+uint32_t Touch_Status(uint32_t sel) {
+return 0;
+}
 #endif  // USE_TOUCH
