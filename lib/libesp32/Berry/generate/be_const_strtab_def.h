@@ -306,7 +306,8 @@ be_define_const_str(AudioFileSource, "AudioFileSource", 2959980058u, 0, 15, &be_
 be_define_const_str(SERIAL_8N1, "SERIAL_8N1", 2369297235u, 0, 10, &be_const_str_pi);
 be_define_const_str(pi, "pi", 1213090802u, 0, 2, NULL);
 be_define_const_str(add_header, "add_header", 927130612u, 0, 10, &be_const_str_list);
-be_define_const_str(list, "list", 217798785u, 0, 4, &be_const_str_super);
+be_define_const_str(list, "list", 217798785u, 0, 4, &be_const_str_read_sensors);
+be_define_const_str(read_sensors, "read_sensors", 892689201u, 0, 12, &be_const_str_super);
 be_define_const_str(super, "super", 4152230356u, 0, 5, NULL);
 be_define_const_str(has, "has", 3988721635u, 0, 3, NULL);
 be_define_const_str(__upper__, "__upper__", 3612202883u, 0, 9, &be_const_str_exp);
@@ -515,6 +516,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 163,
-    .count = 326,
+    .count = 327,
     .table = m_string_table
 };
