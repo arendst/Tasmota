@@ -667,8 +667,8 @@ void CmndPixels(void)
 
 void CmndStepPixels(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
-    Settings->light_step_pixels = XdrvMailbox.payload;
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
+    Settings->light_step_pixels = (XdrvMailbox.payload > WS2812_MAX_LEDS) ? WS2812_MAX_LEDS :  XdrvMailbox.payload;
     Ws2812Clear();
     Light.update = true;
   }
