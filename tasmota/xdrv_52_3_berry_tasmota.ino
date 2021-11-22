@@ -555,6 +555,7 @@ extern "C" {
     if (top >= 2) {
       sensor_display = be_tobool(vm, 2);
     }
+    be_pop(vm, top);    // clear stack to avoid `Error be_top is non zero=1` errors
     ResponseClear();
     if (MqttShowSensor(sensor_display)) {
       // return string
