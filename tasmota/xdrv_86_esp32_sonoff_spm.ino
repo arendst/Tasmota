@@ -1065,7 +1065,7 @@ void SSPMEnergyShow(bool json) {
     uint32_t module = Sspm->rotate >> 2;
     uint32_t relay_base = module * 4;
     WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-    for (uint32_t i = 0; i < 4; i++) {
+    for (uint32_t i = 1; i < 5; i++) {
       WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay_base +i);
     }
     WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
