@@ -994,8 +994,10 @@ void PerformEverySecond(void)
     }
   }
 
+#ifdef ESP8266
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
+#endif
 
   WifiPollNtp();
 
