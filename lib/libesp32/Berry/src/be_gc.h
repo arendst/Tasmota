@@ -38,7 +38,7 @@ if (!gc_isconst(o)) { \
 #define gc_setwhite(o)      gc_setmark((o), GC_WHITE)
 #define gc_setgray(o)       gc_setmark((o), GC_GRAY)
 #if BE_USE_PERF_COUNTERS
-    #define gc_setdark(o)       { vm->counter_gc_scanned++; gc_setmark((o), GC_DARK); }
+    #define gc_setdark(o)       { vm->counter_gc_kept++; gc_setmark((o), GC_DARK); }
 #else
     #define gc_setdark(o)       gc_setmark((o), GC_DARK)
 #endif
