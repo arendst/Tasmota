@@ -18,10 +18,12 @@ All notable changes to this project will be documented in this file.
 - Removed ILI9488 driver in favor of Unversal Display Driver
 - IRremoteESP8266 library from v2.7.20 to v2.8.0 (#13738)
 - Ethernet hostname ending in ``_eth`` to ``-eth`` according to RFC952
+- ESP32 core library from v2.0.1 to v2.0.1.1 (#13768)
 
 ### Fixed
 - ESP32 analog NTC temperature calculation (#13703)
 - ESP32 ethernet broken by core 2.x
+- ESP32 I2C clock stretch issue (#13768)
 
 ### Removed
 - ILI9488 driver in favour of Universal Display driver (#13719)
