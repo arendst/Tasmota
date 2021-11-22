@@ -598,7 +598,7 @@ struct {
   const uint16_t type;
   union {
     NeoPoolRegBlock block;
-    NeoPoolRegList list[];
+    NeoPoolRegList *list;
   };
 } NeoPoolReg[] = {
     // 6 entries so using 250ms poll interval we are through in 1,5 for all register
