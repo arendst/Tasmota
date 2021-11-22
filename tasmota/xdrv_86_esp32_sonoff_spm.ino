@@ -34,7 +34,6 @@
  * Each SPM-4Relay has 4 bistable relays with their own CSE7761 energy monitoring device handled by an ARM processor.
  * Green led is controlled by ARM processor indicating SD-Card access.
  * ESP32 is used as interface between eWelink and ARM processor in SPM-Main unit communicating over proprietary serial protocol.
- * Inductive/Capacitive loads are not reported correctly.
  * Power on sequence for two SPM-4Relay modules is 00-00-15-10-(0F)-(13)-(13)-(19)-0C-09-04-09-04-0B-0B
  *
  * Tasmota POC1:
@@ -45,9 +44,9 @@
  *
  * Tasmota POC2:
  * Ethernet support.
+ * Gui optimized for energy display.
  *
  * Todo:
- * Gui optimization for energy display.
  * Gui for Overload Protection entry (is handled by ARM processor).
  * Gui for Scheduling entry (is handled by ARM processor).
  * Yellow led functionality.
@@ -548,11 +547,13 @@ void SSPMHandleReceivedData(void) {
         /* 0x04 - Overload Protection
          0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
         AA 55 01 8b 34 32 37 39 37 34 13 4b 35 36 37 80 04 00 02 00 00 06 98 06
-        Marker  |Module id                          |Ac|Cm|Size |  |Ch|Ra|Max P   |Min P   |Max U   |Min U   |Max I   |De|Ix|Chksm|
-                                                                   |  |  |   4400W|    0.1W|    240V|    0.1V|     20A|  |
+        Marker  |Module id                          |Ac|Cm|Size |     |Ix|Chksm|
+
         AA 55 01 6B 7E 32 37 39 37 34 13 4B 35 36 37 80 04 00 35 00 07 00 11 30 00 00 00 0A 00 F0 00 00 00 0A 00 14 00 00
                                                                        00 11 30 00 00 00 0A 00 F0 00 00 00 0A 00 14 00 00
                                                                        00 11 30 00 00 00 0A 00 F0 00 00 00 0A 00 14 00 00 07 8A 86
+        Marker  |Module id                          |Ac|Cm|Size |  |Ch|Ra|Max P   |Min P   |Max U   |Min U   |Max I   |De|Ix|Chksm|
+                                                                   |  |  |   4400W|    0.1W|    240V|    0.1V|     20A|  |
         */
         if (0x02 == Sspm->expected_bytes) {
 
@@ -650,7 +651,10 @@ void SSPMHandleReceivedData(void) {
           uint32_t total_energy = 0;
           uint32_t entries = (Sspm->expected_bytes - 22) / 2;
           for (uint32_t i = 0; i < entries; i++) {
-            total_energy += (SspmBuffer[41 + (i*2)] << 8) + SspmBuffer[42 + (i*2)];
+            uint32_t today_energy = (SspmBuffer[41 + (i*2)] << 8) + SspmBuffer[42 + (i*2)];
+            if (today_energy != 28702) {     // Unknown why sometimes 0x701E (=28702kWh) pops up
+              total_energy += today_energy;
+            }
           }
           uint32_t channel = SspmBuffer[32];
           for (uint32_t module = 0; module < Sspm->module_max; module++) {
@@ -687,24 +691,6 @@ void SSPMHandleReceivedData(void) {
                                                                                                     |Ch|Curre|Voltage |ActivePo|Reactive|Apparent|??|
         Values are XX XX    - number
                          XX - decimals
-
-
-
-                                                                         Curr Voltag Active Reacti Appare
-         0 1 2 3 4 5 6 7 8 910111213141516171819202122232425262728293031 3233 343536 373839 404142 434445 46 47 4849
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 000A 00E05B 001817 00013B 001825 4B BC 3DDA   0.100A 224.91V 24.23W  <-- 25W bulb
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 000A 00E115 00181A 00013D 001823 4B BE 6209
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 0044 00E260 009C1C 000000 009C1B 00 36 FD69   0.680A 226.96V 156.28W  <-- 150W bulb
-
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 0054 00E134 007525 00220A 00BD5D 20 34 55D6
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 0054 00E10A 007519 002126 00BD27 20 36 77EA
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 0053 00DE40 00731F 001604 00B952 4B 12 9255
-
-        AA55010000000000000000000000000006001C8B343237393734134B35363708 075B 00D502 06940F 001863 069830 4B 1C E0DE
-
-        AA55010000000000000000000000000006001c8b343237393734134b35363708 0044 00e025 009920 00010f 00993b 00 b3 07 a2  0.68A 223.25V 152.66W 0.54 Rea 152.5 Schijn
-
-
         */
         {
           uint32_t channel = 0;
@@ -764,6 +750,8 @@ void SSPMHandleReceivedData(void) {
          0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 13 00 24 6b 7e 32 37 39 37 34 13 4b 35 36 37 04 00 00 00 82 01 00 00 14 00 00 0a 00 f0 00 00 00 0a 11 30 00 00 00 0a 02 8f cd
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 13 00 24 8b 34 32 37 39 37 34 13 4b 35 36 37 04 00 00 00 82 01 00 00 14 00 00 0a 00 f0 00 00 00 0a 11 30 00 00 00 0a 02 a0 6f
+        Marker  |                                   |Ac|Cm|Size |Module id                          |Ch|                    |Max I|Min I|Max U   |Min U   |Max P   |Min P   |Ix|Chksm|
+                                                                                                                            |  20A| 0.1A|    240V|    0.1V|   4400W|    0.1W|
         */
         if ((0x24 == Sspm->expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
           memcpy(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
@@ -855,9 +843,9 @@ void SSPMInit(void) {
   digitalWrite(SSPM_GPIO_ARM_RESET, 1);
 
   if (0 == Settings->flag2.voltage_resolution) {
-    Settings->flag2.voltage_resolution = 1;   // SPM has only 2 decimals
-    Settings->flag2.current_resolution = 2;   // SPM has only 2 decimals
-    Settings->flag2.wattage_resolution = 2;   // SPM has only 2 decimals
+    Settings->flag2.voltage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
+    Settings->flag2.current_resolution = 2;   // SPM has 2 decimals
+    Settings->flag2.wattage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
     Settings->flag2.energy_resolution = 0;    // SPM has no decimals on total energy
   }
 
@@ -1019,29 +1007,36 @@ bool SSPMButton(void) {
   return result;
 }
 
-const char kSSPMEnergyPhases[] PROGMEM = "%*_f / %*_f / %*_f / %*_f|[%*_f,%*_f,%*_f,%*_f]";
+const uint16_t SSPM_SIZE = 128;
+const char kSSPMEnergyPhases[] PROGMEM = "%*_f</td><td>%*_f</td><td>%*_f</td><td>%*_f</td><td style='white-space:nowrap'>|[%*_f,%*_f,%*_f,%*_f]";
 
 char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, bool json) {
-  char layout[32];
+  char layout[100];
   GetTextIndexed(layout, sizeof(layout), json, kSSPMEnergyPhases);
-  ext_snprintf_P(result, FLOATSZ * 4, layout, resolution, &input[0], resolution, &input[1], resolution, &input[2], resolution, &input[3]);
+  ext_snprintf_P(result, SSPM_SIZE, layout, resolution, &input[0], resolution, &input[1], resolution, &input[2], resolution, &input[3]);
   return result;
 }
 
-const char HTTP_SSPMENERGY_SNS[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "{m}%s " D_UNIT_VA "{e}"
-  "{s}" D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}"
-  "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SSPM_VOLTAGE[] PROGMEM =
+  "{s}" D_VOLTAGE "</th><td>%s" D_UNIT_VOLT "{e}";
+const char HTTP_SSPM_CURRENT[] PROGMEM =
+  "{s}" D_CURRENT "</th><td>%s" D_UNIT_AMPERE "{e}";
+const char HTTP_SSPM_POWER[] PROGMEM =
+  "{s}" D_POWERUSAGE_ACTIVE "</th><td>%s" D_UNIT_WATT "{e}";
+const char HTTP_SSPM_ENERGY[] PROGMEM =
+  "{s}" D_POWERUSAGE_APPARENT "</th><td>%s" D_UNIT_VA "{e}"
+  "{s}" D_POWERUSAGE_REACTIVE "</th><td>%s" D_UNIT_VAR "{e}"
+  "{s}" D_ENERGY_TOTAL "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
 
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"SPM\":{\"" D_JSON_TOTAL "\":["));
+    ResponseAppend_P(PSTR(",\"SPM\":{\"" D_JSON_ENERGY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->total[i >>2][i &3]);
     }
-    ResponseAppend_P(PSTR("],\"" D_JSON_POWERUSAGE "\":["));
+    ResponseAppend_P(PSTR("],\"" D_JSON_ACTIVE_POWERUSAGE "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.wattage_resolution, &Sspm->active_power[i >>2][i &3]);
     }
@@ -1069,16 +1064,21 @@ void SSPMEnergyShow(bool json) {
     }
     uint32_t module = Sspm->rotate >> 2;
     uint32_t relay_base = module * 4;
-    WSContentSend_P(PSTR("{s}" D_SENSOR_RELAY "{m}L%02d / L%02d / L%02d / L%02d{e}"), relay_base +1, relay_base +2, relay_base +3, relay_base +4);
-    char value_chr[FLOATSZ * 4];
-    WSContentSend_PD(HTTP_SNS_VOLTAGE,    SSPMEnergyFormat(value_chr, Sspm->voltage[module], Settings->flag2.voltage_resolution, json));
-    WSContentSend_PD(HTTP_SNS_CURRENT,    SSPMEnergyFormat(value_chr, Sspm->current[module], Settings->flag2.current_resolution, json));
-    WSContentSend_PD(HTTP_SNS_POWER,      SSPMEnergyFormat(value_chr, Sspm->active_power[module], Settings->flag2.wattage_resolution, json));
-    char valu2_chr[FLOATSZ * 4];
-    char valu3_chr[FLOATSZ * 4];
-    WSContentSend_PD(HTTP_SSPMENERGY_SNS, SSPMEnergyFormat(value_chr, Sspm->apparent_power[module], Settings->flag2.wattage_resolution, json),
-                                          SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[module], Settings->flag2.wattage_resolution, json),
-                                          SSPMEnergyFormat(valu3_chr, Sspm->total[module], Settings->flag2.energy_resolution, json));
+    WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+    for (uint32_t i = 0; i < 4; i++) {
+      WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay_base +i);
+    }
+    WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
+    char value_chr[SSPM_SIZE];
+    WSContentSend_PD(HTTP_SSPM_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[module], Settings->flag2.voltage_resolution, json));
+    WSContentSend_PD(HTTP_SSPM_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[module], Settings->flag2.current_resolution, json));
+    WSContentSend_PD(HTTP_SSPM_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[module], Settings->flag2.wattage_resolution, json));
+    char valu2_chr[SSPM_SIZE];
+    char valu3_chr[SSPM_SIZE];
+    WSContentSend_PD(HTTP_SSPM_ENERGY,  SSPMEnergyFormat(value_chr, Sspm->apparent_power[module], Settings->flag2.wattage_resolution, json),
+                                        SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[module], Settings->flag2.wattage_resolution, json),
+                                        SSPMEnergyFormat(valu3_chr, Sspm->total[module], Settings->flag2.energy_resolution, json));
+    WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
   }
 }
 
@@ -1123,8 +1123,7 @@ void CmndSSPMScan(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv86(uint8_t function)
-{
+bool Xdrv86(uint8_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {
@@ -1140,8 +1139,6 @@ bool Xdrv86(uint8_t function)
         break;
       case FUNC_SET_DEVICE_POWER:
         result = SSPMSetDevicePower();
-        break;
-      case FUNC_EVERY_SECOND:
         break;
       case FUNC_JSON_APPEND:
         SSPMEnergyShow(true);
