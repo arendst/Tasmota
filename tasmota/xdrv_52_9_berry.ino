@@ -296,6 +296,17 @@ void BerryObservability(bvm *vm, int event...) {
 }
 
 /*********************************************************************************************\
+ * Adde Berry metrics to teleperiod
+\*********************************************************************************************/
+void BrShowState(void);
+void BrShowState(void) {
+  // trigger a gc first
+  be_gc_collect(berry.vm);
+  ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
+    berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
+}
+
+/*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
 void BerryInit(void) {
