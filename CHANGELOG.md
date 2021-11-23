@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Preliminary support for Tasmota Apps (.tapp extesions)
 - Berry support for neopixel (WS2812, SK6812)
 - Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages (#13750)
+- OTA over HTTPS
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
