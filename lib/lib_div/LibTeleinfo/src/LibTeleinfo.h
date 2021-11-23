@@ -149,6 +149,7 @@ class TInfo
     uint8_t       valuesDump(void);
     char *        valueGet(char * name, char * value);
     char *        valueGet_P(const char * name, char * value);
+    int           labelCount();
     boolean       listDelete();
     unsigned char calcChecksum(char *etiquette, char *valeur, char *horodate=NULL) ;
 
@@ -157,7 +158,6 @@ class TInfo
     ValueList *   valueAdd (char * name, char * value, uint8_t checksum, uint8_t * flags, char * horodate=NULL);
     boolean       valueRemove (char * name);
     boolean       valueRemoveFlagged(uint8_t flags);
-    int           labelCount();
     uint32_t      horodate2Timestamp( char * pdate) ;
     void          customLabel( char * plabel, char * pvalue, uint8_t * pflags) ;
     ValueList *   checkLine(char * pline) ;
