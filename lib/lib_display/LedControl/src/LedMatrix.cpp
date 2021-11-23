@@ -62,6 +62,11 @@ LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, un
     setIntensity(7);
 }
 
+void LedMatrix::power(bool on)
+{
+    shutdown(!on); // shut down on power off
+}
+
 bool LedMatrix::drawText( const char *str)
 {
     strncpy(textBuf, str, TEXT_BUFFER_SIZE -1);
@@ -70,6 +75,7 @@ bool LedMatrix::drawText( const char *str)
     textWidth = strlen(textBuf) * charWidth;
     if(textWidth < displayWidth)
     {
+        clear();
         textPosX = (displayWidth - textWidth) / 2; // center
     }
     else
@@ -78,7 +84,6 @@ bool LedMatrix::drawText( const char *str)
         // Append a space between end of text and the beginning of the repeting text.
         appendSpace();
     }
-    clear();
     drawTextAt(textBuf, textPosX, textPosY);
     refresh(); // refresh display with new string content
     return true;
@@ -102,7 +107,7 @@ bool LedMatrix::scrollText()
     if(textWidth < displayWidth) return false; // do not scroll when text fits into the display
 
     textPosX--;
-    if(textPosX + textWidth < 0)
+    if(textPosX + textWidth < (int)0)
     {
         textPosX = 0; // start from the beginning after text scrolled out of display;
     }
@@ -255,7 +260,7 @@ void LedMatrix::refresh()
 void LedMatrix::refreshByteOfBuffer(int i)
 {
     int line = i / modulesPerRow;
-    int addr = line / 8 + i % modulesPerRow;
+    int addr = (line / 8) * modulesPerRow + i % modulesPerRow;
     byte b = buffer[i];
     if (moduleOrientation == ORIENTATION_NORMAL || moduleOrientation == ORIENTATION_UPSIDE_DOWN)
     {

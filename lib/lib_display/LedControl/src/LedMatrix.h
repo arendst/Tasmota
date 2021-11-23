@@ -60,11 +60,11 @@ class LedMatrix
         ModuleOrientation moduleOrientation;
         byte buffer[MATRIX_BUFFER_SIZE];
         LedControl* ledControl;
-        const unsigned int charWidth = 6;
-        const unsigned int charHeight = 8;
+        const int charWidth = 6;
+        const int charHeight = 8;
         char textBuf[TEXT_BUFFER_SIZE];
         char appendTextBuf[TEXT_APPEND_BUFFER_SIZE];
-        unsigned int textWidth; // width of text [pixel]
+        int textWidth; // width of text [pixel]
         int textPosX; // horizontal pixel position of scrolling text
         int textPosY; // vertical pixelposition of scrolling text;
 

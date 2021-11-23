@@ -131,16 +131,22 @@ and setting it to 3 alternates between time and date.
 \*********************************************************************************************/
 
 #define XDSP_19 19
-#define CMD_MAX_LEN 55
 
+#include <time.h> 
 #include <LedMatrix.h>
 
-LedMatrix *max7219_Matrix;
-bool max2791Matrix_init_done = false;
-byte modulesPerRow = 4;
-byte modulesPerCol = 1;
+LedMatrix *max7219_Matrix = nullptr;
+bool max2791Matrix_initDriver_done = false;
+struct
+{
+    byte modulesPerRow = 4;
+    byte modulesPerCol = 1;
+    bool show_clock = false;
+    const char* timeFormat;
 
-bool MAX7291Matrix_init(void)
+} LedMatrix_settings;
+
+bool MAX7291Matrix_initDriver(void)
 {
     if (!PinUsed(GPIO_MAX7219DIN) || !PinUsed(GPIO_MAX7219CLK) || !PinUsed(GPIO_MAX7219CS))
     {
@@ -151,27 +157,79 @@ bool MAX7291Matrix_init(void)
     Settings->display_model = XDSP_19;
     if (Settings->display_width) // [pixel]
     {
-        modulesPerRow = (Settings->display_width - 1) / 8 + 1;
+        LedMatrix_settings.modulesPerRow = (Settings->display_width - 1) / 8 + 1;
     }
-    Settings->display_width = 8 * modulesPerRow;
+    Settings->display_width = 8 * LedMatrix_settings.modulesPerRow;
     Settings->display_cols[0] = Settings->display_width;
     if (Settings->display_height) // [pixel]
     {
-        modulesPerCol = (Settings->display_height - 1) / 8 + 1;
+        LedMatrix_settings.modulesPerCol = (Settings->display_height - 1) / 8 + 1;
     }
-    Settings->display_height = 8 * modulesPerCol;
+    Settings->display_height = 8 * LedMatrix_settings. modulesPerCol;
     Settings->display_rows = Settings->display_height;
     Settings->display_cols[1] = Settings->display_height;
-    max7219_Matrix = new LedMatrix(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), modulesPerRow, modulesPerCol);
+    max7219_Matrix = new LedMatrix(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), LedMatrix_settings.modulesPerRow, LedMatrix_settings.modulesPerCol);
+    max2791Matrix_initDriver_done = true;
+
+    return MAX7291Matrix_init();
+}
+
+bool MAX7291Matrix_init(void)
+{
     int intensity = GetDisplayDimmer16(); // 0..15
     max7219_Matrix->setIntensity(intensity);
     int orientation = Settings->display_rotate;
     max7219_Matrix->setOrientation((LedMatrix::ModuleOrientation)orientation );
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: MAX7291Matrix_init %dx%d modules, orientation: %d, intensity: %d"), modulesPerRow , modulesPerCol, orientation, intensity);
-    max2791Matrix_init_done = true;
+    AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_init %dx%d modules, orientation: %d, intensity: %d"), LedMatrix_settings.modulesPerRow , LedMatrix_settings.modulesPerCol, orientation, intensity);
 
-    max7219_Matrix->test();
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: display test"));
+    //max7219_Matrix->test();
+    AddLog(LOG_LEVEL_INFO, PSTR("MTX: display test"));
+    return true;
+}
+
+bool MAX7291Matrix_clock(void)
+{
+    LedMatrix_settings.show_clock = XdrvMailbox.payload;
+    if (ArgC() == 0)
+        XdrvMailbox.payload = 1;
+    if (XdrvMailbox.payload > 1)
+    {
+        LedMatrix_settings.timeFormat = "%H:%M";
+        if(LedMatrix_settings.modulesPerRow > 6)
+        {
+            LedMatrix_settings.timeFormat = "%H:%M:%S";
+        }
+        XdrvMailbox.payload = 2;
+    }
+    else
+    {
+        LedMatrix_settings.timeFormat = "%I:%M";
+        if(LedMatrix_settings.modulesPerRow > 6)
+        {
+            LedMatrix_settings.timeFormat = "%I:%M:%S";
+        }
+        XdrvMailbox.payload = 1;
+    }
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: LedMatrix_settings.show_clock %d, timeFormat %s"), LedMatrix_settings.show_clock, LedMatrix_settings.timeFormat);
+
+    //max7219_Matrix->clearDisplay();
+    MAX7291Matrix_showTime();
+    return true;
+}
+
+bool MAX7291Matrix_showTime()
+{
+    time_t rawtime;
+    struct tm *timeinfo;
+    char timeStr[10];
+
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(timeStr, 10, LedMatrix_settings.timeFormat, timeinfo);
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: showTime:%s"), timeStr);
+
+    max7219_Matrix->drawText(timeStr);
     return true;
 }
 
@@ -179,14 +237,20 @@ bool Xdsp19(uint8_t function)
 {
     bool result = false;
 
-    if (FUNC_DISPLAY_INIT_DRIVER == function)
+    if (FUNC_DISPLAY_INIT_DRIVER == function && !max2791Matrix_initDriver_done )
     {
-        result = MAX7291Matrix_init();
+        result = MAX7291Matrix_initDriver();
     }
-    else if (max7219_Matrix && (XDSP_19 == Settings->display_model))
+    else if (max2791Matrix_initDriver_done && max7219_Matrix && (XDSP_19 == Settings->display_model))
     {
         switch (function)
         {
+        case FUNC_DISPLAY_INIT:
+            result = MAX7291Matrix_init();
+            break;
+        case FUNC_DISPLAY_POWER:
+            max7219_Matrix->power(disp_power!=0);
+            break;
         case FUNC_DISPLAY_MODEL:
             result = true;
             break;
@@ -195,6 +259,9 @@ bool Xdsp19(uint8_t function)
             break;
         case FUNC_DISPLAY_DIM:
             result = max7219_Matrix->setIntensity(GetDisplayDimmer16());
+            break;
+        case FUNC_DISPLAY_CLOCK:
+            result = MAX7291Matrix_clock();
             break;
         case FUNC_DISPLAY_SEVENSEG_TEXT:
         case FUNC_DISPLAY_SEVENSEG_TEXTNC:
@@ -205,12 +272,15 @@ bool Xdsp19(uint8_t function)
         case FUNC_DISPLAY_RAW:
         case FUNC_DISPLAY_LEVEL:
         case FUNC_DISPLAY_SCROLLTEXT:
-        case FUNC_DISPLAY_CLOCK:
         case FUNC_DISPLAY_DRAW_STRING:
             result = max7219_Matrix->drawText(dsp_str);
             break;
         case FUNC_DISPLAY_EVERY_SECOND:
-            //result = max7219_Matrix->scrollText();
+            if (LedMatrix_settings.show_clock)
+            {
+                result = MAX7291Matrix_showTime();
+            }
+
             break;
         case FUNC_DISPLAY_EVERY_50_MSECOND:
             result = max7219_Matrix->scrollText();
