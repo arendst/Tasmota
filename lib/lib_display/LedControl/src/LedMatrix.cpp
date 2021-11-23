@@ -25,6 +25,7 @@
  */
 
 #include "LedMatrix.h"
+#include "font_6x8_horizontal_MSB.h"
 
 // public
 LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, unsigned int rows)
@@ -45,22 +46,116 @@ LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, un
 
     modulesPerRow = colums;
     modulesPerCol = rows;
-    width = colums * 8;
-    height = rows * 8;
+    displayWidth = colums * 8;
+    displayHeight = rows * 8;
     modules = colums * rows;
     moduleOrientation = ORIENTATION_UPSIDE_DOWN;
     ledControl = new LedControl(dataPin, clkPin, csPin, modules);
+    textBuf[0] = 0;
+    textWidth = 0;
+    textPosX = 0;
+    textPosY = 0;
+    appendTextBuf[0] = 0;
+    setScrollAppendText("   ");
     shutdown(false); // false: on, true: off
     clear();
     setIntensity(7);
 }
 
+bool LedMatrix::drawText( const char *str)
+{
+    strncpy(textBuf, str, TEXT_BUFFER_SIZE -1);
+    textPosX = 0;
+    textPosY = 0;
+    textWidth = strlen(textBuf) * charWidth;
+    if(textWidth < displayWidth)
+    {
+        textPosX = (displayWidth - textWidth) / 2; // center
+    }
+    else
+    {
+        // The text ist longer than the display width. Scrolling is needed.
+        // Append a space between end of text and the beginning of the repeting text.
+        appendSpace();
+    }
+    clear();
+    drawTextAt(textBuf, textPosX, textPosY);
+    refresh(); // refresh display with new string content
+    return true;
+}
+
+bool LedMatrix::drawTextAt( const char *str, const int x, const int y )
+{
+    // draw character by character
+    unsigned int len = strlen(str);
+    int xPos = x;
+    for (unsigned int i = 0; i < len; i++)
+    {
+        drawCharAt(str[i], xPos, y);
+        xPos += charWidth;
+    }
+    return true;
+}
+
+bool LedMatrix::scrollText()
+{
+    if(textWidth < displayWidth) return false; // do not scroll when text fits into the display
+
+    textPosX--;
+    if(textPosX + textWidth < 0)
+    {
+        textPosX = 0; // start from the beginning after text scrolled out of display;
+    }
+    drawTextAt(textBuf, textPosX, textPosY);
+
+    int startOfRepeatingTextPos = textPosX + textWidth;
+    if(startOfRepeatingTextPos < displayWidth)
+    {
+        // Draw repeating text.
+        drawTextAt(textBuf, startOfRepeatingTextPos, textPosY);
+    }
+    refresh();
+    return true;
+}
+
+bool LedMatrix::drawCharAt( char c, const int x, const int y)
+{
+    // ignore when the character position is not visible on the display
+    bool visible = (
+        x > 0 - (int)charWidth  && x < (int)displayWidth &&
+        y > 0 - (int)charHeight && y < (int)displayHeight
+    );
+    if (!visible) return false;
+
+    // ignore the leading bits above charWidth of the font definition
+    static const byte charOffset = 8 - charWidth;
+
+    for (byte charY = 0; charY < charHeight; charY++)
+    {
+        char pixelRow = (font[c][charY]) << charOffset; // skip the first bits when the character width is smaller than 8 pixel
+        for (byte charX = 0; charX < charWidth; charX++)
+        {
+            bool pixel = (pixelRow & 0x80); // pixel=true when upper bit is set
+            setPixel(x + charX, y + charY, pixel);
+            pixelRow = pixelRow << 1; // next pixel
+        }
+    }
+    return true;
+}
+
+bool LedMatrix::clearDisplay(void)
+{
+    textBuf[0] = 0;
+    memset(textBuf, 0, TEXT_BUFFER_SIZE);
+    textWidth = 0;
+    clear();
+    return true;
+}
+
+
 bool LedMatrix::clear(void)
 {
-    for (int i = 0; i < MATRIX_BUFFER_SIZE; i++)
-    {
-        buffer[i] = 0;
-    }
+    memset(buffer, 0, MATRIX_BUFFER_SIZE);
     for (int addr = 0; addr < modules; addr++)
     {
         ledControl->clearDisplay(addr);
@@ -83,14 +178,20 @@ bool LedMatrix::setOrientation(ModuleOrientation orientation)
     return true;
 }
 
-bool LedMatrix::setPixel(int x, int y, bool on)
+bool LedMatrix::setScrollAppendText(const char* append )
 {
-    if (x >= width || y >= height)
+    strncpy(appendTextBuf, append, TEXT_APPEND_BUFFER_SIZE -1);
+    return (strlen(append) < TEXT_APPEND_BUFFER_SIZE);
+}
+
+bool LedMatrix::setPixel(const int x, const int y, bool on)
+{
+    if (x >= displayWidth || y >= displayHeight)
         return false;
 
     int modul_col = x / 8; // x pos divided by 8 is the index of the modul to the right
-    int buffer_pos = modul_col + y * width / 8;
-    byte buffer_byte = 8 >> (x % 8);
+    int buffer_pos = modul_col + y * modulesPerRow;
+    byte buffer_byte = 0x80 >> (x % 8);
     if (on)
     {
         buffer[buffer_pos] |= buffer_byte; // set bit
@@ -99,12 +200,12 @@ bool LedMatrix::setPixel(int x, int y, bool on)
     {
         buffer[buffer_pos] &= ~buffer_byte; // reset bit
     }
-    refreshByteOfBuffer(buffer_pos);
     return true;
 }
 
 void LedMatrix::test()
 {
+    /*
     const static byte testMatrix[] PROGMEM = {
         B00000010, B00111100, B00111100, B00001000,
         B00000110, B01000010, B01000010, B00010000,
@@ -112,7 +213,7 @@ void LedMatrix::test()
         B00000010, B00000100, B00001100, B01000100,
         B00000010, B00011000, B00000010, B01111110,
         B00000010, B00100000, B01000010, B00000100,
-        B00000000, B11111110, B00111100, B00000100,
+        B00000000, B01111110, B00111100, B00000100,
         B00000000, B00000000, B00000000, B00000000,
     };
     for (int i = 0; i < 32; i++)
@@ -120,6 +221,17 @@ void LedMatrix::test()
         buffer[i] = testMatrix[i];
     }
     refresh();
+    */
+   drawText("1234567890");
+   delay(1000);
+   for( int i=0; i<320; i++)
+   {
+       delay(50);
+       scrollText();
+   }
+   //drawCharAt(0x31, 1, 0);
+   //setPixel(1,30);
+   //refresh();
 }
 
 // private
@@ -134,7 +246,7 @@ bool LedMatrix::shutdown(bool b)
 
 void LedMatrix::refresh()
 {
-    for (int i = 0; i < modulesPerRow * height; i++)
+    for (int i = 0; i < modulesPerRow * displayHeight; i++)
     {
         refreshByteOfBuffer(i);
     }
@@ -183,4 +295,10 @@ byte LedMatrix::revereBitorder (byte b)
         0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf, 
     };
     return (lookup[b & 0b1111] << 4) | lookup[b >> 4];
+}
+
+void LedMatrix::appendSpace()
+{
+    strncat(textBuf, appendTextBuf, TEXT_BUFFER_SIZE -1);
+    textWidth = strlen(textBuf) * charWidth;
 }

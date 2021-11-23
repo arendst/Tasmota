@@ -31,6 +31,8 @@
 
 #define MATRIX_MAX_MODULES 32
 #define MATRIX_BUFFER_SIZE MATRIX_MAX_MODULES * 8 // 8 bytes per modul. One byte represents 8 LEDs.
+#define TEXT_BUFFER_SIZE 256
+#define TEXT_APPEND_BUFFER_SIZE 16
 
 
 /**
@@ -52,12 +54,19 @@ class LedMatrix
     private:
         unsigned int modulesPerRow;
         unsigned int modulesPerCol;
-        unsigned int width; // matrix width [pixel]
-        unsigned int height; // matrix height [pixel]
+        unsigned int displayWidth; // matrix width [pixel]
+        unsigned int displayHeight; // matrix height [pixel]
         unsigned int modules; // number of 8x8 mudules
         ModuleOrientation moduleOrientation;
         byte buffer[MATRIX_BUFFER_SIZE];
         LedControl* ledControl;
+        const unsigned int charWidth = 6;
+        const unsigned int charHeight = 8;
+        char textBuf[TEXT_BUFFER_SIZE];
+        char appendTextBuf[TEXT_APPEND_BUFFER_SIZE];
+        unsigned int textWidth; // width of text [pixel]
+        int textPosX; // horizontal pixel position of scrolling text
+        int textPosY; // vertical pixelposition of scrolling text;
 
 
     public:
@@ -73,7 +82,7 @@ class LedMatrix
          * @brief Set all LEDs off.
          * 
          */
-        bool clear(void);
+        bool clearDisplay(void);
 
         /**
          * @brief Set the brightness of the display
@@ -81,6 +90,13 @@ class LedMatrix
          * @param dim 0..15 
          */
         bool setIntensity(byte dim);
+
+        /**
+         * @brief Set the a pending string to the scrolling text to set a distance to te repeating text. Usually some spaces.
+         * 
+         * @param append text to append to the scrolling text before repeating.
+         */
+        bool setScrollAppendText(const char* append );
 
         /**
          * @brief Switches the display on or off
@@ -97,17 +113,46 @@ class LedMatrix
         bool setOrientation(ModuleOrientation orientation);
 
         /**
+         * @brief draw a string to the display.
+         * When the text fits into the size of the display, it will be shown in the center.
+         * When the text is longer than than the display width, it can be scrolled per pixel with function scrollText().
+         * 
+         * @param str string to display
+         */
+        bool drawText( const char *str );
+
+        /**
+         * @brief dwaws a character string to the display. The position (x,y) is used for the upper left pixtel of the text. 
+         * Existing text before the x position will not be cleared.
+         * 
+         * @param str string to display
+         * @param x horizantal pixel position to start with string (default 0)
+         * @param y vertical pixel position for the top position of the string (default 0)
+         */
+        bool drawTextAt( const char *str, const int x, const int y );
+
+        /**
+         * @brief Scroll the current teext one picel to the left.
+         * Repeat with from start when end of text reached.
+         * 
+         */
+        bool scrollText();
+
+        /**
          * @brief Set the Pixel object
          * 
          * @param x horizontal position from left
          * @param y vertical position from top
          * @param on true: on, false: off 
          */
-        bool setPixel( int x, int y, bool on);
+        bool setPixel( const int x, const int y, bool on=true);
         void test();
 
     private:
+        bool drawCharAt( char c, int x, int y );
+
         bool shutdown(bool b);
+        bool clear(void);
 
         /**
          * @brief sends the changed content of the buffer to the display
@@ -118,6 +163,8 @@ class LedMatrix
         void refreshByteOfBuffer( int i);
 
         byte revereBitorder (byte b);
+
+        void appendSpace();
 
 };
 

@@ -175,31 +175,6 @@ bool MAX7291Matrix_init(void)
     return true;
 }
 
-// /*********************************************************************************************\
-// * Clears the display
-// * Command:  DisplayText
-// \*********************************************************************************************/
-bool MAX7291Matrix_Text()
-{
-    char sString[CMD_MAX_LEN + 1];
-    subStr(sString, XdrvMailbox.data, ",", 1);
-    max7219_Matrix->clear();
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: sString %s"), sString);
-
-    // test
-    uint8_t length = strlen(sString);
-    //if(length > modulesPerRow)
-    length = modulesPerRow;
-
-    for (int addr = 0; addr < length; addr++)
-    {
-        max7219_Matrix->setPixel(addr, addr, true);
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: setPixel() %d, %d)"), addr, addr);
-    }
-
-    return true;
-}
-
 bool Xdsp19(uint8_t function)
 {
     bool result = false;
@@ -216,7 +191,7 @@ bool Xdsp19(uint8_t function)
             result = true;
             break;
         case FUNC_DISPLAY_CLEAR:
-            result = max7219_Matrix->clear();
+            result = max7219_Matrix->clearDisplay();
             break;
         case FUNC_DISPLAY_DIM:
             result = max7219_Matrix->setIntensity(GetDisplayDimmer16());
@@ -232,12 +207,13 @@ bool Xdsp19(uint8_t function)
         case FUNC_DISPLAY_SCROLLTEXT:
         case FUNC_DISPLAY_CLOCK:
         case FUNC_DISPLAY_DRAW_STRING:
-            result = MAX7291Matrix_Text();
+            result = max7219_Matrix->drawText(dsp_str);
+            break;
+        case FUNC_DISPLAY_EVERY_SECOND:
+            //result = max7219_Matrix->scrollText();
             break;
         case FUNC_DISPLAY_EVERY_50_MSECOND:
-        case FUNC_DISPLAY_EVERY_SECOND:
-            // ignore
-            return false;
+            result = max7219_Matrix->scrollText();
         default:
             result = false;
         }
