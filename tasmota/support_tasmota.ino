@@ -1213,8 +1213,18 @@ void Every250mSeconds(void)
           char version[50];
           snprintf_P(version, sizeof(version), PSTR("%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s %s"), full_ota_url, version);
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+          HTTPClientLight OTAclient;
+          if (!OTAclient.begin(full_ota_url)) {
+            AddLog(LOG_LEVEL_INFO, "OTA: unsupported protocol");
+            ota_result = -999;
+          } else {
+            ota_result = (HTTP_UPDATE_FAILED != httpUpdateLight.update(OTAclient, version));
+          }
+#else // standard OTA over HTTP
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, full_ota_url, version));
+#endif
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();

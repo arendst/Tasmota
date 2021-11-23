@@ -35,6 +35,9 @@
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
+#ifdef ESP32
+  #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
+#endif
 #include <StreamString.h>                   // Webserver, Updater
 #include <ext_printf.h>
 #include <SBuffer.hpp>
