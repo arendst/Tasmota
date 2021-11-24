@@ -718,11 +718,11 @@ void ShutterRelayChanged(void)
           TasmotaGlobal.last_source = SRC_SHUTTER; // avoid switch off in the next loop
           if (Shutter[i].direction != 0 ) Shutter[i].target_position = Shutter[i].real_position;
       }
+      if (powerstate_local > 0) {
+        Shutter[i].tiltmoving = 0;
+      }
       switch (ShutterGlobal.position_mode) {
         // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
-        if (powerstate_local > 0) {
-          Shutter[i].tiltmoving = 0;
-        }
         case SHT_TIME_UP_DOWN:
         case SHT_COUNTER:
         case SHT_PWM_VALUE:
@@ -766,7 +766,7 @@ void ShutterRelayChanged(void)
 
 
 			  } // switch (ShutterGlobal.position_mode)
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Target %ld, Powerstatelocal %d"), i+1, Shutter[i].target_position, powerstate_local);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Target %ld, Power: %d, tiltmv: %d"), i+1, Shutter[i].target_position, powerstate_local,Shutter[i].tiltmoving);
 		 } // if (manual_relays_changed)
   } // for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++)
 }
