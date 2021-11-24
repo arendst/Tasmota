@@ -1,5 +1,5 @@
 /*
-  xdsp_19_max7219_matrix.ino.ino - Support for MAX7219 based dot matrix displays for Tasmota
+  xdsp_19_max7219_matrix.ino.ino - Support for MAX7219 based 8x8 dot matrix displays for Tasmota
 
   Copyright (C) 2021  Michael Beuss
 
@@ -20,111 +20,63 @@
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_MAX7219_MATRIX
 /*********************************************************************************************\
-  This driver enables the display of ascii text on MAX7219 based LED dot matrix modules.
+  This driver enables the display of ascii text on MAX7219 based 8x8 LED dot matrix modules (1088AS).
 
-  Connect the MAX7219 display module's pins to any free GPIOs of the ESP8266 or ESP32 module
-  and assign the pins as follows from Tasmota's GUI:
+  Connect the MAX7219 display module's pins to any free GPIOs of the ESP8266 or ESP32 module.
+  VCC should be 5V. Depending on the number of used modules and the brightness, the used current can be more than 500 mA.
+
+  Connect the 5 outgoing pins (VCC, GND, DI, CS, CLK) of the first module to the next one. 
+  With this you can connect up to 32 modules. 
+  To extend the display hieght, multiple rows are supported. Each module row starts from left to right.
+
+  Assign the pins as follows from Tasmota's GUI:
 
   DIN hardware pin --> "MAX7219 DIN"
   CS hardware pin --> "MAX7219 CS"
   CLK hardware pin --> "MAX7219 CLK"
 
+
   Once the GPIO configuration is saved and the ESP8266/ESP32 module restarts,
   set the Display Model to 19 and Display Mode to 0
-  using the command "Backlog DisplayModel 15 ; DisplayMode 0"
 
-  If your display is a TM1637 with 6 digits, set Display Width to the number of digits your
-  display has, using the command "DisplayWidth 6".
+  Depending on order oth the wired 8x8 matrix modules you have got a display of size pixel_width x pixel_height.
+  The size has to be set with the commands "DisplayWidth <pixel_width>" and "DisplayHeight <pixel_height>"
 
   After the ESP8266/ESP32 module restarts again, turn ON the display with the command "Power 1"
 
+
   Now, the following "Display" commands can be used:
 
+  DisplayText  text 
+    Sends the text to the display. 
+    If the text fits into the display, it is shown in the center.
+    Otherwise it scrolls to the left and repeats as long it is cleared or new "DisplayText" overwrites it.
+
+  DisplayDimmer [0..100]
+    Sets the intensity of the display.
+
+  Power [ON|OFF]
+    Sitches the display on or off. When "off", the display buffer is not cleared and will be shown again when after "Power ON". 
+    Other display commands are still active when off.
 
   DisplayClear
+    Clears the display
 
-                               Clears the display, command: "DisplayClear"
+  DisplayScrollDelay [0..15]   // default = 0
+    Sets the speed of text scroll. Smaller delay = faster scrolling.
+    The maximum scroll speed is 50ms per pixel on DisplayScrollDelay 0.
 
+  DisplayWidth [8..256]
+    Sets the pixel width of the display (8x number of modules in a row)
 
-  DisplayNumber         num [,position {0-(Settings->display_width-1))} [,leading_zeros {0|1} [,length {1 to Settings->display_width}]]]
+  DisplayHeight [8..256]
+    Sets the pixel height of the display (8x number of module rows)
 
-                               Clears and then displays number without decimal. command e.g., "DisplayNumber 1234"
-                               Control 'leading zeros', 'length' and 'position' with  "DisplayNumber 1234, <position>, <leadingZeros>, <length>"
-                               'leading zeros' can be 1 or 0 (default), 'length' can be 1 to Settings->display_width, 'position' can be 0 (left-most) to Settings->display_width (right-most).
-                               See function description below for more details.
-
-  DisplayNumberNC       num [,position {0-(Settings->display_width-1))} [,leading_zeros {0|1} [,length {1 to Settings->display_width}]]]
-
-                               Display integer number as above, but without clearing first. e.g., "DisplayNumberNC 1234". Usage is same as above.
-
-
-
-  DisplayFloat          num [,position {0-(Settings->display_width-1)} [,precision {0-Settings->display_width} [,length {1 to Settings->display_width}]]]
-
-                               Clears and then displays float (with decimal point)  command e.g., "DisplayFloat 12.34"
-                               See function description below for more details.
-
-
-
-  DisplayFloatNC        num [,position {0-(Settings->display_width-1)} [,precision {0-Settings->display_width} [,length {1 to Settings->display_width}]]]
-
-                               Displays float (with decimal point) as above, but without clearing first. command e.g., "DisplayFloatNC 12.34"
-                               See function description below for more details.
-
-
-
-  DisplayRaw            position {0-(Settings->display_width-1)},length {1 to Settings->display_width}, num1 [, num2[, num3[, num4[, ...upto Settings->display_width numbers]]]]]
-
-                               Takes upto Settings->display_width comma-separated integers (0-255) and displays raw segments. Each number represents a
-                               7-segment digit. Each 8-bit number represents individual segments of a digit.
-                               For example, the command "DisplayRaw 0, 4, 255, 255, 255, 255" would display "[8.8.8.8.]"
-
-
-
-  DisplayText           text [, position {0-(Settings->display_width-1)} [,length {1 to Settings->display_width}]]
-
-                               Clears and then displays basic text.  command e.g., "DisplayText ajith vasudevan"
-                               Control 'length' and 'position' with  "DisplayText <text>, <position>, <length>"
-                               'length' can be 1 to Settings->display_width, 'position' can be 0 (left-most) to Settings->display_width-1 (right-most)
-                               A caret(^) symbol in the text input is dispayed as the degrees(°) symbol. This is useful for displaying Temperature!
-                               For example, the command "DisplayText 22.5^" will display "22.5°".
-
-
-  DisplayTextNC         text [, position {0-Settings->display_width-1} [,length {1 to Settings->display_width}]]
-
-                               Clears first, then displays text. Usage is same as above.
-
-
-
-  DisplayScrollText     text [, num_loops]
-
-                              Displays scrolling text indefinitely, until another Display- command (other than DisplayScrollText 
-                              or DisplayScrollDelay is issued). Optionally, stop scrolling after num_loops iterations.
-
-
-
-  DisplayScrollDelay delay {0-15}   // default = 4
-
-                               Sets the speed of text scroll. Smaller delay = faster scrolling.
-
-
-
-  DisplayLevel          num {0-100}
-
-                               Display a horizontal bar graph (0-100) command e.g., "DisplayLevel 50" will display [||||    ]
-
-
-
-  DisplayClock  1|2|0
-
-                               Displays a clock.
-                               Commands "DisplayClock 1"     // 12 hr format
-                                        "DisplayClock 2"     // 24 hr format
-                                        "DisplayClock 0"     // turn off clock
-
-
-In addition, setting DisplayMode to 1 shows the time, setting it to 2 shows the date
-and setting it to 3 alternates between time and date.
+  DisplayClock  [0|1|2]
+    Displays a clock.
+    Commands "DisplayClock 1"     // 12 hr format
+            "DisplayClock 2"     // 24 hr format
+            "DisplayClock 0"     // turn off clock
 
 
 
@@ -132,8 +84,11 @@ and setting it to 3 alternates between time and date.
 
 #define XDSP_19 19
 
-#include <time.h> 
 #include <LedMatrix.h>
+
+#ifdef USE_DISPLAY_MODES1TO5
+#include <time.h>
+#endif
 
 LedMatrix *max7219_Matrix = nullptr;
 bool max2791Matrix_initDriver_done = false;
@@ -141,11 +96,14 @@ struct
 {
     byte modulesPerRow = 4;
     byte modulesPerCol = 1;
+    byte scroll_delay = 0;
+    byte scroll_iteration = 0;
     bool show_clock = false;
-    const char* timeFormat;
+    const char *timeFormat;
 
 } LedMatrix_settings;
 
+// FUNC_DISPLAY_INIT_DRIVER
 bool MAX7291Matrix_initDriver(void)
 {
     if (!PinUsed(GPIO_MAX7219DIN) || !PinUsed(GPIO_MAX7219CLK) || !PinUsed(GPIO_MAX7219CS))
@@ -174,6 +132,7 @@ bool MAX7291Matrix_initDriver(void)
     return MAX7291Matrix_init();
 }
 
+// FUNC_DISPLAY_INIT
 bool MAX7291Matrix_init(void)
 {
     int intensity = GetDisplayDimmer16(); // 0..15
@@ -187,6 +146,39 @@ bool MAX7291Matrix_init(void)
     return true;
 }
 
+// FUNC_DISPLAY_SCROLLDELAY
+bool MAX7291Matrix_scrollDelay(void)
+{
+  if (ArgC() == 0)
+  {
+    XdrvMailbox.payload = LedMatrix_settings.scroll_delay;
+    return true;
+  }
+  if (LedMatrix_settings.scroll_delay < 0)
+    LedMatrix_settings.scroll_delay = 0;
+  LedMatrix_settings.scroll_delay = XdrvMailbox.payload;
+  return true;
+}
+
+// FUNC_DISPLAY_EVERY_50_MSECOND
+bool MAX7291Matrix_scrollText(void)
+{
+    // This function is called every 50 ms.
+    // scroll_delay defines the number of cycles to be ignored until the display scrolls by one pixel to the left.
+    // e.g. scrall_delay = 4 causes a scroll each 200 ms.
+    LedMatrix_settings.scroll_iteration++;
+    if (LedMatrix_settings.scroll_delay)
+        LedMatrix_settings.scroll_iteration = LedMatrix_settings.scroll_iteration % LedMatrix_settings.scroll_delay;
+    else
+        LedMatrix_settings.scroll_iteration = 0;
+    if (LedMatrix_settings.scroll_iteration)
+        return false;
+
+    return max7219_Matrix->scrollText();
+}
+
+#ifdef USE_DISPLAY_MODES1TO5
+// FUNC_DISPLAY_CLOCK
 bool MAX7291Matrix_clock(void)
 {
     LedMatrix_settings.show_clock = XdrvMailbox.payload;
@@ -213,11 +205,11 @@ bool MAX7291Matrix_clock(void)
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: LedMatrix_settings.show_clock %d, timeFormat %s"), LedMatrix_settings.show_clock, LedMatrix_settings.timeFormat);
 
-    //max7219_Matrix->clearDisplay();
     MAX7291Matrix_showTime();
     return true;
 }
 
+// FUNC_DISPLAY_EVERY_SECOND
 bool MAX7291Matrix_showTime()
 {
     time_t rawtime;
@@ -227,11 +219,12 @@ bool MAX7291Matrix_showTime()
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     strftime(timeStr, 10, LedMatrix_settings.timeFormat, timeinfo);
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: showTime:%s"), timeStr);
 
     max7219_Matrix->drawText(timeStr);
     return true;
 }
+#endif // USE_DISPLAY_MODES1TO5
+
 
 bool Xdsp19(uint8_t function)
 {
@@ -260,30 +253,28 @@ bool Xdsp19(uint8_t function)
         case FUNC_DISPLAY_DIM:
             result = max7219_Matrix->setIntensity(GetDisplayDimmer16());
             break;
-        case FUNC_DISPLAY_CLOCK:
-            result = MAX7291Matrix_clock();
-            break;
-        case FUNC_DISPLAY_SEVENSEG_TEXT:
-        case FUNC_DISPLAY_SEVENSEG_TEXTNC:
-        case FUNC_DISPLAY_NUMBER:
-        case FUNC_DISPLAY_NUMBERNC:
-        case FUNC_DISPLAY_FLOAT:
-        case FUNC_DISPLAY_FLOATNC:
-        case FUNC_DISPLAY_RAW:
-        case FUNC_DISPLAY_LEVEL:
-        case FUNC_DISPLAY_SCROLLTEXT:
         case FUNC_DISPLAY_DRAW_STRING:
             result = max7219_Matrix->drawText(dsp_str);
+            break;
+        case FUNC_DISPLAY_SCROLLDELAY:
+            result = MAX7291Matrix_scrollDelay();
+            break;
+        case FUNC_DISPLAY_EVERY_50_MSECOND:
+            result = MAX7291Matrix_scrollText();
+            break;
+
+#ifdef USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_CLOCK:
+            result = MAX7291Matrix_clock();
             break;
         case FUNC_DISPLAY_EVERY_SECOND:
             if (LedMatrix_settings.show_clock)
             {
                 result = MAX7291Matrix_showTime();
             }
-
             break;
-        case FUNC_DISPLAY_EVERY_50_MSECOND:
-            result = max7219_Matrix->scrollText();
+#endif // USE_DISPLAY_MODES1TO5            
+
         default:
             result = false;
         }
