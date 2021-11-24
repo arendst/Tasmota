@@ -558,6 +558,8 @@ void ShutterUpdatePosition(void)
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
         if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
           AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
+          char databuf[1] = "";
+          XdrvMailbox.data = databuf;
           XdrvMailbox.payload = -99;
           XdrvMailbox.index = i+1;
           Shutter[i].tiltmoving = 1;
@@ -718,6 +720,9 @@ void ShutterRelayChanged(void)
       }
       switch (ShutterGlobal.position_mode) {
         // enum Shutterposition_mode {SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+        if (powerstate_local > 0) {
+          Shutter[i].tiltmoving = 0;
+        }
         case SHT_TIME_UP_DOWN:
         case SHT_COUNTER:
         case SHT_PWM_VALUE:
