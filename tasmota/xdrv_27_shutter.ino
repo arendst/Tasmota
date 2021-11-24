@@ -239,6 +239,14 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint32_t index)
   }
 }
 
+bool ShutterIsMoving(uint8_t i){
+  return ( Shutter[i].direction != 0 ) ? true : false;
+}
+
+int32_t ShutterGetTargetPosition(uint8_t i) {
+  return Shutter[i].target_position;
+}
+
 void ShutterInit(void)
 {
   TasmotaGlobal.shutters_present = 0;
