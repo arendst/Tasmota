@@ -109,6 +109,7 @@
 #define SSPM_FUNC_SET_SCHEME         10      // 0x0A
 #define SSPM_FUNC_GET_SCHEME         11      // 0x0B
 #define SSPM_FUNC_SET_TIME           12      // 0x0C
+#define SSPM_FUNC_IAMHERE            13      // 0x0D
 #define SSPM_FUNC_INIT_SCAN          16      // 0x10
 #define SSPM_FUNC_UNITS              21      // 0x15
 #define SSPM_FUNC_GET_ENERGY_TOTAL   22      // 0x16
@@ -371,7 +372,10 @@ void SSPMSendSetTime(void) {
   /*
    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
   AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 0c 00 0b 07 e5 0b 06 0c 39 01 00 00 02 00 04 8a 37
-  Marker  |Module id                          |Ac|Cm|Size |YY YY MM DD HH MM SS|Ln|St|Tr|  |Ix|Chksm|
+  Marker  |Module id                          |Ac|Cm|Size |YY YY MM DD HH MM SS|Ln|St|Tr   |Ix|Chksm|
+  UTC time
+  Tr = Time zone, [-12,+14], can be a decimal, such as 7.5
+
   */
   SSPMInitSend();
   SspmBuffer[16] = SSPM_FUNC_SET_TIME;
@@ -385,6 +389,20 @@ void SSPMSendSetTime(void) {
   SspmBuffer[30] = Sspm->command_sequence;
 
   SSPMSend(33);
+}
+
+void SSPMSendIAmHere(uint32_t module) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
+  AA 55 01 8b 34 32 37 39 37 34 13 4b 35 36 37 00 0d 00 00 17 35 b6
+  Marker  |Module id                          |Ac|Cm|Size |Ix|Chksm|
+
+  Response
+  AA 55 01 8b 34 32 37 39 37 34 13 4b 35 36 37 80 0d 00 01 00 17 48 b5
+  Marker  |Module id                          |Ac|Cm|Size |Rs|Ix|Chksm|
+  */
+
+
 }
 
 void SSPMSendSetRelay(uint32_t relay, uint32_t state) {
@@ -681,6 +699,36 @@ void SSPMHandleReceivedData(void) {
           Sspm->allow_updates = 1;
         }
         break;
+      case SSPM_FUNC_GET_LOG:
+        /* 0x1A
+        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1a 01 3a 00 6b 7e 32 37 39 37 34 13 4b 35 36 37
+        1e                            Number of log entries (1e = 30)
+        07 e5 0b 06 0f 25 19 02 01 00 10 byte log entry
+                                  |-- trigger 00 = App, 01 = Device, 02 = Overload, 03 = Overtemp
+                               |----- state   00 = Off, 01 = On
+                            |-------- Channel 00 to 03
+                         |----------- Second  = 25
+                      |-------------- Minute  = 37
+                   |----------------- Hour    = 15
+                |-------------------- Day     =  6
+             |----------------------- Month   = 11 = November
+        ----------------------------- Year    07 e5 = 2021
+        07 e5 0b 06 0f 1f 08 00 00 01
+        07 e5 0b 06 0f 1f 04 02 00 01
+        07 e5 0b 06 0f 1e 32 01 00 01
+        07 e5 0b 06 0f 1e 1e 01 01 01
+        07 e5 0b 06 0f 18 38 02 01 01
+        07 e5 0b 06 0f 12 38 00 01 01
+        07 e5 0b 06 0e 37 36 03 00 00
+        07 e5 0b 06 0e 37 36 01 00 00
+        07 e5 0b 06 0e 37 1e 03 01 00
+        07 e5 0b 06 0e 36 37 01 01 00
+        ...
+        07 e5 0b 06 0d 30 2d 03 00 01 09 89 fe
+        */
+
+        break;
       case SSPM_FUNC_ENERGY_PERIOD:
         /* 0x1B
         Response after start energy period
@@ -703,9 +751,10 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 1C 8B 34 32 37 39 37 34 13 4B 35 36 37 08 02 04 00 DC 14 01 C1 3D 00 10 19 01 C2 29 4B 37 6B 26
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 1c 8b 34 32 37 39 37 34 13 4b 35 36 37 08 00 44 00 e1 35 00 9a 3e 00 01 45 00 9a 38 00 08 8b ae
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 1c 8b 34 32 37 39 37 34 13 4b 35 36 37 08 00 4a 00 e1 22 00 61 4d 00 2c 38 00 a8 28 20 26 21 70
-                                                                                                    |Ch|Curre|Voltage |ActivePo|Reactive|Apparent|??|
+                                                                                                    |Ch|Curre|Voltage |ActivePo|Reactive|Apparent|5m|
         Values are XX XX    - number
                          XX - decimals
+        5m - 5 minutes Power Consumption (Ws)
         */
         {
           uint32_t channel = 0;
@@ -768,8 +817,9 @@ void SSPMHandleReceivedData(void) {
          0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 13 00 24 6b 7e 32 37 39 37 34 13 4b 35 36 37 04 00 00 00 82 01 00 00 14 00 00 0a 00 f0 00 00 00 0a 11 30 00 00 00 0a 02 8f cd
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 13 00 24 8b 34 32 37 39 37 34 13 4b 35 36 37 04 00 00 00 82 01 00 00 14 00 00 0a 00 f0 00 00 00 0a 11 30 00 00 00 0a 02 a0 6f
-        Marker  |                                   |Ac|Cm|Size |Module id                          |Ch|                    |Max I|Min I|Max U   |Min U   |Max P   |Min P   |Ix|Chksm|
+        Marker  |                                   |Ac|Cm|Size |Module id                          |Ch|        |Ty|        |Max I|Min I|Max U   |Min U   |Max P   |Min P   |Ix|Chksm|
                                                                                                                             |  20A| 0.1A|    240V|    0.1V|   4400W|    0.1W|
+        Ty = Type of sub-device. 130: Four-channel sub-device
         */
         if ((0x24 == Sspm->expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
           memcpy(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
