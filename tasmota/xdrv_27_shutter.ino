@@ -479,6 +479,10 @@ void ShutterPowerOff(uint8_t i)
   if (Shutter[i].direction !=0) {
     Shutter[i].direction = 0;
   }
+  if (Shutter[i].real_position == Shutter[i].start_position)  {
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Update target tilt shutter %d from %d to %d"), i+1,  Shutter[i].tilt_target_pos , Shutter[i].tilt_real_pos); 
+    Shutter[i].tilt_target_pos = Shutter[i].tilt_real_pos;
+  }
   TasmotaGlobal.rules_flag.shutter_moved = 1;
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
