@@ -3,7 +3,7 @@ name: Build_firmware_development
 on:
   workflow_dispatch:  # Manually start a workflow
   push:
-#    branches: development
+    branches: development
     paths-ignore:
     - '.github/**' # Ignore changes towards the .github directory
     - '**.md' # Do no build if *.md files changes
@@ -1386,7 +1386,7 @@ jobs:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'trigger.txt'
-        destination_repo: 'Jason2866/tmp_copy'
-        destination_branch: 'action'
+        destination_repo: 'arendst/tmp_copy'
+        destination_branch: 'action-development'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
