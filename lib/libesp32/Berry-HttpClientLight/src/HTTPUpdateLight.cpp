@@ -39,13 +39,13 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 HTTPUpdateLight::HTTPUpdateLight(void)
         : _httpClientTimeout(8000), _ledPin(-1)
 {
-    _followRedirects = HTTPC_DISABLE_FOLLOW_REDIRECTS;
+    _followRedirects = HTTPC_STRICT_FOLLOW_REDIRECTS;
 }
 
 HTTPUpdateLight::HTTPUpdateLight(int httpClientTimeout)
         : _httpClientTimeout(httpClientTimeout), _ledPin(-1)
 {
-    _followRedirects = HTTPC_DISABLE_FOLLOW_REDIRECTS;
+    _followRedirects = HTTPC_STRICT_FOLLOW_REDIRECTS;
 }
 
 HTTPUpdateLight::~HTTPUpdateLight(void)
