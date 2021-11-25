@@ -1,4 +1,4 @@
-name: Build_firmware_development
+name: Build_firmware_development_cache
 
 on:
   workflow_dispatch:  # Manually start a workflow
@@ -1360,7 +1360,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
     - name: Display files to transfer
       run: ls -R ./*
-    - name: Push Firmware files to tmp repo
+    - name: Push Firmware files to tmp_copy repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
