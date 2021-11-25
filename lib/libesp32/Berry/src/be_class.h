@@ -53,7 +53,7 @@ bclass* be_newclass(bvm *vm, bstring *name, bclass *super);
 void be_class_compress(bvm *vm, bclass *c);
 int be_class_attribute(bvm *vm, bclass *c, bstring *attr);
 void be_member_bind(bvm *vm, bclass *c, bstring *name, bbool var);
-void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p);
+void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p, bbool is_static);
 void be_prim_method_bind(bvm *vm, bclass *c, bstring *name, bntvfunc f);
 void be_closure_method_bind(bvm *vm, bclass *c, bstring *name, bclosure *cl);
 int be_class_closure_count(bclass *c);
