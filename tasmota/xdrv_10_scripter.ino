@@ -2595,6 +2595,23 @@ chknext:
 #endif
         break;
       case 'i':
+        if (!strncmp(vname, "ins(", 4)) {
+          char s1[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, s1, 0);
+          SCRIPT_SKIP_SPACES
+          char s2[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, s2, 0);
+          SCRIPT_SKIP_SPACES
+          char *cp = strstr(s1, s2);
+          if (cp) {
+            fvar = ((uint32_t)cp - (uint32_t)s1);
+          } else {
+            fvar = -1;
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
         if (!strncmp(vname, "int(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           fvar = floor(fvar);
@@ -3206,6 +3223,12 @@ chknext:
             uint8_t stopb = (*lp++ & 0x3) - 1;
             sconfig = (bits - 5) + (parity * 8) + stopb * 4;
           }
+          SCRIPT_SKIP_SPACES
+          // check for rec buffer
+          float rxbsiz = 128;
+          if (*lp!=')') {
+              lp = GetNumericArgument(lp, OPER_EQU, &rxbsiz, gv);
+          }
           fvar= -1;
           if (glob_script_mem.sp) {
             fvar == -1;
@@ -3214,7 +3237,8 @@ chknext:
               AddLog(LOG_LEVEL_INFO, PSTR("warning: pins already used"));
             }
 
-            glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, 1);
+            glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, 1, 0, rxbsiz);
+
             if (glob_script_mem.sp) {
               uint32_t config;
 #ifdef ESP8266
@@ -3226,8 +3250,10 @@ chknext:
 #endif // ESP32
               fvar = glob_script_mem.sp->begin(br, config);
               uint32_t savc = Settings->serial_config;
+              //setRxBufferSize(TMSBSIZ);
+
               Settings->serial_config = sconfig;
-              AddLog(LOG_LEVEL_INFO, PSTR("Serial port set to %s %d bit/s at rx=%d tx=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin);
+              AddLog(LOG_LEVEL_INFO, PSTR("Serial port set to %s %d bit/s at rx=%d tx=%d rbu=%d"), GetSerialConfig().c_str(), (uint32_t)br,  (uint32_t)rxpin, (uint32_t)txpin, (uint32_t)rxbsiz);
               Settings->serial_config = savc;
               if (rxpin == 3 and txpin == 1) ClaimSerial();
 
@@ -3295,21 +3321,37 @@ chknext:
           len = 0;
           goto exit;
         }
-        if (!strncmp(vname, "sr(", 4)) {
-          char str[SCRIPT_MAXSSIZE];
-          memset(str, 0, sizeof(str));
+        if (!strncmp(vname, "sr(", 3)) {
+          uint16_t size = glob_script_mem.max_ssize;
+          char str[size];
+          memset(str, 0, size);
+          lp += 3;
+          uint8_t runt = 0;
+          if (*lp != ')') {
+            // read until
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+            runt = fvar;
+          }
           fvar = -1;
+          uint8_t flg = 0;
           if (glob_script_mem.sp) {
-            for (uint8_t index = 0; index < sizeof(str) - 1; index++) {
+            for (uint16_t index = 0; index < (size - 1); index++) {
               if (!glob_script_mem.sp->available()) {
+                flg = 1;
                 break;
               }
-              str[index] = glob_script_mem.sp->read();
+              uint8_t iob = glob_script_mem.sp->read();
+              if (iob == runt) {
+                flg = 2;
+                break;
+              }
+              str[index] = iob;
             }
           }
+          //AddLog(LOG_LEVEL_INFO, PSTR(">>: %d - %d - %d - %s"), runt, flg, index, str);
           lp++;
           len = 0;
-          if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp, str, size);
           goto strexit;;
         }
         if (!strncmp(vname, "sc(", 3)) {
