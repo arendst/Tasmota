@@ -1,0 +1,13 @@
+{
+    "name": "re1.5",
+    "keywords": "esp32, re",
+    "description": "Regex",
+    "version": "0.9",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/pfalcon/re1.5"
+    },
+    "frameworks": "*",
+    "platforms": "*"
+}

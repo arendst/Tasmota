@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Berry support for neopixel (WS2812, SK6812)
 - Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages (#13750)
 - OTA over HTTPS (ESP32x only)
+- Berry add ``import re`` regex module
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
