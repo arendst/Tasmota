@@ -65,8 +65,26 @@ assert(type(a.g) == 'function')
 assert(type(a.h) == 'function')
 
 assert_attribute_error("a.g(1,2)")
-assert(a.h(1) == 'instance')
-# A.h(1) - error
+assert(a.h(1) == 'int')
+assert(A.h(1) == 'int')
+
+
+class A
+    var a
+    static def g(x, y) return [x,y] end
+    static h = def (x, y) return [x,y] end
+    def init() self.a = 1 end
+    def f(x, y) return type(self) end
+end
+a=A()
+assert(type(a.g) == 'function')
+assert(type(a.h) == 'function')
+assert(type(A.g) == 'function')
+assert(type(A.h) == 'function')
+assert(a.g(1,2) == [1,2])
+assert(a.h(1,2) == [1,2])
+assert(A.g(1,2) == [1,2])
+assert(A.h(1,2) == [1,2])
 
 #- test static initializers -#
 class A
@@ -91,3 +109,11 @@ assert(a.f == [1])
 assert(a.g == A.g)
 assert(a.aa == nil)
 assert(a.ab == nil)
+
+#- used to fail for subclasses -#
+class A static a=1 end
+class B:A static a=A def f() end static b=1 static c=A end
+assert(A.a == 1)
+assert(B.a == A)
+assert(B.b == 1)
+assert(B.c == A)
