@@ -854,16 +854,29 @@ newframe: /* a new call frame */
                 bvalue *a = RA();
                 *a = a_temp;
                 if (basetype(type) == BE_FUNCTION) {
-                    /* check if the object is a superinstance, if so get the lowest possible subclass */
-                    while (obj->sub) {
-                        obj = obj->sub;
+                    if (func_isstatic(a)) {
+                        /* static method, don't bother with the instance */
+                        a[1] = a_temp;
+                        var_settype(a, NOT_METHOD);
+                    } else {
+                        /* this is a real method (i.e. non-static) */
+                        /* check if the object is a superinstance, if so get the lowest possible subclass */
+                        while (obj->sub) {
+                            obj = obj->sub;
+                        }
+                        var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                     }
-                    var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                 } else {
                     vm_error(vm, "attribute_error",
                         "class '%s' has no method '%s'",
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
+            } else if (var_isclass(b) && var_isstr(c)) {
+                class_attribute(vm, b, c, &a_temp);
+                reg = vm->reg;
+                bvalue *a = RA();
+                a[1] = a_temp;
+                var_settype(a, NOT_METHOD);
             } else if (var_ismodule(b) && var_isstr(c)) {
                 module_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
@@ -893,9 +906,14 @@ newframe: /* a new call frame */
                 dispatch();
             }
             if (var_isclass(a) && var_isstr(b)) {
+                /* if value is a function, we mark it as a static to distinguish from methods */
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                if (!be_class_setmember(vm, obj, attr, c)) {
+                bvalue c_static = *c;
+                if (var_isfunction(&c_static)) {
+                    c_static.type = func_setstatic(&c_static);
+                }
+                if (!be_class_setmember(vm, obj, attr, &c_static)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",

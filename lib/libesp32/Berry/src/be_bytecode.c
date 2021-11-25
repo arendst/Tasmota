@@ -23,7 +23,7 @@
 #define MAGIC_NUMBER1       0xBE
 #define MAGIC_NUMBER2       0xCD
 #define MAGIC_NUMBER3       0xFE
-#define BYTECODE_VERSION    2
+#define BYTECODE_VERSION    3
 
 #define USE_64BIT_INT       (BE_INTGER_TYPE == 2 \
     || BE_INTGER_TYPE == 1 && LONG_MAX == 9223372036854775807L)
@@ -425,7 +425,7 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
         be_incrtop(vm);
         if (load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version)) {
             /* actual method */
-            be_method_bind(vm, c, name, var_toobj(value));
+            be_method_bind(vm, c, name, var_toobj(value), bfalse);
         } else {
             /* no proto, static member set to nil */
             be_member_bind(vm, c, name, bfalse);

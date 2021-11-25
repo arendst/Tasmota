@@ -41,6 +41,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
 
 static void m_solidify_map(bvm *vm, bmap * map, const char *class_name)
 {
+    // compact first
+    be_map_release(vm, map);
+    
     logfmt("    be_nested_map(%i,\n", map->count);
 
     logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
@@ -128,7 +131,8 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         }
         break;
     case BE_CLOSURE:
-        logfmt("be_const_closure(%s%s%s_closure)",
+        logfmt("be_const_%sclosure(%s%s%s_closure)",
+            func_isstatic(value) ? "static_" : "",
             classname ? classname : "", classname ? "_" : "",
             str(((bclosure*) var_toobj(value))->proto->name));
         break;
@@ -139,7 +143,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         logfmt("be_const_comptr(&be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
         break;
     case BE_NTVFUNC:
-        logfmt("be_const_func(be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
+        logfmt("be_const_%sfunc(be_ntv_%s_%s)",
+            func_isstatic(value) ? "static_" : "",
+            classname ? classname : "unknown", key ? key : "unknown");
         break;
     case BE_INSTANCE:
     {
@@ -199,7 +205,7 @@ static void m_solidify_proto_inner_class(bvm *vm, bproto *pr, int builtins)
 static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int builtins, int indent)
 {
     // const char * func_name = str(pr->name);
-    const char * func_source = str(pr->source);
+    // const char * func_source = str(pr->source);
 
     logfmt("%*sbe_nested_proto(\n", indent, "");
     indent += 2;
@@ -345,7 +351,7 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
         logfmt("    NULL,\n");
     }
 
-    logfmt("    (be_nested_const_str(\"%s\", %i, %i))\n", class_name, be_strhash(cl->name), str_len(cl->name));
+    logfmt("    (be_nested_str_literal(\"%s\"))\n", class_name);
     logfmt(");\n");
 
 }

@@ -75,7 +75,7 @@ void be_member_bind(bvm *vm, bclass *c, bstring *name, bbool var)
     }
 }
 
-void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
+void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p, bbool is_static)
 {
     bclosure *cl;
     bvalue *attr;
@@ -87,6 +87,9 @@ void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
     cl = be_newclosure(vm, p->nupvals);
     cl->proto = p;
     var_setclosure(attr, cl);
+    if (is_static) {
+        func_setstatic(attr);
+    }
 }
 
 void be_prim_method_bind(bvm *vm, bclass *c, bstring *name, bntvfunc f)

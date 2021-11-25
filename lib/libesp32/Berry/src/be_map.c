@@ -346,5 +346,7 @@ bmapnode* be_map_val2node(bvalue *value)
 void be_map_release(bvm *vm, bmap *map)
 {
     (void)vm;
-    resize(vm, map, map->count ? map->count : 1);
+    if (!gc_isconst(map)) {
+        resize(vm, map, map->count ? map->count : 1);
+    }
 }

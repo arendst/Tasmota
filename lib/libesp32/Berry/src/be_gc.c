@@ -348,7 +348,7 @@ static void free_instance(bvm *vm, bgcobject *obj)
 
 static void free_object(bvm *vm, bgcobject *obj)
 {
-    switch (obj->type) {
+    switch (var_type(obj)) {
     case BE_STRING: free_lstring(vm, obj); break; /* long string */
     case BE_CLASS: be_free(vm, obj, sizeof(bclass)); break;
     case BE_INSTANCE: free_instance(vm, obj); break;

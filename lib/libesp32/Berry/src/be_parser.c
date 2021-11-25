@@ -1422,12 +1422,28 @@ static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *
     }
 }
 
+static void classdef_stmt(bparser *parser, bclass *c, bbool is_static)
+{
+    bexpdesc e;
+    bstring *name;
+    bproto *proto;
+    /* 'def' ID '(' varlist ')' block 'end' */
+    scan_next_token(parser); /* skip 'def' */
+    name = func_name(parser, &e, 1);
+    check_class_attr(parser, c, name);
+    proto = funcbody(parser, name, is_static ? 0 : FUNC_METHOD);
+    be_method_bind(parser->vm, c, proto->name, proto, is_static);
+    be_stackpop(parser->vm, 1);
+}
+
 static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
 {
     bstring *name;
     /* 'static' ID ['=' expr] {',' ID ['=' expr] } */
     scan_next_token(parser); /* skip 'static' */
-    if (match_id(parser, name) != NULL) {
+    if (next_type(parser) == KeyDef) {  /* 'static' 'def' ... */
+        classdef_stmt(parser, c, btrue);
+    } else if (match_id(parser, name) != NULL) {
         check_class_attr(parser, c, name);
         be_member_bind(parser->vm, c, name, bfalse);
         class_static_assignment_expr(parser, e, name);
@@ -1444,20 +1460,6 @@ static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
     } else {
         parser_error(parser, "class static error");
     }
-}
-
-static void classdef_stmt(bparser *parser, bclass *c)
-{
-    bexpdesc e;
-    bstring *name;
-    bproto *proto;
-    /* 'def' ID '(' varlist ')' block 'end' */
-    scan_next_token(parser); /* skip 'def' */
-    name = func_name(parser, &e, 1);
-    check_class_attr(parser, c, name);
-    proto = funcbody(parser, name, FUNC_METHOD);
-    be_method_bind(parser->vm, c, proto->name, proto);
-    be_stackpop(parser->vm, 1);
 }
 
 static void class_inherit(bparser *parser, bexpdesc *e)
@@ -1479,7 +1481,7 @@ static void class_block(bparser *parser, bclass *c, bexpdesc *e)
         switch (next_type(parser)) {
         case KeyVar: classvar_stmt(parser, c); break;
         case KeyStatic: classstatic_stmt(parser, c, e); break;
-        case KeyDef: classdef_stmt(parser, c); break;
+        case KeyDef: classdef_stmt(parser, c, bfalse); break;
         case OptSemic: scan_next_token(parser); break;
         default: push_error(parser,
                 "unexpected token '%s'", token2str(parser));
