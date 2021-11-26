@@ -432,6 +432,19 @@ static int list_equal(bvm *vm, bbool iseq)
     be_return(vm);
 }
 
+static int m_keys(bvm *vm)
+{
+    be_getmember(vm, 1, ".p");
+    list_check_data(vm, 1);
+    int size = be_data_size(vm, -1);
+    be_getbuiltin(vm, "range");
+    be_pushint(vm, 0);
+    be_pushint(vm, size - 1);
+    be_call(vm, 2);
+    be_pop(vm, 2);
+    be_return(vm);
+}
+
 static int m_equal(bvm *vm)
 {
     return list_equal(vm, btrue);
@@ -463,6 +476,7 @@ void be_load_listlib(bvm *vm)
         { "concat", m_concat },
         { "reverse", m_reverse },
         { "copy", m_copy },
+        { "keys", m_keys },
         { "..", m_connect },
         { "+", m_merge },
         { "==", m_equal },
@@ -491,6 +505,7 @@ class be_class_list (scope: global, name: list) {
     concat, func(m_concat)
     reverse, func(m_reverse)
     copy, func(m_copy)
+    keys, func(m_keys)
     .., func(m_connect)
     +, func(m_merge)
     ==, func(m_equal)
