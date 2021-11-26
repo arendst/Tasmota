@@ -19,14 +19,18 @@
 #define BE_COMPTR       5       /* common pointer */
 #define BE_INDEX        6       /* index for instance variable, previously BE_INT */
 #define BE_FUNCTION     7
-#define BE_STRING       8       /* from this type can be gced, see BE_GCOBJECT */
-#define BE_CLASS        9
-#define BE_INSTANCE     10
-#define BE_PROTO        11
-#define BE_LIST         12
-#define BE_MAP          13
-#define BE_MODULE       14
-#define BE_COMOBJ       15      /* common object */
+
+#define BE_GCOBJECT     16      /* from this type can be gced */
+
+#define BE_STRING       16
+#define BE_CLASS        17
+#define BE_INSTANCE     18
+#define BE_PROTO        19
+#define BE_LIST         20
+#define BE_MAP          21
+#define BE_MODULE       22
+#define BE_COMOBJ       23      /* common object */
+
 #define BE_NTVFUNC      ((0 << 5) | BE_FUNCTION)
 #define BE_CLOSURE      ((1 << 5) | BE_FUNCTION)
 #define BE_NTVCLOS      ((2 << 5) | BE_FUNCTION)

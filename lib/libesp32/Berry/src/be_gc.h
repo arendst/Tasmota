@@ -10,8 +10,6 @@
 
 #include "be_object.h"
 
-#define BE_GCOBJECT         BE_STRING
-
 #define gc_object(o)        cast(bgcobject*, o)
 #define gc_cast(o, t, T)    ((o) && (o)->type == (t) ? (T*)(o) : NULL)
 #define cast_proto(o)       gc_cast(o, BE_PROTO, bproto)
