@@ -1363,7 +1363,7 @@ jobs:
     - name: Push Firmware files to tmp_copy repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
-        API_TOKEN_GITHUB: ${{ secrets.API_ACTIONS_GITHUB }}
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'firmware'
         destination_repo: 'arendst/tmp_copy'
@@ -1383,7 +1383,7 @@ jobs:
     - name: Push trigger.txt to start workflow copy in tmp repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
-        API_TOKEN_GITHUB: ${{ secrets.API_ACTIONS_GITHUB }}
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'trigger.txt'
         destination_repo: 'arendst/tmp_copy'
