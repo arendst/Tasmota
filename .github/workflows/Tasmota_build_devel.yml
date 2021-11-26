@@ -3,7 +3,7 @@ name: Build_firmware_development_cache
 on:
   workflow_dispatch:  # Manually start a workflow
   push:
-    branches: development-off
+    branches: development
     paths-ignore:
     - '.github/**' # Ignore changes towards the .github directory
     - '**.md' # Do no build if *.md files changes
