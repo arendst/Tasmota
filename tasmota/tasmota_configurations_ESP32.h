@@ -73,6 +73,8 @@
 #define USE_ODROID_GO                            // Add support for Odroid Go
 #define USE_SDCARD
 
+#define USE_WEBCLIENT_HTTPS
+
 #undef USE_HOME_ASSISTANT
 
 #define USE_I2C
@@ -112,6 +114,8 @@
   #define USE_I2S_SAY_TIME
   #define USE_I2S_WEBRADIO
 #define USE_SDCARD
+
+#define USE_WEBCLIENT_HTTPS
 
 #define USE_I2C
   #define USE_BMA423
@@ -199,6 +203,8 @@
 
 #undef USE_DOMOTICZ
 #undef USE_HOME_ASSISTANT
+
+#define USE_WEBCLIENT_HTTPS
 
 #define USE_I2S
 #define USE_SPI
