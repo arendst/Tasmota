@@ -480,17 +480,16 @@ void ShutterPowerOff(uint8_t i)
     Shutter[i].direction = 0;
   }
   if (Shutter[i].real_position == Shutter[i].start_position)  {
-    //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Update target tilt shutter %d from %d to %d"), i+1,  Shutter[i].tilt_target_pos , Shutter[i].tilt_real_pos); 
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Update target tilt shutter %d from %d to %d"), i+1,  Shutter[i].tilt_target_pos , Shutter[i].tilt_real_pos);
     Shutter[i].tilt_target_pos = Shutter[i].tilt_real_pos;
   }
   TasmotaGlobal.rules_flag.shutter_moved = 1;
   switch (Shutter[i].switch_mode) {
     case SHT_SWITCH:
-      if ((1 << (Settings->shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
-        ExecuteCommandPowerShutter(Settings->shutter_startrelay[i], 0, SRC_SHUTTER);
-      }
-      if ((1 << (Settings->shutter_startrelay[i])) & TasmotaGlobal.power) {
-        ExecuteCommandPowerShutter(Settings->shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+      for (int8_t k=0;k<2;k++) {
+        if ((1 << (Settings->shutter_startrelay[i]+k-1)) & TasmotaGlobal.power) {
+          ExecuteCommandPowerShutter(Settings->shutter_startrelay[i]+k, 0, SRC_SHUTTER);
+        }
       }
     break;
     case SHT_PULSE:
@@ -516,11 +515,8 @@ void ShutterPowerOff(uint8_t i)
       char scmnd[20];
   #ifdef SHUTTER_CLEAR_PWM_ONSTOP
       // free the PWM servo lock on stop.
-      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d 0" ), i+1);
-  #else
-      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM "%d %d" ), i+1,Shutter[i].pwm_value);
+      analogWrite(Pin(GPIO_PWM1, i), 0);
   #endif
-      ExecuteCommand(scmnd, SRC_BUTTON);
       break;
   }
   Settings->save_data = savedata_original;
@@ -556,11 +552,9 @@ void ShutterUpdatePosition(void)
         Settings->shutter_position[i] = ShutterRealToPercentPosition(Shutter[i].real_position, i);
         Shutter[i].start_position = Shutter[i].real_position;
 
-        // manage venetian blinds
-        Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 0   ? Shutter[i].tilt_config[0] : Shutter[i].tilt_target_pos;
-        Shutter[i].tilt_target_pos = Settings->shutter_position[i] == 100 ? Shutter[i].tilt_config[1] : Shutter[i].tilt_target_pos;
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Pre: Tilt not match %d -> %d, moving: %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos,Shutter[i].tiltmoving);
-        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0) {
+        if (abs(Shutter[i].tilt_real_pos - Shutter[i].tilt_target_pos) > Shutter[i].min_TiltChange && Shutter[i].tiltmoving == 0
+            && Settings->shutter_position[i] > 0 && Settings->shutter_position[i] < 100) {
           AddLog(LOG_LEVEL_INFO, PSTR("SHT: Tilt not match %d -> %d"),Shutter[i].tilt_real_pos,Shutter[i].tilt_target_pos);
           char databuf[1] = "";
           XdrvMailbox.data = databuf;
