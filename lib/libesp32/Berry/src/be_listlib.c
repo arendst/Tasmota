@@ -333,18 +333,28 @@ static int m_merge(bvm *vm)
     be_return(vm); /* return self */
 }
 
-static void connect(bvm *vm, bvalue *begin, bvalue *end)
+static void connect(bvm *vm, bvalue *begin, bvalue *end, const char * delimiter)
 {
     size_t l0 = be_strlen(vm, -1), len = l0;
+    size_t d = delimiter ? strlen(delimiter) : 0;   /* len of delimiter */
+    bbool non_empty = l0 > 0;  /* is the string non-empty, i.e. needs a prefix delimiter */
     char *buf, *p;
     bvalue *it;
     for (it = begin; it < end; ++it) {
-        len += str_len(var_tostr(it));
+        len += str_len(var_tostr(it)) + d;
+    }
+    if (!non_empty) {
+        len -= d;   /* remove size for first delimiter non needed */
     }
     buf = be_pushbuffer(vm, len);
     memcpy(buf, be_tostring(vm, -2), l0);
     p = buf + l0;
     for (it = begin; it < end; ++it) {
+        if ((it != begin || non_empty) && delimiter) {
+            /* add delimiter */
+            memcpy(p, delimiter, d);
+            p += d;
+        }
         bstring *s = var_tostr(it);
         size_t l = str_len(s);
         memcpy(p, str(s), l);
@@ -355,15 +365,20 @@ static void connect(bvm *vm, bvalue *begin, bvalue *end)
     be_pop(vm, 2);
 }
 
-static void list_concat(bvm *vm, blist *list)
+static void list_concat(bvm *vm, blist *list, const char * delimiter)
 {
     bvalue *it, *begin = be_list_data(list);
     bvalue *end = be_list_end(list);
     be_pushstring(vm, ""); /* push a empty string */
     for (it = begin; it < end;) {
         for (; it < end && var_isstr(it); ++it);
-        connect(vm, begin, it); /* connect string list */
+        connect(vm, begin, it, delimiter); /* connect string list */
         if (it < end) {
+            if (delimiter && be_strlen(vm, -1) > 0) {
+                be_pushstring(vm, delimiter);
+                be_strconcat(vm, -2);
+                be_pop(vm, 1);
+            }
             /* connect other value */
             var_setval(vm->top, it);
             be_incrtop(vm);
@@ -378,10 +393,15 @@ static void list_concat(bvm *vm, blist *list)
 static int m_concat(bvm *vm)
 {
     bvalue *value;
+    int top = be_top(vm);
     be_getmember(vm, 1, ".p");
     list_check_data(vm, 1);
     value = be_indexof(vm, -1);
-    list_concat(vm, var_toobj(value));
+    const char * delimiter = NULL;
+    if (top >= 2) {
+        delimiter = be_tostring(vm, 2);
+    }
+    list_concat(vm, var_toobj(value), delimiter);
     be_return(vm);
 }
 
