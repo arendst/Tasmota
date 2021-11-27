@@ -340,6 +340,17 @@ static int l_str(bvm *vm)
     be_return(vm);
 }
 
+static int l_bool(bvm *vm)
+{
+    if (be_top(vm)) {
+        be_pushbool(vm, be_tobool(vm, 1));
+    } else {
+        be_pushbool(vm, bfalse);
+    }
+    be_return(vm);
+}
+
+
 static int l_size(bvm *vm)
 {
     if (be_top(vm) && be_isstring(vm, 1)) {
@@ -462,9 +473,10 @@ void be_load_baselib(bvm *vm)
 }
 
 /* call must be added later to respect order of builtins */
-void be_load_baselib_call(bvm *vm)
+void be_load_baselib_next(bvm *vm)
 {
     be_regfunc(vm, "call", l_call);
+    be_regfunc(vm, "bool", l_bool);
 }
 #else
 extern const bclass be_class_list;
@@ -497,6 +509,7 @@ vartab m_builtin (scope: local) {
     range, class(be_class_range)
     bytes, class(be_class_bytes)
     call, func(l_call)
+    bool, func(l_bool)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_m_builtin.h"
