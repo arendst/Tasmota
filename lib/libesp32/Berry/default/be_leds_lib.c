@@ -9,7 +9,7 @@
 /********************************************************************
 ** Solidified function: get_pixel_color
 ********************************************************************/
-be_local_closure(get_pixel_color,   /* name */
+be_local_closure(Leds_get_pixel_color,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -20,7 +20,7 @@ be_local_closure(get_pixel_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     }),
     (be_nested_const_str("get_pixel_color", 337490048, 15)),
     ((bstring*) &be_const_str_input),
@@ -39,7 +39,7 @@ be_local_closure(get_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: pixels_buffer
 ********************************************************************/
-be_local_closure(pixels_buffer,   /* name */
+be_local_closure(Leds_pixels_buffer,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -50,7 +50,7 @@ be_local_closure(pixels_buffer,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     }),
     (be_nested_const_str("pixels_buffer", 1229555807, 13)),
     ((bstring*) &be_const_str_input),
@@ -68,7 +68,7 @@ be_local_closure(pixels_buffer,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-be_local_closure(clear,   /* name */
+be_local_closure(Leds_clear,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -79,9 +79,9 @@ be_local_closure(clear,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("clear_to", -766965166, 8),
+    /* K0   */  be_nested_str_literal("clear_to"),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_string("show", -1454906820, 4),
+    /* K2   */  be_nested_str_literal("show"),
     }),
     (be_nested_const_str("clear", 1550717474, 5)),
     ((bstring*) &be_const_str_input),
@@ -101,10 +101,10 @@ be_local_closure(clear,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(Leds_init,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    4,                          /* argc */
+    11,                          /* nstack */
+    5,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -112,52 +112,53 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_string("gamma", -802614262, 5),
-    /* K1   */  be_nested_string("pin", 1866532500, 3),
-    /* K2   */  be_nested_string("WS2812", -755226078, 6),
+    /* K0   */  be_nested_str_literal("gamma"),
+    /* K1   */  be_nested_str_literal("pin"),
+    /* K2   */  be_nested_str_literal("WS2812"),
     /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_string("valuer_error", -1727020191, 12),
-    /* K5   */  be_nested_string("no GPIO specified for neopixelbus", 42078528, 33),
-    /* K6   */  be_nested_string("ctor", 375399343, 4),
-    /* K7   */  be_nested_string("_p", 1594591802, 2),
-    /* K8   */  be_nested_string("internal_error", -1775809127, 14),
-    /* K9   */  be_nested_string("couldn't not initialize noepixelbus", -1758476484, 35),
-    /* K10  */  be_nested_string("begin", 1748273790, 5),
+    /* K4   */  be_nested_str_literal("valuer_error"),
+    /* K5   */  be_nested_str_literal("no GPIO specified for neopixelbus"),
+    /* K6   */  be_nested_str_literal("ctor"),
+    /* K7   */  be_nested_str_literal("_p"),
+    /* K8   */  be_nested_str_literal("internal_error"),
+    /* K9   */  be_nested_str_literal("couldn't not initialize noepixelbus"),
+    /* K10  */  be_nested_str_literal("begin"),
     }),
     (be_nested_const_str("init", 380752755, 4)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[31]) {  /* code */
-      0x50100200,  //  0000  LDBOOL	R4	1	0
-      0x90020004,  //  0001  SETMBR	R0	K0	R4
-      0x4C100000,  //  0002  LDNIL	R4
-      0x1C100404,  //  0003  EQ	R4	R2	R4
-      0x78120008,  //  0004  JMPF	R4	#000E
-      0x8C100501,  //  0005  GETMET	R4	R2	K1
-      0x88180502,  //  0006  GETMBR	R6	R2	K2
-      0x7C100400,  //  0007  CALL	R4	2
-      0x28100903,  //  0008  GE	R4	R4	K3
-      0x78120003,  //  0009  JMPF	R4	#000E
-      0x8C100501,  //  000A  GETMET	R4	R2	K1
-      0x88180502,  //  000B  GETMBR	R6	R2	K2
-      0x7C100400,  //  000C  CALL	R4	2
-      0x5C080800,  //  000D  MOVE	R2	R4
-      0x4C100000,  //  000E  LDNIL	R4
-      0x1C100404,  //  000F  EQ	R4	R2	R4
-      0x78120000,  //  0010  JMPF	R4	#0012
+    ( &(const binstruction[32]) {  /* code */
+      0x50140200,  //  0000  LDBOOL	R5	1	0
+      0x90020005,  //  0001  SETMBR	R0	K0	R5
+      0x4C140000,  //  0002  LDNIL	R5
+      0x1C140405,  //  0003  EQ	R5	R2	R5
+      0x78160008,  //  0004  JMPF	R5	#000E
+      0x8C140501,  //  0005  GETMET	R5	R2	K1
+      0x881C0502,  //  0006  GETMBR	R7	R2	K2
+      0x7C140400,  //  0007  CALL	R5	2
+      0x28140B03,  //  0008  GE	R5	R5	K3
+      0x78160003,  //  0009  JMPF	R5	#000E
+      0x8C140501,  //  000A  GETMET	R5	R2	K1
+      0x881C0502,  //  000B  GETMBR	R7	R2	K2
+      0x7C140400,  //  000C  CALL	R5	2
+      0x5C080A00,  //  000D  MOVE	R2	R5
+      0x4C140000,  //  000E  LDNIL	R5
+      0x1C140405,  //  000F  EQ	R5	R2	R5
+      0x78160000,  //  0010  JMPF	R5	#0012
       0xB0060905,  //  0011  RAISE	1	K4	K5
-      0x8C100106,  //  0012  GETMET	R4	R0	K6
-      0x5C180200,  //  0013  MOVE	R6	R1
-      0x5C1C0400,  //  0014  MOVE	R7	R2
-      0x5C200600,  //  0015  MOVE	R8	R3
-      0x7C100800,  //  0016  CALL	R4	4
-      0x88100107,  //  0017  GETMBR	R4	R0	K7
-      0x4C140000,  //  0018  LDNIL	R5
-      0x1C100805,  //  0019  EQ	R4	R4	R5
-      0x78120000,  //  001A  JMPF	R4	#001C
-      0xB0061109,  //  001B  RAISE	1	K8	K9
-      0x8C10010A,  //  001C  GETMET	R4	R0	K10
-      0x7C100200,  //  001D  CALL	R4	1
-      0x80000000,  //  001E  RET	0
+      0x8C140106,  //  0012  GETMET	R5	R0	K6
+      0x5C1C0200,  //  0013  MOVE	R7	R1
+      0x5C200400,  //  0014  MOVE	R8	R2
+      0x5C240600,  //  0015  MOVE	R9	R3
+      0x5C280800,  //  0016  MOVE	R10	R4
+      0x7C140A00,  //  0017  CALL	R5	5
+      0x88140107,  //  0018  GETMBR	R5	R0	K7
+      0x4C180000,  //  0019  LDNIL	R6
+      0x1C140A06,  //  001A  EQ	R5	R5	R6
+      0x78160000,  //  001B  JMPF	R5	#001D
+      0xB0061109,  //  001C  RAISE	1	K8	K9
+      0x8C14010A,  //  001D  GETMET	R5	R0	K10
+      0x7C140200,  //  001E  CALL	R5	1
+      0x80000000,  //  001F  RET	0
     })
   )
 );
@@ -167,7 +168,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: set_pixel_color
 ********************************************************************/
-be_local_closure(set_pixel_color,   /* name */
+be_local_closure(Leds_set_pixel_color,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
@@ -178,8 +179,8 @@ be_local_closure(set_pixel_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
-    /* K1   */  be_nested_string("to_gamma", 1597139862, 8),
+    /* K0   */  be_nested_str_literal("call_native"),
+    /* K1   */  be_nested_str_literal("to_gamma"),
     }),
     (be_nested_const_str("set_pixel_color", 1275248356, 15)),
     ((bstring*) &be_const_str_input),
@@ -202,7 +203,7 @@ be_local_closure(set_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: begin
 ********************************************************************/
-be_local_closure(begin,   /* name */
+be_local_closure(Leds_begin,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -213,7 +214,7 @@ be_local_closure(begin,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     /* K1   */  be_const_int(1),
     }),
     (be_nested_const_str("begin", 1748273790, 5)),
@@ -232,7 +233,7 @@ be_local_closure(begin,   /* name */
 /********************************************************************
 ** Solidified function: to_gamma
 ********************************************************************/
-be_local_closure(to_gamma,   /* name */
+be_local_closure(Leds_to_gamma,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     3,                          /* argc */
@@ -243,13 +244,13 @@ be_local_closure(to_gamma,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("tasmota", 424643812, 7),
-    /* K1   */  be_nested_string("scale_uint", -1204156202, 10),
+    /* K0   */  be_nested_str_literal("tasmota"),
+    /* K1   */  be_nested_str_literal("scale_uint"),
     /* K2   */  be_const_int(0),
     /* K3   */  be_const_int(16711680),
-    /* K4   */  be_nested_string("gamma", -802614262, 5),
-    /* K5   */  be_nested_string("light", -493019601, 5),
-    /* K6   */  be_nested_string("gamma8", -492123466, 6),
+    /* K4   */  be_nested_str_literal("gamma"),
+    /* K5   */  be_nested_str_literal("light"),
+    /* K6   */  be_nested_str_literal("gamma8"),
     }),
     (be_nested_const_str("to_gamma", 1597139862, 8)),
     ((bstring*) &be_const_str_input),
@@ -330,7 +331,7 @@ be_local_closure(to_gamma,   /* name */
 /********************************************************************
 ** Solidified function: pixel_count
 ********************************************************************/
-be_local_closure(pixel_count,   /* name */
+be_local_closure(Leds_pixel_count,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -341,7 +342,7 @@ be_local_closure(pixel_count,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     }),
     (be_nested_const_str("pixel_count", -1855836553, 11)),
     ((bstring*) &be_const_str_input),
@@ -359,7 +360,7 @@ be_local_closure(pixel_count,   /* name */
 /********************************************************************
 ** Solidified function: can_show
 ********************************************************************/
-be_local_closure(can_show,   /* name */
+be_local_closure(Leds_can_show,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -370,7 +371,7 @@ be_local_closure(can_show,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     /* K1   */  be_const_int(3),
     }),
     (be_nested_const_str("can_show", 960091187, 8)),
@@ -389,7 +390,7 @@ be_local_closure(can_show,   /* name */
 /********************************************************************
 ** Solidified function: pixel_size
 ********************************************************************/
-be_local_closure(pixel_size,   /* name */
+be_local_closure(Leds_pixel_size,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -400,7 +401,7 @@ be_local_closure(pixel_size,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     }),
     (be_nested_const_str("pixel_size", -2085831511, 10)),
     ((bstring*) &be_const_str_input),
@@ -418,7 +419,7 @@ be_local_closure(pixel_size,   /* name */
 /********************************************************************
 ** Solidified function: dirty
 ********************************************************************/
-be_local_closure(dirty,   /* name */
+be_local_closure(Leds_dirty,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -429,7 +430,7 @@ be_local_closure(dirty,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     }),
     (be_nested_const_str("dirty", -1627386213, 5)),
     ((bstring*) &be_const_str_input),
@@ -447,7 +448,7 @@ be_local_closure(dirty,   /* name */
 /********************************************************************
 ** Solidified function: show
 ********************************************************************/
-be_local_closure(show,   /* name */
+be_local_closure(Leds_show,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -458,7 +459,7 @@ be_local_closure(show,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     /* K1   */  be_const_int(2),
     }),
     (be_nested_const_str("show", -1454906820, 4)),
@@ -477,7 +478,7 @@ be_local_closure(show,   /* name */
 /********************************************************************
 ** Solidified function: clear_to
 ********************************************************************/
-be_local_closure(clear_to,   /* name */
+be_local_closure(Leds_clear_to,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -488,8 +489,8 @@ be_local_closure(clear_to,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
-    /* K1   */  be_nested_string("to_gamma", 1597139862, 8),
+    /* K0   */  be_nested_str_literal("call_native"),
+    /* K1   */  be_nested_str_literal("to_gamma"),
     }),
     (be_nested_const_str("clear_to", -766965166, 8)),
     ((bstring*) &be_const_str_input),
@@ -511,7 +512,7 @@ be_local_closure(clear_to,   /* name */
 /********************************************************************
 ** Solidified function: is_dirty
 ********************************************************************/
-be_local_closure(is_dirty,   /* name */
+be_local_closure(Leds_is_dirty,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -522,7 +523,7 @@ be_local_closure(is_dirty,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     }),
     (be_nested_const_str("is_dirty", 418034110, 8)),
     ((bstring*) &be_const_str_input),
@@ -540,7 +541,7 @@ be_local_closure(is_dirty,   /* name */
 /********************************************************************
 ** Solidified function: ctor
 ********************************************************************/
-be_local_closure(ctor,   /* name */
+be_local_closure(Leds_ctor,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
@@ -551,7 +552,7 @@ be_local_closure(ctor,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("call_native", 1389147405, 11),
+    /* K0   */  be_nested_str_literal("call_native"),
     /* K1   */  be_const_int(0),
     }),
     (be_nested_const_str("ctor", 375399343, 4)),
@@ -588,24 +589,24 @@ be_local_class(Leds,
     &be_class_Leds_ntv,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("get_pixel_color", 337490048, 15, -1), be_const_closure(get_pixel_color_closure) },
-        { be_nested_key("pixels_buffer", 1229555807, 13, -1), be_const_closure(pixels_buffer_closure) },
-        { be_nested_key("clear", 1550717474, 5, 13), be_const_closure(clear_closure) },
-        { be_nested_key("init", 380752755, 4, 8), be_const_closure(init_closure) },
-        { be_nested_key("set_pixel_color", 1275248356, 15, -1), be_const_closure(set_pixel_color_closure) },
-        { be_nested_key("begin", 1748273790, 5, -1), be_const_closure(begin_closure) },
-        { be_nested_key("to_gamma", 1597139862, 8, -1), be_const_closure(to_gamma_closure) },
-        { be_nested_key("pixel_count", -1855836553, 11, -1), be_const_closure(pixel_count_closure) },
-        { be_nested_key("can_show", 960091187, 8, -1), be_const_closure(can_show_closure) },
-        { be_nested_key("pixel_size", -2085831511, 10, -1), be_const_closure(pixel_size_closure) },
+        { be_nested_key("get_pixel_color", 337490048, 15, -1), be_const_closure(Leds_get_pixel_color_closure) },
+        { be_nested_key("ctor", 375399343, 4, -1), be_const_closure(Leds_ctor_closure) },
+        { be_nested_key("clear", 1550717474, 5, 8), be_const_closure(Leds_clear_closure) },
+        { be_nested_key("init", 380752755, 4, 13), be_const_closure(Leds_init_closure) },
+        { be_nested_key("set_pixel_color", 1275248356, 15, -1), be_const_closure(Leds_set_pixel_color_closure) },
+        { be_nested_key("is_dirty", 418034110, 8, -1), be_const_closure(Leds_is_dirty_closure) },
+        { be_nested_key("to_gamma", 1597139862, 8, -1), be_const_closure(Leds_to_gamma_closure) },
+        { be_nested_key("pixel_count", -1855836553, 11, -1), be_const_closure(Leds_pixel_count_closure) },
+        { be_nested_key("clear_to", -766965166, 8, -1), be_const_closure(Leds_clear_to_closure) },
+        { be_nested_key("pixel_size", -2085831511, 10, -1), be_const_closure(Leds_pixel_size_closure) },
         { be_nested_key("gamma", -802614262, 5, -1), be_const_var(0) },
-        { be_nested_key("dirty", -1627386213, 5, -1), be_const_closure(dirty_closure) },
-        { be_nested_key("show", -1454906820, 4, -1), be_const_closure(show_closure) },
-        { be_nested_key("clear_to", -766965166, 8, -1), be_const_closure(clear_to_closure) },
-        { be_nested_key("is_dirty", 418034110, 8, 5), be_const_closure(is_dirty_closure) },
-        { be_nested_key("ctor", 375399343, 4, 1), be_const_closure(ctor_closure) },
+        { be_nested_key("dirty", -1627386213, 5, -1), be_const_closure(Leds_dirty_closure) },
+        { be_nested_key("show", -1454906820, 4, -1), be_const_closure(Leds_show_closure) },
+        { be_nested_key("can_show", 960091187, 8, -1), be_const_closure(Leds_can_show_closure) },
+        { be_nested_key("begin", 1748273790, 5, 5), be_const_closure(Leds_begin_closure) },
+        { be_nested_key("pixels_buffer", 1229555807, 13, 1), be_const_closure(Leds_pixels_buffer_closure) },
     })),
-    (be_nested_const_str("Leds", -1585722021, 4))
+    be_str_literal("Leds")
 );
 /*******************************************************************/
 

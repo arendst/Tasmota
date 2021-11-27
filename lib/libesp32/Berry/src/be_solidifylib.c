@@ -351,7 +351,7 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
         logfmt("    NULL,\n");
     }
 
-    logfmt("    (be_nested_str_literal(\"%s\"))\n", class_name);
+    logfmt("    be_str_literal(\"%s\")\n", class_name);
     logfmt(");\n");
 
 }
