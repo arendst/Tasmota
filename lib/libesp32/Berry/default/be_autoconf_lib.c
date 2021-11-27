@@ -961,26 +961,28 @@ be_local_closure(init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[15]) {     /* constants */
-    /* K0   */  be_nested_string("path", -2071507658, 4),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("listdir", 2005220720, 7),
-    /* K3   */  be_nested_string("/", 705468254, 1),
-    /* K4   */  be_nested_string("tasmota", 424643812, 7),
-    /* K5   */  be_nested_string("add_driver", 1654458371, 10),
+    ( &(const bvalue[17]) {     /* constants */
+    /* K0   */  be_nested_str_literal("path"),
+    /* K1   */  be_nested_str_literal("string"),
+    /* K2   */  be_nested_str_literal("listdir"),
+    /* K3   */  be_nested_str_literal("/"),
+    /* K4   */  be_nested_str_literal("tasmota"),
+    /* K5   */  be_nested_str_literal("add_driver"),
     /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_string("find", -1108310694, 4),
-    /* K8   */  be_nested_string(".autoconf", -1770288208, 9),
-    /* K9   */  be_nested_string("format", -1180859054, 6),
-    /* K10  */  be_nested_string("CFG: multiple autoconf files found, aborting ('%s' + '%s')", 197663371, 58),
-    /* K11  */  be_nested_string("_error", 1132109656, 6),
+    /* K7   */  be_nested_str_literal("find"),
+    /* K8   */  be_nested_str_literal(".autoconf"),
+    /* K9   */  be_nested_str_literal("format"),
+    /* K10  */  be_nested_str_literal("CFG: multiple autoconf files found, aborting ('%s' + '%s')"),
+    /* K11  */  be_nested_str_literal("_error"),
     /* K12  */  be_const_int(1),
-    /* K13  */  be_nested_string("CFG: no '*.autoconf' file found", 127493957, 31),
-    /* K14  */  be_nested_string("_archive", -290407892, 8),
+    /* K13  */  be_nested_str_literal("log"),
+    /* K14  */  be_nested_str_literal("CFG: no '*.autoconf' file found"),
+    /* K15  */  be_const_int(2),
+    /* K16  */  be_nested_str_literal("_archive"),
     }),
     (be_nested_const_str("init", 380752755, 4)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[49]) {  /* code */
+    ( &(const binstruction[51]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x8C0C0302,  //  0002  GETMET	R3	R1	K2
@@ -1022,14 +1024,16 @@ be_local_closure(init,   /* name */
       0x7001FFE3,  //  0026  JMP		#000B
       0x4C180000,  //  0027  LDNIL	R6
       0x1C180806,  //  0028  EQ	R6	R4	R6
-      0x781A0004,  //  0029  JMPF	R6	#002F
-      0x60180001,  //  002A  GETGBL	R6	G1
-      0x581C000D,  //  002B  LDCONST	R7	K13
-      0x7C180200,  //  002C  CALL	R6	1
-      0x4C180000,  //  002D  LDNIL	R6
-      0x80040C00,  //  002E  RET	1	R6
-      0x90021C04,  //  002F  SETMBR	R0	K14	R4
-      0x80000000,  //  0030  RET	0
+      0x781A0006,  //  0029  JMPF	R6	#0031
+      0xB81A0800,  //  002A  GETNGBL	R6	K4
+      0x8C180D0D,  //  002B  GETMET	R6	R6	K13
+      0x5820000E,  //  002C  LDCONST	R8	K14
+      0x5824000F,  //  002D  LDCONST	R9	K15
+      0x7C180600,  //  002E  CALL	R6	3
+      0x4C180000,  //  002F  LDNIL	R6
+      0x80040C00,  //  0030  RET	1	R6
+      0x90022004,  //  0031  SETMBR	R0	K16	R4
+      0x80000000,  //  0032  RET	0
     })
   )
 );
