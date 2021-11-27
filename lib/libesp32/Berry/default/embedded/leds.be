@@ -126,16 +126,71 @@ class Leds : Leds_ntv
   end
 end
 
+#-
+
+var s = Leds(25, gpio.pin(gpio.WS2812, 1))
+s.clear_to(0x300000)
+s.show()
+i = 0
+
+def anim()
+  s.clear_to(0x300000)
+  s.set_pixel_color(i, 0x004000)
+  s.show()
+  i = (i + 1) % 25
+  tasmota.set_timer(200, anim)
+end
+anim()
+
+-#
+
 class Leds_matrix : Leds
   var h, w
+  var alternate     # are rows in alternate mode (even/odd are reversed)
 
   def init(w, h, gpio, rmt)
     self.w = w
     self.h = h
+    self.alternate = false
     super(self).init(w * h, gpio, rmt)
   end
 
+  def set_alternate(alt)
+    self.alternate = alt
+  end
+  def get_alternate()
+    return self.alternate
+  end
+
   def set_matrix_pixel_color(x, y, col, bri)
-    self.set_pixel_color(x * self.w + y, col, bri)
+    if self.alternate && x % 2
+      # reversed line
+      self.set_pixel_color(x * self.w + self.h - y - 1, col, bri)
+    else
+      self.set_pixel_color(x * self.w + y, col, bri)
+    end
   end
 end
+
+#-
+
+var s = Leds_matrix(5, 5, gpio.pin(gpio.WS2812, 1))
+s.set_alternate(true)
+s.clear_to(0x300000)
+s.show()
+x = 0
+y = 0
+
+def anim()
+  s.clear_to(0x300000)
+  s.set_matrix_pixel_color(x, y, 0x004000)
+  s.show()
+  y = (y + 1) % 5
+  if y == 0
+    x = (x + 1) % 5
+  end
+  tasmota.set_timer(200, anim)
+end
+anim()
+
+-#

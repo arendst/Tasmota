@@ -79,7 +79,7 @@ r.start()
 
 -#
 
-class Rainbow_Matrix : Leds_animator
+class Rainbow_stripes : Leds_animator
   var cur_offset     # current offset in the palette
   static palette = [ 0xFF0000, #- red -#
                      0xFFA500, #- orange -#
@@ -111,8 +111,8 @@ class Rainbow_Matrix : Leds_animator
     var y = 0
     while y < h
       var x = 0
+      var col = palette[(cur_offset + y) % modulus]
       while x < w
-        var col = palette[(cur_offset + y) % modulus]
         set_matrix_pixel_color(strip, x, y, col, bri)   # simulate the method call without GETMET
         x += 1
       end

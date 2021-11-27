@@ -234,6 +234,9 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_STRING                                                   \
   }
 
+#define be_str_literal(_str)                                    \
+  be_nested_const_str(_str, 0, sizeof(_str)-1 )
+
 #define be_nested_string(_str, _hash, _len)                     \
   {                                                             \
     { .s=(be_nested_const_str(_str, _hash, _len ))              \
