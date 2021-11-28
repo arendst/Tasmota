@@ -330,6 +330,25 @@ class Tasmota
   end
 
   def load(f)
+    # embedded functions
+    # puth_path: adds the current archive to sys.path
+    def push_path(p)
+      import sys
+      var path = sys.path()
+      if path.find(p) == nil  # append only if it's not already there
+        path.push(p)
+      end
+    end
+    # pop_path: removes the path
+    def pop_path(p)
+      import sys
+      var path = sys.path()
+      var idx = path.find(p)
+      if idx != nil
+        path.remove(idx)
+      end
+    end
+
     import string
     import path
 
@@ -382,6 +401,7 @@ class Tasmota
     # recall the working directory
     if f_archive
       self.wd = f_prefix + "#"
+      push_path(self.wd)
     else
       self.wd = ""
     end
@@ -398,6 +418,12 @@ class Tasmota
     # call the compiled code
     c()
     # call successfuls
+
+    # remove path prefix
+    if f_archive
+      pop_path(f_prefix + "#")
+    end
+
     return true
   end
 
