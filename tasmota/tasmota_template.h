@@ -1125,7 +1125,7 @@ typedef struct MYTMPLT {
 // Supported hardware modules
 enum SupportedModules {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
-  SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_DEV, H801,
+  SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_BASIC_R3, SONOFF_DEV, H801,
   SONOFF_SC, SONOFF_BN, SONOFF_4CHPRO, HUAFAN_SS, SONOFF_BRIDGE, SONOFF_B1, AILIGHT, SONOFF_T11, SONOFF_T12, SONOFF_T13,
   SUPLA1, WITTY, YUNSHAN, MAGICHOME, LUANIHVIO, KMC_70011, ARILUX_LC01, ARILUX_LC11, SONOFF_DUAL_R2, ARILUX_LC06,
   SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
@@ -1136,7 +1136,7 @@ enum SupportedModules {
 
 const char kModuleNames[] PROGMEM =
   "Sonoff Basic|Sonoff RF|Sonoff SV|Sonoff TH|Sonoff Dual|Sonoff Pow|Sonoff 4CH|Sonoff S2X|Slampher|Sonoff Touch|"
-  "Sonoff LED|1 Channel|4 Channel|Motor C/AC|ElectroDragon|EXS Relay(s)|WiOn|Generic|Sonoff Dev|H801|"
+  "Sonoff LED|1 Channel|4 Channel|Motor C/AC|ElectroDragon|EXS Relay(s)|WiOn|Generic|Sonoff Basic R3|Sonoff Dev|H801|"
   "Sonoff SC|Sonoff BN-SZ|Sonoff 4CH Pro|Huafan SS|Sonoff Bridge|Sonoff B1|AiLight|Sonoff T1 1CH|Sonoff T1 2CH|Sonoff T1 3CH|"
   "Supla Espablo|Witty Cloud|Yunshan Relay|MagicHome|Luani HVIO|KMC 70011|Arilux LC01|Arilux LC11|Sonoff Dual R2|Arilux LC06|"
   "Sonoff S31|Zengge WF017|Sonoff Pow R2|Sonoff iFan02|BlitzWolf SHP|Shelly 1|Shelly 2|Xiaomi Philips|Neo Coolcam|ESP Switch|"
@@ -1147,6 +1147,7 @@ const char kModuleNames[] PROGMEM =
 
 const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_BASIC,        // Sonoff Relay Devices
+  SONOFF_BASIC_R3,
   SONOFF_RF,
   SONOFF_TH,
   SONOFF_DUAL,
@@ -1260,8 +1261,10 @@ enum SupportedTemplates8285 {
 
 enum SupportedTemplates8266 {
   TMP_WEMOS = TMP_MAXMODULE_8285, TMP_SONOFF_4CH, TMP_SONOFF_T12, TMP_SONOFF_T13, TMP_SONOFF_DUAL_R2, TMP_SONOFF_IFAN03,
+  TMP_SONOFF_BASIC_R3,
   TMP_MAXMODULE_8266 };
 
+// Update this list in the same order as SupportedModules!!
 const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
   TMP_SONOFF_BASIC,
   TMP_SONOFF_BASIC,     // SONOFF_RF
@@ -1281,6 +1284,7 @@ const uint8_t kModuleTemplateList[MAXMODULE] PROGMEM = {
   TMP_EXS_RELAY,
   TMP_WION,
   TMP_WEMOS,
+  TMP_SONOFF_BASIC_R3,
   TMP_SONOFF_DEV,
   TMP_H801,
   TMP_SONOFF_SC,
@@ -2521,6 +2525,26 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
     GPI8_REL2,          // GPIO14 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
     GPI8_REL4,          // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
     0, 0
+  },
+  {                     // SONOFF_BASIC_R3 - Sonoff Basic R3 (ESP8285)
+    GPI8_KEY1,          // GPIO00 Button
+    GPI8_USER,          // GPIO01 Serial RXD and Optional sensor
+    0,                  // GPIO02 Only available on newer Sonoff Basic R2 V1
+    GPI8_USER,          // GPIO03 Serial TXD and Optional sensor
+    0,                  // GPIO04 Optional sensor
+    0,                  // GPIO05
+                        // GPIO06 (SD_CLK   Flash)
+                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                        // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+    GPI8_USER,          // GPIO09 (ESP8285)
+    GPI8_USER,          // GPIO10 (ESP8285)
+                        // GPIO11 (SD_CMD   Flash)
+    GPI8_REL1,          // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+    GPI8_LED1_INV,      // GPIO13 Green Led (0 = On, 1 = Off) - Link and Power status
+    0,                  // GPIO14 Optional sensor
+    0,                  // GPIO15
+    GPI8_USER,          // GPIO16
+    0                   // ADC0 Analog input
   }
 };
 
