@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: json_fdump_map
 ********************************************************************/
-be_local_closure(json_fdump_map,   /* name */
+be_local_closure(Persist_json_fdump_map,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     3,                          /* argc */
@@ -21,16 +21,16 @@ be_local_closure(json_fdump_map,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_string("json", 916562499, 4),
-    /* K1   */  be_nested_string("write", -1104765092, 5),
-    /* K2   */  be_nested_string("{", -32746982, 1),
-    /* K3   */  be_nested_string("keys", -112588595, 4),
-    /* K4   */  be_nested_string("dump", -631966073, 4),
-    /* K5   */  be_nested_string(":", 1057798253, 1),
-    /* K6   */  be_nested_string("json_fdump_any", -946337911, 14),
-    /* K7   */  be_nested_string(",", 688690635, 1),
-    /* K8   */  be_nested_string("stop_iteration", -121173395, 14),
-    /* K9   */  be_nested_string("}", -133412696, 1),
+    /* K0   */  be_nested_str_literal("json"),
+    /* K1   */  be_nested_str_literal("write"),
+    /* K2   */  be_nested_str_literal("{"),
+    /* K3   */  be_nested_str_literal("keys"),
+    /* K4   */  be_nested_str_literal("dump"),
+    /* K5   */  be_nested_str_literal(":"),
+    /* K6   */  be_nested_str_literal("json_fdump_any"),
+    /* K7   */  be_nested_str_literal(","),
+    /* K8   */  be_nested_str_literal("stop_iteration"),
+    /* K9   */  be_nested_str_literal("}"),
     }),
     (be_nested_const_str("json_fdump_map", -203012643, 14)),
     ((bstring*) &be_const_str_input),
@@ -85,7 +85,7 @@ be_local_closure(json_fdump_map,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-be_local_closure(setmember,   /* name */
+be_local_closure(Persist_setmember,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     3,                          /* argc */
@@ -96,8 +96,8 @@ be_local_closure(setmember,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("_dirty", 283846766, 6),
+    /* K0   */  be_nested_str_literal("_p"),
+    /* K1   */  be_nested_str_literal("_dirty"),
     }),
     (be_nested_const_str("setmember", 1432909441, 9)),
     ((bstring*) &be_const_str_input),
@@ -116,7 +116,7 @@ be_local_closure(setmember,   /* name */
 /********************************************************************
 ** Solidified function: zero
 ********************************************************************/
-be_local_closure(zero,   /* name */
+be_local_closure(Persist_zero,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -127,8 +127,8 @@ be_local_closure(zero,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("_dirty", 283846766, 6),
+    /* K0   */  be_nested_str_literal("_p"),
+    /* K1   */  be_nested_str_literal("_dirty"),
     }),
     (be_nested_const_str("zero", -1955600541, 4)),
     ((bstring*) &be_const_str_input),
@@ -148,7 +148,7 @@ be_local_closure(zero,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-be_local_closure(member,   /* name */
+be_local_closure(Persist_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -159,8 +159,8 @@ be_local_closure(member,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("find", -1108310694, 4),
+    /* K0   */  be_nested_str_literal("_p"),
+    /* K1   */  be_nested_str_literal("find"),
     }),
     (be_nested_const_str("member", 719708611, 6)),
     ((bstring*) &be_const_str_input),
@@ -179,7 +179,7 @@ be_local_closure(member,   /* name */
 /********************************************************************
 ** Solidified function: json_fdump
 ********************************************************************/
-be_local_closure(json_fdump,   /* name */
+be_local_closure(Persist_json_fdump,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -190,11 +190,11 @@ be_local_closure(json_fdump,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_string("json", 916562499, 4),
-    /* K1   */  be_nested_string("_p", 1594591802, 2),
-    /* K2   */  be_nested_string("json_fdump_map", -203012643, 14),
-    /* K3   */  be_nested_string("internal_error", -1775809127, 14),
-    /* K4   */  be_nested_string("persist._p is not a map", 1176528732, 23),
+    /* K0   */  be_nested_str_literal("json"),
+    /* K1   */  be_nested_str_literal("_p"),
+    /* K2   */  be_nested_str_literal("json_fdump_map"),
+    /* K3   */  be_nested_str_literal("internal_error"),
+    /* K4   */  be_nested_str_literal("persist._p is not a map"),
     }),
     (be_nested_const_str("json_fdump", 1694216580, 10)),
     ((bstring*) &be_const_str_input),
@@ -221,7 +221,7 @@ be_local_closure(json_fdump,   /* name */
 /********************************************************************
 ** Solidified function: remove
 ********************************************************************/
-be_local_closure(remove,   /* name */
+be_local_closure(Persist_remove,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -232,9 +232,9 @@ be_local_closure(remove,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("remove", -611183107, 6),
-    /* K2   */  be_nested_string("_dirty", 283846766, 6),
+    /* K0   */  be_nested_str_literal("_p"),
+    /* K1   */  be_nested_str_literal("remove"),
+    /* K2   */  be_nested_str_literal("_dirty"),
     }),
     (be_nested_const_str("remove", -611183107, 6)),
     ((bstring*) &be_const_str_input),
@@ -255,7 +255,7 @@ be_local_closure(remove,   /* name */
 /********************************************************************
 ** Solidified function: json_fdump_any
 ********************************************************************/
-be_local_closure(json_fdump_any,   /* name */
+be_local_closure(Persist_json_fdump_any,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -266,11 +266,11 @@ be_local_closure(json_fdump_any,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_string("json", 916562499, 4),
-    /* K1   */  be_nested_string("json_fdump_map", -203012643, 14),
-    /* K2   */  be_nested_string("json_fdump_list", -391087443, 15),
-    /* K3   */  be_nested_string("write", -1104765092, 5),
-    /* K4   */  be_nested_string("dump", -631966073, 4),
+    /* K0   */  be_nested_str_literal("json"),
+    /* K1   */  be_nested_str_literal("json_fdump_map"),
+    /* K2   */  be_nested_str_literal("json_fdump_list"),
+    /* K3   */  be_nested_str_literal("write"),
+    /* K4   */  be_nested_str_literal("dump"),
     }),
     (be_nested_const_str("json_fdump_any", -946337911, 14)),
     ((bstring*) &be_const_str_input),
@@ -311,7 +311,7 @@ be_local_closure(json_fdump_any,   /* name */
 /********************************************************************
 ** Solidified function: save
 ********************************************************************/
-be_local_closure(save,   /* name */
+be_local_closure(Persist_save,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -322,13 +322,13 @@ be_local_closure(save,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("_filename", 1430813195, 9),
-    /* K1   */  be_nested_string("w", -234078410, 1),
-    /* K2   */  be_nested_string("json_fdump", 1694216580, 10),
-    /* K3   */  be_nested_string("close", 667630371, 5),
-    /* K4   */  be_nested_string("write", -1104765092, 5),
-    /* K5   */  be_nested_string("{}", 1415952421, 2),
-    /* K6   */  be_nested_string("_dirty", 283846766, 6),
+    /* K0   */  be_nested_str_literal("_filename"),
+    /* K1   */  be_nested_str_literal("w"),
+    /* K2   */  be_nested_str_literal("json_fdump"),
+    /* K3   */  be_nested_str_literal("close"),
+    /* K4   */  be_nested_str_literal("write"),
+    /* K5   */  be_nested_str_literal("{}"),
+    /* K6   */  be_nested_str_literal("_dirty"),
     }),
     (be_nested_const_str("save", -855671224, 4)),
     ((bstring*) &be_const_str_input),
@@ -379,7 +379,7 @@ be_local_closure(save,   /* name */
 /********************************************************************
 ** Solidified function: load
 ********************************************************************/
-be_local_closure(load,   /* name */
+be_local_closure(Persist_load,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
@@ -389,22 +389,23 @@ be_local_closure(load,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_string("json", 916562499, 4),
-    /* K1   */  be_nested_string("path", -2071507658, 4),
-    /* K2   */  be_nested_string("exists", 1002329533, 6),
-    /* K3   */  be_nested_string("_filename", 1430813195, 9),
-    /* K4   */  be_nested_string("r", -150190315, 1),
-    /* K5   */  be_nested_string("load", -435725847, 4),
-    /* K6   */  be_nested_string("read", -824204347, 4),
-    /* K7   */  be_nested_string("close", 667630371, 5),
-    /* K8   */  be_nested_string("_p", 1594591802, 2),
-    /* K9   */  be_nested_string("BRY: failed to load _persist.json", -1303053851, 33),
-    /* K10  */  be_nested_string("_dirty", 283846766, 6),
+    ( &(const bvalue[12]) {     /* constants */
+    /* K0   */  be_nested_str_literal("json"),
+    /* K1   */  be_nested_str_literal("path"),
+    /* K2   */  be_nested_str_literal("exists"),
+    /* K3   */  be_nested_str_literal("_filename"),
+    /* K4   */  be_nested_str_literal("r"),
+    /* K5   */  be_nested_str_literal("load"),
+    /* K6   */  be_nested_str_literal("read"),
+    /* K7   */  be_nested_str_literal("close"),
+    /* K8   */  be_nested_str_literal("_p"),
+    /* K9   */  be_nested_str_literal("BRY: failed to load _persist.json"),
+    /* K10  */  be_nested_str_literal("_dirty"),
+    /* K11  */  be_nested_str_literal("save"),
     }),
     (be_nested_const_str("load", -435725847, 4)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[46]) {  /* code */
+    ( &(const binstruction[49]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x4C0C0000,  //  0002  LDNIL	R3
@@ -412,7 +413,7 @@ be_local_closure(load,   /* name */
       0x8C140502,  //  0004  GETMET	R5	R2	K2
       0x881C0103,  //  0005  GETMBR	R7	R0	K3
       0x7C140400,  //  0006  CALL	R5	2
-      0x78160024,  //  0007  JMPF	R5	#002D
+      0x78160025,  //  0007  JMPF	R5	#002E
       0xA802000D,  //  0008  EXBLK	0	#0017
       0x60140011,  //  0009  GETGBL	R5	G17
       0x88180103,  //  000A  GETMBR	R6	R0	K3
@@ -450,7 +451,10 @@ be_local_closure(load,   /* name */
       0x7C140200,  //  002A  CALL	R5	1
       0x50140000,  //  002B  LDBOOL	R5	0	0
       0x90021405,  //  002C  SETMBR	R0	K10	R5
-      0x80000000,  //  002D  RET	0
+      0x70020001,  //  002D  JMP		#0030
+      0x8C14010B,  //  002E  GETMET	R5	R0	K11
+      0x7C140200,  //  002F  CALL	R5	1
+      0x80000000,  //  0030  RET	0
     })
   )
 );
@@ -460,7 +464,7 @@ be_local_closure(load,   /* name */
 /********************************************************************
 ** Solidified function: find
 ********************************************************************/
-be_local_closure(find,   /* name */
+be_local_closure(Persist_find,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -471,8 +475,8 @@ be_local_closure(find,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("find", -1108310694, 4),
+    /* K0   */  be_nested_str_literal("_p"),
+    /* K1   */  be_nested_str_literal("find"),
     }),
     (be_nested_const_str("find", -1108310694, 4)),
     ((bstring*) &be_const_str_input),
@@ -492,7 +496,7 @@ be_local_closure(find,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(Persist_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -503,12 +507,12 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_string("_filename", 1430813195, 9),
-    /* K1   */  be_nested_string("_persist.json", 2008425138, 13),
-    /* K2   */  be_nested_string("_p", 1594591802, 2),
-    /* K3   */  be_nested_string("copy", -446502332, 4),
-    /* K4   */  be_nested_string("load", -435725847, 4),
-    /* K5   */  be_nested_string("_dirty", 283846766, 6),
+    /* K0   */  be_nested_str_literal("_filename"),
+    /* K1   */  be_nested_str_literal("_persist.json"),
+    /* K2   */  be_nested_str_literal("_p"),
+    /* K3   */  be_nested_str_literal("copy"),
+    /* K4   */  be_nested_str_literal("load"),
+    /* K5   */  be_nested_str_literal("_dirty"),
     }),
     (be_nested_const_str("init", 380752755, 4)),
     ((bstring*) &be_const_str_input),
@@ -542,7 +546,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: json_fdump_list
 ********************************************************************/
-be_local_closure(json_fdump_list,   /* name */
+be_local_closure(Persist_json_fdump_list,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -553,14 +557,14 @@ be_local_closure(json_fdump_list,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_string("json", 916562499, 4),
-    /* K1   */  be_nested_string("write", -1104765092, 5),
-    /* K2   */  be_nested_string("[", -569630790, 1),
+    /* K0   */  be_nested_str_literal("json"),
+    /* K1   */  be_nested_str_literal("write"),
+    /* K2   */  be_nested_str_literal("["),
     /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_string(",", 688690635, 1),
-    /* K5   */  be_nested_string("json_fdump_any", -946337911, 14),
+    /* K4   */  be_nested_str_literal(","),
+    /* K5   */  be_nested_str_literal("json_fdump_any"),
     /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_string("]", -670296504, 1),
+    /* K7   */  be_nested_str_literal("]"),
     }),
     (be_nested_const_str("json_fdump_list", -391087443, 15)),
     ((bstring*) &be_const_str_input),
@@ -599,7 +603,7 @@ be_local_closure(json_fdump_list,   /* name */
 /********************************************************************
 ** Solidified function: has
 ********************************************************************/
-be_local_closure(has,   /* name */
+be_local_closure(Persist_has,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -610,8 +614,8 @@ be_local_closure(has,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_p", 1594591802, 2),
-    /* K1   */  be_nested_string("has", -306245661, 3),
+    /* K0   */  be_nested_str_literal("_p"),
+    /* K1   */  be_nested_str_literal("has"),
     }),
     (be_nested_const_str("has", -306245661, 3)),
     ((bstring*) &be_const_str_input),
@@ -635,30 +639,30 @@ be_local_class(Persist,
     NULL,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("json_fdump_map", -203012643, 14, 5), be_const_closure(json_fdump_map_closure) },
-        { be_nested_key("setmember", 1432909441, 9, -1), be_const_closure(setmember_closure) },
-        { be_nested_key("zero", -1955600541, 4, 15), be_const_closure(zero_closure) },
-        { be_nested_key("member", 719708611, 6, 12), be_const_closure(member_closure) },
-        { be_nested_key("json_fdump", 1694216580, 10, -1), be_const_closure(json_fdump_closure) },
-        { be_nested_key("remove", -611183107, 6, -1), be_const_closure(remove_closure) },
-        { be_nested_key("json_fdump_any", -946337911, 14, -1), be_const_closure(json_fdump_any_closure) },
-        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(1) },
-        { be_nested_key("save", -855671224, 4, -1), be_const_closure(save_closure) },
-        { be_nested_key("load", -435725847, 4, 6), be_const_closure(load_closure) },
-        { be_nested_key("find", -1108310694, 4, 7), be_const_closure(find_closure) },
+        { be_nested_key("has", -306245661, 3, 6), be_const_closure(Persist_has_closure) },
+        { be_nested_key("setmember", 1432909441, 9, -1), be_const_closure(Persist_setmember_closure) },
+        { be_nested_key("remove", -611183107, 6, -1), be_const_closure(Persist_remove_closure) },
+        { be_nested_key("zero", -1955600541, 4, 0), be_const_closure(Persist_zero_closure) },
+        { be_nested_key("json_fdump", 1694216580, 10, -1), be_const_closure(Persist_json_fdump_closure) },
+        { be_nested_key("json_fdump_list", -391087443, 15, 2), be_const_closure(Persist_json_fdump_list_closure) },
+        { be_nested_key("init", 380752755, 4, 15), be_const_closure(Persist_init_closure) },
+        { be_nested_key("find", -1108310694, 4, -1), be_const_closure(Persist_find_closure) },
+        { be_nested_key("save", -855671224, 4, -1), be_const_closure(Persist_save_closure) },
+        { be_nested_key("json_fdump_any", -946337911, 14, 12), be_const_closure(Persist_json_fdump_any_closure) },
+        { be_nested_key("_p", 1594591802, 2, 7), be_const_var(1) },
         { be_nested_key("_filename", 1430813195, 9, -1), be_const_var(0) },
-        { be_nested_key("init", 380752755, 4, 2), be_const_closure(init_closure) },
-        { be_nested_key("json_fdump_list", -391087443, 15, 0), be_const_closure(json_fdump_list_closure) },
+        { be_nested_key("load", -435725847, 4, -1), be_const_closure(Persist_load_closure) },
+        { be_nested_key("json_fdump_map", -203012643, 14, 5), be_const_closure(Persist_json_fdump_map_closure) },
         { be_nested_key("_dirty", 283846766, 6, -1), be_const_var(2) },
-        { be_nested_key("has", -306245661, 3, -1), be_const_closure(has_closure) },
+        { be_nested_key("member", 719708611, 6, -1), be_const_closure(Persist_member_closure) },
     })),
-    (be_nested_const_str("Persist", 1456346147, 7))
+    be_str_literal("Persist")
 );
 
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(_anonymous_,   /* name */
+be_local_closure(persist__anonymous_,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -692,7 +696,7 @@ be_local_module(persist,
     "persist",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(_anonymous__closure) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_closure(persist__anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(persist);

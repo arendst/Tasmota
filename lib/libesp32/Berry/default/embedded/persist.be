@@ -81,6 +81,8 @@ persist_module.init = def (m)
           print("BRY: failed to load _persist.json")
         end
         self._dirty = false
+      else
+        self.save()
       end
 
       # print("Loading")
