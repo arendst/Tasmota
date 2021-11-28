@@ -101,7 +101,8 @@ TEST(TestDecodeElectraAC, RealExampleDecode) {
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
-      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
+      "IFeel: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
   stdAc::state_t r, p;
   ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &r, &p));
@@ -235,7 +236,8 @@ TEST(TestIRElectraAcClass, HumanReadable) {
   ac.setRaw(on_cool_32C_auto_voff);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 32C, Fan: 5 (Auto), "
-      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
+      "IFeel: Off",
       ac.toString());
   uint8_t on_cool_16C_auto_voff[13] = {
       0xC3, 0x47, 0xE0, 0x00, 0xA0, 0x00, 0x20,
@@ -243,7 +245,8 @@ TEST(TestIRElectraAcClass, HumanReadable) {
   ac.setRaw(on_cool_16C_auto_voff);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 16C, Fan: 5 (Auto), "
-      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
+      "IFeel: Off",
       ac.toString());
   uint8_t on_cool_16C_low_voff[13] = {
       0xC3, 0x47, 0xE0, 0x00, 0x60, 0x00, 0x20,
@@ -251,7 +254,8 @@ TEST(TestIRElectraAcClass, HumanReadable) {
   ac.setRaw(on_cool_16C_low_voff);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 16C, Fan: 3 (Low), "
-      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
+      "IFeel: Off",
       ac.toString());
 }
 
@@ -275,7 +279,8 @@ TEST(TestIRElectraAcClass, Clean) {
   ac.setRaw(on);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
-      "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off, "
+      "IFeel: Off",
       ac.toString());
 }
 
@@ -301,7 +306,8 @@ TEST(TestIRElectraAcClass, Turbo) {
   ac.setRaw(on);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
-      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: On",
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: On, "
+      "IFeel: Off",
       ac.toString());
 }
 
@@ -325,7 +331,8 @@ TEST(TestIRElectraAcClass, LightToggle) {
   ac.setRaw(on);
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
-      "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off, "
+      "IFeel: Off",
        ac.toString());
 }
 
@@ -352,8 +359,76 @@ TEST(TestIRElectraAcClass, ConstructKnownState) {
 
   EXPECT_EQ(
       "Power: On, Mode: 1 (Cool), Temp: 24C, Fan: 3 (Low), "
-      "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off",
+      "Swing(V): Off, Swing(H): Off, Light: Toggle, Clean: On, Turbo: Off, "
+      "IFeel: Off",
       ac.toString());
   EXPECT_STATE_EQ(on_cool_24C_fan1_swing_off_turbo_off_clean_on,
                   ac.getRaw(), kElectraAcBits);
+}
+
+TEST(TestIRElectraAcClass, IFeelAndSensor) {
+  IRElectraAc ac(kGpioUnused);
+  ac.stateReset();
+  // Test a real example.
+  const uint8_t ifeel_on[kElectraAcStateLength] = {
+      0xC3, 0x6F, 0xE0, 0x00, 0xA0, 0x00, 0x28,
+      0x64, 0x00, 0x20, 0x00, 0x1E, 0x7C};
+  ac.setRaw(ifeel_on);
+  EXPECT_TRUE(ac.getIFeel());
+  EXPECT_EQ(26, ac.getSensorTemp());
+  EXPECT_EQ(
+      "Power: On, Mode: 1 (Cool), Temp: 21C, Fan: 5 (Auto), "
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
+      "IFeel: On, Sensor Temp: 26C",
+      ac.toString());
+
+  ac.stateReset();
+  EXPECT_FALSE(ac.getIFeel());
+  EXPECT_EQ(kElectraAcSensorMinTemp, ac.getSensorTemp());
+
+  ac.setIFeel(true);
+  EXPECT_TRUE(ac.getIFeel());
+  EXPECT_EQ(kElectraAcSensorMinTemp, ac.getSensorTemp());
+
+  ac.setSensorTemp(kElectraAcSensorMaxTemp);
+  EXPECT_EQ(kElectraAcSensorMaxTemp, ac.getSensorTemp());
+
+  ac.setSensorTemp(kElectraAcSensorMaxTemp + 1);
+  EXPECT_EQ(kElectraAcSensorMaxTemp, ac.getSensorTemp());
+
+  ac.setIFeel(false);
+  EXPECT_FALSE(ac.getIFeel());
+  EXPECT_EQ(kElectraAcSensorMinTemp, ac.getSensorTemp());
+  EXPECT_EQ(0, ac._.SensorTemp);
+
+  ac.setIFeel(true);
+  ac.setSensorTemp(kElectraAcSensorMinTemp);
+  EXPECT_TRUE(ac.getIFeel());
+  EXPECT_EQ(kElectraAcSensorMinTemp, ac.getSensorTemp());
+
+  ac.setSensorTemp(26);  // Celsius
+  EXPECT_TRUE(ac.getIFeel());
+  EXPECT_EQ(26, ac.getSensorTemp());
+
+  EXPECT_FALSE(ac.getSensorUpdate());
+  ac.setSensorUpdate(true);
+  EXPECT_TRUE(ac.getSensorUpdate());
+  EXPECT_EQ("Sensor Temp: 26C", ac.toString());
+  ac.setSensorUpdate(false);
+  EXPECT_FALSE(ac.getSensorUpdate());
+
+  const uint8_t sensor_update_28C[kElectraAcStateLength] = {
+      0xC3, 0x9F, 0xE0, 0x40, 0xA0, 0x00, 0x88,
+      0x66, 0x00, 0x30, 0x00, 0x1E, 0x5E};
+  ac.setRaw(sensor_update_28C);
+  EXPECT_TRUE(ac.getSensorUpdate());
+  EXPECT_EQ(28, ac.getSensorTemp());
+  EXPECT_EQ("Sensor Temp: 28C", ac.toString());
+  ac.setSensorUpdate(false);
+  EXPECT_FALSE(ac.getSensorUpdate());
+  EXPECT_EQ(
+      "Power: On, Mode: 4 (Heat), Temp: 27C, Fan: 5 (Auto), "
+      "Swing(V): Off, Swing(H): Off, Light: -, Clean: Off, Turbo: Off, "
+      "IFeel: On, Sensor Temp: 28C",
+      ac.toString());
 }

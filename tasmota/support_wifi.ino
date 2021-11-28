@@ -668,6 +668,7 @@ void EspRestart(void)
   }
 }
 
+#ifdef ESP8266
 //
 // Gratuitous ARP, backported from https://github.com/esp8266/Arduino/pull/6889
 //
@@ -715,6 +716,7 @@ void wifiKeepAlive(void) {
     SetNextTimeInterval(wifi_timer, wifiTimerSec * 1000);
   }
 }
+#endif  // ESP8266
 
 void WifiPollNtp() {
   static uint8_t ntp_sync_minute = 0;

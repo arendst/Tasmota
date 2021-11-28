@@ -477,6 +477,7 @@
 #define D_CMND_FADE "Fade"
 #define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
+#define D_CMND_STEPPIXELS "StepPixels"
 #define D_CMND_RGBWWTABLE "RGBWWTable"
 #define D_CMND_ROTATION "Rotation"
 #define D_CMND_SCHEME "Scheme"
@@ -692,6 +693,9 @@
 #define D_CMND_SHUTTER_INVERTWEBBUTTONS "InvertWebButtons"
 #define D_CMND_SHUTTER_PWMRANGE "PWMRange"
 #define D_CMND_SHUTTER_UNITTEST "UnitTest"
+#define D_CMND_SHUTTER_TILTCONFIG "TiltConfig"
+#define D_CMND_SHUTTER_SETTILT "Tilt"
+#define D_CMND_SHUTTER_TILTINCDEC "TiltChange"
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"

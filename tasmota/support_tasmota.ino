@@ -565,7 +565,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     result = XdrvRulesProcess(0);
   }
 #ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER != TasmotaGlobal.module_type || !result) {
+  if (PWM_DIMMER != TasmotaGlobal.module_type || (!result && !Settings->flag3.mqtt_buttons)) {
 #endif  // USE_PWM_DIMMER
   int32_t payload_save = XdrvMailbox.payload;
   XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
@@ -756,6 +756,11 @@ void MqttShowState(void)
     ESP_getFreeHeap1024(), GetTextIndexed(stemp1, sizeof(stemp1), Settings->flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
     TasmotaGlobal.sleep, TasmotaGlobal.loop_load_avg, MqttConnectCount());
 
+#ifdef USE_BERRY
+    extern void BrShowState(void);
+    BrShowState();
+#endif // USE_BERRY
+
   for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
 #ifdef USE_LIGHT
     if ((LightDevice()) && (i >= LightDevice())) {
@@ -835,7 +840,7 @@ String GetSwitchText(uint32_t i) {
   return switch_text;
 }
 
-bool MqttShowSensor(void)
+bool MqttShowSensor(bool call_show_sensor)
 {
   ResponseAppendTime();
 
@@ -894,20 +899,20 @@ bool MqttShowSensor(void)
   }
   ResponseJsonEnd();
 
-  if (json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
+  if (call_show_sensor && json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
   return json_data_available;
 }
 
 void MqttPublishSensor(void) {
   ResponseClear();
-  if (MqttShowSensor()) {
+  if (MqttShowSensor(true)) {
     MqttPublishTeleSensor();
   }
 }
 
 void MqttPublishTeleperiodSensor(void) {
   ResponseClear();
-  if (MqttShowSensor()) {
+  if (MqttShowSensor(true)) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
     XdrvRulesProcess(1);
   }
@@ -994,8 +999,10 @@ void PerformEverySecond(void)
     }
   }
 
+#ifdef ESP8266
   // Wifi keep alive to send Gratuitous ARP
   wifiKeepAlive();
+#endif
 
   WifiPollNtp();
 
@@ -1206,8 +1213,18 @@ void Every250mSeconds(void)
           char version[50];
           snprintf_P(version, sizeof(version), PSTR("%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s %s"), full_ota_url, version);
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+          HTTPClientLight OTAclient;
+          if (!OTAclient.begin(full_ota_url)) {
+            AddLog(LOG_LEVEL_INFO, "OTA: unsupported protocol");
+            ota_result = -999;
+          } else {
+            ota_result = (HTTP_UPDATE_FAILED != httpUpdateLight.update(OTAclient, version));
+          }
+#else // standard OTA over HTTP
           WiFiClient OTAclient;
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, full_ota_url, version));
+#endif
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
@@ -1648,6 +1665,22 @@ void ResetPwm(void)
     }
   }
 }
+
+/********************************************************************************************/
+
+#ifdef ESP32
+// Since ESP-IDF 4.4, GPIO matrix or I/O is not reset during a restart
+// and GPIO configuration can get stuck because of leftovers
+//
+// This patched version of pinMode forces a full GPIO reset before setting new mode
+//
+extern "C" void ARDUINO_ISR_ATTR __pinMode(uint8_t pin, uint8_t mode);
+
+extern "C" void ARDUINO_ISR_ATTR pinMode(uint8_t pin, uint8_t mode) {
+  gpio_reset_pin((gpio_num_t)pin);
+  __pinMode(pin, mode);
+}
+#endif
 
 /********************************************************************************************/
 

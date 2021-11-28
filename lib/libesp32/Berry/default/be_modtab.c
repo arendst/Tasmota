@@ -25,14 +25,19 @@ be_extern_native_module(strict);
 
 /* Tasmota specific */
 be_extern_native_module(python_compat);
+be_extern_native_module(re);
 be_extern_native_module(persist);
+be_extern_native_module(autoconf);
+be_extern_native_module(tapp);
 be_extern_native_module(light);
 be_extern_native_module(gpio);
+be_extern_native_module(display);
 be_extern_native_module(energy);
 be_extern_native_module(webserver);
 be_extern_native_module(flash);
 be_extern_native_module(path);
 be_extern_native_module(unishox);
+be_extern_native_module(animate);
 #ifdef USE_LVGL
 be_extern_native_module(lv);
 #endif // USE_LVGL
@@ -83,9 +88,17 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     /* user-defined modules register start */
     
     &be_native_module(python_compat),
+    &be_native_module(re),
     &be_native_module(path),
     &be_native_module(persist),
+#ifdef USE_AUTOCONF
+    &be_native_module(autoconf),
+#endif // USE_AUTOCONF
+    &be_native_module(tapp),
     &be_native_module(gpio),
+#ifdef USE_DISPLAY
+    &be_native_module(display),
+#endif // USE_DISPLAY
 #ifdef USE_LIGHT
     &be_native_module(light),
 #endif
@@ -93,6 +106,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_UNISHOX_COMPRESSION
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
+    &be_native_module(animate),
 
 #ifdef USE_LVGL
     &be_native_module(lv),
@@ -122,6 +136,10 @@ extern void be_load_AXP192_class(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
 extern void be_load_webclient_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
+extern void be_load_Leds_ntv_class(bvm *vm);
+extern void be_load_Leds_class(bvm *vm);
+extern void be_load_Leds_matrix_class(bvm *vm);
+extern void be_load_Leds_animator_class(bvm *vm);
 
 extern void be_load_ctypes_lib(bvm *vm);
 extern void be_load_ctypes_energy_definitions_lib(bvm *vm);
@@ -176,6 +194,12 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #if defined(USE_ONEWIRE) || defined(USE_DS18x20)
     be_load_onewirelib(vm);
 #endif
+#ifdef USE_WS2812
+    be_load_Leds_ntv_class(vm);
+    be_load_Leds_class(vm);
+    be_load_Leds_matrix_class(vm);
+    be_load_Leds_animator_class(vm);
+#endif // USE_WS2812
 #ifdef USE_I2S_AUDIO_BERRY
     be_load_driver_audio_lib(vm);
 #endif

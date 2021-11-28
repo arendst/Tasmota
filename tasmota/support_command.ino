@@ -621,7 +621,7 @@ void CmndStatus(void)
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
-    MqttShowSensor();
+    MqttShowSensor(true);
     ResponseJsonEnd();
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }

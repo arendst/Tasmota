@@ -343,6 +343,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     Serial.printf("SPED: %d\n", spi_speed*1000000);
     Serial.printf("Pixels: %d\n", col_mode);
     Serial.printf("SaMode: %d\n", sa_mode);
+    Serial.printf("DMA-Mode: %d\n", lvgl_param.use_dma);
 
     Serial.printf("opts: %02x,%02x,%02x\n", saw_3, dim_op, startline);
 

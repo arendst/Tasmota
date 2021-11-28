@@ -1,0 +1,54 @@
+# This is a basic workflow that is triggered on push/PRs to the master branch.
+
+name: Library Linter
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  arduino-library-manager-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: arduino/arduino-lint-action@v1
+        with:
+          library-manager: update
+          compliance: strict
+  # Detect case-insensitive file duplication in the same directory.
+  # This can cause a problem for the Arduino IDE on Windows & Macs.
+  # See:
+  # - https://github.com/arduino/Arduino/issues/11441
+  # - https://github.com/crankyoldgit/IRremoteESP8266/issues/1451
+  detect-duplicate-files:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Look for case-insensitive filename collisions.
+      run: DUPS=$(find . -path '*/.pio' -prune -o -print | sort | uniq -D -i); if [[ -n "${DUPS}" ]]; then echo -e "Duplicates found:\n${DUPS}"; false; fi
+  version-number-consitent:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check all the version numbers match.
+      run: |
+        LIB_VERSION=$(egrep "^#define\s+_IRREMOTEESP8266_VERSION_\s+" src/IRremoteESP8266.h  | cut -d\" -f2)
+        test ${LIB_VERSION} == "$(jq -r .version library.json)"
+        grep -q "^version=${LIB_VERSION}$" library.properties
+  examples-have-platformio_ini:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check that every example directory has a platformio.ini file.
+      run: (status=0; for dir in examples/*; do if [[ ! -f "${dir}/platformio.ini" ]]; then echo "${dir} has no 'platform.ini' file!"; status=1; fi; done; exit ${status})
+  supported-devices-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check that all files have supported sections.
+      run: (SUPPORTED_OUTPUT=$(python3 tools/scrape_supported_devices.py --noout --alert 2>&1); if [[ $? -ne 0 || -n "${SUPPORTED_OUTPUT}" ]]; then echo "${SUPPORTED_OUTPUT}"; exit 1; fi)

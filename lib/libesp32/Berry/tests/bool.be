@@ -16,3 +16,24 @@ def test(a, b)
     end
 end
 test(true, true)
+
+# bug in unary 
+def f(i)
+    var j = !i       # bug if i is erroneously modified
+    return i
+end
+assert(f(1) == 1)
+
+#- addind bool() function -#
+assert(bool() == false)
+assert(bool(0) == false)
+assert(bool(0.0) == false)
+assert(bool(false) == false)
+assert(bool(nil) == false)
+
+assert(bool(-1) == true)
+assert(bool(3.5) == true)
+assert(bool('') == true)
+assert(bool('a') == true)
+assert(bool(list) == true)
+assert(bool(list()) == true)

@@ -1,9 +1,9 @@
-name: Build_firmware_devel
+name: Build_firmware_development_cache
 
 on:
   workflow_dispatch:  # Manually start a workflow
   push:
-    branches: test # Dummy branch run only manually for testing!
+    branches: development
     paths-ignore:
     - '.github/**' # Ignore changes towards the .github directory
     - '**.md' # Do no build if *.md files changes
@@ -1324,7 +1324,6 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v2
     - uses: actions/download-artifact@v2
       with:
         name: firmware
@@ -1361,30 +1360,33 @@ jobs:
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
     - name: Display files to transfer
       run: ls -R ./*
+    - name: Push Firmware files to tmp_copy repo
+      uses: Jason2866/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'firmware'
+        destination_repo: 'arendst/tmp_copy'
+        destination_branch: 'firmware'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'
 
-    - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
-      run: |
-        git config user.name "Platformio BUILD"
-        git config user.email github-actions@github.com
-        git switch -c work
-        git remote add -f Tasmota "https://github.com/arendst/Tasmota-firmware.git" --track main
-        git rm -r --cached .
-        git add -f ./firmware/*
-        git commit -m ${GITHUB_SHA}
-        git merge Tasmota-firmware/main --allow-unrelated-histories
-        git push -u origin main
-
+  Start_final_copy:
+    needs: Upload
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Creat trigger.txt
       run: |
          echo ${GITHUB_SHA}  &> trigger.txt
          echo "$(<trigger.txt)"
-    - name: Push trigger.txt to start workflow in repo https://github.com/arendst/Tasmota-firmware
+    - name: Push trigger.txt to start workflow copy in tmp repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'trigger.txt'
-        destination_repo: 'arendst/Tasmota-firmware'
+        destination_repo: 'arendst/tmp_copy'
         destination_branch: 'action-development'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'

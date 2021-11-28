@@ -1840,6 +1840,15 @@ int8_t ParseSerialConfig(const char *pstr)
   return serial_config;
 }
 
+uint32_t ConvertSerialConfig(uint8_t serial_config) {
+#ifdef ESP8266
+  return (uint32_t)pgm_read_byte(kTasmotaSerialConfig + serial_config);
+#elif defined(ESP32)
+  return (uint32_t)pgm_read_dword(kTasmotaSerialConfig + serial_config);
+#else
+  #error "platform not supported"
+#endif
+}
 
 // workaround disabled 05.11.2021 solved with https://github.com/espressif/arduino-esp32/pull/5549
 //#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3

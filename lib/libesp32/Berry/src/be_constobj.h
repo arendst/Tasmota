@@ -38,6 +38,11 @@ extern "C" {
     .type = BE_FUNCTION                                         \
 }
 
+#define be_const_static_func(_func) {                           \
+    .v.nf = (_func),                                            \
+    .type = BE_FUNCTION | BE_FUNC_STATIC                        \
+}
+
 #define be_const_nil() {                                        \
     .v.i = 0,                                                   \
     .type = BE_NIL                                              \
@@ -86,6 +91,11 @@ extern "C" {
 #define be_const_closure(_closure) {                            \
     .v.c = &(_closure),                                         \
     .type = BE_CLOSURE                                          \
+}
+
+#define be_const_static_closure(_closure) {                     \
+    .v.c = &(_closure),                                         \
+    .type = BE_CLOSURE | BE_FUNC_STATIC                         \
 }
 
 #define be_const_module(_module) {                              \
@@ -217,6 +227,16 @@ const bntvmodule be_native_module(_module) = {                  \
     .data = _items                                              \
   }
 
+#define be_nested_str_literal(_str)                             \
+  {                                                             \
+    { .s=(be_nested_const_str(_str, 0, sizeof(_str)-1 ))        \
+    },                                                          \
+    BE_STRING                                                   \
+  }
+
+#define be_str_literal(_str)                                    \
+  be_nested_const_str(_str, 0, sizeof(_str)-1 )
+
 #define be_nested_string(_str, _hash, _len)                     \
   {                                                             \
     { .s=(be_nested_const_str(_str, _hash, _len ))              \
@@ -242,6 +262,11 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_const_func(_func) {                                  \
     bvaldata(_func),                                            \
     BE_FUNCTION                                                 \
+}
+
+#define be_const_static_func(_func) {                           \
+    bvaldata(_func),                                            \
+    BE_FUNCTION | BE_FUNC_STATIC                                \
 }
 
 #define be_const_nil() {                                        \
@@ -292,6 +317,11 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_const_closure(_closure) {                            \
     bvaldata(&(_closure)),                                      \
     BE_CLOSURE                                                  \
+}
+
+#define be_const_static_closure(_closure) {                     \
+    bvaldata(&(_closure)),                                      \
+    BE_CLOSURE | BE_FUNC_STATIC                                 \
 }
 
 #define be_const_module(_module) {                              \

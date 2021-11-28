@@ -1311,8 +1311,9 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x00010021:       // BatteryPercentage
-        if (modelId.startsWith(F("TRADFRI"))) {
-          attr.setUInt(attr.getUInt() * 2);   // bug in TRADFRI battery, need to double the value
+        if (modelId.startsWith(F("TRADFRI")) ||
+            modelId.startsWith(F("SYMFONISK"))) {
+          attr.setUInt(attr.getUInt() * 2);   // bug in IKEA remotes battery, need to double the value
         }
         break;
       case 0x00060000:    // "Power" for lumi Door/Window is converted to "Contact"

@@ -31,7 +31,8 @@ cat << EndOfTextEndOfTextEndOfText
 EndOfTextEndOfTextEndOfText
 
 CLASSES=$(egrep -h "^ *((enum|class) |} [a-zA-Z0-9_]+_t;$)" src/*.h |
-          sed 's/^ *//;s/enum class//;s/\;$//' | cut -d' ' -f2 | sort -u)
+          sed 's/^ *//;s/enum class//;s/\;$//' | cut -d' ' -f2 | sort -u |
+          grep -v "^__")
 for i in ${CLASSES}; do
   echo -e "${i}\tKEYWORD1"
 done | sort -du
@@ -59,13 +60,15 @@ cat << EndOfTextEndOfTextEndOfText
 #######################################
 
 EndOfTextEndOfTextEndOfText
-LITERALS=$(grep "^#define [A-Z]" src/*.cpp src/*.h |
+LITERALS=$(grep -h "^#define [A-Z]" src/*.cpp src/*.h |
            while read ignore define ignore; do
              echo ${define};
            done | sort -u |
            grep -v [\(\)] | grep -v ^_ | grep -v _\$ | grep -v VIRTUAL)
-CONSTS=$(grep "^const " src/*.cpp src/*.h |
-         sed -E 's/\[.*\] =.*//;s/ =.*//;s/^.* \*?k/k/')
+CONSTS=$(grep -h "^const " src/*.cpp src/*.h |
+         sed -E 's/\[.*\] =.*//;s/ =.*//;s/^.* \*?k/k/';
+         grep -h "^IRTEXT_CONST_" src/*.cpp src/*.h |
+         sed -E 's/IRTEXT_CONST_\S+\(//;s/,.*//;s/\).*//')
 ENUMS=$(cat src/*.h | while read a b; do
           if [[ ${a} == "};" ]]; then
             ENUM=0;
@@ -76,7 +79,7 @@ ENUMS=$(cat src/*.h | while read a b; do
           if [[ ${a} == "enum" ]]; then
             ENUM=1;
           fi;
-        done)
+        done | grep -v "^//")
 for i in ${LITERALS} ${CONSTS} ${ENUMS}; do
   echo -e "${i}\tLITERAL1"
 done | sort -u

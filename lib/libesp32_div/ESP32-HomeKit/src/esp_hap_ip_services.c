@@ -234,7 +234,7 @@ static struct httpd_uri hap_pair_verify = {
     .handler = hap_http_pair_verify_handler,
 };
 
-static int hap_add_char_val_json(hap_char_format_t format, char *key,
+static int hap_add_char_val_json(hap_char_format_t format, const char *key,
 		hap_val_t *val, json_gen_str_t *jptr)
 {
 	switch (format) {
@@ -970,7 +970,7 @@ static int hap_http_put_characteristics(httpd_req_t *req)
     return HAP_SUCCESS;
 }
 
-static bool hap_get_bool_url_param(char *query_str, char *key)
+static bool hap_get_bool_url_param(const char *query_str, const char *key)
 {
 	char val[6]; /* Max string will be "false" */
 	if (httpd_query_key_value(query_str, key, val, sizeof(val)) == HAP_SUCCESS) {

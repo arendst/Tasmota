@@ -57,12 +57,18 @@ int be_eqstr(bstring *s1, bstring *s2)
     }
     /* const short strings */
     if (gc_isconst(s1) || gc_isconst(s2)) { /* one of the two string is short const */
-        if (cast(bcstring*, s1)->hash && cast(bcstring*, s2)->hash) {
-            return 0; /* if they both have a hash, then we know they are different */
+        uint32_t hash1 = cast(bcstring*, s1)->hash;
+        uint32_t hash2 = cast(bcstring*, s2)->hash;
+        if (hash1 && hash2 && hash1 != hash2) {
+            return 0; /* if hash differ, since we know both are non-null */
         }
+        /* if hash are equals, there might be a chance that they are different */
+        /* This can happen with solidified code that a same string is present more than once */
+        /* so just considering that two strings with the same hash must be same pointer, this is no more true */
         return !strcmp(str(s1), str(s2));
     }
 
+    /* if both strings are in-memory, they can't be equal without having the same pointer */
     return 0;
 }
 

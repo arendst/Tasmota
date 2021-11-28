@@ -24,6 +24,7 @@
 
 #include <berry.h>
 #include "be_vm.h"
+#include "ZipReadFS.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
@@ -261,7 +262,10 @@ void BerryObservability(bvm *vm, int event...) {
       {
         int32_t vm_usage2 = va_arg(param, int32_t);
         uint32_t gc_elapsed = millis() - gc_time;
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+        uint32_t vm_scanned = va_arg(param, uint32_t);
+        uint32_t vm_freed = va_arg(param, uint32_t);
+        AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
+                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
@@ -289,6 +293,17 @@ void BerryObservability(bvm *vm, int event...) {
       break;
   }
   va_end(param);
+}
+
+/*********************************************************************************************\
+ * Adde Berry metrics to teleperiod
+\*********************************************************************************************/
+void BrShowState(void);
+void BrShowState(void) {
+  // trigger a gc first
+  be_gc_collect(berry.vm);
+  ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
+    berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
 }
 
 /*********************************************************************************************\
@@ -335,6 +350,9 @@ void BerryInit(void) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     berry_init_ok = true;
 
+    // we generate a synthetic event `autoexec` 
+    callBerryEventDispatcher(PSTR("preinit"), nullptr, 0, nullptr);
+    
     // Run pre-init
     BrLoad("preinit.be");    // run 'preinit.be' if present
   } while (0);
@@ -758,6 +776,9 @@ bool Xdrv52(uint8_t function)
     //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
+        // we generate a synthetic event `autoexec` 
+        callBerryEventDispatcher(PSTR("autoexec"), nullptr, 0, nullptr);
+
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
@@ -773,9 +794,6 @@ bool Xdrv52(uint8_t function)
     case FUNC_MQTT_DATA:
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
       break;
-    case FUNC_EVERY_50_MSECOND:
-      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
-      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kBrCommands, BerryCommand);
       if (!result) {
@@ -784,6 +802,9 @@ bool Xdrv52(uint8_t function)
       break;
 
     // Module specific events
+    case FUNC_EVERY_50_MSECOND:
+      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
+      break;
     case FUNC_EVERY_100_MSECOND:
       callBerryEventDispatcher(PSTR("every_100ms"), nullptr, 0, nullptr);
       break;

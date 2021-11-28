@@ -100,6 +100,12 @@
  **/
 #define BE_STACK_FREE_MIN               20
 
+/* Macro: BE_STACK_START
+ * Set the starting size of the stack at VM creation.
+ * Default: 50
+ **/
+#define BE_STACK_START                  100
+
 /* Macro: BE_CONST_SEARCH_SIZE
  * Constants in function are limited to 255. However the compiler
  * will look for a maximum of pre-existing constants to avoid
@@ -187,12 +193,19 @@
 #define BE_USE_TIME_MODULE              0
 #define BE_USE_OS_MODULE                0
 #define BE_USE_GLOBAL_MODULE            1
-#define BE_USE_SYS_MODULE               0
-#define BE_USE_DEBUG_MODULE             1
+#define BE_USE_SYS_MODULE               1
+#define BE_USE_DEBUG_MODULE             0
 #define BE_USE_GC_MODULE                1
-#define BE_USE_SOLIDIFY_MODULE          1
+#define BE_USE_SOLIDIFY_MODULE          0
 #define BE_USE_INTROSPECT_MODULE        1
 #define BE_USE_STRICT_MODULE            1
+
+#ifdef USE_BERRY_DEBUG
+  #undef BE_USE_DEBUG_MODULE
+  #undef BE_USE_SOLIDIFY_MODULE
+  #define BE_USE_DEBUG_MODULE             1
+  #define BE_USE_SOLIDIFY_MODULE          1
+#endif // USE_BERRY_DEBUG
 
 /* Macro: BE_EXPLICIT_XXX
  * If these macros are defined, the corresponding function will

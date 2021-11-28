@@ -142,7 +142,7 @@
     _vm->cf->status = PRIM_FUNC; \
 }
 
-static void prep_closure(bvm *vm, bvalue *reg, int argc, int mode);
+static void prep_closure(bvm *vm, int32_t pos, int argc, int mode);
 
 static void attribute_error(bvm *vm, const char *t, bvalue *b, bvalue *c)
 {
@@ -453,8 +453,8 @@ BERRY_API bvm* be_vm_new(void)
     be_stack_init(vm, &vm->refstack, sizeof(binstance*));
     be_stack_init(vm, &vm->exceptstack, sizeof(struct bexecptframe));
     be_stack_init(vm, &vm->tracestack, sizeof(bcallsnapshot));
-    vm->stack = be_malloc(vm, sizeof(bvalue) * BE_STACK_FREE_MIN);
-    vm->stacktop = vm->stack + BE_STACK_FREE_MIN;
+    vm->stack = be_malloc(vm, sizeof(bvalue) * BE_STACK_START);
+    vm->stacktop = vm->stack + BE_STACK_START;
     vm->reg = vm->stack;
     vm->top = vm->reg;
     be_globalvar_init(vm);
@@ -472,6 +472,8 @@ BERRY_API bvm* be_vm_new(void)
     vm->counter_set = 0;
     vm->counter_try = 0;
     vm->counter_exc = 0;
+    vm->counter_gc_kept = 0;
+    vm->counter_gc_freed = 0;
 #endif
     return vm;
 }
@@ -852,16 +854,29 @@ newframe: /* a new call frame */
                 bvalue *a = RA();
                 *a = a_temp;
                 if (basetype(type) == BE_FUNCTION) {
-                    /* check if the object is a superinstance, if so get the lowest possible subclass */
-                    while (obj->sub) {
-                        obj = obj->sub;
+                    if (func_isstatic(a)) {
+                        /* static method, don't bother with the instance */
+                        a[1] = a_temp;
+                        var_settype(a, NOT_METHOD);
+                    } else {
+                        /* this is a real method (i.e. non-static) */
+                        /* check if the object is a superinstance, if so get the lowest possible subclass */
+                        while (obj->sub) {
+                            obj = obj->sub;
+                        }
+                        var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                     }
-                    var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                 } else {
                     vm_error(vm, "attribute_error",
                         "class '%s' has no method '%s'",
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
+            } else if (var_isclass(b) && var_isstr(c)) {
+                class_attribute(vm, b, c, &a_temp);
+                reg = vm->reg;
+                bvalue *a = RA();
+                a[1] = a_temp;
+                var_settype(a, NOT_METHOD);
             } else if (var_ismodule(b) && var_isstr(c)) {
                 module_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
@@ -891,9 +906,14 @@ newframe: /* a new call frame */
                 dispatch();
             }
             if (var_isclass(a) && var_isstr(b)) {
+                /* if value is a function, we mark it as a static to distinguish from methods */
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                if (!be_class_setmember(vm, obj, attr, c)) {
+                bvalue c_static = *c;
+                if (var_isfunction(&c_static)) {
+                    c_static.type = func_setstatic(&c_static);
+                }
+                if (!be_class_setmember(vm, obj, attr, &c_static)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",
@@ -1017,9 +1037,6 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(RAISE): {
-#if BE_USE_PERF_COUNTERS
-            vm->counter_exc++;
-#endif
             if (IGET_RA(ins) < 2) {  /* A==2 means no arguments are passed to RAISE, i.e. rethrow with current exception */
                 bvalue *top = vm->top;
                 top[0] = *RKB(); /* push the exception value to top */
@@ -1062,10 +1079,11 @@ newframe: /* a new call frame */
                 ++var, --argc, mode = 1;
                 goto recall;
             case BE_CLASS:
-                if (be_class_newobj(vm, var_toobj(var), var, ++argc, mode)) {  /* instanciate object and find constructor */
+                if (be_class_newobj(vm, var_toobj(var), var - reg, ++argc, mode)) {  /* instanciate object and find constructor */
                     reg = vm->reg + mode;  /* constructor found */
                     mode = 0;
                     var = RA() + 1; /* to next register */
+                    reg = vm->reg;
                     goto recall; /* call constructor */
                 }
                 break;
@@ -1101,7 +1119,7 @@ newframe: /* a new call frame */
                 //     *(reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
                 //     vm->top = top_save;  /* restore top of stack pointer */
                 // }
-                prep_closure(vm, var, argc, mode);
+                prep_closure(vm, var - reg, argc, mode);
                 reg = vm->reg;  /* `reg` has changed, now new base register */
                 goto newframe;  /* continue execution of the closure */
             }
@@ -1163,14 +1181,13 @@ newframe: /* a new call frame */
     }
 }
 
-static void prep_closure(bvm *vm, bvalue *reg, int argc, int mode)
+static void prep_closure(bvm *vm, int32_t pos, int argc, int mode)
 {
     bvalue *v, *end;
-    bproto *proto = var2cl(reg)->proto;
-    push_closure(vm, reg, proto->nstack, mode);
-    v = vm->reg + argc;
+    bproto *proto = var2cl(vm->reg + pos)->proto;
+    push_closure(vm, vm->reg + pos, proto->nstack, mode);
     end = vm->reg + proto->argc;
-    for (; v <= end; ++v) {
+    for (v = vm->reg + argc; v <= end; ++v) {
         var_setnil(v);
     }
     if (proto->varg) {  /* there are vararg at the last argument, build the list */
@@ -1189,7 +1206,7 @@ static void prep_closure(bvm *vm, bvalue *reg, int argc, int mode)
     }
 }
 
-static void do_closure(bvm *vm, bvalue *reg, int argc)
+static void do_closure(bvm *vm, int32_t pos, int argc)
 {
     // bvalue *v, *end;
     // bproto *proto = var2cl(reg)->proto;
@@ -1199,31 +1216,31 @@ static void do_closure(bvm *vm, bvalue *reg, int argc)
     // for (; v <= end; ++v) {
     //     var_setnil(v);
     // }
-    prep_closure(vm, reg, argc, 0);
+    prep_closure(vm, pos, argc, 0);
     vm_exec(vm);
 }
 
-static void do_ntvclos(bvm *vm, bvalue *reg, int argc)
+static void do_ntvclos(bvm *vm, int32_t pos, int argc)
 {
-    bntvclos *f = var_toobj(reg);
-    push_native(vm, reg, argc, 0);
+    bntvclos *f = var_toobj(vm->reg + pos);
+    push_native(vm, vm->reg + pos, argc, 0);
     f->f(vm); /* call C primitive function */
     ret_native(vm);
 }
 
-static void do_ntvfunc(bvm *vm, bvalue *reg, int argc)
+static void do_ntvfunc(bvm *vm, int32_t pos, int argc)
 {
-    bntvfunc f = var_tontvfunc(reg);
-    push_native(vm, reg, argc, 0);
+    bntvfunc f = var_tontvfunc(vm->reg + pos);
+    push_native(vm, vm->reg + pos, argc, 0);
     f(vm); /* call C primitive function */
     ret_native(vm);
 }
 
-static void do_class(bvm *vm, bvalue *reg, int argc)
+static void do_class(bvm *vm, int32_t pos, int argc)
 {
-    if (be_class_newobj(vm, var_toobj(reg), reg, ++argc, 0)) {
+    if (be_class_newobj(vm, var_toobj(vm->reg + pos), pos, ++argc, 0)) {
         be_incrtop(vm);
-        be_dofunc(vm, reg + 1, argc);
+        be_dofunc(vm, vm->reg + pos + 1, argc);
         be_stackpop(vm, 1);
     }
 }
@@ -1232,11 +1249,12 @@ void be_dofunc(bvm *vm, bvalue *v, int argc)
 {
     be_assert(vm->reg <= v && v < vm->stacktop);
     be_assert(vm->stack <= vm->reg && vm->reg < vm->stacktop);
+    int32_t pos = v - vm->reg;
     switch (var_type(v)) {
-    case BE_CLASS: do_class(vm, v, argc); break;
-    case BE_CLOSURE: do_closure(vm, v, argc); break;
-    case BE_NTVCLOS: do_ntvclos(vm, v, argc); break;
-    case BE_NTVFUNC: do_ntvfunc(vm, v, argc); break;
+    case BE_CLASS: do_class(vm, pos, argc); break;
+    case BE_CLOSURE: do_closure(vm, pos, argc); break;
+    case BE_NTVCLOS: do_ntvclos(vm, pos, argc); break;
+    case BE_NTVFUNC: do_ntvfunc(vm, pos, argc); break;
     default: call_error(vm, v);
     }
 }

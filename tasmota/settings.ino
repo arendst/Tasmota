@@ -1454,6 +1454,11 @@ void SettingsDelta(void) {
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
     }
+    if (Settings->version < 0x0A000003) {
+      if (0 == Settings->param[P_ARP_GRATUITOUS]) {
+        Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
+      }
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

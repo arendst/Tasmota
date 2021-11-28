@@ -75,7 +75,7 @@ void be_member_bind(bvm *vm, bclass *c, bstring *name, bbool var)
     }
 }
 
-void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
+void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p, bbool is_static)
 {
     bclosure *cl;
     bvalue *attr;
@@ -87,6 +87,9 @@ void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
     cl = be_newclosure(vm, p->nupvals);
     cl->proto = p;
     var_setclosure(attr, cl);
+    if (is_static) {
+        func_setstatic(attr);
+    }
 }
 
 void be_prim_method_bind(bvm *vm, bclass *c, bstring *name, bntvfunc f)
@@ -217,18 +220,18 @@ static binstance* newobject(bvm *vm, bclass *c)
 /* Instanciate new instance from stack with argc parameters */
 /* Pushes the constructor on the stack to be executed if a construtor is found */
 /* Returns true if a constructor is found */
-bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
+bbool be_class_newobj(bvm *vm, bclass *c, int32_t pos, int argc, int mode)
 {
     bvalue init;
-    size_t pos = reg - vm->reg;
     binstance *obj = newobject(vm, c);  /* create empty object hierarchy from class hierarchy */
-    reg = vm->reg + pos - mode; /* the stack may have changed, mode=1 when class is instanciated from module #104 */
-    var_setinstance(reg, obj);
-    var_setinstance(reg + mode, obj);  /* copy to reg and reg+1 if mode==1 */
+    // reg = vm->reg + pos - mode; /* the stack may have changed, mode=1 when class is instanciated from module #104 */
+    var_setinstance(vm->reg + pos, obj);
+    var_setinstance(vm->reg + pos - mode, obj);  /* copy to reg and reg+1 if mode==1 */
     /* find constructor */
     obj = instance_member(vm, obj, str_literal(vm, "init"), &init);
     if (obj && var_type(&init) != MT_VARIABLE) {
         /* copy argv */
+        bvalue * reg;
         for (reg = vm->reg + pos + 1; argc > 0; --argc) {
             reg[argc] = reg[argc - 2];
         }

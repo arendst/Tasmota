@@ -335,12 +335,15 @@ static void free_suffix(bfuncinfo *finfo, bexpdesc *e)
     }
 }
 
-static int suffix_destreg(bfuncinfo *finfo, bexpdesc *e1, int dst)
+static int suffix_destreg(bfuncinfo *finfo, bexpdesc *e1, int dst, bbool no_reg_reuse)
 {
     int cand_dst = dst;  /* candidate for new dst */
     int nlocal = be_list_count(finfo->local);
     int reg1 = (e1->v.ss.tt == ETREG) ? e1->v.ss.obj : -1;  /* check if obj is ETREG or -1 */
     int reg2 = (!isK(e1->v.ss.idx) && e1->v.ss.idx >= nlocal) ? e1->v.ss.idx : -1;  /* check if idx is ETREG or -1 */
+    if (no_reg_reuse) {  /* if no_reg_reuse flag, then don't reuse any register, this is useful for compound assignments */
+        reg1 = reg2 = -1;
+    }
 
     if (reg1 >= 0 && reg2 >= 0) {
         /* both are ETREG, we keep the lowest and discard the other */
@@ -364,9 +367,9 @@ static int suffix_destreg(bfuncinfo *finfo, bexpdesc *e1, int dst)
     return dst;
 }
 
-static int code_suffix(bfuncinfo *finfo, bopcode op, bexpdesc *e, int dst)
+static int code_suffix(bfuncinfo *finfo, bopcode op, bexpdesc *e, int dst, bbool no_reg_reuse)
 {
-    dst = suffix_destreg(finfo, e, dst);
+    dst = suffix_destreg(finfo, e, dst, no_reg_reuse);
     if (dst > finfo->freereg) {
         dst = finfo->freereg;
     }
@@ -400,6 +403,7 @@ static bbool constint(bfuncinfo *finfo, bint i)
 /* At exit, If dst is `freereg`, the register is allocated */
 static int var2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
 {
+    bbool no_reg_reuse = (dst >= 0);  /* if dst reg is explicitly specified, do not optimize register allocation */
     if (dst < 0) {  /* if unspecified, allocate a new register if needed */
         dst = finfo->freereg;
     }
@@ -434,10 +438,10 @@ static int var2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
         codeABx(finfo, OP_GETUPV, dst, e->v.idx);
         break;
     case ETMEMBER:
-        dst = code_suffix(finfo, OP_GETMBR, e, dst);
+        dst = code_suffix(finfo, OP_GETMBR, e, dst, no_reg_reuse);
         break;
     case ETINDEX:
-        dst = code_suffix(finfo, OP_GETIDX, e, dst);
+        dst = code_suffix(finfo, OP_GETIDX, e, dst, no_reg_reuse);
         break;
     case ETLOCAL: case ETREG: case ETCONST:
         return e->v.idx;
@@ -479,6 +483,7 @@ static int exp2reg(bfuncinfo *finfo, bexpdesc *e, int dst)
 /* Returns the destination register, guaranteed to be ETREG */
 static int codedestreg(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, int dst)
 {
+    if (dst < 0) { dst = finfo->freereg; }
     int cand_dst = dst;
     int con1 = e1->type == ETREG, con2 = e2->type == ETREG;
 
@@ -506,7 +511,6 @@ static int codedestreg(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, int dst)
 /* On exit, e1 is guaranteed to be ETREG, which may have been allocated */
 static void binaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e1, bexpdesc *e2, int dst)
 {
-    if (dst < 0) { dst = finfo->freereg; }
     int src1 = exp2reg(finfo, e1, dst);  /* potentially force the target for src1 reg */
     int src2 = exp2anyreg(finfo, e2);
     dst = codedestreg(finfo, e1, e2, dst);
@@ -561,7 +565,10 @@ static void unaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e)
 {
     int src = exp2anyreg(finfo, e);
     int dst = e->type == ETREG ? src : be_code_allocregs(finfo, 1);
-    codeABC(finfo, op, dst, src, 0);
+    if (!(op == OP_MOVE && src == dst)) {
+        /* skip if MOVE from same src / dst */
+        codeABC(finfo, op, dst, src, 0);
+    }
     e->type = ETREG;
     e->v.idx = dst;
 }
@@ -569,7 +576,7 @@ static void unaryexp(bfuncinfo *finfo, bopcode op, bexpdesc *e)
 /* Apply not to conditional expression */
 /* If literal compute the value */
 /* Or invert t/f subexpressions */
-static void code_not(bexpdesc *e)
+static void code_not(bfuncinfo *finfo, bexpdesc *e)
 {
     switch (e->type) {
     case ETINT: e->v.i = e->v.i == 0; break;
@@ -578,6 +585,7 @@ static void code_not(bexpdesc *e)
     case ETBOOL: e->v.i = !e->v.i; break;
     case ETSTRING: e->v.i = 0; break;
     default: {
+        unaryexp(finfo, OP_MOVE, e);
         int temp = e->t;
         e->t = e->f;
         e->f = temp;
@@ -620,7 +628,7 @@ int be_code_unop(bfuncinfo *finfo, int op, bexpdesc *e)
 {
     switch (op) {
     case OptNot:
-        code_not(e); break;
+        code_not(finfo, e); break;
     case OptFlip: /* do nothing */
         return code_flip(finfo, e);
     case OptSub:
@@ -719,7 +727,7 @@ int be_code_getmethod(bfuncinfo *finfo, bexpdesc *e)
 {
     int dst = finfo->freereg;
     be_assert(e->type == ETMEMBER);
-    dst = code_suffix(finfo, OP_GETMET, e, dst);
+    dst = code_suffix(finfo, OP_GETMET, e, dst, bfalse);
     /* method [object] args */
     be_code_allocregs(finfo, dst == finfo->freereg ? 2 : 1);
     return dst;

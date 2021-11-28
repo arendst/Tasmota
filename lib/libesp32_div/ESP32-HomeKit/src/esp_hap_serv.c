@@ -110,7 +110,7 @@ hap_char_t *hap_serv_get_char_by_uuid(hap_serv_t *hs, const char *uuid)
 /**
  * @brief get characteristics UUID prefix number
  */
- char *hap_serv_get_uuid(hap_serv_t *hs)
+ const char *hap_serv_get_uuid(hap_serv_t *hs)
  {
      return ((__hap_serv_t *)hs)->type_uuid;
  }
@@ -145,7 +145,7 @@ static int hap_serv_def_bulk_read_cb(hap_read_data_t read_data[], int count,
 /**
  * @brief HAP create a service
  */
-hap_serv_t *hap_serv_create(char *type_uuid)
+hap_serv_t *hap_serv_create(const char *type_uuid)
 {
     ESP_MFI_ASSERT(type_uuid);
     __hap_serv_t *_hs = hap_platform_memory_calloc(1, sizeof(__hap_serv_t));
@@ -198,7 +198,7 @@ uint32_t hap_serv_get_iid(hap_serv_t *hs)
     return tmp->iid;
 }
 
-char *hap_serv_get_type_uuid(hap_serv_t *hs)
+const char *hap_serv_get_type_uuid(hap_serv_t *hs)
 {
     if (!hs)
        return 0;
