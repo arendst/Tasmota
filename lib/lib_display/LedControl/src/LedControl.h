@@ -35,6 +35,10 @@
 #include <WProgram.h>
 #endif
 
+#ifndef MAX72XX_MAX_DEVICES
+#define MAX72XX_MAX_DEVICES 32 // maximum number of devices based on MXA7219/MAX7221
+#endif
+
 /*
  * Segments to be switched on for characters and digits on
  * 7-Segment Displays
@@ -61,12 +65,14 @@ const static byte charTable [] PROGMEM  = {
 class LedControl {
     private :
         /* The array for shifting the data to the devices */
-        byte spidata[16];
-        /* Send out a single command to the device */
+        byte spidata[2 * MAX72XX_MAX_DEVICES];
+        /* Send out a single command to one device */
         void spiTransfer(int addr, byte opcode, byte data);
+        /* Send out a command with the same opcode to all devices */
+        void spiTransferLong(byte opcode, const byte* data);
 
         /* We keep track of the led-status for all 8 devices in this array */
-        byte status[64];
+        byte status[8 * MAX72XX_MAX_DEVICES];
         /* Data is shifted out of this pin*/
         int SPI_MOSI;
         /* The clock is signaled on this pin */
@@ -148,6 +154,14 @@ class LedControl {
          *		corresponding Led.
          */
         void setRow(int addr, int row, byte value);
+
+        /**
+         * @brief Set data for the same row of all devices
+         * 
+         * @param row [0..8]
+         * @param value array of bytes, one for each device
+         */
+        void setRowLong(int row, byte* value);
 
         /* 
          * Set all 8 Led's in a column to a new state

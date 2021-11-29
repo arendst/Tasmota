@@ -32,17 +32,17 @@
 // public
 LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, unsigned int rows)
 {
-    if (colums * rows > MATRIX_MAX_MODULES)
+    if (colums * rows > MAX72XX_MAX_DEVICES)
     {
         // dimension exeeds maximum buffer size
-        if (colums >= MATRIX_MAX_MODULES)
+        if (colums >= MAX72XX_MAX_DEVICES)
         {
-            colums = MATRIX_MAX_MODULES;
+            colums = MAX72XX_MAX_DEVICES;
             rows = 1;
         }
         else
         {
-            rows = MATRIX_MAX_MODULES / colums;
+            rows = MAX72XX_MAX_DEVICES / colums;
         }
     }
 
@@ -66,7 +66,7 @@ LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, un
     setIntensity(7);
 }
 
-bool LedMatrix::drawText( const char *str)
+bool LedMatrix::drawText( const char *str, bool clearBefore)
 {
     strncpy(textBuf, str, TEXT_BUFFER_SIZE -1);
     textPosX = 0;
@@ -75,7 +75,7 @@ bool LedMatrix::drawText( const char *str)
     if(textWidth < displayWidth)
     {
         // text fits into the display, place it into the center
-        clear();
+        if(clearBefore) clear();
         textPosX = (displayWidth - textWidth) / 2; // center
     }
     else
@@ -146,9 +146,13 @@ bool LedMatrix::setIntensity(byte dim)
     return true;
 }
 
-bool LedMatrix::setOrientation(ModuleOrientation orientation)
+bool LedMatrix::setOrientation(LedMatrix::ModuleOrientation orientation)
 {
-    moduleOrientation = orientation;
+    if(moduleOrientation != orientation)
+    {
+        moduleOrientation = orientation;
+        refresh();
+    }
     return true;
 }
 
@@ -268,9 +272,9 @@ void LedMatrix::refreshByteOfBuffer(int i)
 
 byte LedMatrix::revereBitorder (byte b)
 {
-    const static byte lookup[] PROGMEM = {
+    static const byte lookup[16] = {
         0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
-        0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf, 
+        0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf
     };
     return (lookup[b & 0b1111] << 4) | lookup[b >> 4];
 }

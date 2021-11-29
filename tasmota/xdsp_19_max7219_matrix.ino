@@ -113,22 +113,31 @@ bool MAX7291Matrix_initDriver(void)
     }
 
     Settings->display_model = XDSP_19;
+    renderer = nullptr; // renderer not yet used
     if (Settings->display_width) // [pixel]
     {
         LedMatrix_settings.modulesPerRow = (Settings->display_width - 1) / 8 + 1;
     }
     Settings->display_width = 8 * LedMatrix_settings.modulesPerRow;
-    Settings->display_cols[0] = Settings->display_width;
+    Settings->display_cols[0] = LedMatrix_settings.modulesPerRow;
     if (Settings->display_height) // [pixel]
     {
         LedMatrix_settings.modulesPerCol = (Settings->display_height - 1) / 8 + 1;
     }
-    Settings->display_height = 8 * LedMatrix_settings. modulesPerCol;
-    Settings->display_rows = Settings->display_height;
-    Settings->display_cols[1] = Settings->display_height;
+    Settings->display_height = 8 * LedMatrix_settings.modulesPerCol;
+    Settings->display_rows = LedMatrix_settings.modulesPerCol;
+    Settings->display_cols[1] = LedMatrix_settings.modulesPerCol;
     max7219_Matrix = new LedMatrix(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), LedMatrix_settings.modulesPerRow, LedMatrix_settings.modulesPerCol);
+    if( LedMatrix_settings.show_clock == 0)
+    {
+        Settings->display_mode = 0; // text mode
+    }
+    else{
+        Settings->display_mode = 1; // clock mode
+    }
     max2791Matrix_initDriver_done = true;
 
+    AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_initDriver DIN:%d CLK:%d CS:%d size(%dx%d)"), Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), LedMatrix_settings.modulesPerRow, LedMatrix_settings.modulesPerCol);
     return MAX7291Matrix_init();
 }
 
@@ -137,12 +146,17 @@ bool MAX7291Matrix_init(void)
 {
     int intensity = GetDisplayDimmer16(); // 0..15
     max7219_Matrix->setIntensity(intensity);
-    int orientation = Settings->display_rotate;
-    max7219_Matrix->setOrientation((LedMatrix::ModuleOrientation)orientation );
-    AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_init %dx%d modules, orientation: %d, intensity: %d"), LedMatrix_settings.modulesPerRow , LedMatrix_settings.modulesPerCol, orientation, intensity);
-
-    //max7219_Matrix->test();
-    AddLog(LOG_LEVEL_INFO, PSTR("MTX: display test"));
+    if(Settings->display_rotate <= 3)
+    {
+        max7219_Matrix->setOrientation((LedMatrix::ModuleOrientation)Settings->display_rotate );
+    }
+    else
+    {
+        // default for most 32x8 modules
+        Settings->display_rotate = LedMatrix::ORIENTATION_UPSIDE_DOWN; 
+        max7219_Matrix->setOrientation( LedMatrix::ORIENTATION_UPSIDE_DOWN ); 
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_init orientation: %d, intensity: %d"), Settings->display_rotate, intensity);
     return true;
 }
 
@@ -183,28 +197,38 @@ bool MAX7291Matrix_clock(void)
 {
     LedMatrix_settings.show_clock = XdrvMailbox.payload;
     if (ArgC() == 0)
-        XdrvMailbox.payload = 1;
-    if (XdrvMailbox.payload > 1)
-    {
-        LedMatrix_settings.timeFormat = "%H:%M";
-        if(LedMatrix_settings.modulesPerRow > 6)
-        {
-            LedMatrix_settings.timeFormat = "%H:%M:%S";
-        }
         XdrvMailbox.payload = 2;
-    }
-    else
-    {
-        LedMatrix_settings.timeFormat = "%I:%M";
-        if(LedMatrix_settings.modulesPerRow > 6)
+        switch(XdrvMailbox.payload)
         {
-            LedMatrix_settings.timeFormat = "%I:%M:%S";
+            case 0:
+                // no clock, switch to text mode
+                Settings->display_mode = 0;
+                return true;
+            case 1:
+                // 12 h clock
+                LedMatrix_settings.timeFormat = "%I:%M";
+                if(LedMatrix_settings.modulesPerRow > 6)
+                {
+                    LedMatrix_settings.timeFormat = "%I:%M:%S";
+                }
+                Settings->display_mode = 1;
+                break;
+            case 2:
+                // 24 h clock
+                LedMatrix_settings.timeFormat = "%H:%M";
+                if(LedMatrix_settings.modulesPerRow > 6)
+                {
+                    LedMatrix_settings.timeFormat = "%H:%M:%S";
+                }
+                Settings->display_mode = 1;
+                break;
+            default:
+                return false;
         }
-        XdrvMailbox.payload = 1;
-    }
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: LedMatrix_settings.show_clock %d, timeFormat %s"), LedMatrix_settings.show_clock, LedMatrix_settings.timeFormat);
 
+    max7219_Matrix->clearDisplay();
     MAX7291Matrix_showTime();
     return true;
 }
@@ -220,7 +244,7 @@ bool MAX7291Matrix_showTime()
     timeinfo = localtime(&rawtime);
     strftime(timeStr, 10, LedMatrix_settings.timeFormat, timeinfo);
 
-    max7219_Matrix->drawText(timeStr);
+    max7219_Matrix->drawText(timeStr, false); // false: do not clear desplay on update to prevent flicker
     return true;
 }
 #endif // USE_DISPLAY_MODES1TO5
@@ -254,7 +278,16 @@ bool Xdsp19(uint8_t function)
             result = max7219_Matrix->setIntensity(GetDisplayDimmer16());
             break;
         case FUNC_DISPLAY_DRAW_STRING:
-            result = max7219_Matrix->drawText(dsp_str);
+        case FUNC_DISPLAY_SCROLLTEXT:
+        case FUNC_DISPLAY_SEVENSEG_TEXT:
+            Settings->display_mode = 0; // text mode
+            LedMatrix_settings.show_clock = 0; // disable clock mode
+            result = max7219_Matrix->drawText(XdrvMailbox.data, true); // true: clears display before drawing text
+            break;
+        case FUNC_DISPLAY_SEVENSEG_TEXTNC:
+            Settings->display_mode = 0; // text mode
+            LedMatrix_settings.show_clock = 0; // disable clock mode
+            result = max7219_Matrix->drawText(XdrvMailbox.data, false); // false: does not clear display before drawing text
             break;
         case FUNC_DISPLAY_SCROLLDELAY:
             result = MAX7291Matrix_scrollDelay();

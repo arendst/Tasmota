@@ -29,8 +29,7 @@
 
 #include <LedControl.h>
 
-#define MATRIX_MAX_MODULES 32  // maximum number of modules that can be used
-#define MATRIX_BUFFER_SIZE MATRIX_MAX_MODULES * 8 // 8 bytes per modul. One byte represents 8 LEDs.
+#define MATRIX_BUFFER_SIZE MAX72XX_MAX_DEVICES * 8 // 8 bytes per modul. One byte represents 8 LEDs.
 #define TEXT_BUFFER_SIZE 256 // maximum text length that can be scrolled
 #define TEXT_APPEND_BUFFER_SIZE 16 // used for characters that are appended to the scroll text, before it repeats
 
@@ -66,12 +65,14 @@ class LedMatrix
          * When the text is longer than than the display width, it can be scrolled per pixel with function scrollText().
          * 
          * @param str string to display
+         * @param clearBefore true (default) clears old display content before, false: do not clear display before
          */
-        bool drawText( const char *str );
+        bool drawText( const char *str, bool clearBefore = true );
 
         /**
          * @brief Dwaws a character string to a defined display position. The position (x,y) is used for the upper left pixel of the text. 
-         * Existing text before the x position will not be cleared. Use refresh() after all text parts are drawed.
+         * Existing content outside the drawing text area will not be cleared. But you can use clearDisplay() before.
+         * Use refresh() after all text parts are drawed.
          * 
          * @param str string to display
          * @param x horizantal pixel position to start with string (0 is most left)
@@ -112,7 +113,7 @@ class LedMatrix
          * 
          * @param orientation 
          */
-        bool setOrientation(ModuleOrientation orientation);
+        bool setOrientation(LedMatrix::ModuleOrientation orientation);
 
         /**
          * @brief Set ap pixel at a defined position.
@@ -151,7 +152,7 @@ class LedMatrix
         unsigned int displayWidth; // matrix width [pixel]
         unsigned int displayHeight; // matrix height [pixel]
         unsigned int modules; // number of 8x8 mudules
-        ModuleOrientation moduleOrientation;
+        uint8_t moduleOrientation;
         byte buffer[MATRIX_BUFFER_SIZE];
         LedControl* ledControl;
         int charWidth;

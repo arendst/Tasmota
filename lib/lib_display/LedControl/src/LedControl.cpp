@@ -47,16 +47,16 @@ LedControl::LedControl(int dataPin, int clkPin, int csPin, int numDevices) {
     SPI_MOSI=dataPin;
     SPI_CLK=clkPin;
     SPI_CS=csPin;
-    if(numDevices<=0 || numDevices>8 )
-        numDevices=8;
-    maxDevices=numDevices;
+    if (numDevices <= 0 || numDevices > MAX72XX_MAX_DEVICES)
+        numDevices = MAX72XX_MAX_DEVICES;
+    maxDevices = numDevices;
     pinMode(SPI_MOSI,OUTPUT);
     pinMode(SPI_CLK,OUTPUT);
     pinMode(SPI_CS,OUTPUT);
     digitalWrite(SPI_CS,HIGH);
     SPI_MOSI=dataPin;
-    for(int i=0;i<64;i++) 
-        status[i]=0x00;
+    for (int i = 0; i < 8 * MAX72XX_MAX_DEVICES; i++)
+        status[i] = 0x00;
     for(int i=0;i<maxDevices;i++) {
         spiTransfer(i,OP_DISPLAYTEST,0);
         //scanlimit is set to max on startup
@@ -138,6 +138,15 @@ void LedControl::setRow(int addr, int row, byte value) {
     spiTransfer(addr, row+1,status[offset+row]);
 }
 
+void LedControl::setRowLong(int row, byte *value)
+{
+    if (row < 0 || row > 7)
+        return;
+    for (int addr = 0; addr < maxDevices; addr++)
+        status[addr * 8 + row] = value[addr];
+    spiTransferLong(row + 1, value);
+}
+
 void LedControl::setColumn(int addr, int col, byte value) {
     byte val;
 
@@ -195,7 +204,7 @@ void LedControl::spiTransfer(int addr, volatile byte opcode, volatile byte data)
     int maxbytes=maxDevices*2;
 
     for(int i=0;i<maxbytes;i++)
-        spidata[i]=(byte)0;
+        spidata[i]=(byte)OP_NOOP;
     //put our device data into the array
     spidata[offset+1]=opcode;
     spidata[offset]=data;
@@ -208,4 +217,18 @@ void LedControl::spiTransfer(int addr, volatile byte opcode, volatile byte data)
     digitalWrite(SPI_CS,HIGH);
 }    
 
-
+void LedControl::spiTransferLong(byte opcode, const byte* data) {
+    //Create an array with the data to shift out
+    for (int addr = 0; addr < maxDevices; addr++)
+    {
+        spidata[addr * 2 + 1] = opcode;
+        spidata[addr * 2] = data[addr];
+    }
+    //enable the line
+    digitalWrite(SPI_CS, LOW);
+    //Now shift out the data
+    for (int i = maxDevices * 2; i > 0; i--)
+        shiftOut(SPI_MOSI, SPI_CLK, MSBFIRST, spidata[i - 1]);
+    //latch the data onto the display
+    digitalWrite(SPI_CS, HIGH);
+}
