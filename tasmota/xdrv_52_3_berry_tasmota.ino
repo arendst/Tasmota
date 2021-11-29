@@ -24,6 +24,7 @@
 #include <Wire.h>
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
+const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recorded when inside REPL
 
 /*********************************************************************************************\
  * Return C callback from index
@@ -575,16 +576,13 @@ extern "C" {
 void berry_log(const char * berry_buf);
 void berry_log(const char * berry_buf) {
   const char * pre_delimiter = nullptr;   // do we need to prepend a delimiter if no REPL command
-  if (!berry.repl_active) {
-    // if no REPL in flight, we limit the number of logs
-    if (berry.log.log.length() == 0) {
-      pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
-    }
-    if (berry.log.log.length() >= BERRY_MAX_LOGS) {
-      berry.log.log.remove(berry.log.log.head());
-    }
+  size_t max_logs = berry.repl_active ? BERRY_MAX_REPL_LOGS : BERRY_MAX_LOGS;
+  if (berry.log.log.length() == 0) {
+    pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
   }
-  // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
+  if (berry.log.log.length() >= BERRY_MAX_LOGS) {
+    berry.log.log.remove(berry.log.log.head());
+  }
   berry.log.addString(berry_buf, pre_delimiter, "\n");
   AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }
