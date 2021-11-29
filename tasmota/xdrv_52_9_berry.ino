@@ -812,7 +812,7 @@ bool Xdrv52(uint8_t function)
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
     case FUNC_SET_POWER:
-      callBerryEventDispatcher(PSTR("set_power"), nullptr, XdrvMailbox.index, nullptr);
+      callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
