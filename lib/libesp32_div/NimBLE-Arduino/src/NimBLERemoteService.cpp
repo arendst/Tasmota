@@ -11,11 +11,9 @@
  *  Created on: Jul 8, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteService.h"
 #include "NimBLEUtils.h"
@@ -386,6 +384,4 @@ std::string NimBLERemoteService::toString() {
     return res;
 } // toString
 
-
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

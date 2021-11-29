@@ -1,0 +1,508 @@
+PTS test results for GATT
+
+PTS version: 7.5.0
+Tested: 27-Sept-2019
+
+Results:
+PASS	test passed
+FAIL	test failed
+INC	test is inconclusive
+N/A	test is disabled due to PICS setup
+
+-------------------------------------------------------------------------------
+Test Name		Result	Notes
+-------------------------------------------------------------------------------
+GATT/CL/GAC/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-exchanche-mtu conn=<handle>
+				gatt-write conn=<handle> long=1 attr=<val_handle> value=<xx:...>
+				disconnect conn=<handle>
+-------------------------------------------------------------------------------
+
+GATT/CL/GAD/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-discover-service conn=<handle>
+				gatt-show
+				<answer YES>
+				disconnect conn=<handle>
+				<repeat>
+GATT/CL/GAD/BV-02-C	PASS	connect peer_addr=<addr>
+				gatt-discover-service conn=<handle> uuid=<uuid>
+				gatt-show
+				<answer YES>
+				disconnect conn=<handle>
+				<repeat>
+GATT/CL/GAD/BV-03-C	PASS	connect peer_addr=<addr>
+				gatt-find-included-services conn=<handle> start=1 end=0xffff
+				<answer YES>
+				disconnect conn=<handle>
+				<repeat>
+GATT/CL/GAD/BV-04-C	PASS	connect peer_addr=<addr>
+				gatt-discover-service conn=<handle> uuid=<uuid>
+				gatt-discover-characteristic conn=<handle> start=<start hdl> end=<end hdl>
+				gatt-show
+				<answer YES>
+				disconnect conn=<handle>
+				<repeat>
+GATT/CL/GAD/BV-05-C	PASS	connect peer_addr=<addr>
+				gatt-discover-service conn=<handle>
+				gatt-discover-characteristic conn=<handle> uuid=<uuid> start=<start hdl> end=<end hdl>
+				gatt-show
+				<answer YES>
+				disconnect conn=<handle>
+				<repeat>
+GATT/CL/GAD/BV-06-C	PASS	connect peer_addr=<addr>
+				gatt-discover-service conn=<handle>
+				gatt-discover-characteristic conn=<handle> start=<start-hdl> end=<end-hdl>
+				gatt-discover-descriptor conn=<handle> start=<start-hdl> end=<end-hdl>
+				<answer YES>
+				disconnect conn=<handle>
+				<repeat>
+GATT/CL/GAD/BV-07-C	N/A
+GATT/CL/GAD/BV-08-C	N/A
+-------------------------------------------------------------------------------
+
+GATT/CL/GAR/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-01-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-02-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-03-C	N/A
+
+GATT/CL/GAR/BI-04-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-05-C	PASS    connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BV-03-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> uuid=<uuid> start=1 end=0xffff
+				<answer YES>
+				<repeat>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-06-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> uuid=<uuid> start=<start hdl> end=<end hdl>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-07-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> uuid=<uuid> start=<start hdl> end=<end hdl>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-09-C	N/A
+GATT/CL/GAR/BI-10-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> uuid=<uuid> start=<start hdl> end=<end hdl>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-11-C	PASS    connect perr_addr=<addr>
+				gatt-read conn=<handle> start=<start_hdl> end=<end_hdl>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BV-04-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				<answer YES>
+				<repeat>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-12-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-13-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle> offset=<offset>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-14-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-15-C	N/A
+
+GATT/CL/GAR/BI-16-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-17-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BV-05-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle1> attr=<val_handle2>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-18-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle1> attr=<val_handle2>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-19-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle1> attr=<val_handle2>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-20-C	N/A
+
+GATT/CL/GAR/BI-21-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle1> attr=<val_handle2>
+				disconnect conn=<handle>
+				<answer YES>
+GATT/CL/GAR/BI-22-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle1> attr=<val_handle2>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BV-06-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+GATT/CL/GAR/BV-07-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				<answer YES>
+				<repeat>
+				disconnect conn=<handle>
+GATT/CL/GAR/BI-34-C	N/A
+GATT/CL/GAR/BI-35-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> long=1 attr=<val_handle>
+				<answer YES>
+				disconnect conn=<handle>
+-------------------------------------------------------------------------------
+
+GATT/CL/GAW/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-write no_rsp=1 conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BV-02-C	N/A
+
+GATT/CL/GAW/BV-03-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-02-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-03-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-04-C	N/A
+
+GATT/CL/GAW/BI-05-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-06-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BV-05-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-07-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+				disocnnect conn=<handle>
+GATT/CL/GAW/BI-08-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+				diconnect conn=<handle>
+GATT/CL/GAW/BI-09-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val> offset=<offset>
+				diconnect conn=1
+GATT/CL/GAW/BI-11-C	N/A
+
+GATT/CL/GAW/BI-12-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-13-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+				diconnect conn=<handle>
+GATT/CL/GAW/BV-06-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+
+GAAT/CL/GAW/BV-08-C	PASS	connect peer_addr=<addr>
+				gat-write conn=<handle> attr=<val_handle> value=<val>
+
+GATT/CL/GAW/BV-09-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+
+GATT/CL/GAW/BI-32-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-33-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+GATT/CL/GAW/BI-34-C	PASS	connect peer_addr=<addr>
+				gatt-write long=1 conn=<handle> attr=<val_handle> value=<val>
+				disconnect conn=<handle>
+
+-------------------------------------------------------------------------------
+
+GATT/CL/GAN/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=01:00
+				Note: verify that the notification was received
+				disconnect conn=<handle>
+-------------------------------------------------------------------------------
+
+GATT/CL/GAI/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=01:00
+				Note: verify that the notification was received
+				disconnect conn=<handle>
+-------------------------------------------------------------------------------
+
+GATT/CL/GAS/BV-01-C	PASS	connect peer_addr=<addr>
+				disconnect conn=<handle>
+-------------------------------------------------------------------------------
+
+GATT/CL/GAT/BV-01-C	PASS	connect peer_addr=<addr>
+				gatt-read conn=<handle> attr=<val_handle>
+GATT/CL/GAT/BV-02-C	PASS	connect peer_addr=<addr>
+				gatt-write conn=<handle> attr=<val_handle> value=<val>
+-------------------------------------------------------------------------------
+
+GATT/CL/GPA/BV-01-C	N/A
+GATT/CL/GPA/BV-02-C	N/A
+GATT/CL/GPA/BV-03-C	N/A
+GATT/CL/GPA/BV-04-C	N/A
+GATT/CL/GPA/BV-05-C	N/A
+GATT/CL/GPA/BV-06-C	N/A
+GATT/CL/GPA/BV-07-C	N/A
+GATT/CL/GPA/BV-08-C	N/A
+GATT/CL/GPA/BV-11-C	N/A
+GATT/CL/GPA/BV-12-C	N/A
+-------------------------------------------------------------------------------
+
+GATT/SR/GAC/BV-01-C	PASS	set mtu=25
+				advertise-configure connectable=1 legacy=1
+				advertise-start
+				advertise-start
+-------------------------------------------------------------------------------
+
+GATT/SR/GAD/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				gatt-show-local
+				<YES>
+GATT/SR/GAD/BV-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				gatt-show-local
+				<YES>
+GATT/SR/GAD/BV-03-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				gatt-show-local
+				<YES>
+GATT/SR/GAD/BV-04-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<confirm handles range for services>
+GATT/SR/GAD/BV-05-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAD/BV-06-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAD/BV-07-C	N/A
+GATT/SR/GAD/BV-08-C	N/A
+-------------------------------------------------------------------------------
+
+GATT/SR/GAR/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAR/BI-03-C	N/A
+GATT/SR/GAR/BI-04-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-05-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BV-03-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-06-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				gatt-show-local
+				<enter uuid without READ flag>
+				<enter value handle>
+GATT/SR/GAR/BI-07-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAR/BI-08-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-09-C	N/A
+GATT/SR/GAR/BI-10-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-11-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter characteristic wit READ|READ_ENC flags>
+GATT/SR/GAR/BV-04-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-12-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter long value handle without READ flag>
+GATT/SR/GAR/BI-13-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-14-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAR/BI-15-C	N/A
+GATT/SR/GAR/BI-16-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-17-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BV-05-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-18-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter value handle without READ flag>
+GATT/SR/GAR/BI-19-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAR/BI-20-C	N/A
+GATT/SR/GAR/BI-21-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-22-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-startt
+GATT/SR/GAR/BV-06-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-23-C	N/A
+GATT/SR/GAR/BI-24-C	N/A
+GATT/SR/GAR/BI-25-C	N/A
+GATT/SR/GAR/BI-26-C	N/A
+GATT/SR/GAR/BI-27-C	N/A
+GATT/SR/GAR/BV-07-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BV-08-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAR/BI-28-C	N/A
+GATT/SR/GAR/BI-29-C	N/A
+GATT/SR/GAR/BI-30-C	N/A
+GATT/SR/GAR/BI-31-C	N/A
+GATT/SR/GAR/BI-32-C	N/A
+GATT/SR/GAR/BI-33-C	N/A
+GATT/SR/GAR/BI-34-C	N/A
+GATT/SR/GAR/BI-35-C	N/A
+-------------------------------------------------------------------------------
+
+GATT/SR/GAW/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-02-C	N/A
+GATT/SR/GAW/BI-01-C	N/A
+GATT/SR/GAW/BV-03-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAW/BI-03-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-04-C	N/A
+GATT/SR/GAW/BI-05-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-06-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-05-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-07-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAW/BI-08-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter long value handle without WRITE flag>
+GATT/SR/GAW/BI-09-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-11-C	N/A
+GATT/SR/GAW/BI-12-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-13-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-06-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-10-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-14-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAW/BI-15-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter value handle without WRITE flag>
+GATT/SR/GAW/BI-17-C	N/A
+GATT/SR/GAW/BI-18-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-19-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-11-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-07-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-08-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-20-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAW/BI-21-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter dsc value handle without WRITE flag>
+GATT/SR/GAW/BI-22-C	N/A
+GATT/SR/GAW/BI-23-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-24-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BV-09-C	PASS	advertise-configure connectable=1 legacy=1q
+				advertise-start
+GATT/SR/GAW/BI-25-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter ffff>
+GATT/SR/GAW/BI-26-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				<enter dsc value handle without WRITE flag>
+GATT/SR/GAW/BI-27-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-29-C	N/A
+GATT/SR/GAW/BI-30-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-31-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-32-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-33-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-34-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/GAW/BI-35-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+------------------------------------------------------------------------------
+
+GATT/SR/GAN/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				gatt-notify attr=<val_handle>
+------------------------------------------------------------------------------
+
+GATT/SR/GAI/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+				gatt-notify attr=<val_handle>
+-------------------------------------------------------------------------------
+
+GATT/SR/GAS/BV-01-C	PASS	Note: set TSPX_security_enabled to TRUE
+				security-set-data bonding=1 our_key_dist=7 their_key_dist=7
+				advertise-configure connectable=1 legacy=1
+				advertise-start
+				<click OK>
+				gatt-service-changed start=1 end=0xffff
+				advertise-start
+				security-start conn=<handle>
+-------------------------------------------------------------------------------
+
+GATT/SR/GAT/BV-01-C	PASS	advertise-start
+				gatt-notify attr=0x0008
+------------------------------------------------------------------------------
+
+GATT/SR/GPA/BV-01-C	N/A
+GATT/SR/GPA/BV-02-C	N/A
+GATT/SR/GPA/BV-03-C	N/A
+GATT/SR/GPA/BV-04-C	N/A
+GATT/SR/GPA/BV-05-C	N/A
+GATT/SR/GPA/BV-06-C	N/A
+GATT/SR/GPA/BV-07-C	N/A
+GATT/SR/GPA/BV-08-C	N/A
+GATT/SR/GPA/BV-11-C	N/A
+GATT/SR/GPA/BV-12-C	N/A
+-------------------------------------------------------------------------------
+
+GATT/SR/UNS/BI-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+GATT/SR/UNS/BI-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-start
+
+--------------------------------------------------------------------------------
+
+GATT/SR/GPM/BV-01-C	N/A
+
