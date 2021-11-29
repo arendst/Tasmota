@@ -554,7 +554,7 @@ public:
         config.clk_div = T_SPEED::RmtClockDivider;
 
         ESP_ERROR_CHECK(rmt_config(&config));
-        ESP_ERROR_CHECK(rmt_driver_install(_channel.RmtChannelNumber, 0, ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_LEVEL1));
+        ESP_ERROR_CHECK(rmt_driver_install(_channel.RmtChannelNumber, 0, 0));
         ESP_ERROR_CHECK(rmt_translator_init(_channel.RmtChannelNumber, T_SPEED::Translate));
     }
 
