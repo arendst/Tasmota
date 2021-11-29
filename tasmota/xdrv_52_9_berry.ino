@@ -695,7 +695,7 @@ void HandleBerryConsoleRefresh(void)
     WSContentFlush();
 
     for (auto & l: berry.log.log) {
-      _WSContentSend((char*) l);
+      _WSContentSend(l.getBuffer());
     }
 
     berry.log.reset();
