@@ -224,9 +224,6 @@ void Ws2812StripShow(void)
     }
   }
   strip->Show();
-#ifdef ESP32    // workaround for SPI conflict
-  rmt_wait_tx_done((rmt_channel_t) USE_WS2812_RMT, 50/portTICK_PERIOD_MS);
-#endif
 }
 
 int mod(int a, int b)
@@ -500,9 +497,6 @@ void Ws2812Clear(void)
   strip->ClearTo(0);
   strip->Show();
   Ws2812.show_next = 1;
-#ifdef ESP32    // workaround for SPI conflict
-  rmt_wait_tx_done((rmt_channel_t) USE_WS2812_RMT, 50/portTICK_PERIOD_MS);
-#endif
 }
 
 void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
@@ -529,9 +523,6 @@ void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   if (!Ws2812.suspend_update) {
     strip->Show();
     Ws2812.show_next = 1;
-#ifdef ESP32    // workaround for SPI conflict
-  rmt_wait_tx_done((rmt_channel_t) USE_WS2812_RMT, 50/portTICK_PERIOD_MS);
-#endif
   }
 }
 
@@ -573,9 +564,6 @@ void Ws2812ForceUpdate (void)
   Ws2812.suspend_update = false;
   strip->Show();
   Ws2812.show_next = 1;
-#ifdef ESP32    // workaround for SPI conflict
-  rmt_wait_tx_done((rmt_channel_t) USE_WS2812_RMT, 50/portTICK_PERIOD_MS);
-#endif
 }
 
 /********************************************************************************************/
