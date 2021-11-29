@@ -246,6 +246,7 @@ be_define_const_str(event, "event", 4264611999u, 0, 5, &be_const_str_resp_cmnd_d
 be_define_const_str(resp_cmnd_done, "resp_cmnd_done", 2601874875u, 0, 14, NULL);
 be_define_const_str(AudioOutputI2S, "AudioOutputI2S", 638031784u, 0, 14, &be_const_str_has_arg);
 be_define_const_str(has_arg, "has_arg", 424878688u, 0, 7, NULL);
+be_define_const_str(bool, "bool", 3365180733u, 0, 4, &be_const_str_floor);
 be_define_const_str(floor, "floor", 3102149661u, 0, 5, &be_const_str_read);
 be_define_const_str(read, "read", 3470762949u, 0, 4, &be_const_str_remove);
 be_define_const_str(remove, "remove", 3683784189u, 0, 6, NULL);
@@ -467,7 +468,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_AudioGenerator,
     (const bstring *)&be_const_str_event,
     (const bstring *)&be_const_str_AudioOutputI2S,
-    (const bstring *)&be_const_str_floor,
+    (const bstring *)&be_const_str_bool,
     (const bstring *)&be_const_str_calldepth,
     (const bstring *)&be_const_str_gamma10,
     (const bstring *)&be_const_str__buffer,
@@ -518,6 +519,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 164,
-    .count = 328,
+    .count = 329,
     .table = m_string_table
 };
