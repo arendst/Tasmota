@@ -491,6 +491,9 @@ void SetLedLink(uint32_t state)
 #ifdef USE_BUZZER
   BuzzerSetStateToLed(state);
 #endif // USE_BUZZER
+#ifdef USE_PWM_DIMMER
+  if (Settings->flag4.powered_off_led) TasmotaGlobal.restore_powered_off_led_counter = 3;
+#endif  // USE_PWM_DIMMER
 }
 
 void SetPulseTimer(uint32_t index, uint32_t time)
