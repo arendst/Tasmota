@@ -249,7 +249,7 @@ void EnergyUpdateTotal(void) {
   // Provide total import active energy as float Energy.import_active[phase] in kWh: 98Wh = 0.098kWh
 
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: EnergyTotal[%d] %4_f kWh"), i, &Energy.import_active[i]);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: EnergyTotal[%d] %4_f kWh"), i, &Energy.import_active[i]);
 
     if (0 == Energy.start_energy[i] || (Energy.import_active[i] < Energy.start_energy[i])) {
       Energy.start_energy[i] = Energy.import_active[i];  // Init after restart and handle roll-over if any
