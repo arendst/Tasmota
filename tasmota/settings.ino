@@ -1182,6 +1182,7 @@ void SettingsDefaultSet2(void) {
 
   // Tuya
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
+  flag5.tuya_allow_dimmer_0 |= TUYA_ALLOW_DIMMER_0;
   flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
   mbflag2.temperature_set_res |= TUYA_TEMP_SET_RES;
 
