@@ -6,9 +6,13 @@ All notable changes to this project will be documented in this file.
 ## [10.0.0.4]
 ### Added
 - (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
+- Support for GPE Multi color smart light as sold by Action in the Netherlands
 
 ### Changed
 - (Internal) Range conversion edge values
+
+### Fixed
+- Tuya dimmer range issue (#13849)
 
 ## [10.0.0.3] 20211130
 ### Added

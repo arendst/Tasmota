@@ -778,7 +778,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_HDC2010)
     feature8 |= 0x00010000;  // xsns_94_hdc2010.ino
 #endif
-//    feature8 |= 0x00020000;
+#if defined(USE_LIGHT) && defined(USE_LSC_MCSL)
+    feature8 |= 0x00020000;  // xlgt_07_lsc_mcsl.ino
+#endif
 //    feature8 |= 0x00040000;
 //    feature8 |= 0x00080000;
 
