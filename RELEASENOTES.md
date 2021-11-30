@@ -100,23 +100,34 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v10.0.0.3
+## Changelog v10.0.0.4
 ### Added
 - 1 second heartbeat GPIO
-- ESP32 Berry add module ``python_compat`` to be closer to Python syntax [#13428](https://github.com/arendst/Tasmota/issues/13428)
-- ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) [#13447](https://github.com/arendst/Tasmota/issues/13447)
+- (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
 - Command ``TcpConfig`` for TCPBridge protocol configuration [#13565](https://github.com/arendst/Tasmota/issues/13565)
 - Support for HDC2010 temperature/humidity sensor by Luc Boudreau [#13633](https://github.com/arendst/Tasmota/issues/13633)
 - WS2812 scheme 13 stairs effect [#13595](https://github.com/arendst/Tasmota/issues/13595)
 - Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages [#13750](https://github.com/arendst/Tasmota/issues/13750)
+- Support for GPE Multi color smart light as sold by Action in the Netherlands
+- Shutter support for venetian blinds with tilt control
+- ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) [#13447](https://github.com/arendst/Tasmota/issues/13447)
+- ESP32 Autoconfiguration
+- ESP32 Preliminary support for Tasmota Apps (.tapp extesions)
+- ESP32 OTA over HTTPS
+- ESP32 HTTPS support to ``WebQuery``
+- ESP32 Berry support for neopixel (WS2812, SK6812)
+- ESP32 Berry ``import re`` regex module
+- ESP32 Berry add module ``python_compat`` to be closer to Python syntax [#13428](https://github.com/arendst/Tasmota/issues/13428)
 
 ### Breaking Changed
 - ESP32-S2 TSettings memory usage fixed to 4096 bytes regression from v9.5.0.8
 
 ### Changed
-- ESP32 core library from v1.0.7.4 to v2.0.1
-- ESP32-C3 core library from v2.0.0-post to v2.0.1
+- ESP32 core library from v1.0.7.4 to v2.0.1.1
+- ESP32-C3 core library from v2.0.0-post to ESP32 core library
 - IRremoteESP8266 library from v2.7.20 to v2.8.0
+- (Internal) Range conversion edge values
+- ESP8266 Gratuitous ARP enabled and set to 60 seconds [#13623](https://github.com/arendst/Tasmota/issues/13623)
 - File editor no-wrap [#13427](https://github.com/arendst/Tasmota/issues/13427)
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds [#13623](https://github.com/arendst/Tasmota/issues/13623)
 - Ethernet hostname ending in ``_eth`` to ``-eth`` according to RFC952
@@ -129,6 +140,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Discovery of shutters [#13572](https://github.com/arendst/Tasmota/issues/13572)
 - ESP32-C3 OneWire as used by DS18x20 [#13583](https://github.com/arendst/Tasmota/issues/13583)
 - ESP32 analog NTC temperature calculation [#13703](https://github.com/arendst/Tasmota/issues/13703)
+- Tuya dimmer range issue [#13849](https://github.com/arendst/Tasmota/issues/13849)
 
 ### Removed
 - ILI9488 driver in favour of Universal Display driver [#13719](https://github.com/arendst/Tasmota/issues/13719)

@@ -9,7 +9,7 @@
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(Tapp_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -20,8 +20,8 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("tasmota", 424643812, 7),
-    /* K1   */  be_nested_string("add_driver", 1654458371, 10),
+    /* K0   */  be_nested_str_literal("tasmota"),
+    /* K1   */  be_nested_str_literal("add_driver"),
     }),
     (be_nested_const_str("init", 380752755, 4)),
     ((bstring*) &be_const_str_input),
@@ -40,9 +40,9 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: autoexec
 ********************************************************************/
-be_local_closure(autoexec,   /* name */
+be_local_closure(Tapp_autoexec,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    12,                          /* nstack */
     1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -50,24 +50,26 @@ be_local_closure(autoexec,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_string("path", -2071507658, 4),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("listdir", 2005220720, 7),
-    /* K3   */  be_nested_string("/", 705468254, 1),
-    /* K4   */  be_nested_string("find", -1108310694, 4),
-    /* K5   */  be_nested_string(".tapp", 1363391594, 5),
+    ( &(const bvalue[15]) {     /* constants */
+    /* K0   */  be_nested_str_literal("path"),
+    /* K1   */  be_nested_str_literal("string"),
+    /* K2   */  be_nested_str_literal("listdir"),
+    /* K3   */  be_nested_str_literal("/"),
+    /* K4   */  be_nested_str_literal("find"),
+    /* K5   */  be_nested_str_literal(".tapp"),
     /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_string("format", -1180859054, 6),
-    /* K8   */  be_nested_string("TAP: found Tasmota App '%s'", -1651814898, 27),
-    /* K9   */  be_nested_string("tasmota", 424643812, 7),
-    /* K10  */  be_nested_string("load", -435725847, 4),
-    /* K11  */  be_nested_string("#autoexec.be", 1181757091, 12),
-    /* K12  */  be_nested_string("stop_iteration", -121173395, 14),
+    /* K7   */  be_nested_str_literal("tasmota"),
+    /* K8   */  be_nested_str_literal("log"),
+    /* K9   */  be_nested_str_literal("format"),
+    /* K10  */  be_nested_str_literal("TAP: found Tasmota App '%s'"),
+    /* K11  */  be_const_int(2),
+    /* K12  */  be_nested_str_literal("load"),
+    /* K13  */  be_nested_str_literal("#autoexec.be"),
+    /* K14  */  be_nested_str_literal("stop_iteration"),
     }),
     (be_nested_const_str("autoexec", -618105405, 8)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[32]) {  /* code */
+    ( &(const binstruction[34]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x8C0C0302,  //  0002  GETMET	R3	R1	K2
@@ -76,7 +78,7 @@ be_local_closure(autoexec,   /* name */
       0x60100010,  //  0005  GETGBL	R4	G16
       0x5C140600,  //  0006  MOVE	R5	R3
       0x7C100200,  //  0007  CALL	R4	1
-      0xA8020012,  //  0008  EXBLK	0	#001C
+      0xA8020014,  //  0008  EXBLK	0	#001E
       0x5C140800,  //  0009  MOVE	R5	R4
       0x7C140000,  //  000A  CALL	R5	0
       0x8C180504,  //  000B  GETMET	R6	R2	K4
@@ -84,22 +86,24 @@ be_local_closure(autoexec,   /* name */
       0x58240005,  //  000D  LDCONST	R9	K5
       0x7C180600,  //  000E  CALL	R6	3
       0x24180D06,  //  000F  GT	R6	R6	K6
-      0x781A0009,  //  0010  JMPF	R6	#001B
-      0x60180001,  //  0011  GETGBL	R6	G1
-      0x8C1C0507,  //  0012  GETMET	R7	R2	K7
-      0x58240008,  //  0013  LDCONST	R9	K8
-      0x5C280A00,  //  0014  MOVE	R10	R5
-      0x7C1C0600,  //  0015  CALL	R7	3
-      0x7C180200,  //  0016  CALL	R6	1
-      0xB81A1200,  //  0017  GETNGBL	R6	K9
-      0x8C180D0A,  //  0018  GETMET	R6	R6	K10
-      0x00200B0B,  //  0019  ADD	R8	R5	K11
-      0x7C180400,  //  001A  CALL	R6	2
-      0x7001FFEC,  //  001B  JMP		#0009
-      0x5810000C,  //  001C  LDCONST	R4	K12
-      0xAC100200,  //  001D  CATCH	R4	1	0
-      0xB0080000,  //  001E  RAISE	2	R0	R0
-      0x80000000,  //  001F  RET	0
+      0x781A000B,  //  0010  JMPF	R6	#001D
+      0xB81A0E00,  //  0011  GETNGBL	R6	K7
+      0x8C180D08,  //  0012  GETMET	R6	R6	K8
+      0x8C200509,  //  0013  GETMET	R8	R2	K9
+      0x5828000A,  //  0014  LDCONST	R10	K10
+      0x5C2C0A00,  //  0015  MOVE	R11	R5
+      0x7C200600,  //  0016  CALL	R8	3
+      0x5824000B,  //  0017  LDCONST	R9	K11
+      0x7C180600,  //  0018  CALL	R6	3
+      0xB81A0E00,  //  0019  GETNGBL	R6	K7
+      0x8C180D0C,  //  001A  GETMET	R6	R6	K12
+      0x00200B0D,  //  001B  ADD	R8	R5	K13
+      0x7C180400,  //  001C  CALL	R6	2
+      0x7001FFEA,  //  001D  JMP		#0009
+      0x5810000E,  //  001E  LDCONST	R4	K14
+      0xAC100200,  //  001F  CATCH	R4	1	0
+      0xB0080000,  //  0020  RAISE	2	R0	R0
+      0x80000000,  //  0021  RET	0
     })
   )
 );
@@ -114,16 +118,16 @@ be_local_class(Tapp,
     NULL,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
-        { be_nested_key("autoexec", -618105405, 8, 0), be_const_closure(autoexec_closure) },
+        { be_nested_key("autoexec", -618105405, 8, -1), be_const_closure(Tapp_autoexec_closure) },
+        { be_nested_key("init", 380752755, 4, 0), be_const_closure(Tapp_init_closure) },
     })),
-    (be_nested_const_str("Tapp", 2012315062, 4))
+    be_str_literal("Tapp")
 );
 
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(_anonymous_,   /* name */
+be_local_closure(tapp__anonymous_,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -157,7 +161,7 @@ be_local_module(tapp,
     "tapp",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(_anonymous__closure) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_closure(tapp__anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(tapp);

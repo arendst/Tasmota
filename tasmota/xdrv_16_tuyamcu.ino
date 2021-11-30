@@ -842,7 +842,7 @@ void TuyaProcessStatePacket(void) {
             (fnId == TUYA_MCU_FUNC_CT) || (fnId == TUYA_MCU_FUNC_WHITE)) {
 
           if (Tuya.ignore_dimmer_cmd_timeout < millis()) {
-            if ((TasmotaGlobal.power || Settings->flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device
+            if ((TasmotaGlobal.power || Settings->flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0 || Settings->flag5.tuya_allow_dimmer_0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device / SetOption131 Allow save dimmer = 0 receved by MCU
               Tuya.ignore_dim = true;
               TasmotaGlobal.skip_light_fade = true;
 

@@ -337,6 +337,7 @@
 #define RF_DATA_RADIX          false             // [SetOption28] RF receive data format (false = hexadecimal, true = decimal)
 #define IR_DATA_RADIX          false             // [SetOption29] IR receive data format (false = hexadecimal, true = decimal)
 #define TUYA_SETOPTION_20      false             // [SetOption54] Apply SetOption20 settings to Tuya device
+#define TUYA_ALLOW_DIMMER_0    false             // [SetOption131] Allow save dimmer = 0 receved by MCU
 #define TUYA_TEMP_SET_RES      1                 // [TuyaTempSetRes] Maximum number of decimals (0 - 3) showing sensor TemperatureSet
 #define IR_ADD_RAW_DATA        false             // [SetOption58] Add IR Raw data to JSON message
 #define BUZZER_ENABLE          false             // [SetOption67] Enable buzzer when available
@@ -552,6 +553,7 @@
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k7 code)
 #define USE_LIGHT_VIRTUAL_CT                     // Add support for Virtual White Color Temperature (+1.1k code)
 #define USE_DGR_LIGHT_SEQUENCE                   // Add support for device group light sequencing (requires USE_DEVICE_GROUPS) (+0k2 code)
+//#define USE_LSC_MCSL                             // Add support for GPE Multi color smart light as sold by Action in the Netherlands (+1k1 code)
 
 // -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)

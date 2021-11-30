@@ -246,6 +246,7 @@ extern const bcstring be_const_str_event;
 extern const bcstring be_const_str_resp_cmnd_done;
 extern const bcstring be_const_str_AudioOutputI2S;
 extern const bcstring be_const_str_has_arg;
+extern const bcstring be_const_str_bool;
 extern const bcstring be_const_str_floor;
 extern const bcstring be_const_str_read;
 extern const bcstring be_const_str_remove;

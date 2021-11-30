@@ -695,7 +695,7 @@ void HandleBerryConsoleRefresh(void)
     WSContentFlush();
 
     for (auto & l: berry.log.log) {
-      _WSContentSend((char*) l);
+      _WSContentSend(l.getBuffer());
     }
 
     berry.log.reset();
@@ -811,8 +811,9 @@ bool Xdrv52(uint8_t function)
     case FUNC_EVERY_SECOND:
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
-    // case FUNC_SET_POWER:
-    //   break;
+    case FUNC_SET_POWER:
+      callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
+      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {
