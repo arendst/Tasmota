@@ -10,9 +10,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - (Internal) Range conversion edge values
+- NimBLE to v.1.3.3
 
 ### Fixed
 - Tuya dimmer range issue (#13849)
+- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3  
 
 ## [10.0.0.3] 20211130
 ### Added
