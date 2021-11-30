@@ -139,10 +139,7 @@ bool LedMatrix::clearDisplay(void)
 
 bool LedMatrix::setIntensity(byte dim)
 {
-    for (int addr = 0; addr < modules; addr++)
-    {
-        ledControl->setIntensity(addr, dim); // 1..15
-    }
+    ledControl->setIntensity_allDevices(dim); // 1..15
     return true;
 }
 
@@ -183,9 +180,51 @@ bool LedMatrix::setPixel(const int x, const int y, bool on)
 
 void LedMatrix::refresh()
 {
-    for (int i = 0; i < modulesPerRow * displayHeight; i++)
+    int col = 0;
+    int pixelRow = 0;
+    int bufPos = 0;
+    int deviceRow = 0;
+    for(int ledRow = 7; ledRow >= 0; ledRow--) // refresh from buttom to top
     {
-        refreshByteOfBuffer(i);
+        for( int addr = 0; addr < modules; addr++)
+        {
+            switch(moduleOrientation)
+            {
+                case ORIENTATION_NORMAL:
+                    col = addr % modulesPerRow;
+                    pixelRow = (addr / modulesPerRow) * 8 + ledRow;
+                    bufPos = pixelRow * modulesPerRow + col;
+                    deviceDataBuff[addr] = buffer[bufPos];
+                    deviceRow = ledRow;
+                break;
+                case ORIENTATION_UPSIDE_DOWN:
+                    col = addr % modulesPerRow;
+                    pixelRow = (addr / modulesPerRow) * 8 + deviceRow;
+                    bufPos = pixelRow * modulesPerRow + col;
+                    deviceDataBuff[addr] = revereBitorder(buffer[bufPos]); // mirror
+                    deviceRow = 7 - ledRow;  // upside down
+                break;
+            }
+            if(moduleOrientation == ORIENTATION_NORMAL || moduleOrientation == ORIENTATION_UPSIDE_DOWN)
+            {
+                    col = addr % modulesPerRow;
+                    pixelRow = (addr / modulesPerRow) * 8 + ledRow;
+                    bufPos = pixelRow * modulesPerRow + col;
+                    if(moduleOrientation == ORIENTATION_NORMAL)
+                    {
+                        // ORIENTATION_NORMAL
+                        deviceDataBuff[addr] = buffer[bufPos];
+                        deviceRow = ledRow;
+                    }
+                    else
+                    {
+                        // ORIENTATION_UPSIDE_DOWN
+                        deviceDataBuff[addr] = revereBitorder(buffer[bufPos]); // mirror
+                        deviceRow = 7 - ledRow;  // upside down
+                    }
+            }
+        }
+        ledControl->setRow_allDevices(deviceRow, deviceDataBuff);  // upside down
     }
 }
 
@@ -227,10 +266,7 @@ bool LedMatrix::shutdown(bool b)
 bool LedMatrix::clear(void)
 {
     memset(buffer, 0, MATRIX_BUFFER_SIZE);
-    for (int addr = 0; addr < modules; addr++)
-    {
-        ledControl->clearDisplay(addr);
-    }
+    ledControl->clearDisplay_allDevices();
     return true;
 }
 

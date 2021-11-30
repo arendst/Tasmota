@@ -154,6 +154,7 @@ class LedMatrix
         unsigned int modules; // number of 8x8 mudules
         uint8_t moduleOrientation;
         byte buffer[MATRIX_BUFFER_SIZE];
+        byte deviceDataBuff[MAX72XX_MAX_DEVICES];
         LedControl* ledControl;
         int charWidth;
         int charHeight;

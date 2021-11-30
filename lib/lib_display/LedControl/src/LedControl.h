@@ -69,10 +69,11 @@ class LedControl {
         /* Send out a single command to one device */
         void spiTransfer(int addr, byte opcode, byte data);
         /* Send out a command with the same opcode to all devices */
-        void spiTransferLong(byte opcode, const byte* data);
+        void spiTransfer_allDevices(byte opcode, const byte* data);
 
         /* We keep track of the led-status for all 8 devices in this array */
         byte status[8 * MAX72XX_MAX_DEVICES];
+        byte deviceDataBuff[MAX72XX_MAX_DEVICES];
         /* Data is shifted out of this pin*/
         int SPI_MOSI;
         /* The clock is signaled on this pin */
@@ -108,6 +109,7 @@ class LedControl {
          *		for normal operation.
          */
         void shutdown(int addr, bool status);
+        void shutdown_allDevices( bool status);
 
         /* 
          * Set the number of digits (or rows) to be displayed.
@@ -118,6 +120,7 @@ class LedControl {
          * limit	number of digits to be displayed (1..8)
          */
         void setScanLimit(int addr, int limit);
+        void setScanLimit_allDevices(int limit);
 
         /* 
          * Set the brightness of the display.
@@ -126,6 +129,7 @@ class LedControl {
          * intensity	the brightness of the display. (0..15)
          */
         void setIntensity(int addr, int intensity);
+        void setIntensity_allDevices(int intensity);
 
         /* 
          * Switch all Leds on the display off. 
@@ -133,6 +137,7 @@ class LedControl {
          * addr	address of the display to control
          */
         void clearDisplay(int addr);
+        void clearDisplay_allDevices();
 
         /* 
          * Set the status of a single Led.
@@ -161,7 +166,7 @@ class LedControl {
          * @param row [0..8]
          * @param value array of bytes, one for each device
          */
-        void setRowLong(int row, byte* value);
+        void setRow_allDevices(int row, byte* value);
 
         /* 
          * Set all 8 Led's in a column to a new state
