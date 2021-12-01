@@ -86,7 +86,7 @@ static const br_x509_trust_anchor PROGMEM LetsEncryptR3_TA = {
 /*********************************************************************************************\
  * Amazon Root CA, RSA 2048 bits SHA 256, valid until 20380117
  *
- * https://letsencrypt.org/certificates/
+ * https://www.amazontrust.com/repository/
  * Downloaded from https://www.amazontrust.com/repository/AmazonRootCA1.pem
  *
  * to convert do: "bearssl ta AmazonRootCA1.pem"
