@@ -7,11 +7,41 @@
 #ifdef USE_WS2812
 
 /********************************************************************
-** Solidified function: get_pixel_color
+** Solidified function: pixel_count
 ********************************************************************/
-be_local_closure(Leds_get_pixel_color,   /* name */
+be_local_closure(Leds_matrix_pixel_count,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("w"),
+    /* K1   */  be_nested_str_literal("h"),
+    }),
+    (be_nested_const_str("pixel_count", -1855836553, 11)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x08040202,  //  0002  MUL	R1	R1	R2
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_alternate
+********************************************************************/
+be_local_closure(Leds_matrix_set_alternate,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
     2,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -20,16 +50,13 @@ be_local_closure(Leds_get_pixel_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("call_native"),
+    /* K0   */  be_nested_str_literal("alternate"),
     }),
-    (be_nested_const_str("get_pixel_color", 337490048, 15)),
+    (be_nested_const_str("set_alternate", 1709680562, 13)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[ 5]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x5412000A,  //  0001  LDINT	R4	11
-      0x5C140200,  //  0002  MOVE	R5	R1
-      0x7C080600,  //  0003  CALL	R2	3
-      0x80040400,  //  0004  RET	1	R2
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x80000000,  //  0001  RET	0
     })
   )
 );
@@ -37,11 +64,11 @@ be_local_closure(Leds_get_pixel_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: pixels_buffer
+** Solidified function: pixel_size
 ********************************************************************/
-be_local_closure(Leds_pixels_buffer,   /* name */
+be_local_closure(Leds_matrix_pixel_size,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -49,16 +76,239 @@ be_local_closure(Leds_pixels_buffer,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("call_native"),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("pixel_size"),
     }),
-    (be_nested_const_str("pixels_buffer", 1229555807, 13)),
+    (be_nested_const_str("pixel_size", -2085831511, 10)),
     ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x540E0005,  //  0001  LDINT	R3	6
-      0x7C040400,  //  0002  CALL	R1	2
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
       0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_pixel_color
+********************************************************************/
+be_local_closure(Leds_matrix_set_pixel_color,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("set_pixel_color"),
+    /* K2   */  be_nested_str_literal("offset"),
+    }),
+    (be_nested_const_str("set_pixel_color", 1275248356, 15)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88100100,  //  0000  GETMBR	R4	R0	K0
+      0x8C100901,  //  0001  GETMET	R4	R4	K1
+      0x88180102,  //  0002  GETMBR	R6	R0	K2
+      0x00180206,  //  0003  ADD	R6	R1	R6
+      0x5C1C0400,  //  0004  MOVE	R7	R2
+      0x5C200600,  //  0005  MOVE	R8	R3
+      0x7C100800,  //  0006  CALL	R4	4
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_matrix_pixel_color
+********************************************************************/
+be_local_closure(Leds_matrix_set_matrix_pixel_color,   /* name */
+  be_nested_proto(
+    10,                          /* nstack */
+    5,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+    /* K0   */  be_nested_str_literal("alternate"),
+    /* K1   */  be_const_int(2),
+    /* K2   */  be_nested_str_literal("strip"),
+    /* K3   */  be_nested_str_literal("set_pixel_color"),
+    /* K4   */  be_nested_str_literal("w"),
+    /* K5   */  be_nested_str_literal("h"),
+    /* K6   */  be_const_int(1),
+    /* K7   */  be_nested_str_literal("offset"),
+    }),
+    (be_nested_const_str("set_matrix_pixel_color", 1197149462, 22)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[29]) {  /* code */
+      0x88140100,  //  0000  GETMBR	R5	R0	K0
+      0x7816000F,  //  0001  JMPF	R5	#0012
+      0x10140301,  //  0002  MOD	R5	R1	K1
+      0x7816000D,  //  0003  JMPF	R5	#0012
+      0x88140102,  //  0004  GETMBR	R5	R0	K2
+      0x8C140B03,  //  0005  GETMET	R5	R5	K3
+      0x881C0104,  //  0006  GETMBR	R7	R0	K4
+      0x081C0207,  //  0007  MUL	R7	R1	R7
+      0x88200105,  //  0008  GETMBR	R8	R0	K5
+      0x001C0E08,  //  0009  ADD	R7	R7	R8
+      0x041C0E02,  //  000A  SUB	R7	R7	R2
+      0x041C0F06,  //  000B  SUB	R7	R7	K6
+      0x88200107,  //  000C  GETMBR	R8	R0	K7
+      0x001C0E08,  //  000D  ADD	R7	R7	R8
+      0x5C200600,  //  000E  MOVE	R8	R3
+      0x5C240800,  //  000F  MOVE	R9	R4
+      0x7C140800,  //  0010  CALL	R5	4
+      0x70020009,  //  0011  JMP		#001C
+      0x88140102,  //  0012  GETMBR	R5	R0	K2
+      0x8C140B03,  //  0013  GETMET	R5	R5	K3
+      0x881C0104,  //  0014  GETMBR	R7	R0	K4
+      0x081C0207,  //  0015  MUL	R7	R1	R7
+      0x001C0E02,  //  0016  ADD	R7	R7	R2
+      0x88200107,  //  0017  GETMBR	R8	R0	K7
+      0x001C0E08,  //  0018  ADD	R7	R7	R8
+      0x5C200600,  //  0019  MOVE	R8	R3
+      0x5C240800,  //  001A  MOVE	R9	R4
+      0x7C140800,  //  001B  CALL	R5	4
+      0x80000000,  //  001C  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: show
+********************************************************************/
+be_local_closure(Leds_matrix_show,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str_literal("offset"),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_literal("w"),
+    /* K3   */  be_nested_str_literal("h"),
+    /* K4   */  be_nested_str_literal("strip"),
+    /* K5   */  be_nested_str_literal("leds"),
+    /* K6   */  be_nested_str_literal("show"),
+    }),
+    (be_nested_const_str("show", -1454906820, 4)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[18]) {  /* code */
+      0x60080017,  //  0000  GETGBL	R2	G23
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x740A0009,  //  0003  JMPT	R2	#000E
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x1C080501,  //  0005  EQ	R2	R2	K1
+      0x780A0009,  //  0006  JMPF	R2	#0011
+      0x88080102,  //  0007  GETMBR	R2	R0	K2
+      0x880C0103,  //  0008  GETMBR	R3	R0	K3
+      0x08080403,  //  0009  MUL	R2	R2	R3
+      0x880C0104,  //  000A  GETMBR	R3	R0	K4
+      0x880C0705,  //  000B  GETMBR	R3	R3	K5
+      0x1C080403,  //  000C  EQ	R2	R2	R3
+      0x780A0002,  //  000D  JMPF	R2	#0011
+      0x88080104,  //  000E  GETMBR	R2	R0	K4
+      0x8C080506,  //  000F  GETMET	R2	R2	K6
+      0x7C080200,  //  0010  CALL	R2	1
+      0x80000000,  //  0011  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: is_dirty
+********************************************************************/
+be_local_closure(Leds_matrix_is_dirty,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("is_dirty"),
+    }),
+    (be_nested_const_str("is_dirty", 418034110, 8)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: clear_to
+********************************************************************/
+be_local_closure(Leds_matrix_clear_to,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    3,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_literal("w"),
+    /* K2   */  be_nested_str_literal("h"),
+    /* K3   */  be_nested_str_literal("strip"),
+    /* K4   */  be_nested_str_literal("set_pixel_color"),
+    /* K5   */  be_nested_str_literal("offset"),
+    /* K6   */  be_const_int(1),
+    }),
+    (be_nested_const_str("clear_to", -766965166, 8)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[16]) {  /* code */
+      0x580C0000,  //  0000  LDCONST	R3	K0
+      0x88100101,  //  0001  GETMBR	R4	R0	K1
+      0x88140102,  //  0002  GETMBR	R5	R0	K2
+      0x08100805,  //  0003  MUL	R4	R4	R5
+      0x14100604,  //  0004  LT	R4	R3	R4
+      0x78120008,  //  0005  JMPF	R4	#000F
+      0x88100103,  //  0006  GETMBR	R4	R0	K3
+      0x8C100904,  //  0007  GETMET	R4	R4	K4
+      0x88180105,  //  0008  GETMBR	R6	R0	K5
+      0x00180606,  //  0009  ADD	R6	R3	R6
+      0x5C1C0200,  //  000A  MOVE	R7	R1
+      0x5C200400,  //  000B  MOVE	R8	R2
+      0x7C100800,  //  000C  CALL	R4	4
+      0x000C0706,  //  000D  ADD	R3	R3	K6
+      0x7001FFF1,  //  000E  JMP		#0001
+      0x80000000,  //  000F  RET	0
     })
   )
 );
@@ -68,7 +318,7 @@ be_local_closure(Leds_pixels_buffer,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-be_local_closure(Leds_clear,   /* name */
+be_local_closure(Leds_matrix_clear,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -99,66 +349,24 @@ be_local_closure(Leds_clear,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: pixels_buffer
 ********************************************************************/
-be_local_closure(Leds_init,   /* name */
+be_local_closure(Leds_matrix_pixels_buffer,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
-    5,                          /* argc */
+    2,                          /* nstack */
+    1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_str_literal("gamma"),
-    /* K1   */  be_nested_str_literal("pin"),
-    /* K2   */  be_nested_str_literal("WS2812"),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_literal("valuer_error"),
-    /* K5   */  be_nested_str_literal("no GPIO specified for neopixelbus"),
-    /* K6   */  be_nested_str_literal("ctor"),
-    /* K7   */  be_nested_str_literal("_p"),
-    /* K8   */  be_nested_str_literal("internal_error"),
-    /* K9   */  be_nested_str_literal("couldn't not initialize noepixelbus"),
-    /* K10  */  be_nested_str_literal("begin"),
-    }),
-    (be_nested_const_str("init", 380752755, 4)),
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    (be_nested_const_str("pixels_buffer", 1229555807, 13)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[32]) {  /* code */
-      0x50140200,  //  0000  LDBOOL	R5	1	0
-      0x90020005,  //  0001  SETMBR	R0	K0	R5
-      0x4C140000,  //  0002  LDNIL	R5
-      0x1C140405,  //  0003  EQ	R5	R2	R5
-      0x78160008,  //  0004  JMPF	R5	#000E
-      0x8C140501,  //  0005  GETMET	R5	R2	K1
-      0x881C0502,  //  0006  GETMBR	R7	R2	K2
-      0x7C140400,  //  0007  CALL	R5	2
-      0x28140B03,  //  0008  GE	R5	R5	K3
-      0x78160003,  //  0009  JMPF	R5	#000E
-      0x8C140501,  //  000A  GETMET	R5	R2	K1
-      0x881C0502,  //  000B  GETMBR	R7	R2	K2
-      0x7C140400,  //  000C  CALL	R5	2
-      0x5C080A00,  //  000D  MOVE	R2	R5
-      0x4C140000,  //  000E  LDNIL	R5
-      0x1C140405,  //  000F  EQ	R5	R2	R5
-      0x78160000,  //  0010  JMPF	R5	#0012
-      0xB0060905,  //  0011  RAISE	1	K4	K5
-      0x8C140106,  //  0012  GETMET	R5	R0	K6
-      0x5C1C0200,  //  0013  MOVE	R7	R1
-      0x5C200400,  //  0014  MOVE	R8	R2
-      0x5C240600,  //  0015  MOVE	R9	R3
-      0x5C280800,  //  0016  MOVE	R10	R4
-      0x7C140A00,  //  0017  CALL	R5	5
-      0x88140107,  //  0018  GETMBR	R5	R0	K7
-      0x4C180000,  //  0019  LDNIL	R6
-      0x1C140A06,  //  001A  EQ	R5	R5	R6
-      0x78160000,  //  001B  JMPF	R5	#001D
-      0xB0061109,  //  001C  RAISE	1	K8	K9
-      0x8C14010A,  //  001D  GETMET	R5	R0	K10
-      0x7C140200,  //  001E  CALL	R5	1
-      0x80000000,  //  001F  RET	0
+    ( &(const binstruction[ 2]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0x80040200,  //  0001  RET	1	R1
     })
   )
 );
@@ -166,12 +374,48 @@ be_local_closure(Leds_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_pixel_color
+** Solidified function: init
 ********************************************************************/
-be_local_closure(Leds_set_pixel_color,   /* name */
+be_local_closure(Leds_matrix_init,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
-    4,                          /* argc */
+    6,                          /* nstack */
+    5,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("offset"),
+    /* K2   */  be_nested_str_literal("h"),
+    /* K3   */  be_nested_str_literal("w"),
+    /* K4   */  be_nested_str_literal("alternate"),
+    }),
+    (be_nested_const_str("init", 380752755, 4)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 7]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020204,  //  0001  SETMBR	R0	K1	R4
+      0x90020403,  //  0002  SETMBR	R0	K2	R3
+      0x90020602,  //  0003  SETMBR	R0	K3	R2
+      0x50140000,  //  0004  LDBOOL	R5	0	0
+      0x90020805,  //  0005  SETMBR	R0	K4	R5
+      0x80000000,  //  0006  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: dirty
+********************************************************************/
+be_local_closure(Leds_matrix_dirty,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -179,21 +423,229 @@ be_local_closure(Leds_set_pixel_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("call_native"),
-    /* K1   */  be_nested_str_literal("to_gamma"),
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("dirty"),
     }),
-    (be_nested_const_str("set_pixel_color", 1275248356, 15)),
+    (be_nested_const_str("dirty", -1627386213, 5)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[ 9]) {  /* code */
-      0x8C100100,  //  0000  GETMET	R4	R0	K0
-      0x541A0009,  //  0001  LDINT	R6	10
-      0x5C1C0200,  //  0002  MOVE	R7	R1
-      0x8C200101,  //  0003  GETMET	R8	R0	K1
-      0x5C280400,  //  0004  MOVE	R10	R2
-      0x5C2C0600,  //  0005  MOVE	R11	R3
-      0x7C200600,  //  0006  CALL	R8	3
-      0x7C100800,  //  0007  CALL	R4	4
-      0x80000000,  //  0008  RET	0
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80000000,  //  0003  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_pixel_color
+********************************************************************/
+be_local_closure(Leds_matrix_get_pixel_color,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("get_pixel_color"),
+    /* K2   */  be_nested_str_literal("offseta"),
+    }),
+    (be_nested_const_str("get_pixel_color", 337490048, 15)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x00100204,  //  0003  ADD	R4	R1	R4
+      0x7C080400,  //  0004  CALL	R2	2
+      0x80040400,  //  0005  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_alternate
+********************************************************************/
+be_local_closure(Leds_matrix_get_alternate,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_literal("alternate"),
+    }),
+    (be_nested_const_str("get_alternate", 1450148894, 13)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: begin
+********************************************************************/
+be_local_closure(Leds_matrix_begin,   /* name */
+  be_nested_proto(
+    1,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    (be_nested_const_str("begin", 1748273790, 5)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: can_show
+********************************************************************/
+be_local_closure(Leds_matrix_can_show,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("can_show"),
+    }),
+    (be_nested_const_str("can_show", 960091187, 8)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified class: Leds_matrix
+********************************************************************/
+be_local_class(Leds_matrix,
+    5,
+    NULL,
+    be_nested_map(21,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("pixel_count", -1855836553, 11, -1), be_const_closure(Leds_matrix_pixel_count_closure) },
+        { be_nested_key("h", -317966505, 1, 6), be_const_var(2) },
+        { be_nested_key("set_alternate", 1709680562, 13, 7), be_const_closure(Leds_matrix_set_alternate_closure) },
+        { be_nested_key("pixel_size", -2085831511, 10, 16), be_const_closure(Leds_matrix_pixel_size_closure) },
+        { be_nested_key("set_pixel_color", 1275248356, 15, 19), be_const_closure(Leds_matrix_set_pixel_color_closure) },
+        { be_nested_key("set_matrix_pixel_color", 1197149462, 22, 10), be_const_closure(Leds_matrix_set_matrix_pixel_color_closure) },
+        { be_nested_key("show", -1454906820, 4, -1), be_const_closure(Leds_matrix_show_closure) },
+        { be_nested_key("alternate", 1140253277, 9, -1), be_const_var(4) },
+        { be_nested_key("strip", -48555823, 5, -1), be_const_var(0) },
+        { be_nested_key("clear_to", -766965166, 8, -1), be_const_closure(Leds_matrix_clear_to_closure) },
+        { be_nested_key("w", -234078410, 1, 15), be_const_var(3) },
+        { be_nested_key("pixels_buffer", 1229555807, 13, -1), be_const_closure(Leds_matrix_pixels_buffer_closure) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_closure(Leds_matrix_init_closure) },
+        { be_nested_key("dirty", -1627386213, 5, -1), be_const_closure(Leds_matrix_dirty_closure) },
+        { be_nested_key("get_pixel_color", 337490048, 15, -1), be_const_closure(Leds_matrix_get_pixel_color_closure) },
+        { be_nested_key("get_alternate", 1450148894, 13, 17), be_const_closure(Leds_matrix_get_alternate_closure) },
+        { be_nested_key("offset", 348705738, 6, 8), be_const_var(1) },
+        { be_nested_key("clear", 1550717474, 5, -1), be_const_closure(Leds_matrix_clear_closure) },
+        { be_nested_key("begin", 1748273790, 5, -1), be_const_closure(Leds_matrix_begin_closure) },
+        { be_nested_key("is_dirty", 418034110, 8, -1), be_const_closure(Leds_matrix_is_dirty_closure) },
+        { be_nested_key("can_show", 960091187, 8, -1), be_const_closure(Leds_matrix_can_show_closure) },
+    })),
+    be_str_literal("Leds_matrix")
+);
+
+/********************************************************************
+** Solidified function: create_matrix
+********************************************************************/
+be_local_closure(Leds_create_matrix,   /* name */
+  be_nested_proto(
+    10,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_literal("leds"),
+    /* K2   */  be_nested_str_literal("value_error"),
+    /* K3   */  be_nested_str_literal("out of range"),
+    /* K4   */  be_const_class(be_class_Leds_matrix),
+    }),
+    (be_nested_const_str("create_matrix", -766781373, 13)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[37]) {  /* code */
+      0x60100009,  //  0000  GETGBL	R4	G9
+      0x5C140600,  //  0001  MOVE	R5	R3
+      0x7C100200,  //  0002  CALL	R4	1
+      0x5C0C0800,  //  0003  MOVE	R3	R4
+      0x60100009,  //  0004  GETGBL	R4	G9
+      0x5C140200,  //  0005  MOVE	R5	R1
+      0x7C100200,  //  0006  CALL	R4	1
+      0x5C040800,  //  0007  MOVE	R1	R4
+      0x60100009,  //  0008  GETGBL	R4	G9
+      0x5C140400,  //  0009  MOVE	R5	R2
+      0x7C100200,  //  000A  CALL	R4	1
+      0x5C080800,  //  000B  MOVE	R2	R4
+      0x4C100000,  //  000C  LDNIL	R4
+      0x1C100604,  //  000D  EQ	R4	R3	R4
+      0x78120000,  //  000E  JMPF	R4	#0010
+      0x580C0000,  //  000F  LDCONST	R3	K0
+      0x08100202,  //  0010  MUL	R4	R1	R2
+      0x00100803,  //  0011  ADD	R4	R4	R3
+      0x88140101,  //  0012  GETMBR	R5	R0	K1
+      0x24100805,  //  0013  GT	R4	R4	R5
+      0x74120005,  //  0014  JMPT	R4	#001B
+      0x14100500,  //  0015  LT	R4	R2	K0
+      0x74120003,  //  0016  JMPT	R4	#001B
+      0x14100300,  //  0017  LT	R4	R1	K0
+      0x74120001,  //  0018  JMPT	R4	#001B
+      0x14100700,  //  0019  LT	R4	R3	K0
+      0x78120000,  //  001A  JMPF	R4	#001C
+      0xB0060503,  //  001B  RAISE	1	K2	K3
+      0x58100004,  //  001C  LDCONST	R4	K4
+      0xB4000004,  //  001D  CLASS	K4
+      0x5C140800,  //  001E  MOVE	R5	R4
+      0x5C180000,  //  001F  MOVE	R6	R0
+      0x5C1C0200,  //  0020  MOVE	R7	R1
+      0x5C200400,  //  0021  MOVE	R8	R2
+      0x5C240600,  //  0022  MOVE	R9	R3
+      0x7C140800,  //  0023  CALL	R5	4
+      0x80040A00,  //  0024  RET	1	R5
     })
   )
 );
@@ -358,29 +810,37 @@ be_local_closure(Leds_pixel_count,   /* name */
 
 
 /********************************************************************
-** Solidified function: can_show
+** Solidified function: matrix
 ********************************************************************/
-be_local_closure(Leds_can_show,   /* name */
+be_local_closure(Leds_matrix,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
-    1,                          /* argc */
+    10,                          /* nstack */
+    4,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("call_native"),
-    /* K1   */  be_const_int(3),
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("Leds"),
+    /* K1   */  be_nested_str_literal("create_matrix"),
+    /* K2   */  be_const_int(0),
     }),
-    (be_nested_const_str("can_show", 960091187, 8)),
+    (be_nested_const_str("matrix", 365099244, 6)),
     ((bstring*) &be_const_str_input),
-    ( &(const binstruction[ 4]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x580C0001,  //  0001  LDCONST	R3	K1
-      0x7C040400,  //  0002  CALL	R1	2
-      0x80040200,  //  0003  RET	1	R1
+    ( &(const binstruction[11]) {  /* code */
+      0xB8120000,  //  0000  GETNGBL	R4	K0
+      0x08140001,  //  0001  MUL	R5	R0	R1
+      0x5C180400,  //  0002  MOVE	R6	R2
+      0x5C1C0600,  //  0003  MOVE	R7	R3
+      0x7C100600,  //  0004  CALL	R4	3
+      0x8C140901,  //  0005  GETMET	R5	R4	K1
+      0x5C1C0000,  //  0006  MOVE	R7	R0
+      0x5C200200,  //  0007  MOVE	R8	R1
+      0x58240002,  //  0008  LDCONST	R9	K2
+      0x7C140800,  //  0009  CALL	R5	4
+      0x80040A00,  //  000A  RET	1	R5
     })
   )
 );
@@ -417,9 +877,9 @@ be_local_closure(Leds_pixel_size,   /* name */
 
 
 /********************************************************************
-** Solidified function: dirty
+** Solidified function: pixels_buffer
 ********************************************************************/
-be_local_closure(Leds_dirty,   /* name */
+be_local_closure(Leds_pixels_buffer,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -432,13 +892,13 @@ be_local_closure(Leds_dirty,   /* name */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_literal("call_native"),
     }),
-    (be_nested_const_str("dirty", -1627386213, 5)),
+    (be_nested_const_str("pixels_buffer", 1229555807, 13)),
     ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x540E0004,  //  0001  LDINT	R3	5
+      0x540E0005,  //  0001  LDINT	R3	6
       0x7C040400,  //  0002  CALL	R1	2
-      0x80000000,  //  0003  RET	0
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -446,9 +906,74 @@ be_local_closure(Leds_dirty,   /* name */
 
 
 /********************************************************************
-** Solidified function: show
+** Solidified function: get_pixel_color
 ********************************************************************/
-be_local_closure(Leds_show,   /* name */
+be_local_closure(Leds_get_pixel_color,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_literal("call_native"),
+    }),
+    (be_nested_const_str("get_pixel_color", 337490048, 15)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x5412000A,  //  0001  LDINT	R4	11
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x7C080600,  //  0003  CALL	R2	3
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_pixel_color
+********************************************************************/
+be_local_closure(Leds_set_pixel_color,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("call_native"),
+    /* K1   */  be_nested_str_literal("to_gamma"),
+    }),
+    (be_nested_const_str("set_pixel_color", 1275248356, 15)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 9]) {  /* code */
+      0x8C100100,  //  0000  GETMET	R4	R0	K0
+      0x541A0009,  //  0001  LDINT	R6	10
+      0x5C1C0200,  //  0002  MOVE	R7	R1
+      0x8C200101,  //  0003  GETMET	R8	R0	K1
+      0x5C280400,  //  0004  MOVE	R10	R2
+      0x5C2C0600,  //  0005  MOVE	R11	R3
+      0x7C200600,  //  0006  CALL	R8	3
+      0x7C100800,  //  0007  CALL	R4	4
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: is_dirty
+********************************************************************/
+be_local_closure(Leds_is_dirty,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -458,17 +983,88 @@ be_local_closure(Leds_show,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_literal("call_native"),
-    /* K1   */  be_const_int(2),
     }),
-    (be_nested_const_str("show", -1454906820, 4)),
+    (be_nested_const_str("is_dirty", 418034110, 8)),
     ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x580C0001,  //  0001  LDCONST	R3	K1
+      0x540E0003,  //  0001  LDINT	R3	4
       0x7C040400,  //  0002  CALL	R1	2
-      0x80000000,  //  0003  RET	0
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Leds_init,   /* name */
+  be_nested_proto(
+    11,                          /* nstack */
+    5,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[12]) {     /* constants */
+    /* K0   */  be_nested_str_literal("gamma"),
+    /* K1   */  be_nested_str_literal("leds"),
+    /* K2   */  be_nested_str_literal("pin"),
+    /* K3   */  be_nested_str_literal("WS2812"),
+    /* K4   */  be_const_int(0),
+    /* K5   */  be_nested_str_literal("valuer_error"),
+    /* K6   */  be_nested_str_literal("no GPIO specified for neopixelbus"),
+    /* K7   */  be_nested_str_literal("ctor"),
+    /* K8   */  be_nested_str_literal("_p"),
+    /* K9   */  be_nested_str_literal("internal_error"),
+    /* K10  */  be_nested_str_literal("couldn't not initialize noepixelbus"),
+    /* K11  */  be_nested_str_literal("begin"),
+    }),
+    (be_nested_const_str("init", 380752755, 4)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[36]) {  /* code */
+      0x50140200,  //  0000  LDBOOL	R5	1	0
+      0x90020005,  //  0001  SETMBR	R0	K0	R5
+      0x60140009,  //  0002  GETGBL	R5	G9
+      0x5C180200,  //  0003  MOVE	R6	R1
+      0x7C140200,  //  0004  CALL	R5	1
+      0x90020205,  //  0005  SETMBR	R0	K1	R5
+      0x4C140000,  //  0006  LDNIL	R5
+      0x1C140405,  //  0007  EQ	R5	R2	R5
+      0x78160008,  //  0008  JMPF	R5	#0012
+      0x8C140502,  //  0009  GETMET	R5	R2	K2
+      0x881C0503,  //  000A  GETMBR	R7	R2	K3
+      0x7C140400,  //  000B  CALL	R5	2
+      0x28140B04,  //  000C  GE	R5	R5	K4
+      0x78160003,  //  000D  JMPF	R5	#0012
+      0x8C140502,  //  000E  GETMET	R5	R2	K2
+      0x881C0503,  //  000F  GETMBR	R7	R2	K3
+      0x7C140400,  //  0010  CALL	R5	2
+      0x5C080A00,  //  0011  MOVE	R2	R5
+      0x4C140000,  //  0012  LDNIL	R5
+      0x1C140405,  //  0013  EQ	R5	R2	R5
+      0x78160000,  //  0014  JMPF	R5	#0016
+      0xB0060B06,  //  0015  RAISE	1	K5	K6
+      0x8C140107,  //  0016  GETMET	R5	R0	K7
+      0x881C0101,  //  0017  GETMBR	R7	R0	K1
+      0x5C200400,  //  0018  MOVE	R8	R2
+      0x5C240600,  //  0019  MOVE	R9	R3
+      0x5C280800,  //  001A  MOVE	R10	R4
+      0x7C140A00,  //  001B  CALL	R5	5
+      0x88140108,  //  001C  GETMBR	R5	R0	K8
+      0x4C180000,  //  001D  LDNIL	R6
+      0x1C140A06,  //  001E  EQ	R5	R5	R6
+      0x78160000,  //  001F  JMPF	R5	#0021
+      0xB006130A,  //  0020  RAISE	1	K9	K10
+      0x8C14010B,  //  0021  GETMET	R5	R0	K11
+      0x7C140200,  //  0022  CALL	R5	1
+      0x80000000,  //  0023  RET	0
     })
   )
 );
@@ -510,9 +1106,9 @@ be_local_closure(Leds_clear_to,   /* name */
 
 
 /********************************************************************
-** Solidified function: is_dirty
+** Solidified function: can_show
 ********************************************************************/
-be_local_closure(Leds_is_dirty,   /* name */
+be_local_closure(Leds_can_show,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -522,16 +1118,80 @@ be_local_closure(Leds_is_dirty,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
+    ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_literal("call_native"),
+    /* K1   */  be_const_int(3),
     }),
-    (be_nested_const_str("is_dirty", 418034110, 8)),
+    (be_nested_const_str("can_show", 960091187, 8)),
     ((bstring*) &be_const_str_input),
     ( &(const binstruction[ 4]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x540E0003,  //  0001  LDINT	R3	4
+      0x580C0001,  //  0001  LDCONST	R3	K1
       0x7C040400,  //  0002  CALL	R1	2
       0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: clear
+********************************************************************/
+be_local_closure(Leds_clear,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("clear_to"),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_literal("show"),
+    }),
+    (be_nested_const_str("clear", 1550717474, 5)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 6]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x580C0001,  //  0001  LDCONST	R3	K1
+      0x7C040400,  //  0002  CALL	R1	2
+      0x8C040102,  //  0003  GETMET	R1	R0	K2
+      0x7C040200,  //  0004  CALL	R1	1
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: show
+********************************************************************/
+be_local_closure(Leds_show,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("call_native"),
+    /* K1   */  be_const_int(2),
+    }),
+    (be_nested_const_str("show", -1454906820, 4)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x580C0001,  //  0001  LDCONST	R3	K1
+      0x7C040400,  //  0002  CALL	R1	2
+      0x80000000,  //  0003  RET	0
     })
   )
 );
@@ -581,30 +1241,566 @@ be_local_closure(Leds_ctor,   /* name */
 
 
 /********************************************************************
+** Solidified function: dirty
+********************************************************************/
+be_local_closure(Leds_dirty,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_literal("call_native"),
+    }),
+    (be_nested_const_str("dirty", -1627386213, 5)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x540E0004,  //  0001  LDINT	R3	5
+      0x7C040400,  //  0002  CALL	R1	2
+      0x80000000,  //  0003  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_pixel_color
+********************************************************************/
+be_local_closure(Leds_segment_get_pixel_color,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("get_pixel_color"),
+    /* K2   */  be_nested_str_literal("offseta"),
+    }),
+    (be_nested_const_str("get_pixel_color", 337490048, 15)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x00100204,  //  0003  ADD	R4	R1	R4
+      0x7C080400,  //  0004  CALL	R2	2
+      0x80040400,  //  0005  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: clear_to
+********************************************************************/
+be_local_closure(Leds_segment_clear_to,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    3,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_const_int(0),
+    /* K1   */  be_nested_str_literal("leds"),
+    /* K2   */  be_nested_str_literal("strip"),
+    /* K3   */  be_nested_str_literal("set_pixel_color"),
+    /* K4   */  be_nested_str_literal("offset"),
+    /* K5   */  be_const_int(1),
+    }),
+    (be_nested_const_str("clear_to", -766965166, 8)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[14]) {  /* code */
+      0x580C0000,  //  0000  LDCONST	R3	K0
+      0x88100101,  //  0001  GETMBR	R4	R0	K1
+      0x14100604,  //  0002  LT	R4	R3	R4
+      0x78120008,  //  0003  JMPF	R4	#000D
+      0x88100102,  //  0004  GETMBR	R4	R0	K2
+      0x8C100903,  //  0005  GETMET	R4	R4	K3
+      0x88180104,  //  0006  GETMBR	R6	R0	K4
+      0x00180606,  //  0007  ADD	R6	R3	R6
+      0x5C1C0200,  //  0008  MOVE	R7	R1
+      0x5C200400,  //  0009  MOVE	R8	R2
+      0x7C100800,  //  000A  CALL	R4	4
+      0x000C0705,  //  000B  ADD	R3	R3	K5
+      0x7001FFF3,  //  000C  JMP		#0001
+      0x80000000,  //  000D  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: can_show
+********************************************************************/
+be_local_closure(Leds_segment_can_show,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("can_show"),
+    }),
+    (be_nested_const_str("can_show", 960091187, 8)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_pixel_color
+********************************************************************/
+be_local_closure(Leds_segment_set_pixel_color,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("set_pixel_color"),
+    /* K2   */  be_nested_str_literal("offset"),
+    }),
+    (be_nested_const_str("set_pixel_color", 1275248356, 15)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88100100,  //  0000  GETMBR	R4	R0	K0
+      0x8C100901,  //  0001  GETMET	R4	R4	K1
+      0x88180102,  //  0002  GETMBR	R6	R0	K2
+      0x00180206,  //  0003  ADD	R6	R1	R6
+      0x5C1C0400,  //  0004  MOVE	R7	R2
+      0x5C200600,  //  0005  MOVE	R8	R3
+      0x7C100800,  //  0006  CALL	R4	4
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: clear
+********************************************************************/
+be_local_closure(Leds_segment_clear,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("clear_to"),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_literal("show"),
+    }),
+    (be_nested_const_str("clear", 1550717474, 5)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 6]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x580C0001,  //  0001  LDCONST	R3	K1
+      0x7C040400,  //  0002  CALL	R1	2
+      0x8C040102,  //  0003  GETMET	R1	R0	K2
+      0x7C040200,  //  0004  CALL	R1	1
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: begin
+********************************************************************/
+be_local_closure(Leds_segment_begin,   /* name */
+  be_nested_proto(
+    1,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    (be_nested_const_str("begin", 1748273790, 5)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: pixel_count
+********************************************************************/
+be_local_closure(Leds_segment_pixel_count,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_literal("leds"),
+    }),
+    (be_nested_const_str("pixel_count", -1855836553, 11)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Leds_segment_init,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    4,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("offset"),
+    /* K2   */  be_nested_str_literal("leds"),
+    }),
+    (be_nested_const_str("init", 380752755, 4)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[10]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x60100009,  //  0001  GETGBL	R4	G9
+      0x5C140400,  //  0002  MOVE	R5	R2
+      0x7C100200,  //  0003  CALL	R4	1
+      0x90020204,  //  0004  SETMBR	R0	K1	R4
+      0x60100009,  //  0005  GETGBL	R4	G9
+      0x5C140600,  //  0006  MOVE	R5	R3
+      0x7C100200,  //  0007  CALL	R4	1
+      0x90020404,  //  0008  SETMBR	R0	K2	R4
+      0x80000000,  //  0009  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: pixel_size
+********************************************************************/
+be_local_closure(Leds_segment_pixel_size,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("pixel_size"),
+    }),
+    (be_nested_const_str("pixel_size", -2085831511, 10)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: dirty
+********************************************************************/
+be_local_closure(Leds_segment_dirty,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("dirty"),
+    }),
+    (be_nested_const_str("dirty", -1627386213, 5)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80000000,  //  0003  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: show
+********************************************************************/
+be_local_closure(Leds_segment_show,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_literal("offset"),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_literal("leds"),
+    /* K3   */  be_nested_str_literal("strip"),
+    /* K4   */  be_nested_str_literal("show"),
+    }),
+    (be_nested_const_str("show", -1454906820, 4)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[16]) {  /* code */
+      0x60080017,  //  0000  GETGBL	R2	G23
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x740A0007,  //  0003  JMPT	R2	#000C
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x1C080501,  //  0005  EQ	R2	R2	K1
+      0x780A0007,  //  0006  JMPF	R2	#000F
+      0x88080102,  //  0007  GETMBR	R2	R0	K2
+      0x880C0103,  //  0008  GETMBR	R3	R0	K3
+      0x880C0702,  //  0009  GETMBR	R3	R3	K2
+      0x1C080403,  //  000A  EQ	R2	R2	R3
+      0x780A0002,  //  000B  JMPF	R2	#000F
+      0x88080103,  //  000C  GETMBR	R2	R0	K3
+      0x8C080504,  //  000D  GETMET	R2	R2	K4
+      0x7C080200,  //  000E  CALL	R2	1
+      0x80000000,  //  000F  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: is_dirty
+********************************************************************/
+be_local_closure(Leds_segment_is_dirty,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("strip"),
+    /* K1   */  be_nested_str_literal("is_dirty"),
+    }),
+    (be_nested_const_str("is_dirty", 418034110, 8)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: pixels_buffer
+********************************************************************/
+be_local_closure(Leds_segment_pixels_buffer,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    (be_nested_const_str("pixels_buffer", 1229555807, 13)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[ 2]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified class: Leds_segment
+********************************************************************/
+be_local_class(Leds_segment,
+    3,
+    NULL,
+    be_nested_map(16,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("get_pixel_color", 337490048, 15, -1), be_const_closure(Leds_segment_get_pixel_color_closure) },
+        { be_nested_key("strip", -48555823, 5, -1), be_const_var(0) },
+        { be_nested_key("clear_to", -766965166, 8, 5), be_const_closure(Leds_segment_clear_to_closure) },
+        { be_nested_key("can_show", 960091187, 8, 13), be_const_closure(Leds_segment_can_show_closure) },
+        { be_nested_key("set_pixel_color", 1275248356, 15, -1), be_const_closure(Leds_segment_set_pixel_color_closure) },
+        { be_nested_key("clear", 1550717474, 5, -1), be_const_closure(Leds_segment_clear_closure) },
+        { be_nested_key("is_dirty", 418034110, 8, -1), be_const_closure(Leds_segment_is_dirty_closure) },
+        { be_nested_key("pixel_count", -1855836553, 11, -1), be_const_closure(Leds_segment_pixel_count_closure) },
+        { be_nested_key("leds", 558858555, 4, -1), be_const_var(2) },
+        { be_nested_key("pixel_size", -2085831511, 10, -1), be_const_closure(Leds_segment_pixel_size_closure) },
+        { be_nested_key("offset", 348705738, 6, -1), be_const_var(1) },
+        { be_nested_key("dirty", -1627386213, 5, 8), be_const_closure(Leds_segment_dirty_closure) },
+        { be_nested_key("show", -1454906820, 4, -1), be_const_closure(Leds_segment_show_closure) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_closure(Leds_segment_init_closure) },
+        { be_nested_key("begin", 1748273790, 5, 6), be_const_closure(Leds_segment_begin_closure) },
+        { be_nested_key("pixels_buffer", 1229555807, 13, -1), be_const_closure(Leds_segment_pixels_buffer_closure) },
+    })),
+    be_str_literal("Leds_segment")
+);
+
+/********************************************************************
+** Solidified function: create_segment
+********************************************************************/
+be_local_closure(Leds_create_segment,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    3,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_literal("leds"),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str_literal("value_error"),
+    /* K3   */  be_nested_str_literal("out of range"),
+    /* K4   */  be_const_class(be_class_Leds_segment),
+    }),
+    (be_nested_const_str("create_segment", -431444577, 14)),
+    ((bstring*) &be_const_str_input),
+    ( &(const binstruction[23]) {  /* code */
+      0x600C0009,  //  0000  GETGBL	R3	G9
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x7C0C0200,  //  0002  CALL	R3	1
+      0x60100009,  //  0003  GETGBL	R4	G9
+      0x5C140400,  //  0004  MOVE	R5	R2
+      0x7C100200,  //  0005  CALL	R4	1
+      0x000C0604,  //  0006  ADD	R3	R3	R4
+      0x88100100,  //  0007  GETMBR	R4	R0	K0
+      0x240C0604,  //  0008  GT	R3	R3	R4
+      0x740E0003,  //  0009  JMPT	R3	#000E
+      0x140C0301,  //  000A  LT	R3	R1	K1
+      0x740E0001,  //  000B  JMPT	R3	#000E
+      0x140C0501,  //  000C  LT	R3	R2	K1
+      0x780E0000,  //  000D  JMPF	R3	#000F
+      0xB0060503,  //  000E  RAISE	1	K2	K3
+      0x580C0004,  //  000F  LDCONST	R3	K4
+      0xB4000004,  //  0010  CLASS	K4
+      0x5C100600,  //  0011  MOVE	R4	R3
+      0x5C140000,  //  0012  MOVE	R5	R0
+      0x5C180200,  //  0013  MOVE	R6	R1
+      0x5C1C0400,  //  0014  MOVE	R7	R2
+      0x7C100600,  //  0015  CALL	R4	3
+      0x80040800,  //  0016  RET	1	R4
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Leds
 ********************************************************************/
 extern const bclass be_class_Leds_ntv;
 be_local_class(Leds,
-    1,
+    2,
     &be_class_Leds_ntv,
-    be_nested_map(16,
+    be_nested_map(20,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("get_pixel_color", 337490048, 15, -1), be_const_closure(Leds_get_pixel_color_closure) },
-        { be_nested_key("ctor", 375399343, 4, -1), be_const_closure(Leds_ctor_closure) },
-        { be_nested_key("clear", 1550717474, 5, 8), be_const_closure(Leds_clear_closure) },
-        { be_nested_key("init", 380752755, 4, 13), be_const_closure(Leds_init_closure) },
-        { be_nested_key("set_pixel_color", 1275248356, 15, -1), be_const_closure(Leds_set_pixel_color_closure) },
-        { be_nested_key("is_dirty", 418034110, 8, -1), be_const_closure(Leds_is_dirty_closure) },
-        { be_nested_key("to_gamma", 1597139862, 8, -1), be_const_closure(Leds_to_gamma_closure) },
         { be_nested_key("pixel_count", -1855836553, 11, -1), be_const_closure(Leds_pixel_count_closure) },
-        { be_nested_key("clear_to", -766965166, 8, -1), be_const_closure(Leds_clear_to_closure) },
+        { be_nested_key("dirty", -1627386213, 5, 6), be_const_closure(Leds_dirty_closure) },
+        { be_nested_key("to_gamma", 1597139862, 8, -1), be_const_closure(Leds_to_gamma_closure) },
+        { be_nested_key("create_matrix", -766781373, 13, 1), be_const_closure(Leds_create_matrix_closure) },
+        { be_nested_key("matrix", 365099244, 6, -1), be_const_static_closure(Leds_matrix_closure) },
         { be_nested_key("pixel_size", -2085831511, 10, -1), be_const_closure(Leds_pixel_size_closure) },
-        { be_nested_key("gamma", -802614262, 5, -1), be_const_var(0) },
-        { be_nested_key("dirty", -1627386213, 5, -1), be_const_closure(Leds_dirty_closure) },
+        { be_nested_key("ctor", 375399343, 4, 0), be_const_closure(Leds_ctor_closure) },
+        { be_nested_key("pixels_buffer", 1229555807, 13, 13), be_const_closure(Leds_pixels_buffer_closure) },
+        { be_nested_key("get_pixel_color", 337490048, 15, -1), be_const_closure(Leds_get_pixel_color_closure) },
         { be_nested_key("show", -1454906820, 4, -1), be_const_closure(Leds_show_closure) },
+        { be_nested_key("begin", 1748273790, 5, 17), be_const_closure(Leds_begin_closure) },
+        { be_nested_key("leds", 558858555, 4, -1), be_const_var(1) },
+        { be_nested_key("clear", 1550717474, 5, -1), be_const_closure(Leds_clear_closure) },
         { be_nested_key("can_show", 960091187, 8, -1), be_const_closure(Leds_can_show_closure) },
-        { be_nested_key("begin", 1748273790, 5, 5), be_const_closure(Leds_begin_closure) },
-        { be_nested_key("pixels_buffer", 1229555807, 13, 1), be_const_closure(Leds_pixels_buffer_closure) },
+        { be_nested_key("gamma", -802614262, 5, 12), be_const_var(0) },
+        { be_nested_key("init", 380752755, 4, 11), be_const_closure(Leds_init_closure) },
+        { be_nested_key("set_pixel_color", 1275248356, 15, 9), be_const_closure(Leds_set_pixel_color_closure) },
+        { be_nested_key("clear_to", -766965166, 8, 18), be_const_closure(Leds_clear_to_closure) },
+        { be_nested_key("is_dirty", 418034110, 8, -1), be_const_closure(Leds_is_dirty_closure) },
+        { be_nested_key("create_segment", -431444577, 14, -1), be_const_closure(Leds_create_segment_closure) },
     })),
     be_str_literal("Leds")
 );
