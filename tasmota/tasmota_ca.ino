@@ -21,7 +21,7 @@
 // Please use fingerprint validation instead
 // However, the CA are available below for future use if it appears to be useful
 
-#if defined(USE_TLS) && defined(USE_MQTT_TLS_CA_CERT)
+#if defined(USE_TLS)
 
 /*********************************************************************************************\
  * LetsEncrypt R3 certificate, RSA 2048 bits SHA 256, valid until 20250915
@@ -232,4 +232,4 @@ const br_x509_trust_anchor GoDaddyCAG2_TA PROGMEM = {
 	}
 };
 
-#endif // defined(USE_TLS) && defined(USE_MQTT_TLS_CA_CERT)
+#endif // defined(USE_TLS)

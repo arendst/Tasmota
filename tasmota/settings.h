@@ -161,7 +161,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t energy_phase : 1;             // bit 15 (v9.5.0.9)  - SetOption129 - (Energy) Show phase information
     uint32_t show_heap_with_timestamp : 1; // bit 16 (v9.5.0.9)  - SetOption130 - (Debug) Show heap with logging timestamp
     uint32_t tuya_allow_dimmer_0 : 1;      // bit 17 (v10.0.0.3) - SetOption131 - (Tuya) Allow save dimmer = 0 receved by MCU
-    uint32_t spare18 : 1;                  // bit 18
+    uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - (TLS) use fingerprint validation instead of CA based
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
