@@ -92,6 +92,7 @@ extern "C" {
           retain = be_tobool(vm, 4);
         }
         if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+        be_pop(vm, be_top(vm));
         MqttPublishPayload(topic, payload, payload_len, retain);
         be_return_nil(vm); // Return
       }
@@ -122,7 +123,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {  // only 1 argument of type string accepted
       const char * command = be_tostring(vm, 2);
-      be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
+      be_pop(vm, top);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
       be_return_nil(vm); // Return
     }
@@ -390,6 +391,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       ResponseAppend_P(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -402,6 +404,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       WSContentSend_P(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -414,6 +417,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       WSContentSend_PD(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -423,9 +427,14 @@ extern "C" {
   // get power
   int32_t l_getpower(bvm *vm);
   int32_t l_getpower(bvm *vm) {
+    power_t pow = TasmotaGlobal.power;
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isint(vm, 2)) {
+      pow = be_toint(vm, 2);
+    }
     be_newobject(vm, "list");
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      be_pushbool(vm, bitRead(TasmotaGlobal.power, i));
+      be_pushbool(vm, bitRead(pow, i));
       be_data_push(vm, -2);
       be_pop(vm, 1);
     }
@@ -440,6 +449,7 @@ extern "C" {
       int32_t idx = be_toint(vm, 2);
       bool power = be_tobool(vm, 3);
       if ((idx >= 0) && (idx < TasmotaGlobal.devices_present)) {
+        be_pop(vm, top);  // avoid Error be_top is non zero message
         ExecuteCommandPower(idx + 1, (power) ? POWER_ON : POWER_OFF, SRC_BERRY);
         be_pushbool(vm, power);
         be_return(vm); // Return
@@ -473,6 +483,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isint(vm, 2)) {
       int32_t index = be_toint(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       bool enabled = I2cEnabled(index);
       be_pushbool(vm, enabled);
       be_return(vm); // Return

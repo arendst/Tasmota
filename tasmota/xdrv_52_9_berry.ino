@@ -214,7 +214,7 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(vm, type != nullptr ? type : "");
       be_pushstring(vm, cmd != nullptr ? cmd : "");
       be_pushint(vm, idx);
-      be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
+      be_pushstring(vm, payload != nullptr ? payload : "");  // empty json
       BrTimeoutStart();
       if (data_len > 0) {
         be_pushbytes(vm, payload, data_len);    // if data_len is set, we also push raw bytes
@@ -811,8 +811,8 @@ bool Xdrv52(uint8_t function)
     case FUNC_EVERY_SECOND:
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
-    case FUNC_SET_POWER:
-      callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
+    case FUNC_SET_DEVICE_POWER:
+      result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
