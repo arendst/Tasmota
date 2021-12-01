@@ -192,6 +192,7 @@ void MqttInit(void) {
   Settings->mqtt_port = 8883;
 #endif //USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
+  bool aws_iot_host = false;
   if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
     // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
     Settings->flag4.mqtt_tls = true;
@@ -202,6 +203,7 @@ void MqttInit(void) {
   String host = String(SettingsText(SET_MQTT_HOST));
   if (host.indexOf(F(".iot.")) && host.endsWith(F(".amazonaws.com"))) {  // look for ".iot." and ".amazonaws.com" in the domain name
     Settings->flag4.mqtt_no_retain = true;
+    aws_iot_host = true;
   }
 
   if (Mqtt.mqtt_tls) {
@@ -211,12 +213,10 @@ void MqttInit(void) {
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 #endif
 
-#ifdef USE_MQTT_AWS_IOT_LIGHT
-    if (443 == Settings->mqtt_port) {
+    if (443 == Settings->mqtt_port && aws_iot_host) {
       static const char * alpn_mqtt = "mqtt";   // needs to be static
       tlsClient->setALPN(&alpn_mqtt, 1);         // need to set alpn to 'mqtt' for AWS IoT
     }
-#endif
 #ifdef USE_MQTT_AWS_IOT
     loadTlsDir();   // load key and certificate data from Flash
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
