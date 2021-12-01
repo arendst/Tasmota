@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - (Internal) Range conversion edge values
 - NimBLE to v.1.3.3
+- MQTT TLS dual mode (CA or fingeprint) in same firmware, ``SetOption132 1`` to force fingerprint
 
 ### Fixed
 - Tuya dimmer range issue (#13849)

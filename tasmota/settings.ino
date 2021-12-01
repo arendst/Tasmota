@@ -1458,6 +1458,14 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0A000003) {
       if (0 == Settings->param[P_ARP_GRATUITOUS]) {
         Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
+#ifdef USE_TLS
+        for (uint32_t i = 0; i < 20; i++) {
+          if (Settings->mqtt_fingerprint[0][i]) {
+            Settings->flag5.tls_use_fingerprint = true;   // if the fingerprint1 is non null we expect it to be actually used
+            break;
+          }
+        }
+#endif
       }
     }
 

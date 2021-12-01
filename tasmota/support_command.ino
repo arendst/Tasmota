@@ -1068,6 +1068,9 @@ void CmndSetoptionBase(bool indexed) {
                   TasmotaGlobal.restart_flag = 2;
                 }
                 break;
+              case 18:                     // SetOption132 - TLS Fingerprint
+                TasmotaGlobal.restart_flag = 2;
+                break;
             }
           }
         } else {

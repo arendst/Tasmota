@@ -371,6 +371,7 @@
 // Commands xdrv_02_mqtt.ino
 #define D_SO_MQTTJSONONLY "MqttJSONOnly"
 #define D_SO_MQTTTLS "MqttTLS"
+#define D_SO_MQTTTLS_FINGERPRINT "MqttTLSFingerprint"
 #define D_SO_MQTTNORETAIN "MqttNoRetain"
 #define D_SO_MQTTDETACHRELAY "MqttDetachRelay"
 #define D_CMND_MQTTLOG "MqttLog"
