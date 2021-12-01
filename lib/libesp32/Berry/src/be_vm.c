@@ -984,7 +984,12 @@ newframe: /* a new call frame */
             bvalue *a = RA(), *b = RKB();
             if (var_isclass(a) && var_isclass(b)) {
                 bclass *obj = var_toobj(a);
-                be_class_setsuper(obj, var_toobj(b));
+                if (!gc_isconst(obj))  {
+                   be_class_setsuper(obj, var_toobj(b));
+                } else {
+                    vm_error(vm, "internal_error",
+                    "cannot change superclass of a read-only class");
+                }
             } else {
                 vm_error(vm, "type_error",
                     "value '%s' does not support set super",
