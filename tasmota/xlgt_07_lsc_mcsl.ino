@@ -24,7 +24,8 @@
  * GP-SW084-052 uses an ESP8285 (TYWE2S) and submicrocontroller controlling two wire RGB leds
  * https://www.gp-electronic.com/product/integrated-switching-power-supply-with-built-in-controller/eugs/european-vertical-6w8-function.html
  *
- * {"NAME":"LSC MC Lights","GPIO":[1,1,1,1,544,32,1,1,3840,1,3872,1,1,1],"FLAG":0,"BASE":18}
+ * Template:
+ * {"NAME":"LSC MC Lights","GPIO":[0,0,0,0,544,32,0,0,3840,0,3872,0,0,0],"FLAG":0,"BASE":18}
  *
  * NL: Action LSC Multi color smart lights
  *
