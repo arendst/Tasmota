@@ -781,7 +781,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_LIGHT) && defined(USE_LSC_MCSL)
     feature8 |= 0x00020000;  // xlgt_07_lsc_mcsl.ino
 #endif
-//    feature8 |= 0x00040000;
+#ifdef USE_SONOFF_SPM
+    feature8 |= 0x00040000;
+#endif
 //    feature8 |= 0x00080000;
 
 //    feature8 |= 0x00100000;
