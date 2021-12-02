@@ -1438,7 +1438,7 @@ void MINRFhandleATCPacket(void){
   // AddLog(LOG_LEVEL_INFO,PSTR("NRF: ATC: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x"),MINRF.buffer.raw[0],MINRF.buffer.raw[1],MINRF.buffer.raw[2],MINRF.buffer.raw[3],MINRF.buffer.raw[4],MINRF.buffer.raw[5],MINRF.buffer.raw[6],MINRF.buffer.raw[7],MINRF.buffer.raw[8],MINRF.buffer.raw[9],MINRF.buffer.raw[10],MINRF.buffer.raw[11]);
   if(_slot==0xff) return;
 
-  MIBLEsensors[_slot].temp = (float)(__builtin_bswap16(_packet->temp))/10.0f;
+  MIBLEsensors[_slot].temp = (float)(int16_t(__builtin_bswap16(_packet->temp)))/10.0f;
   MIBLEsensors[_slot].hum = (float)_packet->hum;
   MIBLEsensors[_slot].bat = _packet->batPer;
   MIBLEsensors[_slot].eventType.tempHum = 1;
