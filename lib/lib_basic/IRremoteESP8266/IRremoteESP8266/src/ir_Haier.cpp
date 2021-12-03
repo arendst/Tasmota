@@ -32,6 +32,8 @@ using irutils::addBoolToString;
 using irutils::addIntToString;
 using irutils::addLabeledString;
 using irutils::addModeToString;
+using irutils::addModelToString;
+using irutils::addSwingHToString;
 using irutils::addFanToString;
 using irutils::addTempToString;
 using irutils::minsToString;
@@ -322,22 +324,22 @@ void IRHaierAC::setCurrTime(const uint16_t nr_mins) {
 }
 
 /// Get the Vertical Swing position setting of the A/C.
-/// @return The native swing mode.
-uint8_t IRHaierAC::getSwing(void) const {
-  return _.Swing;
+/// @return The native vertical swing mode.
+uint8_t IRHaierAC::getSwingV(void) const {
+  return _.SwingV;
 }
 
 /// Set the Vertical Swing mode of the A/C.
 /// @param[in] state The mode to set the vanes to.
-void IRHaierAC::setSwing(const uint8_t state) {
-  if (state == _.Swing) return;  // Nothing to do.
+void IRHaierAC::setSwingV(const uint8_t state) {
+  if (state == _.SwingV) return;  // Nothing to do.
   switch (state) {
-    case kHaierAcSwingOff:
-    case kHaierAcSwingUp:
-    case kHaierAcSwingDown:
-    case kHaierAcSwingChg:
+    case kHaierAcSwingVOff:
+    case kHaierAcSwingVUp:
+    case kHaierAcSwingVDown:
+    case kHaierAcSwingVChg:
       _.Command = kHaierAcCmdSwing;
-      _.Swing = state;
+      _.SwingV = state;
       break;
   }
 }
@@ -376,11 +378,11 @@ uint8_t IRHaierAC::convertSwingV(const stdAc::swingv_t position) {
   switch (position) {
     case stdAc::swingv_t::kHighest:
     case stdAc::swingv_t::kHigh:
-    case stdAc::swingv_t::kMiddle:  return kHaierAcSwingUp;
+    case stdAc::swingv_t::kMiddle:  return kHaierAcSwingVUp;
     case stdAc::swingv_t::kLow:
-    case stdAc::swingv_t::kLowest:  return kHaierAcSwingDown;
-    case stdAc::swingv_t::kOff:     return kHaierAcSwingOff;
-    default:                        return kHaierAcSwingChg;
+    case stdAc::swingv_t::kLowest:  return kHaierAcSwingVDown;
+    case stdAc::swingv_t::kOff:     return kHaierAcSwingVOff;
+    default:                        return kHaierAcSwingVChg;
   }
 }
 
@@ -414,10 +416,10 @@ stdAc::fanspeed_t IRHaierAC::toCommonFanSpeed(const uint8_t speed) {
 /// @return The native equivalent of the enum.
 stdAc::swingv_t IRHaierAC::toCommonSwingV(const uint8_t pos) {
   switch (pos) {
-    case kHaierAcSwingUp:   return stdAc::swingv_t::kHighest;
-    case kHaierAcSwingDown: return stdAc::swingv_t::kLowest;
-    case kHaierAcSwingOff:  return stdAc::swingv_t::kOff;
-    default:                return stdAc::swingv_t::kAuto;
+    case kHaierAcSwingVUp:   return stdAc::swingv_t::kHighest;
+    case kHaierAcSwingVDown: return stdAc::swingv_t::kLowest;
+    case kHaierAcSwingVOff:  return stdAc::swingv_t::kOff;
+    default:                 return stdAc::swingv_t::kAuto;
   }
 }
 
@@ -433,7 +435,7 @@ stdAc::state_t IRHaierAC::toCommon(void) const {
   result.celsius = true;
   result.degrees = getTemp();
   result.fanspeed = toCommonFanSpeed(getFan());
-  result.swingv = toCommonSwingV(_.Swing);
+  result.swingv = toCommonSwingV(_.SwingV);
   result.filter = _.Health;
   result.sleep = _.Sleep ? 0 : -1;
   // Not supported.
@@ -443,7 +445,7 @@ stdAc::state_t IRHaierAC::toCommon(void) const {
   result.econo = false;
   result.light = false;
   result.clean = false;
-  result.beep = false;
+  result.beep = true;
   result.clock = -1;
   return result;
 }
@@ -452,7 +454,7 @@ stdAc::state_t IRHaierAC::toCommon(void) const {
 /// @return A human readable string.
 String IRHaierAC::toString(void) const {
   String result = "";
-  result.reserve(150);  // Reserve some heap for the string to reduce fragging.
+  result.reserve(170);  // Reserve some heap for the string to reduce fragging.
   uint8_t cmd = _.Command;
   result += addIntToString(cmd, kCommandStr, false);
   result += kSpaceLBraceStr;
@@ -492,7 +494,7 @@ String IRHaierAC::toString(void) const {
       result += kHealthStr;
       break;
     case kHaierAcCmdSwing:
-      result += kSwingStr;
+      result += kSwingVStr;
       break;
     default:
       result += kUnknownStr;
@@ -503,19 +505,19 @@ String IRHaierAC::toString(void) const {
   result += addTempToString(getTemp());
   result += addFanToString(getFan(), kHaierAcFanHigh, kHaierAcFanLow,
                            kHaierAcFanAuto, kHaierAcFanAuto, kHaierAcFanMed);
-  result += addIntToString(_.Swing, kSwingStr);
+  result += addIntToString(_.SwingV, kSwingVStr);
   result += kSpaceLBraceStr;
-  switch (_.Swing) {
-    case kHaierAcSwingOff:
+  switch (_.SwingV) {
+    case kHaierAcSwingVOff:
       result += kOffStr;
       break;
-    case kHaierAcSwingUp:
+    case kHaierAcSwingVUp:
       result += kUpStr;
       break;
-    case kHaierAcSwingDown:
+    case kHaierAcSwingVDown:
       result += kDownStr;
       break;
-    case kHaierAcSwingChg:
+    case kHaierAcSwingVChg:
       result += kChangeStr;
       break;
     default:
@@ -581,9 +583,9 @@ bool IRHaierAC176::validChecksum(const uint8_t state[], const uint16_t length) {
 /// Reset the internal state to a fixed known good state.
 void IRHaierAC176::stateReset(void) {
   std::memset(_.raw, 0, sizeof _.raw);
-  _.Prefix = kHaierAcYrw02Prefix;
+  _.Model = kHaierAcYrw02ModelA;
   _.Prefix2 = kHaierAc176Prefix;
-  _.Temp = kHaierAcDefTemp - kHaierAcMinTemp;
+  _.Temp = kHaierAcYrw02DefTempC - kHaierAcYrw02MinTempC;
   _.Health = true;
   setFan(kHaierAcYrw02FanAuto);
   _.Power = true;
@@ -609,14 +611,39 @@ void IRHaierAC176::setButton(uint8_t button) {
   switch (button) {
     case kHaierAcYrw02ButtonTempUp:
     case kHaierAcYrw02ButtonTempDown:
-    case kHaierAcYrw02ButtonSwing:
+    case kHaierAcYrw02ButtonSwingV:
+    case kHaierAcYrw02ButtonSwingH:
     case kHaierAcYrw02ButtonFan:
     case kHaierAcYrw02ButtonPower:
     case kHaierAcYrw02ButtonMode:
     case kHaierAcYrw02ButtonHealth:
     case kHaierAcYrw02ButtonTurbo:
     case kHaierAcYrw02ButtonSleep:
+    case kHaierAcYrw02ButtonLock:
+    case kHaierAcYrw02ButtonCFAB:
       _.Button = button;
+  }
+}
+
+/// Get/Detect the model of the A/C.
+/// @return The enum of the compatible model.
+haier_ac176_remote_model_t IRHaierAC176::getModel(void) const {
+  switch (_.Model) {
+    case kHaierAcYrw02ModelB: return haier_ac176_remote_model_t::V9014557_B;
+    default:                  return haier_ac176_remote_model_t::V9014557_A;
+  }
+}
+
+/// Set the model of the A/C to emulate.
+/// @param[in] model The enum of the appropriate model.
+void IRHaierAC176::setModel(haier_ac176_remote_model_t model) {
+  _.Button = kHaierAcYrw02ButtonCFAB;
+  switch (model) {
+    case haier_ac176_remote_model_t::V9014557_B:
+      _.Model = kHaierAcYrw02ModelB;
+      break;
+    default:
+      _.Model = kHaierAcYrw02ModelA;
   }
 }
 
@@ -629,47 +656,118 @@ uint8_t IRHaierAC176::getButton(void) const {
 /// Set the operating mode of the A/C.
 /// @param[in] mode The desired operating mode.
 void IRHaierAC176::setMode(uint8_t mode) {
-  uint8_t new_mode = mode;
-  _.Button = kHaierAcYrw02ButtonMode;
   switch (mode) {
     case kHaierAcYrw02Auto:
-    case kHaierAcYrw02Cool:
     case kHaierAcYrw02Dry:
+    case kHaierAcYrw02Fan:
+      // Turbo & Quiet is only available in Cool/Heat mode.
+      _.Turbo = false;
+      _.Quiet = false;
+      // FALL-THRU
+    case kHaierAcYrw02Cool:
     case kHaierAcYrw02Heat:
-    case kHaierAcYrw02Fan: break;
-    default: new_mode = kHaierAcYrw02Auto;  // Unexpected, default to auto mode.
+      _.Button = kHaierAcYrw02ButtonMode;
+      _.Mode = mode;
+      break;
+    default:
+      setMode(kHaierAcYrw02Auto);  // Unexpected, default to auto mode.
   }
-  _.Mode = new_mode;
 }
 
 /// Get the operating mode setting of the A/C.
 /// @return The current operating mode setting.
-uint8_t IRHaierAC176::getMode(void) const {
-  return _.Mode;
-}
+uint8_t IRHaierAC176::getMode(void) const { return _.Mode; }
+
+/// Set the default temperature units to use.
+/// @param[in] on Use Fahrenheit as the units.
+///   true is Fahrenheit, false is Celsius.
+void IRHaierAC176::setUseFahrenheit(const bool on) { _.UseFahrenheit = on; }
+
+/// Get the default temperature units in use.
+/// @return true is Fahrenheit, false is Celsius.
+bool IRHaierAC176::getUseFahrenheit(void) const { return _.UseFahrenheit; }
 
 /// Set the temperature.
-/// @param[in] celsius The temperature in degrees celsius.
-void IRHaierAC176::setTemp(const uint8_t celsius) {
-  uint8_t temp = celsius;
-  if (temp < kHaierAcMinTemp)
-    temp = kHaierAcMinTemp;
-  else if (temp > kHaierAcMaxTemp)
-    temp = kHaierAcMaxTemp;
-
+/// @param[in] degree The temperature in degrees.
+/// @param[in] fahrenheit Use units of Fahrenheit and set that as units used.
+void IRHaierAC176::setTemp(const uint8_t degree, const bool fahrenheit) {
   uint8_t old_temp = getTemp();
-  if (old_temp == temp) return;
-  if (old_temp > temp)
-    _.Button = kHaierAcYrw02ButtonTempDown;
-  else
-    _.Button = kHaierAcYrw02ButtonTempUp;
-  _.Temp = temp - kHaierAcMinTemp;
+  if (old_temp == degree) return;
+
+  if (_.UseFahrenheit == fahrenheit) {
+    if (old_temp > degree)
+      _.Button = kHaierAcYrw02ButtonTempDown;
+    else
+      _.Button = kHaierAcYrw02ButtonTempUp;
+  } else {
+      _.Button = kHaierAcYrw02ButtonCFAB;
+  }
+  _.UseFahrenheit = fahrenheit;
+
+  uint8_t temp = degree;
+  if (fahrenheit) {
+    if (temp < kHaierAcYrw02MinTempF)
+      temp = kHaierAcYrw02MinTempF;
+    else if (temp > kHaierAcYrw02MaxTempF)
+      temp = kHaierAcYrw02MaxTempF;
+    if (degree >= 77) { temp++; }
+    if (degree >= 79) { temp++; }
+    // See at IRHaierAC176::getTemp() comments for clarification
+    _.ExtraDegreeF = temp % 2;
+    _.Temp = (temp - kHaierAcYrw02MinTempF -_.ExtraDegreeF) >> 1;
+  } else {
+    if (temp < kHaierAcYrw02MinTempC)
+      temp = kHaierAcYrw02MinTempC;
+    else if (temp > kHaierAcYrw02MaxTempC)
+      temp = kHaierAcYrw02MaxTempC;
+    _.Temp = temp - kHaierAcYrw02MinTempC;
+  }
 }
 
 /// Get the current temperature setting.
-/// @return The current setting for temp. in degrees celsius.
+/// The unit of temperature is specified by UseFahrenheit value.
+/// @return The current setting for temperature.
 uint8_t IRHaierAC176::getTemp(void) const {
-  return _.Temp + kHaierAcMinTemp;
+  if (!_.UseFahrenheit) { return _.Temp + kHaierAcYrw02MinTempC; }
+  uint8_t degree = _.Temp*2 + kHaierAcYrw02MinTempF + _.ExtraDegreeF;
+  // The way of coding the temperature in degree Fahrenheit is
+  // kHaierAcYrw02MinTempF + Temp*2 + ExtraDegreeF, for example
+  // Temp = 0b0011, ExtraDegreeF = 0b1, temperature is 60 + 3*2 + 1 = 67F
+  // But around 78F there is unconsistency, see table below
+  //
+  // | Fahrenheit | Temp   | ExtraDegreeF |
+  // |    60F     | 0b0000 |     0b0      |
+  // |    61F     | 0b0000 |     0b1      |
+  // |    62F     | 0b0001 |     0b0      |
+  // |    63F     | 0b0001 |     0b1      |
+  // |    64F     | 0b0010 |     0b0      |
+  // |    65F     | 0b0010 |     0b1      |
+  // |    66F     | 0b0011 |     0b0      |
+  // |    67F     | 0b0011 |     0b1      |
+  // |    68F     | 0b0100 |     0b0      |
+  // |    69F     | 0b0100 |     0b1      |
+  // |    70F     | 0b0101 |     0b0      |
+  // |    71F     | 0b0101 |     0b1      |
+  // |    72F     | 0b0110 |     0b0      |
+  // |    73F     | 0b0110 |     0b1      |
+  // |    74F     | 0b0111 |     0b0      |
+  // |    75F     | 0b0111 |     0b1      |
+  // |    76F     | 0b1000 |     0b0      |
+  // |  Not Used  | 0b1000 |     0b1      |
+  // |    77F     | 0b1001 |     0b0      |
+  // |  Not Used  | 0b1001 |     0b1      |
+  // |    78F     | 0b1010 |     0b0      |
+  // |    79F     | 0b1010 |     0b1      |
+  // |    80F     | 0b1011 |     0b0      |
+  // |    81F     | 0b1011 |     0b1      |
+  // |    82F     | 0b1100 |     0b0      |
+  // |    83F     | 0b1100 |     0b1      |
+  // |    84F     | 0b1101 |     0b0      |
+  // |    86F     | 0b1110 |     0b0      |
+  // |    85F     | 0b1101 |     0b1      |
+  if (degree >= 77) { degree--; }
+  if (degree >= 79) { degree--; }
+  return degree;
 }
 
 /// Set the Health (filter) setting of the A/C.
@@ -681,15 +779,11 @@ void IRHaierAC176::setHealth(const bool on) {
 
 /// Get the Health (filter) setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRHaierAC176::getHealth(void) const {
-  return _.Health;
-}
+bool IRHaierAC176::getHealth(void) const { return _.Health; }
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
-bool IRHaierAC176::getPower(void) const {
-  return _.Power;
-}
+bool IRHaierAC176::getPower(void) const { return _.Power; }
 
 /// Change the power setting.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -706,9 +800,7 @@ void IRHaierAC176::off(void) { setPower(false); }
 
 /// Get the Sleep setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRHaierAC176::getSleep(void) const {
-  return _.Sleep;
-}
+bool IRHaierAC176::getSleep(void) const { return _.Sleep; }
 
 /// Set the Sleep setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
@@ -718,30 +810,42 @@ void IRHaierAC176::setSleep(const bool on) {
 }
 
 /// Get the Turbo setting of the A/C.
-/// @return The current turbo speed setting.
-uint8_t IRHaierAC176::getTurbo(void) const {
-  return _.Turbo;
-}
+/// @return The current turbo setting.
+bool IRHaierAC176::getTurbo(void) const { return _.Turbo; }
 
 /// Set the Turbo setting of the A/C.
-/// @param[in] speed The desired turbo speed setting.
-/// @note Valid speeds are kHaierAcYrw02TurboOff, kHaierAcYrw02TurboLow, &
-///   kHaierAcYrw02TurboHigh.
-void IRHaierAC176::setTurbo(uint8_t speed) {
-  switch (speed) {
-    case kHaierAcYrw02TurboOff:
-    case kHaierAcYrw02TurboLow:
-    case kHaierAcYrw02TurboHigh:
-      _.Turbo = speed;
+/// @param[in] on The desired turbo setting.
+/// @note Turbo & Quiet can't be on at the same time, and only in Heat/Cool mode
+void IRHaierAC176::setTurbo(const bool on) {
+  switch (getMode()) {
+    case kHaierAcYrw02Cool:
+    case kHaierAcYrw02Heat:
+      _.Turbo = on;
       _.Button = kHaierAcYrw02ButtonTurbo;
+      if (on) _.Quiet = false;
+  }
+}
+
+/// Get the Quiet setting of the A/C.
+/// @return The current Quiet setting.
+bool IRHaierAC176::getQuiet(void) const { return _.Quiet; }
+
+/// Set the Quiet setting of the A/C.
+/// @param[in] on The desired Quiet setting.
+/// @note Turbo & Quiet can't be on at the same time, and only in Heat/Cool mode
+void IRHaierAC176::setQuiet(const bool on) {
+  switch (getMode()) {
+    case kHaierAcYrw02Cool:
+    case kHaierAcYrw02Heat:
+      _.Quiet = on;
+      _.Button = kHaierAcYrw02ButtonTurbo;
+      if (on) _.Turbo = false;
   }
 }
 
 /// Get the current fan speed setting.
 /// @return The current fan speed.
-uint8_t IRHaierAC176::getFan(void) const {
-  return _.Fan;
-}
+uint8_t IRHaierAC176::getFan(void) const { return _.Fan; }
 
 /// Set the speed of the fan.
 /// @param[in] speed The desired setting.
@@ -757,30 +861,61 @@ void IRHaierAC176::setFan(uint8_t speed) {
   }
 }
 
+/// For backward compatibility. Use getSwingV() instead.
 /// Get the Vertical Swing position setting of the A/C.
 /// @return The native position/mode.
-uint8_t IRHaierAC176::getSwing(void) const { return _.Swing; }
+uint8_t IRHaierAC176::getSwing(void) const {
+  return IRHaierAC176::getSwingV();
+}
+
+/// For backward compatibility. Use setSwingV() instead.
+/// Set the Vertical Swing mode of the A/C.
+/// @param[in] pos The position/mode to set the vanes to.
+void IRHaierAC176::setSwing(uint8_t pos) { setSwingV(pos); }
+
+/// Get the Vertical Swing position setting of the A/C.
+/// @return The native position/mode.
+uint8_t IRHaierAC176::getSwingV(void) const { return _.SwingV; }
 
 /// Set the Vertical Swing mode of the A/C.
 /// @param[in] pos The position/mode to set the vanes to.
-void IRHaierAC176::setSwing(uint8_t pos) {
+void IRHaierAC176::setSwingV(uint8_t pos) {
   uint8_t newpos = pos;
   switch (pos) {
-    case kHaierAcYrw02SwingOff:
-    case kHaierAcYrw02SwingAuto:
-    case kHaierAcYrw02SwingTop:
-    case kHaierAcYrw02SwingMiddle:
-    case kHaierAcYrw02SwingBottom:
-    case kHaierAcYrw02SwingDown: _.Button = kHaierAcYrw02ButtonSwing; break;
+    case kHaierAcYrw02SwingVOff:
+    case kHaierAcYrw02SwingVAuto:
+    case kHaierAcYrw02SwingVTop:
+    case kHaierAcYrw02SwingVMiddle:
+    case kHaierAcYrw02SwingVBottom:
+    case kHaierAcYrw02SwingVDown: _.Button = kHaierAcYrw02ButtonSwingV; break;
     default: return;  // Unexpected value so don't do anything.
   }
   // Heat mode has no MIDDLE setting, use BOTTOM instead.
-  if (pos == kHaierAcYrw02SwingMiddle && _.Mode == kHaierAcYrw02Heat)
-    newpos = kHaierAcYrw02SwingBottom;
+  if (pos == kHaierAcYrw02SwingVMiddle && _.Mode == kHaierAcYrw02Heat)
+    newpos = kHaierAcYrw02SwingVBottom;
   // BOTTOM is only allowed if we are in Heat mode, otherwise MIDDLE.
-  if (pos == kHaierAcYrw02SwingBottom && _.Mode != kHaierAcYrw02Heat)
-    newpos = kHaierAcYrw02SwingMiddle;
-  _.Swing = newpos;
+  if (pos == kHaierAcYrw02SwingVBottom && _.Mode != kHaierAcYrw02Heat)
+    newpos = kHaierAcYrw02SwingVMiddle;
+  _.SwingV = newpos;
+}
+
+/// Get the Horizontal Swing position setting of the A/C.
+/// @return The native position/mode.
+uint8_t IRHaierAC176::getSwingH(void) const { return _.SwingH; }
+
+/// Set the Horizontal Swing mode of the A/C.
+/// @param[in] pos The position/mode to set the vanes to.
+void IRHaierAC176::setSwingH(uint8_t pos) {
+  switch (pos) {
+    case kHaierAcYrw02SwingHMiddle:
+    case kHaierAcYrw02SwingHLeftMax:
+    case kHaierAcYrw02SwingHLeft:
+    case kHaierAcYrw02SwingHRight:
+    case kHaierAcYrw02SwingHRightMax:
+    case kHaierAcYrw02SwingHAuto: _.Button = kHaierAcYrw02ButtonSwingH; break;
+    default: return;  // Unexpected value so don't do anything.
+  }
+  _.SwingH = pos;
 }
 
 
@@ -867,6 +1002,17 @@ uint16_t IRHaierAC176::getOffTimer(void) const {
   return _.OffTimerHrs * 60 + _.OffTimerMins;
 }
 
+/// Get the Lock setting of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRHaierAC176::getLock(void) const { return _.Lock; }
+
+/// Set the Lock setting of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRHaierAC176::setLock(const bool on) {
+  _.Button = kHaierAcYrw02ButtonLock;
+  _.Lock = on;
+}
+
 /// Convert a stdAc::opmode_t enum into its native mode.
 /// @param[in] mode The enum to be converted.
 /// @return The native equivalent of the enum.
@@ -900,12 +1046,27 @@ uint8_t IRHaierAC176::convertFan(const stdAc::fanspeed_t speed) {
 uint8_t IRHaierAC176::convertSwingV(const stdAc::swingv_t position) {
   switch (position) {
     case stdAc::swingv_t::kHighest:
-    case stdAc::swingv_t::kHigh:   return kHaierAcYrw02SwingTop;
-    case stdAc::swingv_t::kMiddle: return kHaierAcYrw02SwingMiddle;
-    case stdAc::swingv_t::kLow:    return kHaierAcYrw02SwingDown;
-    case stdAc::swingv_t::kLowest: return kHaierAcYrw02SwingBottom;
-    case stdAc::swingv_t::kOff:    return kHaierAcYrw02SwingOff;
-    default:                       return kHaierAcYrw02SwingAuto;
+    case stdAc::swingv_t::kHigh:   return kHaierAcYrw02SwingVTop;
+    case stdAc::swingv_t::kMiddle: return kHaierAcYrw02SwingVMiddle;
+    case stdAc::swingv_t::kLow:    return kHaierAcYrw02SwingVDown;
+    case stdAc::swingv_t::kLowest: return kHaierAcYrw02SwingVBottom;
+    case stdAc::swingv_t::kOff:    return kHaierAcYrw02SwingVOff;
+    default:                       return kHaierAcYrw02SwingVAuto;
+  }
+}
+
+/// Convert a stdAc::swingh_t enum into it's native setting.
+/// @param[in] position The enum to be converted.
+/// @return The native equivalent of the enum.
+uint8_t IRHaierAC176::convertSwingH(const stdAc::swingh_t position) {
+  switch (position) {
+    case stdAc::swingh_t::kMiddle:   return kHaierAcYrw02SwingHMiddle;
+    case stdAc::swingh_t::kLeftMax:  return kHaierAcYrw02SwingHLeftMax;
+    case stdAc::swingh_t::kLeft:     return kHaierAcYrw02SwingHLeft;
+    case stdAc::swingh_t::kRight:    return kHaierAcYrw02SwingHRight;
+    case stdAc::swingh_t::kRightMax: return kHaierAcYrw02SwingHRightMax;
+    case stdAc::swingh_t::kAuto:     return kHaierAcYrw02SwingHAuto;
+    default:                         return kHaierAcYrw02SwingHMiddle;
   }
 }
 
@@ -939,12 +1100,27 @@ stdAc::fanspeed_t IRHaierAC176::toCommonFanSpeed(const uint8_t speed) {
 /// @return The native equivalent of the enum.
 stdAc::swingv_t IRHaierAC176::toCommonSwingV(const uint8_t pos) {
   switch (pos) {
-    case kHaierAcYrw02SwingTop:    return stdAc::swingv_t::kHighest;
-    case kHaierAcYrw02SwingMiddle: return stdAc::swingv_t::kMiddle;
-    case kHaierAcYrw02SwingDown:   return stdAc::swingv_t::kLow;
-    case kHaierAcYrw02SwingBottom: return stdAc::swingv_t::kLowest;
-    case kHaierAcYrw02SwingOff:    return stdAc::swingv_t::kOff;
-    default:                       return stdAc::swingv_t::kAuto;
+    case kHaierAcYrw02SwingVTop:    return stdAc::swingv_t::kHighest;
+    case kHaierAcYrw02SwingVMiddle: return stdAc::swingv_t::kMiddle;
+    case kHaierAcYrw02SwingVDown:   return stdAc::swingv_t::kLow;
+    case kHaierAcYrw02SwingVBottom: return stdAc::swingv_t::kLowest;
+    case kHaierAcYrw02SwingVOff:    return stdAc::swingv_t::kOff;
+    default:                        return stdAc::swingv_t::kAuto;
+  }
+}
+
+/// Convert a stdAc::swingh_t enum into it's native setting.
+/// @param[in] pos The enum to be converted.
+/// @return The native equivalent of the enum.
+stdAc::swingh_t IRHaierAC176::toCommonSwingH(const uint8_t pos) {
+  switch (pos) {
+    case kHaierAcYrw02SwingHMiddle:   return stdAc::swingh_t::kMiddle;
+    case kHaierAcYrw02SwingHLeftMax:  return stdAc::swingh_t::kLeftMax;
+    case kHaierAcYrw02SwingHLeft:     return stdAc::swingh_t::kLeft;
+    case kHaierAcYrw02SwingHRight:    return stdAc::swingh_t::kRight;
+    case kHaierAcYrw02SwingHRightMax: return stdAc::swingh_t::kRightMax;
+    case kHaierAcYrw02SwingHAuto:     return stdAc::swingh_t::kAuto;
+    default:                          return stdAc::swingh_t::kOff;
   }
 }
 
@@ -953,23 +1129,23 @@ stdAc::swingv_t IRHaierAC176::toCommonSwingV(const uint8_t pos) {
 stdAc::state_t IRHaierAC176::toCommon(void) const {
   stdAc::state_t result;
   result.protocol = decode_type_t::HAIER_AC_YRW02;
-  result.model = -1;  // No models used.
+  result.model = getModel();
   result.power = _.Power;
   result.mode = toCommonMode(_.Mode);
-  result.celsius = true;
+  result.celsius = !_.UseFahrenheit;
   result.degrees = getTemp();
   result.fanspeed = toCommonFanSpeed(_.Fan);
-  result.swingv = toCommonSwingV(_.Swing);
+  result.swingv = toCommonSwingV(_.SwingV);
+  result.swingh = toCommonSwingH(_.SwingH);
   result.filter = _.Health;
   result.sleep = _.Sleep ? 0 : -1;
+  result.turbo = _.Turbo;
+  result.quiet = _.Quiet;
   // Not supported.
-  result.swingh = stdAc::swingh_t::kOff;
-  result.quiet = false;
-  result.turbo = false;
   result.econo = false;
   result.light = false;
   result.clean = false;
-  result.beep = false;
+  result.beep = true;
   result.clock = -1;
   return result;
 }
@@ -978,8 +1154,9 @@ stdAc::state_t IRHaierAC176::toCommon(void) const {
 /// @return A human readable string.
 String IRHaierAC176::toString(void) const {
   String result = "";
-  result.reserve(130);  // Reserve some heap for the string to reduce fragging.
-  result += addBoolToString(_.Power, kPowerStr, false);
+  result.reserve(280);  // Reserve some heap for the string to reduce fragging.
+  result += addModelToString(decode_type_t::HAIER_AC176, getModel(), false);
+  result += addBoolToString(_.Power, kPowerStr);
   uint8_t cmd = _.Button;
   result += addIntToString(cmd, kButtonStr);
   result += kSpaceLBraceStr;
@@ -1005,11 +1182,23 @@ String IRHaierAC176::toString(void) const {
     case kHaierAcYrw02ButtonHealth:
       result += kHealthStr;
       break;
-    case kHaierAcYrw02ButtonSwing:
-      result += kSwingStr;
+    case kHaierAcYrw02ButtonSwingV:
+      result += kSwingVStr;
+      break;
+    case kHaierAcYrw02ButtonSwingH:
+      result += kSwingHStr;
       break;
     case kHaierAcYrw02ButtonTurbo:
       result += kTurboStr;
+      break;
+    case kHaierAcYrw02ButtonTimer:
+      result += kTimerStr;
+      break;
+    case kHaierAcYrw02ButtonLock:
+      result += kLockStr;
+      break;
+    case kHaierAcYrw02ButtonCFAB:
+      result += kCelsiusFahrenheitStr;
       break;
     default:
       result += kUnknownStr;
@@ -1018,51 +1207,49 @@ String IRHaierAC176::toString(void) const {
   result += addModeToString(_.Mode, kHaierAcYrw02Auto, kHaierAcYrw02Cool,
                             kHaierAcYrw02Heat, kHaierAcYrw02Dry,
                             kHaierAcYrw02Fan);
-  result += addTempToString(getTemp());
+  result += addTempToString(getTemp(), !_.UseFahrenheit);
   result += addFanToString(_.Fan, kHaierAcYrw02FanHigh, kHaierAcYrw02FanLow,
                            kHaierAcYrw02FanAuto, kHaierAcYrw02FanAuto,
                            kHaierAcYrw02FanMed);
-  result += addIntToString(_.Turbo, kTurboStr);
+  result += addBoolToString(_.Turbo, kTurboStr);
+  result += addBoolToString(_.Quiet, kQuietStr);
+  result += addIntToString(_.SwingV, kSwingVStr);
   result += kSpaceLBraceStr;
-  switch (_.Turbo) {
-    case kHaierAcYrw02TurboOff:
+  switch (_.SwingV) {
+    case kHaierAcYrw02SwingVOff:
       result += kOffStr;
       break;
-    case kHaierAcYrw02TurboLow:
-      result += kLowStr;
-      break;
-    case kHaierAcYrw02TurboHigh:
-      result += kHighStr;
-      break;
-    default:
-      result += kUnknownStr;
-  }
-  result += ')';
-  result += addIntToString(_.Swing, kSwingStr);
-  result += kSpaceLBraceStr;
-  switch (_.Swing) {
-    case kHaierAcYrw02SwingOff:
-      result += kOffStr;
-      break;
-    case kHaierAcYrw02SwingAuto:
+    case kHaierAcYrw02SwingVAuto:
       result += kAutoStr;
       break;
-    case kHaierAcYrw02SwingBottom:
+    case kHaierAcYrw02SwingVBottom:
       result += kLowestStr;
       break;
-    case kHaierAcYrw02SwingDown:
+    case kHaierAcYrw02SwingVDown:
       result += kLowStr;
       break;
-    case kHaierAcYrw02SwingTop:
+    case kHaierAcYrw02SwingVTop:
       result += kHighestStr;
       break;
-    case kHaierAcYrw02SwingMiddle:
+    case kHaierAcYrw02SwingVMiddle:
       result += kMiddleStr;
       break;
     default:
       result += kUnknownStr;
   }
   result += ')';
+  result += addSwingHToString(_.SwingH, kHaierAcYrw02SwingHAuto,
+                              kHaierAcYrw02SwingHLeftMax,
+                              kHaierAcYrw02SwingHLeft,
+                              kHaierAcYrw02SwingHMiddle,
+                              kHaierAcYrw02SwingHRight,
+                              kHaierAcYrw02SwingHRightMax,
+                              // Below are unused.
+                              kHaierAcYrw02SwingHMiddle,
+                              kHaierAcYrw02SwingHMiddle,
+                              kHaierAcYrw02SwingHMiddle,
+                              kHaierAcYrw02SwingHMiddle,
+                              kHaierAcYrw02SwingHMiddle);
   result += addBoolToString(_.Sleep, kSleepStr);
   result += addBoolToString(_.Health, kHealthStr);
   const uint8_t tmode = getTimerMode();
@@ -1098,6 +1285,7 @@ String IRHaierAC176::toString(void) const {
   result += addLabeledString((tmode != kHaierAcYrw02NoTimers &&
                               tmode != kHaierAcYrw02OnTimer) ?
       minsToString(getOffTimer()) : kOffStr, kOffTimerStr);
+  result += addBoolToString(_.Lock, kLockStr);
   return result;
 }
 // End of IRHaierAC176 class.
@@ -1203,7 +1391,7 @@ bool IRrecv::decodeHaierACYRW02(decode_results* results, uint16_t offset,
 
   // Compliance
   if (strict) {
-    if (results->state[0] != kHaierAcYrw02Prefix) return false;
+    if (results->state[0] != kHaierAcYrw02ModelA) return false;
     if (!IRHaierACYRW02::validChecksum(results->state, nbits / 8)) return false;
   }
 
@@ -1236,7 +1424,8 @@ bool IRrecv::decodeHaierAC176(decode_results* results, uint16_t offset,
 
   // Compliance
   if (strict) {
-    if (results->state[0] != kHaierAcYrw02Prefix) return false;
+    if ((results->state[0] != kHaierAcYrw02ModelA) &&
+        (results->state[0] != kHaierAcYrw02ModelB)) return false;
     if (!IRHaierAC176::validChecksum(results->state, nbits / 8)) return false;
   }
 

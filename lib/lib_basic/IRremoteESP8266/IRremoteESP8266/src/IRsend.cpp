@@ -637,6 +637,7 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
     case LG:
     case LG2:
       return 28;
+    case ARRIS:
     case CARRIER_AC:
     case ELITESCREENS:
     case EPSON:
@@ -665,6 +666,7 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
     case MIDEA:
     case PANASONIC:
       return 48;
+    case AIRTON:
     case ECOCLIM:
     case MAGIQUEST:
     case VESTEL_AC:
@@ -738,6 +740,8 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
       return kNeoclimaBits;
     case PANASONIC_AC:
       return kPanasonicAcBits;
+    case RHOSS:
+      return kRhossBits;
     case SAMSUNG_AC:
       return kSamsungAcBits;
     case SANYO_AC:
@@ -781,6 +785,11 @@ bool IRsend::send(const decode_type_t type, const uint64_t data,
   uint16_t min_repeat __attribute__((unused)) =
       std::max(IRsend::minRepeats(type), repeat);
   switch (type) {
+#if SEND_AIRTON
+    case AIRTON:
+      sendAirton(data, nbits, min_repeat);
+      break;
+#endif  // SEND_AIRTON
 #if SEND_AIRWELL
     case AIRWELL:
       sendAirwell(data, nbits, min_repeat);
@@ -790,7 +799,12 @@ bool IRsend::send(const decode_type_t type, const uint64_t data,
     case AIWA_RC_T501:
       sendAiwaRCT501(data, nbits, min_repeat);
       break;
-#endif
+#endif  // SEND_AIWA_RC_T501
+#if SEND_ARRIS
+    case ARRIS:
+      sendArris(data, nbits, min_repeat);
+      break;
+#endif  // SEND_ARRIS
 #if SEND_BOSE
     case BOSE:
       sendBose(data, nbits, min_repeat);
@@ -1247,6 +1261,11 @@ bool IRsend::send(const decode_type_t type, const uint8_t *state,
       sendPanasonicAC(state, nbytes);
       break;
 #endif  // SEND_PANASONIC_AC
+#if SEND_RHOSS
+    case RHOSS:
+      sendRhoss(state, nbytes);
+      break;
+#endif  // SEND_RHOSS
 #if SEND_SAMSUNG_AC
     case SAMSUNG_AC:
       sendSamsungAC(state, nbytes);

@@ -357,6 +357,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 
                 Energy.import_active[0] = total/1000.0f;
                 EnergyUpdateTotal();
+                AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %u Wh"), total);
             }
 
             // Wh total index (standard)
@@ -568,6 +569,9 @@ void TInfoDrvInit(void) {
         TasmotaGlobal.energy_driver = XNRG_15;
         Energy.voltage_available = false;
         Energy.phase_count = 1;
+        // init hardware energy counters
+        Settings->flag3.hardware_energy_total = true;
+        Settings->energy_kWhtotal = 0;
     }
 }
 

@@ -371,7 +371,7 @@ bool ZipArchive::parse(void) {
     entry.last_mod = dos2unixtime((header.last_mod_date << 16) | header.last_mod_time);
     offset += header.size_uncompressed;
 
-    AddLog(LOG_LEVEL_DEBUG, "ZIP: found file '%s' (%i bytes - offset %i) - next entry %i", &fname[0], header.size_uncompressed, entry.file_start, offset);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "ZIP: found file '%s' (%i bytes - offset %i) - next entry %i", &fname[0], header.size_uncompressed, entry.file_start, offset);
   }
 
   return true;
@@ -400,6 +400,8 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
     char *tok;
     char *prefix = strtok_r(sub_path, "#", &tok);
     char *suffix = strtok_r(NULL, "", &tok);
+    // if suffix starts with '/', skip the first char
+    if (*suffix == '/') { suffix++; }
     AddLog(LOG_LEVEL_DEBUG, "ZIP: prefix=%s suffix=%s", prefix, suffix);
     // parse ZIP archive
     File zipfile = (*_fs)->open(prefix, "r", false);

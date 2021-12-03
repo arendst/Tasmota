@@ -3,6 +3,7 @@ name: Tasmota CI
 on:
   workflow_dispatch:
   pull_request:
+    branches: development
     paths:
       - '**.c'
       - '**.cpp'
@@ -60,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        variant: [ tasmota, tasmota32 ]
+        variant: [ tasmota ]
         language: [ AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v2

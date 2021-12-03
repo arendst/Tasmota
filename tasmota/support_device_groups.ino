@@ -24,9 +24,11 @@
 #ifdef USE_DEVICE_GROUPS
 
 //#define DEVICE_GROUPS_DEBUG
-#define DGR_MEMBER_TIMEOUT        45000
-#define DGR_ANNOUNCEMENT_INTERVAL 60000
-#define DEVICE_GROUP_MESSAGE      "TASMOTA_DGR"
+#define DGR_MULTICAST_REPEAT_COUNT  1       // Number of times to re-send each multicast
+#define DGR_ACK_WAIT_TIME           150     // Initial ms to wait for ack's
+#define DGR_MEMBER_TIMEOUT          45000   // ms to wait for ack's before removing a member
+#define DGR_ANNOUNCEMENT_INTERVAL   60000   // ms between announcements
+#define DEVICE_GROUP_MESSAGE        "TASMOTA_DGR"
 
 const char kDeviceGroupMessage[] PROGMEM = DEVICE_GROUP_MESSAGE;
 
@@ -49,6 +51,7 @@ struct device_group {
   uint16_t ack_check_interval;
   uint8_t message_header_length;
   uint8_t initial_status_requests_remaining;
+  uint8_t multicasts_remaining;
   char group_name[TOPSZ];
   uint8_t message[128];
   struct device_group_member * device_group_members;
@@ -815,6 +818,7 @@ bool _SendDeviceGroupMessage(int32_t device, DevGroupMessageType message_type, .
   }
 
   // Multicast the packet.
+  device_group->multicasts_remaining = DGR_MULTICAST_REPEAT_COUNT;
   SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, device_group->message_length, false);
 
 #ifdef USE_DEVICE_GROUPS_SEND
@@ -832,14 +836,14 @@ bool _SendDeviceGroupMessage(int32_t device, DevGroupMessageType message_type, .
     device_group->next_ack_check_time = 0;
   }
   else {
-    device_group->ack_check_interval = 200;
+    device_group->ack_check_interval = DGR_ACK_WAIT_TIME;
     device_group->next_ack_check_time = now + device_group->ack_check_interval;
-    if (device_group->next_ack_check_time < next_check_time) next_check_time = device_group->next_ack_check_time;
+    if ((int32_t)(next_check_time - device_group->next_ack_check_time) > 0) next_check_time = device_group->next_ack_check_time;
     device_group->member_timeout_time = now + DGR_MEMBER_TIMEOUT;
   }
 
   device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL;
-  if (device_group->next_announcement_time < next_check_time) next_check_time = device_group->next_announcement_time;
+  if ((int32_t)(next_check_time - device_group->next_announcement_time) > 0) next_check_time = device_group->next_announcement_time;
   return 0;
 }
 
@@ -868,6 +872,8 @@ void ProcessDeviceGroupMessage(uint8_t * message, int message_length)
         return;
       }
       device_group_member->ip_address = remote_ip;
+      device_group_member->acked_sequence = device_group->outgoing_sequence;
+      device_group->member_timeout_time = millis() + DGR_MEMBER_TIMEOUT;
       *flink = device_group_member;
       AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s added"), IPAddressToString(remote_ip));
       break;
@@ -914,7 +920,7 @@ void DeviceGroupsLoop(void)
   uint32_t now = millis();
 
   // If it's time to check on things, iterate through the device groups.
-  if ((long)(now - next_check_time) >= 0) {
+  if ((int32_t)(now - next_check_time) >= 0) {
 #ifdef DEVICE_GROUPS_DEBUG
 AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_check_time, now);
 #endif  // DEVICE_GROUPS_DEBUG
@@ -927,7 +933,7 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_c
       if (device_group->next_ack_check_time) {
 
         // If it's time to check for acks, ...
-        if ((long)(now - device_group->next_ack_check_time) >= 0) {
+        if ((int32_t)(now - device_group->next_ack_check_time) >= 0) {
 
           // If we're still sending the initial status request message, send it.
           if (device_group->initial_status_requests_remaining) {
@@ -951,7 +957,7 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_c
           // If we're done initializing, iterate through the group memebers, ...
           else {
 #ifdef DEVICE_GROUPS_DEBUG
-            AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking for ack's"));
+            AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking for %s ack's"), device_group->group_name);
 #endif  // DEVICE_GROUPS_DEBUG
             bool acked = true;
             struct device_group_member ** flink = &device_group->device_group_members;
@@ -963,17 +969,23 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_c
 
                 // If we haven't receive an ack from this member in DGR_MEMBER_TIMEOUT ms, assume
                 // they're offline and remove them from the group.
-                if ((long)(now - device_group->member_timeout_time) >= 0) {
+                if ((int32_t)(now - device_group->member_timeout_time) >= 0) {
                   *flink = device_group_member->flink;
                   free(device_group_member);
                   AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Member %s removed"), IPAddressToString(device_group_member->ip_address));
                   continue;
                 }
 
-                // Otherwise, unicast the last message directly to this member.
+                // If we have more multicasts to do, multicast the packet to all members again;
+                // otherwise, unicast the message directly to this member.
+                if (device_group->multicasts_remaining) device_group_member = nullptr;
                 SendReceiveDeviceGroupMessage(device_group, device_group_member, device_group->message, device_group->message_length, false);
-                device_group_member->unicast_count++;
                 acked = false;
+                if (device_group->multicasts_remaining) {
+                  device_group->multicasts_remaining--;
+                  break;
+                }
+                device_group_member->unicast_count++;
               }
               flink = &device_group_member->flink;
             }
@@ -986,31 +998,34 @@ AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: Checking next_check_time=%u, now=%u"), next_c
             }
 
             // If there are still members we haven't received an ack from, set the next ack check
-            // time. We start at 200ms and double the interval each pass with a maximum interval of
-            // 5 seconds.
+            // time. We start at DGR_ACK_WAIT_TIME ms and add 100ms each pass with a maximum
+            // interval of 2 seconds.
             else {
-              device_group->ack_check_interval *= 2;
-              if (device_group->ack_check_interval > 5000) device_group->ack_check_interval = 5000;
+              device_group->ack_check_interval += 100;
+              if (device_group->ack_check_interval > 2000) device_group->ack_check_interval = 2000;
               device_group->next_ack_check_time = now + device_group->ack_check_interval;
             }
           }
         }
 
-        if (device_group->next_ack_check_time < next_check_time) next_check_time = device_group->next_ack_check_time;
+        if (device_group->next_ack_check_time && (int32_t)(next_check_time - device_group->next_ack_check_time) > 0) next_check_time = device_group->next_ack_check_time;
       }
 
-      // If it's time to send a multicast announcement for this group, send it. This is to
-      // announce ourself to any members that have somehow not heard about us. We send it at the
-      // announcement interval plus a random number of milliseconds so that even if all the devices
-      // booted at the same time, they don't all multicast their announcements at the same time.
+      // If we're not still waiting for acks and it's time to send a multicast announcement for this
+      // group, send it. This is to announce ourself to any members that have somehow not heard
+      // about us. We send it at the announcement interval plus a random number of milliseconds so
+      // that even if all the devices booted at the same time, they don't all multicast their
+      // announcements at the same time.
+      else {
 #ifdef DEVICE_GROUPS_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: next_announcement_time=%u, now=%u"), device_group->next_announcement_time, now);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DGR: next_announcement_time=%u, now=%u"), device_group->next_announcement_time, now);
 #endif  // DEVICE_GROUPS_DEBUG
-      if ((long)(now - device_group->next_announcement_time) >= 0) {
-        SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, false);
-        device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL + random(10000);
+        if ((int32_t)(now - device_group->next_announcement_time) >= 0) {
+          SendReceiveDeviceGroupMessage(device_group, nullptr, device_group->message, BeginDeviceGroupMessage(device_group, DGR_FLAG_ANNOUNCEMENT, true) - device_group->message, false);
+          device_group->next_announcement_time = now + DGR_ANNOUNCEMENT_INTERVAL + random(10000);
+        }
+        if ((int32_t)(next_check_time - device_group->next_announcement_time) > 0) next_check_time = device_group->next_announcement_time;
       }
-      if (device_group->next_announcement_time < next_check_time) next_check_time = device_group->next_announcement_time;
     }
   }
 }

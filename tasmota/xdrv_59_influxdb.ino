@@ -37,6 +37,7 @@
  * IfxBucket   - Set Influxdb v2 and bucket name
  * IfxOrg      - Set Influxdb v2 and organization
  * IfxToken    - Set Influxdb v2 and token
+ * IfxPeriod   - Set Influxdb period. If not set (or 0), use Teleperiod
  *
  * Set influxdb update interval with command teleperiod
  *
@@ -364,8 +365,9 @@ void InfluxDbPublishPowerState(uint32_t device) {
 void InfluxDbLoop(void) {
   if (!TasmotaGlobal.global_state.network_down) {
     IFDB.interval--;
-    if (IFDB.interval <= 0 || IFDB.interval > Settings->tele_period) {
-      IFDB.interval = Settings->tele_period;
+    uint16_t period = Settings->influxdb_period ? Settings->influxdb_period : Settings->tele_period;
+    if (IFDB.interval <= 0 || IFDB.interval > period) {
+      IFDB.interval = period;
       if (!IFDB.init) {
         if (InfluxDbParameterInit()) {
           IFDB.init = InfluxDbValidateConnection();
@@ -385,7 +387,7 @@ void InfluxDbLoop(void) {
 
         // {"Time":"2021-08-14T17:19:33","Switch1":"ON","Switch2":"OFF","ANALOG":{"Temperature":184.72},"DS18B20":{"Id":"01144A0CB2AA","Temperature":27.50},"HTU21":{"Temperature":28.23,"Humidity":39.7,"DewPoint":13.20},"Global":{"Temperature":27.50,"Humidity":39.7,"DewPoint":12.55},"TempUnit":"C"}
         ResponseClear();
-        if (MqttShowSensor()) {   // Pull sensor data
+        if (MqttShowSensor(true)) {   // Pull sensor data
           InfluxDbProcessJson();
         };
 
@@ -408,20 +410,23 @@ void InfluxDbLoop(void) {
 #define D_CMND_INFLUXDBTOKEN    "Token"
 #define D_CMND_INFLUXDBDATABASE "Database"
 #define D_CMND_INFLUXDBBUCKET   "Bucket"
+#define D_CMND_INFLUXDBPERIOD   "Period"
 
 const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   "|" D_CMND_INFLUXDBLOG "|"
   D_CMND_INFLUXDBHOST "|" D_CMND_INFLUXDBPORT "|"
   D_CMND_INFLUXDBUSER "|" D_CMND_INFLUXDBORG "|"
   D_CMND_INFLUXDBPASSWORD "|" D_CMND_INFLUXDBTOKEN "|"
-  D_CMND_INFLUXDBDATABASE "|" D_CMND_INFLUXDBBUCKET;
+  D_CMND_INFLUXDBDATABASE "|" D_CMND_INFLUXDBBUCKET "|"
+  D_CMND_INFLUXDBPERIOD;
 
 void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbState, &CmndInfluxDbLog,
   &CmndInfluxDbHost, &CmndInfluxDbPort,
   &CmndInfluxDbUser, &CmndInfluxDbUser,
   &CmndInfluxDbPassword, &CmndInfluxDbPassword,
-  &CmndInfluxDbDatabase, &CmndInfluxDbDatabase };
+  &CmndInfluxDbDatabase, &CmndInfluxDbDatabase,
+  &CmndInfluxDbPeriod };
 
 void InfluxDbReinit(void) {
   IFDB.init = false;
@@ -502,6 +507,16 @@ void CmndInfluxDbDatabase(void) {
     InfluxDbReinit();
   }
   ResponseCmndChar(SettingsText(SET_INFLUXDB_BUCKET));
+}
+
+void CmndInfluxDbPeriod(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
+    Settings->influxdb_period = XdrvMailbox.payload;
+    if(Settings->influxdb_period > 0 && Settings->influxdb_period < 10) {
+      Settings->influxdb_period = 10;
+    }
+  }
+  ResponseCmndNumber(Settings->influxdb_period);
 }
 
 /*********************************************************************************************\

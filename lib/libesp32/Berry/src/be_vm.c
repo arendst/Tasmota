@@ -453,8 +453,8 @@ BERRY_API bvm* be_vm_new(void)
     be_stack_init(vm, &vm->refstack, sizeof(binstance*));
     be_stack_init(vm, &vm->exceptstack, sizeof(struct bexecptframe));
     be_stack_init(vm, &vm->tracestack, sizeof(bcallsnapshot));
-    vm->stack = be_malloc(vm, sizeof(bvalue) * BE_STACK_FREE_MIN);
-    vm->stacktop = vm->stack + BE_STACK_FREE_MIN;
+    vm->stack = be_malloc(vm, sizeof(bvalue) * BE_STACK_START);
+    vm->stacktop = vm->stack + BE_STACK_START;
     vm->reg = vm->stack;
     vm->top = vm->reg;
     be_globalvar_init(vm);
@@ -472,6 +472,8 @@ BERRY_API bvm* be_vm_new(void)
     vm->counter_set = 0;
     vm->counter_try = 0;
     vm->counter_exc = 0;
+    vm->counter_gc_kept = 0;
+    vm->counter_gc_freed = 0;
 #endif
     return vm;
 }
@@ -852,16 +854,29 @@ newframe: /* a new call frame */
                 bvalue *a = RA();
                 *a = a_temp;
                 if (basetype(type) == BE_FUNCTION) {
-                    /* check if the object is a superinstance, if so get the lowest possible subclass */
-                    while (obj->sub) {
-                        obj = obj->sub;
+                    if (func_isstatic(a)) {
+                        /* static method, don't bother with the instance */
+                        a[1] = a_temp;
+                        var_settype(a, NOT_METHOD);
+                    } else {
+                        /* this is a real method (i.e. non-static) */
+                        /* check if the object is a superinstance, if so get the lowest possible subclass */
+                        while (obj->sub) {
+                            obj = obj->sub;
+                        }
+                        var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                     }
-                    var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                 } else {
                     vm_error(vm, "attribute_error",
                         "class '%s' has no method '%s'",
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
+            } else if (var_isclass(b) && var_isstr(c)) {
+                class_attribute(vm, b, c, &a_temp);
+                reg = vm->reg;
+                bvalue *a = RA();
+                a[1] = a_temp;
+                var_settype(a, NOT_METHOD);
             } else if (var_ismodule(b) && var_isstr(c)) {
                 module_attribute(vm, b, c, &a_temp);
                 reg = vm->reg;
@@ -891,9 +906,14 @@ newframe: /* a new call frame */
                 dispatch();
             }
             if (var_isclass(a) && var_isstr(b)) {
+                /* if value is a function, we mark it as a static to distinguish from methods */
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                if (!be_class_setmember(vm, obj, attr, c)) {
+                bvalue c_static = *c;
+                if (var_isfunction(&c_static)) {
+                    c_static.type = func_setstatic(&c_static);
+                }
+                if (!be_class_setmember(vm, obj, attr, &c_static)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",
@@ -964,7 +984,12 @@ newframe: /* a new call frame */
             bvalue *a = RA(), *b = RKB();
             if (var_isclass(a) && var_isclass(b)) {
                 bclass *obj = var_toobj(a);
-                be_class_setsuper(obj, var_toobj(b));
+                if (!gc_isconst(obj))  {
+                   be_class_setsuper(obj, var_toobj(b));
+                } else {
+                    vm_error(vm, "internal_error",
+                    "cannot change superclass of a read-only class");
+                }
             } else {
                 vm_error(vm, "type_error",
                     "value '%s' does not support set super",
@@ -1017,9 +1042,6 @@ newframe: /* a new call frame */
             dispatch();
         }
         opcase(RAISE): {
-#if BE_USE_PERF_COUNTERS
-            vm->counter_exc++;
-#endif
             if (IGET_RA(ins) < 2) {  /* A==2 means no arguments are passed to RAISE, i.e. rethrow with current exception */
                 bvalue *top = vm->top;
                 top[0] = *RKB(); /* push the exception value to top */

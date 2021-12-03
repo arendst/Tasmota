@@ -44,7 +44,9 @@ TEST(TestDecodeTeknopoint, RealExample) {
   ASSERT_EQ(kTeknopointBits, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
-      "",
+      "Model: 2 (GZ055BE1), Type: 1, Power: On, Mode: 3 (Cool), Temp: 16C, "
+      "Fan: 0 (Auto), Swing(V): 1 (Highest), "
+      "On Timer: Off, Off Timer: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
 }
 
@@ -67,7 +69,9 @@ TEST(TestDecodeTeknopoint, SyntheticExample) {
   ASSERT_EQ(kTeknopointBits, irsend.capture.bits);
   EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
   EXPECT_EQ(
-      "",
+      "Model: 2 (GZ055BE1), Type: 1, Power: On, Mode: 3 (Cool), Temp: 16C, "
+      "Fan: 0 (Auto), Swing(V): 1 (Highest), "
+      "On Timer: Off, Off Timer: Off",
       IRAcUtils::resultAcToString(&irsend.capture));
 
   EXPECT_EQ(
@@ -95,7 +99,7 @@ TEST(TestUtils, Housekeeping) {
   ASSERT_EQ("TEKNOPOINT", typeToString(decode_type_t::TEKNOPOINT));
   ASSERT_EQ(decode_type_t::TEKNOPOINT, strToDecodeType("TEKNOPOINT"));
   ASSERT_TRUE(hasACState(decode_type_t::TEKNOPOINT));
-  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::TEKNOPOINT));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::TEKNOPOINT));
   ASSERT_EQ(kTeknopointBits, IRsend::defaultBits(decode_type_t::TEKNOPOINT));
   ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::TEKNOPOINT));
 }

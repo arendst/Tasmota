@@ -14,10 +14,15 @@
 //   Brand: Green,  Model: YBOFB2 remote
 //   Brand: Gree,  Model: YAA1FBF remote
 //   Brand: Gree,  Model: YB1F2F remote
+//   Brand: Gree,  Model: YAN1F1 remote
+//   Brand: Gree,  Model: VIR09HP115V1AH A/C
+//   Brand: Gree,  Model: VIR12HP230V1AH A/C
 //   Brand: Amana,  Model: PBC093G00CC A/C
 //   Brand: Amana,  Model: YX1FF remote
 //   Brand: Cooper & Hunter,  Model: YB1F2 remote
 //   Brand: Cooper & Hunter,  Model: CH-S09FTXG A/C
+//   Brand: Vailland,  Model: YACIFB remote
+//   Brand: Vailland,  Model: VAI5-035WNI A/C
 
 #ifndef IR_GREE_H_
 #define IR_GREE_H_
@@ -60,19 +65,22 @@ union GreeProtocol{
     uint8_t UseFahrenheit   :1;
     uint8_t unknown1        :4;  // value=0b0101
     // Byte 4
-    uint8_t Swing:4;
-    uint8_t :0;
+    uint8_t SwingV      :4;
+    uint8_t SwingH      :3;
+    uint8_t             :1;
     // Byte 5
     uint8_t DisplayTemp :2;
     uint8_t IFeel       :1;
     uint8_t unknown2    :3;  // value = 0b100
     uint8_t WiFi        :1;
-    uint8_t :0;
+    uint8_t             :1;
     // Byte 6
-    uint8_t :8;
+    uint8_t             :8;
     // Byte 7
-    uint8_t :4;
-    uint8_t Sum:4;
+    uint8_t             :2;
+    uint8_t Econo       :1;
+    uint8_t             :1;
+    uint8_t Sum         :4;
   };
 };
 
@@ -95,16 +103,24 @@ const uint8_t kGreeMinTempF = 61;  // Fahrenheit
 const uint8_t kGreeMaxTempF = 86;  // Fahrenheit
 const uint16_t kGreeTimerMax = 24 * 60;
 
-const uint8_t kGreeSwingLastPos    = 0b0000;
-const uint8_t kGreeSwingAuto       = 0b0001;
-const uint8_t kGreeSwingUp         = 0b0010;
-const uint8_t kGreeSwingMiddleUp   = 0b0011;
-const uint8_t kGreeSwingMiddle     = 0b0100;
-const uint8_t kGreeSwingMiddleDown = 0b0101;
-const uint8_t kGreeSwingDown       = 0b0110;
-const uint8_t kGreeSwingDownAuto   = 0b0111;
-const uint8_t kGreeSwingMiddleAuto = 0b1001;
-const uint8_t kGreeSwingUpAuto     = 0b1011;
+const uint8_t kGreeSwingLastPos    = 0b0000;  // 0
+const uint8_t kGreeSwingAuto       = 0b0001;  // 1
+const uint8_t kGreeSwingUp         = 0b0010;  // 2
+const uint8_t kGreeSwingMiddleUp   = 0b0011;  // 3
+const uint8_t kGreeSwingMiddle     = 0b0100;  // 4
+const uint8_t kGreeSwingMiddleDown = 0b0101;  // 5
+const uint8_t kGreeSwingDown       = 0b0110;  // 6
+const uint8_t kGreeSwingDownAuto   = 0b0111;  // 7
+const uint8_t kGreeSwingMiddleAuto = 0b1001;  // 9
+const uint8_t kGreeSwingUpAuto     = 0b1011;  // 11
+
+const uint8_t kGreeSwingHOff        = 0b000;  // 0
+const uint8_t kGreeSwingHAuto       = 0b001;  // 1
+const uint8_t kGreeSwingHMaxLeft    = 0b010;  // 2
+const uint8_t kGreeSwingHLeft       = 0b011;  // 3
+const uint8_t kGreeSwingHMiddle     = 0b100;  // 4
+const uint8_t kGreeSwingHRight      = 0b101;  // 5
+const uint8_t kGreeSwingHMaxRight   = 0b110;  // 6
 
 const uint8_t kGreeDisplayTempOff     = 0b00;  // 0
 const uint8_t kGreeDisplayTempSet     = 0b01;  // 1
@@ -171,6 +187,8 @@ class IRGreeAC {
   bool getSleep(void) const;
   void setTurbo(const bool on);
   bool getTurbo(void) const;
+  void setEcono(const bool on);
+  bool getEcono(void) const;
   void setIFeel(const bool on);
   bool getIFeel(void) const;
   void setWiFi(const bool on);
@@ -178,6 +196,8 @@ class IRGreeAC {
   void setSwingVertical(const bool automatic, const uint8_t position);
   bool getSwingVerticalAuto(void) const;
   uint8_t getSwingVerticalPosition(void) const;
+  void setSwingHorizontal(const uint8_t position);
+  uint8_t getSwingHorizontal(void) const;
   uint16_t getTimer(void) const;
   void setTimer(const uint16_t minutes);
   void setDisplayTempSource(const uint8_t mode);
@@ -185,9 +205,11 @@ class IRGreeAC {
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(const stdAc::fanspeed_t speed);
   static uint8_t convertSwingV(const stdAc::swingv_t swingv);
+  static uint8_t convertSwingH(const stdAc::swingh_t swingh);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
+  static stdAc::swingh_t toCommonSwingH(const uint8_t pos);
   stdAc::state_t toCommon(void);
   uint8_t* getRaw(void);
   void setRaw(const uint8_t new_code[]);

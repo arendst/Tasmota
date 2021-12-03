@@ -25,7 +25,7 @@ extern const bclass be_class_map;
 #include <inttypes.h>
 
 #ifndef INST_BUF_SIZE
-#define INST_BUF_SIZE   96
+#define INST_BUF_SIZE   288
 #endif
 
 #define logbuf(...)     snprintf(__lbuf, sizeof(__lbuf), __VA_ARGS__)
@@ -41,6 +41,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
 
 static void m_solidify_map(bvm *vm, bmap * map, const char *class_name)
 {
+    // compact first
+    be_map_release(vm, map);
+    
     logfmt("    be_nested_map(%i,\n", map->count);
 
     logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
@@ -115,17 +118,21 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_STRING:
         {
-            logfmt("be_nested_string(\"");
-            be_writestring(str(var_tostr(value)));
             size_t len = strlen(str(var_tostr(value)));
             if (len >= 255) {
                 be_raise(vm, "internal_error", "Strings greater than 255 chars not supported yet");
             }
-            logfmt("\", %i, %zu)", be_strhash(var_tostr(value)), len >= 255 ? 255 : len);
+            be_pushstring(vm, str(var_tostr(value)));
+            be_toescape(vm, -1, 'u');
+            logfmt("be_nested_str_literal(%s)", be_tostring(vm, -1));
+            be_pop(vm, 1);
         }
         break;
     case BE_CLOSURE:
-        logfmt("be_const_closure(%s_closure)", str(((bclosure*) var_toobj(value))->proto->name));
+        logfmt("be_const_%sclosure(%s%s%s_closure)",
+            func_isstatic(value) ? "static_" : "",
+            classname ? classname : "", classname ? "_" : "",
+            str(((bclosure*) var_toobj(value))->proto->name));
         break;
     case BE_CLASS:
         logfmt("be_const_class(be_class_%s)", str(((bclass*) var_toobj(value))->name));
@@ -134,7 +141,9 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         logfmt("be_const_comptr(&be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
         break;
     case BE_NTVFUNC:
-        logfmt("be_const_func(be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
+        logfmt("be_const_%sfunc(be_ntv_%s_%s)",
+            func_isstatic(value) ? "static_" : "",
+            classname ? classname : "unknown", key ? key : "unknown");
         break;
     case BE_INSTANCE:
     {
@@ -194,7 +203,7 @@ static void m_solidify_proto_inner_class(bvm *vm, bproto *pr, int builtins)
 static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int builtins, int indent)
 {
     // const char * func_name = str(pr->name);
-    const char * func_source = str(pr->source);
+    // const char * func_source = str(pr->source);
 
     logfmt("%*sbe_nested_proto(\n", indent, "");
     indent += 2;
@@ -269,7 +278,7 @@ static void m_solidify_proto(bvm *vm, bproto *pr, const char * func_name, int bu
 
 }
 
-static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
+static void m_solidify_closure(bvm *vm, bclosure *cl, const char * classname, int builtins)
 {   
     bproto *pr = cl->proto;
     const char * func_name = str(pr->name);
@@ -287,7 +296,9 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, int builtins)
     logfmt("** Solidified function: %s\n", func_name);
     logfmt("********************************************************************/\n");
 
-    logfmt("be_local_closure(%s,   /* name */\n", func_name);
+    logfmt("be_local_closure(%s%s%s,   /* name */\n",
+        classname ? classname : "", classname ? "_" : "",
+        func_name);
 
     m_solidify_proto(vm, pr, func_name, builtins, indent);
     logfmt("\n");
@@ -308,7 +319,7 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
         while ((node = be_map_next(cl->members, &iter)) != NULL) {
             if (var_isstr(&node->key) && var_isclosure(&node->value)) {
                 bclosure *f = var_toobj(&node->value);
-                m_solidify_closure(vm, f, builtins);
+                m_solidify_closure(vm, f, class_name, builtins);
             }
         }
     }
@@ -338,7 +349,7 @@ static void m_solidify_subclass(bvm *vm, bclass *cl, int builtins)
         logfmt("    NULL,\n");
     }
 
-    logfmt("    (be_nested_const_str(\"%s\", %i, %i))\n", class_name, be_strhash(cl->name), str_len(cl->name));
+    logfmt("    be_str_literal(\"%s\")\n", class_name);
     logfmt(");\n");
 
 }
@@ -362,14 +373,18 @@ static void m_solidify_module(bvm *vm, bmodule *ml, int builtins)
     const char * module_name = be_module_name(ml);
     if (!module_name) { module_name = ""; }
 
-    /* iterate on members to dump closures */
+    /* iterate on members to dump closures and classes */
     if (ml->table) {
         bmapnode *node;
         bmapiter iter = be_map_iter();
         while ((node = be_map_next(ml->table, &iter)) != NULL) {
             if (var_isstr(&node->key) && var_isclosure(&node->value)) {
                 bclosure *f = var_toobj(&node->value);
-                m_solidify_closure(vm, f, builtins);
+                m_solidify_closure(vm, f, NULL, builtins);
+            }
+            if (var_isstr(&node->key) && var_isclass(&node->value)) {
+                bclass *cl = var_toobj(&node->value);
+                m_solidify_subclass(vm, cl, builtins);
             }
         }
     }
@@ -403,7 +418,7 @@ static int m_dump(bvm *vm)
     if (be_top(vm) >= 1) {
         bvalue *v = be_indexof(vm, 1);
         if (var_isclosure(v)) {
-            m_solidify_closure(vm, var_toobj(v), be_builtin_count(vm));
+            m_solidify_closure(vm, var_toobj(v), NULL, be_builtin_count(vm));
         } else if (var_isclass(v)) {
             m_solidify_class(vm, var_toobj(v), be_builtin_count(vm));
         } else if (var_ismodule(v)) {

@@ -1182,6 +1182,7 @@ void SettingsDefaultSet2(void) {
 
   // Tuya
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
+  flag5.tuya_allow_dimmer_0 |= TUYA_ALLOW_DIMMER_0;
   flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
   mbflag2.temperature_set_res |= TUYA_TEMP_SET_RES;
 
@@ -1453,6 +1454,19 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09050009) {
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
+    }
+    if (Settings->version < 0x0A000003) {
+      if (0 == Settings->param[P_ARP_GRATUITOUS]) {
+        Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
+#ifdef USE_TLS
+        for (uint32_t i = 0; i < 20; i++) {
+          if (Settings->mqtt_fingerprint[0][i]) {
+            Settings->flag5.tls_use_fingerprint = true;   // if the fingerprint1 is non null we expect it to be actually used
+            break;
+          }
+        }
+#endif
+      }
     }
 
     Settings->version = VERSION;

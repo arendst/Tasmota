@@ -1,0 +1,304 @@
+PTS test results for L2CAP
+
+PTS version: 7.5.0
+Tested: 07-Oct-2019
+
+syscfg.vals:
+    BLE_EXT_ADV: 1
+    BLE_PUBLIC_DEV_ADDR: "((uint8_t[6]){0x01, 0xff, 0xff, 0xc0, 0xde, 0xc0})"
+    BLE_SM_LEGACY: 1
+    BLE_SM_SC: 1
+    BLE_L2CAP_COC_MAX_NUM: 5
+    BLE_SVC_GAP_PPCP_MIN_CONN_INTERVAL: 9
+    BLE_SVC_GAP_PPCP_MAX_CONN_INTERVAL: 30
+    BLE_SVC_GAP_PPCP_SUPERVISION_TMO: 2000
+    CONSOLE_HISTORY_SIZE: 10
+
+Results:
+PASS   test passed
+FAIL   test failed
+INC    test is inconclusive
+N/A    test is disabled due to PICS setup
+
+-------------------------------------------------------------------------------
+Test Name		Result	Notes
+-------------------------------------------------------------------------------
+
+L2CAP/COS/CED/BV-01-C	N/A
+L2CAP/COS/CED/BV-03-C	N/A
+L2CAP/COS/CED/BV-04-C	N/A
+L2CAP/COS/CED/BV-05-C	N/A
+L2CAP/COS/CED/BV-07-C	N/A
+L2CAP/COS/CED/BV-08-C	N/A
+L2CAP/COS/CED/BV-09-C	N/A
+L2CAP/COS/CED/BV-10-C	N/A
+L2CAP/COS/CED/BV-11-C	N/A
+L2CAP/COS/CED/BI-01-C	N/A
+-------------------------------------------------------------------------------
+
+L2CAP/COS/CFD/BV-01-C	N/A
+L2CAP/COS/CFD/BV-02-C	N/A
+L2CAP/COS/CFD/BV-03-C	N/A
+L2CAP/COS/CFD/BV-08-C	N/A
+L2CAP/COS/CFD/BV-09-C	N/A
+L2CAP/COS/CFD/BV-10-C	N/A
+L2CAP/COS/CFD/BV-11-C	N/A
+L2CAP/COS/CFD/BV-12-C	N/A
+L2CAP/COS/CFD/BV-13-C	N/A
+-------------------------------------------------------------------------------
+
+L2CAP/COS/IEX/BV-01-C	N/A
+L2CAP/COS/IEX/BV-02-C	N/A
+-------------------------------------------------------------------------------
+
+L2CAP/COS/ECH/BV-01-C	N/A
+L2CAP/COS/ECH/BV-02-C	N/A
+-------------------------------------------------------------------------------
+
+L2CAP/COS/CFC/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+				l2cap-send conn=<handle> idx=0 bytes=15
+				<YES>
+L2CAP/COS/CFC/BV-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+				l2cap-send conn=<handle> idx=0 bytes=15
+				<YES>
+L2CAP/COS/CFC/BV-03-C	PASS	NOTE: #define BTSHELL_COC_MTU = 512
+				advertise-configure connectable=1 legacy=1
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+L2CAP/COS/CFC/BV-04-C	PASS	advertise-configure connectable=1 legacy=1
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+L2CAP/COS/CFC/BV-05-C	PASS	advertise-configure connectable=1 legacy=1
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+				l2cap-connect conn=<handle> psm=<your psm>
+				l2cap-connect conn=<handle> psm=<2nd psm>
+-------------------------------------------------------------------------------
+
+L2CAP/CLS/CLR/BV-01-C	N/A
+-------------------------------------------------------------------------------
+
+L2CAP/CLS/UCD/BV-01-C	N/A
+L2CAP/CLS/UCD/BV-02-C	N/A
+L2CAP/CLS/UCD/BV-03-C	N/A
+-------------------------------------------------------------------------------
+
+L2CAP/EXF/BV-01-C		N/A
+L2CAP/EXF/BV-02-C		N/A
+L2CAP/EXF/BV-03-C		N/A
+L2CAP/EXF/BV-04-C		N/A
+L2CAP/EXF/BV-05-C		N/A
+L2CAP/EXF/BV-06-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/CMC/BV-01-C		N/A
+L2CAP/CMC/BV-02-C		N/A
+L2CAP/CMC/BV-03-C		N/A
+L2CAP/CMC/BV-04-C		N/A
+L2CAP/CMC/BV-05-C		N/A
+L2CAP/CMC/BV-06-C		N/A
+L2CAP/CMC/BV-07-C		N/A
+L2CAP/CMC/BV-08-C		N/A
+L2CAP/CMC/BV-09-C		N/A
+L2CAP/CMC/BV-10-C		N/A
+L2CAP/CMC/BV-11-C		N/A
+L2CAP/CMC/BV-12-C		N/A
+L2CAP/CMC/BV-13-C		N/A
+L2CAP/CMC/BV-14-C		N/A
+L2CAP/CMC/BV-15-C		N/A
+L2CAP/CMC/BI-01-C		N/A
+L2CAP/CMC/BI-02-C		N/A
+L2CAP/CMC/BI-03-C		N/A
+L2CAP/CMC/BI-04-C		N/A
+L2CAP/CMC/BI-05-C		N/A
+L2CAP/CMC/BI-06-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/FOC/BV-01-C		N/A
+L2CAP/FOC/BV-02-C		N/A
+L2CAP/FOC/BV-03-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/OFS/BV-01-C		N/A
+L2CAP/OFS/BV-02-C		N/A
+L2CAP/OFS/BV-03-C		N/A
+L2CAP/OFS/BV-04-C		N/A
+L2CAP/OFS/BV-05-C		N/A
+L2CAP/OFS/BV-06-C		N/A
+L2CAP/OFS/BV-07-C		N/A
+L2CAP/OFS/BV-08-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/ERM/BV-01-C		N/A
+L2CAP/ERM/BV-02-C		N/A
+L2CAP/ERM/BV-03-C		N/A
+L2CAP/ERM/BV-05-C		N/A
+L2CAP/ERM/BV-06-C		N/A
+L2CAP/ERM/BV-07-C		N/A
+L2CAP/ERM/BV-08-C		N/A
+L2CAP/ERM/BV-09-C		N/A
+L2CAP/ERM/BV-10-C		N/A
+L2CAP/ERM/BV-11-C		N/A
+L2CAP/ERM/BV-12-C		N/A
+L2CAP/ERM/BV-13-C		N/A
+L2CAP/ERM/BV-14-C		N/A
+L2CAP/ERM/BV-15-C		N/A
+L2CAP/ERM/BV-16-C		N/A
+L2CAP/ERM/BV-17-C		N/A
+L2CAP/ERM/BV-18-C		N/A
+L2CAP/ERM/BV-19-C		N/A
+L2CAP/ERM/BV-20-C		N/A
+L2CAP/ERM/BV-21-C		N/A
+L2CAP/ERM/BV-22-C		N/A
+L2CAP/ERM/BV-23-C		N/A
+L2CAP/ERM/BI-01-C		N/A
+L2CAP/ERM/BI-02-C		N/A
+L2CAP/ERM/BI-03-C		N/A
+L2CAP/ERM/BI-04-C		N/A
+L2CAP/ERM/BI-05-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/STM/BV-01-C		N/A
+L2CAP/STM/BV-02-C		N/A
+L2CAP/STM/BV-03-C		N/A
+L2CAP/STM/BV-11-C		N/A
+L2CAP/STM/BV-12-C		N/A
+L2CAP/STM/BV-13-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/FIX/BV-01-C		N/A
+L2CAP/FIX/BV-02-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/EWC/BV-01-C		N/A
+L2CAP/EWC/BV-02-C		N/A
+L2CAP/EWC/BV-03-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/LSC/BV-01-C		N/A
+L2CAP/LSC/BV-02-C		N/A
+L2CAP/LSC/BV-03-C		N/A
+L2CAP/LSC/BI-04-C		N/A
+L2CAP/LSC/BI-05-C		N/A
+L2CAP/LSC/BV-06-C		N/A
+L2CAP/LSC/BV-07-C		N/A
+L2CAP/LSC/BV-08-C		N/A
+L2CAP/LSC/BV-09-C		N/A
+L2CAP/LSC/BI-10-C		N/A
+L2CAP/LSC/BI-11-C		N/A
+L2CAP/LSC/BV-12-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/CCH/BV-01-C		N/A
+L2CAP/CCH/BV-02-C		N/A
+L2CAP/CCH/BV-03-C		N/A
+L2CAP/CCH/BV-04-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/ECF/BV-01-C		N/A
+L2CAP/ECF/BV-02-C		N/A
+L2CAP/ECF/BV-03-C		N/A
+L2CAP/ECF/BV-04-C		N/A
+L2CAP/ECF/BV-05-C		N/A
+L2CAP/ECF/BV-06-C		N/A
+L2CAP/ECF/BV-07-C		N/A
+L2CAP/ECF/BV-08-C		N/A
+-------------------------------------------------------------------------------
+
+L2CAP/LE/CPU/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-update conn=<handle>
+L2CAP/LE/CPU/BV-02-C	PASS	connect peer_addr=<addr>
+				disconnect conn=<handle>
+L2CAP/LE/CPU/BI-01-C	PASS	connect peer_addr=<addr>
+				disconnect conn=<handle>
+L2CAP/LE/CPU/BI-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+-------------------------------------------------------------------------------
+
+L2CAP/LE/REJ/BI-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+L2CAP/LE/REJ/BI-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				disconnect conn=<handle>
+-------------------------------------------------------------------------------
+
+L2CAP/LE/CFC/BV-01-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+L2CAP/LE/CFC/BV-02-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-connect conn=<handle> psm=90
+L2CAP/LE/CFC/BV-03-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+				l2cap-send conn=<handle> idx=0 bytes=15
+				<YES>
+L2CAP/LE/CFC/BV-04-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-connect conn=<handle> psm=<unsuppported psm from ixit>
+L2CAP/LE/CFC/BV-05-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+L2CAP/LE/CFC/BV-06-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+				l2cap-send conn=<handle> idx=0 bytes=15
+L2CAP/LE/CFC/BV-07-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+L2CAP/LE/CFC/BI-01-C	PASS	advertise-configure connectable=1 legacy=1
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+L2CAP/LE/CFC/BV-08-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<your psm>
+				advertise-start
+				l2cap-disconnect conn=<handle> idx=0
+L2CAP/LE/CFC/BV-09-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+L2CAP/LE/CFC/BV-16-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-connect conn=<handle> psm=90
+L2CAP/LE/CFC/BV-17-C	N/A
+L2CAP/LE/CFC/BV-18-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-connect conn=<handle> psm=90
+L2CAP/LE/CFC/BV-19-C	PASS	NOTE: TSPC_L2CAP_3_16 (multiple channel support) must be checked
+				advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-connect conn=<handle> psm=90
+L2CAP/LE/CFC/BV-20-C	PASS	NOTE: TSPC_L2CAP_3_16 (multiple channel support) must be checked
+				advertise-configure connectable=1 legacy=1
+				l2cap-create-server psm=<TSPX_le_psm from ixit>
+				advertise-start
+L2CAP/LE/CFC/BV-21-C	PASS	advertise-configure connectable=1 legacy=1
+				advertise-set-adv-data flags=6
+				advertise-start
+				l2cap-connect conn=<handle> psm=90
+-------------------------------------------------------------------------------
+
+L2CAP/LE/CID/BV-01-C	N/A
+L2CAP/LE/CID/BV-02-C	N/A
+-------------------------------------------------------------------------------
+

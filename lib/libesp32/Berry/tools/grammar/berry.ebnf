@@ -17,7 +17,7 @@ func_body = '(' [arg_field {',' arg_field}] ')' block 'end';
 arg_field = ['*'] ID;
 (* class define statement *)
 class_stmt = 'class' ID [':' ID] class_block 'end';
-class_block = {'var' ID {',' ID} | 'static' ID ['=' expr] {',' ID ['=' expr] } | func_stmt};
+class_block = {'var' ID {',' ID} | 'static' ID ['=' expr] {',' ID ['=' expr] } | 'static' func_stmt | func_stmt};
 import_stmt = 'import' (ID (['as' ID] | {',' ID}) | STRING 'as' ID);
 (* exceptional handling statement *)
 try_stmt = 'try' block except_block {except_block} 'end';

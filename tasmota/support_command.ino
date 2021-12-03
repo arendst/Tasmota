@@ -621,7 +621,7 @@ void CmndStatus(void)
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
-    MqttShowSensor();
+    MqttShowSensor(true);
     ResponseJsonEnd();
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
@@ -1067,6 +1067,9 @@ void CmndSetoptionBase(bool indexed) {
                 if (0 == XdrvMailbox.payload) {
                   TasmotaGlobal.restart_flag = 2;
                 }
+                break;
+              case 18:                     // SetOption132 - TLS Fingerprint
+                TasmotaGlobal.restart_flag = 2;
                 break;
             }
           }

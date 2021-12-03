@@ -249,7 +249,7 @@
 #define D_REDIRECTED "Пренасочено към портала за настройка"
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager set AccessPoint"
-#define D_TRYING_TO_CONNECT "Извършва се опит за свързване на устройството към мрежата"
+#define D_TRYING_TO_CONNECT "Oпит за свързване към избраната мрежа"
 
 #define D_RESTART_IN "Рестарт след"
 #define D_SECONDS "секунди"
@@ -336,7 +336,7 @@
 #define D_SINGLE_DEVICE "едно устройство"
 #define D_MULTI_DEVICE "много устройства"
 
-#define D_CONFIGURE_TEMPLATE "Настройка на шаблона"
+#define D_CONFIGURE_TEMPLATE "Настройки на шаблона"
 #define D_TEMPLATE_PARAMETERS "Параметри на шаблона"
 #define D_TEMPLATE_NAME "Име"
 #define D_BASE_TYPE "Основан на"
@@ -364,7 +364,7 @@
 #define D_ESP_CHIP_ID "ID на чипа на ESP"
 #define D_FLASH_CHIP_ID "ID на чипа на флаш-паметта"
 #define D_FLASH_CHIP_SIZE "Размер на флаш-паметта"
-#define D_FREE_PROGRAM_SPACE "Свободно пространство за програми"
+#define D_FREE_PROGRAM_SPACE "Свободно място за програми"
 
 #define D_UPGRADE_BY_WEBSERVER "Обновяване от сървър"
 #define D_OTA_URL "Адрес на сървър за OTA"
@@ -376,7 +376,7 @@
 #define D_UPLOAD_TRANSFER "Upload transfer"
 #define D_TRANSFER_STARTED "Transfer started"
 #define D_UPLOAD_ERR_1 "Не е избран файл"
-#define D_UPLOAD_ERR_2 "Недостатъчно свободно пространство"
+#define D_UPLOAD_ERR_2 "Недостатъчно свободно място"
 #define D_UPLOAD_ERR_3 "Недействителен подпис на файла"
 #define D_UPLOAD_ERR_4 "Размерът на програмата е по-голям от размера на флаш-паметта"
 #define D_UPLOAD_ERR_5 "Грешка при сравняване на буфери"
@@ -413,11 +413,11 @@
 #define D_WEMO_BASIC_EVENT "Основно събитие на WeMo"
 #define D_WEMO_EVENT_SERVICE "Услуга за събития на WeMo"
 #define D_WEMO_META_SERVICE "Мета-услуга на WeMo"
-#define D_WEMO_SETUP "Настройка на WeMo"
+#define D_WEMO_SETUP "Настройки на WeMo"
 #define D_RESPONSE_SENT "Отговорът е изпратен"
 
 #define D_HUE "Hue"
-#define D_HUE_BRIDGE_SETUP "Настройка на Hue"
+#define D_HUE_BRIDGE_SETUP "Настройки на Hue"
 #define D_HUE_API_NOT_IMPLEMENTED "ППИ на Hue не е реализиран"
 #define D_HUE_API "ППИ на Hue"
 #define D_HUE_POST_ARGS "Параметри на Hue по POST"
@@ -442,18 +442,18 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Период на обновяване"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Настройка на графика"
+#define D_CONFIGURE_TIMER "Настройки на график"
 #define D_TIMER_PARAMETERS "Параметри на графиците"
 #define D_TIMER_ENABLE "Използване на графици"
 #define D_TIMER_ARM "Включване"
 #define D_TIMER_TIME "Време"
 #define D_TIMER_DAYS "Дни"
-#define D_TIMER_REPEAT "Периодичен"
+#define D_TIMER_REPEAT "Повтаряне"
 #define D_TIMER_OUTPUT "Изход"
 #define D_TIMER_ACTION "Действие"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Настройка на KNX"
+#define D_CONFIGURE_KNX "Настройки на KNX"
 #define D_KNX_PARAMETERS "Параметри на KNX"
 #define D_KNX_GENERAL_CONFIG "Основни"
 #define D_KNX_PHYSICAL_ADDRESS "Физически адрес"
@@ -513,7 +513,7 @@
 #define D_DOMOTICZ_SHUTTER "Щора"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Настройка на PCF8574"
+#define D_CONFIGURE_PCF8574 "Настройки на PCF8574"
 #define D_PCF8574_PARAMETERS "Параметри на PCF8574"
 #define D_INVERT_PORTS "Размяна на портовете"
 #define D_DEVICE "Устройство"
@@ -563,7 +563,7 @@
 #define D_HX_CAL_DONE "Калибрирано"
 #define D_HX_CAL_FAIL "Грешка при калибриране"
 #define D_RESET_HX711 "Нулиране на везната"
-#define D_CONFIGURE_HX711 "Настройка на везната"
+#define D_CONFIGURE_HX711 "Настройки на везната"
 #define D_HX711_PARAMETERS "Параметри на везната"
 #define D_ITEM_WEIGHT "Тегло"
 #define D_REFERENCE_WEIGHT "Еталонна тежест"
@@ -608,7 +608,7 @@
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Няма"
-#define D_SENSOR_USER          "Потребител"
+#define D_SENSOR_USER          "Потребителско"
 #define D_SENSOR_OPTION        "Настройки"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"

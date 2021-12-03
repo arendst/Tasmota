@@ -38,7 +38,7 @@
 #include <freertos/queue.h>
 #include <esp_log.h>
 #include <driver/gpio.h>
-
+#include <lwip/sockets.h>
 
 #include <hap.h>
 
@@ -703,9 +703,9 @@ nextline:
 
 #define HK_PASSCODE "111-11-111"
 int hap_loop_stop(void);
+int32_t homekit_pars(uint32_t sel);
 
-
-void homekit_main(char *desc, uint32_t flag ) {
+int32_t homekit_main(char *desc, uint32_t flag ) {
   if (desc) {
     char *cp = desc;
     cp += 2;
@@ -724,7 +724,7 @@ void homekit_main(char *desc, uint32_t flag ) {
     }
     if (*cp != '\n') {
       printf("init error\n");
-      return;
+      return -1;
     }
     cp++;
     hk_desc = cp;
@@ -736,17 +736,44 @@ void homekit_main(char *desc, uint32_t flag ) {
       hap_loop_stop();
       // is just the folder in wrapper
       hap_platfrom_keystore_erase_partition(hap_platform_keystore_get_nvs_partition_name());
+    } else if (flag < 3) {
+      return homekit_pars(flag);
     } else {
       hap_loop_stop();
     }
-    return;
+
+    return 0;
   }
 
-  if (!hk_desc) return;
+  if (!hk_desc) return -2;
 
   /* Create the application thread */
   xTaskCreate(smart_outlet_thread_entry, SMART_OUTLET_TASK_NAME, SMART_OUTLET_TASK_STACKSIZE, NULL, SMART_OUTLET_TASK_PRIORITY, NULL);
 
+  return 0;
+}
+
+#include <lwip/sockets.h>
+
+int32_t homekit_pars(uint32_t sel) {
+
+  if (sel == 0) {
+  //  return CONFIG_LWIP_MAX_SOCKETS;
+    return MEMP_NUM_NETCONN;
+  } else if (sel == 1) {
+    return LWIP_SOCKET_OFFSET;
+  } else {
+    struct sockaddr name;
+    socklen_t len = sizeof(name);
+    uint8_t open_socs = 0;
+    for (uint32_t cnt = 0; cnt < CONFIG_LWIP_MAX_SOCKETS; cnt++) {
+      //if (!getsockname(cnt, &name, &len)) {
+      if (!getpeername(LWIP_SOCKET_OFFSET + cnt, &name, &len)) {
+        open_socs++;
+      }
+    }
+    return open_socs;
+  }
 }
 
 #endif // ESP32

@@ -14,11 +14,8 @@
 #ifndef MAIN_NIMBLECLIENT_H_
 #define MAIN_NIMBLECLIENT_H_
 
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
-
 #include "nimconfig.h"
-#if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLEAddress.h"
 #include "NimBLEUUID.h"
@@ -71,8 +68,10 @@ public:
                                                                     uint16_t scanInterval=16, uint16_t scanWindow=16);
     void                                        updateConnParams(uint16_t minInterval, uint16_t maxInterval,
                                                                  uint16_t latency, uint16_t timeout);
+    void                                        setDataLen(uint16_t tx_octets);
     void                                        discoverAttributes();
     NimBLEConnInfo                              getConnInfo();
+    int                                         getLastError();
 
 private:
     NimBLEClient(const NimBLEAddress &peerAddress);
@@ -90,6 +89,7 @@ private:
     bool                    retrieveServices(const NimBLEUUID *uuid_filter = nullptr);
 
     NimBLEAddress           m_peerAddress;
+    int                     m_lastErr;
     uint16_t                m_conn_id;
     bool                    m_connEstablished;
     bool                    m_deleteCallbacks;
@@ -158,6 +158,5 @@ public:
     virtual bool onConfirmPIN(uint32_t pin);
 };
 
-#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif // CONFIG_BT_ENABLED
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
 #endif /* MAIN_NIMBLECLIENT_H_ */

@@ -348,7 +348,7 @@ static void free_instance(bvm *vm, bgcobject *obj)
 
 static void free_object(bvm *vm, bgcobject *obj)
 {
-    switch (obj->type) {
+    switch (var_type(obj)) {
     case BE_STRING: free_lstring(vm, obj); break; /* long string */
     case BE_CLASS: be_free(vm, obj, sizeof(bclass)); break;
     case BE_INSTANCE: free_instance(vm, obj); break;
@@ -497,6 +497,9 @@ static void delete_white(bvm *vm)
                 prev->next = next;
             }
             free_object(vm, node);
+#if BE_USE_PERF_COUNTERS
+            vm->counter_gc_freed++;
+#endif
         } else {
             gc_setwhite(node);
             prev = node;
@@ -537,6 +540,10 @@ void be_gc_collect(bvm *vm)
     if (vm->gc.status & GC_HALT) {
         return; /* the GC cannot run for some reason */
     }
+#if BE_USE_PERF_COUNTERS
+    vm->counter_gc_kept = 0;
+    vm->counter_gc_freed = 0;
+#endif
 #if BE_USE_OBSERVABILITY_HOOK
     if (vm->obshook != NULL)
         (*vm->obshook)(vm, BE_OBS_GC_START, vm->gc.usage);
@@ -559,6 +566,6 @@ void be_gc_collect(bvm *vm)
     vm->gc.threshold = next_threshold(vm->gc);
 #if BE_USE_OBSERVABILITY_HOOK
     if (vm->obshook != NULL)
-        (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage);
+        (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage, vm->counter_gc_kept, vm->counter_gc_freed);
 #endif
 }

@@ -82,7 +82,7 @@ esp_err_t hap_platform_httpd_set_sess_ctx(httpd_req_t *req, void *ctx, httpd_fre
     return ESP_FAIL;
 }
 
-static char * hap_platform_httpd_rqtype_to_string(int method)
+static const char * hap_platform_httpd_rqtype_to_string(int method)
 {
     switch (method) {
         case HTTP_GET:

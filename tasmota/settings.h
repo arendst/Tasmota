@@ -160,8 +160,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t disable_referer_chk : 1;      // bit 14 (v9.5.0.5)  - SetOption128 - (Web) Allow access without referer check
     uint32_t energy_phase : 1;             // bit 15 (v9.5.0.9)  - SetOption129 - (Energy) Show phase information
     uint32_t show_heap_with_timestamp : 1; // bit 16 (v9.5.0.9)  - SetOption130 - (Debug) Show heap with logging timestamp
-    uint32_t spare17 : 1;                  // bit 17
-    uint32_t spare18 : 1;                  // bit 18
+    uint32_t tuya_allow_dimmer_0 : 1;      // bit 17 (v10.0.0.3) - SetOption131 - (Tuya) Allow save dimmer = 0 receved by MCU
+    uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - (TLS) use fingerprint validation instead of CA based
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
@@ -524,7 +524,7 @@ typedef struct {
 
   uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
 
-  myio          my_gp;                     // 3AC  2 x 18 bytes (ESP8266) / 2 x 40 bytes (ESP32) / 2 x 22 bytes (ESP32-C3)
+  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x22 bytes (ESP32-C3) / 2x47 bytes (ESP32-S2)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
@@ -534,7 +534,7 @@ typedef struct {
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
 #endif  // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
-  mytmplt       user_template;             // 3FC  2 x 15 bytes (ESP8266) / 2 x 37 bytes (ESP32) / 2 x 23 bytes (ESP32-C3)
+  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x23 bytes (ESP32-C3) / 2x37 bytes (ESP32-S2)
 #ifdef ESP8266
   uint8_t       free_esp8266_41A[55];      // 41A
 #endif  // ESP8266
@@ -546,6 +546,9 @@ typedef struct {
   uint8_t       eth_clk_mode;              // 447
 
   uint8_t       free_esp32_448[4];         // 448
+#ifdef CONFIG_IDF_TARGET_ESP32S2
+  uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
+#endif
 
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
@@ -563,9 +566,11 @@ typedef struct {
   myio8         ex_my_gp8;                 // 484 17 bytes (ESP8266) - Free since 9.0.0.1
 #endif  // ESP8266
 #ifdef ESP32
-
+#ifdef CONFIG_IDF_TARGET_ESP32S2
+  uint8_t       free_esp32s2_494[1];       // 494 - 2 bytes extra because of WebCamCfg 32-bit offset
+#else
   uint8_t       free_esp32_484[17];        // 484
-
+#endif
 #endif  // ESP32
 
   uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1
@@ -593,7 +598,8 @@ typedef struct {
 
   int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  //508
   int8_t        shutter_tilt_pos[MAX_SHUTTERS];        //51C
-  uint8_t       free_520[12];              // 520
+  uint16_t      influxdb_period;           // 520
+  uint8_t       free_522[10];              // 522
 
   uint16_t      mqtt_keepalive;            // 52C
   uint16_t      mqtt_socket_timeout;       // 52E
@@ -634,9 +640,7 @@ typedef struct {
   mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
 #endif  // ESP8266
 #ifdef ESP32
-
   uint8_t       free_esp32_72f[14];        // 72F
-
 #endif  // ESP32
 
   uint8_t       novasds_startingoffset;    // 73D
@@ -736,8 +740,9 @@ typedef struct {
   uint16_t      shd_warmup_brightness;     // F5C
   uint8_t       shd_warmup_time;           // F5E
   uint8_t       tcp_config;                // F5F
+  uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f60[60];              // F60 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f59[59];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
@@ -763,10 +768,7 @@ typedef struct {
   uint32_t      cfg_crc32;                 // FFC
 } TSettings;
 
-#ifndef CONFIG_IDF_TARGET_ESP32S2
-// For the ESP32-S2 the settings area has been made larger than 4096 by accident in order to support more GPIO's
 static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");
-#endif
 
 typedef struct {
   uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))

@@ -3,9 +3,55 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.0.0.2]
+## [10.0.0.4]
+### Added
+- (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
+- Support for GPE Multi color smart light as sold by Action in the Netherlands
+
+### Changed
+- (Internal) Range conversion edge values
+- NimBLE to v.1.3.3
+- MQTT TLS dual mode (CA or fingeprint) in same firmware, ``SetOption132 1`` to force fingerprint
+
+### Fixed
+- Tuya dimmer range issue (#13849)
+- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3  
+
+## [10.0.0.3] 20211130
+### Added
+- Shutter support for venetian blinds with tilt control
+- ESP32 Autoconfiguration
+- ESP32 fix leftover GPIO configuration after restart
+- ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) (#13447)
+- WS2812 scheme 13 stairs effect (#13595)
+- ESP32 Preliminary support for Tasmota Apps (.tapp extesions)
+- ESP32 Berry support for neopixel (WS2812, SK6812)
+- Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages (#13750)
+- ESP32 OTA over HTTPS
+- ESP32 Berry ``import re`` regex module
+- ESP32 HTTPS support to ``WebQuery``
+
+### Changed
+- ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
+- Removed ILI9488 driver in favor of Unversal Display Driver
+- IRremoteESP8266 library from v2.7.20 to v2.8.0 (#13738)
+- Ethernet hostname ending in ``_eth`` to ``-eth`` according to RFC952
+- ESP32 core library from v2.0.1 to v2.0.1.1 (#13768)
+
+### Fixed
+- ESP32 analog NTC temperature calculation (#13703)
+- ESP32 ethernet broken by core 2.x
+- ESP32 I2C clock stretch issue (#13768)
+
+### Removed
+- ILI9488 driver in favour of Universal Display driver (#13719)
+
+## [10.0.0.2] 20211113
 ### Added
 - Support for HDC2010 temperature/humidity sensor by Luc Boudreau (#13633)
+
+### Breaking Changed
+- ESP32-S2 TSettings memory usage fixed to 4096 bytes regression from v9.5.0.8
 
 ### Changed
 - ESP32 core library from v1.0.7.5 to v2.0.1
