@@ -1117,13 +1117,13 @@ void SSPMEnergyShow(bool json) {
 #ifdef SSPM_JSON_ENERGY_YESTERDAY
     ResponseAppend_P(PSTR("],\"" D_JSON_YESTERDAY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_today[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_yesterday[i >>2][i &3]);
     }
 #endif
 #ifdef SSPM_JSON_ENERGY_TODAY
     ResponseAppend_P(PSTR("],\"" D_JSON_TODAY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_yesterday[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_today[i >>2][i &3]);
     }
 #endif
     ResponseAppend_P(PSTR("],\"" D_JSON_ACTIVE_POWERUSAGE "\":["));
