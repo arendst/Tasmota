@@ -55,6 +55,12 @@
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
+
+#define D_JSON_T1_TAE "Tariff 1 Total Active Energy"         // Tariff 1 
+#define D_JSON_T1_TRE "Tariff 1 Total Reactive Energy"       // Tariff 1 
+#define D_JSON_T2_TAE "Tariff 2 Total Active Energy"         // Tariff 2 
+#define D_JSON_T2_TRE "Tariff 2 Total Reactive Energy"       // Tariff 2 
+
 #define D_JSON_DARKNESS "Darkness"
 #define D_JSON_DATA "Data"
 #define D_JSON_DEWPOINT "DewPoint"
