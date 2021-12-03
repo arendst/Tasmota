@@ -1,5 +1,5 @@
 /*
- *    LedMatrix.h - Extends the Library LedControl for multiple 8x8 LED dot matrix modules, based on MAX7219/MAX7221
+ *    LedMatrix.h - Extends the Library LedControl for multiple 8x8 LED dot matrix maxDevices, based on MAX7219/MAX7221
  *    Copyright (c) 2021 Michael Beuss
  * 
  *    Permission is hereby granted, free of charge, to any person
@@ -29,7 +29,26 @@
 #include "font_6x8_horizontal_MSB.h"
 //#include "font_8x8_horizontal_latin_MSB.h"
 
-// public
+//the opcodes for the MAX7221 and MAX7219
+#define OP_NOOP   0
+#define OP_DIGIT0 1
+#define OP_DIGIT1 2
+#define OP_DIGIT2 3
+#define OP_DIGIT3 4
+#define OP_DIGIT4 5
+#define OP_DIGIT5 6
+#define OP_DIGIT6 7
+#define OP_DIGIT7 8
+#define OP_DECODEMODE  9
+#define OP_INTENSITY   10
+#define OP_SCANLIMIT   11
+#define OP_SHUTDOWN    12
+#define OP_DISPLAYTEST 15
+
+// test
+#include "LedControl.h"
+LedControl* ledControl = nullptr;
+// end text
 LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, unsigned int rows)
 {
     if (colums * rows > MAX72XX_MAX_DEVICES)
@@ -52,22 +71,36 @@ LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, un
     modulesPerCol = rows;
     displayWidth = colums * 8;
     displayHeight = rows * 8;
-    modules = colums * rows;
+    maxDevices = colums * rows;
     moduleOrientation = ORIENTATION_UPSIDE_DOWN; // use setOrientation() to turn it
-    ledControl = new LedControl(dataPin, clkPin, csPin, modules); // initializes all connected LED matrix modules
     textBuf[0] = 0;
     textWidth = 0;
     textPosX = 0;
     textPosY = 0;
     appendTextBuf[0] = 0;
     setScrollAppendText("   ");
-    shutdown(false); // false: on, true: off
-    clear();
-    setIntensity(7);
+
+    // initialize all connected MAX7219/MAX7221 devices
+    SPI_MOSI = dataPin;
+    SPI_CLK = clkPin;
+    SPI_CS = csPin;
+    pinMode(SPI_MOSI, OUTPUT);
+    pinMode(SPI_CLK, OUTPUT);
+    pinMode(SPI_CS, OUTPUT);
+    SPI_MOSI = dataPin;
+
+    //spiTransfer_value(OP_DISPLAYTEST, 0); // display test
+    spiTransfer_value(OP_SCANLIMIT, 7); // scanlimit is set to max on startup
+    spiTransfer_value(OP_DECODEMODE, 0); // decode is done in source
+    clearDisplay();
+    //spiTransfer_value(OP_SHUTDOWN, 0); //we go into shutdown-mode (LEDs off) on startup
+    setIntensity(7); // initialize with the half of the maximum intensity [0..15]
+    power(true); // power on;
 }
 
 bool LedMatrix::drawText( const char *str, bool clearBefore)
 {
+    if(clearBefore) clearDisplay();
     strncpy(textBuf, str, TEXT_BUFFER_SIZE -1);
     textPosX = 0;
     textPosY = 0;
@@ -75,7 +108,6 @@ bool LedMatrix::drawText( const char *str, bool clearBefore)
     if(textWidth < displayWidth)
     {
         // text fits into the display, place it into the center
-        if(clearBefore) clear();
         textPosX = (displayWidth - textWidth) / 2; // center
     }
     else
@@ -125,21 +157,29 @@ bool LedMatrix::scrollText()
 
 void LedMatrix::power(bool on)
 {
-    shutdown(!on); // power(false) shuts down the display with shutdown(true)
+    byte value = 0; // 0: shutdown
+    if(on) value = 1; // 1: power on
+    spiTransfer_value(OP_SHUTDOWN, value); // power(false) shuts down the display
 }
 
 bool LedMatrix::clearDisplay(void)
 {
-    textBuf[0] = 0;
     memset(textBuf, 0, TEXT_BUFFER_SIZE);
     textWidth = 0;
-    clear();
+    memset(buffer, 0, MATRIX_BUFFER_SIZE);
+    for (int row = 0; row < 8; row++)
+    {
+        spiTransfer_value(row + 1, 0);
+    }
     return true;
 }
 
-bool LedMatrix::setIntensity(byte dim)
+bool LedMatrix::setIntensity(byte intensity)
 {
-    ledControl->setIntensity_allDevices(dim); // 1..15
+    if (intensity < 0 || intensity > 15)
+        return false;
+
+    spiTransfer_value(OP_INTENSITY, intensity);
     return true;
 }
 
@@ -186,25 +226,8 @@ void LedMatrix::refresh()
     int deviceRow = 0;
     for(int ledRow = 7; ledRow >= 0; ledRow--) // refresh from buttom to top
     {
-        for( int addr = 0; addr < modules; addr++)
+        for( int addr = 0; addr < maxDevices; addr++)
         {
-            switch(moduleOrientation)
-            {
-                case ORIENTATION_NORMAL:
-                    col = addr % modulesPerRow;
-                    pixelRow = (addr / modulesPerRow) * 8 + ledRow;
-                    bufPos = pixelRow * modulesPerRow + col;
-                    deviceDataBuff[addr] = buffer[bufPos];
-                    deviceRow = ledRow;
-                break;
-                case ORIENTATION_UPSIDE_DOWN:
-                    col = addr % modulesPerRow;
-                    pixelRow = (addr / modulesPerRow) * 8 + deviceRow;
-                    bufPos = pixelRow * modulesPerRow + col;
-                    deviceDataBuff[addr] = revereBitorder(buffer[bufPos]); // mirror
-                    deviceRow = 7 - ledRow;  // upside down
-                break;
-            }
             if(moduleOrientation == ORIENTATION_NORMAL || moduleOrientation == ORIENTATION_UPSIDE_DOWN)
             {
                     col = addr % modulesPerRow;
@@ -224,7 +247,7 @@ void LedMatrix::refresh()
                     }
             }
         }
-        ledControl->setRow_allDevices(deviceRow, deviceDataBuff);  // upside down
+        setRow_allDevices(deviceRow, deviceDataBuff); 
     }
 }
 
@@ -254,58 +277,6 @@ bool LedMatrix::drawCharAt( char c, const int x, const int y)
     return true;
 }
 
-bool LedMatrix::shutdown(bool b)
-{
-    for (int addr = 0; addr < modules; addr++)
-    {
-        ledControl->shutdown(addr, b); // b: false: on, true: off
-    }
-    return true;
-}
-
-bool LedMatrix::clear(void)
-{
-    memset(buffer, 0, MATRIX_BUFFER_SIZE);
-    ledControl->clearDisplay_allDevices();
-    return true;
-}
-
-void LedMatrix::refreshByteOfBuffer(int i)
-{
-    int line = i / modulesPerRow;
-    int addr = (line / 8) * modulesPerRow + i % modulesPerRow;
-    byte b = buffer[i];
-    if (moduleOrientation == ORIENTATION_NORMAL || moduleOrientation == ORIENTATION_UPSIDE_DOWN)
-    {
-        int rowOfAddr = 0;
-        if (moduleOrientation == ORIENTATION_NORMAL)
-        {
-            rowOfAddr = line % 8; // ORIENTATION_NORMAL
-        }
-        else
-        {
-            rowOfAddr = 7 - line % 8; // ORIENTATION_UPSIDE_DOWN
-            b = revereBitorder(b);
-        }
-        ledControl->setRow(addr, rowOfAddr, b);
-    }
-    else
-    {
-        // ORIENTATION_TURN_RIGHT or ORIENTATION_TURN_LEFT
-        int colOfAddr = 0;
-        if (moduleOrientation == ORIENTATION_TURN_LEFT)
-        {
-            colOfAddr = line % 8; // ORIENTATION_TURN_LEFT
-        }
-        else
-        {
-            colOfAddr = 7 - line % 8; // ORIENTATION_TURN_RIGHT
-            b = revereBitorder(b);
-        }
-        ledControl->setColumn(addr, colOfAddr, b);
-    }
-}
-
 byte LedMatrix::revereBitorder (byte b)
 {
     static const byte lookup[16] = {
@@ -320,3 +291,37 @@ void LedMatrix::appendSpace()
     strncat(textBuf, appendTextBuf, TEXT_BUFFER_SIZE -1);
     textWidth = strlen(textBuf) * charWidth;
 }
+
+void LedMatrix::setRow_allDevices(int row, byte *data)
+{
+    if (row < 0 || row > 7)
+        return;
+    spiTransfer_array(row + 1, data);
+}
+
+void LedMatrix::spiTransfer_array(byte opcode, const byte* data) {
+    // create an array with the data to shift out
+    for (int addr = 0; addr < maxDevices; addr++)
+    {
+        spidata[addr * 2 + 1] = opcode;
+        spidata[addr * 2] = data[addr];
+    }
+    // enable the line
+    digitalWrite(SPI_CS, LOW);
+    // shift out the data
+    for (int i = maxDevices * 2 -1; i >= 0; i--)
+    {
+        shiftOut(SPI_MOSI, SPI_CLK, MSBFIRST, spidata[i]);
+    }
+    // latch the data onto the display
+    digitalWrite(SPI_CS, HIGH);
+}
+
+void LedMatrix::spiTransfer_value(byte opcode, byte value)
+{
+    memset(deviceDataBuff, (byte)value, maxDevices);
+    spiTransfer_array(opcode, deviceDataBuff);
+}
+
+
+

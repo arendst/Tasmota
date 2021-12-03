@@ -1,5 +1,5 @@
 /*
- *    LedMatrix.h - Extends the Library LedControl for multiple 8x8 LED dot matrix modules, based on MAX7219/MAX7221
+ *    LedMatrix.h - Extends the Library LedControl for multiple 8x8 LED dot matrix devices, based on MAX7219/MAX7221
  *    Copyright (c) 2021 Michael Beuss
  * 
  *    Permission is hereby granted, free of charge, to any person
@@ -27,16 +27,27 @@
 #ifndef LedMatrix_h
 #define LedMatrix_h
 
-#include <LedControl.h>
+#include <pgmspace.h>
+
+#if (ARDUINO >= 100)
+#include <Arduino.h>
+#else
+#include <WProgram.h>
+#endif
+
+#ifndef MAX72XX_MAX_DEVICES
+#define MAX72XX_MAX_DEVICES 32 // maximum number of devices based on MXA7219/MAX7221
+#endif
 
 #define MATRIX_BUFFER_SIZE MAX72XX_MAX_DEVICES * 8 // 8 bytes per modul. One byte represents 8 LEDs.
 #define TEXT_BUFFER_SIZE 256 // maximum text length that can be scrolled
 #define TEXT_APPEND_BUFFER_SIZE 16 // used for characters that are appended to the scroll text, before it repeats
+#define SPI_BUFFER_SIZE MAX72XX_MAX_DEVICES * 2 // buffer size fort shifting commands to all devices (2 bytes each)
 
 
 /**
- * @brief LedMatric controls multiple 8x8 LED dot matrx modules.
- * All modules in rows and clolums together build a common display pixel matrix.
+ * @brief LedMatrix controls multiple 8x8 LED dot matrx devices.
+ * All devices in rows and clolums together build a common display pixel matrix.
  * 
  */
 class LedMatrix
@@ -54,8 +65,8 @@ class LedMatrix
         /**
          * @brief Construct a new LED Matrix object
          * 
-         * @param colums of 8x8 LED dot matrix modules
-         * @param rows of 8x8 LED dot matrix modules
+         * @param colums of 8x8 LED dot matrix devices
+         * @param rows of 8x8 LED dot matrix devices
          */
         LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, unsigned int rows);
 
@@ -139,23 +150,48 @@ class LedMatrix
         void refresh();
 
     private:
+
         bool drawCharAt( char c, int x, int y ); // Draws a character to a defined position
-        bool shutdown(bool b); // shutdown(true) switches the display off. Text and pixels can be set while it is off. shutdown(false) switches the display on.
-        bool clear(void); // clears the display content
-        void refreshByteOfBuffer( int i); // sends one byte of the buffer to the display. This updates an 8 pixel row of one matrix module.
         byte revereBitorder(byte b); // returnes the byte in the reverse bit order.
         void appendSpace(); // appends characters to the end of the text to get a distance to the repeating scroll text
 
+        // device contrl MAX7219/MAX7221
+        /**
+         * @brief Set data for the same row of all devices
+         * 
+         * @param row [0..8]
+         * @param value array of bytes, one for each device
+         */
+        void setRow_allDevices(int row, byte* value);
+
+        /* Send out a command with the same opcode to all devices */
+        /**
+         * @brief sends opcode with specific data values to each device
+         * 
+         * @param opcode 
+         * @param data array of byte values (data[0] is the value for the first device)
+         */
+        void spiTransfer_array(byte opcode, const byte* data);
+
+        /**
+         * @brief sends opcode with same value to all devices
+         */
+        void spiTransfer_value(byte opcode, byte value);
+
+
     private:
+        int SPI_MOSI; // Data is shifted out of this pin
+        int SPI_CLK; // The clock is signaled on this pin
+        int SPI_CS; // This one is driven LOW for chip selectzion
+
         unsigned int modulesPerRow;
         unsigned int modulesPerCol;
         unsigned int displayWidth; // matrix width [pixel]
         unsigned int displayHeight; // matrix height [pixel]
-        unsigned int modules; // number of 8x8 mudules
+        int maxDevices; // number of used 8x8 devices
         uint8_t moduleOrientation;
         byte buffer[MATRIX_BUFFER_SIZE];
         byte deviceDataBuff[MAX72XX_MAX_DEVICES];
-        LedControl* ledControl;
         int charWidth;
         int charHeight;
         char textBuf[TEXT_BUFFER_SIZE];
@@ -163,6 +199,7 @@ class LedMatrix
         int textWidth; // width of text [pixel]
         int textPosX; // horizontal pixel position of scrolling text
         int textPosY; // vertical pixelposition of scrolling text;
+        byte spidata[SPI_BUFFER_SIZE]; // The array for shifting the data to the devices
 
 };
 

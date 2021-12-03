@@ -35,10 +35,6 @@
 #include <WProgram.h>
 #endif
 
-#ifndef MAX72XX_MAX_DEVICES
-#define MAX72XX_MAX_DEVICES 32 // maximum number of devices based on MXA7219/MAX7221
-#endif
-
 /*
  * Segments to be switched on for characters and digits on
  * 7-Segment Displays
@@ -65,15 +61,12 @@ const static byte charTable [] PROGMEM  = {
 class LedControl {
     private :
         /* The array for shifting the data to the devices */
-        byte spidata[2 * MAX72XX_MAX_DEVICES];
-        /* Send out a single command to one device */
+        byte spidata[16];
+        /* Send out a single command to the device */
         void spiTransfer(int addr, byte opcode, byte data);
-        /* Send out a command with the same opcode to all devices */
-        void spiTransfer_allDevices(byte opcode, const byte* data);
 
         /* We keep track of the led-status for all 8 devices in this array */
-        byte status[8 * MAX72XX_MAX_DEVICES];
-        byte deviceDataBuff[MAX72XX_MAX_DEVICES];
+        byte status[64];
         /* Data is shifted out of this pin*/
         int SPI_MOSI;
         /* The clock is signaled on this pin */
@@ -109,7 +102,6 @@ class LedControl {
          *		for normal operation.
          */
         void shutdown(int addr, bool status);
-        void shutdown_allDevices( bool status);
 
         /* 
          * Set the number of digits (or rows) to be displayed.
@@ -120,7 +112,6 @@ class LedControl {
          * limit	number of digits to be displayed (1..8)
          */
         void setScanLimit(int addr, int limit);
-        void setScanLimit_allDevices(int limit);
 
         /* 
          * Set the brightness of the display.
@@ -129,7 +120,6 @@ class LedControl {
          * intensity	the brightness of the display. (0..15)
          */
         void setIntensity(int addr, int intensity);
-        void setIntensity_allDevices(int intensity);
 
         /* 
          * Switch all Leds on the display off. 
@@ -137,7 +127,6 @@ class LedControl {
          * addr	address of the display to control
          */
         void clearDisplay(int addr);
-        void clearDisplay_allDevices();
 
         /* 
          * Set the status of a single Led.
@@ -159,14 +148,6 @@ class LedControl {
          *		corresponding Led.
          */
         void setRow(int addr, int row, byte value);
-
-        /**
-         * @brief Set data for the same row of all devices
-         * 
-         * @param row [0..8]
-         * @param value array of bytes, one for each device
-         */
-        void setRow_allDevices(int row, byte* value);
 
         /* 
          * Set all 8 Led's in a column to a new state

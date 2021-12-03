@@ -128,13 +128,6 @@ bool MAX7291Matrix_initDriver(void)
     Settings->display_rows = LedMatrix_settings.modulesPerCol;
     Settings->display_cols[1] = LedMatrix_settings.modulesPerCol;
     max7219_Matrix = new LedMatrix(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), LedMatrix_settings.modulesPerRow, LedMatrix_settings.modulesPerCol);
-    if( LedMatrix_settings.show_clock == 0)
-    {
-        Settings->display_mode = 0; // text mode
-    }
-    else{
-        Settings->display_mode = 1; // clock mode
-    }
     max2791Matrix_initDriver_done = true;
 
     AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_initDriver DIN:%d CLK:%d CS:%d size(%dx%d)"), Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), LedMatrix_settings.modulesPerRow, LedMatrix_settings.modulesPerCol);
@@ -144,8 +137,13 @@ bool MAX7291Matrix_initDriver(void)
 // FUNC_DISPLAY_INIT
 bool MAX7291Matrix_init(void)
 {
+    Settings->display_mode = 0; // text mode
+    LedMatrix_settings.show_clock = 0; // no clock
+
     int intensity = GetDisplayDimmer16(); // 0..15
     max7219_Matrix->setIntensity(intensity);
+
+    max7219_Matrix->power(true); // power on
     if(Settings->display_rotate <= 3)
     {
         max7219_Matrix->setOrientation((LedMatrix::ModuleOrientation)Settings->display_rotate );
@@ -223,6 +221,8 @@ bool MAX7291Matrix_clock(void)
                 Settings->display_mode = 1;
                 break;
             default:
+                //LedMatrix_settings.timeFormat = XdrvMailbox.payload;
+                //Settings->display_mode = 1;
                 return false;
         }
 
@@ -280,13 +280,11 @@ bool Xdsp19(uint8_t function)
         case FUNC_DISPLAY_DRAW_STRING:
         case FUNC_DISPLAY_SCROLLTEXT:
         case FUNC_DISPLAY_SEVENSEG_TEXT:
-            Settings->display_mode = 0; // text mode
-            LedMatrix_settings.show_clock = 0; // disable clock mode
+            if(Settings->display_mode != 0) MAX7291Matrix_init();
             result = max7219_Matrix->drawText(XdrvMailbox.data, true); // true: clears display before drawing text
             break;
         case FUNC_DISPLAY_SEVENSEG_TEXTNC:
-            Settings->display_mode = 0; // text mode
-            LedMatrix_settings.show_clock = 0; // disable clock mode
+            if(Settings->display_mode != 0) MAX7291Matrix_init();
             result = max7219_Matrix->drawText(XdrvMailbox.data, false); // false: does not clear display before drawing text
             break;
         case FUNC_DISPLAY_SCROLLDELAY:
