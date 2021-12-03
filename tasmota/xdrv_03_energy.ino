@@ -90,6 +90,20 @@ struct ENERGY {
   float total_sum;                              // 12345.12345 kWh total energy
   float yesterday_sum;                          // 123.123 kWh
 
+  float Tariff_1_TotalActiveEnergy[1];
+  float Tariff_1_ForwardActiveEnergy[1];
+  float Tariff_1_ReverseActiveEnergy[1];
+  float Tariff_1_TotalReactiveEnergy[1];
+  float Tariff_1_ForwardReactiveEnergy[1];
+  float Tariff_1_ReverseReactiveEnergy[1];
+  
+  float Tariff_2_TotalActiveEnergy[1];
+  float Tariff_2_ForwardActiveEnergy[1];
+  float Tariff_2_ReverseActiveEnergy[1];
+  float Tariff_2_TotalReactiveEnergy[1];
+  float Tariff_2_ForwardReactiveEnergy[1];
+  float Tariff_2_ReverseReactiveEnergy[1];
+  
   int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
   int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
   int32_t kWhtoday[ENERGY_MAX_PHASES];          // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
@@ -593,6 +607,7 @@ void ResponseCmndEnergyTotalYesterdayToday(void) {
   char value_chr[FLOATSZ * ENERGY_MAX_PHASES];   // Used by EnergyFormatIndex
   char value2_chr[FLOATSZ * ENERGY_MAX_PHASES];
   char value3_chr[FLOATSZ * ENERGY_MAX_PHASES];
+  char value4_chr[FLOATSZ * ENERGY_MAX_PHASES];
 
   float energy_yesterday_ph[3];
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
@@ -958,6 +973,12 @@ void EnergyDrvInit(void) {
     Energy.frequency[phase] = NAN;
     Energy.export_active[phase] = NAN;
   }
+  
+  Energy.Tariff_1_TotalActiveEnergy[0]   = 0;
+  Energy.Tariff_1_TotalReactiveEnergy[0] = 0;
+  Energy.Tariff_2_TotalActiveEnergy[0]   = 0;
+  Energy.Tariff_2_TotalReactiveEnergy[0] = 0;
+  
   Energy.phase_count = 1;              // Number of phases active
   Energy.voltage_available = true;     // Enable if voltage is measured
   Energy.current_available = true;     // Enable if current is measured
@@ -1017,6 +1038,12 @@ const char HTTP_ENERGY_SNS2[] PROGMEM =
 
 const char HTTP_ENERGY_SNS3[] PROGMEM =
   "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
+
+const char HTTP_ENERGY_SNS4[] PROGMEM =
+  "{s}" D_ENERGY_T1_TAE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_T1_TRE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_T2_TAE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_T2_TRE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
 void EnergyShow(bool json) {
@@ -1161,6 +1188,15 @@ void EnergyShow(bool json) {
       ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"),
         EnergyFormat(value_chr, Energy.current, Settings->flag2.current_resolution, json));
     }
+    
+    ResponseAppend_P(PSTR(",\"" D_JSON_T1_TAE "\":%s,\"" D_JSON_T1_TRE "\":%s" ),
+      EnergyFormatSum(value_chr , Energy.Tariff_1_TotalActiveEnergy  , 3, json),
+      EnergyFormatSum(value2_chr, Energy.Tariff_1_TotalReactiveEnergy, 3, json));
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_T2_TAE "\":%s,\"" D_JSON_T2_TRE "\":%s" ),
+      EnergyFormatSum(value_chr , Energy.Tariff_2_TotalActiveEnergy  , 3, json),
+      EnergyFormatSum(value2_chr, Energy.Tariff_2_TotalReactiveEnergy, 3, json));
+    
     XnrgCall(FUNC_JSON_APPEND);
     ResponseJsonEnd();
 
@@ -1233,6 +1269,15 @@ void EnergyShow(bool json) {
     if (!isnan(Energy.export_active[0])) {
       WSContentSend_PD(HTTP_ENERGY_SNS3, EnergyFormat(value_chr, Energy.export_active, Settings->flag2.energy_resolution, json));
     }
+    
+    if (!isnan(Energy.Tariff_1_TotalActiveEnergy[0])) {
+      WSContentSend_PD(HTTP_ENERGY_SNS4,  EnergyFormatSum(value_chr , Energy.Tariff_1_TotalActiveEnergy  , 3, json),
+                                          EnergyFormatSum(value2_chr, Energy.Tariff_1_TotalReactiveEnergy, 3, json),
+                                          EnergyFormatSum(value3_chr, Energy.Tariff_2_TotalActiveEnergy  , 3, json),
+                                          EnergyFormatSum(value4_chr, Energy.Tariff_2_TotalReactiveEnergy, 3, json));
+    }
+
+    
     XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER
   }
