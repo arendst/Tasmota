@@ -506,6 +506,10 @@
 #define D_ENERGY_TODAY "Energy Today"
 #define D_ENERGY_YESTERDAY "Energy Yesterday"
 #define D_ENERGY_TOTAL "Energy Total"
+#define D_ENERGY_T1_TAE "Tariff 1 Total Active Energy"         // Tariff 1 
+#define D_ENERGY_T1_TRE "Tariff 1 Total Reactive Energy"       // Tariff 1 
+#define D_ENERGY_T2_TAE "Tariff 2 Total Active Energy"         // Tariff 2 
+#define D_ENERGY_T2_TRE "Tariff 2 Total Reactive Energy"       // Tariff 2 
 
 // xdrv_27_shutter.ino
 #define D_OPEN "Open"
