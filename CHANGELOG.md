@@ -12,10 +12,11 @@ All notable changes to this project will be documented in this file.
 - (Internal) Range conversion edge values
 - NimBLE to v.1.3.3
 - MQTT TLS dual mode (CA or fingeprint) in same firmware, ``SetOption132 1`` to force fingerprint
+- Toolchains for ESP32x changed from 8.4.0-2021r1 to 8.4.0-2021r2
 
 ### Fixed
 - Tuya dimmer range issue (#13849)
-- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3  
+- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3
 
 ## [10.0.0.3] 20211130
 ### Added
