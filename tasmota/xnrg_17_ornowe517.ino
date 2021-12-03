@@ -55,13 +55,29 @@ const uint16_t we517_start_addresses[] {
   /*  7  */ 0x0020,  //  +   -   +   kW   Phase 2 power
   /*  8  */ 0x0022,  //  +   -   -   kW   Phase 3 power
   /*  9  */ 0x0026,  //  +   -   +   VAr  Phase 1 volt amps reactive
-  /* 10  */ 0x0026,  //  +   -   -   VAr  Phase 2 volt amps reactive
+  /* 10  */ 0x0028,  //  +   -   -   VAr  Phase 2 volt amps reactive
   /* 11  */ 0x002A,  //  +   -   -   VAr  Phase 3 volt amps reactive
   /* 12  */ 0x0036,  //  +   -   +        Phase 1 power factor
   /* 13  */ 0x0038,  //  +   -   -        Phase 2 power factor
   /* 14  */ 0x003A,  //  +   -   -        Phase 3 power factor
   /* 15  */ 0x0014,  //  +   +   +   Hz   Frequency of supply voltages
-  /* 16  */ 0x0100   //  +   +   +   kWh  Total active energy
+  /* 16  */ 0x0100,  //  +   +   +   kWh  Total active energy
+
+  /* 17  */ 0x0130,  //  ?   ?   ?   kWh  Tarif 1 Total active energy
+  // /* 18  */ 0x0132,  //  ?   ?   ?   kWh  Tarif 1 Forward active energy
+  // /* 19  */ 0x0134,  //  ?   ?   ?   kWh  Tarif 1 Reverse active energy
+  /* 20  */ 0x0136,  //  ?   ?   ?   kWh  Tarif 1 Total Reactive energy
+  // /* 21  */ 0x0138,  //  ?   ?   ?   kWh  Tarif 1 Forward Reactive energy
+  // /* 22  */ 0x013A,  //  ?   ?   ?   kWh  Tarif 1 Reverse Reactive energy
+  
+  /* 17  */ 0x013C,  //  ?   ?   ?   kWh  Tarif 2 Total active energy
+  // /* 18  */ 0x013E,  //  ?   ?   ?   kWh  Tarif 2 Forward active energy
+  // /* 19  */ 0x0140,  //  ?   ?   ?   kWh  Tarif 2 Reverse active energy
+  /* 20  */ 0x0142,  //  ?   ?   ?   kWh  Tarif 2 Total Reactive energy
+  // /* 21  */ 0x0144,  //  ?   ?   ?   kWh  Tarif 2 Forward Reactive energy
+  // /* 22  */ 0x0146,  //  ?   ?   ?   kWh  Tarif 2 Reverse Reactive energy
+  
+  // /* 23  */ 0x003C   //  ?   ?   ?   import date & time 
 };
 
 struct WE517 {
@@ -97,79 +113,125 @@ void WE517Every250ms(void)
       ((uint8_t*)&value)[1] = buffer[5];
       ((uint8_t*)&value)[0] = buffer[6];
 
-      switch(We517.read_state) {
-        case 0:
+      // AddLog(LOG_LEVEL_DEBUG, PSTR("::: %.4x :: %4_f"), we517_start_addresses[ We517.read_state ] , &value );
+
+      switch( we517_start_addresses[ We517.read_state ] ) {
+        case 0x000E:  // V    L1 line to neutral volts
           Energy.voltage[0] = value;
           break;
 
-        case 1:
+        case 0x0010:  // V    L2 line to neutral volts
           Energy.voltage[1] = value;
           break;
 
-        case 2:
+        case 0x0012:  // V    L3 line to neutral volts
           Energy.voltage[2] = value;
           break;
 
-        case 3:
-          Energy.current[0] = value;
-          break;
-
-        case 4:
-          Energy.current[1] = value;
-          break;
-
-        case 5:
-          Energy.current[2] = value;
-          break;
-
-        case 6:
-          Energy.active_power[0] = value * 1000;
-          break;
-
-        case 7:
-          Energy.active_power[1] = value * 1000;
-          break;
-
-        case 8:
-          Energy.active_power[2] = value * 1000;
-          break;
-
-        case 9:
-          Energy.reactive_power[0] = value;
-          break;
-
-        case 10:
-          Energy.reactive_power[1] = value;
-          break;
-
-        case 11:
-          Energy.reactive_power[2] = value;
-          break;
-
-        case 12:
-          Energy.power_factor[0] = value;
-          break;
-
-        case 13:
-          Energy.power_factor[1] = value;
-          break;
-
-        case 14:
-          Energy.power_factor[2] = value;
-          break;
-
-        case 15:
+        case 0x0014:  // Hz   Frequency of supply voltages
           Energy.frequency[0] = value;
           break;
 
-        case 16:
+        case 0x0016:  // A    L1 current
+          Energy.current[0] = value;
+          break;
+
+        case 0x0018:  // A    L2 current
+          Energy.current[1] = value;
+          break;
+
+        case 0x001A:  // A    L3 current
+          Energy.current[2] = value;
+          break;
+
+        case 0x001E:  // L1 Active Power
+          Energy.active_power[0] = value * 1000;
+          break;
+
+        case 0x0020:  // L2 Active Power
+          Energy.active_power[1] = value * 1000;
+          break;
+
+        case 0x0022:  // L3 Active Power
+          Energy.active_power[2] = value * 1000;
+          break;
+
+        case 0x0024:  // VAr  L1 Reactive Power
+          Energy.reactive_power[0] = value;
+          break;
+
+        case 0x0026:  // VAr  L2 Reactive Power
+          Energy.reactive_power[1] = value;
+          break;
+
+        case 0x0028:  // VAr  L3 Reactive Power
+          Energy.reactive_power[2] = value;
+          break;
+
+        case 0x0036:  // L1 Power Factor
+          Energy.power_factor[0] = value;
+          break;
+
+        case 0x0038:  // L2 Power Factor
+          Energy.power_factor[1] = value;
+          break;
+
+        case 0x003A:  // L3 Power Factor
+          Energy.power_factor[2] = value;
+          break;
+
+       case 0x0100:  // kWh  Total    active energy
           Energy.import_active[0] = value;
           EnergyUpdateTotal();
           break;
+
+
+        case 0x0130:  // kWh  Tariff 1 Total active energy
+          Energy.Tariff_1_TotalActiveEnergy[0] = value;
+          break;
+        case 0x0132:  // kWh  Tariff 1 Forward active energy
+          Energy.Tariff_1_ForwardActiveEnergy[0] = value;
+          break;
+        case 0x0134:  // kWh  Tariff 1 Reverse active energy
+          Energy.Tariff_1_ReverseActiveEnergy[0] = value;
+          break;
+        case 0x0136:  // kWh  Tariff 1 Total Reactive energy
+          Energy.Tariff_1_TotalReactiveEnergy[0] = value;
+          break;
+        case 0x0138:  // kWh  Tariff 1 Forward Reactive energy
+          Energy.Tariff_1_ForwardReactiveEnergy[0] = value;
+          break;
+        case 0x013A:  // kWh  Tariff 1 Reverse Reactive energy
+          Energy.Tariff_1_ReverseReactiveEnergy[0] = value;
+          break;
+
+        case 0x013C:  // kWh  Tariff 2 Total active energy
+          Energy.Tariff_2_TotalActiveEnergy[0] = value;
+          break;
+        case 0x013E:  // kWh  Tariff 2 Forward active energy
+          Energy.Tariff_2_ForwardActiveEnergy[0] = value;
+          break;
+        case 0x0140:  // kWh  Tariff 2 Reverse active energy
+          Energy.Tariff_2_ReverseActiveEnergy[0] = value;
+          break;
+        case 0x0142:  // kWh  Tariff 2 Total Reactive energy
+          Energy.Tariff_2_TotalReactiveEnergy[0] = value;
+          break;
+        case 0x0144:  // kWh  Tariff 2 Forward Reactive energy
+          Energy.Tariff_2_ForwardReactiveEnergy[0] = value;
+          break;
+        case 0x0146:  // kWh  Tariff 2 Reverse Reactive energy
+          Energy.Tariff_2_ReverseReactiveEnergy[0] = value;
+          break;
+
+        case 0x003C:
+          AddLog(LOG_LEVEL_DEBUG, PSTR("::: %.4x :: %4_f"), we517_start_addresses[ We517.read_state ] , &value );
+          break;
+
       }
 
       We517.read_state++;
-      if (sizeof(we517_start_addresses)/2 == We517.read_state) {
+      if ( (sizeof(we517_start_addresses)/sizeof(we517_start_addresses[0])) <= We517.read_state ) {
         We517.read_state = 0;
       }
     }
