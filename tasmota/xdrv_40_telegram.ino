@@ -83,7 +83,7 @@ bool TelegramInit(void) {
     if (!telegramClient) {
       telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
 
-      if (Settings.flag5.tls_use_fingerprint) {
+      if (Settings->flag5.tls_use_fingerprint) {
         telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
       } else {
         telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
