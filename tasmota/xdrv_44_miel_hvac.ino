@@ -904,7 +904,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 
 	ResponseAppend_P(PSTR("}"));
 
-	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACSettings"));
+	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACSettings"), MQTT_INFO_RETAIN);
 }
 
 static void
