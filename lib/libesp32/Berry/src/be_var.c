@@ -87,7 +87,7 @@ bvalue* be_global_var(bvm *vm, int index)
 
 void be_global_release_space(bvm *vm)
 {
-    be_map_release(vm, global(vm).vtab);
+    be_map_compact(vm, global(vm).vtab);
     be_vector_release(vm, &global(vm).vlist);
 }
 
@@ -130,7 +130,7 @@ int be_builtin_new(bvm *vm, bstring *name)
 
 void be_bulitin_release_space(bvm *vm)
 {
-    be_map_release(vm, builtin(vm).vtab);
+    be_map_compact(vm, builtin(vm).vtab);
     be_vector_release(vm, &builtin(vm).vlist);
 }
 #else
