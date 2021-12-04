@@ -21,10 +21,15 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
+#ifdef USE_KNX
+bool knx_started = false;
+#endif  // USE_KNX
+
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
 
+#ifdef ESP8266
 #include <Ticker.h>
 
 Ticker tickerOSWatch;
@@ -38,12 +43,7 @@ uint8_t oswatch_blocked_loop = 0;
 //void OsWatchTicker() IRAM_ATTR;
 #endif  // USE_WS2812_DMA
 
-#ifdef USE_KNX
-bool knx_started = false;
-#endif  // USE_KNX
-
-void OsWatchTicker(void)
-{
+void OsWatchTicker(void) {
   uint32_t t = millis();
   uint32_t last_run = t - oswatch_last_loop_time;
 
@@ -66,27 +66,33 @@ void OsWatchTicker(void)
   }
 }
 
-void OsWatchInit(void)
-{
+void OsWatchInit(void) {
   oswatch_blocked_loop = RtcSettings.oswatch_blocked_loop;
   RtcSettings.oswatch_blocked_loop = 0;
   oswatch_last_loop_time = millis();
   tickerOSWatch.attach_ms(((OSWATCH_RESET_TIME / 3) * 1000), OsWatchTicker);
 }
 
-void OsWatchLoop(void)
-{
+void OsWatchLoop(void) {
   oswatch_last_loop_time = millis();
 //  while(1) delay(1000);  // this will trigger the os watch
 }
 
-bool OsWatchBlockedLoop(void)
-{
+bool OsWatchBlockedLoop(void) {
   return oswatch_blocked_loop;
 }
 
-uint32_t ResetReason(void)
-{
+#else  // Anything except ESP8266
+
+void OsWatchInit(void) {}
+void OsWatchLoop(void) {}
+bool OsWatchBlockedLoop(void) {
+  return false;
+}
+
+#endif  // ESP8266
+
+uint32_t ResetReason(void) {
   /*
     user_interface.h
     REASON_DEFAULT_RST      = 0,  // "Power on"                normal startup by power on
@@ -100,9 +106,8 @@ uint32_t ResetReason(void)
   return ESP_ResetInfoReason();
 }
 
-String GetResetReason(void)
-{
-  if (oswatch_blocked_loop) {
+String GetResetReason(void) {
+  if (OsWatchBlockedLoop()) {
     char buff[32];
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
