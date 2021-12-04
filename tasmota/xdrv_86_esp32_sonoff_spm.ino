@@ -175,7 +175,6 @@ typedef struct {
   uint8_t command_sequence;
   uint8_t mstate;
   uint8_t last_button;
-  uint8_t gui_display;
   bool discovery_triggered;
 } TSspm;
 
@@ -1160,8 +1159,8 @@ void SSPMEnergyShow(bool json) {
     uint32_t index = 0;
     power_t power = TasmotaGlobal.power;
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      if ((0 == Sspm->gui_display) ||
-          ((1 == Sspm->gui_display) && (power >> i) &1)) {
+      if ((0 == Settings->sbflag1.sspm_display) ||
+          ((1 == Settings->sbflag1.sspm_display) && (power >> i) &1)) {
         relay[index] = i +1;
         indirect[index] = i;
         index++;
@@ -1247,9 +1246,9 @@ void CmndSSPMIamHere(void) {
 void CmndSSPMDisplay(void) {
   // Select either all relays or only powered on relays
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Sspm->gui_display = XdrvMailbox.payload;
+    Settings->sbflag1.sspm_display = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(Sspm->gui_display);
+  ResponseCmndNumber(Settings->sbflag1.sspm_display);
 }
 
 /*********************************************************************************************\

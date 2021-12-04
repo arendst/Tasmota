@@ -250,7 +250,7 @@ typedef union {
     uint32_t sonoff_l1_music_sync : 1;     // bit 5  (v9.5.0.5) - CMND_L1MUSICSYNC - Enable sync to music
     uint32_t influxdb_default : 1;         // bit 6  (v9.5.0.5) - Set influxdb initial defaults if 0
     uint32_t influxdb_state : 1;           // bit 7  (v9.5.0.5) - CMND_IFX - Enable influxdb support
-    uint32_t spare08 : 1;                  // bit 8
+    uint32_t sspm_display : 1;             // bit 8  (v10.0.0.4) - CMND_SSPMDISPLAY - Enable gui display of powered on relays only
     uint32_t spare09 : 1;                  // bit 9
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
