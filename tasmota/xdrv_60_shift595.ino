@@ -83,7 +83,7 @@ void Shift595SwitchRelay(void)
 }
 
 void CmndShift595Devices(void) {
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 3)) {
     Settings->shift595_device_count = (1 == XdrvMailbox.payload) ? SHIFT595_DEVICE_COUNT : XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
