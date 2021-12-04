@@ -716,6 +716,11 @@
 #define D_CMND_BR_RUN ""
 #define D_BR_NOT_STARTED  "Berry not started"
 
+// Commands xdrv_60_shift595.ino - 74x595 family shift register driver
+#ifdef USE_SHIFT595
+#define D_CMND_SHIFT595_DEVICE_COUNT "Shift595DeviceCount"
+#endif
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
