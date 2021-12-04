@@ -175,6 +175,7 @@ typedef struct {
   uint8_t command_sequence;
   uint8_t mstate;
   uint8_t last_button;
+  uint8_t gui_display;
   bool discovery_triggered;
 } TSspm;
 
@@ -1082,29 +1083,30 @@ bool SSPMButton(void) {
 /*********************************************************************************************/
 
 const uint16_t SSPM_SIZE = 128;
-const char kSSPMEnergyPhases[] PROGMEM = "%*_f</td><td>%*_f</td><td>%*_f</td><td>%*_f</td><td style='white-space:nowrap'>|[%*_f,%*_f,%*_f,%*_f]";
 
-char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, bool json) {
-  char layout[100];
-  GetTextIndexed(layout, sizeof(layout), json, kSSPMEnergyPhases);
-  ext_snprintf_P(result, SSPM_SIZE, layout, resolution, &input[0], resolution, &input[1], resolution, &input[2], resolution, &input[3]);
+char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, uint8_t* indirect, uint8_t offset, uint32_t count) {
+  result[0] = '\0';
+  for (uint32_t i = 0; i < count; i++) {
+    ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td>%*_f</td>"), result, resolution, &input[indirect[offset +i]]);
+  }
+  ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td style='white-space:nowrap'>"), result);
   return result;
 }
 
 const char HTTP_SSPM_VOLTAGE[] PROGMEM =
-  "{s}" D_VOLTAGE "</th><td>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
+  "{s}" D_VOLTAGE "</th>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
 const char HTTP_SSPM_CURRENT[] PROGMEM =
-  "{s}" D_CURRENT "</th><td>%s" D_UNIT_AMPERE "{e}";
+  "{s}" D_CURRENT "</th>%s" D_UNIT_AMPERE "{e}";
 const char HTTP_SSPM_POWER[] PROGMEM =
-  "{s}" D_POWERUSAGE_ACTIVE "</th><td>%s" D_UNIT_WATT "{e}";
+  "{s}" D_POWERUSAGE_ACTIVE "</th>%s" D_UNIT_WATT "{e}";
 const char HTTP_SSPM_POWER2[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "</th><td>%s" D_UNIT_VA "{e}"
-  "{s}" D_POWERUSAGE_REACTIVE "</th><td>%s" D_UNIT_VAR "{e}"
-  "{s}" D_POWER_FACTOR "</th><td>%s{e}";
+  "{s}" D_POWERUSAGE_APPARENT "</th>%s" D_UNIT_VA "{e}"
+  "{s}" D_POWERUSAGE_REACTIVE "</th>%s" D_UNIT_VAR "{e}"
+  "{s}" D_POWER_FACTOR "</th>%s{e}";
 const char HTTP_SSPM_ENERGY[] PROGMEM =
-  "{s}" D_ENERGY_TODAY "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_YESTERDAY "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_TOTAL "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}";
+  "{s}" D_ENERGY_TODAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_YESTERDAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_TOTAL "</th>%s" D_UNIT_KILOWATTHOUR "{e}";
 
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
@@ -1152,30 +1154,50 @@ void SSPMEnergyShow(bool json) {
     }
     ResponseAppend_P(PSTR("]}"));
   } else {
-    Sspm->rotate++;
-    if (Sspm->rotate >= TasmotaGlobal.devices_present) {
-      Sspm->rotate = 0;
+    uint8_t relay[SSPM_MAX_MODULES * 4];
+    uint8_t indirect[SSPM_MAX_MODULES * 4];
+
+    uint32_t index = 0;
+    power_t power = TasmotaGlobal.power;
+    for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
+      if ((0 == Sspm->gui_display) ||
+          ((1 == Sspm->gui_display) && (power >> i) &1)) {
+        relay[index] = i +1;
+        indirect[index] = i;
+        index++;
+      }
     }
-    uint32_t module = Sspm->rotate >> 2;
-    uint32_t relay_base = module * 4;
-    WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-    for (uint32_t i = 1; i < 5; i++) {
-      WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay_base +i);
+
+    if (index) {
+      uint32_t offset = 0;
+      if (index > 4) {
+        Sspm->rotate++;
+        if (Sspm->rotate >= ((index -1) >> 2) << 3) {
+          Sspm->rotate = 0;
+        }
+        offset = (Sspm->rotate >> 2) * 4;
+      }
+      uint32_t count = index - offset;
+      if (count > 4) { count = 4; }
+      WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+      for (uint32_t i = 0; i < count; i++) {
+        WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay[offset +i]);
+      }
+      WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
+      char value_chr[SSPM_SIZE];
+      WSContentSend_PD(HTTP_SSPM_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[0], Settings->flag2.voltage_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_SSPM_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[0], Settings->flag2.current_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_SSPM_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
+      char valu2_chr[SSPM_SIZE];
+      char valu3_chr[SSPM_SIZE];
+      WSContentSend_PD(HTTP_SSPM_POWER2,  SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu3_chr, Sspm->power_factor[0], 2, indirect, offset, count));
+      WSContentSend_PD(HTTP_SSPM_ENERGY,  SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu2_chr, Sspm->energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
+      WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
-    WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
-    char value_chr[SSPM_SIZE];
-    WSContentSend_PD(HTTP_SSPM_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[module], Settings->flag2.voltage_resolution, json));
-    WSContentSend_PD(HTTP_SSPM_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[module], Settings->flag2.current_resolution, json));
-    WSContentSend_PD(HTTP_SSPM_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[module], Settings->flag2.wattage_resolution, json));
-    char valu2_chr[SSPM_SIZE];
-    char valu3_chr[SSPM_SIZE];
-    WSContentSend_PD(HTTP_SSPM_POWER2,  SSPMEnergyFormat(value_chr, Sspm->apparent_power[module], Settings->flag2.wattage_resolution, json),
-                                        SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[module], Settings->flag2.wattage_resolution, json),
-                                        SSPMEnergyFormat(valu3_chr, Sspm->power_factor[module], 2, json));
-    WSContentSend_PD(HTTP_SSPM_ENERGY,  SSPMEnergyFormat(value_chr, Sspm->energy_today[module], Settings->flag2.energy_resolution, json),
-                                        SSPMEnergyFormat(valu2_chr, Sspm->energy_yesterday[module], Settings->flag2.energy_resolution, json),
-                                        SSPMEnergyFormat(valu3_chr, Sspm->energy_total[module], Settings->flag2.energy_resolution, json));
-    WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
   }
 }
 
@@ -1184,10 +1206,10 @@ void SSPMEnergyShow(bool json) {
 \*********************************************************************************************/
 
 const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
-  "Log|Energy|History|Scan|IamHere" ;
+  "Log|Energy|History|Scan|IamHere|Display" ;
 
 void (* const SSPMCommand[])(void) PROGMEM = {
-  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere };
+  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay };
 
 void CmndSSPMLog(void) {
   // Report 29 log entries
@@ -1220,6 +1242,14 @@ void CmndSSPMIamHere(void) {
   if ((XdrvMailbox.payload < 1) || (XdrvMailbox.payload > TasmotaGlobal.devices_present)) { XdrvMailbox.payload = 1; }
   SSPMSendIAmHere(XdrvMailbox.payload -1);
   ResponseCmndDone();
+}
+
+void CmndSSPMDisplay(void) {
+  // Select either all relays or only powered on relays
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Sspm->gui_display = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Sspm->gui_display);
 }
 
 /*********************************************************************************************\

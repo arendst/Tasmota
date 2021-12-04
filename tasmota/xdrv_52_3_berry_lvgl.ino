@@ -404,6 +404,10 @@ extern "C" {
     be_return(vm);
   }
   
+  /*********************************************************************************************\
+   * Support for lv_fonts
+  \*********************************************************************************************/
+  // load font by name on file-system
   int lv0_load_font(bvm *vm) {
     int argc = be_top(vm);
     if (argc == 1 && be_isstring(vm, 1)) {
@@ -421,6 +425,10 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  /*********************************************************************************************\
+   * Support for Freetype fonts
+  \*********************************************************************************************/
+  // load freetype font by name in file-system
   int lv0_load_freetype_font(bvm *vm) {
 #ifdef USE_LVGL_FREETYPE
     int argc = be_top(vm);
@@ -448,261 +456,212 @@ extern "C" {
 #endif // USE_LVGL_FREETYPE
   }
 
-  int lv0_load_montserrat_font(bvm *vm) {
-    int argc = be_top(vm);
-    if (argc == 1 && be_isint(vm, 1)) {
-      const lv_font_t * font = nullptr;
-      int32_t   font_size = be_toindex(vm, 1);
+  /*********************************************************************************************\
+   * Support for embedded fonts in Flash
+  \*********************************************************************************************/
+  // We create tables for Font matching
+  // Size of `0` indicates end of table
+  typedef struct {
+    int16_t size;
+    const lv_font_t *font;
+  } lv_font_table_t;
 
-      switch (font_size) {
+  typedef struct {
+    const char * name;
+    const lv_font_table_t * table;
+  } lv_font_names_t;
 
-        #if LV_FONT_MONTSERRAT_8
-        case  8:
-          font = &lv_font_montserrat_8;
-          break;
-        #endif
+  // Montserrat Font
+  const lv_font_table_t lv_montserrat_fonts[] = {
+  #if LV_FONT_MONTSERRAT_8
+    {  8, &lv_font_montserrat_8 },
+  #endif
+  #if LV_FONT_MONTSERRAT_10
+    { 10, &lv_font_montserrat_10 },
+  #endif
+  #if LV_FONT_MONTSERRAT_12
+    { 12, &lv_font_montserrat_12 },
+  #endif
+  #if LV_FONT_MONTSERRAT_14
+    { 14, &lv_font_montserrat_14 },
+  #endif
+  #if LV_FONT_MONTSERRAT_16
+    { 16, &lv_font_montserrat_16 },
+  #endif
+  #if LV_FONT_MONTSERRAT_18
+    { 18, &lv_font_montserrat_18 },
+  #endif
+  #if LV_FONT_MONTSERRAT_20
+    { 20, &lv_font_montserrat_20 },
+  #endif
+  #if LV_FONT_MONTSERRAT_22
+    { 22, &lv_font_montserrat_22 },
+  #endif
+  #if LV_FONT_MONTSERRAT_24
+    { 24, &lv_font_montserrat_24 },
+  #endif
+  #if LV_FONT_MONTSERRAT_26
+    { 26, &lv_font_montserrat_26 },
+  #endif
+  #if LV_FONT_MONTSERRAT_28
+    { 28, &lv_font_montserrat_28 },
+  #endif
+  #if LV_FONT_MONTSERRAT_28_COMPRESSED
+    { 28, &lv_font_montserrat_28_compressed, },
+  #endif
+  #if LV_FONT_MONTSERRAT_30
+    { 30, &lv_font_montserrat_30 },
+  #endif
+  #if LV_FONT_MONTSERRAT_32
+    { 32, &lv_font_montserrat_32 },
+  #endif
+  #if LV_FONT_MONTSERRAT_34
+    { 34, &lv_font_montserrat_34 },
+  #endif
+  #if LV_FONT_MONTSERRAT_36
+    { 36, &lv_font_montserrat_36 },
+  #endif
+  #if LV_FONT_MONTSERRAT_38
+    { 38, &lv_font_montserrat_38 },
+  #endif
+  #if LV_FONT_MONTSERRAT_40
+    { 40, &lv_font_montserrat_40 },
+  #endif
+  #if LV_FONT_MONTSERRAT_42
+    { 42, &lv_font_montserrat_42 },
+  #endif
+  #if LV_FONT_MONTSERRAT_44
+    { 44, &lv_font_montserrat_44 },
+  #endif
+  #if LV_FONT_MONTSERRAT_46
+    { 46, &lv_font_montserrat_46 },
+  #endif
+  #if LV_FONT_MONTSERRAT_48
+    { 48, &lv_font_montserrat_48 },
+  #endif
+    { 0, nullptr}
+  };
 
-        #if LV_FONT_MONTSERRAT_10
-        case  10:
-          font = &lv_font_montserrat_10;
-          break;
-        #endif
+  // Seg7 Font
+  const lv_font_table_t lv_seg7_fonts[] = {
+    {  8, &seg7_8 },
+    { 10, &seg7_10 },
+    { 12, &seg7_12 },
+    { 14, &seg7_14 },
+    { 16, &seg7_16 },
+    { 18, &seg7_18 },
+    { 20, &seg7_20 },
+    { 24, &seg7_24 },
+    { 28, &seg7_28 },
+    { 36, &seg7_36 },
+    { 48, &seg7_48 },
+  };
 
-        #if LV_FONT_MONTSERRAT_12
-        case  12:
-          font = &lv_font_montserrat_12;
-          break;
-        #endif
+  // robotocondensed-latin1
+  const lv_font_table_t lv_robotocondensed_fonts[] = {
+#if ROBOTOCONDENSED_REGULAR_12_LATIN1
+    { 12, &robotocondensed_regular_12_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_14_LATIN1
+    { 14, &robotocondensed_regular_14_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_16_LATIN1
+    { 16, &robotocondensed_regular_16_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_20_LATIN1
+    { 20, &robotocondensed_regular_20_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_22_LATIN1
+    { 22, &robotocondensed_regular_22_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_24_LATIN1
+    { 24, &robotocondensed_regular_24_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_28_LATIN1
+    { 28, &robotocondensed_regular_28_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_32_LATIN1
+    { 32, &robotocondensed_regular_32_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_36_LATIN1
+    { 36, &robotocondensed_regular_36_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_38_LATIN1
+    { 38, &robotocondensed_regular_38_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_40_LATIN1
+    { 40, &robotocondensed_regular_40_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_44_LATIN1
+    { 44, &robotocondensed_regular_44_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_48_LATIN1
+    { 48, &robotocondensed_regular_48_latin1 },
+#endif
+  };
 
-        #if LV_FONT_MONTSERRAT_14
-        case  14:
-          font = &lv_font_montserrat_14;
-          break;
-        #endif
+  // register all included fonts
+  const lv_font_names_t lv_embedded_fonts[] = {
+    { "montserrat", lv_montserrat_fonts },
+    { "seg7", lv_seg7_fonts },
+#ifdef USE_LVGL_OPENHASP
+    { "robotocondensed", lv_robotocondensed_fonts },
+#endif
+    { nullptr, nullptr}
+  };
 
-        #if LV_FONT_MONTSERRAT_16
-        case  16:
-          font = &lv_font_montserrat_16;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_18
-        case  18:
-          font = &lv_font_montserrat_18;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_20
-        case  20:
-          font = &lv_font_montserrat_20;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_22
-        case  22:
-          font = &lv_font_montserrat_22;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_24
-        case  24:
-          font = &lv_font_montserrat_24;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_26
-        case  26:
-          font = &lv_font_montserrat_26;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_28
-        case  28:
-          font = &lv_font_montserrat_28;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_30
-        case  30:
-          font = &lv_font_montserrat_30;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_32
-        case  32:
-          font = &lv_font_montserrat_32;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_34
-        case  34:
-          font = &lv_font_montserrat_34;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_36
-        case  36:
-          font = &lv_font_montserrat_36;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_38
-        case  38:
-          font = &lv_font_montserrat_38;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_40
-        case  40:
-          font = &lv_font_montserrat_40;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_42
-        case  42:
-          font = &lv_font_montserrat_42;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_44
-        case  44:
-          font = &lv_font_montserrat_44;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_46
-        case  46:
-          font = &lv_font_montserrat_46;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_48
-        case  48:
-          font = &lv_font_montserrat_48;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_28_COMPRESSED
-        case 28:
-          font = &lv_font_montserrat_28_compressed;
-          break;
-        #endif
-
-        default:
-          break;
-      }
-
-      if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
-        be_pushcomptr(vm, (void*)font);
-        be_call(vm, 1);
-        be_pop(vm, 1);
-        be_return(vm);
-      } else {
-        be_return_nil(vm);
+  // If size is zero, it is read at arg 1
+  int lv_load_embedded_font(bvm *vm, const char * name, int16_t size) {
+    if (0 == size) {
+      if (be_top(vm) >= 1 && be_isint(vm, 1)) {
+        size = be_toindex(vm, 1);
       }
     }
-    be_raise(vm, kTypeError, nullptr);
+    if (name == nullptr || 0 == size) {
+      be_raise(vm, "value_error", "");
+    }
+    // first look for font
+    const lv_font_names_t * font_name_cursor = lv_embedded_fonts;
+    for (font_name_cursor = lv_embedded_fonts; font_name_cursor->name; font_name_cursor++) {
+      if (strcmp(name, font_name_cursor->name) == 0) break;   // found
+    }
+    if (font_name_cursor->name == nullptr) {
+      be_raisef(vm, "value_error", "unknown font '%s'", name);
+    }
+    // scan for font size
+    const lv_font_table_t * font_entry = font_name_cursor->table;
+    for (font_entry = font_name_cursor->table; font_entry->size; font_entry++) {
+      if (font_entry->size == size) break;    // found
+    }
+    if (font_entry->size == 0) {
+      be_raisef(vm, "value_error", "unknown font size '%s-%i'", name, size);
+    }
+    
+    be_find_class(vm, "lv.lv_font");
+    be_pushcomptr(vm, (void*)font_entry->font);
+    be_call(vm, 1);
+    be_pop(vm, 1);
+    be_return(vm);
+  }
+
+  int lv0_load_montserrat_font(bvm *vm) {
+    return lv_load_embedded_font(vm, "montserrat", 0);
   }
 
   int lv0_load_seg7_font(bvm *vm) {
-    int argc = be_top(vm);
-    if (argc == 1 && be_isint(vm, 1)) {
-      const lv_font_t * font = nullptr;
-      int32_t   font_size = be_toindex(vm, 1);
-
-      switch (font_size) {
-        case  8: font = &seg7_8;  break;
-        case 10: font = &seg7_10; break;
-        case 12: font = &seg7_12; break;
-        case 14: font = &seg7_14; break;
-        case 16: font = &seg7_16; break;
-        case 18: font = &seg7_18; break;
-        case 20: font = &seg7_20; break;
-        case 24: font = &seg7_24; break;
-        case 28: font = &seg7_28; break;
-        case 36: font = &seg7_36; break;
-        case 48: font = &seg7_48; break;
-        default: break;
-      }
-
-      if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
-        be_pushcomptr(vm, (void*)font);
-        be_call(vm, 1);
-        be_pop(vm, 1);
-        be_return(vm);
-      } else {
-        be_return_nil(vm);
-      }
-    }
-    be_raise(vm, kTypeError, nullptr);
+    return lv_load_embedded_font(vm, "seg7", 0);
   }
 
   int lv0_load_robotocondensed_latin1_font(bvm *vm) {
 #ifdef USE_LVGL_OPENHASP
-    int argc = be_top(vm);
-    if (argc == 1 && be_isint(vm, 1)) {
-      const lv_font_t * font = nullptr;
-      int32_t   font_size = be_toindex(vm, 1);
-
-      switch (font_size) {
-#if ROBOTOCONDENSED_REGULAR_12_LATIN1
-        case 12: font = &robotocondensed_regular_12_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_14_LATIN1
-        case 14: font = &robotocondensed_regular_14_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_16_LATIN1
-        case 16: font = &robotocondensed_regular_16_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_20_LATIN1
-        case 20: font = &robotocondensed_regular_20_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_22_LATIN1
-        case 22: font = &robotocondensed_regular_22_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_24_LATIN1
-        case 24: font = &robotocondensed_regular_24_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_28_LATIN1
-        case 28: font = &robotocondensed_regular_28_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_32_LATIN1
-        case 32: font = &robotocondensed_regular_32_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_36_LATIN1
-        case 36: font = &robotocondensed_regular_36_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_38_LATIN1
-        case 38: font = &robotocondensed_regular_38_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_40_LATIN1
-        case 40: font = &robotocondensed_regular_40_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_44_LATIN1
-        case 44: font = &robotocondensed_regular_44_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_48_LATIN1
-        case 48: font = &robotocondensed_regular_48_latin1; break;
-#endif
-        default: break;
-      }
-
-      if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
-        be_pushcomptr(vm, (void*)font);
-        be_call(vm, 1);
-        be_pop(vm, 1);
-        be_return(vm);
-      } else {
-        be_return_nil(vm);
-      }
-    }
+    return lv_load_embedded_font(vm, "robotocondensed", 0);
 #endif // USE_LVGL_OPENHASP
     be_raise(vm, kTypeError, nullptr);
   }
 
+  /*********************************************************************************************\
+   * Tasmota Logo
+  \*********************************************************************************************/
   #include "lvgl_berry/tasmota_logo_64_truecolor_alpha.h"
 
   void lv_img_set_tasmota_logo(lv_obj_t * img) {
@@ -956,10 +915,52 @@ extern "C" {
     if (!glue) { be_return_nil(vm); }
 
     char fname[32];
-    snprintf(fname, sizeof(fname), "/screenshot-%d.raw", Rtc.utc_time);
+    snprintf(fname, sizeof(fname), "/screenshot-%d.bmp", Rtc.utc_time);
     File f = dfsp->open(fname, "w");
     if (f) {
       glue->setScreenshotFile(&f);
+
+      uint32_t bmp_width = lv_disp_get_hor_res(nullptr);
+      uint32_t bmp_height = lv_disp_get_ver_res(nullptr);
+
+      // write BMP header
+      static const uint8_t bmp_sign[] = { 0x42, 0x4d };   // BM = Windows
+      f.write(bmp_sign, sizeof(bmp_sign));
+      size_t bmp_size = bmp_width * bmp_height * LV_COLOR_DEPTH / 8 + 0x44;
+      f.write((uint8_t*)&bmp_size, sizeof(bmp_size));
+      uint32_t zero = 0;
+      f.write((uint8_t*) &zero, sizeof(zero));  // reserved 4-bytes
+      uint32_t bmp_offset_to_pixels = 0x44;  // TODO
+      f.write((uint8_t*) &bmp_offset_to_pixels, sizeof(bmp_offset_to_pixels));
+
+      // DIB Header BITMAPINFOHEADER
+      size_t bmp_dib_header_size = 52;                    // BITMAPV2INFOHEADER
+      f.write((uint8_t*) &bmp_dib_header_size, sizeof(bmp_dib_header_size));
+
+      f.write((uint8_t*) &bmp_width, sizeof(bmp_width));
+      f.write((uint8_t*) &bmp_height, sizeof(bmp_height));
+
+      // rest of header
+      // BITMAPV2INFOHEADER = 52 bytes header, 40 bytes sub-header
+      static const uint8_t bmp_dib_header[] = {
+        0x01, 0x00,                       // planes
+          16, 0x00,                       // bits per pixel = 16
+        0x03, 0x00, 0x00, 0x00,           // compression = BI_BITFIELDS uncrompressed
+        0x00, 0x00, 0x00, 0x00,           // Image size, 0 is valid for BI_RGB (uncompressed) TODO
+        0x00, 0x00, 0x00, 0x00,           // X pixels per meter
+        0x00, 0x00, 0x00, 0x00,           // Y pixels per meter
+        0x00, 0x00, 0x00, 0x00,           // Colors in table
+        0x00, 0x00, 0x00, 0x00,           // Important color count
+
+        // RGB masks
+        0x00, 0xF8, 0x00, 0x00,           // Red channel mask
+        0xE0, 0x07, 0x00, 0x00,           // Green channel mask
+        0x1F, 0x00, 0x00, 0x00,           // Blue channel mask
+
+        0x00, 0x00,                       // Padding to align on 4 bytes boundary
+      };
+      f.write(bmp_dib_header, sizeof(bmp_dib_header));
+      // now we can write the pixels array
 
       // redraw screen
       lv_obj_invalidate(lv_scr_act());

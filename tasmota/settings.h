@@ -162,7 +162,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t show_heap_with_timestamp : 1; // bit 16 (v9.5.0.9)  - SetOption130 - (Debug) Show heap with logging timestamp
     uint32_t tuya_allow_dimmer_0 : 1;      // bit 17 (v10.0.0.3) - SetOption131 - (Tuya) Allow save dimmer = 0 receved by MCU
     uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - (TLS) use fingerprint validation instead of CA based
-    uint32_t shift595_invert_outputs : 1;  // bit 19 (v10.0.0.5) - SetOption133 - (Shift595) invert outputs of 74x595 shift registers
+    uint32_t shift595_invert_outputs : 1;  // bit 19 (v10.0.0.4) - SetOption133 - (Shift595) invert outputs of 74x595 shift registers
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22
@@ -487,8 +487,7 @@ typedef struct {
   int32_t       energy_kWhyesterday_ph[3]; // 320
   int32_t       energy_kWhtotal_ph[3];     // 32C
 
-  uint8_t       shift595_device_count;     // 338 
-  uint8_t       free_339[6];               // 339
+  uint8_t       free_338[7];               // 338
 
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
@@ -687,8 +686,9 @@ typedef struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
 
-  uint8_t       free_ea6[33];              // EA6
+  uint8_t       free_ea6[32];              // EA6
 
+  uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7
   uint8_t       sta_active;                // EC8
   uint8_t       rule_stop;                 // EC9

@@ -176,7 +176,7 @@ enum UserSelectablePins {
   GPIO_BL0942_RX,                      // BL0942 Serial interface
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
   GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
-  GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74HC595 Shift register
+  GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -937,7 +937,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // ESP32
 
 #ifdef USE_SHIFT595
-  AGPIO(GPIO_SHIFT595_SRCLK),            // 74HC595 shift register
+  AGPIO(GPIO_SHIFT595_SRCLK),            // 74x595 shift register
   AGPIO(GPIO_SHIFT595_RCLK),
   AGPIO(GPIO_SHIFT595_OE),
   AGPIO(GPIO_SHIFT595_SER),

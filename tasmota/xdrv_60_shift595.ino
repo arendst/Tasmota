@@ -21,16 +21,16 @@
 #define XDRV_60           60
 
 const char kShift595Commands[] PROGMEM = "|" D_CMND_SHIFT595_DEVICE_COUNT ;
-void (* const Shit595Command[])(void) PROGMEM = { &CmndShift595Devices };
+void (* const Shift595Command[])(void) PROGMEM = { &CmndShift595Devices };
 
 struct Shift595 {
   int8_t pinSRCLK;
   int8_t pinRCLK;
   int8_t pinSER;
   int8_t pinOE;
-  bool connected = false;
   int8_t outputs;
   int8_t first = TasmotaGlobal.devices_present;
+  bool connected = false;
 } Shift595;
 
 void Shift595Init(void)
@@ -56,7 +56,7 @@ void Shift595Init(void)
     Shift595.outputs = Settings->shift595_device_count * 8;
     TasmotaGlobal.devices_present += Shift595.outputs;
     Shift595.connected = true;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("595: Controlling relays POWER%d to POWER%d"), Shift595.first + 1, Shift595.outputs);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("595: Controlling relays POWER%d to POWER%d"), Shift595.first + 1, Shift595.first + Shift595.outputs);
   }
 }
 
@@ -70,8 +70,7 @@ void Shift595SwitchRelay(void)
   if (Shift595.connected == true) {
     for (uint32_t i = 0; i < Shift595.outputs; i++) {
       uint8_t relay_state = bitRead(XdrvMailbox.index, Shift595.first + Shift595.outputs -1 -i);
-      // digitalWrite(Shift595.pinSER, Settings->flag5.shift595_invert_outputs ? !relay_state : relay_state);
-      digitalWrite(Shift595.pinSER, relay_state);
+      digitalWrite(Shift595.pinSER, Settings->flag5.shift595_invert_outputs ? !relay_state : relay_state);
       Shift595LatchPin(Shift595.pinSRCLK);
     }
 
@@ -108,6 +107,7 @@ bool Xdrv60(uint8_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kShift595Commands, Shift595Command);
         break;
+  }
   return result;
 }
 
