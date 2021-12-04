@@ -220,7 +220,7 @@ static binstance* newobject(bvm *vm, bclass *c)
 /* Instanciate new instance from stack with argc parameters */
 /* Pushes the constructor on the stack to be executed if a construtor is found */
 /* Returns true if a constructor is found */
-bbool be_class_newobj(bvm *vm, bclass *c, int32_t pos, int argc, int mode)
+bbool be_class_newobj(bvm *vm, bclass *c, int pos, int argc, int mode)
 {
     bvalue init;
     binstance *obj = newobject(vm, c);  /* create empty object hierarchy from class hierarchy */
