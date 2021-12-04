@@ -40,7 +40,7 @@ bclass* be_newclass(bvm *vm, bstring *name, bclass *super)
 void be_class_compress(bvm *vm, bclass *c)
 {
     if (!gc_isconst(c) && c->members) {
-        be_map_release(vm, c->members); /* clear space */
+        be_map_compact(vm, c->members); /* clear space */
     }
 }
 

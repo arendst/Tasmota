@@ -343,7 +343,7 @@ bmapnode* be_map_val2node(bvalue *value)
     return (bmapnode *)((size_t)value - sizeof(bmapkey));
 }
 
-void be_map_release(bvm *vm, bmap *map)
+void be_map_compact(bvm *vm, bmap *map)
 {
     (void)vm;
     if (!gc_isconst(map)) {
