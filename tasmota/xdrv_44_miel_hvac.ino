@@ -74,7 +74,7 @@ struct miel_hvac_data_settings {
 struct miel_hvac_data_roomtemp {
 	uint8_t			_pad1[2];
 	uint8_t			temp;
-	uint8_t			_pad1[2];
+	uint8_t			_pad2[2];
 	uint8_t			temp05;
 };
 
@@ -1096,16 +1096,17 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	if (sc->sc_temp.type != 0) {
 		const struct miel_hvac_data_roomtemp *rt =
 		    &sc->sc_temp.data.roomtemp;
+		char room_temp[33];
 		if(rt->temp05 == 0) {
 			unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
+			dtostrfd(ConvertTemp(temp),
+		    	    Settings->flag2.temperature_resolution, room_temp);
 			}
 		else {
-			unsigned float temp = (miel_hvac_roomtemp2deg(rt->temp05) - 128)/2;
+			float temp = (rt->temp05 - 128)/2;
+			dtostrfd(ConvertTemp(temp),
+		    	    Settings->flag2.temperature_resolution, room_temp);
 		}
-		char room_temp[33];
-
-		dtostrfd(ConvertTemp(temp),
-		    Settings->flag2.temperature_resolution, room_temp);
 		ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"),
 		    room_temp);
 
