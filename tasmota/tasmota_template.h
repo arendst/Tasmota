@@ -176,6 +176,7 @@ enum UserSelectablePins {
   GPIO_BL0942_RX,                      // BL0942 Serial interface
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
   GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
+  GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -372,7 +373,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0942_RX "|"
   D_SENSOR_HM330X_SET "|"
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
-  ;
+
+  D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
+;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
@@ -930,6 +933,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
 #endif  // ESP32
+
+#ifdef USE_SHIFT595
+  AGPIO(GPIO_SHIFT595_SRCLK),            // 74x595 shift register
+  AGPIO(GPIO_SHIFT595_RCLK),
+  AGPIO(GPIO_SHIFT595_OE),
+  AGPIO(GPIO_SHIFT595_SER),
+#endif
 };
 
 /*-------------------------------------------------------------------------------------------*\

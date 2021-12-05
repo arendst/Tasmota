@@ -1083,4 +1083,10 @@
 #define D_NEOPOOL_PH_LOW                  "too low"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "pump time exceeded"
 
+// xdrv_60_shift595.ino
+#define D_GPIO_SHIFT595_SRCLK                "74x595 SRCLK"
+#define D_GPIO_SHIFT595_RCLK                 "74x595 RCLK"
+#define D_GPIO_SHIFT595_OE                   "74x595 OE"
+#define D_GPIO_SHIFT595_SER                  "74x595 SER"
+
 #endif  // _LANGUAGE_RU_RU_H_

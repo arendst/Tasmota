@@ -1196,6 +1196,9 @@ void SettingsDefaultSet2(void) {
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
+  flag5.shift595_invert_outputs |= SHIFT595_INVERT_OUTPUTS;
+  Settings->shift595_device_count = SHIFT595_DEVICE_COUNT; 
+
   Settings->flag = flag;
   Settings->flag2 = flag2;
   Settings->flag3 = flag3;
