@@ -68,11 +68,14 @@ struct miel_hvac_data_settings {
 	uint8_t			widevane;
 #define MIEL_HVAC_SETTTINGS_WIDEVANE_MASK \
 					0x0f
+	uint8_t			temp05;
 };
 
 struct miel_hvac_data_roomtemp {
 	uint8_t			_pad1[2];
 	uint8_t			temp;
+	uint8_t			_pad1[2];
+	uint8_t			temp05;
 };
 
 struct miel_hvac_data_status {
@@ -109,8 +112,10 @@ CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp) == 5);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.fan) == 6);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.vane) == 7);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.widevane) == 10);
+CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp05) == 11);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp05) == 6);
 
 /* to hvac */
 
@@ -140,6 +145,7 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_F_TEMP		(1 << 10)
 #define MIEL_HVAC_UPDATE_F_FAN		(1 << 11)
 #define MIEL_HVAC_UPDATE_F_VANE		(1 << 12)
+#define MIEL_HVAC_UPDATE_F_TEMP05	(1 << 19)
 	uint8_t			power;
 #define MIEL_HVAC_UPDATE_POWER_OFF	0x00
 #define MIEL_HVAC_UPDATE_POWER_ON	0x01
@@ -180,7 +186,8 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_WIDEVANE_LR	0x08
 #define MIEL_HVAC_UPDATE_WIDEVANE_SWING	0x0c
 #define MIEL_HVAC_UPDATE_WIDEVANE_ADJ	0x80
-	uint8_t			_pad2[2];
+	uint8_t			temp05;
+	uint8_t			_pad2[1];
 } __packed;
 
 CTASSERT(sizeof(struct miel_hvac_msg_update) == 16);
@@ -192,11 +199,16 @@ CTASSERT(offsetof(struct miel_hvac_msg_update, temp) == MIEL_HVAC_OFFS(10));
 CTASSERT(offsetof(struct miel_hvac_msg_update, fan) == MIEL_HVAC_OFFS(11));
 CTASSERT(offsetof(struct miel_hvac_msg_update, vane) == MIEL_HVAC_OFFS(12));
 CTASSERT(offsetof(struct miel_hvac_msg_update, widevane) == MIEL_HVAC_OFFS(18));
+CTASSERT(offsetof(struct miel_hvac_msg_update, temp05) == MIEL_HVAC_OFFS(19));
 
 static inline uint8_t
 miel_hvac_deg2temp(uint8_t deg)
 {
-	return (31 - deg);
+#ifndef MIEL_HVAC_ENHANCED_RES
+return (31 - deg);
+#else
+return 2*deg + 128;
+#endif
 }
 
 static inline uint8_t
@@ -686,16 +698,20 @@ miel_hvac_cmnd_settemp(void)
 
 	if (XdrvMailbox.data_len == 0)
 		return;
-
+	
 	degc = strtoul(XdrvMailbox.data, nullptr, 0);
 	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN ||
 	    degc > MIEL_HVAC_UPDATE_TEMP_MAX) {
 		miel_hvac_respond_unsupported();
 		return;
 	}
-
-	update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
-	update->temp = miel_hvac_deg2temp(degc);
+		#ifndef MIEL_HVAC_ENHANCED_RES
+		update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
+		update->temp = miel_hvac_deg2temp(degc);
+		#else
+		update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP05);
+		update->temp05 = miel_hvac_deg2temp(degc);
+		#endif
 
 	ResponseCmndNumber(degc);
 }
@@ -871,9 +887,15 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""),
 		    set->power ? name : "off");
 	}
-
-	dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
-	    Settings->flag2.temperature_resolution, temp);
+	if (set->temp05 == 0) {
+		dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
+	    		Settings->flag2.temperature_resolution, temp);
+	}
+	else {
+		#define MIEL_HVAC_ENHANCED_RES	1
+		dtostrfd(ConvertTemp((float)(((set->temp05 - 128))/2)),
+	    		Settings->flag2.temperature_resolution, temp);
+	}
 	ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_TEMP "\":%s"), temp);
 
 	name = miel_hvac_map_byval(set->fan,
@@ -1074,7 +1096,12 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	if (sc->sc_temp.type != 0) {
 		const struct miel_hvac_data_roomtemp *rt =
 		    &sc->sc_temp.data.roomtemp;
-		unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
+		if(rt->temp05 == 0) {
+			unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
+			}
+		else {
+			unsigned float temp = (miel_hvac_roomtemp2deg(rt->temp05) - 128)/2;
+		}
 		char room_temp[33];
 
 		dtostrfd(ConvertTemp(temp),
