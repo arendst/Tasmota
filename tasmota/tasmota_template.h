@@ -374,9 +374,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HM330X_SET "|"
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
 
-#ifdef USE_SHIFT595
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
-#endif
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
