@@ -339,7 +339,7 @@ void TCPInit(void) {
     serial_config_rfc2217 = Settings->tcp_config & 0x7F;
 
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
-    TCPSerial->begin(Settings->tcp_baudrate * 1200 + (!Settings->tcp_baudrate ? 300 : 0), ConvertSerialConfig(0x7F & Settings->tcp_config));
+    TCPSerial->begin(Settings->tcp_baudrate ? Settings->tcp_baudrate * 1200 : 300, ConvertSerialConfig(0x7F & Settings->tcp_config));
     if (TCPSerial->hardwareSerial()) {
       ClaimSerial();
     }
@@ -404,10 +404,10 @@ void CmndTCPBaudrate(void) {
     XdrvMailbox.payload /= 1200;  // Make it a valid baudrate, implicitely handles special case 0 -> 300Bd
     Settings->tcp_baudrate = XdrvMailbox.payload;
     if(TCPSerial) {
-      TCPSerial->begin(Settings->tcp_baudrate * 1200 + (!Settings->tcp_baudrate ? 300 : 0), ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new baud rate
+      TCPSerial->begin(Settings->tcp_baudrate ? Settings->tcp_baudrate * 1200 : 300, ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new baud rate
     }
   }
-  ResponseCmndNumber(Settings->tcp_baudrate * 1200 + (!Settings->tcp_baudrate ? 300 : 0));
+  ResponseCmndNumber(Settings->tcp_baudrate ? Settings->tcp_baudrate * 1200 : 300);
 }
 
 void CmndTCPConfig(void) {
@@ -417,7 +417,7 @@ void CmndTCPConfig(void) {
       Settings->tcp_config = 0x80 | serial_config; // default 0x00 should be 8N1
       serial_config_rfc2217 = serial_config;
       if(TCPSerial) {
-        TCPSerial->begin(Settings->tcp_baudrate * 1200 + (!Settings->tcp_baudrate ? 300 : 0), ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new config
+        TCPSerial->begin(Settings->tcp_baudrate ? Settings->tcp_baudrate * 1200 : 300, ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new config
       }
 
     }
