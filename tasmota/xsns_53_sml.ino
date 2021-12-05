@@ -1553,6 +1553,9 @@ void SML_Decode(uint8_t index) {
             // calc difference
             dtimes[dindex] = millis();
             double vdiff = meter_vars[ind - 1] - dvalues[dindex];
+            if(dvalues[dindex] > 0) {
+              dvalid[vindex] = 1;
+            }
             dvalues[dindex] = meter_vars[ind - 1];
             double dres = (double)360000.0 * vdiff / ((double)dtime / 10000.0);
 #ifdef USE_SML_MEDIAN_FILTER
@@ -1573,7 +1576,6 @@ void SML_Decode(uint8_t index) {
               SML_Immediate_MQTT((const char*)mp, vindex, mindex);
             }
           }
-          dvalid[vindex] = 1;
           dindex++;
         }
       } else if (*mp == 'h') {
@@ -2271,6 +2273,10 @@ void SML_Init(void) {
   for (uint32_t cnt=0;cnt<SML_MAX_VARS;cnt++) {
     meter_vars[cnt]=0;
     dvalid[cnt]=0;
+  }
+
+  for (uint32_t cnt=0;cnt<MAX_DVARS;cnt++) {
+    dvalues[cnt]=0;
   }
 
   for (uint32_t cnt=0;cnt<MAX_METERS;cnt++) {
