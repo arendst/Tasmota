@@ -843,6 +843,10 @@
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
 #define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 #define D_SENSOR_HEARTBEAT     "Heartbeat"
+#define D_GPIO_SHIFT595_SRCLK  "74x595 SRCLK"
+#define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
+#define D_GPIO_SHIFT595_OE     "74x595 OE"
+#define D_GPIO_SHIFT595_SER    "74x595 SER"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -1082,11 +1086,5 @@
 #define D_NEOPOOL_PH_HIGH                 "твърде високо"      // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "твърде ниско"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "превишено време за помпане"
-
-// xdrv_60_shift595.ino
-#define D_GPIO_SHIFT595_SRCLK                "74x595 SRCLK"
-#define D_GPIO_SHIFT595_RCLK                 "74x595 RCLK"
-#define D_GPIO_SHIFT595_OE                   "74x595 OE"
-#define D_GPIO_SHIFT595_SER                  "74x595 SER"
 
 #endif  // _LANGUAGE_BG_BG_H_

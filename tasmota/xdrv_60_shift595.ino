@@ -16,6 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_SHIFT595
 
 #define XDRV_60           60
@@ -33,34 +34,34 @@ struct Shift595 {
   bool connected = false;
 } *Shift595 = nullptr;
 
-void Shift595ConfigurePin(uint8_t pin, uint8_t value = 0){
+void Shift595ConfigurePin(uint8_t pin, uint8_t value = 0) {
   pinMode(pin, OUTPUT);
   digitalWrite(pin, value);
 }
 
-void Shift595Init(void)
-{
+void Shift595Init(void) {
   if (PinUsed(GPIO_SHIFT595_SRCLK) && PinUsed(GPIO_SHIFT595_RCLK) && PinUsed(GPIO_SHIFT595_SER)) {
     Shift595 = (struct Shift595*)calloc(1, sizeof(struct Shift595));
-    
-    Shift595->pinSRCLK = Pin(GPIO_SHIFT595_SRCLK);
-    Shift595->pinRCLK = Pin(GPIO_SHIFT595_RCLK);
-    Shift595->pinSER = Pin(GPIO_SHIFT595_SER);
+    if (Shift595) {
+      Shift595->pinSRCLK = Pin(GPIO_SHIFT595_SRCLK);
+      Shift595->pinRCLK = Pin(GPIO_SHIFT595_RCLK);
+      Shift595->pinSER = Pin(GPIO_SHIFT595_SER);
 
-    Shift595ConfigurePin(Shift595->pinSRCLK);
-    Shift595ConfigurePin(Shift595->pinRCLK);
-    Shift595ConfigurePin(Shift595->pinSER);
-    
-    if (PinUsed(GPIO_SHIFT595_OE)) {
-      Shift595->pinOE = Pin(GPIO_SHIFT595_OE);
-      Shift595ConfigurePin(Shift595->pinOE, 1);
+      Shift595ConfigurePin(Shift595->pinSRCLK);
+      Shift595ConfigurePin(Shift595->pinRCLK);
+      Shift595ConfigurePin(Shift595->pinSER);
+
+      if (PinUsed(GPIO_SHIFT595_OE)) {
+        Shift595->pinOE = Pin(GPIO_SHIFT595_OE);
+        Shift595ConfigurePin(Shift595->pinOE, 1);
+      }
+
+      Shift595->first = TasmotaGlobal.devices_present;
+      Shift595->outputs = Settings->shift595_device_count * 8;
+      TasmotaGlobal.devices_present += Shift595->outputs;
+      Shift595->connected = true;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("595: Controlling relays POWER%d to POWER%d"), Shift595->first + 1, Shift595->first + Shift595->outputs);
     }
-
-    Shift595->first = TasmotaGlobal.devices_present;
-    Shift595->outputs = Settings->shift595_device_count * 8;
-    TasmotaGlobal.devices_present += Shift595->outputs;
-    Shift595->connected = true;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("595: Controlling relays POWER%d to POWER%d"), Shift595->first + 1, Shift595->first + Shift595->outputs);
   }
 }
 
@@ -69,8 +70,7 @@ void Shift595LatchPin(uint8_t pin) {
   digitalWrite(pin, 0);
 }
 
-void Shift595SwitchRelay(void)
-{
+void Shift595SwitchRelay(void) {
   if (Shift595 && Shift595->connected == true) {
     for (uint32_t i = 0; i < Shift595->outputs; i++) {
       uint8_t relay_state = bitRead(XdrvMailbox.index, Shift595->first + Shift595->outputs -1 -i);
@@ -81,9 +81,9 @@ void Shift595SwitchRelay(void)
     Shift595LatchPin(Shift595->pinRCLK);
 
     if (PinUsed(GPIO_SHIFT595_OE)) {
-        digitalWrite(Shift595->pinOE, 0);     
-      }
+        digitalWrite(Shift595->pinOE, 0);
     }
+  }
 }
 
 void CmndShift595Devices(void) {
@@ -98,8 +98,7 @@ void CmndShift595Devices(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv60(uint8_t function)
-{
+bool Xdrv60(uint8_t function) {
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {

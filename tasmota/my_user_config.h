@@ -893,7 +893,7 @@
 
 // -- Other sensors/drivers -----------------------
 
-// #define USE_SHIFT595
+//#define USE_SHIFT595                             // Add support for 74xx595 8-bit shift registers (+0k7 code)
   #define SHIFT595_INVERT_OUTPUTS false            // [SetOption133] Don't invert outputs of 74x595 shift register
   #define SHIFT595_DEVICE_COUNT  1                 // [Shift595DeviceCount] Set the number of connected 74x595 shift registers
 

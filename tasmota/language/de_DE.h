@@ -843,6 +843,10 @@
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
 #define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
 #define D_SENSOR_HEARTBEAT     "Herzschlag"
+#define D_GPIO_SHIFT595_SRCLK  "74x595 SRCLK"
+#define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
+#define D_GPIO_SHIFT595_OE     "74x595 OE"
+#define D_GPIO_SHIFT595_SER    "74x595 SER"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -1082,11 +1086,5 @@
 #define D_NEOPOOL_PH_HIGH                 "zu hoch"          // ph Alarms
 #define D_NEOPOOL_PH_LOW                  "zu niedrig"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "Pumpzeit überschritten"
-
-// xdrv_60_shift595.ino
-#define D_GPIO_SHIFT595_SRCLK                "74x595 SRCLK"
-#define D_GPIO_SHIFT595_RCLK                 "74x595 RCLK"
-#define D_GPIO_SHIFT595_OE                   "74x595 OE"
-#define D_GPIO_SHIFT595_SER                  "74x595 SER"
 
 #endif  // _LANGUAGE_DE_DE_H_
