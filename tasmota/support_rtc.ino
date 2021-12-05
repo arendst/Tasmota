@@ -140,13 +140,9 @@ String GetDuration(uint32_t time)
   BreakTime(time, ut);
 
   // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
-//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
 
-  // "128 14:35:44" - OpenVMS
-  // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
-
-  return String(dt);  // 128T14:35:44
+  return String(dt);
 }
 
 String GetDT(uint32_t time)
