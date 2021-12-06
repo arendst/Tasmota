@@ -202,15 +202,15 @@ CTASSERT(offsetof(struct miel_hvac_msg_update, vane) == MIEL_HVAC_OFFS(12));
 CTASSERT(offsetof(struct miel_hvac_msg_update, widevane) == MIEL_HVAC_OFFS(18));
 CTASSERT(offsetof(struct miel_hvac_msg_update, temp05) == MIEL_HVAC_OFFS(19));
 
-static inline float
+static inline uint8_t
 miel_hvac_deg2temp(float deg)
 {
 	if (!temp_type) {
 		return (31 - deg);
 	}
 	else {
-		deg += 128;
-		return ((float) 2*deg);
+		deg = 2*deg + 128;
+		return ((uint8_t) deg);
 	}
 }
 
@@ -714,7 +714,7 @@ miel_hvac_cmnd_settemp(void)
 	if (XdrvMailbox.data_len == 0)
 		return;
 	
-	degc = strtoul(XdrvMailbox.data, nullptr, 0);
+	degc = strtof(XdrvMailbox.data, nullptr);
 	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN ||
 	    degc > MIEL_HVAC_UPDATE_TEMP_MAX) {
 		miel_hvac_respond_unsupported();
@@ -944,7 +944,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 
 	ResponseAppend_P(PSTR("}"));
 
-	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACSettings"));
+	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACSettings"), Settings->flag5.mqtt_info_retain);
 }
 
 static void
@@ -985,7 +985,7 @@ miel_hvac_data_response(struct miel_hvac_softc *sc,
 	Response_P(PSTR("{\"Bytes\":\"%s\"}"),
 	    ToHex_P((uint8_t *)d, sizeof(*d), hex, sizeof(hex)));
 
-	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACData"));
+	MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("HVACData"),Settings->flag5.mqtt_info_retain);
 }
 
 static void
