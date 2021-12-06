@@ -102,7 +102,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v10.0.0.4
 ### Added
-- 1 second heartbeat GPIO
+- One second heartbeat GPIO
 - (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
 - Command ``TcpConfig`` for TCPBridge protocol configuration [#13565](https://github.com/arendst/Tasmota/issues/13565)
 - Support for HDC2010 temperature/humidity sensor by Luc Boudreau [#13633](https://github.com/arendst/Tasmota/issues/13633)
@@ -110,6 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages [#13750](https://github.com/arendst/Tasmota/issues/13750)
 - Support for GPE Multi color smart light as sold by Action in the Netherlands
 - Shutter support for venetian blinds with tilt control
+- Support for 74xx595 8-bit shift registers [#13921](https://github.com/arendst/Tasmota/issues/13921)
 - ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - ESP32 Autoconfiguration
 - ESP32 Preliminary support for Tasmota Apps (.tapp extesions)
