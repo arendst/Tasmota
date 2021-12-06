@@ -99,7 +99,7 @@ static bmodule* new_module(bvm *vm, const bntvmodule *nm)
         obj->table = NULL; /* gc protection */
         obj->table = be_map_new(vm);
         insert_attrs(vm, obj->table, nm);
-        be_map_release(vm, obj->table); /* clear space */
+        be_map_compact(vm, obj->table); /* clear space */
         be_stackpop(vm, 1);
     }
     return obj;

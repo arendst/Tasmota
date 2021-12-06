@@ -843,6 +843,10 @@
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
 #define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
 #define D_SENSOR_HEARTBEAT              "Battito cardiaco"
+#define D_GPIO_SHIFT595_SRCLK           "74x595 - SRCLK"
+#define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
+#define D_GPIO_SHIFT595_OE              "74x595 - OE"
+#define D_GPIO_SHIFT595_SER             "74x595 - SER"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

@@ -42,7 +42,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
 static void m_solidify_map(bvm *vm, bmap * map, const char *class_name)
 {
     // compact first
-    be_map_release(vm, map);
+    be_map_compact(vm, map);
     
     logfmt("    be_nested_map(%i,\n", map->count);
 

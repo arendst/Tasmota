@@ -330,7 +330,6 @@ static bstring* string_range(bvm *vm, bstring *str, binstance *range)
 {
     bint lower, upper;
     bint size = str_len(str);   /* size of source string */
-    // bint size = be_data_size(vm, -1); /* get source list size */
     /* get index range */
     bvalue temp;
     be_instance_member(vm, range, be_newstr(vm, "__lower__"), &temp);

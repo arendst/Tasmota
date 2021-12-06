@@ -56,6 +56,6 @@ bvalue* be_map_insertstr(bvm *vm, bmap *map, bstring *key, bvalue *value);
 void be_map_removestr(bvm *vm, bmap *map, bstring *key);
 bmapnode* be_map_next(bmap *map, bmapiter *iter);
 bmapnode* be_map_val2node(bvalue *value);
-void be_map_release(bvm *vm, bmap *map);
+void be_map_compact(bvm *vm, bmap *map);
 
 #endif

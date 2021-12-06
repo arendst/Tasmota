@@ -784,7 +784,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_SONOFF_SPM
     feature8 |= 0x00040000;
 #endif
-//    feature8 |= 0x00080000;
+#ifdef USE_SHIFT595
+    feature8 |= 0x00080000;  // xdrv_60_shift595.ino
+#endif
 
 //    feature8 |= 0x00100000;
 //    feature8 |= 0x00200000;
