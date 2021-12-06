@@ -50,7 +50,7 @@
  * Gui for Overload Protection entry (is handled by ARM processor).
  * Gui for Scheduling entry (is handled by ARM processor).
  * Yellow led functionality.
- * Interpretation of reset sequence on GPIO's 12-14.
+ * SPI master to ARM (ARM firmware upload from ESP using EasyFlash).
  *
  * Nice to have:
  * Support for all 32 SPM4Relay units equals 128 relays
@@ -61,9 +61,9 @@
  * GPIO03 - Serial console RX
  * GPIO04 - ARM processor TX (115200bps8N1)
  * GPIO05 - ETH POWER
- * GPIO12 - SPI MISO ARM pulsetrain code (input?)
- * GPIO13 - SPI CLK
- * GPIO14 - SPI CS ARM pulsetrain eoc (input?)
+ * GPIO12 - SPI MOSI ARM output (pin36 - PB15) - ESP input
+ * GPIO13 - SPI MISO ESP output - ARM input (pin35 - PB14)
+ * GPIO14 - SPI CLK ESP input (ARM pin34 - PB13)
  * GPIO15 - ARM reset (output) - 18ms low active 125ms after restart esp32
  * GPIO16 - ARM processor RX
  * GPIO17 - EMAC_CLK_OUT_180
@@ -116,6 +116,7 @@
 #define SSPM_FUNC_GET_ENERGY         24      // 0x18
 #define SSPM_FUNC_GET_LOG            26      // 0x1A
 #define SSPM_FUNC_ENERGY_PERIOD      27      // 0x1B
+#define SSPM_FUNC_RESET              28      // 0x1C - Remove device from eWelink and factory reset
 
 // Receive
 #define SSPM_FUNC_ENERGY_RESULT      6       // 0x06
@@ -667,9 +668,9 @@ void SSPMHandleReceivedData(void) {
         03           <- L4
         07 e5 0b 0d  <- End date (Today) 2021 nov 13
         07 e5 05 11  <- Start date       2021 may 17
-        00 05        <- 5kWh  (13/11 Today)
-        00 00        <- 0     (12/11 Yesterday)
-        00 04        <- 4kWh  (11/11 etc)
+        00 05        <- 0.05kWh  (13/11 Today)
+        00 00        <- 0        (12/11 Yesterday)
+        00 04        <- 0.04kWh  (11/11 etc)
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -679,14 +680,14 @@ void SSPMHandleReceivedData(void) {
         42 67 46
         */
         {
-          uint32_t energy_today = 0;
-          uint32_t energy_yesterday = 0;
-          uint32_t energy_total = 0;
+          float energy_today = 0;
+          float energy_yesterday = 0;
+          float energy_total = 0;
           uint32_t entries = (Sspm->expected_bytes - 22) / 2;
 
           for (uint32_t i = 0; i < entries; i++) {
-            uint32_t today_energy = (SspmBuffer[41 + (i*2)] << 8) + SspmBuffer[42 + (i*2)];
-            if (28702 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=28702kWh) pops up
+            float today_energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
+            if (112.30 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
             if (0 == i) { energy_today = today_energy; }
             if (1 == i) { energy_yesterday = today_energy; }
             energy_total += today_energy;
@@ -696,7 +697,7 @@ void SSPMHandleReceivedData(void) {
             if ((SspmBuffer[20] == Sspm->module[module][0]) && (SspmBuffer[21] == Sspm->module[module][1])) {
               Sspm->energy_today[module][channel] = energy_today;
               Sspm->energy_yesterday[module][channel] = energy_yesterday;
-              Sspm->energy_total[module][channel] = energy_total;  // xkWh
+              Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
               break;
             }
           }
@@ -705,7 +706,7 @@ void SSPMHandleReceivedData(void) {
         break;
       case SSPM_FUNC_GET_LOG:
         /* 0x1A
-        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1a 01 3a 00 6b 7e 32 37 39 37 34 13 4b 35 36 37
         1e                            Number of log entries (1e = 30)
         07 e5 0b 06 0f 25 19 02 01 00 10 byte log entry
@@ -730,6 +731,10 @@ void SSPMHandleReceivedData(void) {
         07 e5 0b 06 0e 36 37 01 01 00
         ...
         07 e5 0b 06 0d 30 2d 03 00 01 09 89 fe
+
+        Error:
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1A 00 01 03 E5 45 EB
+                                                                |  |
         */
 
         break;
@@ -920,7 +925,7 @@ void SSPMInit(void) {
     Settings->flag2.voltage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
     Settings->flag2.current_resolution = 2;   // SPM has 2 decimals
     Settings->flag2.wattage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
-    Settings->flag2.energy_resolution = 0;    // SPM has no decimals on total energy
+    Settings->flag2.energy_resolution = 1;    // SPM has 2 decimals but this keeps the gui clean
   }
 
 #if CONFIG_IDF_TARGET_ESP32
@@ -1113,18 +1118,18 @@ void SSPMEnergyShow(bool json) {
   if (json) {
     ResponseAppend_P(PSTR(",\"SPM\":{\"" D_JSON_ENERGY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_total[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.energy_resolution, &Sspm->energy_total[i >>2][i &3]);
     }
 #ifdef SSPM_JSON_ENERGY_YESTERDAY
     ResponseAppend_P(PSTR("],\"" D_JSON_YESTERDAY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_yesterday[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.energy_resolution, &Sspm->energy_yesterday[i >>2][i &3]);
     }
 #endif
 #ifdef SSPM_JSON_ENERGY_TODAY
     ResponseAppend_P(PSTR("],\"" D_JSON_TODAY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_today[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.energy_resolution, &Sspm->energy_today[i >>2][i &3]);
     }
 #endif
     ResponseAppend_P(PSTR("],\"" D_JSON_ACTIVE_POWERUSAGE "\":["));
