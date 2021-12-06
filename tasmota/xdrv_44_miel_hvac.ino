@@ -207,7 +207,7 @@ miel_hvac_deg2temp(uint8_t deg)
 		return (31 - deg);
 	}
 	else {
-		return 2*deg + 128;
+		return (2*deg + 128);
 	}
 }
 
