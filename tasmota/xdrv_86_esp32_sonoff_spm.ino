@@ -28,6 +28,8 @@
  * {"NAME":"Sonoff SPM (POC1)","GPIO":[1,1,1,1,3200,1,1,1,1,1,1,1,3232,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
  * Add ethernet support:
  * {"NAME":"Sonoff SPM (POC2)","GPIO":[1,0,1,0,3200,5536,0,0,1,1,1,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
+ * Remove all user selectable GPIOs:
+ * {"NAME":"Sonoff SPM (POC2)","GPIO":[0,0,0,0,3200,5536,0,0,0,0,0,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,0,0,32,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Things to know:
  * Bulk of the action is handled by ARM processors present in every unit communicating over modbus RS-485.
@@ -45,15 +47,21 @@
  * Tasmota POC2:
  * Ethernet support.
  * Gui optimized for energy display.
+ * Yellow led lights if no ARM connection can be made.
+ * Yellow led blinks 2 seconds if an ARM-ESP comms CRC error is detected.
+ * Supported commands:
+ *   SspmDisplay 0|1     - Select alternative GUI rotating display either all or powered on only
+ *   SspmIAmHere<relay>  - Blink ERROR in SPM-4Relay where relay resides
+ *   SspmScan            - Rescan ARM modbus taking around 20 seconds
+ *   SspmReset 1         - Reset ARM and restart ESP
  *
  * Todo:
  * Gui for Overload Protection entry (is handled by ARM processor).
  * Gui for Scheduling entry (is handled by ARM processor).
- * Yellow led functionality.
  * SPI master to ARM (ARM firmware upload from ESP using EasyFlash).
  *
  * Nice to have:
- * Support for all 32 SPM4Relay units equals 128 relays
+ * Support for all 32 SPM-4Relay units equals 128 relays (restricted due to internal Tasmota register use)
  *
  * GPIO's used:
  * GPIO00 - Bootmode / serial flash
@@ -126,6 +134,7 @@
 #define SSPM_FUNC_SCAN_DONE          25      // 0x19
 
 #define SSPM_GPIO_ARM_RESET          15
+#define SSPM_GPIO_LED_ERROR          33
 
 #define SSPM_MODULE_NAME_SIZE        12
 
@@ -176,6 +185,7 @@ typedef struct {
   uint8_t command_sequence;
   uint8_t mstate;
   uint8_t last_button;
+  uint8_t error_led_blinks;
   bool discovery_triggered;
 } TSspm;
 
@@ -428,7 +438,7 @@ void SSPMSendSetTime(void) {
   SspmBuffer[25] = time.second;
   SspmBuffer[26] = 0;
   SspmBuffer[27] = 0;
-  SspmBuffer[28] = 1 + (Rtc.time_timezone / 60);  // Not sure why the "1" is needed but it is in my case
+  SspmBuffer[28] = Rtc.time_timezone / 60;
   SspmBuffer[29] = abs(Rtc.time_timezone % 60);
   Sspm->command_sequence++;
   SspmBuffer[30] = Sspm->command_sequence;
@@ -747,6 +757,12 @@ void SSPMHandleReceivedData(void) {
         */
 
         break;
+      case SSPM_FUNC_RESET:
+        /* 0x1C
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1c 00 01 00 0b f9 e3
+        */
+//        TasmotaGlobal.restart_flag = 2;
+        break;
     }
   } else {
     // Initiated by ARM
@@ -884,6 +900,7 @@ void SSPMSerialInput(void) {
         if (crc_rcvd == crc_calc) {
           SSPMHandleReceivedData();
         } else {
+          Sspm->error_led_blinks = 20;
           AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: CRC error"));
         }
         Sspm->serial_in_byte_counter = 0;
@@ -921,6 +938,9 @@ void SSPMInit(void) {
   pinMode(SSPM_GPIO_ARM_RESET, OUTPUT);
   digitalWrite(SSPM_GPIO_ARM_RESET, 1);
 
+  pinMode(SSPM_GPIO_LED_ERROR, OUTPUT);
+  digitalWrite(SSPM_GPIO_LED_ERROR, 0);
+
   if (0 == Settings->flag2.voltage_resolution) {
     Settings->flag2.voltage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
     Settings->flag2.current_resolution = 2;   // SPM has 2 decimals
@@ -954,11 +974,21 @@ void SSPMEvery100ms(void) {
     }
   }
 
+  if (Sspm->error_led_blinks) {
+    uint32_t state = 1;                        // Stay lit
+    if (Sspm->error_led_blinks < 255) {
+      Sspm->error_led_blinks--;
+      state = Sspm->error_led_blinks >> 1 &1;  // Blink every 0.4s
+    }
+    digitalWrite(SSPM_GPIO_LED_ERROR, state);
+  }
+
   // Fix race condition if the ARM doesn't respond
   if ((Sspm->mstate > SPM_NONE) && (Sspm->mstate < SPM_SEND_FUNC_UNITS)) {
     Sspm->counter++;
     if (Sspm->counter > 20) {
       Sspm->mstate = SPM_NONE;
+      Sspm->error_led_blinks = 255;
     }
   }
   switch (Sspm->mstate) {
@@ -1210,10 +1240,10 @@ void SSPMEnergyShow(bool json) {
 \*********************************************************************************************/
 
 const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
-  "Log|Energy|History|Scan|IamHere|Display" ;
+  "Log|Energy|History|Scan|IamHere|Display|Reset" ;
 
 void (* const SSPMCommand[])(void) PROGMEM = {
-  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay };
+  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset };
 
 void CmndSSPMLog(void) {
   // Report 29 log entries
@@ -1242,7 +1272,7 @@ void CmndSSPMScan(void) {
 }
 
 void CmndSSPMIamHere(void) {
-  // Blink module COMM led containing relay
+  // Blink module ERROR led containing relay
   if ((XdrvMailbox.payload < 1) || (XdrvMailbox.payload > TasmotaGlobal.devices_present)) { XdrvMailbox.payload = 1; }
   SSPMSendIAmHere(XdrvMailbox.payload -1);
   ResponseCmndDone();
@@ -1254,6 +1284,18 @@ void CmndSSPMDisplay(void) {
     Settings->sbflag1.sspm_display = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->sbflag1.sspm_display);
+}
+
+void CmndSSPMReset(void) {
+  // Reset ARM and restart
+  if (1 == XdrvMailbox.payload) {
+    Sspm->mstate = SPM_NONE;
+    SSPMSendCmnd(SSPM_FUNC_RESET);
+    TasmotaGlobal.restart_flag = 3;
+    ResponseCmndChar(PSTR(D_JSON_RESET_AND_RESTARTING));
+  } else {
+    ResponseCmndChar(PSTR(D_JSON_ONE_TO_RESET));
+  }
 }
 
 /*********************************************************************************************\
