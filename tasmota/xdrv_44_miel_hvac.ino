@@ -145,7 +145,6 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_F_TEMP		(1 << 10)
 #define MIEL_HVAC_UPDATE_F_FAN		(1 << 11)
 #define MIEL_HVAC_UPDATE_F_VANE		(1 << 12)
-#define MIEL_HVAC_UPDATE_F_TEMP05	(1 << 19)
 	uint8_t			power;
 #define MIEL_HVAC_UPDATE_POWER_OFF	0x00
 #define MIEL_HVAC_UPDATE_POWER_ON	0x01
@@ -204,31 +203,34 @@ CTASSERT(offsetof(struct miel_hvac_msg_update, temp05) == MIEL_HVAC_OFFS(19));
 static inline uint8_t
 miel_hvac_deg2temp(uint8_t deg)
 {
-	#ifndef MIEL_HVAC_ENHANCED_RES
-	return (31 - deg);
-	#else
-	return 2*deg + 128;
-	#endif
+	if (!Settings->flag5.mqtt_info_retain) {
+		return (31 - deg);
+	}
+	else {
+		return 2*deg + 128;
+	}
 }
 
 static inline uint8_t
 miel_hvac_temp2deg(uint8_t temp)
 {
-	#ifndef MIEL_HVAC_ENHANCED_RES
-	return (31 - temp);
-	#else
-	return ((float)(((temp - 128))/2));
-	#endif
+	if (!Settings->flag5.mqtt_info_retain) {
+		return (31 - temp);
+	}
+	else {
+		return ((float)(((temp - 128))/2));
+	}
 }
 
 static inline unsigned int
 miel_hvac_roomtemp2deg(uint8_t roomtemp)
 {
-	#ifndef MIEL_HVAC_ENHANCED_RES
-	return ((unsigned int)roomtemp + 10);
-	#else
-	return ((float)(roomtemp - 128)/2;)
-	#endif
+	if (!Settings->flag5.mqtt_info_retain) {
+		return ((unsigned int)roomtemp + 10);
+	}
+	else {
+		return ((float)((roomtemp - 128)/2));
+	}
 }
 
 struct miel_hvac_msg_remotetemp {
@@ -713,13 +715,16 @@ miel_hvac_cmnd_settemp(void)
 		miel_hvac_respond_unsupported();
 		return;
 	}
-		#ifndef MIEL_HVAC_ENHANCED_RES
-		update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
+	update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
+	if (!Settings->flag5.mqtt_info_retain) {
 		update->temp = miel_hvac_deg2temp(degc);
-		#else
-		update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP05);
+		update->temp05 = 0;
+	}
+
+	else {
+		update->temp = 0;
 		update->temp05 = miel_hvac_deg2temp(degc);
-		#endif
+	}
 
 	ResponseCmndNumber(degc);
 }
@@ -895,12 +900,11 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""),
 		    set->power ? name : "off");
 	}
-	if (set->temp05 == 0) {
+	if (!Settings->flag5.mqtt_info_retain) {
 		dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
 	    		Settings->flag2.temperature_resolution, temp);
 	}
 	else {
-		#define MIEL_HVAC_ENHANCED_RES	1
 		dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp05)),
 	    		Settings->flag2.temperature_resolution, temp);
 	}
@@ -1105,13 +1109,12 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		const struct miel_hvac_data_roomtemp *rt =
 		    &sc->sc_temp.data.roomtemp;
 		char room_temp[33];
-		if(rt->temp05 == 0) {
+		if(!Settings->flag5.mqtt_info_retain) {
 			unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
 			dtostrfd(ConvertTemp(temp),
 		    	    Settings->flag2.temperature_resolution, room_temp);
 			}
 		else {
-			#define MIEL_HVAC_ENHANCED_RES	1
 			float temp = miel_hvac_roomtemp2deg(rt->temp05);
 			dtostrfd(ConvertTemp(temp),
 		    	    Settings->flag2.temperature_resolution, room_temp);
