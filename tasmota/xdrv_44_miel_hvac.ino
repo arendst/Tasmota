@@ -204,23 +204,31 @@ CTASSERT(offsetof(struct miel_hvac_msg_update, temp05) == MIEL_HVAC_OFFS(19));
 static inline uint8_t
 miel_hvac_deg2temp(uint8_t deg)
 {
-#ifndef MIEL_HVAC_ENHANCED_RES
-return (31 - deg);
-#else
-return 2*deg + 128;
-#endif
+	#ifndef MIEL_HVAC_ENHANCED_RES
+	return (31 - deg);
+	#else
+	return 2*deg + 128;
+	#endif
 }
 
 static inline uint8_t
 miel_hvac_temp2deg(uint8_t temp)
 {
+	#ifndef MIEL_HVAC_ENHANCED_RES
 	return (31 - temp);
+	#else
+	return ((float)(((temp - 128))/2));
+	#endif
 }
 
 static inline unsigned int
 miel_hvac_roomtemp2deg(uint8_t roomtemp)
 {
+	#ifndef MIEL_HVAC_ENHANCED_RES
 	return ((unsigned int)roomtemp + 10);
+	#else
+	return ((float)(roomtemp - 128)/2;)
+	#endif
 }
 
 struct miel_hvac_msg_remotetemp {
@@ -893,7 +901,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	}
 	else {
 		#define MIEL_HVAC_ENHANCED_RES	1
-		dtostrfd(ConvertTemp((float)(((set->temp05 - 128))/2)),
+		dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp05)),
 	    		Settings->flag2.temperature_resolution, temp);
 	}
 	ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_TEMP "\":%s"), temp);
@@ -1103,7 +1111,8 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		    	    Settings->flag2.temperature_resolution, room_temp);
 			}
 		else {
-			float temp = (rt->temp05 - 128)/2;
+			#define MIEL_HVAC_ENHANCED_RES	1
+			float temp = miel_hvac_roomtemp2deg(rt->temp05);
 			dtostrfd(ConvertTemp(temp),
 		    	    Settings->flag2.temperature_resolution, room_temp);
 		}
