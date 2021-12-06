@@ -124,7 +124,7 @@
 #define XDRV_04              4
 // #define DEBUG_LIGHT
 
-enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX };
+enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_DDP, LS_MAX };
 
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
@@ -279,6 +279,10 @@ uint8_t LightDevice(void)
 static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
   return (a < b && a < c) ? a : (b < c) ? b : c;
 }
+
+// For LS_DDP Effect
+WiFiUDP ddp_udp;
+uint8_t ddp_udp_up = 0;
 
 //
 // LightStateClass
@@ -1615,6 +1619,49 @@ void LightCycleColor(int8_t direction)
   light_controller.calcLevels(Light.new_color);
 }
 
+void LightListenDDP()
+{
+  // Light channels gets completely controlled over DDP. So, we don't really check other settings.
+  // To enter this scheme, we are already assured the light is at least RGB
+  static uint8_t ddp_color[5] = { 0, 0, 0, 0, 0 };
+
+  // Can't be trying to initialize UDP too early.
+  if (TasmotaGlobal.restart_flag || TasmotaGlobal.global_state.network_down) {
+    light_state.setChannels(ddp_color);
+    light_controller.calcLevels(Light.new_color);
+    return;
+  }
+  
+  // Start DDP listener, if fail, just set last ddp_color
+  if (!ddp_udp_up) {
+    if (!ddp_udp.begin(4048)) {
+      light_state.setChannels(ddp_color);
+      light_controller.calcLevels(Light.new_color);
+      return;
+    }
+    ddp_udp_up = 1;
+    AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Listener Started");
+  }
+  
+  // Get the DDP payload over UDP
+  std::vector<uint8_t> payload;
+  while (uint16_t packet_size = ddp_udp.parsePacket()) {
+    payload.resize(packet_size);
+    if (!ddp_udp.read(&payload[0], payload.size())) {
+      continue;
+    }
+  }
+
+  // No verification checks performed against packet besides length
+  if (payload.size() > 12) {
+    ddp_color[0] = payload[10];
+    ddp_color[1] = payload[11];
+    ddp_color[2] = payload[12];
+  }
+  light_state.setChannels(ddp_color);
+  light_controller.calcLevels(Light.new_color);
+}
+
 void LightSetPower(void)
 {
 //  Light.power = XdrvMailbox.index;
@@ -1691,6 +1738,11 @@ void LightAnimate(void)
       power_off = true;
     }
   } else {
+    if ((Settings->light_scheme != LS_DDP) && (ddp_udp_up)) {
+      ddp_udp.stop();
+      ddp_udp_up = 0;
+      AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Listener Stopped");
+    }
     switch (Settings->light_scheme) {
       case LS_POWER:
         light_controller.calcLevels(Light.new_color);
@@ -1742,6 +1794,9 @@ void LightAnimate(void)
           Light.new_color[1] = changeUIntScale(Light.new_color[1], 0, 255, 0, Settings->light_color[1]);
           Light.new_color[2] = changeUIntScale(Light.new_color[2], 0, 255, 0, Settings->light_color[2]);
         }
+        break;
+      case LS_DDP:
+        LightListenDDP();
         break;
       default:
         XlgtCall(FUNC_SET_SCHEME);
