@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Tuya dimmer range issue (#13849)
 - BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3
+- Compile error BLE EQ3 driver with core 2.0.x (#13948)
 
 ## [10.0.0.3] 20211130
 ### Added
