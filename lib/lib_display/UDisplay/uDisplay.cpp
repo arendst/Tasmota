@@ -76,6 +76,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   uint8_t section = 0;
   dsp_ncmds = 0;
   lut_num = 0;
+  lvgl_param.data = 0;
+  lvgl_param.fluslines = 40;
+
   for (uint32_t cnt = 0; cnt < 5; cnt++) {
     lut_cnt[cnt] = 0;
     lut_cmd[cnt] = 0xff;
