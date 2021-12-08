@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [10.0.0] 20211019
-- Release Norman
+## [10.1.0] 20211208
+- Release Noelle
 
-## [10.0.0.4]
+## [10.0.0.4] 20211208
 ### Added
 - (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
 - Support for GPE Multi color smart light as sold by Action in the Netherlands
@@ -80,8 +80,6 @@ All notable changes to this project will be documented in this file.
 - GUI checkbox MQTT TLS not saved regression from v9.2.0.3 (#13442)
 - Discovery of shutters (#13572)
 - ESP32-C3 OneWire as used by DS18x20 (#13583)
-
-## [Released]
 
 ## [10.0.0] 20211019
 - Release Norman
