@@ -40,7 +40,7 @@ bclass* be_newclass(bvm *vm, bstring *name, bclass *super)
 void be_class_compress(bvm *vm, bclass *c)
 {
     if (!gc_isconst(c) && c->members) {
-        be_map_release(vm, c->members); /* clear space */
+        be_map_compact(vm, c->members); /* clear space */
     }
 }
 
@@ -75,7 +75,7 @@ void be_member_bind(bvm *vm, bclass *c, bstring *name, bbool var)
     }
 }
 
-void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
+void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p, bbool is_static)
 {
     bclosure *cl;
     bvalue *attr;
@@ -87,6 +87,9 @@ void be_method_bind(bvm *vm, bclass *c, bstring *name, bproto *p)
     cl = be_newclosure(vm, p->nupvals);
     cl->proto = p;
     var_setclosure(attr, cl);
+    if (is_static) {
+        func_setstatic(attr);
+    }
 }
 
 void be_prim_method_bind(bvm *vm, bclass *c, bstring *name, bntvfunc f)
@@ -217,18 +220,18 @@ static binstance* newobject(bvm *vm, bclass *c)
 /* Instanciate new instance from stack with argc parameters */
 /* Pushes the constructor on the stack to be executed if a construtor is found */
 /* Returns true if a constructor is found */
-bbool be_class_newobj(bvm *vm, bclass *c, bvalue *reg, int argc, int mode)
+bbool be_class_newobj(bvm *vm, bclass *c, int pos, int argc, int mode)
 {
     bvalue init;
-    size_t pos = reg - vm->reg;
     binstance *obj = newobject(vm, c);  /* create empty object hierarchy from class hierarchy */
-    reg = vm->reg + pos - mode; /* the stack may have changed, mode=1 when class is instanciated from module #104 */
-    var_setinstance(reg, obj);
-    var_setinstance(reg + mode, obj);  /* copy to reg and reg+1 if mode==1 */
+    // reg = vm->reg + pos - mode; /* the stack may have changed, mode=1 when class is instanciated from module #104 */
+    var_setinstance(vm->reg + pos, obj);
+    var_setinstance(vm->reg + pos - mode, obj);  /* copy to reg and reg+1 if mode==1 */
     /* find constructor */
     obj = instance_member(vm, obj, str_literal(vm, "init"), &init);
     if (obj && var_type(&init) != MT_VARIABLE) {
         /* copy argv */
+        bvalue * reg;
         for (reg = vm->reg + pos + 1; argc > 0; --argc) {
             reg[argc] = reg[argc - 2];
         }
@@ -346,10 +349,12 @@ bbool be_class_setmember(bvm *vm, bclass *o, bstring *name, bvalue *src)
 {
     bvalue v;
     be_assert(name != NULL);
-    bclass * obj = class_member(vm, o, name, &v);
-    if (obj && !var_istype(&v, MT_VARIABLE)) {
-        be_map_insertstr(vm, obj->members, name, src);
-        return btrue;
+    if (!gc_isconst(o)) {
+        bclass * obj = class_member(vm, o, name, &v);
+        if (obj && !var_istype(&v, MT_VARIABLE)) {
+            be_map_insertstr(vm, obj->members, name, src);
+            return btrue;
+        }
     }
     return bfalse;
 }

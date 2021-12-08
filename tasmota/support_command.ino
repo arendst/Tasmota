@@ -93,6 +93,10 @@ void ResponseCmndFloat(float value, uint32_t decimals) {
   Response_P(PSTR("{\"%s\":%*_f}"), XdrvMailbox.command, decimals, &value);  // Return float value without quotes
 }
 
+void ResponseCmndIdxFloat(float value, uint32_t decimals) {
+  Response_P(PSTR("{\"%s%d\":%*_f}"), XdrvMailbox.command, XdrvMailbox.index, decimals, &value);  // Return float value without quotes
+}
+
 void ResponseCmndIdxNumber(int value) {
   Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
 }
@@ -617,7 +621,7 @@ void CmndStatus(void)
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
-    MqttShowSensor();
+    MqttShowSensor(true);
     ResponseJsonEnd();
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
@@ -1063,6 +1067,9 @@ void CmndSetoptionBase(bool indexed) {
                 if (0 == XdrvMailbox.payload) {
                   TasmotaGlobal.restart_flag = 2;
                 }
+                break;
+              case 18:                     // SetOption132 - TLS Fingerprint
+                TasmotaGlobal.restart_flag = 2;
                 break;
             }
           }
@@ -1521,28 +1528,8 @@ void CmndSerialConfig(void)
       }
     }
     else if ((XdrvMailbox.payload >= 5) && (XdrvMailbox.payload <= 8)) {
-      uint8_t serial_config = XdrvMailbox.payload -5;  // Data bits 5, 6, 7 or 8, No parity and 1 stop bit
-
-      bool valid = true;
-      char parity = (XdrvMailbox.data[1] & 0xdf);
-      if ('E' == parity) {
-        serial_config += 0x08;                         // Even parity
-      }
-      else if ('O' == parity) {
-        serial_config += 0x10;                         // Odd parity
-      }
-      else if ('N' != parity) {
-        valid = false;
-      }
-
-      if ('2' == XdrvMailbox.data[2]) {
-        serial_config += 0x04;                         // Stop bits 2
-      }
-      else if ('1' != XdrvMailbox.data[2]) {
-        valid = false;
-      }
-
-      if (valid) {
+      int8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
+      if (serial_config >= 0) {
         SetSerialConfig(serial_config);
       }
     }

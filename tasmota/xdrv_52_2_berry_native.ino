@@ -46,9 +46,11 @@ extern "C" {
 \*********************************************************************************************/
 extern "C" {
   #include "be_exec.h"
+  #include "be_debug.h"
   void be_dumpstack(bvm *vm) {
     int32_t top = be_top(vm);
     AddLog(LOG_LEVEL_INFO, "BRY: top=%d", top);
+    be_tracestack(vm);
     for (uint32_t i = 1; i <= top; i++) {
       const char * tname = be_typename(vm, i);
       const char * cname = be_classname(vm, i);
@@ -492,5 +494,69 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
   return ret;
 }
 
+extern "C" {
+
+  /*********************************************************************************************\
+   * Generalized virtual members for modules
+   * 
+   * Takes a pointer to be_constint_t array and size
+   * Returns true if a match was found. In such case the result is on Berry stack
+   * 
+   * Encoding depend on prefix (which is skipped when matching names):
+   * 1. `COLOR_WHITE` int value
+   * 3. `$SYMBOL_OK"` string pointer
+   * 4. `&seg7_font` comptr
+  \*********************************************************************************************/
+  bool be_module_member(bvm *vm, const be_constint_t * definitions, size_t def_len);
+  bool be_module_member(bvm *vm, const be_constint_t * definitions, size_t def_len) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 1 && be_isstring(vm, 1)) {
+      const char * needle = be_tostring(vm, 1);
+      int32_t idx;
+
+      idx = bin_search(needle, &definitions[0].name, sizeof(definitions[0]), def_len);
+      if (idx >= 0) {
+        // we did have a match
+        const char * key = definitions[idx].name;
+        switch (key[0]) {
+          // switch depending on the first char of the key, indicating the type
+          case '$': // string
+            be_pushstring(vm, (const char*) definitions[idx].value);
+            break;
+          case '&': // native function
+            be_pushntvfunction(vm, (bntvfunc) definitions[idx].value);
+            break;
+          default:  // int
+            be_pushint(vm, definitions[idx].value);
+            break;
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/*********************************************************************************************\
+ * Manage timeout for Berry code
+ *
+\*********************************************************************************************/
+void BrTimeoutStart(void)  {
+  berry.timeout = millis() + USE_BERRY_TIMEOUT;
+  if (0 == berry.timeout) {
+    berry.timeout = 1;    // rare case when value accidentally computes to zero
+  }
+
+}
+
+void BrTimeoutYield(void) {
+  if (0 != berry.timeout) {
+    BrTimeoutStart();
+  }
+}
+
+void BrTimeoutReset(void)  {
+  berry.timeout = 0;      // remove timer
+}
 
 #endif  // USE_BERRY

@@ -75,7 +75,7 @@
   #define BMS_CHARGE_VOLT_MAX     0x8
   #define BMS_CHARGE_VOLT_MIN    0x10
   #define BMS_CHARGE_AMP_MAX     0x20
-  #define BMS_CHARGE_AMP_MIN     0x40
+  #define BMS_DISCHARGE_AMP_MAX  0x40
   #define BMS_VOLT               0x80
   #define BMS_AMP               0x100
   #define BMS_TEMP              0x200
@@ -166,7 +166,7 @@ void MCP2515_Read() {
             bms.maxChargeCurrent    = (canFrame.data[3] << 8) | canFrame.data[2];
             bms.maxDischargeCurrent = (canFrame.data[5] << 8) | canFrame.data[4];
             bms.dischargeVolt       = (canFrame.data[7] << 8) | canFrame.data[6];
-            bms.setFields          |= BMS_CHARGE_VOLT_MAX | BMS_CHARGE_VOLT_MIN | BMS_CHARGE_AMP_MAX | BMS_CHARGE_AMP_MIN;
+            bms.setFields          |= BMS_CHARGE_VOLT_MAX | BMS_CHARGE_VOLT_MIN | BMS_CHARGE_AMP_MAX | BMS_DISCHARGE_AMP_MAX;
           } else {
             MCP2515_FrameSizeError(canFrame.can_dlc, canFrame.can_id);
           }
@@ -323,6 +323,23 @@ void MCP2515_Show(bool Json) {
           ResponseAppend_P(PSTR("%s\"BattTemp\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.battTemp / 10, bms.battTemp % 10);
           jsonFirstField = false;
         }
+        if (bms.setFields & BMS_CHARGE_VOLT_MAX) {
+          ResponseAppend_P(PSTR("%s\"MaxVoltage\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.chargeVoltLimit / 10, bms.chargeVoltLimit % 10);
+          jsonFirstField = false;
+        }
+        if (bms.setFields & BMS_CHARGE_VOLT_MIN) {
+          ResponseAppend_P(PSTR("%s\"MinVoltage\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.dischargeVolt / 10, bms.dischargeVolt % 10);
+          jsonFirstField = false;
+        }
+        if (bms.setFields & BMS_CHARGE_AMP_MAX) {
+          ResponseAppend_P(PSTR("%s\"MaxChargeAmp\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.maxChargeCurrent / 10, bms.maxChargeCurrent % 10);
+          jsonFirstField = false;
+        }
+        if (bms.setFields & BMS_DISCHARGE_AMP_MAX) {
+          ResponseAppend_P(PSTR("%s\"MaxDischargeAmp\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.maxDischargeCurrent / 10, bms.maxDischargeCurrent % 10);
+          jsonFirstField = false;
+        }
+
         ResponseAppend_P(PSTR("}"));
       }
     } else {
@@ -333,8 +350,6 @@ void MCP2515_Show(bool Json) {
   } else {
   #ifdef MCP2515_BMS_CLIENT
     if (bms.setFields & BMS_MANUFACTURER) {
-      char ampStr[6];
-      dtostrf((float(bms.battAmp) / 10), 5, 1, ampStr);
       if (bms.setFields & BMS_SOC) {
         WSContentSend_PD(HTTP_SNS_SOC, bms.manuf, bms.stateOfCharge);
       }
@@ -345,11 +360,34 @@ void MCP2515_Show(bool Json) {
         WSContentSend_Voltage(bms.manuf, (float(bms.battVoltage) / 100));
       }
       if (bms.setFields & BMS_AMP) {
+        char ampStr[6];
+        dtostrf((float(bms.battAmp) / 10), 5, 1, ampStr);
         WSContentSend_PD(PSTR("{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
       }
       if (bms.setFields & BMS_TEMP) {
         WSContentSend_Temp(bms.manuf, ConvertTemp(float(bms.battTemp) / 10));
       }
+      if (bms.setFields & BMS_CHARGE_VOLT_MAX) {
+        char voltStr[6];
+        dtostrf((float(bms.chargeVoltLimit) / 10), 5, 1, voltStr);
+        WSContentSend_PD(PSTR("{s}%s Max Voltage{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, voltStr);
+      }
+      if (bms.setFields & BMS_CHARGE_VOLT_MIN) {
+        char voltStr[6];
+        dtostrf((float(bms.dischargeVolt) / 10), 5, 1, voltStr);
+        WSContentSend_PD(PSTR("{s}%s Min Voltage{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, voltStr);
+      }
+      if (bms.setFields & BMS_CHARGE_AMP_MAX) {
+        char ampStr[6];
+        dtostrf((float(bms.maxChargeCurrent) / 10), 5, 1, ampStr);
+        WSContentSend_PD(PSTR("{s}%s Max Charge Current{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
+      }
+      if (bms.setFields & BMS_DISCHARGE_AMP_MAX) {
+        char ampStr[6];
+        dtostrf((float(bms.maxDischargeCurrent) / 10), 5, 1, ampStr);
+        WSContentSend_PD(PSTR("{s}%s Max Discharge Current{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
+      }
+
     } else {
       WSContentSend_PD(PSTR("{s}MCP2515 {m} Waiting for data{e}"));
     }

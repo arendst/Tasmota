@@ -100,8 +100,8 @@ struct ENERGY {
   uint8_t data_valid[ENERGY_MAX_PHASES];
 
   uint8_t phase_count;                          // Number of phases active
-  bool voltage_common;                          // Use single voltage
-  bool frequency_common;                        // Use single frequency
+  bool voltage_common;                          // Use common voltage
+  bool frequency_common;                        // Use common frequency
   bool use_overtemp;                            // Use global temperature as overtemp trigger on internal energy monitor hardware
   bool kWhtoday_offset_init;
 
@@ -249,7 +249,7 @@ void EnergyUpdateTotal(void) {
   // Provide total import active energy as float Energy.import_active[phase] in kWh: 98Wh = 0.098kWh
 
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: EnergyTotal[%d] %4_f kWh"), i, &Energy.import_active[i]);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: EnergyTotal[%d] %4_f kWh"), i, &Energy.import_active[i]);
 
     if (0 == Energy.start_energy[i] || (Energy.import_active[i] < Energy.start_energy[i])) {
       Energy.start_energy[i] = Energy.import_active[i];  // Init after restart and handle roll-over if any
@@ -600,7 +600,7 @@ void ResponseCmndEnergyTotalYesterdayToday(void) {
     Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + Energy.kWhtoday_offset[i] + Energy.kWhtoday[i]) / 100000;
   }
 
-  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}"),
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
     XdrvMailbox.command,
     EnergyFormat(value_chr, Energy.total, Settings->flag2.energy_resolution, true),
     EnergyFormat(value2_chr, energy_yesterday_ph, Settings->flag2.energy_resolution, true),

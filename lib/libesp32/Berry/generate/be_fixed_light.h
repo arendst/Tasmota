@@ -18,4 +18,4 @@ static be_define_const_module(
     "light"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(light, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(light);

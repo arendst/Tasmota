@@ -24,6 +24,7 @@
 #include <Wire.h>
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
+const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recorded when inside REPL
 
 /*********************************************************************************************\
  * Return C callback from index
@@ -91,6 +92,7 @@ extern "C" {
           retain = be_tobool(vm, 4);
         }
         if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+        be_pop(vm, be_top(vm));
         MqttPublishPayload(topic, payload, payload_len, retain);
         be_return_nil(vm); // Return
       }
@@ -121,7 +123,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {  // only 1 argument of type string accepted
       const char * command = be_tostring(vm, 2);
-      be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
+      be_pop(vm, top);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
       be_return_nil(vm); // Return
     }
@@ -308,7 +310,7 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-    optimistic_yield(10);
+    BrTimeoutYield();   // reset timeout
     be_return_nil(vm);
   }
 
@@ -389,6 +391,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       ResponseAppend_P(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -401,6 +404,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       WSContentSend_P(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -413,6 +417,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       WSContentSend_PD(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -422,9 +427,14 @@ extern "C" {
   // get power
   int32_t l_getpower(bvm *vm);
   int32_t l_getpower(bvm *vm) {
+    power_t pow = TasmotaGlobal.power;
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isint(vm, 2)) {
+      pow = be_toint(vm, 2);
+    }
     be_newobject(vm, "list");
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      be_pushbool(vm, bitRead(TasmotaGlobal.power, i));
+      be_pushbool(vm, bitRead(pow, i));
       be_data_push(vm, -2);
       be_pop(vm, 1);
     }
@@ -439,6 +449,7 @@ extern "C" {
       int32_t idx = be_toint(vm, 2);
       bool power = be_tobool(vm, 3);
       if ((idx >= 0) && (idx < TasmotaGlobal.devices_present)) {
+        be_pop(vm, top);  // avoid Error be_top is non zero message
         ExecuteCommandPower(idx + 1, (power) ? POWER_ON : POWER_OFF, SRC_BERRY);
         be_pushbool(vm, power);
         be_return(vm); // Return
@@ -472,6 +483,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isint(vm, 2)) {
       int32_t index = be_toint(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       bool enabled = I2cEnabled(index);
       be_pushbool(vm, enabled);
       be_return(vm); // Return
@@ -519,6 +531,14 @@ extern "C" {
     be_return(vm);
   }
 
+  // Berry: `arvh() -> string`
+  // ESP object
+  int32_t l_arch(bvm *vm);
+  int32_t l_arch(bvm *vm) {
+    be_pushstring(vm, ESP32_ARCH);
+    be_return(vm);
+  }
+
   // Berry: `save(file:string, f:closure) -> bool`
   int32_t l_save(struct bvm *vm);
   int32_t l_save(struct bvm *vm) {
@@ -533,20 +553,47 @@ extern "C" {
   }
 }
 
+/*********************************************************************************************\
+ * Native functions mapped to Berry functions
+ *
+ * read_sensors(show_sensor:bool) -> string
+ *
+\*********************************************************************************************/
+extern "C" {
+  int32_t l_read_sensors(struct bvm *vm);
+  int32_t l_read_sensors(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    bool sensor_display = false;    // don't trigger a display by default
+    if (top >= 2) {
+      sensor_display = be_tobool(vm, 2);
+    }
+    be_pop(vm, top);    // clear stack to avoid `Error be_top is non zero=1` errors
+    ResponseClear();
+    if (MqttShowSensor(sensor_display)) {
+      // return string
+      be_pushstring(vm, ResponseData());
+      be_return(vm);
+    } else {
+      be_return_nil(vm);
+    }
+  }
+}
+
+/*********************************************************************************************\
+ * Logging functions
+ *
+\*********************************************************************************************/
 // called as a replacement to Berry `print()`
 void berry_log(const char * berry_buf);
 void berry_log(const char * berry_buf) {
   const char * pre_delimiter = nullptr;   // do we need to prepend a delimiter if no REPL command
-  if (!berry.repl_active) {
-    // if no REPL in flight, we limit the number of logs
-    if (berry.log.log.length() == 0) {
-      pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
-    }
-    if (berry.log.log.length() >= BERRY_MAX_LOGS) {
-      berry.log.log.remove(berry.log.log.head());
-    }
+  size_t max_logs = berry.repl_active ? BERRY_MAX_REPL_LOGS : BERRY_MAX_LOGS;
+  if (berry.log.log.length() == 0) {
+    pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
   }
-  // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
+  if (berry.log.log.length() >= BERRY_MAX_LOGS) {
+    berry.log.log.remove(berry.log.log.head());
+  }
   berry.log.addString(berry_buf, pre_delimiter, "\n");
   AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }

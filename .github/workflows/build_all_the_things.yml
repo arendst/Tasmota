@@ -1,0 +1,81 @@
+name: Tasmota CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: development
+    paths:
+      - '**.c'
+      - '**.cpp'
+      - '**.h'
+      - '**.hpp'
+      - '**.ino'
+      - '**.json'
+      - '**.properties'
+      - 'pio-tools/*.py'
+      - '**.ini'
+
+jobs:
+  base-images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant:
+          - tasmota
+          - tasmota-display
+          - tasmota-ir
+          - tasmota-knx
+          - tasmota-lite
+          - tasmota-minimal
+          - tasmota-sensors
+          - tasmota-zbbridge
+          - tasmota-zigbee
+          - tasmota32
+          - tasmota32-webcam
+          - tasmota32-bluetooth
+          - tasmota32-core2
+          - tasmota32-display
+          - tasmota32-ir
+          - tasmota32-lvgl
+          - tasmota32-odroidgo
+          - tasmota32c3
+          - tasmota32solo1
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U platformio
+          platformio upgrade --dev
+          platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: firmware
+          path: ./build_output
+
+  language-images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [ tasmota ]
+        language: [ AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U platformio
+          platformio upgrade --dev
+          platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: firmware
+          path: ./build_output

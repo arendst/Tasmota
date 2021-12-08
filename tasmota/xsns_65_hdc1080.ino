@@ -236,11 +236,7 @@ bool HdcRead(void) {
  */
 
 void HdcDetect(void) {
-  if (I2cActive(HDC1080_ADDR)) {
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("HdcDetect: Address = 0x%02X already in use."), HDC1080_ADDR);
-
-    return;
-  }
+  if (!I2cSetDevice(HDC1080_ADDR)) { return; }
 
   hdc_manufacturer_id = HdcReadManufacturerId();
   hdc_device_id = HdcReadDeviceId();

@@ -18,7 +18,9 @@
 // Local pointer for file managment
 #ifdef USE_UFILESYS
     #include <FS.h>
-    extern FS *ufsp;
+    #include "ZipReadFS.h"
+    extern FS *ffsp;
+    FS zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ffsp)));
 #endif // USE_UFILESYS
 
 /* this file contains configuration for the file system. */
@@ -95,10 +97,42 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
     // be_fwrite(stdout, buffer, length);
 }
 
+
+extern "C" {
+    int m_path_listdir(bvm *vm)
+    {
+        if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
+            const char *path = be_tostring(vm, 1);
+            be_newobject(vm, "list");
+
+            File dir = ffsp->open(path, "r");
+            if (dir) {
+                dir.rewindDirectory();
+                while (1) {
+                    File entry = dir.openNextFile();
+                    if (!entry) {
+                        break;
+                    }
+                    const char * fn = entry.name();
+                    if (strcmp(fn, ".") && strcmp(fn, "..")) {
+                        be_pushstring(vm, fn);
+                        be_data_push(vm, -2);
+                        be_pop(vm, 1);
+                    }
+
+                }
+            }
+            be_pop(vm, 1);
+            be_return(vm);
+
+        }
+        be_return_nil(vm);
+    }
+}
+
 BERRY_API char* be_readstring(char *buffer, size_t size)
 {
-    return 0;
-    // return be_fgets(stdin, buffer, (int)size);
+    return be_fgets(stdin, buffer, (int)size);
 }
 
 /* use the standard library implementation file API. */
@@ -106,7 +140,7 @@ BERRY_API char* be_readstring(char *buffer, size_t size)
 void* be_fopen(const char *filename, const char *modes)
 {
 #ifdef USE_UFILESYS
-    if (ufsp != nullptr && filename != nullptr && modes != nullptr) {
+    if (filename != nullptr && modes != nullptr) {
         char fname2[strlen(filename) + 2];
         if (filename[0] == '/') {
             strcpy(fname2, filename);   // copy unchanged
@@ -115,7 +149,7 @@ void* be_fopen(const char *filename, const char *modes)
             strcpy(fname2 + 1, filename);   // prepend with '/'
         }
         // Serial.printf("be_fopen filename=%s, modes=%s\n", filename, modes);
-        File f = ufsp->open(fname2, modes);       // returns an object, not a pointer
+        File f = zip_ufsp.open(fname2, modes);       // returns an object, not a pointer
         if (f) {
             File * f_ptr = new File(f);                 // copy to dynamic object
             *f_ptr = f;                                 // TODO is this necessary?
@@ -127,11 +161,24 @@ void* be_fopen(const char *filename, const char *modes)
     // return fopen(filename, modes);
 }
 
+// Tasmota specific, get the underlying Arduino File
+File * be_get_arduino_file(void *hfile)
+{
+#ifdef USE_UFILESYS
+    if (hfile != nullptr) {
+        File * f_ptr = (File*) hfile;
+        return f_ptr;
+    }
+#endif // USE_UFILESYS
+    return nullptr;
+    // return fopen(filename, modes);
+}
+
 int be_fclose(void *hfile)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_fclose\n");
-    if (ufsp != nullptr && hfile != nullptr) {
+    if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->close();
         delete f_ptr;
@@ -146,7 +193,7 @@ size_t be_fwrite(void *hfile, const void *buffer, size_t length)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_fwrite %d\n", length);
-    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
+    if (hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->write((const uint8_t*) buffer, length);
     }
@@ -159,7 +206,7 @@ size_t be_fread(void *hfile, void *buffer, size_t length)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_fread %d\n", length);
-    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr) {
+    if (hfile != nullptr && buffer != nullptr) {
         File * f_ptr = (File*) hfile;
         int32_t ret = f_ptr->read((uint8_t*) buffer, length);
         if (ret >= 0) {
@@ -175,13 +222,19 @@ size_t be_fread(void *hfile, void *buffer, size_t length)
 char* be_fgets(void *hfile, void *buffer, int size)
 {
 #ifdef USE_UFILESYS
-    // Serial.printf("be_fgets %d\n", size);
+    if (size <= 2) { return nullptr; }  // can't work if size is 2 or less
+    // Serial.printf("be_fgets size=%d hfile=%p buf=%p\n", size, hfile, buffer);
     uint8_t * buf = (uint8_t*) buffer;
-    if (ufsp != nullptr && hfile != nullptr && buffer != nullptr && size > 0) {
+    if (hfile != nullptr && buffer != nullptr && size > 0) {
         File * f_ptr = (File*) hfile;
-        int ret = f_ptr->readBytesUntil('\n', buf, size - 1);
+        int ret = f_ptr->readBytesUntil('\n', buf, size - 2);
+        // Serial.printf("be_fgets ret=%d\n", ret);
         if (ret >= 0) {
             buf[ret] = 0;           // add string terminator
+            if (ret > 0 && ret < size - 2) {
+                buf[ret] = '\n';
+                buf[ret+1] = 0;
+            }
             return (char*) buffer;
         }
     }
@@ -194,7 +247,7 @@ int be_fseek(void *hfile, long offset)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_fseek %d\n", offset);
-    if (ufsp != nullptr && hfile != nullptr) {
+    if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         if (f_ptr->seek(offset)) {
             return 0;       // success
@@ -209,7 +262,7 @@ long int be_ftell(void *hfile)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_ftell\n");
-    if (ufsp != nullptr && hfile != nullptr) {
+    if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->position();
     }
@@ -222,7 +275,7 @@ long int be_fflush(void *hfile)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_fflush\n");
-    if (ufsp != nullptr && hfile != nullptr) {
+    if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         f_ptr->flush();
     }
@@ -235,7 +288,7 @@ size_t be_fsize(void *hfile)
 {
 #ifdef USE_UFILESYS
     // Serial.printf("be_fsize\n");
-    if (ufsp != nullptr && hfile != nullptr) {
+    if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->size();
     }
@@ -251,7 +304,7 @@ size_t be_fsize(void *hfile)
 extern "C" time_t be_last_modified(void *hfile)
 {
 #ifdef USE_UFILESYS
-    if (ufsp != nullptr && hfile != nullptr) {
+    if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr->getLastWrite();
     }
@@ -262,16 +315,29 @@ extern "C" time_t be_last_modified(void *hfile)
 int be_isexist(const char *filename)
 {
 #ifdef USE_UFILESYS
-    if (ufsp != nullptr) {
-        char fname2[strlen(filename) + 2];
-        if (filename[0] == '/') {
-            strcpy(fname2, filename);   // copy unchanged
-        } else {
-            fname2[0] = '/';
-            strcpy(fname2 + 1, filename);   // prepend with '/'
-        }
-        return ufsp->exists(fname2);
+    char fname2[strlen(filename) + 2];
+    if (filename[0] == '/') {
+        strcpy(fname2, filename);   // copy unchanged
+    } else {
+        fname2[0] = '/';
+        strcpy(fname2 + 1, filename);   // prepend with '/'
     }
+    return zip_ufsp.exists(fname2);
+#endif // USE_UFILESYS
+    return 0;
+}
+
+int be_unlink(const char *filename)
+{
+#ifdef USE_UFILESYS
+    char fname2[strlen(filename) + 2];
+    if (filename[0] == '/') {
+        strcpy(fname2, filename);   // copy unchanged
+    } else {
+        fname2[0] = '/';
+        strcpy(fname2 + 1, filename);   // prepend with '/'
+    }
+    return zip_ufsp.remove(fname2);
 #endif // USE_UFILESYS
     return 0;
 }

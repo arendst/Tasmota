@@ -35,9 +35,13 @@
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
+#ifdef ESP32
+  #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
+#endif
 #include <StreamString.h>                   // Webserver, Updater
 #include <ext_printf.h>
 #include <SBuffer.hpp>
+#include <LList.h>
 #include <JsonParser.h>
 #include <JsonGenerator.h>
 #ifdef USE_ARDUINO_OTA
@@ -148,6 +152,8 @@ struct TasmotaGlobal_t {
   bool enable_logging;                      // Enable logging
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint8_t init_state;                       // Tasmota init state
+  uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
   uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
@@ -178,6 +184,9 @@ struct TasmotaGlobal_t {
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
   uint8_t discovery_counter;                // Delayed discovery counter
+#ifdef USE_PWM_DIMMER
+  uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
+#endif  // USE_PWM_DIMMER
 
 #ifndef SUPPORT_IF_STATEMENT
   uint8_t backlog_index;                    // Command backlog index
@@ -426,6 +435,8 @@ void setup(void) {
 
   XdrvCall(FUNC_PRE_INIT);
   XsnsCall(FUNC_PRE_INIT);
+
+  TasmotaGlobal.init_state = INIT_GPIOS;
 
   SetPowerOnState();
   WifiConnect();

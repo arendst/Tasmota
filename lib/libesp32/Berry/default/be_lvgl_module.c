@@ -10,6 +10,7 @@
 
 #include "lvgl.h"
 #include "be_lvgl.h"
+#include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 
@@ -19,6 +20,7 @@ extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder lo
 
 extern int lv0_load_montserrat_font(bvm *vm);
 extern int lv0_load_seg7_font(bvm *vm);
+extern int lv0_load_robotocondensed_latin1_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
 extern int lv0_load_freetype_font(bvm *vm);
 
@@ -70,6 +72,7 @@ const lvbe_call_c_t lv_func[] = {
   { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
   { "group_get_default", (void*) &lv_group_get_default, "lv.lv_group", "" },
   { "img_src_get_type", (void*) &lv_img_src_get_type, "i", "." },
+  { "indev_get_act", (void*) &lv_indev_get_act, "lv.lv_indev", "" },
   { "indev_get_obj_act", (void*) &lv_indev_get_obj_act, "lv.lv_obj", "" },
   { "indev_read_timer_cb", (void*) &lv_indev_read_timer_cb, "", "(lv.lv_timer)" },
   { "layer_sys", (void*) &lv_layer_sys, "lv.lv_obj", "" },
@@ -81,18 +84,24 @@ const lvbe_call_c_t lv_func[] = {
   { "obj_enable_style_refresh", (void*) &lv_obj_enable_style_refresh, "", "b" },
   { "obj_event_base", (void*) &lv_obj_event_base, "i", "(lv.lv_obj_class)(lv.lv_event)" },
   { "obj_report_style_change", (void*) &lv_obj_report_style_change, "", "(lv.lv_style)" },
-  { "obj_style_get_selector_part", (void*) &lv_obj_style_get_selector_part, "i", "(lv.lv_style_selector)" },
-  { "obj_style_get_selector_state", (void*) &lv_obj_style_get_selector_state, "i", "(lv.lv_style_selector)" },
+  { "obj_style_get_selector_part", (void*) &lv_obj_style_get_selector_part, "i", "i" },
+  { "obj_style_get_selector_state", (void*) &lv_obj_style_get_selector_state, "i", "i" },
   { "refr_now", (void*) &lv_refr_now, "", "(lv.lv_disp)" },
   { "scr_act", (void*) &lv_scr_act, "lv.lv_obj", "" },
   { "scr_load", (void*) &lv_scr_load, "", "(lv.lv_obj)" },
   { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv.lv_obj)iiib" },
   { "theme_apply", (void*) &lv_theme_apply, "", "(lv.lv_obj)" },
+  { "theme_default_init", (void*) &lv_theme_default_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" },
+  { "theme_default_is_inited", (void*) &lv_theme_default_is_inited, "b", "" },
   { "theme_get_color_primary", (void*) &lv_theme_get_color_primary, "lv.lv_color", "(lv.lv_obj)" },
   { "theme_get_color_secondary", (void*) &lv_theme_get_color_secondary, "lv.lv_color", "(lv.lv_obj)" },
   { "theme_get_font_large", (void*) &lv_theme_get_font_large, "lv.lv_font", "(lv.lv_obj)" },
   { "theme_get_font_normal", (void*) &lv_theme_get_font_normal, "lv.lv_font", "(lv.lv_obj)" },
   { "theme_get_font_small", (void*) &lv_theme_get_font_small, "lv.lv_font", "(lv.lv_obj)" },
+  { "theme_get_from_obj", (void*) &lv_theme_get_from_obj, "lv.lv_theme", "(lv.lv_obj)" },
+  { "theme_mono_init", (void*) &lv_theme_mono_init, "lv.lv_theme", "(lv.lv_disp)b(lv.lv_font)" },
+  { "theme_openhasp_init", (void*) &lv_theme_openhasp_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" },
+  { "theme_openhasp_is_inited", (void*) &lv_theme_openhasp_is_inited, "b", "" },
   { "theme_set_apply_cb", (void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" },
   { "theme_set_parent", (void*) &lv_theme_set_parent, "", "(lv.lv_theme)(lv.lv_theme)" },
 
@@ -653,6 +662,9 @@ const be_constint_t lv0_constants[] = {
     { "TEXT_FLAG_FIT", LV_TEXT_FLAG_FIT },
     { "TEXT_FLAG_NONE", LV_TEXT_FLAG_NONE },
     { "TEXT_FLAG_RECOLOR", LV_TEXT_FLAG_RECOLOR },
+    { "&font_montserrat", (int32_t) &lv0_load_montserrat_font },
+    { "&font_robotocondensed_latin1", (int32_t) &lv0_load_robotocondensed_latin1_font },
+    { "&font_seg7", (int32_t) &lv0_load_seg7_font },
     { "&load_font", (int32_t) &lv0_load_font },
     { "&load_freetype_font", (int32_t) &lv0_load_freetype_font },
     { "&montserrat_font", (int32_t) &lv0_load_montserrat_font },
@@ -673,7 +685,7 @@ be_local_module(lv,
         { be_nested_key("start", 1697318111, 5, 0), be_const_func(lv0_start) },
     }))
 );
-BE_EXPORT_VARIABLE be_define_const_native_module(lv, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(lv);
 
 #endif // USE_LVGL
 

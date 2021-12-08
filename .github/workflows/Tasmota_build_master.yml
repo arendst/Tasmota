@@ -1365,28 +1365,35 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32c3*.* ] || mv ./mv_firmware/firmware/tasmota32c3*.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./release-firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./release-firmware/tasmota/languages/
-    - name: Display files
+    - name: Display files to transfer
       run: ls -R ./*
-    - name: Push Firmware files to https://github.com/arendst/Tasmota-firmware
+    - name: Push Firmware files to tmp_copy repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'release-firmware'
-        destination_repo: 'arendst/Tasmota-firmware'
+        destination_repo: 'arendst/tmp_copy'
+        destination_branch: 'firmware'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'
+
+  Start_final_copy:
+    needs: Upload
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Creat trigger.txt
       run: |
          echo ${GITHUB_SHA}  &> trigger.txt
          echo "$(<trigger.txt)"
-    - name: Push trigger.txt to start workflow in repo https://github.com/arendst/Tasmota-firmware
+    - name: Push trigger.txt to start workflow copy in tmp repo
       uses: Jason2866/copy_file_to_another_repo_action@main
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
         source_file: 'trigger.txt'
-        destination_repo: 'arendst/Tasmota-firmware'
+        destination_repo: 'arendst/tmp_copy'
         destination_branch: 'action-master'
         user_email: 'github-actions@github.com'
         user_name: 'github-actions'

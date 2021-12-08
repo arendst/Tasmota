@@ -3205,6 +3205,9 @@ bool Xdrv04(uint8_t function)
       case FUNC_SET_POWER:
         LightSetPower();
         break;
+      case FUNC_BUTTON_MULTI_PRESSED:
+        result = XlgtCall(FUNC_BUTTON_MULTI_PRESSED);
+        break;
       case FUNC_COMMAND:
         result = DecodeCommand(kLightCommands, LightCommand, kLightSynonyms);
         if (!result) {

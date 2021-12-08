@@ -68,10 +68,6 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
 // Initialize internal structures
 void ZigbeeInit(void)
 {
-// #pragma GCC diagnostic push
-// #pragma GCC diagnostic ignored "-Winvalid-offsetof"
-// Serial.printf(">>> offset %d %d %d\n", Z_offset(Z_Data_Light, dimmer), Z_offset(Z_Data_Light, x), Z_offset(Z_Data_Thermo, temperature));
-// #pragma GCC diagnostic pop
   // Check if settings in Flash are set
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
     if (0 == Settings->zb_channel) {
@@ -108,11 +104,13 @@ void ZigbeeInit(void)
 
 #ifdef USE_ZIGBEE_EZSP
     // Check the I2C EEprom
-    Wire.beginTransmission(USE_ZIGBEE_ZBBRIDGE_EEPROM);
-    uint8_t error = Wire.endTransmission();
-    if (0 == error) {
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS " 0x%02X"), USE_ZIGBEE_ZBBRIDGE_EEPROM);
-      zigbee.eeprom_present = true;
+    if (TasmotaGlobal.i2c_enabled) {
+      Wire.beginTransmission(USE_ZIGBEE_ZBBRIDGE_EEPROM);
+      uint8_t error = Wire.endTransmission();
+      if (0 == error) {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS " 0x%02X"), USE_ZIGBEE_ZBBRIDGE_EEPROM);
+        zigbee.eeprom_present = true;
+      }
     }
 #endif
   }
@@ -1222,7 +1220,7 @@ void CmndZbOccupancy(void) {
     zigbee_devices.dirty();
   } else {
     const Z_Data_PIR & pir_found = (const Z_Data_PIR&) device.data.find(Z_Data_Type::Z_PIR);
-    if (&pir_found != nullptr) {
+    if (&pir_found != &z_data_unk) {
       occupancy_time = pir_found.getTimeoutSeconds();
     }
   }
@@ -1547,7 +1545,7 @@ void CmndZbStatus(void) {
         dump = zigbee_devices.dumpDevice(XdrvMailbox.index, device);
       } else {
         if (XdrvMailbox.index >= 2) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
-        dump = zigbee_devices.dumpDevice(XdrvMailbox.index, *(Z_Device*)nullptr);
+        dump = zigbee_devices.dumpDevice(XdrvMailbox.index, device_unk);
       }
     }
 
@@ -1992,7 +1990,7 @@ void ZigbeeShow(bool json)
         // Sensors
         const Z_Data_Thermo & thermo = device.data.find<Z_Data_Thermo>();
 
-        if (&thermo != nullptr) {
+        if (&thermo != &z_data_unk) {
           bool validTemp = thermo.validTemperature();
           bool validTempTarget = thermo.validTempTarget();
           bool validThSetpoint = thermo.validThSetpoint();
@@ -2027,12 +2025,12 @@ void ZigbeeShow(bool json)
 
         // Light, switches and plugs
         const Z_Data_OnOff & onoff = device.data.find<Z_Data_OnOff>();
-        bool onoff_display = (&onoff != nullptr) ? onoff.validPower() : false;
+        bool onoff_display = (&onoff != &z_data_unk) ? onoff.validPower() : false;
         const Z_Data_Light & light = device.data.find<Z_Data_Light>();
-        bool light_display = (&light != nullptr) ? light.validDimmer() : false;
+        bool light_display = (&light != &z_data_unk) ? light.validDimmer() : false;
         const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
-        bool plug_voltage = (&plug != nullptr) ? plug.validMainsVoltage() : false;
-        bool plug_power = (&plug != nullptr) ? plug.validMainsPower() : false;
+        bool plug_voltage = (&plug != &z_data_unk) ? plug.validMainsVoltage() : false;
+        bool plug_power = (&plug != &z_data_unk) ? plug.validMainsPower() : false;
         if (onoff_display || light_display || plug_voltage || plug_power) {
           int8_t channels = device.getLightChannels();
           if (channels < 0) { channels = 5; }     // if number of channel is unknown, display all known attributes
@@ -2040,7 +2038,7 @@ void ZigbeeShow(bool json)
           if (onoff_display) {
             WSContentSend_P(PSTR(" %s"), onoff.getPower() ? PSTR(D_ON) : PSTR(D_OFF));
           }
-          if (&light != nullptr) {
+          if (&light != &z_data_unk) {
             if (light.validDimmer() && (channels >= 1)) {
               WSContentSend_P(PSTR(" &#128261; %d%%"), changeUIntScale(light.getDimmer(),0,254,0,100));
             }
@@ -2108,7 +2106,7 @@ void ZigbeeShowMap(void) {
   if (zigbee.init_phase) {
     WSContentSend_P(PSTR(D_ZIGBEE_NOT_STARTED));
   } else if (zigbee.mapping_in_progress) {
-    int32_t mapping_remaining = 1 + (zigbee.mapping_end_time - millis()) / 1000;
+    int32_t mapping_remaining = 1 + ((int32_t) zigbee.mapping_end_time - millis()) / 1000;
     if (mapping_remaining < 0) { mapping_remaining = 0; }
     WSContentSend_P(PSTR(D_ZIGBEE_MAPPING_IN_PROGRESS_SEC), mapping_remaining);
     WSContentSend_P(msg[ZB_WEB_AUTO_REFRESH]);

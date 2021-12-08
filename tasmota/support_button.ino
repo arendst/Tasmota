@@ -167,7 +167,7 @@ void ButtonHandler(void) {
     if (PinUsed(GPIO_KEY1, button_index)) {
       button_present = 1;
 #ifdef ESP32
-#ifndef CONFIG_IDF_TARGET_ESP32C3      
+#ifndef CONFIG_IDF_TARGET_ESP32C3
       if (bitRead(Button.touch_mask, button_index)) {          // Touch
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
         button = NOT_PRESSED;
@@ -313,6 +313,13 @@ void ButtonHandler(void) {
                   }
                 }
               }
+
+              XdrvMailbox.index = button_index;
+              XdrvMailbox.payload = Button.press_counter[button_index];
+              if (XdrvCall(FUNC_BUTTON_MULTI_PRESSED)) {
+                // Serviced
+              } else
+
 #ifdef ROTARY_V1
               if (!RotaryButtonPressed(button_index)) {
 #endif

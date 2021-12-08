@@ -45,7 +45,7 @@
 // Json Command
 //const char S_JSON_TELEINFO_COMMAND_STRING[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%s}}";
 //const char S_JSON_TELEINFO_COMMAND_NVALUE[] PROGMEM = "{\"" D_NAME_TELEINFO "\":{\"%s\":%d}}";
-const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, Raw:%s, Skip:%d, Limit:%d";
+const char TELEINFO_COMMAND_SETTINGS[] PROGMEM = "TIC: Settings Mode:%s, RX:%s, EN:%s, Raw:%s, Skip:%d, Limit:%d";
 
 #define MAX_TINFO_COMMAND_NAME 16+1 // Change this if one of the following kTInfo_Commands is higher then 16 char
 const char kTInfo_Commands[] PROGMEM  = "historique|standard|noraw|full|changed|skip|limit";
@@ -357,6 +357,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
 
                 Energy.import_active[0] = total/1000.0f;
                 EnergyUpdateTotal();
+                AddLog (LOG_LEVEL_INFO, PSTR ("TIC: Total counter updated to %u Wh"), total);
             }
 
             // Wh total index (standard)
@@ -568,6 +569,9 @@ void TInfoDrvInit(void) {
         TasmotaGlobal.energy_driver = XNRG_15;
         Energy.voltage_available = false;
         Energy.phase_count = 1;
+        // init hardware energy counters
+        Settings->flag3.hardware_energy_total = true;
+        Settings->energy_kWhtotal = 0;
     }
 }
 
@@ -672,9 +676,10 @@ bool TInfoCmd(void) {
         // Just "EnergyConfig" no more parameter
         // Show Teleinfo configuration
         if (XdrvMailbox.data_len == 0) {
-
             char mode_name[MAX_TINFO_COMMAND_NAME];
             char raw_name[MAX_TINFO_COMMAND_NAME];
+            char rx_pin[8] = "None";
+            char en_pin[8] = "None" ;
             int index_mode = Settings->teleinfo.mode_standard ? CMND_TELEINFO_STANDARD : CMND_TELEINFO_HISTORIQUE;
             int index_raw = Settings->teleinfo.raw_send ? CMND_TELEINFO_RAW_FULL : CMND_TELEINFO_RAW_DISABLE;
             if (Settings->teleinfo.raw_send && Settings->teleinfo.raw_report_changed) {
@@ -684,7 +689,14 @@ bool TInfoCmd(void) {
             GetTextIndexed(mode_name, MAX_TINFO_COMMAND_NAME, index_mode, kTInfo_Commands);
             GetTextIndexed(raw_name, MAX_TINFO_COMMAND_NAME, index_raw, kTInfo_Commands);
 
-            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit);
+            if (PinUsed(GPIO_TELEINFO_RX)) {
+                sprintf_P(rx_pin, PSTR("GPIO%d"), tic_rx_pin);
+            }
+            if (PinUsed(GPIO_TELEINFO_ENABLE)) {
+                sprintf_P(en_pin, PSTR("GPIO%d"), Pin(GPIO_TELEINFO_ENABLE));
+            }
+
+            AddLog(LOG_LEVEL_INFO, TELEINFO_COMMAND_SETTINGS, mode_name, rx_pin, en_pin, raw_name, Settings->teleinfo.raw_skip, Settings->teleinfo.raw_limit);
 
             serviced = true;
 

@@ -778,7 +778,7 @@ void ThermostatCalculatePI(uint8_t ctr_output)
 
   // Minimum action limiter
   // If result is less than the minimum action time, adjust to minimum value
-  if ((Thermostat[ctr_output].time_total_pi <= abs(((uint32_t)Thermostat[ctr_output].time_min_action * 60)))
+  if ((Thermostat[ctr_output].time_total_pi <= abs(((int32_t)Thermostat[ctr_output].time_min_action * 60)))
     && (Thermostat[ctr_output].time_total_pi != 0)) {
     Thermostat[ctr_output].time_total_pi = ((int32_t)Thermostat[ctr_output].time_min_action * 60);
   }
@@ -1253,6 +1253,7 @@ void ThermostatTimerDisarm(uint8_t ctr_output)
 }
 
 #ifdef DEBUG_THERMOSTAT
+
 void ThermostatVirtualSwitch(uint8_t ctr_output)
 {
   char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
@@ -1327,6 +1328,27 @@ void ThermostatDebug(uint8_t ctr_output)
 }
 #endif // DEBUG_THERMOSTAT
 
+uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
+{
+  uint8_t value = 0;
+  if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
+    || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+      &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
+    value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
+  }
+  else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
+        || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
+          &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
+    if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
+      value = 100;
+    }
+    else {
+      value = 0;
+    }
+  }
+  return value;
+}
+
 void ThermostatGetLocalSensor(uint8_t ctr_output) {
   String buf = ResponseData();   // copy the string into a new buffer that will be modified
   JsonParser parser((char*)buf.c_str());
@@ -1379,7 +1401,7 @@ void CmndThermostatModeSet(void)
         Thermostat[ctr_output].timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.thermostat_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.thermostat_mode);
   }
 }
 
@@ -1395,7 +1417,7 @@ void CmndClimateModeSet(void)
         Thermostat[ctr_output].time_ctr_checkpoint = TasmotaGlobal.uptime;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.climate_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.climate_mode);
   }
 }
 
@@ -1422,7 +1444,7 @@ void CmndTempFrostProtectSet(void)
     else {
       value = Thermostat[ctr_output].temp_frost_protect;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1444,7 +1466,7 @@ void CmndControllerModeSet(void)
         Thermostat[ctr_output].time_ctr_checkpoint = 0;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.controller_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.controller_mode);
   }
 }
 
@@ -1459,7 +1481,7 @@ void CmndInputSwitchSet(void)
         Thermostat[ctr_output].timestamp_input_on = TasmotaGlobal.uptime;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.input_switch_number);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.input_switch_number);
   }
 }
 
@@ -1470,7 +1492,7 @@ void CmndInputSwitchUse(void)
     if (XdrvMailbox.data_len > 0) {
       Thermostat[ctr_output].status.use_input = (uint32_t)(XdrvMailbox.payload);
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.use_input);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.use_input);
   }
 }
 
@@ -1484,7 +1506,7 @@ void CmndSensorInputSet(void)
         Thermostat[ctr_output].status.sensor_type = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.sensor_type);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.sensor_type);
   }
 }
 
@@ -1498,7 +1520,7 @@ void CmndOutputRelaySet(void)
         Thermostat[ctr_output].status.output_relay_number = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.output_relay_number);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.output_relay_number);
   }
 }
 
@@ -1512,7 +1534,7 @@ void CmndTimeAllowRampupSet(void)
         Thermostat[ctr_output].time_allow_rampup = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_allow_rampup));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_allow_rampup));
   }
 }
 
@@ -1526,7 +1548,7 @@ void CmndTempFormatSet(void)
         Thermostat[ctr_output].status.temp_format = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.temp_format);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.temp_format);
   }
 }
 
@@ -1564,7 +1586,7 @@ void CmndTempMeasuredSet(void)
     else {
       value = Thermostat[ctr_output].temp_measured;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1592,7 +1614,7 @@ void CmndTempTargetSet(void)
     else {
       value = Thermostat[ctr_output].temp_target_level;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1607,7 +1629,7 @@ void CmndTempMeasuredGrdRead(void)
     else {
       value = Thermostat[ctr_output].temp_measured_gradient;
     }
-    ResponseCmndFloat(((float)value) / 1000, 1);
+    ResponseCmndIdxFloat(((float)value) / 1000, 1);
   }
 }
 
@@ -1621,7 +1643,7 @@ void CmndStateEmergencySet(void)
         Thermostat[ctr_output].diag.state_emergency = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].diag.state_emergency);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].diag.state_emergency);
   }
 }
 
@@ -1635,7 +1657,7 @@ void CmndTimeManualToAutoSet(void)
         Thermostat[ctr_output].time_manual_to_auto = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_manual_to_auto));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_manual_to_auto));
   }
 }
 
@@ -1649,7 +1671,7 @@ void CmndPropBandSet(void)
         Thermostat[ctr_output].val_prop_band = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].val_prop_band);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].val_prop_band);
   }
 }
 
@@ -1663,7 +1685,7 @@ void CmndTimeResetSet(void)
         Thermostat[ctr_output].time_reset = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_reset);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_reset);
   }
 }
 
@@ -1671,7 +1693,7 @@ void CmndTimePiProportRead(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_proportional_pi);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_proportional_pi);
   }
 }
 
@@ -1679,7 +1701,7 @@ void CmndTimePiIntegrRead(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_integral_pi);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_integral_pi);
   }
 }
 
@@ -1693,7 +1715,7 @@ void CmndTimePiCycleSet(void)
         Thermostat[ctr_output].time_pi_cycle = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_pi_cycle));
   }
 }
 
@@ -1720,7 +1742,7 @@ void CmndTempAntiWindupResetSet(void)
     else {
       value = Thermostat[ctr_output].temp_reset_anti_windup;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1747,7 +1769,7 @@ void CmndTempHystSet(void)
     else {
       value = Thermostat[ctr_output].temp_hysteresis;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1762,7 +1784,7 @@ void CmndPerfLevelAutotune(void)
         Thermostat[ctr_output].status.autotune_perf_mode = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.autotune_perf_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.autotune_perf_mode);
   }
 }
 #endif // USE_PI_AUTOTUNING
@@ -1777,7 +1799,7 @@ void CmndTimeMaxActionSet(void)
         Thermostat[ctr_output].time_max_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_max_action));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_max_action));
   }
 }
 
@@ -1791,7 +1813,7 @@ void CmndTimeMinActionSet(void)
         Thermostat[ctr_output].time_min_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_action));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_min_action));
   }
 }
 
@@ -1805,7 +1827,7 @@ void CmndTimeSensLostSet(void)
         Thermostat[ctr_output].time_sens_lost = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_sens_lost));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_sens_lost));
   }
 }
 
@@ -1819,7 +1841,7 @@ void CmndTimeMinTurnoffActionSet(void)
         Thermostat[ctr_output].time_min_turnoff_action = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_min_turnoff_action));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_min_turnoff_action));
   }
 }
 
@@ -1846,7 +1868,7 @@ void CmndTempRupDeltInSet(void)
     else {
       value = Thermostat[ctr_output].temp_rampup_delta_in;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1873,7 +1895,7 @@ void CmndTempRupDeltOutSet(void)
     else {
       value = Thermostat[ctr_output].temp_rampup_delta_out;
     }
-    ResponseCmndFloat((float)value / 10, 1);
+    ResponseCmndIdxFloat((float)value / 10, 1);
   }
 }
 
@@ -1887,7 +1909,7 @@ void CmndTimeRampupMaxSet(void)
         Thermostat[ctr_output].time_rampup_max = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)((uint32_t)Thermostat[ctr_output].time_rampup_max));
+    ResponseCmndIdxNumber((int)((uint32_t)Thermostat[ctr_output].time_rampup_max));
   }
 }
 
@@ -1901,7 +1923,7 @@ void CmndTimeRampupCycleSet(void)
         Thermostat[ctr_output].time_rampup_cycle = (uint16_t)value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].time_rampup_cycle);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].time_rampup_cycle);
   }
 }
 
@@ -1928,7 +1950,7 @@ void CmndTempRampupPiAccErrSet(void)
     else {
       value = Thermostat[ctr_output].temp_rampup_pi_acc_error;
     }
-    ResponseCmndFloat((float)value / 100, 1);
+    ResponseCmndIdxFloat((float)value / 100, 1);
   }
 }
 
@@ -1942,7 +1964,7 @@ void CmndDiagnosticModeSet(void)
         Thermostat[ctr_output].diag.diagnostic_mode = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].diag.diagnostic_mode);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].diag.diagnostic_mode);
   }
 }
 
@@ -1950,23 +1972,8 @@ void CmndCtrDutyCycleRead(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= THERMOSTAT_CONTROLLER_OUTPUTS)) {
     uint8_t ctr_output = XdrvMailbox.index - 1;
-    uint8_t value = 0;
-    if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
-      || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
-        &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
-      value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
-    }
-    else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
-          || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
-            &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_RAMP_UP))) {
-      if (Thermostat[ctr_output].status.status_output == IFACE_ON) {
-        value = 100;
-      }
-      else {
-        value = 0;
-      }
-    }
-    ResponseCmndNumber((int)value);
+
+        ResponseCmndIdxNumber((int)ThermostatGetDutyCycle(ctr_output) );
   }
 }
 
@@ -1980,9 +1987,92 @@ void CmndEnableOutputSet(void)
         Thermostat[ctr_output].status.enable_output = value;
       }
     }
-    ResponseCmndNumber((int)Thermostat[ctr_output].status.enable_output);
+    ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.enable_output);
   }
 }
+
+
+
+/*********************************************************************************************\
+ * Web UI
+\*********************************************************************************************/
+
+
+// To be done, add all of this defines in according languages file when all will be finished
+// Avoid multiple changes on all language files during developement
+// --------------------------------------------------
+// xdrv_39_thermostat.ino
+#define D_THERMOSTAT             "Thermostat"
+#define D_THERMOSTAT_SET_POINT   "Set Point"
+#define D_THERMOSTAT_SENSOR      "Current"
+#define D_THERMOSTAT_GRADIENT    "Gradient"
+#define D_THERMOSTAT_DUTY_CYCLE  "Duty cycle"
+#define D_THERMOSTAT_CYCLE_TIME  "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE "PI Auto tuning"
+// --------------------------------------------------
+
+
+#ifdef USE_WEBSERVER
+const char HTTP_THERMOSTAT_INFO[]        PROGMEM = "{s}" D_THERMOSTAT "{m}%s{e}";
+const char HTTP_THERMOSTAT_TEMPERATURE[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%*_f " D_UNIT_DEGREE "%c{e}";
+const char HTTP_THERMOSTAT_DUTY_CYCLE[]  PROGMEM = "{s}" D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_THERMOSTAT_CYCLE_TIME[]  PROGMEM = "{s}" D_THERMOSTAT_CYCLE_TIME "{m}%d " D_UNIT_MINUTE "{e}";
+const char HTTP_THERMOSTAT_PI_AUTOTUNE[] PROGMEM = "{s}" D_THERMOSTAT_PI_AUTOTUNE "{m}%s{e}";
+const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
+
+#endif  // USE_WEBSERVER
+
+void ThermostatShow(uint8_t ctr_output, bool json)
+{
+  if (json) {
+    float f_target_temp = Thermostat[ctr_output].temp_target_level / 10.0f;
+    ResponseAppend_P(PSTR(",\"Thermostat%i\":{"), ctr_output);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
+    ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
+    ResponseJsonEnd();
+    return;
+  }
+#ifdef USE_WEBSERVER
+
+  WSContentSend_P(HTTP_THERMOSTAT_HL);
+
+  if (Thermostat[ctr_output].status.thermostat_mode == THERMOSTAT_OFF) {
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_DISABLED );
+
+  } else {
+    char c_unit = Thermostat[ctr_output].status.temp_format==TEMP_CELSIUS ? D_UNIT_CELSIUS[0] : D_UNIT_FAHRENHEIT[0];
+    float f_temperature ;
+
+    WSContentSend_P(HTTP_THERMOSTAT_INFO, D_ENABLED );
+
+    f_temperature = Thermostat[ctr_output].temp_target_level / 10.0f ;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+
+    f_temperature = Thermostat[ctr_output].temp_measured / 10.0f;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_SENSOR, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+
+    int16_t value = Thermostat[ctr_output].temp_measured_gradient;
+    if (Thermostat[ctr_output].status.temp_format == TEMP_FAHRENHEIT) {
+      value = ThermostatCelsiusToFahrenheit((int32_t)Thermostat[ctr_output].temp_measured_gradient, TEMP_CONV_RELATIVE);
+    } 
+    f_temperature = value / 1000.0f;
+    WSContentSend_PD(HTTP_THERMOSTAT_TEMPERATURE, D_THERMOSTAT_GRADIENT, Settings->flag2.temperature_resolution, &f_temperature, c_unit);
+    WSContentSend_P(HTTP_THERMOSTAT_DUTY_CYCLE, ThermostatGetDutyCycle(ctr_output) );
+    WSContentSend_P(HTTP_THERMOSTAT_CYCLE_TIME, Thermostat[ctr_output].time_pi_cycle );
+
+  #ifdef USE_PI_AUTOTUNING
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_ENABLED  );
+  #else
+    WSContentSend_P(HTTP_THERMOSTAT_PI_AUTOTUNE, D_DISABLED );
+  #endif
+
+  }
+
+#endif  // USE_WEBSERVER
+}
+
+
 
 /*********************************************************************************************\
  * Interface
@@ -2029,6 +2119,20 @@ bool Xdrv39(uint8_t function)
         }
       }
       break;
+    case FUNC_JSON_APPEND:
+      for (ctr_output = 0; ctr_output < THERMOSTAT_CONTROLLER_OUTPUTS; ctr_output++) {
+        ThermostatShow(ctr_output, true);
+      }
+      break;
+
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      for (ctr_output = 0; ctr_output < THERMOSTAT_CONTROLLER_OUTPUTS; ctr_output++) {
+        ThermostatShow(ctr_output, false);
+      }
+      break;
+#endif  // USE_WEBSERVER
+
     case FUNC_COMMAND:
       result = DecodeCommand(kThermostatCommands, ThermostatCommand);
       break;

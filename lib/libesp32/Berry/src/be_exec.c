@@ -74,6 +74,9 @@ struct filebuf {
 
 void be_throw(bvm *vm, int errorcode)
 {
+#if BE_USE_PERF_COUNTERS
+    vm->counter_exc++;
+#endif
     if (vm->errjmp) {
         vm->errjmp->status = errorcode;
         exec_throw(vm->errjmp);
@@ -390,6 +393,10 @@ void be_stack_expansion(bvm *vm, int n)
         stack_resize(vm, size + 1);
         be_raise(vm, "runtime_error", STACK_OVER_MSG(BE_STACK_TOTAL_MAX));
     }
+#if BE_USE_OBSERVABILITY_HOOK
+    if (vm->obshook != NULL)
+        (*vm->obshook)(vm, BE_OBS_STACK_RESIZE_START, size * sizeof(bvalue), (size + n) * sizeof(bvalue));
+#endif
     stack_resize(vm, size + n);
 }
 

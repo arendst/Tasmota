@@ -167,7 +167,7 @@ void Ads1115Detect(void)
   for (uint32_t i = 0; i < sizeof(Ads1115.addresses); i++) {
     if (!Ads1115.found[i]) {
       Ads1115.address = Ads1115.addresses[i];
-      if (I2cActive(Ads1115.address)) { continue; }
+      if (!I2cSetDevice(Ads1115.address)) { continue; }
       uint16_t buffer;
       if (I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONVERT) &&
           I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONFIG)) {

@@ -1125,15 +1125,20 @@ static int m_buffer(bvm *vm)
 /*
  * External API
  */
-BERRY_API void be_pushbytes(bvm *vm, const void * bytes, size_t len)
+BERRY_API void * be_pushbytes(bvm *vm, const void * bytes, size_t len)
 {
     bytes_new_object(vm, len);
     buf_impl attr = m_read_attributes(vm, -1);
     if ((int32_t)len > attr.size) { len = attr.size; } /* double check if the buffer allocated was smaller */
-    memmove((void*)attr.bufptr, bytes, len);
+    if (bytes) {  /* if bytes is null, buffer is filled with zeros */
+        memmove((void*)attr.bufptr, bytes, len);
+    } else {
+        memset((void*)attr.bufptr, 0, len);
+    }
     attr.len = len;
     m_write_attributes(vm, -1, &attr);  /* update instance */
     /* bytes instance is on top of stack */
+    return (void*)attr.bufptr;
 }
 
 BERRY_API const void *be_tobytes(bvm *vm, int rel_index, size_t *len)

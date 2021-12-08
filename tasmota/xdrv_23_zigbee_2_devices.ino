@@ -95,6 +95,8 @@ protected:
   uint8_t _reserved;           // power state if the type supports it
 };
 
+Z_Data z_data_unk;          // dummy object to mark that data is unknown
+
 Z_Data_Type Z_Data::CharToDataType(char c) {
   if (c) {
     if (c == '_') {
@@ -676,7 +678,7 @@ const M & Z_Data_Set::find(uint8_t ep) const {
 // Output: if reference is null, instantiate object and add it at the end of the list
 template <class M>
 M & Z_Data_Set::addIfNull(M & cur, uint8_t ep) {
-  if (nullptr == &cur) {
+  if (&z_data_unk == &cur) {
     LList_elt<M> * elt = new LList_elt<M>();
     elt->val()._endpoint = ep;
     this->addToLast((LList_elt<Z_Data>*)elt);
@@ -697,7 +699,7 @@ const Z_Data & Z_Data_Set::find(Z_Data_Type type, uint8_t ep) const {
       }
     }
   }
-  return *(Z_Data*)nullptr;
+  return z_data_unk;    // mark as unknown
 }
 
 /*********************************************************************************************\

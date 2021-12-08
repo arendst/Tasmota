@@ -67,7 +67,7 @@ struct MULTI_DISP {
   uint8_t used;
 } displays[MAX_MULTI_DISPLAYS];
 uint8_t cur_display;
-Renderer *Init_uDisplay(const char *desc, int8_t cs);
+Renderer *Init_uDisplay(const char *desc);
 
 void Set_display(uint8_t index) {
   displays[index].display = renderer;
@@ -631,7 +631,7 @@ void DisplayText(void)
                           srot = Settings->display_rotate;
                           Settings->display_rotate = rot;
                         }
-                        renderer = Init_uDisplay(fdesc, -1);
+                        renderer = Init_uDisplay(fdesc);
                         if (rot >= 0) {
                           Settings->display_rotate = srot;
                         }
@@ -701,6 +701,12 @@ void DisplayText(void)
             if (renderer) renderer->fillCircle(disp_xpos, disp_ypos, temp, fg_color);
             //else DisplayDrawFilledCircle(disp_xpos, disp_ypos, temp, fg_color);
             break;
+          case 'm':
+            // epaper draw mode currently only for 4,7 inch displays
+            var = atoiv(cp, &temp);
+            cp += var;
+            if (renderer) renderer->ep_update_mode(temp);
+            break;
           case 'r':
             // rectangle
             var = atoiv(cp, &temp);
@@ -723,7 +729,27 @@ void DisplayText(void)
             break;
           case 'u':
             // rounded rectangle
-            { int16_t rad;
+            { int16_t rad, xp, yp, width, height;
+            if (*cp == 'p') {
+              // update epaper display
+              cp++;
+              var = atoiv(cp, &xp);
+              cp += var;
+              cp++;
+              var = atoiv(cp, &yp);
+              cp += var;
+              cp++;
+              var = atoiv(cp, &width);
+              cp += var;
+              cp++;
+              var = atoiv(cp, &height);
+              cp += var;
+              cp++;
+              var = atoiv(cp, &temp);
+              cp += var;
+              if (renderer) renderer->ep_update_area(xp, yp, width, height, temp);
+              break;
+            }
             var = atoiv(cp, &temp);
             cp += var;
             cp++;
@@ -1100,7 +1126,7 @@ extern FS *ffsp;
               if (buttons[num]) {
                 if (!sbt) {
                   buttons[num]->vpower.slider = 0;
-                  buttons[num]->initButtonUL(renderer, gxp, gyp, gxs, gys, GetColorFromIndex(outline),\
+                  buttons[num]->xinitButtonUL(renderer, gxp, gyp, gxs, gys, GetColorFromIndex(outline),\
                     GetColorFromIndex(fill), GetColorFromIndex(textcolor), bbuff, textsize);
                   if (!bflags) {
                     // power button
@@ -1861,6 +1887,10 @@ void DisplaySetPower(void)
       XdspCall(FUNC_DISPLAY_POWER);
     } else {
       renderer->DisplayOnff(disp_power);
+#ifdef USE_BERRY
+      // still call Berry virtual display in case it is not managed entirely by renderer
+      Xdsp18(FUNC_DISPLAY_POWER);
+#endif // USE_BERRY
     }
   }
 }
@@ -1961,6 +1991,11 @@ void ApplyDisplayDimmer(void) {
   }
   if (renderer) {
     renderer->dim8(dimmer8, dimmer8_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
+#ifdef USE_BERRY
+    // still call Berry virtual display in case it is not managed entirely by renderer
+    Xdsp18(FUNC_DISPLAY_DIM);
+#endif // USE_BERRY
+
   } else {
     XdspCall(FUNC_DISPLAY_DIM);
   }
@@ -2623,7 +2658,11 @@ void Restore_graph(uint8_t num, char *path) {
     if (count<=4) {
       if (count==0) gp->xcnt=atoi(vbuff);
     } else {
-      gp->values[count-5]=atoi(vbuff);
+      uint8_t yval = atoi(vbuff);
+      if (yval >= gp->ys) {
+        yval = gp->ys - 1;
+      }
+      gp->values[count-5] = yval;
     }
   }
   fp.close();
@@ -2727,9 +2766,9 @@ void AddValue(uint8_t num,float fval) {
   // decimation option
   if (gp->decimation<0) {
     if (gp->dcnt>=-gp->decimation) {
-      gp->dcnt=0;
       // calc average
-      val=gp->summ/-gp->decimation;
+      val=gp->summ/gp->dcnt;
+      gp->dcnt=0;
       gp->summ=0;
       // add to graph
       AddGraph(num,val);

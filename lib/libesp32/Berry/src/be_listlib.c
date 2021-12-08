@@ -134,9 +134,15 @@ static int item_range(bvm *vm)
     /* get index range */
     be_getmember(vm, 2, "__lower__");
     lower = be_toint(vm, -1);
+    if (lower < 0) {
+        lower = size + lower;
+    }
     be_pop(vm, 1);
     be_getmember(vm, 2, "__upper__");
     upper = be_toint(vm, -1);
+    if (upper < 0) {
+        upper = size + upper;
+    }
     be_pop(vm, 1);
     /* protection scope */
     upper = upper < size ? upper : size - 1;
@@ -333,18 +339,27 @@ static int m_merge(bvm *vm)
     be_return(vm); /* return self */
 }
 
-static void connect(bvm *vm, bvalue *begin, bvalue *end)
+static void connect(bvm *vm, bvalue *begin, bvalue *end, const char * delimiter, bbool first_element)
 {
     size_t l0 = be_strlen(vm, -1), len = l0;
+    size_t d = delimiter ? strlen(delimiter) : 0;   /* len of delimiter */
     char *buf, *p;
     bvalue *it;
     for (it = begin; it < end; ++it) {
-        len += str_len(var_tostr(it));
+        len += str_len(var_tostr(it)) + d;
+    }
+    if (first_element) {
+        len -= d;   /* remove size for first delimiter non needed */
     }
     buf = be_pushbuffer(vm, len);
     memcpy(buf, be_tostring(vm, -2), l0);
     p = buf + l0;
     for (it = begin; it < end; ++it) {
+        if ((it != begin || !first_element) && delimiter) {
+            /* add delimiter */
+            memcpy(p, delimiter, d);
+            p += d;
+        }
         bstring *s = var_tostr(it);
         size_t l = str_len(s);
         memcpy(p, str(s), l);
@@ -355,15 +370,24 @@ static void connect(bvm *vm, bvalue *begin, bvalue *end)
     be_pop(vm, 2);
 }
 
-static void list_concat(bvm *vm, blist *list)
+static void list_concat(bvm *vm, blist *list, const char * delimiter)
 {
     bvalue *it, *begin = be_list_data(list);
     bvalue *end = be_list_end(list);
     be_pushstring(vm, ""); /* push a empty string */
+    bbool first_element = btrue;
     for (it = begin; it < end;) {
         for (; it < end && var_isstr(it); ++it);
-        connect(vm, begin, it); /* connect string list */
+        if (begin < it) {
+            connect(vm, begin, it, delimiter, first_element); /* connect string list */
+            first_element = bfalse;
+        }
         if (it < end) {
+            if (delimiter && !first_element) {
+                be_pushstring(vm, delimiter);
+                be_strconcat(vm, -2);
+                be_pop(vm, 1);
+            }
             /* connect other value */
             var_setval(vm->top, it);
             be_incrtop(vm);
@@ -371,6 +395,7 @@ static void list_concat(bvm *vm, blist *list)
             be_strconcat(vm, -2);
             be_pop(vm, 1);
             begin = ++it;
+            first_element = bfalse;
         }
     }
 }
@@ -378,10 +403,15 @@ static void list_concat(bvm *vm, blist *list)
 static int m_concat(bvm *vm)
 {
     bvalue *value;
+    int top = be_top(vm);
     be_getmember(vm, 1, ".p");
     list_check_data(vm, 1);
     value = be_indexof(vm, -1);
-    list_concat(vm, var_toobj(value));
+    const char * delimiter = NULL;
+    if (top >= 2) {
+        delimiter = be_tostring(vm, 2);
+    }
+    list_concat(vm, var_toobj(value), delimiter);
     be_return(vm);
 }
 
@@ -432,6 +462,19 @@ static int list_equal(bvm *vm, bbool iseq)
     be_return(vm);
 }
 
+static int m_keys(bvm *vm)
+{
+    be_getmember(vm, 1, ".p");
+    list_check_data(vm, 1);
+    int size = be_data_size(vm, -1);
+    be_getbuiltin(vm, "range");
+    be_pushint(vm, 0);
+    be_pushint(vm, size - 1);
+    be_call(vm, 2);
+    be_pop(vm, 2);
+    be_return(vm);
+}
+
 static int m_equal(bvm *vm)
 {
     return list_equal(vm, btrue);
@@ -463,6 +506,7 @@ void be_load_listlib(bvm *vm)
         { "concat", m_concat },
         { "reverse", m_reverse },
         { "copy", m_copy },
+        { "keys", m_keys },
         { "..", m_connect },
         { "+", m_merge },
         { "==", m_equal },
@@ -491,6 +535,7 @@ class be_class_list (scope: global, name: list) {
     concat, func(m_concat)
     reverse, func(m_reverse)
     copy, func(m_copy)
+    keys, func(m_keys)
     .., func(m_connect)
     +, func(m_merge)
     ==, func(m_equal)

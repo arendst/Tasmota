@@ -85,6 +85,19 @@ class AXP192_M5StickC : AXP192
   def set_lcd_reset(state)
     self.set_ldo_enable(3, state)
   end
+  
+  # Dimmer in percentage
+  def set_displaydimmer(x)
+    var v = tasmota.scale_uint(x, 0, 100, 2500, 3300)
+    self.set_lcd_voltage(v)
+  end
+
+  # respond to display events
+  def display(cmd, idx, payload, raw)
+    if cmd == "dim" || cmd == "power"
+      self.set_displaydimmer(idx)
+    end
+  end
 end
 
 axp = AXP192_M5StickC()

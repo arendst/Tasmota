@@ -14,4 +14,4 @@ static be_define_const_module(
     "strict"
 );
 
-BE_EXPORT_VARIABLE be_define_const_native_module(strict, NULL);
+BE_EXPORT_VARIABLE be_define_const_native_module(strict);

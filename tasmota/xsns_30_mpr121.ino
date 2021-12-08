@@ -219,7 +219,7 @@ void Mpr121Init(struct mpr121 *pS, bool initial)
 	// Loop through I2C addresses
 	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
 
-    if (initial && I2cActive(pS->i2c_addr[i])) { continue; }
+    if (initial && !I2cSetDevice(pS->i2c_addr[i])) { continue; }
 
 		// Soft reset sensor and check if connected at I2C address
 		pS->connected[i] = (I2cWrite8(pS->i2c_addr[i], MPR121_SRST_REG, MPR121_SRST_VAL)

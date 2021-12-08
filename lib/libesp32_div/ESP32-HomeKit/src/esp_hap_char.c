@@ -309,7 +309,7 @@ const hap_val_t *hap_char_get_step_val(hap_char_t *hc)
 /**
  * @brief HAP create a characteristics
  */
-static hap_char_t *hap_char_create(char *type_uuid, uint32_t permission, hap_char_format_t format, hap_val_t val)
+static hap_char_t *hap_char_create(const char *type_uuid, uint32_t permission, hap_char_format_t format, hap_val_t val)
 {
     __hap_char_t *new_ch;
 
@@ -333,42 +333,42 @@ static hap_char_t *hap_char_create(char *type_uuid, uint32_t permission, hap_cha
     return (hap_char_t *) new_ch;
 }
 
-hap_char_t *hap_char_bool_create(char *type_uuid, uint16_t perms, bool b)
+hap_char_t *hap_char_bool_create(const char *type_uuid, uint16_t perms, bool b)
 {
     hap_val_t val = {.b = b};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_BOOL, val);
 }
-hap_char_t *hap_char_uint8_create(char *type_uuid, uint16_t perms, uint8_t u8)
+hap_char_t *hap_char_uint8_create(const char *type_uuid, uint16_t perms, uint8_t u8)
 {
     hap_val_t val = {.u = u8};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_UINT8, val);
 }
-hap_char_t *hap_char_uint16_create(char *type_uuid, uint16_t perms, uint16_t u16)
+hap_char_t *hap_char_uint16_create(const char *type_uuid, uint16_t perms, uint16_t u16)
 {
     hap_val_t val = {.u = u16};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_UINT16, val);
 }
-hap_char_t *hap_char_uint32_create(char *type_uuid, uint16_t perms, uint32_t u32)
+hap_char_t *hap_char_uint32_create(const char *type_uuid, uint16_t perms, uint32_t u32)
 {
     hap_val_t val = {.u = u32};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_UINT32, val);
 }
-hap_char_t *hap_char_uint64_create(char *type_uuid, uint16_t perms, uint64_t u64)
+hap_char_t *hap_char_uint64_create(const char *type_uuid, uint16_t perms, uint64_t u64)
 {
     hap_val_t val = {.i64 = u64};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_UINT64, val);
 }
-hap_char_t *hap_char_int_create(char *type_uuid, uint16_t perms, int i32)
+hap_char_t *hap_char_int_create(const char *type_uuid, uint16_t perms, int i32)
 {
     hap_val_t val = {.i = i32};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_INT, val);
 }
-hap_char_t *hap_char_float_create(char *type_uuid, uint16_t perms, float f)
+hap_char_t *hap_char_float_create(const char *type_uuid, uint16_t perms, float f)
 {
     hap_val_t val = {.f = f};
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_FLOAT, val);
 }
-hap_char_t *hap_char_string_create(char *type_uuid, uint16_t perms, char *s)
+hap_char_t *hap_char_string_create(const char *type_uuid, uint16_t perms, const char *s)
 {
     hap_val_t val;
     if (s)
@@ -378,7 +378,7 @@ hap_char_t *hap_char_string_create(char *type_uuid, uint16_t perms, char *s)
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_STRING, val);
 }
 
-hap_char_t *hap_char_data_create(char *type_uuid, uint16_t perms, hap_data_val_t *d)
+hap_char_t *hap_char_data_create(const char *type_uuid, uint16_t perms, hap_data_val_t *d)
 {
     hap_val_t val = {0};
     if (d) {
@@ -387,7 +387,7 @@ hap_char_t *hap_char_data_create(char *type_uuid, uint16_t perms, hap_data_val_t
     return hap_char_create(type_uuid, perms, HAP_CHAR_FORMAT_DATA, val);
 }
 
-hap_char_t *hap_char_tlv8_create(char *type_uuid, uint16_t perms, hap_tlv8_val_t *t)
+hap_char_t *hap_char_tlv8_create(const char *type_uuid, uint16_t perms, hap_tlv8_val_t *t)
 {
     hap_val_t val = {0};
     if (t) {

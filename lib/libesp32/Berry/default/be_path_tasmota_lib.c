@@ -18,13 +18,17 @@
 #include "be_sys.h"
 #include <time.h>
 
+extern int m_path_listdir(bvm *vm);
+
 static int m_path_exists(bvm *vm)
 {
     const char *path = NULL;
     if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
         path = be_tostring(vm, 1);
+        be_pushbool(vm, be_isexist(path));
+    } else {
+        be_pushbool(vm, bfalse);
     }
-    be_pushbool(vm, be_isexist(path));
     be_return(vm);
 }
 extern time_t be_last_modified(void *hfile);
@@ -43,10 +47,24 @@ static int m_path_last_modified(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_path_remove(bvm *vm)
+{
+    const char *path = NULL;
+    if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
+        path = be_tostring(vm, 1);
+        be_pushbool(vm, be_unlink(path));
+    } else {
+        be_pushbool(vm, bfalse);
+    }
+    be_return(vm);
+}
+
 /* @const_object_info_begin
 module path (scope: global, file: tasmota_path) {
     exists, func(m_path_exists)
     last_modified, func(m_path_last_modified)
+    listdir, func(m_path_listdir)
+    remove, func(m_path_remove)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_tasmota_path.h"

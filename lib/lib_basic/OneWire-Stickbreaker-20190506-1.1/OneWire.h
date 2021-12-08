@@ -197,6 +197,9 @@ void directWriteHigh(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directModeInput(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    GPIO.enable_w1tc.val = ((uint32_t)1 << (pin));
+#else
     if ( digitalPinIsValid(pin) )
     {
 #if ESP_IDF_VERSION_MAJOR < 4      // IDF 3.x ESP32/PICO-D4
@@ -208,27 +211,23 @@ void directModeInput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
 #elif ESP_IDF_VERSION_MAJOR > 3  // ESP32-S2 needs IDF 4.2 or later
-#if CONFIG_IDF_TARGET_ESP32C3
-    // Esp32c3 has no full RTC IO subsystem, so GPIO is 100% "independent" of RTC
-#else // plain ESP32
-        uint32_t rtc_reg(rtc_io_desc[pin].reg);
+        int rtcio_num = rtc_io_number_get((gpio_num_t)pin);
 
-        if ( rtc_reg ) // RTC pins PULL settings
-        {
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].mux);
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].pullup | rtc_io_desc[pin].pulldown);
+        if (rtcio_num >= 0) {
+            uint32_t rtc_reg(rtc_io_desc[rtcio_num].reg);
+
+            if ( rtc_reg ) // RTC pins PULL settings
+            {
+                ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtcio_num].mux);
+                ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtcio_num].pullup | rtc_io_desc[rtcio_num].pulldown);
+            }
         }
 #endif
-#endif
 
-#if CONFIG_IDF_TARGET_ESP32C3
-    GPIO.enable_w1tc.val = ((uint32_t)1 << (pin - 32));
-#else // plain ESP32
         if ( pin < 32 )
             GPIO.enable_w1tc = ((uint32_t)1 << pin);
         else
             GPIO.enable1_w1tc.val = ((uint32_t)1 << (pin - 32));
-#endif
 
         uint32_t pinFunction((uint32_t)2 << FUN_DRV_S); // what are the drivers?
         pinFunction |= FUN_IE; // input enable but required for output as well?
@@ -238,11 +237,15 @@ void directModeInput(IO_REG_TYPE pin)
 
         GPIO.pin[pin].val = 0;
     }
+#endif
 }
 
 static inline __attribute__((always_inline))
 void directModeOutput(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    GPIO.enable_w1ts.val = ((uint32_t)1 << (pin));
+#else
     if ( digitalPinIsValid(pin) && pin <= 33 ) // pins above 33 can be only inputs
     {
 #if ESP_IDF_VERSION_MAJOR < 4      // IDF 3.x ESP32/PICO-D4
@@ -254,27 +257,23 @@ void directModeOutput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
 #elif ESP_IDF_VERSION_MAJOR > 3  // ESP32-S2 needs IDF 4.2 or later
-#if CONFIG_IDF_TARGET_ESP32C3
-    // Esp32c3 has no full RTC IO subsystem, so GPIO is 100% "independent" of RTC
-#else // plain ESP32
-        uint32_t rtc_reg(rtc_io_desc[pin].reg);
+        int rtcio_num = rtc_io_number_get((gpio_num_t)pin);
 
-        if ( rtc_reg ) // RTC pins PULL settings
-        {
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].mux);
-            ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[pin].pullup | rtc_io_desc[pin].pulldown);
+        if (rtcio_num >= 0) {
+            uint32_t rtc_reg(rtc_io_desc[rtcio_num].reg);
+
+            if ( rtc_reg ) // RTC pins PULL settings
+            {
+                ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtcio_num].mux);
+                ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_io_desc[rtcio_num].pullup | rtc_io_desc[rtcio_num].pulldown);
+            }
         }
 #endif
-#endif
 
-#if CONFIG_IDF_TARGET_ESP32C3
-        GPIO.enable_w1ts.val = ((uint32_t)1 << (pin - 32));
-#else // plain ESP32
         if ( pin < 32 )
             GPIO.enable_w1ts = ((uint32_t)1 << pin);
         else // already validated to pins <= 33
             GPIO.enable1_w1ts.val = ((uint32_t)1 << (pin - 32));
-#endif
 
         uint32_t pinFunction((uint32_t)2 << FUN_DRV_S); // what are the drivers?
         pinFunction |= FUN_IE; // input enable but required for output as well?
@@ -284,6 +283,7 @@ void directModeOutput(IO_REG_TYPE pin)
 
         GPIO.pin[pin].val = 0;
     }
+#endif
 }
 
 #define DIRECT_READ(base, pin)          directRead(pin)

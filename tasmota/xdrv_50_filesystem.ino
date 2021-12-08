@@ -102,7 +102,7 @@ void UfsInitOnce(void) {
 #ifdef ESP8266
   ffsp = &LittleFS;
   if (!LittleFS.begin()) {
-    ffsp = 0;
+    ffsp = nullptr;
     return;
   }
 #endif  // ESP8266
@@ -114,6 +114,7 @@ void UfsInitOnce(void) {
     // ffat is second
     ffsp = &FFat;
     if (!FFat.begin(true)) {
+      ffsp = nullptr;
       return;
     }
     ffs_type = UFS_TFAT;
@@ -560,12 +561,8 @@ const char UFS_FORM_SDC_DIRa[] PROGMEM =
 const char UFS_FORM_SDC_DIRc[] PROGMEM =
   "</div>";
 const char UFS_FORM_FILE_UPGb[] PROGMEM =
-#ifdef GUI_EDIT_FILE
   "<form method='get' action='ufse'><input type='hidden' file='" D_NEW_FILE "'>"
-  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>"
-#endif
-;
-
+  "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
 const char UFS_FORM_FILE_UPGb1[] PROGMEM =
   "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>";
 
@@ -601,7 +598,7 @@ const char HTTP_EDITOR_FORM_START[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_EDIT_FILE "&nbsp;</b></legend>"
   "<form>"
   "<label for='name'>" D_FILE ":</label><input type='text' id='name' name='name' value='%s'><br><hr width='98%%'>"
-  "<textarea id='content' name='content' rows='8' cols='80' style='font-size: 12pt'>";
+  "<textarea id='content' name='content' wrap='off' rows='8' cols='80' style='font-size: 12pt'>";
 
 const char HTTP_EDITOR_FORM_END[] PROGMEM =
   "</textarea>"
@@ -670,7 +667,9 @@ void UfsDirectory(void) {
     UfsListDir(ufs_path, depth);
   }
   WSContentSend_P(UFS_FORM_SDC_DIRc);
+#ifdef GUI_EDIT_FILE
   WSContentSend_P(UFS_FORM_FILE_UPGb);
+#endif
   if (!isSDC()) {
     WSContentSend_P(UFS_FORM_FILE_UPGb1);
   }

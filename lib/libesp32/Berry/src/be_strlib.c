@@ -330,7 +330,6 @@ static bstring* string_range(bvm *vm, bstring *str, binstance *range)
 {
     bint lower, upper;
     bint size = str_len(str);   /* size of source string */
-    // bint size = be_data_size(vm, -1); /* get source list size */
     /* get index range */
     bvalue temp;
     be_instance_member(vm, range, be_newstr(vm, "__lower__"), &temp);
@@ -788,6 +787,53 @@ static int str_toupper(bvm *vm) {
     return str_touplower(vm, btrue);
 }
 
+static int str_tr(bvm *vm)
+{
+    if (be_top(vm) == 3 && be_isstring(vm, 1) && be_isstring(vm, 2) && be_isstring(vm, 3)) {
+        const char *p, *s = be_tostring(vm, 1);
+        const char *t1 = be_tostring(vm, 2);
+        const char *t2 = be_tostring(vm, 3);
+        if (strlen(t2) < strlen(t1)) {
+            be_raise(vm, "value_error", "invalid translation pattern");
+        }
+        size_t len = (size_t)be_strlen(vm, 1);
+        char *buf, *q;
+        buf = be_pushbuffer(vm, len);
+        /* convert each char */
+        for (p = s, q = buf; *p != '\0'; ++p, ++q) {
+            const char *p1, *p2;
+            *q = *p;  /* default to no change */
+            for (p1=t1, p2=t2; *p1 != '\0'; ++p1, ++p2) {
+                if (*p == *p1) {
+                    *q = *p2;
+                    break;
+                }
+            }
+        }
+        be_pushnstring(vm, buf, len); /* make escape string from buffer */
+        be_remove(vm, 2); /* remove buffer */
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
+static int str_escape(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1 && be_isstring(vm, 1)) {
+        int quote = 'u';
+        if (top >= 2 && be_isbool(vm, 2)) {
+            if (be_tobool(vm, 1)) {
+                quote = 'x';
+            }
+        }
+        be_tostring(vm, 1);
+        be_toescape(vm, 1, quote);
+        be_pushvalue(vm, 1);
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
 
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(string) {
@@ -800,6 +846,8 @@ be_native_module_attr_table(string) {
     be_native_module_function("char", str_char),
     be_native_module_function("tolower", str_tolower),
     be_native_module_function("toupper", str_toupper),
+    be_native_module_function("tr", str_tr),
+    be_native_module_function("escape", str_escape),
 };
 
 be_define_native_module(string, NULL);
@@ -815,6 +863,8 @@ module string (scope: global, depend: BE_USE_STRING_MODULE) {
     char, func(str_char)
     tolower, func(str_tolower)
     toupper, func(str_toupper)
+    tr, func(str_tr)
+    escape, func(str_escape)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_string.h"

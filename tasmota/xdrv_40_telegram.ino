@@ -47,13 +47,8 @@
 #define TELEGRAM_SEND_RETRY        4    // Retries
 #define TELEGRAM_MAX_MESSAGES      2
 
-#ifdef USE_MQTT_TLS_CA_CERT
-  static const uint32_t tls_rx_size = 2048;   // since Telegram CA is bigger than 1024 bytes, we need to increase rx buffer
-  static const uint32_t tls_tx_size = 1024;
-#else
-  static const uint32_t tls_rx_size = 1024;
-  static const uint32_t tls_tx_size = 1024;
-#endif
+static const uint32_t tls_rx_size = 2048;   // since Telegram CA is bigger than 1024 bytes, we need to increase rx buffer
+static const uint32_t tls_tx_size = 1024;
 
 #include "WiFiClientSecureLightBearSSL.h"
 BearSSL::WiFiClientSecure_light *telegramClient = nullptr;
@@ -87,11 +82,13 @@ bool TelegramInit(void) {
   if (strlen(SettingsText(SET_TELEGRAM_TOKEN))) {
     if (!telegramClient) {
       telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
-#ifdef USE_MQTT_TLS_CA_CERT
-      telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
-#else
-      telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
-#endif
+
+      if (Settings->flag5.tls_use_fingerprint) {
+        telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
+      } else {
+        telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
+      }
+
       Telegram.message_count = 0;     // Number of received messages
       Telegram.next_update_id = 0;    // Code of last read Message
       Telegram.message[0].text = "";

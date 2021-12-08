@@ -48,11 +48,11 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   // SetOption synonyms
   D_SO_MQTTJSONONLY "|"
 #ifdef USE_MQTT_TLS
-  D_SO_MQTTTLS "|"
+  D_SO_MQTTTLS "|" D_SO_MQTTTLS_FINGERPRINT "|"
 #endif
   D_SO_MQTTNORETAIN "|" D_SO_MQTTDETACHRELAY "|"
   // regular commands
-#if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
+#if defined(USE_MQTT_TLS)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_MQTTKEEPALIVE "|" D_CMND_MQTTTIMEOUT "|" D_CMND_MQTTWIFITIMEOUT "|"
@@ -70,18 +70,13 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
 SO_SYNONYMS(kMqttSynonyms,
   90,
 #ifdef USE_MQTT_TLS
-  103,
+  103, 132,
 #endif
   104, 114
 );
 
-// const uint8_t kMqttSynonyms[] PROGMEM = {
-//   4,  // number of synonyms
-//   90, 103, 104, 114,
-// };
-
 void (* const MqttCommand[])(void) PROGMEM = {
-#if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
+#if defined(USE_MQTT_TLS)
   &CmndMqttFingerprint,
 #endif
   &CmndMqttUser, &CmndMqttPassword, &CmndMqttKeepAlive, &CmndMqttTimeout, &CmndMqttWifiTimeout,
@@ -197,6 +192,7 @@ void MqttInit(void) {
   Settings->mqtt_port = 8883;
 #endif //USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
+  bool aws_iot_host = false;
   if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
     // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
     Settings->flag4.mqtt_tls = true;
@@ -207,6 +203,7 @@ void MqttInit(void) {
   String host = String(SettingsText(SET_MQTT_HOST));
   if (host.indexOf(F(".iot.")) && host.endsWith(F(".amazonaws.com"))) {  // look for ".iot." and ".amazonaws.com" in the domain name
     Settings->flag4.mqtt_no_retain = true;
+    aws_iot_host = true;
   }
 
   if (Mqtt.mqtt_tls) {
@@ -216,6 +213,10 @@ void MqttInit(void) {
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 #endif
 
+    if (443 == Settings->mqtt_port && aws_iot_host) {
+      static const char * alpn_mqtt = "mqtt";   // needs to be static
+      tlsClient->setALPN(&alpn_mqtt, 1);         // need to set alpn to 'mqtt' for AWS IoT
+    }
 #ifdef USE_MQTT_AWS_IOT
     loadTlsDir();   // load key and certificate data from Flash
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
@@ -225,9 +226,9 @@ void MqttInit(void) {
     }
 #endif
 
-#ifdef USE_MQTT_TLS_CA_CERT
-    tlsClient->setTrustAnchor(Tasmota_TA, nitems(Tasmota_TA));
-#endif // USE_MQTT_TLS_CA_CERT
+    if (!Settings->flag5.tls_use_fingerprint) {
+      tlsClient->setTrustAnchor(Tasmota_TA, nitems(Tasmota_TA));
+    }
 
     MqttClient.setClient(*tlsClient);
   } else {
@@ -947,7 +948,7 @@ void MqttConnected(void) {
 void MqttReconnect(void) {
   char stopic[TOPSZ];
 
-  Mqtt.allowed = Settings->flag.mqtt_enabled;  // SetOption3 - Enable MQTT
+  Mqtt.allowed = Settings->flag.mqtt_enabled && (TasmotaGlobal.restart_flag == 0);  // SetOption3 - Enable MQTT, and don't connect if restart in process
   if (Mqtt.allowed) {
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
   ProvisionAzureDPS();
@@ -1037,11 +1038,11 @@ void MqttReconnect(void) {
   MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
 
   uint32_t mqtt_connect_time = millis();
-#if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
-  bool allow_all_fingerprints;
-  bool learn_fingerprint1;
-  bool learn_fingerprint2;
-  if (Mqtt.mqtt_tls) {
+#if defined(USE_MQTT_TLS)
+  bool allow_all_fingerprints = false;
+  bool learn_fingerprint1 = false;
+  bool learn_fingerprint2 = false;
+  if (Mqtt.mqtt_tls && Settings->flag5.tls_use_fingerprint) {
     allow_all_fingerprints = false;
     learn_fingerprint1 = is_fingerprint_mono_value(Settings->mqtt_fingerprint[0], 0x00);
     learn_fingerprint2 = is_fingerprint_mono_value(Settings->mqtt_fingerprint[1], 0x00);
@@ -1088,35 +1089,37 @@ void MqttReconnect(void) {
       if (!tlsClient->getMFLNStatus()) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "MFLN not supported by TLS server"));
       }
-#ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
-      const uint8_t *recv_fingerprint = tlsClient->getRecvPubKeyFingerprint();
-      // create a printable version of the fingerprint received
-      char buf_fingerprint[64];
-      ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
 
-      bool learned = false;
+      if (Settings->flag5.tls_use_fingerprint) {    // CA validation
+        const uint8_t *recv_fingerprint = tlsClient->getRecvPubKeyFingerprint();
+        // create a printable version of the fingerprint received
+        char buf_fingerprint[64];
+        ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
 
-      // If the fingerprint slot is marked for update, we'll do so.
-      // Otherwise, if the fingerprint slot had the magic trust-on-first-use
-      // value, we will save the current fingerprint there, but only if the other fingerprint slot
-      // *didn't* match it.
-      if (recv_fingerprint[20] & 0x1 || (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[1], 20))) {
-        memcpy(Settings->mqtt_fingerprint[0], recv_fingerprint, 20);
-        learned = true;
+        bool learned = false;
+
+        // If the fingerprint slot is marked for update, we'll do so.
+        // Otherwise, if the fingerprint slot had the magic trust-on-first-use
+        // value, we will save the current fingerprint there, but only if the other fingerprint slot
+        // *didn't* match it.
+        if (recv_fingerprint[20] & 0x1 || (learn_fingerprint1 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[1], 20))) {
+          memcpy(Settings->mqtt_fingerprint[0], recv_fingerprint, 20);
+          learned = true;
+        }
+        // As above, but for the other slot.
+        if (recv_fingerprint[20] & 0x2 || (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[0], 20))) {
+          memcpy(Settings->mqtt_fingerprint[1], recv_fingerprint, 20);
+          learned = true;
+        }
+
+        if (learned) {
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Fingerprint learned: %s"), buf_fingerprint);
+
+          SettingsSaveAll();  // save settings
+        }
       }
-      // As above, but for the other slot.
-      if (recv_fingerprint[20] & 0x2 || (learn_fingerprint2 && 0 != memcmp(recv_fingerprint, Settings->mqtt_fingerprint[0], 20))) {
-        memcpy(Settings->mqtt_fingerprint[1], recv_fingerprint, 20);
-        learned = true;
-      }
 
-      if (learned) {
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Fingerprint learned: %s"), buf_fingerprint);
-
-        SettingsSaveAll();  // save settings
-      }
-#endif // !USE_MQTT_TLS_CA_CERT
     }
 #endif // USE_MQTT_TLS
     MqttConnected();
@@ -1269,7 +1272,7 @@ bool KeyTopicActive(uint32_t key) {
  * Commands
 \*********************************************************************************************/
 
-#if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
+#if defined(USE_MQTT_TLS)
 void CmndMqttFingerprint(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     char fingerprint[60];
@@ -1883,7 +1886,7 @@ void HandleMqttConfiguration(void)
     SettingsText(SET_MQTT_HOST),
     Settings->mqtt_port,
 #ifdef USE_MQTT_TLS
-    Mqtt.mqtt_tls ? PSTR(" checked") : "",      // SetOption102 - Enable MQTT TLS
+    Mqtt.mqtt_tls ? PSTR(" checked") : "",      // SetOption103 - Enable MQTT TLS
 #endif // USE_MQTT_TLS
     Format(str, PSTR(MQTT_CLIENT_ID), sizeof(str)), PSTR(MQTT_CLIENT_ID), SettingsText(SET_MQTT_CLIENT));
   WSContentSend_P(HTTP_FORM_MQTT2,
@@ -1905,8 +1908,8 @@ void MqttSaveSettings(void) {
   cmnd += AddWebCommand(PSTR(D_CMND_TOPIC), PSTR("mt"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_FULLTOPIC), PSTR("mf"), PSTR("1"));
 #ifdef USE_MQTT_TLS
-  cmnd += F(";" D_CMND_SO "102 ");
-  cmnd += Webserver->hasArg(F("b3"));  // SetOption102 - Enable MQTT TLS
+  cmnd += F(";" D_CMND_SO "103 ");
+  cmnd += Webserver->hasArg(F("b3"));  // SetOption103 - Enable MQTT TLS
 #endif
   ExecuteWebCommand((char*)cmnd.c_str());
 }

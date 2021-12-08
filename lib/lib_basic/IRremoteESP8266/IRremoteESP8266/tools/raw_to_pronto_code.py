@@ -1,4 +1,4 @@
-#!/usr/bin/python
+    #!/usr/bin/python
 """Convert IRremoteESP8266's Raw data output into Pronto Code."""
 #
 # Copyright 2020 David Conran
@@ -16,7 +16,7 @@ def parse_and_report(rawdata_str, hertz=38000, end_usecs=100000,
   # Parse the input.
   rawdata = convert_rawdata(rawdata_str)
   if verbose:
-    output.write("Found %d timing entries.\n" % len(rawdata))
+    output.write(f"Found {len(rawdata)} timing entries.\n")
 
   # Do we need to pad out the rawdata to make it even in length?
   if end_usecs > 0 and len(rawdata) % 2 == 1:
@@ -26,29 +26,29 @@ def parse_and_report(rawdata_str, hertz=38000, end_usecs=100000,
   # Work out the frequency code.
   pronto_freq = int(1000000.0 / (hertz * 0.241246))
   if verbose:
-    output.write("Pronto frequency is %X (%d Hz).\n" % (pronto_freq, hertz))
-  result.append("%04X" % pronto_freq)
+    output.write(f"Pronto frequency is {pronto_freq:X} ({hertz} Hz).\n")
+  result.append(f"{pronto_freq:04X}")
   period = 1000000.0 / max(1, hertz)
   if verbose:
-    output.write("Pronto period is %f uSecs.\n" % period)
+    output.write(f"Pronto period is {period} uSecs.\n")
   # Add the lengths to the code.
   if use_initial:
-    result.append("%04x" % int(len(rawdata) / 2))  # Initial burst code length
-    result.append("%04x" % 0)  # No Repeat code length
+    result.append(f"{int(len(rawdata) / 2):04x}")  # Initial burst code length
+    result.append("0000")  # No Repeat code length
   else:
-    result.append("%04x" % 0)  # No Initial burst code length
-    result.append("%04x" % int(len(rawdata) / 2))  # Repeat code length
+    result.append("0000")  # No Initial burst code length
+    result.append(f"{int(len(rawdata) / 2):04x}")  # Repeat code length
 
   # Add the data.
   if verbose:
-    output.write("Raw data: %s " % rawdata)
+    output.write(f"Raw data: {rawdata} ")
   for i in rawdata:
-    result.append("%04x" % int(i / period))
+    result.append(f"{int(i / period):04x}")
   if generate_code:
-    output.write("uint16_t pronto[%d] = {0x%s};\n" % (len(result),
-                                                      ", 0x".join(result)))
+    output.write(f"uint16_t pronto[{len(result)}] = "
+                 f"{{0x{', 0x'.join(result)}}};\n")
   else:
-    output.write("Pronto code = '%s'\n" % " ".join(result))
+    output.write(f"Pronto code = '{' '.join(result)}'\n")
 # pylint: enable=too-many-arguments
 
 

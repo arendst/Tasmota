@@ -63,7 +63,6 @@ struct remote_pwm_dimmer {
 uint32_t ignore_any_key_time = 0;
 uint32_t button_hold_time[3];
 uint8_t led_timeout_seconds = 0;
-uint8_t restore_powered_off_led_counter = 0;
 uint8_t power_button_index = 0;
 uint8_t down_button_index = 1;
 uint8_t buttons_pressed = 0;
@@ -744,21 +743,15 @@ bool Xdrv35(uint8_t function)
         PWMDimmerSetBrightnessLeds(-2);
       }
 
-      // The powered-off LED is also the LedLink LED. If we lose the WiFi or MQTT server connection,
-      // the LED will be set to a blinking state and will be turned off when the connection is
-      // restored. If the state is blinking now, set a flag so we know that we need to restore it
-      // when it stops blinking.
-      if (TasmotaGlobal.global_state.data)
-        restore_powered_off_led_counter = 5;
-      else if (restore_powered_off_led_counter) {
-        PWMDimmerSetPoweredOffLed();
-        restore_powered_off_led_counter--;
-      }
+      // The powered-off LED is also the LedLink LED. If the state of it gets changed,
+      // restore_powered_off_led_counter will get set to the number of seconds
+      // to wait before restoring it to the proper state.
+      if (TasmotaGlobal.restore_powered_off_led_counter && !--TasmotaGlobal.restore_powered_off_led_counter) PWMDimmerSetPoweredOffLed();
       break;
 
     case FUNC_BUTTON_PRESSED:
       // If the button is pressed or was just released, ...
-      if (!XdrvMailbox.payload || button_pressed[XdrvMailbox.index]) {
+      if (!Settings->flag3.mqtt_buttons && (!XdrvMailbox.payload || button_pressed[XdrvMailbox.index])) {
         uint32_t button_index = XdrvMailbox.index;
         uint32_t now = millis();
 

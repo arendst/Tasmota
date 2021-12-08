@@ -495,6 +495,23 @@ bool first_device_group_is_local = true;
 #define SHOW_FREE_MEM(WHERE)
 #endif
 
+#ifndef USE_PROFILING
+#undef USE_PROFILE_DRIVER
+#undef USE_PROFILE_FUNCTION
+#endif
+
+#ifdef USE_PROFILE_DRIVER
+#define PROFILE_DRIVER(DRIVER, FUNCTION, START) AddLogDriver(DRIVER, FUNCTION, START)
+#else
+#define PROFILE_DRIVER(DRIVER, FUNCTION, START)
+#endif  // USE_PROFILE_DRIVER
+
+#ifdef USE_PROFILE_FUNCTION
+#define PROFILE_FUNCTION(DRIVER, INDEX, FUNCTION, START) AddLogFunction(DRIVER, INDEX, FUNCTION, START)
+#else
+#define PROFILE_FUNCTION(DRIVER, INDEX, FUNCTION, START)
+#endif  // USE_PROFILE_DRIVER
+
 /*********************************************************************************************\
  * Macro for SetOption synonyms
  *

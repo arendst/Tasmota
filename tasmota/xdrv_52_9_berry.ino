@@ -24,6 +24,7 @@
 
 #include <berry.h>
 #include "be_vm.h"
+#include "ZipReadFS.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
@@ -95,12 +96,12 @@ extern "C" {
 // // call a function (if exists) of type void -> void
 
 // If event == nullptr, then take XdrvMailbox.data
-bool callBerryRule(const char *event) {
+bool callBerryRule(const char *event, bool teleperiod) {
   if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
   char * json_event = XdrvMailbox.data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(PSTR("rule"), nullptr, 0, event ? event : XdrvMailbox.data);
+  serviced = callBerryEventDispatcher(teleperiod ? "tele" : "rule", nullptr, 0, event ? event : XdrvMailbox.data);
   berry.rules_busy = false;
   return serviced;     // TODO event not handled
 }
@@ -213,7 +214,8 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(vm, type != nullptr ? type : "");
       be_pushstring(vm, cmd != nullptr ? cmd : "");
       be_pushint(vm, idx);
-      be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
+      be_pushstring(vm, payload != nullptr ? payload : "");  // empty json
+      BrTimeoutStart();
       if (data_len > 0) {
         be_pushbytes(vm, payload, data_len);    // if data_len is set, we also push raw bytes
         ret = be_pcall(vm, 6);   // 6 arguments
@@ -221,6 +223,7 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       } else {
         ret = be_pcall(vm, 5);   // 5 arguments
       }
+      BrTimeoutReset();
       if (ret != 0) {
         BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
         return ret;
@@ -259,16 +262,48 @@ void BerryObservability(bvm *vm, int event...) {
       {
         int32_t vm_usage2 = va_arg(param, int32_t);
         uint32_t gc_elapsed = millis() - gc_time;
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+        uint32_t vm_scanned = va_arg(param, uint32_t);
+        uint32_t vm_freed = va_arg(param, uint32_t);
+        AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
+                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
         }
       }
       break;
-    default: break;
+    case BE_OBS_STACK_RESIZE_START:
+      {
+        int32_t stack_before = va_arg(param, int32_t);
+        int32_t stack_after = va_arg(param, int32_t);
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Stack resized from %i to %i bytes"), stack_before, stack_after);
+      }
+      break;
+    case BE_OBS_VM_HEARTBEAT:
+      {
+        // AddLog(LOG_LEVEL_INFO, ">>>: Heartbeat now=%i timeout=%i", millis(), berry.timeout);
+        if (berry.timeout) {
+          if (TimeReached(berry.timeout)) {
+            be_raise(vm, "timeout_error", "Berry code running for too long");
+          }
+        }
+      }
+      break;
+    default:
+      break;
   }
   va_end(param);
+}
+
+/*********************************************************************************************\
+ * Adde Berry metrics to teleperiod
+\*********************************************************************************************/
+void BrShowState(void);
+void BrShowState(void) {
+  // trigger a gc first
+  be_gc_collect(berry.vm);
+  ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
+    berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
 }
 
 /*********************************************************************************************\
@@ -285,16 +320,14 @@ void BerryInit(void) {
   bool berry_init_ok = false;
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
-    be_set_obs_hook(berry.vm, &BerryObservability);
+    be_set_obs_hook(berry.vm, &BerryObservability);  /* attach observability hook */
     comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
-    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler */
-    be_load_custom_libs(berry.vm);
+    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler, equivalent of `import strict` */
 
-    // Register functions
-    // be_regfunc(berry.vm, PSTR("log"), l_logInfo);
-    // be_regfunc(berry.vm, PSTR("save"), l_save);
+    be_load_custom_libs(berry.vm);  // load classes and modules
 
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry function registered, RAM used=%u"), be_gc_memcount(berry.vm));
+    // Set the GC threshold to 3584 bytes to avoid the first useless GC
+    berry.vm->gc.threshold = 3584;
 
     ret_code1 = be_loadstring(berry.vm, berry_prog);
     if (ret_code1 != 0) {
@@ -317,6 +350,9 @@ void BerryInit(void) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     berry_init_ok = true;
 
+    // we generate a synthetic event `autoexec` 
+    callBerryEventDispatcher(PSTR("preinit"), nullptr, 0, nullptr);
+    
     // Run pre-init
     BrLoad("preinit.be");    // run 'preinit.be' if present
   } while (0);
@@ -348,10 +384,12 @@ void BrLoad(const char * script_name) {
   if (!be_isnil(berry.vm, -1)) {
     be_pushstring(berry.vm, script_name);
 
+    BrTimeoutStart();
     if (be_pcall(berry.vm, 1) != 0) {
       BerryDumpErrorAndClear(berry.vm, false);
       return;
     }
+    BrTimeoutReset();
     bool loaded = be_tobool(berry.vm, -2);  // did it succeed?
     be_pop(berry.vm, 2);
     if (loaded) {
@@ -389,7 +427,9 @@ void CmndBrRun(void) {
     }
     if (0 != ret_code) break;
 
+    BrTimeoutStart();
     ret_code = be_pcall(berry.vm, 0);     // execute code
+    BrTimeoutReset();
   } while (0);
 
   if (0 == ret_code) {
@@ -437,7 +477,9 @@ void BrREPLRun(char * cmd) {
       // AddLog(LOG_LEVEL_INFO, PSTR(">>>> be_loadbuffer cmd1 '%s', ret=%i"), cmd, ret_code);
     }
     if (0 == ret_code) {    // code is ready to run
+      BrTimeoutStart();
       ret_code = be_pcall(berry.vm, 0);     // execute code
+      BrTimeoutReset();
       // AddLog(LOG_LEVEL_INFO, PSTR(">>>> be_pcall ret=%i"), ret_code);
       if (0 == ret_code) {
         if (!be_isnil(berry.vm, 1)) {
@@ -653,7 +695,7 @@ void HandleBerryConsoleRefresh(void)
     WSContentFlush();
 
     for (auto & l: berry.log.log) {
-      _WSContentSend((char*) l);
+      _WSContentSend(l.getBuffer());
     }
 
     berry.log.reset();
@@ -734,6 +776,9 @@ bool Xdrv52(uint8_t function)
     //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
+        // we generate a synthetic event `autoexec` 
+        callBerryEventDispatcher(PSTR("autoexec"), nullptr, 0, nullptr);
+
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
@@ -741,13 +786,13 @@ bool Xdrv52(uint8_t function)
 
     // Berry wide commands and events
     case FUNC_RULES_PROCESS:
-      result = callBerryRule(nullptr);
+      result = callBerryRule(nullptr, false);
+      break;
+    case FUNC_TELEPERIOD_RULES_PROCESS:
+      result = callBerryRule(nullptr, true);
       break;
     case FUNC_MQTT_DATA:
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
-      break;
-    case FUNC_EVERY_50_MSECOND:
-      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kBrCommands, BerryCommand);
@@ -757,14 +802,18 @@ bool Xdrv52(uint8_t function)
       break;
 
     // Module specific events
+    case FUNC_EVERY_50_MSECOND:
+      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
+      break;
     case FUNC_EVERY_100_MSECOND:
       callBerryEventDispatcher(PSTR("every_100ms"), nullptr, 0, nullptr);
       break;
     case FUNC_EVERY_SECOND:
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
-    // case FUNC_SET_POWER:
-    //   break;
+    case FUNC_SET_DEVICE_POWER:
+      result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
+      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {

@@ -29,12 +29,26 @@ lv_coord_t lv_get_ver_res(void);
 
 
 // ../../lib/libesp32_lvgl/LVGL8/src/core/lv_disp.h
+lv_obj_t * lv_disp_get_scr_act(lv_disp_t * disp)
+lv_obj_t * lv_disp_get_scr_prev(lv_disp_t * disp)
+void lv_disp_load_scr(lv_obj_t * scr)
+lv_obj_t * lv_disp_get_layer_top(lv_disp_t * disp)
+lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
+void lv_disp_set_theme(lv_disp_t * disp, lv_theme_t * th)
+lv_theme_t * lv_disp_get_theme(lv_disp_t * disp)
+void lv_disp_set_bg_color(lv_disp_t * disp, lv_color_t color)
+void lv_disp_set_bg_image(lv_disp_t * disp, const void * img_src)
+void lv_disp_set_bg_opa(lv_disp_t * disp, lv_opa_t opa)
 void lv_scr_load_anim(lv_obj_t * scr, lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay, bool auto_del)
+uint32_t lv_disp_get_inactive_time(const lv_disp_t * disp)
+void lv_disp_trig_activity(lv_disp_t * disp)
+void lv_disp_clean_dcache(lv_disp_t * disp)
 static inline lv_obj_t * lv_scr_act(void)
 static inline lv_obj_t * lv_layer_top(void)
 static inline lv_obj_t * lv_layer_sys(void)
 static inline void lv_scr_load(lv_obj_t * scr)
 static inline lv_coord_t lv_dpx(lv_coord_t n)
+static inline lv_coord_t lv_disp_dpx(const lv_disp_t * disp, lv_coord_t n)
 
 // ../../lib/libesp32_lvgl/LVGL8/src/core/lv_event.h
 lv_res_t lv_event_send(struct _lv_obj_t * obj, lv_event_code_t event_code, void * param)
@@ -483,6 +497,13 @@ void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_are
 
 // ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_img_decoder.h
 
+// ../../lib/libesp32_lvgl/LVGL8/src/extra/themes/default/lv_theme_default.h
+lv_theme_t * lv_theme_default_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
+bool lv_theme_default_is_inited(void)
+
+// ../../lib/libesp32_lvgl/LVGL8/src/extra/themes/mono/lv_theme_mono.h
+lv_theme_t * lv_theme_mono_init(lv_disp_t * disp, bool dark_bg, const lv_font_t * font)
+
 // ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/chart/lv_chart.h
 lv_obj_t * lv_chart_create(lv_obj_t * parent)
 void lv_chart_set_type(lv_obj_t * obj, lv_chart_type_t type)
@@ -582,6 +603,9 @@ void lv_spinbox_step_next(lv_obj_t * obj)
 void lv_spinbox_step_prev(lv_obj_t * obj)
 void lv_spinbox_increment(lv_obj_t * obj)
 void lv_spinbox_decrement(lv_obj_t * obj)
+
+// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/spinner/lv_spinner.h
+lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
 
 // ../../lib/libesp32_lvgl/LVGL8/src/misc/lv_style_gen.h
 void lv_style_set_width(lv_style_t * style, lv_coord_t value)
@@ -898,4 +922,8 @@ void lv_textarea_cursor_right(lv_obj_t * obj)
 void lv_textarea_cursor_left(lv_obj_t * obj)
 void lv_textarea_cursor_down(lv_obj_t * obj)
 void lv_textarea_cursor_up(lv_obj_t * obj)
+
+// ../../lib/libesp32_lvgl/LVGL_assets/src/lv_theme_openhasp.h
+lv_theme_t * lv_theme_openhasp_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
+bool lv_theme_openhasp_is_inited(void)
 

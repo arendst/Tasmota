@@ -16,7 +16,7 @@
 //#define HEX_DBG_ENABLE
 
 #ifdef HEX_DBG_ENABLE
-void hex_dbg_with_name(char *name, unsigned char *buf, int buf_len)
+void hex_dbg_with_name(const char *name, unsigned char *buf, int buf_len)
 {
 	int i;
 	printf("%s: ", name);
@@ -28,7 +28,7 @@ void hex_dbg_with_name(char *name, unsigned char *buf, int buf_len)
 	printf("\r\n");
 }
 #else
-void hex_dbg_with_name(char *name, unsigned char *buf, int buf_len)
+void hex_dbg_with_name(const char *name, unsigned char *buf, int buf_len)
 {
 }
 #endif /* HEX_DBG_ENABLED */

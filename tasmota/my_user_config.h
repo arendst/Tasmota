@@ -79,7 +79,7 @@
 #define WIFI_CONFIG_TOOL       WIFI_RETRY        // [WifiConfig] Default tool if Wi-Fi fails to connect (default option: 4 - WIFI_RETRY)
                                                  // (WIFI_RESTART, WIFI_MANAGER, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, WIFI_MANAGER_RESET_ONLY)
                                                  // The configuration can be changed after first setup using WifiConfig 0, 2, 4, 5, 6 and 7.
-#define WIFI_ARP_INTERVAL      0                 // [SetOption41] Send gratuitous ARP interval
+#define WIFI_ARP_INTERVAL      60                // [SetOption41] Send gratuitous ARP interval
 #define WIFI_SCAN_AT_RESTART   false             // [SetOption56] Scan Wi-Fi network at restart for configured AP's
 #define WIFI_SCAN_REGULARLY    true              // [SetOption57] Scan Wi-Fi network every 44 minutes for configured AP's
 
@@ -170,6 +170,7 @@
 #define MQTT_INDEX_SEPARATOR   false             // [SetOption64] Enable "_" instead of "-" as sensor index separator
 #define MQTT_TUYA_RECEIVED     false             // [SetOption66] Enable TuyaMcuReceived messages over Mqtt
 #define MQTT_TLS_ENABLED       false             // [SetOption103] Enable TLS mode (requires TLS version)
+#define MQTT_TLS_FINGERPRINT   false             // [SetOption132] Force TLS fingerprint validation instead of CA (requires TLS version)
 
 // -- HTTP ----------------------------------------
 #define WEB_SERVER             2                 // [WebServer] Web server (0 = Off, 1 = Start as User, 2 = Start as Admin)
@@ -337,6 +338,7 @@
 #define RF_DATA_RADIX          false             // [SetOption28] RF receive data format (false = hexadecimal, true = decimal)
 #define IR_DATA_RADIX          false             // [SetOption29] IR receive data format (false = hexadecimal, true = decimal)
 #define TUYA_SETOPTION_20      false             // [SetOption54] Apply SetOption20 settings to Tuya device
+#define TUYA_ALLOW_DIMMER_0    false             // [SetOption131] Allow save dimmer = 0 receved by MCU
 #define TUYA_TEMP_SET_RES      1                 // [TuyaTempSetRes] Maximum number of decimals (0 - 3) showing sensor TemperatureSet
 #define IR_ADD_RAW_DATA        false             // [SetOption58] Add IR Raw data to JSON message
 #define BUZZER_ENABLE          false             // [SetOption67] Enable buzzer when available
@@ -429,9 +431,7 @@
 // -- MQTT - TLS - AWS IoT ------------------------
 // Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
-//  #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use.  (+2.2k code, +1.9k mem during connection handshake)
-                                                   // This includes the LetsEncrypt CA in tasmota_ca.ino for verifying server certificates
-//  #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
+//  #define USE_MQTT_TLS_CA_CERT                   // [DEPRECATED] Now TLS supports dual mode using SetOption132 - this flag is now ignored
 //  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 //  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
                                                  //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
@@ -452,7 +452,6 @@
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
   #define USE_TELEGRAM_FINGERPRINT "\xB2\x72\x47\xA6\x69\x8C\x3C\x69\xF9\x58\x6C\xF3\x60\x02\xFB\x83\xFA\x8B\x1F\x23" // Telegram api.telegram.org TLS public key fingerpring
-//  #define USE_MQTT_TLS_CA_CERT                   // Use certificate instead of fingerprint
 
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+9.4k code, +3k7 mem)
@@ -552,6 +551,7 @@
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k7 code)
 #define USE_LIGHT_VIRTUAL_CT                     // Add support for Virtual White Color Temperature (+1.1k code)
 #define USE_DGR_LIGHT_SEQUENCE                   // Add support for device group light sequencing (requires USE_DEVICE_GROUPS) (+0k2 code)
+//#define USE_LSC_MCSL                             // Add support for GPE Multi color smart light as sold by Action in the Netherlands (+1k1 code)
 
 // -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
@@ -658,6 +658,7 @@
 //  #define USE_AM2320                             // [I2cDriver60] Enable AM2320 temperature and humidity Sensor (I2C address 0x5C) (+1k code)
 //  #define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
 //  #define USE_HM330X                             // [I2cDriver63] Enable support for SeedStudio Grove Particule sensor (I2C address 0x40) (+1k5 code)
+//  #define USE_HDC2010                            // [I2cDriver64] Enable HDC2010 temperature/humidity sensor (I2C address 0x40) (+1k5 code)
 //    #define HM330X_DEFAULT_ADDRESS    0x40       // Option: change default I2C address for HM330X used in SeedSTudio Particucle Sensor
 //    #define HM330X_WARMUP_DELAY       30         // Option: change warmup delay during which data are not read from sensor after a power up
 //    #define HM330X_HIDE_OUT_OF_DATE   false      // Option: change to true to hide data from web GUI and SENSOR while sensor is asleep
@@ -703,7 +704,6 @@
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
 //    #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
 //    #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
-//    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8] [I2cDriver38] (Touch)
 //    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9] Enable SSD1351 module
 //    #define USE_DISPLAY_RA8876                   // [DisplayModel 10] [I2cDriver39] (Touch)
 //    #define USE_DISPLAY_ST7789                   // [DisplayModel 12] Enable ST7789 module
@@ -853,8 +853,8 @@
     #define IR_RCV_WHILE_SENDING    0            // Turns on receiver while sending messages, i.e. receive your own. This is unreliable and can cause IR timing issues
 
 // -- Zigbee interface ----------------------------
-//#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530 flashed with ZNP (+49k code, +3k mem)
-  #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530 based devices
+//#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530/CC2652 flashed with ZNP or EFR32 flashed with EZSP (+49k code, +3k mem)
+  #define USE_ZIGBEE_ZNP                         // Enable ZNP protocol, needed for CC2530/CC2652 based devices
 //  #define USE_ZIGBEE_EZSP                        // Enable EZSP protocol, needed for EFR32 EmberZNet based devices, like Sonoff Zigbee bridge
                                                  // Note: USE_ZIGBEE_ZNP and USE_ZIGBEE_EZSP are mutually incompatible, you must select exactly one
   // #define USE_ZIGBEE_EEPROM                      // Use the EEPROM from the Sonoff ZBBridge to save Zigbee configuration and data
@@ -892,6 +892,10 @@
   #define USE_ZIGBEE_MAXTIME_LIFT           4*60*60   // 4h
 
 // -- Other sensors/drivers -----------------------
+
+//#define USE_SHIFT595                             // Add support for 74xx595 8-bit shift registers (+0k7 code)
+  #define SHIFT595_INVERT_OUTPUTS false            // [SetOption133] Don't invert outputs of 74x595 shift register
+  #define SHIFT595_DEVICE_COUNT  1                 // [Shift595DeviceCount] Set the number of connected 74x595 shift registers
 
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
 //#define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
@@ -966,6 +970,11 @@
 
 #ifdef ESP32
 
+//#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter(+6k3 code)
+#ifdef USE_SONOFF_SPM
+#define USE_ETHERNET
+#endif
+
 //#define USE_ETHERNET                             // Add support for ethernet (Currently fixed for Olimex ESP32-PoE)
 //  #define USE_WT32_ETH01                         // Add support for Wireless-Tag WT32-ETH01
 //  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
@@ -989,7 +998,10 @@
 //#define USE_IBEACON_ESP32
 //#define USE_WEBCAM                               // Add support for webcam
 
+// #define USE_AUTOCONF                             // Enable Esp32 autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
 #define USE_BERRY                                // Enable Berry scripting language
+  #define USE_BERRY_PYTHON_COMPAT                // Enable by default `import python_compat`
+  #define USE_BERRY_TIMEOUT             4000     // Timeout in ms, will raise an exception if running time exceeds this timeout
   #define USE_BERRY_PSRAM                        // Allocate Berry memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
   // #define USE_BERRY_DEBUG                        // Compile Berry bytecode with line number information, makes exceptions easier to debug. Adds +8% of memory consumption for compiled code
   #define USE_WEBCLIENT                          // Enable `webclient` to make HTTP/HTTPS requests. Can be disabled for security reasons.
@@ -1002,6 +1014,7 @@
 // -- LVGL Graphics Library ---------------------------------
 //#define USE_LVGL                                 // LVGL Engine, requires Berry (+382KB)
   #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
+  #define USE_LVGL_OPENHASP                      // Enable OpenHASP template compatiblity (adds LVGL template and some fonts)
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
   #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
   //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
@@ -1036,6 +1049,7 @@
     #define BE_LV_WIDGET_METER
     #define BE_LV_WIDGET_MSGBOX
     #define BE_LV_WIDGET_SPINBOX
+    #define BE_LV_WIDGET_SPINNER
 
 #endif  // ESP32
 
@@ -1047,6 +1061,15 @@
 //#define DEBUG_TASMOTA_DRIVER                     // Enable driver debug messages
 //#define DEBUG_TASMOTA_SENSOR                     // Enable sensor debug messages
 //#define USE_DEBUG_DRIVER                         // Use xdrv_99_debug.ino providing commands CpuChk, CfgXor, CfgDump, CfgPeek and CfgPoke
+
+/*********************************************************************************************\
+ * Profiling features
+\*********************************************************************************************/
+
+//#define USE_PROFILING                            // Enable profiling
+//#define PROFILE_THRESHOLD            70          // Minimum duration in milliseconds to start logging
+//#define USE_PROFILE_DRIVER                       // Enable driver profiling
+//#define USE_PROFILE_FUNCTION                     // Enable driver function profiling
 
 /*********************************************************************************************\
  * Optional firmware configurations
@@ -1078,15 +1101,24 @@
 #endif
 
 /*********************************************************************************************\
+ * Post-process compile options for Autoconf
+\*********************************************************************************************/
+
+#if defined(USE_AUTOCONF)
+  #ifndef USE_BERRY
+    #define USE_BERRY
+  #endif
+  #ifndef USE_WEBCLIENT_HTTPS
+    #define USE_WEBCLIENT_HTTPS
+  #endif
+#endif // USE_AUTOCONF
+
+/*********************************************************************************************\
  * Post-process compile options for TLS
 \*********************************************************************************************/
 
 #if defined(USE_MQTT_TLS) || defined(USE_SENDMAIL) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS) || defined(USE_ALEXA_AVS)
   #define USE_TLS                                  // flag indicates we need to include TLS code
-
-  #if defined(USE_MQTT_AWS_IOT) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS)
-    #define USE_MQTT_TLS_FORCE_EC_CIPHER           // AWS IoT and TELEGRAM require EC Cipher
-  #endif
 #endif
 
 #endif  // _MY_USER_CONFIG_H_

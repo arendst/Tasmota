@@ -15,6 +15,7 @@ extern "C" {
 #include "be_object.h"
 #include "be_gc.h"
 #include "be_map.h"
+#include "be_list.h"
 #include "be_class.h"
 #include "be_string.h"
 #include "be_module.h"
@@ -35,6 +36,11 @@ extern "C" {
 #define be_const_func(_func) {                                  \
     .v.nf = (_func),                                            \
     .type = BE_FUNCTION                                         \
+}
+
+#define be_const_static_func(_func) {                           \
+    .v.nf = (_func),                                            \
+    .type = BE_FUNCTION | BE_FUNC_STATIC                        \
 }
 
 #define be_const_nil() {                                        \
@@ -87,9 +93,29 @@ extern "C" {
     .type = BE_CLOSURE                                          \
 }
 
+#define be_const_static_closure(_closure) {                     \
+    .v.c = &(_closure),                                         \
+    .type = BE_CLOSURE | BE_FUNC_STATIC                         \
+}
+
 #define be_const_module(_module) {                              \
     .v.c = &(_module),                                          \
     .type = BE_MODULE                                           \
+}
+
+#define be_const_simple_instance(_instance) {                   \
+    .v.c = (_instance),                                         \
+    .type = BE_INSTANCE                                         \
+}
+
+#define be_const_map(_map) {                                    \
+    .v.c = &(_map),                                             \
+    .type = BE_MAP                                              \
+}
+
+#define be_const_list(_list) {                                  \
+    .v.c = &(_list),                                            \
+    .type = BE_LIST                                             \
 }
 
 #define be_define_const_map_slots(_name)                        \
@@ -138,13 +164,12 @@ const bvector _name = {                                         \
     .end = (void*)(_data + (_size) - 1)                         \
 }
 
-#define be_define_const_native_module(_module, _init)           \
+#define be_define_const_native_module(_module)                  \
 const bntvmodule be_native_module(_module) = {                  \
     .name = #_module,                                           \
     .attrs = NULL,                                              \
     .size = 0,                                                  \
-    .module = (bmodule*)&(m_lib##_module),                      \
-    .init = _init                                               \
+    .module = (bmodule*)&(m_lib##_module)                       \
 }
 
 /* defines needed for solidified classes */
@@ -165,6 +190,26 @@ const bntvmodule be_native_module(_module) = {                  \
     .info.name = _module_name                                   \
 }
 
+/* only instances with no super and no sub instance are supported */
+/* primarily for `list` and `map`*/
+#define be_nested_simple_instance(_class_ptr, _members)         \
+  & (const binstance)  {                                        \
+    be_const_header(BE_INSTANCE),                               \
+    .super = NULL,                                              \
+    .sub = NULL,                                                \
+    ._class = (bclass*) _class_ptr,                             \
+    .members = _members                                         \
+  }
+
+// #define be_local_instance(_name, _class_ptr, _members)          \
+//   static const binstance i_##_name = {                          \
+//     be_const_header(BE_INSTANCE),                               \
+//     .super = NULL,                                              \
+//     .sub = NULL,                                                \
+//     ._class = (bclass*) _class_ptr,                             \
+//     .members = _members                                         \
+//   }
+
 #define be_nested_map(_size, _slots)                            \
   & (const bmap) {                                              \
     be_const_header(BE_MAP),                                    \
@@ -173,6 +218,24 @@ const bntvmodule be_native_module(_module) = {                  \
     .size = _size,                                              \
     .count = _size                                              \
   }
+
+#define be_nested_list(_size, _items)                           \
+  & (const blist) {                                             \
+    be_const_header(BE_LIST),                                   \
+    .count = _size,                                             \
+    .capacity = _size,                                          \
+    .data = _items                                              \
+  }
+
+#define be_nested_str_literal(_str)                             \
+  {                                                             \
+    { .s=(be_nested_const_str(_str, 0, sizeof(_str)-1 ))        \
+    },                                                          \
+    BE_STRING                                                   \
+  }
+
+#define be_str_literal(_str)                                    \
+  be_nested_const_str(_str, 0, sizeof(_str)-1 )
 
 #define be_nested_string(_str, _hash, _len)                     \
   {                                                             \
@@ -199,6 +262,11 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_const_func(_func) {                                  \
     bvaldata(_func),                                            \
     BE_FUNCTION                                                 \
+}
+
+#define be_const_static_func(_func) {                           \
+    bvaldata(_func),                                            \
+    BE_FUNCTION | BE_FUNC_STATIC                                \
 }
 
 #define be_const_nil() {                                        \
@@ -251,6 +319,11 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_CLOSURE                                                  \
 }
 
+#define be_const_static_closure(_closure) {                     \
+    bvaldata(&(_closure)),                                      \
+    BE_CLOSURE | BE_FUNC_STATIC                                 \
+}
+
 #define be_const_module(_module) {                              \
     bvaldata(&(_module)),                                       \
     BE_MODULE                                                   \
@@ -285,15 +358,18 @@ const bvector _name = {                                         \
     (void*)_data, (void*)(_data + (_size) - 1)                  \
 }
 
-#define be_define_const_native_module(_module, _init)           \
+#define be_define_const_native_module(_module)                  \
 const bntvmodule be_native_module(_module) = {                  \
     #_module,                                                   \
     0, 0,                                                       \
-    (bmodule*)&(m_lib##_module),                                \
-    _init                                                       \
+    (bmodule*)&(m_lib##_module)                                 \
 }
 
 #endif
+
+/* provide pointers to map and list classes for solidified code */
+extern const bclass be_class_list;
+extern const bclass be_class_map;
 
 #ifdef __cplusplus
 }

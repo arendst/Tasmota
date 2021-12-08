@@ -7,7 +7,6 @@ image:
 
 vscode:
   extensions:
-    - eamodio.gitlens
     - Atishay-Jain.All-Autocomplete
     - CoenraadS.bracket-pair-colorizer
     - esbenp.prettier-vscode

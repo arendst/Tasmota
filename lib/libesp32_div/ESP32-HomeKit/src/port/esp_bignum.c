@@ -23,7 +23,7 @@
 #if __has_include("esp_idf_version.h")
 #include "esp_idf_version.h"
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0)
-#warning("IDF is 4 or later")
+// #warning("IDF is 4 or later")
 #include "soc/hwcrypto_periph.h"
 #endif
 #endif
@@ -79,7 +79,7 @@ static inline size_t bits_to_words(size_t bits)
 /* Return the number of words actually used to represent an mpi
    number.
 */
-#if defined(MBEDTLS_MPI_EXP_MOD_ALT)
+#if defined(MBEDTLS_MPI_EXP_MOD_ALT) || defined(CONFIG_IDF_TARGET_ESP32C3)
 static size_t mpi_words(const mbedtls_mpi *mpi)
 {
     for (size_t i = mpi->n; i > 0; i--) {
@@ -151,7 +151,7 @@ cleanup:
 
 
 
-
+#if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 /* Z = (X * Y) mod M
 
    Not an mbedTLS function
@@ -192,6 +192,8 @@ cleanup:
 
     return ret;
 }
+
+#endif // ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 
 #if defined(MBEDTLS_MPI_EXP_MOD_ALT)
 
@@ -367,6 +369,87 @@ cleanup:
 
 #endif /* MBEDTLS_MPI_EXP_MOD_ALT */
 
+#if CONFIG_IDF_TARGET_ESP32C3
+int esp_mpi_exp_mod( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, mbedtls_mpi *_Rinv )
+{
+    int ret = 0;
+    size_t x_words = mpi_words(X);
+    size_t y_words = mpi_words(Y);
+    size_t m_words = mpi_words(M);
+
+
+    /* "all numbers must be the same length", so choose longest number
+       as cardinal length of operation...
+    */
+    size_t num_words = esp_mpi_hardware_words(MAX(m_words, MAX(x_words, y_words)));
+
+    mbedtls_mpi Rinv_new; /* used if _Rinv == NULL */
+    mbedtls_mpi *Rinv;    /* points to _Rinv (if not NULL) othwerwise &RR_new */
+    mbedtls_mpi_uint Mprime;
+
+    if (mbedtls_mpi_cmp_int(M, 0) <= 0 || (M->p[0] & 1) == 0) {
+        return MBEDTLS_ERR_MPI_BAD_INPUT_DATA;
+    }
+
+    if (mbedtls_mpi_cmp_int(Y, 0) < 0) {
+        return MBEDTLS_ERR_MPI_BAD_INPUT_DATA;
+    }
+
+    if (mbedtls_mpi_cmp_int(Y, 0) == 0) {
+        return mbedtls_mpi_lset(Z, 1);
+    }
+
+    if (num_words * 32 > SOC_RSA_MAX_BIT_LEN) {
+        return MBEDTLS_ERR_MPI_NOT_ACCEPTABLE;
+    }
+
+    /* Determine RR pointer, either _RR for cached value
+       or local RR_new */
+    if (_Rinv == NULL) {
+        mbedtls_mpi_init(&Rinv_new);
+        Rinv = &Rinv_new;
+    } else {
+        Rinv = _Rinv;
+    }
+    if (Rinv->p == NULL) {
+        MBEDTLS_MPI_CHK(calculate_rinv(Rinv, M, num_words));
+    }
+
+    Mprime = modular_inverse(M);
+
+    // Montgomery exponentiation: Z = X ^ Y mod M  (HAC 14.94)
+#ifdef ESP_MPI_USE_MONT_EXP
+    ret = mpi_montgomery_exp_calc(Z, X, Y, M, Rinv, num_words, Mprime) ;
+    MBEDTLS_MPI_CHK(ret);
+#else
+    esp_mpi_enable_hardware_hw_op();
+
+    esp_mpi_exp_mpi_mod_hw_op(X, Y, M, Rinv, Mprime, num_words);
+    ret = mbedtls_mpi_grow(Z, m_words);
+    if (ret != 0) {
+        esp_mpi_disable_hardware_hw_op();
+        goto cleanup;
+    }
+    esp_mpi_read_result_hw_op(Z, m_words);
+    esp_mpi_disable_hardware_hw_op();
+#endif
+
+    // Compensate for negative X
+    if (X->s == -1 && (Y->p[0] & 1) != 0) {
+        Z->s = -1;
+        MBEDTLS_MPI_CHK(mbedtls_mpi_add_mpi(Z, M, Z));
+    } else {
+        Z->s = 1;
+    }
+
+cleanup:
+    if (_Rinv == NULL) {
+        mbedtls_mpi_free(&Rinv_new);
+    }
+    return ret;
+}
+#endif //CONFIG_IDF_TARGET_ESP32C3
+
 
 
 #if defined(MBEDTLS_MPI_MUL_MPI_ALT) /* MBEDTLS_MPI_MUL_MPI_ALT */
@@ -374,6 +457,7 @@ cleanup:
 static int mpi_mult_mpi_failover_mod_mult( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t z_words);
 static int mpi_mult_mpi_overlong(mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t y_words, size_t z_words);
 
+#if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 /* Z = X * Y */
 int mbedtls_mpi_mul_mpi( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y )
 {
@@ -447,6 +531,7 @@ int mbedtls_mpi_mul_mpi( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi
 cleanup:
     return ret;
 }
+#endif //ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
 
 
 

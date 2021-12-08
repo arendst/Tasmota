@@ -21,36 +21,60 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
+#include <LList.h>
+
+#include "re1.5.h"
 
 #define BERRY_CONSOLE_CMD_DELIMITER   "\x01"
 
-typedef LList_elt<char[0]> log_elt;   // store the string after the header to avoid double allocation if we had used char*
+class Log_line {
+public:
+  Log_line() : log_line(nullptr) {}
+  ~Log_line() {
+    if (log_line != nullptr) {
+      berry_free(log_line);
+    }
+  }
+  char * getBuffer() { return log_line; }
+  char * allocate(size_t size) {
+    if (log_line != nullptr) {
+      berry_free(log_line);
+    }
+    log_line = (char*) berry_malloc(size);
+    return log_line;
+  }
+
+  char * log_line;
+};
+
+// typedef LList_elt<Log_line> log_elt;   // store the string after the header to avoid double allocation if we had used char*
+
 
 class BerryLog {
 public:
-  // typedef LList_elt<char[0]> log_elt;   // store the string after the header to avoid double allocation if we had used char*
-  inline static size_t size(size_t chars) { return sizeof(log_elt) + chars; }
   inline bool isEmpty(void) const { return log.isEmpty(); }
-  log_elt * addString(const char * s, const char * prefix = nullptr, const char * suffix = nullptr) {
+  LList_elt<Log_line> * addString(const char * s, const char * prefix = nullptr, const char * suffix = nullptr) {
     if (suffix == nullptr) { suffix = ""; }
     if (prefix == nullptr) { prefix = ""; }
     if (s == nullptr) { s = ""; }
     size_t s_len = strlen_P(s) + strlen_P(prefix) + strlen_P(suffix);
     if (0 == s_len) { return nullptr; }   // do nothing
-    log_elt * elt = (log_elt*) ::operator new(sizeof(log_elt) + s_len + 1); // use low-level new to specify the bytes size
-    snprintf_P((char*) &elt->val(), s_len+1, PSTR("%s%s%s"), prefix, s, suffix);
-    log.addToLast(elt);
-    return elt;
+    LList_elt<Log_line> * log_elt = new LList_elt<Log_line>();
+    log_elt->val().allocate(s_len + 1);
+    snprintf_P(log_elt->val().getBuffer(), s_len+1, PSTR("%s%s%s"), prefix, s, suffix);
+    log.addToLast(log_elt);
+    return log_elt;
   }
   void reset(void) {
     log.reset();
   }
-  LList<char[0]> log;
+  LList<Log_line> log;
 };
 
 class BerrySupport {
 public:
   bvm *vm = nullptr;                    // berry vm
+  int32_t timeout = 0;                  // Berry heartbeat timeout, preventing code to run for too long. `0` means not enabled
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
   bool autoexec_done = false;           // do we still need to load 'autoexec.be'
   bool repl_active = false;             // is REPL running (activates log recording)

@@ -110,6 +110,10 @@ const lvbe_call_c_t lv_font_func[] = {
 const lvbe_call_c_t lv_color_func[] = {
 };
 
+/* `lv_theme` methods */
+const lvbe_call_c_t lv_theme_func[] = {
+};
+
 /* `lv_img` methods */
 #ifdef BE_LV_WIDGET_IMG
 const lvbe_call_c_t lv_img_func[] = {
@@ -131,12 +135,30 @@ const lvbe_call_c_t lv_img_func[] = {
 };
 #endif // BE_LV_WIDGET_IMG
 
+/* `lv_disp` methods */
+const lvbe_call_c_t lv_disp_func[] = {
+  { "clean_dcache", (void*) &lv_disp_clean_dcache, "", "(lv.lv_disp)" },
+  { "dpx", (void*) &lv_disp_dpx, "i", "(lv.lv_disp)i" },
+  { "get_inactive_time", (void*) &lv_disp_get_inactive_time, "i", "(lv.lv_disp)" },
+  { "get_layer_sys", (void*) &lv_disp_get_layer_sys, "lv.lv_obj", "(lv.lv_disp)" },
+  { "get_layer_top", (void*) &lv_disp_get_layer_top, "lv.lv_obj", "(lv.lv_disp)" },
+  { "get_scr_act", (void*) &lv_disp_get_scr_act, "lv.lv_obj", "(lv.lv_disp)" },
+  { "get_scr_prev", (void*) &lv_disp_get_scr_prev, "lv.lv_obj", "(lv.lv_disp)" },
+  { "get_theme", (void*) &lv_disp_get_theme, "lv.lv_theme", "(lv.lv_disp)" },
+  { "load_scr", (void*) &lv_disp_load_scr, "", "(lv.lv_obj)" },
+  { "set_bg_color", (void*) &lv_disp_set_bg_color, "", "(lv.lv_disp)(lv.lv_color)" },
+  { "set_bg_image", (void*) &lv_disp_set_bg_image, "", "(lv.lv_disp)." },
+  { "set_bg_opa", (void*) &lv_disp_set_bg_opa, "", "(lv.lv_disp)i" },
+  { "set_theme", (void*) &lv_disp_set_theme, "", "(lv.lv_disp)(lv.lv_theme)" },
+  { "trig_activity", (void*) &lv_disp_trig_activity, "", "(lv.lv_disp)" },
+};
+
 /* `lv_obj` methods */
 const lvbe_call_c_t lv_obj_func[] = {
   { "add_event_cb", (void*) &lv_obj_add_event_cb, "i", "(lv.lv_obj)^lv_event_cb^i." },
   { "add_flag", (void*) &lv_obj_add_flag, "", "(lv.lv_obj)i" },
   { "add_state", (void*) &lv_obj_add_state, "", "(lv.lv_obj)i" },
-  { "add_style", (void*) &lv_obj_add_style, "", "(lv.lv_obj)(lv.lv_style)(lv.lv_style_selector)" },
+  { "add_style", (void*) &lv_obj_add_style, "", "(lv.lv_obj)(lv.lv_style)i" },
   { "align", (void*) &lv_obj_align, "", "(lv.lv_obj)iii" },
   { "align_to", (void*) &lv_obj_align_to, "", "(lv.lv_obj)(lv.lv_obj)iii" },
   { "allocate_spec_attr", (void*) &lv_obj_allocate_spec_attr, "", "(lv.lv_obj)" },
@@ -162,9 +184,10 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "get_content_height", (void*) &lv_obj_get_content_height, "i", "(lv.lv_obj)" },
   { "get_content_width", (void*) &lv_obj_get_content_width, "i", "(lv.lv_obj)" },
   { "get_coords", (void*) &lv_obj_get_coords, "", "(lv.lv_obj)(lv.lv_area)" },
+  { "get_disp", (void*) &lv_obj_get_disp, "lv.lv_disp", "(lv.lv_obj)" },
   { "get_group", (void*) &lv_obj_get_group, ".", "(lv.lv_obj)" },
   { "get_height", (void*) &lv_obj_get_height, "i", "(lv.lv_obj)" },
-  { "get_local_style_prop", (void*) &lv_obj_get_local_style_prop, "i", "(lv.lv_obj)(lv.lv_style_prop)(lv.lv_style_value)(lv.lv_style_selector)" },
+  { "get_local_style_prop", (void*) &lv_obj_get_local_style_prop, "i", "(lv.lv_obj)(lv.lv_style_prop)(lv.lv_style_value)i" },
   { "get_parent", (void*) &lv_obj_get_parent, "lv.lv_obj", "(lv.lv_obj)" },
   { "get_screen", (void*) &lv_obj_get_screen, "lv.lv_obj", "(lv.lv_obj)" },
   { "get_scroll_bottom", (void*) &lv_obj_get_scroll_bottom, "i", "(lv.lv_obj)" },
@@ -307,8 +330,8 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "refresh_style", (void*) &lv_obj_refresh_style, "", "(lv.lv_obj)i(lv.lv_style_prop)" },
   { "remove_event_cb", (void*) &lv_obj_remove_event_cb, "b", "(lv.lv_obj)^lv_event_cb^" },
   { "remove_event_dsc", (void*) &lv_obj_remove_event_dsc, "b", "(lv.lv_obj)i" },
-  { "remove_local_style_prop", (void*) &lv_obj_remove_local_style_prop, "b", "(lv.lv_obj)(lv.lv_style_prop)(lv.lv_style_selector)" },
-  { "remove_style", (void*) &lv_obj_remove_style, "", "(lv.lv_obj)(lv.lv_style)(lv.lv_style_selector)" },
+  { "remove_local_style_prop", (void*) &lv_obj_remove_local_style_prop, "b", "(lv.lv_obj)(lv.lv_style_prop)i" },
+  { "remove_style", (void*) &lv_obj_remove_style, "", "(lv.lv_obj)(lv.lv_style)i" },
   { "remove_style_all", (void*) &lv_obj_remove_style_all, "", "(lv.lv_obj)" },
   { "scroll_by", (void*) &lv_obj_scroll_by, "", "(lv.lv_obj)ii(lv.lv_anim_enable)" },
   { "scroll_to", (void*) &lv_obj_scroll_to, "", "(lv.lv_obj)ii(lv.lv_anim_enable)" },
@@ -323,7 +346,7 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "set_ext_click_area", (void*) &lv_obj_set_ext_click_area, "", "(lv.lv_obj)i" },
   { "set_height", (void*) &lv_obj_set_height, "", "(lv.lv_obj)i" },
   { "set_layout", (void*) &lv_obj_set_layout, "", "(lv.lv_obj)i" },
-  { "set_local_style_prop", (void*) &lv_obj_set_local_style_prop, "", "(lv.lv_obj)(lv.lv_style_prop)i(lv.lv_style_selector)" },
+  { "set_local_style_prop", (void*) &lv_obj_set_local_style_prop, "", "(lv.lv_obj)(lv.lv_style_prop)ii" },
   { "set_parent", (void*) &lv_obj_set_parent, "", "(lv.lv_obj)(lv.lv_obj)" },
   { "set_pos", (void*) &lv_obj_set_pos, "", "(lv.lv_obj)ii" },
   { "set_scroll_dir", (void*) &lv_obj_set_scroll_dir, "", "(lv.lv_obj)i" },
@@ -331,100 +354,100 @@ const lvbe_call_c_t lv_obj_func[] = {
   { "set_scroll_snap_y", (void*) &lv_obj_set_scroll_snap_y, "", "(lv.lv_obj)i" },
   { "set_scrollbar_mode", (void*) &lv_obj_set_scrollbar_mode, "", "(lv.lv_obj)i" },
   { "set_size", (void*) &lv_obj_set_size, "", "(lv.lv_obj)ii" },
-  { "set_style_align", (void*) &lv_obj_set_style_align, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_anim_speed", (void*) &lv_obj_set_style_anim_speed, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_anim_time", (void*) &lv_obj_set_style_anim_time, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_arc_color", (void*) &lv_obj_set_style_arc_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_arc_color_filtered", (void*) &lv_obj_set_style_arc_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_arc_img_src", (void*) &lv_obj_set_style_arc_img_src, "", "(lv.lv_obj).(lv.lv_style_selector)" },
-  { "set_style_arc_opa", (void*) &lv_obj_set_style_arc_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_arc_rounded", (void*) &lv_obj_set_style_arc_rounded, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_arc_width", (void*) &lv_obj_set_style_arc_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_base_dir", (void*) &lv_obj_set_style_base_dir, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_bg_color", (void*) &lv_obj_set_style_bg_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_bg_color_filtered", (void*) &lv_obj_set_style_bg_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_bg_grad_color", (void*) &lv_obj_set_style_bg_grad_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_bg_grad_color_filtered", (void*) &lv_obj_set_style_bg_grad_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_bg_grad_dir", (void*) &lv_obj_set_style_bg_grad_dir, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_bg_grad_stop", (void*) &lv_obj_set_style_bg_grad_stop, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_bg_img_opa", (void*) &lv_obj_set_style_bg_img_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_bg_img_recolor", (void*) &lv_obj_set_style_bg_img_recolor, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_bg_img_recolor_filtered", (void*) &lv_obj_set_style_bg_img_recolor_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_bg_img_recolor_opa", (void*) &lv_obj_set_style_bg_img_recolor_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_bg_img_src", (void*) &lv_obj_set_style_bg_img_src, "", "(lv.lv_obj).(lv.lv_style_selector)" },
-  { "set_style_bg_img_tiled", (void*) &lv_obj_set_style_bg_img_tiled, "", "(lv.lv_obj)b(lv.lv_style_selector)" },
-  { "set_style_bg_main_stop", (void*) &lv_obj_set_style_bg_main_stop, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_bg_opa", (void*) &lv_obj_set_style_bg_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_blend_mode", (void*) &lv_obj_set_style_blend_mode, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_border_color", (void*) &lv_obj_set_style_border_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_border_color_filtered", (void*) &lv_obj_set_style_border_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_border_opa", (void*) &lv_obj_set_style_border_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_border_post", (void*) &lv_obj_set_style_border_post, "", "(lv.lv_obj)b(lv.lv_style_selector)" },
-  { "set_style_border_side", (void*) &lv_obj_set_style_border_side, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_border_width", (void*) &lv_obj_set_style_border_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_clip_corner", (void*) &lv_obj_set_style_clip_corner, "", "(lv.lv_obj)b(lv.lv_style_selector)" },
-  { "set_style_color_filter_dsc", (void*) &lv_obj_set_style_color_filter_dsc, "", "(lv.lv_obj)(lv.lv_color_filter_dsc)(lv.lv_style_selector)" },
-  { "set_style_color_filter_opa", (void*) &lv_obj_set_style_color_filter_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_height", (void*) &lv_obj_set_style_height, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_img_opa", (void*) &lv_obj_set_style_img_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_img_recolor", (void*) &lv_obj_set_style_img_recolor, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_img_recolor_filtered", (void*) &lv_obj_set_style_img_recolor_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_img_recolor_opa", (void*) &lv_obj_set_style_img_recolor_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_layout", (void*) &lv_obj_set_style_layout, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_line_color", (void*) &lv_obj_set_style_line_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_line_color_filtered", (void*) &lv_obj_set_style_line_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_line_dash_gap", (void*) &lv_obj_set_style_line_dash_gap, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_line_dash_width", (void*) &lv_obj_set_style_line_dash_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_line_opa", (void*) &lv_obj_set_style_line_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_line_rounded", (void*) &lv_obj_set_style_line_rounded, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_line_width", (void*) &lv_obj_set_style_line_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_max_height", (void*) &lv_obj_set_style_max_height, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_max_width", (void*) &lv_obj_set_style_max_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_min_height", (void*) &lv_obj_set_style_min_height, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_min_width", (void*) &lv_obj_set_style_min_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_opa", (void*) &lv_obj_set_style_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_outline_color", (void*) &lv_obj_set_style_outline_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_outline_color_filtered", (void*) &lv_obj_set_style_outline_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_outline_opa", (void*) &lv_obj_set_style_outline_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_outline_pad", (void*) &lv_obj_set_style_outline_pad, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_outline_width", (void*) &lv_obj_set_style_outline_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_all", (void*) &lv_obj_set_style_pad_all, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_bottom", (void*) &lv_obj_set_style_pad_bottom, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_column", (void*) &lv_obj_set_style_pad_column, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_gap", (void*) &lv_obj_set_style_pad_gap, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_hor", (void*) &lv_obj_set_style_pad_hor, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_left", (void*) &lv_obj_set_style_pad_left, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_right", (void*) &lv_obj_set_style_pad_right, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_row", (void*) &lv_obj_set_style_pad_row, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_top", (void*) &lv_obj_set_style_pad_top, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_pad_ver", (void*) &lv_obj_set_style_pad_ver, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_radius", (void*) &lv_obj_set_style_radius, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_shadow_color", (void*) &lv_obj_set_style_shadow_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_shadow_color_filtered", (void*) &lv_obj_set_style_shadow_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_shadow_ofs_x", (void*) &lv_obj_set_style_shadow_ofs_x, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_shadow_ofs_y", (void*) &lv_obj_set_style_shadow_ofs_y, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_shadow_opa", (void*) &lv_obj_set_style_shadow_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_shadow_spread", (void*) &lv_obj_set_style_shadow_spread, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_shadow_width", (void*) &lv_obj_set_style_shadow_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_size", (void*) &lv_obj_set_style_size, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_text_align", (void*) &lv_obj_set_style_text_align, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_text_color", (void*) &lv_obj_set_style_text_color, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_text_color_filtered", (void*) &lv_obj_set_style_text_color_filtered, "", "(lv.lv_obj)(lv.lv_color)(lv.lv_style_selector)" },
-  { "set_style_text_decor", (void*) &lv_obj_set_style_text_decor, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_text_font", (void*) &lv_obj_set_style_text_font, "", "(lv.lv_obj)(lv.lv_font)(lv.lv_style_selector)" },
-  { "set_style_text_letter_space", (void*) &lv_obj_set_style_text_letter_space, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_text_line_space", (void*) &lv_obj_set_style_text_line_space, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_text_opa", (void*) &lv_obj_set_style_text_opa, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_transform_angle", (void*) &lv_obj_set_style_transform_angle, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_transform_height", (void*) &lv_obj_set_style_transform_height, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_transform_width", (void*) &lv_obj_set_style_transform_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_transform_zoom", (void*) &lv_obj_set_style_transform_zoom, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_transition", (void*) &lv_obj_set_style_transition, "", "(lv.lv_obj)(lv.lv_style_transition_dsc)(lv.lv_style_selector)" },
-  { "set_style_translate_x", (void*) &lv_obj_set_style_translate_x, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_translate_y", (void*) &lv_obj_set_style_translate_y, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_width", (void*) &lv_obj_set_style_width, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_x", (void*) &lv_obj_set_style_x, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
-  { "set_style_y", (void*) &lv_obj_set_style_y, "", "(lv.lv_obj)i(lv.lv_style_selector)" },
+  { "set_style_align", (void*) &lv_obj_set_style_align, "", "(lv.lv_obj)ii" },
+  { "set_style_anim_speed", (void*) &lv_obj_set_style_anim_speed, "", "(lv.lv_obj)ii" },
+  { "set_style_anim_time", (void*) &lv_obj_set_style_anim_time, "", "(lv.lv_obj)ii" },
+  { "set_style_arc_color", (void*) &lv_obj_set_style_arc_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_arc_color_filtered", (void*) &lv_obj_set_style_arc_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_arc_img_src", (void*) &lv_obj_set_style_arc_img_src, "", "(lv.lv_obj).i" },
+  { "set_style_arc_opa", (void*) &lv_obj_set_style_arc_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_arc_rounded", (void*) &lv_obj_set_style_arc_rounded, "", "(lv.lv_obj)ii" },
+  { "set_style_arc_width", (void*) &lv_obj_set_style_arc_width, "", "(lv.lv_obj)ii" },
+  { "set_style_base_dir", (void*) &lv_obj_set_style_base_dir, "", "(lv.lv_obj)ii" },
+  { "set_style_bg_color", (void*) &lv_obj_set_style_bg_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_bg_color_filtered", (void*) &lv_obj_set_style_bg_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_bg_grad_color", (void*) &lv_obj_set_style_bg_grad_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_bg_grad_color_filtered", (void*) &lv_obj_set_style_bg_grad_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_bg_grad_dir", (void*) &lv_obj_set_style_bg_grad_dir, "", "(lv.lv_obj)ii" },
+  { "set_style_bg_grad_stop", (void*) &lv_obj_set_style_bg_grad_stop, "", "(lv.lv_obj)ii" },
+  { "set_style_bg_img_opa", (void*) &lv_obj_set_style_bg_img_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_bg_img_recolor", (void*) &lv_obj_set_style_bg_img_recolor, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_bg_img_recolor_filtered", (void*) &lv_obj_set_style_bg_img_recolor_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_bg_img_recolor_opa", (void*) &lv_obj_set_style_bg_img_recolor_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_bg_img_src", (void*) &lv_obj_set_style_bg_img_src, "", "(lv.lv_obj).i" },
+  { "set_style_bg_img_tiled", (void*) &lv_obj_set_style_bg_img_tiled, "", "(lv.lv_obj)bi" },
+  { "set_style_bg_main_stop", (void*) &lv_obj_set_style_bg_main_stop, "", "(lv.lv_obj)ii" },
+  { "set_style_bg_opa", (void*) &lv_obj_set_style_bg_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_blend_mode", (void*) &lv_obj_set_style_blend_mode, "", "(lv.lv_obj)ii" },
+  { "set_style_border_color", (void*) &lv_obj_set_style_border_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_border_color_filtered", (void*) &lv_obj_set_style_border_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_border_opa", (void*) &lv_obj_set_style_border_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_border_post", (void*) &lv_obj_set_style_border_post, "", "(lv.lv_obj)bi" },
+  { "set_style_border_side", (void*) &lv_obj_set_style_border_side, "", "(lv.lv_obj)ii" },
+  { "set_style_border_width", (void*) &lv_obj_set_style_border_width, "", "(lv.lv_obj)ii" },
+  { "set_style_clip_corner", (void*) &lv_obj_set_style_clip_corner, "", "(lv.lv_obj)bi" },
+  { "set_style_color_filter_dsc", (void*) &lv_obj_set_style_color_filter_dsc, "", "(lv.lv_obj)(lv.lv_color_filter_dsc)i" },
+  { "set_style_color_filter_opa", (void*) &lv_obj_set_style_color_filter_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_height", (void*) &lv_obj_set_style_height, "", "(lv.lv_obj)ii" },
+  { "set_style_img_opa", (void*) &lv_obj_set_style_img_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_img_recolor", (void*) &lv_obj_set_style_img_recolor, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_img_recolor_filtered", (void*) &lv_obj_set_style_img_recolor_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_img_recolor_opa", (void*) &lv_obj_set_style_img_recolor_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_layout", (void*) &lv_obj_set_style_layout, "", "(lv.lv_obj)ii" },
+  { "set_style_line_color", (void*) &lv_obj_set_style_line_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_line_color_filtered", (void*) &lv_obj_set_style_line_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_line_dash_gap", (void*) &lv_obj_set_style_line_dash_gap, "", "(lv.lv_obj)ii" },
+  { "set_style_line_dash_width", (void*) &lv_obj_set_style_line_dash_width, "", "(lv.lv_obj)ii" },
+  { "set_style_line_opa", (void*) &lv_obj_set_style_line_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_line_rounded", (void*) &lv_obj_set_style_line_rounded, "", "(lv.lv_obj)ii" },
+  { "set_style_line_width", (void*) &lv_obj_set_style_line_width, "", "(lv.lv_obj)ii" },
+  { "set_style_max_height", (void*) &lv_obj_set_style_max_height, "", "(lv.lv_obj)ii" },
+  { "set_style_max_width", (void*) &lv_obj_set_style_max_width, "", "(lv.lv_obj)ii" },
+  { "set_style_min_height", (void*) &lv_obj_set_style_min_height, "", "(lv.lv_obj)ii" },
+  { "set_style_min_width", (void*) &lv_obj_set_style_min_width, "", "(lv.lv_obj)ii" },
+  { "set_style_opa", (void*) &lv_obj_set_style_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_outline_color", (void*) &lv_obj_set_style_outline_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_outline_color_filtered", (void*) &lv_obj_set_style_outline_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_outline_opa", (void*) &lv_obj_set_style_outline_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_outline_pad", (void*) &lv_obj_set_style_outline_pad, "", "(lv.lv_obj)ii" },
+  { "set_style_outline_width", (void*) &lv_obj_set_style_outline_width, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_all", (void*) &lv_obj_set_style_pad_all, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_bottom", (void*) &lv_obj_set_style_pad_bottom, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_column", (void*) &lv_obj_set_style_pad_column, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_gap", (void*) &lv_obj_set_style_pad_gap, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_hor", (void*) &lv_obj_set_style_pad_hor, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_left", (void*) &lv_obj_set_style_pad_left, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_right", (void*) &lv_obj_set_style_pad_right, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_row", (void*) &lv_obj_set_style_pad_row, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_top", (void*) &lv_obj_set_style_pad_top, "", "(lv.lv_obj)ii" },
+  { "set_style_pad_ver", (void*) &lv_obj_set_style_pad_ver, "", "(lv.lv_obj)ii" },
+  { "set_style_radius", (void*) &lv_obj_set_style_radius, "", "(lv.lv_obj)ii" },
+  { "set_style_shadow_color", (void*) &lv_obj_set_style_shadow_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_shadow_color_filtered", (void*) &lv_obj_set_style_shadow_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_shadow_ofs_x", (void*) &lv_obj_set_style_shadow_ofs_x, "", "(lv.lv_obj)ii" },
+  { "set_style_shadow_ofs_y", (void*) &lv_obj_set_style_shadow_ofs_y, "", "(lv.lv_obj)ii" },
+  { "set_style_shadow_opa", (void*) &lv_obj_set_style_shadow_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_shadow_spread", (void*) &lv_obj_set_style_shadow_spread, "", "(lv.lv_obj)ii" },
+  { "set_style_shadow_width", (void*) &lv_obj_set_style_shadow_width, "", "(lv.lv_obj)ii" },
+  { "set_style_size", (void*) &lv_obj_set_style_size, "", "(lv.lv_obj)ii" },
+  { "set_style_text_align", (void*) &lv_obj_set_style_text_align, "", "(lv.lv_obj)ii" },
+  { "set_style_text_color", (void*) &lv_obj_set_style_text_color, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_text_color_filtered", (void*) &lv_obj_set_style_text_color_filtered, "", "(lv.lv_obj)(lv.lv_color)i" },
+  { "set_style_text_decor", (void*) &lv_obj_set_style_text_decor, "", "(lv.lv_obj)ii" },
+  { "set_style_text_font", (void*) &lv_obj_set_style_text_font, "", "(lv.lv_obj)(lv.lv_font)i" },
+  { "set_style_text_letter_space", (void*) &lv_obj_set_style_text_letter_space, "", "(lv.lv_obj)ii" },
+  { "set_style_text_line_space", (void*) &lv_obj_set_style_text_line_space, "", "(lv.lv_obj)ii" },
+  { "set_style_text_opa", (void*) &lv_obj_set_style_text_opa, "", "(lv.lv_obj)ii" },
+  { "set_style_transform_angle", (void*) &lv_obj_set_style_transform_angle, "", "(lv.lv_obj)ii" },
+  { "set_style_transform_height", (void*) &lv_obj_set_style_transform_height, "", "(lv.lv_obj)ii" },
+  { "set_style_transform_width", (void*) &lv_obj_set_style_transform_width, "", "(lv.lv_obj)ii" },
+  { "set_style_transform_zoom", (void*) &lv_obj_set_style_transform_zoom, "", "(lv.lv_obj)ii" },
+  { "set_style_transition", (void*) &lv_obj_set_style_transition, "", "(lv.lv_obj)(lv.lv_style_transition_dsc)i" },
+  { "set_style_translate_x", (void*) &lv_obj_set_style_translate_x, "", "(lv.lv_obj)ii" },
+  { "set_style_translate_y", (void*) &lv_obj_set_style_translate_y, "", "(lv.lv_obj)ii" },
+  { "set_style_width", (void*) &lv_obj_set_style_width, "", "(lv.lv_obj)ii" },
+  { "set_style_x", (void*) &lv_obj_set_style_x, "", "(lv.lv_obj)ii" },
+  { "set_style_y", (void*) &lv_obj_set_style_y, "", "(lv.lv_obj)ii" },
   { "set_user_data", (void*) &lv_obj_set_user_data, "", "(lv.lv_obj)." },
   { "set_width", (void*) &lv_obj_set_width, "", "(lv.lv_obj)i" },
   { "set_x", (void*) &lv_obj_set_x, "", "(lv.lv_obj)i" },
@@ -591,6 +614,12 @@ const lvbe_call_c_t lv_spinbox_func[] = {
   { "step_prev", (void*) &lv_spinbox_step_prev, "", "(lv.lv_obj)" },
 };
 #endif // BE_LV_WIDGET_SPINBOX
+
+/* `lv_spinner` methods */
+#ifdef BE_LV_WIDGET_SPINNER
+const lvbe_call_c_t lv_spinner_func[] = {
+};
+#endif // BE_LV_WIDGET_SPINNER
 
 /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
@@ -847,6 +876,7 @@ extern const bclass be_class_lv_chart;
 extern const bclass be_class_lv_checkbox;
 extern const bclass be_class_lv_color;
 extern const bclass be_class_lv_colorwheel;
+extern const bclass be_class_lv_disp;
 extern const bclass be_class_lv_dropdown;
 extern const bclass be_class_lv_font;
 extern const bclass be_class_lv_group;
@@ -862,10 +892,12 @@ extern const bclass be_class_lv_obj;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_spinbox;
+extern const bclass be_class_lv_spinner;
 extern const bclass be_class_lv_style;
 extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
 extern const bclass be_class_lv_textarea;
+extern const bclass be_class_lv_theme;
 
 
 // map of clases
@@ -895,6 +927,7 @@ const lvbe_call_c_classes_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_COLORWHEEL
   { "lv_colorwheel", &be_class_lv_colorwheel, lv_colorwheel_func, sizeof(lv_colorwheel_func) / sizeof(lv_colorwheel_func[0]) },
 #endif // BE_LV_WIDGET_COLORWHEEL
+  { "lv_disp", &be_class_lv_disp, lv_disp_func, sizeof(lv_disp_func) / sizeof(lv_disp_func[0]) },
 #ifdef BE_LV_WIDGET_DROPDOWN
   { "lv_dropdown", &be_class_lv_dropdown, lv_dropdown_func, sizeof(lv_dropdown_func) / sizeof(lv_dropdown_func[0]) },
 #endif // BE_LV_WIDGET_DROPDOWN
@@ -932,6 +965,9 @@ const lvbe_call_c_classes_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_SPINBOX
   { "lv_spinbox", &be_class_lv_spinbox, lv_spinbox_func, sizeof(lv_spinbox_func) / sizeof(lv_spinbox_func[0]) },
 #endif // BE_LV_WIDGET_SPINBOX
+#ifdef BE_LV_WIDGET_SPINNER
+  { "lv_spinner", &be_class_lv_spinner, lv_spinner_func, sizeof(lv_spinner_func) / sizeof(lv_spinner_func[0]) },
+#endif // BE_LV_WIDGET_SPINNER
   { "lv_style", &be_class_lv_style, lv_style_func, sizeof(lv_style_func) / sizeof(lv_style_func[0]) },
 #ifdef BE_LV_WIDGET_SWITCH
   { "lv_switch", &be_class_lv_switch, lv_switch_func, sizeof(lv_switch_func) / sizeof(lv_switch_func[0]) },
@@ -942,108 +978,116 @@ const lvbe_call_c_classes_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_TEXTAREA
   { "lv_textarea", &be_class_lv_textarea, lv_textarea_func, sizeof(lv_textarea_func) / sizeof(lv_textarea_func[0]) },
 #endif // BE_LV_WIDGET_TEXTAREA
+  { "lv_theme", &be_class_lv_theme, lv_theme_func, sizeof(lv_theme_func) / sizeof(lv_theme_func[0]) },
 };
 const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 
   /* `lv_style` methods */
   /* `lv_font` methods */
   /* `lv_color` methods */
+  /* `lv_theme` methods */
   /* `lv_img` methods */
 #ifdef BE_LV_WIDGET_IMG
-  int be_ntv_lv_img_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_img_create, "+lv.lv_img", "(lv.lv_obj)"); }
+  int be_ntv_lv_img_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_img_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMG
+  /* `lv_disp` methods */
   /* `lv_obj` methods */
-  int be_ntv_lv_obj_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_create, "+lv.lv_obj", "(lv.lv_obj)"); }
+  int be_ntv_lv_obj_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_create, "+", "(lv.lv_obj)"); }
   /* `lv_group` methods */
-  int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+lv.lv_group", ""); }
+  int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+", ""); }
   /* `lv_indev` methods */
   /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
-  int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+lv.lv_chart", "(lv.lv_obj)"); }
+  int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CHART
   /* `lv_colorwheel` methods */
 #ifdef BE_LV_WIDGET_COLORWHEEL
-  int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+lv.lv_colorwheel", "(lv.lv_obj)b"); }
+  int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+", "(lv.lv_obj)b"); }
 #endif // BE_LV_WIDGET_COLORWHEEL
   /* `lv_imgbtn` methods */
 #ifdef BE_LV_WIDGET_IMGBTN
-  int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+lv.lv_imgbtn", "(lv.lv_obj)"); }
+  int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMGBTN
   /* `lv_led` methods */
 #ifdef BE_LV_WIDGET_LED
-  int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+lv.lv_led", "(lv.lv_obj)"); }
+  int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LED
   /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
-  int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+lv.lv_meter", "(lv.lv_obj)"); }
+  int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_METER
   /* `lv_msgbox` methods */
 #ifdef BE_LV_WIDGET_MSGBOX
-  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+lv.lv_msgbox", "(lv.lv_obj)sssb"); }
+  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+", "(lv.lv_obj)sssb"); }
 #endif // BE_LV_WIDGET_MSGBOX
   /* `lv_spinbox` methods */
 #ifdef BE_LV_WIDGET_SPINBOX
-  int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+lv.lv_spinbox", "(lv.lv_obj)"); }
+  int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SPINBOX
+  /* `lv_spinner` methods */
+#ifdef BE_LV_WIDGET_SPINNER
+  int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+", "(lv.lv_obj)ii"); }
+#endif // BE_LV_WIDGET_SPINNER
   /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
-  int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+lv.lv_arc", "(lv.lv_obj)"); }
+  int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_ARC
   /* `lv_bar` methods */
 #ifdef BE_LV_WIDGET_BAR
-  int be_ntv_lv_bar_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_bar_create, "+lv.lv_bar", "(lv.lv_obj)"); }
+  int be_ntv_lv_bar_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_bar_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BAR
   /* `lv_btn` methods */
 #ifdef BE_LV_WIDGET_BTN
-  int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+lv.lv_btn", "(lv.lv_obj)"); }
+  int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTN
   /* `lv_btnmatrix` methods */
 #ifdef BE_LV_WIDGET_BTNMATRIX
-  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+lv.lv_btnmatrix", "(lv.lv_obj)"); }
+  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTNMATRIX
   /* `lv_canvas` methods */
 #ifdef BE_LV_WIDGET_CANVAS
-  int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+lv.lv_canvas", "(lv.lv_obj)"); }
+  int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CANVAS
   /* `lv_checkbox` methods */
 #ifdef BE_LV_WIDGET_CHECKBOX
-  int be_ntv_lv_checkbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_checkbox_create, "+lv.lv_checkbox", "(lv.lv_obj)"); }
+  int be_ntv_lv_checkbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_checkbox_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CHECKBOX
   /* `lv_dropdown` methods */
 #ifdef BE_LV_WIDGET_DROPDOWN
-  int be_ntv_lv_dropdown_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_dropdown_create, "+lv.lv_dropdown", "(lv.lv_obj)"); }
+  int be_ntv_lv_dropdown_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_dropdown_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_DROPDOWN
   /* `lv_label` methods */
 #ifdef BE_LV_WIDGET_LABEL
-  int be_ntv_lv_label_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, "+lv.lv_label", "(lv.lv_obj)"); }
+  int be_ntv_lv_label_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LABEL
   /* `lv_line` methods */
 #ifdef BE_LV_WIDGET_LINE
-  int be_ntv_lv_line_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_line_create, "+lv.lv_line", "(lv.lv_obj)"); }
+  int be_ntv_lv_line_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_line_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LINE
   /* `lv_roller` methods */
 #ifdef BE_LV_WIDGET_ROLLER
-  int be_ntv_lv_roller_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_roller_create, "+lv.lv_roller", "(lv.lv_obj)"); }
+  int be_ntv_lv_roller_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_roller_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_ROLLER
   /* `lv_slider` methods */
 #ifdef BE_LV_WIDGET_SLIDER
-  int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+lv.lv_slider", "(lv.lv_obj)"); }
+  int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SLIDER
   /* `lv_switch` methods */
 #ifdef BE_LV_WIDGET_SWITCH
-  int be_ntv_lv_switch_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_switch_create, "+lv.lv_switch", "(lv.lv_obj)"); }
+  int be_ntv_lv_switch_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_switch_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SWITCH
   /* `lv_table` methods */
 #ifdef BE_LV_WIDGET_TABLE
-  int be_ntv_lv_table_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_table_create, "+lv.lv_table", "(lv.lv_obj)"); }
+  int be_ntv_lv_table_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_table_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_TABLE
   /* `lv_textarea` methods */
 #ifdef BE_LV_WIDGET_TEXTAREA
-  int be_ntv_lv_textarea_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_textarea_create, "+lv.lv_textarea", "(lv.lv_obj)"); }
+  int be_ntv_lv_textarea_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_textarea_create, "+", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_TEXTAREA
 
 // create font either empty or from parameter on stack
-int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_group", ""); }
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_font", ""); }
+int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_theme", ""); }
 
 
 #ifdef __cplusplus

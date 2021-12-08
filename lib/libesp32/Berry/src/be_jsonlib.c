@@ -45,8 +45,19 @@ static const char* match_char(const char *json, int ch)
 static int is_object(bvm *vm, const char *class, int idx)
 {
     if (be_isinstance(vm, idx)) {
-        const char *name = be_classname(vm, idx);
-        return !strcmp(name, class);
+        be_pushvalue(vm, idx);
+        while (1) {
+            be_getsuper(vm, -1);
+            if (be_isnil(vm, -1)) {
+                be_pop(vm, 1);
+                break;
+            }
+            be_remove(vm, -2);
+        }
+        const char *name = be_classname(vm, -1);
+        bbool ret = !strcmp(name, class);
+        be_pop(vm, 1);
+        return ret;
     }
     return  0;
 }

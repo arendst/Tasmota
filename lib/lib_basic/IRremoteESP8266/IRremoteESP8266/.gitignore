@@ -22,7 +22,7 @@ examples/**/lib
 examples/**/.travis.yml
 examples/**/.gitignore
 lib/readme.txt
-lib/googletest/**/*
+lib/googletest/
 
 # GCC pre-compiled headers.
 **/*.gch

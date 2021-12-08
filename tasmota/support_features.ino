@@ -673,9 +673,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_42)
     feature7 |= 0x00008000;  // xdsp_06_epaper_42.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
-    feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
-#endif
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
+//     feature7 |= 0x00010000;  // xdsp_08_ILI9488.ino
+// #endif
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
     feature7 |= 0x00020000;  // xdsp_09_SSD1351.ino
 #endif
@@ -772,13 +772,21 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x00004000;  // xsns_92_scd40.ino
 #endif
 #if defined(USE_I2C) && defined(USE_HM330X)
-    feature8 |= 0x00008000;
+    feature8 |= 0x00008000;  // xsns_93_hm330x.ino
 #endif
 
-//    feature8 |= 0x00010000;
-//    feature8 |= 0x00020000;
-//    feature8 |= 0x00040000;
-//    feature8 |= 0x00080000;
+#if defined(USE_I2C) && defined(USE_HDC2010)
+    feature8 |= 0x00010000;  // xsns_94_hdc2010.ino
+#endif
+#if defined(USE_LIGHT) && defined(USE_LSC_MCSL)
+    feature8 |= 0x00020000;  // xlgt_07_lsc_mcsl.ino
+#endif
+#ifdef USE_SONOFF_SPM
+    feature8 |= 0x00040000;
+#endif
+#ifdef USE_SHIFT595
+    feature8 |= 0x00080000;  // xdrv_60_shift595.ino
+#endif
 
 //    feature8 |= 0x00100000;
 //    feature8 |= 0x00200000;

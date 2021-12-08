@@ -239,7 +239,7 @@ void MCP230xx_ApplySettings(void)
       if (mcp230xx_port ? mcp230xx_outpinmapping[idx] > 7 : mcp230xx_outpinmapping[idx] < 8) {
         uint8_t relay_no = TasmotaGlobal.devices_present - mcp230xx_outpincount + idx + 1;
         if (mcp230xx_keepout_no_toggle >0) mcp230xx_keepout_no_toggle--;
-        ExecuteCommandPower(relay_no, (reg_portpins[mcp230xx_port] >> (mcp230xx_outpinmapping[idx] & 7)) & 1, SRC_IGNORE);
+        ExecuteCommandPower(relay_no, ((reg_portpins[mcp230xx_port] >> (mcp230xx_outpinmapping[idx] & 7)) & 1) + 8, SRC_IGNORE);
       }
     }
   }
@@ -251,7 +251,7 @@ void MCP230xx_ApplySettings(void)
 
 void MCP230xx_Detect(void)
 {
-  if (I2cActive(USE_MCP230xx_ADDR)) { return; }
+  if (!I2cSetDevice(USE_MCP230xx_ADDR)) { return; }
 
   uint8_t buffer;
 

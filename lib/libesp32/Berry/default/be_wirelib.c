@@ -23,6 +23,7 @@ extern int b_wire_scan(bvm *vm);
 extern int b_wire_validwrite(bvm *vm);
 extern int b_wire_validread(bvm *vm);
 extern int b_wire_detect(bvm *vm);
+extern int b_wire_enabled(bvm *vm);
 
 /********************************************************************
 ** Solidified function: write_bytes
@@ -43,7 +44,7 @@ be_local_closure(write_bytes,   /* name */
     /* K2   */  be_nested_string("_end_transmission", -1057486896, 17),
     }),
     (be_nested_const_str("write_bytes", 1227543792, 11)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[12]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x5C180200,  //  0001  MOVE	R6	R1
@@ -85,7 +86,7 @@ be_local_closure(read_bytes,   /* name */
     /* K5   */  be_nested_string("_read", 346717030, 5),
     }),
     (be_nested_const_str("read_bytes", -718234123, 10)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[24]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x5C180200,  //  0001  MOVE	R6	R1
@@ -140,6 +141,7 @@ class be_class_tasmota_wire (scope: global, name: Wire) {
     write, func(b_wire_validwrite)
     read, func(b_wire_validread)
     detect, func(b_wire_detect)
+    enabled, func(b_wire_enabled)
 
     read_bytes, closure(read_bytes_closure)
     write_bytes, closure(write_bytes_closure)

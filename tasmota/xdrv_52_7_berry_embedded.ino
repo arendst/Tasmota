@@ -26,69 +26,27 @@
 \*********************************************************************************************/
 
 const char berry_prog[] =
-  "import persist "
-  // create a 'ntv' module to allow functions to be registered in a safe namespace
-  // "ntv = module('ntv') "
 
-  // auto-import modules
-  // // import alias
+#ifdef USE_BERRY_PYTHON_COMPAT
+  // enable python syntax compatibility mode
+  "import python_compat "
+#endif
+
 #ifdef USE_ENERGY_SENSOR
   "import energy "
 #endif
-
-
-    // // Force gc and return allocated memory
-    // "def gc() "
-    //   "import gc "
-    //   "gc.collect() "
-    //   "return gc.allocated() "
-    // // "end "
-    // // simple wrapper to load a file
-    // // prefixes '/' if needed, and simpler to use than `compile()`
-    // "def load(f) "
-    //   "import string "
-    //   "try "
-    //     // check that the file ends with '.be' of '.bec'
-    //     "var fl = string.split(f,'.') "
-    //     "if (size(fl) <= 1 || (fl[-1] != 'be' && fl[-1] != 'bec')) "
-    //       "raise \"file extension is not '.be' or '.bec'\" "
-    //     "end "
-    //     "var native = f[size(f)-1] == 'c' "
-    //     // add prefix if needed
-    //     "if f[0] != '/' f = '/' + f end "
-    //     // load - works the same for .be and .bec
-    //     "var c = compile(f,'file') "
-    //     // save the compiled bytecode
-    //     "if !native "
-    //       "try "
-    //         "self.save(f+'c', c) "
-    //       "except .. as e "
-    //         "self.log(string.format('BRY: could not save compiled file %s (%s)',f+'c',e)) "
-    //       "end "
-    //     "end "
-    //     // call the compiled code
-    //     "c() "
-    //     "self.log(string.format(\"BRY: sucessfully loaded '%s'\",f)) "
-    //   "except .. as e "
-    //     "raise \"io_error\",string.format(\"Could not load file '%s'\",f) "
-    //   "end "
-
-    // "end "
-
-
-  // // Monkey patch `Driver` class - To be continued
-  // "class Driver2 : Driver "
-  //   "def add_cmd(c, f) "
-  //     "var tasmota = self.get_tasmota() "
-  //     "tasmota.add_cmd(c, / cmd, idx, payload, payload_json -> f(self, cmd, idx, payload, payload_json)) "
-  //   "end "
-  // "end "
-  // "Driver = Driver2 "
 
   // Instantiate tasmota object
   "tasmota = Tasmota() "
   "def log(m,l) tasmota.log(m,l) end "
   "def load(f) return tasmota.load(f) end "
+
+#ifdef USE_AUTOCONF
+  // autoconf
+  "import autoconf "
+#endif // USE_AUTOCONF
+
+  "import tapp "
 
 #ifdef USE_LVGL
   "import lv "
@@ -96,29 +54,6 @@ const char berry_prog[] =
   "_lvgl = LVGL_glob() "
 
 #endif // USE_LVGL
-
-  // Wire class
-  // "class Wire : Wire_ntv "
-  //   // read bytes as `bytes()` object
-  //   "def read_bytes(addr,reg,size) "
-  //     "self._begin_transmission(addr) "
-  //     "self._write(reg) "
-  //     "self._end_transmission(false) "
-  //     "self._request_from(addr,size) "
-  //     "var ret=bytes(size) "
-  //     "while (self._available()) "
-  //       "ret..self._read() "
-  //     "end "
-  //     "return ret "
-  //   "end "
-  //   // write bytes from `bytes` object
-  //   "def write_bytes(addr,reg,b) "
-  //     "self._begin_transmission(addr) "
-  //     "self._write(reg) "
-  //     "self._write(b) "
-  //     "self._end_transmission() "
-  //   "end "
-  // "end "
 
 #ifdef USE_I2C
   "tasmota.wire1 = Wire(1) "

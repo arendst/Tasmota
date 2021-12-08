@@ -106,12 +106,11 @@ void TasDiscoverMessage(void) {
 #ifdef USE_SHUTTER
       if (Settings->flag3.shutter_mode) {
         for (uint32_t k = 0; k < MAX_SHUTTERS; k++) {
-          if (0 == Settings->shutter_startrelay[k]) {
-            break;
+          if (Settings->shutter_startrelay[k] > 0) {
+            Shutter[Settings->shutter_startrelay[k]-1] = Shutter[Settings->shutter_startrelay[k]] = 1;
           } else {
-            if (Settings->shutter_startrelay[k] > 0 && Settings->shutter_startrelay[k] <= MAX_SHUTTER_RELAYS) {
-              Shutter[Settings->shutter_startrelay[k]-1] = Shutter[Settings->shutter_startrelay[k]] = 1;
-            }
+            // terminate loop at first INVALID Settings->shutter_startrelay[i].
+            break;
           }
         }
       }
@@ -216,7 +215,7 @@ void TasDiscovery(void) {
 
   if (!Settings->flag.hass_discovery) {                         // SetOption19 - Clear retained message
     Response_P(PSTR("{\"sn\":"));
-    MqttShowSensor();
+    MqttShowSensor(true);
     ResponseAppend_P(PSTR(",\"ver\":1}"));
   }
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/sensors"), NetworkUniqueId().c_str());

@@ -149,6 +149,32 @@ static int m_upvname(bvm *vm)
 }
 #endif
 
+
+#if BE_USE_PERF_COUNTERS
+static void map_insert(bvm *vm, const char *key, int value)
+{
+    be_pushstring(vm, key);
+    be_pushint(vm, value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+}
+
+static int m_counters(bvm *vm)
+{
+    be_newobject(vm, "map");
+    map_insert(vm, "instruction", vm->counter_ins);
+    map_insert(vm, "vmenter", vm->counter_enter);
+    map_insert(vm, "call", vm->counter_call);
+    map_insert(vm, "get", vm->counter_get);
+    map_insert(vm, "set", vm->counter_set);
+    map_insert(vm, "try", vm->counter_try);
+    map_insert(vm, "raise", vm->counter_exc);
+    map_insert(vm, "objects", vm->counter_gc_kept);
+    be_pop(vm, 1);
+    be_return(vm);
+}
+#endif
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(debug) {
     be_native_module_function("attrdump", m_attrdump),
@@ -156,6 +182,9 @@ be_native_module_attr_table(debug) {
     be_native_module_function("traceback", m_traceback),
 #if BE_USE_DEBUG_HOOK
     be_native_module_function("sethook", m_sethook),
+#endif
+#if BE_USE_PERF_COUNTERS
+    be_native_module_function("counters", m_counters),
 #endif
     be_native_module_function("calldepth", m_calldepth),
     be_native_module_function("top", m_top),
@@ -173,6 +202,7 @@ module debug (scope: global, depend: BE_USE_DEBUG_MODULE) {
     codedump, func(m_codedump)
     traceback, func(m_traceback)
     sethook, func(m_sethook), BE_USE_DEBUG_HOOK
+    counters, func(m_counters), BE_USE_PERF_COUNTERS
     calldepth, func(m_calldepth)
     top, func(m_top)
     varname, func(m_varname), BE_DEBUG_VAR_INFO

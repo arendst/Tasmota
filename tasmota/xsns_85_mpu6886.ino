@@ -1,5 +1,5 @@
 /*
-  xsns_84_tof10120.ino - TOF10120 sensor support for Tasmota
+  xsns_84_tof10120.ino -MPU6886/MPU9250 accelerometer support for Tasmota
 
   Copyright (C) 2021  Stephan Hadinger and Theo Arends
 

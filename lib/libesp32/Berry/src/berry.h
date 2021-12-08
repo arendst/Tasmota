@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 /* do not modify the version number! */
-#define BERRY_VERSION           "0.1.10"
+#define BERRY_VERSION           "1.0.0"
 
 #if BE_STACK_TOTAL_MAX < BE_STACK_FREE_MIN * 2
 #error "The value of the macro BE_STACK_TOTAL_MAX is too small."
@@ -172,7 +172,6 @@ typedef struct bntvmodule {
     const bntvmodobj *attrs; /* native module attributes */
     size_t size; /* native module attribute count */
     const struct bmodule *module; /* const module object */
-    bntvfunc init; /* initialization function */
 } bntvmodule;
 
 /* native module node definition macro */
@@ -403,8 +402,10 @@ typedef void(*bntvhook)(bvm *vm, bhookinfo *info);
 
 typedef void(*bobshook)(bvm *vm, int event, ...);
 enum beobshookevents {
-  BE_OBS_GC_START,        // start of GC, arg = allocated size
-  BE_OBS_GC_END,          // end of GC, arg = allocated size
+  BE_OBS_GC_START,        /* start of GC, arg = allocated size */
+  BE_OBS_GC_END,          /* end of GC, arg = allocated size */
+  BE_OBS_VM_HEARTBEAT,    /* VM heartbeat called every million instructions */
+  BE_OBS_STACK_RESIZE_START,    /* Berry stack resized */
 };
 
 /* FFI functions */
@@ -561,7 +562,7 @@ BERRY_API void be_module_path(bvm *vm);
 BERRY_API void be_module_path_set(bvm *vm, const char *path);
 
 /* bytes operations */
-BERRY_API void be_pushbytes(bvm *vm, const void *buf, size_t len);
+BERRY_API void* be_pushbytes(bvm *vm, const void *buf, size_t len);
 BERRY_API const void* be_tobytes(bvm *vm, int index, size_t *len);
 
 /* registry operation */

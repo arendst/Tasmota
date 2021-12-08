@@ -38,9 +38,9 @@ class WiFiClientSecure_light : public WiFiClient {
 
     void allocateBuffers(void);
 
-  #ifdef ESP32  // the method to override in ESP32 has timeout argument
-    int connect(IPAddress ip, uint16_t port, int32_t timeout) override;
-    int connect(const char* name, uint16_t port, int32_t timeout) override;
+  #ifdef ESP32  // the method to override in ESP32 has timeout argument default #define WIFI_CLIENT_DEF_CONN_TIMEOUT_MS  (3000)
+    int connect(IPAddress ip, uint16_t port, int32_t timeout = 3000) override;
+    int connect(const char* name, uint16_t port, int32_t timeout = 3000) override;
   #else
     int connect(IPAddress ip, uint16_t port) override;
     int connect(const char* name, uint16_t port) override;
@@ -92,6 +92,12 @@ class WiFiClientSecure_light : public WiFiClient {
                          unsigned allowed_usages, unsigned cert_issuer_key_type);
 
     void setTrustAnchor(const br_x509_trust_anchor *ta, size_t ta_size);
+
+    void setALPN(const char **names, size_t num) {
+      // set ALPN extensions, used mostly by AWS IoT on port 443. Need to be static pointers
+      _alpn_names = names;
+      _alpn_num = num;
+    }
 
     // Sets the requested buffer size for transmit and receive
     void setBufferSizes(int recv, int xmit);
@@ -165,6 +171,10 @@ class WiFiClientSecure_light : public WiFiClient {
     // record the maximum use of ThunkStack for monitoring
     size_t _max_thunkstack_use;
 
+    // ALPN
+    const char ** _alpn_names;
+    size_t        _alpn_num;
+
 };
 
 #define ERR_OOM             -1000
@@ -236,6 +246,44 @@ class WiFiClientSecure_light : public WiFiClient {
 // #define BR_ERR_X509_FORBIDDEN_KEY_USAGE   59
 // #define BR_ERR_X509_WEAK_PUBLIC_KEY       60
 // #define BR_ERR_X509_NOT_TRUSTED           62
+
+// Alert types for TLSContentType.ALERT messages
+// See RFC 8466, section B.2
+
+// CLOSE_NOTIFY = 0
+// UNEXPECTED_MESSAGE = 10
+// BAD_RECORD_MAC = 20
+// DECRYPTION_FAILED = 21
+// RECORD_OVERFLOW = 22
+// DECOMPRESSION_FAILURE = 30
+// HANDSHAKE_FAILURE = 40
+// NO_CERTIFICATE = 41
+// BAD_CERTIFICATE = 42
+// UNSUPPORTED_CERTIFICATE = 43
+// CERTIFICATE_REVOKED = 44
+// CERTIFICATE_EXPIRED = 45
+// CERTIFICATE_UNKNOWN = 46
+// ILLEGAL_PARAMETER = 47
+// UNKNOWN_CA = 48
+// ACCESS_DENIED = 49
+// DECODE_ERROR = 50
+// DECRYPT_ERROR = 51
+// EXPORT_RESTRICTION = 60
+// PROTOCOL_VERSION = 70
+// INSUFFICIENT_SECURITY = 71
+// INTERNAL_ERROR = 80
+// INAPPROPRIATE_FALLBACK = 86
+// USER_CANCELED = 90
+// NO_RENEGOTIATION = 100
+// MISSING_EXTENSION = 109
+// UNSUPPORTED_EXTENSION = 110
+// CERTIFICATE_UNOBTAINABLE = 111
+// UNRECOGNIZED_NAME = 112
+// BAD_CERTIFICATE_STATUS_RESPONSE = 113
+// BAD_CERTIFICATE_HASH_VALUE = 114
+// UNKNOWN_PSK_IDENTITY = 115
+// CERTIFICATE_REQUIRED = 116
+// NO_APPLICATION_PROTOCOL = 120
 
 };
 

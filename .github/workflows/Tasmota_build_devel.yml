@@ -1,0 +1,1392 @@
+name: Build_firmware_development_cache
+
+on:
+  workflow_dispatch:  # Manually start a workflow
+  push:
+    branches: development
+    paths-ignore:
+    - '.github/**' # Ignore changes towards the .github directory
+    - '**.md' # Do no build if *.md files changes
+
+jobs:
+
+  tasmota:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-minimal:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-minimal
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-lite:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-lite
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-knx:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-knx
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-sensors:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-sensors
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-display:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-display
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-ir:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-ir
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-zbbridge:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-zbbridge
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-zigbee:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-zigbee
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-AF:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-BG:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-BG
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-BR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-BR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-CN:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-CN
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-CZ:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-CZ
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-DE:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-DE
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-ES:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-ES
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-FR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-FR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-FY:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-FY
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-GR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-GR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-HE:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-HE
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-HU:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-HU
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-IT:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-IT
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-KO:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-KO
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-NL:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-NL
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-PL:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-PL
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-PT:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-PT
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-RO:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-RO
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-RU:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-RU
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-SE:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-SE
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-SK:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-SK
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-TR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-TR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-TW:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-TW
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-UK:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-UK
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota-VN:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota-VN
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32solo1:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32solo1
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-webcam:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-webcam
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-odroidgo:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-odroidgo
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-core2:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-core2
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-bluetooth:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-bluetooth
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-display:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-display
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-lvgl:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-lvgl
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-ir:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-ir
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+  tasmota32c3:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32c3
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+  tasmota32-AF:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-AF
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-BG:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-BG
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-BR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-BR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-CN:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-CN
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-CZ:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-CZ
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-DE:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-DE
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-ES:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-ES
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-FR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-FR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-FY:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-FY
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-GR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-GR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-HE:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-HE
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-HU:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-HU
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-IT:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-IT
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-KO:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-KO
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-NL:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-NL
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-PL:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-PL
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-PT:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-PT
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-RO:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-RO
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-RU:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-RU
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-SE:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-SE
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-SK:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-SK
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-TR:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-TR
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-TW:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-TW
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-UK:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-UK
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  tasmota32-VN:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+    - name: Install dependencies
+      run: |
+        pip install -U platformio
+    - name: Run PlatformIO
+      run: |
+        platformio run -e tasmota32-VN
+    - uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ./build_output
+
+
+  Upload:
+    needs: [tasmota-VN, tasmota32-VN, tasmota32-TW, tasmota32-TR]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: firmware
+        path: ./mv_firmware
+    - name: Display structure of downloaded files
+      run: ls -R
+      working-directory: ./mv_firmware
+    - name: Move firmware files in sub-folders
+      run: |
+        mkdir -p ./firmware/tasmota/languages
+        mkdir -p ./firmware/tasmota32/languages
+        mkdir -p ./firmware/map
+        [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
+        [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-knx.* ] || mv ./mv_firmware/firmware/tasmota-knx.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zbbridge.* ] || mv ./mv_firmware/firmware/tasmota-zbbridge.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-zigbee.* ] || mv ./mv_firmware/firmware/tasmota-zigbee.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota32.* ] || mv ./mv_firmware/firmware/tasmota32.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32solo1*.* ] || mv ./mv_firmware/firmware/tasmota32solo1*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-ir*.* ] || mv ./mv_firmware/firmware/tasmota32-ir*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32c3*.* ] || mv ./mv_firmware/firmware/tasmota32c3*.* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/languages/
+        [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
+    - name: Display files to transfer
+      run: ls -R ./*
+    - name: Push Firmware files to tmp_copy repo
+      uses: Jason2866/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'firmware'
+        destination_repo: 'arendst/tmp_copy'
+        destination_branch: 'firmware'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'
+
+  Start_final_copy:
+    needs: Upload
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Creat trigger.txt
+      run: |
+         echo ${GITHUB_SHA}  &> trigger.txt
+         echo "$(<trigger.txt)"
+    - name: Push trigger.txt to start workflow copy in tmp repo
+      uses: Jason2866/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'trigger.txt'
+        destination_repo: 'arendst/tmp_copy'
+        destination_branch: 'action-development'
+        user_email: 'github-actions@github.com'
+        user_name: 'github-actions'

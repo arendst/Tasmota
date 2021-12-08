@@ -121,6 +121,12 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
  ************************************************************/
 
 #ifdef USE_UFILESYS
+
+#include <FS.h>
+#include "ZipReadFS.h"
+extern FS *ffsp;
+FS lv_zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ffsp)));
+
 extern "C" {
 
   typedef void lvbe_FILE;
@@ -132,7 +138,7 @@ extern "C" {
     String file_path = "/";
     file_path += filename;
 
-    File f = dfsp->open(file_path, mode);
+    File f = lv_zip_ufsp.open(file_path, mode);
     // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fopen(%s) -> %i", file_path.c_str(), (int32_t)f);
     // AddLog(LOG_LEVEL_INFO, "LVG: F=%*_H", sizeof(f), &f);
     if (f) {
@@ -202,15 +208,9 @@ static void * lvbe_fs_open(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mo
   // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_open(%p, %p, %s, %i) %i", drv, file_p, path, mode, sizeof(File));
   const char * modes = nullptr;
   switch (mode) {
-    case LV_FS_MODE_WR:
-      modes = "w";
-      break;
-    case LV_FS_MODE_RD:
-      modes = "r";
-      break;
-    case LV_FS_MODE_WR | LV_FS_MODE_RD:
-      modes = "rw";
-      break;
+    case LV_FS_MODE_WR:                   modes = "w";    break;
+    case LV_FS_MODE_RD:                   modes = "r";    break;
+    case LV_FS_MODE_WR | LV_FS_MODE_RD:   modes = "rw";   break;
   }
 
   if (modes == nullptr) {
@@ -218,28 +218,12 @@ static void * lvbe_fs_open(lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mo
     return nullptr;
   }
 
-  // Add "/" prefix
-  String file_path = "/";
-  file_path += path;
-
-  File f = dfsp->open(file_path.c_str(), modes);
-  // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_open(%s) -> %i", file_path.c_str(), (int32_t)f);
-  // AddLog(LOG_LEVEL_INFO, "LVG: F=%*_H", sizeof(f), &f);
-  if (f) {
-    File * f_ptr = new File(f);                 // copy to dynamic object
-    return f_ptr;
-  } else {
-    return nullptr;
-  }
+  return (void*) lvbe_fopen(path, modes);
 }
 
 static lv_fs_res_t lvbe_fs_close(lv_fs_drv_t * drv, void * file_p);
 static lv_fs_res_t lvbe_fs_close(lv_fs_drv_t * drv, void * file_p) {
-  // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fs_close(%p, %p)", drv, file_p);
-  File * f_ptr = (File*) file_p;
-  f_ptr->close();
-  delete f_ptr;
-  return LV_FS_RES_OK;
+  return lvbe_fclose((void*)file_p);
 }
 
 static lv_fs_res_t lvbe_fs_read(lv_fs_drv_t * drv, void * file_p, void * buf, uint32_t btr, uint32_t * br);
@@ -363,8 +347,7 @@ extern "C" {
  * We use Adafruit_LvGL_Glue to leverage the Adafruit
  * display ecosystem.
  ************************************************************/
-
-Renderer *Init_uDisplay(const char *desc, int8_t cs);
+extern Renderer *Init_uDisplay(const char *desc);
 
 
 void start_lvgl(const char * uconfig);
@@ -377,7 +360,7 @@ void start_lvgl(const char * uconfig) {
 
   if (!renderer || uconfig) {
 #ifdef USE_UNIVERSAL_DISPLAY    // TODO - we will probably support only UNIV_DISPLAY
-    renderer  = Init_uDisplay((char*)uconfig, -1);
+    renderer  = Init_uDisplay((char*)uconfig);
     if (!renderer) return;
 #else
     return;
@@ -401,6 +384,9 @@ void start_lvgl(const char * uconfig) {
   // Set the default background color of the display
   // This is normally overriden by an opaque screen on top
 #ifdef USE_BERRY
+  // By default set the display color to black and opacity to 100%
+  lv_disp_set_bg_color(NULL, lv_color_from_uint32(USE_LVGL_BG_DEFAULT));
+  lv_disp_set_bg_opa(NULL, LV_OPA_COVER);
   lv_obj_set_style_bg_color(lv_scr_act(), lv_color_from_uint32(USE_LVGL_BG_DEFAULT), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -411,7 +397,7 @@ void start_lvgl(const char * uconfig) {
 
 #ifdef USE_UFILESYS
   // Add file system mapping
-  lv_fs_drv_t drv;      // can be on heap, LVGL creates a copy
+  static lv_fs_drv_t drv;      // LVGL8, needs to be static and not on stack
   lv_fs_drv_init(&drv);                     /*Basic initialization*/
 
   drv.letter = 'A';                         /*An uppercase letter to identify the drive */

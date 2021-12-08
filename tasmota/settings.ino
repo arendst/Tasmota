@@ -38,28 +38,8 @@ uint32_t GetRtcSettingsCrc(void) {
 void RtcSettingsSave(void) {
   RtcSettings.baudrate = Settings->baudrate * 300;
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
-    RtcSettings.valid = RTC_MEM_VALID;
-#ifdef ESP8266
-    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
-#endif  // ESP8266
-#ifdef ESP32
-    RtcDataSettings = RtcSettings;
-#endif  // ESP32
-    rtc_settings_crc = GetRtcSettingsCrc();
-  }
-}
 
-bool RtcSettingsLoad(uint32_t update) {
-#ifdef ESP8266
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
-#endif  // ESP8266
-#ifdef ESP32
-  RtcSettings = RtcDataSettings;
-#endif  // ESP32
-
-  bool read_valid = (RTC_MEM_VALID == RtcSettings.valid);
-  if (update) {
-    if (!read_valid) {
+    if (RTC_MEM_VALID != RtcSettings.valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
       RtcSettings.energy_kWhtoday = Settings->energy_kWhtoday;
@@ -75,9 +55,32 @@ bool RtcSettingsLoad(uint32_t update) {
       RtcSettings.power = Settings->power;
   //    RtcSettings.baudrate = Settings->baudrate * 300;
       RtcSettings.baudrate = APP_BAUDRATE;
+    }
+
+#ifdef ESP8266
+    ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
+#endif  // ESP8266
+#ifdef ESP32
+    RtcDataSettings = RtcSettings;
+#endif  // ESP32
+
+    rtc_settings_crc = GetRtcSettingsCrc();
+  }
+}
+
+bool RtcSettingsLoad(uint32_t update) {
+#ifdef ESP8266
+  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));  // 0x290
+#endif  // ESP8266
+#ifdef ESP32
+  RtcSettings = RtcDataSettings;
+#endif  // ESP32
+
+  bool read_valid = (RTC_MEM_VALID == RtcSettings.valid);
+  if (update) {
+    if (!read_valid) {
       RtcSettingsSave();
     }
-    rtc_settings_crc = GetRtcSettingsCrc();
   }
   return read_valid;
 }
@@ -1179,6 +1182,7 @@ void SettingsDefaultSet2(void) {
 
   // Tuya
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
+  flag5.tuya_allow_dimmer_0 |= TUYA_ALLOW_DIMMER_0;
   flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
   mbflag2.temperature_set_res |= TUYA_TEMP_SET_RES;
 
@@ -1191,6 +1195,9 @@ void SettingsDefaultSet2(void) {
   flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
+
+  flag5.shift595_invert_outputs |= SHIFT595_INVERT_OUTPUTS;
+  Settings->shift595_device_count = SHIFT595_DEVICE_COUNT; 
 
   Settings->flag = flag;
   Settings->flag2 = flag2;
@@ -1450,6 +1457,19 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09050009) {
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
+    }
+    if (Settings->version < 0x0A000003) {
+      if (0 == Settings->param[P_ARP_GRATUITOUS]) {
+        Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
+#ifdef USE_TLS
+        for (uint32_t i = 0; i < 20; i++) {
+          if (Settings->mqtt_fingerprint[0][i]) {
+            Settings->flag5.tls_use_fingerprint = true;   // if the fingerprint1 is non null we expect it to be actually used
+            break;
+          }
+        }
+#endif
+      }
     }
 
     Settings->version = VERSION;

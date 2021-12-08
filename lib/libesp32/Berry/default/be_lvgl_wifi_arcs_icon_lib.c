@@ -40,8 +40,8 @@ be_local_closure(init,   /* name */
     /* K16  */  be_nested_string("set_style_pad_right", -980898242, 19),
     /* K17  */  be_const_int(1),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    (be_nested_const_str("input", -103256197, 5)),
+    ((bstring*) &be_const_str_init),
+    ((bstring*) &be_const_str_input),
     ( &(const binstruction[67]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0

@@ -62,10 +62,11 @@ void Core2DisplayDim(uint8_t dim);
 const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
-Renderer *Init_uDisplay(const char *desc, int8_t cs) {
+Renderer *Init_uDisplay(const char *desc) {
 char *ddesc = 0;
 char *fbuff;
 uDisplay *udisp;
+int8_t cs;
 
   if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
 
@@ -161,11 +162,11 @@ uDisplay *udisp;
       replacepin(&cp, Pin(GPIO_OLED_RESET));
 
       if (wire_n == 1) {
-        Wire.begin(sda, scl);
+        I2cBegin(sda, scl);
       }
 #ifdef ESP32
       if (wire_n == 2) {
-        Wire1.begin(sda, scl);
+        I2c2Begin(sda, scl);
       }
       if (I2cSetDevice(i2caddr, wire_n - 1)) {
         I2cSetActiveFound(i2caddr, "DSP-I2C", wire_n - 1);
@@ -185,18 +186,16 @@ uDisplay *udisp;
       cp += 4;
       //; 7 params nr,cs,sclk,mosi,dc,bl,reset,miso
       //SPI,*,*,*,*,*,*,*
-      if (cs < 0) {
-        switch (*cp) {
-          case '1':
-            cs = Pin(GPIO_SPI_CS);
-            break;
-          case '2':
-            cs = Pin(GPIO_SPI_CS, 1);
-            break;
-          default:
-            cs = Pin(GPIO_SSPI_CS);
-            break;
-        }
+      switch (*cp) {
+        case '1':
+          cs = Pin(GPIO_SPI_CS);
+          break;
+        case '2':
+          cs = Pin(GPIO_SPI_CS, 1);
+          break;
+        default:
+          cs = Pin(GPIO_SSPI_CS);
+          break;
       }
       if (*cp == '1') {
         cp+=2;
@@ -257,11 +256,11 @@ uDisplay *udisp;
       scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
       sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
       if (wire_n == 0) {
-        Wire.begin(sda, scl);
+        I2cBegin(sda, scl);
       }
 #ifdef ESP32
       if (wire_n == 1) {
-        Wire1.begin(sda, scl, 400000);
+        I2c2Begin(sda, scl, 400000);
       }
       if (I2cSetDevice(i2caddr, wire_n)) {
         I2cSetActiveFound(i2caddr, "FT5206", wire_n);
@@ -433,7 +432,7 @@ bool Xdsp17(uint8_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    Init_uDisplay(0, -1);
+    Init_uDisplay(nullptr);
   }
   else if (udisp_init_done && (XDSP_17 == Settings->display_model)) {
     switch (function) {

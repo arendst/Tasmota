@@ -1,5 +1,5 @@
 // Copyright 2009 Ken Shirriff
-// Copyright 2017, 2018, 2019 David Conran
+// Copyright 2017-2021 David Conran
 /// @file
 /// @brief Support for Samsung protocols.
 /// Samsung originally added from https://github.com/shirriff/Arduino-IRremote/
@@ -62,12 +62,25 @@ const uint16_t kSamsung36BitMark = 512;  /// < uSeconds
 const uint16_t kSamsung36OneSpace = 1468;  /// < uSeconds
 const uint16_t kSamsung36ZeroSpace = 490;  /// < uSeconds
 
+// _.Swing
+const uint8_t kSamsungAcSwingV =        0b010;
+const uint8_t kSamsungAcSwingH =        0b011;
+const uint8_t kSamsungAcSwingBoth =     0b100;
+const uint8_t kSamsungAcSwingOff =      0b111;
+// _.FanSpecial
+const uint8_t kSamsungAcFanSpecialOff = 0b000;
+const uint8_t kSamsungAcPowerfulOn =    0b011;
+const uint8_t kSamsungAcBreezeOn =      0b101;
+const uint8_t kSamsungAcEconoOn =       0b111;
+
 using irutils::addBoolToString;
 using irutils::addFanToString;
 using irutils::addIntToString;
 using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addTempToString;
+using irutils::addToggleToString;
+using irutils::minsToString;
 
 #if SEND_SAMSUNG
 /// Send a 32-bit Samsung formatted message.
@@ -275,17 +288,22 @@ IRSamsungAc::IRSamsungAc(const uint16_t pin, const bool inverted,
 }
 
 /// Reset the internal state of the emulation.
-/// @param[in] forcepower A flag indicating if force sending a special power
+/// @param[in] extended A flag indicating if force sending a special extended
 ///   message with the first `send()` call.
 /// @param[in] initialPower Set the initial power state. True, on. False, off.
-void IRSamsungAc::stateReset(const bool forcepower, const bool initialPower) {
+void IRSamsungAc::stateReset(const bool extended, const bool initialPower) {
   static const uint8_t kReset[kSamsungAcExtendedStateLength] = {
       0x02, 0x92, 0x0F, 0x00, 0x00, 0x00, 0xF0,
       0x01, 0x02, 0xAE, 0x71, 0x00, 0x15, 0xF0};
   std::memcpy(_.raw, kReset, kSamsungAcExtendedStateLength);
-  _forcepower = forcepower;
+  _forceextended = extended;
   _lastsentpowerstate = initialPower;
   setPower(initialPower);
+  _OnTimerEnable = false;
+  _OffTimerEnable = false;
+  _Sleep = false;
+  _lastSleep = false;
+  _OnTimer = _OffTimer = _lastOnTimer = _lastOffTimer = 0;
 }
 
 /// Set up hardware to be able to send a message.
@@ -351,30 +369,28 @@ void IRSamsungAc::checksum(void) {
 #if SEND_SAMSUNG_AC
 /// Send the current internal state as an IR message.
 /// @param[in] repeat Nr. of times the message will be repeated.
-/// @param[in] calcchecksum Do we update the checksum before sending?
 /// @note Use for most function/mode/settings changes to the unit.
 ///   i.e. When the device is already running.
-void IRSamsungAc::send(const uint16_t repeat, const bool calcchecksum) {
-  // Do we need to send a the special power on/off message? i.e. An Extended Msg
-  if (getPower() != _lastsentpowerstate || _forcepower) {  // We do.
-    sendExtended(repeat, calcchecksum);
-    _forcepower = false;  // It has now been sent, so clear the flag if set.
-  } else {  // No, it's just a normal message.
-    if (calcchecksum) checksum();
-    _irsend.sendSamsungAC(_.raw, kSamsungAcStateLength, repeat);
-  }
+void IRSamsungAc::send(const uint16_t repeat) {
+  // Do we need to send a special (extended) message?
+  if (getPower() != _lastsentpowerstate || _forceextended ||
+      (_lastOnTimer != _OnTimer) || (_lastOffTimer != _OffTimer) ||
+      (_Sleep != _lastSleep))  // We do.
+    sendExtended(repeat);
+  else  // No, it's just a normal message.
+    _irsend.sendSamsungAC(getRaw(), kSamsungAcStateLength, repeat);
 }
 
 /// Send the extended current internal state as an IR message.
 /// @param[in] repeat Nr. of times the message will be repeated.
-/// @param[in] calcchecksum Do we update the checksum before sending?
-/// @note Use this for when you need to power on/off the device.
-/// Samsung A/C requires an extended length message when you want to
-/// change the power operating mode of the A/C unit.
-void IRSamsungAc::sendExtended(const uint16_t repeat, const bool calcchecksum) {
+/// @note Samsung A/C requires an extended length message when you want to
+/// change the power operating mode, Timers, or Sleep setting of the A/C unit.
+void IRSamsungAc::sendExtended(const uint16_t repeat) {
+  _lastsentpowerstate = getPower();  // Remember the last power state sent.
+  _lastOnTimer = _OnTimer;
+  _lastOffTimer = _OffTimer;
   static const uint8_t extended_middle_section[kSamsungAcSectionLength] = {
       0x01, 0xD2, 0x0F, 0x00, 0x00, 0x00, 0x00};
-  if (calcchecksum) checksum();
   // Copy/convert the internal state to an extended state by
   // copying the second section to the third section, and inserting the extended
   // middle (second) section.
@@ -383,13 +399,16 @@ void IRSamsungAc::sendExtended(const uint16_t repeat, const bool calcchecksum) {
               kSamsungAcSectionLength);
   std::memcpy(_.raw + kSamsungAcSectionLength, extended_middle_section,
               kSamsungAcSectionLength);
+  _setOnTimer();
+  _setSleepTimer();  // This also sets any Off Timer if needed too.
   // Send it.
-  _irsend.sendSamsungAC(_.raw, kSamsungAcExtendedStateLength, repeat);
+  _irsend.sendSamsungAC(getRaw(), kSamsungAcExtendedStateLength, repeat);
   // Now revert it by copying the third section over the second section.
   std::memcpy(_.raw + kSamsungAcSectionLength,
-              _.raw + 2* kSamsungAcSectionLength,
+              _.raw + 2 * kSamsungAcSectionLength,
               kSamsungAcSectionLength);
-  _lastsentpowerstate = getPower();  // Remember the last power state sent.
+
+  _forceextended = false;  // It has now been sent, so clear the flag if set.
 }
 
 /// Send the special extended "On" message as the library can't seem to
@@ -434,6 +453,11 @@ void IRSamsungAc::setRaw(const uint8_t new_code[], const uint16_t length) {
                                           kSamsungAcExtendedStateLength));
   // Shrink the extended state into a normal state.
   if (length > kSamsungAcStateLength) {
+    _OnTimerEnable = _.OnTimerEnable;
+    _OffTimerEnable = _.OffTimerEnable;
+    _Sleep = _.Sleep5 && _.Sleep12;
+    _OnTimer = _getOnTimer();
+    _OffTimer = _getOffTimer();
     for (uint8_t i = kSamsungAcStateLength; i < length; i++)
       _.raw[i - kSamsungAcSectionLength] = _.raw[i];
   }
@@ -448,14 +472,13 @@ void IRSamsungAc::off(void) { setPower(false); }
 /// Change the power setting.
 /// @param[in] on true, the setting is on. false, the setting is off.
 void IRSamsungAc::setPower(const bool on) {
-  _.Power1 = !on;  // Cleared when on.
-  _.Power6 = (on ? 0b11 : 0b00);
+  _.Power1 = _.Power2 = (on ? 0b11 : 0b00);
 }
 
 /// Get the value of the current power setting.
 /// @return true, the setting is on. false, the setting is off.
 bool IRSamsungAc::getPower(void) const {
-  return (_.Power6 == 0b11) && !_.Power1;
+  return _.Power1 == 0b11 && _.Power2 == 0b11;
 }
 
 /// Set the temperature.
@@ -524,56 +547,79 @@ uint8_t IRSamsungAc::getFan(void) const {
 
 /// Get the vertical swing setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-/// @todo (Hollako) Explain why sometimes the LSB of remote_state[9] is a 1.
-/// e.g. 0xAE or 0XAF for swing move.
 bool IRSamsungAc::getSwing(void) const {
-  return _.Swing == kSamsungAcSwingMove;
+  switch (_.Swing) {
+    case kSamsungAcSwingV:
+    case kSamsungAcSwingBoth: return true;
+    default:                  return false;
+  }
 }
 
 /// Set the vertical swing setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-/// @todo (Hollako) Explain why sometimes the LSB of remote_state[9] is a 1.
-///   e.g. 0xAE or 0XAF for swing move.
 void IRSamsungAc::setSwing(const bool on) {
-  _.Swing = (on ? kSamsungAcSwingMove : kSamsungAcSwingStop);
+  switch (_.Swing) {
+    case kSamsungAcSwingBoth:
+    case kSamsungAcSwingH:
+      _.Swing = on ? kSamsungAcSwingBoth : kSamsungAcSwingH;
+      break;
+    default:
+      _.Swing = on ? kSamsungAcSwingV : kSamsungAcSwingOff;
+  }
 }
 
-/// Get the Beep setting of the A/C.
+/// Get the horizontal swing setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRSamsungAc::getBeep(void) const {
-  return _.Beep;
+bool IRSamsungAc::getSwingH(void) const {
+  switch (_.Swing) {
+    case kSamsungAcSwingH:
+    case kSamsungAcSwingBoth: return true;
+    default:                  return false;
+  }
 }
 
-/// Set the Beep setting of the A/C.
+/// Set the horizontal swing setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRSamsungAc::setBeep(const bool on) {
-  _.Beep = on;
+void IRSamsungAc::setSwingH(const bool on) {
+  switch (_.Swing) {
+    case kSamsungAcSwingV:
+    case kSamsungAcSwingBoth:
+      _.Swing = on ? kSamsungAcSwingBoth : kSamsungAcSwingV;
+      break;
+    default:
+      _.Swing = on ? kSamsungAcSwingH : kSamsungAcSwingOff;
+  }
 }
 
-/// Get the Clean setting of the A/C.
+/// Get the Beep toggle setting of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRSamsungAc::getBeep(void) const { return _.BeepToggle; }
+
+/// Set the Beep toggle setting of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRSamsungAc::setBeep(const bool on) { _.BeepToggle = on; }
+
+/// Get the Clean toggle setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
 bool IRSamsungAc::getClean(void) const {
-  return _.Clean10 && _.Clean11;
+  return _.CleanToggle10 && _.CleanToggle11;
 }
 
-/// Set the Clean setting of the A/C.
+/// Set the Clean toggle setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
 void IRSamsungAc::setClean(const bool on) {
-  _.Clean10 = on;
-  _.Clean11 = on;
+  _.CleanToggle10 = on;
+  _.CleanToggle11 = on;
 }
 
 /// Get the Quiet setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRSamsungAc::getQuiet(void) const {
-  return !_.Quiet1 && _.Quiet5;
-}
+bool IRSamsungAc::getQuiet(void) const { return _.Quiet; }
 
 /// Set the Quiet setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
 void IRSamsungAc::setQuiet(const bool on) {
-  _.Quiet1 = !on;  // Cleared when on.
-  _.Quiet5 = on;
+  _.Quiet = on;
   if (on) {
     // Quiet mode seems to set fan speed to auto.
     setFan(kSamsungAcFanAuto);
@@ -584,25 +630,20 @@ void IRSamsungAc::setQuiet(const bool on) {
 /// Get the Powerful (Turbo) setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
 bool IRSamsungAc::getPowerful(void) const {
-  return !(_.Powerful8 & kSamsungAcPowerfulMask8) &&
-         (_.Powerful10 == kSamsungAcPowerful10On) &&
+  return (_.FanSpecial == kSamsungAcPowerfulOn) &&
          (_.Fan == kSamsungAcFanTurbo);
 }
 
 /// Set the Powerful (Turbo) setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
 void IRSamsungAc::setPowerful(const bool on) {
-  uint8_t off_value = getBreeze() ? kSamsungAcBreezeOn : 0b000;
-  _.Powerful10 = (on ? kSamsungAcPowerful10On : off_value);
+  uint8_t off_value = (getBreeze() || getEcono()) ? _.FanSpecial
+                                                  : kSamsungAcFanSpecialOff;
+  _.FanSpecial = (on ? kSamsungAcPowerfulOn : off_value);
   if (on) {
-    _.Powerful8 &= ~kSamsungAcPowerfulMask8;  // Bit needs to be cleared.
     // Powerful mode sets fan speed to Turbo.
     setFan(kSamsungAcFanTurbo);
     setQuiet(false);  // Powerful 'on' is mutually exclusive to Quiet.
-  } else {
-    _.Powerful8 |= kSamsungAcPowerfulMask8;  // Bit needs to be set.
-    // Turning off Powerful mode sets fan speed to Auto if we were in Turbo mode
-    if (_.Fan == kSamsungAcFanTurbo) setFan(kSamsungAcFanAuto);
   }
 }
 
@@ -610,7 +651,7 @@ void IRSamsungAc::setPowerful(const bool on) {
 /// @return true, the setting is on. false, the setting is off.
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1062
 bool IRSamsungAc::getBreeze(void) const {
-  return (_.Breeze == kSamsungAcBreezeOn) &&
+  return (_.FanSpecial == kSamsungAcBreezeOn) &&
          (_.Fan == kSamsungAcFanAuto && !getSwing());
 }
 
@@ -618,36 +659,155 @@ bool IRSamsungAc::getBreeze(void) const {
 /// @param[in] on true, the setting is on. false, the setting is off.
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1062
 void IRSamsungAc::setBreeze(const bool on) {
-  uint8_t off_value = getPowerful() ? kSamsungAcPowerful10On : 0b000;
-  _.Breeze = (on ? kSamsungAcBreezeOn : off_value);
+  const uint8_t off_value = (getPowerful() ||
+                             getEcono()) ? _.FanSpecial
+                                         : kSamsungAcFanSpecialOff;
+  _.FanSpecial = (on ? kSamsungAcBreezeOn : off_value);
   if (on) {
     setFan(kSamsungAcFanAuto);
     setSwing(false);
   }
 }
 
+/// Get the current Economy (Eco) setting of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRSamsungAc::getEcono(void) const {
+  return (_.FanSpecial == kSamsungAcEconoOn) &&
+         (_.Fan == kSamsungAcFanAuto && getSwing());
+}
+
+/// Set the current Economy (Eco) setting of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRSamsungAc::setEcono(const bool on) {
+  const uint8_t off_value = (getBreeze() ||
+                             getPowerful()) ? _.FanSpecial
+                                            : kSamsungAcFanSpecialOff;
+  _.FanSpecial = (on ? kSamsungAcEconoOn : off_value);
+  if (on) {
+    setFan(kSamsungAcFanAuto);
+    setSwing(true);
+  }
+}
+
 /// Get the Display (Light/LED) setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRSamsungAc::getDisplay(void) const {
-  return _.Display;
-}
+bool IRSamsungAc::getDisplay(void) const { return _.Display; }
 
 /// Set the Display (Light/LED) setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRSamsungAc::setDisplay(const bool on) {
-  _.Display = on;
-}
+void IRSamsungAc::setDisplay(const bool on) { _.Display = on; }
 
 /// Get the Ion (Filter) setting of the A/C.
 /// @return true, the setting is on. false, the setting is off.
-bool IRSamsungAc::getIon(void) const {
-  return _.Ion;
-}
+bool IRSamsungAc::getIon(void) const { return _.Ion; }
 
 /// Set the Ion (Filter) setting of the A/C.
 /// @param[in] on true, the setting is on. false, the setting is off.
-void IRSamsungAc::setIon(const bool on) {
-  _.Ion = on;
+void IRSamsungAc::setIon(const bool on) { _.Ion = on; }
+
+/// Get the On Timer setting of the A/C from a raw extended state.
+/// @return The Nr. of minutes the On Timer is set for.
+uint16_t IRSamsungAc::_getOnTimer(void) const {
+  if (_.OnTimeDay) return 24 * 60;
+  return (_.OnTimeHrs2 * 2 + _.OnTimeHrs1) * 60 + _.OnTimeMins * 10;
+}
+
+/// Set the current On Timer value of the A/C into the raw extended state.
+void IRSamsungAc::_setOnTimer(void) {
+  _.OnTimerEnable = _OnTimerEnable = (_OnTimer > 0);
+  _.OnTimeDay = (_OnTimer >= 24 * 60);
+  if (_.OnTimeDay) {
+    _.OnTimeHrs2 = _.OnTimeHrs1 = _.OnTimeMins = 0;
+    return;
+  }
+  _.OnTimeMins = (_OnTimer % 60) / 10;
+  const uint8_t hours = _OnTimer / 60;
+  _.OnTimeHrs1 = hours & 0b1;
+  _.OnTimeHrs2 = hours >> 1;
+}
+
+/// Get the Off Timer setting of the A/C from a raw extended state.
+/// @return The Nr. of minutes the Off Timer is set for.
+uint16_t IRSamsungAc::_getOffTimer(void) const {
+  if (_.OffTimeDay) return 24 * 60;
+  return (_.OffTimeHrs2 * 2 + _.OffTimeHrs1) * 60 + _.OffTimeMins * 10;
+}
+
+/// Set the current Off Timer value of the A/C into the raw extended state.
+void IRSamsungAc::_setOffTimer(void) {
+  _.OffTimerEnable = _OffTimerEnable = (_OffTimer > 0);
+  _.OffTimeDay = (_OffTimer >= 24 * 60);
+  if (_.OffTimeDay) {
+    _.OffTimeHrs2 = _.OffTimeHrs1 = _.OffTimeMins = 0;
+    return;
+  }
+  _.OffTimeMins = (_OffTimer % 60) / 10;
+  const uint8_t hours = _OffTimer / 60;
+  _.OffTimeHrs1 = hours & 0b1;
+  _.OffTimeHrs2 = hours >> 1;
+}
+
+// Set the current Sleep Timer value of the A/C into the raw extended state.
+void IRSamsungAc::_setSleepTimer(void) {
+  _setOffTimer();
+  // The Sleep mode/timer should only be engaged if an off time has been set.
+  _.Sleep5 = _Sleep && _OffTimerEnable;
+  _.Sleep12 = _.Sleep5;
+}
+
+/// Get the On Timer setting of the A/C.
+/// @return The Nr. of minutes the On Timer is set for.
+uint16_t IRSamsungAc::getOnTimer(void) const { return _OnTimer; }
+
+/// Get the Off Timer setting of the A/C.
+/// @return The Nr. of minutes the Off Timer is set for.
+/// @note Sleep & Off Timer share the same timer.
+uint16_t IRSamsungAc::getOffTimer(void) const {
+  return _Sleep ? 0 : _OffTimer;
+}
+
+/// Get the Sleep Timer setting of the A/C.
+/// @return The Nr. of minutes the Off Timer is set for.
+/// @note Sleep & Off Timer share the same timer.
+uint16_t IRSamsungAc::getSleepTimer(void) const {
+  return _Sleep ? _OffTimer : 0;
+}
+
+#define TIMER_RESOLUTION(mins) \
+    (((std::min((mins), (uint16_t)(24 * 60))) / 10) * 10)
+
+/// Set the On Timer value of the A/C.
+/// @param[in] nr_of_mins The number of minutes the timer should be.
+/// @note The timer time only has a resolution of 10 mins.
+/// @note Setting the On Timer active will cancel the Sleep timer/setting.
+void IRSamsungAc::setOnTimer(const uint16_t nr_of_mins) {
+  // Limit to one day, and round down to nearest 10 min increment.
+  _OnTimer = TIMER_RESOLUTION(nr_of_mins);
+  _OnTimerEnable = _OnTimer > 0;
+  if (_OnTimer) _Sleep = false;
+}
+
+/// Set the Off Timer value of the A/C.
+/// @param[in] nr_of_mins The number of minutes the timer should be.
+/// @note The timer time only has a resolution of 10 mins.
+/// @note Setting the Off Timer active will cancel the Sleep timer/setting.
+void IRSamsungAc::setOffTimer(const uint16_t nr_of_mins) {
+  // Limit to one day, and round down to nearest 10 min increment.
+  _OffTimer = TIMER_RESOLUTION(nr_of_mins);
+  _OffTimerEnable = _OffTimer > 0;
+  if (_OffTimer) _Sleep = false;
+}
+
+/// Set the Sleep Timer value of the A/C.
+/// @param[in] nr_of_mins The number of minutes the timer should be.
+/// @note The timer time only has a resolution of 10 mins.
+/// @note Sleep timer acts as an Off timer, and cancels any On Timer.
+void IRSamsungAc::setSleepTimer(const uint16_t nr_of_mins) {
+  // Limit to one day, and round down to nearest 10 min increment.
+  _OffTimer = TIMER_RESOLUTION(nr_of_mins);
+  if (_OffTimer) setOnTimer(0);  // Clear the on timer if set.
+  _Sleep = _OffTimer > 0;
+  _OffTimerEnable = _Sleep;
 }
 
 /// Convert a stdAc::opmode_t enum into its native mode.
@@ -714,18 +874,17 @@ stdAc::state_t IRSamsungAc::toCommon(void) const {
   result.celsius = true;
   result.degrees = getTemp();
   result.fanspeed = toCommonFanSpeed(_.Fan);
-  result.swingv = getSwing() ? stdAc::swingv_t::kAuto :
-                                     stdAc::swingv_t::kOff;
+  result.swingv = getSwing() ? stdAc::swingv_t::kAuto : stdAc::swingv_t::kOff;
+  result.swingh = getSwingH() ? stdAc::swingh_t::kAuto : stdAc::swingh_t::kOff;
   result.quiet = getQuiet();
   result.turbo = getPowerful();
+  result.econo = getEcono();
   result.clean = getClean();
-  result.beep = _.Beep;
+  result.beep = _.BeepToggle;
   result.light = _.Display;
   result.filter = _.Ion;
+  result.sleep = _Sleep ? getSleepTimer() : -1;
   // Not supported.
-  result.swingh = stdAc::swingh_t::kOff;
-  result.econo = false;
-  result.sleep = -1;
   result.clock = -1;
   return result;
 }
@@ -734,7 +893,7 @@ stdAc::state_t IRSamsungAc::toCommon(void) const {
 /// @return A human readable string.
 String IRSamsungAc::toString(void) const {
   String result = "";
-  result.reserve(115);  // Reserve some heap for the string to reduce fragging.
+  result.reserve(230);  // Reserve some heap for the string to reduce fragging.
   result += addBoolToString(getPower(), kPowerStr, false);
   result += addModeToString(_.Mode, kSamsungAcAuto, kSamsungAcCool,
                             kSamsungAcHeat, kSamsungAcDry,
@@ -764,14 +923,21 @@ String IRSamsungAc::toString(void) const {
       break;
   }
   result += ')';
-  result += addBoolToString(getSwing(), kSwingStr);
-  result += addBoolToString(_.Beep, kBeepStr);
-  result += addBoolToString(getClean(), kCleanStr);
+  result += addBoolToString(getSwing(), kSwingVStr);
+  result += addBoolToString(getSwingH(), kSwingHStr);
+  result += addToggleToString(_.BeepToggle, kBeepStr);
+  result += addToggleToString(getClean(), kCleanStr);
   result += addBoolToString(getQuiet(), kQuietStr);
   result += addBoolToString(getPowerful(), kPowerfulStr);
+  result += addBoolToString(getEcono(), kEconoStr);
   result += addBoolToString(getBreeze(), kBreezeStr);
   result += addBoolToString(_.Display, kLightStr);
   result += addBoolToString(_.Ion, kIonStr);
+  if (_OnTimerEnable)
+    result += addLabeledString(minsToString(_OnTimer), kOnTimerStr);
+  if (_OffTimerEnable)
+    result += addLabeledString(minsToString(_OffTimer),
+                               _Sleep ? kSleepTimerStr : kOffTimerStr);
   return result;
 }
 
@@ -811,9 +977,6 @@ bool IRrecv::decodeSamsungAC(decode_results *results, uint16_t offset,
     offset += used;
   }
   // Compliance
-  // Is the signature correct?
-  DPRINTLN("DEBUG: Checking signature.");
-  if (results->state[0] != 0x02 || results->state[2] != 0x0F) return false;
   if (strict) {
     // Is the checksum valid?
     if (!IRSamsungAc::validChecksum(results->state, nbits / 8)) {

@@ -1150,7 +1150,7 @@ void setDetails(ble_advertisment_t *ad){
 
   *(p++) = '{';
   maxlen--;
-  strcpy(p, "\"details\":{");
+  strcpy(p, "\"DetailsBLE\":{");
   int len = strlen(p);
   p += len;
   maxlen -= len;

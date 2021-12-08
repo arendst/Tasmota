@@ -51,7 +51,7 @@ static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
                 ++slib;
             }
         }
-        be_map_release(vm, c->members); /* clear space */
+        be_map_compact(vm, c->members); /* clear space */
     }
 }
 
