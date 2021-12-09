@@ -1555,16 +1555,22 @@ void SML_Decode(uint8_t index) {
             double vdiff = meter_vars[ind - 1] - dvalues[dindex];
             dvalues[dindex] = meter_vars[ind - 1];
             double dres = (double)360000.0 * vdiff / ((double)dtime / 10000.0);
-#ifdef USE_SML_MEDIAN_FILTER
-            if (meter_desc_p[mindex].flag & 16) {
-              meter_vars[vindex] = sml_median(&sml_mf[vindex], dres);
-            } else {
-              meter_vars[vindex] = dres;
-            }
-#else
-            meter_vars[vindex] = dres;
-#endif
 
+            dvalid[vindex] += 1;
+
+            if (dvalid[vindex] >= 2) {
+              // differece is only valid after 2. calculation
+              dvalid[vindex] = 2;
+#ifdef USE_SML_MEDIAN_FILTER
+              if (meter_desc_p[mindex].flag & 16) {
+                meter_vars[vindex] = sml_median(&sml_mf[vindex], dres);
+              } else {
+                meter_vars[vindex] = dres;
+              }
+#else
+              meter_vars[vindex] = dres;
+#endif
+            }
             mp=strchr(mp,'@');
             if (mp) {
               mp++;
@@ -1573,7 +1579,7 @@ void SML_Decode(uint8_t index) {
               SML_Immediate_MQTT((const char*)mp, vindex, mindex);
             }
           }
-          dvalid[vindex] = 1;
+          //dvalid[vindex] = 1;
           dindex++;
         }
       } else if (*mp == 'h') {
@@ -2212,7 +2218,9 @@ uint8_t *script_meter;
 
 #ifdef SML_REPLACE_VARS
 
+#ifndef SML_SRCBSIZE
 #define SML_SRCBSIZE 256
+#endif
 
 uint32_t SML_getlinelen(char *lp) {
 uint32_t cnt;
@@ -2404,10 +2412,53 @@ dddef_exit:
             script_meter_desc[index].tsecs = strtol(lp, &lp, 10);
             if (*lp == ',') {
               lp++;
-              char txbuff[256];
+#if 1
+              // look ahead
+              uint16_t txlen = 0;
+              uint16_t tx_entries = 1;
+              char *txp = lp;
+              while (*txp) {
+                if (*txp == ',') tx_entries++;
+                if (*txp == SCRIPT_EOL) {
+                  if (tx_entries > 1) {
+                    if (*(txp - 1) != ',' ) {
+                      break;
+                    }
+                    // line ends with ,
+                  } else {
+                    // single entry
+                    break;
+                  }
+                }
+                txp++;
+                txlen++;
+              }
+              if (txlen) {
+                script_meter_desc[index].txmem = (char*)calloc(txlen + 2, 1);
+                if (script_meter_desc[index].txmem) {
+                  // now copy send blocks
+                  char *txp = lp;
+                  uint16_t tind = 0;
+                  for (uint32_t cnt = 0; cnt < txlen; cnt++) {
+                      if (*txp == SCRIPT_EOL) {
+                        txp++;
+                      } else {
+                        script_meter_desc[index].txmem[tind] = *txp++;
+                        tind++;
+                      }
+                  }
+                }
+                //AddLog(LOG_LEVEL_INFO, PSTR(">>> %s - %d"), script_meter_desc[index].txmem, txlen);
+                script_meter_desc[index].index = 0;
+                script_meter_desc[index].max_index = tx_entries;
+                sml_send_blocks++;
+                lp += txlen;
+              }
+#else
+              char txbuff[SML_SRCBSIZE];
               uint32_t txlen = 0, tx_entries = 1;
               for (uint32_t cnt = 0; cnt < sizeof(txbuff); cnt++) {
-                if (*lp == SCRIPT_EOL) {
+                if (*lp == SCRIPT_EOL && *(lp - 1) != ',' ) {
                   txbuff[cnt] = 0;
                   txlen = cnt;
                   break;
@@ -2424,6 +2475,7 @@ dddef_exit:
                 script_meter_desc[index].max_index = tx_entries;
                 sml_send_blocks++;
               }
+#endif
             }
           }
           if (*lp == SCRIPT_EOL) lp--;
