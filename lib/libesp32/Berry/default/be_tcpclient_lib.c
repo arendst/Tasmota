@@ -15,7 +15,6 @@ extern int wc_tcp_connect(bvm *vm);
 extern int wc_tcp_connected(bvm *vm);
 extern int wc_tcp_close(bvm *vm);
 extern int wc_tcp_available(bvm *vm);
-extern int wc_tcp_flush(bvm *vm);
 
 extern int wc_tcp_write(bvm *vm);
 extern int wc_tcp_read(bvm *vm);
@@ -39,7 +38,6 @@ class be_class_tcpclient (scope: global, name: tcpclient) {
     connected, func(wc_tcp_connected)
     close, func(wc_tcp_close)
     available, func(wc_tcp_available)
-    flush, func(wc_tcp_flush)
 
     write, func(wc_tcp_write)
     read, func(wc_tcp_read)

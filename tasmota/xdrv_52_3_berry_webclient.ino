@@ -201,14 +201,6 @@ extern "C" {
     be_return_nil(vm);
   }
 
-  // tcp.close(void) -> nil
-  int32_t wc_tcp_flush(struct bvm *vm);
-  int32_t wc_tcp_flush(struct bvm *vm) {
-    WiFiClient * tcp = wc_getwificlient(vm);
-    tcp->flush();
-    be_return_nil(vm);
-  }
-
   // tcp.available(void) -> int
   int32_t wc_tcp_available(struct bvm *vm);
   int32_t wc_tcp_available(struct bvm *vm) {
