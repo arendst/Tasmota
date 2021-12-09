@@ -8,7 +8,7 @@ static be_define_const_map_slots(be_class_map_map) {
     { be_const_key(has, -1), be_const_func(m_contains) },
     { be_const_key(init, -1), be_const_func(m_init) },
     { be_const_key(contains, 9), be_const_func(m_contains) },
-    { be_const_key(dot_p, 13), be_const_var(0) },
+    { be_const_key(_X2Ep, 13), be_const_var(0) },
     { be_const_key(reduce, -1), be_const_func(m_reduce) },
     { be_const_key(size, -1), be_const_func(m_size) },
     { be_const_key(find, -1), be_const_func(m_find) },

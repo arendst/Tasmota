@@ -39,12 +39,12 @@ be_local_closure(write_bytes,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("_begin_transmission", -1515506120, 19),
-    /* K1   */  be_nested_string("_write", -2079504471, 6),
-    /* K2   */  be_nested_string("_end_transmission", -1057486896, 17),
+    /* K0   */  be_nested_str(_begin_transmission),
+    /* K1   */  be_nested_str(_write),
+    /* K2   */  be_nested_str(_end_transmission),
     }),
-    (be_nested_const_str("write_bytes", 1227543792, 11)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_write_bytes,
+    &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x5C180200,  //  0001  MOVE	R6	R1
@@ -78,15 +78,15 @@ be_local_closure(read_bytes,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_string("_begin_transmission", -1515506120, 19),
-    /* K1   */  be_nested_string("_write", -2079504471, 6),
-    /* K2   */  be_nested_string("_end_transmission", -1057486896, 17),
-    /* K3   */  be_nested_string("_request_from", -329818692, 13),
-    /* K4   */  be_nested_string("_available", 1306196581, 10),
-    /* K5   */  be_nested_string("_read", 346717030, 5),
+    /* K0   */  be_nested_str(_begin_transmission),
+    /* K1   */  be_nested_str(_write),
+    /* K2   */  be_nested_str(_end_transmission),
+    /* K3   */  be_nested_str(_request_from),
+    /* K4   */  be_nested_str(_available),
+    /* K5   */  be_nested_str(_read),
     }),
-    (be_nested_const_str("read_bytes", -718234123, 10)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_read_bytes,
+    &be_const_str_solidified,
     ( &(const binstruction[24]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x5C180200,  //  0001  MOVE	R6	R1

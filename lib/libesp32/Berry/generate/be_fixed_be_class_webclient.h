@@ -3,8 +3,8 @@
 static be_define_const_map_slots(be_class_webclient_map) {
     { be_const_key(close, -1), be_const_func(wc_close) },
     { be_const_key(get_string, 5), be_const_func(wc_getstring) },
-    { be_const_key(dot_w, 11), be_const_var(0) },
-    { be_const_key(dot_p, 13), be_const_var(1) },
+    { be_const_key(_X2Ew, 11), be_const_var(0) },
+    { be_const_key(_X2Ep, 13), be_const_var(1) },
     { be_const_key(add_header, 10), be_const_func(wc_addheader) },
     { be_const_key(url_encode, -1), be_const_func(wc_urlencode) },
     { be_const_key(POST, -1), be_const_func(wc_POST) },

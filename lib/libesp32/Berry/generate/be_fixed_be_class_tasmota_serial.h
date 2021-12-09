@@ -26,7 +26,7 @@ static be_define_const_map_slots(be_class_tasmota_serial_map) {
     { be_const_key(SERIAL_8N1, 1), be_const_int(SERIAL_8N1) },
     { be_const_key(SERIAL_7E1, -1), be_const_int(SERIAL_7E1) },
     { be_const_key(SERIAL_8N2, -1), be_const_int(SERIAL_8N2) },
-    { be_const_key(dot_p, 8), be_const_var(0) },
+    { be_const_key(_X2Ep, 8), be_const_var(0) },
     { be_const_key(SERIAL_8E2, -1), be_const_int(SERIAL_8E2) },
     { be_const_key(SERIAL_7O2, -1), be_const_int(SERIAL_7O2) },
     { be_const_key(SERIAL_7N2, -1), be_const_int(SERIAL_7N2) },

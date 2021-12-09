@@ -20,17 +20,17 @@ be_local_closure(Leds_animator_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_string("strip", -48555823, 5),
-    /* K1   */  be_nested_string("bri", 2112284244, 3),
-    /* K2   */  be_nested_string("running", 343848780, 7),
-    /* K3   */  be_nested_string("pixel_count", -1855836553, 11),
-    /* K4   */  be_nested_string("animators", 279858213, 9),
-    /* K5   */  be_nested_string("clear", 1550717474, 5),
-    /* K6   */  be_nested_string("tasmota", 424643812, 7),
-    /* K7   */  be_nested_string("add_driver", 1654458371, 10),
+    /* K0   */  be_nested_str(strip),
+    /* K1   */  be_nested_str(bri),
+    /* K2   */  be_nested_str(running),
+    /* K3   */  be_nested_str(pixel_count),
+    /* K4   */  be_nested_str(animators),
+    /* K5   */  be_nested_str(clear),
+    /* K6   */  be_nested_str(tasmota),
+    /* K7   */  be_nested_str(add_driver),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x540A0031,  //  0001  LDINT	R2	50
@@ -70,10 +70,10 @@ be_local_closure(Leds_animator_set_bri,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("bri", 2112284244, 3),
+    /* K0   */  be_nested_str(bri),
     }),
-    (be_nested_const_str("set_bri", -1505848517, 7)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_bri,
+    &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x80000000,  //  0001  RET	0
@@ -97,10 +97,10 @@ be_local_closure(Leds_animator_stop,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("running", 343848780, 7),
+    /* K0   */  be_nested_str(running),
     }),
-    (be_nested_const_str("stop", -883741979, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_stop,
+    &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x50040000,  //  0000  LDBOOL	R1	0	0
       0x90020001,  //  0001  SETMBR	R0	K0	R1
@@ -125,8 +125,8 @@ be_local_closure(Leds_animator_animate,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    (be_nested_const_str("animate", -409180496, 7)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_animate,
+    &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
     })
@@ -149,11 +149,11 @@ be_local_closure(Leds_animator_remove,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("tasmota", 424643812, 7),
-    /* K1   */  be_nested_string("remove_driver", 1030243768, 13),
+    /* K0   */  be_nested_str(tasmota),
+    /* K1   */  be_nested_str(remove_driver),
     }),
-    (be_nested_const_str("remove", -611183107, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_remove,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -180,16 +180,16 @@ be_local_closure(Leds_animator_every_50ms,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("running", 343848780, 7),
+    /* K0   */  be_nested_str(running),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_string("animators", 279858213, 9),
-    /* K3   */  be_nested_string("is_running", -2068120035, 10),
-    /* K4   */  be_nested_string("animate", -409180496, 7),
+    /* K2   */  be_nested_str(animators),
+    /* K3   */  be_nested_str(is_running),
+    /* K4   */  be_nested_str(animate),
     /* K5   */  be_const_int(1),
-    /* K6   */  be_nested_string("remove", -611183107, 6),
+    /* K6   */  be_nested_str(remove),
     }),
-    (be_nested_const_str("every_50ms", -1911083288, 10)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_every_50ms,
+    &be_const_str_solidified,
     ( &(const binstruction[25]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x78060015,  //  0001  JMPF	R1	#0018
@@ -236,10 +236,10 @@ be_local_closure(Leds_animator_get_bri,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("bri", 2112284244, 3),
+    /* K0   */  be_nested_str(bri),
     }),
-    (be_nested_const_str("get_bri", 2041809895, 7)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_bri,
+    &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x80040400,  //  0001  RET	1	R2
@@ -263,10 +263,10 @@ be_local_closure(Leds_animator_start,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("running", 343848780, 7),
+    /* K0   */  be_nested_str(running),
     }),
-    (be_nested_const_str("start", 1697318111, 5)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_start,
+    &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x50040200,  //  0000  LDBOOL	R1	1	0
       0x90020001,  //  0001  SETMBR	R0	K0	R1
@@ -291,12 +291,12 @@ be_local_closure(Leds_animator_add_anim,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("animators", 279858213, 9),
-    /* K1   */  be_nested_string("push", -2022703139, 4),
-    /* K2   */  be_nested_string("run", 718098122, 3),
+    /* K0   */  be_nested_str(animators),
+    /* K1   */  be_nested_str(push),
+    /* K2   */  be_nested_str(run),
     }),
-    (be_nested_const_str("add_anim", -314304628, 8)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_add_anim,
+    &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -325,12 +325,12 @@ be_local_closure(Leds_animator_clear,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("stop", -883741979, 4),
-    /* K1   */  be_nested_string("strip", -48555823, 5),
-    /* K2   */  be_nested_string("clear", 1550717474, 5),
+    /* K0   */  be_nested_str(stop),
+    /* K1   */  be_nested_str(strip),
+    /* K2   */  be_nested_str(clear),
     }),
-    (be_nested_const_str("clear", 1550717474, 5)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_clear,
+    &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x7C040200,  //  0001  CALL	R1	1
@@ -352,23 +352,23 @@ be_local_class(Leds_animator,
     NULL,
     be_nested_map(15,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, 7), be_const_closure(Leds_animator_init_closure) },
-        { be_nested_key("set_bri", -1505848517, 7, -1), be_const_closure(Leds_animator_set_bri_closure) },
-        { be_nested_key("stop", -883741979, 4, -1), be_const_closure(Leds_animator_stop_closure) },
-        { be_nested_key("strip", -48555823, 5, 4), be_const_var(0) },
-        { be_nested_key("animators", 279858213, 9, 12), be_const_var(4) },
-        { be_nested_key("animate", -409180496, 7, -1), be_const_closure(Leds_animator_animate_closure) },
-        { be_nested_key("remove", -611183107, 6, -1), be_const_closure(Leds_animator_remove_closure) },
-        { be_nested_key("running", 343848780, 7, -1), be_const_var(3) },
-        { be_nested_key("every_50ms", -1911083288, 10, -1), be_const_closure(Leds_animator_every_50ms_closure) },
-        { be_nested_key("bri", 2112284244, 3, 6), be_const_var(2) },
-        { be_nested_key("get_bri", 2041809895, 7, -1), be_const_closure(Leds_animator_get_bri_closure) },
-        { be_nested_key("start", 1697318111, 5, -1), be_const_closure(Leds_animator_start_closure) },
-        { be_nested_key("add_anim", -314304628, 8, 13), be_const_closure(Leds_animator_add_anim_closure) },
-        { be_nested_key("pixel_count", -1855836553, 11, -1), be_const_var(1) },
-        { be_nested_key("clear", 1550717474, 5, 1), be_const_closure(Leds_animator_clear_closure) },
+        { be_const_key(init, 12), be_const_closure(Leds_animator_init_closure) },
+        { be_const_key(clear, -1), be_const_closure(Leds_animator_clear_closure) },
+        { be_const_key(stop, -1), be_const_closure(Leds_animator_stop_closure) },
+        { be_const_key(strip, 4), be_const_var(0) },
+        { be_const_key(pixel_count, 6), be_const_var(1) },
+        { be_const_key(animate, -1), be_const_closure(Leds_animator_animate_closure) },
+        { be_const_key(add_anim, 13), be_const_closure(Leds_animator_add_anim_closure) },
+        { be_const_key(bri, -1), be_const_var(2) },
+        { be_const_key(every_50ms, -1), be_const_closure(Leds_animator_every_50ms_closure) },
+        { be_const_key(remove, 7), be_const_closure(Leds_animator_remove_closure) },
+        { be_const_key(get_bri, -1), be_const_closure(Leds_animator_get_bri_closure) },
+        { be_const_key(start, -1), be_const_closure(Leds_animator_start_closure) },
+        { be_const_key(running, -1), be_const_var(3) },
+        { be_const_key(animators, -1), be_const_var(4) },
+        { be_const_key(set_bri, 1), be_const_closure(Leds_animator_set_bri_closure) },
     })),
-    (be_nested_const_str("Leds_animator", 142168673, 13))
+    be_str_literal("Leds_animator")
 );
 /*******************************************************************/
 
