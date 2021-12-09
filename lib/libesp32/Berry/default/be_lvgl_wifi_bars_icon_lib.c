@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(lv_wifi_bars_icon_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -21,26 +21,26 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_string("init", 380752755, 4),
-    /* K1   */  be_nested_string("set_style_line_color", -629728320, 20),
-    /* K2   */  be_nested_string("lv", 1529997255, 2),
-    /* K3   */  be_nested_string("color", 1031692888, 5),
-    /* K4   */  be_nested_string("COLOR_WHITE", -1758096026, 11),
-    /* K5   */  be_nested_string("PART_MAIN", -1821475788, 9),
-    /* K6   */  be_nested_string("STATE_DEFAULT", 712406428, 13),
-    /* K7   */  be_nested_string("set_style_bg_color", 1689513089, 18),
-    /* K8   */  be_nested_string("COLOR_BLACK", 264427940, 11),
-    /* K9   */  be_nested_string("get_height", -723211773, 10),
-    /* K10  */  be_nested_string("get_style_pad_right", -1144679830, 19),
-    /* K11  */  be_nested_string("set_height", 1080207399, 10),
-    /* K12  */  be_nested_string("set_width", 484671920, 9),
-    /* K13  */  be_nested_string("set_x", 1849400772, 5),
-    /* K14  */  be_nested_string("get_width", -1001549996, 9),
-    /* K15  */  be_nested_string("set_style_pad_right", -980898242, 19),
+    /* K0   */  be_nested_str(init),
+    /* K1   */  be_nested_str(set_style_line_color),
+    /* K2   */  be_nested_str(lv),
+    /* K3   */  be_nested_str(color),
+    /* K4   */  be_nested_str(COLOR_WHITE),
+    /* K5   */  be_nested_str(PART_MAIN),
+    /* K6   */  be_nested_str(STATE_DEFAULT),
+    /* K7   */  be_nested_str(set_style_bg_color),
+    /* K8   */  be_nested_str(COLOR_BLACK),
+    /* K9   */  be_nested_str(get_height),
+    /* K10  */  be_nested_str(get_style_pad_right),
+    /* K11  */  be_nested_str(set_height),
+    /* K12  */  be_nested_str(set_width),
+    /* K13  */  be_nested_str(set_x),
+    /* K14  */  be_nested_str(get_width),
+    /* K15  */  be_nested_str(set_style_pad_right),
     /* K16  */  be_const_int(1),
     }),
-    ((bstring*) &be_const_str_init),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[64]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
@@ -121,9 +121,9 @@ be_local_class(lv_wifi_bars_icon,
     &be_class_lv_wifi_bars,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
+        { be_const_key(init, -1), be_const_closure(lv_wifi_bars_icon_init_closure) },
     })),
-    (be_nested_const_str("lv_wifi_bars_icon", -1489151756, 17))
+    be_str_literal("lv_wifi_bars_icon")
 );
 /*******************************************************************/
 

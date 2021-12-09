@@ -20,11 +20,11 @@ be_local_closure(Tapp_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("tasmota"),
-    /* K1   */  be_nested_str_literal("add_driver"),
+    /* K0   */  be_nested_str(tasmota),
+    /* K1   */  be_nested_str(add_driver),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -51,24 +51,24 @@ be_local_closure(Tapp_autoexec,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
-    /* K0   */  be_nested_str_literal("path"),
-    /* K1   */  be_nested_str_literal("string"),
-    /* K2   */  be_nested_str_literal("listdir"),
-    /* K3   */  be_nested_str_literal("/"),
-    /* K4   */  be_nested_str_literal("find"),
-    /* K5   */  be_nested_str_literal(".tapp"),
+    /* K0   */  be_nested_str(path),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(listdir),
+    /* K3   */  be_nested_str(_X2F),
+    /* K4   */  be_nested_str(find),
+    /* K5   */  be_nested_str(_X2Etapp),
     /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_str_literal("tasmota"),
-    /* K8   */  be_nested_str_literal("log"),
-    /* K9   */  be_nested_str_literal("format"),
-    /* K10  */  be_nested_str_literal("TAP: found Tasmota App '%s'"),
+    /* K7   */  be_nested_str(tasmota),
+    /* K8   */  be_nested_str(log),
+    /* K9   */  be_nested_str(format),
+    /* K10  */  be_nested_str(TAP_X3A_X20found_X20Tasmota_X20App_X20_X27_X25s_X27),
     /* K11  */  be_const_int(2),
-    /* K12  */  be_nested_str_literal("load"),
-    /* K13  */  be_nested_str_literal("#autoexec.be"),
-    /* K14  */  be_nested_str_literal("stop_iteration"),
+    /* K12  */  be_nested_str(load),
+    /* K13  */  be_nested_str(_X23autoexec_X2Ebe),
+    /* K14  */  be_nested_str(stop_iteration),
     }),
-    (be_nested_const_str("autoexec", -618105405, 8)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_autoexec,
+    &be_const_str_solidified,
     ( &(const binstruction[34]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -118,8 +118,8 @@ be_local_class(Tapp,
     NULL,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("autoexec", -618105405, 8, -1), be_const_closure(Tapp_autoexec_closure) },
-        { be_nested_key("init", 380752755, 4, 0), be_const_closure(Tapp_init_closure) },
+        { be_const_key(autoexec, -1), be_const_closure(Tapp_autoexec_closure) },
+        { be_const_key(init, 0), be_const_closure(Tapp_init_closure) },
     })),
     be_str_literal("Tapp")
 );
@@ -140,8 +140,8 @@ be_local_closure(tapp__anonymous_,   /* name */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_Tapp),
     }),
-    (be_nested_const_str("_anonymous_", 1957281476, 11)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str__anonymous_,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x58040000,  //  0000  LDCONST	R1	K0
       0xB4000000,  //  0001  CLASS	K0
@@ -161,7 +161,7 @@ be_local_module(tapp,
     "tapp",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(tapp__anonymous__closure) },
+        { be_const_key(init, -1), be_const_closure(tapp__anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(tapp);

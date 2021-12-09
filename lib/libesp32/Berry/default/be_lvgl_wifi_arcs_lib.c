@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-be_local_closure(every_second,   /* name */
+be_local_closure(lv_wifi_arcs_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -21,16 +21,16 @@ be_local_closure(every_second,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("tasmota", 424643812, 7),
-    /* K1   */  be_nested_string("wifi", 120087624, 4),
-    /* K2   */  be_nested_string("find", -1108310694, 4),
-    /* K3   */  be_nested_string("quality", -1697296346, 7),
-    /* K4   */  be_nested_string("ip", 1261996636, 2),
-    /* K5   */  be_nested_string("set_percentage", -1342944572, 14),
+    /* K0   */  be_nested_str(tasmota),
+    /* K1   */  be_nested_str(wifi),
+    /* K2   */  be_nested_str(find),
+    /* K3   */  be_nested_str(quality),
+    /* K4   */  be_nested_str(ip),
+    /* K5   */  be_nested_str(set_percentage),
     /* K6   */  be_const_int(0),
     }),
-    (be_nested_const_str("every_second", 2075451465, 12)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_every_second,
+    &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -64,7 +64,7 @@ be_local_closure(every_second,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(lv_wifi_arcs_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -75,14 +75,14 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_string("init", 380752755, 4),
-    /* K1   */  be_nested_string("tasmota", 424643812, 7),
-    /* K2   */  be_nested_string("add_driver", 1654458371, 10),
-    /* K3   */  be_nested_string("set_percentage", -1342944572, 14),
+    /* K0   */  be_nested_str(init),
+    /* K1   */  be_nested_str(tasmota),
+    /* K2   */  be_nested_str(add_driver),
+    /* K3   */  be_nested_str(set_percentage),
     /* K4   */  be_const_int(0),
     }),
-    ((bstring*) &be_const_str_init),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
@@ -107,7 +107,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: del
 ********************************************************************/
-be_local_closure(del,   /* name */
+be_local_closure(lv_wifi_arcs_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -118,12 +118,12 @@ be_local_closure(del,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("del", -816214454, 3),
-    /* K1   */  be_nested_string("tasmota", 424643812, 7),
-    /* K2   */  be_nested_string("remove_driver", 1030243768, 13),
+    /* K0   */  be_nested_str(del),
+    /* K1   */  be_nested_str(tasmota),
+    /* K2   */  be_nested_str(remove_driver),
     }),
-    (be_nested_const_str("del", -816214454, 3)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_del,
+    &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
@@ -150,11 +150,11 @@ be_local_class(lv_wifi_arcs,
     &be_class_lv_signal_arcs,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("every_second", 2075451465, 12, 1), be_const_closure(every_second_closure) },
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
-        { be_nested_key("del", -816214454, 3, -1), be_const_closure(del_closure) },
+        { be_const_key(every_second, 1), be_const_closure(lv_wifi_arcs_every_second_closure) },
+        { be_const_key(init, -1), be_const_closure(lv_wifi_arcs_init_closure) },
+        { be_const_key(del, -1), be_const_closure(lv_wifi_arcs_del_closure) },
     })),
-    (be_nested_const_str("lv_wifi_arcs", 2082091963, 12))
+    be_str_literal("lv_wifi_arcs")
 );
 /*******************************************************************/
 

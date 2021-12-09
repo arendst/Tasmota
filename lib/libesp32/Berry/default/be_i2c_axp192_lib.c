@@ -6,7 +6,7 @@
 /********************************************************************
 ** Solidified function: get_warning_level
 ********************************************************************/
-be_local_closure(get_warning_level,   /* name */
+be_local_closure(AXP192_get_warning_level,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -17,11 +17,11 @@ be_local_closure(get_warning_level,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read12", -3890326, 6),
+    /* K0   */  be_nested_str(read12),
     /* K1   */  be_const_int(1),
     }),
-    (be_nested_const_str("get_warning_level", 1737834441, 17)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_warning_level,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0046,  //  0001  LDINT	R3	71
@@ -37,7 +37,7 @@ be_local_closure(get_warning_level,   /* name */
 /********************************************************************
 ** Solidified function: get_vbus_current
 ********************************************************************/
-be_local_closure(get_vbus_current,   /* name */
+be_local_closure(AXP192_get_vbus_current,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -48,11 +48,11 @@ be_local_closure(get_vbus_current,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read12", -3890326, 6),
+    /* K0   */  be_nested_str(read12),
     /* K1   */  be_const_real_hex(0x3EC00000),
     }),
-    (be_nested_const_str("get_vbus_current", 1205347942, 16)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_vbus_current,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E005B,  //  0001  LDINT	R3	92
@@ -68,7 +68,7 @@ be_local_closure(get_vbus_current,   /* name */
 /********************************************************************
 ** Solidified function: set_chg_current
 ********************************************************************/
-be_local_closure(set_chg_current,   /* name */
+be_local_closure(AXP192_set_chg_current,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -79,11 +79,11 @@ be_local_closure(set_chg_current,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("write8", -1160975764, 6),
-    /* K1   */  be_nested_string("read8", -1492179129, 5),
+    /* K0   */  be_nested_str(write8),
+    /* K1   */  be_nested_str(read8),
     }),
-    (be_nested_const_str("set_chg_current", 336304386, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_chg_current,
+    &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
       0x54120032,  //  0001  LDINT	R4	51
@@ -106,7 +106,7 @@ be_local_closure(set_chg_current,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_current
 ********************************************************************/
-be_local_closure(get_bat_current,   /* name */
+be_local_closure(AXP192_get_bat_current,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -117,11 +117,11 @@ be_local_closure(get_bat_current,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read13", 12887293, 6),
+    /* K0   */  be_nested_str(read13),
     /* K1   */  be_const_real_hex(0x3F000000),
     }),
-    (be_nested_const_str("get_bat_current", 1912106073, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_bat_current,
+    &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0079,  //  0001  LDINT	R3	122
@@ -141,7 +141,7 @@ be_local_closure(get_bat_current,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_power
 ********************************************************************/
-be_local_closure(get_bat_power,   /* name */
+be_local_closure(AXP192_get_bat_power,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -152,11 +152,11 @@ be_local_closure(get_bat_power,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read24", 1808533811, 6),
+    /* K0   */  be_nested_str(read24),
     /* K1   */  be_const_real_hex(0x3A102DE1),
     }),
-    (be_nested_const_str("get_bat_power", -1227592443, 13)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_bat_power,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E006F,  //  0001  LDINT	R3	112
@@ -172,7 +172,7 @@ be_local_closure(get_bat_power,   /* name */
 /********************************************************************
 ** Solidified function: json_append
 ********************************************************************/
-be_local_closure(json_append,   /* name */
+be_local_closure(AXP192_json_append,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -183,10 +183,10 @@ be_local_closure(json_append,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
+    /* K0   */  be_nested_str(wire),
     }),
-    (be_nested_const_str("json_append", -1292948012, 11)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_json_append,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x74060001,  //  0001  JMPT	R1	#0004
@@ -202,7 +202,7 @@ be_local_closure(json_append,   /* name */
 /********************************************************************
 ** Solidified function: get_vbus_voltage
 ********************************************************************/
-be_local_closure(get_vbus_voltage,   /* name */
+be_local_closure(AXP192_get_vbus_voltage,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -213,11 +213,11 @@ be_local_closure(get_vbus_voltage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read12", -3890326, 6),
+    /* K0   */  be_nested_str(read12),
     /* K1   */  be_const_real_hex(0x3ADED28A),
     }),
-    (be_nested_const_str("get_vbus_voltage", -1896756895, 16)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_vbus_voltage,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0059,  //  0001  LDINT	R3	90
@@ -233,7 +233,7 @@ be_local_closure(get_vbus_voltage,   /* name */
 /********************************************************************
 ** Solidified function: get_temp
 ********************************************************************/
-be_local_closure(get_temp,   /* name */
+be_local_closure(AXP192_get_temp,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -244,12 +244,12 @@ be_local_closure(get_temp,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("read12", -3890326, 6),
+    /* K0   */  be_nested_str(read12),
     /* K1   */  be_const_real_hex(0x3DCCCCCD),
     /* K2   */  be_const_real_hex(0x4310B333),
     }),
-    (be_nested_const_str("get_temp", -924047810, 8)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_temp,
+    &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E005D,  //  0001  LDINT	R3	94
@@ -266,7 +266,7 @@ be_local_closure(get_temp,   /* name */
 /********************************************************************
 ** Solidified function: battery_present
 ********************************************************************/
-be_local_closure(battery_present,   /* name */
+be_local_closure(AXP192_battery_present,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -277,13 +277,13 @@ be_local_closure(battery_present,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read", -824204347, 4),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(1),
     }),
-    (be_nested_const_str("battery_present", -706570238, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_battery_present,
+    &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -309,7 +309,7 @@ be_local_closure(battery_present,   /* name */
 /********************************************************************
 ** Solidified function: get_aps_voltage
 ********************************************************************/
-be_local_closure(get_aps_voltage,   /* name */
+be_local_closure(AXP192_get_aps_voltage,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -320,11 +320,11 @@ be_local_closure(get_aps_voltage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read12", -3890326, 6),
+    /* K0   */  be_nested_str(read12),
     /* K1   */  be_const_real_hex(0x3AB78035),
     }),
-    (be_nested_const_str("get_aps_voltage", -2001930861, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_aps_voltage,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E007D,  //  0001  LDINT	R3	126
@@ -340,7 +340,7 @@ be_local_closure(get_aps_voltage,   /* name */
 /********************************************************************
 ** Solidified function: set_dcdc_enable
 ********************************************************************/
-be_local_closure(set_dcdc_enable,   /* name */
+be_local_closure(AXP192_set_dcdc_enable,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -352,13 +352,13 @@ be_local_closure(set_dcdc_enable,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(1),
-    /* K1   */  be_nested_string("write_bit", -1633976860, 9),
+    /* K1   */  be_nested_str(write_bit),
     /* K2   */  be_const_int(0),
     /* K3   */  be_const_int(2),
     /* K4   */  be_const_int(3),
     }),
-    (be_nested_const_str("set_dcdc_enable", 1594690786, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_dcdc_enable,
+    &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
       0x1C0C0300,  //  0000  EQ	R3	R1	K0
       0x780E0004,  //  0001  JMPF	R3	#0007
@@ -391,7 +391,7 @@ be_local_closure(set_dcdc_enable,   /* name */
 /********************************************************************
 ** Solidified function: set_ldo_voltage
 ********************************************************************/
-be_local_closure(set_ldo_voltage,   /* name */
+be_local_closure(AXP192_set_ldo_voltage,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -403,12 +403,12 @@ be_local_closure(set_ldo_voltage,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(2),
-    /* K1   */  be_nested_string("write8", -1160975764, 6),
-    /* K2   */  be_nested_string("read8", -1492179129, 5),
+    /* K1   */  be_nested_str(write8),
+    /* K2   */  be_nested_str(read8),
     /* K3   */  be_const_int(3),
     }),
-    (be_nested_const_str("set_ldo_voltage", -204466136, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_ldo_voltage,
+    &be_const_str_solidified,
     ( &(const binstruction[39]) {  /* code */
       0x540E0CE3,  //  0000  LDINT	R3	3300
       0x240C0403,  //  0001  GT	R3	R2	R3
@@ -458,7 +458,7 @@ be_local_closure(set_ldo_voltage,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(AXP192_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -469,12 +469,12 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("I2C_Driver", 1714501658, 10),
-    /* K1   */  be_nested_string("init", 380752755, 4),
-    /* K2   */  be_nested_string("AXP192", 757230128, 6),
+    /* K0   */  be_nested_str(I2C_Driver),
+    /* K1   */  be_nested_str(init),
+    /* K2   */  be_nested_str(AXP192),
     }),
-    ((bstring*) &be_const_str_init),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
@@ -494,7 +494,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_voltage
 ********************************************************************/
-be_local_closure(get_bat_voltage,   /* name */
+be_local_closure(AXP192_get_bat_voltage,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -505,11 +505,11 @@ be_local_closure(get_bat_voltage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read12", -3890326, 6),
+    /* K0   */  be_nested_str(read12),
     /* K1   */  be_const_real_hex(0x3A902DE0),
     }),
-    (be_nested_const_str("get_bat_voltage", 706676538, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_bat_voltage,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0077,  //  0001  LDINT	R3	120
@@ -525,7 +525,7 @@ be_local_closure(get_bat_voltage,   /* name */
 /********************************************************************
 ** Solidified function: set_ldo_enable
 ********************************************************************/
-be_local_closure(set_ldo_enable,   /* name */
+be_local_closure(AXP192_set_ldo_enable,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -537,11 +537,11 @@ be_local_closure(set_ldo_enable,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(2),
-    /* K1   */  be_nested_string("write_bit", -1633976860, 9),
+    /* K1   */  be_nested_str(write_bit),
     /* K2   */  be_const_int(3),
     }),
-    (be_nested_const_str("set_ldo_enable", -1378465255, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_ldo_enable,
+    &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x1C0C0300,  //  0000  EQ	R3	R1	K0
       0x780E0004,  //  0001  JMPF	R3	#0007
@@ -567,7 +567,7 @@ be_local_closure(set_ldo_enable,   /* name */
 /********************************************************************
 ** Solidified function: set_dc_voltage
 ********************************************************************/
-be_local_closure(set_dc_voltage,   /* name */
+be_local_closure(AXP192_set_dc_voltage,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -582,11 +582,11 @@ be_local_closure(set_dc_voltage,   /* name */
     /* K1   */  be_const_int(3),
     /* K2   */  be_const_int(0),
     /* K3   */  be_const_int(2),
-    /* K4   */  be_nested_string("write8", -1160975764, 6),
-    /* K5   */  be_nested_string("read8", -1492179129, 5),
+    /* K4   */  be_nested_str(write8),
+    /* K5   */  be_nested_str(read8),
     }),
-    (be_nested_const_str("set_dc_voltage", -2112985360, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_dc_voltage,
+    &be_const_str_solidified,
     ( &(const binstruction[48]) {  /* code */
       0x140C0300,  //  0000  LT	R3	R1	K0
       0x740E0001,  //  0001  JMPT	R3	#0004
@@ -645,7 +645,7 @@ be_local_closure(set_dc_voltage,   /* name */
 /********************************************************************
 ** Solidified function: write_gpio
 ********************************************************************/
-be_local_closure(write_gpio,   /* name */
+be_local_closure(AXP192_write_gpio,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -658,11 +658,11 @@ be_local_closure(write_gpio,   /* name */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_const_int(2),
-    /* K2   */  be_nested_string("write_bit", -1633976860, 9),
+    /* K2   */  be_nested_str(write_bit),
     /* K3   */  be_const_int(3),
     }),
-    (be_nested_const_str("write_gpio", -2027026962, 10)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_write_gpio,
+    &be_const_str_solidified,
     ( &(const binstruction[21]) {  /* code */
       0x280C0300,  //  0000  GE	R3	R1	K0
       0x780E0007,  //  0001  JMPF	R3	#000A
@@ -694,7 +694,7 @@ be_local_closure(write_gpio,   /* name */
 /********************************************************************
 ** Solidified function: web_sensor
 ********************************************************************/
-be_local_closure(web_sensor,   /* name */
+be_local_closure(AXP192_web_sensor,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     1,                          /* argc */
@@ -705,23 +705,23 @@ be_local_closure(web_sensor,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("format", -1180859054, 6),
-    /* K3   */  be_nested_string("{s}VBus Voltage{m}%.3f V{e}", 165651270, 27),
-    /* K4   */  be_nested_string("{s}VBus Current{m}%.1f mA{e}", 1032721155, 28),
-    /* K5   */  be_nested_string("{s}Batt Voltage{m}%.3f V{e}", -1110659097, 27),
-    /* K6   */  be_nested_string("{s}Batt Current{m}%.1f mA{e}", 866537156, 28),
-    /* K7   */  be_nested_string("{s}Temp AXP{m}%.1f °C{e}", -1990510004, 25),
-    /* K8   */  be_nested_string("get_vbus_voltage", -1896756895, 16),
-    /* K9   */  be_nested_string("get_bat_voltage", 706676538, 15),
-    /* K10  */  be_nested_string("get_bat_current", 1912106073, 15),
-    /* K11  */  be_nested_string("get_temp", -924047810, 8),
-    /* K12  */  be_nested_string("tasmota", 424643812, 7),
-    /* K13  */  be_nested_string("web_send_decimal", 1407210204, 16),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(format),
+    /* K3   */  be_nested_str(_X7Bs_X7DVBus_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
+    /* K4   */  be_nested_str(_X7Bs_X7DVBus_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
+    /* K5   */  be_nested_str(_X7Bs_X7DBatt_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
+    /* K6   */  be_nested_str(_X7Bs_X7DBatt_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
+    /* K7   */  be_nested_str(_X7Bs_X7DTemp_X20AXP_X7Bm_X7D_X25_X2E1f_X20_XB0C_X7Be_X7D),
+    /* K8   */  be_nested_str(get_vbus_voltage),
+    /* K9   */  be_nested_str(get_bat_voltage),
+    /* K10  */  be_nested_str(get_bat_current),
+    /* K11  */  be_nested_str(get_temp),
+    /* K12  */  be_nested_str(tasmota),
+    /* K13  */  be_nested_str(web_send_decimal),
     }),
-    (be_nested_const_str("web_sensor", -1394870324, 10)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_web_sensor,
+    &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x74060001,  //  0001  JMPT	R1	#0004
@@ -758,7 +758,7 @@ be_local_closure(web_sensor,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_charge_current
 ********************************************************************/
-be_local_closure(get_bat_charge_current,   /* name */
+be_local_closure(AXP192_get_bat_charge_current,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -769,11 +769,11 @@ be_local_closure(get_bat_charge_current,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("read13", 12887293, 6),
+    /* K0   */  be_nested_str(read13),
     /* K1   */  be_const_real_hex(0x3F000000),
     }),
-    (be_nested_const_str("get_bat_charge_current", 1385293050, 22)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_bat_charge_current,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
       0x540E0079,  //  0001  LDINT	R3	122
@@ -789,7 +789,7 @@ be_local_closure(get_bat_charge_current,   /* name */
 /********************************************************************
 ** Solidified function: get_battery_chargin_status
 ********************************************************************/
-be_local_closure(get_battery_chargin_status,   /* name */
+be_local_closure(AXP192_get_battery_chargin_status,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -800,13 +800,13 @@ be_local_closure(get_battery_chargin_status,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read", -824204347, 4),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(1),
     }),
-    (be_nested_const_str("get_battery_chargin_status", -2061725725, 26)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_battery_chargin_status,
+    &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -824,7 +824,7 @@ be_local_closure(get_battery_chargin_status,   /* name */
 /********************************************************************
 ** Solidified function: get_input_power_status
 ********************************************************************/
-be_local_closure(get_input_power_status,   /* name */
+be_local_closure(AXP192_get_input_power_status,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -835,14 +835,14 @@ be_local_closure(get_input_power_status,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read", -824204347, 4),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(0),
     /* K4   */  be_const_int(1),
     }),
-    (be_nested_const_str("get_input_power_status", -192138119, 22)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_input_power_status,
+    &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -866,29 +866,29 @@ be_local_class(AXP192,
     &be_class_I2C_Driver,
     be_nested_map(21,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("get_warning_level", 1737834441, 17, -1), be_const_closure(get_warning_level_closure) },
-        { be_nested_key("get_vbus_current", 1205347942, 16, -1), be_const_closure(get_vbus_current_closure) },
-        { be_nested_key("set_chg_current", 336304386, 15, 14), be_const_closure(set_chg_current_closure) },
-        { be_nested_key("get_bat_current", 1912106073, 15, -1), be_const_closure(get_bat_current_closure) },
-        { be_nested_key("get_bat_power", -1227592443, 13, 9), be_const_closure(get_bat_power_closure) },
-        { be_nested_key("json_append", -1292948012, 11, -1), be_const_closure(json_append_closure) },
-        { be_nested_key("get_vbus_voltage", -1896756895, 16, -1), be_const_closure(get_vbus_voltage_closure) },
-        { be_nested_key("get_temp", -924047810, 8, -1), be_const_closure(get_temp_closure) },
-        { be_nested_key("battery_present", -706570238, 15, -1), be_const_closure(battery_present_closure) },
-        { be_nested_key("get_aps_voltage", -2001930861, 15, -1), be_const_closure(get_aps_voltage_closure) },
-        { be_nested_key("set_dcdc_enable", 1594690786, 15, -1), be_const_closure(set_dcdc_enable_closure) },
-        { be_nested_key("set_ldo_voltage", -204466136, 15, 7), be_const_closure(set_ldo_voltage_closure) },
-        { be_nested_key("init", 380752755, 4, 2), be_const_closure(init_closure) },
-        { be_nested_key("get_bat_voltage", 706676538, 15, 18), be_const_closure(get_bat_voltage_closure) },
-        { be_nested_key("set_ldo_enable", -1378465255, 14, -1), be_const_closure(set_ldo_enable_closure) },
-        { be_nested_key("set_dc_voltage", -2112985360, 14, 13), be_const_closure(set_dc_voltage_closure) },
-        { be_nested_key("write_gpio", -2027026962, 10, -1), be_const_closure(write_gpio_closure) },
-        { be_nested_key("web_sensor", -1394870324, 10, -1), be_const_closure(web_sensor_closure) },
-        { be_nested_key("get_bat_charge_current", 1385293050, 22, 19), be_const_closure(get_bat_charge_current_closure) },
-        { be_nested_key("get_battery_chargin_status", -2061725725, 26, -1), be_const_closure(get_battery_chargin_status_closure) },
-        { be_nested_key("get_input_power_status", -192138119, 22, -1), be_const_closure(get_input_power_status_closure) },
+        { be_const_key(get_warning_level, -1), be_const_closure(AXP192_get_warning_level_closure) },
+        { be_const_key(get_vbus_current, -1), be_const_closure(AXP192_get_vbus_current_closure) },
+        { be_const_key(get_aps_voltage, -1), be_const_closure(AXP192_get_aps_voltage_closure) },
+        { be_const_key(get_bat_current, -1), be_const_closure(AXP192_get_bat_current_closure) },
+        { be_const_key(get_bat_power, 2), be_const_closure(AXP192_get_bat_power_closure) },
+        { be_const_key(json_append, -1), be_const_closure(AXP192_json_append_closure) },
+        { be_const_key(get_vbus_voltage, -1), be_const_closure(AXP192_get_vbus_voltage_closure) },
+        { be_const_key(get_battery_chargin_status, 9), be_const_closure(AXP192_get_battery_chargin_status_closure) },
+        { be_const_key(battery_present, -1), be_const_closure(AXP192_battery_present_closure) },
+        { be_const_key(get_bat_charge_current, 14), be_const_closure(AXP192_get_bat_charge_current_closure) },
+        { be_const_key(set_dcdc_enable, -1), be_const_closure(AXP192_set_dcdc_enable_closure) },
+        { be_const_key(get_temp, 19), be_const_closure(AXP192_get_temp_closure) },
+        { be_const_key(set_chg_current, 13), be_const_closure(AXP192_set_chg_current_closure) },
+        { be_const_key(set_ldo_enable, 18), be_const_closure(AXP192_set_ldo_enable_closure) },
+        { be_const_key(set_dc_voltage, -1), be_const_closure(AXP192_set_dc_voltage_closure) },
+        { be_const_key(get_bat_voltage, 7), be_const_closure(AXP192_get_bat_voltage_closure) },
+        { be_const_key(write_gpio, -1), be_const_closure(AXP192_write_gpio_closure) },
+        { be_const_key(web_sensor, -1), be_const_closure(AXP192_web_sensor_closure) },
+        { be_const_key(init, -1), be_const_closure(AXP192_init_closure) },
+        { be_const_key(set_ldo_voltage, -1), be_const_closure(AXP192_set_ldo_voltage_closure) },
+        { be_const_key(get_input_power_status, -1), be_const_closure(AXP192_get_input_power_status_closure) },
     })),
-    (be_nested_const_str("AXP192", 757230128, 6))
+    be_str_literal("AXP192")
 );
 /*******************************************************************/
 

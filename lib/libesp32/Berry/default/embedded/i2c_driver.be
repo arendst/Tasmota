@@ -14,7 +14,7 @@
  -   i2c_index: (optional) check is the device is not disabled
  -------------------------------------------------------------#
 
-class I2C_Driver : Driver
+class I2C_Driver
   var wire          #- wire object to reach the device, if nil then the module is not initialized -#
   var addr          #- I2C address of the device -#
   var name          #- model namme of the device, cannot be nil -#
