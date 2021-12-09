@@ -167,7 +167,7 @@ extern "C" {
     be_return(vm);  /* return self */
   }
 
-  // tcp.connect(url:string) -> self
+  // tcp.connect(address:string, port:int [, timeout_ms:int]) -> bool
   int32_t wc_tcp_connect(struct bvm *vm);
   int32_t wc_tcp_connect(struct bvm *vm) {
     int32_t argc = be_top(vm);
@@ -175,11 +175,13 @@ extern "C" {
       WiFiClient * tcp = wc_getwificlient(vm);
       const char * address = be_tostring(vm, 2);
       int32_t port = be_toint(vm, 3);
-      // open connection
-      if (!tcp->connect(address, port)) {
-        be_raise(vm, "value_error", "unsupported protocol");
+      int32_t timeout = USE_BERRY_WEBCLIENT_TIMEOUT;   // default timeout of 2 seconds
+      if (argc >= 4) {
+        timeout = be_toint(vm, 4);
       }
-      be_pushvalue(vm, 1);
+      // open connection
+      bool success = tcp->connect(address, port, timeout);
+      be_pushbool(vm, success);
       be_return(vm);  /* return self */
     }
     be_raise(vm, "attribute_error", NULL);
