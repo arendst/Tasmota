@@ -55,7 +55,7 @@ void Core2DisplayDim(uint8_t dim);
 #ifndef DISP_DESC_FILE
 //#define DISP_DESC_FILE "/dispdesc.txt"
 #define DISP_DESC_FILE "/display.ini"
-#endif
+#endif // DISP_DESC_FILE
 
 /*********************************************************************************************/
 #ifdef DSP_ROM_DESC
@@ -95,7 +95,7 @@ int8_t cs;
         AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor used"));
       }
     }
-#endif
+#endif // USE_UFILESYS
 
 
 #ifdef USE_SCRIPT
@@ -212,8 +212,8 @@ int8_t cs;
         replacepin(&cp, Pin(GPIO_SPI_CLK, 1));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, 1));
         replacepin(&cp, Pin(GPIO_SPI_DC, 1));
-        replacepin(&cp, Pin(GPIO_BACKLIGHT, 1));
-        replacepin(&cp, Pin(GPIO_OLED_RESET, 1));
+        replacepin(&cp, Pin(GPIO_BACKLIGHT));
+        replacepin(&cp, Pin(GPIO_OLED_RESET));
         replacepin(&cp, Pin(GPIO_SPI_MISO, 1));
       } else {
         // soft spi pins
@@ -280,9 +280,9 @@ int8_t cs;
       else FT5206_Touch_Init(Wire1);
 #else
       if (!wire_n) FT5206_Touch_Init(Wire);
-#endif
+#endif // ESP32
     }
-#endif
+#endif // USE_FT5206
 
 #ifdef USE_XPT2046
     cp = strstr(ddesc, ":TS,");
@@ -291,7 +291,7 @@ int8_t cs;
       uint8_t touch_cs = replacepin(&cp, Pin(GPIO_XPT2046_CS));
 	    XPT2046_Touch_Init(touch_cs);
     }
-#endif
+#endif // USE_XPT2046
 
     uint8_t inirot = Settings->display_rotate;
 
@@ -314,18 +314,18 @@ int8_t cs;
 #ifdef USE_M5STACK_CORE2
     renderer->SetPwrCB(Core2DisplayPower);
     renderer->SetDimCB(Core2DisplayDim);
-#endif
+#endif // USE_M5STACK_CORE2
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, inirot, Settings->display_font);
 
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
-    
+
     ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH
     renderer->Splash();
-#endif
+#endif // SHOW_SPLASH
 
     udisp_init_done = true;
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), renderer->devname());
