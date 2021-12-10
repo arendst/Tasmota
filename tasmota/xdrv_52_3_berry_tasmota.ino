@@ -329,7 +329,6 @@ extern "C" {
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
     BrTimeoutYield();   // reset timeout
-    strptime(nullptr, nullptr, nullptr);
     be_return_nil(vm);
   }
 
