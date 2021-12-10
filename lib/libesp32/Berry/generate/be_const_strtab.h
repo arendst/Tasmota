@@ -649,6 +649,7 @@ extern const bcstring be_const_str_str;
 extern const bcstring be_const_str_strftime;
 extern const bcstring be_const_str_string;
 extern const bcstring be_const_str_strip;
+extern const bcstring be_const_str_strptime;
 extern const bcstring be_const_str_super;
 extern const bcstring be_const_str_sys;
 extern const bcstring be_const_str_tag;

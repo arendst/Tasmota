@@ -293,6 +293,24 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  int32_t l_strptime(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {
+      const char * input = be_tostring(vm, 2);
+      const char * format = be_tostring(vm, 3);
+      struct tm time;
+      char * ret = strptime(input, format, &time);
+      if (ret) {
+        time_t ts = mktime(&time);
+        be_pushint(vm, ts);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: tasmota.delay(timer:int) -> nil
   //
   int32_t l_delay(struct bvm *vm);
@@ -311,6 +329,7 @@ extern "C" {
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
     BrTimeoutYield();   // reset timeout
+    strptime(nullptr, nullptr, nullptr);
     be_return_nil(vm);
   }
 
