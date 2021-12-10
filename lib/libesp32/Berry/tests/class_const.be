@@ -64,7 +64,7 @@ A.h = def (x, y) return type(x) end
 assert(type(a.g) == 'function')
 assert(type(a.h) == 'function')
 
-assert_attribute_error("a.g(1,2)")
+assert(a.g(1) == 'int')
 assert(a.h(1) == 'int')
 assert(A.h(1) == 'int')
 
@@ -85,6 +85,9 @@ assert(a.g(1,2) == [1,2])
 assert(a.h(1,2) == [1,2])
 assert(A.g(1,2) == [1,2])
 assert(A.h(1,2) == [1,2])
+a.a = def (x,y) return [x,y] end
+assert(a.a(1,2) == [1,2])
+
 
 #- test static initializers -#
 class A
