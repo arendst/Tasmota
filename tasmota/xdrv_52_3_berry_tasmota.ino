@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_native.ino - Berry scripting language, native fucnctions
+  xdrv_52_3_berry_tasmota.ino - Berry scripting language, native fucnctions
 
   Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
 
@@ -612,19 +612,6 @@ extern "C" {
     if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
     berry_log(log_data);
   }
-}
-
-
-void berry_log_P(const char * berry_buf, ...) {
-  // To save stack space support logging for max text length of 128 characters
-  char log_data[LOGSZ];
-
-  va_list arg;
-  va_start(arg, berry_buf);
-  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
-  va_end(arg);
-  if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
-  berry_log(log_data);
 }
 
 #endif  // USE_BERRY
