@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_native.ino - Berry scripting language, native fucnctions
+  xdrv_52_1_berry_native.ino - Berry scripting language, native fucnctions
 
   Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
 
@@ -45,6 +45,11 @@ extern "C" {
  * Responds to virtual constants
 \*********************************************************************************************/
 extern "C" {
+  // Clear all elements on the stack
+  void be_pop_all(bvm *vm) {
+    be_pop(vm, be_top(vm));       // clear Berry stack
+  }
+
   #include "be_exec.h"
   #include "be_debug.h"
   void be_dumpstack(bvm *vm) {
@@ -259,12 +264,27 @@ extern "C" {
 /*********************************************************************************************\
  * Generalized callbacks
  * 
+ * Warning, the following expect all parameters to be 32 bits wide
 \*********************************************************************************************/
+
 extern "C" {
   
+  /*********************************************************************************************\
+   * Callback structures
+   * 
+   * We allow 4 parameters, or 3 if method (first arg is `self`)
+   * This could be extended if needed
+  \*********************************************************************************************/
   typedef int32_t (*berry_callback_t)(int32_t v0, int32_t v1, int32_t v2, int32_t v3);
+
   extern void BerryDumpErrorAndClear(bvm *vm, bool berry_console);
 
+  /*********************************************************************************************\
+   * Callback structures
+   * 
+   * We allow 4 parameters, or 3 if method (first arg is `self`)
+   * This could be extended if needed
+  \*********************************************************************************************/
   int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, int32_t v3) {
     // call berry cb dispatcher
     int32_t ret = 0;
@@ -285,6 +305,7 @@ extern "C" {
         ret = be_pcall(berry.vm, 6);   // 5 arguments
         if (ret != 0) {
           BerryDumpErrorAndClear(berry.vm, false);  // log in Tasmota console only
+          be_pop_all(berry.vm);             // clear Berry stack
           return 0;
         }
         be_pop(berry.vm, 6);
@@ -353,10 +374,6 @@ extern "C" {
   };
 }
 
-
-#define LV_OBJ_CLASS    "lv_obj"
-#define LV_MODULE       "lvgl"    // name of the lvgl module
-
 /*********************************************************************************************\
  * Automatically parse Berry stack and call the C function accordingly
  * 
@@ -424,7 +441,7 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
       const void * func = be_tocomptr(vm, -6);
       be_pop(vm, 6);
 
-      // berry_log_P("func=%p", func);
+      // berry_log_C("func=%p", func);
       return (int32_t) func;
     } else {
       be_raise(vm, kTypeError, "Closure expected for callback type");
@@ -445,7 +462,7 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
     type_ok = type_ok || (ret == 0 && arg_type_len != 1);    // or NULL is accepted for an instance
     
     if (!type_ok) {
-      berry_log_P("Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
+      berry_log_C("Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
     }
     return ret;
   }
@@ -475,14 +492,14 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
         // Stack: class_of_idx, class_of_target (or nil)
         if (class_found) {
           if (!be_isderived(vm, -2)) {
-            berry_log_P("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
+            berry_log_C("Unexpected class type '%s', expected '%s'", be_classname(vm, idx), arg_type);
           }
         } else {
-          berry_log_P("Unable to find class '%s' (%d)", arg_type, arg_type_len);
+          berry_log_C("Unable to find class '%s' (%d)", arg_type, arg_type_len);
         }
         be_pop(vm, 2);
       } else if (arg_type[0] != '.') {
-        berry_log_P("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
+        berry_log_C("Unexpected instance type '%s', expected '%s'", be_classname(vm, idx), arg_type);
       }
 
       return ret;

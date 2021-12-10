@@ -25,6 +25,11 @@
 
 #include "re1.5.h"
 
+/*********************************************************************************************\
+ * Logging for Tasmota Berry console
+ *
+ * We need to declare the the log class first since it is used in structure
+\*********************************************************************************************/
 #define BERRY_CONSOLE_CMD_DELIMITER   "\x01"
 
 class Log_line {
@@ -71,6 +76,12 @@ public:
   LList<Log_line> log;
 };
 
+/*********************************************************************************************\
+ * Berry global structure
+ *
+\*********************************************************************************************/
+class BerryLog;
+
 class BerrySupport {
 public:
   bvm *vm = nullptr;                    // berry vm
@@ -83,6 +94,5 @@ public:
   BerryLog log;
 };
 BerrySupport berry;
-
 
 #endif  // USE_BERRY

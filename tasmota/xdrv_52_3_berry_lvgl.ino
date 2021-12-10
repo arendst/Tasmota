@@ -167,7 +167,7 @@ void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * ar
 
   // check if we are missing arguments
   if (arg_type != nullptr && arg_type[arg_idx] != 0) {
-    berry_log_P("Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
+    berry_log_C("Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
   }
 }
 
@@ -777,7 +777,7 @@ extern "C" {
   int lv0_register_button_encoder(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     bool inverted = false;
-    // berry_log_P("lv0_register_button_encoder argc=%d inverted=%d", argc, be_tobool(vm, 1));
+    // berry_log_C("lv0_register_button_encoder argc=%d inverted=%d", argc, be_tobool(vm, 1));
     if (argc >= 1) {
       inverted = be_tobool(vm, 1);    // get the inverted flag
     }
@@ -794,7 +794,7 @@ extern "C" {
     lvbe.btn[1].set_inverted(inverted);
     lvbe.btn[2].set_gpio(btn2);
     lvbe.btn[2].set_inverted(inverted);
-    berry_log_P(D_LOG_LVGL "Button Rotary encoder using GPIOs %d,%d,%d%s", btn0, btn1, btn2, inverted ? " (inverted)" : "");
+    berry_log_C(D_LOG_LVGL "Button Rotary encoder using GPIOs %d,%d,%d%s", btn0, btn1, btn2, inverted ? " (inverted)" : "");
 
     lv_indev_drv_init(&lvbe.indev_drv);
     lvbe.indev_drv.type = LV_INDEV_TYPE_ENCODER;
@@ -837,7 +837,7 @@ extern "C" {
         }
         bool state = lvbe.btn[i].clear_state_changed();
         data->state = state ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-        // berry_log_P("Button event key %d state %d,%d", data->key, state, data->state);
+        // berry_log_C("Button event key %d state %d,%d", data->key, state, data->state);
         break;
       }
     }
