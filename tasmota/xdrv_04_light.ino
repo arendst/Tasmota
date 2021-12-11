@@ -1051,11 +1051,9 @@ bool LightModuleInit(void)
   }
 #endif  // ESP8266
 #ifdef USE_PWM_DIMMER
-#ifdef USE_DEVICE_GROUPS
-  else if (PWM_DIMMER == TasmotaGlobal.module_type) {
+  else if (TasmotaGlobal.use_pwm_dimmer) {
     TasmotaGlobal.light_type = Settings->pwm_dimmer_cfg.pwm_count + 1;
   }
-#endif  // USE_DEVICE_GROUPS
 #endif  // USE_PWM_DIMMER
 
   if (TasmotaGlobal.light_type > LT_BASIC) {
@@ -1903,7 +1901,7 @@ void LightStopFade(void) {
   Light.fade_running = false;
 #ifdef USE_PWM_DIMMER
   // If the power is off and the fade is done, turn the relay off.
-  if (PWM_DIMMER == TasmotaGlobal.module_type && !Light.power) PWMDimmerSetPower();
+  if (TasmotaGlobal.use_pwm_dimmer && !Light.power) PWMDimmerSetPower();
 #endif  // USE_PWM_DIMMER
 }
 
@@ -2012,6 +2010,15 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+#ifdef USE_LINKIND
+    uint8_t val = change10to8(cur_col_10[Light.pwm_offset] > 0 ? changeUIntScale(cur_col_10[Light.pwm_offset], 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0);
+#ifdef USE_PWM_DIMMER
+    uint16_t max_col = val;
+#endif  // USE_PWM_DIMMER
+    uint16_t chk = 65403 - val;
+    uint8_t buf[] = { 0x09, 0x50, 0x01, val, 0x00, 0x00, (uint8_t)(chk >> 8), (uint8_t)(chk & 0xff) };
+    I2cWriteBuffer(0x50, 0x2A, buf, sizeof(buf));
+#else // USE_LINKIND
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
 #endif  // USE_PWM_DIMMER
@@ -2031,9 +2038,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
         }
       }
     }
+#endif  // USE_LINKIND
 #ifdef USE_PWM_DIMMER
     // Animate brightness LEDs to follow PWM dimmer brightness
-    if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(max_col));
+    if (TasmotaGlobal.use_pwm_dimmer) PWMDimmerSetBrightnessLeds(change10to8(max_col));
 #endif  // USE_PWM_DIMMER
   }
 //  char msg[24];

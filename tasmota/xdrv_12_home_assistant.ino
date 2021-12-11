@@ -457,7 +457,7 @@ void HAssAnnounceRelayLight(void)
   power_t shutter_mask = 0;
 
   #ifdef ESP8266
-        if (PWM_DIMMER == TasmotaGlobal.module_type ) { PwmMod = true; } //
+        if (TasmotaGlobal.use_pwm_dimmer) { PwmMod = true; } //
         if (SONOFF_IFAN02 == TasmotaGlobal.module_type || SONOFF_IFAN03 == TasmotaGlobal.module_type) { FanMod = true; }
         if (SONOFF_DUAL == TasmotaGlobal.module_type) { valid_relay = 2; }
         if (TUYA_DIMMER == TasmotaGlobal.module_type || SK03_TUYA == TasmotaGlobal.module_type) { TuyaMod = true; }

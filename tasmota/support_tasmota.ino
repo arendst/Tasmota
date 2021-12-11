@@ -568,14 +568,14 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     result = XdrvRulesProcess(0);
   }
 #ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER != TasmotaGlobal.module_type || (!result && !Settings->flag3.mqtt_buttons)) {
+  if (!TasmotaGlobal.use_pwm_dimmer || (!result && !Settings->flag3.mqtt_buttons)) {
 #endif  // USE_PWM_DIMMER
   int32_t payload_save = XdrvMailbox.payload;
   XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
   XdrvCall(FUNC_ANY_KEY);
   XdrvMailbox.payload = payload_save;
 #ifdef USE_PWM_DIMMER
-    if (PWM_DIMMER == TasmotaGlobal.module_type) result = true;
+    if (TasmotaGlobal.use_pwm_dimmer) result = true;
   }
 #endif  // USE_PWM_DIMMER
   return result;
@@ -2036,7 +2036,7 @@ void GpioInit(void)
   }
 
 #ifdef USE_PWM_DIMMER
-  if (PWM_DIMMER == TasmotaGlobal.module_type && PinUsed(GPIO_REL1)) { TasmotaGlobal.devices_present--; }
+  if (TasmotaGlobal.use_pwm_dimmer && PinUsed(GPIO_REL1)) { TasmotaGlobal.devices_present--; }
 #endif  // USE_PWM_DIMMER
 
   SetLedPower(Settings->ledstate &8);

@@ -150,6 +150,7 @@ struct TasmotaGlobal_t {
   bool wifi_stay_asleep;                    // Allow sleep only incase of ESP32 BLE
   bool no_autoexec;                         // Disable autoexec
   bool enable_logging;                      // Enable logging
+  bool use_pwm_dimmer;                      // Use PWM dimmer logic
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
   uint8_t init_state;                       // Tasmota init state

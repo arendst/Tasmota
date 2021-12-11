@@ -134,7 +134,7 @@ String EthernetMacAddress(void);
 
 // Hardware has no ESP32
 #undef USE_TUYA_DIMMER
-#undef USE_PWM_DIMMER
+//#undef USE_PWM_DIMMER
 #undef USE_EXS_DIMMER
 #undef USE_ARMTRONIX_DIMMERS
 #undef USE_SONOFF_RF

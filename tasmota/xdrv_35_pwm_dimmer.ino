@@ -126,7 +126,11 @@ void PWMModulePreInit(void)
     device_group_count = button_count;
 
     // If no relay or PWM is defined, all buttons control remote devices.
-    if (!PinUsed(GPIO_REL1) && !PinUsed(GPIO_PWM1)) {
+    if (!PinUsed(GPIO_REL1) && !PinUsed(GPIO_PWM1)
+#ifdef USE_I2C
+      && !PinUsed(GPIO_I2C_SCL)
+#endif  // USE_I2C
+      ) {
       first_device_group_is_local = false;
 
       // Back out the changes made in the light module under the assumtion we have a relay or PWM.
@@ -165,13 +169,23 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
       bri = ((bri == -2 && Settings->flag4.led_timeout) || !Light.power ? 0 : light_state.getBri());
       if (!bri || !Settings->flag4.led_timeout) led_timeout_seconds = 0;
     }
+#ifdef ESP8266
     uint32_t step = 256 / (leds + 1);
+#endif  // ESP8266
+#ifdef ESP32
+    uint32_t step = 256 / leds;
+#endif  // ESP32
 
     // Turn the LED's on/off.
     uint32_t level = 0;
+#ifdef USE_LINKIND
+    if (LINKIND == TasmotaGlobal.module_type) level = -step;
+#endif  // USE_LINKIND
     led = -1;
     mask = 0;
+#ifdef ESP8266
     uint16_t pwm_led_bri = 0;
+#endif  // ESP8266
     for (uint32_t count = 0; count < leds; count++) {
       level += step;
       for (;;) {
@@ -180,8 +194,13 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
         if (!mask) mask = 1;
         if (Settings->ledmask & mask) break;
       }
+#ifdef ESP8266
       pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings->pwm_range);
       analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm_led_bri : pwm_led_bri);
+#endif  // ESP8266
+#ifdef ESP32
+      SetLedPowerIdx(led, bri > level);
+#endif  // ESP32
     }
   }
 }
@@ -455,11 +474,9 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
           else
 #endif  // USE_PWM_DIMMER_REMOTE
             power_button_increases_bri ^= 1;
-#ifdef USE_PWM_DIMMER_REMOTE
-          dgr_item = DGR_ITEM_FLAGS;
-          state_updated = true;
-#endif  // USE_PWM_DIMMER_REMOTE
         }
+        dgr_item = DGR_ITEM_FLAGS;
+        state_updated = true;
       }
 
       // If the power button was not held and we're not ignoring the next power button release,
@@ -782,7 +799,7 @@ bool Xdrv35(uint8_t function)
 {
   bool result = false;
 
-  if (PWM_DIMMER != TasmotaGlobal.module_type) return result;
+  if (!TasmotaGlobal.use_pwm_dimmer) return result;
 
   switch (function) {
     case FUNC_EVERY_SECOND:

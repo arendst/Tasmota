@@ -40,6 +40,8 @@ jobs:
           - tasmota32-odroidgo
           - tasmota32c3
           - tasmota32solo1
+          - tasmota32solo1-linkind
+          - tasmota32solo1-linkind-ble
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python

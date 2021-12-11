@@ -1525,6 +1525,14 @@ void ModuleDefault(uint32_t module)
 void SetModuleType(void)
 {
   TasmotaGlobal.module_type = (USER_MODULE == Settings->module) ? Settings->user_template_base : Settings->module;
+
+  TasmotaGlobal.use_pwm_dimmer = false;
+#ifdef ESP8266
+  if (PWM_DIMMER == TasmotaGlobal.module_type) TasmotaGlobal.use_pwm_dimmer = true;
+#endif  // ESP8266
+#ifdef USE_LINKIND
+  if (LINKIND == TasmotaGlobal.module_type) TasmotaGlobal.use_pwm_dimmer = true;
+#endif  // USE_LINKIND
 }
 
 bool FlashPin(uint32_t pin)

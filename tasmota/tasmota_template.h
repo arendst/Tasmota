@@ -2686,6 +2686,7 @@ enum SupportedModules {
   ESP32_CAM_AITHINKER,
   ODROID_GO,
   ESP32_SOLO,
+  LINKIND,
   WT32_ETH01,
   TTGO_WATCH,
   M5STACK_CORE2,
@@ -2703,6 +2704,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #ifdef USE_ESP32_SOLO
 //  ESP32_SOLO,                // To be defined
 #endif  // USE_ESP32_SOLO
+#ifdef USE_LINKIND
+  LINKIND,
+#endif  // USE_LINKIND
 #ifdef USE_WT32_ETH01
   WT32_ETH01,
 #endif  // USE_WT32_ETH01
@@ -2726,6 +2730,9 @@ const char kModuleNames[] PROGMEM =
 #ifdef USE_ESP32_SOLO
 //  "ESP32-Solo|"              // To be defined
 #endif  // USE_ESP32_SOLO
+#ifdef USE_LINKIND
+  "Linkind|"
+#endif  // USE_LINKIND
 #ifdef USE_WT32_ETH01
   "WT32-Eth01|"
 #endif  // USE_WT32_ETH01
@@ -2879,6 +2886,52 @@ const mytmplt kModules[] PROGMEM = {
 //  {                              // ESP32 Solo (ESP32) - To be defined
 //  },
 #endif  // USE_ESP32_SOLO
+
+#ifdef USE_LINKIND
+  {                              // LINKIND - (ESP32)
+    0,                           // 0       (I)O                GPIO0
+    0,                           // 1                           GPIO1
+    0,                           // 2                           GPIO2
+    0,                           // 3                           GPIO3
+    AGPIO(GPIO_I2C_SDA),         // 4       IO                  GPIO4, I2C_SDA
+    0,                           // 5                           GPIO5
+                                 // 6       IO                  Remapped to 28
+                                 // 7       IO                  Remapped to 29
+                                 // 8       IO                  Remapped to 30
+    0,                           // 9                           GPIO9
+    0,                           // 10                          GPIO10
+                                 // 11      IO                  Remapped to 31
+    0,                           // 12                          GPIO12
+    0,                           // 13                          GPIO13
+    AGPIO(GPIO_LED1),            // 14      IO                  GPIO14, LED1 (green)
+    0,                           // 15                          GPIO15
+    0,                           // 16                          GPIO16
+    0,                           // 17                          GPIO17
+    0,                           // 18                          GPIO18
+    0,                           // 19                          GPIO19
+    0,                           // 20                          GPIO20
+    0,                           // 21                          GPIO21
+    AGPIO(GPIO_I2C_SCL),         // 22      IO                  GPIO22, I2C_SCL
+    0,                           // 23                          GPIO23
+    0,                           // 24                          GPIO24
+    0,                           // 25                          GPIO25
+    AGPIO(GPIO_LEDLNK),          // 26      IO                  GPIO26, LEDLNK (red)
+    0,                           // 27                          GPIO27
+    0,                           // 6       IO                  GPIO6
+    0,                           // 7       IO                  GPIO7
+    0,                           // 8       IO                  GPIO8
+    0,                           // 11      IO                  GPIO11
+    AGPIO(GPIO_KEY1) +1,         // 32      IO                  GPIO32, BUTTON2
+    AGPIO(GPIO_KEY1),            // 33      IO                  GPIO33, BUTTON1
+    0,                           // 34      I   NO PULLUP       GPIO34
+    0,                           // 35      I   NO PULLUP       GPIO35
+    0,                           // 36      I   NO PULLUP       GPIO36
+    0,                           // 37          NO PULLUP       GPIO37
+    0,                           // 38          NO PULLUP       GPIO39
+    0,                           // 39      I   NO PULLUP       GPIO39
+    0                            // Flag
+  },
+#endif  // USE_LINKIND
 
 #ifdef USE_WT32_ETH01
   {                              // WT32_ETH01 - (ESP32)
