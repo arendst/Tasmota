@@ -260,20 +260,25 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  static void l_push_time(bvm *vm, struct tm *t, const char *unparsed) {
+    be_newobject(vm, "map");
+    map_insert_int(vm, "year", t->tm_year + 1900);
+    map_insert_int(vm, "month", t->tm_mon + 1);
+    map_insert_int(vm, "day", t->tm_mday);
+    map_insert_int(vm, "hour", t->tm_hour);
+    map_insert_int(vm, "min", t->tm_min);
+    map_insert_int(vm, "sec", t->tm_sec);
+    map_insert_int(vm, "weekday", t->tm_wday);
+    if (unparsed) map_insert_str(vm, "unparsed", unparsed);
+    be_pop(vm, 1);
+  }
+
   int32_t l_time_dump(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isint(vm, 2)) {
       time_t ts = be_toint(vm, 2);
       struct tm *t = gmtime(&ts);
-      be_newobject(vm, "map");
-      map_insert_int(vm, "year", t->tm_year + 1900);
-      map_insert_int(vm, "month", t->tm_mon + 1);
-      map_insert_int(vm, "day", t->tm_mday);
-      map_insert_int(vm, "hour", t->tm_hour);
-      map_insert_int(vm, "min", t->tm_min);
-      map_insert_int(vm, "sec", t->tm_sec);
-      map_insert_int(vm, "weekday", t->tm_wday);
-      be_pop(vm, 1);
+      l_push_time(vm, t, NULL);
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
@@ -298,11 +303,10 @@ extern "C" {
     if (argc == 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {
       const char * input = be_tostring(vm, 2);
       const char * format = be_tostring(vm, 3);
-      struct tm time;
-      char * ret = strptime(input, format, &time);
+      struct tm t = {0};
+      char * ret = strptime(input, format, &t);
       if (ret) {
-        time_t ts = mktime(&time);
-        be_pushint(vm, ts);
+        l_push_time(vm, &t, ret);
         be_return(vm);
       } else {
         be_return_nil(vm);
