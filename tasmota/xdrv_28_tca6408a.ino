@@ -1,7 +1,7 @@
 /*
   xdrv_28_tca6408a.ino - TCA6408A I2C support for Tasmota
 
-  Copyright (C) 2021  Stefan Bode 
+  Copyright (C) 2021  Stefan Bode
   modified to support TCA6408A as faked PCF8574 - 2021 Joern Plewka 
 
   This program is free software: you can redistribute it and/or modify
