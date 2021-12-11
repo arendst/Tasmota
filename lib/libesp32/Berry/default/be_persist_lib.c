@@ -21,19 +21,19 @@ be_local_closure(Persist_json_fdump_map,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("write"),
-    /* K2   */  be_nested_str_literal("{"),
-    /* K3   */  be_nested_str_literal("keys"),
-    /* K4   */  be_nested_str_literal("dump"),
-    /* K5   */  be_nested_str_literal(":"),
-    /* K6   */  be_nested_str_literal("json_fdump_any"),
-    /* K7   */  be_nested_str_literal(","),
-    /* K8   */  be_nested_str_literal("stop_iteration"),
-    /* K9   */  be_nested_str_literal("}"),
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(write),
+    /* K2   */  be_nested_str(_X7B),
+    /* K3   */  be_nested_str(keys),
+    /* K4   */  be_nested_str(dump),
+    /* K5   */  be_nested_str(_X3A),
+    /* K6   */  be_nested_str(json_fdump_any),
+    /* K7   */  be_nested_str(_X2C),
+    /* K8   */  be_nested_str(stop_iteration),
+    /* K9   */  be_nested_str(_X7D),
     }),
-    (be_nested_const_str("json_fdump_map", -203012643, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_json_fdump_map,
+    &be_const_str_solidified,
     ( &(const binstruction[41]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0x8C100301,  //  0001  GETMET	R4	R1	K1
@@ -96,11 +96,11 @@ be_local_closure(Persist_setmember,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_p"),
-    /* K1   */  be_nested_str_literal("_dirty"),
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(_dirty),
     }),
-    (be_nested_const_str("setmember", 1432909441, 9)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_setmember,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x980C0202,  //  0001  SETIDX	R3	R1	R2
@@ -127,11 +127,11 @@ be_local_closure(Persist_zero,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_p"),
-    /* K1   */  be_nested_str_literal("_dirty"),
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(_dirty),
     }),
-    (be_nested_const_str("zero", -1955600541, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_zero,
+    &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x60040013,  //  0000  GETGBL	R1	G19
       0x7C040000,  //  0001  CALL	R1	0
@@ -159,11 +159,11 @@ be_local_closure(Persist_member,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_p"),
-    /* K1   */  be_nested_str_literal("find"),
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(find),
     }),
-    (be_nested_const_str("member", 719708611, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_member,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -190,14 +190,14 @@ be_local_closure(Persist_json_fdump,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("_p"),
-    /* K2   */  be_nested_str_literal("json_fdump_map"),
-    /* K3   */  be_nested_str_literal("internal_error"),
-    /* K4   */  be_nested_str_literal("persist._p is not a map"),
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(_p),
+    /* K2   */  be_nested_str(json_fdump_map),
+    /* K3   */  be_nested_str(internal_error),
+    /* K4   */  be_nested_str(persist_X2E_p_X20is_X20not_X20a_X20map),
     }),
-    (be_nested_const_str("json_fdump", 1694216580, 10)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_json_fdump,
+    &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0x600C000F,  //  0001  GETGBL	R3	G15
@@ -232,12 +232,12 @@ be_local_closure(Persist_remove,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_p"),
-    /* K1   */  be_nested_str_literal("remove"),
-    /* K2   */  be_nested_str_literal("_dirty"),
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(remove),
+    /* K2   */  be_nested_str(_dirty),
     }),
-    (be_nested_const_str("remove", -611183107, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_remove,
+    &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -266,14 +266,14 @@ be_local_closure(Persist_json_fdump_any,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("json_fdump_map"),
-    /* K2   */  be_nested_str_literal("json_fdump_list"),
-    /* K3   */  be_nested_str_literal("write"),
-    /* K4   */  be_nested_str_literal("dump"),
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(json_fdump_map),
+    /* K2   */  be_nested_str(json_fdump_list),
+    /* K3   */  be_nested_str(write),
+    /* K4   */  be_nested_str(dump),
     }),
-    (be_nested_const_str("json_fdump_any", -946337911, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_json_fdump_any,
+    &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0x6010000F,  //  0001  GETGBL	R4	G15
@@ -322,16 +322,16 @@ be_local_closure(Persist_save,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_filename"),
-    /* K1   */  be_nested_str_literal("w"),
-    /* K2   */  be_nested_str_literal("json_fdump"),
-    /* K3   */  be_nested_str_literal("close"),
-    /* K4   */  be_nested_str_literal("write"),
-    /* K5   */  be_nested_str_literal("{}"),
-    /* K6   */  be_nested_str_literal("_dirty"),
+    /* K0   */  be_nested_str(_filename),
+    /* K1   */  be_nested_str(w),
+    /* K2   */  be_nested_str(json_fdump),
+    /* K3   */  be_nested_str(close),
+    /* K4   */  be_nested_str(write),
+    /* K5   */  be_nested_str(_X7B_X7D),
+    /* K6   */  be_nested_str(_dirty),
     }),
-    (be_nested_const_str("save", -855671224, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_save,
+    &be_const_str_solidified,
     ( &(const binstruction[37]) {  /* code */
       0x4C040000,  //  0000  LDNIL	R1
       0xA802000B,  //  0001  EXBLK	0	#000E
@@ -390,21 +390,21 @@ be_local_closure(Persist_load,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("path"),
-    /* K2   */  be_nested_str_literal("exists"),
-    /* K3   */  be_nested_str_literal("_filename"),
-    /* K4   */  be_nested_str_literal("r"),
-    /* K5   */  be_nested_str_literal("load"),
-    /* K6   */  be_nested_str_literal("read"),
-    /* K7   */  be_nested_str_literal("close"),
-    /* K8   */  be_nested_str_literal("_p"),
-    /* K9   */  be_nested_str_literal("BRY: failed to load _persist.json"),
-    /* K10  */  be_nested_str_literal("_dirty"),
-    /* K11  */  be_nested_str_literal("save"),
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(path),
+    /* K2   */  be_nested_str(exists),
+    /* K3   */  be_nested_str(_filename),
+    /* K4   */  be_nested_str(r),
+    /* K5   */  be_nested_str(load),
+    /* K6   */  be_nested_str(read),
+    /* K7   */  be_nested_str(close),
+    /* K8   */  be_nested_str(_p),
+    /* K9   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson),
+    /* K10  */  be_nested_str(_dirty),
+    /* K11  */  be_nested_str(save),
     }),
-    (be_nested_const_str("load", -435725847, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_load,
+    &be_const_str_solidified,
     ( &(const binstruction[49]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -475,11 +475,11 @@ be_local_closure(Persist_find,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_p"),
-    /* K1   */  be_nested_str_literal("find"),
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(find),
     }),
-    (be_nested_const_str("find", -1108310694, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_find,
+    &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
@@ -507,15 +507,15 @@ be_local_closure(Persist_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_filename"),
-    /* K1   */  be_nested_str_literal("_persist.json"),
-    /* K2   */  be_nested_str_literal("_p"),
-    /* K3   */  be_nested_str_literal("copy"),
-    /* K4   */  be_nested_str_literal("load"),
-    /* K5   */  be_nested_str_literal("_dirty"),
+    /* K0   */  be_nested_str(_filename),
+    /* K1   */  be_nested_str(_persist_X2Ejson),
+    /* K2   */  be_nested_str(_p),
+    /* K3   */  be_nested_str(copy),
+    /* K4   */  be_nested_str(load),
+    /* K5   */  be_nested_str(_dirty),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
       0x90020101,  //  0000  SETMBR	R0	K0	K1
       0x6008000F,  //  0001  GETGBL	R2	G15
@@ -557,17 +557,17 @@ be_local_closure(Persist_json_fdump_list,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("write"),
-    /* K2   */  be_nested_str_literal("["),
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(write),
+    /* K2   */  be_nested_str(_X5B),
     /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_literal(","),
-    /* K5   */  be_nested_str_literal("json_fdump_any"),
+    /* K4   */  be_nested_str(_X2C),
+    /* K5   */  be_nested_str(json_fdump_any),
     /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str_literal("]"),
+    /* K7   */  be_nested_str(_X5D),
     }),
-    (be_nested_const_str("json_fdump_list", -391087443, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_json_fdump_list,
+    &be_const_str_solidified,
     ( &(const binstruction[25]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0x8C100301,  //  0001  GETMET	R4	R1	K1
@@ -614,11 +614,11 @@ be_local_closure(Persist_has,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_p"),
-    /* K1   */  be_nested_str_literal("has"),
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(has),
     }),
-    (be_nested_const_str("has", -306245661, 3)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_has,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -639,22 +639,22 @@ be_local_class(Persist,
     NULL,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("has", -306245661, 3, 6), be_const_closure(Persist_has_closure) },
-        { be_nested_key("setmember", 1432909441, 9, -1), be_const_closure(Persist_setmember_closure) },
-        { be_nested_key("remove", -611183107, 6, -1), be_const_closure(Persist_remove_closure) },
-        { be_nested_key("zero", -1955600541, 4, 0), be_const_closure(Persist_zero_closure) },
-        { be_nested_key("json_fdump", 1694216580, 10, -1), be_const_closure(Persist_json_fdump_closure) },
-        { be_nested_key("json_fdump_list", -391087443, 15, 2), be_const_closure(Persist_json_fdump_list_closure) },
-        { be_nested_key("init", 380752755, 4, 15), be_const_closure(Persist_init_closure) },
-        { be_nested_key("find", -1108310694, 4, -1), be_const_closure(Persist_find_closure) },
-        { be_nested_key("save", -855671224, 4, -1), be_const_closure(Persist_save_closure) },
-        { be_nested_key("json_fdump_any", -946337911, 14, 12), be_const_closure(Persist_json_fdump_any_closure) },
-        { be_nested_key("_p", 1594591802, 2, 7), be_const_var(1) },
-        { be_nested_key("_filename", 1430813195, 9, -1), be_const_var(0) },
-        { be_nested_key("load", -435725847, 4, -1), be_const_closure(Persist_load_closure) },
-        { be_nested_key("json_fdump_map", -203012643, 14, 5), be_const_closure(Persist_json_fdump_map_closure) },
-        { be_nested_key("_dirty", 283846766, 6, -1), be_const_var(2) },
-        { be_nested_key("member", 719708611, 6, -1), be_const_closure(Persist_member_closure) },
+        { be_const_key(has, 6), be_const_closure(Persist_has_closure) },
+        { be_const_key(setmember, -1), be_const_closure(Persist_setmember_closure) },
+        { be_const_key(remove, -1), be_const_closure(Persist_remove_closure) },
+        { be_const_key(zero, 0), be_const_closure(Persist_zero_closure) },
+        { be_const_key(json_fdump, -1), be_const_closure(Persist_json_fdump_closure) },
+        { be_const_key(json_fdump_list, 2), be_const_closure(Persist_json_fdump_list_closure) },
+        { be_const_key(init, 15), be_const_closure(Persist_init_closure) },
+        { be_const_key(find, -1), be_const_closure(Persist_find_closure) },
+        { be_const_key(save, -1), be_const_closure(Persist_save_closure) },
+        { be_const_key(json_fdump_any, 12), be_const_closure(Persist_json_fdump_any_closure) },
+        { be_const_key(_p, 7), be_const_var(1) },
+        { be_const_key(_filename, -1), be_const_var(0) },
+        { be_const_key(load, -1), be_const_closure(Persist_load_closure) },
+        { be_const_key(json_fdump_map, 5), be_const_closure(Persist_json_fdump_map_closure) },
+        { be_const_key(_dirty, -1), be_const_var(2) },
+        { be_const_key(member, -1), be_const_closure(Persist_member_closure) },
     })),
     be_str_literal("Persist")
 );
@@ -675,8 +675,8 @@ be_local_closure(persist__anonymous_,   /* name */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_Persist),
     }),
-    (be_nested_const_str("_anonymous_", 1957281476, 11)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str__anonymous_,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x58040000,  //  0000  LDCONST	R1	K0
       0xB4000000,  //  0001  CLASS	K0
@@ -696,7 +696,7 @@ be_local_module(persist,
     "persist",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(persist__anonymous__closure) },
+        { be_const_key(init, -1), be_const_closure(persist__anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(persist);

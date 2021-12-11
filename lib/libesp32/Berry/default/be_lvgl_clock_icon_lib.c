@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: set_time
 ********************************************************************/
-be_local_closure(set_time,   /* name */
+be_local_closure(lv_clock_icon_set_time,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
@@ -21,19 +21,19 @@ be_local_closure(set_time,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_string("string", 398550328, 6),
-    /* K1   */  be_nested_string("hour", -1241306097, 4),
-    /* K2   */  be_nested_string("minute", 954666857, 6),
-    /* K3   */  be_nested_string("sec", -1155074638, 3),
-    /* K4   */  be_nested_string("format", -1180859054, 6),
-    /* K5   */  be_nested_string("%02d%s%02d", 1587999717, 10),
+    /* K0   */  be_nested_str(string),
+    /* K1   */  be_nested_str(hour),
+    /* K2   */  be_nested_str(minute),
+    /* K3   */  be_nested_str(sec),
+    /* K4   */  be_nested_str(format),
+    /* K5   */  be_nested_str(_X2502d_X25s_X2502d),
     /* K6   */  be_const_int(2),
-    /* K7   */  be_nested_string(":", 1057798253, 1),
-    /* K8   */  be_nested_string(" ", 621580159, 1),
-    /* K9   */  be_nested_string("set_text", 1849641155, 8),
+    /* K7   */  be_nested_str(_X3A),
+    /* K8   */  be_nested_str(_X20),
+    /* K9   */  be_nested_str(set_text),
     }),
-    (be_nested_const_str("set_time", 900236405, 8)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_time,
+    &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
       0xA4120000,  //  0000  IMPORT	R4	K0
       0x88140101,  //  0001  GETMBR	R5	R0	K1
@@ -71,7 +71,7 @@ be_local_closure(set_time,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-be_local_closure(every_second,   /* name */
+be_local_closure(lv_clock_icon_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -82,18 +82,18 @@ be_local_closure(every_second,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_string("tasmota", 424643812, 7),
-    /* K1   */  be_nested_string("time_dump", -964556549, 9),
-    /* K2   */  be_nested_string("rtc", 1070575216, 3),
-    /* K3   */  be_nested_string("local", -1673304312, 5),
-    /* K4   */  be_nested_string("year", -1367388900, 4),
-    /* K5   */  be_nested_string("set_time", 900236405, 8),
-    /* K6   */  be_nested_string("hour", -1241306097, 4),
-    /* K7   */  be_nested_string("min", -913357481, 3),
-    /* K8   */  be_nested_string("sec", -1155074638, 3),
+    /* K0   */  be_nested_str(tasmota),
+    /* K1   */  be_nested_str(time_dump),
+    /* K2   */  be_nested_str(rtc),
+    /* K3   */  be_nested_str(local),
+    /* K4   */  be_nested_str(year),
+    /* K5   */  be_nested_str(set_time),
+    /* K6   */  be_nested_str(hour),
+    /* K7   */  be_nested_str(min),
+    /* K8   */  be_nested_str(sec),
     }),
-    (be_nested_const_str("every_second", 2075451465, 12)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_every_second,
+    &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
@@ -121,7 +121,7 @@ be_local_closure(every_second,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(lv_clock_icon_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     2,                          /* argc */
@@ -132,31 +132,31 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[22]) {     /* constants */
-    /* K0   */  be_nested_string("init", 380752755, 4),
-    /* K1   */  be_nested_string("lv", 1529997255, 2),
-    /* K2   */  be_nested_string("seg7_font", -195276607, 9),
-    /* K3   */  be_nested_string("set_style_text_font", 1028590019, 19),
-    /* K4   */  be_nested_string("PART_MAIN", -1821475788, 9),
-    /* K5   */  be_nested_string("STATE_DEFAULT", 712406428, 13),
-    /* K6   */  be_nested_string("get_height", -723211773, 10),
-    /* K7   */  be_nested_string("set_text", 1849641155, 8),
-    /* K8   */  be_nested_string("--:--", 1370615441, 5),
-    /* K9   */  be_nested_string("refr_size", 1958144468, 9),
-    /* K10  */  be_nested_string("get_width", -1001549996, 9),
-    /* K11  */  be_nested_string("set_y", 1866178391, 5),
+    /* K0   */  be_nested_str(init),
+    /* K1   */  be_nested_str(lv),
+    /* K2   */  be_nested_str(seg7_font),
+    /* K3   */  be_nested_str(set_style_text_font),
+    /* K4   */  be_nested_str(PART_MAIN),
+    /* K5   */  be_nested_str(STATE_DEFAULT),
+    /* K6   */  be_nested_str(get_height),
+    /* K7   */  be_nested_str(set_text),
+    /* K8   */  be_nested_str(_X2D_X2D_X3A_X2D_X2D),
+    /* K9   */  be_nested_str(refr_size),
+    /* K10  */  be_nested_str(get_width),
+    /* K11  */  be_nested_str(set_y),
     /* K12  */  be_const_int(2),
-    /* K13  */  be_nested_string("get_style_pad_right", -1144679830, 19),
-    /* K14  */  be_nested_string("set_x", 1849400772, 5),
+    /* K13  */  be_nested_str(get_style_pad_right),
+    /* K14  */  be_nested_str(set_x),
     /* K15  */  be_const_int(3),
-    /* K16  */  be_nested_string("set_style_pad_right", -980898242, 19),
-    /* K17  */  be_nested_string("set_style_bg_color", 1689513089, 18),
-    /* K18  */  be_nested_string("color", 1031692888, 5),
-    /* K19  */  be_nested_string("COLOR_BLACK", 264427940, 11),
-    /* K20  */  be_nested_string("tasmota", 424643812, 7),
-    /* K21  */  be_nested_string("add_driver", 1654458371, 10),
+    /* K16  */  be_nested_str(set_style_pad_right),
+    /* K17  */  be_nested_str(set_style_bg_color),
+    /* K18  */  be_nested_str(color),
+    /* K19  */  be_nested_str(COLOR_BLACK),
+    /* K20  */  be_nested_str(tasmota),
+    /* K21  */  be_nested_str(add_driver),
     }),
-    ((bstring*) &be_const_str_init),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[82]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
@@ -249,7 +249,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: del
 ********************************************************************/
-be_local_closure(del,   /* name */
+be_local_closure(lv_clock_icon_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -260,12 +260,12 @@ be_local_closure(del,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("del", -816214454, 3),
-    /* K1   */  be_nested_string("tasmota", 424643812, 7),
-    /* K2   */  be_nested_string("remove_driver", 1030243768, 13),
+    /* K0   */  be_nested_str(del),
+    /* K1   */  be_nested_str(tasmota),
+    /* K2   */  be_nested_str(remove_driver),
     }),
-    (be_nested_const_str("del", -816214454, 3)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_del,
+    &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
@@ -292,15 +292,15 @@ be_local_class(lv_clock_icon,
     &be_class_lv_label,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("sec", -1155074638, 3, -1), be_const_var(2) },
-        { be_nested_key("hour", -1241306097, 4, -1), be_const_var(0) },
-        { be_nested_key("set_time", 900236405, 8, 6), be_const_closure(set_time_closure) },
-        { be_nested_key("every_second", 2075451465, 12, -1), be_const_closure(every_second_closure) },
-        { be_nested_key("minute", 954666857, 6, -1), be_const_var(1) },
-        { be_nested_key("init", 380752755, 4, 2), be_const_closure(init_closure) },
-        { be_nested_key("del", -816214454, 3, -1), be_const_closure(del_closure) },
+        { be_const_key(sec, -1), be_const_var(2) },
+        { be_const_key(hour, -1), be_const_var(0) },
+        { be_const_key(set_time, 6), be_const_closure(lv_clock_icon_set_time_closure) },
+        { be_const_key(every_second, -1), be_const_closure(lv_clock_icon_every_second_closure) },
+        { be_const_key(minute, -1), be_const_var(1) },
+        { be_const_key(init, 2), be_const_closure(lv_clock_icon_init_closure) },
+        { be_const_key(del, -1), be_const_closure(lv_clock_icon_del_closure) },
     })),
-    (be_nested_const_str("lv_clock_icon", -1037751086, 13))
+    be_str_literal("lv_clock_icon")
 );
 /*******************************************************************/
 

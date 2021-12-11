@@ -35,8 +35,8 @@ extern Unishox compressor;
 \*********************************************************************************************/
 extern "C" {
 
-  int be_unishox_compress(bvm *vm);
-  int be_unishox_compress(bvm *vm) {
+  int be_ntv_unishox_compress(bvm *vm);
+  int be_ntv_unishox_compress(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 1 && be_isstring(vm, 1)) {
       const char * s = be_tostring(vm, 1);
@@ -57,8 +57,8 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  int be_unishox_decompress(bvm *vm);
-  int be_unishox_decompress(bvm *vm) {
+  int be_ntv_unishox_decompress(bvm *vm);
+  int be_ntv_unishox_decompress(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 1 && be_isbytes(vm, 1)) {
       size_t len;

@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: get_object_from_ptr
 ********************************************************************/
-be_local_closure(get_object_from_ptr,   /* name */
+be_local_closure(LVGL_glob_get_object_from_ptr,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -21,11 +21,11 @@ be_local_closure(get_object_from_ptr,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("cb_obj", 1195696482, 6),
-    /* K1   */  be_nested_string("find", -1108310694, 4),
+    /* K0   */  be_nested_str(cb_obj),
+    /* K1   */  be_nested_str(find),
     }),
-    (be_nested_const_str("get_object_from_ptr", -1949948095, 19)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_object_from_ptr,
+    &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -46,7 +46,7 @@ be_local_closure(get_object_from_ptr,   /* name */
 /********************************************************************
 ** Solidified function: widget_event_impl
 ********************************************************************/
-be_local_closure(widget_event_impl,   /* name */
+be_local_closure(LVGL_glob_widget_event_impl,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     3,                          /* argc */
@@ -57,18 +57,18 @@ be_local_closure(widget_event_impl,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_string("introspect", 164638290, 10),
-    /* K1   */  be_nested_string("lv", 1529997255, 2),
-    /* K2   */  be_nested_string("lv_obj_class", -255311002, 12),
-    /* K3   */  be_nested_string("lv_event", -1860877328, 8),
-    /* K4   */  be_nested_string("target", 845187144, 6),
-    /* K5   */  be_nested_string("get_object_from_ptr", -1949948095, 19),
-    /* K6   */  be_nested_string("instance", 193386898, 8),
-    /* K7   */  be_nested_string("get", 1410115415, 3),
-    /* K8   */  be_nested_string("widget_event", 1951408186, 12),
+    /* K0   */  be_nested_str(introspect),
+    /* K1   */  be_nested_str(lv),
+    /* K2   */  be_nested_str(lv_obj_class),
+    /* K3   */  be_nested_str(lv_event),
+    /* K4   */  be_nested_str(target),
+    /* K5   */  be_nested_str(get_object_from_ptr),
+    /* K6   */  be_nested_str(instance),
+    /* K7   */  be_nested_str(get),
+    /* K8   */  be_nested_str(widget_event),
     }),
-    (be_nested_const_str("widget_event_impl", -2116536735, 17)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_widget_event_impl,
+    &be_const_str_solidified,
     ( &(const binstruction[30]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
@@ -109,7 +109,7 @@ be_local_closure(widget_event_impl,   /* name */
 /********************************************************************
 ** Solidified function: lvgl_event_dispatch
 ********************************************************************/
-be_local_closure(lvgl_event_dispatch,   /* name */
+be_local_closure(LVGL_glob_lvgl_event_dispatch,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     2,                          /* argc */
@@ -120,16 +120,16 @@ be_local_closure(lvgl_event_dispatch,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("introspect", 164638290, 10),
-    /* K1   */  be_nested_string("lv", 1529997255, 2),
-    /* K2   */  be_nested_string("lv_event", -1860877328, 8),
-    /* K3   */  be_nested_string("toptr", -915119842, 5),
-    /* K4   */  be_nested_string("target", 845187144, 6),
-    /* K5   */  be_nested_string("cb_event_closure", -466699971, 16),
-    /* K6   */  be_nested_string("get_object_from_ptr", -1949948095, 19),
+    /* K0   */  be_nested_str(introspect),
+    /* K1   */  be_nested_str(lv),
+    /* K2   */  be_nested_str(lv_event),
+    /* K3   */  be_nested_str(toptr),
+    /* K4   */  be_nested_str(target),
+    /* K5   */  be_nested_str(cb_event_closure),
+    /* K6   */  be_nested_str(get_object_from_ptr),
     }),
-    (be_nested_const_str("lvgl_event_dispatch", 2104396622, 19)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_lvgl_event_dispatch,
+    &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0xB80E0200,  //  0001  GETNGBL	R3	K1
@@ -160,7 +160,7 @@ be_local_closure(lvgl_event_dispatch,   /* name */
 /********************************************************************
 ** Solidified function: widget_dtor_impl
 ********************************************************************/
-be_local_closure(widget_dtor_impl,   /* name */
+be_local_closure(LVGL_glob_widget_dtor_impl,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -171,16 +171,16 @@ be_local_closure(widget_dtor_impl,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("introspect", 164638290, 10),
-    /* K1   */  be_nested_string("lv", 1529997255, 2),
-    /* K2   */  be_nested_string("lv_obj_class", -255311002, 12),
-    /* K3   */  be_nested_string("get_object_from_ptr", -1949948095, 19),
-    /* K4   */  be_nested_string("instance", 193386898, 8),
-    /* K5   */  be_nested_string("get", 1410115415, 3),
-    /* K6   */  be_nested_string("widget_destructor", -87578951, 17),
+    /* K0   */  be_nested_str(introspect),
+    /* K1   */  be_nested_str(lv),
+    /* K2   */  be_nested_str(lv_obj_class),
+    /* K3   */  be_nested_str(get_object_from_ptr),
+    /* K4   */  be_nested_str(instance),
+    /* K5   */  be_nested_str(get),
+    /* K6   */  be_nested_str(widget_destructor),
     }),
-    (be_nested_const_str("widget_dtor_impl", 520430610, 16)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_widget_dtor_impl,
+    &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
@@ -213,7 +213,7 @@ be_local_closure(widget_dtor_impl,   /* name */
 /********************************************************************
 ** Solidified function: register_obj
 ********************************************************************/
-be_local_closure(register_obj,   /* name */
+be_local_closure(LVGL_glob_register_obj,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -224,11 +224,11 @@ be_local_closure(register_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("cb_obj", 1195696482, 6),
-    /* K1   */  be_nested_string("_p", 1594591802, 2),
+    /* K0   */  be_nested_str(cb_obj),
+    /* K1   */  be_nested_str(_p),
     }),
-    (be_nested_const_str("register_obj", -312352526, 12)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_register_obj,
+    &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -252,7 +252,7 @@ be_local_closure(register_obj,   /* name */
 /********************************************************************
 ** Solidified function: gen_cb
 ********************************************************************/
-be_local_closure(gen_cb,   /* name */
+be_local_closure(LVGL_glob_gen_cb,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     5,                          /* argc */
@@ -273,10 +273,10 @@ be_local_closure(gen_cb,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_string("lvgl_event_dispatch", 2104396622, 19),
+        /* K0   */  be_nested_str(lvgl_event_dispatch),
         }),
-        (be_nested_const_str("<lambda>", 607256038, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0x68040000,  //  0000  GETUPV	R1	U0
           0x8C040300,  //  0001  GETMET	R1	R1	K0
@@ -288,17 +288,17 @@ be_local_closure(gen_cb,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_string("lv_event_cb", -1814236280, 11),
-    /* K1   */  be_nested_string("cb_event_closure", -466699971, 16),
-    /* K2   */  be_nested_string("event_cb", -1166269279, 8),
-    /* K3   */  be_nested_string("tasmota", 424643812, 7),
-    /* K4   */  be_nested_string("gen_cb", -1049739745, 6),
-    /* K5   */  be_nested_string("register_obj", -312352526, 12),
-    /* K6   */  be_nested_string("null_cb", -1961430836, 7),
-    /* K7   */  be_nested_string("cb_do_nothing", 1488730702, 13),
+    /* K0   */  be_nested_str(lv_event_cb),
+    /* K1   */  be_nested_str(cb_event_closure),
+    /* K2   */  be_nested_str(event_cb),
+    /* K3   */  be_nested_str(tasmota),
+    /* K4   */  be_nested_str(gen_cb),
+    /* K5   */  be_nested_str(register_obj),
+    /* K6   */  be_nested_str(null_cb),
+    /* K7   */  be_nested_str(cb_do_nothing),
     }),
-    (be_nested_const_str("gen_cb", -1049739745, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_gen_cb,
+    &be_const_str_solidified,
     ( &(const binstruction[41]) {  /* code */
       0x1C140300,  //  0000  EQ	R5	R1	K0
       0x78160018,  //  0001  JMPF	R5	#001B
@@ -350,7 +350,7 @@ be_local_closure(gen_cb,   /* name */
 /********************************************************************
 ** Solidified function: deregister_obj
 ********************************************************************/
-be_local_closure(deregister_obj,   /* name */
+be_local_closure(LVGL_glob_deregister_obj,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -361,12 +361,12 @@ be_local_closure(deregister_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("cb_obj", 1195696482, 6),
-    /* K1   */  be_nested_string("remove", -611183107, 6),
-    /* K2   */  be_nested_string("cb_event_closure", -466699971, 16),
+    /* K0   */  be_nested_str(cb_obj),
+    /* K1   */  be_nested_str(remove),
+    /* K2   */  be_nested_str(cb_event_closure),
     }),
-    (be_nested_const_str("deregister_obj", -385000303, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_deregister_obj,
+    &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -394,7 +394,7 @@ be_local_closure(deregister_obj,   /* name */
 /********************************************************************
 ** Solidified function: widget_cb
 ********************************************************************/
-be_local_closure(widget_cb,   /* name */
+be_local_closure(LVGL_glob_widget_cb,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -415,10 +415,10 @@ be_local_closure(widget_cb,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_string("widget_ctor_impl", 194252479, 16),
+        /* K0   */  be_nested_str(widget_ctor_impl),
         }),
-        (be_nested_const_str("<lambda>", 607256038, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x68080000,  //  0000  GETUPV	R2	U0
           0x8C080500,  //  0001  GETMET	R2	R2	K0
@@ -440,10 +440,10 @@ be_local_closure(widget_cb,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_string("widget_dtor_impl", 520430610, 16),
+        /* K0   */  be_nested_str(widget_dtor_impl),
         }),
-        (be_nested_const_str("<lambda>", 607256038, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x68080000,  //  0000  GETUPV	R2	U0
           0x8C080500,  //  0001  GETMET	R2	R2	K0
@@ -465,10 +465,10 @@ be_local_closure(widget_cb,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_string("widget_event_impl", -2116536735, 17),
+        /* K0   */  be_nested_str(widget_event_impl),
         }),
-        (be_nested_const_str("<lambda>", 607256038, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x68080000,  //  0000  GETUPV	R2	U0
           0x8C080500,  //  0001  GETMET	R2	R2	K0
@@ -481,24 +481,24 @@ be_local_closure(widget_cb,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
-    /* K0   */  be_nested_string("widget_ctor_cb", 876007560, 14),
-    /* K1   */  be_nested_string("tasmota", 424643812, 7),
-    /* K2   */  be_nested_string("gen_cb", -1049739745, 6),
-    /* K3   */  be_nested_string("widget_dtor_cb", -1143421451, 14),
-    /* K4   */  be_nested_string("widget_event_cb", 1508466754, 15),
-    /* K5   */  be_nested_string("widget_struct_default", 781673633, 21),
-    /* K6   */  be_nested_string("lv", 1529997255, 2),
-    /* K7   */  be_nested_string("lv_obj_class", -255311002, 12),
-    /* K8   */  be_nested_string("lv_obj", -37134147, 6),
-    /* K9   */  be_nested_string("_class", -1562820946, 6),
-    /* K10  */  be_nested_string("copy", -446502332, 4),
-    /* K11  */  be_nested_string("base_class", 1107737279, 10),
-    /* K12  */  be_nested_string("constructor_cb", -1805861999, 14),
-    /* K13  */  be_nested_string("destructor_cb", 1930283190, 13),
-    /* K14  */  be_nested_string("event_cb", -1166269279, 8),
+    /* K0   */  be_nested_str(widget_ctor_cb),
+    /* K1   */  be_nested_str(tasmota),
+    /* K2   */  be_nested_str(gen_cb),
+    /* K3   */  be_nested_str(widget_dtor_cb),
+    /* K4   */  be_nested_str(widget_event_cb),
+    /* K5   */  be_nested_str(widget_struct_default),
+    /* K6   */  be_nested_str(lv),
+    /* K7   */  be_nested_str(lv_obj_class),
+    /* K8   */  be_nested_str(lv_obj),
+    /* K9   */  be_nested_str(_class),
+    /* K10  */  be_nested_str(copy),
+    /* K11  */  be_nested_str(base_class),
+    /* K12  */  be_nested_str(constructor_cb),
+    /* K13  */  be_nested_str(destructor_cb),
+    /* K14  */  be_nested_str(event_cb),
     }),
-    (be_nested_const_str("widget_cb", -1531384241, 9)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_widget_cb,
+    &be_const_str_solidified,
     ( &(const binstruction[56]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x4C080000,  //  0001  LDNIL	R2
@@ -565,7 +565,7 @@ be_local_closure(widget_cb,   /* name */
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(_anonymous_,   /* name */
+be_local_closure(LVGL_glob__anonymous_,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     0,                          /* argc */
@@ -576,10 +576,10 @@ be_local_closure(_anonymous_,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("LVG: call to unsupported callback", 504176819, 33),
+    /* K0   */  be_nested_str(LVG_X3A_X20call_X20to_X20unsupported_X20callback),
     }),
-    (be_nested_const_str("_anonymous_", 1957281476, 11)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str__anonymous_,
+    &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x60000001,  //  0000  GETGBL	R0	G1
       0x58040000,  //  0001  LDCONST	R1	K0
@@ -594,7 +594,7 @@ be_local_closure(_anonymous_,   /* name */
 /********************************************************************
 ** Solidified function: create_custom_widget
 ********************************************************************/
-be_local_closure(create_custom_widget,   /* name */
+be_local_closure(LVGL_glob_create_custom_widget,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -605,36 +605,36 @@ be_local_closure(create_custom_widget,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[27]) {     /* constants */
-    /* K0   */  be_nested_string("introspect", 164638290, 10),
-    /* K1   */  be_nested_string("lv", 1529997255, 2),
-    /* K2   */  be_nested_string("lv_obj", -37134147, 6),
-    /* K3   */  be_nested_string("value_error", 773297791, 11),
-    /* K4   */  be_nested_string("arg must be a subclass of lv_obj", 1641882079, 32),
-    /* K5   */  be_nested_string("widget_struct_by_class", -488593454, 22),
-    /* K6   */  be_nested_string("find", -1108310694, 4),
-    /* K7   */  be_nested_string("widget_cb", -1531384241, 9),
-    /* K8   */  be_nested_string("widget_struct_default", 781673633, 21),
-    /* K9   */  be_nested_string("copy", -446502332, 4),
-    /* K10  */  be_nested_string("base_class", 1107737279, 10),
-    /* K11  */  be_nested_string("_class", -1562820946, 6),
-    /* K12  */  be_nested_string("get", 1410115415, 3),
-    /* K13  */  be_nested_string("widget_width_def", -308888434, 16),
-    /* K14  */  be_nested_string("width_def", 1143717879, 9),
-    /* K15  */  be_nested_string("widget_height_def", -1163299483, 17),
-    /* K16  */  be_nested_string("height_def", -1946728458, 10),
-    /* K17  */  be_nested_string("widget_editable", -473174010, 15),
-    /* K18  */  be_nested_string("editable", 60532369, 8),
-    /* K19  */  be_nested_string("widget_group_def", 1246968785, 16),
-    /* K20  */  be_nested_string("group_def", 1524213328, 9),
-    /* K21  */  be_nested_string("widget_instance_size", 2055354779, 20),
-    /* K22  */  be_nested_string("instance_size", -14697778, 13),
-    /* K23  */  be_nested_string("obj_class_create_obj", -990576664, 20),
-    /* K24  */  be_nested_string("_p", 1594591802, 2),
-    /* K25  */  be_nested_string("register_obj", -312352526, 12),
-    /* K26  */  be_nested_string("class_init_obj", 178410604, 14),
+    /* K0   */  be_nested_str(introspect),
+    /* K1   */  be_nested_str(lv),
+    /* K2   */  be_nested_str(lv_obj),
+    /* K3   */  be_nested_str(value_error),
+    /* K4   */  be_nested_str(arg_X20must_X20be_X20a_X20subclass_X20of_X20lv_obj),
+    /* K5   */  be_nested_str(widget_struct_by_class),
+    /* K6   */  be_nested_str(find),
+    /* K7   */  be_nested_str(widget_cb),
+    /* K8   */  be_nested_str(widget_struct_default),
+    /* K9   */  be_nested_str(copy),
+    /* K10  */  be_nested_str(base_class),
+    /* K11  */  be_nested_str(_class),
+    /* K12  */  be_nested_str(get),
+    /* K13  */  be_nested_str(widget_width_def),
+    /* K14  */  be_nested_str(width_def),
+    /* K15  */  be_nested_str(widget_height_def),
+    /* K16  */  be_nested_str(height_def),
+    /* K17  */  be_nested_str(widget_editable),
+    /* K18  */  be_nested_str(editable),
+    /* K19  */  be_nested_str(widget_group_def),
+    /* K20  */  be_nested_str(group_def),
+    /* K21  */  be_nested_str(widget_instance_size),
+    /* K22  */  be_nested_str(instance_size),
+    /* K23  */  be_nested_str(obj_class_create_obj),
+    /* K24  */  be_nested_str(_p),
+    /* K25  */  be_nested_str(register_obj),
+    /* K26  */  be_nested_str(class_init_obj),
     }),
-    (be_nested_const_str("create_custom_widget", 1140594778, 20)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_create_custom_widget,
+    &be_const_str_solidified,
     ( &(const binstruction[86]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0x6010000F,  //  0001  GETGBL	R4	G15
@@ -731,7 +731,7 @@ be_local_closure(create_custom_widget,   /* name */
 /********************************************************************
 ** Solidified function: widget_ctor_impl
 ********************************************************************/
-be_local_closure(widget_ctor_impl,   /* name */
+be_local_closure(LVGL_glob_widget_ctor_impl,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -742,18 +742,18 @@ be_local_closure(widget_ctor_impl,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_string("introspect", 164638290, 10),
-    /* K1   */  be_nested_string("lv", 1529997255, 2),
-    /* K2   */  be_nested_string("lv_obj_class", -255311002, 12),
-    /* K3   */  be_nested_string("get_object_from_ptr", -1949948095, 19),
-    /* K4   */  be_nested_string("cb_obj", 1195696482, 6),
-    /* K5   */  be_nested_string("find", -1108310694, 4),
-    /* K6   */  be_nested_string("instance", 193386898, 8),
-    /* K7   */  be_nested_string("get", 1410115415, 3),
-    /* K8   */  be_nested_string("widget_constructor", -1751181362, 18),
+    /* K0   */  be_nested_str(introspect),
+    /* K1   */  be_nested_str(lv),
+    /* K2   */  be_nested_str(lv_obj_class),
+    /* K3   */  be_nested_str(get_object_from_ptr),
+    /* K4   */  be_nested_str(cb_obj),
+    /* K5   */  be_nested_str(find),
+    /* K6   */  be_nested_str(instance),
+    /* K7   */  be_nested_str(get),
+    /* K8   */  be_nested_str(widget_constructor),
     }),
-    (be_nested_const_str("widget_ctor_impl", 194252479, 16)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_widget_ctor_impl,
+    &be_const_str_solidified,
     ( &(const binstruction[29]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
@@ -798,28 +798,28 @@ be_local_class(LVGL_glob,
     NULL,
     be_nested_map(20,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("widget_ctor_cb", 876007560, 14, 9), be_const_var(4) },
-        { be_nested_key("get_object_from_ptr", -1949948095, 19, 4), be_const_closure(get_object_from_ptr_closure) },
-        { be_nested_key("cb_obj", 1195696482, 6, 7), be_const_var(0) },
-        { be_nested_key("widget_struct_by_class", -488593454, 22, -1), be_const_var(8) },
-        { be_nested_key("widget_event_impl", -2116536735, 17, -1), be_const_closure(widget_event_impl_closure) },
-        { be_nested_key("widget_dtor_cb", -1143421451, 14, 6), be_const_var(5) },
-        { be_nested_key("cb_event_closure", -466699971, 16, -1), be_const_var(1) },
-        { be_nested_key("lvgl_event_dispatch", 2104396622, 19, 16), be_const_closure(lvgl_event_dispatch_closure) },
-        { be_nested_key("widget_dtor_impl", 520430610, 16, -1), be_const_closure(widget_dtor_impl_closure) },
-        { be_nested_key("null_cb", -1961430836, 7, -1), be_const_var(3) },
-        { be_nested_key("register_obj", -312352526, 12, 8), be_const_closure(register_obj_closure) },
-        { be_nested_key("gen_cb", -1049739745, 6, -1), be_const_closure(gen_cb_closure) },
-        { be_nested_key("widget_struct_default", 781673633, 21, -1), be_const_var(7) },
-        { be_nested_key("deregister_obj", -385000303, 14, 12), be_const_closure(deregister_obj_closure) },
-        { be_nested_key("widget_event_cb", 1508466754, 15, -1), be_const_var(6) },
-        { be_nested_key("widget_cb", -1531384241, 9, -1), be_const_closure(widget_cb_closure) },
-        { be_nested_key("cb_do_nothing", 1488730702, 13, 3), be_const_closure(_anonymous__closure) },
-        { be_nested_key("event_cb", -1166269279, 8, -1), be_const_var(2) },
-        { be_nested_key("create_custom_widget", 1140594778, 20, -1), be_const_closure(create_custom_widget_closure) },
-        { be_nested_key("widget_ctor_impl", 194252479, 16, -1), be_const_closure(widget_ctor_impl_closure) },
+        { be_const_key(widget_ctor_cb, 9), be_const_var(4) },
+        { be_const_key(get_object_from_ptr, 4), be_const_closure(LVGL_glob_get_object_from_ptr_closure) },
+        { be_const_key(cb_obj, 7), be_const_var(0) },
+        { be_const_key(widget_struct_by_class, -1), be_const_var(8) },
+        { be_const_key(widget_event_impl, -1), be_const_closure(LVGL_glob_widget_event_impl_closure) },
+        { be_const_key(widget_dtor_cb, 6), be_const_var(5) },
+        { be_const_key(cb_event_closure, -1), be_const_var(1) },
+        { be_const_key(lvgl_event_dispatch, 16), be_const_closure(LVGL_glob_lvgl_event_dispatch_closure) },
+        { be_const_key(widget_dtor_impl, -1), be_const_closure(LVGL_glob_widget_dtor_impl_closure) },
+        { be_const_key(null_cb, -1), be_const_var(3) },
+        { be_const_key(register_obj, 8), be_const_closure(LVGL_glob_register_obj_closure) },
+        { be_const_key(gen_cb, -1), be_const_closure(LVGL_glob_gen_cb_closure) },
+        { be_const_key(widget_struct_default, -1), be_const_var(7) },
+        { be_const_key(deregister_obj, 12), be_const_closure(LVGL_glob_deregister_obj_closure) },
+        { be_const_key(widget_event_cb, -1), be_const_var(6) },
+        { be_const_key(widget_cb, -1), be_const_closure(LVGL_glob_widget_cb_closure) },
+        { be_const_key(cb_do_nothing, 3), be_const_closure(LVGL_glob__anonymous__closure) },
+        { be_const_key(event_cb, -1), be_const_var(2) },
+        { be_const_key(create_custom_widget, -1), be_const_closure(LVGL_glob_create_custom_widget_closure) },
+        { be_const_key(widget_ctor_impl, -1), be_const_closure(LVGL_glob_widget_ctor_impl_closure) },
     })),
-    (be_nested_const_str("LVGL_glob", 315437079, 9))
+    be_str_literal("LVGL_glob")
 );
 /*******************************************************************/
 

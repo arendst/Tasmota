@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 ## [10.1.0] 20211208
 - Release Noelle
 
+### Added
+- Berry added ``tcpclient``
 
 ## [10.0.0.4] 20211208
 ### Added

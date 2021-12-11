@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: page_autoconf_ctl
 ********************************************************************/
-be_local_closure(page_autoconf_ctl,   /* name */
+be_local_closure(Autoconf_page_autoconf_ctl,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     1,                          /* argc */
@@ -21,50 +21,50 @@ be_local_closure(page_autoconf_ctl,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[41]) {     /* constants */
-    /* K0   */  be_nested_string("webserver", 1572454038, 9),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("path", -2071507658, 4),
-    /* K3   */  be_nested_string("check_privileged_access", -602033328, 23),
-    /* K4   */  be_nested_string("has_arg", 424878688, 7),
-    /* K5   */  be_nested_string("reapply", -516027964, 7),
-    /* K6   */  be_nested_string("tasmota", 424643812, 7),
-    /* K7   */  be_nested_string("log", 1062293841, 3),
-    /* K8   */  be_nested_string("CFG: removing first time marker", 2125556683, 31),
+    /* K0   */  be_nested_str(webserver),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(path),
+    /* K3   */  be_nested_str(check_privileged_access),
+    /* K4   */  be_nested_str(has_arg),
+    /* K5   */  be_nested_str(reapply),
+    /* K6   */  be_nested_str(tasmota),
+    /* K7   */  be_nested_str(log),
+    /* K8   */  be_nested_str(CFG_X3A_X20removing_X20first_X20time_X20marker),
     /* K9   */  be_const_int(2),
-    /* K10  */  be_nested_string("clear_first_time", 632769909, 16),
-    /* K11  */  be_nested_string("redirect", 389758641, 8),
-    /* K12  */  be_nested_string("/?rst=", 580074707, 6),
-    /* K13  */  be_nested_string("zip", -1417514060, 3),
-    /* K14  */  be_nested_string("CFG: removing autoconf files", -280262326, 28),
-    /* K15  */  be_nested_string("delete_all_configs", -1912899718, 18),
-    /* K16  */  be_nested_string("arg", 1047474471, 3),
-    /* K17  */  be_nested_string("reset", 1695364032, 5),
-    /* K18  */  be_nested_string("format", -1180859054, 6),
-    /* K19  */  be_nested_string("https://raw.githubusercontent.com/tasmota/autoconf/main/%s/%s.autoconf", -1551440987, 70),
-    /* K20  */  be_nested_string("arch", -1342162999, 4),
-    /* K21  */  be_nested_string("CFG: downloading '%s'", 589480701, 21),
-    /* K22  */  be_nested_string("%s.autoconf", -734583772, 11),
-    /* K23  */  be_nested_string("webclient", -218578150, 9),
-    /* K24  */  be_nested_string("begin", 1748273790, 5),
-    /* K25  */  be_nested_string("GET", -1763262857, 3),
-    /* K26  */  be_nested_string("return code=%i", 2127454401, 14),
-    /* K27  */  be_nested_string("connection_error", 1358926260, 16),
-    /* K28  */  be_nested_string("write_file", -1117308417, 10),
-    /* K29  */  be_nested_string("close", 667630371, 5),
-    /* K30  */  be_nested_string("value_error", 773297791, 11),
-    /* K31  */  be_nested_string("Unknown command", 1830905432, 15),
-    /* K32  */  be_nested_string("CFG: Exception> '%s' - %s", 1228874553, 25),
-    /* K33  */  be_nested_string("content_start", -1357458227, 13),
-    /* K34  */  be_nested_string("Parameter error", -454925258, 15),
-    /* K35  */  be_nested_string("content_send_style", 1087907647, 18),
-    /* K36  */  be_nested_string("content_send", 1673733649, 12),
-    /* K37  */  be_nested_string("<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", -42402214, 59),
-    /* K38  */  be_nested_string("content_button", 1956476087, 14),
-    /* K39  */  be_nested_string("BUTTON_CONFIGURATION", 70820856, 20),
-    /* K40  */  be_nested_string("content_stop", 658554751, 12),
+    /* K10  */  be_nested_str(clear_first_time),
+    /* K11  */  be_nested_str(redirect),
+    /* K12  */  be_nested_str(_X2F_X3Frst_X3D),
+    /* K13  */  be_nested_str(zip),
+    /* K14  */  be_nested_str(CFG_X3A_X20removing_X20autoconf_X20files),
+    /* K15  */  be_nested_str(delete_all_configs),
+    /* K16  */  be_nested_str(arg),
+    /* K17  */  be_nested_str(reset),
+    /* K18  */  be_nested_str(format),
+    /* K19  */  be_nested_str(https_X3A_X2F_X2Fraw_X2Egithubusercontent_X2Ecom_X2Ftasmota_X2Fautoconf_X2Fmain_X2F_X25s_X2F_X25s_X2Eautoconf),
+    /* K20  */  be_nested_str(arch),
+    /* K21  */  be_nested_str(CFG_X3A_X20downloading_X20_X27_X25s_X27),
+    /* K22  */  be_nested_str(_X25s_X2Eautoconf),
+    /* K23  */  be_nested_str(webclient),
+    /* K24  */  be_nested_str(begin),
+    /* K25  */  be_nested_str(GET),
+    /* K26  */  be_nested_str(return_X20code_X3D_X25i),
+    /* K27  */  be_nested_str(connection_error),
+    /* K28  */  be_nested_str(write_file),
+    /* K29  */  be_nested_str(close),
+    /* K30  */  be_nested_str(value_error),
+    /* K31  */  be_nested_str(Unknown_X20command),
+    /* K32  */  be_nested_str(CFG_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+    /* K33  */  be_nested_str(content_start),
+    /* K34  */  be_nested_str(Parameter_X20error),
+    /* K35  */  be_nested_str(content_send_style),
+    /* K36  */  be_nested_str(content_send),
+    /* K37  */  be_nested_str(_X3Cp_X20style_X3D_X27width_X3A340px_X3B_X27_X3E_X3Cb_X3EException_X3A_X3C_X2Fb_X3E_X3Cbr_X3E_X27_X25s_X27_X3Cbr_X3E_X25s_X3C_X2Fp_X3E),
+    /* K38  */  be_nested_str(content_button),
+    /* K39  */  be_nested_str(BUTTON_CONFIGURATION),
+    /* K40  */  be_nested_str(content_stop),
     }),
-    (be_nested_const_str("page_autoconf_ctl", -1841585800, 17)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_page_autoconf_ctl,
+    &be_const_str_solidified,
     ( &(const binstruction[117]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -192,7 +192,7 @@ be_local_closure(page_autoconf_ctl,   /* name */
 /********************************************************************
 ** Solidified function: autoexec
 ********************************************************************/
-be_local_closure(autoexec,   /* name */
+be_local_closure(Autoconf_autoexec,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
@@ -203,41 +203,41 @@ be_local_closure(autoexec,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[32]) {     /* constants */
-    /* K0   */  be_nested_string("_archive", -290407892, 8),
-    /* K1   */  be_nested_string("path", -2071507658, 4),
-    /* K2   */  be_nested_string("#init.bat", -997372219, 9),
-    /* K3   */  be_nested_string("is_first_time", 275242384, 13),
-    /* K4   */  be_nested_string("exists", 1002329533, 6),
-    /* K5   */  be_nested_string("set_first_time", -1183719746, 14),
-    /* K6   */  be_nested_string("run_bat", -1758063998, 7),
-    /* K7   */  be_nested_string("tasmota", 424643812, 7),
-    /* K8   */  be_nested_string("log", 1062293841, 3),
-    /* K9   */  be_nested_string("CFG: 'init.bat' done, restarting", 1569670677, 32),
+    /* K0   */  be_nested_str(_archive),
+    /* K1   */  be_nested_str(path),
+    /* K2   */  be_nested_str(_X23init_X2Ebat),
+    /* K3   */  be_nested_str(is_first_time),
+    /* K4   */  be_nested_str(exists),
+    /* K5   */  be_nested_str(set_first_time),
+    /* K6   */  be_nested_str(run_bat),
+    /* K7   */  be_nested_str(tasmota),
+    /* K8   */  be_nested_str(log),
+    /* K9   */  be_nested_str(CFG_X3A_X20_X27init_X2Ebat_X27_X20done_X2C_X20restarting),
     /* K10  */  be_const_int(2),
-    /* K11  */  be_nested_string("cmd", -158181397, 3),
-    /* K12  */  be_nested_string("Restart 1", -790511441, 9),
-    /* K13  */  be_nested_string("#display.ini", 182218220, 12),
-    /* K14  */  be_nested_string("gpio", -1656812038, 4),
-    /* K15  */  be_nested_string("pin_used", -261112684, 8),
-    /* K16  */  be_nested_string("OPTION_A", 1133299440, 8),
-    /* K17  */  be_nested_string("display.ini", -1648793295, 11),
-    /* K18  */  be_nested_string("CFG: skipping 'display.ini' because already present in file-system", -329418032, 66),
-    /* K19  */  be_nested_string("display", 1164572437, 7),
-    /* K20  */  be_nested_string("r", -150190315, 1),
-    /* K21  */  be_nested_string("read", -824204347, 4),
-    /* K22  */  be_nested_string("close", 667630371, 5),
-    /* K23  */  be_nested_string("start", 1697318111, 5),
-    /* K24  */  be_nested_string("#autoexec.bat", -912076799, 13),
-    /* K25  */  be_nested_string("CFG: running ", -1816632762, 13),
+    /* K11  */  be_nested_str(cmd),
+    /* K12  */  be_nested_str(Restart_X201),
+    /* K13  */  be_nested_str(_X23display_X2Eini),
+    /* K14  */  be_nested_str(gpio),
+    /* K15  */  be_nested_str(pin_used),
+    /* K16  */  be_nested_str(OPTION_A),
+    /* K17  */  be_nested_str(display_X2Eini),
+    /* K18  */  be_nested_str(CFG_X3A_X20skipping_X20_X27display_X2Eini_X27_X20because_X20already_X20present_X20in_X20file_X2Dsystem),
+    /* K19  */  be_nested_str(display),
+    /* K20  */  be_nested_str(r),
+    /* K21  */  be_nested_str(read),
+    /* K22  */  be_nested_str(close),
+    /* K23  */  be_nested_str(start),
+    /* K24  */  be_nested_str(_X23autoexec_X2Ebat),
+    /* K25  */  be_nested_str(CFG_X3A_X20running_X20),
     /* K26  */  be_const_int(3),
-    /* K27  */  be_nested_string("CFG: ran  ", -715396824, 10),
-    /* K28  */  be_nested_string("#autoexec.be", 1181757091, 12),
-    /* K29  */  be_nested_string("CFG: loading ", -284605793, 13),
-    /* K30  */  be_nested_string("load", -435725847, 4),
-    /* K31  */  be_nested_string("CFG: loaded  ", -584693758, 13),
+    /* K27  */  be_nested_str(CFG_X3A_X20ran_X20_X20),
+    /* K28  */  be_nested_str(_X23autoexec_X2Ebe),
+    /* K29  */  be_nested_str(CFG_X3A_X20loading_X20),
+    /* K30  */  be_nested_str(load),
+    /* K31  */  be_nested_str(CFG_X3A_X20loaded_X20_X20),
     }),
-    (be_nested_const_str("autoexec", -618105405, 8)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_autoexec,
+    &be_const_str_solidified,
     ( &(const binstruction[107]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x4C080000,  //  0001  LDNIL	R2
@@ -355,7 +355,7 @@ be_local_closure(autoexec,   /* name */
 /********************************************************************
 ** Solidified function: run_bat
 ********************************************************************/
-be_local_closure(run_bat,   /* name */
+be_local_closure(Autoconf_run_bat,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
@@ -366,19 +366,19 @@ be_local_closure(run_bat,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_string("string", 398550328, 6),
-    /* K1   */  be_nested_string("r", -150190315, 1),
-    /* K2   */  be_nested_string("readline", 1212709927, 8),
+    /* K0   */  be_nested_str(string),
+    /* K1   */  be_nested_str(r),
+    /* K2   */  be_nested_str(readline),
     /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_string("\n", 252472541, 1),
-    /* K5   */  be_nested_string("tasmota", 424643812, 7),
-    /* K6   */  be_nested_string("cmd", -158181397, 3),
-    /* K7   */  be_nested_string("close", 667630371, 5),
-    /* K8   */  be_nested_string("format", -1180859054, 6),
-    /* K9   */  be_nested_string("CFG: could not run %s (%s - %s)", 1428829580, 31),
+    /* K4   */  be_nested_str(_X0A),
+    /* K5   */  be_nested_str(tasmota),
+    /* K6   */  be_nested_str(cmd),
+    /* K7   */  be_nested_str(close),
+    /* K8   */  be_nested_str(format),
+    /* K9   */  be_nested_str(CFG_X3A_X20could_X20not_X20run_X20_X25s_X20_X28_X25s_X20_X2D_X20_X25s_X29),
     }),
-    (be_nested_const_str("run_bat", -1758063998, 7)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_run_bat,
+    &be_const_str_solidified,
     ( &(const binstruction[54]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0x4C0C0000,  //  0001  LDNIL	R3
@@ -443,7 +443,7 @@ be_local_closure(run_bat,   /* name */
 /********************************************************************
 ** Solidified function: page_autoconf_mgr
 ********************************************************************/
-be_local_closure(page_autoconf_mgr,   /* name */
+be_local_closure(Autoconf_page_autoconf_mgr,   /* name */
   be_nested_proto(
     19,                          /* nstack */
     1,                          /* argc */
@@ -454,48 +454,48 @@ be_local_closure(page_autoconf_mgr,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[39]) {     /* constants */
-    /* K0   */  be_nested_string("webserver", 1572454038, 9),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("check_privileged_access", -602033328, 23),
-    /* K3   */  be_nested_string("content_start", -1357458227, 13),
-    /* K4   */  be_nested_string("Auto-configuration", 1665006109, 18),
-    /* K5   */  be_nested_string("content_send_style", 1087907647, 18),
-    /* K6   */  be_nested_string("content_send", 1673733649, 12),
-    /* K7   */  be_nested_string("<p><small>&nbsp;(This feature requires an internet connection)</small></p>", -1575700810, 74),
-    /* K8   */  be_nested_string("get_current_module_path", -1088293888, 23),
-    /* K9   */  be_nested_string("tr", 1195724803, 2),
-    /* K10  */  be_nested_string("get_current_module_name", -1915696556, 23),
-    /* K11  */  be_nested_string("_", -636741266, 1),
-    /* K12  */  be_nested_string(" ", 621580159, 1),
-    /* K13  */  be_nested_string("_error", 1132109656, 6),
-    /* K14  */  be_nested_string("&lt;Error: apply new or remove&gt;", -1439459347, 34),
-    /* K15  */  be_nested_string("&lt;None&gt;", -1692801798, 12),
-    /* K16  */  be_nested_string("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>", 842307168, 77),
-    /* K17  */  be_nested_string("format", -1180859054, 6),
-    /* K18  */  be_nested_string("<legend><b title='Autoconfiguration'>&nbsp;Current auto-configuration</b></legend>", -82466516, 82),
-    /* K19  */  be_nested_string("<p>Current configuration: </p><p><b>%s</b></p>", -179311535, 46),
-    /* K20  */  be_nested_string("<p><form id=reapply style='display: block;' action='/ac' method='post' ", 546993478, 71),
-    /* K21  */  be_nested_string("onsubmit='return confirm(\"This will cause a restart.\");'>", 232646018, 57),
-    /* K22  */  be_nested_string("<button name='reapply' class='button bgrn'>Re-apply current configuration</button>", -1147033080, 82),
-    /* K23  */  be_nested_string("</form></p>", -748395557, 11),
-    /* K24  */  be_nested_string("<p></p></fieldset><p></p>", 2052843416, 25),
-    /* K25  */  be_nested_string("<legend><b title='New autoconf'>&nbsp;Select new auto-configuration</b></legend>", 1926223891, 80),
-    /* K26  */  be_nested_string("<p><form id=zip style='display: block;' action='/ac' method='post' ", -261345130, 67),
-    /* K27  */  be_nested_string("onsubmit='return confirm(\"This will change the current configuration and cause a restart.\");'>", -502554737, 94),
-    /* K28  */  be_nested_string("<label>Choose a device configuration:</label><br>", 1336654704, 49),
-    /* K29  */  be_nested_string("<select name='zip'>", -47042760, 19),
-    /* K30  */  be_nested_string("load_templates", -781097163, 14),
-    /* K31  */  be_nested_string("<option value='reset'>&lt;Remove autoconf&gt;</option>", -300347541, 54),
-    /* K32  */  be_nested_string("<option value='%s'>%s</option>", 510303524, 30),
-    /* K33  */  be_nested_string("stop_iteration", -121173395, 14),
-    /* K34  */  be_nested_string("</select><p></p>", 1863865923, 16),
-    /* K35  */  be_nested_string("<button name='zipapply' class='button bgrn'>Apply configuration</button>", 1205771629, 72),
-    /* K36  */  be_nested_string("content_button", 1956476087, 14),
-    /* K37  */  be_nested_string("BUTTON_CONFIGURATION", 70820856, 20),
-    /* K38  */  be_nested_string("content_stop", 658554751, 12),
+    /* K0   */  be_nested_str(webserver),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(check_privileged_access),
+    /* K3   */  be_nested_str(content_start),
+    /* K4   */  be_nested_str(Auto_X2Dconfiguration),
+    /* K5   */  be_nested_str(content_send_style),
+    /* K6   */  be_nested_str(content_send),
+    /* K7   */  be_nested_str(_X3Cp_X3E_X3Csmall_X3E_X26nbsp_X3B_X28This_X20feature_X20requires_X20an_X20internet_X20connection_X29_X3C_X2Fsmall_X3E_X3C_X2Fp_X3E),
+    /* K8   */  be_nested_str(get_current_module_path),
+    /* K9   */  be_nested_str(tr),
+    /* K10  */  be_nested_str(get_current_module_name),
+    /* K11  */  be_nested_str(_),
+    /* K12  */  be_nested_str(_X20),
+    /* K13  */  be_nested_str(_error),
+    /* K14  */  be_nested_str(_X26lt_X3BError_X3A_X20apply_X20new_X20or_X20remove_X26gt_X3B),
+    /* K15  */  be_nested_str(_X26lt_X3BNone_X26gt_X3B),
+    /* K16  */  be_nested_str(_X3Cfieldset_X3E_X3Cstyle_X3E_X2Ebdis_X7Bbackground_X3A_X23888_X3B_X7D_X2Ebdis_X3Ahover_X7Bbackground_X3A_X23888_X3B_X7D_X3C_X2Fstyle_X3E),
+    /* K17  */  be_nested_str(format),
+    /* K18  */  be_nested_str(_X3Clegend_X3E_X3Cb_X20title_X3D_X27Autoconfiguration_X27_X3E_X26nbsp_X3BCurrent_X20auto_X2Dconfiguration_X3C_X2Fb_X3E_X3C_X2Flegend_X3E),
+    /* K19  */  be_nested_str(_X3Cp_X3ECurrent_X20configuration_X3A_X20_X3C_X2Fp_X3E_X3Cp_X3E_X3Cb_X3E_X25s_X3C_X2Fb_X3E_X3C_X2Fp_X3E),
+    /* K20  */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dreapply_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20action_X3D_X27_X2Fac_X27_X20method_X3D_X27post_X27_X20),
+    /* K21  */  be_nested_str(onsubmit_X3D_X27return_X20confirm_X28_X22This_X20will_X20cause_X20a_X20restart_X2E_X22_X29_X3B_X27_X3E),
+    /* K22  */  be_nested_str(_X3Cbutton_X20name_X3D_X27reapply_X27_X20class_X3D_X27button_X20bgrn_X27_X3ERe_X2Dapply_X20current_X20configuration_X3C_X2Fbutton_X3E),
+    /* K23  */  be_nested_str(_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
+    /* K24  */  be_nested_str(_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
+    /* K25  */  be_nested_str(_X3Clegend_X3E_X3Cb_X20title_X3D_X27New_X20autoconf_X27_X3E_X26nbsp_X3BSelect_X20new_X20auto_X2Dconfiguration_X3C_X2Fb_X3E_X3C_X2Flegend_X3E),
+    /* K26  */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dzip_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20action_X3D_X27_X2Fac_X27_X20method_X3D_X27post_X27_X20),
+    /* K27  */  be_nested_str(onsubmit_X3D_X27return_X20confirm_X28_X22This_X20will_X20change_X20the_X20current_X20configuration_X20and_X20cause_X20a_X20restart_X2E_X22_X29_X3B_X27_X3E),
+    /* K28  */  be_nested_str(_X3Clabel_X3EChoose_X20a_X20device_X20configuration_X3A_X3C_X2Flabel_X3E_X3Cbr_X3E),
+    /* K29  */  be_nested_str(_X3Cselect_X20name_X3D_X27zip_X27_X3E),
+    /* K30  */  be_nested_str(load_templates),
+    /* K31  */  be_nested_str(_X3Coption_X20value_X3D_X27reset_X27_X3E_X26lt_X3BRemove_X20autoconf_X26gt_X3B_X3C_X2Foption_X3E),
+    /* K32  */  be_nested_str(_X3Coption_X20value_X3D_X27_X25s_X27_X3E_X25s_X3C_X2Foption_X3E),
+    /* K33  */  be_nested_str(stop_iteration),
+    /* K34  */  be_nested_str(_X3C_X2Fselect_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
+    /* K35  */  be_nested_str(_X3Cbutton_X20name_X3D_X27zipapply_X27_X20class_X3D_X27button_X20bgrn_X27_X3EApply_X20configuration_X3C_X2Fbutton_X3E),
+    /* K36  */  be_nested_str(content_button),
+    /* K37  */  be_nested_str(BUTTON_CONFIGURATION),
+    /* K38  */  be_nested_str(content_stop),
     }),
-    (be_nested_const_str("page_autoconf_mgr", -651030265, 17)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_page_autoconf_mgr,
+    &be_const_str_solidified,
     ( &(const binstruction[124]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -630,7 +630,7 @@ be_local_closure(page_autoconf_mgr,   /* name */
 /********************************************************************
 ** Solidified function: get_current_module_name
 ********************************************************************/
-be_local_closure(get_current_module_name,   /* name */
+be_local_closure(Autoconf_get_current_module_name,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -641,11 +641,11 @@ be_local_closure(get_current_module_name,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_string("_archive", -290407892, 8),
+    /* K0   */  be_nested_str(_archive),
     /* K1   */  be_const_int(0),
     }),
-    (be_nested_const_str("get_current_module_name", -1915696556, 23)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_current_module_name,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x5405FFF5,  //  0000  LDINT	R1	-10
       0x40060201,  //  0001  CONNECT	R1	K1	R1
@@ -661,7 +661,7 @@ be_local_closure(get_current_module_name,   /* name */
 /********************************************************************
 ** Solidified function: delete_all_configs
 ********************************************************************/
-be_local_closure(delete_all_configs,   /* name */
+be_local_closure(Autoconf_delete_all_configs,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -672,18 +672,18 @@ be_local_closure(delete_all_configs,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_string("path", -2071507658, 4),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("listdir", 2005220720, 7),
-    /* K3   */  be_nested_string("/", 705468254, 1),
-    /* K4   */  be_nested_string("find", -1108310694, 4),
-    /* K5   */  be_nested_string(".autoconf", -1770288208, 9),
+    /* K0   */  be_nested_str(path),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(listdir),
+    /* K3   */  be_nested_str(_X2F),
+    /* K4   */  be_nested_str(find),
+    /* K5   */  be_nested_str(_X2Eautoconf),
     /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_string("remove", -611183107, 6),
-    /* K8   */  be_nested_string("stop_iteration", -121173395, 14),
+    /* K7   */  be_nested_str(remove),
+    /* K8   */  be_nested_str(stop_iteration),
     }),
-    (be_nested_const_str("delete_all_configs", -1912899718, 18)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_delete_all_configs,
+    &be_const_str_solidified,
     ( &(const binstruction[25]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -719,7 +719,7 @@ be_local_closure(delete_all_configs,   /* name */
 /********************************************************************
 ** Solidified function: set_first_time
 ********************************************************************/
-be_local_closure(set_first_time,   /* name */
+be_local_closure(Autoconf_set_first_time,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -730,12 +730,12 @@ be_local_closure(set_first_time,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("/.autoconf", -2082892903, 10),
-    /* K1   */  be_nested_string("w", -234078410, 1),
-    /* K2   */  be_nested_string("close", 667630371, 5),
+    /* K0   */  be_nested_str(_X2F_X2Eautoconf),
+    /* K1   */  be_nested_str(w),
+    /* K2   */  be_nested_str(close),
     }),
-    (be_nested_const_str("set_first_time", -1183719746, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_first_time,
+    &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x60040011,  //  0000  GETGBL	R1	G17
       0x58080000,  //  0001  LDCONST	R2	K0
@@ -753,7 +753,7 @@ be_local_closure(set_first_time,   /* name */
 /********************************************************************
 ** Solidified function: load_templates
 ********************************************************************/
-be_local_closure(load_templates,   /* name */
+be_local_closure(Autoconf_load_templates,   /* name */
   be_nested_proto(
     15,                          /* nstack */
     1,                          /* argc */
@@ -764,30 +764,30 @@ be_local_closure(load_templates,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
-    /* K0   */  be_nested_string("string", 398550328, 6),
-    /* K1   */  be_nested_string("json", 916562499, 4),
-    /* K2   */  be_nested_string("format", -1180859054, 6),
-    /* K3   */  be_nested_string("https://raw.githubusercontent.com/tasmota/autoconf/main/%s_manifest.json", -637415251, 72),
-    /* K4   */  be_nested_string("tasmota", 424643812, 7),
-    /* K5   */  be_nested_string("arch", -1342162999, 4),
-    /* K6   */  be_nested_string("log", 1062293841, 3),
-    /* K7   */  be_nested_string("CFG: loading '%s'", -2009661199, 17),
+    /* K0   */  be_nested_str(string),
+    /* K1   */  be_nested_str(json),
+    /* K2   */  be_nested_str(format),
+    /* K3   */  be_nested_str(https_X3A_X2F_X2Fraw_X2Egithubusercontent_X2Ecom_X2Ftasmota_X2Fautoconf_X2Fmain_X2F_X25s_manifest_X2Ejson),
+    /* K4   */  be_nested_str(tasmota),
+    /* K5   */  be_nested_str(arch),
+    /* K6   */  be_nested_str(log),
+    /* K7   */  be_nested_str(CFG_X3A_X20loading_X20_X27_X25s_X27),
     /* K8   */  be_const_int(3),
-    /* K9   */  be_nested_string("webclient", -218578150, 9),
-    /* K10  */  be_nested_string("begin", 1748273790, 5),
-    /* K11  */  be_nested_string("GET", -1763262857, 3),
-    /* K12  */  be_nested_string("CFG: return_code=%i", 2059897320, 19),
+    /* K9   */  be_nested_str(webclient),
+    /* K10  */  be_nested_str(begin),
+    /* K11  */  be_nested_str(GET),
+    /* K12  */  be_nested_str(CFG_X3A_X20return_code_X3D_X25i),
     /* K13  */  be_const_int(2),
-    /* K14  */  be_nested_string("get_string", -99119327, 10),
-    /* K15  */  be_nested_string("close", 667630371, 5),
-    /* K16  */  be_nested_string("load", -435725847, 4),
-    /* K17  */  be_nested_string("CFG: loaded '%s'", 1699028828, 16),
-    /* K18  */  be_nested_string("find", -1108310694, 4),
-    /* K19  */  be_nested_string("files", 1055342736, 5),
-    /* K20  */  be_nested_string("CFG: exception '%s' - '%s'", -199559383, 26),
+    /* K14  */  be_nested_str(get_string),
+    /* K15  */  be_nested_str(close),
+    /* K16  */  be_nested_str(load),
+    /* K17  */  be_nested_str(CFG_X3A_X20loaded_X20_X27_X25s_X27),
+    /* K18  */  be_nested_str(find),
+    /* K19  */  be_nested_str(files),
+    /* K20  */  be_nested_str(CFG_X3A_X20exception_X20_X27_X25s_X27_X20_X2D_X20_X27_X25s_X27),
     }),
-    (be_nested_const_str("load_templates", -781097163, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_load_templates,
+    &be_const_str_solidified,
     ( &(const binstruction[86]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -884,7 +884,7 @@ be_local_closure(load_templates,   /* name */
 /********************************************************************
 ** Solidified function: web_add_config_button
 ********************************************************************/
-be_local_closure(web_add_config_button,   /* name */
+be_local_closure(Autoconf_web_add_config_button,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -895,12 +895,12 @@ be_local_closure(web_add_config_button,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("webserver", 1572454038, 9),
-    /* K1   */  be_nested_string("content_send", 1673733649, 12),
-    /* K2   */  be_nested_string("<p><form id=ac action='ac' style='display: block;' method='get'><button>&#129668; Auto-configuration</button></form></p>", 452285201, 120),
+    /* K0   */  be_nested_str(webserver),
+    /* K1   */  be_nested_str(content_send),
+    /* K2   */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3E_X26_X23129668_X3B_X20Auto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
     }),
-    (be_nested_const_str("web_add_config_button", 639674325, 21)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_web_add_config_button,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
@@ -916,7 +916,7 @@ be_local_closure(web_add_config_button,   /* name */
 /********************************************************************
 ** Solidified function: is_first_time
 ********************************************************************/
-be_local_closure(is_first_time,   /* name */
+be_local_closure(Autoconf_is_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -927,12 +927,12 @@ be_local_closure(is_first_time,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("path", -2071507658, 4),
-    /* K1   */  be_nested_string("exists", 1002329533, 6),
-    /* K2   */  be_nested_string("/.autoconf", -2082892903, 10),
+    /* K0   */  be_nested_str(path),
+    /* K1   */  be_nested_str(exists),
+    /* K2   */  be_nested_str(_X2F_X2Eautoconf),
     }),
-    (be_nested_const_str("is_first_time", 275242384, 13)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_is_first_time,
+    &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
@@ -951,7 +951,7 @@ be_local_closure(is_first_time,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(Autoconf_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
@@ -962,26 +962,26 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_literal("path"),
-    /* K1   */  be_nested_str_literal("string"),
-    /* K2   */  be_nested_str_literal("listdir"),
-    /* K3   */  be_nested_str_literal("/"),
-    /* K4   */  be_nested_str_literal("tasmota"),
-    /* K5   */  be_nested_str_literal("add_driver"),
+    /* K0   */  be_nested_str(path),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(listdir),
+    /* K3   */  be_nested_str(_X2F),
+    /* K4   */  be_nested_str(tasmota),
+    /* K5   */  be_nested_str(add_driver),
     /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_str_literal("find"),
-    /* K8   */  be_nested_str_literal(".autoconf"),
-    /* K9   */  be_nested_str_literal("format"),
-    /* K10  */  be_nested_str_literal("CFG: multiple autoconf files found, aborting ('%s' + '%s')"),
-    /* K11  */  be_nested_str_literal("_error"),
+    /* K7   */  be_nested_str(find),
+    /* K8   */  be_nested_str(_X2Eautoconf),
+    /* K9   */  be_nested_str(format),
+    /* K10  */  be_nested_str(CFG_X3A_X20multiple_X20autoconf_X20files_X20found_X2C_X20aborting_X20_X28_X27_X25s_X27_X20_X2B_X20_X27_X25s_X27_X29),
+    /* K11  */  be_nested_str(_error),
     /* K12  */  be_const_int(1),
-    /* K13  */  be_nested_str_literal("log"),
-    /* K14  */  be_nested_str_literal("CFG: no '*.autoconf' file found"),
+    /* K13  */  be_nested_str(log),
+    /* K14  */  be_nested_str(CFG_X3A_X20no_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found),
     /* K15  */  be_const_int(2),
-    /* K16  */  be_nested_str_literal("_archive"),
+    /* K16  */  be_nested_str(_archive),
     }),
-    (be_nested_const_str("init", 380752755, 4)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[51]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -1043,7 +1043,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: preinit
 ********************************************************************/
-be_local_closure(preinit,   /* name */
+be_local_closure(Autoconf_preinit,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1054,19 +1054,19 @@ be_local_closure(preinit,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_string("_archive", -290407892, 8),
-    /* K1   */  be_nested_string("path", -2071507658, 4),
-    /* K2   */  be_nested_string("#preinit.be", 687035716, 11),
-    /* K3   */  be_nested_string("exists", 1002329533, 6),
-    /* K4   */  be_nested_string("tasmota", 424643812, 7),
-    /* K5   */  be_nested_string("log", 1062293841, 3),
-    /* K6   */  be_nested_string("CFG: loading ", -284605793, 13),
+    /* K0   */  be_nested_str(_archive),
+    /* K1   */  be_nested_str(path),
+    /* K2   */  be_nested_str(_X23preinit_X2Ebe),
+    /* K3   */  be_nested_str(exists),
+    /* K4   */  be_nested_str(tasmota),
+    /* K5   */  be_nested_str(log),
+    /* K6   */  be_nested_str(CFG_X3A_X20loading_X20),
     /* K7   */  be_const_int(3),
-    /* K8   */  be_nested_string("load", -435725847, 4),
-    /* K9   */  be_nested_string("CFG: loaded  ", -584693758, 13),
+    /* K8   */  be_nested_str(load),
+    /* K9   */  be_nested_str(CFG_X3A_X20loaded_X20_X20),
     }),
-    (be_nested_const_str("preinit", -1572960196, 7)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_preinit,
+    &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x4C080000,  //  0001  LDNIL	R2
@@ -1103,7 +1103,7 @@ be_local_closure(preinit,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(reset,   /* name */
+be_local_closure(Autoconf_reset,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
@@ -1114,22 +1114,22 @@ be_local_closure(reset,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_string("path", -2071507658, 4),
-    /* K1   */  be_nested_string("string", 398550328, 6),
-    /* K2   */  be_nested_string("listdir", 2005220720, 7),
-    /* K3   */  be_nested_string("/", 705468254, 1),
+    /* K0   */  be_nested_str(path),
+    /* K1   */  be_nested_str(string),
+    /* K2   */  be_nested_str(listdir),
+    /* K3   */  be_nested_str(_X2F),
     /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_string("find", -1108310694, 4),
-    /* K6   */  be_nested_string(".autoconf", -1770288208, 9),
-    /* K7   */  be_nested_string("remove", -611183107, 6),
-    /* K8   */  be_nested_string("format", -1180859054, 6),
-    /* K9   */  be_nested_string("CFG: removed file '%s'", 2048602473, 22),
+    /* K5   */  be_nested_str(find),
+    /* K6   */  be_nested_str(_X2Eautoconf),
+    /* K7   */  be_nested_str(remove),
+    /* K8   */  be_nested_str(format),
+    /* K9   */  be_nested_str(CFG_X3A_X20removed_X20file_X20_X27_X25s_X27),
     /* K10  */  be_const_int(1),
-    /* K11  */  be_nested_string("_archive", -290407892, 8),
-    /* K12  */  be_nested_string("_error", 1132109656, 6),
+    /* K11  */  be_nested_str(_archive),
+    /* K12  */  be_nested_str(_error),
     }),
-    (be_nested_const_str("reset", 1695364032, 5)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_reset,
+    &be_const_str_solidified,
     ( &(const binstruction[35]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
@@ -1175,7 +1175,7 @@ be_local_closure(reset,   /* name */
 /********************************************************************
 ** Solidified function: web_add_handler
 ********************************************************************/
-be_local_closure(web_add_handler,   /* name */
+be_local_closure(Autoconf_web_add_handler,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1196,10 +1196,10 @@ be_local_closure(web_add_handler,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_string("page_autoconf_mgr", -651030265, 17),
+        /* K0   */  be_nested_str(page_autoconf_mgr),
         }),
-        (be_nested_const_str("<lambda>", 607256038, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
         ( &(const binstruction[ 4]) {  /* code */
           0x68000000,  //  0000  GETUPV	R0	U0
           0x8C000100,  //  0001  GETMET	R0	R0	K0
@@ -1219,10 +1219,10 @@ be_local_closure(web_add_handler,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_string("page_autoconf_ctl", -1841585800, 17),
+        /* K0   */  be_nested_str(page_autoconf_ctl),
         }),
-        (be_nested_const_str("<lambda>", 607256038, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
         ( &(const binstruction[ 4]) {  /* code */
           0x68000000,  //  0000  GETUPV	R0	U0
           0x8C000100,  //  0001  GETMET	R0	R0	K0
@@ -1233,14 +1233,14 @@ be_local_closure(web_add_handler,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_string("webserver", 1572454038, 9),
-    /* K1   */  be_nested_string("on", 1630810064, 2),
-    /* K2   */  be_nested_string("/ac", -390315318, 3),
-    /* K3   */  be_nested_string("HTTP_GET", 1722467738, 8),
-    /* K4   */  be_nested_string("HTTP_POST", 1999554144, 9),
+    /* K0   */  be_nested_str(webserver),
+    /* K1   */  be_nested_str(on),
+    /* K2   */  be_nested_str(_X2Fac),
+    /* K3   */  be_nested_str(HTTP_GET),
+    /* K4   */  be_nested_str(HTTP_POST),
     }),
-    (be_nested_const_str("web_add_handler", -304792334, 15)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_web_add_handler,
+    &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
@@ -1264,7 +1264,7 @@ be_local_closure(web_add_handler,   /* name */
 /********************************************************************
 ** Solidified function: clear_first_time
 ********************************************************************/
-be_local_closure(clear_first_time,   /* name */
+be_local_closure(Autoconf_clear_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -1275,12 +1275,12 @@ be_local_closure(clear_first_time,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("path", -2071507658, 4),
-    /* K1   */  be_nested_string("remove", -611183107, 6),
-    /* K2   */  be_nested_string("/.autoconf", -2082892903, 10),
+    /* K0   */  be_nested_str(path),
+    /* K1   */  be_nested_str(remove),
+    /* K2   */  be_nested_str(_X2F_X2Eautoconf),
     }),
-    (be_nested_const_str("clear_first_time", 632769909, 16)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_clear_first_time,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
@@ -1296,7 +1296,7 @@ be_local_closure(clear_first_time,   /* name */
 /********************************************************************
 ** Solidified function: get_current_module_path
 ********************************************************************/
-be_local_closure(get_current_module_path,   /* name */
+be_local_closure(Autoconf_get_current_module_path,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -1307,10 +1307,10 @@ be_local_closure(get_current_module_path,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("_archive", -290407892, 8),
+    /* K0   */  be_nested_str(_archive),
     }),
-    (be_nested_const_str("get_current_module_path", -1088293888, 23)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_current_module_path,
+    &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x80040200,  //  0001  RET	1	R1
@@ -1328,26 +1328,26 @@ be_local_class(Autoconf,
     NULL,
     be_nested_map(18,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("page_autoconf_ctl", -1841585800, 17, -1), be_const_closure(page_autoconf_ctl_closure) },
-        { be_nested_key("autoexec", -618105405, 8, -1), be_const_closure(autoexec_closure) },
-        { be_nested_key("run_bat", -1758063998, 7, 6), be_const_closure(run_bat_closure) },
-        { be_nested_key("page_autoconf_mgr", -651030265, 17, -1), be_const_closure(page_autoconf_mgr_closure) },
-        { be_nested_key("get_current_module_name", -1915696556, 23, -1), be_const_closure(get_current_module_name_closure) },
-        { be_nested_key("delete_all_configs", -1912899718, 18, 13), be_const_closure(delete_all_configs_closure) },
-        { be_nested_key("set_first_time", -1183719746, 14, -1), be_const_closure(set_first_time_closure) },
-        { be_nested_key("load_templates", -781097163, 14, -1), be_const_closure(load_templates_closure) },
-        { be_nested_key("_archive", -290407892, 8, -1), be_const_var(0) },
-        { be_nested_key("web_add_config_button", 639674325, 21, -1), be_const_closure(web_add_config_button_closure) },
-        { be_nested_key("is_first_time", 275242384, 13, -1), be_const_closure(is_first_time_closure) },
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
-        { be_nested_key("preinit", -1572960196, 7, 5), be_const_closure(preinit_closure) },
-        { be_nested_key("reset", 1695364032, 5, 17), be_const_closure(reset_closure) },
-        { be_nested_key("web_add_handler", -304792334, 15, 4), be_const_closure(web_add_handler_closure) },
-        { be_nested_key("clear_first_time", 632769909, 16, 11), be_const_closure(clear_first_time_closure) },
-        { be_nested_key("_error", 1132109656, 6, -1), be_const_var(1) },
-        { be_nested_key("get_current_module_path", -1088293888, 23, -1), be_const_closure(get_current_module_path_closure) },
+        { be_const_key(page_autoconf_ctl, -1), be_const_closure(Autoconf_page_autoconf_ctl_closure) },
+        { be_const_key(autoexec, -1), be_const_closure(Autoconf_autoexec_closure) },
+        { be_const_key(run_bat, 17), be_const_closure(Autoconf_run_bat_closure) },
+        { be_const_key(page_autoconf_mgr, -1), be_const_closure(Autoconf_page_autoconf_mgr_closure) },
+        { be_const_key(get_current_module_path, 13), be_const_closure(Autoconf_get_current_module_path_closure) },
+        { be_const_key(preinit, -1), be_const_closure(Autoconf_preinit_closure) },
+        { be_const_key(clear_first_time, -1), be_const_closure(Autoconf_clear_first_time_closure) },
+        { be_const_key(load_templates, -1), be_const_closure(Autoconf_load_templates_closure) },
+        { be_const_key(_archive, -1), be_const_var(0) },
+        { be_const_key(web_add_config_button, -1), be_const_closure(Autoconf_web_add_config_button_closure) },
+        { be_const_key(is_first_time, -1), be_const_closure(Autoconf_is_first_time_closure) },
+        { be_const_key(web_add_handler, -1), be_const_closure(Autoconf_web_add_handler_closure) },
+        { be_const_key(delete_all_configs, 4), be_const_closure(Autoconf_delete_all_configs_closure) },
+        { be_const_key(reset, 5), be_const_closure(Autoconf_reset_closure) },
+        { be_const_key(get_current_module_name, 11), be_const_closure(Autoconf_get_current_module_name_closure) },
+        { be_const_key(init, 6), be_const_closure(Autoconf_init_closure) },
+        { be_const_key(_error, -1), be_const_var(1) },
+        { be_const_key(set_first_time, -1), be_const_closure(Autoconf_set_first_time_closure) },
     })),
-    (be_nested_const_str("Autoconf", 984011268, 8))
+    be_str_literal("Autoconf")
 );
 
 /********************************************************************
@@ -1366,8 +1366,8 @@ be_local_closure(_anonymous_,   /* name */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_Autoconf),
     }),
-    (be_nested_const_str("_anonymous_", 1957281476, 11)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str__anonymous_,
+    &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x58040000,  //  0000  LDCONST	R1	K0
       0xB4000000,  //  0001  CLASS	K0
@@ -1387,7 +1387,7 @@ be_local_module(autoconf,
     "autoconf",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(_anonymous__closure) },
+        { be_const_key(init, -1), be_const_closure(_anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(autoconf);
