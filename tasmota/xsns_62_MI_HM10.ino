@@ -268,25 +268,6 @@ struct mi_sensor_t{
   union {
       uint8_t bat; // many values seem to be hard-coded garbage (LYWSD0x, GCD1)
   };
-/*  union {
-    struct {
-      uint8_t has_impedance;
-      uint8_t impedance_stabilized;
-      uint8_t weight_stabilized;
-      uint8_t weight_removed;
-      char weight_unit[4]; // kg, lbs, jin or empty when unknown
-      float weight;
-      uint16_t impedance;
-      struct {
-        uint16_t	year;
-        uint8_t		month;
-        uint8_t		day;
-        uint8_t		hour;
-        uint8_t		minute;
-        uint8_t		second;
-      } datetime;
-    };
-  } scale;*/
 };
 
 struct {
@@ -359,7 +340,6 @@ const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s" " Impedance" "{m}%u{e}";
 const char HTTP_MISCALE_WEIGHT_REMOVED[] PROGMEM = "{s}%s" " Weight removed" "{m}%s{e}";
 const char HTTP_MISCALE_STABILIZED[] PROGMEM = "{s}%s" " Stabilized" "{m}%s{e}";
 
-
 void (*const HM10_Commands[])(void) PROGMEM = { &CmndHM10Scan, &CmndHM10AT, &CmndHM10Period, &CmndHM10Baud, &CmndHM10Time, &CmndHM10Auto, &CmndHM10Page, &CmndHM10Beacon, &CmndHM10Block, &CmndHM10Option };
 
 
@@ -409,8 +389,8 @@ const char kHM10DeviceType9[] PROGMEM = "YEERC";
 const char kHM10DeviceType10[] PROGMEM ="MHOC401";
 const char kHM10DeviceType11[] PROGMEM ="MHOC303";
 const char kHM10DeviceType12[] PROGMEM ="ATC";
-const char kHM10DeviceType13[] PROGMEM ="MISCALEV1";
-const char kHM10DeviceType14[] PROGMEM ="MISCALEV2";
+const char kHM10DeviceType13[] PROGMEM ="MSCALE1";
+const char kHM10DeviceType14[] PROGMEM ="MSCALE2";
 
 const char * kHM10DeviceType[] PROGMEM = {kHM10DeviceType1,kHM10DeviceType2,kHM10DeviceType3,kHM10DeviceType4,kHM10DeviceType5,kHM10DeviceType6,kHM10DeviceType7,kHM10DeviceType8,kHM10DeviceType9,kHM10DeviceType10,kHM10DeviceType11,kHM10DeviceType12,kHM10DeviceType13,kHM10DeviceType14};
 
@@ -2123,15 +2103,15 @@ void HM10Show(bool json)
   #endif //USE_HOME_ASSISTANT
         ){
           HM10ShowContinuation(&commaflg);
-          ResponseAppend_P(PSTR("\"weight_removed\":%u"), MIBLEsensors[i].weight_removed);
+          ResponseAppend_P(PSTR("\"wgh_removed\":%u"), MIBLEsensors[i].weight_removed);
           HM10ShowContinuation(&commaflg);
-          ResponseAppend_P(PSTR("\"weight_stabilized\":%u"), MIBLEsensors[i].weight_stabilized);
+          ResponseAppend_P(PSTR("\"wgh_stabilized\":%u"), MIBLEsensors[i].weight_stabilized);
           HM10ShowContinuation(&commaflg);
-          ResponseAppend_P(PSTR("\"weight_unit\":\"%s\""), MIBLEsensors[i].weight_unit);
+          ResponseAppend_P(PSTR("\"wgh_unit\":\"%s\""), MIBLEsensors[i].weight_unit);
           HM10ShowContinuation(&commaflg);
           ResponseAppend_P(PSTR("\"" D_JSON_WEIGHT "\":%*_f"),Settings->flag2.weight_resolution, &MIBLEsensors[i].weight);
           HM10ShowContinuation(&commaflg);
-          ResponseAppend_P(PSTR("\"datetime\":\"%02u/%02u/%04u %02u:%02u:%02u\"")
+          ResponseAppend_P(PSTR("\"dtime\":\"%02u/%02u/%04u %02u:%02u:%02u\"")
                   , MIBLEsensors[i].datetime.day
                   , MIBLEsensors[i].datetime.month
                   , MIBLEsensors[i].datetime.year
@@ -2145,7 +2125,7 @@ void HM10Show(bool json)
           HM10ShowContinuation(&commaflg);
           ResponseAppend_P(PSTR("\"impedance\":%u"), MIBLEsensors[i].has_impedance ? MIBLEsensors[i].impedance : 0);
           HM10ShowContinuation(&commaflg);
-          ResponseAppend_P(PSTR("\"impedance_stabilized\":%u"), MIBLEsensors[i].impedance_stabilized);
+          ResponseAppend_P(PSTR("\"imp_stabilized\":%u"), MIBLEsensors[i].impedance_stabilized);
       }
 
       if (HM10.option.showRSSI) {
