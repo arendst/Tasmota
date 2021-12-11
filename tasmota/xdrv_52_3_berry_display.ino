@@ -36,8 +36,8 @@ Renderer *Init_uDisplay(const char *desc);
 \*********************************************************************************************/
 extern "C" {
 
-  int be_disp_start(bvm *vm);
-  int be_disp_start(bvm *vm) {
+  int be_ntv_display_start(bvm *vm);
+  int be_ntv_display_start(bvm *vm) {
 #ifdef USE_UNIVERSAL_DISPLAY
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_isstring(vm, 1)) {

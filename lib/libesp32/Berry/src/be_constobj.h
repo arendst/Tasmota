@@ -227,6 +227,12 @@ const bntvmodule be_native_module(_module) = {                  \
     .data = _items                                              \
   }
 
+#define be_nested_str(_name_)                                   \
+  {                                                             \
+    { .s=((bstring*)&be_const_str_##_name_) },                  \
+    BE_STRING                                                   \
+  }
+
 #define be_nested_str_literal(_str)                             \
   {                                                             \
     { .s=(be_nested_const_str(_str, 0, sizeof(_str)-1 ))        \

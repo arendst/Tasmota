@@ -1260,46 +1260,46 @@ be_local_closure(getbits,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_string("value_error", 773297791, 11),
-    /* K2   */  be_nested_string("length in bits must be between 0 and 32", -1710458168, 39),
+    /* K1   */  be_nested_str(value_error),
+    /* K2   */  be_nested_str(length_X20in_X20bits_X20must_X20be_X20between_X200_X20and_X2032),
     /* K3   */  be_const_int(3),
     /* K4   */  be_const_int(1),
     }),
-    (be_nested_const_str("getbits", -1200798317, 7)),
-    (be_nested_const_str("input", -103256197, 5)),
+    &be_const_str_getbits,
+    &be_const_str_solidified,
     ( &(const binstruction[32]) {  /* code */
-      0x180C0500,  //  0000  LE  R3  R2  K0
-      0x740E0002,  //  0001  JMPT  R3  #0005
-      0x540E001F,  //  0002  LDINT  R3  32
-      0x240C0403,  //  0003  GT  R3  R2  R3
-      0x780E0000,  //  0004  JMPF  R3  #0006
-      0xB0060302,  //  0005  RAISE  1  K1  K2
-      0x580C0000,  //  0006  LDCONST  R3  K0
-      0x3C100303,  //  0007  SHR  R4  R1  K3
-      0x54160007,  //  0008  LDINT  R5  8
-      0x10040205,  //  0009  MOD  R1  R1  R5
-      0x58140000,  //  000A  LDCONST  R5  K0
-      0x24180500,  //  000B  GT  R6  R2  K0
-      0x781A0011,  //  000C  JMPF  R6  #001F
-      0x541A0007,  //  000D  LDINT  R6  8
-      0x04180C01,  //  000E  SUB  R6  R6  R1
-      0x241C0C02,  //  000F  GT  R7  R6  R2
-      0x781E0000,  //  0010  JMPF  R7  #0012
-      0x5C180400,  //  0011  MOVE  R6  R2
-      0x381E0806,  //  0012  SHL  R7  K4  R6
-      0x041C0F04,  //  0013  SUB  R7  R7  K4
-      0x381C0E01,  //  0014  SHL  R7  R7  R1
-      0x94200004,  //  0015  GETIDX  R8  R0  R4
-      0x2C201007,  //  0016  AND  R8  R8  R7
-      0x3C201001,  //  0017  SHR  R8  R8  R1
-      0x38201005,  //  0018  SHL  R8  R8  R5
-      0x300C0608,  //  0019  OR  R3  R3  R8
-      0x00140A06,  //  001A  ADD  R5  R5  R6
-      0x04080406,  //  001B  SUB  R2  R2  R6
-      0x58040000,  //  001C  LDCONST  R1  K0
-      0x00100904,  //  001D  ADD  R4  R4  K4
-      0x7001FFEB,  //  001E  JMP    #000B
-      0x80040600,  //  001F  RET  1  R3
+      0x180C0500,  //  0000  LE	R3	R2	K0
+      0x740E0002,  //  0001  JMPT	R3	#0005
+      0x540E001F,  //  0002  LDINT	R3	32
+      0x240C0403,  //  0003  GT	R3	R2	R3
+      0x780E0000,  //  0004  JMPF	R3	#0006
+      0xB0060302,  //  0005  RAISE	1	K1	K2
+      0x580C0000,  //  0006  LDCONST	R3	K0
+      0x3C100303,  //  0007  SHR	R4	R1	K3
+      0x54160007,  //  0008  LDINT	R5	8
+      0x10040205,  //  0009  MOD	R1	R1	R5
+      0x58140000,  //  000A  LDCONST	R5	K0
+      0x24180500,  //  000B  GT	R6	R2	K0
+      0x781A0011,  //  000C  JMPF	R6	#001F
+      0x541A0007,  //  000D  LDINT	R6	8
+      0x04180C01,  //  000E  SUB	R6	R6	R1
+      0x241C0C02,  //  000F  GT	R7	R6	R2
+      0x781E0000,  //  0010  JMPF	R7	#0012
+      0x5C180400,  //  0011  MOVE	R6	R2
+      0x381E0806,  //  0012  SHL	R7	K4	R6
+      0x041C0F04,  //  0013  SUB	R7	R7	K4
+      0x381C0E01,  //  0014  SHL	R7	R7	R1
+      0x94200004,  //  0015  GETIDX	R8	R0	R4
+      0x2C201007,  //  0016  AND	R8	R8	R7
+      0x3C201001,  //  0017  SHR	R8	R8	R1
+      0x38201005,  //  0018  SHL	R8	R8	R5
+      0x300C0608,  //  0019  OR	R3	R3	R8
+      0x00140A06,  //  001A  ADD	R5	R5	R6
+      0x04080406,  //  001B  SUB	R2	R2	R6
+      0x58040000,  //  001C  LDCONST	R1	K0
+      0x00100904,  //  001D  ADD	R4	R4	K4
+      0x7001FFEB,  //  001E  JMP		#000B
+      0x80040600,  //  001F  RET	1	R3
     })
   )
 );
@@ -1320,51 +1320,51 @@ be_local_closure(setbits,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_string("value_error", 773297791, 11),
-    /* K2   */  be_nested_string("length in bits must be between 0 and 32", -1710458168, 39),
+    /* K1   */  be_nested_str(value_error),
+    /* K2   */  be_nested_str(length_X20in_X20bits_X20must_X20be_X20between_X200_X20and_X2032),
     /* K3   */  be_const_int(3),
     /* K4   */  be_const_int(1),
     }),
-    (be_nested_const_str("setbits", -1532559129, 7)),
-    (be_nested_const_str("input", -103256197, 5)),
+    &be_const_str_setbits,
+    &be_const_str_solidified,
     ( &(const binstruction[37]) {  /* code */
-      0x14100500,  //  0000  LT  R4  R2  K0
-      0x74120002,  //  0001  JMPT  R4  #0005
-      0x5412001F,  //  0002  LDINT  R4  32
-      0x24100404,  //  0003  GT  R4  R2  R4
-      0x78120000,  //  0004  JMPF  R4  #0006
-      0xB0060302,  //  0005  RAISE  1  K1  K2
-      0x60100009,  //  0006  GETGBL  R4  G9
-      0x5C140600,  //  0007  MOVE  R5  R3
-      0x7C100200,  //  0008  CALL  R4  1
-      0x5C0C0800,  //  0009  MOVE  R3  R4
-      0x3C100303,  //  000A  SHR  R4  R1  K3
-      0x54160007,  //  000B  LDINT  R5  8
-      0x10040205,  //  000C  MOD  R1  R1  R5
-      0x24140500,  //  000D  GT  R5  R2  K0
-      0x78160014,  //  000E  JMPF  R5  #0024
-      0x54160007,  //  000F  LDINT  R5  8
-      0x04140A01,  //  0010  SUB  R5  R5  R1
-      0x24180A02,  //  0011  GT  R6  R5  R2
-      0x781A0000,  //  0012  JMPF  R6  #0014
-      0x5C140400,  //  0013  MOVE  R5  R2
-      0x381A0805,  //  0014  SHL  R6  K4  R5
-      0x04180D04,  //  0015  SUB  R6  R6  K4
-      0x541E00FE,  //  0016  LDINT  R7  255
-      0x38200C01,  //  0017  SHL  R8  R6  R1
-      0x041C0E08,  //  0018  SUB  R7  R7  R8
-      0x94200004,  //  0019  GETIDX  R8  R0  R4
-      0x2C201007,  //  001A  AND  R8  R8  R7
-      0x2C240606,  //  001B  AND  R9  R3  R6
-      0x38241201,  //  001C  SHL  R9  R9  R1
-      0x30201009,  //  001D  OR  R8  R8  R9
-      0x98000808,  //  001E  SETIDX  R0  R4  R8
-      0x3C0C0605,  //  001F  SHR  R3  R3  R5
-      0x04080405,  //  0020  SUB  R2  R2  R5
-      0x58040000,  //  0021  LDCONST  R1  K0
-      0x00100904,  //  0022  ADD  R4  R4  K4
-      0x7001FFE8,  //  0023  JMP    #000D
-      0x80040000,  //  0024  RET  1  R0
+      0x14100500,  //  0000  LT	R4	R2	K0
+      0x74120002,  //  0001  JMPT	R4	#0005
+      0x5412001F,  //  0002  LDINT	R4	32
+      0x24100404,  //  0003  GT	R4	R2	R4
+      0x78120000,  //  0004  JMPF	R4	#0006
+      0xB0060302,  //  0005  RAISE	1	K1	K2
+      0x60100009,  //  0006  GETGBL	R4	G9
+      0x5C140600,  //  0007  MOVE	R5	R3
+      0x7C100200,  //  0008  CALL	R4	1
+      0x5C0C0800,  //  0009  MOVE	R3	R4
+      0x3C100303,  //  000A  SHR	R4	R1	K3
+      0x54160007,  //  000B  LDINT	R5	8
+      0x10040205,  //  000C  MOD	R1	R1	R5
+      0x24140500,  //  000D  GT	R5	R2	K0
+      0x78160014,  //  000E  JMPF	R5	#0024
+      0x54160007,  //  000F  LDINT	R5	8
+      0x04140A01,  //  0010  SUB	R5	R5	R1
+      0x24180A02,  //  0011  GT	R6	R5	R2
+      0x781A0000,  //  0012  JMPF	R6	#0014
+      0x5C140400,  //  0013  MOVE	R5	R2
+      0x381A0805,  //  0014  SHL	R6	K4	R5
+      0x04180D04,  //  0015  SUB	R6	R6	K4
+      0x541E00FE,  //  0016  LDINT	R7	255
+      0x38200C01,  //  0017  SHL	R8	R6	R1
+      0x041C0E08,  //  0018  SUB	R7	R7	R8
+      0x94200004,  //  0019  GETIDX	R8	R0	R4
+      0x2C201007,  //  001A  AND	R8	R8	R7
+      0x2C240606,  //  001B  AND	R9	R3	R6
+      0x38241201,  //  001C  SHL	R9	R9	R1
+      0x30201009,  //  001D  OR	R8	R8	R9
+      0x98000808,  //  001E  SETIDX	R0	R4	R8
+      0x3C0C0605,  //  001F  SHR	R3	R3	R5
+      0x04080405,  //  0020  SUB	R2	R2	R5
+      0x58040000,  //  0021  LDCONST	R1	K0
+      0x00100904,  //  0022  ADD	R4	R4	K4
+      0x7001FFE8,  //  0023  JMP		#000D
+      0x80040000,  //  0024  RET	1	R0
     })
   )
 );

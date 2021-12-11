@@ -3,7 +3,7 @@
 static be_define_const_map_slots(m_libglobal_map) {
     { be_const_key(member, -1), be_const_func(m_findglobal) },
     { be_const_key(setmember, 0), be_const_func(m_setglobal) },
-    { be_const_key(opt_call, -1), be_const_func(m_globals) },
+    { be_const_key(_X28_X29, -1), be_const_func(m_globals) },
 };
 
 static be_define_const_map(
