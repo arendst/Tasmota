@@ -1855,10 +1855,12 @@ bool isChannelGammaCorrected(uint32_t channel) {
   if (channel >= Light.subtype) { return false; }     // Out of range
 #ifdef ESP8266
   if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
+#else
+  if (Settings->flag4.pwm_ct_mode) {
+#endif  // ESP8266
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return false; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return false; }   // PMW reserved for CT
   }
-#endif  // ESP8266
   return true;
 }
 
@@ -1866,10 +1868,12 @@ bool isChannelGammaCorrected(uint32_t channel) {
 bool isChannelCT(uint32_t channel) {
 #ifdef ESP8266
   if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
+#else
+  if (Settings->flag4.pwm_ct_mode) {
+#endif  // ESP8266
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
   }
-#endif  // ESP8266
   return false;
 }
 
@@ -2159,9 +2163,12 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
 
   // Now we know ct_10 and white_bri10 (gamma corrected if needed)
 
-#ifdef ESP8266
   if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
+#ifdef ESP8266
     if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+#else
+    if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+#endif  // ESP8266
       pwm_ct = true;
       // Xiaomi Philips bulbs follow a different scheme:
       // channel 0=intensity, channel1=temperature
@@ -2170,7 +2177,6 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
       return false;     // avoid any interference
     }
   }
-#endif  // ESP8266
 
   // Now see if we need to mix RGB and  White
   // Valid only for LST_RGBW, LST_RGBCW, SetOption105 1, and white is zero (see doc)
