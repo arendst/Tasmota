@@ -22,7 +22,7 @@ extern int wc_tcp_readbytes(bvm *vm);
 
 #include "../generate/be_fixed_be_class_tcpclient.h"
 
-void be_load_webclient_lib(bvm *vm) {
+void be_load_tcpclient_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_tcpclient);
     be_setglobal(vm, "tcpclient");
     be_pop(vm, 1);

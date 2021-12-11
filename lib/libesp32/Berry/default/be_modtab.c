@@ -135,6 +135,7 @@ extern void be_load_I2C_Driver_class(bvm *vm);
 extern void be_load_AXP192_class(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
 extern void be_load_webclient_lib(bvm *vm);
+extern void be_load_tcpclient_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
 extern void be_load_Leds_ntv_class(bvm *vm);
 extern void be_load_Leds_class(bvm *vm);
@@ -189,6 +190,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif // USE_ENERGY_SENSOR
 #ifdef USE_WEBCLIENT
     be_load_webclient_lib(vm);
+    be_load_tcpclient_lib(vm);
 #endif // USE_WEBCLIENT
 #if defined(USE_ONEWIRE) || defined(USE_DS18x20)
     be_load_onewirelib(vm);
