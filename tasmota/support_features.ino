@@ -452,8 +452,8 @@ void ResponseAppendFeatures(void)
 #ifdef USE_SHUTTER
     feature5 |= 0x00000100;  // xdrv_027_shutter.ino
 #endif
-#if defined(USE_I2C) && defined(USE_PCF8574)
-    feature5 |= 0x00000200;  // xdrv_028_pcf8574.ino
+#if defined(USE_I2C) && (defined(USE_PCF8574) || defined(USE_TCA6408A))
+    feature5 |= 0x00000200;  // xdrv_028_pcf8574.ino or  xdrv_28_tca6408a.ino
 #endif
 #if defined(USE_ENERGY_SENSOR) && defined(USE_DDSU666)
     feature5 |= 0x00000400;  // xnrg_11_ddsu666.ino
