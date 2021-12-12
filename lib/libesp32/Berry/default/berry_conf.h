@@ -65,20 +65,14 @@
  **/
 #define BE_DEBUG_VAR_INFO               0
 
-/* Macro: BE_USE_OBSERVABILITY_HOOK
- * Use the obshook function to report low-level actions.
- * Default: 0
- **/
-#define BE_USE_OBSERVABILITY_HOOK       1
-
-/* Macro: BE_USE_OBSERVABILITY_HOOK
+/* Macro: BE_USE_PERF_COUNTERS
  * Use the obshook function to report low-level actions.
  * Default: 0
  **/
 #define BE_USE_PERF_COUNTERS            1
 
 /* Macro: BE_VM_OBSERVABILITY_SAMPLING
- * If BE_USE_OBSERVABILITY_HOOK == 1 and BE_USE_PERF_COUNTERS == 1
+ * If BE_USE_PERF_COUNTERS == 1
  * then the observability hook is called regularly in the VM loop
  * allowing to stop infinite loops or too-long running code.
  * The value is a power of 2.

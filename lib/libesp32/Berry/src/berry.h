@@ -402,6 +402,7 @@ typedef void(*bntvhook)(bvm *vm, bhookinfo *info);
 
 typedef void(*bobshook)(bvm *vm, int event, ...);
 enum beobshookevents {
+  BE_OBS_PCALL_ERROR,     /* called when be_callp() returned an error, most likely an exception */
   BE_OBS_GC_START,        /* start of GC, arg = allocated size */
   BE_OBS_GC_END,          /* end of GC, arg = allocated size */
   BE_OBS_VM_HEARTBEAT,    /* VM heartbeat called every million instructions */
