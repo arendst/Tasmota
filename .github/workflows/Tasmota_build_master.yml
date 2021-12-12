@@ -10,6 +10,7 @@ on:
 jobs:
   base-images:
     runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
     strategy:
       matrix:
@@ -49,6 +50,7 @@ jobs:
 
   language-images:
     runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
     strategy:
       matrix:
