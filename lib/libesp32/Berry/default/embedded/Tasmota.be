@@ -21,7 +21,6 @@ class Tasmota
   var _timers
   var _ccmd
   var _drivers
-  var _cb
   var wire1
   var wire2
   var cmd_res         # store the command result, nil if disables, true if capture enabled, contains return value
@@ -520,28 +519,11 @@ class Tasmota
     end
   end
 
-
-  #- dispatch callback number n, with parameters v0,v1,v2,v3 -#
-  def cb_dispatch(n,v0,v1,v2,v3)
-    if self._cb == nil return 0 end
-    var f = self._cb.find(n)
-    if f != nil
-      return f(v0,v1,v2,v3)
-    end
-    return 0
-  end
-
   #- generate a new C callback and record the associated Berry closure -#
   def gen_cb(f)
-    if self._cb == nil self._cb = {} end  # create map if not already initialized
-    for i:0..19
-      if self._cb.find(i) == nil
-        #- free slot -#
-        self._cb[i] = f
-        return self._get_cb(i)
-      end
-    end
-    raise "internal_error", "No callback available"
+    # DEPRECATED
+    import cb
+    return cb.gen_cb(f)
   end
 
   #- convert hue/sat to rgb -#
