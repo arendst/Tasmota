@@ -36,6 +36,8 @@ jobs:
           - tasmota32solo1
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: master
       - name: Set up Python
         uses: actions/setup-python@v1
       - name: Install dependencies
@@ -58,6 +60,8 @@ jobs:
         language: [ AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: master
       - name: Set up Python
         uses: actions/setup-python@v1
       - name: Install dependencies
