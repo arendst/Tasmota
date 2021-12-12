@@ -16,7 +16,6 @@ extern int l_arch(bvm *vm);
 extern int l_publish(bvm *vm);
 extern int l_publish_result(bvm *vm);
 extern int l_cmd(bvm *vm);
-extern int l_get_cb(bvm *vm);
 extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
 extern int l_timereached(bvm *vm);
@@ -384,7 +383,7 @@ be_local_closure(Tasmota_try_rule,   /* name */
 ********************************************************************/
 be_local_closure(Tasmota_gen_cb,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
+    6,                          /* nstack */
     2,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -392,52 +391,18 @@ be_local_closure(Tasmota_gen_cb,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(_cb),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str(find),
-    /* K3   */  be_nested_str(_get_cb),
-    /* K4   */  be_nested_str(stop_iteration),
-    /* K5   */  be_nested_str(internal_error),
-    /* K6   */  be_nested_str(No_X20callback_X20available),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(cb),
+    /* K1   */  be_nested_str(gen_cb),
     }),
     &be_const_str_gen_cb,
     &be_const_str_solidified,
-    ( &(const binstruction[34]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x4C0C0000,  //  0001  LDNIL	R3
-      0x1C080403,  //  0002  EQ	R2	R2	R3
-      0x780A0002,  //  0003  JMPF	R2	#0007
-      0x60080013,  //  0004  GETGBL	R2	G19
-      0x7C080000,  //  0005  CALL	R2	0
-      0x90020002,  //  0006  SETMBR	R0	K0	R2
-      0x60080010,  //  0007  GETGBL	R2	G16
-      0x540E0012,  //  0008  LDINT	R3	19
-      0x400E0203,  //  0009  CONNECT	R3	K1	R3
-      0x7C080200,  //  000A  CALL	R2	1
-      0xA8020010,  //  000B  EXBLK	0	#001D
-      0x5C0C0400,  //  000C  MOVE	R3	R2
-      0x7C0C0000,  //  000D  CALL	R3	0
-      0x88100100,  //  000E  GETMBR	R4	R0	K0
-      0x8C100902,  //  000F  GETMET	R4	R4	K2
-      0x5C180600,  //  0010  MOVE	R6	R3
-      0x7C100400,  //  0011  CALL	R4	2
-      0x4C140000,  //  0012  LDNIL	R5
-      0x1C100805,  //  0013  EQ	R4	R4	R5
-      0x78120006,  //  0014  JMPF	R4	#001C
-      0x88100100,  //  0015  GETMBR	R4	R0	K0
-      0x98100601,  //  0016  SETIDX	R4	R3	R1
-      0x8C100103,  //  0017  GETMET	R4	R0	K3
-      0x5C180600,  //  0018  MOVE	R6	R3
-      0x7C100400,  //  0019  CALL	R4	2
-      0xA8040001,  //  001A  EXBLK	1	1
-      0x80040800,  //  001B  RET	1	R4
-      0x7001FFEE,  //  001C  JMP		#000C
-      0x58080004,  //  001D  LDCONST	R2	K4
-      0xAC080200,  //  001E  CATCH	R2	1	0
-      0xB0080000,  //  001F  RAISE	2	R0	R0
-      0xB0060B06,  //  0020  RAISE	1	K5	K6
-      0x80000000,  //  0021  RET	0
+    ( &(const binstruction[ 5]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0x8C0C0501,  //  0001  GETMET	R3	R2	K1
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x7C0C0400,  //  0003  CALL	R3	2
+      0x80040600,  //  0004  RET	1	R3
     })
   )
 );
@@ -1606,53 +1571,6 @@ be_local_closure(Tasmota_exec_rules,   /* name */
 
 
 /********************************************************************
-** Solidified function: cb_dispatch
-********************************************************************/
-be_local_closure(Tasmota_cb_dispatch,   /* name */
-  be_nested_proto(
-    12,                          /* nstack */
-    6,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(_cb),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str(find),
-    }),
-    &be_const_str_cb_dispatch,
-    &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x88180100,  //  0000  GETMBR	R6	R0	K0
-      0x4C1C0000,  //  0001  LDNIL	R7
-      0x1C180C07,  //  0002  EQ	R6	R6	R7
-      0x781A0000,  //  0003  JMPF	R6	#0005
-      0x80060200,  //  0004  RET	1	K1
-      0x88180100,  //  0005  GETMBR	R6	R0	K0
-      0x8C180D02,  //  0006  GETMET	R6	R6	K2
-      0x5C200200,  //  0007  MOVE	R8	R1
-      0x7C180400,  //  0008  CALL	R6	2
-      0x4C1C0000,  //  0009  LDNIL	R7
-      0x201C0C07,  //  000A  NE	R7	R6	R7
-      0x781E0006,  //  000B  JMPF	R7	#0013
-      0x5C1C0C00,  //  000C  MOVE	R7	R6
-      0x5C200400,  //  000D  MOVE	R8	R2
-      0x5C240600,  //  000E  MOVE	R9	R3
-      0x5C280800,  //  000F  MOVE	R10	R4
-      0x5C2C0A00,  //  0010  MOVE	R11	R5
-      0x7C1C0800,  //  0011  CALL	R7	4
-      0x80040E00,  //  0012  RET	1	R7
-      0x80060200,  //  0013  RET	1	K1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: hs2rgb
 ********************************************************************/
 be_local_closure(Tasmota_hs2rgb,   /* name */
@@ -2072,7 +1990,6 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _timers, var
     _ccmd, var
     _drivers, var
-    _cb, var
     wire1, var
     wire2, var
     global, var
@@ -2094,7 +2011,6 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     publish, func(l_publish)
     publish_result, func(l_publish_result)
     _cmd, func(l_cmd)
-    _get_cb, func(l_get_cb)
     get_option, func(l_getoption)
     millis, func(l_millis)
     time_reached, func(l_timereached)
@@ -2155,7 +2071,6 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     hs2rgb, closure(Tasmota_hs2rgb_closure)
 
-    cb_dispatch, closure(Tasmota_cb_dispatch_closure)
     gen_cb, closure(Tasmota_gen_cb_closure)
 
     get_light, closure(Tasmota_get_light_closure)

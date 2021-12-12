@@ -544,10 +544,7 @@ void be_gc_collect(bvm *vm)
     vm->counter_gc_kept = 0;
     vm->counter_gc_freed = 0;
 #endif
-#if BE_USE_OBSERVABILITY_HOOK
-    if (vm->obshook != NULL)
-        (*vm->obshook)(vm, BE_OBS_GC_START, vm->gc.usage);
-#endif
+    if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_GC_START, vm->gc.usage);
     /* step 1: set root-set reference objects to unscanned */
     premark_internal(vm); /* object internal the VM */
     premark_global(vm); /* global objects */
@@ -564,8 +561,5 @@ void be_gc_collect(bvm *vm)
     reset_fixedlist(vm);
     /* step 5: calculate the next GC threshold */
     vm->gc.threshold = next_threshold(vm->gc);
-#if BE_USE_OBSERVABILITY_HOOK
-    if (vm->obshook != NULL)
-        (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage, vm->counter_gc_kept, vm->counter_gc_freed);
-#endif
+    if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage, vm->counter_gc_kept, vm->counter_gc_freed);
 }

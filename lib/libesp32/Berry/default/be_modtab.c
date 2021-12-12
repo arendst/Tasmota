@@ -23,6 +23,10 @@ be_extern_native_module(solidify);
 be_extern_native_module(introspect);
 be_extern_native_module(strict);
 
+/* Berry extensions */
+#include "be_mapping.h"
+be_extern_native_module(cb);
+
 /* Tasmota specific */
 be_extern_native_module(python_compat);
 be_extern_native_module(re);
@@ -85,6 +89,10 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #if BE_USE_STRICT_MODULE
     &be_native_module(strict),
 #endif
+
+    /* Berry extensions */
+    &be_native_module(cb),
+
     /* user-defined modules register start */
     
     &be_native_module(python_compat),

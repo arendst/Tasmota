@@ -101,9 +101,7 @@ struct bvm {
     blist *registry; /* registry list */
     struct bgc gc;
     bbyte compopt; /* compilation options */
-#if BE_USE_OBSERVABILITY_HOOK
     bobshook obshook;
-#endif
 #if BE_USE_PERF_COUNTERS
     uint32_t counter_ins; /* instructions counter */
     uint32_t counter_enter; /* counter for times the VM was entered */
