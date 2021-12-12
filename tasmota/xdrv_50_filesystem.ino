@@ -294,7 +294,23 @@ bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
     return false;
   }
 
-  file.write(buf, len);
+//  This will timeout on ESP32-webcam
+//  file.write(buf, len);
+
+  uint32_t count = len / 512;
+  uint32_t chunk = len / count;
+  for (uint32_t i = 0; i < count; i++) {
+    file.write(buf + (i * chunk), chunk);
+    // do actually wait a little to allow ESP32 tasks to tick
+    // fixes task timeout in ESP32Solo1 style unicore code and webcam.
+    delay(10);
+    OsWatchLoop();
+  }
+  uint32_t left = len % count;
+  if (left) {
+    file.write(buf + (count * chunk), left);
+  }
+
   file.close();
   return true;
 }

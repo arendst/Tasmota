@@ -876,6 +876,10 @@ void WcStreamControl() {
   WcSetup(Settings->webcam_config.resolution);
 }
 
+bool WcStreamActive(void) {
+  return (Wc.stream_active);
+}
+
 /*********************************************************************************************/
 
 
