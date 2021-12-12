@@ -41,10 +41,10 @@
 struct TCA6408A {
   int error;
   uint8_t pin[64];
-  uint8_t address[MAX_PCF8574];
-  uint8_t pin_mask[MAX_PCF8574] = { 0 };
+  uint8_t address[MAX_TCA6408A];
+  uint8_t pin_mask[MAX_TCA6408A] = { 0 };
 #ifdef USE_PCF8574_MQTTINPUT
-  uint8_t last_input[MAX_PCF8574] = { 0 };
+  uint8_t last_input[MAX_TCA6408A] = { 0 };
 #endif
   uint8_t max_connected_ports = 0;        // Max numbers of devices comming from TCA6408A modules
   uint8_t max_devices = 0;                // Max numbers of TCA6408A modules
@@ -56,6 +56,8 @@ uint8_t Tca6408aRead(uint8_t idx, uint8_t reg)
 {
   Wire.beginTransmission(Tca6408a.address[idx]);
   Wire.write(reg);  // reg 
+  Wire.endTransmission();
+
   Wire.requestFrom(Tca6408a.address[idx],(uint8_t)1);
   return Wire.read();
 }
@@ -73,7 +75,7 @@ uint8_t Tca6408aRead_Output(uint8_t idx)     {return(Tca6408aRead(idx, TCA6408_O
 uint8_t Tca6408aRead_Inversion(uint8_t idx)  {return(Tca6408aRead(idx, TCA6408_POLARITY_INVERSION));}
 uint8_t Tca6408aRead_Direction(uint8_t idx)  {return(Tca6408aRead(idx, TCA6408_CONFIGURATION));}
 
-uint8_t Tca6408aWrite_Input(uint8_t idx)     {return(Tca6408aWrite(idx, TCA6408_INPUT));}
+//uint8_t Tca6408aWrite_Input(uint8_t idx)     {return(Tca6408aWrite(idx, TCA6408_INPUT));}
 uint8_t Tca6408aWrite_Output(uint8_t idx)    {return(Tca6408aWrite(idx, TCA6408_OUTPUT));}
 uint8_t Tca6408aWrite_Inversion(uint8_t idx) {return(Tca6408aWrite(idx, TCA6408_POLARITY_INVERSION));}
 uint8_t Tca6408aWrite_Direction(uint8_t idx) {return(Tca6408aWrite(idx, TCA6408_CONFIGURATION));}
@@ -102,7 +104,8 @@ void Tca6408aSwitchRelay(void)
 void Tca6408aInit(void)
 {
   uint8_t tca6408a_address = TCA6408A_ADDR;
-  while (Tca6408a.max_devices < MAX_PCF8574 +1) {
+  while ((Tca6408a.max_devices < MAX_TCA6408A) &&  //
+         (tca6408a_address <= TCA6408A_ADDR+1)) {
 
 #ifdef USE_MCP230xx_ADDR
     if (USE_MCP230xx_ADDR == tca6408a_address) {
@@ -111,7 +114,7 @@ void Tca6408aInit(void)
     }
 #endif
 
-  //  AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), tca6408a_address);
+    // AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for TCA6408A"), tca6408a_address);
 
     if (I2cSetDevice(tca6408a_address)) {
       Tca6408a.type = true;
@@ -161,7 +164,7 @@ void Tca6408aInit(void)
       }
     }
     //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Settings->power=0x%08X, TasmotaGlobal.power=0x%08X"), Settings->power, TasmotaGlobal.power);
-    AddLog(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Tca6408a.max_devices, Tca6408a.max_connected_ports);
+    AddLog(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, TCA6408A output ports %d"), Tca6408a.max_devices, Tca6408a.max_connected_ports);
   }
 }
 
