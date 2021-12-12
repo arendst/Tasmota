@@ -1060,7 +1060,13 @@ newframe: /* a new call frame */
             if (!IGET_RA(ins)) {
                 be_except_block_setup(vm);
                 if (be_setjmp(vm->errjmp->b)) {
+                    bvalue *top = vm->top;
+                    bvalue e1 = top[0];
+                    bvalue e2 = top[1];
                     be_except_block_resume(vm);
+                    top = vm->top;
+                    top[0] = e1;
+                    top[1] = e2;
                     goto newframe;
                 }
                 reg = vm->reg;
