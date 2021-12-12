@@ -131,14 +131,14 @@ extern void be_load_onewirelib(bvm *vm);
 extern void be_load_serial_lib(bvm *vm);
 extern void be_load_Driver_class(bvm *vm);
 extern void be_load_Timer_class(bvm *vm);
-extern void be_load_driver_i2c_lib(bvm *vm);
+extern void be_load_I2C_Driver_class(bvm *vm);
 extern void be_load_AXP192_class(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
 extern void be_load_webclient_lib(bvm *vm);
+extern void be_load_tcpclient_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
 extern void be_load_Leds_ntv_class(bvm *vm);
 extern void be_load_Leds_class(bvm *vm);
-extern void be_load_Leds_matrix_class(bvm *vm);
 extern void be_load_Leds_animator_class(bvm *vm);
 
 extern void be_load_ctypes_lib(bvm *vm);
@@ -182,7 +182,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif
 #ifdef USE_I2C
     be_load_wirelib(vm);
-    be_load_driver_i2c_lib(vm);
+    be_load_I2C_Driver_class(vm);
     be_load_AXP192_class(vm);
 #endif // USE_I2C
 #ifdef USE_ENERGY_SENSOR
@@ -190,6 +190,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif // USE_ENERGY_SENSOR
 #ifdef USE_WEBCLIENT
     be_load_webclient_lib(vm);
+    be_load_tcpclient_lib(vm);
 #endif // USE_WEBCLIENT
 #if defined(USE_ONEWIRE) || defined(USE_DS18x20)
     be_load_onewirelib(vm);
@@ -197,7 +198,6 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #ifdef USE_WS2812
     be_load_Leds_ntv_class(vm);
     be_load_Leds_class(vm);
-    be_load_Leds_matrix_class(vm);
     be_load_Leds_animator_class(vm);
 #endif // USE_WS2812
 #ifdef USE_I2S_AUDIO_BERRY

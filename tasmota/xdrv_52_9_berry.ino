@@ -126,7 +126,6 @@ void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
   } else {
     be_dumpstack(vm);
   }
-  be_pop(vm, top);
 }
 
 // void callBerryMqttData(void) {
@@ -214,7 +213,7 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(vm, type != nullptr ? type : "");
       be_pushstring(vm, cmd != nullptr ? cmd : "");
       be_pushint(vm, idx);
-      be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
+      be_pushstring(vm, payload != nullptr ? payload : "");  // empty json
       BrTimeoutStart();
       if (data_len > 0) {
         be_pushbytes(vm, payload, data_len);    // if data_len is set, we also push raw bytes
@@ -226,6 +225,7 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       BrTimeoutReset();
       if (ret != 0) {
         BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
+        be_pop_all(berry.vm);             // clear Berry stack
         return ret;
       }
       be_pop(vm, 5);
@@ -332,17 +332,20 @@ void BerryInit(void) {
     ret_code1 = be_loadstring(berry.vm, berry_prog);
     if (ret_code1 != 0) {
       BerryDumpErrorAndClear(berry.vm, false);
+      be_pop_all(berry.vm);             // clear Berry stack
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code loaded, RAM used=%u"), be_gc_memcount(berry.vm));
     ret_code2 = be_pcall(berry.vm, 0);
     if (ret_code1 != 0) {
       BerryDumpErrorAndClear(berry.vm, false);
+      be_pop_all(berry.vm);             // clear Berry stack
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
     if (be_top(berry.vm) > 1) {
       BerryDumpErrorAndClear(berry.vm, false);
+      be_pop_all(berry.vm);             // clear Berry stack
     } else {
       be_pop(berry.vm, 1);
     }
@@ -387,6 +390,7 @@ void BrLoad(const char * script_name) {
     BrTimeoutStart();
     if (be_pcall(berry.vm, 1) != 0) {
       BerryDumpErrorAndClear(berry.vm, false);
+      be_pop_all(berry.vm);             // clear Berry stack
       return;
     }
     BrTimeoutReset();
@@ -492,6 +496,7 @@ void BrREPLRun(char * cmd) {
     }
     if (BE_EXCEPTION == ret_code) {
       BerryDumpErrorAndClear(berry.vm, true);
+      be_pop_all(berry.vm);             // clear Berry stack
       // be_dumpstack(berry.vm);
       // char exception_s[120];
       // ext_snprintf_P(exception_s, sizeof(exception_s), PSTR("%s: %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
@@ -695,7 +700,7 @@ void HandleBerryConsoleRefresh(void)
     WSContentFlush();
 
     for (auto & l: berry.log.log) {
-      _WSContentSend((char*) l);
+      _WSContentSend(l.getBuffer());
     }
 
     berry.log.reset();
@@ -811,8 +816,9 @@ bool Xdrv52(uint8_t function)
     case FUNC_EVERY_SECOND:
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
-    // case FUNC_SET_POWER:
-    //   break;
+    case FUNC_SET_DEVICE_POWER:
+      result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
+      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {

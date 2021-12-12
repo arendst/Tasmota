@@ -184,6 +184,9 @@ struct TasmotaGlobal_t {
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
   uint8_t discovery_counter;                // Delayed discovery counter
+#ifdef USE_PWM_DIMMER
+  uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
+#endif  // USE_PWM_DIMMER
 
 #ifndef SUPPORT_IF_STATEMENT
   uint8_t backlog_index;                    // Command backlog index

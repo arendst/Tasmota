@@ -14,11 +14,9 @@
 
 #ifndef COMPONENTS_NIMBLEREMOTEDESCRIPTOR_H_
 #define COMPONENTS_NIMBLEREMOTEDESCRIPTOR_H_
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteCharacteristic.h"
 
@@ -81,6 +79,5 @@ private:
     NimBLERemoteCharacteristic* m_pRemoteCharacteristic;
 };
 
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
 #endif /* COMPONENTS_NIMBLEREMOTEDESCRIPTOR_H_ */

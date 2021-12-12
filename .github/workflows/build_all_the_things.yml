@@ -3,6 +3,7 @@ name: Tasmota CI
 on:
   workflow_dispatch:
   pull_request:
+    branches: development
     paths:
       - '**.c'
       - '**.cpp'

@@ -134,9 +134,15 @@ static int item_range(bvm *vm)
     /* get index range */
     be_getmember(vm, 2, "__lower__");
     lower = be_toint(vm, -1);
+    if (lower < 0) {
+        lower = size + lower;
+    }
     be_pop(vm, 1);
     be_getmember(vm, 2, "__upper__");
     upper = be_toint(vm, -1);
+    if (upper < 0) {
+        upper = size + upper;
+    }
     be_pop(vm, 1);
     /* protection scope */
     upper = upper < size ? upper : size - 1;

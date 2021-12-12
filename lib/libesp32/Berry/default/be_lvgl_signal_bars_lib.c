@@ -10,7 +10,7 @@
 /********************************************************************
 ** Solidified function: set_percentage
 ********************************************************************/
-be_local_closure(set_percentage,   /* name */
+be_local_closure(lv_signal_bars_set_percentage,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -21,12 +21,12 @@ be_local_closure(set_percentage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_string("percentage", -1756136011, 10),
+    /* K0   */  be_nested_str(percentage),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_string("invalidate", -1645232368, 10),
+    /* K2   */  be_nested_str(invalidate),
     }),
-    (be_nested_const_str("set_percentage", -1342944572, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_set_percentage,
+    &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x540E0013,  //  0001  LDINT	R3	20
@@ -55,7 +55,7 @@ be_local_closure(set_percentage,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(lv_signal_bars_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -66,19 +66,19 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_string("_lvgl", -1605747813, 5),
-    /* K1   */  be_nested_string("create_custom_widget", 1140594778, 20),
-    /* K2   */  be_nested_string("percentage", -1756136011, 10),
-    /* K3   */  be_nested_string("p1", -1605446022, 2),
-    /* K4   */  be_nested_string("lv", 1529997255, 2),
-    /* K5   */  be_nested_string("point", 414084241, 5),
-    /* K6   */  be_nested_string("p2", -1622223641, 2),
-    /* K7   */  be_nested_string("area", -1693507260, 4),
-    /* K8   */  be_nested_string("line_dsc", -200476318, 8),
-    /* K9   */  be_nested_string("draw_line_dsc", -74291093, 13),
+    /* K0   */  be_nested_str(_lvgl),
+    /* K1   */  be_nested_str(create_custom_widget),
+    /* K2   */  be_nested_str(percentage),
+    /* K3   */  be_nested_str(p1),
+    /* K4   */  be_nested_str(lv),
+    /* K5   */  be_nested_str(point),
+    /* K6   */  be_nested_str(p2),
+    /* K7   */  be_nested_str(area),
+    /* K8   */  be_nested_str(line_dsc),
+    /* K9   */  be_nested_str(draw_line_dsc),
     }),
-    ((bstring*) &be_const_str_init),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[24]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -113,7 +113,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: widget_event
 ********************************************************************/
-be_local_closure(widget_event,   /* name */
+be_local_closure(lv_signal_bars_widget_event,   /* name */
   be_nested_proto(
     23,                          /* nstack */
     3,                          /* argc */
@@ -134,8 +134,8 @@ be_local_closure(widget_event,   /* name */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_const_int(1),
         }),
-        (be_nested_const_str("atleast1", 1956331672, 8)),
-        ((bstring*) &be_const_str_input),
+        &be_const_str_atleast1,
+        &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x28040100,  //  0000  GE	R1	R0	K0
           0x78060001,  //  0001  JMPF	R1	#0004
@@ -148,46 +148,46 @@ be_local_closure(widget_event,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[37]) {     /* constants */
-    /* K0   */  be_nested_string("lv", 1529997255, 2),
-    /* K1   */  be_nested_string("obj_event_base", 1624064363, 14),
-    /* K2   */  be_nested_string("RES_OK", 1233817284, 6),
-    /* K3   */  be_nested_string("code", -114201356, 4),
-    /* K4   */  be_nested_string("get_height", -723211773, 10),
-    /* K5   */  be_nested_string("get_width", -1001549996, 9),
+    /* K0   */  be_nested_str(lv),
+    /* K1   */  be_nested_str(obj_event_base),
+    /* K2   */  be_nested_str(RES_OK),
+    /* K3   */  be_nested_str(code),
+    /* K4   */  be_nested_str(get_height),
+    /* K5   */  be_nested_str(get_width),
     /* K6   */  be_const_int(3),
     /* K7   */  be_const_int(2),
-    /* K8   */  be_nested_string("EVENT_DRAW_MAIN", 1955620614, 15),
-    /* K9   */  be_nested_string("area", -1693507260, 4),
-    /* K10  */  be_nested_string("param", 1309554226, 5),
-    /* K11  */  be_nested_string("get_coords", 1044089006, 10),
-    /* K12  */  be_nested_string("x1", 274927234, 2),
-    /* K13  */  be_nested_string("y1", -1939865569, 2),
-    /* K14  */  be_nested_string("draw_line_dsc_init", -428273650, 18),
-    /* K15  */  be_nested_string("line_dsc", -200476318, 8),
-    /* K16  */  be_nested_string("init_draw_line_dsc", -1787031256, 18),
-    /* K17  */  be_nested_string("PART_MAIN", -1821475788, 9),
-    /* K18  */  be_nested_string("round_start", -1345482912, 11),
+    /* K8   */  be_nested_str(EVENT_DRAW_MAIN),
+    /* K9   */  be_nested_str(area),
+    /* K10  */  be_nested_str(param),
+    /* K11  */  be_nested_str(get_coords),
+    /* K12  */  be_nested_str(x1),
+    /* K13  */  be_nested_str(y1),
+    /* K14  */  be_nested_str(draw_line_dsc_init),
+    /* K15  */  be_nested_str(line_dsc),
+    /* K16  */  be_nested_str(init_draw_line_dsc),
+    /* K17  */  be_nested_str(PART_MAIN),
+    /* K18  */  be_nested_str(round_start),
     /* K19  */  be_const_int(1),
-    /* K20  */  be_nested_string("round_end", 985288225, 9),
-    /* K21  */  be_nested_string("width", -1786286561, 5),
-    /* K22  */  be_nested_string("get_style_line_color", 805371932, 20),
-    /* K23  */  be_nested_string("STATE_DEFAULT", 712406428, 13),
-    /* K24  */  be_nested_string("get_style_bg_color", 964794381, 18),
-    /* K25  */  be_nested_string("event_send", 598925582, 10),
-    /* K26  */  be_nested_string("EVENT_DRAW_PART_BEGIN", -903102272, 21),
+    /* K20  */  be_nested_str(round_end),
+    /* K21  */  be_nested_str(width),
+    /* K22  */  be_nested_str(get_style_line_color),
+    /* K23  */  be_nested_str(STATE_DEFAULT),
+    /* K24  */  be_nested_str(get_style_bg_color),
+    /* K25  */  be_nested_str(event_send),
+    /* K26  */  be_nested_str(EVENT_DRAW_PART_BEGIN),
     /* K27  */  be_const_int(0),
-    /* K28  */  be_nested_string("color", 1031692888, 5),
-    /* K29  */  be_nested_string("percentage", -1756136011, 10),
-    /* K30  */  be_nested_string("p1", -1605446022, 2),
-    /* K31  */  be_nested_string("y", -66302220, 1),
-    /* K32  */  be_nested_string("x", -49524601, 1),
-    /* K33  */  be_nested_string("p2", -1622223641, 2),
-    /* K34  */  be_nested_string("draw_line", 1634465686, 9),
-    /* K35  */  be_nested_string("stop_iteration", -121173395, 14),
-    /* K36  */  be_nested_string("EVENT_DRAW_PART_END", -993342004, 19),
+    /* K28  */  be_nested_str(color),
+    /* K29  */  be_nested_str(percentage),
+    /* K30  */  be_nested_str(p1),
+    /* K31  */  be_nested_str(y),
+    /* K32  */  be_nested_str(x),
+    /* K33  */  be_nested_str(p2),
+    /* K34  */  be_nested_str(draw_line),
+    /* K35  */  be_nested_str(stop_iteration),
+    /* K36  */  be_nested_str(EVENT_DRAW_PART_END),
     }),
-    (be_nested_const_str("widget_event", 1951408186, 12)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_widget_event,
+    &be_const_str_solidified,
     ( &(const binstruction[138]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
@@ -336,7 +336,7 @@ be_local_closure(widget_event,   /* name */
 /********************************************************************
 ** Solidified function: get_percentage
 ********************************************************************/
-be_local_closure(get_percentage,   /* name */
+be_local_closure(lv_signal_bars_get_percentage,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -347,10 +347,10 @@ be_local_closure(get_percentage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_string("percentage", -1756136011, 10),
+    /* K0   */  be_nested_str(percentage),
     }),
-    (be_nested_const_str("get_percentage", -1414483304, 14)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_get_percentage,
+    &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x80040200,  //  0001  RET	1	R1
@@ -369,17 +369,17 @@ be_local_class(lv_signal_bars,
     &be_class_lv_obj,
     be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("percentage", -1756136011, 10, 4), be_const_var(0) },
-        { be_nested_key("p1", -1605446022, 2, 3), be_const_var(1) },
-        { be_nested_key("p2", -1622223641, 2, -1), be_const_var(2) },
-        { be_nested_key("area", -1693507260, 4, -1), be_const_var(3) },
-        { be_nested_key("line_dsc", -200476318, 8, -1), be_const_var(4) },
-        { be_nested_key("set_percentage", -1342944572, 14, -1), be_const_closure(set_percentage_closure) },
-        { be_nested_key("init", 380752755, 4, -1), be_const_closure(init_closure) },
-        { be_nested_key("widget_event", 1951408186, 12, -1), be_const_closure(widget_event_closure) },
-        { be_nested_key("get_percentage", -1414483304, 14, 5), be_const_closure(get_percentage_closure) },
+        { be_const_key(percentage, 4), be_const_var(0) },
+        { be_const_key(p1, 3), be_const_var(1) },
+        { be_const_key(p2, -1), be_const_var(2) },
+        { be_const_key(area, -1), be_const_var(3) },
+        { be_const_key(line_dsc, -1), be_const_var(4) },
+        { be_const_key(set_percentage, -1), be_const_closure(lv_signal_bars_set_percentage_closure) },
+        { be_const_key(init, -1), be_const_closure(lv_signal_bars_init_closure) },
+        { be_const_key(widget_event, -1), be_const_closure(lv_signal_bars_widget_event_closure) },
+        { be_const_key(get_percentage, 5), be_const_closure(lv_signal_bars_get_percentage_closure) },
     })),
-    (be_nested_const_str("lv_signal_bars", -780994737, 14))
+    be_str_literal("lv_signal_bars")
 );
 /*******************************************************************/
 

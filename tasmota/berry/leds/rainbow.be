@@ -11,28 +11,6 @@ rainbow.start()
 
 import animate
 
-# https://stackoverflow.com/questions/34187171/fast-integer-square-root-approximation
-def fast_sqrt_int(val)
-  var a, b
-
-  if val < 2 return val end
-
-  a = 1255        # starting point is relatively unimportant
-
-  b = val / a; a = (a+b) /2;
-  b = val / a; a = (a+b) /2;
-  b = val / a; a = (a+b) /2;
-  b = val / a; a = (a+b) /2;
-  b = val / a; a = (a+b) /2;
-  b = val / a; a = (a+b) /2;
-  if (val < 20000)
-    b = val / a; a = (a+b) /2;
-    b = val / a; a = (a+b) /2;
-  end
-
-  return a
-end
-
 class Rainbow : Leds_animator
   var cur_offset     # current offset in the palette
   static palette = [ 0xFF0000, #- red -#
@@ -45,6 +23,7 @@ class Rainbow : Leds_animator
                   ]
 
   def init(strip, duration)
+    import animate
     super(self).init(strip)
     self.cur_offset = 0
     # add an animator to change `self.cur_offset` to each value of the palette
@@ -73,7 +52,7 @@ end
 
 #-
 
-var strip = Leds_matrix(5,5, gpio.pin(gpio.WS2812, 1))
+var strip = Leds.matrix(5,5, gpio.pin(gpio.WS2812, 1))
 var r = Rainbow(strip, 1.0)
 r.start()
 
@@ -91,6 +70,7 @@ class Rainbow_stripes : Leds_animator
                   ]
 
   def init(strip, duration)
+    import animate
     super(self).init(strip)
     self.cur_offset = 0
     # add an animator to change `self.cur_offset` to each value of the palette
@@ -125,7 +105,7 @@ end
 
 #-
 
-var strip = Leds_matrix(5,5, gpio.pin(gpio.WS2812, 1))
+var strip = Leds.matrix(5,5, gpio.pin(gpio.WS2812, 1))
 var r = Rainbow_Matrix(strip, 0.5)
 r.start()
 
@@ -138,6 +118,7 @@ class Round : Leds_animator
   var h
 
   def init(strip, glow_duration, color_duration)
+    import animate
     super(self).init(strip)
     self.cur_val = 5 << 8
     self.h = 0          # start with hue = 0 (red)
@@ -162,7 +143,7 @@ class Round : Leds_animator
       var x = 0
       while x < w
         var col = col_ref
-        var dist = fast_sqrt_int( ((y - ch)*(y - ch) + (x - cw)*(x - cw)) << 16)
+        var dist = self.fast_sqrt_int( ((y - ch)*(y - ch) + (x - cw)*(x - cw)) << 16)
         var rel_bri = tasmota.scale_uint(dist, 0, self.cur_val, bri, 0)
         set_matrix_pixel_color(strip, x, y, col, rel_bri)   # simulate the method call without GETMET
         x += 1
@@ -172,11 +153,32 @@ class Round : Leds_animator
     strip.show()
   end
 
+  # https://stackoverflow.com/questions/34187171/fast-integer-square-root-approximation
+  static def fast_sqrt_int(val)
+    var a, b
+
+    if val < 2 return val end
+
+    a = 1255        # starting point is relatively unimportant
+
+    b = val / a; a = (a+b) /2;
+    b = val / a; a = (a+b) /2;
+    b = val / a; a = (a+b) /2;
+    b = val / a; a = (a+b) /2;
+    b = val / a; a = (a+b) /2;
+    b = val / a; a = (a+b) /2;
+    if (val < 20000)
+      b = val / a; a = (a+b) /2;
+      b = val / a; a = (a+b) /2;
+    end
+
+    return a
+  end
 end
 
 #-
 
-var strip = Leds_matrix(5,5, gpio.pin(gpio.WS2812, 1))
+var strip = Leds.matrix(5,5, gpio.pin(gpio.WS2812, 1))
 var r = Round(strip, 2, 30)
 r.start()
 

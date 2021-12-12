@@ -9,12 +9,10 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-extern bclass* be_class_Driver;     // Parent class
-
 /********************************************************************
 ** Solidified function: read32
 ********************************************************************/
-be_local_closure(read32,   /* name */
+be_local_closure(I2C_Driver_read32,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -25,16 +23,16 @@ be_local_closure(read32,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read_bytes", -718234123, 10),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read_bytes),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(0),
     /* K4   */  be_const_int(1),
     /* K5   */  be_const_int(2),
     /* K6   */  be_const_int(3),
     }),
-    (be_nested_const_str("read32", 1741276240, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_read32,
+    &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -65,7 +63,7 @@ be_local_closure(read32,   /* name */
 /********************************************************************
 ** Solidified function: write8
 ********************************************************************/
-be_local_closure(write8,   /* name */
+be_local_closure(I2C_Driver_write8,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -76,13 +74,13 @@ be_local_closure(write8,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("write", -1104765092, 5),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(write),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(1),
     }),
-    (be_nested_const_str("write8", -1160975764, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_write8,
+    &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x8C0C0701,  //  0001  GETMET	R3	R3	K1
@@ -101,7 +99,7 @@ be_local_closure(write8,   /* name */
 /********************************************************************
 ** Solidified function: read12
 ********************************************************************/
-be_local_closure(read12,   /* name */
+be_local_closure(I2C_Driver_read12,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -112,15 +110,15 @@ be_local_closure(read12,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read_bytes", -718234123, 10),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read_bytes),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(2),
     /* K4   */  be_const_int(0),
     /* K5   */  be_const_int(1),
     }),
-    (be_nested_const_str("read12", -3890326, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_read12,
+    &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -143,7 +141,7 @@ be_local_closure(read12,   /* name */
 /********************************************************************
 ** Solidified function: write_bit
 ********************************************************************/
-be_local_closure(write_bit,   /* name */
+be_local_closure(I2C_Driver_write_bit,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
@@ -156,11 +154,11 @@ be_local_closure(write_bit,   /* name */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_const_int(1),
-    /* K2   */  be_nested_string("write8", -1160975764, 6),
-    /* K3   */  be_nested_string("read8", -1492179129, 5),
+    /* K2   */  be_nested_str(write8),
+    /* K3   */  be_nested_str(read8),
     }),
-    (be_nested_const_str("write_bit", -1633976860, 9)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_write_bit,
+    &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
       0x14100500,  //  0000  LT	R4	R2	K0
       0x74120002,  //  0001  JMPT	R4	#0005
@@ -197,7 +195,7 @@ be_local_closure(write_bit,   /* name */
 /********************************************************************
 ** Solidified function: read24
 ********************************************************************/
-be_local_closure(read24,   /* name */
+be_local_closure(I2C_Driver_read24,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -208,16 +206,16 @@ be_local_closure(read24,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read_bytes", -718234123, 10),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read_bytes),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(3),
     /* K4   */  be_const_int(0),
     /* K5   */  be_const_int(1),
     /* K6   */  be_const_int(2),
     }),
-    (be_nested_const_str("read24", 1808533811, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_read24,
+    &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -244,7 +242,7 @@ be_local_closure(read24,   /* name */
 /********************************************************************
 ** Solidified function: read8
 ********************************************************************/
-be_local_closure(read8,   /* name */
+be_local_closure(I2C_Driver_read8,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -255,13 +253,13 @@ be_local_closure(read8,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read", -824204347, 4),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(1),
     }),
-    (be_nested_const_str("read8", -1492179129, 5)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_read8,
+    &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -279,7 +277,7 @@ be_local_closure(read8,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(init,   /* name */
+be_local_closure(I2C_Driver_init,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
@@ -290,19 +288,19 @@ be_local_closure(init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_string("get_tasmota", 334356779, 11),
-    /* K1   */  be_nested_string("i2c_enabled", 218388101, 11),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
-    /* K3   */  be_nested_string("wire", -212213352, 4),
-    /* K4   */  be_nested_string("wire_scan", -1623691416, 9),
-    /* K5   */  be_nested_string("function", -1630125495, 8),
-    /* K6   */  be_nested_string("name", -1925595674, 4),
-    /* K7   */  be_nested_string("I2C:", 813483371, 4),
-    /* K8   */  be_nested_string("detected on bus", 1432002650, 15),
-    /* K9   */  be_nested_string("bus", 1607822841, 3),
+    /* K0   */  be_nested_str(get_tasmota),
+    /* K1   */  be_nested_str(i2c_enabled),
+    /* K2   */  be_nested_str(addr),
+    /* K3   */  be_nested_str(wire),
+    /* K4   */  be_nested_str(wire_scan),
+    /* K5   */  be_nested_str(function),
+    /* K6   */  be_nested_str(name),
+    /* K7   */  be_nested_str(I2C_X3A),
+    /* K8   */  be_nested_str(detected_X20on_X20bus),
+    /* K9   */  be_nested_str(bus),
     }),
-    ((bstring*) &be_const_str_init),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_init,
+    &be_const_str_solidified,
     ( &(const binstruction[44]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x7C100200,  //  0001  CALL	R4	1
@@ -357,7 +355,7 @@ be_local_closure(init,   /* name */
 /********************************************************************
 ** Solidified function: read13
 ********************************************************************/
-be_local_closure(read13,   /* name */
+be_local_closure(I2C_Driver_read13,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -368,15 +366,15 @@ be_local_closure(read13,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_string("wire", -212213352, 4),
-    /* K1   */  be_nested_string("read_bytes", -718234123, 10),
-    /* K2   */  be_nested_string("addr", 1087856498, 4),
+    /* K0   */  be_nested_str(wire),
+    /* K1   */  be_nested_str(read_bytes),
+    /* K2   */  be_nested_str(addr),
     /* K3   */  be_const_int(2),
     /* K4   */  be_const_int(0),
     /* K5   */  be_const_int(1),
     }),
-    (be_nested_const_str("read13", 12887293, 6)),
-    ((bstring*) &be_const_str_input),
+    &be_const_str_read13,
+    &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
@@ -395,27 +393,33 @@ be_local_closure(read13,   /* name */
 );
 /*******************************************************************/
 
-#include "../generate/be_fixed_be_class_I2C_Driver.h"
 
-void be_load_driver_i2c_lib(bvm *vm) {
+/********************************************************************
+** Solidified class: I2C_Driver
+********************************************************************/
+be_local_class(I2C_Driver,
+    3,
+    NULL,
+    be_nested_map(11,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key(read32, -1), be_const_closure(I2C_Driver_read32_closure) },
+        { be_const_key(write8, 6), be_const_closure(I2C_Driver_write8_closure) },
+        { be_const_key(name, -1), be_const_var(2) },
+        { be_const_key(addr, 8), be_const_var(1) },
+        { be_const_key(read12, -1), be_const_closure(I2C_Driver_read12_closure) },
+        { be_const_key(wire, 10), be_const_var(0) },
+        { be_const_key(read13, -1), be_const_closure(I2C_Driver_read13_closure) },
+        { be_const_key(read24, -1), be_const_closure(I2C_Driver_read24_closure) },
+        { be_const_key(read8, -1), be_const_closure(I2C_Driver_read8_closure) },
+        { be_const_key(init, -1), be_const_closure(I2C_Driver_init_closure) },
+        { be_const_key(write_bit, -1), be_const_closure(I2C_Driver_write_bit_closure) },
+    })),
+    be_str_literal("I2C_Driver")
+);
+/*******************************************************************/
+
+void be_load_I2C_Driver_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_I2C_Driver);
     be_setglobal(vm, "I2C_Driver");
     be_pop(vm, 1);
 }
-/* @const_object_info_begin
-
-class be_class_I2C_Driver (scope: global, name: I2C_Driver, super: be_class_Driver) {
-    wire, var
-    addr, var
-    name, var
-
-    init, closure(init_closure)
-    write8, closure(write8_closure)
-    write_bit, closure(write_bit_closure)
-    read8, closure(read8_closure)
-    read12, closure(read12_closure)
-    read13, closure(read13_closure)
-    read24, closure(read24_closure)
-    read32, closure(read32_closure)
-}
-@const_object_info_end */

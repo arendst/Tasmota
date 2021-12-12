@@ -35,12 +35,12 @@ const char kHAssJsonSensorUnits[] PROGMEM =
   "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |";
 
 const char kHAssJsonSensorDevCla[] PROGMEM =
-  "dev_cla\":\"temperature|ic\":\"mdi:weather-rainy|dev_cla\":\"pressure|dev_cla\":\"pressure|"
-  "dev_cla\":\"power|dev_cla\":\"battery|ic\":\"mdi:alpha-a-circle-outline|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
+  "dev_cla\":\"temperature|dev_cla\":\"temperature|dev_cla\":\"pressure|dev_cla\":\"pressure|"
+  "dev_cla\":\"power|dev_cla\":\"battery|dev_cla\":\"current|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
-  "ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:air-filter|ic\":\"mdi:alpha-f-circle-outline|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
-  "dev_cla\":\"power|dev_cla\":\"power|dev_cla\":\"power|ic\":\"mdi:alpha-v-circle-outline|ic\":\"mdi:scale|dev_cla\":\"power|"
-  "ic\":\"mdi:molecule-co2|ic\":\"mdi:molecule-co2|ic\":\"mdi:air-filter|"
+  "dev_cla\":\"pm1|dev_cla\":\"pm25|dev_cla\":\"pm10|dev_cla\":\"power_factor|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
+  "dev_cla\":\"power|dev_cla\":\"energy|dev_cla\":\"energy|dev_cla\":\"voltage|ic\":\"mdi:scale|dev_cla\":\"energy|"
+  "dev_cla\":\"carbon_dioxide|dev_cla\":\"carbon_dioxide|dev_class\":\"volatile_organic_compounds|"
   "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
 
 // List of sensors ready for discovery

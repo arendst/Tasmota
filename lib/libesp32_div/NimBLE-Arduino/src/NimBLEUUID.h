@@ -14,10 +14,16 @@
 
 #ifndef COMPONENTS_NIMBLEUUID_H_
 #define COMPONENTS_NIMBLEUUID_H_
-#include "sdkconfig.h"
+
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
+#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_uuid.h"
+#else
+#include "nimble/nimble/host/include/host/ble_uuid.h"
+#endif
+
 /****  FIX COMPILATION ****/
 #undef min
 #undef max

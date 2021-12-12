@@ -1,0 +1,75 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BLE_PHY_SYSVIEW:
+        description: >
+            Enable SystemView tracing module for radio driver.
+        value: 0
+
+    BLE_PHY_CODED_RX_IFS_EXTRA_MARGIN:
+        description: >
+            This defines additional margin for T_IFS tolerance while in
+            RX on coded phy to allow maintaining connections with some
+            controllers that exceed proper T_IFS (150 usecs) by more
+            than allowed 2 usecs.
+            This value shall be only used for debugging purposes. It is
+            strongly recommended to keep this settings at default value
+            to ensure compliance with specification.
+        value: 0
+    BLE_PHY_DBG_TIME_TXRXEN_READY_PIN:
+        description: >
+            When set to proper GPIO pin number, this pin will be set
+            to high state when radio is enabled using PPI channels
+            20 or 21 and back to low state on radio EVENTS_READY.
+            This can be used to measure radio ram-up time.
+        value: -1
+
+    BLE_PHY_DBG_TIME_ADDRESS_END_PIN:
+        description: >
+            When set to proper GPIO pin number, this pin will be set
+            to high state on radio EVENTS_ADDRESS and back to low state
+            on radio EVENTS_END.
+            This can be used to measure radio pipeline delays.
+        value: -1
+
+    BLE_PHY_DBG_TIME_WFR_PIN:
+        description: >
+            When set to proper GPIO pin number, this pin will be set
+            to high state on radio EVENTS_RXREADY and back to low
+            state when wfr timer expires.
+            This can be used to check if wfr is calculated properly.
+        value: -1
+
+    BLE_PHY_NRF52840_ERRATA_164:
+        description: >
+            Enable workaround for anomaly 164 found in nRF52840.
+            "[164] RADIO: Low selectivity in long range mode"
+            This shall be only enabled for:
+            - nRF52840 Engineering A
+        value: 0
+
+    BLE_PHY_NRF52840_ERRATA_191:
+        description: >
+            Enable workaround for anomaly 191 found in nRF52840.
+            "[191] RADIO: High packet error rate in BLE Long Range mode"
+            This shall be only enabled for:
+            - nRF52840 Engineering B
+            - nRF52840 Engineering C
+            - nRF52840 Rev 1 (final silicon)
+        value: 1

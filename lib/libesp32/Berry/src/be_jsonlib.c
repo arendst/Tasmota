@@ -54,7 +54,7 @@ static int is_object(bvm *vm, const char *class, int idx)
             }
             be_remove(vm, -2);
         }
-        const char *name = be_classname(vm, idx);
+        const char *name = be_classname(vm, -1);
         bbool ret = !strcmp(name, class);
         be_pop(vm, 1);
         return ret;

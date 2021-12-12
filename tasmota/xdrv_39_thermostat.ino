@@ -1400,6 +1400,12 @@ void CmndThermostatModeSet(void)
         Thermostat[ctr_output].status.thermostat_mode = value;
         Thermostat[ctr_output].timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
       }
+      if ((value == THERMOSTAT_OFF) && (Thermostat[ctr_output].status.enable_output == IFACE_ON)) {
+        // Make sure the relay is switched to off once if the thermostat is being disabled,
+        // or it will get stuck on (danger!)
+        Thermostat[ctr_output].status.command_output = IFACE_OFF;
+        ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
+      }
     }
     ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.thermostat_mode);
   }
@@ -2022,8 +2028,17 @@ const char HTTP_THERMOSTAT_HL[]          PROGMEM = "{s}<hr>{m}<hr>{e}";
 
 #endif  // USE_WEBSERVER
 
-void ThermostatShow(uint8_t ctr_output)
+void ThermostatShow(uint8_t ctr_output, bool json)
 {
+  if (json) {
+    float f_target_temp = Thermostat[ctr_output].temp_target_level / 10.0f;
+    ResponseAppend_P(PSTR(",\"Thermostat%i\":{"), ctr_output);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), "", D_CMND_THERMOSTATMODESET, Thermostat[ctr_output].status.thermostat_mode);
+    ResponseAppend_P(PSTR("%s\"%s\":%2_f"), ",", D_CMND_TEMPTARGETSET, &f_target_temp);
+    ResponseAppend_P(PSTR("%s\"%s\":%i"), ",", D_CMND_CTRDUTYCYCLEREAD, ThermostatGetDutyCycle(ctr_output));
+    ResponseJsonEnd();
+    return;
+  }
 #ifdef USE_WEBSERVER
 
   WSContentSend_P(HTTP_THERMOSTAT_HL);
@@ -2110,11 +2125,16 @@ bool Xdrv39(uint8_t function)
         }
       }
       break;
+    case FUNC_JSON_APPEND:
+      for (ctr_output = 0; ctr_output < THERMOSTAT_CONTROLLER_OUTPUTS; ctr_output++) {
+        ThermostatShow(ctr_output, true);
+      }
+      break;
 
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
       for (ctr_output = 0; ctr_output < THERMOSTAT_CONTROLLER_OUTPUTS; ctr_output++) {
-        ThermostatShow(ctr_output);
+        ThermostatShow(ctr_output, false);
       }
       break;
 #endif  // USE_WEBSERVER

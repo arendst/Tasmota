@@ -10,6 +10,8 @@ SRCPATH   = src default
 GENERATE  = generate
 CONFIG    = default/berry_conf.h
 COC		  = tools/coc/coc
+PY        = python3
+PYCOC     = tools/pycoc/main.py
 CONST_TAB = $(GENERATE)/be_const_strtab.h
 MAKE_COC  = $(MAKE) -C tools/coc
 
@@ -18,6 +20,7 @@ ifeq ($(OS), Windows_NT) # Windows
     LFLAGS    += -Wl,--out-implib,berry.lib # export symbols lib for dll linked
     TARGET    := $(TARGET).exe
     COC       := $(COC).exe
+    PY        := $(PY).exe
 else
     CFLAGS    += -DUSE_READLINE_LIB
     LIBS      += -lreadline -ldl
@@ -92,7 +95,7 @@ uninstall:
 
 prebuild: $(COC) $(GENERATE)
 	$(MSG) [Prebuild] generate resources
-	$(Q) $(COC) -o $(GENERATE) $(SRCPATH) -c $(CONFIG)
+	$(Q) $(PY) $(PYCOC) -o $(GENERATE) $(SRCPATH) -c $(CONFIG)
 	$(MSG) done
 
 clean:

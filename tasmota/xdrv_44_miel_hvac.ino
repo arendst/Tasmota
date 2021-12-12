@@ -42,6 +42,8 @@
 #include <TasmotaSerial.h>
 
 /* from hvac */
+bool temp_type = false; 
+
 struct miel_hvac_header {
 	uint8_t			start;
 #define MIEL_HVAC_H_START		0xfc
@@ -68,11 +70,14 @@ struct miel_hvac_data_settings {
 	uint8_t			widevane;
 #define MIEL_HVAC_SETTTINGS_WIDEVANE_MASK \
 					0x0f
+	uint8_t			temp05;
 };
 
 struct miel_hvac_data_roomtemp {
 	uint8_t			_pad1[2];
 	uint8_t			temp;
+	uint8_t			_pad2[2];
+	uint8_t			temp05;
 };
 
 struct miel_hvac_data_status {
@@ -109,8 +114,10 @@ CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp) == 5);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.fan) == 6);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.vane) == 7);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.widevane) == 10);
+CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp05) == 11);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp05) == 6);
 
 /* to hvac */
 
@@ -180,7 +187,8 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_WIDEVANE_LR	0x08
 #define MIEL_HVAC_UPDATE_WIDEVANE_SWING	0x0c
 #define MIEL_HVAC_UPDATE_WIDEVANE_ADJ	0x80
-	uint8_t			_pad2[2];
+	uint8_t			temp05;
+	uint8_t			_pad2[1];
 } __packed;
 
 CTASSERT(sizeof(struct miel_hvac_msg_update) == 16);
@@ -192,23 +200,42 @@ CTASSERT(offsetof(struct miel_hvac_msg_update, temp) == MIEL_HVAC_OFFS(10));
 CTASSERT(offsetof(struct miel_hvac_msg_update, fan) == MIEL_HVAC_OFFS(11));
 CTASSERT(offsetof(struct miel_hvac_msg_update, vane) == MIEL_HVAC_OFFS(12));
 CTASSERT(offsetof(struct miel_hvac_msg_update, widevane) == MIEL_HVAC_OFFS(18));
+CTASSERT(offsetof(struct miel_hvac_msg_update, temp05) == MIEL_HVAC_OFFS(19));
 
 static inline uint8_t
-miel_hvac_deg2temp(uint8_t deg)
+miel_hvac_deg2temp(float deg)
 {
-	return (31 - deg);
+	if (!temp_type) {
+		return (31 - deg);
+	}
+	else {
+		deg = 2*deg + 128;
+		return ((uint8_t) deg);
+	}
 }
 
-static inline uint8_t
+static inline float
 miel_hvac_temp2deg(uint8_t temp)
 {
-	return (31 - temp);
+	if (!temp_type) {
+		return (31 - temp);
+	}
+	else {
+		temp -= 128;
+		return ((float) temp/2);
+	}
 }
 
-static inline unsigned int
+static inline float
 miel_hvac_roomtemp2deg(uint8_t roomtemp)
 {
-	return ((unsigned int)roomtemp + 10);
+	if (!temp_type) {
+		return ((unsigned int)roomtemp + 10);
+	}
+	else {
+		roomtemp -= 128;
+		return ((float) roomtemp/2);
+	}
 }
 
 struct miel_hvac_msg_remotetemp {
@@ -682,20 +709,27 @@ miel_hvac_cmnd_settemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	struct miel_hvac_msg_update *update = &sc->sc_update;
-	unsigned long degc;
+	float degc;
 
 	if (XdrvMailbox.data_len == 0)
 		return;
-
-	degc = strtoul(XdrvMailbox.data, nullptr, 0);
+	
+	degc = strtof(XdrvMailbox.data, nullptr);
 	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN ||
 	    degc > MIEL_HVAC_UPDATE_TEMP_MAX) {
 		miel_hvac_respond_unsupported();
 		return;
 	}
-
 	update->flags |= htons(MIEL_HVAC_UPDATE_F_TEMP);
-	update->temp = miel_hvac_deg2temp(degc);
+	if (!temp_type) {
+		update->temp = miel_hvac_deg2temp(degc);
+		update->temp05 = 0;
+	}
+
+	else {
+		update->temp = 0;
+		update->temp05 = miel_hvac_deg2temp(degc);
+	}
 
 	ResponseCmndNumber(degc);
 }
@@ -871,9 +905,15 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"HA" D_JSON_IRHVAC_MODE "\":\"%s\""),
 		    set->power ? name : "off");
 	}
-
-	dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
-	    Settings->flag2.temperature_resolution, temp);
+	if (set->temp05 == 0) {
+		dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp)),
+	    		Settings->flag2.temperature_resolution, temp);
+	}
+	else {
+		temp_type = true;
+		dtostrfd(ConvertTemp(miel_hvac_temp2deg(set->temp05)),
+	    		Settings->flag2.temperature_resolution, temp);
+	}
 	ResponseAppend_P(PSTR(",\"" D_JSON_IRHVAC_TEMP "\":%s"), temp);
 
 	name = miel_hvac_map_byval(set->fan,
@@ -1074,11 +1114,18 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	if (sc->sc_temp.type != 0) {
 		const struct miel_hvac_data_roomtemp *rt =
 		    &sc->sc_temp.data.roomtemp;
-		unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
 		char room_temp[33];
-
-		dtostrfd(ConvertTemp(temp),
-		    Settings->flag2.temperature_resolution, room_temp);
+		if(rt->temp05 == 0) {
+			unsigned int temp = miel_hvac_roomtemp2deg(rt->temp);
+			dtostrfd(ConvertTemp(temp),
+		    	    Settings->flag2.temperature_resolution, room_temp);
+			}
+		else {
+			temp_type = true;
+			float temp = miel_hvac_roomtemp2deg(rt->temp05);
+			dtostrfd(ConvertTemp(temp),
+		    	    Settings->flag2.temperature_resolution, room_temp);
+		}
 		ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%s"),
 		    room_temp);
 

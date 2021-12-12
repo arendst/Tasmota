@@ -19,7 +19,7 @@ tapp_module.init = def (m)
 
       for d: dir
         if string.find(d, ".tapp") > 0
-          print(string.format("TAP: found Tasmota App '%s'", d))
+          tasmota.log(string.format("TAP: found Tasmota App '%s'", d), 2)
           tasmota.load(d + "#autoexec.be")
         end
       end

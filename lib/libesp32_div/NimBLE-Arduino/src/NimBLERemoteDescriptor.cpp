@@ -11,11 +11,9 @@
  *  Created on: Jul 8, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteDescriptor.h"
 #include "NimBLEUtils.h"
@@ -188,6 +186,7 @@ int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
                 const struct ble_gatt_error *error,
                 struct ble_gatt_attr *attr, void *arg)
 {
+    (void)attr;
     ble_task_data_t *pTaskData = (ble_task_data_t*)arg;
     NimBLERemoteDescriptor* desc = (NimBLERemoteDescriptor*)pTaskData->pATT;
     uint16_t conn_id = desc->getRemoteCharacteristic()->getRemoteService()->getClient()->getConnId();
@@ -350,5 +349,4 @@ bool NimBLERemoteDescriptor::writeValue(const std::string &newValue, bool respon
     return writeValue((uint8_t*) newValue.data(), newValue.length(), response);
 } // writeValue
 
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

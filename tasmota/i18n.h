@@ -371,6 +371,7 @@
 // Commands xdrv_02_mqtt.ino
 #define D_SO_MQTTJSONONLY "MqttJSONOnly"
 #define D_SO_MQTTTLS "MqttTLS"
+#define D_SO_MQTTTLS_FINGERPRINT "MqttTLSFingerprint"
 #define D_SO_MQTTNORETAIN "MqttNoRetain"
 #define D_SO_MQTTDETACHRELAY "MqttDetachRelay"
 #define D_CMND_MQTTLOG "MqttLog"
@@ -714,6 +715,9 @@
 #define D_PRFX_BR "Br"
 #define D_CMND_BR_RUN ""
 #define D_BR_NOT_STARTED  "Berry not started"
+
+// Commands xdrv_60_shift595.ino - 74x595 family shift register driver
+#define D_CMND_SHIFT595_DEVICE_COUNT "Shift595DeviceCount"
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"

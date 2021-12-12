@@ -39,7 +39,7 @@ struct EZOO2 : public EZOStruct {
     dtostrfd(O2, 2, str);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_O2 "\":%d}" ), name, str);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_O2 "\":%s}" ), name, str);
 #ifdef USE_WEBSERVER
     }else {
       WSContentSend_PD(HTTP_SNS_O2, name, str);

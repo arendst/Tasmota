@@ -28,6 +28,8 @@
  * {"NAME":"Sonoff SPM (POC1)","GPIO":[1,1,1,1,3200,1,1,1,1,1,1,1,3232,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
  * Add ethernet support:
  * {"NAME":"Sonoff SPM (POC2)","GPIO":[1,0,1,0,3200,5536,0,0,1,1,1,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
+ * Remove all user selectable GPIOs:
+ * {"NAME":"Sonoff SPM (POC2)","GPIO":[0,0,0,0,3200,5536,0,0,0,0,0,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,0,0,32,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Things to know:
  * Bulk of the action is handled by ARM processors present in every unit communicating over modbus RS-485.
@@ -45,15 +47,21 @@
  * Tasmota POC2:
  * Ethernet support.
  * Gui optimized for energy display.
+ * Yellow led lights if no ARM connection can be made.
+ * Yellow led blinks 2 seconds if an ARM-ESP comms CRC error is detected.
+ * Supported commands:
+ *   SspmDisplay 0|1     - Select alternative GUI rotating display either all or powered on only
+ *   SspmIAmHere<relay>  - Blink ERROR in SPM-4Relay where relay resides
+ *   SspmScan            - Rescan ARM modbus taking around 20 seconds
+ *   SspmReset 1         - Reset ARM and restart ESP
  *
  * Todo:
  * Gui for Overload Protection entry (is handled by ARM processor).
  * Gui for Scheduling entry (is handled by ARM processor).
- * Yellow led functionality.
- * Interpretation of reset sequence on GPIO's 12-14.
+ * SPI master to ARM (ARM firmware upload from ESP using EasyFlash).
  *
  * Nice to have:
- * Support for all 32 SPM4Relay units equals 128 relays
+ * Support for all 32 SPM-4Relay units equals 128 relays (restricted due to internal Tasmota register use)
  *
  * GPIO's used:
  * GPIO00 - Bootmode / serial flash
@@ -61,9 +69,9 @@
  * GPIO03 - Serial console RX
  * GPIO04 - ARM processor TX (115200bps8N1)
  * GPIO05 - ETH POWER
- * GPIO12 - SPI MISO ARM pulsetrain code (input?)
- * GPIO13 - SPI CLK
- * GPIO14 - SPI CS ARM pulsetrain eoc (input?)
+ * GPIO12 - SPI MOSI ARM output (pin36 - PB15) - ESP input
+ * GPIO13 - SPI MISO ESP output - ARM input (pin35 - PB14)
+ * GPIO14 - SPI CLK ESP input (ARM pin34 - PB13)
  * GPIO15 - ARM reset (output) - 18ms low active 125ms after restart esp32
  * GPIO16 - ARM processor RX
  * GPIO17 - EMAC_CLK_OUT_180
@@ -116,6 +124,7 @@
 #define SSPM_FUNC_GET_ENERGY         24      // 0x18
 #define SSPM_FUNC_GET_LOG            26      // 0x1A
 #define SSPM_FUNC_ENERGY_PERIOD      27      // 0x1B
+#define SSPM_FUNC_RESET              28      // 0x1C - Remove device from eWelink and factory reset
 
 // Receive
 #define SSPM_FUNC_ENERGY_RESULT      6       // 0x06
@@ -125,6 +134,7 @@
 #define SSPM_FUNC_SCAN_DONE          25      // 0x19
 
 #define SSPM_GPIO_ARM_RESET          15
+#define SSPM_GPIO_LED_ERROR          33
 
 #define SSPM_MODULE_NAME_SIZE        12
 
@@ -175,6 +185,7 @@ typedef struct {
   uint8_t command_sequence;
   uint8_t mstate;
   uint8_t last_button;
+  uint8_t error_led_blinks;
   bool discovery_triggered;
 } TSspm;
 
@@ -427,7 +438,7 @@ void SSPMSendSetTime(void) {
   SspmBuffer[25] = time.second;
   SspmBuffer[26] = 0;
   SspmBuffer[27] = 0;
-  SspmBuffer[28] = 1 + (Rtc.time_timezone / 60);  // Not sure why the "1" is needed but it is in my case
+  SspmBuffer[28] = Rtc.time_timezone / 60;
   SspmBuffer[29] = abs(Rtc.time_timezone % 60);
   Sspm->command_sequence++;
   SspmBuffer[30] = Sspm->command_sequence;
@@ -667,9 +678,9 @@ void SSPMHandleReceivedData(void) {
         03           <- L4
         07 e5 0b 0d  <- End date (Today) 2021 nov 13
         07 e5 05 11  <- Start date       2021 may 17
-        00 05        <- 5kWh  (13/11 Today)
-        00 00        <- 0     (12/11 Yesterday)
-        00 04        <- 4kWh  (11/11 etc)
+        00 05        <- 0.05kWh  (13/11 Today)
+        00 00        <- 0        (12/11 Yesterday)
+        00 04        <- 0.04kWh  (11/11 etc)
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -679,14 +690,14 @@ void SSPMHandleReceivedData(void) {
         42 67 46
         */
         {
-          uint32_t energy_today = 0;
-          uint32_t energy_yesterday = 0;
-          uint32_t energy_total = 0;
+          float energy_today = 0;
+          float energy_yesterday = 0;
+          float energy_total = 0;
           uint32_t entries = (Sspm->expected_bytes - 22) / 2;
 
           for (uint32_t i = 0; i < entries; i++) {
-            uint32_t today_energy = (SspmBuffer[41 + (i*2)] << 8) + SspmBuffer[42 + (i*2)];
-            if (28702 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=28702kWh) pops up
+            float today_energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
+            if (112.30 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
             if (0 == i) { energy_today = today_energy; }
             if (1 == i) { energy_yesterday = today_energy; }
             energy_total += today_energy;
@@ -696,7 +707,7 @@ void SSPMHandleReceivedData(void) {
             if ((SspmBuffer[20] == Sspm->module[module][0]) && (SspmBuffer[21] == Sspm->module[module][1])) {
               Sspm->energy_today[module][channel] = energy_today;
               Sspm->energy_yesterday[module][channel] = energy_yesterday;
-              Sspm->energy_total[module][channel] = energy_total;  // xkWh
+              Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
               break;
             }
           }
@@ -705,7 +716,7 @@ void SSPMHandleReceivedData(void) {
         break;
       case SSPM_FUNC_GET_LOG:
         /* 0x1A
-        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1a 01 3a 00 6b 7e 32 37 39 37 34 13 4b 35 36 37
         1e                            Number of log entries (1e = 30)
         07 e5 0b 06 0f 25 19 02 01 00 10 byte log entry
@@ -730,6 +741,10 @@ void SSPMHandleReceivedData(void) {
         07 e5 0b 06 0e 36 37 01 01 00
         ...
         07 e5 0b 06 0d 30 2d 03 00 01 09 89 fe
+
+        Error:
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1A 00 01 03 E5 45 EB
+                                                                |  |
         */
 
         break;
@@ -741,6 +756,12 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1b 00 11 [00] 8b 34 32 37 39 37 34 13 4b 35 36 37 [03] [00 00 00] f8 94 15   L4, kWh start period (0)
         */
 
+        break;
+      case SSPM_FUNC_RESET:
+        /* 0x1C
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1c 00 01 00 0b f9 e3
+        */
+//        TasmotaGlobal.restart_flag = 2;
         break;
     }
   } else {
@@ -879,6 +900,7 @@ void SSPMSerialInput(void) {
         if (crc_rcvd == crc_calc) {
           SSPMHandleReceivedData();
         } else {
+          Sspm->error_led_blinks = 20;
           AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: CRC error"));
         }
         Sspm->serial_in_byte_counter = 0;
@@ -916,11 +938,14 @@ void SSPMInit(void) {
   pinMode(SSPM_GPIO_ARM_RESET, OUTPUT);
   digitalWrite(SSPM_GPIO_ARM_RESET, 1);
 
+  pinMode(SSPM_GPIO_LED_ERROR, OUTPUT);
+  digitalWrite(SSPM_GPIO_LED_ERROR, 0);
+
   if (0 == Settings->flag2.voltage_resolution) {
     Settings->flag2.voltage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
     Settings->flag2.current_resolution = 2;   // SPM has 2 decimals
     Settings->flag2.wattage_resolution = 1;   // SPM has 2 decimals but this keeps the gui clean
-    Settings->flag2.energy_resolution = 0;    // SPM has no decimals on total energy
+    Settings->flag2.energy_resolution = 1;    // SPM has 2 decimals but this keeps the gui clean
   }
 
 #if CONFIG_IDF_TARGET_ESP32
@@ -949,11 +974,21 @@ void SSPMEvery100ms(void) {
     }
   }
 
+  if (Sspm->error_led_blinks) {
+    uint32_t state = 1;                        // Stay lit
+    if (Sspm->error_led_blinks < 255) {
+      Sspm->error_led_blinks--;
+      state = Sspm->error_led_blinks >> 1 &1;  // Blink every 0.4s
+    }
+    digitalWrite(SSPM_GPIO_LED_ERROR, state);
+  }
+
   // Fix race condition if the ARM doesn't respond
   if ((Sspm->mstate > SPM_NONE) && (Sspm->mstate < SPM_SEND_FUNC_UNITS)) {
     Sspm->counter++;
     if (Sspm->counter > 20) {
       Sspm->mstate = SPM_NONE;
+      Sspm->error_led_blinks = 255;
     }
   }
   switch (Sspm->mstate) {
@@ -1082,29 +1117,30 @@ bool SSPMButton(void) {
 /*********************************************************************************************/
 
 const uint16_t SSPM_SIZE = 128;
-const char kSSPMEnergyPhases[] PROGMEM = "%*_f</td><td>%*_f</td><td>%*_f</td><td>%*_f</td><td style='white-space:nowrap'>|[%*_f,%*_f,%*_f,%*_f]";
 
-char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, bool json) {
-  char layout[100];
-  GetTextIndexed(layout, sizeof(layout), json, kSSPMEnergyPhases);
-  ext_snprintf_P(result, SSPM_SIZE, layout, resolution, &input[0], resolution, &input[1], resolution, &input[2], resolution, &input[3]);
+char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, uint8_t* indirect, uint8_t offset, uint32_t count) {
+  result[0] = '\0';
+  for (uint32_t i = 0; i < count; i++) {
+    ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td>%*_f</td>"), result, resolution, &input[indirect[offset +i]]);
+  }
+  ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td style='white-space:nowrap'>"), result);
   return result;
 }
 
 const char HTTP_SSPM_VOLTAGE[] PROGMEM =
-  "{s}" D_VOLTAGE "</th><td>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
+  "{s}" D_VOLTAGE "</th>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
 const char HTTP_SSPM_CURRENT[] PROGMEM =
-  "{s}" D_CURRENT "</th><td>%s" D_UNIT_AMPERE "{e}";
+  "{s}" D_CURRENT "</th>%s" D_UNIT_AMPERE "{e}";
 const char HTTP_SSPM_POWER[] PROGMEM =
-  "{s}" D_POWERUSAGE_ACTIVE "</th><td>%s" D_UNIT_WATT "{e}";
+  "{s}" D_POWERUSAGE_ACTIVE "</th>%s" D_UNIT_WATT "{e}";
 const char HTTP_SSPM_POWER2[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "</th><td>%s" D_UNIT_VA "{e}"
-  "{s}" D_POWERUSAGE_REACTIVE "</th><td>%s" D_UNIT_VAR "{e}"
-  "{s}" D_POWER_FACTOR "</th><td>%s{e}";
+  "{s}" D_POWERUSAGE_APPARENT "</th>%s" D_UNIT_VA "{e}"
+  "{s}" D_POWERUSAGE_REACTIVE "</th>%s" D_UNIT_VAR "{e}"
+  "{s}" D_POWER_FACTOR "</th>%s{e}";
 const char HTTP_SSPM_ENERGY[] PROGMEM =
-  "{s}" D_ENERGY_TODAY "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_YESTERDAY "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_TOTAL "</th><td>%s" D_UNIT_KILOWATTHOUR "{e}";
+  "{s}" D_ENERGY_TODAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_YESTERDAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_TOTAL "</th>%s" D_UNIT_KILOWATTHOUR "{e}";
 
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
@@ -1112,18 +1148,18 @@ void SSPMEnergyShow(bool json) {
   if (json) {
     ResponseAppend_P(PSTR(",\"SPM\":{\"" D_JSON_ENERGY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_total[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.energy_resolution, &Sspm->energy_total[i >>2][i &3]);
     }
 #ifdef SSPM_JSON_ENERGY_YESTERDAY
     ResponseAppend_P(PSTR("],\"" D_JSON_YESTERDAY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_today[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.energy_resolution, &Sspm->energy_yesterday[i >>2][i &3]);
     }
 #endif
 #ifdef SSPM_JSON_ENERGY_TODAY
     ResponseAppend_P(PSTR("],\"" D_JSON_TODAY "\":["));
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", -1, &Sspm->energy_yesterday[i >>2][i &3]);
+      ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.energy_resolution, &Sspm->energy_today[i >>2][i &3]);
     }
 #endif
     ResponseAppend_P(PSTR("],\"" D_JSON_ACTIVE_POWERUSAGE "\":["));
@@ -1152,30 +1188,50 @@ void SSPMEnergyShow(bool json) {
     }
     ResponseAppend_P(PSTR("]}"));
   } else {
-    Sspm->rotate++;
-    if (Sspm->rotate >= TasmotaGlobal.devices_present) {
-      Sspm->rotate = 0;
+    uint8_t relay[SSPM_MAX_MODULES * 4];
+    uint8_t indirect[SSPM_MAX_MODULES * 4];
+
+    uint32_t index = 0;
+    power_t power = TasmotaGlobal.power;
+    for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
+      if ((0 == Settings->sbflag1.sspm_display) ||
+          ((1 == Settings->sbflag1.sspm_display) && (power >> i) &1)) {
+        relay[index] = i +1;
+        indirect[index] = i;
+        index++;
+      }
     }
-    uint32_t module = Sspm->rotate >> 2;
-    uint32_t relay_base = module * 4;
-    WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-    for (uint32_t i = 1; i < 5; i++) {
-      WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay_base +i);
+
+    if (index) {
+      uint32_t offset = 0;
+      if (index > 4) {
+        Sspm->rotate++;
+        if (Sspm->rotate >= ((index -1) >> 2) << 3) {
+          Sspm->rotate = 0;
+        }
+        offset = (Sspm->rotate >> 2) * 4;
+      }
+      uint32_t count = index - offset;
+      if (count > 4) { count = 4; }
+      WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+      for (uint32_t i = 0; i < count; i++) {
+        WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay[offset +i]);
+      }
+      WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
+      char value_chr[SSPM_SIZE];
+      WSContentSend_PD(HTTP_SSPM_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[0], Settings->flag2.voltage_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_SSPM_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[0], Settings->flag2.current_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_SSPM_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
+      char valu2_chr[SSPM_SIZE];
+      char valu3_chr[SSPM_SIZE];
+      WSContentSend_PD(HTTP_SSPM_POWER2,  SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu3_chr, Sspm->power_factor[0], 2, indirect, offset, count));
+      WSContentSend_PD(HTTP_SSPM_ENERGY,  SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu2_chr, Sspm->energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count),
+                                          SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
+      WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
-    WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
-    char value_chr[SSPM_SIZE];
-    WSContentSend_PD(HTTP_SSPM_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[module], Settings->flag2.voltage_resolution, json));
-    WSContentSend_PD(HTTP_SSPM_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[module], Settings->flag2.current_resolution, json));
-    WSContentSend_PD(HTTP_SSPM_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[module], Settings->flag2.wattage_resolution, json));
-    char valu2_chr[SSPM_SIZE];
-    char valu3_chr[SSPM_SIZE];
-    WSContentSend_PD(HTTP_SSPM_POWER2,  SSPMEnergyFormat(value_chr, Sspm->apparent_power[module], Settings->flag2.wattage_resolution, json),
-                                        SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[module], Settings->flag2.wattage_resolution, json),
-                                        SSPMEnergyFormat(valu3_chr, Sspm->power_factor[module], 2, json));
-    WSContentSend_PD(HTTP_SSPM_ENERGY,  SSPMEnergyFormat(value_chr, Sspm->energy_today[module], Settings->flag2.energy_resolution, json),
-                                        SSPMEnergyFormat(valu2_chr, Sspm->energy_yesterday[module], Settings->flag2.energy_resolution, json),
-                                        SSPMEnergyFormat(valu3_chr, Sspm->energy_total[module], Settings->flag2.energy_resolution, json));
-    WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
   }
 }
 
@@ -1184,10 +1240,10 @@ void SSPMEnergyShow(bool json) {
 \*********************************************************************************************/
 
 const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
-  "Log|Energy|History|Scan|IamHere" ;
+  "Log|Energy|History|Scan|IamHere|Display|Reset" ;
 
 void (* const SSPMCommand[])(void) PROGMEM = {
-  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere };
+  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset };
 
 void CmndSSPMLog(void) {
   // Report 29 log entries
@@ -1216,10 +1272,30 @@ void CmndSSPMScan(void) {
 }
 
 void CmndSSPMIamHere(void) {
-  // Blink module COMM led containing relay
+  // Blink module ERROR led containing relay
   if ((XdrvMailbox.payload < 1) || (XdrvMailbox.payload > TasmotaGlobal.devices_present)) { XdrvMailbox.payload = 1; }
   SSPMSendIAmHere(XdrvMailbox.payload -1);
   ResponseCmndDone();
+}
+
+void CmndSSPMDisplay(void) {
+  // Select either all relays or only powered on relays
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings->sbflag1.sspm_display = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings->sbflag1.sspm_display);
+}
+
+void CmndSSPMReset(void) {
+  // Reset ARM and restart
+  if (1 == XdrvMailbox.payload) {
+    Sspm->mstate = SPM_NONE;
+    SSPMSendCmnd(SSPM_FUNC_RESET);
+    TasmotaGlobal.restart_flag = 3;
+    ResponseCmndChar(PSTR(D_JSON_RESET_AND_RESTARTING));
+  } else {
+    ResponseCmndChar(PSTR(D_JSON_ONE_TO_RESET));
+  }
 }
 
 /*********************************************************************************************\

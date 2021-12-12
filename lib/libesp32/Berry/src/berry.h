@@ -342,11 +342,11 @@ typedef struct bntvmodule {
     (bvalue*) _ktab,            /* ktab */                                        \
     (struct bproto**) _protos,  /* bproto **ptab */                               \
     (binstruction*) _code,      /* code */                                        \
-    _fname,                     /* name */                                        \
+    ((bstring*) _fname),        /* name */                                        \
     sizeof(*_code)/sizeof(binstruction),                        /* codesize */    \
     BE_IIF(_has_const)(sizeof(*_ktab)/sizeof(bvalue),0),        /* nconst */      \
     BE_IIF(_has_subproto)(sizeof(*_protos)/sizeof(bproto*),0),  /* proto */       \
-    _source,                    /* source */                                      \
+    ((bstring*) _source),        /* source */                                      \
     PROTO_RUNTIME_BLOCK                                                           \
     PROTO_VAR_INFO_BLOCK                                                          \
   }

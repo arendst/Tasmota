@@ -282,6 +282,17 @@ void ZigbeeInputLoop(void) {
 void ZigbeeInitSerial(void)
 {
   zigbee.active = false;
+
+  // always initialize reset pins for TCP serial server
+  if (PinUsed(GPIO_ZIGBEE_RST)) {
+    pinMode(Pin(GPIO_ZIGBEE_RST), OUTPUT);
+    digitalWrite(Pin(GPIO_ZIGBEE_RST), 1);
+  }
+  if (PinUsed(GPIO_ZIGBEE_RST, 1)) {
+    pinMode(Pin(GPIO_ZIGBEE_RST, 1), OUTPUT);
+    digitalWrite(Pin(GPIO_ZIGBEE_RST, 1), 1);
+  }
+
   if (PinUsed(GPIO_ZIGBEE_RX) && PinUsed(GPIO_ZIGBEE_TX)) {
 		AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "GPIOs Rx:%d Tx:%d"), Pin(GPIO_ZIGBEE_RX), Pin(GPIO_ZIGBEE_TX));
     // if TasmotaGlobal.seriallog_level is 0, we allow GPIO 13/15 to switch to Hardware Serial
@@ -294,15 +305,6 @@ void ZigbeeInitSerial(void)
 		} else {
 			zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
 		}
-
-    if (PinUsed(GPIO_ZIGBEE_RST)) {
-      pinMode(Pin(GPIO_ZIGBEE_RST), OUTPUT);
-      digitalWrite(Pin(GPIO_ZIGBEE_RST), 1);
-    }
-    if (PinUsed(GPIO_ZIGBEE_RST, 1)) {
-      pinMode(Pin(GPIO_ZIGBEE_RST, 1), OUTPUT);
-      digitalWrite(Pin(GPIO_ZIGBEE_RST, 1), 1);
-    }
 
     zigbee.active = true;
 		zigbee.init_phase = true;			// start the state machine

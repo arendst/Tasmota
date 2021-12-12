@@ -407,14 +407,8 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
     to_max = ito_min;
   }
 
-  uint32_t numerator = (num - from_min) * (to_max - to_min);
-  uint32_t result;
-  if (numerator >= 0x80000000L) {
-    // don't do rounding as it would create an overflow
-    result = numerator / (from_max - from_min) + to_min;
-  } else {
-    result = (((numerator * 2) / (from_max - from_min)) + 1) / 2 + to_min;
-  }
+  uint32_t numerator = (num - from_min) * (to_max - to_min + 1);
+  uint32_t result = numerator / (from_max - from_min) + to_min;
   return (uint32_t) (result > to_max ? to_max : (result < to_min ? to_min : result));
 }
 

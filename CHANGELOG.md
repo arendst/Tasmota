@@ -3,19 +3,46 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.0.0.3]
+## [10.1.0.1]
+
+## [Released]
+
+## [10.1.0] 20211208
+- Release Noelle
+
+### Added
+- Berry added ``tcpclient``
+
+## [10.0.0.4] 20211208
+### Added
+- (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
+- Support for GPE Multi color smart light as sold by Action in the Netherlands
+- Support for 74xx595 8-bit shift registers (#13921)
+
+### Changed
+- (Internal) Range conversion edge values
+- NimBLE to v.1.3.3
+- MQTT TLS dual mode (CA or fingeprint) in same firmware, ``SetOption132 1`` to force fingerprint
+- Toolchains for ESP32x changed from 8.4.0-2021r1 to 8.4.0-2021r2
+
+### Fixed
+- Tuya dimmer range issue (#13849)
+- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3
+- Compile error BLE EQ3 driver with core 2.0.x (#13948)
+
+## [10.0.0.3] 20211130
 ### Added
 - Shutter support for venetian blinds with tilt control
-- Autoconfiguration for ESP32 and variants
+- ESP32 Autoconfiguration
 - ESP32 fix leftover GPIO configuration after restart
 - ESP32 Proof of Concept Sonoff SPM with limited functionality (switching and energy monitoring) (#13447)
 - WS2812 scheme 13 stairs effect (#13595)
-- Preliminary support for Tasmota Apps (.tapp extesions)
-- Berry support for neopixel (WS2812, SK6812)
+- ESP32 Preliminary support for Tasmota Apps (.tapp extesions)
+- ESP32 Berry support for neopixel (WS2812, SK6812)
 - Command ``IfxPeriod `` to overrule ``Teleperiod`` for Influx messages (#13750)
-- OTA over HTTPS (ESP32x only)
-- Berry add ``import re`` regex module
-- Add HTTPS support to ``WebQuery`` (ESP32x only)
+- ESP32 OTA over HTTPS
+- ESP32 Berry ``import re`` regex module
+- ESP32 HTTPS support to ``WebQuery``
 
 ### Changed
 - ESP8266 Gratuitous ARP enabled and set to 60 seconds (#13623)
@@ -60,8 +87,6 @@ All notable changes to this project will be documented in this file.
 - GUI checkbox MQTT TLS not saved regression from v9.2.0.3 (#13442)
 - Discovery of shutters (#13572)
 - ESP32-C3 OneWire as used by DS18x20 (#13583)
-
-## [Released]
 
 ## [10.0.0] 20211019
 - Release Norman

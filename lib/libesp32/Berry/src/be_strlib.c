@@ -330,7 +330,6 @@ static bstring* string_range(bvm *vm, bstring *str, binstance *range)
 {
     bint lower, upper;
     bint size = str_len(str);   /* size of source string */
-    // bint size = be_data_size(vm, -1); /* get source list size */
     /* get index range */
     bvalue temp;
     be_instance_member(vm, range, be_newstr(vm, "__lower__"), &temp);
@@ -794,9 +793,6 @@ static int str_tr(bvm *vm)
         const char *p, *s = be_tostring(vm, 1);
         const char *t1 = be_tostring(vm, 2);
         const char *t2 = be_tostring(vm, 3);
-        if (strlen(t2) < strlen(t1)) {
-            be_raise(vm, "value_error", "invalid translation pattern");
-        }
         size_t len = (size_t)be_strlen(vm, 1);
         char *buf, *q;
         buf = be_pushbuffer(vm, len);
@@ -804,11 +800,17 @@ static int str_tr(bvm *vm)
         for (p = s, q = buf; *p != '\0'; ++p, ++q) {
             const char *p1, *p2;
             *q = *p;  /* default to no change */
-            for (p1=t1, p2=t2; *p1 != '\0'; ++p1, ++p2) {
+            for (p1=t1, p2=t2; *p1 != '\0'; ++p1) {
                 if (*p == *p1) {
-                    *q = *p2;
+                    if (*p2) {
+                        *q = *p2;
+                    } else {
+                        q--;    /* remove this char */
+                        len--;
+                    }
                     break;
                 }
+                if (*p2) { p2++; }
             }
         }
         be_pushnstring(vm, buf, len); /* make escape string from buffer */
