@@ -46,10 +46,14 @@
 
 #define BMP_MAX_SENSORS      2
 
+#define TCA9548A_ADDR                           0x70
+
+
 const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
 
 typedef struct {
   uint8_t bmp_address;    // I2C bus address
+//  uint8_t bmp_mux;
   char bmp_name[7];       // Sensor name - "BMPXXX"
   uint8_t bmp_type;
   uint8_t bmp_model;
@@ -451,6 +455,11 @@ void Bme680Read(uint8_t bmp_idx)
 
 void BmpDetect(void)
 {
+
+  Wire.beginTransmission(TCA9548A_ADDR);
+  Wire.write(0x01 << 6-1);
+  Wire.endTransmission();
+
   int bmp_sensor_size = BMP_MAX_SENSORS * sizeof(bmp_sensors_t);
   if (!bmp_sensors) {
     bmp_sensors = (bmp_sensors_t*)malloc(bmp_sensor_size);
