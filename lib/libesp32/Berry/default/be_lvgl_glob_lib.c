@@ -69,7 +69,7 @@ be_local_closure(LVGL_glob_widget_event_impl,   /* name */
     }),
     &be_const_str_widget_event_impl,
     &be_const_str_solidified,
-    ( &(const binstruction[30]) {  /* code */
+    ( &(const binstruction[28]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
       0x8C100902,  //  0002  GETMET	R4	R4	K2
@@ -81,25 +81,23 @@ be_local_closure(LVGL_glob_widget_event_impl,   /* name */
       0x7C140400,  //  0008  CALL	R5	2
       0x88180B04,  //  0009  GETMBR	R6	R5	K4
       0x8C1C0105,  //  000A  GETMET	R7	R0	K5
-      0x60240009,  //  000B  GETGBL	R9	G9
-      0x5C280C00,  //  000C  MOVE	R10	R6
-      0x7C240200,  //  000D  CALL	R9	1
-      0x7C1C0400,  //  000E  CALL	R7	2
-      0x60200004,  //  000F  GETGBL	R8	G4
-      0x5C240E00,  //  0010  MOVE	R9	R7
-      0x7C200200,  //  0011  CALL	R8	1
-      0x1C201106,  //  0012  EQ	R8	R8	K6
-      0x78220008,  //  0013  JMPF	R8	#001D
-      0x8C200707,  //  0014  GETMET	R8	R3	K7
-      0x5C280E00,  //  0015  MOVE	R10	R7
-      0x582C0008,  //  0016  LDCONST	R11	K8
-      0x7C200600,  //  0017  CALL	R8	3
-      0x78220003,  //  0018  JMPF	R8	#001D
-      0x8C200F08,  //  0019  GETMET	R8	R7	K8
-      0x5C280800,  //  001A  MOVE	R10	R4
-      0x5C2C0A00,  //  001B  MOVE	R11	R5
-      0x7C200600,  //  001C  CALL	R8	3
-      0x80000000,  //  001D  RET	0
+      0x5C240C00,  //  000B  MOVE	R9	R6
+      0x7C1C0400,  //  000C  CALL	R7	2
+      0x60200004,  //  000D  GETGBL	R8	G4
+      0x5C240E00,  //  000E  MOVE	R9	R7
+      0x7C200200,  //  000F  CALL	R8	1
+      0x1C201106,  //  0010  EQ	R8	R8	K6
+      0x78220008,  //  0011  JMPF	R8	#001B
+      0x8C200707,  //  0012  GETMET	R8	R3	K7
+      0x5C280E00,  //  0013  MOVE	R10	R7
+      0x582C0008,  //  0014  LDCONST	R11	K8
+      0x7C200600,  //  0015  CALL	R8	3
+      0x78220003,  //  0016  JMPF	R8	#001B
+      0x8C200F08,  //  0017  GETMET	R8	R7	K8
+      0x5C280800,  //  0018  MOVE	R10	R4
+      0x5C2C0A00,  //  0019  MOVE	R11	R5
+      0x7C200600,  //  001A  CALL	R8	3
+      0x80000000,  //  001B  RET	0
     })
   )
 );
@@ -130,7 +128,7 @@ be_local_closure(LVGL_glob_lvgl_event_dispatch,   /* name */
     }),
     &be_const_str_lvgl_event_dispatch,
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
+    ( &(const binstruction[18]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0xB80E0200,  //  0001  GETNGBL	R3	K1
       0x8C0C0702,  //  0002  GETMET	R3	R3	K2
@@ -138,19 +136,17 @@ be_local_closure(LVGL_glob_lvgl_event_dispatch,   /* name */
       0x5C1C0200,  //  0004  MOVE	R7	R1
       0x7C140400,  //  0005  CALL	R5	2
       0x7C0C0400,  //  0006  CALL	R3	2
-      0x60100009,  //  0007  GETGBL	R4	G9
-      0x88140704,  //  0008  GETMBR	R5	R3	K4
-      0x7C100200,  //  0009  CALL	R4	1
-      0x88140105,  //  000A  GETMBR	R5	R0	K5
-      0x94140A04,  //  000B  GETIDX	R5	R5	R4
-      0x8C180106,  //  000C  GETMET	R6	R0	K6
-      0x5C200800,  //  000D  MOVE	R8	R4
-      0x7C180400,  //  000E  CALL	R6	2
-      0x5C1C0A00,  //  000F  MOVE	R7	R5
-      0x5C200C00,  //  0010  MOVE	R8	R6
-      0x5C240600,  //  0011  MOVE	R9	R3
-      0x7C1C0400,  //  0012  CALL	R7	2
-      0x80000000,  //  0013  RET	0
+      0x88100704,  //  0007  GETMBR	R4	R3	K4
+      0x88140105,  //  0008  GETMBR	R5	R0	K5
+      0x94140A04,  //  0009  GETIDX	R5	R5	R4
+      0x8C180106,  //  000A  GETMET	R6	R0	K6
+      0x5C200800,  //  000B  MOVE	R8	R4
+      0x7C180400,  //  000C  CALL	R6	2
+      0x5C1C0A00,  //  000D  MOVE	R7	R5
+      0x5C200C00,  //  000E  MOVE	R8	R6
+      0x5C240600,  //  000F  MOVE	R9	R3
+      0x7C1C0400,  //  0010  CALL	R7	2
+      0x80000000,  //  0011  RET	0
     })
   )
 );
@@ -229,7 +225,7 @@ be_local_closure(LVGL_glob_register_obj,   /* name */
     }),
     &be_const_str_register_obj,
     &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
+    ( &(const binstruction[11]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x4C0C0000,  //  0001  LDNIL	R3
       0x1C080403,  //  0002  EQ	R2	R2	R3
@@ -237,12 +233,10 @@ be_local_closure(LVGL_glob_register_obj,   /* name */
       0x60080013,  //  0004  GETGBL	R2	G19
       0x7C080000,  //  0005  CALL	R2	0
       0x90020002,  //  0006  SETMBR	R0	K0	R2
-      0x60080009,  //  0007  GETGBL	R2	G9
-      0x880C0301,  //  0008  GETMBR	R3	R1	K1
-      0x7C080200,  //  0009  CALL	R2	1
-      0x880C0100,  //  000A  GETMBR	R3	R0	K0
-      0x980C0401,  //  000B  SETIDX	R3	R2	R1
-      0x80000000,  //  000C  RET	0
+      0x88080301,  //  0007  GETMBR	R2	R1	K1
+      0x880C0100,  //  0008  GETMBR	R3	R0	K0
+      0x980C0401,  //  0009  SETIDX	R3	R2	R1
+      0x80000000,  //  000A  RET	0
     })
   )
 );
@@ -798,23 +792,23 @@ be_local_class(LVGL_glob,
     NULL,
     be_nested_map(20,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(widget_ctor_cb, 9), be_const_var(4) },
+        { be_const_key(widget_ctor_cb, 8), be_const_var(4) },
         { be_const_key(get_object_from_ptr, 4), be_const_closure(LVGL_glob_get_object_from_ptr_closure) },
         { be_const_key(cb_obj, 7), be_const_var(0) },
         { be_const_key(widget_struct_by_class, -1), be_const_var(8) },
         { be_const_key(widget_event_impl, -1), be_const_closure(LVGL_glob_widget_event_impl_closure) },
         { be_const_key(widget_dtor_cb, 6), be_const_var(5) },
         { be_const_key(cb_event_closure, -1), be_const_var(1) },
-        { be_const_key(lvgl_event_dispatch, 16), be_const_closure(LVGL_glob_lvgl_event_dispatch_closure) },
-        { be_const_key(widget_dtor_impl, -1), be_const_closure(LVGL_glob_widget_dtor_impl_closure) },
+        { be_const_key(cb_do_nothing, 16), be_const_static_closure(LVGL_glob__anonymous__closure) },
         { be_const_key(null_cb, -1), be_const_var(3) },
-        { be_const_key(register_obj, 8), be_const_closure(LVGL_glob_register_obj_closure) },
+        { be_const_key(register_obj, -1), be_const_closure(LVGL_glob_register_obj_closure) },
+        { be_const_key(widget_dtor_impl, 9), be_const_closure(LVGL_glob_widget_dtor_impl_closure) },
         { be_const_key(gen_cb, -1), be_const_closure(LVGL_glob_gen_cb_closure) },
-        { be_const_key(widget_struct_default, -1), be_const_var(7) },
-        { be_const_key(deregister_obj, 12), be_const_closure(LVGL_glob_deregister_obj_closure) },
+        { be_const_key(deregister_obj, -1), be_const_closure(LVGL_glob_deregister_obj_closure) },
+        { be_const_key(widget_struct_default, 12), be_const_var(7) },
         { be_const_key(widget_event_cb, -1), be_const_var(6) },
         { be_const_key(widget_cb, -1), be_const_closure(LVGL_glob_widget_cb_closure) },
-        { be_const_key(cb_do_nothing, 3), be_const_closure(LVGL_glob__anonymous__closure) },
+        { be_const_key(lvgl_event_dispatch, 3), be_const_closure(LVGL_glob_lvgl_event_dispatch_closure) },
         { be_const_key(event_cb, -1), be_const_var(2) },
         { be_const_key(create_custom_widget, -1), be_const_closure(LVGL_glob_create_custom_widget_closure) },
         { be_const_key(widget_ctor_impl, -1), be_const_closure(LVGL_glob_widget_ctor_impl_closure) },
