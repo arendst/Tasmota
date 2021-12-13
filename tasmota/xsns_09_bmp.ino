@@ -2,6 +2,8 @@
   xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Tasmota
 
   Copyright (C) 2021  Heiko Krupp and Theo Arends
+  hacked to support BMxs on muxed I2C-Bus - 2021 Joern Plewka
+  max. number of BMx sensors should be 2x8.
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -46,14 +48,17 @@
 
 #define BMP_MAX_SENSORS      2
 
-#define TCA9548A_ADDR                           0x70
-
+#ifndef TCA9548A_ADDR
+ #define TCA9548A_ADDR                           0x70
+#endif
 
 const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
 
 typedef struct {
   uint8_t bmp_address;    // I2C bus address
+  #ifdef TCA9548A_ADDR
   uint8_t bmp_mux;
+  #endif // TCA9548A_ADDR
   char bmp_name[7];       // Sensor name - "BMPXXX"
   uint8_t bmp_type;
   uint8_t bmp_model;
@@ -112,7 +117,9 @@ bmp180_cal_data_t *bmp180_cal_data = nullptr;
 
 bool Bmp180Calibration(uint8_t bmp_idx)
 {
+  #ifdef TCA9548A_ADDR
   TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+  #endif // TCA9548A_ADDR
 
   if (!bmp180_cal_data) {
     bmp180_cal_data = (bmp180_cal_data_t*)malloc(BMP_MAX_SENSORS * sizeof(bmp180_cal_data_t));
@@ -161,7 +168,9 @@ bool Bmp180Calibration(uint8_t bmp_idx)
 
 void Bmp180Read(uint8_t bmp_idx)
 {
+  #ifdef TCA9548A_ADDR
   TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+  #endif // TCA9548A_ADDR
 
   if (!bmp180_cal_data) { return; }
 
@@ -261,7 +270,9 @@ Bme280CalibrationData_t *Bme280CalibrationData = nullptr;
 
 bool Bmx280Calibrate(uint8_t bmp_idx)
 {
+  #ifdef TCA9548A_ADDR
   TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+  #endif // TCA9548A_ADDR
 
   //  if (I2cRead8(bmp_address, BMP_REGISTER_CHIPID) != BME280_CHIPID) return false;
 
@@ -303,7 +314,9 @@ bool Bmx280Calibrate(uint8_t bmp_idx)
 
 void Bme280Read(uint8_t bmp_idx)
 {
+  #ifdef TCA9548A_ADDR
   TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+  #endif // TCA9548A_ADDR
 
   if (!Bme280CalibrationData) { return; }
 
@@ -370,7 +383,9 @@ static void BmeDelayMs(uint32_t ms)
 
 bool Bme680Init(uint8_t bmp_idx)
 {
+  #ifdef TCA9548A_ADDR
   TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+  #endif // TCA9548A_ADDR
 
   if (!gas_sensor) {
     gas_sensor = (bme680_dev*)malloc(BMP_MAX_SENSORS * sizeof(bme680_dev));
@@ -421,7 +436,9 @@ bool Bme680Init(uint8_t bmp_idx)
 
 void Bme680Read(uint8_t bmp_idx)
 {
+  #ifdef TCA9548A_ADDR
   TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+  #endif // TCA9548A_ADDR
 
   if (!gas_sensor) { return; }
 
@@ -463,12 +480,14 @@ void Bme680Read(uint8_t bmp_idx)
 
 #endif  // USE_BME680
 
+#ifdef TCA9548A_ADDR
 void TCA9548A_setmask (uint8_t channel)
 {
   Wire.beginTransmission(TCA9548A_ADDR);
   Wire.write(0x01 << channel-1);
   Wire.endTransmission();
 }
+#endif // TCA9548A_ADDR
 
 /********************************************************************************************/
 
@@ -483,10 +502,11 @@ void BmpDetect(void)
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
 
+#ifdef TCA9548A_ADDR
 for (uint32_t channel=0; channel<8; channel++)
 {
     TCA9548A_setmask(channel);
-
+#endif // TCA9548A_ADDR
     if (!I2cSetDevice(bmp_addresses[i])) { continue; }
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
@@ -519,7 +539,9 @@ for (uint32_t channel=0; channel<8; channel++)
         bmp_count++;
       }
     }
-}
+#ifdef TCA9548A_ADDR    
+   }
+#endif // TCA9548A_ADDR   
   }
 }
 
