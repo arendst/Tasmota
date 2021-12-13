@@ -1,6 +1,6 @@
 ## Needed to support other hardware: ##
 * I hacked in support for an I2C-Mux (TCA9548A) to support more than two BME sensors on 8 sub buses.
-* I even hacked in support for an further I2C-Portexpander (Tca6408a) and made it behave like the PCF8574(A).
+* I even hacked in support for a further I2C-Portexpander (TCA/PCA6408A) and made it behave like the PCF8574(A).
 * I intend to add support for DS2482-x00 and successor.
 <hr>
 Hopefully there is a chance of contributing this somehow this to great: 
