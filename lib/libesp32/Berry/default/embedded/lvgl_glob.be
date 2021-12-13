@@ -23,8 +23,7 @@ class LVGL_glob
   #- register an lv.lv_* object in the mapping -#
   def register_obj(obj)
     if self.cb_obj == nil    self.cb_obj = {} end
-    var native_ptr = int(obj._p)
-    self.cb_obj[native_ptr] = obj
+    self.cb_obj[obj._p] = obj
   end
 
   def get_object_from_ptr(ptr)
@@ -38,7 +37,7 @@ class LVGL_glob
 
     var event = lv.lv_event(introspect.toptr(event_ptr))
 
-    var target = int(event.target)
+    var target = event.target
     var f = self.cb_event_closure[target]
     var obj = self.get_object_from_ptr(target)
     #print('>> lvgl_event_dispatch', f, obj, event)
@@ -87,7 +86,7 @@ class LVGL_glob
     var cl = lv.lv_obj_class(cl_ptr)
     var event = lv.lv_event(e_ptr)
     var obj_ptr = event.target
-    var obj = self.get_object_from_ptr(int(obj_ptr))
+    var obj = self.get_object_from_ptr(obj_ptr)
     if type(obj) == 'instance' && introspect.get(obj, 'widget_event')
       obj.widget_event(cl, event)
     end

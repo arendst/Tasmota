@@ -162,7 +162,7 @@ void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * ar
       }
     }
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[i] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : nullptr, p[0]);
+    p[i] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : nullptr, (void*) p[0]);
   }
 
   // check if we are missing arguments
