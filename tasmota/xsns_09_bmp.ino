@@ -48,9 +48,9 @@
 
 #define BMP_MAX_SENSORS      2
 
-#ifndef TCA9548A_ADDR
- #define TCA9548A_ADDR                           0x70
-#endif
+
+// #define TCA9548A_ADDR                           0x70
+
 
 const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
 

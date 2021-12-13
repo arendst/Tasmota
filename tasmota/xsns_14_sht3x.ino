@@ -35,7 +35,12 @@
 #define SHT3X_MAX_SENSORS   3
 
 const char kShtTypes[] PROGMEM = "SHT3X|SHT3X|SHTC3";
-uint8_t sht3x_addresses[] = { SHT3X_ADDR_GND, SHT3X_ADDR_VDD, SHTC3_ADDR };
+
+#if TCA9548A_ADDR == SHTC3_ADDR     // prevent conflict
+ uint8_t sht3x_addresses[] = { SHT3X_ADDR_GND, SHT3X_ADDR_VDD};
+#else
+ uint8_t sht3x_addresses[] = { SHT3X_ADDR_GND, SHT3X_ADDR_VDD, SHTC3_ADDR };
+#endif
 
 uint8_t sht3x_count = 0;
 struct SHT3XSTRUCT {
