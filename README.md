@@ -2,6 +2,18 @@
 * I hacked in support for an I2C-Mux (TCA9548A) to support more than two BME sensors on 8 sub buses.
 * I even hacked in support for a further I2C-Portexpander (TCA/PCA6408A) and made it behave like the PCF8574(A).
 * I intend to add support for DS2482-x00 and successor.
+
+### all these ten devices behave the same ###
+* at least on software view (if you are not interested to read the configuration for interrupts)
+* you have may limit the scan to the number of busses but you don't have to
+* the Address is 1110xxx, there are devices with 2/4/8 addresses from this base address
+```
+TCA/PCA9548A
+TCA/PCA9546A
+TCA/PCA9545A
+TCA/PCA9544A
+TCA/PCA9543A
+```
 <hr>
 Hopefully there is a chance of contributing this somehow this to great: 
 
