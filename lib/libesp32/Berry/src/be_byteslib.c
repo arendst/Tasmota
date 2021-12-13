@@ -246,7 +246,7 @@ static unsigned int decode_base64(unsigned char input[], unsigned char output[])
 static void buf_set_len(buf_impl* attr, const size_t len)
 {
     uint16_t old_len = attr->len;
-    attr->len = ((int32_t)len <= attr->size) ? len : attr->size;
+    attr->len = ((int32_t)len <= attr->size) ? (int32_t)len : attr->size;
     if (old_len < attr->len) {
         memset((void*) &attr->bufptr[old_len], 0, attr->len - old_len);
     }
