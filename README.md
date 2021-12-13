@@ -4,6 +4,7 @@
 * I intend to add support for DS2482-x00 and successor.
 
 ### TCA9548A-like: all these ten devices behave the same ###
+#define TCA9548A_ADDR 0x70
 * at least on software view (if you are not interested to read the configuration for interrupts)
 * you may limit the scan to the number of really existing busses but you don't have to
 * the Address is 1110xxx, there are devices with 2/4/8 addresses from this base address (0x70..0x78)
@@ -17,11 +18,15 @@ TCA/PCA9543A
 ```
 
 ### TCA6408A-like: these should behave nearly the same ###
+#define USE_TCA6408A
+#define MAX_TCA6408A 1
+//#define TCA6408A_ADDR 0x18
 ```
 PCA6408A - same from NXP
 PCA9557 
-* "nearly the same" code is easy to change but might cause conflict 
-* P0 is open collector and it is using address (0x18..0x1f)
+* P0 is open collector and it is able of using address (0x18..0x1f)
+* "nearly the same" code is easy to change 
+* use TCA6408A_ADDR 0x18 to scan for (0x18..0x19)
 ```
 
 <hr>
