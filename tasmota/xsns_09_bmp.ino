@@ -53,7 +53,7 @@ const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
 
 typedef struct {
   uint8_t bmp_address;    // I2C bus address
-//  uint8_t bmp_mux;
+  uint8_t bmp_mux;
   char bmp_name[7];       // Sensor name - "BMPXXX"
   uint8_t bmp_type;
   uint8_t bmp_model;
@@ -112,6 +112,8 @@ bmp180_cal_data_t *bmp180_cal_data = nullptr;
 
 bool Bmp180Calibration(uint8_t bmp_idx)
 {
+  TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+
   if (!bmp180_cal_data) {
     bmp180_cal_data = (bmp180_cal_data_t*)malloc(BMP_MAX_SENSORS * sizeof(bmp180_cal_data_t));
   }
@@ -159,6 +161,8 @@ bool Bmp180Calibration(uint8_t bmp_idx)
 
 void Bmp180Read(uint8_t bmp_idx)
 {
+  TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+
   if (!bmp180_cal_data) { return; }
 
   I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_CONTROL, BMP180_TEMPERATURE);
@@ -257,6 +261,8 @@ Bme280CalibrationData_t *Bme280CalibrationData = nullptr;
 
 bool Bmx280Calibrate(uint8_t bmp_idx)
 {
+  TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+
   //  if (I2cRead8(bmp_address, BMP_REGISTER_CHIPID) != BME280_CHIPID) return false;
 
   if (!Bme280CalibrationData) {
@@ -297,6 +303,8 @@ bool Bmx280Calibrate(uint8_t bmp_idx)
 
 void Bme280Read(uint8_t bmp_idx)
 {
+  TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+
   if (!Bme280CalibrationData) { return; }
 
   int32_t adc_T = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_TEMPDATA);
@@ -362,6 +370,8 @@ static void BmeDelayMs(uint32_t ms)
 
 bool Bme680Init(uint8_t bmp_idx)
 {
+  TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+
   if (!gas_sensor) {
     gas_sensor = (bme680_dev*)malloc(BMP_MAX_SENSORS * sizeof(bme680_dev));
   }
@@ -411,6 +421,8 @@ bool Bme680Init(uint8_t bmp_idx)
 
 void Bme680Read(uint8_t bmp_idx)
 {
+  TCA9548A_setmask(bmp_sensors[bmp_idx].bmp_mux);
+
   if (!gas_sensor) { return; }
 
   int8_t rslt = BME680_OK;
@@ -451,15 +463,17 @@ void Bme680Read(uint8_t bmp_idx)
 
 #endif  // USE_BME680
 
+void TCA9548A_setmask (uint8_t channel)
+{
+  Wire.beginTransmission(TCA9548A_ADDR);
+  Wire.write(0x01 << channel-1);
+  Wire.endTransmission();
+}
+
 /********************************************************************************************/
 
 void BmpDetect(void)
 {
-
-  Wire.beginTransmission(TCA9548A_ADDR);
-  Wire.write(0x01 << 6-1);
-  Wire.endTransmission();
-
   int bmp_sensor_size = BMP_MAX_SENSORS * sizeof(bmp_sensors_t);
   if (!bmp_sensors) {
     bmp_sensors = (bmp_sensors_t*)malloc(bmp_sensor_size);
@@ -468,12 +482,18 @@ void BmpDetect(void)
   memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
+
+for (uint32_t channel=0; channel<8; channel++)
+{
+    TCA9548A_setmask(channel);
+
     if (!I2cSetDevice(bmp_addresses[i])) { continue; }
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
       bmp_sensors[bmp_count].bmp_type = bmp_type;
       bmp_sensors[bmp_count].bmp_model = 0;
+      bmp_sensors[bmp_count].bmp_mux = channel;      
 
       bool success = false;
       switch (bmp_type) {
@@ -499,6 +519,7 @@ void BmpDetect(void)
         bmp_count++;
       }
     }
+}
   }
 }
 
