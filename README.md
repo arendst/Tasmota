@@ -19,7 +19,9 @@ TCA/PCA9543A
 ### TCA6408A-like: these should behave nearly the same ###
 ```
 PCA6408A - same from NXP
-PCA9557 - P0 is open collector and it is using address (0x18..0x1f)
+PCA9557 
+* "nearly the same" code is easy to change but might cause conflict 
+* P0 is open collector and it is using address (0x18..0x1f)
 ```
 
 <hr>
