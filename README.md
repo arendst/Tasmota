@@ -6,7 +6,8 @@
 ### all these ten devices behave the same ###
 * at least on software view (if you are not interested to read the configuration for interrupts)
 * you have may limit the scan to the number of busses but you don't have to
-* the Address is 1110xxx, there are devices with 2/4/8 addresses from this base address
+* the Address is 1110xxx, there are devices with 2/4/8 addresses from this base address (0x70..0x78)
+* use 0x70 - I fixed the conflict with a sht3c sensor, didn't look for the others.
 ```
 TCA/PCA9548A
 TCA/PCA9546A
