@@ -1,3 +1,7 @@
+I hacked in support for an I2C-Mux (TCA9548A) to support more than two BME sensors on 8 sub buses.
+I even hacked in support for an further I2C-Portexpander (Tca6408a) and made it behave like the PCF8574(A).
+I intend to add support for DS2482-x00 and successor.
+
 ![Tasmota logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
 Alternative firmware for [ESP8266](https://en.wikipedia.org/wiki/ESP8266) and [ESP32](https://en.wikipedia.org/wiki/ESP32) based devices with **easy configuration using webUI, OTA updates, automation using timers or rules, expandability and entirely local control over MQTT, HTTP, Serial or KNX**.
