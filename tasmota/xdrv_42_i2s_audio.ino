@@ -53,6 +53,9 @@
 #include "AudioFileSourceICYStream.h"
 #include "AudioFileSourceBuffer.h"
 #include "AudioGeneratorAAC.h"
+#include "AudioGeneratorRTTTL.h"
+AudioGeneratorRTTTL *rtttl;
+AudioFileSourcePROGMEM *melody;
 
 #undef AUDIO_PWR_ON
 #undef AUDIO_PWR_OFF
@@ -665,9 +668,32 @@ void Say(char *text) {
   AUDIO_PWR_OFF
 }
 
+void Rtttl(char *text) {
+
+  if (!out) return;
+
+    AUDIO_PWR_ON
+
+  out->begin();
+  melody = new AudioFileSourcePROGMEM( text, strlen_P(text) );
+  rtttl = new AudioGeneratorRTTTL();
+  
+  rtttl->begin(melody, out);
+  while (rtttl->isRunning()) {
+    if (!rtttl->loop()) {
+      rtttl->stop();
+      break;
+     }
+    OsWatchLoop();
+   }
+  out->stop();
+  delete rtttl;    
+       
+  AUDIO_PWR_OFF
+}
 
 const char kI2SAudio_Commands[] PROGMEM = "I2S|"
-  "Say|Gain|Time"
+  "Say|Gain|Time|Rtttl"
 #ifdef ESP32
   "|Play"
 #ifdef USE_I2S_WEBRADIO
@@ -680,7 +706,7 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
   ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
-  &Cmd_Say, &Cmd_Gain, &Cmd_Time
+  &Cmd_Say, &Cmd_Gain, &Cmd_Time, &Cmd_Rtttl
 #ifdef ESP32
   ,&Cmd_Play
 #ifdef USE_I2S_WEBRADIO
@@ -691,7 +717,6 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #endif // USE_M5STACK_CORE2
 #endif // ESP32
 };
-
 
 
 void Cmd_Play(void) {
@@ -714,6 +739,13 @@ void Cmd_Gain(void) {
 void Cmd_Say(void) {
   if (XdrvMailbox.data_len > 0) {
     Say(XdrvMailbox.data);
+  }
+  ResponseCmndChar(XdrvMailbox.data);
+}
+
+void Cmd_Rtttl(void) {
+  if (XdrvMailbox.data_len > 0) {
+    Rtttl(XdrvMailbox.data);
   }
   ResponseCmndChar(XdrvMailbox.data);
 }
