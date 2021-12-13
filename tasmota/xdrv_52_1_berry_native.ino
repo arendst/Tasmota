@@ -312,7 +312,7 @@ extern "C" {
 
 // read a single value at stack position idx, convert to int.
 // if object instance, get `_p` member and convert it recursively
-int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = nullptr, int32_t lv_obj_cb = 0) {
+int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = nullptr, void * lv_obj_cb = nullptr) {
   int32_t ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
@@ -332,7 +332,7 @@ int32_t be_convert_single_elt(bvm *vm, int32_t idx, const char * arg_type = null
       be_pushstring(vm, arg_type);
       be_pushvalue(vm, idx);
       be_pushvalue(vm, 1);
-      be_pushint(vm, lv_obj_cb);
+      be_pushcomptr(vm, lv_obj_cb);
       be_call(vm, 5);
       const void * func = be_tocomptr(vm, -6);
       be_pop(vm, 6);
