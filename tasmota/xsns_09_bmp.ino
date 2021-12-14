@@ -576,10 +576,13 @@ void BmpShow(bool json)
 
       char name[10];
       strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(name));
-      if (bmp_count > 1) {
-        snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
+  #ifdef TCA9548A_ADDR  
+        snprintf_P(name, sizeof(name), PSTR("%s%c%01X%01X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_mux , bmp_idx);  // BMXXXX-YX - Bus+Node
+  #else
+      if (bmp_count > 1) {  
+        snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator() ,bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX - I2C Adress
       }
-
+ #endif 
       char pressure[33];
       dtostrfd(bmp_pressure, Settings->flag2.pressure_resolution, pressure);
       char sea_pressure[33];
