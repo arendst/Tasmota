@@ -174,7 +174,7 @@ void end_varinfo(bparser *parser, int beginpc)
     if (beginpc == -1) /* use block->beginpc by default */
         beginpc = binfo->beginpc;
     /* skip the variable of the previous blocks */
-    for (; it->beginpc < beginpc; ++it);
+    for (; (it <= end) && (it->beginpc < beginpc); ++it);
     for (; it <= end; ++it) {
         if (!it->endpc) /* write to endpc only once */
             it->endpc = finfo->pc;

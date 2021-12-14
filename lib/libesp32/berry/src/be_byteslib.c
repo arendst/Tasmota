@@ -650,6 +650,9 @@ buf_impl bytes_check_data(bvm *vm, size_t add_size) {
     buf_impl attr = m_read_attributes(vm, 1);
     /* check if the `size` is big enough */
     if (attr.len + (int32_t)add_size > attr.size) {
+        if (attr.fixed) {
+            be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+        }
         /* it does not fit so we need to realocate the buffer */
         bytes_resize(vm, &attr, attr.len + add_size);
     }
