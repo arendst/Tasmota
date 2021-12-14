@@ -513,8 +513,9 @@ for (uint32_t channel=0; channel<8; channel++)
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
       bmp_sensors[bmp_count].bmp_type = bmp_type;
       bmp_sensors[bmp_count].bmp_model = 0;
+#ifdef TCA9548A_ADDR
       bmp_sensors[bmp_count].bmp_mux = channel;      
-
+#endif // TCA9548A_ADDR
       bool success = false;
       switch (bmp_type) {
         case BMP180_CHIPID:
