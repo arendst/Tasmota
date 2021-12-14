@@ -203,6 +203,7 @@ static void resize(bvm *vm, bmap *map, int size)
     slots = be_malloc(vm, datasize(size));
     for (i = 0; i < size; ++i) {
         setnil(slots + i);
+        next(slots + i) = LASTNODE;
     }
     map->size = size;
     map->slots = slots;
