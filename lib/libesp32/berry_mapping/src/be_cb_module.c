@@ -168,4 +168,4 @@ module cb (scope: global) {
     get_cb_list, func(be_cb_get_cb_list)
 }
 @const_object_info_end */
-#include "../../Berry/generate/be_fixed_cb.h"
+#include "../../berry/generate/be_fixed_cb.h"
