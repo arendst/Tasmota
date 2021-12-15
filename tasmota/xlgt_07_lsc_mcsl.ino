@@ -249,8 +249,6 @@ void LscMcModuleSelected(void) {
 #ifdef USE_LSC_MCSL_GUI
 
 void LscMcAddFuctionButtons(void) {
-  char number[4];
-
   uint32_t rows = 1;
   uint32_t cols = 8;
   for (uint32_t i = 0; i < 8; i++) {
@@ -262,6 +260,7 @@ void LscMcAddFuctionButtons(void) {
   }
   WSContentSend_P(HTTP_TABLE100);
   WSContentSend_P(PSTR("<tr>"));
+  char number[4];
   uint32_t idx = 0;
   for (uint32_t i = 0; i < rows; i++) {
     if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
@@ -277,11 +276,11 @@ void LscMcAddFuctionButtons(void) {
 }
 
 void LscMcWebGetArg(void) {
-  char tmp[8];                       // WebGetArg numbers only
-  char command[20];
+  char tmp[8];                               // WebGetArg numbers only
   WebGetArg(PSTR("lsc"), tmp, sizeof(tmp));  // 0 - 7 functions
   if (strlen(tmp)) {
     uint32_t function = atoi(tmp);
+    char command[20];
     snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER " %d"), (function * (100 / 8)) + ((100 / 8) / 2));
     ExecuteWebCommand(command);
   }
