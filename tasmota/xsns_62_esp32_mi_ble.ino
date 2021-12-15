@@ -1700,23 +1700,30 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
   }
 }
 
-void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID){
+void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID) {
   MiScaleV1Packet_t *_packetV1 = (MiScaleV1Packet_t*)_buf;
   MiScaleV2Packet_t *_packetV2 = (MiScaleV2Packet_t*)_buf;
+  uint8_t stabilized = 0;
+  uint8_t weight_removed = 0;
 
   // Mi Scale V1
-  if (length == 10 && UUID == 0x181d){ // 14-1-1-2
-    uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
-    if(_slot==0xff) return;
+  if (length == 10 && UUID == 0x181d) { // 14-1-1-2
+    stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
+    weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
+    if (!MI32.option.directBridgeMode && (!stabilized || weight_removed))
+      return;
 
-    if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
+    uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
+    if (_slot==0xff) return;
+
+    if ((_slot >= 0) && (_slot < MIBLEsensors.size())) {
       if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
-      MIBLEsensors[_slot].RSSI=RSSI;
-      MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+      MIBLEsensors[_slot].RSSI = RSSI;
+      MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
       MIBLEsensors[_slot].eventType.scale = 1;
 
-      MIBLEsensors[_slot].stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
-      MIBLEsensors[_slot].weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
+      MIBLEsensors[_slot].stabilized = stabilized;
+      MIBLEsensors[_slot].weight_removed = weight_removed;
       
       if (_packetV1->status & (1 << 0)) {
         strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
@@ -1741,19 +1748,24 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
   }
 
   // Mi Scale V2
-  else if (length == 13 && UUID == 0x181b){ // 17-1-1-2
-    uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
-    if(_slot==0xff) return;
+  else if (length == 13 && UUID == 0x181b) { // 17-1-1-2
+    stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
+    weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
+    if (!MI32.option.directBridgeMode && (!stabilized || weight_removed))
+      return;
 
-    if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
+    uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
+    if (_slot==0xff) return;
+
+    if ((_slot >= 0) && (_slot < MIBLEsensors.size())) {
       if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: at slot %u"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot);
-      MIBLEsensors[_slot].RSSI=RSSI;
-      MIBLEsensors[_slot].needkey=KEY_NOT_REQUIRED;
+      MIBLEsensors[_slot].RSSI = RSSI;
+      MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
       MIBLEsensors[_slot].eventType.scale = 1;
 
       MIBLEsensors[_slot].has_impedance = (_packetV2->status & (1 << 1)) ? 1 : 0;
-      MIBLEsensors[_slot].stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
-      MIBLEsensors[_slot].weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
+      MIBLEsensors[_slot].stabilized = stabilized;
+      MIBLEsensors[_slot].weight_removed = weight_removed;
 
       if (_packetV2->weight_unit & (1 << 4)) {
         strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
@@ -2731,8 +2743,10 @@ void MI32GetOneSensorJson(int slot, int hidename){
           ||(hass_mode==2)
 #endif //USE_HOME_ASSISTANT
       ){
-        ResponseAppend_P(PSTR(",\"weight_removed\":%u"), p->weight_removed);
-        ResponseAppend_P(PSTR(",\"stabilized\":%u"), p->stabilized);
+        if (MI32.option.directBridgeMode) {
+          ResponseAppend_P(PSTR(",\"weight_removed\":%u"), p->weight_removed);
+          ResponseAppend_P(PSTR(",\"stabilized\":%u"), p->stabilized);
+        }
         ResponseAppend_P(PSTR(",\"weight_unit\":\"%s\""), p->weight_unit);
         ResponseAppend_P(PSTR(",\"weight\":%*_f"),
           Settings->flag2.weight_resolution, &p->weight);
@@ -3369,8 +3383,10 @@ void MI32Show(bool json)
         if (p->has_impedance) {
           WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, typeName, p->impedance);
         }
-        WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, typeName, p->weight_removed? PSTR("yes") : PSTR("no"));
-        WSContentSend_PD(HTTP_MISCALE_STABILIZED, typeName, p->stabilized ? PSTR("yes") : PSTR("no"));
+        if (MI32.option.directBridgeMode) {
+          WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, typeName, p->weight_removed? PSTR("yes") : PSTR("no"));
+          WSContentSend_PD(HTTP_MISCALE_STABILIZED, typeName, p->stabilized ? PSTR("yes") : PSTR("no"));
+        }
       }
 
       if(p->bat!=0x00){
