@@ -201,15 +201,6 @@ const bntvmodule be_native_module(_module) = {                  \
     .members = _members                                         \
   }
 
-// #define be_local_instance(_name, _class_ptr, _members)          \
-//   static const binstance i_##_name = {                          \
-//     be_const_header(BE_INSTANCE),                               \
-//     .super = NULL,                                              \
-//     .sub = NULL,                                                \
-//     ._class = (bclass*) _class_ptr,                             \
-//     .members = _members                                         \
-//   }
-
 #define be_nested_map(_size, _slots)                            \
   & (const bmap) {                                              \
     be_const_header(BE_MAP),                                    \
@@ -230,13 +221,6 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_nested_str(_name_)                                   \
   {                                                             \
     { .s=((bstring*)&be_const_str_##_name_) },                  \
-    BE_STRING                                                   \
-  }
-
-#define be_nested_str_literal(_str)                             \
-  {                                                             \
-    { .s=(be_nested_const_str(_str, 0, sizeof(_str)-1 ))        \
-    },                                                          \
     BE_STRING                                                   \
   }
 
