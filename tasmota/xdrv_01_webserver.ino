@@ -1425,6 +1425,9 @@ bool HandleRootStatusRefresh(void)
   }
 #endif // USE_ZIGBEE
 
+  XsnsCall(FUNC_WEB_GET_ARG);
+  XdrvCall(FUNC_WEB_GET_ARG);
+
 #ifdef USE_WEB_SSE
   WSContentBegin(200, CT_STREAM);
   WSContentSend_P(PSTR("data: "));
