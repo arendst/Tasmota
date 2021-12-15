@@ -76,6 +76,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   uint8_t section = 0;
   dsp_ncmds = 0;
   lut_num = 0;
+  lvgl_param.data = 0;
+  lvgl_param.fluslines = 40;
+
   for (uint32_t cnt = 0; cnt < 5; cnt++) {
     lut_cnt[cnt] = 0;
     lut_cmd[cnt] = 0xff;
@@ -343,6 +346,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     Serial.printf("SPED: %d\n", spi_speed*1000000);
     Serial.printf("Pixels: %d\n", col_mode);
     Serial.printf("SaMode: %d\n", sa_mode);
+    Serial.printf("DMA-Mode: %d\n", lvgl_param.use_dma);
 
     Serial.printf("opts: %02x,%02x,%02x\n", saw_3, dim_op, startline);
 

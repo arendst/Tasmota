@@ -246,7 +246,7 @@ void Ina219Detect(void)
 {
   for (uint32_t i = 0; i < sizeof(ina219_type); i++) {
     uint16_t addr = ina219_addresses[i];
-    if (I2cActive(addr)) { continue; }
+    if (!I2cSetDevice(addr)) { continue; }
     if (Ina219SetCalibration(Settings->ina219_mode, addr)) {
       I2cSetActiveFound(addr, ina219_types);
       ina219_type[i] = 1;

@@ -17,16 +17,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define USE_PROFILING
-
-#define PROFILE_THRESHOLD            70       // Minimum duration in milliseconds to start logging
-//#define USE_PROFILE_DRIVER
-#define USE_PROFILE_FUNCTION
-
 /*********************************************************************************************\
  * Profiling features
 \*********************************************************************************************/
 
+// Moved to my_user_config.h (and user_config_override.h)
+//#define USE_PROFILING                            // Enable profiling
+//#define PROFILE_THRESHOLD            70          // Minimum duration in milliseconds to start logging
+//#define USE_PROFILE_DRIVER                       // Enable driver profiling
+//#define USE_PROFILE_FUNCTION                     // Enable driver function profiling
+
+/*
+// Moved to tasmota_globals.h fixing compile warnings
 #ifndef USE_PROFILING
 #undef USE_PROFILE_DRIVER
 #undef USE_PROFILE_FUNCTION
@@ -43,12 +45,16 @@
 #else
 #define PROFILE_FUNCTION(DRIVER, INDEX, FUNCTION, START)
 #endif  // USE_PROFILE_DRIVER
-
+*/
 /*********************************************************************************************\
  * Profiling services
 \*********************************************************************************************/
 
 #ifdef USE_PROFILING
+
+#ifndef PROFILE_THRESHOLD
+#define PROFILE_THRESHOLD            70       // Minimum duration in milliseconds to start logging
+#endif
 
 // Below needs to be inline with enum XsnsFunctions
 const char kXSnsFunctions[] PROGMEM = "SETTINGS_OVERRIDE|PIN_STATE|MODULE_INIT|PRE_INIT|INIT|"
@@ -68,7 +74,7 @@ void AddLogDriver(const char *driver, uint8_t function, uint32_t start) {
   uint32_t profile_millis = millis() - start;
   if (profile_millis > PROFILE_THRESHOLD) {
     char stemp1[20];
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** %s FUNC_%s (%d ms)"), driver, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** x%s FUNC_%s (%d ms)"), driver, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
   }
 }
 #endif  // USE_PROFILE_DRIVER
@@ -78,7 +84,7 @@ void AddLogFunction(const char *driver, uint8_t index, uint8_t function, uint32_
   uint32_t profile_millis = millis() - start;
   if (profile_millis > PROFILE_THRESHOLD) {
     char stemp1[20];
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** %s_%02d FUNC_%s (%d ms)"), driver, index, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PRF: *** x%s_%02d FUNC_%s (%d ms)"), driver, index, GetTextIndexed(stemp1, sizeof(stemp1), function, kXSnsFunctions), profile_millis);
   }
 }
 #endif  // USE_PROFILE_DRIVER

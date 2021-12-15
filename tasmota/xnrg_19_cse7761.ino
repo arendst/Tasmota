@@ -137,7 +137,7 @@ bool Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size, uint32_t* 
 
   uint8_t buffer[8] = { 0 };
   uint32_t rcvd = 0;
-  uint32_t timeout = millis() + 3;
+  uint32_t timeout = millis() + 6;
 
   while (!TimeReached(timeout) && (rcvd <= size)) {
 //  while (!TimeReached(timeout)) {

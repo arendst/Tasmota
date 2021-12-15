@@ -191,11 +191,7 @@ void WiFiClientSecure_light::_clear() {
   _last_error = 0;
   _recvapp_buf = nullptr;
   _recvapp_len = 0;
-#ifdef USE_MQTT_TLS_CA_CERT
-  _insecure = false;        // insecure (fingerprint) mode is only enabled if setPubKeyFingerprint() is called
-#else
-  _insecure = true;        // force insecure if CA validation is not enabled
-#endif
+  _insecure = false;  // set to true when calling setPubKeyFingerprint()
   _fingerprint_any = true; // by default accept all fingerprints
   _fingerprint1 = nullptr;
   _fingerprint2 = nullptr;
@@ -204,6 +200,8 @@ void WiFiClientSecure_light::_clear() {
   _ta_P = nullptr;
   _ta_size = 0;
   _max_thunkstack_use = 0;
+  _alpn_names = nullptr;
+  _alpn_num = 0;
 }
 
 // Constructor
@@ -918,11 +916,7 @@ extern "C" {
   // We limit to a single cipher to reduce footprint
   // we reference it, don't put in PROGMEM
   static const uint16_t suites[] = {
-#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
     BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-#else
-    BR_TLS_RSA_WITH_AES_128_GCM_SHA256
-#endif
   };
 
   // Default initializion for our SSL clients
@@ -945,12 +939,8 @@ extern "C" {
     br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
     br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
-#ifdef USE_MQTT_TLS_FORCE_EC_CIPHER
     // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
     br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15); // TODO
-#endif
-    static const char * alpn_mqtt = "mqtt";
-    br_ssl_engine_set_protocol_names(&cc->eng, &alpn_mqtt, 1);
   }
 }
 
@@ -958,9 +948,8 @@ extern "C" {
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
   // Validation context, either full CA validation or checking only fingerprints
-#ifdef USE_MQTT_TLS_CA_CERT
+
   br_x509_minimal_context *x509_minimal = nullptr;
-#endif
   br_x509_pubkeyfingerprint_context *x509_insecure = nullptr;
 
   LOG_HEAP_SIZE("_connectSSL.start");
@@ -983,6 +972,9 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
 
     br_ssl_client_base_init(_sc.get());
+    if (_alpn_names && _alpn_num > 0) {
+      br_ssl_engine_set_protocol_names(_eng, _alpn_names, _alpn_num);
+    }
 
     // ============================================================
     // Allocatte and initialize Decoder Context
@@ -995,7 +987,6 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     br_x509_pubkeyfingerprint_init(x509_insecure, _fingerprint1, _fingerprint2, _recv_fingerprint, _fingerprint_any);
     br_ssl_engine_set_x509(_eng, &x509_insecure->vtable);
 
-  #ifdef USE_MQTT_TLS_CA_CERT
     if (!_insecure) {
       x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
       if (!x509_minimal) break;
@@ -1008,7 +999,6 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
       if (cfg_time > now) { now = cfg_time; }
       br_x509_minimal_set_time(x509_minimal, now / 86400 + 719528, now % 86400);
     }
-  #endif
     LOG_HEAP_SIZE("_connectSSL after DecoderContext allocation");
 
     // ============================================================
@@ -1047,9 +1037,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
 #endif // ESP8266
 
-  #ifdef USE_MQTT_TLS_CA_CERT
-    free(x509_minimal);
-  #endif
+    free(x509_minimal);   // safe to call if nullptr
     free(x509_insecure);
     LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
     return ret;
@@ -1062,9 +1050,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 #ifdef ESP8266
   stack_thunk_light_del_ref();
 #endif
-#ifdef USE_MQTT_TLS_CA_CERT
-  free(x509_minimal);
-#endif
+  free(x509_minimal);   // safe to call if nullptr
   free(x509_insecure);
   LOG_HEAP_SIZE("_connectSSL clean_on_error");
   return false;

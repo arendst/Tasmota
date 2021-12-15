@@ -227,7 +227,7 @@ hap_char_t *hap_char_current_temperature_create(float curr_temp);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_firmware_revision_create(char *fw_rev);
+hap_char_t *hap_char_firmware_revision_create(const char *fw_rev);
 
 /** Create Hardware Revision Characteristic
  *
@@ -239,7 +239,7 @@ hap_char_t *hap_char_firmware_revision_create(char *fw_rev);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_hardware_revision_create(char *hw_rev);
+hap_char_t *hap_char_hardware_revision_create(const char *hw_rev);
 
 /** Heating Threshold Temperature Characteristic
  *
@@ -309,7 +309,7 @@ hap_char_t *hap_char_lock_target_state_create(uint8_t lock_targ_state);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_manufacturer_create(char *manufacturer);
+hap_char_t *hap_char_manufacturer_create(const char *manufacturer);
 
 /** Create Model Characteristic
  *
@@ -321,7 +321,7 @@ hap_char_t *hap_char_manufacturer_create(char *manufacturer);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_model_create(char *model);
+hap_char_t *hap_char_model_create(const char *model);
 
 /** Create Motion Detected Characteristic
  *
@@ -345,7 +345,7 @@ hap_char_t *hap_char_motion_detected_create(bool motion_detected);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_name_create(char *name);
+hap_char_t *hap_char_name_create(const char *name);
 
 /** Create Obstruction Detected Characteristic
  *
@@ -429,7 +429,7 @@ hap_char_t *hap_char_saturation_create(float saturation);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_serial_number_create(char *serial_num);
+hap_char_t *hap_char_serial_number_create(const char *serial_num);
 
 /** Create Target Door State Characteristic
  *
@@ -501,7 +501,7 @@ hap_char_t *hap_char_temperature_display_units_create(uint8_t temp_disp_units);
  * @return Pointer to the characteristic object on success
  * @return NULL on failure
  */
-hap_char_t *hap_char_version_create(char *version);
+hap_char_t *hap_char_version_create(const char *version);
 
 /** Create Security System Current State Characteristic
  *

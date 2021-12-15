@@ -24,6 +24,7 @@
 
 #include <berry.h>
 #include "be_vm.h"
+#include "ZipReadFS.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
@@ -109,25 +110,6 @@ size_t callBerryGC(void) {
   return callBerryEventDispatcher(PSTR("gc"), nullptr, 0, nullptr);
 }
 
-void BerryDumpErrorAndClear(bvm *vm, bool berry_console);
-void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
-  int32_t top = be_top(vm);
-  // check if we have two strings for an Exception
-  if (top >= 2 && be_isstring(vm, -1) && be_isstring(vm, -2)) {
-    if (berry_console) {
-      berry_log_C(PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      be_tracestack(vm);
-      top = be_top(vm);   // update top after dump
-    } else {
-      AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      be_tracestack(vm);
-    }
-  } else {
-    be_dumpstack(vm);
-  }
-  be_pop(vm, top);
-}
-
 // void callBerryMqttData(void) {
 //   AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "callBerryMqttData");
 //   if (nullptr == berry.vm) { return; }
@@ -150,53 +132,6 @@ void BerryDumpErrorAndClear(bvm *vm, bool berry_console) {
 //   checkBeTop();
 // }
 
-/*
-// Call a method of a global object, with n args
-// Before: stack must containt n args
-// After: stack contains return value or nil if something wrong (args removes)
-// returns true is successful, false if object or method not found
-bool callMethodObjectWithArgs(const char * objname, const char * method, size_t argc) {
-  if (nullptr == berry.vm) { return false; }
-  int32_t top = be_top(berry.vm);
-  // stacks contains n x arg
-  be_getglobal(berry.vm, objname);
-  // stacks contains n x arg + object
-  if (!be_isnil(berry.vm, -1)) {
-    be_getmethod(berry.vm, -1, method);
-  // stacks contains n x arg + object + method
-    if (!be_isnil(berry.vm, -1)) {
-      // reshuffle the entire stack since we want: method + object + n x arg
-      be_pushvalue(berry.vm, -1); // add instance as first arg
-      // stacks contains n x arg + object + method + method
-      be_pushvalue(berry.vm, -3); // add instance as first arg
-      // stacks contains n x arg + object + method + method + object
-      // now move args 2 slots up to make room for method and object
-      for (uint32_t i = 1; i <= argc; i++) {
-        be_moveto(berry.vm, -4 - i, -2 - i);
-      }
-      // stacks contains free + free + n x arg + method + object
-      be_moveto(berry.vm, -2, -4 - argc);
-      be_moveto(berry.vm, -1, -3 - argc);
-      // stacks contains method + object + n x arg + method + object
-      be_pop(berry.vm, 2);
-      // stacks contains method + object + n x arg
-      be_pcall(berry.vm, argc + 1);
-      // stacks contains return_val + object + n x arg
-      be_pop(berry.vm, argc + 1);
-      // stacks contains return_val
-      return true;
-    }
-    be_pop(berry.vm, 1);  // remove method
-    // stacks contains n x arg + object
-  }
-  // stacks contains n x arg + object
-  be_pop(berry.vm, argc + 1); // clear stack
-  be_pushnil(berry.vm); // put nil object
-  return false;
-}
-*/
-
-
 // call the event dispatcher from Tasmota object
 // if data_len is non-zero, the event is also sent as raw `bytes()` object because the string may lose data
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len) {
@@ -213,7 +148,7 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       be_pushstring(vm, type != nullptr ? type : "");
       be_pushstring(vm, cmd != nullptr ? cmd : "");
       be_pushint(vm, idx);
-      be_pushstring(vm, payload != nullptr ? payload : "{}");  // empty json
+      be_pushstring(vm, payload != nullptr ? payload : "");  // empty json
       BrTimeoutStart();
       if (data_len > 0) {
         be_pushbytes(vm, payload, data_len);    // if data_len is set, we also push raw bytes
@@ -224,7 +159,7 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
       }
       BrTimeoutReset();
       if (ret != 0) {
-        BerryDumpErrorAndClear(vm, false);  // log in Tasmota console only
+        be_error_pop_all(berry.vm);             // clear Berry stack
         return ret;
       }
       be_pop(vm, 5);
@@ -251,6 +186,17 @@ void BerryObservability(bvm *vm, int event...) {
   static uint32_t gc_time = 0;
 
   switch (event)  {
+    case BE_OBS_PCALL_ERROR:    // error after be_pcall
+      {
+        int32_t top = be_top(vm);
+        // check if we have two strings for an Exception
+        if (top >= 2 && be_isstring(vm, -1) && be_isstring(vm, -2)) {
+          berry_log_C(PSTR(D_LOG_BERRY "Exception> '%s' - %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
+          be_tracestack(vm);
+        } else {
+          be_dumpstack(vm);
+        }
+      }
     case BE_OBS_GC_START:
       {
         gc_time = millis();
@@ -261,7 +207,10 @@ void BerryObservability(bvm *vm, int event...) {
       {
         int32_t vm_usage2 = va_arg(param, int32_t);
         uint32_t gc_elapsed = millis() - gc_time;
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "GC from %i to %i bytes (in %d ms)"), vm_usage, vm_usage2, gc_elapsed);
+        uint32_t vm_scanned = va_arg(param, uint32_t);
+        uint32_t vm_freed = va_arg(param, uint32_t);
+        AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
+                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
@@ -292,6 +241,17 @@ void BerryObservability(bvm *vm, int event...) {
 }
 
 /*********************************************************************************************\
+ * Adde Berry metrics to teleperiod
+\*********************************************************************************************/
+void BrShowState(void);
+void BrShowState(void) {
+  // trigger a gc first
+  be_gc_collect(berry.vm);
+  ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
+    berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
+}
+
+/*********************************************************************************************\
  * VM Init
 \*********************************************************************************************/
 void BerryInit(void) {
@@ -305,31 +265,29 @@ void BerryInit(void) {
   bool berry_init_ok = false;
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
-    be_set_obs_hook(berry.vm, &BerryObservability);
+    be_set_obs_hook(berry.vm, &BerryObservability);  /* attach observability hook */
     comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
-    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler */
-    be_load_custom_libs(berry.vm);
+    comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler, equivalent of `import strict` */
 
-    // Register functions
-    // be_regfunc(berry.vm, PSTR("log"), l_logInfo);
-    // be_regfunc(berry.vm, PSTR("save"), l_save);
+    be_load_custom_libs(berry.vm);  // load classes and modules
 
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry function registered, RAM used=%u"), be_gc_memcount(berry.vm));
+    // Set the GC threshold to 3584 bytes to avoid the first useless GC
+    berry.vm->gc.threshold = 3584;
 
     ret_code1 = be_loadstring(berry.vm, berry_prog);
     if (ret_code1 != 0) {
-      BerryDumpErrorAndClear(berry.vm, false);
+      be_error_pop_all(berry.vm);             // clear Berry stack
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code loaded, RAM used=%u"), be_gc_memcount(berry.vm));
     ret_code2 = be_pcall(berry.vm, 0);
     if (ret_code1 != 0) {
-      BerryDumpErrorAndClear(berry.vm, false);
+      be_error_pop_all(berry.vm);             // clear Berry stack
       break;
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
     if (be_top(berry.vm) > 1) {
-      BerryDumpErrorAndClear(berry.vm, false);
+      be_error_pop_all(berry.vm);             // clear Berry stack
     } else {
       be_pop(berry.vm, 1);
     }
@@ -337,6 +295,9 @@ void BerryInit(void) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     berry_init_ok = true;
 
+    // we generate a synthetic event `autoexec` 
+    callBerryEventDispatcher(PSTR("preinit"), nullptr, 0, nullptr);
+    
     // Run pre-init
     BrLoad("preinit.be");    // run 'preinit.be' if present
   } while (0);
@@ -370,7 +331,7 @@ void BrLoad(const char * script_name) {
 
     BrTimeoutStart();
     if (be_pcall(berry.vm, 1) != 0) {
-      BerryDumpErrorAndClear(berry.vm, false);
+      be_error_pop_all(berry.vm);             // clear Berry stack
       return;
     }
     BrTimeoutReset();
@@ -475,7 +436,7 @@ void BrREPLRun(char * cmd) {
       }
     }
     if (BE_EXCEPTION == ret_code) {
-      BerryDumpErrorAndClear(berry.vm, true);
+      be_error_pop_all(berry.vm);             // clear Berry stack
       // be_dumpstack(berry.vm);
       // char exception_s[120];
       // ext_snprintf_P(exception_s, sizeof(exception_s), PSTR("%s: %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
@@ -679,7 +640,7 @@ void HandleBerryConsoleRefresh(void)
     WSContentFlush();
 
     for (auto & l: berry.log.log) {
-      _WSContentSend((char*) l);
+      _WSContentSend(l.getBuffer());
     }
 
     berry.log.reset();
@@ -760,6 +721,9 @@ bool Xdrv52(uint8_t function)
     //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
+        // we generate a synthetic event `autoexec` 
+        callBerryEventDispatcher(PSTR("autoexec"), nullptr, 0, nullptr);
+
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
@@ -775,9 +739,6 @@ bool Xdrv52(uint8_t function)
     case FUNC_MQTT_DATA:
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
       break;
-    case FUNC_EVERY_50_MSECOND:
-      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
-      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kBrCommands, BerryCommand);
       if (!result) {
@@ -786,14 +747,18 @@ bool Xdrv52(uint8_t function)
       break;
 
     // Module specific events
+    case FUNC_EVERY_50_MSECOND:
+      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
+      break;
     case FUNC_EVERY_100_MSECOND:
       callBerryEventDispatcher(PSTR("every_100ms"), nullptr, 0, nullptr);
       break;
     case FUNC_EVERY_SECOND:
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
-    // case FUNC_SET_POWER:
-    //   break;
+    case FUNC_SET_DEVICE_POWER:
+      result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
+      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {

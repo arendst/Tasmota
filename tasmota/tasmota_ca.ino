@@ -21,7 +21,7 @@
 // Please use fingerprint validation instead
 // However, the CA are available below for future use if it appears to be useful
 
-#if defined(USE_TLS) && defined(USE_MQTT_TLS_CA_CERT)
+#if defined(USE_TLS)
 
 /*********************************************************************************************\
  * LetsEncrypt R3 certificate, RSA 2048 bits SHA 256, valid until 20250915
@@ -86,7 +86,7 @@ static const br_x509_trust_anchor PROGMEM LetsEncryptR3_TA = {
 /*********************************************************************************************\
  * Amazon Root CA, RSA 2048 bits SHA 256, valid until 20380117
  *
- * https://letsencrypt.org/certificates/
+ * https://www.amazontrust.com/repository/
  * Downloaded from https://www.amazontrust.com/repository/AmazonRootCA1.pem
  *
  * to convert do: "bearssl ta AmazonRootCA1.pem"
@@ -232,4 +232,4 @@ const br_x509_trust_anchor GoDaddyCAG2_TA PROGMEM = {
 	}
 };
 
-#endif // defined(USE_TLS) && defined(USE_MQTT_TLS_CA_CERT)
+#endif // defined(USE_TLS)

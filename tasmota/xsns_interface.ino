@@ -1126,7 +1126,14 @@ bool XsnsCall(uint8_t Function) {
 
       result = xsns_func_ptr[x](Function);
 
-      PROFILE_FUNCTION(PSTR("xsns"), kXsnsList[x], Function, profile_function_start);
+#ifdef USE_PROFILE_FUNCTION
+#ifdef XFUNC_PTR_IN_ROM
+      uint32_t index = pgm_read_byte(kXsnsList + x);
+#else
+      uint32_t index = kXsnsList[x];
+#endif
+      PROFILE_FUNCTION("sns", index, Function, profile_function_start);
+#endif  // USE_PROFILE_FUNCTION
 
       if (result && ((FUNC_COMMAND == Function) ||
                      (FUNC_PIN_STATE == Function) ||
@@ -1137,7 +1144,7 @@ bool XsnsCall(uint8_t Function) {
     }
   }
 
-  PROFILE_DRIVER(PSTR("xsns"), Function, profile_driver_start);
+  PROFILE_DRIVER("sns", Function, profile_driver_start);
 
   return result;
 }

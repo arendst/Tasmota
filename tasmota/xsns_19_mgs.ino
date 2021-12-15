@@ -37,13 +37,9 @@
 
 bool mgs_detected = false;
 
-void MGSInit(void) {
-  gas.begin(MGS_SENSOR_ADDR);
-}
-
 void MGSPrepare(void)
 {
-  if (I2cActive(MGS_SENSOR_ADDR)) { return; }
+  if (!I2cSetDevice(MGS_SENSOR_ADDR)) { return; }
 
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {

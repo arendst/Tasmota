@@ -43,7 +43,7 @@ float sgp30_abshum;
 
 void sgp30_Init(void)
 {
-  if (I2cActive(SGP30_ADDRESS)) { return; }
+  if (!I2cSetDevice(SGP30_ADDRESS)) { return; }
 
   if (sgp.begin()) {
     sgp30_type = true;
@@ -114,14 +114,14 @@ void Sgp30Show(bool json)
 {
   if (sgp30_ready) {
     char abs_hum[33];
-
-    if (TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius)) {
+    bool ahum_available = TasmotaGlobal.global_update && (TasmotaGlobal.humidity > 0) && !isnan(TasmotaGlobal.temperature_celsius);
+    if (ahum_available) {
         // has humidity + temperature
         dtostrfd(sgp30_abshum,4,abs_hum);
     }
     if (json) {
       ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
-      if (TasmotaGlobal.global_update && TasmotaGlobal.humidity>0 && !isnan(TasmotaGlobal.temperature_celsius)) {
+      if (ahum_available) {
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
       ResponseJsonEnd();
@@ -131,7 +131,7 @@ void Sgp30Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_SNS_SGP30, sgp.eCO2, sgp.TVOC);
-      if (TasmotaGlobal.global_update) {
+      if (ahum_available) {
         WSContentSend_PD(HTTP_SNS_AHUM, abs_hum);
       }
 #endif

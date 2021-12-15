@@ -89,7 +89,7 @@ void CCS811Detect(void)
   int active_index = 1;
   for (i = 0, pccsd = ccsd; i < MAXDEVICECOUNT; i++, pccsd++) {
     pccsd->address = CCS811_addresses[ i];
-    if (I2cActive( pccsd->address)) { continue; }
+    if (!I2cSetDevice( pccsd->address)) { continue; }
     if (!pccsd->ccsinstance.begin(pccsd->address)) {
       pccsd->device_found = 1;
       CCS811_devices_found += 1;

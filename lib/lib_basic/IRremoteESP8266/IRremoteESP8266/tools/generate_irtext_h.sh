@@ -24,12 +24,26 @@ cat >${OUTPUT} << EOF
 // Constant text to be shared across all object files.
 // This means there is only one copy of the character/string/text etc.
 
+#ifdef ESP8266
+class __FlashStringHelper;
+#define IRTEXT_CONST_PTR_CAST(PTR)\\
+    reinterpret_cast<const __FlashStringHelper*>(PTR)
+#define IRTEXT_CONST_PTR(NAME) const __FlashStringHelper* const NAME
+#else  // ESP8266
+#define IRTEXT_CONST_PTR_CAST(PTR) PTR
+#define IRTEXT_CONST_PTR(NAME) const char* const NAME
+#endif  // ESP8266
+
 EOF
 
 # Parse and output contents of INPUT file.
 sed 's/ PROGMEM//' ${INPUT} | egrep "^(const )?char" | cut -f1 -d= |
     sed 's/ $/;/;s/^/extern /' | sort -u >> ${OUTPUT}
-
+egrep '^\s{,10}IRTEXT_CONST_STRING\(' ${INPUT} | cut -f2 -d\( | cut -f1 -d, |
+    sed 's/^/extern IRTEXT_CONST_PTR\(/;s/$/\);/' | sort -u >> ${OUTPUT}
+egrep '^\s{,10}IRTEXT_CONST_BLOB_DECL\(' ${INPUT} |
+    cut -f2 -d\( | cut -f1 -d\) |
+    sed 's/^/extern IRTEXT_CONST_PTR\(/;s/$/\);/' | sort -u >> ${OUTPUT}
 # Footer
 cat >> ${OUTPUT} << EOF
 

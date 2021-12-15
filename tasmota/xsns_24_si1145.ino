@@ -326,7 +326,7 @@ bool Si1145Read(void)
 
 void Si1145Detect(void)
 {
-  if (I2cActive(SI114X_ADDR)) { return; }
+  if (!I2cSetDevice(SI114X_ADDR)) { return; }
 
   if (Si1145Begin()) {
     si1145_type = true;

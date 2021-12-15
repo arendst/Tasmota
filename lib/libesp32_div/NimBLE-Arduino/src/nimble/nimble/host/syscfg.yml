@@ -1,0 +1,471 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+syscfg.defs:
+    BLE_HOST:
+        description: 'Indicates that a BLE host is present.'
+        value: 1
+
+    BLE_HS_AUTO_START:
+        description: >
+                Causes the BLE host to automatically start during system
+                initialization.
+        value: 1
+
+    # Debug settings.
+    BLE_HS_DEBUG:
+        description: 'Enables extra runtime assertions.'
+        value: 0
+    BLE_HS_PHONY_HCI_ACKS:
+        description: >
+            Rather than wait for HCI acknowledgements from a controller, the
+            host simulates incoming acks.  Only recommended for test code
+            running in the simulator.
+        value: 0
+    BLE_HS_REQUIRE_OS:
+        description: >
+            Specifies whether the host can depend on the kernel being present.
+            This should only be disabled for unit tests running in the
+            simulator.
+        value: 1
+
+    # Monitor interface settings
+    BLE_MONITOR_UART:
+        description: Enables monitor interface over UART
+        value: 0
+    BLE_MONITOR_UART_DEV:
+        description: Monitor interface UART device
+        value: '"uart0"'
+    BLE_MONITOR_UART_BAUDRATE:
+        description: Baudrate for monitor interface UART
+        value: 1000000
+    BLE_MONITOR_UART_BUFFER_SIZE:
+        description: >
+            Monitor interface ringbuffer size for UART.
+            This value should be a power of 2.
+        value: 64
+    BLE_MONITOR_RTT:
+        description: Enables monitor interface over RTT
+        value: 0
+    BLE_MONITOR_RTT_BUFFER_NAME:
+        description: Monitor interface upstream buffer name
+        value: '"btmonitor"'
+    BLE_MONITOR_RTT_BUFFER_SIZE:
+        description: Monitor interface upstream buffer size
+        value: 256
+    BLE_MONITOR_RTT_BUFFERED:
+        description: >
+            Enables buffering when using monitor interface over RTT. The data
+            are written to RTT once complete packet is created in intermediate
+            buffer. This allows to skip complete packet if there is not enough
+            space in RTT buffer (e.g. there is no reader connected). If disabled,
+            monitor will simply block waiting for RTT to free space in buffer.
+        value: 1
+    BLE_MONITOR_CONSOLE_BUFFER_SIZE:
+        description: >
+            Size of internal buffer for console output. Any line exceeding this
+            length value will be split.
+        value: 128
+
+    # L2CAP settings.
+    BLE_L2CAP_MAX_CHANS:
+        description: >
+            The number of L2CAP channels to allocate.  The default value allows
+            for the signal, ATT, and SM channels for each connection.
+        value: '3*MYNEWT_VAL_BLE_MAX_CONNECTIONS'
+    BLE_L2CAP_SIG_MAX_PROCS:
+        description: >
+            The maximum number of concurrent L2CAP signal procedures.
+        value: 1
+    BLE_L2CAP_JOIN_RX_FRAGS:
+        description: >
+            Whether to collapse incoming L2CAP fragments into a minimal set of
+            mbufs.
+                1: Slower, more memory efficient.
+                0: Faster, less memory efficient.
+        value: 1
+    BLE_L2CAP_RX_FRAG_TIMEOUT:
+        description: >
+            Expiry time for incoming data packets (ms).  If this much time
+            passes since the previous fragment was received, the connection is
+            terminated.  A value of 0 means no timeout.
+        value: 30000
+    BLE_L2CAP_COC_MAX_NUM:
+        description: >
+            Defines maximum number of LE Connection Oriented Channels channels.
+            When set to (0), LE COC is not compiled in.
+        value: 0
+    BLE_L2CAP_COC_MPS:
+        description: >
+            Defines the MPS of L2CAP COC module. This is actually NimBLE's internal
+            L2CAP MTU. The default MPS size is chosen in a way, that the MPS plus
+            the required HCI and L2CAP headers fit into the smallest available
+            MSYS blocks.
+        value: 'MYNEWT_VAL_MSYS_1_BLOCK_SIZE-8'
+
+    BLE_L2CAP_ENHANCED_COC:
+        description: >
+            Enables LE Enhanced CoC mode.
+        value: 0
+        restrictions:
+            - '(BLE_L2CAP_COC_MAX_NUM > 0) && (BLE_VERSION >= 52) if 1'
+
+    # Security manager settings.
+    BLE_SM_LEGACY:
+        description: 'Security manager legacy pairing.'
+        value: 1
+    BLE_SM_SC:
+        description: 'Security manager secure connections (4.2).'
+        value: 0
+
+    BLE_SM_MAX_PROCS:
+        description: >
+            The maximum number of concurrent security manager procedures.
+        value: 1
+    BLE_SM_IO_CAP:
+        description: >
+            The IO capabilities to report during pairing.  Valid values are:
+                BLE_HS_IO_DISPLAY_ONLY
+                BLE_HS_IO_DISPLAY_YESNO
+                BLE_HS_IO_KEYBOARD_ONLY
+                BLE_HS_IO_NO_INPUT_OUTPUT
+                BLE_HS_IO_KEYBOARD_DISPLAY
+        value: 'BLE_HS_IO_NO_INPUT_OUTPUT'
+    BLE_SM_OOB_DATA_FLAG:
+        description: >
+            Whether the out-of-band pairing algorithm is advertised. (0/1)
+        value: 0
+    BLE_SM_BONDING:
+        description: >
+            Enables bonding (persistence and restoration of secure links). (0/1)
+        value: 0
+    BLE_SM_MITM:
+        description: >
+            Whether man-in-the-middle protection is advertised during
+            pairing. (0/1)
+        value: 0
+    BLE_SM_KEYPRESS:
+        description: >
+            Whether keypress support is advertised during pairing. (0/1)
+        value: 0
+    BLE_SM_OUR_KEY_DIST:
+        description: >
+            A bitmap indicating which keys to distribute during pairing.  The
+            bits are defined as follows:
+                0x01: BLE_SM_PAIR_KEY_DIST_ENC
+                0x02: BLE_SM_PAIR_KEY_DIST_ID
+                0x04: BLE_SM_PAIR_KEY_DIST_SIGN
+                0x08: BLE_SM_PAIR_KEY_DIST_LINK
+        value: 0
+    BLE_SM_THEIR_KEY_DIST:
+        description: >
+            A bitmap indicating which keys to accept during pairing.  The
+            bits are defined as follows:
+                0x01: BLE_SM_PAIR_KEY_DIST_ENC
+                0x02: BLE_SM_PAIR_KEY_DIST_ID
+                0x04: BLE_SM_PAIR_KEY_DIST_SIGN
+                0x08: BLE_SM_PAIR_KEY_DIST_LINK
+        value: 0
+    BLE_SM_SC_DEBUG_KEYS:
+        description: >
+            Enable SM debug mode. In this mode SM uses predefined DH key pair as
+            described in Core Specification 5.0, Vol. 3, Part H, 2.3.5.6.1. This
+            allows to decrypt air traffic easily and thus should be only used
+            for debugging.
+        value: 0
+
+    # GAP options.
+    BLE_GAP_MAX_PENDING_CONN_PARAM_UPDATE:
+        description: >
+            Controls the number of connection parameter updates that can be pending
+            simultaneously. Devices with many concurrent connections may need
+            to increase this value.
+        value: 1
+
+    # Supported GATT procedures.  By default:
+    #     o Notify and indicate are enabled;
+    #     o All other procedures are enabled for centrals.
+    BLE_GATT_DISC_ALL_SVCS:
+        description: >
+            Enables the Discover All Primary Services GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_DISC_SVC_UUID:
+        description: >
+            Enables the Discover Primary Services by Service UUID GATT
+            procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_FIND_INC_SVCS:
+        description: >
+            Enables the Find Included Services GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_DISC_ALL_CHRS:
+        description: >
+            Enables the Discover All Characteristics of a Service GATT
+            procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_DISC_CHR_UUID:
+        description: >
+            Enables the Discover Characteristics by UUID GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_DISC_ALL_DSCS:
+        description: >
+            Enables the Discover All Primary Services GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_READ:
+        description: >
+            Enables the Read Characteristic Value GATT procedure. (0/1)
+            (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_READ_UUID:
+        description: >
+            Enables the Read Using Characteristic UUID GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_READ_LONG:
+        description: >
+            Enables the Read Long Characteristic Values GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_READ_MULT:
+        description: >
+            Enables the Read Multiple Characteristic Values GATT procedure.
+            (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_WRITE_NO_RSP:
+        description: >
+            Enables the Write Without Response GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_SIGNED_WRITE:
+        description: >
+            Enables the Signed Write Without Response GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_WRITE:
+        description: >
+            Enables the Write Characteristic Value GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_WRITE_LONG:
+        description: >
+            Enables the Write Long Characteristic Values GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_WRITE_RELIABLE:
+        description: >
+            Enables the Reliable Writes GATT procedure. (0/1)
+        value: MYNEWT_VAL_BLE_ROLE_CENTRAL
+    BLE_GATT_NOTIFY:
+        description: >
+            Enables sending and receiving of GATT notifications. (0/1)
+        value: 1
+    BLE_GATT_INDICATE:
+        description: >
+            Enables sending and receiving of GATT indications. (0/1)
+        value: 1
+
+    # GATT options.
+    BLE_GATT_READ_MAX_ATTRS:
+        description: >
+            The maximum number of attributes that can be read with a single
+            GATT Read Multiple Characteristic Values procedure. (0/1)
+        value: 8
+    BLE_GATT_WRITE_MAX_ATTRS:
+        description: >
+            The maximum number of attributes that can be written with a single
+            GATT Reliable Write procedure. (0/1)
+        value: 4
+    BLE_GATT_MAX_PROCS:
+        description: >
+            The maximum number of concurrent client GATT procedures. (0/1)
+        value: 4
+    BLE_GATT_RESUME_RATE:
+        description: >
+            The rate to periodically resume GATT procedures that have stalled
+            due to memory exhaustion. (0/1)  Units are milliseconds. (0/1)
+        value: 1000
+
+    # Supported server ATT commands. (0/1)
+    BLE_ATT_SVR_FIND_INFO:
+        description: >
+            Enables processing of incoming Find Information Request ATT
+            commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_FIND_TYPE:
+        description: >
+            Enables processing of incoming Find By Type Value Request ATT
+            commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_READ_TYPE:
+        description: >
+            Enables processing of incoming Read By Type Request ATT commands.
+            (0/1)
+        value: 1
+    BLE_ATT_SVR_READ:
+        description: >
+            Enables processing of incoming Read Request ATT commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_READ_BLOB:
+        description: >
+            Enables processing of incoming Read Blob Request ATT commands.
+            (0/1)
+        value: 1
+    BLE_ATT_SVR_READ_MULT:
+        description: >
+            Enables processing of incoming Read Multiple Request ATT commands.
+            (0/1)
+        value: 1
+    BLE_ATT_SVR_READ_GROUP_TYPE:
+        description: >
+            Enables processing of incoming Read by Group Type Request ATT
+            commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_WRITE:
+        description: >
+            Enables processing of incoming Write Request ATT commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_WRITE_NO_RSP:
+        description: >
+            Enables processing of incoming Write Command ATT commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_SIGNED_WRITE:
+        description: >
+            Enables processing of incoming Signed Write Command ATT commands.
+            (0/1)
+        value: 1
+    BLE_ATT_SVR_QUEUED_WRITE:
+        description: >
+            Enables processing of incoming Prepare Write Request and Execute
+            Write Request ATT commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_NOTIFY:
+        description: >
+            Enables processing of incoming Handle Value Notification ATT
+            commands. (0/1)
+        value: 1
+    BLE_ATT_SVR_INDICATE:
+        description: >
+            Enables processing of incoming Handle Value Indication ATT
+            commands.  (0/1)
+        value: 1
+
+    # ATT options.
+    BLE_ATT_PREFERRED_MTU:
+        description: The preferred MTU to indicate in MTU exchange commands.
+        value: 256
+
+    BLE_ATT_SVR_MAX_PREP_ENTRIES:
+        description: >
+            A GATT server uses these when a peer performs a "write long
+            characteristic values" or "write long characteristic descriptors"
+            procedure.  One of these resources is consumed each time a peer
+            sends a partial write.
+        value: 64
+
+    BLE_ATT_SVR_QUEUED_WRITE_TMO:
+        description: >
+            Expiry time for incoming ATT queued writes (ms).  If this much
+            time passes since the previous prepared write was received, the
+            connection is terminated.  A value of 0 means no timeout.
+        value: 30000
+
+    # Privacy options.
+    BLE_RPA_TIMEOUT:
+        description: >
+            The rate that new random addresses should be generated (seconds).
+        value: 300
+
+    # Store settings.
+    BLE_STORE_MAX_BONDS:
+        description: >
+            Maximum number of bonds that can be persisted.  Note: increasing
+            this value may also require increasing the capacity of the
+            underlying storage mechanism.
+        value: 3
+    BLE_STORE_MAX_CCCDS:
+        description: >
+            Maximum number of client characteristic configuration descriptors
+            that can be persisted.  Note: increasing this value may also
+            require increasing the capacity of the underlying storage
+            mechanism.
+
+        value: 8
+
+    BLE_MESH:
+        description: >
+            This option enables Bluetooth Mesh support. The specific
+            features that are available may depend on other features
+            that have been enabled in the stack, such as GATT support.
+        value: 0
+
+    # Flow control settings.
+    BLE_HS_FLOW_CTRL:
+        description: >
+            Whether to enable host-side flow control.  This should only be
+            enabled in host-only setups (i.e., not combined-host-controller).
+        value: 0
+
+    BLE_HS_FLOW_CTRL_ITVL:
+        description: >
+            The interval, in milliseconds, that the host should provide
+            number-of-completed-packets updates to the controller.
+        value: 1000
+
+    BLE_HS_FLOW_CTRL_THRESH:
+        description: >
+            If the number of data buffers available to the controller falls to
+            this number, immediately send a number-of-completed-packets event.
+            The free buffer count is calculated as follows:
+            (total-acl-bufs - bufs-freed-since-last-num-completed-event).
+        value: 2
+
+    BLE_HS_FLOW_CTRL_TX_ON_DISCONNECT:
+        description: >
+            If enabled, the host will immediately transmit a
+            host-number-of-completed-packets command whenever a connection
+            terminates.  This behavior is not required by the standard, but is
+            a necessary workaround when interfacing with some controllers.
+        value: 0
+
+    BLE_HS_STOP_ON_SHUTDOWN:
+        description: >
+            Stops the Bluetooth host when the system shuts down.  Stopping
+            entails aborting all GAP procedures and terminating open
+            connections.
+        value: 1
+
+    BLE_HS_STOP_ON_SHUTDOWN_TIMEOUT:
+        description: >
+            Timeout used in NimBLE's host stop procedure in ms.
+        value: 2000
+
+    BLE_HS_SYSINIT_STAGE:
+        description: >
+            Sysinit stage for the NimBLE host.
+        value: 200
+
+    ### Log settings.
+
+    BLE_HS_LOG_MOD:
+        description: 'Numeric module ID to use for BLE host log messages.'
+        value: 4
+    BLE_HS_LOG_LVL:
+        description: 'Minimum level for the BLE host log.'
+        value: 1
+
+syscfg.logs:
+    BLE_HS_LOG:
+        module: MYNEWT_VAL(BLE_HS_LOG_MOD)
+        level: MYNEWT_VAL(BLE_HS_LOG_LVL)
+
+syscfg.vals.BLE_MESH:
+    BLE_SM_SC: 1

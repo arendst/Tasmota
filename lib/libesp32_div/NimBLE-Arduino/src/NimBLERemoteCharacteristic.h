@@ -14,11 +14,9 @@
 
 #ifndef COMPONENTS_NIMBLEREMOTECHARACTERISTIC_H_
 #define COMPONENTS_NIMBLEREMOTECHARACTERISTIC_H_
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteService.h"
 #include "NimBLERemoteDescriptor.h"
@@ -161,12 +159,10 @@ private:
     std::string             m_value;
     notify_callback         m_notifyCallback;
     time_t                  m_timestamp;
-    portMUX_TYPE            m_valMux;
 
     // We maintain a vector of descriptors owned by this characteristic.
     std::vector<NimBLERemoteDescriptor*> m_descriptorVector;
 }; // NimBLERemoteCharacteristic
 
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
 #endif /* COMPONENTS_NIMBLEREMOTECHARACTERISTIC_H_ */

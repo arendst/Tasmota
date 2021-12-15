@@ -55,17 +55,18 @@ void Core2DisplayDim(uint8_t dim);
 #ifndef DISP_DESC_FILE
 //#define DISP_DESC_FILE "/dispdesc.txt"
 #define DISP_DESC_FILE "/display.ini"
-#endif
+#endif // DISP_DESC_FILE
 
 /*********************************************************************************************/
 #ifdef DSP_ROM_DESC
 const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
-Renderer *Init_uDisplay(const char *desc, int8_t cs) {
+Renderer *Init_uDisplay(const char *desc) {
 char *ddesc = 0;
 char *fbuff;
 uDisplay *udisp;
+int8_t cs;
 
   if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
 
@@ -94,7 +95,7 @@ uDisplay *udisp;
         AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor used"));
       }
     }
-#endif
+#endif // USE_UFILESYS
 
 
 #ifdef USE_SCRIPT
@@ -185,18 +186,16 @@ uDisplay *udisp;
       cp += 4;
       //; 7 params nr,cs,sclk,mosi,dc,bl,reset,miso
       //SPI,*,*,*,*,*,*,*
-      if (cs < 0) {
-        switch (*cp) {
-          case '1':
-            cs = Pin(GPIO_SPI_CS);
-            break;
-          case '2':
-            cs = Pin(GPIO_SPI_CS, 1);
-            break;
-          default:
-            cs = Pin(GPIO_SSPI_CS);
-            break;
-        }
+      switch (*cp) {
+        case '1':
+          cs = Pin(GPIO_SPI_CS);
+          break;
+        case '2':
+          cs = Pin(GPIO_SPI_CS, 1);
+          break;
+        default:
+          cs = Pin(GPIO_SSPI_CS);
+          break;
       }
       if (*cp == '1') {
         cp+=2;
@@ -213,8 +212,8 @@ uDisplay *udisp;
         replacepin(&cp, Pin(GPIO_SPI_CLK, 1));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, 1));
         replacepin(&cp, Pin(GPIO_SPI_DC, 1));
-        replacepin(&cp, Pin(GPIO_BACKLIGHT, 1));
-        replacepin(&cp, Pin(GPIO_OLED_RESET, 1));
+        replacepin(&cp, Pin(GPIO_BACKLIGHT));
+        replacepin(&cp, Pin(GPIO_OLED_RESET));
         replacepin(&cp, Pin(GPIO_SPI_MISO, 1));
       } else {
         // soft spi pins
@@ -281,9 +280,9 @@ uDisplay *udisp;
       else FT5206_Touch_Init(Wire1);
 #else
       if (!wire_n) FT5206_Touch_Init(Wire);
-#endif
+#endif // ESP32
     }
-#endif
+#endif // USE_FT5206
 
 #ifdef USE_XPT2046
     cp = strstr(ddesc, ":TS,");
@@ -292,7 +291,7 @@ uDisplay *udisp;
       uint8_t touch_cs = replacepin(&cp, Pin(GPIO_XPT2046_CS));
 	    XPT2046_Touch_Init(touch_cs);
     }
-#endif
+#endif // USE_XPT2046
 
     uint8_t inirot = Settings->display_rotate;
 
@@ -315,18 +314,18 @@ uDisplay *udisp;
 #ifdef USE_M5STACK_CORE2
     renderer->SetPwrCB(Core2DisplayPower);
     renderer->SetDimCB(Core2DisplayDim);
-#endif
+#endif // USE_M5STACK_CORE2
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, inirot, Settings->display_font);
 
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
-    
+
     ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH
     renderer->Splash();
-#endif
+#endif // SHOW_SPLASH
 
     udisp_init_done = true;
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), renderer->devname());
@@ -433,7 +432,7 @@ bool Xdsp17(uint8_t function) {
   bool result = false;
 
   if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    Init_uDisplay(0, -1);
+    Init_uDisplay(nullptr);
   }
   else if (udisp_init_done && (XDSP_17 == Settings->display_model)) {
     switch (function) {

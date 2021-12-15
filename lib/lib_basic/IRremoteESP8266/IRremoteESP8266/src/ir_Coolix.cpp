@@ -611,7 +611,11 @@ String IRCoolixAC::toString(void) const {
   result += addBoolToString(getZoneFollow(), kZoneFollowStr);
   result += addLabeledString(
       (getSensorTemp() == kCoolixSensorTempIgnoreCode)
-          ? kOffStr : uint64ToString(getSensorTemp()) + 'C', kSensorTempStr);
+          // Encasing with String(blah) to keep compatible with old arduino
+          // frameworks. Not needed with 3.0.2.
+          ///> @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1639#issuecomment-944906016
+          ? kOffStr : String(uint64ToString(getSensorTemp()) + 'C'),
+      kSensorTempStr);
   return result;
 }
 

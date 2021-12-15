@@ -12,11 +12,8 @@
  *      Author: kolban
  */
 
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
-
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteCharacteristic.h"
 #include "NimBLEUtils.h"
@@ -60,7 +57,6 @@ static const char* LOG_TAG = "NimBLERemoteCharacteristic";
     m_pRemoteService     = pRemoteService;
     m_notifyCallback     = nullptr;
     m_timestamp          = 0;
-    m_valMux             = portMUX_INITIALIZER_UNLOCKED;
 
     NIMBLE_LOGD(LOG_TAG, "<< NimBLERemoteCharacteristic(): %s", m_uuid.toString().c_str());
  } // NimBLERemoteCharacteristic
@@ -408,12 +404,12 @@ NimBLEUUID NimBLERemoteCharacteristic::getUUID() {
  * @return The value of the remote characteristic.
  */
 std::string NimBLERemoteCharacteristic::getValue(time_t *timestamp) {
-    portENTER_CRITICAL(&m_valMux);
+    ble_npl_hw_enter_critical();
     std::string value = m_value;
     if(timestamp != nullptr) {
         *timestamp = m_timestamp;
     }
-    portEXIT_CRITICAL(&m_valMux);
+    ble_npl_hw_exit_critical(0);
 
     return value;
 }
@@ -515,13 +511,13 @@ std::string NimBLERemoteCharacteristic::readValue(time_t *timestamp) {
     } while(rc != 0 && retryCount--);
 
     time_t t = time(nullptr);
-    portENTER_CRITICAL(&m_valMux);
+    ble_npl_hw_enter_critical();
     m_value = value;
     m_timestamp = t;
     if(timestamp != nullptr) {
         *timestamp = m_timestamp;
     }
-    portEXIT_CRITICAL(&m_valMux);
+    ble_npl_hw_exit_critical(0);
 
     NIMBLE_LOGD(LOG_TAG, "<< readValue length: %d rc=%d", value.length(), rc);
     return value;
@@ -819,6 +815,4 @@ int NimBLERemoteCharacteristic::onWriteCB(uint16_t conn_handle,
     return 0;
 }
 
-
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

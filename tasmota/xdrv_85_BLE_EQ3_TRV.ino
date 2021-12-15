@@ -225,7 +225,7 @@ uint8_t pairing = 0;
 
 #define EQ3_NUM_DEVICESLOTS 16
 eq3_device_tag EQ3Devices[EQ3_NUM_DEVICESLOTS];
-void *EQ3mutex = nullptr;
+SemaphoreHandle_t EQ3mutex = nullptr;
 
 int EQ3Period = 300;
 uint8_t EQ3OnlyAliased = 0;
@@ -1760,7 +1760,7 @@ bool Xdrv85(uint8_t function)
     }
   return result;
 }
-#endif  // 
+#endif  //
 #endif  // ESP32
 
 #endif

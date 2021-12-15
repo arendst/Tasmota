@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_native.ino - Berry scripting language, native fucnctions
+  xdrv_52_3_berry_tasmota.ino - Berry scripting language, native fucnctions
 
   Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
 
@@ -24,26 +24,27 @@
 #include <Wire.h>
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
+const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recorded when inside REPL
 
-/*********************************************************************************************\
- * Return C callback from index
- *
-\*********************************************************************************************/
-extern "C" {
-  int32_t l_get_cb(struct bvm *vm);
-  int32_t l_get_cb(struct bvm *vm) {
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 2 && be_isint(vm, 2)) {
-      int32_t idx = be_toint(vm, 2);
-      if (idx >= 0 && idx < ARRAY_SIZE(berry_callback_array)) {
-        const berry_callback_t c_ptr = berry_callback_array[idx];
-        be_pushcomptr(vm, (void*) c_ptr);
-        be_return(vm);
-      }
-    }
-    be_raise(vm, kTypeError, nullptr);
-  }
-}
+// /*********************************************************************************************\
+//  * Return C callback from index
+//  *
+// \*********************************************************************************************/
+// extern "C" {
+//   extern int32_t be_cb__get_cb(struct bvm *vm);
+//   int32_t be_cb__get_cb(struct bvm *vm) {
+//     int32_t argc = be_top(vm); // Get the number of arguments
+//     if (argc >= 2 && be_isint(vm, 2)) {
+//       int32_t idx = be_toint(vm, 2);
+//       if (idx >= 0 && idx < ARRAY_SIZE(berry_callback_array)) {
+//         const berry_callback_t c_ptr = berry_callback_array[idx];
+//         be_pushcomptr(vm, (void*) c_ptr);
+//         be_return(vm);
+//       }
+//     }
+//     be_raise(vm, kTypeError, nullptr);
+//   }
+// }
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
@@ -91,6 +92,7 @@ extern "C" {
           retain = be_tobool(vm, 4);
         }
         if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+        be_pop(vm, be_top(vm));
         MqttPublishPayload(topic, payload, payload_len, retain);
         be_return_nil(vm); // Return
       }
@@ -121,7 +123,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {  // only 1 argument of type string accepted
       const char * command = be_tostring(vm, 2);
-      be_pop(vm, 2);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
+      be_pop(vm, top);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
       ExecuteCommand(command, SRC_BERRY);
       be_return_nil(vm); // Return
     }
@@ -258,20 +260,25 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  static void l_push_time(bvm *vm, struct tm *t, const char *unparsed) {
+    be_newobject(vm, "map");
+    map_insert_int(vm, "year", t->tm_year + 1900);
+    map_insert_int(vm, "month", t->tm_mon + 1);
+    map_insert_int(vm, "day", t->tm_mday);
+    map_insert_int(vm, "hour", t->tm_hour);
+    map_insert_int(vm, "min", t->tm_min);
+    map_insert_int(vm, "sec", t->tm_sec);
+    map_insert_int(vm, "weekday", t->tm_wday);
+    if (unparsed) map_insert_str(vm, "unparsed", unparsed);
+    be_pop(vm, 1);
+  }
+
   int32_t l_time_dump(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isint(vm, 2)) {
       time_t ts = be_toint(vm, 2);
       struct tm *t = gmtime(&ts);
-      be_newobject(vm, "map");
-      map_insert_int(vm, "year", t->tm_year + 1900);
-      map_insert_int(vm, "month", t->tm_mon + 1);
-      map_insert_int(vm, "day", t->tm_mday);
-      map_insert_int(vm, "hour", t->tm_hour);
-      map_insert_int(vm, "min", t->tm_min);
-      map_insert_int(vm, "sec", t->tm_sec);
-      map_insert_int(vm, "weekday", t->tm_wday);
-      be_pop(vm, 1);
+      l_push_time(vm, t, NULL);
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
@@ -287,6 +294,23 @@ extern "C" {
       strftime(s, sizeof(s), format, t);
       be_pushstring(vm, s);
       be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int32_t l_strptime(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {
+      const char * input = be_tostring(vm, 2);
+      const char * format = be_tostring(vm, 3);
+      struct tm t = {0};
+      char * ret = strptime(input, format, &t);
+      if (ret) {
+        l_push_time(vm, &t, ret);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -308,7 +332,6 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-//    TWDTLoop();   // reset watchdog
     BrTimeoutYield();   // reset timeout
     be_return_nil(vm);
   }
@@ -390,6 +413,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       ResponseAppend_P(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -402,6 +426,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       WSContentSend_P(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -414,6 +439,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       WSContentSend_PD(PSTR("%s"), msg);
       be_return_nil(vm); // Return nil when something goes wrong
     }
@@ -423,9 +449,14 @@ extern "C" {
   // get power
   int32_t l_getpower(bvm *vm);
   int32_t l_getpower(bvm *vm) {
+    power_t pow = TasmotaGlobal.power;
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top == 2 && be_isint(vm, 2)) {
+      pow = be_toint(vm, 2);
+    }
     be_newobject(vm, "list");
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      be_pushbool(vm, bitRead(TasmotaGlobal.power, i));
+      be_pushbool(vm, bitRead(pow, i));
       be_data_push(vm, -2);
       be_pop(vm, 1);
     }
@@ -440,6 +471,7 @@ extern "C" {
       int32_t idx = be_toint(vm, 2);
       bool power = be_tobool(vm, 3);
       if ((idx >= 0) && (idx < TasmotaGlobal.devices_present)) {
+        be_pop(vm, top);  // avoid Error be_top is non zero message
         ExecuteCommandPower(idx + 1, (power) ? POWER_ON : POWER_OFF, SRC_BERRY);
         be_pushbool(vm, power);
         be_return(vm); // Return
@@ -473,6 +505,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isint(vm, 2)) {
       int32_t index = be_toint(vm, 2);
+      be_pop(vm, top);  // avoid Error be_top is non zero message
       bool enabled = I2cEnabled(index);
       be_pushbool(vm, enabled);
       be_return(vm); // Return
@@ -520,6 +553,14 @@ extern "C" {
     be_return(vm);
   }
 
+  // Berry: `arvh() -> string`
+  // ESP object
+  int32_t l_arch(bvm *vm);
+  int32_t l_arch(bvm *vm) {
+    be_pushstring(vm, ESP32_ARCH);
+    be_return(vm);
+  }
+
   // Berry: `save(file:string, f:closure) -> bool`
   int32_t l_save(struct bvm *vm);
   int32_t l_save(struct bvm *vm) {
@@ -534,22 +575,47 @@ extern "C" {
   }
 }
 
+/*********************************************************************************************\
+ * Native functions mapped to Berry functions
+ *
+ * read_sensors(show_sensor:bool) -> string
+ *
+\*********************************************************************************************/
+extern "C" {
+  int32_t l_read_sensors(struct bvm *vm);
+  int32_t l_read_sensors(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    bool sensor_display = false;    // don't trigger a display by default
+    if (top >= 2) {
+      sensor_display = be_tobool(vm, 2);
+    }
+    be_pop(vm, top);    // clear stack to avoid `Error be_top is non zero=1` errors
+    ResponseClear();
+    if (MqttShowSensor(sensor_display)) {
+      // return string
+      be_pushstring(vm, ResponseData());
+      be_return(vm);
+    } else {
+      be_return_nil(vm);
+    }
+  }
+}
+
+/*********************************************************************************************\
+ * Logging functions
+ *
+\*********************************************************************************************/
 // called as a replacement to Berry `print()`
 void berry_log(const char * berry_buf);
 void berry_log(const char * berry_buf) {
   const char * pre_delimiter = nullptr;   // do we need to prepend a delimiter if no REPL command
-  if (!berry.repl_active) {
-    // if no REPL in flight, we limit the number of logs
-    if (berry.log.log.length() == 0) {
-      pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
-    }
-    if (berry.log.log.length() >= BERRY_MAX_LOGS) {
-      berry.log.log.remove(berry.log.log.head());
-    }
-  } else {
-//    TWDTLoop();   // if REPL, printing resets the WDT
+  size_t max_logs = berry.repl_active ? BERRY_MAX_REPL_LOGS : BERRY_MAX_LOGS;
+  if (berry.log.log.length() == 0) {
+    pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
   }
-  // AddLog(LOG_LEVEL_INFO, PSTR("[Add to log] %s"), berry_buf);
+  if (berry.log.log.length() >= BERRY_MAX_LOGS) {
+    berry.log.log.remove(berry.log.log.head());
+  }
   berry.log.addString(berry_buf, pre_delimiter, "\n");
   AddLog(LOG_LEVEL_INFO, PSTR("%s"), berry_buf);
 }
@@ -568,19 +634,6 @@ extern "C" {
     if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
     berry_log(log_data);
   }
-}
-
-
-void berry_log_P(const char * berry_buf, ...) {
-  // To save stack space support logging for max text length of 128 characters
-  char log_data[LOGSZ];
-
-  va_list arg;
-  va_start(arg, berry_buf);
-  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
-  va_end(arg);
-  if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
-  berry_log(log_data);
 }
 
 #endif  // USE_BERRY

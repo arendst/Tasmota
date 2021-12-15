@@ -6,6 +6,13 @@
 
 // Supports:
 //   Brand: Epson,  Model: EN-TW9100W Projector
+//   Brand: Epson,  Model: VS230 Projector
+//   Brand: Epson,  Model: VS330 Projector
+//   Brand: Epson,  Model: EX3220 Projector
+//   Brand: Epson,  Model: EX5220 Projector
+//   Brand: Epson,  Model: EX5230 Projector
+//   Brand: Epson,  Model: EX6220 Projector
+//   Brand: Epson,  Model: EX7220 Projector
 
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>

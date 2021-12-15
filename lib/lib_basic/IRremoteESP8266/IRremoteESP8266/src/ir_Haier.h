@@ -1,4 +1,4 @@
-// Copyright 2018 crankyoldgit
+// Copyright 2018-2021 crankyoldgit
 /// @file
 /// @brief Support for Haier A/C protocols.
 /// The specifics of reverse engineering the protocols details:
@@ -13,8 +13,10 @@
 //   Brand: Haier,  Model: HSU07-HEA03 remote (HAIER_AC)
 //   Brand: Haier,  Model: YR-W02 remote (HAIER_AC_YRW02)
 //   Brand: Haier,  Model: HSU-09HMC203 A/C (HAIER_AC_YRW02)
+//   Brand: Haier,  Model: V9014557 M47 8D remote (HAIER_AC176)
 //   Brand: Mabe,   Model: MMI18HDBWCA6MI8 A/C (HAIER_AC176)
 //   Brand: Mabe,   Model: V12843 HJ200223 remote (HAIER_AC176)
+//   Brand: Daichi, Model: D-H A/C (HAIER_AC176)
 
 #ifndef IR_HAIER_H_
 #define IR_HAIER_H_
@@ -41,7 +43,7 @@ union HaierProtocol{
     // Byte 2
     uint8_t CurrHours:5;
     uint8_t unknown  :1;  // value=1
-    uint8_t Swing    :2;
+    uint8_t SwingV   :2;
     // Byte 3
     uint8_t CurrMins:6;
     uint8_t OffTimer:1;
@@ -84,10 +86,10 @@ const uint8_t kHaierAcCmdTimerCancel = 0b1010;
 const uint8_t kHaierAcCmdHealth =      0b1100;
 const uint8_t kHaierAcCmdSwing =       0b1101;
 
-const uint8_t kHaierAcSwingOff =  0b00;
-const uint8_t kHaierAcSwingUp =   0b01;
-const uint8_t kHaierAcSwingDown = 0b10;
-const uint8_t kHaierAcSwingChg =  0b11;
+const uint8_t kHaierAcSwingVOff =  0b00;
+const uint8_t kHaierAcSwingVUp =   0b01;
+const uint8_t kHaierAcSwingVDown = 0b10;
+const uint8_t kHaierAcSwingVChg =  0b11;
 
 const uint8_t kHaierAcAuto = 0;
 const uint8_t kHaierAcCool = 1;
@@ -118,11 +120,11 @@ const uint8_t kHaierAcSleepBit = 0b01000000;
 #define HAIER_AC_CMD_TIMER_SET kHaierAcCmdTimerSet
 #define HAIER_AC_CMD_TIMER_CANCEL kHaierAcCmdTimerCancel
 #define HAIER_AC_CMD_HEALTH kHaierAcCmdHealth
-#define HAIER_AC_CMD_SWING kHaierAcCmdSwing
-#define HAIER_AC_SWING_OFF kHaierAcSwingOff
-#define HAIER_AC_SWING_UP kHaierAcSwingUp
-#define HAIER_AC_SWING_DOWN kHaierAcSwingDown
-#define HAIER_AC_SWING_CHG kHaierAcSwingChg
+#define HAIER_AC_CMD_SWINGV kHaierAcCmdSwing
+#define HAIER_AC_SWINGV_OFF kHaierAcSwingVOff
+#define HAIER_AC_SWINGV_UP kHaierAcSwingVUp
+#define HAIER_AC_SWINGV_DOWN kHaierAcSwingVDown
+#define HAIER_AC_SWINGV_CHG kHaierAcSwingVChg
 #define HAIER_AC_AUTO kHaierAcAuto
 #define HAIER_AC_COOL kHaierAcCool
 #define HAIER_AC_DRY kHaierAcDry
@@ -133,69 +135,34 @@ const uint8_t kHaierAcSleepBit = 0b01000000;
 #define HAIER_AC_FAN_MED kHaierAcFanMed
 #define HAIER_AC_FAN_HIGH kHaierAcFanHigh
 
-/// Native representation of a Haier YRW02 A/C message.
-union HaierYRW02Protocol{
-  uint8_t raw[kHaierACYRW02StateLength];  ///< The state in native form
-  struct {
-    // Byte 0
-    uint8_t Prefix;
-    // Byte 1
-    uint8_t Swing:4;
-    uint8_t Temp :4;  // 16C~30C
-    // Byte 2
-    uint8_t :8;
-    // Byte 3
-    uint8_t       :1;
-    uint8_t Health:1;
-    uint8_t       :6;
-    // Byte 4
-    uint8_t      :6;
-    uint8_t Power:1;
-    uint8_t      :1;
-    // Byte 5
-    uint8_t    :5;
-    uint8_t Fan:3;
-    // Byte 6
-    uint8_t      :6;
-    uint8_t Turbo:2;
-    // Byte 7
-    uint8_t     :5;
-    uint8_t Mode:3;
-    // Byte 8
-    uint8_t      :7;
-    uint8_t Sleep:1;
-    // Byte 9
-    uint8_t :8;
-    // Byte 10
-    uint8_t :8;
-    // Byte 11
-    uint8_t :8;
-    // Byte 12
-    uint8_t Button:4;
-    uint8_t       :4;
-    // Byte 13
-    uint8_t Sum;
-  };
-};
+const uint8_t kHaierAcYrw02MinTempC = 16;
+const uint8_t kHaierAcYrw02MaxTempC = 30;
+const uint8_t kHaierAcYrw02MinTempF = 60;
+const uint8_t kHaierAcYrw02MaxTempF = 86;
+const uint8_t kHaierAcYrw02DefTempC = 25;
 
-const uint8_t kHaierAcYrw02Prefix = 0xA6;
+const uint8_t kHaierAcYrw02ModelA = 0xA6;
+const uint8_t kHaierAcYrw02ModelB = 0x59;
 const uint8_t kHaierAc176Prefix = 0xB7;
 
-const uint8_t kHaierAcYrw02SwingOff = 0x0;
-const uint8_t kHaierAcYrw02SwingTop = 0x1;
-const uint8_t kHaierAcYrw02SwingMiddle = 0x2;  // Not available in heat mode.
-const uint8_t kHaierAcYrw02SwingBottom = 0x3;  // Only available in heat mode.
-const uint8_t kHaierAcYrw02SwingDown = 0xA;
-const uint8_t kHaierAcYrw02SwingAuto = 0xC;  // Airflow
+const uint8_t kHaierAcYrw02SwingVOff = 0x0;
+const uint8_t kHaierAcYrw02SwingVTop = 0x1;
+const uint8_t kHaierAcYrw02SwingVMiddle = 0x2;  // Not available in heat mode.
+const uint8_t kHaierAcYrw02SwingVBottom = 0x3;  // Only available in heat mode.
+const uint8_t kHaierAcYrw02SwingVDown = 0xA;
+const uint8_t kHaierAcYrw02SwingVAuto = 0xC;  // Airflow
+
+const uint8_t kHaierAcYrw02SwingHMiddle = 0x0;
+const uint8_t kHaierAcYrw02SwingHLeftMax = 0x3;
+const uint8_t kHaierAcYrw02SwingHLeft = 0x4;
+const uint8_t kHaierAcYrw02SwingHRight = 0x5;
+const uint8_t kHaierAcYrw02SwingHRightMax = 0x6;
+const uint8_t kHaierAcYrw02SwingHAuto = 0x7;
 
 const uint8_t kHaierAcYrw02FanHigh = 0b001;
 const uint8_t kHaierAcYrw02FanMed =  0b010;
 const uint8_t kHaierAcYrw02FanLow =  0b011;
 const uint8_t kHaierAcYrw02FanAuto = 0b101;  // HAIER_AC176 uses `0` in Fan2
-
-const uint8_t kHaierAcYrw02TurboOff = 0x0;
-const uint8_t kHaierAcYrw02TurboHigh = 0x1;
-const uint8_t kHaierAcYrw02TurboLow = 0x2;
 
 const uint8_t kHaierAcYrw02Auto = 0b000;  // 0
 const uint8_t kHaierAcYrw02Cool = 0b001;  // 1
@@ -203,15 +170,19 @@ const uint8_t kHaierAcYrw02Dry =  0b010;  // 2
 const uint8_t kHaierAcYrw02Heat = 0b100;  // 4
 const uint8_t kHaierAcYrw02Fan =  0b110;  // 5
 
-const uint8_t kHaierAcYrw02ButtonTempUp = 0x0;
-const uint8_t kHaierAcYrw02ButtonTempDown = 0x1;
-const uint8_t kHaierAcYrw02ButtonSwing = 0x2;
-const uint8_t kHaierAcYrw02ButtonFan = 0x4;
-const uint8_t kHaierAcYrw02ButtonPower = 0x5;
-const uint8_t kHaierAcYrw02ButtonMode = 0x6;
-const uint8_t kHaierAcYrw02ButtonHealth = 0x7;
-const uint8_t kHaierAcYrw02ButtonTurbo = 0x8;
-const uint8_t kHaierAcYrw02ButtonSleep = 0xB;
+const uint8_t kHaierAcYrw02ButtonTempUp =   0b00000;
+const uint8_t kHaierAcYrw02ButtonTempDown = 0b00001;
+const uint8_t kHaierAcYrw02ButtonSwingV =   0b00010;
+const uint8_t kHaierAcYrw02ButtonSwingH =   0b00011;
+const uint8_t kHaierAcYrw02ButtonFan =      0b00100;
+const uint8_t kHaierAcYrw02ButtonPower =    0b00101;
+const uint8_t kHaierAcYrw02ButtonMode =     0b00110;
+const uint8_t kHaierAcYrw02ButtonHealth =   0b00111;
+const uint8_t kHaierAcYrw02ButtonTurbo =    0b01000;
+const uint8_t kHaierAcYrw02ButtonSleep =    0b01011;
+const uint8_t kHaierAcYrw02ButtonTimer =    0b10000;
+const uint8_t kHaierAcYrw02ButtonLock =     0b10100;
+const uint8_t kHaierAcYrw02ButtonCFAB =     0b11010;
 
 const uint8_t kHaierAcYrw02NoTimers       = 0b000;
 const uint8_t kHaierAcYrw02OffTimer       = 0b001;
@@ -224,12 +195,13 @@ union HaierAc176Protocol{
   uint8_t raw[kHaierAC176StateLength];  ///< The state in native form
   struct {
     // Byte 0
-    uint8_t Prefix      :8;
+    uint8_t Model       :8;
     // Byte 1
-    uint8_t Swing       :4;
+    uint8_t SwingV      :4;
     uint8_t Temp        :4;  // 16C~30C
     // Byte 2
-    uint8_t             :8;
+    uint8_t             :5;
+    uint8_t SwingH      :3;
     // Byte 3
     uint8_t             :1;
     uint8_t Health      :1;
@@ -244,7 +216,8 @@ union HaierAc176Protocol{
     uint8_t Fan         :3;
     // Byte 6
     uint8_t OffTimerMins:6;
-    uint8_t Turbo:2;
+    uint8_t Turbo       :1;
+    uint8_t Quiet       :1;
     // Byte 7
     uint8_t OnTimerHrs  :5;
     uint8_t Mode        :3;
@@ -255,12 +228,16 @@ union HaierAc176Protocol{
     // Byte 9
     uint8_t             :8;
     // Byte 10
-    uint8_t             :8;
+    uint8_t ExtraDegreeF :1;
+    uint8_t              :4;
+    uint8_t UseFahrenheit:1;
+    uint8_t              :2;
     // Byte 11
     uint8_t             :8;
     // Byte 12
-    uint8_t Button      :4;
-    uint8_t             :4;
+    uint8_t Button      :5;
+    uint8_t Lock        :1;
+    uint8_t             :2;
     // Byte 13
     uint8_t Sum         :8;
     // Byte 14
@@ -295,8 +272,6 @@ union HaierAc176Protocol{
 #define HAIER_AC_YRW02_FAN_LOW kHaierAcYrw02FanLow
 #define HAIER_AC_YRW02_FAN_AUTO kHaierAcYrw02FanAuto
 #define HAIER_AC_YRW02_TURBO_OFF kHaierAcYrw02TurboOff
-#define HAIER_AC_YRW02_TURBO_HIGH kHaierAcYrw02TurboHigh
-#define HAIER_AC_YRW02_TURBO_LOW kHaierAcYrw02TurboLow
 #define HAIER_AC_YRW02_AUTO kHaierAcYrw02Auto
 #define HAIER_AC_YRW02_COOL kHaierAcYrw02Cool
 #define HAIER_AC_YRW02_DRY kHaierAcYrw02Dry
@@ -355,8 +330,8 @@ class IRHaierAC {
   uint16_t getCurrTime(void) const;
   void setCurrTime(const uint16_t mins);
 
-  uint8_t getSwing(void) const;
-  void setSwing(const uint8_t state);
+  uint8_t getSwingV(void) const;
+  void setSwingV(const uint8_t state);
 
   uint8_t* getRaw(void);
   void setRaw(const uint8_t new_code[]);
@@ -400,10 +375,15 @@ class IRHaierAC176 {
   void begin(void);
   void stateReset(void);
 
+  void setModel(const haier_ac176_remote_model_t model);
+  haier_ac176_remote_model_t getModel(void) const;
+
   void setButton(const uint8_t button);
   uint8_t getButton(void) const;
 
-  void setTemp(const uint8_t temp);
+  void setUseFahrenheit(const bool on);
+  bool getUseFahrenheit(void) const;
+  void setTemp(const uint8_t temp, const bool fahrenheit = false);
   uint8_t getTemp(void) const;
 
   void setFan(const uint8_t speed);
@@ -422,9 +402,18 @@ class IRHaierAC176 {
   bool getHealth(void) const;
   void setHealth(const bool on);
 
-  uint8_t getTurbo(void) const;
-  void setTurbo(const uint8_t speed);
+  bool getTurbo(void) const;
+  void setTurbo(const bool on);
+  bool getQuiet(void) const;
+  void setQuiet(const bool on);
 
+  uint8_t getSwingV(void) const;
+  void setSwingV(const uint8_t pos);
+  uint8_t getSwingH(void) const;
+  void setSwingH(const uint8_t pos);
+
+  /// These functions are for backward compatibility.
+  /// Use getSwingV() and setSwingV() instead.
   uint8_t getSwing(void) const;
   void setSwing(const uint8_t pos);
 
@@ -435,6 +424,9 @@ class IRHaierAC176 {
   void setOffTimer(const uint16_t mins);
   uint16_t getOffTimer(void) const;
 
+  bool getLock(void) const;
+  void setLock(const bool on);
+
   uint8_t* getRaw(void);
   virtual void setRaw(const uint8_t new_code[]);
   static bool validChecksum(const uint8_t state[],
@@ -442,9 +434,13 @@ class IRHaierAC176 {
   static uint8_t convertMode(const stdAc::opmode_t mode);
   static uint8_t convertFan(const stdAc::fanspeed_t speed);
   static uint8_t convertSwingV(const stdAc::swingv_t position);
+  static uint8_t convertSwingH(const stdAc::swingh_t position);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
+  static stdAc::swingh_t toCommonSwingH(const uint8_t pos);
+  static bool toCommonTurbo(const uint8_t speed);
+  static bool toCommonQuiet(const uint8_t speed);
   stdAc::state_t toCommon(void) const;
   String toString(void) const;
 #ifndef UNIT_TEST

@@ -74,7 +74,7 @@ bool Hih6Read(void)
 
 void Hih6Detect(void)
 {
-  if (I2cActive(HIH6_ADDR)) { return; }
+  if (!I2cSetDevice(HIH6_ADDR)) { return; }
 
   if (TasmotaGlobal.uptime < 2) { delay(20); } // Skip entering power on comand mode
   Hih6.type = Hih6Read();

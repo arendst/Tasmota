@@ -1,0 +1,164 @@
+#! /usr/bin/env python3
+
+RE_EXEC = "./re"
+
+test_suite = [
+    # basics
+    ("search", r"abc", "abcdef"),
+    ("search", r"cde", "abcdef"),
+    ("search", r"abc*", "abdef"),
+    ("search", r"abc*", "abcccdef"),
+    ("search", r"abc+", "abdef"),
+    ("search", r"abc+", "abcccdef"),
+
+    # match
+    ("match", r"abc", "abcdef"),
+    ("match", r"abc*", "abdef"),
+
+    # search vs match distinction
+    ("match", r"a*", "baa"),
+    ("search", r"a*", "baa"),
+
+    # nested group matching
+    ("match", r"(([0-9]*)([a-z]*)[0-9]*)", "1234hello567"),
+    ("match", r"([0-9]*)(([a-z]*)([0-9]*))", "1234hello567"),
+
+    # non-capturing groups
+    ("match", r"(([0-9]*)(?:[a-z]*)[0-9]*)", "1234hello568"),
+    ("match", r"(?:[0-9]*)(([a-z]*)(?:[0-9]*))", "1234hello568"),
+    ("match", r"([0-9]*)(?:([a-z]*)(?:[0-9]*))", "1234hello568"),
+    ("match", r"(?:)", "1234hello568"),
+    ("match", r"1?:", "1:"),
+
+    # named character classes
+    ("match", r"\d+", "123abc456"),
+    ("match", r"\s+", " \t123abc456"),
+    ("match", r"\w+", "123abc_456 abc"),
+    ("match", r"(\w+)\s+(\w+)", "ABC \t123hello456 abc"),
+    ("match", r"(\S+)\s+(\D+)", "ABC \thello abc456 abc"),
+    ("match", r"(([0-9]*)([a-z]*)\d*)", "123hello456"),
+
+    # classes
+    ("match", r"[a]*", "a"),
+    ("search", r"([yab]*)(e*)([cd])", "xyac"),
+    ("search", r"([yab]*)(e*)([^y]?)$", "xyac"),
+    ("match", r"[-]*", "--"),
+    ("match", r"[-a]*", "-a-b"),
+    ("match", r"[-ab]*", "-a-b"),
+    ("match", r"[-a-c]*", "-a-b-d-"),
+    ("match", r"[a-]*", "-a-b"),
+    ("match", r"[ab-]*", "-a-b"),
+    ("match", r"[a-c-]*", "-a-b-d-"),
+
+    # escaped metacharacters
+    ("match", r"(\?:)", ":"),
+    ("match", r"\(?:", "(:"),
+
+    # non-greedy
+    ("match", r"a(b??)(b*)c", "abbc"),
+    ("match", r"a(b+?)(b*)c", "abbbc"),
+    ("match", r"a(b*?)(b*)c", "abbbbc"),
+
+    # greedy
+    ("match", r"a(b?)(b*)c", "abbc"),
+    ("match", r"a(b+)(b*)c", "abbbc"),
+    ("match", r"a(b*)(b*)c", "abbbbc"),
+
+    # errors
+    ("search", r"?", ""),
+    ("search", r"*", ""),
+    ("search", r"+", ""),
+    ("search", r"[", ""),
+    ("search", r"(", ""),
+    ("search", r")", ""),
+    ("search", "\\", ""),
+    ("search", "|+", ""),
+    ("search", "|*", ""),
+    ("search", "|?", ""),
+    ("search", "^*", ""),
+    ("search", "$*", ""),
+    ("search", "a*+", ""),
+    ("search", "a*?", ""),
+    ("search", "a**", ""),
+]
+
+import re
+import sre_constants
+import subprocess
+from collections import OrderedDict
+
+def parse_result(string, res):
+    name, rest = res.split(b" ", 1)
+    if rest == b"-no match-":
+        return name, None
+    if rest == b"REGEX ERROR":
+        return name, rest
+    assert rest.startswith(b"match ")
+    rest = rest[6:]
+    tuples = [eval(t) for t in rest.split()]
+    matches = tuple(string[t[0]:t[1]] for t in tuples)
+    return name, matches
+
+def fit_str(string, width):
+    if len(string) <= width:
+        return string
+    else:
+        return string[:width - 2] + ".."
+
+def main():
+    engine_stats = OrderedDict()
+    for kind, regex, string in test_suite:
+        # run Python re to get correct result
+        try:
+            if kind == "match":
+                py_res = re.match(regex, string)
+            else:
+                py_res = re.search(regex, string)
+            if py_res is not None:
+                py_res = (py_res.group(0),) + py_res.groups()
+        except sre_constants.error:
+            py_res = b"REGEX ERROR"
+
+        # run our code
+        try:
+            args = (["-m"] if kind == "match" else []) + [regex, string]
+            re_res = subprocess.check_output([RE_EXEC]+args, stderr=subprocess.STDOUT)
+            re_res = re_res.split(b'\n')[1:-1] # split lines, remove first and last
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 2 and e.output == b"fatal error: Error in regexp\n":
+                re_res = [b"recursive REGEX ERROR", b"recursiveloop REGEX ERROR", b"backtrack REGEX ERROR", b"thompson REGEX ERROR", b"pike REGEX ERROR"]
+            else:
+                raise
+
+        # check result of each engine
+        for engine in re_res:
+            engine_name, re_res = parse_result(string, engine)
+            try:
+                stats = engine_stats[engine_name]
+            except KeyError:
+                engine_stats[engine_name] = stats = [0, 0]
+
+            # Thompson algo offers just boolean match/no match status
+            py_res_cur = py_res
+            re_res_cur = re_res
+            if engine_name == b"thompson":
+                if py_res is not None:
+                    py_res_cur = True
+                if re_res is not None:
+                    re_res_cur = True
+
+            if py_res_cur == re_res_cur:
+                print("pass ", end="")
+                stats[0] += 1
+            else:
+                print("FAIL ", end="")
+                stats[1] += 1
+
+        print("%s %-25s %-20s" % (kind[0], fit_str(regex, 25), fit_str(string, 20)))
+
+    print("Ran %d tests, results:" % len(test_suite))
+    for name, stats in engine_stats.items():
+        print("%15s %2d pass %2d fail" % (str(name, encoding='utf8'), stats[0], stats[1]))
+
+if __name__ == "__main__":
+    main()

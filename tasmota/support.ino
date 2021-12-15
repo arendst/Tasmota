@@ -21,10 +21,15 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
+#ifdef USE_KNX
+bool knx_started = false;
+#endif  // USE_KNX
+
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
 
+#ifdef ESP8266
 #include <Ticker.h>
 
 Ticker tickerOSWatch;
@@ -38,12 +43,7 @@ uint8_t oswatch_blocked_loop = 0;
 //void OsWatchTicker() IRAM_ATTR;
 #endif  // USE_WS2812_DMA
 
-#ifdef USE_KNX
-bool knx_started = false;
-#endif  // USE_KNX
-
-void OsWatchTicker(void)
-{
+void OsWatchTicker(void) {
   uint32_t t = millis();
   uint32_t last_run = t - oswatch_last_loop_time;
 
@@ -66,56 +66,33 @@ void OsWatchTicker(void)
   }
 }
 
-#ifdef ESP32
-#include "esp_task_wdt.h"
-void TWDTInit(void) {
-  // enable Task Watchdog Timer
-  esp_task_wdt_init(WATCHDOG_TASK_SECONDS, true);
-  // if (ret != ESP_OK) { AddLog(LOG_LEVEL_ERROR, "HDW: cannot init Task WDT %i", ret); }
-  esp_task_wdt_add(nullptr);
-  // if (ret != ESP_OK) { AddLog(LOG_LEVEL_ERROR, "HDW: cannot start Task WDT %i", ret); }
-}
-
-void TWDTRestore(void) {
-  // restore default WDT values
-  esp_task_wdt_init(WATCHDOG_TASK_SECONDS, false);
-}
-
-void TWDTLoop(void) {
-  esp_task_wdt_reset();
-}
-
-// custom handler
-extern "C" {
-  void __attribute__((weak)) esp_task_wdt_isr_user_handler(void)
-  {
-    Serial.printf(">>>>>----------\n");
-  }
-
-}
-#endif
-
-void OsWatchInit(void)
-{
+void OsWatchInit(void) {
   oswatch_blocked_loop = RtcSettings.oswatch_blocked_loop;
   RtcSettings.oswatch_blocked_loop = 0;
   oswatch_last_loop_time = millis();
   tickerOSWatch.attach_ms(((OSWATCH_RESET_TIME / 3) * 1000), OsWatchTicker);
 }
 
-void OsWatchLoop(void)
-{
+void OsWatchLoop(void) {
   oswatch_last_loop_time = millis();
 //  while(1) delay(1000);  // this will trigger the os watch
 }
 
-bool OsWatchBlockedLoop(void)
-{
+bool OsWatchBlockedLoop(void) {
   return oswatch_blocked_loop;
 }
 
-uint32_t ResetReason(void)
-{
+#else  // Anything except ESP8266
+
+void OsWatchInit(void) {}
+void OsWatchLoop(void) {}
+bool OsWatchBlockedLoop(void) {
+  return false;
+}
+
+#endif  // ESP8266
+
+uint32_t ResetReason(void) {
   /*
     user_interface.h
     REASON_DEFAULT_RST      = 0,  // "Power on"                normal startup by power on
@@ -129,9 +106,8 @@ uint32_t ResetReason(void)
   return ESP_ResetInfoReason();
 }
 
-String GetResetReason(void)
-{
-  if (oswatch_blocked_loop) {
+String GetResetReason(void) {
+  if (OsWatchBlockedLoop()) {
     char buff[32];
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
@@ -1818,7 +1794,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
  * Serial
 \*********************************************************************************************/
 
-String GetSerialConfig(void) {
+String GetSerialConfig(uint8_t serial_config) {
   // Settings->serial_config layout
   // b000000xx - 5, 6, 7 or 8 data bits
   // b00000x00 - 1 or 2 stop bits
@@ -1827,26 +1803,72 @@ String GetSerialConfig(void) {
   const static char kParity[] PROGMEM = "NEOI";
 
   char config[4];
-  config[0] = '5' + (Settings->serial_config & 0x3);
-  config[1] = pgm_read_byte(&kParity[(Settings->serial_config >> 3) & 0x3]);
-  config[2] = '1' + ((Settings->serial_config >> 2) & 0x1);
+  config[0] = '5' + (serial_config & 0x3);
+  config[1] = pgm_read_byte(&kParity[(serial_config >> 3) & 0x3]);
+  config[2] = '1' + ((serial_config >> 2) & 0x1);
   config[3] = '\0';
   return String(config);
 }
 
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
-#include <driver/uart.h>
-uint32_t GetSerialBaudrate(void) {
-  uint32_t br;
-  uart_get_baudrate(0, &br);
-  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+String GetSerialConfig(void) {
+  return GetSerialConfig(Settings->serial_config);
 }
+
+int8_t ParseSerialConfig(const char *pstr)
+{
+  if (strlen(pstr) < 3)
+    return -1;
+
+  int8_t serial_config = (uint8_t)atoi(pstr);
+  if (serial_config < 5 || serial_config > 8)
+    return -1;
+  serial_config -= 5;
+
+  char parity = (pstr[1] & 0xdf);
+  if ('E' == parity) {
+    serial_config += 0x08;                         // Even parity
+  }
+  else if ('O' == parity) {
+    serial_config += 0x10;                         // Odd parity
+  }
+  else if ('N' != parity) {
+    return -1;
+  }
+
+  if ('2' == pstr[2]) {
+    serial_config += 0x04;                         // Stop bits 2
+  }
+  else if ('1' != pstr[2]) {
+    return -1;
+  }
+
+  return serial_config;
+}
+
+uint32_t ConvertSerialConfig(uint8_t serial_config) {
+#ifdef ESP8266
+  return (uint32_t)pgm_read_byte(kTasmotaSerialConfig + serial_config);
+#elif defined(ESP32)
+  return (uint32_t)pgm_read_dword(kTasmotaSerialConfig + serial_config);
 #else
+  #error "platform not supported"
+#endif
+}
+
+// workaround disabled 05.11.2021 solved with https://github.com/espressif/arduino-esp32/pull/5549
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
+// temporary workaround, see https://github.com/espressif/arduino-esp32/issues/5287
+//#include <driver/uart.h>
+//uint32_t GetSerialBaudrate(void) {
+//  uint32_t br;
+//  uart_get_baudrate(0, &br);
+//  return (br / 300) * 300;  // Fix ESP32 strange results like 115201
+//}
+//#else
 uint32_t GetSerialBaudrate(void) {
   return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
 }
-#endif
+//#endif
 
 #ifdef ESP8266
 void SetSerialSwap(void) {
@@ -2004,7 +2026,14 @@ bool I2cBegin(int sda, int scl, uint32_t frequency) {
   Wire.begin(sda, scl);
 #endif
 #ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
+  static bool reinit = false;
+  if (reinit) { Wire.end(); }
+#endif  // ESP_IDF_VERSION_MAJOR > 3
   result = Wire.begin(sda, scl, frequency);
+#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
+  reinit = result;
+#endif  // ESP_IDF_VERSION_MAJOR > 3
 #endif
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus1 %d"), result);
   return result;

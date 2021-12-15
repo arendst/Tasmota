@@ -261,8 +261,8 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_RX_GPIO "rx"
 
 // Text for Last Will & Testament status messages.
-const char* kLwtOnline = "Online";
-const char* kLwtOffline = "Offline";
+const char* const kLwtOnline = "Online";
+const char* const kLwtOffline = "Offline";
 
 const uint8_t kHostnameLength = 30;
 const uint8_t kPortLength = 5;  // Largest value of uint16_t is "65535".
@@ -285,7 +285,7 @@ const uint16_t kJsonAcStateMaxSize = 1024;  // Bytes
 // ----------------- End of User Configuration Section -------------------------
 
 // Constants
-#define _MY_VERSION_ "v1.5.2"
+#define _MY_VERSION_ "v1.6.0"
 
 const uint8_t kRebootTime = 15;  // Seconds
 const uint8_t kQuickDisplayTime = 2;  // Seconds
@@ -310,29 +310,29 @@ const int8_t kRxGpios[] = {
 
 // JSON stuff
 // Name of the json config file in SPIFFS.
-const char* kConfigFile = "/config.json";
-const char* kMqttServerKey = "mqtt_server";
-const char* kMqttPortKey = "mqtt_port";
-const char* kMqttUserKey = "mqtt_user";
-const char* kMqttPassKey = "mqtt_pass";
-const char* kMqttPrefixKey = "mqtt_prefix";
-const char* kHostnameKey = "hostname";
-const char* kHttpUserKey = "http_user";
-const char* kHttpPassKey = "http_pass";
-const char* kCommandDelimiter = ",";
+const char* const kConfigFile = "/config.json";
+const char* const kMqttServerKey = "mqtt_server";
+const char* const kMqttPortKey = "mqtt_port";
+const char* const kMqttUserKey = "mqtt_user";
+const char* const kMqttPassKey = "mqtt_pass";
+const char* const kMqttPrefixKey = "mqtt_prefix";
+const char* const kHostnameKey = "hostname";
+const char* const kHttpUserKey = "http_user";
+const char* const kHttpPassKey = "http_pass";
+const char* const kCommandDelimiter = ",";
 
 // URLs
-const char* kUrlRoot = "/";
-const char* kUrlAdmin = "/admin";
-const char* kUrlAircon = "/aircon";
-const char* kUrlSendDiscovery = "/send_discovery";
-const char* kUrlExamples = "/examples";
-const char* kUrlGpio = "/gpio";
-const char* kUrlGpioSet = "/gpio/set";
-const char* kUrlInfo = "/info";
-const char* kUrlReboot = "/quitquitquit";
-const char* kUrlWipe = "/reset";
-const char* kUrlClearMqtt = "/clear_retained";
+const char* const kUrlRoot = "/";
+const char* const kUrlAdmin = "/admin";
+const char* const kUrlAircon = "/aircon";
+const char* const kUrlSendDiscovery = "/send_discovery";
+const char* const kUrlExamples = "/examples";
+const char* const kUrlGpio = "/gpio";
+const char* const kUrlGpioSet = "/gpio/set";
+const char* const kUrlInfo = "/info";
+const char* const kUrlReboot = "/quitquitquit";
+const char* const kUrlWipe = "/reset";
+const char* const kUrlClearMqtt = "/clear_retained";
 
 #if MQTT_ENABLE
 const uint32_t kBroadcastPeriodMs = MQTTbroadcastInterval * 1000;  // mSeconds.
@@ -340,7 +340,7 @@ const uint32_t kBroadcastPeriodMs = MQTTbroadcastInterval * 1000;  // mSeconds.
 // Default is 5 seconds per IR TX GPIOs (channels) used.
 const uint32_t kStatListenPeriodMs = 5 * 1000 * kNrOfIrTxGpios;  // mSeconds
 const int32_t kMaxPauseMs = 10000;  // 10 Seconds.
-const char* kSequenceDelimiter = ";";
+const char* const kSequenceDelimiter = ";";
 const char kPauseChar = 'P';
 #if defined(ESP8266)
 const uint32_t kChipId = ESP.getChipId();
@@ -349,7 +349,7 @@ const uint32_t kChipId = ESP.getChipId();
 const uint32_t kChipId = ESP.getEfuseMac();  // Discard the top 16 bits.
 #endif  // ESP32
 
-const char* kClimateTopics =
+static const char kClimateTopics[] PROGMEM =
     "(" KEY_PROTOCOL "|" KEY_MODEL "|" KEY_POWER "|" KEY_MODE "|" KEY_TEMP "|"
     KEY_FANSPEED "|" KEY_SWINGV "|" KEY_SWINGH "|" KEY_QUIET "|"
     KEY_TURBO "|" KEY_LIGHT "|" KEY_BEEP "|" KEY_ECONO "|" KEY_SLEEP "|"
@@ -358,7 +358,7 @@ const char* kClimateTopics =
     "|" KEY_JSON
 #endif  // MQTT_CLIMATE_JSON
     ")<br>";
-const char* kMqttTopics[] = {
+static const char* const kMqttTopics[] = {
     KEY_PROTOCOL, KEY_MODEL, KEY_POWER, KEY_MODE, KEY_TEMP, KEY_FANSPEED,
     KEY_SWINGV, KEY_SWINGH, KEY_QUIET, KEY_TURBO, KEY_LIGHT, KEY_BEEP,
     KEY_ECONO, KEY_SLEEP, KEY_FILTER, KEY_CLEAN, KEY_CELSIUS, KEY_RESEND,

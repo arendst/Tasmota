@@ -1941,6 +1941,7 @@ void ExecuteCommandBlock(const char * commands, int len)
     //Going to insert the command into backlog
     String sCurrentCommand = oneCommand;
     sCurrentCommand.trim();
+/*
     if (sCurrentCommand.length() > 0
       && backlog.size() < MAX_BACKLOG && !TasmotaGlobal.backlog_mutex)
     {
@@ -1948,6 +1949,12 @@ void ExecuteCommandBlock(const char * commands, int len)
       TasmotaGlobal.backlog_mutex = true;
       backlog.add(insertPosition, sCurrentCommand);
       TasmotaGlobal.backlog_mutex = false;
+      insertPosition++;
+    }
+*/
+    if ((sCurrentCommand.length() > 0) && (backlog.size() < MAX_BACKLOG)) {
+      //Insert into backlog
+      backlog.add(insertPosition, sCurrentCommand);
       insertPosition++;
     }
   }

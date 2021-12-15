@@ -23,7 +23,7 @@
 #include <jsmn/jsmn.h>
 #include <json_parser.h>
 
-static bool token_matches_str(jparse_ctx_t *ctx, json_tok_t *tok, char *str)
+static bool token_matches_str(jparse_ctx_t *ctx, json_tok_t *tok, const char *str)
 {
 	char *js = ctx->js;
 	return ((strncmp(js + tok->start, str, strlen(str)) == 0)
@@ -100,7 +100,7 @@ static int json_tok_to_string(jparse_ctx_t *jctx, json_tok_t *tok, char *val, in
 	return OS_SUCCESS;
 }
 
-static json_tok_t *json_obj_search(jparse_ctx_t *jctx, char *key)
+static json_tok_t *json_obj_search(jparse_ctx_t *jctx, const char *key)
 {
 	json_tok_t *tok = jctx->cur;
 	int size = tok->size;
@@ -118,7 +118,7 @@ static json_tok_t *json_obj_search(jparse_ctx_t *jctx, char *key)
 	return NULL;
 }
 
-static json_tok_t *json_obj_get_val_tok(jparse_ctx_t *jctx, char *name, jsmntype_t type)
+static json_tok_t *json_obj_get_val_tok(jparse_ctx_t *jctx, const char *name, jsmntype_t type)
 {
 	json_tok_t *tok = json_obj_search(jctx, name);
 	if (!tok)
@@ -129,7 +129,7 @@ static json_tok_t *json_obj_get_val_tok(jparse_ctx_t *jctx, char *name, jsmntype
 	return tok;
 }
 
-int json_obj_get_array(jparse_ctx_t *jctx, char *name, int *num_elem)
+int json_obj_get_array(jparse_ctx_t *jctx, const char *name, int *num_elem)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_ARRAY);
 	if (!tok)
@@ -153,7 +153,7 @@ int json_obj_leave_array(jparse_ctx_t *jctx)
 	return OS_SUCCESS;
 }
 
-int json_obj_get_object(jparse_ctx_t *jctx, char *name)
+int json_obj_get_object(jparse_ctx_t *jctx, const char *name)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_OBJECT);
 	if (!tok)
@@ -176,7 +176,7 @@ int json_obj_leave_object(jparse_ctx_t *jctx)
 	return OS_SUCCESS;
 }
 
-int json_obj_get_bool(jparse_ctx_t *jctx, char *name, bool *val)
+int json_obj_get_bool(jparse_ctx_t *jctx, const char *name, bool *val)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_PRIMITIVE);
 	if (!tok)
@@ -184,7 +184,7 @@ int json_obj_get_bool(jparse_ctx_t *jctx, char *name, bool *val)
 	return json_tok_to_bool(jctx, tok, val);
 }
 
-int json_obj_get_int(jparse_ctx_t *jctx, char *name, int *val)
+int json_obj_get_int(jparse_ctx_t *jctx, const char *name, int *val)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_PRIMITIVE);
 	if (!tok)
@@ -192,7 +192,7 @@ int json_obj_get_int(jparse_ctx_t *jctx, char *name, int *val)
 	return json_tok_to_int(jctx, tok, val);
 }
 
-int json_obj_get_int64(jparse_ctx_t *jctx, char *name, int64_t *val)
+int json_obj_get_int64(jparse_ctx_t *jctx, const char *name, int64_t *val)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_PRIMITIVE);
 	if (!tok)
@@ -200,7 +200,7 @@ int json_obj_get_int64(jparse_ctx_t *jctx, char *name, int64_t *val)
 	return json_tok_to_int64(jctx, tok, val);
 }
 
-int json_obj_get_float(jparse_ctx_t *jctx, char *name, float *val)
+int json_obj_get_float(jparse_ctx_t *jctx, const char *name, float *val)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_PRIMITIVE);
 	if (!tok)
@@ -208,7 +208,7 @@ int json_obj_get_float(jparse_ctx_t *jctx, char *name, float *val)
 	return json_tok_to_float(jctx, tok, val);
 }
 
-int json_obj_get_string(jparse_ctx_t *jctx, char *name, char *val, int size)
+int json_obj_get_string(jparse_ctx_t *jctx, const char *name, char *val, int size)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_STRING);
 	if (!tok)
@@ -216,7 +216,7 @@ int json_obj_get_string(jparse_ctx_t *jctx, char *name, char *val, int size)
 	return json_tok_to_string(jctx, tok, val, size);
 }
 
-int json_obj_get_strlen(jparse_ctx_t *jctx, char *name, int *strlen)
+int json_obj_get_strlen(jparse_ctx_t *jctx, const char *name, int *strlen)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_STRING);
 	if (!tok)
@@ -225,7 +225,7 @@ int json_obj_get_strlen(jparse_ctx_t *jctx, char *name, int *strlen)
 	return OS_SUCCESS;
 }
 
-int json_obj_get_object_str(jparse_ctx_t *jctx, char *name, char *val, int size)
+int json_obj_get_object_str(jparse_ctx_t *jctx, const char *name, char *val, int size)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_OBJECT);
 	if (!tok)
@@ -233,7 +233,7 @@ int json_obj_get_object_str(jparse_ctx_t *jctx, char *name, char *val, int size)
 	return json_tok_to_string(jctx, tok, val, size);
 }
 
-int json_obj_get_object_strlen(jparse_ctx_t *jctx, char *name, int *strlen)
+int json_obj_get_object_strlen(jparse_ctx_t *jctx, const char *name, int *strlen)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_OBJECT);
 	if (!tok)
@@ -241,7 +241,7 @@ int json_obj_get_object_strlen(jparse_ctx_t *jctx, char *name, int *strlen)
 	*strlen = tok->end - tok->start;
 	return OS_SUCCESS;
 }
-int json_obj_get_array_str(jparse_ctx_t *jctx, char *name, char *val, int size)
+int json_obj_get_array_str(jparse_ctx_t *jctx, const char *name, char *val, int size)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_ARRAY);
 	if (!tok)
@@ -249,7 +249,7 @@ int json_obj_get_array_str(jparse_ctx_t *jctx, char *name, char *val, int size)
 	return json_tok_to_string(jctx, tok, val, size);
 }
 
-int json_obj_get_array_strlen(jparse_ctx_t *jctx, char *name, int *strlen)
+int json_obj_get_array_strlen(jparse_ctx_t *jctx, const char *name, int *strlen)
 {
 	json_tok_t *tok = json_obj_get_val_tok(jctx, name, JSMN_ARRAY);
 	if (!tok)

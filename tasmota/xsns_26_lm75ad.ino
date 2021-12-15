@@ -53,8 +53,6 @@ void LM75ADDetect(void)
 {
   for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
-    if (I2cActive(lm75ad_address)) {
-      continue; }
     if (!I2cSetDevice(lm75ad_address)) {
       continue; // do not make the next step without a confirmed device on the bus
     }

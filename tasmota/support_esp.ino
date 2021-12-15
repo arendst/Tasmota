@@ -103,6 +103,19 @@ String GetDeviceHardware(void) {
 
 #ifdef ESP32
 
+// ESP32_ARCH contains the name of the architecture (used by autoconf)
+#if CONFIG_IDF_TARGET_ESP32
+  #define ESP32_ARCH              "esp32"
+#elif CONFIG_IDF_TARGET_ESP32S2
+  #define ESP32_ARCH              "esp32s2"
+#elif CONFIG_IDF_TARGET_ESP32S3
+  #define ESP32_ARCH              "esp32s3"
+#elif CONFIG_IDF_TARGET_ESP32C3
+  #define ESP32_ARCH              "esp32c3"
+#else
+  #define ESP32_ARCH              ""
+#endif
+
 // Handle 20k of NVM
 
 #include <nvs.h>
@@ -124,34 +137,43 @@ String GetDeviceHardware(void) {
 
 #include <esp_phy_init.h>
 
-void NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
-  nvs_handle handle;
-  noInterrupts();
-  nvs_open(sNvsName, NVS_READONLY, &handle);
+bool NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
+  nvs_handle_t handle;
+//  noInterrupts();
+  esp_err_t result = nvs_open(sNvsName, NVS_READONLY, &handle);
+  if (result != ESP_OK) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NVS: Error %d"), result);
+    return false;
+  }
   size_t size = nSettingsLen;
   nvs_get_blob(handle, sName, pSettings, &size);
   nvs_close(handle);
-  interrupts();
+//  interrupts();
+  return true;
 }
 
 void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen) {
-  nvs_handle handle;
-  noInterrupts();
-  nvs_open(sNvsName, NVS_READWRITE, &handle);
+  nvs_handle_t handle;
+//  noInterrupts();
+  esp_err_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
+  if (result != ESP_OK) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NVS: Error %d"), result);
+    return;
+  }
   nvs_set_blob(handle, sName, pSettings, nSettingsLen);
   nvs_commit(handle);
   nvs_close(handle);
-  interrupts();
+//  interrupts();
 }
 
 int32_t NvmErase(const char *sNvsName) {
-  nvs_handle handle;
-  noInterrupts();
+  nvs_handle_t handle;
+//  noInterrupts();
   int32_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
   if (ESP_OK == result) { result = nvs_erase_all(handle); }
   if (ESP_OK == result) { result = nvs_commit(handle); }
   nvs_close(handle);
-  interrupts();
+//  interrupts();
   return result;
 }
 
@@ -195,23 +217,25 @@ void SettingsErase(uint8_t type) {
 }
 
 uint32_t SettingsRead(void *data, size_t size) {
-  uint32_t source = 1;
 #ifdef USE_UFILESYS
-  if (!TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)data, size)) {
-#endif
-    source = 0;
-    NvmLoad("main", "Settings", data, size);
-#ifdef USE_UFILESYS
+  if (TfsLoadFile(TASM_FILE_SETTINGS, (uint8_t*)data, size)) {
+    return 2;
   }
 #endif
-  return source;
+  if (NvmLoad("main", "Settings", data, size)) {
+    return 1;
+  };
+  return 0;
 }
 
 void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
 #ifdef USE_UFILESYS
   TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)pSettings, nSettingsLen);
 #endif
-  NvmSave("main", "Settings", pSettings, nSettingsLen);
+#ifdef USE_WEBCAM
+  if (!WcStreamActive())
+#endif
+    NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
 void QPCRead(void *pSettings, unsigned nSettingsLen) {

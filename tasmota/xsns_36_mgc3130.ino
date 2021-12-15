@@ -483,7 +483,7 @@ void MGC3130_loop()
 
 void MGC3130_detect(void)
 {
-  if (MGC3130_type || I2cActive(MGC3130_I2C_ADDR)) { return; }
+  if (MGC3130_type || !I2cSetDevice(MGC3130_I2C_ADDR)) { return; }
 
   MGC3130_xfer = Pin(GPIO_MGC3130_XFER);
   MGC3130_reset = Pin(GPIO_MGC3130_RESET);

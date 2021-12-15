@@ -73,7 +73,6 @@ const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver driv
 const uint8_t MAX_XSNS_DRIVERS = 128;       // Max number of allowed sensor drivers
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
-const uint8_t MAX_SHUTTER_RELAYS = 8;       // Max number of shutter relays
 const uint8_t MAX_SHUTTER_KEYS = 4;         // Max number of shutter keys or buttons
 const uint8_t MAX_PCF8574 = 4;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
@@ -84,10 +83,22 @@ const uint16_t VL53L0X_MAX_SENSORS = 8;     // Max number of VL53L0X sensors
 const uint8_t MAX_I2C = 2;                  // Max number of I2C controllers (ESP32 = 2)
 const uint8_t MAX_SPI = 2;                  // Max number of Hardware SPI controllers (ESP32 = 2)
 const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S controllers (ESP32 = 2)
+
+#if CONFIG_IDF_TARGET_ESP32
+const uint8_t MAX_RMT = 8;                  // Max number or RMT channels (ESP32 only)
+#elif CONFIG_IDF_TARGET_ESP32S2
+const uint8_t MAX_RMT = 4;                  // Max number or RMT channels (ESP32S2 only)
+#elif CONFIG_IDF_TARGET_ESP32C3
+const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C3 only)
+#else
+const uint8_t MAX_RMT = 0;                  // Max number or RMT channels (0 if unknown)
+#endif
+
 #else
 const uint8_t MAX_I2C = 0;                  // Max number of I2C controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_SPI = 0;                  // Max number of Hardware SPI controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_I2S = 0;                  // Max number of Hardware I2S controllers (ESP8266 = 0, no choice)
+const uint8_t MAX_RMT = 0;                  // No RMT channel on ESP8266
 #endif
 
 // Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
@@ -278,6 +289,8 @@ enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_LOCALNOTZ, DT_DST, DT_STD, DT_
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
+enum InitStates {INIT_NONE, INIT_GPIOS, INIT_DONE};
+
 enum WifiConfigOptions {WIFI_RESTART, EX_WIFI_SMARTCONFIG, WIFI_MANAGER, EX_WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, WIFI_MANAGER_RESET_ONLY, MAX_WIFI_OPTION};
 
 enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, TOGGLEMULTI,
@@ -328,9 +341,9 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
                     FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA,
                     FUNC_SET_POWER, FUNC_SET_DEVICE_POWER, FUNC_SHOW_SENSOR, FUNC_ANY_KEY,
                     FUNC_ENERGY_EVERY_SECOND, FUNC_ENERGY_RESET,
-                    FUNC_RULES_PROCESS, FUNC_TELEPERIOD_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED,
+                    FUNC_RULES_PROCESS, FUNC_TELEPERIOD_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED, FUNC_BUTTON_MULTI_PRESSED,
                     FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_CONSOLE_BUTTON, FUNC_WEB_ADD_MANAGEMENT_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON,
-                    FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
+                    FUNC_WEB_GET_ARG, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
                     FUNC_DEVICE_GROUP_ITEM };
 
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };

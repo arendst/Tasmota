@@ -223,7 +223,7 @@ void Ina226Init()
   for (i = 0; i < INA226_MAX_ADDRESSES; i++){
     uint8_t addr = pgm_read_byte(probeAddresses + i);
 
-    if (I2cActive(addr)) { continue; }
+    if (!I2cSetDevice(addr)) { continue; }
 
     // Skip device probing if the full scale current is zero
 

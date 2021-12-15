@@ -148,6 +148,7 @@
 //#define USE_BM8563                             // [I2cDriver59] Enable BM8563 RTC - found in M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2k5 code)
 //#define USE_AM2320                             // [I2cDriver60] Enable AM2320 temperature and humidity Sensor (I2C address 0x5C) (+1k code)
 //#define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
+//#define USE_HDC2010                            // [I2cDriver64] Enable HDC2010 temperature/humidity sensor (I2C address 0x40) (+1k5 code)
 
 //#define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
@@ -329,7 +330,7 @@
   #define USE_DISPLAY_ILI9341                    // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
   #define USE_DISPLAY_EPAPER_29                  // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
   #define USE_DISPLAY_EPAPER_42                  // [DisplayModel 6] Enable e-paper 4.2 inch display
-  #define USE_DISPLAY_ILI9488                    // [DisplayModel 8]
+  // #define USE_DISPLAY_ILI9488                    // [DisplayModel 8]
   #define USE_DISPLAY_SSD1351                    // [DisplayModel 9]
   #define USE_DISPLAY_RA8876                     // [DisplayModel 10]
   #define USE_DISPLAY_ST7789                     // [DisplayModel 12] Enable ST7789 module
@@ -496,9 +497,6 @@
 // -- MQTT - TLS - AWS IoT ------------------------
 #ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge
   #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
-    #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use.  (+2.2k code, +1.9k mem during connection handshake)
-                                                   // This includes the LetsEncrypt CA in tasmota_ca.ino for verifying server certificates
-    #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
     #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
   #define USE_TLS                                  // flag indicates we need to include TLS code
 #endif                                             // USE_ZBBRIDGE_TLS

@@ -181,7 +181,9 @@ int HM330XSendI2CCommand(uint8_t cmd) {
   return ret;
 }
 
-int HM330XInit() {
+void HM330XInit(void) {
+  if (!I2cSetDevice(HM330X_DEFAULT_ADDRESS)) { return; }
+
   int8_t set_pin = Pin(GPIO_HM330X_SET);
   if (set_pin >= 0) {
     pinMode(set_pin, OUTPUT);
@@ -189,20 +191,15 @@ int HM330XInit() {
     delay(5);
   }
 
-  if (I2cActive(HM330X_DEFAULT_ADDRESS)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("HM3: Address 0x%02X already in use"), HM330X_DEFAULT_ADDRESS);
-    return HM330X_ERROR_PARAM;
-  }
-
   if (HM330X_NO_ERROR != HM330XSendI2CCommand(HM330X_SELECT_COMM_CMD)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("HM3: no response from address 0x%02X"), HM330X_DEFAULT_ADDRESS);
-    return HM330X_ERROR_COMM;
+    return;
   }
 
   HM330Xdata = (HM330XDATA*)calloc(1,sizeof(HM330XDATA));
   if (!HM330Xdata) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("HM3: out of memory"));
-    return HM330X_ERROR_MEMALLOC;
+    return;
   }
 
   HM330Xdata->valid = false;
@@ -211,8 +208,6 @@ int HM330XInit() {
   HM330Xdata->warmup_counter = HM330X_WARMUP_DELAY;
 
   I2cSetActiveFound(HM330X_DEFAULT_ADDRESS, "HM330X");
-
-  return HM330X_NO_ERROR;
 }
 
 void HM330XEverySecond() {

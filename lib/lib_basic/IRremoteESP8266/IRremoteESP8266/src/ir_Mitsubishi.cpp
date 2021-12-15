@@ -1166,7 +1166,7 @@ void IRsend::sendMitsubishi112(const unsigned char data[],
 }
 #endif  // SEND_MITSUBISHI112
 
-#if DECODE_MITSUBISHI112 || DECODE_TCL112AC
+#if (DECODE_MITSUBISHI112 || DECODE_TCL112AC)
 /// Decode the supplied Mitsubishi/TCL 112-bit A/C message.
 ///   (MITSUBISHI112, TCL112AC)
 /// Status: STABLE / Reported as working.
@@ -1212,7 +1212,7 @@ bool IRrecv::decodeMitsubishi112(decode_results *results, uint16_t offset,
     gap = kMitsubishi112Gap;
   }
 #endif  // DECODE_MITSUBISHI112
-#if DECODE_TCL112AC
+#if (DECODE_TCL112AC || DECODE_TEKNOPOINT)
   if (typeguess == decode_type_t::UNKNOWN &&  // We didn't match Mitsubishi112
       matchMark(results->rawbuf[offset], kTcl112AcHdrMark,
                 kTcl112AcHdrMarkTolerance, 0)) {
@@ -1224,7 +1224,7 @@ bool IRrecv::decodeMitsubishi112(decode_results *results, uint16_t offset,
     gap = kTcl112AcGap;
     tolerance += kTcl112AcTolerance;
   }
-#endif  // DECODE_TCL112AC
+#endif  // (DECODE_TCL112AC || DECODE_TEKNOPOINT)
   if (typeguess == decode_type_t::UNKNOWN) return false;  // No header matched.
   offset++;
 

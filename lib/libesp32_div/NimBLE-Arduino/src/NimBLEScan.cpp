@@ -11,11 +11,9 @@
  *  Created on: Jul 1, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 
 #include "NimBLEScan.h"
 #include "NimBLEDevice.h"
@@ -534,5 +532,4 @@ NimBLEAdvertisedDevice *NimBLEScanResults::getDevice(const NimBLEAddress &addres
     return nullptr;
 }
 
-#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_OBSERVER */

@@ -41,11 +41,11 @@ IPAddress    ip_filter;
 TasmotaSerial *TCPSerial = nullptr;
 
 const char kTCPCommands[] PROGMEM = "TCP" "|"    // prefix
-  "Start" "|" "Baudrate"
+  "Start" "|" "Baudrate" "|" "Config"
   ;
 
 void (* const TCPCommand[])(void) PROGMEM = {
-  &CmndTCPStart, &CmndTCPBaudrate
+  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig
   };
 
 //
@@ -134,14 +134,17 @@ void TCPLoop(void)
 }
 
 /********************************************************************************************/
+
 void TCPInit(void) {
   if (PinUsed(GPIO_TCP_RX) && PinUsed(GPIO_TCP_TX)) {
+    if (0 == (0x80 & Settings->tcp_config)) // !0x80 means unitialized
+      Settings->tcp_config = 0x80 | ParseSerialConfig("8N1"); // default as 8N1 for backward compatibility
     tcp_buf = (uint8_t*) malloc(TCP_BRIDGE_BUF_SIZE);
     if (!tcp_buf) { AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_TCP "could not allocate buffer")); return; }
 
     if (!Settings->tcp_baudrate)  { Settings->tcp_baudrate = 115200 / 1200; }
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
-    TCPSerial->begin(Settings->tcp_baudrate * 1200);
+    TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));
     if (TCPSerial->hardwareSerial()) {
       ClaimSerial();
 		}
@@ -197,9 +200,20 @@ void CmndTCPBaudrate(void) {
   if ((XdrvMailbox.payload >= 1200) && (XdrvMailbox.payload <= 115200)) {
     XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
     Settings->tcp_baudrate = XdrvMailbox.payload;
-    TCPSerial->begin(Settings->tcp_baudrate * 1200);  // Reinitialize serial port with new baud rate
+    TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new baud rate
   }
   ResponseCmndNumber(Settings->tcp_baudrate * 1200);
+}
+
+void CmndTCPConfig(void) {
+  if (XdrvMailbox.data_len > 0) {
+    uint8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
+    if (serial_config >= 0) {
+      Settings->tcp_config = 0x80 | serial_config; // default 0x00 should be 8N1
+      TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new config
+    }
+  }
+  ResponseCmndChar_P(GetSerialConfig(0x7F & Settings->tcp_config).c_str());
 }
 
 /*********************************************************************************************\

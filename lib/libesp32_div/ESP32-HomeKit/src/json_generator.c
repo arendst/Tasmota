@@ -34,13 +34,13 @@ static inline int json_gen_get_empty_len(json_gen_str_t *jstr)
  * flushed out will always be equal to the size of the buffer unless
  * this is the last chunk being flushed out on json_gen_end_str()
  */
-static int json_gen_add_to_str(json_gen_str_t *jstr, char *str)
+static int json_gen_add_to_str(json_gen_str_t *jstr, const char *str)
 {
     if (!str) {
         return 0;
     }
 	int len = strlen(str);
-	char *cur_ptr = str;
+	const char *cur_ptr = str;
 	while (1) {
 		int len_remaining = json_gen_get_empty_len(jstr);
 		int copy_len = len_remaining > len ? len : len_remaining;
@@ -91,7 +91,7 @@ static inline void json_gen_handle_comma(json_gen_str_t *jstr)
 }
 
 
-static int json_gen_handle_name(json_gen_str_t *jstr, char *name)
+static int json_gen_handle_name(json_gen_str_t *jstr, const char *name)
 {
 	json_gen_add_to_str(jstr, "\"");
 	json_gen_add_to_str(jstr, name);
@@ -126,7 +126,7 @@ int json_gen_end_array(json_gen_str_t *jstr)
 	return json_gen_add_to_str(jstr, "]");
 }
 
-int json_gen_push_object(json_gen_str_t *jstr, char *name)
+int json_gen_push_object(json_gen_str_t *jstr, const char *name)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -140,7 +140,7 @@ int json_gen_pop_object(json_gen_str_t *jstr)
 	return json_gen_add_to_str(jstr, "}");
 }
 
-int json_gen_push_object_str(json_gen_str_t *jstr, char *name, char *object_str)
+int json_gen_push_object_str(json_gen_str_t *jstr, const char *name, char *object_str)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -148,7 +148,7 @@ int json_gen_push_object_str(json_gen_str_t *jstr, char *name, char *object_str)
 	return json_gen_add_to_str(jstr, object_str);
 }
 
-int json_gen_push_array(json_gen_str_t *jstr, char *name)
+int json_gen_push_array(json_gen_str_t *jstr, const char *name)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -161,7 +161,7 @@ int json_gen_pop_array(json_gen_str_t *jstr)
 	return json_gen_add_to_str(jstr, "]");
 }
 
-int json_gen_push_array_str(json_gen_str_t *jstr, char *name, char *array_str)
+int json_gen_push_array_str(json_gen_str_t *jstr, const char *name, char *array_str)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -177,7 +177,7 @@ static int json_gen_set_bool(json_gen_str_t *jstr, bool val)
 	else
 		return json_gen_add_to_str(jstr, "false");
 }
-int json_gen_obj_set_bool(json_gen_str_t *jstr, char *name, bool val)
+int json_gen_obj_set_bool(json_gen_str_t *jstr, const char *name, bool val)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -198,7 +198,7 @@ static int json_gen_set_int(json_gen_str_t *jstr, int val)
 	return json_gen_add_to_str(jstr, str);
 }
 
-int json_gen_obj_set_int(json_gen_str_t *jstr, char *name, int val)
+int json_gen_obj_set_int(json_gen_str_t *jstr, const char *name, int val)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -219,7 +219,7 @@ static int json_gen_set_float(json_gen_str_t *jstr, float val)
 	snprintf(str, MAX_FLOAT_IN_STR, "%.*f", JSON_FLOAT_PRECISION, val);
 	return json_gen_add_to_str(jstr, str);
 }
-int json_gen_obj_set_float(json_gen_str_t *jstr, char *name, float val)
+int json_gen_obj_set_float(json_gen_str_t *jstr, const char *name, float val)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
@@ -231,7 +231,7 @@ int json_gen_arr_set_float(json_gen_str_t *jstr, float val)
 	return json_gen_set_float(jstr, val);
 }
 
-static int json_gen_set_string(json_gen_str_t *jstr, char *val)
+static int json_gen_set_string(json_gen_str_t *jstr, const char *val)
 {
 	jstr->comma_req = true;
 	json_gen_add_to_str(jstr, "\"");
@@ -239,40 +239,40 @@ static int json_gen_set_string(json_gen_str_t *jstr, char *val)
 	return json_gen_add_to_str(jstr, "\"");
 }
 
-int json_gen_obj_set_string(json_gen_str_t *jstr, char *name, char *val)
+int json_gen_obj_set_string(json_gen_str_t *jstr, const char *name, const char *val)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
 	return json_gen_set_string(jstr, val);
 }
 
-int json_gen_arr_set_string(json_gen_str_t *jstr, char *val)
+int json_gen_arr_set_string(json_gen_str_t *jstr, const char *val)
 {
 	json_gen_handle_comma(jstr);
 	return json_gen_set_string(jstr, val);
 }
 
-static int json_gen_set_long_string(json_gen_str_t *jstr, char *val)
+static int json_gen_set_long_string(json_gen_str_t *jstr, const char *val)
 {
 	jstr->comma_req = true;
 	json_gen_add_to_str(jstr, "\"");
 	return json_gen_add_to_str(jstr, val);
 }
 
-int json_gen_obj_start_long_string(json_gen_str_t *jstr, char *name, char *val)
+int json_gen_obj_start_long_string(json_gen_str_t *jstr, const char *name, const char *val)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);
     return json_gen_set_long_string(jstr, val);
 }
 
-int json_gen_arr_start_long_string(json_gen_str_t *jstr, char *val)
+int json_gen_arr_start_long_string(json_gen_str_t *jstr, const char *val)
 {
 	json_gen_handle_comma(jstr);
     return json_gen_set_long_string(jstr, val);
 }
 
-int json_gen_add_to_long_string(json_gen_str_t *jstr, char *val)
+int json_gen_add_to_long_string(json_gen_str_t *jstr, const char *val)
 {
     return json_gen_add_to_str(jstr, val);
 }
@@ -286,7 +286,7 @@ static int json_gen_set_null(json_gen_str_t *jstr)
 	jstr->comma_req = true;
 	return json_gen_add_to_str(jstr, "null");
 }
-int json_gen_obj_set_null(json_gen_str_t *jstr, char *name)
+int json_gen_obj_set_null(json_gen_str_t *jstr, const char *name)
 {
 	json_gen_handle_comma(jstr);
 	json_gen_handle_name(jstr, name);

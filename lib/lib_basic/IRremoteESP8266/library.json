@@ -1,6 +1,6 @@
 {
   "name": "IRremoteESP8266",
-  "version": "2.7.19",
+  "version": "2.8.0",
   "keywords": "infrared, ir, remote, esp8266, esp32",
   "description": "Send and receive infrared signals with multiple protocols (ESP8266/ESP32)",
   "repository":
@@ -47,8 +47,6 @@
   "exclude": [".github", "extras", "docs", "assets"],
   "frameworks": "arduino",
   "platforms": ["espressif8266", "espressif32"],
-
-
 
   "build": {
     "srcDir": "IRremoteESP8266/src",

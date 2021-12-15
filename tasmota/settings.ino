@@ -694,7 +694,7 @@ void SettingsLoad(void) {
   if (source) {
     settings_location = 1;
     if (Settings->cfg_holder == (uint16_t)CFG_HOLDER) {
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings->save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
     }
   }
 #endif  // ESP32
@@ -1182,6 +1182,7 @@ void SettingsDefaultSet2(void) {
 
   // Tuya
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
+  flag5.tuya_allow_dimmer_0 |= TUYA_ALLOW_DIMMER_0;
   flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
   mbflag2.temperature_set_res |= TUYA_TEMP_SET_RES;
 
@@ -1194,6 +1195,10 @@ void SettingsDefaultSet2(void) {
   flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
+
+  flag5.shift595_invert_outputs |= SHIFT595_INVERT_OUTPUTS;
+  Settings->shift595_device_count = SHIFT595_DEVICE_COUNT;
+  flag5.tls_use_fingerprint |= MQTT_TLS_FINGERPRINT;
 
   Settings->flag = flag;
   Settings->flag2 = flag2;
@@ -1453,6 +1458,19 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09050009) {
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
+    }
+    if (Settings->version < 0x0A000003) {
+      if (0 == Settings->param[P_ARP_GRATUITOUS]) {
+        Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
+#ifdef USE_TLS
+        for (uint32_t i = 0; i < 20; i++) {
+          if (Settings->mqtt_fingerprint[0][i]) {
+            Settings->flag5.tls_use_fingerprint = true;   // if the fingerprint1 is non null we expect it to be actually used
+            break;
+          }
+        }
+#endif
+      }
     }
 
     Settings->version = VERSION;

@@ -15,6 +15,8 @@
 //   Brand: LG,  Model: AMNW09GSJA0 A/C (LG2 - AKB74955603)
 //   Brand: LG,  Model: AMNW24GTPA1 A/C (LG2 - AKB73757604)
 //   Brand: LG,  Model: AKB73757604 remote (LG2 - AKB73757604)
+//   Brand: LG,  Model: AKB73315611 remote (LG2 - AKB74955603)
+//   Brand: LG,  Model: MS05SQ NW0 A/C (LG2 - AKB74955603)
 //   Brand: General Electric,  Model: AG1BH09AW101 Split A/C (LG)
 //   Brand: General Electric,  Model: 6711AR2853M A/C Remote (LG)
 

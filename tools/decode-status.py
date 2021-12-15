@@ -185,7 +185,9 @@ a_setoption = [[
     "(Web) Allow access without referer check",
     "(Energy) Show phase information",
     "(Debug) Show heap with logging timestamp",
-    "","","",
+    "(Tuya) Allow save dimmer = 0 receved by MCU",
+    "(TLS) Use fingerprint validation instead of CA based",
+    "(Shift595) Invert outputs of 74x595 shift registers",
     "","","","",
     "","","","",
     "","","",""
@@ -259,7 +261,7 @@ a_features = [[
     "USE_BM8563","USE_ENERGY_DUMMY","USE_AM2320","USE_T67XX",
     "USE_MCP2515","USE_TASMESH","USE_WIFI_RANGE_EXTENDER","USE_INFLUXDB",
     "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
-    "","","","",
+    "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
     "","","","",
     "","","","",
     "","","",""
@@ -290,7 +292,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20211008 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v20211205 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

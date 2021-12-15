@@ -3,6 +3,7 @@ name: Tasmota CI
 on:
   workflow_dispatch:
   pull_request:
+    branches: development
     paths:
       - '**.c'
       - '**.cpp'
@@ -17,6 +18,7 @@ on:
 jobs:
   base-images:
     runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
     strategy:
       matrix:
         variant:
@@ -30,6 +32,7 @@ jobs:
           - tasmota-zbbridge
           - tasmota-zigbee
           - tasmota32
+          - tasmota32-webcam
           - tasmota32-bluetooth
           - tasmota32-core2
           - tasmota32-display
@@ -57,9 +60,10 @@ jobs:
 
   language-images:
     runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
     strategy:
       matrix:
-        variant: [ tasmota, tasmota32 ]
+        variant: [ tasmota ]
         language: [ AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v2

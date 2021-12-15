@@ -11,7 +11,8 @@
  *  Created on: Jun 21, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
+
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEUtils.h"
