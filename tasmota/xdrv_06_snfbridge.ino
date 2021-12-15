@@ -503,7 +503,7 @@ void CmndRfRaw(void)
 
 #ifdef USE_WEBSERVER
 
-void SonoffBridgeAddFuctionButtons(void) {
+void SonoffBridgeAddButton(void) {
   WSContentSend_P(HTTP_TABLE100);
   WSContentSend_P(PSTR("<tr>"));
   char number[4];
@@ -550,7 +550,7 @@ bool Xdrv06(uint8_t function)
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        SonoffBridgeAddFuctionButtons();
+        SonoffBridgeAddButton();
         break;
       case FUNC_WEB_GET_ARG:
         SonoffBridgeWebGetArg();
