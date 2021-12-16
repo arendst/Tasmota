@@ -400,7 +400,6 @@ extern const bcstring be_const_str_get_style_bg_color;
 extern const bcstring be_const_str_get_style_line_color;
 extern const bcstring be_const_str_get_style_pad_right;
 extern const bcstring be_const_str_get_switch;
-extern const bcstring be_const_str_get_tasmota;
 extern const bcstring be_const_str_get_temp;
 extern const bcstring be_const_str_get_vbus_current;
 extern const bcstring be_const_str_get_vbus_voltage;

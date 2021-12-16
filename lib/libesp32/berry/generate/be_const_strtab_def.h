@@ -264,7 +264,7 @@ be_define_const_str(collect, "collect", 2399039025u, 0, 7, &be_const_str_json_fd
 be_define_const_str(color, "color", 1031692888u, 0, 5, &be_const_str_del);
 be_define_const_str(compile, "compile", 1000265118u, 0, 7, &be_const_str_skip);
 be_define_const_str(compress, "compress", 2818084237u, 0, 8, &be_const_str_width_def);
-be_define_const_str(concat, "concat", 4124019837u, 0, 6, &be_const_str_get_tasmota);
+be_define_const_str(concat, "concat", 4124019837u, 0, 6, NULL);
 be_define_const_str(connect, "connect", 2866859257u, 0, 7, &be_const_str_resolvecmnd);
 be_define_const_str(connected, "connected", 1424938192u, 0, 9, &be_const_str_exp);
 be_define_const_str(connection_error, "connection_error", 1358926260u, 0, 16, &be_const_str_tanh);
@@ -392,7 +392,6 @@ be_define_const_str(get_style_bg_color, "get_style_bg_color", 964794381u, 0, 18,
 be_define_const_str(get_style_line_color, "get_style_line_color", 805371932u, 0, 20, &be_const_str_ip);
 be_define_const_str(get_style_pad_right, "get_style_pad_right", 3150287466u, 0, 19, NULL);
 be_define_const_str(get_switch, "get_switch", 164821028u, 0, 10, &be_const_str_init_draw_line_dsc);
-be_define_const_str(get_tasmota, "get_tasmota", 334356779u, 0, 11, NULL);
 be_define_const_str(get_temp, "get_temp", 3370919486u, 0, 8, NULL);
 be_define_const_str(get_vbus_current, "get_vbus_current", 1205347942u, 0, 16, &be_const_str_rotate);
 be_define_const_str(get_vbus_voltage, "get_vbus_voltage", 2398210401u, 0, 16, NULL);
@@ -1102,6 +1101,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 358,
-    .count = 740,
+    .count = 739,
     .table = m_string_table
 };

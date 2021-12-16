@@ -29,8 +29,6 @@ class I2C_Driver
    -   i2c_index : Tasmota I2C index, see `I2CDEVICES.md` (int)
    --#
   def init(name_or_detect, addr, i2c_index)
-    var tasmota = self.get_tasmota()            #- retrieve the 'tasmota' singleton -#
-
     #- check if the i2c index is disabled by Tasmota configuration -#
     if i2c_index != nil && !tasmota.i2c_enabled(i2c_index) return end
 

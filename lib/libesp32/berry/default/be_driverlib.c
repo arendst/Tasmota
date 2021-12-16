@@ -7,57 +7,6 @@
 #include "be_constobj.h"
 
 /********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(Driver_init,   /* name */
-  be_nested_proto(
-    1,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    &be_const_str_init,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_tasmota
-********************************************************************/
-be_local_closure(Driver_get_tasmota,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    }),
-    &be_const_str_get_tasmota,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x80040200,  //  0001  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
 be_local_closure(Driver_add_cmd,   /* name */
@@ -123,24 +72,22 @@ be_local_closure(Driver_add_cmd,   /* name */
 be_local_class(Driver,
     13,
     NULL,
-    be_nested_map(16,
+    be_nested_map(14,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(web_add_main_button, 14), be_const_var(4) },
-        { be_const_key(web_add_console_button, -1), be_const_var(7) },
-        { be_const_key(web_add_management_button, 8), be_const_var(5) },
-        { be_const_key(init, -1), be_const_closure(Driver_init_closure) },
-        { be_const_key(json_append, -1), be_const_var(10) },
-        { be_const_key(web_add_config_button, 7), be_const_var(6) },
-        { be_const_key(every_100ms, -1), be_const_var(1) },
-        { be_const_key(display, -1), be_const_var(12) },
-        { be_const_key(web_add_button, 13), be_const_var(3) },
-        { be_const_key(every_second, -1), be_const_var(0) },
-        { be_const_key(save_before_restart, -1), be_const_var(8) },
-        { be_const_key(get_tasmota, -1), be_const_closure(Driver_get_tasmota_closure) },
-        { be_const_key(web_sensor, 6), be_const_var(9) },
-        { be_const_key(web_add_handler, -1), be_const_var(2) },
-        { be_const_key(button_pressed, 1), be_const_var(11) },
+        { be_const_key(web_add_console_button, 6), be_const_var(7) },
+        { be_const_key(web_add_config_button, -1), be_const_var(6) },
+        { be_const_key(button_pressed, 9), be_const_var(11) },
+        { be_const_key(every_second, 1), be_const_var(0) },
+        { be_const_key(web_add_handler, 11), be_const_var(2) },
         { be_const_key(add_cmd, -1), be_const_closure(Driver_add_cmd_closure) },
+        { be_const_key(web_sensor, -1), be_const_var(9) },
+        { be_const_key(display, -1), be_const_var(12) },
+        { be_const_key(web_add_main_button, 2), be_const_var(4) },
+        { be_const_key(save_before_restart, -1), be_const_var(8) },
+        { be_const_key(web_add_management_button, 0), be_const_var(5) },
+        { be_const_key(every_100ms, 13), be_const_var(1) },
+        { be_const_key(json_append, -1), be_const_var(10) },
+        { be_const_key(web_add_button, -1), be_const_var(3) },
     })),
     be_str_literal("Driver")
 );

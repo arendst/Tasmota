@@ -67,9 +67,9 @@ class AXP192_M5Stack_Core2 : AXP192
   
       # Reset LCD Controller
       self.set_lcd_reset(false)
-      self.get_tasmota().delay(100)   # wait for 100ms
+      tasmota.delay(100)   # wait for 100ms
       self.set_lcd_reset(true)
-      self.get_tasmota().delay(100)   # wait for 100ms
+      tasmota.delay(100)   # wait for 100ms
 
       # bus power mode_output
       self.set_buf_power_mode(false)
