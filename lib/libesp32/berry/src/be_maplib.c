@@ -212,62 +212,6 @@ static int m_keys(bvm *vm)
     be_return(vm);
 }
 
-/* apply a function/closure to each element of a map */
-/* `map.reduce(f:function [, initializer:any]) -> any` */
-/* Calls for each element `f(key, value, acc) -> any` */
-/* `acc` is initialized with `initilizer` if present or `nil` */
-/* the return value of the function becomes the next value passed in arg `acc` */
-static int m_reduce(bvm *vm)
-{
-    int argc = be_top(vm);
-    if (argc > 1 && be_isfunction(vm, 2)) {
-        bbool has_initializer = (argc > 2);
-        /* get map internal object */
-        be_getmember(vm, 1, ".p");
-        bvalue *v = be_indexof(vm, -1);
-        bmap *map = cast(bmap*, var_toobj(v));
-        /* get the number of slots if any */
-        int slots_initial = be_map_size(map);
-        /* place-holder for on-going value and return value */
-        if (has_initializer) {
-            be_pushvalue(vm, 3);
-        } else {
-            be_pushnil(vm);     /* if no initializer use `nil` */
-        }
-        for (int i = 0; i < slots_initial; i++) {
-            bmapnode * node = map->slots + i;
-            if (!var_isnil(&node->key)) {   /* is the key present in this slot? */
-                be_pushvalue(vm, 2);        /* push function */
-
-                bvalue kv;                  /* push key on stack */
-                kv.type = node->key.type;
-                kv.v = node->key.v;
-                bvalue *reg = vm->top; 
-                var_setval(reg, &kv);
-                be_incrtop(vm);
-
-                reg = vm->top;              /* push value on stack */
-                var_setval(reg, &node->value);
-                be_incrtop(vm);
-
-                be_pushvalue(vm, -4);
-
-                be_call(vm, 3);
-                be_pop(vm, 3);   /* pop args, keep return value */
-                be_remove(vm, -2);  /* remove previous accumulator, keep return value from function */
-            }
-            /* check if the map has been resized during the call */
-            if (be_map_size(map) != slots_initial) {
-                be_raise(vm, "stop_iteration", "map resized within apply");
-                break;      /* abort */
-            }
-        }
-        be_return(vm);
-    }
-    be_raise(vm, "value_error", "needs function as first argument");
-    be_return_nil(vm);
-}
-
 #if !BE_USE_PRECOMPILED_OBJECT
 void be_load_maplib(bvm *vm)
 {
@@ -285,7 +229,6 @@ void be_load_maplib(bvm *vm)
         { "insert", m_insert },
         { "iter", m_iter },
         { "keys", m_keys },
-        { "reduce", m_reduce },
         { NULL, NULL }
     };
     be_regclass(vm, "map", members);
@@ -306,7 +249,6 @@ class be_class_map (scope: global, name: map) {
     insert, func(m_insert)
     iter, func(m_iter)
     keys, func(m_keys)
-    reduce, func(m_reduce)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_be_class_map.h"
