@@ -501,6 +501,36 @@ void CmndRfRaw(void)
   ResponseCmndStateText(SnfBridge.receive_raw_flag);
 }
 
+#ifdef USE_WEBSERVER
+
+void SonoffBridgeAddButton(void) {
+  WSContentSend_P(HTTP_TABLE100);
+  WSContentSend_P(PSTR("<tr>"));
+  char number[4];
+  uint32_t idx = 0;
+  for (uint32_t i = 0; i < 4; i++) {
+    if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
+    for (uint32_t j = 0; j < 4; j++) {
+      idx++;
+      WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%s</button></td>"), idx,  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
+        (strlen(SettingsText(SET_BUTTON1 + idx -1))) ? SettingsText(SET_BUTTON1 + idx -1) : itoa(idx, number, 10));
+    }
+  }
+  WSContentSend_P(PSTR("</tr></table>"));
+}
+
+void SonoffBridgeWebGetArg(void) {
+  char tmp[8];                             // WebGetArg numbers only
+  WebGetArg(PSTR("k"), tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
+  if (strlen(tmp)) {
+    char command[20];
+    snprintf_P(command, sizeof(command), PSTR(D_CMND_RFKEY "%s"), tmp);
+    ExecuteWebCommand(command);
+  }
+}
+
+#endif  // USE_WEBSERVER
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -518,6 +548,14 @@ bool Xdrv06(uint8_t function)
       case FUNC_COMMAND:
         result = DecodeCommand(kSonoffBridgeCommands, SonoffBridgeCommand);
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        SonoffBridgeAddButton();
+        break;
+      case FUNC_WEB_GET_ARG:
+        SonoffBridgeWebGetArg();
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_INIT:
         SnfBridge.receive_raw_flag = 0;
         SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling

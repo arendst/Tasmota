@@ -4,10 +4,13 @@
 
 #include "re1.5.h"
 
+extern void berry_log_C(const char * berry_buf, ...);
+
 void
-re1_5_fatal(char *msg)
+re1_5_fatal(const char *msg)
 {
-	fprintf(stderr, "fatal error: %s\n", msg);
+	berry_log_C("BRY: regex fatal error: %s", msg);
+	// fprintf(stderr, "fatal error: %s\n", msg);
 	exit(2);
 }
 

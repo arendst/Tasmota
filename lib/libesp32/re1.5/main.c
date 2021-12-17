@@ -5,7 +5,7 @@
 #include "re1.5.h"
 
 struct {
-	char *name;
+	const char *name;
 	int (*fn)(ByteProg*, Subject*, const char**, int, int);
 } tab[] = {
 	{"recursive", re1_5_recursiveprog},

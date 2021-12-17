@@ -46,7 +46,7 @@ Regexp *parse(char*);
 Regexp *reg(int type, Regexp *left, Regexp *right);
 void printre(Regexp*);
 #ifndef re1_5_fatal
-void re1_5_fatal(char*);
+void re1_5_fatal(const char*);
 #endif
 #ifndef re1_5_stack_chk
 #define re1_5_stack_chk()

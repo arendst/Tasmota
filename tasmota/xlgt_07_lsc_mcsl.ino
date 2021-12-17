@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define USE_LSC_MCSL_GUI
+
 #ifdef USE_LIGHT
 #ifdef USE_LSC_MCSL
 /*********************************************************************************************\
@@ -26,6 +28,17 @@
  *
  * Template:
  * {"NAME":"LSC MC Lights","GPIO":[0,0,0,0,544,32,0,0,3840,0,3872,0,0,0],"FLAG":0,"BASE":18}
+ *
+ * Webbutton:
+ * {"WebButton1":"On / Off",
+ *  "WebButton2":"Bright",
+ *  "WebButton3":"Slow",
+ *  "WebButton4":"Star",
+ *  "WebButton5":"Flower",
+ *  "WebButton6":"Marquee",
+ *  "WebButton7":"Fireworks",
+ *  "WebButton8":"Meteor",
+ *  "WebButton9":"Stream"}
  *
  * NL: Action LSC Multi color smart lights
  *
@@ -232,6 +245,51 @@ void LscMcModuleSelected(void) {
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: LSC Multi Color Found"));
 }
 
+#ifdef USE_WEBSERVER
+#ifdef USE_LSC_MCSL_GUI
+
+void LscMcAddFuctionButtons(void) {
+  uint32_t rows = 1;
+  uint32_t cols = 8;
+  for (uint32_t i = 0; i < 8; i++) {
+    if (strlen(SettingsText(SET_BUTTON1 + i +1))) {
+      rows <<= 1;
+      cols >>= 1;
+      break;
+    }
+  }
+  WSContentSend_P(HTTP_TABLE100);
+  WSContentSend_P(PSTR("<tr>"));
+  char number[4];
+  uint32_t idx = 0;
+  for (uint32_t i = 0; i < rows; i++) {
+    if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
+    for (uint32_t j = 0; j < cols; j++) {
+      idx++;
+      WSContentSend_P(PSTR("<td style='width:%d%%'><button onclick='la(\"&lsc=%d\");'>%s</button></td>"),  // &lsc is related to WebGetArg("lsc", tmp, sizeof(tmp));
+        100 / cols,
+        idx -1,
+        (strlen(SettingsText(SET_BUTTON1 + idx))) ? SettingsText(SET_BUTTON1 + idx) : itoa(idx, number, 10));
+    }
+  }
+  WSContentSend_P(PSTR("</tr></table>"));
+}
+
+void LscMcWebGetArg(void) {
+  char tmp[8];                               // WebGetArg numbers only
+  WebGetArg(PSTR("lsc"), tmp, sizeof(tmp));  // 0 - 7 functions
+  if (strlen(tmp)) {
+    uint32_t function = atoi(tmp);
+    char command[20];
+    snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER " %d"), (function * (100 / 8)) + ((100 / 8) / 2));
+    ExecuteWebCommand(command);
+  }
+}
+
+#endif  // USE_LSC_MCSL_GUI
+#endif  // USE_WEBSERVER
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -247,6 +305,16 @@ bool Xlgt07(uint8_t function)
     case FUNC_BUTTON_MULTI_PRESSED:
       result = LscMcMultiButtonPressed();
       break;
+#ifdef USE_WEBSERVER
+#ifdef USE_LSC_MCSL_GUI
+    case FUNC_WEB_ADD_MAIN_BUTTON:
+      LscMcAddFuctionButtons();
+      break;
+    case FUNC_WEB_GET_ARG:
+      LscMcWebGetArg();
+      break;
+#endif  // USE_LSC_MCSL_GUI
+#endif  // USE_WEBSERVER
     case FUNC_MODULE_INIT:
       LscMcModuleSelected();
       break;

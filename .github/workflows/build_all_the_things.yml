@@ -18,6 +18,7 @@ on:
 jobs:
   base-images:
     runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
     strategy:
       matrix:
         variant:
@@ -59,6 +60,7 @@ jobs:
 
   language-images:
     runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
     strategy:
       matrix:
         variant: [ tasmota ]
