@@ -320,13 +320,14 @@ extern "C" {
 #endif
 
 #include "be_ctypes.h"
+#include "be_mapping.h"
 """)
 
 for subtype, flv in lv.items():
   print(f"/* `lv_{subtype}` methods */")
   if subtype in lv_widgets:
     print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
-  print(f"const lvbe_call_c_t lv_{subtype}_func[] = {{")
+  print(f"const be_ntv_func_def_t lv_{subtype}_func[] = {{")
 
   func_out = {} # used to sort output
   for f in flv:
@@ -361,7 +362,7 @@ print()
 # print the global map of classes
 print(f"""
 // map of clases
-const lvbe_call_c_classes_t lv_classes[] = {{""")
+const be_ntv_class_def_t lv_classes[] = {{""")
 
 for subtype in sorted(lv):
 # for subtype, flv in lv.items():
@@ -391,7 +392,7 @@ for subtype, flv in lv.items():
     if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
 
     if c_func_name.endswith("_create"):
-      c_ret_type = "+"  # constructor, init method does not return any value
+      c_ret_type = "+_p"  # constructor, init method does not return any value
       if subtype in lv_widgets:
         print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
         print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
@@ -401,8 +402,8 @@ for subtype, flv in lv.items():
 
 print("""
 // create font either empty or from parameter on stack
-int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_font", ""); }
-int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_theme", ""); }
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
+int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
 """)
 
 print()
@@ -660,7 +661,7 @@ print("""/********************************************************************
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-#include "be_lvgl.h"
+#include "be_mapping.h"
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
@@ -685,7 +686,7 @@ static int lv_get_ver_res(void) {
 }
 
 /* `lv` methods */
-const lvbe_call_c_t lv_func[] = {
+const be_ntv_func_def_t lv_func[] = {
 """)
 
 func_out = {} # used to sort output
@@ -728,12 +729,7 @@ const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
 print("""
 
-typedef struct be_constint_t {
-    const char * name;
-    int32_t      value;
-} be_constint_t;
-
-const be_constint_t lv0_constants[] = {
+const be_const_member_t lv0_constants[] = {
 """)
 
 lv_module2 = {}

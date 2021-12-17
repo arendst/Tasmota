@@ -6,7 +6,7 @@
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-#include "be_lvgl.h"
+#include "be_mapping.h"
 
 /********************************************************************
  * Generated code, don't edit

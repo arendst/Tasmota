@@ -44,20 +44,21 @@ class LVGL_glob
     f(obj, event)
   end
 
-  def gen_cb(name, f, obj, ptr)
-    #print('>> gen_cb', name, obj, ptr)
+  def gen_cb(f, obj, name)
+    import cb
+    # print('>> gen_cb', f, name, obj)
     # record the object, whatever the callback
     
     if name  == "lv_event_cb"
       if self.cb_event_closure == nil   self.cb_event_closure = {} end
-      if self.event_cb == nil			     self.event_cb = tasmota.gen_cb(/ event_ptr -> self.lvgl_event_dispatch(event_ptr)) end  # encapsulate 'self' in closure
+      if self.event_cb == nil			      self.event_cb = cb.gen_cb(/ event_ptr -> self.lvgl_event_dispatch(event_ptr)) end  # encapsulate 'self' in closure
     
       self.register_obj(obj)
-      self.cb_event_closure[ptr] = f
+      self.cb_event_closure[obj._p] = f
       return self.event_cb
     # elif name == "<other_cb>"
     else
-      if self.null_cb == nil                  self.null_cb = tasmota.gen_cb(self.cb_do_nothing) end
+      if self.null_cb == nil                  self.null_cb = cb.gen_cb(self.cb_do_nothing) end
       return self.null_cb
     end
   end
