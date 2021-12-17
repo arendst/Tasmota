@@ -181,10 +181,10 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 1) {  // no argument (instance only)
       be_newobject(vm, "map");
-      map_insert_int(vm, "utc", Rtc.utc_time);
-      map_insert_int(vm, "local", Rtc.local_time);
-      map_insert_int(vm, "restart", Rtc.restart_time);
-      map_insert_int(vm, "timezone", Rtc.time_timezone);
+      be_map_insert_int(vm, "utc", Rtc.utc_time);
+      be_map_insert_int(vm, "local", Rtc.local_time);
+      be_map_insert_int(vm, "restart", Rtc.restart_time);
+      be_map_insert_int(vm, "timezone", Rtc.time_timezone);
       be_pop(vm, 1);
       be_return(vm);
     }
@@ -198,14 +198,14 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 1) {  // no argument (instance only)
       be_newobject(vm, "map");
-      map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
-      map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
-      map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
-      map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
-      map_insert_int(vm, "frag", ESP_getHeapFragmentation());
+      be_map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
+      be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
+      be_map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
+      be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
+      be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
       if (UsePSRAM()) {
-        map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
-        map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+        be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
+        be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
       }
       be_pop(vm, 1);
       be_return(vm);
@@ -222,17 +222,17 @@ extern "C" {
       be_newobject(vm, "map");
       if (Settings->flag4.network_wifi) {
         int32_t rssi = WiFi.RSSI();
-        map_insert_int(vm, "rssi", rssi);
-        map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+        be_map_insert_int(vm, "rssi", rssi);
+        be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
 #if LWIP_IPV6
         String ipv6_addr = WifiGetIPv6();
         if (ipv6_addr != "") {
-          map_insert_str(vm, "ip6", ipv6_addr.c_str());
+          be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
         }
 #endif
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-          map_insert_str(vm, "mac", WiFi.macAddress().c_str());
-          map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
+          be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+          be_map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
         }
       }
       be_pop(vm, 1);
@@ -250,8 +250,8 @@ extern "C" {
       be_newobject(vm, "map");
 #ifdef USE_ETHERNET
       if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-        map_insert_str(vm, "mac", EthernetMacAddress().c_str());
-        map_insert_str(vm, "ip", EthernetLocalIP().toString().c_str());
+        be_map_insert_str(vm, "mac", EthernetMacAddress().c_str());
+        be_map_insert_str(vm, "ip", EthernetLocalIP().toString().c_str());
       }
 #endif
       be_pop(vm, 1);
@@ -262,14 +262,14 @@ extern "C" {
 
   static void l_push_time(bvm *vm, struct tm *t, const char *unparsed) {
     be_newobject(vm, "map");
-    map_insert_int(vm, "year", t->tm_year + 1900);
-    map_insert_int(vm, "month", t->tm_mon + 1);
-    map_insert_int(vm, "day", t->tm_mday);
-    map_insert_int(vm, "hour", t->tm_hour);
-    map_insert_int(vm, "min", t->tm_min);
-    map_insert_int(vm, "sec", t->tm_sec);
-    map_insert_int(vm, "weekday", t->tm_wday);
-    if (unparsed) map_insert_str(vm, "unparsed", unparsed);
+    be_map_insert_int(vm, "year", t->tm_year + 1900);
+    be_map_insert_int(vm, "month", t->tm_mon + 1);
+    be_map_insert_int(vm, "day", t->tm_mday);
+    be_map_insert_int(vm, "hour", t->tm_hour);
+    be_map_insert_int(vm, "min", t->tm_min);
+    be_map_insert_int(vm, "sec", t->tm_sec);
+    be_map_insert_int(vm, "weekday", t->tm_wday);
+    if (unparsed) be_map_insert_str(vm, "unparsed", unparsed);
     be_pop(vm, 1);
   }
 
@@ -332,27 +332,14 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-    BrTimeoutYield();   // reset timeout
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &BrTimeoutYield, NULL, "-");
   }
 
   // Berry: tasmota.scale_uint(int * 5) -> int
   //
   int32_t l_scaleuint(struct bvm *vm);
   int32_t l_scaleuint(struct bvm *vm) {
-    int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 6 && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6)) {  // only 1 argument of type string accepted
-      int32_t v = be_toint(vm, 2);
-      int32_t from1 = be_toint(vm, 3);
-      int32_t from2 = be_toint(vm, 4);
-      int32_t to1 = be_toint(vm, 5);
-      int32_t to2 = be_toint(vm, 6);
-
-      int32_t ret = changeUIntScale(v, from1, from2, to1, to2);
-      be_pushint(vm, ret);
-      be_return(vm);
-    }
-    be_raise(vm, kTypeError, nullptr);
+    return be_call_c_func(vm, (void*) &changeUIntScale, "i", "-iiiii");
   }
 
   int32_t l_respCmnd(bvm *vm);
@@ -379,20 +366,17 @@ extern "C" {
 
   int32_t l_respCmndDone(bvm *vm);
   int32_t l_respCmndDone(bvm *vm) {
-    ResponseCmndDone();
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &ResponseCmndDone, NULL, "-");
   }
 
   int32_t l_respCmndError(bvm *vm);
   int32_t l_respCmndError(bvm *vm) {
-    ResponseCmndError();
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &ResponseCmndError, NULL, "-");
   }
 
   int32_t l_respCmndFailed(bvm *vm);
   int32_t l_respCmndFailed(bvm *vm) {
-    ResponseCmndFailed();
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &ResponseCmndFailed, NULL, "-");
   }
 
   // update XdrvMailbox.command with actual command

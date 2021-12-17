@@ -9,7 +9,7 @@
 #ifdef USE_LVGL
 
 #include "lvgl.h"
-#include "be_lvgl.h"
+#include "be_mapping.h"
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
@@ -34,7 +34,7 @@ static int lv_get_ver_res(void) {
 }
 
 /* `lv` methods */
-const lvbe_call_c_t lv_func[] = {
+const be_ntv_func_def_t lv_func[] = {
 
   { "clamp_height", (void*) &lv_clamp_height, "i", "iiii" },
   { "clamp_width", (void*) &lv_clamp_width, "i", "iiii" },
@@ -111,12 +111,7 @@ const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
 
 
-typedef struct be_constint_t {
-    const char * name;
-    int32_t      value;
-} be_constint_t;
-
-const be_constint_t lv0_constants[] = {
+const be_const_member_t lv0_constants[] = {
 
     { "ALIGN_BOTTOM_LEFT", LV_ALIGN_BOTTOM_LEFT },
     { "ALIGN_BOTTOM_MID", LV_ALIGN_BOTTOM_MID },
