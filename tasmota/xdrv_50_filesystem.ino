@@ -287,32 +287,40 @@ bool TfsFileExists(const char *fname){
 
 bool TfsSaveFile(const char *fname, const uint8_t *buf, uint32_t len) {
   if (!ffs_type) { return false; }
-
+#ifdef USE_WEBCAM
+  WcInterrupt(0);  // Stop stream if active to fix TG1WDT_SYS_RESET
+#endif
+  bool result = false;
   File file = ffsp->open(fname, "w");
   if (!file) {
     AddLog(LOG_LEVEL_INFO, PSTR("TFS: Save failed"));
-    return false;
+  } else {
+    // This will timeout on ESP32-webcam
+    // But now solved with WcInterrupt(0) in support_esp.ino
+    file.write(buf, len);
+  /*
+    // This will still timeout on ESP32-webcam when wcresolution 10
+    uint32_t count = len / 512;
+    uint32_t chunk = len / count;
+    for (uint32_t i = 0; i < count; i++) {
+      file.write(buf + (i * chunk), chunk);
+      // do actually wait a little to allow ESP32 tasks to tick
+      // fixes task timeout in ESP32Solo1 style unicore code and webcam.
+      delay(10);
+      OsWatchLoop();
+    }
+    uint32_t left = len % count;
+    if (left) {
+      file.write(buf + (count * chunk), left);
+    }
+  */
+    file.close();
+    result = true;
   }
-
-//  This will timeout on ESP32-webcam
-//  file.write(buf, len);
-
-  uint32_t count = len / 512;
-  uint32_t chunk = len / count;
-  for (uint32_t i = 0; i < count; i++) {
-    file.write(buf + (i * chunk), chunk);
-    // do actually wait a little to allow ESP32 tasks to tick
-    // fixes task timeout in ESP32Solo1 style unicore code and webcam.
-    delay(10);
-    OsWatchLoop();
-  }
-  uint32_t left = len % count;
-  if (left) {
-    file.write(buf + (count * chunk), left);
-  }
-
-  file.close();
-  return true;
+#ifdef USE_WEBCAM
+  WcInterrupt(1);
+#endif
+  return result;
 }
 
 bool TfsInitFile(const char *fname, uint32_t len, uint8_t init_value) {

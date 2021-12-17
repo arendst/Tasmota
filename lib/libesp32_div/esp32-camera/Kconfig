@@ -1,0 +1,114 @@
+menu "Camera configuration"
+
+    config OV7670_SUPPORT
+        bool "Support OV7670 VGA"
+        default y
+        help
+            Enable this option if you want to use the OV7670.
+            Disable this option to save memory.
+
+    config OV7725_SUPPORT
+        bool "Support OV7725 VGA"
+        default y
+        help
+            Enable this option if you want to use the OV7725.
+            Disable this option to save memory.
+
+    config NT99141_SUPPORT
+        bool "Support NT99141 HD"
+        default y
+        help
+            Enable this option if you want to use the NT99141.
+            Disable this option to save memory.
+
+    config OV2640_SUPPORT
+        bool "Support OV2640 2MP"
+        default y
+        help
+            Enable this option if you want to use the OV2640.
+            Disable this option to save memory.
+
+    config OV3660_SUPPORT
+        bool "Support OV3660 3MP"
+        default y
+        help
+            Enable this option if you want to use the OV3360.
+            Disable this option to save memory.
+
+    config OV5640_SUPPORT
+        bool "Support OV5640 5MP"
+        default y
+        help
+            Enable this option if you want to use the OV5640.
+            Disable this option to save memory.
+
+    config GC2145_SUPPORT
+        bool "Support GC2145 2MP"
+        default y
+        help
+            Enable this option if you want to use the GC2145.
+            Disable this option to save memory.
+
+    config GC032A_SUPPORT
+        bool "Support GC032A VGA"
+        default y
+        help
+            Enable this option if you want to use the GC032A.
+            Disable this option to save memory.
+
+    config GC0308_SUPPORT
+        bool "Support GC0308 VGA"
+        default y
+        help
+            Enable this option if you want to use the GC0308.
+            Disable this option to save memory.
+
+    choice SCCB_HARDWARE_I2C_PORT
+        bool "I2C peripheral to use for SCCB"
+        default SCCB_HARDWARE_I2C_PORT1
+
+        config SCCB_HARDWARE_I2C_PORT0
+            bool "I2C0"
+        config SCCB_HARDWARE_I2C_PORT1
+            bool "I2C1"
+
+    endchoice
+
+    choice GC_SENSOR_WINDOW_MODE
+        bool "GalaxyCore Sensor Window Mode"
+        depends on (GC2145_SUPPORT || GC032A_SUPPORT || GC0308_SUPPORT)
+        default GC_SENSOR_SUBSAMPLE_MODE
+        help
+            This option determines how to reduce the output size when the resolution you set is less than the maximum resolution.
+            SUBSAMPLE_MODE has a bigger perspective and WINDOWING_MODE has a higher frame rate.
+
+        config GC_SENSOR_WINDOWING_MODE
+            bool "Windowing Mode"
+        config GC_SENSOR_SUBSAMPLE_MODE
+            bool "Subsample Mode"
+    endchoice
+
+    choice CAMERA_TASK_PINNED_TO_CORE
+        bool "Camera task pinned to core"
+        default CAMERA_CORE0
+        help
+            Pin the camera handle task to a certain core(0/1). It can also be done automatically choosing NO_AFFINITY.
+
+        config CAMERA_CORE0
+            bool "CORE0"
+        config CAMERA_CORE1
+            bool "CORE1"
+        config CAMERA_NO_AFFINITY
+            bool "NO_AFFINITY"
+
+    endchoice
+
+    config CAMERA_DMA_BUFFER_SIZE_MAX
+        int "DMA buffer size"
+        range 8192 32768
+        default 32768
+        help
+            Maximum value of DMA buffer
+            Larger values may fail to allocate due to insufficient contiguous memory blocks, and smaller value may cause DMA interrupt to be too frequent
+
+endmenu

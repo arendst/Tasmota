@@ -139,7 +139,6 @@ String GetDeviceHardware(void) {
 
 bool NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
   nvs_handle_t handle;
-//  noInterrupts();
   esp_err_t result = nvs_open(sNvsName, NVS_READONLY, &handle);
   if (result != ESP_OK) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("NVS: Error %d"), result);
@@ -148,32 +147,33 @@ bool NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned 
   size_t size = nSettingsLen;
   nvs_get_blob(handle, sName, pSettings, &size);
   nvs_close(handle);
-//  interrupts();
   return true;
 }
 
 void NvmSave(const char *sNvsName, const char *sName, const void *pSettings, unsigned nSettingsLen) {
+#ifdef USE_WEBCAM
+  WcInterrupt(0);  // Stop stream if active to fix TG1WDT_SYS_RESET
+#endif
   nvs_handle_t handle;
-//  noInterrupts();
   esp_err_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
   if (result != ESP_OK) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("NVS: Error %d"), result);
-    return;
+  } else {
+    nvs_set_blob(handle, sName, pSettings, nSettingsLen);
+    nvs_commit(handle);
+    nvs_close(handle);
   }
-  nvs_set_blob(handle, sName, pSettings, nSettingsLen);
-  nvs_commit(handle);
-  nvs_close(handle);
-//  interrupts();
+#ifdef USE_WEBCAM
+  WcInterrupt(1);
+#endif
 }
 
 int32_t NvmErase(const char *sNvsName) {
   nvs_handle_t handle;
-//  noInterrupts();
   int32_t result = nvs_open(sNvsName, NVS_READWRITE, &handle);
   if (ESP_OK == result) { result = nvs_erase_all(handle); }
   if (ESP_OK == result) { result = nvs_commit(handle); }
   nvs_close(handle);
-//  interrupts();
   return result;
 }
 
@@ -232,10 +232,7 @@ void SettingsWrite(const void *pSettings, unsigned nSettingsLen) {
 #ifdef USE_UFILESYS
   TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)pSettings, nSettingsLen);
 #endif
-#ifdef USE_WEBCAM
-  if (!WcStreamActive())
-#endif
-    NvmSave("main", "Settings", pSettings, nSettingsLen);
+  NvmSave("main", "Settings", pSettings, nSettingsLen);
 }
 
 void QPCRead(void *pSettings, unsigned nSettingsLen) {
