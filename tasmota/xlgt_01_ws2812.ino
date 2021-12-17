@@ -17,11 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FIRMWARE_MINIMAL
-#define USE_LIGHT
-#define USE_WS2812
-#endif
-
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
 /*********************************************************************************************\
@@ -42,7 +37,7 @@
 
 #define XLGT_01             1
 
-const uint8_t WS2812_SCHEMES = 10;      // Number of WS2812 schemes
+const uint8_t WS2812_SCHEMES = 9;      // Number of WS2812 schemes
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
   D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
@@ -293,93 +288,6 @@ void Ws2812Clock(void)
     }
   }
 
-  Ws2812StripShow();
-}
-
-#define pow2(x) ((x)*(x))
-#define pow3(x) ((x)*pow2(x))
-#define pow4(x) (pow2(x)*pow2(x))
-
-void Ws2812RunningStrip(int scheme)
-{
-#if (USE_WS2812_CTYPE > NEO_3LED)
-  RgbwColor c;
-  c.W = 0;
-#else
-  RgbColor c(Settings->light_dimmer);
-#endif
-
-  static uint32_t timer_counter = 0;
-  static uint32_t last_timer_counter = timer_counter;
-  if (Settings->light_rotation%2) timer_counter--;
-  else timer_counter++;
-
-  uint32_t width = Settings->ws_width[WS_MINUTE]?Settings->ws_width[WS_MINUTE]:1;
-  uint32_t repeat = 1;//kWsRepeat[Settings->light_width];  // number of scheme.count per ledcount
-  uint32_t range = (uint32_t)ceil((float)Settings->light_pixels / (float)repeat);
-  uint32_t speed = Settings->light_speed; //((Settings->light_speed * 2) -1) * (STATES / 10); //
-  static uint32_t offset = 0;
-   
-  if (scheme==WS2812_SCHEMES-1) {
-    if (timer_counter/speed!=last_timer_counter/speed) {
-      offset = random(range);
-      last_timer_counter = timer_counter;
-    }
-  } else {
-    offset = speed > 0 ? timer_counter / speed : 0;
-  }
-
-  //WsColor oldColor, currentColor;
-  //Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
-  //currentColor = oldColor;
-  int power = Settings->ws_width[WS_SECOND];
-  int max_input = pow(width, power);
-  float dimmer = 100 / (float)Settings->light_dimmer;
-
-  uint32_t target = offset % Settings->light_pixels;
-
-  for (uint32_t i = 0; i < Settings->light_pixels; i++) {
-    int delta = target<i ? i-target : target-i; //abs(i-target);
-    if (delta<width) {
-      float fmyRed = Settings->light_color[0] / pow(delta+1, power);
-      float fmyGrn = Settings->light_color[1] / pow(delta+1, power);
-      float fmyBlu = Settings->light_color[2] / pow(delta+1, power);
-      /*
-      float fmyRed = (float)wsmap(max_input-pow(delta+1, power), 0, max_input, 0, Settings->light_color[0]);
-      float fmyGrn = (float)wsmap(max_input-pow(delta+1, power), 0, max_input, 0, Settings->light_color[1]);
-      float fmyBlu = (float)wsmap(max_input-pow(delta+1, power), 0, max_input, 0, Settings->light_color[2]);
-      */
-      
-      c.R = (uint8_t)fmyRed/dimmer;
-      c.G = (uint8_t)fmyGrn/dimmer;
-      c.B = (uint8_t)fmyBlu/dimmer;
-    }
-    else {
-      c.R = 0 ;
-      c.G = 0 ;
-      c.B = 0 ;
-    }
-
-    if (Settings->light_width==2) {
-      c.R = Settings->light_color[0]/dimmer - c.R;
-      c.G = Settings->light_color[1]/dimmer - c.G;
-      c.B = Settings->light_color[2]/dimmer - c.B;
-    } else if (Settings->ws_width[WS_MINUTE]==3) {
-      c.R = max(100 - c.R,0);
-      c.G = max(100 - c.G,0);
-      c.B = max(100 - c.B,0);
-    }
-
-    strip->SetPixelColor(i, c);
-/*
-    // Blend old and current color based on time for smooth movement.
-    c.R = wsmap(Light.strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
-    c.G = wsmap(Light.strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
-    c.B = wsmap(Light.strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
-    strip->SetPixelColor(i, c);
-    oldColor = currentColor;
-    */
-  }
   Ws2812StripShow();
 }
 
@@ -679,11 +587,6 @@ void Ws2812ShowScheme(void)
         Ws2812Clock();
         Ws2812.show_next = 0;
       }
-      break;
-    case WS2812_SCHEMES-2:  // Running strip
-    case WS2812_SCHEMES-1:  // Running strip
-      Ws2812RunningStrip(scheme);
-      Ws2812.show_next = 1;
       break;
     default:
 			if(Settings->light_step_pixels > 0){
