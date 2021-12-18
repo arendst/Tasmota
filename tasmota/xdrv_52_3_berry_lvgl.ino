@@ -23,7 +23,7 @@
 
 #include <berry.h>
 #include "lvgl.h"
-#include "be_lvgl.h"
+#include "be_mapping.h"
 #include "be_ctypes.h"
 #include "Adafruit_LvGL_Glue.h"
 
@@ -35,6 +35,8 @@
 // Berry easy logging
 extern "C" {
   extern void berry_log_C(const char * berry_buf, ...);
+  extern const be_ntv_class_def_t lv_classes[];
+  extern const size_t lv_classes_size;
 }
 
 extern Adafruit_LvGL_Glue * glue;
@@ -99,80 +101,6 @@ LVBE_globals lvbe;
 extern void start_lvgl(const char * uconfig);
 extern void lv_ex_get_started_1(void);
 
-/*********************************************************************************************\
- * Calling any LVGL function with auto-mapping
- * 
-\*********************************************************************************************/
-
-// check input parameters, and create callbacks if needed
-// change values in place
-//
-// Format:
-// - either a lowercase character encoding for a simple type
-//   - 'b': bool
-//   - 'i': int (int32_t)
-//   - 's': string (const char *)
-//
-// - a class name surroungded by parenthesis
-//   - '(lv_button)' -> lv_button class or derived
-//   - '[lv_event_cb]' -> callback type, still prefixed with '^' to mark that it is cb
-//
-void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * arg_type, int32_t p[8]);
-void be_check_arg_type(bvm *vm, int32_t arg_start, int32_t argc, const char * arg_type, int32_t p[8]) {
-  bool arg_type_check = (arg_type != nullptr);      // is type checking activated
-  int32_t arg_idx = 0;    // position in arg_type string
-  char type_short_name[32];
-
-  for (uint32_t i = 0; i < argc; i++) {
-    type_short_name[0] = 0;   // clear string
-    // extract individual type
-    if (nullptr != arg_type) {
-      switch (arg_type[arg_idx]) {
-        case '.':
-        case 'a'...'z':
-          type_short_name[0] = arg_type[arg_idx];
-          type_short_name[1] = 0;
-          arg_idx++;
-          break;
-        case '(':
-        case '^':
-          {
-            uint32_t prefix = 0;
-            if (arg_type[arg_idx] == '^') {
-              type_short_name[0] = '^';
-              type_short_name[1] = 0;
-              prefix = 1;
-            }
-            uint32_t offset = 0;
-            arg_idx++;
-            while (arg_type[arg_idx + offset] != ')' && arg_type[arg_idx + offset] != '^' && arg_type[arg_idx + offset] != 0 && offset+prefix+1 < sizeof(type_short_name)) {
-              type_short_name[offset+prefix] = arg_type[arg_idx + offset];
-              type_short_name[offset+prefix+1] = 0;
-              offset++;
-            }
-            if (arg_type[arg_idx + offset] == 0) {
-              arg_type = nullptr;   // no more parameters, stop iterations
-            }
-            arg_idx += offset + 1;
-          }
-          break;
-        case 0:
-          arg_type = nullptr;   // stop iterations
-          break;
-      }
-    }
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[i] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : nullptr, p[0]);
-  }
-
-  // check if we are missing arguments
-  if (arg_type != nullptr && arg_type[arg_idx] != 0) {
-    berry_log_P("Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
-  }
-}
-
-typedef int32_t (*fn_any_callable)(int32_t p0, int32_t p1, int32_t p2, int32_t p3,
-                                   int32_t p4, int32_t p5, int32_t p6, int32_t p7);
 extern "C" {
 
   void lv_init_set_member(bvm *vm, int index, void * ptr);
@@ -205,15 +133,15 @@ extern "C" {
         // berry_log_C("lvx_member looking for method '%s' of class '%s'", method_name, class_name);
 
         // look for class descriptor
-        int32_t class_idx = bin_search(class_name, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
+        int32_t class_idx = be_map_bin_search(class_name, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
         if (class_idx >= 0) {
-          const lvbe_call_c_t * methods_calls = lv_classes[class_idx].func_table;
+          const be_ntv_func_def_t * methods_calls = lv_classes[class_idx].func_table;
           size_t methods_size = lv_classes[class_idx].size;
 
-          int32_t method_idx = bin_search(method_name, methods_calls, sizeof(lvbe_call_c_t), methods_size);
+          int32_t method_idx = be_map_bin_search(method_name, methods_calls, sizeof(be_ntv_func_def_t), methods_size);
           if (method_idx >= 0) {
             // method found
-            const lvbe_call_c_t * method = &methods_calls[method_idx];
+            const be_ntv_func_def_t * method = &methods_calls[method_idx];
             // berry_log_C("lvx_member method found func=%p return_type=%s arg_type=%s", method->func, method->return_type, method->arg_type);
             // push native closure
             be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
@@ -244,63 +172,6 @@ extern "C" {
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
-  }
-
-  int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, func=%p, return_type=%s, arg_type=%s", func, return_type ? return_type : "", arg_type ? arg_type : "");
-    int32_t p[8] = {0,0,0,0,0,0,0,0};
-    int32_t argc = be_top(vm); // Get the number of arguments
-
-    // the following describe the active payload for the C function (start and count)
-    // this is because the `init()` constructor first arg is not passed to the C function
-    int32_t arg_start = 1;      // start with standard values
-    int32_t arg_count = argc;
-
-    // check if we call a constructor, in this case we store the return type into the new object
-    // check if we call a constructor with a comptr as first arg
-    if (return_type && return_type[0] == '+') {
-      if (argc > 1 && be_iscomptr(vm, 2)) {
-        lv_obj_t * obj = (lv_obj_t*) be_tocomptr(vm, 2);
-        lv_init_set_member(vm, 1, obj);
-        be_return_nil(vm);
-      } else {
-        // we need to discard the first arg
-        arg_start++;
-        arg_count--;
-      }
-    }
-
-    fn_any_callable f = (fn_any_callable) func;
-    // AddLog(LOG_LEVEL_INFO, ">> before be_check_arg_type argc=%i - %i", arg_count, arg_start);
-    be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func(%p) - %p,%p,%p,%p,%p - %s", f, p[0], p[1], p[2], p[3], p[4], return_type ? return_type : "NULL");
-    int32_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, ret = %p", ret);
-    if ((return_type == nullptr) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
-    else if (return_type[0] == '+') {
-      lv_obj_t * obj = (lv_obj_t*) ret;
-      lv_init_set_member(vm, 1, obj);
-      be_return_nil(vm);
-    }
-    else if (strlen(return_type) == 1) {
-      switch (return_type[0]) {
-        case '.':   // fallback next
-        case 'i':   be_pushint(vm, ret); break;
-        case 'b':   be_pushbool(vm, ret);  break;
-        case 's':   be_pushstring(vm, (const char*) ret);  break;
-        case 'c':   be_pushint(vm, ret); break; // TODO missing 'c' general callback type
-        default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
-      }
-      be_return(vm);
-    } else { // class name
-      // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func, create_obj ret=%i return_type=%s", ret, return_type);
-      be_find_class(vm, return_type);
-      be_pushcomptr(vm, (void*) ret);         // stack = class, ptr
-      be_pushcomptr(vm, (void*) -1);         // stack = class, ptr, -1
-      be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, -1, ptr
-      be_pop(vm, 2);                  // stack = instance
-      be_return(vm);
-    }
   }
 }
 
@@ -396,7 +267,7 @@ extern "C" {
   typedef lv_obj_t* (*fn_lvobj__void)(void);  // f() -> newly created lv_obj()
   int lv0_lvobj__void_call(bvm *vm, fn_lvobj__void func) {
     lv_obj_t * obj = (*func)();
-    be_find_class(vm, "lv.lv_obj");
+    be_find_global_or_module_member(vm, "lv.lv_obj");
     be_pushcomptr(vm, (void*) -1);         // stack = class, -1
     be_pushcomptr(vm, (void*) obj);         // stack = class, -1, ptr
     be_call(vm, 2);                 // instanciate, stack = instance (don't call init() )
@@ -404,12 +275,16 @@ extern "C" {
     be_return(vm);
   }
   
+  /*********************************************************************************************\
+   * Support for lv_fonts
+  \*********************************************************************************************/
+  // load font by name on file-system
   int lv0_load_font(bvm *vm) {
     int argc = be_top(vm);
     if (argc == 1 && be_isstring(vm, 1)) {
       lv_font_t * font = lv_font_load(be_tostring(vm, 1));
       if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
+        be_find_global_or_module_member(vm, "lv.lv_font");
         be_pushcomptr(vm, font);
         be_call(vm, 1);
         be_pop(vm, 1);
@@ -421,6 +296,10 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  /*********************************************************************************************\
+   * Support for Freetype fonts
+  \*********************************************************************************************/
+  // load freetype font by name in file-system
   int lv0_load_freetype_font(bvm *vm) {
 #ifdef USE_LVGL_FREETYPE
     int argc = be_top(vm);
@@ -433,7 +312,7 @@ extern "C" {
       lv_font_t * font = info.font;
 
       if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
+        be_find_global_or_module_member(vm, "lv.lv_font");
         be_pushcomptr(vm, font);
         be_call(vm, 1);
         be_pop(vm, 1);
@@ -448,261 +327,212 @@ extern "C" {
 #endif // USE_LVGL_FREETYPE
   }
 
-  int lv0_load_montserrat_font(bvm *vm) {
-    int argc = be_top(vm);
-    if (argc == 1 && be_isint(vm, 1)) {
-      const lv_font_t * font = nullptr;
-      int32_t   font_size = be_toindex(vm, 1);
+  /*********************************************************************************************\
+   * Support for embedded fonts in Flash
+  \*********************************************************************************************/
+  // We create tables for Font matching
+  // Size of `0` indicates end of table
+  typedef struct {
+    int16_t size;
+    const lv_font_t *font;
+  } lv_font_table_t;
 
-      switch (font_size) {
+  typedef struct {
+    const char * name;
+    const lv_font_table_t * table;
+  } lv_font_names_t;
 
-        #if LV_FONT_MONTSERRAT_8
-        case  8:
-          font = &lv_font_montserrat_8;
-          break;
-        #endif
+  // Montserrat Font
+  const lv_font_table_t lv_montserrat_fonts[] = {
+  #if LV_FONT_MONTSERRAT_8
+    {  8, &lv_font_montserrat_8 },
+  #endif
+  #if LV_FONT_MONTSERRAT_10
+    { 10, &lv_font_montserrat_10 },
+  #endif
+  #if LV_FONT_MONTSERRAT_12
+    { 12, &lv_font_montserrat_12 },
+  #endif
+  #if LV_FONT_MONTSERRAT_14
+    { 14, &lv_font_montserrat_14 },
+  #endif
+  #if LV_FONT_MONTSERRAT_16
+    { 16, &lv_font_montserrat_16 },
+  #endif
+  #if LV_FONT_MONTSERRAT_18
+    { 18, &lv_font_montserrat_18 },
+  #endif
+  #if LV_FONT_MONTSERRAT_20
+    { 20, &lv_font_montserrat_20 },
+  #endif
+  #if LV_FONT_MONTSERRAT_22
+    { 22, &lv_font_montserrat_22 },
+  #endif
+  #if LV_FONT_MONTSERRAT_24
+    { 24, &lv_font_montserrat_24 },
+  #endif
+  #if LV_FONT_MONTSERRAT_26
+    { 26, &lv_font_montserrat_26 },
+  #endif
+  #if LV_FONT_MONTSERRAT_28
+    { 28, &lv_font_montserrat_28 },
+  #endif
+  #if LV_FONT_MONTSERRAT_28_COMPRESSED
+    { 28, &lv_font_montserrat_28_compressed, },
+  #endif
+  #if LV_FONT_MONTSERRAT_30
+    { 30, &lv_font_montserrat_30 },
+  #endif
+  #if LV_FONT_MONTSERRAT_32
+    { 32, &lv_font_montserrat_32 },
+  #endif
+  #if LV_FONT_MONTSERRAT_34
+    { 34, &lv_font_montserrat_34 },
+  #endif
+  #if LV_FONT_MONTSERRAT_36
+    { 36, &lv_font_montserrat_36 },
+  #endif
+  #if LV_FONT_MONTSERRAT_38
+    { 38, &lv_font_montserrat_38 },
+  #endif
+  #if LV_FONT_MONTSERRAT_40
+    { 40, &lv_font_montserrat_40 },
+  #endif
+  #if LV_FONT_MONTSERRAT_42
+    { 42, &lv_font_montserrat_42 },
+  #endif
+  #if LV_FONT_MONTSERRAT_44
+    { 44, &lv_font_montserrat_44 },
+  #endif
+  #if LV_FONT_MONTSERRAT_46
+    { 46, &lv_font_montserrat_46 },
+  #endif
+  #if LV_FONT_MONTSERRAT_48
+    { 48, &lv_font_montserrat_48 },
+  #endif
+    { 0, nullptr}
+  };
 
-        #if LV_FONT_MONTSERRAT_10
-        case  10:
-          font = &lv_font_montserrat_10;
-          break;
-        #endif
+  // Seg7 Font
+  const lv_font_table_t lv_seg7_fonts[] = {
+    {  8, &seg7_8 },
+    { 10, &seg7_10 },
+    { 12, &seg7_12 },
+    { 14, &seg7_14 },
+    { 16, &seg7_16 },
+    { 18, &seg7_18 },
+    { 20, &seg7_20 },
+    { 24, &seg7_24 },
+    { 28, &seg7_28 },
+    { 36, &seg7_36 },
+    { 48, &seg7_48 },
+  };
 
-        #if LV_FONT_MONTSERRAT_12
-        case  12:
-          font = &lv_font_montserrat_12;
-          break;
-        #endif
+  // robotocondensed-latin1
+  const lv_font_table_t lv_robotocondensed_fonts[] = {
+#if ROBOTOCONDENSED_REGULAR_12_LATIN1
+    { 12, &robotocondensed_regular_12_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_14_LATIN1
+    { 14, &robotocondensed_regular_14_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_16_LATIN1
+    { 16, &robotocondensed_regular_16_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_20_LATIN1
+    { 20, &robotocondensed_regular_20_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_22_LATIN1
+    { 22, &robotocondensed_regular_22_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_24_LATIN1
+    { 24, &robotocondensed_regular_24_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_28_LATIN1
+    { 28, &robotocondensed_regular_28_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_32_LATIN1
+    { 32, &robotocondensed_regular_32_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_36_LATIN1
+    { 36, &robotocondensed_regular_36_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_38_LATIN1
+    { 38, &robotocondensed_regular_38_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_40_LATIN1
+    { 40, &robotocondensed_regular_40_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_44_LATIN1
+    { 44, &robotocondensed_regular_44_latin1 },
+#endif
+#if ROBOTOCONDENSED_REGULAR_48_LATIN1
+    { 48, &robotocondensed_regular_48_latin1 },
+#endif
+  };
 
-        #if LV_FONT_MONTSERRAT_14
-        case  14:
-          font = &lv_font_montserrat_14;
-          break;
-        #endif
+  // register all included fonts
+  const lv_font_names_t lv_embedded_fonts[] = {
+    { "montserrat", lv_montserrat_fonts },
+    { "seg7", lv_seg7_fonts },
+#ifdef USE_LVGL_OPENHASP
+    { "robotocondensed", lv_robotocondensed_fonts },
+#endif
+    { nullptr, nullptr}
+  };
 
-        #if LV_FONT_MONTSERRAT_16
-        case  16:
-          font = &lv_font_montserrat_16;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_18
-        case  18:
-          font = &lv_font_montserrat_18;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_20
-        case  20:
-          font = &lv_font_montserrat_20;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_22
-        case  22:
-          font = &lv_font_montserrat_22;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_24
-        case  24:
-          font = &lv_font_montserrat_24;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_26
-        case  26:
-          font = &lv_font_montserrat_26;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_28
-        case  28:
-          font = &lv_font_montserrat_28;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_30
-        case  30:
-          font = &lv_font_montserrat_30;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_32
-        case  32:
-          font = &lv_font_montserrat_32;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_34
-        case  34:
-          font = &lv_font_montserrat_34;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_36
-        case  36:
-          font = &lv_font_montserrat_36;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_38
-        case  38:
-          font = &lv_font_montserrat_38;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_40
-        case  40:
-          font = &lv_font_montserrat_40;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_42
-        case  42:
-          font = &lv_font_montserrat_42;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_44
-        case  44:
-          font = &lv_font_montserrat_44;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_46
-        case  46:
-          font = &lv_font_montserrat_46;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_48
-        case  48:
-          font = &lv_font_montserrat_48;
-          break;
-        #endif
-
-        #if LV_FONT_MONTSERRAT_28_COMPRESSED
-        case 28:
-          font = &lv_font_montserrat_28_compressed;
-          break;
-        #endif
-
-        default:
-          break;
-      }
-
-      if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
-        be_pushcomptr(vm, (void*)font);
-        be_call(vm, 1);
-        be_pop(vm, 1);
-        be_return(vm);
-      } else {
-        be_return_nil(vm);
+  // If size is zero, it is read at arg 1
+  int lv_load_embedded_font(bvm *vm, const char * name, int16_t size) {
+    if (0 == size) {
+      if (be_top(vm) >= 1 && be_isint(vm, 1)) {
+        size = be_toindex(vm, 1);
       }
     }
-    be_raise(vm, kTypeError, nullptr);
+    if (name == nullptr || 0 == size) {
+      be_raise(vm, "value_error", "");
+    }
+    // first look for font
+    const lv_font_names_t * font_name_cursor = lv_embedded_fonts;
+    for (font_name_cursor = lv_embedded_fonts; font_name_cursor->name; font_name_cursor++) {
+      if (strcmp(name, font_name_cursor->name) == 0) break;   // found
+    }
+    if (font_name_cursor->name == nullptr) {
+      be_raisef(vm, "value_error", "unknown font '%s'", name);
+    }
+    // scan for font size
+    const lv_font_table_t * font_entry = font_name_cursor->table;
+    for (font_entry = font_name_cursor->table; font_entry->size; font_entry++) {
+      if (font_entry->size == size) break;    // found
+    }
+    if (font_entry->size == 0) {
+      be_raisef(vm, "value_error", "unknown font size '%s-%i'", name, size);
+    }
+    
+    be_find_global_or_module_member(vm, "lv.lv_font");
+    be_pushcomptr(vm, (void*)font_entry->font);
+    be_call(vm, 1);
+    be_pop(vm, 1);
+    be_return(vm);
+  }
+
+  int lv0_load_montserrat_font(bvm *vm) {
+    return lv_load_embedded_font(vm, "montserrat", 0);
   }
 
   int lv0_load_seg7_font(bvm *vm) {
-    int argc = be_top(vm);
-    if (argc == 1 && be_isint(vm, 1)) {
-      const lv_font_t * font = nullptr;
-      int32_t   font_size = be_toindex(vm, 1);
-
-      switch (font_size) {
-        case  8: font = &seg7_8;  break;
-        case 10: font = &seg7_10; break;
-        case 12: font = &seg7_12; break;
-        case 14: font = &seg7_14; break;
-        case 16: font = &seg7_16; break;
-        case 18: font = &seg7_18; break;
-        case 20: font = &seg7_20; break;
-        case 24: font = &seg7_24; break;
-        case 28: font = &seg7_28; break;
-        case 36: font = &seg7_36; break;
-        case 48: font = &seg7_48; break;
-        default: break;
-      }
-
-      if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
-        be_pushcomptr(vm, (void*)font);
-        be_call(vm, 1);
-        be_pop(vm, 1);
-        be_return(vm);
-      } else {
-        be_return_nil(vm);
-      }
-    }
-    be_raise(vm, kTypeError, nullptr);
+    return lv_load_embedded_font(vm, "seg7", 0);
   }
 
   int lv0_load_robotocondensed_latin1_font(bvm *vm) {
 #ifdef USE_LVGL_OPENHASP
-    int argc = be_top(vm);
-    if (argc == 1 && be_isint(vm, 1)) {
-      const lv_font_t * font = nullptr;
-      int32_t   font_size = be_toindex(vm, 1);
-
-      switch (font_size) {
-#if ROBOTOCONDENSED_REGULAR_12_LATIN1
-        case 12: font = &robotocondensed_regular_12_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_14_LATIN1
-        case 14: font = &robotocondensed_regular_14_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_16_LATIN1
-        case 16: font = &robotocondensed_regular_16_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_20_LATIN1
-        case 20: font = &robotocondensed_regular_20_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_22_LATIN1
-        case 22: font = &robotocondensed_regular_22_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_24_LATIN1
-        case 24: font = &robotocondensed_regular_24_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_28_LATIN1
-        case 28: font = &robotocondensed_regular_28_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_32_LATIN1
-        case 32: font = &robotocondensed_regular_32_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_36_LATIN1
-        case 36: font = &robotocondensed_regular_36_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_38_LATIN1
-        case 38: font = &robotocondensed_regular_38_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_40_LATIN1
-        case 40: font = &robotocondensed_regular_40_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_44_LATIN1
-        case 44: font = &robotocondensed_regular_44_latin1; break;
-#endif
-#if ROBOTOCONDENSED_REGULAR_48_LATIN1
-        case 48: font = &robotocondensed_regular_48_latin1; break;
-#endif
-        default: break;
-      }
-
-      if (font != nullptr) {
-        be_find_class(vm, "lv.lv_font");
-        be_pushcomptr(vm, (void*)font);
-        be_call(vm, 1);
-        be_pop(vm, 1);
-        be_return(vm);
-      } else {
-        be_return_nil(vm);
-      }
-    }
+    return lv_load_embedded_font(vm, "robotocondensed", 0);
 #endif // USE_LVGL_OPENHASP
     be_raise(vm, kTypeError, nullptr);
   }
 
+  /*********************************************************************************************\
+   * Tasmota Logo
+  \*********************************************************************************************/
   #include "lvgl_berry/tasmota_logo_64_truecolor_alpha.h"
 
   void lv_img_set_tasmota_logo(lv_obj_t * img) {
@@ -715,10 +545,10 @@ extern "C" {
    * Responds to virtual constants
   \*********************************************************************************************/
 
-  extern const lvbe_call_c_t lv_func[];
+  extern const be_ntv_func_def_t lv_func[];
   extern const size_t lv_func_size;
 
-  extern const be_constint_t lv0_constants[];
+  extern const be_const_member_t lv0_constants[];
   extern const size_t lv0_constants_size;
 
   extern const be_ctypes_class_by_name_t be_ctypes_lvgl_classes[];
@@ -727,7 +557,7 @@ extern "C" {
   int lv0_member(bvm *vm);
   int lv0_member(bvm *vm) {
     // first try the standard way
-    if (be_module_member(vm, lv0_constants, lv0_constants_size)) {
+    if (be_const_member(vm, lv0_constants, lv0_constants_size)) {
       be_return(vm);
     }
     // try alternative members
@@ -739,9 +569,9 @@ extern "C" {
       // search for a class with this name
       char cl_prefixed[32];
       snprintf(cl_prefixed, sizeof(cl_prefixed), "lv_%s", needle);    // we try both actual name and prefixed with `lv_` so both `lv.obj` and `lv.lv_obj` work
-      idx = bin_search(cl_prefixed, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
+      idx = be_map_bin_search(cl_prefixed, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
       if (idx < 0) {
-        idx = bin_search(needle, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
+        idx = be_map_bin_search(needle, &lv_classes[0].name, sizeof(lv_classes[0]), lv_classes_size);
       }
       if (idx >= 0) {
         // we did have a match
@@ -749,9 +579,9 @@ extern "C" {
         be_return(vm);
       }
       // same search for ctypes
-      idx = bin_search(cl_prefixed, &be_ctypes_lvgl_classes[0].name, sizeof(be_ctypes_lvgl_classes[0]), be_ctypes_lvgl_classes_size);
+      idx = be_map_bin_search(cl_prefixed, &be_ctypes_lvgl_classes[0].name, sizeof(be_ctypes_lvgl_classes[0]), be_ctypes_lvgl_classes_size);
       if (idx < 0) {
-        idx = bin_search(needle, &be_ctypes_lvgl_classes[0].name, sizeof(be_ctypes_lvgl_classes[0]), be_ctypes_lvgl_classes_size);
+        idx = be_map_bin_search(needle, &be_ctypes_lvgl_classes[0].name, sizeof(be_ctypes_lvgl_classes[0]), be_ctypes_lvgl_classes_size);
       }
       if (idx >= 0) {
         // we did have a match
@@ -760,9 +590,9 @@ extern "C" {
       }
 
       // search for a method with this name
-      idx = bin_search(needle, &lv_func[0].name, sizeof(lv_func[0]), lv_func_size);
+      idx = be_map_bin_search(needle, &lv_func[0].name, sizeof(lv_func[0]), lv_func_size);
       if (idx >= 0) {
-        const lvbe_call_c_t * method = &lv_func[idx];
+        const be_ntv_func_def_t * method = &lv_func[idx];
         // push native closure
         be_pushntvclosure(vm, &lvx_call_c, 3);   // 3 upvals
 
@@ -818,7 +648,7 @@ extern "C" {
   int lv0_register_button_encoder(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     bool inverted = false;
-    // berry_log_P("lv0_register_button_encoder argc=%d inverted=%d", argc, be_tobool(vm, 1));
+    // berry_log_C("lv0_register_button_encoder argc=%d inverted=%d", argc, be_tobool(vm, 1));
     if (argc >= 1) {
       inverted = be_tobool(vm, 1);    // get the inverted flag
     }
@@ -835,7 +665,7 @@ extern "C" {
     lvbe.btn[1].set_inverted(inverted);
     lvbe.btn[2].set_gpio(btn2);
     lvbe.btn[2].set_inverted(inverted);
-    berry_log_P(D_LOG_LVGL "Button Rotary encoder using GPIOs %d,%d,%d%s", btn0, btn1, btn2, inverted ? " (inverted)" : "");
+    berry_log_C(D_LOG_LVGL "Button Rotary encoder using GPIOs %d,%d,%d%s", btn0, btn1, btn2, inverted ? " (inverted)" : "");
 
     lv_indev_drv_init(&lvbe.indev_drv);
     lvbe.indev_drv.type = LV_INDEV_TYPE_ENCODER;
@@ -844,7 +674,7 @@ extern "C" {
     lv_indev_t * indev = lv_indev_drv_register(&lvbe.indev_drv);
     lvbe.indev_list.addHead(indev);   // keep track of indevs
 
-    be_find_class(vm, "lv.lv_indev");
+    be_find_global_or_module_member(vm, "lv.lv_indev");
     be_pushint(vm, (int32_t) indev);
     be_call(vm, 1);
     be_pop(vm, 1);
@@ -878,7 +708,7 @@ extern "C" {
         }
         bool state = lvbe.btn[i].clear_state_changed();
         data->state = state ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-        // berry_log_P("Button event key %d state %d,%d", data->key, state, data->state);
+        // berry_log_C("Button event key %d state %d,%d", data->key, state, data->state);
         break;
       }
     }
@@ -900,7 +730,7 @@ extern "C" {
     void * obj = nullptr;
     int argc = be_top(vm);
     if (argc > 1) {
-      obj = (void*) be_convert_single_elt(vm, 2);
+      obj = (void*) be_convert_single_elt(vm, 2, NULL, NULL);
     }
     lv_init_set_member(vm, 1, obj);
     be_return_nil(vm);
@@ -926,7 +756,7 @@ extern "C" {
     lv_style_t * style = nullptr;
 
     if (argc > 1) {
-      style = (lv_style_t*) be_convert_single_elt(vm, 2);
+      style = (lv_style_t*) be_convert_single_elt(vm, 2, NULL, NULL);
     }
     if (style == nullptr) {
       style = (lv_style_t*) be_malloc(vm, sizeof(lv_style_t));
@@ -956,10 +786,52 @@ extern "C" {
     if (!glue) { be_return_nil(vm); }
 
     char fname[32];
-    snprintf(fname, sizeof(fname), "/screenshot-%d.raw", Rtc.utc_time);
+    snprintf(fname, sizeof(fname), "/screenshot-%d.bmp", Rtc.utc_time);
     File f = dfsp->open(fname, "w");
     if (f) {
       glue->setScreenshotFile(&f);
+
+      uint32_t bmp_width = lv_disp_get_hor_res(nullptr);
+      uint32_t bmp_height = lv_disp_get_ver_res(nullptr);
+
+      // write BMP header
+      static const uint8_t bmp_sign[] = { 0x42, 0x4d };   // BM = Windows
+      f.write(bmp_sign, sizeof(bmp_sign));
+      size_t bmp_size = bmp_width * bmp_height * LV_COLOR_DEPTH / 8 + 0x44;
+      f.write((uint8_t*)&bmp_size, sizeof(bmp_size));
+      uint32_t zero = 0;
+      f.write((uint8_t*) &zero, sizeof(zero));  // reserved 4-bytes
+      uint32_t bmp_offset_to_pixels = 0x44;  // TODO
+      f.write((uint8_t*) &bmp_offset_to_pixels, sizeof(bmp_offset_to_pixels));
+
+      // DIB Header BITMAPINFOHEADER
+      size_t bmp_dib_header_size = 52;                    // BITMAPV2INFOHEADER
+      f.write((uint8_t*) &bmp_dib_header_size, sizeof(bmp_dib_header_size));
+
+      f.write((uint8_t*) &bmp_width, sizeof(bmp_width));
+      f.write((uint8_t*) &bmp_height, sizeof(bmp_height));
+
+      // rest of header
+      // BITMAPV2INFOHEADER = 52 bytes header, 40 bytes sub-header
+      static const uint8_t bmp_dib_header[] = {
+        0x01, 0x00,                       // planes
+          16, 0x00,                       // bits per pixel = 16
+        0x03, 0x00, 0x00, 0x00,           // compression = BI_BITFIELDS uncrompressed
+        0x00, 0x00, 0x00, 0x00,           // Image size, 0 is valid for BI_RGB (uncompressed) TODO
+        0x00, 0x00, 0x00, 0x00,           // X pixels per meter
+        0x00, 0x00, 0x00, 0x00,           // Y pixels per meter
+        0x00, 0x00, 0x00, 0x00,           // Colors in table
+        0x00, 0x00, 0x00, 0x00,           // Important color count
+
+        // RGB masks
+        0x00, 0xF8, 0x00, 0x00,           // Red channel mask
+        0xE0, 0x07, 0x00, 0x00,           // Green channel mask
+        0x1F, 0x00, 0x00, 0x00,           // Blue channel mask
+
+        0x00, 0x00,                       // Padding to align on 4 bytes boundary
+      };
+      f.write(bmp_dib_header, sizeof(bmp_dib_header));
+      // now we can write the pixels array
 
       // redraw screen
       lv_obj_invalidate(lv_scr_act());

@@ -79,7 +79,7 @@
 #define DJ_COUNTER "Count"
 
 struct METER_DESC {
-  uint8_t srcpin;
+  int8_t srcpin;
   uint8_t type;
   uint16_t flag;
   int32_t params;
@@ -499,9 +499,7 @@ uint16_t meter_spos[MAX_METERS];
 #ifdef ESP8266
 TasmotaSerial *meter_ss[MAX_METERS];
 #endif  // ESP8266
-#ifdef ESP32
-HardwareSerial *meter_ss[MAX_METERS];
-#endif  // ESP32
+
 
 // serial buffers, may be made larger depending on telegram lenght
 #ifndef SML_BSIZ
@@ -591,6 +589,229 @@ double sml_median(struct SML_MEDIAN_FILTER* mf, double in) {
   */
 }
 #endif
+
+
+// ESP32 software serial read only
+#ifdef ESP32
+#ifdef USE_ESP32_SW_SERIAL
+
+#ifndef ESP32_SWS_BUFFER_SIZE
+#define ESP32_SWS_BUFFER_SIZE 256
+#endif
+
+
+class SML_ESP32_SERIAL : public Stream {
+public:
+	SML_ESP32_SERIAL(uint32_t uart_index);
+  virtual ~SML_ESP32_SERIAL();
+  bool begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin);
+  int32_t peek(void);
+  int32_t read(void) override;
+  size_t write(uint8_t byte) override;
+  int32_t available(void) override;
+  void flush(void) override;
+  void setRxBufferSize(uint32_t size);
+  void updateBaudRate(uint32_t baud);
+  void rxRead(void);
+  using Print::write;
+private:
+  // Member variables
+  void setbaud(uint32_t speed);
+  uint32_t uart_index;
+  int8_t m_rx_pin;
+  int8_t m_tx_pin;
+  uint32_t cfgmode;
+  uint32_t ss_byte;
+  uint32_t ss_bstart;
+  uint32_t ss_index;
+  uint32_t m_bit_time;
+  uint32_t m_in_pos;
+  uint32_t m_out_pos;
+  uint16_t serial_buffer_size;
+  bool m_valid;
+  uint8_t *m_buffer;
+  HardwareSerial *hws;
+};
+
+
+void IRAM_ATTR sml_callRxRead(void *self) { ((SML_ESP32_SERIAL*)self)->rxRead(); };
+
+SML_ESP32_SERIAL::SML_ESP32_SERIAL(uint32_t index) {
+  uart_index = index;
+  m_valid = true;
+}
+
+SML_ESP32_SERIAL::~SML_ESP32_SERIAL(void) {
+  if (hws) {
+    hws->end();
+  } else {
+    detachInterrupt(m_rx_pin);
+    if (m_buffer) {
+      free(m_buffer);
+    }
+  }
+}
+
+void SML_ESP32_SERIAL::setbaud(uint32_t speed) {
+  m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
+}
+
+
+bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin) {
+  if (!m_valid) { return false; }
+
+  m_buffer = 0;
+  if (recpin < 0) {
+    setbaud(speed);
+    m_rx_pin = -recpin;
+    serial_buffer_size = ESP32_SWS_BUFFER_SIZE;
+    m_buffer = (uint8_t*)malloc(serial_buffer_size);
+    if (m_buffer == NULL) return false;
+    pinMode(m_rx_pin, INPUT);
+    attachInterruptArg(m_rx_pin, sml_callRxRead, this, CHANGE);
+    m_in_pos = m_out_pos = 0;
+    hws = nullptr;
+  } else {
+    cfgmode = smode;
+    m_rx_pin = recpin;
+    m_tx_pin = trxpin;
+    hws = new HardwareSerial(uart_index);
+    if (hws) {
+      hws->begin(speed, cfgmode, m_rx_pin, m_tx_pin);
+    }
+  }
+  return true;
+}
+
+void SML_ESP32_SERIAL::flush(void) {
+  if (hws) {
+    hws->flush();
+  } else {
+    m_in_pos = m_out_pos = 0;
+  }
+}
+
+int32_t SML_ESP32_SERIAL::peek(void) {
+  if (hws) {
+    return  hws->peek();
+  } else {
+    if (m_in_pos == m_out_pos) return -1;
+    return m_buffer[m_out_pos];
+  }
+}
+
+int32_t SML_ESP32_SERIAL::read(void) {
+  if (hws) {
+    return hws->read();
+  } else {
+    if (m_in_pos == m_out_pos) return -1;
+    uint32_t ch = m_buffer[m_out_pos];
+    m_out_pos = (m_out_pos +1) % serial_buffer_size;
+    return ch;
+  }
+}
+
+int32_t SML_ESP32_SERIAL::available(void) {
+  if (hws) {
+    return hws->available();
+  } else {
+    int avail = m_in_pos - m_out_pos;
+    if (avail < 0) avail += serial_buffer_size;
+    return avail;
+  }
+}
+
+size_t SML_ESP32_SERIAL::write(uint8_t byte) {
+  if (hws) {
+    return hws->write(byte);
+  }
+  return 0;
+}
+
+void SML_ESP32_SERIAL::setRxBufferSize(uint32_t size) {
+  if (hws) {
+    hws->setRxBufferSize(size);
+  } else {
+    if (m_buffer) {
+        free(m_buffer);
+    }
+    serial_buffer_size = size;
+    m_buffer = (uint8_t*)malloc(size);
+  }
+}
+void SML_ESP32_SERIAL::updateBaudRate(uint32_t baud) {
+  if (hws) {
+    hws->updateBaudRate(baud);
+  } else {
+    setbaud(baud);
+  }
+}
+
+// no wait mode only 8N1  (or 7X1, obis only, ignoring parity)
+void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
+  uint32_t diff;
+  uint32_t level;
+
+#define SML_LASTBIT 9
+
+  level = digitalRead(m_rx_pin);
+
+  if (!level && !ss_index) {
+    // start condition
+    ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
+    ss_byte = 0;
+    ss_index++;
+  } else {
+    // now any bit changes go here
+    // calc bit number
+    diff = (ESP.getCycleCount() - ss_bstart) / m_bit_time;
+
+    if (!level && diff > SML_LASTBIT) {
+      // start bit of next byte, store  and restart
+      // leave irq at change
+      for (uint32_t i = ss_index; i <= SML_LASTBIT; i++) {
+        ss_byte |= (1 << i);
+      }
+      uint32_t next = (m_in_pos + 1) % serial_buffer_size;
+      if (next != (uint32_t)m_out_pos) {
+        m_buffer[m_in_pos] = ss_byte >> 1;
+        m_in_pos = next;
+      }
+
+      ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
+      ss_byte = 0;
+      ss_index = 1;
+      return;
+    }
+    if (diff >= SML_LASTBIT) {
+      // bit zero was 0,
+      uint32_t next = (m_in_pos + 1) % serial_buffer_size;
+      if (next != (uint32_t)m_out_pos) {
+        m_buffer[m_in_pos] = ss_byte >> 1;
+        m_in_pos = next;
+      }
+      ss_byte = 0;
+      ss_index = 0;
+    } else {
+      // shift in
+      for (uint32_t i = ss_index; i < diff; i++) {
+        if (!level) ss_byte |= (1 << i);
+      }
+      ss_index = diff;
+    }
+  }
+}
+#endif // USE_ESP32_SW_SERIAL
+#endif // ESP32
+
+#ifdef ESP32
+#ifndef USE_ESP32_SW_SERIAL
+HardwareSerial *meter_ss[MAX_METERS];
+#else
+SML_ESP32_SERIAL *meter_ss[MAX_METERS];
+#endif
+#endif  // ESP32
+
 
 #ifdef ANALOG_OPTO_SENSOR
 // sensor over ADS1115 with i2c Bus
@@ -1398,12 +1619,12 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
 void SML_Poll(void) {
 uint32_t meters;
 
-    for (meters=0; meters<meters_used; meters++) {
-      if (meter_desc_p[meters].type!='c') {
+    for (meters = 0; meters < meters_used; meters++) {
+      if (meter_desc_p[meters].type != 'c') {
         // poll for serial input
         if (!meter_ss[meters]) continue;
         while (meter_ss[meters]->available()) {
-          sml_shift_in(meters,0);
+          sml_shift_in(meters, 0);
         }
       }
     }
@@ -1555,16 +1776,22 @@ void SML_Decode(uint8_t index) {
             double vdiff = meter_vars[ind - 1] - dvalues[dindex];
             dvalues[dindex] = meter_vars[ind - 1];
             double dres = (double)360000.0 * vdiff / ((double)dtime / 10000.0);
-#ifdef USE_SML_MEDIAN_FILTER
-            if (meter_desc_p[mindex].flag & 16) {
-              meter_vars[vindex] = sml_median(&sml_mf[vindex], dres);
-            } else {
-              meter_vars[vindex] = dres;
-            }
-#else
-            meter_vars[vindex] = dres;
-#endif
 
+            dvalid[vindex] += 1;
+
+            if (dvalid[vindex] >= 2) {
+              // differece is only valid after 2. calculation
+              dvalid[vindex] = 2;
+#ifdef USE_SML_MEDIAN_FILTER
+              if (meter_desc_p[mindex].flag & 16) {
+                meter_vars[vindex] = sml_median(&sml_mf[vindex], dres);
+              } else {
+                meter_vars[vindex] = dres;
+              }
+#else
+              meter_vars[vindex] = dres;
+#endif
+            }
             mp=strchr(mp,'@');
             if (mp) {
               mp++;
@@ -1573,7 +1800,7 @@ void SML_Decode(uint8_t index) {
               SML_Immediate_MQTT((const char*)mp, vindex, mindex);
             }
           }
-          dvalid[vindex] = 1;
+          //dvalid[vindex] = 1;
           dindex++;
         }
       } else if (*mp == 'h') {
@@ -2212,7 +2439,9 @@ uint8_t *script_meter;
 
 #ifdef SML_REPLACE_VARS
 
+#ifndef SML_SRCBSIZE
 #define SML_SRCBSIZE 256
+#endif
 
 uint32_t SML_getlinelen(char *lp) {
 uint32_t cnt;
@@ -2303,7 +2532,7 @@ void SML_Init(void) {
     uint8_t *tp = 0;
     uint16_t index = 0;
     uint8_t section = 0;
-    uint8_t srcpin = 0;
+    int8_t srcpin = 0;
     uint8_t dec_line = 0;
     char *lp = glob_script_mem.scriptptr;
     sml_send_blocks = 0;
@@ -2340,7 +2569,7 @@ void SML_Init(void) {
           }
           index--;
           srcpin  = strtol(lp,&lp,10);
-          if (Gpio_used(srcpin)) {
+          if (Gpio_used(abs(srcpin))) {
             AddLog(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
 dddef_exit:
             if (script_meter) free(script_meter);
@@ -2404,10 +2633,53 @@ dddef_exit:
             script_meter_desc[index].tsecs = strtol(lp, &lp, 10);
             if (*lp == ',') {
               lp++;
-              char txbuff[256];
+#if 1
+              // look ahead
+              uint16_t txlen = 0;
+              uint16_t tx_entries = 1;
+              char *txp = lp;
+              while (*txp) {
+                if (*txp == ',') tx_entries++;
+                if (*txp == SCRIPT_EOL) {
+                  if (tx_entries > 1) {
+                    if (*(txp - 1) != ',' ) {
+                      break;
+                    }
+                    // line ends with ,
+                  } else {
+                    // single entry
+                    break;
+                  }
+                }
+                txp++;
+                txlen++;
+              }
+              if (txlen) {
+                script_meter_desc[index].txmem = (char*)calloc(txlen + 2, 1);
+                if (script_meter_desc[index].txmem) {
+                  // now copy send blocks
+                  char *txp = lp;
+                  uint16_t tind = 0;
+                  for (uint32_t cnt = 0; cnt < txlen; cnt++) {
+                      if (*txp == SCRIPT_EOL) {
+                        txp++;
+                      } else {
+                        script_meter_desc[index].txmem[tind] = *txp++;
+                        tind++;
+                      }
+                  }
+                }
+                //AddLog(LOG_LEVEL_INFO, PSTR(">>> %s - %d"), script_meter_desc[index].txmem, txlen);
+                script_meter_desc[index].index = 0;
+                script_meter_desc[index].max_index = tx_entries;
+                sml_send_blocks++;
+                lp += txlen;
+              }
+#else
+              char txbuff[SML_SRCBSIZE];
               uint32_t txlen = 0, tx_entries = 1;
               for (uint32_t cnt = 0; cnt < sizeof(txbuff); cnt++) {
-                if (*lp == SCRIPT_EOL) {
+                if (*lp == SCRIPT_EOL && *(lp - 1) != ',' ) {
                   txbuff[cnt] = 0;
                   txlen = cnt;
                   break;
@@ -2424,12 +2696,12 @@ dddef_exit:
                 script_meter_desc[index].max_index = tx_entries;
                 sml_send_blocks++;
               }
+#endif
             }
           }
           if (*lp == SCRIPT_EOL) lp--;
           goto next_line;
         }
-
 #ifdef SML_REPLACE_VARS
         char dstbuf[SML_SRCBSIZE*2];
         Replace_Cmd_Vars(lp, 1, dstbuf,sizeof(dstbuf));
@@ -2518,13 +2790,13 @@ init10:
   uint8_t cindex=0;
   // preloud counters
   for (byte i = 0; i < MAX_COUNTERS; i++) {
-      RtcSettings.pulse_counter[i]=Settings->pulse_counter[i];
+      RtcSettings.pulse_counter[i] = Settings->pulse_counter[i];
       sml_counters[i].sml_cnt_last_ts=millis();
   }
-  uint32_t uart_index=2;
-  for (uint8_t meters=0; meters<meters_used; meters++) {
-    if (meter_desc_p[meters].type=='c') {
-        if (meter_desc_p[meters].flag&2) {
+  uint32_t uart_index = 2;
+  for (uint8_t meters = 0; meters < meters_used; meters++) {
+    if (meter_desc_p[meters].type == 'c') {
+        if (meter_desc_p[meters].flag & 2) {
           // analog mode
 #ifdef ANALOG_OPTO_SENSOR
           ADS1115_init();
@@ -2561,13 +2833,24 @@ init10:
         meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,0,TMSBSIZ);
 #endif  // ESP8266
 #ifdef ESP32
+        // use hardware serial
+#ifdef USE_ESP32_SW_SERIAL
+        meter_ss[meters] = new SML_ESP32_SERIAL(uart_index);
+        if (meter_desc_p[meters].srcpin >= 0) {
+          if (uart_index == 0) { ClaimSerial(); }
+          uart_index--;
+          if (uart_index < 0) uart_index = 0;
+        }
+#else
         meter_ss[meters] = new HardwareSerial(uart_index);
-        if (uart_index==0) { ClaimSerial(); }
+        if (uart_index == 0) { ClaimSerial(); }
         uart_index--;
-        if (uart_index<0) uart_index=0;
+        if (uart_index < 0) uart_index = 0;
         meter_ss[meters]->setRxBufferSize(TMSBSIZ);
+#endif // USE_ESP32_SW_SERIAL
+
 #endif  // ESP32
-#endif
+#endif // SPECIAL_SS
 
         SerialConfig smode = SERIAL_8N1;
 
@@ -2612,10 +2895,10 @@ init10:
 #endif  // ESP8266
 #ifdef ESP32
         meter_ss[meters]->begin(meter_desc_p[meters].params, smode, meter_desc_p[meters].srcpin, meter_desc_p[meters].trxpin);
+        //meter_ss[meters]->setRxBufferSize(TMSBSIZ);
 #endif  // ESP32
     }
   }
-
 }
 
 
@@ -2633,7 +2916,7 @@ uint32_t sml_getv(uint32_t sel) {
   return sel;
 }
 uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
-  if (meter<1 || meter>meters_used) return 0;
+  if (meter < 1 || meter > meters_used) return 0;
   meter--;
   if (!meter_ss[meter]) return 0;
 #ifdef ESP8266
@@ -3043,7 +3326,9 @@ bool Xsns53(byte function) {
       case FUNC_LOOP:
         SML_Counter_Poll();
         if (dump2log) Dump2log();
-        else SML_Poll();
+        else {
+          SML_Poll();
+        }
         break;
     //  case FUNC_EVERY_50_MSECOND:
     //    if (dump2log) Dump2log();

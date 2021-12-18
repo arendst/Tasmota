@@ -39,7 +39,7 @@ extern "C" {
   // virtual member
   int gp_member(bvm *vm);
   int gp_member(bvm *vm) {
-    if (be_module_member(vm, lv_gpio_constants, lv_gpio_constants_size)) {
+    if (be_const_member(vm, lv_gpio_constants, lv_gpio_constants_size)) {
       be_return(vm);
     } else {
       be_return_nil(vm);

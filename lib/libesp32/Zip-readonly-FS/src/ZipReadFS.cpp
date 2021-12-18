@@ -227,7 +227,7 @@ public:
   }
 
   bool seek(uint32_t pos, SeekMode mode) {
-    AddLog(LOG_LEVEL_DEBUG, "ZIP: seek pos=%i mode=%i", pos, mode);
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: seek pos=%i mode=%i", pos, mode);
     if (SeekSet == mode) {
       if (pos <= _len) {
         _seek = pos;
@@ -246,12 +246,12 @@ public:
   }
 
   size_t position() const {
-    AddLog(LOG_LEVEL_DEBUG, "ZIP: position return=%i", _seek);
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: position return=%i", _seek);
     return _seek;
   }
 
   size_t size() const {
-    AddLog(LOG_LEVEL_DEBUG, "ZIP: size return=%i", _len);
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: size return=%i", _len);
     return _len;
   }
 
@@ -322,7 +322,7 @@ bool ZipArchive::parse(void) {
       return false;
     }
     if (header.signature2 != 0x0403) {
-      AddLog(LOG_LEVEL_DEBUG, "ZIP: end of file section");
+      // AddLog(LOG_LEVEL_DEBUG, "ZIP: end of file section");
       break;
     }
     // Check no extra field
@@ -371,7 +371,7 @@ bool ZipArchive::parse(void) {
     entry.last_mod = dos2unixtime((header.last_mod_date << 16) | header.last_mod_time);
     offset += header.size_uncompressed;
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, "ZIP: found file '%s' (%i bytes - offset %i) - next entry %i", &fname[0], header.size_uncompressed, entry.file_start, offset);
+    // AddLog(LOG_LEVEL_DEBUG_MORE, "ZIP: found file '%s' (%i bytes - offset %i) - next entry %i", &fname[0], header.size_uncompressed, entry.file_start, offset);
   }
 
   return true;
@@ -402,7 +402,7 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
     char *suffix = strtok_r(NULL, "", &tok);
     // if suffix starts with '/', skip the first char
     if (*suffix == '/') { suffix++; }
-    AddLog(LOG_LEVEL_DEBUG, "ZIP: prefix=%s suffix=%s", prefix, suffix);
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: prefix=%s suffix=%s", prefix, suffix);
     // parse ZIP archive
     File zipfile = (*_fs)->open(prefix, "r", false);
     if ((bool)zipfile) {
@@ -413,7 +413,7 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
       for (auto & entry : zip_archive.entries) {
         if (entry.file_name.equals(suffix)) {
           // found
-          AddLog(LOG_LEVEL_DEBUG, "ZIP: file '%s' in archive (start=%i - len=%i - last_mod=%i)", suffix, entry.file_start, entry.file_len, entry.last_mod);
+          // AddLog(LOG_LEVEL_DEBUG, "ZIP: file '%s' in archive (start=%i - len=%i - last_mod=%i)", suffix, entry.file_start, entry.file_len, entry.last_mod);
           return ZipItemImplPtr(new ZipItemImpl((*_fs)->open(prefix, "r", false), entry.file_start, entry.file_len, entry.last_mod));
         }
       }

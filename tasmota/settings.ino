@@ -694,7 +694,7 @@ void SettingsLoad(void) {
   if (source) {
     settings_location = 1;
     if (Settings->cfg_holder == (uint16_t)CFG_HOLDER) {
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings->save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
     }
   }
 #endif  // ESP32
@@ -1195,6 +1195,10 @@ void SettingsDefaultSet2(void) {
   flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
+
+  flag5.shift595_invert_outputs |= SHIFT595_INVERT_OUTPUTS;
+  Settings->shift595_device_count = SHIFT595_DEVICE_COUNT;
+  flag5.tls_use_fingerprint |= MQTT_TLS_FINGERPRINT;
 
   Settings->flag = flag;
   Settings->flag2 = flag2;

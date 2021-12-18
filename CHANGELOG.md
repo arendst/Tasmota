@@ -3,19 +3,32 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.0.0.4]
+## [10.1.0.1]
+
+## [Released]
+
+## [10.1.0] 20211208
+- Release Noelle
+
+### Added
+- Berry added ``tcpclient``
+
+## [10.0.0.4] 20211208
 ### Added
 - (Internal) Support for FUNC_BUTTON_MULTI_PRESSED in (light)drivers
 - Support for GPE Multi color smart light as sold by Action in the Netherlands
+- Support for 74xx595 8-bit shift registers (#13921)
 
 ### Changed
 - (Internal) Range conversion edge values
 - NimBLE to v.1.3.3
 - MQTT TLS dual mode (CA or fingeprint) in same firmware, ``SetOption132 1`` to force fingerprint
+- Toolchains for ESP32x changed from 8.4.0-2021r1 to 8.4.0-2021r2
 
 ### Fixed
 - Tuya dimmer range issue (#13849)
-- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3  
+- BLE Memory leak with update NimBLE v.1.3.1 to v.1.3.3
+- Compile error BLE EQ3 driver with core 2.0.x (#13948)
 
 ## [10.0.0.3] 20211130
 ### Added
@@ -74,8 +87,6 @@ All notable changes to this project will be documented in this file.
 - GUI checkbox MQTT TLS not saved regression from v9.2.0.3 (#13442)
 - Discovery of shutters (#13572)
 - ESP32-C3 OneWire as used by DS18x20 (#13583)
-
-## [Released]
 
 ## [10.0.0] 20211019
 - Release Norman
@@ -882,6 +893,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Triple-mode TLS via configuration in a single firmware (TLS AWS IoT, Letsencrypt and No-TLS)
+- Berry C mapping moved to a separate ``berry_mapping`` library
 
 ### Fixed
 - ESP32 PWM range

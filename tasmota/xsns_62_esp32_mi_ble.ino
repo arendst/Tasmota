@@ -2741,9 +2741,8 @@ void MI32ShowOneMISensor(){
             kMI32DeviceType[p->type-1],
             p->MAC[3], p->MAC[4], p->MAC[5]);
     }
-    char SensorTopic[60];
-    sprintf(SensorTopic, "tele/tasmota_ble/%s",
-      id);
+    char SensorTopic[TOPSZ];
+    GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
 
     MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
     //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
@@ -2868,10 +2867,8 @@ void MI32DiscoveryOneMISensor(){
             p->MAC[3], p->MAC[4], p->MAC[5]);
     }
 
-    char SensorTopic[60];
-    sprintf(SensorTopic, "tele/tasmota_ble/%s",
-      id);
-
+    char SensorTopic[TOPSZ];
+    GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
 
     //int i = p->nextDiscoveryData*3;
     for (int i = 0; i < datacount*3; i += 3){
@@ -3063,7 +3060,7 @@ void MI32ShowTriggeredSensors(){
     #endif //USE_HOME_ASSISTANT
         MI32.option.MQTTType == 1
         ){
-        char SensorTopic[60];
+        char SensorTopic[TOPSZ];
         char idstr[32];
         const char *alias = BLE_ESP32::getAlias(p->MAC);
         const char *id = idstr;
@@ -3074,7 +3071,7 @@ void MI32ShowTriggeredSensors(){
                 kMI32DeviceType[p->type-1],
                 p->MAC[3], p->MAC[4], p->MAC[5]);
         }
-        snprintf_P(SensorTopic, sizeof(SensorTopic), PSTR("tele/tasmota_ble/%s"), id);
+        GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
         MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
         AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered %d %s"), sensor, ResponseData());
         XdrvRulesProcess(0);

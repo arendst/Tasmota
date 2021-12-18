@@ -1400,6 +1400,12 @@ void CmndThermostatModeSet(void)
         Thermostat[ctr_output].status.thermostat_mode = value;
         Thermostat[ctr_output].timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
       }
+      if ((value == THERMOSTAT_OFF) && (Thermostat[ctr_output].status.enable_output == IFACE_ON)) {
+        // Make sure the relay is switched to off once if the thermostat is being disabled,
+        // or it will get stuck on (danger!)
+        Thermostat[ctr_output].status.command_output = IFACE_OFF;
+        ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
+      }
     }
     ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.thermostat_mode);
   }
