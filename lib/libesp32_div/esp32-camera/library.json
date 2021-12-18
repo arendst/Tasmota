@@ -7,8 +7,8 @@
     "type": "git",
     "url": "https://github.com/espressif/esp32-camera"
   },
-  "frameworks": "*",
-  "platforms": "*",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
   "build": {
     "flags": [
       "-Idriver/include",
@@ -16,8 +16,7 @@
       "-Idriver/private_include",
       "-Iconversions/private_include",
       "-Isensors/private_include",
-      "-Itarget/private_include",
-      "-fno-rtti"
+      "-Itarget/private_include"
     ],
     "includeDir": ".",
     "srcDir": ".",

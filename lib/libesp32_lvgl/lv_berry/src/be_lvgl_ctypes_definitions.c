@@ -3,8 +3,6 @@
  *******************************************************************/
 #include "be_ctypes.h"
 
-#ifdef USE_LVGL
-
 #include "lvgl.h"
 #include "be_mapping.h"
 
@@ -527,5 +525,3 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
 const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);
 
 /********************************************************************/
-
-#endif // USE_LVGL

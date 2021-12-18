@@ -48,7 +48,7 @@ def clean_source(raw):
 # Parse function signatures
 # ################################################################################
 
-lv_src_prefix = "../../lib/libesp32_lvgl/LVGL8/src/"
+lv_src_prefix = "../../lvgl/src/"
 lv_fun_globs = [ 
                   "widgets/*.h",   # all widgets
                   # "extra/widgets/*/*.h",
@@ -69,14 +69,14 @@ lv_fun_globs = [
                   #"**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
-headers_names += list_files("../../lib/libesp32_lvgl/LVGL_assets/src/", ["lv_theme_openhasp.h"])
+headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_openhasp.h"])
 # headers_names += ["lv_pre_style.h"] # for LVGL v7, add pre-generated style functions from C preprocessor
 
 # unit test
 # headers_names = [ '../../lib/libesp32_lvgl/LVGL/src/lv_widgets/lv_btn.h' ]
 # headers_names = [ '../../lib/libesp32_lvgl/LVGL/src/lv_api_map.h' ]
 
-output_filename = "lv_funcs.h"
+output_filename = "../mapping/lv_funcs.h"
 sys.stdout = open(output_filename, 'w')
 
 print("""
@@ -169,11 +169,11 @@ sys.stdout.close()
 # Parse 'enum'
 # ################################################################################
 
-lv_src_prefix = "../../lib/libesp32_lvgl/LVGL8/src/"
+lv_src_prefix = "../../lvgl/src/"
 lv_fun_globs = [ "**/*.h" ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
-output_filename = "lv_enum.h"
+output_filename = "../mapping/lv_enum.h"
 sys.stdout = open(output_filename, 'w')
 print("""// ======================================================================
 // Functions

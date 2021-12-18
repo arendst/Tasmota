@@ -1,7 +1,7 @@
 {
-    "name": "Berry mapping to C",
+    "name": "Berry mapping to LVGL",
     "version": "1.0",
-    "description": "Mapping to C functions",
+    "description": "Mapping of LVGL functions to Berry",
     "license": "MIT",
     "homepage": "https://github.com/arendst/Tasmota",
     "frameworks": "arduino",
@@ -12,6 +12,14 @@
       "maintainer": true
     },
     "build": {
+        "srcFilter": [
+            "+<*.c>",
+            "+<../generate/*.c>",
+            "+<../generate/*.cpp>",
+            "+<../generate/*.hpp>",
+            "+<*.cpp>",
+            "+<*.h>"
+        ],
       "flags": [ "-I$PROJECT_DIR/include" ]
     }
   }

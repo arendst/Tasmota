@@ -13,6 +13,14 @@
 #include "be_exec.h"
 #include <string.h>
 
+// By default the cb generator is cb.gen_cb
+// This can be changed. Note: it is across all VMs
+static const char * be_gen_cb_name = "cb.gen_cb";
+
+void be_set_gen_cb_name(bvm *vm, const char * gen_cb) {
+  if (gen_cb) be_gen_cb_name = gen_cb;
+}
+
 /*********************************************************************************************\
  * Create an object of `class_name` given an external poinrt `ptr`.
  * 
@@ -115,7 +123,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   's' be_str
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
- *   string of argument types, '+' marks optional arguments
+ *   string of argument types
  *   '.' don't care
  *   'i' be_int
  *   'b' be_bool
@@ -125,7 +133,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'lv_obj' be_instance of type or subtype
  *   '^lv_event_cb' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
  * 
- * Ex: "oii+s" takes 3 mandatory arguments (obj_instance, int, int) and an optional fourth one [,string]
+ * Ex: ".ii" takes 3 arguments, first one is any type, followed by 2 ints
 \*********************************************************************************************/
 // general form of lv_obj_t* function, up to 4 parameters
 // We can only send 32 bits arguments (no 64 bits nor double) and we expect pointers to be 32 bits
@@ -302,7 +310,7 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
       }
     }
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[p_idx++] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, "_lvgl.gen_cb");
+    p[p_idx++] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, be_gen_cb_name);
   }
 
   // check if we are missing arguments
@@ -324,11 +332,13 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
 //   ptr: the C pointer for internal data (can be NULL), will be stored in an instance variable
 //   name: name of instance variable to store the pointer as `comptr`.
 //         If NULL, this function does nothing
-//         the name can be prefixed with `+`, if so first char is ignored.
+//         the name can be prefixed with `+` or `=`, if so first char is ignored.
 //         Ex: `+_p` stores in instance variable `_p`
+//         `+` forbids any NULL value (raises an exception) while `=` allows a NULL value
 static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
   if (name == NULL) return;    // do nothing if no name of attribute
-  if (name[0] == '+') { name++; }   // skip prefix '^' if any
+  if (name[0] == '=' && ptr == NULL)  { be_raise(vm, "value_error", "argument cannot be NULL"); }
+  if (name[0] == '+' || name[0] == '=') { name++; }   // skip prefix '^' if any
   if (strlen(name) == 0) return;  // do nothing if name is empty
 
   be_pushcomptr(vm, ptr);
@@ -362,7 +372,7 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
 
   // check if we call a constructor, in this case we store the return type into the new object
   // check if we call a constructor with a comptr as first arg
-  if (return_type && return_type[0] == '+') {
+  if (return_type && (return_type[0] == '+' || return_type[0] == '=')) {
     if (argc > 1 && be_iscomptr(vm, 2)) {
       void * obj = be_tocomptr(vm, 2);
       be_set_ctor_ptr(vm, obj, return_type);
@@ -380,7 +390,7 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
   // berry_log_C("be_call_c_func '%s' -> '%s': (%i,%i,%i,%i,%i,%i) -> %i", return_type, arg_type, p[0], p[1], p[2], p[3], p[4], p[5], ret);
 
   if ((return_type == NULL) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
-  else if (return_type[0] == '+') {
+  else if (return_type[0] == '+' || return_type[0] == '=') {
     void * obj = (void*) ret;
     be_set_ctor_ptr(vm, obj, return_type);
     be_return_nil(vm);
