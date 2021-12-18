@@ -53,8 +53,7 @@ struct RG15 {
   float rate = 0.0f;
 } Rg15;
 
-void Rg15Init(void)
-{
+void Rg15Init(void) {
   Rg15.ready = 0;
   if (PinUsed(GPIO_HRG15_RX) && PinUsed(GPIO_HRG15_TX)) {
     HydreonSerial = new TasmotaSerial(Pin(GPIO_HRG15_RX), Pin(GPIO_HRG15_TX));
@@ -92,8 +91,8 @@ bool Rg15Poll(void) {
 
   while (HydreonSerial->available()) {
     Rg15ReadLine(rg15_buffer);
-    AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("%s:" D_JSON_SERIALRECEIVED " = %s"),"HRG", rg15_buffer);
-
+  //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received '%s'"), rg15_buffer);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
     Rg15Process(rg15_buffer);
   }
 
@@ -102,11 +101,11 @@ bool Rg15Poll(void) {
   return true;
 }
 
-bool Rg15ReadLine(char* buffer)
-{
+bool Rg15ReadLine(char* buffer) {
   char c;
   uint8_t i = 0;
   uint32_t cmillis = millis();
+  buffer[0] = '\0';
 
   while (1) {
       if (HydreonSerial->available()) {
@@ -121,8 +120,7 @@ bool Rg15ReadLine(char* buffer)
         return false;
       }
   }
-
-  buffer[i-2] = '\0';
+  if (i > 1) { buffer[i-2] = '\0'; }
   return true;
 }
 
@@ -163,14 +161,14 @@ bool Rg15Command(void) {
     HydreonSerial->flush();
 
     if (send[0] == 'k' || send[0] == 'K' || send[0] == 'o' || send[0] == 'O') {
-        ResponseCmndDone();
-        return serviced;
+      ResponseCmndDone();
+      return serviced;
     }
 
     char rg15_buffer[255];
     if (Rg15ReadLine(rg15_buffer)) {
-        Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":%s\"}"), rg15_buffer);
-        Rg15Process(rg15_buffer);
+      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), rg15_buffer);
+      Rg15Process(rg15_buffer);
     }
   }
 
@@ -184,7 +182,7 @@ void Rg15Show(bool json)
     }
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{\"" D_JSON_ACTIVE "\":%2_f, \"" D_JSON_EVENT "\":%2_f, \"" D_JSON_TOTAL "\":%2_f, \"" D_JSON_FLOWRATE "\":%2_f}"), &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{\"" D_JSON_ACTIVE "\":%2_f,\"" D_JSON_EVENT "\":%2_f,\"" D_JSON_TOTAL "\":%2_f,\"" D_JSON_FLOWRATE "\":%2_f}"), &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);

@@ -2,7 +2,7 @@
  * Generated code, don't edit
  *******************************************************************/
 
-const be_constint_t lv_gpio_constants[] = {
+const be_const_member_t lv_gpio_constants[] = {
 
     { "A4988_DIR", (int32_t) GPIO_A4988_DIR },
     { "A4988_ENA", (int32_t) GPIO_A4988_ENA },

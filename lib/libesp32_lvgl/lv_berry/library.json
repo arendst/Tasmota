@@ -1,0 +1,25 @@
+{
+    "name": "Berry mapping to LVGL",
+    "version": "1.0",
+    "description": "Mapping of LVGL functions to Berry",
+    "license": "MIT",
+    "homepage": "https://github.com/arendst/Tasmota",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "authors":
+    {
+      "name": "Stephan Hadinger",
+      "maintainer": true
+    },
+    "build": {
+        "srcFilter": [
+            "+<*.c>",
+            "+<../generate/*.c>",
+            "+<../generate/*.cpp>",
+            "+<../generate/*.hpp>",
+            "+<*.cpp>",
+            "+<*.h>"
+        ],
+      "flags": [ "-I$PROJECT_DIR/include" ]
+    }
+  }

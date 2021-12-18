@@ -377,12 +377,6 @@ void RtcSecond(void)
   static uint32_t last_sync = 0;
   static bool mutex = false;
 
-  if ((TasmotaGlobal.init_state >= INIT_GPIOS) && PinUsed(GPIO_HEARTBEAT)) {
-    digitalWrite(Pin(GPIO_HEARTBEAT), ~TasmotaGlobal.heartbeat_inverted &1);
-    delayMicroseconds(50);
-    digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
-  }
-
   if (mutex) { return; }
 
   if (Rtc.time_synced) {

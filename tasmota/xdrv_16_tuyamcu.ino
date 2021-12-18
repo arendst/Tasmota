@@ -1442,14 +1442,30 @@ void TuyaSensorsShow(bool json)
   #endif  // USE_WEBSERVER
     }
   }
-  #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
   if (AsModuleTuyaMS()) {
     WSContentSend_P(PSTR("{s}" D_JSON_IRHVAC_MODE "{m}%d{e}"), Tuya.ModeSet);
   }
-  #endif  // USE_WEBSERVER
+#endif  // USE_WEBSERVER
 
   if (RootName) { ResponseJsonEnd();}
 }
+
+#ifdef USE_WEBSERVER
+
+void TuyaAddButton(void) {
+  if (AsModuleTuyaMS()) {
+    WSContentSend_P(HTTP_TABLE100);
+    WSContentSend_P(PSTR("<tr><div></div>"));
+    char stemp[33];
+    snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
+    WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1,
+      (strlen(SettingsText(SET_BUTTON1 + TasmotaGlobal.devices_present))) ? SettingsText(SET_BUTTON1 + TasmotaGlobal.devices_present) : stemp, "");
+    WSContentSend_P(PSTR("</tr></table>"));
+  }
+}
+
+#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -1507,6 +1523,9 @@ bool Xdrv16(uint8_t function)
         TuyaSensorsShow(1);
         break;
 #ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        TuyaAddButton();
+        break;
       case FUNC_WEB_SENSOR:
         TuyaSensorsShow(0);
         break;

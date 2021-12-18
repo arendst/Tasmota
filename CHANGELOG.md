@@ -893,6 +893,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Triple-mode TLS via configuration in a single firmware (TLS AWS IoT, Letsencrypt and No-TLS)
+- Berry C mapping moved to a separate ``berry_mapping`` library
 
 ### Fixed
 - ESP32 PWM range

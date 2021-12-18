@@ -57,7 +57,7 @@ String wc_UrlEncode(const String& text) {
 /*********************************************************************************************\
  * Int constants
  *********************************************************************************************/
-// const be_constint_t webserver_constants[] = {
+// const be_const_member_t webserver_constants[] = {
 //     { "BUTTON_CONFIGURATION", BUTTON_CONFIGURATION },
 //     { "BUTTON_INFORMATION", BUTTON_INFORMATION },
 //     { "BUTTON_MAIN", BUTTON_MAIN },

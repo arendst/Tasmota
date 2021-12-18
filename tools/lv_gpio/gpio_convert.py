@@ -56,7 +56,7 @@ print(" * Generated code, don't edit")
 print(" *******************************************************************/")
 
 print("""
-const be_constint_t lv_gpio_constants[] = {
+const be_const_member_t lv_gpio_constants[] = {
 """)
 
 lv_module2 = {}

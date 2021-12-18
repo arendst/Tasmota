@@ -3214,6 +3214,14 @@ bool Xdrv04(uint8_t function)
       case FUNC_BUTTON_MULTI_PRESSED:
         result = XlgtCall(FUNC_BUTTON_MULTI_PRESSED);
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        XlgtCall(FUNC_WEB_ADD_MAIN_BUTTON);
+        break;
+      case FUNC_WEB_GET_ARG:
+        XlgtCall(FUNC_WEB_GET_ARG);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kLightCommands, LightCommand, kLightSynonyms);
         if (!result) {
