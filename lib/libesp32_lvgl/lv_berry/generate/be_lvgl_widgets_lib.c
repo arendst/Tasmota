@@ -8,8 +8,6 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_LVGL
-
 #include "lvgl.h"
 
 extern int lv0_init(bvm *vm);
@@ -1558,7 +1556,4 @@ void be_load_lv_textarea_class(bvm *vm) {
     be_setglobal(vm, "lv_textarea");
     be_pop(vm, 1);
 }
-
-
-#endif // USE_LVGL
 

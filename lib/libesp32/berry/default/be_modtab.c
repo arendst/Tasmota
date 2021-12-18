@@ -157,9 +157,7 @@ extern void be_load_driver_audio_lib(bvm *vm);
 #endif
 
 #ifdef USE_LVGL
-extern void be_load_lv_color_class(bvm *vm);
-extern void be_load_lv_font_class(bvm *vm);
-extern void be_load_LVGL_glob_class(bvm *vm);
+#include "lv_berry.h"
 // custom widgets
 extern void be_load_lv_signal_bars_class(bvm *vm);
 extern void be_load_lv_wifi_bars_class(bvm *vm);
@@ -213,10 +211,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif
 #ifdef USE_LVGL
     // LVGL
-    be_load_lv_color_class(vm);
-    be_load_lv_font_class(vm);
-
-    be_load_LVGL_glob_class(vm);
+    be_load_lvgl_classes(vm);
     // custom widgets
     be_load_lv_signal_bars_class(vm);
     be_load_lv_wifi_bars_class(vm);
