@@ -91,7 +91,8 @@ bool Rg15Poll(void) {
 
   while (HydreonSerial->available()) {
     Rg15ReadLine(rg15_buffer);
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received '%s'"), rg15_buffer);
+  //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received '%s'"), rg15_buffer);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
     Rg15Process(rg15_buffer);
   }
 
