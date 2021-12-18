@@ -12,8 +12,8 @@
 	},
 	"license": "MIT",
 	"homepage": "https://lvgl.io",
-	"frameworks": "*",
-	"platforms": "*",
+	"frameworks": "arduino",
+	"platforms": "espressif32",
 	"build": {
 	  "flags": [ "-I$PROJECT_DIR/tasmota/lvgl_berry" ]
 	}
