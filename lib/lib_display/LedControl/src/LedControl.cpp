@@ -49,7 +49,7 @@ LedControl::LedControl(int dataPin, int clkPin, int csPin, int numDevices) {
     SPI_CS=csPin;
     if(numDevices<=0 || numDevices>8 )
         numDevices=8;
-    maxDevices = numDevices;
+    maxDevices=numDevices;
     pinMode(SPI_MOSI,OUTPUT);
     pinMode(SPI_CLK,OUTPUT);
     pinMode(SPI_CS,OUTPUT);
@@ -59,14 +59,14 @@ LedControl::LedControl(int dataPin, int clkPin, int csPin, int numDevices) {
         status[i]=0x00;
     for(int i=0;i<maxDevices;i++) {
         spiTransfer(i,OP_DISPLAYTEST,0);
-    //scanlimit is set to max on startup
+        //scanlimit is set to max on startup
         setScanLimit(i,7);
-    //decode is done in source
+        //decode is done in source
         spiTransfer(i,OP_DECODEMODE,0);
         clearDisplay(i);
-    //we go into shutdown-mode on startup
+        //we go into shutdown-mode on startup
         shutdown(i,true);
-}
+    }
 }
 
 int LedControl::getDeviceCount() {
@@ -207,5 +207,4 @@ void LedControl::spiTransfer(int addr, volatile byte opcode, volatile byte data)
     //latch the data onto the display
     digitalWrite(SPI_CS,HIGH);
 }    
-
 

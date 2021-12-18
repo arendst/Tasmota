@@ -25,9 +25,15 @@
  */
 
 #include "LedMatrix.h"
-//#include "font_5x8_horizontal_MSB.h"
-#include "font_6x8_horizontal_MSB.h"
-//#include "font_8x8_horizontal_latin_MSB.h"
+#include "font_6x8_base.h"
+//#include "font_6x8_UTF8_C2.h" // additional characters if needed
+//#include "font_6x8_UTF8_C3.h" // additional characters (latin1) if needed
+#include "../../../../tasmota/my_user_config.h" // to check compiler option USE_UTF8_LATIN1
+#ifdef USE_UTF8_LATIN1
+    #include "font_6x8_UTF8_C2.h" // 256 bytes
+    #include "font_6x8_UTF8_C3.h" // 512 bytes
+#endif
+
 
 //the opcodes for the MAX7221 and MAX7219
 #define OP_NOOP   0
@@ -45,10 +51,6 @@
 #define OP_SHUTDOWN    12
 #define OP_DISPLAYTEST 15
 
-// test
-#include "LedControl.h"
-LedControl* ledControl = nullptr;
-// end text
 LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, unsigned int rows)
 {
     if (colums * rows > MAX72XX_MAX_DEVICES)
@@ -79,6 +81,7 @@ LedMatrix::LedMatrix(int dataPin, int clkPin, int csPin, unsigned int colums, un
     textPosY = 0;
     appendTextBuf[0] = 0;
     setScrollAppendText("   ");
+    powerIsOn = false;
 
     // initialize all connected MAX7219/MAX7221 devices
     SPI_MOSI = dataPin;
@@ -104,8 +107,9 @@ bool LedMatrix::drawText( const char *str, bool clearBefore)
     strncpy(textBuf, str, TEXT_BUFFER_SIZE -1);
     textPosX = 0;
     textPosY = 0;
-    textWidth = strlen(textBuf) * charWidth;
-    if(textWidth < displayWidth)
+    textLen = countChars(str);
+    textWidth = textLen * charWidth;
+    if(textWidth <= displayWidth)
     {
         // text fits into the display, place it into the center
         textPosX = (displayWidth - textWidth) / 2; // center
@@ -113,8 +117,8 @@ bool LedMatrix::drawText( const char *str, bool clearBefore)
     else
     {
         // The text ist longer than the display width. Scrolling is needed.
-        // Append a space between end of text and the beginning of the repeting text.
-        appendSpace();
+        // Add a space in front of text to have a distance to the pervious scroll text.
+        addSpace();
     }
     drawTextAt(textBuf, textPosX, textPosY);
     refresh(); // refresh display with the new drawed string content
@@ -124,19 +128,90 @@ bool LedMatrix::drawText( const char *str, bool clearBefore)
 bool LedMatrix::drawTextAt( const char *str, const int x, const int y )
 {
     // draw character by character
-    unsigned int len = strlen(str);
     int xPos = x;
-    for (unsigned int i = 0; i < len; i++)
+    const char* fontChar = nullptr;
+    for (unsigned int i = 0; (i<TEXT_BUFFER_SIZE && str[i]!=0); i++)
     {
-        drawCharAt(str[i], xPos, y);
+        char c = str[i];
+        fontChar = font_20_7F[char('_') - 0x20]; // default character in case of non printable or undefined
+        if( c >= 0x20 && c < 0x80) // basic font
+        {
+            fontChar = font_20_7F[c-0x20];
+        }
+
+#ifdef font_6x8_UTF8_C2_h
+        else if(c == 0xC2) // UTF special characters
+        {
+            i++;
+            c= str[i];
+            if(c>= 0xA0 && c < 0xC0)
+            {
+                fontChar = font_UTF_C2_A0_BF[c - 0xA0];
+            }
+        }
+#endif // font_6x8_UTF8_C2_h
+
+#ifdef font_6x8_UTF8_C3_h
+        else if(c == 0xC3) // UTF latin1
+        {
+            i++;
+            c= str[i];
+            if(c>= 0x80 && c < 0xC0)
+            {
+                fontChar = font_UTF_C3_80_BF[c - 0x80];
+            }
+        }
+#endif // font_6x8_UTF8_C3_h
+
+        else if(c>= 0xC0 && c <= 0xDF)
+        {
+            i += 1;  // 2 byte UTF sequence
+        }
+        else if(c>= 0xE0 && c <= 0xEF)
+        {
+            i += 2; // 3 byte UTF sequence
+        }
+        else if(c>= 0xF0 && c <= 0xF7)
+        {
+            i += 3; // 4 byte UTF sequence
+        }
+
+        drawCharAt(fontChar, xPos, y);
         xPos += charWidth;
     }
     return true;
 }
 
+int LedMatrix::countChars( const char* utfText)
+{
+    int len = 0;
+    for( int i = 0; (i<TEXT_BUFFER_SIZE && utfText[i]!=0); i++)
+    {
+        char c = utfText[i];
+        if( c < 0xC0) 
+        {
+            // 1 byte UTF sequence
+        }
+        else if(c <= 0xDF)
+        {
+            i += 1;  // 2 byte UTF sequence
+        }
+        else if(c <= 0xEF)
+        {
+            i += 2; // 3 byte UTF sequence
+        }
+        else if(c <= 0xF7)
+        {
+            i += 3; // 4 byte UTF sequence
+        }
+        len++;
+    }
+    return len;
+}
+
 bool LedMatrix::scrollText()
 {
-    if(textWidth < displayWidth) return false; // do not scroll when text fits into the display
+    if(textWidth <= displayWidth) return false; // do not scroll when text fits into the display
 
     textPosX--;
     if(textPosX + textWidth < (int)0)
@@ -157,10 +232,17 @@ bool LedMatrix::scrollText()
 
 void LedMatrix::power(bool on)
 {
+    powerIsOn = on;
     byte value = 0; // 0: shutdown
     if(on) value = 1; // 1: power on
     spiTransfer_value(OP_SHUTDOWN, value); // power(false) shuts down the display
 }
+
+bool LedMatrix::isPowerOn()
+{
+    return powerIsOn;
+}
+
 
 bool LedMatrix::clearDisplay(void)
 {
@@ -236,15 +318,19 @@ void LedMatrix::refresh()
                     if(moduleOrientation == ORIENTATION_NORMAL)
                     {
                         // ORIENTATION_NORMAL
-                        deviceDataBuff[addr] = buffer[bufPos];
-                        deviceRow = ledRow;
+                        deviceDataBuff[addr] = revereBitorder(buffer[bufPos]); // mirror
+                        deviceRow = 7 - ledRow;  // upside down
                     }
                     else
                     {
                         // ORIENTATION_UPSIDE_DOWN
-                        deviceDataBuff[addr] = revereBitorder(buffer[bufPos]); // mirror
-                        deviceRow = 7 - ledRow;  // upside down
+                        deviceDataBuff[maxDevices -1 - addr] = buffer[bufPos];
+                        deviceRow = ledRow;
                     }
+            }
+            else // ORIENTATION_TURN_RIGHT || ORIENTATION_TURN_LEFT
+            {
+                // not implemented yet
             }
         }
         setRow_allDevices(deviceRow, deviceDataBuff); 
@@ -252,7 +338,14 @@ void LedMatrix::refresh()
 }
 
 // private functions
-bool LedMatrix::drawCharAt( char c, const int x, const int y)
+/**
+ * @brief 
+ * 
+ * @param fontChar defines the pixelrows of a character. const char fontChar[charHeight]
+ * @param x 
+ * @param y 
+ */
+bool LedMatrix::drawCharAt( const char* fontChar, const int x, const int y)
 {
     // ignore when the character position is not visible on the display
     bool visible = (
@@ -266,7 +359,7 @@ bool LedMatrix::drawCharAt( char c, const int x, const int y)
 
     for (byte charY = 0; charY < charHeight; charY++)
     {
-        char pixelRow = (font[c][charY]) << charOffset; // skip the first bits when the character width is smaller than 8 pixel
+        char pixelRow = (fontChar[charY]) << charOffset; // skip the first bits when the character width is smaller than 8 pixel
         for (byte charX = 0; charX < charWidth; charX++)
         {
             bool pixel = (pixelRow & 0x80); // pixel=true when upper bit is set
@@ -286,10 +379,12 @@ byte LedMatrix::revereBitorder (byte b)
     return (lookup[b & 0b1111] << 4) | lookup[b >> 4];
 }
 
-void LedMatrix::appendSpace()
+void LedMatrix::addSpace()
 {
     strncat(textBuf, appendTextBuf, TEXT_BUFFER_SIZE -1);
-    textWidth = strlen(textBuf) * charWidth;
+    textPosX = strlen(appendTextBuf) * charWidth; // start scrolling with space
+    textLen = countChars(textBuf);
+    textWidth = countChars(textBuf) * charWidth;
 }
 
 void LedMatrix::setRow_allDevices(int row, byte *data)

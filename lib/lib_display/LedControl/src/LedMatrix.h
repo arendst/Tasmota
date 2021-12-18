@@ -106,6 +106,8 @@ class LedMatrix
 
         void power( bool on );
 
+        bool isPowerOn();
+
         /**
          * @brief cleares the display and text buffer
          * 
@@ -136,7 +138,7 @@ class LedMatrix
          */
 
         /**
-         * @brief Set the a pending string to the scrolling text to set a distance to the repeating text. Usually some spaces are used.
+         * @brief Adds a string before the scrolling text to set a distance. Usually some spaces are used.
          * 
          * @param append text to append to the scrolling text before repeating.
          */
@@ -151,9 +153,10 @@ class LedMatrix
 
     private:
 
-        bool drawCharAt( char c, int x, int y ); // Draws a character to a defined position
+        bool drawCharAt( const char* fontChar, int x, int y ); // Draws a character to a defined position
+        int countChars( const char* utfText); // count the characters of an UTF8 string. To be uesd instead of strlen().
         byte revereBitorder(byte b); // returnes the byte in the reverse bit order.
-        void appendSpace(); // appends characters to the end of the text to get a distance to the repeating scroll text
+        void addSpace(); // adds characters in front of the text to get a distance to the repeating scroll text
 
         // device contrl MAX7219/MAX7221
         /**
@@ -196,10 +199,12 @@ class LedMatrix
         int charHeight;
         char textBuf[TEXT_BUFFER_SIZE];
         char appendTextBuf[TEXT_APPEND_BUFFER_SIZE];
+        int textLen; // number of UTF8 characters
         int textWidth; // width of text [pixel]
         int textPosX; // horizontal pixel position of scrolling text
         int textPosY; // vertical pixelposition of scrolling text;
         byte spidata[SPI_BUFFER_SIZE]; // The array for shifting the data to the devices
+        bool powerIsOn;
 
 };
 

@@ -39,7 +39,7 @@
   Once the GPIO configuration is saved and the ESP8266/ESP32 module restarts,
   set the Display Model to 19 and Display Mode to 0
 
-  Depending on order oth the wired 8x8 matrix modules you have got a display of size pixel_width x pixel_height.
+  Depending on order of the wired 8x8 matrix modules you have got a display of size pixel_width x pixel_height.
   The size has to be set with the commands "DisplayWidth <pixel_width>" and "DisplayHeight <pixel_height>"
 
   After the ESP8266/ESP32 module restarts again, turn ON the display with the command "Power 1"
@@ -54,6 +54,10 @@
 
   DisplayDimmer [0..100]
     Sets the intensity of the display.
+
+  DisplayBlinkrate [0..3]
+    0: not blinking
+    1: slow, 2: medium 3: fast blinking
 
   Power [ON|OFF]
     Sitches the display on or off. When "off", the display buffer is not cleared and will be shown again when after "Power ON". 
@@ -72,23 +76,24 @@
   DisplayHeight [8..256]
     Sets the pixel height of the display (8x number of module rows)
 
+  DisplayRotate [0|2]
+    0: normal orientation; devide 0 starts at top left
+    2: upside down; device 0 starts at bottom right
+
   DisplayClock  [0|1|2]
     Displays a clock.
     Commands "DisplayClock 1"     // 12 hr format
             "DisplayClock 2"     // 24 hr format
-            "DisplayClock 0"     // turn off clock
+            "DisplayClock 0"     // turn off clock; please use additional cammand: DisplayMode 0
 
-
+  If you would like to use the UTF8 latin1 character set, it cam be added by copile option: 
+  #define USE_UTF8_LATIN1
 
 \*********************************************************************************************/
 
 #define XDSP_19 19
 
 #include <LedMatrix.h>
-
-#ifdef USE_DISPLAY_MODES1TO5
-#include <time.h>
-#endif
 
 LedMatrix *max7219_Matrix = nullptr;
 bool max2791Matrix_initDriver_done = false;
@@ -99,7 +104,9 @@ struct
     byte scroll_delay = 0;
     byte scroll_iteration = 0;
     bool show_clock = false;
-    const char *timeFormat;
+    bool timeFormat24 = true;
+    byte blink_delay = 0; // 0: not blinking
+    byte blink_iteration = 0;
 
 } LedMatrix_settings;
 
@@ -138,7 +145,8 @@ bool MAX7291Matrix_initDriver(void)
 bool MAX7291Matrix_init(void)
 {
     Settings->display_mode = 0; // text mode
-    LedMatrix_settings.show_clock = 0; // no clock
+    LedMatrix_settings.show_clock = 0; // no 
+    LedMatrix_settings.blink_delay = 0; // no blinking
 
     int intensity = GetDisplayDimmer16(); // 0..15
     max7219_Matrix->setIntensity(intensity);
@@ -156,6 +164,13 @@ bool MAX7291Matrix_init(void)
     }
     AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_init orientation: %d, intensity: %d"), Settings->display_rotate, intensity);
     return true;
+}
+
+bool MAX7291Matrix_setText(bool clearBefore=true)
+{
+    if(Settings->display_mode != 0) MAX7291Matrix_init();
+    LedMatrix_settings.blink_delay = 0; // no blinking    
+    return max7219_Matrix->drawText(XdrvMailbox.data, clearBefore); 
 }
 
 // FUNC_DISPLAY_SCROLLDELAY
@@ -178,6 +193,8 @@ bool MAX7291Matrix_scrollText(void)
     // This function is called every 50 ms.
     // scroll_delay defines the number of cycles to be ignored until the display scrolls by one pixel to the left.
     // e.g. scrall_delay = 4 causes a scroll each 200 ms.
+
+    if(!max7219_Matrix->isPowerOn()) return false; // do not scroll on power off
     LedMatrix_settings.scroll_iteration++;
     if (LedMatrix_settings.scroll_delay)
         LedMatrix_settings.scroll_iteration = LedMatrix_settings.scroll_iteration % LedMatrix_settings.scroll_delay;
@@ -187,6 +204,41 @@ bool MAX7291Matrix_scrollText(void)
         return false;
 
     return max7219_Matrix->scrollText();
+}
+
+bool MAX7291Matrix_blink(void)
+{
+    // This function is called every 50 ms.
+    // blink_delay defines the number of cycles to be ignored until the blinkstate changes.
+    if(LedMatrix_settings.blink_delay == 0) return false;
+
+    LedMatrix_settings.blink_iteration++;
+    if(LedMatrix_settings.blink_iteration == LedMatrix_settings.blink_delay)
+    {
+        max7219_Matrix->power(false);
+    }
+    else if(LedMatrix_settings.blink_iteration == 2* LedMatrix_settings.blink_delay )
+    {
+        LedMatrix_settings.blink_iteration = 0;
+        max7219_Matrix->power(true);
+    }
+    return true;
+}
+
+
+bool MAX7291Matrix_setBlinkRate()
+{
+    LedMatrix_settings.blink_iteration = 0;
+    max7219_Matrix->power(true);
+    if (ArgC() == 0)
+    {
+        XdrvMailbox.payload = 0;
+    }
+    if (XdrvMailbox.payload)
+        LedMatrix_settings.blink_delay = 20 / XdrvMailbox.payload; // 1: once per second; 2: twice per second; 3: three times per second
+    else    
+        LedMatrix_settings.blink_delay  = 0; // do not blink
+    return true;
 }
 
 #ifdef USE_DISPLAY_MODES1TO5
@@ -204,29 +256,19 @@ bool MAX7291Matrix_clock(void)
                 return true;
             case 1:
                 // 12 h clock
-                LedMatrix_settings.timeFormat = "%I:%M";
-                if(LedMatrix_settings.modulesPerRow > 6)
-                {
-                    LedMatrix_settings.timeFormat = "%I:%M:%S";
-                }
+                LedMatrix_settings.timeFormat24 = false;
                 Settings->display_mode = 1;
                 break;
             case 2:
                 // 24 h clock
-                LedMatrix_settings.timeFormat = "%H:%M";
-                if(LedMatrix_settings.modulesPerRow > 6)
-                {
-                    LedMatrix_settings.timeFormat = "%H:%M:%S";
-                }
+                LedMatrix_settings.timeFormat24 = true;
                 Settings->display_mode = 1;
                 break;
             default:
-                //LedMatrix_settings.timeFormat = XdrvMailbox.payload;
-                //Settings->display_mode = 1;
                 return false;
         }
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: LedMatrix_settings.show_clock %d, timeFormat %s"), LedMatrix_settings.show_clock, LedMatrix_settings.timeFormat);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MTX: LedMatrix_settings.show_clock %d, 24h: %b"), LedMatrix_settings.show_clock, LedMatrix_settings.timeFormat24);
 
     max7219_Matrix->clearDisplay();
     MAX7291Matrix_showTime();
@@ -236,17 +278,30 @@ bool MAX7291Matrix_clock(void)
 // FUNC_DISPLAY_EVERY_SECOND
 bool MAX7291Matrix_showTime()
 {
-    time_t rawtime;
-    struct tm *timeinfo;
+    if(!LedMatrix_settings.show_clock) return false;
+
+    uint8_t hr = RtcTime.hour;
+    uint8_t mn = RtcTime.minute;
+    uint8_t sc = RtcTime.second;
     char timeStr[10];
+    if(!LedMatrix_settings.timeFormat24)
+    {
+        if(hr == 0) hr = 12;
+        if(hr > 12 ) hr -= 12;
+    }
 
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(timeStr, 10, LedMatrix_settings.timeFormat, timeinfo);
-
+    if(LedMatrix_settings.modulesPerRow >= 6)
+    {
+        snprintf(timeStr, 10, "%02d:%02d:%02d", hr , mn, sc);
+    }
+    else
+    {
+        snprintf(timeStr, 10, "%02d:%02d", hr , mn);
+    }
     max7219_Matrix->drawText(timeStr, false); // false: do not clear desplay on update to prevent flicker
     return true;
 }
+
 #endif // USE_DISPLAY_MODES1TO5
 
 
@@ -280,17 +335,21 @@ bool Xdsp19(uint8_t function)
         case FUNC_DISPLAY_DRAW_STRING:
         case FUNC_DISPLAY_SCROLLTEXT:
         case FUNC_DISPLAY_SEVENSEG_TEXT:
-            if(Settings->display_mode != 0) MAX7291Matrix_init();
-            result = max7219_Matrix->drawText(XdrvMailbox.data, true); // true: clears display before drawing text
+            result = MAX7291Matrix_setText(true); // true: clears display before drawing text
             break;
         case FUNC_DISPLAY_SEVENSEG_TEXTNC:
-            if(Settings->display_mode != 0) MAX7291Matrix_init();
-            result = max7219_Matrix->drawText(XdrvMailbox.data, false); // false: does not clear display before drawing text
+            result = MAX7291Matrix_setText(false); // false: does not clear display before drawing text
             break;
         case FUNC_DISPLAY_SCROLLDELAY:
             result = MAX7291Matrix_scrollDelay();
             break;
+        case FUNC_DISPLAY_BLINKRATE:
+        {
+            result = MAX7291Matrix_setBlinkRate();
+            break;
+        }
         case FUNC_DISPLAY_EVERY_50_MSECOND:
+            MAX7291Matrix_blink();
             result = MAX7291Matrix_scrollText();
             break;
 
