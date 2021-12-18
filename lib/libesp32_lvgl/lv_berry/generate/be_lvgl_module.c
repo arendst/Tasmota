@@ -6,8 +6,6 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_LVGL
-
 #include "lvgl.h"
 #include "be_mapping.h"
 #include "lv_theme_openhasp.h"
@@ -681,7 +679,5 @@ be_local_module(lv,
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(lv);
-
-#endif // USE_LVGL
 
 /********************************************************************/

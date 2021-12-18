@@ -43,6 +43,7 @@ typedef struct be_ntv_class_def_t {
 } be_ntv_class_def_t;
 
 void be_raisef(bvm *vm, const char *except, const char *msg, ...);
+void be_set_gen_cb_name(bvm *vm, const char * gen_cb);
 
 extern void be_map_insert_int(bvm *vm, const char *key, bint value);
 extern void be_map_insert_bool(bvm *vm, const char *key, bbool value);

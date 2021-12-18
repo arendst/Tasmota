@@ -1,11 +1,11 @@
 import re
 import sys
 
-lv_widgets_file = "lv_funcs.h"
-lv_module_file = "lv_enum.h"
+lv_widgets_file = "../mapping/lv_funcs.h"
+lv_module_file = "../mapping/lv_enum.h"
 
-out_prefix = "../../tasmota/lvgl_berry/"
-lvgl_prefix = "../../lib/libesp32/Berry/default/"
+out_prefix = "../generate/"
+lvgl_prefix = "../generate/"
 
 be_lv_defines = "be_lv_defines.h"
 be_lv_c_mapping = "be_lv_c_mapping.h"
@@ -425,8 +425,6 @@ print("""
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_LVGL
-
 #include "lvgl.h"
 
 extern int lv0_init(bvm *vm);
@@ -642,9 +640,6 @@ be_local_class(lv_{subtype},
 }}
 """)
 
-print("""
-#endif // USE_LVGL
-""")
 sys.stdout.close()
 
 
@@ -657,8 +652,6 @@ print("""/********************************************************************
  * LVGL Module
  *******************************************************************/
 #include "be_constobj.h"
-
-#ifdef USE_LVGL
 
 #include "lvgl.h"
 #include "be_mapping.h"
@@ -778,8 +771,6 @@ be_local_module(lv,
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(lv);
-
-#endif // USE_LVGL
 """)
 
 print("/********************************************************************/")

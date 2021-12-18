@@ -3,10 +3,6 @@
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_LVGL
-
-#include "lvgl.h"
-
 /********************************************************************
 ** Solidified function: get_object_from_ptr
 ********************************************************************/
@@ -823,5 +819,3 @@ void be_load_LVGL_glob_class(bvm *vm) {
     be_setglobal(vm, "LVGL_glob");
     be_pop(vm, 1);
 }
-
-#endif // USE_LVGL

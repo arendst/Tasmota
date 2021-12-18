@@ -25,6 +25,7 @@
 #include "lvgl.h"
 #include "be_mapping.h"
 #include "be_ctypes.h"
+#include "lv_berry.h"
 #include "Adafruit_LvGL_Glue.h"
 
 #ifdef USE_LVGL_FREETYPE
@@ -629,6 +630,7 @@ extern "C" {
       if (argc == 1) {
         uconfig = be_tostring(vm, 1);
       }
+      be_set_gen_cb_name(vm, "_lvgl.gen_cb");   // TODO maybe not the best place for it
       start_lvgl(uconfig);
       be_return_nil(vm);
     }
