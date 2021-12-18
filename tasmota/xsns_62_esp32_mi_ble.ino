@@ -280,7 +280,7 @@ struct MiScaleV2Packet_t {
 	//uint8_t		uid;	// = 0x16, 16-bit UUID
 	//uint16_t	UUID;	// = 0x181B
 	uint8_t		weight_unit;
-	uint8_t		status;
+	uint8_t		status; // bit 14 impedance stabilized
 	uint16_t	year;
 	uint8_t		month;
 	uint8_t		day;
@@ -317,6 +317,7 @@ struct mi_sensor_t{
       uint32_t pairing:1;
       uint32_t light:1; // binary light sensor
       uint32_t scale:1;
+      uint32_t impedance:1;
     };
     uint32_t raw;
   } feature;
@@ -367,11 +368,11 @@ struct mi_sensor_t{
   };
   union {
     struct {
-      uint8_t has_impedance;
-      uint8_t stabilized;
+      uint8_t weight_stabilized;
       uint8_t weight_removed;
       char weight_unit[4]; // kg, lbs, jin or empty when unknown
       float weight;
+      uint8_t impedance_stabilized;
       uint16_t impedance;
     };
   };
@@ -1492,8 +1493,11 @@ uint32_t MIBLEgetSensorSlot(const uint8_t *mac, uint16_t _type, uint8_t counter)
       _newSensor.feature.bat=1;
       break;
     case MI_SCALE_V1:
+      _newSensor.feature.scale=1;
+      break;
     case MI_SCALE_V2:
       _newSensor.feature.scale=1;
+      _newSensor.feature.impedance=1;
       break;
     default:
       _newSensor.hum=NAN;
@@ -1703,14 +1707,15 @@ void MI32ParseATCPacket(const uint8_t * _buf, uint32_t length, const uint8_t *ad
 void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID) {
   MiScaleV1Packet_t *_packetV1 = (MiScaleV1Packet_t*)_buf;
   MiScaleV2Packet_t *_packetV2 = (MiScaleV2Packet_t*)_buf;
-  uint8_t stabilized = 0;
+  uint8_t weight_stabilized = 0;
   uint8_t weight_removed = 0;
+  uint8_t impedance_stabilized = 0;
 
   // Mi Scale V1
   if (length == 10 && UUID == 0x181d) { // 14-1-1-2
-    stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
+    weight_stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
     weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
-    if (!MI32.option.directBridgeMode && (!stabilized || weight_removed))
+    if (!MI32.option.directBridgeMode && (!weight_stabilized || weight_removed))
       return;
 
     uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
@@ -1722,7 +1727,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
       MIBLEsensors[_slot].eventType.scale = 1;
 
-      MIBLEsensors[_slot].stabilized = stabilized;
+      MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
       MIBLEsensors[_slot].weight_removed = weight_removed;
       
       if (_packetV1->status & (1 << 0)) {
@@ -1749,9 +1754,10 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
 
   // Mi Scale V2
   else if (length == 13 && UUID == 0x181b) { // 17-1-1-2
-    stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
+    weight_stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
     weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
-    if (!MI32.option.directBridgeMode && (!stabilized || weight_removed))
+    impedance_stabilized = (_packetV2->status & (1 << 1)) ? 1 : 0;
+    if (!MI32.option.directBridgeMode && (!weight_stabilized || weight_removed /* || !impedance_stabilized */))
       return;
 
     uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
@@ -1763,9 +1769,10 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
       MIBLEsensors[_slot].needkey = KEY_NOT_REQUIRED;
       MIBLEsensors[_slot].eventType.scale = 1;
 
-      MIBLEsensors[_slot].has_impedance = (_packetV2->status & (1 << 1)) ? 1 : 0;
-      MIBLEsensors[_slot].stabilized = stabilized;
+      MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
       MIBLEsensors[_slot].weight_removed = weight_removed;
+      MIBLEsensors[_slot].impedance_stabilized = impedance_stabilized;
+      MIBLEsensors[_slot].impedance = _packetV2->impedance;
 
       if (_packetV2->weight_unit & (1 << 4)) {
         strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
@@ -1783,6 +1790,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
 
       if (MIBLEsensors[_slot].weight_removed) {
         MIBLEsensors[_slot].weight = 0.0f;
+        MIBLEsensors[_slot].impedance = 0;
       }
 
       if(MI32.option.directBridgeMode) {
@@ -2535,9 +2543,10 @@ const char HTTP_MI32_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}
 const char HTTP_MI32_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";
 const char HTTP_MI32_LIGHT[] PROGMEM = "{s}%s" " Light" "{m}%d{e}";
 const char HTTP_MISCALE_WEIGHT[] PROGMEM = "{s}%s" " Weight" "{m}%*_f %s{e}";
-const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s" " Impedance" "{m}%u{e}";
 const char HTTP_MISCALE_WEIGHT_REMOVED[] PROGMEM = "{s}%s" " Weight removed" "{m}%s{e}";
-const char HTTP_MISCALE_STABILIZED[] PROGMEM = "{s}%s" " Stabilized" "{m}%s{e}";
+const char HTTP_MISCALE_WEIGHT_STABILIZED[] PROGMEM = "{s}%s" " Weight stabilized" "{m}%s{e}";
+const char HTTP_MISCALE_IMPEDANCE[] PROGMEM = "{s}%s" " Impedance" "{m}%u{e}";
+const char HTTP_MISCALE_IMPEDANCE_STABILIZED[] PROGMEM = "{s}%s" " Impedance stabilized" "{m}%s{e}";
 
 //const char HTTP_NEEDKEY[] PROGMEM = "{s}%s <a target=\"_blank\" href=\""
 //  "https://atc1441.github.io/TelinkFlasher.html?mac=%s&cb=http%%3A%%2F%%2F%s%%2Fmikey"
@@ -2745,12 +2754,15 @@ void MI32GetOneSensorJson(int slot, int hidename){
       ){
         if (MI32.option.directBridgeMode) {
           ResponseAppend_P(PSTR(",\"weight_removed\":%u"), p->weight_removed);
-          ResponseAppend_P(PSTR(",\"stabilized\":%u"), p->stabilized);
+          ResponseAppend_P(PSTR(",\"weight_stabilized\":%u"), p->weight_stabilized);
         }
         ResponseAppend_P(PSTR(",\"weight_unit\":\"%s\""), p->weight_unit);
         ResponseAppend_P(PSTR(",\"weight\":%*_f"),
           Settings->flag2.weight_resolution, &p->weight);
-        if (p->has_impedance){
+        if (p->feature.impedance) {
+          if (MI32.option.directBridgeMode) {
+            ResponseAppend_P(PSTR(",\"impedance_stabilized\":%u"), p->impedance_stabilized);
+          }
           ResponseAppend_P(PSTR(",\"impedance\":%u"), p->impedance);
         }
       }
@@ -3380,15 +3392,17 @@ void MI32Show(bool json)
       }
       if (p->feature.scale){
         WSContentSend_PD(HTTP_MISCALE_WEIGHT, typeName, Settings->flag2.weight_resolution, &p->weight, p->weight_unit);
-        if (p->has_impedance) {
-          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, typeName, p->impedance);
-        }
         if (MI32.option.directBridgeMode) {
           WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, typeName, p->weight_removed? PSTR("yes") : PSTR("no"));
-          WSContentSend_PD(HTTP_MISCALE_STABILIZED, typeName, p->stabilized ? PSTR("yes") : PSTR("no"));
+          WSContentSend_PD(HTTP_MISCALE_WEIGHT_STABILIZED, typeName, p->weight_stabilized ? PSTR("yes") : PSTR("no"));
+        }
+        if (p->feature.impedance) {
+          WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, typeName, p->impedance);
+          if (MI32.option.directBridgeMode) {
+            WSContentSend_PD(HTTP_MISCALE_IMPEDANCE_STABILIZED, typeName, p->impedance_stabilized? PSTR("yes") : PSTR("no"));
+          }
         }
       }
-
       if(p->bat!=0x00){
           WSContentSend_PD(HTTP_BATTERY, typeName, p->bat);
       }
