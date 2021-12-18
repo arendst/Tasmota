@@ -983,6 +983,12 @@ void PerformEverySecond(void)
 
   ResetGlobalValues();
 
+  if ((TasmotaGlobal.init_state >= INIT_GPIOS) && PinUsed(GPIO_HEARTBEAT)) {
+    digitalWrite(Pin(GPIO_HEARTBEAT), ~TasmotaGlobal.heartbeat_inverted &1);
+    delayMicroseconds(50);
+    digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
+  }
+
   if (Settings->tele_period || (3601 == TasmotaGlobal.tele_period)) {
     if (TasmotaGlobal.tele_period >= 9999) {
       if (!TasmotaGlobal.global_state.network_down) {
