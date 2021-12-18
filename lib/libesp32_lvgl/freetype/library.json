@@ -8,8 +8,8 @@
     "type": "git",
     "url": "https://gitlab.freedesktop.org/freetype"
 	},
-  "frameworks": "*",
-  "platforms": "*",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
   "build": {
     "srcFilter": [
         "+<base/ftsystem.c>",
