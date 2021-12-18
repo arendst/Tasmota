@@ -669,26 +669,21 @@ void Say(char *text) {
 }
 
 void Rtttl(char *text) {
-
   if (!out) return;
-
-    AUDIO_PWR_ON
-
+  AUDIO_PWR_ON
   out->begin();
   melody = new AudioFileSourcePROGMEM( text, strlen_P(text) );
   rtttl = new AudioGeneratorRTTTL();
-  
   rtttl->begin(melody, out);
   while (rtttl->isRunning()) {
     if (!rtttl->loop()) {
       rtttl->stop();
       break;
-     }
-    OsWatchLoop();
+      }
+    delay(0);
    }
   out->stop();
   delete rtttl;    
-       
   AUDIO_PWR_OFF
 }
 
