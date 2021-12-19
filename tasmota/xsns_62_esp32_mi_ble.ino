@@ -3012,6 +3012,16 @@ const char *classes[] = {
   "", //- empty device class
   "Firmware",
   "",
+
+  // 11
+  "", //- empty device class
+  "Weight",
+  "", // Will be set to p->weight_unit
+
+  // 12
+  "", //- empty device class
+  "Impedance",
+  "Ohm",
 };
 
 
@@ -3123,6 +3133,16 @@ void MI32DiscoveryOneMISensor(){
             continue;
           }
           break;
+        case 11: // weight
+          if (!p->feature.scale){ // Mi Scale V1 and V2 only
+            continue;
+          }
+          break;
+        case 12: // impedance
+          if (!p->feature.impedance){ // Mi Scale V2 only
+            continue;
+          }
+          break;
       }
 
     /*
@@ -3157,9 +3177,9 @@ void MI32DiscoveryOneMISensor(){
       //"\"uniq_id\":\"%s_%s\"," - unique for this data,
         id, classes[i+1],
       //"\"unit_of_meas\":\"%s\"," - the measure of this type of data
-        (classes[i+2][0]?"\"unit_of_meas\":\"":""),
-        classes[i+2],
-        (classes[i+2][0]?"\",":""),
+        ((i/3==11)||classes[i+2][0]?"\"unit_of_meas\":\"":""),
+        (i/3==11)?p->weight_unit:classes[i+2],
+        ((i/3==11)||classes[i+2][0]?"\",":""),
       //"\"val_tpl\":\"{{ %s%s }}") // e.g. Temperature
       // inverted binary - {{ 'off' if value_json.posn else 'on' }}
       // binary - {{ 'on' if value_json.posn else 'off' }}
