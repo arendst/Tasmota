@@ -49,7 +49,9 @@ void TasDiscoverMessage(void) {
 
   bool TuyaMod = false;
   bool iFanMod = false;
+#ifdef TUYA_MCU
   if ((TUYA_DIMMER == TasmotaGlobal.module_type) || (SK03_TUYA == TasmotaGlobal.module_type)) { TuyaMod = true; };
+#endif
 #ifdef ESP8266
   if ((SONOFF_IFAN02 == TasmotaGlobal.module_type) || (SONOFF_IFAN03 == TasmotaGlobal.module_type)) { iFanMod = true; };
 #endif  // ESP8266

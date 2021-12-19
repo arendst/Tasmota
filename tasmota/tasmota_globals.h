@@ -133,7 +133,6 @@ String EthernetMacAddress(void);
 #undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
 
 // Hardware has no ESP32
-//#undef USE_TUYA_DIMMER
 #undef USE_PWM_DIMMER
 #undef USE_EXS_DIMMER
 #undef USE_ARMTRONIX_DIMMERS
@@ -147,8 +146,14 @@ String EthernetMacAddress(void);
 
 // Not ported (yet)
 
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+// tuya suported on C3 to allow brain-transplant
+#else
+#undef USE_TUYA_MCU
+#undef USE_TUYA_DIMMER
+#endif
+
 #undef USE_MY92X1
-//#undef USE_TUYA_MCU
 #undef USE_PS_16_DZ
 
 #undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE

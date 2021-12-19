@@ -2617,13 +2617,13 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, XTAL_32K_P
     AGPIO(GPIO_USER),            // 1       IO                  GPIO1, ADC1_CH1, XTAL_32K_N
     AGPIO(GPIO_USER),            // 2       IO                  GPIO2, ADC1_CH2, FSPIQ
-    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, ADC1_CH3
-    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, ADC1_CH4, FSPIHD, MTMS
-    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, ADC2_CH0, FSPIWP, MTDI
+    AGPIO(GPIO_LEDLNK_INV),      // 3       IO                  GPIO3, ADC1_CH3  (based on ESP-12F=>ESP32C3-12F)
+    AGPIO(GPIO_NRG_SEL_INV),     // 4       IO                  GPIO4, ADC1_CH4, FSPIHD, MTMS (based on ESP-12F=>ESP32C3-12F)
+    AGPIO(GPIO_LED1_INV),        // 5       IO                  GPIO5, ADC2_CH0, FSPIWP, MTDI (based on ESP-12F=>ESP32C3-12F)
     AGPIO(GPIO_USER),            // 6       IO                  GPIO6, FSPICLK, MTCK
     AGPIO(GPIO_USER),            // 7       IO                  GPIO7, FSPID, MTDO
-    AGPIO(GPIO_USER),            // 8       IO                  GPIO8
-    AGPIO(GPIO_USER),            // 9       IO                  GPIO9
+    AGPIO(GPIO_REL1),            // 8       IO                  GPIO8 (based on ESP-12F=>ESP32C3-12F)
+    AGPIO(GPIO_KEY1),            // 9       IO                  GPIO9 (based on ESP-12F=>ESP32C3-12F)
     AGPIO(GPIO_USER),            // 10      IO                  GPIO10
     0,                           // 11      IO                  GPIO11, output power supply for flash
     0,                           // 12      IO                  GPIO12, SPIHD
@@ -2632,8 +2632,8 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 15      IO                  GPIO15, SPICLK
     0,                           // 16      IO                  GPIO16, SPID
     0,                           // 17      IO                  GPIO17, SPIQ
-    AGPIO(GPIO_USER),            // 18      IO                  GPIO18, USB_D
-    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, USB_D+
+    AGPIO(GPIO_HLW_CF),          // 18      IO                  GPIO18, USB_D  (based on ESP-12F=>ESP32C3-12F)
+    AGPIO(GPIO_NRG_CF1),         // 19      IO                  GPIO19, USB_D+ (based on ESP-12F=>ESP32C3-12F)
     AGPIO(GPIO_USER),            // 20      IO     RXD0         GPIO20, U0RXD
     AGPIO(GPIO_USER),            // 21      IO     TXD0         GPIO21, U0TXD
     0                            // Flag
