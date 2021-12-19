@@ -1,0 +1,20 @@
+{
+  "name": "esp32-camera-header",
+  "version": "1.0.0",
+  "keywords": "esp32, camera, espressif, esp32-cam",
+  "description": "ESP32 camera header files",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/espressif/esp32-camera"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "build": {
+    "flags": [
+      "-Idriver/include"
+    ],
+    "includeDir": ".",
+    "srcDir": ".",
+    "srcFilter": ["-<*>", "+<driver>"]
+  }
+}

@@ -1,6 +1,6 @@
 tasks:
   - before: platformio upgrade
-  - command: platformio run -e tasmota
+  - command: platformio run -e tasmota32-webcam
 
 image:
   file: .gitpod.Dockerfile
