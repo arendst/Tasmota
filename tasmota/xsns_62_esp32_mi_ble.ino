@@ -2753,17 +2753,17 @@ void MI32GetOneSensorJson(int slot, int hidename){
 #endif //USE_HOME_ASSISTANT
       ){
         if (MI32.option.directBridgeMode) {
-          ResponseAppend_P(PSTR(",\"weight_removed\":%u"), p->weight_removed);
-          ResponseAppend_P(PSTR(",\"weight_stabilized\":%u"), p->weight_stabilized);
+          ResponseAppend_P(PSTR(",\"WeightRemoved\":%u"), p->weight_removed);
+          ResponseAppend_P(PSTR(",\"WeightStabilized\":%u"), p->weight_stabilized);
         }
-        ResponseAppend_P(PSTR(",\"weight_unit\":\"%s\""), p->weight_unit);
-        ResponseAppend_P(PSTR(",\"weight\":%*_f"),
+        ResponseAppend_P(PSTR(",\"WeightUnit\":\"%s\""), p->weight_unit);
+        ResponseAppend_P(PSTR(",\"Weight\":%*_f"),
           Settings->flag2.weight_resolution, &p->weight);
         if (p->feature.impedance) {
           if (MI32.option.directBridgeMode) {
-            ResponseAppend_P(PSTR(",\"impedance_stabilized\":%u"), p->impedance_stabilized);
+            ResponseAppend_P(PSTR(",\"ImpedanceStabilized\":%u"), p->impedance_stabilized);
           }
-          ResponseAppend_P(PSTR(",\"impedance\":%u"), p->impedance);
+          ResponseAppend_P(PSTR(",\"Impedance\":%u"), p->impedance);
         }
       }
     }
