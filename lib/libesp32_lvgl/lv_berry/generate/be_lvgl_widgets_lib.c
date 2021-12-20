@@ -16,11 +16,11 @@ extern int lco_init(bvm *vm);           // generic function
 extern int lco_tostring(bvm *vm);       // generic function
 extern int lco_toint(bvm *vm);          // generic function
 
-extern int lvx_member(bvm *vm);
-extern int lvx_tostring(bvm *vm);       // generic function
+extern int lv_x_member(bvm *vm);
+extern int lv_x_tostring(bvm *vm);       // generic function
 
 extern int lvs_init(bvm *vm);
-extern int lvs_tostring(bvm *vm);
+extern int lv_x_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 
@@ -877,9 +877,9 @@ be_local_class(lv_style,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lvs_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvs_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_style", -143355747, 8))
 );
@@ -893,8 +893,8 @@ be_local_class(lv_obj,
     NULL,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("tostring", -1995258651, 8, 3), be_const_func(lvx_tostring) },
-        { be_nested_key("member", 719708611, 6, -1), be_const_func(lvx_member) },
+        { be_nested_key("tostring", -1995258651, 8, 3), be_const_func(lv_x_tostring) },
+        { be_nested_key("member", 719708611, 6, -1), be_const_func(lv_x_member) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
         { be_nested_key("init", 380752755, 4, 4), be_const_func(be_ntv_lv_obj_init) },
         { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_obj_class) },
@@ -912,9 +912,9 @@ be_local_class(lv_group,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_group_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_group", -442928277, 8))
 );
@@ -929,9 +929,9 @@ be_local_class(lv_indev,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_indev", 225602374, 8))
 );
@@ -946,9 +946,9 @@ be_local_class(lv_disp,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_disp", 609712084, 8))
 );
@@ -963,7 +963,7 @@ be_local_class(lv_font,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_font_create) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_font", 1550958453, 7))
@@ -979,7 +979,7 @@ be_local_class(lv_theme,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_theme_create) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_theme", 1550958453, 7))

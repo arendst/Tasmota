@@ -20,6 +20,12 @@ class LVGL_glob
   #- this is the fallback callback, if the event is unknown or unsupported -#
   static cb_do_nothing = def() print("LVG: call to unsupported callback") end
 
+  # register our callback handler to `module cb`
+  def init()
+    import cb
+    cb.add_handler(/ f, obj, name -> self.make_cb(f, obj, name))
+  end
+
   #- register an lv.lv_* object in the mapping -#
   def register_obj(obj)
     if self.cb_obj == nil    self.cb_obj = {} end
@@ -44,9 +50,9 @@ class LVGL_glob
     f(obj, event)
   end
 
-  def gen_cb(f, obj, name)
+  def make_cb(f, obj, name)
     import cb
-    # print('>> gen_cb', f, name, obj)
+    # print('>> make_cb', f, name, obj)
     # record the object, whatever the callback
     
     if name  == "lv_event_cb"
@@ -57,9 +63,11 @@ class LVGL_glob
       self.cb_event_closure[obj._p] = f
       return self.event_cb
     # elif name == "<other_cb>"
-    else
+    elif name[0..2] == "lv_"
       if self.null_cb == nil                  self.null_cb = cb.gen_cb(self.cb_do_nothing) end
       return self.null_cb
+    else
+      return nil    # the call is not for us, pass to next handler
     end
   end
 
@@ -96,9 +104,10 @@ class LVGL_glob
 
 
   def widget_cb()
-    if self.widget_ctor_cb == nil           self.widget_ctor_cb = tasmota.gen_cb(/ cl, obj -> self.widget_ctor_impl(cl, obj)) end
-    if self.widget_dtor_cb == nil           self.widget_dtor_cb = tasmota.gen_cb(/ cl, obj -> self.widget_dtor_impl(cl, obj)) end
-    if self.widget_event_cb == nil          self.widget_event_cb = tasmota.gen_cb(/ cl, e -> self.widget_event_impl(cl, e)) end
+    import cb
+    if self.widget_ctor_cb == nil           self.widget_ctor_cb = cb.gen_cb(/ cl, obj -> self.widget_ctor_impl(cl, obj)) end
+    if self.widget_dtor_cb == nil           self.widget_dtor_cb = cb.gen_cb(/ cl, obj -> self.widget_dtor_impl(cl, obj)) end
+    if self.widget_event_cb == nil          self.widget_event_cb = cb.gen_cb(/ cl, e -> self.widget_event_impl(cl, e)) end
 
     if self.widget_struct_default == nil
       self.widget_struct_default = lv.lv_obj_class(lv.lv_obj._class).copy()

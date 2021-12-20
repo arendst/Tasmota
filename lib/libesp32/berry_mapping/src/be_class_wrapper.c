@@ -22,6 +22,24 @@ void be_set_gen_cb_name(bvm *vm, const char * gen_cb) {
 }
 
 /*********************************************************************************************\
+ * Converision from real <-> int
+ * 
+ * Warning, works only if sizeof(intptr_t) == sizeof(breal)
+ * On ESP32, int=32bits, real=float (32bits)
+\*********************************************************************************************/
+static intptr_t realasint(breal v) {
+  intptr_t i;
+  i = *((intptr_t*) &v);
+  return i;
+}
+
+static breal intasreal(intptr_t v) {
+  breal r;
+  r = *((breal*) &v);
+  return r;
+}
+
+/*********************************************************************************************\
  * Create an object of `class_name` given an external poinrt `ptr`.
  * 
  * Instanciates the class and calls `init()` with `ptr` wrapped in `comptr` as single arg.
@@ -73,7 +91,14 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
   char * prefix = strtok_r(name_buf, ".", &saveptr);
   char * suffix = strtok_r(NULL, ".", &saveptr);
   if (suffix) {
-    if (be_getglobal(vm, prefix)) {
+    if (!be_getglobal(vm, prefix)) {
+      // global not found, try module
+      be_pop(vm, 1);
+      if (!be_getmodule(vm, prefix)) {
+        return 0;
+      }
+    }
+    if (!be_isnil(vm, -1)) {
       if (be_getmember(vm, -1, suffix)) {
         if (be_isinstance(vm, -2)) {  // instance, so we need to push method + instance
           be_pushvalue(vm, -2);
@@ -123,7 +148,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   's' be_str
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
- *   string of argument types
+ *   string of argument types, '[' indicates that the following parameters are optional
  *   '.' don't care
  *   'i' be_int
  *   'b' be_bool
@@ -141,7 +166,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
 // read a single value at stack position idx, convert to int.
 // if object instance, get `_p` member and convert it recursively
 intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const char * gen_cb) {
-  // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', gen_cb=%p", idx, arg_type, gen_cb);
+  // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', gen_cb=%p, type=%s", idx, arg_type ? arg_type : "", gen_cb ? gen_cb : "", be_typename(vm, idx));
   int ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
@@ -156,7 +181,6 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
     if (be_isclosure(vm, idx)) {
       ret = be_find_global_or_module_member(vm, gen_cb);
       if (ret) {
-        be_remove(vm, -3);  // stack contains method + instance
         be_pushvalue(vm, idx);
         be_pushvalue(vm, 1);
         be_pushstring(vm, arg_type);
@@ -175,18 +199,24 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
   }
 
   // first convert the value to int32
-  if      (be_isint(vm, idx))     { ret = be_toint(vm, idx); provided_type = 'i'; }
+  if      (be_isint(vm, idx))     {
+    if (arg_type[0] == 'f') {
+      ret = realasint((float)be_toint(vm, idx)); provided_type = 'f';
+    } else {
+      ret = be_toint(vm, idx); provided_type = 'i'; }
+  }
   else if (be_isbool(vm, idx))    { ret = be_tobool(vm, idx); provided_type = 'b'; }
   else if (be_isstring(vm, idx))  { ret = (intptr_t) be_tostring(vm, idx); provided_type = 's'; }
   else if (be_iscomptr(vm, idx))  { ret = (intptr_t) be_tocomptr(vm, idx); provided_type = 'c'; }
   else if (be_isnil(vm, idx))     { ret = 0; provided_type = 'c'; }
+  else if (be_isreal(vm, idx))    { ret = realasint(be_toreal(vm, idx)); provided_type = 'f'; }
 
   // check if simple type was a match
   if (provided_type) {
     bbool type_ok = bfalse;
     type_ok = (arg_type[0] == '.');                           // any type is accepted
     type_ok = type_ok || (arg_type[0] == provided_type);      // or type is a match
-    type_ok = type_ok || (ret == 0 && arg_type_len != 1);    // or NULL is accepted for an instance
+    type_ok = type_ok || (ret == 0 && arg_type_len != 1);     // or NULL is accepted for an instance
     
     if (!type_ok) {
       be_raisef(vm, "type_error", "Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
@@ -195,7 +225,6 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
     return ret;
   }
 
-  // berry_log_C("be_convert_single_elt non simple type");
   // non-simple type
   if (be_isinstance(vm, idx))  {
     // check if the instance is a subclass of `bytes()``
@@ -265,6 +294,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
 void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]) {
   bbool arg_type_check = (arg_type != NULL);      // is type checking activated
   int32_t arg_idx = 0;    // position in arg_type string
+  bbool arg_optional = bfalse;   // are remaining types optional?
   char type_short_name[32];
 
   uint32_t p_idx = 0; // index in p[], is incremented with each parameter except '-'
@@ -272,6 +302,10 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
     type_short_name[0] = 0;   // clear string
     // extract individual type
     if (NULL != arg_type) {
+      if (arg_type[arg_idx] == '[' || arg_type[arg_idx] == ']') {   // '[' is a marker that following parameters are optional and default to NULL
+        arg_optional = btrue;
+        arg_idx++;
+      }
       switch (arg_type[arg_idx]) {
         case '-':
           arg_idx++;
@@ -310,11 +344,13 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
       }
     }
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[p_idx++] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, be_gen_cb_name);
+    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, "cb.make_cb");
+    // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
+    p_idx++;
   }
 
   // check if we are missing arguments
-  if (arg_type != NULL && arg_type[arg_idx] != 0) {
+  if (!arg_optional && arg_type != NULL && arg_type[arg_idx] != 0) {
     be_raisef(vm, "value_error", "Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
   }
 }
@@ -337,7 +373,7 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
 //         `+` forbids any NULL value (raises an exception) while `=` allows a NULL value
 static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
   if (name == NULL) return;    // do nothing if no name of attribute
-  if (name[0] == '=' && ptr == NULL)  { be_raise(vm, "value_error", "argument cannot be NULL"); }
+  if (name[0] == '+' && ptr == NULL)  { be_raise(vm, "value_error", "argument cannot be NULL"); }
   if (name[0] == '+' || name[0] == '=') { name++; }   // skip prefix '^' if any
   if (strlen(name) == 0) return;  // do nothing if name is empty
 
@@ -386,7 +422,8 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
 
   fn_any_callable f = (fn_any_callable) func;
   be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
-  intptr_t ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+  intptr_t ret = 0;
+  if (f) ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
   // berry_log_C("be_call_c_func '%s' -> '%s': (%i,%i,%i,%i,%i,%i) -> %i", return_type, arg_type, p[0], p[1], p[2], p[3], p[4], p[5], ret);
 
   if ((return_type == NULL) || (strlen(return_type) == 0))       { be_return_nil(vm); }  // does not return
