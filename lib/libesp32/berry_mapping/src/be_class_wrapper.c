@@ -446,7 +446,7 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
     be_find_global_or_module_member(vm, return_type);
     be_pushcomptr(vm, (void*) ret);         // stack = class, ptr
     be_pushcomptr(vm, (void*) -1);         // stack = class, ptr, -1
-    be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, -1, ptr
+    be_call(vm, 2);                 // instanciate with 2 arguments, stack = instance, ptr, -1
     be_pop(vm, 2);                  // stack = instance
     be_return(vm);
   }
