@@ -125,7 +125,8 @@ void My92x1ModuleSelected(void)
     digitalWrite(My92x1.pdcki_pin, LOW);
 
     My92x1.model = 2;
-    TasmotaGlobal.light_type = LT_RGBW;                    // RGBW (2 chips) as used in Lohas
+    TasmotaGlobal.light_type = LT_RGBW;                 // RGBW (2 chips) as used in Lohas
+#ifdef ESP8266
     if (AILIGHT == TasmotaGlobal.module_type) {         // RGBW (1 chip) as used in Ailight
       My92x1.model = 0;
 //      TasmotaGlobal.light_type = LT_RGBW;
@@ -134,6 +135,7 @@ void My92x1ModuleSelected(void)
       My92x1.model = 1;
       TasmotaGlobal.light_type = LT_RGBWC;
     }
+#endif  // ESP8266
 
     LightMy92x1Init();
 

@@ -1,11 +1,11 @@
 import re
 import sys
 
-lv_widgets_file = "lv_funcs.h"
-lv_module_file = "lv_enum.h"
+lv_widgets_file = "../mapping/lv_funcs.h"
+lv_module_file = "../mapping/lv_enum.h"
 
-out_prefix = "../../tasmota/lvgl_berry/"
-lvgl_prefix = "../../lib/libesp32/Berry/default/"
+out_prefix = "../generate/"
+lvgl_prefix = "../generate/"
 
 be_lv_defines = "be_lv_defines.h"
 be_lv_c_mapping = "be_lv_c_mapping.h"
@@ -320,13 +320,14 @@ extern "C" {
 #endif
 
 #include "be_ctypes.h"
+#include "be_mapping.h"
 """)
 
 for subtype, flv in lv.items():
   print(f"/* `lv_{subtype}` methods */")
   if subtype in lv_widgets:
     print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
-  print(f"const lvbe_call_c_t lv_{subtype}_func[] = {{")
+  print(f"const be_ntv_func_def_t lv_{subtype}_func[] = {{")
 
   func_out = {} # used to sort output
   for f in flv:
@@ -361,7 +362,7 @@ print()
 # print the global map of classes
 print(f"""
 // map of clases
-const lvbe_call_c_classes_t lv_classes[] = {{""")
+const be_ntv_class_def_t lv_classes[] = {{""")
 
 for subtype in sorted(lv):
 # for subtype, flv in lv.items():
@@ -391,7 +392,7 @@ for subtype, flv in lv.items():
     if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
 
     if c_func_name.endswith("_create"):
-      c_ret_type = "+"  # constructor, init method does not return any value
+      c_ret_type = "+_p"  # constructor, init method does not return any value
       if subtype in lv_widgets:
         print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
         print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'}); }}")
@@ -401,8 +402,8 @@ for subtype, flv in lv.items():
 
 print("""
 // create font either empty or from parameter on stack
-int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_font", ""); }
-int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_theme", ""); }
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
+int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
 """)
 
 print()
@@ -424,8 +425,6 @@ print("""
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_LVGL
-
 #include "lvgl.h"
 
 extern int lv0_init(bvm *vm);
@@ -434,11 +433,11 @@ extern int lco_init(bvm *vm);           // generic function
 extern int lco_tostring(bvm *vm);       // generic function
 extern int lco_toint(bvm *vm);          // generic function
 
-extern int lvx_member(bvm *vm);
-extern int lvx_tostring(bvm *vm);       // generic function
+extern int lv_x_member(bvm *vm);
+extern int lv_x_tostring(bvm *vm);       // generic function
 
 extern int lvs_init(bvm *vm);
-extern int lvs_tostring(bvm *vm);
+extern int lv_x_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 
@@ -485,9 +484,9 @@ be_local_class(lv_style,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lvs_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvs_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_style", -143355747, 8))
 );
@@ -501,8 +500,8 @@ be_local_class(lv_obj,
     NULL,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("tostring", -1995258651, 8, 3), be_const_func(lvx_tostring) },
-        { be_nested_key("member", 719708611, 6, -1), be_const_func(lvx_member) },
+        { be_nested_key("tostring", -1995258651, 8, 3), be_const_func(lv_x_tostring) },
+        { be_nested_key("member", 719708611, 6, -1), be_const_func(lv_x_member) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
         { be_nested_key("init", 380752755, 4, 4), be_const_func(be_ntv_lv_obj_init) },
         { be_nested_key("_class", -1562820946, 6, -1), be_const_comptr(&lv_obj_class) },
@@ -520,9 +519,9 @@ be_local_class(lv_group,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(be_ntv_lv_group_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_group", -442928277, 8))
 );
@@ -537,9 +536,9 @@ be_local_class(lv_indev,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_indev", 225602374, 8))
 );
@@ -554,9 +553,9 @@ be_local_class(lv_disp,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
-        { be_nested_key("member", 719708611, 6, 0), be_const_func(lvx_member) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_disp", 609712084, 8))
 );
@@ -571,7 +570,7 @@ be_local_class(lv_font,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_font_create) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_font", 1550958453, 7))
@@ -587,7 +586,7 @@ be_local_class(lv_theme,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_nested_key("init", 380752755, 4, -1), be_const_func(lvbe_theme_create) },
-        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lvx_tostring) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
     })),
     (be_nested_const_str("lv_theme", 1550958453, 7))
@@ -641,9 +640,6 @@ be_local_class(lv_{subtype},
 }}
 """)
 
-print("""
-#endif // USE_LVGL
-""")
 sys.stdout.close()
 
 
@@ -657,10 +653,8 @@ print("""/********************************************************************
  *******************************************************************/
 #include "be_constobj.h"
 
-#ifdef USE_LVGL
-
 #include "lvgl.h"
-#include "be_lvgl.h"
+#include "be_mapping.h"
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
@@ -685,7 +679,7 @@ static int lv_get_ver_res(void) {
 }
 
 /* `lv` methods */
-const lvbe_call_c_t lv_func[] = {
+const be_ntv_func_def_t lv_func[] = {
 """)
 
 func_out = {} # used to sort output
@@ -728,12 +722,7 @@ const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);
 
 print("""
 
-typedef struct be_constint_t {
-    const char * name;
-    int32_t      value;
-} be_constint_t;
-
-const be_constint_t lv0_constants[] = {
+const be_const_member_t lv0_constants[] = {
 """)
 
 lv_module2 = {}
@@ -782,8 +771,6 @@ be_local_module(lv,
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(lv);
-
-#endif // USE_LVGL
 """)
 
 print("/********************************************************************/")

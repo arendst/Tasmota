@@ -28,7 +28,7 @@ lv_coord_t lv_get_ver_res(void);
 // ======================================================================
 
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_disp.h
+// ../../lvgl/src/core/lv_disp.h
 lv_obj_t * lv_disp_get_scr_act(lv_disp_t * disp)
 lv_obj_t * lv_disp_get_scr_prev(lv_disp_t * disp)
 void lv_disp_load_scr(lv_obj_t * scr)
@@ -50,7 +50,7 @@ static inline void lv_scr_load(lv_obj_t * scr)
 static inline lv_coord_t lv_dpx(lv_coord_t n)
 static inline lv_coord_t lv_disp_dpx(const lv_disp_t * disp, lv_coord_t n)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_event.h
+// ../../lvgl/src/core/lv_event.h
 lv_res_t lv_event_send(struct _lv_obj_t * obj, lv_event_code_t event_code, void * param)
 lv_res_t lv_obj_event_base(const lv_obj_class_t * class_p, lv_event_t * e)
 uint32_t lv_event_register_id(void)
@@ -60,7 +60,7 @@ bool lv_obj_remove_event_dsc(struct _lv_obj_t * obj, struct _lv_event_dsc_t * ev
 void lv_event_set_ext_draw_size(lv_event_t * e, lv_coord_t size)
 void lv_event_set_cover_res(lv_event_t * e, lv_cover_res_t res)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_group.h
+// ../../lvgl/src/core/lv_group.h
 lv_group_t * lv_group_create(void)
 void lv_group_del(lv_group_t * group)
 void lv_group_set_default(lv_group_t * group)
@@ -83,7 +83,7 @@ bool lv_group_get_editing(const lv_group_t * group)
 bool lv_group_get_wrap(lv_group_t * group)
 uint32_t lv_group_get_obj_count(lv_group_t * group)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_indev.h
+// ../../lvgl/src/core/lv_indev.h
 void lv_indev_read_timer_cb(lv_timer_t * timer)
 void lv_indev_enable(lv_indev_t * indev, bool en)
 lv_indev_t * lv_indev_get_act(void)
@@ -104,9 +104,9 @@ lv_obj_t * lv_indev_get_obj_act(void)
 lv_timer_t * lv_indev_get_read_timer(lv_disp_t * indev)
 lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t * point)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_indev_scroll.h
+// ../../lvgl/src/core/lv_indev_scroll.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj.h
+// ../../lvgl/src/core/lv_obj.h
 lv_obj_t * lv_obj_create(lv_obj_t * parent)
 void lv_obj_add_flag(lv_obj_t * obj, lv_obj_flag_t f)
 void lv_obj_clear_flag(lv_obj_t * obj, lv_obj_flag_t f)
@@ -126,13 +126,13 @@ const lv_obj_class_t * lv_obj_get_class(const lv_obj_t * obj)
 bool lv_obj_is_valid(const lv_obj_t * obj)
 static inline lv_coord_t lv_obj_dpx(const lv_obj_t * obj, lv_coord_t n)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_class.h
+// ../../lvgl/src/core/lv_obj_class.h
 struct _lv_obj_t * lv_obj_class_create_obj(const struct _lv_obj_class_t * class_p, struct _lv_obj_t * parent)
 void lv_obj_class_init_obj(struct _lv_obj_t * obj)
 bool lv_obj_is_editable(struct _lv_obj_t * obj)
 bool lv_obj_is_group_def(struct _lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_draw.h
+// ../../lvgl/src/core/lv_obj_draw.h
 void lv_obj_init_draw_rect_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_rect_dsc_t * draw_dsc)
 void lv_obj_init_draw_label_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_label_dsc_t * draw_dsc)
 void lv_obj_init_draw_img_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_img_dsc_t * draw_dsc)
@@ -142,7 +142,7 @@ lv_coord_t lv_obj_calculate_ext_draw_size(struct _lv_obj_t * obj, uint32_t part)
 void lv_obj_draw_dsc_init(lv_obj_draw_part_dsc_t * dsc, const lv_area_t * clip_area)
 void lv_obj_refresh_ext_draw_size(struct _lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_pos.h
+// ../../lvgl/src/core/lv_obj_pos.h
 void lv_obj_set_pos(struct _lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
 void lv_obj_set_x(struct _lv_obj_t * obj, lv_coord_t x)
 void lv_obj_set_y(struct _lv_obj_t * obj, lv_coord_t y)
@@ -187,7 +187,7 @@ bool lv_obj_hit_test(struct _lv_obj_t * obj, const lv_point_t * point)
 lv_coord_t lv_clamp_width(lv_coord_t width, lv_coord_t min_width, lv_coord_t max_width, lv_coord_t ref_width)
 lv_coord_t lv_clamp_height(lv_coord_t height, lv_coord_t min_height, lv_coord_t max_height, lv_coord_t ref_height)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_scroll.h
+// ../../lvgl/src/core/lv_obj_scroll.h
 void lv_obj_set_scrollbar_mode(struct _lv_obj_t * obj, lv_scrollbar_mode_t mode)
 void lv_obj_set_scroll_dir(struct _lv_obj_t * obj, lv_dir_t dir)
 void lv_obj_set_scroll_snap_x(struct _lv_obj_t * obj, lv_scroll_snap_t align)
@@ -215,7 +215,7 @@ void lv_obj_get_scrollbar_area(struct _lv_obj_t * obj, lv_area_t * hor, lv_area_
 void lv_obj_scrollbar_invalidate(struct _lv_obj_t * obj)
 void lv_obj_readjust_scroll(struct _lv_obj_t * obj, lv_anim_enable_t anim_en)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_style.h
+// ../../lvgl/src/core/lv_obj_style.h
 void lv_obj_add_style(struct _lv_obj_t * obj, lv_style_t * style, lv_style_selector_t selector)
 void lv_obj_remove_style(struct _lv_obj_t * obj, lv_style_t * style, lv_style_selector_t selector)
 static inline void lv_obj_remove_style_all(struct _lv_obj_t * obj)
@@ -236,7 +236,7 @@ static inline void lv_obj_set_style_pad_ver(struct _lv_obj_t * obj, lv_coord_t v
 static inline void lv_obj_set_style_pad_gap(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 static inline void lv_obj_set_style_size(struct _lv_obj_t * obj, lv_coord_t value, lv_style_selector_t selector)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_style_gen.h
+// ../../lvgl/src/core/lv_obj_style_gen.h
 static inline lv_coord_t lv_obj_get_style_width(const struct _lv_obj_t * obj, uint32_t part)
 static inline lv_coord_t lv_obj_get_style_min_width(const struct _lv_obj_t * obj, uint32_t part)
 static inline lv_coord_t lv_obj_get_style_max_width(const struct _lv_obj_t * obj, uint32_t part)
@@ -416,7 +416,7 @@ void lv_obj_set_style_arc_color_filtered(struct _lv_obj_t * obj, lv_color_t valu
 void lv_obj_set_style_arc_opa(struct _lv_obj_t * obj, lv_opa_t value, lv_style_selector_t selector)
 void lv_obj_set_style_arc_img_src(struct _lv_obj_t * obj, const void * value, lv_style_selector_t selector)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_obj_tree.h
+// ../../lvgl/src/core/lv_obj_tree.h
 void lv_obj_del(struct _lv_obj_t * obj)
 void lv_obj_clean(struct _lv_obj_t * obj)
 void lv_obj_del_anim_ready_cb(lv_anim_t * a)
@@ -432,10 +432,10 @@ uint32_t lv_obj_get_child_cnt(const struct _lv_obj_t * obj)
 uint32_t lv_obj_get_child_id(const struct _lv_obj_t * obj)
 void lv_obj_tree_walk(struct _lv_obj_t * start_obj, lv_obj_tree_walk_cb_t cb, void * user_data)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_refr.h
+// ../../lvgl/src/core/lv_refr.h
 void lv_refr_now(lv_disp_t * disp)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/core/lv_theme.h
+// ../../lvgl/src/core/lv_theme.h
 lv_theme_t * lv_theme_get_from_obj(lv_obj_t * obj)
 void lv_theme_apply(lv_obj_t * obj)
 void lv_theme_set_parent(lv_theme_t * new_theme, lv_theme_t * parent)
@@ -446,30 +446,30 @@ const lv_font_t * lv_theme_get_font_large(lv_obj_t * obj)
 lv_color_t lv_theme_get_color_primary(lv_obj_t * obj)
 lv_color_t lv_theme_get_color_secondary(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw.h
+// ../../lvgl/src/draw/lv_draw.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_arc.h
+// ../../lvgl/src/draw/lv_draw_arc.h
 void lv_draw_arc_dsc_init(lv_draw_arc_dsc_t * dsc)
 void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius, uint16_t start_angle, uint16_t end_angle, const lv_area_t * clip_area, const lv_draw_arc_dsc_t * dsc)
 void lv_draw_arc_get_area(lv_coord_t x, lv_coord_t y, uint16_t radius, uint16_t start_angle, uint16_t end_angle, lv_coord_t w, bool rounded, lv_area_t * area)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_blend.h
+// ../../lvgl/src/draw/lv_draw_blend.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_img.h
+// ../../lvgl/src/draw/lv_draw_img.h
 void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc)
 void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, const lv_draw_img_dsc_t * dsc)
 lv_img_src_t lv_img_src_get_type(const void * src)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_label.h
+// ../../lvgl/src/draw/lv_draw_label.h
 void lv_draw_label_dsc_init(lv_draw_label_dsc_t * dsc)
 void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, const lv_draw_label_dsc_t * dsc, const char * txt, lv_draw_label_hint_t * hint)
 void lv_draw_letter(const lv_point_t * pos_p, const lv_area_t * clip_area, const lv_font_t * font_p, uint32_t letter, lv_color_t color, lv_opa_t opa, lv_blend_mode_t blend_mode)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_line.h
+// ../../lvgl/src/draw/lv_draw_line.h
 void lv_draw_line(const lv_point_t * point1, const lv_point_t * point2, const lv_area_t * clip, const lv_draw_line_dsc_t * dsc)
 void lv_draw_line_dsc_init(lv_draw_line_dsc_t * dsc)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_mask.h
+// ../../lvgl/src/draw/lv_draw_mask.h
 static inline uint8_t lv_draw_mask_get_cnt(void)
 int16_t lv_draw_mask_add(void * param, void * custom_id)
 lv_draw_mask_res_t lv_draw_mask_apply(lv_opa_t * mask_buf, lv_coord_t abs_x, lv_coord_t abs_y, lv_coord_t len)
@@ -483,28 +483,28 @@ void lv_draw_mask_radius_init(lv_draw_mask_radius_param_t * param, const lv_area
 void lv_draw_mask_fade_init(lv_draw_mask_fade_param_t * param, const lv_area_t * coords, lv_opa_t opa_top, lv_coord_t y_top, lv_opa_t opa_bottom, lv_coord_t y_bottom)
 void lv_draw_mask_map_init(lv_draw_mask_map_param_t * param, const lv_area_t * coords, const lv_opa_t * map)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_rect.h
+// ../../lvgl/src/draw/lv_draw_rect.h
 void lv_draw_rect_dsc_init(lv_draw_rect_dsc_t * dsc)
 void lv_draw_rect(const lv_area_t * coords, const lv_area_t * mask, const lv_draw_rect_dsc_t * dsc)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_draw_triangle.h
+// ../../lvgl/src/draw/lv_draw_triangle.h
 void lv_draw_triangle(const lv_point_t points[], const lv_area_t * clip, const lv_draw_rect_dsc_t * draw_dsc)
 void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_area_t * mask, const lv_draw_rect_dsc_t * draw_dsc)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_img_buf.h
+// ../../lvgl/src/draw/lv_img_buf.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_img_cache.h
+// ../../lvgl/src/draw/lv_img_cache.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/draw/lv_img_decoder.h
+// ../../lvgl/src/draw/lv_img_decoder.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/themes/default/lv_theme_default.h
+// ../../lvgl/src/extra/themes/default/lv_theme_default.h
 lv_theme_t * lv_theme_default_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
 bool lv_theme_default_is_inited(void)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/themes/mono/lv_theme_mono.h
+// ../../lvgl/src/extra/themes/mono/lv_theme_mono.h
 lv_theme_t * lv_theme_mono_init(lv_disp_t * disp, bool dark_bg, const lv_font_t * font)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/chart/lv_chart.h
+// ../../lvgl/src/extra/widgets/chart/lv_chart.h
 lv_obj_t * lv_chart_create(lv_obj_t * parent)
 void lv_chart_set_type(lv_obj_t * obj, lv_chart_type_t type)
 void lv_chart_set_point_count(lv_obj_t * obj, uint16_t cnt)
@@ -542,7 +542,7 @@ lv_coord_t * lv_chart_get_y_array(const lv_obj_t * obj, lv_chart_series_t * ser)
 lv_coord_t * lv_chart_get_x_array(const lv_obj_t * obj, lv_chart_series_t * ser)
 uint32_t lv_chart_get_pressed_point(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/colorwheel/lv_colorwheel.h
+// ../../lvgl/src/extra/widgets/colorwheel/lv_colorwheel.h
 lv_obj_t * lv_colorwheel_create(lv_obj_t * parent, bool knob_recolor)
 bool lv_colorwheel_set_hsv(lv_obj_t * obj, lv_color_hsv_t hsv)
 bool lv_colorwheel_set_rgb(lv_obj_t * obj, lv_color_t color)
@@ -553,11 +553,11 @@ lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj)
 lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj)
 bool lv_colorwheel_get_color_mode_fixed(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/imgbtn/lv_imgbtn.h
+// ../../lvgl/src/extra/widgets/imgbtn/lv_imgbtn.h
 lv_obj_t * lv_imgbtn_create(lv_obj_t * parent)
 void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_imgbtn_state_t state, const void * src_left, const void * src_mid, const void * src_right)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/led/lv_led.h
+// ../../lvgl/src/extra/widgets/led/lv_led.h
 lv_obj_t * lv_led_create(lv_obj_t * parent)
 void lv_led_set_color(lv_obj_t * led, lv_color_t color)
 void lv_led_set_brightness(lv_obj_t * led, uint8_t bright)
@@ -566,7 +566,7 @@ void lv_led_off(lv_obj_t * led)
 void lv_led_toggle(lv_obj_t * led)
 uint8_t lv_led_get_brightness(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/meter/lv_meter.h
+// ../../lvgl/src/extra/widgets/meter/lv_meter.h
 lv_obj_t * lv_meter_create(lv_obj_t * parent)
 lv_meter_scale_t * lv_meter_add_scale(lv_obj_t * obj)
 void lv_meter_set_scale_ticks(lv_obj_t * obj, lv_meter_scale_t * scale, uint16_t cnt, uint16_t width, uint16_t len, lv_color_t color)
@@ -580,7 +580,7 @@ void lv_meter_set_indicator_value(lv_obj_t * obj, lv_meter_indicator_t * indic, 
 void lv_meter_set_indicator_start_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value)
 void lv_meter_set_indicator_end_value(lv_obj_t * obj, lv_meter_indicator_t * indic, int32_t value)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/msgbox/lv_msgbox.h
+// ../../lvgl/src/extra/widgets/msgbox/lv_msgbox.h
 lv_obj_t * lv_msgbox_create(lv_obj_t * parent, const char * title, const char * txt, const char * btn_txts[], bool add_close_btn)
 lv_obj_t * lv_msgbox_get_title(lv_obj_t * mbox)
 lv_obj_t * lv_msgbox_get_close_btn(lv_obj_t * mbox)
@@ -589,7 +589,7 @@ lv_obj_t * lv_msgbox_get_btns(lv_obj_t * mbox)
 const char * lv_msgbox_get_active_btn_text(lv_obj_t * mbox)
 void lv_msgbox_close(lv_obj_t * mbox)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/spinbox/lv_spinbox.h
+// ../../lvgl/src/extra/widgets/spinbox/lv_spinbox.h
 lv_obj_t * lv_spinbox_create(lv_obj_t * parent)
 void lv_spinbox_set_value(lv_obj_t * obj, int32_t i)
 void lv_spinbox_set_rollover(lv_obj_t * obj, bool b)
@@ -604,10 +604,10 @@ void lv_spinbox_step_prev(lv_obj_t * obj)
 void lv_spinbox_increment(lv_obj_t * obj)
 void lv_spinbox_decrement(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/extra/widgets/spinner/lv_spinner.h
+// ../../lvgl/src/extra/widgets/spinner/lv_spinner.h
 lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/misc/lv_style_gen.h
+// ../../lvgl/src/misc/lv_style_gen.h
 void lv_style_set_width(lv_style_t * style, lv_coord_t value)
 void lv_style_set_min_width(lv_style_t * style, lv_coord_t value)
 void lv_style_set_max_width(lv_style_t * style, lv_coord_t value)
@@ -698,7 +698,7 @@ void lv_style_set_arc_color_filtered(lv_style_t * style, lv_color_t value)
 void lv_style_set_arc_opa(lv_style_t * style, lv_opa_t value)
 void lv_style_set_arc_img_src(lv_style_t * style, const void * value)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_arc.h
+// ../../lvgl/src/widgets/lv_arc.h
 lv_obj_t * lv_arc_create(lv_obj_t * parent)
 void lv_arc_set_start_angle(lv_obj_t * arc, uint16_t start)
 void lv_arc_set_end_angle(lv_obj_t * arc, uint16_t end)
@@ -720,7 +720,7 @@ int16_t lv_arc_get_min_value(const lv_obj_t * obj)
 int16_t lv_arc_get_max_value(const lv_obj_t * obj)
 lv_arc_mode_t lv_arc_get_mode(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_bar.h
+// ../../lvgl/src/widgets/lv_bar.h
 lv_obj_t * lv_bar_create(lv_obj_t * parent)
 void lv_bar_set_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
 void lv_bar_set_start_value(lv_obj_t * obj, int32_t start_value, lv_anim_enable_t anim)
@@ -732,10 +732,10 @@ int32_t lv_bar_get_min_value(const lv_obj_t * obj)
 int32_t lv_bar_get_max_value(const lv_obj_t * obj)
 lv_bar_mode_t lv_bar_get_mode(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_btn.h
+// ../../lvgl/src/widgets/lv_btn.h
 lv_obj_t * lv_btn_create(lv_obj_t * parent)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_btnmatrix.h
+// ../../lvgl/src/widgets/lv_btnmatrix.h
 lv_obj_t * lv_btnmatrix_create(lv_obj_t * parent)
 void lv_btnmatrix_set_map(lv_obj_t * obj, const char * map[])
 void lv_btnmatrix_set_ctrl_map(lv_obj_t * obj, const lv_btnmatrix_ctrl_t ctrl_map[])
@@ -752,7 +752,7 @@ const char * lv_btnmatrix_get_btn_text(const lv_obj_t * obj, uint16_t btn_id)
 bool lv_btnmatrix_has_btn_ctrl(lv_obj_t * obj, uint16_t btn_id, lv_btnmatrix_ctrl_t ctrl)
 bool lv_btnmatrix_get_one_checked(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_canvas.h
+// ../../lvgl/src/widgets/lv_canvas.h
 lv_obj_t * lv_canvas_create(lv_obj_t * parent)
 void lv_canvas_set_buffer(lv_obj_t * canvas, void * buf, lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
 void lv_canvas_set_px(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_color_t c)
@@ -771,13 +771,13 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t points[], uint32_t 
 void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32_t point_cnt, const lv_draw_rect_dsc_t * draw_dsc)
 void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t r, int32_t start_angle, int32_t end_angle, const lv_draw_arc_dsc_t * draw_dsc)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_checkbox.h
+// ../../lvgl/src/widgets/lv_checkbox.h
 lv_obj_t * lv_checkbox_create(lv_obj_t * parent)
 void lv_checkbox_set_text(lv_obj_t * obj, const char * txt)
 void lv_checkbox_set_text_static(lv_obj_t * obj, const char * txt)
 const char * lv_checkbox_get_text(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_dropdown.h
+// ../../lvgl/src/widgets/lv_dropdown.h
 lv_obj_t * lv_dropdown_create(lv_obj_t * parent)
 void lv_dropdown_set_text(lv_obj_t * obj, const char * txt)
 void lv_dropdown_set_options(lv_obj_t * obj, const char * options)
@@ -800,7 +800,7 @@ lv_dir_t lv_dropdown_get_dir(const lv_obj_t * obj)
 void lv_dropdown_open(lv_obj_t * dropdown_obj)
 void lv_dropdown_close(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_img.h
+// ../../lvgl/src/widgets/lv_img.h
 lv_obj_t * lv_img_create(lv_obj_t * parent)
 void lv_img_set_src(lv_obj_t * obj, const void * src)
 void lv_img_set_offset_x(lv_obj_t * obj, lv_coord_t x)
@@ -817,7 +817,7 @@ void lv_img_get_pivot(lv_obj_t * obj, lv_point_t * pivot)
 uint16_t lv_img_get_zoom(lv_obj_t * obj)
 bool lv_img_get_antialias(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_label.h
+// ../../lvgl/src/widgets/lv_label.h
 lv_obj_t * lv_label_create(lv_obj_t * parent)
 void lv_label_set_text(lv_obj_t * obj, const char * text)
 void lv_label_set_text_fmt(lv_obj_t * obj, const char * fmt, ...) LV_FORMAT_ATTRIBUTE(2, 3)
@@ -837,15 +837,15 @@ uint32_t lv_label_get_text_selection_end(const lv_obj_t * obj)
 void lv_label_ins_text(lv_obj_t * obj, uint32_t pos, const char * txt)
 void lv_label_cut_text(lv_obj_t * obj, uint32_t pos, uint32_t cnt)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_line.h
+// ../../lvgl/src/widgets/lv_line.h
 lv_obj_t * lv_line_create(lv_obj_t * parent)
 void lv_line_set_points(lv_obj_t * obj, const lv_point_t points[], uint16_t point_num)
 void lv_line_set_y_invert(lv_obj_t * obj, bool en)
 bool lv_line_get_y_invert(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_objx_templ.h
+// ../../lvgl/src/widgets/lv_objx_templ.h
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_roller.h
+// ../../lvgl/src/widgets/lv_roller.h
 lv_obj_t * lv_roller_create(lv_obj_t * parent)
 void lv_roller_set_options(lv_obj_t * obj, const char * options, lv_roller_mode_t mode)
 void lv_roller_set_selected(lv_obj_t * obj, uint16_t sel_opt, lv_anim_enable_t anim)
@@ -855,7 +855,7 @@ void lv_roller_get_selected_str(const lv_obj_t * obj, char * buf, uint32_t buf_s
 const char * lv_roller_get_options(const lv_obj_t * obj)
 uint16_t lv_roller_get_option_cnt(const lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_slider.h
+// ../../lvgl/src/widgets/lv_slider.h
 lv_obj_t * lv_slider_create(lv_obj_t * parent)
 static inline void lv_slider_set_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
 static inline void lv_slider_set_left_value(lv_obj_t * obj, int32_t value, lv_anim_enable_t anim)
@@ -868,10 +868,10 @@ static inline int32_t lv_slider_get_max_value(const lv_obj_t * obj)
 bool lv_slider_is_dragged(const lv_obj_t * obj)
 static inline lv_slider_mode_t lv_slider_get_mode(lv_obj_t * slider)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_switch.h
+// ../../lvgl/src/widgets/lv_switch.h
 lv_obj_t * lv_switch_create(lv_obj_t * parent)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_table.h
+// ../../lvgl/src/widgets/lv_table.h
 lv_obj_t * lv_table_create(lv_obj_t * parent)
 void lv_table_set_cell_value(lv_obj_t * obj, uint16_t row, uint16_t col, const char * txt)
 void lv_table_set_cell_value_fmt(lv_obj_t * obj, uint16_t row, uint16_t col, const char * fmt, ...)
@@ -887,7 +887,7 @@ lv_coord_t lv_table_get_col_width(lv_obj_t * obj, uint16_t col)
 bool lv_table_has_cell_ctrl(lv_obj_t * obj, uint16_t row, uint16_t col, lv_table_cell_ctrl_t ctrl)
 void lv_table_get_selected_cell(lv_obj_t * obj, uint16_t * row, uint16_t * col)
 
-// ../../lib/libesp32_lvgl/LVGL8/src/widgets/lv_textarea.h
+// ../../lvgl/src/widgets/lv_textarea.h
 lv_obj_t * lv_textarea_create(lv_obj_t * parent)
 void lv_textarea_add_char(lv_obj_t * obj, uint32_t c)
 void lv_textarea_add_text(lv_obj_t * obj, const char * txt)
@@ -923,7 +923,7 @@ void lv_textarea_cursor_left(lv_obj_t * obj)
 void lv_textarea_cursor_down(lv_obj_t * obj)
 void lv_textarea_cursor_up(lv_obj_t * obj)
 
-// ../../lib/libesp32_lvgl/LVGL_assets/src/lv_theme_openhasp.h
+// ../../LVGL_assets/src/lv_theme_openhasp.h
 lv_theme_t * lv_theme_openhasp_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
 bool lv_theme_openhasp_is_inited(void)
 

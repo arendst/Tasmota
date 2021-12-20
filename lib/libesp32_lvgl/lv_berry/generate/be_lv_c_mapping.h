@@ -8,9 +8,10 @@ extern "C" {
 #endif
 
 #include "be_ctypes.h"
+#include "be_mapping.h"
 
 /* `lv_style` methods */
-const lvbe_call_c_t lv_style_func[] = {
+const be_ntv_func_def_t lv_style_func[] = {
   { "set_align", (void*) &lv_style_set_align, "", "(lv.lv_style)i" },
   { "set_anim_speed", (void*) &lv_style_set_anim_speed, "", "(lv.lv_style)i" },
   { "set_anim_time", (void*) &lv_style_set_anim_time, "", "(lv.lv_style)i" },
@@ -103,20 +104,20 @@ const lvbe_call_c_t lv_style_func[] = {
 };
 
 /* `lv_font` methods */
-const lvbe_call_c_t lv_font_func[] = {
+const be_ntv_func_def_t lv_font_func[] = {
 };
 
 /* `lv_color` methods */
-const lvbe_call_c_t lv_color_func[] = {
+const be_ntv_func_def_t lv_color_func[] = {
 };
 
 /* `lv_theme` methods */
-const lvbe_call_c_t lv_theme_func[] = {
+const be_ntv_func_def_t lv_theme_func[] = {
 };
 
 /* `lv_img` methods */
 #ifdef BE_LV_WIDGET_IMG
-const lvbe_call_c_t lv_img_func[] = {
+const be_ntv_func_def_t lv_img_func[] = {
   { "get_angle", (void*) &lv_img_get_angle, "i", "(lv.lv_obj)" },
   { "get_antialias", (void*) &lv_img_get_antialias, "b", "(lv.lv_obj)" },
   { "get_offset_x", (void*) &lv_img_get_offset_x, "i", "(lv.lv_obj)" },
@@ -136,7 +137,7 @@ const lvbe_call_c_t lv_img_func[] = {
 #endif // BE_LV_WIDGET_IMG
 
 /* `lv_disp` methods */
-const lvbe_call_c_t lv_disp_func[] = {
+const be_ntv_func_def_t lv_disp_func[] = {
   { "clean_dcache", (void*) &lv_disp_clean_dcache, "", "(lv.lv_disp)" },
   { "dpx", (void*) &lv_disp_dpx, "i", "(lv.lv_disp)i" },
   { "get_inactive_time", (void*) &lv_disp_get_inactive_time, "i", "(lv.lv_disp)" },
@@ -154,7 +155,7 @@ const lvbe_call_c_t lv_disp_func[] = {
 };
 
 /* `lv_obj` methods */
-const lvbe_call_c_t lv_obj_func[] = {
+const be_ntv_func_def_t lv_obj_func[] = {
   { "add_event_cb", (void*) &lv_obj_add_event_cb, "i", "(lv.lv_obj)^lv_event_cb^i." },
   { "add_flag", (void*) &lv_obj_add_flag, "", "(lv.lv_obj)i" },
   { "add_state", (void*) &lv_obj_add_state, "", "(lv.lv_obj)i" },
@@ -458,7 +459,7 @@ const lvbe_call_c_t lv_obj_func[] = {
 };
 
 /* `lv_group` methods */
-const lvbe_call_c_t lv_group_func[] = {
+const be_ntv_func_def_t lv_group_func[] = {
   { "add_obj", (void*) &lv_group_add_obj, "", "(lv.lv_group)(lv.lv_obj)" },
   { "del", (void*) &lv_group_del, "", "(lv.lv_group)" },
   { "focus_freeze", (void*) &lv_group_focus_freeze, "", "(lv.lv_group)b" },
@@ -481,7 +482,7 @@ const lvbe_call_c_t lv_group_func[] = {
 };
 
 /* `lv_indev` methods */
-const lvbe_call_c_t lv_indev_func[] = {
+const be_ntv_func_def_t lv_indev_func[] = {
   { "enable", (void*) &lv_indev_enable, "", "(lv.lv_indev)b" },
   { "get_gesture_dir", (void*) &lv_indev_get_gesture_dir, "i", "(lv.lv_indev)" },
   { "get_key", (void*) &lv_indev_get_key, "i", "(lv.lv_indev)" },
@@ -501,7 +502,7 @@ const lvbe_call_c_t lv_indev_func[] = {
 
 /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
-const lvbe_call_c_t lv_chart_func[] = {
+const be_ntv_func_def_t lv_chart_func[] = {
   { "get_cursor_point", (void*) &lv_chart_get_cursor_point, "i", "(lv.lv_obj)(lv.lv_chart_cursor)" },
   { "get_point_count", (void*) &lv_chart_get_point_count, "i", "(lv.lv_obj)" },
   { "get_point_pos_by_id", (void*) &lv_chart_get_point_pos_by_id, "", "(lv.lv_obj)(lv.lv_chart_series)i(lv.lv_point)" },
@@ -537,7 +538,7 @@ const lvbe_call_c_t lv_chart_func[] = {
 
 /* `lv_colorwheel` methods */
 #ifdef BE_LV_WIDGET_COLORWHEEL
-const lvbe_call_c_t lv_colorwheel_func[] = {
+const be_ntv_func_def_t lv_colorwheel_func[] = {
   { "get_color_mode", (void*) &lv_colorwheel_get_color_mode, "i", "(lv.lv_obj)" },
   { "get_color_mode_fixed", (void*) &lv_colorwheel_get_color_mode_fixed, "b", "(lv.lv_obj)" },
   { "get_hsv", (void*) &lv_colorwheel_get_hsv, "i", "(lv.lv_obj)" },
@@ -551,14 +552,14 @@ const lvbe_call_c_t lv_colorwheel_func[] = {
 
 /* `lv_imgbtn` methods */
 #ifdef BE_LV_WIDGET_IMGBTN
-const lvbe_call_c_t lv_imgbtn_func[] = {
+const be_ntv_func_def_t lv_imgbtn_func[] = {
   { "set_src", (void*) &lv_imgbtn_set_src, "", "(lv.lv_obj)(lv.lv_imgbtn_state)..." },
 };
 #endif // BE_LV_WIDGET_IMGBTN
 
 /* `lv_led` methods */
 #ifdef BE_LV_WIDGET_LED
-const lvbe_call_c_t lv_led_func[] = {
+const be_ntv_func_def_t lv_led_func[] = {
   { "get_brightness", (void*) &lv_led_get_brightness, "i", "(lv.lv_obj)" },
   { "off", (void*) &lv_led_off, "", "(lv.lv_obj)" },
   { "on", (void*) &lv_led_on, "", "(lv.lv_obj)" },
@@ -570,7 +571,7 @@ const lvbe_call_c_t lv_led_func[] = {
 
 /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
-const lvbe_call_c_t lv_meter_func[] = {
+const be_ntv_func_def_t lv_meter_func[] = {
   { "add_arc", (void*) &lv_meter_add_arc, "lv.lv_meter_indicator", "(lv.lv_obj)(lv.lv_meter_scale)i(lv.lv_color)i" },
   { "add_needle_img", (void*) &lv_meter_add_needle_img, "lv.lv_meter_indicator", "(lv.lv_obj)(lv.lv_meter_scale).ii" },
   { "add_needle_line", (void*) &lv_meter_add_needle_line, "lv.lv_meter_indicator", "(lv.lv_obj)(lv.lv_meter_scale)i(lv.lv_color)i" },
@@ -587,7 +588,7 @@ const lvbe_call_c_t lv_meter_func[] = {
 
 /* `lv_msgbox` methods */
 #ifdef BE_LV_WIDGET_MSGBOX
-const lvbe_call_c_t lv_msgbox_func[] = {
+const be_ntv_func_def_t lv_msgbox_func[] = {
   { "close", (void*) &lv_msgbox_close, "", "(lv.lv_obj)" },
   { "get_active_btn_text", (void*) &lv_msgbox_get_active_btn_text, "s", "(lv.lv_obj)" },
   { "get_btns", (void*) &lv_msgbox_get_btns, "lv.lv_obj", "(lv.lv_obj)" },
@@ -599,7 +600,7 @@ const lvbe_call_c_t lv_msgbox_func[] = {
 
 /* `lv_spinbox` methods */
 #ifdef BE_LV_WIDGET_SPINBOX
-const lvbe_call_c_t lv_spinbox_func[] = {
+const be_ntv_func_def_t lv_spinbox_func[] = {
   { "decrement", (void*) &lv_spinbox_decrement, "", "(lv.lv_obj)" },
   { "get_rollover", (void*) &lv_spinbox_get_rollover, "b", "(lv.lv_obj)" },
   { "get_step", (void*) &lv_spinbox_get_step, "i", "(lv.lv_obj)" },
@@ -617,13 +618,13 @@ const lvbe_call_c_t lv_spinbox_func[] = {
 
 /* `lv_spinner` methods */
 #ifdef BE_LV_WIDGET_SPINNER
-const lvbe_call_c_t lv_spinner_func[] = {
+const be_ntv_func_def_t lv_spinner_func[] = {
 };
 #endif // BE_LV_WIDGET_SPINNER
 
 /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
-const lvbe_call_c_t lv_arc_func[] = {
+const be_ntv_func_def_t lv_arc_func[] = {
   { "get_angle_end", (void*) &lv_arc_get_angle_end, "i", "(lv.lv_obj)" },
   { "get_angle_start", (void*) &lv_arc_get_angle_start, "i", "(lv.lv_obj)" },
   { "get_bg_angle_end", (void*) &lv_arc_get_bg_angle_end, "i", "(lv.lv_obj)" },
@@ -648,7 +649,7 @@ const lvbe_call_c_t lv_arc_func[] = {
 
 /* `lv_bar` methods */
 #ifdef BE_LV_WIDGET_BAR
-const lvbe_call_c_t lv_bar_func[] = {
+const be_ntv_func_def_t lv_bar_func[] = {
   { "get_max_value", (void*) &lv_bar_get_max_value, "i", "(lv.lv_obj)" },
   { "get_min_value", (void*) &lv_bar_get_min_value, "i", "(lv.lv_obj)" },
   { "get_mode", (void*) &lv_bar_get_mode, "i", "(lv.lv_obj)" },
@@ -663,13 +664,13 @@ const lvbe_call_c_t lv_bar_func[] = {
 
 /* `lv_btn` methods */
 #ifdef BE_LV_WIDGET_BTN
-const lvbe_call_c_t lv_btn_func[] = {
+const be_ntv_func_def_t lv_btn_func[] = {
 };
 #endif // BE_LV_WIDGET_BTN
 
 /* `lv_btnmatrix` methods */
 #ifdef BE_LV_WIDGET_BTNMATRIX
-const lvbe_call_c_t lv_btnmatrix_func[] = {
+const be_ntv_func_def_t lv_btnmatrix_func[] = {
   { "clear_btn_ctrl", (void*) &lv_btnmatrix_clear_btn_ctrl, "", "(lv.lv_obj)i(lv.lv_btnmatrix_ctrl)" },
   { "clear_btn_ctrl_all", (void*) &lv_btnmatrix_clear_btn_ctrl_all, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" },
   { "get_btn_text", (void*) &lv_btnmatrix_get_btn_text, "s", "(lv.lv_obj)i" },
@@ -688,7 +689,7 @@ const lvbe_call_c_t lv_btnmatrix_func[] = {
 
 /* `lv_canvas` methods */
 #ifdef BE_LV_WIDGET_CANVAS
-const lvbe_call_c_t lv_canvas_func[] = {
+const be_ntv_func_def_t lv_canvas_func[] = {
   { "blur_hor", (void*) &lv_canvas_blur_hor, "", "(lv.lv_obj)(lv.lv_area)i" },
   { "blur_ver", (void*) &lv_canvas_blur_ver, "", "(lv.lv_obj)(lv.lv_area)i" },
   { "copy_buf", (void*) &lv_canvas_copy_buf, "", "(lv.lv_obj).iiii" },
@@ -709,7 +710,7 @@ const lvbe_call_c_t lv_canvas_func[] = {
 
 /* `lv_checkbox` methods */
 #ifdef BE_LV_WIDGET_CHECKBOX
-const lvbe_call_c_t lv_checkbox_func[] = {
+const be_ntv_func_def_t lv_checkbox_func[] = {
   { "get_text", (void*) &lv_checkbox_get_text, "s", "(lv.lv_obj)" },
   { "set_text", (void*) &lv_checkbox_set_text, "", "(lv.lv_obj)s" },
   { "set_text_static", (void*) &lv_checkbox_set_text_static, "", "(lv.lv_obj)s" },
@@ -718,7 +719,7 @@ const lvbe_call_c_t lv_checkbox_func[] = {
 
 /* `lv_dropdown` methods */
 #ifdef BE_LV_WIDGET_DROPDOWN
-const lvbe_call_c_t lv_dropdown_func[] = {
+const be_ntv_func_def_t lv_dropdown_func[] = {
   { "add_option", (void*) &lv_dropdown_add_option, "", "(lv.lv_obj)si" },
   { "clear_options", (void*) &lv_dropdown_clear_options, "", "(lv.lv_obj)" },
   { "close", (void*) &lv_dropdown_close, "", "(lv.lv_obj)" },
@@ -744,7 +745,7 @@ const lvbe_call_c_t lv_dropdown_func[] = {
 
 /* `lv_label` methods */
 #ifdef BE_LV_WIDGET_LABEL
-const lvbe_call_c_t lv_label_func[] = {
+const be_ntv_func_def_t lv_label_func[] = {
   { "cut_text", (void*) &lv_label_cut_text, "", "(lv.lv_obj)ii" },
   { "get_letter_on", (void*) &lv_label_get_letter_on, "i", "(lv.lv_obj)(lv.lv_point)" },
   { "get_letter_pos", (void*) &lv_label_get_letter_pos, "", "(lv.lv_obj)i(lv.lv_point)" },
@@ -767,7 +768,7 @@ const lvbe_call_c_t lv_label_func[] = {
 
 /* `lv_line` methods */
 #ifdef BE_LV_WIDGET_LINE
-const lvbe_call_c_t lv_line_func[] = {
+const be_ntv_func_def_t lv_line_func[] = {
   { "get_y_invert", (void*) &lv_line_get_y_invert, "b", "(lv.lv_obj)" },
   { "set_points", (void*) &lv_line_set_points, "", "(lv.lv_obj)ii" },
   { "set_y_invert", (void*) &lv_line_set_y_invert, "", "(lv.lv_obj)b" },
@@ -776,7 +777,7 @@ const lvbe_call_c_t lv_line_func[] = {
 
 /* `lv_roller` methods */
 #ifdef BE_LV_WIDGET_ROLLER
-const lvbe_call_c_t lv_roller_func[] = {
+const be_ntv_func_def_t lv_roller_func[] = {
   { "get_option_cnt", (void*) &lv_roller_get_option_cnt, "i", "(lv.lv_obj)" },
   { "get_options", (void*) &lv_roller_get_options, "s", "(lv.lv_obj)" },
   { "get_selected", (void*) &lv_roller_get_selected, "i", "(lv.lv_obj)" },
@@ -789,7 +790,7 @@ const lvbe_call_c_t lv_roller_func[] = {
 
 /* `lv_slider` methods */
 #ifdef BE_LV_WIDGET_SLIDER
-const lvbe_call_c_t lv_slider_func[] = {
+const be_ntv_func_def_t lv_slider_func[] = {
   { "get_left_value", (void*) &lv_slider_get_left_value, "i", "(lv.lv_obj)" },
   { "get_max_value", (void*) &lv_slider_get_max_value, "i", "(lv.lv_obj)" },
   { "get_min_value", (void*) &lv_slider_get_min_value, "i", "(lv.lv_obj)" },
@@ -805,13 +806,13 @@ const lvbe_call_c_t lv_slider_func[] = {
 
 /* `lv_switch` methods */
 #ifdef BE_LV_WIDGET_SWITCH
-const lvbe_call_c_t lv_switch_func[] = {
+const be_ntv_func_def_t lv_switch_func[] = {
 };
 #endif // BE_LV_WIDGET_SWITCH
 
 /* `lv_table` methods */
 #ifdef BE_LV_WIDGET_TABLE
-const lvbe_call_c_t lv_table_func[] = {
+const be_ntv_func_def_t lv_table_func[] = {
   { "add_cell_ctrl", (void*) &lv_table_add_cell_ctrl, "", "(lv.lv_obj)ii(lv.lv_table_cell_ctrl)" },
   { "clear_cell_ctrl", (void*) &lv_table_clear_cell_ctrl, "", "(lv.lv_obj)ii(lv.lv_table_cell_ctrl)" },
   { "get_cell_value", (void*) &lv_table_get_cell_value, "s", "(lv.lv_obj)ii" },
@@ -830,7 +831,7 @@ const lvbe_call_c_t lv_table_func[] = {
 
 /* `lv_textarea` methods */
 #ifdef BE_LV_WIDGET_TEXTAREA
-const lvbe_call_c_t lv_textarea_func[] = {
+const be_ntv_func_def_t lv_textarea_func[] = {
   { "add_char", (void*) &lv_textarea_add_char, "", "(lv.lv_obj)i" },
   { "add_text", (void*) &lv_textarea_add_text, "", "(lv.lv_obj)s" },
   { "clear_selection", (void*) &lv_textarea_clear_selection, "", "(lv.lv_obj)" },
@@ -901,7 +902,7 @@ extern const bclass be_class_lv_theme;
 
 
 // map of clases
-const lvbe_call_c_classes_t lv_classes[] = {
+const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_ARC
   { "lv_arc", &be_class_lv_arc, lv_arc_func, sizeof(lv_arc_func) / sizeof(lv_arc_func[0]) },
 #endif // BE_LV_WIDGET_ARC
@@ -988,106 +989,106 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
   /* `lv_theme` methods */
   /* `lv_img` methods */
 #ifdef BE_LV_WIDGET_IMG
-  int be_ntv_lv_img_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_img_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_img_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_img_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMG
   /* `lv_disp` methods */
   /* `lv_obj` methods */
-  int be_ntv_lv_obj_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_obj_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_obj_create, "+_p", "(lv.lv_obj)"); }
   /* `lv_group` methods */
-  int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+", ""); }
+  int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+_p", ""); }
   /* `lv_indev` methods */
   /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
-  int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CHART
   /* `lv_colorwheel` methods */
 #ifdef BE_LV_WIDGET_COLORWHEEL
-  int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+", "(lv.lv_obj)b"); }
+  int be_ntv_lv_colorwheel_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_colorwheel_create, "+_p", "(lv.lv_obj)b"); }
 #endif // BE_LV_WIDGET_COLORWHEEL
   /* `lv_imgbtn` methods */
 #ifdef BE_LV_WIDGET_IMGBTN
-  int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_imgbtn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_imgbtn_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_IMGBTN
   /* `lv_led` methods */
 #ifdef BE_LV_WIDGET_LED
-  int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_led_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_led_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LED
   /* `lv_meter` methods */
 #ifdef BE_LV_WIDGET_METER
-  int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_meter_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_meter_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_METER
   /* `lv_msgbox` methods */
 #ifdef BE_LV_WIDGET_MSGBOX
-  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+", "(lv.lv_obj)sssb"); }
+  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+_p", "(lv.lv_obj)sssb"); }
 #endif // BE_LV_WIDGET_MSGBOX
   /* `lv_spinbox` methods */
 #ifdef BE_LV_WIDGET_SPINBOX
-  int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_spinbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinbox_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SPINBOX
   /* `lv_spinner` methods */
 #ifdef BE_LV_WIDGET_SPINNER
-  int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+", "(lv.lv_obj)ii"); }
+  int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+_p", "(lv.lv_obj)ii"); }
 #endif // BE_LV_WIDGET_SPINNER
   /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC
-  int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_arc_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_arc_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_ARC
   /* `lv_bar` methods */
 #ifdef BE_LV_WIDGET_BAR
-  int be_ntv_lv_bar_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_bar_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_bar_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_bar_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BAR
   /* `lv_btn` methods */
 #ifdef BE_LV_WIDGET_BTN
-  int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_btn_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btn_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTN
   /* `lv_btnmatrix` methods */
 #ifdef BE_LV_WIDGET_BTNMATRIX
-  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_btnmatrix_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_btnmatrix_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_BTNMATRIX
   /* `lv_canvas` methods */
 #ifdef BE_LV_WIDGET_CANVAS
-  int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_canvas_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_canvas_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CANVAS
   /* `lv_checkbox` methods */
 #ifdef BE_LV_WIDGET_CHECKBOX
-  int be_ntv_lv_checkbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_checkbox_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_checkbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_checkbox_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_CHECKBOX
   /* `lv_dropdown` methods */
 #ifdef BE_LV_WIDGET_DROPDOWN
-  int be_ntv_lv_dropdown_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_dropdown_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_dropdown_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_dropdown_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_DROPDOWN
   /* `lv_label` methods */
 #ifdef BE_LV_WIDGET_LABEL
-  int be_ntv_lv_label_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_label_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_label_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LABEL
   /* `lv_line` methods */
 #ifdef BE_LV_WIDGET_LINE
-  int be_ntv_lv_line_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_line_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_line_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_line_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_LINE
   /* `lv_roller` methods */
 #ifdef BE_LV_WIDGET_ROLLER
-  int be_ntv_lv_roller_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_roller_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_roller_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_roller_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_ROLLER
   /* `lv_slider` methods */
 #ifdef BE_LV_WIDGET_SLIDER
-  int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SLIDER
   /* `lv_switch` methods */
 #ifdef BE_LV_WIDGET_SWITCH
-  int be_ntv_lv_switch_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_switch_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_switch_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_switch_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_SWITCH
   /* `lv_table` methods */
 #ifdef BE_LV_WIDGET_TABLE
-  int be_ntv_lv_table_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_table_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_table_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_table_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_TABLE
   /* `lv_textarea` methods */
 #ifdef BE_LV_WIDGET_TEXTAREA
-  int be_ntv_lv_textarea_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_textarea_create, "+", "(lv.lv_obj)"); }
+  int be_ntv_lv_textarea_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_textarea_create, "+_p", "(lv.lv_obj)"); }
 #endif // BE_LV_WIDGET_TEXTAREA
 
 // create font either empty or from parameter on stack
-int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_font", ""); }
-int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+lv_theme", ""); }
+int lvbe_font_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
+int lvbe_theme_create(bvm *vm)       { return be_call_c_func(vm, NULL, "+_p", ""); }
 
 
 #ifdef __cplusplus
