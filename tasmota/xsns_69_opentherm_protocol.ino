@@ -32,7 +32,7 @@ typedef union {
         uint8_t notSupported : 1; // If set, boiler does not support this command
         uint8_t supported : 1;    // Set if at least one response were successfull
         uint8_t retryCount : 2;   // Retry counter before notSupported flag being set
-        uint8_t manual : 1;       // Only manual call        
+        uint8_t skip : 1;       // Only manual call        
     };
 } OpenThermParamFlags;
 
@@ -247,12 +247,13 @@ OpenThermCommand sns_opentherm_commands[] = {
     {// Boiler Lock-out Reset command
      .m_command_name = "BLOR",
      .m_command_code = (uint8_t)OpenThermMessageID::Command,
-     .m_flags = {.manual = 1},
+     .m_flags = {.skip = 1},
      .m_results = {{.m_u8 = 0}, {.m_u8 = 0}},
      .m_ot_make_request = sns_opentherm_send_blor,
      .m_ot_parse_response = sns_opentherm_parse_generic_u16,
      .m_ot_appent_telemetry = sns_opentherm_tele_u8_u8},
 };
+#define SNS_OT_COMMANDS_COUNT (sizeof(sns_opentherm_commands) / sizeof(OpenThermCommand))
 
 /////////////////////////////////// Process Slave Status Flags & Control //////////////////////////////////////////////////
 unsigned long sns_opentherm_set_slave_flags(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *status)
@@ -445,7 +446,7 @@ unsigned long sns_opentherm_send_blor(struct OpenThermCommandT *self, struct OT_
 {
     AddLog(LOG_LEVEL_ERROR, PSTR("[OTH]: Call Boiler Lock-out Reset"));
     
-    self->m_flags.notSupported = true; // Disable future calls of this command
+    self->m_flags.skip = true; // Disable future calls of this command
 
     unsigned int data = 1; //1 : “BLOR”= Boiler Lock-out Reset command
     data <<= 8;
@@ -454,10 +455,16 @@ unsigned long sns_opentherm_send_blor(struct OpenThermCommandT *self, struct OT_
 
 bool sns_opentherm_call_blor() 
 {
-    OpenThermCommandT *cmd = &sns_opentherm_commands[(sizeof(sns_opentherm_commands) / sizeof(OpenThermCommand))-1];
-    if (strcmp(cmd->m_command_name, "BLOR")) return false;
-    cmd->m_flags.notSupported = false;
-    return true;
+    for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
+    {
+        struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
+        if (!strcmp(cmd->m_command_name, "BLOR") && cmd->m_flags.skip) {
+          cmd->m_flags.skip = false;
+          return true;
+        }
+    }
+
+    return false;
 }
 
 /////////////////////////////////// Generic Single Float /////////////////////////////////////////////////
@@ -517,7 +524,6 @@ void sns_opentherm_parse_boiler_temperature(struct OpenThermCommandT *self, stru
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SNS_OT_COMMANDS_COUNT (sizeof(sns_opentherm_commands) / sizeof(OpenThermCommand))
 int sns_opentherm_current_command = SNS_OT_COMMANDS_COUNT;
 
 unsigned long sns_opentherm_get_next_request(struct OT_BOILER_STATUS_T *boilerStatus)
@@ -581,7 +587,7 @@ void sns_opentherm_dump_telemetry()
     for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
     {
         struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
-        if (!cmd->m_flags.supported)
+        if (!cmd->m_flags.supported || cmd->m_flags.skip)
         {
             continue;
         }
@@ -597,8 +603,9 @@ void sns_opentherm_protocol_reset()
     for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
     {
         struct OpenThermCommandT *cmd = &sns_opentherm_commands[i];
-        cmd->m_flags.notSupported = cmd->m_flags.manual;
-        cmd->m_flags.retryCount   = 0;
+        int skip = cmd->m_flags.skip;
+        cmd->m_flags.m_flags = 0;
+        cmd->m_flags.skip = skip;
         memset(cmd->m_results, 0, sizeof(OpenThermCommandT::m_results));
     }
 }
