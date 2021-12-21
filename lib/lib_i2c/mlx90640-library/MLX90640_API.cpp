@@ -42,7 +42,9 @@ int MLX90640_I2CRead(uint8_t addr, uint32_t reg, uint16_t len, uint16_t *reg_dat
 int MLX90640_I2CWrite(uint8_t _deviceAddress, unsigned int writeAddress, uint16_t data);
 
 // I2C
-#define I2C_BUFFER_LENGTH 128
+#ifndef I2C_BUFFER_LENGTH
+  #define I2C_BUFFER_LENGTH 128
+#endif
 
 int MLX90640_I2CRead(uint8_t addr, uint32_t reg, uint16_t len, uint16_t *reg_data){
   int bytesRemaining = len * 2;
