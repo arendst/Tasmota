@@ -88,11 +88,36 @@ inline void analogWriteFreq(uint32_t freq) {
   _analogWriteFreqRange();
 }
 
+/*
 inline void analogAttach(uint32_t pin, uint32_t channel) {
   _pwm_channel[channel &7] = pin;
   ledcAttachPin(pin, channel + PWM_CHANNEL_OFFSET);
   ledcSetup(channel + PWM_CHANNEL_OFFSET, _pwm_frequency, _pwm_bit_num);
 //  Serial.printf("attach %d - %d\n", channel, pin);
+}
+*/
+inline bool analogAttach(uint32_t pin) {
+  // Find if pin is already attached
+  uint32_t channel;
+  for (channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
+    if (_pwm_channel[channel] == pin) {
+      // Already attached
+//      Serial.printf("PWM: Already attached pin %d to channel %d\n", pin, channel);
+      return true;
+    }
+  }
+  // Find an empty channel
+  for (channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
+    if (99 == _pwm_channel[channel]) {
+      _pwm_channel[channel] = pin;
+      ledcAttachPin(pin, channel + PWM_CHANNEL_OFFSET);
+      ledcSetup(channel + PWM_CHANNEL_OFFSET, _pwm_frequency, _pwm_bit_num);
+//      Serial.printf("PWM: New attach pin %d to channel %d\n", pin, channel);
+      return true;
+    }
+  }
+  // No more channels available
+  return false;
 }
 
 inline void analogWrite(uint8_t pin, int val)

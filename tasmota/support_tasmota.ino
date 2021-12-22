@@ -439,7 +439,10 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
 #else //USE_LIGHT
       pwm = changeUIntScale((uint16_t)(state ? Settings->ledpwm_on : Settings->ledpwm_off), 0, 255, 0, Settings->pwm_range); // linear
 #endif //USE_LIGHT
-      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm : pwm);
+#ifdef ESP32
+      if (analogAttach(Pin(GPIO_LED1, led)))
+#endif
+        analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm : pwm);
     } else {
       DigitalWrite(GPIO_LED1, led, bitRead(TasmotaGlobal.led_inverted, led) ? !state : state);
     }
@@ -1996,7 +1999,7 @@ void GpioInit(void)
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
 #ifdef ESP32
-      analogAttach(Pin(GPIO_PWM1, i), i);
+      analogAttach(Pin(GPIO_PWM1, i));
 #endif  // ESP32
       if (TasmotaGlobal.light_type) {
         // force PWM GPIOs to low or high mode, see #7165

@@ -1158,7 +1158,7 @@ void LightInit(void)
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
 #ifdef ESP32
-        analogAttach(Pin(GPIO_PWM1, i), i);
+        analogAttach(Pin(GPIO_PWM1, i));
 #endif  // ESP32
       }
     }

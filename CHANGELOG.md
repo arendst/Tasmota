@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [10.1.0.1]
+### Fixed
+- ESP32 LedPwmMode exception (#14073)
 
 ## [Released]
 

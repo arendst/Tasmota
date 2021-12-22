@@ -108,5 +108,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Changed
 
 ### Fixed
+- ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
 
 ### Removed
