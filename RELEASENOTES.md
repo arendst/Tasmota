@@ -102,12 +102,22 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v10.1.0.1
 ### Added
+- PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
+- Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
+- Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
+- ESP32 support for TuyaMcu
+- ESP32 Berry features
 
 ### Breaking Changed
 
 ### Changed
+- Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
+- Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
 
 ### Fixed
+- EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
+- ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
+- ESP32 Compile error when I2S_Audio is enabled [#14095](https://github.com/arendst/Tasmota/issues/14095)
 
 ### Removed
