@@ -55,6 +55,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_hardserial = false;
   m_hardswap = false;
   m_stop_bits = 1;
+  m_parity = -1;
   m_nwmode = nwmode;
   serial_buffer_size = buffer_size;
   m_rx_pin = receive_pin;
@@ -121,26 +122,23 @@ bool TasmotaSerial::isValidGPIOpin(int pin) {
 
 bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   if (!m_valid) { return false; }
-  if (config > 2) {
-    // Legacy support where software serial fakes two stop bits if either stop bits is 2 or parity is not None
-    m_stop_bits = ((config &0x30) >> 5) +1;
-    if ((1 == m_stop_bits) && (config &0x03)) {
-      m_stop_bits++;
+  // get the number of stop bits
+  m_stop_bits = (config &0x20) ? 2 : 1;
+  // check for parity
+  if (config &0x02) {           // parity is enabled
+    if (config &0x01) {
+      m_parity = HIGH;          // odd parity
+    } else {
+      m_parity = LOW;           // even parity
     }
   } else {
-    m_stop_bits = ((config -1) &1) +1;
-#ifdef ESP8266
-    config = (2 == m_stop_bits) ? (uint32_t)SERIAL_8N2 : (uint32_t)SERIAL_8N1;
-#endif  // ESP8266
-#ifdef ESP32
-    config = (2 == m_stop_bits) ? SERIAL_8N2 : SERIAL_8N1;
-#endif  // ESP32
+    m_parity = -1;              // no parity
   }
 
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
-    Serial.begin(speed, (SerialConfig)config);
+    Serial.begin(speed, (SerialConfig)ConvertSerialConfig(config));
     if (m_hardswap) {
       Serial.swap();
     }
@@ -285,13 +283,22 @@ int TasmotaSerial::available(void) {
 void IRAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
   uint32_t wait = m_bit_time;
   uint32_t start = ESP.getCycleCount();
+  uint8_t numOnes = 0;
+  uint8_t bit;
   // Start bit;
   digitalWrite(m_tx_pin, LOW);
   TM_SERIAL_WAIT_SND_FAST;
   for (uint32_t i = 0; i < 8; i++) {
-    digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
+    bit = (b &1);
+    numOnes += bit;
+    digitalWrite(m_tx_pin, bit ? HIGH : LOW);
     TM_SERIAL_WAIT_SND_FAST;
     b >>= 1;
+  }
+  // parity bit
+  if (m_parity != -1) {
+    digitalWrite(m_tx_pin, (numOnes %2) ? !m_parity : m_parity);
+    TM_SERIAL_WAIT_SND_FAST;
   }
   // Stop bit(s)
   digitalWrite(m_tx_pin, HIGH);
@@ -318,14 +325,23 @@ size_t TasmotaSerial::write(uint8_t b) {
       uint32_t wait = m_bit_time;
       //digitalWrite(m_tx_pin, HIGH);     // already in HIGH mode
       uint32_t start = ESP.getCycleCount();
+      uint8_t numOnes = 0;
+      uint8_t bit;      
       // Start bit;
       digitalWrite(m_tx_pin, LOW);
       TM_SERIAL_WAIT_SND;
       for (uint32_t i = 0; i < 8; i++) {
-        digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
+        bit = (b &1);
+        numOnes += bit;     
+        digitalWrite(m_tx_pin, bit ? HIGH : LOW);        
         TM_SERIAL_WAIT_SND;
         b >>= 1;
       }
+      // parity bit
+      if (m_parity != -1) {
+        digitalWrite(m_tx_pin, (numOnes %2) ? !m_parity : m_parity);
+        TM_SERIAL_WAIT_SND;
+      }      
       // Stop bit(s)
       digitalWrite(m_tx_pin, HIGH);
       // re-enable interrupts during stop bits, it's not an issue if they are longer than expected
@@ -357,6 +373,12 @@ void IRAM_ATTR TasmotaSerial::rxRead(void) {
       if (next != (int)m_out_pos) {
         m_buffer[m_in_pos] = rec;
         m_in_pos = next;
+      }
+
+      // just consume the parity bit -- no parity checking is occuring
+      if (m_parity != -1) {
+        TM_SERIAL_WAIT_RCV_LOOP;  // wait for the parity bit
+        wait += m_bit_time / 4;
       }
 
       TM_SERIAL_WAIT_RCV_LOOP;    // wait for stop bit
