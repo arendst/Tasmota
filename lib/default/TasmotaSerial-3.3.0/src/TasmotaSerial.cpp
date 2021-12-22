@@ -30,8 +30,8 @@ extern "C" {
 #ifdef ESP8266
 
 // added to access kTasmotaSerialConfig
-#include "..\..\..\..\tasmota\tasmota_compat.h"
-#include "..\..\..\..\tasmota\tasmota.h"
+#include "../../../../tasmota/tasmota_compat.h"
+#include "../../../../tasmota/tasmota.h"
 
 
 void IRAM_ATTR callRxRead(void *self) { ((TasmotaSerial*)self)->rxRead(); };
