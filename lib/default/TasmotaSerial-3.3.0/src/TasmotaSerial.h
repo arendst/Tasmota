@@ -35,8 +35,6 @@
 #include <HardwareSerial.h>
 #endif
 
-extern uint32_t ConvertSerialConfig(uint8_t serial_config);
-
 class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
@@ -70,7 +68,6 @@ class TasmotaSerial : public Stream {
     int m_rx_pin;
     int m_tx_pin;
     uint32_t m_stop_bits;
-    uint32_t m_parity;  
     uint32_t ss_byte;
     uint32_t ss_bstart;
     uint32_t ss_index;
