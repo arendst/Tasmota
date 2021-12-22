@@ -28,6 +28,7 @@ bool knx_started = false;
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
+#include <TasmotaSerial.h>
 
 #ifdef ESP8266
 #include <Ticker.h>
