@@ -43,7 +43,6 @@ typedef struct be_ntv_class_def_t {
 } be_ntv_class_def_t;
 
 void be_raisef(bvm *vm, const char *except, const char *msg, ...);
-void be_set_gen_cb_name(bvm *vm, const char * gen_cb);
 
 extern void be_map_insert_int(bvm *vm, const char *key, bint value);
 extern void be_map_insert_bool(bvm *vm, const char *key, bbool value);
@@ -57,7 +56,7 @@ extern void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr
 extern int be_find_global_or_module_member(bvm *vm, const char * cl_name);
 
 extern bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
-extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const char * gen_cb);
+extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *len);
 extern void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);;
 extern int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
 

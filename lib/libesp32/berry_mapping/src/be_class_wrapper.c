@@ -13,14 +13,6 @@
 #include "be_exec.h"
 #include <string.h>
 
-// By default the cb generator is cb.gen_cb
-// This can be changed. Note: it is across all VMs
-static const char * be_gen_cb_name = "cb.gen_cb";
-
-void be_set_gen_cb_name(bvm *vm, const char * gen_cb) {
-  if (gen_cb) be_gen_cb_name = gen_cb;
-}
-
 /*********************************************************************************************\
  * Converision from real <-> int
  * 
@@ -165,8 +157,8 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
 
 // read a single value at stack position idx, convert to int.
 // if object instance, get `_p` member and convert it recursively
-intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const char * gen_cb) {
-  // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', gen_cb=%p, type=%s", idx, arg_type ? arg_type : "", gen_cb ? gen_cb : "", be_typename(vm, idx));
+intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf_len) {
+  // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', type=%s", idx, arg_type ? arg_type : "", be_typename(vm, idx));
   int ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
@@ -179,7 +171,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
   if (arg_type_len > 1 && arg_type[0] == '^') {     // it is a callback
     arg_type++;   // skip first character
     if (be_isclosure(vm, idx)) {
-      ret = be_find_global_or_module_member(vm, gen_cb);
+      ret = be_find_global_or_module_member(vm, "cb.make_cb");
       if (ret) {
         be_pushvalue(vm, idx);
         be_pushvalue(vm, 1);
@@ -191,7 +183,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
         // berry_log_C("func=%p", func);
         return (int32_t) func;
       } else {
-        be_raisef(vm, "type_error", "Can't find callback generator: %s", gen_cb);
+        be_raisef(vm, "type_error", "Can't find callback generator: 'cb.make_cb'");
       }
     } else {
       be_raise(vm, "type_error", "Closure expected for callback type");
@@ -228,17 +220,12 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
   // non-simple type
   if (be_isinstance(vm, idx))  {
     // check if the instance is a subclass of `bytes()``
-    be_getbuiltin(vm, "bytes");
-    if (be_isderived(vm, idx)) {
-      be_pop(vm, 1);
-      be_getmember(vm, idx, "_buffer");
-      be_pushvalue(vm, idx);
-      be_call(vm, 1);
-      int32_t ret = (int32_t) be_tocomptr(vm, -2);
-      be_pop(vm, 2);
+    if (be_isbytes(vm, idx)) {
+      size_t len;
+      intptr_t ret = (intptr_t) be_tobytes(vm, idx, &len);
+      if (buf_len) { *buf_len = (int) len; }
       return ret;
     } else {
-      be_pop(vm, 1);
       // we accept either `_p` or `.p` attribute to retrieve a pointer
       if (!be_getmember(vm, idx, "_p")) {
         be_pop(vm, 1);    // remove `nil`
@@ -286,6 +273,9 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, const ch
 //   - 'b': bool
 //   - 'i': int (int32_t)
 //   - 's': string (const char *)
+//   - '.': any argument (no check)
+//   - '-': skip argument and ignore
+//   - '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
 //
 // - a class name surroungded by parenthesis
 //   - '(lv_button)' -> lv_button class or derived
@@ -298,6 +288,7 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
   char type_short_name[32];
 
   uint32_t p_idx = 0; // index in p[], is incremented with each parameter except '-'
+  int32_t buf_len = -1;   // stores the length of a bytes() buffer to be used as '~' attribute
   for (uint32_t i = 0; i < argc; i++) {
     type_short_name[0] = 0;   // clear string
     // extract individual type
@@ -344,9 +335,18 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
       }
     }
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
-    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, "cb.make_cb");
+    p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, &buf_len);
     // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
     p_idx++;
+
+    if (arg_type[arg_idx] == '~') { // if next argument is virtual
+      if (buf_len < 0) {
+        be_raisef(vm, "value_error", "no bytes() length known");
+      }
+      p[p_idx] = buf_len; // add the previous buffer len
+      p_idx++;
+      arg_idx++; // skip this arg
+    }
   }
 
   // check if we are missing arguments
