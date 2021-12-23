@@ -171,6 +171,8 @@ bool Rg15Command(void) {
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
       Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), rg15_buffer);
       Rg15Process(rg15_buffer);
+    } else {
+      ResponseCmndDone();
     }
   }
 
