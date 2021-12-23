@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v10.1.0.1
+## Changelog v10.1.0.2
 ### Added
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
 - Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
@@ -111,8 +111,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- TasmotaSerial library from v3.3.0 to v3.4.0 [#14153](https://github.com/arendst/Tasmota/issues/14153)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
+- Force initial serial configuration even if no serial GPIO's are enabled [#14153](https://github.com/arendst/Tasmota/issues/14153)
+- Increase SerialBridge receive buffer from 130 to 256 characters [#14153](https://github.com/arendst/Tasmota/issues/14153)
 
 ### Fixed
 - EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
