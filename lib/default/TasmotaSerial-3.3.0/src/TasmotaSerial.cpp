@@ -28,7 +28,6 @@ extern "C" {
 #include <TasmotaSerial.h>
 
 #ifdef ESP8266
-
 void IRAM_ATTR callRxRead(void *self) { ((TasmotaSerial*)self)->rxRead(); };
 
 // As the Arduino attachInterrupt has no parameter, lists of objects
@@ -140,7 +139,7 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   if (m_hardserial) {
 #ifdef ESP8266
     Serial.flush();
-    Serial.begin(speed, (SerialConfig)config);
+    Serial.begin(speed, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + config));
     if (m_hardswap) {
       Serial.swap();
     }

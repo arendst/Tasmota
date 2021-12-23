@@ -3620,15 +3620,7 @@ chknext:
             glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, 1, 0, rxbsiz);
 
             if (glob_script_mem.sp) {
-              uint32_t config;
-#ifdef ESP8266
-              config = pgm_read_byte(kTasmotaSerialConfig + sconfig);
-#endif  // ESP8266
-
-#ifdef ESP32
-              config = pgm_read_dword(kTasmotaSerialConfig + sconfig);
-#endif // ESP32
-              fvar = glob_script_mem.sp->begin(br, config);
+              fvar = glob_script_mem.sp->begin(br, ConvertSerialConfig(sconfig));
               uint32_t savc = Settings->serial_config;
               //setRxBufferSize(TMSBSIZ);
 
