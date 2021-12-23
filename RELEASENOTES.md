@@ -114,7 +114,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - TasmotaSerial library from v3.3.0 to v3.4.0 [#14153](https://github.com/arendst/Tasmota/issues/14153)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
-- Force initial serial configuration even if no serial GPIO's are enabled [#14153](https://github.com/arendst/Tasmota/issues/14153)
 - Increase SerialBridge receive buffer from 130 to 256 characters [#14153](https://github.com/arendst/Tasmota/issues/14153)
 
 ### Fixed

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - TasmotaSerial library from v3.3.0 to v3.4.0 (#14153)
 - Force initial serial configuration even if no serial GPIO's are enabled (#14153)
+- Revert change to fix extra flashwrite before QuickPowerDetection (#14153)
 - Increase SerialBridge receive buffer from 130 to 256 characters (#14153)
 
 ## [10.1.0.1]
