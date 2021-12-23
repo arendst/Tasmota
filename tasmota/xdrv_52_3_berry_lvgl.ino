@@ -375,7 +375,6 @@ extern "C" {
       if (argc == 1) {
         uconfig = be_tostring(vm, 1);
       }
-      be_set_gen_cb_name(vm, "_lvgl.gen_cb");   // TODO maybe not the best place for it
       start_lvgl(uconfig);
       be_return_nil(vm);
     }
