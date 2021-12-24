@@ -111,6 +111,8 @@ return_types = {
   "lv_meter_scale_t *": "lv_meter_scale",
   "lv_meter_indicator_t *": "lv_meter_indicator",
   "lv_obj_class_t *": "lv_obj_class",
+  "lv_chart_series_t *": "lv_chart_series",
+  "lv_chart_cursor_t *": "lv_chart_cursor",
 
   "_lv_obj_t *": "lv_obj",
   "lv_obj_t *": "lv_obj",
