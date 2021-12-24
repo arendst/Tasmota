@@ -80,7 +80,7 @@ bool Rg15Poll(void) {
     if (++Rg15.time == RG15_EVENT_TIMEOUT) {
       Rg15.acc = 0;
       Rg15.rate = 0;
-//      MqttPublishSensor();
+      MqttPublishSensor();
     }
 
     return false;
@@ -96,7 +96,7 @@ bool Rg15Poll(void) {
     Rg15Process(rg15_buffer);
   }
 
-//  MqttPublishSensor();
+  MqttPublishSensor();
 
   return true;
 }
