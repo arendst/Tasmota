@@ -560,6 +560,8 @@ extern const bcstring be_const_str_reapply;
 extern const bcstring be_const_str_redirect;
 extern const bcstring be_const_str_refr_size;
 extern const bcstring be_const_str_register_obj;
+extern const bcstring be_const_str_remote_ip;
+extern const bcstring be_const_str_remote_port;
 extern const bcstring be_const_str_remove;
 extern const bcstring be_const_str_remove_cmd;
 extern const bcstring be_const_str_remove_driver;

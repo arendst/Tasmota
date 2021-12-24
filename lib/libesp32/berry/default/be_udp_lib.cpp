@@ -98,6 +98,18 @@ extern "C" {
       uint8_t * buf = (uint8_t*) be_pushbuffer(vm, btr);
       int32_t btr2 = udp->read(buf, btr);
       be_pushbytes(vm, buf, btr2);
+
+      // set remotet ip
+      IPAddress remote_ip = udp->remoteIP();
+      be_pushstring(vm, remote_ip.toString().c_str());
+      be_setmember(vm, 1, "remote_ip");
+      be_pop(vm, 1);
+
+      // set remote port
+      be_pushint(vm, udp->remotePort());
+      be_setmember(vm, 1, "remote_port");
+      be_pop(vm, 1);
+
       be_return(vm);  /* return code */
     } else {
       be_return_nil(vm);
@@ -116,6 +128,8 @@ extern "C" {
 
 class be_class_udp (scope: global, name: udp) {
     .p, var
+    remote_ip, var
+    remote_port, var
     init, func(be_udp_init)
     deinit, func(be_udp_deinit)
 
