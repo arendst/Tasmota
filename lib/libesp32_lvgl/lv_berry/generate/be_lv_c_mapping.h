@@ -503,10 +503,13 @@ const be_ntv_func_def_t lv_indev_func[] = {
 /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
 const be_ntv_func_def_t lv_chart_func[] = {
+  { "add_cursor", (void*) &lv_chart_add_cursor, "lv.lv_chart_cursor", "(lv.lv_obj)(lv.lv_color)i" },
+  { "add_series", (void*) &lv_chart_add_series, "lv.lv_chart_series", "(lv.lv_obj)(lv.lv_color)i" },
   { "get_cursor_point", (void*) &lv_chart_get_cursor_point, "i", "(lv.lv_obj)(lv.lv_chart_cursor)" },
   { "get_point_count", (void*) &lv_chart_get_point_count, "i", "(lv.lv_obj)" },
   { "get_point_pos_by_id", (void*) &lv_chart_get_point_pos_by_id, "", "(lv.lv_obj)(lv.lv_chart_series)i(lv.lv_point)" },
   { "get_pressed_point", (void*) &lv_chart_get_pressed_point, "i", "(lv.lv_obj)" },
+  { "get_series_next", (void*) &lv_chart_get_series_next, "lv.lv_chart_series", "(lv.lv_obj)(lv.lv_chart_series)" },
   { "get_type", (void*) &lv_chart_get_type, "i", "(lv.lv_obj)" },
   { "get_x_start_point", (void*) &lv_chart_get_x_start_point, "i", "(lv.lv_obj)(lv.lv_chart_series)" },
   { "get_zoom_x", (void*) &lv_chart_get_zoom_x, "i", "(lv.lv_obj)" },

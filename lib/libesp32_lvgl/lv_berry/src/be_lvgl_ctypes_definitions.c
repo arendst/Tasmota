@@ -402,6 +402,36 @@ const be_ctypes_structure_t be_lv_meter_indicator_scale_lines = {
     { "width_mod", 16, 0, 0, ctypes_i16, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_chart_series = {
+  13,  /* size in bytes */
+  9,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[9]) {
+    { "color", 8, 0, 0, ctypes_u16, 1 },
+    { "hidden", 12, 0, 1, ctypes_bf, 0 },
+    { "start_point", 10, 0, 0, ctypes_u16, 0 },
+    { "x_axis_sec", 12, 3, 1, ctypes_bf, 0 },
+    { "x_ext_buf_assigned", 12, 1, 1, ctypes_bf, 0 },
+    { "x_points", 0, 0, 0, ctypes_ptr32, 0 },
+    { "y_axis_sec", 12, 4, 1, ctypes_bf, 0 },
+    { "y_ext_buf_assigned", 12, 2, 1, ctypes_bf, 0 },
+    { "y_points", 4, 0, 0, ctypes_ptr32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_chart_cursor = {
+  14,  /* size in bytes */
+  7,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[7]) {
+    { "color", 6, 0, 0, ctypes_u16, 1 },
+    { "dir", 12, 0, 0, ctypes_u8, 0 },
+    { "point_id", 4, 0, 0, ctypes_u16, 0 },
+    { "pos_set", 13, 0, 1, ctypes_bf, 0 },
+    { "pos_x", 0, 0, 0, ctypes_i16, 0 },
+    { "pos_y", 2, 0, 0, ctypes_i16, 0 },
+    { "ser", 8, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_obj_class = {
   27,  /* size in bytes */
   10,  /* number of elements */
@@ -439,6 +469,8 @@ static const char * be_ctypes_instance_mappings[] = {
 };
 
 static be_define_ctypes_class(lv_area, &be_lv_area, &be_class_ctypes, "lv_area");
+static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ctypes, "lv_chart_cursor");
+static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes, "lv_chart_series");
 static be_define_ctypes_class(lv_draw_img_dsc, &be_lv_draw_img_dsc, &be_class_ctypes, "lv_draw_img_dsc");
 static be_define_ctypes_class(lv_draw_line_dsc, &be_lv_draw_line_dsc, &be_class_ctypes, "lv_draw_line_dsc");
 static be_define_ctypes_class(lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param, &be_class_ctypes, "lv_draw_mask_angle_param");
@@ -467,6 +499,8 @@ static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes, "l
 
 void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
+  ctypes_register_class(vm, &be_class_lv_chart_cursor, &be_lv_chart_cursor);
+  ctypes_register_class(vm, &be_class_lv_chart_series, &be_lv_chart_series);
   ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_line_dsc, &be_lv_draw_line_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param);
@@ -496,6 +530,8 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
 
 be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_area", &be_class_lv_area },
+  { "lv_chart_cursor", &be_class_lv_chart_cursor },
+  { "lv_chart_series", &be_class_lv_chart_series },
   { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
   { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
   { "lv_draw_mask_angle_param", &be_class_lv_draw_mask_angle_param },

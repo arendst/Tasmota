@@ -24,6 +24,7 @@ lv_text_decor = ctypes.u8
 lv_font = ctypes.u32
 lv_blend_mode = ctypes.u8
 lv_draw_mask_line_side = ctypes.u8
+lv_dir = ctypes.u8
 uint8_t_1 = ctypes.bf_1
 uint8_t_2 = ctypes.bf_2
 uint8_t_3 = ctypes.bf_3
@@ -334,6 +335,29 @@ lv_meter_indicator_scale_lines = [            # valid LVGL8
     [uint8_t_1, "local_grad"],
 ]
 lv_meter_indicator_scale_lines = ctypes.structure(lv_meter_indicator_scale_lines, "lv_meter_indicator_scale_lines")
+
+lv_chart_series = [
+    [ptr, "x_points"],
+    [ptr, "y_points"],
+    [lv_color, "color"],
+    [uint16_t, "start_point"],
+    [uint8_t_1, "hidden"],
+    [uint8_t_1, "x_ext_buf_assigned"],
+    [uint8_t_1, "y_ext_buf_assigned"],
+    [uint8_t_1, "x_axis_sec"],
+    [uint8_t_1, "y_axis_sec"],
+]
+lv_chart_series = ctypes.structure(lv_chart_series, "lv_chart_series")
+
+lv_chart_cursor = [
+    [lv_point, "pos"],
+    [uint16_t, "point_id"],
+    [lv_color, "color"],
+    [ptr, "ser"],
+    [lv_dir, "dir"],
+    [uint8_t_1, "pos_set"],
+]
+lv_chart_cursor = ctypes.structure(lv_chart_cursor, "lv_chart_cursor")
 
 #- --------- class system --------- -#
 lv_obj_class_ptr = ptr
