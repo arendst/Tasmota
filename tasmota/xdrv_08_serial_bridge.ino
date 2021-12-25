@@ -25,7 +25,7 @@
 #define XDRV_08                    8
 #define HARDWARE_FALLBACK          2
 
-const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = 256;
+const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
 const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
@@ -106,13 +106,7 @@ void SerialBridgeInit(void)
   serial_bridge_active = false;
   if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
     SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);
-#ifdef ESP8266
-    if (SerialBridgeSerial->begin(Settings->sbaudrate * 300, (SerialConfig)ConvertSerialConfig(Settings->serial_config)))  // Baud rate is stored div 300 so it fits into 16 bits
-#endif  // ESP8266
-#ifdef ESP32
-    if (SerialBridgeSerial->begin(Settings->sbaudrate * 300, ConvertSerialConfig(Settings->serial_config)))  // Baud rate is stored div 300 so it fits into 16 bits
-#endif  // ESP32    
-    {
+    if (SerialBridgeSerial->begin(Settings->sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
         serial_bridge_buffer = TasmotaGlobal.serial_in_buffer;  // Use idle serial buffer to save RAM

@@ -35,27 +35,6 @@
 #include <HardwareSerial.h>
 #endif
 
-#ifdef ESP8266
-const uint8_t kTasmotaSerialConfig[] PROGMEM = {
-  SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
-  SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
-  SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
-  SERIAL_5E2, SERIAL_6E2, SERIAL_7E2, SERIAL_8E2,
-  SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
-  SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
-};
-#endif  // ESP8266
-#ifdef ESP32
-const uint32_t kTasmotaSerialConfig[] PROGMEM = {
-  SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
-  SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
-  SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
-  SERIAL_5E2, SERIAL_6E2, SERIAL_7E2, SERIAL_8E2,
-  SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
-  SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
-};
-#endif  // ESP32
-
 class TasmotaSerial : public Stream {
   public:
     TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);

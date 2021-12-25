@@ -28,7 +28,6 @@ bool knx_started = false;
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
-#include <TasmotaSerial.h>
 
 #ifdef ESP8266
 #include <Ticker.h>
@@ -1886,14 +1885,15 @@ void SetSerialBegin(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
-  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)ConvertSerialConfig(Settings->serial_config));
+  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings->serial_config));
   SetSerialSwap();
 #endif  // ESP8266
 #ifdef ESP32
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-  Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
+  uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings->serial_config);
+  Serial.begin(TasmotaGlobal.baudrate, config);
 #endif  // ESP32
 }
 
