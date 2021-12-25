@@ -487,8 +487,9 @@ typedef struct {
   int32_t       energy_kWhyesterday_ph[3]; // 320
   int32_t       energy_kWhtotal_ph[3];     // 32C
 
-  uint8_t       free_338[7];               // 338
+  uint8_t       free_338[6];               // 338
 
+  uint8_t       sserial_config;            // 33E
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
@@ -595,10 +596,10 @@ typedef struct {
 
   uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
-
   int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  //508
   int8_t        shutter_tilt_pos[MAX_SHUTTERS];        //51C
   uint16_t      influxdb_period;           // 520
+
   uint8_t       free_522[10];              // 522
 
   uint16_t      mqtt_keepalive;            // 52C

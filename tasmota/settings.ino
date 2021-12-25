@@ -1472,6 +1472,9 @@ void SettingsDelta(void) {
 #endif
       }
     }
+    if (Settings->version < 0x0A010003) {
+      Settings->sserial_config = Settings->serial_config;
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

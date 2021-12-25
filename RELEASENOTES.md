@@ -100,8 +100,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v10.1.0.2
+## Changelog v10.1.0.3
 ### Added
+- Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
 - Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
 - Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
