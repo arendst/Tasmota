@@ -115,6 +115,9 @@ bool DhtRead(uint32_t sensor) {
     }
   }
   interrupts();
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Read %5_H"), dht_data);
+
   if (i < 40) { return false; }
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
