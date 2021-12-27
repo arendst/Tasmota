@@ -152,11 +152,10 @@ bool DhtRead(uint32_t sensor) {
     case GPIO_SI7021:                                   // iTead SI7021
       humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
       // DHT21/22 (Adafruit):
-      temperature = ((int16_t)(dht_data[2] & 0x7F) << 8 ) | dht_data[3];
-      temperature *= 0.1f;
-      if (dht_data[2] & 0x80) {
-        temperature *= -1;
-      }
+      int16_t temp16 = dht_data[2] << 8  | dht_data[3]; // case 1 : signed 16 bits
+      if ((dht_data[2] & 0xF0) == 0x80)                 // case 2 : negative when high nibble = 0x80
+        temp16 = -(0xFFF & temp16);
+      temperature = 0.1f * temp16;
       break;
   }
   if (isnan(temperature) || isnan(humidity)) {
