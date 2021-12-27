@@ -11,18 +11,8 @@
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
-
-extern int lv0_start(bvm *vm);
-
-extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder logic
-
-extern int lv0_load_montserrat_font(bvm *vm);
-extern int lv0_load_seg7_font(bvm *vm);
-extern int lv0_load_robotocondensed_latin1_font(bvm *vm);
 extern int lv0_load_font(bvm *vm);
-extern int lv0_load_freetype_font(bvm *vm);
 
-extern int lv0_screenshot(bvm *vm);
 
 static int lv_get_hor_res(void) {
   return lv_disp_get_hor_res(lv_disp_get_default());
@@ -655,29 +645,54 @@ const be_const_member_t lv0_constants[] = {
     { "TEXT_FLAG_FIT", LV_TEXT_FLAG_FIT },
     { "TEXT_FLAG_NONE", LV_TEXT_FLAG_NONE },
     { "TEXT_FLAG_RECOLOR", LV_TEXT_FLAG_RECOLOR },
-    { "&font_montserrat", (int32_t) &lv0_load_montserrat_font },
-    { "&font_robotocondensed_latin1", (int32_t) &lv0_load_robotocondensed_latin1_font },
-    { "&font_seg7", (int32_t) &lv0_load_seg7_font },
     { "&load_font", (int32_t) &lv0_load_font },
-    { "&load_freetype_font", (int32_t) &lv0_load_freetype_font },
-    { "&montserrat_font", (int32_t) &lv0_load_montserrat_font },
-    { "&register_button_encoder", (int32_t) &lv0_register_button_encoder },
-    { "&screenshot", (int32_t) &lv0_screenshot },
-    { "&seg7_font", (int32_t) &lv0_load_seg7_font },
 
 };
 
 const size_t lv0_constants_size = sizeof(lv0_constants)/sizeof(lv0_constants[0]);
 
-/* generated */
+/********************************************************************
+** Solidified function: lv_module_init
+********************************************************************/
+be_local_closure(lv_lv_module_init,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(lv),
+    /* K1   */  be_nested_str(member),
+    }),
+    &be_const_str_lv_module_init,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x6004000B,  //  0000  GETGBL	R1	G11
+      0x58080000,  //  0001  LDCONST	R2	K0
+      0x7C040200,  //  0002  CALL	R1	1
+      0x88080101,  //  0003  GETMBR	R2	R0	K1
+      0x90060202,  //  0004  SETMBR	R1	K1	R2
+      0x80040200,  //  0005  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified module: lv
+********************************************************************/
 be_local_module(lv,
     "lv",
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("member", 719708611, 6, -1), be_const_func(lv0_member) },
-        { be_nested_key("start", 1697318111, 5, 0), be_const_func(lv0_start) },
+        { be_const_key(init, -1), be_const_closure(lv_lv_module_init_closure) },
+        { be_const_key(member, 0), be_const_func(lv0_member) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(lv);
-
 /********************************************************************/

@@ -13,6 +13,9 @@ extern void be_load_lv_color_class(bvm *vm);
 extern void be_load_lv_font_class(bvm *vm);
 extern void be_load_LVGL_glob_class(bvm *vm);
 
+/*********************************************************************************************\
+ * Load all LVGL classes, including widgets
+\*********************************************************************************************/
 void be_load_lvgl_classes(bvm *vm) {
   be_load_lv_color_class(vm);
   be_load_lv_font_class(vm);
@@ -20,7 +23,7 @@ void be_load_lvgl_classes(bvm *vm) {
 }
 
 /*********************************************************************************************\
- * Support for lv
+ * Retrieve the value of `self._p`
 \*********************************************************************************************/
 // Get the `_p` member of instance at `index`
 void * lv_get_arg(bvm *vm, int index) {
@@ -56,9 +59,12 @@ int lv_x_tostring(bvm *vm) {
 }
 
 /*********************************************************************************************\
- * Support for lv_style
+ * Support for lv_style `init()`
+ * 
+ * Either encapsulate the pointer passed as `comptr` as arg1
+ * Or allocate a new empty style structure in memory. In this case, it is never freed.
 \*********************************************************************************************/
-int lvs_init(bvm *vm) {
+int lv_be_style_init(bvm *vm) {
   int argc = be_top(vm);
   lv_style_t * style = NULL;
 
@@ -66,6 +72,7 @@ int lvs_init(bvm *vm) {
     style = (lv_style_t*) be_convert_single_elt(vm, 2, NULL, NULL);
   }
   if (style == NULL) {
+    // if no valid pointer passed, allocate a new empty style
     style = (lv_style_t*) be_malloc(vm, sizeof(lv_style_t));
     if (style == NULL) {
         be_throw(vm, BE_MALLOC_FAIL);

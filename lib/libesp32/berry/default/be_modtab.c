@@ -44,6 +44,7 @@ be_extern_native_module(unishox);
 be_extern_native_module(animate);
 #ifdef USE_LVGL
 be_extern_native_module(lv);
+be_extern_native_module(lv_tasmota);
 #endif // USE_LVGL
 
 /* user-defined modules declare start */
@@ -118,6 +119,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 
 #ifdef USE_LVGL
     &be_native_module(lv),
+    &be_native_module(lv_tasmota),
 #endif // USE_LVGL
 #ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),

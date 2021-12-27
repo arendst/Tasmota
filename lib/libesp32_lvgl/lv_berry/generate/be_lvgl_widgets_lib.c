@@ -19,7 +19,7 @@ extern int lco_toint(bvm *vm);          // generic function
 extern int lv_x_member(bvm *vm);
 extern int lv_x_tostring(bvm *vm);       // generic function
 
-extern int lvs_init(bvm *vm);
+extern int lv_be_style_init(bvm *vm);
 extern int lv_x_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
@@ -879,7 +879,7 @@ be_local_class(lv_style,
     NULL,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_nested_key("init", 380752755, 4, -1), be_const_func(lvs_init) },
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv_be_style_init) },
         { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
         { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
         { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
