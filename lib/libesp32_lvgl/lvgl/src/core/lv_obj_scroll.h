@@ -37,7 +37,7 @@ enum {
 typedef uint8_t lv_scrollbar_mode_t;
 
 
-/** Scroll span align options. Tells where to align the snapable children when scroll stops.*/
+/** Scroll span align options. Tells where to align the snappable children when scroll stops.*/
 enum {
     LV_SCROLL_SNAP_NONE,    /**< Do not align, leave where it is*/
     LV_SCROLL_SNAP_START,   /**< Align to the left/top*/
@@ -172,9 +172,9 @@ lv_coord_t lv_obj_get_scroll_right(struct _lv_obj_t * obj);
 
 /**
  * Get the X and Y coordinates where the scrolling will end for this object if a scrolling animation is in progress.
- * In no scrolling animation give the current `x` or `y` scroll position.
+ * If no scrolling animation, give the current `x` or `y` scroll position.
  * @param obj       pointer to an object
- * @param           end poinr to point to store the result
+ * @param end       pointer to store the result
  */
 void lv_obj_get_scroll_end(struct _lv_obj_t  * obj, lv_point_t * end);
 

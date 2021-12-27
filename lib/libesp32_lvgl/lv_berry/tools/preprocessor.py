@@ -170,7 +170,14 @@ sys.stdout.close()
 # ################################################################################
 
 lv_src_prefix = "../../lvgl/src/"
-lv_fun_globs = [ "**/*.h" ]
+lv_fun_globs = [ 
+                  "core/*.h",
+                  "draw/*.h",
+                  "hal/*.h",
+                  "misc/*.h",
+                  "widgets/*.h",
+                  "extra/widgets/**/*.h",
+              ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
 output_filename = "../mapping/lv_enum.h"
@@ -282,12 +289,11 @@ SYMBOL_BULLET="\\xE2\\x80\\xA2"
 // ======================================================================
 """)
 
-
-
 for header_name in headers_names:
   with open(header_name) as f:
     raw = clean_source(f.read())
 
+    print(f"// File: {header_name}")
     # extract enums
     enums = re.findall('enum\s+{(.*?)}', raw, flags=re.DOTALL)
     for enum in enums:  # iterate on all matches

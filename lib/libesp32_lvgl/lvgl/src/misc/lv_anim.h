@@ -17,11 +17,17 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stddef.h>
 
 /*********************
  *      DEFINES
  *********************/
+
+#define LV_ANIM_REPEAT_INFINITE      0xFFFF
+#define LV_ANIM_PLAYTIME_INFINITE    0xFFFFFFFF
+
+LV_EXPORT_CONST_INT(LV_ANIM_REPEAT_INFINITE);
+LV_EXPORT_CONST_INT(LV_ANIM_PLAYTIME_INFINITE);
 
 /**********************
  *      TYPEDEFS
@@ -31,10 +37,7 @@ extern "C" {
 typedef enum {
     LV_ANIM_OFF,
     LV_ANIM_ON,
-}lv_anim_enable_t;
-
-#define LV_ANIM_REPEAT_INFINITE      0xFFFF
-LV_EXPORT_CONST_INT(LV_ANIM_REPEAT_INFINITE);
+} lv_anim_enable_t;
 
 struct _lv_anim_t;
 
@@ -45,7 +48,7 @@ typedef int32_t (*lv_anim_path_cb_t)(const struct _lv_anim_t *);
  * First parameter is the variable to animate.
  * Second parameter is the value to set.
  * Compatible with `lv_xxx_set_yyy(obj, value)` functions
- * The `x` in `_xcb_t` means its not a fully generic prototype because
+ * The `x` in `_xcb_t` means it's not a fully generic prototype because
  * it doesn't receive `lv_anim_t *` as its first argument*/
 typedef void (*lv_anim_exec_xcb_t)(void *, int32_t);
 
@@ -88,7 +91,6 @@ typedef struct _lv_anim_t {
     uint8_t playback_now : 1; /**< Play back is in progress*/
     uint8_t run_round : 1;    /**< Indicates the animation has run in this round*/
     uint8_t start_cb_called : 1;    /**< Indicates that the `start_cb` was already called*/
-    uint32_t time_orig;
 } lv_anim_t;
 
 /**********************
@@ -169,9 +171,9 @@ static inline void lv_anim_set_values(lv_anim_t * a, int32_t start, int32_t end)
 /**
  * Similar to `lv_anim_set_exec_cb` but `lv_anim_custom_exec_cb_t` receives
  * `lv_anim_t * ` as its first parameter instead of `void *`.
- * This function might be used when LVGL is binded to other languages because
+ * This function might be used when LVGL is bound to other languages because
  * it's more consistent to have `lv_anim_t *` as first parameter.
- * The variable to animate can be stored in the animation's `user_sata`
+ * The variable to animate can be stored in the animation's `user_data`
  * @param a         pointer to an initialized `lv_anim_t` variable
  * @param exec_cb   a function to execute.
  */
@@ -184,7 +186,7 @@ static inline void lv_anim_set_custom_exec_cb(lv_anim_t * a, lv_anim_custom_exec
 /**
  * Set the path (curve) of the animation.
  * @param a         pointer to an initialized `lv_anim_t` variable
- * @param path_cb a function the get the current value of the animation.
+ * @param path_cb a function to set the current value of the animation.
  */
 static inline void lv_anim_set_path_cb(lv_anim_t * a, lv_anim_path_cb_t path_cb)
 {
@@ -196,7 +198,7 @@ static inline void lv_anim_set_path_cb(lv_anim_t * a, lv_anim_path_cb_t path_cb)
  * @param a         pointer to an initialized `lv_anim_t` variable
  * @param start_cb  a function call when the animation starts
  */
-static inline void lv_anim_set_start_cb(lv_anim_t * a, lv_anim_ready_cb_t start_cb)
+static inline void lv_anim_set_start_cb(lv_anim_t * a, lv_anim_start_cb_t start_cb)
 {
     a->start_cb = start_cb;
 }
@@ -221,10 +223,11 @@ static inline void lv_anim_set_ready_cb(lv_anim_t * a, lv_anim_ready_cb_t ready_
 {
     a->ready_cb = ready_cb;
 }
+
 /**
  * Make the animation to play back to when the forward direction is ready
  * @param a         pointer to an initialized `lv_anim_t` variable
- * @param time      the duration of the playback animation in in milliseconds. 0: disable playback
+ * @param time      the duration of the playback animation in milliseconds. 0: disable playback
  */
 static inline void lv_anim_set_playback_time(lv_anim_t * a, uint32_t time)
 {
@@ -273,6 +276,18 @@ static inline void lv_anim_set_early_apply(lv_anim_t * a, bool en)
 }
 
 /**
+ * Set the custom user data field of the animation.
+ * @param a           pointer to an initialized `lv_anim_t` variable
+ * @param user_data   pointer to the new user_data.
+ */
+#if LV_USE_USER_DATA
+static inline void lv_anim_set_user_data(lv_anim_t * a, void * user_data)
+{
+    a->user_data = user_data;
+}
+#endif
+
+/**
  * Create an animation
  * @param a         an initialized 'anim_t' variable. Not required after call.
  * @return          pointer to the created animation (different from the `a` parameter)
@@ -290,6 +305,25 @@ static inline uint32_t lv_anim_get_delay(lv_anim_t * a)
 }
 
 /**
+ * Get the time used to play the animation.
+ * @param a pointer to an animation.
+ * @return the play time in milliseconds.
+ */
+uint32_t lv_anim_get_playtime(lv_anim_t * a);
+
+/**
+ * Get the user_data field of the animation
+ * @param   a pointer to an initialized `lv_anim_t` variable
+ * @return  the pointer to the custom user_data of the animation
+ */
+#if LV_USE_USER_DATA
+static inline void * lv_anim_get_user_data(lv_anim_t * a)
+{
+    return a->user_data;
+}
+#endif
+
+/**
  * Delete an animation of a variable with a given animator function
  * @param var       pointer to variable
  * @param exec_cb   a function pointer which is animating 'var',
@@ -299,7 +333,7 @@ static inline uint32_t lv_anim_get_delay(lv_anim_t * a)
 bool lv_anim_del(void * var, lv_anim_exec_xcb_t exec_cb);
 
 /**
- * Delete all the animations animation
+ * Delete all the animations
  */
 void lv_anim_del_all(void);
 
@@ -320,11 +354,25 @@ lv_anim_t * lv_anim_get(void * var, lv_anim_exec_xcb_t exec_cb);
  * @param a         pointer to an animation.
  * @param exec_cb   a function pointer which is animating 'var',
  *                  or NULL to ignore it and delete all the animations of 'var
- * @return           true: at least 1 animation is deleted, false: no animation is deleted
+ * @return          true: at least 1 animation is deleted, false: no animation is deleted
  */
 static inline bool lv_anim_custom_del(lv_anim_t * a, lv_anim_custom_exec_cb_t exec_cb)
 {
     return lv_anim_del(a ? a->var : NULL, (lv_anim_exec_xcb_t)exec_cb);
+}
+
+/**
+ * Get the animation of a variable and its `exec_cb`.
+ * This function exists because it's logical that all anim. functions receives an
+ * `lv_anim_t` as their first parameter. It's not practical in C but might make
+ * the API more consequent and makes easier to generate bindings.
+ * @param a         pointer to an animation.
+ * @param exec_cb   a function pointer which is animating 'var', or NULL to return first matching 'var'
+ * @return          pointer to the animation.
+ */
+static inline lv_anim_t * lv_anim_custom_get(lv_anim_t * a, lv_anim_custom_exec_cb_t exec_cb)
+{
+    return lv_anim_get(a ? a->var : NULL, (lv_anim_exec_xcb_t)exec_cb);
 }
 
 /**

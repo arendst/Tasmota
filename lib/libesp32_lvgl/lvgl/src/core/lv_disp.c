@@ -82,7 +82,16 @@ void lv_disp_load_scr(lv_obj_t * scr)
 {
     lv_disp_t * d = lv_obj_get_disp(scr);
     if(!d) return;  /*Shouldn't happen, just to be sure*/
+
+    lv_obj_t * old_scr = d->act_scr;
+
+    if(d->act_scr) lv_event_send(old_scr, LV_EVENT_SCREEN_UNLOAD_START, NULL);
+    if(d->act_scr) lv_event_send(scr, LV_EVENT_SCREEN_LOAD_START, NULL);
+
     d->act_scr = scr;
+
+    if(d->act_scr) lv_event_send(scr, LV_EVENT_SCREEN_LOADED, NULL);
+    if(d->act_scr) lv_event_send(old_scr, LV_EVENT_SCREEN_UNLOADED, NULL);
 
     lv_obj_invalidate(scr);
 }
@@ -90,7 +99,7 @@ void lv_disp_load_scr(lv_obj_t * scr)
 /**
  * Return with the top layer. (Same on every screen and it is above the normal screen layer)
  * @param disp pointer to display which top layer should be get. (NULL to use the default screen)
- * @return pointer to the top layer object  (transparent screen sized lv_obj)
+ * @return pointer to the top layer object (transparent screen sized lv_obj)
  */
 lv_obj_t * lv_disp_get_layer_top(lv_disp_t * disp)
 {
@@ -106,8 +115,8 @@ lv_obj_t * lv_disp_get_layer_top(lv_disp_t * disp)
 /**
  * Return with the sys. layer. (Same on every screen and it is above the normal screen and the top
  * layer)
- * @param disp pointer to display which sys. layer  should be get. (NULL to use the default screen)
- * @return pointer to the sys layer object  (transparent screen sized lv_obj)
+ * @param disp pointer to display which sys. layer should be retrieved. (NULL to use the default screen)
+ * @return pointer to the sys layer object (transparent screen sized lv_obj)
  */
 lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
 {
@@ -121,20 +130,18 @@ lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
 }
 
 /**
- * Get the theme of a display
+ * Set the theme of a display
  * @param disp pointer to a display
- * @return the display's theme (can be NULL)
  */
 void lv_disp_set_theme(lv_disp_t * disp, lv_theme_t * th)
 {
-	if(disp == NULL) disp = lv_disp_get_default();
+    if(disp == NULL) disp = lv_disp_get_default();
     disp->theme = th;
 
     if(disp->screen_cnt == 3 &&
-        lv_obj_get_child_cnt(disp->screens[0]) == 0 &&
-        lv_obj_get_child_cnt(disp->screens[1]) == 0 &&
-        lv_obj_get_child_cnt(disp->screens[2]) == 0)
-    {
+       lv_obj_get_child_cnt(disp->screens[0]) == 0 &&
+       lv_obj_get_child_cnt(disp->screens[1]) == 0 &&
+       lv_obj_get_child_cnt(disp->screens[2]) == 0) {
         lv_theme_apply(disp->screens[0]);
     }
 }
@@ -145,7 +152,7 @@ void lv_disp_set_theme(lv_disp_t * disp, lv_theme_t * th)
  */
 lv_theme_t * lv_disp_get_theme(lv_disp_t * disp)
 {
-	if(disp == NULL) disp = lv_disp_get_default();
+    if(disp == NULL) disp = lv_disp_get_default();
     return disp->theme;
 }
 
@@ -191,7 +198,7 @@ void lv_disp_set_bg_image(lv_disp_t * disp, const void  * img_src)
 }
 
 /**
- * Opacity of the background
+ * Set opacity of the background
  * @param disp pointer to a display
  * @param opa opacity (0..255)
  */
@@ -220,16 +227,21 @@ void lv_disp_set_bg_opa(lv_disp_t * disp, lv_opa_t opa)
  */
 void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay, bool auto_del)
 {
+
     lv_disp_t * d = lv_obj_get_disp(new_scr);
     lv_obj_t * act_scr = lv_scr_act();
 
-    if(d->del_prev && act_scr != d->scr_to_load && d->scr_to_load) {
-        lv_obj_del(act_scr);
+    /*If an other screen load animation is in progress
+     *make target screen loaded immediately. */
+    if(d->scr_to_load && act_scr != d->scr_to_load) {
         lv_disp_load_scr(d->scr_to_load);
         lv_anim_del(d->scr_to_load, NULL);
         lv_obj_set_pos(d->scr_to_load, 0, 0);
         lv_obj_remove_local_style_prop(d->scr_to_load, LV_STYLE_OPA, 0);
 
+        if(d->del_prev) {
+            lv_obj_del(act_scr);
+        }
         act_scr = d->scr_to_load;
     }
 
@@ -323,13 +335,16 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
             break;
     }
 
+    lv_event_send(act_scr, LV_EVENT_SCREEN_UNLOAD_START, NULL);
+
     lv_anim_start(&a_new);
     lv_anim_start(&a_old);
+
 }
 
 /**
  * Get elapsed time since last user activity on a display (e.g. click)
- * @param disp pointer to an display (NULL to get the overall smallest inactivity)
+ * @param disp pointer to a display (NULL to get the overall smallest inactivity)
  * @return elapsed ticks (milliseconds) since the last activity
  */
 uint32_t lv_disp_get_inactive_time(const lv_disp_t * disp)
@@ -350,7 +365,7 @@ uint32_t lv_disp_get_inactive_time(const lv_disp_t * disp)
 
 /**
  * Manually trigger an activity on a display
- * @param disp pointer to an display (NULL to use the default display)
+ * @param disp pointer to a display (NULL to use the default display)
  */
 void lv_disp_trig_activity(lv_disp_t * disp)
 {
@@ -365,7 +380,7 @@ void lv_disp_trig_activity(lv_disp_t * disp)
 
 /**
  * Clean any CPU cache that is related to the display.
- * @param disp pointer to an display (NULL to use the default display)
+ * @param disp pointer to a display (NULL to use the default display)
  */
 void lv_disp_clean_dcache(lv_disp_t * disp)
 {
@@ -403,9 +418,11 @@ lv_timer_t * _lv_disp_get_refr_timer(lv_disp_t * disp)
 static void scr_load_anim_start(lv_anim_t * a)
 {
     lv_disp_t * d = lv_obj_get_disp(a->var);
-    d->prev_scr = lv_scr_act();
 
-    lv_disp_load_scr(a->var);
+    d->prev_scr = lv_scr_act();
+    d->act_scr = a->var;
+
+    lv_event_send(d->act_scr, LV_EVENT_SCREEN_LOAD_START, NULL);
 }
 
 static void opa_scale_anim(void * obj, int32_t v)
@@ -426,6 +443,9 @@ static void set_y_anim(void * obj, int32_t v)
 static void scr_anim_ready(lv_anim_t * a)
 {
     lv_disp_t * d = lv_obj_get_disp(a->var);
+
+    lv_event_send(d->act_scr, LV_EVENT_SCREEN_LOADED, NULL);
+    lv_event_send(d->prev_scr, LV_EVENT_SCREEN_UNLOADED, NULL);
 
     if(d->prev_scr && d->del_prev) lv_obj_del(d->prev_scr);
     d->prev_scr = NULL;

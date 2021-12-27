@@ -18,6 +18,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "lv_hal.h"
+#include "../draw/lv_img_buf.h"
 #include "../misc/lv_color.h"
 #include "../misc/lv_area.h"
 #include "../misc/lv_ll.h"
@@ -46,7 +47,7 @@ struct _lv_theme_t;
 /**
  * Structure for holding display buffer information.
  */
-typedef struct _lv_disp_draw_buf_t{
+typedef struct _lv_disp_draw_buf_t {
     void * buf1; /**< First display buffer.*/
     void * buf2; /**< Second display buffer.*/
 
@@ -79,10 +80,16 @@ typedef struct _lv_disp_drv_t {
     lv_coord_t hor_res;         /**< Horizontal resolution.*/
     lv_coord_t ver_res;         /**< Vertical resolution.*/
 
+    lv_coord_t physical_hor_res;     /**< Horizontal resolution of the full / physical display. Set to -1 for fullscreen mode.*/
+    lv_coord_t physical_ver_res;     /**< Vertical resolution of the full / physical display. Set to -1 for fullscreen mode.*/
+    lv_coord_t offset_x;             /**< Horizontal offset from the full / physical display. Set to 0 for fullscreen mode.*/
+    lv_coord_t offset_y;             /**< Vertical offset from the full / physical display. Set to 0 for fullscreen mode.*/
+
     /** Pointer to a buffer initialized with `lv_disp_draw_buf_init()`.
      * LVGL will use this buffer(s) to draw the screens contents*/
     lv_disp_draw_buf_t * draw_buf;
 
+    uint32_t direct_mode : 1;        /**< 1: Use screen-sized buffers and draw to absolute coordinates*/
     uint32_t full_refresh : 1;       /**< 1: Always make the whole screen redrawn*/
     uint32_t sw_rotate : 1;          /**< 1: use software rotation (slower)*/
     uint32_t antialiasing : 1;       /**< 1: anti-aliasing is enabled on this display.*/
@@ -160,11 +167,13 @@ typedef struct _lv_disp_t {
     struct _lv_obj_t * top_layer;   /**< @see lv_disp_get_layer_top*/
     struct _lv_obj_t * sys_layer;   /**< @see lv_disp_get_layer_sys*/
     uint32_t screen_cnt;
-    uint8_t del_prev  : 1;          /**< 1: Automatically delete the previous screen when the screen load animation is ready*/
+uint8_t del_prev  :
+    1;          /**< 1: Automatically delete the previous screen when the screen load animation is ready*/
 
     lv_opa_t bg_opa;                /**<Opacity of the background color or wallpaper*/
     lv_color_t bg_color;            /**< Default display color when screens are transparent*/
     const void * bg_img;            /**< An image source to display as wallpaper*/
+    void (*bg_fn)(lv_area_t*);/**< A function to handle drawing*/
 
     /** Invalidated (marked to redraw) areas*/
     lv_area_t inv_areas[LV_INV_BUF_SIZE];
@@ -252,6 +261,34 @@ lv_coord_t lv_disp_get_hor_res(lv_disp_t * disp);
 lv_coord_t lv_disp_get_ver_res(lv_disp_t * disp);
 
 /**
+ * Get the full / physical horizontal resolution of a display
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return the full / physical horizontal resolution of the display
+ */
+lv_coord_t lv_disp_get_physical_hor_res(lv_disp_t * disp);
+
+/**
+ * Get the full / physical vertical resolution of a display
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return the full / physical vertical resolution of the display
+ */
+lv_coord_t lv_disp_get_physical_ver_res(lv_disp_t * disp);
+
+/**
+ * Get the horizontal offset from the full / physical display
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return the horizontal offset from the full / physical display
+ */
+lv_coord_t lv_disp_get_offset_x(lv_disp_t * disp);
+
+/**
+ * Get the vertical offset from the full / physical display
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return the horizontal offset from the full / physical display
+ */
+lv_coord_t lv_disp_get_offset_y(lv_disp_t * disp);
+
+/**
  * Get if anti-aliasing is enabled for a display or not
  * @param disp pointer to a display (NULL to use the default display)
  * @return true: anti-aliasing is enabled; false: disabled
@@ -311,6 +348,8 @@ lv_disp_t * lv_disp_get_next(lv_disp_t * disp);
  * @return pointer to the internal buffers
  */
 lv_disp_draw_buf_t * lv_disp_get_draw_buf(lv_disp_t * disp);
+
+void lv_disp_drv_use_generic_set_px_cb(lv_disp_drv_t * disp_drv, lv_img_cf_t cf);
 
 /**********************
  *      MACROS

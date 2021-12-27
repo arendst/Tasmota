@@ -305,6 +305,16 @@ void _lv_bidi_process_paragraph(const char * str_in, char * str_out, uint32_t le
     }
 }
 
+void lv_bidi_calculate_align(lv_text_align_t * align, lv_base_dir_t * base_dir, const char * txt)
+{
+    if(*base_dir == LV_BASE_DIR_AUTO) *base_dir = _lv_bidi_detect_base_dir(txt);
+
+    if(*align == LV_TEXT_ALIGN_AUTO) {
+        if(*base_dir == LV_BASE_DIR_RTL) *align = LV_TEXT_ALIGN_RIGHT;
+        else *align = LV_TEXT_ALIGN_LEFT;
+    }
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -430,10 +440,13 @@ static lv_base_dir_t get_next_run(const char * txt, lv_base_dir_t base_dir, uint
     /*Find the first strong char. Skip the neutrals*/
     while(dir == LV_BASE_DIR_NEUTRAL || dir == LV_BASE_DIR_WEAK) {
         letter = _lv_txt_encoded_next(txt, &i);
+        
         pos_conv_i++;
         dir = lv_bidi_get_letter_dir(letter);
         if(dir == LV_BASE_DIR_NEUTRAL)  dir = bracket_process(txt, i, max_len, letter, base_dir);
-
+ 
+        if(dir==LV_BASE_DIR_LTR || dir==LV_BASE_DIR_RTL)  break;
+         
         if(i >= max_len || txt[i] == '\0' || txt[i] == '\n' || txt[i] == '\r') {
             *len = i;
             *pos_conv_len = pos_conv_i;
@@ -455,6 +468,14 @@ static lv_base_dir_t get_next_run(const char * txt, lv_base_dir_t base_dir, uint
         pos_conv_i++;
         next_dir  = lv_bidi_get_letter_dir(letter);
         if(next_dir == LV_BASE_DIR_NEUTRAL)  next_dir = bracket_process(txt, i, max_len, letter, base_dir);
+   
+        if(next_dir == LV_BASE_DIR_WEAK){
+             if(run_dir == LV_BASE_DIR_RTL){
+                 if(base_dir == LV_BASE_DIR_RTL){
+                     next_dir = LV_BASE_DIR_LTR;
+                 }
+             }
+         }
 
         /*New dir found?*/
         if((next_dir == LV_BASE_DIR_RTL || next_dir == LV_BASE_DIR_LTR) && next_dir != run_dir) {
@@ -589,7 +610,7 @@ static lv_base_dir_t bracket_process(const char * txt, uint32_t next_pos, uint32
     /*Is the letter an opening bracket?*/
     for(i = 0; bracket_left[i] != '\0'; i++) {
         if(bracket_left[i] == letter) {
-            /*If so find it's matching closing bracket.
+            /*If so find its matching closing bracket.
              *If a char with base dir. direction is found then the brackets will have `base_dir` direction*/
             uint32_t txt_i = next_pos;
             while(txt_i < len) {

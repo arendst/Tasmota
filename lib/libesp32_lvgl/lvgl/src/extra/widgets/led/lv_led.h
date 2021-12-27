@@ -21,6 +21,15 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
+/** Brightness when the LED if OFF */
+#ifndef LV_LED_BRIGHT_MIN
+# define LV_LED_BRIGHT_MIN 80
+#endif
+
+/** Brightness when the LED if ON */
+#ifndef LV_LED_BRIGHT_MAX
+# define LV_LED_BRIGHT_MAX 255
+#endif
 
 /**********************
  *      TYPEDEFS
@@ -34,6 +43,14 @@ typedef struct {
 } lv_led_t;
 
 extern const lv_obj_class_t lv_led_class;
+
+/**
+ * `type` field in `lv_obj_draw_part_dsc_t` if `class_p = lv_led_class`
+ * Used in `LV_EVENT_DRAW_PART_BEGIN` and `LV_EVENT_DRAW_PART_END`
+ */
+typedef enum {
+    LV_LED_DRAW_PART_RECTANGLE,    /**< The main rectangle*/
+} lv_led_draw_part_type_t;
 
 /**********************
  * GLOBAL PROTOTYPES

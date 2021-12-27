@@ -57,9 +57,9 @@ static lv_disp_t * disp_refr; /*Display being refreshed*/
  *      MACROS
  **********************/
 #if LV_LOG_TRACE_DISP_REFR
-#  define TRACE_REFR(...) LV_LOG_TRACE( __VA_ARGS__)
+    #define REFR_TRACE(...) LV_LOG_TRACE(__VA_ARGS__)
 #else
-#  define TRACE_REFR(...)
+    #define REFR_TRACE(...)
 #endif
 
 /**********************
@@ -181,10 +181,10 @@ void _lv_refr_set_disp_refreshing(lv_disp_t * disp)
  */
 void _lv_disp_refr_timer(lv_timer_t * tmr)
 {
-    TRACE_REFR("begin");
+    REFR_TRACE("begin");
 
     uint32_t start = lv_tick_get();
-    uint32_t elaps = 0;
+    volatile uint32_t elaps = 0;
 
     disp_refr = tmr->user_data;
 
@@ -207,7 +207,7 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
     if(disp_refr->act_scr == NULL) {
         disp_refr->inv_p = 0;
         LV_LOG_WARN("there is no active screen");
-        TRACE_REFR("finished");
+        REFR_TRACE("finished");
         return;
     }
 
@@ -236,6 +236,10 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
     lv_mem_buf_free_all();
     _lv_font_clean_up_fmt_txt();
 
+#if LV_DRAW_COMPLEX
+    _lv_draw_mask_cleanup();
+#endif
+
 #if LV_USE_PERF_MONITOR && LV_USE_LABEL
     static lv_obj_t * perf_label = NULL;
     if(perf_label == NULL) {
@@ -249,7 +253,7 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
         lv_obj_set_style_pad_right(perf_label, 3, 0);
         lv_obj_set_style_text_align(perf_label, LV_TEXT_ALIGN_RIGHT, 0);
         lv_label_set_text(perf_label, "?");
-        lv_obj_align(perf_label, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+        lv_obj_align(perf_label, LV_USE_PERF_MONITOR_POS, 0, 0);
     }
 
     static uint32_t perf_last_time = 0;
@@ -264,7 +268,7 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
     else {
         perf_last_time = lv_tick_get();
         uint32_t fps_limit = 1000 / disp_refr->refr_timer->period;
-        uint32_t fps;
+        unsigned int fps;
 
         if(elaps_sum == 0) elaps_sum = 1;
         if(frame_cnt == 0) fps = fps_limit;
@@ -275,8 +279,8 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
 
         fps_sum_all += fps;
         fps_sum_cnt ++;
-        uint32_t cpu = 100 - lv_timer_get_idle();
-        lv_label_set_text_fmt(perf_label, "%d FPS\n%d%% CPU", fps, cpu);
+        unsigned int cpu = 100 - lv_timer_get_idle();
+        lv_label_set_text_fmt(perf_label, "%u FPS\n%u%% CPU", fps, cpu);
     }
 #endif
 
@@ -292,7 +296,7 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
         lv_obj_set_style_pad_left(mem_label, 3, 0);
         lv_obj_set_style_pad_right(mem_label, 3, 0);
         lv_label_set_text(mem_label, "?");
-        lv_obj_align(mem_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+        lv_obj_align(mem_label, LV_USE_MEM_MONITOR_POS, 0, 0);
     }
 
     static uint32_t mem_last_time = 0;
@@ -303,11 +307,13 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
         uint32_t used_size = mon.total_size - mon.free_size;;
         uint32_t used_kb = used_size / 1024;
         uint32_t used_kb_tenth = (used_size - (used_kb * 1024)) / 102;
-        lv_label_set_text_fmt(mem_label, "%d.%d kB used (%d %%)\n%d%% frag.", used_kb,  used_kb_tenth, mon.used_pct, mon.frag_pct);
+        lv_label_set_text_fmt(mem_label, "%" LV_PRIu32 ".%" LV_PRIu32 " kB used (%d %%)\n" \
+                              "%d%% frag.", used_kb, used_kb_tenth, mon.used_pct,
+                              mon.frag_pct);
     }
 #endif
 
-    TRACE_REFR("finished");
+    REFR_TRACE("finished");
 }
 
 #if LV_USE_PERF_MONITOR
@@ -417,7 +423,7 @@ static void lv_refr_area(const lv_area_t * area_p)
     lv_coord_t w = lv_area_get_width(area_p);
     lv_coord_t h = lv_area_get_height(area_p);
     lv_coord_t y2 = area_p->y2 >= lv_disp_get_ver_res(disp_refr) ?
-                        lv_disp_get_ver_res(disp_refr) - 1 : area_p->y2;
+                    lv_disp_get_ver_res(disp_refr) - 1 : area_p->y2;
 
     int32_t max_row = (uint32_t)draw_buf->size / w;
 
@@ -452,31 +458,43 @@ static void lv_refr_area(const lv_area_t * area_p)
         }
     }
 
-    /*Always use the full row*/
-    lv_coord_t row;
-    lv_coord_t row_last = 0;
-    for(row = area_p->y1; row + max_row - 1 <= y2; row += max_row) {
-        /*Calc. the next y coordinates of draw_buf*/
-        draw_buf->area.x1 = area_p->x1;
-        draw_buf->area.x2 = area_p->x2;
-        draw_buf->area.y1 = row;
-        draw_buf->area.y2 = row + max_row - 1;
-        if(draw_buf->area.y2 > y2) draw_buf->area.y2 = y2;
-        row_last = draw_buf->area.y2;
-        if(y2 == row_last) disp_refr->driver->draw_buf->last_part = 1;
+    /*In direct mode draw directly on the absolute coordinates of the buffer*/
+    if(disp_refr->driver->direct_mode) {
+        draw_buf->area.x1 = 0;
+        draw_buf->area.x2 = lv_disp_get_hor_res(disp_refr) - 1;
+        draw_buf->area.y1 = 0;
+        draw_buf->area.y2 = lv_disp_get_ver_res(disp_refr) - 1;
+        disp_refr->driver->draw_buf->last_part = disp_refr->driver->draw_buf->last_area;
         lv_refr_area_part(area_p);
     }
+    /*Else assume the buffer starts at the given area*/
+    else {
+        /*Always use the full row*/
+        lv_coord_t row;
+        lv_coord_t row_last = 0;
+        for(row = area_p->y1; row + max_row - 1 <= y2; row += max_row) {
+            /*Calc. the next y coordinates of draw_buf*/
+            draw_buf->area.x1 = area_p->x1;
+            draw_buf->area.x2 = area_p->x2;
+            draw_buf->area.y1 = row;
+            draw_buf->area.y2 = row + max_row - 1;
+            if(draw_buf->area.y2 > y2) draw_buf->area.y2 = y2;
+            row_last = draw_buf->area.y2;
+            if(y2 == row_last) disp_refr->driver->draw_buf->last_part = 1;
+            lv_refr_area_part(area_p);
+        }
 
-    /*If the last y coordinates are not handled yet ...*/
-    if(y2 != row_last) {
-        /*Calc. the next y coordinates of draw_buf*/
-        draw_buf->area.x1 = area_p->x1;
-        draw_buf->area.x2 = area_p->x2;
-        draw_buf->area.y1 = row;
-        draw_buf->area.y2 = y2;
+        /*If the last y coordinates are not handled yet ...*/
+        if(y2 != row_last) {
+            /*Calc. the next y coordinates of draw_buf*/
+            draw_buf->area.x1 = area_p->x1;
+            draw_buf->area.x2 = area_p->x2;
+            draw_buf->area.y1 = row;
+            draw_buf->area.y2 = y2;
 
-        disp_refr->driver->draw_buf->last_part = 1;
-        lv_refr_area_part(area_p);
+            disp_refr->driver->draw_buf->last_part = 1;
+            lv_refr_area_part(area_p);
+        }
     }
 }
 
@@ -488,8 +506,12 @@ static void lv_refr_area_part(const lv_area_t * area_p)
 {
     lv_disp_draw_buf_t * draw_buf = lv_disp_get_draw_buf(disp_refr);
 
-    while(draw_buf->flushing) {
-        if(disp_refr->driver->wait_cb) disp_refr->driver->wait_cb(disp_refr->driver);
+    /* Below the `area_p` area will be redrawn into the draw buffer.
+     * In single buffered mode wait here until the buffer is freed.*/
+    if(draw_buf->buf1 && !draw_buf->buf2) {
+        while(draw_buf->flushing) {
+            if(disp_refr->driver->wait_cb) disp_refr->driver->wait_cb(disp_refr->driver);
+        }
     }
 
     lv_obj_t * top_act_scr = NULL;
@@ -508,7 +530,9 @@ static void lv_refr_area_part(const lv_area_t * area_p)
 
     /*Draw a display background if there is no top object*/
     if(top_act_scr == NULL && top_prev_scr == NULL) {
-        if(disp_refr->bg_img) {
+        if(disp_refr->bg_fn) {
+            disp_refr->bg_fn(&start_mask);
+        } else if(disp_refr->bg_img) {
             lv_draw_img_dsc_t dsc;
             lv_draw_img_dsc_init(&dsc);
             dsc.opa = disp_refr->bg_opa;
@@ -521,7 +545,7 @@ static void lv_refr_area_part(const lv_area_t * area_p)
                 lv_draw_img(&a, &start_mask, disp_refr->bg_img, &dsc);
             }
             else {
-                LV_LOG_WARN("Can't draw the background image")
+                LV_LOG_WARN("Can't draw the background image");
             }
         }
         else {
@@ -580,8 +604,9 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
         if(info.res == LV_COVER_RES_MASKED) return NULL;
 
         uint32_t i;
-        for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-            lv_obj_t * child = lv_obj_get_child(obj, i);
+        uint32_t child_cnt = lv_obj_get_child_cnt(obj);
+        for(i = 0; i < child_cnt; i++) {
+            lv_obj_t * child = obj->spec_attr->children[i];
             found_p = lv_refr_get_top_obj(area_p, child);
 
             /*If a children is ok then break*/
@@ -627,20 +652,22 @@ static void lv_refr_obj_and_children(lv_obj_t * top_p, const lv_area_t * mask_p)
     while(par != NULL) {
         bool go = false;
         uint32_t i;
-        for(i = 0; i < lv_obj_get_child_cnt(par); i++) {
-            lv_obj_t * child = lv_obj_get_child(par, i);
+        uint32_t child_cnt = lv_obj_get_child_cnt(par);
+        for(i = 0; i < child_cnt; i++) {
+            lv_obj_t * child = par->spec_attr->children[i];
             if(!go) {
                 if(child == border_p) go = true;
-            } else {
+            }
+            else {
                 /*Refresh the objects*/
                 lv_refr_obj(child, mask_p);
             }
         }
 
         /*Call the post draw draw function of the parents of the to object*/
-        lv_event_send(par, LV_EVENT_DRAW_POST_BEGIN, (void*)mask_p);
-        lv_event_send(par, LV_EVENT_DRAW_POST, (void*)mask_p);
-        lv_event_send(par, LV_EVENT_DRAW_POST_END, (void*)mask_p);
+        lv_event_send(par, LV_EVENT_DRAW_POST_BEGIN, (void *)mask_p);
+        lv_event_send(par, LV_EVENT_DRAW_POST, (void *)mask_p);
+        lv_event_send(par, LV_EVENT_DRAW_POST_END, (void *)mask_p);
 
         /*The new border will be the last parents,
          *so the 'younger' brothers of parent will be refreshed*/
@@ -699,8 +726,9 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
             lv_area_t mask_child; /*Mask from obj and its child*/
             lv_area_t child_area;
             uint32_t i;
-            for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-                lv_obj_t * child = lv_obj_get_child(obj, i);
+            uint32_t child_cnt = lv_obj_get_child_cnt(obj);
+            for(i = 0; i < child_cnt; i++) {
+                lv_obj_t * child = obj->spec_attr->children[i];
                 lv_obj_get_coords(child, &child_area);
                 ext_size = _lv_obj_get_ext_draw_size(child);
                 child_area.x1 -= ext_size;
@@ -726,7 +754,8 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
     }
 }
 
-static void draw_buf_rotate_180(lv_disp_drv_t *drv, lv_area_t *area, lv_color_t *color_p) {
+static void draw_buf_rotate_180(lv_disp_drv_t * drv, lv_area_t * area, lv_color_t * color_p)
+{
     lv_coord_t area_w = lv_area_get_width(area);
     lv_coord_t area_h = lv_area_get_height(area);
     uint32_t total = area_w * area_h;
@@ -749,7 +778,9 @@ static void draw_buf_rotate_180(lv_disp_drv_t *drv, lv_area_t *area, lv_color_t 
     area->x1 = drv->hor_res - tmp_coord - 1;
 }
 
-static LV_ATTRIBUTE_FAST_MEM void draw_buf_rotate_90(bool invert_i, lv_coord_t area_w, lv_coord_t area_h, lv_color_t *orig_color_p, lv_color_t *rot_buf) {
+static LV_ATTRIBUTE_FAST_MEM void draw_buf_rotate_90(bool invert_i, lv_coord_t area_w, lv_coord_t area_h,
+                                                     lv_color_t * orig_color_p, lv_color_t * rot_buf)
+{
 
     uint32_t invert = (area_w * area_h) - 1;
     uint32_t initial_i = ((area_w - 1) * area_h);
@@ -770,7 +801,8 @@ static LV_ATTRIBUTE_FAST_MEM void draw_buf_rotate_90(bool invert_i, lv_coord_t a
 /**
  * Helper function for draw_buf_rotate_90_sqr. Given a list of four numbers, rotate the entire list to the left.
  */
-static inline void draw_buf_rotate4(lv_color_t *a, lv_color_t *b, lv_color_t * c, lv_color_t * d) {
+static inline void draw_buf_rotate4(lv_color_t * a, lv_color_t * b, lv_color_t * c, lv_color_t * d)
+{
     lv_color_t tmp;
     tmp = *a;
     *a = *b;
@@ -783,9 +815,10 @@ static inline void draw_buf_rotate4(lv_color_t *a, lv_color_t *b, lv_color_t * c
  * Rotate a square image 90/270 degrees in place.
  * @note inspired by https://stackoverflow.com/a/43694906
  */
-static void draw_buf_rotate_90_sqr(bool is_270, lv_coord_t w, lv_color_t * color_p) {
-    for(lv_coord_t i = 0; i < w/2; i++) {
-        for(lv_coord_t j = 0; j < (w + 1)/2; j++) {
+static void draw_buf_rotate_90_sqr(bool is_270, lv_coord_t w, lv_color_t * color_p)
+{
+    for(lv_coord_t i = 0; i < w / 2; i++) {
+        for(lv_coord_t j = 0; j < (w + 1) / 2; j++) {
             lv_coord_t inv_i = (w - 1) - i;
             lv_coord_t inv_j = (w - 1) - j;
             if(is_270) {
@@ -795,7 +828,8 @@ static void draw_buf_rotate_90_sqr(bool is_270, lv_coord_t w, lv_color_t * color
                     &color_p[inv_i * w + inv_j],
                     &color_p[j * w + inv_i]
                 );
-            } else {
+            }
+            else {
                 draw_buf_rotate4(
                     &color_p[i * w + j],
                     &color_p[j * w + inv_i],
@@ -811,7 +845,8 @@ static void draw_buf_rotate_90_sqr(bool is_270, lv_coord_t w, lv_color_t * color
 /**
  * Rotate the draw_buf to the display's native orientation.
  */
-static void draw_buf_rotate(lv_area_t *area, lv_color_t *color_p) {
+static void draw_buf_rotate(lv_area_t * area, lv_color_t * color_p)
+{
     lv_disp_drv_t * drv = disp_refr->driver;
     if(disp_refr->driver->full_refresh && drv->sw_rotate) {
         LV_LOG_ERROR("cannot rotate a full refreshed display!");
@@ -820,14 +855,15 @@ static void draw_buf_rotate(lv_area_t *area, lv_color_t *color_p) {
     if(drv->rotated == LV_DISP_ROT_180) {
         draw_buf_rotate_180(drv, area, color_p);
         call_flush_cb(drv, area, color_p);
-    } else if(drv->rotated == LV_DISP_ROT_90 || drv->rotated == LV_DISP_ROT_270) {
+    }
+    else if(drv->rotated == LV_DISP_ROT_90 || drv->rotated == LV_DISP_ROT_270) {
         /*Allocate a temporary buffer to store rotated image*/
         lv_color_t * rot_buf = NULL;
         lv_disp_draw_buf_t * draw_buf = lv_disp_get_draw_buf(disp_refr);
         lv_coord_t area_w = lv_area_get_width(area);
         lv_coord_t area_h = lv_area_get_height(area);
         /*Determine the maximum number of rows that can be rotated at a time*/
-        lv_coord_t max_row = LV_MIN((lv_coord_t)((LV_DISP_ROT_MAX_BUF/sizeof(lv_color_t)) / area_w), area_h);
+        lv_coord_t max_row = LV_MIN((lv_coord_t)((LV_DISP_ROT_MAX_BUF / sizeof(lv_color_t)) / area_w), area_h);
         lv_coord_t init_y_off;
         init_y_off = area->y1;
         if(drv->rotated == LV_DISP_ROT_90) {
@@ -838,11 +874,11 @@ static void draw_buf_rotate(lv_area_t *area, lv_color_t *color_p) {
             area->y1 = area->x1;
             area->y2 = area->y1 + area_w - 1;
         }
-        draw_buf->flushing = 0;
+
         /*Rotate the screen in chunks, flushing after each one*/
         lv_coord_t row = 0;
         while(row < area_h) {
-            lv_coord_t height = LV_MIN(max_row, area_h-row);
+            lv_coord_t height = LV_MIN(max_row, area_h - row);
             draw_buf->flushing = 1;
             if((row == 0) && (area_h >= area_w)) {
                 /*Rotate the initial area as a square*/
@@ -871,6 +907,16 @@ static void draw_buf_rotate(lv_area_t *area, lv_color_t *color_p) {
                     area->x1 = area->x2 - height + 1;
                 }
             }
+
+            /* The original part (chunk of the current area) were split into more parts here.
+             * Set the original last_part flag on the last part of rotation. */
+            if(row + height >= area_h && draw_buf->last_area && draw_buf->last_part) {
+                draw_buf->flushing_last = 1;
+            }
+            else {
+                draw_buf->flushing_last = 0;
+            }
+
             /*Flush the completed area to the display*/
             call_flush_cb(drv, area, rot_buf == NULL ? color_p : rot_buf);
             /*FIXME: Rotation forces legacy behavior where rendering and flushing are done serially*/
@@ -893,20 +939,29 @@ static void draw_buf_flush(void)
     lv_disp_draw_buf_t * draw_buf = lv_disp_get_draw_buf(disp_refr);
     lv_color_t * color_p = draw_buf->buf_act;
 
+    /*Flush the rendered content to the display*/
+    lv_disp_t * disp = _lv_refr_get_disp_refreshing();
+    if(disp->driver->gpu_wait_cb) disp->driver->gpu_wait_cb(disp->driver);
+
+    /* In double buffered mode wait until the other buffer is freed
+     * and driver is ready to receive the new buffer */
+    if(draw_buf->buf1 && draw_buf->buf2) {
+        while(draw_buf->flushing) {
+            if(disp_refr->driver->wait_cb) disp_refr->driver->wait_cb(disp_refr->driver);
+        }
+    }
+
     draw_buf->flushing = 1;
 
     if(disp_refr->driver->draw_buf->last_area && disp_refr->driver->draw_buf->last_part) draw_buf->flushing_last = 1;
     else draw_buf->flushing_last = 0;
 
-    /*Flush the rendered content to the display*/
-    lv_disp_t * disp = _lv_refr_get_disp_refreshing();
-    if(disp->driver->gpu_wait_cb) disp->driver->gpu_wait_cb(disp->driver);
-
     if(disp->driver->flush_cb) {
         /*Rotate the buffer to the display's native orientation if necessary*/
         if(disp->driver->rotated != LV_DISP_ROT_NONE && disp->driver->sw_rotate) {
             draw_buf_rotate(&draw_buf->area, draw_buf->buf_act);
-        } else {
+        }
+        else {
             call_flush_cb(disp->driver, &draw_buf->area, color_p);
         }
     }
@@ -920,6 +975,15 @@ static void draw_buf_flush(void)
 
 static void call_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
 {
-    TRACE_REFR("Calling flush_cb on (%d;%d)(%d;%d) area with %p image pointer", area->x1, area->y1, area->x2, area->y2, color_p);
-    drv->flush_cb(drv, area, color_p);
+    REFR_TRACE("Calling flush_cb on (%d;%d)(%d;%d) area with %p image pointer", area->x1, area->y1, area->x2, area->y2,
+               (void *)color_p);
+
+    lv_area_t offset_area = {
+        .x1 = area->x1 + drv->offset_x,
+        .y1 = area->y1 + drv->offset_y,
+        .x2 = area->x2 + drv->offset_x,
+        .y2 = area->y2 + drv->offset_y
+    };
+
+    drv->flush_cb(drv, &offset_area, color_p);
 }
