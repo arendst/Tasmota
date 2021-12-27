@@ -23,9 +23,10 @@ def eventcb(class_p, e)
     print(string.format("> event class_p=0x%08X event=%s obj=%s code=%i",
             class_p, str(event), str(obj), event_code))
 end
-var cb_ctor = tasmota.gen_cb(ctorcb)
-var cb_dtor = tasmota.gen_cb(dtorcb)
-var cb_event = tasmota.gen_cb(eventcb)
+import cb
+var cb_ctor = cb.gen_cb(ctorcb)
+var cb_dtor = cb.gen_cb(dtorcb)
+var cb_event = cb.gen_cb(eventcb)
 
 # static void lv_img_event(const lv_obj_class_t * class_p, lv_event_t * e)
 

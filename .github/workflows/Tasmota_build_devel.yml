@@ -95,7 +95,7 @@ jobs:
         [ ! -f ./mv_firmware/map/* ] || mv ./mv_firmware/map/* ./firmware/map/
         [ ! -f ./mv_firmware/firmware/tasmota.* ] || mv ./mv_firmware/firmware/tasmota.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-sensors.* ] || mv ./mv_firmware/firmware/tasmota-sensors.* ./firmware/tasmota/
-        [ ! -f ./mv_firmware/firmware/tasmota-minimal.* ] || mv ./mv_firmware/firmware/tasmota-minimal.* ./firmware/tasmota/
+        [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin.gz ] || mv ./mv_firmware/firmware/tasmota-minimal.bin.gz ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-lite.* ] || mv ./mv_firmware/firmware/tasmota-lite.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-ir*.* ] || mv ./mv_firmware/firmware/tasmota-ir*.* ./firmware/tasmota/
         [ ! -f ./mv_firmware/firmware/tasmota-display.* ] || mv ./mv_firmware/firmware/tasmota-display.* ./firmware/tasmota/

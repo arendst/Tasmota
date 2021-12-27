@@ -10,6 +10,7 @@
 #include "be_gc.h"
 #include "be_exec.h"
 #include "be_vm.h"
+#include "be_mem.h"
 
 /*********************************************************************************************\
  * Callback structures
@@ -69,10 +70,114 @@ static const berry_callback_t berry_callback_array[BE_MAX_CB] = {
 
 typedef struct be_callback_hook {
   bvm *vm;
-  bgcobject *f;
+  bvalue f;
 } be_callback_hook;
 
+typedef struct be_callback_handler_list_t {
+  bvm *vm;
+  bvalue f;
+  struct be_callback_handler_list_t *next;
+} be_callback_handler_list_t;
+
 static be_callback_hook be_cb_hooks[BE_MAX_CB] = {0};
+
+static int32_t be_cb_gen_cb(bvm *vm);
+static be_callback_handler_list_t be_callback_default_gen_cb = {
+  NULL,
+  be_const_func(&be_cb_gen_cb),
+  NULL
+};
+
+static be_callback_handler_list_t *be_callback_handler_list_head = &be_callback_default_gen_cb;    /* linked list of handlers */
+
+/*********************************************************************************************\
+ * `add_handler`: Add an external handler to `make_cb()`
+ * 
+ * This is typically used by LVGL mapping to handle widget callbacks, the handler
+ * needs to record additional infomation to disambiguate the call
+ * 
+ * arg1: function (or closure)
+\*********************************************************************************************/
+static int32_t be_cb_add_handler(bvm *vm) {
+  int32_t top = be_top(vm);
+  if (top >= 1 && be_isfunction(vm, 1)) {
+    bvalue *v = be_indexof(vm, 1);
+
+    be_callback_handler_list_t *elt = be_os_malloc(sizeof(be_callback_handler_list_t));
+    if (!elt) { be_throw(vm, BE_MALLOC_FAIL); }
+
+    if (be_isgcobj(v)) {
+      be_gc_fix_set(vm, v->v.gc, btrue);    // mark the function as non-gc
+    }
+    elt->vm = vm;
+    elt->f = *v;
+    elt->next = be_callback_handler_list_head;  /* insert as new head */
+    be_callback_handler_list_head = elt;
+    be_return_nil(vm);
+  }
+  be_raise(vm, "value_error", "arg must be a function");
+}
+
+/*********************************************************************************************\
+ * `list_handlers`: List all cb handlers registered for this VM
+ * 
+ * Used for debugging only
+ * 
+ * No args
+\*********************************************************************************************/
+static int32_t be_cb_list_handlers(bvm *vm) {
+  be_newobject(vm, "list");
+  for (be_callback_handler_list_t *elt = be_callback_handler_list_head; elt != NULL; elt = elt->next) {
+    if (elt->vm == vm) { /* on purpose don't show the default handler, just pretend it's not there since it's default */
+      bvalue *top = be_incrtop(vm);
+      *top = elt->f;
+      be_data_push(vm, -2);
+      be_pop(vm, 1);
+    }
+  }
+  be_pop(vm, 1);
+  be_return(vm);
+}
+
+/*********************************************************************************************\
+ * `make_cb`: high-level call for creating a callback.
+ * 
+ * This function is called by `be_mapping` when generating a callback with a type name.
+ * LVGL typically needs to register typed callbacks
+ * 
+ * arg1: function (or closure)
+ * arg2: type name for callback (optional)
+ * argN: any other callback specific arguments (unlimited number, passed as-is)
+\*********************************************************************************************/
+static int32_t be_cb_make_cb(bvm *vm) {
+  int32_t argc = be_top(vm);
+  if (argc >= 1 && be_isfunction(vm, 1)) {
+
+    bvalue *v = be_indexof(vm, 1);
+    for (be_callback_handler_list_t *elt = be_callback_handler_list_head; elt != NULL; elt = elt->next) {
+      if (elt->vm == vm || elt->vm == NULL) {   // if elt->vm is NULL then we accept any VM
+        // call the handler and check result
+        bvalue *top = be_incrtop(vm);
+        *top = elt->f;
+        // var_setobj(top, elt->f->type, elt->f);  // push function - arg0
+        for (int i=1; i<=argc; i++) {           // push all arguments including function
+          be_pushvalue(vm, i);
+        }
+        be_call(vm, argc);                      // call handler
+        be_pop(vm, argc);                       // remove arguments, top of stack has the result
+        // if top of stack is `comptr` then it is successful
+        if (be_iscomptr(vm, -1)) {
+          be_return(vm);
+        } else {
+          be_pop(vm, 1);                        // remove top, rinse and repeat
+        }
+      }
+    }
+
+    // if we are here, it means that no handler has handled the request
+  }
+  be_raise(vm, "value_error", "arg must be a function");
+}
 
 /*********************************************************************************************\
  * `gen_cb`: Generate a new callback
@@ -85,17 +190,16 @@ static int32_t be_cb_gen_cb(bvm *vm) {
     // find first available slot
     int32_t slot;
     for (slot = 0; slot < BE_MAX_CB; slot++) {
-      if (be_cb_hooks[slot].f == NULL) break;
+      if (be_cb_hooks[slot].f.type == BE_NIL) break;
     }
     bvalue *v = be_indexof(vm, 1);
     if (slot < BE_MAX_CB) {
-      // found a free slot
-      bgcobject * f = v->v.gc;
-      // mark the function as non-gc
-      be_gc_fix_set(vm, f, btrue);
+      if (be_isgcobj(v)) {
+        be_gc_fix_set(vm, v->v.gc, btrue);    // mark the function as non-gc
+      }
       // record pointers
       be_cb_hooks[slot].vm = vm;
-      be_cb_hooks[slot].f = f;
+      be_cb_hooks[slot].f = *v;
       be_pushcomptr(vm, (void*) berry_callback_array[slot]);
       be_return(vm);
     } else {
@@ -115,7 +219,9 @@ static int32_t be_cb_get_cb_list(bvm *vm) {
   for (uint32_t i=0; i < BE_MAX_CB; i++) {
     if (be_cb_hooks[i].vm) {
       if (vm == be_cb_hooks[i].vm) {  // make sure it corresponds to this vm
-        be_pushcomptr(vm, be_cb_hooks[i].f);
+        bvalue *top = be_incrtop(vm);
+        *top = be_cb_hooks[i].f;
+        // be_pushcomptr(vm, be_cb_hooks[i].f);
         be_data_push(vm, -2);
         be_pop(vm, 1);
       }
@@ -140,11 +246,11 @@ static int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, in
   if (num < 0 || num >= BE_MAX_CB || be_cb_hooks[num].vm == NULL) return 0;   // invalid call, avoid a crash
 
   bvm * vm = be_cb_hooks[num].vm;
-  bgcobject * f = be_cb_hooks[num].f;
+  bvalue *f = &be_cb_hooks[num].f;
 
   // push function (don't check type)
   bvalue *top = be_incrtop(vm);
-  var_setobj(top, f->type, f);
+  *top = *f;
   // push args
   be_pushint(vm, v0);
   be_pushint(vm, v1);
@@ -166,6 +272,10 @@ static int32_t call_berry_cb(int32_t num, int32_t v0, int32_t v1, int32_t v2, in
 module cb (scope: global) {
     gen_cb, func(be_cb_gen_cb)
     get_cb_list, func(be_cb_get_cb_list)
+
+    add_handler, func(be_cb_add_handler)
+    list_handlers, func(be_cb_list_handlers)
+    make_cb, func(be_cb_make_cb)
 }
 @const_object_info_end */
 #include "../../berry/generate/be_fixed_cb.h"

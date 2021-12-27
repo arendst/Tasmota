@@ -48,10 +48,12 @@ void TasDiscoverMessage(void) {
   }
 
   bool TuyaMod = false;
+#ifdef USE_TUYA_MCU
+  TuyaMod = IsModuleTuya();
+#endif
   bool iFanMod = false;
 #ifdef ESP8266
-  if ((TUYA_DIMMER == TasmotaGlobal.module_type) || (SK03_TUYA == TasmotaGlobal.module_type)) { TuyaMod = true; };
-  if ((SONOFF_IFAN02 == TasmotaGlobal.module_type) || (SONOFF_IFAN03 == TasmotaGlobal.module_type)) { iFanMod = true; };
+  iFanMod = ((SONOFF_IFAN02 == TasmotaGlobal.module_type) || (SONOFF_IFAN03 == TasmotaGlobal.module_type));
 #endif  // ESP8266
 
   ResponseAppend_P(PSTR("],"                                   // Friendly Names (end)

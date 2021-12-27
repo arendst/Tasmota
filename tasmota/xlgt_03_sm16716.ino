@@ -143,21 +143,6 @@ void Sm16716ModuleSelected(void)
     Sm16716.pin_dat = Pin(GPIO_SM16716_DAT);
     Sm16716.pin_sel = Pin(GPIO_SM16716_SEL);
 
-/*
-    // init PWM
-    for (uint32_t i = 0; i < Light.subtype; i++) {
-      Settings->pwm_value[i] = 0;        // Disable direct PWM control
-      if (PinUsed(GPIO_PWM1, i)) {
-#ifdef ESP8266
-        pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#endif  // ESP8266
-#ifdef ESP32
-        analogAttach(Pin(GPIO_PWM1, i), i);
-#endif  // ESP32
-      }
-    }
-*/
-
     // init sm16716
     pinMode(Sm16716.pin_clk, OUTPUT);
     digitalWrite(Sm16716.pin_clk, LOW);

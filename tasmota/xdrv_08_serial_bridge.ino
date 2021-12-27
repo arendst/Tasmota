@@ -28,10 +28,10 @@
 const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
 const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
+  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE "|" D_CMND_SSERIALCONFIG;
 
 void (* const SerialBridgeCommand[])(void) PROGMEM = {
-  &CmndSSerialSend, &CmndSBaudrate };
+  &CmndSSerialSend, &CmndSBaudrate, &CmndSSerialConfig };
 
 #include <TasmotaSerial.h>
 
@@ -43,8 +43,32 @@ int serial_bridge_in_byte_counter = 0;
 bool serial_bridge_active = true;
 bool serial_bridge_raw = false;
 
-void SerialBridgeInput(void)
-{
+/********************************************************************************************/
+
+bool SetSSerialBegin(void) {
+  uint32_t config;
+#ifdef ESP8266
+  config = pgm_read_byte(kTasmotaSerialConfig + Settings->sserial_config);
+#endif  // ESP8266
+#ifdef ESP32
+  config = pgm_read_dword(kTasmotaSerialConfig + Settings->sserial_config);
+#endif  // ESP32
+  return SerialBridgeSerial->begin(Settings->sbaudrate * 300, config);         // Reinitialize serial port with new baud rate
+}
+
+void SetSSerialConfig(uint32_t serial_config) {
+  if (serial_config > TS_SERIAL_8O2) {
+    serial_config = TS_SERIAL_8N1;
+  }
+  if (serial_config != Settings->sserial_config) {
+    Settings->sserial_config = serial_config;
+    SetSSerialBegin();
+  }
+}
+
+/********************************************************************************************/
+
+void SerialBridgeInput(void) {
   while (SerialBridgeSerial->available()) {
     yield();
     uint8_t serial_in_byte = SerialBridgeSerial->read();
@@ -106,7 +130,7 @@ void SerialBridgeInit(void)
   serial_bridge_active = false;
   if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
     SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);
-    if (SerialBridgeSerial->begin(Settings->sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
+    if (SetSSerialBegin()) {
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
         serial_bridge_buffer = TasmotaGlobal.serial_in_buffer;  // Use idle serial buffer to save RAM
@@ -168,14 +192,34 @@ void CmndSSerialSend(void)
   }
 }
 
-void CmndSBaudrate(void)
-{
+void CmndSBaudrate(void) {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
     Settings->sbaudrate = XdrvMailbox.payload;
-    SerialBridgeSerial->begin(Settings->sbaudrate * 300);  // Reinitialize serial port with new baud rate
+    SetSSerialBegin();
   }
   ResponseCmndNumber(Settings->sbaudrate * 300);
+}
+
+void CmndSSerialConfig(void) {
+  // See TasmotaSerialConfig for possible options
+  // SSerialConfig 0..23 where 3 equals 8N1
+  // SSerialConfig 8N1
+
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.data_len < 3) {                    // Use 0..23 as serial config option
+      if ((XdrvMailbox.payload >= TS_SERIAL_5N1) && (XdrvMailbox.payload <= TS_SERIAL_8O2)) {
+        SetSSerialConfig(XdrvMailbox.payload);
+      }
+    }
+    else if ((XdrvMailbox.payload >= 5) && (XdrvMailbox.payload <= 8)) {
+      int8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
+      if (serial_config >= 0) {
+        SetSSerialConfig(serial_config);
+      }
+    }
+  }
+  ResponseCmndChar(GetSerialConfig(Settings->sserial_config).c_str());
 }
 
 /*********************************************************************************************\

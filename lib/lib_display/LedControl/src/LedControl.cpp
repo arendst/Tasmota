@@ -208,4 +208,3 @@ void LedControl::spiTransfer(int addr, volatile byte opcode, volatile byte data)
     digitalWrite(SPI_CS,HIGH);
 }    
 
-
