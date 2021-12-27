@@ -489,6 +489,7 @@ extern const bcstring be_const_str_lv_obj;
 extern const bcstring be_const_str_lv_obj_class;
 extern const bcstring be_const_str_lv_signal_arcs;
 extern const bcstring be_const_str_lv_signal_bars;
+extern const bcstring be_const_str_lv_solidified;
 extern const bcstring be_const_str_lv_wifi_arcs;
 extern const bcstring be_const_str_lv_wifi_arcs_icon;
 extern const bcstring be_const_str_lv_wifi_bars;

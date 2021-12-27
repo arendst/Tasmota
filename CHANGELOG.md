@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 
+### Changed
+- LVGL update from 8.0.2 to 8.1.0
+
 ## [10.1.0.2] 20211225
 ### Changed
 - TasmotaSerial library from v3.3.0 to v3.4.0 - reverted (#14153)

@@ -14,8 +14,8 @@ extern "C" {
  * CURRENT VERSION OF LVGL
  ***************************/
 #define LVGL_VERSION_MAJOR 8
-#define LVGL_VERSION_MINOR 0
-#define LVGL_VERSION_PATCH 2
+#define LVGL_VERSION_MINOR 1
+#define LVGL_VERSION_PATCH 0
 #define LVGL_VERSION_INFO ""
 
 /*********************
@@ -25,14 +25,16 @@ extern "C" {
 #include "src/misc/lv_log.h"
 #include "src/misc/lv_timer.h"
 #include "src/misc/lv_math.h"
+#include "src/misc/lv_mem.h"
 #include "src/misc/lv_async.h"
+#include "src/misc/lv_anim_timeline.h"
+#include "src/misc/lv_printf.h"
 
 #include "src/hal/lv_hal.h"
 
 #include "src/core/lv_obj.h"
 #include "src/core/lv_group.h"
 #include "src/core/lv_indev.h"
-
 #include "src/core/lv_refr.h"
 #include "src/core/lv_disp.h"
 #include "src/core/lv_theme.h"
@@ -40,7 +42,6 @@ extern "C" {
 #include "src/font/lv_font.h"
 #include "src/font/lv_font_loader.h"
 #include "src/font/lv_font_fmt_txt.h"
-#include "src/misc/lv_printf.h"
 
 #include "src/widgets/lv_arc.h"
 #include "src/widgets/lv_btn.h"
@@ -69,6 +70,8 @@ extern "C" {
 #include "src/extra/widgets/lv_widgets.h"
 #include "src/extra/layouts/lv_layouts.h"
 #include "src/extra/themes/lv_themes.h"
+#include "src/extra/others/lv_others.h"
+#include "src/extra/libs/lv_libs.h"
 
 /*********************
  *      DEFINES
