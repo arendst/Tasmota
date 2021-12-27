@@ -58,7 +58,7 @@ function build_sketches()
         local sketchdirname=$(basename $sketchdir)
         local sketchname=$(basename $sketch)
         if [[ "${sketchdirname}.ino" != "$sketchname" ]]; then
-            echo "Skipping $sketch, beacause it is not the main sketch file";
+            echo "Skipping $sketch, because it is not the main sketch file";
             continue
         fi;
         if [[ -f "$sketchdir/.test.skip" ]]; then

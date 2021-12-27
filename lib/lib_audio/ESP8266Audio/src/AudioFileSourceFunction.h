@@ -1,6 +1,6 @@
 /*
   AudioFileSourceFunction
-  Audio ouptut generator which can generate WAV file data from function
+  Audio output generator which can generate WAV file data from function
 
   Copyright (C) 2021  Hideaki Tai
 

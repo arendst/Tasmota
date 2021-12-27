@@ -31,7 +31,9 @@ JohannesMTC has built a similar project especially for model trains: https://git
 
 A neat MQTT-driven ESP8266 light-and-sound device (alarm? toy? who can say!) was built by @CosmicMac, available at https://github.com/CosmicMac/ESParkle
 
-A very interesting "linear clock" with a stepper motor, NTP time keeping, and configurable recorded chimes with schematics, 3D printer plans, and source code, is now available http://home.kpn.nl/bderogee1980/projects/linear_clock/linear_clock.html
+A very interesting "linear clock" with a stepper motor, NTP time keeping, and configurable recorded chimes with schematics, 3D printer plans, and source code, is now available https://janderogee.com/projects/linear_clock/linear_clock.htm
+
+Source and instructions for a gorgeous wooden MP3-playing clock, FM radio and a walkie-talkie using the ESP8266 and AVR microcontrollers is available https://github.com/zduka/mp3-player
 
 ## Prerequisites
 First, make sure you are running the 2.6.3/later or GIT head version of the Arduino libraries for ESP8266, or the latest ESP32 SDK from Espressif.
@@ -100,7 +102,7 @@ AudioFileSourcePROGMEM:  Reads a file from a PROGMEM array.  Under UNIX you can 
 AudioFileSourceHTTPStream:  Simple implementation of a streaming HTTP reader for ShoutCast-type MP3 streaming.  Not yet resilient, and at 44.1khz 128bit stutters due to CPU limitations, but it works more or less.
 
 ## AudioFileSourceBuffer - Double buffering, useful for HTTP streams
-AudioFileSourceBuffer is an input source that simpy adds an additional RAM buffer of the output of any other AudioFileSource.  This is particularly useful for web streaming where you need to have 1-2 packets in memory to ensure hiccup-free playback.
+AudioFileSourceBuffer is an input source that simply adds an additional RAM buffer of the output of any other AudioFileSource.  This is particularly useful for web streaming where you need to have 1-2 packets in memory to ensure hiccup-free playback.
 
 Create your standard input file source, create the buffer with the original source as its input, and pass this buffer object to the generator.
 ```cpp
@@ -158,7 +160,15 @@ AudioOutputSPIFFSWAV:  Writes a binary WAV format with headers to a SPIFFS files
 AudioOutputNull:  Just dumps samples to /dev/null.  Used for speed testing as it doesn't artificially limit the AudioGenerator output speed since there are no buffers to fill/drain.
 
 ## I2S DACs
-I've used both the Adafruit [I2S +3W amp DAC](https://www.adafruit.com/product/3006) and a generic PCM5102 based DAC with success.  The biggest problems I've seen from users involve pinouts from the ESP8266 for GPIO and hooking up all necessary pins on the DAC board.
+I've used both the Adafruit [I2S +3W amp DAC](https://www.adafruit.com/product/3006) and a generic PCM5102 based DAC with success.  The biggest problems I've seen from users involve pinouts from the ESP8266 for GPIO and hooking up all necessary pins on the DAC board. The essential pins are:
+
+I2S pin | Common label* | ESP8266 pin 
+--------|---------------|-------------
+LRC     | D4            | GPIO2
+BCLK    | D8            | GPIO15
+DIN     | RX            | GPIO3
+
+\* The "common label" column applies to common NodeMCU and D1 Mini development boards. Unfortunately some manufacturers use different mappings so the labels listed here might not apply to your particular model.
 
 ### Adafruit I2S DAC
 This is quite simple and only needs the GND, VIN, LRC, BCLK< and DIN pins to be wired.  Be sure to use +5V on the VIN to get the loudest sound.  See the [Adafruit example page](https://learn.adafruit.com/adafruit-max98357-i2s-class-d-mono-amp) for more info.
