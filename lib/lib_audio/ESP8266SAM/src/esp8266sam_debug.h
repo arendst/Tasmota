@@ -1,5 +1,5 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef ESP8266SAM_DEBUG_H
+#define ESP8266SAM_DEBUG_H
 
 void PrintPhonemes(unsigned char *phonemeindex, unsigned char *phonemeLength, unsigned char *stress);
 void PrintOutput(
@@ -14,6 +14,6 @@ void PrintOutput(
 
 void PrintRule(int offset);
 
-#define sam_debug 0
+#define DEBUG_ESP8266SAM_LIB 0
 
 #endif

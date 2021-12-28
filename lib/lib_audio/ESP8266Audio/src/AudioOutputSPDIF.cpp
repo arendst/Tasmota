@@ -3,7 +3,7 @@
   
   S/PDIF output via I2S
   
-  Needs transciever from CMOS level to either optical or coaxial interface
+  Needs transceiver from CMOS level to either optical or coaxial interface
   See: https://www.epanorama.net/documents/audio/spdif.html
 
   Original idea and sources: 
@@ -94,7 +94,11 @@ AudioOutputSPDIF::AudioOutputSPDIF(int dout_pin, int port, int dma_buf_count)
     .sample_rate = 88200, // 2 x sampling_rate 
     .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // 32bit words
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT, // Right than left
-    .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 2, 0)
+	  .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_STAND_I2S),
+#else
+	  .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+#endif
     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1, // lowest interrupt priority
     .dma_buf_count = dma_buf_count,
     .dma_buf_len = DMA_BUF_SIZE_DEFAULT, // bigger buffers, reduces interrupts
@@ -265,7 +269,7 @@ bool AudioOutputSPDIF::ConsumeSample(int16_t sample[2])
 
 #if defined(ESP32)
   // Assume DMA buffers are multiples of 16 bytes. Either we write all bytes or none.
-  uint32_t bytes_written;
+  size_t bytes_written;
   esp_err_t ret = i2s_write((i2s_port_t)portNo, (const char*)&buf, 8 * channels, &bytes_written, 0);
   // If we didn't write all bytes, return false early and do not increment frame_num
   if ((ret != ESP_OK) || (bytes_written != (8 * channels))) return false;  

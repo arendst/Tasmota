@@ -28,7 +28,7 @@ Even with the caching, it was found that SPIFFS, while having great
 functionality, was horrbly slow.  So I wrote a new "faster" ROM filesystem
 called, surprisingly, FastROMFilesystem.
 https://github.com/earlephilhower/ESP8266FastROMFS
-If you are getting choppy playback, try this new filesytem or using a SD
+If you are getting choppy playback, try this new filesystem or using a SD
 card (not tested by myself, but it'd be hard top be slower than SPIFFS).
 Simply going from SPIFFS to FastROMFilesystem took my testing of
 FURELISE.MID and 1MGM.SF2 from 0.5x realtime to 2.5x (i.e. from unusable

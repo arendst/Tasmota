@@ -83,7 +83,7 @@ CPPOPTS=-g -Wunused-parameter -Wall -std=c++11 -m32 -Wstack-usage=300 -include A
 
 .phony: all
 
-all: mp3 aac wav midi opus flac
+all: mp3 aac wav midi opus flac mod
 
 mp3: FORCE
 	rm -f *.o
@@ -105,6 +105,12 @@ flac: FORCE
 	g++ $(CPPOPTS) -o flac flac.cpp Serial.cpp *.o ../../src/AudioFileSourceSTDIO.cpp ../../src/AudioOutputSTDIO.cpp ../../src/AudioFileSourceID3.cpp ../../src/AudioGeneratorFLAC.cpp  ../../src/AudioLogger.cpp -I ../../src/ -I.
 	rm -f *.o
 	echo valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all ./flac
+
+mod: FORCE
+	rm -f *.o
+	g++ $(CPPOPTS) -o mod mod.cpp Serial.cpp ../../src/AudioFileSourcePROGMEM.cpp ../../src/AudioOutputSTDIO.cpp ../../src/AudioGeneratorMOD.cpp  ../../src/AudioLogger.cpp -I ../../src/ -I.
+	rm -f *.o
+	echo valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all ./mod
 
 wav: FORCE
 	rm -f *.o
@@ -128,6 +134,6 @@ opus: FORCE
 	echo valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all ./opus
 
 clean:
-	rm -f mp3 aac wav midi opus flac *.o
+	rm -f mp3 aac wav midi opus flac mod *.o
 
 FORCE:
