@@ -400,7 +400,7 @@ be_define_const_str(get_switch, "get_switch", 164821028u, 0, 10, &be_const_str_l
 be_define_const_str(get_temp, "get_temp", 3370919486u, 0, 8, &be_const_str_group_def);
 be_define_const_str(get_vbus_current, "get_vbus_current", 1205347942u, 0, 16, NULL);
 be_define_const_str(get_vbus_voltage, "get_vbus_voltage", 2398210401u, 0, 16, &be_const_str_select);
-be_define_const_str(get_warning_level, "get_warning_level", 1737834441u, 0, 17, &be_const_str_value_error);
+be_define_const_str(get_warning_level, "get_warning_level", 1737834441u, 0, 17, &be_const_str_random_byte);
 be_define_const_str(get_width, "get_width", 3293417300u, 0, 9, &be_const_str_pin);
 be_define_const_str(getbits, "getbits", 3094168979u, 0, 7, &be_const_str_pow);
 be_define_const_str(geti, "geti", 2381006490u, 0, 4, NULL);
@@ -550,6 +550,7 @@ be_define_const_str(r, "r", 4144776981u, 0, 1, NULL);
 be_define_const_str(rad, "rad", 1358899048u, 0, 3, &be_const_str_sec);
 be_define_const_str(raise, "raise", 1593437475u, 70, 5, NULL);
 be_define_const_str(rand, "rand", 2711325910u, 0, 4, &be_const_str_import);
+be_define_const_str(random_byte, "random_byte", 1603171253u, 0, 11, &be_const_str_value_error);
 be_define_const_str(range, "range", 4208725202u, 0, 5, &be_const_str_resp_cmnd);
 be_define_const_str(read, "read", 3470762949u, 0, 4, NULL);
 be_define_const_str(read12, "read12", 4291076970u, 0, 6, &be_const_str_tomap);
@@ -1149,6 +1150,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 374,
-    .count = 771,
+    .count = 772,
     .table = m_string_table
 };
