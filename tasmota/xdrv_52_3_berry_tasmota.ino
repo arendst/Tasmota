@@ -557,13 +557,6 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
-
-  // Berry: `random_byte() -> int`
-  // returns a single byte (0..255) from a good random source
-  int32_t t_random_byte(bvm *vm) {
-    be_pushint(vm, esp_random() & 0xFF);
-    be_return(vm);
-  }
 }
 
 /*********************************************************************************************\

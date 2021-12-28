@@ -558,7 +558,6 @@ extern const bcstring be_const_str_r;
 extern const bcstring be_const_str_rad;
 extern const bcstring be_const_str_raise;
 extern const bcstring be_const_str_rand;
-extern const bcstring be_const_str_random_byte;
 extern const bcstring be_const_str_range;
 extern const bcstring be_const_str_read;
 extern const bcstring be_const_str_read12;
