@@ -439,6 +439,17 @@ boolean PubSubClient::loop() {
                 if (type == MQTTPUBLISH) {
                     if (callback) {
                         uint16_t tl = (this->buffer[llen+1]<<8)+this->buffer[llen+2]; /* topic length in bytes */
+
+// Start Tasmota patch
+// Observed heap corruption in some cases since v10.0.0
+// Also see https://github.com/knolleary/pubsubclient/pull/843
+                        if (llen+3+tl>this->bufferSize) {
+                          _state = MQTT_DISCONNECTED;
+                          _client->stop();
+                          return false;
+                        }
+// End Tasmota patch
+
                         memmove(this->buffer+llen+2,this->buffer+llen+3,tl); /* move topic inside buffer 1 byte to front */
                         this->buffer[llen+2+tl] = 0; /* end the topic as a 'C' string with \x00 */
                         char *topic = (char*) this->buffer+llen+2;
