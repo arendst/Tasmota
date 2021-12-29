@@ -4,7 +4,7 @@
       "ldscript": "esp32_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DARDUINO_M5STACK_Core2 -DBOARD_HAS_PSRAM",
+    "extra_flags": "-DARDUINO_M5STACK_Core2 -DBOARD_HAS_PSRAM -DARDUINO_USB_CDC_ON_BOOT=0 -DESP32_16M",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "dout",
