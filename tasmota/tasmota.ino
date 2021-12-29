@@ -337,7 +337,7 @@ void setup(void) {
     Settings->baudrate = APP_BAUDRATE / 300;
     Settings->serial_config = TS_SERIAL_8N1;
   }
-  SetSerialBegin();                            // Reset serial interface if current serial settings are different from requested serial settings
+  SetSerialBaudrate(Settings->baudrate * 300);  // Reset serial interface if current baudrate is different from requested baudrate
 
   if (1 == RtcReboot.fast_reboot_count) {      // Allow setting override only when all is well
     UpdateQuickPowerCycle(true);
