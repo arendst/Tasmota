@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
 #ifdef USE_DHT
 /*********************************************************************************************\
  * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidity
@@ -25,6 +26,8 @@
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
  *
  * Changelog
+ * 20211229 - Change poll time from to 2 to 4 seconds for better results
+ * 20211226 - https://github.com/arendst/Tasmota/pull/14173
  * 20210524 - https://github.com/arendst/Tasmota/issues/12180
  * 20200621 - https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
  * 20200313 - https://github.com/arendst/Tasmota/issues/7717#issuecomment-585833243
@@ -213,7 +216,7 @@ void DhtInit(void) {
 }
 
 void DhtEverySecond(void) {
-  if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
+  if (!(TasmotaGlobal.uptime %4)) {  // Every 4 seconds
     for (uint32_t sensor = 0; sensor < dht_sensors; sensor++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       if (!DhtRead(sensor)) {
@@ -265,3 +268,4 @@ bool Xsns06(uint8_t function) {
 }
 
 #endif  // USE_DHT
+#endif  // ESP8266
