@@ -1,5 +1,5 @@
 /*
-  xsns_05_ds18x20_esp32.ino - DS18x20 temperature sensor support for Tasmota
+  xsns_05_esp32_ds18x20.ino - DS18x20 temperature sensor support for ESP32 Tasmota
 
   Copyright (C) 2021  Heiko Krupp and Theo Arends
 
