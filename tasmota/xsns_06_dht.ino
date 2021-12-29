@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ESP8266
 #ifdef USE_DHT
 /*********************************************************************************************\
  * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidity
@@ -25,6 +26,8 @@
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
  *
  * Changelog
+ * 20211229 - Change poll time from to 2 to 4 seconds for better results
+ * 20211226 - https://github.com/arendst/Tasmota/pull/14173
  * 20210524 - https://github.com/arendst/Tasmota/issues/12180
  * 20200621 - https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
  * 20200313 - https://github.com/arendst/Tasmota/issues/7717#issuecomment-585833243
@@ -115,6 +118,9 @@ bool DhtRead(uint32_t sensor) {
     }
   }
   interrupts();
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Read %5_H"), dht_data);
+
   if (i < 40) { return false; }
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
@@ -149,15 +155,14 @@ bool DhtRead(uint32_t sensor) {
     case GPIO_SI7021:                                   // iTead SI7021
       humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
       // DHT21/22 (Adafruit):
-      temperature = ((int16_t)(dht_data[2] & 0x7F) << 8 ) | dht_data[3];
-      temperature *= 0.1f;
-      if (dht_data[2] & 0x80) {
-        temperature *= -1;
-      }
+      int16_t temp16 = dht_data[2] << 8  | dht_data[3]; // case 1 : signed 16 bits
+      if ((dht_data[2] & 0xF0) == 0x80)                 // case 2 : negative when high nibble = 0x80
+        temp16 = -(0xFFF & temp16);
+      temperature = 0.1f * temp16;
       break;
   }
   if (isnan(temperature) || isnan(humidity)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid NAN reading"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid reading"));
     return false;
   }
 
@@ -211,7 +216,7 @@ void DhtInit(void) {
 }
 
 void DhtEverySecond(void) {
-  if (TasmotaGlobal.uptime &1) {  // Every 2 seconds
+  if (!(TasmotaGlobal.uptime %4)) {  // Every 4 seconds
     for (uint32_t sensor = 0; sensor < dht_sensors; sensor++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       if (!DhtRead(sensor)) {
@@ -263,3 +268,4 @@ bool Xsns06(uint8_t function) {
 }
 
 #endif  // USE_DHT
+#endif  // ESP8266

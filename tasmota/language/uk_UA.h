@@ -80,7 +80,7 @@
 #define D_DATA "Дані"
 #define D_DARKLIGHT "Темний"
 #define D_DEBUG "Налагодження"
-#define D_DEWPOINT "Dew point"
+#define D_DEWPOINT "Tочка роси"
 #define D_DISABLED "Вимкнено"
 #define D_DISTANCE "Відстань"
 #define D_DNS_SERVER "Сервер DNS"

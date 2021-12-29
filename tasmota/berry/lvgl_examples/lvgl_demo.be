@@ -26,8 +26,8 @@ stat_line.refr_size()                                                           
 stat_line.refr_pos()                                                                 # new in LVGL8
 
 #- display wifi strength indicator icon (for professionals ;) -#
-wifi_icon = lv_wifi_arcs_icon(stat_line)    # the widget takes care of positioning and driver stuff
-clock_icon = lv_clock_icon(stat_line)
+wifi_icon = lv.wifi_arcs_icon(stat_line)    # the widget takes care of positioning and driver stuff
+clock_icon = lv.clock_icon(stat_line)
 
 #- create a style for the buttons -#
 btn_style = lv.style()

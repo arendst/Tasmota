@@ -8,6 +8,6 @@
       "type": "git",
       "url": "https://github.com/pfalcon/re1.5"
     },
-    "frameworks": "*",
-    "platforms": "*"
+    "frameworks": "arduino",
+    "platforms": "espressif32"
 }

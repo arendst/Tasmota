@@ -232,8 +232,7 @@ void setup(void) {
 #ifdef ESP32
 #ifdef DISABLE_ESP32_BROWNOUT
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
-#endif
-#endif
+#endif  // DISABLE_ESP32_BROWNOUT
 
 #ifdef CONFIG_IDF_TARGET_ESP32
   // restore GPIO16/17 if no PSRAM is found
@@ -246,7 +245,9 @@ void setup(void) {
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
-#endif
+#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // ESP32
+
   RtcPreInit();
   SettingsInit();
 

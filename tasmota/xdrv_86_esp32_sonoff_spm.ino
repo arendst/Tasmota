@@ -69,9 +69,9 @@
  * GPIO03 - Serial console RX
  * GPIO04 - ARM processor TX (115200bps8N1)
  * GPIO05 - ETH POWER
- * GPIO12 - SPI MOSI ARM output (pin36 - PB15) - ESP input
- * GPIO13 - SPI MISO ESP output - ARM input (pin35 - PB14)
- * GPIO14 - SPI CLK ESP input (ARM pin34 - PB13)
+ * GPIO12 - SPI MISO to MOSI ARM output (pin36 - PB15)
+ * GPIO13 - SPI MOSI to MISO ARM input (pin35 - PB14)
+ * GPIO14 - SPI SCLK to ARM input (ARM pin34 - PB13)
  * GPIO15 - ARM reset (output) - 18ms low active 125ms after restart esp32
  * GPIO16 - ARM processor RX
  * GPIO17 - EMAC_CLK_OUT_180
@@ -1204,6 +1204,7 @@ void SSPMEnergyShow(bool json) {
 
     if (index) {
       uint32_t offset = 0;
+/*
       if (index > 4) {
         Sspm->rotate++;
         if (Sspm->rotate >= ((index -1) >> 2) << 3) {
@@ -1211,6 +1212,15 @@ void SSPMEnergyShow(bool json) {
         }
         offset = (Sspm->rotate >> 2) * 4;
       }
+*/
+      if (index > 4) {
+        Sspm->rotate++;
+        if (Sspm->rotate >= (index | 0x3)) {
+          Sspm->rotate = 0;
+        }
+        offset = (Sspm->rotate >> 2) * 4;
+      }
+
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
       WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)

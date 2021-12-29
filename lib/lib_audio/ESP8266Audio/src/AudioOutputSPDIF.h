@@ -3,7 +3,7 @@
   
   S/PDIF output via I2S
   
-  Needs transciever from CMOS level to either optical or coaxial interface
+  Needs transceiver from CMOS level to either optical or coaxial interface
   See: https://www.epanorama.net/documents/audio/spdif.html
 
   Original idea and sources: 

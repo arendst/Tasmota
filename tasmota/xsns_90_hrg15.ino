@@ -91,7 +91,8 @@ bool Rg15Poll(void) {
 
   while (HydreonSerial->available()) {
     Rg15ReadLine(rg15_buffer);
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received '%s'"), rg15_buffer);
+  //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received '%s'"), rg15_buffer);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
     Rg15Process(rg15_buffer);
   }
 
@@ -141,14 +142,15 @@ float Rg15Parse(char* buffer, const char* item) {
     char* start = strstr(buffer, item);
     if (start != nullptr) {
       char* end = strstr(start, " mm");
-      char tmp = end[0];
-      end[0] = '\0';
-      float result = CharToFloat (start + strlen(item));
-      end[0] = tmp;
-      return result;
-    } else {
-      return 0.0f;
+      if (end != nullptr) {
+        char tmp = end[0];
+        end[0] = '\0';
+        float result = CharToFloat (start + strlen(item));
+        end[0] = tmp;
+        return result;
+      }
     }
+    return 0.0f;
 }
 
 bool Rg15Command(void) {
@@ -166,8 +168,11 @@ bool Rg15Command(void) {
 
     char rg15_buffer[255];
     if (Rg15ReadLine(rg15_buffer)) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
       Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), rg15_buffer);
       Rg15Process(rg15_buffer);
+    } else {
+      ResponseCmndDone();
     }
   }
 

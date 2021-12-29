@@ -44,6 +44,7 @@ be_extern_native_module(unishox);
 be_extern_native_module(animate);
 #ifdef USE_LVGL
 be_extern_native_module(lv);
+be_extern_native_module(lv_tasmota);
 #endif // USE_LVGL
 
 /* user-defined modules declare start */
@@ -118,6 +119,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 
 #ifdef USE_LVGL
     &be_native_module(lv),
+    &be_native_module(lv_tasmota),
 #endif // USE_LVGL
 #ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),
@@ -144,6 +146,7 @@ extern void be_load_AXP192_class(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
 extern void be_load_webclient_lib(bvm *vm);
 extern void be_load_tcpclient_lib(bvm *vm);
+extern void be_load_udp_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
 extern void be_load_Leds_ntv_class(bvm *vm);
 extern void be_load_Leds_class(bvm *vm);
@@ -157,9 +160,7 @@ extern void be_load_driver_audio_lib(bvm *vm);
 #endif
 
 #ifdef USE_LVGL
-extern void be_load_lv_color_class(bvm *vm);
-extern void be_load_lv_font_class(bvm *vm);
-extern void be_load_LVGL_glob_class(bvm *vm);
+#include "lv_berry.h"
 // custom widgets
 extern void be_load_lv_signal_bars_class(bvm *vm);
 extern void be_load_lv_wifi_bars_class(bvm *vm);
@@ -199,6 +200,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #ifdef USE_WEBCLIENT
     be_load_webclient_lib(vm);
     be_load_tcpclient_lib(vm);
+    be_load_udp_lib(vm);
 #endif // USE_WEBCLIENT
 #if defined(USE_ONEWIRE) || defined(USE_DS18x20)
     be_load_onewirelib(vm);
@@ -213,10 +215,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif
 #ifdef USE_LVGL
     // LVGL
-    be_load_lv_color_class(vm);
-    be_load_lv_font_class(vm);
-
-    be_load_LVGL_glob_class(vm);
+    be_load_lvgl_classes(vm);
     // custom widgets
     be_load_lv_signal_bars_class(vm);
     be_load_lv_wifi_bars_class(vm);

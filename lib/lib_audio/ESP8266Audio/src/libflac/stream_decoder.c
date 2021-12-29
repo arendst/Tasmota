@@ -2199,14 +2199,14 @@ FLAC__bool read_frame_header_(FLAC__StreamDecoder *decoder)
 	 * Three kinds of things can go wrong when reading the frame header:
 	 *  1) We may have sync'ed incorrectly and not landed on a frame header.
 	 *     If we don't find a sync code, it can end up looking like we read
-	 *     a valid but unparseable header, until getting to the frame header
+	 *     a valid but unparsable header, until getting to the frame header
 	 *     CRC.  Even then we could get a false positive on the CRC.
-	 *  2) We may have sync'ed correctly but on an unparseable frame (from a
+	 *  2) We may have sync'ed correctly but on an unparsable frame (from a
 	 *     future encoder).
-	 *  3) We may be on a damaged frame which appears valid but unparseable.
+	 *  3) We may be on a damaged frame which appears valid but unparsable.
 	 *
 	 * For all these reasons, we try and read a complete frame header as
-	 * long as it seems valid, even if unparseable, up until the frame
+	 * long as it seems valid, even if unparsable, up until the frame
 	 * header CRC.
 	 */
 
@@ -2839,7 +2839,7 @@ FLAC__bool read_callback_(FLAC__byte buffer[], size_t *bytes, void *client_data)
 		 * FLAC__STREAM_DECODER_UNPARSEABLE_STREAM and increment its
 		 * unparseable_frame_count.  But there is a remote possibility
 		 * that it is properly synced at such a "future-codec frame",
-		 * so to make sure, we wait to see many "unparseable" errors in
+		 * so to make sure, we wait to see many "unparsable" errors in
 		 * a row before bailing out.
 		 */
 		if(decoder->private_->is_seeking && decoder->private_->unparseable_frame_count > 20) {
@@ -3146,7 +3146,7 @@ FLAC__bool seek_to_absolute_sample_(FLAC__StreamDecoder *decoder, FLAC__uint64 s
 			return false;
 		}
 		/* Now we need to get a frame.  First we need to reset our
-		 * unparseable_frame_count; if we get too many unparseable
+		 * unparseable_frame_count; if we get too many unparsable
 		 * frames in a row, the read callback will return
 		 * FLAC__STREAM_DECODER_READ_STATUS_ABORT, causing
 		 * FLAC__stream_decoder_process_single() to return false.

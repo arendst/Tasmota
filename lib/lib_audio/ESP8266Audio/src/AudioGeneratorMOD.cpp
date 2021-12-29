@@ -124,7 +124,7 @@ bool AudioGeneratorMOD::begin(AudioFileSource *source, AudioOutput *out)
   UpdateAmiga();
 
   for (int i = 0; i < CHANNELS; i++) {
-    FatBuffer.channels[i] = reinterpret_cast<uint8_t*>(malloc(fatBufferSize));
+    FatBuffer.channels[i] = reinterpret_cast<uint8_t*>(calloc(fatBufferSize, 1));
     if (!FatBuffer.channels[i]) {
       stop();
       return false;
@@ -565,7 +565,7 @@ bool AudioGeneratorMOD::ProcessRow()
       Mixer.channelFrequency[channel] = Player.amiga / Player.lastAmigaPeriod[channel];
 
     if (note != NONOTE)
-      Mixer.channelSampleOffset[channel] = sampleOffset << DIVIDER;
+      Mixer.channelSampleOffset[channel] = sampleOffset << FIXED_DIVIDER;
 
     if (sampleNumber)
       Mixer.channelSampleNumber[channel] = Player.lastSampleNumber[channel];
@@ -757,12 +757,12 @@ void AudioGeneratorMOD::GetSample(int16_t sample[2])
     if (!Mixer.channelVolume[channel]) continue;
 
     samplePointer = Mixer.sampleBegin[Mixer.channelSampleNumber[channel]] +
-                    (Mixer.channelSampleOffset[channel] >> DIVIDER);
+                    (Mixer.channelSampleOffset[channel] >> FIXED_DIVIDER);
 
     if (Mixer.sampleLoopLength[Mixer.channelSampleNumber[channel]]) {
 
       if (samplePointer >= Mixer.sampleLoopEnd[Mixer.channelSampleNumber[channel]]) {
-        Mixer.channelSampleOffset[channel] -= Mixer.sampleLoopLength[Mixer.channelSampleNumber[channel]] << DIVIDER;
+        Mixer.channelSampleOffset[channel] -= Mixer.sampleLoopLength[Mixer.channelSampleNumber[channel]] << FIXED_DIVIDER;
         samplePointer -= Mixer.sampleLoopLength[Mixer.channelSampleNumber[channel]];
       }
 
@@ -801,7 +801,7 @@ void AudioGeneratorMOD::GetSample(int16_t sample[2])
     out = current;
 
     // Integer linear interpolation
-    out += (next - current) * (Mixer.channelSampleOffset[channel] & ((1 << DIVIDER) - 1)) >> DIVIDER;
+    out += (next - current) * (Mixer.channelSampleOffset[channel] & ((1 << FIXED_DIVIDER) - 1)) >> FIXED_DIVIDER;
 
     // Upscale to BITDEPTH
     out <<= BITDEPTH - 8;

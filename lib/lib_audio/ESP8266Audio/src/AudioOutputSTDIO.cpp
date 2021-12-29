@@ -54,6 +54,11 @@ bool AudioOutputSTDIO::begin()
 
 bool AudioOutputSTDIO::ConsumeSample(int16_t sample[2])
 {
+  static int avail = 100;
+  if (!(--avail)) {
+      avail = 100;
+      return false;
+  }
   for (int i=0; i<channels; i++) {
     if (bps == 8) {
       uint8_t l = sample[i] & 0xff;

@@ -1,7 +1,7 @@
 /*
   AudioOutputI2SNoDAC
   Audio player using SW delta-sigma to generate "analog" on I2S data
-
+ 
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,10 @@
 #include <Arduino.h>
 #ifdef ESP32
   #include "driver/i2s.h"
-#elif defined(ARDUINO_ARCH_RP2040) || defined(ESP8266)
-  #ifdef ARDUINO_ESP8266_MAJOR    //this define was added in ESP8266 Arduino Core version v3.0.1
-    #include "core_esp8266_i2s.h" //for Arduino core >= 3.0.1
-  #else
-    #include "i2s.h"              //for Arduino core <= 3.0.0
-  #endif
+#elif defined(ARDUINO_ARCH_RP2040) || ARDUINO_ESP8266_MAJOR >= 3
+  #include <I2S.h>
+#elif ARDUINO_ESP8266_MAJOR < 3
+  #include <i2s.h>
 #endif
 #include "AudioOutputI2SNoDAC.h"
 
@@ -70,7 +68,7 @@ void AudioOutputI2SNoDAC::DeltaSigma(int16_t sample[2], uint32_t dsBuff[8])
 
   for (int j = 0; j < oversample32; j++) {
     uint32_t bits = 0; // The bits we convert the sample into, MSB to go on the wire first
-
+    
     for (int i = 32; i > 0; i--) {
       bits = bits << 1;
       if (cumErr < 0) {
@@ -99,12 +97,14 @@ bool AudioOutputI2SNoDAC::ConsumeSample(int16_t sample[2])
 
   // Either send complete pulse stream or nothing
 #ifdef ESP32
-// Deprecated. Use i2s_write
+//"i2s_write_bytes" has been removed in the ESP32 Arduino 2.0.0,  use "i2s_write" instead.
 //  if (!i2s_write_bytes((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), 0))
-  size_t bytes_written;
-  i2s_write((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), &bytes_written, 0);
-  if (!bytes_written)
+
+  size_t i2s_bytes_written;
+  i2s_write((i2s_port_t)portNo, (const char *)dsBuff, sizeof(uint32_t) * (oversample/32), &i2s_bytes_written, 0);
+  if (!i2s_bytes_written){
     return false;
+  }
 #elif defined(ESP8266)
   if (!i2s_write_sample_nb(dsBuff[0])) return false; // No room at the inn
   // At this point we've sent in first of possibly 8 32-bits, need to send

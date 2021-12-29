@@ -548,6 +548,7 @@
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
+#define D_CMND_SSERIALCONFIG "SSerialConfig"
   #define D_JSON_SSERIALRECEIVED "SSerialReceived"
 
 // Commands xdrv_09_timers.ino

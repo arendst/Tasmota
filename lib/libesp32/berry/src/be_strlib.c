@@ -578,7 +578,7 @@ static int str_format(bvm *vm)
                 break;
             case 's': {
                 const char *s = be_tostring(vm, index);
-                int len = be_strlen(vm, 2);
+                int len = be_strlen(vm, index);
                 if (len > 100 && strlen(mode) == 2) {
                     be_pushvalue(vm, index);
                 } else {

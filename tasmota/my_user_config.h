@@ -98,7 +98,11 @@
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32C3
 #define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota32c3.bin"  // [OtaUrl]
-#else   // No CONFIG_IDF_TARGET_ESP32C3
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#define OTA_URL                "no official version (yet)"  // [OtaUrl]
+#elif defined(CORE32SOLO1)
+#define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota32solo1.bin"  // [OtaUrl]
+#else
 #define OTA_URL                "http://ota.tasmota.com/tasmota32/release/tasmota32.bin"  // [OtaUrl]
 #endif  //  CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
