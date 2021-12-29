@@ -54,7 +54,7 @@ bool DhtRead(uint32_t sensor) {
   float humidity = Dht[sensor].dht->readHumidity(false);
 
   if (isnan(temperature) || isnan(humidity)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid NAN reading"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid reading"));
     return false;
   }
 
