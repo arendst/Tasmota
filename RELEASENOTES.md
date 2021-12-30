@@ -117,8 +117,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Fixed
 - EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
+- DHT support negative temperatures on different hardware [#14173](https://github.com/arendst/Tasmota/issues/14173)
+- Hardware serial parity and stop bits support [#14212](https://github.com/arendst/Tasmota/issues/14212)
 - ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
 - ESP32 Compile error when I2S_Audio is enabled [#14095](https://github.com/arendst/Tasmota/issues/14095)
+- ESP32 Provide proper OTA_URL for tasmota32solo1 [#14202](https://github.com/arendst/Tasmota/issues/14202)
 
 ### Removed

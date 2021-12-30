@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 
+### Fixed
+- DHT support negative temperatures on different hardware (#14173)
+- ESP32 Provide proper OTA_URL for tasmota32solo1 (#14202)
+- Hardware serial parity and stop bits support (#14212)
+
 ### Changed
 - LVGL update from 8.0.2 to 8.1.0
 
