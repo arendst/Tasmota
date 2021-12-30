@@ -65,7 +65,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndSwitchText,
 #ifdef USE_I2C
-  &CmndI2cScan, CmndI2cDriver,
+  &CmndI2cScan, &CmndI2cDriver,
 #endif
 #ifdef USE_DEVICE_GROUPS
   &CmndDevGroupName,
