@@ -50,7 +50,7 @@ uint8_t Sr04TModeDetect(void)
   int sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
-  if (sonar_serial->begin(9600,1)) {
+  if (sonar_serial->begin(9600)) {
     DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
 
     if (sr04_trig_pin != -1) {

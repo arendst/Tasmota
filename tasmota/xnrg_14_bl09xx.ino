@@ -279,7 +279,7 @@ void Bl09XXEverySecond(void) {
 void Bl09XXInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   Bl09XXSerial = new TasmotaSerial(Bl09XX.rx_pin, Pin(GPIO_TXD), 1);
-  if (Bl09XXSerial->begin(4800, 1)) {
+  if (Bl09XXSerial->begin(4800)) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }

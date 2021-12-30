@@ -121,21 +121,6 @@ bool TasmotaSerial::isValidGPIOpin(int pin) {
 
 bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   if (!m_valid) { return false; }
-  if (config > 2) {
-    // Legacy support where software serial fakes two stop bits if either stop bits is 2 or parity is not None
-    m_stop_bits = ((config &0x30) >> 5) +1;
-    if ((1 == m_stop_bits) && (config &0x03)) {
-      m_stop_bits++;
-    }
-  } else {
-    m_stop_bits = ((config -1) &1) +1;
-#ifdef ESP8266
-    config = (2 == m_stop_bits) ? (uint32_t)SERIAL_8N2 : (uint32_t)SERIAL_8N1;
-#endif  // ESP8266
-#ifdef ESP32
-    config = (2 == m_stop_bits) ? SERIAL_8N2 : SERIAL_8N1;
-#endif  // ESP32
-  }
 
   if (m_hardserial) {
 #ifdef ESP8266
@@ -181,6 +166,18 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
 //    Serial.printf("TSR: Using UART%d\n", m_uart);
 #endif  // ESP32
   } else {
+    // Software serial fakes two stop bits if either stop bits is 2 or parity is not None
+    // #define UART_NB_STOP_BIT_0    0B00000000
+    // #define UART_NB_STOP_BIT_1    0B00010000
+    // #define UART_NB_STOP_BIT_15   0B00100000
+    // #define UART_NB_STOP_BIT_2    0B00110000
+    m_stop_bits = ((config &0x30) >> 5) +1;
+    // #define UART_PARITY_NONE      0B00000000
+    // #define UART_PARITY_EVEN      0B00000010
+    // #define UART_PARITY_ODD       0B00000011
+    if ((1 == m_stop_bits) && (config &0x03)) {
+      m_stop_bits++;
+    }
     // Use getCycleCount() loop to get as exact timing as possible
     m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
     m_bit_start_time = m_bit_time + m_bit_time/3 - (ESP.getCpuFreqMHz() > 120 ? 700 : 500); // pre-compute first wait
