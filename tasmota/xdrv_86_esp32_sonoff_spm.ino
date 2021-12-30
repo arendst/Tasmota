@@ -1204,15 +1204,6 @@ void SSPMEnergyShow(bool json) {
 
     if (index) {
       uint32_t offset = 0;
-/*
-      if (index > 4) {
-        Sspm->rotate++;
-        if (Sspm->rotate >= ((index -1) >> 2) << 3) {
-          Sspm->rotate = 0;
-        }
-        offset = (Sspm->rotate >> 2) * 4;
-      }
-*/
       if (index > 4) {
         Sspm->rotate++;
         if (Sspm->rotate >= (index | 0x3)) {
@@ -1220,7 +1211,6 @@ void SSPMEnergyShow(bool json) {
         }
         offset = (Sspm->rotate >> 2) * 4;
       }
-
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
       WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
