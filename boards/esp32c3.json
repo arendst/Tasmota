@@ -22,7 +22,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k SPIFFS",
+  "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,
