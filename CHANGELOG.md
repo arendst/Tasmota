@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.1.0.3]
+## [2022.01.1]
+### Changed
+- Versioning from SemVer to CalVer
+
+## [10.1.0.3] 20211231
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 
