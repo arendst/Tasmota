@@ -21,6 +21,7 @@
 /*********************************************************************************************\
  * Hydreon RG-15
  * See https://rainsensors.com/products/rg-15/
+ * https://rainsensors.com/rg-9-15-protocol/
 \*********************************************************************************************/
 
 #define XSNS_90 90
@@ -29,6 +30,7 @@
 #define RG15_BAUDRATE      9600
 #define RG15_READ_TIMEOUT  500
 #define RG15_EVENT_TIMEOUT 60
+#define RG15_BUFFER_SIZE   150
 
 #include <TasmotaSerial.h>
 
@@ -41,117 +43,148 @@ const char HTTP_RG15[] PROGMEM =
    "{s}" RG15_NAME " " D_JSON_FLOWRATE "{m}%2_f " D_UNIT_MILLIMETER "/" D_UNIT_HOUR "{e}";
 #endif  // USE_WEBSERVER
 
-TasmotaSerial *HydreonSerial;
+TasmotaSerial *HydreonSerial = nullptr;
 
 struct RG15 {
+  float acc;
+  float event;
+  float total;
+  float rate;
   uint16_t time = RG15_EVENT_TIMEOUT;
-  uint8_t ready = 1;
-  uint8_t received = 0;
-  float acc = 0.0f;
-  float event = 0.0f;
-  float total = 0.0f;
-  float rate = 0.0f;
+  uint8_t init_step;
 } Rg15;
 
-void Rg15Init(void) {
-  Rg15.ready = 0;
-  if (PinUsed(GPIO_HRG15_RX) && PinUsed(GPIO_HRG15_TX)) {
-    HydreonSerial = new TasmotaSerial(Pin(GPIO_HRG15_RX), Pin(GPIO_HRG15_TX));
-    if (HydreonSerial->begin(RG15_BAUDRATE)) {
-      if (HydreonSerial->hardwareSerial()) { ClaimSerial(); }
-
-      HydreonSerial->println('R');
-
-      Rg15.ready = 1;
-    }
-  }
-}
-
-bool Rg15Poll(void) {
-
-  // Trigger the first update
-  if (! Rg15.received) {
-    HydreonSerial->println('R');
-  }
-
-  if (! HydreonSerial->available()) {
-
-    // Check if the rain event has timed out, reset rate to 0
-    if (++Rg15.time == RG15_EVENT_TIMEOUT) {
-      Rg15.acc = 0;
-      Rg15.rate = 0;
-      MqttPublishSensor();
-    }
-
-    return false;
-  }
-
-  // Now read what's available
-  char rg15_buffer[255];
-
-  while (HydreonSerial->available()) {
-    Rg15ReadLine(rg15_buffer);
-  //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received '%s'"), rg15_buffer);
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
-    Rg15Process(rg15_buffer);
-  }
-
-  MqttPublishSensor();
-
-  return true;
-}
+/*********************************************************************************************/
 
 bool Rg15ReadLine(char* buffer) {
-  char c;
-  uint8_t i = 0;
+  // All lines are terminated with a carriage return (\r or 13) followed by a new line (\n or 10)
+  uint32_t i = 0;
   uint32_t cmillis = millis();
-  buffer[0] = '\0';
+  while (HydreonSerial->available() ) {
+    char c = HydreonSerial->read();
+    if (c == 10) { break; }            // New line ends the message
 
-  while (1) {
-      if (HydreonSerial->available()) {
-        c = HydreonSerial->read();
-        buffer[i++] = c;
+    if ((c >= 32) && (c < 127)) {      // Accept only valid characters
+      buffer[i++] = c;
+      if (i == RG15_BUFFER_SIZE -1) { break; }       // Overflow
+    }
 
-        if (c == 10) { break; } // New line ends the message
-        if (i == 254) { break; } // Overflow
-      }
-
-      if ((millis() - cmillis) > RG15_READ_TIMEOUT) {
-        return false;
-      }
+    if ((millis() - cmillis) > RG15_READ_TIMEOUT) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("HRG: Timeout"));
+      return false;
+    }
   }
-  if (i > 1) { buffer[i-2] = '\0'; }
+  buffer[i] = '\0';
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Read '%s'"), buffer);
+
   return true;
-}
-
-void Rg15Process(char* buffer) {
-
-  // Process payload, example: Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
-  Rg15.received = 1;
-  Rg15.acc = Rg15Parse(buffer, "Acc");
-  Rg15.event = Rg15Parse(buffer, "EventAcc");
-  Rg15.total = Rg15Parse(buffer, "TotalAcc");
-  Rg15.rate = Rg15Parse(buffer, "RInt");
-
-  if (Rg15.acc > 0.0f) {
-    Rg15.time = 0; // We have some data, so the rain event is on-going
-  }
 }
 
 float Rg15Parse(char* buffer, const char* item) {
-    char* start = strstr(buffer, item);
-    if (start != nullptr) {
-      char* end = strstr(start, " mm");
-      if (end != nullptr) {
-        char tmp = end[0];
-        end[0] = '\0';
-        float result = CharToFloat (start + strlen(item));
-        end[0] = tmp;
-        return result;
+  char* start = strstr(buffer, item);
+  if (start != nullptr) {
+    char* end = strstr(start, " mm");  // Metric (mm or mmph)
+    if (end == nullptr) {
+      end = strstr(start, " i");       // Imperial (in or iph)
+    }
+    if (end != nullptr) {
+      char tmp = end[0];
+      end[0] = '\0';
+      float result = CharToFloat(start + strlen(item));
+      end[0] = tmp;
+      return result;
+    }
+  }
+  return 0.0f;
+}
+
+void Rg15Process(char* buffer) {
+  // Process payloads like:
+  // Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
+  // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
+  // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
+  if (buffer[0] == 'A' && buffer[1] == 'c' && buffer[2] == 'c') {
+    Rg15.acc   = Rg15Parse(buffer, "Acc");
+    Rg15.event = Rg15Parse(buffer, "EventAcc");
+    Rg15.total = Rg15Parse(buffer, "TotalAcc");
+    Rg15.rate  = Rg15Parse(buffer, "RInt");
+
+    if (Rg15.acc > 0.0f) {
+      Rg15.time = RG15_EVENT_TIMEOUT;  // We have some data, so the rain event is on-going
+    }
+  }
+}
+
+/*********************************************************************************************/
+
+void Rg15Init(void) {
+  if (PinUsed(GPIO_HRG15_RX) && PinUsed(GPIO_HRG15_TX)) {
+    // Max size message:
+    // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
+    HydreonSerial = new TasmotaSerial(Pin(GPIO_HRG15_RX), Pin(GPIO_HRG15_TX), 2, 0, RG15_BUFFER_SIZE);
+    if (HydreonSerial) {
+      if (HydreonSerial->begin(RG15_BAUDRATE)) {
+        if (HydreonSerial->hardwareSerial()) { ClaimSerial(); }
+        Rg15.init_step = 3;
       }
     }
-    return 0.0f;
+  }
 }
+
+void Rg15Poll(void) {
+  if (Rg15.init_step) {
+    Rg15.init_step--;
+    if (1 == Rg15.init_step) {
+//      HydreonSerial->println('I');  // Imperial (in)
+      HydreonSerial->println('M');  // Metric (mm)
+
+//      HydreonSerial->println('H');  // High resolution (0.001)
+      HydreonSerial->println('L');  // Low resolution (0.01)
+
+//      HydreonSerial->println('P');  // Request mode (Polling)
+      HydreonSerial->println('C');  // Continuous mode - report any change
+    }
+    if (0 == Rg15.init_step) {
+      HydreonSerial->println('R');  // Read available data once
+    }
+  }
+
+  if (!HydreonSerial->available()) {
+    // Check if the rain event has timed out, reset rate to 0
+    if (Rg15.time) {
+      Rg15.time--;
+      if (!Rg15.time) {
+        Rg15.acc = 0;
+        Rg15.rate = 0;
+        MqttPublishSensor();
+      }
+    }
+  } else {
+    // Now read what's available
+    char rg15_buffer[RG15_BUFFER_SIZE];
+    while (HydreonSerial->available()) {
+      Rg15ReadLine(rg15_buffer);
+      Rg15Process(rg15_buffer);
+    }
+    if (!TasmotaGlobal.global_state.mqtt_down) { MqttPublishSensor(); }
+  }
+}
+
+void Rg15Show(bool json) {
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{\"" D_JSON_ACTIVE "\":%2_f,\"" D_JSON_EVENT "\":%2_f,\"" D_JSON_TOTAL "\":%2_f,\"" D_JSON_FLOWRATE "\":%2_f}"),
+      &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+#endif  // USE_WEBSERVER
+  }
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
 
 bool Rg15Command(void) {
   bool serviced = true;
@@ -166,9 +199,8 @@ bool Rg15Command(void) {
       return serviced;
     }
 
-    char rg15_buffer[255];
+    char rg15_buffer[RG15_BUFFER_SIZE];
     if (Rg15ReadLine(rg15_buffer)) {
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Received %*_H"), strlen(rg15_buffer), rg15_buffer);
       Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), rg15_buffer);
       Rg15Process(rg15_buffer);
     } else {
@@ -179,56 +211,36 @@ bool Rg15Command(void) {
   return serviced;
 }
 
-void Rg15Show(bool json)
-{
-    if (!Rg15.received) {
-        return;
-    }
-
-    if (json) {
-      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{\"" D_JSON_ACTIVE "\":%2_f,\"" D_JSON_EVENT "\":%2_f,\"" D_JSON_TOTAL "\":%2_f,\"" D_JSON_FLOWRATE "\":%2_f}"), &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
-#endif  // USE_WEBSERVER
-    }
-}
-
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-bool Xsns90(uint8_t function)
-{
-
+bool Xsns90(uint8_t function) {
   bool result = false;
 
-  if (Rg15.ready)
-  {
-    switch (function)
-    {
-    case FUNC_INIT:
-      Rg15Init();
-      break;
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_90 == XdrvMailbox.index) {
-          Rg15Command();
-      }
-      break;
-    case FUNC_EVERY_SECOND:
-      Rg15Poll();
-      break;
-    case FUNC_JSON_APPEND:
-      Rg15Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    Rg15Init();
+  }
+  else if (HydreonSerial) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Rg15Poll();
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_90 == XdrvMailbox.index) {
+          result = Rg15Command();
+        }
+        break;
+      case FUNC_JSON_APPEND:
+        Rg15Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Rg15Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        Rg15Show(0);
+        break;
 #endif // USE_WEBSERVER
     }
   }
-
   return result;
 }
 
