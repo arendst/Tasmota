@@ -86,3 +86,27 @@ jobs:
         valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all --error-exitcode=999 ./wav
         valgrind --leak-check=full --track-origins=yes -v --error-limit=no --show-leak-kinds=all --error-exitcode=999 ./midi
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: arduino/arduino-lint-action@v1
+        with:
+          library-manager: 'update'
+
+# Validate orthography
+  code-spell:
+    name: Check spelling
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Run codespell
+      uses: codespell-project/actions-codespell@master
+      with:
+        skip: ./src/libmad,./src/libhelix-aac,./src/libopus
+        ignore_words_list: ESP8266,esp8266,esp,dout,DOUT,ser,ans,inout,numer,hist

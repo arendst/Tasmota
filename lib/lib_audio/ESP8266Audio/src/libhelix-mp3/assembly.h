@@ -40,7 +40,7 @@
  *
  * assembly.h - assembly language functions and prototypes for supported platforms
  *
- * - inline rountines with access to 64-bit multiply results
+ * - inline routines with access to 64-bit multiply results
  * - x86 (_WIN32) and ARM (ARM_ADS, _WIN32_WCE) versions included
  * - some inline functions are mix of asm and C for speed
  * - some functions are in native asm files, so only the prototype is given here
@@ -241,7 +241,7 @@ static __inline int MULSHIFT32(int x, int y)
 
 static __inline int FASTABS(int x)
 {
-	int t=0; /*Really is not necessary to initialiaze only to avoid warning*/
+	int t=0; /*Really is not necessary to initialize only to avoid warning*/
 
 	__asm {
 		eor	t, x, x, asr #31

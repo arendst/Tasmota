@@ -44,7 +44,7 @@ void setup() {
   // param  : float (current time [sec] of the song)
   // return : float (the amplitude of sound which varies from -1.f to +1.f)
   //
-  // sound function can be registerd only one or the same number with channels
+  // sound function can be registered only one or the same number with channels
   // if the channels > 1 && the number of function == 1,
   // same function are used to generate the sound in every channel
   //

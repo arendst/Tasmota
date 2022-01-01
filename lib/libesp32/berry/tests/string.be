@@ -39,3 +39,44 @@ s="azerty"
 assert(s[1..2] == "ze")
 assert(s[1..] == "zerty")
 assert(s[1..-1] == "zerty")
+
+#- string ranges -#
+s="azertyuiop"
+assert(s[0] == "a")
+assert(s[0..1] == "az")
+assert(s[0..2] == "aze")
+assert(s[0..10] == s)
+assert(s[0..size(s)] == s)
+assert(s[0..50] == s)       #- upper limit is allowed to be out of range -#
+
+#- negative indices start from the end -#
+s="azertyuiop"
+assert(s[-1] == "p")
+assert(s[-2] == "o")
+assert(s[0..-2] == "azertyuio")
+assert(s[-4..-2] == "uio")
+assert(s[-2..-4] == "")  #- if range is in wrong order, returns empty string -#
+assert(s[-40..-2] == "azertyuio")  #- borders are allowed to be out of range -#
+
+# escape
+import string
+assert(string.escape("A") == '"A"')
+assert(string.escape("A", true) == "'A'")
+assert(string.escape("\"") == '"\\""')
+assert(string.escape("\"", true) == '\'"\'')
+
+var s ='"a\'b"\''
+assert(string.escape(s) == '"\\"a\'b\\"\'"')
+assert(string.escape(s, true) == '\'"a\\\'b"\\\'\'')
+
+# tr
+assert(string.tr("azer", "abcde", "ABCDE") == 'AzEr')
+assert(string.tr("azer", "", "") == 'azer')
+assert(string.tr("azer", "aaa", "ABC") == 'Azer')  # only first match works
+assert(string.tr("A_b", "_", " ") == 'A b')
+# tr used to remove characters
+assert(string.tr("qwerty", "qwe", "_") == '_rty')
+
+# the following should not crash
+var s1 = 'A string of more than 128 bytes 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789'
+var s2 = string.format("%i, %s", 1, s1)

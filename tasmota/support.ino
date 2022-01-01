@@ -676,9 +676,8 @@ bool ParseIPv4(uint32_t* addr, const char* str_p)
   return (3 == i);
 }
 
-// Function to parse & check if version_str is newer than our currently installed version.
-bool NewerVersion(char* version_str)
-{
+bool NewerVersion(char* version_str) {
+  // Function to parse & check if version_str is newer than our currently installed version.
   uint32_t version = 0;
   uint32_t i = 0;
   char *str_ptr;
@@ -688,20 +687,19 @@ bool NewerVersion(char* version_str)
   // Loop through the version string, splitting on '.' seperators.
   for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
-    // The fields in a version string can only range from 0-255.
-    if ((field < 0) || (field > 255)) {
-      return false;
-    }
-    // Shuffle the accumulated bytes across, and add the new byte.
-    version = (version << 8) + field;
-    // Check alpha delimiter after 1.2.3 only
-    if ((2 == i) && isalpha(str[strlen(str)-1])) {
-      field = str[strlen(str)-1] & 0x1f;
-      version = (version << 8) + field;
+    if ((0 == i) && (field > 2021) && (field < 2099)) {    // New versions look like 2022.01.1
+      version = ((field / 100) << 8) + (field - 2000);
       i++;
+    } else {
+      // The fields in a version string can only range from 0-255.
+      if ((field < 0) || (field > 255)) {                  // Old version look like 10.1.0.1
+        return false;
+      }
+      // Shuffle the accumulated bytes across, and add the new byte.
+      version = (version << 8) + field;
     }
   }
-  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
+  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3.1 (Now 2022.01 or 2022.01.1)
   // If not, then don't consider it a valid version string.
   if ((i < 2) || (i > sizeof(VERSION))) {
     return false;
@@ -1885,15 +1883,14 @@ void SetSerialBegin(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
-  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings->serial_config));
+  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)ConvertSerialConfig(Settings->serial_config));
   SetSerialSwap();
 #endif  // ESP8266
 #ifdef ESP32
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-  uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings->serial_config);
-  Serial.begin(TasmotaGlobal.baudrate, config);
+  Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
 #endif  // ESP32
 }
 

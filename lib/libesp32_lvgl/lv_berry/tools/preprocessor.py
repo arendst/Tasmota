@@ -62,6 +62,7 @@ lv_fun_globs = [
                   "extra/widgets/spinner/*.h",
                   "extra/themes/default/*.h",
                   "extra/themes/mono/*.h",
+                  "extra/layouts/**/*.h",
                   "core/*.h",
                   "draw/*.h",
                   "misc/lv_style_gen.h",
@@ -177,6 +178,7 @@ lv_fun_globs = [
                   "misc/*.h",
                   "widgets/*.h",
                   "extra/widgets/**/*.h",
+                  "extra/layouts/**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 

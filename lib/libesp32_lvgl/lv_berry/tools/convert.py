@@ -98,6 +98,12 @@ return_types = {
   "lv_colorwheel_mode_t": "i",
   "lv_scr_load_anim_t": "i",
   "lv_style_selector_t": "i",
+  "lv_draw_mask_res_t": "i",
+  "lv_img_size_mode_t": "i",
+  # layouts
+  "lv_flex_align_t": "i",
+  "lv_flex_flow_t": "i",
+  "lv_grid_align_t": "i",
 
   "_lv_event_dsc_t *": "i",
 

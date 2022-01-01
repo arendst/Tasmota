@@ -3,9 +3,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.1.0.3]
+## [2022.01.1]
+### Changed
+- From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
+
+### Fixed
+- Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
+
+## [10.1.0.3] 20211231
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
+
+### Fixed
+- DHT support negative temperatures on different hardware (#14173)
+- ESP32 Provide proper OTA_URL for tasmota32solo1 (#14202)
+- Hardware serial parity and stop bits support (#14212)
 
 ### Changed
 - LVGL update from 8.0.2 to 8.1.0
