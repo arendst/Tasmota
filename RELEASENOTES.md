@@ -112,10 +112,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
 
 ### Fixed
+- Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow [#13700](https://github.com/arendst/Tasmota/issues/13700)
 - EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
 - DHT support negative temperatures on different hardware [#14173](https://github.com/arendst/Tasmota/issues/14173)
 - Hardware serial parity and stop bits support [#14212](https://github.com/arendst/Tasmota/issues/14212)

@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ## [2022.01.1]
 ### Changed
-- Versioning from SemVer to CalVer
+- From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
+
+### Fixed
+- Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
 
 ## [10.1.0.3] 20211231
 ### Added
