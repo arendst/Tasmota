@@ -978,15 +978,15 @@ void UfsEditor(void) {
   char fname[UFS_FILENAME_SIZE];
   UfsFilename(fname, fname_input);                  // Trim spaces and add slash
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file=%s, ffs_type=%d, TfsFileExist=%d"), fname, ffs_type, TfsFileExists(fname));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file=%s, ffs_type=%d, TfsFileExist=%d"), fname, ffs_type, dfsp->exists(fname));
 
   WSContentStart_P(PSTR(D_EDIT_FILE));
   WSContentSendStyle();
   char *bfname = fname +1;
   WSContentSend_P(HTTP_EDITOR_FORM_START, bfname);  // Skip leading slash
 
-  if (ffs_type && TfsFileExists(fname)) {
-    File fp = ffsp->open(fname, "r");
+  if (ffs_type && dfsp->exists(fname)) {
+    File fp = dfsp->open(fname, "r");
     if (!fp) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("UFS: UfsEditor: file open failed"));
       WSContentSend_P(D_NEW_FILE);
@@ -1039,14 +1039,14 @@ void UfsEditorUpload(void) {
   }
   String content = Webserver->arg("content");
 
-  if (!ffsp) {
+  if (!dfsp) {
     Web.upload_error = 1;
     AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: 507: no storage available"));
     WSSend(507, CT_PLAIN, F("507: no storage available"));
     return;
   }
 
-  File fp = ffsp->open(fname, "w");
+  File fp = dfsp->open(fname, "w");
   if (!fp) {
     Web.upload_error = 1;
     AddLog(LOG_LEVEL_ERROR, PSTR("UFS: UfsEditor: 400: invalid file name '%s'"), fname);
