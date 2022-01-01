@@ -22,7 +22,7 @@ parse_func_def = re.compile("(.*?)\s(\w+)\((.*?)\)")
 # parse call argument type
 # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent'
 # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit'
-parse_arg = re.compile("(\w+\s+)?(\w+)([\*\s]+)(\w+)")
+parse_arg = re.compile("(\w+\s+)?(\w+)([\*\s]+)(\w+)(\[\])?")
 
 return_types = {
   "void": "",
@@ -106,6 +106,11 @@ return_types = {
   "lv_grid_align_t": "i",
 
   "_lv_event_dsc_t *": "i",
+
+  # arrays
+  "char * []": "str_arr",
+  "lv_coord_t []": "lv_coord_arr",
+  "lv_point_t []": "lv_point_arr",
 
   # "lv_signal_cb_t": "c",
   # "lv_design_cb_t": "c",
@@ -224,15 +229,18 @@ with open(lv_widgets_file) as f:
       c_args = ""
       args_raw = [ x.strip(" \t\n\r") for x in g.group(3).split(",") ]  # split by comma and strip
       for arg_raw in args_raw:
-        # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent'
-        # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit'
+        # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent', ''
+        # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit', ''
+        # Ex: 'const lv_coord_t value[]' -> 'const', 'lv_coord_t', '', 'value', '[]'
         ga = parse_arg.search(arg_raw)
         if ga:    # parsing ok?
           ga_type = ga.group(2)
           ga_ptr = ( ga.group(3).strip(" \t\n\r") == "*" )    # boolean
           ga_name = ga.group(4)
+          ga_array = ga.group(5)
           ga_type_ptr = ga_type
           if ga_ptr: ga_type_ptr += " *"
+          if ga_array: ga_type_ptr += " []"
           if ga_type_ptr in return_types:
             ga_type = return_types[ga_type_ptr]
           else:
