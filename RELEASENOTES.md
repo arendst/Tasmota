@@ -113,6 +113,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
+- ESP8266Audio library from v1.9.2 to v1.9.5
+- ESP8266SAM library from v1.0 to v1.0.1
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
