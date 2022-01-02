@@ -610,23 +610,26 @@ be_local_closure(LVGL_glob_init,   /* name */
       ),
     }),
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(cb),
     /* K1   */  be_nested_str(add_handler),
+    /* K2   */  be_nested_str(lv_extra),
     }),
     &be_const_str_init,
     &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080301,  //  0001  GETMET	R2	R1	K1
       0x84100000,  //  0002  CLOSURE	R4	P0
       0x7C080400,  //  0003  CALL	R2	2
-      0xA0000000,  //  0004  CLOSE	R0
-      0x80000000,  //  0005  RET	0
+      0xA40A0400,  //  0004  IMPORT	R2	K2
+      0xA0000000,  //  0005  CLOSE	R0
+      0x80000000,  //  0006  RET	0
     })
   )
 );
 /*******************************************************************/
+
 
 
 /********************************************************************
