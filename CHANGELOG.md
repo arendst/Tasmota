@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2022.01.1]
 ### Changed
+- PubSubClient library from v2.8.12 to v2.8.13
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 
 ### Fixed
