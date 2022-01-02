@@ -35,13 +35,13 @@ const char kHAssJsonSensorUnits[] PROGMEM =
   "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |";
 
 const char kHAssJsonSensorDevCla[] PROGMEM =
-  "dev_cla\":\"temperature|dev_cla\":\"temperature|dev_cla\":\"pressure|dev_cla\":\"pressure|"
-  "dev_cla\":\"power|dev_cla\":\"battery|dev_cla\":\"current|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
-  "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
-  "dev_cla\":\"pm1|dev_cla\":\"pm25|dev_cla\":\"pm10|dev_cla\":\"power_factor|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
-  "dev_cla\":\"power|dev_cla\":\"energy|dev_cla\":\"energy|dev_cla\":\"voltage|ic\":\"mdi:scale|dev_cla\":\"energy|"
-  "dev_cla\":\"carbon_dioxide|dev_cla\":\"carbon_dioxide|dev_cla\":\"volatile_organic_compounds|"
-  "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
+  "dev_cla\":\"temperature\",\"stat_cla\":\"measurement|dev_cla\":\"temperature\",\"stat_cla\":\"measurement|dev_cla\":\"pressure\",\"stat_cla\":\"measurement|dev_cla\":\"pressure\",\"stat_cla\":\"measurement|"
+  "dev_cla\":\"power\",\"stat_cla\":\"measurement|dev_cla\":\"battery|dev_cla\":\"current\",\"stat_cla\":\"measurement|ic\":\"mdi:leak|ic\":\"mdi:current-ac\",\"stat_cla\":\"measurement|dev_cla\":\"humidity\",\"stat_cla\":\"measurement|dev_cla\":\"illuminance\",\"stat_cla\":\"measurement|"
+  "ic\":\"mdi:cup-water\",\"stat_cla\":\"measurement|ic\":\"mdi:flask\",\"stat_cla\":\"measurement|ic\":\"mdi:flask\",\"stat_cla\":\"measurement|ic\":\"mdi:flask\",\"stat_cla\":\"measurement|ic\":\"mdi:flask\",\"stat_cla\":\"measurement|ic\":\"mdi:flask\",\"stat_cla\":\"measurement|ic\":\"mdi:flask\",\"stat_cla\":\"measurement|"
+  "dev_cla\":\"pm1\",\"stat_cla\":\"measurement|dev_cla\":\"pm25\",\"stat_cla\":\"measurement|dev_cla\":\"pm10\",\"stat_cla\":\"measurement|dev_cla\":\"power_factor\",\"stat_cla\":\"measurement|dev_cla\":\"power\",\"stat_cla\":\"measurement|ic\":\"mdi:progress-clock|"
+  "dev_cla\":\"power\",\"stat_cla\":\"measurement|dev_cla\":\"energy\",\"stat_cla\":\"total_increasing|dev_cla\":\"energy\",\"stat_cla\":\"total|dev_cla\":\"voltage\",\"stat_cla\":\"measurement|ic\":\"mdi:scale\",\"stat_cla\":\"measurement|dev_cla\":\"energy\",\"stat_cla\":\"total_increasing|"
+  "dev_cla\":\"carbon_dioxide\",\"stat_cla\":\"measurement|dev_cla\":\"carbon_dioxide\",\"stat_cla\":\"measurement|dev_cla\":\"volatile_organic_compounds\",\"stat_cla\":\"measurement|"
+  "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler\",\"stat_cla\":\"measurement|dev_cla\":\"illuminance|";
 
 // List of sensors ready for discovery
 
@@ -912,7 +912,7 @@ void HAssAnnounceSensor(const char *sensorname, const char *subsensortype, const
           snprintf_P(param1, sizeof(param1), PSTR("%s"), PressureUnit().c_str());
           break;
        }
-      char param2[50];
+      char param2[62];
       GetTextIndexed(param2, sizeof(param2), sensor_index, kHAssJsonSensorDevCla);
       TryResponseAppend_P(HASS_DISCOVER_SENSOR, param1, param2, sensorname, subsensortype);
 
