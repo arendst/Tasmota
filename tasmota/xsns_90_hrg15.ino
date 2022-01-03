@@ -99,7 +99,7 @@ float Rg15Parse(char* buffer, const char* item) {
   return 0.0f;
 }
 
-void Rg15Process(char* buffer) {
+bool Rg15Process(char* buffer) {
   // Process payloads like:
   // Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
   // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
@@ -113,7 +113,9 @@ void Rg15Process(char* buffer) {
     if (Rg15.acc > 0.0f) {
       Rg15.time = RG15_EVENT_TIMEOUT;  // We have some data, so the rain event is on-going
     }
+    return true;
   }
+  return false;
 }
 
 /*********************************************************************************************/
@@ -133,6 +135,33 @@ void Rg15Init(void) {
 }
 
 void Rg15Poll(void) {
+  bool publish = false;
+
+  if (!HydreonSerial->available()) {
+    // Check if the rain event has timed out, reset rate to 0
+    if (Rg15.time) {
+      Rg15.time--;
+      if (!Rg15.time) {
+        Rg15.acc = 0;
+        Rg15.rate = 0;
+        publish = true;
+      }
+    }
+  } else {
+    // Now read what's available
+    char rg15_buffer[RG15_BUFFER_SIZE];
+    while (HydreonSerial->available()) {
+      Rg15ReadLine(rg15_buffer);
+      if (Rg15Process(rg15_buffer)) {  // Do NOT use "publish = Rg15Process(rg15_buffer)"
+        publish = true;
+      }
+    }
+  }
+
+  if (publish && !TasmotaGlobal.global_state.mqtt_down) {
+    MqttPublishSensor();
+  }
+
   if (Rg15.init_step) {
     Rg15.init_step--;
     if (1 == Rg15.init_step) {
@@ -148,26 +177,6 @@ void Rg15Poll(void) {
     if (0 == Rg15.init_step) {
       HydreonSerial->println('R');  // Read available data once
     }
-  }
-
-  if (!HydreonSerial->available()) {
-    // Check if the rain event has timed out, reset rate to 0
-    if (Rg15.time) {
-      Rg15.time--;
-      if (!Rg15.time) {
-        Rg15.acc = 0;
-        Rg15.rate = 0;
-        MqttPublishSensor();
-      }
-    }
-  } else {
-    // Now read what's available
-    char rg15_buffer[RG15_BUFFER_SIZE];
-    while (HydreonSerial->available()) {
-      Rg15ReadLine(rg15_buffer);
-      Rg15Process(rg15_buffer);
-    }
-    if (!TasmotaGlobal.global_state.mqtt_down) { MqttPublishSensor(); }
   }
 }
 
