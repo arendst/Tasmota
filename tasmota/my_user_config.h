@@ -974,6 +974,8 @@
 
 #ifdef ESP32
 
+#define SET_ESP32_STACK_SIZE  (8 * 1024)         // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
+
 //#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter(+6k3 code)
 #ifdef USE_SONOFF_SPM
 #define USE_ETHERNET

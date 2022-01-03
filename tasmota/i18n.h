@@ -143,6 +143,7 @@
 #define D_JSON_PROBETEMPERATURE "ProbeTemperature"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_STACKLOWMARK "StackLowMark"
 #define D_JSON_PSRMAXMEMORY "PsrMax"
 #define D_JSON_PSRFREEMEMORY "PsrFree"
 #define D_JSON_PUMP "Pumped"
