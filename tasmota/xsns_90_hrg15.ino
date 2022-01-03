@@ -62,11 +62,11 @@ bool Rg15ReadLine(char* buffer) {
   uint32_t cmillis = millis();
   while (HydreonSerial->available() ) {
     char c = HydreonSerial->read();
-    if (c == 10) { break; }            // New line ends the message
+    if (c == 10) { break; }                  // New line ends the message
 
-    if ((c >= 32) && (c < 127)) {      // Accept only valid characters
+    if ((c >= 32) && (c < 127)) {            // Accept only valid characters
       buffer[i++] = c;
-      if (i == RG15_BUFFER_SIZE -1) { break; }       // Overflow
+      if (i == RG15_BUFFER_SIZE -1) { break; }  // Overflow
     }
 
     if ((millis() - cmillis) > RG15_READ_TIMEOUT) {
@@ -84,9 +84,9 @@ bool Rg15ReadLine(char* buffer) {
 float Rg15Parse(char* buffer, const char* item) {
   char* start = strstr(buffer, item);
   if (start != nullptr) {
-    char* end = strstr(start, " mm");  // Metric (mm or mmph)
+    char* end = strstr(start, " mm");        // Metric (mm or mmph)
     if (end == nullptr) {
-      end = strstr(start, " i");       // Imperial (in or iph)
+      end = strstr(start, " i");             // Imperial (in or iph)
     }
     if (end != nullptr) {
       char tmp = end[0];
@@ -111,7 +111,7 @@ bool Rg15Process(char* buffer) {
     Rg15.rate  = Rg15Parse(buffer, "RInt");
 
     if (Rg15.acc > 0.0f) {
-      Rg15.time = RG15_EVENT_TIMEOUT;  // We have some data, so the rain event is on-going
+      Rg15.time = RG15_EVENT_TIMEOUT;        // We have some data, so the rain event is on-going
     }
     return true;
   }
@@ -128,7 +128,7 @@ void Rg15Init(void) {
     if (HydreonSerial) {
       if (HydreonSerial->begin(RG15_BAUDRATE)) {
         if (HydreonSerial->hardwareSerial()) { ClaimSerial(); }
-        Rg15.init_step = 3;
+        Rg15.init_step = 5;                  // Perform RG-15 init
       }
     }
   }
@@ -138,8 +138,7 @@ void Rg15Poll(void) {
   bool publish = false;
 
   if (!HydreonSerial->available()) {
-    // Check if the rain event has timed out, reset rate to 0
-    if (Rg15.time) {
+    if (Rg15.time) {                         // Check if the rain event has timed out, reset rate to 0
       Rg15.time--;
       if (!Rg15.time) {
         Rg15.acc = 0;
@@ -148,11 +147,10 @@ void Rg15Poll(void) {
       }
     }
   } else {
-    // Now read what's available
-    char rg15_buffer[RG15_BUFFER_SIZE];
+    char rg15_buffer[RG15_BUFFER_SIZE];      // Read what's available
     while (HydreonSerial->available()) {
       Rg15ReadLine(rg15_buffer);
-      if (Rg15Process(rg15_buffer)) {  // Do NOT use "publish = Rg15Process(rg15_buffer)"
+      if (Rg15Process(rg15_buffer)) {        // Do NOT use "publish = Rg15Process(rg15_buffer)"
         publish = true;
       }
     }
@@ -162,20 +160,18 @@ void Rg15Poll(void) {
     MqttPublishSensor();
   }
 
+//       Units: I = Imperial (in)          or M = Metric (mm)
+//  Resolution: H = High (0.001)           or L = Low (0.01)
+//        Mode: P = Request mode (Polling) or C = Continuous mode - report any change
+//     Request: R = Read available data once
+  char init_commands[] = "R CLM  ";          // Indexed by Rg15.init_step
+
   if (Rg15.init_step) {
     Rg15.init_step--;
-    if (1 == Rg15.init_step) {
-//      HydreonSerial->println('I');  // Imperial (in)
-      HydreonSerial->println('M');  // Metric (mm)
 
-//      HydreonSerial->println('H');  // High resolution (0.001)
-      HydreonSerial->println('L');  // Low resolution (0.01)
-
-//      HydreonSerial->println('P');  // Request mode (Polling)
-      HydreonSerial->println('C');  // Continuous mode - report any change
-    }
-    if (0 == Rg15.init_step) {
-      HydreonSerial->println('R');  // Read available data once
+    char cmnd = init_commands[Rg15.init_step];
+    if (cmnd != ' ') {
+      HydreonSerial->println(cmnd);
     }
   }
 }
@@ -199,22 +195,15 @@ bool Rg15Command(void) {
   bool serviced = true;
 
   if (XdrvMailbox.data_len == 1) {
-    char *send = XdrvMailbox.data;
+    char send = XdrvMailbox.data[0] & 0xDF;  // Make uppercase
+    HydreonSerial->flush();                  // Flush receive buffer
     HydreonSerial->println(send);
-    HydreonSerial->flush();
 
-    if (send[0] == 'k' || send[0] == 'K' || send[0] == 'o' || send[0] == 'O') {
-      ResponseCmndDone();
-      return serviced;
+    if ('K' == send) {
+      Rg15.init_step = 5;                    // Perform RG-15 init
     }
 
-    char rg15_buffer[RG15_BUFFER_SIZE];
-    if (Rg15ReadLine(rg15_buffer)) {
-      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), rg15_buffer);
-      Rg15Process(rg15_buffer);
-    } else {
-      ResponseCmndDone();
-    }
+    ResponseCmndDone();
   }
 
   return serviced;
