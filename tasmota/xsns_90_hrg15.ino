@@ -22,6 +22,9 @@
  * Hydreon RG-15
  * See https://rainsensors.com/products/rg-15/
  * https://rainsensors.com/rg-9-15-protocol/
+ *
+ * Rule for Domoticz Rain sensor index 418:
+ * on tele-rg-15#flowrate do var1 %value% endon on tele-rg-15#event do dzsend1 418,%var1%;%value% endon
 \*********************************************************************************************/
 
 #define XSNS_90 90
@@ -199,7 +202,7 @@ bool Rg15Command(void) {
     HydreonSerial->flush();                  // Flush receive buffer
     HydreonSerial->println(send);
 
-    if ('K' == send) {
+    if ('K' == send) {                       // Restart RG-15 reading DIP switches
       Rg15.init_step = 5;                    // Perform RG-15 init
     }
 
