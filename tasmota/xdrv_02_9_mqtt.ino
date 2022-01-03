@@ -188,6 +188,9 @@ void MqttDisableLogging(bool state) {
 PubSubClient MqttClient;
 
 void MqttInit(void) {
+  // Force buffer size since the #define may not be visible from Arduino lib
+  MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+
 #ifdef USE_MQTT_AZURE_IOT
   Settings->mqtt_port = 8883;
 #endif //USE_MQTT_AZURE_IOT
