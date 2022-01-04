@@ -24,7 +24,9 @@
  * https://rainsensors.com/rg-9-15-protocol/
  *
  * Rule for Domoticz Rain sensor index 418:
- * on tele-rg-15#flowrate do var1 %value% endon on tele-rg-15#event do dzsend1 418,%var1%;%value% endon
+ * on tele-rg-15#flowrate do var1 %value% endon
+ * on tele-rg-15#event do backlog var2 %value%; mult1 100; event sendrain endon
+ * on event#sendrain do dzsend1 418,%var1%;%var2% endon
 \*********************************************************************************************/
 
 #define XSNS_90 90
@@ -84,7 +86,7 @@ bool Rg15ReadLine(char* buffer) {
   return true;
 }
 
-float Rg15Parse(char* buffer, const char* item) {
+bool Rg15Parse(char* buffer, const char* item, float* result) {
   char* start = strstr(buffer, item);
   if (start != nullptr) {
     char* end = strstr(start, " mm");        // Metric (mm or mmph)
@@ -94,12 +96,12 @@ float Rg15Parse(char* buffer, const char* item) {
     if (end != nullptr) {
       char tmp = end[0];
       end[0] = '\0';
-      float result = CharToFloat(start + strlen(item));
+      *result = CharToFloat(start + strlen(item));
       end[0] = tmp;
-      return result;
+      return true;
     }
   }
-  return 0.0f;
+  return false;
 }
 
 bool Rg15Process(char* buffer) {
@@ -108,10 +110,10 @@ bool Rg15Process(char* buffer) {
   // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
   // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
   if (buffer[0] == 'A' && buffer[1] == 'c' && buffer[2] == 'c') {
-    Rg15.acc   = Rg15Parse(buffer, "Acc");
-    Rg15.event = Rg15Parse(buffer, "EventAcc");
-    Rg15.total = Rg15Parse(buffer, "TotalAcc");
-    Rg15.rate  = Rg15Parse(buffer, "RInt");
+    Rg15Parse(buffer, "Acc", &Rg15.acc);
+    Rg15Parse(buffer, "EventAcc", &Rg15.event);
+    Rg15Parse(buffer, "TotalAcc", &Rg15.total);
+    Rg15Parse(buffer, "RInt", &Rg15.rate);
 
     if (Rg15.acc > 0.0f) {
       Rg15.time = RG15_EVENT_TIMEOUT;        // We have some data, so the rain event is on-going
