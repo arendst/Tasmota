@@ -1090,7 +1090,7 @@ bool SSPMSetDevicePower(void) {
   power_t new_power = XdrvMailbox.index;
   if (new_power != Sspm->old_power) {
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      uint8_t new_state = (new_power >> i) &1;
+      uint32_t new_state = (new_power >> i) &1;
       if (new_state != ((Sspm->old_power >> i) &1)) {
         SSPMSendSetRelay(i, new_state);
         Sspm->no_send_key = 10;  // Disable buttons for 10 * 0.1 second
