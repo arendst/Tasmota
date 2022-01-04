@@ -106,6 +106,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
 - Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
 - Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
+- Experimental ADE7953 (Shelly EM) reset on restart [#14261](https://github.com/arendst/Tasmota/issues/14261)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features
 
