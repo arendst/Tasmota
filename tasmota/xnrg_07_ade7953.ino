@@ -235,6 +235,12 @@ void Ade7953DrvInit(void)
 {
   if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
     uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
+
+    pinMode(pin_irq, OUTPUT);                     // Reset pin ADE7953
+    digitalWrite(pin_irq, 0);
+    delay(1);
+    digitalWrite(pin_irq, 1);
+
     pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
     Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 .. 1 ;
     delay(100);                                   // Need 100mS to init ADE7953
