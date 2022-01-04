@@ -1203,14 +1203,15 @@ void SSPMEnergyShow(bool json) {
     }
 
     if (index) {
-      uint32_t offset = 0;
       if (index > 4) {
         Sspm->rotate++;
-        if (Sspm->rotate >= (index | 0x3)) {
-          Sspm->rotate = 0;
-        }
-        offset = (Sspm->rotate >> 2) * 4;
+      } else {
+        Sspm->rotate = 0;
       }
+      if (Sspm->rotate > ((index -1) | 0x3)) { // Always test in case index has changed due to use of SspmDisplay command
+        Sspm->rotate = 0;
+      }
+      uint32_t offset = (Sspm->rotate >> 2) * 4;
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
       WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
