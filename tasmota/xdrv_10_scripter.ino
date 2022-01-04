@@ -689,7 +689,7 @@ char *script;
                     numflt++;
                     if (numflt>MAXFILT) {
                       if (imemptr) free(imemptr);
-                      if (strings_p) free(strings_p);
+                      if (strings_op) free(strings_op);
                       return -6;
                     }
                 } else {
@@ -716,7 +716,7 @@ char *script;
                     nvars++;
                     if (nvars>MAXNVARS) {
                       if (imemptr) free(imemptr);
-                      if (strings_p) free(strings_p);
+                      if (strings_op) free(strings_op);
                       return -1;
                     }
                     if (vtypes[vars].bits.is_filter) {
@@ -750,14 +750,14 @@ char *script;
                     svars++;
                     if (svars>MAXSVARS) {
                       if (imemptr) free(imemptr);
-                      if (strings_p) free(strings_p);
+                      if (strings_op) free(strings_op);
                       return -2;
                     }
                 }
                 vars++;
                 if (vars>MAXVARS) {
                   if (imemptr) free(imemptr);
-                  if (strings_p) free(strings_p);
+                  if (strings_op) free(strings_op);
                   return -3;
                 }
             }
@@ -809,7 +809,7 @@ char *script;
     script_mem = (uint8_t*)special_malloc(script_mem_size);
     if (!script_mem) {
       if (imemptr) free(imemptr);
-      if (strings_p) free(strings_p);
+      if (strings_op) free(strings_op);
       return -4;
     }
 
@@ -891,7 +891,7 @@ char *script;
         if (index > MAXVNSIZ) {
           free(glob_script_mem.script_mem);
           if (imemptr) free(imemptr);
-          if (strings_p) free(strings_p);
+          if (strings_op) free(strings_op);
           return -5;
         }
     }
@@ -989,7 +989,7 @@ char *script;
 
     if (imemptr) {
       free(imemptr);
-      if (strings_p) free(strings_p);
+      if (strings_op) free(strings_op);
     }
     return err;
 }
@@ -1408,7 +1408,7 @@ uint32_t ts2ts(struct FE_TM *tm, char *ts) {
     tm->secs = strtol(ts, &ts, 10);
     return 0;
   } else {
-    // german excel fromat 16.12.20 15:36
+    // german excel format 16.12.20 15:36
     tm->day = strtol(ts, &ts, 10);
     ts++;
     tm->month = strtol(ts, &ts, 10);
@@ -1444,10 +1444,18 @@ struct FE_TM tm;
 // convert tasmota time stamp to ul seconds
 uint32_t tstamp2l(char *ts) {
 struct FE_TM tm;
+struct tm tmx;
+  uint8_t mode = ts2ts(&tm, ts);
 
-  ts2ts(&tm, ts);
+  tmx.tm_sec = tm.secs;
+  tmx.tm_min = tm.mins;
+  tmx.tm_hour = tm.hour;
+  tmx.tm_mon = tm.month - 1;
+  tmx.tm_year = tm.year + 100;
+  tmx.tm_mday = tm.day;
+  time_t tmd = mktime(&tmx);
 
-  return (tm.year*365*86400)+(tm.month*31*86400)+(tm.day*86400)+(tm.hour*3600)+(tm.mins*60)+tm.secs;
+  return tmd;
 }
 
 // assume 1. entry is timestamp, others are tab delimited values until LF
@@ -1496,6 +1504,7 @@ int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coff
   glob_script_mem.files[fref].seek(0, SeekSet);
   uint32_t tsfrom = tstamp2l(ts_from);
   uint32_t tsto = tstamp2l(ts_to);
+  //AddLog(LOG_LEVEL_INFO, PSTR("from: %d  to: %d"),tsfrom,  tsto);
   uint16_t lines = 0;
   uint16_t rlines = 0;
   float summs[numa];
@@ -2789,7 +2798,8 @@ chknext:
           if (glob_script_mem.file_flags[index].is_open) {
             char dstr[24];
             for (uint32_t cnt = 0; cnt < alen; cnt++) {
-              dtostrfd(*fa, glob_script_mem.script_dprec, dstr);
+              //dtostrfd(*fa, glob_script_mem.script_dprec, dstr);
+              ext_snprintf_P(dstr, sizeof(dstr), PSTR("%*_f"), -glob_script_mem.script_dprec, fa);
               fa++;
               if (cnt < (alen - 1)) {
                 strcat(dstr,"\t");
@@ -7634,7 +7644,7 @@ const char SCRIPT_MSG_GOPT2[] PROGMEM =
 "showRowNumber:true,sort:'disable',allowHtml:true,width:'100%%',height:'100%%',cssClassNames:cssc";
 
 const char SCRIPT_MSG_GOPT3[] PROGMEM =
-"title:'%s',isStacked:false,vAxes:{0:{maxValue:%d},1:{maxValue:%d}},series:{0:{targetAxisIndex:0},1:{targetAxisIndex:1}}%s";
+"title:'%s',isStacked:false,vAxes:{0:{maxValue:%s},1:{maxValue:%s}},series:{0:{targetAxisIndex:0},1:{targetAxisIndex:1}}%s";
 
 const char SCRIPT_MSG_GOPT4[] PROGMEM =
 //"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'}";
@@ -7644,7 +7654,7 @@ const char SCRIPT_MSG_GOPT5[] PROGMEM =
 "new Date(0,0,0,%d,%d)";
 
 const char SCRIPT_MSG_GOPT6[] PROGMEM =
-"title:'%s',isStacked:false,vAxis:{viewWindow:{min:%d,max:%d}}%s";
+"title:'%s',isStacked:false,vAxis:{viewWindow:{min:%s,max:%s}}%s";
 
 const char SCRIPT_MSG_GTE1[] PROGMEM = "'%s'";
 
@@ -8356,7 +8366,12 @@ exgc:
                   float max2;
                   lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
                   SCRIPT_SKIP_SPACES
-                  snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, (uint32_t)max1, (uint32_t)max2, func);
+                  char maxstr1[16];
+                  dtostrfd(max1, 3, maxstr1);
+                  char maxstr2[16];
+                  dtostrfd(max2, 3, maxstr2);
+                  //snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, (uint32_t)max1, (uint32_t)max2, func);
+                  snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, maxstr1, maxstr2, func);
                 } else {
                   SCRIPT_SKIP_SPACES
                   if (ctype!='g') {
@@ -8367,7 +8382,12 @@ exgc:
                       float max2;
                       lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
                       SCRIPT_SKIP_SPACES
-                      snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, (uint32_t)max1, (uint32_t)max2, func);
+                      char maxstr1[16];
+                      dtostrfd(max1, 3, maxstr1);
+                      char maxstr2[16];
+                      dtostrfd(max2, 3, maxstr2);
+                      //nprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, (uint32_t)max1, (uint32_t)max2, func);
+                      snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, maxstr1, maxstr2, func);
                     }
                   }
                 }
@@ -9339,13 +9359,13 @@ bool Xdrv10(uint8_t function)
       if (EEP_INIT(EEP_SCRIPT_SIZE)) {
           // found 32kb eeprom,
           char *script;
-          if (EEP_SCRIPT_SIZE!=SPECIAL_EEPMODE_SIZE) {
+          if (EEP_SCRIPT_SIZE != SPECIAL_EEPMODE_SIZE) {
             script = (char*)calloc(EEP_SCRIPT_SIZE + 4, 1);
             if (!script) break;
             glob_script_mem.script_ram = script;
             glob_script_mem.script_size = EEP_SCRIPT_SIZE;
             EEP_READ(0, EEP_SCRIPT_SIZE, script);
-            if (*script==0xff) {
+            if (*script == 0xff) {
               memset(script, EEP_SCRIPT_SIZE, 0);
             }
             script[EEP_SCRIPT_SIZE - 1] = 0;
@@ -9354,7 +9374,7 @@ bool Xdrv10(uint8_t function)
             ucs = (uint8_t*)calloc(SPI_FLASH_SEC_SIZE + 4, 1);
             if (!ucs) break;
             alt_eeprom_readBytes(0, SPI_FLASH_SEC_SIZE, ucs);
-            if (*ucs==0xff) {
+            if (*ucs == 0xff) {
               memset(ucs, SPI_FLASH_SEC_SIZE, 0);
             }
             ucs[SPI_FLASH_SEC_SIZE - 1] = 0;
