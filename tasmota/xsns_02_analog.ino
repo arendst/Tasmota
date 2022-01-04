@@ -338,13 +338,13 @@ float AdcGetPh(uint32_t idx) {
   int adc = AdcRead(Adc[idx].pin, 2);
 
 
-  float y1 = Adc[idx].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  uint32_t x1 = Adc[idx].param2;
-  float y2 = Adc[idx].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  uint32_t x2 = Adc[idx].param4;
+  float y1 = (float)Adc[idx].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
+  int32_t x1 = Adc[idx].param2;
+  float y2 = (float)Adc[idx].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
+  int32_t x2 = Adc[idx].param4;
 
-  float m = (y2 - y1) / (x2 - x1);
-  float ph = m * (adc - x1) + y1;
+  float m = (y2 - y1) / (float)(x2 - x1);
+  float ph = m * (float)(adc - x1) + y1;
 
 
   char phLow_chr[6];
@@ -417,7 +417,7 @@ void AdcEverySecond(void) {
       double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE * ANALOG_V33 - (double)adc);  // Shelly param1 = 32000 (ANALOG_NTC_BRIDGE_RESISTANCE)
 #else
       double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE - (double)adc);
-#endif      
+#endif
       double BC = (double)Adc[idx].param3 / 10000;                                      // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
       double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Adc[idx].param2));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
       Adc[idx].temperature = ConvertTemp(TO_CELSIUS(T));
