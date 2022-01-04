@@ -4,9 +4,6 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [2022.01.1]
-### Added
-- Experimental ADE7953 (Shelly 2.5 and Shelly EM) reset on restart (#14261)
-
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
