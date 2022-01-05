@@ -29,6 +29,18 @@
 #define SOLAXX1_SPEED      9600      // default solax rs485 speed
 #endif
 
+// D1 mini
+// rx D5 14
+// tx D6 12
+// rts 2
+
+// Sonoff Dual R2
+// RX: 3
+// TX: 1
+// RTS: 9 (BUTTON1)
+
+#define SOLAXX1_RTS_PIN   9
+
 #define INVERTER_ADDRESS   0x0A
 
 #define D_SOLAX_X1         "SolaxX1"
