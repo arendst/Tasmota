@@ -847,9 +847,12 @@ void SSPMHandleReceivedData(void) {
         Ty = Type of sub-device. 130: Four-channel sub-device
         */
         if ((0x24 == Sspm->expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
-          memcpy(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
+          memmove(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
           memcpy(Sspm->module[0], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
           Sspm->module_max++;
+
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Module %d type %d version %d.%d.%d found with id %12_H"),
+            Sspm->module_max, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[0]);
         }
         SSPMSendAck(command_sequence);
         break;
