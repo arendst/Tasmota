@@ -138,6 +138,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'i' be_int
  *   'b' be_bool
  *   's' be_str
+ *   '&' bytes() object, pointer to buffer returned, and size passed with an additional (size_t*) argument
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
  *   string of argument types, '[' indicates that the following parameters are optional
@@ -145,8 +146,10 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'i' be_int
  *   'b' be_bool
  *   's' be_string
+ *   'f' be_real (float)
  *   'c' C callback
- *   '-' ignore and don't send to C function
+ *   '-': skip argument and ignore
+ *   '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
  *   'lv_obj' be_instance of type or subtype
  *   '^lv_event_cb' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
  * 
@@ -276,27 +279,33 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
 //   - '.': any argument (no check)
 //   - '-': skip argument and ignore
 //   - '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
+//   - if return type is '&' (bytes), an implicit additional parameter is passed as (size_t*) to return the length in bytes
 //
 // - a class name surroungded by parenthesis
 //   - '(lv_button)' -> lv_button class or derived
 //   - '[lv_event_cb]' -> callback type, still prefixed with '^' to mark that it is cb
 //
-void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]) {
+// Returns the number of parameters sent to the function
+//
+int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]) {
   bbool arg_type_check = (arg_type != NULL);      // is type checking activated
-  int32_t arg_idx = 0;    // position in arg_type string
-  bbool arg_optional = bfalse;   // are remaining types optional?
+  int32_t arg_idx = 0;              // position in arg_type string
+  bbool arg_optional = bfalse;      // are remaining types optional?
   char type_short_name[32];
 
   uint32_t p_idx = 0; // index in p[], is incremented with each parameter except '-'
   int32_t buf_len = -1;   // stores the length of a bytes() buffer to be used as '~' attribute
+
+  // special case when no parameters are passed but all are optional
+  if (NULL != arg_type && arg_type[arg_idx] == '[') {
+    arg_optional = btrue;
+    arg_idx++;
+  }
+  
   for (uint32_t i = 0; i < argc; i++) {
     type_short_name[0] = 0;   // clear string
     // extract individual type
     if (NULL != arg_type) {
-      if (arg_type[arg_idx] == '[' || arg_type[arg_idx] == ']') {   // '[' is a marker that following parameters are optional and default to NULL
-        arg_optional = btrue;
-        arg_idx++;
-      }
       switch (arg_type[arg_idx]) {
         case '-':
           arg_idx++;
@@ -333,6 +342,10 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
           arg_type = NULL;   // stop iterations
           break;
       }
+      if (arg_type[arg_idx] == '[' || arg_type[arg_idx] == ']') {   // '[' is a marker that following parameters are optional and default to NULL
+        arg_optional = btrue;
+        arg_idx++;
+      }
     }
     // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
     p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, &buf_len);
@@ -353,6 +366,7 @@ void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, 
   if (!arg_optional && arg_type != NULL && arg_type[arg_idx] != 0) {
     be_raisef(vm, "value_error", "Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
   }
+  return p_idx;
 }
 
 //
@@ -420,8 +434,12 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
     }
   }
 
-  fn_any_callable f = (fn_any_callable) func;
-  be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
+  fn_any_callable f = (fn_any_callable) func;   // when returning a bytes buffer, this holds the length of the buffer, while the return value of the function is `void*`
+  size_t return_len = 0;
+  int c_args = be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
+  if (return_type != NULL && return_type[0] == '&') {
+    if (c_args < 8) { p[c_args] = (intptr_t) &return_len; }
+  }
   intptr_t ret = 0;
   if (f) ret = (*f)(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
   // berry_log_C("be_call_c_func '%s' -> '%s': (%i,%i,%i,%i,%i,%i) -> %i", return_type, arg_type, p[0], p[1], p[2], p[3], p[4], p[5], ret);
@@ -438,7 +456,7 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
       case 'i':   be_pushint(vm, ret); break;
       case 'b':   be_pushbool(vm, ret);  break;
       case 's':   be_pushstring(vm, (const char*) ret);  break;
-      case 'c':   be_pushint(vm, ret); break; // TODO missing 'c' general callback type
+      case '&':   be_pushbytes(vm, (void*) ret, return_len); break;
       default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
     }
     be_return(vm);

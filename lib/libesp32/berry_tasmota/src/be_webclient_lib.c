@@ -24,7 +24,7 @@ extern int wc_getstring(bvm *vm);
 extern int wc_writefile(bvm *vm);
 extern int wc_getsize(bvm *vm);
 
-#include "../generate/be_fixed_be_class_webclient.h"
+#include "be_fixed_be_class_webclient.h"
 
 void be_load_webclient_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_webclient);

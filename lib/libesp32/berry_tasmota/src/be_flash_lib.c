@@ -18,4 +18,4 @@ module flash (scope: global) {
     erase, func(p_flash_erase)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_flash.h"
+#include "be_fixed_flash.h"

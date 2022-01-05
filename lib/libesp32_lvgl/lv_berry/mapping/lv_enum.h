@@ -34,6 +34,12 @@ LV_STYLE_PROP_ANY
 
 LV_SIZE_CONTENT
 
+LV_GRID_FR=LV_GRID_FR(0)
+LV_GRID_CONTENT
+LV_GRID_TEMPLATE_LAST
+
+LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
+
 // ======================================================================
 // Symbols
 // ======================================================================

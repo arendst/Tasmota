@@ -23,6 +23,7 @@
 #define XDRV_52             52
 
 #include <berry.h>
+#include "berry_tasmota.h"
 #include "be_vm.h"
 #include "ZipReadFS.h"
 
@@ -738,7 +739,7 @@ bool Xdrv52(uint8_t function)
       break;
     case FUNC_MQTT_DATA:
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
-      break;
+     break;
     case FUNC_COMMAND:
       result = DecodeCommand(kBrCommands, BerryCommand);
       if (!result) {

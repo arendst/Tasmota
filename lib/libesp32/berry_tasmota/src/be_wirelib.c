@@ -118,7 +118,7 @@ be_local_closure(read_bytes,   /* name */
 /*******************************************************************/
 
 
-#include "../generate/be_fixed_be_class_tasmota_wire.h"
+#include "be_fixed_be_class_tasmota_wire.h"
 
 void be_load_wirelib(bvm *vm) {
     be_pushntvclass(vm, &be_class_tasmota_wire);

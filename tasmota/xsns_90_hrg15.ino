@@ -22,6 +22,11 @@
  * Hydreon RG-15
  * See https://rainsensors.com/products/rg-15/
  * https://rainsensors.com/rg-9-15-protocol/
+ *
+ * Rule for Domoticz Rain sensor index 418:
+ * on tele-rg-15#flowrate do var1 %value% endon
+ * on tele-rg-15#event do backlog var2 %value%; mult1 100; event sendrain endon
+ * on event#sendrain do dzsend1 418,%var1%;%var2% endon
 \*********************************************************************************************/
 
 #define XSNS_90 90
@@ -62,11 +67,11 @@ bool Rg15ReadLine(char* buffer) {
   uint32_t cmillis = millis();
   while (HydreonSerial->available() ) {
     char c = HydreonSerial->read();
-    if (c == 10) { break; }            // New line ends the message
+    if (c == 10) { break; }                  // New line ends the message
 
-    if ((c >= 32) && (c < 127)) {      // Accept only valid characters
+    if ((c >= 32) && (c < 127)) {            // Accept only valid characters
       buffer[i++] = c;
-      if (i == RG15_BUFFER_SIZE -1) { break; }       // Overflow
+      if (i == RG15_BUFFER_SIZE -1) { break; }  // Overflow
     }
 
     if ((millis() - cmillis) > RG15_READ_TIMEOUT) {
@@ -81,39 +86,41 @@ bool Rg15ReadLine(char* buffer) {
   return true;
 }
 
-float Rg15Parse(char* buffer, const char* item) {
+bool Rg15Parse(char* buffer, const char* item, float* result) {
   char* start = strstr(buffer, item);
   if (start != nullptr) {
-    char* end = strstr(start, " mm");  // Metric (mm or mmph)
+    char* end = strstr(start, " mm");        // Metric (mm or mmph)
     if (end == nullptr) {
-      end = strstr(start, " i");       // Imperial (in or iph)
+      end = strstr(start, " i");             // Imperial (in or iph)
     }
     if (end != nullptr) {
       char tmp = end[0];
       end[0] = '\0';
-      float result = CharToFloat(start + strlen(item));
+      *result = CharToFloat(start + strlen(item));
       end[0] = tmp;
-      return result;
+      return true;
     }
   }
-  return 0.0f;
+  return false;
 }
 
-void Rg15Process(char* buffer) {
+bool Rg15Process(char* buffer) {
   // Process payloads like:
   // Acc  0.01 mm, EventAcc  2.07 mm, TotalAcc 54.85 mm, RInt  2.89 mmph
   // Acc 0.001 in, EventAcc 0.002 in, TotalAcc 0.003 in, RInt 0.004 iph
   // Acc 0.001 mm, EventAcc 0.002 mm, TotalAcc 0.003 mm, RInt 0.004 mmph, XTBTips 0, XTBAcc 0.01 mm, XTBEventAcc 0.02 mm, XTBTotalAcc 0.03 mm
   if (buffer[0] == 'A' && buffer[1] == 'c' && buffer[2] == 'c') {
-    Rg15.acc   = Rg15Parse(buffer, "Acc");
-    Rg15.event = Rg15Parse(buffer, "EventAcc");
-    Rg15.total = Rg15Parse(buffer, "TotalAcc");
-    Rg15.rate  = Rg15Parse(buffer, "RInt");
+    Rg15Parse(buffer, "Acc", &Rg15.acc);
+    Rg15Parse(buffer, "EventAcc", &Rg15.event);
+    Rg15Parse(buffer, "TotalAcc", &Rg15.total);
+    Rg15Parse(buffer, "RInt", &Rg15.rate);
 
     if (Rg15.acc > 0.0f) {
-      Rg15.time = RG15_EVENT_TIMEOUT;  // We have some data, so the rain event is on-going
+      Rg15.time = RG15_EVENT_TIMEOUT;        // We have some data, so the rain event is on-going
     }
+    return true;
   }
+  return false;
 }
 
 /*********************************************************************************************/
@@ -126,48 +133,51 @@ void Rg15Init(void) {
     if (HydreonSerial) {
       if (HydreonSerial->begin(RG15_BAUDRATE)) {
         if (HydreonSerial->hardwareSerial()) { ClaimSerial(); }
-        Rg15.init_step = 3;
+        Rg15.init_step = 5;                  // Perform RG-15 init
       }
     }
   }
 }
 
 void Rg15Poll(void) {
-  if (Rg15.init_step) {
-    Rg15.init_step--;
-    if (1 == Rg15.init_step) {
-//      HydreonSerial->println('I');  // Imperial (in)
-      HydreonSerial->println('M');  // Metric (mm)
-
-//      HydreonSerial->println('H');  // High resolution (0.001)
-      HydreonSerial->println('L');  // Low resolution (0.01)
-
-//      HydreonSerial->println('P');  // Request mode (Polling)
-      HydreonSerial->println('C');  // Continuous mode - report any change
-    }
-    if (0 == Rg15.init_step) {
-      HydreonSerial->println('R');  // Read available data once
-    }
-  }
+  bool publish = false;
 
   if (!HydreonSerial->available()) {
-    // Check if the rain event has timed out, reset rate to 0
-    if (Rg15.time) {
+    if (Rg15.time) {                         // Check if the rain event has timed out, reset rate to 0
       Rg15.time--;
       if (!Rg15.time) {
         Rg15.acc = 0;
         Rg15.rate = 0;
-        MqttPublishSensor();
+        publish = true;
       }
     }
   } else {
-    // Now read what's available
-    char rg15_buffer[RG15_BUFFER_SIZE];
+    char rg15_buffer[RG15_BUFFER_SIZE];      // Read what's available
     while (HydreonSerial->available()) {
       Rg15ReadLine(rg15_buffer);
-      Rg15Process(rg15_buffer);
+      if (Rg15Process(rg15_buffer)) {        // Do NOT use "publish = Rg15Process(rg15_buffer)"
+        publish = true;
+      }
     }
-    if (!TasmotaGlobal.global_state.mqtt_down) { MqttPublishSensor(); }
+  }
+
+  if (publish && !TasmotaGlobal.global_state.mqtt_down) {
+    MqttPublishSensor();
+  }
+
+//       Units: I = Imperial (in)          or M = Metric (mm)
+//  Resolution: H = High (0.001)           or L = Low (0.01)
+//        Mode: P = Request mode (Polling) or C = Continuous mode - report any change
+//     Request: R = Read available data once
+  char init_commands[] = "R CLM  ";          // Indexed by Rg15.init_step
+
+  if (Rg15.init_step) {
+    Rg15.init_step--;
+
+    char cmnd = init_commands[Rg15.init_step];
+    if (cmnd != ' ') {
+      HydreonSerial->println(cmnd);
+    }
   }
 }
 
@@ -190,22 +200,15 @@ bool Rg15Command(void) {
   bool serviced = true;
 
   if (XdrvMailbox.data_len == 1) {
-    char *send = XdrvMailbox.data;
+    char send = XdrvMailbox.data[0] & 0xDF;  // Make uppercase
+    HydreonSerial->flush();                  // Flush receive buffer
     HydreonSerial->println(send);
-    HydreonSerial->flush();
 
-    if (send[0] == 'k' || send[0] == 'K' || send[0] == 'o' || send[0] == 'O') {
-      ResponseCmndDone();
-      return serviced;
+    if ('K' == send) {                       // Restart RG-15 reading DIP switches
+      Rg15.init_step = 5;                    // Perform RG-15 init
     }
 
-    char rg15_buffer[RG15_BUFFER_SIZE];
-    if (Rg15ReadLine(rg15_buffer)) {
-      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), rg15_buffer);
-      Rg15Process(rg15_buffer);
-    } else {
-      ResponseCmndDone();
-    }
+    ResponseCmndDone();
   }
 
   return serviced;

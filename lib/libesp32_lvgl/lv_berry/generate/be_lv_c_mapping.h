@@ -58,9 +58,9 @@ const be_ntv_func_def_t lv_style_func[] = {
   { "set_grid_cell_x_align", (void*) &lv_style_set_grid_cell_x_align, "", "(lv.lv_style)i" },
   { "set_grid_cell_y_align", (void*) &lv_style_set_grid_cell_y_align, "", "(lv.lv_style)i" },
   { "set_grid_column_align", (void*) &lv_style_set_grid_column_align, "", "(lv.lv_style)i" },
-  { "set_grid_column_dsc_array", (void*) &lv_style_set_grid_column_dsc_array, "", "(lv.lv_style)i" },
+  { "set_grid_column_dsc_array", (void*) &lv_style_set_grid_column_dsc_array, "", "(lv.lv_style)(lv.lv_coord_arr)" },
   { "set_grid_row_align", (void*) &lv_style_set_grid_row_align, "", "(lv.lv_style)i" },
-  { "set_grid_row_dsc_array", (void*) &lv_style_set_grid_row_dsc_array, "", "(lv.lv_style)i" },
+  { "set_grid_row_dsc_array", (void*) &lv_style_set_grid_row_dsc_array, "", "(lv.lv_style)(lv.lv_coord_arr)" },
   { "set_height", (void*) &lv_style_set_height, "", "(lv.lv_style)i" },
   { "set_img_opa", (void*) &lv_style_set_img_opa, "", "(lv.lv_style)i" },
   { "set_img_recolor", (void*) &lv_style_set_img_recolor, "", "(lv.lv_style)(lv.lv_color)" },
@@ -384,7 +384,7 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "set_flex_grow", (void*) &lv_obj_set_flex_grow, "", "(lv.lv_obj)i" },
   { "set_grid_align", (void*) &lv_obj_set_grid_align, "", "(lv.lv_obj)ii" },
   { "set_grid_cell", (void*) &lv_obj_set_grid_cell, "", "(lv.lv_obj)iiiiii" },
-  { "set_grid_dsc_array", (void*) &lv_obj_set_grid_dsc_array, "", "(lv.lv_obj)ii" },
+  { "set_grid_dsc_array", (void*) &lv_obj_set_grid_dsc_array, "", "(lv.lv_obj)(lv.lv_coord_arr)(lv.lv_coord_arr)" },
   { "set_height", (void*) &lv_obj_set_height, "", "(lv.lv_obj)i" },
   { "set_layout", (void*) &lv_obj_set_layout, "", "(lv.lv_obj)i" },
   { "set_local_style_prop", (void*) &lv_obj_set_local_style_prop, "", "(lv.lv_obj)(lv.lv_style_prop)ii" },
@@ -441,9 +441,9 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "set_style_grid_cell_x_align", (void*) &lv_obj_set_style_grid_cell_x_align, "", "(lv.lv_obj)ii" },
   { "set_style_grid_cell_y_align", (void*) &lv_obj_set_style_grid_cell_y_align, "", "(lv.lv_obj)ii" },
   { "set_style_grid_column_align", (void*) &lv_obj_set_style_grid_column_align, "", "(lv.lv_obj)ii" },
-  { "set_style_grid_column_dsc_array", (void*) &lv_obj_set_style_grid_column_dsc_array, "", "(lv.lv_obj)ii" },
+  { "set_style_grid_column_dsc_array", (void*) &lv_obj_set_style_grid_column_dsc_array, "", "(lv.lv_obj)(lv.lv_coord_arr)i" },
   { "set_style_grid_row_align", (void*) &lv_obj_set_style_grid_row_align, "", "(lv.lv_obj)ii" },
-  { "set_style_grid_row_dsc_array", (void*) &lv_obj_set_style_grid_row_dsc_array, "", "(lv.lv_obj)ii" },
+  { "set_style_grid_row_dsc_array", (void*) &lv_obj_set_style_grid_row_dsc_array, "", "(lv.lv_obj)(lv.lv_coord_arr)i" },
   { "set_style_height", (void*) &lv_obj_set_style_height, "", "(lv.lv_obj)ii" },
   { "set_style_img_opa", (void*) &lv_obj_set_style_img_opa, "", "(lv.lv_obj)ii" },
   { "set_style_img_recolor", (void*) &lv_obj_set_style_img_recolor, "", "(lv.lv_obj)(lv.lv_color)i" },
@@ -551,7 +551,7 @@ const be_ntv_func_def_t lv_indev_func[] = {
   { "reset", (void*) &lv_indev_reset, "", "(lv.lv_indev)(lv.lv_obj)" },
   { "reset_long_press", (void*) &lv_indev_reset_long_press, "", "(lv.lv_indev)" },
   { "search_obj", (void*) &lv_indev_search_obj, "lv.lv_obj", "(lv.lv_obj)(lv.lv_point)" },
-  { "set_button_points", (void*) &lv_indev_set_button_points, "", "(lv.lv_indev)i" },
+  { "set_button_points", (void*) &lv_indev_set_button_points, "", "(lv.lv_indev)(lv.lv_point_arr)" },
   { "set_cursor", (void*) &lv_indev_set_cursor, "", "(lv.lv_indev)(lv.lv_obj)" },
   { "set_group", (void*) &lv_indev_set_group, "", "(lv.lv_indev)(lv.lv_group)" },
   { "wait_release", (void*) &lv_indev_wait_release, "", "(lv.lv_indev)" },
@@ -579,8 +579,8 @@ const be_ntv_func_def_t lv_chart_func[] = {
   { "set_cursor_point", (void*) &lv_chart_set_cursor_point, "", "(lv.lv_obj)(lv.lv_chart_cursor)(lv.lv_chart_series)i" },
   { "set_cursor_pos", (void*) &lv_chart_set_cursor_pos, "", "(lv.lv_obj)(lv.lv_chart_cursor)(lv.lv_point)" },
   { "set_div_line_count", (void*) &lv_chart_set_div_line_count, "", "(lv.lv_obj)ii" },
-  { "set_ext_x_array", (void*) &lv_chart_set_ext_x_array, "", "(lv.lv_obj)(lv.lv_chart_series)i" },
-  { "set_ext_y_array", (void*) &lv_chart_set_ext_y_array, "", "(lv.lv_obj)(lv.lv_chart_series)i" },
+  { "set_ext_x_array", (void*) &lv_chart_set_ext_x_array, "", "(lv.lv_obj)(lv.lv_chart_series)(lv.lv_coord_arr)" },
+  { "set_ext_y_array", (void*) &lv_chart_set_ext_y_array, "", "(lv.lv_obj)(lv.lv_chart_series)(lv.lv_coord_arr)" },
   { "set_next_value", (void*) &lv_chart_set_next_value, "", "(lv.lv_obj)(lv.lv_chart_series)i" },
   { "set_next_value2", (void*) &lv_chart_set_next_value2, "", "(lv.lv_obj)(lv.lv_chart_series)ii" },
   { "set_point_count", (void*) &lv_chart_set_point_count, "", "(lv.lv_obj)i" },
@@ -747,7 +747,7 @@ const be_ntv_func_def_t lv_btnmatrix_func[] = {
   { "set_btn_ctrl_all", (void*) &lv_btnmatrix_set_btn_ctrl_all, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" },
   { "set_btn_width", (void*) &lv_btnmatrix_set_btn_width, "", "(lv.lv_obj)ii" },
   { "set_ctrl_map", (void*) &lv_btnmatrix_set_ctrl_map, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" },
-  { "set_map", (void*) &lv_btnmatrix_set_map, "", "(lv.lv_obj)s" },
+  { "set_map", (void*) &lv_btnmatrix_set_map, "", "(lv.lv_obj)(lv.str_arr)" },
   { "set_one_checked", (void*) &lv_btnmatrix_set_one_checked, "", "(lv.lv_obj)b" },
   { "set_selected_btn", (void*) &lv_btnmatrix_set_selected_btn, "", "(lv.lv_obj)i" },
 };
@@ -761,8 +761,8 @@ const be_ntv_func_def_t lv_canvas_func[] = {
   { "copy_buf", (void*) &lv_canvas_copy_buf, "", "(lv.lv_obj).iiii" },
   { "draw_arc", (void*) &lv_canvas_draw_arc, "", "(lv.lv_obj)iiiii(lv.lv_draw_arc_dsc)" },
   { "draw_img", (void*) &lv_canvas_draw_img, "", "(lv.lv_obj)ii.(lv.lv_draw_img_dsc)" },
-  { "draw_line", (void*) &lv_canvas_draw_line, "", "(lv.lv_obj)ii(lv.lv_draw_line_dsc)" },
-  { "draw_polygon", (void*) &lv_canvas_draw_polygon, "", "(lv.lv_obj)ii(lv.lv_draw_rect_dsc)" },
+  { "draw_line", (void*) &lv_canvas_draw_line, "", "(lv.lv_obj)(lv.lv_point_arr)i(lv.lv_draw_line_dsc)" },
+  { "draw_polygon", (void*) &lv_canvas_draw_polygon, "", "(lv.lv_obj)(lv.lv_point_arr)i(lv.lv_draw_rect_dsc)" },
   { "draw_rect", (void*) &lv_canvas_draw_rect, "", "(lv.lv_obj)iiii(lv.lv_draw_rect_dsc)" },
   { "draw_text", (void*) &lv_canvas_draw_text, "", "(lv.lv_obj)iii(lv.lv_draw_label_dsc)s" },
   { "fill_bg", (void*) &lv_canvas_fill_bg, "", "(lv.lv_obj)(lv.lv_color)i" },
@@ -838,7 +838,7 @@ const be_ntv_func_def_t lv_label_func[] = {
 #ifdef BE_LV_WIDGET_LINE
 const be_ntv_func_def_t lv_line_func[] = {
   { "get_y_invert", (void*) &lv_line_get_y_invert, "b", "(lv.lv_obj)" },
-  { "set_points", (void*) &lv_line_set_points, "", "(lv.lv_obj)ii" },
+  { "set_points", (void*) &lv_line_set_points, "", "(lv.lv_obj)(lv.lv_point_arr)i" },
   { "set_y_invert", (void*) &lv_line_set_y_invert, "", "(lv.lv_obj)b" },
 };
 #endif // BE_LV_WIDGET_LINE
@@ -1087,7 +1087,7 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #endif // BE_LV_WIDGET_METER
   /* `lv_msgbox` methods */
 #ifdef BE_LV_WIDGET_MSGBOX
-  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+_p", "(lv.lv_obj)sssb"); }
+  int be_ntv_lv_msgbox_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_msgbox_create, "+_p", "(lv.lv_obj)ss(lv.str_arr)b"); }
 #endif // BE_LV_WIDGET_MSGBOX
   /* `lv_spinbox` methods */
 #ifdef BE_LV_WIDGET_SPINBOX

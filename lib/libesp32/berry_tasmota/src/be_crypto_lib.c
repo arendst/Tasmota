@@ -17,8 +17,8 @@ extern int m_aes_gcm_tag(bvm *vm);
 extern int m_ec_c25519_pubkey(bvm *vm);
 extern int m_ec_c25519_sharedkey(bvm *vm);
 
-#include "../generate/be_fixed_be_class_aes_gcm.h"
-#include "../generate/be_fixed_be_class_ec_c25519.h"
+#include "be_fixed_be_class_aes_gcm.h"
+#include "be_fixed_be_class_ec_c25519.h"
 
 void be_load_crypto_lib(bvm *vm) {
     // insert the class GCM in module AES

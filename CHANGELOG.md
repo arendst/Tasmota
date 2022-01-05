@@ -4,8 +4,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 
 ## [2022.01.1]
+### Added
+- Experimental ADE7953 (Shelly EM) reset on restart (#14261)
+
 ### Changed
+- PubSubClient library from v2.8.12 to v2.8.13
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
+- Set ESP32 stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
 
 ### Fixed
 - Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
@@ -28,6 +33,8 @@ All notable changes to this project will be documented in this file.
 - Force initial serial configuration even if no serial GPIO's are enabled (#14153)
 - Revert change to fix extra flashwrite before QuickPowerDetection (#14153)
 - Increase SerialBridge receive buffer from 130 to 256 characters - reverted (#14153)
+- ESP8266Audio library from v1.9.2 to v1.9.5 (#14172)
+- ESP8266SAM library from v1.0 to v1.0.1 (#14172)
 
 ### Fixed
 - Serial broken after #14153 - reverted

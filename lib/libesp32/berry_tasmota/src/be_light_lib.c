@@ -23,6 +23,6 @@ module light (scope: global) {
     reverse_gamma10, func(l_rev_gamma10)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_light.h"
+#include "be_fixed_light.h"
 
 #endif // USE_LIGHT

@@ -847,9 +847,12 @@ void SSPMHandleReceivedData(void) {
         Ty = Type of sub-device. 130: Four-channel sub-device
         */
         if ((0x24 == Sspm->expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
-          memcpy(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
+          memmove(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
           memcpy(Sspm->module[0], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
           Sspm->module_max++;
+
+          AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Module %d type %d version %d.%d.%d found with id %12_H"),
+            Sspm->module_max, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[0]);
         }
         SSPMSendAck(command_sequence);
         break;
@@ -1022,9 +1025,15 @@ void SSPMEvery100ms(void) {
       Sspm->module_max = 0;
       SSPMSendInitScan();
       Sspm->mstate = SPM_WAIT_FOR_SCAN;
+      Sspm->last_totals = 0;
       break;
     case SPM_WAIT_FOR_SCAN:
-      // Wait for scan sequence to complete
+      // Wait for scan sequence to complete within 60 seconds
+      if (Sspm->last_totals > 600) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Relay scan timeout"));
+        Sspm->mstate = SPM_NONE;
+        Sspm->error_led_blinks = 255;
+      }
       break;
     case SPM_SCAN_COMPLETE:
       // Scan sequence finished
@@ -1090,7 +1099,7 @@ bool SSPMSetDevicePower(void) {
   power_t new_power = XdrvMailbox.index;
   if (new_power != Sspm->old_power) {
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      uint8_t new_state = (new_power >> i) &1;
+      uint32_t new_state = (new_power >> i) &1;
       if (new_state != ((Sspm->old_power >> i) &1)) {
         SSPMSendSetRelay(i, new_state);
         Sspm->no_send_key = 10;  // Disable buttons for 10 * 0.1 second
@@ -1203,14 +1212,15 @@ void SSPMEnergyShow(bool json) {
     }
 
     if (index) {
-      uint32_t offset = 0;
       if (index > 4) {
         Sspm->rotate++;
-        if (Sspm->rotate >= (index | 0x3)) {
-          Sspm->rotate = 0;
-        }
-        offset = (Sspm->rotate >> 2) * 4;
+      } else {
+        Sspm->rotate = 0;
       }
+      if (Sspm->rotate > ((index -1) | 0x3)) { // Always test in case index has changed due to use of SspmDisplay command
+        Sspm->rotate = 0;
+      }
+      uint32_t offset = (Sspm->rotate >> 2) * 4;
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
       WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)

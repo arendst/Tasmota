@@ -94,7 +94,7 @@ const char kSolaxError[] PROGMEM =
 TasmotaSerial *solaxX1Serial;
 
 struct SOLAXX1 {
-  float temperature = 0;
+  int16_t temperature = 0;
   float energy_today = 0;
   float dc1_voltage = 0;
   float dc2_voltage = 0;
@@ -260,7 +260,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
         solaxX1_send_retry = 20;
         Energy.data_valid[0] = 0;
 
-        solaxX1.temperature =    (float)((value[9] << 8) | value[10]); // Temperature
+        solaxX1.temperature =    (value[9] << 8) | value[10]; // Temperature
         solaxX1.energy_today =   (float)((value[11] << 8) | value[12]) * 0.1f; // Energy Today
         solaxX1.dc1_voltage =    (float)((value[13] << 8) | value[14]) * 0.1f; // PV1 Voltage
         solaxX1.dc2_voltage =    (float)((value[15] << 8) | value[16]) * 0.1f; // PV2 Voltage
@@ -447,12 +447,12 @@ void solaxX1Show(bool json)
     ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
                                 pv2_voltage, pv2_current, pv2_power);
 #endif
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
-                                Settings->flag2.temperature_resolution, &solaxX1.temperature, runtime, status, solaxX1.errorCode);
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
+                                solaxX1.temperature, runtime, status, solaxX1.errorCode);
 
 #ifdef USE_DOMOTICZ
     // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)
-    if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzFloatSensor(DZ_TEMP, solaxX1.temperature); }
+    if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzSensor(DZ_TEMP, solaxX1.temperature); }
 #endif // USE_DOMOTICZ
 
 #ifdef USE_WEBSERVER

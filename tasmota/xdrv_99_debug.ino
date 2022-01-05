@@ -42,6 +42,7 @@
  * Debug commands
 \*********************************************************************************************/
 
+#define D_CMND_MEMDUMP   "MemDump"
 #define D_CMND_CFGDUMP   "CfgDump"
 #define D_CMND_CFGPEEK   "CfgPeek"
 #define D_CMND_CFGPOKE   "CfgPoke"
@@ -60,7 +61,7 @@
 #define D_CMND_SERBUFF   "SerBufSize"
 
 const char kDebugCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
+  D_CMND_MEMDUMP "|" D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
 #ifdef USE_WEBSERVER
   D_CMND_CFGXOR "|"
 #endif
@@ -75,7 +76,7 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
   ;
 
 void (* const DebugCommand[])(void) PROGMEM = {
-  &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
+  &CmndMemDump, &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
 #ifdef USE_WEBSERVER
   &CmndCfgXor,
 #endif
@@ -313,8 +314,8 @@ void DebugDump(uint32_t start, uint32_t size) {
   uint32_t col;
   char *p;
 
-  uint8_t *buffer = (uint8_t *)&start;
-  maxrow = ((start + size + CFG_COLS) / CFG_COLS);
+  uint8_t *buffer = (uint8_t *)(start);
+  maxrow = ((size + CFG_COLS) / CFG_COLS);
 
   uint32_t srow = 0;
   uint32_t mrow = maxrow;
@@ -334,7 +335,7 @@ void DebugDump(uint32_t start, uint32_t size) {
   char log_data[150];  // 020:  C7 2B 2E AB  70 E8 09 AE  C8 88 3D EA  7C FF 48 2F  0E A7 D7 BF  02 0E D7 7D  C9 6F B9 3A  1D 01 3F 28 | +. p     = | H/       } o :  ?(|
   for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
-    snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%08X:"), start + idx);
     for (col = 0; col < CFG_COLS; col++) {
       if (!(col%4)) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s "), log_data);
@@ -353,6 +354,7 @@ void DebugDump(uint32_t start, uint32_t size) {
     delay(1);
   }
 }
+
 
 void DebugCfgDump(char* parms)
 {
@@ -486,6 +488,19 @@ void CmndHelp(void)
 void CmndRtcDump(void)
 {
   DebugRtcDump(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndMemDump(void) {
+  // MemDump 0x3fff1aa8 200
+  if (XdrvMailbox.payload >= 0) {
+    char *p;
+
+    uint32_t start = strtol(XdrvMailbox.data, &p, 16);
+    uint32_t size = strtol(p, &p, 10);
+    if (0 == size) { size = 32; }
+    DebugDump(start, size);
+  }
   ResponseCmndDone();
 }
 

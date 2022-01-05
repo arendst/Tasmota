@@ -236,7 +236,16 @@ void Ade7953DrvInit(void)
   if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
     uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
     pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
-    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 .. 1 ;
+    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 (Shelly 2.5), 1 (Shelly EM)
+
+    if (1 == Ade7953.model) {                     // Shelly EM
+      pinMode(16, OUTPUT);                        // Reset pin ADE7953
+      digitalWrite(16, 0);
+      delay(1);
+      digitalWrite(16, 1);
+      pinMode(16, INPUT);
+    }
+
     delay(100);                                   // Need 100mS to init ADE7953
     if (I2cSetDevice(ADE7953_ADDR)) {
       if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
