@@ -24,7 +24,7 @@ extern int b_onewire_reset_search(bvm *vm);
 extern int b_onewire_target_search(bvm *vm);
 extern int b_onewire_search(bvm *vm);
 
-#include "../generate/be_fixed_be_class_tasmota_onewire.h"
+#include "be_fixed_be_class_tasmota_onewire.h"
 
 void be_load_onewirelib(bvm *vm) {
     be_pushntvclass(vm, &be_class_tasmota_onewire);

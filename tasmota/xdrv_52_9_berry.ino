@@ -23,6 +23,7 @@
 #define XDRV_52             52
 
 #include <berry.h>
+#include "berry_tasmota.h"
 #include "be_vm.h"
 #include "ZipReadFS.h"
 
@@ -727,6 +728,7 @@ bool Xdrv52(uint8_t function)
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
       }
+      callBerryEventDispatcher(PSTR("every_50ms"), nullptr, 0, nullptr);
       break;
 
     // Berry wide commands and events
@@ -737,7 +739,9 @@ bool Xdrv52(uint8_t function)
       result = callBerryRule(nullptr, true);
       break;
     case FUNC_MQTT_DATA:
+{int32_t now = millis();
       result = callBerryEventDispatcher(PSTR("mqtt_data"), XdrvMailbox.topic, 0, XdrvMailbox.data, XdrvMailbox.data_len);
+AddLog(LOG_LEVEL_INFO, ">>>: mqtt_data ms = %i", millis()-now);}
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kBrCommands, BerryCommand);

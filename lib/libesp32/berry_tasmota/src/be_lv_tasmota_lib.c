@@ -111,6 +111,6 @@ module lv_tasmota (scope: global) {
     load_freetype_font, func(lv0_load_freetype_font)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_lv_tasmota.h"
+#include "be_fixed_lv_tasmota.h"
 
 #endif // USE_LVGL

@@ -20,7 +20,7 @@ extern int wc_tcp_write(bvm *vm);
 extern int wc_tcp_read(bvm *vm);
 extern int wc_tcp_readbytes(bvm *vm);
 
-#include "../generate/be_fixed_be_class_tcpclient.h"
+#include "be_fixed_be_class_tcpclient.h"
 
 void be_load_tcpclient_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_tcpclient);

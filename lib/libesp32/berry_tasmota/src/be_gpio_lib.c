@@ -31,4 +31,4 @@ module gpio (scope: global) {
     pin, func(gp_pin)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_gpio.h"
+#include "be_fixed_gpio.h"

@@ -462,8 +462,8 @@ int be_ctypes_dyn_init(bvm *vm) {
 
 BE_EXPORT_VARIABLE extern const bclass be_class_bytes;
 
-#include "../generate/be_fixed_be_class_ctypes.h"
-#include "../generate/be_fixed_be_class_ctypes_dyn.h"
+#include "be_fixed_be_class_ctypes.h"
+#include "be_fixed_be_class_ctypes_dyn.h"
 
 void be_load_ctypes_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_ctypes);

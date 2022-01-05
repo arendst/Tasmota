@@ -159,6 +159,7 @@ extern void be_load_ctypes_energy_definitions_lib(bvm *vm);
 
 #ifdef USE_I2S_AUDIO_BERRY
 extern void be_load_driver_audio_lib(bvm *vm);
+extern void be_load_driver_audio_opus_decoder(bvm *vm);
 #endif
 
 #ifdef USE_LVGL
@@ -214,6 +215,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #endif // USE_WS2812
 #ifdef USE_I2S_AUDIO_BERRY
     be_load_driver_audio_lib(vm);
+    be_load_driver_audio_opus_decoder(vm);
 #endif
 #ifdef USE_LVGL
     // LVGL

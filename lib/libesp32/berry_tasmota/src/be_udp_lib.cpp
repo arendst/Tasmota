@@ -116,7 +116,7 @@ extern "C" {
     }
   }
 
-  #include "../generate/be_fixed_be_class_udp.h"
+  #include "be_fixed_be_class_udp.h"
 
   void be_load_udp_lib(bvm *vm) {
       be_pushntvclass(vm, &be_class_udp);

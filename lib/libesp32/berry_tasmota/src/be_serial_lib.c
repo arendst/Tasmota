@@ -17,7 +17,7 @@ extern int b_serial_read(bvm *vm);
 extern int b_serial_available(bvm *vm);
 extern int b_serial_flush(bvm *vm);
 
-#include "../generate/be_fixed_be_class_tasmota_serial.h"
+#include "be_fixed_be_class_tasmota_serial.h"
 
 void be_load_serial_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_tasmota_serial);
