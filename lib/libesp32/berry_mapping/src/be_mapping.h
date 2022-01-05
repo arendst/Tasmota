@@ -57,7 +57,7 @@ extern int be_find_global_or_module_member(bvm *vm, const char * cl_name);
 
 extern bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
 extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *len);
-extern void be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);;
+extern int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);
 extern int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
 
 #ifdef __cplusplus

@@ -618,6 +618,16 @@ extern "C" {
     if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
     berry_log(log_data);
   }
+
+  void tasmota_log_C(int32_t loglevel, const char * berry_buf, ...) {
+    va_list arg;
+    va_start(arg, berry_buf);
+    char* log_data = ext_vsnprintf_malloc_P(berry_buf, arg);
+    va_end(arg);
+    if (log_data == nullptr) { return; }
+    AddLogData(loglevel, log_data);
+    free(log_data);
+  }
 }
 
 #endif  // USE_BERRY

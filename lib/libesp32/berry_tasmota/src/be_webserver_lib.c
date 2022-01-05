@@ -50,6 +50,6 @@ module webserver (scope: global) {
     has_arg, func(w_webserver_has_arg)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_webserver.h"
+#include "be_fixed_webserver.h"
 
 #endif // USE_WEBSERVER

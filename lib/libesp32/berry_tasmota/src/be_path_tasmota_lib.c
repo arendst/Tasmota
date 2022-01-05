@@ -67,4 +67,4 @@ module path (scope: global, file: tasmota_path) {
     remove, func(m_path_remove)
 }
 @const_object_info_end */
-#include "../generate/be_fixed_tasmota_path.h"
+#include "be_fixed_tasmota_path.h"

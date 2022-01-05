@@ -31,6 +31,7 @@ extern int l_delay(bvm *vm);
 extern int l_scaleuint(bvm *vm);
 extern int l_logInfo(bvm *vm);
 extern int l_save(bvm *vm);
+extern int t_random_byte(bvm *vm);
 
 extern int l_read_sensors(bvm *vm);
 
@@ -1973,7 +1974,7 @@ be_local_closure(Tasmota_get_light,   /* name */
 );
 /*******************************************************************/
 
-#include "../generate/be_fixed_be_class_tasmota.h"
+#include "be_fixed_be_class_tasmota.h"
 
 
 // Class definition

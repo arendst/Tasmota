@@ -81,7 +81,7 @@ int32_t m_md5_finish(struct bvm *vm) {
   be_return(vm);
 }
 
-#include "../generate/be_fixed_be_class_md5.h"
+#include "be_fixed_be_class_md5.h"
 
 void be_load_md5_lib(bvm *vm) {
     be_pushntvclass(vm, &be_class_md5);
