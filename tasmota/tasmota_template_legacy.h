@@ -190,6 +190,7 @@ enum LegacyUserSelectablePins {
   GPI8_OLED_RESET,     // OLED Display Reset
   GPI8_SOLAXX1_TX,     // Solax Inverter tx pin
   GPI8_SOLAXX1_RX,     // Solax Inverter rx pin
+  GPI8_SOLAXX1_RTS,    // Solax Inverter RTS pin
   GPI8_ZIGBEE_TX,      // Zigbee Serial interface
   GPI8_ZIGBEE_RX,      // Zigbee Serial interface
   GPI8_RDM6300_RX,     // RDM6300 RX
@@ -420,6 +421,7 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_OLED_RESET),     // OLED Display Reset
   AGPIO(GPIO_SOLAXX1_TX),     // Solax Inverter tx pin
   AGPIO(GPIO_SOLAXX1_RX),     // Solax Inverter rx pin
+  AGPIO(GPIO_SOLAXX1_RTS),    // Solax Inverter RTS pin
   AGPIO(GPIO_ZIGBEE_TX),      // Zigbee Serial interface
   AGPIO(GPIO_ZIGBEE_RX),      // Zigbee Serial interface
   AGPIO(GPIO_RDM6300_RX),
