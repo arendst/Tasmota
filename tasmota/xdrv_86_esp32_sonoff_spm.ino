@@ -1025,9 +1025,15 @@ void SSPMEvery100ms(void) {
       Sspm->module_max = 0;
       SSPMSendInitScan();
       Sspm->mstate = SPM_WAIT_FOR_SCAN;
+      Sspm->last_totals = 0;
       break;
     case SPM_WAIT_FOR_SCAN:
-      // Wait for scan sequence to complete
+      // Wait for scan sequence to complete within 60 seconds
+      if (Sspm->last_totals > 600) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Relay scan timeout"));
+        Sspm->mstate = SPM_NONE;
+        Sspm->error_led_blinks = 255;
+      }
       break;
     case SPM_SCAN_COMPLETE:
       // Scan sequence finished
