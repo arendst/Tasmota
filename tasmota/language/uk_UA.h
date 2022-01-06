@@ -737,6 +737,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
