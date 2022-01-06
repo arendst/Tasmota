@@ -19,9 +19,13 @@
 Import("env")
 
 import subprocess
+import sys
+
 from os.path import expanduser, join
+
 home = expanduser("~")
-esptool = join(home, ".platformio", "packages", "tool-esptoolpy", "esptool.py")
+esptoolpath = join(home, ".platformio", "packages", "tool-esptoolpy")
+sys.path.append(esptoolpath)
 import esptool
 
 def esp32_create_combined_bin(source, target, env):
