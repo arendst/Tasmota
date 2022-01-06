@@ -30,7 +30,7 @@ class TasmotaModbus : public TasmotaSerial {
     TasmotaModbus(int receive_pin, int transmit_pin);
     virtual ~TasmotaModbus() {}
 
-    int Begin(long speed = TM_MODBUS_BAUDRATE, int stop_bits = 1);
+    int Begin(long speed = TM_MODBUS_BAUDRATE, uint32_t config = SERIAL_8N1);
 
     uint16_t CalculateCRC(uint8_t *frame, uint8_t num);
 

@@ -114,11 +114,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
+- TasmotaSerial library from v3.3.0 to v3.4.0
+- TasmotaModbus library from v1.2.0 to v3.4.0
 - ESP8266Audio library from v1.9.2 to v1.9.5
 - ESP8266SAM library from v1.0 to v1.0.1
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
+- ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Berry stores compiled bytecode into IRAM, freeing space in heap [#14307](https://github.com/arendst/Tasmota/issues/14307)
 
 ### Fixed
 - Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow [#13700](https://github.com/arendst/Tasmota/issues/13700)

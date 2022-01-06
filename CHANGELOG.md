@@ -9,12 +9,15 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
+- TasmotaSerial library from v3.3.0 to v3.4.0
+- TasmotaModbus library from v1.2.0 to v3.4.0
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
-- Set ESP32 stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
-- Berry stores compiled bytecode into IRAM, freeing space in heap
+- ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Berry stores compiled bytecode into IRAM, freeing space in heap (#14307)
 
 ### Fixed
 - Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
+- Modbus serial config regression from v10.1.0.3
 
 ## [10.1.0.3] 20211231
 ### Added
