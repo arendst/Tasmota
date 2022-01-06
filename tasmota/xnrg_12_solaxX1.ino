@@ -156,7 +156,6 @@ void solaxX1_RS485Send(uint16_t msgLen)
   }
 
   if (PinUsed(GPIO_SOLAXX1_RTS)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: RTS-high"));
     digitalWrite(Pin(GPIO_SOLAXX1_RTS), HIGH);
   }
   solaxX1Serial->flush();
