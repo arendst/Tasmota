@@ -37,7 +37,7 @@ def esp32_create_factory_bin(source, target, env):
     # -  0xe000 | ~\.platformio\packages\framework-arduinoespressif32\tools\partitions\boot_app0.bin
     # - 0x10000 | ~\Tasmota\.pio\build\<env name>/firmware.bin
 
-    new_file_name = env.subst("$BUILD_DIR/${PROGNAME}-factory.bin")
+    new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
     sections = env.subst(env.get('FLASH_EXTRA_IMAGES'))
     new_file = open(new_file_name,"wb")
     new_file.truncate() # Make sure no left over data is present from a previous build
