@@ -74,7 +74,7 @@ enum UserSelectablePins {
   GPIO_SSPI_MAX31865_CS1,              // MAX31865 Chip Select
   GPIO_HRE_CLOCK, GPIO_HRE_DATA,       // HR-E Water Meter
   GPIO_ADE7953_IRQ,                    // ADE7953 IRQ
-  GPIO_SOLAXX1_TX, GPIO_SOLAXX1_RX, GPIO_SOLAXX1_RTS,    // Solax Inverter Serial interface
+  GPIO_SOLAXX1_TX, GPIO_SOLAXX1_RX,    // Solax Inverter Serial interface
   GPIO_ZIGBEE_TX, GPIO_ZIGBEE_RX,      // Zigbee Serial interface
   GPIO_RDM6300_RX,                     // RDM6300 RX
   GPIO_IBEACON_TX, GPIO_IBEACON_RX,    // HM17 IBEACON Serial interface
@@ -177,6 +177,7 @@ enum UserSelectablePins {
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
   GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
   GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
+  GPIO_SOLAXX1_RTS,                    // Solax Inverter Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -275,7 +276,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MAX31865_CS "|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
-  D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|" D_SENSOR_SOLAXX1_RTS "|"
+  D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
   D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
   D_SENSOR_RDM6300_RX "|"
   D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
@@ -373,8 +374,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0942_RX "|"
   D_SENSOR_HM330X_SET "|"
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
-
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
+  D_SENSOR_SOLAXX1_RTS "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =

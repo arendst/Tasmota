@@ -162,7 +162,6 @@ void solaxX1_RS485Send(uint16_t msgLen)
   solaxX1Serial->write(message, msgLen);
   solaxX1Serial->write(highByte(crc));
   solaxX1Serial->write(lowByte(crc));
-  solaxX1Serial->flush();
   if (PinUsed(GPIO_SOLAXX1_RTS)) {
     digitalWrite(Pin(GPIO_SOLAXX1_RTS), LOW);
   }
