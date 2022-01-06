@@ -59,7 +59,7 @@ def esp32_create_combined_bin(source, target, env):
     print(f" - {hex(app_offset)} | {firmware_name}")
     cmd += [hex(app_offset), firmware_name]
 
-    print('Using esptool.py arguments: %s' % ' '.join(cmd))
+    #print('Using esptool.py arguments: %s' % ' '.join(cmd))
 
     esptool.main(cmd)
 
