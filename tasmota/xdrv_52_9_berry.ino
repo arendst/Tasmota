@@ -84,6 +84,29 @@ extern "C" {
   }
 #endif // USE_BERRY_PSRAM
 
+
+  void *berry_malloc32(uint32_t size) {
+  #ifdef USE_BERRY_IRAM
+    return special_malloc32(size);
+  #else
+    return special_malloc(size);
+  #endif
+  }
+  void *berry_realloc32(void *ptr, size_t size) {
+  #ifdef USE_BERRY_IRAM
+    return special_realloc32(ptr, size);
+  #else
+    return special_realloc(ptr, size);
+  #endif
+  }
+  void *berry_calloc32(size_t num, size_t size) {
+  #ifdef USE_BERRY_IRAM
+    return special_calloc32(num, size);
+  #else
+    return special_calloc(num, size);
+  #endif
+  }
+
   void berry_free(void *ptr) {
     free(ptr);
   }
