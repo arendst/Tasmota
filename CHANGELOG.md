@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [2022.01.1]
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
+- ESP32 Sonoff SPM command ``SspmMap 2,1,..`` to map scanned module to physical module (#14281)
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13

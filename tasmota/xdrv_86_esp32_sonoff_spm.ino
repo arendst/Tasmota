@@ -49,7 +49,9 @@
  * Gui optimized for energy display.
  * Yellow led lights if no ARM connection can be made.
  * Yellow led blinks 2 seconds if an ARM-ESP comms CRC error is detected.
+ * Persistence for module mapping
  * Supported commands:
+ *   SspmMap 2,3,1,..    - Map scanned module number to physical module number using positional numbering
  *   SspmDisplay 0|1     - Select alternative GUI rotating display either all or powered on only
  *   SspmIAmHere<relay>  - Blink ERROR in SPM-4Relay where relay resides
  *   SspmScan            - Rescan ARM modbus taking around 20 seconds
@@ -140,6 +142,8 @@
 
 /*********************************************************************************************/
 
+const uint32_t SSPM_VERSION = 0x01010101;          // Latest driver version (See settings deltas below)
+
 enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_WAIT,                 // Wait 100ms
                          SPM_RESET,                // Toggle ARM reset pin
@@ -155,6 +159,13 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
 
 #include <TasmotaSerial.h>
 TasmotaSerial *SspmSerial;
+
+// Global structure containing driver saved variables
+struct {
+  uint32_t crc32;                                 // To detect file changes
+  uint32_t version;                               // To detect driver function changes
+  uint16_t module_map[32];                        // Max possible SPM relay modules
+} SSPMSettings;
 
 typedef struct {
   float voltage[SSPM_MAX_MODULES][4];             // 123.12 V
@@ -192,7 +203,123 @@ typedef struct {
 uint8_t *SspmBuffer = nullptr;
 TSspm *Sspm = nullptr;
 
+/*********************************************************************************************\
+ * Driver Settings load and save using filesystem
+\*********************************************************************************************/
+
+uint32_t SSPMSettingsCrc32(void) {
+  // Use Tasmota CRC calculation function
+  return GetCfgCrc32((uint8_t*)&SSPMSettings +4, sizeof(SSPMSettings) -4);  // Skip crc32
+}
+
+void SSPMSettingsDefault(void) {
+  // Init default values in case file is not found
+  AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM " D_USE_DEFAULTS));
+
+  memset(&SSPMSettings, 0x00, sizeof(SSPMSettings));
+  SSPMSettings.version = SSPM_VERSION;
+  // Init any other parameter in struct SSPMSettings
+}
+
+void SSPMSettingsDelta(void) {
+  // Fix possible setting deltas
+  if (SSPMSettings.version != SSPM_VERSION) {      // Fix version dependent changes
+
+    if (Settings->version < 0x01010100) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM update oldest version restore"));
+
+    }
+    if (Settings->version < 0x01010101) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM update old version restore"));
+
+    }
+
+    // Set current version and save settings
+    SSPMSettings.version = SSPM_VERSION;
+    SSPMSettingsSave();
+  }
+}
+
+void SSPMSettingsLoad(void) {
+  // Init default values in case file is not found
+  SSPMSettingsDefault();
+
+  // Try to load file /.drvset086
+  char filename[20];
+  // Use for drivers:
+  snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_86);
+
+#ifdef USE_UFILESYS
+  if (TfsLoadFile(filename, (uint8_t*)&SSPMSettings, sizeof(SSPMSettings))) {
+    // Fix possible setting deltas
+    SSPMSettingsDelta();
+
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM loaded from file"));
+  } else {
+    // File system not ready: No flash space reserved for file system
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not ready or file not found"));
+  }
+#else
+  AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not enabled"));
+#endif  // USE_UFILESYS
+
+  SSPMSettings.crc32 = SSPMSettingsCrc32();
+}
+
+void SSPMSettingsSave(void) {
+  // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
+
+  if (SSPMSettingsCrc32() != SSPMSettings.crc32) {
+    // Try to save file /.drvset086
+    SSPMSettings.crc32 = SSPMSettingsCrc32();
+
+    char filename[20];
+    // Use for drivers:
+    snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_86);
+
+#ifdef USE_UFILESYS
+    if (TfsSaveFile(filename, (const uint8_t*)&SSPMSettings, sizeof(SSPMSettings))) {
+      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM saved to file"));
+    } else {
+      // File system not ready: No flash space reserved for file system
+      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not ready or unable to save file"));
+    }
+#else
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not enabled"));
+#endif  // USE_UFILESYS
+  }
+}
+
 /*********************************************************************************************/
+
+uint32_t SSMPGetModuleId(uint32_t module) {
+  // Return short module id
+  uint32_t module_id = 0;
+  if (module < Sspm->module_max) {
+    module_id = Sspm->module[module][0] << 8 | Sspm->module[module][1];
+  }
+  return module_id;
+}
+
+uint32_t SSPMGetMappedModuleId(uint32_t module) {
+  // Return mapped module number
+  for (uint32_t module_nr = 0; module_nr < Sspm->module_max; module_nr++) {
+    if (SSPMSettings.module_map[module] == SSMPGetModuleId(module_nr)) {
+      return module_nr;  // 0, 1, ..
+    }
+  }
+  return module;
+}
+
+uint32_t SSPMGetModuleNumberFromMap(uint32_t id) {
+  // Return module number based on first two bytes of module id
+  for (uint32_t module_nr = 0; module_nr < SSPM_MAX_MODULES; module_nr++) {
+    if (id == SSPMSettings.module_map[module_nr]) {
+      return module_nr;  // 0, 1, ...
+    }
+  }
+  return 0;
+}
 
 void SSPMSetLock(uint32_t seconds) {
   Sspm->timeout = seconds * 10;     // Decremented every 100mSec
@@ -210,6 +337,8 @@ uint16_t SSPMCalculateCRC(uint8_t *frame, uint32_t num) {
   }
   return crc ^ 0;
 }
+
+/*********************************************************************************************/
 
 void SSPMSend(uint32_t size) {
   uint16_t crc = SSPMCalculateCRC(SspmBuffer, size -2);
@@ -303,7 +432,7 @@ void SSPMSendGetOps(uint32_t module) {
   Marker  |Module id                          |Ac|Cm|Size |Ix|Chksm|
   */
   SSPMInitSend();
-  memcpy(SspmBuffer +3, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +3, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[16] = SSPM_FUNC_GET_OPS;  // 0x04
   Sspm->command_sequence++;
   SspmBuffer[19] = Sspm->command_sequence;
@@ -323,7 +452,7 @@ void SSPMSendSetRelay(uint32_t relay, uint32_t state) {
   }
   uint8_t module = relay >> 2;
   SSPMInitSend();
-  memcpy(SspmBuffer +3, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +3, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[16] = SSPM_FUNC_SET_RELAY;  // 0x08
   SspmBuffer[18] = 0x01;
   SspmBuffer[19] = channel;
@@ -340,7 +469,7 @@ void SSPMSendGetModuleState(uint32_t module) {
   Marker  |Module id                          |Ac|Cm|Size |Pl|Ix|Chksm|
   */
   SSPMInitSend();
-  memcpy(SspmBuffer +3, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +3, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[16] = SSPM_FUNC_GET_MODULE_STATE;  // 0x09
   SspmBuffer[18] = 0x01;
   SspmBuffer[19] = 0x0F;   // State of all four relays
@@ -407,7 +536,7 @@ void SSPMSendGetScheme(uint32_t module) {
   Marker  |Module id                          |Ac|Cm|Size |Ix|Chksm|
   */
   SSPMInitSend();
-  memcpy(SspmBuffer +3, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +3, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[16] = SSPM_FUNC_GET_SCHEME;  // 0x0B
   Sspm->command_sequence++;
   SspmBuffer[19] = Sspm->command_sequence;
@@ -459,7 +588,7 @@ void SSPMSendIAmHere(uint32_t relay) {
   */
   uint8_t module = relay >> 2;
   SSPMInitSend();
-  memcpy(SspmBuffer +3, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +3, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[16] = SSPM_FUNC_IAMHERE;  // 0x0D
   Sspm->command_sequence++;
   SspmBuffer[19] = Sspm->command_sequence;
@@ -507,7 +636,7 @@ void SSPMSendGetEnergyTotal(uint32_t relay) {
   SSPMInitSend();
   SspmBuffer[16] = SSPM_FUNC_GET_ENERGY_TOTAL;  // 0x16
   SspmBuffer[18] = 0x0D;
-  memcpy(SspmBuffer +19, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +19, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[31] = channel;
   Sspm->command_sequence++;
   SspmBuffer[32] = Sspm->command_sequence;
@@ -527,7 +656,7 @@ void SSPMSendGetEnergy(uint32_t relay) {
   SSPMInitSend();
   SspmBuffer[16] = SSPM_FUNC_GET_ENERGY;  // 0x18
   SspmBuffer[18] = 0x10;
-  memcpy(SspmBuffer +19, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +19, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[31] = 0x01;
   SspmBuffer[32] = channel;
   SspmBuffer[33] = 0;
@@ -551,7 +680,7 @@ void SSPMSendGetLog(uint32_t relay, uint32_t entries) {
   SSPMInitSend();
   SspmBuffer[16] = SSPM_FUNC_GET_LOG;  // 0x1A
   SspmBuffer[18] = 0x10;
-  memcpy(SspmBuffer +19, Sspm->module[module], SSPM_MODULE_NAME_SIZE);
+  memcpy(SspmBuffer +19, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
   SspmBuffer[31] = startlog >> 8;    // MSB start log
   SspmBuffer[32] = startlog;         // LSB start log
   SspmBuffer[33] = entries >> 8;     // MSB end log
@@ -619,7 +748,8 @@ void SSPMHandleReceivedData(void) {
           power_t current_state = SspmBuffer[20] >> 4;  // Relays state
           power_t mask = 0x0000000F;
           for (uint32_t i = 0; i < Sspm->module_max; i++) {
-            if ((SspmBuffer[3] == Sspm->module[i][0]) && (SspmBuffer[4] == Sspm->module[i][1])) {
+            uint32_t module = SSPMGetMappedModuleId(i);
+            if ((SspmBuffer[3] == Sspm->module[module][0]) && (SspmBuffer[4] == Sspm->module[module][1])) {
               current_state <<= (i * 4);
               mask <<= (i * 4);
               TasmotaGlobal.power &= (POWER_MASK ^ mask);
@@ -703,14 +833,10 @@ void SSPMHandleReceivedData(void) {
             energy_total += today_energy;
           }
           uint32_t channel = SspmBuffer[32];
-          for (uint32_t module = 0; module < Sspm->module_max; module++) {
-            if ((SspmBuffer[20] == Sspm->module[module][0]) && (SspmBuffer[21] == Sspm->module[module][1])) {
-              Sspm->energy_today[module][channel] = energy_today;
-              Sspm->energy_yesterday[module][channel] = energy_yesterday;
-              Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
-              break;
-            }
-          }
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
+          Sspm->energy_today[module][channel] = energy_today;
+          Sspm->energy_yesterday[module][channel] = energy_yesterday;
+          Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
           Sspm->allow_updates = 1;
         }
         break;
@@ -787,19 +913,15 @@ void SSPMHandleReceivedData(void) {
             if (SspmBuffer[31] & 1) { break; }
             SspmBuffer[31] >>= 1;
           }
-          for (uint32_t module = 0; module < Sspm->module_max; module++) {
-            if ((SspmBuffer[19] == Sspm->module[module][0]) && (SspmBuffer[20] == Sspm->module[module][1])) {
-              Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
-              Sspm->voltage[module][channel] = (SspmBuffer[34] << 8) + SspmBuffer[35] + (float)SspmBuffer[36] / 100;         // x.xxV
-              Sspm->active_power[module][channel] = (SspmBuffer[37] << 8) + SspmBuffer[38] + (float)SspmBuffer[39] / 100;    // x.xxW
-              Sspm->reactive_power[module][channel] = (SspmBuffer[40] << 8) + SspmBuffer[41] + (float)SspmBuffer[42] / 100;  // x.xxVAr
-              Sspm->apparent_power[module][channel] = (SspmBuffer[43] << 8) + SspmBuffer[44] + (float)SspmBuffer[45] / 100;  // x.xxVA
-              float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
-              if (power_factor > 1) { power_factor = 1; }
-              Sspm->power_factor[module][channel] = power_factor;
-              break;
-            }
-          }
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
+          Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
+          Sspm->voltage[module][channel] = (SspmBuffer[34] << 8) + SspmBuffer[35] + (float)SspmBuffer[36] / 100;         // x.xxV
+          Sspm->active_power[module][channel] = (SspmBuffer[37] << 8) + SspmBuffer[38] + (float)SspmBuffer[39] / 100;    // x.xxW
+          Sspm->reactive_power[module][channel] = (SspmBuffer[40] << 8) + SspmBuffer[41] + (float)SspmBuffer[42] / 100;  // x.xxVAr
+          Sspm->apparent_power[module][channel] = (SspmBuffer[43] << 8) + SspmBuffer[44] + (float)SspmBuffer[45] / 100;  // x.xxVA
+          float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
+          if (power_factor > 1) { power_factor = 1; }
+          Sspm->power_factor[module][channel] = power_factor;
           SSPMSendAck(command_sequence);
           Sspm->allow_updates = 1;
         }
@@ -814,7 +936,8 @@ void SSPMHandleReceivedData(void) {
           power_t relay = SspmBuffer[31] & 0x0F;      // Relays active
           power_t relay_state = SspmBuffer[31] >> 4;  // Relays state
           for (uint32_t i = 0; i < Sspm->module_max; i++) {
-            if ((SspmBuffer[19] == Sspm->module[i][0]) && (SspmBuffer[20] == Sspm->module[i][1])) {
+            uint32_t module = SSPMGetMappedModuleId(i);
+            if ((SspmBuffer[19] == Sspm->module[module][0]) && (SspmBuffer[20] == Sspm->module[module][1])) {
               relay <<= (i * 4);
               relay_state <<= (i * 4);
               break;
@@ -847,12 +970,15 @@ void SSPMHandleReceivedData(void) {
         Ty = Type of sub-device. 130: Four-channel sub-device
         */
         if ((0x24 == Sspm->expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
-          memmove(Sspm->module[1], Sspm->module[0], (SSPM_MAX_MODULES -1) * SSPM_MODULE_NAME_SIZE);
-          memcpy(Sspm->module[0], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
-          Sspm->module_max++;
+          memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
+          if (0 == SSPMSettings.module_map[Sspm->module_max]) {
+            SSPMSettings.module_map[Sspm->module_max] = SspmBuffer[19] << 8 | SspmBuffer[20];
+          }
 
           AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Module %d type %d version %d.%d.%d found with id %12_H"),
-            Sspm->module_max, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[0]);
+            Sspm->module_max +1, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
+
+          Sspm->module_max++;
         }
         SSPMSendAck(command_sequence);
         break;
@@ -937,6 +1063,8 @@ void SSPMInit(void) {
     free(Sspm);
     return;
   }
+
+  SSPMSettingsLoad();
 
   pinMode(SSPM_GPIO_ARM_RESET, OUTPUT);
   digitalWrite(SSPM_GPIO_ARM_RESET, 1);
@@ -1250,10 +1378,10 @@ void SSPMEnergyShow(bool json) {
 \*********************************************************************************************/
 
 const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
-  "Log|Energy|History|Scan|IamHere|Display|Reset" ;
+  "Log|Energy|History|Scan|IamHere|Display|Reset|Map" ;
 
 void (* const SSPMCommand[])(void) PROGMEM = {
-  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset };
+  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset, &CmndSSPMMap };
 
 void CmndSSPMLog(void) {
   // Report 29 log entries
@@ -1277,12 +1405,14 @@ void CmndSSPMEnergyHistory(void) {
 
 void CmndSSPMScan(void) {
   // Start relay module scan taking up to 20 seconds
+  // SspmScan
   Sspm->mstate = SPM_START_SCAN;
   ResponseCmndChar(PSTR(D_JSON_STARTED));
 }
 
 void CmndSSPMIamHere(void) {
   // Blink module ERROR led containing relay
+  // SspmIamHere 6
   if ((XdrvMailbox.payload < 1) || (XdrvMailbox.payload > TasmotaGlobal.devices_present)) { XdrvMailbox.payload = 1; }
   SSPMSendIAmHere(XdrvMailbox.payload -1);
   ResponseCmndDone();
@@ -1290,6 +1420,7 @@ void CmndSSPMIamHere(void) {
 
 void CmndSSPMDisplay(void) {
   // Select either all relays or only powered on relays
+  // SspmDisplay 0 or SspmDisplay 1
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings->sbflag1.sspm_display = XdrvMailbox.payload;
   }
@@ -1298,6 +1429,7 @@ void CmndSSPMDisplay(void) {
 
 void CmndSSPMReset(void) {
   // Reset ARM and restart
+  // Reset 1
   if (1 == XdrvMailbox.payload) {
     Sspm->mstate = SPM_NONE;
     SSPMSendCmnd(SSPM_FUNC_RESET);
@@ -1305,6 +1437,28 @@ void CmndSSPMReset(void) {
     ResponseCmndChar(PSTR(D_JSON_RESET_AND_RESTARTING));
   } else {
     ResponseCmndChar(PSTR(D_JSON_ONE_TO_RESET));
+  }
+}
+
+void CmndSSPMMap(void) {
+  // Map scanned module number to physical module number using positional numbering
+  // SspmMap 1,3,4,2
+  // TODO: Might need input checks on count and valid different numbers
+  if (Sspm->module_max) {  // Valid after initial scan
+    char *p;
+    uint32_t i = 0;
+    for (char* str = strtok_r(XdrvMailbox.data, ",", &p); str && i < Sspm->module_max; str = strtok_r(nullptr, ",", &p)) {
+      uint32_t module = atoi(str);
+      if ((module > 0) && (module <= Sspm->module_max)) {  // Only valid modules 1 to x
+        SSPMSettings.module_map[i] = SSMPGetModuleId(module -1);
+      }
+      i++;
+    }
+    Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
+    for (uint32_t i = 0; i < Sspm->module_max; i++) {
+      ResponseAppend_P(PSTR("%s%d"), (i)?",":"", SSPMGetModuleNumberFromMap(SSMPGetModuleId(i)) +1);
+    }
+    ResponseAppend_P(PSTR("]}"));
   }
 }
 
@@ -1325,6 +1479,9 @@ bool Xdrv86(uint8_t function) {
         break;
       case FUNC_EVERY_100_MSECOND:
         SSPMEvery100ms();
+        break;
+      case FUNC_SAVE_SETTINGS:
+        SSPMSettingsSave();
         break;
       case FUNC_SET_DEVICE_POWER:
         result = SSPMSetDevicePower();
