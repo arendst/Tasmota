@@ -35,6 +35,9 @@
 #define XSNS_33             33
 #define XI2C_26             26  // See I2CDEVICES.md
 
+#include "NTPServer.h"
+#include "NTPPacket.h"
+
 //DS3232 I2C Address
 #ifndef USE_RTC_ADDR
 #define USE_RTC_ADDR 0x68
@@ -66,6 +69,23 @@
 bool ds3231ReadStatus = false;
 bool ds3231WriteStatus = false;    //flag, we want to read/write to DS3231 only once
 bool DS3231chipDetected = false;
+
+#define D_CMND_NTP "NTP"
+
+const char S_JSON_NTP_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_NTP "%s\":%d}";
+
+const char kRTCTypes[] PROGMEM = "NTP";
+
+#define NTP_MILLIS_OFFSET      50
+
+NtpServer timeServer(PortUdp);
+
+struct NTP_t {
+  struct {
+    uint32_t init:1;
+    uint32_t runningNTP:1;
+  } mode;
+} NTP;
 
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
@@ -156,6 +176,39 @@ void DS3231EverySecond(void)
     SetDS3231Time (Rtc.utc_time); //update the DS3231 time
     ds3231WriteStatus = true;
   }
+  if (NTP.mode.runningNTP) {
+  timeServer.processOneRequest(Rtc.utc_time, NTP_MILLIS_OFFSET);
+  }
+}
+
+/*********************************************************************************************\
+   NTP functions
+  \*********************************************************************************************/
+
+void NTPSelectMode(uint16_t mode)
+{
+  DEBUG_SENSOR_LOG(PSTR("RTC: NTP status %u"),mode);
+  switch(mode){
+    case 0:
+      NTP.mode.runningNTP = false;
+      break;
+    case 1:
+      if (timeServer.beginListening()) {
+        NTP.mode.runningNTP = true;
+      }
+      break;
+
+  }
+}
+
+bool NTPCmd(void)
+{
+  bool serviced = true;
+  if (XdrvMailbox.data_len > 0) {
+    NTPSelectMode(XdrvMailbox.payload);
+    Response_P(S_JSON_NTP_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
+  }
+  return serviced;
 }
 
 /*********************************************************************************************\
@@ -173,6 +226,11 @@ bool Xsns33(uint8_t function)
   }
   else if (DS3231chipDetected) {
     switch (function) {
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_33 == XdrvMailbox.index) {
+          result = NTPCmd();
+        }
+        break;
       case FUNC_EVERY_SECOND:
         DS3231EverySecond();
         break;
