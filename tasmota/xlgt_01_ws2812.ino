@@ -37,7 +37,11 @@
 
 #define XLGT_01             1
 
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+const uint8_t WS2812_SCHEMES = 10;      // Number of WS2812 schemes
+#else
 const uint8_t WS2812_SCHEMES = 9;      // Number of WS2812 schemes
+#endif
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
   D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
@@ -167,7 +171,12 @@ WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
 WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
 WsColor kStairs[2] = { 0,0,0, 255,255,255 };
+
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+ColorScheme kSchemes[WS2812_SCHEMES -2] = {  // Skip clock scheme and DDP scheme
+#else
 ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
+#endif
   kIncandescent, 2,
   kRgb, 3,
   kChristmas, 2,
@@ -492,6 +501,51 @@ void Ws2812Steps(uint32_t schemenr) {
   Ws2812StripShow();
 }
 
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+void Ws2812DDP(void)
+{
+#if (USE_WS2812_CTYPE > NEO_3LED)
+  RgbwColor c;
+  c.W = 0;
+#else
+  RgbColor c;
+#endif
+  c.R = 0;
+  c.G = 0;
+  c.B = 0;
+
+  // Can't be trying to initialize UDP too early.
+  if (TasmotaGlobal.restart_flag || TasmotaGlobal.global_state.network_down) return;
+
+  // Start DDP listener, if fail, just set last ddp_color
+  if (!ddp_udp_up) {
+    if (!ddp_udp.begin(4048)) return;
+    ddp_udp_up = 1;
+    AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Listener Started: WS2812 Scheme");
+  }
+
+  // Get the DDP payload over UDP
+  std::vector<uint8_t> payload;
+  while (uint16_t packet_size = ddp_udp.parsePacket()) {
+    payload.resize(packet_size);
+    if (!ddp_udp.read(&payload[0], payload.size())) {
+      continue;
+    }
+  }
+
+  // No verification checks performed against packet besides length
+  if (payload.size() > (9+3*Settings->light_pixels)) {
+    for (uint32_t i = 0; i < Settings->light_pixels; i++) {
+      c.R = payload[10+3*i];
+      c.G = payload[11+3*i];
+      c.B = payload[12+3*i];
+      strip->SetPixelColor(i, c);
+    }
+    Ws2812StripShow();
+  }
+}
+#endif
+
 void Ws2812Clear(void)
 {
   strip->ClearTo(0);
@@ -580,7 +634,14 @@ bool Ws2812SetChannels(void)
 void Ws2812ShowScheme(void)
 {
   uint32_t scheme = Settings->light_scheme - Ws2812.scheme_offset;
-
+  
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+  if ((scheme != 9) && (ddp_udp_up)) {
+    ddp_udp.stop();
+    ddp_udp_up = 0;
+    AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: WS2812 Scheme not DDP");
+  }
+#endif
   switch (scheme) {
     case 0:  // Clock
       if ((1 == TasmotaGlobal.state_250mS) || (Ws2812.show_next)) {
@@ -588,6 +649,11 @@ void Ws2812ShowScheme(void)
         Ws2812.show_next = 0;
       }
       break;
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    case 9:
+      Ws2812DDP();
+      break;
+#endif
     default:
 			if(Settings->light_step_pixels > 0){
 				Ws2812Steps(scheme -1);
