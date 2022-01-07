@@ -226,6 +226,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } GpioOptionABits;
 
+#ifdef ESP32
 enum SupportedEmulationModules {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
   SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS_DUMMY, SONOFF_DEV, H801,
@@ -242,6 +243,7 @@ enum SupportedEmulationModules {
 const uint8_t kModuleEmulationList[] PROGMEM = {
   PWM_DIMMER                               // (v2022.01.1) - Option_E1 - (Light) USE_PWM_DIMMER support
 };
+#endif  // ESP32
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char kSensorNames[] PROGMEM =
