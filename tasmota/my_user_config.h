@@ -663,6 +663,8 @@
 //  #define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
 //  #define USE_HM330X                             // [I2cDriver63] Enable support for SeedStudio Grove Particule sensor (I2C address 0x40) (+1k5 code)
 //  #define USE_HDC2010                            // [I2cDriver64] Enable HDC2010 temperature/humidity sensor (I2C address 0x40) (+1k5 code)
+  #define USE_DS3502                             // [I2cDriver65] Enable DS3502 digital potentiometer. (I2C address 0x28-0x2B) (+xxx code)
+    #define USE_DS3502_ADDR 0x28                 // Enable DS3502 I2C Address to use (Must be within range 0x28 through 0x2B - set according to your wired setup)
 //    #define HM330X_DEFAULT_ADDRESS    0x40       // Option: change default I2C address for HM330X used in SeedSTudio Particucle Sensor
 //    #define HM330X_WARMUP_DELAY       30         // Option: change warmup delay during which data are not read from sensor after a power up
 //    #define HM330X_HIDE_OUT_OF_DATE   false      // Option: change to true to hide data from web GUI and SENSOR while sensor is asleep
