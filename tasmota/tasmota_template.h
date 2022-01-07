@@ -177,6 +177,7 @@ enum UserSelectablePins {
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
   GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
   GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
+  GPIO_SOLAXX1_RTS,                    // Solax Inverter Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -373,8 +374,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0942_RX "|"
   D_SENSOR_HM330X_SET "|"
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
-
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
+  D_SENSOR_SOLAXX1_RTS "|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -711,6 +712,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SOLAX_X1
   AGPIO(GPIO_SOLAXX1_TX),     // Solax Inverter tx pin
   AGPIO(GPIO_SOLAXX1_RX),     // Solax Inverter rx pin
+  AGPIO(GPIO_SOLAXX1_RTS),     // Solax Inverter RTS pin
 #endif // USE_SOLAX_X1
 #ifdef USE_LE01MR
   AGPIO(GPIO_LE01MR_TX),     // F7F LE-01MR energy meter tx pin

@@ -83,7 +83,7 @@ union {
   };
 } ErrCode;
 
-const char kSolaxMode[] PROGMEM = D_WAITING "|" D_CHECKING "|" D_WORKING "|" D_FAILURE;
+const char kSolaxMode[] PROGMEM = D_WAITING "|" D_CHECKING "|" D_WORKING "|" D_FAILURE "|" D_OFF;
 
 const char kSolaxError[] PROGMEM =
   D_SOLAX_ERROR_0 "|" D_SOLAX_ERROR_1 "|" D_SOLAX_ERROR_2 "|" D_SOLAX_ERROR_3 "|" D_SOLAX_ERROR_4 "|" D_SOLAX_ERROR_5 "|"
@@ -155,10 +155,17 @@ void solaxX1_RS485Send(uint16_t msgLen)
     solaxX1Serial->read();
   }
 
+  if (PinUsed(GPIO_SOLAXX1_RTS)) {
+    digitalWrite(Pin(GPIO_SOLAXX1_RTS), HIGH);
+  }
   solaxX1Serial->flush();
   solaxX1Serial->write(message, msgLen);
   solaxX1Serial->write(highByte(crc));
   solaxX1Serial->write(lowByte(crc));
+  if (PinUsed(GPIO_SOLAXX1_RTS)) {
+    digitalWrite(Pin(GPIO_SOLAXX1_RTS), LOW);
+  }
+
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, message, msgLen);
 }
 
@@ -363,8 +370,8 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
       Energy.data_valid[0] = ENERGY_WATCHDOG;
 
       solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
-      solaxX1.dc2_power = solaxX1.status = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
-      //solaxX1.energy_today = solaxX1.runtime_total = 0;
+      solaxX1.dc2_power = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
+      solaxX1.status = 4; // off(line)
     } else {
       if (protocolStatus.queryOfflineSend) {
         protocolStatus.status = 0b00001000; // queryOffline
@@ -380,7 +387,8 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
 void solaxX1SnsInit(void)
 {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
-  DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: RX-pin: %d, TX-pin: %d, RTS-pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), Pin(GPIO_SOLAXX1_RTS));
+//  DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX));
   protocolStatus.status = 0b00100000; // hasAddress
 
   solaxX1Serial = new TasmotaSerial(Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), 1);
@@ -388,6 +396,9 @@ void solaxX1SnsInit(void)
     if (solaxX1Serial->hardwareSerial()) { ClaimSerial(); }
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
+  }
+  if (PinUsed(GPIO_SOLAXX1_RTS)) {
+    pinMode(Pin(GPIO_SOLAXX1_RTS), OUTPUT);
   }
 }
 
