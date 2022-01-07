@@ -103,11 +103,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v2022.01.1
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
-- ESP32 Sonoff SPM command ``SspmMap 2,1,..`` to map scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
+- Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
+- DDP schemes for light and WS2812 [#14017](https://github.com/arendst/Tasmota/issues/14017)
 - Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
 - Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
 - Experimental ADE7953 (Shelly EM) reset on restart [#14261](https://github.com/arendst/Tasmota/issues/14261)
+- Solax X1 negative temperature support [#14278](https://github.com/arendst/Tasmota/issues/14278)
+- Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
+- ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features
 
@@ -130,6 +134,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
 - DHT support negative temperatures on different hardware [#14173](https://github.com/arendst/Tasmota/issues/14173)
 - Hardware serial parity and stop bits support [#14212](https://github.com/arendst/Tasmota/issues/14212)
+- Edit file for SD card [#14229](https://github.com/arendst/Tasmota/issues/14229)
+- Scripter memory corruption [#14268](https://github.com/arendst/Tasmota/issues/14268)
 - ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
 - ESP32 Compile error when I2S_Audio is enabled [#14095](https://github.com/arendst/Tasmota/issues/14095)

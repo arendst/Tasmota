@@ -6,7 +6,10 @@ All notable changes to this project will be documented in this file.
 ## [2022.01.1]
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
-- ESP32 Sonoff SPM command ``SspmMap 2,1,..`` to map scanned module to physical module (#14281)
+- Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)
+- Solax X1 modbus RTS support and offline status (#14305)
+- DDP schemes for light and WS2812 (#14017)
+- ESP32 single binary firmware (#14239)
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
@@ -18,6 +21,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
+- Scripter memory corruption (#14268)
+- Edit file for SD card (#14229)
+- Solax X1 negative temperature support (#14278)
 - Modbus serial config regression from v10.1.0.3
 
 ## [10.1.0.3] 20211231
