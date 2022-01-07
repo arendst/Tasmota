@@ -178,6 +178,7 @@ enum UserSelectablePins {
   GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
   GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
   GPIO_SOLAXX1_RTS,                    // Solax Inverter Serial interface
+  GPIO_OPTION_E,                       // Emulated module
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -185,7 +186,7 @@ enum ProgramSelectablePins {
   GPIO_USER,           // User configurable needs to be 2047
   GPIO_MAX };
 
-#define MAX_OPTIONS_A  5                   // Increase if more bits are used from GpioOptionABits
+#define MAX_OPTIONS_A  6                   // Increase if more bits are used from GpioOptionABits
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -195,7 +196,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t udisplay_driver : 1;          // bit 2 (v9.3.1.2)   - Option_A3 - (Display) Universal display driver
     uint32_t enable_ccloader : 1;          // bit 3 (v9.4.0.5)   - Option_A4 - (Zigbee) Enable CCLoader using Zigbee Rx/Tx/Rst Gpios
     uint32_t rotary_mi_desk : 1;           // bit 4 (v9.5.0.5)   - Option_A5 - (Rotary) Enable Mi Desk emulation
-    uint32_t spare05 : 1;                  // bit 5
+    uint32_t linkind_support : 1;          // bit 5 (v2022.01.1) - Option_A6 - (Light) LinkInd support
     uint32_t spare06 : 1;                  // bit 6
     uint32_t spare07 : 1;                  // bit 7
     uint32_t spare08 : 1;                  // bit 8
@@ -224,6 +225,23 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare31 : 1;                  // bit 31
   };
 } GpioOptionABits;
+
+enum SupportedEmulationModules {
+  SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
+  SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS_DUMMY, SONOFF_DEV, H801,
+  SONOFF_SC, SONOFF_BN, SONOFF_4CHPRO, HUAFAN_SS, SONOFF_BRIDGE, SONOFF_B1, AILIGHT, SONOFF_T11, SONOFF_T12, SONOFF_T13,
+  SUPLA1, WITTY, YUNSHAN, MAGICHOME, LUANIHVIO, KMC_70011, ARILUX_LC01, ARILUX_LC11, SONOFF_DUAL_R2, ARILUX_LC06,
+  SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
+  OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
+  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
+  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, SONOFF_ZB_BRIDGE,
+  MAXMODULE_EMULATION };
+
+#define MAX_OPTIONS_E  1                   // Increase if more emulated modules are supported from kModuleEmulationList
+
+const uint8_t kModuleEmulationList[] PROGMEM = {
+  PWM_DIMMER                               // (v2022.01.1) - Option_E1 - (Light) USE_PWM_DIMMER support
+};
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char kSensorNames[] PROGMEM =
@@ -376,6 +394,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
   D_SENSOR_SOLAXX1_RTS "|"
+  D_SENSOR_OPTION " E|"
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -390,6 +409,9 @@ const char kSensorNamesFixed[] PROGMEM =
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
   AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A, // Device specific options
+#ifdef ESP32
+  AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E, // Device module emulation
+#endif
   AGPIO(GPIO_KEY1) + MAX_KEYS,          // Buttons
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
 #ifdef ESP32
@@ -1143,8 +1165,8 @@ typedef struct MYTMPLT {
 
 #define USER_MODULE        255
 
-// Supported hardware modules
-enum SupportedModules {
+// Supported ESP8266 hardware modules
+enum SupportedModulesESP8266 {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
   SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_DEV, H801,
   SONOFF_SC, SONOFF_BN, SONOFF_4CHPRO, HUAFAN_SS, SONOFF_BRIDGE, SONOFF_B1, AILIGHT, SONOFF_T11, SONOFF_T12, SONOFF_T13,
@@ -2556,7 +2578,7 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 #define USER_MODULE        255
 
 // Supported hardware modules
-enum SupportedModules {
+enum SupportedModulesESP32C3 {
   WEMOS,
   MAXMODULE };
 
@@ -2570,7 +2592,7 @@ const char kModuleNames[] PROGMEM =
   "ESP32C3|"
   ;
 
-// !!! Update this list in the same order as SupportedModules !!!
+// !!! Update this list in the same order as SupportedModulesESP32C3 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // Generic ESP32C3 device
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, XTAL_32K_P
@@ -2606,13 +2628,13 @@ const mytmplt kModules[] PROGMEM = {
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 
 /********************************************************************************************\
- * ESP32-C3 Module templates
+ * ESP32-S2 Module templates
 \********************************************************************************************/
 
 #define USER_MODULE        255
 
 // Supported hardware modules
-enum SupportedModules {
+enum SupportedModulesESP32S2 {
   WEMOS,
   MAXMODULE };
 
@@ -2626,7 +2648,7 @@ const char kModuleNames[] PROGMEM =
   "ESP32S2|"
   ;
 
-// !!! Update this list in the same order as SupportedModules !!!
+// !!! Update this list in the same order as SupportedModulesESP32S2 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // Generic ESP32C3 device
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, RTC_GPIO0, Strapping
@@ -2692,7 +2714,7 @@ const mytmplt kModules[] PROGMEM = {
 #define USER_MODULE        255
 
 // Supported hardware modules
-enum SupportedModules {
+enum SupportedModulesESP32 {
   WEMOS,
   ESP32_CAM_AITHINKER,
   ODROID_GO,
@@ -2748,7 +2770,7 @@ const char kModuleNames[] PROGMEM =
 #endif  // USE_M5STACK_CORE2
   ;
 
-// !!! Update this list in the same order as SupportedModules !!!
+// !!! Update this list in the same order as SupportedModulesESP32 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // WEMOS - Espressif ESP32-DevKitC - Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
     AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, ADC2_CH1, TOUCH1, RTC_GPIO11, CLK_OUT1, EMAC_TX_CLK

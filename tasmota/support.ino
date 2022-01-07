@@ -1523,6 +1523,11 @@ void ModuleDefault(uint32_t module)
 void SetModuleType(void)
 {
   TasmotaGlobal.module_type = (USER_MODULE == Settings->module) ? Settings->user_template_base : Settings->module;
+#ifdef ESP32
+  if (TasmotaGlobal.emulated_module_type) {
+    TasmotaGlobal.module_type = TasmotaGlobal.emulated_module_type;
+  }
+#endif
 }
 
 bool FlashPin(uint32_t pin)

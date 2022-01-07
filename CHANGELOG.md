@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Solax X1 modbus RTS support and offline status (#14305)
 - DDP schemes for light and WS2812 (#14017)
 - ESP32 single binary firmware (#14239)
+- ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
+- Support for Linkind dimmer as GPIO ``Option A6`` (#14004)
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13

@@ -133,7 +133,6 @@ String EthernetMacAddress(void);
 #undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
 
 // Hardware has no ESP32
-#undef USE_PWM_DIMMER
 #undef USE_EXS_DIMMER
 #undef USE_ARMTRONIX_DIMMERS
 #undef USE_SONOFF_RF

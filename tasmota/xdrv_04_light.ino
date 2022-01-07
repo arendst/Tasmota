@@ -1060,11 +1060,9 @@ bool LightModuleInit(void)
   }
 #endif  // ESP8266
 #ifdef USE_PWM_DIMMER
-#ifdef USE_DEVICE_GROUPS
   else if (PWM_DIMMER == TasmotaGlobal.module_type) {
     TasmotaGlobal.light_type = Settings->pwm_dimmer_cfg.pwm_count + 1;
   }
-#endif  // USE_DEVICE_GROUPS
 #endif  // USE_PWM_DIMMER
 
   if (TasmotaGlobal.light_type > LT_BASIC) {
@@ -2091,6 +2089,15 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
+#ifdef USE_I2C
+    if (TasmotaGlobal.gpio_optiona.linkind_support) {  // Option_A6
+      uint8_t val = change10to8(cur_col_10[Light.pwm_offset] > 0 ? changeUIntScale(cur_col_10[Light.pwm_offset], 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0);
+      max_col = val;
+      uint16_t chk = 65403 - val;
+      uint8_t buf[] = { 0x09, 0x50, 0x01, val, 0x00, 0x00, (uint8_t)(chk >> 8), (uint8_t)(chk & 0xff) };
+      I2cWriteBuffer(0x50, 0x2A, buf, sizeof(buf));
+    } else
+#endif  // USE_I2C
 #endif  // USE_PWM_DIMMER
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       uint16_t cur_col = cur_col_10[i + Light.pwm_offset];

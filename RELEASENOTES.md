@@ -105,6 +105,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
+- Support for Linkind dimmer as GPIO ``Option A6`` [#14004](https://github.com/arendst/Tasmota/issues/14004)
 - DDP schemes for light and WS2812 [#14017](https://github.com/arendst/Tasmota/issues/14017)
 - Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
 - Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
@@ -114,6 +115,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features
+- ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
 
 ### Breaking Changed
 

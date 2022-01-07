@@ -1781,6 +1781,11 @@ void GpioInit(void)
         mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
       }
 #ifdef ESP32
+      else if ((mpin >= AGPIO(GPIO_OPTION_E)) && (mpin < (AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E))) {
+        TasmotaGlobal.emulated_module_type = pgm_read_byte(kModuleEmulationList + (mpin - AGPIO(GPIO_OPTION_A)));
+        SetModuleType();
+        mpin = GPIO_NONE;
+      }
       else if ((mpin >= AGPIO(GPIO_SWT1_PD)) && (mpin < (AGPIO(GPIO_SWT1_PD) + MAX_SWITCHES))) {
         SwitchPulldownFlag(mpin - AGPIO(GPIO_SWT1_PD));
         mpin -= (AGPIO(GPIO_SWT1_PD) - AGPIO(GPIO_SWT1));
