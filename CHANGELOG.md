@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.01.1]
+## [2022.01.2]
+### Added
+
+### Changed
+
+### Fixed
+
+
+## [2022.01.1] 20220107
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)

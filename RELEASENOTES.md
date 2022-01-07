@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v2022.01.1
+## Changelog v2022.01.2
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
