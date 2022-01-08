@@ -23,7 +23,6 @@ import unishox
 from os import listdir
 from os import path
 from datetime import datetime
-import re
 
 def extract_c_string(s: str) -> str:
   state = 0
