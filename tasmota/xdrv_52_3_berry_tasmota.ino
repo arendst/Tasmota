@@ -68,34 +68,45 @@ const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recor
  *
 \*********************************************************************************************/
 extern "C" {
-  // Berry: `tasmota.publish(topic, payload [,retain]) -> nil``
+  // Berry: `tasmota.publish(topic, payload [, retain:bool, start:int, len:int]) -> nil``
   //
   int32_t l_publish(struct bvm *vm);
   int32_t l_publish(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isinstance(vm, 3))) {  // 2 mandatory string arguments
-      if (top == 3 || (top == 4 && be_isbool(vm, 4))) {           // 3rd optional argument must be bool
-        const char * topic = be_tostring(vm, 2);
-        const char * payload = nullptr;
-        size_t payload_len = 0;
-        if (be_isstring(vm, 3)) {
-          payload = be_tostring(vm, 3);
-          payload_len = strlen(payload);
-        } else {
-          be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-          if (be_isderived(vm, 3)) {
-            payload = (const char *) be_tobytes(vm, 3, &payload_len);
-          }
-        }
-        bool retain = false;
-        if (top == 4) {
-          retain = be_tobool(vm, 4);
-        }
-        if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
-        be_pop(vm, be_top(vm));
-        MqttPublishPayload(topic, payload, payload_len, retain);
-        be_return_nil(vm); // Return
+    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isbytes(vm, 3))) {  // 2 mandatory string arguments
+      bool retain = false;
+      int32_t payload_start = 0;
+      int32_t len = -1;   // send all of it
+      if (top >= 4) { retain = be_tobool(vm, 4); }
+      if (top >= 5) {
+        payload_start = be_toint(vm, 5);
+        if (payload_start < 0) payload_start = 0;
       }
+      if (top >= 6) { len = be_toint(vm, 6); }
+      const char * topic = be_tostring(vm, 2);
+      const char * payload = nullptr;
+      size_t payload_len = 0;
+
+      if (be_isstring(vm, 3)) {
+        payload = be_tostring(vm, 3);
+        payload_len = strlen(payload);
+      } else {
+        payload = (const char *) be_tobytes(vm, 3, &payload_len);
+      }
+      if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+
+      // adjust start and len
+      if (payload_start >= payload_len) { len = 0; }              // send empty packet
+      else if (len < 0) { len = payload_len - payload_start; }    // send all packet, adjust len
+      else if (payload_start + len > payload_len) { len = payload_len - payload_start; }    // len is too long, adjust
+      // adjust start
+      payload = payload + payload_start;
+
+      be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
+
+      MqttPublishPayload(topic, payload, len, retain);
+
+      be_return_nil(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -206,6 +217,10 @@ extern "C" {
       if (UsePSRAM()) {
         be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+      } else {
+        // IRAM information
+        int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        be_map_insert_int(vm, "iram_free", iram_free / 1024);
       }
       be_pop(vm, 1);
       be_return(vm);
