@@ -787,9 +787,7 @@ void ResponseAppendFeatures(void)
 #ifdef USE_SHIFT595
     feature8 |= 0x00080000;  // xdrv_60_shift595.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DS3231)
-    feature8 |= 0x00100000;  // xsns_33_ds3231.ino
-#endif
+//    feature8 |= 0x00100000;
 //    feature8 |= 0x00200000;
 //    feature8 |= 0x00400000;
 //    feature8 |= 0x00800000;
