@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Experimental ADE7953 (Shelly EM) reset on restart [#14261](https://github.com/arendst/Tasmota/issues/14261)
 - Solax X1 negative temperature support [#14278](https://github.com/arendst/Tasmota/issues/14278)
 - Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
+- Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features

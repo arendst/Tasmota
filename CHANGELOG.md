@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2022.01.2]
 ### Added
+- Tasmota favicon to webbrowser tab (#14322)
 
 ### Changed
 
