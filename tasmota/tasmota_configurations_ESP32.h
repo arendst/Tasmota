@@ -51,7 +51,7 @@
 #undef USE_DS18x20
 #undef USE_WS2812
 #undef USE_ENERGY_SENSOR
-#undef USE_BERRY                                 // Disable Berry scripting language
+//#undef USE_BERRY                                 // Disable Berry scripting language
 #undef USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
 
