@@ -83,7 +83,8 @@ union {
   };
 } ErrCode;
 
-const char kSolaxMode[] PROGMEM = D_WAITING "|" D_CHECKING "|" D_WORKING "|" D_FAILURE "|" D_OFF;
+const char kSolaxMode[] PROGMEM = D_OFF "|" D_SOLAX_MODE_0 "|" D_SOLAX_MODE_1 "|" D_SOLAX_MODE_2 "|" D_SOLAX_MODE_3 "|"
+  D_SOLAX_MODE_4 "|" D_SOLAX_MODE_5 "|" D_SOLAX_MODE_6;
 
 const char kSolaxError[] PROGMEM =
   D_SOLAX_ERROR_0 "|" D_SOLAX_ERROR_1 "|" D_SOLAX_ERROR_2 "|" D_SOLAX_ERROR_3 "|" D_SOLAX_ERROR_4 "|" D_SOLAX_ERROR_5 "|"
@@ -104,7 +105,7 @@ struct SOLAXX1 {
   float dc1_power = 0;
   float dc2_power = 0;
 
-  uint8_t status = 0;
+  int16_t runMode = 0;
   uint32_t errorCode = 0;
 } solaxX1;
 
@@ -281,7 +282,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
         //temporal = (float)((value[29] << 8) | value[30]) * 0.1f; // Not Used
         Energy.import_active[0] = (float)((value[31] << 24) | (value[32] << 16) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
         solaxX1.runtime_total =  ((value[35] << 24) | (value[36] << 16) | (value[37] << 8) | value[38]); // Work Time Total
-        solaxX1.status =         (uint8_t)((value[39] << 8) | value[40]); // Work mode
+        solaxX1.runMode =        (value[39] << 8) | value[40]; // Work mode
         //temporal = (float)((value[41] << 8) | value[42]); // Grid voltage fault value 0.1V
         //temporal = (float)((value[43] << 8) | value[44]); // Gird frequency fault value 0.01Hz
         //temporal = (float)((value[45] << 8) | value[46]); // Dc injection fault value 1mA
@@ -289,7 +290,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
         //temporal = (float)((value[49] << 8) | value[50]); // Pv1 voltage fault value 0.1V
         //temporal = (float)((value[51] << 8) | value[52]); // Pv2 voltage fault value 0.1V
         //temporal = (float)((value[53] << 8) | value[54]); // GFC fault value
-        solaxX1.errorCode =      ((value[58] << 24) | (value[57] << 16) | (value[56] << 8) | value[55]); // Error Code
+        solaxX1.errorCode =      (value[58] << 24) | (value[57] << 16) | (value[56] << 8) | value[55]; // Error Code
 
         solaxX1.dc1_power = solaxX1.dc1_voltage * solaxX1.dc1_current;
         solaxX1.dc2_power = solaxX1.dc2_voltage * solaxX1.dc2_current;
@@ -372,7 +373,7 @@ void solaxX1250MSecond(void) // Every 250 milliseconds
 
       solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
       solaxX1.dc2_power = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
-      solaxX1.status = 4; // off(line)
+      solaxX1.runMode = -1; // off(line)
     } else {
       if (protocolStatus.queryOfflineSend) {
         protocolStatus.status = 0b00001000; // queryOffline
@@ -449,7 +450,7 @@ void solaxX1Show(bool json)
   char runtime[33];
   dtostrfd(solaxX1.runtime_total, 0, runtime);
   char status[33];
-  GetTextIndexed(status, sizeof(status), solaxX1.status, kSolaxMode);
+  GetTextIndexed(status, sizeof(status), solaxX1.runMode + 1, kSolaxMode);
 
   if (json)
   {

@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Zon krêft"
 #define D_INVERTER_POWER  "Inverter krêft"
 #define D_STATUS          "Status"
-#define D_WAITING         "Wachtsje"
-#define D_CHECKING        "Kontrôle"
-#define D_WORKING         "Aktyf"
-#define D_FAILURE         "Ferkeard"
+#define D_SOLAX_MODE_0    "Wachtsje"
+#define D_SOLAX_MODE_1    "Kontrôle"
+#define D_SOLAX_MODE_2    "Aktyf"
+#define D_SOLAX_MODE_3    "Ferkeard"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Gjin"
 #define D_SOLAX_ERROR_1   "Netferbining"
 #define D_SOLAX_ERROR_2   "Netspanning"

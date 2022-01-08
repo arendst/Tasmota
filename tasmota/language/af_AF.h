@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Sonkrag"
 #define D_INVERTER_POWER  "Omskakelaarkrag"
 #define D_STATUS          "Status"
-#define D_WAITING         "Wag"
-#define D_CHECKING        "Nagaan"
-#define D_WORKING         "Werk"
-#define D_FAILURE         "Mislukking"
+#define D_SOLAX_MODE_0    "Wag"
+#define D_SOLAX_MODE_1    "Nagaan"
+#define D_SOLAX_MODE_2    "Werk"
+#define D_SOLAX_MODE_3    "Mislukking"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Geen foutkode nie"
 #define D_SOLAX_ERROR_1   "Netspanning verlies fout"
 #define D_SOLAX_ERROR_2   "Netspanning spanning fout"

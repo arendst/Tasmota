@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "太陽能"
 #define D_INVERTER_POWER  "Inverter Power"
 #define D_STATUS          "狀態"
-#define D_WAITING         "等待中"
-#define D_CHECKING        "確認中"
-#define D_WORKING         "運作中"
-#define D_FAILURE         "錯誤"
+#define D_SOLAX_MODE_0    "等待中"
+#define D_SOLAX_MODE_1    "確認中"
+#define D_SOLAX_MODE_2    "運作中"
+#define D_SOLAX_MODE_3    "錯誤"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "無錯誤碼"
 #define D_SOLAX_ERROR_1   "電網失聯(Grid Lost)錯誤"
 #define D_SOLAX_ERROR_2   "電網(Grid)電壓錯誤"

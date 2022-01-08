@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Putere Solară"
 #define D_INVERTER_POWER  "Invertor Putere"
 #define D_STATUS          "Status"
-#define D_WAITING         "Așteptare"
-#define D_CHECKING        "Verificare"
-#define D_WORKING         "Lucrează"
-#define D_FAILURE         "Eroare"
+#define D_SOLAX_MODE_0    "Așteptare"
+#define D_SOLAX_MODE_1    "Verificare"
+#define D_SOLAX_MODE_2    "Lucrează"
+#define D_SOLAX_MODE_3    "Eroare"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Fără cod de eroare"
 #define D_SOLAX_ERROR_1   "Eroare zona"
 #define D_SOLAX_ERROR_2   "Eroare zona voltaj"
