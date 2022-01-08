@@ -142,7 +142,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_XPT2046
 
   if (touched) {
-
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : touched x=%i y=%i", touch_xp, touch_yp);
 #ifdef USE_TOUCH_BUTTONS
 #ifdef USE_M5STACK_CORE2
     // handle  3 built in touch buttons
@@ -317,9 +317,12 @@ bool Xdrv55(uint8_t function) {
   }
   return result;
 }
-#else
+
+#else  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
+
 // dummy for LVGL without a touch controller
 uint32_t Touch_Status(uint32_t sel) {
-return 0;
+  return 0;
 }
+
 #endif  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
