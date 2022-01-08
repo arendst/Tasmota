@@ -342,7 +342,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
           arg_type = NULL;   // stop iterations
           break;
       }
-      if (arg_type[arg_idx] == '[' || arg_type[arg_idx] == ']') {   // '[' is a marker that following parameters are optional and default to NULL
+      if (arg_type && (arg_type[arg_idx] == '[' || arg_type[arg_idx] == ']')) {   // '[' is a marker that following parameters are optional and default to NULL
         arg_optional = btrue;
         arg_idx++;
       }
