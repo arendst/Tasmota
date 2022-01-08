@@ -211,7 +211,11 @@ void MqttInit(void) {
 
   if (Mqtt.mqtt_tls) {
 #ifdef ESP32
+  #if MQTT_MAX_PACKET_SIZE > 2000
+    tlsClient = new BearSSL::WiFiClientSecure_light(4096,4096);
+  #else
     tlsClient = new BearSSL::WiFiClientSecure_light(2048,2048);
+  #endif
 #else // ESP32 - ESP8266
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 #endif
