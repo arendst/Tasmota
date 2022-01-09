@@ -24,13 +24,25 @@
 #include <OpenTherm.h>
 
 // Hot water and boiler parameter ranges
+#ifndef OT_HOT_WATER_MIN
 #define OT_HOT_WATER_MIN 23
+#endif
+#ifndef OT_HOT_WATER_MAX
 #define OT_HOT_WATER_MAX 55
+#endif
+#ifndef OT_BOILER_MIN
 #define OT_BOILER_MIN 40
+#endif
+#ifndef OT_BOILER_MAX
 #define OT_BOILER_MAX 85
+#endif
 
+#ifndef OT_HOT_WATER_DEFAULT
 #define OT_HOT_WATER_DEFAULT 36;
+#endif
+#ifndef OT_BOILER_DEFAULT
 #define OT_BOILER_DEFAULT 85;
+#endif
 
 // Seconds before OT will make an attempt to connect to the boiler after connection error
 #define SNS_OT_DISCONNECT_COOLDOWN_SECONDS 4
