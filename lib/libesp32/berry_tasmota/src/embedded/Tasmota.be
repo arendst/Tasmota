@@ -17,6 +17,7 @@ end
 
 tasmota = nil
 class Tasmota
+  var _fl             # list of fast_loop registered closures
   var _rules
   var _timers
   var _ccmd
@@ -424,6 +425,29 @@ class Tasmota
     end
 
     return true
+  end
+
+  # fast_loop() is a trimmed down version of event() called at every Tasmota loop iteration
+  # it is optimized to be as fast as possible and reduce overhead
+  # there is no introspect, closures must be registered directly
+  def fast_loop()
+    var fl = self._fl
+    if !fl return end     # fast exit if no closure is registered (most common case)
+
+    # iterate and call each closure
+    var i = 0
+    while i < size(fl)
+      # note: this is not guarded in try/except for performance reasons. The inner function must not raise exceptions
+      fl[i]()
+      i += 1
+    end
+  end
+
+  def add_fast_loop(cl)
+    if !self._fl  self._fl = [] end
+    if type(cl) != 'function' raise "value_error", "argument must be a function" end
+    self.global.fast_loop_enabled = 1      # enable fast_loop at global level: `TasmotaGlobal.fast_loop_enabled = true`
+    self._fl.push(cl)
   end
 
   def event(event_type, cmd, idx, payload, raw)

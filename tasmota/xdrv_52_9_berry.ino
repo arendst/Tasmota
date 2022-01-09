@@ -199,6 +199,29 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
   return ret;
 }
 
+// Simplified version of event loop. Just call `tasmota.fast_loop()`
+void callBerryFastLoop(void) {
+  bvm *vm = berry.vm;
+
+  if (nullptr == vm) { return; }
+
+  if (be_getglobal(vm, "tasmota")) {
+    if (be_getmethod(vm, -1, "fast_loop")) {
+      be_pushvalue(vm, -2); // add instance as first arg
+      BrTimeoutStart();
+      int32_t ret = be_pcall(vm, 1);
+      if (ret != 0) {
+        be_error_pop_all(berry.vm);             // clear Berry stack
+      }
+      BrTimeoutReset();
+      be_pop(vm, 1);
+    }
+    be_pop(vm, 1);  // remove method
+  }
+  be_pop(vm, 1);  // remove instance object
+  be_pop(vm, be_top(vm));   // clean
+}
+
 /*********************************************************************************************\
  * VM Observability
 \*********************************************************************************************/
@@ -750,6 +773,9 @@ bool Xdrv52(uint8_t function)
 
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
+      }
+      if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
+        callBerryFastLoop();      // call `tasmota.fast_loop()` optimized for minimal performance impact
       }
       break;
 
