@@ -325,6 +325,11 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
     return false;
   }
 
+  size_t flen = file.size();
+  if (len > flen){
+    len = flen;
+  }
+
   file.read(buf, len);
   file.close();
   return true;
