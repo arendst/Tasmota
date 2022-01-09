@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Potência Solar"
 #define D_INVERTER_POWER  "Potência do Inversor"
 #define D_STATUS          "Estado"
-#define D_WAITING         "Esperando"
-#define D_CHECKING        "Verificando"
-#define D_WORKING         "Trabalhando"
-#define D_FAILURE         "Falha"
+#define D_SOLAX_MODE_0    "Esperando"
+#define D_SOLAX_MODE_1    "Verificando"
+#define D_SOLAX_MODE_2    "Trabalhando"
+#define D_SOLAX_MODE_3    "Falha"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Nenhum código de erro"
 #define D_SOLAX_ERROR_1   "Falha devido a perda de rede"
 #define D_SOLAX_ERROR_2   "Falha devido a perda de tensão"

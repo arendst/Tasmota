@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Solar Power"
 #define D_INVERTER_POWER  "Inverter Power"
 #define D_STATUS          "Status"
-#define D_WAITING         "Waiting"
-#define D_CHECKING        "Checking"
-#define D_WORKING         "Working"
-#define D_FAILURE         "Failure"
+#define D_SOLAX_MODE_0    "Waiting"
+#define D_SOLAX_MODE_1    "Checking"
+#define D_SOLAX_MODE_2    "Working"
+#define D_SOLAX_MODE_3    "Failure"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "No Error Code"
 #define D_SOLAX_ERROR_1   "Grid Lost Fault"
 #define D_SOLAX_ERROR_2   "Grid Voltage Fault"

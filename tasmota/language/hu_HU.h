@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Solar teljesítmény"
 #define D_INVERTER_POWER  "Inverter teljesítmény"
 #define D_STATUS          "Állapot"
-#define D_WAITING         "Várakozás"
-#define D_CHECKING        "Ellenőrzés"
-#define D_WORKING         "Folyamatban"
-#define D_FAILURE         "Hiba"
+#define D_SOLAX_MODE_0    "Várakozás"
+#define D_SOLAX_MODE_1    "Ellenőrzés"
+#define D_SOLAX_MODE_2    "Folyamatban"
+#define D_SOLAX_MODE_3    "Hiba"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Nincs hibakód"
 #define D_SOLAX_ERROR_1   "Hálózat elvesztése hiba"
 #define D_SOLAX_ERROR_2   "Hálózat feszültség hiba"

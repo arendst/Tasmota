@@ -922,10 +922,13 @@
 #define D_SOLAR_POWER     "Solar Потужність"
 #define D_INVERTER_POWER  "Inverter Потужність"
 #define D_STATUS          "Стан"
-#define D_WAITING         "Очікування"
-#define D_CHECKING        "Перевірка"
-#define D_WORKING         "Працює"
-#define D_FAILURE         "Помилка"
+#define D_SOLAX_MODE_0    "Очікування"
+#define D_SOLAX_MODE_1    "Перевірка"
+#define D_SOLAX_MODE_2    "Працює"
+#define D_SOLAX_MODE_3    "Помилка"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Немає помилки"
 #define D_SOLAX_ERROR_1   "Втрата мережі"
 #define D_SOLAX_ERROR_2   "Напруга мережі"
