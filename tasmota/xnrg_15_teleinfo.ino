@@ -327,9 +327,9 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             else if ( ilabel == LABEL_HCHC || ilabel == LABEL_HCHP || ilabel == LABEL_BASE)
             {
                 char value[32];
-                long hc = 0;
-                long hp = 0;
-                long total = 0;
+                uint32_t hc = 0;
+                uint32_t hp = 0;
+                uint32_t total = 0;
 
                 // Base, un seul index
                 if (ilabel == LABEL_BASE) {
@@ -368,7 +368,7 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
             // Wh total index (all contract)
             else if ( ilabel == LABEL_EAST)
             {
-                long total = atol(me->value);
+                uint32_t total = atol(me->value);
                 Energy.import_active[0] = (float)total/1000.0f;
                 EnergyUpdateTotal();
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Total:%ldWh"), total);
