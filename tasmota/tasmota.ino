@@ -213,6 +213,10 @@ struct TasmotaGlobal_t {
 #else
   char log_buffer[LOG_BUFFER_SIZE];         // Log buffer in DRAM
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+
+#ifdef USE_BERRY
+  bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
+#endif // USE_BERRY
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;
