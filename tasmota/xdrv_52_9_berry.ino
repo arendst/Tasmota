@@ -777,6 +777,12 @@ bool Xdrv52(uint8_t function)
     case FUNC_EVERY_100_MSECOND:
       callBerryEventDispatcher(PSTR("every_100ms"), nullptr, 0, nullptr);
       break;
+    case FUNC_EVERY_200_MSECOND:
+      callBerryEventDispatcher(PSTR("every_200ms"), nullptr, 0, nullptr);
+      break;
+    case FUNC_EVERY_250_MSECOND:
+      callBerryEventDispatcher(PSTR("every_250ms"), nullptr, 0, nullptr);
+      break;
     case FUNC_EVERY_SECOND:
       callBerryEventDispatcher(PSTR("every_second"), nullptr, 0, nullptr);
       break;
