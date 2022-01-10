@@ -161,13 +161,14 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
 TasmotaSerial *SspmSerial;
 
 // Global structure containing driver saved variables
-struct {
+typedef struct {
   uint32_t crc32;                                 // To detect file changes
   uint32_t version;                               // To detect driver function changes
   uint16_t module_map[32];                        // Max possible SPM relay modules
-} SSPMSettings;
+} tSspmSettings;
 
 typedef struct {
+  tSspmSettings Settings;
   float voltage[SSPM_MAX_MODULES][4];             // 123.12 V
   float current[SSPM_MAX_MODULES][4];             // 123.12 A
   float active_power[SSPM_MAX_MODULES][4];        // 123.12 W
@@ -209,28 +210,28 @@ TSspm *Sspm = nullptr;
 
 uint32_t SSPMSettingsCrc32(void) {
   // Use Tasmota CRC calculation function
-  return GetCfgCrc32((uint8_t*)&SSPMSettings +4, sizeof(SSPMSettings) -4);  // Skip crc32
+  return GetCfgCrc32((uint8_t*)&Sspm->Settings +4, sizeof(tSspmSettings) -4);  // Skip crc32
 }
 
 void SSPMSettingsDefault(void) {
   // Init default values in case file is not found
   AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM " D_USE_DEFAULTS));
 
-  memset(&SSPMSettings, 0x00, sizeof(SSPMSettings));
-  SSPMSettings.version = SSPM_VERSION;
+  memset(&Sspm->Settings, 0x00, sizeof(tSspmSettings));
+  Sspm->Settings.version = SSPM_VERSION;
   // Init any other parameter in struct SSPMSettings
 }
 
 void SSPMSettingsDelta(void) {
   // Fix possible setting deltas
-  if (SSPMSettings.version != SSPM_VERSION) {      // Fix version dependent changes
+  if (Sspm->Settings.version != SSPM_VERSION) {      // Fix version dependent changes
 
 //    if (Settings->version < 0x01010101) {
 
 //    }
 
     // Set current version and save settings
-    SSPMSettings.version = SSPM_VERSION;
+    Sspm->Settings.version = SSPM_VERSION;
     SSPMSettingsSave();
   }
 }
@@ -245,7 +246,7 @@ void SSPMSettingsLoad(void) {
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_86);
 
 #ifdef USE_UFILESYS
-  if (TfsLoadFile(filename, (uint8_t*)&SSPMSettings, sizeof(SSPMSettings))) {
+  if (TfsLoadFile(filename, (uint8_t*)&Sspm->Settings, sizeof(tSspmSettings))) {
     // Fix possible setting deltas
     SSPMSettingsDelta();
 
@@ -258,22 +259,22 @@ void SSPMSettingsLoad(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM ERROR File system not enabled"));
 #endif  // USE_UFILESYS
 
-  SSPMSettings.crc32 = SSPMSettingsCrc32();
+  Sspm->Settings.crc32 = SSPMSettingsCrc32();
 }
 
 void SSPMSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 
-  if (SSPMSettingsCrc32() != SSPMSettings.crc32) {
+  if (SSPMSettingsCrc32() != Sspm->Settings.crc32) {
     // Try to save file /.drvset086
-    SSPMSettings.crc32 = SSPMSettingsCrc32();
+    Sspm->Settings.crc32 = SSPMSettingsCrc32();
 
     char filename[20];
     // Use for drivers:
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_86);
 
 #ifdef USE_UFILESYS
-    if (TfsSaveFile(filename, (const uint8_t*)&SSPMSettings, sizeof(SSPMSettings))) {
+    if (TfsSaveFile(filename, (const uint8_t*)&Sspm->Settings, sizeof(tSspmSettings))) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
@@ -299,7 +300,7 @@ uint32_t SSMPGetModuleId(uint32_t module) {
 uint32_t SSPMGetMappedModuleId(uint32_t module) {
   // Return mapped module number
   for (uint32_t module_nr = 0; module_nr < Sspm->module_max; module_nr++) {
-    if (SSPMSettings.module_map[module] == SSMPGetModuleId(module_nr)) {
+    if (Sspm->Settings.module_map[module] == SSMPGetModuleId(module_nr)) {
       return module_nr;  // 0, 1, ..
     }
   }
@@ -309,7 +310,7 @@ uint32_t SSPMGetMappedModuleId(uint32_t module) {
 uint32_t SSPMGetModuleNumberFromMap(uint32_t id) {
   // Return module number based on first two bytes of module id
   for (uint32_t module_nr = 0; module_nr < SSPM_MAX_MODULES; module_nr++) {
-    if (id == SSPMSettings.module_map[module_nr]) {
+    if (id == Sspm->Settings.module_map[module_nr]) {
       return module_nr;  // 0, 1, ...
     }
   }
@@ -970,12 +971,14 @@ void SSPMHandleReceivedData(void) {
         */
         if ((0x24 == Sspm->expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
           memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
-          if (0 == SSPMSettings.module_map[Sspm->module_max]) {
-            SSPMSettings.module_map[Sspm->module_max] = SspmBuffer[19] << 8 | SspmBuffer[20];
+          uint32_t module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
+          if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
+            Sspm->Settings.module_map[Sspm->module_max] = module_id;
           }
 
-          AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d type %d version %d.%d.%d found with id %12_H"),
-            Sspm->module_max +1, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
+          uint32_t mapped = SSPMGetModuleNumberFromMap(module_id) +1;
+          AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
+            Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
 
           Sspm->module_max++;
         }
@@ -1449,7 +1452,7 @@ void CmndSSPMMap(void) {
     for (char* str = strtok_r(XdrvMailbox.data, ",", &p); str && i < Sspm->module_max; str = strtok_r(nullptr, ",", &p)) {
       uint32_t module = atoi(str);
       if ((module > 0) && (module <= Sspm->module_max)) {  // Only valid modules 1 to x
-        SSPMSettings.module_map[i] = SSMPGetModuleId(module -1);
+        Sspm->Settings.module_map[i] = SSMPGetModuleId(module -1);
       }
       i++;
     }
