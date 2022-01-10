@@ -134,28 +134,6 @@ size_t callBerryGC(void) {
   return callBerryEventDispatcher(PSTR("gc"), nullptr, 0, nullptr);
 }
 
-// void callBerryMqttData(void) {
-//   AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "callBerryMqttData");
-//   if (nullptr == berry.vm) { return; }
-//   if (XdrvMailbox.data_len < 1) {
-//     return;
-//   }
-//   const char * topic = XdrvMailbox.topic;
-//   const char * payload = XdrvMailbox.data;
-
-//   checkBeTop();
-//   be_getglobal(berry.vm, "mqtt_data_dispatch");
-//   if (!be_isnil(berry.vm, -1)) {
-//     be_pushstring(berry.vm, topic);
-//     be_pushstring(berry.vm, payload);
-//     be_pcall(berry.vm, 0);
-//     be_pop(berry.vm, 3);    // remove function object
-//   } else {
-//     be_pop(berry.vm, 1);    // remove nil object
-//   }
-//   checkBeTop();
-// }
-
 // call the event dispatcher from Tasmota object
 // if data_len is non-zero, the event is also sent as raw `bytes()` object because the string may lose data
 int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx, const char *payload, uint32_t data_len) {
@@ -268,7 +246,7 @@ void BerryObservability(bvm *vm, int event...) {
       {
         int32_t stack_before = va_arg(param, int32_t);
         int32_t stack_after = va_arg(param, int32_t);
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Stack resized from %i to %i bytes"), stack_before, stack_after);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_BERRY "Stack resized from %i to %i bytes"), stack_before, stack_after);
       }
       break;
     case BE_OBS_VM_HEARTBEAT:
@@ -425,10 +403,6 @@ void CmndBrRun(void) {
   } while (0);
 
   if (0 == ret_code) {
-    // AddLog(LOG_LEVEL_INFO, "run: top=%d", be_top(berry.vm));
-    // AddLog(LOG_LEVEL_INFO, "run: type(1)=%s", be_typename(berry.vm, 1));
-    // AddLog(LOG_LEVEL_INFO, "run: type(2)=%s", be_typename(berry.vm, 2));
-
     // code taken from REPL, look first at top, and if nil, look at return value
     // if (!be_isnil(berry.vm, 1)) {
       ret_val = be_tostring(berry.vm, 1);
@@ -484,12 +458,6 @@ void BrREPLRun(char * cmd) {
     }
     if (BE_EXCEPTION == ret_code) {
       be_error_pop_all(berry.vm);             // clear Berry stack
-      // be_dumpstack(berry.vm);
-      // char exception_s[120];
-      // ext_snprintf_P(exception_s, sizeof(exception_s), PSTR("%s: %s"), be_tostring(berry.vm, -2), be_tostring(berry.vm, -1));
-      // berry.log.addString(exception_s, nullptr, "\n");
-      // // AddLog(LOG_LEVEL_INFO, PSTR(">>> %s"), exception_s);
-      // be_pop(berry.vm, 2);
     }
   } while(0);
 
@@ -698,9 +666,6 @@ void HandleBerryConsoleRefresh(void)
 void HandleBerryConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  // int i=16;
-  // // AddLog(LOG_LEVEL_INFO, PSTR("Size = %d %d"), sizeof(LList_elt<char[12]>), sizeof(LList_elt<char[0]>)+12);
-  // LList_elt<char[0]> * elt = (LList_elt<char[0]>*) ::operator new(sizeof(LList_elt<char[0]>) + 12);
 
   if (Webserver->hasArg(F("c2"))) {      // Console refresh requested
     HandleBerryConsoleRefresh();
@@ -720,38 +685,6 @@ void HandleBerryConsole(void)
   WSContentStop();
 }
 
-// void HandleBerryConsoleRefresh(void)
-// {
-//   String svalue = Webserver->arg(F("c1"));
-//   if (svalue.length() && (svalue.length() < MQTT_MAX_PACKET_SIZE)) {
-//     // TODO run command and store result
-//     // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
-//     // ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
-//   }
-
-//   char stmp[8];
-//   WebGetArg(PSTR("c2"), stmp, sizeof(stmp));
-//   uint32_t index = 0;                // Initial start, dump all
-//   if (strlen(stmp)) { index = atoi(stmp); }
-
-//   WSContentBegin(200, CT_PLAIN);
-//   WSContentSend_P(PSTR("%d}1%d}1"), TasmotaGlobal.log_buffer_pointer, Web.reset_web_log_flag);
-//   if (!Web.reset_web_log_flag) {
-//     index = 0;
-//     Web.reset_web_log_flag = true;
-//   }
-//   bool cflg = (index);
-//   char* line;
-//   size_t len;
-//   while (GetLog(Settings->weblog_level, &index, &line, &len)) {
-//     if (cflg) { WSContentSend_P(PSTR("\n")); }
-//     WSContentFlush();
-//     Webserver->sendContent(line, len -1);
-//     cflg = true;
-//   }
-//   WSContentSend_P(PSTR("}1"));
-//   WSContentEnd();
-// }
 #endif // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -762,10 +695,6 @@ bool Xdrv52(uint8_t function)
   bool result = false;
 
   switch (function) {
-    // case FUNC_PRE_INIT: // we start Berry in pre_init so that other modules can call Berry in their init methods
-    // // case FUNC_INIT:
-    //   BerryInit();
-    //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
         // we generate a synthetic event `autoexec`
