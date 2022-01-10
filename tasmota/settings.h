@@ -687,7 +687,13 @@ typedef struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
 
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32
+  uint8_t       free_ea6[10];              // EA6
+  uint32_t      eth_ipv4_address[5];       // EB0
+  uint8_t       free_ec4[2];               // EC4
+#else
   uint8_t       free_ea6[32];              // EA6
+#endif
 
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7

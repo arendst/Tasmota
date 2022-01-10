@@ -97,10 +97,10 @@ void EthernetEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_ETH_GOT_IP:
       AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %_I, Hostname %s"),
         ETH.macAddress().c_str(), (uint32_t)ETH.localIP(), eth_hostname);
-      Settings->ipv4_address[1] = (uint32_t)ETH.gatewayIP();
-      Settings->ipv4_address[2] = (uint32_t)ETH.subnetMask();
-      Settings->ipv4_address[3] = (uint32_t)ETH.dnsIP();
-      Settings->ipv4_address[4] = (uint32_t)ETH.dnsIP(1);
+      Settings->eth_ipv4_address[1] = (uint32_t)ETH.gatewayIP();
+      Settings->eth_ipv4_address[2] = (uint32_t)ETH.subnetMask();
+      Settings->eth_ipv4_address[3] = (uint32_t)ETH.dnsIP();
+      Settings->eth_ipv4_address[4] = (uint32_t)ETH.dnsIP(1);
       TasmotaGlobal.global_state.eth_down = 0;
       break;
     case ARDUINO_EVENT_ETH_DISCONNECTED:
@@ -140,7 +140,13 @@ void EthernetInit(void) {
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);
   if (!ETH.begin(Settings->eth_address, eth_power, eth_mdc, eth_mdio, (eth_phy_type_t)Settings->eth_type, (eth_clock_mode_t)Settings->eth_clk_mode)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Bad PHY type or init error"));
+    return;
   };
+
+  if (Settings->eth_ipv4_address[0]) {
+    //         (IPAddress local_ip,            IPAddress gateway,             IPAddress subnet,              IPAddress dns1,                IPAddress dns2);
+    ETH.config(Settings->eth_ipv4_address[0], Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2], Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4]);  // Set static IP
+  }
 }
 
 IPAddress EthernetLocalIP(void) {
@@ -159,15 +165,28 @@ String EthernetMacAddress(void) {
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_ETHADDRESS "EthAddress"
-#define D_CMND_ETHTYPE "EthType"
+#define D_CMND_ETHADDRESS   "EthAddress"
+#define D_CMND_ETHTYPE      "EthType"
 #define D_CMND_ETHCLOCKMODE "EthClockMode"
+#define D_CMND_ETHIPADDRESS "Eth" D_CMND_IPADDRESS
+#define D_CMND_ETHGATEWAY   "Eth" D_JSON_GATEWAY
+#define D_CMND_ETHNETMASK   "Eth" D_JSON_SUBNETMASK
+#define D_CMND_ETHDNS       "Eth" D_JSON_DNSSERVER
 
 const char kEthernetCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_ETHERNET "|" D_CMND_ETHADDRESS "|" D_CMND_ETHTYPE "|" D_CMND_ETHCLOCKMODE;
+  D_CMND_ETHERNET "|" D_CMND_ETHADDRESS "|" D_CMND_ETHTYPE "|" D_CMND_ETHCLOCKMODE "|"
+  D_CMND_ETHIPADDRESS "|" D_CMND_ETHGATEWAY "|" D_CMND_ETHNETMASK "|" D_CMND_ETHDNS;
+
+const char *EthIpParams[] = {
+  PSTR(D_CMND_ETHIPADDRESS), PSTR(D_CMND_ETHGATEWAY), PSTR(D_CMND_ETHNETMASK),
+  PSTR(D_CMND_ETHDNS "1"), PSTR(D_CMND_ETHDNS "2")
+};
 
 void (* const EthernetCommand[])(void) PROGMEM = {
-  &CmndEthernet, &CmndEthAddress, &CmndEthType, &CmndEthClockMode };
+  &CmndEthernet, &CmndEthAddress, &CmndEthType, &CmndEthClockMode,
+  &CmndEthIpAddr, &CmndEthGateway, &CmndEthNetmask, &CmndEthDns
+};
+
 
 void CmndEthernet(void)
 {
@@ -204,6 +223,28 @@ void CmndEthClockMode(void)
   }
   ResponseCmndNumber(Settings->eth_clk_mode);
 }
+
+void CmndEthIpConfig(int param_id)
+{
+  if (3 == param_id && 2 == XdrvMailbox.index)
+    param_id = 4;
+  char network_address[22] = {0};
+  if (0 == param_id)
+    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)ETH.localIP());
+
+  uint32_t ipv4_address;
+  if (ParseIPv4(&ipv4_address, XdrvMailbox.data)) {
+    Settings->eth_ipv4_address[param_id] = ipv4_address;
+  }
+  Response_P(PSTR("{\"%s\":\"%_I%s\"}"), EthIpParams[param_id], Settings->eth_ipv4_address[param_id], (0 == param_id)?network_address:"");
+
+  // TasmotaGlobal.restart_flag = 2; // Wifi IpAddress doesn't do that so ?
+}
+
+void CmndEthIpAddr(void)  { CmndEthIpConfig(0); }
+void CmndEthGateway(void) { CmndEthIpConfig(1); }
+void CmndEthNetmask(void) { CmndEthIpConfig(2); }
+void CmndEthDns(void)     { CmndEthIpConfig(3); }
 
 /*********************************************************************************************\
  * Interface

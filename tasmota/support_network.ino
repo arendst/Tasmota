@@ -96,35 +96,35 @@ void MdnsUpdate(void) {
 \*********************************************************************************************/
 
 char* NetworkHostname(void) {
-#ifdef ESP32
+/*#ifdef ESP32
 #ifdef USE_ETHERNET
   if (!TasmotaGlobal.global_state.eth_down) {
     return EthernetHostname();
   }
 #endif
-#endif
+#endif*/
   return TasmotaGlobal.hostname;
 }
 
 IPAddress NetworkAddress(void) {
-#ifdef ESP32
+/*#ifdef ESP32
 #ifdef USE_ETHERNET
   if (!TasmotaGlobal.global_state.eth_down) {
     return EthernetLocalIP();
   }
 #endif
-#endif
+#endif*/
   return WiFi.localIP();
 }
 
 String NetworkMacAddress(void) {
-#ifdef ESP32
+/*#ifdef ESP32
 #ifdef USE_ETHERNET
   if (!TasmotaGlobal.global_state.eth_down) {
     return EthernetMacAddress();
   }
 #endif
-#endif
+#endif*/
   return WiFi.macAddress();
 }
 
