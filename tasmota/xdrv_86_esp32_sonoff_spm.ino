@@ -214,7 +214,7 @@ uint32_t SSPMSettingsCrc32(void) {
 
 void SSPMSettingsDefault(void) {
   // Init default values in case file is not found
-  AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM " D_USE_DEFAULTS));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM " D_USE_DEFAULTS));
 
   memset(&SSPMSettings, 0x00, sizeof(SSPMSettings));
   SSPMSettings.version = SSPM_VERSION;
@@ -225,14 +225,9 @@ void SSPMSettingsDelta(void) {
   // Fix possible setting deltas
   if (SSPMSettings.version != SSPM_VERSION) {      // Fix version dependent changes
 
-    if (Settings->version < 0x01010100) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM update oldest version restore"));
+//    if (Settings->version < 0x01010101) {
 
-    }
-    if (Settings->version < 0x01010101) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM update old version restore"));
-
-    }
+//    }
 
     // Set current version and save settings
     SSPMSettings.version = SSPM_VERSION;
@@ -257,10 +252,10 @@ void SSPMSettingsLoad(void) {
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM loaded from file"));
   } else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not ready or file not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM ERROR File system not ready or file not found"));
   }
 #else
-  AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not enabled"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM ERROR File system not enabled"));
 #endif  // USE_UFILESYS
 
   SSPMSettings.crc32 = SSPMSettingsCrc32();
@@ -279,13 +274,13 @@ void SSPMSettingsSave(void) {
 
 #ifdef USE_UFILESYS
     if (TfsSaveFile(filename, (const uint8_t*)&SSPMSettings, sizeof(SSPMSettings))) {
-      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM saved to file"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM ERROR File system not ready or unable to save file"));
     }
 #else
-    AddLog(LOG_LEVEL_INFO, PSTR("CFG: SPM ERROR File system not enabled"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM ERROR File system not enabled"));
 #endif  // USE_UFILESYS
   }
 }
@@ -797,8 +792,12 @@ void SSPMHandleReceivedData(void) {
         /* 0x15
          0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 15 00 04 00 01 00 00 01 81 b1
-                                                                |?? ?? ?? ??|
+                                                                |Ty|FwVersio|
+                                                                | 0|   1.0.0|
         */
+        AddLog(LOG_LEVEL_INFO, PSTR("SPM: Main type %d version %d.%d.%d found"),
+          SspmBuffer[19], SspmBuffer[20], SspmBuffer[21], SspmBuffer[22]);
+
         Sspm->mstate = SPM_START_SCAN;
         break;
       case SSPM_FUNC_GET_ENERGY_TOTAL:
@@ -975,7 +974,7 @@ void SSPMHandleReceivedData(void) {
             SSPMSettings.module_map[Sspm->module_max] = SspmBuffer[19] << 8 | SspmBuffer[20];
           }
 
-          AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Module %d type %d version %d.%d.%d found with id %12_H"),
+          AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d type %d version %d.%d.%d found with id %12_H"),
             Sspm->module_max +1, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
 
           Sspm->module_max++;
