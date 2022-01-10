@@ -596,8 +596,11 @@ newframe: /* a new call frame */
             if (var_isint(a) && var_isint(b)) {
                 var_setint(dst, ibinop(+, a, b));
             } else if (var_isnumber(a) && var_isnumber(b)) {
-                breal x = var2real(a), y = var2real(b);
-                var_setreal(dst, x + y);
+                union bvaldata x, y;        // TASMOTA workaround for ESP32 rev0 bug
+                x.i = a->v.i;
+                y.i = b->v.i;
+                // breal x = var2real(a), y = var2real(b);
+                var_setreal(dst, x.r + y.r);
             } else if (var_isstr(a) && var_isstr(b)) { /* strcat */
                 bstring *s = be_strcat(vm, var_tostr(a), var_tostr(b));
                 reg = vm->reg;
