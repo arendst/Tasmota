@@ -49,7 +49,7 @@ autoconf_module.init = def (m)
       end
 
       if entry == nil
-        tasmota.log("CFG: no '*.autoconf' file found", 2)
+        tasmota.log("CFG: No '*.autoconf' file found", 3)
         return nil
       end
 
