@@ -8,10 +8,13 @@
 
 #include "lvgl.h"
 #include "be_mapping.h"
+#include "lv_berry.h"
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
+
+extern lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 
 static int lv_get_hor_res(void) {
@@ -62,6 +65,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "event_set_ext_draw_size", (void*) &lv_event_set_ext_draw_size, "", "(lv.lv_event)i" },
   { "flex_init", (void*) &lv_flex_init, "", "" },
   { "get_hor_res", (void*) &lv_get_hor_res, "i", "" },
+  { "get_ts_calibration", (void*) &lv_get_ts_calibration, "lv.lv_ts_calibration", "" },
   { "get_ver_res", (void*) &lv_get_ver_res, "i", "" },
   { "grid_fr", (void*) &lv_grid_fr, "i", "i" },
   { "grid_init", (void*) &lv_grid_init, "", "" },

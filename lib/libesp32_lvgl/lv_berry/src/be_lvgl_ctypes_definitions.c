@@ -463,6 +463,18 @@ const be_ctypes_structure_t be_lv_event = {
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_ts_calibration = {
+  12,  /* size in bytes */
+  5,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[5]) {
+    { "raw_x", 0, 0, 0, ctypes_i16, 0 },
+    { "raw_y", 2, 0, 0, ctypes_i16, 0 },
+    { "state", 8, 0, 0, ctypes_i32, 0 },
+    { "x", 4, 0, 0, ctypes_i16, 0 },
+    { "y", 6, 0, 0, ctypes_i16, 0 },
+}};
+
 static const char * be_ctypes_instance_mappings[] = {
   "lv_color",
   NULL
@@ -496,6 +508,7 @@ static be_define_ctypes_class(lv_meter_scale, &be_lv_meter_scale, &be_class_ctyp
 static be_define_ctypes_class(lv_obj_class, &be_lv_obj_class, &be_class_ctypes, "lv_obj_class");
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes, "lv_point");
 static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes, "lv_sqrt_res");
+static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes, "lv_ts_calibration");
 
 void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
@@ -526,6 +539,7 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_obj_class, &be_lv_obj_class);
   ctypes_register_class(vm, &be_class_lv_point, &be_lv_point);
   ctypes_register_class(vm, &be_class_lv_sqrt_res, &be_lv_sqrt_res);
+  ctypes_register_class(vm, &be_class_lv_ts_calibration, &be_lv_ts_calibration);
 }
 
 be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
@@ -557,6 +571,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_obj_class", &be_class_lv_obj_class },
   { "lv_point", &be_class_lv_point },
   { "lv_sqrt_res", &be_class_lv_sqrt_res },
+  { "lv_ts_calibration", &be_class_lv_ts_calibration },
 };
 const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);
 
