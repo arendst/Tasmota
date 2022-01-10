@@ -4,6 +4,7 @@
 
 // Custom Tasmota functions
 void lv_img_set_tasmota_logo(lv_obj_t * img);
+lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 // ======================================================================
 // Artificial

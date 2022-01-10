@@ -229,6 +229,19 @@ int lv0_load_font(bvm *vm) {
 }
 
 /*********************************************************************************************\
+ * Get Touch Screen calibration information
+\*********************************************************************************************/
+lv_ts_calibration_t lv_ts_calibration = {
+  0, 0,
+  0, 0,
+  LV_INDEV_STATE_RELEASED
+};
+
+lv_ts_calibration_t * lv_get_ts_calibration(void) {
+  return &lv_ts_calibration;
+}
+
+/*********************************************************************************************\
  * LVGL top level virtual members
  * 
  * Responds to virtual constants

@@ -134,6 +134,7 @@ return_types = {
   "lv_theme_t *": "lv_theme",
   "lv_disp_t *": "lv_disp",
   "lv_indev_t *": "lv_indev",
+  "lv_ts_calibration_t *": "lv_ts_calibration",
   #"lv_disp_t*": "lv_disp",
   #"lv_style_list_t*": "",
 
@@ -671,10 +672,13 @@ print("""/********************************************************************
 
 #include "lvgl.h"
 #include "be_mapping.h"
+#include "lv_berry.h"
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
+
+extern lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 
 static int lv_get_hor_res(void) {
