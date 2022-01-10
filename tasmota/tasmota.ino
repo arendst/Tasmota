@@ -36,7 +36,9 @@
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #ifdef ESP32
+  #ifdef USE_BERRY
   #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
+  #endif // USE_BERRY
 #endif
 #include <StreamString.h>                   // Webserver, Updater
 #include <ext_printf.h>
