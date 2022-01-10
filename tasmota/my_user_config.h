@@ -1118,6 +1118,9 @@
   #ifndef USE_WEBCLIENT_HTTPS
     #define USE_WEBCLIENT_HTTPS
   #endif
+  #ifndef USE_MQTT_TLS
+    #define USE_MQTT_TLS
+  #endif
 #endif // USE_AUTOCONF
 
 /*********************************************************************************************\
