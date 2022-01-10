@@ -256,7 +256,7 @@ void BerryObservability(bvm *vm, int event...) {
         uint32_t gc_elapsed = millis() - gc_time;
         uint32_t vm_scanned = va_arg(param, uint32_t);
         uint32_t vm_freed = va_arg(param, uint32_t);
-        AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
+        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
                                 vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
@@ -342,9 +342,9 @@ void BerryInit(void) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
     berry_init_ok = true;
 
-    // we generate a synthetic event `autoexec` 
+    // we generate a synthetic event `autoexec`
     callBerryEventDispatcher(PSTR("preinit"), nullptr, 0, nullptr);
-    
+
     // Run pre-init
     BrLoad("preinit.be");    // run 'preinit.be' if present
   } while (0);
@@ -768,7 +768,7 @@ bool Xdrv52(uint8_t function)
     //   break;
     case FUNC_LOOP:
       if (!berry.autoexec_done) {
-        // we generate a synthetic event `autoexec` 
+        // we generate a synthetic event `autoexec`
         callBerryEventDispatcher(PSTR("autoexec"), nullptr, 0, nullptr);
 
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
