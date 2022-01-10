@@ -100,31 +100,45 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v2022.01.1
+## Changelog v2022.01.2
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
+- Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
+- Support for Linkind dimmer as GPIO ``Option A6`` [#14004](https://github.com/arendst/Tasmota/issues/14004)
+- DDP schemes for light and WS2812 [#14017](https://github.com/arendst/Tasmota/issues/14017)
 - Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
 - Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
 - Experimental ADE7953 (Shelly EM) reset on restart [#14261](https://github.com/arendst/Tasmota/issues/14261)
+- Solax X1 negative temperature support [#14278](https://github.com/arendst/Tasmota/issues/14278)
+- Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
+- Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
+- ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features
+- ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
 
 ### Breaking Changed
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
+- TasmotaSerial library from v3.3.0 to v3.4.0
+- TasmotaModbus library from v1.2.0 to v3.4.0
 - ESP8266Audio library from v1.9.2 to v1.9.5
 - ESP8266SAM library from v1.0 to v1.0.1
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
+- ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Berry stores compiled bytecode into IRAM, freeing space in heap [#14307](https://github.com/arendst/Tasmota/issues/14307)
 
 ### Fixed
 - Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow [#13700](https://github.com/arendst/Tasmota/issues/13700)
 - EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
 - DHT support negative temperatures on different hardware [#14173](https://github.com/arendst/Tasmota/issues/14173)
 - Hardware serial parity and stop bits support [#14212](https://github.com/arendst/Tasmota/issues/14212)
+- Edit file for SD card [#14229](https://github.com/arendst/Tasmota/issues/14229)
+- Scripter memory corruption [#14268](https://github.com/arendst/Tasmota/issues/14268)
 - ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
 - ESP32 Compile error when I2S_Audio is enabled [#14095](https://github.com/arendst/Tasmota/issues/14095)

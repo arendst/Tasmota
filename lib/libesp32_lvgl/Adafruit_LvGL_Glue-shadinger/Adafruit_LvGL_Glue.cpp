@@ -1,5 +1,6 @@
 #include "Adafruit_LvGL_Glue.h"
 #include <lvgl.h>
+#include "lv_berry.h"
 
 // ARCHITECTURE-SPECIFIC TIMER STUFF ---------------------------------------
 
@@ -12,29 +13,22 @@ static void lv_tick_handler(void) { lv_tick_inc(lv_tick_interval_ms); }
 
 // TOUCHSCREEN STUFF -------------------------------------------------------
 
-// STMPE610 calibration for raw touch data
-#define TS_MINX 100
-#define TS_MAXX 3800
-#define TS_MINY 100
-#define TS_MAXY 3750
 
-// Same, for ADC touchscreen
-#define ADC_XMIN 325
-#define ADC_XMAX 750
-#define ADC_YMIN 240
-#define ADC_YMAX 840
-
-
-
-uint32_t Touch_Status(uint32_t sel);
+uint32_t Touch_Status(int32_t sel);
 
 static void touchscreen_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
-  //lv_coord_t last_x = 0, last_y = 0;
-  //static uint8_t release_count = 0;
   data->point.x = Touch_Status(1); // Last-pressed coordinates
   data->point.y = Touch_Status(2);
   data->state = Touch_Status(0) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
   data->continue_reading = false; /*No buffering now so no more data read*/
+  // keep data for TS calibration
+  lv_ts_calibration.state = data->state;
+  if (data->state == LV_INDEV_STATE_PRESSED) {    // if not pressed, the data may be invalid
+    lv_ts_calibration.x = data->point.x;
+    lv_ts_calibration.y = data->point.y;
+    lv_ts_calibration.raw_x = Touch_Status(-1);
+    lv_ts_calibration.raw_y = Touch_Status(-2);
+  }
 }
 
 // OTHER LITTLEVGL VITALS --------------------------------------------------

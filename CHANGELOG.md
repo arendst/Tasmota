@@ -3,17 +3,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.01.1]
+## [2022.01.2]
+### Added
+- Tasmota favicon to webbrowser tab (#14322)
+
+### Changed
+
+### Fixed
+
+
+## [2022.01.1] 20220107
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
+- Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)
+- Solax X1 modbus RTS support and offline status (#14305)
+- DDP schemes for light and WS2812 (#14017)
+- ESP32 single binary firmware (#14239)
+- ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
+- Support for Linkind dimmer as GPIO ``Option A6`` (#14004)
 
 ### Changed
 - PubSubClient library from v2.8.12 to v2.8.13
+- TasmotaSerial library from v3.3.0 to v3.4.0
+- TasmotaModbus library from v1.2.0 to v3.4.0
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
-- Set ESP32 stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Berry stores compiled bytecode into IRAM, freeing space in heap (#14307)
 
 ### Fixed
 - Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
+- Scripter memory corruption (#14268)
+- Edit file for SD card (#14229)
+- Solax X1 negative temperature support (#14278)
+- Modbus serial config regression from v10.1.0.3
 
 ## [10.1.0.3] 20211231
 ### Added

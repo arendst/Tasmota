@@ -737,6 +737,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
@@ -921,10 +922,13 @@
 #define D_SOLAR_POWER     "Moc PV"
 #define D_INVERTER_POWER  "Moc invertera"
 #define D_STATUS          "Status"
-#define D_WAITING         "Oczekiwanie"
-#define D_CHECKING        "Sprawdzanie"
-#define D_WORKING         "Praca"
-#define D_FAILURE         "Błąd"
+#define D_SOLAX_MODE_0    "Oczekiwanie"
+#define D_SOLAX_MODE_1    "Sprawdzanie"
+#define D_SOLAX_MODE_2    "Praca"
+#define D_SOLAX_MODE_3    "Błąd"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Błąd - brak kodu"
 #define D_SOLAX_ERROR_1   "Błąd - utrata sieci"
 #define D_SOLAX_ERROR_2   "Błąd - napięcie sieci"

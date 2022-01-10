@@ -631,6 +631,95 @@ be_local_closure(Tasmota_remove_driver,   /* name */
 );
 /*******************************************************************/
 
+/********************************************************************
+** Solidified function: fast_loop
+********************************************************************/
+be_local_closure(Tasmota_fast_loop,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str(_fl),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_const_int(1),
+    }),
+    &be_const_str_fast_loop,
+    &be_const_str_solidified,
+    ( &(const binstruction[15]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x5C080200,  //  0001  MOVE	R2	R1
+      0x740A0000,  //  0002  JMPT	R2	#0004
+      0x80000400,  //  0003  RET	0
+      0x58080001,  //  0004  LDCONST	R2	K1
+      0x600C000C,  //  0005  GETGBL	R3	G12
+      0x5C100200,  //  0006  MOVE	R4	R1
+      0x7C0C0200,  //  0007  CALL	R3	1
+      0x140C0403,  //  0008  LT	R3	R2	R3
+      0x780E0003,  //  0009  JMPF	R3	#000E
+      0x940C0202,  //  000A  GETIDX	R3	R1	R2
+      0x7C0C0000,  //  000B  CALL	R3	0
+      0x00080502,  //  000C  ADD	R2	R2	K2
+      0x7001FFF6,  //  000D  JMP		#0005
+      0x80000000,  //  000E  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified function: add_fast_loop
+********************************************************************/
+be_local_closure(Tasmota_add_fast_loop,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+    /* K0   */  be_nested_str(_fl),
+    /* K1   */  be_nested_str(function),
+    /* K2   */  be_nested_str(value_error),
+    /* K3   */  be_nested_str(argument_X20must_X20be_X20a_X20function),
+    /* K4   */  be_nested_str(global),
+    /* K5   */  be_nested_str(fast_loop_enabled),
+    /* K6   */  be_const_int(1),
+    /* K7   */  be_nested_str(push),
+    }),
+    &be_const_str_add_fast_loop,
+    &be_const_str_solidified,
+    ( &(const binstruction[18]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x740A0002,  //  0001  JMPT	R2	#0005
+      0x60080012,  //  0002  GETGBL	R2	G18
+      0x7C080000,  //  0003  CALL	R2	0
+      0x90020002,  //  0004  SETMBR	R0	K0	R2
+      0x60080004,  //  0005  GETGBL	R2	G4
+      0x5C0C0200,  //  0006  MOVE	R3	R1
+      0x7C080200,  //  0007  CALL	R2	1
+      0x20080501,  //  0008  NE	R2	R2	K1
+      0x780A0000,  //  0009  JMPF	R2	#000B
+      0xB0060503,  //  000A  RAISE	1	K2	K3
+      0x88080104,  //  000B  GETMBR	R2	R0	K4
+      0x900A0B06,  //  000C  SETMBR	R2	K5	K6
+      0x88080100,  //  000D  GETMBR	R2	R0	K0
+      0x8C080507,  //  000E  GETMET	R2	R2	K7
+      0x5C100200,  //  000F  MOVE	R4	R1
+      0x7C080400,  //  0010  CALL	R2	2
+      0x80000000,  //  0011  RET	0
+    })
+  )
+);
+/*******************************************************************/
 
 /********************************************************************
 ** Solidified function: event
@@ -1987,6 +2076,7 @@ void be_load_tasmota_ntvlib(bvm *vm)
 
 /* @const_object_info_begin
 class be_class_tasmota (scope: global, name: Tasmota) {
+    _fl, var
     _rules, var
     _timers, var
     _ccmd, var
@@ -2047,6 +2137,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     i2c_enabled, func(l_i2cenabled)
 
+    fast_loop, closure(Tasmota_fast_loop_closure)
+    add_fast_loop, closure(Tasmota_add_fast_loop_closure)
     cmd, closure(Tasmota_cmd_closure)
     chars_in_string, closure(Tasmota_chars_in_string_closure)
     find_key_i, closure(Tasmota_find_key_i_closure)

@@ -42,11 +42,11 @@ uint16_t TasmotaModbus::CalculateCRC(uint8_t *frame, uint8_t num)
   return crc;
 }
 
-int TasmotaModbus::Begin(long speed, int stop_bits)
+int TasmotaModbus::Begin(long speed, uint32_t config)
 {
   int result = 0;
 
-  if (begin(speed, stop_bits)) {
+  if (begin(speed, config)) {
     result = 1;
     if (hardwareSerial()) { result = 2; }
   }

@@ -181,6 +181,7 @@ struct TasmotaGlobal_t {
   uint8_t syslog_level;                     // Current copy of Settings->syslog_level
   uint8_t templog_level;                    // Temporary log level to be used by HTTP cm and Telegram
   uint8_t module_type;                      // Current copy of Settings->module or user template type
+  uint8_t emulated_module_type;             // Emulated module type as requested by ESP32
   uint8_t last_source;                      // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
   uint8_t discovery_counter;                // Delayed discovery counter
@@ -212,6 +213,10 @@ struct TasmotaGlobal_t {
 #else
   char log_buffer[LOG_BUFFER_SIZE];         // Log buffer in DRAM
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
+
+#ifdef USE_BERRY
+  bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
+#endif // USE_BERRY
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;

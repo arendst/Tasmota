@@ -214,6 +214,9 @@ extern "C" {
   extern void *berry_malloc(size_t size);
   extern void  berry_free(void *ptr);
   extern void *berry_realloc(void *ptr, size_t size);
+  extern void *berry_malloc32(size_t size);
+  extern void  berry_free32(void *ptr);
+  extern void *berry_realloc32(void *ptr, size_t size);
 #ifdef __cplusplus
 }
 #endif
@@ -241,7 +244,7 @@ extern "C" {
 /* Tasmota debug specific */
 #ifdef USE_BERRY_DEBUG
   #undef BE_DEBUG_RUNTIME_INFO
-  #define BE_DEBUG_RUNTIME_INFO 2 /* record line information in 16 bits */
+  #define BE_DEBUG_RUNTIME_INFO 1 /* record line information in 32 bits to be places in IRAM */
 #endif // USE_BERRY_DEBUG
 
 #endif

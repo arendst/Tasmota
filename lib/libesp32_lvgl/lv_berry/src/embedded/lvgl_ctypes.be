@@ -393,6 +393,18 @@ lv_event = [            # valid LVGL8
 ]
 lv_event = ctypes.structure(lv_event, "lv_event")
 
+#######################################################################
+# Special structure used to calibrate resistive touchscreens
+#######################################################################
+lv_ts_calibration = [            # valid LVGL8
+    [lv_coord, "raw_x"],
+    [lv_coord, "raw_y"],
+    [lv_coord, "x"],
+    [lv_coord, "y"],
+    [int32_t, "state"],
+]
+lv_ts_calibration = ctypes.structure(lv_ts_calibration, "lv_ts_calibration")
+
 #
 ctypes.print_classes("lvgl")
 
