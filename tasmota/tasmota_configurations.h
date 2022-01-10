@@ -964,14 +964,17 @@
 \*********************************************************************************************/
 
 #ifndef ESP8266_1M
-#define USE_UFILESYS
-#define GUI_TRASH_FILE
-#define GUI_EDIT_FILE
-#define USE_PING
+  #ifndef FIRMWARE_MINIMAL    // there might be a ESP32-minimal
+    #define USE_UFILESYS
+      #define GUI_TRASH_FILE
+      #define GUI_EDIT_FILE
+    #define USE_PING
+  #endif // FIRMWARE_MINIMAL
+
   #ifdef USE_RULES
-  #define USE_EXPRESSION
-  #define SUPPORT_IF_STATEMENT
-  #define SUPPORT_MQTT_EVENT
+    #define USE_EXPRESSION
+    #define SUPPORT_IF_STATEMENT
+    #define SUPPORT_MQTT_EVENT
   #endif  // USE_RULES
 #endif  // NOT ESP8266_1M
 
