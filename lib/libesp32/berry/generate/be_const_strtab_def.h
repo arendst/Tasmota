@@ -81,6 +81,7 @@ be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson, "BRY: f
 be_define_const_str(BUTTON_CONFIGURATION, "BUTTON_CONFIGURATION", 70820856u, 0, 20, &be_const_str_SERIAL_7E1);
 be_define_const_str(CFG_X3A_X20_X27init_X2Ebat_X27_X20done_X2C_X20restarting, "CFG: 'init.bat' done, restarting", 1569670677u, 0, 32, NULL);
 be_define_const_str(CFG_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s, "CFG: Exception> '%s' - %s", 1228874553u, 0, 25, &be_const_str_byte);
+be_define_const_str(CFG_X3A_X20No_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found, "CFG: No '*.autoconf' file found", 755798501u, 0, 31, &be_const_str__anonymous_);
 be_define_const_str(CFG_X3A_X20could_X20not_X20run_X20_X25s_X20_X28_X25s_X20_X2D_X20_X25s_X29, "CFG: could not run %s (%s - %s)", 1428829580u, 0, 31, &be_const_str_json_fdump_any);
 be_define_const_str(CFG_X3A_X20downloading_X20_X27_X25s_X27, "CFG: downloading '%s'", 589480701u, 0, 21, &be_const_str_EC_C25519);
 be_define_const_str(CFG_X3A_X20exception_X20_X27_X25s_X27_X20_X2D_X20_X27_X25s_X27, "CFG: exception '%s' - '%s'", 4095407913u, 0, 26, &be_const_str___upper__);
@@ -89,7 +90,6 @@ be_define_const_str(CFG_X3A_X20loaded_X20_X27_X25s_X27, "CFG: loaded '%s'", 1699
 be_define_const_str(CFG_X3A_X20loading_X20, "CFG: loading ", 4010361503u, 0, 13, &be_const_str_CFG_X3A_X20removed_X20file_X20_X27_X25s_X27);
 be_define_const_str(CFG_X3A_X20loading_X20_X27_X25s_X27, "CFG: loading '%s'", 2285306097u, 0, 17, &be_const_str_cb_do_nothing);
 be_define_const_str(CFG_X3A_X20multiple_X20autoconf_X20files_X20found_X2C_X20aborting_X20_X28_X27_X25s_X27_X20_X2B_X20_X27_X25s_X27_X29, "CFG: multiple autoconf files found, aborting ('%s' + '%s')", 197663371u, 0, 58, NULL);
-be_define_const_str(CFG_X3A_X20no_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found, "CFG: no '*.autoconf' file found", 127493957u, 0, 31, &be_const_str_find);
 be_define_const_str(CFG_X3A_X20ran_X20_X20, "CFG: ran  ", 3579570472u, 0, 10, &be_const_str_ctypes_bytes_dyn);
 be_define_const_str(CFG_X3A_X20removed_X20file_X20_X27_X25s_X27, "CFG: removed file '%s'", 2048602473u, 0, 22, &be_const_str_invalidate);
 be_define_const_str(CFG_X3A_X20removing_X20autoconf_X20files, "CFG: removing autoconf files", 4014704970u, 0, 28, &be_const_str_min);
@@ -845,7 +845,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_HTTP_POST,
     (const bstring *)&be_const_str_list,
     (const bstring *)&be_const_str_send,
-    (const bstring *)&be_const_str_CFG_X3A_X20no_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found,
+    (const bstring *)&be_const_str_find,
     (const bstring *)&be_const_str_SERIAL_8E2,
     NULL,
     (const bstring *)&be_const_str_consume_silence,
@@ -1174,7 +1174,7 @@ static const bstring* const m_string_table[] = {
     NULL,
     (const bstring *)&be_const_str_sqrt,
     NULL,
-    (const bstring *)&be_const_str__anonymous_,
+    (const bstring *)&be_const_str_CFG_X3A_X20No_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found,
     (const bstring *)&be_const_str_CFG_X3A_X20loading_X20_X27_X25s_X27,
     (const bstring *)&be_const_str_obj_event_base,
     (const bstring *)&be_const_str__X2Esize
