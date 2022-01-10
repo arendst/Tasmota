@@ -28,8 +28,8 @@
 #define XDRV_65                     65
 #define XI2C_65                     65  // See I2CDEVICES.md
 
-// #define DS3502_REG_MODE1           0x00
-// #define DS3502_REG_LED0_ON_L       0x06
+ #define DS3502_REG_MODE        0x02
+ #define DS3502_REG_WIPER       0x00
 // #define DS3502_REG_PRE_SCALE       0xFE
 
 #ifndef USE_DS3502_ADDR
@@ -46,12 +46,12 @@ void DS3502_Detect(void)
   uint8_t buffer;
   // TODO: init routine
 //   if (I2cValidRead8(&buffer, USE_DS3502_ADDR, DS3502_REG_MODE1)) {
-//     I2cWrite8(USE_DS3502_ADDR, DS3502_REG_MODE1, 0x20);
+     I2cWrite8(USE_DS3502_ADDR, DS3502_REG_MODE, 0x80);
 //     if (I2cValidRead8(&buffer, USE_DS3502_ADDR, DS3502_REG_MODE1)) {
 //       if (0x20 == buffer) {
-//         DS3502_detected = true;
-//         I2cSetActiveFound(USE_DS3502_ADDR, "DS3502");
-//         DS3502_Reset(); // Reset the controller
+         DS3502_detected = true;
+         I2cSetActiveFound(USE_DS3502_ADDR, "DS3502");
+         DS3502_Reset(); // Reset the controller
 //       }
 //     }
 //   }
@@ -67,12 +67,7 @@ void DS3502_Reset(void)
 }
 
 void DS3502_SetPoti_Reg(uint8_t val) {
-//   uint8_t led_reg = DS3502_REG_LED0_ON_L + 4 * pin;
-//   uint32_t led_data = 0;
-//   I2cWrite8(USE_DS3502_ADDR, led_reg, on);
-//   I2cWrite8(USE_DS3502_ADDR, led_reg+1, (on >> 8));
-//   I2cWrite8(USE_DS3502_ADDR, led_reg+2, off);
-//   I2cWrite8(USE_DS3502_ADDR, led_reg+3, (off >> 8));
+   I2cWrite8(USE_DS3502_ADDR, DS3502_REG_WIPER, val);
 }
 
 void DS3502_SetPoti(uint8_t poti) {
@@ -106,30 +101,15 @@ bool DS3502_Command(void)
 
   if (!strcmp(ArgV(argument, 1),"STATUS"))  { DS3502_OutputTelemetry(false); return serviced; }
 
-  if (!strcmp(ArgV(argument, 1),"PWM")) {
+  if (!strcmp(ArgV(argument, 1),"POTI")) {
     if (paramcount > 1) {
-      uint8_t pin = 0;//atoi(ArgV(argument, 2));
-      if (paramcount > 2) {
-        if (!strcmp(ArgV(argument, 3), "ON")) {
-          DS3502_SetPoti(127);
-          Response_P(PSTR("{\"DS3502\":{\"PIN\":%i,\"PWM\":%i}}"),pin,4096);
+        uint16_t val = atoi(ArgV(argument, 2));
+        if ((val >= 0 && val <= 127)) {
+          DS3502_SetPoti(val);
+          Response_P(PSTR("{\"DS3502\":{\"POTI\":%i}}"),val);
           serviced = true;
           return serviced;
         }
-        if (!strcmp(ArgV(argument, 3), "OFF")) {
-          DS3502_SetPoti(0);
-          Response_P(PSTR("{\"DS3502\":{\"PIN\":%i,\"PWM\":%i}}"),pin,0);
-          serviced = true;
-          return serviced;
-        }
-        uint16_t pwm = atoi(ArgV(argument, 3));
-        if ((pin >= 0 && pin <= 15) && (pwm >= 0 && pwm <= 127)) {
-          DS3502_SetPoti(pwm);
-          Response_P(PSTR("{\"DS3502\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
-          serviced = true;
-          return serviced;
-        }
-      }
     }
   }
   return serviced;
@@ -137,11 +117,7 @@ bool DS3502_Command(void)
 
 void DS3502_OutputTelemetry(bool telemetry)
 {
-  ResponseTime_P(PSTR(",\"DS3502\":{\"PWM_FREQ\":%i,"),DS3502_freq);
-  for (uint32_t pin=0;pin<16;pin++) {
-    ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,DS3502_potiValue[pin]);
-  }
-  ResponseAppend_P(PSTR("\"END\":1}}"));
+  ResponseTime_P(PSTR(",\"DS3502\":{\"POTI\":%i}}"),DS3502_potiValue);
   if (telemetry) {
     MqttPublishTeleSensor();
   }
