@@ -246,7 +246,7 @@ void BerryObservability(bvm *vm, int event...) {
       {
         int32_t stack_before = va_arg(param, int32_t);
         int32_t stack_after = va_arg(param, int32_t);
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Stack resized from %i to %i bytes"), stack_before, stack_after);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_BERRY "Stack resized from %i to %i bytes"), stack_before, stack_after);
       }
       break;
     case BE_OBS_VM_HEARTBEAT:
