@@ -93,6 +93,7 @@ void EthernetEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_ETH_CONNECTED:
       AddLog(LOG_LEVEL_INFO, PSTR("ETH: " D_CONNECTED " at %dMbps%s"),
         ETH.linkSpeed(), (ETH.fullDuplex()) ? " Full Duplex" : "");
+      TasmotaGlobal.rules_flag.eth_connected = 1;
       break;
     case ARDUINO_EVENT_ETH_GOT_IP:
       AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Mac %s, IPAddress %_I, Hostname %s"),
@@ -106,6 +107,8 @@ void EthernetEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       AddLog(LOG_LEVEL_INFO, PSTR("ETH: Disconnected"));
       TasmotaGlobal.global_state.eth_down = 1;
+      TasmotaGlobal.rules_flag.eth_disconnected = 1;
+
       break;
     case ARDUINO_EVENT_ETH_STOP:
       AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: Stopped"));

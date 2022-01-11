@@ -979,6 +979,10 @@ void RulesEvery50ms(void)
             case 9: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event)); break;
             case 10: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event)); break;
 #endif  // USE_SHUTTER
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+            case 11: strncpy_P(json_event, PSTR("{\"ETH\":{\"Connected\":1}}"), sizeof(json_event)); break;
+            case 12: strncpy_P(json_event, PSTR("{\"ETH\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+#endif
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);

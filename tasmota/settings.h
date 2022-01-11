@@ -859,8 +859,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t http_init : 1;
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    uint16_t spare11 : 1;
-    uint16_t spare12 : 1;
+    uint16_t eth_connected : 1;
+    uint16_t eth_disconnected : 1;
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;
