@@ -168,28 +168,23 @@ String EthernetMacAddress(void) {
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_ETHADDRESS   "EthAddress"
-#define D_CMND_ETHTYPE      "EthType"
-#define D_CMND_ETHCLOCKMODE "EthClockMode"
-#define D_CMND_ETHIPADDRESS "Eth" D_CMND_IPADDRESS
-#define D_CMND_ETHGATEWAY   "Eth" D_JSON_GATEWAY
-#define D_CMND_ETHNETMASK   "Eth" D_JSON_SUBNETMASK
-#define D_CMND_ETHDNS       "Eth" D_JSON_DNSSERVER
+#define D_CMND_ETHADDRESS   "Address"
+#define D_CMND_ETHTYPE      "Type"
+#define D_CMND_ETHCLOCKMODE "ClockMode"
+#define D_CMND_ETHIPADDRESS D_CMND_IPADDRESS
+#define D_CMND_ETHGATEWAY   D_JSON_GATEWAY
+#define D_CMND_ETHNETMASK   D_JSON_SUBNETMASK
+#define D_CMND_ETHDNS       D_JSON_DNSSERVER
 
-const char kEthernetCommands[] PROGMEM = "|"  // No prefix
+const char kEthernetCommands[] PROGMEM = "Eth|"
   D_CMND_ETHERNET "|" D_CMND_ETHADDRESS "|" D_CMND_ETHTYPE "|" D_CMND_ETHCLOCKMODE "|"
   D_CMND_ETHIPADDRESS "|" D_CMND_ETHGATEWAY "|" D_CMND_ETHNETMASK "|" D_CMND_ETHDNS;
-
-const char *EthIpParams[] = {
-  PSTR(D_CMND_ETHIPADDRESS), PSTR(D_CMND_ETHGATEWAY), PSTR(D_CMND_ETHNETMASK),
-  PSTR(D_CMND_ETHDNS "1"), PSTR(D_CMND_ETHDNS "2")
-};
 
 void (* const EthernetCommand[])(void) PROGMEM = {
   &CmndEthernet, &CmndEthAddress, &CmndEthType, &CmndEthClockMode,
   &CmndEthIpAddr, &CmndEthGateway, &CmndEthNetmask, &CmndEthDns
 };
-
+#define ETH_PARAM_OFFSET 5
 
 void CmndEthernet(void)
 {
@@ -229,17 +224,20 @@ void CmndEthClockMode(void)
 
 void CmndEthIpConfig(int param_id)
 {
-  if (3 == param_id && 2 == XdrvMailbox.index)
-    param_id = 4;
   char network_address[22] = {0};
   if (0 == param_id)
     ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)ETH.localIP());
-
+  char param_name[15];
+  GetTextIndexed(param_name, sizeof(param_name), param_id + ETH_PARAM_OFFSET, kEthernetCommands);
+  if (3 == param_id && 2 == XdrvMailbox.index) {
+    param_id = 4;
+    strcat(param_name, "2");
+  }
   uint32_t ipv4_address;
   if (ParseIPv4(&ipv4_address, XdrvMailbox.data)) {
     Settings->eth_ipv4_address[param_id] = ipv4_address;
   }
-  Response_P(PSTR("{\"%s\":\"%_I%s\"}"), EthIpParams[param_id], Settings->eth_ipv4_address[param_id], (0 == param_id)?network_address:"");
+  Response_P(PSTR("{\"Eth%s\":\"%_I%s\"}"), param_name, Settings->eth_ipv4_address[param_id], (0 == param_id)?network_address:"");
 
   // TasmotaGlobal.restart_flag = 2; // Wifi IpAddress doesn't do that so ?
 }
