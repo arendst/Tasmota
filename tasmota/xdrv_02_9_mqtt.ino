@@ -921,8 +921,16 @@ void MqttConnected(void) {
         Response_P(PSTR("{\"Info2\":{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}}"),
           (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), NetworkAddress().toString().c_str(), WifiGetIPv6().c_str(), Settings->flag5.mqtt_info_retain);
 #else
-        Response_P(PSTR("{\"Info2\":{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}}"),
-          (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), NetworkAddress().toString().c_str(), Settings->flag5.mqtt_info_retain);
+        Response_P(PSTR("{\"Info2\":{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\""
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+          ",\"Eth" D_CMND_HOSTNAME "\":\"%s\",\"Eth" D_CMND_IPADDRESS "\":\"%s\""
+#endif
+          "}}"),
+          (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), TasmotaGlobal.hostname, WiFi.localIP().toString().c_str(),
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+          EthernetHostname(), (uint32_t)EthernetLocalIP().toString().c_str(),
+#endif
+          Settings->flag5.mqtt_info_retain);
 #endif // LWIP_IPV6 = 1
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_INFO "2"), Settings->flag5.mqtt_info_retain);
       }

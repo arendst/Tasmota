@@ -685,7 +685,11 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
       referer.toUpperCase();
       String hostname = NetworkHostname();
       hostname.toUpperCase();
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(NetworkAddress().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(WiFi.localIP().toString()) == 7)
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+          || (referer.indexOf(EthernetLocalIP().toString()) == 7)
+#endif
+      ) {
         return true;
       }
     }
