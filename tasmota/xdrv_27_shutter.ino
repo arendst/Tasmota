@@ -476,7 +476,8 @@ void ShutterPowerOff(uint8_t i)
 {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: Stop %d. Mode %d, time:%d"), i+1,Shutter[i].switch_mode, Shutter[i].time); // fix log to indicate correct shutter number
   ShutterDecellerateForStop(i);
-  if (Shutter[i].direction !=0) {
+  uint8_t current_direction = Shutter[i].direction;
+  if (current_direction !=0) {
     Shutter[i].direction = 0;
   }
   if (Shutter[i].real_position == Shutter[i].start_position)  {
@@ -493,7 +494,7 @@ void ShutterPowerOff(uint8_t i)
       }
     break;
     case SHT_PULSE:
-      uint8_t cur_relay = Settings->shutter_startrelay[i] + (Shutter[i].direction == 1 ? 0 : (uint8_t)(ShutterGlobal.position_mode == SHT_TIME)) ;
+      uint8_t cur_relay = Settings->shutter_startrelay[i] + (current_direction == 1 ? 0 : (uint8_t)(ShutterGlobal.position_mode == SHT_TIME)) ;
       // we have a momentary switch here. Needs additional pulse on same relay after the end
       if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
         ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
