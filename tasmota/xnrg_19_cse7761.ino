@@ -130,33 +130,13 @@ void Cse7761Write(uint32_t reg, uint32_t data) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Tx %*_H"), len, buffer);
 }
 
-bool Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size, uint32_t* value) {
-  while (Cse7761Serial->available()) { Cse7761Serial->read(); }
-
-  Cse7761Write(reg, 0);
-
-  uint8_t buffer[8] = { 0 };
-  uint32_t rcvd = 0;
-  uint32_t timeout = millis() + 6;
-
-  while (!TimeReached(timeout) && (rcvd <= size)) {
-//  while (!TimeReached(timeout)) {
-    int value = Cse7761Serial->read();
-    if ((value > -1) && (rcvd < sizeof(buffer) -1)) {
-      buffer[rcvd++] = value;
-    }
-  }
-
-  if (!rcvd) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx none"));
-    return false;
-  }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx %*_H"), rcvd, buffer);
-  if (rcvd > 5) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx overflow"));
-    return false;
-  }
-
+bool Cse7761CheckValue(
+  uint32_t log_level, 
+  uint32_t reg,     // register read
+  uint32_t rcvd,    // number of read data and crc bytes
+  uint8_t* buffer,  // buffer containing the bytes
+  uint32_t *value)  // returns calculated value if crc is ok
+{
   rcvd--;
   uint32_t result = 0;
   uint8_t crc = 0xA5 + reg;
@@ -172,6 +152,51 @@ bool Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size, uint32_t* 
 
   *value = result;
   return true;
+}
+
+uint32_t Cse7761ReadValue(
+  uint32_t size,   // max number of bytes to read
+  uint8_t* buffer) // buffersize >= size
+{
+  uint32_t rcvd = 0;
+  uint32_t timeout = millis() + 6;
+
+  while (!TimeReached(timeout) && (rcvd < size)) {
+    int value = Cse7761Serial->read();
+
+    if ((value > -1)) {
+      buffer[rcvd++] = value;
+    }
+  }
+  return rcvd;  // number of bytes actually read into buffer
+}
+
+bool Cse7761ReadOnce(uint32_t log_level, uint32_t reg, uint32_t size, uint32_t* value) {
+  while (Cse7761Serial->available()) { Cse7761Serial->read(); }
+
+  Cse7761Write(reg, 0);
+
+  uint8_t buffer[8] = { 0 };
+  uint32_t rcvd = Cse7761ReadValue(size +1, buffer);
+
+  if (!rcvd) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx none"));
+    return false;
+  }
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx %*_H"), rcvd, buffer);
+
+  if( Cse7761CheckValue(log_level, reg, rcvd, buffer, value) ) {
+    return true;
+  }
+
+  // Sometimes first byte read is a zero that is not part of the result.
+  // Ignore it and read one more byte
+  if( buffer[0] == 0 && Cse7761ReadValue(1, &buffer[rcvd]) ) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: Rx extra %02X"), buffer[rcvd]);
+    return Cse7761CheckValue(log_level, reg, rcvd, &buffer[1], value);
+  }
+
+  return false;
 }
 
 uint32_t Cse7761Read(uint32_t reg, uint32_t size) {
