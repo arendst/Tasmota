@@ -744,10 +744,11 @@ typedef struct {
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f59[59];              // F61 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f61[39];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  uint32_t      eth_ipv4_address[5];       // F88
   uint32_t      energy_kWhtotal;           // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
@@ -834,11 +835,6 @@ struct XDRVMAILBOX {
   char         *command;
 } XdrvMailbox;
 
-#ifdef USE_SHUTTER
-const uint8_t MAX_RULES_FLAG = 11;         // Number of bits used in RulesBitfield (tricky I know...)
-#else
-const uint8_t MAX_RULES_FLAG = 9;          // Number of bits used in RulesBitfield (tricky I know...)
-#endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -850,11 +846,11 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t mqtt_disconnected : 1;
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
+    uint16_t eth_connected : 1;
+    uint16_t eth_disconnected : 1;
     uint16_t http_init : 1;
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    uint16_t spare11 : 1;
-    uint16_t spare12 : 1;
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;
