@@ -94,6 +94,8 @@ namespace irutils {
                      const uint8_t init = 0);
   uint8_t sumNibbles(const uint64_t data, const uint8_t count = 16,
                      const uint8_t init = 0, const bool nibbleonly = true);
+  uint16_t sumBytes(const uint64_t data, const uint8_t count = 8,
+                    const uint8_t init = 0, const bool byteonly = true);
   uint8_t bcdToUint8(const uint8_t bcd);
   uint8_t uint8ToBcd(const uint8_t integer);
   bool getBit(const uint64_t data, const uint8_t position,

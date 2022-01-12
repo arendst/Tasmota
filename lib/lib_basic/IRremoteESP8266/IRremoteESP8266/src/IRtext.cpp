@@ -81,6 +81,14 @@ IRTEXT_CONST_STRING(kHoldStr, D_STR_HOLD);  ///< "Hold"
 IRTEXT_CONST_STRING(kButtonStr, D_STR_BUTTON);  ///< "Button"
 IRTEXT_CONST_STRING(k8CHeatStr, D_STR_8C_HEAT);  ///< "8C Heat"
 IRTEXT_CONST_STRING(k10CHeatStr, D_STR_10C_HEAT);  ///< "10C Heat"
+IRTEXT_CONST_STRING(kISeeStr, D_STR_ISEE);  ///< "ISee"
+IRTEXT_CONST_STRING(kAbsenseDetectStr, D_STR_ABSENSEDETECT);
+                                                   ///< "AbsenseDetect"
+IRTEXT_CONST_STRING(kDirectIndirectModeStr, D_STR_DIRECTINDIRECTMODE);
+                                                   ///< "Direct/Indirect mode"
+IRTEXT_CONST_STRING(kDirectStr, D_STR_DIRECT);  ///< "Direct"
+IRTEXT_CONST_STRING(kIndirectStr, D_STR_INDIRECT);  ///< "Indirect"
+
 IRTEXT_CONST_STRING(kNightStr, D_STR_NIGHT);  ///< "Night"
 IRTEXT_CONST_STRING(kSilentStr, D_STR_SILENT);  ///< "Silent"
 IRTEXT_CONST_STRING(kFilterStr, D_STR_FILTER);  ///< "Filter"
@@ -382,6 +390,7 @@ IRTEXT_CONST_BLOB_DECL(kAllProtocolNamesStr) {
     D_STR_ARRIS "\x0"
     D_STR_RHOSS "\x0"
     D_STR_AIRTON "\x0"
+    D_STR_COOLIX48 "\x0"
     ///< New protocol strings should be added just above this line.
     "\x0"  ///< This string requires double null termination.
 };
