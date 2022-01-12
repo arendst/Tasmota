@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Tasmota favicon to webbrowser tab (#14322)
 
 ### Changed
+- IRremoteESP8266 library from v2.8.0 to v2.8.1
 
 ### Fixed
 
