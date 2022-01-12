@@ -517,6 +517,9 @@ extern int lvbe_obj_get_style_grid_cell_row_pos(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_row_span(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_x_align(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_y_align(bvm *vm);
+extern int lvbe_obj_move_foreground(bvm *vm);
+extern int lvbe_obj_move_background(bvm *vm);
+extern int lvbe_obj_get_child_id(bvm *vm);
 
 /* `lv_group` external functions definitions */
 extern int lvbe_group_create(bvm *vm);
