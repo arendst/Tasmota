@@ -1030,8 +1030,7 @@ void HAssAnnounceShutters(void)
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s"), SettingsText(SET_FRIENDLYNAME1 + i));
       }
-      GetTopic_P(stemp2, TELE, TasmotaGlobal.mqtt_topic, D_RSLT_STATE);
-      Response_P(HASS_DISCOVER_BASE, stemp1, stemp2);
+      Response_P(PSTR("{\"name\":\"%s\""), stemp1);
 
       GetTopic_P(stemp1, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_LWT, stemp1);
