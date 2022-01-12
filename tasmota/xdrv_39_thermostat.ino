@@ -1334,7 +1334,7 @@ uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
   if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
     || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
       &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
-    value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
+    value = 100*Thermostat[ctr_output].time_total_pi / ((uint32_t)60*(uint32_t)Thermostat[ctr_output].time_pi_cycle);
   }
   else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
         || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
