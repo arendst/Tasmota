@@ -6,19 +6,12 @@
 /*********************
  *      INCLUDES
  *********************/
-#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
-#include "lvgl.h"
-#else
-#include "lvgl/lvgl.h"
-#endif
+#include "../../../lvgl.h"
+#if LV_USE_PNG
 
 #include "lv_png.h"
 #include "lodepng.h"
 #include <stdlib.h>
-#if LV_MEM_CUSTOM != 0
-    #include LV_MEM_CUSTOM_INCLUDE
-#endif
-#include <stdio.h>
 
 /*********************
  *      DEFINES
@@ -84,7 +77,6 @@ static lv_res_t decoder_info(struct _lv_img_decoder_t * decoder, const void * sr
               * [24..27]: height
               */
              uint32_t size[2];
-#if LV_PNG_USE_LV_FILESYSTEM
              lv_fs_file_t f;
              lv_fs_res_t res = lv_fs_open(&f, fn, LV_FS_MODE_RD);
              if(res != LV_FS_RES_OK) return LV_RES_INV;
@@ -93,15 +85,6 @@ static lv_res_t decoder_info(struct _lv_img_decoder_t * decoder, const void * sr
              lv_fs_read(&f, &size, 8, &rn);
              if(rn != 8) return LV_RES_INV;
              lv_fs_close(&f);
-#else
-             FILE* file;
-             file = fopen(fn, "rb" );
-             if(!file) return LV_RES_INV;
-             fseek(file, 16, SEEK_SET);
-             size_t rn = fread(size, 1 , 8, file);
-             fclose(file);
-             if(rn != 8) return LV_RES_INV;
-#endif
              /*Save the data in the header*/
              header->always_zero = 0;
              header->cf = LV_IMG_CF_RAW_ALPHA;
@@ -152,11 +135,7 @@ static lv_res_t decoder_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * 
 
             error = lodepng_load_file(&png_data, &png_data_size, fn);   /*Load the file*/
             if(error) {
-#ifdef LODEPNG_COMPILE_ERROR_TEXT
-                LV_LOG_ERROR("lv_png error %u: %s\n", error, lodepng_error_text(error));
-#else
-                LV_LOG_ERROR("lv_png error %u\n", error);
-#endif
+                LV_LOG_WARN("error %u: %s\n", error, lodepng_error_text(error));
                 return LV_RES_INV;
             }
 
@@ -166,13 +145,9 @@ static lv_res_t decoder_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * 
 
             /*Decode the loaded image in ARGB8888 */
             error = lodepng_decode32(&img_data, &png_width, &png_height, png_data, png_data_size);
-            LV_MEM_CUSTOM_FREE(png_data); /*Free the loaded file*/
+            lv_mem_free(png_data); /*Free the loaded file*/
             if(error) {
-#ifdef LODEPNG_COMPILE_ERROR_TEXT
-                LV_LOG_ERROR("lv_png error %u: %s\n", error, lodepng_error_text(error));
-#else
-                LV_LOG_ERROR("lv_png error %u\n", error);
-#endif
+                LV_LOG_WARN("error %u: %s\n", error, lodepng_error_text(error));
                 return LV_RES_INV;
             }
 
@@ -210,8 +185,11 @@ static lv_res_t decoder_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * 
  */
 static void decoder_close(lv_img_decoder_t *decoder, lv_img_decoder_dsc_t *dsc)
 {
-    (void) decoder; /*Unused*/
-    if(dsc->img_data) LV_MEM_CUSTOM_FREE((uint8_t *)dsc->img_data);
+    LV_UNUSED(decoder); /*Unused*/
+    if (dsc->img_data) {
+        lv_mem_free((uint8_t *)dsc->img_data);
+        dsc->img_data = NULL;
+    }
 }
 
 /**
@@ -243,15 +221,25 @@ static void convert_color_depth(uint8_t * img, uint32_t px_cnt)
     }
 #elif LV_COLOR_DEPTH == 8
     lv_color32_t * img_argb = (lv_color32_t*)img;
-       lv_color_t c;
-       uint32_t i;
-       for(i = 0; i < px_cnt; i++) {
-           c = lv_color_make(img_argb[i].red, img_argb[i].green, img_argb[i].blue);
-           img[i*2 + 1] = img_argb[i].alpha;
-           img[i*2 + 0] = c.full
-       }
+    lv_color_t c;
+    uint32_t i;
+    for(i = 0; i < px_cnt; i++) {
+        c = lv_color_make(img_argb[i].ch.red, img_argb[i].ch.green, img_argb[i].ch.blue);
+        img[i*2 + 1] = img_argb[i].ch.alpha;
+        img[i*2 + 0] = c.full;
+    }
+#elif LV_COLOR_DEPTH == 1
+    lv_color32_t * img_argb = (lv_color32_t*)img;
+    uint8_t b;
+    uint32_t i;
+    for(i = 0; i < px_cnt; i++) {
+        b = img_argb[i].ch.red | img_argb[i].ch.green | img_argb[i].ch.blue;
+        img[i*2 + 1] = img_argb[i].ch.alpha;
+        img[i*2 + 0] = b > 128 ? 1 : 0;
+    }
 #endif
 }
 
+#endif /*LV_USE_PNG*/
 
 

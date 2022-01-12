@@ -28,18 +28,8 @@ freely, subject to the following restrictions:
 
 #include <string.h> /*for size_t*/
 
-#ifndef LV_PNG_USE_LV_FILESYSTEM
-#define LV_PNG_USE_LV_FILESYSTEM 0
-#endif
-
-#if LV_PNG_USE_LV_FILESYSTEM
-#if defined(LV_LVGL_H_INCLUDE_SIMPLE)
-#include "lvgl.h"
-#else
-#include "lvgl/lvgl.h"
-#endif
-#endif /* LV_PNG_USE_LV_FILESYSTEM */
-
+#include "../../../lvgl.h"
+#if LV_USE_PNG
 extern const char* LODEPNG_VERSION_STRING;
 
 /*
@@ -1094,6 +1084,8 @@ TODO:
 [ ] allow user to give data (void*) to custom allocator
 [X] provide alternatives for C library functions not present on some platforms (memcpy, ...)
 */
+
+#endif /*LV_USE_PNG*/
 
 #endif /*LODEPNG_H inclusion guard*/
 
