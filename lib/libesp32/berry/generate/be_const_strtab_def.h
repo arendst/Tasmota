@@ -147,7 +147,7 @@ be_define_const_str(SERIAL_8O1, "SERIAL_8O1", 289122742u, 0, 10, &be_const_str_c
 be_define_const_str(SERIAL_8O2, "SERIAL_8O2", 272345123u, 0, 10, NULL);
 be_define_const_str(SK6812_GRBW, "SK6812_GRBW", 81157857u, 0, 11, &be_const_str_time_str);
 be_define_const_str(STATE_DEFAULT, "STATE_DEFAULT", 712406428u, 0, 13, &be_const_str_srand);
-be_define_const_str(TAP_X3A_X20found_X20Tasmota_X20App_X20_X27_X25s_X27, "TAP: found Tasmota App '%s'", 2643152398u, 0, 27, &be_const_str_get_option);
+be_define_const_str(TAP_X3A_X20Loaded_X20Tasmota_X20App_X20_X27_X25s_X27, "TAP: Loaded Tasmota App '%s'", 926477145u, 0, 28, &be_const_str_consume_silence);
 be_define_const_str(Tasmota, "Tasmota", 4047617668u, 0, 7, &be_const_str_file);
 be_define_const_str(Tele, "Tele", 1329980653u, 0, 4, &be_const_str_pop_path);
 be_define_const_str(Timer, "Timer", 3948127682u, 0, 5, NULL);
@@ -848,7 +848,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_find,
     (const bstring *)&be_const_str_SERIAL_8E2,
     NULL,
-    (const bstring *)&be_const_str_consume_silence,
+    (const bstring *)&be_const_str_TAP_X3A_X20Loaded_X20Tasmota_X20App_X20_X27_X25s_X27,
     (const bstring *)&be_const_str_False,
     (const bstring *)&be_const_str__settings_def,
     (const bstring *)&be_const_str__X23,
@@ -1141,7 +1141,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str__write,
     NULL,
     NULL,
-    (const bstring *)&be_const_str_TAP_X3A_X20found_X20Tasmota_X20App_X20_X27_X25s_X27,
+    (const bstring *)&be_const_str_get_option,
     (const bstring *)&be_const_str_wifi,
     (const bstring *)&be_const_str_OPTION_A,
     (const bstring *)&be_const_str_True,
