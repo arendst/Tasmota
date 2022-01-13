@@ -1131,4 +1131,15 @@
   #include "user_config_override.h"         // Configuration overrides for my_user_config.h
 #endif
 
+/*********************************************************************************************\
+ * Post-process stack size adjustment
+\*********************************************************************************************/
+
+#if defined(USE_LVGL) && defined(USE_LVGL_FREETYPE)   // Freetype requires a stack of at least 24KB
+  #if SET_ESP32_STACK_SIZE < (24 * 1024)
+    #undef SET_ESP32_STACK_SIZE
+    #define SET_ESP32_STACK_SIZE (24 * 1024)
+  #endif
+#endif // USE_LVGL && USE_LVGL_FREETYPE
+
 #endif  // _MY_USER_CONFIG_H_

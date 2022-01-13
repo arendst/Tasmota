@@ -32,10 +32,6 @@
 
 #include "Adafruit_LvGL_Glue.h"
 
-#ifdef USE_LVGL_FREETYPE
-  #include "lv_freetype.h"
-#endif // USE_LVGL_FREETYPE
-
 Adafruit_LvGL_Glue * glue;
 
 // **************************************************
