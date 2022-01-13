@@ -193,11 +193,11 @@ void EthernetConfigChange(void) {
 
 const char kEthernetCommands[] PROGMEM = "Eth|"  // Prefix
   "ernet|" D_CMND_ETHADDRESS "|" D_CMND_ETHTYPE "|" D_CMND_ETHCLOCKMODE "|"
-  D_CMND_ETHIPADDRESS "|" D_CMND_ETHGATEWAY "|" D_CMND_ETHNETMASK "|" D_CMND_ETHDNS "|Ipconfig" ;
+  D_CMND_ETHIPADDRESS "|" D_CMND_ETHGATEWAY "|" D_CMND_ETHNETMASK "|" D_CMND_ETHDNS ;
 
 void (* const EthernetCommand[])(void) PROGMEM = {
   &CmndEthernet, &CmndEthAddress, &CmndEthType, &CmndEthClockMode,
-  &CmndEthSetIpConfig, &CmndEthSetIpConfig, &CmndEthSetIpConfig, &CmndEthSetIpConfig, &CmndEthIpConfig };
+  &CmndEthSetIpConfig, &CmndEthSetIpConfig, &CmndEthSetIpConfig, &CmndEthSetIpConfig };
 
 #define ETH_PARAM_OFFSET 4                       // Offset of command index in above table of first CmndEthIpConfig
 
@@ -260,18 +260,6 @@ void CmndEthSetIpConfig(void) {
     }
   }
   Response_P(PSTR("{\"%s%s\":\"%_I%s\"}"), XdrvMailbox.command, cmnd_idx, Settings->eth_ipv4_address[param_id], network_address);
-}
-
-void CmndEthIpConfig(void) {
-  char network_address[22] = { 0 };
-  if (!Settings->eth_ipv4_address[0]) {
-    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)ETH.localIP());
-  }
-  Response_P(PSTR("{\"EthIpAddress\":\"%_I%s\""), Settings->eth_ipv4_address[0], network_address);
-  ResponseAppend_P(PSTR(",\"EthGateway\":\"%_I\""), Settings->eth_ipv4_address[1]);
-  ResponseAppend_P(PSTR(",\"EthSubNetmask\":\"%_I\""), Settings->eth_ipv4_address[2]);
-  ResponseAppend_P(PSTR(",\"EthDnsServer1\":\"%_I\""), Settings->eth_ipv4_address[3]);
-  ResponseAppend_P(PSTR(",\"EthDnsServer2\":\"%_I\"}"), Settings->eth_ipv4_address[4]);
 }
 
 /*********************************************************************************************\

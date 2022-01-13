@@ -1002,7 +1002,7 @@ void RulesEvery50ms(void)
         TasmotaGlobal.rules_flag.eth_disconnected = 0;
         strncpy_P(json_event, PSTR("{\"ETH\":{\"Disconnected\":1}}"), sizeof(json_event));
       }
-#endif
+#endif  // USE_ETHERNET
       else if (TasmotaGlobal.rules_flag.http_init) {
         TasmotaGlobal.rules_flag.http_init = 0;
         strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event));

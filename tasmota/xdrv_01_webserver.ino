@@ -683,11 +683,18 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     String referer = Webserver->header(F("Referer"));  // http://demo/? or http://192.168.2.153/?
     if (referer.length()) {
       referer.toUpperCase();
-      String hostname = NetworkHostname();
+      String hostname = TasmotaGlobal.hostname;
       hostname.toUpperCase();
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(NetworkAddress().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(WiFi.localIP().toString()) == 7)) {
         return true;
       }
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+      hostname = EthernetHostname();
+      hostname.toUpperCase();
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(EthernetLocalIP().toString()) == 7)) {
+        return true;
+      }
+#endif  // USE_ETHERNET
     }
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer '%s' denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."), referer.c_str());
     return false;
@@ -2313,16 +2320,12 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-#ifdef ESP32
-#ifdef USE_ETHERNET
-  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
+  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%_I"), (uint32_t)WiFi.softAPIP());
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
   }
-#endif
-#endif
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
@@ -2332,11 +2335,10 @@ void HandleInformation(void)
     if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
     }
-#endif
+#endif  // LWIP_IPV6 = 1
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
       WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
       WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%_I"), (uint32_t)WiFi.localIP());
-      WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
   }
   if (!TasmotaGlobal.global_state.network_down) {
@@ -2345,12 +2347,20 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->ipv4_address[3]);
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->ipv4_address[4]);
   }
-  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%_I"), (uint32_t)WiFi.softAPIP());
-    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
   }
+  if (!TasmotaGlobal.global_state.network_down) {
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->eth_ipv4_address[1]);
+    WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->eth_ipv4_address[2]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->eth_ipv4_address[3]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->eth_ipv4_address[4]);
+  }
+#endif  // USE_ETHERNET
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_HTTP_API "}2%s"), Settings->flag5.disable_referer_chk ? PSTR(D_ENABLED) : PSTR(D_DISABLED)); // SetOption 128
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
