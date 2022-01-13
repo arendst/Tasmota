@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [2022.01.2]
 ### Added
 - Tasmota favicon to webbrowser tab (#14322)
+- Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
 
 ### Changed
 - IRremoteESP8266 library from v2.8.0 to v2.8.1

@@ -921,7 +921,7 @@ void MqttConnected(void) {
           (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER));
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
-            TasmotaGlobal.hostname, WiFi.localIP());
+            TasmotaGlobal.hostname, (uint32_t)WiFi.localIP());
 #if LWIP_IPV6
           ResponseAppend_P(PSTR(",\"IPv6Address\":\"%s\""), WifiGetIPv6().c_str());
 #endif  // LWIP_IPV6 = 1
