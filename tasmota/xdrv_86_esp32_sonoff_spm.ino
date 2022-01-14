@@ -142,6 +142,8 @@
 
 /*********************************************************************************************/
 
+#define SSPM_FINAL_MAX_MODULES       32            // Max number of SPM-4RELAY units for a total of 128 relays
+
 const uint32_t SSPM_VERSION = 0x01010101;          // Latest driver version (See settings deltas below)
 
 enum SspmMachineStates { SPM_NONE,                 // Do nothing
@@ -164,7 +166,7 @@ TasmotaSerial *SspmSerial;
 typedef struct {
   uint32_t crc32;                                 // To detect file changes
   uint32_t version;                               // To detect driver function changes
-  uint16_t module_map[32];                        // Max possible SPM relay modules
+  uint16_t module_map[SSPM_FINAL_MAX_MODULES];    // Max possible SPM relay modules
 } tSspmSettings;
 
 typedef struct {
@@ -198,6 +200,7 @@ typedef struct {
   uint8_t mstate;
   uint8_t last_button;
   uint8_t error_led_blinks;
+  bool map_change;
   bool discovery_triggered;
 } TSspm;
 
@@ -294,27 +297,45 @@ uint32_t SSMPGetModuleId(uint32_t module) {
   if (module < Sspm->module_max) {
     module_id = Sspm->module[module][0] << 8 | Sspm->module[module][1];
   }
-  return module_id;
+  return module_id;                 // 0 if not found, else first two bytes of module_id
+}
+
+int SSPMGetMappedModuleIdIfFound(uint32_t module) {
+  // Return mapped module number
+  for (uint32_t module_nr = 0; module_nr < Sspm->module_max; module_nr++) {
+    if (Sspm->Settings.module_map[module] == SSMPGetModuleId(module_nr)) {
+      return module_nr;             // 0, 1, ..
+    }
+  }
+  return -1;                        // -1 if not found
 }
 
 uint32_t SSPMGetMappedModuleId(uint32_t module) {
   // Return mapped module number
-  for (uint32_t module_nr = 0; module_nr < Sspm->module_max; module_nr++) {
-    if (Sspm->Settings.module_map[module] == SSMPGetModuleId(module_nr)) {
-      return module_nr;  // 0, 1, ..
+  int module_nr = SSPMGetMappedModuleIdIfFound(module);
+  if (-1 == module_nr) {
+    module_nr = module;             // input module number if not found used as fallback
+  }
+  return (uint32_t)module_nr;       // 0, 1, ...
+}
+
+int SSPMGetModuleNumberFromMapIfFound(uint32_t id) {
+  // Return module number based on first two bytes of module id
+  for (uint32_t module_nr = 0; module_nr < SSPM_MAX_MODULES; module_nr++) {
+    if (id == Sspm->Settings.module_map[module_nr]) {
+      return module_nr;             // 0, 1, ...
     }
   }
-  return module;
+  return -1;                        // -1 if not found
 }
 
 uint32_t SSPMGetModuleNumberFromMap(uint32_t id) {
   // Return module number based on first two bytes of module id
-  for (uint32_t module_nr = 0; module_nr < SSPM_MAX_MODULES; module_nr++) {
-    if (id == Sspm->Settings.module_map[module_nr]) {
-      return module_nr;  // 0, 1, ...
-    }
+  int module_nr = SSPMGetModuleNumberFromMapIfFound(id);
+  if (-1 == module_nr) {
+    module_nr = 0;                  // 0 if not found used as fallback
   }
-  return 0;
+  return (uint32_t)module_nr;                 // 0, 1, ...
 }
 
 void SSPMSetLock(uint32_t seconds) {
@@ -975,12 +996,34 @@ void SSPMHandleReceivedData(void) {
           if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
             Sspm->Settings.module_map[Sspm->module_max] = module_id;
           }
-
-          uint32_t mapped = SSPMGetModuleNumberFromMap(module_id) +1;
+          int mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
+          if (-1 == mapped) { Sspm->map_change = true; }
+          mapped++;
           AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
             Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
 
           Sspm->module_max++;
+/*
+          // Debugging module removal/addition/change (exception 3)
+          if ((1 == Sspm->module_max) && (Settings->flag3.user_esp8285_enable)) {  // SO51
+            SspmBuffer[19] = 0x4B;
+            SspmBuffer[20] = 0x62;
+            memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
+            module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
+            if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
+              Sspm->Settings.module_map[Sspm->module_max] = module_id;
+            }
+            mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
+            if (-1 == mapped) {
+              Sspm->map_change = true;
+            }
+            mapped++;
+            AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
+              Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
+
+            Sspm->module_max++;
+          }
+*/
         }
         SSPMSendAck(command_sequence);
         break;
@@ -989,6 +1032,40 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 19 00 00 03 a1 16
         */
         SSPMSendAck(command_sequence);
+
+        // Warn for mapping change when removal or addition of 4Relay modules
+        for (uint32_t module = Sspm->module_max; module < SSPM_MAX_MODULES; module++) {
+          // Clear obsolete mapping slots
+          Sspm->Settings.module_map[module] = 0;
+        }
+        for (uint32_t module = 0; module < Sspm->module_max; module++) {
+          // Remove not scanned module (probably physical removed) from mapping
+          if (-1 == SSPMGetMappedModuleIdIfFound(module)) {
+            // Clear mapping slot
+            Sspm->Settings.module_map[module] = 0;
+            Sspm->map_change = true;
+          }
+        }
+        for (uint32_t module = 0; module < Sspm->module_max; module++) {
+          // Add scanned module to mapping
+          uint32_t module_id = SSMPGetModuleId(module);
+          if (-1 == SSPMGetModuleNumberFromMapIfFound(module_id)) {
+            // Scanned module not in mapping list (probably due to physical install)
+            for (uint32_t i = 0; i < Sspm->module_max; i++) {
+              // Find empty slot in mapping and insert
+              if (0 == Sspm->Settings.module_map[i]) {
+                Sspm->Settings.module_map[i] = module_id;
+                Sspm->map_change = true;
+                break;
+              }
+            }
+          }
+        }
+        if (Sspm->map_change) {
+          Sspm->map_change = false;
+          AddLog(LOG_LEVEL_INFO, PSTR("SPM: WARNING 4Relay mapping possibly changed"));
+        }
+
         Sspm->module_selected = Sspm->module_max;
         SSPMSendSetTime();
         break;
@@ -1052,7 +1129,7 @@ void SSPMInit(void) {
       !ValidTemplate(PSTR("Sonoff SPM (POC2)"))) { return; }
   if (!PinUsed(GPIO_RXD) || !PinUsed(GPIO_TXD)) { return; }
 
-  Sspm = (TSspm*)calloc(sizeof(TSspm), 1);
+  Sspm = (TSspm*)calloc(sizeof(TSspm), 1);    // Need calloc to reset registers to 0/false
   if (!Sspm) { return; }
   SspmBuffer = (uint8_t*)malloc(SSPM_SERIAL_BUFFER_SIZE);
   if (!SspmBuffer) {
