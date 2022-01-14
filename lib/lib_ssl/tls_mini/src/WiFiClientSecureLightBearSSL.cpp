@@ -418,6 +418,10 @@ size_t WiFiClientSecure_light::_write(const uint8_t *buf, size_t size, bool pmem
   return sent_bytes;
 }
 
+void WiFiClientSecure_light::setInsecure() {
+  _insecure = true;
+}
+
 size_t WiFiClientSecure_light::write(const uint8_t *buf, size_t size) {
   return _write(buf, size, false);
 }
@@ -965,7 +969,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     _freeSSL();
     clearLastError();
 #ifdef ESP8266
-    if (!stack_thunk_light_get_stack_bot()) break;  
+    if (!stack_thunk_light_get_stack_bot()) break;
 #endif // ESP8266
 
     _ctx_present = true;
