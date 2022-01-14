@@ -317,7 +317,7 @@ void BerryInit(void) {
       be_pop(berry.vm, 1);
     }
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u bytes"), callBerryGC());
     berry_init_ok = true;
 
     // we generate a synthetic event `autoexec`

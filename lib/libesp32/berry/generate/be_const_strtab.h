@@ -83,7 +83,7 @@ extern const bcstring be_const_str_SERIAL_8O1;
 extern const bcstring be_const_str_SERIAL_8O2;
 extern const bcstring be_const_str_SK6812_GRBW;
 extern const bcstring be_const_str_STATE_DEFAULT;
-extern const bcstring be_const_str_TAP_X3A_X20found_X20Tasmota_X20App_X20_X27_X25s_X27;
+extern const bcstring be_const_str_TAP_X3A_X20Loaded_X20Tasmota_X20App_X20_X27_X25s_X27;
 extern const bcstring be_const_str_Tasmota;
 extern const bcstring be_const_str_Tele;
 extern const bcstring be_const_str_Timer;
