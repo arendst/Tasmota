@@ -177,10 +177,17 @@ void DeviceGroupsStart()
     }
 
     // Subscribe to device groups multicasts.
+#ifdef ESP8266
     if (!device_groups_udp.beginMulticast(WiFi.localIP(), IPAddress(DEVICE_GROUPS_ADDRESS), DEVICE_GROUPS_PORT)) {
       AddLog(LOG_LEVEL_ERROR, PSTR("DGR: Error subscribing"));
       return;
     }
+#else
+    if (!device_groups_udp.beginMulticast(IPAddress(DEVICE_GROUPS_ADDRESS), DEVICE_GROUPS_PORT)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("DGR: Error subscribing"));
+      return;
+    }
+#endif
     device_groups_up = true;
 
     // The WiFi was down but now it's up and device groups is initialized. (Re-)discover devices in
