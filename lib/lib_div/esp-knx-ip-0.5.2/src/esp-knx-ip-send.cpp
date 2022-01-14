@@ -77,7 +77,14 @@ void ESPKNXIP::send(address_t const &receiver, knx_command_type_t ct, uint8_t da
 	DEBUG_PRINTLN(F(""));
 #endif
 
+#ifdef ESP8266
 	udp.beginPacketMulticast(MULTICAST_IP, MULTICAST_PORT, WiFi.localIP());
+#else
+	if (0 == udp.beginMulticastPacket()) {
+		udp.beginMulticast(MULTICAST_IP, MULTICAST_PORT);
+		udp.beginMulticastPacket();
+	}
+#endif
 	udp.write(buf, len);
  	udp.endPacket();
 	delay(1);
