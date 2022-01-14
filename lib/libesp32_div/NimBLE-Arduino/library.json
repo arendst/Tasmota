@@ -2,7 +2,7 @@
     "name": "NimBLE-Arduino",
     "keywords": "esp32, bluetooth",
     "description": "Bluetooth low energy (BLE) library for arduino-esp32 based on NimBLE",
-    "version": "1.3.3",
+    "version": "1.3.5",
     "frameworks": "arduino",
     "platforms": "espressif32"
 }

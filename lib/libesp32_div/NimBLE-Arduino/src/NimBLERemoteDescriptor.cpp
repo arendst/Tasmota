@@ -11,9 +11,11 @@
  *  Created on: Jul 8, 2017
  *      Author: kolban
  */
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteDescriptor.h"
 #include "NimBLEUtils.h"
@@ -137,7 +139,8 @@ std::string NimBLERemoteDescriptor::readValue() {
 
     int rc = 0;
     int retryCount = 1;
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(),0, &value};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, &value};
 
     do {
         rc = ble_gattc_read_long(pClient->getConnId(), m_handle, 0,
@@ -149,6 +152,10 @@ std::string NimBLERemoteDescriptor::readValue() {
             return value;
         }
 
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         rc = taskData.rc;
 
@@ -186,7 +193,6 @@ int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
                 const struct ble_gatt_error *error,
                 struct ble_gatt_attr *attr, void *arg)
 {
-    (void)attr;
     ble_task_data_t *pTaskData = (ble_task_data_t*)arg;
     NimBLERemoteDescriptor* desc = (NimBLERemoteDescriptor*)pTaskData->pATT;
     uint16_t conn_id = desc->getRemoteCharacteristic()->getRemoteService()->getClient()->getConnId();
@@ -202,11 +208,12 @@ int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
 
     if(rc == 0) {
         if(attr) {
-            if(((*strBuf).length() + attr->om->om_len) > BLE_ATT_ATTR_MAX_LEN) {
+            uint32_t data_len = OS_MBUF_PKTLEN(attr->om);
+            if(((*strBuf).length() + data_len) > BLE_ATT_ATTR_MAX_LEN) {
                 rc = BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             } else {
-                NIMBLE_LOGD(LOG_TAG, "Got %d bytes", attr->om->om_len);
-                (*strBuf) += std::string((char*) attr->om->om_data, attr->om->om_len);
+                NIMBLE_LOGD(LOG_TAG, "Got %d bytes", data_len);
+                (*strBuf) += std::string((char*) attr->om->om_data, data_len);
                 return 0;
             }
         }
@@ -288,7 +295,8 @@ bool NimBLERemoteDescriptor::writeValue(const uint8_t* data, size_t length, bool
         return (rc == 0);
     }
 
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
 
     do {
         if(length > mtu) {
@@ -309,6 +317,10 @@ bool NimBLERemoteDescriptor::writeValue(const uint8_t* data, size_t length, bool
             return false;
         }
 
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         rc = taskData.rc;
 
@@ -349,4 +361,5 @@ bool NimBLERemoteDescriptor::writeValue(const std::string &newValue, bool respon
     return writeValue((uint8_t*) newValue.data(), newValue.length(), response);
 } // writeValue
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
+#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#endif /* CONFIG_BT_ENABLED */

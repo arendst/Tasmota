@@ -11,8 +11,11 @@
  *      Author: kolban
  */
 
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLEClient.h"
 #include "NimBLEDevice.h"
@@ -21,11 +24,8 @@
 #include <string>
 #include <unordered_set>
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "nimble/nimble_port.h"
-#else
-#include "nimble/porting/nimble/include/nimble/nimble_port.h"
-#endif
+
 
 static const char* LOG_TAG = "NimBLEClient";
 static NimBLEClientCallbacks defaultCallbacks;
@@ -74,7 +74,6 @@ NimBLEClient::NimBLEClient(const NimBLEAddress &peerAddress) : m_peerAddress(pee
     m_pConnParams.min_ce_len = BLE_GAP_INITIAL_CONN_MIN_CE_LEN; // Minimum length of connection event in 0.625ms units
     m_pConnParams.max_ce_len = BLE_GAP_INITIAL_CONN_MAX_CE_LEN; // Maximum length of connection event in 0.625ms units
 
-    memset(&m_dcTimer, 0, sizeof(m_dcTimer));
     ble_npl_callout_init(&m_dcTimer, nimble_port_get_dflt_eventq(),
                          NimBLEClient::dcTimerCb, this);
 } // NimBLEClient
@@ -207,7 +206,8 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         m_peerAddress = address;
     }
 
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
     m_pTaskData = &taskData;
     int rc = 0;
 
@@ -260,6 +260,10 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         return false;
     }
 
+#ifdef ulTaskNotifyValueClear
+    // Clear the task notification value to ensure we block
+    ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
     // Wait for the connect timeout time +1 second for the connection to complete
     if(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(m_connectTimeout + 1000)) == pdFALSE) {
         m_pTaskData = nullptr;
@@ -310,7 +314,8 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
  * @return True on success.
  */
 bool NimBLEClient::secureConnection() {
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
 
     int retryCount = 1;
 
@@ -324,6 +329,10 @@ bool NimBLEClient::secureConnection() {
             return false;
         }
 
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     } while (taskData.rc == (BLE_HS_ERR_HCI_BASE + BLE_ERR_PINKEY_MISSING) && retryCount--);
 
@@ -442,28 +451,6 @@ void NimBLEClient::updateConnParams(uint16_t minInterval, uint16_t maxInterval,
                     rc, NimBLEUtils::returnCodeToString(rc));
     }
 } // updateConnParams
-
-
-/**
- * @brief Request an update of the data packet length.
- * * Can only be used after a connection has been established.
- * @details Sends a data length update request to the server the client is connected to.
- * The Data Length Extension (DLE) allows to increase the Data Channel Payload from 27 bytes to up to 251 bytes.
- * The server needs to support the Bluetooth 4.2 specifications, to be capable of DLE.
- * @param [in] tx_octets The preferred number of payload octets to use (Range 0x001B-0x00FB).
- */
-void NimBLEClient::setDataLen(uint16_t tx_octets) {
-#ifdef CONFIG_NIMBLE_CPP_IDF // not yet available in IDF, Sept 9 2021
-    return;
-#else
-    uint16_t tx_time = (tx_octets + 14) * 8;
-
-    int rc = ble_gap_set_data_len(m_conn_id, tx_octets, tx_time);
-    if(rc != 0) {
-        NIMBLE_LOGE(LOG_TAG, "Set data length error: %d, %s", rc, NimBLEUtils::returnCodeToString(rc));
-    }
-#endif
-} // setDataLen
 
 
 /**
@@ -670,7 +657,8 @@ bool NimBLEClient::retrieveServices(const NimBLEUUID *uuid_filter) {
     }
 
     int rc = 0;
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
 
     if(uuid_filter == nullptr) {
         rc = ble_gattc_disc_all_svcs(m_conn_id, NimBLEClient::serviceDiscoveredCB, &taskData);
@@ -684,6 +672,11 @@ bool NimBLEClient::retrieveServices(const NimBLEUUID *uuid_filter) {
         m_lastErr = rc;
         return false;
     }
+
+#ifdef ulTaskNotifyValueClear
+    // Clear the task notification value to ensure we block
+    ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
 
     // wait until we have all the services
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -958,11 +951,11 @@ uint16_t NimBLEClient::getMTU() {
                                 (*characteristic)->toString().c_str());
 
                     time_t t = time(nullptr);
-                    ble_npl_hw_enter_critical();
+                    portENTER_CRITICAL(&(*characteristic)->m_valMux);
                     (*characteristic)->m_value = std::string((char *)event->notify_rx.om->om_data,
                                                              event->notify_rx.om->om_len);
                     (*characteristic)->m_timestamp = t;
-                    ble_npl_hw_exit_critical(0);
+                    portEXIT_CRITICAL(&(*characteristic)->m_valMux);
 
                     if ((*characteristic)->m_notifyCallback != nullptr) {
                         NIMBLE_LOGD(LOG_TAG, "Invoking callback for notification on characteristic %s",
@@ -1212,4 +1205,5 @@ bool NimBLEClientCallbacks::onConfirmPIN(uint32_t pin){
     return true;
 }
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
+#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#endif // CONFIG_BT_ENABLED
