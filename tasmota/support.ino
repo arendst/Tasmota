@@ -2410,7 +2410,7 @@ void SyslogAsync(bool refresh) {
         line_start += 1460;
       }
 #else
-      PortUdp.write(header);
+      PortUdp.write((const uint8_t*)header, strlen(header));
       PortUdp.write((uint8_t*)line_start, len -mxtime -1);
       PortUdp.endPacket();
 #endif

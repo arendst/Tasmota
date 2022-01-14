@@ -291,7 +291,7 @@ public:
       }
       char response[400];
       snprintf_P(response, sizeof(response), WEMO_MSEARCH, WiFi.localIP().toString().c_str(), _localPort, type, WemoUuid().c_str(), type);
-      PortUdp.write(response);
+      PortUdp.write((const uint8_t*)response, strlen(response));
       PortUdp.endPacket();
 
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("WMO: Sending packet device %d: %s"), _deviceId, response);

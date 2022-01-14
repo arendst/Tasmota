@@ -1020,7 +1020,11 @@ void Script_Init_UDP() {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
+#ifdef ESP8266
   if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+#else
+  if (glob_script_mem.Script_PortUdp.beginMulticast(IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+#endif
 #ifdef SCRIPT_DEBUG_UDP
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
 #endif
