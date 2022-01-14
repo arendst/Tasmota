@@ -233,6 +233,9 @@ static int l_int(bvm *vm)
             be_pushvalue(vm, 1);
         } else if (be_isbool(vm, 1)) {
             be_pushint(vm, be_tobool(vm, 1) ? 1 : 0);
+        } else if (be_iscomptr(vm, 1)) {
+            intptr_t p = (intptr_t) be_tocomptr(vm, 1);
+            be_pushint(vm, (int) p);
         } else {
             be_return_nil(vm);
         }
