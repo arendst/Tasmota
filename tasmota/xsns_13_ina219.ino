@@ -45,6 +45,7 @@
 #define INA219_CONFIG_BVOLTAGERANGE_MASK        (0x2000)  // Bus Voltage Range Mask
 #define INA219_CONFIG_BVOLTAGERANGE_16V         (0x0000)  // 0-16V Range
 #define INA219_CONFIG_BVOLTAGERANGE_32V         (0x2000)  // 0-32V Range
+#define ISL28022_CONFIG_BVOLTAGERANGE_60V       (0x6000)  // 0-60V Range for ISL28022
 
 #define INA219_CONFIG_GAIN_MASK                 (0x1800)  // Gain Mask
 #define INA219_CONFIG_GAIN_1_40MV               (0x0000)  // Gain 1, 40mV Range
@@ -65,6 +66,7 @@
 #define INA219_CONFIG_BADCRES_12BIT_64S_34MS    (0xE<<7)  // 64 x 12-bit bus samples averaged together
 #define INA219_CONFIG_BADCRES_12BIT_128S_69MS   (0xF<<7)  // 128 x 12-bit bus samples averaged together
 
+// Note: for IS28022, the ADC has 3 more bits and approximatively similar conversion times
 #define INA219_CONFIG_SADCRES_MASK              (0x0078)  // Shunt ADC Resolution and Averaging Mask
 #define INA219_CONFIG_SADCRES_9BIT_1S_84US      (0x0<<3)  // 1 x 9-bit shunt sample
 #define INA219_CONFIG_SADCRES_10BIT_1S_148US    (0x1<<3)  // 1 x 10-bit shunt sample
@@ -111,6 +113,9 @@ struct INA219_Channel_Data {
 
 struct INA219_Data {
   struct INA219_Channel_Data  chan[INA219_MAX_COUNT];
+  // The following multiplier is used to convert shunt voltage (in mV) to current (in A)
+  // Current_A = ShuntVoltage_mV / ShuntResistor_milliOhms = ShuntVoltage_mV * ina219_current_multiplier
+  // ina219_current_multiplier = 1 / ShuntResistor_milliOhms
   float current_multiplier;
   uint8_t   count;
 };
@@ -120,19 +125,6 @@ struct INA219_Data *Ina219Data = nullptr;
 const char INA219_TYPE[] = "INA219";
 const uint8_t INA219_ADDRESSES[] = { INA219_ADDRESS1, INA219_ADDRESS2, INA219_ADDRESS3, INA219_ADDRESS4 };
 
-//uint8_t ina219_type[4] = {0,0,0,0};
-//uint8_t ina219_addresses[] = { INA219_ADDRESS1, INA219_ADDRESS2, INA219_ADDRESS3, INA219_ADDRESS4 };
-
-
-// The following multiplier is used to convert shunt voltage (in mV) to current (in A)
-// Current_A = ShuntVoltage_mV / ShuntResistor_milliOhms = ShuntVoltage_mV * ina219_current_multiplier
-// ina219_current_multiplier = 1 / ShuntResistor_milliOhms
-//float Ina219Data->current_multiplier
-
-//uint8_t ina219_valid[4] = {0,0,0,0};
-//float ina219_voltage[4] = {0,0,0,0};
-//float ina219_current[4] = {0,0,0,0};
-//uint8_t ina219_count = 0;
 
 /*********************************************************************************************\
  * Calculate current multiplier depending on the selected mode
@@ -175,7 +167,7 @@ bool Ina219SetCalibration(uint8_t mode, uint16_t addr)
     DEBUG_SENSOR_LOG("Ina219SetCalibration: shunt=%dmO => cur_mul=%s",shunt_milliOhms,__ina219_dbg1);
     #endif
   }
-  config = INA219_CONFIG_BVOLTAGERANGE_32V
+  config = ISL28022_CONFIG_BVOLTAGERANGE_60V        // If INA219 0..32V, If ISL28022 0..60V
          | INA219_CONFIG_GAIN_8_320MV               // Use max scale
          | INA219_CONFIG_BADCRES_12BIT_16S_8510US   // use averaging to improve accuracy
          | INA219_CONFIG_SADCRES_12BIT_16S_8510US   // use averaging to improve accuracy
@@ -195,11 +187,14 @@ float Ina219GetShuntVoltage_mV(uint16_t addr)
 
 float Ina219GetBusVoltage_V(uint16_t addr)
 {
-  // Shift 3 to the right to drop CNVR and OVF as unsigned
-  uint16_t value = I2cRead16(addr, INA219_REG_BUSVOLTAGE) >> 3;
+  // Shift 2 to the right to drop CNVR and OVF as unsigned
+  // On ISL28022, bit 2 is the LSB with a weight of 0.002V
+  // On INA219, bit 2 is 0 and LSB is bit 3 with a weight of 0.004V
+  // Assuming ISL28022 is also compatible with INA219
+  uint16_t value = I2cRead16(addr, INA219_REG_BUSVOLTAGE) >> 2;
   DEBUG_SENSOR_LOG("Ina219GetBusVoltage_V: BusReg = 0x%04X (%d)",value, value);
   // and multiply by LSB raw bus voltage to return bus voltage in volts (LSB=4mV=0.004V)
-  return (float)value * 0.004;
+  return (float)value * 0.002;
 }
 
 bool Ina219Read(void)
