@@ -11,9 +11,11 @@
  *  Created on: Jul 8, 2017
  *      Author: kolban
  */
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteService.h"
 #include "NimBLEUtils.h"
@@ -196,7 +198,8 @@ bool NimBLERemoteService::retrieveCharacteristics(const NimBLEUUID *uuid_filter)
     NIMBLE_LOGD(LOG_TAG, ">> retrieveCharacteristics() for service: %s", getUUID().toString().c_str());
 
     int rc = 0;
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
 
     if(uuid_filter == nullptr) {
         rc = ble_gattc_disc_all_chrs(m_pClient->getConnId(),
@@ -218,6 +221,10 @@ bool NimBLERemoteService::retrieveCharacteristics(const NimBLEUUID *uuid_filter)
         return false;
     }
 
+#ifdef ulTaskNotifyValueClear
+    // Clear the task notification value to ensure we block
+    ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     if(taskData.rc == 0){
@@ -384,4 +391,6 @@ std::string NimBLERemoteService::toString() {
     return res;
 } // toString
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
+
+#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#endif /* CONFIG_BT_ENABLED */

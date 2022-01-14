@@ -14,9 +14,11 @@
 
 #ifndef MAIN_NIMBLEDESCRIPTOR_H_
 #define MAIN_NIMBLEDESCRIPTOR_H_
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLECharacteristic.h"
 #include "NimBLEUUID.h"
@@ -90,6 +92,7 @@ private:
     NimBLECharacteristic*      m_pCharacteristic;
     uint8_t                    m_properties;
     attr_value_t               m_value;
+    portMUX_TYPE               m_valMux;
     uint8_t                    m_removed;
 }; // NimBLEDescriptor
 
@@ -110,5 +113,6 @@ public:
 
 #include "NimBLE2904.h"
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif /* CONFIG_BT_ENABLED */
 #endif /* MAIN_NIMBLEDESCRIPTOR_H_ */

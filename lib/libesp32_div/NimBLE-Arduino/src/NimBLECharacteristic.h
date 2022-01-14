@@ -13,15 +13,13 @@
 
 #ifndef MAIN_NIMBLECHARACTERISTIC_H_
 #define MAIN_NIMBLECHARACTERISTIC_H_
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_hs.h"
-#else
-#include "nimble/nimble/host/include/host/ble_hs.h"
-#endif
-
 /****  FIX COMPILATION ****/
 #undef min
 #undef max
@@ -153,6 +151,7 @@ private:
     NimBLEService*                 m_pService;
     std::string                    m_value;
     std::vector<NimBLEDescriptor*> m_dscVec;
+    portMUX_TYPE                   m_valMux;
     time_t                         m_timestamp;
     uint8_t                        m_removed;
 
@@ -196,5 +195,6 @@ public:
     virtual void onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue);
 };
 
-#endif /* CONFIG_BT_ENABLED  && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif /* CONFIG_BT_ENABLED */
 #endif /*MAIN_NIMBLECHARACTERISTIC_H_*/

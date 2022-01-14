@@ -15,8 +15,11 @@
 #ifndef _BLEHIDDEVICE_H_
 #define _BLEHIDDEVICE_H_
 
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+#if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 
 #include "NimBLECharacteristic.h"
 #include "NimBLEService.h"
@@ -81,6 +84,6 @@ private:
 	NimBLECharacteristic* 	m_protocolModeCharacteristic;	//0x2a4e
 	NimBLECharacteristic*	m_batteryLevelCharacteristic;	//0x2a19
 };
-
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER */
+#endif // CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#endif // CONFIG_BT_ENABLED
 #endif /* _BLEHIDDEVICE_H_ */
