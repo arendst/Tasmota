@@ -1406,6 +1406,9 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
   WSContentSend_P(PSTR("{t}"));
+  if (Settings->flag3.gui_hostname_ip) {
+    WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s"), GetDateAndTime(DT_LOCAL).substring(0, 16).c_str());  // no seconds
+  }
   XsnsCall(FUNC_WEB_SENSOR);
   XdrvCall(FUNC_WEB_SENSOR);
 
