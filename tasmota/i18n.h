@@ -132,6 +132,7 @@
 #define D_JSON_PH "pH"
 #define D_JSON_PHASE_ANGLE "PhaseAngle"
 #define D_JSON_POWERFACTOR "Factor"
+#define D_JSON_POWERMAX "MaxPower"
 #define D_JSON_POWERUSAGE "Power"
 #define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
 #define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
@@ -220,6 +221,7 @@
 #define D_JSON_IMPORT "Import"
 #define D_JSON_EXPORT "Export"
 #define D_JSON_TOTAL_ACTIVE "TotalActive"
+#define D_JSON_RESETTABLE_TOTAL_ACTIVE "ResetTotalActive"
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
 

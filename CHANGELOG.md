@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
+- added support for Eastron SDM230 ModBus
 
 ## [2022.01.2]
 ### Added
