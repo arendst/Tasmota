@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 03.11.2021
+ * Updated until v9.5.0.9 - Last update 15.01.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -926,9 +926,9 @@
 #define D_SOLAX_MODE_1    "Controllo"
 #define D_SOLAX_MODE_2    "Attivo"
 #define D_SOLAX_MODE_3    "Errore"
-#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
-#define D_SOLAX_MODE_5    "Software Update"  // to be translated
-#define D_SOLAX_MODE_6    "Selftest"  // to be translated
+#define D_SOLAX_MODE_4    "Errore permanente"
+#define D_SOLAX_MODE_5    "Aggiornamento software"
+#define D_SOLAX_MODE_6    "Test autoverifica"
 #define D_SOLAX_ERROR_0   "Nessun codice errore"
 #define D_SOLAX_ERROR_1   "Griglia errore persa"
 #define D_SOLAX_ERROR_2   "Griglia errore tensione"
