@@ -100,6 +100,7 @@ return_types = {
   "lv_style_selector_t": "i",
   "lv_draw_mask_res_t": "i",
   "lv_img_size_mode_t": "i",
+  "lv_palette_t": "i",
   # layouts
   "lv_flex_align_t": "i",
   "lv_flex_flow_t": "i",
