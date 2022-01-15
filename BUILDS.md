@@ -76,6 +76,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MCP39F501         | x | x / - | x | x | - | - |
 | USE_SDM72             | - | - / x | - | x | - | - |
 | USE_SDM120            | - | - / x | - | x | - | - |
+| USE_SDM230            | - | - / x | - | - | - | - |
 | USE_SDM630            | - | - / x | - | x | - | - |
 | USE_DDS2382           | - | - / x | - | x | - | - |
 | USE_DDSU666           | - | - / x | - | x | - | - |

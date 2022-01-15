@@ -1,7 +1,7 @@
 /*
-  xnrg_08_sdm230.ino - Eastron SDM230-Modbus energy meter support for Tasmota
+  xnrg_21_sdm230.ino - Eastron SDM230-Modbus energy meter support for Tasmota
 
-  Copyright (C) 2021  Gennaro Tortone and Theo Arends
+  Copyright (C) 2022  dad401 and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
  *
  * Based on: existing tasmota drivers for SDM120 and SDM630,
  * https://github.com/reaper7/SDM_Energy_Meter and https://github.com/nmakel/sdm_modbus
- 
+
  * manuals can be found here:
  * German:  https://bg-etech.de/download/manual/SDM230-Modbus.pdf
  * English: https://www.eastroneurope.com/images/uploads/products/manuals/SDM230_Sereis_Manual.pdf
@@ -52,7 +52,7 @@ const uint16_t sdm230_start_addresses[] {
   0x000C,   // SDM230_POWER (Active)                      [W]
   0x0012,   // SDM230_POWER (Apparent) G                  [VA]
   0x0018,   // SDM230_POWER (Reactive)                    [VAr]
-  0x001E,   // SDM230_POWER_FACTOR 
+  0x001E,   // SDM230_POWER_FACTOR
   0x0046,   // SDM230_FREQUENCY                           [Hz]
   0X0048,   // SDM230_IMPORT_ACTIVE                       [kWh]
   0X004A,   // SDM230_EXPORT_ACTIVE                       [kWh]
@@ -152,17 +152,17 @@ void SDM230Every250ms(void)
           Energy.export_active[0] = value;    // 478.492 kWh
           break;
 
-        #ifdef SDM230_MORE_REGS 
+        #ifdef SDM230_MORE_REGS
         case 9:
           Sdm230.phase_angle = value;      // 0.00 Deg
           break;
 
         case 10:
-          Sdm230.maximum_total_demand_power_active  = value;  
+          Sdm230.maximum_total_demand_power_active  = value;
           break;
 
         case 11:
-          Sdm230.resettable_total_energy = value;  
+          Sdm230.resettable_total_energy = value;
           break;
         #endif // SDM230_MORE_REGS
       }
@@ -170,9 +170,9 @@ void SDM230Every250ms(void)
       Sdm230.read_state++;
       if (sizeof(sdm230_start_addresses)/2 == Sdm230.read_state) {
         Sdm230.read_state = 0;
-        EnergyUpdateTotal();                 // update every cycle after all registers have been read 
+        EnergyUpdateTotal();                 // update every cycle after all registers have been read
       }
-      
+
     }
   } // end data ready
 
