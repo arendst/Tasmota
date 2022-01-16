@@ -117,6 +117,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "scr_act", (void*) &lv_scr_act, "lv.lv_obj", "" },
   { "scr_load", (void*) &lv_scr_load, "", "(lv.lv_obj)" },
   { "scr_load_anim", (void*) &lv_scr_load_anim, "", "(lv.lv_obj)iiib" },
+  { "task_handler", (void*) &lv_task_handler, "i", "" },
   { "theme_apply", (void*) &lv_theme_apply, "", "(lv.lv_obj)" },
   { "theme_default_get", (void*) &lv_theme_default_get, "lv.lv_theme", "" },
   { "theme_default_init", (void*) &lv_theme_default_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" },
