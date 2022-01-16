@@ -95,6 +95,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "img_src_get_type", (void*) &lv_img_src_get_type, "i", "." },
   { "indev_get_act", (void*) &lv_indev_get_act, "lv.lv_indev", "" },
   { "indev_get_obj_act", (void*) &lv_indev_get_obj_act, "lv.lv_obj", "" },
+  { "indev_get_read_timer", (void*) &lv_indev_get_read_timer, "lv.lv_timer", "(lv.lv_disp)" },
   { "indev_read_timer_cb", (void*) &lv_indev_read_timer_cb, "", "(lv.lv_timer)" },
   { "is_initialized", (void*) &lv_is_initialized, "b", "" },
   { "layer_sys", (void*) &lv_layer_sys, "lv.lv_obj", "" },
