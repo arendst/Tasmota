@@ -17,6 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  #include "HttpClientLight.h"
+#endif
+
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 const char kPrefixes[] PROGMEM = D_CMND "|" D_STAT "|" D_TELE;
 
