@@ -875,7 +875,7 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 
   // SetOption53 - Show hostname and IP address in GUI main menu
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
-  if (Settings->flag3.gui_hostname_ip) {
+  if (Settings->flag3.gui_hostname_ip) {               // SetOption53  - (GUI) Show hostname and IP address in GUI main menu
 #else
   if ( Settings->flag3.gui_hostname_ip || ( (WiFi.getMode() == WIFI_AP_STA) && (!Web.initial_config) )  ) {
 #endif
@@ -1406,6 +1406,9 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
   WSContentSend_P(PSTR("{t}"));
+  if (Settings->web_time_end) {
+    WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
+  }
   XsnsCall(FUNC_WEB_SENSOR);
   XdrvCall(FUNC_WEB_SENSOR);
 
@@ -3281,6 +3284,7 @@ const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|
 ;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_WEBTIME "|"
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
 #endif
@@ -3298,6 +3302,7 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 ;
 
 void (* const WebCommand[])(void) PROGMEM = {
+  &CmndWebTime,
 #ifdef USE_EMULATION
   &CmndEmulation,
 #endif
@@ -3317,6 +3322,25 @@ void (* const WebCommand[])(void) PROGMEM = {
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
+
+void CmndWebTime(void) {
+  // 2017-03-07T11:08:02-07:00
+  // 0123456789012345678901234
+  //
+  // WebTime 0,16  = 2017-03-07T11:08 - No seconds
+  // WebTime 11,19 = 11:08:02
+  uint32_t values[2] = { 0 };
+  String datetime = GetDateAndTime(DT_LOCAL);
+  if (ParseParameters(2, values) > 1) {
+    Settings->web_time_start = values[0];
+    Settings->web_time_end = values[1];
+    if (Settings->web_time_end > datetime.length()) { Settings->web_time_end = datetime.length(); }
+    if (Settings->web_time_start >= Settings->web_time_end) { Settings->web_time_start = 0; }
+  }
+  Response_P(PSTR("{\"%s\":[%d,%d],\"Time\":\"%s\"}"),
+    XdrvMailbox.command, Settings->web_time_start, Settings->web_time_end,
+    datetime.substring(Settings->web_time_start, Settings->web_time_end).c_str());
+}
 
 #ifdef USE_EMULATION
 void CmndEmulation(void)
