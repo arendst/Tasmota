@@ -258,6 +258,7 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "get_style_border_side", (void*) &lv_obj_get_style_border_side, "i", "(lv.lv_obj)i" },
   { "get_style_border_width", (void*) &lv_obj_get_style_border_width, "i", "(lv.lv_obj)i" },
   { "get_style_clip_corner", (void*) &lv_obj_get_style_clip_corner, "b", "(lv.lv_obj)i" },
+  { "get_style_color_filter_dsc", (void*) &lv_obj_get_style_color_filter_dsc, "lv.lv_color_filter_dsc", "(lv.lv_obj)i" },
   { "get_style_color_filter_opa", (void*) &lv_obj_get_style_color_filter_opa, "i", "(lv.lv_obj)i" },
   { "get_style_flex_cross_place", (void*) &lv_obj_get_style_flex_cross_place, "i", "(lv.lv_obj)i" },
   { "get_style_flex_flow", (void*) &lv_obj_get_style_flex_flow, "i", "(lv.lv_obj)i" },

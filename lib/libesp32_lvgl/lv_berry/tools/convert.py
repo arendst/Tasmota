@@ -139,6 +139,8 @@ return_types = {
   "lv_img_dsc_t *": "lv_img_dsc",
   "lv_ts_calibration_t *": "lv_ts_calibration",
   "lv_style_transition_dsc_t *": "lv_style_transition_dsc",
+  # "lv_color_hsv_t *": "lv_color_hsv",
+  "lv_color_filter_dsc_t *": "lv_color_filter_dsc",
   #"lv_disp_t*": "lv_disp",
   #"lv_style_list_t*": "",
 
