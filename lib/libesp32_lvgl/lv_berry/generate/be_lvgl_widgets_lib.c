@@ -722,6 +722,7 @@ extern int lvbe_btnmatrix_set_btn_ctrl_all(bvm *vm);
 extern int lvbe_btnmatrix_clear_btn_ctrl_all(bvm *vm);
 extern int lvbe_btnmatrix_set_btn_width(bvm *vm);
 extern int lvbe_btnmatrix_set_one_checked(bvm *vm);
+extern int lvbe_btnmatrix_get_map(bvm *vm);
 extern int lvbe_btnmatrix_get_selected_btn(bvm *vm);
 extern int lvbe_btnmatrix_get_btn_text(bvm *vm);
 extern int lvbe_btnmatrix_has_btn_ctrl(bvm *vm);

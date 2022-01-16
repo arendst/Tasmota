@@ -749,6 +749,7 @@ const be_ntv_func_def_t lv_btnmatrix_func[] = {
   { "clear_btn_ctrl", (void*) &lv_btnmatrix_clear_btn_ctrl, "", "(lv.lv_obj)i(lv.lv_btnmatrix_ctrl)" },
   { "clear_btn_ctrl_all", (void*) &lv_btnmatrix_clear_btn_ctrl_all, "", "(lv.lv_obj)(lv.lv_btnmatrix_ctrl)" },
   { "get_btn_text", (void*) &lv_btnmatrix_get_btn_text, "s", "(lv.lv_obj)i" },
+  { "get_map", (void*) &lv_btnmatrix_get_map, "p", "(lv.lv_obj)" },
   { "get_one_checked", (void*) &lv_btnmatrix_get_one_checked, "b", "(lv.lv_obj)" },
   { "get_selected_btn", (void*) &lv_btnmatrix_get_selected_btn, "i", "(lv.lv_obj)" },
   { "has_btn_ctrl", (void*) &lv_btnmatrix_has_btn_ctrl, "b", "(lv.lv_obj)i(lv.lv_btnmatrix_ctrl)" },
