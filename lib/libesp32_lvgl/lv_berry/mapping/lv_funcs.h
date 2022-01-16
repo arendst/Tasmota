@@ -688,7 +688,7 @@ void lv_spinbox_decrement(lv_obj_t * obj)
 lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
 
 // ../../lvgl/src/lv_api_map.h
-static inline LV_ATTRIBUTE_TIMER_HANDLER uint32_t lv_task_handler(void)
+static inline uint32_t lv_task_handler(void)
 static inline void lv_obj_move_foreground(lv_obj_t * obj)
 static inline void lv_obj_move_background(lv_obj_t * obj)
 static inline uint32_t lv_obj_get_child_id(const struct _lv_obj_t * obj)

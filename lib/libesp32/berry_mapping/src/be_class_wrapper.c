@@ -147,7 +147,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'b' be_bool
  *   's' be_string
  *   'f' be_real (float)
- *   'c' C callback
+ *   'c' C comptr (general pointer)
  *   '-': skip argument and ignore
  *   '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
  *   'lv_obj' be_instance of type or subtype
@@ -455,6 +455,7 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
       case '.':   // fallback next
       case 'i':   be_pushint(vm, ret); break;
       case 'b':   be_pushbool(vm, ret);  break;
+      case 'c':   be_pushcomptr(vm, (void*) ret); break;
       case 's':   be_pushstring(vm, (const char*) ret);  break;
       case '&':   be_pushbytes(vm, (void*) ret, return_len); break;
       default:    be_raise(vm, "internal_error", "Unsupported return type"); break;

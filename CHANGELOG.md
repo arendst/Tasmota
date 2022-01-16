@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.01.2]
+## [2022.01.3]
+### Added
+- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+
+### Changed
+
+### Fixed
+
+## [2022.01.2] 20220116
 ### Added
 - Tasmota favicon to webbrowser tab (#14322)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
@@ -11,9 +19,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - IRremoteESP8266 library from v2.8.0 to v2.8.1
-
-### Fixed
-
 
 ## [2022.01.1] 20220107
 ### Added

@@ -487,8 +487,10 @@ typedef struct {
   int32_t       energy_kWhyesterday_ph[3]; // 320
   int32_t       energy_kWhtotal_ph[3];     // 32C
 
-  uint8_t       free_338[6];               // 338
+  uint8_t       free_338[4];               // 338
 
+  uint8_t       web_time_start;            // 33C
+  uint8_t       web_time_end;              // 33D
   uint8_t       sserial_config;            // 33E
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340

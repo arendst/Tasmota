@@ -502,6 +502,28 @@ const be_ctypes_structure_t be_lv_style_transition_dsc = {
     { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_color_filter_dsc = {
+  8,  /* size in bytes */
+  2,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[2]) {
+    { "filter_cb", 0, 0, 0, ctypes_ptr32, 0 },
+    { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_timer = {
+  21,  /* size in bytes */
+  6,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[6]) {
+    { "last_run", 4, 0, 0, ctypes_u32, 0 },
+    { "paused", 20, 0, 1, ctypes_bf, 0 },
+    { "period", 0, 0, 0, ctypes_u32, 0 },
+    { "repeat_count", 16, 0, 0, ctypes_i32, 0 },
+    { "timer_cb", 8, 0, 0, ctypes_ptr32, 0 },
+    { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_ts_calibration = {
   12,  /* size in bytes */
   5,  /* number of elements */
@@ -522,6 +544,7 @@ static const char * be_ctypes_instance_mappings[] = {
 static be_define_ctypes_class(lv_area, &be_lv_area, &be_class_ctypes, "lv_area");
 static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ctypes, "lv_chart_cursor");
 static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes, "lv_chart_series");
+static be_define_ctypes_class(lv_color_filter_dsc, &be_lv_color_filter_dsc, &be_class_ctypes, "lv_color_filter_dsc");
 static be_define_ctypes_class(lv_draw_img_dsc, &be_lv_draw_img_dsc, &be_class_ctypes, "lv_draw_img_dsc");
 static be_define_ctypes_class(lv_draw_line_dsc, &be_lv_draw_line_dsc, &be_class_ctypes, "lv_draw_line_dsc");
 static be_define_ctypes_class(lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param, &be_class_ctypes, "lv_draw_mask_angle_param");
@@ -550,12 +573,14 @@ static be_define_ctypes_class(lv_obj_class, &be_lv_obj_class, &be_class_ctypes, 
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes, "lv_point");
 static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes, "lv_sqrt_res");
 static be_define_ctypes_class(lv_style_transition_dsc, &be_lv_style_transition_dsc, &be_class_ctypes, "lv_style_transition_dsc");
+static be_define_ctypes_class(lv_timer, &be_lv_timer, &be_class_ctypes, "lv_timer");
 static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes, "lv_ts_calibration");
 
 void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
   ctypes_register_class(vm, &be_class_lv_chart_cursor, &be_lv_chart_cursor);
   ctypes_register_class(vm, &be_class_lv_chart_series, &be_lv_chart_series);
+  ctypes_register_class(vm, &be_class_lv_color_filter_dsc, &be_lv_color_filter_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_line_dsc, &be_lv_draw_line_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param);
@@ -584,6 +609,7 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_point, &be_lv_point);
   ctypes_register_class(vm, &be_class_lv_sqrt_res, &be_lv_sqrt_res);
   ctypes_register_class(vm, &be_class_lv_style_transition_dsc, &be_lv_style_transition_dsc);
+  ctypes_register_class(vm, &be_class_lv_timer, &be_lv_timer);
   ctypes_register_class(vm, &be_class_lv_ts_calibration, &be_lv_ts_calibration);
 }
 
@@ -591,6 +617,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_area", &be_class_lv_area },
   { "lv_chart_cursor", &be_class_lv_chart_cursor },
   { "lv_chart_series", &be_class_lv_chart_series },
+  { "lv_color_filter_dsc", &be_class_lv_color_filter_dsc },
   { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
   { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
   { "lv_draw_mask_angle_param", &be_class_lv_draw_mask_angle_param },
@@ -619,6 +646,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_point", &be_class_lv_point },
   { "lv_sqrt_res", &be_class_lv_sqrt_res },
   { "lv_style_transition_dsc", &be_class_lv_style_transition_dsc },
+  { "lv_timer", &be_class_lv_timer },
   { "lv_ts_calibration", &be_class_lv_ts_calibration },
 };
 const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);

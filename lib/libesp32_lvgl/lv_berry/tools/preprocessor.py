@@ -133,6 +133,8 @@ for header_name in headers_names:
     for fun in fun_defs:
       # remove LV_ATTRIBUTE_FAST_MEM 
       fun = re.sub('LV_ATTRIBUTE_FAST_MEM ', '', fun)
+      # remove LV_ATTRIBUTE_TIMER_HANDLER 
+      fun = re.sub('LV_ATTRIBUTE_TIMER_HANDLER ', '', fun)
       exclude = False
       for exclude_prefix in ["typedef", "_LV_", "LV_"]:
         if fun.startswith(exclude_prefix): exclude = True

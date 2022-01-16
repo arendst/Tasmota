@@ -1475,6 +1475,10 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0A010003) {
       Settings->sserial_config = Settings->serial_config;
     }
+    if (Settings->version < 0x14160103) {
+      Settings->web_time_start = 0;
+      Settings->web_time_end = 0;
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);
