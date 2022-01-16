@@ -179,6 +179,7 @@ enum UserSelectablePins {
   GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
   GPIO_SOLAXX1_RTS,                    // Solax Inverter Serial interface
   GPIO_OPTION_E,                       // Emulated module
+  GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -397,6 +398,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
   D_SENSOR_SOLAXX1_RTS "|"
   D_SENSOR_OPTION " E|"
+  D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX
 ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -760,6 +762,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SDM72_RX),      // SDM72 Serial interface
 #endif
   AGPIO(GPIO_ZEROCROSS),
+#ifdef USE_SDM230
+  AGPIO(GPIO_SDM230_TX),      // SDM230 Serial interface
+  AGPIO(GPIO_SDM230_RX),      // SDM230 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 /*-------------------------------------------------------------------------------------------*\

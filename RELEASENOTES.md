@@ -100,10 +100,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v2022.01.2
+## Changelog v2022.01.3
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
+- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
+- Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` [#14385](https://github.com/arendst/Tasmota/issues/14385)
+- Support for Eastron SDM230 modBus energy meter [#13443](https://github.com/arendst/Tasmota/issues/13443)
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
 - Support for Linkind dimmer as GPIO ``Option A6`` [#14004](https://github.com/arendst/Tasmota/issues/14004)
 - DDP schemes for light and WS2812 [#14017](https://github.com/arendst/Tasmota/issues/14017)

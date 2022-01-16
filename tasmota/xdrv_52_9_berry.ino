@@ -51,7 +51,7 @@ void checkBeTop(void) {
   int32_t top = be_top(berry.vm);
   if (top != 0) {
     be_pop(berry.vm, top);   // TODO should not be there
-    AddLog(LOG_LEVEL_ERROR, D_LOG_BERRY "Error be_top is non zero=%d", top);
+    AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "Error be_top is non zero=%d", top);
   }
 }
 
@@ -317,7 +317,7 @@ void BerryInit(void) {
       be_pop(berry.vm, 1);
     }
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u"), callBerryGC());
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used=%u bytes"), callBerryGC());
     berry_init_ok = true;
 
     // we generate a synthetic event `autoexec`
@@ -363,9 +363,9 @@ void BrLoad(const char * script_name) {
     bool loaded = be_tobool(berry.vm, -2);  // did it succeed?
     be_pop(berry.vm, 2);
     if (loaded) {
-      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "successfully loaded '%s'", script_name);
+      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "Successfully loaded '%s'", script_name);
     } else {
-      AddLog(LOG_LEVEL_INFO, D_LOG_BERRY "no '%s'", script_name);
+      AddLog(LOG_LEVEL_DEBUG, D_LOG_BERRY "No '%s'", script_name);
     }
   }
 }

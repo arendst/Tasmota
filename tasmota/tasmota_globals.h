@@ -130,8 +130,6 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
-
 // Hardware has no ESP32
 #undef USE_EXS_DIMMER
 #undef USE_ARMTRONIX_DIMMERS

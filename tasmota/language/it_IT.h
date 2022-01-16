@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 03.11.2021
+ * Updated until v9.5.0.9 - Last update 15.01.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -663,6 +663,8 @@
 #define D_SENSOR_SDM72_RX               "SDM72 - RX"
 #define D_SENSOR_SDM120_TX              "SDMx20 - TX"
 #define D_SENSOR_SDM120_RX              "SDMx20 - RX"
+#define D_SENSOR_SDM230_TX              "SDM230 - TX"
+#define D_SENSOR_SDM230_RX              "SDM230 - RX"
 #define D_SENSOR_SDM630_TX              "SDM630 - TX"
 #define D_SENSOR_SDM630_RX              "SDM630 - RX"
 #define D_SENSOR_WE517_TX               "WE517 - TX"
@@ -899,7 +901,7 @@
 #define D_OUT_OF_RANGE         "Fuori intervallo"
 #define D_SENSOR_DETECTED      "rilevato"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER     "Potenza esportata"
 #define D_IMPORT_POWER 	   "Potenza importata"
 #define D_PHASE_ANGLE      "Angolo fase"
@@ -911,6 +913,7 @@
 #define D_UNIT_KWARH       "kVArh"
 #define D_UNIT_ANGLE       "°"
 #define D_TOTAL_ACTIVE     "Potenza attiva totale"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Potenza attiva totale (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 - Voltaggio"
@@ -926,9 +929,9 @@
 #define D_SOLAX_MODE_1    "Controllo"
 #define D_SOLAX_MODE_2    "Attivo"
 #define D_SOLAX_MODE_3    "Errore"
-#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
-#define D_SOLAX_MODE_5    "Software Update"  // to be translated
-#define D_SOLAX_MODE_6    "Selftest"  // to be translated
+#define D_SOLAX_MODE_4    "Errore permanente"
+#define D_SOLAX_MODE_5    "Aggiornamento software"
+#define D_SOLAX_MODE_6    "Test autoverifica"
 #define D_SOLAX_ERROR_0   "Nessun codice errore"
 #define D_SOLAX_ERROR_1   "Griglia errore persa"
 #define D_SOLAX_ERROR_2   "Griglia errore tensione"

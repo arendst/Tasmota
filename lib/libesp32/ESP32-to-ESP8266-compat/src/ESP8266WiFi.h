@@ -53,37 +53,3 @@ void wifi_station_disconnect();
 void wifi_station_dhcpc_start();
 extern WiFiClass32 WiFi32;
 #define WiFi WiFi32
-
-class WiFiUDP32 : public WiFiUDP
-{
-    public:
-        size_t write(const char*s)
-        {
-            return WiFiUDP::write((const uint8_t *)s, strlen(s));
-        }
-        size_t write(const uint8_t *buf, size_t n)
-        {
-            return WiFiUDP::write(buf, n);
-        }
-        static void stopAll()
-        {
-
-        }
-        static void forceSleepWake()
-        {
-
-        }
-        uint8_t beginMulticast(IPAddress interfaceAddr, IPAddress multicast, uint16_t port)
-        {
-            return WiFiUDP::beginMulticast(multicast, port);
-        }
-        void beginPacketMulticast(IPAddress multicast, uint16_t port, IPAddress interfaceAddr)
-        {
-            if (0 == WiFiUDP::beginMulticastPacket()) {
-              WiFiUDP::beginMulticast(multicast, port);
-            }
-            WiFiUDP::beginMulticastPacket();
-        }
-};
-
-#define WiFiUDP WiFiUDP32

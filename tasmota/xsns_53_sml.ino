@@ -2345,7 +2345,7 @@ void SML_Show(boolean json) {
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
-             if (strcmp(name,"*"))  WSContentSend_PD(PSTR("{s}%s %s: {m}%s %s{e}"),meter_desc_p[mindex].prefix,name,tpowstr,unit);
+             if (strcmp(name,"*"))  WSContentSend_PD(PSTR("{s}%s %s {m}%s %s{e}"),meter_desc_p[mindex].prefix,name,tpowstr,unit);
             }
           }
         }

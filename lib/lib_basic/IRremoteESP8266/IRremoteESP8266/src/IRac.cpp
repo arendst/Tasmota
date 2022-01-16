@@ -16,6 +16,7 @@
 #include "IRremoteESP8266.h"
 #include "IRtext.h"
 #include "IRutils.h"
+#include "ir_Airton.h"
 #include "ir_Airwell.h"
 #include "ir_Amcor.h"
 #include "ir_Argo.h"
@@ -56,7 +57,7 @@
 #ifndef STRCASECMP
 #if defined(ESP8266)
 #define STRCASECMP(LHS, RHS) \
-    strcasecmp_P(LHS, reinterpret_cast<const char* const>(RHS))
+    strcasecmp_P(LHS, reinterpret_cast<const char*>(RHS))
 #else  // ESP8266
 #define STRCASECMP(LHS, RHS) strcasecmp(LHS, RHS)
 #endif  // ESP8266
@@ -152,9 +153,12 @@ stdAc::state_t IRac::getStatePrev(void) { return _prev; }
 /// @return true if the protocol is supported by this class, otherwise false.
 bool IRac::isProtocolSupported(const decode_type_t protocol) {
   switch (protocol) {
+#if SEND_AIRTON
+    case decode_type_t::AIRTON:
+#endif  // SEND_AIRTON
 #if SEND_AIRWELL
     case decode_type_t::AIRWELL:
-#endif
+#endif  // SEND_AIRWELL
 #if SEND_AMCOR
     case decode_type_t::AMCOR:
 #endif
@@ -325,6 +329,44 @@ bool IRac::isProtocolSupported(const decode_type_t protocol) {
       return false;
   }
 }
+
+#if SEND_AIRTON
+/// Send an Airton 56-bit A/C message with the supplied settings.
+/// @param[in, out] ac A Ptr to an IRAirtonAc object to use.
+/// @param[in] on The power setting.
+/// @param[in] mode The operation mode setting.
+/// @param[in] degrees The temperature setting in degrees.
+/// @param[in] fan The speed setting for the fan.
+/// @param[in] swingv The vertical swing setting.
+/// @param[in] turbo Run the device in turbo/powerful mode.
+/// @param[in] light Turn on the LED/Display mode.
+/// @param[in] econo Run the device in economical mode.
+/// @param[in] filter Turn on the (ion/pollen/health/etc) filter mode.
+/// @param[in] sleep Nr. of minutes for sleep mode.
+/// @note -1 is Off, >= 0 is on.
+void IRac::airton(IRAirtonAc *ac,
+                  const bool on, const stdAc::opmode_t mode,
+                  const float degrees, const stdAc::fanspeed_t fan,
+                  const stdAc::swingv_t swingv, const bool turbo,
+                  const bool light, const bool econo, const bool filter,
+                  const int16_t sleep) {
+  ac->begin();
+  ac->setPower(on);
+  ac->setMode(ac->convertMode(mode));
+  ac->setTemp(degrees);
+  ac->setFan(ac->convertFan(fan));
+  ac->setSwingV(swingv != stdAc::swingv_t::kOff);
+  // No Quiet setting available.
+  ac->setLight(light);
+  ac->setHealth(filter);
+  ac->setTurbo(turbo);
+  ac->setEcono(econo);
+  // No Clean setting available.
+  // No Beep setting available.
+  ac->setSleep(sleep >= 0);  // Convert to a boolean.
+  ac->send();
+}
+#endif  // SEND_AIRTON
 
 #if SEND_AIRWELL
 /// Send an Airwell A/C message with the supplied settings.
@@ -1530,6 +1572,7 @@ void IRac::mitsubishi(IRMitsubishiAC *ac,
   ac->setVane(ac->convertSwingV(swingv));
   ac->setWideVane(ac->convertSwingH(swingh));
   if (quiet) ac->setFan(kMitsubishiAcFanSilent);
+  ac->setISave10C(false);
   // No Turbo setting available.
   // No Light setting available.
   // No Filter setting available.
@@ -2116,11 +2159,12 @@ void IRac::teco(IRTecoAc *ac,
 /// @param[in] swingv The vertical swing setting.
 /// @param[in] turbo Run the device in turbo/powerful mode.
 /// @param[in] econo Run the device in economical mode.
+/// @param[in] filter Turn on the (Pure/ion/pollen/etc) filter mode.
 void IRac::toshiba(IRToshibaAC *ac,
                    const bool on, const stdAc::opmode_t mode,
                    const float degrees, const stdAc::fanspeed_t fan,
                    const stdAc::swingv_t swingv,
-                   const bool turbo, const bool econo) {
+                   const bool turbo, const bool econo, const bool filter) {
   ac->begin();
   ac->setMode(ac->convertMode(mode));
   ac->setTemp(degrees);
@@ -2133,7 +2177,7 @@ void IRac::toshiba(IRToshibaAC *ac,
   ac->setTurbo(turbo);
   ac->setEcono(econo);
   // No Light setting available.
-  // No Filter setting available.
+  ac->setFilter(filter);
   // No Clean setting available.
   // No Beep setting available.
   // No Sleep setting available.
@@ -2603,6 +2647,16 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
 #endif  // (SEND_LG || SEND_SHARP_AC)
   // Per vendor settings & setup.
   switch (send.protocol) {
+#if SEND_AIRTON
+    case AIRTON:
+    {
+      IRAirtonAc ac(_pin, _inverted, _modulation);
+      airton(&ac, send.power, send.mode, degC, send.fanspeed,
+             send.swingv, send.turbo, send.light, send.econo, send.filter,
+             send.sleep);
+      break;
+    }
+#endif  // SEND_AIRTON
 #if SEND_AIRWELL
     case AIRWELL:
     {
@@ -3062,7 +3116,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     {
       IRToshibaAC ac(_pin, _inverted, _modulation);
       toshiba(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
-              send.turbo, send.econo);
+              send.turbo, send.econo, send.filter);
       break;
     }
 #endif  // SEND_TOSHIBA_AC
@@ -3507,6 +3561,13 @@ namespace IRAcUtils {
   ///   An empty string if we can't.
   String resultAcToString(const decode_results * const result) {
     switch (result->decode_type) {
+#if DECODE_AIRTON
+      case decode_type_t::AIRTON: {
+        IRAirtonAc ac(kGpioUnused);
+        ac.setRaw(result->value);  // AIRTON uses value instead of state.
+        return ac.toString();
+      }
+#endif  // DECODE_AIRTON
 #if DECODE_AIRWELL
       case decode_type_t::AIRWELL: {
         IRAirwellAc ac(kGpioUnused);
@@ -3931,6 +3992,14 @@ namespace IRAcUtils {
                     ) {
     if (decode == NULL || result == NULL) return false;  // Safety check.
     switch (decode->decode_type) {
+#if DECODE_AIRTON
+      case decode_type_t::AIRTON: {
+        IRAirtonAc ac(kGpioUnused);
+        ac.setRaw(decode->value);  // Uses value instead of state.
+        *result = ac.toCommon();
+        break;
+      }
+#endif  // DECODE_AIRTON
 #if DECODE_AIRWELL
       case decode_type_t::AIRWELL: {
         IRAirwellAc ac(kGpioUnused);

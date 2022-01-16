@@ -570,12 +570,26 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (5 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\""
-                          D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          NetworkHostname(), (uint32_t)NetworkAddress(),
-                          Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3], Settings->ipv4_address[4],
-                          NetworkMacAddress().c_str(), Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
+                          D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
+                          D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
+                          D_JSON_MAC "\":\"%s\""),
+                          TasmotaGlobal.hostname,
+                          (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
+                          Settings->ipv4_address[3], Settings->ipv4_address[4],
+                          WiFi.macAddress().c_str());
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+    ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
+                          D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
+                          D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
+                          D_JSON_MAC "\":\"%s\"}"),
+                          EthernetHostname(),
+                          (uint32_t)EthernetLocalIP(), Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2],
+                          Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4],
+                          EthernetMacAddress().c_str());
+#endif  // USE_ETHERNET
+    ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
+                          Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
     CmndStatusResponse(5);
   }
 
@@ -1635,7 +1649,7 @@ void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     char network_address[22];
-    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)NetworkAddress());
+    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)WiFi.localIP());
     if (!XdrvMailbox.usridx) {
       ResponseClear();
       for (uint32_t i = 0; i < 5; i++) {

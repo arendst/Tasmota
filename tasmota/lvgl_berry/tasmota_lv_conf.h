@@ -555,7 +555,7 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #define LV_USE_FS_FATFS '\0'        /*Uses f_open, f_read, etc*/
 
 /*PNG decoder library*/
-#define LV_USE_PNG 0
+#define LV_USE_PNG 1
 
 /*BMP decoder library*/
 #define LV_USE_BMP 0
@@ -571,7 +571,7 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #define LV_USE_QRCODE 0
 
 /*FreeType library*/
-#define LV_USE_FREETYPE 0
+#define LV_USE_FREETYPE 1
 #if LV_USE_FREETYPE
 /*Memory used by FreeType to cache characters [bytes] (-1: no caching)*/
 # define LV_FREETYPE_CACHE_SIZE (16 * 1024)

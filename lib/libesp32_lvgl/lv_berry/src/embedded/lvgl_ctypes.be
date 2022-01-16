@@ -30,6 +30,7 @@ uint8_t_2 = ctypes.bf_2
 uint8_t_3 = ctypes.bf_3
 uint8_t_4 = ctypes.bf_4
 uint8_t_5 = ctypes.bf_5
+uint8_t_11 = ctypes.bf_11
 uint8_t = ctypes.u8
 int16_t = ctypes.i16
 uint16_t = ctypes.u16
@@ -392,6 +393,63 @@ lv_event = [            # valid LVGL8
     [uint8_t_1, "deleted"],
 ]
 lv_event = ctypes.structure(lv_event, "lv_event")
+
+#######################################################################
+# lv_img structures
+lv_img_header = [            # valid LVGL8
+    [uint8_t_5, "cf"],
+    [uint8_t_3, "always_zero"],
+    [uint8_t_2, "reserved"],
+    [uint8_t_11, "w"],
+    [uint8_t_11, "h"],
+]
+lv_img_header = ctypes.structure(lv_img_header, "lv_img_header")
+
+lv_img_dsc = [            # valid LVGL8
+    [lv_img_header, "header"],
+    [uint8_t_5, "cf"],
+    [uint32_t, "data_size"],
+    [ptr, "data"],
+]
+lv_img_dsc = ctypes.structure(lv_img_dsc, "lv_img_dsc")
+
+#######################################################################
+# lv_style
+lv_style_transition_dsc = [            # valid LVGL8
+    [ptr, "props"],
+    [ptr, "user_data"],
+    [ptr, "path_xcb"],
+    [uint32_t, "time"],
+    [uint32_t, "delay"],
+]
+lv_style_transition_dsc = ctypes.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
+
+#######################################################################
+# lv_color
+# lv_color_hsv = [            # valid LVGL8
+#     [uint16_t, "h"],
+#     [uint8_t, "s"],
+#     [uint8_t, "v"],
+# ]
+# lv_color_hsv = ctypes.structure(lv_color_hsv, "lv_color_hsv")
+
+lv_color_filter_dsc = [            # valid LVGL8
+    [ptr, "filter_cb"],
+    [ptr, "user_data"],
+]
+lv_color_filter_dsc = ctypes.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
+
+#######################################################################
+# lv_timer
+lv_timer = [            # valid LVGL8
+    [uint32_t, "period"],
+    [uint32_t, "last_run"],
+    [ptr, "timer_cb"],
+    [ptr, "user_data"],
+    [int32_t, "repeat_count"],
+    [uint8_t_1, "paused"],
+]
+lv_timer = ctypes.structure(lv_timer, "lv_timer")
 
 #######################################################################
 # Special structure used to calibrate resistive touchscreens

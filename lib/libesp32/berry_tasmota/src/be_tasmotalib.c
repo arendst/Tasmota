@@ -4,12 +4,12 @@
  * To use: `import tasmota`
  *******************************************************************/
 #include "be_constobj.h"
+#include "be_ctypes.h"
 
-struct dummy_struct {};  // we need a struct name but don't need any meaningful content, we just take the address
 extern struct TasmotaGlobal_t TasmotaGlobal;
 extern struct TSettings * Settings;
-extern struct dummy_struct be_tasmota_global_struct;
-extern struct dummy_struct be_tasmota_settings_struct;
+extern const be_ctypes_structure_t be_tasmota_global_struct;
+extern const be_ctypes_structure_t be_tasmota_settings_struct;
 
 extern int l_getFreeHeap(bvm *vm);
 extern int l_arch(bvm *vm);

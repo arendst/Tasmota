@@ -14,15 +14,13 @@
 
 #ifndef MAIN_BLEADVERTISING_H_
 #define MAIN_BLEADVERTISING_H_
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+#if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_gap.h"
-#else
-#include "nimble/nimble/host/include/host/ble_gap.h"
-#endif
-
 /****  FIX COMPILATION ****/
 #undef min
 #undef max
@@ -134,5 +132,6 @@ private:
     std::vector<uint8_t>    m_uri;
 };
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER */
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif /* CONFIG_BT_ENABLED */
 #endif /* MAIN_BLEADVERTISING_H_ */

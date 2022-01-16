@@ -199,6 +199,7 @@
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #define USE_SDM72                                // Add support for Eastron SDM72-Modbus energy monitor (+0k3 code)
 #define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
+//#define USE_SDM230                               // Add support for Eastron SDM230-Modbus energy monitor (+?? code)
 #define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -303,6 +304,7 @@
   #undef USE_MCP39F501                           // Disable MCP39F501 Energy monitor as used in Shelly 2
   #undef USE_SDM72                               // Disable support for Eastron SDM72-Modbus energy meter
   #undef USE_SDM120                              // Disable support for Eastron SDM120-Modbus energy meter
+  #undef USE_SDM230                              // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
   #undef USE_SDM630                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -411,6 +413,7 @@
   #undef USE_MCP39F501                           // Disable MCP39F501 Energy monitor as used in Shelly 2
   #undef USE_SDM72                               // Disable support for Eastron SDM72-Modbus energy meter
   #undef USE_SDM120                              // Disable support for Eastron SDM120-Modbus energy meter
+  #undef USE_SDM230                              // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
   #undef USE_SDM630                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -586,6 +589,7 @@
 #undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM230                                // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -727,6 +731,7 @@
 //#undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM230                                // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -870,6 +875,7 @@
 #undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM230                                // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -920,6 +926,21 @@
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_WEBCAM
+#undef FIRMWARE_ODROID_GO
+#undef FIRMWARE_M5STACK_CORE2
+#undef FIRMWARE_BLUETOOTH
+#undef FIRMWARE_LVGL
+#undef FIRMWARE_TASMOTA32
+#undef USE_UFILESYS
+#undef GUI_TRASH_FILE
+#undef GUI_EDIT_FILE
+#undef USE_PING
+#undef USE_AUTOCONF
+#undef USE_BERRY
+#undef USE_WEBCLIENT
+#undef USE_WEBCLIENT_HTTPS
+//#undef USE_TLS   // needed for MQTT over TLS
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -964,14 +985,17 @@
 \*********************************************************************************************/
 
 #ifndef ESP8266_1M
-#define USE_UFILESYS
-#define GUI_TRASH_FILE
-#define GUI_EDIT_FILE
-#define USE_PING
+  #ifndef FIRMWARE_MINIMAL    // there might be a ESP32-minimal
+    #define USE_UFILESYS
+      #define GUI_TRASH_FILE
+      #define GUI_EDIT_FILE
+    #define USE_PING
+  #endif // FIRMWARE_MINIMAL
+
   #ifdef USE_RULES
-  #define USE_EXPRESSION
-  #define SUPPORT_IF_STATEMENT
-  #define SUPPORT_MQTT_EVENT
+    #define USE_EXPRESSION
+    #define SUPPORT_IF_STATEMENT
+    #define SUPPORT_MQTT_EVENT
   #endif  // USE_RULES
 #endif  // NOT ESP8266_1M
 

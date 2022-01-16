@@ -6,6 +6,25 @@
 #include "IRsend_test.h"
 #include "gtest/gtest.h"
 
+
+TEST(TestUtils, Housekeeping) {
+  // COOLIX
+  ASSERT_EQ("COOLIX", typeToString(decode_type_t::COOLIX));
+  ASSERT_EQ(decode_type_t::COOLIX, strToDecodeType("COOLIX"));
+  ASSERT_FALSE(hasACState(decode_type_t::COOLIX));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::COOLIX));
+  ASSERT_EQ(kCoolixBits, IRsend::defaultBits(decode_type_t::COOLIX));
+  ASSERT_EQ(kSingleRepeat, IRsend::minRepeats(decode_type_t::COOLIX));
+
+  // COOLIX48
+  ASSERT_EQ("COOLIX48", typeToString(decode_type_t::COOLIX48));
+  ASSERT_EQ(decode_type_t::COOLIX48, strToDecodeType("COOLIX48"));
+  ASSERT_FALSE(hasACState(decode_type_t::COOLIX48));
+  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::COOLIX48));
+  ASSERT_EQ(kCoolix48Bits, IRsend::defaultBits(decode_type_t::COOLIX48));
+  ASSERT_EQ(kSingleRepeat, IRsend::minRepeats(decode_type_t::COOLIX48));
+}
+
 // Tests for sendCOOLIX().
 
 // Test sending typical data only.
@@ -940,4 +959,77 @@ TEST(TestCoolixACClass, VerifyZoneFollowFan) {
       "Power: On, Mode: 3 (Heat), Fan: 6 (Zone Follow), Temp: 24C, "
       "Zone Follow: On, Sensor Temp: 19C",
       ac.toString());
+}
+
+TEST(TestDecodeCoolix48, RealExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+
+  // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1694#issue-1068786691
+  // Off Timer: 1 hour
+  const uint16_t rawData[199] = {
+      4342, 4454, 486, 1724, 436, 658, 438, 1748, 464, 1718, 462, 634, 440, 656,
+      462, 1696, 488, 634, 462, 634, 436, 1722, 516, 608, 462, 660, 436, 1694,
+      488, 1720, 440, 630, 488, 1700, 488, 1704, 458, 660, 462, 1698, 490, 632,
+      462, 634, 436, 684, 436, 1700, 464, 1748, 462, 634, 462, 1720, 436, 658,
+      462, 1700, 488, 1692, 512, 1696, 438, 684, 410, 686, 434, 688, 408, 1696,
+      488, 1694, 464, 682, 414, 1748, 436, 1722, 488, 632, 438, 686, 408, 662,
+      462, 1696, 488, 1722, 462, 1696, 462, 1746, 436, 1798, 386, 1694, 490,
+      1720, 516, 5234, 4370, 4446, 490, 1690, 492, 658, 434, 1726, 436, 1746,
+      464, 604, 488, 658, 412, 1718, 490, 636, 460, 660, 438, 1698, 460, 662,
+      458, 632, 436, 1718, 490, 1720, 488, 608, 436, 1754, 462, 1726, 438, 682,
+      414, 1748, 464, 632, 460, 660, 410, 658, 438, 1748, 464, 1694, 464, 660,
+      436, 1720, 488, 634, 460, 1726, 462, 1724, 462, 1692, 490, 606, 462, 714,
+      384, 660, 460, 1722, 460, 1722, 490, 606, 464, 1718, 490, 1670, 486, 634,
+      462, 662, 410, 660, 460, 1722, 464, 1718, 460, 1696, 464, 1720, 462, 1720,
+      462, 1722, 486, 1700, 462};  // UNKNOWN 1F691B97
+
+  irsend.begin();
+  irsend.reset();
+
+  irsend.sendRaw(rawData, 199, 38000);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(COOLIX48, irsend.capture.decode_type);
+  EXPECT_EQ(kCoolix48Bits, irsend.capture.bits);
+  EXPECT_EQ(0xB24DA35C6C7F, irsend.capture.value);
+  EXPECT_EQ(0x0, irsend.capture.address);
+  EXPECT_EQ(0x0, irsend.capture.command);
+}
+
+TEST(TestDecodeCoolix48, SyntheticSelfDecode) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  irsend.reset();
+  irsend.sendCoolix48(0xB24DA35C6C7F);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(COOLIX48, irsend.capture.decode_type);
+  EXPECT_EQ(kCoolix48Bits, irsend.capture.bits);
+  EXPECT_EQ(0xB24DA35C6C7F, irsend.capture.value);
+  EXPECT_EQ(0x0, irsend.capture.address);
+  EXPECT_EQ(0x0, irsend.capture.command);
+
+  EXPECT_EQ(
+      "f38000d33"
+      "m4692s4416"  // Message.
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s552m552s1656m552s552"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s1656m552s552m552s1656"
+      "m552s1656m552s552m552s1656m552s552m552s552m552s552m552s1656m552s1656"
+      "m552s552m552s1656m552s552m552s1656m552s1656m552s1656m552s552m552s552"
+      "m552s552m552s1656m552s1656m552s552m552s1656m552s1656m552s552m552s552"
+      "m552s552m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656"
+      "m552s5244"
+      "m4692s4416"  // Repeat
+      "m552s1656m552s552m552s1656m552s1656m552s552m552s552m552s1656m552s552"
+      "m552s552m552s1656m552s552m552s552m552s1656m552s1656m552s552m552s1656"
+      "m552s1656m552s552m552s1656m552s552m552s552m552s552m552s1656m552s1656"
+      "m552s552m552s1656m552s552m552s1656m552s1656m552s1656m552s552m552s552"
+      "m552s552m552s1656m552s1656m552s552m552s1656m552s1656m552s552m552s552"
+      "m552s552m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656m552s1656"
+      "m552s5244",
+      irsend.outputStr());
 }

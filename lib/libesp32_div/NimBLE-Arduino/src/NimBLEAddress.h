@@ -14,15 +14,10 @@
 
 #ifndef COMPONENTS_NIMBLEADDRESS_H_
 #define COMPONENTS_NIMBLEADDRESS_H_
-#include "nimconfig.h"
+#include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "nimble/ble.h"
-#else
-#include "nimble/nimble/include/nimble/ble.h"
-#endif
-
 /****  FIX COMPILATION ****/
 #undef min
 #undef max
