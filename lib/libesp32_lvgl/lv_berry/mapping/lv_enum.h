@@ -353,6 +353,10 @@ LV_GRID_ALIGN_SPACE_AROUND
 LV_GRID_ALIGN_SPACE_BETWEEN
 
 // File: ../../lvgl/src/extra/layouts/lv_layouts.h
+// File: ../../lvgl/src/extra/libs/freetype/lv_freetype.h
+FT_FONT_STYLE_NORMAL
+FT_FONT_STYLE_ITALIC
+FT_FONT_STYLE_BOLD
 // File: ../../lvgl/src/extra/widgets/animimg/lv_animimg.h
 LV_ANIM_IMG_PART_MAIN
 

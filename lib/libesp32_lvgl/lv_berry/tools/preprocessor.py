@@ -184,6 +184,7 @@ lv_fun_globs = [
                   "widgets/*.h",
                   "extra/widgets/**/*.h",
                   "extra/layouts/**/*.h",
+                  "extra/libs/freetype/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
