@@ -211,6 +211,7 @@ with open(lv_widgets_file) as f:
 
     g = parse_func_def.search(l_raw)
     if g:
+      # print(l_raw, g.group(3))
       # if match, we parse the line
       # Ex: 'void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent);'
       ret_type = g.group(1)   # return type of the function
@@ -230,37 +231,43 @@ with open(lv_widgets_file) as f:
       # convert arguments
       c_args = ""
       args_raw = [ x.strip(" \t\n\r") for x in g.group(3).split(",") ]  # split by comma and strip
+      # print(args_raw)
       for arg_raw in args_raw:
         # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent', ''
         # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit', ''
         # Ex: 'const lv_coord_t value[]' -> 'const', 'lv_coord_t', '', 'value', '[]'
         ga = parse_arg.search(arg_raw)
-        if ga:    # parsing ok?
-          ga_type = ga.group(2)
-          ga_ptr = ( ga.group(3).strip(" \t\n\r") == "*" )    # boolean
-          ga_name = ga.group(4)
-          ga_array = ga.group(5)
-          ga_type_ptr = ga_type
-          if ga_ptr: ga_type_ptr += " *"
-          if ga_array: ga_type_ptr += " []"
-          if ga_type_ptr in return_types:
-            ga_type = return_types[ga_type_ptr]
-          else:
-            # remove the trailing '_t' of type name if any
-            ga_type = re.sub(r"_t$", "", ga_type)
-          
-          # if the type is a single letter, we just add it
-          if len(ga_type) == 1 and ga_type != 'c':  # callbacks are different
-            c_args += ga_type
-          else:
-            if ga_type.endswith("_cb"):
-              # it's a callback type, we encode it differently
-              if ga_type not in lv_cb_types:
-                lv_cb_types.append(ga_type)
-              c_args += "^" + ga_type + "^"
+        # print(f"g={g} ga={ga}")
+        if ga or arg_raw == '...':    # parsing ok? Special case for '...' which can't be captured easily in regex
+          if arg_raw != '...':
+            ga_type = ga.group(2)
+            ga_ptr = ( ga.group(3).strip(" \t\n\r") == "*" )    # boolean
+            ga_name = ga.group(4)
+            ga_array = ga.group(5)
+            ga_type_ptr = ga_type
+            if ga_ptr: ga_type_ptr += " *"
+            if ga_array: ga_type_ptr += " []"
+            if ga_type_ptr in return_types:
+              ga_type = return_types[ga_type_ptr]
             else:
-              # we have a high-level type that we treat as a class name, enclose in parenthesis
-              c_args += "(" + "lv." + ga_type + ")"
+              # remove the trailing '_t' of type name if any
+              ga_type = re.sub(r"_t$", "", ga_type)
+            
+            # if the type is a single letter, we just add it
+            if len(ga_type) == 1 and ga_type != 'c':  # callbacks are different
+              c_args += ga_type
+            else:
+              if ga_type.endswith("_cb"):
+                # it's a callback type, we encode it differently
+                if ga_type not in lv_cb_types:
+                  lv_cb_types.append(ga_type)
+                c_args += "^" + ga_type + "^"
+              else:
+                # we have a high-level type that we treat as a class name, enclose in parenthesis
+                c_args += "(" + "lv." + ga_type + ")"
+          else:
+            # '...'
+            c_args += "[......]"  # allow 6 additional parameters
 
       # analyze function name and determine if it needs to be assigned to a specific class
       func_name = g.group(2)
