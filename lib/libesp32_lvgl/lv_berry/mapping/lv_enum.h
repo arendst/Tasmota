@@ -27,6 +27,11 @@ COLOR_NAVY=0x000080
 COLOR_MAGENTA=0xFF00FF
 COLOR_PURPLE=0x800080
 
+// Freetype
+FT_FONT_STYLE_NORMAL=FT_FONT_STYLE_NORMAL
+FT_FONT_STYLE_ITALIC=FT_FONT_STYLE_ITALIC
+FT_FONT_STYLE_BOLD=FT_FONT_STYLE_BOLD
+
 // following are #define, not enum
 LV_RADIUS_CIRCLE
 LV_TEXTAREA_CURSOR_LAST
@@ -353,10 +358,6 @@ LV_GRID_ALIGN_SPACE_AROUND
 LV_GRID_ALIGN_SPACE_BETWEEN
 
 // File: ../../lvgl/src/extra/layouts/lv_layouts.h
-// File: ../../lvgl/src/extra/libs/freetype/lv_freetype.h
-FT_FONT_STYLE_NORMAL
-FT_FONT_STYLE_ITALIC
-FT_FONT_STYLE_BOLD
 // File: ../../lvgl/src/extra/widgets/animimg/lv_animimg.h
 LV_ANIM_IMG_PART_MAIN
 

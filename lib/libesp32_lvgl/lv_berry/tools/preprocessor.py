@@ -184,7 +184,6 @@ lv_fun_globs = [
                   "widgets/*.h",
                   "extra/widgets/**/*.h",
                   "extra/layouts/**/*.h",
-                  "extra/libs/freetype/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 
@@ -218,6 +217,11 @@ COLOR_BLUE=0x0000FF
 COLOR_NAVY=0x000080
 COLOR_MAGENTA=0xFF00FF
 COLOR_PURPLE=0x800080
+
+// Freetype
+FT_FONT_STYLE_NORMAL=FT_FONT_STYLE_NORMAL
+FT_FONT_STYLE_ITALIC=FT_FONT_STYLE_ITALIC
+FT_FONT_STYLE_BOLD=FT_FONT_STYLE_BOLD
 
 // following are #define, not enum
 LV_RADIUS_CIRCLE
