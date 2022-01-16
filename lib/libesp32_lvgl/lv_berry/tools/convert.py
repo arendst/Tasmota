@@ -135,7 +135,10 @@ return_types = {
   "lv_theme_t *": "lv_theme",
   "lv_disp_t *": "lv_disp",
   "lv_indev_t *": "lv_indev",
+  "lv_img_header_t *": "lv_img_header",
+  "lv_img_dsc_t *": "lv_img_dsc",
   "lv_ts_calibration_t *": "lv_ts_calibration",
+  "lv_style_transition_dsc_t *": "lv_style_transition_dsc",
   #"lv_disp_t*": "lv_disp",
   #"lv_style_list_t*": "",
 
