@@ -142,8 +142,8 @@ return_types = {
   # "lv_color_hsv_t *": "lv_color_hsv",
   "lv_color_filter_dsc_t *": "lv_color_filter_dsc",
   "lv_timer_t *": "lv_timer",
-  "lv_coord_t *": "p",      # treat as a simple pointer, decoding needs to be done at Berry level
-  "char **": "p",      # treat as a simple pointer, decoding needs to be done at Berry level
+  "lv_coord_t *": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
+  "char **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
 
   # callbacks
   "lv_group_focus_cb_t": "lv_group_focus_cb",
