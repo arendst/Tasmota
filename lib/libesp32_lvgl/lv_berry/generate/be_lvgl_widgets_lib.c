@@ -317,6 +317,7 @@ extern int lvbe_obj_get_style_pad_column(bvm *vm);
 extern int lvbe_obj_get_style_radius(bvm *vm);
 extern int lvbe_obj_get_style_clip_corner(bvm *vm);
 extern int lvbe_obj_get_style_opa(bvm *vm);
+extern int lvbe_obj_get_style_color_filter_dsc(bvm *vm);
 extern int lvbe_obj_get_style_color_filter_opa(bvm *vm);
 extern int lvbe_obj_get_style_anim_time(bvm *vm);
 extern int lvbe_obj_get_style_anim_speed(bvm *vm);

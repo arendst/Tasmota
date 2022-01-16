@@ -502,6 +502,15 @@ const be_ctypes_structure_t be_lv_style_transition_dsc = {
     { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_color_filter_dsc = {
+  8,  /* size in bytes */
+  2,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[2]) {
+    { "filter_cb", 0, 0, 0, ctypes_ptr32, 0 },
+    { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_ts_calibration = {
   12,  /* size in bytes */
   5,  /* number of elements */
@@ -522,6 +531,7 @@ static const char * be_ctypes_instance_mappings[] = {
 static be_define_ctypes_class(lv_area, &be_lv_area, &be_class_ctypes, "lv_area");
 static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ctypes, "lv_chart_cursor");
 static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes, "lv_chart_series");
+static be_define_ctypes_class(lv_color_filter_dsc, &be_lv_color_filter_dsc, &be_class_ctypes, "lv_color_filter_dsc");
 static be_define_ctypes_class(lv_draw_img_dsc, &be_lv_draw_img_dsc, &be_class_ctypes, "lv_draw_img_dsc");
 static be_define_ctypes_class(lv_draw_line_dsc, &be_lv_draw_line_dsc, &be_class_ctypes, "lv_draw_line_dsc");
 static be_define_ctypes_class(lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param, &be_class_ctypes, "lv_draw_mask_angle_param");
@@ -556,6 +566,7 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
   ctypes_register_class(vm, &be_class_lv_chart_cursor, &be_lv_chart_cursor);
   ctypes_register_class(vm, &be_class_lv_chart_series, &be_lv_chart_series);
+  ctypes_register_class(vm, &be_class_lv_color_filter_dsc, &be_lv_color_filter_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_line_dsc, &be_lv_draw_line_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param);
@@ -591,6 +602,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_area", &be_class_lv_area },
   { "lv_chart_cursor", &be_class_lv_chart_cursor },
   { "lv_chart_series", &be_class_lv_chart_series },
+  { "lv_color_filter_dsc", &be_class_lv_color_filter_dsc },
   { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
   { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
   { "lv_draw_mask_angle_param", &be_class_lv_draw_mask_angle_param },

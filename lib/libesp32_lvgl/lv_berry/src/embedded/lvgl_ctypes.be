@@ -425,6 +425,21 @@ lv_style_transition_dsc = [            # valid LVGL8
 lv_style_transition_dsc = ctypes.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
 
 #######################################################################
+# lv_color
+# lv_color_hsv = [            # valid LVGL8
+#     [uint16_t, "h"],
+#     [uint8_t, "s"],
+#     [uint8_t, "v"],
+# ]
+# lv_color_hsv = ctypes.structure(lv_color_hsv, "lv_color_hsv")
+
+lv_color_filter_dsc = [            # valid LVGL8
+    [ptr, "filter_cb"],
+    [ptr, "user_data"],
+]
+lv_color_filter_dsc = ctypes.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
+
+#######################################################################
 # Special structure used to calibrate resistive touchscreens
 #######################################################################
 lv_ts_calibration = [            # valid LVGL8
