@@ -30,6 +30,7 @@ uint8_t_2 = ctypes.bf_2
 uint8_t_3 = ctypes.bf_3
 uint8_t_4 = ctypes.bf_4
 uint8_t_5 = ctypes.bf_5
+uint8_t_11 = ctypes.bf_11
 uint8_t = ctypes.u8
 int16_t = ctypes.i16
 uint16_t = ctypes.u16
@@ -392,6 +393,36 @@ lv_event = [            # valid LVGL8
     [uint8_t_1, "deleted"],
 ]
 lv_event = ctypes.structure(lv_event, "lv_event")
+
+#######################################################################
+# lv_img structures
+lv_img_header = [            # valid LVGL8
+    [uint8_t_5, "cf"],
+    [uint8_t_3, "always_zero"],
+    [uint8_t_2, "reserved"],
+    [uint8_t_11, "w"],
+    [uint8_t_11, "h"],
+]
+lv_img_header = ctypes.structure(lv_img_header, "lv_img_header")
+
+lv_img_dsc = [            # valid LVGL8
+    [lv_img_header, "header"],
+    [uint8_t_5, "cf"],
+    [uint32_t, "data_size"],
+    [ptr, "data"],
+]
+lv_img_dsc = ctypes.structure(lv_img_dsc, "lv_img_dsc")
+
+#######################################################################
+# lv_style
+lv_style_transition_dsc = [            # valid LVGL8
+    [ptr, "props"],
+    [ptr, "user_data"],
+    [ptr, "path_xcb"],
+    [uint32_t, "time"],
+    [uint32_t, "delay"],
+]
+lv_style_transition_dsc = ctypes.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
 
 #######################################################################
 # Special structure used to calibrate resistive touchscreens
