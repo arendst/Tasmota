@@ -938,8 +938,8 @@
 #undef USE_PING
 #undef USE_AUTOCONF
 #undef USE_BERRY
-#undef USE_WEBCLIENT
-#undef USE_WEBCLIENT_HTTPS
+//#undef USE_WEBCLIENT
+//#undef USE_WEBCLIENT_HTTPS
 //#undef USE_TLS   // needed for MQTT over TLS
 
 #endif  // FIRMWARE_MINICUSTOM
