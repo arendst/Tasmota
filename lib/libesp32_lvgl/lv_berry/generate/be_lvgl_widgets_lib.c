@@ -511,6 +511,8 @@ extern int lvbe_obj_set_style_grid_cell_row_pos(bvm *vm);
 extern int lvbe_obj_set_style_grid_cell_row_span(bvm *vm);
 extern int lvbe_obj_set_style_grid_cell_x_align(bvm *vm);
 extern int lvbe_obj_set_style_grid_cell_y_align(bvm *vm);
+extern int lvbe_obj_get_style_grid_row_dsc_array(bvm *vm);
+extern int lvbe_obj_get_style_grid_column_dsc_array(bvm *vm);
 extern int lvbe_obj_get_style_grid_row_align(bvm *vm);
 extern int lvbe_obj_get_style_grid_column_align(bvm *vm);
 extern int lvbe_obj_get_style_grid_cell_column_pos(bvm *vm);
@@ -597,6 +599,8 @@ extern int lvbe_chart_set_value_by_id(bvm *vm);
 extern int lvbe_chart_set_value_by_id2(bvm *vm);
 extern int lvbe_chart_set_ext_y_array(bvm *vm);
 extern int lvbe_chart_set_ext_x_array(bvm *vm);
+extern int lvbe_chart_get_y_array(bvm *vm);
+extern int lvbe_chart_get_x_array(bvm *vm);
 extern int lvbe_chart_get_pressed_point(bvm *vm);
 
 /* `lv_colorwheel` external functions definitions */
@@ -718,6 +722,7 @@ extern int lvbe_btnmatrix_set_btn_ctrl_all(bvm *vm);
 extern int lvbe_btnmatrix_clear_btn_ctrl_all(bvm *vm);
 extern int lvbe_btnmatrix_set_btn_width(bvm *vm);
 extern int lvbe_btnmatrix_set_one_checked(bvm *vm);
+extern int lvbe_btnmatrix_get_map(bvm *vm);
 extern int lvbe_btnmatrix_get_selected_btn(bvm *vm);
 extern int lvbe_btnmatrix_get_btn_text(bvm *vm);
 extern int lvbe_btnmatrix_has_btn_ctrl(bvm *vm);

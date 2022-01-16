@@ -440,6 +440,18 @@ lv_color_filter_dsc = [            # valid LVGL8
 lv_color_filter_dsc = ctypes.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
 
 #######################################################################
+# lv_timer
+lv_timer = [            # valid LVGL8
+    [uint32_t, "period"],
+    [uint32_t, "last_run"],
+    [ptr, "timer_cb"],
+    [ptr, "user_data"],
+    [int32_t, "repeat_count"],
+    [uint8_t_1, "paused"],
+]
+lv_timer = ctypes.structure(lv_timer, "lv_timer")
+
+#######################################################################
 # Special structure used to calibrate resistive touchscreens
 #######################################################################
 lv_ts_calibration = [            # valid LVGL8
