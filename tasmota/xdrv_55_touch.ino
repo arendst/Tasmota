@@ -190,6 +190,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
     }
 #endif  // USE_M5STACK_CORE2
 
+    rotconvert(&touch_xp, &touch_yp);   // still do rot convert if not touched
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(touched, touch_xp, touch_yp);
 #endif // USE_TOUCH_BUTTONS
