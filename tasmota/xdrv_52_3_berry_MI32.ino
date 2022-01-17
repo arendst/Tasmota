@@ -22,7 +22,7 @@
 
 #include <berry.h>
 
-#ifdef USE_MI_ESP32
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
