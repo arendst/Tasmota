@@ -1353,7 +1353,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
             uint8_t brightness = 255;
             if (device.valid()) {
               const Z_Data_Light & light = device.data.find<Z_Data_Light>(_srcendpoint);
-              if ((&light != nullptr) && (light.validDimmer())) {
+              if ((&light != &z_data_unk) && (light.validDimmer())) {
                 // Dimmer has a valid value
                 brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
               }
