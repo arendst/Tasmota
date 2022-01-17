@@ -146,5 +146,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
 - ESP32 Compile error when I2S_Audio is enabled [#14095](https://github.com/arendst/Tasmota/issues/14095)
 - ESP32 Provide proper OTA_URL for tasmota32solo1 [#14202](https://github.com/arendst/Tasmota/issues/14202)
+- ESP32 OneWire-Stickbreaker (DS18x20) library support for ESP32C3 and ESP32S2 [#14338](https://github.com/arendst/Tasmota/issues/14338)
 
 ### Removed

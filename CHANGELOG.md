@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
 
 ## [2022.01.2] 20220116
 ### Added
