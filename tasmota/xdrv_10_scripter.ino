@@ -447,6 +447,8 @@ struct SCRIPT_MEM {
 #ifdef USE_SCRIPT_SERIAL
     TasmotaSerial *sp;
 #endif
+    float retval;
+    char *retstr;
 } glob_script_mem;
 
 
@@ -478,12 +480,13 @@ void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
 }
 
 
-
+char *scripter_sub(char *lp, uint8_t fromscriptcmd);
 char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, struct GVARS *gv);
 char *GetStringArgument(char *lp,uint8_t lastop,char *cp, struct GVARS *gv);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
 uint8_t UfsReject(char *name);
+void fread_str(uint8_t fref, char *sp, uint16_t slen);
 
 void ScriptEverySecond(void) {
 
@@ -1020,11 +1023,14 @@ void Script_Init_UDP() {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
+  //if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
 #ifdef ESP8266
   if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
 #else
   if (glob_script_mem.Script_PortUdp.beginMulticast(IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
 #endif
+
+
 #ifdef SCRIPT_DEBUG_UDP
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
 #endif
@@ -1349,6 +1355,23 @@ float DoMedian5(uint8_t index, float in) {
 }
 
 
+void fread_str(uint8_t fref, char *sp, uint16_t slen) {
+  uint16_t index = 0;
+  while (glob_script_mem.files[fref].available()) {
+    uint8_t buf[1], iob;
+    glob_script_mem.files[fref].read(buf,1);
+    iob = buf[0];
+    if (iob == '\t' || iob == ',' || iob == '\n' || iob == '\r') {
+      break;
+    } else {
+      *sp++ = iob;
+      index++;
+      if (index >= slen - 1) break;
+    }
+  }
+  *sp = 0;
+}
+
 #ifdef USE_FEXTRACT
 
 struct FE_TM {
@@ -1463,7 +1486,7 @@ struct tm tmx;
 }
 
 // assume 1. entry is timestamp, others are tab delimited values until LF
-// file refernece, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
+// file reference, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
 int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coffs, float **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum) {
   if (!glob_script_mem.file_flags[fref].is_open) return -1;
   char rstr[32];
@@ -1490,7 +1513,7 @@ int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coff
         index--;
       }
       glob_script_mem.files[fref].seek(cpos, SeekSet);
-    } else {
+    } else if (coffs == -2) {
       // seek to line 2
       for (uint32_t cp = 0; cp < cpos; cp++) {
         uint8_t buff[2], iob;
@@ -1501,6 +1524,33 @@ int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coff
           break;
         }
       }
+    } else {
+      // seek to pos of ts_from
+      cpos = glob_script_mem.files[fref].position();
+      uint32_t tsfrom = tstamp2l(ts_from);
+      while (glob_script_mem.files[fref].available()) {
+        uint8_t buff[2], iob;
+        glob_script_mem.files[fref].read(buff, 1);
+        cpos++;
+        iob = buff[0];
+        if (iob == '\n' || iob == '\r') {
+          // read time stamp
+          char ts[22];
+          glob_script_mem.files[fref].read((uint8_t*)ts, sizeof(ts));
+          char *cp = strchr(ts, '\t');
+          if (cp) {
+            *cp = 0;
+            uint32_t tstc = tstamp2l(ts);
+            //Serial.printf(">>> %s - %d - %d\n",ts, tstc, cpos );
+            if (tstc >= tsfrom) {
+              glob_script_mem.files[fref].seek(cpos, SeekSet);
+              return cpos;
+            }
+          }
+          cpos += sizeof(ts);
+        }
+      }
+      return -1;
     }
     return cpos;
   }
@@ -2738,9 +2788,26 @@ chknext:
         }
 
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "fxt(", 4)) {
+        if (!strncmp(lp, "fxt", 3)) {
+          lp += 3;
+          uint8_t oflg = 0;
+          if (*lp == 'o') {
+            oflg = 1;
+            lp++;
+          }
+          if (*lp == '(') {
+            lp++;
+          } else {
+            break;
+          }
+          /*
+          if (oflg) {
+            lp = GetNumericArgument(lp, OPER_EQU, &pfac, gv);
+            SCRIPT_SKIP_SPACES
+          }*/
+
           // extract from file
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           uint8_t fref = fvar;
 
@@ -2773,7 +2840,35 @@ chknext:
                 break;
               }
             }
-            fvar = extract_from_file(fref,  ts_from, ts_to, coffs, a_ptr, a_len, index, accum);
+            if (oflg) {
+              // optimized access
+              // seek to start
+              uint32_t fres = extract_from_file(fref,  ts_from, ts_to, -2, 0, 0, 0, 0);
+              char tsf[32];
+              fread_str(fref, tsf, sizeof(tsf));
+              uint32_t ltsf = tstamp2l(tsf);
+              fres = extract_from_file(fref,  ts_from, ts_to, -1, 0, 0, 0, 0);
+              fread_str(fref, tsf, sizeof(tsf));
+              uint32_t tssiz = tstamp2l(tsf) - ltsf;
+              uint32_t tspos = tstamp2l(ts_from) - ltsf;
+              float perc =  (float)tspos / (float)tssiz * 0.9;
+              if (perc < 0) perc = 0;
+              if (perc > 1) perc = 1;
+              float fsize = glob_script_mem.files[fref].size();
+              uint32_t spos = perc * fsize;
+              //AddLog(LOG_LEVEL_INFO,PSTR(">>> 1 %d, %d"), (uint32_t)perc, spos);
+              glob_script_mem.files[fref].seek(spos, SeekSet);
+              fres = extract_from_file(fref,  ts_from, ts_to, -3, 0, 0, 0, 0);
+              //AddLog(LOG_LEVEL_INFO,PSTR(">>> 2 %s - %d - %d"), ts_from, fres, (uint32_t)(perc*100));
+              if (fres > 0) {
+                fvar = extract_from_file(fref,  ts_from, ts_to, coffs, a_ptr, a_len, index, accum);
+              } else {
+                // fatal error time stamp out of range
+                fvar = -2;
+              }
+            } else {
+              fvar = extract_from_file(fref,  ts_from, ts_to, coffs, a_ptr, a_len, index, accum);
+            }
           } else {
             fvar = extract_from_file(fref,  ts_from, ts_to, coffs, 0, 0, 0, 0);
           }
@@ -3513,12 +3608,13 @@ chknext:
         if (!strncmp(lp, "st(", 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          while (*lp==' ') lp++;
+          SCRIPT_SKIP_SPACES
           char token[2];
           token[0] = *lp++;
           token[1] = 0;
-          while (*lp==' ') lp++;
+          SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          SCRIPT_SKIP_SPACES
           // skip ) bracket
           lp++;
           len = 0;
@@ -3528,15 +3624,36 @@ chknext:
             if (!st) {
               *sp = 0;
             } else {
-              for (uint8_t cnt = 1; cnt<=fvar; cnt++) {
-                if (cnt==fvar) {
-                  strcpy(sp, st);
-                  break;
+              if (fvar > 0) {
+                for (uint8_t cnt = 1; cnt <= fvar; cnt++) {
+                  if (cnt == fvar) {
+                    strcpy(sp, st);
+                    break;
+                  }
+                  st = strtok(NULL, token);
+                  if (!st) {
+                    *sp = 0;
+                    break;
+                  }
                 }
-                st = strtok(NULL, token);
-                if (!st) {
-                  *sp = 0;
-                  break;
+              } else {
+                // get string before token
+                fvar = -fvar;
+                char cstr[SCRIPT_MAXSSIZE];
+                strcpy(cstr, str);
+                for (uint8_t cnt = 1; cnt <= fvar; cnt++) {
+                  if (cnt == fvar - 1) {
+                    *st = 0;
+                    strcpy(sp, cstr);
+                    break;
+                  }
+                  st = strtok(NULL, token);
+                  if (!st) {
+                    *sp = 0;
+                    break;
+                  }
+                  strcat(cstr, token);
+                  strcat(cstr, st);
                 }
               }
             }
@@ -3544,9 +3661,23 @@ chknext:
           goto strexit;
         }
         if (!strncmp(lp, "s(", 2)) {
-          lp = GetNumericArgument(lp + 2, OPER_EQU, &fvar, gv);
+          lp += 2;
+          uint8_t dprec = glob_script_mem.script_dprec;
+          uint8_t lzero = glob_script_mem.script_lzero;
+          if (isdigit(*lp)) {
+            if (*(lp + 1) == '.') {
+              lzero = *lp & 0xf;
+              lp += 2;
+              dprec = *lp & 0xf;
+              lp++;
+            } else {
+              dprec = *lp & 0xf;
+              lp++;
+            }
+          }
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           char str[glob_script_mem.max_ssize + 1];
-          f2char(fvar, glob_script_mem.script_dprec, glob_script_mem.script_lzero, str);
+          f2char(fvar, dprec, lzero, str);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           lp++;
           len = 0;
@@ -3954,6 +4085,12 @@ extern char *SML_GetSVal(uint32_t index);
           len = 0;
           goto strexit;
         }
+        if (!strncmp(lp, "tsn(", 4)) {
+          char str[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
+          fvar = tstamp2l(str);
+          goto nfuncexit;
+        }
 #endif
         break;
       case 'u':
@@ -4095,6 +4232,25 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
         break;
+      case '#':
+        { char sub[128];
+          // subroutine
+          sub[0] = '=';
+          strncpy(sub + 1, lp, sizeof(sub) - 1);
+          char *xp = scripter_sub(sub, 0);
+          lp += (uint32_t)xp - (uint32_t)sub - 1;
+
+          if (glob_script_mem.retstr) {
+            if (sp) strlcpy(sp, glob_script_mem.retstr, glob_script_mem.max_ssize);
+            free (glob_script_mem.retstr);
+            goto strexit;
+          } else {
+            fvar = glob_script_mem.retval;
+            goto exit;
+          }
+        }
+        break;
+
       default:
         break;
     }
@@ -4546,10 +4702,17 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               if (*cp=='(') {
                 // math expression
                 cp++;
+                glob_script_mem.glob_error = 0;
+                char *slp = cp;
                 cp = GetNumericArgument(cp, OPER_EQU, &fvar, 0);
-                f2char(fvar, dprec, lzero, string);
+                if (glob_script_mem.glob_error == 1) {
+                  glob_script_mem.glob_error = 0;
+                  cp = GetStringArgument(slp, OPER_EQU, string, 0);
+                } else {
+                  f2char(fvar, dprec, lzero, string);
+                }
                 uint8_t slen = strlen(string);
-                if (count + slen<dstsize - 1) {
+                if (count + slen < dstsize - 1) {
                   strcpy(&dstbuf[count], string);
                   count += slen - 1;
                 }
@@ -5136,7 +5299,29 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             toLogEOL(tbuff, lp);
 #endif //IFTHEN_DEBUG
 
-            if (!strncmp(lp, "break", 5)) {
+            if (!strncmp(lp, "return", 6)) {
+              lp += 6;
+              SCRIPT_SKIP_SPACES
+              if (*lp == SCRIPT_EOL) {
+                goto next_line;
+              }
+              glob_script_mem.glob_error = 0;
+              char *slp = lp;
+              lp = GetNumericArgument(lp, OPER_EQU, &glob_script_mem.retval, 0);
+              if (glob_script_mem.glob_error == 1) {
+                // mismatch was string, not number
+                lp = slp;
+                glob_script_mem.glob_error = 0;
+                glob_script_mem.retstr = (char*)calloc(SCRIPT_MAXSSIZE, 1);
+                if (glob_script_mem.retstr) {
+                  lp = GetStringArgument(lp, OPER_EQU, glob_script_mem.retstr, 0);
+                }
+              } else {
+                glob_script_mem.retstr = 0;
+              }
+              section = 0;
+              goto next_line;
+            } else if (!strncmp(lp, "break", 5)) {
               lp += 5;
               if (floop) {
                 // should break loop
@@ -9277,7 +9462,7 @@ void script_add_subpage(uint8_t num) {
       }
       sprintf_P(id, PSTR("/sfd%1d"), num);
       Webserver->on(id, wptr);
-      WSContentSend_PD( HTTP_WEB_FULL_DISPLAY , num, bname);
+      WSContentSend_PD(HTTP_WEB_FULL_DISPLAY, num, bname);
   }
 }
 #endif // SCRIPT_FULL_WEBPAGE
