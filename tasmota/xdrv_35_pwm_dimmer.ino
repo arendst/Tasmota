@@ -854,7 +854,8 @@ bool Xdrv35(uint8_t function)
           }
 
           // If hold time has arrived and no rule is enabled that handles the button hold, handle it.
-          else if (button_hold_time[button_index] <= now) {
+          else if ((int32_t)(now - button_hold_time[button_index]) >= 0) {
+
 #ifdef USE_RULES
             Response_P(PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
             Rules.no_execute = true;
@@ -908,7 +909,8 @@ bool Xdrv35(uint8_t function)
     case FUNC_ANY_KEY:
       {
         uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;  // 0 = Off, 1 = On, 2 = Toggle, 3 = Hold, 10,11,12,13 and 14 for Button Multipress
-        if ((state == 2 || state == 10) && ignore_any_key_time < millis()) {
+        if ((state == 2 || state == 10) && (int32_t)(millis() - ignore_any_key_time) > 0) {
+
           uint32_t button_index = (XdrvMailbox.payload & 0xFF) - 1;
           button_unprocessed[button_index] = false;
           PWMDimmerHandleButton(button_index, false);
