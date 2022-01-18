@@ -13,7 +13,7 @@ be_local_closure(Driver_add_cmd,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
