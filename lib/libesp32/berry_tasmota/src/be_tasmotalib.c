@@ -62,31 +62,40 @@ be_local_closure(Tasmota_add_driver,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(_drivers),
-    /* K1   */  be_nested_str(push),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str(instance),
+    /* K1   */  be_nested_str(value_error),
+    /* K2   */  be_nested_str(instance_X20required),
+    /* K3   */  be_nested_str(_drivers),
+    /* K4   */  be_nested_str(push),
     }),
     &be_const_str_add_driver,
     &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x780A0004,  //  0001  JMPF	R2	#0007
-      0x88080100,  //  0002  GETMBR	R2	R0	K0
-      0x8C080501,  //  0003  GETMET	R2	R2	K1
-      0x5C100200,  //  0004  MOVE	R4	R1
-      0x7C080400,  //  0005  CALL	R2	2
-      0x70020003,  //  0006  JMP		#000B
-      0x60080012,  //  0007  GETGBL	R2	G18
-      0x7C080000,  //  0008  CALL	R2	0
-      0x400C0401,  //  0009  CONNECT	R3	R2	R1
-      0x90020002,  //  000A  SETMBR	R0	K0	R2
-      0x80000000,  //  000B  RET	0
+    ( &(const binstruction[18]) {  /* code */
+      0x60080004,  //  0000  GETGBL	R2	G4
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x20080500,  //  0003  NE	R2	R2	K0
+      0x780A0000,  //  0004  JMPF	R2	#0006
+      0xB0060302,  //  0005  RAISE	1	K1	K2
+      0x88080103,  //  0006  GETMBR	R2	R0	K3
+      0x780A0004,  //  0007  JMPF	R2	#000D
+      0x88080103,  //  0008  GETMBR	R2	R0	K3
+      0x8C080504,  //  0009  GETMET	R2	R2	K4
+      0x5C100200,  //  000A  MOVE	R4	R1
+      0x7C080400,  //  000B  CALL	R2	2
+      0x70020003,  //  000C  JMP		#0011
+      0x60080012,  //  000D  GETGBL	R2	G18
+      0x7C080000,  //  000E  CALL	R2	0
+      0x400C0401,  //  000F  CONNECT	R3	R2	R1
+      0x90020602,  //  0010  SETMBR	R0	K3	R2
+      0x80000000,  //  0011  RET	0
     })
   )
 );
@@ -100,7 +109,7 @@ be_local_closure(Tasmota_gc,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -133,7 +142,7 @@ be_local_closure(Tasmota_find_op,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -205,7 +214,7 @@ be_local_closure(Tasmota_try_rule,   /* name */
   be_nested_proto(
     15,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -386,7 +395,7 @@ be_local_closure(Tasmota_gen_cb,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -417,7 +426,7 @@ be_local_closure(Tasmota_set_light,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -462,7 +471,7 @@ be_local_closure(Tasmota_exec_tele,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -539,7 +548,7 @@ be_local_closure(Tasmota_run_deferred,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -598,7 +607,7 @@ be_local_closure(Tasmota_remove_driver,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -638,7 +647,7 @@ be_local_closure(Tasmota_fast_loop,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -672,6 +681,7 @@ be_local_closure(Tasmota_fast_loop,   /* name */
 );
 /*******************************************************************/
 
+
 /********************************************************************
 ** Solidified function: add_fast_loop
 ********************************************************************/
@@ -679,47 +689,52 @@ be_local_closure(Tasmota_add_fast_loop,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str(_fl),
-    /* K1   */  be_nested_str(function),
-    /* K2   */  be_nested_str(value_error),
-    /* K3   */  be_nested_str(argument_X20must_X20be_X20a_X20function),
-    /* K4   */  be_nested_str(global),
-    /* K5   */  be_nested_str(fast_loop_enabled),
-    /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str(push),
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str(check_not_method),
+    /* K1   */  be_nested_str(_fl),
+    /* K2   */  be_nested_str(function),
+    /* K3   */  be_nested_str(value_error),
+    /* K4   */  be_nested_str(argument_X20must_X20be_X20a_X20function),
+    /* K5   */  be_nested_str(global),
+    /* K6   */  be_nested_str(fast_loop_enabled),
+    /* K7   */  be_const_int(1),
+    /* K8   */  be_nested_str(push),
     }),
     &be_const_str_add_fast_loop,
     &be_const_str_solidified,
-    ( &(const binstruction[18]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x740A0002,  //  0001  JMPT	R2	#0005
-      0x60080012,  //  0002  GETGBL	R2	G18
-      0x7C080000,  //  0003  CALL	R2	0
-      0x90020002,  //  0004  SETMBR	R0	K0	R2
-      0x60080004,  //  0005  GETGBL	R2	G4
-      0x5C0C0200,  //  0006  MOVE	R3	R1
-      0x7C080200,  //  0007  CALL	R2	1
-      0x20080501,  //  0008  NE	R2	R2	K1
-      0x780A0000,  //  0009  JMPF	R2	#000B
-      0xB0060503,  //  000A  RAISE	1	K2	K3
-      0x88080104,  //  000B  GETMBR	R2	R0	K4
-      0x900A0B06,  //  000C  SETMBR	R2	K5	K6
-      0x88080100,  //  000D  GETMBR	R2	R0	K0
-      0x8C080507,  //  000E  GETMET	R2	R2	K7
-      0x5C100200,  //  000F  MOVE	R4	R1
-      0x7C080400,  //  0010  CALL	R2	2
-      0x80000000,  //  0011  RET	0
+    ( &(const binstruction[21]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x7C080400,  //  0002  CALL	R2	2
+      0x88080101,  //  0003  GETMBR	R2	R0	K1
+      0x740A0002,  //  0004  JMPT	R2	#0008
+      0x60080012,  //  0005  GETGBL	R2	G18
+      0x7C080000,  //  0006  CALL	R2	0
+      0x90020202,  //  0007  SETMBR	R0	K1	R2
+      0x60080004,  //  0008  GETGBL	R2	G4
+      0x5C0C0200,  //  0009  MOVE	R3	R1
+      0x7C080200,  //  000A  CALL	R2	1
+      0x20080502,  //  000B  NE	R2	R2	K2
+      0x780A0000,  //  000C  JMPF	R2	#000E
+      0xB0060704,  //  000D  RAISE	1	K3	K4
+      0x88080105,  //  000E  GETMBR	R2	R0	K5
+      0x900A0D07,  //  000F  SETMBR	R2	K6	K7
+      0x88080101,  //  0010  GETMBR	R2	R0	K1
+      0x8C080508,  //  0011  GETMET	R2	R2	K8
+      0x5C100200,  //  0012  MOVE	R4	R1
+      0x7C080400,  //  0013  CALL	R2	2
+      0x80000000,  //  0014  RET	0
     })
   )
 );
 /*******************************************************************/
+
 
 /********************************************************************
 ** Solidified function: event
@@ -728,7 +743,7 @@ be_local_closure(Tasmota_event,   /* name */
   be_nested_proto(
     20,                          /* nstack */
     6,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -866,7 +881,7 @@ be_local_closure(Tasmota_find_key_i,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -925,7 +940,7 @@ be_local_closure(Tasmota_wire_scan,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -987,7 +1002,7 @@ be_local_closure(Tasmota_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1062,7 +1077,7 @@ be_local_closure(Tasmota_time_str,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1110,7 +1125,7 @@ be_local_closure(Tasmota_remove_rule,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1160,7 +1175,7 @@ be_local_closure(Tasmota_load,   /* name */
   be_nested_proto(
     21,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -1168,7 +1183,7 @@ be_local_closure(Tasmota_load,   /* name */
       be_nested_proto(
         6,                          /* nstack */
         1,                          /* argc */
-        0,                          /* varg */
+        2,                          /* varg */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
@@ -1201,7 +1216,7 @@ be_local_closure(Tasmota_load,   /* name */
       be_nested_proto(
         7,                          /* nstack */
         1,                          /* argc */
-        0,                          /* varg */
+        2,                          /* varg */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
@@ -1393,7 +1408,7 @@ be_local_closure(Tasmota_chars_in_string,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1450,7 +1465,7 @@ be_local_closure(Tasmota_cmd,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1488,38 +1503,42 @@ be_local_closure(Tasmota_cmd,   /* name */
 ********************************************************************/
 be_local_closure(Tasmota_add_cmd,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    6,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(_ccmd),
-    /* K1   */  be_nested_str(function),
-    /* K2   */  be_nested_str(value_error),
-    /* K3   */  be_nested_str(the_X20second_X20argument_X20is_X20not_X20a_X20function),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str(check_not_method),
+    /* K1   */  be_nested_str(_ccmd),
+    /* K2   */  be_nested_str(function),
+    /* K3   */  be_nested_str(value_error),
+    /* K4   */  be_nested_str(the_X20second_X20argument_X20is_X20not_X20a_X20function),
     }),
     &be_const_str_add_cmd,
     &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x740E0002,  //  0001  JMPT	R3	#0005
-      0x600C0013,  //  0002  GETGBL	R3	G19
-      0x7C0C0000,  //  0003  CALL	R3	0
-      0x90020003,  //  0004  SETMBR	R0	K0	R3
-      0x600C0004,  //  0005  GETGBL	R3	G4
-      0x5C100400,  //  0006  MOVE	R4	R2
-      0x7C0C0200,  //  0007  CALL	R3	1
-      0x1C0C0701,  //  0008  EQ	R3	R3	K1
-      0x780E0002,  //  0009  JMPF	R3	#000D
-      0x880C0100,  //  000A  GETMBR	R3	R0	K0
-      0x980C0202,  //  000B  SETIDX	R3	R1	R2
-      0x70020000,  //  000C  JMP		#000E
-      0xB0060503,  //  000D  RAISE	1	K2	K3
-      0x80000000,  //  000E  RET	0
+    ( &(const binstruction[18]) {  /* code */
+      0x8C0C0100,  //  0000  GETMET	R3	R0	K0
+      0x5C140400,  //  0001  MOVE	R5	R2
+      0x7C0C0400,  //  0002  CALL	R3	2
+      0x880C0101,  //  0003  GETMBR	R3	R0	K1
+      0x740E0002,  //  0004  JMPT	R3	#0008
+      0x600C0013,  //  0005  GETGBL	R3	G19
+      0x7C0C0000,  //  0006  CALL	R3	0
+      0x90020203,  //  0007  SETMBR	R0	K1	R3
+      0x600C0004,  //  0008  GETGBL	R3	G4
+      0x5C100400,  //  0009  MOVE	R4	R2
+      0x7C0C0200,  //  000A  CALL	R3	1
+      0x1C0C0702,  //  000B  EQ	R3	R3	K2
+      0x780E0002,  //  000C  JMPF	R3	#0010
+      0x880C0101,  //  000D  GETMBR	R3	R0	K1
+      0x980C0202,  //  000E  SETIDX	R3	R1	R2
+      0x70020000,  //  000F  JMP		#0011
+      0xB0060704,  //  0010  RAISE	1	K3	K4
+      0x80000000,  //  0011  RET	0
     })
   )
 );
@@ -1533,43 +1552,47 @@ be_local_closure(Tasmota_add_rule,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str(_rules),
-    /* K1   */  be_nested_str(function),
-    /* K2   */  be_nested_str(push),
-    /* K3   */  be_nested_str(kv),
-    /* K4   */  be_nested_str(value_error),
-    /* K5   */  be_nested_str(the_X20second_X20argument_X20is_X20not_X20a_X20function),
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str(check_not_method),
+    /* K1   */  be_nested_str(_rules),
+    /* K2   */  be_nested_str(function),
+    /* K3   */  be_nested_str(push),
+    /* K4   */  be_nested_str(kv),
+    /* K5   */  be_nested_str(value_error),
+    /* K6   */  be_nested_str(the_X20second_X20argument_X20is_X20not_X20a_X20function),
     }),
     &be_const_str_add_rule,
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x740E0002,  //  0001  JMPT	R3	#0005
-      0x600C0012,  //  0002  GETGBL	R3	G18
-      0x7C0C0000,  //  0003  CALL	R3	0
-      0x90020003,  //  0004  SETMBR	R0	K0	R3
-      0x600C0004,  //  0005  GETGBL	R3	G4
-      0x5C100400,  //  0006  MOVE	R4	R2
-      0x7C0C0200,  //  0007  CALL	R3	1
-      0x1C0C0701,  //  0008  EQ	R3	R3	K1
-      0x780E0007,  //  0009  JMPF	R3	#0012
-      0x880C0100,  //  000A  GETMBR	R3	R0	K0
-      0x8C0C0702,  //  000B  GETMET	R3	R3	K2
-      0x8C140103,  //  000C  GETMET	R5	R0	K3
-      0x5C1C0200,  //  000D  MOVE	R7	R1
-      0x5C200400,  //  000E  MOVE	R8	R2
-      0x7C140600,  //  000F  CALL	R5	3
-      0x7C0C0400,  //  0010  CALL	R3	2
-      0x70020000,  //  0011  JMP		#0013
-      0xB0060905,  //  0012  RAISE	1	K4	K5
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[23]) {  /* code */
+      0x8C0C0100,  //  0000  GETMET	R3	R0	K0
+      0x5C140400,  //  0001  MOVE	R5	R2
+      0x7C0C0400,  //  0002  CALL	R3	2
+      0x880C0101,  //  0003  GETMBR	R3	R0	K1
+      0x740E0002,  //  0004  JMPT	R3	#0008
+      0x600C0012,  //  0005  GETGBL	R3	G18
+      0x7C0C0000,  //  0006  CALL	R3	0
+      0x90020203,  //  0007  SETMBR	R0	K1	R3
+      0x600C0004,  //  0008  GETGBL	R3	G4
+      0x5C100400,  //  0009  MOVE	R4	R2
+      0x7C0C0200,  //  000A  CALL	R3	1
+      0x1C0C0702,  //  000B  EQ	R3	R3	K2
+      0x780E0007,  //  000C  JMPF	R3	#0015
+      0x880C0101,  //  000D  GETMBR	R3	R0	K1
+      0x8C0C0703,  //  000E  GETMET	R3	R3	K3
+      0x8C140104,  //  000F  GETMET	R5	R0	K4
+      0x5C1C0200,  //  0010  MOVE	R7	R1
+      0x5C200400,  //  0011  MOVE	R8	R2
+      0x7C140600,  //  0012  CALL	R5	3
+      0x7C0C0400,  //  0013  CALL	R3	2
+      0x70020000,  //  0014  JMP		#0016
+      0xB0060B06,  //  0015  RAISE	1	K5	K6
+      0x80000000,  //  0016  RET	0
     })
   )
 );
@@ -1583,7 +1606,7 @@ be_local_closure(Tasmota_exec_rules,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1667,7 +1690,7 @@ be_local_closure(Tasmota_hs2rgb,   /* name */
   be_nested_proto(
     17,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1765,7 +1788,7 @@ be_local_closure(KV_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1809,7 +1832,7 @@ be_local_closure(Tasmota_kv,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1841,7 +1864,7 @@ be_local_closure(Tasmota_remove_cmd,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1874,37 +1897,41 @@ be_local_closure(Tasmota_set_timer,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(_timers),
-    /* K1   */  be_nested_str(push),
-    /* K2   */  be_nested_str(Timer),
-    /* K3   */  be_nested_str(millis),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str(check_not_method),
+    /* K1   */  be_nested_str(_timers),
+    /* K2   */  be_nested_str(push),
+    /* K3   */  be_nested_str(Timer),
+    /* K4   */  be_nested_str(millis),
     }),
     &be_const_str_set_timer,
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
-      0x88100100,  //  0000  GETMBR	R4	R0	K0
-      0x74120002,  //  0001  JMPT	R4	#0005
-      0x60100012,  //  0002  GETGBL	R4	G18
-      0x7C100000,  //  0003  CALL	R4	0
-      0x90020004,  //  0004  SETMBR	R0	K0	R4
-      0x88100100,  //  0005  GETMBR	R4	R0	K0
-      0x8C100901,  //  0006  GETMET	R4	R4	K1
-      0xB81A0400,  //  0007  GETNGBL	R6	K2
-      0x8C1C0103,  //  0008  GETMET	R7	R0	K3
-      0x5C240200,  //  0009  MOVE	R9	R1
-      0x7C1C0400,  //  000A  CALL	R7	2
-      0x5C200400,  //  000B  MOVE	R8	R2
-      0x5C240600,  //  000C  MOVE	R9	R3
-      0x7C180600,  //  000D  CALL	R6	3
-      0x7C100400,  //  000E  CALL	R4	2
-      0x80000000,  //  000F  RET	0
+    ( &(const binstruction[19]) {  /* code */
+      0x8C100100,  //  0000  GETMET	R4	R0	K0
+      0x5C180400,  //  0001  MOVE	R6	R2
+      0x7C100400,  //  0002  CALL	R4	2
+      0x88100101,  //  0003  GETMBR	R4	R0	K1
+      0x74120002,  //  0004  JMPT	R4	#0008
+      0x60100012,  //  0005  GETGBL	R4	G18
+      0x7C100000,  //  0006  CALL	R4	0
+      0x90020204,  //  0007  SETMBR	R0	K1	R4
+      0x88100101,  //  0008  GETMBR	R4	R0	K1
+      0x8C100902,  //  0009  GETMET	R4	R4	K2
+      0xB81A0600,  //  000A  GETNGBL	R6	K3
+      0x8C1C0104,  //  000B  GETMET	R7	R0	K4
+      0x5C240200,  //  000C  MOVE	R9	R1
+      0x7C1C0400,  //  000D  CALL	R7	2
+      0x5C200400,  //  000E  MOVE	R8	R2
+      0x5C240600,  //  000F  MOVE	R9	R3
+      0x7C180600,  //  0010  CALL	R6	3
+      0x7C100400,  //  0011  CALL	R4	2
+      0x80000000,  //  0012  RET	0
     })
   )
 );
@@ -1918,7 +1945,7 @@ be_local_closure(Tasmota_remove_timer,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1972,7 +1999,7 @@ be_local_closure(Tasmota_exec_cmd,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -2028,7 +2055,7 @@ be_local_closure(Tasmota_get_light,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -2058,6 +2085,42 @@ be_local_closure(Tasmota_get_light,   /* name */
       0x7C0C0200,  //  000D  CALL	R3	1
       0x80040600,  //  000E  RET	1	R3
       0x80000000,  //  000F  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified function: check_not_method
+********************************************************************/
+be_local_closure(Tasmota_check_not_method,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str(introspect),
+    /* K1   */  be_nested_str(ismethod),
+    /* K2   */  be_nested_str(type_error),
+    /* K3   */  be_nested_str(BRY_X3A_X20method_X20not_X20allowed_X2C_X20use_X20a_X20closure_X20like_X20_X27_X2F_X20args_X20_X2D_X3E_X20obj_X2Efunc_X28args_X29_X27),
+    }),
+    &be_const_str_check_not_method,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0x8C0C0501,  //  0001  GETMET	R3	R2	K1
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x7C0C0400,  //  0003  CALL	R3	2
+      0x50100200,  //  0004  LDBOOL	R4	1	0
+      0x1C0C0604,  //  0005  EQ	R3	R3	R4
+      0x780E0000,  //  0006  JMPF	R3	#0008
+      0xB0060503,  //  0007  RAISE	1	K2	K3
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -2161,6 +2224,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     load, closure(Tasmota_load_closure)
     wire_scan, closure(Tasmota_wire_scan_closure)
     time_str, closure(Tasmota_time_str_closure)
+
+    check_not_method, closure(Tasmota_check_not_method_closure)
 
     hs2rgb, closure(Tasmota_hs2rgb_closure)
 

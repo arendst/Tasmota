@@ -40,6 +40,10 @@
 #define func_setstatic(o)      ((o)->type |= BE_FUNC_STATIC)
 #define func_clearstatic(o)    ((o)->type &= ~BE_FUNC_STATIC)
 
+/* values for bproto.varg */
+#define BE_VA_VARARG    (1 << 0)    /* function has variable number of arguments */
+#define BE_VA_METHOD    (1 << 1)    /* function is a method (this is only a hint) */
+
 #define array_count(a)   (sizeof(a) / sizeof((a)[0]))
 
 #define bcommon_header          \

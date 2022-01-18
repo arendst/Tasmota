@@ -51,3 +51,8 @@ assert_dump({1: 'x'}, '{"1":"x"}');
 assert_dump([1, 'x'], '[\n  1,\n  "x"\n]', 'format');
 assert_dump({1: 'x'}, '{\n  "1": "x"\n}', 'format');
 assert_dump({1: 'x', 'k': 'v'}, '{"k":"v","1":"x"}');
+
+class map2 : map def init() super(self).init() end end
+var m = map2()
+m['key'] = 1
+assert_dump(m, '{"key":1}')
