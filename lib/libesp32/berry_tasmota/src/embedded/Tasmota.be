@@ -246,6 +246,7 @@ class Tasmota
   end
 
   def set_timer(delay,f,id)
+    self.check_not_method(f)
     if !self._timers self._timers=[] end
     self._timers.push(Timer(self.millis(delay),f,id))
   end

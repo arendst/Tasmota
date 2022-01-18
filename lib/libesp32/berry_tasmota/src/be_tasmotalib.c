@@ -1903,31 +1903,35 @@ be_local_closure(Tasmota_set_timer,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(_timers),
-    /* K1   */  be_nested_str(push),
-    /* K2   */  be_nested_str(Timer),
-    /* K3   */  be_nested_str(millis),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str(check_not_method),
+    /* K1   */  be_nested_str(_timers),
+    /* K2   */  be_nested_str(push),
+    /* K3   */  be_nested_str(Timer),
+    /* K4   */  be_nested_str(millis),
     }),
     &be_const_str_set_timer,
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
-      0x88100100,  //  0000  GETMBR	R4	R0	K0
-      0x74120002,  //  0001  JMPT	R4	#0005
-      0x60100012,  //  0002  GETGBL	R4	G18
-      0x7C100000,  //  0003  CALL	R4	0
-      0x90020004,  //  0004  SETMBR	R0	K0	R4
-      0x88100100,  //  0005  GETMBR	R4	R0	K0
-      0x8C100901,  //  0006  GETMET	R4	R4	K1
-      0xB81A0400,  //  0007  GETNGBL	R6	K2
-      0x8C1C0103,  //  0008  GETMET	R7	R0	K3
-      0x5C240200,  //  0009  MOVE	R9	R1
-      0x7C1C0400,  //  000A  CALL	R7	2
-      0x5C200400,  //  000B  MOVE	R8	R2
-      0x5C240600,  //  000C  MOVE	R9	R3
-      0x7C180600,  //  000D  CALL	R6	3
-      0x7C100400,  //  000E  CALL	R4	2
-      0x80000000,  //  000F  RET	0
+    ( &(const binstruction[19]) {  /* code */
+      0x8C100100,  //  0000  GETMET	R4	R0	K0
+      0x5C180400,  //  0001  MOVE	R6	R2
+      0x7C100400,  //  0002  CALL	R4	2
+      0x88100101,  //  0003  GETMBR	R4	R0	K1
+      0x74120002,  //  0004  JMPT	R4	#0008
+      0x60100012,  //  0005  GETGBL	R4	G18
+      0x7C100000,  //  0006  CALL	R4	0
+      0x90020204,  //  0007  SETMBR	R0	K1	R4
+      0x88100101,  //  0008  GETMBR	R4	R0	K1
+      0x8C100902,  //  0009  GETMET	R4	R4	K2
+      0xB81A0600,  //  000A  GETNGBL	R6	K3
+      0x8C1C0104,  //  000B  GETMET	R7	R0	K4
+      0x5C240200,  //  000C  MOVE	R9	R1
+      0x7C1C0400,  //  000D  CALL	R7	2
+      0x5C200400,  //  000E  MOVE	R8	R2
+      0x5C240600,  //  000F  MOVE	R9	R3
+      0x7C180600,  //  0010  CALL	R6	3
+      0x7C100400,  //  0011  CALL	R4	2
+      0x80000000,  //  0012  RET	0
     })
   )
 );
