@@ -53,7 +53,7 @@ uint8_t Sr04TModeDetect(void)
   if (sonar_serial->begin(9600)) {
     DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
 
-    if (sr04_trig_pin != -1) {
+    if (PinUsed(GPIO_SR04_TRIG)) {
       sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
     } else {
       sr04_type = 2;
@@ -65,7 +65,7 @@ uint8_t Sr04TModeDetect(void)
   if (sr04_type < 2) {
     delete sonar_serial;
     sonar_serial = nullptr;
-    if (-1 == sr04_trig_pin) {
+    if (! PinUsed(GPIO_SR04_TRIG)) {
       sr04_trig_pin = Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
     }
     sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
