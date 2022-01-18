@@ -500,8 +500,7 @@
 // -- MQTT - TLS - AWS IoT ------------------------
 #ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge
   #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
-    #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
-  #define USE_TLS                                  // flag indicates we need to include TLS code
+  #define USE_MQTT_AWS_IOT_LIGHT                   // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 #endif                                             // USE_ZBBRIDGE_TLS
 
 //#undef USE_KNX                                   // Disable KNX IP Protocol Support
@@ -940,7 +939,6 @@
 #undef USE_BERRY
 //#undef USE_WEBCLIENT
 //#undef USE_WEBCLIENT_HTTPS
-//#undef USE_TLS   // needed for MQTT over TLS
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -1046,5 +1044,9 @@
 #ifdef USE_EMULATION_HUE
 #define USE_UNISHOX_COMPRESSION                // Add support for string compression
 #endif
+
+#ifdef USE_MQTT_TLS                              // If TLS for MQTT is enabled:
+  #define USE_TLS                                // flag indicates we need to include TLS code
+#endif                                           // USE_MQTT_TLS
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_
