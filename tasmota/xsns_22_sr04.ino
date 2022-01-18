@@ -53,7 +53,7 @@ uint8_t Sr04TModeDetect(void)
   if (sonar_serial->begin(9600)) {
     DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
 
-    if (! PinUsed(GPIO_SR04_TRIG)) {
+    if (PinUsed(GPIO_SR04_TRIG)) {
       sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
     } else {
       sr04_type = 2;
