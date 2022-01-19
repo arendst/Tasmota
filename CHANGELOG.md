@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [2022.01.3]
 ### Added
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+- ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
 
 ### Changed
 

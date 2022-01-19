@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
 - Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
+- ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested [#14487](https://github.com/arendst/Tasmota/issues/14487)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features
 - ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
