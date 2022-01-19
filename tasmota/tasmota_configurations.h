@@ -1045,8 +1045,8 @@
 #define USE_UNISHOX_COMPRESSION                // Add support for string compression
 #endif
 
-#ifdef USE_MQTT_TLS                              // If TLS for MQTT is enabled:
-  #define USE_TLS                                // flag indicates we need to include TLS code
-#endif                                           // USE_MQTT_TLS
+#if defined(USE_MQTT_TLS) || defined(USE_TELEGRAM)      // Enable TLS if required:
+  #define USE_TLS                                       // flag indicates we need to include TLS code
+#endif                                                  // USE_MQTT_TLS || USE_TELEGRAM
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_
