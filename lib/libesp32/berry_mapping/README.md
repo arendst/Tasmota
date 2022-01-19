@@ -1,4 +1,4 @@
-# Berry mapping to C functions
+# Berry mapping to C functions, aka "ctype functions"
 
 This library provides a simplified and semi-automated way to map C functions to Berry functions with minimal effort and minimal code size.
 
@@ -87,7 +87,7 @@ When calling a `C` function, here are the steps applied:
 
 Berry type|converted to C type
 :---|:---
-`int`|`intptr_t`<br>If a type `r` (real) is expected, the value is silently converted to `breal`
+`int`|`intptr_t` (i.e. `int` large enough to hold a pointer.<br><br>If a type `r` (real) is expected, the value is silently converted to `breal`
 `real`|`breal` (either `float` or `double`)
 `bool`|`intptr_t` with value `1` if `true` or `0` if `false`
 `string`|`const char*` C string `NULL` terminated (cannot be modified)
@@ -111,6 +111,7 @@ Argument type|Berry type expected
 `c`|`comptr` (native pointer)
 `.`|**any** - no type checking for this argument
 `-`|**skip** - skip this argument (handy to discard the `self` implicit argument for methods)
+`~`|send the length of the previous bytes() buffer (or raise an exception if no length known)
 `(<class>)`|`instance` deriving from `<class>` (i.e. of this class or any subclass
 `^<callback_type>^`|`function` which is converted to a `C` callback by calling `cb.make_cb()`. The optional `callback_type` string is passed as second argument to `cb.make_cb()` and Berrt `arg #1` (typically `self`) is passed as 3rd argument<br>See below for callbacks
 `[<...>]`|arguments in brackets are optional (note: the closing bracket is not strictly necessary but makes it more readable)
@@ -128,12 +129,50 @@ Return type definition|Berry return type
 :---|:---
 `''` (empty string)|`nil` - no return value, equivalent to `C` `void`
 `i`|`int`
-`r`|`real` (warning `intptr_t` and `breal` must be of same size)
+`f`|(float) `real` (warning `intptr_t` and `breal` must be of same size)
 `s`|`string` - `const char*` is converted to `C` string, a copy of the string is made so the original string can be modified
 `b`|`bool` - any non-zero value is converted to `true`
 `c`|`comptr` - native pointer
 `<class>` or `<module.class>`|Instanciate a new instance for this class, pass the return value as `comptr` (native pointer), and pass a second argument as `comptr(-1)` as a marker for an instance cretion (to distinguish from an simple encapsulation of a pointer)
 `+<varable>` of `=<variable>`|Used in class constructor `init()` functions, the return value is passed as `comptr` and stored in the instance variable with name `<variable>`. The variables are typically `_p` or `.p`. `=` prefix indicates that a `NULL` value is accepted, while the `+` prefix raises an exception if the function returns `NULL`. This is typically used when encapsulating a pointer to a `C++` object that is not supposed to be `NULL`.
+`&`|`bytes()` object, pointer to buffer returned, and size passed with an additional (size_t*) argument after arguments
+
+## Pre-compiled ctype functions
+
+It is possible to pre-compile Berry modules or classes that reference directly a ctype function definition.
+
+Example:
+
+``` C
+/* return type is "i", arg type is "ifs" for int-float-string
+int my_ext_func(int x, float s, const char* s) {
+    /* do whatever */
+    return 0;
+}
+
+/* @const_object_info_begin
+module my_module (scope: global) {
+    my_func, ctype_func(my_ext_func, "i", "ifs")
+}
+@const_object_info_end */
+#include "be_fixed_my_module.h"
+```
+
+With this scheme, the definition is passed automatically to the ctype handler.
+It relies on an extensibility scheme of Berry.
+
+You need to register the ctype function handler at the launch of the Berry VM:
+
+``` C
+#include "berry.h"
+#include "be_mapping.h"
+
+void berry_launch(boid)
+{
+    bvm *vm = be_vm_new();      /* Construct a VM */
+    be_set_ctype_func_hanlder(berry.vm, be_call_ctype_func);  /* register the ctype function handler */
+}
+```
 
 ## Callbacks
 

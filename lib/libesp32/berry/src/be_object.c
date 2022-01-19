@@ -20,7 +20,7 @@ const char* be_vtype2str(bvalue *v)
     case BE_INT: return "int";
     case BE_REAL: return "real";
     case BE_BOOL: return "bool";
-    case BE_CLOSURE: case BE_NTVCLOS:
+    case BE_CLOSURE: case BE_NTVCLOS: case BE_CTYPE_FUNC:
     case BE_NTVFUNC: return "function";
     case BE_PROTO: return "proto";
     case BE_CLASS: return "class";
