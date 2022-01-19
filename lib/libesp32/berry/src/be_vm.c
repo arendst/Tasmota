@@ -462,6 +462,7 @@ BERRY_API bvm* be_vm_new(void)
     be_loadlibs(vm);
     vm->compopt = 0;
     vm->obshook = NULL;
+    vm->ctypefunc = NULL;
 #if BE_USE_PERF_COUNTERS
     vm->counter_ins = 0;
     vm->counter_enter = 0;
@@ -1128,6 +1129,17 @@ newframe: /* a new call frame */
                 ret_native(vm);
                 break;
             }
+            case BE_CTYPE_FUNC: {
+                if (vm->ctypefunc) {
+                    push_native(vm, var, argc, mode);
+                    const void* args = var_toobj(var);
+                    vm->ctypefunc(vm, args);
+                    ret_native(vm);
+                } else {
+                    vm_error(vm, "internal_error", "missing ctype_func handler");
+                }
+                break;
+            }
             case BE_MODULE: {
                 bvalue attr;
                 var_setstr(&attr, str_literal(vm, "()"));
@@ -1256,4 +1268,14 @@ BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook)
     (void)hook;     /* avoid comiler warning */
 
     vm->obshook = hook;
+}
+
+BERRY_API void be_set_ctype_func_hanlder(bvm *vm, bctypefunc handler)
+{
+    vm->ctypefunc = handler;
+}
+
+BERRY_API bctypefunc be_get_ctype_func_hanlder(bvm *vm)
+{
+    return vm->ctypefunc;
 }

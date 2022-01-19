@@ -151,7 +151,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   '-': skip argument and ignore
  *   '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
  *   'lv_obj' be_instance of type or subtype
- *   '^lv_event_cb' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
+ *   '^lv_event_cb^' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
  * 
  * Ex: ".ii" takes 3 arguments, first one is any type, followed by 2 ints
 \*********************************************************************************************/
@@ -399,6 +399,21 @@ static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
   }
 }
 
+/* C arguments are coded as an array of 3 pointers */
+typedef struct ctype_args {
+  void* func;
+  const char* return_type;
+  const char* arg_type;
+} ctype_args;
+
+/*********************************************************************************************\
+ * CType handler for Berry
+\*********************************************************************************************/
+int be_call_ctype_func(bvm *vm, const void *definition) {
+  ctype_args* args = (ctype_args*) definition;
+  return be_call_c_func(vm, args->func, args->return_type, args->arg_type);
+}
+
 /*********************************************************************************************\
  * Call a C function with auto-mapping
  * 
@@ -411,7 +426,7 @@ static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
  * Note: the C function mapping supports max 8 arguments and does not directly support
  *       pointers to values (although it is possible to mimick with classes)
 \*********************************************************************************************/
-int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
+int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type) {
   intptr_t p[8] = {0,0,0,0,0,0,0,0};
   int argc = be_top(vm); // Get the number of arguments
 
