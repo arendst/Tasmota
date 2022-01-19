@@ -980,9 +980,6 @@
 #define SET_ESP32_STACK_SIZE  (8 * 1024)         // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
 
 //#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter(+6k3 code)
-#ifdef USE_SONOFF_SPM
-#define USE_ETHERNET
-#endif
 
 //#define USE_ETHERNET                             // Add support for ethernet (Currently fixed for Olimex ESP32-PoE)
 //  #define USE_WT32_ETH01                         // Add support for Wireless-Tag WT32-ETH01
@@ -1095,7 +1092,15 @@
 //#define FIRMWARE_MINIMAL                         // Create tasmota-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
- * No user configurable items below
+ * User configurable items override                                                          *
+\*********************************************************************************************/
+
+#ifdef USE_CONFIG_OVERRIDE
+  #include "user_config_override.h"         // Configuration overrides for my_user_config.h
+#endif
+
+/*********************************************************************************************\
+ * Mutual exclude options
 \*********************************************************************************************/
 
 #if defined(USE_DISCOVERY) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT))
@@ -1107,7 +1112,7 @@
 #endif
 
 /*********************************************************************************************\
- * Post-process compile options for Autoconf
+ * Post-process compile options for Autoconf and others
 \*********************************************************************************************/
 
 #if defined(USE_AUTOCONF)
@@ -1122,16 +1127,16 @@
   #endif
 #endif // USE_AUTOCONF
 
+#ifdef USE_SONOFF_SPM
+  #define USE_ETHERNET
+#endif
+
 /*********************************************************************************************\
  * Post-process compile options for TLS
 \*********************************************************************************************/
 
 #if defined(USE_MQTT_TLS) || defined(USE_SENDMAIL) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS) || defined(USE_ALEXA_AVS)
   #define USE_TLS                                  // flag indicates we need to include TLS code
-#endif
-
-#ifdef USE_CONFIG_OVERRIDE
-  #include "user_config_override.h"         // Configuration overrides for my_user_config.h
 #endif
 
 /*********************************************************************************************\
