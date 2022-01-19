@@ -90,7 +90,9 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   }
 #endif  // ESP8266
 #ifdef ESP32
-  if (transmit_pin > 33) { return; }  // GPIO34 - GPIO39 are Input only
+//  if (transmit_pin > 33) { return; }  // GPIO34 - GPIO39 are Input only
+  if ((receive_pin >= 0) && !GPIO_IS_VALID_GPIO(receive_pin)) { return; }
+  if ((transmit_pin >= 0) && !GPIO_IS_VALID_OUTPUT_GPIO(transmit_pin)) { return; }
   m_hardserial = true;
 #endif  // ESP32
   m_valid = true;
