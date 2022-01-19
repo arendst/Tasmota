@@ -134,7 +134,8 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
     }
 #endif  // ESP8266
 #ifdef ESP32
-    if (tasmota_serial_index > 0) {  // We only support UART1 and UART2 and keep UART0 for debugging
+//    if (tasmota_serial_index > 0) {  // We only support UART1 and UART2 and keep UART0 for debugging
+    if (tasmota_serial_index >= 0) {  // We prefer UART1 and UART2 and keep UART0 for debugging
       m_uart = tasmota_serial_index;
       tasmota_serial_index--;
       TSerial = new HardwareSerial(m_uart);
@@ -192,7 +193,8 @@ bool TasmotaSerial::hardwareSerial(void) {
   return m_hardserial;
 #endif  // ESP8266
 #ifdef ESP32
-  return false;  // On ESP32 do not mess with Serial0 buffers
+//  return false;  // On ESP32 do not mess with Serial0 buffers
+  return (0 == m_uart);  // We prefer UART1 and UART2 and keep UART0 for debugging
 #endif  // ESP32
 }
 
