@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Solax X1 negative temperature support [#14278](https://github.com/arendst/Tasmota/issues/14278)
 - Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
 - Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
+- Support for BME688 with latest Bosch-Sensor-API library [#14513](https://github.com/arendst/Tasmota/issues/14513)
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested [#14487](https://github.com/arendst/Tasmota/issues/14487)
 - ESP32 support for TuyaMcu
@@ -130,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - TasmotaModbus library from v1.2.0 to v3.4.0
 - ESP8266Audio library from v1.9.2 to v1.9.5
 - ESP8266SAM library from v1.0 to v1.0.1
+- BME68x-Sensor-API library from v3.5.9 to v4.4.7
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)

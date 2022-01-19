@@ -258,8 +258,8 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_BMP)
     feature3 |= 0x00000400;  // xsns_09_bmp.ino
 #endif
-#if defined(USE_I2C) && defined(USE_BMP) && defined(USE_BME680)
-    feature3 |= 0x00000800;  // xsns_09_bmp.ino - BME680
+#if defined(USE_I2C) && defined(USE_BMP) && defined(USE_BME68X)
+    feature3 |= 0x00000800;  // xsns_09_bmp.ino - BME68x
 #endif
 #if defined(USE_I2C) && defined(USE_BH1750)
     feature3 |= 0x00001000;  // xsns_10_bh1750.ino

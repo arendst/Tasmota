@@ -101,7 +101,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SHT               | - | - / x | - | x | - | - |
 | USE_HTU               | - | - / x | - | x | - | - |
 | USE_BMP               | - | - / x | - | x | - | - |
-| USE_BME680            | - | - / x | - | x | - | - |
+| USE_BME68X            | - | - / x | - | x | - | - |
 | USE_BH1750            | - | - / x | - | x | - | - |
 | USE_VEML6070          | - | - / x | - | x | - | - |
 | USE_ADS1115           | - | - / x | - | x | - | - |
