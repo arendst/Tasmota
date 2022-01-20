@@ -17,18 +17,35 @@ extern "C" {
  * as virtual members
  \*********************************************************************************************/
 
-typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intptr_t p3,
-                                    intptr_t p4, intptr_t p5, intptr_t p6, intptr_t p7);
+#define be_cconst_int(_v)                   ((intptr_t)(_v))
+#define be_cconst_string(_v)                ((intptr_t)(_v))
+#define be_cconst_ptr(_v)                   ((intptr_t)(_v))
+#define be_cconst_func(_v)                  ((intptr_t)(_v))
+#define be_cconst_ctype_func(_f, _r)        ((intptr_t) &(be_ctype_var_args) { (const void*) _f, _r })
+
+/* C arguments are coded as an array of 3 pointers */
+typedef struct be_ctype_args {
+  void* func;
+  const char* return_type;
+  const char* arg_type;
+} be_ctype_args;
+
+/* ctype constant function as an array of 2 pointers: function and return type. arg_type is always NULL */
+typedef struct be_ctype_var_args {
+  const void* func;
+  const char* return_type;
+} be_ctype_var_args;
+
 
 typedef struct be_const_member_t {
     const char * name;
-    int        value;
+    intptr_t     value;
 } be_const_member_t;
 
 // table of functions per class
 typedef struct be_ntv_func_def_t {
     const char * name;
-    void * func;
+    const void * func;
     const char * return_type;
     const char * arg_type;
 } be_ntv_func_def_t;
@@ -55,7 +72,8 @@ extern int be_map_bin_search(const char * needle, const void * table, size_t elt
 extern void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr);
 extern int be_find_global_or_module_member(bvm *vm, const char * cl_name);
 
-extern bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern bbool be_const_module_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern bbool be_const_class_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
 extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *len);
 extern int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);
 extern int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type);

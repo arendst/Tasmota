@@ -37,9 +37,10 @@ extern "C" {
     .v.nf = (_func),                                            \
     .type = BE_NTVFUNC                                          \
 }
-typedef const void * constptr;
+
+typedef const void* be_constptr;
 #define be_const_ctype_func(_f, ...) {                          \
-    .v.nf = ((const void*) &(constptr[]) { _f, __VA_ARGS__ }),  \
+    .v.nf = ((const void*) &(be_constptr[]) { _f, __VA_ARGS__ }),\
     .type = BE_CTYPE_FUNC                                       \
 }
 
@@ -259,10 +260,9 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_NTVFUNC                                                  \
 }
 
-typedef const void * constptr;
 #define be_const_ctype_func(_f, ...) {                          \
     bvaldata(((const void*)                                     \
-        &(constptr[]) { (const void*) _f, __VA_ARGS__ })),      \
+        &((const void *)[]) { (const void*) _f, __VA_ARGS__ })),      \
     BE_CTYPE_FUNC                                               \
 }
 

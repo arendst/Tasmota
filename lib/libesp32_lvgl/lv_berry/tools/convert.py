@@ -774,11 +774,12 @@ for k in sorted(lv_module2):
   # otherwise it's an int, leave if unchanged
   if v is not None:
     v_prefix = ""
-    if v[0] == '"': v_prefix = "$"
-    if v[0] == '&': v_prefix = "&"
-    print(f"    {{ \"{v_prefix}{k}\", (int32_t) {v} }},")
+    v_macro = "be_cconst_int"
+    if v[0] == '"': v_prefix = "$"; v_macro = "be_cconst_string"
+    if v[0] == '&': v_prefix = "&"; v_macro = "be_cconst_ptr"
+    print(f"    {{ \"{v_prefix}{k}\", {v_macro}({v}) }},")
   else:
-    print(f"    {{ \"{k}\", LV_{k} }},")
+    print(f"    {{ \"{k}\", be_cconst_int(LV_{k}) }},")
 
 print("""
 };
