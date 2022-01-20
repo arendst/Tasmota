@@ -18,9 +18,6 @@
 */
 
 #ifdef USE_SR04
-
-#include <NewPing.h>
-#include <TasmotaSerial.h>
 /*********************************************************************************************\
  * HC-SR04, HC-SR04+, JSN-SR04T - Ultrasonic distance sensor
  *
@@ -35,52 +32,18 @@
 #define SR04_MAX_SENSOR_DISTANCE  500
 #endif
 
-uint8_t sr04_type = 1;
-real64_t distance;
+#include <NewPing.h>
+#include <TasmotaSerial.h>
+
+struct {
+  uint8_t type;
+  real64_t distance;
+} SR04;
 
 NewPing* sonar = nullptr;
 TasmotaSerial* sonar_serial = nullptr;
 
-uint8_t Sr04TModeDetect(void)
-{
-  sr04_type = 0;
-  if (!PinUsed(GPIO_SR04_ECHO)) { return sr04_type; }
-
-  int sr04_echo_pin = Pin(GPIO_SR04_ECHO);
-  int sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
-  sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
-
-  if (sonar_serial->begin(9600)) {
-    DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
-
-    if (PinUsed(GPIO_SR04_TRIG)) {
-      sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
-    } else {
-      sr04_type = 2;
-    }
-  } else {
-    sr04_type = 1;
-  }
-
-  if (sr04_type < 2) {
-    delete sonar_serial;
-    sonar_serial = nullptr;
-    if (! PinUsed(GPIO_SR04_TRIG)) {
-      sr04_trig_pin = Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
-    }
-    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
-  } else {
-    if (sonar_serial->hardwareSerial()) {
-      ClaimSerial();
-    }
-  }
-
-  AddLog(LOG_LEVEL_INFO,PSTR("SR4: Mode %d"), sr04_type);
-  return sr04_type;
-}
-
-uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third)
-{
+uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third) {
   uint16_t ret = first;
   if (first > second) {
     first = second;
@@ -96,16 +59,7 @@ uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third)
   }
 }
 
-uint16_t Sr04TMode3Distance() {
-
-    sonar_serial->write(0x55);
-    sonar_serial->flush();
-
-    return Sr04TMode2Distance();
-}
-
-uint16_t Sr04TMode2Distance(void)
-{
+uint16_t Sr04TMode2Distance(void) {
   sonar_serial->setTimeout(300);
   const char startByte = 0xff;
 
@@ -134,37 +88,74 @@ uint16_t Sr04TMode2Distance(void)
   return distance;
 }
 
+uint16_t Sr04TMode3Distance() {
+  sonar_serial->write(0x55);
+  sonar_serial->flush();
+
+  return Sr04TMode2Distance();
+}
+
 void Sr04TReading(void) {
-
-  if (sonar_serial==nullptr && sonar==nullptr) {
-    Sr04TModeDetect();
-  }
-
-  switch (sr04_type) {
-      case 3:
-        distance = (real64_t)(Sr04TMiddleValue(Sr04TMode3Distance(),Sr04TMode3Distance(),Sr04TMode3Distance()))/ 10; //convert to cm
-        break;
-      case 2:
-        //empty input buffer first
-        while(sonar_serial->available()) sonar_serial->read();
-        distance = (real64_t)(Sr04TMiddleValue(Sr04TMode2Distance(),Sr04TMode2Distance(),Sr04TMode2Distance()))/10;
-        break;
-      case 1:
-        distance = (real64_t)(sonar->ping_median(5))/ US_ROUNDTRIP_CM;
-        break;
-      default:
-        distance = NO_ECHO;
+  switch (SR04.type) {
+    case 3:
+      SR04.distance = (real64_t)(Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance())) / 10; //convert to cm
+      break;
+    case 2:
+      //empty input buffer first
+      while(sonar_serial->available()) sonar_serial->read();
+      SR04.distance = (real64_t)(Sr04TMiddleValue(Sr04TMode2Distance(), Sr04TMode2Distance(), Sr04TMode2Distance())) / 10;
+      break;
+    case 1:
+      SR04.distance = (real64_t)(sonar->ping_median(5))/ US_ROUNDTRIP_CM;
+      break;
+    default:
+      SR04.distance = NO_ECHO;
   }
 
   return;
 }
 
-void Sr04Show(bool json)
-{
+/*********************************************************************************************/
 
-  if (distance != 0) {                // Check if read failed
+void Sr04TModeDetect(void) {
+  if (!PinUsed(GPIO_SR04_ECHO)) { return; }
+
+  int sr04_echo_pin = Pin(GPIO_SR04_ECHO);
+  int sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
+  sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
+
+  if (sonar_serial->begin(9600)) {
+    DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
+
+    if (PinUsed(GPIO_SR04_TRIG)) {
+      SR04.type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
+    } else {
+      SR04.type = 2;
+    }
+  } else {
+    SR04.type = 1;
+  }
+
+  if (SR04.type < 2) {
+    delete sonar_serial;
+    sonar_serial = nullptr;
+    if (! PinUsed(GPIO_SR04_TRIG)) {
+      sr04_trig_pin = Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
+    }
+    sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
+  } else {
+    if (sonar_serial->hardwareSerial()) {
+      ClaimSerial();
+    }
+  }
+
+  AddLog(LOG_LEVEL_INFO,PSTR("SR4: Mode %d"), SR04.type);
+}
+
+void Sr04Show(bool json) {
+  if (SR04.distance != 0) {                // Check if read failed
     char distance_chr[33];
-    dtostrfd(distance, 3, distance_chr);
+    dtostrfd(SR04.distance, 3, distance_chr);
 
     if(json) {
       ResponseAppend_P(PSTR(",\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), distance_chr);
@@ -185,15 +176,14 @@ void Sr04Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns22(uint8_t function)
-{
+bool Xsns22(uint8_t function) {
   bool result = false;
 
-  if (sr04_type) {
+  if (FUNC_INIT == function) {
+    Sr04TModeDetect();
+  }
+  else if (SR04.type) {
     switch (function) {
-      case FUNC_INIT:
-        result = (PinUsed(GPIO_SR04_ECHO));
-        break;
       case FUNC_EVERY_SECOND:
         Sr04TReading();
         result = true;
