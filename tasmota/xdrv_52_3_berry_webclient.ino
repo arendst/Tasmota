@@ -196,19 +196,20 @@ extern "C" {
   }
 
   // tcp.close(void) -> nil
-  void wc_tcp_close_native(WiFiClient *tcp) {
-    tcp->stop();
-  }
+  int32_t wc_tcp_close(struct bvm *vm);
   int32_t wc_tcp_close(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &wc_tcp_close_native, NULL, ".");
+    WiFiClient * tcp = wc_getwificlient(vm);
+    tcp->stop();
+    be_return_nil(vm);
   }
 
   // tcp.available(void) -> int
-  int32_t wc_tcp_available_native(WiFiClient *tcp) {
-    return tcp->available();
-  }
+  int32_t wc_tcp_available(struct bvm *vm);
   int32_t wc_tcp_available(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &wc_tcp_available_native, "i", ".");
+    WiFiClient * tcp = wc_getwificlient(vm);
+    int32_t available = tcp->available();
+    be_pushint(vm, available);
+    be_return(vm);
   }
 
   // wc.wc_set_timeouts([http_timeout_ms:int, tcp_timeout_ms:int]) -> self
@@ -284,19 +285,19 @@ extern "C" {
   }
 
   // cw.connected(void) -> bool
-  bbool wc_connected_native(HTTPClientLight *cl) {
-    return cl->connected();
-  }
+  int32_t wc_connected(struct bvm *vm);
   int32_t wc_connected(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &wc_connected_native, "b", ".");
+    HTTPClientLight * cl = wc_getclient(vm);
+    be_pushbool(vm, cl->connected());
+    be_return(vm);  /* return code */
   }
 
   // tcp.connected(void) -> bool
-  bbool wc_tcp_connected_native(WiFiClient *tcp) {
-    return tcp->connected();
-  }
+  int32_t wc_tcp_connected(struct bvm *vm);
   int32_t wc_tcp_connected(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &wc_tcp_connected_native, "b", ".");
+    WiFiClient * tcp = wc_getwificlient(vm);
+    be_pushbool(vm, tcp->connected());
+    be_return(vm);  /* return code */
   }
 
   // tcp.write(bytes | string) -> int
@@ -366,14 +367,14 @@ extern "C" {
   }
 
   // cw.GET(void) -> httpCode:int
-  int32_t wc_GET_native(HTTPClientLight *cl) {
+  int32_t wc_GET(struct bvm *vm);
+  int32_t wc_GET(struct bvm *vm) {
+    HTTPClientLight * cl = wc_getclient(vm);
     uint32_t http_connect_time = millis();
     int32_t httpCode = cl->GET();
     wc_errorCodeMessage(httpCode, http_connect_time);
-    return httpCode;
-  }
-  int32_t wc_GET(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &wc_GET_native, "i", ".");
+    be_pushint(vm, httpCode);
+    be_return(vm);  /* return code */
   }
 
   // wc.POST(string | bytes) -> httpCode:int
@@ -433,11 +434,11 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  int32_t wc_getsize_native(HTTPClientLight *cl) {
-    return cl->getSize();
-  }
+  int32_t wc_getsize(struct bvm *vm);
   int32_t wc_getsize(struct bvm *vm) {
-    return be_call_c_func(vm, (void*) &wc_getsize_native, "i", ".");
+    HTTPClientLight * cl = wc_getclient(vm);
+    be_pushint(vm, cl->getSize());
+    be_return(vm);  /* return code */
   }
 
 }
