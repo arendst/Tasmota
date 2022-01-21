@@ -79,7 +79,12 @@ stat/EQ3/001A22092C9A = {
   "dst":"set",
   "window":"closed",
   "state":"unlocked",
-  "battery":"GOOD"
+  "battery":"GOOD",
+  "windowtemp": 12.0,
+  "windowdur": 15,
+  "day": 21.0,
+  "night": 17.0,
+  "offset": 0.0
 }
 
 holiday:
@@ -507,8 +512,8 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
       );
 
     if (statlen >= 15) {
-      ResponseAppend_P(PSTR(",\"windowdur\":%d"), ((int)status[11])*5);
       ResponseAppend_P(PSTR(",\"windowtemp\":%2.1f"), ((float)status[10])/2);
+      ResponseAppend_P(PSTR(",\"windowdur\":%d"), ((int)status[11])*5);
       ResponseAppend_P(PSTR(",\"day\":%2.1f"), ((float)status[12])/2);
       ResponseAppend_P(PSTR(",\"night\":%2.1f"), ((float)status[13])/2);
       ResponseAppend_P(PSTR(",\"offset\":%2.1f"), ((float)status[14]-7) /2);
