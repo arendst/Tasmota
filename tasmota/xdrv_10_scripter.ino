@@ -1354,7 +1354,7 @@ float DoMedian5(uint8_t index, float in) {
   return median_array(mf->buffer, MEDIAN_SIZE);
 }
 
-
+#ifdef USE_UFILESYS
 void fread_str(uint8_t fref, char *sp, uint16_t slen) {
   uint16_t index = 0;
   while (glob_script_mem.files[fref].available()) {
@@ -1371,6 +1371,7 @@ void fread_str(uint8_t fref, char *sp, uint16_t slen) {
   }
   *sp = 0;
 }
+#endif
 
 #ifdef USE_FEXTRACT
 
@@ -8889,8 +8890,8 @@ uint32_t call2https(const char *host, const char *path) {
   uint32_t status = 0;
 
 #ifdef TESLA_POWERWALL
-  authCookie = powerwall.getAuthCookie();
-  return 0;
+//  authCookie = powerwall.getAuthCookie();
+//  return 0;
 #endif
 
 #ifdef ESP32
