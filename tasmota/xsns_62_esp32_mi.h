@@ -226,7 +226,6 @@ struct mi_sensor_t{
   union {
     struct {
       uint32_t needsKey:1;
-      uint32_t hasWrongKey:1;
       uint32_t temp:1;
       uint32_t hum:1;
       uint32_t tempHum:1; //every hum sensor has temp too, easier to use Tasmota dew point functions
@@ -260,6 +259,13 @@ struct mi_sensor_t{
     };
     uint32_t raw;
   } eventType;
+  union{
+    struct{
+      uint8_t hasWrongKey:1;
+      uint8_t isUnbounded:1;
+    };
+    uint8_t raw;
+  } status;
 
   int RSSI;
   uint32_t lastTime;
