@@ -196,6 +196,7 @@ void IrReceiveUpdateThreshold(void)
 void IrReceiveUpdateTolerance(void)
 {
   if (irrecv != nullptr) {
+    if (Settings->param[P_IR_TOLERANCE] == 0) { Settings->param[P_IR_TOLERANCE] = IR_RCV_TOLERANCE; }
     if (Settings->param[P_IR_TOLERANCE] > 100) { Settings->param[P_IR_TOLERANCE] = 100; }
     irrecv->setTolerance(Settings->param[P_IR_TOLERANCE]);
   }
