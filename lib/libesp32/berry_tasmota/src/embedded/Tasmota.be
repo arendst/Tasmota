@@ -47,6 +47,14 @@ class Tasmota
     end
   end
 
+  # check that the parameter is not a method, it would require a closure instead
+  def check_not_method(f)
+    import introspect
+    if introspect.ismethod(f) == true
+      raise "type_error", "BRY: method not allowed, use a closure like '/ args -> obj.func(args)'"
+    end
+  end
+
   # create a specific sub-class for rules: pattern(string) -> closure
   # Classs KV has two members k and v
   def kv(k, v)
@@ -120,6 +128,7 @@ class Tasmota
 
   # Rules
   def add_rule(pat,f)
+    self.check_not_method(f)
     if !self._rules
       self._rules=[]
     end
@@ -237,6 +246,7 @@ class Tasmota
   end
 
   def set_timer(delay,f,id)
+    self.check_not_method(f)
     if !self._timers self._timers=[] end
     self._timers.push(Timer(self.millis(delay),f,id))
   end
@@ -273,6 +283,7 @@ class Tasmota
 
   # Add command to list
   def add_cmd(c,f)
+    self.check_not_method(f)
     if !self._ccmd
       self._ccmd={}
     end
@@ -444,6 +455,7 @@ class Tasmota
   end
 
   def add_fast_loop(cl)
+    self.check_not_method(cl)
     if !self._fl  self._fl = [] end
     if type(cl) != 'function' raise "value_error", "argument must be a function" end
     self.global.fast_loop_enabled = 1      # enable fast_loop at global level: `TasmotaGlobal.fast_loop_enabled = true`
@@ -492,6 +504,9 @@ class Tasmota
   end
 
   def add_driver(d)
+    if type(d) != 'instance'
+      raise "value_error", "instance required"
+    end
     if self._drivers
       self._drivers.push(d)
         else

@@ -676,7 +676,7 @@ void HueGlobalConfig(String *path) {
   CheckHue(&response, appending);
 #endif // USE_LIGHT
 #ifdef USE_ZIGBEE
-  ZigbeeCheckHue(&response, appending);
+  ZigbeeCheckHue(response, &appending);
 #endif // USE_ZIGBEE
   response += F("},\"groups\":{},\"schedules\":{},\"config\":");
   HueConfigResponse(&response);
@@ -914,42 +914,44 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
 }
 #endif // USE_LIGHT
 
-void HueLights(String *path)
+void HueLights(String *path_req)
 {
 /*
  * http://tasmota/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
   String response;
-  int code = 200;
+  int32_t code = 200;
   uint8_t device = 1;
   uint32_t device_id;   // the raw device_id used by Hue emulation
   uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
+  path_req->remove(0,path_req->indexOf(F("/lights")));          // Remove until /lights
+  String path(*path_req);
 
-  path->remove(0,path->indexOf(F("/lights")));          // Remove until /lights
-  if (path->endsWith(F("/lights"))) {                   // Got /lights
+  if (path.endsWith(F("/lights"))) {                   // Got /lights
     response = F("{");
     bool appending = false;
 #ifdef USE_LIGHT
     CheckHue(&response, appending);
 #endif // USE_LIGHT
 #ifdef USE_ZIGBEE
-    ZigbeeCheckHue(&response, appending);
+    ZigbeeCheckHue(response, &appending);
 #endif // USE_ZIGBEE
 #ifdef USE_SCRIPT_HUE
     Script_Check_Hue(&response);
 #endif
     response += F("}");
   }
-  else if (path->endsWith(F("/state"))) {               // Got ID/state
-    path->remove(0,8);                               // Remove /lights/
-    path->remove(path->indexOf(F("/state")));           // Remove /state
-    device_id = atoi(path->c_str());
+  else if (path.endsWith(F("/state"))) {               // Got ID/state
+    path.remove(0,8);                               // Remove /lights/
+    path.remove(path.indexOf(F("/state")));           // Remove /state
+    device_id = atoi(path.c_str());
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
     uint16_t shortaddr;
     device = DecodeLightId(device_id, &shortaddr);
     if (shortaddr) {
-      return ZigbeeHandleHue(shortaddr, device_id, response);
+      code = ZigbeeHandleHue(shortaddr, device_id, response);
+      goto exit;
     }
 #endif // USE_ZIGBEE
 
@@ -965,16 +967,16 @@ void HueLights(String *path)
 #endif // USE_LIGHT
 
   }
-  else if(path->indexOf(F("/lights/")) >= 0) {          // Got /lights/ID
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("/lights path=%s"), path->c_str());
-    path->remove(0,8);                               // Remove /lights/
-    device_id = atoi(path->c_str());
+  else if(path.indexOf(F("/lights/")) >= 0) {          // Got /lights/ID
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("/lights path=%s"), path.c_str());
+    path.remove(0,8);                               // Remove /lights/
+    device_id = atoi(path.c_str());
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
     uint16_t shortaddr;
     device = DecodeLightId(device_id, &shortaddr);
     if (shortaddr) {
-      ZigbeeHueStatus(&response, shortaddr);
+      code = ZigbeeHueStatus(&response, shortaddr);
       goto exit;
     }
 #endif // USE_ZIGBEE
@@ -1000,6 +1002,14 @@ void HueLights(String *path)
     code = 406;
   }
   exit:
+  if (code < 0) {
+    response = F("{\"error\":{\"type\":");
+    response += -code;
+    response += F(",\"address\":\"");
+    response += *path_req;
+    response += F("\",\"description\":\"\"}}");
+    code = 200;
+  }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_APP_JSON, response);
 }
@@ -1011,7 +1021,7 @@ void HueGroups(String *path)
  */
   String response(F("{}"));
   uint8_t maxhue = (TasmotaGlobal.devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : TasmotaGlobal.devices_present;
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path->c_str());
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups (%s)"), path.c_str());
 
   if (path->endsWith(F("/0"))) {
     UnishoxStrings msg(HUE_LIGHTS);

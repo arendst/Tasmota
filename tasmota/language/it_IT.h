@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 15.01.2022
+ * Updated until v9.5.0.9 - Last update 19.01.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -936,8 +936,8 @@
 #define D_SOLAX_ERROR_1   "Griglia errore persa"
 #define D_SOLAX_ERROR_2   "Griglia errore tensione"
 #define D_SOLAX_ERROR_3   "Griglia errore frequenza"
-#define D_SOLAX_ERROR_4   "Errore tensione PV"
-#define D_SOLAX_ERROR_5   "Errore isolamento"
+#define D_SOLAX_ERROR_4   "Errore tensione troppo bassa"
+#define D_SOLAX_ERROR_5   "Errore isolamento PV"
 #define D_SOLAX_ERROR_6   "Errore temperatura eccessiva"
 #define D_SOLAX_ERROR_7   "Errore ventilatore"
 #define D_SOLAX_ERROR_8   "Altro errore dispositivo"

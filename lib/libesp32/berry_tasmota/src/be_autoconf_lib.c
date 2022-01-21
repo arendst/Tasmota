@@ -14,7 +14,7 @@ be_local_closure(Autoconf_page_autoconf_ctl,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -196,7 +196,7 @@ be_local_closure(Autoconf_autoexec,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -359,7 +359,7 @@ be_local_closure(Autoconf_run_bat,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -447,7 +447,7 @@ be_local_closure(Autoconf_page_autoconf_mgr,   /* name */
   be_nested_proto(
     19,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -634,7 +634,7 @@ be_local_closure(Autoconf_get_current_module_name,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -665,7 +665,7 @@ be_local_closure(Autoconf_delete_all_configs,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -723,7 +723,7 @@ be_local_closure(Autoconf_set_first_time,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -757,7 +757,7 @@ be_local_closure(Autoconf_load_templates,   /* name */
   be_nested_proto(
     15,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -888,7 +888,7 @@ be_local_closure(Autoconf_web_add_config_button,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -920,7 +920,7 @@ be_local_closure(Autoconf_is_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -955,7 +955,7 @@ be_local_closure(Autoconf_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1047,7 +1047,7 @@ be_local_closure(Autoconf_preinit,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1107,7 +1107,7 @@ be_local_closure(Autoconf_reset,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1179,7 +1179,7 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -1268,7 +1268,7 @@ be_local_closure(Autoconf_clear_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1300,7 +1300,7 @@ be_local_closure(Autoconf_get_current_module_path,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */

@@ -28,7 +28,6 @@
 #ifdef ESP32
 #include "tasmota_options.h"
 
-#ifdef USE_BERRY
 #include <Arduino.h>
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
@@ -1504,5 +1503,4 @@ const String &HTTPClientLight::getLocation(void)
 {
     return _location;
 }
-#endif // USE_BERRY
 #endif // ESP32

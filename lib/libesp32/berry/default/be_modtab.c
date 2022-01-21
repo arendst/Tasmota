@@ -48,6 +48,11 @@ be_extern_native_module(lv_extra);
 be_extern_native_module(lv_tasmota);
 #endif // USE_LVGL
 
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+extern void be_load_MI32_class(bvm *vm);
+extern void be_load_BLE_class(bvm *vm);
+#endif //USE_MI_ESP32
+
 /* user-defined modules declare start */
 
 /* user-defined modules declare end */
@@ -229,5 +234,9 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_lv_wifi_arcs_icon_class(vm);
     be_load_lv_clock_icon_class(vm);
 #endif // USE_LVGL
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+    be_load_MI32_class(vm);
+    be_load_BLE_class(vm);
+#endif //USE_MI_ESP32
 }
 #endif

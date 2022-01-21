@@ -293,6 +293,7 @@ void BerryInit(void) {
     be_set_obs_hook(berry.vm, &BerryObservability);  /* attach observability hook */
     comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
     comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler, equivalent of `import strict` */
+    be_set_ctype_func_hanlder(berry.vm, be_call_ctype_func);
 
     be_load_custom_libs(berry.vm);  // load classes and modules
 
