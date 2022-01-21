@@ -27,7 +27,7 @@
 
 #include "tasmota_options.h"
 
-#if defined(ESP8266) && defined(USE_TLS)
+#if defined(ESP8266) && (defined(USE_TLS) || defined(USE_SENDMAIL))
 #include <stdint.h>
 #include <stdlib.h>
 #include "StackThunk_light.h"

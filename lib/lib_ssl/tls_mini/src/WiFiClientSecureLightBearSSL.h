@@ -24,7 +24,7 @@
 
 #ifndef wificlientlightbearssl_h
 #define wificlientlightbearssl_h
-#ifdef USE_TLS
+#if defined(USE_TLS) || defined(USE_SENDMAIL)
 #include <vector>
 #include "WiFiClient.h"
 #include <t_bearssl.h>
