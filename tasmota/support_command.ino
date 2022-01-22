@@ -992,6 +992,9 @@ void CmndSetoptionBase(bool indexed) {
           if (P_IR_UNKNOW_THRESHOLD == pindex) {
             IrReceiveUpdateThreshold();    // SetOption38
           }
+          if (P_IR_TOLERANCE == pindex) {
+            IrReceiveUpdateTolerance();    // SetOption44
+          }
 #endif
 #ifdef ROTARY_V1
           if (P_ROTARY_MAX_STEP == pindex) {
