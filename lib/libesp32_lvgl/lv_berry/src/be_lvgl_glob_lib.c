@@ -631,7 +631,6 @@ be_local_closure(LVGL_glob_init,   /* name */
 /*******************************************************************/
 
 
-
 /********************************************************************
 ** Solidified function: widget_event_impl
 ********************************************************************/
@@ -639,13 +638,13 @@ be_local_closure(LVGL_glob_widget_event_impl,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
+    ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(introspect),
     /* K1   */  be_nested_str(lv),
     /* K2   */  be_nested_str(lv_obj_class),
@@ -653,12 +652,15 @@ be_local_closure(LVGL_glob_widget_event_impl,   /* name */
     /* K4   */  be_nested_str(target),
     /* K5   */  be_nested_str(get_object_from_ptr),
     /* K6   */  be_nested_str(instance),
-    /* K7   */  be_nested_str(get),
-    /* K8   */  be_nested_str(widget_event),
+    /* K7   */  be_nested_str(code),
+    /* K8   */  be_nested_str(EVENT_DELETE),
+    /* K9   */  be_nested_str(get),
+    /* K10  */  be_nested_str(before_del),
+    /* K11  */  be_nested_str(widget_event),
     }),
     &be_const_str_widget_event_impl,
     &be_const_str_solidified,
-    ( &(const binstruction[28]) {  /* code */
+    ( &(const binstruction[43]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
       0xB8120200,  //  0001  GETNGBL	R4	K1
       0x8C100902,  //  0002  GETMET	R4	R4	K2
@@ -676,17 +678,32 @@ be_local_closure(LVGL_glob_widget_event_impl,   /* name */
       0x5C240E00,  //  000E  MOVE	R9	R7
       0x7C200200,  //  000F  CALL	R8	1
       0x1C201106,  //  0010  EQ	R8	R8	K6
-      0x78220008,  //  0011  JMPF	R8	#001B
-      0x8C200707,  //  0012  GETMET	R8	R3	K7
-      0x5C280E00,  //  0013  MOVE	R10	R7
-      0x582C0008,  //  0014  LDCONST	R11	K8
-      0x7C200600,  //  0015  CALL	R8	3
-      0x78220003,  //  0016  JMPF	R8	#001B
-      0x8C200F08,  //  0017  GETMET	R8	R7	K8
-      0x5C280800,  //  0018  MOVE	R10	R4
-      0x5C2C0A00,  //  0019  MOVE	R11	R5
+      0x78220017,  //  0011  JMPF	R8	#002A
+      0x88200B07,  //  0012  GETMBR	R8	R5	K7
+      0xB8260200,  //  0013  GETNGBL	R9	K1
+      0x88241308,  //  0014  GETMBR	R9	R9	K8
+      0x1C201009,  //  0015  EQ	R8	R8	R9
+      0x78220009,  //  0016  JMPF	R8	#0021
+      0x8C200709,  //  0017  GETMET	R8	R3	K9
+      0x5C280E00,  //  0018  MOVE	R10	R7
+      0x582C000A,  //  0019  LDCONST	R11	K10
       0x7C200600,  //  001A  CALL	R8	3
-      0x80000000,  //  001B  RET	0
+      0x78220004,  //  001B  JMPF	R8	#0021
+      0x8C200F0A,  //  001C  GETMET	R8	R7	K10
+      0x5C280800,  //  001D  MOVE	R10	R4
+      0x5C2C0A00,  //  001E  MOVE	R11	R5
+      0x7C200600,  //  001F  CALL	R8	3
+      0x70020008,  //  0020  JMP		#002A
+      0x8C200709,  //  0021  GETMET	R8	R3	K9
+      0x5C280E00,  //  0022  MOVE	R10	R7
+      0x582C000B,  //  0023  LDCONST	R11	K11
+      0x7C200600,  //  0024  CALL	R8	3
+      0x78220003,  //  0025  JMPF	R8	#002A
+      0x8C200F0B,  //  0026  GETMET	R8	R7	K11
+      0x5C280800,  //  0027  MOVE	R10	R4
+      0x5C2C0A00,  //  0028  MOVE	R11	R5
+      0x7C200600,  //  0029  CALL	R8	3
+      0x80000000,  //  002A  RET	0
     })
   )
 );
