@@ -216,9 +216,7 @@ void IRToshibaAC::setTemp(const uint8_t degrees) {
 
 /// Get the current temperature setting.
 /// @return The current setting for temp. in degrees celsius.
-uint8_t IRToshibaAC::getTemp(void) const {
-  return _.Temp + kToshibaAcMinTemp;
-}
+uint8_t IRToshibaAC::getTemp(void) const { return _.Temp + kToshibaAcMinTemp; }
 
 /// Set the speed of the fan.
 /// @param[in] speed The desired setting (0 is Auto, 1-5 is the speed, 5 is Max)
@@ -339,6 +337,19 @@ void IRToshibaAC::setEcono(const bool on) {
   }
 }
 
+/// Get the filter (Pure/Ion Filter) setting of the A/C.
+/// @return true, if the current setting is on. Otherwise, false.
+bool IRToshibaAC::getFilter(void) const {
+  return (getStateLength() >= kToshibaACStateLength) ? _.Filter : false;
+}
+
+/// Set the filter (Pure/Ion Filter) setting of the A/C.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRToshibaAC::setFilter(const bool on) {
+  _.Filter = on;
+  if (on) setStateLength(std::min(kToshibaACStateLength, getStateLength()));
+}
+
 /// Convert a stdAc::opmode_t enum into its native mode.
 /// @param[in] mode The enum to be converted.
 /// @return The native equivalent of the enum.
@@ -421,6 +432,7 @@ stdAc::state_t IRToshibaAC::toCommon(const stdAc::state_t *prev) const {
     result.fanspeed = toCommonFanSpeed(getFan());
     result.turbo = getTurbo();
     result.econo = getEcono();
+    result.filter = getFilter();
   }
   switch (getSwing()) {
     case kToshibaAcSwingOn:
@@ -436,7 +448,6 @@ stdAc::state_t IRToshibaAC::toCommon(const stdAc::state_t *prev) const {
   }
   // Not supported.
   result.light = false;
-  result.filter = false;
   result.swingh = stdAc::swingh_t::kOff;
   result.quiet = false;
   result.clean = false;
@@ -450,7 +461,7 @@ stdAc::state_t IRToshibaAC::toCommon(const stdAc::state_t *prev) const {
 /// @return A human readable string.
 String IRToshibaAC::toString(void) const {
   String result = "";
-  result.reserve(80);
+  result.reserve(95);
   result += addTempToString(getTemp(), true, false);
   switch (getStateLength()) {
     case kToshibaACStateLengthShort:
@@ -477,6 +488,7 @@ String IRToshibaAC::toString(void) const {
                                kToshibaAcFanMed);
       result += addBoolToString(getTurbo(), kTurboStr);
       result += addBoolToString(getEcono(), kEconoStr);
+      result += addBoolToString(getFilter(), kFilterStr);
   }
   return result;
 }

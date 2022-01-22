@@ -25,7 +25,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "AI Thinker ESP32-CAM, 4M Flash 4MB PSRAM, Tasmota 1856k Code/OTA, 320k SPIFFS",
+  "name": "AI Thinker ESP32-CAM, 4M Flash 4MB PSRAM, Tasmota 1856k Code/OTA, 320k FS",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,

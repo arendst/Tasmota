@@ -313,14 +313,14 @@ static void end_func(bparser *parser)
     be_code_ret(finfo, NULL); /* append a return to last code */
     end_block(parser); /* close block */
     setupvals(finfo); /* close upvals */
-    proto->code = be_vector_release(vm, &finfo->code); /* compact all vectors and return NULL if empty */
+    proto->code = be_vector_release_32(vm, &finfo->code); /* compact all vectors and return NULL if empty */
     proto->codesize = finfo->pc;
-    proto->ktab = be_vector_release(vm, &finfo->kvec);
+    proto->ktab = be_vector_release_32(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
     proto->ptab = be_vector_release(vm, &finfo->pvec);
     proto->nproto = be_vector_count(&finfo->pvec);
 #if BE_DEBUG_RUNTIME_INFO
-    proto->lineinfo = be_vector_release(vm, &finfo->linevec);
+    proto->lineinfo = be_vector_release_32(vm, &finfo->linevec);
     proto->nlineinfo = be_vector_count(&finfo->linevec);
 #endif
 #if BE_DEBUG_VAR_INFO
@@ -557,7 +557,7 @@ static void func_vararg(bparser *parser) {
     str = next_token(parser).u.s;
     match_token(parser, TokenId); /* match and skip ID */
     new_var(parser, str, &v); /* new variable */
-    parser->finfo->proto->varg = 1;   /* set varg flag */
+    parser->finfo->proto->varg |= BE_VA_VARARG;   /* set varg flag */
 }
 
 /* Parse function or method definition variable list */
@@ -606,6 +606,7 @@ static bproto* funcbody(bparser *parser, bstring *name, int type)
     finfo.proto->name = name;
     if (type & FUNC_METHOD) { /* If method, add an implicit first argument `self` */
         new_localvar(parser, parser_newstr(parser, "self"));
+        finfo.proto->varg |= BE_VA_METHOD;
     }
     func_varlist(parser); /* parse arg list */
     stmtlist(parser); /* parse statement without final `end` */

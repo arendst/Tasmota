@@ -59,7 +59,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbInfo, &CmndZbForget, &CmndZbSave, &CmndZbName,
   &CmndZbBind, &CmndZbUnbind, &CmndZbPing, &CmndZbModelId,
   &CmndZbLight, &CmndZbOccupancy,
-  &CmndZbRestore, &CmndZbBindState, &CmndZbMap, CmndZbLeave,
+  &CmndZbRestore, &CmndZbBindState, &CmndZbMap, &CmndZbLeave,
   &CmndZbConfig, &CmndZbData, &CmndZbScan,
   };
 

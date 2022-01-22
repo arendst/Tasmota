@@ -124,6 +124,8 @@ class WiFiClientSecure_light : public WiFiClient {
       return _max_thunkstack_use;
     }
 
+    void setInsecure();
+
   private:
     void _clear();
     bool _ctx_present;
@@ -152,7 +154,6 @@ class WiFiClientSecure_light : public WiFiClient {
 
     unsigned char *_recvapp_buf;
     size_t _recvapp_len;
-
     bool _clientConnected(); // Is the underlying socket alive?
     bool _connectSSL(const char *hostName); // Do initial SSL handshake
     void _freeSSL();

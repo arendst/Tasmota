@@ -360,7 +360,7 @@ bool DomoticzSendKey(uint8_t key, uint8_t device, uint8_t state, uint8_t svalflg
 \*********************************************************************************************/
 
 void DomoticzSendData(uint32_t sensor_idx, uint32_t idx, char *data) {
-  char payload[128];
+  char payload[128];  // {"idx":26700,"nvalue":0,"svalue":"22330.1;10234.4;22000.5;10243.4;1006;3000","Battery":100,"RSSI":10}
   if (DZ_AIRQUALITY == sensor_idx) {
     snprintf_P(payload, sizeof(payload), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
       idx, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
@@ -506,6 +506,7 @@ void CmndDomoticzUpdateTimer(void) {
 
 void CmndDomoticzSend(void) {
   // DzSend1 <idx>,<values> - {\"idx\":<idx>,\"nvalue\":0,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
+  // DzSend1 418,%var1%;%var2% or DzSend1 418,%var1%:%var2% - Notice colon as substitute to semi-colon
   // DzSend2 <idx>,<values> - USE_SHUTTER only - {\"idx\":<idx>,\"nvalue\":<position>,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
   // DzSend3 <idx>,<values> - {\"idx\":<idx>,\"nvalue\":<values>,\"Battery\":xx,\"RSSI\":yy}
   // DzSend4 <idx>,<state>  - {\"command\":\"switchlight\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
@@ -517,6 +518,7 @@ void CmndDomoticzSend(void) {
         char *data;
         uint32_t index = strtoul(strtok_r(XdrvMailbox.data, ",", &data), nullptr, 10);
         if ((index > 0) && (data != nullptr)) {
+          ReplaceChar(data,':',';');  // As a workaround for command backlog inter-command separator
           if (XdrvMailbox.index > 3) {
             uint32_t state = strtoul(data, nullptr, 10);  // 0, 1 or 2
             DomoticzSendSwitch(XdrvMailbox.index -4, index, state);

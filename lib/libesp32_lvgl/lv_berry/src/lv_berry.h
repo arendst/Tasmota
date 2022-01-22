@@ -27,6 +27,17 @@ extern void be_load_lvgl_classes(bvm *vm);
 // TODO temporary fix
 extern void lv_img_set_tasmota_logo(lv_obj_t * img);
 
+// used for ToushScreen calibration
+typedef struct lv_ts_calibration_t {
+  lv_coord_t        raw_x;
+  lv_coord_t        raw_y;
+  lv_coord_t        x;
+  lv_coord_t        y;
+  lv_indev_state_t  state;
+} lv_ts_calibration_t;
+extern lv_ts_calibration_t lv_ts_calibration;
+
+
 #ifdef __cplusplus
 }
 #endif

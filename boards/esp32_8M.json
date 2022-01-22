@@ -25,7 +25,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif Generic ESP32 8M Flash, Tasmota 2944k Code/OTA, 2112k SPIFFS",
+  "name": "Espressif Generic ESP32 8M Flash, Tasmota 2944k Code/OTA, 2112k FS",
   "upload": {
     "flash_size": "8MB",
     "maximum_ram_size": 327680,

@@ -100,6 +100,7 @@ struct bvm {
     bmap *ntvclass; /* native class table */
     blist *registry; /* registry list */
     struct bgc gc;
+    bctypefunc ctypefunc; /* handler to ctype_func */
     bbyte compopt; /* compilation options */
     bobshook obshook;
 #if BE_USE_PERF_COUNTERS

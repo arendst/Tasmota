@@ -1,0 +1,17 @@
+{
+    "name": "Berry Tasmota mapping",
+    "version": "1.0",
+    "description": "Mapping of Tasmota features to Berry",
+    "license": "MIT",
+    "homepage": "https://github.com/arendst/Tasmota",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "authors":
+    {
+      "name": "Stephan Hadinger",
+      "maintainer": true
+    },
+    "build": {
+      "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+    }
+  }

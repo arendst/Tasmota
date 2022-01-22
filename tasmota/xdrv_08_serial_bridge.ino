@@ -46,14 +46,7 @@ bool serial_bridge_raw = false;
 /********************************************************************************************/
 
 bool SetSSerialBegin(void) {
-  uint32_t config;
-#ifdef ESP8266
-  config = pgm_read_byte(kTasmotaSerialConfig + Settings->sserial_config);
-#endif  // ESP8266
-#ifdef ESP32
-  config = pgm_read_dword(kTasmotaSerialConfig + Settings->sserial_config);
-#endif  // ESP32
-  return SerialBridgeSerial->begin(Settings->sbaudrate * 300, config);         // Reinitialize serial port with new baud rate
+  return SerialBridgeSerial->begin(Settings->sbaudrate * 300, ConvertSerialConfig(Settings->sserial_config));  // Reinitialize serial port with new baud rate
 }
 
 void SetSSerialConfig(uint32_t serial_config) {

@@ -112,7 +112,7 @@ projector_ctrl_pre_init(void)
 	sc->sc_serial = new TasmotaSerial(Pin(GPIO_PROJECTOR_CTRL_RX),
 	    Pin(GPIO_PROJECTOR_CTRL_TX), 2);
 
-	if (!sc->sc_serial->begin(baudrate, 2)) {
+	if (!sc->sc_serial->begin(baudrate)) {
 		AddLog(LOG_LEVEL_ERROR, PSTR(PROJECTOR_CTRL_LOGNAME ": unable to begin serial "
 		    "(baudrate %d)"), baudrate);
 		goto del;

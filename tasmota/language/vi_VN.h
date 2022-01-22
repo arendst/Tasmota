@@ -663,6 +663,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -737,6 +739,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
@@ -898,7 +901,7 @@
 #define D_OUT_OF_RANGE         "Out of Range"
 #define D_SENSOR_DETECTED      "detected"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Export Power"
 #define D_IMPORT_POWER 	  "Import Power"
 #define D_PHASE_ANGLE     "Góc pha"
@@ -910,6 +913,7 @@
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
 #define D_TOTAL_ACTIVE    "Total Active"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Total Active (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Điện áp PV1"
@@ -921,10 +925,13 @@
 #define D_SOLAR_POWER     "Nguồn năng lượng mặt trời"
 #define D_INVERTER_POWER  "Nguồn Inverter"
 #define D_STATUS          "Trạng thái"
-#define D_WAITING         "Đang chờ"
-#define D_CHECKING        "Đang kiểm tra"
-#define D_WORKING         "Đang làm việc"
-#define D_FAILURE         "Bị lỗi"
+#define D_SOLAX_MODE_0    "Đang chờ"
+#define D_SOLAX_MODE_1    "Đang kiểm tra"
+#define D_SOLAX_MODE_2    "Đang làm việc"
+#define D_SOLAX_MODE_3    "Bị lỗi"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Không có mã lỗi"
 #define D_SOLAX_ERROR_1   "Lỗi mất lưới điện"
 #define D_SOLAX_ERROR_2   "Điện áp điện lưới bị lỗi"

@@ -419,7 +419,12 @@ class IRrecv {
   bool decodeCOOLIX(decode_results *results, uint16_t offset = kStartOffset,
                     const uint16_t nbits = kCoolixBits,
                     const bool strict = true);
-#endif
+#endif  // DECODE_COOLIX
+#if DECODE_COOLIX48
+  bool decodeCoolix48(decode_results *results, uint16_t offset = kStartOffset,
+                      const uint16_t nbits = kCoolix48Bits,
+                      const bool strict = true);
+#endif  // DECODE_COOLIX48
 #if DECODE_DENON
   bool decodeDenon(decode_results *results, uint16_t offset = kStartOffset,
                    const uint16_t nbits = kDenonBits,

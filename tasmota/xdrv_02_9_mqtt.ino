@@ -188,6 +188,9 @@ void MqttDisableLogging(bool state) {
 PubSubClient MqttClient;
 
 void MqttInit(void) {
+  // Force buffer size since the #define may not be visible from Arduino lib
+  MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+
 #ifdef USE_MQTT_AZURE_IOT
   Settings->mqtt_port = 8883;
 #endif //USE_MQTT_AZURE_IOT
@@ -208,7 +211,11 @@ void MqttInit(void) {
 
   if (Mqtt.mqtt_tls) {
 #ifdef ESP32
+  #if MQTT_MAX_PACKET_SIZE > 2000
+    tlsClient = new BearSSL::WiFiClientSecure_light(4096,4096);
+  #else
     tlsClient = new BearSSL::WiFiClientSecure_light(2048,2048);
+  #endif
 #else // ESP32 - ESP8266
     tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 #endif
@@ -910,13 +917,22 @@ void MqttConnected(void) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_INFO "1"), Settings->flag5.mqtt_info_retain);
 #ifdef USE_WEBSERVER
       if (Settings->webserver) {
+        Response_P(PSTR("{\"Info2\":{\"" D_JSON_WEBSERVER_MODE "\":\"%s\""),
+          (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER));
+        if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+          ResponseAppend_P(PSTR(",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\""),
+            TasmotaGlobal.hostname, (uint32_t)WiFi.localIP());
 #if LWIP_IPV6
-        Response_P(PSTR("{\"Info2\":{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}}"),
-          (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), NetworkAddress().toString().c_str(), WifiGetIPv6().c_str(), Settings->flag5.mqtt_info_retain);
-#else
-        Response_P(PSTR("{\"Info2\":{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}}"),
-          (2 == Settings->webserver) ? PSTR(D_ADMIN) : PSTR(D_USER), NetworkHostname(), NetworkAddress().toString().c_str(), Settings->flag5.mqtt_info_retain);
-#endif // LWIP_IPV6 = 1
+          ResponseAppend_P(PSTR(",\"IPv6Address\":\"%s\""), WifiGetIPv6().c_str());
+#endif  // LWIP_IPV6 = 1
+        }
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+        if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+          ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\"}"),
+            EthernetHostname(), (uint32_t)EthernetLocalIP());
+        }
+#endif  // USE_ETHERNET
+        ResponseJsonEndEnd();
         MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_INFO "2"), Settings->flag5.mqtt_info_retain);
       }
 #endif  // USE_WEBSERVER

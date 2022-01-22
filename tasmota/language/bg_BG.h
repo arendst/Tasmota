@@ -663,6 +663,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -737,6 +739,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
@@ -898,7 +901,7 @@
 #define D_OUT_OF_RANGE         "Out of Range"
 #define D_SENSOR_DETECTED      "detected"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Изходна мощност"
 #define D_IMPORT_POWER 	  "Входна мощност"
 #define D_PHASE_ANGLE     "Фазов ъгъл"
@@ -910,6 +913,7 @@
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
 #define D_TOTAL_ACTIVE    "Общо активна мощност"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Общо активна мощност (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Напрежение на PV1"
@@ -921,10 +925,13 @@
 #define D_SOLAR_POWER     "Слънчева мощност"
 #define D_INVERTER_POWER  "Мощност на инвертора"
 #define D_STATUS          "Състояние"
-#define D_WAITING         "Очакване"
-#define D_CHECKING        "Проверка"
-#define D_WORKING         "Работи"
-#define D_FAILURE         "Грешка"
+#define D_SOLAX_MODE_0    "Очакване"
+#define D_SOLAX_MODE_1    "Проверка"
+#define D_SOLAX_MODE_2    "Работи"
+#define D_SOLAX_MODE_3    "Грешка"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Липсва код за грешка"
 #define D_SOLAX_ERROR_1   "Грешка - загуба на мрежата"
 #define D_SOLAX_ERROR_2   "Грешка - мрежово напрежение"

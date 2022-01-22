@@ -28,11 +28,6 @@
 #include "lv_berry.h"
 #include "Adafruit_LvGL_Glue.h"
 
-#ifdef USE_LVGL_FREETYPE
-#include "esp_task_wdt.h"
-#include "lv_freetype.h"
-#endif
-
 // Berry easy logging
 extern "C" {
   extern void berry_log_C(const char * berry_buf, ...);
@@ -126,7 +121,7 @@ extern "C" {
 #ifdef USE_LVGL_FREETYPE
     int argc = be_top(vm);
     if (argc == 3 && be_isstring(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3)) {
-      lv_ft_info_t info;
+      lv_ft_info_t info = {};
       info.name = be_tostring(vm, 1);
       info.weight = be_toint(vm, 2);
       info.style = be_toint(vm, 3);

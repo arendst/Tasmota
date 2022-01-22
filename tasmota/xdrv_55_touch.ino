@@ -31,6 +31,8 @@
 
 bool FT5206_found = false;
 bool XPT2046_found = false;
+int16_t raw_touch_xp;
+int16_t raw_touch_yp;
 int16_t touch_xp;
 int16_t touch_yp;
 bool touched;
@@ -43,7 +45,7 @@ bool touched;
 VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
-uint32_t Touch_Status(uint32_t sel) {
+uint32_t Touch_Status(int32_t sel) {
   if (FT5206_found || XPT2046_found) {
     switch (sel) {
       case 0:
@@ -52,6 +54,10 @@ uint32_t Touch_Status(uint32_t sel) {
         return touch_xp;
       case 2:
         return touch_yp;
+      case -1:                  // before calibration
+        return raw_touch_xp;
+      case -2:
+        return raw_touch_yp;
     }
     return 0;
   } else {
@@ -141,8 +147,9 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   }
 #endif // USE_XPT2046
 
+  raw_touch_xp = touch_xp;
+  raw_touch_yp = touch_yp;
   if (touched) {
-
 #ifdef USE_TOUCH_BUTTONS
 #ifdef USE_M5STACK_CORE2
     // handle  3 built in touch buttons
@@ -165,6 +172,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_TOUCH_BUTTONS
 
     rotconvert(&touch_xp, &touch_yp);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : touched x=%i y=%i (raw x=%i y=%i)", touch_xp, touch_yp, raw_touch_xp, raw_touch_yp);
 
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(touched, touch_xp, touch_yp);
@@ -182,6 +190,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
     }
 #endif  // USE_M5STACK_CORE2
 
+    rotconvert(&touch_xp, &touch_yp);   // still do rot convert if not touched
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(touched, touch_xp, touch_yp);
 #endif // USE_TOUCH_BUTTONS
@@ -290,8 +299,8 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
         }
       }
     }
-    touch_xp = 0;
-    touch_yp = 0;
+    raw_touch_xp = touch_xp = 0;
+    raw_touch_yp = touch_yp = 0;
   }
 }
 #endif // USE_TOUCH_BUTTONS
@@ -317,9 +326,12 @@ bool Xdrv55(uint8_t function) {
   }
   return result;
 }
-#else
+
+#else  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
+
 // dummy for LVGL without a touch controller
-uint32_t Touch_Status(uint32_t sel) {
-return 0;
+uint32_t Touch_Status(int32_t sel) {
+  return 0;
 }
+
 #endif  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)

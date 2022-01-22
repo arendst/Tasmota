@@ -24,6 +24,8 @@ class LVGL_glob
   def init()
     import cb
     cb.add_handler(/ f, obj, name -> self.make_cb(f, obj, name))
+    # load extra modules
+    import lv_extra
   end
 
   #- register an lv.lv_* object in the mapping -#
