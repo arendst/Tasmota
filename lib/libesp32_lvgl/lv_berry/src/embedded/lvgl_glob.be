@@ -101,8 +101,12 @@ class LVGL_glob
     var event = lv.lv_event(e_ptr)
     var obj_ptr = event.target
     var obj = self.get_object_from_ptr(obj_ptr)
-    if type(obj) == 'instance' && introspect.get(obj, 'widget_event')
-      obj.widget_event(cl, event)
+    if type(obj) == 'instance'
+      if event.code == lv.EVENT_DELETE && introspect.get(obj, 'before_del')
+        obj.before_del(cl, event)
+      elif introspect.get(obj, 'widget_event')
+        obj.widget_event(cl, event)
+      end
     end
     # print("widget_event_impl", cl, obj_ptr, obj, event)
   end
