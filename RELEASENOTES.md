@@ -105,6 +105,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
+- Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` [#14385](https://github.com/arendst/Tasmota/issues/14385)
 - Support for Eastron SDM230 modBus energy meter [#13443](https://github.com/arendst/Tasmota/issues/13443)
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
@@ -126,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- ESP32 core library from v2.0.2 to v2.0.2.1
 - PubSubClient library from v2.8.12 to v2.8.13
 - TasmotaSerial library from v3.3.0 to v3.4.0
 - TasmotaModbus library from v1.2.0 to v3.4.0
