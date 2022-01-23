@@ -383,12 +383,12 @@ float AdcGetMq(uint32_t idx) {
     _adc = AdcRead(Adc[idx].pin, 2);
     avg += _adc;
   }
-  float voltage = (avg/ retries) * ANALOG_V33 / ((pow(2, ANALOG_RESOLUTION)) - 1);
+  float voltage = (avg/ retries) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
 
   float _RS_Calc = ((ANALOG_V33 * _RL) / voltage) -_RL; //Get value of RS in a gas
   if (_RS_Calc < 0)  _RS_Calc = 0; //No negative values accepted.
   float _ratio = _RS_Calc / _R0;   // Get ratio RS_gas/RS_air
-  float ppm= Adc[idx].param2/ANALOG_MQ_DECIMAL_MULTIPLIER*pow(_ratio, Adc[idx].param3/ANALOG_MQ_DECIMAL_MULTIPLIER); // <- Source excel analisis https://github.com/miguel5612/MQSensorsLib_Docs/tree/master/Internal_design_documents
+  float ppm= Adc[idx].param2/ANALOG_MQ_DECIMAL_MULTIPLIER*FastPrecisePow(_ratio, Adc[idx].param3/ANALOG_MQ_DECIMAL_MULTIPLIER); // <- Source excel analisis https://github.com/miguel5612/MQSensorsLib_Docs/tree/master/Internal_design_documents
   if(ppm < 0)  ppm = 0; //No negative values accepted or upper datasheet recomendation.
   char ppm_chr[6];
   dtostrfd(ppm, 2, ppm_chr);
