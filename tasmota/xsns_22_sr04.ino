@@ -32,12 +32,19 @@
 #define SR04_MAX_SENSOR_DISTANCE  500
 #endif
 
+enum Sr04CommsMode { SR04_MODE_NONE,             // No hardware detected
+                     SR04_MODE_TRIGGER_ECHO,     // Mode 1 - Trigger and Echo connection
+                     SR04_MODE_SER_RECEIVER,     // Mode 2 - Serial receive only
+                     SR04_MODE_SER_TRANSCEIVER,  // Mode 3 - Serial transmit and receive
+                     SR04_NOT_DETECTED };        // Not yet detected
+
 #include <NewPing.h>
 #include <TasmotaSerial.h>
 
 struct {
-  uint8_t type;
-  real64_t distance;
+  float distance;
+  uint8_t valid;
+  uint8_t type = SR04_NOT_DETECTED;
 } SR04;
 
 NewPing* sonar = nullptr;
@@ -60,29 +67,33 @@ uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third) {
 }
 
 uint16_t Sr04TMode2Distance(void) {
-  sonar_serial->setTimeout(300);
-  const char startByte = 0xff;
-
-  if (!sonar_serial->find(startByte)) {
-      //DEBUG_SENSOR_LOG(PSTR("SR4: No start byte"));
-      return NO_ECHO;
+  uint8_t buffer[4];         // Accomodate either 2 or 3 bytes of data
+  uint32_t buffer_idx = 0;
+  uint32_t end = millis() + 100;
+  while (millis() < end) {
+    if (sonar_serial->available() && (buffer_idx < sizeof(buffer))) {
+      buffer[buffer_idx++] = sonar_serial->read();
+      end = millis() + 10;
+    }
+    delay(1);
+  }
+  if (0 == SR04.type) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SR4: Received '%*_H'"), buffer_idx, buffer);
   }
 
-  delay(5);
+  if (buffer_idx < 2) { return 0; }
 
-  uint8_t crc = sonar_serial->read();
-  //read high byte
+  uint8_t crc = buffer[0];   // Read high byte
   uint16_t distance = ((uint16_t)crc) << 8;
+  distance += buffer[1];     // Read low byte
 
-  //read low byte
-  distance += sonar_serial->read();
-  crc += distance & 0x00ff;
-  crc += 0x00FF;
-
-  //check crc sum
-  if (crc != sonar_serial->read()) {
-    AddLog(LOG_LEVEL_ERROR,PSTR("SR4: Reading CRC error."));
-    return NO_ECHO;
+  if (buffer_idx > 2) {      // US-100 serial has no CRC
+    crc += distance & 0x00ff;
+    crc += 0x00FF;
+    if (crc != buffer[3]) {  // Check crc sum
+      AddLog(LOG_LEVEL_ERROR, PSTR("SR4: Reading CRC error"));
+      return 0;
+    }
   }
   //DEBUG_SENSOR_LOG(PSTR("SR4: Distance: %d"), distance);
   return distance;
@@ -95,54 +106,37 @@ uint16_t Sr04TMode3Distance() {
   return Sr04TMode2Distance();
 }
 
-void Sr04TReading(void) {
-  switch (SR04.type) {
-    case 3:
-      SR04.distance = (real64_t)(Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance())) / 10; //convert to cm
-      break;
-    case 2:
-      //empty input buffer first
-      while(sonar_serial->available()) sonar_serial->read();
-      SR04.distance = (real64_t)(Sr04TMiddleValue(Sr04TMode2Distance(), Sr04TMode2Distance(), Sr04TMode2Distance())) / 10;
-      break;
-    case 1:
-      SR04.distance = (real64_t)(sonar->ping_median(5))/ US_ROUNDTRIP_CM;
-      break;
-    default:
-      SR04.distance = NO_ECHO;
-  }
-
-  return;
-}
-
 /*********************************************************************************************/
 
 void Sr04TModeDetect(void) {
+  SR04.type = SR04_MODE_NONE;
   if (!PinUsed(GPIO_SR04_ECHO)) { return; }
 
   int sr04_echo_pin = Pin(GPIO_SR04_ECHO);
   int sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
-  if (sonar_serial->begin(9600)) {
+  if (sonar_serial && sonar_serial->begin(9600)) {
     DEBUG_SENSOR_LOG(PSTR("SR4: Detect mode"));
 
     if (PinUsed(GPIO_SR04_TRIG)) {
-      SR04.type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != NO_ECHO) ? 3 : 1;
+      SR04.type = (Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance()) != 0) ? SR04_MODE_SER_TRANSCEIVER : SR04_MODE_TRIGGER_ECHO;
     } else {
-      SR04.type = 2;
+      SR04.type = SR04_MODE_SER_RECEIVER;
     }
   } else {
-    SR04.type = 1;
+    SR04.type = SR04_MODE_TRIGGER_ECHO;
   }
 
-  if (SR04.type < 2) {
-    delete sonar_serial;
-    sonar_serial = nullptr;
-    if (! PinUsed(GPIO_SR04_TRIG)) {
-      sr04_trig_pin = Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
+  if (SR04.type < SR04_MODE_SER_RECEIVER) {
+    if (sonar_serial) {
+      delete sonar_serial;
+      sonar_serial = nullptr;
     }
     sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
+    if (!sonar || !sonar->ping_median(5)) {
+      SR04.type = SR04_MODE_NONE;
+    }
   } else {
     if (sonar_serial->hardwareSerial()) {
       ClaimSerial();
@@ -152,8 +146,44 @@ void Sr04TModeDetect(void) {
   AddLog(LOG_LEVEL_INFO,PSTR("SR4: Mode %d"), SR04.type);
 }
 
+void Sr04TReading(void) {
+  if (TasmotaGlobal.uptime < 3) { return; }
+
+  if (SR04.valid) {
+    SR04.valid--;
+  } else {
+    SR04.distance = 0;
+  }
+
+  float distance;
+  switch (SR04.type) {
+    case SR04_NOT_DETECTED:
+      Sr04TModeDetect();
+      SR04.valid = (SR04.type) ? SENSOR_MAX_MISS : 0;
+      break;
+    case SR04_MODE_SER_TRANSCEIVER:
+      distance = (float)(Sr04TMiddleValue(Sr04TMode3Distance(), Sr04TMode3Distance(), Sr04TMode3Distance())) / 10;  // Convert to cm
+      break;
+    case SR04_MODE_SER_RECEIVER:
+      //empty input buffer first
+      while(sonar_serial->available()) { sonar_serial->read(); }
+      distance = (float)(Sr04TMiddleValue(Sr04TMode2Distance(), Sr04TMode2Distance(), Sr04TMode2Distance())) / 10;  // Convert to cm
+      break;
+    case SR04_MODE_TRIGGER_ECHO:
+      distance = (float)(sonar->ping_median(5)) / US_ROUNDTRIP_CM;
+      break;
+    default:
+      distance = 0;
+  }
+
+  if (distance) {
+    SR04.distance = distance;
+    SR04.valid = SENSOR_MAX_MISS;
+  }
+}
+
 void Sr04Show(bool json) {
-  if (SR04.distance != 0) {                // Check if read failed
+  if (SR04.valid) {                // Check if read failed
     char distance_chr[33];
     dtostrfd(SR04.distance, 3, distance_chr);
 
@@ -179,10 +209,7 @@ void Sr04Show(bool json) {
 bool Xsns22(uint8_t function) {
   bool result = false;
 
-  if (FUNC_INIT == function) {
-    Sr04TModeDetect();
-  }
-  else if (SR04.type) {
+  if (SR04.type) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         Sr04TReading();

@@ -8,9 +8,13 @@ All notable changes to this project will be documented in this file.
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
 - Support for BME688 with latest Bosch-Sensor-API library (#14513)
+- Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) (#14555)
+- Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens (#14568)
+- Rule variable %color% (#14572)
 
 ### Changed
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7
+- ESP32 core library from v2.0.2 to v2.0.2.1 (#14553)
 
 ### Fixed
 - OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)

@@ -306,6 +306,10 @@ String EthernetMacAddress(void);
 #define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
 #endif
 
+#ifndef IR_RCV_TOLERANCE
+#define IR_RCV_TOLERANCE            25         // Base tolerance percentage for matching incoming IR messages (default 25, max 100)
+#endif
+
 #ifndef ENERGY_OVERTEMP
 #define ENERGY_OVERTEMP             90         // Overtemp in Celsius
 #endif

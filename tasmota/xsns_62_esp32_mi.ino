@@ -255,7 +255,7 @@ void MI32AddKey(mi_bindKey_t keyMAC){
       memcpy(_key,keyMAC.key,16);
       _sensor.key = _key;
       unknownMAC=false;
-      _sensor.feature.hasWrongKey = 0;
+      _sensor.status.hasWrongKey = 0;
     }
   }
   if(unknownMAC){
@@ -282,7 +282,6 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   uint8_t tag[4] = {0};
   const unsigned char authData[1] = {0x11};
   size_t dataLen = _bufSize - 11 ; // _bufsize - frame - type - frame.counter - MAC
-  int ret = 0;
 
   if(MIBLEsensors[_slot].key == nullptr){
     // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: No Key found !!"));
@@ -355,11 +354,11 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   br_ccm_flip(&ctx);
   br_ccm_run(&ctx, 0, _payload, dataLen);
 
-  ret = br_ccm_check_tag(&ctx, &tag);
+  if(br_ccm_check_tag(&ctx, &tag)) return 0;
 
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decrypted in %.2f mSec"),enctime);
   // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) _payload, dataLen);
-  return ret;
+  return -1; // wrong key ... maybe corrupt data packet too
 }
 
 /*********************************************************************************************\
@@ -412,6 +411,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
   _newSensor.type = _type;
   _newSensor.eventType.raw = 0;
   _newSensor.feature.raw = 0;
+  _newSensor.status.raw = 0;
   _newSensor.temp = NAN;
   _newSensor.temp_history = (uint8_t*) calloc(24,1);
   _newSensor.bat=0x00;
@@ -497,12 +497,6 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.bat_hap_service = nullptr;
 #endif //USE_MI_HOMEKIT
       break;
-    }
-    switch (_type){
-      case LYWSD03MMC: case MHOC401: case MJYD2S: case MCCGQ02: case SJWS01L: case YLKG08:
-        _newSensor.feature.needsKey = 1;
-      default:
-        _newSensor.feature.needsKey = 0;
     }
   MIBLEsensors.push_back(_newSensor);
   AddLog(LOG_LEVEL_DEBUG,PSTR("M32: new %s at slot: %u"),kMI32DeviceType[_type-1],MIBLEsensors.size()-1);
@@ -1199,12 +1193,15 @@ void MI32parseMiBeacon(char * _buf, uint32_t _slot, uint16_t _bufSize){
   bitSet(MI32.widgetSlot,_slot);
 #endif //USE_MI_EXT_GUI
 if(_beacon->frame.includesObj == 0){
+  if(_beacon->capability == 0x28) MIBLEsensors[_slot].status.isUnbounded = 1;
   return; //nothing to parse
 }
 
 int decryptRet = 0;
 if(_beacon->frame.isEncrypted){
+    MIBLEsensors[_slot].feature.needsKey = 1;
     decryptRet = MI32_decryptPacket(_buf,_bufSize, (uint8_t*)&_payload,_slot);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decryptRet: %d"),decryptRet);
   }
 else{
   uint32_t _offset = (_beacon->frame.includesCapability)?0:1;
@@ -1215,17 +1212,11 @@ else{
       // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)&_payload,_payloadSize + 3);
       }
   }
-if(decryptRet<0){
+if(decryptRet!=0){
   AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Decryption failed with error: %d"),decryptRet);
-  MIBLEsensors[_slot].feature.hasWrongKey = 1;
+  if (decryptRet == -1) MIBLEsensors[_slot].status.hasWrongKey = 1;
   return;
 }
-// if (_beacon->frame.solicited){
-//   AddLog(LOG_LEVEL_DEBUG,PSTR("M32: sensor unbonded: %s"),kMI32DeviceType[MIBLEsensors[_slot].type-1]);
-// }
-// if (_beacon->frame.registered){
-//   AddLog(LOG_LEVEL_DEBUG,PSTR("M32: registered: %s"),kMI32DeviceType[MIBLEsensors[_slot].type-1]);
-// }
 
   // AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u with payload type: %02x"), kMI32DeviceType[MIBLEsensors[_slot].type-1],_slot,_payload.type);
   MIBLEsensors[_slot].lastTime = millis();
@@ -1722,18 +1713,30 @@ void MI32sendWidget(uint32_t slot){
     _opacity=0;
   }
   char _key[33] ={0};
-  if(_sensor.feature.needsKey){
-    snprintf_P(_key,32,PSTR("!! needs key!!"));
-    _opacity=0;
-  }
   if(_sensor.key!=nullptr){
     ToHex_P(_sensor.key,16,_key,33);
   }
+  else if(_sensor.feature.needsKey == 1){
+    snprintf_P(_key,32,PSTR("!! needs key !!"));
+    _opacity=0;
+  }
+  if (_sensor.status.hasWrongKey == 1){
+    snprintf_P(_key,32,PSTR("!! wrong key !!"));
+    _opacity=0;
+  }
+  if (_sensor.status.isUnbounded == 1){
+    if(_sensor.type != CGD1){ //only exception atm
+      snprintf_P(_key,32,PSTR("!! not paired !!"));
+      _opacity=0;
+    }
+  }
+
   char _bat[24];
   snprintf_P(_bat,24,PSTR("&#128267;%u%%"), _sensor.bat);
   if(!_sensor.feature.bat) _bat[0] = 0;
   if (_sensor.bat == 0) _bat[9] = 0;
   WSContentSend_P(HTTP_MI32_WIDGET,slot+1,_opacity,_MAC,_sensor.RSSI,_bat,_key,kMI32DeviceType[_sensor.type-1]);
+
   if(_sensor.feature.tempHum){
     if(!isnan(_sensor.temp)){
       char _polyline[176];
@@ -1752,7 +1755,6 @@ void MI32sendWidget(uint32_t slot){
     if(!isnan(_sensor.temp) && !isnan(_sensor.hum)){
       WSContentSend_P(PSTR("" D_JSON_DEWPOINT ": %.1f °C"),CalcTempHumToDew(_sensor.temp,_sensor.hum));
     }
-
   }
   else if(_sensor.feature.temp){
     if(!isnan(_sensor.temp)){
@@ -2112,7 +2114,7 @@ void MI32Show(bool json)
           if(MIBLEsensors[i].key == nullptr){
             WSContentSend_PD(PSTR("{s}No known Key!!{m} can not decrypt messages{e}"));
           }
-          else if(MIBLEsensors[i].feature.hasWrongKey){
+          else if(MIBLEsensors[i].status.hasWrongKey){
             WSContentSend_PD(PSTR("{s}Wrong Key!!{m} can not decrypt messages{e}"));
           }
         }
