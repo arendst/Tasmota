@@ -392,11 +392,41 @@ void CmndBacklog(void) {
 }
 
 void CmndJson(void) {
-  // Json {"POWER":"OFF","Dimmer":100,"Color":"FFD908","HSBColor":"51,97,100","Channel":[100,85,3]}
-  JsonParser parser((char*)XdrvMailbox.data);
+  // Json {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  //
+  // Escape lower level tokens and add quotes around it
+  // Input:
+  // {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  // Output (escaped subtokens):
+  // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  uint32_t bracket = 0;
+  String data_buf("");
+  data_buf.reserve(XdrvMailbox.data_len);       // We need at least the same amount of characters
+  for (uint32_t index = 0; index < XdrvMailbox.data_len; index++) {
+    char c = (char)XdrvMailbox.data[index];
+    if (c == '{') {
+      bracket++;
+      if (2 == bracket) { data_buf += '"'; }    // Add start quote
+    }
+    if (bracket > 1) {
+      if (c == '\"') { data_buf += '\\'; }      // Escape any quote within second level token
+    }
+    data_buf += c;
+    if (c == '}') {
+      bracket--;
+      if (1 == bracket) { data_buf += '"'; }    // Add end quote
+    }
+  }
+
+  JsonParser parser((char*)data_buf.c_str());
   JsonParserObject root = parser.getRootObject();
   if (root) {
-    String backlog;
+    // Convert to backlog commands
+    // Input (escaped subtokens):
+    // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+    // Output:
+    // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
+    String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
     for (auto command_key : root) {
       const char *command = command_key.getStr();
       JsonParserToken parameters = command_key.getValue();
@@ -410,6 +440,8 @@ void CmndJson(void) {
           backlog += " ";
           backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
         }
+      } else if (parameters.isObject()) {       // Should have been escaped
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
       } else {
         if (backlog.length()) { backlog += ";"; }
         backlog += command;

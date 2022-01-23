@@ -106,6 +106,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
 - Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)
+- Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens [#14568](https://github.com/arendst/Tasmota/issues/14568)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` [#14385](https://github.com/arendst/Tasmota/issues/14385)
 - Support for Eastron SDM230 modBus energy meter [#13443](https://github.com/arendst/Tasmota/issues/13443)
 - PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
@@ -118,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
 - Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
 - Support for BME688 with latest Bosch-Sensor-API library [#14513](https://github.com/arendst/Tasmota/issues/14513)
+- Rule variable %color% [#14572](https://github.com/arendst/Tasmota/issues/14572)
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested [#14487](https://github.com/arendst/Tasmota/issues/14487)
 - ESP32 support for TuyaMcu
