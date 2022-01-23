@@ -134,6 +134,8 @@
 #define ANALOG_MQ_RatioMQCleanAir                 15.0        
 // Multiplier used to store pH with 2 decimal places in a non decimal datatype
 #define ANALOG_MQ_DECIMAL_MULTIPLIER              100.0
+// lenght of filter
+#define ANALOG_MQ_SAMPLES                         60
 
 struct {
   uint8_t present = 0;
@@ -152,6 +154,8 @@ struct {
   uint16_t last_value = 0;
   uint8_t type = 0;
   uint8_t pin = 0;
+  float mq_samples[ANALOG_MQ_SAMPLES];
+  int indexOfPointer = -1;
 } Adc[MAX_ADCS];
 
 #ifdef ESP8266
@@ -230,7 +234,7 @@ void AdcInitParams(uint8_t idx) {
   }
 }
 
-void AdcAttach(uint8_t pin, uint8_t type) {
+void AdcAttach(uint32_t pin, uint8_t type) {
   if (Adcs.present == MAX_ADCS) { return; }
   Adc[Adcs.present].pin = pin;
   if (adcAttachPin(Adc[Adcs.present].pin)) {
@@ -367,20 +371,31 @@ uint16_t AdcGetLux(uint32_t idx) {
   return (uint16_t)ldrLux;
 }
 
+void AddSampleMq(uint32_t idx){
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Adding sample for mq-sensor"));
+  int _adc = AdcRead(Adc[idx].pin, 2);
+  // init af array at same value
+  if (Adc[idx].indexOfPointer==-1)
+  {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Init samples for mq-sensor"));
+    for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+      Adc[idx].mq_samples[i] = _adc;
+  }
+  else
+    Adc[idx].mq_samples[Adc[idx].indexOfPointer] = _adc;
+  Adc[idx].indexOfPointer++;
+  if (Adc[idx].indexOfPointer==ANALOG_MQ_SAMPLES)
+    Adc[idx].indexOfPointer=0;
+}
+
 float AdcGetMq(uint32_t idx) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Getting value for mq-sensor"));
   float avg = 0.0;
-  int retries = 5;
-  int retries_delay = 20;
   float _RL = 10; //Value in KiloOhms
   float _R0 = 10;
-  int _adc = AdcRead(Adc[idx].pin, 2);
-  avg += _adc;
-  for (int i = 0; i < retries-1; i ++) {
-    delay(retries_delay);
-    _adc = AdcRead(Adc[idx].pin, 2);
-    avg += _adc;
-  }
-  float voltage = (avg/ retries) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
+  for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+    avg += Adc[idx].mq_samples[i];
+  float voltage = (avg / ANALOG_MQ_SAMPLES) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
 
   float _RS_Calc = ((ANALOG_V33 * _RL) / voltage) -_RL; //Get value of RS in a gas
   if (_RS_Calc < 0)  _RS_Calc = 0; //No negative values accepted.
@@ -389,7 +404,7 @@ float AdcGetMq(uint32_t idx) {
   if(ppm < 0)  ppm = 0; //No negative values accepted or upper datasheet recomendation.
   char ppm_chr[6];
   dtostrfd(ppm, 2, ppm_chr);
-  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "ppm read. ADC-RAW: %d, ppm: %d,"), voltage, ppm_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Ppm read. ADC-RAW: %2_f, ppm: %s,"), &voltage, ppm_chr);
   return ppm;
 }
 
@@ -485,6 +500,7 @@ void AdcEverySecond(void) {
       AdcGetCurrentPower(idx, 5);
     }
     else if (ADC_MQ == Adc[idx].type) {
+      AddSampleMq(idx);
       AdcGetMq(idx);
     }
   }
