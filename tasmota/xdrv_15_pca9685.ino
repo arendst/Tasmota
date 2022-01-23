@@ -181,7 +181,7 @@ bool PCA9685_Command(void)
           return serviced;
         }
         uint16_t pwm = atoi(ArgV(argument, 3));
-        if ((pin >= 0 && pin <= 15) && (pwm >= 0 && pwm <= 4096)) {
+        if ((pin >= 0 && pin <= 15 || pin==61) && (pwm >= 0 && pwm <= 4096)) {
           PCA9685_SetPWM(pin, pwm, pca9685_inverted);
           Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
           serviced = true;
