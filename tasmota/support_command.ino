@@ -42,7 +42,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
@@ -74,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSetSensor, &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -388,6 +388,41 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_pointer = TasmotaGlobal.backlog_index;
 #endif
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
+  }
+}
+
+void CmndJson(void) {
+  // Json {"POWER":"OFF","Dimmer":100,"Color":"FFD908","HSBColor":"51,97,100","Channel":[100,85,3]}
+  JsonParser parser((char*)XdrvMailbox.data);
+  JsonParserObject root = parser.getRootObject();
+  if (root) {
+    String backlog;
+    for (auto command_key : root) {
+      const char *command = command_key.getStr();
+      JsonParserToken parameters = command_key.getValue();
+      if (parameters.isArray()) {
+        JsonParserArray parameter_arr = parameters.getArray();
+        uint32_t index = 1;
+        for (auto value : parameter_arr) {
+          if (backlog.length()) { backlog += ";"; }
+          backlog += command;
+          backlog += index++;
+          backlog += " ";
+          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
+        }
+      } else {
+        if (backlog.length()) { backlog += ";"; }
+        backlog += command;
+        backlog += " ";
+        backlog += parameters.getStr();         // HSBColor 51,97,100
+      }
+    }
+    XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
+    XdrvMailbox.data_len = 1;                   // Any data
+    XdrvMailbox.index = 0;                      // Backlog0 - no delay
+    CmndBacklog();
+  } else {
+    ResponseCmndChar(PSTR(D_JSON_EMPTY));
   }
 }
 
