@@ -378,7 +378,7 @@ for subtype, flv in lv.items():
       pass
       # c_ret_type = f"+lv_{subtype}"
     else:
-      func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+      func_out[be_name] = f"  {{ \"{be_name}\", {{ (const void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }} }},"
 
   for be_name in sorted(func_out):
     print(func_out[be_name])
@@ -721,7 +721,7 @@ for f in lv0:
   # if c_ret_type is an object, prefix with `lv.`
   if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
 
-  func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+  func_out[be_name] = f"  {{ \"{be_name}\", {{ (const void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }} }},"
 
 for be_name in sorted(func_out):
   print(func_out[be_name])
