@@ -137,6 +137,7 @@
 #define D_ORP "ORP"
 #define D_PASSWORD "Palavra Chave"
 #define D_PH "pH"
+#define D_MQ "MQ"
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Factor de Potência"
 #define D_POWERUSAGE "Potência"

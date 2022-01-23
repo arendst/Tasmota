@@ -180,6 +180,7 @@ enum UserSelectablePins {
   GPIO_SOLAXX1_RTS,                    // Solax Inverter Serial interface
   GPIO_OPTION_E,                       // Emulated module
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
+  GPIO_ADC_MQ,                         // Analog MQ Sensor
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -399,7 +400,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SOLAXX1_RTS "|"
   D_SENSOR_OPTION " E|"
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX
-;
+  D_SENSOR_ADC_MQ "|"
+  ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
@@ -973,6 +975,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
+  AGPIO(GPIO_ADC_MQ) + MAX_ADCS,          // Analog MQ Sensor
 #endif  // ESP32
 
 #ifdef USE_SHIFT595
@@ -999,6 +1002,7 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_CT_POWER),               // Current
   AGPIO(GPIO_ADC_JOY),                    // Joystick
   AGPIO(GPIO_ADC_PH),                     // Analog PH Sensor
+  AGPIO(GPIO_ADC_MQ),                     // Analog MQ Sensor
 };
 #endif  // ESP8266
 
@@ -1014,6 +1018,7 @@ enum UserSelectableAdc {
   ADC_CT_POWER,       // Current
   ADC_JOY,            // Joystick
   ADC_PH,             // Analog PH Sensor
+  ADC_MQ,             // Analog MQ Sensor
 //  ADC_SWITCH,         // Switch
 //  ADC_SWITCH_INV,
   ADC_END };
