@@ -28,7 +28,6 @@
 #define ANALOG_RESOLUTION             10               // 12 = 4095, 11 = 2047, 10 = 1023
 #define ANALOG_RANGE                  1023             // 4095 = 12, 2047 = 11, 1023 = 10
 #define ANALOG_PERCENT                10               // backward compatible div10 range
-#define ANALOG_BOARD                  "ESP8266"
 #endif  // ESP8266
 #ifdef ESP32
 #undef ANALOG_RESOLUTION
@@ -37,8 +36,6 @@
 #define ANALOG_RANGE                  4095             // 4095 = 12, 2047 = 11, 1023 = 10
 #undef ANALOG_PERCENT
 #define ANALOG_PERCENT                ((ANALOG_RANGE + 50) / 100)  // approximation to 1% ADC range
-#undef ANALOG_BOARD
-#define ANALOG_BOARD                  "ESP-32"
 #endif  // ESP32
 
 #define TO_CELSIUS(x) ((x) - 273.15)
