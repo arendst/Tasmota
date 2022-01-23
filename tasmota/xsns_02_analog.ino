@@ -728,26 +728,26 @@ void CmndAdcParam(void) {
               if (Adc[idx].param1==2)
               {
                 a=574.25;
-                b=-2.222
-                ratioMQCleanAir=9.83
+                b=-2.222;
+                ratioMQCleanAir=9.83;
               }
               if (Adc[idx].param1==4)
               {
-                a=1012.7
-                b=-2.786
-                ratioMQCleanAir=4.4
+                a=1012.7;
+                b=-2.786;
+                ratioMQCleanAir=4.4;
               }
               if (Adc[idx].param1==7)
               {
-                a=99.042
-                b=-1.518
-                ratioMQCleanAir=27.5
+                a=99.042;
+                b=-1.518;
+                ratioMQCleanAir=27.5;
               }
               if (Adc[idx].param1==131)
               {
-                a=23.943
-                b=-1.11
-                ratioMQCleanAir=15
+                a=23.943;
+                b=-1.11;
+                ratioMQCleanAir=15;
               }
             }
             Adc[idx].param2 = (int)(a * ANALOG_MQ_DECIMAL_MULTIPLIER);                       // Exponential regression
