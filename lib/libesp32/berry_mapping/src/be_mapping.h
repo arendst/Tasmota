@@ -3,38 +3,47 @@
 #ifndef __BE_MAPPING__
 #define __BE_MAPPING__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "berry.h"
 
 // include this header to force compilation fo this module
 #define BE_MAX_CB       20      // max number of callbacks, each callback requires a distinct address
 
-/*********************************************************************************************\
- * Support for Berry int constants
- * as virtual members
- \*********************************************************************************************/
+#ifdef __cplusplus
+  #define be_const_ctype_func(_f) {                               \
+      bvaldata((const void*) &ctype_func_def##_f),                      \
+      BE_CTYPE_FUNC                                               \
+  }
+#else // __cplusplus
+typedef const void* be_constptr;
+  #define be_const_ctype_func(_f) {                               \
+      .v.nf = (const void*) &ctype_func_def##_f,                  \
+      .type = BE_CTYPE_FUNC                                       \
+  }
+#endif // __cplusplus
+
+#define BE_FUNC_CTYPE_DECLARE(_name, _ret_arg, _in_arg) \
+    static const be_ctype_args_t ctype_func_def##_name = { (const void*) &_name, _ret_arg, _in_arg };
+#define BE_VAR_CTYPE_DECLARE(_name, _ret_arg) \
+    static const be_ctype_var_args_t ctype_func_def##_name = { (const void*) &_name, _ret_arg };
 
 #define be_cconst_int(_v)                   ((intptr_t)(_v))
 #define be_cconst_string(_v)                ((intptr_t)(_v))
 #define be_cconst_ptr(_v)                   ((intptr_t)(_v))
 #define be_cconst_func(_v)                  ((intptr_t)(_v))
-#define be_cconst_ctype_func(_f, _r)        ((intptr_t) &(be_ctype_var_args) { (const void*) _f, _r })
+#define be_ctype(_name)                     ((intptr_t) &ctype_func_def##_name)
 
 /* C arguments are coded as an array of 3 pointers */
-typedef struct be_ctype_args {
-  void* func;
-  const char* return_type;
-  const char* arg_type;
-} be_ctype_args;
-
-/* ctype constant function as an array of 2 pointers: function and return type. arg_type is always NULL */
-typedef struct be_ctype_var_args {
+typedef struct be_ctype_args_t {
   const void* func;
   const char* return_type;
-} be_ctype_var_args;
+  const char* arg_type;
+} be_ctype_args_t;
+
+/* ctype constant function as an array of 2 pointers: function and return type. arg_type is always NULL */
+typedef struct be_ctype_var_args_t {
+  const void* func;
+  const char* return_type;
+} be_ctype_var_args_t;
 
 
 typedef struct be_const_member_t {
@@ -45,9 +54,7 @@ typedef struct be_const_member_t {
 // table of functions per class
 typedef struct be_ntv_func_def_t {
     const char * name;
-    const void * func;
-    const char * return_type;
-    const char * arg_type;
+    be_ctype_args_t args;
 } be_ntv_func_def_t;
 
 struct bclass;
@@ -58,6 +65,17 @@ typedef struct be_ntv_class_def_t {
     const be_ntv_func_def_t * func_table;
     size_t size;
 } be_ntv_class_def_t;
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/*********************************************************************************************\
+ * Support for Berry int constants
+ * as virtual members
+ \*********************************************************************************************/
 
 void be_raisef(bvm *vm, const char *except, const char *msg, ...);
 

@@ -406,7 +406,7 @@ static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
  * CType handler for Berry
 \*********************************************************************************************/
 int be_call_ctype_func(bvm *vm, const void *definition) {
-  be_ctype_args* args = (be_ctype_args*) definition;
+  be_ctype_args_t* args = (be_ctype_args_t*) definition;
   return be_call_c_func(vm, args->func, args->return_type, args->arg_type);
 }
 

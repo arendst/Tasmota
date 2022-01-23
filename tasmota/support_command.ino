@@ -42,7 +42,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
@@ -74,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSetSensor, &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -388,6 +388,73 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_pointer = TasmotaGlobal.backlog_index;
 #endif
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
+  }
+}
+
+void CmndJson(void) {
+  // Json {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  //
+  // Escape lower level tokens and add quotes around it
+  // Input:
+  // {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  // Output (escaped subtokens):
+  // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  uint32_t bracket = 0;
+  String data_buf("");
+  data_buf.reserve(XdrvMailbox.data_len);       // We need at least the same amount of characters
+  for (uint32_t index = 0; index < XdrvMailbox.data_len; index++) {
+    char c = (char)XdrvMailbox.data[index];
+    if (c == '{') {
+      bracket++;
+      if (2 == bracket) { data_buf += '"'; }    // Add start quote
+    }
+    if (bracket > 1) {
+      if (c == '\"') { data_buf += '\\'; }      // Escape any quote within second level token
+    }
+    data_buf += c;
+    if (c == '}') {
+      bracket--;
+      if (1 == bracket) { data_buf += '"'; }    // Add end quote
+    }
+  }
+
+  JsonParser parser((char*)data_buf.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root) {
+    // Convert to backlog commands
+    // Input (escaped subtokens):
+    // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+    // Output:
+    // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
+    String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
+    for (auto command_key : root) {
+      const char *command = command_key.getStr();
+      JsonParserToken parameters = command_key.getValue();
+      if (parameters.isArray()) {
+        JsonParserArray parameter_arr = parameters.getArray();
+        uint32_t index = 1;
+        for (auto value : parameter_arr) {
+          if (backlog.length()) { backlog += ";"; }
+          backlog += command;
+          backlog += index++;
+          backlog += " ";
+          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
+        }
+      } else if (parameters.isObject()) {       // Should have been escaped
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
+      } else {
+        if (backlog.length()) { backlog += ";"; }
+        backlog += command;
+        backlog += " ";
+        backlog += parameters.getStr();         // HSBColor 51,97,100
+      }
+    }
+    XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
+    XdrvMailbox.data_len = 1;                   // Any data
+    XdrvMailbox.index = 0;                      // Backlog0 - no delay
+    CmndBacklog();
+  } else {
+    ResponseCmndChar(PSTR(D_JSON_EMPTY));
   }
 }
 

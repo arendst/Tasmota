@@ -238,6 +238,7 @@ with open(lv_widgets_file) as f:
       c_args = ""
       args_raw = [ x.strip(" \t\n\r") for x in g.group(3).split(",") ]  # split by comma and strip
       # print(args_raw)
+      func_name = g.group(2)
       for arg_raw in args_raw:
         # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent', ''
         # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit', ''
@@ -264,10 +265,13 @@ with open(lv_widgets_file) as f:
               c_args += ga_type
             else:
               if ga_type.endswith("_cb"):
-                # it's a callback type, we encode it differently
-                if ga_type not in lv_cb_types:
-                  lv_cb_types.append(ga_type)
-                c_args += "^" + ga_type + "^"
+                if 'remove_' in func_name:    # if the call is to remove the cb, just treat as an 'anything' parameter
+                  c_args += "."
+                else:
+                  # it's a callback type, we encode it differently
+                  if ga_type not in lv_cb_types:
+                    lv_cb_types.append(ga_type)
+                  c_args += "^" + ga_type + "^"
               else:
                 # we have a high-level type that we treat as a class name, enclose in parenthesis
                 c_args += "(" + "lv." + ga_type + ")"
@@ -276,7 +280,6 @@ with open(lv_widgets_file) as f:
             c_args += "[......]"  # allow 6 additional parameters
 
       # analyze function name and determine if it needs to be assigned to a specific class
-      func_name = g.group(2)
       # Ex: func_name -> 'lv_obj_set_parent'
       if func_name.startswith("_"): continue            # skip low-level
       if func_name.startswith("lv_debug_"): continue    # skip debug
@@ -375,7 +378,7 @@ for subtype, flv in lv.items():
       pass
       # c_ret_type = f"+lv_{subtype}"
     else:
-      func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+      func_out[be_name] = f"  {{ \"{be_name}\", {{ (const void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }} }},"
 
   for be_name in sorted(func_out):
     print(func_out[be_name])
@@ -718,7 +721,7 @@ for f in lv0:
   # if c_ret_type is an object, prefix with `lv.`
   if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
 
-  func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+  func_out[be_name] = f"  {{ \"{be_name}\", {{ (const void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }} }},"
 
 for be_name in sorted(func_out):
   print(func_out[be_name])

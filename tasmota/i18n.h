@@ -240,6 +240,7 @@
 
 // Commands tasmota.ino
 #define D_CMND_BACKLOG "Backlog"
+#define D_CMND_JSON "Json"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_NODELAY "NoDelay"
 #define D_CMND_STATUS "Status"
