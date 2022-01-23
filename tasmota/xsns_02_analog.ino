@@ -484,6 +484,9 @@ void AdcEverySecond(void) {
     else if (ADC_CT_POWER == Adc[idx].type) {
       AdcGetCurrentPower(idx, 5);
     }
+    else if (ADC_MQ == Adc[idx].type) {
+      AdcGetMq(idx);
+    }
   }
 }
 
