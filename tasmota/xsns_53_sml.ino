@@ -2576,7 +2576,7 @@ void SML_Init(void) {
           index--;
           srcpin  = strtol(lp,&lp,10);
           if (Gpio_used(abs(srcpin))) {
-            AddLog(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for RX in meter number %d"),abs(srcpin),index+1);
 dddef_exit:
             if (script_meter) free(script_meter);
             script_meter = 0;
@@ -2631,7 +2631,7 @@ dddef_exit:
             lp++;
             script_meter_desc[index].trxpin = strtol(lp, &lp, 10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
-              AddLog(LOG_LEVEL_INFO, PSTR("gpio tx double define!"));
+              AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX in meter number %d"),script_meter_desc[index].trxpin,index+1);
               goto dddef_exit;
             }
             if (*lp != ',') goto next_line;
@@ -3320,6 +3320,10 @@ bool XSNS_53_cmd(void) {
           ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_LED_pin: %d\"}}"),ser_act_LED_pin);
         } else {
           ser_act_LED_pin=atoi(cp);
+          if (Gpio_used(ser_act_LED_pin)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for LED."),ser_act_LED_pin);
+            ser_act_LED_pin=255;
+          }
           if (ser_act_LED_pin!=255) {
             pinMode(ser_act_LED_pin, OUTPUT);
           }
