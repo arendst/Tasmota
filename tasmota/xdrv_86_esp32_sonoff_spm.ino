@@ -200,6 +200,8 @@ typedef struct {
   uint8_t mstate;
   uint8_t last_button;
   uint8_t error_led_blinks;
+  uint8_t history_module;
+  uint8_t history_channel;
   bool map_change;
   bool discovery_triggered;
 } TSspm;
@@ -846,18 +848,39 @@ void SSPMHandleReceivedData(void) {
           float energy_total = 0;
           uint32_t entries = (Sspm->expected_bytes - 22) / 2;
 
+          uint32_t channel = SspmBuffer[32];
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
+
+          if ((Sspm->history_channel == channel) && (Sspm->history_module == module)) {
+//            uint32_t now = SspmBuffer[33] << 8 | SspmBuffer[34];
+            uint32_t start = SspmBuffer[37] << 8 | SspmBuffer[38];
+            Response_P(PSTR("{\"SSPMHistory\":{\"From\":\"%d-%02d-%02d\",\"DailyEnergy\":["),
+              start, SspmBuffer[39], SspmBuffer[40]);
+          }
+
           for (uint32_t i = 0; i < entries; i++) {
             float today_energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
             if (112.30 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
+
+            if ((Sspm->history_channel == channel) && (Sspm->history_module == module)) {
+              ResponseAppend_P(PSTR("%s%*_f"), (i)?",":"", Settings->flag2.energy_resolution, &today_energy);
+            }
+
             if (0 == i) { energy_today = today_energy; }
             if (1 == i) { energy_yesterday = today_energy; }
             energy_total += today_energy;
           }
-          uint32_t channel = SspmBuffer[32];
-          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
+
           Sspm->energy_today[module][channel] = energy_today;
           Sspm->energy_yesterday[module][channel] = energy_yesterday;
           Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
+
+          if ((Sspm->history_channel == channel) && (Sspm->history_module == module)) {
+            ResponseAppend_P(PSTR("]}}"));
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("SSPMHistory"));
+            Sspm->history_channel = 5;  // Disable display energy history
+          }
+
           Sspm->allow_updates = 1;
         }
         break;
@@ -1014,9 +1037,7 @@ void SSPMHandleReceivedData(void) {
               Sspm->Settings.module_map[Sspm->module_max] = module_id;
             }
             mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
-            if (-1 == mapped) {
-              Sspm->map_change = true;
-            }
+            if (-1 == mapped) { Sspm->map_change = true; }
             mapped++;
             AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
               Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
@@ -1166,6 +1187,7 @@ void SSPMInit(void) {
 #endif
 #endif
 
+  Sspm->history_channel = 5;                  // Disable display energy history
   Sspm->old_power = TasmotaGlobal.power;
   Sspm->mstate = SPM_WAIT;                    // Start init sequence
 }
@@ -1460,7 +1482,7 @@ const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
   "Log|Energy|History|Scan|IamHere|Display|Reset|Map" ;
 
 void (* const SSPMCommand[])(void) PROGMEM = {
-  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMEnergyHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset, &CmndSSPMMap };
+  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset, &CmndSSPMMap };
 
 void CmndSSPMLog(void) {
   // Report 29 log entries
@@ -1476,10 +1498,13 @@ void CmndSSPMEnergy(void) {
   ResponseCmndDone();
 }
 
-void CmndSSPMEnergyHistory(void) {
+void CmndSSPMHistory(void) {
   if ((XdrvMailbox.index < 1) || (XdrvMailbox.index > TasmotaGlobal.devices_present)) { XdrvMailbox.index = 1; }
+  uint32_t relay = XdrvMailbox.index -1;
+  Sspm->history_module = relay >> 2;
+  Sspm->history_channel = relay & 0x03;  // Channel relays are NOT bit masked this time
   SSPMSendGetEnergyTotal(XdrvMailbox.index -1);
-  ResponseCmndDone();
+  ResponseClear();
 }
 
 void CmndSSPMScan(void) {

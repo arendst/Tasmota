@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) (#14555)
 - Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens (#14568)
 - Rule variable %color% (#14572)
+- Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
+- Command ``SspmHistory<relay>`` to retrieve daily energy of last six month (as defined by ARM firmware)
+- Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
+- Command ``SspmScan`` to rescan Sonoff SPM modbus
 
 ### Changed
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7

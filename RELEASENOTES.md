@@ -104,7 +104,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Added
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+- Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
+- Command ``SspmHistory<relay>`` to retrieve daily energy of last six month (as defined by ARM firmware)
+- Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
+- Command ``SspmScan`` to rescan Sonoff SPM modbus
 - Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)
 - Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens [#14568](https://github.com/arendst/Tasmota/issues/14568)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` [#14385](https://github.com/arendst/Tasmota/issues/14385)
