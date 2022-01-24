@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
 - Command ``SspmHistory<relay>`` to retrieve daily energy of last six month (as defined by ARM firmware)
 - Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
+- Command ``SspmLog<relay> [x]`` to retrieve relay power state change and cause logging
 - Command ``SspmScan`` to rescan Sonoff SPM modbus
 
 ### Changed

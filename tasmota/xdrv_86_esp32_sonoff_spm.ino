@@ -22,13 +22,13 @@
 #ifdef ESP32
 #ifdef USE_SONOFF_SPM
 /*********************************************************************************************\
- * Sonoff Stackable Power Manager (Current state: PROOF OF CONCEPT)
+ * Sonoff Stackable Power Manager
+ *
+ * {"NAME":"Sonoff SPM","GPIO":[0,0,0,0,3200,5536,0,0,0,0,0,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,0,0,32,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Initial POC template:
  * {"NAME":"Sonoff SPM (POC1)","GPIO":[1,1,1,1,3200,1,1,1,1,1,1,1,3232,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
  * Add ethernet support:
- * {"NAME":"Sonoff SPM (POC2)","GPIO":[1,0,1,0,3200,5536,0,0,1,1,1,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,1,1,32,1,0,0,1],"FLAG":0,"BASE":1}
- * Remove all user selectable GPIOs:
  * {"NAME":"Sonoff SPM (POC2)","GPIO":[0,0,0,0,3200,5536,0,0,0,0,0,0,3232,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,544,0,0,32,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * Things to know:
@@ -37,6 +37,8 @@
  * Green led is controlled by ARM processor indicating SD-Card access.
  * ESP32 is used as interface between eWelink and ARM processor in SPM-Main unit communicating over proprietary serial protocol.
  * Power on sequence for two SPM-4Relay modules is 00-00-15-10-(0F)-(13)-(13)-(19)-0C-09-04-09-04-0B-0B
+ * Up to six months of daily energy are stored onthe SD-Card. Previous data is lost.
+ * Tasmota support is based on Sonoff SPM v1.0.0 ARM firmware.
  *
  * Tasmota POC1:
  * Up to 7 SPM-4Relay units supporting up to 28 relays.
@@ -51,9 +53,11 @@
  * Yellow led blinks 2 seconds if an ARM-ESP comms CRC error is detected.
  * Persistence for module mapping
  * Supported commands:
- *   SspmMap 2,3,1,..    - Map scanned module number to physical module number using positional numbering
  *   SspmDisplay 0|1     - Select alternative GUI rotating display either all or powered on only
+ *   SspmHistory<relay>  - Retrieve daily energy of last six month (as defined by ARM firmware)
  *   SspmIAmHere<relay>  - Blink ERROR in SPM-4Relay where relay resides
+ *   SspmLog<relay> [x]  - Retrieve relay power state change and cause logging
+ *   SspmMap 2,3,1,..    - Map scanned module number to physical module number using positional numbering
  *   SspmScan            - Rescan ARM modbus taking around 20 seconds
  *   SspmReset 1         - Reset ARM and restart ESP
  *
@@ -159,6 +163,8 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_UPDATE_CHANNELS       // Update Energy for powered on channels
                          };
 
+const char kSSPMTriggers[] PROGMEM = "Tasmota|Device|Overload|Overtemp";
+
 #include <TasmotaSerial.h>
 TasmotaSerial *SspmSerial;
 
@@ -200,8 +206,8 @@ typedef struct {
   uint8_t mstate;
   uint8_t last_button;
   uint8_t error_led_blinks;
-  uint8_t history_module;
-  uint8_t history_channel;
+  uint8_t history_relay;
+  uint8_t log_relay;
   bool map_change;
   bool discovery_triggered;
 } TSspm;
@@ -851,18 +857,24 @@ void SSPMHandleReceivedData(void) {
           uint32_t channel = SspmBuffer[32];
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
 
-          if ((Sspm->history_channel == channel) && (Sspm->history_module == module)) {
-//            uint32_t now = SspmBuffer[33] << 8 | SspmBuffer[34];
-            uint32_t start = SspmBuffer[37] << 8 | SspmBuffer[38];
-            Response_P(PSTR("{\"SSPMHistory\":{\"From\":\"%d-%02d-%02d\",\"DailyEnergy\":["),
-              start, SspmBuffer[39], SspmBuffer[40]);
+          if (Sspm->history_relay < 255) {
+            uint32_t history_module = Sspm->history_relay >> 2;
+            uint32_t history_channel = Sspm->history_relay & 0x03;  // Channel relays are NOT bit masked this time
+            if ((history_channel == channel) && (history_module == module)) {
+//              uint32_t now = SspmBuffer[33] << 8 | SspmBuffer[34];
+              uint32_t start = SspmBuffer[37] << 8 | SspmBuffer[38];
+              Response_P(PSTR("{\"SSPMHistory%d\":{\"From\":\"%d-%02d-%02d\",\"DailyEnergy\":["),
+                Sspm->history_relay +1, start, SspmBuffer[39], SspmBuffer[40]);
+            } else {
+              Sspm->history_relay = 255;
+            }
           }
 
           for (uint32_t i = 0; i < entries; i++) {
             float today_energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
             if (112.30 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
 
-            if ((Sspm->history_channel == channel) && (Sspm->history_module == module)) {
+            if (Sspm->history_relay < 255) {
               ResponseAppend_P(PSTR("%s%*_f"), (i)?",":"", Settings->flag2.energy_resolution, &today_energy);
             }
 
@@ -875,10 +887,10 @@ void SSPMHandleReceivedData(void) {
           Sspm->energy_yesterday[module][channel] = energy_yesterday;
           Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
 
-          if ((Sspm->history_channel == channel) && (Sspm->history_module == module)) {
+          if (Sspm->history_relay < 255) {
             ResponseAppend_P(PSTR("]}}"));
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("SSPMHistory"));
-            Sspm->history_channel = 5;  // Disable display energy history
+            Sspm->history_relay = 255;  // Disable display energy history
           }
 
           Sspm->allow_updates = 1;
@@ -900,14 +912,9 @@ void SSPMHandleReceivedData(void) {
              |----------------------- Month   = 11 = November
         ----------------------------- Year    07 e5 = 2021
         07 e5 0b 06 0f 1f 08 00 00 01
-        07 e5 0b 06 0f 1f 04 02 00 01
-        07 e5 0b 06 0f 1e 32 01 00 01
         07 e5 0b 06 0f 1e 1e 01 01 01
-        07 e5 0b 06 0f 18 38 02 01 01
-        07 e5 0b 06 0f 12 38 00 01 01
         07 e5 0b 06 0e 37 36 03 00 00
         07 e5 0b 06 0e 37 36 01 00 00
-        07 e5 0b 06 0e 37 1e 03 01 00
         07 e5 0b 06 0e 36 37 01 01 00
         ...
         07 e5 0b 06 0d 30 2d 03 00 01 09 89 fe
@@ -916,7 +923,40 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1A 00 01 03 E5 45 EB
                                                                 |  |
         */
-
+        if (Sspm->log_relay < 255) {
+          uint32_t module = Sspm->log_relay >> 2;
+          uint32_t channel = Sspm->log_relay & 0x03;  // Channel relays are NOT bit masked this time
+          Response_P(PSTR("{\"SSPMLog%d\":"), Sspm->log_relay +1);
+          if (Sspm->expected_bytes < 15) {
+            ResponseAppend_P(PSTR("\"Error%d\"}"), SspmBuffer[19]);
+          } else if (module != SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21])) {
+            ResponseAppend_P(PSTR("\"Wrong module\"}"));
+          } else {
+            uint32_t entries = SspmBuffer[32];
+            uint32_t offset = 33;
+            bool more = false;
+            for (uint32_t i = 0; i < entries; i++) {
+              if (SspmBuffer[offset +7] == channel) {
+                uint32_t year = SspmBuffer[offset] << 8 | SspmBuffer[offset +1];
+                char stemp[10];  // One of "App|Device|Overload|Overtemp"
+                ResponseAppend_P(PSTR("%s{\"Time\":\"%d-%02d-%02dT%02d:%02d:%02d\",\"Trigger\":\"%s\",\"State\":\"%s\"}"),
+                  (more)?",":"[", year, SspmBuffer[offset +2], SspmBuffer[offset +3],
+                  SspmBuffer[offset +4], SspmBuffer[offset +5], SspmBuffer[offset +6],
+                  GetTextIndexed(stemp, sizeof(stemp), SspmBuffer[offset +9] & 0x03, kSSPMTriggers),
+                  GetStateText(SspmBuffer[offset +8]));
+                more = true;
+              }
+              offset += 10;
+            }
+            if (more) {
+              ResponseAppend_P(PSTR("]}"));
+            }else {
+              ResponseAppend_P(PSTR("\"None\"}"));
+            }
+          }
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("SSPMLog"));
+          Sspm->log_relay = 255;  // Disable display energy history
+        }
         break;
       case SSPM_FUNC_ENERGY_PERIOD:
         /* 0x1B
@@ -1146,9 +1186,7 @@ void SSPMSerialInput(void) {
 /*********************************************************************************************/
 
 void SSPMInit(void) {
-  if (!ValidTemplate(PSTR("Sonoff SPM (POC1)")) &&
-      !ValidTemplate(PSTR("Sonoff SPM (POC2)"))) { return; }
-  if (!PinUsed(GPIO_RXD) || !PinUsed(GPIO_TXD)) { return; }
+  if (!ValidTemplate(PSTR("Sonoff SPM")) || !PinUsed(GPIO_RXD) || !PinUsed(GPIO_TXD)) { return; }
 
   Sspm = (TSspm*)calloc(sizeof(TSspm), 1);    // Need calloc to reset registers to 0/false
   if (!Sspm) { return; }
@@ -1187,7 +1225,8 @@ void SSPMInit(void) {
 #endif
 #endif
 
-  Sspm->history_channel = 5;                  // Disable display energy history
+  Sspm->history_relay = 255;                  // Disable display energy history
+  Sspm->log_relay = 255;                      // Disable display logging
   Sspm->old_power = TasmotaGlobal.power;
   Sspm->mstate = SPM_WAIT;                    // Start init sequence
 }
@@ -1485,11 +1524,14 @@ void (* const SSPMCommand[])(void) PROGMEM = {
   &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset, &CmndSSPMMap };
 
 void CmndSSPMLog(void) {
-  // Report 29 log entries
+  // SspmLog<relay>     - Report from up to 29 latest log entries
+  // SspmLog<relay> 10  - Report from up to 10 latest log entries
+  // SspmLog<relay> 100 - Report from up to 29 log entries
   if ((XdrvMailbox.index < 1) || (XdrvMailbox.index > TasmotaGlobal.devices_present)) { XdrvMailbox.index = 1; }
-  XdrvMailbox.payload &= 0xFFFF;  // Max 65000 entries
-  SSPMSendGetLog(XdrvMailbox.index -1, XdrvMailbox.payload +1);
-  ResponseCmndDone();
+  if ((XdrvMailbox.payload < 1) || (XdrvMailbox.payload > 65000)) { XdrvMailbox.payload = 28; }
+  Sspm->log_relay = XdrvMailbox.index -1;
+  SSPMSendGetLog(Sspm->log_relay, XdrvMailbox.payload +1);
+  ResponseClear();
 }
 
 void CmndSSPMEnergy(void) {
@@ -1499,11 +1541,11 @@ void CmndSSPMEnergy(void) {
 }
 
 void CmndSSPMHistory(void) {
+  // Retreive daily history of one relay up to six month
+  // SspmHistory<relay>
   if ((XdrvMailbox.index < 1) || (XdrvMailbox.index > TasmotaGlobal.devices_present)) { XdrvMailbox.index = 1; }
-  uint32_t relay = XdrvMailbox.index -1;
-  Sspm->history_module = relay >> 2;
-  Sspm->history_channel = relay & 0x03;  // Channel relays are NOT bit masked this time
-  SSPMSendGetEnergyTotal(XdrvMailbox.index -1);
+  Sspm->history_relay = XdrvMailbox.index -1;
+  SSPMSendGetEnergyTotal(Sspm->history_relay);
   ResponseClear();
 }
 
