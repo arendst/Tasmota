@@ -2099,8 +2099,8 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
     } else
 #endif  // USE_I2C
 #endif  // USE_PWM_DIMMER
-#ifdef ESP32
     uint32_t pwm_phase = 0;     // dephase each PWM channel with the value of the previous
+#ifdef ESP32
     uint32_t pwm_modulus = (1 << _pwm_bit_num) - 1;   // 1023
 #endif // ESP32
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
