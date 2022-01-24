@@ -2099,6 +2099,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
     } else
 #endif  // USE_I2C
 #endif  // USE_PWM_DIMMER
+#ifdef ESP32
+    uint32_t pwm_phase = 0;     // dephase each PWM channel with the value of the previous
+    uint32_t pwm_modulus = (1 << _pwm_bit_num) - 1;   // 1023
+#endif // ESP32
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
 #ifdef USE_PWM_DIMMER
@@ -2111,7 +2115,14 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+          uint32_t pwm_val = bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col;
+#ifdef ESP32
+          uint32_t pwm_phase_invert = bitRead(TasmotaGlobal.pwm_inverted, i) ? cur_col : 0;   // move phase if inverted
+          analogWritePhase(Pin(GPIO_PWM1, i), pwm_val, Settings->flag5.pwm_force_same_phase ? 0 : (pwm_phase + pwm_phase_invert) & pwm_modulus);
+          pwm_phase = (pwm_phase + cur_col) & pwm_modulus;
+#else // ESP32
+          analogWrite(Pin(GPIO_PWM1, i), pwm_val);
+#endif // ESP32
         }
       }
     }
