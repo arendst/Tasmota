@@ -65,7 +65,7 @@ void SerialBridgeInput(void) {
   while (SerialBridgeSerial->available()) {
     yield();
     uint8_t serial_in_byte = SerialBridgeSerial->read();
-    serial_bridge_raw = Settings->serial_delimiter == 255;
+    serial_bridge_raw = Settings->serial_delimiter == 254;
     if ((serial_in_byte > 127) && !serial_bridge_raw) {                        // Discard binary data above 127 if no raw reception allowed
       serial_bridge_in_byte_counter = 0;
       SerialBridgeSerial->flush();
