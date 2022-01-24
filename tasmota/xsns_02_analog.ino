@@ -111,6 +111,15 @@
 // Multiplier used to store pH with 2 decimal places in a non decimal datatype
 #define ANALOG_PH_DECIMAL_MULTIPLIER              100.0
 
+// MQ-X sensor (MQ-02, MQ-03, MQ-04, MQ-05, MQ-06, MQ-07, MQ-08, MQ-09, MQ-131, MQ-135)
+//         
+// A0  -------------------
+//                        |
+// GND -----------        |
+//                |       |
+// VCC ---        |       |
+//        |       |       |
+//       3V3     GND     ADC  <- (A0 for nodemcu, wemos; GPIO34,35,36,39 and other analog IN/OUT pin for esp32)
 //means mq type (ex for mq-02 use 2, mq-131 use 131)
 #define ANALOG_MQ_TYPE                            2 
 //exponential regression a params
