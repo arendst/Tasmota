@@ -762,9 +762,9 @@ void MqttShowState(void)
 #endif  // USE_ADC_VCC
 #endif  // ESP8266
 
-  ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
+  ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u,\"" D_JSON_DEVICENAME "\":\"%s\"" ),
     ESP_getFreeHeap1024(), GetTextIndexed(stemp1, sizeof(stemp1), Settings->flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
-    TasmotaGlobal.sleep, TasmotaGlobal.loop_load_avg, MqttConnectCount());
+    TasmotaGlobal.sleep, TasmotaGlobal.loop_load_avg, MqttConnectCount(),SettingsText(SET_DEVICENAME));
 
 #ifdef USE_BERRY
     extern void BrShowState(void);
