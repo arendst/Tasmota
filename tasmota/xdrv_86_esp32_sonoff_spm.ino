@@ -102,8 +102,12 @@
  * relay   = 0 to 127                  Relays
 \*********************************************************************************************/
 
+#ifndef SSPM_JSON_ENERGY_TODAY
 #define SSPM_JSON_ENERGY_TODAY               // Show JSON energy today
+#endif
+#ifndef SSPM_JSON_ENERGY_YESTERDAY
 #define SSPM_JSON_ENERGY_YESTERDAY           // Show JSON energy yesterday
+#endif
 
 /*********************************************************************************************\
  * Fixed defines - Do not change
@@ -146,9 +150,9 @@
 
 /*********************************************************************************************/
 
-#define SSPM_FINAL_MAX_MODULES       32            // Max number of SPM-4RELAY units for a total of 128 relays
+#define SSPM_TOTAL_MODULES           32            // Max number of SPM-4RELAY units for a total of 128 relays
 
-const uint32_t SSPM_VERSION = 0x01010101;          // Latest driver version (See settings deltas below)
+const uint32_t SSPM_VERSION = 0x01010103;          // Latest driver version (See settings deltas below)
 
 enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_WAIT,                 // Wait 100ms
@@ -172,7 +176,8 @@ TasmotaSerial *SspmSerial;
 typedef struct {
   uint32_t crc32;                                 // To detect file changes
   uint32_t version;                               // To detect driver function changes
-  uint16_t module_map[SSPM_FINAL_MAX_MODULES];    // Max possible SPM relay modules
+  uint16_t module_map[SSPM_TOTAL_MODULES];        // Max possible SPM relay modules
+  float energy_total[SSPM_TOTAL_MODULES][4];      // Total energy in hecto kWh (30.12 kwH is stored as 3012)
 } tSspmSettings;
 
 typedef struct {
@@ -275,7 +280,6 @@ void SSPMSettingsLoad(void) {
 
 void SSPMSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
-
   if (SSPMSettingsCrc32() != Sspm->Settings.crc32) {
     // Try to save file /.drvset086
     Sspm->Settings.crc32 = SSPMSettingsCrc32();
@@ -870,26 +874,30 @@ void SSPMHandleReceivedData(void) {
             }
           }
 
-          float energy_today = 0;
-          float energy_yesterday = 0;
+          float last_energy_today = Sspm->energy_yesterday[module][channel];
           float energy_total = 0;
-
           for (uint32_t i = 0; i <= entries; i++) {
-            float today_energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
-            if (112.30 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
+            float energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
+            if (112.30 == energy) { energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
 
             if (Sspm->history_relay < 255) {
-              ResponseAppend_P(PSTR("%s%*_f"), (i)?",":"", Settings->flag2.energy_resolution, &today_energy);
+              ResponseAppend_P(PSTR("%s%*_f"), (i)?",":"", Settings->flag2.energy_resolution, &energy);
             }
 
-            if (0 == i) { energy_today = today_energy; }
-            if (1 == i) { energy_yesterday = today_energy; }
-            energy_total += today_energy;
+            if (0 == i) {
+              Sspm->energy_today[module][channel] = energy;
+            } else {
+              if (1 == i) { Sspm->energy_yesterday[module][channel] = energy; }
+              energy_total += energy;
+            }
           }
-
-          Sspm->energy_today[module][channel] = energy_today;
-          Sspm->energy_yesterday[module][channel] = energy_yesterday;
-          Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
+          if (0 == Sspm->Settings.energy_total[module][channel]) {        // Initial save
+            Sspm->Settings.energy_total[module][channel] = energy_total;
+          }
+          if (Sspm->energy_today[module][channel] < last_energy_today) {  // Daily incremental save
+            Sspm->Settings.energy_total[module][channel] += last_energy_today;
+          }
+          Sspm->energy_total[module][channel] = Sspm->Settings.energy_total[module][channel] + Sspm->energy_today[module][channel];
 
           if (Sspm->history_relay < 255) {
             ResponseAppend_P(PSTR("]}"));
@@ -1522,10 +1530,25 @@ void SSPMEnergyShow(bool json) {
 \*********************************************************************************************/
 
 const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
-  "Log|Energy|History|Scan|IamHere|Display|Reset|Map" ;
+  "Log|Energy|History|Scan|IamHere|Display|Reset|Map|" D_CMND_ENERGYTOTAL;
 
 void (* const SSPMCommand[])(void) PROGMEM = {
-  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMHistory, &CmndSSPMScan, &CmndSSPMIamHere, &CmndSSPMDisplay, &CmndSSPMReset, &CmndSSPMMap };
+  &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMHistory, &CmndSSPMScan, &CmndSSPMIamHere,
+  &CmndSSPMDisplay, &CmndSSPMReset, &CmndSSPMMap, &CmndSpmEnergyTotal };
+
+void CmndSpmEnergyTotal(void) {
+  // Reset Energy Total 
+  // SspmEnergyTotal<relay> 0     - Set total energy from midnight with sum of last month history
+  // SspmEnergyTotal<relay> 4.23  - Set total energy from midnight (without today's energy)
+  uint32_t relay = XdrvMailbox.index -1;
+  uint32_t module = relay >> 2;
+  uint32_t channel = relay & 0x03;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present) && XdrvMailbox.data_len) {
+    Sspm->Settings.energy_total[module][channel] = CharToFloat(XdrvMailbox.data);
+    Sspm->energy_total[module][channel] = Sspm->Settings.energy_total[module][channel] + Sspm->energy_today[module][channel];
+  }
+  ResponseCmndFloat(Sspm->energy_total[module][channel], Settings->flag2.energy_resolution);
+}
 
 void CmndSSPMLog(void) {
   // SspmLog<relay>     - Report from up to 29 latest log entries
