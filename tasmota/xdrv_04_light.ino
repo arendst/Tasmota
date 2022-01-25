@@ -2087,6 +2087,11 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+#ifdef ESP32
+    uint32_t pwm_phase = 0;     // dephase each PWM channel with the value of the previous
+    uint32_t pwm_modulus = (1 << _pwm_bit_num) - 1;   // 1023
+#endif // ESP32
+
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
 #ifdef USE_I2C
@@ -2111,7 +2116,14 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+          uint32_t pwm_val = bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col;
+#ifdef ESP32
+          uint32_t pwm_phase_invert = bitRead(TasmotaGlobal.pwm_inverted, i) ? cur_col : 0;   // move phase if inverted
+          analogWritePhase(Pin(GPIO_PWM1, i), pwm_val, Settings->flag5.pwm_force_same_phase ? 0 : (pwm_phase + pwm_phase_invert) & pwm_modulus);
+          pwm_phase = (pwm_phase + cur_col) & pwm_modulus;
+#else // ESP32
+          analogWrite(Pin(GPIO_PWM1, i), pwm_val);
+#endif // ESP32
         }
       }
     }

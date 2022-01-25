@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SspmLog<relay> [x]`` to retrieve relay power state change and cause logging
 - Command ``SspmScan`` to rescan Sonoff SPM modbus
 - Support for MQ analog sensor for air quality by Francesco Adriani (#14581)
+- PWM auto-phasing for lights by default (new behavior) unless ``SetOption134 1``
 
 ### Changed
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7

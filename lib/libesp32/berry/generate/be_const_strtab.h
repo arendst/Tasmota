@@ -662,6 +662,7 @@ extern const bcstring be_const_str_set_matrix_pixel_color;
 extern const bcstring be_const_str_set_percentage;
 extern const bcstring be_const_str_set_pixel_color;
 extern const bcstring be_const_str_set_power;
+extern const bcstring be_const_str_set_pwm;
 extern const bcstring be_const_str_set_rate;
 extern const bcstring be_const_str_set_style_bg_color;
 extern const bcstring be_const_str_set_style_line_color;
