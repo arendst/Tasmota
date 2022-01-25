@@ -849,10 +849,13 @@ void SSPMHandleReceivedData(void) {
         42 67 46
         */
         {
-          float energy_today = 0;
-          float energy_yesterday = 0;
-          float energy_total = 0;
           uint32_t entries = (Sspm->expected_bytes - 22) / 2;
+          // Find last valid (= non-zero) entry in 6 month fifo buffer
+          uint16_t energy = 0;
+          while (!energy && --entries) {
+            energy = SspmBuffer[41 + (entries *2)] + SspmBuffer[42 + (entries *2)];
+            if (0x701E == energy) { energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
+          }
 
           uint32_t channel = SspmBuffer[32];
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
@@ -861,16 +864,17 @@ void SSPMHandleReceivedData(void) {
             uint32_t history_module = Sspm->history_relay >> 2;
             uint32_t history_channel = Sspm->history_relay & 0x03;  // Channel relays are NOT bit masked this time
             if ((history_channel == channel) && (history_module == module)) {
-//              uint32_t now = SspmBuffer[33] << 8 | SspmBuffer[34];
-              uint32_t start = SspmBuffer[37] << 8 | SspmBuffer[38];
-              Response_P(PSTR("{\"SSPMHistory%d\":{\"From\":\"%d-%02d-%02d\",\"DailyEnergy\":["),
-                Sspm->history_relay +1, start, SspmBuffer[39], SspmBuffer[40]);
+              Response_P(PSTR("{\"SSPMHistory%d\":["), Sspm->history_relay +1);
             } else {
               Sspm->history_relay = 255;
             }
           }
 
-          for (uint32_t i = 0; i < entries; i++) {
+          float energy_today = 0;
+          float energy_yesterday = 0;
+          float energy_total = 0;
+
+          for (uint32_t i = 0; i <= entries; i++) {
             float today_energy = SspmBuffer[41 + (i*2)] + (float)SspmBuffer[42 + (i*2)] / 100;   // x.xxkWh
             if (112.30 == today_energy) { today_energy = 0; }  // Unknown why sometimes 0x701E (=112.30kWh) pops up
 
@@ -888,7 +892,7 @@ void SSPMHandleReceivedData(void) {
           Sspm->energy_total[module][channel] = energy_total;  // x.xxkWh
 
           if (Sspm->history_relay < 255) {
-            ResponseAppend_P(PSTR("]}}"));
+            ResponseAppend_P(PSTR("]}"));
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("SSPMHistory"));
             Sspm->history_relay = 255;  // Disable display energy history
           }
