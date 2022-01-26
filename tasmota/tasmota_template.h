@@ -936,9 +936,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX7219CS),
 #endif  // USE_DISPLAY_MAX7219
 
-#ifdef USE_CM1107
-  AGPIO(GPIO_CM11_TXD),        // MH-Z19 Serial interface
-  AGPIO(GPIO_CM11_RXD),        // MH-Z19 Serial interface
+#ifdef USE_CM110x
+  AGPIO(GPIO_CM11_TXD),        // CM110x Serial interface
+  AGPIO(GPIO_CM11_RXD),        // CM110x Serial interface
 #endif
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics

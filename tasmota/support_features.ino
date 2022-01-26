@@ -788,10 +788,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_SDM230
     feature8 |= 0x00100000;  // xnrg_21_sdm230.ino
 #endif
-#ifdef USE_CM1107
-    feature8 |= 0x00200000; // xsns_95_cm1107.ino
+#ifdef USE_CM110x
+    feature8 |= 0x00200000; // xsns_95_cm110x.ino
 #endif
-//    feature8 |= 0x00200000;
 //    feature8 |= 0x00400000;
 //    feature8 |= 0x00800000;
 

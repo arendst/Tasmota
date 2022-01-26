@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_CM1107
+#ifdef USE_CM110x
 /*********************************************************************************************\
  * CM11xx - CO2 sensor
  * https://en.gassensor.com.cn/CO2Sensor/list.html
@@ -462,4 +462,4 @@ bool Xsns95(uint8_t function)
   return result;
 }
 
-#endif  // USE_CM1107
+#endif  // USE_CM110x
