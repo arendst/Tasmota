@@ -133,17 +133,21 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 
 #ifdef USE_FT5206
   if (FT5206_found) {
-    touch_xp = FT5206_x();
-    touch_yp = FT5206_y();
     touched = FT5206_touched();
+    if (touched) {
+      touch_xp = FT5206_x();
+      touch_yp = FT5206_y();
+    }
   }
 #endif // USE_FT5206
 
 #ifdef USE_XPT2046
   if (XPT2046_found) {
-    touch_xp = XPT2046_x();
-    touch_yp = XPT2046_y();
     touched = XPT2046_touched();
+    if (touched) {
+      touch_xp = XPT2046_x();
+      touch_yp = XPT2046_y();
+    }
   }
 #endif // USE_XPT2046
 
