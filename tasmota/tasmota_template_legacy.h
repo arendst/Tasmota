@@ -87,6 +87,8 @@ enum LegacyUserSelectablePins {
   GPI8_LED4_INV,
   GPI8_MHZ_TXD,        // MH-Z19 Serial interface
   GPI8_MHZ_RXD,        // MH-Z19 Serial interface
+  GPI8_CM11_TXD,        // MH-Z19 Serial interface
+  GPI8_CM11_RXD,        // MH-Z19 Serial interface
   GPI8_PZEM0XX_TX,     // PZEM0XX Serial interface
   GPI8_PZEM004_RX,     // PZEM004T Serial interface
   GPI8_SAIR_TX,        // SenseAir Serial interface
@@ -317,6 +319,8 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_LED1_INV) +3,
   AGPIO(GPIO_MHZ_TXD),        // MH-Z19 Serial interface
   AGPIO(GPIO_MHZ_RXD),
+  AGPIO(GPIO_CM11_TXD),        // MH-Z19 Serial interface
+  AGPIO(GPIO_CM11_RXD),
   AGPIO(GPIO_PZEM0XX_TX),     // PZEM0XX Serial interface
   AGPIO(GPIO_PZEM004_RX),     // PZEM004T Serial interface
   AGPIO(GPIO_SAIR_TX),        // SenseAir Serial interface
