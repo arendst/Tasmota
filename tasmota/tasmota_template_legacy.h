@@ -87,8 +87,8 @@ enum LegacyUserSelectablePins {
   GPI8_LED4_INV,
   GPI8_MHZ_TXD,        // MH-Z19 Serial interface
   GPI8_MHZ_RXD,        // MH-Z19 Serial interface
-  GPI8_CM11_TXD,        // CM110x Serial interface
-  GPI8_CM11_RXD,        // CM110x Serial interface
+  GPI8_CM11_TXD,       // CM110x Serial interface
+  GPI8_CM11_RXD,       // CM110x Serial interface
   GPI8_PZEM0XX_TX,     // PZEM0XX Serial interface
   GPI8_PZEM004_RX,     // PZEM004T Serial interface
   GPI8_SAIR_TX,        // SenseAir Serial interface

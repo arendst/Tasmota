@@ -215,8 +215,8 @@ void CM11EverySecond(void)
     while (((millis() - start) < CM1107_READ_TIMEOUT) && (counter < resp_len)) {
       if (CM11Serial->available() > 0) {
         cm11_response[counter++] = CM11Serial->read();
-        if (counter ==2 && cm11_response[0] == 0x16) {
-          resp_len = cm11_response[1] +3 ;
+        if (counter ==2 && cm11_response[0] == 0x16) { //0x16 - first byte in response
+          resp_len = cm11_response[1] +3 ; // Get expected response len (according protocol desc), +3 - first byte, len and checksum
         }
       } else {
         delay(5);
