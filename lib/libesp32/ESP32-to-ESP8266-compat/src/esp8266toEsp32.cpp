@@ -13,64 +13,58 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
-
-#ifdef ESP32
-
+//
 #include "Arduino.h"
-#include "esp8266toEsp32.h"
-#include "driver/ledc.h"
+//#include "lwip/apps/sntp.h"
+#include <nvs.h>
 
-// Tasmota Logging
-extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
-enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
-
-// ESP Stuff
-
-// replicated from `tasmota.h`
-#if defined(CONFIG_IDF_TARGET_ESP32)
-  const uint8_t MAX_PWMS = 16;            // ESP32: 16 ledc PWM channels in total - TODO for now
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-  const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-  const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
-#else
-  const uint8_t MAX_PWMS = 5;             // Unknown - revert to 5 PWM max
+// See libraries\ESP32\examples\ResetReason.ino
+#if ESP_IDF_VERSION_MAJOR > 3      // IDF 4+
+  #if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
+    #include "esp32/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+    #include "esp32s2/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
+    #include "esp32c3/rom/rtc.h"
+  #else
+    #error Target CONFIG_IDF_TARGET is not supported
+  #endif
+#else // ESP32 Before IDF 4.0
+  #include "rom/rtc.h"
 #endif
 
-// channel mapping
-static uint8_t  pwm_channel[MAX_PWMS];
-static uint32_t pwm_frequency = 977;      // Default 977Hz
-static uint8_t  pwm_bit_num = 10;         // Default 1023
-static bool     pwm_impl_inited = false;  // trigger initialization
+#include <ESP8266WiFi.h>
+#include "esp8266toEsp32.h"
+
+// ESP Stuff
 
 /*********************************************************************************************\
  * ESP32 analogWrite emulation support
 \*********************************************************************************************/
 
-void _analogInit(void) {
-  if (pwm_impl_inited) return;
-  // set all channels to unaffected (255)
-  for (uint32_t i = 0; i < MAX_PWMS; i++) {
-    pwm_channel[i] = 255;
-  }
-  pwm_impl_inited = true;
-}
+#if CONFIG_IDF_TARGET_ESP32C3
+  uint8_t _pwm_channel[PWM_SUPPORTED_CHANNELS] = { 99, 99, 99, 99, 99, 99 };
+  uint32_t _pwm_frequency = 977;     // Default 977Hz
+  uint8_t _pwm_bit_num = 10;         // Default 1023
+#else // other ESP32
+  uint8_t _pwm_channel[PWM_SUPPORTED_CHANNELS] = { 99, 99, 99, 99, 99, 99, 99, 99 };
+  uint32_t _pwm_frequency = 977;     // Default 977Hz
+  uint8_t _pwm_bit_num = 10;         // Default 1023
+#endif // CONFIG_IDF_TARGET_ESP32C3 vs ESP32
 
-int32_t _analog_pin2chan(uint32_t pin) {    // returns -1 if uallocated
-  _analogInit();      // make sure the mapping array is initialized
-  for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
-    if ((pwm_channel[channel] < 255) && (pwm_channel[channel] == pin)) {
+uint32_t _analog_pin2chan(uint32_t pin) {
+  for (uint32_t channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
+    if ((_pwm_channel[channel] < 99) && (_pwm_channel[channel] == pin)) {
       return channel;
     }
   }
-  return -1;
+  return 0;
 }
 
 void _analogWriteFreqRange(void) {
-  _analogInit();      // make sure the mapping array is initialized
-  for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
-    if (pwm_channel[channel] < 255) {
-      ledcSetup(channel, pwm_frequency, pwm_bit_num);
+  for (uint32_t channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
+    if (_pwm_channel[channel] < 99) {
+      ledcSetup(channel + PWM_CHANNEL_OFFSET, _pwm_frequency, _pwm_bit_num);
     }
   }
 }
@@ -86,43 +80,50 @@ uint32_t _analogGetResolution(uint32_t x) {
 }
 
 void analogWriteRange(uint32_t range) {
-  pwm_bit_num = _analogGetResolution(range);
+  _pwm_bit_num = _analogGetResolution(range);
   _analogWriteFreqRange();
 }
 
 void analogWriteFreq(uint32_t freq) {
-  pwm_frequency = freq;
+  _pwm_frequency = freq;
   _analogWriteFreqRange();
 }
 
-int32_t analogAttach(uint32_t pin) {    // returns ledc channel used, or -1 if failed
-  _analogInit();      // make sure the mapping array is initialized
+bool analogAttach(uint32_t pin) {
   // Find if pin is already attached
-  int32_t channel = _analog_pin2chan(pin);
-  if (channel >= 0) { return channel; }
+  uint32_t channel;
+  for (channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
+    if (_pwm_channel[channel] == pin) {
+      // Already attached
+      // Serial.printf("PWM: Already attached pin %d to channel %d\n", pin, channel);
+      return true;
+    }
+  }
   // Find an empty channel
-  for (channel = 0; channel < MAX_PWMS; channel++) {
-    if (255 == pwm_channel[channel]) {
-      pwm_channel[channel] = pin;
-      ledcAttachPin(pin, channel);
-      ledcSetup(channel, pwm_frequency, pwm_bit_num);
+  for (channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
+    if (99 == _pwm_channel[channel]) {
+      _pwm_channel[channel] = pin;
+      ledcAttachPin(pin, channel + PWM_CHANNEL_OFFSET);
+      ledcSetup(channel + PWM_CHANNEL_OFFSET, _pwm_frequency, _pwm_bit_num);
       // Serial.printf("PWM: New attach pin %d to channel %d\n", pin, channel);
-      return channel;
+      return true;
     }
   }
   // No more channels available
-  AddLog(LOG_LEVEL_INFO, "PWM: no more PWM (ledc) channel for GPIO %i", pin);
-  return -1;
+  return false;
 }
 
 // void analogWrite(uint8_t pin, int val);
 extern "C" void __wrap__Z11analogWritehi(uint8_t pin, int val) {
-  analogWritePhase(pin, val, 0);      // if unspecified, use phase = 0
+{
+  uint32_t channel = _analog_pin2chan(pin);
+  if ( val >> (_pwm_bit_num-1) ) ++val;
+  ledcWrite(channel + PWM_CHANNEL_OFFSET, val);
+  // Serial.printf("write %d - %d\n",channel,val);
 }
 
-
 /*
-  The primary goal of this function is to add phase control to PWM ledc
+  The primary goal of this library is to add phase control to PWM ledc
   functions.
 
   Phase control allows to stress less the power supply of LED lights.
@@ -141,19 +142,25 @@ extern "C" void __wrap__Z11analogWritehi(uint8_t pin, int val) {
   implementation changes.
 */
 
+#include "driver/ledc.h"
+
+#ifdef SOC_LEDC_SUPPORT_HS_MODE
+#define LEDC_CHANNELS           (SOC_LEDC_CHANNEL_NUM<<1)
+#else
+#define LEDC_CHANNELS           (SOC_LEDC_CHANNEL_NUM)
+#endif
+
 // exported from Arduno Core
-extern uint8_t channels_resolution[MAX_PWMS];
+extern uint8_t channels_resolution[LEDC_CHANNELS];
 
 void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase)
 {
-  int32_t chan = _analog_pin2chan(pin);
-  if (chan < 0) {    // not yet allocated, try to allocate
-    chan = analogAttach(pin);
-    if (chan < 0) { return; }   // failed
+  uint32_t chan = _analog_pin2chan(pin) + PWM_CHANNEL_OFFSET;
+  if (duty >> (_pwm_bit_num-1) ) ++duty;
+
+  if(chan >= LEDC_CHANNELS){
+    return;
   }
-
-  if (duty >> (pwm_bit_num-1) ) ++duty;
-
   uint8_t group=(chan/8), channel=(chan%8);
 
   //Fixing if all bits in resolution is set = LEDC FULL ON
@@ -167,5 +174,3 @@ void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase)
   ledc_set_duty_with_hpoint((ledc_mode_t)group, (ledc_channel_t)channel, duty, phase);
   ledc_update_duty((ledc_mode_t)group, (ledc_channel_t)channel);
 }
-
-#endif // ESP32
