@@ -113,7 +113,8 @@ bool analogAttach(uint32_t pin) {
   return false;
 }
 
-void analogWrite(uint8_t pin, int val)
+// void analogWrite(uint8_t pin, int val);
+extern "C" void __wrap__Z11analogWritehi(uint8_t pin, int val)
 {
   uint32_t channel = _analog_pin2chan(pin);
   if ( val >> (_pwm_bit_num-1) ) ++val;
