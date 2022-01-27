@@ -485,6 +485,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     char scolor[LIGHT_COLOR_SIZE];
     if (rule_param.startsWith(F("%COLOR%"))) {
       rule_param = LightGetColor(scolor);
+    }
 #endif
 // #ifdef USE_ZIGBEE
 //     if (rule_param.startsWith(F("%ZBDEVICE%"))) {
