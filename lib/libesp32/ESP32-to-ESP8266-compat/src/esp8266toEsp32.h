@@ -13,39 +13,21 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
-#pragma once
+#ifndef __ESP8266TOESP32_H__
+#define __ESP8266TOESP32_H__
+
 #ifdef ESP32
-// my debug Stuff
-#define Serial_Debug1(p) Serial.printf p
-#define Serial_DebugX(p)
 
 //
 // basics
 //
-// dummy defines
-//#define SPIFFS_END (SPI_FLASH_SEC_SIZE * 200)
-//#define SETTINGS_LOCATION SPIFFS_END
-
 #include <Esp.h>
 
-#if CONFIG_IDF_TARGET_ESP32C3
-  #define PWM_SUPPORTED_CHANNELS 6
-  #define PWM_CHANNEL_OFFSET     1   // Webcam uses channel 0, so we offset standard PWM
-#else // other ESP32
-  #define PWM_SUPPORTED_CHANNELS 8
-  #define PWM_CHANNEL_OFFSET     2   // Webcam uses channel 0, so we offset standard PWM
-#endif // CONFIG_IDF_TARGET_ESP32C3 vs ESP32
 
-extern uint8_t _pwm_channel[PWM_SUPPORTED_CHANNELS];
-extern uint32_t _pwm_frequency;
-extern uint8_t _pwm_bit_num;
-
-void _analogWriteFreqRange(void);
 // input range is in full range, ledc needs bits
-uint32_t _analogGetResolution(uint32_t x);
 void analogWriteRange(uint32_t range);
 void analogWriteFreq(uint32_t freq);
-bool analogAttach(uint32_t pin);
+int32_t analogAttach(uint32_t pin);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
 void analogWrite(uint8_t pin, int val);
 
 // Extended version that also allows to change phase
@@ -55,8 +37,6 @@ extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
 /*********************************************************************************************/
 
 #define INPUT_PULLDOWN_16 INPUT_PULLUP
-
-typedef double real64_t;
 
 //
 // Time and Timer
@@ -71,16 +51,12 @@ typedef double real64_t;
 // Serial minimal type to hold the config
 typedef int SerConfu8;
 typedef int SerialConfig;
-//#define analogWrite(a, b)
 
 //
 // UDP
 //
 //#define PortUdp_writestr(log_data) PortUdp.write((const uint8_t *)(log_data), strlen(log_data))
 #define PortUdp_write(log_data, n) PortUdp.write((const uint8_t *)(log_data), n)
-
-//
-#define wifi_forceSleepBegin()
 
 #undef LWIP_IPV6
 
@@ -106,4 +82,5 @@ typedef int SerialConfig;
 
 #define STATION_IF 0
 
-#endif
+#endif // ESP32
+#endif // __ESP8266TOESP32_H__

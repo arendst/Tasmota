@@ -448,8 +448,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_CNTR1) + MAX_COUNTERS,     // Counters
   AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS,
 #endif
-  AGPIO(GPIO_PWM1) + MAX_PWMS,          // RGB   Red   or C  Cold White
-  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,
+  AGPIO(GPIO_PWM1) + MAX_PWMS,      // RGB   Red   or C  Cold White
+  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,  // or extended PWM for ESP32
 #ifdef USE_BUZZER
   AGPIO(GPIO_BUZZER),                   // Buzzer
   AGPIO(GPIO_BUZZER_INV),               // Inverted buzzer

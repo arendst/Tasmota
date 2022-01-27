@@ -474,7 +474,7 @@ typedef struct {
   TimeRule      tflag[2];                  // 2E2
   uint16_t      pwm_frequency;             // 2E6
   power_t       power;                     // 2E8
-  uint16_t      pwm_value[MAX_PWMS];       // 2EC
+  uint16_t      pwm_value[MAX_PWMS_LEGACY];// 2EC
   int16_t       altitude;                  // 2F6
   uint16_t      tele_period;               // 2F8
   uint8_t       display_rotate;            // 2FA
@@ -579,7 +579,7 @@ typedef struct {
   uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1
 
   uint16_t      light_pixels;              // 496
-  uint8_t       light_color[5];            // 498
+  uint8_t       light_color[LST_MAX];      // 498  LST_MAX = 5
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
   uint8_t       rule_enabled;              // 49F
@@ -614,7 +614,8 @@ typedef struct {
   uint32_t      ipv4_rgx_address;          // 558
   uint32_t      ipv4_rgx_subnetmask;       // 55C
 
-  uint8_t       free_560[92];              // 560
+  uint16_t      pwm_value_ext[16-5];       // 560  Extension to pwm_value to store up to 16 PWM for ESP32. This array stores values 5..15
+  uint8_t       free_560[70];              // 576
 
   SysMBitfield1 flag2;                     // 5BC
   uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0

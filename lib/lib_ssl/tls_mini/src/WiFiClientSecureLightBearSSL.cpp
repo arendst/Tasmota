@@ -43,8 +43,8 @@
 #include "lwip/netif.h"
 #ifdef ESP8266
   #include <include/ClientContext.h>
+  #include "c_types.h"
 #endif
-#include "c_types.h"
 
 #include <core_version.h>
 #undef DEBUG_TLS
