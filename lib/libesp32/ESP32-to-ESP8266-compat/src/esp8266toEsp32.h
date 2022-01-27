@@ -46,6 +46,7 @@ uint32_t _analogGetResolution(uint32_t x);
 void analogWriteRange(uint32_t range);
 void analogWriteFreq(uint32_t freq);
 bool analogAttach(uint32_t pin);
+void analogWrite(uint8_t pin, int val);
 
 // Extended version that also allows to change phase
 extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
