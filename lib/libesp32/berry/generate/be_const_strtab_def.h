@@ -51,7 +51,7 @@ be_define_const_str(_X3Coption_X20value_X3D_X27_X25s_X27_X3E_X25s_X3C_X2Foption_
 be_define_const_str(_X3Coption_X20value_X3D_X27reset_X27_X3E_X26lt_X3BRemove_X20autoconf_X26gt_X3B_X3C_X2Foption_X3E, "<option value='reset'>&lt;Remove autoconf&gt;</option>", 3994619755u, 0, 54, &be_const_str_Leds);
 be_define_const_str(_X3Cp_X20style_X3D_X27width_X3A340px_X3B_X27_X3E_X3Cb_X3EException_X3A_X3C_X2Fb_X3E_X3Cbr_X3E_X27_X25s_X27_X3Cbr_X3E_X25s_X3C_X2Fp_X3E, "<p style='width:340px;'><b>Exception:</b><br>'%s'<br>%s</p>", 4252565082u, 0, 59, &be_const_str_AudioGenerator);
 be_define_const_str(_X3Cp_X3E_X3C_X2Fp_X3E_X3C_X2Ffieldset_X3E_X3Cp_X3E_X3C_X2Fp_X3E, "<p></p></fieldset><p></p>", 2052843416u, 0, 25, NULL);
-be_define_const_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3E_X26_X23129668_X3B_X20Auto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E, "<p><form id=ac action='ac' style='display: block;' method='get'><button>&#129668; Auto-configuration</button></form></p>", 452285201u, 0, 120, &be_const_str_gc);
+be_define_const_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3EAuto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E, "<p><form id=ac action='ac' style='display: block;' method='get'><button>Auto-configuration</button></form></p>", 2058443583u, 0, 110, &be_const_str_widget_height_def);
 be_define_const_str(_X3Cp_X3E_X3Cform_X20id_X3Dreapply_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20action_X3D_X27_X2Fac_X27_X20method_X3D_X27post_X27_X20, "<p><form id=reapply style='display: block;' action='/ac' method='post' ", 546993478u, 0, 71, &be_const_str_color);
 be_define_const_str(_X3Cp_X3E_X3Cform_X20id_X3Dzip_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20action_X3D_X27_X2Fac_X27_X20method_X3D_X27post_X27_X20, "<p><form id=zip style='display: block;' action='/ac' method='post' ", 4033622166u, 0, 67, &be_const_str_BUTTON_CONFIGURATION);
 be_define_const_str(_X3Cp_X3E_X3Csmall_X3E_X26nbsp_X3B_X28This_X20feature_X20requires_X20an_X20internet_X20connection_X29_X3C_X2Fsmall_X3E_X3C_X2Fp_X3E, "<p><small>&nbsp;(This feature requires an internet connection)</small></p>", 2719266486u, 0, 74, &be_const_str_get_style_pad_right);
@@ -987,7 +987,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str__X3D,
     (const bstring *)&be_const_str__def,
     (const bstring *)&be_const_str_web_add_console_button,
-    (const bstring *)&be_const_str_widget_height_def,
+    (const bstring *)&be_const_str__X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3EAuto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E,
     (const bstring *)&be_const_str_montserrat_font,
     (const bstring *)&be_const_str_set_time,
     (const bstring *)&be_const_str_scan,
@@ -1055,7 +1055,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_Parameter_X20error,
     NULL,
     (const bstring *)&be_const_str_ismethod,
-    (const bstring *)&be_const_str__X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3E_X26_X23129668_X3B_X20Auto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E,
+    (const bstring *)&be_const_str_gc,
     (const bstring *)&be_const_str_classof,
     (const bstring *)&be_const_str_add_rule,
     (const bstring *)&be_const_str_SERIAL_7E2,
