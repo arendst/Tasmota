@@ -32,7 +32,9 @@
 
 #define D_PRFX_DEEPSLEEP "DeepSleep"
 #define D_CMND_DEEPSLEEP_TIME "Time"
-#define DEEPSLEEP_NETWORK_TIMEOUT 15
+#ifndef DEEPSLEEP_NETWORK_TIMEOUT
+  #define DEEPSLEEP_NETWORK_TIMEOUT 15
+#endif
 
 const uint32_t DEEPSLEEP_MAX = 10 * 366 * 24 * 60 * 60;  // Allow max 10 years sleep
 const uint32_t DEEPSLEEP_MAX_CYCLE = 60 * 60;            // Maximum time for a deepsleep as defined by chip hardware
@@ -154,13 +156,11 @@ void DeepSleepStart(void)
 
 void DeepSleepEverySecond(void)
 {
-#ifdef DEEPSLEEP_NETWORK_TIMEOUT
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi Info: up %d, wifidown %d, wifistatus %d, flag %d"),TasmotaGlobal.uptime, TasmotaGlobal.global_state.wifi_down, Wifi.status , deepsleep_flag);
   if (DEEPSLEEP_NETWORK_TIMEOUT && TasmotaGlobal.uptime > DEEPSLEEP_NETWORK_TIMEOUT && Wifi.status != WL_CONNECTED && !deepsleep_flag && DeepSleepEnabled()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("Error Wifi could not connect 15 seconds. Deepsleep") );
     deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
   }
-#endif // DEEPSLEEP_NETWORK_TIMEOUT
 
   if (!deepsleep_flag) { return; }
 
