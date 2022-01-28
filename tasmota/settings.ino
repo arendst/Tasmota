@@ -184,9 +184,10 @@ bool RtcRebootValid(void) {
 extern "C" {
 #include "spi_flash.h"
 }
-#include "eboot_command.h"
 
 #ifdef ESP8266
+
+#include "eboot_command.h"
 
 extern "C" uint32_t _FS_start;      // 1M = 0x402fb000, 2M = 0x40300000, 4M = 0x40300000
 const uint32_t FLASH_FS_START = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE);
@@ -1094,7 +1095,7 @@ void SettingsDefaultSet2(void) {
 
   Settings->pwm_frequency = PWM_FREQ;
   Settings->pwm_range = PWM_RANGE;
-  for (uint32_t i = 0; i < MAX_PWMS; i++) {
+  for (uint32_t i = 0; i < LST_MAX; i++) {
     Settings->light_color[i] = DEFAULT_LIGHT_COMPONENT;
 //    Settings->pwm_value[i] = 0;
   }
