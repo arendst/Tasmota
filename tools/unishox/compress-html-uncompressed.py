@@ -4,11 +4,11 @@
 # Instructions:
 # open a console, e.g. in vscode, open a 'terminal'
 # cd .\tools\unishox
-# run: 
+# run:
 # python compress-html-uncompressed.py
 #
 # The intent it to commit both uncompressed and compressed to the repo
-# else this script would need to be run at build. 
+# else this script would need to be run at build.
 #
 # Example Tasmota code:
 # #ifdef USE_UNISHOX_COMPRESSION
@@ -23,6 +23,30 @@ import unishox
 from os import listdir
 from os import path
 from datetime import datetime
+
+def extract_c_string(s: str) -> str:
+  state = 0
+  escape = False
+  out = ""
+  for c in s:
+    if state == 0:    # before string
+      if c == '"':      # entering string
+        out = '"'
+        state = 1
+      elif c == '/':    # start of comment before entering string
+        state = 99      # we're done
+    elif state == 1:  # in string
+      if escape:        # escaped char
+        out += '\\' + c
+        escape = False
+      elif c == '\\':   # escaped char
+        escape = True
+      elif c == '"':    # end of string
+        out += '"'
+        state = 99      # we're done
+      else:
+        out += c
+  return out
 
 path_compressed   = path.join('..','..','tasmota','html_compressed')
 path_uncompressed = path.join('..','..','tasmota','html_uncompressed')
@@ -56,10 +80,9 @@ for file in files:
           const_name = el[:-2] #extract the "const char" variable name
           line_list.pop(line_number)
     else: # remove line comments
-      line_el = line.rsplit("//")
-      # print('Splitted line list by //' % line_el)
-      # print(line_el[0])
-      text = text + line_el[0]
+      line_el = extract_c_string(line)
+      # print(line_el)
+      text = text + line_el
     line_number = line_number +1
 
   # print const_name
@@ -86,9 +109,9 @@ for file in files:
           # print(text[lastel+1:pos:])
       lastel = pos
 
-  print("####### Parsing input from " + path_uncompressed + path.sep + file)  
+  print("####### Parsing input from " + path_uncompressed + path.sep + file)
   print("  Const char name: "+const_name)
-  #print('####### Cleaned input:')  
+  #print('####### Cleaned input:')
   #print(input)
 
   #construct output (taken from shadinger)
@@ -121,7 +144,7 @@ for file in files:
   print("  the optimal case would be raw bytes + 8, real difference: "+str(in_real - out_real)+ "bytes")
   # https://www.geeksforgeeks.org/break-list-chunks-size-n-python/
   def chunked(my_list, n):
-      return [my_list[i * n:(i + 1) * n] for i in range((len(my_list) + n - 1) // n )]  
+      return [my_list[i * n:(i + 1) * n] for i in range((len(my_list) + n - 1) // n )]
 
   # split in chunks of 20 characters
   chunks = chunked(out_bytes, 20)
@@ -130,7 +153,7 @@ for file in files:
   line_complete = "const char " + const_name + "_COMPRESSED" +"[] PROGMEM = " + ("\n" + " "*29).join(lines_raw) + ";"
   lines = "\nconst size_t " + const_name +"_SIZE = {size};\n{lines}\n\n".format(size=in_len, lines=line_complete)
 
-  #print('####### Final output:')  
+  #print('####### Final output:')
   #print(lines)
 
   definition = "#define  " + const_name +  "       Decompress(" + const_name + "_COMPRESSED" + "," + const_name +"_SIZE" + ").c_str()"
@@ -148,6 +171,6 @@ for file in files:
   f = open(path_compressed + path.sep + file, "w")
   f.write(comment + lines + definition)
   f.close()
-  print("####### Wrote output to " + path_compressed + path.sep + file)  
+  print("####### Wrote output to " + path_compressed + path.sep + file)
 
 print("If all files are in use, total saving was "+str(totalSaved)+" out of "+str(totalIn))

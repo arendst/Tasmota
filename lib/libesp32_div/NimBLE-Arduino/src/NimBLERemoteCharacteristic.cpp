@@ -12,8 +12,11 @@
  *      Author: kolban
  */
 
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteCharacteristic.h"
 #include "NimBLEUtils.h"
@@ -57,6 +60,7 @@ static const char* LOG_TAG = "NimBLERemoteCharacteristic";
     m_pRemoteService     = pRemoteService;
     m_notifyCallback     = nullptr;
     m_timestamp          = 0;
+    m_valMux             = portMUX_INITIALIZER_UNLOCKED;
 
     NIMBLE_LOGD(LOG_TAG, "<< NimBLERemoteCharacteristic(): %s", m_uuid.toString().c_str());
  } // NimBLERemoteCharacteristic
@@ -237,7 +241,8 @@ bool NimBLERemoteCharacteristic::retrieveDescriptors(const NimBLEUUID *uuid_filt
     }
 
     int rc = 0;
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
 
     // If we don't know the end handle of this characteristic retrieve the next one in the service
     // The end handle is the next characteristic definition handle -1.
@@ -252,6 +257,10 @@ bool NimBLERemoteCharacteristic::retrieveDescriptors(const NimBLEUUID *uuid_filt
             return false;
         }
 
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         if (taskData.rc != 0) {
@@ -273,6 +282,10 @@ bool NimBLERemoteCharacteristic::retrieveDescriptors(const NimBLEUUID *uuid_filt
         return false;
     }
 
+#ifdef ulTaskNotifyValueClear
+    // Clear the task notification value to ensure we block
+    ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     if (taskData.rc != 0) {
@@ -404,12 +417,12 @@ NimBLEUUID NimBLERemoteCharacteristic::getUUID() {
  * @return The value of the remote characteristic.
  */
 std::string NimBLERemoteCharacteristic::getValue(time_t *timestamp) {
-    ble_npl_hw_enter_critical();
+    portENTER_CRITICAL(&m_valMux);
     std::string value = m_value;
     if(timestamp != nullptr) {
         *timestamp = m_timestamp;
     }
-    ble_npl_hw_exit_critical(0);
+    portEXIT_CRITICAL(&m_valMux);
 
     return value;
 }
@@ -473,7 +486,8 @@ std::string NimBLERemoteCharacteristic::readValue(time_t *timestamp) {
 
     int rc = 0;
     int retryCount = 1;
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(),0, &value};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, &value};
 
     do {
         rc = ble_gattc_read_long(pClient->getConnId(), m_handle, 0,
@@ -485,6 +499,10 @@ std::string NimBLERemoteCharacteristic::readValue(time_t *timestamp) {
             return value;
         }
 
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         rc = taskData.rc;
 
@@ -511,13 +529,13 @@ std::string NimBLERemoteCharacteristic::readValue(time_t *timestamp) {
     } while(rc != 0 && retryCount--);
 
     time_t t = time(nullptr);
-    ble_npl_hw_enter_critical();
+    portENTER_CRITICAL(&m_valMux);
     m_value = value;
     m_timestamp = t;
     if(timestamp != nullptr) {
         *timestamp = m_timestamp;
     }
-    ble_npl_hw_exit_critical(0);
+    portEXIT_CRITICAL(&m_valMux);
 
     NIMBLE_LOGD(LOG_TAG, "<< readValue length: %d rc=%d", value.length(), rc);
     return value;
@@ -547,11 +565,12 @@ int NimBLERemoteCharacteristic::onReadCB(uint16_t conn_handle,
 
     if(rc == 0) {
         if(attr) {
-            if(((*strBuf).length() + attr->om->om_len) > BLE_ATT_ATTR_MAX_LEN) {
+            uint32_t data_len = OS_MBUF_PKTLEN(attr->om);
+            if(((*strBuf).length() + data_len) > BLE_ATT_ATTR_MAX_LEN) {
                 rc = BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             } else {
-                NIMBLE_LOGD(LOG_TAG, "Got %d bytes", attr->om->om_len);
-                (*strBuf) += std::string((char*) attr->om->om_data, attr->om->om_len);
+                NIMBLE_LOGD(LOG_TAG, "Got %d bytes", data_len);
+                (*strBuf) += std::string((char*) attr->om->om_data, data_len);
                 return 0;
             }
         }
@@ -741,7 +760,8 @@ bool NimBLERemoteCharacteristic::writeValue(const uint8_t* data, size_t length, 
         return (rc==0);
     }
 
-    ble_task_data_t taskData = {this, xTaskGetCurrentTaskHandle(), 0, nullptr};
+    TaskHandle_t cur_task = xTaskGetCurrentTaskHandle();
+    ble_task_data_t taskData = {this, cur_task, 0, nullptr};
 
     do {
         if(length > mtu) {
@@ -761,6 +781,10 @@ bool NimBLERemoteCharacteristic::writeValue(const uint8_t* data, size_t length, 
             return false;
         }
 
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(cur_task, ULONG_MAX);
+#endif
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         rc = taskData.rc;
 
@@ -815,4 +839,6 @@ int NimBLERemoteCharacteristic::onWriteCB(uint16_t conn_handle,
     return 0;
 }
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
+
+#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#endif /* CONFIG_BT_ENABLED */

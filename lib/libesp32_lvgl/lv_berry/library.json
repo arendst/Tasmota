@@ -1,0 +1,25 @@
+{
+    "name": "Berry mapping to LVGL",
+    "version": "1.0",
+    "description": "Mapping of LVGL functions to Berry. Currently supporting LVGL 8.0.2",
+    "license": "MIT",
+    "homepage": "https://github.com/lvgl/lv_berry",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "authors":
+    {
+      "name": "Stephan Hadinger",
+      "maintainer": true
+    },
+    "build": {
+        "srcFilter": [
+            "+<*.c>",
+            "+<../generate/*.c>",
+            "+<../generate/*.cpp>",
+            "+<../generate/*.hpp>",
+            "+<*.cpp>",
+            "+<*.h>"
+        ],
+      "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+    }
+  }

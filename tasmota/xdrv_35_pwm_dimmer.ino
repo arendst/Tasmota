@@ -29,6 +29,9 @@
 * https://www.amazon.com/dp/B07K67D43J
 * https://www.amazon.com/dp/B07TTGFWFM
 *
+* Template for Linkind device
+* {"NAME":"ESP32-Linkind","GPIO":[6213,8448,0,0,640,0,0,0,0,288,0,0,0,0,0,0,0,608,0,0,0,544,0,0,0,0,0,0,33,32,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+*
 \*********************************************************************************************/
 
 #define XDRV_35             35
@@ -126,7 +129,11 @@ void PWMModulePreInit(void)
     device_group_count = button_count;
 
     // If no relay or PWM is defined, all buttons control remote devices.
-    if (!PinUsed(GPIO_REL1) && !PinUsed(GPIO_PWM1)) {
+    if (!PinUsed(GPIO_REL1) && !PinUsed(GPIO_PWM1)
+#ifdef USE_I2C
+      && !PinUsed(GPIO_I2C_SCL)
+#endif  // USE_I2C
+      ) {
       first_device_group_is_local = false;
 
       // Back out the changes made in the light module under the assumtion we have a relay or PWM.
@@ -165,13 +172,16 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
       bri = ((bri == -2 && Settings->flag4.led_timeout) || !Light.power ? 0 : light_state.getBri());
       if (!bri || !Settings->flag4.led_timeout) led_timeout_seconds = 0;
     }
-    uint32_t step = 256 / (leds + 1);
 
     // Turn the LED's on/off.
-    uint32_t level = 0;
+    uint32_t step = 256 / (leds + 1);
+    int32_t level = 0;
+    if (TasmotaGlobal.gpio_optiona.linkind_support) {
+      step = 256 / leds;
+      level = -step;
+    }
     led = -1;
     mask = 0;
-    uint16_t pwm_led_bri = 0;
     for (uint32_t count = 0; count < leds; count++) {
       level += step;
       for (;;) {
@@ -180,8 +190,12 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
         if (!mask) mask = 1;
         if (Settings->ledmask & mask) break;
       }
-      pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings->pwm_range);
-      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm_led_bri : pwm_led_bri);
+      if (TasmotaGlobal.gpio_optiona.linkind_support) {
+        SetLedPowerIdx(led, bri > level);
+      } else {
+        uint16_t pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings->pwm_range);
+        analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm_led_bri : pwm_led_bri);
+      }
     }
   }
 }
@@ -450,15 +464,13 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
         if (invert_power_button_bri_direction) {
           invert_power_button_bri_direction = false;
 #ifdef USE_PWM_DIMMER_REMOTE
-          if (active_remote_pwm_dimmer)
+          if (active_remote_pwm_dimmer) {
             active_remote_pwm_dimmer->power_button_increases_bri ^= 1;
-          else
+          } else
 #endif  // USE_PWM_DIMMER_REMOTE
             power_button_increases_bri ^= 1;
-#ifdef USE_PWM_DIMMER_REMOTE
           dgr_item = DGR_ITEM_FLAGS;
           state_updated = true;
-#endif  // USE_PWM_DIMMER_REMOTE
         }
       }
 
@@ -842,7 +854,8 @@ bool Xdrv35(uint8_t function)
           }
 
           // If hold time has arrived and no rule is enabled that handles the button hold, handle it.
-          else if (button_hold_time[button_index] <= now) {
+          else if ((int32_t)(now - button_hold_time[button_index]) >= 0) {
+
 #ifdef USE_RULES
             Response_P(PSTR("{\"Button%u\":{\"State\":3}}"), button_index + 1);
             Rules.no_execute = true;
@@ -896,7 +909,8 @@ bool Xdrv35(uint8_t function)
     case FUNC_ANY_KEY:
       {
         uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;  // 0 = Off, 1 = On, 2 = Toggle, 3 = Hold, 10,11,12,13 and 14 for Button Multipress
-        if ((state == 2 || state == 10) && ignore_any_key_time < millis()) {
+        if ((state == 2 || state == 10) && (int32_t)(millis() - ignore_any_key_time) > 0) {
+
           uint32_t button_index = (XdrvMailbox.payload & 0xFF) - 1;
           button_unprocessed[button_index] = false;
           PWMDimmerHandleButton(button_index, false);

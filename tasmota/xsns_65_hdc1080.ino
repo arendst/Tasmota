@@ -213,7 +213,7 @@ bool HdcRead(void) {
   temp_data = (uint16_t) ((sensor_data[0] << 8) | sensor_data[1]);
   rh_data = (uint16_t) ((sensor_data[2] << 8) | sensor_data[3]);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature raw data: 0x%04x; humidity raw data: 0x%04x"), temp_data, rh_data);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HdcRead: temperature raw data: 0x%04x; humidity raw data: 0x%04x"), temp_data, rh_data);
 
   // read the temperature from the first 16 bits of the result
 

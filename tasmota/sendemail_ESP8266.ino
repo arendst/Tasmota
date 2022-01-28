@@ -203,6 +203,8 @@ String buffer;
   }
 
   client->setTimeout(timeout);
+  client->setInsecure();
+
   // smtp connect
 #ifdef DEBUG_EMAIL_PORT
   AddLog(LOG_LEVEL_INFO, PSTR("Connecting: %s on port %d"),host.c_str(),port);
@@ -484,4 +486,4 @@ void attach_File(char *path) {
 
 #endif // USE_SENDMAIL
 
-#endif // ESP32
+#endif // ESP8266

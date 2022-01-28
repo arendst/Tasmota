@@ -163,7 +163,7 @@ void loop() {
     if (results.overflow)
       Serial.printf(D_WARN_BUFFERFULL "\n", kCaptureBufferSize);
     // Display the library version the message was captured with.
-    Serial.println(D_STR_LIBRARY "   : v" _IRREMOTEESP8266_VERSION_ "\n");
+    Serial.println(D_STR_LIBRARY "   : v" _IRREMOTEESP8266_VERSION_STR "\n");
     // Display the tolerance percentage if it has been change from the default.
     if (kTolerancePercentage != kTolerance)
       Serial.printf(D_STR_TOLERANCE " : %d%%\n", kTolerancePercentage);

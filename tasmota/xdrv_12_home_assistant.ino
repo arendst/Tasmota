@@ -39,7 +39,7 @@ const char kHAssJsonSensorDevCla[] PROGMEM =
   "dev_cla\":\"power|dev_cla\":\"battery|dev_cla\":\"current|ic\":\"mdi:leak|ic\":\"mdi:current-ac|dev_cla\":\"humidity|dev_cla\":\"illuminance|"
   "ic\":\"mdi:cup-water|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|ic\":\"mdi:flask|"
   "dev_cla\":\"pm1|dev_cla\":\"pm25|dev_cla\":\"pm10|dev_cla\":\"power_factor|dev_cla\":\"power|ic\":\"mdi:progress-clock|"
-  "dev_cla\":\"power|dev_cla\":\"energy|dev_cla\":\"energy|dev_cla\":\"voltage|ic\":\"mdi:scale|dev_cla\":\"energy|"
+  "dev_cla\":\"power|dev_cla\":\"energy|dev_cla\":\"energy\",\"stat_cla\":\"total_increasing|dev_cla\":\"voltage|ic\":\"mdi:scale|dev_cla\":\"energy|"
   "dev_cla\":\"carbon_dioxide|dev_cla\":\"carbon_dioxide|dev_class\":\"volatile_organic_compounds|"
   "ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:palette|ic\":\"mdi:temperature-kelvin|ic\":\"mdi:ruler|dev_cla\":\"illuminance|";
 
@@ -215,10 +215,12 @@ void HassDiscoverMessage(void) {
   }
 
   bool TuyaMod = false;
+#ifdef USE_TUYA_MCU
+  TuyaMod = IsModuleTuya();
+#endif
   bool iFanMod = false;
 #ifdef ESP8266
-  if ((TUYA_DIMMER == TasmotaGlobal.module_type) || (SK03_TUYA == TasmotaGlobal.module_type)) { TuyaMod = true; };
-  if ((SONOFF_IFAN02 == TasmotaGlobal.module_type) || (SONOFF_IFAN03 == TasmotaGlobal.module_type)) { iFanMod = true; };
+  iFanMod = ((SONOFF_IFAN02 == TasmotaGlobal.module_type) || (SONOFF_IFAN03 == TasmotaGlobal.module_type));
 #endif  // ESP8266
 
   ResponseAppend_P(PSTR("],"                                   // Friendly Names (end)
@@ -456,12 +458,14 @@ void HAssAnnounceRelayLight(void)
   uint8_t TuyaDim = 0;
   power_t shutter_mask = 0;
 
-  #ifdef ESP8266
-        if (PWM_DIMMER == TasmotaGlobal.module_type ) { PwmMod = true; } //
-        if (SONOFF_IFAN02 == TasmotaGlobal.module_type || SONOFF_IFAN03 == TasmotaGlobal.module_type) { FanMod = true; }
-        if (SONOFF_DUAL == TasmotaGlobal.module_type) { valid_relay = 2; }
-        if (TUYA_DIMMER == TasmotaGlobal.module_type || SK03_TUYA == TasmotaGlobal.module_type) { TuyaMod = true; }
-  #endif //ESP8266
+#ifdef ESP8266
+  PwmMod = (PWM_DIMMER == TasmotaGlobal.module_type);
+  FanMod = (SONOFF_IFAN02 == TasmotaGlobal.module_type || SONOFF_IFAN03 == TasmotaGlobal.module_type);
+  if (SONOFF_DUAL == TasmotaGlobal.module_type) { valid_relay = 2; }
+#endif //ESP8266
+#ifdef USE_TUYA_MCU
+  TuyaMod = IsModuleTuya();
+#endif
 
 #ifdef USE_LIGHT
   // If there is a special Light to be enabled and managed with SetOption68 or SetOption37 >= 128, Discovery calculates the maximum number of entities to be generated in advance
@@ -1026,8 +1030,7 @@ void HAssAnnounceShutters(void)
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s"), SettingsText(SET_FRIENDLYNAME1 + i));
       }
-      GetTopic_P(stemp2, TELE, TasmotaGlobal.mqtt_topic, D_RSLT_STATE);
-      Response_P(HASS_DISCOVER_BASE, stemp1, stemp2);
+      Response_P(PSTR("{\"name\":\"%s\""), stemp1);
 
       GetTopic_P(stemp1, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_LWT, stemp1);
@@ -1038,10 +1041,12 @@ void HAssAnnounceShutters(void)
       GetTopic_P(stemp1, STAT, TasmotaGlobal.mqtt_topic, PSTR("SHUTTER"));
       GetTopic_P(stemp2, CMND, TasmotaGlobal.mqtt_topic, PSTR("ShutterPosition"));
       TryResponseAppend_P(HASS_DISCOVER_SHUTTER_POS, stemp1, i + 1, stemp2, i + 1);
-      
-      GetTopic_P(stemp1, CMND, TasmotaGlobal.mqtt_topic, PSTR("ShutterTilt"));
-      TryResponseAppend_P(HASS_DISCOVER_SHUTTER_TILT, stemp1, i + 1, Settings->shutter_tilt_config[3][i], Settings->shutter_tilt_config[4][i]);
-      
+
+      if (Settings->shutter_tilt_config[3][i] != Settings->shutter_tilt_config[4][i]) {
+        GetTopic_P(stemp1, CMND, TasmotaGlobal.mqtt_topic, PSTR("ShutterTilt"));
+        TryResponseAppend_P(HASS_DISCOVER_SHUTTER_TILT, stemp1, i + 1, Settings->shutter_tilt_config[3][i], Settings->shutter_tilt_config[4][i]);
+      }
+
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP_getChipId());
       TryResponseAppend_P(PSTR("}"));
     } else {

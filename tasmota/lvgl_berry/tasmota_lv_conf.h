@@ -324,14 +324,14 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
                                   LV_FONT_DECLARE(robotocondensed_regular_44_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_48_latin1) \
 
-#define ROBOTOCONDENSED_REGULAR_12_LATIN1  1
-#define ROBOTOCONDENSED_REGULAR_14_LATIN1  1
-#define ROBOTOCONDENSED_REGULAR_16_LATIN1  1
+#define ROBOTOCONDENSED_REGULAR_12_LATIN1  0
+#define ROBOTOCONDENSED_REGULAR_14_LATIN1  0
+#define ROBOTOCONDENSED_REGULAR_16_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_20_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_22_LATIN1  0
-#define ROBOTOCONDENSED_REGULAR_24_LATIN1  1
+#define ROBOTOCONDENSED_REGULAR_24_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_28_LATIN1  0
-#define ROBOTOCONDENSED_REGULAR_32_LATIN1  1
+#define ROBOTOCONDENSED_REGULAR_32_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_36_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_38_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_40_LATIN1  0
@@ -536,6 +536,56 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 
 /*A layout similar to Grid in CSS.*/
 #define LV_USE_GRID     1
+
+/*---------------------
+ * 3rd party libraries
+ *--------------------*/
+
+/*File system interfaces for common APIs
+ *To enable set a driver letter for that API*/
+#define LV_USE_FS_STDIO '\0'        /*Uses fopen, fread, etc*/
+//#define LV_FS_STDIO_PATH "/home/john/"    /*Set the working directory. If commented it will be "./" */
+
+#define LV_USE_FS_POSIX '\0'        /*Uses open, read, etc*/
+//#define LV_FS_POSIX_PATH "/home/john/"    /*Set the working directory. If commented it will be "./" */
+
+#define LV_USE_FS_WIN32 '\0'        /*Uses CreateFile, ReadFile, etc*/
+//#define LV_FS_WIN32_PATH "C:\\Users\\john\\"    /*Set the working directory. If commented it will be ".\\" */
+
+#define LV_USE_FS_FATFS '\0'        /*Uses f_open, f_read, etc*/
+
+/*PNG decoder library*/
+#define LV_USE_PNG 1
+
+/*BMP decoder library*/
+#define LV_USE_BMP 0
+
+/* JPG + split JPG decoder library.
+ * Split JPG is a custom format optimized for embedded systems. */
+#define LV_USE_SJPG 0
+
+/*GIF decoder library*/
+#define LV_USE_GIF 0
+
+/*QR code library*/
+#define LV_USE_QRCODE 0
+
+/*FreeType library*/
+#define LV_USE_FREETYPE 1
+#if LV_USE_FREETYPE
+/*Memory used by FreeType to cache characters [bytes] (-1: no caching)*/
+# define LV_FREETYPE_CACHE_SIZE (16 * 1024)
+#endif
+
+/*Rlottie library*/
+#define LV_USE_RLOTTIE 0
+
+/*-----------
+ * Others
+ *----------*/
+
+/*1: Enable API to take snapshot for object*/
+#define LV_USE_SNAPSHOT 0
 
 /*==================
 * EXAMPLES

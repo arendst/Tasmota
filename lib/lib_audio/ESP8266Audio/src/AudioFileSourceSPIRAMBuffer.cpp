@@ -105,7 +105,7 @@ uint32_t AudioFileSourceSPIRAMBuffer::read(void *data, uint32_t len)
     }
 
     // Read up to the entire buffer from RAM
-    uint32_t toReadFromBuffer = std::min(len, writePtr - readPtr);
+    uint32_t toReadFromBuffer = std::min(len, (uint32_t)(writePtr - readPtr));
     uint8_t *ptr = reinterpret_cast<uint8_t*>(data);
     if (toReadFromBuffer > 0) {
 #ifdef FAKERAM

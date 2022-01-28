@@ -694,7 +694,7 @@ void SettingsLoad(void) {
   if (source) {
     settings_location = 1;
     if (Settings->cfg_holder == (uint16_t)CFG_HOLDER) {
-      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (source)?"File":"Nvm", Settings->save_flag);
+      AddLog(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG "Loaded from %s, " D_COUNT " %lu"), (2 == source)?"File":"NVS", Settings->save_flag);
     }
   }
 #endif  // ESP32
@@ -1032,6 +1032,7 @@ void SettingsDefaultSet2(void) {
   flag.ir_receive_decimal |= IR_DATA_RADIX;
   flag3.receive_raw |= IR_ADD_RAW_DATA;
   Settings->param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
+  Settings->param[P_IR_TOLERANCE] = IR_RCV_TOLERANCE;
 
   // RF Bridge
   flag.rf_receive_decimal |= RF_DATA_RADIX;
@@ -1471,6 +1472,13 @@ void SettingsDelta(void) {
         }
 #endif
       }
+    }
+    if (Settings->version < 0x0A010003) {
+      Settings->sserial_config = Settings->serial_config;
+    }
+    if (Settings->version < 0x14160103) {
+      Settings->web_time_start = 0;
+      Settings->web_time_end = 0;
     }
 
     Settings->version = VERSION;

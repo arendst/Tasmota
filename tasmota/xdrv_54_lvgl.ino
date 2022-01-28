@@ -32,14 +32,6 @@
 
 #include "Adafruit_LvGL_Glue.h"
 
-#ifdef USE_LVGL_PNG_DECODER
-  #include "lv_png.h"
-#endif // USE_LVGL_PNG_DECODER
-
-#ifdef USE_LVGL_FREETYPE
-  #include "lv_freetype.h"
-#endif // USE_LVGL_FREETYPE
-
 Adafruit_LvGL_Glue * glue;
 
 // **************************************************
@@ -79,11 +71,13 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
       uint16_t * pix = (uint16_t*) color_p;
       for (uint32_t i = 0; i < btw / 2; i++) (pix[i] = pix[i] << 8 | pix[i] >> 8);
 #endif
-      int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
-      if (ret >= 0) {
-        btw -= ret;
-      } else {
-        btw = 0;  // abort
+      if (btw > 0) {    // if we had a previous error (ex disk full) don't try to write anymore
+        int32_t ret = glue->getScreenshotFile()->write((const uint8_t*) color_p, btw);
+        if (ret >= 0) {
+          btw -= ret;
+        } else {
+          btw = 0;  // abort
+        }
       }
     }
     lv_disp_flush_ready(disp);
@@ -354,7 +348,7 @@ void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
 
   if (glue != nullptr) {
-    AddLog(LOG_LEVEL_INFO, D_LOG_LVGL " LVGL was already initialized");
+    AddLog(LOG_LEVEL_INFO, D_LOG_LVGL "LVGL was already initialized");
     return;
   }
 

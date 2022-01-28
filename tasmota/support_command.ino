@@ -42,7 +42,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
@@ -65,7 +65,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndSwitchText,
 #ifdef USE_I2C
-  &CmndI2cScan, CmndI2cDriver,
+  &CmndI2cScan, &CmndI2cDriver,
 #endif
 #ifdef USE_DEVICE_GROUPS
   &CmndDevGroupName,
@@ -74,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSetSensor, &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -391,6 +391,73 @@ void CmndBacklog(void) {
   }
 }
 
+void CmndJson(void) {
+  // Json {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  //
+  // Escape lower level tokens and add quotes around it
+  // Input:
+  // {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  // Output (escaped subtokens):
+  // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  uint32_t bracket = 0;
+  String data_buf("");
+  data_buf.reserve(XdrvMailbox.data_len);       // We need at least the same amount of characters
+  for (uint32_t index = 0; index < XdrvMailbox.data_len; index++) {
+    char c = (char)XdrvMailbox.data[index];
+    if (c == '{') {
+      bracket++;
+      if (2 == bracket) { data_buf += '"'; }    // Add start quote
+    }
+    if (bracket > 1) {
+      if (c == '\"') { data_buf += '\\'; }      // Escape any quote within second level token
+    }
+    data_buf += c;
+    if (c == '}') {
+      bracket--;
+      if (1 == bracket) { data_buf += '"'; }    // Add end quote
+    }
+  }
+
+  JsonParser parser((char*)data_buf.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root) {
+    // Convert to backlog commands
+    // Input (escaped subtokens):
+    // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+    // Output:
+    // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
+    String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
+    for (auto command_key : root) {
+      const char *command = command_key.getStr();
+      JsonParserToken parameters = command_key.getValue();
+      if (parameters.isArray()) {
+        JsonParserArray parameter_arr = parameters.getArray();
+        uint32_t index = 1;
+        for (auto value : parameter_arr) {
+          if (backlog.length()) { backlog += ";"; }
+          backlog += command;
+          backlog += index++;
+          backlog += " ";
+          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
+        }
+      } else if (parameters.isObject()) {       // Should have been escaped
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
+      } else {
+        if (backlog.length()) { backlog += ";"; }
+        backlog += command;
+        backlog += " ";
+        backlog += parameters.getStr();         // HSBColor 51,97,100
+      }
+    }
+    XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
+    XdrvMailbox.data_len = 1;                   // Any data
+    XdrvMailbox.index = 0;                      // Backlog0 - no delay
+    CmndBacklog();
+  } else {
+    ResponseCmndChar(PSTR(D_JSON_EMPTY));
+  }
+}
+
 void CmndDelay(void)
 {
   if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
@@ -545,7 +612,7 @@ void CmndStatus(void)
   if ((0 == payload) || (4 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
 #ifdef ESP32
-                          D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
+                          D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
 #endif  // ESP32
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
 #ifdef ESP8266
@@ -554,7 +621,7 @@ void CmndStatus(void)
                           ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
                           ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
-                          ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
+                          uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
 #endif  // ESP32
                           ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
 #ifdef ESP8266
@@ -570,12 +637,26 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (5 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\",\""
-                          D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\"" D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
-                          D_JSON_MAC "\":\"%s\",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
-                          NetworkHostname(), (uint32_t)NetworkAddress(),
-                          Settings->ipv4_address[1], Settings->ipv4_address[2], Settings->ipv4_address[3], Settings->ipv4_address[4],
-                          NetworkMacAddress().c_str(), Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
+                          D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
+                          D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
+                          D_JSON_MAC "\":\"%s\""),
+                          TasmotaGlobal.hostname,
+                          (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
+                          Settings->ipv4_address[3], Settings->ipv4_address[4],
+                          WiFi.macAddress().c_str());
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+    ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
+                          D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
+                          D_JSON_DNSSERVER "1\":\"%_I\",\"" D_JSON_DNSSERVER "2\":\"%_I\",\""
+                          D_JSON_MAC "\":\"%s\"}"),
+                          EthernetHostname(),
+                          (uint32_t)EthernetLocalIP(), Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2],
+                          Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4],
+                          EthernetMacAddress().c_str());
+#endif  // USE_ETHERNET
+    ResponseAppend_P(PSTR(",\"" D_CMND_WEBSERVER "\":%d,\"HTTP_API\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
+                          Settings->webserver, Settings->flag5.disable_referer_chk, Settings->sta_config, WifiGetOutputPower().c_str());
     CmndStatusResponse(5);
   }
 
@@ -977,6 +1058,9 @@ void CmndSetoptionBase(bool indexed) {
 #if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
           if (P_IR_UNKNOW_THRESHOLD == pindex) {
             IrReceiveUpdateThreshold();    // SetOption38
+          }
+          if (P_IR_TOLERANCE == pindex) {
+            IrReceiveUpdateTolerance();    // SetOption44
           }
 #endif
 #ifdef ROTARY_V1
@@ -1635,7 +1719,7 @@ void CmndIpAddress(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     char network_address[22];
-    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)NetworkAddress());
+    ext_snprintf_P(network_address, sizeof(network_address), PSTR(" (%_I)"), (uint32_t)WiFi.localIP());
     if (!XdrvMailbox.usridx) {
       ResponseClear();
       for (uint32_t i = 0; i < 5; i++) {

@@ -2,8 +2,8 @@
 #define RECITERTABS_H
 
 #include <pgmspace.h>
-#include "samdebug.h"
-#if sam_debug
+#include "esp8266sam_debug.h"
+#if DEBUG_ESP8266SAM_LIB
   #define PROGMEM
 #endif
 

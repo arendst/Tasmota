@@ -132,6 +132,7 @@
 #define D_JSON_PH "pH"
 #define D_JSON_PHASE_ANGLE "PhaseAngle"
 #define D_JSON_POWERFACTOR "Factor"
+#define D_JSON_POWERMAX "MaxPower"
 #define D_JSON_POWERUSAGE "Power"
 #define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
 #define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
@@ -143,6 +144,7 @@
 #define D_JSON_PROBETEMPERATURE "ProbeTemperature"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_STACKLOWMARK "StackLowMark"
 #define D_JSON_PSRMAXMEMORY "PsrMax"
 #define D_JSON_PSRFREEMEMORY "PsrFree"
 #define D_JSON_PUMP "Pumped"
@@ -219,6 +221,7 @@
 #define D_JSON_IMPORT "Import"
 #define D_JSON_EXPORT "Export"
 #define D_JSON_TOTAL_ACTIVE "TotalActive"
+#define D_JSON_RESETTABLE_TOTAL_ACTIVE "ResetTotalActive"
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
 
@@ -237,6 +240,7 @@
 
 // Commands tasmota.ino
 #define D_CMND_BACKLOG "Backlog"
+#define D_CMND_JSON "Json"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_NODELAY "NoDelay"
 #define D_CMND_STATUS "Status"
@@ -419,6 +423,7 @@
 #define D_CMND_WEBQUERY "WebQuery"
 #define D_CMND_WEBCOLOR "WebColor"
 #define D_CMND_WEBBUTTON "WebButton"
+#define D_CMND_WEBTIME "WebTime"
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_WEBGETCONFIG "WebGetConfig"
 #define D_CMND_EMULATION "Emulation"
@@ -548,6 +553,7 @@
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
+#define D_CMND_SSERIALCONFIG "SSerialConfig"
   #define D_JSON_SSERIALRECEIVED "SSerialReceived"
 
 // Commands xdrv_09_timers.ino
@@ -866,6 +872,7 @@ const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{
 const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";
 const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
 const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
+const char HTTP_SNS_MQ[]            PROGMEM = "{s}"     D_MQ"-%s"             "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";
 const char HTTP_SNS_ORP[]           PROGMEM = "{s}%s "  D_ORP                 "{m}%s " D_UNIT_MILLIVOLT           "{e}";
 const char HTTP_SNS_EC[]            PROGMEM = "{s}%s "  D_EC                  "{m}%s " D_UNIT_MICROSIEMENS_PER_CM "{e}";
 const char HTTP_SNS_O2[]            PROGMEM = "{s}%s "  D_O2                  "{m}%s " D_UNIT_PERCENT             "{e}";

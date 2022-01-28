@@ -112,7 +112,7 @@ void PzemDcEverySecond(void)
 void PzemDcSnsInit(void)
 {
   PzemDcModbus = new TasmotaModbus(Pin(GPIO_PZEM017_RX), Pin(GPIO_PZEM0XX_TX));
-  uint8_t result = PzemDcModbus->Begin(9600, 2);  // Uses two stop bits!!
+  uint8_t result = PzemDcModbus->Begin(9600, SERIAL_8N2);
   if (result) {
     if (2 == result) { ClaimSerial(); }
     Energy.type_dc = true;

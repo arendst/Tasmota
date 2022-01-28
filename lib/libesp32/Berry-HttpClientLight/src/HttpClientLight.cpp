@@ -28,7 +28,6 @@
 #ifdef ESP32
 #include "tasmota_options.h"
 
-#ifdef USE_BERRY
 #include <Arduino.h>
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
@@ -46,10 +45,10 @@
 #endif // USE_WEBCLIENT_HTTPS
 
 // #ifdef HTTPCLIENT_1_1_COMPATIBLE
-class TransportTraits
+class TransportTraitsLight
 {
 public:
-    virtual ~TransportTraits()
+    virtual ~TransportTraitsLight()
     {
     }
 
@@ -72,7 +71,7 @@ public:
 
 #ifdef USE_WEBCLIENT_HTTPS
 static const uint8_t _fingerprint_any[] = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
-class BearSSLTraits : public TransportTraits
+class BearSSLTraits : public TransportTraitsLight
 {
 public:
     BearSSLTraits(int recv, int xmit) :
@@ -221,7 +220,7 @@ bool HTTPClientLight::begin(String url, const char* CAcert)
     }
     _secure = true;
 #ifdef USE_WEBCLIENT_HTTPS
-    _transportTraits = TransportTraitsPtr(new BearSSLTraits(16384, 0));
+    _transportTraits = TransportTraitsLightPtr(new BearSSLTraits(16384, 0));
     // set buffer to 16KB half duplex, so we won't lose responses bigger than 16KB
     // half duplex is well suited for HTTPS: one request followed by responses
 #else
@@ -251,7 +250,7 @@ bool HTTPClientLight::begin(String url)
     if (!beginInternal(url, "http")) {
         return begin(url, (const char*)NULL);
     }
-    _transportTraits = TransportTraitsPtr(new TransportTraits());
+    _transportTraits = TransportTraitsLightPtr(new TransportTraitsLight());
     if(!_transportTraits) {
         log_e("could not create transport traits");
         return false;
@@ -328,7 +327,7 @@ bool HTTPClientLight::beginInternal(String url, const char* expectedProtocol)
 //     _host = host;
 //     _port = port;
 //     _uri = uri;
-//     // _transportTraits = TransportTraitsPtr(new TransportTraits());  TODO
+//     // _transportTraits = TransportTraitsLightPtr(new TransportTraitsLight());  TODO
 //     _transportTraits = nullptr;
 //     log_d("host: %s port: %d uri: %s", host.c_str(), port, uri.c_str());
 //     return true;
@@ -351,7 +350,7 @@ bool HTTPClientLight::beginInternal(String url, const char* expectedProtocol)
 //         return false;
 //     }
 //     _secure = true;
-//     _transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
+//     _transportTraits = TransportTraitsLightPtr(new TLSTraits(CAcert));
 //     return true;
 // }
 
@@ -372,7 +371,7 @@ bool HTTPClientLight::beginInternal(String url, const char* expectedProtocol)
 //         return false;
 //     }
 //     _secure = true;
-//     _transportTraits = TransportTraitsPtr(new TLSTraits(CAcert, cli_cert, cli_key));
+//     _transportTraits = TransportTraitsLightPtr(new TLSTraits(CAcert, cli_cert, cli_key));
 //     return true;
 // }
 #endif // HTTPCLIENT_1_1_COMPATIBLE
@@ -1504,5 +1503,4 @@ const String &HTTPClientLight::getLocation(void)
 {
     return _location;
 }
-#endif // USE_BERRY
 #endif // ESP32

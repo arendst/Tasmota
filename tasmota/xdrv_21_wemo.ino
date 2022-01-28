@@ -67,7 +67,7 @@ void WemoRespondToMSearch(int echo_type)
     }
     char response[400];
     snprintf_P(response, sizeof(response), WEMO_MSEARCH, WiFi.localIP().toString().c_str(), type, WemoUuid().c_str(), type);
-    PortUdp.write(response);
+    PortUdp.write((uint8_t*)response, strlen(response));
     PortUdp.endPacket();
     snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
   } else {

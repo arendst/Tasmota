@@ -130,11 +130,7 @@ String EthernetMacAddress(void);
 #define ARDUINO_CORE_RELEASE        ARDUINO_ESP32_RELEASE
 #endif  // ARDUINO_ESP32_RELEASE
 
-#undef FIRMWARE_MINIMAL                            // Minimal is not supported as not needed
-
 // Hardware has no ESP32
-#undef USE_TUYA_DIMMER
-#undef USE_PWM_DIMMER
 #undef USE_EXS_DIMMER
 #undef USE_ARMTRONIX_DIMMERS
 #undef USE_SONOFF_RF
@@ -146,9 +142,6 @@ String EthernetMacAddress(void);
 #undef USE_RF_FLASH
 
 // Not ported (yet)
-
-#undef USE_MY92X1
-#undef USE_TUYA_MCU
 #undef USE_PS_16_DZ
 
 #undef USE_HM10                     // Disable support for HM-10 as a BLE-bridge as an alternative is using the internal ESP32 BLE
@@ -311,6 +304,10 @@ String EthernetMacAddress(void);
 
 #ifndef IR_RCV_MIN_UNKNOWN_SIZE
 #define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
+#endif
+
+#ifndef IR_RCV_TOLERANCE
+#define IR_RCV_TOLERANCE            25         // Base tolerance percentage for matching incoming IR messages (default 25, max 100)
 #endif
 
 #ifndef ENERGY_OVERTEMP

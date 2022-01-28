@@ -30,6 +30,10 @@
 #define XSNS_09              9
 #define XI2C_10              10  // See I2CDEVICES.md
 
+#ifdef USE_BME680
+#define USE_BME68X
+#endif
+
 #define BMP_ADDR1            0x76
 #define BMP_ADDR2            0x77
 
@@ -53,10 +57,10 @@ typedef struct {
   char bmp_name[7];       // Sensor name - "BMPXXX"
   uint8_t bmp_type;
   uint8_t bmp_model;
-#ifdef USE_BME680
+#ifdef USE_BME68X
   uint8_t bme680_state;
   float bmp_gas_resistance;
-#endif  // USE_BME680
+#endif  // USE_BME68X
   float bmp_temperature;
   float bmp_pressure;
   float bmp_humidity;
@@ -342,63 +346,72 @@ void Bme280Read(uint8_t bmp_idx)
   bmp_sensors[bmp_idx].bmp_humidity = h / 1024.0;
 }
 
-#ifdef USE_BME680
+#ifdef USE_BME68X
 /*********************************************************************************************\
- * BME680 support by Bosch https://github.com/BoschSensortec/BME680_driver
+ * BME68x support by Bosch https://github.com/BoschSensortec/BME68x-Sensor-API
 \*********************************************************************************************/
 
-#include <bme680.h>
+//#define BME68X_DO_NOT_USE_FPU
 
-struct bme680_dev *gas_sensor = nullptr;
+#include <bme68x.h>
 
-static void BmeDelayMs(uint32_t ms)
-{
-  delay(ms);
+struct bme68x_dev *bme_dev = nullptr;
+struct bme68x_conf *bme_conf = nullptr;
+struct bme68x_heatr_conf *bme_heatr_conf = nullptr;
+
+static void Bme68x_Delayus(uint32_t period, void *intf_ptr) {
+  delayMicroseconds(period);
 }
 
-bool Bme680Init(uint8_t bmp_idx)
-{
-  if (!gas_sensor) {
-    gas_sensor = (bme680_dev*)malloc(BMP_MAX_SENSORS * sizeof(bme680_dev));
+int8_t Bme68x_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr) {
+  uint8_t dev_addr = *(uint8_t*)intf_ptr;
+  return I2cReadBuffer(dev_addr, reg_addr, reg_data, (uint16_t)len);
+}
+
+int8_t Bme68x_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr) {
+  uint8_t dev_addr = *(uint8_t*)intf_ptr;
+  return I2cWriteBuffer(dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len);
+}
+
+bool Bme680Init(uint8_t bmp_idx) {
+  if (!bme_dev) {
+    bme_heatr_conf = (bme68x_heatr_conf*)malloc(BMP_MAX_SENSORS * sizeof(bme68x_heatr_conf));
+    bme_conf = (bme68x_conf*)malloc(BMP_MAX_SENSORS * sizeof(bme68x_conf));
+    bme_dev = (bme68x_dev*)malloc(BMP_MAX_SENSORS * sizeof(bme68x_dev));
   }
-  if (!gas_sensor) { return false; }
+  if (!bme_dev) { return false; }
 
-  gas_sensor[bmp_idx].dev_id = bmp_sensors[bmp_idx].bmp_address;
-  gas_sensor[bmp_idx].intf = BME680_I2C_INTF;
-  gas_sensor[bmp_idx].read = &I2cReadBuffer;
-  gas_sensor[bmp_idx].write = &I2cWriteBuffer;
-  gas_sensor[bmp_idx].delay_ms = BmeDelayMs;
-  /* amb_temp can be set to 25 prior to configuring the gas sensor
-   * or by performing a few temperature readings without operating the gas sensor.
-   */
-  gas_sensor[bmp_idx].amb_temp = 25;
+  bme_dev[bmp_idx].intf_ptr = &bmp_sensors[bmp_idx].bmp_address;
+  bme_dev[bmp_idx].intf = BME68X_I2C_INTF;
+  bme_dev[bmp_idx].read = Bme68x_i2c_read;
+  bme_dev[bmp_idx].write = Bme68x_i2c_write;
+  bme_dev[bmp_idx].delay_us = Bme68x_Delayus;
+  // amb_temp can be set to 25 prior to configuring the gas sensor
+  // or by performing a few temperature readings without operating the gas sensor.
+  bme_dev[bmp_idx].amb_temp = 25;
+  int8_t rslt = bme68x_init(&bme_dev[bmp_idx]);
+  if (rslt != BME68X_OK) { return false; }
 
-  int8_t rslt = BME680_OK;
-  rslt = bme680_init(&gas_sensor[bmp_idx]);
-  if (rslt != BME680_OK) { return false; }
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("BME: Gas variant %d"), bme_dev[bmp_idx].variant_id);
 
-  /* Set the temperature, pressure and humidity settings */
-  gas_sensor[bmp_idx].tph_sett.os_hum = BME680_OS_2X;
-  gas_sensor[bmp_idx].tph_sett.os_pres = BME680_OS_4X;
-  gas_sensor[bmp_idx].tph_sett.os_temp = BME680_OS_8X;
-  gas_sensor[bmp_idx].tph_sett.filter = BME680_FILTER_SIZE_3;
+//  rslt = bme68x_get_conf(&bme_conf[bmp_idx], &bme_dev[bmp_idx]);
+//  if (rslt != BME68X_OK) { return false; }
+  // Set the temperature, pressure and humidity settings
+  bme_conf[bmp_idx].os_hum = BME68X_OS_2X;
+  bme_conf[bmp_idx].os_pres = BME68X_OS_4X;
+  bme_conf[bmp_idx].os_temp = BME68X_OS_8X;
+  bme_conf[bmp_idx].filter = BME68X_FILTER_SIZE_3;
+  bme_conf[bmp_idx].odr = BME68X_ODR_NONE;          // This parameter defines the sleep duration after each profile
+  rslt = bme68x_set_conf(&bme_conf[bmp_idx], &bme_dev[bmp_idx]);
+  if (rslt != BME68X_OK) { return false; }
 
-  /* Set the remaining gas sensor settings and link the heating profile */
-  gas_sensor[bmp_idx].gas_sett.run_gas = BME680_ENABLE_GAS_MEAS;
-  /* Create a ramp heat waveform in 3 steps */
-  gas_sensor[bmp_idx].gas_sett.heatr_temp = 320; /* degree Celsius */
-  gas_sensor[bmp_idx].gas_sett.heatr_dur = 150; /* milliseconds */
-
-  /* Select the power mode */
-  /* Must be set before writing the sensor configuration */
-  gas_sensor[bmp_idx].power_mode = BME680_FORCED_MODE;
-
-  /* Set the required sensor settings needed */
-  uint8_t set_required_settings = BME680_OST_SEL | BME680_OSP_SEL | BME680_OSH_SEL | BME680_FILTER_SEL | BME680_GAS_SENSOR_SEL;
-
-  /* Set the desired sensor configuration */
-  rslt = bme680_set_sensor_settings(set_required_settings,&gas_sensor[bmp_idx]);
-  if (rslt != BME680_OK) { return false; }
+  // Set the gas sensor settings
+  bme_heatr_conf[bmp_idx].enable = BME68X_ENABLE;
+  // Create a ramp heat waveform in 3 steps
+  bme_heatr_conf[bmp_idx].heatr_temp = 320;  // degree Celsius
+  bme_heatr_conf[bmp_idx].heatr_dur = 150;   // milliseconds
+  rslt = bme68x_set_heatr_conf(BME68X_FORCED_MODE, &bme_heatr_conf[bmp_idx], &bme_dev[bmp_idx]);
+  if (rslt != BME68X_OK) { return false; }
 
   bmp_sensors[bmp_idx].bme680_state = 0;
 
@@ -407,36 +420,40 @@ bool Bme680Init(uint8_t bmp_idx)
 
 void Bme680Read(uint8_t bmp_idx)
 {
-  if (!gas_sensor) { return; }
+  if (!bme_dev) { return; }
 
-  int8_t rslt = BME680_OK;
+  int8_t rslt = BME68X_OK;
 
   if (BME680_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
     if (0 == bmp_sensors[bmp_idx].bme680_state) {
-      /* Trigger the next measurement if you would like to read data out continuously */
-      rslt = bme680_set_sensor_mode(&gas_sensor[bmp_idx]);
-      if (rslt != BME680_OK) { return; }
+      // Trigger the next measurement if you would like to read data out continuously
+      rslt = bme68x_set_op_mode(BME68X_FORCED_MODE, &bme_dev[bmp_idx]);
+      if (rslt != BME68X_OK) { return; }
 
-      /* Get the total measurement duration so as to sleep or wait till the
-       * measurement is complete */
-//      uint16_t meas_period;
-//      bme680_get_profile_dur(&meas_period, &gas_sensor[bmp_idx]);
-//      delay(meas_period); /* Delay till the measurement is ready */  // 183 mSec - we'll wait a second
+      // Calculate delay period in microseconds
+//      del_period = bme68x_get_meas_dur(BME68X_FORCED_MODE, &conf, &bme) + (heatr_conf.heatr_dur * 1000);
+//      bme.delay_us(del_period, bme.intf_ptr);
 
       bmp_sensors[bmp_idx].bme680_state = 1;
     } else {
       bmp_sensors[bmp_idx].bme680_state = 0;
 
-      struct bme680_field_data data;
-      rslt = bme680_get_sensor_data(&data, &gas_sensor[bmp_idx]);
-      if (rslt != BME680_OK) { return; }
+      struct bme68x_data data;
+      uint8_t n_fields;
+      rslt = bme68x_get_data(BME68X_FORCED_MODE, &data, &n_fields, &bme_dev[bmp_idx]);
+      if (rslt != BME68X_OK) { return; }
 
-      bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0;
-      bmp_sensors[bmp_idx].bmp_humidity = data.humidity / 1000.0;
-      bmp_sensors[bmp_idx].bmp_pressure = data.pressure / 100.0;
-      /* Avoid using measurements from an unstable heating setup */
-      if (data.status & BME680_GASM_VALID_MSK) {
-        bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0;
+#ifdef BME68X_DO_NOT_USE_FPU
+      bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0;  // Temperature in degree celsius x100
+      bmp_sensors[bmp_idx].bmp_humidity = data.humidity / 1000.0;       // Humidity in % relative humidity x1000
+#else
+      bmp_sensors[bmp_idx].bmp_temperature = data.temperature;          // Temperature in degree celsius
+      bmp_sensors[bmp_idx].bmp_humidity = data.humidity;                // Humidity in % relative humidity
+#endif
+      bmp_sensors[bmp_idx].bmp_pressure = data.pressure / 100.0;        // Pressure in Pascal (converted to hPa)
+      // Avoid using measurements from an unstable heating setup
+      if (data.status & BME68X_GASM_VALID_MSK) {
+        bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0;  // Gas resistance in Ohms (converted to kOhm)
       } else {
         bmp_sensors[bmp_idx].bmp_gas_resistance = 0;
       }
@@ -445,7 +462,7 @@ void Bme680Read(uint8_t bmp_idx)
   return;
 }
 
-#endif  // USE_BME680
+#endif  // USE_BME68X
 
 /********************************************************************************************/
 
@@ -477,12 +494,12 @@ void BmpDetect(void)
           bmp_sensors[bmp_count].bmp_model++;  // 1
           success = Bmx280Calibrate(bmp_count);
           break;
-#ifdef USE_BME680
+#ifdef USE_BME68X
         case BME680_CHIPID:
           bmp_sensors[bmp_count].bmp_model = 3;  // 3
           success = Bme680Init(bmp_count);
           break;
-#endif  // USE_BME680
+#endif  // USE_BME68X
       }
       if (success) {
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
@@ -504,11 +521,11 @@ void BmpRead(void)
       case BME280_CHIPID:
         Bme280Read(bmp_idx);
         break;
-#ifdef USE_BME680
+#ifdef USE_BME68X
       case BME680_CHIPID:
         Bme680Read(bmp_idx);
         break;
-#endif  // USE_BME680
+#endif  // USE_BME68X
     }
   }
 }
@@ -538,17 +555,17 @@ void BmpShow(bool json)
       float f_dewpoint = CalcTempHumToDew(bmp_temperature, bmp_humidity);
       char dewpoint[33];
       dtostrfd(f_dewpoint, Settings->flag2.temperature_resolution, dewpoint);
-#ifdef USE_BME680
+#ifdef USE_BME68X
       char gas_resistance[33];
       dtostrfd(bmp_sensors[bmp_idx].bmp_gas_resistance, 2, gas_resistance);
-#endif  // USE_BME680
+#endif  // USE_BME68X
 
       if (json) {
         char json_humidity[80];
         snprintf_P(json_humidity, sizeof(json_humidity), PSTR(",\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_DEWPOINT "\":%s"), humidity, dewpoint);
         char json_sealevel[40];
         snprintf_P(json_sealevel, sizeof(json_sealevel), PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
-#ifdef USE_BME680
+#ifdef USE_BME68X
         char json_gas[40];
         snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
 
@@ -562,14 +579,14 @@ void BmpShow(bool json)
 #else
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s}"),
           name, Settings->flag2.temperature_resolution, &bmp_temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings->altitude != 0) ? json_sealevel : "");
-#endif  // USE_BME680
+#endif  // USE_BME68X
 
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
           DomoticzTempHumPressureSensor(bmp_temperature, bmp_humidity, bmp_pressure);
-#ifdef USE_BME680
+#ifdef USE_BME68X
           if (bmp_sensors[bmp_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
-#endif  // USE_BME680
+#endif  // USE_BME68X
         }
 #endif  // USE_DOMOTICZ
 
@@ -591,11 +608,11 @@ void BmpShow(bool json)
         if (Settings->altitude != 0) {
           WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sea_pressure, PressureUnit().c_str());
         }
-#ifdef USE_BME680
+#ifdef USE_BME68X
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
           WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
         }
-#endif  // USE_BME680
+#endif  // USE_BME68X
 
 #endif  // USE_WEBSERVER
       }

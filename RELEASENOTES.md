@@ -100,13 +100,67 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v10.1.0.1
+## Changelog v2022.01.3
 ### Added
+- Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens [#14568](https://github.com/arendst/Tasmota/issues/14568)
+- Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)
+- Command ``SetOption134 1`` to disable PWM auto-phasing for lights by default (new behavior) [#14590](https://github.com/arendst/Tasmota/issues/14590)
+- Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
+- Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
+- Command ``SspmEnergyTotal<relay>`` to (p)reset Sonoff SPM total energy without today's energy
+- Command ``SspmHistory<relay>`` to retrieve Sonoff SPM daily energy up to last six month (as defined by ARM firmware)
+- Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
+- Command ``SspmLog<relay> [x]`` to retrieve Sonoff SPM relay power state change and cause logging
+- Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
+- Command ``SspmScan`` to rescan Sonoff SPM modbus
+- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+- Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` [#14385](https://github.com/arendst/Tasmota/issues/14385)
+- Support for Eastron SDM230 modBus energy meter [#13443](https://github.com/arendst/Tasmota/issues/13443)
+- PWM Dimmer two button support [#13993](https://github.com/arendst/Tasmota/issues/13993)
+- Support for Linkind dimmer as GPIO ``Option A6`` [#14004](https://github.com/arendst/Tasmota/issues/14004)
+- DDP schemes for light and WS2812 [#14017](https://github.com/arendst/Tasmota/issues/14017)
+- Device Group Send full status item [#14045](https://github.com/arendst/Tasmota/issues/14045)
+- Support for MAX7219 Dot Matrix displays [#14091](https://github.com/arendst/Tasmota/issues/14091)
+- Experimental ADE7953 (Shelly EM) reset on restart [#14261](https://github.com/arendst/Tasmota/issues/14261)
+- Solax X1 negative temperature support [#14278](https://github.com/arendst/Tasmota/issues/14278)
+- Solax X1 modbus RTS support and offline status [#14305](https://github.com/arendst/Tasmota/issues/14305)
+- Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
+- Support for BME688 with latest Bosch-Sensor-API library [#14513](https://github.com/arendst/Tasmota/issues/14513)
+- Rule variable %color% [#14572](https://github.com/arendst/Tasmota/issues/14572)
+- Support for MQ analog sensor for air quality by Francesco Adriani [#14581](https://github.com/arendst/Tasmota/issues/14581)
+- ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
+- ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested [#14487](https://github.com/arendst/Tasmota/issues/14487)
+- ESP32 support for TuyaMcu
+- ESP32 Berry features
+- ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
 
 ### Breaking Changed
 
 ### Changed
+- ESP32 core library from v2.0.2 to v2.0.2.1
+- PubSubClient library from v2.8.12 to v2.8.13
+- TasmotaSerial library from v3.3.0 to v3.4.0
+- TasmotaModbus library from v1.2.0 to v3.4.0
+- ESP8266Audio library from v1.9.2 to v1.9.5
+- ESP8266SAM library from v1.0 to v1.0.1
+- BME68x-Sensor-API library from v3.5.9 to v4.4.7
+- From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
+- Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
+- Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
+- ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Berry stores compiled bytecode into IRAM, freeing space in heap [#14307](https://github.com/arendst/Tasmota/issues/14307)
 
 ### Fixed
+- Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow [#13700](https://github.com/arendst/Tasmota/issues/13700)
+- EZOO2 sensor message format [#14000](https://github.com/arendst/Tasmota/issues/14000)
+- DHT support negative temperatures on different hardware [#14173](https://github.com/arendst/Tasmota/issues/14173)
+- Hardware serial parity and stop bits support [#14212](https://github.com/arendst/Tasmota/issues/14212)
+- Edit file for SD card [#14229](https://github.com/arendst/Tasmota/issues/14229)
+- Scripter memory corruption [#14268](https://github.com/arendst/Tasmota/issues/14268)
+- ESP32 Webcam exception during flashwrites
+- ESP32 LedPwmMode exception [#14073](https://github.com/arendst/Tasmota/issues/14073)
+- ESP32 Compile error when I2S_Audio is enabled [#14095](https://github.com/arendst/Tasmota/issues/14095)
+- ESP32 Provide proper OTA_URL for tasmota32solo1 [#14202](https://github.com/arendst/Tasmota/issues/14202)
+- ESP32 OneWire-Stickbreaker (DS18x20) library support for ESP32C3 and ESP32S2 [#14338](https://github.com/arendst/Tasmota/issues/14338)
 
 ### Removed

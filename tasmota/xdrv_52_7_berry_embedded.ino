@@ -50,6 +50,7 @@ const char berry_prog[] =
 
 #ifdef USE_LVGL
   "import lv "
+  "import lv_tasmota "
   // create the '_lvgl' global singleton
   "_lvgl = LVGL_glob() "
 

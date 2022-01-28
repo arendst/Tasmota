@@ -163,7 +163,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t tuya_allow_dimmer_0 : 1;      // bit 17 (v10.0.0.3) - SetOption131 - (Tuya) Allow save dimmer = 0 receved by MCU
     uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - (TLS) Use fingerprint validation instead of CA based
     uint32_t shift595_invert_outputs : 1;  // bit 19 (v10.0.0.4) - SetOption133 - (Shift595) Invert outputs of 74x595 shift registers
-    uint32_t spare20 : 1;                  // bit 20
+    uint32_t pwm_force_same_phase : 1;     // bit 20 (2022.01.3) - SetOption134 - (PWM) force PWM lights to start at same phase, default is to spread phases to minimze overlap (also needed for H-bridge)
     uint32_t spare21 : 1;                  // bit 21
     uint32_t spare22 : 1;                  // bit 22
     uint32_t spare23 : 1;                  // bit 23
@@ -487,8 +487,11 @@ typedef struct {
   int32_t       energy_kWhyesterday_ph[3]; // 320
   int32_t       energy_kWhtotal_ph[3];     // 32C
 
-  uint8_t       free_338[7];               // 338
+  uint8_t       free_338[4];               // 338
 
+  uint8_t       web_time_start;            // 33C
+  uint8_t       web_time_end;              // 33D
+  uint8_t       sserial_config;            // 33E
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
@@ -595,10 +598,10 @@ typedef struct {
 
   uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
-
   int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  //508
   int8_t        shutter_tilt_pos[MAX_SHUTTERS];        //51C
   uint16_t      influxdb_period;           // 520
+
   uint8_t       free_522[10];              // 522
 
   uint16_t      mqtt_keepalive;            // 52C
@@ -743,10 +746,11 @@ typedef struct {
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f59[59];              // F61 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f61[39];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  uint32_t      eth_ipv4_address[5];       // F88
   uint32_t      energy_kWhtotal;           // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
@@ -833,11 +837,6 @@ struct XDRVMAILBOX {
   char         *command;
 } XdrvMailbox;
 
-#ifdef USE_SHUTTER
-const uint8_t MAX_RULES_FLAG = 11;         // Number of bits used in RulesBitfield (tricky I know...)
-#else
-const uint8_t MAX_RULES_FLAG = 9;          // Number of bits used in RulesBitfield (tricky I know...)
-#endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -849,11 +848,11 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t mqtt_disconnected : 1;
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
+    uint16_t eth_connected : 1;
+    uint16_t eth_disconnected : 1;
     uint16_t http_init : 1;
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    uint16_t spare11 : 1;
-    uint16_t spare12 : 1;
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;

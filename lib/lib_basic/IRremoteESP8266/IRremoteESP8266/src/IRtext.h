@@ -231,5 +231,11 @@ extern IRTEXT_CONST_PTR(kYbofbStr);
 extern IRTEXT_CONST_PTR(kYesStr);
 extern IRTEXT_CONST_PTR(kZoneFollowStr);
 extern IRTEXT_CONST_PTR(kAllProtocolNamesStr);
+extern IRTEXT_CONST_PTR(kISeeStr);
+extern IRTEXT_CONST_PTR(kEcocoolStr);
+extern IRTEXT_CONST_PTR(kAbsenseDetectStr);
+extern IRTEXT_CONST_PTR(kDirectIndirectModeStr);
+extern IRTEXT_CONST_PTR(kDirectStr);
+extern IRTEXT_CONST_PTR(kIndirectStr);
 
 #endif  // IRTEXT_H_

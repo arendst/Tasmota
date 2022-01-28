@@ -120,7 +120,7 @@ uint32_t IRsend::encodeSony(const uint16_t nbits, const uint16_t command,
 ///   bits long.
 bool IRrecv::decodeSony(decode_results *results, uint16_t offset,
                         const uint16_t nbits, const bool strict) {
-  if (results->rawlen <= 2 * nbits + kHeader - 1 + offset)
+  if (results->rawlen < 2 * nbits + kHeader - 1 + offset)
     return false;  // Message is smaller than we expected.
 
   // Compliance

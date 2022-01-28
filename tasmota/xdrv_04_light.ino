@@ -124,7 +124,11 @@
 #define XDRV_04              4
 // #define DEBUG_LIGHT
 
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_DDP, LS_MAX };
+#else
 enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX };
+#endif
 
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
@@ -279,6 +283,11 @@ uint8_t LightDevice(void)
 static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
   return (a < b && a < c) ? a : (b < c) ? b : c;
 }
+
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+WiFiUDP ddp_udp;
+uint8_t ddp_udp_up = 0;
+#endif
 
 //
 // LightStateClass
@@ -1051,11 +1060,9 @@ bool LightModuleInit(void)
   }
 #endif  // ESP8266
 #ifdef USE_PWM_DIMMER
-#ifdef USE_DEVICE_GROUPS
   else if (PWM_DIMMER == TasmotaGlobal.module_type) {
     TasmotaGlobal.light_type = Settings->pwm_dimmer_cfg.pwm_count + 1;
   }
-#endif  // USE_DEVICE_GROUPS
 #endif  // USE_PWM_DIMMER
 
   if (TasmotaGlobal.light_type > LT_BASIC) {
@@ -1158,7 +1165,7 @@ void LightInit(void)
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
 #ifdef ESP32
-        analogAttach(Pin(GPIO_PWM1, i), i);
+        analogAttach(Pin(GPIO_PWM1, i));
 #endif  // ESP32
       }
     }
@@ -1615,6 +1622,51 @@ void LightCycleColor(int8_t direction)
   light_controller.calcLevels(Light.new_color);
 }
 
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+void LightListenDDP()
+{
+  // Light channels gets completely controlled over DDP. So, we don't really check other settings.
+  // To enter this scheme, we are already assured the light is at least RGB
+  static uint8_t ddp_color[5] = { 0, 0, 0, 0, 0 };
+
+  // Can't be trying to initialize UDP too early.
+  if (TasmotaGlobal.restart_flag || TasmotaGlobal.global_state.network_down) {
+    light_state.setChannels(ddp_color);
+    light_controller.calcLevels(Light.new_color);
+    return;
+  }
+
+  // Start DDP listener, if fail, just set last ddp_color
+  if (!ddp_udp_up) {
+    if (!ddp_udp.begin(4048)) {
+      light_state.setChannels(ddp_color);
+      light_controller.calcLevels(Light.new_color);
+      return;
+    }
+    ddp_udp_up = 1;
+    AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Listener Started: Normal Scheme");
+  }
+
+  // Get the DDP payload over UDP
+  std::vector<uint8_t> payload;
+  while (uint16_t packet_size = ddp_udp.parsePacket()) {
+    payload.resize(packet_size);
+    if (!ddp_udp.read(&payload[0], payload.size())) {
+      continue;
+    }
+  }
+
+  // No verification checks performed against packet besides length
+  if (payload.size() > 12) {
+    ddp_color[0] = payload[10];
+    ddp_color[1] = payload[11];
+    ddp_color[2] = payload[12];
+  }
+  light_state.setChannels(ddp_color);
+  light_controller.calcLevels(Light.new_color);
+}
+#endif
+
 void LightSetPower(void)
 {
 //  Light.power = XdrvMailbox.index;
@@ -1690,7 +1742,21 @@ void LightAnimate(void)
     if (Settings->light_scheme >= LS_MAX) {
       power_off = true;
     }
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    if (ddp_udp_up) {
+      ddp_udp.stop();
+      ddp_udp_up = 0;
+      AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: Power Off");
+    }
+#endif
   } else {
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    if ((Settings->light_scheme < LS_MAX) && (Settings->light_scheme != LS_DDP) && (ddp_udp_up)) {
+      ddp_udp.stop();
+      ddp_udp_up = 0;
+      AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: Normal Scheme not DDP");
+    }
+#endif
     switch (Settings->light_scheme) {
       case LS_POWER:
         light_controller.calcLevels(Light.new_color);
@@ -1743,6 +1809,11 @@ void LightAnimate(void)
           Light.new_color[2] = changeUIntScale(Light.new_color[2], 0, 255, 0, Settings->light_color[2]);
         }
         break;
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+      case LS_DDP:
+        LightListenDDP();
+        break;
+#endif
       default:
         XlgtCall(FUNC_SET_SCHEME);
     }
@@ -2016,8 +2087,22 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+#ifdef ESP32
+    uint32_t pwm_phase = 0;     // dephase each PWM channel with the value of the previous
+    uint32_t pwm_modulus = (1 << _pwm_bit_num) - 1;   // 1023
+#endif // ESP32
+
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
+#ifdef USE_I2C
+    if (TasmotaGlobal.gpio_optiona.linkind_support) {  // Option_A6
+      uint8_t val = change10to8(cur_col_10[Light.pwm_offset] > 0 ? changeUIntScale(cur_col_10[Light.pwm_offset], 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0);
+      max_col = val;
+      uint16_t chk = 65403 - val;
+      uint8_t buf[] = { 0x09, 0x50, 0x01, val, 0x00, 0x00, (uint8_t)(chk >> 8), (uint8_t)(chk & 0xff) };
+      I2cWriteBuffer(0x50, 0x2A, buf, sizeof(buf));
+    } else
+#endif  // USE_I2C
 #endif  // USE_PWM_DIMMER
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
@@ -2031,7 +2116,14 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
-          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+          uint32_t pwm_val = bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col;
+#ifdef ESP32
+          uint32_t pwm_phase_invert = bitRead(TasmotaGlobal.pwm_inverted, i) ? cur_col : 0;   // move phase if inverted
+          analogWritePhase(Pin(GPIO_PWM1, i), pwm_val, Settings->flag5.pwm_force_same_phase ? 0 : (pwm_phase + pwm_phase_invert) & pwm_modulus);
+          pwm_phase = (pwm_phase + cur_col) & pwm_modulus;
+#else // ESP32
+          analogWrite(Pin(GPIO_PWM1, i), pwm_val);
+#endif // ESP32
         }
       }
     }
@@ -3214,6 +3306,14 @@ bool Xdrv04(uint8_t function)
       case FUNC_BUTTON_MULTI_PRESSED:
         result = XlgtCall(FUNC_BUTTON_MULTI_PRESSED);
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        XlgtCall(FUNC_WEB_ADD_MAIN_BUTTON);
+        break;
+      case FUNC_WEB_GET_ARG:
+        XlgtCall(FUNC_WEB_GET_ARG);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kLightCommands, LightCommand, kLightSynonyms);
         if (!result) {

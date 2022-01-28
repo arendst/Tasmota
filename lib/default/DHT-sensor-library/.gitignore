@@ -1,0 +1,8 @@
+# osx
+.DS_Store
+
+# doxygen
+Doxyfile*
+doxygen_sqlite3.db
+html
+*.tmp

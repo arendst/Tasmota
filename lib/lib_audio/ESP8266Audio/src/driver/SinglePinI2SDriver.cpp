@@ -3,7 +3,7 @@
   ESP8266Audio I2S Minimal driver
 
   Most of this code is taken and reworked from ESP8266 Arduino core,
-  which itsef is reworked from Espessif's I2S examples.
+  which itself is reworked from Espessif's I2S examples.
   Original code is licensed under LGPL 2.1 or above
  
   Reasons for rewrite:
@@ -196,7 +196,7 @@ void SinglePinI2SDriver::setDividers(uint8_t div1, uint8_t div2)
   // Ensure dividers fit in bit fields
   div1 &= I2SBDM;
   div2 &= I2SCDM;
-  // trans master(active low), recv master(active_low), !bits mod(==16 bits/chanel), clear clock dividers
+  // trans master(active low), recv master(active_low), !bits mod(==16 bits/channel), clear clock dividers
   I2SC &= ~(I2STSM | I2SRSM | (I2SBMM << I2SBM) | (I2SBDM << I2SBD) | (I2SCDM << I2SCD));
   // I2SRF = Send/recv right channel first
   // I2SMR = MSB recv/xmit first
@@ -249,7 +249,7 @@ void SinglePinI2SDriver::startI2S()
   I2SFC |= I2SDE; // Enable DMA
   // I2STXCMM, I2SRXCMM=0 => Dual channel mode, RX/TX CHAN_MOD=0
   I2SCC &= ~((I2STXCMM << I2STXCM) | (I2SRXCMM << I2SRXCM));
-  // Set dividers to something resonable
+  // Set dividers to something reasonable
   currentRate = 0;
   setRate(44100);
   // Start I2S peripheral

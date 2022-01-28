@@ -17,6 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  #include "HttpClientLight.h"
+#endif
+
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 const char kPrefixes[] PROGMEM = D_CMND "|" D_STAT "|" D_TELE;
 
@@ -439,7 +443,10 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
 #else //USE_LIGHT
       pwm = changeUIntScale((uint16_t)(state ? Settings->ledpwm_on : Settings->ledpwm_off), 0, 255, 0, Settings->pwm_range); // linear
 #endif //USE_LIGHT
-      analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm : pwm);
+#ifdef ESP32
+      if (analogAttach(Pin(GPIO_LED1, led)))
+#endif
+        analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm : pwm);
     } else {
       DigitalWrite(GPIO_LED1, led, bitRead(TasmotaGlobal.led_inverted, led) ? !state : state);
     }
@@ -982,6 +989,12 @@ void PerformEverySecond(void)
   SyslogAsync(false);
 
   ResetGlobalValues();
+
+  if ((TasmotaGlobal.init_state >= INIT_GPIOS) && PinUsed(GPIO_HEARTBEAT)) {
+    digitalWrite(Pin(GPIO_HEARTBEAT), ~TasmotaGlobal.heartbeat_inverted &1);
+    delayMicroseconds(50);
+    digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
+  }
 
   if (Settings->tele_period || (3601 == TasmotaGlobal.tele_period)) {
     if (TasmotaGlobal.tele_period >= 9999) {
@@ -1772,6 +1785,11 @@ void GpioInit(void)
         mpin -= (AGPIO(GPIO_KEY1_INV_NP) - AGPIO(GPIO_KEY1));
       }
 #ifdef ESP32
+      else if ((mpin >= AGPIO(GPIO_OPTION_E)) && (mpin < (AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E))) {
+        TasmotaGlobal.emulated_module_type = pgm_read_byte(kModuleEmulationList + (mpin - AGPIO(GPIO_OPTION_A)));
+        SetModuleType();
+        mpin = GPIO_NONE;
+      }
       else if ((mpin >= AGPIO(GPIO_SWT1_PD)) && (mpin < (AGPIO(GPIO_SWT1_PD) + MAX_SWITCHES))) {
         SwitchPulldownFlag(mpin - AGPIO(GPIO_SWT1_PD));
         mpin -= (AGPIO(GPIO_SWT1_PD) - AGPIO(GPIO_SWT1));
@@ -1990,7 +2008,7 @@ void GpioInit(void)
       pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
 #ifdef ESP32
-      analogAttach(Pin(GPIO_PWM1, i), i);
+      analogAttach(Pin(GPIO_PWM1, i));
 #endif  // ESP32
       if (TasmotaGlobal.light_type) {
         // force PWM GPIOs to low or high mode, see #7165

@@ -141,6 +141,11 @@
 // } followRedirects_t;
 
 
+#ifdef HTTPCLIENT_1_1_COMPATIBLE
+class TransportTraitsLight;
+typedef std::unique_ptr<TransportTraitsLight> TransportTraitsLightPtr;
+#endif
+
 
 class HTTPClientLight
 {
@@ -231,7 +236,7 @@ protected:
 
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
-    TransportTraitsPtr _transportTraits;
+    TransportTraitsLightPtr _transportTraits;
     std::unique_ptr<WiFiClient> _tcpDeprecated;
 #endif
 

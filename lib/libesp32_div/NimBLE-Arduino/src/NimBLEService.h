@@ -14,9 +14,11 @@
 
 #ifndef MAIN_NIMBLESERVICE_H_
 #define MAIN_NIMBLESERVICE_H_
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLEServer.h"
 #include "NimBLECharacteristic.h"
@@ -34,8 +36,8 @@ class NimBLECharacteristic;
 class NimBLEService {
 public:
 
-    NimBLEService(const char* uuid);
-    NimBLEService(const NimBLEUUID &uuid);
+    NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer* pServer);
+    NimBLEService(const NimBLEUUID &uuid, uint16_t numHandles, NimBLEServer* pServer);
     ~NimBLEService();
 
     NimBLEServer*         getServer();
@@ -74,12 +76,16 @@ private:
     friend class          NimBLEDevice;
 
     uint16_t              m_handle;
+    NimBLEServer*         m_pServer;
     NimBLEUUID            m_uuid;
+    uint16_t              m_numHandles;
     ble_gatt_svc_def*     m_pSvcDef;
     uint8_t               m_removed;
     std::vector<NimBLECharacteristic*> m_chrVec;
 
 }; // NimBLEService
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
+
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif // CONFIG_BT_ENABLED
 #endif /* MAIN_NIMBLESERVICE_H_ */

@@ -6,13 +6,12 @@
  *
  */
 
-#include "nimconfig.h"
+#include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEUtils.h"
 #include "NimBLELog.h"
-
-#include <stdlib.h>
+#include "nimconfig.h"
 
 static const char* LOG_TAG = "NimBLEUtils";
 
@@ -343,7 +342,6 @@ const char* NimBLEUtils::returnCodeToString(int rc) {
             return "Unknown";
     }
 #else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT)
-    (void)rc;
     return "";
 #endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT)
 }
@@ -371,7 +369,6 @@ const char* NimBLEUtils::advTypeToString(uint8_t advType) {
             return "Unknown flag";
     }
 #else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
-    (void)advType;
     return "";
 #endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
 } // adFlagsToString
@@ -419,11 +416,8 @@ char* NimBLEUtils::buildHexData(uint8_t* target, const uint8_t* source, uint8_t 
  * @param [in] arg Unused.
  */
 void NimBLEUtils::dumpGapEvent(ble_gap_event *event, void *arg){
-    (void)arg;
 #if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
     NIMBLE_LOGD(LOG_TAG, "Received a GAP event: %s", gapEventToString(event->type));
-#else
-    (void)event;
 #endif
 }
 
@@ -510,7 +504,6 @@ const char* NimBLEUtils::gapEventToString(uint8_t eventType) {
             return "Unknown event type";
     }
 #else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
-    (void)eventType;
     return "";
 #endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT)
 } // gapEventToString

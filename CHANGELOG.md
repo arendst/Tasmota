@@ -3,7 +3,105 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [10.1.0.1]
+## [2022.01.3]
+### Added
+- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+- ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
+- Support for BME688 with latest Bosch-Sensor-API library (#14513)
+- Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) (#14555)
+- Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens (#14568)
+- Rule variable %color% (#14572)
+- Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
+- Command ``SspmEnergyTotal<relay>`` to (p)reset Sonoff SPM total energy without today's energy
+- Command ``SspmHistory<relay>`` to retrieve Sonoff SPM daily energy up to last six month (as defined by ARM firmware)
+- Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
+- Command ``SspmLog<relay> [x]`` to retrieve Sonoff SPM relay power state change and cause logging
+- Command ``SspmScan`` to rescan Sonoff SPM modbus
+- Support for MQ analog sensor for air quality by Francesco Adriani (#14581)
+- Command ``SetOption134 1`` to disable PWM auto-phasing for lights by default (new behavior) (#14590)
+
+### Changed
+- BME68x-Sensor-API library from v3.5.9 to v4.4.7
+- ESP32 core library from v2.0.2 to v2.0.2.1 (#14553)
+
+### Fixed
+- OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
+
+## [2022.01.2] 20220116
+### Added
+- Tasmota favicon to webbrowser tab (#14322)
+- Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
+- Support for Eastron SDM230 modBus energy meter (#13443)
+
+### Changed
+- IRremoteESP8266 library from v2.8.0 to v2.8.1
+
+## [2022.01.1] 20220107
+### Added
+- Experimental ADE7953 (Shelly EM) reset on restart (#14261)
+- Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)
+- Solax X1 modbus RTS support and offline status (#14305)
+- DDP schemes for light and WS2812 (#14017)
+- ESP32 single binary firmware (#14239)
+- ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
+- Support for Linkind dimmer as GPIO ``Option A6`` (#14004)
+
+### Changed
+- PubSubClient library from v2.8.12 to v2.8.13
+- TasmotaSerial library from v3.3.0 to v3.4.0
+- TasmotaModbus library from v1.2.0 to v3.4.0
+- From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
+- ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics
+- ESP32 Berry stores compiled bytecode into IRAM, freeing space in heap (#14307)
+
+### Fixed
+- Intermittent exceptions and heap corruption due to PubSubClient library buffer overflow (#13700)
+- Scripter memory corruption (#14268)
+- Edit file for SD card (#14229)
+- Solax X1 negative temperature support (#14278)
+- Modbus serial config regression from v10.1.0.3
+
+## [10.1.0.3] 20211231
+### Added
+- Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
+
+### Fixed
+- DHT support negative temperatures on different hardware (#14173)
+- ESP32 Provide proper OTA_URL for tasmota32solo1 (#14202)
+- Hardware serial parity and stop bits support (#14212)
+
+### Changed
+- LVGL update from 8.0.2 to 8.1.0
+
+## [10.1.0.2] 20211225
+### Changed
+- TasmotaSerial library from v3.3.0 to v3.4.0 - reverted (#14153)
+- Force initial serial configuration even if no serial GPIO's are enabled (#14153)
+- Revert change to fix extra flashwrite before QuickPowerDetection (#14153)
+- Increase SerialBridge receive buffer from 130 to 256 characters - reverted (#14153)
+- ESP8266Audio library from v1.9.2 to v1.9.5 (#14172)
+- ESP8266SAM library from v1.0 to v1.0.1 (#14172)
+
+### Fixed
+- Serial broken after #14153 - reverted
+
+## [10.1.0.1] 20211223
+### Added
+- PWM Dimmer two button support (#13993)
+- Device Group Send full status item (#14045)
+- Support for MAX7219 Dot Matrix displays (#14091)
+- ESP32 support for TuyaMcu
+- ESP32 Berry features
+
+### Changed
+- Mitsubishi HVAC temperature resolution (#13936)
+- Remove restriction of topic must differ from mqttclient (#14019)
+
+### Fixed
+- EZOO2 sensor message format (#14000)
+- ESP32 Webcam exception during flashwrites
+- ESP32 LedPwmMode exception (#14073)
+- ESP32 Compile error when I2S_Audio is enabled (#14095)
 
 ## [Released]
 
@@ -893,6 +991,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Triple-mode TLS via configuration in a single firmware (TLS AWS IoT, Letsencrypt and No-TLS)
+- Berry C mapping moved to a separate ``berry_mapping`` library
 
 ### Fixed
 - ESP32 PWM range

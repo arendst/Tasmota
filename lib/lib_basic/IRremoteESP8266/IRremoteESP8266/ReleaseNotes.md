@@ -1,5 +1,29 @@
 # Release Notes
 
+## _v2.8.1 (20220101)_
+
+**[Bug Fixes]**
+- Arduino ESP32 Core v2.0.2+ crashes due to our timer hack. (#1715 #1713)
+- SONY: Fix old Sony CD-Player Remote (12 Bit) (#1714)
+
+**[Features]**
+- Add tool to convert protocol & code to raw timing info. (#1708 #1707 #1703)
+- Add basic support for COOLIX48 protocol. (#1697 #1694)
+- MITSUBISHI_AC: Added support for i-SAVE mode. (#1666)
+- TOSHIBA_AC: Add Filter setting support. aka. Pure. (#1693 #1692)
+- Airton: Add detailed A/C support. (#1688 #1670)
+
+**[Misc]**
+- Add a structured library version number. (#1717)
+- Workflows Split UnitTests (#1712)
+- Reduce time for workflow/Build (#1709)
+- Fix some compiler & linter warnings (#1699 #1700)
+- Fujitsu: Update supported A/C models (#1690 #1689 #1702 #1701)
+- Remove extra `const` qualifier for char pointer (#1704)
+- TCL: Update supported devices. (#1698)
+- ESP32-C3: Work around for some C3 specific compiler issues. (#1696 #1695)
+
+
 ## _v2.8.0 (20211119)_
 
 **[Bug Fixes]**
