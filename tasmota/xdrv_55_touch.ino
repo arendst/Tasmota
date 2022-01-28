@@ -136,8 +136,8 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   if (FT5206_found) {
     touched = FT5206_touched();
     if (touched) {
-      touch_xp = FT5206_x();
-      touch_yp = FT5206_y();
+      raw_touch_xp = FT5206_x();
+      raw_touch_yp = FT5206_y();
     }
   }
 #endif // USE_FT5206
@@ -146,14 +146,14 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   if (XPT2046_found) {
     touched = XPT2046_touched();
     if (touched) {
-      touch_xp = XPT2046_x();
-      touch_yp = XPT2046_y();
+      raw_touch_xp = XPT2046_x();
+      raw_touch_yp = XPT2046_y();
     }
   }
 #endif // USE_XPT2046
+  touch_xp = raw_touch_xp;
+  touch_yp = raw_touch_yp;
 
-  raw_touch_xp = touch_xp;
-  raw_touch_yp = touch_yp;
   if (touched) {
     was_touched = true;
 #ifdef USE_TOUCH_BUTTONS
@@ -185,10 +185,6 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_TOUCH_BUTTONS
 
   } else {
-    if (was_touched) {
-      AddLog(LOG_LEVEL_DEBUG_MORE, "TS : released x=%i y=%i (raw x=%i y=%i)", touch_xp, touch_yp, raw_touch_xp, raw_touch_yp);
-      was_touched = false;
-    }
 #ifdef USE_M5STACK_CORE2
     for (uint32_t tbut = 0; tbut < 3; tbut++) {
       if (tbstate[tbut] & 1) {
@@ -201,6 +197,10 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif  // USE_M5STACK_CORE2
 
     rotconvert(&touch_xp, &touch_yp);   // still do rot convert if not touched
+    if (was_touched) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, "TS : released x=%i y=%i (raw x=%i y=%i)", touch_xp, touch_yp, raw_touch_xp, raw_touch_yp);
+      was_touched = false;
+    }
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(touched, touch_xp, touch_yp);
 #endif // USE_TOUCH_BUTTONS
