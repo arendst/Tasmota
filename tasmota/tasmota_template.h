@@ -181,6 +181,7 @@ enum UserSelectablePins {
   GPIO_OPTION_E,                       // Emulated module
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
+  GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -400,7 +401,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SOLAXX1_RTS "|"
   D_SENSOR_OPTION " E|"
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
-  D_SENSOR_ADC_MQ
+  D_SENSOR_ADC_MQ "|"
+  D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -934,6 +936,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX7219CS),
 #endif  // USE_DISPLAY_MAX7219
 
+#ifdef USE_CM110x
+  AGPIO(GPIO_CM11_TXD),        // CM110x Serial interface
+  AGPIO(GPIO_CM11_RXD),        // CM110x Serial interface
+#endif
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
 \*-------------------------------------------------------------------------------------------*/

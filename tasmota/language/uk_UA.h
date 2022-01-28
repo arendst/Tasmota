@@ -852,6 +852,8 @@
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
+#define D_SENSOR_CM11_TX       "CM110x TX" 
+#define D_SENSOR_CM11_RX       "CM110x RX" 
 
 // Units
 #define D_UNIT_AMPERE                    "А"
