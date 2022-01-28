@@ -471,23 +471,27 @@ void CmndDelay(void)
 
 void CmndPower(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
-    if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_BLINK_STOP)) {
-      XdrvMailbox.payload = POWER_SHOW_STATE;
+  if ('{' == XdrvMailbox.data[0]) {
+    CmndJson();
+  } else {
+    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
+      if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_BLINK_STOP)) {
+        XdrvMailbox.payload = POWER_SHOW_STATE;
+      }
+  //      Settings->flag.device_index_enable = XdrvMailbox.usridx;  // SetOption26 - Switch between POWER or POWER1
+      ExecuteCommandPower(XdrvMailbox.index, XdrvMailbox.payload, SRC_IGNORE);
+      ResponseClear();
     }
-//      Settings->flag.device_index_enable = XdrvMailbox.usridx;  // SetOption26 - Switch between POWER or POWER1
-    ExecuteCommandPower(XdrvMailbox.index, XdrvMailbox.payload, SRC_IGNORE);
-    ResponseClear();
-  }
-  else if (0 == XdrvMailbox.index) {
-    if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_TOGGLE)) {
-      XdrvMailbox.payload = POWER_SHOW_STATE;
+    else if (0 == XdrvMailbox.index) {
+      if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_TOGGLE)) {
+        XdrvMailbox.payload = POWER_SHOW_STATE;
+      }
+      SetAllPower(XdrvMailbox.payload, SRC_IGNORE);
+      if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+        MqttPublishTeleState();
+      }
+      ResponseClear();
     }
-    SetAllPower(XdrvMailbox.payload, SRC_IGNORE);
-    if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
-      MqttPublishTeleState();
-    }
-    ResponseClear();
   }
 }
 

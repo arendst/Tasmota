@@ -2733,35 +2733,39 @@ void CmndChannel(void)
 
 void CmndHsbColor(void)
 {
-  // HsbColor             - Show current HSB
-  // HsbColor 360,100,100 - Set Hue, Saturation and Brighthness
-  // HsbColor 360,100     - Set Hue and Saturation
-  // HsbColor 360         - Set Hue
-  // HsbColor1 360        - Set Hue
-  // HsbColor2 100        - Set Saturation
-  // HsbColor3 100        - Set Brightness
-  if (Light.subtype >= LST_RGB) {
-    if (XdrvMailbox.data_len > 0) {
-      uint16_t c_hue;
-      uint8_t  c_sat;
-      light_state.getHSB(&c_hue, &c_sat, nullptr);
-      uint32_t HSB[3];
-      HSB[0] = c_hue;
-      HSB[1] = c_sat;
-      HSB[2] = light_state.getBriRGB();
-      if ((2 == XdrvMailbox.index) || (3 == XdrvMailbox.index)) {
-        if ((uint32_t)XdrvMailbox.payload > 100) { XdrvMailbox.payload = 100; }
-        HSB[XdrvMailbox.index-1] = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 255);
-      } else {
-        uint32_t paramcount = ParseParameters(3, HSB);
-        if (HSB[0] > 360) { HSB[0] = 360; }
-        for (uint32_t i = 1; i < paramcount; i++) {
-          if (HSB[i] > 100) { HSB[i] = 100; }
-          HSB[i] = changeUIntScale(HSB[i], 0, 100, 0, 255); // change sat and bri to 0..255
+  if ('{' == XdrvMailbox.data[0]) {
+    CmndJson();
+  } else {
+    // HsbColor             - Show current HSB
+    // HsbColor 360,100,100 - Set Hue, Saturation and Brighthness
+    // HsbColor 360,100     - Set Hue and Saturation
+    // HsbColor 360         - Set Hue
+    // HsbColor1 360        - Set Hue
+    // HsbColor2 100        - Set Saturation
+    // HsbColor3 100        - Set Brightness
+    if (Light.subtype >= LST_RGB) {
+      if (XdrvMailbox.data_len > 0) {
+        uint16_t c_hue;
+        uint8_t  c_sat;
+        light_state.getHSB(&c_hue, &c_sat, nullptr);
+        uint32_t HSB[3];
+        HSB[0] = c_hue;
+        HSB[1] = c_sat;
+        HSB[2] = light_state.getBriRGB();
+        if ((2 == XdrvMailbox.index) || (3 == XdrvMailbox.index)) {
+          if ((uint32_t)XdrvMailbox.payload > 100) { XdrvMailbox.payload = 100; }
+          HSB[XdrvMailbox.index-1] = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 255);
+        } else {
+          uint32_t paramcount = ParseParameters(3, HSB);
+          if (HSB[0] > 360) { HSB[0] = 360; }
+          for (uint32_t i = 1; i < paramcount; i++) {
+            if (HSB[i] > 100) { HSB[i] = 100; }
+            HSB[i] = changeUIntScale(HSB[i], 0, 100, 0, 255); // change sat and bri to 0..255
+          }
         }
+        light_controller.changeHSB(HSB[0], HSB[1], HSB[2]);
+        LightPreparePower(1);
       }
-      light_controller.changeHSB(HSB[0], HSB[1], HSB[2]);
-      LightPreparePower(1);
     } else {
       ResponseLightState(0);
     }
@@ -2770,42 +2774,46 @@ void CmndHsbColor(void)
 
 void CmndScheme(void)
 {
-  // Scheme 0..12  - Select one of schemes 0 to 12
-  // Scheme 2      - Select scheme 2
-  // Scheme 2,0    - Select scheme 2 with color wheel set to 0 (HSB Red)
-  // Scheme +      - Select next scheme
-  // Scheme -      - Select previous scheme
-  if (Light.subtype >= LST_RGB) {
-    uint32_t max_scheme = Light.max_scheme;
+  if ('{' == XdrvMailbox.data[0]) {
+    CmndJson();
+  } else {
+    // Scheme 0..12  - Select one of schemes 0 to 12
+    // Scheme 2      - Select scheme 2
+    // Scheme 2,0    - Select scheme 2 with color wheel set to 0 (HSB Red)
+    // Scheme +      - Select next scheme
+    // Scheme -      - Select previous scheme
+    if (Light.subtype >= LST_RGB) {
+      uint32_t max_scheme = Light.max_scheme;
 
-    if (1 == XdrvMailbox.data_len) {
-      if (('+' == XdrvMailbox.data[0]) && (Settings->light_scheme < max_scheme)) {
-        XdrvMailbox.payload = Settings->light_scheme + ((0 == Settings->light_scheme) ? 2 : 1);  // Skip wakeup
+      if (1 == XdrvMailbox.data_len) {
+        if (('+' == XdrvMailbox.data[0]) && (Settings->light_scheme < max_scheme)) {
+          XdrvMailbox.payload = Settings->light_scheme + ((0 == Settings->light_scheme) ? 2 : 1);  // Skip wakeup
+        }
+        else if (('-' == XdrvMailbox.data[0]) && (Settings->light_scheme > 0)) {
+          XdrvMailbox.payload = Settings->light_scheme - ((2 == Settings->light_scheme) ? 2 : 1);  // Skip wakeup
+        }
       }
-      else if (('-' == XdrvMailbox.data[0]) && (Settings->light_scheme > 0)) {
-        XdrvMailbox.payload = Settings->light_scheme - ((2 == Settings->light_scheme) ? 2 : 1);  // Skip wakeup
-      }
-    }
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_scheme)) {
-      uint32_t parm[2];
-      if (ParseParameters(2, parm) > 1) {
-        Light.wheel = parm[1];
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_scheme)) {
+        uint32_t parm[2];
+        if (ParseParameters(2, parm) > 1) {
+          Light.wheel = parm[1];
 #ifdef USE_LIGHT_PALETTE
-        Light.wheel--;
+          Light.wheel--;
 #endif  // USE_LIGHT_PALETTE
+        }
+        LightSetScheme(XdrvMailbox.payload);
+        if (LS_WAKEUP == Settings->light_scheme) {
+          Light.wakeup_active = 3;
+        }
+        LightPowerOn();
+        Light.strip_timer_counter = 0;
+        // Publish state message for Hass
+        if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+          MqttPublishTeleState();
+        }
       }
-      LightSetScheme(XdrvMailbox.payload);
-      if (LS_WAKEUP == Settings->light_scheme) {
-        Light.wakeup_active = 3;
-      }
-      LightPowerOn();
-      Light.strip_timer_counter = 0;
-      // Publish state message for Hass
-      if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
-        MqttPublishTeleState();
-      }
+      ResponseCmndNumber(Settings->light_scheme);
     }
-    ResponseCmndNumber(Settings->light_scheme);
   }
 }
 
@@ -2824,26 +2832,30 @@ void CmndWakeup(void)
 
 void CmndColorTemperature(void)
 {
-  // CT          - Show current color temperature
-  // CT 153..500 - Set color temperature
-  // CT +        - Incerement color temperature in steps of 34
-  // CT -        - Decrement color temperature in steps of 34
-  if (Light.pwm_multi_channels) { return; }
-  if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) { // ColorTemp
-    uint32_t ct = light_state.getCT();
-    if (1 == XdrvMailbox.data_len) {
-      if ('+' == XdrvMailbox.data[0]) {
-        XdrvMailbox.payload = (ct > (CT_MAX-34)) ? CT_MAX : ct + 34;
+  if ('{' == XdrvMailbox.data[0]) {
+    CmndJson();
+  } else {
+    // CT          - Show current color temperature
+    // CT 153..500 - Set color temperature
+    // CT +        - Incerement color temperature in steps of 34
+    // CT -        - Decrement color temperature in steps of 34
+    if (Light.pwm_multi_channels) { return; }
+    if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) { // ColorTemp
+      uint32_t ct = light_state.getCT();
+      if (1 == XdrvMailbox.data_len) {
+        if ('+' == XdrvMailbox.data[0]) {
+          XdrvMailbox.payload = (ct > (CT_MAX-34)) ? CT_MAX : ct + 34;
+        }
+        else if ('-' == XdrvMailbox.data[0]) {
+          XdrvMailbox.payload = (ct < (CT_MIN+34)) ? CT_MIN : ct - 34;
+        }
       }
-      else if ('-' == XdrvMailbox.data[0]) {
-        XdrvMailbox.payload = (ct < (CT_MIN+34)) ? CT_MIN : ct - 34;
+      if ((XdrvMailbox.payload >= CT_MIN) && (XdrvMailbox.payload <= CT_MAX)) {  // https://developers.meethue.com/documentation/core-concepts
+        light_controller.changeCTB(XdrvMailbox.payload, light_state.getBriCT());
+        LightPreparePower(2);
+      } else {
+        ResponseCmndNumber(ct);
       }
-    }
-    if ((XdrvMailbox.payload >= CT_MIN) && (XdrvMailbox.payload <= CT_MAX)) {  // https://developers.meethue.com/documentation/core-concepts
-      light_controller.changeCTB(XdrvMailbox.payload, light_state.getBriCT());
-      LightPreparePower(2);
-    } else {
-      ResponseCmndNumber(ct);
     }
   }
 }
@@ -2860,78 +2872,82 @@ void LightDimmerOffset(uint32_t index, int32_t offset) {
 
 void CmndDimmer(void)
 {
-  // Dimmer         - Show current Dimmer state
-  // Dimmer0 0..100 - Change both RGB and W(W) Dimmers
-  // Dimmer1 0..100 - Change RGB Dimmer
-  // Dimmer2 0..100 - Change W(W) Dimmer
-  // Dimmer3 0..100 - Change both RGB and W(W) Dimmers with no fading
-  // Dimmer<x> +    - Incerement Dimmer in steps of DimmerStep
-  // Dimmer<x> -    - Decrement Dimmer in steps of DimmerStep
-  uint32_t dimmer;
-  if (XdrvMailbox.index == 3) {
-    TasmotaGlobal.skip_light_fade = true;
-    XdrvMailbox.index = 0;
-  }
-  else if (XdrvMailbox.index > 4) {
-    XdrvMailbox.index = 1;
-  }
+  if ('{' == XdrvMailbox.data[0]) {
+    CmndJson();
+  } else {
+    // Dimmer         - Show current Dimmer state
+    // Dimmer0 0..100 - Change both RGB and W(W) Dimmers
+    // Dimmer1 0..100 - Change RGB Dimmer
+    // Dimmer2 0..100 - Change W(W) Dimmer
+    // Dimmer3 0..100 - Change both RGB and W(W) Dimmers with no fading
+    // Dimmer<x> +    - Incerement Dimmer in steps of DimmerStep
+    // Dimmer<x> -    - Decrement Dimmer in steps of DimmerStep
+    uint32_t dimmer;
+    if (XdrvMailbox.index == 3) {
+      TasmotaGlobal.skip_light_fade = true;
+      XdrvMailbox.index = 0;
+    }
+    else if (XdrvMailbox.index > 4) {
+      XdrvMailbox.index = 1;
+    }
 
-  if ((light_controller.isCTRGBLinked()) || (0 == XdrvMailbox.index)) {
-    dimmer = light_state.getDimmer();
-  } else {
-    dimmer = light_state.getDimmer(XdrvMailbox.index);
-  }
-  // Handle +/-/!/</> special commands
-  if (1 == XdrvMailbox.data_len) {
-    if ('+' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer > (100 - Settings->dimmer_step - 1)) ? 100 : dimmer + Settings->dimmer_step;
-    } else if ('-' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer < (Settings->dimmer_step + 1)) ? 1 : dimmer - Settings->dimmer_step;
-    } else if ('!' == XdrvMailbox.data[0] && Light.fade_running) {
-      XdrvMailbox.payload = LightGetCurFadeBri();
-    } else if ('<' == XdrvMailbox.data[0] ) {
-      XdrvMailbox.payload = 1;
-    } else if ('>' == XdrvMailbox.data[0] ) {
-      XdrvMailbox.payload = 100;
-    }
-  }
-  // If value is ok, change it, otherwise report old value
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    if (light_controller.isCTRGBLinked()) {
-      // normal state, linked RGB and CW
-      if (4 == XdrvMailbox.index) {
-        // change both dimmers, retain ratio between white and color channels
-        uint32_t new_bri = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 255);
-        LightSetBriScaled(new_bri);
-      } else {
-        // change both dimmers
-        light_controller.changeDimmer(XdrvMailbox.payload);
-      }
-      LightPreparePower();
+    if ((light_controller.isCTRGBLinked()) || (0 == XdrvMailbox.index)) {
+      dimmer = light_state.getDimmer();
     } else {
-      if (0 != XdrvMailbox.index) {
-        light_controller.changeDimmer(XdrvMailbox.payload, XdrvMailbox.index);
-        LightPreparePower(1 << (XdrvMailbox.index - 1));    // recalculate only the target dimmer
-      } else {
-        // change both dimmers
-        light_controller.changeDimmer(XdrvMailbox.payload, 1);
-        light_controller.changeDimmer(XdrvMailbox.payload, 2);
-        LightPreparePower();
+      dimmer = light_state.getDimmer(XdrvMailbox.index);
+    }
+    // Handle +/-/!/</> special commands
+    if (1 == XdrvMailbox.data_len) {
+      if ('+' == XdrvMailbox.data[0]) {
+        XdrvMailbox.payload = (dimmer > (100 - Settings->dimmer_step - 1)) ? 100 : dimmer + Settings->dimmer_step;
+      } else if ('-' == XdrvMailbox.data[0]) {
+        XdrvMailbox.payload = (dimmer < (Settings->dimmer_step + 1)) ? 1 : dimmer - Settings->dimmer_step;
+      } else if ('!' == XdrvMailbox.data[0] && Light.fade_running) {
+        XdrvMailbox.payload = LightGetCurFadeBri();
+      } else if ('<' == XdrvMailbox.data[0] ) {
+        XdrvMailbox.payload = 1;
+      } else if ('>' == XdrvMailbox.data[0] ) {
+        XdrvMailbox.payload = 100;
       }
     }
-#if defined(USE_PWM_DIMMER) && defined(USE_DEVICE_GROUPS)
-    uint8_t bri = light_state.getBri();
-    if (bri != Settings->bri_power_on) {
-      Settings->bri_power_on = bri;
-      SendDeviceGroupMessage(Light.device, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings->bri_power_on);
+    // If value is ok, change it, otherwise report old value
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+      if (light_controller.isCTRGBLinked()) {
+        // normal state, linked RGB and CW
+        if (4 == XdrvMailbox.index) {
+          // change both dimmers, retain ratio between white and color channels
+          uint32_t new_bri = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 255);
+          LightSetBriScaled(new_bri);
+        } else {
+          // change both dimmers
+          light_controller.changeDimmer(XdrvMailbox.payload);
+        }
+        LightPreparePower();
+      } else {
+        if (0 != XdrvMailbox.index) {
+          light_controller.changeDimmer(XdrvMailbox.payload, XdrvMailbox.index);
+          LightPreparePower(1 << (XdrvMailbox.index - 1));    // recalculate only the target dimmer
+        } else {
+          // change both dimmers
+          light_controller.changeDimmer(XdrvMailbox.payload, 1);
+          light_controller.changeDimmer(XdrvMailbox.payload, 2);
+          LightPreparePower();
+        }
+      }
+  #if defined(USE_PWM_DIMMER) && defined(USE_DEVICE_GROUPS)
+      uint8_t bri = light_state.getBri();
+      if (bri != Settings->bri_power_on) {
+        Settings->bri_power_on = bri;
+        SendDeviceGroupMessage(Light.device, DGR_MSGTYP_PARTIAL_UPDATE, DGR_ITEM_BRI_POWER_ON, Settings->bri_power_on);
+      }
+  #endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
+      Light.update = true;
+      if (TasmotaGlobal.skip_light_fade) LightAnimate();
+    } else {
+      ResponseCmndNumber(dimmer);
     }
-#endif  // USE_PWM_DIMMER && USE_DEVICE_GROUPS
-    Light.update = true;
-    if (TasmotaGlobal.skip_light_fade) LightAnimate();
-  } else {
-    ResponseCmndNumber(dimmer);
+    TasmotaGlobal.skip_light_fade = false;
   }
-  TasmotaGlobal.skip_light_fade = false;
 }
 
 void CmndDimmerRange(void)
