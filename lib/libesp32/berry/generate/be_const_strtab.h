@@ -652,6 +652,7 @@ extern const bcstring be_const_str_set_channels;
 extern const bcstring be_const_str_set_chg_current;
 extern const bcstring be_const_str_set_dc_voltage;
 extern const bcstring be_const_str_set_dcdc_enable;
+extern const bcstring be_const_str_set_exten;
 extern const bcstring be_const_str_set_first_time;
 extern const bcstring be_const_str_set_gain;
 extern const bcstring be_const_str_set_height;
