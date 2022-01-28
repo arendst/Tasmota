@@ -262,7 +262,7 @@ be_define_const_str(check_not_method, "check_not_method", 2597324607u, 0, 16, &b
 be_define_const_str(check_privileged_access, "check_privileged_access", 3692933968u, 0, 23, NULL);
 be_define_const_str(class, "class", 2872970239u, 57, 5, NULL);
 be_define_const_str(class_init_obj, "class_init_obj", 178410604u, 0, 14, &be_const_str_set_useragent);
-be_define_const_str(classname, "classname", 1998589948u, 0, 9, NULL);
+be_define_const_str(classname, "classname", 1998589948u, 0, 9, &be_const_str_set_exten);
 be_define_const_str(classof, "classof", 1796577762u, 0, 7, &be_const_str_kv);
 be_define_const_str(clear, "clear", 1550717474u, 0, 5, &be_const_str_scale_uint);
 be_define_const_str(clear_first_time, "clear_first_time", 632769909u, 0, 16, &be_const_str_width_def);
@@ -644,6 +644,7 @@ be_define_const_str(set_channels, "set_channels", 1370190620u, 0, 12, NULL);
 be_define_const_str(set_chg_current, "set_chg_current", 336304386u, 0, 15, NULL);
 be_define_const_str(set_dc_voltage, "set_dc_voltage", 2181981936u, 0, 14, NULL);
 be_define_const_str(set_dcdc_enable, "set_dcdc_enable", 1594690786u, 0, 15, &be_const_str_widget_event);
+be_define_const_str(set_exten, "set_exten", 1721782768u, 0, 9, NULL);
 be_define_const_str(set_first_time, "set_first_time", 3111247550u, 0, 14, &be_const_str__X7D);
 be_define_const_str(set_gain, "set_gain", 3847781975u, 0, 8, &be_const_str_set_text);
 be_define_const_str(set_height, "set_height", 1080207399u, 0, 10, NULL);
@@ -1197,6 +1198,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 390,
-    .count = 803,
+    .count = 804,
     .table = m_string_table
 };
