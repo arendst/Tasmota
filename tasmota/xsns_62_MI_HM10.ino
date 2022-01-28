@@ -662,9 +662,11 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, int _rssi){
       _newSensor.feature.Btn=1;
       break;
     case MI_SCALE_V1:
+      _newSensor.weight=NAN;
       _newSensor.feature.scale=1;
     break;
     case MI_SCALE_V2:
+      _newSensor.weight=NAN;
       _newSensor.feature.scale=1;
       _newSensor.feature.impedance=1;
       break;
@@ -875,95 +877,145 @@ void HM10parseCGD1Packet(char * _buf, uint32_t _slot){ // no MiBeacon
 
 void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
 //void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID){
-  MiScaleV1Packet_t *_packetV1 = (MiScaleV1Packet_t*)_buf;
-  MiScaleV2Packet_t *_packetV2 = (MiScaleV2Packet_t*)_buf;
+    
+  uint8_t impedance_stabilized = 0;
+  uint8_t weight_stabilized = 0;
+  uint8_t weight_removed = 0;
+
+  if (isnan(MIBLEsensors[_slot].weight))
+  {
+    //First recieved packet, need to set default values to prevent memory garbage display
+    // For other packets only stable values will be displayed (or bridgeMode will send all packets)
+    MIBLEsensors[_slot].eventType.scale = 1;
+    MIBLEsensors[_slot].has_impedance = 0;
+    MIBLEsensors[_slot].weight_stabilized = 0;
+    MIBLEsensors[_slot].impedance_stabilized = 0;
+    MIBLEsensors[_slot].weight_removed = 0;
+    MIBLEsensors[_slot].weight = 0.0f;
+    MIBLEsensors[_slot].impedance = 0;
+    strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+  }
 
   // Mi Scale V1
   if (_type == 0x181d){ // 14-1-1-2
-
+    MiScaleV1Packet_t *_packetV1 = (MiScaleV1Packet_t*)_buf;
     if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
       DEBUG_SENSOR_LOG(PSTR("HM10: %s: at slot %u"), kHM10DeviceType[MIBLEsensors[_slot].type-1],_slot);
 
       MIBLEsensors[_slot].eventType.scale = 1;
 
-      MIBLEsensors[_slot].weight_stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
-      MIBLEsensors[_slot].weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
+      weight_stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
+      weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
+      
+      // Set sensor values for every packet in BridgedMode and for every packet with stable weight
+      if (HM10.option.directBridgeMode || (weight_stabilized && !weight_removed))
+      {
+        MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
+        MIBLEsensors[_slot].weight_removed = weight_removed;
 
-      if (_packetV1->status & (1 << 0)) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
-        MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
-      } else if(_packetV1->status & (1 << 4)) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
-        MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
-      } else {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
-        MIBLEsensors[_slot].weight = (float)_packetV1->weight / 200.0f;
+        if (_packetV1->status & (1 << 0))
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+          MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
+        }
+        else if (_packetV1->status & (1 << 4))
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+          MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
+        }
+        else
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+          MIBLEsensors[_slot].weight = (float)_packetV1->weight / 200.0f;
+        }
+
+        if (MIBLEsensors[_slot].weight_removed)
+        {
+          MIBLEsensors[_slot].weight = 0.0f;
+        }
+        // Can be changed to memcpy or smthng else ?
+        MIBLEsensors[_slot].datetime.year = _packetV1->year;
+        MIBLEsensors[_slot].datetime.month = _packetV1->month;
+        MIBLEsensors[_slot].datetime.day = _packetV1->day;
+        MIBLEsensors[_slot].datetime.hour = _packetV1->hour;
+        MIBLEsensors[_slot].datetime.minute = _packetV1->minute;
+        MIBLEsensors[_slot].datetime.second = _packetV1->second;
+
+        MIBLEsensors[_slot].shallSendMQTT = 1;
+ 
+        HM10.mode.shallTriggerTele = 1;
       }
-
-      if (MIBLEsensors[_slot].weight_removed) {
-        MIBLEsensors[_slot].weight = 0.0f;
-      }
-            // Can be changed to memcpy or smthng else ?
-      MIBLEsensors[_slot].datetime.year = _packetV2->year;
-      MIBLEsensors[_slot].datetime.month = _packetV2->month;
-      MIBLEsensors[_slot].datetime.day = _packetV2->day;
-      MIBLEsensors[_slot].datetime.hour = _packetV2->hour;
-      MIBLEsensors[_slot].datetime.minute = _packetV2->minute;
-      MIBLEsensors[_slot].datetime.second = _packetV2->second;
-
-      MIBLEsensors[_slot].shallSendMQTT = 1;
-      bool triggerTele = MIBLEsensors[_slot].weight_stabilized && ! MIBLEsensors[_slot].weight_removed  && MIBLEsensors[_slot].weight > 0;
-
-      if(HM10.option.directBridgeMode || triggerTele) HM10.mode.shallTriggerTele = 1;
     }
   }
 
   // Mi Scale V2
-  else if (_type == 0x181b){ // 17-1-1-2
+  // Scales measure weight at first step, after weight is stable - measure impedance.
+  //  So measurement (packet) can contain 'weight' or 'weight + impedance'
 
+  else if (_type == 0x181b){ // 17-1-1-2
+    MiScaleV2Packet_t *_packetV2 = (MiScaleV2Packet_t*)_buf;
     if ((_slot >= 0) && (_slot < MIBLEsensors.size())){
       DEBUG_SENSOR_LOG(PSTR("HM10: %s: at slot %u"), kHM10DeviceType[MIBLEsensors[_slot].type-1],_slot);
 
-      MIBLEsensors[_slot].eventType.scale = 1;
+      weight_stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
+      weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
+      impedance_stabilized = (_packetV2->status & (1 << 1)) ? 1 : 0;
 
-      MIBLEsensors[_slot].has_impedance = (_packetV2->status & (1 << 1)) ? 1 : 0;
-      MIBLEsensors[_slot].weight_stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
-      MIBLEsensors[_slot].impedance_stabilized = (_packetV2->status & (1 << 1)) ? 1 : 0;
-      MIBLEsensors[_slot].weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
+      //AddLog(LOG_LEVEL_DEBUG, PSTR("%s: MSCALE: WS %u, WR: %u, IS: %u "),D_CMND_HM10,weight_stabilized,weight_removed,impedance_stabilized);
 
-      if (_packetV2->weight_unit & (1 << 4)) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
-        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
-      } else if(_packetV2->weight_unit == 3) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
-        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
-      } else if(_packetV2->weight_unit == 2) {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
-        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 200.0f;
-      } else {
-        strcpy(MIBLEsensors[_slot].weight_unit, PSTR(""));
-        MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
-      }
+      // Set sensor values for every packet in BridgedMode and for every packet with stable weight
+      if (HM10.option.directBridgeMode || (weight_stabilized && !weight_removed))
+      {
+        MIBLEsensors[_slot].has_impedance = (_packetV2->status & (1 << 1)) ? 1 : 0;
+        MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
+        MIBLEsensors[_slot].impedance_stabilized = impedance_stabilized;
+        MIBLEsensors[_slot].weight_removed = weight_removed;
+        if (_packetV2->weight_unit & (1 << 4))
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
+          MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
+        }
+        else if (_packetV2->weight_unit == 3)
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
+          MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
+        }
+        else if (_packetV2->weight_unit == 2)
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR("kg"));
+          MIBLEsensors[_slot].weight = (float)_packetV2->weight / 200.0f;
+        }
+        else
+        {
+          strcpy(MIBLEsensors[_slot].weight_unit, PSTR(""));
+          MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
+        }
 
-      if (MIBLEsensors[_slot].weight_removed) {
-        MIBLEsensors[_slot].weight = 0.0f;
+        if (MIBLEsensors[_slot].weight_removed)
+        {
+          MIBLEsensors[_slot].weight = 0.0f;
+          
+        }
+        //Set impedance to zero after every stable weight measurement
         MIBLEsensors[_slot].impedance = 0;
-      }
-      else if (MIBLEsensors[_slot].has_impedance) {
-        MIBLEsensors[_slot].impedance = _packetV2->impedance;
-      }
-      // Can be changed to memcpy or smthng else ?
-      MIBLEsensors[_slot].datetime.year = _packetV2->year;
-      MIBLEsensors[_slot].datetime.month = _packetV2->month;
-      MIBLEsensors[_slot].datetime.day = _packetV2->day;
-      MIBLEsensors[_slot].datetime.hour = _packetV2->hour;
-      MIBLEsensors[_slot].datetime.minute = _packetV2->minute;
-      MIBLEsensors[_slot].datetime.second = _packetV2->second;
+        // If impedance stable or BridgeMode - set value
+        if (HM10.option.directBridgeMode || impedance_stabilized)
+        {
+          MIBLEsensors[_slot].impedance = MIBLEsensors[_slot].has_impedance ? _packetV2->impedance: 0;
+        }
+        // Can be changed to memcpy or smthng else ?
+        MIBLEsensors[_slot].datetime.year = _packetV2->year;
+        MIBLEsensors[_slot].datetime.month = _packetV2->month;
+        MIBLEsensors[_slot].datetime.day = _packetV2->day;
+        MIBLEsensors[_slot].datetime.hour = _packetV2->hour;
+        MIBLEsensors[_slot].datetime.minute = _packetV2->minute;
+        MIBLEsensors[_slot].datetime.second = _packetV2->second;
 
-      MIBLEsensors[_slot].shallSendMQTT = 1;
+        MIBLEsensors[_slot].shallSendMQTT = 1;
+        //Trigger in all cases - BridgeMode or weight_stabilized
+        HM10.mode.shallTriggerTele = 1;
+      }
 
-      bool triggerTele = MIBLEsensors[_slot].weight_stabilized && ! MIBLEsensors[_slot].weight_removed && MIBLEsensors[_slot].weight > 0;
-      if(HM10.option.directBridgeMode || triggerTele) HM10.mode.shallTriggerTele = 1;
     }
   }
 }
@@ -1341,7 +1393,7 @@ bool HM10SerialHandleFeedback(){                  // every 50 milliseconds
           if(_slot!=0xff){
             if (_type==0xa1c) HM10parseATC((char*)HM10.rxAdvertisement.svcData+2,_slot);
             else if (_type==0x0576) HM10parseCGD1Packet((char*)HM10.rxAdvertisement.svcData+2,_slot);
-            else if (_type==0x181b) HM10ParseMiScalePacket((char*)HM10.rxAdvertisement.svcData+2,_slot, _type);
+            else if (_type==0x181b) HM10ParseMiScalePacket((char*)HM10.rxAdvertisement.svcData+2,_slot, HM10.rxAdvertisement.SVC);
             else HM10parseMiBeacon((char*)HM10.rxAdvertisement.svcData+2,_slot);
           }
           else{
