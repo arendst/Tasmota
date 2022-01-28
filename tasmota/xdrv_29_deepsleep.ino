@@ -1,7 +1,7 @@
 /*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
-  Copyright (C) 2021  Stefan Bode
+  Copyright (C) 2022  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -154,11 +154,14 @@ void DeepSleepStart(void)
 
 void DeepSleepEverySecond(void)
 {
+#ifdef DEEPSLEEP_NETWORK_TIMEOUT
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi Info: up %d, wifidown %d, wifistatus %d, flag %d"),TasmotaGlobal.uptime, TasmotaGlobal.global_state.wifi_down, Wifi.status , deepsleep_flag);
   if (DEEPSLEEP_NETWORK_TIMEOUT && TasmotaGlobal.uptime > DEEPSLEEP_NETWORK_TIMEOUT && Wifi.status != WL_CONNECTED && !deepsleep_flag && DeepSleepEnabled()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("Error Wifi could not connect 15 seconds. Deepsleep") );
     deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
   }
+#endif // DEEPSLEEP_NETWORK_TIMEOUT
+
   if (!deepsleep_flag) { return; }
 
   if (DeepSleepEnabled()) {
