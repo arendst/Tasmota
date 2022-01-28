@@ -154,9 +154,13 @@ void DeepSleepStart(void)
 }
 
 void DeepSleepEverySecond(void)
-{
+{  
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi Info: up %d, wifidown %d, wifistatus %d, flag %d"),TasmotaGlobal.uptime, TasmotaGlobal.global_state.wifi_down, Wifi.status , deepsleep_flag);
+  if (TasmotaGlobal.uptime > 15 && Wifi.status != WL_CONNECTED && !deepsleep_flag && DeepSleepEnabled()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("Error Wifi could not connect 15 seconds. Deepsleep") );
+    deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
+  }
   if (!deepsleep_flag) { return; }
-
   if (DeepSleepEnabled()) {
     if (DEEPSLEEP_START_COUNTDOWN == deepsleep_flag) {  // Allow 4 seconds to update web console before deepsleep
       SettingsSaveAll();
