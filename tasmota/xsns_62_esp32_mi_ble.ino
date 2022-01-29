@@ -1729,7 +1729,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
 
       MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
       MIBLEsensors[_slot].weight_removed = weight_removed;
-      
+
       if (_packetV1->status & (1 << 0)) {
         strcpy(MIBLEsensors[_slot].weight_unit, PSTR("lbs"));
         MIBLEsensors[_slot].weight = (float)_packetV1->weight / 100.0f;
@@ -1745,10 +1745,8 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
         MIBLEsensors[_slot].weight = 0.0f;
       }
 
-      if(MI32.option.directBridgeMode) {
-        MIBLEsensors[_slot].shallSendMQTT = 1;
-        MI32.mode.shallTriggerTele = 1;
-      }
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MI32.mode.shallTriggerTele = 1;
     }
   }
 
@@ -1757,7 +1755,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
     weight_stabilized = (_packetV2->status & (1 << 5)) ? 1 : 0;
     weight_removed = (_packetV2->status & (1 << 7)) ? 1 : 0;
     impedance_stabilized = (_packetV2->status & (1 << 1)) ? 1 : 0;
-    if (!MI32.option.directBridgeMode && (!weight_stabilized || weight_removed /* || !impedance_stabilized */))
+    if (!MI32.option.directBridgeMode && (!weight_stabilized || weight_removed))
       return;
 
     uint32_t _slot = MIBLEgetSensorSlot(addr, UUID, 0);
@@ -1771,8 +1769,6 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
 
       MIBLEsensors[_slot].weight_stabilized = weight_stabilized;
       MIBLEsensors[_slot].weight_removed = weight_removed;
-      MIBLEsensors[_slot].impedance_stabilized = impedance_stabilized;
-      MIBLEsensors[_slot].impedance = _packetV2->impedance;
 
       if (_packetV2->weight_unit & (1 << 4)) {
         strcpy(MIBLEsensors[_slot].weight_unit, PSTR("jin"));
@@ -1788,15 +1784,23 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
         MIBLEsensors[_slot].weight = (float)_packetV2->weight / 100.0f;
       }
 
-      if (MIBLEsensors[_slot].weight_removed) {
+      if (weight_removed) {
         MIBLEsensors[_slot].weight = 0.0f;
-        MIBLEsensors[_slot].impedance = 0;
       }
 
-      if(MI32.option.directBridgeMode) {
-        MIBLEsensors[_slot].shallSendMQTT = 1;
-        MI32.mode.shallTriggerTele = 1;
+      MIBLEsensors[_slot].impedance = 0;
+      if (MI32.option.directBridgeMode || impedance_stabilized)
+      {
+        MIBLEsensors[_slot].impedance_stabilized = impedance_stabilized;
+        MIBLEsensors[_slot].impedance = _packetV2->impedance;
+
+        if (weight_removed) {
+          MIBLEsensors[_slot].impedance = 0;
+        } 
       }
+
+      MIBLEsensors[_slot].shallSendMQTT = 1;
+      MI32.mode.shallTriggerTele = 1;
     }
   }
 }
