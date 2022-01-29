@@ -9,21 +9,15 @@
 
 #ifdef USE_DISPLAY
 
-// Tasmota specific
-
 extern int be_ntv_display_start(bvm *vm);
+extern int be_ntv_display_dimmer(bvm *vm);
 
-/********************************************************************
-** Solidified module: display
-********************************************************************/
-be_local_module(display,
-    "display",
-    be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(start, -1), be_const_func(be_ntv_display_start) },
-    }))
-);
-BE_EXPORT_VARIABLE be_define_const_native_module(display);
-/********************************************************************/
+/* @const_object_info_begin
+module display (scope: global) {
+    start, func(be_ntv_display_start)
+    dimmer, func(be_ntv_display_dimmer)
+}
+@const_object_info_end */
+#include "be_fixed_display.h"
 
 #endif // USE_DISPLAY
