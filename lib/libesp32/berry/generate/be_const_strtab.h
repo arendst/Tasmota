@@ -333,6 +333,7 @@ extern const bcstring be_const_str_detect;
 extern const bcstring be_const_str_detected_X20on_X20bus;
 extern const bcstring be_const_str_digital_read;
 extern const bcstring be_const_str_digital_write;
+extern const bcstring be_const_str_dimmer;
 extern const bcstring be_const_str_dirty;
 extern const bcstring be_const_str_display;
 extern const bcstring be_const_str_display_X2Eini;
