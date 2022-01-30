@@ -126,6 +126,8 @@ String GetDeviceHardware(void) {
     #include "esp32/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
     #include "esp32s2/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32S3  // ESP32-S3
+    #include "esp32s3/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
     #include "esp32c3/rom/rtc.h"
   #else
@@ -277,6 +279,8 @@ extern "C" {
     #include "esp32/rom/spi_flash.h"
   #elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
     #include "esp32s2/rom/spi_flash.h"
+  #elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
+    #include "esp32s3/rom/spi_flash.h"
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
   #else
@@ -524,12 +528,14 @@ float CpuTemperature(void) {
   return t;
 */
 #else
-  // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
-  static float t = NAN;
-  if (isnan(t)) {
-    t = (float)temperatureRead();  // In Celsius
-  }
-  return t;
+  #ifndef CONFIG_IDF_TARGET_ESP32S3
+    // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
+    static float t = NAN;
+    if (isnan(t)) {
+      t = (float)temperatureRead();  // In Celsius
+    }
+    return t;
+  #endif
 #endif
 }
 
