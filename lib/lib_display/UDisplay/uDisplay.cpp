@@ -20,6 +20,10 @@
 #include <Arduino.h>
 #include "uDisplay.h"
 
+#ifdef ESP32
+#include "esp8266toEsp32.h"
+#endif
+
 // #define UDSP_DEBUG
 
 const uint16_t udisp_colors[]={UDISP_BLACK,UDISP_WHITE,UDISP_RED,UDISP_GREEN,UDISP_BLUE,UDISP_CYAN,UDISP_MAGENTA,\
@@ -428,9 +432,7 @@ Renderer *uDisplay::Init(void) {
 
     if (bpanel >= 0) {
 #ifdef ESP32
-        ledcSetup(ESP32_PWM_CHANNEL, 977, 8);   // use 10 bits resolution like in Light
-        ledcAttachPin(bpanel, ESP32_PWM_CHANNEL);
-        ledcWrite(ESP32_PWM_CHANNEL, 8);        // 38/255 correspond roughly to 50% visual brighness (with Gamma)
+        analogWrite(bpanel, 32);
 #else
         pinMode(bpanel, OUTPUT);
         digitalWrite(bpanel, HIGH);
@@ -1353,7 +1355,8 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_on != 0xff) spi_command_one(dsp_on);
       if (bpanel >= 0) {
 #ifdef ESP32
-        ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+        analogWrite(bpanel, dimmer10_gamma);
+        // ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
 #else
         digitalWrite(bpanel, HIGH);
 #endif
@@ -1363,7 +1366,8 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_off != 0xff) spi_command_one(dsp_off);
       if (bpanel >= 0) {
 #ifdef ESP32
-        ledcWrite(ESP32_PWM_CHANNEL, 0);
+        analogWrite(bpanel, 0);
+        // ledcWrite(ESP32_PWM_CHANNEL, 0);
 #else
         digitalWrite(bpanel, LOW);
 #endif
@@ -1402,16 +1406,17 @@ void udisp_dimm(uint8_t dim);
 // }
 
 // dim is 0..255
-void uDisplay::dim8(uint8_t dim, uint8_t dim_gamma) {           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
+void uDisplay::dim10(uint8_t dim, uint16_t dim_gamma) {           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
   dimmer8 = dim;
-  dimmer8_gamma = dim_gamma;
+  dimmer10_gamma = dim_gamma;
   if (ep_mode) {
     return;
   }
 
 #ifdef ESP32              // TODO should we also add a ESP8266 version for bpanel?
   if (bpanel >= 0) {      // is the BaclPanel GPIO configured
-    ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+    analogWrite(bpanel, dimmer10_gamma);
+    // ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
   } else if (dim_cbp) {
     dim_cbp(dim);
   }

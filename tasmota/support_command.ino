@@ -1523,56 +1523,6 @@ void CmndTemplate(void)
   if (!error) { TemplateJson(); }
 }
 
-void CmndPwm(void)
-{
-  if (TasmotaGlobal.pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings->pwm_range) && PinUsed(GPIO_PWM1, XdrvMailbox.index -1)) {
-      Settings->pwm_value[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      analogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(TasmotaGlobal.pwm_inverted, XdrvMailbox.index -1) ? Settings->pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
-    }
-    Response_P(PSTR("{"));
-    MqttShowPWMState();  // Render the PWM status to MQTT
-    ResponseJsonEnd();
-  }
-}
-
-void CmndPwmfrequency(void)
-{
-  if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload >= PWM_MIN) && (XdrvMailbox.payload <= PWM_MAX))) {
-    Settings->pwm_frequency = (1 == XdrvMailbox.payload) ? PWM_FREQ : XdrvMailbox.payload;
-    analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
-#ifdef USE_LIGHT
-    LightReapplyColor();
-    LightAnimate();
-#endif // USE_LIGHT
-  }
-  ResponseCmndNumber(Settings->pwm_frequency);
-}
-
-void CmndPwmrange(void) {
-  // Support only 8 (=255), 9 (=511) and 10 (=1023) bits resolution
-  if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload > 254) && (XdrvMailbox.payload < 1024))) {
-    uint32_t pwm_range = XdrvMailbox.payload;
-    uint32_t pwm_resolution = 0;
-    while (pwm_range) {
-      pwm_resolution++;
-      pwm_range >>= 1;
-    }
-    pwm_range = (1 << pwm_resolution) - 1;
-    uint32_t old_pwm_range = Settings->pwm_range;
-    Settings->pwm_range = (1 == XdrvMailbox.payload) ? PWM_RANGE : pwm_range;
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {
-      if (Settings->pwm_value[i] > Settings->pwm_range) {
-        Settings->pwm_value[i] = Settings->pwm_range;
-      }
-    }
-    if (Settings->pwm_range != old_pwm_range) {  // On ESP32 this prevents loss of duty state
-      analogWriteRange(Settings->pwm_range);     // Default is 1023 (Arduino.h)
-    }
-  }
-  ResponseCmndNumber(Settings->pwm_range);
-}
-
 void CmndButtonDebounce(void)
 {
   if ((XdrvMailbox.payload > 39) && (XdrvMailbox.payload < 1001)) {

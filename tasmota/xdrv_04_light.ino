@@ -227,7 +227,7 @@ struct LIGHT {
   uint8_t old_power = 1;
   uint8_t wakeup_active = 0;             // 0=inctive, 1=on-going, 2=about to start, 3=will be triggered next cycle
   uint8_t fixed_color_index = 1;
-  uint8_t pwm_offset = 0;                 // Offset in color buffer
+  uint8_t pwm_offset = 0;                 // Offset in color buffer, used by sm16716 to drive itself RGB, and PWM for CCT (value is 0 or 3)
   uint8_t max_scheme = LS_MAX -1;
 
   uint32_t wakeup_start_time = 0;
@@ -1030,7 +1030,7 @@ bool LightModuleInit(void)
   TasmotaGlobal.light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
 
   if (Settings->flag.pwm_control) {                     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {
+    for (uint32_t i = 0; i < LST_MAX; i++) {
       if (PinUsed(GPIO_PWM1, i)) { TasmotaGlobal.light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
   }
@@ -1164,9 +1164,7 @@ void LightInit(void)
 #ifdef ESP8266
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
-#ifdef ESP32
-        analogAttach(Pin(GPIO_PWM1, i));
-#endif  // ESP32
+        // For ESP32, the PWM are already attached by GpioInit() - GpioInitPwm()
       }
     }
     if (PinUsed(GPIO_ARIRFRCV)) {
@@ -2087,10 +2085,6 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
-#ifdef ESP32
-    uint32_t pwm_phase = 0;     // dephase each PWM channel with the value of the previous
-    uint32_t pwm_modulus = (1 << _pwm_bit_num) - 1;   // 1023
-#endif // ESP32
 
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
@@ -2116,17 +2110,18 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
-          uint32_t pwm_val = bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col;
 #ifdef ESP32
-          uint32_t pwm_phase_invert = bitRead(TasmotaGlobal.pwm_inverted, i) ? cur_col : 0;   // move phase if inverted
-          analogWritePhase(Pin(GPIO_PWM1, i), pwm_val, Settings->flag5.pwm_force_same_phase ? 0 : (pwm_phase + pwm_phase_invert) & pwm_modulus);
-          pwm_phase = (pwm_phase + cur_col) & pwm_modulus;
+          TasmotaGlobal.pwm_value[i] = cur_col;   // mark the new expected value
 #else // ESP32
-          analogWrite(Pin(GPIO_PWM1, i), pwm_val);
+          analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
 #endif // ESP32
         }
       }
     }
+#ifdef ESP32
+    PwmApplyGPIO();
+#endif // ESP32
+
 #ifdef USE_PWM_DIMMER
     // Animate brightness LEDs to follow PWM dimmer brightness
     if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(max_col));

@@ -35,10 +35,8 @@ Renderer *Init_uDisplay(const char *desc);
  * 
 \*********************************************************************************************/
 extern "C" {
-
-  int be_ntv_display_start(bvm *vm);
   int be_ntv_display_start(bvm *vm) {
-#ifdef USE_UNIVERSAL_DISPLAY
+  #ifdef USE_UNIVERSAL_DISPLAY
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 1 && be_isstring(vm, 1)) {
       const char * desc = be_tostring(vm, 1);
@@ -53,9 +51,25 @@ extern "C" {
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
-#else // USE_UNIVERSAL_DISPLAY
+  #else // USE_UNIVERSAL_DISPLAY
     be_raise(vm, "internal_error", "universal display driver not present");
-#endif // USE_UNIVERSAL_DISPLAY
+  #endif // USE_UNIVERSAL_DISPLAY
+  }
+
+  // `display.dimmer([dim:int]) -> int` sets the dimmer of display, value 0..100. If `0` then turn off display. If no arg, read the current value.
+  int be_ntv_display_dimmer(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    int32_t dimmer;
+    if (argc >= 1) {
+      if (!be_isint(vm, 1)) { be_raise(vm, "type_error", "arg must be int"); }
+      dimmer = be_toint(vm, 1);
+      if ((dimmer < 0) || (dimmer > 100)) { be_raise(vm, "value_error", "value must be in range 0..100"); }
+      be_pop(vm, argc);   // clear stack to avoid ripple errors in code called later
+      SetDisplayDimmer(dimmer);
+      ApplyDisplayDimmer();
+    }
+    be_pushint(vm, GetDisplayDimmer());
+    be_return(vm);
   }
 }
 

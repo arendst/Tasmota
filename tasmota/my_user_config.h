@@ -724,6 +724,7 @@
 // -- Serial sensors ------------------------------
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 //#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+//#define USE_CM110x                                // Add support for CM110x CO2 sensors (+2k7code)
   #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
   #define CO2_HIGH             1200              // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 //#define USE_PMS5003                              // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
@@ -747,7 +748,7 @@
 //#define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 //#define USE_GPS                                  // Add support for GPS and NTP Server for becoming Stratus 1 Time Source (+3k1 code, +132 bytes RAM)
 //  #define USE_FLOG                               // Add support for GPS logging in OTA's Flash (Experimental) (+2k9 code, +8 bytes RAM)
-//#define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge (+9k3 code)
+//#define USE_HM10                                 // (ESP8266 only) Add support for HM-10 as a BLE-bridge (+17k code)
 //#define USE_HRXL                                 // Add support for MaxBotix HRXL-MaxSonar ultrasonic range finders (+0k7)
 //#define USE_TASMOTA_CLIENT                       // Add support for Arduino Uno/Pro Mini via serial interface including flashing (+2k6 code, 64 mem)
   #define USE_TASMOTA_CLIENT_FLASH_SPEED 57600   // Usually 57600 for 3.3V variants and 115200 for 5V variants
@@ -793,7 +794,7 @@
   #define DDSU666_SPEED        9600              // Chint DDSU666 Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+3k1 code)
   #define SOLAXX1_SPEED        9600              // Solax X1 Modbus RS485 serial speed (default: 9600 baud)
-  #define SOLAXX1_PV2                            // Solax X1 using second PV
+//  #define SOLAXX1_PV2                            // Solax X1 using second PV
 //#define USE_LE01MR                               // Add support for F&F LE-01MR Modbus energy monitor (+1k code)
   #define LE01MR_SPEED         9600              // LE-01MR modbus baudrate (default: 9600)
   #define LE01MR_ADDR          1                 // LE-01MR modbus address (default: 0x01)

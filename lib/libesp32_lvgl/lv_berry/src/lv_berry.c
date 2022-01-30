@@ -43,7 +43,7 @@ int lv0_init(bvm *vm);
 int lv0_init(bvm *vm) {
   // "+_p" indicates that there must be an non NULL argument, either passed as comptr or returned by the function
   // Here, there is no function, so calling the constructor without a non-null comptr argument is rejected
-  return be_call_c_func(vm, NULL, "+_p", NULL);
+  return be_call_c_func(vm, NULL, "=_p", NULL);
 }
 
 /*********************************************************************************************\

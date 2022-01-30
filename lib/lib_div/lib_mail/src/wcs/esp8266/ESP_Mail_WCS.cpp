@@ -50,7 +50,9 @@ extern "C"
 #include <lwip/inet.h>
 #include <lwip/netif.h>
 #include <include/ClientContext.h>
-#include <c_types.h>
+#ifdef ESP8266
+  #include <c_types.h>
+#endif
 #include <coredecls.h>
 
 #if !CORE_MOCK

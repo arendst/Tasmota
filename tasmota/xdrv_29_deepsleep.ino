@@ -1,7 +1,7 @@
 /*
   xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
-  Copyright (C) 2021  Stefan Bode
+  Copyright (C) 2022  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,6 +32,9 @@
 
 #define D_PRFX_DEEPSLEEP "DeepSleep"
 #define D_CMND_DEEPSLEEP_TIME "Time"
+#ifndef DEEPSLEEP_NETWORK_TIMEOUT
+  #define DEEPSLEEP_NETWORK_TIMEOUT 15
+#endif
 
 const uint32_t DEEPSLEEP_MAX = 10 * 366 * 24 * 60 * 60;  // Allow max 10 years sleep
 const uint32_t DEEPSLEEP_MAX_CYCLE = 60 * 60;            // Maximum time for a deepsleep as defined by chip hardware
@@ -137,8 +140,6 @@ void DeepSleepPrepare(void)
 
 void DeepSleepStart(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Sleeping"));  // Won't show in GUI
-
   WifiShutdown();
   RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - LocalTime();
   RtcSettingsSave();
@@ -155,6 +156,12 @@ void DeepSleepStart(void)
 
 void DeepSleepEverySecond(void)
 {
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Wifi Info: up %d, wifidown %d, wifistatus %d, flag %d"),TasmotaGlobal.uptime, TasmotaGlobal.global_state.wifi_down, Wifi.status , deepsleep_flag);
+  if (DEEPSLEEP_NETWORK_TIMEOUT && TasmotaGlobal.uptime > DEEPSLEEP_NETWORK_TIMEOUT && Wifi.status != WL_CONNECTED && !deepsleep_flag && DeepSleepEnabled()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("Error Wifi could not connect %d seconds. Deepsleep"), DEEPSLEEP_NETWORK_TIMEOUT);
+    deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
+  }
+
   if (!deepsleep_flag) { return; }
 
   if (DeepSleepEnabled()) {

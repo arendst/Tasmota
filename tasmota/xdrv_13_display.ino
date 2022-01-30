@@ -1989,7 +1989,7 @@ void CmndDisplayMode(void) {
 // Apply the current display dimmer
 void ApplyDisplayDimmer(void) {
   uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
-  uint8_t dimmer8_gamma = ledGamma(dimmer8);
+  uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
     ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
   }
@@ -1997,7 +1997,7 @@ void ApplyDisplayDimmer(void) {
     ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
   }
   if (renderer) {
-    renderer->dim8(dimmer8, dimmer8_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
+    renderer->dim10(dimmer8, dimmer10_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
 #ifdef USE_BERRY
     // still call Berry virtual display in case it is not managed entirely by renderer
     Xdsp18(FUNC_DISPLAY_DIM);

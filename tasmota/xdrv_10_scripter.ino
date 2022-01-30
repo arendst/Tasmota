@@ -59,6 +59,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #ifndef SCRIPT_MAXSSIZE
 #define SCRIPT_MAXSSIZE 48
 #endif
+
+
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
 #define PMEM_SIZE sizeof(Settings->script_pram)
@@ -134,19 +136,19 @@ Ticker Script_ticker4;
 
 void Script_ticker1_end(void) {
   Script_ticker1.detach();
-  Run_Scripter(">ti1", 4, 0);
+  Run_Scripter1(">ti1", 4, 0);
 }
 void Script_ticker2_end(void) {
   Script_ticker2.detach();
-  Run_Scripter(">ti2", 4, 0);
+  Run_Scripter1(">ti2", 4, 0);
 }
 void Script_ticker3_end(void) {
   Script_ticker3.detach();
-  Run_Scripter(">ti3", 4, 0);
+  Run_Scripter1(">ti3", 4, 0);
 }
 void Script_ticker4_end(void) {
   Script_ticker4.detach();
-  Run_Scripter(">ti4", 4, 0);
+  Run_Scripter1(">ti4", 4, 0);
 }
 #endif
 
@@ -435,6 +437,7 @@ struct SCRIPT_MEM {
     char *glob_script = 0;
     char *fast_script = 0;
     char *event_script = 0;
+    char *html_script = 0;
     char *web_pages[5];
     uint32_t script_lastmillis;
     bool event_handeled = false;
@@ -489,6 +492,7 @@ char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
 uint8_t UfsReject(char *name);
 void fread_str(uint8_t fref, char *sp, uint16_t slen);
+char *eval_sub(char *lp, float *fvar, char *rstr);
 
 void ScriptEverySecond(void) {
 
@@ -514,11 +518,11 @@ void ScriptEverySecond(void) {
         }
       }
     }
-    Run_Scripter(">S", 2, 0);
+    Run_Scripter1(">S", 2, 0);
 
 #ifdef USE_HOMEKIT
     if (glob_script_mem.homekit_running == false) {
-      uint8_t homekit_found = Run_Scripter(">h", -2, 0);
+      uint8_t homekit_found = Run_Scripter1(">h", -2, 0);
       if (homekit_found == 99) {
         if (!TasmotaGlobal.global_state.wifi_down) {
           homekit_main(glob_script_mem.section_ptr, 0);
@@ -988,7 +992,7 @@ char *script;
 #ifdef USE_SCRIPT_GLOBVARS
     if (glob_script_mem.udp_flags.udp_used) {
       Script_Init_UDP();
-      if (Run_Scripter(">G", -2, 0) == 99) {glob_script_mem.glob_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.glob_script = 0;}
+      if (Run_Scripter1(">G", -2, 0) == 99) {glob_script_mem.glob_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.glob_script = 0;}
     }
 #endif //USE_SCRIPT_GLOBVARS
 
@@ -1098,7 +1102,7 @@ void Script_PollUdp(void) {
             glob_script_mem.last_udp_ip = glob_script_mem.Script_PortUdp.remoteIP();
             SetChanged(index);
             if (glob_script_mem.glob_script) {
-              Run_Scripter(glob_script_mem.glob_script, 0, 0);
+              Run_Scripter1(glob_script_mem.glob_script, 0, 0);
             }
           }
         }
@@ -1937,7 +1941,8 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
     tind->index = 0;
     tind->bits.data = 0;
 
-    if (isdigit(*lp) || (*lp=='-' && isdigit(*(lp+1))) || *lp=='.') {
+    //Serial.printf("Stack 2: %d\n",GetStack());
+    if (isdigit(*lp) || (*lp == '-' && isdigit(*(lp+1))) || *lp == '.') {
       // isnumber
         if (fp) {
           if (*lp == '0' && *(lp + 1) == 'x') {
@@ -1957,20 +1962,21 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         *vtype = NUM_RES;
         return lp;
     }
-    if (*lp=='"') {
+
+    if (*lp == '"') {
       lp++;
-      while (*lp!='"') {
-        if (*lp==0 || *lp==SCRIPT_EOL) break;
+      while (*lp != '"') {
+        if (*lp == 0 || *lp == SCRIPT_EOL) break;
         uint8_t iob = *lp;
-        if (iob=='\\') {
+        if (iob == '\\') {
           lp++;
-          if (*lp=='t') {
+          if (*lp == 't') {
             iob = '\t';
-          } else if (*lp=='n') {
+          } else if (*lp == 'n') {
             iob = '\n';
-          } else if (*lp=='r') {
+          } else if (*lp == 'r') {
             iob = '\r';
-          } else if (*lp=='\\') {
+          } else if (*lp == '\\') {
             iob = '\\';
           } else {
             lp--;
@@ -1995,9 +2001,9 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
     }
 
     const char *term="\n\r ])=+-/*%><!^&|}{";
-    for (count = 0; count<sizeof(vname); count++) {
+    for (count = 0; count < sizeof(vname); count++) {
         char iob = lp[count];
-        if (!iob || strchr(term,iob)) {
+        if (!iob || strchr(term, iob)) {
             vname[count] = 0;
             break;
         }
@@ -2027,15 +2033,16 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
       ja++;
       olen = strlen(dvnam);
     }
-    for (count = 0; count<glob_script_mem.numvars; count++) {
+
+    for (count = 0; count < glob_script_mem.numvars; count++) {
         char *cp = glob_script_mem.glob_vnp + glob_script_mem.vnp_offset[count];
         uint8_t slen = strlen(cp);
-        if (slen==olen && *cp==dvnam[0]) {
+        if (slen == olen && *cp == dvnam[0]) {
             if (!strncmp(cp, dvnam, olen)) {
                 uint8_t index = vtp[count].index;
                 *tind = vtp[count];
                 tind->index = count; // overwrite with global var index
-                if (vtp[count].bits.is_string==0) {
+                if (vtp[count].bits.is_string == 0) {
                     *vtype = NTYPE | index;
                     if (vtp[count].bits.is_filter) {
                       if (ja) {
@@ -2062,6 +2069,9 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         }
     }
 
+#define USE_JSON
+
+#ifdef USE_JSON
     if (gv && gv->jo) {
       // look for json input
 
@@ -2176,9 +2186,13 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         }
       }
     }
+#endif
+
 
 chknext:
+
     switch (vname[0]) {
+
       case 'a':
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(lp, "acos(", 5)) {
@@ -2227,6 +2241,7 @@ chknext:
           len = 0;
           goto exit;
         }
+
         if (!strncmp(lp, "acp(", 4)) {
           lp += 4;
           SCRIPT_SKIP_SPACES
@@ -2577,7 +2592,7 @@ chknext:
           uint8_t find = fvar;
           if (find>=SFS_MAX) find = SFS_MAX - 1;
           uint8_t index = 0;
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           char *cp = str;
           if (glob_script_mem.file_flags[find].is_open) {
             if (glob_script_mem.file_flags[find].is_dir) {
@@ -2677,7 +2692,7 @@ chknext:
           goto nfuncexit;
         }
         if (!strncmp(lp, "fd(", 3)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           ufsp->remove(str);
           goto nfuncexit;
@@ -2722,7 +2737,7 @@ chknext:
 #endif //ESP32 && USE_WEBCAM
 #ifdef USE_SCRIPT_FATFS_EXT
         if (!strncmp(lp, "fe(", 3)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           // execute script
           File ef = ufsp->open(str, FS_FILE_READ);
@@ -2743,7 +2758,7 @@ chknext:
           goto nfuncexit;
         }
         if (!strncmp(lp, "fmd(", 4)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->mkdir(str);
           goto nfuncexit;
@@ -2758,13 +2773,13 @@ chknext:
           goto nfuncexit;
         }
         if (!strncmp(lp, "frd(", 4)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->rmdir(str);
           goto nfuncexit;
         }
         if (!strncmp(lp, "fx(", 3)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           if (ufsp->exists(str)) fvar = 1;
           else fvar = 0;
@@ -2778,11 +2793,11 @@ chknext:
         }
         if (!strncmp(lp, "frn(", 4)) {
           // rename a file
-          char fn_from[glob_script_mem.max_ssize + 1];
+          char fn_from[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, fn_from, 0);
           SCRIPT_SKIP_SPACES
 
-          char fn_to[glob_script_mem.max_ssize + 1];
+          char fn_to[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp, OPER_EQU, fn_to, 0);
           SCRIPT_SKIP_SPACES
 
@@ -2934,7 +2949,7 @@ chknext:
           SCRIPT_SKIP_SPACES
 
           if (find >= SFS_MAX) find = SFS_MAX - 1;
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           if (glob_script_mem.file_flags[find].is_open) {
             uint8_t first = 0;
             for (uint32_t cnt = 0; cnt < alen; cnt++) {
@@ -2968,7 +2983,7 @@ chknext:
 #endif // USE_SCRIPT_FATFS_EXT
         if (!strncmp(lp, "fl1(", 4) || !strncmp(lp, "fl2(", 4) )  {
           uint8_t lknum = *(lp+2)&3;
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           if (lknum<1 || lknum>2) lknum = 1;
           strlcpy(glob_script_mem.flink[lknum - 1], str, 14);
@@ -3299,6 +3314,7 @@ chknext:
         }
 #endif // USE_SCRIPT_I2C
         break;
+
       case 'l':
         if (!strncmp(lp, "lip", 3)) {
           if (sp) strlcpy(sp, (const char*)WiFi.localIP().toString().c_str(), glob_script_mem.max_ssize);
@@ -3427,6 +3443,14 @@ chknext:
         }
 #endif //USE_MORITZ
         break;
+
+      case 'n':
+        if (!strncmp(vname, "npwr", 4)) {
+          fvar = TasmotaGlobal.devices_present;
+          goto exit;
+        }
+        break;
+
       case 'p':
         if (!strncmp(lp, "pin[", 4)) {
           // raw pin level
@@ -3508,7 +3532,7 @@ chknext:
         if (!strncmp(lp, "pwr[", 4)) {
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<=TasmotaGlobal.devices_present) {
+          if (index <= TasmotaGlobal.devices_present) {
             fvar = bitRead(TasmotaGlobal.power, index - 1);
           } else {
             fvar = -1;
@@ -3519,7 +3543,7 @@ chknext:
         if (!strncmp(lp, "pc[", 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<1 || index>MAX_COUNTERS) index = 1;
+          if (index < 1 || index > MAX_COUNTERS) index = 1;
           fvar = RtcSettings.pulse_counter[index - 1];
           len += 1;
           goto exit;
@@ -3557,6 +3581,7 @@ chknext:
         }
 #endif
         break;
+
       case 's':
         if (!strncmp(vname, "secs", 4)) {
           fvar = RtcTime.second;
@@ -3679,7 +3704,7 @@ chknext:
             }
           }
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           f2char(fvar, dprec, lzero, str);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           lp++;
@@ -3920,7 +3945,7 @@ extern char *SML_GetSVal(uint32_t index);
         }
         if (!strncmp(lp, "sr(", 3)) {
           uint16_t size = glob_script_mem.max_ssize;
-          char str[size];
+          char str[SCRIPT_MAXSSIZE];
           memset(str, 0, size);
           lp += 3;
           uint8_t runt = 0;
@@ -3956,12 +3981,13 @@ extern char *SML_GetSVal(uint32_t index);
           if (Script_Close_Serial()) {
             fvar = 0;
           }
-          lp+=4;
+          lp += 4;
           len = 0;
           goto exit;
         }
 #endif //USE_SCRIPT_SERIAL
         break;
+
       case 't':
         if (!strncmp(vname, "time", 4)) {
           fvar = MinutesPastMidnight();
@@ -3991,25 +4017,25 @@ extern char *SML_GetSVal(uint32_t index);
 #ifdef USE_SCRIPT_TIMER
         if (!strncmp(lp, "ts1(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker1.attach_ms(fvar, Script_ticker1_end);
           goto nfuncexit;
         }
         if (!strncmp(lp, "ts2(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker2.attach_ms(fvar, Script_ticker2_end);
           goto nfuncexit;
         }
         if (!strncmp(lp, "ts3(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker3.attach_ms(fvar, Script_ticker3_end);
           goto nfuncexit;
         }
         if (!strncmp(lp, "ts4(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker4.attach_ms(fvar, Script_ticker4_end);
           goto nfuncexit;
         }
@@ -4020,7 +4046,7 @@ extern char *SML_GetSVal(uint32_t index);
         if (!strncmp(lp, "tbut[", 5)) {
           GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<1 || index>MAX_TOUCH_BUTTONS) index = 1;
+          if (index < 1 || index > MAX_TOUCH_BUTTONS) index = 1;
           index--;
           if (buttons[index]) {
             fvar = buttons[index]->vpower.on_off;
@@ -4033,11 +4059,13 @@ extern char *SML_GetSVal(uint32_t index);
 
 #endif //USE_TOUCH_BUTTONS
 #endif //USE_DISPLAY
+
+
 #if 0
         if (!strncmp(lp, "test(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint32_t cycles;
-          uint64_t accu=0;
+          uint64_t accu = 0;
           char sbuffer[32];
           // PSTR performance test
           // this is best case since everything will be in cache
@@ -4236,27 +4264,19 @@ extern char *SML_GetSVal(uint32_t index);
         }
         break;
       case '#':
-        { char sub[128];
-          // subroutine
-          sub[0] = '=';
-          strncpy(sub + 1, lp, sizeof(sub) - 1);
-          char *xp = scripter_sub(sub, 0);
-          lp += (uint32_t)xp - (uint32_t)sub - 1;
-
-          if (glob_script_mem.retstr) {
-            if (sp) strlcpy(sp, glob_script_mem.retstr, glob_script_mem.max_ssize);
-            free (glob_script_mem.retstr);
-            goto strexit;
-          } else {
-            fvar = glob_script_mem.retval;
-            goto exit;
-          }
+        len = 0;
+        lp = eval_sub(lp, &fvar, sp);
+        if (glob_script_mem.retstr)  {
+          goto strexit;
+        } else {
+          goto exit;
         }
         break;
 
       default:
         break;
     }
+
     // nothing valid found
 notfound:
     if (fp) *fp=0;
@@ -4281,8 +4301,6 @@ strexit:
     tind->bits.is_string = 1;
     return lp + len;
 }
-
-
 
 char *getop(char *lp, uint8_t *operand) {
     switch (*lp) {
@@ -5005,7 +5023,34 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
 #endif // ESP32
 }
 
-
+char *eval_sub(char *lp, float *fvar, char *rstr) {
+  scripter_sub(lp - 1, 0);
+  while (1) {
+    if (*lp == ')') {
+      lp++;
+      break;
+    }
+    if (*lp == SCRIPT_EOL || *lp == '+' || *lp == '-') {
+      break;
+    }
+    lp++;
+  }
+  if (glob_script_mem.retstr) {
+    if (rstr) {
+      strcpy(rstr, glob_script_mem.retstr);
+    } else {
+      *fvar = CharToFloat(glob_script_mem.retstr);
+    }
+    free (glob_script_mem.retstr);
+  } else {
+    if (fvar) {
+      *fvar = glob_script_mem.retval;
+    } else {
+      dtostrfd(glob_script_mem.retval, 6, rstr);
+    }
+  }
+  return lp;
+}
 
 //#define IFTHEN_DEBUG
 
@@ -5023,10 +5068,10 @@ char *scripter_sub(char *lp, uint8_t fromscriptcmd) {
   if (fromscriptcmd) {
     char *sp = glob_script_mem.scriptptr;
     glob_script_mem.scriptptr = glob_script_mem.scriptptr_bu;
-    Run_Scripter(slp, plen, 0);
+    Run_Scripter1(slp, plen, 0);
     glob_script_mem.scriptptr = sp;
   } else {
-    Run_Scripter(slp, plen, 0);
+    Run_Scripter1(slp, plen, 0);
   }
   lp = slp;
   return lp;
@@ -5035,6 +5080,19 @@ char *scripter_sub(char *lp, uint8_t fromscriptcmd) {
 int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv);
 
 #define IF_NEST 8
+
+int16_t Run_Scripter1(const char *type, int8_t tlen, const char *js) {
+int16_t retval;
+  if (!glob_script_mem.scriptptr) {
+    return -99;
+  }
+  if (tasm_cmd_activ && tlen > 0) return 0;
+  struct GVARS gv;
+  gv.jo = 0;
+  retval = Run_script_sub(type, tlen, &gv);
+  return retval;
+}
+
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, const char *js) {
 int16_t retval;
@@ -5098,6 +5156,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
         // skip leading spaces
         startline:
         SCRIPT_SKIP_SPACES
+        while (*lp == '\t') {lp++;}
         // skip empty line
         SCRIPT_SKIP_EOL
         // skip comment
@@ -5350,15 +5409,19 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             }
 #ifdef USE_DISPLAY
             else if (!strncmp(lp, "dt", 2)) {
-              char dstbuf[256];
+              //char dstbuf[256];
               lp += 2;
               SCRIPT_SKIP_SPACES
-              Replace_Cmd_Vars(lp, 1, dstbuf, sizeof(dstbuf));
-              char *savptr = XdrvMailbox.data;
-              XdrvMailbox.data = dstbuf;
-              XdrvMailbox.data_len = 0;
-              DisplayText();
-              XdrvMailbox.data = savptr;
+              char *dstbuf = (char*)malloc(256);
+              if (dstbuf) {
+                Replace_Cmd_Vars(lp, 1, dstbuf, 256);
+                char *savptr = XdrvMailbox.data;
+                XdrvMailbox.data = dstbuf;
+                XdrvMailbox.data_len = 0;
+                DisplayText();
+                XdrvMailbox.data = savptr;
+                free(dstbuf);
+              }
               goto next_line;
             }
 #endif //USE_DISPLAY
@@ -5491,6 +5554,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               lp++;
               goto next_line;
             }
+#ifdef USE_SCRIPT_WEB_DISPLAY
             else if (!strncmp(lp, "wcs", 3)) {
               lp+=4;
               // skip one space after cmd
@@ -5505,20 +5569,30 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               WSContentFlush();
               goto next_line;
             }
+#endif
             else if (!strncmp(lp, "rapp", 3)) {
               lp+=4;
               // skip one space after cmd
-              char tmp[256];
-              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
-              ResponseAppend_P(PSTR("%s"), tmp);
+              char *tmp = (char*)malloc(256);
+              if (tmp) {
+                Replace_Cmd_Vars(lp ,1 , tmp, 256);
+                ResponseAppend_P(PSTR("%s"), tmp);
+                free(tmp);
+              }
               goto next_line;
             }
+
+
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
             else if (!strncmp(lp, "mail", 4)) {
               lp+=5;
-              char tmp[256];
-              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
-              SendMail(tmp);
+              //char tmp[256];
+              char *tmp = (char*)malloc(256);
+              if (tmp) {
+                Replace_Cmd_Vars(lp ,1 , tmp, 256);
+                SendMail(tmp);
+                free(tmp);
+              }
               goto next_line;
             }
 #endif
@@ -5601,11 +5675,11 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             }
 
             // check for variable result
-            if (if_state[ifstck]==1) {
+            if (if_state[ifstck] == 1) {
               // evaluate exxpression
               lp = Evaluate_expression(lp, and_or, &if_result[ifstck], gv);
               SCRIPT_SKIP_SPACES
-              if (*lp=='{' && if_state[ifstck]==1) {
+              if (*lp == '{' && if_state[ifstck] == 1) {
                 lp += 1; // then
                 if_state[ifstck] = 2;
                 if (if_exe[ifstck - 1]) if_exe[ifstck] = if_result[ifstck];
@@ -5614,7 +5688,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             } else {
               char *vnp = lp;
               lp = isvar(lp, &vtype, &ind, &sysvar, 0, gv);
-              if (vtype!=VAR_NV) {
+              if (vtype != VAR_NV) {
 #ifdef USE_SCRIPT_GLOBVARS
                   char varname[16];
                   uint32_t vnl = (uint32_t)lp - (uint32)vnp;
@@ -5642,15 +5716,25 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                       }
                       numeric = 1;
                       lp = getop(lp, &lastop);
-                      char *slp = lp;
-                      glob_script_mem.glob_error = 0;
-                      lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-                      if (glob_script_mem.glob_error==1) {
-                        // mismatch was string, not number
-                        // get the string and convert to number
-                        lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
-                        fvar = CharToFloat(cmpstr);
+#ifdef SCRIPT_LM_SUB
+                      if (*lp=='#') {
+                        // subroutine
+                        lp = eval_sub(lp, &fvar, 0);
+                      } else {
+#endif
+                        char *slp = lp;
+                        glob_script_mem.glob_error = 0;
+                        //Serial.printf("Stack 1: %d\n",GetStack());
+                        lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+                        if (glob_script_mem.glob_error == 1) {
+                          // mismatch was string, not number
+                          // get the string and convert to number
+                          lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
+                          fvar = CharToFloat(cmpstr);
+                        }
+#ifdef SCRIPT_LM_SUB
                       }
+#endif
                       switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
@@ -5740,16 +5824,24 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                     // string result
                     char str[SCRIPT_MAXSSIZE];
                     lp = getop(lp, &lastop);
-                    char *slp = lp;
-                    glob_script_mem.glob_error = 0;
-                    lp = GetStringArgument(lp, OPER_EQU, str, gv);
-                    if ((!gv || !gv->jo) && glob_script_mem.glob_error) {
-                      // mismatch
-                      lp = GetNumericArgument(slp, OPER_EQU, &fvar, 0);
-                      dtostrfd(fvar, 6, str);
+#ifdef SCRIPT_LM_SUB
+                    if (*lp=='#') {
+                      // subroutine
+                      lp = eval_sub(lp, 0, str);
+                    } else {
+#endif
+                      char *slp = lp;
                       glob_script_mem.glob_error = 0;
+                      lp = GetStringArgument(lp, OPER_EQU, str, gv);
+                      if ((!gv || !gv->jo) && glob_script_mem.glob_error) {
+                        // mismatch
+                        lp = GetNumericArgument(slp, OPER_EQU, &fvar, 0);
+                        dtostrfd(fvar, 6, str);
+                        glob_script_mem.glob_error = 0;
+                      }
+#ifdef SCRIPT_LM_SUB
                     }
-
+#endif
                     if (!glob_script_mem.var_not_found) {
                       // var was changed
                       SetChanged(globvindex);
@@ -5802,15 +5894,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                 }
                 // check for subroutine
                 char *ctype = (char*)type;
-                if (*ctype=='#') {
+                if (*ctype == '#') {
                   // check for parameter
                   ctype += tlen;
                   char nxttok = '(';
-                  char *argptr = ctype+tlen;
-
+                  char *argptr = ctype + tlen;
                   lp += tlen;
                   do {
-                    if (*ctype==nxttok && *lp==nxttok) {
+                    if (*ctype == nxttok && *lp == nxttok) {
                       float fparam;
                       numeric = 1;
                       glob_script_mem.glob_error = 0;
@@ -5821,14 +5912,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         // get the string
                         argptr = GetStringArgument((char*)ctype + 1, OPER_EQU, cmpstr, 0);
                       }
-                      if (*lp==nxttok) {
+                      if (*lp == nxttok) {
                         // fetch destination
                         lp++;
                         lp = isvar(lp, &vtype, &ind, 0, 0, gv);
-                        if (vtype!=VAR_NV) {
+                        if (vtype != VAR_NV) {
                           // found variable as result
                           uint8_t index = glob_script_mem.type[ind.index].index;
-                          if ((vtype&STYPE)==0) {
+                          if ((vtype & STYPE) == 0) {
                               // numeric result
                               dfvar = &glob_script_mem.fvars[index];
                               if (numeric) {
@@ -5850,14 +5941,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         }
                       }
                     } else {
-                      if (*ctype==nxttok || (*lp!=SCRIPT_EOL && *lp!='?')) {
+                      if (*ctype == nxttok || (*lp != SCRIPT_EOL && *lp != '?')) {
                         // revert
                         section = 0;
                       }
                     }
                     nxttok = ' ';
                     ctype = argptr;
-                  } while (*lp==' ' && (section == 1) );
+                  } while (*lp == ' ' && (section == 1) );
                 }
             }
         }
@@ -5916,7 +6007,7 @@ void ScripterEvery100ms(void) {
     }
   }
   if (bitRead(Settings->rule_enabled, 0)) {
-    if (glob_script_mem.fast_script) Run_Scripter(glob_script_mem.fast_script, 0, 0);
+    if (glob_script_mem.fast_script) Run_Scripter1(glob_script_mem.fast_script, 0, 0);
   }
 }
 
@@ -6386,24 +6477,30 @@ void SaveScriptEnd(void) {
     Script_Close_Serial();
 #endif
 
-    Run_Scripter(">B\n", 3, 0);
-    Run_Scripter(">BS", 3, 0);
+    set_callbacks();
+
+    Run_Scripter1(">B\n", 3, 0);
+    Run_Scripter1(">BS", 3, 0);
 
     //glob_script_mem.fast_script = Run_Scripter(">F", -2, 0);
-    if (Run_Scripter(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
-    if (Run_Scripter(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
 
     script_set_web_pages();
 
   }
 }
 
+void set_callbacks() {
+  if (Run_Scripter1(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
+  if (Run_Scripter1(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
+  if (Run_Scripter1(">C", -2, 0) == 99) {glob_script_mem.html_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.html_script = 0;}
+}
+
 void script_set_web_pages(void) {
-  if (Run_Scripter(">W", -2, 0) == 99) {glob_script_mem.web_pages[0] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[0] = 0;}
-  if (Run_Scripter(">w ", -3, 0) == 99) {glob_script_mem.web_pages[1] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[1] = 0;}
-  if (Run_Scripter(">w1 ", -4, 0) == 99) {glob_script_mem.web_pages[2] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[2] = 0;}
-  if (Run_Scripter(">w2 ", -4, 0) == 99) {glob_script_mem.web_pages[3] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[3] = 0;}
-  if (Run_Scripter(">w3 ", -4, 0) == 99) {glob_script_mem.web_pages[4] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[4] = 0;}
+  if (Run_Scripter1(">W", -2, 0) == 99) {glob_script_mem.web_pages[0] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[0] = 0;}
+  if (Run_Scripter1(">w ", -3, 0) == 99) {glob_script_mem.web_pages[1] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[1] = 0;}
+  if (Run_Scripter1(">w1 ", -4, 0) == 99) {glob_script_mem.web_pages[2] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[2] = 0;}
+  if (Run_Scripter1(">w2 ", -4, 0) == 99) {glob_script_mem.web_pages[3] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[3] = 0;}
+  if (Run_Scripter1(">w3 ", -4, 0) == 99) {glob_script_mem.web_pages[4] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[4] = 0;}
 }
 
 #endif // USE_WEBSERVER
@@ -6623,7 +6720,7 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
 void Script_Check_Hue(String *response) {
   if (!bitRead(Settings->rule_enabled, 0)) return;
 
-  uint8_t hue_script_found = Run_Scripter(">H", -2, 0);
+  uint8_t hue_script_found = Run_Scripter1(">H", -2, 0);
   if (hue_script_found!=99) return;
 
   char tmp[256];
@@ -6885,7 +6982,7 @@ void Script_Handle_Hue(String *path) {
   WSSend(code, CT_APP_JSON, response);
   if (resp) {
     //Run_Scripter(">E", 2, 0);
-    if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, 0);
+    if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
   }
 }
 #endif  // hue interface
@@ -6923,7 +7020,7 @@ bool Script_SubCmd(void) {
     *cp = 0;
   }
   //toLog(cmdbuff);
-  uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
+  uint32_t res = Run_Scripter1(cmdbuff, tlen + 1, 0);
   //AddLog(LOG_LEVEL_INFO,">>%d",res);
   if (res) {
     return false;
@@ -6945,7 +7042,7 @@ void execute_script(char *script) {
   char *svd_sp = glob_script_mem.scriptptr;
   strcat(script, "\n#");
   glob_script_mem.scriptptr = script;
-  Run_Scripter(">", 1, 0);
+  Run_Scripter1(">", 1, 0);
   glob_script_mem.scriptptr = svd_sp;
 }
 #define D_CMND_SCRIPT "Script"
@@ -7734,12 +7831,14 @@ void Script_Check_HTML_Setvars(void) {
       *cp1 = '\"';
       *(cp1 + tlen +1 ) = '\"';
     }
-
     //toLog(cmdbuf);
     execute_script(cmdbuf);
-    //Run_Scripter(">E", 2, 0);
-    if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, 0);
 
+#ifdef USE_HTML_CALLBACK
+    if (glob_script_mem.html_script) Run_Scripter1(glob_script_mem.html_script, 0, 0);
+#else
+    if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
+#endif
   }
 }
 
@@ -7839,7 +7938,7 @@ const char SCRIPT_MSG_GOPT3[] PROGMEM =
 
 const char SCRIPT_MSG_GOPT4[] PROGMEM =
 //"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'}";
-"hAxis:{format:'HH:mm',minValue:new Date(0,0,0,0,0),maxValue:new Date(0,0,0,23,59)},theme: 'maximized'";
+"hAxis:{format:'HH:mm',minValue:new Date(0,0,0,0,0),maxValue:new Date(0,0,0,23,59)},theme: 'maximized',timeline:{tooltipDateFormat:'HH:mm'},";
 
 const char SCRIPT_MSG_GOPT5[] PROGMEM =
 "new Date(0,0,0,%d,%d)";
@@ -8523,7 +8622,7 @@ exgc:
         uint16_t ipos = 0;
         lp = gc_get_arrays(lp, &arrays[0], &anum, &entries, &ipos);
 
-        if (anum>nanum) {
+        if (anum > nanum) {
           return lp1;
           //goto nextwebline;
         }
@@ -8582,6 +8681,11 @@ exgc:
             }
           }
           snprintf_P(options,sizeof(options), SCRIPT_MSG_GOPT4);
+        }
+        if (tonly) {
+          WSContentSend_PD("]);");
+          return lp1;
+          //goto nextwebline;
         }
       } else {
         // we need to fetch the labels now
@@ -8764,7 +8868,7 @@ exgc:
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
 
 void script_send_email_body(void(*func)(char *)) {
-uint8_t msect = Run_Scripter(">m", -2, 0);
+uint8_t msect = Run_Scripter1(">m", -2, 0);
   if (msect==99) {
     char tmp[256];
     char *lp = glob_script_mem.section_ptr + 2;
@@ -8798,7 +8902,7 @@ uint8_t msect = Run_Scripter(">m", -2, 0);
 
 #ifdef USE_SCRIPT_JSON_EXPORT
 void ScriptJsonAppend(void) {
-  uint8_t web_script = Run_Scripter(">J", -2, 0);
+  uint8_t web_script = Run_Scripter1(">J", -2, 0);
   if (web_script==99) {
     char tmp[256];
     char *lp = glob_script_mem.section_ptr + 2;
@@ -8864,7 +8968,7 @@ void script_task1(void *arg) {
     //if (time<esp32_tasks[1].task_timer) {delay(time); }
     //if (time<=esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     if (bitRead(Settings->rule_enabled, 0)) {
-      if (esp32_tasks[0].tstart) Run_Scripter(esp32_tasks[0].tstart, 0, 0);
+      if (esp32_tasks[0].tstart) Run_Scripter1(esp32_tasks[0].tstart, 0, 0);
     }
     if (esp32_tasks[0].task_timer) {
       delay(esp32_tasks[0].task_timer);
@@ -8878,7 +8982,7 @@ void script_task1(void *arg) {
 void script_task2(void *arg) {
   while (1) {
     if (bitRead(Settings->rule_enabled, 0)) {
-      if (esp32_tasks[1].tstart) Run_Scripter(esp32_tasks[1].tstart, 0, 0);
+      if (esp32_tasks[1].tstart) Run_Scripter1(esp32_tasks[1].tstart, 0, 0);
     }
     if (esp32_tasks[1].task_timer) {
       delay(esp32_tasks[1].task_timer);
@@ -8903,12 +9007,12 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_
     char *sp = 0;
     esp32_tasks[num].task_timer = time;
     if (!num) {
-      if (Run_Scripter(">t1", -3, 0) == 99) {
+      if (Run_Scripter1(">t1", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
         res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &esp32_tasks[num].task_t, core);
       }
     } else {
-      if (Run_Scripter(">t2", -3, 0) == 99) {
+      if (Run_Scripter1(">t2", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
         res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &esp32_tasks[num].task_t, core);
       }
@@ -9245,7 +9349,7 @@ void btn_event_cb(lv_event_t * e);
 void btn_event_cb(lv_event_t * e) {
   lvgl_set_last(e->target, e->code);
   if (e->code == LV_EVENT_CLICKED) {
-    Run_Scripter(">lvb", 4, 0);
+    Run_Scripter1(">lvb", 4, 0);
   }
 }
 
@@ -9254,7 +9358,7 @@ void slider_event_cb(lv_event_t * e) {
   lvgl_set_last(e->target, e->code);
   lvgl_last_slider = lv_slider_get_value(e->target);
   if (e->code == LV_EVENT_VALUE_CHANGED) {
-    Run_Scripter(">lvs", 4, 0);
+    Run_Scripter1(">lvs", 4, 0);
   }
 }
 
@@ -9786,9 +9890,8 @@ bool Xdrv10(uint8_t function)
     //  break;
     //case FUNC_INIT:
       if (bitRead(Settings->rule_enabled, 0)) {
-        Run_Scripter(">B\n", 3, 0);
-        if (Run_Scripter(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
-        if (Run_Scripter(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
+        set_callbacks();
+        Run_Scripter1(">B\n", 3, 0);
         script_set_web_pages();
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
@@ -9807,11 +9910,11 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_SET_POWER:
 #ifdef SCRIPT_POWER_SECTION
-      if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">P", 2, 0);
+      if (bitRead(Settings->rule_enabled, 0)) Run_Scripter1(">P", 2, 0);
 #else
       if (bitRead(Settings->rule_enabled, 0)) {
         //Run_Scripter(">E", 2, 0);
-        if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, 0);
+        if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
         result = glob_script_mem.event_handeled;
       }
 #endif //SCRIPT_POWER_SECTION
@@ -9875,7 +9978,7 @@ bool Xdrv10(uint8_t function)
 
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings->rule_enabled, 0)) {
-        Run_Scripter(">R", 2, 0);
+        Run_Scripter1(">R", 2, 0);
         Scripter_save_pvars();
       }
 #ifdef USE_SCRIPT_GLOBVARS
@@ -9910,7 +10013,7 @@ bool Xdrv10(uint8_t function)
       if (bitRead(Settings->rule_enabled, 0)) {
         if ((glob_script_mem.script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
           glob_script_mem.script_button[XdrvMailbox.index] = XdrvMailbox.payload;
-          Run_Scripter(">b", 2, 0);
+          Run_Scripter1(">b", 2, 0);
         }
       }
       break;
