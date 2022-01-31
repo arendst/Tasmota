@@ -67,6 +67,8 @@ const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in fir
     const uint8_t MAX_PWMS = 16;            // ESP32: 16 ledc PWM channels in total - TODO for now
   #elif defined(CONFIG_IDF_TARGET_ESP32S2)
     const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    const uint8_t MAX_PWMS = 8;             // ESP32S3: 8 ledc PWM channels in total
   #elif defined(CONFIG_IDF_TARGET_ESP32C3)
     const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
   #else
@@ -102,6 +104,8 @@ const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S contro
 const uint8_t MAX_RMT = 8;                  // Max number or RMT channels (ESP32 only)
 #elif CONFIG_IDF_TARGET_ESP32S2
 const uint8_t MAX_RMT = 4;                  // Max number or RMT channels (ESP32S2 only)
+#elif CONFIG_IDF_TARGET_ESP32S3
+const uint8_t MAX_RMT = 1;                  // Max number or RMT channels (ESP32S3 only)
 #elif CONFIG_IDF_TARGET_ESP32C3
 const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C3 only)
 #else

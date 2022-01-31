@@ -144,7 +144,7 @@ void CrashDumpClear(void)
   }
 }
 
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 /**
  * Save crash information in RTC memory
  * This function is called automatically if ESP8266 suffers an exception
