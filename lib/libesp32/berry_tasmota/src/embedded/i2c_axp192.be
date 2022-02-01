@@ -67,6 +67,11 @@ class AXP192 : I2C_Driver
     end
   end
 
+  # set EXTEN which enables external power on M5Stack, powering Hat with 5V
+  def set_exten(state)
+    self.write_bit(0x12, 6, state)
+  end
+
   # set DCDC enable, 1/2/3
   def set_dcdc_enable(dcdc, state)
     if dcdc == 1  self.write_bit(0x12, 0, state) end

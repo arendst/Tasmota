@@ -41,6 +41,7 @@ be_extern_native_module(webserver);
 be_extern_native_module(flash);
 be_extern_native_module(path);
 be_extern_native_module(unishox);
+be_extern_native_module(uuid);
 be_extern_native_module(animate);
 #ifdef USE_LVGL
 be_extern_native_module(lv);
@@ -118,6 +119,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(light),
 #endif
 
+    &be_native_module(uuid),
 #ifdef USE_UNISHOX_COMPRESSION
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION

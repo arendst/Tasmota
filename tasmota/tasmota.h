@@ -60,7 +60,23 @@ const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons (up
 const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS / 2)
 const uint8_t MAX_SWITCHES_SET = 28;        // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
-const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
+const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in first settings block - Legacy limit for ESP8266, but extended for ESP32 (see below)
+#ifdef ESP32
+                                            // Max number of PWM channels (total including extended) - ESP32 only
+  #if defined(CONFIG_IDF_TARGET_ESP32)
+    const uint8_t MAX_PWMS = 16;            // ESP32: 16 ledc PWM channels in total - TODO for now
+  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    const uint8_t MAX_PWMS = 8;             // ESP32S3: 8 ledc PWM channels in total
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
+  #else
+    const uint8_t MAX_PWMS = 5;             // Unknown - revert to 5 PWM max
+  #endif
+#else
+  const uint8_t MAX_PWMS = 5;               // (not used on ESP8266)
+#endif
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
@@ -88,6 +104,8 @@ const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S contro
 const uint8_t MAX_RMT = 8;                  // Max number or RMT channels (ESP32 only)
 #elif CONFIG_IDF_TARGET_ESP32S2
 const uint8_t MAX_RMT = 4;                  // Max number or RMT channels (ESP32S2 only)
+#elif CONFIG_IDF_TARGET_ESP32S3
+const uint8_t MAX_RMT = 1;                  // Max number or RMT channels (ESP32S3 only)
 #elif CONFIG_IDF_TARGET_ESP32C3
 const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C3 only)
 #else

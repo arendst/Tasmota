@@ -1,6 +1,5 @@
 # I2C devices
-
-Tasmota supports several I2C devices but to use them they mostly need to be enabled at compile time to solve possible address conflicts.
+Tasmota supports several I2C devices. To use them I2C and the device need to be enabled at compile time. I2C and some devices are supported also in the official releases. Devices can be de/-actived on runtime to solve possible address conflicts. (e.g. address 0x27 is used by multiple devices)
 
 Using command ``I2cDriver`` individual drivers can be enabled or disabled at runtime allowing duplicate I2C addresses at compile time. Use the Index from the table below to control I2C drivers like ``I2cDriver10 0`` for disabling BMP support.
 
@@ -41,7 +40,7 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   19  | USE_SI1145          | xsns_24 | SI1147   | 0x60        | Ultra violet index and light sensor
   20  | USE_LM75AD          | xsns_26 | LM75AD   | 0x48 - 0x4F | Temperature sensor
   21  | USE_APDS9960        | xsns_27 | APDS9960 | 0x39        | Proximity ambient light RGB and gesture sensor
-  22  | USE_MCP230xx        | xsns_29 | MCP23008 | 0x20 - 0x26 | 16-bit I/O expander
+  22  | USE_MCP230xx        | xsns_29 | MCP23008 | 0x20 - 0x26 |  8-bit I/O expander
   22  | USE_MCP230xx        | xsns_29 | MCP23017 | 0x20 - 0x26 | 16-bit I/O expander
   23  | USE_MPR121          | xsns_30 | MPR121   | 0x5A - 0x5D | Proximity capacitive touch sensor
   24  | USE_CCS811          | xsns_31 | CCS811   | 0x5A        | Gas (TVOC) and air quality sensor
