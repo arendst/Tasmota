@@ -1098,6 +1098,22 @@ const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX"
 //                                  0 1 2 3 4 5 6 7 8 910111213141516171819202122232425262728293031323334353637383940414243444546
 const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO--------FLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOI ";
 
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+/* ****************************************
+ * ESP32S3
+ * GPIOs 0..21 + 33..48
+ * - 22..25 are not used
+ * - 26..32 are used for SPI Flash
+ * - 33..37 are used by PSRAM
+ * ****************************************/
+#define MAX_GPIO_PIN       49   // Number of supported GPIO, 0..48
+#define MIN_FLASH_PINS     11   // Number of flash chip pins unusable for configuration (22-25 don't exist, 26-32 for SPI)
+#define MAX_USER_PINS      38   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748
+const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO--------FLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO";
+
 #else  // not CONFIG_IDF_TARGET_ESP32C3 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 
 /* ****************************************
@@ -1138,11 +1154,11 @@ const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOI
 
 typedef struct MYIO {
   uint16_t      io[MAX_GPIO_PIN];
-} myio;                         // ESP8266: 18*2 = 36 bytes / ESP32: 40*2 = 80 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 47*2 = 94 bytes
+} myio;                         // ESP8266: 18*2 = 36 bytes / ESP32: 40*2 = 80 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 47*2 = 94 bytes / ESP32-S3: 49*2 = 98 bytes
 
 typedef struct MYCFGIO {
   uint16_t      io[MAX_USER_PINS];
-} mycfgio;                      // ESP8266: 14*2 = 28 bytes / ESP32: 36*2 = 72 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 36*2 = 72 bytes
+} mycfgio;                      // ESP8266: 14*2 = 28 bytes / ESP32: 36*2 = 72 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 36*2 = 72 bytes / ESP32-S3: 33*2 = 66 bytes
 
 #define GPIO_FLAG_USED       0  // Currently no flags used
 
@@ -2717,6 +2733,89 @@ const mytmplt kModules[] PROGMEM = {
     AGPIO(GPIO_USER),            // 44      IO                  GPIO44, U0RXD
     AGPIO(GPIO_USER),            // 45      IO                  GPIO45, Strapping
     AGPIO(GPIO_USER),            // 46      I                   GPIO46, Input only, Strapping
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+
+/********************************************************************************************\
+ * ESP32-S3 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModulesESP32S3 {
+  WEMOS,
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32S3|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32S2 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32C3 device
+    AGPIO(GPIO_USER),            // 0       IO                  RTC_GPIO0, GPIO0, Strapping
+    AGPIO(GPIO_USER),            // 1       AO                  RTC_GPIO1, GPIO1, TOUCH1, ADC1_CH0
+    AGPIO(GPIO_USER),            // 2       AO                  RTC_GPIO2, GPIO2, TOUCH2, ADC1_CH1
+    AGPIO(GPIO_USER),            // 3       AO                  RTC_GPIO3, GPIO3, TOUCH3, ADC1_CH2, Strapping
+    AGPIO(GPIO_USER),            // 4       AO                  RTC_GPIO4, GPIO4, TOUCH4, ADC1_CH3
+    AGPIO(GPIO_USER),            // 5       AO                  RTC_GPIO5, GPIO5, TOUCH5, ADC1_CH4
+    AGPIO(GPIO_USER),            // 6       AO                  RTC_GPIO6, GPIO6, TOUCH6, ADC1_CH5
+    AGPIO(GPIO_USER),            // 7       AO                  RTC_GPIO7, GPIO7, TOUCH7, ADC1_CH6
+    AGPIO(GPIO_USER),            // 8       AO                  RTC_GPIO8, GPIO8, TOUCH8, ADC1_CH7, SUBSPICS1
+    AGPIO(GPIO_USER),            // 9       AO                  RTC_GPIO9, GPIO9, TOUCH9, ADC1_CH8, SUBSPIHD, FSPIHD
+    AGPIO(GPIO_USER),            // 10      AO                  RTC_GPIO10, GPIO10, TOUCH10, ADC1_CH9, FSPIIO4, SUBSPICS0, FSPICS0
+    AGPIO(GPIO_USER),            // 11      AO                  RTC_GPIO11, GPIO11, TOUCH11, ADC2_CH0, FSPIIO5, SUBSPID, FSPID
+    AGPIO(GPIO_USER),            // 12      AO                  RTC_GPIO12, GPIO12, TOUCH12, ADC2_CH1, FSPIIO6, SUBSPICLK, FSPICLK
+    AGPIO(GPIO_USER),            // 13      AO                  RTC_GPIO13, GPIO13, TOUCH13, ADC2_CH2, FSPIIO7, SUBSPIQ, FSPIQ
+    AGPIO(GPIO_USER),            // 14      AO                  RTC_GPIO14, GPIO14, TOUCH14, ADC2_CH3, FSPIDQS, SUBSPIWP, FSPIWP
+    AGPIO(GPIO_USER),            // 15      AO                  RTC_GPIO15, GPIO15, U0RTS, ADC2_CH4, XTAL_32K_P
+    AGPIO(GPIO_USER),            // 16      AO                  RTC_GPIO16, GPIO16, U0CTS, ADC2_CH5, XTAL_32K_N
+    AGPIO(GPIO_USER),            // 17      AO                  RTC_GPIO17, GPIO17, U1TXD, ADC2_CH6
+    AGPIO(GPIO_USER),            // 18      AO                  RTC_GPIO18, GPIO18, U1RXD, ADC2_CH7, CLK_OUT3
+    AGPIO(GPIO_USER),            // 19      AO                  RTC_GPIO19, GPIO19, U1RTS, ADC2_CH8, CLK_OUT2, USB_D­
+    AGPIO(GPIO_USER),            // 20      AO                  RTC_GPIO20, GPIO20, U1CTS, ADC2_CH9, CLK_OUT1, USB_D+
+    AGPIO(GPIO_USER),            // 21      IO                  RTC_GPIO21, GPIO21
+                                 // 22      --                  Unused
+                                 // 23      --                  Unused
+                                 // 24      --                  Unused
+                                 // 25      --                  Unused
+                                 // 26      FL                  SPICS1, GPIO26
+                                 // 27      FL                  SPIHD, GPIO27
+                                 // 28      FL                  SPIWP, GPIO28
+                                 // 29      FL                  SPICS0, GPIO29
+                                 // 30      FL                  SPICLK, GPIO30
+                                 // 31      FL                  SPIQ, GPIO31
+                                 // 32      FL                  SPID, GPIO32
+    AGPIO(GPIO_NONE),            // 33      IO                  SPIIO4, GPIO33, FSPIHD, SUBSPIHD
+    AGPIO(GPIO_NONE),            // 34      IO                  SPIIO5, GPIO34, FSPICS0, SUBSPICS0
+    AGPIO(GPIO_NONE),            // 35      IO                  SPIIO6, GPIO35, FSPID, SUBSPID
+    AGPIO(GPIO_NONE),            // 36      IO                  SPIIO7, GPIO36, FSPICLK, SUBSPICLK
+    AGPIO(GPIO_NONE),            // 37      IO                  SPIDQS, GPIO37, FSPIQ, SUBSPIQ
+    AGPIO(GPIO_USER),            // 38      IO                  GPIO38, FSPIWP, SUBSPIWP
+    AGPIO(GPIO_USER),            // 39      IO                  MTCK, GPIO39, CLK_OUT3, SUBSPICS1
+    AGPIO(GPIO_USER),            // 40      IO                  MTDO, GPIO40, CLK_OUT2
+    AGPIO(GPIO_USER),            // 41      IO                  MTDI, GPIO41, CLK_OUT1
+    AGPIO(GPIO_USER),            // 42      IO                  MTMS, GPIO42
+    AGPIO(GPIO_USER),            // 43      IO                  U0TXD, GPIO43, CLK_OUT1
+    AGPIO(GPIO_USER),            // 44      IO                  U0RXD, GPIO44, CLK_OUT2
+    AGPIO(GPIO_USER),            // 45      IO                  GPIO45, Strapping
+    AGPIO(GPIO_USER),            // 46      IO                  GPIO46, Strapping
+    AGPIO(GPIO_USER),            // 47      IO                  SPICLK_P_DIFF, GPIO47, SUBSPICLK_P_DIFF
+    AGPIO(GPIO_USER),            // 48      IO                  SPICLK_N_DIFF, GPIO48, SUBSPICLK_N_DIFF
     0                            // Flag
   },
 };

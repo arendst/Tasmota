@@ -150,7 +150,7 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
       "sk(g[i],i);"                       // Set GPIO
     "}";
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 22-32
@@ -1577,7 +1577,7 @@ void HandleTemplateConfiguration(void) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
       // ESP32C3 we always send all GPIOs, Flash are just hidden
       WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
@@ -1679,7 +1679,7 @@ void TemplateSaveSettings(void) {
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
     j++;
