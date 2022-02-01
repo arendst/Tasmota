@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Support for MQ analog sensor for air quality by Francesco Adriani (#14581)
 - Command ``SetOption134 1`` to disable PWM auto-phasing for lights by default (new behavior) (#14590)
 - Increase PWM channels to 16 (Esp32 only)
+- Initial support for ESP32S3 with support for 38 configurable GPIOs
 
 ### Changed
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7
