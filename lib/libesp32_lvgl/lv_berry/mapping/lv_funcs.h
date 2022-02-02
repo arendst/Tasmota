@@ -721,6 +721,23 @@ static inline lv_color_t lv_color_black(void)
 lv_color_t lv_palette_lighten(lv_palette_t p, uint8_t lvl)
 lv_color_t lv_palette_darken(lv_palette_t p, uint8_t lvl)
 
+// ../../lvgl/src/misc/lv_style.h
+void lv_style_init(lv_style_t * style)
+void lv_style_reset(lv_style_t * style)
+lv_style_prop_t lv_style_register_prop(void)
+bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop)
+void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t value)
+lv_res_t lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
+static inline lv_res_t lv_style_get_prop_inlined(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
+void lv_style_transition_dsc_init(lv_style_transition_dsc_t * tr, const lv_style_prop_t props[], lv_anim_path_cb_t path_cb, uint32_t time, uint32_t delay, void * user_data)
+lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
+bool lv_style_is_empty(const lv_style_t * style)
+static inline void lv_style_set_pad_all(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_pad_hor(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_pad_ver(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_pad_gap(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_size(lv_style_t * style, lv_coord_t value)
+
 // ../../lvgl/src/misc/lv_style_gen.h
 void lv_style_set_width(lv_style_t * style, lv_coord_t value)
 void lv_style_set_min_width(lv_style_t * style, lv_coord_t value)
