@@ -527,6 +527,31 @@ typedef struct {
 
   uint8_t       ex_switchmode[8];          // 3A4 - Free since 9.2.0.6
 
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+  // ------------------------------------
+  // Remapping of the section for ESP32S3
+  // ------------------------------------
+  myio          my_gp;                     // 3AC  (+x62) 2x49 bytes (ESP32-S3)
+  uint8_t       eth_type;                  // 40E
+  uint8_t       eth_clk_mode;              // 40F
+  mytmplt       user_template;             // 410  (9x4E) 2x39 bytes (ESP32-S3)
+  uint8_t       eth_address;               // 45E
+  uint8_t       module;                    // 45F
+  WebCamCfg     webcam_config;             // 460
+
+  uint8_t       ws_width[3];               // 464
+  char          serial_delimiter;          // 467
+  uint8_t       seriallog_level;           // 468
+  uint8_t       sleep;                     // 469
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 46A (+8)
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 472 (+x18)
+  uint8_t       ws_color[4][3];            // 48A (+xC)
+                                           // 496
+
+  // ----------------------------------------
+  // End of remapping, next is all other CPUs
+  // ----------------------------------------
+#else
   myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x22 bytes (ESP32-C3) / 2x47 bytes (ESP32-S2)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
@@ -545,6 +570,7 @@ typedef struct {
 #ifdef CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
 #endif  // CONFIG_IDF_TARGET_ESP32C3
+
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
@@ -556,6 +582,7 @@ typedef struct {
   WebCamCfg     webcam_config;             // 44C
   uint8_t       eth_address;               // 450
 #endif  // ESP32
+
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
@@ -576,7 +603,12 @@ typedef struct {
 #endif
 #endif  // ESP32
 
-  uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1
+  uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1 - Do not use anymore because of ESP32S3
+
+  // ----------------------------------------
+  // End of remapping for non-ESP32S3
+  // ----------------------------------------
+#endif // ESP32S3
 
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[LST_MAX];      // 498  LST_MAX = 5

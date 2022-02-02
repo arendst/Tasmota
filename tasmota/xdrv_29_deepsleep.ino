@@ -37,7 +37,6 @@
 #endif
 
 const uint32_t DEEPSLEEP_MAX = 10 * 366 * 24 * 60 * 60;  // Allow max 10 years sleep
-const uint32_t DEEPSLEEP_MAX_CYCLE = 60 * 60;            // Maximum time for a deepsleep as defined by chip hardware
 const uint32_t DEEPSLEEP_MIN_TIME = 5;                   // Allow 5 seconds skew
 const uint32_t DEEPSLEEP_START_COUNTDOWN = 4;            // Allow 4 seconds to update web console before deepsleep
 
@@ -47,7 +46,6 @@ const char kDeepsleepCommands[] PROGMEM = D_PRFX_DEEPSLEEP "|"
 void (* const DeepsleepCommand[])(void) PROGMEM = {
   &CmndDeepsleepTime };
 
-uint32_t deepsleep_sleeptime = 0;
 uint8_t deepsleep_flag = 0;
 
 bool DeepSleepEnabled(void)
@@ -61,32 +59,7 @@ bool DeepSleepEnabled(void)
     pinMode(Pin(GPIO_DEEPSLEEP), INPUT_PULLUP);
     return (digitalRead(Pin(GPIO_DEEPSLEEP)));  // Disable DeepSleep if user holds pin GPIO_DEEPSLEEP low
   }
-
   return true;                  // Enabled
-}
-
-void DeepSleepReInit(void)
-{
-  if ((ResetReason() == REASON_DEEP_SLEEP_AWAKE) && DeepSleepEnabled()) {
-    if ((RtcSettings.ultradeepsleep > DEEPSLEEP_MAX_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
-      // Go back to sleep after 60 minutes if requested deepsleep has not been reached
-      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - DEEPSLEEP_MAX_CYCLE;
-      AddLog(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
-      RtcSettingsSave();
-      RtcRebootReset();
-#ifdef ESP8266
-      ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
-#endif  // ESP8266
-#ifdef ESP32
-      esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep));
-      esp_deep_sleep_start();
-#endif  // ESP32
-      yield();
-      // Sleeping
-    }
-  }
-  // Stay awake
-  RtcSettings.ultradeepsleep = 0;
 }
 
 void DeepSleepPrepare(void)
@@ -112,10 +85,11 @@ void DeepSleepPrepare(void)
   // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
   timeslip = (timeslip < -(int32_t)Settings->deepsleep) ? 0 : (timeslip > (int32_t)Settings->deepsleep) ? 0 : 1;
   if (timeslip) {
-    RtcSettings.deepsleep_slip = (Settings->deepsleep + RtcSettings.nextwakeup - LocalTime()) * RtcSettings.deepsleep_slip / tmax((Settings->deepsleep - (millis() / 1000)),5);
+    RtcSettings.nextwakeup += Settings->deepsleep;
+    RtcSettings.deepsleep_slip = (RtcSettings.nextwakeup - LocalTime()) * RtcSettings.deepsleep_slip / tmax((Settings->deepsleep - (millis() / 1000)),5);
     // Avoid crazy numbers. Again maximum 10% deviation.
     RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000), 11000);
-    RtcSettings.nextwakeup += Settings->deepsleep;
+
   }
 
   // It may happen that wakeup in just <5 seconds in future
@@ -126,29 +100,22 @@ void DeepSleepPrepare(void)
   }
 
   String dt = GetDT(RtcSettings.nextwakeup);  // 2017-03-07T11:08:02
-  // Limit sleeptime to DEEPSLEEP_MAX_CYCLE
-  // uint32_t deepsleep_sleeptime = DEEPSLEEP_MAX_CYCLE < (RtcSettings.nextwakeup - LocalTime()) ? (uint32_t)DEEPSLEEP_MAX_CYCLE : RtcSettings.nextwakeup - LocalTime();
-  deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup - LocalTime());
 
   // stat/tasmota/DEEPSLEEP = {"DeepSleep":{"Time":"2019-11-12T21:33:45","Epoch":1573590825}}
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_DEEPSLEEP));
-
-//  Response_P(S_LWT_OFFLINE);
-//  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
 }
 
 void DeepSleepStart(void)
 {
   WifiShutdown();
-  RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - LocalTime();
   RtcSettingsSave();
   RtcRebootReset();
 #ifdef ESP8266
-  ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+  ESP.deepSleep((uint64_t) 100 * RtcSettings.deepsleep_slip * (RtcSettings.nextwakeup - LocalTime()));
 #endif  // ESP8266
 #ifdef ESP32
-  esp_sleep_enable_timer_wakeup(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+  esp_sleep_enable_timer_wakeup((uint64_t) 100 * RtcSettings.deepsleep_slip * (RtcSettings.nextwakeup - LocalTime()));
   esp_deep_sleep_start();
 #endif  // ESP32
   yield();
@@ -211,15 +178,12 @@ bool Xdrv29(uint8_t function)
       DeepSleepEverySecond();
       break;
     case FUNC_AFTER_TELEPERIOD:
-        if (DeepSleepEnabled() && !deepsleep_flag && (Settings->tele_period == 10 || Settings->tele_period == 300 || UpTime() > Settings->tele_period)) {
+        if (DeepSleepEnabled() && !deepsleep_flag) {
         deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
       }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kDeepsleepCommands, DeepsleepCommand);
-      break;
-    case FUNC_PRE_INIT:
-      DeepSleepReInit();
       break;
   }
   return result;

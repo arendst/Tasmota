@@ -81,8 +81,6 @@ extern "C" {
             } else {
               be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
             }
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-            be_raise(vm, "value_error", "DAC unsupported in this chip");
 #else
             be_raise(vm, "value_error", "DAC unsupported in this chip");
 #endif
