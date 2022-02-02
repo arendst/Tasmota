@@ -568,10 +568,27 @@ bool HueActive(uint8_t device) {
   return '$' != *SettingsText(SET_FRIENDLYNAME1 +device -1);
 }
 
+/*********************************************************************************\
+ * HueLightStatus2Generic
+ * 
+ * Adds specific information for a newly discovered device
+\*********************************************************************************/
+void HueLightStatus2Generic(String *response, const char * name, const char * modelid, const char * manuf, const char * uniqueid) {
+  // //=HUE_LIGHTS_STATUS_JSON2
+  // ",\"type\":\"Extended color light\","
+  // "\"name\":\"%s\","
+  // "\"modelid\":\"%s\","
+  // "\"manufacturername\":\"%s\","
+  // "\"uniqueid\":\"%s\"}"
+
+  UnishoxStrings msg(HUE_LIGHTS);
+  char * buf = ext_snprintf_malloc_P(msg[HUE_LIGHTS_STATUS_JSON2], EscapeJSONString(name).c_str(), EscapeJSONString(modelid).c_str(), EscapeJSONString(manuf).c_str(), uniqueid);
+  *response += buf;
+  free(buf);
+}
+
 void HueLightStatus2(uint8_t device, String *response)
 {
-  const size_t buf_size = 300;
-  char * buf = (char*) malloc(buf_size);
   const size_t max_name_len = 32;
   char fname[max_name_len + 1];
 
@@ -588,14 +605,8 @@ void HueLightStatus2(uint8_t device, String *response)
     }
     fname[fname_len] = 0x00;
   }
-  UnishoxStrings msg(HUE_LIGHTS);
-  snprintf_P(buf, buf_size, msg[HUE_LIGHTS_STATUS_JSON2],
-            EscapeJSONString(fname).c_str(),
-            EscapeJSONString(Settings->user_template_name).c_str(),
-            PSTR("Tasmota"),
-            GetHueDeviceId(device).c_str());
-  *response += buf;
-  free(buf);
+
+  HueLightStatus2Generic(response, fname, Settings->user_template_name, PSTR("Tasmota"), GetHueDeviceId(device).c_str());
 }
 #endif // USE_LIGHT
 

@@ -139,6 +139,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   relevant Berry object depending on this char:
  *   '' (default): nil, no value
  *   'i' be_int
+ *   'f' be_real (float)
  *   'b' be_bool
  *   's' be_str
  *   '&' bytes() object, pointer to buffer returned, and size passed with an additional (size_t*) argument
@@ -465,6 +466,7 @@ int be_call_c_func(bvm *vm, const void * func, const char * return_type, const c
     switch (return_type[0]) {
       case '.':   // fallback next
       case 'i':   be_pushint(vm, ret); break;
+      case 'f':   be_pushreal(vm, intasreal(ret)); break;
       case 'b':   be_pushbool(vm, ret);  break;
       case 'c':   be_pushcomptr(vm, (void*) ret); break;
       case 's':   be_pushstring(vm, (const char*) ret);  break;
