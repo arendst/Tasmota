@@ -68,6 +68,7 @@ lv_fun_globs = [
                   "draw/*.h",
                   "misc/lv_style_gen.h",
                   "misc/lv_color.h",
+                  "misc/lv_style.h",
                   #"misc/lv_area.h",
                   #"**/*.h",
               ]
