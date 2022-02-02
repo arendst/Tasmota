@@ -1,6 +1,7 @@
 // Copyright 2019-2021 David Conran
 
 #include <string>
+#include "ir_Airton.h"
 #include "ir_Airwell.h"
 #include "ir_Amcor.h"
 #include "ir_Argo.h"
@@ -43,6 +44,36 @@
 #include "gtest/gtest.h"
 
 // Tests for IRac class.
+
+TEST(TestIRac, Airton) {
+  IRAirtonAc ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  const char expected[] =
+      "Power: On, Mode: 1 (Cool), Fan: 5 (Maximum), Temp: 18C, "
+      "Swing(V): On, Econo: On, Turbo: On, Light: On, Health: On, Sleep: On";
+
+  ac.begin();
+  irac.airton(&ac,
+              true,                        // Power
+              stdAc::opmode_t::kCool,      // Mode
+              18,                          // Celsius
+              stdAc::fanspeed_t::kMax,     // Fan speed
+              stdAc::swingv_t::kAuto,      // Vertical Swing
+              true,                        // Turbo
+              true,                        // Light/Display/LED
+              true,                        // Econo (Eco)
+              true,                        // Filter (Health)
+              9 * 60 + 12);                // Sleep (09:12)
+  ASSERT_EQ(expected, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(AIRTON, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kAirtonBits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
+  stdAc::state_t r, p;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+}
 
 TEST(TestIRac, Airwell) {
   IRAirwellAc ac(kGpioUnused);
@@ -1418,7 +1449,9 @@ TEST(TestIRac, Mitsubishi) {
       "Power: On, Mode: 3 (Cool), Temp: 20C, Fan: 2 (Medium), "
       "Swing(V): 0 (Auto), Swing(H): 3 (Middle), "
       "Clock: 14:30, On Timer: 00:00, Off Timer: 00:00, Timer: -, "
-      "Weekly Timer: Off";
+      "Weekly Timer: Off"
+      ", 10C Heat: Off, ISee: Off, Econo: Off, Absense detect: Off, "
+      "Direct / Indirect Mode: 0, Fresh: Off";
 
   ac.begin();
   irac.mitsubishi(&ac,
@@ -1958,7 +1991,7 @@ TEST(TestIRac, Toshiba) {
   IRrecv capture(kGpioUnused);
   char expected[] =
       "Temp: 29C, Power: On, Mode: 2 (Dry), Fan: 2 (UNKNOWN), "
-      "Turbo: Off, Econo: On";
+      "Turbo: Off, Econo: On, Filter: Off";
 
   ac.begin();
   irac.toshiba(&ac,
@@ -1968,7 +2001,8 @@ TEST(TestIRac, Toshiba) {
                stdAc::fanspeed_t::kLow,   // Fan speed
                stdAc::swingv_t::kOff,     // Vertical Swing
                false,                     // Turbo
-               true);                     // Econo
+               true,                      // Econo
+               false);                    // Filter
   ASSERT_EQ(expected, ac.toString());
   ASSERT_EQ(kToshibaACStateLengthLong, ac.getStateLength());
   ac._irsend.makeDecodeResult();
@@ -2873,7 +2907,7 @@ TEST(TestIRac, Issue1250) {
   // Now send the state so we can actually decode/capture what we sent.
   char expected_on[] =
       "Temp: 19C, Power: On, Mode: 4 (Fan), Fan: 0 (Auto), "
-      "Turbo: Off, Econo: Off";
+      "Turbo: Off, Econo: Off, Filter: Off";
   ac._irsend.reset();
   irac.toshiba(&ac,
                irac.next.power,     // Power
@@ -2882,7 +2916,8 @@ TEST(TestIRac, Issue1250) {
                irac.next.fanspeed,  // Fan speed
                irac.next.swingv,    // Vertical Swing
                irac.next.turbo,     // Turbo
-               irac.next.econo);    // Econo
+               irac.next.econo,     // Econo
+               irac.next.filter);   // Filter
   ASSERT_EQ(expected_on, ac.toString());
   ASSERT_EQ(kToshibaACStateLength, ac.getStateLength());
   ac._irsend.makeDecodeResult();
@@ -2898,7 +2933,8 @@ TEST(TestIRac, Issue1250) {
   irac.sendAc();
   // Now send the state so we can actually decode/capture what we sent.
   char expected_off[] =
-      "Temp: 19C, Power: Off, Fan: 0 (Auto), Turbo: Off, Econo: Off";
+      "Temp: 19C, Power: Off, Fan: 0 (Auto), Turbo: Off, Econo: Off, "
+      "Filter: Off";
   ac._irsend.reset();
   irac.toshiba(&ac,
                irac.next.power,     // Power
@@ -2907,7 +2943,8 @@ TEST(TestIRac, Issue1250) {
                irac.next.fanspeed,  // Fan speed
                irac.next.swingv,    // Vertical Swing
                irac.next.turbo,     // Turbo
-               irac.next.econo);    // Econo
+               irac.next.econo,     // Econo
+               irac.next.filter);   // Filter
   ASSERT_EQ(expected_off, ac.toString());
   ASSERT_EQ(kToshibaACStateLength, ac.getStateLength());
   ac._irsend.makeDecodeResult();

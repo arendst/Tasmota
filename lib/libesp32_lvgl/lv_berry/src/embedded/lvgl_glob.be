@@ -58,11 +58,14 @@ class LVGL_glob
     # record the object, whatever the callback
     
     if name  == "lv_event_cb"
-      if self.cb_event_closure == nil   self.cb_event_closure = {} end
+      if self.cb_event_closure == nil   self.cb_event_closure = {} end    # lazy instanciation
       if self.event_cb == nil			      self.event_cb = cb.gen_cb(/ event_ptr -> self.lvgl_event_dispatch(event_ptr)) end  # encapsulate 'self' in closure
     
-      self.register_obj(obj)
-      self.cb_event_closure[obj._p] = f
+      self.register_obj(obj)                # keep a record of the object to prevent from being gc'ed
+      if self.cb_event_closure.contains(obj._p)
+        tasmota.log("LVG: object:" + str(obj) + "has already an event callback", 2)
+      end
+      self.cb_event_closure[obj._p] = f     # keep a mapping of the closure to call, indexed by internal lvgl native pointer
       return self.event_cb
     # elif name == "<other_cb>"
     elif name[0..2] == "lv_"
@@ -98,8 +101,12 @@ class LVGL_glob
     var event = lv.lv_event(e_ptr)
     var obj_ptr = event.target
     var obj = self.get_object_from_ptr(obj_ptr)
-    if type(obj) == 'instance' && introspect.get(obj, 'widget_event')
-      obj.widget_event(cl, event)
+    if type(obj) == 'instance'
+      if event.code == lv.EVENT_DELETE && introspect.get(obj, 'before_del')
+        obj.before_del(cl, event)
+      elif introspect.get(obj, 'widget_event')
+        obj.widget_event(cl, event)
+      end
     end
     # print("widget_event_impl", cl, obj_ptr, obj, event)
   end

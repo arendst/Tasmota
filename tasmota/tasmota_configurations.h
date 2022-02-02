@@ -81,7 +81,7 @@
 #define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
 #define USE_HTU                                // [I2cDriver9] Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
 #define USE_BMP                                // [I2cDriver10] Enable BMP085/BMP180/BMP280/BME280 sensors (I2C addresses 0x76 and 0x77) (+4k4 code)
-  #define USE_BME680                           // Enable support for BME680 sensor using Bosch BME680 library (+4k code)
+  #define USE_BME68X                           // Enable support for BME680/BME688 sensor using Bosch BME68x library (+6k9 code)
 #define USE_BH1750                             // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
 #define USE_VEML6070                           // [I2cDriver12] Enable VEML6070 sensor (I2C addresses 0x38 and 0x39) (+1k5 code)
 //#define USE_VEML6075                           // [I2cDriver49] Enable VEML6075 UVA/UVB/UVINDEX Sensor (I2C address 0x10) (+2k1 code)
@@ -199,6 +199,7 @@
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #define USE_SDM72                                // Add support for Eastron SDM72-Modbus energy monitor (+0k3 code)
 #define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
+//#define USE_SDM230                               // Add support for Eastron SDM230-Modbus energy monitor (+?? code)
 #define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -303,6 +304,7 @@
   #undef USE_MCP39F501                           // Disable MCP39F501 Energy monitor as used in Shelly 2
   #undef USE_SDM72                               // Disable support for Eastron SDM72-Modbus energy meter
   #undef USE_SDM120                              // Disable support for Eastron SDM120-Modbus energy meter
+  #undef USE_SDM230                              // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
   #undef USE_SDM630                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -411,6 +413,7 @@
   #undef USE_MCP39F501                           // Disable MCP39F501 Energy monitor as used in Shelly 2
   #undef USE_SDM72                               // Disable support for Eastron SDM72-Modbus energy meter
   #undef USE_SDM120                              // Disable support for Eastron SDM120-Modbus energy meter
+  #undef USE_SDM230                              // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
   #undef USE_SDM630                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -497,8 +500,7 @@
 // -- MQTT - TLS - AWS IoT ------------------------
 #ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge
   #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
-    #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
-  #define USE_TLS                                  // flag indicates we need to include TLS code
+  #define USE_MQTT_AWS_IOT_LIGHT                   // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 #endif                                             // USE_ZBBRIDGE_TLS
 
 //#undef USE_KNX                                   // Disable KNX IP Protocol Support
@@ -586,6 +588,7 @@
 #undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM230                                // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -727,6 +730,7 @@
 //#undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM230                                // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -870,6 +874,7 @@
 #undef USE_MCP39F501                             // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM72                                 // Disable support for Eastron SDM72-Modbus energy meter
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM230                                // Disable support for Eastron SDM230-Modbus energy monitor (+?? code)
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
@@ -920,6 +925,20 @@
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
 #undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_WEBCAM
+#undef FIRMWARE_ODROID_GO
+#undef FIRMWARE_M5STACK_CORE2
+#undef FIRMWARE_BLUETOOTH
+#undef FIRMWARE_LVGL
+#undef FIRMWARE_TASMOTA32
+#undef USE_UFILESYS
+#undef GUI_TRASH_FILE
+#undef GUI_EDIT_FILE
+#undef USE_PING
+#undef USE_AUTOCONF
+#undef USE_BERRY
+//#undef USE_WEBCLIENT
+//#undef USE_WEBCLIENT_HTTPS
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -964,14 +983,17 @@
 \*********************************************************************************************/
 
 #ifndef ESP8266_1M
-#define USE_UFILESYS
-#define GUI_TRASH_FILE
-#define GUI_EDIT_FILE
-#define USE_PING
+  #ifndef FIRMWARE_MINIMAL    // there might be a ESP32-minimal
+    #define USE_UFILESYS
+      #define GUI_TRASH_FILE
+      #define GUI_EDIT_FILE
+    #define USE_PING
+  #endif // FIRMWARE_MINIMAL
+
   #ifdef USE_RULES
-  #define USE_EXPRESSION
-  #define SUPPORT_IF_STATEMENT
-  #define SUPPORT_MQTT_EVENT
+    #define USE_EXPRESSION
+    #define SUPPORT_IF_STATEMENT
+    #define SUPPORT_MQTT_EVENT
   #endif  // USE_RULES
 #endif  // NOT ESP8266_1M
 
@@ -1022,5 +1044,13 @@
 #ifdef USE_EMULATION_HUE
 #define USE_UNISHOX_COMPRESSION                // Add support for string compression
 #endif
+
+#if defined(USE_MQTT_TLS)                      // Enable TLS if required:
+  #define USE_TLS                              // flag indicates we need to include TLS code
+#endif                                         // USE_MQTT_TLS
+
+#if(USE_MI_HOMEKIT != 1)                       // Enable(1)/ Disable(0) Homekit, only for the .c-file
+  #undef USE_MI_HOMEKIT
+#endif //USE_MI_HOMEKIT
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

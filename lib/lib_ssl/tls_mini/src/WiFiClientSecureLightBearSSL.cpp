@@ -21,7 +21,7 @@
 */
 
 #include "tasmota_options.h"
-#if defined(USE_TLS)
+#ifdef USE_TLS
 
 // #define DEBUG_TLS
 // #define DEBUG_ESP_SSL
@@ -43,8 +43,8 @@
 #include "lwip/netif.h"
 #ifdef ESP8266
   #include <include/ClientContext.h>
+  #include "c_types.h"
 #endif
-#include "c_types.h"
 
 #include <core_version.h>
 #undef DEBUG_TLS
@@ -416,6 +416,10 @@ size_t WiFiClientSecure_light::_write(const uint8_t *buf, size_t size, bool pmem
 
   LOG_HEAP_SIZE("_write");
   return sent_bytes;
+}
+
+void WiFiClientSecure_light::setInsecure() {
+  _insecure = true;
 }
 
 size_t WiFiClientSecure_light::write(const uint8_t *buf, size_t size) {
@@ -965,7 +969,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     _freeSSL();
     clearLastError();
 #ifdef ESP8266
-    if (!stack_thunk_light_get_stack_bot()) break;  
+    if (!stack_thunk_light_get_stack_bot()) break;
 #endif // ESP8266
 
     _ctx_present = true;

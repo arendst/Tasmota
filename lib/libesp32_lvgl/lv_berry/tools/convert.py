@@ -100,6 +100,7 @@ return_types = {
   "lv_style_selector_t": "i",
   "lv_draw_mask_res_t": "i",
   "lv_img_size_mode_t": "i",
+  "lv_palette_t": "i",
   # layouts
   "lv_flex_align_t": "i",
   "lv_flex_flow_t": "i",
@@ -134,8 +135,15 @@ return_types = {
   "lv_theme_t *": "lv_theme",
   "lv_disp_t *": "lv_disp",
   "lv_indev_t *": "lv_indev",
-  #"lv_disp_t*": "lv_disp",
-  #"lv_style_list_t*": "",
+  "lv_img_header_t *": "lv_img_header",
+  "lv_img_dsc_t *": "lv_img_dsc",
+  "lv_ts_calibration_t *": "lv_ts_calibration",
+  "lv_style_transition_dsc_t *": "lv_style_transition_dsc",
+  # "lv_color_hsv_t *": "lv_color_hsv",
+  "lv_color_filter_dsc_t *": "lv_color_filter_dsc",
+  "lv_timer_t *": "lv_timer",
+  "lv_coord_t *": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
+  "char **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
 
   # callbacks
   "lv_group_focus_cb_t": "lv_group_focus_cb",
@@ -209,6 +217,7 @@ with open(lv_widgets_file) as f:
 
     g = parse_func_def.search(l_raw)
     if g:
+      # print(l_raw, g.group(3))
       # if match, we parse the line
       # Ex: 'void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent);'
       ret_type = g.group(1)   # return type of the function
@@ -228,40 +237,49 @@ with open(lv_widgets_file) as f:
       # convert arguments
       c_args = ""
       args_raw = [ x.strip(" \t\n\r") for x in g.group(3).split(",") ]  # split by comma and strip
+      # print(args_raw)
+      func_name = g.group(2)
       for arg_raw in args_raw:
         # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent', ''
         # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit', ''
         # Ex: 'const lv_coord_t value[]' -> 'const', 'lv_coord_t', '', 'value', '[]'
         ga = parse_arg.search(arg_raw)
-        if ga:    # parsing ok?
-          ga_type = ga.group(2)
-          ga_ptr = ( ga.group(3).strip(" \t\n\r") == "*" )    # boolean
-          ga_name = ga.group(4)
-          ga_array = ga.group(5)
-          ga_type_ptr = ga_type
-          if ga_ptr: ga_type_ptr += " *"
-          if ga_array: ga_type_ptr += " []"
-          if ga_type_ptr in return_types:
-            ga_type = return_types[ga_type_ptr]
-          else:
-            # remove the trailing '_t' of type name if any
-            ga_type = re.sub(r"_t$", "", ga_type)
-          
-          # if the type is a single letter, we just add it
-          if len(ga_type) == 1 and ga_type != 'c':  # callbacks are different
-            c_args += ga_type
-          else:
-            if ga_type.endswith("_cb"):
-              # it's a callback type, we encode it differently
-              if ga_type not in lv_cb_types:
-                lv_cb_types.append(ga_type)
-              c_args += "^" + ga_type + "^"
+        # print(f"g={g} ga={ga}")
+        if ga or arg_raw == '...':    # parsing ok? Special case for '...' which can't be captured easily in regex
+          if arg_raw != '...':
+            ga_type = ga.group(2)
+            ga_ptr = ( ga.group(3).strip(" \t\n\r") == "*" )    # boolean
+            ga_name = ga.group(4)
+            ga_array = ga.group(5)
+            ga_type_ptr = ga_type
+            if ga_ptr: ga_type_ptr += " *"
+            if ga_array: ga_type_ptr += " []"
+            if ga_type_ptr in return_types:
+              ga_type = return_types[ga_type_ptr]
             else:
-              # we have a high-level type that we treat as a class name, enclose in parenthesis
-              c_args += "(" + "lv." + ga_type + ")"
+              # remove the trailing '_t' of type name if any
+              ga_type = re.sub(r"_t$", "", ga_type)
+            
+            # if the type is a single letter, we just add it
+            if len(ga_type) == 1 and ga_type != 'c':  # callbacks are different
+              c_args += ga_type
+            else:
+              if ga_type.endswith("_cb"):
+                if 'remove_' in func_name:    # if the call is to remove the cb, just treat as an 'anything' parameter
+                  c_args += "."
+                else:
+                  # it's a callback type, we encode it differently
+                  if ga_type not in lv_cb_types:
+                    lv_cb_types.append(ga_type)
+                  c_args += "^" + ga_type + "^"
+              else:
+                # we have a high-level type that we treat as a class name, enclose in parenthesis
+                c_args += "(" + "lv." + ga_type + ")"
+          else:
+            # '...'
+            c_args += "[......]"  # allow 6 additional parameters
 
       # analyze function name and determine if it needs to be assigned to a specific class
-      func_name = g.group(2)
       # Ex: func_name -> 'lv_obj_set_parent'
       if func_name.startswith("_"): continue            # skip low-level
       if func_name.startswith("lv_debug_"): continue    # skip debug
@@ -360,7 +378,7 @@ for subtype, flv in lv.items():
       pass
       # c_ret_type = f"+lv_{subtype}"
     else:
-      func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+      func_out[be_name] = f"  {{ \"{be_name}\", {{ (const void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }} }},"
 
   for be_name in sorted(func_out):
     print(func_out[be_name])
@@ -671,10 +689,13 @@ print("""/********************************************************************
 
 #include "lvgl.h"
 #include "be_mapping.h"
+#include "lv_berry.h"
 #include "lv_theme_openhasp.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
+
+extern lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 
 static int lv_get_hor_res(void) {
@@ -700,7 +721,7 @@ for f in lv0:
   # if c_ret_type is an object, prefix with `lv.`
   if len(c_ret_type) > 1: c_ret_type = "lv." + c_ret_type
 
-  func_out[be_name] = f"  {{ \"{be_name}\", (void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }},"
+  func_out[be_name] = f"  {{ \"{be_name}\", {{ (const void*) &{orig_func_name}, \"{c_ret_type}\", { c_argc if c_argc else 'nullptr'} }} }},"
 
 for be_name in sorted(func_out):
   print(func_out[be_name])
@@ -756,11 +777,12 @@ for k in sorted(lv_module2):
   # otherwise it's an int, leave if unchanged
   if v is not None:
     v_prefix = ""
-    if v[0] == '"': v_prefix = "$"
-    if v[0] == '&': v_prefix = "&"
-    print(f"    {{ \"{v_prefix}{k}\", (int32_t) {v} }},")
+    v_macro = "be_cconst_int"
+    if v[0] == '"': v_prefix = "$"; v_macro = "be_cconst_string"
+    if v[0] == '&': v_prefix = "&"; v_macro = "be_cconst_ptr"
+    print(f"    {{ \"{v_prefix}{k}\", {v_macro}({v}) }},")
   else:
-    print(f"    {{ \"{k}\", LV_{k} }},")
+    print(f"    {{ \"{k}\", be_cconst_int(LV_{k}) }},")
 
 print("""
 };

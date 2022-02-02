@@ -17,3 +17,12 @@ b=A()
 assert(b.a == 1)
 b.g(10)
 assert(b.a == 6)
+
+# bug in compound assignments
+class A var a,b end
+c=A()
+c.a = {"x": 1, "y": 2}
+c.b = "x"
+assert(c.a[c.b] == 1)
+c.a[c.b] += 2   # this is where the bug happens
+assert(c.a[c.b] == 3)

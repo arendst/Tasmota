@@ -137,6 +137,7 @@
 #define D_ORP "ORP"
 #define D_PASSWORD "Wachtwurd"
 #define D_PH "pH"
+#define D_MQ "MQ"
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Krêftfaktor"
 #define D_POWERUSAGE "Krêft"
@@ -663,6 +664,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -786,6 +789,7 @@
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
+#define D_SENSOR_ADC_MQ        "ADC MQ"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -848,6 +852,8 @@
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
+#define D_SENSOR_CM11_TX       "CM110x TX" 
+#define D_SENSOR_CM11_RX       "CM110x RX" 
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -899,7 +905,7 @@
 #define D_OUT_OF_RANGE         "Out of Range"
 #define D_SENSOR_DETECTED      "detected"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Eksportearje krêft"
 #define D_IMPORT_POWER 	  "Ymportearje krêft"
 #define D_PHASE_ANGLE     "Faze hoeke"
@@ -911,6 +917,7 @@
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
 #define D_TOTAL_ACTIVE    "Hielendal wier"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Hielendal wier (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 foltaazje"
@@ -922,10 +929,13 @@
 #define D_SOLAR_POWER     "Zon krêft"
 #define D_INVERTER_POWER  "Inverter krêft"
 #define D_STATUS          "Status"
-#define D_WAITING         "Wachtsje"
-#define D_CHECKING        "Kontrôle"
-#define D_WORKING         "Aktyf"
-#define D_FAILURE         "Ferkeard"
+#define D_SOLAX_MODE_0    "Wachtsje"
+#define D_SOLAX_MODE_1    "Kontrôle"
+#define D_SOLAX_MODE_2    "Aktyf"
+#define D_SOLAX_MODE_3    "Ferkeard"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Gjin"
 #define D_SOLAX_ERROR_1   "Netferbining"
 #define D_SOLAX_ERROR_2   "Netspanning"

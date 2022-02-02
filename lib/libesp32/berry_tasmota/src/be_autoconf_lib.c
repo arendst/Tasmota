@@ -14,7 +14,7 @@ be_local_closure(Autoconf_page_autoconf_ctl,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -196,7 +196,7 @@ be_local_closure(Autoconf_autoexec,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -359,7 +359,7 @@ be_local_closure(Autoconf_run_bat,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -447,7 +447,7 @@ be_local_closure(Autoconf_page_autoconf_mgr,   /* name */
   be_nested_proto(
     19,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -634,7 +634,7 @@ be_local_closure(Autoconf_get_current_module_name,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -665,7 +665,7 @@ be_local_closure(Autoconf_delete_all_configs,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -723,7 +723,7 @@ be_local_closure(Autoconf_set_first_time,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -757,7 +757,7 @@ be_local_closure(Autoconf_load_templates,   /* name */
   be_nested_proto(
     15,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -888,7 +888,7 @@ be_local_closure(Autoconf_web_add_config_button,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -897,7 +897,7 @@ be_local_closure(Autoconf_web_add_config_button,   /* name */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(webserver),
     /* K1   */  be_nested_str(content_send),
-    /* K2   */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3E_X26_X23129668_X3B_X20Auto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
+    /* K2   */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3EAuto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
     }),
     &be_const_str_web_add_config_button,
     &be_const_str_solidified,
@@ -920,7 +920,7 @@ be_local_closure(Autoconf_is_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -955,7 +955,7 @@ be_local_closure(Autoconf_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -976,8 +976,8 @@ be_local_closure(Autoconf_init,   /* name */
     /* K11  */  be_nested_str(_error),
     /* K12  */  be_const_int(1),
     /* K13  */  be_nested_str(log),
-    /* K14  */  be_nested_str(CFG_X3A_X20no_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found),
-    /* K15  */  be_const_int(2),
+    /* K14  */  be_nested_str(CFG_X3A_X20No_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found),
+    /* K15  */  be_const_int(3),
     /* K16  */  be_nested_str(_archive),
     }),
     &be_const_str_init,
@@ -1047,7 +1047,7 @@ be_local_closure(Autoconf_preinit,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1107,7 +1107,7 @@ be_local_closure(Autoconf_reset,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1179,7 +1179,7 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -1268,7 +1268,7 @@ be_local_closure(Autoconf_clear_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -1300,7 +1300,7 @@ be_local_closure(Autoconf_get_current_module_path,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */

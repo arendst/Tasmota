@@ -13,7 +13,7 @@ be_local_closure(Animate_rotate_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     5,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -84,7 +84,7 @@ be_local_closure(Animate_from_to_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     5,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -144,7 +144,7 @@ be_local_closure(Animate_back_forth_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     5,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -225,7 +225,7 @@ be_local_closure(Animate_ins_goto_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -272,7 +272,7 @@ be_local_closure(Animate_ins_ramp_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -319,7 +319,7 @@ be_local_closure(Animate_engine_run,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -368,7 +368,7 @@ be_local_closure(Animate_engine_init,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -405,7 +405,7 @@ be_local_closure(Animate_engine_autorun,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -441,7 +441,7 @@ be_local_closure(Animate_engine_stop,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -475,7 +475,7 @@ be_local_closure(Animate_engine_is_running,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -502,7 +502,7 @@ be_local_closure(Animate_engine_every_50ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -530,7 +530,7 @@ be_local_closure(Animate_engine_animate,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */

@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #endif
 #include "IRremoteESP8266.h"
+#include "ir_Airton.h"
 #include "ir_Airwell.h"
 #include "ir_Amcor.h"
 #include "ir_Argo.h"
@@ -109,6 +110,14 @@ class IRac {
   bool _inverted;  ///< IR LED is lit when GPIO is LOW (true) or HIGH (false)?
   bool _modulation;  ///< Is frequency modulation to be used?
   stdAc::state_t _prev;  ///< The state we expect the device to currently be in.
+#if SEND_AIRTON
+  void airton(IRAirtonAc *ac,
+              const bool on, const stdAc::opmode_t mode,
+              const float degrees, const stdAc::fanspeed_t fan,
+              const stdAc::swingv_t swingv, const bool turbo,
+              const bool light, const bool econo, const bool filter,
+              const int16_t sleep = -1);
+#endif  // SEND_AIRTON
 #if SEND_AIRWELL
   void airwell(IRAirwellAc *ac,
                const bool on, const stdAc::opmode_t mode, const float degrees,
@@ -457,7 +466,7 @@ void electra(IRElectraAc *ac,
   void toshiba(IRToshibaAC *ac,
                const bool on, const stdAc::opmode_t mode, const float degrees,
                const stdAc::fanspeed_t fan, const stdAc::swingv_t swingv,
-               const bool turbo, const bool econo);
+               const bool turbo, const bool econo, const bool filter);
 #endif  // SEND_TOSHIBA_AC
 #if SEND_TROTEC
   void trotec(IRTrotecESP *ac,

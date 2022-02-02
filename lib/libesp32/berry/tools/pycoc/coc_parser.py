@@ -74,9 +74,22 @@ class coc_parser:
         self.text = self.text[r.end(0):]
         return r[0]
 
+    # parse until the next comma or space (trim preceding spaces before)
+    # does not skip the comma
     def parse_tocomma(self):
         self.skip_space()
         r = re.match(r"[^,\s]*", self.text)
+        self.text = self.text[r.end(0):]
+        return r[0]
+
+    # parse until the next closing parenthesis or a single token if no parenthesis (trim preceding spaces before)
+    # matches:
+    #  'int'
+    #  'func(aa)'
+    #  'mapped_func(aa,"ee", "aa")
+    def parse_value(self):
+        self.skip_space()
+        r = re.match(r"(\S+\(.*?\))|([^,\s]*)", self.text)
         self.text = self.text[r.end(0):]
         return r[0]
 
@@ -87,6 +100,7 @@ class coc_parser:
         return r[0]
 
     def parse_object(self):
+        self.text = re.sub("\s+//.*?$", "", self.text, flags=re.MULTILINE)      # remove trailing comments
         while True:
             obj = self.parse_block()
             self.objects.append(obj)
@@ -105,11 +119,15 @@ class coc_parser:
             self.strtab.add(literal)
             # print(f"str '{ident}' -> {literal}")
 
+    #################################################################################
+    # Parse a block of definition like module, class...
+    #################################################################################
     def parse_block(self):
         obj = object_block()
         obj.type = self.parse_word()
         obj.name = self.parse_word()
         # print(f"parse_block: type={obj.type} name={obj.name}")
+        # # ex: 'parse_block: type=module name=gpio'
         self.parse_attr(obj)
         self.parse_body(obj)
         return obj
@@ -127,6 +145,9 @@ class coc_parser:
         value = self.parse_word()
         obj.attr[key] = value
     
+    #################################################################################
+    # Parse the body definition of a class, module...
+    #################################################################################
     def parse_body(self, obj):
         self.skip_char("{")
         if not self.parse_char("}"):
@@ -134,12 +155,16 @@ class coc_parser:
                 self.parse_body_item(obj)
                 if self.parse_char("}"): break
     
+    #################################################################################
+    # Parse each line item in the module/class/vartab
+    #################################################################################
     def parse_body_item(self, obj):
         value = data_value()
         key = self.parse_tocomma()
         # print(f"Key={key}")
-        self.parse_char_continue(",", True)
-        value.value = self.parse_tocomma()
+        self.parse_char_continue(",", True)     # skip the ',' after the key
+        value.value = self.parse_value()
+        # print(f"value.value={value.value}")
         if self.parse_char_continue(","):
             value.depend = self.parse_tonewline()
         obj.data[key] = value

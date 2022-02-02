@@ -43,9 +43,12 @@
 #include <esp_hap_pair_verify.h>
 #include <hap_platform_os.h>
 #include <_esp_hap_config.h>
+#include <hap_platform_httpd.h>
+#include <esp_hap_ip_services.h>
 
 static QueueHandle_t xQueue;
 ESP_EVENT_DEFINE_BASE(HAP_EVENT);
+// static TaskHandle_t hap_loop_handle;
 
 const char * hap_get_version(void)
 {
@@ -354,7 +357,11 @@ int hap_start(void)
 int hap_stop(void)
 {
     int ret = HAP_SUCCESS;
-    //todo
+    hap_mdns_deannounce();
+    hap_mdns_deinit();
+    httpd_handle_t _handle = hap_platform_httpd_get_handle();
+    if(_handle != NULL) hap_platform_httpd_stop(_handle);
+    ret = hap_loop_stop();
     return ret;
 }
 

@@ -101,6 +101,7 @@ BERRY_API void be_writebuffer(const char *buffer, size_t length)
 extern "C" {
     int m_path_listdir(bvm *vm)
     {
+#ifdef USE_UFILESYS
         if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
             const char *path = be_tostring(vm, 1);
             be_newobject(vm, "list");
@@ -126,6 +127,7 @@ extern "C" {
             be_return(vm);
 
         }
+#endif // USE_UFILESYS
         be_return_nil(vm);
     }
 }
@@ -136,10 +138,9 @@ BERRY_API char* be_readstring(char *buffer, size_t size)
 }
 
 /* use the standard library implementation file API. */
-
+#ifdef USE_UFILESYS
 void* be_fopen(const char *filename, const char *modes)
 {
-#ifdef USE_UFILESYS
     if (filename != nullptr && modes != nullptr) {
         char fname2[strlen(filename) + 2];
         if (filename[0] == '/') {
@@ -156,23 +157,24 @@ void* be_fopen(const char *filename, const char *modes)
             return f_ptr;
         }
     }
-#endif // USE_UFILESYS
     return nullptr;
     // return fopen(filename, modes);
 }
+#endif // USE_UFILESYS
 
+
+#ifdef USE_UFILESYS
 // Tasmota specific, get the underlying Arduino File
 File * be_get_arduino_file(void *hfile)
 {
-#ifdef USE_UFILESYS
     if (hfile != nullptr) {
         File * f_ptr = (File*) hfile;
         return f_ptr;
     }
-#endif // USE_UFILESYS
     return nullptr;
     // return fopen(filename, modes);
 }
+#endif
 
 int be_fclose(void *hfile)
 {

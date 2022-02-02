@@ -40,13 +40,7 @@ TasmotaSerial *tms_obj_list[16];
 
 #include "driver/uart.h"
 
-#if CONFIG_IDF_TARGET_ESP32           // ESP32/PICO-D4
-static int tasmota_serial_index = 2;  // Allow UART2 and UART1 only
-#elif CONFIG_IDF_TARGET_ESP32S2       // ESP32-S2
-static int tasmota_serial_index = 1;  // Allow UART1 only
-#elif CONFIG_IDF_TARGET_ESP32C3       // ESP32-C3
-static int tasmota_serial_index = 1;  // Allow UART1 only
-#endif
+static int tasmota_serial_index = SOC_UART_NUM -1;  // Available UART
 
 #endif  // ESP32
 
@@ -90,7 +84,8 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   }
 #endif  // ESP8266
 #ifdef ESP32
-  if (transmit_pin > 33) { return; }  // GPIO34 - GPIO39 are Input only
+  if ((receive_pin >= 0) && !GPIO_IS_VALID_GPIO(receive_pin)) { return; }
+  if ((transmit_pin >= 0) && !GPIO_IS_VALID_OUTPUT_GPIO(transmit_pin)) { return; }
   m_hardserial = true;
 #endif  // ESP32
   m_valid = true;
@@ -111,7 +106,7 @@ TasmotaSerial::~TasmotaSerial(void) {
 
 #ifdef ESP32
   TSerial->end();
-  tasmota_serial_index++;
+  tasmota_serial_index++;  // This only works if no more uarts are requested otherwise will need a global used_uart log
 #endif  // ESP32
 }
 
@@ -134,10 +129,17 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
     }
 #endif  // ESP8266
 #ifdef ESP32
-    if (tasmota_serial_index > 0) {  // We only support UART1 and UART2 and keep UART0 for debugging
+    if (tasmota_serial_index >= 0) {  // We prefer UART1 and UART2 and keep UART0 for debugging
       m_uart = tasmota_serial_index;
       tasmota_serial_index--;
-      TSerial = new HardwareSerial(m_uart);
+      if (0 == m_uart) {
+          Serial.flush();
+          Serial.end();
+          delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
+          TSerial = &Serial;
+      } else {
+        TSerial = new HardwareSerial(m_uart);
+      }
       if (serial_buffer_size > 256) {  // RX Buffer can't be resized when Serial is already running (HardwareSerial.cpp)
         TSerial->setRxBufferSize(serial_buffer_size);
       }
@@ -192,7 +194,7 @@ bool TasmotaSerial::hardwareSerial(void) {
   return m_hardserial;
 #endif  // ESP8266
 #ifdef ESP32
-  return false;  // On ESP32 do not mess with Serial0 buffers
+  return (0 == m_uart);  // We prefer UART1 and UART2 and keep UART0 for debugging
 #endif  // ESP32
 }
 

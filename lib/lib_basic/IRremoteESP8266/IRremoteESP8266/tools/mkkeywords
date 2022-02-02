@@ -30,7 +30,8 @@ cat << EndOfTextEndOfTextEndOfText
 
 EndOfTextEndOfTextEndOfText
 
-CLASSES=$(egrep -h "^ *((enum|class) |} [a-zA-Z0-9_]+_t;$)" src/*.h |
+CLASSES=$(egrep -h \
+          "^ *((enum|class|struct) [a-zA-Z0-9_]+|} [a-zA-Z0-9_]+_t;$)" src/*.h |
           sed 's/^ *//;s/enum class//;s/\;$//' | cut -d' ' -f2 | sort -u |
           grep -v "^__")
 for i in ${CLASSES}; do
@@ -45,7 +46,7 @@ cat << EndOfTextEndOfTextEndOfText
 
 EndOfTextEndOfTextEndOfText
 CTYPES="u?int(8|16|32|64)?(_t)?|void|bool|char|float|long|double|String|static"
-OURTYPES="match_result_t|state_t|decode_type_t"
+OURTYPES="match_result_t|stdAc::state_t|decode_type_t"
 METHODS=$(egrep -h "^[ ]{0,2}(${CTYPES}|${OURTYPES})\*? [^ ]*\(" src/*.cpp |
           sed 's/^  //' | cut -d' ' -f2 | sed 's/^\([^:]*::\| *\* *\)//' |
           cut -d'(' -f1 | sort -u | grep -v RAM_ATTR)

@@ -3,14 +3,40 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.01.2]
+## [2022.01.3]
 ### Added
-- Tasmota favicon to webbrowser tab (#14322)
+- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+- ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
+- Support for BME688 with latest Bosch-Sensor-API library (#14513)
+- Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) (#14555)
+- Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens (#14568)
+- Rule variable %color% (#14572)
+- Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
+- Command ``SspmEnergyTotal<relay>`` to (p)reset Sonoff SPM total energy without today's energy
+- Command ``SspmHistory<relay>`` to retrieve Sonoff SPM daily energy up to last six month (as defined by ARM firmware)
+- Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
+- Command ``SspmLog<relay> [x]`` to retrieve Sonoff SPM relay power state change and cause logging
+- Command ``SspmScan`` to rescan Sonoff SPM modbus
+- Support for MQ analog sensor for air quality by Francesco Adriani (#14581)
+- Command ``SetOption134 1`` to disable PWM auto-phasing for lights by default (new behavior) (#14590)
+- Increase PWM channels to 16 (Esp32 only)
+- Initial support for ESP32S3 with support for 38 configurable GPIOs
 
 ### Changed
+- BME68x-Sensor-API library from v3.5.9 to v4.4.7
+- ESP32 core library from v2.0.2 to v2.0.2.1 (#14553)
 
 ### Fixed
+- OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
 
+## [2022.01.2] 20220116
+### Added
+- Tasmota favicon to webbrowser tab (#14322)
+- Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
+- Support for Eastron SDM230 modBus energy meter (#13443)
+
+### Changed
+- IRremoteESP8266 library from v2.8.0 to v2.8.1
 
 ## [2022.01.1] 20220107
 ### Added

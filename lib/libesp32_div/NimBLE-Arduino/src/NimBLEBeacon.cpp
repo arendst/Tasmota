@@ -11,7 +11,7 @@
  *  Created on: Jan 4, 2018
  *      Author: kolban
  */
-#include "nimconfig.h"
+#include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include <string.h>

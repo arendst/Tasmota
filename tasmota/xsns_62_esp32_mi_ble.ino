@@ -2496,7 +2496,7 @@ void MI32GetOneSensorJson(int slot, int hidename){
 #endif //USE_HOME_ASSISTANT
         ) {
           ResponseAppend_P(PSTR(","));
-          ResponseAppendTHD(p->temp, p->hum);
+          ResponseAppendTHD(ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
           tempHumSended = true;
         }
       }
@@ -2508,8 +2508,9 @@ void MI32GetOneSensorJson(int slot, int hidename){
           ||(hass_mode!=-1)
 #endif //USE_HOME_ASSISTANT
         ) {
+          float temp = ConvertTempToFahrenheit(p->temp); // convert if SO8 on
           ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%*_f"),
-            Settings->flag2.temperature_resolution, &p->temp);
+            Settings->flag2.temperature_resolution, &temp);
         }
       }
     }
@@ -2691,6 +2692,9 @@ void MI32ShowSomeSensors(){
     }
     cnt++;
   }
+  if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
+  }
   ResponseAppend_P(PSTR("}"));
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
   //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
@@ -2729,6 +2733,9 @@ void MI32ShowOneMISensor(){
     mi_sensor_t *p;
     p = &MIBLEsensors[MI32.mqttCurrentSingleSlot];
 
+    if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
+    }
     ResponseAppend_P(PSTR("}"));
 
     char idstr[32];
@@ -3052,6 +3059,9 @@ void MI32ShowTriggeredSensors(){
       }
     }
     if (cnt){ // if we got one, then publish
+      if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
+        ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
+      }
       ResponseAppend_P(PSTR("}"));
       if(
     #ifdef USE_HOME_ASSISTANT
@@ -3133,7 +3143,7 @@ void MI32Show(bool json)
       switch(p->type){
         case MI_FLORA:{
           if (!isnan(p->temp)) {
-            WSContentSend_Temp(typeName, p->temp);
+            WSContentSend_Temp(typeName, ConvertTempToFahrenheit(p->temp));  // convert if SO8 on
           }
           if (p->moisture!=0xff) {
             WSContentSend_PD(HTTP_SNS_MOISTURE, typeName, p->moisture);
@@ -3144,7 +3154,7 @@ void MI32Show(bool json)
         } break;
         default:{
           if (!isnan(p->hum) && !isnan(p->temp)) {
-            WSContentSend_THD(typeName, p->temp, p->hum);
+            WSContentSend_THD(typeName, ConvertTempToFahrenheit(p->temp), p->hum);  // convert if SO8 on
           }
         }
       }

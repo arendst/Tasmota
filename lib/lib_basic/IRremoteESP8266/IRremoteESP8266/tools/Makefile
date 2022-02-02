@@ -27,13 +27,19 @@ CPPFLAGS += -DUNIT_TEST -D_IR_LOCALE_=en-AU
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra -pthread -std=gnu++11
 
-all : gc_decode mode2_decode
+objects = $(patsubst %.cpp,%,$(wildcard *.cpp))
+
+all : $(objects)
 
 run_tests : all
 	failed=""; \
 	for py_unittest in *_test.py; do \
 	  echo "RUNNING: $${py_unittest}"; \
 		python3 ./$${py_unittest} || failed="$${failed} $${py_unittest}"; \
+	done; \
+	for shell_unittest in *_test.sh; do \
+	  echo "RUNNING: $${shell_unittest}"; \
+		bash ./$${shell_unittest} || failed="$${failed} $${shell_unittest}"; \
 	done; \
 	if [ -n "$${failed}" ]; then \
 		echo "FAIL: :-( :-( Unit test(s)$${failed} failed! :-( :-("; exit 1; \
@@ -46,7 +52,7 @@ run-% : all
 	python3 ./$*.py;
 
 clean :
-	rm -f  *.o *.pyc gc_decode mode2_decode
+	rm -f  *.o *.pyc $(objects)
 
 
 # Keep all intermediate files.
@@ -80,7 +86,7 @@ IRrecv.o : $(USER_DIR)/IRrecv.cpp $(USER_DIR)/IRrecv.h $(USER_DIR)/IRremoteESP82
 
 # new specific targets goes above this line
 
-%_decode : $(COMMON_OBJ) %_decode.o
+$(objects) : %: $(COMMON_OBJ) %.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
 ir_%.o : $(USER_DIR)/ir_%.h $(USER_DIR)/ir_%.cpp $(COMMON_DEPS) $(GTEST_HEADERS)

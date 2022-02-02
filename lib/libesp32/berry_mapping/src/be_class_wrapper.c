@@ -13,6 +13,9 @@
 #include "be_exec.h"
 #include <string.h>
 
+typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intptr_t p3,
+                                    intptr_t p4, intptr_t p5, intptr_t p6, intptr_t p7);
+
 /*********************************************************************************************\
  * Converision from real <-> int
  * 
@@ -147,11 +150,11 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'b' be_bool
  *   's' be_string
  *   'f' be_real (float)
- *   'c' C callback
+ *   'c' C comptr (general pointer)
  *   '-': skip argument and ignore
  *   '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
  *   'lv_obj' be_instance of type or subtype
- *   '^lv_event_cb' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
+ *   '^lv_event_cb^' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
  * 
  * Ex: ".ii" takes 3 arguments, first one is any type, followed by 2 ints
 \*********************************************************************************************/
@@ -161,7 +164,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
 // read a single value at stack position idx, convert to int.
 // if object instance, get `_p` member and convert it recursively
 intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf_len) {
-  // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', type=%s", idx, arg_type ? arg_type : "", be_typename(vm, idx));
+  // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', type=%s)", idx, arg_type ? arg_type : "", be_typename(vm, idx));
   int ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
@@ -233,7 +236,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
       if (!be_getmember(vm, idx, "_p")) {
         be_pop(vm, 1);    // remove `nil`
         be_getmember(vm, idx, ".p");
-      }
+      } // else `nil` is on top of stack
       int32_t ret = be_convert_single_elt(vm, -1, NULL, NULL);   // recurse
       be_pop(vm, 1);
 
@@ -347,12 +350,12 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
         arg_idx++;
       }
     }
-    // AddLog(LOG_LEVEL_INFO, ">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
+    // berry_log_C(">> be_call_c_func arg %i, type %s", i, arg_type_check ? type_short_name : "<null>");
     p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, &buf_len);
     // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
     p_idx++;
 
-    if (arg_type[arg_idx] == '~') { // if next argument is virtual
+    if (arg_type && arg_type[arg_idx] == '~') { // if next argument is virtual
       if (buf_len < 0) {
         be_raisef(vm, "value_error", "no bytes() length known");
       }
@@ -363,7 +366,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
   }
 
   // check if we are missing arguments
-  if (!arg_optional && arg_type != NULL && arg_type[arg_idx] != 0) {
+  if (!arg_optional && arg_type && arg_type[arg_idx] != 0) {
     be_raisef(vm, "value_error", "Missing arguments, remaining type '%s'", &arg_type[arg_idx]);
   }
   return p_idx;
@@ -400,6 +403,14 @@ static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
 }
 
 /*********************************************************************************************\
+ * CType handler for Berry
+\*********************************************************************************************/
+int be_call_ctype_func(bvm *vm, const void *definition) {
+  be_ctype_args_t* args = (be_ctype_args_t*) definition;
+  return be_call_c_func(vm, args->func, args->return_type, args->arg_type);
+}
+
+/*********************************************************************************************\
  * Call a C function with auto-mapping
  * 
  * Arguments:
@@ -411,7 +422,7 @@ static void be_set_ctor_ptr(bvm *vm, void * ptr, const char *name) {
  * Note: the C function mapping supports max 8 arguments and does not directly support
  *       pointers to values (although it is possible to mimick with classes)
 \*********************************************************************************************/
-int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type) {
+int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type) {
   intptr_t p[8] = {0,0,0,0,0,0,0,0};
   int argc = be_top(vm); // Get the number of arguments
 
@@ -434,8 +445,8 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
     }
   }
 
-  fn_any_callable f = (fn_any_callable) func;   // when returning a bytes buffer, this holds the length of the buffer, while the return value of the function is `void*`
-  size_t return_len = 0;
+  fn_any_callable f = (fn_any_callable) func;
+  size_t return_len = 0;   // when returning a bytes buffer, this holds the length of the buffer, while the return value of the function is `void*`
   int c_args = be_check_arg_type(vm, arg_start, arg_count, arg_type, p);
   if (return_type != NULL && return_type[0] == '&') {
     if (c_args < 8) { p[c_args] = (intptr_t) &return_len; }
@@ -455,6 +466,7 @@ int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * 
       case '.':   // fallback next
       case 'i':   be_pushint(vm, ret); break;
       case 'b':   be_pushbool(vm, ret);  break;
+      case 'c':   be_pushcomptr(vm, (void*) ret); break;
       case 's':   be_pushstring(vm, (const char*) ret);  break;
       case '&':   be_pushbytes(vm, (void*) ret, return_len); break;
       default:    be_raise(vm, "internal_error", "Unsupported return type"); break;

@@ -79,7 +79,7 @@ int8_t cs;
     if (desc) {
       memcpy_P(fbuff, desc, DISPDESC_SIZE - 1);
       ddesc = fbuff;
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: const char descriptor used"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: const char descriptor used"));
     }
 
 
@@ -92,7 +92,7 @@ int8_t cs;
         fp.read((uint8_t*)fbuff, size);
         fp.close();
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: File descriptor used"));
       }
     }
 #endif // USE_UFILESYS
@@ -106,7 +106,7 @@ int8_t cs;
         while (*lp != '\n') lp++;
         memcpy(fbuff, lp + 1, DISPDESC_SIZE - 1);
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: Script descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Script descriptor used"));
       }
     }
 #endif // USE_SCRIPT
@@ -123,7 +123,7 @@ int8_t cs;
           if (fbuff[cnt] == ' ') fbuff[cnt] = '\n';
         }
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: Rule 3 descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Rule 3 descriptor used"));
       }
 
     }
@@ -134,12 +134,12 @@ int8_t cs;
     if (!ddesc) {
       memcpy_P(fbuff, DSP_SAMPLE_DESC, sizeof(DSP_SAMPLE_DESC));
       ddesc = fbuff;
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: Flash descriptor used"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Flash descriptor used"));
     }
 #endif // DSP_ROM_DESC
 
     if (!ddesc) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: No valid descriptor found"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: No valid descriptor found"));
       if (fbuff) free(fbuff);
       return 0;
     }
@@ -238,7 +238,7 @@ int8_t cs;
     // init renderer
     if (renderer) {
       delete renderer;
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: reinit"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: reinit"));
     }
     udisp  = new uDisplay(ddesc);
 
@@ -328,7 +328,7 @@ int8_t cs;
 #endif // SHOW_SPLASH
 
     udisp_init_done = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), renderer->devname());
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: Configured display '%s'"), renderer->devname());
 
     return renderer;
   }
