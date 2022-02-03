@@ -979,6 +979,7 @@ void TM1637ShowTime()
 {
   uint8_t hr = RtcTime.hour;
   uint8_t mn = RtcTime.minute;
+  uint8_t sc = RtcTime.second;
   // uint8_t hr = 1;
   // uint8_t mn = 0;
   char z = ' ';
@@ -998,16 +999,36 @@ void TM1637ShowTime()
   if (hr < 10)
   {
     if (mn < 10)
-      snprintf(tm, sizeof(tm), PSTR("%c%d0%d"), z, hr, mn);
+    {
+      if (sc < 10)
+        snprintf(tm, sizeof(tm), PSTR("%c%d0%d0%d"), z, hr, mn, sc);
+      else
+        snprintf(tm, sizeof(tm), PSTR("%c%d0%d%d"), z, hr, mn, sc);
+    }
     else
-      snprintf(tm, sizeof(tm), PSTR("%c%d%d"), z, hr, mn);
+    {
+      if (sc < 10)
+        snprintf(tm, sizeof(tm), PSTR("%c%d%d0%d"), z, hr, mn, sc);
+      else
+        snprintf(tm, sizeof(tm), PSTR("%c%d%d%d"), z, hr, mn, sc);
+    }
   }
   else
   {
     if (mn < 10)
-      snprintf(tm, sizeof(tm), PSTR("%d0%d"), hr, mn);
+    {
+      if (sc < 10)
+        snprintf(tm, sizeof(tm), PSTR("%d0%d0%d"), hr, mn, sc);
+      else
+        snprintf(tm, sizeof(tm), PSTR("%d0%d%d"), hr, mn, sc);
+    }
     else
-      snprintf(tm, sizeof(tm), PSTR("%d%d"), hr, mn);
+    {
+      if (sc < 10)
+        snprintf(tm, sizeof(tm), PSTR("%d%d0%d"), hr, mn, sc);
+      else
+        snprintf(tm, sizeof(tm), PSTR("%d%d%d"), hr, mn, sc);
+    }
   }
 
   if (TM1637 == TM1637Data.display_type)
@@ -1035,7 +1056,8 @@ void TM1637ShowTime()
   {
     for (uint32_t i = 0; i < 4; i++)
     {
-      if ((millis() % 1000) > 500 && (i == 1))
+      //if ((millis() % 1000) > 500 && (i == 3))
+      if ((i == 1) || (i == 3))
         displayMAX7219ASCIIwDot(i, tm[i]);
       else
         displayMAX7219ASCII(i, tm[i]);
