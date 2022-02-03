@@ -1861,6 +1861,7 @@ void GpioInit(void)
   }
 #endif  // ESP8266
 #ifdef ESP32
+/*
   if (PinUsed(GPIO_SPI_CS) ||
       PinUsed(GPIO_RC522_CS) ||
       PinUsed(GPIO_NRF24_CS) ||
@@ -1879,6 +1880,10 @@ void GpioInit(void)
     uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
     TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
   }
+*/
+  uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+  uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
+  TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
 #endif  // ESP32
   AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
 #endif  // USE_SPI
