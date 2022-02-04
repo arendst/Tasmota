@@ -1185,8 +1185,8 @@ void CmndShutterPosition(void)
         }
         if (Shutter[index].direction != new_shutterdirection) {
           ShutterStartInit(index, new_shutterdirection, Shutter[index].target_position);
-          uint8_t save_direction = Shutter[i].direction;
-          Shutter[i].direction = 0; // set temporary direction = 0 to avoid RTC timer sarting. Some delay may happen before shutter starts moving
+          uint8_t save_direction = Shutter[index].direction;
+          Shutter[index].direction = 0; // set temporary direction = 0 to avoid RTC timer sarting. Some delay may happen before shutter starts moving
           switch (ShutterGlobal.position_mode) {
             case SHT_COUNTER:
             case SHT_PWM_TIME:
@@ -1226,7 +1226,7 @@ void CmndShutterPosition(void)
               } // if (!ShutterGlobal.skip_relay_change)
             break;
           } // switch (ShutterGlobal.position_mode)
-          Shutter[i].direction = save_direction;
+          Shutter[index].direction = save_direction;
           ShutterGlobal.RelayCurrentMask = 0;
         } // if (Shutter[i].direction[index] != new_shutterdirection)
       } else {
