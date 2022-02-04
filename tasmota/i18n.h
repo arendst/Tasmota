@@ -122,7 +122,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
-// xsns_32_HMC5883L.ino
+// xsns_96_QMC5883.ino
 #define D_JSON_MX "Compass  X-Axis"
 #define D_JSON_MY "Compass  Y-Axis"
 #define D_JSON_MZ "Compass Z-Axis"

@@ -97,5 +97,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   62  | USE_SCD40           | xsns_92 | SCD40    | 0x62        | CO2 sensor Sensirion SCD40/SCD41
   63  | USE_HM330X          | xsns_93 | HM330X   | 0x40        | Particule sensor
   64  | USE_HDC2010         | xsns_94 | HDC2010  | 0x40        | Temperature and Humidity sensor  
-  65  | USE_HMC5883L        | xsns_95 | HMC5883L | 0x1E        | Magnetic Field Sensor
   66  | USE_QMC5883         | xsns_96 | QMC5883  | 0x1D        | Magnetic Field Sensor

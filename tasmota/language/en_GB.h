@@ -558,12 +558,7 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
-// xsns_99_HMC5883L.ino
-#define D_MX                    "Compass  X-Axis"
-#define D_MY                    "Compass  Y-Axis"
-#define D_MZ                    "Compass Z-Axis"
-#define D_HG                    "Compass Heading"
-#define D_MAGNETICFLD           "Magnetic Field Strength"
+
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Remove weight"
@@ -613,6 +608,13 @@
 // xsns_86_tfminiplus.ino
 #define D_SIGNALSTRENGTH "Signal Strength"
 #define D_CHIPTEMPERATURE "Chip Temperature"
+
+// xsns_96_QMC5883.ino
+#define D_MX                    "Compass X-Axis"
+#define D_MY                    "Compass Y-Axis"
+#define D_MZ                    "Compass Z-Axis"
+#define D_HG                    "Compass Heading"
+#define D_MAGNETICFLD           "Magnetic Field Strength"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
