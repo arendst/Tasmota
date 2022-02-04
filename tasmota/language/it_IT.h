@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 19.01.2022
+ * Updated until v9.5.0.9 - Last update 04.02.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -852,8 +852,8 @@
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"
 #define D_GPIO_SHIFT595_SER             "74x595 - SER"
-#define D_SENSOR_CM11_TX                "CM110x TX"
-#define D_SENSOR_CM11_RX                "CM110x RX"
+#define D_SENSOR_CM11_TX                "CM110x - TX"
+#define D_SENSOR_CM11_RX                "CM110x - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
