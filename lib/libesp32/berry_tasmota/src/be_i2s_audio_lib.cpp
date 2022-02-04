@@ -147,6 +147,8 @@ int32_t be_audio_output_consume_silence(struct bvm *vm) {
   return be_call_c_func(vm, (void*) &be_audio_output_consume_silence_ntv, "i", ".");
 }
 
+#include "AudioOutputI2S.h"
+
 extern "C" {
   
 #include "be_fixed_be_class_audio_output.h"
@@ -211,6 +213,10 @@ class be_class_audio_file_source (scope: global, name: AudioFileSource) {
 }
 
 class be_class_audio_output_i2s (scope: global, name: AudioOutputI2S, super: be_class_audio_output) {
+    EXTERNAL_I2S, int(AudioOutputI2S::EXTERNAL_I2S)
+    INTERNAL_DAC, int(AudioOutputI2S::INTERNAL_DAC)
+    INTERNAL_PDM, int(AudioOutputI2S::INTERNAL_PDM)
+
     init, func(i2s_output_i2s_init)
     deinit, func(i2s_output_i2s_deinit)
     stop, func(i2s_output_i2s_stop)

@@ -43,7 +43,7 @@ int lv0_init(bvm *vm);
 int lv0_init(bvm *vm) {
   // "+_p" indicates that there must be an non NULL argument, either passed as comptr or returned by the function
   // Here, there is no function, so calling the constructor without a non-null comptr argument is rejected
-  return be_call_c_func(vm, NULL, "+_p", NULL);
+  return be_call_c_func(vm, NULL, "=_p", NULL);
 }
 
 /*********************************************************************************************\
@@ -125,15 +125,15 @@ int lv_x_member(bvm *vm) {
           // push native closure
           be_pushntvclosure(vm, &lv_x_call_c, 3);   // 3 upvals
 
-          be_pushcomptr(vm, method->func);
+          be_pushcomptr(vm, method->args.func);
           be_setupval(vm, -2, 0);
           be_pop(vm, 1);
 
-          be_pushstring(vm, method->return_type);
+          be_pushstring(vm, method->args.return_type);
           be_setupval(vm, -2, 1);
           be_pop(vm, 1);
 
-          be_pushstring(vm, method->arg_type);
+          be_pushstring(vm, method->args.arg_type);
           be_setupval(vm, -2, 2);
           be_pop(vm, 1);
 
@@ -298,15 +298,15 @@ int lv0_member(bvm *vm) {
       // push native closure
       be_pushntvclosure(vm, &lv_x_call_c, 3);   // 3 upvals
 
-      be_pushcomptr(vm, method->func);
+      be_pushcomptr(vm, method->args.func);
       be_setupval(vm, -2, 0);
       be_pop(vm, 1);
 
-      be_pushstring(vm, method->return_type);
+      be_pushstring(vm, method->args.return_type);
       be_setupval(vm, -2, 1);
       be_pop(vm, 1);
 
-      be_pushstring(vm, method->arg_type);
+      be_pushstring(vm, method->args.arg_type);
       be_setupval(vm, -2, 2);
       be_pop(vm, 1);
 

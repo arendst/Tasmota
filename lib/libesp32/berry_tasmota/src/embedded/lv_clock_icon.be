@@ -25,6 +25,8 @@ class lv_clock_icon: lv.label
       self.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
     end
 
+    self.add_event_cb(/->self.before_del(), lv.EVENT_DELETE, 0)   # register `before_del` to be called when object is deleted
+
     tasmota.add_driver(self)
   end
 
@@ -47,8 +49,7 @@ class lv_clock_icon: lv.label
     end
   end
 
-  def del()
-    super(self).del()
+  def before_del()
     tasmota.remove_driver(self)
   end
 end

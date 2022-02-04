@@ -184,9 +184,10 @@ bool RtcRebootValid(void) {
 extern "C" {
 #include "spi_flash.h"
 }
-#include "eboot_command.h"
 
 #ifdef ESP8266
+
+#include "eboot_command.h"
 
 extern "C" uint32_t _FS_start;      // 1M = 0x402fb000, 2M = 0x40300000, 4M = 0x40300000
 const uint32_t FLASH_FS_START = (((uint32_t)&_FS_start - 0x40200000) / SPI_FLASH_SEC_SIZE);
@@ -438,13 +439,16 @@ bool SettingsConfigRestore(void) {
   }
 
   if (valid_settings) {
-#ifdef ESP8266
     // uint8_t       config_version;            // F36
+#ifdef ESP8266
     valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
 #ifdef ESP32
-    // uint8_t       config_version;            // F36
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+    valid_settings = (2 == settings_buffer[0xF36]);  // Settings->config_version
+#else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version
+#endif  // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
   }
 
@@ -824,7 +828,11 @@ void SettingsDefaultSet2(void) {
 //  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  Settings->config_version = 2;  // ESP32C3
+#else
   Settings->config_version = 1;  // ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
 
   flag.stop_flash_rotate |= APP_FLASH_CYCLE;
@@ -1032,6 +1040,7 @@ void SettingsDefaultSet2(void) {
   flag.ir_receive_decimal |= IR_DATA_RADIX;
   flag3.receive_raw |= IR_ADD_RAW_DATA;
   Settings->param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
+  Settings->param[P_IR_TOLERANCE] = IR_RCV_TOLERANCE;
 
   // RF Bridge
   flag.rf_receive_decimal |= RF_DATA_RADIX;
@@ -1093,7 +1102,7 @@ void SettingsDefaultSet2(void) {
 
   Settings->pwm_frequency = PWM_FREQ;
   Settings->pwm_range = PWM_RANGE;
-  for (uint32_t i = 0; i < MAX_PWMS; i++) {
+  for (uint32_t i = 0; i < LST_MAX; i++) {
     Settings->light_color[i] = DEFAULT_LIGHT_COMPONENT;
 //    Settings->pwm_value[i] = 0;
   }
@@ -1345,7 +1354,11 @@ void SettingsDelta(void) {
       Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+      Settings->config_version = 2;  // ESP32C3
+#else
       Settings->config_version = 1;  // ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
     }
     if (Settings->version < 0x08020006) {

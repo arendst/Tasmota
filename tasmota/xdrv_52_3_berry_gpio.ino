@@ -21,6 +21,7 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
+#include "esp8266toEsp32.h"
 
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
 #include <driver/dac.h>
@@ -80,8 +81,6 @@ extern "C" {
             } else {
               be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
             }
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-            be_raise(vm, "value_error", "DAC unsupported in this chip");
 #else
             be_raise(vm, "value_error", "DAC unsupported in this chip");
 #endif
@@ -201,8 +200,10 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  void gp_set_duty(int32_t pin, int32_t duty, int32_t hpoint) {
+    analogWritePhase(pin, duty, hpoint);
+  }
+
 }
-
-
 
 #endif  // USE_BERRY

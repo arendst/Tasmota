@@ -109,8 +109,7 @@ class lv_wifi_arcs: lv_signal_arcs
     end
   end
 
-  def del()
-    super(self).del()
+  def before_del()    # called when the widget is being deleted
     tasmota.remove_driver(self)
   end
 end

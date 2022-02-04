@@ -219,12 +219,6 @@ uint32_t WcSetup(int32_t fsiz) {
 //esp_log_level_set("*", ESP_LOG_VERBOSE);
 
   camera_config_t config;
-  config.ledc_channel = LEDC_CHANNEL_0;
-  config.ledc_timer = LEDC_TIMER_0;
-  config.xclk_freq_hz = 20000000;
-  config.pixel_format = PIXFORMAT_JPEG;
-//  config.pixel_format = PIXFORMAT_GRAYSCALE;
-//  config.pixel_format = PIXFORMAT_RGB565;
 
   if (WcPinUsed()) {
     config.pin_d0 = Pin(GPIO_WEBCAM_DATA);        // Y2_GPIO_NUM;
@@ -265,8 +259,17 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_reset = RESET_GPIO_NUM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Default template"));
   }
+  
+  int32_t ledc_channel = analogAttach(config.pin_xclk);
+  if (ledc_channel < 0) {
+    AddLog(LOG_LEVEL_ERROR, "CAM: cannot allocated ledc cahnnel, remove a PWM GPIO");
+  }
+  config.ledc_channel = (ledc_channel_t) ledc_channel;
+  AddLog(LOG_LEVEL_DEBUG_MORE, "CAM: XCLK on GPIO %i using ledc channel %i", config.pin_xclk, config.ledc_channel);
+  config.ledc_timer = LEDC_TIMER_0;
+  config.xclk_freq_hz = 20000000;
+  config.pixel_format = PIXFORMAT_JPEG;
 
-  //ESP.getPsramSize()
 
   //esp_log_level_set("*", ESP_LOG_INFO);
 
@@ -283,6 +286,7 @@ uint32_t WcSetup(int32_t fsiz) {
     config.frame_size = FRAMESIZE_VGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
+    config.fb_location = CAMERA_FB_IN_DRAM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM not found"));
   }
 

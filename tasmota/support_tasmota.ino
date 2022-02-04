@@ -444,7 +444,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
       pwm = changeUIntScale((uint16_t)(state ? Settings->ledpwm_on : Settings->ledpwm_off), 0, 255, 0, Settings->pwm_range); // linear
 #endif //USE_LIGHT
 #ifdef ESP32
-      if (analogAttach(Pin(GPIO_LED1, led)))
+      if (analogAttach(Pin(GPIO_LED1, led)) >= 0)
 #endif
         analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm : pwm);
     } else {
@@ -733,19 +733,6 @@ void StopAllPowerBlink(void)
       ExecuteCommandPower(i, (TasmotaGlobal.blink_powersave >> (i -1))&1, SRC_IGNORE);  // Restore state
     }
   }
-}
-
-void MqttShowPWMState(void)
-{
-  ResponseAppend_P(PSTR("\"" D_CMND_PWM "\":{"));
-  bool first = true;
-  for (uint32_t i = 0; i < MAX_PWMS; i++) {
-    if (PinUsed(GPIO_PWM1, i)) {
-      ResponseAppend_P(PSTR("%s\"" D_CMND_PWM "%d\":%d"), first ? "" : ",", i+1, Settings->pwm_value[i]);
-      first = false;
-    }
-  }
-  ResponseJsonEnd();
 }
 
 void MqttShowState(void)
@@ -1670,17 +1657,6 @@ void SerialInput(void)
   }
 }
 
-/********************************************************************************************/
-
-void ResetPwm(void)
-{
-  for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-    if (PinUsed(GPIO_PWM1, i)) {
-      analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range : 0);
-//      analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - Settings->pwm_value[i] : Settings->pwm_value[i]);
-    }
-  }
-}
 
 /********************************************************************************************/
 
@@ -1825,7 +1801,7 @@ void GpioInit(void)
         mpin -= (AGPIO(GPIO_HEARTBEAT_INV) - AGPIO(GPIO_HEARTBEAT));
       }
       else if ((mpin >= AGPIO(GPIO_PWM1_INV)) && (mpin < (AGPIO(GPIO_PWM1_INV) + MAX_PWMS))) {
-        bitSet(TasmotaGlobal.pwm_inverted, mpin - AGPIO(GPIO_PWM1_INV));
+        bitSet(TasmotaGlobal.pwm_inverted, mpin - AGPIO(GPIO_PWM1_INV));    // PWMi are later converted to PMW, but marked as inverted in TasmotaGlobal.pwm_inverted
         mpin -= (AGPIO(GPIO_PWM1_INV) - AGPIO(GPIO_PWM1));
       }
       else if (XdrvCall(FUNC_PIN_STATE)) {
@@ -1885,6 +1861,7 @@ void GpioInit(void)
   }
 #endif  // ESP8266
 #ifdef ESP32
+/*
   if (PinUsed(GPIO_SPI_CS) ||
       PinUsed(GPIO_RC522_CS) ||
       PinUsed(GPIO_NRF24_CS) ||
@@ -1903,6 +1880,10 @@ void GpioInit(void)
     uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
     TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
   }
+*/
+  uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+  uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
+  TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
 #endif  // ESP32
   AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
 #endif  // USE_SPI
@@ -2002,23 +1983,7 @@ void GpioInit(void)
 #endif  // USE_SONOFF_SC
 #endif  // ESP8266
 
-  for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-    if (PinUsed(GPIO_PWM1, i)) {
-#ifdef ESP8266
-      pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-#endif  // ESP8266
-#ifdef ESP32
-      analogAttach(Pin(GPIO_PWM1, i));
-#endif  // ESP32
-      if (TasmotaGlobal.light_type) {
-        // force PWM GPIOs to low or high mode, see #7165
-        analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range : 0);
-      } else {
-        TasmotaGlobal.pwm_present = true;
-        analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - Settings->pwm_value[i] : Settings->pwm_value[i]);
-      }
-    }
-  }
+  GpioInitPwm();
 
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {

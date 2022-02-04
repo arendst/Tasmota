@@ -154,6 +154,13 @@ struct TasmotaGlobal_t {
   bool enable_logging;                      // Enable logging
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint16_t pwm_inverted;                    // PWM inverted flag (1 = inverted) - extended to 16 bits for ESP32
+#ifdef ESP32
+  int16_t pwm_cur_value[MAX_PWMS];          // Current effective values of PWMs as applied to GPIOs
+  int16_t pwm_cur_phase[MAX_PWMS];          // Current phase values of PWMs as applied to GPIOs
+  int16_t pwm_value[MAX_PWMS];              // Wanted values of PWMs after update - -1 means no change
+  int16_t pwm_phase[MAX_PWMS];              // Wanted phase of PWMs after update - -1 means no change
+#endif // ESP32
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
@@ -172,7 +179,7 @@ struct TasmotaGlobal_t {
   uint8_t led_inverted;                     // LED inverted flag (1 = (0 = On, 1 = Off))
   uint8_t led_power;                        // LED power state
   uint8_t ledlnk_inverted;                  // Link LED inverted flag (1 = (0 = On, 1 = Off))
-  uint8_t pwm_inverted;                     // PWM inverted flag (1 = inverted)
+  // uint8_t pwm_inverted;                     // PWM inverted flag (1 = inverted) -- TODO
   uint8_t energy_driver;                    // Energy monitor configured
   uint8_t light_driver;                     // Light module configured
   uint8_t light_type;                       // Light types
@@ -407,8 +414,8 @@ void setup(void) {
 
   memcpy_P(TasmotaGlobal.version, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
-  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d%d.%02d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 2022.01
-  if (VERSION & 0xff) {  // Development or patched version 2022.01.10
+  snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%d%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 2022.1
+  if (VERSION & 0xff) {  // Development or patched version 2022.1.10
     snprintf_P(TasmotaGlobal.version, sizeof(TasmotaGlobal.version), PSTR("%s.%d"), TasmotaGlobal.version, VERSION & 0xff);
   }
 
