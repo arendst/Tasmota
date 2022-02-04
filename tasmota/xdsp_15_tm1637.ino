@@ -996,41 +996,8 @@ void TM1637ShowTime()
   }
 
   char tm[9];
-  if (hr < 10)
-  {
-    if (mn < 10)
-    {
-      if (sc < 10)
-        snprintf(tm, sizeof(tm), PSTR("%c%d0%d0%d"), z, hr, mn, sc);
-      else
-        snprintf(tm, sizeof(tm), PSTR("%c%d0%d%d"), z, hr, mn, sc);
-    }
-    else
-    {
-      if (sc < 10)
-        snprintf(tm, sizeof(tm), PSTR("%c%d%d0%d"), z, hr, mn, sc);
-      else
-        snprintf(tm, sizeof(tm), PSTR("%c%d%d%d"), z, hr, mn, sc);
-    }
-  }
-  else
-  {
-    if (mn < 10)
-    {
-      if (sc < 10)
-        snprintf(tm, sizeof(tm), PSTR("%d0%d0%d"), hr, mn, sc);
-      else
-        snprintf(tm, sizeof(tm), PSTR("%d0%d%d"), hr, mn, sc);
-    }
-    else
-    {
-      if (sc < 10)
-        snprintf(tm, sizeof(tm), PSTR("%d%d0%d"), hr, mn, sc);
-      else
-        snprintf(tm, sizeof(tm), PSTR("%d%d%d"), hr, mn, sc);
-    }
-  }
-
+  snprintf_P(tm, sizeof(tm), PSTR("%c%d%02d%02d"), z, hr, mn, sc);
+  
   if (TM1637 == TM1637Data.display_type)
   {
     uint8_t rawBytes[1];
