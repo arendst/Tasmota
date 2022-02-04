@@ -995,7 +995,7 @@ void TM1637ShowTime()
       hr = 12;
   }
 
-  char tm[5];
+  char tm[9];
   if (hr < 10)
   {
     if (mn < 10)
