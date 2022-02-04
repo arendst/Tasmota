@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v2022.01.3
+## Changelog v2022.1.4
 ### Added
 - Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens [#14568](https://github.com/arendst/Tasmota/issues/14568)
 - Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)

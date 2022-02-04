@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [2022.1.4]
+### Added
+
+### Changed
+- Version display from 2022.01.3 to 2022.1.4
+
+### Fixed
+
+
 ## [2022.01.3]
 ### Added
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
