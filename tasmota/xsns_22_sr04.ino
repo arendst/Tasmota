@@ -67,7 +67,7 @@ uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third) {
 }
 
 uint16_t Sr04TMode2Distance(void) {
-  uint8_t buffer[4];         // Accomodate either 2 or 3 bytes of data
+  uint8_t buffer[4];                  // Accommodate either 2 or 4 bytes of data
   uint32_t buffer_idx = 0;
   uint32_t end = millis() + 100;
   while (millis() < end) {
@@ -77,25 +77,27 @@ uint16_t Sr04TMode2Distance(void) {
     }
     delay(1);
   }
-  if (0 == SR04.type) {
+  if (SR04_MODE_NONE == SR04.type) {  // Only log during detection
     AddLog(LOG_LEVEL_DEBUG, PSTR("SR4: Received '%*_H'"), buffer_idx, buffer);
   }
 
-  if (buffer_idx < 2) { return 0; }
-
-  uint8_t crc = buffer[0];   // Read high byte
-  uint16_t distance = ((uint16_t)crc) << 8;
-  distance += buffer[1];     // Read low byte
-
-  if (buffer_idx > 2) {      // US-100 serial has no CRC
-    crc += distance & 0x00ff;
-    crc += 0x00FF;
-    if (crc != buffer[3]) {  // Check crc sum
-      AddLog(LOG_LEVEL_ERROR, PSTR("SR4: Reading CRC error"));
-      return 0;
+  uint32_t distance = 0;
+  if (buffer_idx > 2) {               // JSN-SR04T serial has four bytes
+    // FF00FAF9
+    uint8_t crc = buffer[0];
+    crc += buffer[1];
+    crc += buffer[2];
+    if (crc == buffer[3]) {           // Check crc sum
+      distance = (buffer[1] << 8) + buffer[2];
+    } else {
+      AddLog(LOG_LEVEL_ERROR, PSTR("SR4: CRC error"));
     }
   }
-  //DEBUG_SENSOR_LOG(PSTR("SR4: Distance: %d"), distance);
+  else if (buffer_idx > 1) {          // US-100 serial has no CRC
+    // 00FA = 250 millimeter
+    distance = (buffer[0] << 8) + buffer[1];
+  }
+
   return distance;
 }
 

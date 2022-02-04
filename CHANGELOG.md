@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Version display from 2022.01.3 to 2022.1.4
 
 ### Fixed
-
+- SR04 sensor driver regression from 2022.01.2
 
 ## [2022.01.3]
 ### Added
