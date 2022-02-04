@@ -48,6 +48,7 @@
  *   on switch1#state do power2 %value% endon
  *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
  *   on loadavg<50 do power 2 endon
+ *   on Time#Initialized do Backlog var1 0;event checktime=%time% endon on event#checktime>%timer1% do var1 1 endon on event#checktime>=%timer2%  do var1 0 endon * on event#checktime do Power1 %var1% endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -471,6 +472,15 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
       rule_param = String(SunMinutes(1));
     }
 #endif  // USE_TIMERS and USE_SUNRISE
+#if defined(USE_TIMERS)
+    for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+      snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
+      if (rule_param.startsWith(stemp)) {
+        rule_param = String(Settings->timer[i].time);
+        break;
+      }
+    }
+#endif  // USE_TIMERS
 #if defined(USE_LIGHT)
     char scolor[LIGHT_COLOR_SIZE];
     if (rule_param.startsWith(F("%COLOR%"))) {
@@ -778,6 +788,12 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
 #endif  // USE_TIMERS and USE_SUNRISE
+#if defined(USE_TIMERS)
+      for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(Settings->timer[i].time));
+      }
+#endif  // USE_TIMERS
 #if defined(USE_LIGHT)
       char scolor[LIGHT_COLOR_SIZE];
       RulesVarReplace(commands, F("%COLOR%"), LightGetColor(scolor));
@@ -1410,6 +1426,13 @@ bool findNextVariableValue(char * &pVarname, float &value)
   } else if (sVarName.equals(F("SUNSET"))) {
     value = SunMinutes(1);
 #endif
+#if defined(USE_TIMERS)
+  } else if (sVarName.startsWith(F("TIMER"))) {
+    int index = sVarName.substring(5).toInt();
+    if (index > 0 && index <= MAX_TIMERS) {
+      value = Settings->timer[index-1].time;
+    }
+#endif  // USE_TIMERS
 // #ifdef USE_ZIGBEE
 //   // } else if (sVarName.equals(F("ZBDEVICE"))) {
 //   //   value = Z_GetLastDevice();
