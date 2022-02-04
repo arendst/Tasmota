@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
 - Support for BME688 with latest Bosch-Sensor-API library [#14513](https://github.com/arendst/Tasmota/issues/14513)
 - Rule variable %color% [#14572](https://github.com/arendst/Tasmota/issues/14572)
+- Rule variables %timer1% to %timer16% [#14619](https://github.com/arendst/Tasmota/issues/14619)
 - Support for MQ analog sensor for air quality by Francesco Adriani [#14581](https://github.com/arendst/Tasmota/issues/14581)
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested [#14487](https://github.com/arendst/Tasmota/issues/14487)

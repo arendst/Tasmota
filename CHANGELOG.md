@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2022.1.4]
 ### Added
+- Rule variables %timer1% to %timer16% (#14619)
 
 ### Changed
 - Version display from 2022.01.3 to 2022.1.4
