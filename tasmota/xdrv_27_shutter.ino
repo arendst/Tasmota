@@ -28,11 +28,11 @@
 #endif
 
 #ifndef SHUTTER_RELAY_OPERATION_TIME
-  #define SHUTTER_RELAY_OPERATION_TIME = 100 // wait for direction relay 0.1sec before power up main relay
+  #define SHUTTER_RELAY_OPERATION_TIME 100 // wait for direction relay 0.1sec before power up main relay
 #endif
 
 #ifndef MOTOR_STOP_TIME
- #define MOTOR_STOP_TIME = 500 // wait 0.5 second after stop to do any other action. e.g. move in the opposite direction
+ #define MOTOR_STOP_TIME 500 // wait 0.5 second after stop to do any other action. e.g. move in the opposite direction
 #endif
 
 //#define SHUTTER_UNITTEST
