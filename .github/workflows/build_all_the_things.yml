@@ -14,7 +14,7 @@ on:
       - '**.properties'
       - 'pio-tools/*.py'
       - '**.ini'
-      - '.github/workflows/build_all_the_things.yml
+      - '.github/workflows/build_all_the_things.yml'
 
 jobs:
   base-images:
