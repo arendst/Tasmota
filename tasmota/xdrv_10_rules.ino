@@ -48,6 +48,7 @@
  *   on switch1#state do power2 %value% endon
  *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
  *   on loadavg<50 do power 2 endon
+ *   on Time#Initialized do Backlog var1 0;event checktime=%time% endon on event#checktime>%timer1% do var1 1 endon on event#checktime>=%timer2%  do var1 0 endon * on event#checktime do Power1 %var1% endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -463,14 +464,25 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     if (rule_param.startsWith(F("%TIMESTAMP%"))) {
       rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+    if (rule_param.startsWith(F("%TIMER"))) {
+      uint32_t index = rule_param.substring(6).toInt();
+      if ((index > 0) && (index <= MAX_TIMERS)) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), index);
+        if (rule_param.startsWith(stemp)) {
+          rule_param = String(Settings->timer[index -1].time);
+        }
+      }
+    }
+#if defined(USE_SUNRISE)
     if (rule_param.startsWith(F("%SUNRISE%"))) {
       rule_param = String(SunMinutes(0));
     }
     if (rule_param.startsWith(F("%SUNSET%"))) {
       rule_param = String(SunMinutes(1));
     }
-#endif  // USE_TIMERS and USE_SUNRISE
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
 #if defined(USE_LIGHT)
     char scolor[LIGHT_COLOR_SIZE];
     if (rule_param.startsWith(F("%COLOR%"))) {
@@ -774,10 +786,16 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
       RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+      for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(Settings->timer[i].time));
+      }
+#if defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
-#endif  // USE_TIMERS and USE_SUNRISE
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
 #if defined(USE_LIGHT)
       char scolor[LIGHT_COLOR_SIZE];
       RulesVarReplace(commands, F("%COLOR%"), LightGetColor(scolor));
@@ -1404,12 +1422,19 @@ bool findNextVariableValue(char * &pVarname, float &value)
     value = UtcTime();
   } else if (sVarName.equals(F("LOCALTIME"))) {
     value = LocalTime();
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+  } else if (sVarName.startsWith(F("TIMER"))) {
+    uint32_t index = sVarName.substring(5).toInt();
+    if (index > 0 && index <= MAX_TIMERS) {
+      value = Settings->timer[index -1].time;
+    }
+#if defined(USE_SUNRISE)
   } else if (sVarName.equals(F("SUNRISE"))) {
     value = SunMinutes(0);
   } else if (sVarName.equals(F("SUNSET"))) {
     value = SunMinutes(1);
-#endif
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
 // #ifdef USE_ZIGBEE
 //   // } else if (sVarName.equals(F("ZBDEVICE"))) {
 //   //   value = Z_GetLastDevice();

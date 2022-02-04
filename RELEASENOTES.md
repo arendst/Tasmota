@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v2022.01.3
+## Changelog v2022.1.4
 ### Added
 - Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens [#14568](https://github.com/arendst/Tasmota/issues/14568)
 - Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)
@@ -108,10 +108,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SSerialConfig <serialconfig>`` to change Serial Bridge configuration
 - Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
 - Command ``SspmEnergyTotal<relay>`` to (p)reset Sonoff SPM total energy without today's energy
+- Command ``SspmEnergyYesterday<relay>`` to (p)reset Sonoff SPM energy yesterday
 - Command ``SspmHistory<relay>`` to retrieve Sonoff SPM daily energy up to last six month (as defined by ARM firmware)
 - Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
 - Command ``SspmLog<relay> [x]`` to retrieve Sonoff SPM relay power state change and cause logging
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module [#14281](https://github.com/arendst/Tasmota/issues/14281)
+- Command ``SspmOverload<relay> <options>`` to set Sonoff SPM overload criteria for any relay
 - Command ``SspmScan`` to rescan Sonoff SPM modbus
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` [#14385](https://github.com/arendst/Tasmota/issues/14385)
@@ -127,12 +129,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Tasmota favicon to webbrowser tab [#14322](https://github.com/arendst/Tasmota/issues/14322)
 - Support for BME688 with latest Bosch-Sensor-API library [#14513](https://github.com/arendst/Tasmota/issues/14513)
 - Rule variable %color% [#14572](https://github.com/arendst/Tasmota/issues/14572)
+- Rule variables %timer1% to %timer16% [#14619](https://github.com/arendst/Tasmota/issues/14619)
 - Support for MQ analog sensor for air quality by Francesco Adriani [#14581](https://github.com/arendst/Tasmota/issues/14581)
 - ESP32 single binary firmware [#14239](https://github.com/arendst/Tasmota/issues/14239)
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested [#14487](https://github.com/arendst/Tasmota/issues/14487)
 - ESP32 support for TuyaMcu
 - ESP32 Berry features
 - ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
+- ESP32 increase PWM channels to 16
+- ESP32 initial support for ESP32S3 with support for 38 configurable GPIOs
 
 ### Breaking Changed
 
@@ -145,6 +150,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP8266SAM library from v1.0 to v1.0.1
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7
 - From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
+- SR04 driver to support US-100
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
 - ESP32 Set stack size with ``#define SET_ESP32_STACK_SIZE``, added ``StackLowMark`` metrics

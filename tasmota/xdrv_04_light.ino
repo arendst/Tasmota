@@ -345,6 +345,7 @@ class LightStateClass {
     uint8_t  _briCT_orig = 255;
 
     uint8_t  _color_mode = LCM_RGB; // RGB by default
+    bool     _power = false;    // power indicator, used only in virtual lights, Tasmota tracks power separately
 
   public:
     LightStateClass() {
@@ -353,6 +354,9 @@ class LightStateClass {
 
     void setSubType(uint8_t sub_type) {
       _subtype = sub_type;    // set sub_type at initialization, shoudln't be changed afterwards
+    }
+    uint8_t getSubType(void) const {
+      return _subtype;
     }
 
     // This function is a bit hairy, it will try to match the required
@@ -400,19 +404,27 @@ class LightStateClass {
       return prev_cm;
     }
 
-    inline uint8_t getColorMode() {
+    inline uint8_t getColorMode() const {
       return _color_mode;
     }
 
-    void addRGBMode() {
+    void addRGBMode(void) {
       setColorMode(_color_mode | LCM_RGB);
     }
-    void addCTMode() {
+    void addCTMode(void) {
       setColorMode(_color_mode | LCM_CT);
     }
 
+    // power accessors, for virtual lights only (has no effect on Tasmota lights)
+    bool getPower(void) const {
+      return _power;
+    }
+    void setPower(bool pow) {
+      _power = pow;
+    }
+
     // Get RGB color, always at full brightness (ie. one of the components is 255)
-    void getRGB(uint8_t *r, uint8_t *g, uint8_t *b) {
+    void getRGB(uint8_t *r, uint8_t *g, uint8_t *b) const {
       if (r) { *r = _r; }
       if (g) { *g = _g; }
       if (b) { *b = _b; }
@@ -420,13 +432,13 @@ class LightStateClass {
 
     // get full brightness values for warm and cold channels.
     // either w=c=0 (off) or w+c >= 255
-    void getCW(uint8_t *rc, uint8_t *rw) {
+    void getCW(uint8_t *rc, uint8_t *rw) const {
       if (rc) { *rc = _wc; }
       if (rw) { *rw = _ww; }
     }
 
     // Get the actual values for each channel, ie multiply with brightness
-    void getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) {
+    void getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) const {
       bool rgb_channels_on = _color_mode & LCM_RGB;
       bool ct_channels_on = _color_mode & LCM_CT;
 
@@ -438,11 +450,11 @@ class LightStateClass {
       if (w) { *w = ct_channels_on  ? changeUIntScale(_ww, 0, 255, 0, _briCT) : 0; }
     }
 
-    void getChannels(uint8_t *channels) {
+    void getChannels(uint8_t *channels) const {
       getActualRGBCW(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
     }
 
-    void getChannelsRaw(uint8_t *channels) {
+    void getChannelsRaw(uint8_t *channels) const {
       channels[0] = _r;
       channels[1] = _g;
       channels[2] = _b;
@@ -450,24 +462,24 @@ class LightStateClass {
       channels[4] = _ww;
     }
 
-    void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
+    void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) const {
       if (hue) { *hue = _hue; }
       if (sat) { *sat = _sat; }
       if (bri) { *bri = _briRGB; }
     }
 
     // getBri() is guaranteed to give the same result as setBri() - no rounding errors.
-    uint8_t getBri(void) {
+    uint8_t getBri(void) const {
       // return the max of _briCT and _briRGB
       return (_briRGB >= _briCT) ? _briRGB : _briCT;
     }
 
     // get the white Brightness
-    inline uint8_t getBriCT() {
+    inline uint8_t getBriCT(void) const {
       return _briCT;
     }
 
-    inline uint8_t getBriCTOrig() {
+    inline uint8_t getBriCTOrig(void) const {
       return _briCT_orig;
     }
 
@@ -481,7 +493,7 @@ class LightStateClass {
       return dimmer;
     }
 
-    uint8_t getDimmer(uint32_t mode = 0) {
+    uint8_t getDimmer(uint32_t mode = 0) const {
       uint8_t bri;
       switch (mode) {
         case 1:
@@ -497,12 +509,12 @@ class LightStateClass {
       return BriToDimmer(bri);
     }
 
-    inline uint16_t getCT() const {
+    inline uint16_t getCT(void) const {
       return _ct; // 153..500, or CT_MIN..CT_MAX
    }
 
     // get current color in XY format
-    void getXY(float *x, float *y) {
+    void getXY(float *x, float *y) const {
       RgbToXy(_r, _g, _b, x, y);
     }
 
@@ -532,11 +544,11 @@ class LightStateClass {
       return prev_bri;
     }
 
-    inline uint8_t getBriRGB() {
+    inline uint8_t getBriRGB(void) const {
       return _briRGB;
     }
 
-    inline uint8_t getBriRGBOrig() {
+    inline uint8_t getBriRGBOrig(void) const {
       return _briRGB_orig;
     }
 

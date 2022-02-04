@@ -759,7 +759,7 @@ typedef struct {
   uint8_t       zb_channel;                // F32
   int8_t        zb_txradio_dbm;            // F33
   uint16_t      pms_wake_interval;         // F34
-  uint8_t       config_version;            // F36
+  uint8_t       config_version;            // F36  Setting mem layout identifier for different ESP types - don't move!
   uint8_t       windmeter_pulses_x_rot;    // F37
   uint16_t      windmeter_radius;          // F38
   uint16_t      windmeter_pulse_debounce;  // F3A
