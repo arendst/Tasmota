@@ -65,6 +65,7 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   42  | USE_DS1624          | xsns_59 | DS1624   | 0x48 - 0x4F | Temperature sensor
   43  | USE_AHT1x           | xsns_63 | AHT10/15 | 0x38 - 0x39 | Temperature and humidity sensor
   43  | USE_AHT2x           | xsns_63 | AHT20    | 0x38        | Temperature and humidity sensor
+  43  | USE_AHT2x           | xsns_63 | AM2301B  | 0x38        | Temperature and humidity sensor
   44  | USE_WEMOS_MOTOR_V1  | xdrv_34 |          | 0x2D - 0x30 | WEMOS motor shield v1.0.0 (6612FNG)
   45  | USE_HDC1080         | xsns_65 | HDC1080  | 0x40        | Temperature and Humidity sensor
   46  | USE_IAQ             | xsns_66 | IAQ      | 0x5a        | Air quality sensor
@@ -96,4 +97,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   61  | USE_T67XX           | xsns_89 | T67XX    | 0x15        | CO2 sensor
   62  | USE_SCD40           | xsns_92 | SCD40    | 0x62        | CO2 sensor Sensirion SCD40/SCD41
   63  | USE_HM330X          | xsns_93 | HM330X   | 0x40        | Particule sensor
-  64  | USE_HDC2010         | xsns_94 | HDC2010  | 0x40        | Temperature and Humidity sensor  
+  64  | USE_HDC2010         | xsns_94 | HDC2010  | 0x40        | Temperature and Humidity sensor
