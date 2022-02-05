@@ -189,7 +189,7 @@
 
 
 /** @brief Set if CCCD's and bond data should be stored in NVS */
-#define CONFIG_BT_NIMBLE_NVS_PERSIST 1
+#define CONFIG_BT_NIMBLE_NVS_PERSIST 0
 
 /** @brief Allow legacy paring */
 #define CONFIG_BT_NIMBLE_SM_LEGACY 1
