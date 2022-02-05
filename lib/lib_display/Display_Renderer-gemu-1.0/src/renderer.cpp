@@ -104,7 +104,7 @@ uint8_t *Renderer::allocate_framebuffer(uint32_t size) {
 
 void Renderer::setTextSize(uint8_t sf) {
   if (sf < 1) sf = 1;
-  if (sf > 4) sf = 4;
+  if (sf > 16) sf = 16;
   tsize = sf;
   Adafruit_GFX::setTextSize(sf);
 }
