@@ -100,7 +100,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v2022.1.4
+## Changelog v10.1.0.8
 ### Added
 - Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens [#14568](https://github.com/arendst/Tasmota/issues/14568)
 - Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) [#14555](https://github.com/arendst/Tasmota/issues/14555)
@@ -149,7 +149,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP8266Audio library from v1.9.2 to v1.9.5
 - ESP8266SAM library from v1.0 to v1.0.1
 - BME68x-Sensor-API library from v3.5.9 to v4.4.7
-- From Semantic Versioning (SemVer) to Calendar Versioning (CalVer)
 - SR04 driver to support US-100
 - Mitsubishi HVAC temperature resolution [#13936](https://github.com/arendst/Tasmota/issues/13936)
 - Remove restriction of topic must differ from mqttclient [#14019](https://github.com/arendst/Tasmota/issues/14019)
