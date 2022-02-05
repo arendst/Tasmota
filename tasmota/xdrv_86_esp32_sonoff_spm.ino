@@ -1138,6 +1138,9 @@ void SSPMHandleReceivedData(void) {
           if (0 == Sspm->Settings.energy_total[module][channel]) {
             Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Inital setting
             Sspm->Settings.energy_total[module][channel] = energy_total;           // Initial setting
+            if (Settings->save_data) {
+              TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Potspone flash write until all relays are updated
+            }
           }
 
           // If received daily energy is below last daily energy then update total energy
@@ -1145,6 +1148,9 @@ void SSPMHandleReceivedData(void) {
           if (Sspm->energy_today[module][channel] < last_energy_today) {
             Sspm->Settings.energy_yesterday[module][channel] = last_energy_today;  // Daily save
             Sspm->Settings.energy_total[module][channel] += last_energy_today;     // Daily incremental save
+            if (Settings->save_data) {
+              TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Potspone flash write until all relays are updated
+            }
           }
           Sspm->energy_total[module][channel] = Sspm->Settings.energy_total[module][channel] + Sspm->energy_today[module][channel];
 
