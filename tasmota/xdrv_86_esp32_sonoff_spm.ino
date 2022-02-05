@@ -192,8 +192,8 @@ TasmotaSerial *SspmSerial;
 typedef union {
   uint16_t data;
   struct {
-    uint16_t dump : 1;           // bit 0  (2022.01.3) - SSPMDump    - Short receive dump (0) or full receive dump (1)
-    uint16_t display : 1;        // bit 1  (2022.01.3) - SSPMDisplay - GUI display all relays (0) or only powered on relays (1)
+    uint16_t dump : 1;           // bit 0  (v10.1.0.6) - SSPMDump    - Short receive dump (0) or full receive dump (1)
+    uint16_t display : 1;        // bit 1  (v10.1.0.6) - SSPMDisplay - GUI display all relays (0) or only powered on relays (1)
     uint16_t spare02 : 1;        // bit 2
     uint16_t spare03 : 1;        // bit 3
     uint16_t spare04 : 1;        // bit 4
