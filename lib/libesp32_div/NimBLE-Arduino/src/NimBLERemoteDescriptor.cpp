@@ -11,15 +11,15 @@
  *  Created on: Jul 8, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteDescriptor.h"
 #include "NimBLEUtils.h"
 #include "NimBLELog.h"
+
+#include <climits>
 
 static const char* LOG_TAG = "NimBLERemoteDescriptor";
 
@@ -86,11 +86,7 @@ NimBLEUUID NimBLERemoteDescriptor::getUUID() {
  * @deprecated Use readValue<uint8_t>().
  */
 uint8_t NimBLERemoteDescriptor::readUInt8() {
-    std::string value = readValue();
-    if (value.length() >= 1) {
-        return (uint8_t) value[0];
-    }
-    return 0;
+    return readValue<uint8_t>();
 } // readUInt8
 
 
@@ -100,11 +96,7 @@ uint8_t NimBLERemoteDescriptor::readUInt8() {
  * @deprecated Use readValue<uint16_t>().
  */
 uint16_t NimBLERemoteDescriptor::readUInt16() {
-    std::string value = readValue();
-    if (value.length() >= 2) {
-        return *(uint16_t*) value.data();
-    }
-    return 0;
+    return readValue<uint16_t>();
 } // readUInt16
 
 
@@ -114,11 +106,7 @@ uint16_t NimBLERemoteDescriptor::readUInt16() {
  * @deprecated Use readValue<uint32_t>().
  */
 uint32_t NimBLERemoteDescriptor::readUInt32() {
-    std::string value = readValue();
-    if (value.length() >= 4) {
-        return *(uint32_t*) value.data();
-    }
-    return 0;
+    return readValue<uint32_t>();
 } // readUInt32
 
 
@@ -126,11 +114,11 @@ uint32_t NimBLERemoteDescriptor::readUInt32() {
  * @brief Read the value of the remote descriptor.
  * @return The value of the remote descriptor.
  */
-std::string NimBLERemoteDescriptor::readValue() {
+NimBLEAttValue NimBLERemoteDescriptor::readValue() {
     NIMBLE_LOGD(LOG_TAG, ">> Descriptor readValue: %s", toString().c_str());
 
     NimBLEClient* pClient = getRemoteCharacteristic()->getRemoteService()->getClient();
-    std::string value;
+    NimBLEAttValue value;
 
     if (!pClient->isConnected()) {
         NIMBLE_LOGE(LOG_TAG, "Disconnected");
@@ -180,7 +168,7 @@ std::string NimBLERemoteDescriptor::readValue() {
         }
     } while(rc != 0 && retryCount--);
 
-    NIMBLE_LOGD(LOG_TAG, "<< Descriptor readValue(): length: %d rc=%d", value.length(), rc);
+    NIMBLE_LOGD(LOG_TAG, "<< Descriptor readValue(): length: %u rc=%d", value.length(), rc);
     return value;
 } // readValue
 
@@ -193,6 +181,7 @@ int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
                 const struct ble_gatt_error *error,
                 struct ble_gatt_attr *attr, void *arg)
 {
+    (void)attr;
     ble_task_data_t *pTaskData = (ble_task_data_t*)arg;
     NimBLERemoteDescriptor* desc = (NimBLERemoteDescriptor*)pTaskData->pATT;
     uint16_t conn_id = desc->getRemoteCharacteristic()->getRemoteService()->getClient()->getConnId();
@@ -203,17 +192,17 @@ int NimBLERemoteDescriptor::onReadCB(uint16_t conn_handle,
 
     NIMBLE_LOGD(LOG_TAG, "Read complete; status=%d conn_handle=%d", error->status, conn_handle);
 
-    std::string *strBuf = (std::string*)pTaskData->buf;
+    NimBLEAttValue *valBuf = (NimBLEAttValue*)pTaskData->buf;
     int rc = error->status;
 
     if(rc == 0) {
         if(attr) {
-            uint32_t data_len = OS_MBUF_PKTLEN(attr->om);
-            if(((*strBuf).length() + data_len) > BLE_ATT_ATTR_MAX_LEN) {
+            uint16_t data_len = OS_MBUF_PKTLEN(attr->om);
+            if((valBuf->size() + data_len) > BLE_ATT_ATTR_MAX_LEN) {
                 rc = BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
             } else {
-                NIMBLE_LOGD(LOG_TAG, "Got %d bytes", data_len);
-                (*strBuf) += std::string((char*) attr->om->om_data, data_len);
+                NIMBLE_LOGD(LOG_TAG, "Got %u bytes", data_len);
+                valBuf->append(attr->om->om_data, data_len);
                 return 0;
             }
         }
@@ -266,11 +255,33 @@ int NimBLERemoteDescriptor::onWriteCB(uint16_t conn_handle,
 
 
 /**
- * @brief Write data to the BLE Remote Descriptor.
+ * @brief Write a new value to a remote descriptor from a std::vector<uint8_t>.
+ * @param [in] vec A std::vector<uint8_t> value to write to the remote descriptor.
+ * @param [in] response Whether we require a response from the write.
+ * @return false if not connected or otherwise cannot perform write.
+ */
+bool NimBLERemoteDescriptor::writeValue(const std::vector<uint8_t>& vec, bool response) {
+    return writeValue((uint8_t*)&vec[0], vec.size(), response);
+} // writeValue
+
+
+/**
+ * @brief Write a new value to the remote descriptor from a const char*.
+ * @param [in] char_s A character string to write to the remote descriptor.
+ * @param [in] response Whether we require a response from the write.
+ * @return false if not connected or otherwise cannot perform write.
+ */
+bool NimBLERemoteDescriptor::writeValue(const char* char_s, bool response) {
+    return writeValue((uint8_t*)char_s, strlen(char_s), response);
+} // writeValue
+
+
+/**
+ * @brief Write a new value to a remote descriptor.
  * @param [in] data The data to send to the remote descriptor.
  * @param [in] length The length of the data to send.
  * @param [in] response True if we expect a write response.
- * @return True if successful
+ * @return false if not connected or otherwise cannot perform write.
  */
 bool NimBLERemoteDescriptor::writeValue(const uint8_t* data, size_t length, bool response) {
 
@@ -351,15 +362,4 @@ bool NimBLERemoteDescriptor::writeValue(const uint8_t* data, size_t length, bool
 } // writeValue
 
 
-/**
- * @brief Write data represented as a string to the BLE Remote Descriptor.
- * @param [in] newValue The data to send to the remote descriptor.
- * @param [in] response True if we expect a response.
- * @return True if successful
- */
-bool NimBLERemoteDescriptor::writeValue(const std::string &newValue, bool response) {
-    return writeValue((uint8_t*) newValue.data(), newValue.length(), response);
-} // writeValue
-
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
