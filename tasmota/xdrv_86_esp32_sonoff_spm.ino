@@ -1144,7 +1144,7 @@ void SSPMHandleReceivedData(void) {
           }
           // If received daily energy is below last daily energy then update total energy
           // This happens around midnight in normal situations
-          else if (Sspm->energy_today[module][channel] < last_energy_today) {
+          if (Sspm->energy_today[module][channel] < last_energy_today) {
             Sspm->Settings.energy_yesterday[module][channel] = last_energy_today;  // Daily save
             Sspm->Settings.energy_total[module][channel] += last_energy_today;     // Daily incremental save
             if (Settings->save_data) {
