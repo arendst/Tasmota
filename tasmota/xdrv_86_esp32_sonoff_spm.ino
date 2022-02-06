@@ -179,6 +179,7 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_START_SCAN,           // Start module scan sequence
                          SPM_WAIT_FOR_SCAN,        // Wait for scan sequence to complete
                          SPM_SCAN_COMPLETE,        // Scan complete
+                         SPM_STALL_MIDNIGHT,       // Stall energy totals around midnight
                          SPM_GET_ENERGY_TOTALS,    // Init available Energy totals registers
                          SPM_UPDATE_CHANNELS       // Update Energy for powered on channels
                          };
@@ -1753,10 +1754,10 @@ void SSPMEvery100ms(void) {
       break;
     case SPM_START_SCAN:
       // Start scan module sequence
-      Sspm->error_led_blinks = 0;                 // Reset error light
-      Sspm->overload_relay = 255;                 // Disable display overload settings
-      Sspm->history_relay = 255;                  // Disable display energy history
-      Sspm->log_relay = 255;                      // Disable display logging
+      Sspm->error_led_blinks = 0;              // Reset error light
+      Sspm->overload_relay = 255;              // Disable display overload settings
+      Sspm->history_relay = 255;               // Disable display energy history
+      Sspm->log_relay = 255;                   // Disable display logging
       Sspm->module_max = 0;
       SSPMSendInitScan();
       Sspm->mstate = SPM_WAIT_FOR_SCAN;
@@ -1772,10 +1773,17 @@ void SSPMEvery100ms(void) {
       break;
     case SPM_SCAN_COMPLETE:
       // Scan sequence finished
-      TasmotaGlobal.discovery_counter = 1;      // Force TasDiscovery()
+      TasmotaGlobal.discovery_counter = 1;     // Force TasDiscovery()
+      Sspm->allow_updates = 1;                 // Enable requests from 100mSec loop
       Sspm->get_energy_relay = 0;
-      Sspm->allow_updates = 1;                  // Enable requests from 100mSec loop
       Sspm->mstate = SPM_GET_ENERGY_TOTALS;
+      break;
+    case SPM_STALL_MIDNIGHT:
+      // Get totals for ALL relays after midnight updating Tasmotas total and yesterday energy
+      if (Sspm->last_totals > 600) {           // Continue after 60 seconds
+        Sspm->get_energy_relay = 0;
+        Sspm->mstate = SPM_GET_ENERGY_TOTALS;
+      }
       break;
     case SPM_GET_ENERGY_TOTALS:
       // Retrieve Energy total status from up to 128 relays
@@ -1793,14 +1801,14 @@ void SSPMEvery100ms(void) {
       // Retrieve Energy status from up to 128 powered on relays (takes 128 * 2s!!)
       if (Sspm->allow_updates) {
         int32_t time = (RtcTime.hour *3600) + (RtcTime.minute *60) + RtcTime.second;
-        if ((time > 86370) || (time < 30)) {  // Between 00:00:29 and 23:59:31 stall updates to satisfy ARM firmware
-          Sspm->get_energy_relay = TasmotaGlobal.devices_present;
+        if (time > 86370) {                    // Stall updates after 23:59:31 to satisfy ARM firmware
           Sspm->last_totals = 0;
+          Sspm->mstate = SPM_STALL_MIDNIGHT;
         } else {
           Sspm->get_energy_relay++;
           if (Sspm->get_energy_relay >= TasmotaGlobal.devices_present) {
             Sspm->get_energy_relay = 0;
-            if (Sspm->last_totals > 1200) {  // Get totals every 2 minutes (takes 128 * 0.2s)
+            if (Sspm->last_totals > 1200) {    // Get totals every 2 minutes (takes 128 * 0.2s)
               Sspm->last_totals = 0;
               Sspm->get_totals = 1;
             } else {
