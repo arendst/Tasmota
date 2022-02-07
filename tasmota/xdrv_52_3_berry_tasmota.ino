@@ -1,5 +1,5 @@
 /*
-  xdrv_52_3_berry_native.ino - Berry scripting language, native fucnctions
+  xdrv_52_3_berry_tasmota.ino - Berry scripting language, native fucnctions
 
   Copyright (C) 2021 Stephan Hadinger, Berry language by Guan Wenliang https://github.com/Skiars/berry
 
@@ -26,25 +26,25 @@
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
 const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recorded when inside REPL
 
-/*********************************************************************************************\
- * Return C callback from index
- *
-\*********************************************************************************************/
-extern "C" {
-  int32_t l_get_cb(struct bvm *vm);
-  int32_t l_get_cb(struct bvm *vm) {
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 2 && be_isint(vm, 2)) {
-      int32_t idx = be_toint(vm, 2);
-      if (idx >= 0 && idx < ARRAY_SIZE(berry_callback_array)) {
-        const berry_callback_t c_ptr = berry_callback_array[idx];
-        be_pushcomptr(vm, (void*) c_ptr);
-        be_return(vm);
-      }
-    }
-    be_raise(vm, kTypeError, nullptr);
-  }
-}
+// /*********************************************************************************************\
+//  * Return C callback from index
+//  *
+// \*********************************************************************************************/
+// extern "C" {
+//   extern int32_t be_cb__get_cb(struct bvm *vm);
+//   int32_t be_cb__get_cb(struct bvm *vm) {
+//     int32_t argc = be_top(vm); // Get the number of arguments
+//     if (argc >= 2 && be_isint(vm, 2)) {
+//       int32_t idx = be_toint(vm, 2);
+//       if (idx >= 0 && idx < ARRAY_SIZE(berry_callback_array)) {
+//         const berry_callback_t c_ptr = berry_callback_array[idx];
+//         be_pushcomptr(vm, (void*) c_ptr);
+//         be_return(vm);
+//       }
+//     }
+//     be_raise(vm, kTypeError, nullptr);
+//   }
+// }
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
@@ -68,34 +68,45 @@ extern "C" {
  *
 \*********************************************************************************************/
 extern "C" {
-  // Berry: `tasmota.publish(topic, payload [,retain]) -> nil``
+  // Berry: `tasmota.publish(topic, payload [, retain:bool, start:int, len:int]) -> nil``
   //
   int32_t l_publish(struct bvm *vm);
   int32_t l_publish(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isinstance(vm, 3))) {  // 2 mandatory string arguments
-      if (top == 3 || (top == 4 && be_isbool(vm, 4))) {           // 3rd optional argument must be bool
-        const char * topic = be_tostring(vm, 2);
-        const char * payload = nullptr;
-        size_t payload_len = 0;
-        if (be_isstring(vm, 3)) {
-          payload = be_tostring(vm, 3);
-          payload_len = strlen(payload);
-        } else {
-          be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
-          if (be_isderived(vm, 3)) {
-            payload = (const char *) be_tobytes(vm, 3, &payload_len);
-          }
-        }
-        bool retain = false;
-        if (top == 4) {
-          retain = be_tobool(vm, 4);
-        }
-        if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
-        be_pop(vm, be_top(vm));
-        MqttPublishPayload(topic, payload, payload_len, retain);
-        be_return_nil(vm); // Return
+    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isbytes(vm, 3))) {  // 2 mandatory string arguments
+      bool retain = false;
+      int32_t payload_start = 0;
+      int32_t len = -1;   // send all of it
+      if (top >= 4) { retain = be_tobool(vm, 4); }
+      if (top >= 5) {
+        payload_start = be_toint(vm, 5);
+        if (payload_start < 0) payload_start = 0;
       }
+      if (top >= 6) { len = be_toint(vm, 6); }
+      const char * topic = be_tostring(vm, 2);
+      const char * payload = nullptr;
+      size_t payload_len = 0;
+
+      if (be_isstring(vm, 3)) {
+        payload = be_tostring(vm, 3);
+        payload_len = strlen(payload);
+      } else {
+        payload = (const char *) be_tobytes(vm, 3, &payload_len);
+      }
+      if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
+
+      // adjust start and len
+      if (payload_start >= payload_len) { len = 0; }              // send empty packet
+      else if (len < 0) { len = payload_len - payload_start; }    // send all packet, adjust len
+      else if (payload_start + len > payload_len) { len = payload_len - payload_start; }    // len is too long, adjust
+      // adjust start
+      payload = payload + payload_start;
+
+      be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
+
+      MqttPublishPayload(topic, payload, len, retain);
+
+      be_return_nil(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -181,10 +192,10 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 1) {  // no argument (instance only)
       be_newobject(vm, "map");
-      map_insert_int(vm, "utc", Rtc.utc_time);
-      map_insert_int(vm, "local", Rtc.local_time);
-      map_insert_int(vm, "restart", Rtc.restart_time);
-      map_insert_int(vm, "timezone", Rtc.time_timezone);
+      be_map_insert_int(vm, "utc", Rtc.utc_time);
+      be_map_insert_int(vm, "local", Rtc.local_time);
+      be_map_insert_int(vm, "restart", Rtc.restart_time);
+      be_map_insert_int(vm, "timezone", Rtc.time_timezone);
       be_pop(vm, 1);
       be_return(vm);
     }
@@ -198,14 +209,21 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 1) {  // no argument (instance only)
       be_newobject(vm, "map");
-      map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
-      map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
-      map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
-      map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
-      map_insert_int(vm, "frag", ESP_getHeapFragmentation());
+      be_map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
+      be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
+      be_map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
+      be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
+      be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
+      // give info about stack size
+      be_map_insert_int(vm, "stack_size", SET_ESP32_STACK_SIZE / 1024);
+      be_map_insert_int(vm, "stack_low", uxTaskGetStackHighWaterMark(nullptr) / 1024);
       if (UsePSRAM()) {
-        map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
-        map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+        be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
+        be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
+      } else {
+        // IRAM information
+        int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        be_map_insert_int(vm, "iram_free", iram_free / 1024);
       }
       be_pop(vm, 1);
       be_return(vm);
@@ -222,17 +240,17 @@ extern "C" {
       be_newobject(vm, "map");
       if (Settings->flag4.network_wifi) {
         int32_t rssi = WiFi.RSSI();
-        map_insert_int(vm, "rssi", rssi);
-        map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+        be_map_insert_int(vm, "rssi", rssi);
+        be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
 #if LWIP_IPV6
         String ipv6_addr = WifiGetIPv6();
         if (ipv6_addr != "") {
-          map_insert_str(vm, "ip6", ipv6_addr.c_str());
+          be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
         }
 #endif
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-          map_insert_str(vm, "mac", WiFi.macAddress().c_str());
-          map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
+          be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+          be_map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
         }
       }
       be_pop(vm, 1);
@@ -250,8 +268,8 @@ extern "C" {
       be_newobject(vm, "map");
 #ifdef USE_ETHERNET
       if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-        map_insert_str(vm, "mac", EthernetMacAddress().c_str());
-        map_insert_str(vm, "ip", EthernetLocalIP().toString().c_str());
+        be_map_insert_str(vm, "mac", EthernetMacAddress().c_str());
+        be_map_insert_str(vm, "ip", EthernetLocalIP().toString().c_str());
       }
 #endif
       be_pop(vm, 1);
@@ -260,20 +278,25 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  static void l_push_time(bvm *vm, struct tm *t, const char *unparsed) {
+    be_newobject(vm, "map");
+    be_map_insert_int(vm, "year", t->tm_year + 1900);
+    be_map_insert_int(vm, "month", t->tm_mon + 1);
+    be_map_insert_int(vm, "day", t->tm_mday);
+    be_map_insert_int(vm, "hour", t->tm_hour);
+    be_map_insert_int(vm, "min", t->tm_min);
+    be_map_insert_int(vm, "sec", t->tm_sec);
+    be_map_insert_int(vm, "weekday", t->tm_wday);
+    if (unparsed) be_map_insert_str(vm, "unparsed", unparsed);
+    be_pop(vm, 1);
+  }
+
   int32_t l_time_dump(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 2 && be_isint(vm, 2)) {
       time_t ts = be_toint(vm, 2);
       struct tm *t = gmtime(&ts);
-      be_newobject(vm, "map");
-      map_insert_int(vm, "year", t->tm_year + 1900);
-      map_insert_int(vm, "month", t->tm_mon + 1);
-      map_insert_int(vm, "day", t->tm_mday);
-      map_insert_int(vm, "hour", t->tm_hour);
-      map_insert_int(vm, "min", t->tm_min);
-      map_insert_int(vm, "sec", t->tm_sec);
-      map_insert_int(vm, "weekday", t->tm_wday);
-      be_pop(vm, 1);
+      l_push_time(vm, t, NULL);
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
@@ -289,6 +312,23 @@ extern "C" {
       strftime(s, sizeof(s), format, t);
       be_pushstring(vm, s);
       be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  int32_t l_strptime(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 3 && be_isstring(vm, 2) && be_isstring(vm, 3)) {
+      const char * input = be_tostring(vm, 2);
+      const char * format = be_tostring(vm, 3);
+      struct tm t = {0};
+      char * ret = strptime(input, format, &t);
+      if (ret) {
+        l_push_time(vm, &t, ret);
+        be_return(vm);
+      } else {
+        be_return_nil(vm);
+      }
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -310,27 +350,14 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-    BrTimeoutYield();   // reset timeout
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &BrTimeoutYield, NULL, "-");
   }
 
   // Berry: tasmota.scale_uint(int * 5) -> int
   //
   int32_t l_scaleuint(struct bvm *vm);
   int32_t l_scaleuint(struct bvm *vm) {
-    int32_t top = be_top(vm); // Get the number of arguments
-    if (top == 6 && be_isint(vm, 2) && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6)) {  // only 1 argument of type string accepted
-      int32_t v = be_toint(vm, 2);
-      int32_t from1 = be_toint(vm, 3);
-      int32_t from2 = be_toint(vm, 4);
-      int32_t to1 = be_toint(vm, 5);
-      int32_t to2 = be_toint(vm, 6);
-
-      int32_t ret = changeUIntScale(v, from1, from2, to1, to2);
-      be_pushint(vm, ret);
-      be_return(vm);
-    }
-    be_raise(vm, kTypeError, nullptr);
+    return be_call_c_func(vm, (void*) &changeUIntScale, "i", "-iiiii");
   }
 
   int32_t l_respCmnd(bvm *vm);
@@ -357,20 +384,17 @@ extern "C" {
 
   int32_t l_respCmndDone(bvm *vm);
   int32_t l_respCmndDone(bvm *vm) {
-    ResponseCmndDone();
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &ResponseCmndDone, NULL, "-");
   }
 
   int32_t l_respCmndError(bvm *vm);
   int32_t l_respCmndError(bvm *vm) {
-    ResponseCmndError();
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &ResponseCmndError, NULL, "-");
   }
 
   int32_t l_respCmndFailed(bvm *vm);
   int32_t l_respCmndFailed(bvm *vm) {
-    ResponseCmndFailed();
-    be_return_nil(vm);
+    return be_call_c_func(vm, (void*) &ResponseCmndFailed, NULL, "-");
   }
 
   // update XdrvMailbox.command with actual command
@@ -612,19 +636,16 @@ extern "C" {
     if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
     berry_log(log_data);
   }
-}
 
-
-void berry_log_P(const char * berry_buf, ...) {
-  // To save stack space support logging for max text length of 128 characters
-  char log_data[LOGSZ];
-
-  va_list arg;
-  va_start(arg, berry_buf);
-  uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
-  va_end(arg);
-  if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
-  berry_log(log_data);
+  void tasmota_log_C(int32_t loglevel, const char * berry_buf, ...) {
+    va_list arg;
+    va_start(arg, berry_buf);
+    char* log_data = ext_vsnprintf_malloc_P(berry_buf, arg);
+    va_end(arg);
+    if (log_data == nullptr) { return; }
+    AddLogData(loglevel, log_data);
+    free(log_data);
+  }
 }
 
 #endif  // USE_BERRY

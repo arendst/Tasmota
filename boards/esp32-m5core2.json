@@ -4,7 +4,7 @@
       "ldscript": "esp32_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DARDUINO_M5STACK_Core2 -DBOARD_HAS_PSRAM",
+    "extra_flags": "-DARDUINO_M5STACK_Core2 -DBOARD_HAS_PSRAM -DARDUINO_USB_CDC_ON_BOOT=0 -DESP32_16M",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "dout",
@@ -25,7 +25,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "M5Stack Core2 16M Flash, 4MB PSRAM, Tasmota 2944k Code/OTA, 10M SPIFFS",
+  "name": "M5Stack Core2 16M Flash, 4MB PSRAM, Tasmota 2944k Code/OTA, 10M FS",
   "upload": {
     "flash_size": "16MB",
     "maximum_ram_size": 327680,

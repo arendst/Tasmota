@@ -14,10 +14,12 @@
 
 // A service is identified by a UUID.  A service is also the container for one or more characteristics.
 
-#include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
-#include "NimBLEDevice.h"
+#include "nimconfig.h"
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+
 #include "NimBLEService.h"
 #include "NimBLEUtils.h"
 #include "NimBLELog.h"
@@ -32,19 +34,25 @@ static const char* LOG_TAG = "NimBLEService"; // Tag for logging.
 /**
  * @brief Construct an instance of the NimBLEService
  * @param [in] uuid The UUID of the service.
+ * @param [in] numHandles The maximum number of handles associated with the service.
+ * @param [in] pServer A pointer to the server instance that this service belongs to.
  */
-NimBLEService::NimBLEService(const char* uuid)
-: NimBLEService(NimBLEUUID(uuid)) {
+NimBLEService::NimBLEService(const char* uuid, uint16_t numHandles, NimBLEServer* pServer)
+: NimBLEService(NimBLEUUID(uuid), numHandles, pServer) {
 }
 
 
 /**
  * @brief Construct an instance of the BLEService
  * @param [in] uuid The UUID of the service.
+ * @param [in] numHandles The maximum number of handles associated with the service.
+ * @param [in] pServer A pointer to the server instance that this service belongs to.
  */
-NimBLEService::NimBLEService(const NimBLEUUID &uuid) {
+NimBLEService::NimBLEService(const NimBLEUUID &uuid, uint16_t numHandles, NimBLEServer* pServer) {
     m_uuid         = uuid;
     m_handle       = NULL_HANDLE;
+    m_pServer      = pServer;
+    m_numHandles   = numHandles;
     m_pSvcDef      = nullptr;
     m_removed      = 0;
 
@@ -421,7 +429,8 @@ std::string NimBLEService::toString() {
  * @return The BLEServer associated with this service.
  */
 NimBLEServer* NimBLEService::getServer() {
-    return NimBLEDevice::getServer();
+    return m_pServer;
 }// getServer
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif // CONFIG_BT_ENABLED

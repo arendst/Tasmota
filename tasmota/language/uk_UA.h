@@ -80,7 +80,7 @@
 #define D_DATA "Дані"
 #define D_DARKLIGHT "Темний"
 #define D_DEBUG "Налагодження"
-#define D_DEWPOINT "Dew point"
+#define D_DEWPOINT "Tочка роси"
 #define D_DISABLED "Вимкнено"
 #define D_DISTANCE "Відстань"
 #define D_DNS_SERVER "Сервер DNS"
@@ -137,6 +137,7 @@
 #define D_ORP "ORP"
 #define D_PASSWORD "Гасло"
 #define D_PH "pH"
+#define D_MQ "MQ"
 #define D_PORT "Порт"
 #define D_POWER_FACTOR "Коефіцієнт потужності"
 #define D_POWERUSAGE "Потужність"
@@ -663,6 +664,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -737,6 +740,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
@@ -785,6 +789,7 @@
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
+#define D_SENSOR_ADC_MQ        "ADC MQ"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -847,6 +852,8 @@
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
+#define D_SENSOR_CM11_TX       "CM110x TX" 
+#define D_SENSOR_CM11_RX       "CM110x RX" 
 
 // Units
 #define D_UNIT_AMPERE                    "А"
@@ -898,7 +905,7 @@
 #define D_OUT_OF_RANGE         "Out of Range"
 #define D_SENSOR_DETECTED      "detected"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Export Power"
 #define D_IMPORT_POWER 	  "Import Power"
 #define D_PHASE_ANGLE     "Кут фази"
@@ -910,6 +917,7 @@
 #define D_UNIT_KWARH      "кВАр/г"
 #define D_UNIT_ANGLE      "Град"
 #define D_TOTAL_ACTIVE    "Total Active"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Total Active (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Напруга"
@@ -921,10 +929,13 @@
 #define D_SOLAR_POWER     "Solar Потужність"
 #define D_INVERTER_POWER  "Inverter Потужність"
 #define D_STATUS          "Стан"
-#define D_WAITING         "Очікування"
-#define D_CHECKING        "Перевірка"
-#define D_WORKING         "Працює"
-#define D_FAILURE         "Помилка"
+#define D_SOLAX_MODE_0    "Очікування"
+#define D_SOLAX_MODE_1    "Перевірка"
+#define D_SOLAX_MODE_2    "Працює"
+#define D_SOLAX_MODE_3    "Помилка"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Немає помилки"
 #define D_SOLAX_ERROR_1   "Втрата мережі"
 #define D_SOLAX_ERROR_2   "Напруга мережі"

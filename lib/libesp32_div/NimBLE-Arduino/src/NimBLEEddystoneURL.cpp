@@ -11,7 +11,7 @@
  *  Created on: Mar 12, 2018
  *      Author: pcbreflux
  */
-#include "nimconfig.h"
+#include "sdkconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEEddystoneURL.h"

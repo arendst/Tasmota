@@ -7,7 +7,7 @@
 Ogg project codecs use the Ogg bitstream format to arrange the raw,
 compressed bitstream into a more robust, useful form. For example,
 the Ogg bitstream makes seeking, time stamping and error recovery
-possible, as well as mixing several sepearate, concurrent media
+possible, as well as mixing several separate, concurrent media
 streams into a single physical bitstream.
 
 ## What's here ##
@@ -18,7 +18,7 @@ use with Ogg bitstreams.
 
 Directory:
 
-- `src` The source for libogg, a BSD-license inplementation of the public domain Ogg bitstream format
+- `src` The source for libogg, a BSD-license implementation of the public domain Ogg bitstream format
 
 - `include` Library API headers
 

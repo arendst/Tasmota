@@ -21,17 +21,18 @@
 // pulse parameters in usec
 const uint16_t kCoolixTick = 276;  // Approximately 10.5 cycles at 38kHz
 const uint16_t kCoolixBitMarkTicks = 2;
-const uint16_t kCoolixBitMark = kCoolixBitMarkTicks * kCoolixTick;
+const uint16_t kCoolixBitMark = kCoolixBitMarkTicks * kCoolixTick;  // 552us
 const uint16_t kCoolixOneSpaceTicks = 6;
-const uint16_t kCoolixOneSpace = kCoolixOneSpaceTicks * kCoolixTick;
+const uint16_t kCoolixOneSpace = kCoolixOneSpaceTicks * kCoolixTick;  // 1656us
 const uint16_t kCoolixZeroSpaceTicks = 2;
-const uint16_t kCoolixZeroSpace = kCoolixZeroSpaceTicks * kCoolixTick;
+const uint16_t kCoolixZeroSpace = kCoolixZeroSpaceTicks * kCoolixTick;  // 552us
 const uint16_t kCoolixHdrMarkTicks = 17;
-const uint16_t kCoolixHdrMark = kCoolixHdrMarkTicks * kCoolixTick;
+const uint16_t kCoolixHdrMark = kCoolixHdrMarkTicks * kCoolixTick;  // 4692us
 const uint16_t kCoolixHdrSpaceTicks = 16;
-const uint16_t kCoolixHdrSpace = kCoolixHdrSpaceTicks * kCoolixTick;
+const uint16_t kCoolixHdrSpace = kCoolixHdrSpaceTicks * kCoolixTick;  // 4416us
 const uint16_t kCoolixMinGapTicks = kCoolixHdrMarkTicks + kCoolixZeroSpaceTicks;
-const uint16_t kCoolixMinGap = kCoolixMinGapTicks * kCoolixTick;
+const uint16_t kCoolixMinGap = kCoolixMinGapTicks * kCoolixTick;  // 5244us
+const uint8_t  kCoolix48ExtraTolerance = 5;  // Percent
 
 using irutils::addBoolToString;
 using irutils::addIntToString;
@@ -40,7 +41,7 @@ using irutils::addModeToString;
 using irutils::addTempToString;
 
 #if SEND_COOLIX
-/// Send a Coolix message
+/// Send a Coolix 24-bit message
 /// Status: STABLE / Confirmed Working.
 /// @param[in] data The message to be sent.
 /// @param[in] nbits The number of bits of message to be sent.
@@ -620,7 +621,7 @@ String IRCoolixAC::toString(void) const {
 }
 
 #if DECODE_COOLIX
-/// Decode the supplied Coolix A/C message.
+/// Decode the supplied Coolix 24-bit A/C message.
 /// Status: STABLE / Known Working.
 /// @param[in,out] results Ptr to the data to decode & where to store the decode
 ///   result.
@@ -699,3 +700,58 @@ bool IRrecv::decodeCOOLIX(decode_results *results, uint16_t offset,
   return true;
 }
 #endif  // DECODE_COOLIX
+
+#if SEND_COOLIX48
+/// Send a Coolix 48-bit message.
+/// Status: ALPHA / Untested.
+/// @param[in] data The message to be sent.
+/// @param[in] nbits The number of bits of message to be sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1694
+/// @note This is effectively the same as `sendCOOLIX()` except requiring the
+/// bit flipping be done prior to the call.
+void IRsend::sendCoolix48(const uint64_t data, const uint16_t nbits,
+                          const uint16_t repeat) {
+  // Header + Data + Footer
+  sendGeneric(kCoolixHdrMark, kCoolixHdrSpace,
+              kCoolixBitMark, kCoolixOneSpace,
+              kCoolixBitMark, kCoolixZeroSpace,
+              kCoolixBitMark, kCoolixMinGap,
+              data, nbits, 38000, true, repeat, 33);
+}
+#endif  // SEND_COOLIX48
+
+#if DECODE_COOLIX
+/// Decode the supplied Coolix 48-bit A/C message.
+/// Status: BETA / Probably Working.
+/// @param[in,out] results Ptr to the data to decode & where to store the decode
+///   result.
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return A boolean. True if it can decode it, false if it can't.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1694
+bool IRrecv::decodeCoolix48(decode_results *results, uint16_t offset,
+                            const uint16_t nbits, const bool strict) {
+  if (strict && nbits != kCoolix48Bits)
+    return false;      // Not strictly a COOLIX48 message.
+
+  // Header + Data + Footer
+  if (!matchGeneric(results->rawbuf + offset, &(results->value),
+                    results->rawlen - offset, nbits,
+                    kCoolixHdrMark, kCoolixHdrSpace,
+                    kCoolixBitMark, kCoolixOneSpace,
+                    kCoolixBitMark, kCoolixZeroSpace,
+                    kCoolixBitMark, kCoolixMinGap,
+                    true, _tolerance + kCoolix48ExtraTolerance, 0, true))
+    return false;
+
+  // Success
+  results->decode_type = COOLIX48;
+  results->bits = nbits;
+  results->address = 0;
+  results->command = 0;
+  return true;
+}
+#endif  // DECODE_COOLIX48

@@ -96,6 +96,11 @@ void Get_display(uint8_t index) {
 }
 #endif // USE_MULTI_DISPLAY
 
+#ifndef TXT_MAX_SFAC
+#define TXT_MAX_SFAC 4
+#endif // TXT_MAX_SFAC
+
+
 const uint8_t DISPLAY_MAX_DRIVERS = 32;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 64;           // Max number of columns allowed with command DisplayCols
 const uint8_t DISPLAY_MAX_ROWS = 64;           // Max number of lines allowed with command DisplayRows
@@ -875,9 +880,11 @@ void DisplayText(void)
             break;
           case 's':
             // size sx
-            if (renderer) renderer->setTextSize(*cp&7);
+            var = atoiv(cp, &temp);
+            if (temp > TXT_MAX_SFAC) temp = TXT_MAX_SFAC;
+            if (renderer) renderer->setTextSize(temp);
             //else DisplaySetSize(*cp&3);
-            cp += 1;
+            cp+=var;
             break;
           case 'f':
             // font sx
@@ -1982,7 +1989,7 @@ void CmndDisplayMode(void) {
 // Apply the current display dimmer
 void ApplyDisplayDimmer(void) {
   uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
-  uint8_t dimmer8_gamma = ledGamma(dimmer8);
+  uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
     ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
   }
@@ -1990,7 +1997,7 @@ void ApplyDisplayDimmer(void) {
     ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
   }
   if (renderer) {
-    renderer->dim8(dimmer8, dimmer8_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
+    renderer->dim10(dimmer8, dimmer10_gamma);   // provide 8 bits and gamma corrected dimmer in 8 bits
 #ifdef USE_BERRY
     // still call Berry virtual display in case it is not managed entirely by renderer
     Xdsp18(FUNC_DISPLAY_DIM);
@@ -2011,7 +2018,7 @@ void CmndDisplayDimmer(void) {
 }
 
 void CmndDisplaySize(void) {
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= TXT_MAX_SFAC)) {
     Settings->display_size = XdrvMailbox.payload;
     if (renderer) renderer->setTextSize(Settings->display_size);
     //else DisplaySetSize(Settings->display_size);

@@ -177,10 +177,17 @@ void DeviceGroupsStart()
     }
 
     // Subscribe to device groups multicasts.
+#ifdef ESP8266
     if (!device_groups_udp.beginMulticast(WiFi.localIP(), IPAddress(DEVICE_GROUPS_ADDRESS), DEVICE_GROUPS_PORT)) {
       AddLog(LOG_LEVEL_ERROR, PSTR("DGR: Error subscribing"));
       return;
     }
+#else
+    if (!device_groups_udp.beginMulticast(IPAddress(DEVICE_GROUPS_ADDRESS), DEVICE_GROUPS_PORT)) {
+      AddLog(LOG_LEVEL_ERROR, PSTR("DGR: Error subscribing"));
+      return;
+    }
+#endif
     device_groups_up = true;
 
     // The WiFi was down but now it's up and device groups is initialized. (Re-)discover devices in
@@ -591,8 +598,7 @@ bool _SendDeviceGroupMessage(int32_t device, DevGroupMessageType message_type, .
       value_ptr = (uint8_t *)XdrvMailbox.data;
       while ((item = strtoul((char *)value_ptr, (char **)&value_ptr, 0))) {
         item_ptr->item = item;
-        if (*value_ptr != '=') return 1;
-        value_ptr++;
+        if (*value_ptr == '=') value_ptr++;
 
         // If flags were specified for this item, save them.
         item_ptr->flags = 0;
@@ -613,6 +619,12 @@ bool _SendDeviceGroupMessage(int32_t device, DevGroupMessageType message_type, .
             value = (oper == '+' ? old_value + value : oper == '-' ? old_value - value : oper == '^' ? old_value ^ value : oper == '|' ? old_value | value : old_value == '&' ? old_value & value : old_value);
           }
           item_ptr->value = value;
+
+          if (item == DGR_ITEM_STATUS) {
+            if (!(item_ptr->flags & DGR_ITEM_FLAG_NO_SHARE)) device_group->no_status_share = 0;
+            _SendDeviceGroupMessage(-device_group_index, DGR_MSGTYP_FULL_STATUS);
+            item_ptr--;
+          }
         }
         else {
           item_ptr->value_ptr = out_ptr;

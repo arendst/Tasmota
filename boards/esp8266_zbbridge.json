@@ -4,7 +4,7 @@
       "ldscript": "eagle.flash.2m256.ld"
     },
     "core": "esp8266",
-    "extra_flags": "-DESP8266 -DARDUINO_ARCH_ESP8266 -DARDUINO_ESP8266_ESP01",
+    "extra_flags": "-DESP8266 -DARDUINO_ARCH_ESP8266 -DARDUINO_ESP8266_ESP01 -DESP8266_2M -DESP8266_2M256",
     "f_cpu": "160000000L",
     "f_flash": "40000000L",
     "flash_mode": "dout",
@@ -19,7 +19,7 @@
     "esp8266-rtos-sdk",
     "esp8266-nonos-sdk"
   ],
-  "name": "Sonoff ZbBridge Tasmota 1M sketch 772k OTA 256k SPIFFS",
+  "name": "Sonoff ZbBridge Tasmota 1M sketch 772k OTA 256k FS",
   "upload": {
     "maximum_ram_size": 81920,
     "maximum_size": 995326,

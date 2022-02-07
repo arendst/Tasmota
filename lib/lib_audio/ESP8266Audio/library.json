@@ -14,7 +14,7 @@
         "type": "git",
          "url": "https://github.com/earlephilhower/ESP8266Audio"
     },
-    "version": "1.9.2",
+    "version": "1.9.5",
     "homepage": "https://github.com/earlephilhower/ESP8266Audio",
     "frameworks": "Arduino",
     "examples": [

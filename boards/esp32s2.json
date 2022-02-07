@@ -4,7 +4,7 @@
       "ldscript": "esp32s2_out.ld"
     },
     "core": "esp32",
-    "extra_flags": "-DBOARD_HAS_PSRAM",
+    "extra_flags": "-DBOARD_HAS_PSRAM -DESP32_4M -DESP32S2",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "dout",
@@ -22,7 +22,7 @@
     "espidf",
     "arduino"
   ],
-  "name": "Espressif Generic ESP32-S2 4M Flash, Tasmota 1856k Code/OTA, 320k SPIFFS",
+  "name": "Espressif Generic ESP32-S2 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,

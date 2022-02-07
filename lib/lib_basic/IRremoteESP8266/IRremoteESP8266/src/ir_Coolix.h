@@ -6,6 +6,8 @@
 /// @note Kudos:
 ///   Hamper: For the breakdown and mapping of the bit values.
 ///   fraschizzato: For additional ZoneFollow & SwingVStep analysis.
+/// @note Timers seem to use the `COOLIX48` protocol.
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1694
 
 // Supports:
 //   Brand: Beko, Model: RG57K7(B)/BGEF Remote
@@ -21,6 +23,8 @@
 //   Brand: Toshiba, Model: RAS-M13YKV-E A/C
 //   Brand: Toshiba, Model: RAS-4M27YAV-E A/C
 //   Brand: Toshiba, Model: WH-E1YE remote
+//   Brand: Bosch, Model: RG36B4/BGE remote
+//   Brand: Bosch, Model: B1ZAI2441W/B1ZAO2441W A/C
 
 #ifndef IR_COOLIX_H_
 #define IR_COOLIX_H_

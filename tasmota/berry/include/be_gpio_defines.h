@@ -2,7 +2,7 @@
  * Generated code, don't edit
  *******************************************************************/
 
-const be_constint_t lv_gpio_constants[] = {
+const be_const_member_t lv_gpio_constants[] = {
 
     { "A4988_DIR", (int32_t) GPIO_A4988_DIR },
     { "A4988_ENA", (int32_t) GPIO_A4988_ENA },
@@ -14,6 +14,7 @@ const be_constint_t lv_gpio_constants[] = {
     { "ADC_INPUT", (int32_t) GPIO_ADC_INPUT },
     { "ADC_JOY", (int32_t) GPIO_ADC_JOY },
     { "ADC_LIGHT", (int32_t) GPIO_ADC_LIGHT },
+    { "ADC_MQ", (int32_t) GPIO_ADC_MQ },
     { "ADC_PH", (int32_t) GPIO_ADC_PH },
     { "ADC_RANGE", (int32_t) GPIO_ADC_RANGE },
     { "ADC_TEMP", (int32_t) GPIO_ADC_TEMP },

@@ -91,6 +91,12 @@ void esp_mpi_exp_mpi_mod_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, const
 
 #if CONFIG_IDF_TARGET_ESP32C3
 void esp_mpi_exp_mpi_mod_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, const mbedtls_mpi *Rinv, mbedtls_mpi_uint Mprime, size_t num_words);
+extern int esp_mpi_exp_mod( mbedtls_mpi *Z, const mbedtls_mpi *X, const mbedtls_mpi *Y, const mbedtls_mpi *M, mbedtls_mpi *_Rinv );
+extern size_t esp_mpi_hardware_words(size_t words);
+extern void esp_mpi_enable_hardware_hw_op( void );
+extern void esp_mpi_disable_hardware_hw_op( void );
+extern void esp_mpi_read_result_hw_op(mbedtls_mpi *Z, size_t z_words);
+extern void esp_mpi_mult_mpi_failover_mod_mult_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t num_words);   
 #endif //CONFIG_IDF_TARGET_ESP32C3
 
 #endif

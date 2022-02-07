@@ -118,7 +118,7 @@ void ST7789_InitDriver(void) {
     #define SDA_2 4
     #define SCL_2 0
   #endif // USE_LANBON_L8
-    Wire1.begin(SDA_2, SCL_2, 400000);
+    Wire1.begin(SDA_2, SCL_2, (uint32_t)400000);
     FT5206_Touch_Init(Wire1);
 #endif // USE_FT5206
 #endif // ESP32

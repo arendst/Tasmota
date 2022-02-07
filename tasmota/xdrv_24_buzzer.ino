@@ -50,9 +50,6 @@ void BuzzerSet(uint32_t state) {
   if (Settings->flag4.buzzer_freq_mode) {     // SetOption111 - Enable frequency output mode for buzzer
     static uint8_t last_state = 0;
     if (last_state != state) {
-#ifdef ESP32
-      analogAttach(Pin(GPIO_BUZZER), 7);
-#endif  // ESP32
       // Set 50% duty cycle for frequency output
       // Set 0% (or 100% for inverted PWM) duty cycle which turns off frequency output either way
       analogWrite(Pin(GPIO_BUZZER), (state) ? Settings->pwm_range / 2 : 0);  // set duty cycle for frequency output

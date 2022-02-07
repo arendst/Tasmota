@@ -26,7 +26,7 @@
  * {"NAME":"AITHINKER CAM","GPIO":[4992,1,672,1,416,5088,1,1,1,6720,736,704,1,1,5089,5090,0,5091,5184,5152,0,5120,5024,5056,0,0,0,0,4928,1,5094,5095,5092,0,0,5093],"FLAG":0,"BASE":2}
  *
  * Supported commands:
- * WcStream     = Control streaming, 0 = stop, 1 = start
+ * WcInterrupt     = Control streaming, 0 = stop, 1 = start
  * WcResolution = Set resolution
  0 = FRAMESIZE_96X96,    // 96x96
  1 = FRAMESIZE_QQVGA,    // 160x120
@@ -78,6 +78,7 @@
 
 #define XDRV_81           81
 
+#include "cam_hal.h"
 #include "esp_camera.h"
 #include "sensor.h"
 #include "fb_gfx.h"
@@ -162,9 +163,20 @@ struct {
 #endif // ENABLE_RTSPSERVER
 } Wc;
 
-
-
 /*********************************************************************************************/
+
+void WcInterrupt(uint32_t state) {
+  // Stop camera ISR if active to fix TG1WDT_SYS_RESET
+  if (!Wc.up) { return; }
+
+  if (state) {
+    // Re-enable interrupts
+    cam_start();
+  } else {
+    // Stop interrupts
+    cam_stop();
+  }
+}
 
 bool WcPinUsed(void) {
   bool pin_used = true;
@@ -207,12 +219,6 @@ uint32_t WcSetup(int32_t fsiz) {
 //esp_log_level_set("*", ESP_LOG_VERBOSE);
 
   camera_config_t config;
-  config.ledc_channel = LEDC_CHANNEL_0;
-  config.ledc_timer = LEDC_TIMER_0;
-  config.xclk_freq_hz = 20000000;
-  config.pixel_format = PIXFORMAT_JPEG;
-//  config.pixel_format = PIXFORMAT_GRAYSCALE;
-//  config.pixel_format = PIXFORMAT_RGB565;
 
   if (WcPinUsed()) {
     config.pin_d0 = Pin(GPIO_WEBCAM_DATA);        // Y2_GPIO_NUM;
@@ -253,8 +259,17 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_reset = RESET_GPIO_NUM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Default template"));
   }
+  
+  int32_t ledc_channel = analogAttach(config.pin_xclk);
+  if (ledc_channel < 0) {
+    AddLog(LOG_LEVEL_ERROR, "CAM: cannot allocated ledc cahnnel, remove a PWM GPIO");
+  }
+  config.ledc_channel = (ledc_channel_t) ledc_channel;
+  AddLog(LOG_LEVEL_DEBUG_MORE, "CAM: XCLK on GPIO %i using ledc channel %i", config.pin_xclk, config.ledc_channel);
+  config.ledc_timer = LEDC_TIMER_0;
+  config.xclk_freq_hz = 20000000;
+  config.pixel_format = PIXFORMAT_JPEG;
 
-  //ESP.getPsramSize()
 
   //esp_log_level_set("*", ESP_LOG_INFO);
 
@@ -271,6 +286,7 @@ uint32_t WcSetup(int32_t fsiz) {
     config.frame_size = FRAMESIZE_VGA;
     config.jpeg_quality = 12;
     config.fb_count = 1;
+    config.fb_location = CAMERA_FB_IN_DRAM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM not found"));
   }
 
@@ -711,7 +727,7 @@ void HandleImageBasic(void) {
 
   if (Settings->webcam_config.stream) {
     if (!Wc.CamServer) {
-      WcStreamControl();
+      WcInterruptControl();
     }
   }
 
@@ -871,7 +887,7 @@ uint32_t WcSetStreamserver(uint32_t flag) {
   return 0;
 }
 
-void WcStreamControl() {
+void WcInterruptControl() {
   WcSetStreamserver(Settings->webcam_config.stream);
   WcSetup(Settings->webcam_config.resolution);
 }
@@ -880,6 +896,8 @@ void WcStreamControl() {
 
 
 void WcLoop(void) {
+  if (4 == Wc.stream_active) { return; }
+
   if (Wc.CamServer) {
     Wc.CamServer->handleClient();
     if (Wc.stream_active) { HandleWebcamMjpegTask(); }
@@ -941,7 +959,7 @@ void WcShowStream(void) {
   if (Settings->webcam_config.stream) {
 //    if (!Wc.CamServer || !Wc.up) {
     if (!Wc.CamServer) {
-      WcStreamControl();
+      WcInterruptControl();
       delay(50);   // Give the webcam webserver some time to prepare the stream
     }
     if (Wc.CamServer && Wc.up) {
@@ -1014,7 +1032,7 @@ void CmndWebcam(void) {
 void CmndWebcamStream(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings->webcam_config.stream = XdrvMailbox.payload;
-    if (!Settings->webcam_config.stream) { WcStreamControl(); }  // Stop stream
+    if (!Settings->webcam_config.stream) { WcInterruptControl(); }  // Stop stream
   }
   ResponseCmndStateText(Settings->webcam_config.stream);
 }
@@ -1068,7 +1086,7 @@ void CmndWebcamContrast(void) {
 }
 
 void CmndWebcamInit(void) {
-  WcStreamControl();
+  WcInterruptControl();
   ResponseCmndDone();
 }
 

@@ -21,6 +21,7 @@
 #ifdef USE_BERRY
 
 #include <berry.h>
+#include "esp8266toEsp32.h"
 
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
 #include <driver/dac.h>
@@ -39,7 +40,7 @@ extern "C" {
   // virtual member
   int gp_member(bvm *vm);
   int gp_member(bvm *vm) {
-    if (be_module_member(vm, lv_gpio_constants, lv_gpio_constants_size)) {
+    if (be_const_module_member(vm, lv_gpio_constants, lv_gpio_constants_size)) {
       be_return(vm);
     } else {
       be_return_nil(vm);
@@ -62,8 +63,8 @@ extern "C" {
             // DAC
 #if   defined(CONFIG_IDF_TARGET_ESP32)
             if (25 == pin || 26 == pin) {
-              uint32_t channel = pin - 25 + 1;    // 1 or 2
-              esp_err_t err = dac_output_enable((dac_channel_t) channel);
+              dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
+              esp_err_t err = dac_output_enable(channel);
               if (err) {
                 be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
               }
@@ -72,16 +73,14 @@ extern "C" {
             }
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
             if (17 == pin || 18 == pin) {
-              uint32_t channel = pin - 17 + 1;    // 1 or 2
-              esp_err_t err = dac_output_enable((dac_channel_t) channel);
+              dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
+              esp_err_t err = dac_output_enable(channel);
               if (err) {
                 be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
               }
             } else {
               be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
             }
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-            be_raise(vm, "value_error", "DAC unsupported in this chip");
 #else
             be_raise(vm, "value_error", "DAC unsupported in this chip");
 #endif
@@ -133,8 +132,8 @@ extern "C" {
       uint32_t dac_value = changeUIntScale(mV, 0, 3300, 0, 255);    // convert from 0..3300 ms to 0..255
 #if   defined(CONFIG_IDF_TARGET_ESP32)
       if (25 == pin || 26 == pin) {
-        uint32_t channel = pin - 25 + 1;    // 1 or 2
-        esp_err_t err = dac_output_voltage((dac_channel_t) channel, dac_value);
+        dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
+        esp_err_t err = dac_output_voltage(channel, dac_value);
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
         }
@@ -143,8 +142,8 @@ extern "C" {
       }
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
       if (17 == pin || 18 == pin) {
-        uint32_t channel = pin - 17 + 1;    // 1 or 2
-        esp_err_t err = dac_output_voltage((dac_channel_t) channel, dac_value);
+        dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
+        esp_err_t err = dac_output_voltage(channel, dac_value);
         if (err) {
           be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
         }
@@ -201,8 +200,10 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  void gp_set_duty(int32_t pin, int32_t duty, int32_t hpoint) {
+    analogWritePhase(pin, duty, hpoint);
+  }
+
 }
-
-
 
 #endif  // USE_BERRY

@@ -1334,7 +1334,7 @@ uint8_t ThermostatGetDutyCycle(uint8_t ctr_output)
   if ( (Thermostat[ctr_output].status.controller_mode == CTR_PI)
     || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
       &&(Thermostat[ctr_output].status.phase_hybrid_ctr == CTR_HYBRID_PI))) {
-    value = Thermostat[ctr_output].time_total_pi / Thermostat[ctr_output].time_pi_cycle;
+    value = 100*Thermostat[ctr_output].time_total_pi / ((uint32_t)60*(uint32_t)Thermostat[ctr_output].time_pi_cycle);
   }
   else if ( (Thermostat[ctr_output].status.controller_mode == CTR_RAMP_UP)
         || ((Thermostat[ctr_output].status.controller_mode == CTR_HYBRID)
@@ -1399,6 +1399,12 @@ void CmndThermostatModeSet(void)
       if ((value >= THERMOSTAT_OFF) && (value < THERMOSTAT_MODES_MAX)) {
         Thermostat[ctr_output].status.thermostat_mode = value;
         Thermostat[ctr_output].timestamp_input_on = 0;     // Reset last manual switch timer if command set externally
+      }
+      if ((value == THERMOSTAT_OFF) && (Thermostat[ctr_output].status.enable_output == IFACE_ON)) {
+        // Make sure the relay is switched to off once if the thermostat is being disabled,
+        // or it will get stuck on (danger!)
+        Thermostat[ctr_output].status.command_output = IFACE_OFF;
+        ThermostatOutputRelay(ctr_output, Thermostat[ctr_output].status.command_output);
       }
     }
     ResponseCmndIdxNumber((int)Thermostat[ctr_output].status.thermostat_mode);

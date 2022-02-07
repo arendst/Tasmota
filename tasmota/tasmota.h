@@ -60,7 +60,23 @@ const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons (up
 const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS / 2)
 const uint8_t MAX_SWITCHES_SET = 28;        // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
-const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
+const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in first settings block - Legacy limit for ESP8266, but extended for ESP32 (see below)
+#ifdef ESP32
+                                            // Max number of PWM channels (total including extended) - ESP32 only
+  #if defined(CONFIG_IDF_TARGET_ESP32)
+    const uint8_t MAX_PWMS = 16;            // ESP32: 16 ledc PWM channels in total - TODO for now
+  #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+    const uint8_t MAX_PWMS = 8;             // ESP32S2: 8 ledc PWM channels in total
+  #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+    const uint8_t MAX_PWMS = 8;             // ESP32S3: 8 ledc PWM channels in total
+  #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+    const uint8_t MAX_PWMS = 6;             // ESP32C3: 6 ledc PWM channels in total
+  #else
+    const uint8_t MAX_PWMS = 5;             // Unknown - revert to 5 PWM max
+  #endif
+#else
+  const uint8_t MAX_PWMS = 5;               // (not used on ESP8266)
+#endif
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
@@ -88,6 +104,8 @@ const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S contro
 const uint8_t MAX_RMT = 8;                  // Max number or RMT channels (ESP32 only)
 #elif CONFIG_IDF_TARGET_ESP32S2
 const uint8_t MAX_RMT = 4;                  // Max number or RMT channels (ESP32S2 only)
+#elif CONFIG_IDF_TARGET_ESP32S3
+const uint8_t MAX_RMT = 1;                  // Max number or RMT channels (ESP32S3 only)
 #elif CONFIG_IDF_TARGET_ESP32C3
 const uint8_t MAX_RMT = 2;                  // Max number or RMT channels (ESP32C3 only)
 #else
@@ -318,11 +336,25 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_BACKLOG_DELAY, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
-                          P_CSE7766_INVALID_POWER, P_HOLD_IGNORE, P_ARP_GRATUITOUS, P_OVER_TEMP,  // SetOption39 .. SetOption42
-                          P_ROTARY_MAX_STEP, P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46
-                          P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
-                          P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
+enum SO32_49Index { P_HOLD_TIME,              // SetOption32 - (Button/Switch) Key hold time detection in decaseconds (default 40)
+                    P_MAX_POWER_RETRY,        // SetOption33 - (Energy) Maximum number of retries before deciding power limit overflow (default 5)
+                    P_BACKLOG_DELAY,          // SetOption34 - (Backlog) Minimal delay in milliseconds between executing backlog commands (default 200)
+                    P_MDNS_DELAYED_START,     // SetOption35 - (mDNS) Number of seconds before mDNS is started (default 0) - Obsolete
+                    P_BOOT_LOOP_OFFSET,       // SetOption36 - (Restart) Number of restarts to start detecting boot loop (default 1)
+                    P_RGB_REMAP,              // SetOption37 - (Light) RGB and White channel separation (default 0)
+                    P_IR_UNKNOW_THRESHOLD,    // SetOption38 - (IR) Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
+                    P_CSE7766_INVALID_POWER,  // SetOption39 - (CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurments (default 128)
+                    P_HOLD_IGNORE,            // SetOption40 - (Button/Shutter) Ignore button change in seconds (default 0)
+                    P_ARP_GRATUITOUS,         // SetOption41 - (Wifi) Interval in seconds between gratuitous ARP requests (default 60)
+                    P_OVER_TEMP,              // SetOption42 - (Energy) Turn all power off at or above this temperature (default 90C)
+                    P_ROTARY_MAX_STEP,        // SetOption43 - (Rotary) Rotary step boundary (default 10)
+                    P_IR_TOLERANCE,           // SetOption44 - (IR) Base tolerance percentage for matching incoming IR messages (default 25, max 100)
+                    P_SO45_FREE,              // SetOption45
+                    P_SO46_FREE,              // SetOption46
+                    P_SO47_FREE,              // SetOption47
+                    P_SO48_FREE,              // SetOption48
+                    P_SO49_FREE               // SetOption49
+                  };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT,
                       DZ_AIRQUALITY, DZ_P1_SMART_METER, DZ_SHUTTER, DZ_MAX_SENSORS};
@@ -343,7 +375,7 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
                     FUNC_ENERGY_EVERY_SECOND, FUNC_ENERGY_RESET,
                     FUNC_RULES_PROCESS, FUNC_TELEPERIOD_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED, FUNC_BUTTON_MULTI_PRESSED,
                     FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_CONSOLE_BUTTON, FUNC_WEB_ADD_MANAGEMENT_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON,
-                    FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
+                    FUNC_WEB_GET_ARG, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
                     FUNC_DEVICE_GROUP_ITEM };
 
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };

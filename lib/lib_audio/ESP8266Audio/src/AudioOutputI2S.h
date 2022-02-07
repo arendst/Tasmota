@@ -44,6 +44,7 @@ class AudioOutputI2S : public AudioOutput
     
     bool begin(bool txDAC);
     bool SetOutputModeMono(bool mono);  // Force mono output no matter the input
+    bool SetLsbJustified(bool lsbJustified);  // Allow supporting non-I2S chips, e.g. PT8211 
 
   protected:
     bool SetPinout();
@@ -51,6 +52,7 @@ class AudioOutputI2S : public AudioOutput
     uint8_t portNo;
     int output_mode;
     bool mono;
+    int lsb_justified;
     bool i2sOn;
     int dma_buf_count;
     int use_apll;

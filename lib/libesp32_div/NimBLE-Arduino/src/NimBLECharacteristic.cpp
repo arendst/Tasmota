@@ -9,9 +9,11 @@
  *  Created on: Jun 22, 2017
  *      Author: kolban
  */
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLECharacteristic.h"
 #include "NimBLE2904.h"
@@ -49,6 +51,7 @@ NimBLECharacteristic::NimBLECharacteristic(const NimBLEUUID &uuid, uint16_t prop
     m_pCallbacks  = &defaultCallback;
     m_pService    = pService;
     m_value       = "";
+    m_valMux      = portMUX_INITIALIZER_UNLOCKED;
     m_timestamp   = 0;
     m_removed     = 0;
 } // NimBLECharacteristic
@@ -234,12 +237,12 @@ NimBLEUUID NimBLECharacteristic::getUUID() {
  * @return A std::string containing the current characteristic value.
  */
 std::string NimBLECharacteristic::getValue(time_t *timestamp) {
-    ble_npl_hw_enter_critical();
+    portENTER_CRITICAL(&m_valMux);
     std::string retVal = m_value;
     if(timestamp != nullptr) {
         *timestamp = m_timestamp;
     }
-    ble_npl_hw_exit_critical(0);
+    portEXIT_CRITICAL(&m_valMux);
 
     return retVal;
 } // getValue
@@ -250,9 +253,10 @@ std::string NimBLECharacteristic::getValue(time_t *timestamp) {
  * @return The length of the current characteristic data.
  */
 size_t NimBLECharacteristic::getDataLength() {
-    ble_npl_hw_enter_critical();
+    portENTER_CRITICAL(&m_valMux);
     size_t len = m_value.length();
-    ble_npl_hw_exit_critical(0);
+    portEXIT_CRITICAL(&m_valMux);
+
     return len;
 }
 
@@ -285,10 +289,11 @@ int NimBLECharacteristic::handleGapEvent(uint16_t conn_handle, uint16_t attr_han
                     pCharacteristic->m_pCallbacks->onRead(pCharacteristic, &desc);
                 }
 
-                ble_npl_hw_enter_critical();
+                portENTER_CRITICAL(&pCharacteristic->m_valMux);
                 rc = os_mbuf_append(ctxt->om, (uint8_t*)pCharacteristic->m_value.data(),
                                     pCharacteristic->m_value.length());
-                ble_npl_hw_exit_critical(0);
+                portEXIT_CRITICAL(&pCharacteristic->m_valMux);
+
                 return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
             }
 
@@ -427,7 +432,7 @@ void NimBLECharacteristic::notify(bool is_notification) {
     int rc = 0;
 
     for (auto &it : m_subscribedVec) {
-        uint16_t _mtu = getService()->getServer()->getPeerMTU(it.first) - 3;
+        uint16_t _mtu = getService()->getServer()->getPeerMTU(it.first);
 
         // check if connected and subscribed
         if(_mtu == 0 || it.second == 0) {
@@ -443,8 +448,8 @@ void NimBLECharacteristic::notify(bool is_notification) {
             }
         }
 
-        if (length > _mtu) {
-            NIMBLE_LOGW(LOG_TAG, "- Truncating to %d bytes (maximum notify size)", _mtu);
+        if (length > _mtu - 3) {
+            NIMBLE_LOGW(LOG_TAG, "- Truncating to %d bytes (maximum notify size)", _mtu - 3);
         }
 
         if(is_notification && (!(it.second & NIMBLE_SUB_NOTIFY))) {
@@ -511,7 +516,7 @@ NimBLECharacteristicCallbacks* NimBLECharacteristic::getCallbacks() {
  * @param [in] length The length of the data in bytes.
  */
 void NimBLECharacteristic::setValue(const uint8_t* data, size_t length) {
-#if CONFIG_LOG_DEFAULT_LEVEL > 3 || (ARDUINO_ARCH_ESP32 && CORE_DEBUG_LEVEL >= 4)
+#if CONFIG_NIMBLE_CPP_DEBUG_LEVEL >= 4
     char* pHex = NimBLEUtils::buildHexData(nullptr, data, length);
     NIMBLE_LOGD(LOG_TAG, ">> setValue: length=%d, data=%s, characteristic UUID=%s", length, pHex, getUUID().toString().c_str());
     free(pHex);
@@ -523,10 +528,10 @@ void NimBLECharacteristic::setValue(const uint8_t* data, size_t length) {
     }
 
     time_t t = time(nullptr);
-    ble_npl_hw_enter_critical();
+    portENTER_CRITICAL(&m_valMux);
     m_value = std::string((char*)data, length);
     m_timestamp = t;
-    ble_npl_hw_exit_critical(0);
+    portEXIT_CRITICAL(&m_valMux);
 
     NIMBLE_LOGD(LOG_TAG, "<< setValue");
 } // setValue
@@ -636,4 +641,6 @@ void NimBLECharacteristicCallbacks::onSubscribe(NimBLECharacteristic* pCharacter
     NIMBLE_LOGD("NimBLECharacteristicCallbacks", "onSubscribe: default");
 }
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
+
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif /* CONFIG_BT_ENABLED */

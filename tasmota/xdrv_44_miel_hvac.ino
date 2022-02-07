@@ -42,7 +42,7 @@
 #include <TasmotaSerial.h>
 
 /* from hvac */
-bool temp_type = false; 
+bool temp_type = false;
 
 struct miel_hvac_header {
 	uint8_t			start;
@@ -713,7 +713,7 @@ miel_hvac_cmnd_settemp(void)
 
 	if (XdrvMailbox.data_len == 0)
 		return;
-	
+
 	degc = strtof(XdrvMailbox.data, nullptr);
 	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN ||
 	    degc > MIEL_HVAC_UPDATE_TEMP_MAX) {
@@ -1069,7 +1069,7 @@ miel_hvac_pre_init(void)
 	sc->sc_serial = new TasmotaSerial(Pin(GPIO_MIEL_HVAC_RX),
 	    Pin(GPIO_MIEL_HVAC_TX), 2);
 
-	if (!sc->sc_serial->begin(baudrate, 2)) {
+	if (!sc->sc_serial->begin(baudrate, SERIAL_8E1)) {
 		AddLog(LOG_LEVEL_ERROR,
 		    PSTR(MIEL_HVAC_LOGNAME ": unable to begin serial "
 		    "(baudrate %d)"), baudrate);
@@ -1207,7 +1207,7 @@ miel_hvac_connect(struct miel_hvac_softc *sc)
 		return;
 	}
 
-	serial->begin(baudrate, 2);
+	serial->begin(baudrate, SERIAL_8E1);
 	if (serial->hardwareSerial())
 		SetSerial(baudrate, TS_SERIAL_8E1);
 }

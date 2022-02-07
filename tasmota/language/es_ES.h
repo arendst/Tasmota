@@ -137,6 +137,7 @@
 #define D_ORP "ORP"
 #define D_PASSWORD "Clave"
 #define D_PH "pH"
+#define D_MQ "MQ"
 #define D_PORT "Puerto"
 #define D_POWER_FACTOR "Factor de Potencia"
 #define D_POWERUSAGE "Potencia"
@@ -663,6 +664,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -737,6 +740,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
@@ -785,6 +789,7 @@
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Potencia"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
+#define D_SENSOR_ADC_MQ        "ADC MQ"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -847,6 +852,8 @@
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
+#define D_SENSOR_CM11_TX       "CM110x TX" 
+#define D_SENSOR_CM11_RX       "CM110x RX" 
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -898,7 +905,7 @@
 #define D_OUT_OF_RANGE         "Fuera de Rango"
 #define D_SENSOR_DETECTED      "detectado"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Pot. Exportada"
 #define D_IMPORT_POWER 	  "Pot. Importada"
 #define D_PHASE_ANGLE     "Ángulo de Fase"
@@ -910,6 +917,7 @@
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
 #define D_TOTAL_ACTIVE    "P. Total Activa"
+#define D_RESETTABLE_TOTAL_ACTIVE    "P. Total Activa (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltaje"
@@ -921,10 +929,13 @@
 #define D_SOLAR_POWER     "Potencia Solar"
 #define D_INVERTER_POWER  "Potencia del Inversor"
 #define D_STATUS          "Estado"
-#define D_WAITING         "En Espera"
-#define D_CHECKING        "Revisando"
-#define D_WORKING         "Funcionando"
-#define D_FAILURE         "Falla"
+#define D_SOLAX_MODE_0    "En Espera"
+#define D_SOLAX_MODE_1    "Revisando"
+#define D_SOLAX_MODE_2    "Funcionando"
+#define D_SOLAX_MODE_3    "Falla"
+#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
+#define D_SOLAX_MODE_5    "Software Update"  // to be translated
+#define D_SOLAX_MODE_6    "Selftest"  // to be translated
 #define D_SOLAX_ERROR_0   "Sin código de Error"
 #define D_SOLAX_ERROR_1   "Falla por Pérdida de Red"
 #define D_SOLAX_ERROR_2   "Falla por Voltaje de Red"

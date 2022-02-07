@@ -55,7 +55,7 @@ void Core2DisplayDim(uint8_t dim);
 #ifndef DISP_DESC_FILE
 //#define DISP_DESC_FILE "/dispdesc.txt"
 #define DISP_DESC_FILE "/display.ini"
-#endif
+#endif // DISP_DESC_FILE
 
 /*********************************************************************************************/
 #ifdef DSP_ROM_DESC
@@ -79,7 +79,7 @@ int8_t cs;
     if (desc) {
       memcpy_P(fbuff, desc, DISPDESC_SIZE - 1);
       ddesc = fbuff;
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: const char descriptor used"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: const char descriptor used"));
     }
 
 
@@ -92,10 +92,10 @@ int8_t cs;
         fp.read((uint8_t*)fbuff, size);
         fp.close();
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: File descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: File descriptor used"));
       }
     }
-#endif
+#endif // USE_UFILESYS
 
 
 #ifdef USE_SCRIPT
@@ -106,7 +106,7 @@ int8_t cs;
         while (*lp != '\n') lp++;
         memcpy(fbuff, lp + 1, DISPDESC_SIZE - 1);
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: Script descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Script descriptor used"));
       }
     }
 #endif // USE_SCRIPT
@@ -123,7 +123,7 @@ int8_t cs;
           if (fbuff[cnt] == ' ') fbuff[cnt] = '\n';
         }
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_INFO, PSTR("DSP: Rule 3 descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Rule 3 descriptor used"));
       }
 
     }
@@ -134,12 +134,12 @@ int8_t cs;
     if (!ddesc) {
       memcpy_P(fbuff, DSP_SAMPLE_DESC, sizeof(DSP_SAMPLE_DESC));
       ddesc = fbuff;
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: Flash descriptor used"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Flash descriptor used"));
     }
 #endif // DSP_ROM_DESC
 
     if (!ddesc) {
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: No valid descriptor found"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: No valid descriptor found"));
       if (fbuff) free(fbuff);
       return 0;
     }
@@ -212,8 +212,8 @@ int8_t cs;
         replacepin(&cp, Pin(GPIO_SPI_CLK, 1));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, 1));
         replacepin(&cp, Pin(GPIO_SPI_DC, 1));
-        replacepin(&cp, Pin(GPIO_BACKLIGHT, 1));
-        replacepin(&cp, Pin(GPIO_OLED_RESET, 1));
+        replacepin(&cp, Pin(GPIO_BACKLIGHT));
+        replacepin(&cp, Pin(GPIO_OLED_RESET));
         replacepin(&cp, Pin(GPIO_SPI_MISO, 1));
       } else {
         // soft spi pins
@@ -238,7 +238,7 @@ int8_t cs;
     // init renderer
     if (renderer) {
       delete renderer;
-      AddLog(LOG_LEVEL_INFO, PSTR("DSP: reinit"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: reinit"));
     }
     udisp  = new uDisplay(ddesc);
 
@@ -280,9 +280,9 @@ int8_t cs;
       else FT5206_Touch_Init(Wire1);
 #else
       if (!wire_n) FT5206_Touch_Init(Wire);
-#endif
+#endif // ESP32
     }
-#endif
+#endif // USE_FT5206
 
 #ifdef USE_XPT2046
     cp = strstr(ddesc, ":TS,");
@@ -291,7 +291,7 @@ int8_t cs;
       uint8_t touch_cs = replacepin(&cp, Pin(GPIO_XPT2046_CS));
 	    XPT2046_Touch_Init(touch_cs);
     }
-#endif
+#endif // USE_XPT2046
 
     uint8_t inirot = Settings->display_rotate;
 
@@ -314,21 +314,21 @@ int8_t cs;
 #ifdef USE_M5STACK_CORE2
     renderer->SetPwrCB(Core2DisplayPower);
     renderer->SetDimCB(Core2DisplayDim);
-#endif
+#endif // USE_M5STACK_CORE2
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, inirot, Settings->display_font);
 
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
-    
+
     ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH
     renderer->Splash();
-#endif
+#endif // SHOW_SPLASH
 
     udisp_init_done = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s!"), renderer->devname());
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: Configured display '%s'"), renderer->devname());
 
     return renderer;
   }

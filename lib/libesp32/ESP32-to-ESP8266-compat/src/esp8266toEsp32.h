@@ -13,101 +13,30 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
  */
-#pragma once
+#ifndef __ESP8266TOESP32_H__
+#define __ESP8266TOESP32_H__
+
 #ifdef ESP32
-// my debug Stuff
-#define Serial_Debug1(p) Serial.printf p
-#define Serial_DebugX(p)
 
 //
 // basics
 //
-// dummy defines
-//#define SPIFFS_END (SPI_FLASH_SEC_SIZE * 200)
-//#define SETTINGS_LOCATION SPIFFS_END
-
 #include <Esp.h>
 
-/*********************************************************************************************\
- * ESP32 analogWrite emulation support
-\*********************************************************************************************/
-
-#if CONFIG_IDF_TARGET_ESP32C3
-  #define PWM_SUPPORTED_CHANNELS 6
-  #define PWM_CHANNEL_OFFSET     1   // Webcam uses channel 0, so we offset standard PWM
-
-  uint8_t _pwm_channel[PWM_SUPPORTED_CHANNELS] = { 99, 99, 99, 99, 99, 99 };
-  uint32_t _pwm_frequency = 977;     // Default 977Hz
-  uint8_t _pwm_bit_num = 10;         // Default 1023
-#else // other ESP32
-  #define PWM_SUPPORTED_CHANNELS 8
-  #define PWM_CHANNEL_OFFSET     2   // Webcam uses channel 0, so we offset standard PWM
-
-  uint8_t _pwm_channel[PWM_SUPPORTED_CHANNELS] = { 99, 99, 99, 99, 99, 99, 99, 99 };
-  uint32_t _pwm_frequency = 977;     // Default 977Hz
-  uint8_t _pwm_bit_num = 10;         // Default 1023
-#endif // CONFIG_IDF_TARGET_ESP32C3 vs ESP32
-
-inline uint32_t _analog_pin2chan(uint32_t pin) {
-  for (uint32_t channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
-    if ((_pwm_channel[channel] < 99) && (_pwm_channel[channel] == pin)) {
-      return channel;
-    }
-  }
-  return 0;
-}
-
-inline void _analogWriteFreqRange(void) {
-  for (uint32_t channel = 0; channel < PWM_SUPPORTED_CHANNELS; channel++) {
-    if (_pwm_channel[channel] < 99) {
-//      uint32_t duty = ledcRead(channel + PWM_CHANNEL_OFFSET);
-      ledcSetup(channel + PWM_CHANNEL_OFFSET, _pwm_frequency, _pwm_bit_num);
-//      ledcWrite(channel + PWM_CHANNEL_OFFSET, duty);
-    }
-  }
-//  Serial.printf("freq - range %d - %d\n",freq,range);
-}
 
 // input range is in full range, ledc needs bits
-inline uint32_t _analogGetResolution(uint32_t x) {
-  uint32_t bits = 0;
-  while (x) {
-    bits++;
-    x >>= 1;
-  }
-  return bits;
-}
+void analogWriteRange(uint32_t range);
+void analogWriteFreq(uint32_t freq);
+int32_t analogAttach(uint32_t pin);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
+void analogWrite(uint8_t pin, int val);
 
-inline void analogWriteRange(uint32_t range) {
-  _pwm_bit_num = _analogGetResolution(range);
-  _analogWriteFreqRange();
-}
+// Extended version that also allows to change phase
+extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
 
-inline void analogWriteFreq(uint32_t freq) {
-  _pwm_frequency = freq;
-  _analogWriteFreqRange();
-}
-
-inline void analogAttach(uint32_t pin, uint32_t channel) {
-  _pwm_channel[channel &7] = pin;
-  ledcAttachPin(pin, channel + PWM_CHANNEL_OFFSET);
-  ledcSetup(channel + PWM_CHANNEL_OFFSET, _pwm_frequency, _pwm_bit_num);
-//  Serial.printf("attach %d - %d\n", channel, pin);
-}
-
-inline void analogWrite(uint8_t pin, int val)
-{
-  uint32_t channel = _analog_pin2chan(pin);
-  if ( val >> (_pwm_bit_num-1) ) ++val;
-  ledcWrite(channel + PWM_CHANNEL_OFFSET, val);
-//  Serial.printf("write %d - %d\n",channel,val);
-}
 
 /*********************************************************************************************/
 
 #define INPUT_PULLDOWN_16 INPUT_PULLUP
-
-typedef double real64_t;
 
 //
 // Time and Timer
@@ -122,16 +51,12 @@ typedef double real64_t;
 // Serial minimal type to hold the config
 typedef int SerConfu8;
 typedef int SerialConfig;
-//#define analogWrite(a, b)
 
 //
 // UDP
 //
 //#define PortUdp_writestr(log_data) PortUdp.write((const uint8_t *)(log_data), strlen(log_data))
 #define PortUdp_write(log_data, n) PortUdp.write((const uint8_t *)(log_data), n)
-
-//
-#define wifi_forceSleepBegin()
 
 #undef LWIP_IPV6
 
@@ -157,4 +82,5 @@ typedef int SerialConfig;
 
 #define STATION_IF 0
 
-#endif
+#endif // ESP32
+#endif // __ESP8266TOESP32_H__

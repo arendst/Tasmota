@@ -13,18 +13,16 @@
  */
 #ifndef COMPONENTS_NIMBLE_SCAN_H_
 #define COMPONENTS_NIMBLE_SCAN_H_
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 
 #include "NimBLEAdvertisedDevice.h"
 #include "NimBLEUtils.h"
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_gap.h"
-#else
-#include "nimble/nimble/host/include/host/ble_gap.h"
-#endif
 
 #include <vector>
 
@@ -99,5 +97,6 @@ private:
     uint8_t                             m_maxResults;
 };
 
-#endif /* CONFIG_BT_ENABLED CONFIG_BT_NIMBLE_ROLE_OBSERVER */
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+#endif /* CONFIG_BT_ENABLED */
 #endif /* COMPONENTS_NIMBLE_SCAN_H_ */

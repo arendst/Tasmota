@@ -4,6 +4,7 @@
       "ldscript": "esp32c3_out.ld"
     },
     "core": "esp32",
+    "extra_flags": "-DARDUINO_USB_CDC_ON_BOOT=0 -DESP32_4M -DESP32C3",
     "f_cpu": "160000000L",
     "f_flash": "80000000L",
     "flash_mode": "dout",
@@ -21,7 +22,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k SPIFFS",
+  "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,

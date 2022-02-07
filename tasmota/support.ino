@@ -676,9 +676,8 @@ bool ParseIPv4(uint32_t* addr, const char* str_p)
   return (3 == i);
 }
 
-// Function to parse & check if version_str is newer than our currently installed version.
-bool NewerVersion(char* version_str)
-{
+bool NewerVersion(char* version_str) {
+  // Function to parse & check if version_str is newer than our currently installed version.
   uint32_t version = 0;
   uint32_t i = 0;
   char *str_ptr;
@@ -1467,7 +1466,7 @@ void TemplateGpios(myio *gp)
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     dest[i] = src[i];
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
     dest[j] = src[i];
     j++;
@@ -1525,13 +1524,18 @@ void ModuleDefault(uint32_t module)
 void SetModuleType(void)
 {
   TasmotaGlobal.module_type = (USER_MODULE == Settings->module) ? Settings->user_template_base : Settings->module;
+#ifdef ESP32
+  if (TasmotaGlobal.emulated_module_type) {
+    TasmotaGlobal.module_type = TasmotaGlobal.emulated_module_type;
+  }
+#endif
 }
 
 bool FlashPin(uint32_t pin)
 {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
   return (pin > 10) && (pin < 18);        // ESP32C3 has GPIOs 11-17 reserved for Flash
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
   return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
 #elif defined(CONFIG_IDF_TARGET_ESP32)
   return (pin >= 28) && (pin <= 31);      // ESP21 skip 28-31
@@ -1546,6 +1550,8 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
   return false;     // no red pin on ESP32C3
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
   return false;     // no red pin on ESP32S3
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+  return (33<=pin) && (37>=pin);  // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #elif defined(CONFIG_IDF_TARGET_ESP32)  // red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
   // PICO can also have 16/17/18/23 not available
   return ((6<=pin) && (11>=pin)) || (16==pin) || (17==pin);  // TODO adapt depending on the exact type of ESP32
@@ -1885,15 +1891,14 @@ void SetSerialBegin(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), TasmotaGlobal.baudrate);
   Serial.flush();
 #ifdef ESP8266
-  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings->serial_config));
+  Serial.begin(TasmotaGlobal.baudrate, (SerialConfig)ConvertSerialConfig(Settings->serial_config));
   SetSerialSwap();
 #endif  // ESP8266
 #ifdef ESP32
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-  uint32_t config = pgm_read_dword(kTasmotaSerialConfig + Settings->serial_config);
-  Serial.begin(TasmotaGlobal.baudrate, config);
+  Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
 #endif  // ESP32
 }
 
@@ -2408,7 +2413,7 @@ void SyslogAsync(bool refresh) {
         line_start += 1460;
       }
 #else
-      PortUdp.write(header);
+      PortUdp.write((const uint8_t*)header, strlen(header));
       PortUdp.write((uint8_t*)line_start, len -mxtime -1);
       PortUdp.endPacket();
 #endif

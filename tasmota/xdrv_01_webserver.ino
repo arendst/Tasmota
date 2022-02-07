@@ -150,7 +150,7 @@ const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"
       "sk(g[i],i);"                       // Set GPIO
     "}";
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
 const char HTTP_SCRIPT_TEMPLATE2[] PROGMEM =
     "j=0;"
     "for(i=0;i<" STR(MAX_USER_PINS) ";i++){"  // Skip 22-32
@@ -381,7 +381,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
 const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:center;font-weight:%s;font-size:%dpx'>%s</td>";
 
 enum ButtonTitle {
@@ -683,11 +683,18 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
     String referer = Webserver->header(F("Referer"));  // http://demo/? or http://192.168.2.153/?
     if (referer.length()) {
       referer.toUpperCase();
-      String hostname = NetworkHostname();
+      String hostname = TasmotaGlobal.hostname;
       hostname.toUpperCase();
-      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(NetworkAddress().toString()) == 7)) {
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(WiFi.localIP().toString()) == 7)) {
         return true;
       }
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+      hostname = EthernetHostname();
+      hostname.toUpperCase();
+      if ((referer.indexOf(hostname) == 7) || (referer.indexOf(EthernetLocalIP().toString()) == 7)) {
+        return true;
+      }
+#endif  // USE_ETHERNET
     }
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP "Referer '%s' denied. Use 'SO128 1' for HTTP API commands. 'Webpassword' is recommended."), referer.c_str());
     return false;
@@ -868,7 +875,7 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 
   // SetOption53 - Show hostname and IP address in GUI main menu
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
-  if (Settings->flag3.gui_hostname_ip) {
+  if (Settings->flag3.gui_hostname_ip) {               // SetOption53  - (GUI) Show hostname and IP address in GUI main menu
 #else
   if ( Settings->flag3.gui_hostname_ip || ( (WiFi.getMode() == WIFI_AP_STA) && (!Web.initial_config) )  ) {
 #endif
@@ -1240,35 +1247,6 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
     WSContentSend_P(PSTR("</tr></table>"));
   }
-#ifdef USE_TUYA_MCU
-  if (IsModuleTuya()) {
-    if (AsModuleTuyaMS()) {
-      WSContentSend_P(HTTP_TABLE100);
-      WSContentSend_P(PSTR("<tr><div></div>"));
-      snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
-      WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1,
-        (strlen(SettingsText(SET_BUTTON1 + TasmotaGlobal.devices_present))) ? SettingsText(SET_BUTTON1 + TasmotaGlobal.devices_present) : stemp, "");
-      WSContentSend_P(PSTR("</tr></table>"));
-    }
-  }
-#endif  // USE_TUYA_MCU
-#ifdef USE_SONOFF_RF
-  if (SONOFF_BRIDGE == TasmotaGlobal.module_type) {
-    WSContentSend_P(HTTP_TABLE100);
-    WSContentSend_P(PSTR("<tr>"));
-    uint32_t idx = 0;
-    for (uint32_t i = 0; i < 4; i++) {
-      if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
-      for (uint32_t j = 0; j < 4; j++) {
-        idx++;
-        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), idx);
-        WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%s</button></td>"), idx,  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
-          (strlen(SettingsText(SET_BUTTON1 + idx -1))) ? SettingsText(SET_BUTTON1 + idx -1) : stemp);
-      }
-    }
-    WSContentSend_P(PSTR("</tr></table>"));
-  }
-#endif  // USE_SONOFF_RF
 
 #ifndef FIRMWARE_MINIMAL
   XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
@@ -1405,13 +1383,6 @@ bool HandleRootStatusRefresh(void)
     }
   }
 #endif  // USE_SHUTTER
-#ifdef USE_SONOFF_RF
-  WebGetArg(PSTR("k"), tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
-    ExecuteWebCommand(svalue);
-  }
-#endif  // USE_SONOFF_RF
 #ifdef USE_ZIGBEE
   WebGetArg(PSTR("zbj"), tmp, sizeof(tmp));
   if (strlen(tmp)) {
@@ -1425,6 +1396,9 @@ bool HandleRootStatusRefresh(void)
   }
 #endif // USE_ZIGBEE
 
+  XsnsCall(FUNC_WEB_GET_ARG);
+  XdrvCall(FUNC_WEB_GET_ARG);
+
 #ifdef USE_WEB_SSE
   WSContentBegin(200, CT_STREAM);
   WSContentSend_P(PSTR("data: "));
@@ -1432,6 +1406,9 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
   WSContentSend_P(PSTR("{t}"));
+  if (Settings->web_time_end) {
+    WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
+  }
   XsnsCall(FUNC_WEB_SENSOR);
   XdrvCall(FUNC_WEB_SENSOR);
 
@@ -1600,7 +1577,7 @@ void HandleTemplateConfiguration(void) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
       // ESP32C3 we always send all GPIOs, Flash are just hidden
       WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
@@ -1702,7 +1679,7 @@ void TemplateSaveSettings(void) {
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(i));
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
     snprintf_P(command, sizeof(command), PSTR("%s%s%d"), command, (i>0)?",":"", WebGetGpioArg(j));
     j++;
@@ -2346,16 +2323,13 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-#ifdef ESP32
-#ifdef USE_ETHERNET
-  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
-    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
+  bool show_hr = false;
+  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%_I"), (uint32_t)WiFi.softAPIP());
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
     WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
   }
-#endif
-#endif
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
     WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm) 11%c"), Settings->sta_active +1, HtmlEscape(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WifiGetRssiAsQuality(rssi), rssi, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
@@ -2365,25 +2339,35 @@ void HandleInformation(void)
     if (ipv6_addr != "") {
       WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
     }
-#endif
+#endif  // LWIP_IPV6 = 1
     if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
       WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.macAddress().c_str());
       WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (wifi)}2%_I"), (uint32_t)WiFi.localIP());
-      WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
     }
+    show_hr = true;
   }
-  if (!TasmotaGlobal.global_state.network_down) {
+  if (!TasmotaGlobal.global_state.wifi_down) {
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->ipv4_address[1]);
     WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->ipv4_address[2]);
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->ipv4_address[3]);
     WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->ipv4_address[4]);
   }
-  if ((WiFi.getMode() >= WIFI_AP) && (static_cast<uint32_t>(WiFi.softAPIP()) != 0)) {
-    WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
-    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
-    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (AP)}2%_I"), (uint32_t)WiFi.softAPIP());
-    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), (uint32_t)WiFi.softAPIP());
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+    if (show_hr) {
+      WSContentSend_P(PSTR("}1<hr/>}2<hr/>"));
+    }
+    WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), EthernetHostname(), (Mdns.begun) ? PSTR(".local") : "");
+    WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), EthernetMacAddress().c_str());
+    WSContentSend_P(PSTR("}1" D_IP_ADDRESS " (eth)}2%_I"), (uint32_t)EthernetLocalIP());
   }
+  if (!TasmotaGlobal.global_state.eth_down) {
+    WSContentSend_P(PSTR("}1" D_GATEWAY "}2%_I"), Settings->eth_ipv4_address[1]);
+    WSContentSend_P(PSTR("}1" D_SUBNET_MASK "}2%_I"), Settings->eth_ipv4_address[2]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "1}2%_I"), Settings->eth_ipv4_address[3]);
+    WSContentSend_P(PSTR("}1" D_DNS_SERVER "2}2%_I"), Settings->eth_ipv4_address[4]);
+  }
+#endif  // USE_ETHERNET
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_HTTP_API "}2%s"), Settings->flag5.disable_referer_chk ? PSTR(D_ENABLED) : PSTR(D_DISABLED)); // SetOption 128
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
@@ -2598,7 +2582,7 @@ void HandleUploadDone(void) {
   WSContentStop();
 }
 
-#ifdef USE_BLE_ESP32
+#if defined(USE_BLE_ESP32) || defined(USE_MI_ESP32)
   // declare the fn
   int ExtStopBLE();
 #endif
@@ -3300,6 +3284,7 @@ const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|
 ;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_WEBTIME "|"
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
 #endif
@@ -3317,6 +3302,7 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 ;
 
 void (* const WebCommand[])(void) PROGMEM = {
+  &CmndWebTime,
 #ifdef USE_EMULATION
   &CmndEmulation,
 #endif
@@ -3336,6 +3322,25 @@ void (* const WebCommand[])(void) PROGMEM = {
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
+
+void CmndWebTime(void) {
+  // 2017-03-07T11:08:02-07:00
+  // 0123456789012345678901234
+  //
+  // WebTime 0,16  = 2017-03-07T11:08 - No seconds
+  // WebTime 11,19 = 11:08:02
+  uint32_t values[2] = { 0 };
+  String datetime = GetDateAndTime(DT_LOCAL);
+  if (ParseParameters(2, values) > 1) {
+    Settings->web_time_start = values[0];
+    Settings->web_time_end = values[1];
+    if (Settings->web_time_end > datetime.length()) { Settings->web_time_end = datetime.length(); }
+    if (Settings->web_time_start >= Settings->web_time_end) { Settings->web_time_start = 0; }
+  }
+  Response_P(PSTR("{\"%s\":[%d,%d],\"Time\":\"%s\"}"),
+    XdrvMailbox.command, Settings->web_time_start, Settings->web_time_end,
+    datetime.substring(Settings->web_time_start, Settings->web_time_end).c_str());
+}
 
 #ifdef USE_EMULATION
 void CmndEmulation(void)

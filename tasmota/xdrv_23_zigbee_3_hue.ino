@@ -42,7 +42,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
 
   const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
   const Z_Data_Light & light = device.data.find<Z_Data_Light>();
-  if (&light != nullptr) {
+  if (&light != &z_data_unk) {
     bri = light.getDimmer();
     colormode = light.getColorMode();
     sat = light.getSat();
@@ -91,9 +91,6 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
 
 void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
 {
-  const size_t buf_size = 300;
-  char * buf = (char*) malloc(buf_size);
-
   const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
   const char * friendlyName = device.friendlyName;
   const char * modelId = device.modelId;
@@ -101,24 +98,25 @@ void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
   char shortaddrname[8];
   snprintf_P(shortaddrname, sizeof(shortaddrname), PSTR("0x%04X"), shortaddr);
 
-  UnishoxStrings msg(HUE_LIGHTS);
-  snprintf_P(buf, buf_size, msg[HUE_LIGHTS_STATUS_JSON2],
-              (friendlyName) ? EscapeJSONString(friendlyName).c_str() : shortaddrname,
-              (modelId) ? EscapeJSONString(modelId).c_str() : PSTR("Unknown"),
-              (manufacturerId) ? EscapeJSONString(manufacturerId).c_str() : PSTR("Tasmota"),
+  HueLightStatus2Generic(response, (friendlyName) ? friendlyName : shortaddrname,
+              (modelId) ? modelId : PSTR("Unknown"),
+              (manufacturerId) ? manufacturerId : PSTR("Tasmota"),
               GetHueDeviceId(shortaddr).c_str());
-
-  *response += buf;
-  free(buf);
 }
 
-void ZigbeeHueStatus(String * response, uint16_t shortaddr) {
-  *response += F("{\"state\":");
-  HueLightStatus1Zigbee(shortaddr, zigbee_devices.getHueBulbtype(shortaddr), response);
-  HueLightStatus2Zigbee(shortaddr, response);
+int32_t ZigbeeHueStatus(String * response, uint16_t shortaddr) {
+  int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
+  if (bulbtype >= 0) {  // respond only if eligible
+    *response += F("{\"state\":");
+    HueLightStatus1Zigbee(shortaddr, zigbee_devices.getHueBulbtype(shortaddr), response);
+    HueLightStatus2Zigbee(shortaddr, response);
+    return 200;
+  } else {
+    return -3;
+  }
 }
 
-void ZigbeeCheckHue(String * response, bool &appending) {
+void ZigbeeCheckHue(String & response, bool * appending) {
   uint32_t zigbee_num = zigbee_devices.devicesSize();
   for (uint32_t i = 0; i < zigbee_num; i++) {
     uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
@@ -126,13 +124,13 @@ void ZigbeeCheckHue(String * response, bool &appending) {
 
     if (bulbtype >= 0) {
       // this bulb is advertized
-      if (appending) { *response += ","; }
-      *response += "\"";
-      *response += EncodeLightId(0, shortaddr);
-      *response += F("\":{\"state\":");
-      HueLightStatus1Zigbee(shortaddr, bulbtype, response);    // TODO
-      HueLightStatus2Zigbee(shortaddr, response);
-      appending = true;
+      if (*appending) { response += ","; }
+      response += "\"";
+      response += EncodeLightId(0, shortaddr);
+      response += F("\":{\"state\":");
+      HueLightStatus1Zigbee(shortaddr, bulbtype, &response);    // TODO
+      HueLightStatus2Zigbee(shortaddr, &response);
+      *appending = true;
     }
   }
 }
@@ -223,15 +221,19 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   light.setHue(hue);
 }
 
-void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
+int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   uint8_t  bri, sat;
   uint16_t ct, hue;
   int code = 200;
 
+  int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
+  if (bulbtype < 0) {  // respond only if eligible
+    response = F("{}");
+    return 200;
+  }
+
   bool resp = false;  // is the response non null (add comma between parameters)
   bool on = false;
-
-  uint8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
 
   const size_t buf_size = 100;
   char * buf = (char*) malloc(buf_size);
@@ -368,10 +370,8 @@ void ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   else {
     response = msg[HUE_ERROR_JSON];
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
-  WSSend(code, CT_APP_JSON, response);
-
   free(buf);
+  return 200;
 }
 
 #endif  // USE_WEBSERVER && USE_EMULATION && USE_EMULATION_HUE

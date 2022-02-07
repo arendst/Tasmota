@@ -177,6 +177,11 @@ enum UserSelectablePins {
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
   GPIO_HEARTBEAT, GPIO_HEARTBEAT_INV,
   GPIO_SHIFT595_SRCLK, GPIO_SHIFT595_RCLK, GPIO_SHIFT595_OE, GPIO_SHIFT595_SER,   // 74x595 Shift register
+  GPIO_SOLAXX1_RTS,                    // Solax Inverter Serial interface
+  GPIO_OPTION_E,                       // Emulated module
+  GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
+  GPIO_ADC_MQ,                         // Analog MQ Sensor
+  GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -184,7 +189,7 @@ enum ProgramSelectablePins {
   GPIO_USER,           // User configurable needs to be 2047
   GPIO_MAX };
 
-#define MAX_OPTIONS_A  5                   // Increase if more bits are used from GpioOptionABits
+#define MAX_OPTIONS_A  6                   // Increase if more bits are used from GpioOptionABits
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -194,7 +199,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t udisplay_driver : 1;          // bit 2 (v9.3.1.2)   - Option_A3 - (Display) Universal display driver
     uint32_t enable_ccloader : 1;          // bit 3 (v9.4.0.5)   - Option_A4 - (Zigbee) Enable CCLoader using Zigbee Rx/Tx/Rst Gpios
     uint32_t rotary_mi_desk : 1;           // bit 4 (v9.5.0.5)   - Option_A5 - (Rotary) Enable Mi Desk emulation
-    uint32_t spare05 : 1;                  // bit 5
+    uint32_t linkind_support : 1;          // bit 5 (v10.1.0.4)  - Option_A6 - (Light) LinkInd support
     uint32_t spare06 : 1;                  // bit 6
     uint32_t spare07 : 1;                  // bit 7
     uint32_t spare08 : 1;                  // bit 8
@@ -223,6 +228,25 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare31 : 1;                  // bit 31
   };
 } GpioOptionABits;
+
+#ifdef ESP32
+enum SupportedEmulationModules {
+  SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
+  SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS_DUMMY, SONOFF_DEV, H801,
+  SONOFF_SC, SONOFF_BN, SONOFF_4CHPRO, HUAFAN_SS, SONOFF_BRIDGE, SONOFF_B1, AILIGHT, SONOFF_T11, SONOFF_T12, SONOFF_T13,
+  SUPLA1, WITTY, YUNSHAN, MAGICHOME, LUANIHVIO, KMC_70011, ARILUX_LC01, ARILUX_LC11, SONOFF_DUAL_R2, ARILUX_LC06,
+  SONOFF_S31, ZENGGE_ZF_WF017, SONOFF_POW_R2, SONOFF_IFAN02, BLITZWOLF_BWSHP, SHELLY1, SHELLY2, PHILIPS, NEO_COOLCAM, ESP_SWITCH,
+  OBI, TECKIN, APLIC_WDP303075, TUYA_DIMMER, GOSUND, ARMTRONIX_DIMMERS, SK03_TUYA, PS_16_DZ, TECKIN_US, MANZOKU_EU_4,
+  OBI2, YTF_IR_BRIDGE, DIGOO, KA10, ZX2820, MI_DESK_LAMP, SP10, WAGA, SYF05, SONOFF_L1,
+  SONOFF_IFAN03, EXS_DIMMER, PWM_DIMMER, SONOFF_D1, SONOFF_ZB_BRIDGE,
+  MAXMODULE_EMULATION };
+
+#define MAX_OPTIONS_E  1                   // Increase if more emulated modules are supported from kModuleEmulationList
+
+const uint8_t kModuleEmulationList[] PROGMEM = {
+  PWM_DIMMER                               // (v10.1.0.4)  - Option_E1 - (Light) USE_PWM_DIMMER support
+};
+#endif  // ESP32
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
 const char kSensorNames[] PROGMEM =
@@ -373,9 +397,13 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0942_RX "|"
   D_SENSOR_HM330X_SET "|"
   D_SENSOR_HEARTBEAT "|" D_SENSOR_HEARTBEAT "_i|"
-
   D_GPIO_SHIFT595_SRCLK "|" D_GPIO_SHIFT595_RCLK "|" D_GPIO_SHIFT595_OE "|" D_GPIO_SHIFT595_SER "|"
-;
+  D_SENSOR_SOLAXX1_RTS "|"
+  D_SENSOR_OPTION " E|"
+  D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
+  D_SENSOR_ADC_MQ "|"
+  D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
+  ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
@@ -389,6 +417,9 @@ const char kSensorNamesFixed[] PROGMEM =
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
   AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A, // Device specific options
+#ifdef ESP32
+  AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E, // Device module emulation
+#endif
   AGPIO(GPIO_KEY1) + MAX_KEYS,          // Buttons
   AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
 #ifdef ESP32
@@ -419,8 +450,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_CNTR1) + MAX_COUNTERS,     // Counters
   AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS,
 #endif
-  AGPIO(GPIO_PWM1) + MAX_PWMS,          // RGB   Red   or C  Cold White
-  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,
+  AGPIO(GPIO_PWM1) + MAX_PWMS,      // RGB   Red   or C  Cold White
+  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,  // or extended PWM for ESP32
 #ifdef USE_BUZZER
   AGPIO(GPIO_BUZZER),                   // Buzzer
   AGPIO(GPIO_BUZZER_INV),               // Inverted buzzer
@@ -523,6 +554,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSD1331_CS),
   AGPIO(GPIO_SSD1331_DC),
 #endif  // USE_DISPLAY_SSD1331
+
+#ifdef USE_DISPLAY_MAX7219_MATRIX
+  #undef USE_DISPLAY_MAX7219
+  #undef USE_DISPLAY_TM1637
+  AGPIO(GPIO_MAX7219CLK),
+  AGPIO(GPIO_MAX7219DIN),
+  AGPIO(GPIO_MAX7219CS),
+#endif  // USE_DISPLAY_MAX7219_MATRIX
+
 #ifdef USE_DISPLAY_TM1637
   AGPIO(GPIO_TM1637CLK),
   AGPIO(GPIO_TM1637DIO),
@@ -702,6 +742,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SOLAX_X1
   AGPIO(GPIO_SOLAXX1_TX),     // Solax Inverter tx pin
   AGPIO(GPIO_SOLAXX1_RX),     // Solax Inverter rx pin
+  AGPIO(GPIO_SOLAXX1_RTS),     // Solax Inverter RTS pin
 #endif // USE_SOLAX_X1
 #ifdef USE_LE01MR
   AGPIO(GPIO_LE01MR_TX),     // F7F LE-01MR energy meter tx pin
@@ -725,6 +766,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SDM72_RX),      // SDM72 Serial interface
 #endif
   AGPIO(GPIO_ZEROCROSS),
+#ifdef USE_SDM230
+  AGPIO(GPIO_SDM230_TX),      // SDM230 Serial interface
+  AGPIO(GPIO_SDM230_RX),      // SDM230 Serial interface
+#endif
 #endif  // USE_ENERGY_SENSOR
 
 /*-------------------------------------------------------------------------------------------*\
@@ -891,6 +936,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MAX7219CS),
 #endif  // USE_DISPLAY_MAX7219
 
+#ifdef USE_CM110x
+  AGPIO(GPIO_CM11_TXD),        // CM110x Serial interface
+  AGPIO(GPIO_CM11_RXD),        // CM110x Serial interface
+#endif
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
 \*-------------------------------------------------------------------------------------------*/
@@ -932,6 +981,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,    // Current
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
+  AGPIO(GPIO_ADC_MQ) + MAX_ADCS,          // Analog MQ Sensor
 #endif  // ESP32
 
 #ifdef USE_SHIFT595
@@ -958,6 +1008,7 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_CT_POWER),               // Current
   AGPIO(GPIO_ADC_JOY),                    // Joystick
   AGPIO(GPIO_ADC_PH),                     // Analog PH Sensor
+  AGPIO(GPIO_ADC_MQ),                     // Analog MQ Sensor
 };
 #endif  // ESP8266
 
@@ -973,6 +1024,7 @@ enum UserSelectableAdc {
   ADC_CT_POWER,       // Current
   ADC_JOY,            // Joystick
   ADC_PH,             // Analog PH Sensor
+  ADC_MQ,             // Analog MQ Sensor
 //  ADC_SWITCH,         // Switch
 //  ADC_SWITCH_INV,
   ADC_END };
@@ -1046,6 +1098,22 @@ const char PINS_WEMOS[] PROGMEM = "AOAOAOAOAOAOIOIOIOIOIOFLFLFLFLFLFLFLIOIORXTX"
 //                                  0 1 2 3 4 5 6 7 8 910111213141516171819202122232425262728293031323334353637383940414243444546
 const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO--------FLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOI ";
 
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+/* ****************************************
+ * ESP32S3
+ * GPIOs 0..21 + 33..48
+ * - 22..25 are not used
+ * - 26..32 are used for SPI Flash
+ * - 33..37 are used by PSRAM
+ * ****************************************/
+#define MAX_GPIO_PIN       49   // Number of supported GPIO, 0..48
+#define MIN_FLASH_PINS     11   // Number of flash chip pins unusable for configuration (22-25 don't exist, 26-32 for SPI)
+#define MAX_USER_PINS      38   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748
+const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO--------FLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO";
+
 #else  // not CONFIG_IDF_TARGET_ESP32C3 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 
 /* ****************************************
@@ -1086,11 +1154,11 @@ const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOI
 
 typedef struct MYIO {
   uint16_t      io[MAX_GPIO_PIN];
-} myio;                         // ESP8266: 18*2 = 36 bytes / ESP32: 40*2 = 80 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 47*2 = 94 bytes
+} myio;                         // ESP8266: 18*2 = 36 bytes / ESP32: 40*2 = 80 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 47*2 = 94 bytes / ESP32-S3: 49*2 = 98 bytes
 
 typedef struct MYCFGIO {
   uint16_t      io[MAX_USER_PINS];
-} mycfgio;                      // ESP8266: 14*2 = 28 bytes / ESP32: 36*2 = 72 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 36*2 = 72 bytes
+} mycfgio;                      // ESP8266: 14*2 = 28 bytes / ESP32: 36*2 = 72 bytes / ESP32-C3: 22*2 = 44 bytes / ESP32-S2: 36*2 = 72 bytes / ESP32-S3: 33*2 = 66 bytes
 
 #define GPIO_FLAG_USED       0  // Currently no flags used
 
@@ -1132,8 +1200,8 @@ typedef struct MYTMPLT {
 
 #define USER_MODULE        255
 
-// Supported hardware modules
-enum SupportedModules {
+// Supported ESP8266 hardware modules
+enum SupportedModulesESP8266 {
   SONOFF_BASIC, SONOFF_RF, SONOFF_SV, SONOFF_TH, SONOFF_DUAL, SONOFF_POW, SONOFF_4CH, SONOFF_S2X, SLAMPHER, SONOFF_TOUCH,
   SONOFF_LED, CH1, CH4, MOTOR, ELECTRODRAGON, EXS_RELAY, WION, WEMOS, SONOFF_DEV, H801,
   SONOFF_SC, SONOFF_BN, SONOFF_4CHPRO, HUAFAN_SS, SONOFF_BRIDGE, SONOFF_B1, AILIGHT, SONOFF_T11, SONOFF_T12, SONOFF_T13,
@@ -2545,7 +2613,7 @@ const mytmplt8285 kModules8285[TMP_MAXMODULE_8266 - TMP_WEMOS] PROGMEM = {
 #define USER_MODULE        255
 
 // Supported hardware modules
-enum SupportedModules {
+enum SupportedModulesESP32C3 {
   WEMOS,
   MAXMODULE };
 
@@ -2559,7 +2627,7 @@ const char kModuleNames[] PROGMEM =
   "ESP32C3|"
   ;
 
-// !!! Update this list in the same order as SupportedModules !!!
+// !!! Update this list in the same order as SupportedModulesESP32C3 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // Generic ESP32C3 device
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, ADC1_CH0, XTAL_32K_P
@@ -2595,13 +2663,13 @@ const mytmplt kModules[] PROGMEM = {
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 
 /********************************************************************************************\
- * ESP32-C3 Module templates
+ * ESP32-S2 Module templates
 \********************************************************************************************/
 
 #define USER_MODULE        255
 
 // Supported hardware modules
-enum SupportedModules {
+enum SupportedModulesESP32S2 {
   WEMOS,
   MAXMODULE };
 
@@ -2615,7 +2683,7 @@ const char kModuleNames[] PROGMEM =
   "ESP32S2|"
   ;
 
-// !!! Update this list in the same order as SupportedModules !!!
+// !!! Update this list in the same order as SupportedModulesESP32S2 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // Generic ESP32C3 device
     AGPIO(GPIO_USER),            // 0       IO                  GPIO0, RTC_GPIO0, Strapping
@@ -2673,6 +2741,89 @@ const mytmplt kModules[] PROGMEM = {
  Known templates
 \*********************************************************************************************/
 
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+
+/********************************************************************************************\
+ * ESP32-S3 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModulesESP32S3 {
+  WEMOS,
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32S3|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32S2 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32C3 device
+    AGPIO(GPIO_USER),            // 0       IO                  RTC_GPIO0, GPIO0, Strapping
+    AGPIO(GPIO_USER),            // 1       AO                  RTC_GPIO1, GPIO1, TOUCH1, ADC1_CH0
+    AGPIO(GPIO_USER),            // 2       AO                  RTC_GPIO2, GPIO2, TOUCH2, ADC1_CH1
+    AGPIO(GPIO_USER),            // 3       AO                  RTC_GPIO3, GPIO3, TOUCH3, ADC1_CH2, Strapping
+    AGPIO(GPIO_USER),            // 4       AO                  RTC_GPIO4, GPIO4, TOUCH4, ADC1_CH3
+    AGPIO(GPIO_USER),            // 5       AO                  RTC_GPIO5, GPIO5, TOUCH5, ADC1_CH4
+    AGPIO(GPIO_USER),            // 6       AO                  RTC_GPIO6, GPIO6, TOUCH6, ADC1_CH5
+    AGPIO(GPIO_USER),            // 7       AO                  RTC_GPIO7, GPIO7, TOUCH7, ADC1_CH6
+    AGPIO(GPIO_USER),            // 8       AO                  RTC_GPIO8, GPIO8, TOUCH8, ADC1_CH7, SUBSPICS1
+    AGPIO(GPIO_USER),            // 9       AO                  RTC_GPIO9, GPIO9, TOUCH9, ADC1_CH8, SUBSPIHD, FSPIHD
+    AGPIO(GPIO_USER),            // 10      AO                  RTC_GPIO10, GPIO10, TOUCH10, ADC1_CH9, FSPIIO4, SUBSPICS0, FSPICS0
+    AGPIO(GPIO_USER),            // 11      AO                  RTC_GPIO11, GPIO11, TOUCH11, ADC2_CH0, FSPIIO5, SUBSPID, FSPID
+    AGPIO(GPIO_USER),            // 12      AO                  RTC_GPIO12, GPIO12, TOUCH12, ADC2_CH1, FSPIIO6, SUBSPICLK, FSPICLK
+    AGPIO(GPIO_USER),            // 13      AO                  RTC_GPIO13, GPIO13, TOUCH13, ADC2_CH2, FSPIIO7, SUBSPIQ, FSPIQ
+    AGPIO(GPIO_USER),            // 14      AO                  RTC_GPIO14, GPIO14, TOUCH14, ADC2_CH3, FSPIDQS, SUBSPIWP, FSPIWP
+    AGPIO(GPIO_USER),            // 15      AO                  RTC_GPIO15, GPIO15, U0RTS, ADC2_CH4, XTAL_32K_P
+    AGPIO(GPIO_USER),            // 16      AO                  RTC_GPIO16, GPIO16, U0CTS, ADC2_CH5, XTAL_32K_N
+    AGPIO(GPIO_USER),            // 17      AO                  RTC_GPIO17, GPIO17, U1TXD, ADC2_CH6
+    AGPIO(GPIO_USER),            // 18      AO                  RTC_GPIO18, GPIO18, U1RXD, ADC2_CH7, CLK_OUT3
+    AGPIO(GPIO_USER),            // 19      AO                  RTC_GPIO19, GPIO19, U1RTS, ADC2_CH8, CLK_OUT2, USB_D­
+    AGPIO(GPIO_USER),            // 20      AO                  RTC_GPIO20, GPIO20, U1CTS, ADC2_CH9, CLK_OUT1, USB_D+
+    AGPIO(GPIO_USER),            // 21      IO                  RTC_GPIO21, GPIO21
+                                 // 22      --                  Unused
+                                 // 23      --                  Unused
+                                 // 24      --                  Unused
+                                 // 25      --                  Unused
+                                 // 26      FL                  SPICS1, GPIO26
+                                 // 27      FL                  SPIHD, GPIO27
+                                 // 28      FL                  SPIWP, GPIO28
+                                 // 29      FL                  SPICS0, GPIO29
+                                 // 30      FL                  SPICLK, GPIO30
+                                 // 31      FL                  SPIQ, GPIO31
+                                 // 32      FL                  SPID, GPIO32
+    AGPIO(GPIO_NONE),            // 33      IO                  SPIIO4, GPIO33, FSPIHD, SUBSPIHD
+    AGPIO(GPIO_NONE),            // 34      IO                  SPIIO5, GPIO34, FSPICS0, SUBSPICS0
+    AGPIO(GPIO_NONE),            // 35      IO                  SPIIO6, GPIO35, FSPID, SUBSPID
+    AGPIO(GPIO_NONE),            // 36      IO                  SPIIO7, GPIO36, FSPICLK, SUBSPICLK
+    AGPIO(GPIO_NONE),            // 37      IO                  SPIDQS, GPIO37, FSPIQ, SUBSPIQ
+    AGPIO(GPIO_USER),            // 38      IO                  GPIO38, FSPIWP, SUBSPIWP
+    AGPIO(GPIO_USER),            // 39      IO                  MTCK, GPIO39, CLK_OUT3, SUBSPICS1
+    AGPIO(GPIO_USER),            // 40      IO                  MTDO, GPIO40, CLK_OUT2
+    AGPIO(GPIO_USER),            // 41      IO                  MTDI, GPIO41, CLK_OUT1
+    AGPIO(GPIO_USER),            // 42      IO                  MTMS, GPIO42
+    AGPIO(GPIO_USER),            // 43      IO                  U0TXD, GPIO43, CLK_OUT1
+    AGPIO(GPIO_USER),            // 44      IO                  U0RXD, GPIO44, CLK_OUT2
+    AGPIO(GPIO_USER),            // 45      IO                  GPIO45, Strapping
+    AGPIO(GPIO_USER),            // 46      IO                  GPIO46, Strapping
+    AGPIO(GPIO_USER),            // 47      IO                  SPICLK_P_DIFF, GPIO47, SUBSPICLK_P_DIFF
+    AGPIO(GPIO_USER),            // 48      IO                  SPICLK_N_DIFF, GPIO48, SUBSPICLK_N_DIFF
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+
 #else  // not CONFIG_IDF_TARGET_ESP32C3 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 /********************************************************************************************\
  * ESP32 Module templates
@@ -2681,7 +2832,7 @@ const mytmplt kModules[] PROGMEM = {
 #define USER_MODULE        255
 
 // Supported hardware modules
-enum SupportedModules {
+enum SupportedModulesESP32 {
   WEMOS,
   ESP32_CAM_AITHINKER,
   ODROID_GO,
@@ -2737,7 +2888,7 @@ const char kModuleNames[] PROGMEM =
 #endif  // USE_M5STACK_CORE2
   ;
 
-// !!! Update this list in the same order as SupportedModules !!!
+// !!! Update this list in the same order as SupportedModulesESP32 !!!
 const mytmplt kModules[] PROGMEM = {
   {                              // WEMOS - Espressif ESP32-DevKitC - Any ESP32 device like WeMos and NodeMCU hardware (ESP32)
     AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, ADC2_CH1, TOUCH1, RTC_GPIO11, CLK_OUT1, EMAC_TX_CLK

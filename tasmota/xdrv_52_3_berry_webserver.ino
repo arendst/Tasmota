@@ -27,7 +27,7 @@
 /*********************************************************************************************\
  * Int constants
  *********************************************************************************************/
-const be_constint_t webserver_constants[] = {
+const be_const_member_t webserver_constants[] = {
     { "BUTTON_CONFIGURATION", BUTTON_CONFIGURATION },
     { "BUTTON_INFORMATION", BUTTON_INFORMATION },
     { "BUTTON_MAIN", BUTTON_MAIN },
@@ -51,7 +51,7 @@ extern "C" {
     if (argc == 1 && be_isstring(vm, 1)) {
       const char * needle = be_tostring(vm, 1);
 
-      int32_t constant_idx = bin_search(needle, &webserver_constants[0].name, sizeof(webserver_constants[0]), ARRAY_SIZE(webserver_constants));
+      int32_t constant_idx = be_map_bin_search(needle, &webserver_constants[0].name, sizeof(webserver_constants[0]), ARRAY_SIZE(webserver_constants));
     
       if (constant_idx >= 0) {
         // we did have a match, low == high

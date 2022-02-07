@@ -20,7 +20,11 @@
 #include <Arduino.h>
 #include "uDisplay.h"
 
-#define UDSP_DEBUG
+#ifdef ESP32
+#include "esp8266toEsp32.h"
+#endif
+
+// #define UDSP_DEBUG
 
 const uint16_t udisp_colors[]={UDISP_BLACK,UDISP_WHITE,UDISP_RED,UDISP_GREEN,UDISP_BLUE,UDISP_CYAN,UDISP_MAGENTA,\
   UDISP_YELLOW,UDISP_NAVY,UDISP_DARKGREEN,UDISP_DARKCYAN,UDISP_MAROON,UDISP_PURPLE,UDISP_OLIVE,\
@@ -76,6 +80,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   uint8_t section = 0;
   dsp_ncmds = 0;
   lut_num = 0;
+  lvgl_param.data = 0;
+  lvgl_param.fluslines = 40;
+
   for (uint32_t cnt = 0; cnt < 5; cnt++) {
     lut_cnt[cnt] = 0;
     lut_cmd[cnt] = 0xff;
@@ -425,9 +432,7 @@ Renderer *uDisplay::Init(void) {
 
     if (bpanel >= 0) {
 #ifdef ESP32
-        ledcSetup(ESP32_PWM_CHANNEL, 977, 8);   // use 10 bits resolution like in Light
-        ledcAttachPin(bpanel, ESP32_PWM_CHANNEL);
-        ledcWrite(ESP32_PWM_CHANNEL, 8);        // 38/255 correspond roughly to 50% visual brighness (with Gamma)
+        analogWrite(bpanel, 32);
 #else
         pinMode(bpanel, OUTPUT);
         digitalWrite(bpanel, HIGH);
@@ -478,6 +483,11 @@ Renderer *uDisplay::Init(void) {
     }
 #endif // ESP32
 
+
+    spiSettings = SPISettings((uint32_t)spi_speed*1000000, MSBFIRST, SPI_MODE3);
+    SPI_BEGIN_TRANSACTION
+
+
     if (reset >= 0) {
       pinMode(reset, OUTPUT);
       digitalWrite(reset, HIGH);
@@ -488,11 +498,7 @@ Renderer *uDisplay::Init(void) {
       delay(200);
     }
 
-    spiSettings = SPISettings((uint32_t)spi_speed*1000000, MSBFIRST, SPI_MODE3);
-
     uint16_t index = 0;
-
-    SPI_BEGIN_TRANSACTION
     while (1) {
       uint8_t iob;
       SPI_CS_LOW
@@ -1208,7 +1214,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
       // special version 8 bit spi I or II
   #ifdef ESP8266
       while (len--) {
-        uspi->write(*data++);
+        //uspi->write(*data++);
+        WriteColor(*data++);
       }
   #else
       uspi->writePixels(data, len * 2);
@@ -1350,7 +1357,8 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_on != 0xff) spi_command_one(dsp_on);
       if (bpanel >= 0) {
 #ifdef ESP32
-        ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+        analogWrite(bpanel, dimmer10_gamma);
+        // ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
 #else
         digitalWrite(bpanel, HIGH);
 #endif
@@ -1360,7 +1368,8 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_off != 0xff) spi_command_one(dsp_off);
       if (bpanel >= 0) {
 #ifdef ESP32
-        ledcWrite(ESP32_PWM_CHANNEL, 0);
+        analogWrite(bpanel, 0);
+        // ledcWrite(ESP32_PWM_CHANNEL, 0);
 #else
         digitalWrite(bpanel, LOW);
 #endif
@@ -1399,16 +1408,17 @@ void udisp_dimm(uint8_t dim);
 // }
 
 // dim is 0..255
-void uDisplay::dim8(uint8_t dim, uint8_t dim_gamma) {           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
+void uDisplay::dim10(uint8_t dim, uint16_t dim_gamma) {           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
   dimmer8 = dim;
-  dimmer8_gamma = dim_gamma;
+  dimmer10_gamma = dim_gamma;
   if (ep_mode) {
     return;
   }
 
 #ifdef ESP32              // TODO should we also add a ESP8266 version for bpanel?
   if (bpanel >= 0) {      // is the BaclPanel GPIO configured
-    ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+    analogWrite(bpanel, dimmer10_gamma);
+    // ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
   } else if (dim_cbp) {
     dim_cbp(dim);
   }

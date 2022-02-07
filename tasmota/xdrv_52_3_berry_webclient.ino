@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// also includes tcp_client
 
 #ifdef USE_BERRY
 
@@ -56,7 +57,7 @@ String wc_UrlEncode(const String& text) {
 /*********************************************************************************************\
  * Int constants
  *********************************************************************************************/
-// const be_constint_t webserver_constants[] = {
+// const be_const_member_t webserver_constants[] = {
 //     { "BUTTON_CONFIGURATION", BUTTON_CONFIGURATION },
 //     { "BUTTON_INFORMATION", BUTTON_INFORMATION },
 //     { "BUTTON_MAIN", BUTTON_MAIN },
@@ -84,7 +85,6 @@ extern "C" {
   //
   int32_t wc_init(struct bvm *vm);
   int32_t wc_init(struct bvm *vm) {
-    // int32_t argc = be_top(vm); // Get the number of arguments
     WiFiClient * wcl = new WiFiClient();
     be_pushcomptr(vm, (void*) wcl);
     be_setmember(vm, 1, ".w");
@@ -93,6 +93,14 @@ extern "C" {
     cl->setConnectTimeout(USE_BERRY_WEBCLIENT_TIMEOUT);   // set default timeout
     be_pushcomptr(vm, (void*) cl);
     be_setmember(vm, 1, ".p");
+    be_return_nil(vm);
+  }
+
+  int32_t wc_tcp_init(struct bvm *vm);
+  int32_t wc_tcp_init(struct bvm *vm) {
+    WiFiClient * wcl = new WiFiClient();
+    be_pushcomptr(vm, (void*) wcl);
+    be_setmember(vm, 1, ".w");
     be_return_nil(vm);
   }
 
@@ -117,6 +125,14 @@ extern "C" {
     if (cl != nullptr) { delete cl; }
     be_pushnil(vm);
     be_setmember(vm, 1, ".p");
+    WiFiClient * wcl = wc_getwificlient(vm);
+    if (wcl != nullptr) { delete wcl; }
+    be_setmember(vm, 1, ".w");
+    be_return_nil(vm);
+  }
+
+  int32_t wc_tcp_deinit(struct bvm *vm);
+  int32_t wc_tcp_deinit(struct bvm *vm) {
     WiFiClient * wcl = wc_getwificlient(vm);
     if (wcl != nullptr) { delete wcl; }
     be_setmember(vm, 1, ".w");
@@ -151,12 +167,49 @@ extern "C" {
     be_return(vm);  /* return self */
   }
 
+  // tcp.connect(address:string, port:int [, timeout_ms:int]) -> bool
+  int32_t wc_tcp_connect(struct bvm *vm);
+  int32_t wc_tcp_connect(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 3 && be_isstring(vm, 2) && be_isint(vm, 3)) {
+      WiFiClient * tcp = wc_getwificlient(vm);
+      const char * address = be_tostring(vm, 2);
+      int32_t port = be_toint(vm, 3);
+      int32_t timeout = USE_BERRY_WEBCLIENT_TIMEOUT;   // default timeout of 2 seconds
+      if (argc >= 4) {
+        timeout = be_toint(vm, 4);
+      }
+      // open connection
+      bool success = tcp->connect(address, port, timeout);
+      be_pushbool(vm, success);
+      be_return(vm);  /* return self */
+    }
+    be_raise(vm, "attribute_error", NULL);
+  }
+
   // wc.close(void) -> nil
   int32_t wc_close(struct bvm *vm);
   int32_t wc_close(struct bvm *vm) {
     HTTPClientLight * cl = wc_getclient(vm);
     cl->end();
     be_return_nil(vm);
+  }
+
+  // tcp.close(void) -> nil
+  int32_t wc_tcp_close(struct bvm *vm);
+  int32_t wc_tcp_close(struct bvm *vm) {
+    WiFiClient * tcp = wc_getwificlient(vm);
+    tcp->stop();
+    be_return_nil(vm);
+  }
+
+  // tcp.available(void) -> int
+  int32_t wc_tcp_available(struct bvm *vm);
+  int32_t wc_tcp_available(struct bvm *vm) {
+    WiFiClient * tcp = wc_getwificlient(vm);
+    int32_t available = tcp->available();
+    be_pushint(vm, available);
+    be_return(vm);
   }
 
   // wc.wc_set_timeouts([http_timeout_ms:int, tcp_timeout_ms:int]) -> self
@@ -236,6 +289,79 @@ extern "C" {
   int32_t wc_connected(struct bvm *vm) {
     HTTPClientLight * cl = wc_getclient(vm);
     be_pushbool(vm, cl->connected());
+    be_return(vm);  /* return code */
+  }
+
+  // tcp.connected(void) -> bool
+  int32_t wc_tcp_connected(struct bvm *vm);
+  int32_t wc_tcp_connected(struct bvm *vm) {
+    WiFiClient * tcp = wc_getwificlient(vm);
+    be_pushbool(vm, tcp->connected());
+    be_return(vm);  /* return code */
+  }
+
+  // tcp.write(bytes | string) -> int
+  int32_t wc_tcp_write(struct bvm *vm);
+  int32_t wc_tcp_write(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && (be_isstring(vm, 2) || be_isbytes(vm, 2))) {
+      WiFiClient * tcp = wc_getwificlient(vm);
+      const char * buf = nullptr;
+      size_t buf_len = 0;
+      if (be_isstring(vm, 2)) {  // string
+        buf = be_tostring(vm, 2);
+        buf_len = strlen(buf);
+      } else { // bytes
+        buf = (const char*) be_tobytes(vm, 2, &buf_len);
+      }
+      size_t bw = tcp->write(buf, buf_len);
+      be_pushint(vm, bw);
+      be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // tcp.read() -> string
+  int32_t wc_tcp_read(struct bvm *vm);
+  int32_t wc_tcp_read(struct bvm *vm) {
+    WiFiClient * tcp = wc_getwificlient(vm);
+    int32_t max_read = -1;      // by default read as much as we can
+    if (be_top(vm) >= 2 && be_isint(vm, 2)) {
+      max_read = be_toint(vm, 2);
+    }
+    int32_t btr = tcp->available();
+    if (btr <= 0) {
+      be_pushstring(vm, "");
+    } else {
+      if ((max_read >= 0) && (btr > max_read)) {
+        btr = max_read;
+      }
+      char * buf = (char*) be_pushbuffer(vm, btr);
+      int32_t btr2 = tcp->read((uint8_t*) buf, btr);
+      be_pushnstring(vm, buf, btr2);
+    }
+    be_return(vm);  /* return code */
+  }
+
+  // tcp.readbytes() -> bytes
+  int32_t wc_tcp_readbytes(struct bvm *vm);
+  int32_t wc_tcp_readbytes(struct bvm *vm) {
+    WiFiClient * tcp = wc_getwificlient(vm);
+    int32_t max_read = -1;      // by default read as much as we can
+    if (be_top(vm) >= 2 && be_isint(vm, 2)) {
+      max_read = be_toint(vm, 2);
+    }
+    int32_t btr = tcp->available();
+    if (btr <= 0) {
+      be_pushbytes(vm, nullptr, 0);
+    } else {
+      if ((max_read >= 0) && (btr > max_read)) {
+        btr = max_read;
+      }
+      uint8_t * buf = (uint8_t*) be_pushbuffer(vm, btr);
+      int32_t btr2 = tcp->read(buf, btr);
+      be_pushbytes(vm, buf, btr2);
+    }
     be_return(vm);  /* return code */
   }
 

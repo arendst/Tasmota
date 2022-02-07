@@ -124,7 +124,11 @@
 #define XDRV_04              4
 // #define DEBUG_LIGHT
 
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_DDP, LS_MAX };
+#else
 enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX };
+#endif
 
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
@@ -223,7 +227,7 @@ struct LIGHT {
   uint8_t old_power = 1;
   uint8_t wakeup_active = 0;             // 0=inctive, 1=on-going, 2=about to start, 3=will be triggered next cycle
   uint8_t fixed_color_index = 1;
-  uint8_t pwm_offset = 0;                 // Offset in color buffer
+  uint8_t pwm_offset = 0;                 // Offset in color buffer, used by sm16716 to drive itself RGB, and PWM for CCT (value is 0 or 3)
   uint8_t max_scheme = LS_MAX -1;
 
   uint32_t wakeup_start_time = 0;
@@ -279,6 +283,11 @@ uint8_t LightDevice(void)
 static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
   return (a < b && a < c) ? a : (b < c) ? b : c;
 }
+
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+WiFiUDP ddp_udp;
+uint8_t ddp_udp_up = 0;
+#endif
 
 //
 // LightStateClass
@@ -336,6 +345,7 @@ class LightStateClass {
     uint8_t  _briCT_orig = 255;
 
     uint8_t  _color_mode = LCM_RGB; // RGB by default
+    bool     _power = false;    // power indicator, used only in virtual lights, Tasmota tracks power separately
 
   public:
     LightStateClass() {
@@ -344,6 +354,9 @@ class LightStateClass {
 
     void setSubType(uint8_t sub_type) {
       _subtype = sub_type;    // set sub_type at initialization, shoudln't be changed afterwards
+    }
+    uint8_t getSubType(void) const {
+      return _subtype;
     }
 
     // This function is a bit hairy, it will try to match the required
@@ -391,19 +404,27 @@ class LightStateClass {
       return prev_cm;
     }
 
-    inline uint8_t getColorMode() {
+    inline uint8_t getColorMode() const {
       return _color_mode;
     }
 
-    void addRGBMode() {
+    void addRGBMode(void) {
       setColorMode(_color_mode | LCM_RGB);
     }
-    void addCTMode() {
+    void addCTMode(void) {
       setColorMode(_color_mode | LCM_CT);
     }
 
+    // power accessors, for virtual lights only (has no effect on Tasmota lights)
+    bool getPower(void) const {
+      return _power;
+    }
+    void setPower(bool pow) {
+      _power = pow;
+    }
+
     // Get RGB color, always at full brightness (ie. one of the components is 255)
-    void getRGB(uint8_t *r, uint8_t *g, uint8_t *b) {
+    void getRGB(uint8_t *r, uint8_t *g, uint8_t *b) const {
       if (r) { *r = _r; }
       if (g) { *g = _g; }
       if (b) { *b = _b; }
@@ -411,13 +432,13 @@ class LightStateClass {
 
     // get full brightness values for warm and cold channels.
     // either w=c=0 (off) or w+c >= 255
-    void getCW(uint8_t *rc, uint8_t *rw) {
+    void getCW(uint8_t *rc, uint8_t *rw) const {
       if (rc) { *rc = _wc; }
       if (rw) { *rw = _ww; }
     }
 
     // Get the actual values for each channel, ie multiply with brightness
-    void getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) {
+    void getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) const {
       bool rgb_channels_on = _color_mode & LCM_RGB;
       bool ct_channels_on = _color_mode & LCM_CT;
 
@@ -429,11 +450,11 @@ class LightStateClass {
       if (w) { *w = ct_channels_on  ? changeUIntScale(_ww, 0, 255, 0, _briCT) : 0; }
     }
 
-    void getChannels(uint8_t *channels) {
+    void getChannels(uint8_t *channels) const {
       getActualRGBCW(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
     }
 
-    void getChannelsRaw(uint8_t *channels) {
+    void getChannelsRaw(uint8_t *channels) const {
       channels[0] = _r;
       channels[1] = _g;
       channels[2] = _b;
@@ -441,24 +462,24 @@ class LightStateClass {
       channels[4] = _ww;
     }
 
-    void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
+    void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) const {
       if (hue) { *hue = _hue; }
       if (sat) { *sat = _sat; }
       if (bri) { *bri = _briRGB; }
     }
 
     // getBri() is guaranteed to give the same result as setBri() - no rounding errors.
-    uint8_t getBri(void) {
+    uint8_t getBri(void) const {
       // return the max of _briCT and _briRGB
       return (_briRGB >= _briCT) ? _briRGB : _briCT;
     }
 
     // get the white Brightness
-    inline uint8_t getBriCT() {
+    inline uint8_t getBriCT(void) const {
       return _briCT;
     }
 
-    inline uint8_t getBriCTOrig() {
+    inline uint8_t getBriCTOrig(void) const {
       return _briCT_orig;
     }
 
@@ -472,7 +493,7 @@ class LightStateClass {
       return dimmer;
     }
 
-    uint8_t getDimmer(uint32_t mode = 0) {
+    uint8_t getDimmer(uint32_t mode = 0) const {
       uint8_t bri;
       switch (mode) {
         case 1:
@@ -488,12 +509,12 @@ class LightStateClass {
       return BriToDimmer(bri);
     }
 
-    inline uint16_t getCT() const {
+    inline uint16_t getCT(void) const {
       return _ct; // 153..500, or CT_MIN..CT_MAX
    }
 
     // get current color in XY format
-    void getXY(float *x, float *y) {
+    void getXY(float *x, float *y) const {
       RgbToXy(_r, _g, _b, x, y);
     }
 
@@ -523,11 +544,11 @@ class LightStateClass {
       return prev_bri;
     }
 
-    inline uint8_t getBriRGB() {
+    inline uint8_t getBriRGB(void) const {
       return _briRGB;
     }
 
-    inline uint8_t getBriRGBOrig() {
+    inline uint8_t getBriRGBOrig(void) const {
       return _briRGB_orig;
     }
 
@@ -1021,7 +1042,7 @@ bool LightModuleInit(void)
   TasmotaGlobal.light_type = LT_BASIC;                 // Use basic PWM control if SetOption15 = 0
 
   if (Settings->flag.pwm_control) {                     // SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {
+    for (uint32_t i = 0; i < LST_MAX; i++) {
       if (PinUsed(GPIO_PWM1, i)) { TasmotaGlobal.light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
   }
@@ -1051,11 +1072,9 @@ bool LightModuleInit(void)
   }
 #endif  // ESP8266
 #ifdef USE_PWM_DIMMER
-#ifdef USE_DEVICE_GROUPS
   else if (PWM_DIMMER == TasmotaGlobal.module_type) {
     TasmotaGlobal.light_type = Settings->pwm_dimmer_cfg.pwm_count + 1;
   }
-#endif  // USE_DEVICE_GROUPS
 #endif  // USE_PWM_DIMMER
 
   if (TasmotaGlobal.light_type > LT_BASIC) {
@@ -1157,9 +1176,7 @@ void LightInit(void)
 #ifdef ESP8266
         pinMode(Pin(GPIO_PWM1, i), OUTPUT);
 #endif  // ESP8266
-#ifdef ESP32
-        analogAttach(Pin(GPIO_PWM1, i), i);
-#endif  // ESP32
+        // For ESP32, the PWM are already attached by GpioInit() - GpioInitPwm()
       }
     }
     if (PinUsed(GPIO_ARIRFRCV)) {
@@ -1615,6 +1632,51 @@ void LightCycleColor(int8_t direction)
   light_controller.calcLevels(Light.new_color);
 }
 
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+void LightListenDDP()
+{
+  // Light channels gets completely controlled over DDP. So, we don't really check other settings.
+  // To enter this scheme, we are already assured the light is at least RGB
+  static uint8_t ddp_color[5] = { 0, 0, 0, 0, 0 };
+
+  // Can't be trying to initialize UDP too early.
+  if (TasmotaGlobal.restart_flag || TasmotaGlobal.global_state.network_down) {
+    light_state.setChannels(ddp_color);
+    light_controller.calcLevels(Light.new_color);
+    return;
+  }
+
+  // Start DDP listener, if fail, just set last ddp_color
+  if (!ddp_udp_up) {
+    if (!ddp_udp.begin(4048)) {
+      light_state.setChannels(ddp_color);
+      light_controller.calcLevels(Light.new_color);
+      return;
+    }
+    ddp_udp_up = 1;
+    AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Listener Started: Normal Scheme");
+  }
+
+  // Get the DDP payload over UDP
+  std::vector<uint8_t> payload;
+  while (uint16_t packet_size = ddp_udp.parsePacket()) {
+    payload.resize(packet_size);
+    if (!ddp_udp.read(&payload[0], payload.size())) {
+      continue;
+    }
+  }
+
+  // No verification checks performed against packet besides length
+  if (payload.size() > 12) {
+    ddp_color[0] = payload[10];
+    ddp_color[1] = payload[11];
+    ddp_color[2] = payload[12];
+  }
+  light_state.setChannels(ddp_color);
+  light_controller.calcLevels(Light.new_color);
+}
+#endif
+
 void LightSetPower(void)
 {
 //  Light.power = XdrvMailbox.index;
@@ -1690,7 +1752,21 @@ void LightAnimate(void)
     if (Settings->light_scheme >= LS_MAX) {
       power_off = true;
     }
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    if (ddp_udp_up) {
+      ddp_udp.stop();
+      ddp_udp_up = 0;
+      AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: Power Off");
+    }
+#endif
   } else {
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+    if ((Settings->light_scheme < LS_MAX) && (Settings->light_scheme != LS_DDP) && (ddp_udp_up)) {
+      ddp_udp.stop();
+      ddp_udp_up = 0;
+      AddLog(LOG_LEVEL_DEBUG_MORE, "DDP: UDP Stopped: Normal Scheme not DDP");
+    }
+#endif
     switch (Settings->light_scheme) {
       case LS_POWER:
         light_controller.calcLevels(Light.new_color);
@@ -1743,6 +1819,11 @@ void LightAnimate(void)
           Light.new_color[2] = changeUIntScale(Light.new_color[2], 0, 255, 0, Settings->light_color[2]);
         }
         break;
+#ifdef USE_NETWORK_LIGHT_SCHEMES
+      case LS_DDP:
+        LightListenDDP();
+        break;
+#endif
       default:
         XlgtCall(FUNC_SET_SCHEME);
     }
@@ -1855,10 +1936,12 @@ bool isChannelGammaCorrected(uint32_t channel) {
   if (channel >= Light.subtype) { return false; }     // Out of range
 #ifdef ESP8266
   if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
+#else
+  if (Settings->flag4.pwm_ct_mode) {
+#endif  // ESP8266
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return false; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return false; }   // PMW reserved for CT
   }
-#endif  // ESP8266
   return true;
 }
 
@@ -1866,10 +1949,12 @@ bool isChannelGammaCorrected(uint32_t channel) {
 bool isChannelCT(uint32_t channel) {
 #ifdef ESP8266
   if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
+#else
+  if (Settings->flag4.pwm_ct_mode) {
+#endif  // ESP8266
     if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
     if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
   }
-#endif  // ESP8266
   return false;
 }
 
@@ -2012,8 +2097,18 @@ void LightApplyPower(uint8_t new_color[LST_MAX], power_t power) {
 void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
+#ifdef USE_I2C
+    if (TasmotaGlobal.gpio_optiona.linkind_support) {  // Option_A6
+      uint8_t val = change10to8(cur_col_10[Light.pwm_offset] > 0 ? changeUIntScale(cur_col_10[Light.pwm_offset], 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0);
+      max_col = val;
+      uint16_t chk = 65403 - val;
+      uint8_t buf[] = { 0x09, 0x50, 0x01, val, 0x00, 0x00, (uint8_t)(chk >> 8), (uint8_t)(chk & 0xff) };
+      I2cWriteBuffer(0x50, 0x2A, buf, sizeof(buf));
+    } else
+#endif  // USE_I2C
 #endif  // USE_PWM_DIMMER
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
@@ -2027,10 +2122,18 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
+#ifdef ESP32
+          TasmotaGlobal.pwm_value[i] = cur_col;   // mark the new expected value
+#else // ESP32
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+#endif // ESP32
         }
       }
     }
+#ifdef ESP32
+    PwmApplyGPIO();
+#endif // ESP32
+
 #ifdef USE_PWM_DIMMER
     // Animate brightness LEDs to follow PWM dimmer brightness
     if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(max_col));
@@ -2159,9 +2262,12 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
 
   // Now we know ct_10 and white_bri10 (gamma corrected if needed)
 
-#ifdef ESP8266
   if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
+#ifdef ESP8266
     if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+#else
+    if (Settings->flag4.pwm_ct_mode) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+#endif  // ESP8266
       pwm_ct = true;
       // Xiaomi Philips bulbs follow a different scheme:
       // channel 0=intensity, channel1=temperature
@@ -2170,7 +2276,6 @@ bool calcGammaBulbs(uint16_t cur_col_10[5]) {
       return false;     // avoid any interference
     }
   }
-#endif  // ESP8266
 
   // Now see if we need to mix RGB and  White
   // Valid only for LST_RGBW, LST_RGBCW, SetOption105 1, and white is zero (see doc)
@@ -3208,6 +3313,14 @@ bool Xdrv04(uint8_t function)
       case FUNC_BUTTON_MULTI_PRESSED:
         result = XlgtCall(FUNC_BUTTON_MULTI_PRESSED);
         break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        XlgtCall(FUNC_WEB_ADD_MAIN_BUTTON);
+        break;
+      case FUNC_WEB_GET_ARG:
+        XlgtCall(FUNC_WEB_GET_ARG);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kLightCommands, LightCommand, kLightSynonyms);
         if (!result) {

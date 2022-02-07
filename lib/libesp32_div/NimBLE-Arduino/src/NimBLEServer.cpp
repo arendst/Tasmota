@@ -12,20 +12,19 @@
  *      Author: kolban
  */
 
+#include "sdkconfig.h"
+#if defined(CONFIG_BT_ENABLED)
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 
 #include "NimBLEServer.h"
 #include "NimBLEDevice.h"
 #include "NimBLELog.h"
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
-#else
-#include "nimble/nimble/host/services/gap/include/services/gap/ble_svc_gap.h"
-#include "nimble/nimble/host/services/gatt/include/services/gatt/ble_svc_gatt.h"
-#endif
+
 
 static const char* LOG_TAG = "NimBLEServer";
 static NimBLEServerCallbacks defaultCallbacks;
@@ -80,17 +79,18 @@ NimBLEService* NimBLEServer::createService(const char* uuid) {
  *             to provide inst_id value different for each service.
  * @return A reference to the new service object.
  */
-NimBLEService* NimBLEServer::createService(const NimBLEUUID &uuid) {
+NimBLEService* NimBLEServer::createService(const NimBLEUUID &uuid, uint32_t numHandles, uint8_t inst_id) {
     NIMBLE_LOGD(LOG_TAG, ">> createService - %s", uuid.toString().c_str());
-
+    // TODO: add functionality to use inst_id for multiple services with same uuid
+    (void)inst_id;
     // Check that a service with the supplied UUID does not already exist.
     if(getServiceByUUID(uuid) != nullptr) {
         NIMBLE_LOGW(LOG_TAG, "Warning creating a duplicate service UUID: %s",
                              std::string(uuid).c_str());
     }
 
-    NimBLEService* pService = new NimBLEService(uuid);
-    m_svcVec.push_back(pService);
+    NimBLEService* pService = new NimBLEService(uuid, numHandles, this);
+    m_svcVec.push_back(pService); // Save a reference to this service being on this server.
     serviceChanged();
 
     NIMBLE_LOGD(LOG_TAG, "<< createService");
@@ -181,7 +181,7 @@ void NimBLEServer::start() {
         abort();
     }
 
-#if CONFIG_LOG_DEFAULT_LEVEL > 3 || (ARDUINO_ARCH_ESP32 && CORE_DEBUG_LEVEL >= 4)
+#if CONFIG_NIMBLE_CPP_DEBUG_LEVEL >= 4
     ble_gatts_show_local();
 #endif
 /*** Future use ***
@@ -734,7 +734,7 @@ void NimBLEServer::startAdvertising() {
  */
 void NimBLEServer::stopAdvertising() {
     NimBLEDevice::stopAdvertising();
-} // stopAdvertising
+} // startAdvertising
 
 
 /**
@@ -772,30 +772,7 @@ void NimBLEServer::updateConnParams(uint16_t conn_handle,
     if(rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "Update params error: %d, %s", rc, NimBLEUtils::returnCodeToString(rc));
     }
-} // updateConnParams
-
-
-/**
- * @brief Request an update of the data packet length.
- * * Can only be used after a connection has been established.
- * @details Sends a data length update request to the peer.
- * The Data Length Extension (DLE) allows to increase the Data Channel Payload from 27 bytes to up to 251 bytes.
- * The peer needs to support the Bluetooth 4.2 specifications, to be capable of DLE.
- * @param [in] conn_handle The connection handle of the peer to send the request to.
- * @param [in] tx_octets The preferred number of payload octets to use (Range 0x001B-0x00FB).
- */
-void NimBLEServer::setDataLen(uint16_t conn_handle, uint16_t tx_octets) {
-#ifdef CONFIG_NIMBLE_CPP_IDF // not yet available in IDF, Sept 9 2021
-    return;
-#else
-    uint16_t tx_time = (tx_octets + 14) * 8;
-
-    int rc = ble_gap_set_data_len(conn_handle, tx_octets, tx_time);
-    if(rc != 0) {
-        NIMBLE_LOGE(LOG_TAG, "Set data length error: %d, %s", rc, NimBLEUtils::returnCodeToString(rc));
-    }
-#endif
-} // setDataLen
+}// updateConnParams
 
 
 bool NimBLEServer::setIndicateWait(uint16_t conn_handle) {
@@ -865,4 +842,6 @@ bool NimBLEServerCallbacks::onConfirmPIN(uint32_t pin){
     return true;
 }
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
+
+#endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#endif // CONFIG_BT_ENABLED

@@ -111,6 +111,41 @@
 // Multiplier used to store pH with 2 decimal places in a non decimal datatype
 #define ANALOG_PH_DECIMAL_MULTIPLIER              100.0
 
+// MQ-X sensor (MQ-02, MQ-03, MQ-04, MQ-05, MQ-06, MQ-07, MQ-08, MQ-09, MQ-131, MQ-135)
+//         
+// A0  -------------------
+//                        |
+// GND -----------        |
+//                |       |
+// VCC ---        |       |
+//        |       |       |
+//       3V3     GND     ADC  <- (A0 for nodemcu, wemos; GPIO34,35,36,39 and other analog IN/OUT pin for esp32)
+//means mq type (ex for mq-02 use 2, mq-131 use 131)
+#define ANALOG_MQ_TYPE                            2 
+//exponential regression a params
+#define ANALOG_MQ_A                               574.25
+//exponential regression b params
+#define ANALOG_MQ_B                               -2.222
+/*
+    Exponential regression:
+  Gas    | a      | b
+  LPG    | 44771  | -3.245
+  CH4    | 2*10^31| 19.01
+  CO     | 521853 | -3.821
+  Alcohol| 0.3934 | -1.504
+  Benzene| 4.8387 | -2.68
+  Hexane | 7585.3 | -2.849  
+  NOx    | -462.43 | -2.204
+  CL2    | 47.209 | -1.186
+  O3     | 23.943 | -1.11
+*/
+//ratio for alarm, NOT USED yet (RS / R0 = 15 ppm)
+#define ANALOG_MQ_RatioMQCleanAir                 15.0        
+// Multiplier used to store pH with 2 decimal places in a non decimal datatype
+#define ANALOG_MQ_DECIMAL_MULTIPLIER              100.0
+// lenght of filter
+#define ANALOG_MQ_SAMPLES                         60
+
 struct {
   uint8_t present = 0;
   uint8_t type = 0;
@@ -128,6 +163,8 @@ struct {
   uint16_t last_value = 0;
   uint8_t type = 0;
   uint8_t pin = 0;
+  float mq_samples[ANALOG_MQ_SAMPLES];
+  int indexOfPointer = -1;
 } Adc[MAX_ADCS];
 
 #ifdef ESP8266
@@ -189,6 +226,12 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param3 = ANALOG_PH_CALSOLUTION_HIGH_PH * ANALOG_PH_DECIMAL_MULTIPLIER; // PH of the calibration solution 2, which is the one with the higher PH
       Adc[idx].param4 = ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE;                      // Reading of AnalogInput while probe is in solution 2
     }
+    else if (ADC_MQ == Adc[idx].type) {
+      Adc[idx].param1 = ANALOG_MQ_TYPE;  // Could be MQ-002, MQ-004, MQ-131 ....
+      Adc[idx].param2 = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                       // Exponential regression
+      Adc[idx].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
+      Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
+    }
   }
   if ((Adcs.type != Adc[idx].type) || (0 == Adc[idx].param1) || (Adc[idx].param1 > ANALOG_RANGE)) {
     if ((ADC_BUTTON == Adc[idx].type) || (ADC_BUTTON_INV == Adc[idx].type)) {
@@ -200,7 +243,7 @@ void AdcInitParams(uint8_t idx) {
   }
 }
 
-void AdcAttach(uint8_t pin, uint8_t type) {
+void AdcAttach(uint32_t pin, uint8_t type) {
   if (Adcs.present == MAX_ADCS) { return; }
   Adc[Adcs.present].pin = pin;
   if (adcAttachPin(Adc[Adcs.present].pin)) {
@@ -233,6 +276,9 @@ void AdcInit(void) {
     }
     if (PinUsed(GPIO_ADC_PH, i)) {
       AdcAttach(Pin(GPIO_ADC_PH, i), ADC_PH);
+    }
+    if (PinUsed(GPIO_ADC_MQ, i)) {
+      AdcAttach(Pin(GPIO_ADC_MQ, i), ADC_MQ);
     }
   }
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
@@ -334,17 +380,54 @@ uint16_t AdcGetLux(uint32_t idx) {
   return (uint16_t)ldrLux;
 }
 
+void AddSampleMq(uint32_t idx){
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Adding sample for mq-sensor"));
+  int _adc = AdcRead(Adc[idx].pin, 2);
+  // init af array at same value
+  if (Adc[idx].indexOfPointer==-1)
+  {
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Init samples for mq-sensor"));
+    for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+      Adc[idx].mq_samples[i] = _adc;
+  }
+  else
+    Adc[idx].mq_samples[Adc[idx].indexOfPointer] = _adc;
+  Adc[idx].indexOfPointer++;
+  if (Adc[idx].indexOfPointer==ANALOG_MQ_SAMPLES)
+    Adc[idx].indexOfPointer=0;
+}
+
+float AdcGetMq(uint32_t idx) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Getting value for mq-sensor"));
+  float avg = 0.0;
+  float _RL = 10; //Value in KiloOhms
+  float _R0 = 10;
+  for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+    avg += Adc[idx].mq_samples[i];
+  float voltage = (avg / ANALOG_MQ_SAMPLES) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
+
+  float _RS_Calc = ((ANALOG_V33 * _RL) / voltage) -_RL; //Get value of RS in a gas
+  if (_RS_Calc < 0)  _RS_Calc = 0; //No negative values accepted.
+  float _ratio = _RS_Calc / _R0;   // Get ratio RS_gas/RS_air
+  float ppm= Adc[idx].param2/ANALOG_MQ_DECIMAL_MULTIPLIER*FastPrecisePow(_ratio, Adc[idx].param3/ANALOG_MQ_DECIMAL_MULTIPLIER); // <- Source excel analisis https://github.com/miguel5612/MQSensorsLib_Docs/tree/master/Internal_design_documents
+  if(ppm < 0)  ppm = 0; //No negative values accepted or upper datasheet recomendation.
+  char ppm_chr[6];
+  dtostrfd(ppm, 2, ppm_chr);
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Ppm read. ADC-RAW: %2_f, ppm: %s,"), &voltage, ppm_chr);
+  return ppm;
+}
+
 float AdcGetPh(uint32_t idx) {
   int adc = AdcRead(Adc[idx].pin, 2);
 
 
-  float y1 = Adc[idx].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  uint32_t x1 = Adc[idx].param2;
-  float y2 = Adc[idx].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  uint32_t x2 = Adc[idx].param4;
+  float y1 = (float)Adc[idx].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
+  int32_t x1 = Adc[idx].param2;
+  float y2 = (float)Adc[idx].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
+  int32_t x2 = Adc[idx].param4;
 
-  float m = (y2 - y1) / (x2 - x1);
-  float ph = m * (adc - x1) + y1;
+  float m = (y2 - y1) / (float)(x2 - x1);
+  float ph = m * (float)(adc - x1) + y1;
 
 
   char phLow_chr[6];
@@ -417,13 +500,17 @@ void AdcEverySecond(void) {
       double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE * ANALOG_V33 - (double)adc);  // Shelly param1 = 32000 (ANALOG_NTC_BRIDGE_RESISTANCE)
 #else
       double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE - (double)adc);
-#endif      
+#endif
       double BC = (double)Adc[idx].param3 / 10000;                                      // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
       double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Adc[idx].param2));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
       Adc[idx].temperature = ConvertTemp(TO_CELSIUS(T));
     }
     else if (ADC_CT_POWER == Adc[idx].type) {
       AdcGetCurrentPower(idx, 5);
+    }
+    else if (ADC_MQ == Adc[idx].type) {
+      AddSampleMq(idx);
+      AdcGetMq(idx);
     }
   }
 }
@@ -579,6 +666,25 @@ void AdcShow(bool json) {
         }
         break;
       }
+      case ADC_MQ: {
+        float mq = AdcGetMq(idx);
+        char mq_chr[6];
+        dtostrfd(mq, 2, mq_chr);
+
+        float mqnumber =Adc[idx].param1;
+        char mqnumber_chr[6];
+        dtostrfd(mqnumber, 0, mqnumber_chr);
+
+        if (json) {
+          AdcShowContinuation(&jsonflg);
+          ResponseAppend_P(PSTR("\"MQ%d_%d\":%s"), Adc[idx].param1, idx + offset, mq_chr);
+  #ifdef USE_WEBSERVER
+        } else {
+          WSContentSend_PD(HTTP_SNS_MQ, mqnumber_chr, mq_chr);
+  #endif // USE_WEBSERVER
+        }
+        break;
+      }
     }
   }
   if (jsonflg) {
@@ -638,6 +744,43 @@ void CmndAdcParam(void) {
               Adc[idx].param1 ^= CT_FLAG_ENERGY_RESET;  // Cancel energy reset flag
             }
           }
+          if (ADC_MQ == XdrvMailbox.payload) {
+            float a = CharToFloat(ArgV(argument, 3));
+            float b = CharToFloat(ArgV(argument, 4));
+            float ratioMQCleanAir = CharToFloat(ArgV(argument, 5));
+            if (a==0 && b==0 && ratioMQCleanAir==0)
+            {
+              if (Adc[idx].param1==2)
+              {
+                a=574.25;
+                b=-2.222;
+                ratioMQCleanAir=9.83;
+              }
+              if (Adc[idx].param1==4)
+              {
+                a=1012.7;
+                b=-2.786;
+                ratioMQCleanAir=4.4;
+              }
+              if (Adc[idx].param1==7)
+              {
+                a=99.042;
+                b=-1.518;
+                ratioMQCleanAir=27.5;
+              }
+              if (Adc[idx].param1==131)
+              {
+                a=23.943;
+                b=-1.11;
+                ratioMQCleanAir=15;
+              }
+            }
+            Adc[idx].param2 = (int)(a * ANALOG_MQ_DECIMAL_MULTIPLIER);                       // Exponential regression
+            Adc[idx].param3 = (int)(b * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
+            Adc[idx].param4 = (int)(ratioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog MQ reset: mq%d, a=%2_f, b=%2_f, ratioMQCleanAir=%2_f"),
+              Adc[idx].param1, &a, &b, &ratioMQCleanAir);
+          }
         } else {                                         // Set default values based on current adc type
           // AdcParam 2
           // AdcParam 3
@@ -656,7 +799,7 @@ void CmndAdcParam(void) {
     // AdcParam
     AdcGetSettings(idx);
     Response_P(PSTR("{\"" D_CMND_ADCPARAM "%d\":[%d,%d,%d"), idx +1, Adcs.type, Adc[idx].param1, Adc[idx].param2);
-    if (ADC_RANGE == Adc[idx].type) {
+    if ((ADC_RANGE == Adc[idx].type) || (ADC_MQ == Adc[idx].type)){
       ResponseAppend_P(PSTR(",%d,%d"), Adc[idx].param3, Adc[idx].param4);
     } else {
       int value = Adc[idx].param3;
