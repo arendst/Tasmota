@@ -435,7 +435,7 @@ uint16_t SSPMCalculateCRC(uint8_t *frame, uint32_t num) {
 }
 
 float SSPMGetValue(uint8_t *buffer) {
-  // return floast from three bytes in buffer
+  // return float from three bytes in buffer
   float value = (buffer[0] << 8) + buffer[1] + (float)buffer[2] / 100;
   return value;
 }
@@ -1136,7 +1136,7 @@ void SSPMHandleReceivedData(void) {
               energy_total += energy;
             }
           }
-          if (0 == Sspm->Settings.energy_total[module][channel]) {
+          if ((0 == Sspm->Settings.energy_total[module][channel]) && energy_total) {
             Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Inital setting
             Sspm->Settings.energy_total[module][channel] = energy_total;           // Initial setting
             if (Settings->save_data) {
@@ -1145,7 +1145,7 @@ void SSPMHandleReceivedData(void) {
           }
           // If received daily energy is below last daily energy then update total energy
           // This happens around midnight in normal situations
-          if (Sspm->energy_today[module][channel] < last_energy_today) {
+          else if (Sspm->energy_today[module][channel] < last_energy_today) {
             Sspm->Settings.energy_yesterday[module][channel] = last_energy_today;  // Daily save
             Sspm->Settings.energy_total[module][channel] += last_energy_today;     // Daily incremental save
             if (Settings->save_data) {
