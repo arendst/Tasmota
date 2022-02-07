@@ -24,3 +24,15 @@ Change in nimconfig.h
 `#define CONFIG_BT_NIMBLE_NVS_PERSIST 1`
 to
 `#define CONFIG_BT_NIMBLE_NVS_PERSIST 0`
+
+and line 249 from
+
+`
+#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+`
+
+to
+
+`
+#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
+`
