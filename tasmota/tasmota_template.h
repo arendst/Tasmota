@@ -199,7 +199,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t udisplay_driver : 1;          // bit 2 (v9.3.1.2)   - Option_A3 - (Display) Universal display driver
     uint32_t enable_ccloader : 1;          // bit 3 (v9.4.0.5)   - Option_A4 - (Zigbee) Enable CCLoader using Zigbee Rx/Tx/Rst Gpios
     uint32_t rotary_mi_desk : 1;           // bit 4 (v9.5.0.5)   - Option_A5 - (Rotary) Enable Mi Desk emulation
-    uint32_t linkind_support : 1;          // bit 5 (v2022.01.1) - Option_A6 - (Light) LinkInd support
+    uint32_t linkind_support : 1;          // bit 5 (v10.1.0.4)  - Option_A6 - (Light) LinkInd support
     uint32_t spare06 : 1;                  // bit 6
     uint32_t spare07 : 1;                  // bit 7
     uint32_t spare08 : 1;                  // bit 8
@@ -244,7 +244,7 @@ enum SupportedEmulationModules {
 #define MAX_OPTIONS_E  1                   // Increase if more emulated modules are supported from kModuleEmulationList
 
 const uint8_t kModuleEmulationList[] PROGMEM = {
-  PWM_DIMMER                               // (v2022.01.1) - Option_E1 - (Light) USE_PWM_DIMMER support
+  PWM_DIMMER                               // (v10.1.0.4)  - Option_E1 - (Light) USE_PWM_DIMMER support
 };
 #endif  // ESP32
 

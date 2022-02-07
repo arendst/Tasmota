@@ -262,7 +262,7 @@ a_features = [[
     "USE_MCP2515","USE_TASMESH","USE_WIFI_RANGE_EXTENDER","USE_INFLUXDB",
     "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
-    "USE_SDM230","","","",
+    "USE_SDM230","USE_CM110x","","",
     "","","","",
     "","","",""
     ]]

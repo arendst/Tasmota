@@ -687,19 +687,20 @@ bool NewerVersion(char* version_str) {
   // Loop through the version string, splitting on '.' seperators.
   for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
-    if ((0 == i) && (field > 2021) && (field < 2099)) {    // New versions look like 2022.01.1
-      version = ((field / 100) << 8) + (field - 2000);
-      i++;
-    } else {
-      // The fields in a version string can only range from 0-255.
-      if ((field < 0) || (field > 255)) {                  // Old version look like 10.1.0.1
-        return false;
-      }
-      // Shuffle the accumulated bytes across, and add the new byte.
+    // The fields in a version string can only range from 0-255.
+    if ((field < 0) || (field > 255)) {
+      return false;
+    }
+    // Shuffle the accumulated bytes across, and add the new byte.
+    version = (version << 8) + field;
+    // Check alpha delimiter after 1.2.3 only
+    if ((2 == i) && isalpha(str[strlen(str)-1])) {
+      field = str[strlen(str)-1] & 0x1f;
       version = (version << 8) + field;
+      i++;
     }
   }
-  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3.1 (Now 2022.01 or 2022.01.1)
+  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
   // If not, then don't consider it a valid version string.
   if ((i < 2) || (i > sizeof(VERSION))) {
     return false;

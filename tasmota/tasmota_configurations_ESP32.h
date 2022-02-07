@@ -211,6 +211,8 @@
 #define USE_I2S
 #define USE_SPI
 #define USE_LVGL
+#define USE_LVGL_FREETYPE
+#define USE_LVGL_PNG_DECODER
 #define USE_DISPLAY
 #define SHOW_SPLASH
 #define USE_XPT2046
@@ -218,7 +220,6 @@
 #define USE_MPU_ACCEL
 #define USE_BM8563
 #define USE_MLX90614
-#define USE_LVGL_PNG_DECODER
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 

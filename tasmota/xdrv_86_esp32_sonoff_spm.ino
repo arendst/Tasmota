@@ -179,6 +179,7 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_START_SCAN,           // Start module scan sequence
                          SPM_WAIT_FOR_SCAN,        // Wait for scan sequence to complete
                          SPM_SCAN_COMPLETE,        // Scan complete
+                         SPM_STALL_MIDNIGHT,       // Stall energy totals around midnight
                          SPM_GET_ENERGY_TOTALS,    // Init available Energy totals registers
                          SPM_UPDATE_CHANNELS       // Update Energy for powered on channels
                          };
@@ -192,8 +193,8 @@ TasmotaSerial *SspmSerial;
 typedef union {
   uint16_t data;
   struct {
-    uint16_t dump : 1;           // bit 0  (2022.01.3) - SSPMDump    - Short receive dump (0) or full receive dump (1)
-    uint16_t display : 1;        // bit 1  (2022.01.3) - SSPMDisplay - GUI display all relays (0) or only powered on relays (1)
+    uint16_t dump : 1;           // bit 0  (v10.1.0.6) - SSPMDump    - Short receive dump (0) or full receive dump (1)
+    uint16_t display : 1;        // bit 1  (v10.1.0.6) - SSPMDisplay - GUI display all relays (0) or only powered on relays (1)
     uint16_t spare02 : 1;        // bit 2
     uint16_t spare03 : 1;        // bit 3
     uint16_t spare04 : 1;        // bit 4
@@ -434,7 +435,7 @@ uint16_t SSPMCalculateCRC(uint8_t *frame, uint32_t num) {
 }
 
 float SSPMGetValue(uint8_t *buffer) {
-  // return floast from three bytes in buffer
+  // return float from three bytes in buffer
   float value = (buffer[0] << 8) + buffer[1] + (float)buffer[2] / 100;
   return value;
 }
@@ -1135,16 +1136,21 @@ void SSPMHandleReceivedData(void) {
               energy_total += energy;
             }
           }
-          if (0 == Sspm->Settings.energy_total[module][channel]) {
+          if ((0 == Sspm->Settings.energy_total[module][channel]) && energy_total) {
             Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Inital setting
             Sspm->Settings.energy_total[module][channel] = energy_total;           // Initial setting
+            if (Settings->save_data) {
+              TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all relays are updated
+            }
           }
-
           // If received daily energy is below last daily energy then update total energy
           // This happens around midnight in normal situations
-          if (Sspm->energy_today[module][channel] < last_energy_today) {
+          else if (Sspm->energy_today[module][channel] < last_energy_today) {
             Sspm->Settings.energy_yesterday[module][channel] = last_energy_today;  // Daily save
             Sspm->Settings.energy_total[module][channel] += last_energy_today;     // Daily incremental save
+            if (Settings->save_data) {
+              TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all relays are updated
+            }
           }
           Sspm->energy_total[module][channel] = Sspm->Settings.energy_total[module][channel] + Sspm->energy_today[module][channel];
 
@@ -1748,10 +1754,10 @@ void SSPMEvery100ms(void) {
       break;
     case SPM_START_SCAN:
       // Start scan module sequence
-      Sspm->error_led_blinks = 0;                 // Reset error light
-      Sspm->overload_relay = 255;                 // Disable display overload settings
-      Sspm->history_relay = 255;                  // Disable display energy history
-      Sspm->log_relay = 255;                      // Disable display logging
+      Sspm->error_led_blinks = 0;              // Reset error light
+      Sspm->overload_relay = 255;              // Disable display overload settings
+      Sspm->history_relay = 255;               // Disable display energy history
+      Sspm->log_relay = 255;                   // Disable display logging
       Sspm->module_max = 0;
       SSPMSendInitScan();
       Sspm->mstate = SPM_WAIT_FOR_SCAN;
@@ -1767,10 +1773,17 @@ void SSPMEvery100ms(void) {
       break;
     case SPM_SCAN_COMPLETE:
       // Scan sequence finished
-      TasmotaGlobal.discovery_counter = 1;      // Force TasDiscovery()
+      TasmotaGlobal.discovery_counter = 1;     // Force TasDiscovery()
+      Sspm->allow_updates = 1;                 // Enable requests from 100mSec loop
       Sspm->get_energy_relay = 0;
-      Sspm->allow_updates = 1;                  // Enable requests from 100mSec loop
       Sspm->mstate = SPM_GET_ENERGY_TOTALS;
+      break;
+    case SPM_STALL_MIDNIGHT:
+      // Get totals for ALL relays after midnight updating Tasmotas total and yesterday energy
+      if (Sspm->last_totals > 600) {           // Continue after 60 seconds
+        Sspm->get_energy_relay = 0;
+        Sspm->mstate = SPM_GET_ENERGY_TOTALS;
+      }
       break;
     case SPM_GET_ENERGY_TOTALS:
       // Retrieve Energy total status from up to 128 relays
@@ -1787,25 +1800,15 @@ void SSPMEvery100ms(void) {
     case SPM_UPDATE_CHANNELS:
       // Retrieve Energy status from up to 128 powered on relays (takes 128 * 2s!!)
       if (Sspm->allow_updates) {
-
-        // Test if this solves midnight timeout
-
         int32_t time = (RtcTime.hour *3600) + (RtcTime.minute *60) + RtcTime.second;
-        if ((time > 86370) || (time < 30)) {  // Between 00:00:29 and 23:59:31 stall updates to satisfy ARM firmware
-          Sspm->get_energy_relay = TasmotaGlobal.devices_present;
+        if (time > 86370) {                    // Stall updates after 23:59:31 to satisfy ARM firmware
           Sspm->last_totals = 0;
+          Sspm->mstate = SPM_STALL_MIDNIGHT;
         } else {
-/*
-        int32_t time = (RtcTime.hour *60) + RtcTime.minute;
-        if ((time > 1433) || (time < 1)) {  // Between 23:54 and 01:00 stall updates to satisfy ARM firmware (flash writes at 23:55)
-          Sspm->get_energy_relay = TasmotaGlobal.devices_present;
-          Sspm->last_totals = 0;
-        } else {
-*/
           Sspm->get_energy_relay++;
           if (Sspm->get_energy_relay >= TasmotaGlobal.devices_present) {
             Sspm->get_energy_relay = 0;
-            if (Sspm->last_totals > 1200) {  // Get totals every 2 minutes (takes 128 * 0.2s)
+            if (Sspm->last_totals > 1200) {    // Get totals every 2 minutes (takes 128 * 0.2s)
               Sspm->last_totals = 0;
               Sspm->get_totals = 1;
             } else {
@@ -1832,12 +1835,9 @@ void SSPMEvery100ms(void) {
               Sspm->power_factor[module][channel] = 0;
             }
           }
-
         }
-
       }
       break;
-
   }
 }
 

@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.1.4]
+## [10.1.0.8]
+### Added
+
+### Changed
+- From Calendar Versioning (CalVer) back to Semantic Versioning (SemVer) for better major change indication and future support
+
+### Fixed
+
+## [2022.1.4 = 10.1.0.7] 20220205
 ### Added
 - Rule variables %timer1% to %timer16% (#14619)
 
@@ -13,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - SR04 sensor driver regression from 2022.01.2
 
-## [2022.01.3]
+## [2022.01.3 = 10.1.0.6] 20220204
 ### Added
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
@@ -41,7 +49,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
 
-## [2022.01.2] 20220116
+## [2022.01.2 = 10.1.0.5] 20220116
 ### Added
 - Tasmota favicon to webbrowser tab (#14322)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
@@ -50,7 +58,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - IRremoteESP8266 library from v2.8.0 to v2.8.1
 
-## [2022.01.1] 20220107
+## [2022.01.1 = 10.1.0.4] 20220107
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)

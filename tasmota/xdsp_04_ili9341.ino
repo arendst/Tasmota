@@ -124,7 +124,7 @@ void ILI9341_InitDriver()
     #define SDA_2 21
     #undef SCL_2
     #define SCL_2 22
-    Wire1.begin(SDA_2, SCL_2, 400000);
+    Wire1.begin(SDA_2, SCL_2, (uint32_t)400000);
     FT5206_Touch_Init(Wire1);
 #endif // USE_FT5206
 #endif // ESP32
