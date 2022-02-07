@@ -84,6 +84,8 @@
 #ifdef USE_UNIVERSAL_DISPLAY
   #define USE_LVGL
   #define USE_LVGL_FREETYPE
+    #undef SET_ESP32_STACK_SIZE
+    #define SET_ESP32_STACK_SIZE (24 * 1024)
 //  #define USE_DISPLAY_LVGL_ONLY
 #else
   #define USE_DISPLAY_ILI9341                      // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
@@ -126,6 +128,8 @@
 #ifdef USE_UNIVERSAL_DISPLAY
   #define USE_LVGL
   #define USE_LVGL_FREETYPE
+    #undef SET_ESP32_STACK_SIZE
+    #define SET_ESP32_STACK_SIZE (24 * 1024)
 //  #define USE_DISPLAY_LVGL_ONLY
 #else
   #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
@@ -212,6 +216,8 @@
 #define USE_SPI
 #define USE_LVGL
 #define USE_LVGL_FREETYPE
+  #undef SET_ESP32_STACK_SIZE
+  #define SET_ESP32_STACK_SIZE (24 * 1024)
 #define USE_LVGL_PNG_DECODER
 #define USE_DISPLAY
 #define SHOW_SPLASH
