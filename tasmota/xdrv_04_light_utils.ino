@@ -187,7 +187,11 @@ void HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b
   if (r_b)  *r_b = b;
 }
 
-#define POW FastPrecisePowf
+#ifdef ESP8266
+  #define POW FastPrecisePowf
+#else
+  #define POW powf
+#endif
 
 //
 // Matrix 3x3 multiplied to a 3 vector, result in a 3 vector
@@ -225,6 +229,7 @@ void RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y) {
     mat3x3(XYZ_factors, rgb, XYZ);
 
     float XYZ_sum = XYZ[0] + XYZ[1] + XYZ[2];
+    // AddLog(LOG_LEVEL_DEBUG, ">>>: RgbToXy X=%5_f Y=%5_f Z=%5_f TOTAL=%5_f", &XYZ[0], &XYZ[1], &XYZ[2], &XYZ_sum);
     x = XYZ[0] / XYZ_sum;
     y = XYZ[1] / XYZ_sum;
     // we keep the raw gamut, one nice thing could be to convert to a narrower gamut
@@ -239,14 +244,17 @@ void XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_t *rb)
   x = (x > 0.99f ? 0.99f : (x < 0.01f ? 0.01f : x));
   y = (y > 0.99f ? 0.99f : (y < 0.01f ? 0.01f : y));
   float z = 1.0f - x - y;
+  // AddLog(LOG_LEVEL_DEBUG, ">>>: XyToRgb x=%5_f y=%5_f z=%5_f", &x, &y, &z);
   XYZ[0] = x / y;
   XYZ[1] = 1.0f;
   XYZ[2] = z / y;
 
-  static const float rgb_factors[] = {  3.2406f, -1.5372f, -0.4986f,
-                                       -0.9689f,  1.8758f,  0.0415f,
-                                        0.0557f, -0.2040f,  1.0570f };
+  // AddLog(LOG_LEVEL_DEBUG, ">>>: XyToRgb X=%5_f Y=%5_f Z=%5_f", &XYZ[0], &XYZ[1], &XYZ[2]);
+  static const float rgb_factors[] = {  1.612f, -0.203f, -0.302f,
+                                       -0.509f,  1.412f,  0.066f,
+                                        0.026f, -0.072f,  0.962f };
   mat3x3(rgb_factors, XYZ, rgb);
+  // AddLog(LOG_LEVEL_DEBUG, ">>>: XyToRgb rr=%5_f gg=%5_f bb=%5_f", &rgb[0], &rgb[1], &rgb[2]);
   float max = (rgb[0] > rgb[1] && rgb[0] > rgb[2]) ? rgb[0] : (rgb[1] > rgb[2]) ? rgb[1] : rgb[2];
 
   for (uint32_t i = 0; i < 3; i++) {
