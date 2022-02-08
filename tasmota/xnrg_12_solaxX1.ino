@@ -1,7 +1,8 @@
 /*
   xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
-  Copyright (C) 2021  Pablo Zerón
+  Copyright (C) 2021 by Pablo Zerón
+  Copyright (C) 2022 by Stefan Wershoven
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,12 +35,6 @@
 #define D_SOLAX_X1         "SolaxX1"
 
 #include <TasmotaSerial.h>
-
-enum solaxX1_Error
-{
-  solaxX1_ERR_NO_ERROR,
-  solaxX1_ERR_CRC_ERROR
-};
 
 union {
   uint32_t ErrMessage;
@@ -90,10 +85,6 @@ const char kSolaxError[] PROGMEM =
   D_SOLAX_ERROR_0 "|" D_SOLAX_ERROR_1 "|" D_SOLAX_ERROR_2 "|" D_SOLAX_ERROR_3 "|" D_SOLAX_ERROR_4 "|" D_SOLAX_ERROR_5 "|"
   D_SOLAX_ERROR_6 "|" D_SOLAX_ERROR_7 "|" D_SOLAX_ERROR_8;
 
-/*********************************************************************************************/
-
-TasmotaSerial *solaxX1Serial;
-
 struct SOLAXX1 {
   int16_t temperature = 0;
   float energy_today = 0;
@@ -104,24 +95,9 @@ struct SOLAXX1 {
   uint32_t runtime_total = 0;
   float dc1_power = 0;
   float dc2_power = 0;
-
   int16_t runMode = 0;
   uint32_t errorCode = 0;
 } solaxX1;
-
-union {
-  uint8_t status;
-  struct {
-    uint8_t freeBit7:1; // Bit7
-    uint8_t freeBit6:1; // Bit6
-    uint8_t freeBit5:1; // Bit5
-    uint8_t queryOffline:1; // Bit4
-    uint8_t queryOfflineSend:1; // Bit3
-    uint8_t hasAddress:1; // Bit2
-    uint8_t inverterAddressSend:1; // Bit1
-    uint8_t inverterSnReceived:1; // Bit0
-  };
-} protocolStatus;
 
 uint8_t header[2] = {0xAA, 0x55};
 uint8_t source[2] = {0x00, 0x00};
@@ -131,14 +107,15 @@ uint8_t functionCode[1] = {0x00};
 uint8_t dataLength[1] = {0x00};
 uint8_t data[16] = {0};
 
+TasmotaSerial *solaxX1Serial;
 uint8_t message[30];
+bool AddressAssigned = true;
+uint8_t solaxX1_send_retry = 20;
+uint8_t solaxX1_queryData_count = 0;
+uint8_t solaxX1_QueryID_count = 240;
+uint8_t solaxX1SerialNumber[16] = {0x6e, 0x2f, 0x61}; // "n/a"
 
 /*********************************************************************************************/
-
-bool solaxX1_RS485ReceiveReady(void)
-{
-  return (solaxX1Serial->available() > 1);
-}
 
 void solaxX1_RS485Send(uint16_t msgLen)
 {
@@ -151,8 +128,7 @@ void solaxX1_RS485Send(uint16_t msgLen)
   memcpy(message + 9, data, sizeof(data));
   uint16_t crc = solaxX1_calculateCRC(message, msgLen); // calculate out crc bytes
 
-  while (solaxX1Serial->available() > 0)
-  { // read serial if any old data is available
+  while (solaxX1Serial->available() > 0) { // read serial if any old data is available
     solaxX1Serial->read();
   }
 
@@ -171,12 +147,11 @@ void solaxX1_RS485Send(uint16_t msgLen)
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, message, msgLen);
 }
 
-uint8_t solaxX1_RS485Receive(uint8_t *value)
+bool solaxX1_RS485Receive(uint8_t *value)
 {
   uint8_t len = 0;
 
-  while (solaxX1Serial->available() > 0)
-  {
+  while (solaxX1Serial->available() > 0) {
     value[len++] = (uint8_t)solaxX1Serial->read();
   }
 
@@ -184,14 +159,7 @@ uint8_t solaxX1_RS485Receive(uint8_t *value)
 
   uint16_t crc = solaxX1_calculateCRC(value, len - 2); // calculate out crc bytes
 
-  if (value[len - 1] == lowByte(crc) && value[len - 2] == highByte(crc))
-  { // check calc crc with received crc
-    return solaxX1_ERR_NO_ERROR;
-  }
-  else
-  {
-    return solaxX1_ERR_CRC_ERROR;
-  }
+  return !(value[len - 1] == lowByte(crc) && value[len - 2] == highByte(crc));
 }
 
 uint16_t solaxX1_calculateCRC(uint8_t *bExternTxPackage, uint8_t bLen)
@@ -200,11 +168,21 @@ uint16_t solaxX1_calculateCRC(uint8_t *bExternTxPackage, uint8_t bLen)
   uint16_t wChkSum;
   wChkSum = 0;
 
-  for (i = 0; i < bLen; i++)
-  {
+  for (i = 0; i < bLen; i++) {
     wChkSum = wChkSum + bExternTxPackage[i];
   }
   return wChkSum;
+}
+
+void solaxX1_QueryOfflineInverters(void)
+{
+  source[0] = 0x01;
+  destination[0] = 0x00;
+  destination[1] = 0x00;
+  controlCode[0] = 0x10;
+  functionCode[0] = 0x00;
+  dataLength[0] = 0x00;
+  solaxX1_RS485Send(9);
 }
 
 void solaxX1_SendInverterAddress(void)
@@ -230,6 +208,17 @@ void solaxX1_QueryLiveData(void)
   solaxX1_RS485Send(9);
 }
 
+void solaxX1_QueryIDData(void)
+{
+  source[0] = 0x01;
+  destination[0] = 0x00;
+  destination[1] = INVERTER_ADDRESS;
+  controlCode[0] = 0x11;
+  functionCode[0] = 0x03;
+  dataLength[0] = 0x00;
+  solaxX1_RS485Send(9);
+}
+
 uint8_t solaxX1_ParseErrorCode(uint32_t code){
   ErrCode.ErrMessage = code;
 
@@ -247,152 +236,124 @@ uint8_t solaxX1_ParseErrorCode(uint32_t code){
 
 /*********************************************************************************************/
 
-uint8_t solaxX1_send_retry = 20;
-uint8_t solaxX1_queryData_count = 0;
-
 void solaxX1250MSecond(void) // Every 250 milliseconds
 {
-  uint8_t value[61] = {0};
-  bool data_ready = solaxX1_RS485ReceiveReady();
+  uint8_t value[70] = {0};
+  uint8_t i;
 
-  if (data_ready)
-  {
-    if (protocolStatus.hasAddress)
-    {
-      uint8_t error = solaxX1_RS485Receive(value);
-      if (error)
-      {
-        DEBUG_SENSOR_LOG(PSTR("SX1: Data response CRC error"));
-      }
-      else
-      {
-        solaxX1_send_retry = 20;
-        Energy.data_valid[0] = 0;
-
-        solaxX1.temperature =    (value[9] << 8) | value[10]; // Temperature
-        solaxX1.energy_today =   (float)((value[11] << 8) | value[12]) * 0.1f; // Energy Today
-        solaxX1.dc1_voltage =    (float)((value[13] << 8) | value[14]) * 0.1f; // PV1 Voltage
-        solaxX1.dc2_voltage =    (float)((value[15] << 8) | value[16]) * 0.1f; // PV2 Voltage
-        solaxX1.dc1_current =    (float)((value[17] << 8) | value[18]) * 0.1f; // PV1 Current
-        solaxX1.dc2_current =    (float)((value[19] << 8) | value[20]) * 0.1f; // PV2 Current
-        Energy.current[0] =      (float)((value[21] << 8) | value[22]) * 0.1f; // AC Current
-        Energy.voltage[0] =      (float)((value[23] << 8) | value[24]) * 0.1f; // AC Voltage
-        Energy.frequency[0] =    (float)((value[25] << 8) | value[26]) * 0.01f; // AC Frequency
-        Energy.active_power[0] = (float)((value[27] << 8) | value[28]); // AC Power
-        //temporal = (float)((value[29] << 8) | value[30]) * 0.1f; // Not Used
-        Energy.import_active[0] = (float)((value[31] << 24) | (value[32] << 16) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
-        solaxX1.runtime_total =  ((value[35] << 24) | (value[36] << 16) | (value[37] << 8) | value[38]); // Work Time Total
-        solaxX1.runMode =        (value[39] << 8) | value[40]; // Work mode
-        //temporal = (float)((value[41] << 8) | value[42]); // Grid voltage fault value 0.1V
-        //temporal = (float)((value[43] << 8) | value[44]); // Gird frequency fault value 0.01Hz
-        //temporal = (float)((value[45] << 8) | value[46]); // Dc injection fault value 1mA
-        //temporal = (float)((value[47] << 8) | value[48]); // Temperature fault value
-        //temporal = (float)((value[49] << 8) | value[50]); // Pv1 voltage fault value 0.1V
-        //temporal = (float)((value[51] << 8) | value[52]); // Pv2 voltage fault value 0.1V
-        //temporal = (float)((value[53] << 8) | value[54]); // GFC fault value
-        solaxX1.errorCode =      (value[58] << 24) | (value[57] << 16) | (value[56] << 8) | value[55]; // Error Code
-
-        solaxX1.dc1_power = solaxX1.dc1_voltage * solaxX1.dc1_current;
-        solaxX1.dc2_power = solaxX1.dc2_voltage * solaxX1.dc2_current;
-
-        EnergyUpdateTotal();  // 484.708 kWh
-      }
-    } else { // end hasAddress
-      // check address confirmation from inverter
-      if (protocolStatus.inverterAddressSend)
-      {
-        uint8_t error = solaxX1_RS485Receive(value);
-        if (error)
-        {
-          DEBUG_SENSOR_LOG(PSTR("SX1: Address confirmation response CRC error"));
-        }
-        else
-        {
-          if (value[6] == 0x10 && value[7] == 0x81 && value[9] == 0x06)
-          {
-            DEBUG_SENSOR_LOG(PSTR("SX1: Set hasAddress"));
-            protocolStatus.status = 0b00100000; // hasAddress
-          }
-        }
-      }
-
-      // Check inverter serial number and send the set address request
-      if (protocolStatus.queryOfflineSend)
-      {
-        uint8_t error = solaxX1_RS485Receive(value);
-        if (error)
-        {
-          DEBUG_SENSOR_LOG(PSTR("SX1: Query Offline response CRC error"));
-        }
-        else
-        {
-          // Serial number from query response
-          if (value[6] == 0x10 && value[7] == 0x80 && protocolStatus.inverterSnReceived == false)
-          {
-            for (uint8_t i = 9; i <= 22; i++)
-            {
-              data[i - 9] = value[i];
-            }
-            solaxX1_SendInverterAddress();
-            protocolStatus.status = 0b1100000; // inverterSnReceived and inverterAddressSend
-            DEBUG_SENSOR_LOG(PSTR("SX1: Set inverterSnReceived and inverterAddressSend"));
-          }
-        }
-      }
+  if (solaxX1Serial->available()) {
+    if (solaxX1_RS485Receive(value)) { // CRC-error -> no further action
+      DEBUG_SENSOR_LOG(PSTR("SX1: Data response CRC error"));
+      return;
     }
-  }
+  
+    solaxX1_send_retry = 20; // Inverter is responding
 
-  if (protocolStatus.hasAddress) {
-    if (solaxX1_queryData_count <= 0) {
+    if (value[0] != 0xAA || value[1] != 0x55) { // Check for header
+      DEBUG_SENSOR_LOG(PSTR("SX1: Check for header failed"));
+      return;
+    }
+
+    if (value[6] == 0x11 && value[7] == 0x82) { // received "Response for query (live data)"
+      Energy.data_valid[0] = 0;
+
+      solaxX1.temperature =    (value[9] << 8) | value[10]; // Temperature
+      solaxX1.energy_today =   (float)((value[11] << 8) | value[12]) * 0.1f; // Energy Today
+      solaxX1.dc1_voltage =    (float)((value[13] << 8) | value[14]) * 0.1f; // PV1 Voltage
+      solaxX1.dc2_voltage =    (float)((value[15] << 8) | value[16]) * 0.1f; // PV2 Voltage
+      solaxX1.dc1_current =    (float)((value[17] << 8) | value[18]) * 0.1f; // PV1 Current
+      solaxX1.dc2_current =    (float)((value[19] << 8) | value[20]) * 0.1f; // PV2 Current
+      Energy.current[0] =      (float)((value[21] << 8) | value[22]) * 0.1f; // AC Current
+      Energy.voltage[0] =      (float)((value[23] << 8) | value[24]) * 0.1f; // AC Voltage
+      Energy.frequency[0] =    (float)((value[25] << 8) | value[26]) * 0.01f; // AC Frequency
+      Energy.active_power[0] = (float)((value[27] << 8) | value[28]); // AC Power
+      //temporal = (float)((value[29] << 8) | value[30]) * 0.1f; // Not Used
+      Energy.import_active[0] = (float)((value[31] << 24) | (value[32] << 16) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
+      solaxX1.runtime_total =  ((value[35] << 24) | (value[36] << 16) | (value[37] << 8) | value[38]); // Work Time Total
+      solaxX1.runMode =        (value[39] << 8) | value[40]; // Work mode
+      //temporal = (float)((value[41] << 8) | value[42]); // Grid voltage fault value 0.1V
+      //temporal = (float)((value[43] << 8) | value[44]); // Gird frequency fault value 0.01Hz
+      //temporal = (float)((value[45] << 8) | value[46]); // Dc injection fault value 1mA
+      //temporal = (float)((value[47] << 8) | value[48]); // Temperature fault value
+      //temporal = (float)((value[49] << 8) | value[50]); // Pv1 voltage fault value 0.1V
+      //temporal = (float)((value[51] << 8) | value[52]); // Pv2 voltage fault value 0.1V
+      //temporal = (float)((value[53] << 8) | value[54]); // GFC fault value
+      solaxX1.errorCode =      (value[58] << 24) | (value[57] << 16) | (value[56] << 8) | value[55]; // Error Code
+
+      solaxX1.dc1_power = solaxX1.dc1_voltage * solaxX1.dc1_current;
+      solaxX1.dc2_power = solaxX1.dc2_voltage * solaxX1.dc2_current;
+
+      EnergyUpdateTotal();  // 484.708 kWh
+      DEBUG_SENSOR_LOG(PSTR("SX1: received live data"));
+      return;
+    } // end received "Response for query (live data)"
+
+    if (value[6] == 0x11 && value[7] == 0x83) { // received "Response for query (ID data)"
+      for (i = 49; i <= 62; i++) { // get "real" serial number
+        solaxX1SerialNumber[i - 49] = value[i];
+      }
+      AddLog(LOG_LEVEL_INFO, PSTR("SX1: Inverter serial number: %s"),(char*)solaxX1SerialNumber);
+      DEBUG_SENSOR_LOG(PSTR("SX1: received ID data"));
+      return;
+   } // end received "Response for query (ID data)"
+
+    if (value[6] == 0x10 && value[7] == 0x80) { // received "register request"
+      solaxX1_queryData_count = 5; // give time for next query
+      for (i = 9; i <= 22; i++) { // store serial number for register
+        data[i - 9] = value[i];
+      }
+      DEBUG_SENSOR_LOG(PSTR("SX1: received register request and send register address"));
+      solaxX1_SendInverterAddress(); // "send register address"
+      return;
+    }
+
+    if (value[6] == 0x10 && value[7] == 0x81 && value[9] == 0x06) { // received "address confirm (ACK)"
+      solaxX1_queryData_count = 5; // give time for next query
+      AddressAssigned = true;
+      DEBUG_SENSOR_LOG(PSTR("SX1: received \"address confirm (ACK)\""));
+      return;
+    }
+
+  } // end solaxX1Serial->available()
+
+//  DEBUG_SENSOR_LOG(PSTR("SX1: AddressAssigned: %d, solaxX1_queryData_count: %d, solaxX1_send_retry: %d, solaxX1_QueryID_count: %d"), AddressAssigned, solaxX1_queryData_count, solaxX1_send_retry, solaxX1_QueryID_count);
+  if (AddressAssigned) {
+    if (!solaxX1_queryData_count) { // normal periodically query
       solaxX1_queryData_count = 5;
-      DEBUG_SENSOR_LOG(PSTR("SX1: Send Retry count: %d"), solaxX1_send_retry);
-      solaxX1_QueryLiveData();
-    }
+      if (solaxX1_QueryID_count) { // normal live query
+        DEBUG_SENSOR_LOG(PSTR("SX1: Send periodically live query"));
+        solaxX1_QueryLiveData();
+      } else { // normal ID query
+        DEBUG_SENSOR_LOG(PSTR("SX1: Send periodically ID query"));
+        solaxX1_QueryIDData();
+      }
+      solaxX1_QueryID_count++; // query ID every 256th time
+    }  // end normal periodically query
     solaxX1_queryData_count--;
-  }
-
-  // request to the inverter the serial number if offline
-  if (protocolStatus.queryOffline)
-  {
-    // We sent the message to query inverters in offline status
-    source[0] = 0x01;
-    destination[1] = 0x00;
-    controlCode[0] = 0x10;
-    functionCode[0] = 0x00;
-    dataLength[0] = 0x00;
-    solaxX1_RS485Send(9);
-    protocolStatus.status = 0b00010000; // queryOfflineSend
-    solaxX1_send_retry = 20;
-    DEBUG_SENSOR_LOG(PSTR("SX1: Query Offline Send"));
-  }
-
-  if (solaxX1_send_retry == 0) {
-    if (protocolStatus.hasAddress) {
-      protocolStatus.status = 0b00001000; // queryOffline
+    if (!solaxX1_send_retry) { // Inverter went "off"
+      solaxX1_send_retry = 20;
+      DEBUG_SENSOR_LOG(PSTR("SX1: Inverter went \"off\""));
       Energy.data_valid[0] = ENERGY_WATCHDOG;
-
       solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
       solaxX1.dc2_power = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
       solaxX1.runMode = -1; // off(line)
-    } else {
-      if (protocolStatus.queryOfflineSend) {
-        protocolStatus.status = 0b00001000; // queryOffline
-        DEBUG_SENSOR_LOG(PSTR("SX1: Set Query Offline"));
-      }
+      AddressAssigned = false;
+    } // end Inverter went "off"
+  } else { // sent query for inverters in offline status
+    if (!solaxX1_send_retry) {
       solaxX1_send_retry = 20;
+      DEBUG_SENSOR_LOG(PSTR("SX1: Sent query for inverters in offline state"));
+      solaxX1_QueryOfflineInverters();
     }
   }
+  solaxX1_send_retry--;
 
-  if (!data_ready && solaxX1_send_retry > 0) { solaxX1_send_retry--; }
+return;  
 }
 
 void solaxX1SnsInit(void)
 {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: RX-pin: %d, TX-pin: %d, RTS-pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), Pin(GPIO_SOLAXX1_RTS));
-//  DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX));
-  protocolStatus.status = 0b00100000; // hasAddress
-
+  AddLog(LOG_LEVEL_INFO, PSTR("SX1: Init - RX-pin: %d, TX-pin: %d, RTS-pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), Pin(GPIO_SOLAXX1_RTS));
   solaxX1Serial = new TasmotaSerial(Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), 1);
   if (solaxX1Serial->begin(SOLAXX1_SPEED)) {
     if (solaxX1Serial->hardwareSerial()) { ClaimSerial(); }
@@ -426,7 +387,8 @@ const char HTTP_SNS_solaxX1_DATA2[] PROGMEM =
 const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
     "{s}" D_SOLAX_X1 " " D_UPTIME "{m}%s " D_UNIT_HOUR "{e}"
     "{s}" D_SOLAX_X1 " " D_STATUS "{m}%s"
-    "{s}" D_SOLAX_X1 " " D_ERROR "{m}%s";
+    "{s}" D_SOLAX_X1 " " D_ERROR "{m}%s"
+    "{s}" D_SOLAX_X1 " Inverter SN{m}%s";
 #endif // USE_WEBSERVER
 
 void solaxX1Show(bool json)
@@ -452,8 +414,7 @@ void solaxX1Show(bool json)
   char status[33];
   GetTextIndexed(status, sizeof(status), solaxX1.runMode + 1, kSolaxMode);
 
-  if (json)
-  {
+  if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s"),
                                 solar_power, pv1_voltage, pv1_current, pv1_power);
 #ifdef SOLAXX1_PV2
@@ -477,7 +438,8 @@ void solaxX1Show(bool json)
     WSContentSend_Temp(D_SOLAX_X1, solaxX1.temperature);
     char errorCodeString[33];
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, runtime, status,
-      GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));
+      GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError),
+      solaxX1SerialNumber);
 #endif  // USE_WEBSERVER
   }
 }
