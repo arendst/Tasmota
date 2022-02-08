@@ -444,11 +444,11 @@ bool SettingsConfigRestore(void) {
     valid_settings = (0 == settings_buffer[0xF36]);  // Settings->config_version
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
+#ifdef CONFIG_IDF_TARGET_ESP32S3
     valid_settings = (2 == settings_buffer[0xF36]);  // Settings->config_version
 #else
     valid_settings = (1 == settings_buffer[0xF36]);  // Settings->config_version
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+#endif  // CONFIG_IDF_TARGET_ESP32S3
 #endif  // ESP32
   }
 
@@ -828,11 +828,11 @@ void SettingsDefaultSet2(void) {
 //  Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-  Settings->config_version = 2;  // ESP32C3
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+  Settings->config_version = 2;  // ESP32S3
 #else
   Settings->config_version = 1;  // ESP32
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+#endif  // CONFIG_IDF_TARGET_ESP32S3
 #endif  // ESP32
 
   flag.stop_flash_rotate |= APP_FLASH_CYCLE;
@@ -1354,11 +1354,11 @@ void SettingsDelta(void) {
       Settings->config_version = 0;  // ESP8266 (Has been 0 for long time)
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-      Settings->config_version = 2;  // ESP32C3
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+      Settings->config_version = 2;  // ESP32S3
 #else
       Settings->config_version = 1;  // ESP32
-#endif  // CONFIG_IDF_TARGET_ESP32C3
+#endif  // CONFIG_IDF_TARGET_ESP32S3
 #endif  // ESP32
     }
     if (Settings->version < 0x08020006) {
