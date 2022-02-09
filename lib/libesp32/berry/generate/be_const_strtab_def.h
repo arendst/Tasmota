@@ -78,6 +78,7 @@ be_define_const_str(AudioOutputI2S, "AudioOutputI2S", 638031784u, 0, 14, &be_con
 be_define_const_str(Auto_X2Dconfiguration, "Auto-configuration", 1665006109u, 0, 18, &be_const_str_lv_wifi_arcs_icon);
 be_define_const_str(BRY_X3A_X20ERROR_X2C_X20bad_X20json_X3A_X20, "BRY: ERROR, bad json: ", 2715135809u, 0, 22, NULL);
 be_define_const_str(BRY_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s, "BRY: Exception> '%s' - %s", 2246990964u, 0, 25, &be_const_str_copy);
+be_define_const_str(BRY_X3A_X20argument_X20must_X20be_X20a_X20function, "BRY: argument must be a function", 3917068408u, 0, 32, &be_const_str_every_50ms);
 be_define_const_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s_X20_X28_X25s_X29, "BRY: could not save compiled file %s (%s)", 736659787u, 0, 41, NULL);
 be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson, "BRY: failed to load _persist.json", 2991913445u, 0, 33, &be_const_str_light_state);
 be_define_const_str(BRY_X3A_X20method_X20not_X20allowed_X2C_X20use_X20a_X20closure_X20like_X20_X27_X2F_X20args_X20_X2D_X3E_X20obj_X2Efunc_X28args_X29_X27, "BRY: method not allowed, use a closure like '/ args -> obj.func(args)'", 177121572u, 0, 70, &be_const_str_set_x);
@@ -831,7 +832,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_set_time,
     NULL,
     (const bstring *)&be_const_str_upper,
-    (const bstring *)&be_const_str_every_50ms,
+    (const bstring *)&be_const_str_BRY_X3A_X20argument_X20must_X20be_X20a_X20function,
     NULL,
     (const bstring *)&be_const_str_hex,
     NULL,
@@ -1227,6 +1228,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 400,
-    .count = 823,
+    .count = 824,
     .table = m_string_table
 };
