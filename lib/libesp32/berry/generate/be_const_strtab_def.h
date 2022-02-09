@@ -18,6 +18,7 @@ be_define_const_str(_X26lt_X3BNone_X26gt_X3B, "&lt;None&gt;", 2602165498u, 0, 12
 be_define_const_str(_X28_X29, "()", 685372826u, 0, 2, &be_const_str_resp_cmnd);
 be_define_const_str(_X2B, "+", 772578730u, 0, 1, &be_const_str_end);
 be_define_const_str(_X2C, ",", 688690635u, 0, 1, &be_const_str_abs);
+be_define_const_str(_X2C_X22AXP192_X22_X3A_X7B_X22VBusVoltage_X22_X3A_X25_X2E3f_X2C_X22VBusCurrent_X22_X3A_X25_X2E1f_X2C_X22BattVoltage_X22_X3A_X25_X2E3f_X2C_X22BattCurrent_X22_X3A_X25_X2E1f_X2C_X22Temperature_X22_X3A_X25_X2E1f_X7D, ",\"AXP192\":{\"VBusVoltage\":%.3f,\"VBusCurrent\":%.1f,\"BattVoltage\":%.3f,\"BattCurrent\":%.1f,\"Temperature\":%.1f}", 2598755376u, 0, 106, &be_const_str_find_op);
 be_define_const_str(_X2D_X2D_X3A_X2D_X2D, "--:--", 1370615441u, 0, 5, &be_const_str_log);
 be_define_const_str(_X2E, ".", 722245873u, 0, 1, &be_const_str_strip);
 be_define_const_str(_X2E_X2E, "..", 2748622605u, 0, 2, &be_const_str_call_native);
@@ -999,7 +1000,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_type,
     NULL,
     NULL,
-    (const bstring *)&be_const_str_find_op,
+    (const bstring *)&be_const_str__X2C_X22AXP192_X22_X3A_X7B_X22VBusVoltage_X22_X3A_X25_X2E3f_X2C_X22VBusCurrent_X22_X3A_X25_X2E1f_X2C_X22BattVoltage_X22_X3A_X25_X2E3f_X2C_X22BattCurrent_X22_X3A_X25_X2E1f_X2C_X22Temperature_X22_X3A_X25_X2E1f_X7D,
     (const bstring *)&be_const_str__X3E,
     (const bstring *)&be_const_str__X23,
     (const bstring *)&be_const_str_getbits,
@@ -1227,6 +1228,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 400,
-    .count = 823,
+    .count = 824,
     .table = m_string_table
 };
