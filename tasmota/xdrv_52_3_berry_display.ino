@@ -72,7 +72,9 @@ int be_ntv_display_dimmer(struct bvm *vm) {
 }
 
 void be_ntv_display_touch_update(int32_t touches, int32_t raw_x, int32_t raw_y, int32_t gesture) {
+#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
   Touch_SetStatus(touches, raw_x, raw_y, gesture);
+#endif
 }
 
 #endif // USE_DISPLAY
