@@ -399,6 +399,8 @@ void IRMitsubishiAC::setTemp(const float degrees) {
   // Do we have a half degree celsius?
   _.HalfDegree = nrHalfDegrees & 1;
   _.Temp = static_cast<uint8_t>(nrHalfDegrees / 2 - kMitsubishiAcMinTemp);
+  // If temp is modified, iSave10C cannot be ON (because temp is then > 10C)
+  setISave10C(false);
 }
 
 /// Get the current temperature setting.
@@ -452,7 +454,103 @@ void IRMitsubishiAC::setMode(const uint8_t mode) {
       return;
   }
   _.Mode = mode;
+  // iSave10C can only be on in Heat mode.
+  if (mode != kMitsubishiAcHeat) {
+      setISave10C(false);
+  }
 }
+
+/// Set the iSave10C (i-SAVE) mode of the A/C.
+/// @param[in] state true, the setting is on. false, the setting is off.
+/// @note Normal minimum temp is 16C; i-SAVE mode works as gate to enable AC
+/// to use 10C as setting. However, when Remote control shows 10C, it still
+/// emits 16C on the "Temp" bits, and instead it uses other bits to indicate
+/// a target temp of 10C.
+/// Slightly strange, but I guess it's to keep compatibility to systems
+/// without i-SAVE.
+/// i-SAVE only has this 10C functionality when the AC is already in Heat mode.
+/// In all other modes, minimum temp is 16C.
+/// I have found no other difference between normal Heat mode and i-SAVE
+/// other than the ability to go to 10C.
+/// In this implementation, i-SAVE mode is ONLY used to enable the AC
+/// temperature setting to 10C. Therefore "Temp" is set to 16 disregarding
+/// what the remote shows, and mode is set to Heat.
+void IRMitsubishiAC::setISave10C(const bool state) {
+  if (state) setMode(kMitsubishiAcHeat);
+  if (state) setTemp(kMitsubishiAcMinTemp);
+  _.iSave10C = state;
+}
+
+/// Get the iSave10C (i-SAVE) mode of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRMitsubishiAC::getISave10C(void) const {
+  return _.iSave10C;
+}
+
+/// Set the requested iSee mode.
+/// @param[in] state requested iSee mode.
+void IRMitsubishiAC::setISee(const bool state) {
+  _.ISee = state;
+}
+
+/// Get the iSee mode of the A/C.
+/// @return The iSee mode setting.
+bool IRMitsubishiAC::getISee(void) const {
+  return _.ISee;
+}
+
+/// Set the requested Ecocool mode.
+/// @param[in] state requested Ecocool mode.
+void IRMitsubishiAC::setEcocool(const bool state) {
+  _.Ecocool = state;
+}
+
+/// Get the Ecocool mode of the A/C.
+/// @return The Ecocool mode setting.
+bool IRMitsubishiAC::getEcocool(void) const {
+  return _.Ecocool;
+}
+
+/// Set the requested Absense Detect mode.
+/// @param[in] state requested Absense Detect mode.
+void IRMitsubishiAC::setAbsenseDetect(const bool state) {
+  _.AbsenseDetect = state;
+}
+
+/// Get the Absense Detect mode of the A/C.
+/// @return The Absense Detect mode setting.
+bool IRMitsubishiAC::getAbsenseDetect(void) const {
+  return _.AbsenseDetect;
+}
+
+/// Set the requested Direct/Indirect mode. Only works if I-See mode is ON.
+/// @param[in] mode requested Direct/Indirect mode.
+void IRMitsubishiAC::setDirectIndirect(const uint8_t mode) {
+  if (_.ISee) {
+    _.DirectIndirect = std::min(mode, kMitsubishiAcDirect);  // bounds check
+  } else {
+    _.DirectIndirect = 0;
+  }
+}
+
+/// Get the Direct/Indirect mode of the A/C.
+/// @return The native mode setting.
+uint8_t IRMitsubishiAC::getDirectIndirect(void) const {
+  return _.DirectIndirect;
+}
+
+/// Set the requested Natural Flow mode.
+/// @param[in] state requested Natural Flow mode.
+void IRMitsubishiAC::setNaturalFlow(const bool state) {
+  _.NaturalFlow = state;
+}
+
+/// Get the Natural Flow mode of the A/C.
+/// @return The Natural Flow mode setting.
+bool IRMitsubishiAC::getNaturalFlow(void) const {
+  return _.NaturalFlow;
+}
+
 
 /// Set the requested vane (Vertical Swing) operation mode of the a/c unit.
 /// @note On some models, this represents the Right vertical vane.
@@ -463,23 +561,11 @@ void IRMitsubishiAC::setVane(const uint8_t position) {
   _.Vane = pos;
 }
 
-/// Set the requested wide-vane (Horizontal Swing) operation mode of the a/c.
-/// @param[in] position The position/mode to set the wide vane to.
-void IRMitsubishiAC::setWideVane(const uint8_t position) {
-  _.WideVane = std::min(position, kMitsubishiAcWideVaneAuto);
-}
-
 /// Get the Vane (Vertical Swing) mode of the A/C.
 /// @note On some models, this represents the Right vertical vane.
 /// @return The native position/mode setting.
 uint8_t IRMitsubishiAC::getVane(void) const {
   return _.Vane;
-}
-
-/// Get the Wide Vane (Horizontal Swing) mode of the A/C.
-/// @return The native position/mode setting.
-uint8_t IRMitsubishiAC::getWideVane(void) const {
-  return _.WideVane;
 }
 
 /// Set the requested Left Vane (Vertical Swing) operation mode of the a/c unit.
@@ -491,6 +577,18 @@ void IRMitsubishiAC::setVaneLeft(const uint8_t position) {
 /// Get the Left Vane (Vertical Swing) mode of the A/C.
 /// @return The native position/mode setting.
 uint8_t IRMitsubishiAC::getVaneLeft(void) const { return _.VaneLeft; }
+
+/// Set the requested wide-vane (Horizontal Swing) operation mode of the a/c.
+/// @param[in] position The position/mode to set the wide vane to.
+void IRMitsubishiAC::setWideVane(const uint8_t position) {
+  _.WideVane = std::min(position, kMitsubishiAcWideVaneAuto);
+}
+
+/// Get the Wide Vane (Horizontal Swing) mode of the A/C.
+/// @return The native position/mode setting.
+uint8_t IRMitsubishiAC::getWideVane(void) const {
+  return _.WideVane;
+}
 
 /// Get the clock time of the A/C unit.
 /// @return Nr. of 10 minute increments past midnight.
@@ -777,6 +875,12 @@ String IRMitsubishiAC::toString(void) const {
       result += ')';
   }
   result += addBoolToString(_.WeeklyTimer, kWeeklyTimerStr);
+  result += addBoolToString(_.iSave10C, k10CHeatStr);
+  result += addBoolToString(_.ISee, kISeeStr);
+  result += addBoolToString(_.Ecocool, kEconoStr);
+  result += addBoolToString(_.AbsenseDetect, kAbsenseDetectStr);
+  result += addIntToString(_.DirectIndirect, kDirectIndirectModeStr);
+  result += addBoolToString(_.NaturalFlow, kFreshStr);
   return result;
 }
 

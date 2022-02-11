@@ -13,9 +13,11 @@
  * Returns true if a match was found. In such case the result is on Berry stack
  * 
  * Encoding depend on prefix (which is skipped when matching names):
- * 1. `COLOR_WHITE` int value
- * 3. `$SYMBOL_OK"` string pointer
- * 4. `&seg7_font` comptr
+ * - `COLOR_WHITE` int value
+ * - `$SYMBOL_OK"` string pointer
+ * - `&seg7_font` comptr
+ * - `*my_func` native function - the function is called and return value passed back.
+ *              This allows to create dynamic virtual members that are the result of a call.
 \*********************************************************************************************/
 
 #include "be_mapping.h"
@@ -29,16 +31,19 @@
  * berry stack at position 1.
  * 
  * Encoding depend on prefix (which is skipped when matching names):
- * 1. `COLOR_WHITE` int value
- * 3. `$SYMBOL_OK"` string pointer
- * 4. `&seg7_font` comptr
+ * - `COLOR_WHITE` int value
+ * - `$SYMBOL_OK"` string pointer
+ * - `&seg7_font` comptr
+ * - `*my_func` native function - the function is called and return value passed back.
+ *              This allows to create dynamic virtual members that are the result of a call.
  * 
- * The array must be lexically sorted, but the sort function must ignore the prefix `$` or `&`
+ * The array must be lexically sorted, but the sort function must ignore the prefix `$`, `&`, `*`
 \*********************************************************************************************/
-bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def_len) {
+static bbool be_const_member_dual(bvm *vm, const be_const_member_t * definitions, size_t def_len, bbool is_method) {
+  int32_t arg_idx = is_method ? 2 : 1;    // index for name argument, 1 if module, 2 if method since 1 is self.
   int32_t argc = be_top(vm); // Get the number of arguments
-  if (argc == 1 && be_isstring(vm, 1)) {
-    const char * needle = be_tostring(vm, 1);
+  if (argc == arg_idx && be_isstring(vm, arg_idx)) {
+    const char * needle = be_tostring(vm, arg_idx);
     int32_t idx;
 
     idx = be_map_bin_search(needle, &definitions[0].name, sizeof(definitions[0]), def_len);
@@ -53,6 +58,28 @@ bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def
         case '&': // native function
           be_pushntvfunction(vm, (bntvfunc) definitions[idx].value);
           break;
+        case '*': // call to a native function
+        {
+          bntvfunc f = (bntvfunc) definitions[idx].value;
+          int ret = f(vm);
+          if ((ret == BE_OK) && !be_isnil(vm, -1)) {
+            return btrue;
+          } else {
+            return bfalse;
+          }
+          break;
+        }
+        case '>': // call to a ctype function
+        {
+          be_ctype_var_args_t* args = (be_ctype_var_args_t*) definitions[idx].value;
+          int ret = be_call_c_func(vm, args->func, args->return_type, NULL);
+          if ((ret == BE_OK) && !be_isnil(vm, -1)) {
+            return btrue;
+          } else {
+            return bfalse;
+          }
+          break;
+        }
         default:  // int
           be_pushint(vm, definitions[idx].value);
           break;
@@ -61,4 +88,12 @@ bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def
     }
   }
   return bfalse;
+}
+
+bbool be_const_module_member(bvm *vm, const be_const_member_t * definitions, size_t def_len) {
+  return be_const_member_dual(vm, definitions, def_len, bfalse);   // call for module, non-method
+}
+
+bbool be_const_class_member(bvm *vm, const be_const_member_t * definitions, size_t def_len) {
+  return be_const_member_dual(vm, definitions, def_len, btrue);   // call for method
 }

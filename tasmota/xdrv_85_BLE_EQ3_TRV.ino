@@ -79,7 +79,12 @@ stat/EQ3/001A22092C9A = {
   "dst":"set",
   "window":"closed",
   "state":"unlocked",
-  "battery":"GOOD"
+  "battery":"GOOD",
+  "windowtemp": 12.0,
+  "windowdur": 15,
+  "day": 21.0,
+  "night": 17.0,
+  "offset": 0.0
 }
 
 holiday:
@@ -188,7 +193,8 @@ const char *cmdnames[] = {
   "day",
   "night",
   "reqprofile",
-  "setprofile"
+  "setprofile",
+  "lock",
 };
 
 const uint8_t *macprefixes[1] = {
@@ -206,7 +212,7 @@ struct eq3_device_tag{
   int8_t RSSI;
   uint64_t timeoutTime;
   uint8_t pairing;
-  uint8_t lastStatus[10]; // last received 02 stat
+  uint8_t lastStatus[16]; // last received 02 stat
   uint8_t lastStatusLen;
   uint32_t lastStatusTime; // in utc
   uint8_t nextDiscoveryData;
@@ -433,8 +439,8 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
   if (success){
     if ((op->notifylen >= 6) && (op->dataNotify[0] == 2) && (op->dataNotify[1] == 1)){
       if (eq3){
-        memcpy(eq3->lastStatus, op->dataNotify, (op->notifylen <= 10)?op->notifylen:10);
-        eq3->lastStatusLen = (op->notifylen <= 10)?op->notifylen:10;
+        memcpy(eq3->lastStatus, op->dataNotify, (op->notifylen <= 10)?op->notifylen:16);
+        eq3->lastStatusLen = (op->notifylen <= 10)?op->notifylen:16;
         eq3->lastStatusTime = UtcTime();
       }
     }
@@ -504,6 +510,15 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
       status[6],
       hh, mm
       );
+
+    if (statlen >= 15) {
+      ResponseAppend_P(PSTR(",\"windowtemp\":%2.1f"), ((float)status[10])/2);
+      ResponseAppend_P(PSTR(",\"windowdur\":%d"), ((int)status[11])*5);
+      ResponseAppend_P(PSTR(",\"day\":%2.1f"), ((float)status[12])/2);
+      ResponseAppend_P(PSTR(",\"night\":%2.1f"), ((float)status[13])/2);
+      ResponseAppend_P(PSTR(",\"offset\":%2.1f"), ((float)status[14]-7) /2);
+    }
+
   }
 
   if (success) {
@@ -1216,7 +1231,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
     if (!strcmp(cmd, "unboost"))  { 
       cmdtype = 10;
       d[0] = 0x45; d[1] = 0x00; dlen = 2; break; }
-    if (!strcmp(cmd, "lock"))     { d[0] = 0x80; d[1] = 0x01; 
+    if (!strcmp(cmd, "lock"))     { cmdtype = 23; d[0] = 0x80; d[1] = 0x01; 
       if (param && (!strcmp(param, "off") || param[0] == '0')){
         d[1] = 0x00;
       }

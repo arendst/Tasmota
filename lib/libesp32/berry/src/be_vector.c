@@ -81,7 +81,11 @@ void be_vector_resize(bvm *vm, bvector *vector, int count)
             vector->capacity = newcap;
         }
         vector->count = count;
-        vector->end = (char*)vector->data + size * ((size_t)count - 1);
+        if (count == 0) {
+            vector->end = (char*)vector->data - size;
+        } else {
+            vector->end = (char*)vector->data + size * ((size_t)count - 1);
+        }
     }
 }
 

@@ -61,6 +61,12 @@
 // Для keeloq нужно увеличить RCSWITCH_MAX_CHANGES до 23+1+66*2+1=157
 #define RCSWITCH_MAX_CHANGES 67        // default 67
 
+// separationLimit: minimum microseconds between received codes, closer codes are ignored.
+// according to discussion on issue #14 it might be more suitable to set the separation
+// limit to the same time as the 'low' part of the sync signal for the current protocol.
+// should be set to the minimum value of pulselength * the sync signal
+#define RCSWITCH_SEPARATION_LIMIT 4100
+
 class RCSwitch {
 
   public:

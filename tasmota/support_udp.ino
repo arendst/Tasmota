@@ -69,7 +69,9 @@ bool UdpDisconnect(void)
     PortUdp.stop();
 #else // USE_DEVICE_GROUPS
     // stop all
-    WiFiUDP::stopAll();
+#ifdef ESP8266
+    WiFiUDP::stopAll();   // only for ESP8266
+#endif // ESP8266
 #endif  // !USE_DEVICE_GROUPS
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udp_connected = false;
@@ -92,7 +94,7 @@ bool UdpConnect(void)
       }
 #endif  // ESP8266
 #ifdef ESP32
-    if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
+    if (PortUdp.beginMulticast(IPAddress(239,255,255,250), 1900)) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_connected = true;
 #endif  // ESP32

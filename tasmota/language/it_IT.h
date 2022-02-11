@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 03.11.2021
+ * Updated until v10.1.0.6 - Last update 04.02.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -137,6 +137,7 @@
 #define D_ORP                  "ORP"
 #define D_PASSWORD             "Password"
 #define D_PH                   "pH"
+#define D_MQ                   "MQ"
 #define D_PORT                 "Porta"
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
@@ -663,6 +664,8 @@
 #define D_SENSOR_SDM72_RX               "SDM72 - RX"
 #define D_SENSOR_SDM120_TX              "SDMx20 - TX"
 #define D_SENSOR_SDM120_RX              "SDMx20 - RX"
+#define D_SENSOR_SDM230_TX              "SDM230 - TX"
+#define D_SENSOR_SDM230_RX              "SDM230 - RX"
 #define D_SENSOR_SDM630_TX              "SDM630 - TX"
 #define D_SENSOR_SDM630_RX              "SDM630 - RX"
 #define D_SENSOR_WE517_TX               "WE517 - TX"
@@ -735,6 +738,7 @@
 #define D_SENSOR_ZIGBEE_RST             "Zigbee - RESET"
 #define D_SENSOR_SOLAXX1_TX             "SolaxX1 - TX"
 #define D_SENSOR_SOLAXX1_RX             "SolaxX1 - RX"
+#define D_SENSOR_SOLAXX1_RTS            "SolaxX1 - RTS"
 #define D_SENSOR_IBEACON_TX             "iBeacon - TX"
 #define D_SENSOR_IBEACON_RX             "iBeacon - RX"
 #define D_SENSOR_RDM6300_RX             "RDM6300 - RX"
@@ -785,6 +789,7 @@
 #define D_SENSOR_ADC_CT_POWER           "ADC - CTR alimentazione"
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
 #define D_SENSOR_ADC_PH                 "ADC pH"
+#define D_SENSOR_ADC_MQ                 "ADC MQ"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
@@ -847,6 +852,8 @@
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"
 #define D_GPIO_SHIFT595_SER             "74x595 - SER"
+#define D_SENSOR_CM11_TX                "CM110x - TX"
+#define D_SENSOR_CM11_RX                "CM110x - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -898,7 +905,7 @@
 #define D_OUT_OF_RANGE         "Fuori intervallo"
 #define D_SENSOR_DETECTED      "rilevato"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER     "Potenza esportata"
 #define D_IMPORT_POWER 	   "Potenza importata"
 #define D_PHASE_ANGLE      "Angolo fase"
@@ -910,6 +917,7 @@
 #define D_UNIT_KWARH       "kVArh"
 #define D_UNIT_ANGLE       "°"
 #define D_TOTAL_ACTIVE     "Potenza attiva totale"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Potenza attiva totale (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 - Voltaggio"
@@ -921,16 +929,19 @@
 #define D_SOLAR_POWER     "Energia solare"
 #define D_INVERTER_POWER  "Potenza inverter"
 #define D_STATUS          "Stato"
-#define D_WAITING         "In attesa"
-#define D_CHECKING        "Controllo"
-#define D_WORKING         "Attivo"
-#define D_FAILURE         "Errore"
+#define D_SOLAX_MODE_0    "In attesa"
+#define D_SOLAX_MODE_1    "Controllo"
+#define D_SOLAX_MODE_2    "Attivo"
+#define D_SOLAX_MODE_3    "Errore"
+#define D_SOLAX_MODE_4    "Errore permanente"
+#define D_SOLAX_MODE_5    "Aggiornamento software"
+#define D_SOLAX_MODE_6    "Test autoverifica"
 #define D_SOLAX_ERROR_0   "Nessun codice errore"
 #define D_SOLAX_ERROR_1   "Griglia errore persa"
 #define D_SOLAX_ERROR_2   "Griglia errore tensione"
 #define D_SOLAX_ERROR_3   "Griglia errore frequenza"
-#define D_SOLAX_ERROR_4   "Errore tensione PV"
-#define D_SOLAX_ERROR_5   "Errore isolamento"
+#define D_SOLAX_ERROR_4   "Errore tensione troppo bassa"
+#define D_SOLAX_ERROR_5   "Errore isolamento PV"
 #define D_SOLAX_ERROR_6   "Errore temperatura eccessiva"
 #define D_SOLAX_ERROR_7   "Errore ventilatore"
 #define D_SOLAX_ERROR_8   "Altro errore dispositivo"

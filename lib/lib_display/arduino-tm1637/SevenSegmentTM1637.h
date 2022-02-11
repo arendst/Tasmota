@@ -183,24 +183,24 @@ public:
   void    setPrintDelay(uint16_t printDelay);
 
   // helpers //////////////////////////////////////////////////////////////////
-  /* Encodes a character to sevensegment binairy
+  /* Encodes a character to sevensegment binary
   *
   @param [in] c             a character to encode
   */
   uint8_t encode(char c);
-  /* Encodes a single digit to sevensegment binairy
+  /* Encodes a single digit to sevensegment binary
   *
   @param [in] d             a digit to encode
   */
   uint8_t encode(int16_t d);
-  /* Encodes a null terminated c string (char array) to sevensegment binairy
+  /* Encodes a null terminated c string (char array) to sevensegment binary
   *
   @param [out] buffer       holds the encodes char array
   @param [in] str           the c string to encode
   @param [in] bufferSize    the size/length of the buffer
   */
   size_t  encode(uint8_t* buffer, const char* str, size_t bufferSize);
-  /* Encodes a byte array to sevensegment binairy
+  /* Encodes a byte array to sevensegment binary
   *
   @param [out] buffer       holds the encodes char array
   @param [in] byteArr       the byte array to encode

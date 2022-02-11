@@ -20,6 +20,8 @@
 # Datatypes & Classes (KEYWORD1)
 #######################################
 
+CoronaSection	KEYWORD1
+IRAirtonAc	KEYWORD1
 IRAirwellAc	KEYWORD1
 IRAmcorAc	KEYWORD1
 IRArgoAC	KEYWORD1
@@ -147,6 +149,7 @@ addTempFloatToString	KEYWORD2
 addTempToString	KEYWORD2
 addToggleToString	KEYWORD2
 adjustRepeat	KEYWORD2
+airton	KEYWORD2
 airwell	KEYWORD2
 amcor	KEYWORD2
 argo	KEYWORD2
@@ -174,6 +177,7 @@ checkSum	KEYWORD2
 checkZjsSig	KEYWORD2
 checkZmsSig	KEYWORD2
 checksum	KEYWORD2
+cleanState	KEYWORD2
 clearOnTimerFlag	KEYWORD2
 clearPowerSpecial	KEYWORD2
 clearSensorTemp	KEYWORD2
@@ -211,6 +215,7 @@ decodeCOOLIX	KEYWORD2
 decodeCarrierAC	KEYWORD2
 decodeCarrierAC40	KEYWORD2
 decodeCarrierAC64	KEYWORD2
+decodeCoolix48	KEYWORD2
 decodeCoronaAc	KEYWORD2
 decodeDISH	KEYWORD2
 decodeDaikin	KEYWORD2
@@ -339,6 +344,7 @@ fujitsu	KEYWORD2
 get10CHeat	KEYWORD2
 get3D	KEYWORD2
 get8CHeat	KEYWORD2
+getAbsenseDetect	KEYWORD2
 getBeep	KEYWORD2
 getBit	KEYWORD2
 getBoost	KEYWORD2
@@ -356,9 +362,11 @@ getCorrectedRawLength	KEYWORD2
 getCurrTime	KEYWORD2
 getCurrentDay	KEYWORD2
 getCurrentTime	KEYWORD2
+getDirectIndirect	KEYWORD2
 getDisplay	KEYWORD2
 getDisplayTempSource	KEYWORD2
 getDryGrade	KEYWORD2
+getEcocool	KEYWORD2
 getEcono	KEYWORD2
 getEconoToggle	KEYWORD2
 getEnableSensorTemp	KEYWORD2
@@ -377,6 +385,8 @@ getHold	KEYWORD2
 getHumid	KEYWORD2
 getHumidity	KEYWORD2
 getIFeel	KEYWORD2
+getISave10C	KEYWORD2
+getISee	KEYWORD2
 getId	KEYWORD2
 getInternalStateLength	KEYWORD2
 getIon	KEYWORD2
@@ -388,6 +398,7 @@ getLock	KEYWORD2
 getMax	KEYWORD2
 getMode	KEYWORD2
 getMold	KEYWORD2
+getNaturalFlow	KEYWORD2
 getNight	KEYWORD2
 getOffSleepTimer	KEYWORD2
 getOffTime	KEYWORD2
@@ -423,7 +434,9 @@ getSleepTimerEnabled	KEYWORD2
 getSpecial	KEYWORD2
 getSpeed	KEYWORD2
 getStartClock	KEYWORD2
+getState	KEYWORD2
 getStateLength	KEYWORD2
+getStatePrev	KEYWORD2
 getStopClock	KEYWORD2
 getSupercool	KEYWORD2
 getSwing	KEYWORD2
@@ -474,6 +487,7 @@ haier	KEYWORD2
 haier176	KEYWORD2
 haierYrwo2	KEYWORD2
 handleSpecialState	KEYWORD2
+handleToggles	KEYWORD2
 hasACState	KEYWORD2
 hasInvertedStates	KEYWORD2
 hasStateChanged	KEYWORD2
@@ -571,6 +585,7 @@ sendCOOLIX	KEYWORD2
 sendCarrierAC	KEYWORD2
 sendCarrierAC40	KEYWORD2
 sendCarrierAC64	KEYWORD2
+sendCoolix48	KEYWORD2
 sendCoronaAc	KEYWORD2
 sendDISH	KEYWORD2
 sendDaikin	KEYWORD2
@@ -679,6 +694,7 @@ serialPrintUint64	KEYWORD2
 set10CHeat	KEYWORD2
 set3D	KEYWORD2
 set8CHeat	KEYWORD2
+setAbsenseDetect	KEYWORD2
 setAuto	KEYWORD2
 setBeep	KEYWORD2
 setBit	KEYWORD2
@@ -696,9 +712,11 @@ setCommand	KEYWORD2
 setCurrTime	KEYWORD2
 setCurrentDay	KEYWORD2
 setCurrentTime	KEYWORD2
+setDirectIndirect	KEYWORD2
 setDisplay	KEYWORD2
 setDisplayTempSource	KEYWORD2
 setDryGrade	KEYWORD2
+setEcocool	KEYWORD2
 setEcono	KEYWORD2
 setEconoToggle	KEYWORD2
 setEnableSensorTemp	KEYWORD2
@@ -717,6 +735,8 @@ setHold	KEYWORD2
 setHumid	KEYWORD2
 setHumidity	KEYWORD2
 setIFeel	KEYWORD2
+setISave10C	KEYWORD2
+setISee	KEYWORD2
 setId	KEYWORD2
 setInvertedStates	KEYWORD2
 setIon	KEYWORD2
@@ -729,6 +749,7 @@ setMax	KEYWORD2
 setMode	KEYWORD2
 setModel	KEYWORD2
 setMold	KEYWORD2
+setNaturalFlow	KEYWORD2
 setNight	KEYWORD2
 setOffTime	KEYWORD2
 setOffTimeEnabled	KEYWORD2
@@ -819,6 +840,7 @@ technibel	KEYWORD2
 teco	KEYWORD2
 ticksHigh	KEYWORD2
 ticksLow	KEYWORD2
+toCommon	KEYWORD2
 toString	KEYWORD2
 toggleArrisRelease	KEYWORD2
 toggleRC5	KEYWORD2
@@ -896,6 +918,7 @@ CARRIER_AC40	LITERAL1
 CARRIER_AC64	LITERAL1
 CARRIER_AC_BITS	LITERAL1
 COOLIX	LITERAL1
+COOLIX48	LITERAL1
 COOLIX_BITS	LITERAL1
 CORONA_AC	LITERAL1
 DAIKIN	LITERAL1
@@ -930,6 +953,7 @@ DECODE_CARRIER_AC	LITERAL1
 DECODE_CARRIER_AC40	LITERAL1
 DECODE_CARRIER_AC64	LITERAL1
 DECODE_COOLIX	LITERAL1
+DECODE_COOLIX48	LITERAL1
 DECODE_CORONA_AC	LITERAL1
 DECODE_DAIKIN	LITERAL1
 DECODE_DAIKIN128	LITERAL1
@@ -1284,6 +1308,7 @@ SEND_CARRIER_AC	LITERAL1
 SEND_CARRIER_AC40	LITERAL1
 SEND_CARRIER_AC64	LITERAL1
 SEND_COOLIX	LITERAL1
+SEND_COOLIX48	LITERAL1
 SEND_CORONA_AC	LITERAL1
 SEND_DAIKIN	LITERAL1
 SEND_DAIKIN128	LITERAL1
@@ -1443,13 +1468,27 @@ k8CHeatStr	LITERAL1
 kA705Str	LITERAL1
 kA903Str	LITERAL1
 kA907Str	LITERAL1
+kAbsenseDetectStr	LITERAL1
 kAirFlowStr	LITERAL1
+kAirtonAuto	LITERAL1
 kAirtonBitMark	LITERAL1
 kAirtonBits	LITERAL1
+kAirtonCool	LITERAL1
 kAirtonDefaultRepeat	LITERAL1
+kAirtonDry	LITERAL1
+kAirtonFan	LITERAL1
+kAirtonFanAuto	LITERAL1
+kAirtonFanHigh	LITERAL1
+kAirtonFanLow	LITERAL1
+kAirtonFanMax	LITERAL1
+kAirtonFanMed	LITERAL1
+kAirtonFanMin	LITERAL1
 kAirtonFreq	LITERAL1
 kAirtonHdrMark	LITERAL1
 kAirtonHdrSpace	LITERAL1
+kAirtonHeat	LITERAL1
+kAirtonMaxTemp	LITERAL1
+kAirtonMinTemp	LITERAL1
 kAirtonOneSpace	LITERAL1
 kAirtonZeroSpace	LITERAL1
 kAirwellAuto	LITERAL1
@@ -1645,6 +1684,8 @@ kCommandStr	LITERAL1
 kCool	LITERAL1
 kCoolStr	LITERAL1
 kCoolingStr	LITERAL1
+kCoolix48Bits	LITERAL1
+kCoolix48ExtraTolerance	LITERAL1
 kCoolixAuto	LITERAL1
 kCoolixBitMark	LITERAL1
 kCoolixBitMarkTicks	LITERAL1
@@ -1997,6 +2038,8 @@ kDenonZeroSpaceTicks	LITERAL1
 kDg11j104Str	LITERAL1
 kDg11j13aStr	LITERAL1
 kDg11j191Str	LITERAL1
+kDirectIndirectModeStr	LITERAL1
+kDirectStr	LITERAL1
 kDishBitMark	LITERAL1
 kDishBitMarkTicks	LITERAL1
 kDishBits	LITERAL1
@@ -2478,6 +2521,7 @@ kHourStr	LITERAL1
 kHoursStr	LITERAL1
 kHumidStr	LITERAL1
 kIFeelStr	LITERAL1
+kISeeStr	LITERAL1
 kIdStr	LITERAL1
 kIdleState	LITERAL1
 kInaxBitMark	LITERAL1
@@ -2489,6 +2533,7 @@ kInaxMinRepeat	LITERAL1
 kInaxOneSpace	LITERAL1
 kInaxTick	LITERAL1
 kInaxZeroSpace	LITERAL1
+kIndirectStr	LITERAL1
 kInsideStr	LITERAL1
 kIonStr	LITERAL1
 kJkeStr	LITERAL1
@@ -2894,6 +2939,8 @@ kMitsubishiACStateLength	LITERAL1
 kMitsubishiAcAuto	LITERAL1
 kMitsubishiAcBitMark	LITERAL1
 kMitsubishiAcCool	LITERAL1
+kMitsubishiAcDirect	LITERAL1
+kMitsubishiAcDirectOff	LITERAL1
 kMitsubishiAcDry	LITERAL1
 kMitsubishiAcExtraTolerance	LITERAL1
 kMitsubishiAcFan	LITERAL1
@@ -2905,6 +2952,7 @@ kMitsubishiAcFanSilent	LITERAL1
 kMitsubishiAcHdrMark	LITERAL1
 kMitsubishiAcHdrSpace	LITERAL1
 kMitsubishiAcHeat	LITERAL1
+kMitsubishiAcIndirect	LITERAL1
 kMitsubishiAcMaxTemp	LITERAL1
 kMitsubishiAcMinTemp	LITERAL1
 kMitsubishiAcNoTimer	LITERAL1

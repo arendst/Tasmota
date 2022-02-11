@@ -913,7 +913,9 @@ TEST(TestMitsubishiACClass, HumanReadable) {
       "Power: On, Mode: 1 (Heat), Temp: 22C, Fan: 6 (Quiet), "
       "Swing(V): 0 (Auto), Swing(H): 3 (Middle), "
       "Clock: 17:10, On Timer: 00:00, Off Timer: 00:00, Timer: -, "
-      "Weekly Timer: Off",
+      "Weekly Timer: Off"
+      ", 10C Heat: Off, ISee: Off, Econo: Off, Absense detect: Off, "
+      "Direct / Indirect Mode: 0, Fresh: Off",
       ac.toString());
   ac.setTemp(21.5);
   ac.setWeeklyTimerEnabled(true);
@@ -921,7 +923,9 @@ TEST(TestMitsubishiACClass, HumanReadable) {
       "Power: On, Mode: 1 (Heat), Temp: 21.5C, Fan: 6 (Quiet), "
       "Swing(V): 0 (Auto), Swing(H): 3 (Middle), "
       "Clock: 17:10, On Timer: 00:00, Off Timer: 00:00, Timer: -, "
-      "Weekly Timer: On",
+      "Weekly Timer: On"
+      ", 10C Heat: Off, ISee: Off, Econo: Off, Absense detect: Off, "
+      "Direct / Indirect Mode: 0, Fresh: Off",
       ac.toString());
 }
 
@@ -1434,7 +1438,9 @@ TEST(TestDecodeMitsubishiAC, Issue891) {
       "Power: Off, Mode: 3 (Cool), Temp: 24C, Fan: 0 (Auto), "
       "Swing(V): 0 (Auto), Swing(H): 3 (Middle), "
       "Clock: 00:00, On Timer: 00:00, Off Timer: 00:00, Timer: -, "
-      "Weekly Timer: Off",
+      "Weekly Timer: Off"
+      ", 10C Heat: Off, ISee: Off, Econo: Off, Absense detect: Off, "
+      "Direct / Indirect Mode: 0, Fresh: Off",
       ac.toString());
 }
 

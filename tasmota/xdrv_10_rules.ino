@@ -48,6 +48,7 @@
  *   on switch1#state do power2 %value% endon
  *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
  *   on loadavg<50 do power 2 endon
+ *   on Time#Initialized do Backlog var1 0;event checktime=%time% endon on event#checktime>%timer1% do var1 1 endon on event#checktime>=%timer2%  do var1 0 endon * on event#checktime do Power1 %var1% endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -463,14 +464,31 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     if (rule_param.startsWith(F("%TIMESTAMP%"))) {
       rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+    if (rule_param.startsWith(F("%TIMER"))) {
+      uint32_t index = rule_param.substring(6).toInt();
+      if ((index > 0) && (index <= MAX_TIMERS)) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), index);
+        if (rule_param.startsWith(stemp)) {
+          rule_param = String(Settings->timer[index -1].time);
+        }
+      }
+    }
+#if defined(USE_SUNRISE)
     if (rule_param.startsWith(F("%SUNRISE%"))) {
       rule_param = String(SunMinutes(0));
     }
     if (rule_param.startsWith(F("%SUNSET%"))) {
       rule_param = String(SunMinutes(1));
     }
-#endif  // USE_TIMERS and USE_SUNRISE
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
+#if defined(USE_LIGHT)
+    char scolor[LIGHT_COLOR_SIZE];
+    if (rule_param.startsWith(F("%COLOR%"))) {
+      rule_param = LightGetColor(scolor);
+    }
+#endif
 // #ifdef USE_ZIGBEE
 //     if (rule_param.startsWith(F("%ZBDEVICE%"))) {
 //       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
@@ -768,10 +786,20 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
       RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+      for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(Settings->timer[i].time));
+      }
+#if defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
-#endif  // USE_TIMERS and USE_SUNRISE
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
+#if defined(USE_LIGHT)
+      char scolor[LIGHT_COLOR_SIZE];
+      RulesVarReplace(commands, F("%COLOR%"), LightGetColor(scolor));
+#endif
 #ifdef USE_ZIGBEE
       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
       RulesVarReplace(commands, F("%ZBDEVICE%"), String(stemp));
@@ -960,32 +988,65 @@ void RulesEvery50ms(void)
       }
     }
     else if (TasmotaGlobal.rules_flag.data) {
-      uint16_t mask = 1;
-      for (uint32_t i = 0; i < MAX_RULES_FLAG; i++) {
-        if (TasmotaGlobal.rules_flag.data & mask) {
-          TasmotaGlobal.rules_flag.data ^= mask;
-          json_event[0] = '\0';
-          switch (i) {
-            case 0: strncpy_P(json_event, PSTR("{\"System\":{\"Init\":1}}"), sizeof(json_event)); break;
-            case 1: strncpy_P(json_event, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(json_event)); break;
-            case 2: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Initialized\":%d}}"), MinutesPastMidnight()); break;
-            case 3: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), MinutesPastMidnight()); break;
-            case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event)); break;
-            case 5: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
-            case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
-            case 7: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
-            case 8: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
+      json_event[0] = '\0';
+      if (TasmotaGlobal.rules_flag.system_init) {
+        TasmotaGlobal.rules_flag.system_init = 0;
+        strncpy_P(json_event, PSTR("{\"System\":{\"Init\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.system_boot) {
+        TasmotaGlobal.rules_flag.system_boot = 0;
+        strncpy_P(json_event, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.time_init) {
+        TasmotaGlobal.rules_flag.time_init = 0;
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Initialized\":%d}}"), MinutesPastMidnight());
+      }
+      else if (TasmotaGlobal.rules_flag.time_set) {
+        TasmotaGlobal.rules_flag.time_set = 0;
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), MinutesPastMidnight());
+      }
+      else if (TasmotaGlobal.rules_flag.mqtt_connected) {
+        TasmotaGlobal.rules_flag.mqtt_connected = 0;
+        strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.mqtt_disconnected) {
+        TasmotaGlobal.rules_flag.mqtt_disconnected = 0;
+        strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.wifi_connected) {
+        TasmotaGlobal.rules_flag.wifi_connected = 0;
+        strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.wifi_disconnected) {
+        TasmotaGlobal.rules_flag.wifi_disconnected = 0;
+        strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event));
+      }
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+      else if (TasmotaGlobal.rules_flag.eth_connected) {
+        TasmotaGlobal.rules_flag.eth_connected = 0;
+        strncpy_P(json_event, PSTR("{\"ETH\":{\"Connected\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.eth_disconnected) {
+        TasmotaGlobal.rules_flag.eth_disconnected = 0;
+        strncpy_P(json_event, PSTR("{\"ETH\":{\"Disconnected\":1}}"), sizeof(json_event));
+      }
+#endif  // USE_ETHERNET
+      else if (TasmotaGlobal.rules_flag.http_init) {
+        TasmotaGlobal.rules_flag.http_init = 0;
+        strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event));
+      }
 #ifdef USE_SHUTTER
-            case 9: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event)); break;
-            case 10: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event)); break;
+      else if (TasmotaGlobal.rules_flag.shutter_moved) {
+        TasmotaGlobal.rules_flag.shutter_moved = 0;
+        strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event));
+      }
+      else if (TasmotaGlobal.rules_flag.shutter_moving) {
+        TasmotaGlobal.rules_flag.shutter_moving = 0;
+        strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event));
+      }
 #endif  // USE_SHUTTER
-          }
-          if (json_event[0]) {
-            RulesProcessEvent(json_event);
-            break;                       // Only service one event within 50mS
-          }
-        }
-        mask <<= 1;
+      if (json_event[0]) {
+        RulesProcessEvent(json_event);  // Only service one event within 50mS
       }
     }
   }
@@ -1361,12 +1422,19 @@ bool findNextVariableValue(char * &pVarname, float &value)
     value = UtcTime();
   } else if (sVarName.equals(F("LOCALTIME"))) {
     value = LocalTime();
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+  } else if (sVarName.startsWith(F("TIMER"))) {
+    uint32_t index = sVarName.substring(5).toInt();
+    if (index > 0 && index <= MAX_TIMERS) {
+      value = Settings->timer[index -1].time;
+    }
+#if defined(USE_SUNRISE)
   } else if (sVarName.equals(F("SUNRISE"))) {
     value = SunMinutes(0);
   } else if (sVarName.equals(F("SUNSET"))) {
     value = SunMinutes(1);
-#endif
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
 // #ifdef USE_ZIGBEE
 //   // } else if (sVarName.equals(F("ZBDEVICE"))) {
 //   //   value = Z_GetLastDevice();

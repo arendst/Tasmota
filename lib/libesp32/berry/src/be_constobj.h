@@ -35,12 +35,12 @@ extern "C" {
 
 #define be_const_func(_func) {                                  \
     .v.nf = (_func),                                            \
-    .type = BE_FUNCTION                                         \
+    .type = BE_NTVFUNC                                          \
 }
 
 #define be_const_static_func(_func) {                           \
     .v.nf = (_func),                                            \
-    .type = BE_FUNCTION | BE_FUNC_STATIC                        \
+    .type = BE_NTVFUNC | BE_FUNC_STATIC                         \
 }
 
 #define be_const_nil() {                                        \
@@ -251,12 +251,12 @@ const bntvmodule be_native_module(_module) = {                  \
 
 #define be_const_func(_func) {                                  \
     bvaldata(_func),                                            \
-    BE_FUNCTION                                                 \
+    BE_NTVFUNC                                                  \
 }
 
 #define be_const_static_func(_func) {                           \
     bvaldata(_func),                                            \
-    BE_FUNCTION | BE_FUNC_STATIC                                \
+    BE_NTVFUNC | BE_FUNC_STATIC                                 \
 }
 
 #define be_const_nil() {                                        \
@@ -349,7 +349,7 @@ const bvector _name = {                                         \
 }
 
 #define be_define_const_native_module(_module)                  \
-const bntvmodule be_native_module(_module) = {                  \
+const bntvmodule be_native_module_##_module = {                 \
     #_module,                                                   \
     0, 0,                                                       \
     (bmodule*)&(m_lib##_module)                                 \

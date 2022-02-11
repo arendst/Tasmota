@@ -59,6 +59,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #ifndef SCRIPT_MAXSSIZE
 #define SCRIPT_MAXSSIZE 48
 #endif
+
+
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
 #define PMEM_SIZE sizeof(Settings->script_pram)
@@ -71,6 +73,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
+char *web_send_line(char mc, char *lp);
 
 #define SPECIAL_EEPMODE_SIZE 6200
 
@@ -133,19 +136,19 @@ Ticker Script_ticker4;
 
 void Script_ticker1_end(void) {
   Script_ticker1.detach();
-  Run_Scripter(">ti1", 4, 0);
+  Run_Scripter1(">ti1", 4, 0);
 }
 void Script_ticker2_end(void) {
   Script_ticker2.detach();
-  Run_Scripter(">ti2", 4, 0);
+  Run_Scripter1(">ti2", 4, 0);
 }
 void Script_ticker3_end(void) {
   Script_ticker3.detach();
-  Run_Scripter(">ti3", 4, 0);
+  Run_Scripter1(">ti3", 4, 0);
 }
 void Script_ticker4_end(void) {
   Script_ticker4.detach();
-  Run_Scripter(">ti4", 4, 0);
+  Run_Scripter1(">ti4", 4, 0);
 }
 #endif
 
@@ -433,6 +436,8 @@ struct SCRIPT_MEM {
     char web_mode;
     char *glob_script = 0;
     char *fast_script = 0;
+    char *event_script = 0;
+    char *html_script = 0;
     char *web_pages[5];
     uint32_t script_lastmillis;
     bool event_handeled = false;
@@ -447,6 +452,8 @@ struct SCRIPT_MEM {
 #ifdef USE_SCRIPT_SERIAL
     TasmotaSerial *sp;
 #endif
+    float retval;
+    char *retstr;
 } glob_script_mem;
 
 
@@ -478,12 +485,14 @@ void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
 }
 
 
-
+char *scripter_sub(char *lp, uint8_t fromscriptcmd);
 char *GetNumericArgument(char *lp,uint8_t lastop,float *fp, struct GVARS *gv);
 char *GetStringArgument(char *lp,uint8_t lastop,char *cp, struct GVARS *gv);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
 uint8_t UfsReject(char *name);
+void fread_str(uint8_t fref, char *sp, uint16_t slen);
+char *eval_sub(char *lp, float *fvar, char *rstr);
 
 void ScriptEverySecond(void) {
 
@@ -509,11 +518,11 @@ void ScriptEverySecond(void) {
         }
       }
     }
-    Run_Scripter(">S", 2, 0);
+    Run_Scripter1(">S", 2, 0);
 
 #ifdef USE_HOMEKIT
     if (glob_script_mem.homekit_running == false) {
-      uint8_t homekit_found = Run_Scripter(">h", -2, 0);
+      uint8_t homekit_found = Run_Scripter1(">h", -2, 0);
       if (homekit_found == 99) {
         if (!TasmotaGlobal.global_state.wifi_down) {
           homekit_main(glob_script_mem.section_ptr, 0);
@@ -983,7 +992,7 @@ char *script;
 #ifdef USE_SCRIPT_GLOBVARS
     if (glob_script_mem.udp_flags.udp_used) {
       Script_Init_UDP();
-      if (Run_Scripter(">G", -2, 0) == 99) {glob_script_mem.glob_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.glob_script = 0;}
+      if (Run_Scripter1(">G", -2, 0) == 99) {glob_script_mem.glob_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.glob_script = 0;}
     }
 #endif //USE_SCRIPT_GLOBVARS
 
@@ -1020,7 +1029,14 @@ void Script_Init_UDP() {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) return;
 
+  //if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+#ifdef ESP8266
   if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+#else
+  if (glob_script_mem.Script_PortUdp.beginMulticast(IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
+#endif
+
+
 #ifdef SCRIPT_DEBUG_UDP
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP "SCRIPT UDP started"));
 #endif
@@ -1086,7 +1102,7 @@ void Script_PollUdp(void) {
             glob_script_mem.last_udp_ip = glob_script_mem.Script_PortUdp.remoteIP();
             SetChanged(index);
             if (glob_script_mem.glob_script) {
-              Run_Scripter(glob_script_mem.glob_script, 0, 0);
+              Run_Scripter1(glob_script_mem.glob_script, 0, 0);
             }
           }
         }
@@ -1344,6 +1360,24 @@ float DoMedian5(uint8_t index, float in) {
   return median_array(mf->buffer, MEDIAN_SIZE);
 }
 
+#ifdef USE_UFILESYS
+void fread_str(uint8_t fref, char *sp, uint16_t slen) {
+  uint16_t index = 0;
+  while (glob_script_mem.files[fref].available()) {
+    uint8_t buf[1], iob;
+    glob_script_mem.files[fref].read(buf,1);
+    iob = buf[0];
+    if (iob == '\t' || iob == ',' || iob == '\n' || iob == '\r') {
+      break;
+    } else {
+      *sp++ = iob;
+      index++;
+      if (index >= slen - 1) break;
+    }
+  }
+  *sp = 0;
+}
+#endif
 
 #ifdef USE_FEXTRACT
 
@@ -1459,7 +1493,7 @@ struct tm tmx;
 }
 
 // assume 1. entry is timestamp, others are tab delimited values until LF
-// file refernece, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
+// file reference, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
 int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coffs, float **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum) {
   if (!glob_script_mem.file_flags[fref].is_open) return -1;
   char rstr[32];
@@ -1486,7 +1520,7 @@ int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coff
         index--;
       }
       glob_script_mem.files[fref].seek(cpos, SeekSet);
-    } else {
+    } else if (coffs == -2) {
       // seek to line 2
       for (uint32_t cp = 0; cp < cpos; cp++) {
         uint8_t buff[2], iob;
@@ -1497,6 +1531,33 @@ int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coff
           break;
         }
       }
+    } else {
+      // seek to pos of ts_from
+      cpos = glob_script_mem.files[fref].position();
+      uint32_t tsfrom = tstamp2l(ts_from);
+      while (glob_script_mem.files[fref].available()) {
+        uint8_t buff[2], iob;
+        glob_script_mem.files[fref].read(buff, 1);
+        cpos++;
+        iob = buff[0];
+        if (iob == '\n' || iob == '\r') {
+          // read time stamp
+          char ts[22];
+          glob_script_mem.files[fref].read((uint8_t*)ts, sizeof(ts));
+          char *cp = strchr(ts, '\t');
+          if (cp) {
+            *cp = 0;
+            uint32_t tstc = tstamp2l(ts);
+            //Serial.printf(">>> %s - %d - %d\n",ts, tstc, cpos );
+            if (tstc >= tsfrom) {
+              glob_script_mem.files[fref].seek(cpos, SeekSet);
+              return cpos;
+            }
+          }
+          cpos += sizeof(ts);
+        }
+      }
+      return -1;
     }
     return cpos;
   }
@@ -1880,7 +1941,8 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
     tind->index = 0;
     tind->bits.data = 0;
 
-    if (isdigit(*lp) || (*lp=='-' && isdigit(*(lp+1))) || *lp=='.') {
+    //Serial.printf("Stack 2: %d\n",GetStack());
+    if (isdigit(*lp) || (*lp == '-' && isdigit(*(lp+1))) || *lp == '.') {
       // isnumber
         if (fp) {
           if (*lp == '0' && *(lp + 1) == 'x') {
@@ -1900,20 +1962,21 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         *vtype = NUM_RES;
         return lp;
     }
-    if (*lp=='"') {
+
+    if (*lp == '"') {
       lp++;
-      while (*lp!='"') {
-        if (*lp==0 || *lp==SCRIPT_EOL) break;
+      while (*lp != '"') {
+        if (*lp == 0 || *lp == SCRIPT_EOL) break;
         uint8_t iob = *lp;
-        if (iob=='\\') {
+        if (iob == '\\') {
           lp++;
-          if (*lp=='t') {
+          if (*lp == 't') {
             iob = '\t';
-          } else if (*lp=='n') {
+          } else if (*lp == 'n') {
             iob = '\n';
-          } else if (*lp=='r') {
+          } else if (*lp == 'r') {
             iob = '\r';
-          } else if (*lp=='\\') {
+          } else if (*lp == '\\') {
             iob = '\\';
           } else {
             lp--;
@@ -1938,9 +2001,9 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
     }
 
     const char *term="\n\r ])=+-/*%><!^&|}{";
-    for (count = 0; count<sizeof(vname); count++) {
+    for (count = 0; count < sizeof(vname); count++) {
         char iob = lp[count];
-        if (!iob || strchr(term,iob)) {
+        if (!iob || strchr(term, iob)) {
             vname[count] = 0;
             break;
         }
@@ -1970,15 +2033,16 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
       ja++;
       olen = strlen(dvnam);
     }
-    for (count = 0; count<glob_script_mem.numvars; count++) {
+
+    for (count = 0; count < glob_script_mem.numvars; count++) {
         char *cp = glob_script_mem.glob_vnp + glob_script_mem.vnp_offset[count];
         uint8_t slen = strlen(cp);
-        if (slen==olen && *cp==dvnam[0]) {
+        if (slen == olen && *cp == dvnam[0]) {
             if (!strncmp(cp, dvnam, olen)) {
                 uint8_t index = vtp[count].index;
                 *tind = vtp[count];
                 tind->index = count; // overwrite with global var index
-                if (vtp[count].bits.is_string==0) {
+                if (vtp[count].bits.is_string == 0) {
                     *vtype = NTYPE | index;
                     if (vtp[count].bits.is_filter) {
                       if (ja) {
@@ -2005,6 +2069,9 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         }
     }
 
+#define USE_JSON
+
+#ifdef USE_JSON
     if (gv && gv->jo) {
       // look for json input
 
@@ -2119,9 +2186,13 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         }
       }
     }
+#endif
+
 
 chknext:
+
     switch (vname[0]) {
+
       case 'a':
 #ifdef USE_ANGLE_FUNC
         if (!strncmp(lp, "acos(", 5)) {
@@ -2170,6 +2241,7 @@ chknext:
           len = 0;
           goto exit;
         }
+
         if (!strncmp(lp, "acp(", 4)) {
           lp += 4;
           SCRIPT_SKIP_SPACES
@@ -2520,7 +2592,7 @@ chknext:
           uint8_t find = fvar;
           if (find>=SFS_MAX) find = SFS_MAX - 1;
           uint8_t index = 0;
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           char *cp = str;
           if (glob_script_mem.file_flags[find].is_open) {
             if (glob_script_mem.file_flags[find].is_dir) {
@@ -2620,7 +2692,7 @@ chknext:
           goto nfuncexit;
         }
         if (!strncmp(lp, "fd(", 3)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           ufsp->remove(str);
           goto nfuncexit;
@@ -2665,7 +2737,7 @@ chknext:
 #endif //ESP32 && USE_WEBCAM
 #ifdef USE_SCRIPT_FATFS_EXT
         if (!strncmp(lp, "fe(", 3)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           // execute script
           File ef = ufsp->open(str, FS_FILE_READ);
@@ -2686,7 +2758,7 @@ chknext:
           goto nfuncexit;
         }
         if (!strncmp(lp, "fmd(", 4)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->mkdir(str);
           goto nfuncexit;
@@ -2701,13 +2773,13 @@ chknext:
           goto nfuncexit;
         }
         if (!strncmp(lp, "frd(", 4)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           fvar = ufsp->rmdir(str);
           goto nfuncexit;
         }
         if (!strncmp(lp, "fx(", 3)) {
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           if (ufsp->exists(str)) fvar = 1;
           else fvar = 0;
@@ -2721,11 +2793,11 @@ chknext:
         }
         if (!strncmp(lp, "frn(", 4)) {
           // rename a file
-          char fn_from[glob_script_mem.max_ssize + 1];
+          char fn_from[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, fn_from, 0);
           SCRIPT_SKIP_SPACES
 
-          char fn_to[glob_script_mem.max_ssize + 1];
+          char fn_to[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp, OPER_EQU, fn_to, 0);
           SCRIPT_SKIP_SPACES
 
@@ -2734,9 +2806,26 @@ chknext:
         }
 
 #ifdef USE_FEXTRACT
-        if (!strncmp(lp, "fxt(", 4)) {
+        if (!strncmp(lp, "fxt", 3)) {
+          lp += 3;
+          uint8_t oflg = 0;
+          if (*lp == 'o') {
+            oflg = 1;
+            lp++;
+          }
+          if (*lp == '(') {
+            lp++;
+          } else {
+            break;
+          }
+          /*
+          if (oflg) {
+            lp = GetNumericArgument(lp, OPER_EQU, &pfac, gv);
+            SCRIPT_SKIP_SPACES
+          }*/
+
           // extract from file
-          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
           uint8_t fref = fvar;
 
@@ -2769,7 +2858,35 @@ chknext:
                 break;
               }
             }
-            fvar = extract_from_file(fref,  ts_from, ts_to, coffs, a_ptr, a_len, index, accum);
+            if (oflg) {
+              // optimized access
+              // seek to start
+              uint32_t fres = extract_from_file(fref,  ts_from, ts_to, -2, 0, 0, 0, 0);
+              char tsf[32];
+              fread_str(fref, tsf, sizeof(tsf));
+              uint32_t ltsf = tstamp2l(tsf);
+              fres = extract_from_file(fref,  ts_from, ts_to, -1, 0, 0, 0, 0);
+              fread_str(fref, tsf, sizeof(tsf));
+              uint32_t tssiz = tstamp2l(tsf) - ltsf;
+              uint32_t tspos = tstamp2l(ts_from) - ltsf;
+              float perc =  (float)tspos / (float)tssiz * 0.9;
+              if (perc < 0) perc = 0;
+              if (perc > 1) perc = 1;
+              float fsize = glob_script_mem.files[fref].size();
+              uint32_t spos = perc * fsize;
+              //AddLog(LOG_LEVEL_INFO,PSTR(">>> 1 %d, %d"), (uint32_t)perc, spos);
+              glob_script_mem.files[fref].seek(spos, SeekSet);
+              fres = extract_from_file(fref,  ts_from, ts_to, -3, 0, 0, 0, 0);
+              //AddLog(LOG_LEVEL_INFO,PSTR(">>> 2 %s - %d - %d"), ts_from, fres, (uint32_t)(perc*100));
+              if (fres > 0) {
+                fvar = extract_from_file(fref,  ts_from, ts_to, coffs, a_ptr, a_len, index, accum);
+              } else {
+                // fatal error time stamp out of range
+                fvar = -2;
+              }
+            } else {
+              fvar = extract_from_file(fref,  ts_from, ts_to, coffs, a_ptr, a_len, index, accum);
+            }
           } else {
             fvar = extract_from_file(fref,  ts_from, ts_to, coffs, 0, 0, 0, 0);
           }
@@ -2832,7 +2949,7 @@ chknext:
           SCRIPT_SKIP_SPACES
 
           if (find >= SFS_MAX) find = SFS_MAX - 1;
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           if (glob_script_mem.file_flags[find].is_open) {
             uint8_t first = 0;
             for (uint32_t cnt = 0; cnt < alen; cnt++) {
@@ -2866,7 +2983,7 @@ chknext:
 #endif // USE_SCRIPT_FATFS_EXT
         if (!strncmp(lp, "fl1(", 4) || !strncmp(lp, "fl2(", 4) )  {
           uint8_t lknum = *(lp+2)&3;
-          char str[glob_script_mem.max_ssize + 1];
+          char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
           if (lknum<1 || lknum>2) lknum = 1;
           strlcpy(glob_script_mem.flink[lknum - 1], str, 14);
@@ -3197,6 +3314,7 @@ chknext:
         }
 #endif // USE_SCRIPT_I2C
         break;
+
       case 'l':
         if (!strncmp(lp, "lip", 3)) {
           if (sp) strlcpy(sp, (const char*)WiFi.localIP().toString().c_str(), glob_script_mem.max_ssize);
@@ -3325,6 +3443,14 @@ chknext:
         }
 #endif //USE_MORITZ
         break;
+
+      case 'n':
+        if (!strncmp(vname, "npwr", 4)) {
+          fvar = TasmotaGlobal.devices_present;
+          goto exit;
+        }
+        break;
+
       case 'p':
         if (!strncmp(lp, "pin[", 4)) {
           // raw pin level
@@ -3406,7 +3532,7 @@ chknext:
         if (!strncmp(lp, "pwr[", 4)) {
           GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<=TasmotaGlobal.devices_present) {
+          if (index <= TasmotaGlobal.devices_present) {
             fvar = bitRead(TasmotaGlobal.power, index - 1);
           } else {
             fvar = -1;
@@ -3417,7 +3543,7 @@ chknext:
         if (!strncmp(lp, "pc[", 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<1 || index>MAX_COUNTERS) index = 1;
+          if (index < 1 || index > MAX_COUNTERS) index = 1;
           fvar = RtcSettings.pulse_counter[index - 1];
           len += 1;
           goto exit;
@@ -3455,6 +3581,7 @@ chknext:
         }
 #endif
         break;
+
       case 's':
         if (!strncmp(vname, "secs", 4)) {
           fvar = RtcTime.second;
@@ -3509,12 +3636,13 @@ chknext:
         if (!strncmp(lp, "st(", 3)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
-          while (*lp==' ') lp++;
+          SCRIPT_SKIP_SPACES
           char token[2];
           token[0] = *lp++;
           token[1] = 0;
-          while (*lp==' ') lp++;
+          SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          SCRIPT_SKIP_SPACES
           // skip ) bracket
           lp++;
           len = 0;
@@ -3524,15 +3652,36 @@ chknext:
             if (!st) {
               *sp = 0;
             } else {
-              for (uint8_t cnt = 1; cnt<=fvar; cnt++) {
-                if (cnt==fvar) {
-                  strcpy(sp, st);
-                  break;
+              if (fvar > 0) {
+                for (uint8_t cnt = 1; cnt <= fvar; cnt++) {
+                  if (cnt == fvar) {
+                    strcpy(sp, st);
+                    break;
+                  }
+                  st = strtok(NULL, token);
+                  if (!st) {
+                    *sp = 0;
+                    break;
+                  }
                 }
-                st = strtok(NULL, token);
-                if (!st) {
-                  *sp = 0;
-                  break;
+              } else {
+                // get string before token
+                fvar = -fvar;
+                char cstr[SCRIPT_MAXSSIZE];
+                strcpy(cstr, str);
+                for (uint8_t cnt = 1; cnt <= fvar; cnt++) {
+                  if (cnt == fvar - 1) {
+                    *st = 0;
+                    strcpy(sp, cstr);
+                    break;
+                  }
+                  st = strtok(NULL, token);
+                  if (!st) {
+                    *sp = 0;
+                    break;
+                  }
+                  strcat(cstr, token);
+                  strcat(cstr, st);
                 }
               }
             }
@@ -3540,9 +3689,23 @@ chknext:
           goto strexit;
         }
         if (!strncmp(lp, "s(", 2)) {
-          lp = GetNumericArgument(lp + 2, OPER_EQU, &fvar, gv);
-          char str[glob_script_mem.max_ssize + 1];
-          f2char(fvar, glob_script_mem.script_dprec, glob_script_mem.script_lzero, str);
+          lp += 2;
+          uint8_t dprec = glob_script_mem.script_dprec;
+          uint8_t lzero = glob_script_mem.script_lzero;
+          if (isdigit(*lp)) {
+            if (*(lp + 1) == '.') {
+              lzero = *lp & 0xf;
+              lp += 2;
+              dprec = *lp & 0xf;
+              lp++;
+            } else {
+              dprec = *lp & 0xf;
+              lp++;
+            }
+          }
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          char str[SCRIPT_MAXSSIZE];
+          f2char(fvar, dprec, lzero, str);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           lp++;
           len = 0;
@@ -3782,7 +3945,7 @@ extern char *SML_GetSVal(uint32_t index);
         }
         if (!strncmp(lp, "sr(", 3)) {
           uint16_t size = glob_script_mem.max_ssize;
-          char str[size];
+          char str[SCRIPT_MAXSSIZE];
           memset(str, 0, size);
           lp += 3;
           uint8_t runt = 0;
@@ -3818,12 +3981,13 @@ extern char *SML_GetSVal(uint32_t index);
           if (Script_Close_Serial()) {
             fvar = 0;
           }
-          lp+=4;
+          lp += 4;
           len = 0;
           goto exit;
         }
 #endif //USE_SCRIPT_SERIAL
         break;
+
       case 't':
         if (!strncmp(vname, "time", 4)) {
           fvar = MinutesPastMidnight();
@@ -3853,25 +4017,25 @@ extern char *SML_GetSVal(uint32_t index);
 #ifdef USE_SCRIPT_TIMER
         if (!strncmp(lp, "ts1(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker1.attach_ms(fvar, Script_ticker1_end);
           goto nfuncexit;
         }
         if (!strncmp(lp, "ts2(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker2.attach_ms(fvar, Script_ticker2_end);
           goto nfuncexit;
         }
         if (!strncmp(lp, "ts3(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker3.attach_ms(fvar, Script_ticker3_end);
           goto nfuncexit;
         }
         if (!strncmp(lp, "ts4(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
-          if (fvar<10) fvar = 10;
+          if (fvar < 10) fvar = 10;
           Script_ticker4.attach_ms(fvar, Script_ticker4_end);
           goto nfuncexit;
         }
@@ -3882,7 +4046,7 @@ extern char *SML_GetSVal(uint32_t index);
         if (!strncmp(lp, "tbut[", 5)) {
           GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint8_t index = fvar;
-          if (index<1 || index>MAX_TOUCH_BUTTONS) index = 1;
+          if (index < 1 || index > MAX_TOUCH_BUTTONS) index = 1;
           index--;
           if (buttons[index]) {
             fvar = buttons[index]->vpower.on_off;
@@ -3895,11 +4059,13 @@ extern char *SML_GetSVal(uint32_t index);
 
 #endif //USE_TOUCH_BUTTONS
 #endif //USE_DISPLAY
+
+
 #if 0
         if (!strncmp(lp, "test(", 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           uint32_t cycles;
-          uint64_t accu=0;
+          uint64_t accu = 0;
           char sbuffer[32];
           // PSTR performance test
           // this is best case since everything will be in cache
@@ -3949,6 +4115,12 @@ extern char *SML_GetSVal(uint32_t index);
           lp++;
           len = 0;
           goto strexit;
+        }
+        if (!strncmp(lp, "tsn(", 4)) {
+          char str[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
+          fvar = tstamp2l(str);
+          goto nfuncexit;
         }
 #endif
         break;
@@ -4091,9 +4263,20 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
         break;
+      case '#':
+        len = 0;
+        lp = eval_sub(lp, &fvar, sp);
+        if (glob_script_mem.retstr)  {
+          goto strexit;
+        } else {
+          goto exit;
+        }
+        break;
+
       default:
         break;
     }
+
     // nothing valid found
 notfound:
     if (fp) *fp=0;
@@ -4118,8 +4301,6 @@ strexit:
     tind->bits.is_string = 1;
     return lp + len;
 }
-
-
 
 char *getop(char *lp, uint8_t *operand) {
     switch (*lp) {
@@ -4522,14 +4703,14 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     char string[SCRIPT_MAXSSIZE];
     dstsize -= 2;
     for (count = 0; count<dstsize; count++) {
-        if (srcsize && (*cp==SCRIPT_EOL)) break;
-        if (*cp=='%') {
+        if (srcsize && (*cp == SCRIPT_EOL)) break;
+        if (*cp == '%') {
             cp++;
-            if (*cp=='%') {
+            if (*cp == '%') {
               dstbuf[count] = *cp++;
             } else {
               if (isdigit(*cp)) {
-                if (*(cp+1)=='.') {
+                if (*(cp+1) == '.') {
                   lzero = *cp & 0xf;
                   cp+=2;
                 }
@@ -4542,10 +4723,17 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               if (*cp=='(') {
                 // math expression
                 cp++;
+                glob_script_mem.glob_error = 0;
+                char *slp = cp;
                 cp = GetNumericArgument(cp, OPER_EQU, &fvar, 0);
-                f2char(fvar, dprec, lzero, string);
+                if (glob_script_mem.glob_error == 1) {
+                  glob_script_mem.glob_error = 0;
+                  cp = GetStringArgument(slp, OPER_EQU, string, 0);
+                } else {
+                  f2char(fvar, dprec, lzero, string);
+                }
                 uint8_t slen = strlen(string);
-                if (count + slen<dstsize - 1) {
+                if (count + slen < dstsize - 1) {
                   strcpy(&dstbuf[count], string);
                   count += slen - 1;
                 }
@@ -4589,6 +4777,8 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                 dstbuf[count] = '\r';
               } else if (*cp=='\\') {
                 dstbuf[count] = '\\';
+              } else if (*cp=='#') {
+                dstbuf[count] = '#';
               } else {
                 dstbuf[count] = *cp;
               }
@@ -4833,7 +5023,34 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
 #endif // ESP32
 }
 
-
+char *eval_sub(char *lp, float *fvar, char *rstr) {
+  scripter_sub(lp - 1, 0);
+  while (1) {
+    if (*lp == ')') {
+      lp++;
+      break;
+    }
+    if (*lp == SCRIPT_EOL || *lp == '+' || *lp == '-') {
+      break;
+    }
+    lp++;
+  }
+  if (glob_script_mem.retstr) {
+    if (rstr) {
+      strcpy(rstr, glob_script_mem.retstr);
+    } else {
+      *fvar = CharToFloat(glob_script_mem.retstr);
+    }
+    free (glob_script_mem.retstr);
+  } else {
+    if (fvar) {
+      *fvar = glob_script_mem.retval;
+    } else {
+      dtostrfd(glob_script_mem.retval, 6, rstr);
+    }
+  }
+  return lp;
+}
 
 //#define IFTHEN_DEBUG
 
@@ -4851,10 +5068,10 @@ char *scripter_sub(char *lp, uint8_t fromscriptcmd) {
   if (fromscriptcmd) {
     char *sp = glob_script_mem.scriptptr;
     glob_script_mem.scriptptr = glob_script_mem.scriptptr_bu;
-    Run_Scripter(slp, plen, 0);
+    Run_Scripter1(slp, plen, 0);
     glob_script_mem.scriptptr = sp;
   } else {
-    Run_Scripter(slp, plen, 0);
+    Run_Scripter1(slp, plen, 0);
   }
   lp = slp;
   return lp;
@@ -4863,6 +5080,19 @@ char *scripter_sub(char *lp, uint8_t fromscriptcmd) {
 int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv);
 
 #define IF_NEST 8
+
+int16_t Run_Scripter1(const char *type, int8_t tlen, const char *js) {
+int16_t retval;
+  if (!glob_script_mem.scriptptr) {
+    return -99;
+  }
+  if (tasm_cmd_activ && tlen > 0) return 0;
+  struct GVARS gv;
+  gv.jo = 0;
+  retval = Run_script_sub(type, tlen, &gv);
+  return retval;
+}
+
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, const char *js) {
 int16_t retval;
@@ -4926,6 +5156,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
         // skip leading spaces
         startline:
         SCRIPT_SKIP_SPACES
+        while (*lp == '\t') {lp++;}
         // skip empty line
         SCRIPT_SKIP_EOL
         // skip comment
@@ -5132,7 +5363,29 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             toLogEOL(tbuff, lp);
 #endif //IFTHEN_DEBUG
 
-            if (!strncmp(lp, "break", 5)) {
+            if (!strncmp(lp, "return", 6)) {
+              lp += 6;
+              SCRIPT_SKIP_SPACES
+              if (*lp == SCRIPT_EOL) {
+                goto next_line;
+              }
+              glob_script_mem.glob_error = 0;
+              char *slp = lp;
+              lp = GetNumericArgument(lp, OPER_EQU, &glob_script_mem.retval, 0);
+              if (glob_script_mem.glob_error == 1) {
+                // mismatch was string, not number
+                lp = slp;
+                glob_script_mem.glob_error = 0;
+                glob_script_mem.retstr = (char*)calloc(SCRIPT_MAXSSIZE, 1);
+                if (glob_script_mem.retstr) {
+                  lp = GetStringArgument(lp, OPER_EQU, glob_script_mem.retstr, 0);
+                }
+              } else {
+                glob_script_mem.retstr = 0;
+              }
+              section = 0;
+              goto next_line;
+            } else if (!strncmp(lp, "break", 5)) {
               lp += 5;
               if (floop) {
                 // should break loop
@@ -5156,15 +5409,19 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             }
 #ifdef USE_DISPLAY
             else if (!strncmp(lp, "dt", 2)) {
-              char dstbuf[256];
+              //char dstbuf[256];
               lp += 2;
               SCRIPT_SKIP_SPACES
-              Replace_Cmd_Vars(lp, 1, dstbuf, sizeof(dstbuf));
-              char *savptr = XdrvMailbox.data;
-              XdrvMailbox.data = dstbuf;
-              XdrvMailbox.data_len = 0;
-              DisplayText();
-              XdrvMailbox.data = savptr;
+              char *dstbuf = (char*)malloc(256);
+              if (dstbuf) {
+                Replace_Cmd_Vars(lp, 1, dstbuf, 256);
+                char *savptr = XdrvMailbox.data;
+                XdrvMailbox.data = dstbuf;
+                XdrvMailbox.data_len = 0;
+                DisplayText();
+                XdrvMailbox.data = savptr;
+                free(dstbuf);
+              }
               goto next_line;
             }
 #endif //USE_DISPLAY
@@ -5297,30 +5554,45 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               lp++;
               goto next_line;
             }
+#ifdef USE_SCRIPT_WEB_DISPLAY
             else if (!strncmp(lp, "wcs", 3)) {
               lp+=4;
               // skip one space after cmd
+              web_send_line(0, lp);
+              /*
               char tmp[256];
               Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
               WSContentFlush();
               WSContentSend_P(PSTR("%s"),tmp);
+              */
+
               WSContentFlush();
               goto next_line;
             }
+#endif
             else if (!strncmp(lp, "rapp", 3)) {
               lp+=4;
               // skip one space after cmd
-              char tmp[256];
-              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
-              ResponseAppend_P(PSTR("%s"), tmp);
+              char *tmp = (char*)malloc(256);
+              if (tmp) {
+                Replace_Cmd_Vars(lp ,1 , tmp, 256);
+                ResponseAppend_P(PSTR("%s"), tmp);
+                free(tmp);
+              }
               goto next_line;
             }
+
+
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
             else if (!strncmp(lp, "mail", 4)) {
               lp+=5;
-              char tmp[256];
-              Replace_Cmd_Vars(lp ,1 , tmp, sizeof(tmp));
-              SendMail(tmp);
+              //char tmp[256];
+              char *tmp = (char*)malloc(256);
+              if (tmp) {
+                Replace_Cmd_Vars(lp ,1 , tmp, 256);
+                SendMail(tmp);
+                free(tmp);
+              }
               goto next_line;
             }
 #endif
@@ -5403,11 +5675,11 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             }
 
             // check for variable result
-            if (if_state[ifstck]==1) {
+            if (if_state[ifstck] == 1) {
               // evaluate exxpression
               lp = Evaluate_expression(lp, and_or, &if_result[ifstck], gv);
               SCRIPT_SKIP_SPACES
-              if (*lp=='{' && if_state[ifstck]==1) {
+              if (*lp == '{' && if_state[ifstck] == 1) {
                 lp += 1; // then
                 if_state[ifstck] = 2;
                 if (if_exe[ifstck - 1]) if_exe[ifstck] = if_result[ifstck];
@@ -5416,7 +5688,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             } else {
               char *vnp = lp;
               lp = isvar(lp, &vtype, &ind, &sysvar, 0, gv);
-              if (vtype!=VAR_NV) {
+              if (vtype != VAR_NV) {
 #ifdef USE_SCRIPT_GLOBVARS
                   char varname[16];
                   uint32_t vnl = (uint32_t)lp - (uint32)vnp;
@@ -5444,15 +5716,25 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                       }
                       numeric = 1;
                       lp = getop(lp, &lastop);
-                      char *slp = lp;
-                      glob_script_mem.glob_error = 0;
-                      lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-                      if (glob_script_mem.glob_error==1) {
-                        // mismatch was string, not number
-                        // get the string and convert to number
-                        lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
-                        fvar = CharToFloat(cmpstr);
+#ifdef SCRIPT_LM_SUB
+                      if (*lp=='#') {
+                        // subroutine
+                        lp = eval_sub(lp, &fvar, 0);
+                      } else {
+#endif
+                        char *slp = lp;
+                        glob_script_mem.glob_error = 0;
+                        //Serial.printf("Stack 1: %d\n",GetStack());
+                        lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+                        if (glob_script_mem.glob_error == 1) {
+                          // mismatch was string, not number
+                          // get the string and convert to number
+                          lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
+                          fvar = CharToFloat(cmpstr);
+                        }
+#ifdef SCRIPT_LM_SUB
                       }
+#endif
                       switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
@@ -5542,16 +5824,24 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                     // string result
                     char str[SCRIPT_MAXSSIZE];
                     lp = getop(lp, &lastop);
-                    char *slp = lp;
-                    glob_script_mem.glob_error = 0;
-                    lp = GetStringArgument(lp, OPER_EQU, str, gv);
-                    if ((!gv || !gv->jo) && glob_script_mem.glob_error) {
-                      // mismatch
-                      lp = GetNumericArgument(slp, OPER_EQU, &fvar, 0);
-                      dtostrfd(fvar, 6, str);
+#ifdef SCRIPT_LM_SUB
+                    if (*lp=='#') {
+                      // subroutine
+                      lp = eval_sub(lp, 0, str);
+                    } else {
+#endif
+                      char *slp = lp;
                       glob_script_mem.glob_error = 0;
+                      lp = GetStringArgument(lp, OPER_EQU, str, gv);
+                      if ((!gv || !gv->jo) && glob_script_mem.glob_error) {
+                        // mismatch
+                        lp = GetNumericArgument(slp, OPER_EQU, &fvar, 0);
+                        dtostrfd(fvar, 6, str);
+                        glob_script_mem.glob_error = 0;
+                      }
+#ifdef SCRIPT_LM_SUB
                     }
-
+#endif
                     if (!glob_script_mem.var_not_found) {
                       // var was changed
                       SetChanged(globvindex);
@@ -5604,15 +5894,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                 }
                 // check for subroutine
                 char *ctype = (char*)type;
-                if (*ctype=='#') {
+                if (*ctype == '#') {
                   // check for parameter
                   ctype += tlen;
                   char nxttok = '(';
-                  char *argptr = ctype+tlen;
-
+                  char *argptr = ctype + tlen;
                   lp += tlen;
                   do {
-                    if (*ctype==nxttok && *lp==nxttok) {
+                    if (*ctype == nxttok && *lp == nxttok) {
                       float fparam;
                       numeric = 1;
                       glob_script_mem.glob_error = 0;
@@ -5623,14 +5912,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         // get the string
                         argptr = GetStringArgument((char*)ctype + 1, OPER_EQU, cmpstr, 0);
                       }
-                      if (*lp==nxttok) {
+                      if (*lp == nxttok) {
                         // fetch destination
                         lp++;
                         lp = isvar(lp, &vtype, &ind, 0, 0, gv);
-                        if (vtype!=VAR_NV) {
+                        if (vtype != VAR_NV) {
                           // found variable as result
                           uint8_t index = glob_script_mem.type[ind.index].index;
-                          if ((vtype&STYPE)==0) {
+                          if ((vtype & STYPE) == 0) {
                               // numeric result
                               dfvar = &glob_script_mem.fvars[index];
                               if (numeric) {
@@ -5652,14 +5941,14 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         }
                       }
                     } else {
-                      if (*ctype==nxttok || (*lp!=SCRIPT_EOL && *lp!='?')) {
+                      if (*ctype == nxttok || (*lp != SCRIPT_EOL && *lp != '?')) {
                         // revert
                         section = 0;
                       }
                     }
                     nxttok = ' ';
                     ctype = argptr;
-                  } while (*lp==' ' && (section == 1) );
+                  } while (*lp == ' ' && (section == 1) );
                 }
             }
         }
@@ -5718,7 +6007,7 @@ void ScripterEvery100ms(void) {
     }
   }
   if (bitRead(Settings->rule_enabled, 0)) {
-    if (glob_script_mem.fast_script) Run_Scripter(glob_script_mem.fast_script, 0, 0);
+    if (glob_script_mem.fast_script) Run_Scripter1(glob_script_mem.fast_script, 0, 0);
   }
 }
 
@@ -6188,23 +6477,30 @@ void SaveScriptEnd(void) {
     Script_Close_Serial();
 #endif
 
-    Run_Scripter(">B\n", 3, 0);
-    Run_Scripter(">BS", 3, 0);
+    set_callbacks();
+
+    Run_Scripter1(">B\n", 3, 0);
+    Run_Scripter1(">BS", 3, 0);
 
     //glob_script_mem.fast_script = Run_Scripter(">F", -2, 0);
-    if (Run_Scripter(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
 
     script_set_web_pages();
 
   }
 }
 
+void set_callbacks() {
+  if (Run_Scripter1(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
+  if (Run_Scripter1(">E", -2, 0) == 99) {glob_script_mem.event_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.event_script = 0;}
+  if (Run_Scripter1(">C", -2, 0) == 99) {glob_script_mem.html_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.html_script = 0;}
+}
+
 void script_set_web_pages(void) {
-  if (Run_Scripter(">W", -2, 0) == 99) {glob_script_mem.web_pages[0] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[0] = 0;}
-  if (Run_Scripter(">w ", -3, 0) == 99) {glob_script_mem.web_pages[1] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[1] = 0;}
-  if (Run_Scripter(">w1 ", -4, 0) == 99) {glob_script_mem.web_pages[2] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[2] = 0;}
-  if (Run_Scripter(">w2 ", -4, 0) == 99) {glob_script_mem.web_pages[3] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[3] = 0;}
-  if (Run_Scripter(">w3 ", -4, 0) == 99) {glob_script_mem.web_pages[4] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[4] = 0;}
+  if (Run_Scripter1(">W", -2, 0) == 99) {glob_script_mem.web_pages[0] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[0] = 0;}
+  if (Run_Scripter1(">w ", -3, 0) == 99) {glob_script_mem.web_pages[1] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[1] = 0;}
+  if (Run_Scripter1(">w1 ", -4, 0) == 99) {glob_script_mem.web_pages[2] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[2] = 0;}
+  if (Run_Scripter1(">w2 ", -4, 0) == 99) {glob_script_mem.web_pages[3] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[3] = 0;}
+  if (Run_Scripter1(">w3 ", -4, 0) == 99) {glob_script_mem.web_pages[4] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[4] = 0;}
 }
 
 #endif // USE_WEBSERVER
@@ -6424,7 +6720,7 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
 void Script_Check_Hue(String *response) {
   if (!bitRead(Settings->rule_enabled, 0)) return;
 
-  uint8_t hue_script_found = Run_Scripter(">H", -2, 0);
+  uint8_t hue_script_found = Run_Scripter1(">H", -2, 0);
   if (hue_script_found!=99) return;
 
   char tmp[256];
@@ -6685,7 +6981,8 @@ void Script_Handle_Hue(String *path) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_APP_JSON, response);
   if (resp) {
-    Run_Scripter(">E", 2, 0);
+    //Run_Scripter(">E", 2, 0);
+    if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
   }
 }
 #endif  // hue interface
@@ -6723,7 +7020,7 @@ bool Script_SubCmd(void) {
     *cp = 0;
   }
   //toLog(cmdbuff);
-  uint32_t res = Run_Scripter(cmdbuff, tlen + 1, 0);
+  uint32_t res = Run_Scripter1(cmdbuff, tlen + 1, 0);
   //AddLog(LOG_LEVEL_INFO,">>%d",res);
   if (res) {
     return false;
@@ -6745,7 +7042,7 @@ void execute_script(char *script) {
   char *svd_sp = glob_script_mem.scriptptr;
   strcat(script, "\n#");
   glob_script_mem.scriptptr = script;
-  Run_Scripter(">", 1, 0);
+  Run_Scripter1(">", 1, 0);
   glob_script_mem.scriptptr = svd_sp;
 }
 #define D_CMND_SCRIPT "Script"
@@ -7396,25 +7693,9 @@ char buff[512];
 
 #ifdef SCRIPT_FULL_WEBPAGE
 const char HTTP_WEB_FULL_DISPLAY[] PROGMEM =
-  "<p><form action='" "sfd%1d" "' method='get'><button>" "%s" "</button></form></p>";
+  "<p><form action='sfd%1d' method='get'><button>%s</button></form></p>";
 
 const char HTTP_SCRIPT_FULLPAGE1[] PROGMEM =
-  "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
-  "<head>"
-  "<meta charset='utf-8'>"
-  "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\"/>"
-  "<title>%s - %s</title>"
-  "<script>"
-  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
-  "function eb(s){"
-    "return document.getElementById(s);"  // Alias to save code space
-  "}"
-  "function qs(s){"                       // Alias to save code space
-    "return document.querySelector(s);"
-  "}"
-  "function wl(f){"                       // Execute multiple window.onload
-    "window.addEventListener('load',f);"
-  "}"
     "var rfsh=1;"
     "function la(p){"
       "var a='';"
@@ -7444,6 +7725,13 @@ const char HTTP_SCRIPT_FULLPAGE2[] PROGMEM =
     "}"
     "function siva(par,ivar){"
       "rfsh=1;"
+      "la('&sv='+ivar+'_'+par);"
+      "rfsh=0;"
+    "}"
+    "function sivat(par,ivar){"
+      "rfsh=1;"
+      // remove : from time string
+      "par = par.slice(0, 2) + par.slice(3);"
       "la('&sv='+ivar+'_'+par);"
       "rfsh=0;"
     "}"
@@ -7496,13 +7784,12 @@ void ScriptFullWebpage(uint8_t page) {
   }
 
   WSContentBegin(200, CT_HTML);
-  const char *title = "Full Screen";
-  WSContentSend_P(HTTP_SCRIPT_FULLPAGE1, SettingsText(SET_DEVICENAME), title, page , fullpage_refresh);
+  WSContentSend_P(HTTP_HEADER1, PSTR(D_HTML_LANGUAGE), SettingsText(SET_DEVICENAME), PSTR("Full Screen"));
+  WSContentSend_P(HTTP_SCRIPT_FULLPAGE1, page , fullpage_refresh);
   WSContentSend_P(HTTP_SCRIPT_FULLPAGE2, fullpage_refresh);
   //WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
 
   //WSContentSendStyle();
-
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'>"));
   ScriptWebShow('w', page);
@@ -7544,10 +7831,14 @@ void Script_Check_HTML_Setvars(void) {
       *cp1 = '\"';
       *(cp1 + tlen +1 ) = '\"';
     }
-
     //toLog(cmdbuf);
     execute_script(cmdbuf);
-    Run_Scripter(">E", 2, 0);
+
+#ifdef USE_HTML_CALLBACK
+    if (glob_script_mem.html_script) Run_Scripter1(glob_script_mem.html_script, 0, 0);
+#else
+    if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
+#endif
   }
 }
 
@@ -7576,24 +7867,23 @@ const char SCRIPT_MSG_SLIDER[] PROGMEM =
   "<div><input type='range' min='%d' max='%d' value='%d' onchange='seva(value,\"%s\")'></div>";
 
 const char SCRIPT_MSG_CHKBOX[] PROGMEM =
-  "<div><center><label><b>%s</b><input type='checkbox' %s onchange='seva(%d,\"%s\")'></label></div>";
+  "%s<label><b>%s</b><input type='checkbox' %s onchange='seva(%d,\"%s\")'></label>";
 
 const char SCRIPT_MSG_PULLDOWNa[] PROGMEM =
-  "<div><center><label for=\'pu_%s\'>%s:</label><select style='width:200px' name='pu%d' id='pu_%s' onchange='seva(value,\"%s\")'>";
+  "%s<label for=\'pu_%s\'>%s</label><select style='width:%dpx' name='pu%d' id='pu_%s' onchange='seva(value,\"%s\")'>";
 const char SCRIPT_MSG_PULLDOWNb[] PROGMEM =
   "<option %s value='%d'>%s</option>";
 const char SCRIPT_MSG_PULLDOWNc[] PROGMEM =
-  "</select></div>";
+  "</select>";
 
 const char SCRIPT_MSG_TEXTINP[] PROGMEM =
-  "<div><center><label><b>%s</b><input type='text'  value='%s' style='width:200px'  onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label></div>";
+  "%s<label><b>%s</b><input type='text'  value='%s' style='width:%dpx'  onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label>";
 
 const char SCRIPT_MSG_TEXTINP_U[] PROGMEM =
-  "<div><center><label><b>%s</b><input type='%s'  value='%s' min='%s' max='%s' style='width:200px'  onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label></div>";
-
+  "%s<label><b>%s</b><input type='%s'  value='%s' min='%s' max='%s' style='width:%dpx'  onfocusin='pr(0)' onfocusout='pr(1)' onchange='%s(value,\"%s\")'></label>";
 
 const char SCRIPT_MSG_NUMINP[] PROGMEM =
-  "<div><center><label><b>%s</b><input  min='%s' max='%s' step='%s' value='%s' type='number' style='width:200px' onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label></div>";
+  "%s<label><b>%s</b><input  min='%s' max='%s' step='%s' value='%s' type='number' style='width:%dpx' onfocusin='pr(0)' onfocusout='pr(1)' onchange='siva(value,\"%s\")'></label>";
 
 
 #ifdef USE_GOOGLE_CHARTS
@@ -7648,7 +7938,7 @@ const char SCRIPT_MSG_GOPT3[] PROGMEM =
 
 const char SCRIPT_MSG_GOPT4[] PROGMEM =
 //"hAxis:{minValue:new Date(0,1,1,0,0),maxValue:new Date(0,1,2,0,0),format:'HH:mm'}";
-"hAxis:{format:'HH:mm',minValue:new Date(0,0,0,0,0),maxValue:new Date(0,0,0,23,59)},theme: 'maximized'";
+"hAxis:{format:'HH:mm',minValue:new Date(0,0,0,0,0),maxValue:new Date(0,0,0,23,59)},theme: 'maximized',timeline:{tooltipDateFormat:'HH:mm'},";
 
 const char SCRIPT_MSG_GOPT5[] PROGMEM =
 "new Date(0,0,0,%d,%d)";
@@ -7732,6 +8022,32 @@ char *gc_send_labels(char *lp,uint32_t anum) {
   return lp;
 }
 
+const char *GC_type(uint8_t type) {
+  switch (type) {
+    case 'l':
+      return PSTR("LineChart");
+    case 'b':
+      return PSTR("BarChart");
+    case 'p':
+      return PSTR("PieChart");
+    case 'g':
+      return PSTR("Gauge");
+    case 't':
+      return PSTR("Table");
+    case 'T':
+      return PSTR("Timeline");
+    case 'h':
+      return PSTR("Histogram");
+    case 'c':
+      return PSTR("ColumnChart");
+    case 'C':
+      return PSTR("ComboChart");
+    default:
+      return PSTR("*");
+  }
+}
+
+
 #endif // USE_GOOGLE_CHARTS
 
 void ScriptGetVarname(char *nbuf,char *sp, uint32_t blen) {
@@ -7745,45 +8061,67 @@ uint32_t cnt;
   nbuf[cnt] = 0;
 }
 
+#define WSO_NOCENTER 1
+#define WSO_NODIV 2
+#define WSO_FORCEPLAIN 4
+#define WSO_STOP_DIV 0x80
+
+void WCS_DIV(uint8_t flag) {
+  if (flag & WSO_NODIV) return;
+  if (flag & WSO_STOP_DIV) {
+    WSContentSend_PD(SCRIPT_MSG_BUT_STOP);
+  } else {
+    WSContentSend_PD(SCRIPT_MSG_BUT_START);
+  }
+}
+
+
+uint8_t specopt;
+uint8_t chartindex;
+uint8_t google_libs;
+#ifdef USE_GOOGLE_CHARTS
+char gs_ctype;
+#endif
+
 void ScriptWebShow(char mc, uint8_t page) {
-  uint8_t web_script;
+  float cv_max = 0;
+  float cv_inc = 0;
+  float *cv_count = 0;
+  char *cv_ptr;
+
+  //uint8_t web_script;
   glob_script_mem.web_mode = mc;
-  if (mc=='w' || mc=='x') {
-    if (mc=='x') {
-      mc='$';
+  if (mc == 'w' || mc == 'x') {
+    if (mc == 'x') {
+      mc = '$';
     }
-    //web_script = Run_Scripter(">w", -2, 0);
     glob_script_mem.section_ptr = glob_script_mem.web_pages[page];
   } else {
-    //web_script = Run_Scripter(">W", -2, 0);
     glob_script_mem.section_ptr = glob_script_mem.web_pages[0];
   }
 
-  //if (web_script==99) {
   if (glob_script_mem.section_ptr) {
-    char tmp[256];
-    uint8_t optflg = 0;
-    uint8_t chartindex = 1;
-    uint8_t google_libs = 0;
+
+    chartindex = 1;
+    google_libs = 0;
     char *lp = glob_script_mem.section_ptr + 2;
-    if (mc=='w') {
+    if (mc == 'w') {
       while (*lp) {
-        if (*lp=='\n') break;
+        if (*lp == '\n') break;
         lp++;
       }
     }
-    char *cv_ptr;
-    float cv_max=0;
-    float cv_inc=0;
-    float *cv_count=0;
+
+    specopt = 0;
     while (lp) {
-      while (*lp==SCRIPT_EOL) {
+      while (*lp == SCRIPT_EOL) {
        lp++;
       }
       if (!*lp || *lp=='#' || *lp=='>') {
           break;
       }
-      if (*lp!=';') {
+      if (*lp != ';') {
+
         // send this line to web
         SCRIPT_SKIP_SPACES
         if (!strncmp(lp, "%for ", 5)) {
@@ -7791,7 +8129,7 @@ void ScriptWebShow(char mc, uint8_t page) {
           struct T_INDEX ind;
           uint8_t vtype;
           lp = isvar(lp + 5, &vtype, &ind, 0, 0, 0);
-          if ((vtype!=VAR_NV) && (vtype&STYPE)==0) {
+          if ((vtype != VAR_NV) && (vtype&STYPE) == 0) {
             uint16_t index = glob_script_mem.type[ind.index].index;
             cv_count = &glob_script_mem.fvars[index];
             SCRIPT_SKIP_SPACES
@@ -7801,7 +8139,7 @@ void ScriptWebShow(char mc, uint8_t page) {
             SCRIPT_SKIP_SPACES
             lp = GetNumericArgument(lp , OPER_EQU, &cv_inc, 0);
             cv_ptr = lp;
-            goto nextwebline;
+            //goto nextwebline;
           } else {
             continue;
           }
@@ -7809,638 +8147,728 @@ void ScriptWebShow(char mc, uint8_t page) {
           if (cv_count) {
             // for next loop
             *cv_count += cv_inc;
-            if (*cv_count<=cv_max) {
+            if (*cv_count <= cv_max) {
               lp = cv_ptr;
             } else {
               cv_count = 0;
-              goto nextwebline;
+              //goto nextwebline;
             }
           } else {
-            goto nextwebline;
+            //goto nextwebline;
           }
         } else if (!strncmp(lp, "%=#", 3)) {
           // subroutine
+          uint8_t sflg = specopt;
+          specopt = WSO_FORCEPLAIN;
           lp = scripter_sub(lp + 1, 0);
-          goto nextwebline;
-        }
-
-        Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
-        char *lin = tmp;
-        if ((!mc && (*lin!='$')) || (mc=='w' && (*lin!='$'))) {
-        /*if (!mc || mc=='w') {
-          if (*lin=='$') {
-            lin++;
-            if (!strncmp(lin,"gc(", 3)) {
-              goto exgc;
-            }
-          }*/
-          // normal web section
-          if (*lin=='@') {
-            lin++;
-            optflg = 1;
-          } else {
-            optflg = 0;
-          }
-          // check for input elements
-          // prescan for html tags
-          /*
-          restart:
-          //if (*lp == 0 || *lp == SCRIPT_EOL)
-          if (*lin == '<') {
-            char *cp = strchr(lin, '>');
-            if (cp) {
-              char svd = *(cp + 1);
-              *(cp + 1) = 0;
-              WSContentSend_PD("%s", lin);
-              *(cp + 1) = svd;
-              lin = cp + 1;
-            }
-          }*/
-
-          if (!strncmp(lin, "sl(", 3)) {
-            // insert slider sl(min max var left mid right)
-            char *lp = lin;
-            float min;
-            lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
-            SCRIPT_SKIP_SPACES
-            // arg2
-            float max;
-            lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
-            SCRIPT_SKIP_SPACES
-            float val;
-            char *slp = lp;
-            lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
-            SCRIPT_SKIP_SPACES
-
-            char vname[16];
-            ScriptGetVarname(vname, slp, sizeof(vname));
-
-            char left[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, left, 0);
-            SCRIPT_SKIP_SPACES
-            char mid[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, mid, 0);
-            SCRIPT_SKIP_SPACES
-            char right[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, right, 0);
-            SCRIPT_SKIP_SPACES
-
-            WSContentSend_PD(SCRIPT_MSG_SLIDER, left,mid, right, (uint32_t)min, (uint32_t)max, (uint32_t)val, vname);
-
-          } else if (!strncmp(lin, "ck(", 3)) {
-            char *lp = lin + 3;
-            char *slp = lp;
-            float val;
-            lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
-            SCRIPT_SKIP_SPACES
-
-            char vname[16];
-            ScriptGetVarname(vname, slp, sizeof(vname));
-
-            char label[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, label, 0);
-            const char *cp;
-            uint8_t uval;
-            if (val>0) {
-              cp = "checked='checked'";
-              uval = 0;
-            } else {
-              cp = "";
-              uval = 1;
-            }
-            WSContentSend_PD(SCRIPT_MSG_CHKBOX, label, (char*)cp, uval, vname);
-          } else if (!strncmp(lin, "pd(", 3)) {
-            // pull down
-            char *lp = lin + 3;
-            char *slp = lp;
-            float val;
-            lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
-            SCRIPT_SKIP_SPACES
-
-            char vname[16];
-            ScriptGetVarname(vname, slp, sizeof(vname));
-
-            SCRIPT_SKIP_SPACES
-            char pulabel[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, pulabel, 0);
-
-            WSContentSend_PD(SCRIPT_MSG_PULLDOWNa, vname, pulabel, 1, vname, vname);
-
-            // get pu labels
-            uint8_t index = 1;
-            while (*lp) {
-              SCRIPT_SKIP_SPACES
-              lp = GetStringArgument(lp, OPER_EQU, pulabel, 0);
-              if (index == 1 && pulabel[0] == '#') {
-                // number range
-                char *cp = &pulabel[1];
-                uint8_t from = strtol(cp, &cp, 10);
-                uint8_t to = from;
-                if (*cp == '-') {
-                  cp++;
-                  to = strtol(cp, &cp, 10);
-                }
-                for (uint32_t cnt = from; cnt <= to; cnt++) {
-                  sprintf(pulabel, "%d", cnt);
-                  if (val == index) {
-                    cp = (char*)"selected";
-                  } else {
-                    cp = (char*)"";
-                  }
-                  WSContentSend_PD(SCRIPT_MSG_PULLDOWNb, cp, index, pulabel);
-                  index++;
-                }
-                break;
-              }
-
-              char *cp;
-              if (val == index) {
-                cp = (char*)"selected";
-              } else {
-                cp = (char*)"";
-              }
-              WSContentSend_PD(SCRIPT_MSG_PULLDOWNb, cp, index, pulabel);
-              SCRIPT_SKIP_SPACES
-              if (*lp == ')') {
-                lp++;
-                break;
-              }
-              index++;
-            }
-            WSContentSend_PD(SCRIPT_MSG_PULLDOWNc);
-          } else if (!strncmp(lin, "bu(", 3)) {
-            char *lp = lin + 3;
-            uint8_t bcnt = 0;
-            char *found = lin;
-            while (bcnt<4) {
-              found = strstr(found, "bu(");
-              if (!found) break;
-              found += 3;
-              bcnt++;
-            }
-            uint8_t proz = 100 / bcnt;
-            if (!optflg && bcnt>1) proz -= 2;
-            if (optflg) WSContentSend_PD(SCRIPT_MSG_BUT_START_TBL);
-            else WSContentSend_PD(SCRIPT_MSG_BUT_START);
-            for (uint32_t cnt = 0; cnt < bcnt; cnt++) {
-              float val;
-              char *slp = lp;
-              lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
-              SCRIPT_SKIP_SPACES
-
-              char vname[16];
-              ScriptGetVarname(vname, slp, sizeof(vname));
-
-              SCRIPT_SKIP_SPACES
-              char ontxt[SCRIPT_MAXSSIZE];
-              lp = GetStringArgument(lp, OPER_EQU, ontxt, 0);
-              SCRIPT_SKIP_SPACES
-              char offtxt[SCRIPT_MAXSSIZE];
-              lp = GetStringArgument(lp, OPER_EQU, offtxt, 0);
-
-              char *cp;
-              uint8_t uval;
-              if (val>0) {
-                cp = ontxt;
-                uval = 0;
-              } else {
-                cp = offtxt;
-                uval = 1;
-              }
-              if (bcnt>1 && cnt==bcnt-1) {
-                if (!optflg) proz += 2;
-              }
-              if (!optflg) {
-                WSContentSend_PD(SCRIPT_MSG_BUTTONa, proz, uval, vname, cp);
-              } else {
-                WSContentSend_PD(SCRIPT_MSG_BUTTONa_TBL, proz, uval, vname, cp);
-              }
-              if (bcnt>1 && cnt<bcnt-1) {
-                if (!optflg) WSContentSend_PD(SCRIPT_MSG_BUTTONb, 2);
-              }
-              lp += 4;
-            }
-            if (optflg) WSContentSend_PD(SCRIPT_MSG_BUT_STOP_TBL);
-            else WSContentSend_PD(SCRIPT_MSG_BUT_STOP);
-
-          } else if (!strncmp(lin, "tx(", 3)) {
-            char *lp = lin + 3;
-            char *slp = lp;
-            char str[SCRIPT_MAXSSIZE];
-            lp = ForceStringVar(lp, str);
-            SCRIPT_SKIP_SPACES
-            char label[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, label, 0);
-            char vname[16];
-            ScriptGetVarname(vname, slp, sizeof(vname));
-            SCRIPT_SKIP_SPACES
-            if (*lp != ')') {
-              char type[SCRIPT_MAXSSIZE];
-              lp = GetStringArgument(lp, OPER_EQU, type, 0);
-              SCRIPT_SKIP_SPACES
-              // also requires min max values
-              char min[SCRIPT_MAXSSIZE];
-              lp = GetStringArgument(lp, OPER_EQU, min, 0);
-              SCRIPT_SKIP_SPACES
-              char max[SCRIPT_MAXSSIZE];
-              lp = GetStringArgument(lp, OPER_EQU, max, 0);
-              SCRIPT_SKIP_SPACES
-              WSContentSend_PD(SCRIPT_MSG_TEXTINP_U, label, type, str, min, max, vname);
-            } else {
-              WSContentSend_PD(SCRIPT_MSG_TEXTINP, label, str, vname);
-            }
-            lp++;
-            //goto restart;
-
-          } else if (!strncmp(lin, "nm(", 3)) {
-            char *lp = lin;
-            float min;
-            lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
-            SCRIPT_SKIP_SPACES
-            float max;
-            lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
-            SCRIPT_SKIP_SPACES
-            float step;
-            lp = GetNumericArgument(lp, OPER_EQU, &step, 0);
-            SCRIPT_SKIP_SPACES
-            float val;
-            char *slp = lp;
-            lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
-            SCRIPT_SKIP_SPACES
-            char vname[16];
-            ScriptGetVarname(vname, slp, sizeof(vname));
-
-            char label[SCRIPT_MAXSSIZE];
-            lp = GetStringArgument(lp, OPER_EQU, label, 0);
-
-            char vstr[16],minstr[16],maxstr[16],stepstr[16];
-            dtostrfd(val, 4, vstr);
-            dtostrfd(min, 4, minstr);
-            dtostrfd(max, 4, maxstr);
-            dtostrfd(step, 4, stepstr);
-            WSContentSend_PD(SCRIPT_MSG_NUMINP, label, minstr, maxstr, stepstr, vstr, vname);
-
-          } else {
-            if (mc=='w') {
-              WSContentSend_PD(PSTR("%s"), lin);
-            } else {
-              if (optflg) {
-                WSContentSend_PD(PSTR("<div>%s</div>"), lin);
-              } else {
-                WSContentSend_PD(PSTR("{s}%s{e}"), lin);
-              }
-            }
-          }
-          // end standard web interface
+          specopt = sflg;
+          //goto nextwebline;
         } else {
-          //  main section interface
-          if (*lin==mc) {
-
-#ifdef USE_GOOGLE_CHARTS
-            lin++;
-exgc:
-            char *lp;
-            if (!strncmp(lin, "gc(", 3)) {
-                // get google table
-              lp = lin + 3;
-              SCRIPT_SKIP_SPACES
-              const char *type;
-              const char *func;
-              char options[312];
-              uint8_t nanum = MAX_GARRAY;
-              uint8_t y2f = 0;
-              uint8_t tonly = 0;
-              char ctype;
-              ctype = *lp;
-              lp++;
-              if (!(google_libs & GLIBS_MAIN)) {
-                google_libs |= GLIBS_MAIN;
-                WSContentSend_PD(SCRIPT_MSG_GTABLE);
-              }
-              switch (ctype) {
-                  case 'l':
-                    type = PSTR("LineChart");
-                    break;
-                  case 'b':
-                    type = PSTR("BarChart");
-                    break;
-                  case 'p':
-                    type = PSTR("PieChart");
-                    break;
-                  case 'g':
-                    type = PSTR("Gauge");
-                    if (!(google_libs & GLIBS_GAUGE)) {
-                      google_libs |= GLIBS_GAUGE;
-                      WSContentSend_PD(SCRIPT_MSG_GAUGE);
-                    }
-                    break;
-                  case 't':
-                    type = PSTR("Table");
-                    if (!(google_libs & GLIBS_TABLE)) {
-                      google_libs |= GLIBS_TABLE;
-                      WSContentSend_PD(SCRIPT_MSG_TABLE);
-                    }
-                    break;
-                  case 'T':
-                    type = PSTR("Timeline");
-                    if (!(google_libs & GLIBS_TIMELINE)) {
-                      google_libs |= GLIBS_TIMELINE;
-                      WSContentSend_PD(SCRIPT_MSG_TIMELINE);
-                    }
-                    break;
-                  case 'h':
-                    type = PSTR("Histogram");
-                    break;
-                  case 'c':
-                    type = PSTR("ColumnChart");
-                    break;
-                  case 'C':
-                    type = PSTR("ComboChart");
-                    break;
-                  case 'e':
-                    WSContentSend_PD(SCRIPT_MSG_GTABLEbx, type, chartindex);
-                    chartindex++;
-                    goto nextwebline;
-                    break;
-                  default:
-                    // error
-                    goto nextwebline;
-                    break;
-              }
-              if (ctype=='l' && *lp=='f') {
-                lp++;
-                func = PSTR(",curveType:'function'");
-              } else {
-                func = "";
-              }
-              if (*lp=='2') {
-                lp++;
-                nanum = 2;
-                y2f = 1;
-              }
-              if (*lp=='t') {
-                lp++;
-                tonly = 1;
-              }
-              SCRIPT_SKIP_SPACES
-
-              //Serial.printf("type %d\n",ctype);
-
-              float *arrays[MAX_GARRAY];
-              uint8_t anum = 0;
-              uint16_t entries = 0;
-              uint16_t ipos = 0;
-              lp = gc_get_arrays(lp, &arrays[0], &anum, &entries, &ipos);
-
-              if (anum>nanum) {
-                goto nextwebline;
-              }
-              // we know how many arrays and the number of entries
-              //Serial.printf("arrays %d\n",anum);
-              //Serial.printf("entries %d\n",entries);
-              if (ctype=='T') {
-                if (anum && !(entries & 1)) {
-                  WSContentSend_PD(SCRIPT_MSG_GTABLEa);
-                  char label[SCRIPT_MAXSSIZE];
-                  lp = GetStringArgument(lp, OPER_EQU, label, 0);
-                  SCRIPT_SKIP_SPACES
-                  char lab2[SCRIPT_MAXSSIZE];
-                  lab2[0] = 0;
-                  if (*lp!=')') {
-                    lp = GetStringArgument(lp, OPER_EQU, lab2, 0);
-                    WSContentSend_PD(SCRIPT_MSG_GTABLEe);
-                  } else {
-                    WSContentSend_PD(SCRIPT_MSG_GTABLEd);
-                  }
-
-                  for (uint32_t ind = 0; ind < anum; ind++) {
-                    char lbl[16];
-                    float *fp = arrays[ind];
-                    GetTextIndexed(lbl, sizeof(lbl), ind, label);
-                    char lbl2[16];
-                    if (lab2[0]) {
-                      GetTextIndexed(lbl2, sizeof(lbl2), ind, lab2);
-                    }
-                    uint32_t ventries = 0;
-                    for (uint32_t cnt = 0; cnt < entries; cnt += 2) {
-                      if (fp[cnt]!=0 && fp[cnt+1]!=0) {
-                        ventries+=2;
-                      } else {
-                        break;
-                      }
-                    }
-
-                    for (uint32_t cnt = 0; cnt < ventries; cnt += 2) {
-                      WSContentSend_PD("['%s',",lbl);
-                      if (lab2[0]) {
-                        WSContentSend_PD("'%s',",lbl2);
-                      }
-                      uint32_t time = fp[cnt];
-                      WSContentSend_PD(SCRIPT_MSG_GOPT5, time / 60, time % 60);
-                      WSContentSend_PD(",");
-                      time = fp[cnt + 1];
-                      WSContentSend_PD(SCRIPT_MSG_GOPT5, time / 60, time % 60);
-                      WSContentSend_PD("]");
-                      if (cnt < ventries - 2) { WSContentSend_PD(","); }
-                    }
-                    if (ind < anum - 1) {
-                      if (ventries) {
-                        WSContentSend_PD(",");
-                      }
-                    }
-                  }
-                  snprintf_P(options,sizeof(options), SCRIPT_MSG_GOPT4);
-                }
-              } else {
-                // we need to fetch the labels now
-                WSContentSend_PD(SCRIPT_MSG_GTABLEa);
-                lp = gc_send_labels(lp, anum);
-
-                // now we have to export the values
-                // fetch label part only once in combo string
-                char label[SCRIPT_MAXSSIZE];
-                lp = GetStringArgument(lp, OPER_EQU, label, 0);
-                SCRIPT_SKIP_SPACES
-
-                uint8_t asflg = 1;
-                if (label[0] == '&') {
-                  strcpy(label, &label[1]);
-                  asflg = 0;
-                }
-
-                int16_t divflg = 1;
-                int16_t todflg = -1;
-                if (!strncmp(label, "cnt", 3)) {
-                  char *cp = &label[3];
-                  //todflg=atoi(&label[3]);
-                  todflg = strtol(cp, &cp, 10);
-                  if (todflg >= entries) todflg = entries - 1;
-                  if (todflg < 0) todflg = 0;
-                  if (*cp=='/') {
-                    cp++;
-                    divflg = strtol(cp, &cp, 10);
-                  }
-                } else {
-                  char *lp = label;
-                  if (!strncmp(label, "wdh:", 4)) {
-                   // one week hours
-                   todflg = -2;
-                   lp += 4;
-                  }
-                  uint16 segments = 1;
-                  for (uint32_t cnt = 0; cnt < strlen(lp); cnt++) {
-                    if (lp[cnt] == '|') {
-                      segments++;
-                    }
-                  }
-                  divflg = entries / segments;
-                }
-
-                uint32_t aind = ipos;
-                if (aind >= entries) aind = entries - 1;
-                for (uint32_t cnt = 0; cnt < entries; cnt++) {
-                  WSContentSend_PD("['");
-                  char lbl[16];
-                  if (todflg >= 0) {
-                    sprintf(lbl, "%d:%02d", todflg / divflg, (todflg % divflg) * (60 / divflg) );
-                    todflg++;
-                    if (todflg >= entries) {
-                      todflg = 0;
-                    }
-                  } else {
-                    if (todflg == -1) {
-                      GetTextIndexed(lbl, sizeof(lbl), aind / divflg, label);
-                    } else {
-                      // day,hours,mins
-                      GetTextIndexed(lbl, sizeof(lbl), aind / divflg, label + 4);
-                      sprintf(lbl, "%s-%02d", lbl, aind % divflg);
-                    }
-                  }
-                  WSContentSend_PD(lbl);
-                  WSContentSend_PD("',");
-                  for (uint32_t ind = 0; ind < anum; ind++) {
-                    char acbuff[32];
-                    float *fp = arrays[ind];
-                    float fval;
-                    if (asflg) {
-                      fval = fp[aind];
-                    } else {
-                      fval = fp[cnt];
-                    }
-                    f2char(fval, glob_script_mem.script_dprec, glob_script_mem.script_lzero, acbuff);
-                    WSContentSend_PD("%s", acbuff);
-                    if (ind < anum - 1) { WSContentSend_PD(","); }
-                  }
-                  WSContentSend_PD("]");
-                  if (cnt < entries - 1) { WSContentSend_PD(","); }
-                  aind++;
-                  if (aind >= entries) {
-                    aind = 0;
-                  }
-                }
-                // table complete
-                if (tonly) {
-                  WSContentSend_PD("]);");
-                  goto nextwebline;
-                }
-                // get header
-                char header[SCRIPT_MAXSSIZE];
-                lp = GetStringArgument(lp, OPER_EQU, header, 0);
-                SCRIPT_SKIP_SPACES
-
-                switch (ctype) {
-                  case 't':
-                    snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT2);
-                    break;
-                  default:
-                    snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT1, header);
-                    break;
-                }
-                // check for 2 axis option
-                if (y2f) {
-                  // 2 y axes variant
-                  SCRIPT_SKIP_SPACES
-                  float max1;
-                  lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
-                  SCRIPT_SKIP_SPACES
-                  float max2;
-                  lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
-                  SCRIPT_SKIP_SPACES
-                  char maxstr1[16];
-                  dtostrfd(max1, 3, maxstr1);
-                  char maxstr2[16];
-                  dtostrfd(max2, 3, maxstr2);
-                  //snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, (uint32_t)max1, (uint32_t)max2, func);
-                  snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, maxstr1, maxstr2, func);
-                } else {
-                  SCRIPT_SKIP_SPACES
-                  if (ctype!='g') {
-                    if (*lp!=')') {
-                      float max1;
-                      lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
-                      SCRIPT_SKIP_SPACES
-                      float max2;
-                      lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
-                      SCRIPT_SKIP_SPACES
-                      char maxstr1[16];
-                      dtostrfd(max1, 3, maxstr1);
-                      char maxstr2[16];
-                      dtostrfd(max2, 3, maxstr2);
-                      //nprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, (uint32_t)max1, (uint32_t)max2, func);
-                      snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, maxstr1, maxstr2, func);
-                    }
-                  }
-                }
-
-                if (ctype=='g') {
-                  float yellowFrom;
-                  lp = GetNumericArgument(lp, OPER_EQU, &yellowFrom, 0);
-                  SCRIPT_SKIP_SPACES
-                  float redFrom;
-                  lp = GetNumericArgument(lp, OPER_EQU, &redFrom, 0);
-                  SCRIPT_SKIP_SPACES
-                  float maxValue;
-                  lp = GetNumericArgument(lp, OPER_EQU, &maxValue, 0);
-                  SCRIPT_SKIP_SPACES
-                  float redTo = maxValue;
-                  float yellowTo = redFrom;
-                  snprintf_P(options, sizeof(options), SCRIPT_MSG_GAUGEOPT, (uint32_t)maxValue, (uint32_t)redFrom, (uint32_t)redTo,
-                  (uint32_t)yellowFrom, (uint32_t)yellowTo);
-                }
-              }
-              WSContentSend_PD(SCRIPT_MSG_GTABLEb, options);
-              WSContentSend_PD(SCRIPT_MSG_GTABLEbx, type, chartindex);
-              chartindex++;
-            } else {
-              WSContentSend_PD(PSTR("%s"), lin);
-            }
-#else
-            lin++;
-            WSContentSend_PD(PSTR("%s"), lin);
-          } else {
-          //  WSContentSend_PD(PSTR("%s"),lin);
-#endif //USE_GOOGLE_CHARTS
-          }
+          web_send_line(mc, lp);
         }
-      }
 nextwebline:
-      if (*lp==SCRIPT_EOL) {
-        lp++;
-      } else {
-        lp = strchr(lp, SCRIPT_EOL);
-        if (!lp) break;
-        lp++;
+        if (*lp == SCRIPT_EOL) {
+          lp++;
+        } else {
+          lp = strchr(lp, SCRIPT_EOL);
+          if (!lp) break;
+          lp++;
+        }
       }
     }
   }
 }
+
+char *web_send_line(char mc, char *lp1) {
+char tmp[256];
+char center[10];
+uint8_t optflg = 0;
+const char *gc_str;
+
+  Replace_Cmd_Vars(lp1, 1, tmp, sizeof(tmp));
+
+  char *lin = tmp;
+  if ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) {
+    // normal web section
+    if (*lin == '@') {
+      lin++;
+      optflg = 1;
+    } else {
+      optflg = 0;
+    }
+
+    if (specopt & WSO_NOCENTER) {
+      center[0] = 0;
+    } else {
+      strcpy_P(center, PSTR("<center>"));
+    }
+
+    if (!strncmp(lin, "so(", 3)) {
+      // set options
+      char *lp = lin;
+      float var;
+      lp = GetNumericArgument(lp + 3, OPER_EQU, &var, 0);
+      SCRIPT_SKIP_SPACES
+      lp++;
+      specopt = var;
+      // bit 0 = center mode
+      if (specopt & WSO_NOCENTER) {
+        center[0] = 0;
+      } else {
+        strcpy_P(center, PSTR("<center>"));
+      }
+    } else if (!strncmp(lin, "sl(", 3)) {
+      // insert slider sl(min max var left mid right)
+      char *lp = lin;
+      float min;
+      lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
+      SCRIPT_SKIP_SPACES
+      // arg2
+      float max;
+      lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
+      SCRIPT_SKIP_SPACES
+      float val;
+      char *slp = lp;
+      lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+      SCRIPT_SKIP_SPACES
+
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+
+      char left[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, left, 0);
+      SCRIPT_SKIP_SPACES
+      char mid[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, mid, 0);
+      SCRIPT_SKIP_SPACES
+      char right[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, right, 0);
+      SCRIPT_SKIP_SPACES
+
+      WSContentSend_PD(SCRIPT_MSG_SLIDER, left,mid, right, (uint32_t)min, (uint32_t)max, (uint32_t)val, vname);
+      lp++;
+
+    } else if (!strncmp(lin, "ck(", 3)) {
+      char *lp = lin + 3;
+      char *slp = lp;
+      float val;
+      lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+      SCRIPT_SKIP_SPACES
+
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+
+      char label[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, label, 0);
+      const char *cp;
+      uint8_t uval;
+      if (val>0) {
+        cp = "checked='checked'";
+        uval = 0;
+      } else {
+        cp = "";
+        uval = 1;
+      }
+      WCS_DIV(specopt);
+      WSContentSend_PD(SCRIPT_MSG_CHKBOX, center, label, (char*)cp, uval, vname);
+      WCS_DIV(specopt | WSO_STOP_DIV);
+      lp++;
+    } else if (!strncmp(lin, "pd(", 3)) {
+      // pull down
+      char *lp = lin + 3;
+      char *slp = lp;
+      float val;
+      lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+      SCRIPT_SKIP_SPACES
+
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+
+      SCRIPT_SKIP_SPACES
+      char pulabel[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, pulabel, 0);
+      SCRIPT_SKIP_SPACES
+
+      glob_script_mem.glob_error = 0;
+      uint16_t tsiz = 200;
+      float fvar;
+      char *slp1 = lp;
+      lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+      if (!glob_script_mem.glob_error) {
+        tsiz = fvar;
+      } else {
+        lp = slp1;
+      }
+      WCS_DIV(specopt);
+      WSContentSend_PD(SCRIPT_MSG_PULLDOWNa, center, vname, pulabel, tsiz, 1, vname, vname);
+
+      // get pu labels
+      uint8_t index = 1;
+      while (*lp) {
+        SCRIPT_SKIP_SPACES
+        lp = GetStringArgument(lp, OPER_EQU, pulabel, 0);
+        if (index == 1 && pulabel[0] == '#') {
+          // number range
+          char *cp = &pulabel[1];
+          uint8_t from = strtol(cp, &cp, 10);
+          uint8_t to = from;
+          if (*cp == '-') {
+            cp++;
+            to = strtol(cp, &cp, 10);
+          }
+          for (uint32_t cnt = from; cnt <= to; cnt++) {
+            sprintf(pulabel, "%d", cnt);
+            if (val == index) {
+              cp = (char*)"selected";
+            } else {
+              cp = (char*)"";
+            }
+            WSContentSend_PD(SCRIPT_MSG_PULLDOWNb, cp, index, pulabel);
+            index++;
+          }
+          break;
+        }
+
+        char *cp;
+        if (val == index) {
+          cp = (char*)"selected";
+        } else {
+          cp = (char*)"";
+        }
+        WSContentSend_PD(SCRIPT_MSG_PULLDOWNb, cp, index, pulabel);
+        SCRIPT_SKIP_SPACES
+        if (*lp == ')') {
+          lp++;
+          break;
+        }
+        index++;
+      }
+      WSContentSend_PD(SCRIPT_MSG_PULLDOWNc);
+      WCS_DIV(specopt | WSO_STOP_DIV);
+    } else if (!strncmp(lin, "bu(", 3)) {
+      char *lp = lin + 3;
+      uint8_t bcnt = 0;
+      char *found = lin;
+      while (bcnt<4) {
+        found = strstr(found, "bu(");
+        if (!found) break;
+        found += 3;
+        bcnt++;
+      }
+      uint8_t proz = 100 / bcnt;
+      if (!optflg && bcnt>1) proz -= 2;
+      if (optflg) WSContentSend_PD(SCRIPT_MSG_BUT_START_TBL);
+      else WSContentSend_PD(SCRIPT_MSG_BUT_START);
+      for (uint32_t cnt = 0; cnt < bcnt; cnt++) {
+        float val;
+        char *slp = lp;
+        lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+        SCRIPT_SKIP_SPACES
+
+        char vname[16];
+        ScriptGetVarname(vname, slp, sizeof(vname));
+
+        SCRIPT_SKIP_SPACES
+        char ontxt[SCRIPT_MAXSSIZE];
+        lp = GetStringArgument(lp, OPER_EQU, ontxt, 0);
+        SCRIPT_SKIP_SPACES
+        char offtxt[SCRIPT_MAXSSIZE];
+        lp = GetStringArgument(lp, OPER_EQU, offtxt, 0);
+
+        char *cp;
+        uint8_t uval;
+        if (val>0) {
+          cp = ontxt;
+          uval = 0;
+        } else {
+          cp = offtxt;
+          uval = 1;
+        }
+        if (bcnt > 1 && cnt == bcnt - 1) {
+          if (!optflg) proz += 2;
+        }
+        if (!optflg) {
+          WSContentSend_PD(SCRIPT_MSG_BUTTONa, proz, uval, vname, cp);
+        } else {
+          WSContentSend_PD(SCRIPT_MSG_BUTTONa_TBL, proz, uval, vname, cp);
+        }
+        if (bcnt > 1 && cnt < bcnt - 1) {
+          if (!optflg) WSContentSend_PD(SCRIPT_MSG_BUTTONb, 2);
+        }
+        lp += 4;
+      }
+      if (optflg) WSContentSend_PD(SCRIPT_MSG_BUT_STOP_TBL);
+      else WSContentSend_PD(SCRIPT_MSG_BUT_STOP);
+
+    }  else if (!strncmp(lin, "tm(", 3)) {
+      // time only HH:MM
+      float val;
+      char *lp = lin + 3;
+      char *slp = lp;
+      lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+      SCRIPT_SKIP_SPACES
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+      SCRIPT_SKIP_SPACES
+      char label[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, label, 0);
+      SCRIPT_SKIP_SPACES
+      uint16_t tsiz = 70;
+      if (*lp != ')') {
+        float fvar;
+        lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+        tsiz = fvar;
+      }
+      lp++;
+      char vstr[16];
+      uint32_t tv = val;
+      sprintf_P(vstr,PSTR("%02d:%02d"),tv / 100, tv % 100);
+      const char *type = PSTR("time");
+      const char *min = PSTR("00:00");
+      const char *max = PSTR("23:59");
+      const char *styp = PSTR("sivat");
+      WCS_DIV(specopt);
+      WSContentSend_PD(SCRIPT_MSG_TEXTINP_U, center, label, type, vstr, min, max, tsiz, styp, vname);
+      WCS_DIV(specopt | WSO_STOP_DIV);
+    }  else if (!strncmp(lin, "tx(", 3)) {
+      // text
+      char *lp = lin + 3;
+      char *slp = lp;
+      char str[SCRIPT_MAXSSIZE];
+      lp = ForceStringVar(lp, str);
+      SCRIPT_SKIP_SPACES
+      char label[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, label, 0);
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+      SCRIPT_SKIP_SPACES
+
+      uint16_t tsiz = 200;
+      if (*lp != ')') {
+        glob_script_mem.glob_error = 0;
+        float fvar;
+        char *slp1 = lp;
+        lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+        SCRIPT_SKIP_SPACES
+        if (!glob_script_mem.glob_error) {
+          tsiz = fvar;
+        } else {
+          lp = slp1;
+        }
+
+        if (*lp != ')') {
+          char type[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, type, 0);
+          SCRIPT_SKIP_SPACES
+          // also requires min max values
+          char min[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, min, 0);
+          SCRIPT_SKIP_SPACES
+          char max[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, max, 0);
+          SCRIPT_SKIP_SPACES
+          WCS_DIV(specopt);
+          const char *styp = PSTR("siva");
+          WSContentSend_PD(SCRIPT_MSG_TEXTINP_U, center, label, type, str, min, max, tsiz, styp, vname);
+          WCS_DIV(specopt | WSO_STOP_DIV);
+        } else {
+          WCS_DIV(specopt);
+          WSContentSend_PD(SCRIPT_MSG_TEXTINP, center, label, str, tsiz, vname);
+          WCS_DIV(specopt | WSO_STOP_DIV);
+        }
+      } else {
+        WCS_DIV(specopt);
+        WSContentSend_PD(SCRIPT_MSG_TEXTINP, center, label, str, tsiz, vname);
+        WCS_DIV(specopt | WSO_STOP_DIV);
+      }
+      lp++;
+      //goto restart;
+
+    } else if (!strncmp(lin, "nm(", 3)) {
+      char *lp = lin;
+      float min;
+      lp = GetNumericArgument(lp + 3, OPER_EQU, &min, 0);
+      SCRIPT_SKIP_SPACES
+      float max;
+      lp = GetNumericArgument(lp, OPER_EQU, &max, 0);
+      SCRIPT_SKIP_SPACES
+      float step;
+      lp = GetNumericArgument(lp, OPER_EQU, &step, 0);
+      SCRIPT_SKIP_SPACES
+      float val;
+      char *slp = lp;
+      lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+      SCRIPT_SKIP_SPACES
+      char vname[16];
+      ScriptGetVarname(vname, slp, sizeof(vname));
+
+      char label[SCRIPT_MAXSSIZE];
+      lp = GetStringArgument(lp, OPER_EQU, label, 0);
+      SCRIPT_SKIP_SPACES
+      uint16_t tsiz = 200;
+      uint8_t dprec = 1;
+      if (*lp != ')') {
+        float val;
+        lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+        SCRIPT_SKIP_SPACES
+        tsiz = val;
+        if (*lp != ')') {
+          lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+          dprec = val;
+        }
+      }
+
+      char vstr[16],minstr[16],maxstr[16],stepstr[16];
+      dtostrfd(val, dprec, vstr);
+      dtostrfd(min, dprec, minstr);
+      dtostrfd(max, dprec, maxstr);
+      dtostrfd(step, dprec, stepstr);
+      WCS_DIV(specopt);
+      WSContentSend_PD(SCRIPT_MSG_NUMINP, center, label, minstr, maxstr, stepstr, vstr, tsiz, vname);
+      WCS_DIV(specopt | WSO_STOP_DIV);
+      lp++;
+
+    } else {
+      if (mc == 'w' || (specopt & WSO_FORCEPLAIN)) {
+        WSContentSend_PD(PSTR("%s"), lin);
+      } else {
+        if (optflg) {
+          WSContentSend_PD(PSTR("<div>%s</div>"), lin);
+        } else {
+          WSContentSend_PD(PSTR("{s}%s{e}"), lin);
+        }
+      }
+    }
+    // end standard web interface
+  } else {
+    //  main section interface
+    if (*lin == mc) {
+
+#ifdef USE_GOOGLE_CHARTS
+      lin++;
+exgc:
+      char *lp;
+      if (!strncmp(lin, "gc(", 3)) {
+        // get google table
+        lp = lin + 3;
+        SCRIPT_SKIP_SPACES
+
+        const char *func;
+        char options[312];
+        uint8_t nanum = MAX_GARRAY;
+        uint8_t y2f = 0;
+        uint8_t tonly = 0;
+        char type = *lp;
+        if (type != 'e') {
+          gs_ctype = type;
+        }
+        lp++;
+        if (!(google_libs & GLIBS_MAIN)) {
+          google_libs |= GLIBS_MAIN;
+          WSContentSend_PD(SCRIPT_MSG_GTABLE);
+        }
+
+        gc_str = GC_type(gs_ctype);
+
+        switch (gs_ctype) {
+          case 'g':
+            if (!(google_libs & GLIBS_GAUGE)) {
+              google_libs |= GLIBS_GAUGE;
+              WSContentSend_PD(SCRIPT_MSG_GAUGE);
+            }
+            break;
+          case 't':
+            if (!(google_libs & GLIBS_TABLE)) {
+              google_libs |= GLIBS_TABLE;
+              WSContentSend_PD(SCRIPT_MSG_TABLE);
+            }
+            break;
+          case 'T':
+            if (!(google_libs & GLIBS_TIMELINE)) {
+              google_libs |= GLIBS_TIMELINE;
+              WSContentSend_PD(SCRIPT_MSG_TIMELINE);
+            }
+            break;
+        }
+        if (type == 'e') {
+          WSContentSend_PD(SCRIPT_MSG_GTABLEbx, gc_str, chartindex);
+          chartindex++;
+          return lp1;
+        }
+
+
+        if (gs_ctype=='l' && *lp=='f') {
+          lp++;
+          func = PSTR(",curveType:'function'");
+        } else {
+          func = "";
+        }
+        if (*lp=='2') {
+          lp++;
+          nanum = 2;
+          y2f = 1;
+        }
+        if (*lp=='t') {
+          lp++;
+          tonly = 1;
+        }
+        SCRIPT_SKIP_SPACES
+
+        //Serial.printf("type %d\n",ctype);
+
+        float *arrays[MAX_GARRAY];
+        uint8_t anum = 0;
+        uint16_t entries = 0;
+        uint16_t ipos = 0;
+        lp = gc_get_arrays(lp, &arrays[0], &anum, &entries, &ipos);
+
+        if (anum > nanum) {
+          return lp1;
+          //goto nextwebline;
+        }
+        // we know how many arrays and the number of entries
+        //Serial.printf("arrays %d\n",anum);
+        //Serial.printf("entries %d\n",entries);
+        if (gs_ctype=='T') {
+          if (anum && !(entries & 1)) {
+            WSContentSend_PD(SCRIPT_MSG_GTABLEa);
+            char label[SCRIPT_MAXSSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, label, 0);
+            SCRIPT_SKIP_SPACES
+            char lab2[SCRIPT_MAXSSIZE];
+            lab2[0] = 0;
+            if (*lp!=')') {
+              lp = GetStringArgument(lp, OPER_EQU, lab2, 0);
+              WSContentSend_PD(SCRIPT_MSG_GTABLEe);
+            } else {
+              WSContentSend_PD(SCRIPT_MSG_GTABLEd);
+            }
+
+            for (uint32_t ind = 0; ind < anum; ind++) {
+              char lbl[16];
+              float *fp = arrays[ind];
+              GetTextIndexed(lbl, sizeof(lbl), ind, label);
+              char lbl2[16];
+              if (lab2[0]) {
+                GetTextIndexed(lbl2, sizeof(lbl2), ind, lab2);
+              }
+              uint32_t ventries = 0;
+              for (uint32_t cnt = 0; cnt < entries; cnt += 2) {
+                if (fp[cnt]!=0 && fp[cnt+1]!=0) {
+                  ventries+=2;
+                } else {
+                  break;
+                }
+              }
+
+              for (uint32_t cnt = 0; cnt < ventries; cnt += 2) {
+                WSContentSend_PD("['%s',",lbl);
+                if (lab2[0]) {
+                  WSContentSend_PD("'%s',",lbl2);
+                }
+                uint32_t time = fp[cnt];
+                WSContentSend_PD(SCRIPT_MSG_GOPT5, time / 60, time % 60);
+                WSContentSend_PD(",");
+                time = fp[cnt + 1];
+                WSContentSend_PD(SCRIPT_MSG_GOPT5, time / 60, time % 60);
+                  WSContentSend_PD("]");
+                  if (cnt < ventries - 2) { WSContentSend_PD(","); }
+              }
+              if (ind < anum - 1) {
+                if (ventries) {
+                WSContentSend_PD(",");
+              }
+            }
+          }
+          snprintf_P(options,sizeof(options), SCRIPT_MSG_GOPT4);
+        }
+        if (tonly) {
+          WSContentSend_PD("]);");
+          return lp1;
+          //goto nextwebline;
+        }
+      } else {
+        // we need to fetch the labels now
+        WSContentSend_PD(SCRIPT_MSG_GTABLEa);
+        lp = gc_send_labels(lp, anum);
+
+        // now we have to export the values
+        // fetch label part only once in combo string
+        char label[SCRIPT_MAXSSIZE];
+        lp = GetStringArgument(lp, OPER_EQU, label, 0);
+        SCRIPT_SKIP_SPACES
+
+        uint8_t asflg = 1;
+        if (label[0] == '&') {
+          strcpy(label, &label[1]);
+          asflg = 0;
+        }
+
+        int16_t divflg = 1;
+        int16_t todflg = -1;
+        if (!strncmp(label, "cnt", 3)) {
+          char *cp = &label[3];
+          //todflg=atoi(&label[3]);
+          todflg = strtol(cp, &cp, 10);
+          if (todflg >= entries) todflg = entries - 1;
+          if (todflg < 0) todflg = 0;
+          if (*cp=='/') {
+            cp++;
+            divflg = strtol(cp, &cp, 10);
+          }
+        } else {
+          char *lp = label;
+          if (!strncmp(label, "wdh:", 4)) {
+            // one week hours
+            todflg = -2;
+            lp += 4;
+          }
+          uint16 segments = 1;
+          for (uint32_t cnt = 0; cnt < strlen(lp); cnt++) {
+            if (lp[cnt] == '|') {
+              segments++;
+            }
+          }
+          divflg = entries / segments;
+        }
+
+        uint32_t aind = ipos;
+        if (aind >= entries) aind = entries - 1;
+        for (uint32_t cnt = 0; cnt < entries; cnt++) {
+          WSContentSend_PD("['");
+          char lbl[16];
+          if (todflg >= 0) {
+            sprintf(lbl, "%d:%02d", todflg / divflg, (todflg % divflg) * (60 / divflg) );
+            todflg++;
+            if (todflg >= entries) {
+              todflg = 0;
+            }
+          } else {
+            if (todflg == -1) {
+              GetTextIndexed(lbl, sizeof(lbl), aind / divflg, label);
+            } else {
+              // day,hours,mins
+              GetTextIndexed(lbl, sizeof(lbl), aind / divflg, label + 4);
+              sprintf(lbl, "%s-%02d", lbl, aind % divflg);
+            }
+          }
+          WSContentSend_PD(lbl);
+          WSContentSend_PD("',");
+          for (uint32_t ind = 0; ind < anum; ind++) {
+            char acbuff[32];
+            float *fp = arrays[ind];
+            float fval;
+            if (asflg) {
+              fval = fp[aind];
+            } else {
+              fval = fp[cnt];
+            }
+            f2char(fval, glob_script_mem.script_dprec, glob_script_mem.script_lzero, acbuff);
+            WSContentSend_PD("%s", acbuff);
+            if (ind < anum - 1) { WSContentSend_PD(","); }
+          }
+          WSContentSend_PD("]");
+          if (cnt < entries - 1) { WSContentSend_PD(","); }
+          aind++;
+          if (aind >= entries) {
+            aind = 0;
+          }
+        }
+        // table complete
+        if (tonly) {
+          WSContentSend_PD("]);");
+          return lp1;
+          //goto nextwebline;
+        }
+        // get header
+        char header[SCRIPT_MAXSSIZE];
+        lp = GetStringArgument(lp, OPER_EQU, header, 0);
+        SCRIPT_SKIP_SPACES
+
+        switch (gs_ctype) {
+          case 't':
+            snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT2);
+            break;
+          default:
+            snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT1, header);
+            break;
+        }
+        // check for 2 axis option
+        if (y2f) {
+          // 2 y axes variant
+          SCRIPT_SKIP_SPACES
+          float max1;
+          lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
+          SCRIPT_SKIP_SPACES
+          float max2;
+          lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
+          SCRIPT_SKIP_SPACES
+          char maxstr1[16];
+          dtostrfd(max1, 3, maxstr1);
+          char maxstr2[16];
+          dtostrfd(max2, 3, maxstr2);
+          //snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, (uint32_t)max1, (uint32_t)max2, func);
+          snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT3, header, maxstr1, maxstr2, func);
+        } else {
+          SCRIPT_SKIP_SPACES
+          if (gs_ctype!='g') {
+            if (*lp!=')') {
+              float max1;
+              lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
+              SCRIPT_SKIP_SPACES
+              float max2;
+              lp = GetNumericArgument(lp, OPER_EQU, &max2, 0);
+              SCRIPT_SKIP_SPACES
+              char maxstr1[16];
+              dtostrfd(max1, 3, maxstr1);
+              char maxstr2[16];
+              dtostrfd(max2, 3, maxstr2);
+              //nprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, (uint32_t)max1, (uint32_t)max2, func);
+              snprintf_P(options, sizeof(options), SCRIPT_MSG_GOPT6, header, maxstr1, maxstr2, func);
+            }
+          }
+        }
+
+        if (gs_ctype=='g') {
+          float yellowFrom;
+          lp = GetNumericArgument(lp, OPER_EQU, &yellowFrom, 0);
+          SCRIPT_SKIP_SPACES
+          float redFrom;
+          lp = GetNumericArgument(lp, OPER_EQU, &redFrom, 0);
+          SCRIPT_SKIP_SPACES
+          float maxValue;
+          lp = GetNumericArgument(lp, OPER_EQU, &maxValue, 0);
+          SCRIPT_SKIP_SPACES
+          float redTo = maxValue;
+          float yellowTo = redFrom;
+          snprintf_P(options, sizeof(options), SCRIPT_MSG_GAUGEOPT, (uint32_t)maxValue, (uint32_t)redFrom, (uint32_t)redTo,
+            (uint32_t)yellowFrom, (uint32_t)yellowTo);
+          }
+        }
+        WSContentSend_PD(SCRIPT_MSG_GTABLEb, options);
+        WSContentSend_PD(SCRIPT_MSG_GTABLEbx, gc_str, chartindex);
+        chartindex++;
+      } else {
+        WSContentSend_PD(PSTR("%s"), lin);
+      }
+#else
+      lin++;
+      WSContentSend_PD(PSTR("%s"), lin);
+    } else {
+          //  WSContentSend_PD(PSTR("%s"),lin);
+#endif //USE_GOOGLE_CHARTS
+    }
+  }
+  return lp1;
+}
+
 #endif //USE_SCRIPT_WEB_DISPLAY
 
 
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
 
 void script_send_email_body(void(*func)(char *)) {
-uint8_t msect = Run_Scripter(">m", -2, 0);
+uint8_t msect = Run_Scripter1(">m", -2, 0);
   if (msect==99) {
     char tmp[256];
     char *lp = glob_script_mem.section_ptr + 2;
@@ -8474,7 +8902,7 @@ uint8_t msect = Run_Scripter(">m", -2, 0);
 
 #ifdef USE_SCRIPT_JSON_EXPORT
 void ScriptJsonAppend(void) {
-  uint8_t web_script = Run_Scripter(">J", -2, 0);
+  uint8_t web_script = Run_Scripter1(">J", -2, 0);
   if (web_script==99) {
     char tmp[256];
     char *lp = glob_script_mem.section_ptr + 2;
@@ -8509,7 +8937,10 @@ void ScriptJsonAppend(void) {
 
 
 bool RulesProcessEvent(const char *json_event) {
-  if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">E", 2, json_event);
+  if (bitRead(Settings->rule_enabled, 0)) {
+    //Run_Scripter(">E", 2, json_event);
+    if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, json_event);
+  }
   return true;
 }
 
@@ -8537,7 +8968,7 @@ void script_task1(void *arg) {
     //if (time<esp32_tasks[1].task_timer) {delay(time); }
     //if (time<=esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     if (bitRead(Settings->rule_enabled, 0)) {
-      if (esp32_tasks[0].tstart) Run_Scripter(esp32_tasks[0].tstart, 0, 0);
+      if (esp32_tasks[0].tstart) Run_Scripter1(esp32_tasks[0].tstart, 0, 0);
     }
     if (esp32_tasks[0].task_timer) {
       delay(esp32_tasks[0].task_timer);
@@ -8551,7 +8982,7 @@ void script_task1(void *arg) {
 void script_task2(void *arg) {
   while (1) {
     if (bitRead(Settings->rule_enabled, 0)) {
-      if (esp32_tasks[1].tstart) Run_Scripter(esp32_tasks[1].tstart, 0, 0);
+      if (esp32_tasks[1].tstart) Run_Scripter1(esp32_tasks[1].tstart, 0, 0);
     }
     if (esp32_tasks[1].task_timer) {
       delay(esp32_tasks[1].task_timer);
@@ -8576,12 +9007,12 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_
     char *sp = 0;
     esp32_tasks[num].task_timer = time;
     if (!num) {
-      if (Run_Scripter(">t1", -3, 0) == 99) {
+      if (Run_Scripter1(">t1", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
         res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &esp32_tasks[num].task_t, core);
       }
     } else {
-      if (Run_Scripter(">t2", -3, 0) == 99) {
+      if (Run_Scripter1(">t2", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
         res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &esp32_tasks[num].task_t, core);
       }
@@ -8685,7 +9116,9 @@ int32_t http_req(char *host, char *request) {
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("JSON %s"), wd_jstr);
 //  TasmotaGlobal.mqtt_data = wd_jstr;
-  Run_Scripter(">E", 2, ResponseData());
+  //Run_Scripter(">E", 2, ResponseData());
+  if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, ResponseData());
+
 
   glob_script_mem.glob_error = 0;
 #endif
@@ -8711,12 +9144,12 @@ String authCookie   = "";
 
 // get tesla powerwall info page json string
 uint32_t call2https(const char *host, const char *path) {
-  if (TasmotaGlobal.global_state.wifi_down) return 1;
+  //if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
 
 #ifdef TESLA_POWERWALL
-  authCookie = powerwall.getAuthCookie();
-  return 0;
+//  authCookie = powerwall.getAuthCookie();
+//  return 0;
 #endif
 
 #ifdef ESP32
@@ -8750,12 +9183,15 @@ uint32_t call2https(const char *host, const char *path) {
   }
 #endif
 
+
+  AddLog(LOG_LEVEL_INFO,PSTR(">>> host %s"),host);
+
   uint32_t retry = 0;
-  while ((!httpsClient->connect(host, 443)) && (retry < 5)) {
+  while ((!httpsClient->connect(host, 443)) && (retry < 10)) {
     delay(100);
     retry++;
   }
-  if (retry == 5) {
+  if (retry == 10) {
     return 2;
   }
   AddLog(LOG_LEVEL_INFO,PSTR("connected"));
@@ -8913,7 +9349,7 @@ void btn_event_cb(lv_event_t * e);
 void btn_event_cb(lv_event_t * e) {
   lvgl_set_last(e->target, e->code);
   if (e->code == LV_EVENT_CLICKED) {
-    Run_Scripter(">lvb", 4, 0);
+    Run_Scripter1(">lvb", 4, 0);
   }
 }
 
@@ -8922,7 +9358,7 @@ void slider_event_cb(lv_event_t * e) {
   lvgl_set_last(e->target, e->code);
   lvgl_last_slider = lv_slider_get_value(e->target);
   if (e->code == LV_EVENT_VALUE_CHANGED) {
-    Run_Scripter(">lvs", 4, 0);
+    Run_Scripter1(">lvs", 4, 0);
   }
 }
 
@@ -9454,8 +9890,8 @@ bool Xdrv10(uint8_t function)
     //  break;
     //case FUNC_INIT:
       if (bitRead(Settings->rule_enabled, 0)) {
-        Run_Scripter(">B\n", 3, 0);
-        if (Run_Scripter(">F", -2, 0) == 99) {glob_script_mem.fast_script = glob_script_mem.section_ptr + 2;} else {glob_script_mem.fast_script = 0;}
+        set_callbacks();
+        Run_Scripter1(">B\n", 3, 0);
         script_set_web_pages();
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
@@ -9474,10 +9910,11 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_SET_POWER:
 #ifdef SCRIPT_POWER_SECTION
-      if (bitRead(Settings->rule_enabled, 0)) Run_Scripter(">P", 2, 0);
+      if (bitRead(Settings->rule_enabled, 0)) Run_Scripter1(">P", 2, 0);
 #else
       if (bitRead(Settings->rule_enabled, 0)) {
-        Run_Scripter(">E", 2, 0);
+        //Run_Scripter(">E", 2, 0);
+        if (glob_script_mem.event_script) Run_Scripter1(glob_script_mem.event_script, 0, 0);
         result = glob_script_mem.event_handeled;
       }
 #endif //SCRIPT_POWER_SECTION
@@ -9488,10 +9925,12 @@ bool Xdrv10(uint8_t function)
         if (!strncmp_P(ResponseData(), PSTR("{\"Status"), 8)) {
           Run_Scripter(">U", 2, ResponseData());
         } else {
-          Run_Scripter(">E", 2, ResponseData());
+          //Run_Scripter(">E", 2, ResponseData());
+          if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, ResponseData());
         }
 #else
-        Run_Scripter(">E", 2, ResponseData());
+        //Run_Scripter(">E", 2, ResponseData());
+        if (glob_script_mem.event_script) Run_Scripter(glob_script_mem.event_script, 0, ResponseData());
 #endif
 
         result = glob_script_mem.event_handeled;
@@ -9539,7 +9978,7 @@ bool Xdrv10(uint8_t function)
 
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings->rule_enabled, 0)) {
-        Run_Scripter(">R", 2, 0);
+        Run_Scripter1(">R", 2, 0);
         Scripter_save_pvars();
       }
 #ifdef USE_SCRIPT_GLOBVARS
@@ -9574,7 +10013,7 @@ bool Xdrv10(uint8_t function)
       if (bitRead(Settings->rule_enabled, 0)) {
         if ((glob_script_mem.script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
           glob_script_mem.script_button[XdrvMailbox.index] = XdrvMailbox.payload;
-          Run_Scripter(">b", 2, 0);
+          Run_Scripter1(">b", 2, 0);
         }
       }
       break;

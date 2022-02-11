@@ -409,6 +409,8 @@ enum beobshookevents {
   BE_OBS_STACK_RESIZE_START,    /* Berry stack resized */
 };
 
+typedef int (*bctypefunc)(bvm*, const void*);
+
 /* FFI functions */
 #define be_writestring(s)       be_writebuffer((s), strlen(s))
 #define be_writenewline()       be_writebuffer("\n", 1)
@@ -550,6 +552,8 @@ BERRY_API void be_vm_delete(bvm *vm);
 
 /* Observability hook */
 BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook);
+BERRY_API void be_set_ctype_func_hanlder(bvm *vm, bctypefunc handler);
+BERRY_API bctypefunc be_get_ctype_func_hanlder(bvm *vm);
 
 /* code load APIs */
 BERRY_API int be_loadbuffer(bvm *vm,

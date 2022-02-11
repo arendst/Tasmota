@@ -1,7 +1,7 @@
 /*
   xdrv_55_touch.ino - Touch contolers
 
-  Copyright (C) 2021 Gerhard Mutz and Theo Arends
+  Copyright (C) 2021 Gerhard Mutz, Theo Arends & Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,9 +17,26 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*******************************************************************************************\
+ * Universal TouchScreen driver, extensible via Berry
+ * 
+ * API:
+ *   void Touch_Init() - TODO
+ * 
+ *   uint32_t Touch_Status(int32_t sel)
+ *     0: return 1 if TSGlobal.touched
+ *     1: return x
+ *     2: return y
+ *    -1: return raw x (before conersion for resistive)
+ *    -2: return raw y
+ * 
+ *   void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y))
+ * 
+ *   void TS_RotConvert(int16_t *x, int16_t *y) - calls the renderer's rotation converter
+\*******************************************************************************************/
 
 
-#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
+#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
 
 #ifdef USE_DISPLAY_LVGL_ONLY
 #undef USE_TOUCH_BUTTONS
@@ -29,11 +46,33 @@
 
 #define XDRV_55             55
 
+// Codes for gestures, when supported by the Touch Screen controller
+enum TS_Gesture {
+  TS_Gest_None = 0,
+  TS_Gest_Move_Up = 0x10,
+  TS_Gest_Move_Down = 0x11,
+  TS_Gest_Move_Left = 0x12,
+  TS_Gest_Move_Right = 0x13,
+  TS_Gest_Zoom_In = 0x20,
+  TS_Gest_Zoom_Out = 0x21,
+};
+
+typedef struct TSGlobal_t {
+  int16_t raw_touch_xp = 0;
+  int16_t raw_touch_yp = 0;
+  int16_t touch_xp = 0;
+  int16_t touch_yp = 0;
+  uint8_t touches = 0;    // number of touches for multi-touch
+  uint8_t gesture = 0;    // gesture code
+  // multi-point is not yet supported
+  bool touched = false;
+  bool external_ts = false;
+} TSGlobal_t;
+
+TSGlobal_t TSGlobal;
+
 bool FT5206_found = false;
 bool XPT2046_found = false;
-int16_t touch_xp;
-int16_t touch_yp;
-bool touched;
 
 #ifndef MAX_TOUCH_BUTTONS
 #define MAX_TOUCH_BUTTONS 16
@@ -43,15 +82,44 @@ bool touched;
 VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
-uint32_t Touch_Status(uint32_t sel) {
-  if (FT5206_found || XPT2046_found) {
+void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t gesture) {
+  TSGlobal.external_ts = true;
+  TSGlobal.gesture = gesture;
+  TSGlobal.touches = touches;
+  TSGlobal.touched = (TSGlobal.touches > 0);
+  TSGlobal.touch_xp = TSGlobal.raw_touch_xp = raw_x;
+  TSGlobal.touch_yp = TSGlobal.raw_touch_yp = raw_y;
+  TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
+}
+
+// return true if succesful, false if not configured
+bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gesture,
+                     uint16_t* raw_x, uint16_t* raw_y) {
+  if (TSGlobal.external_ts || FT5206_found || XPT2046_found) {
+    if (touches)    { *touches = TSGlobal.touches; }
+    if (x)          { *x = TSGlobal.touch_xp; }
+    if (y)          { *y = TSGlobal.touch_yp; }
+    if (raw_x)      { *raw_x = TSGlobal.raw_touch_xp; }
+    if (raw_y)      { *raw_y = TSGlobal.raw_touch_yp; }
+    if (gesture)    { *touches = TSGlobal.gesture; }
+    return true;
+  }
+  return false;
+}
+
+uint32_t Touch_Status(int32_t sel) {
+  if (TSGlobal.external_ts || FT5206_found || XPT2046_found) {
     switch (sel) {
       case 0:
-        return  touched;
+        return  TSGlobal.touched;
       case 1:
-        return touch_xp;
+        return TSGlobal.touch_xp;
       case 2:
-        return touch_yp;
+        return TSGlobal.touch_yp;
+      case -1:                  // before calibration
+        return TSGlobal.raw_touch_xp;
+      case -2:
+        return TSGlobal.raw_touch_yp;
     }
     return 0;
   } else {
@@ -124,25 +192,32 @@ int16_t XPT2046_y() {
 
 
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
+  static bool was_touched = false;    // flag used to log the data sent when the screen was just released
 
 #ifdef USE_FT5206
   if (FT5206_found) {
-    touch_xp = FT5206_x();
-    touch_yp = FT5206_y();
-    touched = FT5206_touched();
+    TSGlobal.touched = FT5206_touched();
+    if (TSGlobal.touched) {
+      TSGlobal.raw_touch_xp = FT5206_x();
+      TSGlobal.raw_touch_yp = FT5206_y();
+    }
   }
 #endif // USE_FT5206
 
 #ifdef USE_XPT2046
   if (XPT2046_found) {
-    touch_xp = XPT2046_x();
-    touch_yp = XPT2046_y();
-    touched = XPT2046_touched();
+    TSGlobal.touched = XPT2046_touched();
+    if (TSGlobal.touched) {
+      TSGlobal.raw_touch_xp = XPT2046_x();
+      TSGlobal.raw_touch_yp = XPT2046_y();
+    }
   }
 #endif // USE_XPT2046
+  TSGlobal.touch_xp = TSGlobal.raw_touch_xp;
+  TSGlobal.touch_yp = TSGlobal.raw_touch_yp;
 
-  if (touched) {
-
+  if (TSGlobal.touched) {
+    was_touched = true;
 #ifdef USE_TOUCH_BUTTONS
 #ifdef USE_M5STACK_CORE2
     // handle  3 built in touch buttons
@@ -150,7 +225,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #define TDELTA 30
 #define TYPOS 275
     for (uint32_t tbut = 0; tbut < 3; tbut++) {
-      if (touch_xp > (xcenter - TDELTA) && touch_xp < (xcenter + TDELTA) && touch_yp > (TYPOS - TDELTA) && touch_yp < (TYPOS + TDELTA)) {
+      if (TSGlobal.touch_xp > (xcenter - TDELTA) && TSGlobal.touch_xp < (xcenter + TDELTA) && TSGlobal.touch_yp > (TYPOS - TDELTA) && TSGlobal.touch_yp < (TYPOS + TDELTA)) {
         // hit a button
         if (!(tbstate[tbut] & 1)) {
           // pressed
@@ -164,10 +239,11 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif  // USE_M5STACK_CORE2
 #endif // USE_TOUCH_BUTTONS
 
-    rotconvert(&touch_xp, &touch_yp);
+    rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
 
 #ifdef USE_TOUCH_BUTTONS
-    CheckTouchButtons(touched, touch_xp, touch_yp);
+    CheckTouchButtons(TSGlobal.touched, TSGlobal.touch_xp, TSGlobal.touch_yp);
 #endif // USE_TOUCH_BUTTONS
 
   } else {
@@ -182,8 +258,13 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
     }
 #endif  // USE_M5STACK_CORE2
 
+    rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);   // still do rot convert if not TSGlobal.touched
+    if (was_touched) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, "TS : released x=%i y=%i (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
+      was_touched = false;
+    }
 #ifdef USE_TOUCH_BUTTONS
-    CheckTouchButtons(touched, touch_xp, touch_yp);
+    CheckTouchButtons(TSGlobal.touched, TSGlobal.touch_xp, TSGlobal.touch_yp);
 #endif // USE_TOUCH_BUTTONS
 
   }
@@ -212,7 +293,7 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
   uint8_t vbutt=0;
 
   if (!renderer) return;
-    if (touched) {
+    if (TSGlobal.touched) {
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
       // now must compare with defined buttons
       for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
@@ -290,8 +371,8 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
         }
       }
     }
-    touch_xp = 0;
-    touch_yp = 0;
+    TSGlobal.raw_touch_xp = TSGlobal.touch_xp = 0;
+    TSGlobal.raw_touch_yp = TSGlobal.touch_yp = 0;
   }
 }
 #endif // USE_TOUCH_BUTTONS
@@ -317,9 +398,12 @@ bool Xdrv55(uint8_t function) {
   }
   return result;
 }
-#else
+
+#else  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
+
 // dummy for LVGL without a touch controller
-uint32_t Touch_Status(uint32_t sel) {
-return 0;
+uint32_t Touch_Status(int32_t sel) {
+  return 0;
 }
+
 #endif  // #if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)

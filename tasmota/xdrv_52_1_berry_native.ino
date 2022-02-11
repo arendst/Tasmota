@@ -44,7 +44,7 @@ extern "C" {
   #include "be_debug.h"
   void be_dumpstack(bvm *vm) {
     int32_t top = be_top(vm);
-    AddLog(LOG_LEVEL_INFO, "BRY: top=%d", top);
+    AddLog(LOG_LEVEL_DEBUG, "BRY: top=%d", top);
     be_tracestack(vm);
     for (uint32_t i = 1; i <= top; i++) {
       const char * tname = be_typename(vm, i);

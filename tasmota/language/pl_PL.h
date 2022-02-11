@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 16.10.2021
+ * Updated until v10.1.0.7 - Last update 04.02.2022
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -137,6 +137,7 @@
 #define D_ORP "ORP"
 #define D_PASSWORD "Hasło"
 #define D_PH "pH"
+#define D_MQ "MQ"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Cosinus fi"
 #define D_POWERUSAGE "Moc"
@@ -182,7 +183,7 @@
 #define D_UPTIME "Czas pracy"
 #define D_USER "Użytkownik"
 #define D_UTC_TIME "UTC"
-#define D_UV_INDEX "Index UV"
+#define D_UV_INDEX "Indeks UV"
 #define D_UV_INDEX_1 "Niski"
 #define D_UV_INDEX_2 "Średni"
 #define D_UV_INDEX_3 "Wysoki"
@@ -379,7 +380,7 @@
 #define D_UPLOAD_ERR_2 "Niewystarczająca ilość miejsca"
 #define D_UPLOAD_ERR_3 "Błędna sygnatura pliku"
 #define D_UPLOAD_ERR_4 "Rozmiar programu jest większy niż rzeczywisty rozmiar pamięci flash"
-#define D_UPLOAD_ERR_5 "Wgrywanie, bufor niezgodności stanu porównywanych bitow"
+#define D_UPLOAD_ERR_5 "Wgrywanie, bufor niezgodności stanu porównywanych bitów"
 #define D_UPLOAD_ERR_6 "Błąd wgrywania. Uruchomiono zapis do dziennika na poziomie 3"
 #define D_UPLOAD_ERR_7 "Wgrywanie przerwane"
 #define D_UPLOAD_ERR_8 "Błędny plik"
@@ -387,7 +388,7 @@
 #define D_UPLOAD_ERR_10 "Błąd inicjacji układu RF"
 #define D_UPLOAD_ERR_11 "Błąd kasowania układu RF"
 #define D_UPLOAD_ERR_12 "Błąd zapisu układu RF"
-#define D_UPLOAD_ERR_13 "Błąd dekodowania oprrogramowania układu RF"
+#define D_UPLOAD_ERR_13 "Błąd dekodowania oprogramowania układu RF"
 #define D_UPLOAD_ERR_14 "Brak kompatybilności"
 #define D_UPLOAD_ERROR_CODE "Błąd wgrywania"
 
@@ -497,7 +498,7 @@
 #define D_ZIGBEE_TOO_MANY_COMMANDS "Tylko 1 komenda dozwolona (%d)"
 #define D_ZIGBEE_NO_ATTRIBUTE "Brak atrybutów na liście"
 #define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Niewspierany typ atrybutu"
-#define D_ZIGBEE_JSON_REQUIRED "Wymagana konfiguracja objectów JSON"
+#define D_ZIGBEE_JSON_REQUIRED "Wymagana konfiguracja objektów JSON"
 #define D_ZIGBEE_RESET_1_OR_2 "1 lub 2 aby zresetować"
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "Znaleziono ZBBridge EEPROM na adresie"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Losowanie parametrów Zigbee, proszę sprawdzić 'ZbConfig'"
@@ -547,7 +548,7 @@
 #define D_COLOR_GREEN "Zielony"
 #define D_COLOR_BLUE "Niebieski"
 #define D_CCT "CCT"
-#define D_PROXIMITY "Proximity"
+#define D_PROXIMITY "Zbliżenie"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Przys. Oś-X"
@@ -663,6 +664,8 @@
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
 #define D_SENSOR_SDM120_RX     "SDMx20 Rx"
+#define D_SENSOR_SDM230_TX     "SDM230 Tx"
+#define D_SENSOR_SDM230_RX     "SDM230 Rx"
 #define D_SENSOR_SDM630_TX     "SDM630 Tx"
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
@@ -737,6 +740,7 @@
 #define D_SENSOR_ZIGBEE_RST    "Zigbee Rst"
 #define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
 #define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_SOLAXX1_RTS   "SolaxX1 RTS"
 #define D_SENSOR_IBEACON_TX    "iBeacon TX"
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
@@ -745,8 +749,8 @@
 #define D_SENSOR_A4988_STP     "A4988 STP"
 #define D_SENSOR_A4988_ENA     "A4988 ENA"
 #define D_SENSOR_A4988_MS1     "A4988 MS1"
-#define D_SENSOR_OUTPUT_HI     "Output Hi"
-#define D_SENSOR_OUTPUT_LO     "Output Lo"
+#define D_SENSOR_OUTPUT_HI     "Wyjście Hi"
+#define D_SENSOR_OUTPUT_LO     "Wyjście Lo"
 #define D_SENSOR_AS608_TX      "AS608 Tx"
 #define D_SENSOR_AS608_RX      "AS608 Rx"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
@@ -757,9 +761,9 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "Głęboko uśpiony"
 #define D_SENSOR_EXS_ENABLE    "Załącz EXS"
-#define D_SENSOR_CLIENT_TX    "Client TX"
-#define D_SENSOR_CLIENT_RX    "Client RX"
-#define D_SENSOR_CLIENT_RESET "Client RST"
+#define D_SENSOR_CLIENT_TX    "Klient TX"
+#define D_SENSOR_CLIENT_RX    "Klient RX"
+#define D_SENSOR_CLIENT_RESET "Klient RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
 #define D_SENSOR_HM10_RX       "HM10 RX"
@@ -785,6 +789,7 @@
 #define D_SENSOR_ADC_CT_POWER  "ADC Moc CT"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Dżojstik"
 #define D_SENSOR_ADC_PH        "ADC pH"
+#define D_SENSOR_ADC_MQ        "ADC MQ"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -841,12 +846,14 @@
 #define D_SENSOR_MCP2515_CS    "MCP2515 CS"
 #define D_SENSOR_HRG15_RX      "HRG15 Rx"
 #define D_SENSOR_HRG15_TX      "HRG15 Tx"
-#define D_SENSOR_VINDRIKTNING_RX "VINDRIKTNING"
+#define D_SENSOR_VINDRIKTNING_RX "Kierunek wiatru"
 #define D_SENSOR_HEARTBEAT     "Heartbeat"
 #define D_GPIO_SHIFT595_SRCLK  "74x595 SRCLK"
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
+#define D_SENSOR_CM11_TX       "CM110x TX" 
+#define D_SENSOR_CM11_RX       "CM110x RX" 
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -898,9 +905,9 @@
 #define D_OUT_OF_RANGE         "Poza zakresem"
 #define D_SENSOR_DETECTED      "wykryto"
 
-//SDM220, SDM120, SDM72, LE01MR
+//SDM220, SDM120, SDM72, LE01MR, SDM230
 #define D_EXPORT_POWER    "Moc Eksportowana"
-#define D_IMPORT_POWER 	  "Moc Inportowana"
+#define D_IMPORT_POWER 	  "Moc Importowana"
 #define D_PHASE_ANGLE     "Przesunięcie faz"
 #define D_IMPORT_ACTIVE   "Czynna pobrana"
 #define D_EXPORT_ACTIVE   "Czynna oddana"
@@ -910,6 +917,7 @@
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Stopni"
 #define D_TOTAL_ACTIVE    "Całkowita czynna"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Całkowita czynna (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Napięcie PV1"
@@ -919,12 +927,15 @@
 #define D_PV2_CURRENT     "Prąd PV2"
 #define D_PV2_POWER       "Moc PV2"
 #define D_SOLAR_POWER     "Moc PV"
-#define D_INVERTER_POWER  "Moc invertera"
+#define D_INVERTER_POWER  "Moc inwertera"
 #define D_STATUS          "Status"
-#define D_WAITING         "Oczekiwanie"
-#define D_CHECKING        "Sprawdzanie"
-#define D_WORKING         "Praca"
-#define D_FAILURE         "Błąd"
+#define D_SOLAX_MODE_0    "Oczekiwanie"
+#define D_SOLAX_MODE_1    "Sprawdzanie"
+#define D_SOLAX_MODE_2    "Praca"
+#define D_SOLAX_MODE_3    "Błąd"
+#define D_SOLAX_MODE_4    "Trwała awaria"  // to be translated
+#define D_SOLAX_MODE_5    "Aktualizacja programu"  // to be translated
+#define D_SOLAX_MODE_6    "Autotest"  // to be translated
 #define D_SOLAX_ERROR_0   "Błąd - brak kodu"
 #define D_SOLAX_ERROR_1   "Błąd - utrata sieci"
 #define D_SOLAX_ERROR_2   "Błąd - napięcie sieci"
@@ -955,14 +966,14 @@
 #define D_NEW_FILE             "nowyplik.txt"
 #define D_CREATE_NEW_FILE      "Utwórz i edytuj nowy plik"
 #define D_EDIT_FILE            "Edytuj Plik"
-#define D_CONFIRM_FILE_DEL     "Confirm file deletion"
-#define D_SHOW_HIDDEN_FILES    "Show hidden files"
+#define D_CONFIRM_FILE_DEL     "Potwierdź usunięcie pliku"
+#define D_SHOW_HIDDEN_FILES    "Pokaż ukryte pliki"
 
 //xsns_67_as3935.ino
 #define D_AS3935_GAIN "wejście:"
 #define D_AS3935_ENERGY "energia:"
 #define D_AS3935_DISTANCE "dystans:"
-#define D_AS3935_DISTURBER "zakłucacz:"
+#define D_AS3935_DISTURBER "zakłócacz:"
 #define D_AS3935_VRMS "µVrms:"
 #define D_AS3935_APRX "aprx.:"
 #define D_AS3935_AWAY "daleko"
@@ -972,8 +983,8 @@
 #define D_AS3935_ABOVE "wyładowanie"
 #define D_AS3935_NOISE "detekcja szumu"
 #define D_AS3935_DISTDET "wykryto zakłócenia"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
-#define D_AS3935_FLICKER "IRQ flicker!"
+#define D_AS3935_INTNOEV "Przerwanie bez zdarzenia!"
+#define D_AS3935_FLICKER "Migotanie IRQ!"
 #define D_AS3935_POWEROFF "Wyłącz"
 #define D_AS3935_NOMESS "nasłuchiwanie..."
 #define D_AS3935_ON "Wł."

@@ -1041,6 +1041,9 @@ void ADS1115_init(void) {
 char sml_start;
 uint8_t dump2log=0;
 
+uint8_t ser_act_LED_pin=255;
+uint8_t ser_act_meter_num=0;
+
 #define SML_SAVAILABLE Serial_available()
 #define SML_SREAD Serial_read()
 #define SML_SPEAK Serial_peek()
@@ -1623,6 +1626,9 @@ uint32_t meters;
       if (meter_desc_p[meters].type != 'c') {
         // poll for serial input
         if (!meter_ss[meters]) continue;
+        if (ser_act_LED_pin!=255 && (ser_act_meter_num==0 || ser_act_meter_num-1==meters)) {
+          digitalWrite(ser_act_LED_pin, meter_ss[meters]->available() && !digitalRead(ser_act_LED_pin)); // Invert LED, if queue is continuously full
+        }
         while (meter_ss[meters]->available()) {
           sml_shift_in(meters, 0);
         }
@@ -2345,7 +2351,7 @@ void SML_Show(boolean json) {
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
-             if (strcmp(name,"*"))  WSContentSend_PD(PSTR("{s}%s %s: {m}%s %s{e}"),meter_desc_p[mindex].prefix,name,tpowstr,unit);
+             if (strcmp(name,"*"))  WSContentSend_PD(PSTR("{s}%s %s {m}%s %s{e}"),meter_desc_p[mindex].prefix,name,tpowstr,unit);
             }
           }
         }
@@ -2570,7 +2576,7 @@ void SML_Init(void) {
           index--;
           srcpin  = strtol(lp,&lp,10);
           if (Gpio_used(abs(srcpin))) {
-            AddLog(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for RX in meter number %d"),abs(srcpin),index+1);
 dddef_exit:
             if (script_meter) free(script_meter);
             script_meter = 0;
@@ -2625,7 +2631,7 @@ dddef_exit:
             lp++;
             script_meter_desc[index].trxpin = strtol(lp, &lp, 10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
-              AddLog(LOG_LEVEL_INFO, PSTR("gpio tx double define!"));
+              AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX in meter number %d"),script_meter_desc[index].trxpin,index+1);
               goto dddef_exit;
             }
             if (*lp != ',') goto next_line;
@@ -3253,9 +3259,11 @@ uint8_t parity=0;
 
 // dump to log shows serial data on console
 // has to be off for normal use
-// in console sensor53 d1,d2,d3 .. or. d0 for normal use
+// in console sensor53 d1, d2, d3 ... or d0 for normal use
 // set counter => sensor53 c1 xxxx
 // restart driver => sensor53 r
+// meter number for monitoring serial activity => sensor53 m1, m2, m3 ... or m0 for all (default)
+// LED-GPIO for monitoring serial activity => sensor53 l2, l13, l15 ... or l255 for turn off (default)
 
 bool XSNS_53_cmd(void) {
   bool serviced = true;
@@ -3272,7 +3280,7 @@ bool XSNS_53_cmd(void) {
         dump2log=index;
         ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"),dump2log);
       } else if (*cp=='c') {
-          // set ounter
+        // set counter
           cp++;
           uint8_t index=*cp&7;
           if (index<1 || index>MAX_COUNTERS) index=1;
@@ -3296,6 +3304,31 @@ bool XSNS_53_cmd(void) {
         ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"restart\"}}"));
         SML_CounterSaveState();
         SML_Init();
+      } else if (*cp=='m') {
+        // meter number for serial activity
+        cp++;
+        if (!isdigit(*cp)) {
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_meter_num: %d\"}}"),ser_act_meter_num);
+        } else {
+          ser_act_meter_num=atoi(cp);
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_meter_num: %d\"}}"),ser_act_meter_num);
+        }
+      } else if (*cp=='l') {
+        // serial activity LED-GPIO
+        cp++;
+        if (!isdigit(*cp)) {
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_LED_pin: %d\"}}"),ser_act_LED_pin);
+        } else {
+          ser_act_LED_pin=atoi(cp);
+          if (Gpio_used(ser_act_LED_pin)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for LED."),ser_act_LED_pin);
+            ser_act_LED_pin=255;
+          }
+          if (ser_act_LED_pin!=255) {
+            pinMode(ser_act_LED_pin, OUTPUT);
+          }
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_LED_pin: %d\"}}"),ser_act_LED_pin);
+        }
       } else {
         serviced=false;
       }

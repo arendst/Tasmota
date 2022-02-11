@@ -61,7 +61,7 @@ be_local_closure(Tapp_autoexec,   /* name */
     /* K7   */  be_nested_str(tasmota),
     /* K8   */  be_nested_str(log),
     /* K9   */  be_nested_str(format),
-    /* K10  */  be_nested_str(TAP_X3A_X20found_X20Tasmota_X20App_X20_X27_X25s_X27),
+    /* K10  */  be_nested_str(TAP_X3A_X20Loaded_X20Tasmota_X20App_X20_X27_X25s_X27),
     /* K11  */  be_const_int(2),
     /* K12  */  be_nested_str(load),
     /* K13  */  be_nested_str(_X23autoexec_X2Ebe),

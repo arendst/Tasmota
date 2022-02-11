@@ -14,7 +14,7 @@ be_local_closure(lv_clock_icon_set_time,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -75,7 +75,7 @@ be_local_closure(lv_clock_icon_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -125,13 +125,37 @@ be_local_closure(lv_clock_icon_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     2,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        2,                          /* nstack */
+        0,                          /* argc */
+        0,                          /* varg */
+        1,                          /* has upvals */
+        ( &(const bupvaldesc[ 1]) {  /* upvals */
+          be_local_const_upval(1, 0),
+        }),
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        1,                          /* has constants */
+        ( &(const bvalue[ 1]) {     /* constants */
+        /* K0   */  be_nested_str(before_del),
+        }),
+        &be_const_str__X3Clambda_X3E,
+        &be_const_str_solidified,
+        ( &(const binstruction[ 4]) {  /* code */
+          0x68000000,  //  0000  GETUPV	R0	U0
+          0x8C000100,  //  0001  GETMET	R0	R0	K0
+          0x7C000200,  //  0002  CALL	R0	1
+          0x80040000,  //  0003  RET	1	R0
+        })
+      ),
+    }),
     1,                          /* has constants */
-    ( &(const bvalue[22]) {     /* constants */
+    ( &(const bvalue[25]) {     /* constants */
     /* K0   */  be_nested_str(init),
     /* K1   */  be_nested_str(lv),
     /* K2   */  be_nested_str(seg7_font),
@@ -152,12 +176,15 @@ be_local_closure(lv_clock_icon_init,   /* name */
     /* K17  */  be_nested_str(set_style_bg_color),
     /* K18  */  be_nested_str(color),
     /* K19  */  be_nested_str(COLOR_BLACK),
-    /* K20  */  be_nested_str(tasmota),
-    /* K21  */  be_nested_str(add_driver),
+    /* K20  */  be_nested_str(add_event_cb),
+    /* K21  */  be_nested_str(EVENT_DELETE),
+    /* K22  */  be_const_int(0),
+    /* K23  */  be_nested_str(tasmota),
+    /* K24  */  be_nested_str(add_driver),
     }),
     &be_const_str_init,
     &be_const_str_solidified,
-    ( &(const binstruction[82]) {  /* code */
+    ( &(const binstruction[89]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
@@ -235,11 +262,18 @@ be_local_closure(lv_clock_icon_init,   /* name */
       0x88281505,  //  004A  GETMBR	R10	R10	K5
       0x3024120A,  //  004B  OR	R9	R9	R10
       0x7C180600,  //  004C  CALL	R6	3
-      0xB80E2800,  //  004D  GETNGBL	R3	K20
-      0x8C0C0715,  //  004E  GETMET	R3	R3	K21
-      0x5C140000,  //  004F  MOVE	R5	R0
-      0x7C0C0400,  //  0050  CALL	R3	2
-      0x80000000,  //  0051  RET	0
+      0x8C0C0114,  //  004D  GETMET	R3	R0	K20
+      0x84140000,  //  004E  CLOSURE	R5	P0
+      0xB81A0200,  //  004F  GETNGBL	R6	K1
+      0x88180D15,  //  0050  GETMBR	R6	R6	K21
+      0x581C0016,  //  0051  LDCONST	R7	K22
+      0x7C0C0800,  //  0052  CALL	R3	4
+      0xB80E2E00,  //  0053  GETNGBL	R3	K23
+      0x8C0C0718,  //  0054  GETMET	R3	R3	K24
+      0x5C140000,  //  0055  MOVE	R5	R0
+      0x7C0C0400,  //  0056  CALL	R3	2
+      0xA0000000,  //  0057  CLOSE	R0
+      0x80000000,  //  0058  RET	0
     })
   )
 );
@@ -247,36 +281,30 @@ be_local_closure(lv_clock_icon_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: del
+** Solidified function: before_del
 ********************************************************************/
-be_local_closure(lv_clock_icon_del,   /* name */
+be_local_closure(lv_clock_icon_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(del),
-    /* K1   */  be_nested_str(tasmota),
-    /* K2   */  be_nested_str(remove_driver),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(tasmota),
+    /* K1   */  be_nested_str(remove_driver),
     }),
-    &be_const_str_del,
+    &be_const_str_before_del,
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x60040003,  //  0000  GETGBL	R1	G3
-      0x5C080000,  //  0001  MOVE	R2	R0
-      0x7C040200,  //  0002  CALL	R1	1
-      0x8C040300,  //  0003  GETMET	R1	R1	K0
-      0x7C040200,  //  0004  CALL	R1	1
-      0xB8060200,  //  0005  GETNGBL	R1	K1
-      0x8C040302,  //  0006  GETMET	R1	R1	K2
-      0x5C0C0000,  //  0007  MOVE	R3	R0
-      0x7C040400,  //  0008  CALL	R1	2
-      0x80000000,  //  0009  RET	0
+    ( &(const binstruction[ 5]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x5C0C0000,  //  0002  MOVE	R3	R0
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80000000,  //  0004  RET	0
     })
   )
 );
@@ -294,11 +322,11 @@ be_local_class(lv_clock_icon,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(sec, -1), be_const_var(2) },
         { be_const_key(hour, -1), be_const_var(0) },
-        { be_const_key(set_time, 6), be_const_closure(lv_clock_icon_set_time_closure) },
+        { be_const_key(before_del, 6), be_const_closure(lv_clock_icon_before_del_closure) },
         { be_const_key(every_second, -1), be_const_closure(lv_clock_icon_every_second_closure) },
         { be_const_key(minute, -1), be_const_var(1) },
-        { be_const_key(init, 2), be_const_closure(lv_clock_icon_init_closure) },
-        { be_const_key(del, -1), be_const_closure(lv_clock_icon_del_closure) },
+        { be_const_key(set_time, 2), be_const_closure(lv_clock_icon_set_time_closure) },
+        { be_const_key(init, -1), be_const_closure(lv_clock_icon_init_closure) },
     })),
     be_str_literal("lv_clock_icon")
 );

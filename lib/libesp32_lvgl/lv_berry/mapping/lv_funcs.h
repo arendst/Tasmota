@@ -4,6 +4,7 @@
 
 // Custom Tasmota functions
 void lv_img_set_tasmota_logo(lv_obj_t * img);
+lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 // ======================================================================
 // Artificial
@@ -685,6 +686,57 @@ void lv_spinbox_decrement(lv_obj_t * obj)
 
 // ../../lvgl/src/extra/widgets/spinner/lv_spinner.h
 lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
+
+// ../../lvgl/src/lv_api_map.h
+static inline uint32_t lv_task_handler(void)
+static inline void lv_obj_move_foreground(lv_obj_t * obj)
+static inline void lv_obj_move_background(lv_obj_t * obj)
+static inline uint32_t lv_obj_get_child_id(const struct _lv_obj_t * obj)
+
+// ../../lvgl/src/misc/lv_color.h
+static inline uint8_t lv_color_to1(lv_color_t color)
+static inline uint8_t lv_color_to8(lv_color_t color)
+static inline uint16_t lv_color_to16(lv_color_t color)
+static inline uint32_t lv_color_to32(lv_color_t color)
+static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
+static inline void lv_color_premult(lv_color_t c, uint8_t mix, uint16_t * out)
+static inline lv_color_t lv_color_mix_premult(uint16_t * premult_c1, lv_color_t c2, uint8_t mix)
+static inline void lv_color_mix_with_alpha(lv_color_t bg_color, lv_opa_t bg_opa, lv_color_t fg_color, lv_opa_t fg_opa, lv_color_t * res_color, lv_opa_t * res_opa)
+static inline uint8_t lv_color_brightness(lv_color_t color)
+static inline lv_color_t lv_color_make(uint8_t r, uint8_t g, uint8_t b)
+static inline lv_color_t lv_color_hex(uint32_t c)
+static inline lv_color_t lv_color_hex3(uint32_t c)
+static inline void lv_color_filter_dsc_init(lv_color_filter_dsc_t * dsc, lv_color_filter_cb_t cb)
+void lv_color_fill(lv_color_t * buf, lv_color_t color, uint32_t px_num)
+lv_color_t lv_color_lighten(lv_color_t c, lv_opa_t lvl)
+lv_color_t lv_color_darken(lv_color_t c, lv_opa_t lvl)
+lv_color_t lv_color_change_lightness(lv_color_t c, lv_opa_t lvl)
+lv_color_t lv_color_hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v)
+lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8)
+lv_color_hsv_t lv_color_to_hsv(lv_color_t color)
+static inline lv_color_t lv_color_chroma_key(void)
+lv_color_t lv_palette_main(lv_palette_t p)
+static inline lv_color_t lv_color_white(void)
+static inline lv_color_t lv_color_black(void)
+lv_color_t lv_palette_lighten(lv_palette_t p, uint8_t lvl)
+lv_color_t lv_palette_darken(lv_palette_t p, uint8_t lvl)
+
+// ../../lvgl/src/misc/lv_style.h
+void lv_style_init(lv_style_t * style)
+void lv_style_reset(lv_style_t * style)
+lv_style_prop_t lv_style_register_prop(void)
+bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop)
+void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t value)
+lv_res_t lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
+static inline lv_res_t lv_style_get_prop_inlined(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
+void lv_style_transition_dsc_init(lv_style_transition_dsc_t * tr, const lv_style_prop_t props[], lv_anim_path_cb_t path_cb, uint32_t time, uint32_t delay, void * user_data)
+lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
+bool lv_style_is_empty(const lv_style_t * style)
+static inline void lv_style_set_pad_all(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_pad_hor(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_pad_ver(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_pad_gap(lv_style_t * style, lv_coord_t value)
+static inline void lv_style_set_size(lv_style_t * style, lv_coord_t value)
 
 // ../../lvgl/src/misc/lv_style_gen.h
 void lv_style_set_width(lv_style_t * style, lv_coord_t value)

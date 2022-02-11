@@ -51,112 +51,9 @@
 #undef USE_DS18x20
 #undef USE_WS2812
 #undef USE_ENERGY_SENSOR
-#undef USE_BERRY                                 // Disable Berry scripting language
+//#undef USE_BERRY                                 // Disable Berry scripting language
 #undef USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
 #endif  // FIRMWARE_WEBCAM
-
-/*********************************************************************************************\
- * [tasmota32-odroidgo.bin]
- * Provide an image with useful supported sensors enabled for Odroid Go
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_ODROID_GO
-
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "odroid-go"
-
-#undef MODULE
-#define MODULE                 ODROID_GO         // [Module] Select default module from tasmota_template.h
-#undef FALLBACK_MODULE
-#define FALLBACK_MODULE        ODROID_GO         // [Module2] Select default module on fast reboot where USER_MODULE is user template
-
-#define USE_ODROID_GO                            // Add support for Odroid Go
-#define USE_SDCARD
-
-#define USE_WEBCLIENT_HTTPS
-
-#undef USE_HOME_ASSISTANT
-
-#define USE_I2C
-#define USE_SPI
-  #define USE_DISPLAY
-  #define SHOW_SPLASH
-#ifdef USE_UNIVERSAL_DISPLAY
-  #define USE_LVGL
-  #define USE_LVGL_FREETYPE
-//  #define USE_DISPLAY_LVGL_ONLY
-#else
-  #define USE_DISPLAY_ILI9341                      // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-  #define USE_DISPLAY_MODES1TO5
-#endif
-//#define USE_BLE_ESP32                            // Enable new BLE driver
-//#define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
-#endif  // FIRMWARE_ODROID_GO
-
-/*********************************************************************************************\
- * [tasmota32-core2.bin]
- * Provide an image with useful supported sensors enabled for M5stack core2
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_M5STACK_CORE2
-
-#undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "core2"
-
-#undef MODULE
-#define MODULE                 M5STACK_CORE2     // [Module] Select default module from tasmota_template.h
-#undef FALLBACK_MODULE
-#define FALLBACK_MODULE        M5STACK_CORE2     // [Module2] Select default module on fast reboot where USER_MODULE is user template
-
-#undef USE_HOME_ASSISTANT
-
-#define USE_M5STACK_CORE2                        // Add support for M5Stack Core2
-  #define USE_I2S_SAY_TIME
-  #define USE_I2S_WEBRADIO
-#define USE_SDCARD
-
-#define USE_WEBCLIENT_HTTPS
-
-#define USE_I2C
-  #define USE_BMA423
-  #define USE_MPU_ACCEL
-#define USE_SPI
-  #define USE_DISPLAY
-  #define SHOW_SPLASH
-#ifdef USE_UNIVERSAL_DISPLAY
-  #define USE_LVGL
-  #define USE_LVGL_FREETYPE
-//  #define USE_DISPLAY_LVGL_ONLY
-#else
-  #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-  #define USE_DISPLAY_MODES1TO5
-#endif
-    #define USE_TOUCH_BUTTONS
-    #define JPEG_PICTS
-    #define USE_FT5206
-
-#define USE_SENDMAIL
-#define USE_ESP32MAIL
-
-#ifndef USE_RULES
-  #define USE_SCRIPT                             // Add support for script (+17k code)
-// Script related defines
-  #define MAXVARS 75
-  #define MAXSVARS 15
-  #define MAXFILT 10
-  #define UFSYS_SIZE 8192
-  #define USE_SCRIPT_TASK
-  #define LARGE_ARRAYS
-  #define SCRIPT_LARGE_VNBUFF
-  #define USE_SCRIPT_GLOBVARS
-  #define USE_SCRIPT_SUB_COMMAND
-  #define USE_ANGLE_FUNC
-  #define USE_SCRIPT_WEB_DISPLAY
-  #define SCRIPT_FULL_WEBPAGE
-  #define SCRIPT_GET_HTTPS_JP
-  #define USE_GOOGLE_CHARTS
-#endif  // USE_RULES
-#endif  // FIRMWARE_M5STACK_CORE2
 
 /*********************************************************************************************\
  * [tasmota32-bluetooth.bin]
@@ -184,6 +81,8 @@
 #define USE_BLE_ESP32                            // Enable new BLE driver
 #define USE_EQ3_ESP32
 #define USE_MI_ESP32                             // (ESP32 only) Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#define USE_MI_EXT_GUI                         //enable dashboard style GUI
+
 #endif  // FIRMWARE_BLUETOOTH
 
 /*********************************************************************************************\
@@ -209,6 +108,10 @@
 #define USE_I2S
 #define USE_SPI
 #define USE_LVGL
+#define USE_LVGL_FREETYPE
+  #undef SET_ESP32_STACK_SIZE
+  #define SET_ESP32_STACK_SIZE (24 * 1024)
+#define USE_LVGL_PNG_DECODER
 #define USE_DISPLAY
 #define SHOW_SPLASH
 #define USE_XPT2046
@@ -216,12 +119,10 @@
 #define USE_MPU_ACCEL
 #define USE_BM8563
 #define USE_MLX90614
-#define USE_LVGL_PNG_DECODER
 #define USE_UNIVERSAL_DISPLAY
 #define USE_DISPLAY_LVGL_ONLY
 
 #undef USE_DISPLAY_MODES1TO5
-#undef SHOW_SPLASH
 #undef USE_DISPLAY_LCD
 #undef USE_DISPLAY_SSD1306
 #undef USE_DISPLAY_MATRIX
@@ -268,7 +169,7 @@
 #define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
 #define USE_HTU                                // [I2cDriver9] Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
 #define USE_BMP                                // [I2cDriver10] Enable BMP085/BMP180/BMP280/BME280 sensors (I2C addresses 0x76 and 0x77) (+4k4 code)
-//  #define USE_BME680                           // Enable support for BME680 sensor using Bosch BME680 library (+4k code)
+//  #define USE_BME68X                           // Enable support for BME680/BME688 sensor using Bosch BME68x library (+6k9 code)
 //#define USE_BH1750                             // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
 //#define USE_VEML6070                           // [I2cDriver12] Enable VEML6070 sensor (I2C addresses 0x38 and 0x39) (+1k5 code)
 //#define USE_VEML6075                           // [I2cDriver49] Enable VEML6075 UVA/UVB/UVINDEX Sensor (I2C address 0x10) (+2k1 code)
@@ -338,6 +239,7 @@
 
 //#define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 //#define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+//#define USE_CM110x                               // Add support for CM110x CO2 sensors (+2k7 code)
 #ifndef CO2_LOW
   #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 #endif
@@ -391,7 +293,7 @@
 #undef USE_EXS_DIMMER                           // Disable support for EX-Store WiFi Dimmer
 //#define USE_HOTPLUG                              // Add support for sensor HotPlug
 //#undef USE_DEVICE_GROUPS                        // Disable support for device groups (+5k6 code)
-#undef USE_PWM_DIMMER                           // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
+//#undef USE_PWM_DIMMER                           // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #undef USE_SONOFF_D1                            // Disable support for Sonoff D1 Dimmer (+0k7 code)
 #undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
@@ -404,7 +306,7 @@
 #define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
 #define USE_HTU                                // [I2cDriver9] Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
 #define USE_BMP                                // [I2cDriver10] Enable BMP085/BMP180/BMP280/BME280 sensors (I2C addresses 0x76 and 0x77) (+4k4 code)
-  #define USE_BME680                           // Enable support for BME680 sensor using Bosch BME680 library (+4k code)
+  #define USE_BME68X                           // Enable support for BME680/BME688 sensor using Bosch BME68x library (+6k9 code)
 #define USE_BH1750                             // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
 #define USE_VEML6070                           // [I2cDriver12] Enable VEML6070 sensor (I2C addresses 0x38 and 0x39) (+1k5 code)
 //#define USE_VEML6075                           // [I2cDriver49] Enable VEML6075 UVA/UVB/UVINDEX Sensor (I2C address 0x10) (+2k1 code)
@@ -474,6 +376,7 @@
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+#define USE_CM110x                               // Add support for CM110x CO2 sensors (+2k7 code)
 #ifndef CO2_LOW
   #define CO2_LOW              800               // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 #endif
@@ -517,6 +420,7 @@
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #define USE_SDM72                                // Add support for Eastron SDM72-Modbus energy monitor (+0k3 code)
 #define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
+#define USE_SDM230                               // Add support for Eastron SDM230-Modbus energy monitor (+?? code)
 #define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
