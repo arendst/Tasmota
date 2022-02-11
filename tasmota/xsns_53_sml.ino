@@ -2418,6 +2418,8 @@ struct SML_COUNTER {
   uint8_t sml_cnt_old_state;
   uint32_t sml_cnt_last_ts;
   uint32_t sml_counter_ltime;
+  uint32_t sml_counter_lfalltime;
+  uint32_t sml_counter_pulsewidth;
   uint16_t sml_debounce;
   uint8_t sml_cnt_updated;
 
@@ -2434,10 +2436,10 @@ uint8_t sml_counter_pinstate;
 
 uint8_t sml_cnt_index[MAX_COUNTERS] =  { 0, 1, 2, 3 };
 void IRAM_ATTR SML_CounterIsr(void *arg) {
-uint32_t index = *static_cast<uint8_t*>(arg);
+  uint32_t index = *static_cast<uint8_t*>(arg);
 
-uint32_t time = millis();
-uint32_t debounce_time;
+  uint32_t time = millis();
+  uint32_t debounce_time;
 
   if (digitalRead(meter_desc_p[sml_counters[index].sml_cnt_old_state].srcpin) == bitRead(sml_counter_pinstate, index)) {
     return;
@@ -2450,6 +2452,8 @@ uint32_t debounce_time;
   if bitRead(sml_counter_pinstate, index) {
     // falling edge
     RtcSettings.pulse_counter[index]++;
+    sml_counters[index].sml_counter_pulsewidth = time - sml_counters[index].sml_counter_lfalltime;
+    sml_counters[index].sml_counter_lfalltime = time;
     sml_counters[index].sml_cnt_updated = 1;
   }
   sml_counters[index].sml_counter_ltime = time;
@@ -2855,7 +2859,7 @@ init10:
           }
 
           RtcSettings.pulse_counter[cindex] = Settings->pulse_counter[cindex];
-          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex]);
+          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex],0.0);
           cindex++;
         }
     } else {
@@ -3062,8 +3066,8 @@ void SetDBGLed(uint8_t srcpin, uint8_t ledpin) {
 
 // fast counter polling
 void SML_Counter_Poll(void) {
-uint16_t meters,cindex=0;
-uint32_t ctime=millis();
+  uint16_t meters,cindex=0;
+  uint32_t ctime=millis();
 
   for (meters=0; meters<meters_used; meters++) {
     if (meter_desc_p[meters].type=='c') {
@@ -3101,7 +3105,9 @@ uint32_t ctime=millis();
               if (state==0) {
                 // inc counter
                 RtcSettings.pulse_counter[cindex]++;
-                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex]);
+                sml_counters[cindex].sml_counter_pulsewidth = ctime - sml_counters[cindex].sml_counter_lfalltime;
+                sml_counters[cindex].sml_counter_lfalltime = ctime;
+                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex],60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
               }
             }
           }
@@ -3124,7 +3130,7 @@ uint32_t ctime=millis();
         }
 
         if (sml_counters[cindex].sml_cnt_updated) {
-          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex]);
+          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex],60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
           sml_counters[cindex].sml_cnt_updated=0;
         }
 
@@ -3340,7 +3346,7 @@ bool XSNS_53_cmd(void) {
             uint8_t cindex=0;
             for (uint8_t meters=0; meters<meters_used; meters++) {
               if (meter_desc_p[meters].type=='c') {
-                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex]);
+                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex],0.0);
                 cindex++;
               }
             }
@@ -3383,8 +3389,14 @@ bool XSNS_53_cmd(void) {
   return serviced;
 }
 
-void InjektCounterValue(uint8_t meter,uint32_t counter) {
-  sprintf((char*)&smltbuf[meter][0],"1-0:1.8.0*255(%d)",counter);
+void InjektCounterValue(uint8_t meter,uint32_t counter,float rate) {
+  int dec = (int)rate;
+  int frac = (int)((rate - (float)dec) * 1000.0);
+
+  snprintf((char*)&smltbuf[meter][0],SML_BSIZ,"1-0:1.8.0*255(%d)",counter);
+  SML_Decode(meter);
+
+  snprintf((char*)&smltbuf[meter][0],SML_BSIZ,"1-0:1.7.0*255(%d.%d)",dec,frac);
   SML_Decode(meter);
 }
 
