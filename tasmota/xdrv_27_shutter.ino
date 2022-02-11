@@ -182,7 +182,7 @@ void ShutterRtc50mS(void)
             startWaveformClockCycles(Pin(GPIO_PWM1, i), cc/2, cc/2, 0, -1, 0, false);
   #endif  // ESP8266
   #ifdef ESP32
-            analogWriteFreq(Shutter[i].pwm_velocity)
+            analogWriteFreq(Shutter[i].pwm_velocity);
             analogWrite(Pin(GPIO_PWM1, i), 50);
   #endif  // ESP32
           }
