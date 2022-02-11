@@ -175,8 +175,10 @@ void ShutterRtc50mS(void)
           if (Shutter[i].accelerator) {
             //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
-            analogWriteFreq(Shutter[i].pwm_velocity);
-            analogWrite(Pin(GPIO_PWM1, i), 50);
+            digitalWrite(Pin(GPIO_PWM1, i), LOW);
+            // Convert frequency into clock cycles
+            uint32_t cc = microsecondsToClockCycles(1000000UL) / Shutter[i].pwm_velocity;
+            startWaveformClockCycles(Pin(GPIO_PWM1, i), cc/2, cc/2, 0, -1, 0, false);
           }
         break;
       }
