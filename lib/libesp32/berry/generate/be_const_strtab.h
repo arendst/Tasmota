@@ -747,6 +747,7 @@ extern const bcstring be_const_str_tomap;
 extern const bcstring be_const_str_top;
 extern const bcstring be_const_str_toptr;
 extern const bcstring be_const_str_tostring;
+extern const bcstring be_const_str_touch_update;
 extern const bcstring be_const_str_toupper;
 extern const bcstring be_const_str_tr;
 extern const bcstring be_const_str_traceback;
