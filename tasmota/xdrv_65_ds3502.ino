@@ -99,7 +99,7 @@ bool DS3502_Command(void)
 
   if (!strcmp(ArgV(argument, 1),"RESET"))  {  DS3502_Reset(); return serviced; }
 
-  if (!strcmp(ArgV(argument, 1),"STATUS"))  { DS3502_OutputTelemetry(false); return serviced; }
+  if (!strcmp(ArgV(argument, 1),"STATUS"))  { ResponseTime_P(PSTR(",\"DS3502\":{\"POTI\":%i}}"),DS3502_potiValue); return serviced; }
 
   if (!strcmp(ArgV(argument, 1),"POTI")) {
     if (paramcount > 1) {
@@ -115,14 +115,6 @@ bool DS3502_Command(void)
   return serviced;
 }
 
-void DS3502_OutputTelemetry(bool telemetry)
-{
-  ResponseTime_P(PSTR(",\"DS3502\":{\"POTI\":%i}}"),DS3502_potiValue);
-  if (telemetry) {
-    MqttPublishTeleSensor();
-  }
-}
-
 bool Xdrv65(uint8_t function)
 {
   if (!I2cEnabled(XI2C_65)) { return false; }
@@ -135,9 +127,6 @@ bool Xdrv65(uint8_t function)
   else if (DS3502_detected) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        if (TasmotaGlobal.tele_period == 0) {
-          DS3502_OutputTelemetry(true);
-        }
         break;
       case FUNC_COMMAND_DRIVER:
         if (XDRV_65 == XdrvMailbox.index) {
