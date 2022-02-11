@@ -89,6 +89,7 @@ struct METER_DESC {
   char *txmem;
   uint8_t index;
   uint8_t max_index;
+  char *script_str;
   uint8_t sopt;
 };
 
@@ -3038,6 +3039,15 @@ char *SML_GetSVal(uint32_t index) {
   if (index < 1 || index > MAX_METERS) { index = 1;}
   return &meter_id[index - 1][0];
 }
+
+int32_t SML_Set_WStr(uint32_t meter, char *hstr) {
+  if (meter < 1 || meter > meters_used) return -1;
+  meter--;
+  if (!meter_ss[meter]) return -2;
+  script_meter_desc[meter].script_str = hstr;
+  return 0;
+}
+
 #endif // USE_SML_SCRIPT_CMD
 
 
@@ -3145,29 +3155,35 @@ char *SML_Get_Sequence(char *cp,uint32_t index) {
 void SML_Check_Send(void) {
   sml_100ms_cnt++;
   char *cp;
-  for (uint32_t cnt=sml_desc_cnt; cnt<meters_used; cnt++) {
-    if (script_meter_desc[cnt].trxpin>=0 && script_meter_desc[cnt].txmem) {
+  for (uint32_t cnt = sml_desc_cnt; cnt < meters_used; cnt++) {
+    if (script_meter_desc[cnt].trxpin >= 0 && script_meter_desc[cnt].txmem) {
       //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> %d - %s - %d"),sml_desc_cnt,script_meter_desc[cnt].txmem,script_meter_desc[cnt].tsecs);
-      if ((sml_100ms_cnt>=script_meter_desc[cnt].tsecs)) {
-        sml_100ms_cnt=0;
-        //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
-        if (script_meter_desc[cnt].max_index>1) {
-          script_meter_desc[cnt].index++;
-          if (script_meter_desc[cnt].index>=script_meter_desc[cnt].max_index) {
-            script_meter_desc[cnt].index=0;
+      if ((sml_100ms_cnt >= script_meter_desc[cnt].tsecs)) {
+        sml_100ms_cnt = 0;
+        // check for scriptsync extra output
+        if (script_meter_desc[cnt].script_str) {
+          cp = script_meter_desc[cnt].script_str;
+          script_meter_desc[cnt].script_str = 0;
+        } else {
+          //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
+          if (script_meter_desc[cnt].max_index>1) {
+            script_meter_desc[cnt].index++;
+            if (script_meter_desc[cnt].index >= script_meter_desc[cnt].max_index) {
+              script_meter_desc[cnt].index = 0;
+              sml_desc_cnt++;
+            }
+            cp=SML_Get_Sequence(script_meter_desc[cnt].txmem,script_meter_desc[cnt].index);
+            //SML_Send_Seq(cnt,cp);
+          } else {
+            cp = script_meter_desc[cnt].txmem;
+            //SML_Send_Seq(cnt,cp);
             sml_desc_cnt++;
           }
-          cp=SML_Get_Sequence(script_meter_desc[cnt].txmem,script_meter_desc[cnt].index);
-          //SML_Send_Seq(cnt,cp);
-        } else {
-          cp=script_meter_desc[cnt].txmem;
-          //SML_Send_Seq(cnt,cp);
-          sml_desc_cnt++;
         }
         //AddLog(LOG_LEVEL_INFO, PSTR(">> %s"),cp);
         SML_Send_Seq(cnt,cp);
-        if (sml_desc_cnt>=meters_used) {
-          sml_desc_cnt=0;
+        if (sml_desc_cnt >= meters_used) {
+          sml_desc_cnt = 0;
         }
         break;
       }
@@ -3175,8 +3191,8 @@ void SML_Check_Send(void) {
       sml_desc_cnt++;
     }
 
-    if (sml_desc_cnt>=meters_used) {
-      sml_desc_cnt=0;
+    if (sml_desc_cnt >= meters_used) {
+      sml_desc_cnt = 0;
     }
   }
 }
