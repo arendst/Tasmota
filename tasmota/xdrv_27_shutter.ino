@@ -175,6 +175,7 @@ void ShutterRtc50mS(void)
           if (Shutter[i].accelerator) {
             //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
+	    digitalWrite(Pin(GPIO_PWM1, i), LOW);
   #ifdef ESP8266
             // Convert frequency into clock cycles
             uint32_t cc = microsecondsToClockCycles(1000000UL) / Shutter[i].pwm_velocity;
