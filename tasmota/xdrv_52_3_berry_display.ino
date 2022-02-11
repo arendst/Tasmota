@@ -34,43 +34,47 @@ Renderer *Init_uDisplay(const char *desc);
  * display.start(string) -> comptr or nil if failed
  * 
 \*********************************************************************************************/
-extern "C" {
-  int be_ntv_display_start(bvm *vm) {
-  #ifdef USE_UNIVERSAL_DISPLAY
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 1 && be_isstring(vm, 1)) {
-      const char * desc = be_tostring(vm, 1);
-      // remove all objects on stack to avoid warnings in subsequent calls to Berry
-      be_pop(vm, argc);
-      Renderer * renderer = Init_uDisplay(desc);
-      if (renderer) {
-        be_pushcomptr(vm, renderer);
-      } else {
-        be_pushnil(vm);
-      }
-      be_return(vm);
+int be_ntv_display_start(struct bvm *vm) {
+#ifdef USE_UNIVERSAL_DISPLAY
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 1 && be_isstring(vm, 1)) {
+    const char * desc = be_tostring(vm, 1);
+    // remove all objects on stack to avoid warnings in subsequent calls to Berry
+    be_pop(vm, argc);
+    Renderer * renderer = Init_uDisplay(desc);
+    if (renderer) {
+      be_pushcomptr(vm, renderer);
+    } else {
+      be_pushnil(vm);
     }
-    be_raise(vm, kTypeError, nullptr);
-  #else // USE_UNIVERSAL_DISPLAY
-    be_raise(vm, "internal_error", "universal display driver not present");
-  #endif // USE_UNIVERSAL_DISPLAY
-  }
-
-  // `display.dimmer([dim:int]) -> int` sets the dimmer of display, value 0..100. If `0` then turn off display. If no arg, read the current value.
-  int be_ntv_display_dimmer(bvm *vm) {
-    int32_t argc = be_top(vm); // Get the number of arguments
-    int32_t dimmer;
-    if (argc >= 1) {
-      if (!be_isint(vm, 1)) { be_raise(vm, "type_error", "arg must be int"); }
-      dimmer = be_toint(vm, 1);
-      if ((dimmer < 0) || (dimmer > 100)) { be_raise(vm, "value_error", "value must be in range 0..100"); }
-      be_pop(vm, argc);   // clear stack to avoid ripple errors in code called later
-      SetDisplayDimmer(dimmer);
-      ApplyDisplayDimmer();
-    }
-    be_pushint(vm, GetDisplayDimmer());
     be_return(vm);
   }
+  be_raise(vm, kTypeError, nullptr);
+#else // USE_UNIVERSAL_DISPLAY
+  be_raise(vm, "internal_error", "universal display driver not present");
+#endif // USE_UNIVERSAL_DISPLAY
+}
+
+// `display.dimmer([dim:int]) -> int` sets the dimmer of display, value 0..100. If `0` then turn off display. If no arg, read the current value.
+int be_ntv_display_dimmer(struct bvm *vm) {
+  int32_t argc = be_top(vm); // Get the number of arguments
+  int32_t dimmer;
+  if (argc >= 1) {
+    if (!be_isint(vm, 1)) { be_raise(vm, "type_error", "arg must be int"); }
+    dimmer = be_toint(vm, 1);
+    if ((dimmer < 0) || (dimmer > 100)) { be_raise(vm, "value_error", "value must be in range 0..100"); }
+    be_pop(vm, argc);   // clear stack to avoid ripple errors in code called later
+    SetDisplayDimmer(dimmer);
+    ApplyDisplayDimmer();
+  }
+  be_pushint(vm, GetDisplayDimmer());
+  be_return(vm);
+}
+
+void be_ntv_display_touch_update(int32_t touches, int32_t raw_x, int32_t raw_y, int32_t gesture) {
+#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
+  Touch_SetStatus(touches, raw_x, raw_y, gesture);
+#endif
 }
 
 #endif // USE_DISPLAY
