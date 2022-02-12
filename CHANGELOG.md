@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- ESP32 update the internal Berry type system to sync with Skiars Berry reopsitory. No expected impact on code, but .bec files need to be generated again. (#14811)
 
 ### Fixed
 - SSPM energy yesterday when zero

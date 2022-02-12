@@ -109,7 +109,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- ESP32 update the internal Berry type system to sync with Skiars Berry reopsitory. No expected impact on code, but .bec files need to be generated again. [#14811](https://github.com/arendst/Tasmota/issues/14811)
 
 ### Fixed
+- SSPM energy yesterday when zero
 
 ### Removed
