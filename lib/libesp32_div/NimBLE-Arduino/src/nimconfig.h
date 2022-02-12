@@ -1,6 +1,11 @@
  #pragma once
 
+#ifdef ESP_PLATFORM
 #include "sdkconfig.h"
+#else
+#include "ext_nimble_config.h"
+#endif
+
 #include "nimconfig_rename.h"
 
 /***********************************************
@@ -10,22 +15,44 @@
 /** @brief Un-comment to change the number of simultaneous connections (esp controller max is 9) */
 // #define CONFIG_BT_NIMBLE_MAX_CONNECTIONS 3
 
+/** @brief Un-comment to enable storing the timestamp when an attribute value is updated\n
+ *  This allows for checking the last update time using getTimeStamp() or getValue(time_t*)\n
+ *  If disabled, the timestamp returned from these functions will be 0.\n
+ *  Disabling timestamps will reduce the memory used for each value.\n
+ *  1 = Enabled, 0 = Disabled; Default = Disabled
+ */
+// #define CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED 0
+
+/** @brief Uncomment to set the default allocation size (bytes) for each attribute if\n
+ *  not specified when the constructor is called. This is also the size used when a remote\n
+ *  characteristic or descriptor is constructed before a value is read/notifed.\n
+ *  Increasing this will reduce reallocations but increase memory footprint.\n
+ *  Default value is 20. Range: 1 : 512 (BLE_ATT_ATTR_MAX_LEN)
+ */
+// #define CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH 20
+
 /** @brief Un-comment to change the default MTU size */
 // #define CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU 255
 
 /** @brief Un-comment to change default device name */
 // #define CONFIG_BT_NIMBLE_SVC_GAP_DEVICE_NAME "nimble"
 
-/** @brief Un-comment to see debug log messages from the NimBLE host
+/** @brief Un-comment to set the debug log messages level from the NimBLE host stack.\n
+ *  Values: 0 = DEBUG, 1 = INFO, 2 = WARNING, 3 = ERROR, 4 = CRITICAL, 5+ = NONE\n
  *  Uses approx. 32kB of flash memory.
  */
-// #define CONFIG_BT_NIMBLE_DEBUG
+ // #define CONFIG_BT_NIMBLE_LOG_LEVEL 5
 
  /** @brief Un-comment to set the debug log messages level from the NimBLE CPP Wrapper.\n
  *  Values: 0 = NONE, 1 = ERROR, 2 = WARNING, 3 = INFO, 4+ = DEBUG\n
  *  Uses approx. 32kB of flash memory.
  */
- // #define CONFIG_NIMBLE_CPP_DEBUG_LEVEL 0
+ // #define CONFIG_NIMBLE_CPP_LOG_LEVEL 0
+
+ /** @brief Un-comment to use timestamps with characteristic / descriptor values
+ *  If not enabled the `::get/readValue()` calls with a timestamp parameter will set the timestamp to 0.
+ */
+// #define NIMBLE_ATT_VALUE_TIMESTAMP_ENABLED
 
 /** @brief Un-comment to see NimBLE host return codes as text debug log messages.
  *  Uses approx. 7kB of flash memory.
@@ -156,9 +183,13 @@
 #define CONFIG_BT_NIMBLE_RPA_TIMEOUT 900
 #endif
 
+#ifndef CONFIG_BT_NIMBLE_LOG_LEVEL
+#define CONFIG_BT_NIMBLE_LOG_LEVEL 5
+#endif
+
 
 /** @brief Set if CCCD's and bond data should be stored in NVS */
-#define CONFIG_BT_NIMBLE_NVS_PERSIST 1
+#define CONFIG_BT_NIMBLE_NVS_PERSIST 0
 
 /** @brief Allow legacy paring */
 #define CONFIG_BT_NIMBLE_SM_LEGACY 1
@@ -198,6 +229,7 @@
 #define CONFIG_BT_ENABLED
 #endif
 
+#ifdef ESP_PLATFORM
 #ifndef CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
 #define CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY
 #endif
@@ -214,8 +246,9 @@
 #define CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE 2
 #endif
 
-#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+#if !defined(CONFIG_IDF_TARGET_ESP32) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32S3)
 #define CONFIG_IDF_TARGET_ESP32 1
+#endif
 #endif
 
 /* Cannot use client without scan */
@@ -228,3 +261,9 @@
 #define CONFIG_BT_NIMBLE_ROLE_BROADCASTER
 #endif
 
+/* Enables the use of Arduino String class for attribute values */
+#if defined __has_include
+#  if __has_include (<Arduino.h>)
+#    define NIMBLE_CPP_ARDUINO_STRING_AVAILABLE
+#  endif
+#endif

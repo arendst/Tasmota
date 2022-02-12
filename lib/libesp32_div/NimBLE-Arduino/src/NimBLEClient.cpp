@@ -11,11 +11,8 @@
  *      Author: kolban
  */
 
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
-
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLEClient.h"
 #include "NimBLEDevice.h"
@@ -23,9 +20,13 @@
 
 #include <string>
 #include <unordered_set>
+#include <climits>
 
+#if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "nimble/nimble_port.h"
-
+#else
+#include "nimble/porting/nimble/include/nimble/nimble_port.h"
+#endif
 
 static const char* LOG_TAG = "NimBLEClient";
 static NimBLEClientCallbacks defaultCallbacks;
@@ -74,6 +75,7 @@ NimBLEClient::NimBLEClient(const NimBLEAddress &peerAddress) : m_peerAddress(pee
     m_pConnParams.min_ce_len = BLE_GAP_INITIAL_CONN_MIN_CE_LEN; // Minimum length of connection event in 0.625ms units
     m_pConnParams.max_ce_len = BLE_GAP_INITIAL_CONN_MAX_CE_LEN; // Maximum length of connection event in 0.625ms units
 
+    memset(&m_dcTimer, 0, sizeof(m_dcTimer));
     ble_npl_callout_init(&m_dcTimer, nimble_port_get_dflt_eventq(),
                          NimBLEClient::dcTimerCb, this);
 } // NimBLEClient
@@ -454,6 +456,29 @@ void NimBLEClient::updateConnParams(uint16_t minInterval, uint16_t maxInterval,
 
 
 /**
+ * @brief Request an update of the data packet length.
+ * * Can only be used after a connection has been established.
+ * @details Sends a data length update request to the server the client is connected to.
+ * The Data Length Extension (DLE) allows to increase the Data Channel Payload from 27 bytes to up to 251 bytes.
+ * The server needs to support the Bluetooth 4.2 specifications, to be capable of DLE.
+ * @param [in] tx_octets The preferred number of payload octets to use (Range 0x001B-0x00FB).
+ */
+void NimBLEClient::setDataLen(uint16_t tx_octets) {
+#if defined(CONFIG_NIMBLE_CPP_IDF) && defined(ESP_IDF_VERSION) && \
+           ESP_IDF_VERSION_MAJOR >= 4 && ESP_IDF_VERSION_MINOR >= 3 && ESP_IDF_VERSION_PATCH >= 2
+    return;
+#else
+    uint16_t tx_time = (tx_octets + 14) * 8;
+
+    int rc = ble_gap_set_data_len(m_conn_id, tx_octets, tx_time);
+    if(rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "Set data length error: %d, %s", rc, NimBLEUtils::returnCodeToString(rc));
+    }
+#endif
+} // setDataLen
+
+
+/**
  * @brief Get detailed information about the current peer connection.
  */
 NimBLEConnInfo NimBLEClient::getConnInfo() {
@@ -586,7 +611,7 @@ NimBLERemoteService* NimBLEClient::getService(const NimBLEUUID &uuid) {
             return m_servicesVector.back();
         }
 
-        // If the request was successful but 16/32 bit service not found
+        // If the request was successful but 16/32 bit uuid not found
         // try again with the 128 bit uuid.
         if(uuid.bitSize() == BLE_UUID_TYPE_16 ||
            uuid.bitSize() == BLE_UUID_TYPE_32)
@@ -594,6 +619,15 @@ NimBLERemoteService* NimBLEClient::getService(const NimBLEUUID &uuid) {
             NimBLEUUID uuid128(uuid);
             uuid128.to128();
             return getService(uuid128);
+        } else {
+            // If the request was successful but the 128 bit uuid not found
+            // try again with the 16 bit uuid.
+            NimBLEUUID uuid16(uuid);
+            uuid16.to16();
+            // if the uuid was 128 bit but not of the BLE base type this check will fail
+            if (uuid16.bitSize() == BLE_UUID_TYPE_16) {
+                return getService(uuid16);
+            }
         }
     }
 
@@ -743,11 +777,11 @@ int NimBLEClient::serviceDiscoveredCB(
  * @param [in] characteristicUUID The characteristic whose value we wish to read.
  * @returns characteristic value or an empty string if not found
  */
-std::string NimBLEClient::getValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID) {
+NimBLEAttValue NimBLEClient::getValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID) {
     NIMBLE_LOGD(LOG_TAG, ">> getValue: serviceUUID: %s, characteristicUUID: %s",
                          serviceUUID.toString().c_str(), characteristicUUID.toString().c_str());
 
-    std::string ret = "";
+    NimBLEAttValue ret;
     NimBLERemoteService* pService = getService(serviceUUID);
 
     if(pService != nullptr) {
@@ -771,7 +805,7 @@ std::string NimBLEClient::getValue(const NimBLEUUID &serviceUUID, const NimBLEUU
  * @returns true if successful otherwise false
  */
 bool NimBLEClient::setValue(const NimBLEUUID &serviceUUID, const NimBLEUUID &characteristicUUID,
-                            const std::string &value, bool response)
+                            const NimBLEAttValue &value, bool response)
 {
     NIMBLE_LOGD(LOG_TAG, ">> setValue: serviceUUID: %s, characteristicUUID: %s",
                          serviceUUID.toString().c_str(), characteristicUUID.toString().c_str());
@@ -832,7 +866,7 @@ uint16_t NimBLEClient::getMTU() {
  * @param [in] arg A pointer to the client instance that registered for this callback.
  */
  /*STATIC*/
- int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
+int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
     NimBLEClient* client = (NimBLEClient*)arg;
     int rc;
 
@@ -950,19 +984,14 @@ uint16_t NimBLEClient::getMTU() {
                     NIMBLE_LOGD(LOG_TAG, "Got Notification for characteristic %s",
                                 (*characteristic)->toString().c_str());
 
-                    time_t t = time(nullptr);
-                    portENTER_CRITICAL(&(*characteristic)->m_valMux);
-                    (*characteristic)->m_value = std::string((char *)event->notify_rx.om->om_data,
-                                                             event->notify_rx.om->om_len);
-                    (*characteristic)->m_timestamp = t;
-                    portEXIT_CRITICAL(&(*characteristic)->m_valMux);
+                    uint32_t data_len = OS_MBUF_PKTLEN(event->notify_rx.om);
+                    (*characteristic)->m_value.setValue(event->notify_rx.om->om_data, data_len);
 
                     if ((*characteristic)->m_notifyCallback != nullptr) {
                         NIMBLE_LOGD(LOG_TAG, "Invoking callback for notification on characteristic %s",
                                     (*characteristic)->toString().c_str());
                         (*characteristic)->m_notifyCallback(*characteristic, event->notify_rx.om->om_data,
-                                                            event->notify_rx.om->om_len,
-                                                            !event->notify_rx.indication);
+                                                            data_len, !event->notify_rx.indication);
                     }
                     break;
                 }
@@ -1060,7 +1089,7 @@ uint16_t NimBLEClient::getMTU() {
                 NIMBLE_LOGD(LOG_TAG, "ble_sm_inject_io result: %d", rc);
 
             } else if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
-                NIMBLE_LOGD(LOG_TAG, "Passkey on device's display: %d", event->passkey.params.numcmp);
+                NIMBLE_LOGD(LOG_TAG, "Passkey on device's display: %" PRIu32, event->passkey.params.numcmp);
                 pkey.action = event->passkey.params.action;
                 // Compatibility only - Do not use, should be removed the in future
                 if(NimBLEDevice::m_securityCallbacks != nullptr) {
@@ -1205,5 +1234,4 @@ bool NimBLEClientCallbacks::onConfirmPIN(uint32_t pin){
     return true;
 }
 
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif // CONFIG_BT_ENABLED
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

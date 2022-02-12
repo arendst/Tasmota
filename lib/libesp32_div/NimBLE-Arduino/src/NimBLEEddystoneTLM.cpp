@@ -11,12 +11,14 @@
  *  Created on: Mar 12, 2018
  *      Author: pcbreflux
  */
-#include "sdkconfig.h"
+
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLELog.h"
 
+#include <stdio.h>
 #include <cstring>
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00)>>8) + (((x)&0xFF)<<8))
@@ -124,30 +126,30 @@ std::string NimBLEEddystoneTLM::toString() {
   out += " C\n";
 
   out += "Adv. Count ";
-  snprintf(val, sizeof(val), "%d", ENDIAN_CHANGE_U32(m_eddystoneData.advCount));
+  snprintf(val, sizeof(val), "%" PRIu32, ENDIAN_CHANGE_U32(m_eddystoneData.advCount));
   out += val;
   out += "\n";
 
   out += "Time in seconds ";
-  snprintf(val, sizeof(val), "%d", rawsec/10);
+  snprintf(val, sizeof(val), "%" PRIu32, rawsec/10);
   out += val;
   out += "\n";
 
   out += "Time ";
 
-  snprintf(val, sizeof(val), "%04d", rawsec / 864000);
+  snprintf(val, sizeof(val), "%04" PRIu32, rawsec / 864000);
   out += val;
   out += ".";
 
-  snprintf(val, sizeof(val), "%02d", (rawsec / 36000) % 24);
+  snprintf(val, sizeof(val), "%02" PRIu32, (rawsec / 36000) % 24);
   out += val;
   out += ":";
 
-  snprintf(val, sizeof(val), "%02d", (rawsec / 600) % 60);
+  snprintf(val, sizeof(val), "%02" PRIu32, (rawsec / 600) % 60);
   out += val;
   out += ":";
 
-  snprintf(val, sizeof(val), "%02d", (rawsec / 10) % 60);
+  snprintf(val, sizeof(val), "%02" PRIu32, (rawsec / 10) % 60);
   out += val;
   out += "\n";
 
