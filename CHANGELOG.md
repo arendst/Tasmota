@@ -2,14 +2,21 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
-
-## [10.1.0.8]
+## [11.0.0.1]
 ### Added
 
 ### Changed
-- From Calendar Versioning (CalVer) back to Semantic Versioning (SemVer) for better major change indication and future support
 
 ### Fixed
+
+## [Released]
+
+## [11.0.0] 20220212
+- Release Olivia
+
+## [10.1.0.8] 20220212
+### Changed
+- From Calendar Versioning (CalVer) back to Semantic Versioning (SemVer) for better major change indication and future support
 
 ## [2022.1.4 = 10.1.0.7] 20220205
 ### Added
@@ -124,8 +131,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception (#14073)
 - ESP32 Compile error when I2S_Audio is enabled (#14095)
-
-## [Released]
 
 ## [10.1.0] 20211208
 - Release Noelle
