@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- SSPM energy yesterday when zero
 
 ## [Released]
 

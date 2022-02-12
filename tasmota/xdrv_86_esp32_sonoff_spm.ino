@@ -252,6 +252,7 @@ typedef struct {
   uint16_t expected_bytes;
   uint8_t module[SSPM_MAX_MODULES][SSPM_MODULE_NAME_SIZE];
 
+  uint8_t history_day[SSPM_MAX_MODULES][4];
   uint8_t allow_updates;
   uint8_t get_energy_relay;
   uint8_t get_totals;
@@ -1136,16 +1137,22 @@ void SSPMHandleReceivedData(void) {
               energy_total += energy;
             }
           }
+
+          uint8_t history_day = SspmBuffer[36];                                    // Date of last entry
+          if (0 == Sspm->history_day[module][channel]) {                           // Initial setting
+            Sspm->history_day[module][channel] = history_day;
+          }
           if ((0 == Sspm->Settings.energy_total[module][channel]) && energy_total) {
-            Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Inital setting
+            Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Initial setting
             Sspm->Settings.energy_total[module][channel] = energy_total;           // Initial setting
             if (Settings->save_data) {
               TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all relays are updated
             }
           }
-          // If received daily energy is below last daily energy then update total energy
+          // If received daily energy date is changed then update total energy
           // This happens around midnight in normal situations
-          else if (Sspm->energy_today[module][channel] < last_energy_today) {
+          else if (Sspm->history_day[module][channel] != history_day) {
+            Sspm->history_day[module][channel] = history_day;
             Sspm->Settings.energy_yesterday[module][channel] = last_energy_today;  // Daily save
             Sspm->Settings.energy_total[module][channel] += last_energy_today;     // Daily incremental save
             if (Settings->save_data) {
