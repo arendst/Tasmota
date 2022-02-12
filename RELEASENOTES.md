@@ -87,8 +87,6 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32-lvgl.bin** = The LVGL version adds Light and Versatile Graphics Library (LVGL) display support for 4M+ flash.
 - **tasmota32-webcam.bin** = The Webcam version adds webcam support for 4M+ flash.
 - **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support for 4M+ flash.
-- **tasmota32-odroidgo.bin** = The Odroid-Go version is specifically tailored to Odroid_go hardware for 8M+ flash.
-- **tasmota32-core2.bin** = The Core2 version is specifically tailored to M5Stack Core2 hardware for 8M+ flash.
 
 Latest released binaries can be downloaded from
 - https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
@@ -142,6 +140,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 Berry features
 - ESP32 support for USE_PWM_DIMMER as GPIO ``Option E1``
 - ESP32 increase PWM channels to 16
+- ESP32 auto-configuration
 - ESP32 initial support for ESP32S3 with support for 38 configurable GPIOs
 
 ### Breaking Changed
@@ -174,3 +173,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 OneWire-Stickbreaker (DS18x20) library support for ESP32C3 and ESP32S2 [#14338](https://github.com/arendst/Tasmota/issues/14338)
 
 ### Removed
+- ESP32 consolidate odroidgo and core2 binaries into tasmota32 using Berry features
