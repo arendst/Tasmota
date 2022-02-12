@@ -50,6 +50,9 @@ class Tasmota
   # check that the parameter is not a method, it would require a closure instead
   def check_not_method(f)
     import introspect
+    if type(f) != 'function'
+      raise "type_error", "BRY: argument must be a function"
+    end
     if introspect.ismethod(f) == true
       raise "type_error", "BRY: method not allowed, use a closure like '/ args -> obj.func(args)'"
     end

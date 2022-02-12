@@ -40,7 +40,7 @@ static bool MIBridgeWasNeverConnected = true;
 #define CGD1        6
 #define NLIGHT      7
 #define MJYD2S      8
-#define YEERC       9
+#define YLYK01       9
 #define MHOC401     10
 #define MHOC303     11
 #define ATC         12
@@ -221,7 +221,7 @@ static void MI32_bridge_thread_entry(void *p)
                 MI32saveHAPhandles(i,0x0a,hap_serv_get_char_by_uuid(service, HAP_CHAR_UUID_BATTERY_LEVEL));
                 break;
             }
-            case YEERC:
+            case YLYK01:
                 {
                     bridge_cfg.cid = HAP_CID_PROGRAMMABLE_SWITCH;
                     hap_serv_t * _label = hap_serv_service_label_create(1);
@@ -235,6 +235,20 @@ static void MI32_bridge_thread_entry(void *p)
                         hap_acc_add_serv(accessory, _newSwitch);
                         MI32saveHAPhandles(i,_but+1000,hap_serv_get_char_by_uuid(_newSwitch, HAP_CHAR_UUID_PROGRAMMABLE_SWITCH_EVENT));
                     }
+                }
+                break;
+            case YLKG08: //without the dimmer function due to lack of HomeKit support
+                {
+                    bridge_cfg.cid = HAP_CID_PROGRAMMABLE_SWITCH;
+                    hap_serv_t * _label = hap_serv_service_label_create(1);
+                    hap_acc_add_serv(accessory, _label);
+                    hap_serv_t * _newSwitch = hap_serv_stateless_programmable_switch_create(0);
+                    const uint8_t _validVals[] = {0,1,2};
+                    hap_char_add_valid_vals(hap_serv_get_char_by_uuid(_newSwitch, HAP_CHAR_UUID_PROGRAMMABLE_SWITCH_EVENT), _validVals, 3);
+                    hap_char_t *_index = hap_char_service_label_index_create(1);
+                    hap_serv_add_char(_newSwitch,_index);
+                    hap_acc_add_serv(accessory, _newSwitch);
+                    MI32saveHAPhandles(i,1000,hap_serv_get_char_by_uuid(_newSwitch, HAP_CHAR_UUID_PROGRAMMABLE_SWITCH_EVENT));
                 }
                 break;
             case SJWS01L:

@@ -1028,6 +1028,7 @@
   #define USE_LVGL_OPENHASP                      // Enable OpenHASP template compatiblity (adds LVGL template and some fonts)
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
   #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
+  //#define USE_LVGL_TOUCHSCREEN                   // Use virtual touch screen with Berry driver
   //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
     #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
     #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache

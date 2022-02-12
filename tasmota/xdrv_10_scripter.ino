@@ -3801,15 +3801,15 @@ extern char *SML_GetSVal(uint32_t index);
           float fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
-          if (fvar2==0) {
+          if (fvar2 == 0) {
             float fvar3;
             lp = GetNumericArgument(lp, OPER_EQU, &fvar3, gv);
             fvar = SML_SetBaud(fvar1, fvar3);
-          } else if (fvar2==1) {
+          } else if (fvar2 == 1) {
             char str[SCRIPT_MAXSSIZE];
             lp = GetStringArgument(lp, OPER_EQU, str, 0);
             fvar = SML_Write(fvar1, str);
-          } else if (fvar2==2) {
+          } else if (fvar2 == 2) {
             char str[SCRIPT_MAXSSIZE];
             str[0] = 0;
             fvar = SML_Read(fvar1, str, SCRIPT_MAXSSIZE);
@@ -3817,8 +3817,27 @@ extern char *SML_GetSVal(uint32_t index);
             lp++;
             len = 0;
             goto strexit;
-
+          } else if (fvar2 == 3) {
+            uint8_t vtype;
+            struct T_INDEX ind;
+            lp = isvar(lp, &vtype, &ind, 0, 0, 0);
+            if (vtype != VAR_NV) {
+              // found variable as result
+              if (vtype == NUM_RES || (vtype & STYPE) == 0) {
+                // numeric result
+                fvar = -1;
+              } else {
+                // string result
+                uint8_t sindex = glob_script_mem.type[ind.index].index;
+                char *cp = glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize);
+                fvar = SML_Set_WStr(fvar1, cp);
+              }
+            } else {
+              fvar = -99;
+            }
           } else {
+
+
 #ifdef ED300L
             fvar = SML_Status(fvar1);
 #else

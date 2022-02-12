@@ -2103,24 +2103,32 @@ be_local_closure(Tasmota_check_not_method,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(introspect),
-    /* K1   */  be_nested_str(ismethod),
+    /* K1   */  be_nested_str(function),
     /* K2   */  be_nested_str(type_error),
-    /* K3   */  be_nested_str(BRY_X3A_X20method_X20not_X20allowed_X2C_X20use_X20a_X20closure_X20like_X20_X27_X2F_X20args_X20_X2D_X3E_X20obj_X2Efunc_X28args_X29_X27),
+    /* K3   */  be_nested_str(BRY_X3A_X20argument_X20must_X20be_X20a_X20function),
+    /* K4   */  be_nested_str(ismethod),
+    /* K5   */  be_nested_str(BRY_X3A_X20method_X20not_X20allowed_X2C_X20use_X20a_X20closure_X20like_X20_X27_X2F_X20args_X20_X2D_X3E_X20obj_X2Efunc_X28args_X29_X27),
     }),
     &be_const_str_check_not_method,
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
+    ( &(const binstruction[15]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
-      0x8C0C0501,  //  0001  GETMET	R3	R2	K1
-      0x5C140200,  //  0002  MOVE	R5	R1
-      0x7C0C0400,  //  0003  CALL	R3	2
-      0x50100200,  //  0004  LDBOOL	R4	1	0
-      0x1C0C0604,  //  0005  EQ	R3	R3	R4
-      0x780E0000,  //  0006  JMPF	R3	#0008
-      0xB0060503,  //  0007  RAISE	1	K2	K3
-      0x80000000,  //  0008  RET	0
+      0x600C0004,  //  0001  GETGBL	R3	G4
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C0C0200,  //  0003  CALL	R3	1
+      0x200C0701,  //  0004  NE	R3	R3	K1
+      0x780E0000,  //  0005  JMPF	R3	#0007
+      0xB0060503,  //  0006  RAISE	1	K2	K3
+      0x8C0C0504,  //  0007  GETMET	R3	R2	K4
+      0x5C140200,  //  0008  MOVE	R5	R1
+      0x7C0C0400,  //  0009  CALL	R3	2
+      0x50100200,  //  000A  LDBOOL	R4	1	0
+      0x1C0C0604,  //  000B  EQ	R3	R3	R4
+      0x780E0000,  //  000C  JMPF	R3	#000E
+      0xB0060505,  //  000D  RAISE	1	K2	K5
+      0x80000000,  //  000E  RET	0
     })
   )
 );
