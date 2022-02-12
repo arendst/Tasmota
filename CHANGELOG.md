@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [11.0.0] 202202178
+## [11.0.0] 20220212
 - Release Olivia
 
-## [10.1.0.8]
+## [10.1.0.8] 20220212
 ### Added
 
 ### Changed
