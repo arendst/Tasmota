@@ -240,17 +240,22 @@ extern "C" {
       be_newobject(vm, "map");
       if (Settings->flag4.network_wifi) {
         int32_t rssi = WiFi.RSSI();
-        be_map_insert_int(vm, "rssi", rssi);
-        be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+        bool show_rssi = false;
 #if LWIP_IPV6
         String ipv6_addr = WifiGetIPv6();
         if (ipv6_addr != "") {
           be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
+          show_rssi = true;
         }
 #endif
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
           be_map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
+          show_rssi = true;
+        }
+        if (show_rssi) {
+          be_map_insert_int(vm, "rssi", rssi);
+          be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
         }
       }
       be_pop(vm, 1);
@@ -604,6 +609,31 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * Tasmota Log Reader
+ *
+\*********************************************************************************************/
+
+uint32_t* tlr_init(void) {
+  uint32_t* idx = new uint32_t();
+  *idx = 0;
+  return idx;
+}
+char* tlr_get_log(uint32_t* idx, int32_t log_level) {
+  // bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+  if (log_level < 0 || log_level > 4) { log_level = 2; }    // default to LOG_LEVEL_INFO
+  char* line;
+  size_t len;
+  if (GetLog(log_level, idx, &line, &len) && len > 0) {
+    char* s = (char*) malloc(len+1);
+    memmove(s, line, len);
+    s[len] = 0;
+    return s;   // caller will free()
+  } else {
+    return NULL;
+  }
+}
+
+/*********************************************************************************************\
  * Logging functions
  *
 \*********************************************************************************************/
@@ -625,6 +655,18 @@ void berry_log(const char * berry_buf) {
 const uint16_t LOGSZ = 128;                 // Max number of characters in log line
 
 extern "C" {
+  void serial_debug(const char * berry_buf, ...) {
+    // To save stack space support logging for max text length of 128 characters
+    char log_data[LOGSZ];
+
+    va_list arg;
+    va_start(arg, berry_buf);
+    uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
+    va_end(arg);
+    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    Serial.printf(log_data);
+  }
+
   void berry_log_C(const char * berry_buf, ...) {
     // To save stack space support logging for max text length of 128 characters
     char log_data[LOGSZ];

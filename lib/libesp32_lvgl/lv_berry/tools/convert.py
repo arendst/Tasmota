@@ -102,6 +102,7 @@ return_types = {
   "lv_img_size_mode_t": "i",
   "lv_palette_t": "i",
   "lv_style_prop_t": "i",
+  "lv_dither_mode_t": "i",
   # layouts
   "lv_flex_align_t": "i",
   "lv_flex_flow_t": "i",
@@ -140,6 +141,9 @@ return_types = {
   "lv_img_dsc_t *": "lv_img_dsc",
   "lv_ts_calibration_t *": "lv_ts_calibration",
   "lv_style_transition_dsc_t *": "lv_style_transition_dsc",
+  "lv_draw_ctx_t *": "lv_draw_ctx",
+  "_lv_draw_ctx_t *": "lv_draw_ctx",
+  "lv_grad_dsc_t *": "lv_grad_dsc",
   # "lv_color_hsv_t *": "lv_color_hsv",
   "lv_color_filter_dsc_t *": "lv_color_filter_dsc",
   "lv_timer_t *": "lv_timer",

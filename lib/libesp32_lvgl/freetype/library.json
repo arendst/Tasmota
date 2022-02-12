@@ -15,6 +15,7 @@
         "+<base/ftsystem.c>",
         "+<base/ftinit.c>",
         "+<base/ftdebug.c>",
+        "+<base/ftbitmap.c>",
 
         "+<base/ftbase.c>",
 
