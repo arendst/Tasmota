@@ -83,13 +83,15 @@
 
 #define equal_rule(op, iseq) \
     bbool res; \
+    be_assert(!var_isstatic(a)); \
+    be_assert(!var_isstatic(b)); \
     if (var_isint(a) && var_isint(b)) { \
         res = ibinop(op, a, b); \
     } else if (var_isnumber(a) && var_isnumber(b)) { \
         res = var2real(a) op var2real(b); \
     } else if (var_isinstance(a) && !var_isnil(b)) { \
         res = object_eqop(vm, #op, iseq, a, b); \
-    } else if (var_type(a) == var_type(b)) { /* same types */ \
+    } else if (var_primetype(a) == var_primetype(b)) { /* same types */ \
         if (var_isnil(a)) { /* nil op nil */ \
             res = 1 op 1; \
         } else if (var_isbool(a)) { /* bool op bool */ \
@@ -256,6 +258,7 @@ static bbool obj2bool(bvm *vm, bvalue *var)
     binstance *obj = var_toobj(var);
     bstring *tobool = str_literal(vm, "tobool");
     /* get operator method */
+    // TODO what if `tobool` is static
     int type = be_instance_member(vm, obj, tobool, vm->top);
     if (type != BE_NONE && type != BE_NIL) {
         vm->top[1] = *var; /* move self to argv[0] */
@@ -342,6 +345,7 @@ static bbool object_eqop(bvm *vm,
     bbool isself = var_isinstance(b) && o == var_toobj(b);
     /* first, try to call the overloaded operator of the object */
     int type = be_instance_member(vm, o, be_newstr(vm, op), vm->top);
+    // TODO check that method is not static
     if (basetype(type) == BE_FUNCTION) { /* call method */
         bvalue *top = vm->top;
         top[1] = self;  /* move self to argv[0] */
@@ -826,41 +830,41 @@ newframe: /* a new call frame */
 #if BE_USE_PERF_COUNTERS
             vm->counter_get++;
 #endif
-            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue result;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
             bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
-                obj_attribute(vm, b, var_tostr(c), &a_temp);
+                obj_attribute(vm, b, var_tostr(c), &result);
                 reg = vm->reg;
             } else if (var_isclass(b) && var_isstr(c)) {
-                class_attribute(vm, b, c, &a_temp);
+                class_attribute(vm, b, c, &result);
                 reg = vm->reg;
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, &a_temp);
+                module_attribute(vm, b, c, &result);
                 reg = vm->reg;
             } else {
                 attribute_error(vm, "attribute", b, c);
-                a_temp = *RA();     /* avoid gcc warning for uninitialized variable a_temp, this code is never reached */
+                result = *RA();     /* avoid gcc warning for uninitialized variable result, this code is never reached */
             }
             bvalue *a = RA();
-            *a = a_temp;    /* assign the resul to the specified register on the updated stack */
+            *a = result;    /* assign the resul to the specified register on the updated stack */
             dispatch();
         }
         opcase(GETMET): {
 #if BE_USE_PERF_COUNTERS
             vm->counter_get++;
 #endif
-            bvalue a_temp;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
+            bvalue result;  /* copy result to a temp variable because the stack may be relocated in virtual member calls */
             bvalue *b = RKB(), *c = RKC();
             if (var_isinstance(b) && var_isstr(c)) {
                 binstance *obj = var_toobj(b);
-                int type = obj_attribute(vm, b, var_tostr(c), &a_temp);
+                int type = obj_attribute(vm, b, var_tostr(c), &result);
                 reg = vm->reg;
                 bvalue *a = RA();
-                *a = a_temp;
+                *a = result;
                 if (var_basetype(a) == BE_FUNCTION) {
-                    if (func_isstatic(a) || (type == BE_INDEX)) {    /* if instance variable then we consider it's non-method */
-                       /* static method, don't bother with the instance */
-                        a[1] = a_temp;
+                    if ((type & BE_STATIC) || (type == BE_INDEX)) {    /* if instance variable then we consider it's non-method */
+                        /* static method, don't bother with the instance */
+                        a[1] = result;
                         var_settype(a, NOT_METHOD);
                     } else {
                         /* this is a real method (i.e. non-static) */
@@ -876,16 +880,16 @@ newframe: /* a new call frame */
                         str(be_instance_name(obj)), str(var_tostr(c)));
                 }
             } else if (var_isclass(b) && var_isstr(c)) {
-                class_attribute(vm, b, c, &a_temp);
+                class_attribute(vm, b, c, &result);
                 reg = vm->reg;
                 bvalue *a = RA();
-                a[1] = a_temp;
+                a[1] = result;
                 var_settype(a, NOT_METHOD);
             } else if (var_ismodule(b) && var_isstr(c)) {
-                module_attribute(vm, b, c, &a_temp);
+                module_attribute(vm, b, c, &result);
                 reg = vm->reg;
                 bvalue *a = RA();
-                a[1] = a_temp;
+                a[1] = result;
                 var_settype(a, NOT_METHOD);
             } else {
                 attribute_error(vm, "method", b, c);
@@ -913,11 +917,11 @@ newframe: /* a new call frame */
                 /* if value is a function, we mark it as a static to distinguish from methods */
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                bvalue c_static = *c;
-                if (var_isfunction(&c_static)) {
-                    c_static.type = func_setstatic(&c_static);
+                bvalue result = *c;
+                if (var_isfunction(&result)) {
+                    var_markstatic(&result);
                 }
-                if (!be_class_setmember(vm, obj, attr, &c_static)) {
+                if (!be_class_setmember(vm, obj, attr, &result)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to static attribute '%s'",
@@ -1253,6 +1257,7 @@ void be_dofunc(bvm *vm, bvalue *v, int argc)
     be_assert(vm->reg <= v && v < vm->stacktop);
     be_assert(vm->stack <= vm->reg && vm->reg < vm->stacktop);
     int pos = v - vm->reg;
+    be_assert(!var_isstatic(v));
     switch (var_type(v)) {
     case BE_CLASS: do_class(vm, pos, argc); break;
     case BE_CLOSURE: do_closure(vm, pos, argc); break;

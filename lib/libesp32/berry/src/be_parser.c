@@ -18,7 +18,6 @@
 #include "be_func.h"
 #include "be_class.h"
 #include "be_decoder.h"
-#include "be_debug.h"
 #include "be_exec.h"
 #include <limits.h>
 
@@ -1392,11 +1391,11 @@ static void classvar_stmt(bparser *parser, bclass *c)
     scan_next_token(parser); /* skip 'var' */
     if (match_id(parser, name) != NULL) {
         check_class_attr(parser, c, name);
-        be_member_bind(parser->vm, c, name, btrue);
+        be_class_member_bind(parser->vm, c, name, btrue);
         while (match_skip(parser, OptComma)) { /* ',' */
             if (match_id(parser, name) != NULL) {
                 check_class_attr(parser, c, name);
-                be_member_bind(parser->vm, c, name, btrue);
+                be_class_member_bind(parser->vm, c, name, btrue);
             } else {
                 parser_error(parser, "class var error");
             }
@@ -1433,7 +1432,7 @@ static void classdef_stmt(bparser *parser, bclass *c, bbool is_static)
     name = func_name(parser, &e, 1);
     check_class_attr(parser, c, name);
     proto = funcbody(parser, name, is_static ? 0 : FUNC_METHOD);
-    be_method_bind(parser->vm, c, proto->name, proto, is_static);
+    be_class_method_bind(parser->vm, c, proto->name, proto, is_static);
     be_stackpop(parser->vm, 1);
 }
 
@@ -1446,13 +1445,13 @@ static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
         classdef_stmt(parser, c, btrue);
     } else if (match_id(parser, name) != NULL) {
         check_class_attr(parser, c, name);
-        be_member_bind(parser->vm, c, name, bfalse);
+        be_class_member_bind(parser->vm, c, name, bfalse);
         class_static_assignment_expr(parser, e, name);
 
         while (match_skip(parser, OptComma)) { /* ',' */
             if (match_id(parser, name) != NULL) {
                 check_class_attr(parser, c, name);
-                be_member_bind(parser->vm, c, name, bfalse);
+                be_class_member_bind(parser->vm, c, name, bfalse);
                 class_static_assignment_expr(parser, e, name);
             } else {
                 parser_error(parser, "class static error");

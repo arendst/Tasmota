@@ -329,10 +329,9 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
             }
         }
         return BE_NONE;
-    } else {
-        *dst = *member;
-        return var_type(dst);
     }
+    *dst = *member;
+    return var_type(dst);
 }
 
 bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
