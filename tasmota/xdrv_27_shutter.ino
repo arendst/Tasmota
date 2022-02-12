@@ -175,8 +175,16 @@ void ShutterRtc50mS(void)
           if (Shutter[i].accelerator) {
             //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
+	    digitalWrite(Pin(GPIO_PWM1, i), LOW);
+  #ifdef ESP8266
+            // Convert frequency into clock cycles
+            uint32_t cc = microsecondsToClockCycles(1000000UL) / Shutter[i].pwm_velocity;
+            startWaveformClockCycles(Pin(GPIO_PWM1, i), cc/2, cc/2, 0, -1, 0, false);
+  #endif  // ESP8266
+  #ifdef ESP32
             analogWriteFreq(Shutter[i].pwm_velocity);
             analogWrite(Pin(GPIO_PWM1, i), 50);
+  #endif  // ESP32
           }
         break;
       }
