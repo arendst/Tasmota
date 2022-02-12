@@ -173,4 +173,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 OneWire-Stickbreaker (DS18x20) library support for ESP32C3 and ESP32S2 [#14338](https://github.com/arendst/Tasmota/issues/14338)
 
 ### Removed
-- ESP32 consolidate odroidgo and core2 binaries into tasmota32 using Berry features
+- ESP32 consolidate odroidgo and core2 binaries into tasmota32-lvgl using Berry features
