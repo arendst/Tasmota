@@ -85,7 +85,7 @@ static bclass *find_class_closure(bclass *cl, bclosure *needle)
         if (members) {  /* only iterate if there are members */
             bmapiter iter = be_map_iter();
             while ((node = be_map_next(members, &iter)) != NULL) {
-                if (var_type(&node->value) == BE_CLOSURE) {  /* only native functions are considered */
+                if (var_primetype(&node->value) == BE_CLOSURE) {  /* only native functions are considered */
                     bclosure *clos_iter = var_toobj(&node->value);  /* retrieve the method's closure */
                     if (clos_iter == needle) {
                         /* we found the closure, we now know its class */
@@ -140,7 +140,7 @@ static int l_super(bvm *vm)
             if (size >= 2) {  /* need at least 2 stackframes: current (for super() native) and caller (the one we are interested in) */
                 bcallframe *caller = be_vector_at(&vm->callstack, size - 2);  /* get the callframe of caller */
                 bvalue *func = caller->func;  /* function object of caller */
-                if (var_type(func) == BE_CLOSURE) {  /* only useful if the caller is a Berry closure (i.e. not native) */
+                if (var_primetype(func) == BE_CLOSURE) {  /* only useful if the caller is a Berry closure (i.e. not native) */
                     bclosure *clos_ctx = var_toobj(func);  /* this is the closure we look for in the class chain */
                     base_class = find_class_closure(o->_class, clos_ctx);  /* iterate on current and super classes to find where the closure belongs */
                 }
