@@ -647,7 +647,7 @@ typedef struct {
   uint32_t      ipv4_rgx_subnetmask;       // 55C
 
   uint16_t      pwm_value_ext[16-5];       // 560  Extension to pwm_value to store up to 16 PWM for ESP32. This array stores values 5..15
-  uint8_t       free_560[70];              // 576
+  uint8_t       free_576[70];              // 576
 
   SysMBitfield1 flag2;                     // 5BC
   uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0
