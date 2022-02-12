@@ -142,6 +142,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'f' be_real (float)
  *   'b' be_bool
  *   's' be_str
+ *   '$' be_str but the buffer must be `free()`ed
  *   '&' bytes() object, pointer to buffer returned, and size passed with an additional (size_t*) argument
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
@@ -469,7 +470,8 @@ int be_call_c_func(bvm *vm, const void * func, const char * return_type, const c
       case 'f':   be_pushreal(vm, intasreal(ret)); break;
       case 'b':   be_pushbool(vm, ret);  break;
       case 'c':   be_pushcomptr(vm, (void*) ret); break;
-      case 's':   be_pushstring(vm, (const char*) ret);  break;
+      case 's':   if (ret) {be_pushstring(vm, (const char*) ret);} else {be_pushnil(vm);} break;  // push `nil` if no string
+      case '$':   if (ret) {be_pushstring(vm, (const char*) ret);  free((void*)ret);} else {be_pushnil(vm);} break;
       case '&':   be_pushbytes(vm, (void*) ret, return_len); break;
       default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
     }

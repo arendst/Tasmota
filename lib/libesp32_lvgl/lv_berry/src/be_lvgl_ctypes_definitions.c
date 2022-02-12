@@ -32,40 +32,66 @@ const be_ctypes_structure_t be_lv_area = {
     { "y2", 6, 0, 0, ctypes_i16, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_draw_rect_dsc = {
-  51,  /* size in bytes */
-  29,  /* number of elements */
+const be_ctypes_structure_t be_lv_gradient_stop = {
+  3,  /* size in bytes */
+  2,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[29]) {
+  (const be_ctypes_structure_item_t[2]) {
+    { "color", 0, 0, 0, ctypes_u16, 1 },
+    { "frac", 2, 0, 0, ctypes_u8, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_grad_dsc = {
+  9,  /* size in bytes */
+  7,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[7]) {
+    { "dir", 8, 0, 3, ctypes_bf, 0 },
+    { "dither", 8, 3, 3, ctypes_bf, 0 },
+    { "stops_0_color", 0, 0, 0, ctypes_u16, 1 },
+    { "stops_0_frac", 2, 0, 0, ctypes_u8, 0 },
+    { "stops_1_color", 4, 0, 0, ctypes_u16, 1 },
+    { "stops_1_frac", 6, 0, 0, ctypes_u8, 0 },
+    { "stops_count", 7, 0, 0, ctypes_u8, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_draw_rect_dsc = {
+  59,  /* size in bytes */
+  32,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[32]) {
     { "bg_color", 4, 0, 0, ctypes_u16, 1 },
-    { "bg_grad_color", 6, 0, 0, ctypes_u16, 1 },
-    { "bg_grad_color_stop", 9, 0, 0, ctypes_u8, 0 },
-    { "bg_grad_dir", 11, 0, 3, ctypes_bf, 0 },
-    { "bg_img_opa", 22, 0, 0, ctypes_u8, 0 },
-    { "bg_img_recolor", 20, 0, 0, ctypes_u16, 1 },
-    { "bg_img_recolor_opa", 23, 0, 0, ctypes_u8, 0 },
-    { "bg_img_src", 12, 0, 0, ctypes_ptr32, 0 },
-    { "bg_img_symbol_font", 16, 0, 0, ctypes_ptr32, 0 },
-    { "bg_img_tiled", 24, 0, 0, ctypes_u8, 0 },
-    { "bg_main_color_stop", 8, 0, 0, ctypes_u8, 0 },
-    { "bg_opa", 10, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_dir", 16, 0, 3, ctypes_bf, 0 },
+    { "bg_grad_dither", 16, 3, 3, ctypes_bf, 0 },
+    { "bg_grad_stops_0_color", 8, 0, 0, ctypes_u16, 1 },
+    { "bg_grad_stops_0_frac", 10, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_1_color", 12, 0, 0, ctypes_u16, 1 },
+    { "bg_grad_stops_1_frac", 14, 0, 0, ctypes_u8, 0 },
+    { "bg_grad_stops_count", 15, 0, 0, ctypes_u8, 0 },
+    { "bg_img_opa", 30, 0, 0, ctypes_u8, 0 },
+    { "bg_img_recolor", 28, 0, 0, ctypes_u16, 1 },
+    { "bg_img_recolor_opa", 31, 0, 0, ctypes_u8, 0 },
+    { "bg_img_src", 20, 0, 0, ctypes_ptr32, 0 },
+    { "bg_img_symbol_font", 24, 0, 0, ctypes_ptr32, 0 },
+    { "bg_img_tiled", 32, 0, 0, ctypes_u8, 0 },
+    { "bg_opa", 3, 0, 0, ctypes_u8, 0 },
     { "blend_mode", 2, 0, 0, ctypes_u8, 0 },
-    { "border_color", 26, 0, 0, ctypes_u16, 1 },
-    { "border_opa", 30, 0, 0, ctypes_u8, 0 },
-    { "border_post", 31, 0, 1, ctypes_bf, 0 },
-    { "border_side", 31, 1, 5, ctypes_bf, 0 },
-    { "border_width", 28, 0, 0, ctypes_i16, 0 },
-    { "outline_color", 32, 0, 0, ctypes_u16, 1 },
-    { "outline_opa", 38, 0, 0, ctypes_u8, 0 },
-    { "outline_pad", 36, 0, 0, ctypes_i16, 0 },
-    { "outline_width", 34, 0, 0, ctypes_i16, 0 },
+    { "border_color", 34, 0, 0, ctypes_u16, 1 },
+    { "border_opa", 38, 0, 0, ctypes_u8, 0 },
+    { "border_post", 39, 0, 1, ctypes_bf, 0 },
+    { "border_side", 39, 1, 5, ctypes_bf, 0 },
+    { "border_width", 36, 0, 0, ctypes_i16, 0 },
+    { "outline_color", 40, 0, 0, ctypes_u16, 1 },
+    { "outline_opa", 46, 0, 0, ctypes_u8, 0 },
+    { "outline_pad", 44, 0, 0, ctypes_i16, 0 },
+    { "outline_width", 42, 0, 0, ctypes_i16, 0 },
     { "radius", 0, 0, 0, ctypes_i16, 0 },
-    { "shadow_color", 40, 0, 0, ctypes_u16, 1 },
-    { "shadow_ofs_x", 44, 0, 0, ctypes_i16, 0 },
-    { "shadow_ofs_y", 46, 0, 0, ctypes_i16, 0 },
-    { "shadow_opa", 50, 0, 0, ctypes_u8, 0 },
-    { "shadow_spread", 48, 0, 0, ctypes_i16, 0 },
-    { "shadow_width", 42, 0, 0, ctypes_i16, 0 },
+    { "shadow_color", 48, 0, 0, ctypes_u16, 1 },
+    { "shadow_ofs_x", 52, 0, 0, ctypes_i16, 0 },
+    { "shadow_ofs_y", 54, 0, 0, ctypes_i16, 0 },
+    { "shadow_opa", 58, 0, 0, ctypes_u8, 0 },
+    { "shadow_spread", 56, 0, 0, ctypes_i16, 0 },
+    { "shadow_width", 50, 0, 0, ctypes_i16, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_line_dsc = {
@@ -81,6 +107,21 @@ const be_ctypes_structure_t be_lv_draw_line_dsc = {
     { "raw_end", 9, 4, 1, ctypes_bf, 0 },
     { "round_end", 9, 3, 1, ctypes_bf, 0 },
     { "round_start", 9, 2, 1, ctypes_bf, 0 },
+    { "width", 2, 0, 0, ctypes_i16, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_draw_arc_dsc = {
+  14,  /* size in bytes */
+  8,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[8]) {
+    { "blend_mode", 13, 0, 2, ctypes_bf, 0 },
+    { "color", 0, 0, 0, ctypes_u16, 1 },
+    { "end_angle", 6, 0, 0, ctypes_u16, 0 },
+    { "img_src", 8, 0, 0, ctypes_ptr32, 0 },
+    { "opa", 12, 0, 0, ctypes_u8, 0 },
+    { "rounded", 13, 2, 1, ctypes_bf, 0 },
+    { "start_angle", 4, 0, 0, ctypes_u16, 0 },
     { "width", 2, 0, 0, ctypes_i16, 0 },
 }};
 
@@ -212,31 +253,40 @@ const be_ctypes_structure_t be_lv_draw_mask_radius_param_cfg = {
     { "rect_y2", 6, 0, 0, ctypes_i16, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_sqrt_res = {
-  4,  /* size in bytes */
-  2,  /* number of elements */
+const be_ctypes_structure_t be_lv_draw_mask_radius_circle_dsc = {
+  26,  /* size in bytes */
+  7,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[2]) {
-    { "f", 2, 0, 0, ctypes_u16, 0 },
-    { "i", 0, 0, 0, ctypes_u16, 0 },
+  (const be_ctypes_structure_item_t[7]) {
+    { "buf", 0, 0, 0, ctypes_ptr32, 0 },
+    { "cir_opa", 4, 0, 0, ctypes_ptr32, 0 },
+    { "life", 16, 0, 0, ctypes_i32, 0 },
+    { "opa_start_on_y", 12, 0, 0, ctypes_ptr32, 0 },
+    { "radius", 24, 0, 0, ctypes_i16, 0 },
+    { "used_cnt", 20, 0, 0, ctypes_u32, 0 },
+    { "x_start_on_y", 8, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_mask_radius_param = {
-  28,  /* size in bytes */
-  11,  /* number of elements */
+  46,  /* size in bytes */
+  15,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[11]) {
+  (const be_ctypes_structure_item_t[15]) {
     { "cfg_outer", 18, 0, 1, ctypes_bf, 0 },
     { "cfg_radius", 16, 0, 0, ctypes_i16, 0 },
     { "cfg_rect_x1", 8, 0, 0, ctypes_i16, 0 },
     { "cfg_rect_x2", 12, 0, 0, ctypes_i16, 0 },
     { "cfg_rect_y1", 10, 0, 0, ctypes_i16, 0 },
     { "cfg_rect_y2", 14, 0, 0, ctypes_i16, 0 },
+    { "circle_buf", 20, 0, 0, ctypes_ptr32, 0 },
+    { "circle_cir_opa", 24, 0, 0, ctypes_ptr32, 0 },
+    { "circle_life", 36, 0, 0, ctypes_i32, 0 },
+    { "circle_opa_start_on_y", 32, 0, 0, ctypes_ptr32, 0 },
+    { "circle_radius", 44, 0, 0, ctypes_i16, 0 },
+    { "circle_used_cnt", 40, 0, 0, ctypes_u32, 0 },
+    { "circle_x_start_on_y", 28, 0, 0, ctypes_ptr32, 0 },
     { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
     { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
-    { "y_prev", 20, 0, 0, ctypes_i32, 0 },
-    { "y_prev_x_f", 26, 0, 0, ctypes_u16, 0 },
-    { "y_prev_x_i", 24, 0, 0, ctypes_u16, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_mask_fade_param_cfg = {
@@ -297,6 +347,26 @@ const be_ctypes_structure_t be_lv_draw_mask_map_param = {
     { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_draw_mask_polygon_param_cfg = {
+  6,  /* size in bytes */
+  2,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[2]) {
+    { "point_cnt", 4, 0, 0, ctypes_u16, 0 },
+    { "points", 0, 0, 0, ctypes_ptr32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_draw_mask_polygon_param = {
+  14,  /* size in bytes */
+  4,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[4]) {
+    { "cfg_point_cnt", 12, 0, 0, ctypes_u16, 0 },
+    { "cfg_points", 8, 0, 0, ctypes_ptr32, 0 },
+    { "dsc_cb", 0, 0, 0, ctypes_ptr32, 0 },
+    { "dsc_type", 4, 0, 0, ctypes_u8, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_draw_mask_saved = {
   8,  /* size in bytes */
   2,  /* number of elements */
@@ -329,10 +399,13 @@ const be_ctypes_structure_t be_lv_meter_scale = {
 }};
 
 const be_ctypes_structure_t be_lv_meter_indicator = {
-  16,  /* size in bytes */
-  5,  /* number of elements */
+  28,  /* size in bytes */
+  8,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[5]) {
+  (const be_ctypes_structure_item_t[8]) {
+    { "data0", 16, 0, 0, ctypes_ptr32, 0 },
+    { "data1", 20, 0, 0, ctypes_ptr32, 0 },
+    { "data2", 24, 0, 0, ctypes_ptr32, 0 },
     { "end_value", 12, 0, 0, ctypes_i32, 0 },
     { "opa", 5, 0, 0, ctypes_u8, 0 },
     { "scale", 0, 0, 0, ctypes_ptr32, 0 },
@@ -432,6 +505,19 @@ const be_ctypes_structure_t be_lv_chart_cursor = {
     { "ser", 8, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_chart_tick_dsc = {
+  10,  /* size in bytes */
+  6,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[6]) {
+    { "draw_size", 4, 0, 0, ctypes_i16, 0 },
+    { "label_en", 9, 6, 1, ctypes_bf, 0 },
+    { "major_cnt", 7, 7, 15, ctypes_bf, 0 },
+    { "major_len", 0, 0, 0, ctypes_i16, 0 },
+    { "minor_cnt", 6, 0, 15, ctypes_bf, 0 },
+    { "minor_len", 2, 0, 0, ctypes_i16, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_obj_class = {
   27,  /* size in bytes */
   10,  /* number of elements */
@@ -451,14 +537,16 @@ const be_ctypes_structure_t be_lv_obj_class = {
 
 const be_ctypes_structure_t be_lv_event = {
   25,  /* size in bytes */
-  7,  /* number of elements */
+  9,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[7]) {
+  (const be_ctypes_structure_item_t[9]) {
     { "code", 8, 0, 0, ctypes_i32, 0 },
     { "current_target", 4, 0, 0, ctypes_ptr32, 0 },
     { "deleted", 24, 0, 1, ctypes_bf, 0 },
     { "param", 16, 0, 0, ctypes_ptr32, 0 },
     { "prev", 20, 0, 0, ctypes_ptr32, 0 },
+    { "stop_bubbling", 24, 2, 1, ctypes_bf, 0 },
+    { "stop_processing", 24, 1, 1, ctypes_bf, 0 },
     { "target", 0, 0, 0, ctypes_ptr32, 0 },
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
@@ -524,6 +612,32 @@ const be_ctypes_structure_t be_lv_timer = {
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_draw_ctx = {
+  60,  /* size in bytes */
+  19,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[19]) {
+    { "buf", 0, 0, 0, ctypes_ptr32, 0 },
+    { "buf_area_x1", 4, 0, 0, ctypes_i16, 0 },
+    { "buf_area_x2", 8, 0, 0, ctypes_i16, 0 },
+    { "buf_area_y1", 6, 0, 0, ctypes_i16, 0 },
+    { "buf_area_y2", 10, 0, 0, ctypes_i16, 0 },
+    { "clip_area_x1", 12, 0, 0, ctypes_i16, 0 },
+    { "clip_area_x2", 16, 0, 0, ctypes_i16, 0 },
+    { "clip_area_y1", 14, 0, 0, ctypes_i16, 0 },
+    { "clip_area_y2", 18, 0, 0, ctypes_i16, 0 },
+    { "draw_arc", 24, 0, 0, ctypes_ptr32, 0 },
+    { "draw_bg", 48, 0, 0, ctypes_ptr32, 0 },
+    { "draw_img", 32, 0, 0, ctypes_ptr32, 0 },
+    { "draw_img_decoded", 28, 0, 0, ctypes_ptr32, 0 },
+    { "draw_letter", 36, 0, 0, ctypes_ptr32, 0 },
+    { "draw_line", 40, 0, 0, ctypes_ptr32, 0 },
+    { "draw_polygon", 44, 0, 0, ctypes_ptr32, 0 },
+    { "draw_rect", 20, 0, 0, ctypes_ptr32, 0 },
+    { "user_data", 56, 0, 0, ctypes_ptr32, 0 },
+    { "wait_for_finish", 52, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_ts_calibration = {
   12,  /* size in bytes */
   5,  /* number of elements */
@@ -544,7 +658,10 @@ static const char * be_ctypes_instance_mappings[] = {
 static be_define_ctypes_class(lv_area, &be_lv_area, &be_class_ctypes, "lv_area");
 static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ctypes, "lv_chart_cursor");
 static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes, "lv_chart_series");
+static be_define_ctypes_class(lv_chart_tick_dsc, &be_lv_chart_tick_dsc, &be_class_ctypes, "lv_chart_tick_dsc");
 static be_define_ctypes_class(lv_color_filter_dsc, &be_lv_color_filter_dsc, &be_class_ctypes, "lv_color_filter_dsc");
+static be_define_ctypes_class(lv_draw_arc_dsc, &be_lv_draw_arc_dsc, &be_class_ctypes, "lv_draw_arc_dsc");
+static be_define_ctypes_class(lv_draw_ctx, &be_lv_draw_ctx, &be_class_ctypes, "lv_draw_ctx");
 static be_define_ctypes_class(lv_draw_img_dsc, &be_lv_draw_img_dsc, &be_class_ctypes, "lv_draw_img_dsc");
 static be_define_ctypes_class(lv_draw_line_dsc, &be_lv_draw_line_dsc, &be_class_ctypes, "lv_draw_line_dsc");
 static be_define_ctypes_class(lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param, &be_class_ctypes, "lv_draw_mask_angle_param");
@@ -556,11 +673,16 @@ static be_define_ctypes_class(lv_draw_mask_line_param, &be_lv_draw_mask_line_par
 static be_define_ctypes_class(lv_draw_mask_line_param_cfg, &be_lv_draw_mask_line_param_cfg, &be_class_ctypes, "lv_draw_mask_line_param_cfg");
 static be_define_ctypes_class(lv_draw_mask_map_param, &be_lv_draw_mask_map_param, &be_class_ctypes, "lv_draw_mask_map_param");
 static be_define_ctypes_class(lv_draw_mask_map_param_cfg, &be_lv_draw_mask_map_param_cfg, &be_class_ctypes, "lv_draw_mask_map_param_cfg");
+static be_define_ctypes_class(lv_draw_mask_polygon_param, &be_lv_draw_mask_polygon_param, &be_class_ctypes, "lv_draw_mask_polygon_param");
+static be_define_ctypes_class(lv_draw_mask_polygon_param_cfg, &be_lv_draw_mask_polygon_param_cfg, &be_class_ctypes, "lv_draw_mask_polygon_param_cfg");
+static be_define_ctypes_class(lv_draw_mask_radius_circle_dsc, &be_lv_draw_mask_radius_circle_dsc, &be_class_ctypes, "lv_draw_mask_radius_circle_dsc");
 static be_define_ctypes_class(lv_draw_mask_radius_param, &be_lv_draw_mask_radius_param, &be_class_ctypes, "lv_draw_mask_radius_param");
 static be_define_ctypes_class(lv_draw_mask_radius_param_cfg, &be_lv_draw_mask_radius_param_cfg, &be_class_ctypes, "lv_draw_mask_radius_param_cfg");
 static be_define_ctypes_class(lv_draw_mask_saved, &be_lv_draw_mask_saved, &be_class_ctypes, "lv_draw_mask_saved");
 static be_define_ctypes_class(lv_draw_rect_dsc, &be_lv_draw_rect_dsc, &be_class_ctypes, "lv_draw_rect_dsc");
 static be_define_ctypes_class(lv_event, &be_lv_event, &be_class_ctypes, "lv_event");
+static be_define_ctypes_class(lv_grad_dsc, &be_lv_grad_dsc, &be_class_ctypes, "lv_grad_dsc");
+static be_define_ctypes_class(lv_gradient_stop, &be_lv_gradient_stop, &be_class_ctypes, "lv_gradient_stop");
 static be_define_ctypes_class(lv_img_dsc, &be_lv_img_dsc, &be_class_ctypes, "lv_img_dsc");
 static be_define_ctypes_class(lv_img_header, &be_lv_img_header, &be_class_ctypes, "lv_img_header");
 static be_define_ctypes_class(lv_meter_indicator, &be_lv_meter_indicator, &be_class_ctypes, "lv_meter_indicator");
@@ -571,7 +693,6 @@ static be_define_ctypes_class(lv_meter_indicator_scale_lines, &be_lv_meter_indic
 static be_define_ctypes_class(lv_meter_scale, &be_lv_meter_scale, &be_class_ctypes, "lv_meter_scale");
 static be_define_ctypes_class(lv_obj_class, &be_lv_obj_class, &be_class_ctypes, "lv_obj_class");
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes, "lv_point");
-static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes, "lv_sqrt_res");
 static be_define_ctypes_class(lv_style_transition_dsc, &be_lv_style_transition_dsc, &be_class_ctypes, "lv_style_transition_dsc");
 static be_define_ctypes_class(lv_timer, &be_lv_timer, &be_class_ctypes, "lv_timer");
 static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes, "lv_ts_calibration");
@@ -580,7 +701,10 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
   ctypes_register_class(vm, &be_class_lv_chart_cursor, &be_lv_chart_cursor);
   ctypes_register_class(vm, &be_class_lv_chart_series, &be_lv_chart_series);
+  ctypes_register_class(vm, &be_class_lv_chart_tick_dsc, &be_lv_chart_tick_dsc);
   ctypes_register_class(vm, &be_class_lv_color_filter_dsc, &be_lv_color_filter_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_arc_dsc, &be_lv_draw_arc_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_ctx, &be_lv_draw_ctx);
   ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_line_dsc, &be_lv_draw_line_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param);
@@ -592,11 +716,16 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_cfg, &be_lv_draw_mask_line_param_cfg);
   ctypes_register_class(vm, &be_class_lv_draw_mask_map_param, &be_lv_draw_mask_map_param);
   ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_cfg, &be_lv_draw_mask_map_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param, &be_lv_draw_mask_polygon_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param_cfg, &be_lv_draw_mask_polygon_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_circle_dsc, &be_lv_draw_mask_radius_circle_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param, &be_lv_draw_mask_radius_param);
   ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_cfg, &be_lv_draw_mask_radius_param_cfg);
   ctypes_register_class(vm, &be_class_lv_draw_mask_saved, &be_lv_draw_mask_saved);
   ctypes_register_class(vm, &be_class_lv_draw_rect_dsc, &be_lv_draw_rect_dsc);
   ctypes_register_class(vm, &be_class_lv_event, &be_lv_event);
+  ctypes_register_class(vm, &be_class_lv_grad_dsc, &be_lv_grad_dsc);
+  ctypes_register_class(vm, &be_class_lv_gradient_stop, &be_lv_gradient_stop);
   ctypes_register_class(vm, &be_class_lv_img_dsc, &be_lv_img_dsc);
   ctypes_register_class(vm, &be_class_lv_img_header, &be_lv_img_header);
   ctypes_register_class(vm, &be_class_lv_meter_indicator, &be_lv_meter_indicator);
@@ -607,7 +736,6 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_meter_scale, &be_lv_meter_scale);
   ctypes_register_class(vm, &be_class_lv_obj_class, &be_lv_obj_class);
   ctypes_register_class(vm, &be_class_lv_point, &be_lv_point);
-  ctypes_register_class(vm, &be_class_lv_sqrt_res, &be_lv_sqrt_res);
   ctypes_register_class(vm, &be_class_lv_style_transition_dsc, &be_lv_style_transition_dsc);
   ctypes_register_class(vm, &be_class_lv_timer, &be_lv_timer);
   ctypes_register_class(vm, &be_class_lv_ts_calibration, &be_lv_ts_calibration);
@@ -617,7 +745,10 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_area", &be_class_lv_area },
   { "lv_chart_cursor", &be_class_lv_chart_cursor },
   { "lv_chart_series", &be_class_lv_chart_series },
+  { "lv_chart_tick_dsc", &be_class_lv_chart_tick_dsc },
   { "lv_color_filter_dsc", &be_class_lv_color_filter_dsc },
+  { "lv_draw_arc_dsc", &be_class_lv_draw_arc_dsc },
+  { "lv_draw_ctx", &be_class_lv_draw_ctx },
   { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
   { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
   { "lv_draw_mask_angle_param", &be_class_lv_draw_mask_angle_param },
@@ -629,11 +760,16 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_draw_mask_line_param_cfg", &be_class_lv_draw_mask_line_param_cfg },
   { "lv_draw_mask_map_param", &be_class_lv_draw_mask_map_param },
   { "lv_draw_mask_map_param_cfg", &be_class_lv_draw_mask_map_param_cfg },
+  { "lv_draw_mask_polygon_param", &be_class_lv_draw_mask_polygon_param },
+  { "lv_draw_mask_polygon_param_cfg", &be_class_lv_draw_mask_polygon_param_cfg },
+  { "lv_draw_mask_radius_circle_dsc", &be_class_lv_draw_mask_radius_circle_dsc },
   { "lv_draw_mask_radius_param", &be_class_lv_draw_mask_radius_param },
   { "lv_draw_mask_radius_param_cfg", &be_class_lv_draw_mask_radius_param_cfg },
   { "lv_draw_mask_saved", &be_class_lv_draw_mask_saved },
   { "lv_draw_rect_dsc", &be_class_lv_draw_rect_dsc },
   { "lv_event", &be_class_lv_event },
+  { "lv_grad_dsc", &be_class_lv_grad_dsc },
+  { "lv_gradient_stop", &be_class_lv_gradient_stop },
   { "lv_img_dsc", &be_class_lv_img_dsc },
   { "lv_img_header", &be_class_lv_img_header },
   { "lv_meter_indicator", &be_class_lv_meter_indicator },
@@ -644,7 +780,6 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_meter_scale", &be_class_lv_meter_scale },
   { "lv_obj_class", &be_class_lv_obj_class },
   { "lv_point", &be_class_lv_point },
-  { "lv_sqrt_res", &be_class_lv_sqrt_res },
   { "lv_style_transition_dsc", &be_class_lv_style_transition_dsc },
   { "lv_timer", &be_class_lv_timer },
   { "lv_ts_calibration", &be_class_lv_ts_calibration },

@@ -4,7 +4,7 @@
 
 class lv_signal_arcs : lv.obj
   var percentage          # value to display, range 0..100
-  var p1, p2, area, line_dsc    # instances of objects kept to avoid re-instanciating at each call
+  var p1, p2, area, arc_dsc    # instances of objects kept to avoid re-instanciating at each call
 
   def init(parent)
     # init custom widget (don't call super constructor)
@@ -15,7 +15,7 @@ class lv_signal_arcs : lv.obj
     self.p1 = lv.point()
     self.p2 = lv.point()
     self.area = lv.area()
-    self.line_dsc = lv.draw_line_dsc()
+    self.arc_dsc = lv.draw_arc_dsc()
   end
 
   def widget_event(cl, event)
@@ -35,19 +35,18 @@ class lv_signal_arcs : lv.obj
     #print("inter_bar", inter_bar, "bar", bar, "bar_offset", bar_offset)
 
     if code == lv.EVENT_DRAW_MAIN
-      var clip_area = lv.area(event.param)
+      var draw_ctx = lv.draw_ctx(event.param)
     
       # get coordinates of object
       self.get_coords(self.area)
       var x_ofs = self.area.x1
       var y_ofs = self.area.y1
 
-      lv.draw_line_dsc_init(self.line_dsc)                  # initialize lv.draw_line_dsc structure
-      self.init_draw_line_dsc(lv.PART_MAIN, self.line_dsc)  # copy the current values
+      lv.draw_arc_dsc_init(self.arc_dsc)                  # initialize lv.draw_line_dsc structure
+      self.init_draw_arc_dsc(lv.PART_MAIN, self.arc_dsc)  # copy the current values
 
-      self.line_dsc.round_start = 1
-      self.line_dsc.round_end = 1
-      self.line_dsc.width = (bar * 3 + 1) / 4
+      self.arc_dsc.rounded = 1
+      self.arc_dsc.width = (bar * 3 + 1) / 4
       var on_color = self.get_style_line_color(lv.PART_MAIN | lv.STATE_DEFAULT)
       var off_color = self.get_style_bg_color(lv.PART_MAIN | lv.STATE_DEFAULT)
 
@@ -64,12 +63,12 @@ class lv_signal_arcs : lv.obj
       self.p1.x = x_ofs + width / 2
       self.p1.y = y_ofs + height - 1 - bar_offset
 
-      self.line_dsc.color = self.percentage >= 25 ? on_color : off_color
-      lv.draw_arc(self.p1.x, self.p1.y, 0 * (bar + inter_bar) + bar_offset, 0, 360, clip_area, self.line_dsc)
-      self.line_dsc.color = self.percentage >= 50 ? on_color : off_color
-      lv.draw_arc(self.p1.x, self.p1.y, 1 * (bar + inter_bar) + bar_offset - 1, 270 - angle, 270 + angle, clip_area, self.line_dsc)
-      self.line_dsc.color = self.percentage >= 75 ? on_color : off_color
-      lv.draw_arc(self.p1.x, self.p1.y, 2 * (bar + inter_bar) + bar_offset - 2, 270 - angle, 270 + angle, clip_area, self.line_dsc)
+      self.arc_dsc.color = self.percentage >= 25 ? on_color : off_color
+      lv.draw_arc(draw_ctx, self.arc_dsc, self.p1, 0 * (bar + inter_bar) + bar_offset, 0, 360)
+      self.arc_dsc.color = self.percentage >= 50 ? on_color : off_color
+      lv.draw_arc(draw_ctx, self.arc_dsc, self.p1, 1 * (bar + inter_bar) + bar_offset - 1, 270 - angle, 270 + angle)
+      self.arc_dsc.color = self.percentage >= 75 ? on_color : off_color
+      lv.draw_arc(draw_ctx, self.arc_dsc, self.p1, 2 * (bar + inter_bar) + bar_offset - 2, 270 - angle, 270 + angle)
 
     #elif mode == lv.DESIGN_DRAW_POST    # commented since we don't want a frame around this object
       # self.ancestor_design.call(self, clip_area, mode)

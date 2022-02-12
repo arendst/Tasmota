@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- LVGL library from 8.1.0 to 8.2.0
 
 ### Fixed
 - SSPM energy yesterday when zero

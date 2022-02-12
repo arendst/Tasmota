@@ -230,6 +230,17 @@ extern "C" {
     { 0, nullptr}
   };
 
+  // unscii fonts
+  const lv_font_table_t lv_unscii_fonts[] = {
+  #if LV_FONT_UNSCII_8
+    {  8, &lv_font_unscii_8 },
+  #endif
+  #if LV_FONT_UNSCII_16
+    { 16, &lv_font_unscii_16 },
+  #endif
+    { 0, nullptr}
+  };
+
   // Seg7 Font
   const lv_font_table_t lv_seg7_fonts[] = {
     {  8, &seg7_8 },
@@ -292,6 +303,7 @@ extern "C" {
   const lv_font_names_t lv_embedded_fonts[] = {
     { "montserrat", lv_montserrat_fonts },
     { "seg7", lv_seg7_fonts },
+    { "unscii", lv_unscii_fonts},
 #ifdef USE_LVGL_OPENHASP
     { "robotocondensed", lv_robotocondensed_fonts },
 #endif
@@ -345,6 +357,13 @@ extern "C" {
     return lv_load_embedded_font(vm, "robotocondensed", 0);
 #endif // USE_LVGL_OPENHASP
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  int lv0_load_font_embedded(bvm *vm) {
+    if ((be_top(vm) >= 2) && (be_isstring(vm, 1)) && (be_isint(vm, 2))) {
+      return lv_load_embedded_font(vm, be_tostring(vm, 1), be_toint(vm, 2));
+    }
+    be_return_nil(vm);
   }
 
   /*********************************************************************************************\

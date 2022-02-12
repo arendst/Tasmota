@@ -33,7 +33,7 @@ class lv_signal_bars : lv.obj
     var bar_offset = bar / 2
 
     if code == lv.EVENT_DRAW_MAIN
-      var clip_area = lv.area(event.param)
+      var draw_ctx = lv.draw_ctx(event.param)
 
       # get coordinates of object
       self.get_coords(self.area)
@@ -56,7 +56,7 @@ class lv_signal_bars : lv.obj
         self.p1.x = x_ofs + i * (bar + inter_bar) + bar_offset
         self.p2.y = y_ofs + ((3 - i) * (height - bar)) / 4 + bar_offset
         self.p2.x = self.p1.x
-        lv.draw_line(self.p1, self.p2, clip_area, self.line_dsc)
+        lv.draw_line(draw_ctx, self.line_dsc, self.p1, self.p2)
       end
       lv.event_send(self, lv.EVENT_DRAW_PART_END, self.line_dsc)
     end
