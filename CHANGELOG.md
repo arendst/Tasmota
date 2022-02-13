@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 integrate Homekit in Bluetooth binary (#14818)
 
 ### Changed
-- ESP32 update the internal Berry type system to sync with Skiars Berry reopsitory. No expected impact on code, but .bec files need to be generated again. (#14811)
+- Adafruit BusIO library from v1.0.10 to v1.11.0
+- ESP32 update the internal Berry type system to sync with Skiars Berry repository. No expected impact on code, but .bec files need to be generated again. (#14811)
 - ESP32 LVGL library from v8.1.0 to v8.2.0
 - ESP32 NimBLE library from v1.3.3 to v1.3.6
 
