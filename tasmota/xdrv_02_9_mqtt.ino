@@ -943,6 +943,7 @@ void MqttConnected(void) {
         ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
       }
       ResponseAppend_P(PSTR(",\"" D_JSON_BOOTCOUNT "\":%d}}"), Settings->bootcount +1);
+      ResponseAppend_P(PSTR(",\"" D_JSON_FLASHWRITECOUNT "\":%d}}"), Settings->save_flag);
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_INFO "3"), Settings->flag5.mqtt_info_retain);
     }
 
