@@ -82,6 +82,7 @@
 #define D_JSON_FLASHCHIPID "FlashChipId"
 #define D_JSON_FLASHMODE "FlashMode"
 #define D_JSON_FLASHSIZE "FlashSize"
+#define D_JSON_FLASHWRITECOUNT "FlashWriteCount"
 #define D_JSON_FLOWRATE "FlowRate"
 #define D_JSON_FREEMEMORY "Free"
 #define D_JSON_FREQUENCY "Frequency"
