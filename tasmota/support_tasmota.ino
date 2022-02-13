@@ -1762,7 +1762,7 @@ void GpioInit(void)
       }
 #ifdef ESP32
       else if ((mpin >= AGPIO(GPIO_OPTION_E)) && (mpin < (AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E))) {
-        TasmotaGlobal.emulated_module_type = pgm_read_byte(kModuleEmulationList + (mpin - AGPIO(GPIO_OPTION_A)));
+        TasmotaGlobal.emulated_module_type = pgm_read_byte(kModuleEmulationList + (mpin - AGPIO(GPIO_OPTION_E)));
         SetModuleType();
         mpin = GPIO_NONE;
       }

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 ## [11.0.0.1]
 ### Added
+- ESP32 support for BLE Mi scale V1 (#13517)
+- ESP32 integrate Homekit in Bluetooth binary (#14818)
 
 ### Changed
 - ESP32 update the internal Berry type system to sync with Skiars Berry reopsitory. No expected impact on code, but .bec files need to be generated again. (#14811)
@@ -12,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - SSPM energy yesterday when zero
+- GPIO OptionE1 selection regression (#14821)
 
 ## [Released]
 

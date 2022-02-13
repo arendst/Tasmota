@@ -105,15 +105,18 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v11.0.0.1
 ### Added
+- ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)
+- ESP32 integrate Homekit in Bluetooth binary [#14818](https://github.com/arendst/Tasmota/issues/14818)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 LVGL library from v8.1.0 to v8.2.0
 - ESP32 NimBLE library from v1.3.3 to v1.3.6
-- ESP32 update the internal Berry type system to sync with Skiars Berry reopsitory. No expected impact on code, but .bec files need to be generated again. [#14811](https://github.com/arendst/Tasmota/issues/14811)
+- ESP32 update the internal Berry type system to sync with Skiars Berry reopsitory. No expected impact on code, but .bec files need to be generated again [#14811](https://github.com/arendst/Tasmota/issues/14811)
 
 ### Fixed
 - SSPM energy yesterday when zero
+- GPIO OptionE1 selection regression [#14821](https://github.com/arendst/Tasmota/issues/14821)
 
 ### Removed
