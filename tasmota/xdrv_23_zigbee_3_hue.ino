@@ -102,7 +102,7 @@ void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
               (modelId) ? modelId : PSTR("Unknown"),
               (manufacturerId) ? manufacturerId : PSTR("Tasmota"),
               GetHueDeviceId(shortaddr).c_str());
-  *reponse += buf;
+  *response += buf;
   free(buf);
 }
 
