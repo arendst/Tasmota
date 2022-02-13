@@ -14,43 +14,55 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-extern void * ls_init(int32_t channels);                            BE_FUNC_CTYPE_DECLARE(ls_init, "+_p", "i")
-extern void ls_set_rgb(void* p, int32_t r, int32_t g, int32_t b);   BE_FUNC_CTYPE_DECLARE(ls_set_rgb, "", ".iii")
-extern void ls_set_huesat(void* p, int32_t hue, int32_t sat);       BE_FUNC_CTYPE_DECLARE(ls_set_huesat, "", ".ii")
-extern void ls_set_ct(void* p, int32_t ct);       BE_FUNC_CTYPE_DECLARE(ls_set_ct, "", ".i")
-extern void ls_set_xy(void* p, float x, float y); BE_FUNC_CTYPE_DECLARE(ls_set_xy, "", ".ff")
-extern int32_t ls_r(void* p);           BE_VAR_CTYPE_DECLARE(ls_r, "i");
-extern int32_t ls_g(void* p);           BE_VAR_CTYPE_DECLARE(ls_g, "i");
-extern int32_t ls_b(void* p);           BE_VAR_CTYPE_DECLARE(ls_b, "i");
-extern float ls_x(void* p);             BE_VAR_CTYPE_DECLARE(ls_x, "f");
-extern float ls_y(void* p);             BE_VAR_CTYPE_DECLARE(ls_y, "f");
-extern int32_t ls_hue(void* p);         BE_VAR_CTYPE_DECLARE(ls_hue, "i");
-extern int32_t ls_sat(void* p);         BE_VAR_CTYPE_DECLARE(ls_sat, "i");
-extern int32_t ls_bri(void* p);         BE_VAR_CTYPE_DECLARE(ls_bri, "i");
-extern int32_t ls_ct(void* p);          BE_VAR_CTYPE_DECLARE(ls_ct, "i");
+extern void * ls_init(int32_t type);                            BE_FUNC_CTYPE_DECLARE(ls_init, "+_p", "i")
+extern void ls_set_rgb(class LightStateClass* l, int32_t r, int32_t g, int32_t b);   BE_FUNC_CTYPE_DECLARE(ls_set_rgb, "", ".iii")
+extern void ls_set_huesat(class LightStateClass* l, int32_t hue, int32_t sat);       BE_FUNC_CTYPE_DECLARE(ls_set_huesat, "", ".ii")
+extern void ls_set_hue16sat(class LightStateClass* l, int32_t hue16, int32_t sat);   BE_FUNC_CTYPE_DECLARE(ls_set_hue16sat, "", ".ii")
+extern void ls_set_ct(class LightStateClass* l, int32_t ct);       BE_FUNC_CTYPE_DECLARE(ls_set_ct, "", ".i")
+extern void ls_set_bri(class LightStateClass* l, int32_t bri);       BE_FUNC_CTYPE_DECLARE(ls_set_bri, "", ".i")
+extern void ls_set_xy(class LightStateClass* l, float x, float y); BE_FUNC_CTYPE_DECLARE(ls_set_xy, "", ".ff")
+extern int32_t ls_r(class LightStateClass* l);           BE_VAR_CTYPE_DECLARE(ls_r, "i");
+extern int32_t ls_g(class LightStateClass* l);           BE_VAR_CTYPE_DECLARE(ls_g, "i");
+extern int32_t ls_b(class LightStateClass* l);           BE_VAR_CTYPE_DECLARE(ls_b, "i");
+extern float ls_x(class LightStateClass* l);             BE_VAR_CTYPE_DECLARE(ls_x, "f");
+extern float ls_y(class LightStateClass* l);             BE_VAR_CTYPE_DECLARE(ls_y, "f");
+extern int32_t ls_hue(class LightStateClass* l);         BE_VAR_CTYPE_DECLARE(ls_hue, "i");
+extern int32_t ls_hue16(class LightStateClass* l);       BE_VAR_CTYPE_DECLARE(ls_hue16, "i");
+extern int32_t ls_sat(class LightStateClass* l);         BE_VAR_CTYPE_DECLARE(ls_sat, "i");
+extern int32_t ls_bri(class LightStateClass* l);         BE_VAR_CTYPE_DECLARE(ls_bri, "i");
+extern int32_t ls_ct(class LightStateClass* l);          BE_VAR_CTYPE_DECLARE(ls_ct, "i");
+extern int32_t ls_type(class LightStateClass* l);        BE_VAR_CTYPE_DECLARE(ls_type, "i");
 
-extern int32_t ls_mode_rgb(void* p);    BE_VAR_CTYPE_DECLARE(ls_mode_rgb, "b");
-extern int32_t ls_mode_ct(void* p);     BE_VAR_CTYPE_DECLARE(ls_mode_ct, "b");
-extern void ls_set_mode_rgb(void* p);   BE_FUNC_CTYPE_DECLARE(ls_set_mode_rgb, "", ".");
-extern void ls_set_mode_ct(void* p);    BE_FUNC_CTYPE_DECLARE(ls_set_mode_ct, "", ".");
-extern int32_t ls_get_power(void* p);   BE_VAR_CTYPE_DECLARE(ls_get_power, "b");
-extern void ls_set_power(void* p, int32_t pow); BE_FUNC_CTYPE_DECLARE(ls_set_power, "", ".b");
+extern int32_t ls_mode_rgb(class LightStateClass* l);    BE_VAR_CTYPE_DECLARE(ls_mode_rgb, "b");
+extern int32_t ls_mode_ct(class LightStateClass* l);     BE_VAR_CTYPE_DECLARE(ls_mode_ct, "b");
+extern void ls_set_mode_rgb(class LightStateClass* l);   BE_FUNC_CTYPE_DECLARE(ls_set_mode_rgb, "", ".");
+extern void ls_set_mode_ct(class LightStateClass* l);    BE_FUNC_CTYPE_DECLARE(ls_set_mode_ct, "", ".");
+extern int32_t ls_get_power(class LightStateClass* l);   BE_VAR_CTYPE_DECLARE(ls_get_power, "b");
+extern void ls_set_power(class LightStateClass* l, int32_t pow); BE_FUNC_CTYPE_DECLARE(ls_set_power, "", ".b");
+extern int32_t ls_reachable(class LightStateClass* p);   BE_VAR_CTYPE_DECLARE(ls_reachable, "b");
+extern void ls_set_reachable(class LightStateClass* l, int32_t pow); BE_FUNC_CTYPE_DECLARE(ls_set_reachable, "", ".b");
+
+extern void ls_signal_change(void) {} BE_FUNC_CTYPE_DECLARE(ls_signal_change, "", ".");
 
 extern int32_t ls_gamma8(int32_t val);      BE_FUNC_CTYPE_DECLARE(ls_gamma8, "i", "-i")
 extern int32_t ls_gamma10(int32_t val);     BE_FUNC_CTYPE_DECLARE(ls_gamma10, "i", "-i")
 extern int32_t ls_rev_gamma10(int32_t val); BE_FUNC_CTYPE_DECLARE(ls_rev_gamma10, "i", "-i")
 
+//  moved to constants array
 const be_const_member_t light_state_members[] = {
     { ">b", be_ctype(ls_b) },
     { ">bri", be_ctype(ls_bri) },
     { ">ct", be_ctype(ls_ct) },
     { ">g", be_ctype(ls_g) },
     { ">hue", be_ctype(ls_hue) },
+    { ">hue16", be_ctype(ls_hue16) },
     { ">mode_ct", be_ctype(ls_mode_ct) },
     { ">mode_rgb", be_ctype(ls_mode_rgb) },
     { ">power", be_ctype(ls_get_power) },
     { ">r", be_ctype(ls_r) },
+    { ">reachable", be_ctype(ls_reachable) },
     { ">sat", be_ctype(ls_sat) },
+    { ">type", be_ctype(ls_type) },
     { ">x", be_ctype(ls_x) },
     { ">y", be_ctype(ls_y) },
 };
@@ -75,6 +87,7 @@ extern "C" void be_load_light_state_class(bvm *vm) {
 
 /* @const_object_info_begin
 class be_class_light_state (scope: global, name: light_state) {
+  RELAY,  int(0)
   DIMMER, int(1)
   CT,     int(2)
   RGB,    int(3)
@@ -88,14 +101,19 @@ class be_class_light_state (scope: global, name: light_state) {
 
   set_rgb, ctype_func(ls_set_rgb)
   set_huesat, ctype_func(ls_set_huesat)
+  set_hue16sat, ctype_func(ls_set_hue16sat)
   set_xy, ctype_func(ls_set_xy)
   set_ct, ctype_func(ls_set_ct)
+  set_bri, ctype_func(ls_set_bri)
 
   set_mode_rgb, ctype_func(ls_set_mode_rgb)
   set_mode_ct, ctype_func(ls_set_mode_ct)
   set_power, ctype_func(ls_set_power)
+  set_reachable, ctype_func(ls_set_reachable)
 
   get, func(light_state_get)
+
+  signal_change, ctype_func(ls_signal_change)
 
   gamma8, ctype_func(ls_gamma8)
   gamma10, ctype_func(ls_gamma10)

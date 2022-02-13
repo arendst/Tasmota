@@ -32,6 +32,13 @@
 
 #include "UnishoxStrings.h"
 
+#ifdef USE_BERRY
+  // not sure why they are not infered automatically
+  bool be_hue_status(String* response, uint32_t device_id);
+  void be_hue_discovery(String* response, bool* appending);
+  void be_hue_groups(String* response);
+#endif
+
 const char HUE_RESP_MSG_U[] PROGMEM =
   //=HUE_RESP_RESPONSE
   "HTTP/1.1 200 OK\r\n"
@@ -572,8 +579,9 @@ bool HueActive(uint8_t device) {
  * HueLightStatus2Generic
  * 
  * Adds specific information for a newly discovered device
+ * Returns a (char*) pointer that the caller needs to `free()`
 \*********************************************************************************/
-void HueLightStatus2Generic(String *response, const char * name, const char * modelid, const char * manuf, const char * uniqueid) {
+char* HueLightStatus2Generic(const char * name, const char * modelid, const char * manuf, const char * uniqueid) {
   // //=HUE_LIGHTS_STATUS_JSON2
   // ",\"type\":\"Extended color light\","
   // "\"name\":\"%s\","
@@ -583,8 +591,7 @@ void HueLightStatus2Generic(String *response, const char * name, const char * mo
 
   UnishoxStrings msg(HUE_LIGHTS);
   char * buf = ext_snprintf_malloc_P(msg[HUE_LIGHTS_STATUS_JSON2], EscapeJSONString(name).c_str(), EscapeJSONString(modelid).c_str(), EscapeJSONString(manuf).c_str(), uniqueid);
-  *response += buf;
-  free(buf);
+  return buf;
 }
 
 void HueLightStatus2(uint8_t device, String *response)
@@ -606,7 +613,9 @@ void HueLightStatus2(uint8_t device, String *response)
     fname[fname_len] = 0x00;
   }
 
-  HueLightStatus2Generic(response, fname, Settings->user_template_name, PSTR("Tasmota"), GetHueDeviceId(device).c_str());
+  char* buf = HueLightStatus2Generic(fname, Settings->user_template_name, PSTR("Tasmota"), GetHueDeviceId(device).c_str());
+  *response += buf;
+  free(buf);
 }
 #endif // USE_LIGHT
 
@@ -947,6 +956,9 @@ void HueLights(String *path_req)
 #ifdef USE_ZIGBEE
     ZigbeeCheckHue(response, &appending);
 #endif // USE_ZIGBEE
+#ifdef USE_BERRY
+    be_hue_discovery(&response, &appending);
+#endif
 #ifdef USE_SCRIPT_HUE
     Script_Check_Hue(&response);
 #endif
@@ -965,6 +977,13 @@ void HueLights(String *path_req)
       goto exit;
     }
 #endif // USE_ZIGBEE
+
+#ifdef USE_BERRY
+  if (be_hue_command(device, device_id, &response)) {
+    // code is already 200
+    goto exit;
+  }
+#endif
 
 #ifdef USE_SCRIPT_HUE
     if (device > TasmotaGlobal.devices_present) {
@@ -992,12 +1011,19 @@ void HueLights(String *path_req)
     }
 #endif // USE_ZIGBEE
 
+#ifdef USE_BERRY
+    if (be_hue_status(&response, device_id)) {
+      goto exit;
+    }
+#endif
+
 #ifdef USE_SCRIPT_HUE
     if (device > TasmotaGlobal.devices_present) {
       Script_HueStatus(&response, device-TasmotaGlobal.devices_present - 1);
       goto exit;
     }
 #endif
+
 
 #ifdef USE_LIGHT
     if ((device < 1) || (device > maxhue)) {
@@ -1037,21 +1063,25 @@ void HueGroups(String *path)
   if (path->endsWith(F("/0"))) {
     UnishoxStrings msg(HUE_LIGHTS);
     response = msg[HUE_GROUP0_STATUS_JSON];
-    String lights = F("\"1\"");
-    for (uint32_t i = 2; i <= maxhue; i++) {
+    String lights;
+    for (uint32_t i = 1; i <= maxhue; i++) {
       lights += F(",\"");
       lights += EncodeLightId(i);
       lights += F("\"");
     }
 
 #ifdef USE_ZIGBEE
-    ZigbeeHueGroups(&response);
+    ZigbeeHueGroups(&lights);
 #endif // USE_ZIGBEE
+#ifdef USE_BERRY
+    be_hue_groups(&lights);
+#endif
+    lights.remove(0,1);     // remove first ','
     response.replace(F("{l1"), lights);
 #ifdef USE_LIGHT
-    HueLightStatus1(1, &response);
+    // HueLightStatus1(1, &response);   // Not sure it is useful
 #endif // USE_LIGHT
-    response += F("}");
+    response += F("{}}");
   }
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups Result (%s)"), path->c_str());

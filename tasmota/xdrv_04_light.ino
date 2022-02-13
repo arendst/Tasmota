@@ -329,6 +329,7 @@ uint8_t ddp_udp_up = 0;
 class LightStateClass {
   private:
     uint16_t _hue = 0;  // 0..359
+    uint16_t _hue16 = 0;  // 0..65535 - high resolution hue necessary for Alexa/Hue integration
     uint8_t  _sat = 255;  // 0..255
     uint8_t  _briRGB = 255;  // 0..255
     uint8_t  _briRGB_orig = 255;  // 0..255
@@ -346,6 +347,7 @@ class LightStateClass {
 
     uint8_t  _color_mode = LCM_RGB; // RGB by default
     bool     _power = false;    // power indicator, used only in virtual lights, Tasmota tracks power separately
+    bool     _reachable = true; // reachable indicator, used only in vritual lights. Not used in internal light
 
   public:
     LightStateClass() {
@@ -421,6 +423,14 @@ class LightStateClass {
     }
     void setPower(bool pow) {
       _power = pow;
+    }
+
+    // reachable accessors, for virtual lights only (has no effect on Tasmota lights)
+    bool getReachable(void) const {
+      return _reachable;
+    }
+    void setReachable(bool reachable) {
+      _reachable = reachable;
     }
 
     // Get RGB color, always at full brightness (ie. one of the components is 255)
@@ -643,6 +653,7 @@ class LightStateClass {
       _g = g;
       _b = b;
       _hue = hue;
+      _hue16 = changeUIntScale(_hue, 0, 360, 0, 65535);
       _sat = sat;
 #ifdef DEBUG_LIGHT
       AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
@@ -650,20 +661,32 @@ class LightStateClass {
       return max;
     }
 
-    void setHS(uint16_t hue, uint8_t sat) {
-      uint8_t r, g, b;
-      HsToRgb(hue, sat, &r, &g, &b);
-      _r = r;
-      _g = g;
-      _b = b;
-      _hue = hue;
-      _sat = sat;
-      addRGBMode();
+  void setHS(uint16_t hue, uint8_t sat) {
+    uint8_t r, g, b;
+    HsToRgb(hue, sat, &r, &g, &b);
+    _r = r;
+    _g = g;
+    _b = b;
+    _hue = hue;
+    _hue16 = changeUIntScale(_hue, 0, 360, 0, 65535);
+    _sat = sat;
+    addRGBMode();
 #ifdef DEBUG_LIGHT
-      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS HS (%d %d) rgb (%d %d %d)", hue, sat, r, g, b);
-      AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS HS (%d %d) rgb (%d %d %d)", hue, sat, r, g, b);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
   }
+
+  // version taking Hue over 0..65535 as sent by Zigbee or Hue
+  void setH16S(uint16_t hue16, uint8_t sat) {
+    uint16_t hue360 = changeUIntScale(hue16, 0, 65535, 0, 360);
+    setHS(hue360, sat);
+    _hue16 = hue16;   // keep a higher resolution version in memory
+  }
+  uint16_t getHue16(void) const {
+    return _hue16;
+  }
+
 
   // set all 5 channels at once, don't modify the values in ANY way
   // Channels are: R G B CW WW
@@ -673,7 +696,7 @@ class LightStateClass {
     _b = channels[2];
     _wc = channels[3];
     _ww = channels[4];
-}
+  }
 
   // set all 5 channels at once.
   // Channels are: R G B CW WW

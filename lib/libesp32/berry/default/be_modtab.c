@@ -41,6 +41,8 @@ be_extern_native_module(webserver);
 be_extern_native_module(flash);
 be_extern_native_module(path);
 be_extern_native_module(unishox);
+be_extern_native_module(hue_ntv);
+be_extern_native_module(hue_bridge);
 be_extern_native_module(uuid);
 be_extern_native_module(animate);
 #ifdef USE_LVGL
@@ -117,6 +119,10 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif // USE_DISPLAY
 #ifdef USE_LIGHT
     &be_native_module(light),
+#endif
+#if defined(USE_EMULATION) && defined(USE_EMULATION_HUE)
+    &be_native_module(hue_ntv),
+    &be_native_module(hue_bridge),
 #endif
 
     &be_native_module(uuid),
