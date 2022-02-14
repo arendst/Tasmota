@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - ESP32 support for BLE Mi scale V1 (#13517)
 - ESP32 integrate Homekit in Bluetooth binary (#14818)
+- ESP32 Berry always enable rules
+- ESP32 Berry bootloop protection
+- ESP32 Berry virtual Alexa hue device (#14833)
 
 ### Changed
 - Adafruit BusIO library from v1.0.10 to v1.11.0
@@ -17,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - SSPM energy yesterday when zero
 - GPIO OptionE1 selection regression (#14821)
 - BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 (#14829)
+- Orno WE517 power meter phase 2 current reactive (#14841)
 
 ## [Released]
 
