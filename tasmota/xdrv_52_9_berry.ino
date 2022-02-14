@@ -270,10 +270,12 @@ void BerryObservability(bvm *vm, int event...) {
 \*********************************************************************************************/
 void BrShowState(void);
 void BrShowState(void) {
-  // trigger a gc first
-  be_gc_collect(berry.vm);
-  ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
-    berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
+  if (berry.vm) {
+    // trigger a gc first
+    be_gc_collect(berry.vm);
+    ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
+      berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
+  }
 }
 
 /*********************************************************************************************\
