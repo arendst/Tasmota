@@ -36,12 +36,12 @@
  *
  * Rule:
  * on wiegand#uid=4302741608 do publish cmnd/ailight/power 2 endon
- * 
+ *
  * contains:
- *  - fix for #11047 Wiegand 26/34 missed some key press if they are press at normal speed  
- *  - removed testing code for tests without attached hardware 
- *  - added SetOption123 0-Wiegand UID decimal (default) 1-Wiegand UID hexadecimal 
- *  - added SetOption124 0-all keys up to ending char (# or *) send as one tag by MQTT (default) 1-Keypad every key a single tag 
+ *  - fix for #11047 Wiegand 26/34 missed some key press if they are press at normal speed
+ *  - removed testing code for tests without attached hardware
+ *  - added SetOption123 0-Wiegand UID decimal (default) 1-Wiegand UID hexadecimal
+ *  - added SetOption124 0-all keys up to ending char (# or *) send as one tag by MQTT (default) 1-Keypad every key a single tag
  *  - added a new realtime testing option emulating a Wiegang reader output on same GPIOs where normally reader is attached. Details below
  *  - fix timing issue when fast glitches are detected on one on the datalines. The interbitgab was too short in that case
 \*********************************************************************************************/
@@ -49,12 +49,12 @@
 
 #define XSNS_82                82
 
-#define WIEGAND_CODE_GAP_FACTOR 3  // Gap between 2 complete RFID codes send by the device. (WIEGAND_CODE_GAP_FACTOR * bitTime) to detect the end of a code 
+#define WIEGAND_CODE_GAP_FACTOR 3  // Gap between 2 complete RFID codes send by the device. (WIEGAND_CODE_GAP_FACTOR * bitTime) to detect the end of a code
 #define WIEGAND_BIT_TIME_DEFAULT 1250  // period time (µs) of one bit (impluse + impulse_gap time) 1250µs measured by oscilloscope on my RFID Reader
 #define WIEGAND_RFID_ARRAY_SIZE 11 // storage of rfids found between 2 calls of FUNC_EVERY_100_MSECOND
 #define WIEGAND_OPTION_HEX 123 // Index of option to switch output between hex (1) an decimal (0) (default)
 #define WIEGAND_OPTION_HEX_POSTFIX "h"  // will be added after UID output nothing = ""
-#define WIEGAND_OPTION_KEYPAD_TO_TAG 124 //Index of option to switch output of key pad strokes between every single stroke one single char (0) (default) 
+#define WIEGAND_OPTION_KEYPAD_TO_TAG 124 //Index of option to switch output of key pad strokes between every single stroke one single char (0) (default)
                                          // or all strokes until detecting ending char (WIEGAND_OPTION_KEYPAD_END_CHAR) as one tag (1)
 
 #define DEV_WIEGAND_TEST_MODE  0
@@ -73,7 +73,7 @@
     // WieBitTime [time] : get or set the bit impuls length
     // WieInterBitTime [time]: get or set the length of the gap between 2 bits
     // WieTagGap [tagGap]: get or set the current used gap time between 2 tags send in µs minimal WIEGAND_BIT_TIME_DEFAULT µs default WIEGAND_BIT_TIME_DEFAULT * WIEGAND_CODE_GAP_FACTOR
-    // WieTagSize [tagsize]:  get or set the tagsize (4,8,24,26,32,34) default 26. 
+    // WieTagSize [tagsize]:  get or set the tagsize (4,8,24,26,32,34) default 26.
     // WieTag [tag]:  get or set the current used tag. For tagsize 4,8 only one char will be used.
     // WieSend [tag[:tagsize];tag[:tagsize];...] : Generate the current Tag with current TagSize to GPIOs if the paramters are used
     //                                             tags and tagsize from commandline are used as current values. If tagsize is omitted always last value will be used
@@ -107,12 +107,12 @@ class Wiegand {
     bool WiegandConversion (uint64_t , uint16_t );
     void setOutputFormat(void); // fix output HEX format
     void HandleKeyPad(void); //handle one tag for multi key strokes
-    
+
 
     static void handleD0Interrupt(void);
     static void handleD1Interrupt(void);
-    static void handleDxInterrupt(int in); // fix #11047 
-    static void ClearRFIDBuffer(int); 
+    static void handleDxInterrupt(int in); // fix #11047
+    static void ClearRFIDBuffer(int);
 
     uint64_t rfid;
     uint32_t tagSize;
@@ -124,8 +124,8 @@ class Wiegand {
     static volatile uint16_t bitCount;
     static volatile uint32_t lastFoundTime;
     // fix #11047
-    static volatile uint32_t bitTime; 
-    static volatile uint32_t FirstBitTimeStamp; 
+    static volatile uint32_t bitTime;
+    static volatile uint32_t FirstBitTimeStamp;
     static volatile uint32_t CodeGapTime;
     static volatile bool CodeComplete;
     static volatile RFID_store rfid_found[];
@@ -137,7 +137,7 @@ Wiegand* oWiegand = new Wiegand();
 volatile uint64_t Wiegand::rfidBuffer;
 volatile uint16_t Wiegand::bitCount;
 volatile uint32_t Wiegand::lastFoundTime;
-// fix for #11047 
+// fix for #11047
 volatile uint32_t Wiegand::bitTime;
 volatile uint32_t Wiegand::FirstBitTimeStamp;
 volatile uint32_t Wiegand::CodeGapTime;
@@ -159,13 +159,13 @@ void IRAM_ATTR Wiegand::handleD1Interrupt() {  // Receive a 1 bit. (D0=high & D1
 }
 
 void IRAM_ATTR Wiegand::handleD0Interrupt() {  // Receive a 0 bit. (D0=low & D1=high)
-  handleDxInterrupt(0);                    
+  handleDxInterrupt(0);
 }
 
 void IRAM_ATTR Wiegand::handleDxInterrupt(int in) {
   unsigned long curTime = micros();  // to be sure I will use micros() instead of millis() overflow is handle by using the minus operator to compare
   unsigned long diffTime= curTime - lastFoundTime;
-  if ( (diffTime > CodeGapTime) && (bitCount > 0)) { 
+  if ( (diffTime > CodeGapTime) && (bitCount > 0)) {
     // previous RFID tag (key pad numer)is complete. Will be detected by the code ending gap
     // one bit will take the time of impulse_time + impulse_gap_time. it (bitTime) will be recalculated each time an impulse is detected
     // the devices will add some inter_code_gap_time to separate codes this will be much longer than the bit_time. (WIEGAND_CODE_GAP_FACTOR)
@@ -174,23 +174,23 @@ void IRAM_ATTR Wiegand::handleDxInterrupt(int in) {
       currentFoundRFIDcount++;
     }
     // start a new tag
-    rfidBuffer = 0; 
+    rfidBuffer = 0;
     bitCount = 0;
-    FirstBitTimeStamp = 0; 
+    FirstBitTimeStamp = 0;
   }
-  
+
   if (in == 0) { rfidBuffer = rfidBuffer << 1; } // Receive a 0 bit. (D0=low & D1=high): Leftshift the 0 bit is now at the end of rfidBuffer
   else if (in == 1)  {rfidBuffer = (rfidBuffer << 1) | 1; }    // Receive a 1 bit. (D0=high & D1=low): Leftshift + 1 bit
   else { return; } // (in==3) called by ScanForTag to get the last tag, because the interrupt handler is no longer called after receiving the last bit
 
-  bitCount++; 
+  bitCount++;
   if (bitCount == 1) { // first bit was detected
     FirstBitTimeStamp = (curTime != 0) ? curTime : 1; // accept 1µs differenct to avoid a miss the first timestamp if curTime is 0.
   }
   else if (bitCount == 2) { // only calculate once per RFID tag, but restrict to values, which are in within a plausible range
     bitTime = ((diffTime > (WIEGAND_BIT_TIME_DEFAULT/4)) && (diffTime < (4*WIEGAND_BIT_TIME_DEFAULT))) ? diffTime : WIEGAND_BIT_TIME_DEFAULT;
     CodeGapTime = WIEGAND_CODE_GAP_FACTOR * bitTime;
-  }   
+  }
   //save current rfid in array otherwise we will never see the last found tag
   rfid_found[currentFoundRFIDcount].RFID=rfidBuffer;
   rfid_found[currentFoundRFIDcount].bitCount= bitCount;
@@ -365,18 +365,18 @@ void Wiegand::HandleKeyPad(void) { // will be called if a valid key pad input wa
       if (rfid >= 0x0a) { // # * as end of input detected -> all key values which are larger than 9
         rfid = mqttRFIDKeypadBuffer; // original tagsize of 4 or 8 will be kept.
         webRFIDKeypadBuffer = 0; // can be resetted, because now rfid > 0 will be used at web interface
-        mqttRFIDKeypadBuffer = 0; 
+        mqttRFIDKeypadBuffer = 0;
       }
       else {
         mqttRFIDKeypadBuffer = (mqttRFIDKeypadBuffer*10)+rfid; //left shift + new key
         webRFIDKeypadBuffer = mqttRFIDKeypadBuffer; // visualising the current typed keys
         rfid = 0;
-        tagSize = 0;  
+        tagSize = 0;
       }
     }
     else { //it's not a key pad entry, so another key come in, we will reset the buffer, if it is not finished yet
-      webRFIDKeypadBuffer = 0; 
-      mqttRFIDKeypadBuffer = 0; 
+      webRFIDKeypadBuffer = 0;
+      mqttRFIDKeypadBuffer = 0;
     }
   }
 }
@@ -390,10 +390,9 @@ void Wiegand::ScanForTag() {
     AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag(). bitTime: %0lu lastFoundTime: %0lu RFIDS in buffer: %lu"), bitTime, lastFoundTime, currentFoundRFIDcount);
     #endif
     // format MQTT output
-    setOutputFormat();
-    char sFormat[50];
-    snprintf( sFormat, 50, PSTR(",\"Wiegand\":{\"UID\":%%0ll%s,\"" D_JSON_SIZE "\":%%%s}}"), outFormat, outFormat);
-
+//    setOutputFormat();
+//    char sFormat[50];
+//    snprintf( sFormat, 50, PSTR(",\"Wiegand\":{\"UID\":%%0ll%s,\"" D_JSON_SIZE "\":%%%s}}"), outFormat, outFormat);
     for (int i= 0; i < WIEGAND_RFID_ARRAY_SIZE; i++)
     {
 	  if (rfid_found[i].RFID != 0 || (rfid_found[i].RFID == 0 && i == 0)) {
@@ -403,12 +402,18 @@ void Wiegand::ScanForTag() {
         AddLog(LOG_LEVEL_INFO, PSTR("WIE: ValidKey: %d Previous tag %llu"), validKey, oldTag);
         #endif  // DEV_WIEGAND_TEST_MODE>0
         if (validKey) {  // Only in case of valid key do action. Issue#10585
-          HandleKeyPad();  //support one tag for multi key input 
+          HandleKeyPad();  //support one tag for multi key input
           if (tagSize>0) { //do output only for rfids which are complete
             if (oldTag == rfid) {
               AddLog(LOG_LEVEL_DEBUG, PSTR("WIE: Old tag"));
             }
-            ResponseTime_P(sFormat, rfid, tagSize);
+//            ResponseTime_P(sFormat, rfid, tagSize);
+//          Tasmota does not support 64-bit decimal output specifier (%llu) saving 60k code
+            if (GetOption(WIEGAND_OPTION_HEX) == 0) {
+              ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":%lu,\"" D_JSON_SIZE "\":%d}}"), (uint32_t)rfid, tagSize);
+            } else {
+              ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%2_X" WIEGAND_OPTION_HEX_POSTFIX "\",\"" D_JSON_SIZE "\":\"%X" WIEGAND_OPTION_HEX_POSTFIX "\"}}"), &rfid, tagSize);
+            }
             MqttPublishTeleSensor();
           }
         }
@@ -417,24 +422,29 @@ void Wiegand::ScanForTag() {
     if (currentFoundRFIDcount > lastFoundRFIDcount) {
       // if that happens: we need to move the id found during the loop to top of the array
       // and correct the currentFoundRFIDcount
-      AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag() %lu tags added while working on buffer"), (currentFoundRFIDcount-lastFoundRFIDcount));  
+      AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag() %lu tags added while working on buffer"), (currentFoundRFIDcount-lastFoundRFIDcount));
     }
-    ClearRFIDBuffer(); //reset array  
+    ClearRFIDBuffer(); //reset array
     #if (DEV_WIEGAND_TEST_MODE)>0
-    AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag() time elapsed %lu"), (micros() - startTime));  
+    AddLog(LOG_LEVEL_INFO, PSTR("WIE: ScanForTag() time elapsed %lu"), (micros() - startTime));
     #endif
   }
-  
+
 }
 
 #ifdef USE_WEBSERVER
 void Wiegand::Show(void) {
-    setOutputFormat(); 
-    char sFormat [30];
-    snprintf( sFormat, 30,PSTR("{s}Wiegand UID{m}%%ll%s {e}"), outFormat);
-    if (tagSize>0) { WSContentSend_PD(sFormat, rfid); }
-    else { WSContentSend_PD(sFormat, webRFIDKeypadBuffer); }
-
+//    setOutputFormat();
+//    char sFormat [30];
+//    snprintf( sFormat, 30,PSTR("{s}Wiegand UID{m}%%ll%s {e}"), outFormat);
+//    if (tagSize>0) { WSContentSend_PD(sFormat, rfid); }
+//    else { WSContentSend_PD(sFormat, webRFIDKeypadBuffer); }
+//  Tasmota does not support 64-bit decimal output specifier (%llu) saving 60k code
+    if (GetOption(WIEGAND_OPTION_HEX) == 0) {
+      WSContentSend_P(PSTR("{s}Wiegand UID{m}%lu{e}"), (tagSize>0) ? (uint32_t)rfid : (uint32_t)webRFIDKeypadBuffer);
+    } else {
+      WSContentSend_P(PSTR("{s}Wiegand UID{m}%2_X" WIEGAND_OPTION_HEX_POSTFIX "{e}"), (tagSize>0) ? &rfid : &webRFIDKeypadBuffer);
+    }
     #if (DEV_WIEGAND_TEST_MODE)>0
     AddLog(LOG_LEVEL_INFO, PSTR("WIE: Tag %llu, Bits %u"), rfid, bitCount);
     #endif  // DEV_WIEGAND_TEST_MODE>0
@@ -461,11 +471,11 @@ void Wiegand::Show(void) {
   uint32_t currBitTime=(WIEGAND_BIT_TIME_DEFAULT/10); //length of the bit impluse in µs
   uint32_t currInterBitTime = ((WIEGAND_BIT_TIME_DEFAULT/10)*9); //time to wait before next bit is send in µs
   uint32_t currTagGabTime = (WIEGAND_BIT_TIME_DEFAULT * WIEGAND_CODE_GAP_FACTOR) ; //time to wait before next tag is send in µs
-  
+
 
   void CmndTag(void){
     if (XdrvMailbox.data_len > 0) {
-      currTag= strtoul(XdrvMailbox.data, nullptr, 0);     
+      currTag= strtoul(XdrvMailbox.data, nullptr, 0);
     }
     ResponseCmndNumber(currTag);
   }
@@ -500,9 +510,9 @@ void Wiegand::Show(void) {
     ResponseCmndNumber(currInterBitTime);
   }
   void CmndTimeReset(void){
-    currBitTime=(WIEGAND_BIT_TIME_DEFAULT/10); 
-    currInterBitTime = ((WIEGAND_BIT_TIME_DEFAULT/10)*9); 
-    currTagGabTime = (WIEGAND_BIT_TIME_DEFAULT * WIEGAND_CODE_GAP_FACTOR) ; 
+    currBitTime=(WIEGAND_BIT_TIME_DEFAULT/10);
+    currInterBitTime = ((WIEGAND_BIT_TIME_DEFAULT/10)*9);
+    currTagGabTime = (WIEGAND_BIT_TIME_DEFAULT * WIEGAND_CODE_GAP_FACTOR) ;
     ResponseCmndChar_P(PSTR("All timings reset to default!"));
   }
   void CmndAllReset(void){
@@ -518,12 +528,12 @@ void Wiegand::Show(void) {
         if (pTagSize != 0) { // 2 parameters found tag:tagsize
           *pTagSize = 0;  //replace separator ':' by \0 string end
           currTag = setTag(parameter);  // is now ending before tagsize
-          pTagSize++; //set the starting char of tagsize correctly      
+          pTagSize++; //set the starting char of tagsize correctly
           currTagSize = setTagSize(pTagSize);
           ResponseCmndChar(pTagSize);
         }
         else {//only one parameter (tag) found
-          currTag = setTag(parameter);        
+          currTag = setTag(parameter);
         }
         ResponseCmndChar(parameter);
         sendTag(currTag, currTagSize);
@@ -587,7 +597,7 @@ void Wiegand::Show(void) {
     case 8: // high nibble is ~ low nibble
       Tag = Tag & 0x0F; // low nibble in case of more the one char input it will be cut here
       Tag = Tag | ((~Tag) << 4);
-      sendPlainTag ( Tag, TagSize); 
+      sendPlainTag ( Tag, TagSize);
       break;
   }
   //delay to simulate end of tag
