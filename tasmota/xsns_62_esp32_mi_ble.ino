@@ -1874,7 +1874,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].eventType.temp = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 4: temp updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 4: temp ignored > 60 (%f)"), _tempFloat);
+        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 4: temp ignored > 60 (%2_f)"), &_tempFloat);
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 4: U16:  %u Temp"), _beacon.temp );
     } break;
@@ -1887,7 +1887,7 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].eventType.hum = 1;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 6: hum updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 6: hum ignored > 101 (%f)"), _tempFloat);
+        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode 6: hum ignored > 101 (%2_f)"), &_tempFloat);
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode 6: U16:  %u Hum"), _beacon.hum);
     } break;
@@ -1941,14 +1941,14 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
         MIBLEsensors[_slot].temp = _tempFloat;
         if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: temp updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: temp ignored > 60 (%f)"), _tempFloat);
+        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: temp ignored > 60 (%2_f)"), &_tempFloat);
       }
       _tempFloat=(float)(pld->HT.hum)/10.0f;
       if(_tempFloat < 100){
           MIBLEsensors[_slot].hum = _tempFloat;
           if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum updated"));
       } else {
-        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum ignored > 100 (%f)"), _tempFloat);
+        if (BLE_ESP32::BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: Mode d: hum ignored > 100 (%2_f)"), &_tempFloat);
       }
       MIBLEsensors[_slot].eventType.tempHum  = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Mode d: U16:  %x Temp U16: %x Hum"), _beacon.HT.temp,  _beacon.HT.hum);
