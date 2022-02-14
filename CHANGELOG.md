@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - SSPM energy yesterday when zero
 - GPIO OptionE1 selection regression (#14821)
+- BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 (#14829)
 
 ## [Released]
 
