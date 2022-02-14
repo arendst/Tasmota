@@ -1,5 +1,5 @@
 /*
-  xdrv_85_BLE_EQ3_TRV.ino - EQ3 radiator valve sense and control via BLE_ESP32 support for Tasmota
+  xdrv_85_esp32_ble_eq3_trv.ino - EQ3 radiator valve sense and control via BLE_ESP32 support for Tasmota
 
   Copyright (C) 2020  Simon Hailes
 
@@ -403,7 +403,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
   BLE_ESP32::ReverseMAC(addrev);
 
   eq3_device_tag *eq3 = nullptr;
-  
+
   int free = -1;
   for (int i = 0; i < EQ3_NUM_DEVICESLOTS; i++){
     if (!memcmp(EQ3Devices[i].addr, addrev, 6)){
@@ -449,7 +449,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
     statlen = op->notifylen;
     stattime = UtcTime();
   }
-  
+
   if (eq3){
     status = eq3->lastStatus;
     statlen = eq3->lastStatusLen;
@@ -489,7 +489,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
       if (((stat & 3) == 1) && (status[5] > 9) && (status[3] > 0)) { ResponseAppend_P(PSTR("\"heat\"")); break; }
       // it's achieved temp (valve closed)
       if (((stat & 3) == 1) && (status[5] > 9)) { ResponseAppend_P(PSTR("\"idle\"")); break; }
-      ResponseAppend_P(PSTR("\"idle\"")); 
+      ResponseAppend_P(PSTR("\"idle\""));
       break;
     } while (0);
 
@@ -503,10 +503,10 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
   if ((statlen >= 10) && (status[0] == 2) && (status[1] == 1)){
     int mm = status[8] * 30;
     int hh = mm/60;
-    mm = mm % 60; 
-    ResponseAppend_P(PSTR(",\"holidayend\":\"%02d-%02d-%02d %02d:%02d\""), 
-      status[7], 
-      status[9], 
+    mm = mm % 60;
+    ResponseAppend_P(PSTR(",\"holidayend\":\"%02d-%02d-%02d %02d:%02d\""),
+      status[7],
+      status[9],
       status[6],
       hh, mm
       );
@@ -538,7 +538,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
 // byte (8,9): 2A 8A (21°C up to 23:00)
 // byte (10,11): 22 90 (17°C up to 24:00)
 // byte (12,13): 22 90 (unused)
-// byte (14,15): 22 90 (unused)      
+// byte (14,15): 22 90 (unused)
       ResponseAppend_P(PSTR(",\"profileday%d\":\""), op->dataNotify[1]);
       uint8_t *data = op->dataNotify + 2;
       for (int i = 0; i < 7; i++){
@@ -565,7 +565,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
   }
 
   ResponseAppend_P(PSTR("}"));
-  
+
   int type = STAT;
   if (cmdtype){
     type = STAT;
@@ -587,7 +587,7 @@ int EQ3ParseOp(BLE_ESP32::generic_sensor_t *op, bool success, int retries){
 int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   uint32_t context = (uint32_t) op->context;
   opInProgress = 0;
-  
+
   if (op->state <= GEN_STATE_FAILED){
     uint8_t addrev[7];
     const uint8_t *native = op->addr.getNative();
@@ -809,7 +809,7 @@ int TaskEQ3advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   int8_t RSSI = pStruct->RSSI;
   const uint8_t *addr = pStruct->addr;
 
-  
+
   const char *alias = BLE_ESP32::getAlias(addr);
   if (EQ3OnlyAliased){
     // ignore unless we have an alias.
@@ -925,7 +925,7 @@ void EQ3EverySecond(bool restart){
         intervalSecondsCounter--;
       } else {
         // queue a EQ3Status op against each known EQ3.
-        // mark it as a regular stat rather than a use cmd.    
+        // mark it as a regular stat rather than a use cmd.
         for(int i = nextEQ3Poll; i < EQ3_NUM_DEVICESLOTS; i++){
           if (!EQ3Devices[i].timeoutTime){
             nextEQ3Poll = i+1;
@@ -1072,7 +1072,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
           d[6] = RtcTime.second;
         } else {
           return -1;
-        }        
+        }
 
         // time_t now = 0;
         // struct tm timeinfo = { 0 };
@@ -1106,7 +1106,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       ftemp *= 2;
       uint8_t ctemp = (uint8_t) ftemp;
       d[0] = 0x41; d[1] = ctemp; dlen = 2;
-      break; 
+      break;
     }
 
     if (!strcmp(cmd, "offset")){
@@ -1120,7 +1120,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       int8_t ctemp = (int8_t) ftemp;
       ctemp += 7;
       d[0] = 0x13; d[1] = ctemp; dlen = 2;
-      break; 
+      break;
     }
 
     if (!strcmp(cmd, "setdaynight")){
@@ -1144,7 +1144,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       uint8_t ntemp = (uint8_t) ftemp;
 
       d[0] = 0x11; d[1] = dtemp; d[2] = ntemp; dlen = 3;
-      break; 
+      break;
     }
 
     if (!strcmp(cmd, "setwindowtempdur")){
@@ -1164,7 +1164,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       int dur = 0;
       sscanf(param2, "%d", &dur);
       d[0] = 0x14; d[1] = temp; d[2] = (dur/5); dlen = 3;
-      break; 
+      break;
     }
 
     if (!strcmp(cmd, "setholiday")){
@@ -1209,61 +1209,61 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       ftemp *= 2;
       uint8_t temp = (uint8_t) ftemp + 128;
 
-      d[0] = 0x40; 
-      d[1] = temp; 
-      d[2] = dd; 
-      d[3] = yy; 
-      d[4] = tt; 
+      d[0] = 0x40;
+      d[1] = temp;
+      d[2] = dd;
+      d[3] = yy;
+      d[4] = tt;
       d[5] = mm;
       dlen = 6;
-      break; 
+      break;
     }
 
 
-    if (!strcmp(cmd, "boost"))    { 
+    if (!strcmp(cmd, "boost"))    {
       cmdtype = 9;
-      d[0] = 0x45; d[1] = 0x01; 
+      d[0] = 0x45; d[1] = 0x01;
       if (param && (!strcmp(param, "off") || param[0] == '0')){
         d[1] = 0x00;
       }
-      dlen = 2; break; 
+      dlen = 2; break;
     }
-    if (!strcmp(cmd, "unboost"))  { 
+    if (!strcmp(cmd, "unboost"))  {
       cmdtype = 10;
       d[0] = 0x45; d[1] = 0x00; dlen = 2; break; }
-    if (!strcmp(cmd, "lock"))     { cmdtype = 23; d[0] = 0x80; d[1] = 0x01; 
+    if (!strcmp(cmd, "lock"))     { cmdtype = 23; d[0] = 0x80; d[1] = 0x01;
       if (param && (!strcmp(param, "off") || param[0] == '0')){
         d[1] = 0x00;
       }
-      dlen = 2; break; 
+      dlen = 2; break;
     }
     if (!strcmp(cmd, "unlock"))   { cmdtype = 11; d[0] = 0x80; d[1] = 0x00; dlen = 2; break; }
     if (!strcmp(cmd, "auto"))     { cmdtype = 12; d[0] = 0x40; d[1] = 0x00; dlen = 2; break; }
     if (!strcmp(cmd, "manual"))   { cmdtype = 13; d[0] = 0x40; d[1] = 0x40; dlen = 2; break; }
     // this is basically 'cancel holiday' - mode auto does that.
     //if (!strcmp(cmd, "eco"))      { cmdtype = 14; d[0] = 0x40; d[1] = 0x80; dlen = 2; break; }
-    if (!strcmp(cmd, "on"))       { 
+    if (!strcmp(cmd, "on"))       {
       int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
       char tmp[] = "30";
       int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
       return res2;
     }
-    if (!strcmp(cmd, "off"))      { 
+    if (!strcmp(cmd, "off"))      {
       int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
       char tmp[] = "4.5";
       int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
       return res2;
     }
-    if (!strcmp(cmd, "valve"))     { cmdtype = 17; d[0] = 0x41; d[1] = 0x3c; 
+    if (!strcmp(cmd, "valve"))     { cmdtype = 17; d[0] = 0x41; d[1] = 0x3c;
       if (!param || param[0] == 0){
         return -1;
       }
       if ((!strcmp(param, "off") || param[0] == '0')){
         d[1] = 0x09;
       }
-      dlen = 2; break; 
+      dlen = 2; break;
     }
-    if (!strcmp(cmd, "mode"))     { cmdtype = 18; d[0] = 0x40; d[1] = 0xff;// invlaid 
+    if (!strcmp(cmd, "mode"))     { cmdtype = 18; d[0] = 0x40; d[1] = 0xff;// invlaid
 
       if (!param || param[0] == 0){
         return -1;
@@ -1274,13 +1274,13 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       if (!strcmp(param, "manual")){
         d[1] = 0x40;
       }
-      if (!strcmp(param, "on") || !strcmp(param, "heat")) { 
+      if (!strcmp(param, "on") || !strcmp(param, "heat")) {
         int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
         char tmp[] = "30";
         int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
         return res2;
       }
-      if (!strcmp(param, "off") || !strcmp(param, "cool")) { 
+      if (!strcmp(param, "off") || !strcmp(param, "cool")) {
         int res = EQ3Send(addr, "manual", nullptr, nullptr, useAlias);
         char tmp[] = "4.5";
         int res2 = EQ3Send(addr, "settemp", tmp, nullptr, useAlias);
@@ -1294,28 +1294,28 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       //if (!strcmp(param, "eco")){
       //  d[1] = 0x80;
       //}
-      dlen = 2; break; 
+      dlen = 2; break;
     }
     if (!strcmp(cmd, "day"))      { cmdtype = 19; d[0] = 0x43; dlen = 1; break; }
     if (!strcmp(cmd, "night"))    { cmdtype = 20; d[0] = 0x44; dlen = 1; break; }
 
-    if (!strcmp(cmd, "reqprofile"))     { cmdtype = 21; 
+    if (!strcmp(cmd, "reqprofile"))     { cmdtype = 21;
       if (!param || param[0] == 0){
         return -1;
       }
-      d[0] = 0x20; d[1] = atoi(param); dlen = 2; 
-      break; 
+      d[0] = 0x20; d[1] = atoi(param); dlen = 2;
+      break;
     }
 
-    if (!strcmp(cmd, "setprofile"))     { cmdtype = 22; 
+    if (!strcmp(cmd, "setprofile"))     { cmdtype = 22;
       if (!param || param[0] == 0){
         return -1;
       }
       if (!param2 || param2[0] == 0){
         return -1;
       }
-      d[0] = 0x10; d[1] = atoi(param); 
-      
+      d[0] = 0x10; d[1] = atoi(param);
+
       // default
       uint8_t temps[7] = {0x22,0x22,0x22,0x22,0x22,0x22,0x22};
       uint8_t times[7] = {0x90,0x90,0x90,0x90,0x90,0x90,0x90};
@@ -1343,9 +1343,9 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
         d[2+j*2] = temps[j];
         d[2+j*2+1] = times[j];
       }
-      
-      dlen = 2+14; 
-      break; 
+
+      dlen = 2+14;
+      break;
     }
 
     break;
@@ -1378,7 +1378,7 @@ int CmndTrvNext(int index, char *data){
   //simpletolower(data);
 
   switch(index){
-    case 0: 
+    case 0:
     case 1: {
 
       char *p = strtok(data, " ");
@@ -1447,7 +1447,7 @@ int CmndTrvNext(int index, char *data){
         AddLog(LOG_LEVEL_ERROR,PSTR("EQ3 queued"));
         return 1;
       }
-      
+
       if (res < 0) { // invalid in some way
         AddLog(LOG_LEVEL_ERROR,PSTR("EQ3 invalid"));
         return 3;
