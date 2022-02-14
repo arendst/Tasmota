@@ -31,6 +31,7 @@ bool be_hue_status(String* response, uint32_t device_id) {
   // If so, append json response, and return `true`
   // otherwise ignore and respond `false``
   bvm* vm = berry.vm;
+  if (nullptr == vm) { return false; }
   if (be_getglobal(vm, "hue_bridge")) {
     if (be_getmember(vm, -1, "full_status")) {
       // AddLog(LOG_LEVEL_DEBUG_MORE, ">be_hue_status found");
@@ -38,7 +39,7 @@ bool be_hue_status(String* response, uint32_t device_id) {
       be_pushint(vm, device_id);
       int32_t ret = be_pcall(vm, 2);   // 2 params: self, id
       if (ret != 0) {
-        be_error_pop_all(berry.vm);             // clear Berry stack
+        be_error_pop_all(vm);             // clear Berry stack
       }
       be_pop(vm, 2);
       if (be_isstring(vm, -1)) {
@@ -60,6 +61,7 @@ bool be_hue_status(String* response, uint32_t device_id) {
 void be_hue_discovery(String* response, bool* appending);
 void be_hue_discovery(String* response, bool* appending) {
   bvm* vm = berry.vm;
+  if (nullptr == vm) { return; }
   if (be_getglobal(vm, "hue_bridge")) {
     // AddLog(LOG_LEVEL_DEBUG_MORE, ">be_hue_discovery hue_bridge found");
     if (be_getmember(vm, -1, "discover")) {
@@ -67,7 +69,7 @@ void be_hue_discovery(String* response, bool* appending) {
       be_pushvalue(vm, -2);
       int32_t ret = be_pcall(vm, 1);   // 2 params: self
       if (ret != 0) {
-        be_error_pop_all(berry.vm);             // clear Berry stack
+        be_error_pop_all(vm);             // clear Berry stack
       }
       be_pop(vm, 1);
       if (be_isstring(vm, -1)) {
@@ -87,6 +89,7 @@ void be_hue_discovery(String* response, bool* appending) {
 void be_hue_groups(String* response);
 void be_hue_groups(String* response) {
   bvm* vm = berry.vm;
+  if (nullptr == vm) { return; }
   if (be_getglobal(vm, "hue_bridge")) {
     // AddLog(LOG_LEVEL_DEBUG_MORE, ">be_hue_discovery hue_bridge found");
     if (be_getmember(vm, -1, "groups")) {
@@ -94,7 +97,7 @@ void be_hue_groups(String* response) {
       be_pushvalue(vm, -2);
       int32_t ret = be_pcall(vm, 1);   // 2 params: self
       if (ret != 0) {
-        be_error_pop_all(berry.vm);             // clear Berry stack
+        be_error_pop_all(vm);             // clear Berry stack
       }
       be_pop(vm, 1);
       if (be_isstring(vm, -1)) {
@@ -114,6 +117,7 @@ bool be_hue_command(uint8_t device, uint32_t device_id, String* response) {
   // If so, append json response, and return `true`
   // otherwise ignore and respond `false``
   bvm* vm = berry.vm;
+  if (nullptr == vm) { return false; }
   if (be_getglobal(vm, "hue_bridge")) {
     if (be_getmember(vm, -1, "cmd")) {
       be_pushvalue(vm, -2);
@@ -125,7 +129,7 @@ bool be_hue_command(uint8_t device, uint32_t device_id, String* response) {
       // be_pushint(vm, device);
       int32_t ret = be_pcall(vm, 3);   // 2 params: self, id, args
       if (ret != 0) {
-        be_error_pop_all(berry.vm);             // clear Berry stack
+        be_error_pop_all(vm);             // clear Berry stack
       }
       be_pop(vm, 3);
       if (be_isstring(vm, -1)) {

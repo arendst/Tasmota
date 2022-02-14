@@ -446,7 +446,9 @@ void setup(void) {
   RotaryInit();
 #endif  // ROTARY_V1
 #ifdef USE_BERRY
-  BerryInit();
+  if (!TasmotaGlobal.no_autoexec) {
+    BerryInit();
+  }
 #endif // USE_BERRY
 
   XdrvCall(FUNC_PRE_INIT);
