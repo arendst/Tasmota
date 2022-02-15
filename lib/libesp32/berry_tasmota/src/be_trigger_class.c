@@ -1,18 +1,18 @@
 /********************************************************************
  * Tasmota lib
  * 
- * class Timer
+ * class Trigger
  *******************************************************************/
 #include "be_constobj.h"
 
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(Timer_tostring,   /* name */
+be_local_closure(Trigger_tostring,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
@@ -22,7 +22,7 @@ be_local_closure(Timer_tostring,   /* name */
     /* K0   */  be_nested_str(string),
     /* K1   */  be_nested_str(format),
     /* K2   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X25s_X2C_X20_X25s_X2C_X20_X25s_X29),
-    /* K3   */  be_nested_str(due),
+    /* K3   */  be_nested_str(trig),
     /* K4   */  be_nested_str(f),
     /* K5   */  be_nested_str(id),
     }),
@@ -57,18 +57,18 @@ be_local_closure(Timer_tostring,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Timer_init,   /* name */
+be_local_closure(Trigger_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     4,                          /* argc */
-    0,                          /* varg */
+    2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(due),
+    /* K0   */  be_nested_str(trig),
     /* K1   */  be_nested_str(f),
     /* K2   */  be_nested_str(id),
     }),
@@ -86,25 +86,25 @@ be_local_closure(Timer_init,   /* name */
 
 
 /********************************************************************
-** Solidified class: Timer
+** Solidified class: Trigger
 ********************************************************************/
-be_local_class(Timer,
+be_local_class(Trigger,
     3,
     NULL,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(tostring, 4), be_const_closure(Timer_tostring_closure) },
+        { be_const_key(tostring, 3), be_const_closure(Trigger_tostring_closure) },
         { be_const_key(id, 2), be_const_var(2) },
         { be_const_key(f, -1), be_const_var(1) },
-        { be_const_key(due, -1), be_const_var(0) },
-        { be_const_key(init, -1), be_const_closure(Timer_init_closure) },
+        { be_const_key(init, -1), be_const_closure(Trigger_init_closure) },
+        { be_const_key(trig, -1), be_const_var(0) },
     })),
-    be_str_literal("Timer")
+    be_str_literal("Trigger")
 );
 /*******************************************************************/
 
-void be_load_Timer_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Timer);
-    be_setglobal(vm, "Timer");
+void be_load_Trigger_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_Trigger);
+    be_setglobal(vm, "Trigger");
     be_pop(vm, 1);
 }
