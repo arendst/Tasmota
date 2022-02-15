@@ -88,7 +88,7 @@ bool Bl6523ReadData(void)
 
   if (!Bl6523RxSerial->available())
   {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 No Rx Data available " ));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:No Rx Data available" ));
     return false;
   }
 
@@ -99,7 +99,7 @@ bool Bl6523ReadData(void)
 
   if (Bl6523RxSerial->available() < BL6523_RX_DATASET_SIZE)
   {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 Rx less than expected " ));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:Rx less than expected" ));
     return false;
   }
 
@@ -134,7 +134,7 @@ bool Bl6523ReadData(void)
   crc = ~crc; // Invert the byte
   if (crc != tx_buffer[BL6523_TX_DATASET_SIZE - 1])
   {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL6523 : " D_CHECKSUM_FAILURE));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL6:" D_CHECKSUM_FAILURE));
     Bl6523TxSerial->flush(); 
     Bl6523RxSerial->flush(); 
     return false;
@@ -239,11 +239,11 @@ void Bl6523Init(void)
       }
       Bl6523.type = 1;
       Energy.phase_count = 1;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 Init Success " ));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:Init Success" ));
     }
    else
      {
-       AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 Init Failure! " ));
+       AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:Init Failure!" ));
        TasmotaGlobal.energy_driver = ENERGY_NONE;
      }
   
@@ -252,12 +252,12 @@ void Bl6523Init(void)
 void Bl6523DrvInit(void)
 {
   if (PinUsed(GPIO_BL6523_RX) && PinUsed(GPIO_BL6523_TX)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 PreInit Success " ));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:PreInit Success" ));
     TasmotaGlobal.energy_driver = XNRG_22;
   }
   else
   {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 PreInit Failure! " ));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:PreInit Failure!" ));
        TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
   
