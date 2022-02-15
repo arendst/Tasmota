@@ -1,17 +1,17 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
-class Timer
-  var due, f, id
-  def init(due, f, id)
-    self.due = due
+class Trigger
+  var trig, f, id
+  def init(trig, f, id)
+    self.trig = trig
     self.f = f
     self.id = id
   end
   def tostring()
     import string
     return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
-              str(self.due), str(self.f), str(self.id))
+              str(self.trig), str(self.f), str(self.id))
   end
 end
 
@@ -56,20 +56,6 @@ class Tasmota
     if introspect.ismethod(f) == true
       raise "type_error", "BRY: method not allowed, use a closure like '/ args -> obj.func(args)'"
     end
-  end
-
-  # create a specific sub-class for rules: pattern(string) -> closure
-  # Classs KV has two members k and v
-  def kv(k, v)
-    class KV
-      var k, v
-      def init(k,v)
-        self.k = k
-        self.v = v
-      end
-    end
-
-    return KV(k, v)
   end
 
   # add `chars_in_string(s:string,c:string) -> int``
@@ -130,23 +116,23 @@ class Tasmota
   end
 
   # Rules
-  def add_rule(pat,f)
+  def add_rule(pat, f, id)
     self.check_not_method(f)
     if !self._rules
       self._rules=[]
     end
     if type(f) == 'function'
-      self._rules.push(self.kv(pat, f))
+      self._rules.push(Trigger(pat, f, id))
     else
       raise 'value_error', 'the second argument is not a function'
     end
   end
 
-  def remove_rule(pat)
+  def remove_rule(pat, id)
     if self._rules
       var i = 0
       while i < size(self._rules)
-        if self._rules[i].k == pat
+        if self._rules[i].trig == pat && self._rules[i].id == id
           self._rules.remove(i)  #- don't increment i since we removed the object -#
         else
           i += 1
@@ -214,8 +200,8 @@ class Tasmota
       if self._rules
         var i = 0
         while i < size(self._rules)
-          var kv = self._rules[i]
-          ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut if ret is already true -#
+          var tr = self._rules[i]
+          ret = self.try_rule(ev,tr.trig,tr.f) || ret  #- call should be first to avoid evaluation shortcut if ret is already true -#
           i += 1
         end
       end
@@ -239,8 +225,8 @@ class Tasmota
 
       var i = 0
       while i < size(self._rules)
-        var kv = self._rules[i]
-        ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut -#
+        var tr = self._rules[i]
+        ret = self.try_rule(ev,tr.trig,tr.f) || ret  #- call should be first to avoid evaluation shortcut -#
         i += 1
       end
       return ret
@@ -251,7 +237,7 @@ class Tasmota
   def set_timer(delay,f,id)
     self.check_not_method(f)
     if !self._timers self._timers=[] end
-    self._timers.push(Timer(self.millis(delay),f,id))
+    self._timers.push(Trigger(self.millis(delay),f,id))
   end
 
   # run every 50ms tick
@@ -259,7 +245,7 @@ class Tasmota
     if self._timers
       var i=0
       while i<self._timers.size()
-        if self.time_reached(self._timers[i].due)
+        if self.time_reached(self._timers[i].trig)
           var f=self._timers[i].f
           self._timers.remove(i)
           f()

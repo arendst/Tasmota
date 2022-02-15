@@ -159,7 +159,7 @@ extern void be_load_wirelib(bvm *vm);
 extern void be_load_onewirelib(bvm *vm);
 extern void be_load_serial_lib(bvm *vm);
 extern void be_load_Driver_class(bvm *vm);
-extern void be_load_Timer_class(bvm *vm);
+extern void be_load_Trigger_class(bvm *vm);
 extern void be_load_I2C_Driver_class(bvm *vm);
 extern void be_load_AXP192_class(bvm *vm);
 extern void be_load_md5_lib(bvm *vm);
@@ -200,7 +200,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
     /* be_load_xxxlib(vm); */
 #endif
-    be_load_Timer_class(vm);
+    be_load_Trigger_class(vm);
     be_load_tasmota_ntvlib(vm);
     be_load_tasmota_log_reader_class(vm);
     be_load_Driver_class(vm);
