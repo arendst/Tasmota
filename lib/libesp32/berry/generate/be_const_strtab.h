@@ -526,6 +526,7 @@ extern const bcstring be_const_str_length_X20in_X20bits_X20must_X20be_X20between
 extern const bcstring be_const_str_light;
 extern const bcstring be_const_str_light_X20must_X20be_X20of_X20class_X20_X27light_state_X27;
 extern const bcstring be_const_str_light_state;
+extern const bcstring be_const_str_light_to_id;
 extern const bcstring be_const_str_lights;
 extern const bcstring be_const_str_line_dsc;
 extern const bcstring be_const_str_list;

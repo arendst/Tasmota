@@ -518,6 +518,7 @@ be_define_const_str(length_X20in_X20bits_X20must_X20be_X20between_X200_X20and_X2
 be_define_const_str(light, "light", 3801947695u, 0, 5, NULL);
 be_define_const_str(light_X20must_X20be_X20of_X20class_X20_X27light_state_X27, "light must be of class 'light_state'", 3669350396u, 0, 36, NULL);
 be_define_const_str(light_state, "light_state", 905783845u, 0, 11, NULL);
+be_define_const_str(light_to_id, "light_to_id", 1117015647u, 0, 11, &be_const_str_signal_arcs);
 be_define_const_str(lights, "lights", 425118420u, 0, 6, &be_const_str_success);
 be_define_const_str(line_dsc, "line_dsc", 4094490978u, 0, 8, &be_const_str_web_add_button);
 be_define_const_str(list, "list", 217798785u, 0, 4, &be_const_str_url_encode);
@@ -890,7 +891,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_SERIAL_6N2,
     (const bstring *)&be_const_str__drivers,
     (const bstring *)&be_const_str__X28_X29,
-    (const bstring *)&be_const_str_signal_arcs,
+    (const bstring *)&be_const_str_light_to_id,
     (const bstring *)&be_const_str_AudioGeneratorMP3,
     (const bstring *)&be_const_str_BRY_X3A_X20ERROR_X2C_X20bad_X20json_X3A_X20,
     (const bstring *)&be_const_str_clear_to,
@@ -1287,6 +1288,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 420,
-    .count = 863,
+    .count = 864,
     .table = m_string_table
 };
