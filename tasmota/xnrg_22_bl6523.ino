@@ -36,7 +36,8 @@
  *    BL6523 GND -> ESP GND
  * 
  * To build add the below to user_config_override.h
- * #define USE_BL6523       // Add support for Chinese BL6523 based Watt hour meter (+1k code)¸
+ * #define USE_ENERGY_SENSOR  // Enable Energy sensor framework
+ * #define USE_BL6523         // Add support for Chinese BL6523 based Watt hour meter (+1k code)¸
  * 
  * After Installation use the below template sample:
  * {"NAME":"BL6523 Smart Meter","GPIO":[0,0,0,0,7488,7520,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
@@ -57,6 +58,8 @@
 #define BL6523_REG_POWF  0x08
 #define BL6523_REG_WATTHR 0x0C
 
+#define SINGLE_PHASE 0
+
 /* No idea how to derive human readable units from the byte stream.
 For now  dividing the 24-bit values with below constants seems to yield something sane
 that matches whatever displayed in the screen of my 240v model. Probably it would be possible
@@ -72,13 +75,6 @@ TasmotaSerial *Bl6523TxSerial;
 
 struct BL6523
 {
-  uint32_t amps = 0;
-  uint32_t volts = 0;
-  uint32_t freq = 0;
-  uint32_t watts = 0;
-  uint32_t powf = 0;
-  uint32_t watthr = 0;
-
   uint8_t type = 1;
   uint8_t valid = 0;
   uint8_t got_data_stone = 0;
@@ -87,6 +83,8 @@ struct BL6523
 
 bool Bl6523ReadData(void)
 {
+   uint32_t powf_word = 0, powf_buf = 0;
+   float powf = 0.0f;
 
   if (!Bl6523RxSerial->available())
   {
@@ -163,35 +161,39 @@ RX: 35 0C TX: 00 00 00 F3 (WATT_HR)
 
 switch(rx_buffer[1]) {
   case BL6523_REG_AMPS :
-    Bl6523.amps =  ((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
-    Bl6523.got_data_stone |= 1<<0;
+    Energy.current[SINGLE_PHASE] =  (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_AMPS;     // 1.260 A
     break;
   case BL6523_REG_VOLTS :
-    Bl6523.volts = ((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
-    Bl6523.got_data_stone |= 1<<1;
+    Energy.voltage[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_VOLTS;     // 230.2 V
     break;
   case BL6523_REG_FREQ :
-    Bl6523.freq = ((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
-    Bl6523.got_data_stone |= 1<<2;
+    Energy.frequency[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_FREQ;    // 50.0 Hz
     break;        
   case BL6523_REG_WATTS :
-    Bl6523.watts = ((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
-    Bl6523.got_data_stone |= 1<<3;
+    Energy.active_power[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_WATTS; // -196.3 W
     break;
   case BL6523_REG_POWF :
-    Bl6523.powf = ((tx_buffer[2]  << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
-    Bl6523.got_data_stone |= 1<<4;
+   /* Power factor =(sign bit)*((PF[22]×2^－1）＋（PF[21]×2^－2）＋。。。)
+       Eg., reg value  0x7FFFFF(HEX) -> PF 1, 0x800000(HEX) -> -1, 0x400000(HEX) -> 0.5
+    */
+   powf = 0.0f;
+   powf_buf = ((tx_buffer[2]  << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
+   powf_word = (powf_buf >> 23) ? ~(powf_buf & 0x7fffff) : powf_buf & 0x7fffff; //Extract the 23 bits and invert if sign bit(24) is set
+   for (int i = 0; i < 23; i++){ // Accumulate powf from 23 bits
+    powf += ((powf_word >> (22-i)) * pow(2,(0-(i+1)))); 
+    powf_word = powf_word & (0x7fffff >> (1+i));
+   }
+   powf = (powf_buf >> 23) ? (0.0f - (powf)) : powf; // Negate if sign bit(24) is set
+   Energy.power_factor[SINGLE_PHASE] = powf;
     break;
   case BL6523_REG_WATTHR :
-    Bl6523.watthr = ((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]);
-    Bl6523.got_data_stone |= 1<<5;
+    Energy.import_active[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_WATTHR; // 6.216 kWh => used in EnergyUpdateTotal()
     break;
   default :  
   break;            
 }
- 
-AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Amps: %d Volts: %d Freq: %d Watts: %d PowF: %d WattHr: %d"), Bl6523.amps, Bl6523.volts, Bl6523.freq, Bl6523.watts, Bl6523.powf, Bl6523.watthr);
-
+  Energy.data_valid[SINGLE_PHASE] = 0;
+  EnergyUpdateTotal();
   if (!Bl6523.discovery_triggered)
   {
     TasmotaGlobal.discovery_counter = 1; // force TasDiscovery()
@@ -221,9 +223,8 @@ void Bl6523Update(void)
 
 void Bl6523Init(void)
 {
-  Bl6523.type = 0;
-  if ((PinUsed(GPIO_BL6523_RX)) && (PinUsed(GPIO_BL6523_TX)))
-  {
+    
+    Bl6523.type = 0;
     Bl6523RxSerial = new TasmotaSerial(Pin(GPIO_BL6523_RX), -1, 1);
     Bl6523TxSerial = new TasmotaSerial(Pin(GPIO_BL6523_TX), -1, 1);
     if ((Bl6523RxSerial->begin(BL6523_BAUD)) && (Bl6523TxSerial->begin(BL6523_BAUD)))
@@ -237,86 +238,29 @@ void Bl6523Init(void)
         ClaimSerial();
       }
       Bl6523.type = 1;
+      Energy.phase_count = 1;
       AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 Init Success " ));
     }
-  }
+   else
+     {
+       AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 Init Failure! " ));
+       TasmotaGlobal.energy_driver = ENERGY_NONE;
+     }
+  
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_BL6523_SNM[] PROGMEM = "{s}BL6523 Smart Energy Monitor{m}{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_BL6523_SNS[] PROGMEM = "{s}       %s  {m}%s {e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
-void Bl6523Show(bool json)
+void Bl6523DrvInit(void)
 {
-  uint32_t powf_word = 0;
-  float amps = 0.0f, volts = 0.0f, freq = 0.0f, watts = 0.0f, powf = 0.0f, watthr = 0.0f;
-  char amps_str[12], volts_str[12], freq_str[12];
-  char watts_str[12], powf_str[12], watthr_str[12];
-
-  if (Bl6523.valid)
-  {
-
-   amps = (float)Bl6523.amps / BL6523_DIV_AMPS;
-   volts =  (float)Bl6523.volts / BL6523_DIV_VOLTS;
-   freq = (float)Bl6523.freq / BL6523_DIV_FREQ;
-   watts = (float)Bl6523.watts / BL6523_DIV_WATTS;
-
-    /* Power factor =(sign bit)*((PF[22]×2^－1）＋（PF[21]×2^－2）＋。。。)
-       Eg., reg value  0x7FFFFF(HEX) -> PF 1, 0x800000(HEX) -> -1, 0x400000(HEX) -> 0.5
-    */
-   powf = 0.0f;
-   powf_word = (Bl6523.powf >> 23) ? ~(Bl6523.powf & 0x7fffff) : Bl6523.powf & 0x7fffff; //Extract the 23 bits and invert if sign bit(24) is set
-   for (int i = 0; i < 23; i++){ // Accumulate powf from 23 bits
-    powf += ((powf_word >> (22-i)) * pow(2,(0-(i+1)))); 
-    powf_word = powf_word & (0x7fffff >> (1+i));
-   }
-   powf = (Bl6523.powf >> 23) ? (0.0f - (powf)) : powf; // Negate if sign bit(24) is set
-   
-   watthr = (float)Bl6523.watthr / BL6523_DIV_WATTHR;
-
-   ext_snprintf_P(amps_str, sizeof(amps_str), PSTR("%3_f"), &amps);
-   ext_snprintf_P(volts_str, sizeof(volts_str), PSTR("%2_f"), &volts);
-   ext_snprintf_P(freq_str, sizeof(freq_str), PSTR("%2_f"), &freq);
-   ext_snprintf_P(watts_str, sizeof(watts_str), PSTR("%3_f"), &watts);
-   ext_snprintf_P(powf_str, sizeof(powf_str), PSTR("%2_f"), &powf);
-   ext_snprintf_P(watthr_str, sizeof(watthr_str), PSTR("%3_f"), &watthr);
-
-    if (json)
-    {
-      ResponseAppend_P(PSTR(",\"BL6523\":{"));
-      ResponseAppend_P(PSTR("\"Amps\":%s,"), amps_str);
-      ResponseAppend_P(PSTR("\"Volts\":%s,"), volts_str);
-      ResponseAppend_P(PSTR("\"Freq\":%s,"), freq_str);
-      ResponseAppend_P(PSTR("\"Watts\":%s,"), watts_str);
-      ResponseAppend_P(PSTR("\"Powf\":%s,"), powf_str);
-      ResponseAppend_P(PSTR("\"WattHr\":%s"), watthr_str);
-      ResponseJsonEnd();
-#ifdef USE_DOMOTICZ
-      if (0 == TasmotaGlobal.tele_period)
-      {
-        DomoticzSensor(DZ_CURRENT, amps_str);    // Amps
-        DomoticzSensor(DZ_VOLTAGE, volts_str); // Voltage
-        DomoticzSensor(DZ_COUNT, freq_str);  // Frequency
-        DomoticzSensor(DZ_ILLUMINANCE, watts_str);    // Watts
-        DomoticzSensor(DZ_P1_SMART_METER, powf_str); // Power Factor
-        DomoticzSensor(DZ_POWER_ENERGY, watthr_str);  // WattHour
-      }
-#endif // USE_DOMOTICZ
-#ifdef USE_WEBSERVER
-    }
-    else
-    {
-      WSContentSend_PD(HTTP_BL6523_SNM);
-      WSContentSend_PD(HTTP_BL6523_SNS, PSTR("Amps:"), amps_str);
-      WSContentSend_PD(HTTP_BL6523_SNS, PSTR("Volts:"), volts_str);
-      WSContentSend_PD(HTTP_BL6523_SNS, PSTR("Freq:"), freq_str);
-      WSContentSend_PD(HTTP_BL6523_SNS, PSTR("Watts:"), watts_str);
-      WSContentSend_PD(HTTP_BL6523_SNS, PSTR("PowF:"), powf_str);
-      WSContentSend_PD(HTTP_BL6523_SNS, PSTR("WattHr:"), watthr_str);
-#endif // USE_WEBSERVER
-    }
+  if (PinUsed(GPIO_BL6523_RX) && PinUsed(GPIO_BL6523_TX)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 PreInit Success " ));
+    TasmotaGlobal.energy_driver = XNRG_22;
   }
+  else
+  {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("BL6523 PreInit Failure! " ));
+       TasmotaGlobal.energy_driver = ENERGY_NONE;
+  }
+  
 }
 
 /*********************************************************************************************\
@@ -327,27 +271,19 @@ bool Xnrg22(uint8_t function)
 {
   bool result = false;
   
-if ( FUNC_INIT == function )
-{
-   Bl6523Init();
-}
-else if ( Bl6523.type ) 
-   {
     switch (function)
     {
     case FUNC_EVERY_250_MSECOND:
       Bl6523Update();
       break;
-    case FUNC_JSON_APPEND:
-      Bl6523Show(1);
+    case FUNC_INIT:
+      Bl6523Init();
       break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Bl6523Show(0);
+    case FUNC_PRE_INIT:
+      Bl6523DrvInit();
       break;
-#endif // USE_WEBSERVER
     }
-  }
+  
   return result;
 }
 
