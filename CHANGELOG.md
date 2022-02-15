@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - GPIO OptionE1 selection regression (#14821)
 - BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 (#14829)
 - Orno WE517 power meter phase 2 current reactive (#14841)
+- Wiegand 34-bit rfid reading and presentation (#14834)
 
 ## [Released]
 

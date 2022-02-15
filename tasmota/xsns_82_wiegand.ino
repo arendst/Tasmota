@@ -37,7 +37,11 @@
  * Rule:
  * on wiegand#uid=4302741608 do publish cmnd/ailight/power 2 endon
  *
- * contains:
+ * 20220215
+ *  - fix 34-bit size parity chk
+ *  - fix 64-bit representation after removal of %llu support (Tasmota does not support 64-bit decimal output specifier (%llu) saving 60k code)
+ * ---
+ * 20201101
  *  - fix for #11047 Wiegand 26/34 missed some key press if they are press at normal speed
  *  - removed testing code for tests without attached hardware
  *  - added SetOption123 0-Wiegand UID decimal (default) 1-Wiegand UID hexadecimal
@@ -264,8 +268,8 @@ uint64_t Wiegand::CheckAndConvertRfid(uint64_t rfidIn, uint16_t bitCount) {
     break;
 
     case 34:
-      evenParityBit = (rfidIn & 0x400000000) ? 0x80 : 0;
-      rfidIn = (rfidIn & 0x3FFFFFFFE) >>1;
+      evenParityBit = (rfidIn & 0x200000000) ? 0x80 : 0;
+      rfidIn = (rfidIn & 0x1FFFFFFFE) >>1;
     break;
 
     default:
@@ -274,7 +278,7 @@ uint64_t Wiegand::CheckAndConvertRfid(uint64_t rfidIn, uint16_t bitCount) {
   calcParity = CalculateParities(rfidIn, bitCount);    // Check result on http://www.ccdesignworks.com/wiegand_calc.htm with raw tag as input
   if (calcParity != (evenParityBit | oddParityBit)) {  // Parity bit is wrong
     rfidIn=0;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("WIE: %llu parity error"), rfidIn);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WIE: %_X parity error"), &rfidIn);
   }
 #if (DEV_WIEGAND_TEST_MODE)>0
   AddLog(LOG_LEVEL_INFO, PSTR("WIE: even (left) parity: %u "), (evenParityBit>>7));
@@ -412,7 +416,7 @@ void Wiegand::ScanForTag() {
             if (GetOption(WIEGAND_OPTION_HEX) == 0) {
               ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":%lu,\"" D_JSON_SIZE "\":%d}}"), (uint32_t)rfid, tagSize);
             } else {
-              ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%2_X" WIEGAND_OPTION_HEX_POSTFIX "\",\"" D_JSON_SIZE "\":\"%X" WIEGAND_OPTION_HEX_POSTFIX "\"}}"), &rfid, tagSize);
+              ResponseTime_P(PSTR(",\"Wiegand\":{\"UID\":\"%1_X" WIEGAND_OPTION_HEX_POSTFIX "\",\"" D_JSON_SIZE "\":%d}}"), &rfid, tagSize);
             }
             MqttPublishTeleSensor();
           }
@@ -443,7 +447,7 @@ void Wiegand::Show(void) {
     if (GetOption(WIEGAND_OPTION_HEX) == 0) {
       WSContentSend_P(PSTR("{s}Wiegand UID{m}%lu{e}"), (tagSize>0) ? (uint32_t)rfid : (uint32_t)webRFIDKeypadBuffer);
     } else {
-      WSContentSend_P(PSTR("{s}Wiegand UID{m}%2_X" WIEGAND_OPTION_HEX_POSTFIX "{e}"), (tagSize>0) ? &rfid : &webRFIDKeypadBuffer);
+      WSContentSend_P(PSTR("{s}Wiegand UID{m}%1_X" WIEGAND_OPTION_HEX_POSTFIX "{e}"), (tagSize>0) ? &rfid : &webRFIDKeypadBuffer);
     }
     #if (DEV_WIEGAND_TEST_MODE)>0
     AddLog(LOG_LEVEL_INFO, PSTR("WIE: Tag %llu, Bits %u"), rfid, bitCount);
