@@ -904,7 +904,11 @@ newframe: /* a new call frame */
             if (var_isinstance(a) && var_isstr(b)) {
                 binstance *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                if (!be_instance_setmember(vm, obj, attr, c)) {
+                bvalue result = *c;
+                if (var_isfunction(&result)) {
+                    var_markstatic(&result);
+                }
+                if (!be_instance_setmember(vm, obj, attr, &result)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to attribute '%s'",
