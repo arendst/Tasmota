@@ -177,11 +177,10 @@ extern "C" {
       if (UsePSRAM()) {
         be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
-      } else {
-        // IRAM information
-        int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
-        be_map_insert_int(vm, "iram_free", iram_free / 1024);
       }
+      // IRAM information
+      int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
+      be_map_insert_int(vm, "iram_free", iram_free / 1024);
       be_pop(vm, 1);
       be_return(vm);
     }
