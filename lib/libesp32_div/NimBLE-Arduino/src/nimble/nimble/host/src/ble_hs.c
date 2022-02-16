@@ -836,4 +836,8 @@ ble_hs_deinit(void)
     ble_gap_deinit();
 
     ble_hs_hci_deinit();
+
+    ble_hs_flow_stop();
+
+    ble_hs_stop_deinit();
 }
