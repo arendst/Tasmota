@@ -41,11 +41,11 @@ IPAddress    ip_filter;
 TasmotaSerial *TCPSerial = nullptr;
 
 const char kTCPCommands[] PROGMEM = "TCP" "|"    // prefix
-  "Start" "|" "Baudrate" "|" "Config"
+  "Start" "|" "Baudrate" "|" "Config" "|" "Connect"
   ;
 
 void (* const TCPCommand[])(void) PROGMEM = {
-  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig
+  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig, &CmndTCPConnect
   };
 
 //
@@ -214,6 +214,45 @@ void CmndTCPConfig(void) {
     }
   }
   ResponseCmndChar_P(GetSerialConfig(0x7F & Settings->tcp_config).c_str());
+}
+
+//
+// Command `Connect`
+// Params: port,<IPv4>
+//
+void CmndTCPConnect(void) {
+  int32_t tcp_port = XdrvMailbox.payload;
+  
+  if (ArgC() == 2) {
+    char sub_string[XdrvMailbox.data_len];
+    WiFiClient new_client;
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Connecting to %s on port %d"), ArgV(sub_string, 2),tcp_port);  
+    if (new_client.connect(ArgV(sub_string, 2),tcp_port)) {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "connected!"));  
+    } else {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "error connecting!"));  
+    }
+    
+    // find an empty slot
+    uint32_t i;
+    for (i=0; i<nitems(client_tcp); i++) {
+      WiFiClient &client = client_tcp[i];
+      if (!client) {
+        client = new_client;
+        break;
+      }
+    }
+    if (i >= nitems(client_tcp)) {
+      i = client_next++ % nitems(client_tcp);
+      WiFiClient &client = client_tcp[i];
+      client.stop();
+      client = new_client;
+    }
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Usage: port,ip_address"));  
+  }
+  
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\
