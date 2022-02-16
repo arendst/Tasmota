@@ -273,3 +273,11 @@ ble_hs_flow_startup(void)
 
     return 0;
 }
+
+void
+ble_hs_flow_stop(void)
+{
+#if MYNEWT_VAL(BLE_HS_FLOW_CTRL)
+    ble_npl_callout_deinit(&ble_hs_flow_timer);
+#endif
+}

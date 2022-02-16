@@ -132,6 +132,7 @@ void ble_hs_timer_resched(void);
 void ble_hs_notifications_sched(void);
 struct ble_npl_eventq *ble_hs_evq_get(void);
 void ble_hs_stop_init(void);
+void ble_hs_stop_deinit(void);
 
 struct ble_mqueue {
     STAILQ_HEAD(, os_mbuf_pkthdr) head;

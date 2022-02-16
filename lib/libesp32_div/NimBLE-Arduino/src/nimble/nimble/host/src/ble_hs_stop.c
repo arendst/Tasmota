@@ -281,3 +281,9 @@ ble_hs_stop_init(void)
                          ble_hs_stop_terminate_timeout_cb, NULL);
 #endif
 }
+
+void
+ble_hs_stop_deinit(void)
+{
+    ble_npl_callout_deinit(&ble_hs_stop_terminate_tmo);
+}

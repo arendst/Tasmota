@@ -1374,4 +1374,12 @@
 #define MYNEWT_VAL_NEWT_FEATURE_LOGCFG (1)
 #endif
 
+#ifndef MYNEWT_VAL_BLE_USE_ESP_TIMER
+#ifdef CONFIG_BT_NIMBLE_USE_ESP_TIMER
+#define MYNEWT_VAL_BLE_USE_ESP_TIMER (1)
+#else
+#define MYNEWT_VAL_BLE_USE_ESP_TIMER (0)
+#endif
+#endif
+
 #endif
