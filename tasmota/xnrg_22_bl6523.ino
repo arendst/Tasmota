@@ -64,11 +64,17 @@
 For now  dividing the 24-bit values with below constants seems to yield something sane
 that matches whatever displayed in the screen of my 240v model. Probably it would be possible
 to extract these values from the write register commands (0xCA).*/ 
-#define BL6523_DIV_AMPS 297899.4f
-#define BL6523_DIV_VOLTS 13304.0f
-#define BL6523_DIV_FREQ  3907.0f
-#define BL6523_DIV_WATTS 707.0f
-#define BL6523_DIV_WATTHR 674.0f
+//#define BL6523_DIV_AMPS 297899.4f
+//#define BL6523_DIV_VOLTS 13304.0f
+//#define BL6523_DIV_FREQ  3907.0f
+//#define BL6523_DIV_WATTS 707.0f
+//#define BL6523_DIV_WATTHR 674.0f
+
+#define BL6523_IREF 297899
+#define BL6523_UREF 13304
+#define BL6523_FREF 3907
+#define BL6523_PREF 707
+#define BL6523_PWHRREF_D 33 // Substract this from BL6523_PREF to get WattHr Div.
 
 TasmotaSerial *Bl6523RxSerial;
 TasmotaSerial *Bl6523TxSerial;
@@ -161,16 +167,16 @@ RX: 35 0C TX: 00 00 00 F3 (WATT_HR)
 
 switch(rx_buffer[1]) {
   case BL6523_REG_AMPS :
-    Energy.current[SINGLE_PHASE] =  (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_AMPS;     // 1.260 A
+    Energy.current[SINGLE_PHASE] =  (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_current_calibration;     // 1.260 A
     break;
   case BL6523_REG_VOLTS :
-    Energy.voltage[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_VOLTS;     // 230.2 V
+    Energy.voltage[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_voltage_calibration;     // 230.2 V
     break;
   case BL6523_REG_FREQ :
-    Energy.frequency[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_FREQ;    // 50.0 Hz
+    Energy.frequency[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_frequency_calibration;    // 50.0 Hz
     break;        
   case BL6523_REG_WATTS :
-    Energy.active_power[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_WATTS; // -196.3 W
+    Energy.active_power[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / Settings->energy_power_calibration; // -196.3 W
     break;
   case BL6523_REG_POWF :
    /* Power factor =(sign bit)*((PF[22]×2^－1）＋（PF[21]×2^－2）＋。。。)
@@ -187,7 +193,7 @@ switch(rx_buffer[1]) {
    Energy.power_factor[SINGLE_PHASE] = powf;
     break;
   case BL6523_REG_WATTHR :
-    Energy.import_active[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / BL6523_DIV_WATTHR; // 6.216 kWh => used in EnergyUpdateTotal()
+    Energy.import_active[SINGLE_PHASE] = (float)((tx_buffer[2] << 16) | (tx_buffer[1] << 8) | tx_buffer[0]) / ( Settings->energy_power_calibration - BL6523_PWHRREF_D ); // 6.216 kWh => used in EnergyUpdateTotal()
     break;
   default :  
   break;            
@@ -249,11 +255,73 @@ void Bl6523Init(void)
   
 }
 
+bool Bl6523Command(void) {
+  bool serviced = true;
+
+  int32_t value = (int32_t)(CharToFloat(XdrvMailbox.data) * 1000);  // 1.234 = 1234, -1.234 = -1234
+  uint32_t abs_value = abs(value) / 10;                             // 1.23 = 123,   -1.23 = 123
+
+  if ((CMND_POWERCAL == Energy.command_code) || (CMND_VOLTAGECAL == Energy.command_code) || (CMND_CURRENTCAL == Energy.command_code)) {
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == Energy.command_code) {
+    if (XdrvMailbox.data_len) {
+      if ((abs_value > 100) && (abs_value < 200000)) {    // Between 1.00 and 2000.00 W
+        Settings->energy_power_calibration = abs_value;
+      }
+    }
+  }
+  else if (CMND_VOLTAGESET == Energy.command_code) {
+    if (XdrvMailbox.data_len) {
+      if ((abs_value > 10000) && (abs_value < 26000)) {   // Between 100.00 and 260.00 V
+        Settings->energy_voltage_calibration = abs_value;
+      }
+    }
+  }
+  else if (CMND_CURRENTSET == Energy.command_code) {
+    if (XdrvMailbox.data_len) {
+      if ((abs_value > 1000) && (abs_value < 1000000)) {  // Between 10.00 mA and 10.00000 A
+        Settings->energy_current_calibration = abs_value;
+      }
+    }
+  }
+  else if (CMND_FREQUENCYSET == Energy.command_code) {
+    if (XdrvMailbox.data_len) {
+      if ((abs_value > 4500) && (abs_value < 6500)) {     // Between 45.00 and 65.00 Hz
+        Settings->energy_frequency_calibration = abs_value;
+      }
+    }
+  }
+  else if (CMND_ENERGYCONFIG == Energy.command_code) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Config index %d, payload %d, value %d, data '%s'"),
+      XdrvMailbox.index, XdrvMailbox.payload, value, XdrvMailbox.data ? XdrvMailbox.data : "null" );
+
+    // EnergyConfig1 to 3 = Set Energy.current[channel] in A like 0.417 for 417mA
+    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < 4)) {
+      //Bl6523.current[XdrvMailbox.index -1] = value;
+    }
+    // EnergyConfig4 to 6 = Set Energy.active_power[channel] in W like 100 for 100W
+    if ((XdrvMailbox.index > 3) && (XdrvMailbox.index < 7)) {
+      //Bl6523.power[XdrvMailbox.index -4] = value;
+    }
+  }
+  else serviced = false;  // Unknown command
+
+  return serviced;
+}
+
 void Bl6523DrvInit(void)
 {
   if (PinUsed(GPIO_BL6523_RX) && PinUsed(GPIO_BL6523_TX)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("BL6:PreInit Success" ));
     TasmotaGlobal.energy_driver = XNRG_22;
+    if (HLW_PREF_PULSE == Settings->energy_power_calibration) {
+      Settings->energy_frequency_calibration = BL6523_FREF;
+      Settings->energy_voltage_calibration = BL6523_UREF;
+      Settings->energy_current_calibration = BL6523_IREF;
+      Settings->energy_power_calibration = BL6523_PREF;
+    }
+
   }
   else
   {
@@ -276,6 +344,9 @@ bool Xnrg22(uint8_t function)
     case FUNC_EVERY_250_MSECOND:
       Bl6523Update();
       break;
+    case FUNC_COMMAND:
+      result = Bl6523Command();
+      break;      
     case FUNC_INIT:
       Bl6523Init();
       break;
