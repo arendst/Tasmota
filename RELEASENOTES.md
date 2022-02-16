@@ -105,6 +105,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v11.0.0.1
 ### Added
+- Command ``SspmMap 0`` to reset Sonoff SPM default mapping
+- Command ``TcpConnect <port><ip_address>`` to add client connection mode [#14874](https://github.com/arendst/Tasmota/issues/14874)
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection
 - ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)

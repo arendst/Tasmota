@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - Development
 ## [11.0.0.1]
 ### Added
+- Command ``SspmMap 0`` to reset Sonoff SPM default mapping
+- Command ``TcpConnect <port><ip_address>`` to add client connection mode (#14874)
 - ESP32 support for BLE Mi scale V1 (#13517)
 - ESP32 integrate Homekit in Bluetooth binary (#14818)
 - ESP32 Berry always enable rules
