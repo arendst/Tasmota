@@ -789,9 +789,11 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x00100000;  // xnrg_21_sdm230.ino
 #endif
 #ifdef USE_CM110x
-    feature8 |= 0x00200000; // xsns_95_cm110x.ino
+    feature8 |= 0x00200000;  // xsns_95_cm110x.ino
 #endif
-//    feature8 |= 0x00400000;
+#if defined(USE_ENERGY_SENSOR) && defined(USE_BL6523)
+    feature8 |= 0x00400000;  // xnrg_22_bl6523.ino
+#endif
 //    feature8 |= 0x00800000;
 
 //    feature8 |= 0x01000000;

@@ -1,7 +1,7 @@
 /*
-  xsns_96_bl6523.ino - Chinese bl6523 based Watt hour meter support for Tasmota
+  xnrg_22_bl6523.ino - BL6523 based Watt hour meter support for Tasmota
 
-  Copyright (C) 2022  Jeevas Vasudevan and the Internet
+  Copyright (C) 2022  Jeevas Vasudevan
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_BL6523
 /*********************************************************************************************\
