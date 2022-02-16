@@ -182,6 +182,7 @@ enum UserSelectablePins {
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
+  GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -403,6 +404,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
   D_SENSOR_ADC_MQ "|"
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
+  D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -769,6 +771,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDM230
   AGPIO(GPIO_SDM230_TX),      // SDM230 Serial interface
   AGPIO(GPIO_SDM230_RX),      // SDM230 Serial interface
+#endif
+#ifdef USE_BL6523
+  AGPIO(GPIO_BL6523_TX),       // BL6523 based Watt meter Serial interface
+  AGPIO(GPIO_BL6523_RX),       // BL6523 based Watt meter Serial interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 

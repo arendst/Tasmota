@@ -105,6 +105,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v11.0.0.1
 ### Added
+- Command ``SspmMap 0`` to reset Sonoff SPM default mapping
+- Command ``TcpConnect <port><ip_address>`` to add client connection mode [#14874](https://github.com/arendst/Tasmota/issues/14874)
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection
 - ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)
@@ -123,6 +125,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - SSPM energy yesterday when zero
 - GPIO OptionE1 selection regression [#14821](https://github.com/arendst/Tasmota/issues/14821)
 - BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 [#14829](https://github.com/arendst/Tasmota/issues/14829)
+- Wiegand 34-bit rfid reading and presentation [#14834](https://github.com/arendst/Tasmota/issues/14834)
 - Orno WE517 power meter phase 2 current reactive [#14841](https://github.com/arendst/Tasmota/issues/14841)
 
 ### Removed

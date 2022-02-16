@@ -40,6 +40,7 @@ void be_gc_init(bvm *vm)
 {
     vm->gc.usage = sizeof(bvm);
     be_gc_setsteprate(vm, 200);
+    be_gc_init_memory_pools(vm);
 }
 
 void be_gc_deleteall(bvm *vm)
@@ -543,6 +544,8 @@ void be_gc_collect(bvm *vm)
         return; /* the GC cannot run for some reason */
     }
 #if BE_USE_PERF_COUNTERS
+    size_t slors_used_before_gc, slots_allocated_before_gc;
+    be_gc_memory_pools_info(vm, &slors_used_before_gc, &slots_allocated_before_gc);
     vm->counter_gc_kept = 0;
     vm->counter_gc_freed = 0;
 #endif
@@ -563,8 +566,13 @@ void be_gc_collect(bvm *vm)
     reset_fixedlist(vm);
     /* step 5: calculate the next GC threshold */
     vm->gc.threshold = next_threshold(vm->gc);
+    be_gc_memory_pools(vm); /* free unsued memory pools */
 #if BE_USE_PERF_COUNTERS
-    if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage, vm->counter_gc_kept, vm->counter_gc_freed);
+    size_t slors_used_after_gc, slots_allocated_after_gc;
+    be_gc_memory_pools_info(vm, &slors_used_after_gc, &slots_allocated_after_gc);
+    if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage, vm->counter_gc_kept, vm->counter_gc_freed,
+                                            slors_used_before_gc, slots_allocated_before_gc,
+                                            slors_used_after_gc, slots_allocated_after_gc);
 #else
     if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_GC_END, vm->gc.usage);
 #endif

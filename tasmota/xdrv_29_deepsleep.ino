@@ -178,7 +178,7 @@ bool Xdrv29(uint8_t function)
       DeepSleepEverySecond();
       break;
     case FUNC_AFTER_TELEPERIOD:
-        if (DeepSleepEnabled() && !deepsleep_flag) {
+        if (DeepSleepEnabled() && !deepsleep_flag && (Settings->tele_period == 10 || Settings->tele_period == 300 || millis() > 20000 )) {
         deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
       }
       break;

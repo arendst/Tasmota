@@ -28,6 +28,15 @@ hue_bridge.init = def (m)
       self.lights.remove(id)
     end
 
+    # get id from light object
+    def light_to_id(l)
+      for id: self.lights.keys()
+        if l == self.lights[id]['light']
+          return id
+        end
+      end
+    end
+
     # return the status of a single light by id
     def hue_status(id)
       import hue_ntv

@@ -491,6 +491,7 @@ BERRY_API void be_vm_delete(bvm *vm)
     be_stack_delete(vm, &vm->tracestack);
     be_free(vm, vm->stack, (vm->stacktop - vm->stack) * sizeof(bvalue));
     be_globalvar_deinit(vm);
+    be_gc_free_memory_pools(vm);
 #if BE_USE_DEBUG_HOOK
     /* free native hook */
     if (var_istype(&vm->hook, BE_COMPTR))
@@ -904,7 +905,11 @@ newframe: /* a new call frame */
             if (var_isinstance(a) && var_isstr(b)) {
                 binstance *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
-                if (!be_instance_setmember(vm, obj, attr, c)) {
+                bvalue result = *c;
+                if (var_isfunction(&result)) {
+                    var_markstatic(&result);
+                }
+                if (!be_instance_setmember(vm, obj, attr, &result)) {
                     reg = vm->reg;
                     vm_error(vm, "attribute_error",
                         "class '%s' cannot assign to attribute '%s'",

@@ -32,7 +32,7 @@
  * Green led is controlled by ARM processor indicating SD-Card access.
  * ESP32 is used as interface between eWelink and ARM processor in SPM-Main unit communicating over proprietary serial protocol.
  * Power on sequence for two SPM-4Relay modules is 00-00-15-10-(0F)-(13)-(13)-(19)-0C-09-04-09-04-0B-0B
- * Up to six months of daily energy are stored onthe SD-Card. Previous data is lost.
+ * Up to 180 days of daily energy are stored on the SD-Card. Previous data is lost.
  * Tasmota support is based on Sonoff SPM v1.0.0 ARM firmware.
  * Energy history cannot be guaranteed using either SD-Card or internal flash. As a solution Tasmota stores the total energy and yesterday energy just after midnight.
  *
@@ -55,6 +55,7 @@
  *   SspmHistory<relay>         - Retrieve daily energy of last six month (as defined by ARM firmware)
  *   SspmIAmHere<relay>         - Blink ERROR in SPM-4Relay where relay resides
  *   SspmLog<relay> [x]         - Retrieve relay power state change and cause logging
+ *   SspmMap 0                  - Start a scan to fill default mapping
  *   SspmMap 2,3,1,..           - Map scanned module number to physical module number using positional numbering
  *   SspmOverload<relay> 0      - Set default overload detection parameters as read from module during initial scan
  *   SspmOverload<relay> <delay>,<min_power>,<max_power>,<min_voltage>,<max_voltage,<max_current>
@@ -1409,11 +1410,21 @@ void SSPMHandleReceivedData(void) {
             Sspm->min_voltage = SSPMGetValue(&SspmBuffer[46]);                 // x.xxV
           }
           uint32_t module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
-          if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
-            Sspm->Settings.module_map[Sspm->module_max] = module_id;
-          }
+//          if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
+//            Sspm->Settings.module_map[Sspm->module_max] = module_id;
+//          }
           int mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
-          if (-1 == mapped) { Sspm->map_change = true; }
+          if (-1 == mapped) {
+            // Scanned module not in mapped list. Append if possible
+            for (uint32_t module = Sspm->module_max; module < SSPM_MAX_MODULES; module++) {
+              if (0 == Sspm->Settings.module_map[module]) {
+                Sspm->Settings.module_map[module] = module_id;
+                mapped = module;
+                break;
+              }
+            }
+            Sspm->map_change = true;
+          }
           mapped++;
           AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
             Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
@@ -2212,9 +2223,16 @@ void CmndSSPMReset(void) {
 
 void CmndSSPMMap(void) {
   // Map scanned module number to physical module number using positional numbering
-  // SspmMap 1,3,4,2
+  // SspmMap 0        - start a scan to fill default mapping
+  // SspmMap 1,3,4,2  - map modules
   // TODO: Might need input checks on count and valid different numbers
-  if (Sspm->module_max) {  // Valid after initial scan
+  if (0 == XdrvMailbox.payload) {
+    for (uint32_t module = 0; module < SSPM_MAX_MODULES; module++) {
+      Sspm->Settings.module_map[module] = 0;               // Clear mapping slots
+    }
+    CmndSSPMScan();                                        // Start scan to fill default mapping
+  }
+  else if (Sspm->module_max) {                             // Valid after initial scan
     char *p;
     uint32_t i = 0;
     for (char* str = strtok_r(XdrvMailbox.data, ",", &p); str && i < Sspm->module_max; str = strtok_r(nullptr, ",", &p)) {

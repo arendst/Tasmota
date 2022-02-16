@@ -1097,7 +1097,7 @@ void CmndSetoptionBase(bool indexed) {
               SettingsSave(2);
             }
 #ifdef USE_HOME_ASSISTANT
-            if ((19 == pindex) || (30 == pindex)) {
+            if ((19 == pindex) || (30 == pindex) || (114 == pindex)) {
               HAssDiscover();              // Delayed execution to provide enough resources during hass_discovery or hass_light
             }
 #endif  // USE_HOME_ASSISTANT

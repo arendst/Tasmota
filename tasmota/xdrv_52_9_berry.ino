@@ -89,21 +89,7 @@ extern "C" {
   #ifdef USE_BERRY_IRAM
     return special_malloc32(size);
   #else
-    return special_malloc(size);
-  #endif
-  }
-  void *berry_realloc32(void *ptr, size_t size) {
-  #ifdef USE_BERRY_IRAM
-    return special_realloc32(ptr, size);
-  #else
-    return special_realloc(ptr, size);
-  #endif
-  }
-  void *berry_calloc32(size_t num, size_t size) {
-  #ifdef USE_BERRY_IRAM
-    return special_calloc32(num, size);
-  #else
-    return special_calloc(num, size);
+    return NULL;    /* return NULL to indicate that IRAM is not enabled */
   #endif
   }
 
@@ -234,8 +220,14 @@ void BerryObservability(bvm *vm, int event...) {
         uint32_t gc_elapsed = millis() - gc_time;
         uint32_t vm_scanned = va_arg(param, uint32_t);
         uint32_t vm_freed = va_arg(param, uint32_t);
-        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
-                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
+        size_t slots_used_before_gc = va_arg(param, size_t);
+        size_t slots_allocated_before_gc = va_arg(param, size_t);
+        size_t slots_used_after_gc = va_arg(param, size_t);
+        size_t slots_allocated_after_gc = va_arg(param, size_t);
+        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms) - slots from %i/%i to %i/%i",
+                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
+                                slots_used_before_gc, slots_allocated_before_gc,
+                                slots_used_after_gc, slots_allocated_after_gc);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB

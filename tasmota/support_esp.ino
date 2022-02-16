@@ -509,13 +509,7 @@ void *special_calloc(size_t num, size_t size) {
 
 // Variants for IRAM heap, which need all accesses to be 32 bits aligned
 void *special_malloc32(uint32_t size) {
-  return heap_caps_malloc(size, UsePSRAM() ? MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT : MALLOC_CAP_32BIT);
-}
-void *special_realloc32(void *ptr, size_t size) {
-  return heap_caps_realloc(ptr, size, UsePSRAM() ? MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT : MALLOC_CAP_32BIT);
-}
-void *special_calloc32(size_t num, size_t size) {
-  return heap_caps_calloc(num, size, UsePSRAM() ? MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT : MALLOC_CAP_32BIT);
+  return heap_caps_malloc(size, MALLOC_CAP_32BIT);
 }
 
 float CpuTemperature(void) {
