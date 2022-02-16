@@ -96,4 +96,7 @@ public:
 };
 BerrySupport berry;
 
+// multi-purpose serial logging
+extern "C" void serial_debug(const char * berry_buf, ...);
+
 #endif  // USE_BERRY

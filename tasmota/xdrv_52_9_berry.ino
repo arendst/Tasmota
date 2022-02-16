@@ -492,15 +492,15 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
           "var d,t1;"
-          "d=x.responseText.split(/" BERRY_CONSOLE_CMD_DELIMITER "/);"  // Field separator
-          "var d1=d.shift();"
+          "d=x.responseText.split(/" BERRY_CONSOLE_CMD_DELIMITER "/,2);"  // Field separator
+          "var d1=d.length>1?d[0]:null;"
           "if(d1){"
             "t1=document.createElement('div');"
             "t1.classList.add('br1');"
             "t1.innerText=d1;"
             "t.appendChild(t1);"
           "}"
-          "d1=d.shift();"
+          "d1=d.length>1?d[1]:d[0];"
           "if(d1){"
             "t1=document.createElement('div');"
             "t1.classList.add('br2');"
