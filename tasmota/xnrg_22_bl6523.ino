@@ -112,7 +112,7 @@ bool Bl6523ReadData(void)
     // sleep till TX buffer is full
     delay(10);
     if ( i++ > RX_WAIT ){
-      abort();
+      break;
     }
   }
   
