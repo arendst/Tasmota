@@ -59,16 +59,7 @@
 #define BL6523_REG_WATTHR 0x0C
 
 #define SINGLE_PHASE 0
-
-/* No idea how to derive human readable units from the byte stream.
-For now  dividing the 24-bit values with below constants seems to yield something sane
-that matches whatever displayed in the screen of my 240v model. Probably it would be possible
-to extract these values from the write register commands (0xCA).*/ 
-//#define BL6523_DIV_AMPS 297899.4f
-//#define BL6523_DIV_VOLTS 13304.0f
-//#define BL6523_DIV_FREQ  3907.0f
-//#define BL6523_DIV_WATTS 707.0f
-//#define BL6523_DIV_WATTHR 674.0f
+#define RX_WAIT 100
 
 #define BL6523_IREF 297899
 #define BL6523_UREF 13304
@@ -89,7 +80,7 @@ struct BL6523
 
 bool Bl6523ReadData(void)
 {
-   uint32_t powf_word = 0, powf_buf = 0;
+   uint32_t powf_word = 0, powf_buf = 0, i = 0;
    float powf = 0.0f;
 
   if (!Bl6523RxSerial->available())
@@ -115,11 +106,14 @@ bool Bl6523ReadData(void)
 
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, rx_buffer, BL6523_RX_DATASET_SIZE);
   
+  i=0;
   while (Bl6523TxSerial->available() < BL6523_TX_DATASET_SIZE)
   {
     // sleep till TX buffer is full
-     unsigned long timeout = millis() + 10;
-     while (millis() < timeout) {}
+    delay(10);
+    if ( i++ > RX_WAIT ){
+      abort();
+    }
   }
   
 
