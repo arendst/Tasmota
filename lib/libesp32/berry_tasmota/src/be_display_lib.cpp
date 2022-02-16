@@ -13,7 +13,7 @@
 extern int be_ntv_display_start(bvm *vm);
 extern int be_ntv_display_dimmer(bvm *vm);
 extern void be_ntv_display_touch_update(int32_t touches, int32_t raw_x, int32_t raw_y, int32_t gesture);
-            BE_FUNC_CTYPE_DECLARE(be_ntv_display_touch_update, "", "iiii[ii]")
+            BE_FUNC_CTYPE_DECLARE(be_ntv_display_touch_update, "", "iiii")
 
 /* @const_object_info_begin
 module display (scope: global) {

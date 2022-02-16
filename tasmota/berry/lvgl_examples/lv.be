@@ -93,7 +93,7 @@ tasmota.add_driver(ws)
 import lv_tasmota_info
 var info = lv_tasmota_info(scr)
 info.set_pos(0, stat_line.get_height())
-info.set_size(hres - 80, 30)
+info.set_size(hres - 80 + 1, 40)
 tasmota.add_driver(info)
 
 # logs
