@@ -94,7 +94,7 @@ void DeepSleepPrepare(void)
 
   // It may happen that wakeup in just <5 seconds in future
   // In this case also add deepsleep to nextwakeup
-  if (RtcSettings.nextwakeup <= (LocalTime() - DEEPSLEEP_MIN_TIME)) {
+  if (RtcSettings.nextwakeup <= (LocalTime() + DEEPSLEEP_MIN_TIME)) {
     // ensure nextwakeup is at least in the future
     RtcSettings.nextwakeup += (((LocalTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings->deepsleep) + 1) * Settings->deepsleep;
   }
