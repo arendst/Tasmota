@@ -264,7 +264,7 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
   uint8_t DataRead[80] = {0};
   uint8_t TempData[16] = {0};
   char TempDataChar[16];
-  uint8_t i;
+  float TempFloat;
 
   if (solaxX1Serial->available()) {
     if (solaxX1_RS485Receive(DataRead)) { // CRC-error -> no further action
@@ -282,18 +282,18 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     if (DataRead[6] == 0x11 && DataRead[7] == 0x82) { // received "Response for query (live data)"
       Energy.data_valid[0] = 0;
       solaxX1.temperature =    (DataRead[9] << 8) | DataRead[10]; // Temperature
-      solaxX1.energy_today =   (float)((DataRead[11] << 8) | DataRead[12]) * 0.1f; // Energy Today
-      solaxX1.dc1_voltage =    (float)((DataRead[13] << 8) | DataRead[14]) * 0.1f; // PV1 Voltage
-      solaxX1.dc2_voltage =    (float)((DataRead[15] << 8) | DataRead[16]) * 0.1f; // PV2 Voltage
-      solaxX1.dc1_current =    (float)((DataRead[17] << 8) | DataRead[18]) * 0.1f; // PV1 Current
-      solaxX1.dc2_current =    (float)((DataRead[19] << 8) | DataRead[20]) * 0.1f; // PV2 Current
-      Energy.current[0] =      (float)((DataRead[21] << 8) | DataRead[22]) * 0.1f; // AC Current
-      Energy.voltage[0] =      (float)((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
-      Energy.frequency[0] =    (float)((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
-      Energy.active_power[0] = (float)((DataRead[27] << 8) | DataRead[28]); // AC Power
+      solaxX1.energy_today =   ((DataRead[11] << 8) | DataRead[12]) * 0.1f; // Energy Today
+      solaxX1.dc1_voltage =    ((DataRead[13] << 8) | DataRead[14]) * 0.1f; // PV1 Voltage
+      solaxX1.dc2_voltage =    ((DataRead[15] << 8) | DataRead[16]) * 0.1f; // PV2 Voltage
+      solaxX1.dc1_current =    ((DataRead[17] << 8) | DataRead[18]) * 0.1f; // PV1 Current
+      solaxX1.dc2_current =    ((DataRead[19] << 8) | DataRead[20]) * 0.1f; // PV2 Current
+      Energy.current[0] =      ((DataRead[21] << 8) | DataRead[22]) * 0.1f; // AC Current
+      Energy.voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
+      Energy.frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
+      Energy.active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
       //temporal = (float)((DataRead[29] << 8) | DataRead[30]) * 0.1f; // Not Used
-      Energy.import_active[0] = (float)((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
-      solaxX1.runtime_total =  ((DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]); // Work Time Total
+      Energy.import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
+      solaxX1.runtime_total =  (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
       solaxX1.runMode =        (DataRead[39] << 8) | DataRead[40]; // Work mode
       //temporal = (float)((DataRead[41] << 8) | DataRead[42]); // Grid voltage fault value 0.1V
       //temporal = (float)((DataRead[43] << 8) | DataRead[44]); // Gird frequency fault value 0.01Hz
@@ -336,56 +336,56 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     if (DataRead[6] == 0x11 && DataRead[7] == 0x84) { // received "Response for query (config data)"
       if (solaxX1_global.Command_QueryConfig) {
         // This values are displayed as they were received from the inverter. They are not interpreted in any way.
-        dtostrfd(((DataRead[9] << 8) | DataRead[10]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVpvStart: %s V (Inverter launch voltage threshold)"), TempDataChar);
+        TempFloat = ((DataRead[9] << 8) | DataRead[10]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: new wVpvStart: %1_f V (Inverter launch voltage threshold)"), &TempFloat);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wTimeStart: %d sec (launch wait time)"), (DataRead[11] << 8) | DataRead[12]);
-        dtostrfd(((DataRead[13] << 8) | DataRead[14]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMinProtect: %s V (allowed minimum grid voltage)"), TempDataChar);
-        dtostrfd(((DataRead[15] << 8) | DataRead[16]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMaxProtect: %s V (allowed maximum grid voltage)"), TempDataChar);
-        dtostrfd(((DataRead[17] << 8) | DataRead[18]) * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMinProtect: %s Hz (allowed minimum grid frequency)"), TempDataChar);
-        dtostrfd(((DataRead[19] << 8) | DataRead[20]) * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMaxProtect: %s Hz (allowed maximum grid frequency)"), TempDataChar);
+        TempFloat = ((DataRead[13] << 8) | DataRead[14]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMinProtect: %1_f V (allowed minimum grid voltage)"), &TempFloat);
+        TempFloat = ((DataRead[15] << 8) | DataRead[16]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMaxProtect: %1_f V (allowed maximum grid voltage)"), &TempFloat);
+        TempFloat = ((DataRead[17] << 8) | DataRead[18]) * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMinProtect: %2_f Hz (allowed minimum grid frequency)"), &TempFloat);
+        TempFloat = ((DataRead[19] << 8) | DataRead[20]) * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMaxProtect: %2_f Hz (allowed maximum grid frequency)"), &TempFloat);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wDciLimits: %d mA (DC component limits)"), (DataRead[21] << 8) | DataRead[22]);
-        dtostrfd(((DataRead[23] << 8) | DataRead[24]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wGrid10MinAvgProtect: %s V (10 minutes over voltage protect)"), TempDataChar);
-        dtostrfd(((DataRead[25] << 8) | DataRead[26]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMinSlowProtect: %s V (grid undervoltage protect value)"), TempDataChar);
-        dtostrfd(((DataRead[27] << 8) | DataRead[28]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMaxSlowProtect: %s V (grid overvoltage protect value)"), TempDataChar);
-        dtostrfd(((DataRead[29] << 8) | DataRead[30]) * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMinSlowProtect: %s Hz (grid underfrequency protect value)"), TempDataChar);
-        dtostrfd(((DataRead[31] << 8) | DataRead[32]) * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMaxSlowProtect: %s Hz (grid overfrequency protect value)"), TempDataChar);
+        TempFloat = ((DataRead[23] << 8) | DataRead[24]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wGrid10MinAvgProtect: %1_f V (10 minutes over voltage protect)"), &TempFloat);
+        TempFloat = ((DataRead[25] << 8) | DataRead[26]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMinSlowProtect: %1_f V (grid undervoltage protect value)"), &TempFloat);
+        TempFloat = ((DataRead[27] << 8) | DataRead[28]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMaxSlowProtect: %1_f V (grid overvoltage protect value)"), &TempFloat);
+        TempFloat = ((DataRead[29] << 8) | DataRead[30]) * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMinSlowProtect: %2_f Hz (grid underfrequency protect value)"), &TempFloat);
+        TempFloat = ((DataRead[31] << 8) | DataRead[32]) * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wFacMaxSlowProtect: %2_f Hz (grid overfrequency protect value)"), &TempFloat);
         GetTextIndexed(TempDataChar, sizeof(TempDataChar), (DataRead[33] << 8) | DataRead[34], kSolaxSafetyType);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wSafety: %d ≙ %s"), (DataRead[33] << 8) | DataRead[34], TempDataChar);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerfactor_mode: %d"), DataRead[35]);
-        dtostrfd(DataRead[36] * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerfactor_data: %s"), TempDataChar);
-        dtostrfd(DataRead[37] * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wUpperLimit: %s (overexcite limits)"), TempDataChar);
-        dtostrfd(DataRead[38] * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wLowerLimit: %s (underexcite limits)"), TempDataChar);
-        dtostrfd(DataRead[39] * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerLow: %s (power ratio change upper limits)"), TempDataChar);
-        dtostrfd(DataRead[40] * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerUp: %s (power ratio change lower limits)"), TempDataChar);
+        TempFloat = DataRead[36] * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerfactor_data: %2_f"), &TempFloat);
+        TempFloat = DataRead[37] * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wUpperLimit: %2_f (overexcite limits)"), &TempFloat);
+        TempFloat = DataRead[38] * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wLowerLimit: %2_f (underexcite limits)"), &TempFloat);
+        TempFloat = DataRead[39] * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerLow: %2_f (power ratio change upper limits)"), &TempFloat);
+        TempFloat = DataRead[40] * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wPowerUp: %2_f (power ratio change lower limits)"), &TempFloat);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: Qpower_set: %d"), (DataRead[41] << 8) | DataRead[42]);
-        dtostrfd(((DataRead[43] << 8) | DataRead[44]) * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: WFreqSetPoint: %s Hz (Over Frequency drop output setpoint)"), TempDataChar);
+        TempFloat = ((DataRead[43] << 8) | DataRead[44]) * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: WFreqSetPoint: %2_f Hz (Over Frequency drop output setpoint)"), &TempFloat);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: WFreqDroopRate: %d %% (drop output slope)"), (DataRead[45] << 8) | DataRead[46]);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: QuVupRate: %d %% (Q(U) curve up set point)"), (DataRead[47] << 8) | DataRead[48]);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: QuVlowRate: %d %% (Q(U) curve low set point)"), (DataRead[49] << 8) | DataRead[50]);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: WPowerLimitsPercent: %d %%"), (DataRead[51] << 8) | DataRead[52]);
-        dtostrfd(((DataRead[53] << 8) | DataRead[54]) * 0.01f, 2, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: WWgra: %s %%"), TempDataChar);
-        dtostrfd(((DataRead[55] << 8) | DataRead[56]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wWv2: %s V"), TempDataChar);
-        dtostrfd(((DataRead[57] << 8) | DataRead[58]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wWv3: %s V"), TempDataChar);
-        dtostrfd(((DataRead[59] << 8) | DataRead[60]) * 0.1f, 1, TempDataChar);
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wWv4: %s V"), TempDataChar);
+        TempFloat = ((DataRead[53] << 8) | DataRead[54]) * 0.01f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: WWgra: %2_f %%"), &TempFloat);
+        TempFloat = ((DataRead[55] << 8) | DataRead[56]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wWv2: %1_f V"), &TempFloat);
+        TempFloat = ((DataRead[57] << 8) | DataRead[58]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wWv3: %1_f V"), &TempFloat);
+        TempFloat = ((DataRead[59] << 8) | DataRead[60]) * 0.1f;
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wWv4: %1_f V"), &TempFloat);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wQurangeV1: %d %%"), (DataRead[61] << 8) | DataRead[62]);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wQurangeV4: %d %%"), (DataRead[63] << 8) | DataRead[64]);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: BVoltPowerLimit: %d"), (DataRead[65] << 8) | DataRead[66]);
@@ -596,9 +596,7 @@ bool Xnrg12(uint8_t function)
       solaxX1_DrvInit();
       break;
     case FUNC_COMMAND:
-      if (XNRG_12 == XdrvMailbox.index) { // "EnergyConfig12 <command>"
-        result = SolaxX1_cmd();
-      }
+      result = SolaxX1_cmd();
       break;
   }
   return result;
