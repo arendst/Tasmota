@@ -736,6 +736,15 @@ static inline lv_color_t lv_color_black(void)
 lv_color_t lv_palette_lighten(lv_palette_t p, uint8_t lvl)
 lv_color_t lv_palette_darken(lv_palette_t p, uint8_t lvl)
 
+// ../../lvgl/src/misc/lv_math.h
+int16_t lv_trigo_sin(int16_t angle)
+static inline int16_t lv_trigo_cos(int16_t angle)
+uint32_t lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3)
+uint16_t lv_atan2(int x, int y)
+void lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask)
+int32_t lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min_out, int32_t max_out)
+uint32_t lv_rand(uint32_t min, uint32_t max)
+
 // ../../lvgl/src/misc/lv_style.h
 void lv_style_init(lv_style_t * style)
 void lv_style_reset(lv_style_t * style)

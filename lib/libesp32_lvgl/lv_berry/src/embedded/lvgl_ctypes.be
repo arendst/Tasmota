@@ -455,6 +455,12 @@ lv_event = [            # valid LVGL8.2
 ]
 lv_event = ctypes.structure(lv_event, "lv_event")
 
+lv_sqrt_res = [            # valid LVGL8.2
+    [uint16_t, "i"],
+    [uint16_t, "f"],
+]
+lv_sqrt_res = ctypes.structure(lv_sqrt_res, "lv_sqrt_res")
+
 #######################################################################
 # lv_img structures
 lv_img_header = [            # valid LVGL8.2

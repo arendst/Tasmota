@@ -367,7 +367,6 @@ extern const bcstring be_const_str_draw_ctx;
 extern const bcstring be_const_str_draw_line;
 extern const bcstring be_const_str_draw_line_dsc;
 extern const bcstring be_const_str_draw_line_dsc_init;
-extern const bcstring be_const_str_due;
 extern const bcstring be_const_str_dump;
 extern const bcstring be_const_str_duration;
 extern const bcstring be_const_str_editable;
