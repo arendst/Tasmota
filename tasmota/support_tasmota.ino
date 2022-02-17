@@ -409,7 +409,9 @@ void SetPowerOnState(void)
     }
   }
   TasmotaGlobal.blink_powersave = TasmotaGlobal.power;
+#ifndef FIRMWARE_MINIMAL
   RulesEvery50ms();
+#endif
 }
 
 void UpdateLedPowerAll()
