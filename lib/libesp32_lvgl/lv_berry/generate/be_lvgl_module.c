@@ -27,6 +27,8 @@ static int lv_get_ver_res(void) {
 /* `lv` methods */
 const be_ntv_func_def_t lv_func[] = {
 
+  { "atan2", { (const void*) &lv_atan2, "i", "ii" } },
+  { "bezier3", { (const void*) &lv_bezier3, "i", "iiiii" } },
   { "clamp_height", { (const void*) &lv_clamp_height, "i", "iiii" } },
   { "clamp_width", { (const void*) &lv_clamp_width, "i", "iiii" } },
   { "color_black", { (const void*) &lv_color_black, "lv.lv_color", "" } },
@@ -106,6 +108,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "layer_sys", { (const void*) &lv_layer_sys, "lv.lv_obj", "" } },
   { "layer_top", { (const void*) &lv_layer_top, "lv.lv_obj", "" } },
   { "layout_register", { (const void*) &lv_layout_register, "i", "^lv_layout_update_cb^." } },
+  { "map", { (const void*) &lv_map, "i", "iiiii" } },
   { "obj_class_create_obj", { (const void*) &lv_obj_class_create_obj, "lv.lv_obj", "(lv._lv_obj_class)(lv.lv_obj)" } },
   { "obj_del_anim_ready_cb", { (const void*) &lv_obj_del_anim_ready_cb, "", "(lv.lv_anim)" } },
   { "obj_draw_dsc_init", { (const void*) &lv_obj_draw_dsc_init, "", "(lv.lv_obj_draw_part_dsc)(lv.lv_draw_ctx)" } },
@@ -121,11 +124,13 @@ const be_ntv_func_def_t lv_func[] = {
   { "qrcode_create", { (const void*) &lv_qrcode_create, "lv.lv_obj", "(lv.lv_obj)i(lv.lv_color)(lv.lv_color)" } },
   { "qrcode_delete", { (const void*) &lv_qrcode_delete, "", "(lv.lv_obj)" } },
   { "qrcode_update", { (const void*) &lv_qrcode_update, "i", "(lv.lv_obj).i" } },
+  { "rand", { (const void*) &lv_rand, "i", "ii" } },
   { "refr_now", { (const void*) &lv_refr_now, "", "(lv.lv_disp)" } },
   { "refr_obj", { (const void*) &lv_refr_obj, "", "(lv.lv_draw_ctx)(lv.lv_obj)" } },
   { "scr_act", { (const void*) &lv_scr_act, "lv.lv_obj", "" } },
   { "scr_load", { (const void*) &lv_scr_load, "", "(lv.lv_obj)" } },
   { "scr_load_anim", { (const void*) &lv_scr_load_anim, "", "(lv.lv_obj)iiib" } },
+  { "sqrt", { (const void*) &lv_sqrt, "", "i(lv.lv_sqrt_res)i" } },
   { "style_prop_get_default", { (const void*) &lv_style_prop_get_default, "i", "i" } },
   { "style_register_prop", { (const void*) &lv_style_register_prop, "i", "" } },
   { "style_transition_dsc_init", { (const void*) &lv_style_transition_dsc_init, "", "(lv.lv_style_transition_dsc)(lv.lv_style_prop)^lv_anim_path_cb^ii." } },
@@ -145,6 +150,8 @@ const be_ntv_func_def_t lv_func[] = {
   { "theme_openhasp_is_inited", { (const void*) &lv_theme_openhasp_is_inited, "b", "" } },
   { "theme_set_apply_cb", { (const void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" } },
   { "theme_set_parent", { (const void*) &lv_theme_set_parent, "", "(lv.lv_theme)(lv.lv_theme)" } },
+  { "trigo_cos", { (const void*) &lv_trigo_cos, "i", "i" } },
+  { "trigo_sin", { (const void*) &lv_trigo_sin, "i", "i" } },
 
 };
 const size_t lv_func_size = sizeof(lv_func) / sizeof(lv_func[0]);

@@ -70,6 +70,7 @@ lv_fun_globs = [
                   "misc/lv_style_gen.h",
                   "misc/lv_color.h",
                   "misc/lv_style.h",
+                  "misc/lv_math.h"
                   #"misc/lv_area.h",
                   #"**/*.h",
               ]
@@ -162,6 +163,7 @@ for header_name in headers_names:
               "^lv_img_cf_",
               "^lv_img_buf_",
               "^lv_indev_scroll_",
+              "^lv_pow",
               "^lv_keyboard_def_event_cb",  # need to fix conditional include
               "^lv_event_get_",            # event_getters not needed
               "^lv_refr_reset_fps_counter",

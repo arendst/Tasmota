@@ -27,6 +27,7 @@ parse_arg = re.compile("(\w+\s+)?(\w+)([\*\s]+)(\w+)(\[\])?")
 return_types = {
   "void": "",
   "bool": "b",
+  "int": "i",
   "uint8_t": "i",
   "uint16_t": "i",
   "int16_t": "i",
@@ -144,6 +145,7 @@ return_types = {
   "lv_draw_ctx_t *": "lv_draw_ctx",
   "_lv_draw_ctx_t *": "lv_draw_ctx",
   "lv_grad_dsc_t *": "lv_grad_dsc",
+  "lv_sqrt_res_t *": "lv_sqrt_res",
   # "lv_color_hsv_t *": "lv_color_hsv",
   "lv_color_filter_dsc_t *": "lv_color_filter_dsc",
   "lv_timer_t *": "lv_timer",
