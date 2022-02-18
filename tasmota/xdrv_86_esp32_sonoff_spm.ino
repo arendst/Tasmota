@@ -257,8 +257,8 @@ typedef struct {
   uint8_t history_day[SSPM_MAX_MODULES][4];
 
 #ifdef SSPM_SIMULATE
-  uint8_t emulate;
-  uint8_t emulated_module;
+  uint8_t simulate;
+  uint8_t simulated_module;
 #endif
   uint8_t allow_updates;
   uint8_t get_energy_relay;
@@ -398,8 +398,8 @@ uint32_t SSPMGetMappedModuleId(uint32_t module) {
     module_nr = module;             // input module number if not found used as fallback
   }
 #ifdef SSPM_SIMULATE
-  Sspm->emulated_module = module_nr;
-  if (Sspm->emulate && (module_nr > 0) && (module_nr <= Sspm->emulate)) {
+  Sspm->simulated_module = module_nr;
+  if (Sspm->simulate && (module_nr > 0) && (module_nr <= Sspm->simulate)) {
     module_nr = 0;                  // Emulate modules by 0
   }
 #endif
@@ -1067,18 +1067,15 @@ void SSPMHandleReceivedData(void) {
         */
         if (!status && (0x06 == expected_bytes)) {
           // SspmBuffer[20] & 0x0F                      // Relays operational
-          power_t current_state = SspmBuffer[20] >> 4;  // Relays state
-          power_t mask = 0x0000000F;
-          for (uint32_t i = 0; i < Sspm->module_max; i++) {
-            uint32_t module = SSPMGetMappedModuleId(i);
-            if ((SspmBuffer[3] == Sspm->module[module][0]) && (SspmBuffer[4] == Sspm->module[module][1])) {
-              current_state <<= (i * 4);
-              mask <<= (i * 4);
-              TasmotaGlobal.power &= (POWER_MASK ^ mask);
-              TasmotaGlobal.power |= current_state;
-              break;
-            }
-          }
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[3] << 8 | SspmBuffer[4]);
+#ifdef SSPM_SIMULATE
+          module = Sspm->simulated_module;
+#endif
+          power_t current_state = (SspmBuffer[20] >> 4) << (module * 4);  // Relays state
+          power_t mask = 0x0000000F << (module * 4);
+          TasmotaGlobal.power &= (POWER_MASK ^ mask);
+          TasmotaGlobal.power |= current_state;
+
           Sspm->old_power = TasmotaGlobal.power;
           TasmotaGlobal.devices_present += 4;
         }
@@ -1161,7 +1158,7 @@ void SSPMHandleReceivedData(void) {
           uint32_t channel = SspmBuffer[32];
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
 #ifdef SSPM_SIMULATE
-          module = Sspm->emulated_module;
+          module = Sspm->simulated_module;
 #endif
           if (Sspm->history_relay < 255) {
             uint32_t history_module = Sspm->history_relay >> 2;
@@ -1344,7 +1341,7 @@ void SSPMHandleReceivedData(void) {
           }
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
 #ifdef SSPM_SIMULATE
-          module = Sspm->emulated_module;
+          module = Sspm->simulated_module;
 #endif
           Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
           Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[34]);         // x.xxV
@@ -1368,16 +1365,13 @@ void SSPMHandleReceivedData(void) {
         aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 07 00 0d 8b 34 32 37 39 37 34 13 4b 35 36 37 02 2d bb 08  - L2 Overload triggered power off
         */
         if (!Sspm->no_send_key) {
-          power_t relay = SspmBuffer[31] & 0x0F;      // Relays active
-          power_t relay_state = SspmBuffer[31] >> 4;  // Relays state
-          for (uint32_t i = 0; i < Sspm->module_max; i++) {
-            uint32_t module = SSPMGetMappedModuleId(i);
-            if ((SspmBuffer[19] == Sspm->module[module][0]) && (SspmBuffer[20] == Sspm->module[module][1])) {
-              relay <<= (i * 4);
-              relay_state <<= (i * 4);
-              break;
-            }
-          }
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
+#ifdef SSPM_SIMULATE
+//          module = Sspm->simulated_module;  // Won't work as this is initiated from device
+#endif
+          power_t relay = (SspmBuffer[31] & 0x0F) << (module * 4);      // Relays active
+          power_t relay_state = (SspmBuffer[31] >> 4) << (module * 4);  // Relays state
+
           for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
             if (relay &1) {
               ExecuteCommandPower(i, relay_state &1, SRC_BUTTON);
@@ -1458,10 +1452,10 @@ void SSPMHandleReceivedData(void) {
         if (0x24 == expected_bytes) {
           SSPMAddModule();
 #ifdef SSPM_SIMULATE
-          if (0 == Sspm->emulate) {
+          if (0 == Sspm->simulate) {
             uint8_t current_idl = SspmBuffer[20];
-            for (Sspm->emulate = 0; Sspm->emulate < SSPM_SIMULATE; Sspm->emulate++) {
-              SspmBuffer[20] = Sspm->emulate +1;
+            for (Sspm->simulate = 0; Sspm->simulate < SSPM_SIMULATE; Sspm->simulate++) {
+              SspmBuffer[20] = Sspm->simulate +1;
               SSPMAddModule();
             }
             SspmBuffer[20] = current_idl;

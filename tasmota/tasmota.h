@@ -37,8 +37,9 @@
  * Power Type
 \*********************************************************************************************/
 
-typedef unsigned long power_t;              // Power (Relay) type
-const uint32_t POWER_MASK = 0xffffffffUL;   // Power (Relay) full mask
+typedef uint32_t power_t;                   // Power (Relay) type
+const uint32_t POWER_MASK = 0xFFFFFFFFUL;   // Power (Relay) full mask
+const uint32_t POWER_SIZE = 32;             // Power (relay) bit count
 
 /*********************************************************************************************\
  * Constants
