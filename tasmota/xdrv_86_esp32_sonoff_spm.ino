@@ -37,7 +37,7 @@
  * Energy history cannot be guaranteed using either SD-Card or internal flash. As a solution Tasmota stores the total energy and yesterday energy just after midnight.
  *
  * Tasmota features:
- * - Up to 7 SPM-4Relay units supporting a total of 28 relays.
+ * - Up to 8 SPM-4Relay units supporting a total of 32 relays.
  * - Button on SPM-Main initiates re-scan of SPM-4Relay units.
  * - SPI master to ARM (ARM firmware upload from ESP using EasyFlash not supported).
  * - Ethernet support.
@@ -120,8 +120,10 @@
 
 #define XDRV_86                      86
 
-#define SSPM_MAX_MODULES             7       // Currently supports up to 7 SPM-4RELAY units for a total of 28 relays restricted by power_t size
+#define SSPM_MAX_MODULES             8       // Currently supports up to 8 SPM-4RELAY units for a total of 32 relays restricted by 32-bit power_t size
 #define SSPM_SERIAL_BUFFER_SIZE      512     // Needs to accomodate Energy total history for 180 days (408 bytes)
+
+//#define SSPM_SIMULATE                2       // Simulate additional 4Relay modules based on first detected 4Relay module (debugging purposes only!!)
 
 // From ESP to ARM
 #define SSPM_FUNC_FIND               0       // 0x00
@@ -252,8 +254,12 @@ typedef struct {
   uint16_t serial_in_byte_counter;
   uint16_t expected_bytes;
   uint8_t module[SSPM_MAX_MODULES][SSPM_MODULE_NAME_SIZE];
-
   uint8_t history_day[SSPM_MAX_MODULES][4];
+
+#ifdef SSPM_SIMULATE
+  uint8_t emulate;
+  uint8_t emulated_module;
+#endif
   uint8_t allow_updates;
   uint8_t get_energy_relay;
   uint8_t get_totals;
@@ -391,6 +397,12 @@ uint32_t SSPMGetMappedModuleId(uint32_t module) {
   if (-1 == module_nr) {
     module_nr = module;             // input module number if not found used as fallback
   }
+#ifdef SSPM_SIMULATE
+  Sspm->emulated_module = module_nr;
+  if (Sspm->emulate && (module_nr > 0) && (module_nr <= Sspm->emulate)) {
+    module_nr = 0;                  // Emulate modules by 0
+  }
+#endif
   return (uint32_t)module_nr;       // 0, 1, ...
 }
 
@@ -884,6 +896,44 @@ void SSPMSendGetEnergyPeriod(uint32_t relay) {
 
 /*********************************************************************************************/
 
+void SSPMAddModule(void) {
+  if (Sspm->module_max < SSPM_MAX_MODULES) {
+    memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
+    if (0 == Sspm->max_power) {
+      Sspm->max_current = SspmBuffer[39] + (float)SspmBuffer[40] / 100;  // x.xxA
+      Sspm->min_current = SspmBuffer[41] + (float)SspmBuffer[42] / 100;  // x.xxA
+      Sspm->max_power = SSPMGetValue(&SspmBuffer[49]);                   // x.xxVA
+      Sspm->min_power = SSPMGetValue(&SspmBuffer[52]);                   // x.xxVA
+      Sspm->max_voltage = SSPMGetValue(&SspmBuffer[43]);                 // x.xxV
+      Sspm->min_voltage = SSPMGetValue(&SspmBuffer[46]);                 // x.xxV
+    }
+    uint32_t module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
+    int mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
+    if (-1 == mapped) {
+      // Scanned module not in mapped list. Append if possible
+      for (uint32_t module = Sspm->module_max; module < SSPM_MAX_MODULES; module++) {
+        if (0 == Sspm->Settings.module_map[module]) {
+          Sspm->Settings.module_map[module] = module_id;
+          mapped = module;
+          break;
+        }
+      }
+      Sspm->map_change = true;
+    }
+    mapped++;
+    AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
+      Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
+
+    Sspm->module_max++;
+
+    if (Settings->save_data) {
+      TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all modules are scanned
+    }
+  }
+}
+
+/*********************************************************************************************/
+
 void SSPMHandleReceivedData(void) {
   /*
    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
@@ -1110,6 +1160,9 @@ void SSPMHandleReceivedData(void) {
 
           uint32_t channel = SspmBuffer[32];
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
+#ifdef SSPM_SIMULATE
+          module = Sspm->emulated_module;
+#endif
           if (Sspm->history_relay < 255) {
             uint32_t history_module = Sspm->history_relay >> 2;
             uint32_t history_channel = Sspm->history_relay & 0x03;  // Channel relays are NOT bit masked this time
@@ -1290,6 +1343,9 @@ void SSPMHandleReceivedData(void) {
             SspmBuffer[31] >>= 1;
           }
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
+#ifdef SSPM_SIMULATE
+          module = Sspm->emulated_module;
+#endif
           Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
           Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[34]);         // x.xxV
           Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[37]);    // x.xxW
@@ -1399,37 +1455,18 @@ void SSPMHandleReceivedData(void) {
                                                                                                                 |130|  1.0.0|20.0A|0.10A| 240.00V|   0.10V|4400.00W|   0.10W|
         Ty = Type of sub-device. 130: Four-channel sub-device
         */
-        if ((0x24 == expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
-          memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
-          if (0 == Sspm->max_power) {
-            Sspm->max_current = SspmBuffer[39] + (float)SspmBuffer[40] / 100;  // x.xxA
-            Sspm->min_current = SspmBuffer[41] + (float)SspmBuffer[42] / 100;  // x.xxA
-            Sspm->max_power = SSPMGetValue(&SspmBuffer[49]);                   // x.xxVA
-            Sspm->min_power = SSPMGetValue(&SspmBuffer[52]);                   // x.xxVA
-            Sspm->max_voltage = SSPMGetValue(&SspmBuffer[43]);                 // x.xxV
-            Sspm->min_voltage = SSPMGetValue(&SspmBuffer[46]);                 // x.xxV
-          }
-          uint32_t module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
-//          if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
-//            Sspm->Settings.module_map[Sspm->module_max] = module_id;
-//          }
-          int mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
-          if (-1 == mapped) {
-            // Scanned module not in mapped list. Append if possible
-            for (uint32_t module = Sspm->module_max; module < SSPM_MAX_MODULES; module++) {
-              if (0 == Sspm->Settings.module_map[module]) {
-                Sspm->Settings.module_map[module] = module_id;
-                mapped = module;
-                break;
-              }
+        if (0x24 == expected_bytes) {
+          SSPMAddModule();
+#ifdef SSPM_SIMULATE
+          if (0 == Sspm->emulate) {
+            uint8_t current_idl = SspmBuffer[20];
+            for (Sspm->emulate = 0; Sspm->emulate < SSPM_SIMULATE; Sspm->emulate++) {
+              SspmBuffer[20] = Sspm->emulate +1;
+              SSPMAddModule();
             }
-            Sspm->map_change = true;
+            SspmBuffer[20] = current_idl;
           }
-          mapped++;
-          AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
-            Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
-
-          Sspm->module_max++;
+#endif
         }
         SSPMSendAck(command_sequence);
         break;
@@ -1580,39 +1617,6 @@ bool SSPMSendSPI(uint32_t size) {
       // Complete message received
       expected_bytes += 20;
 
-/*
-  uint32_t expected_bytes = 19;                                          // Location of expected bytes (Size) - This fails probably because not on 4-byte boundary (See __spiTransferBytes)
-  SPI.transferBytes(nullptr, SspmBuffer, expected_bytes);                // First receive data up to known location of expected bytes
-  if ((0xAA == SspmBuffer[0]) && (0x55 == SspmBuffer[1]) && (0x01 == SspmBuffer[2])) {
-    // Message size known
-    expected_bytes = 3 + (SspmBuffer[17] << 8) + SspmBuffer[18];
-    if (expected_bytes < SSPM_SERIAL_BUFFER_SIZE - 19) {
-      SPI.transferBytes(nullptr, SspmBuffer +19, expected_bytes);        // Then receive the expected bytes
-      // Complete message received
-      expected_bytes += 19;
-*/
-/*
-  SPI.transferBytes(nullptr, SspmBuffer, 3);                             // First receive marker data - This fails probably because not on 4-byte boundary (See __spiTransferBytes)
-  if ((0xAA == SspmBuffer[0]) && (0x55 == SspmBuffer[1]) && (0x01 == SspmBuffer[2])) {
-    SPI.transferBytes(nullptr, SspmBuffer +3, 16);                       // Then receive data up to known location of expected bytes (Size at index 17 and 18)
-    // Message size known
-    uint32_t expected_bytes = 3 + (SspmBuffer[17] << 8) + SspmBuffer[18];
-    if (expected_bytes < SSPM_SERIAL_BUFFER_SIZE - 19) {
-      SPI.transferBytes(nullptr, SspmBuffer +19, expected_bytes);        // Then receive the expected bytes
-      // Complete message received
-      expected_bytes += 19;
-*/
-/*
-  SPI.transferBytes(nullptr, SspmBuffer, 4);                             // First receive marker data - This fails too
-  if ((0xAA == SspmBuffer[0]) && (0x55 == SspmBuffer[1]) && (0x01 == SspmBuffer[2])) {
-    SPI.transferBytes(nullptr, SspmBuffer +4, 16);                       // Then receive data up to known location of expected bytes (Size at index 17 and 18)
-    // Message size known
-    uint32_t expected_bytes = 2 + (SspmBuffer[17] << 8) + SspmBuffer[18];
-    if (expected_bytes < SSPM_SERIAL_BUFFER_SIZE - 20) {
-      SPI.transferBytes(nullptr, SspmBuffer +20, expected_bytes);        // Then receive the expected bytes
-      // Complete message received
-      expected_bytes += 20;
-*/
       bool more = (!Sspm->Settings.flag.dump && (expected_bytes > 58));  // Skip long dumps as they overwrite log buffer
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SPM: SPI %*_H%s"), (more) ? 58 : expected_bytes, SspmBuffer, (more) ? "..." : "");
 
