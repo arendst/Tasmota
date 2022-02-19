@@ -136,6 +136,7 @@ void Sr04TModeDetect(void) {
       sonar_serial = nullptr;
     }
     sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
+    delay(100); // give time to inizialise, preventing ping_median fails
     if (!sonar || !sonar->ping_median(5)) {
       SR04.type = SR04_MODE_NONE;
     }
