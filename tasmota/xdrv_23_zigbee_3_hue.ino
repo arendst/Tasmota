@@ -128,7 +128,7 @@ void ZigbeeCheckHue(String & response, bool * appending) {
       // this bulb is advertized
       if (*appending) { response += ","; }
       response += "\"";
-      response += EncodeLightId(0, shortaddr);
+      response += EncodeLightIdZigbee(0, shortaddr);
       response += F("\":{\"state\":");
       HueLightStatus1Zigbee(shortaddr, bulbtype, &response);    // TODO
       HueLightStatus2Zigbee(shortaddr, &response);
@@ -145,7 +145,7 @@ void ZigbeeHueGroups(String * lights) {
 
     if (bulbtype >= 0) {
       *lights += ",\"";
-      *lights += EncodeLightId(0, shortaddr);
+      *lights += EncodeLightIdZigbee(0, shortaddr);
       *lights += "\"";
     }
   }
