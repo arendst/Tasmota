@@ -1371,7 +1371,6 @@ void SSPMHandleReceivedData(void) {
 #endif
           power_t relay = (SspmBuffer[31] & 0x0F) << (module * 4);      // Relays active
           power_t relay_state = (SspmBuffer[31] >> 4) << (module * 4);  // Relays state
-
           for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
             if (relay &1) {
               ExecuteCommandPower(i, relay_state &1, SRC_BUTTON);
@@ -1453,11 +1452,14 @@ void SSPMHandleReceivedData(void) {
           SSPMAddModule();
 #ifdef SSPM_SIMULATE
           if (0 == Sspm->simulate) {
+            uint8_t current_idh = SspmBuffer[19];
             uint8_t current_idl = SspmBuffer[20];
             for (Sspm->simulate = 0; Sspm->simulate < SSPM_SIMULATE; Sspm->simulate++) {
+              SspmBuffer[19] = Sspm->simulate +1;
               SspmBuffer[20] = Sspm->simulate +1;
               SSPMAddModule();
             }
+            SspmBuffer[19] = current_idh;
             SspmBuffer[20] = current_idl;
           }
 #endif
