@@ -95,6 +95,19 @@ String EthernetMacAddress(void);
 #ifdef ESP32
 
 /*-------------------------------------------------------------------------------------------*\
+ * Start ESP32-C32 specific parameters - disable features not present in ESP32-C3
+\*-------------------------------------------------------------------------------------------*/
+
+#if CONFIG_IDF_TARGET_ESP32C3                      // ESP32-C3
+#ifdef USE_ETHERNET
+#undef USE_ETHERNET                                // ESP32-C3 does not support ethernet
+#endif
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+
+/*-------------------------------------------------------------------------------------------*\
+ * End ESP32-S2 specific parameters
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
  * Start ESP32-S2 specific parameters - disable features not present in ESP32-S2
 \*-------------------------------------------------------------------------------------------*/
 
