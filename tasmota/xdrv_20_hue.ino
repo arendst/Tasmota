@@ -623,11 +623,7 @@ void HueLightStatus2(uint8_t device, String *response)
 // it is limited to 32 devices.
 // last 24 bits of Mac address + 4 bits of local light + high bit for relays 16-31, relay 32 is mapped to 0
 // Zigbee extension: bit 29 = 1, and last 16 bits = short address of Zigbee device
-#ifndef USE_ZIGBEE
-uint32_t EncodeLightId(uint8_t relay_id)
-#else
-uint32_t EncodeLightId(uint8_t relay_id, uint16_t z_shortaddr = 0)
-#endif
+uint32_t EncodeLightIdZigbee(uint8_t relay_id, uint16_t z_shortaddr)
 {
   uint8_t mac[6];
   WiFi.macAddress(mac);
@@ -650,17 +646,17 @@ uint32_t EncodeLightId(uint8_t relay_id, uint16_t z_shortaddr = 0)
   return id;
 }
 
+uint32_t EncodeLightId(uint8_t relay_id)
+{
+  return EncodeLightIdZigbee(relay_id, 0);
+}
 
 // get hue_id and decode the relay_id
 // 4 LSB decode to 1-15, if bit 28 is set, it encodes 16-31, if 0 then 32
 // Zigbee:
 // If the Id encodes a Zigbee device (meaning bit 29 is set)
 // it returns 0 and sets the 'shortaddr' to the device short address
-#ifndef USE_ZIGBEE
-uint32_t DecodeLightId(uint32_t hue_id)
-#else
-uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
-#endif
+uint32_t DecodeLightIdZigbee(uint32_t hue_id, uint16_t * shortaddr)
 {
   uint8_t relay_id = hue_id & 0xF;
   if (hue_id & (1 << 28)) {   // check if bit 25 is set, if so we have
@@ -678,6 +674,11 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
   }
 #endif // USE_ZIGBEE
   return relay_id;
+}
+
+uint32_t DecodeLightId(uint32_t hue_id)
+{
+  return DecodeLightIdZigbee(hue_id, nullptr);
 }
 
 // Check if the Echo device is of 1st generation, which triggers different results
@@ -971,7 +972,7 @@ void HueLights(String *path_req)
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
     uint16_t shortaddr;
-    device = DecodeLightId(device_id, &shortaddr);
+    device = DecodeLightIdZigbee(device_id, &shortaddr);
     if (shortaddr) {
       code = ZigbeeHandleHue(shortaddr, device_id, response);
       goto exit;
@@ -1004,7 +1005,7 @@ void HueLights(String *path_req)
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
     uint16_t shortaddr;
-    device = DecodeLightId(device_id, &shortaddr);
+    device = DecodeLightIdZigbee(device_id, &shortaddr);
     if (shortaddr) {
       code = ZigbeeHueStatus(&response, shortaddr);
       goto exit;
