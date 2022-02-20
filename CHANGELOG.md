@@ -2,7 +2,16 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
-## [11.0.0.1]
+
+## [11.0.0.2]
+### Added
+
+### Changed
+- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
+
+### Fixed
+
+## [11.0.0.1] 20220220
 ### Added
 - Command ``SspmMap 0`` to reset Sonoff SPM default mapping
 - Command ``TcpConnect <port><ip_address>`` to add client connection mode (#14874)
