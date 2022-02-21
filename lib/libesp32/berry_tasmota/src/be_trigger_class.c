@@ -59,26 +59,62 @@ be_local_closure(Trigger_tostring,   /* name */
 ********************************************************************/
 be_local_closure(Trigger_init,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
-    4,                          /* argc */
+    5,                          /* nstack */
+    5,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
+    ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(trig),
     /* K1   */  be_nested_str(f),
     /* K2   */  be_nested_str(id),
+    /* K3   */  be_nested_str(o),
     }),
     &be_const_str_init,
     &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
+    ( &(const binstruction[ 5]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x90020202,  //  0001  SETMBR	R0	K1	R2
       0x90020403,  //  0002  SETMBR	R0	K2	R3
-      0x80000000,  //  0003  RET	0
+      0x90020604,  //  0003  SETMBR	R0	K3	R4
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: next
+********************************************************************/
+be_local_closure(Trigger_next,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(o),
+    /* K1   */  be_nested_str(next),
+    }),
+    &be_const_str_next,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x780A0004,  //  0001  JMPF	R2	#0007
+      0x88080100,  //  0002  GETMBR	R2	R0	K0
+      0x8C080501,  //  0003  GETMET	R2	R2	K1
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x80040400,  //  0006  RET	1	R2
+      0x80000000,  //  0007  RET	0
     })
   )
 );
@@ -89,15 +125,17 @@ be_local_closure(Trigger_init,   /* name */
 ** Solidified class: Trigger
 ********************************************************************/
 be_local_class(Trigger,
-    3,
+    4,
     NULL,
-    be_nested_map(5,
+    be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(tostring, 3), be_const_closure(Trigger_tostring_closure) },
-        { be_const_key(id, 2), be_const_var(2) },
-        { be_const_key(f, -1), be_const_var(1) },
+        { be_const_key(f, 1), be_const_var(1) },
+        { be_const_key(o, -1), be_const_var(3) },
         { be_const_key(init, -1), be_const_closure(Trigger_init_closure) },
-        { be_const_key(trig, -1), be_const_var(0) },
+        { be_const_key(id, 4), be_const_var(2) },
+        { be_const_key(tostring, -1), be_const_closure(Trigger_tostring_closure) },
+        { be_const_key(trig, 2), be_const_var(0) },
+        { be_const_key(next, -1), be_const_closure(Trigger_next_closure) },
     })),
     be_str_literal("Trigger")
 );

@@ -157,6 +157,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
  *   'lv_obj' be_instance of type or subtype
  *   '^lv_event_cb^' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
+ *   '@': pass a pointer to the Berry VM (virtual parameter added, must be the first argument)
  * 
  * Ex: ".ii" takes 3 arguments, first one is any type, followed by 2 ints
 \*********************************************************************************************/
@@ -300,6 +301,13 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
 
   uint32_t p_idx = 0; // index in p[], is incremented with each parameter except '-'
   int32_t buf_len = -1;   // stores the length of a bytes() buffer to be used as '~' attribute
+
+  // special case when first parameter is '@', pass pointer to VM
+  if (NULL != arg_type && arg_type[arg_idx] == '@') {
+    arg_idx++;
+    p[p_idx] = vm;
+    p_idx++;
+  }
 
   // special case when no parameters are passed but all are optional
   if (NULL != arg_type && arg_type[arg_idx] == '[') {
