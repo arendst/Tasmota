@@ -167,6 +167,7 @@ extern void be_load_webclient_lib(bvm *vm);
 extern void be_load_tcpclient_lib(bvm *vm);
 extern void be_load_udp_lib(bvm *vm);
 extern void be_load_crypto_lib(bvm *vm);
+extern void be_load_ccronexpr_class(bvm *vm);
 extern void be_load_Leds_ntv_class(bvm *vm);
 extern void be_load_Leds_class(bvm *vm);
 extern void be_load_Leds_animator_class(bvm *vm);
@@ -207,6 +208,7 @@ BERRY_API void be_load_custom_libs(bvm *vm)
     be_load_md5_lib(vm);
     be_load_serial_lib(vm);
     be_load_ctypes_lib(vm);
+    be_load_ccronexpr_class(vm);
 #ifdef USE_LIGHT
     be_load_light_state_class(vm);
 #endif

@@ -1,0 +1,17 @@
+{
+    "name": "ccronexpr",
+    "frameworks": "arduino",
+    "keywords": "cron, Time, alarm, schedule, date, hour, minute, second, day, week, month, year",
+    "description": "Crontab parser",
+    "url": "https://github.com/Martin-Laclaustra/CronAlarms",
+    "authors":
+    {
+            "name": "alex@staticlibs.net"
+    },
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/staticlibs/ccronexpr"
+    },
+    "platforms": "espressif32"
+}

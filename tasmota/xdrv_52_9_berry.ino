@@ -26,6 +26,7 @@
 #include "berry_tasmota.h"
 #include "be_vm.h"
 #include "ZipReadFS.h"
+#include "ccronexpr.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);

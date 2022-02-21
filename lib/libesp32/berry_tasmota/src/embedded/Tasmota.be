@@ -3,15 +3,23 @@
 
 class Trigger
   var trig, f, id
-  def init(trig, f, id)
+  var o             # optional object
+  def init(trig, f, id, o)
     self.trig = trig
     self.f = f
     self.id = id
+    self.o = o
   end
   def tostring()
     import string
     return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
               str(self.trig), str(self.f), str(self.id))
+  end
+  # next(now) returns the next trigger, or nil if no more
+  def next(now)
+    if self.o
+      return self.o.next(now)
+    end
   end
 end
 
@@ -19,7 +27,8 @@ tasmota = nil
 class Tasmota
   var _fl             # list of fast_loop registered closures
   var _rules
-  var _timers
+  var _timers         # holds both timers and cron
+  var _crons
   var _ccmd
   var _drivers
   var wire1
@@ -244,11 +253,76 @@ class Tasmota
   def run_deferred()
     if self._timers
       var i=0
-      while i<self._timers.size()
-        if self.time_reached(self._timers[i].trig)
-          var f=self._timers[i].f
-          self._timers.remove(i)
+      while i < self._timers.size()
+        var trigger = self._timers[i]
+
+        if self.time_reached(trigger.trig)
+          var f = trigger.f
+          self._timers.remove(i)      # one shot event
           f()
+        else
+          i += 1
+        end
+      end
+    end
+  end
+
+  def run_cron()
+    if self._crons
+      var i=0
+      var now = self.rtc()['local']   # now in epoch seconds
+      while i < self._crons.size()
+        var trigger = self._crons[i]
+
+        if trigger.trig <= now
+          var f = trigger.f
+          var next_time = trigger.next(now)
+          if !next_time
+            self._crons.remove(i)      # one shot event
+          else
+            trigger.trig = next_time    # recurring event
+            i += 1
+          end
+          f(now, next_time)
+        else
+          i += 1
+        end
+      end
+    end
+  end
+
+  def remove_timer(id)
+    var timers = self._timers
+    if timers
+      var i=0
+      while i < timers.size()
+        if timers[i].id == id
+          timers.remove(i)
+        else
+          i=i+1
+        end
+      end
+    end
+  end
+  
+  # crontab style recurring events
+  def add_cron(pattern,f,id)
+    self.check_not_method(f)
+    if !self._crons self._crons=[] end
+    var cron = ccronexpr(str(pattern))    # can fail, throwing an exception
+    var next_time = cron.next(self.rtc()['local'])
+
+    self._crons.push(Trigger(next_time, f, id, cron))
+  end
+
+  # remove cron by id
+  def remove_cron(id)
+    var crons = self._crons
+    if crons
+      var i=0
+      while i < crons.size()
+        if crons[i].id == id
+          crons.remove(i)
         else
           i=i+1
         end
@@ -256,15 +330,14 @@ class Tasmota
     end
   end
 
-  # remove timers by id
-  def remove_timer(id)
-    if tasmota._timers
+  # get next timestamp for cron
+  def next_cron(id)
+    var crons = self._crons
+    if crons
       var i=0
-      while i<tasmota._timers.size()
-        if self._timers[i].id == id
-          self._timers.remove(i)
-        else
-          i=i+1
+      while i < crons.size()
+        if crons[i].id == id
+          return crons[i].trig
         end
       end
     end
@@ -454,7 +527,13 @@ class Tasmota
   def event(event_type, cmd, idx, payload, raw)
     import introspect
     import string
-    if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
+    if event_type=='every_50ms'
+      self.run_deferred()
+    end  #- first run deferred events -#
+
+    if event_type=='every_250ms'
+      self.run_cron()
+    end
 
     var done = false
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
