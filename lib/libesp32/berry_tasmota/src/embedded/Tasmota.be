@@ -330,6 +330,19 @@ class Tasmota
     end
   end
 
+  # get next timestamp for cron
+  def next_cron(id)
+    var crons = self._crons
+    if crons
+      var i=0
+      while i < crons.size()
+        if crons[i].id == id
+          return crons[i].trig
+        end
+      end
+    end
+  end
+
   # Add command to list
   def add_cmd(c,f)
     self.check_not_method(f)

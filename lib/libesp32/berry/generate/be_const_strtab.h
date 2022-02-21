@@ -582,6 +582,7 @@ extern const bcstring be_const_str_montserrat_font;
 extern const bcstring be_const_str_name;
 extern const bcstring be_const_str_nan;
 extern const bcstring be_const_str_next;
+extern const bcstring be_const_str_next_cron;
 extern const bcstring be_const_str_nil;
 extern const bcstring be_const_str_no_X20GPIO_X20specified_X20for_X20neopixelbus;
 extern const bcstring be_const_str_null_cb;

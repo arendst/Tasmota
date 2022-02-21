@@ -2132,6 +2132,51 @@ be_local_closure(Tasmota_run_cron,   /* name */
 
 
 /********************************************************************
+** Solidified function: next_cron
+********************************************************************/
+be_local_closure(Tasmota_next_cron,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str(_crons),
+    /* K1   */  be_const_int(0),
+    /* K2   */  be_nested_str(size),
+    /* K3   */  be_nested_str(id),
+    /* K4   */  be_nested_str(trig),
+    }),
+    &be_const_str_next_cron,
+    &be_const_str_solidified,
+    ( &(const binstruction[16]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x780A000C,  //  0001  JMPF	R2	#000F
+      0x580C0001,  //  0002  LDCONST	R3	K1
+      0x8C100502,  //  0003  GETMET	R4	R2	K2
+      0x7C100200,  //  0004  CALL	R4	1
+      0x14100604,  //  0005  LT	R4	R3	R4
+      0x78120007,  //  0006  JMPF	R4	#000F
+      0x94100403,  //  0007  GETIDX	R4	R2	R3
+      0x88100903,  //  0008  GETMBR	R4	R4	K3
+      0x1C100801,  //  0009  EQ	R4	R4	R1
+      0x78120002,  //  000A  JMPF	R4	#000E
+      0x94100403,  //  000B  GETIDX	R4	R2	R3
+      0x88100904,  //  000C  GETMBR	R4	R4	K4
+      0x80040800,  //  000D  RET	1	R4
+      0x7001FFF3,  //  000E  JMP		#0003
+      0x80000000,  //  000F  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: remove_cron
 ********************************************************************/
 be_local_closure(Tasmota_remove_cron,   /* name */
@@ -2423,6 +2468,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     add_cron, closure(Tasmota_add_cron_closure)
     run_cron, closure(Tasmota_run_cron_closure)
+    next_cron, closure(Tasmota_next_cron_closure)
     remove_cron, closure(Tasmota_remove_cron_closure)
 
     check_not_method, closure(Tasmota_check_not_method_closure)
