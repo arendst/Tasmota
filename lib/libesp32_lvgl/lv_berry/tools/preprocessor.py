@@ -64,10 +64,13 @@ lv_fun_globs = [
                   "extra/themes/default/*.h",
                   "extra/themes/mono/*.h",
                   "extra/layouts/**/*.h",
+                  "extra/libs/qrcode/lv_qrcode.h",
                   "core/*.h",
                   "draw/*.h",
                   "misc/lv_style_gen.h",
                   "misc/lv_color.h",
+                  "misc/lv_style.h",
+                  "misc/lv_math.h"
                   #"misc/lv_area.h",
                   #"**/*.h",
               ]
@@ -160,8 +163,11 @@ for header_name in headers_names:
               "^lv_img_cf_",
               "^lv_img_buf_",
               "^lv_indev_scroll_",
+              "^lv_pow",
               "^lv_keyboard_def_event_cb",  # need to fix conditional include
               "^lv_event_get_",            # event_getters not needed
+              "^lv_refr_reset_fps_counter",
+              "^lv_refr_get_fps_avg",
             ]:
           if re.search(exclude_pattern, fun_name): exclude = True
         if exclude: continue
@@ -217,6 +223,11 @@ COLOR_BLUE=0x0000FF
 COLOR_NAVY=0x000080
 COLOR_MAGENTA=0xFF00FF
 COLOR_PURPLE=0x800080
+
+// Freetype
+FT_FONT_STYLE_NORMAL=FT_FONT_STYLE_NORMAL
+FT_FONT_STYLE_ITALIC=FT_FONT_STYLE_ITALIC
+FT_FONT_STYLE_BOLD=FT_FONT_STYLE_BOLD
 
 // following are #define, not enum
 LV_RADIUS_CIRCLE
@@ -323,7 +334,8 @@ for header_name in headers_names:
         # item is ready
         exclude = False
         for exclude_prefix in ["_", "LV_BIDI_DIR_", "LV_FONT_", "LV_IMG_CF_RESERVED_", "LV_IMG_CF_USER_",
-                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_", "LV_KEYBOARD_"]:
+                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_", "LV_KEYBOARD_",
+                               "LV_LRU_"]:
           if enum_item.startswith(exclude_prefix): exclude = True
         if exclude: continue
 

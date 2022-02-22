@@ -41,6 +41,9 @@ class AXP192_M5StickC : AXP192
       self.set_dcdc_enable(1, true)
       self.set_dcdc_enable(3, true)
 
+      # enable external power on HAT connector (5V)
+      self.set_exten(true)
+
       # Set temperature protection
       self.write8(0x39, 0xFC)
 

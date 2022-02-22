@@ -89,6 +89,7 @@ struct METER_DESC {
   char *txmem;
   uint8_t index;
   uint8_t max_index;
+  char *script_str;
   uint8_t sopt;
 };
 
@@ -1041,6 +1042,9 @@ void ADS1115_init(void) {
 char sml_start;
 uint8_t dump2log=0;
 
+uint8_t ser_act_LED_pin=255;
+uint8_t ser_act_meter_num=0;
+
 #define SML_SAVAILABLE Serial_available()
 #define SML_SREAD Serial_read()
 #define SML_SPEAK Serial_peek()
@@ -1623,6 +1627,9 @@ uint32_t meters;
       if (meter_desc_p[meters].type != 'c') {
         // poll for serial input
         if (!meter_ss[meters]) continue;
+        if (ser_act_LED_pin!=255 && (ser_act_meter_num==0 || ser_act_meter_num-1==meters)) {
+          digitalWrite(ser_act_LED_pin, meter_ss[meters]->available() && !digitalRead(ser_act_LED_pin)); // Invert LED, if queue is continuously full
+        }
         while (meter_ss[meters]->available()) {
           sml_shift_in(meters, 0);
         }
@@ -1842,93 +1849,117 @@ void SML_Decode(uint8_t index) {
                   cp += skip;
                 }
               }
-            } else if (!strncmp(mp,"UUuuUUuu",8)) {
-              uint32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
-              ebus_dval=val;
-              mbus_dval=val;
-              mp+=8;
-              cp+=4;
-            } else if (*mp=='U' && *(mp+1)=='U' && *(mp+2)=='u' && *(mp+3)=='u'){
-              uint16_t val = cp[1]|(cp[0]<<8);
-              mbus_dval=val;
-              ebus_dval=val;
-              mp+=4;
-              cp+=2;
-            } else if (!strncmp(mp,"SSssSSss",8)) {
-              int32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
-              ebus_dval=val;
-              mbus_dval=val;
-              mp+=8;
-              cp+=4;
-            } else if (*mp=='u' && *(mp+1)=='u' && *(mp+2)=='U' && *(mp+3)=='U'){
-              uint16_t val = cp[0]|(cp[1]<<8);
-              mbus_dval=val;
-              ebus_dval=val;
-              mp+=4;
-              cp+=2;
-            } else if (*mp=='u' && *(mp+1)=='u') {
+            } else if (!strncmp(mp, "UUuuUUuu", 8)) {
+              uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+              mp += 8;
+              cp += 4;
+              if (*mp == 's') {
+                mp++;
+                // swap words
+                val = (val>>16) | (val<<16);
+              }
+              ebus_dval = val;
+              mbus_dval = val;
+            } else if (!strncmp(mp, "uuUUuuUU", 8)) {
+              uint32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
+              mp += 8;
+              cp += 4;
+              if (*mp == 's') {
+                mp++;
+                // swap words
+                val = (val>>16) | (val<<16);
+              }
+              ebus_dval = val;
+              mbus_dval = val;
+            } else if (!strncmp(mp, "UUuu", 4)) {
+              uint16_t val = cp[1] | (cp[0]<<8);
+              mbus_dval = val;
+              ebus_dval = val;
+              mp += 4;
+              cp += 2;
+            } else if (!strncmp(mp, "SSssSSss", 8)) {
+              int32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+              mp += 8;
+              cp += 4;
+              if (*mp == 's') {
+                mp++;
+                // swap words
+                val = ((uint32_t)val>>16) | ((uint32_t)val<<16);
+              }
+              ebus_dval = val;
+              mbus_dval = val;
+            } else if (!strncmp(mp, "ssSSssSS", 8)) {
+              int32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
+              mp += 8;
+              cp += 4;
+              if (*mp == 's') {
+                mp++;
+                // swap words
+                val = ((uint32_t)val>>16) | ((uint32_t)val<<16);
+              }
+              ebus_dval = val;
+              mbus_dval = val;
+            } else if (!strncmp(mp, "uuUU", 4)) {
+              uint16_t val = cp[0] | (cp[1]<<8);
+              mbus_dval = val;
+              ebus_dval = val;
+              mp += 4;
+              cp += 2;
+            } else if (!strncmp(mp, "uu", 2)) {
               uint8_t val = *cp++;
-              mbus_dval=val;
-              ebus_dval=val;
-              mp+=2;
-            } else if (*mp=='s' && *(mp+1)=='s' && *(mp+2)=='S' && *(mp+3)=='S') {
-              int16_t val = *cp|(*(cp+1)<<8);
-              mbus_dval=val;
-              ebus_dval=val;
-              mp+=4;
-              cp+=2;
-            } else if (*mp=='S' && *(mp+1)=='S' && *(mp+2)=='s' && *(mp+3)=='s') {
-              int16_t val = cp[1]|(cp[0]<<8);
-              mbus_dval=val;
-              ebus_dval=val;
-              mp+=4;
-              cp+=2;
-            }
-            else if (*mp=='s' && *(mp+1)=='s') {
+              mbus_dval = val;
+              ebus_dval = val;
+              mp += 2;
+            } else if (!strncmp(mp, "ssSS", 4)) {
+              int16_t val = *cp | (*(cp+1)<<8);
+              mbus_dval = val;
+              ebus_dval = val;
+              mp += 4;
+              cp += 2;
+            } else if (!strncmp(mp, "SSss", 4)) {
+              int16_t val = cp[1] | (cp[0]<<8);
+              mbus_dval = val;
+              ebus_dval = val;
+              mp += 4;
+              cp += 2;
+            } else if (!strncmp(mp,"ss", 2)) {
               int8_t val = *cp++;
-              mbus_dval=val;
-              ebus_dval=val;
-              mp+=2;
-            }
-            else if (!strncmp(mp,"ffffffff",8)) {
-              uint32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
-              float *fp=(float*)&val;
-              ebus_dval=*fp;
-              mbus_dval=*fp;
-              mp+=8;
-              cp+=4;
-            }
-            else if (!strncmp(mp,"FFffFFff",8)) {
+              mbus_dval = val;
+              ebus_dval = val;
+              mp += 2;
+            } else if (!strncmp(mp, "ffffffff", 8)) {
+              uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+              float *fp = (float*)&val;
+              ebus_dval = *fp;
+              mbus_dval = *fp;
+              mp += 8;
+              cp += 4;
+            } else if (!strncmp(mp, "FFffFFff", 8)) {
               // reverse word float
-              uint32_t val= (cp[1]<<0)|(cp[0]<<8)|(cp[3]<<16)|(cp[2]<<24);
-              float *fp=(float*)&val;
-              ebus_dval=*fp;
-              mbus_dval=*fp;
-              mp+=8;
-              cp+=4;
-            }
-            else if (!strncmp(mp,"eeeeee",6)) {
-              uint32_t val=(cp[0]<<16)|(cp[1]<<8)|(cp[2]<<0);
-              mbus_dval=val;
-              mp+=6;
-              cp+=3;
-            }
-            else if (!strncmp(mp,"vvvvvv",6)) {
-              mbus_dval=(float)((cp[0]<<8)|(cp[1])) + ((float)cp[2]/10.0);
-              mp+=6;
-              cp+=3;
-            }
-            else if (!strncmp(mp,"cccccc",6)) {
-              mbus_dval=(float)((cp[0]<<8)|(cp[1])) + ((float)cp[2]/100.0);
-              mp+=6;
-              cp+=3;
-            }
-            else if (!strncmp(mp,"pppp",4)) {
-              mbus_dval=(float)((cp[0]<<8)|cp[1]);
-              mp+=4;
-              cp+=2;
-            }
-            else if (*mp == 'v') {
+              uint32_t val = (cp[1]<<0) | (cp[0]<<8) | (cp[3]<<16) | (cp[2]<<24);
+              float *fp = (float*)&val;
+              ebus_dval = *fp;
+              mbus_dval = *fp;
+              mp += 8;
+              cp += 4;
+            } else if (!strncmp(mp, "eeeeee", 6)) {
+              uint32_t val = (cp[0]<<16) | (cp[1]<<8) | (cp[2]<<0);
+              mbus_dval = val;
+              mp += 6;
+              cp += 3;
+            } else if (!strncmp(mp, "vvvvvv", 6)) {
+              mbus_dval = (float)((cp[0]<<8) | (cp[1])) + ((float)cp[2]/10.0);
+              mp += 6;
+              cp += 3;
+            } else if (!strncmp(mp, "cccccc", 6)) {
+              mbus_dval = (float)((cp[0]<<8) | (cp[1])) + ((float)cp[2]/100.0);
+              mp += 6;
+              cp += 3;
+            } else if (!strncmp(mp, "pppp", 4)) {
+              mbus_dval = (float)((cp[0]<<8) | cp[1]);
+              mp += 4;
+              cp += 2;
+            } else if (*mp == 'v') {
               // vbus values vul, vsl, vuwh, vuwl, wswh, vswl, vswh
               // vub3, vsb3 etc
               mp++;
@@ -2405,7 +2436,7 @@ uint8_t sml_cnt_index[MAX_COUNTERS] =  { 0, 1, 2, 3 };
 void IRAM_ATTR SML_CounterIsr(void *arg) {
 uint32_t index = *static_cast<uint8_t*>(arg);
 
-uint32_t time = micros();
+uint32_t time = millis();
 uint32_t debounce_time;
 
   if (digitalRead(meter_desc_p[sml_counters[index].sml_cnt_old_state].srcpin) == bitRead(sml_counter_pinstate, index)) {
@@ -2414,15 +2445,15 @@ uint32_t debounce_time;
 
   debounce_time = time - sml_counters[index].sml_counter_ltime;
 
-  if (debounce_time <= sml_counters[index].sml_debounce * 1000) return;
+  if (debounce_time <= sml_counters[index].sml_debounce) return;
 
   if bitRead(sml_counter_pinstate, index) {
     // falling edge
     RtcSettings.pulse_counter[index]++;
-    sml_counters[index].sml_cnt_updated=1;
+    sml_counters[index].sml_cnt_updated = 1;
   }
   sml_counters[index].sml_counter_ltime = time;
-  sml_counter_pinstate ^= (1<<index);
+  sml_counter_pinstate ^= (1 << index);
 }
 
 
@@ -2570,7 +2601,7 @@ void SML_Init(void) {
           index--;
           srcpin  = strtol(lp,&lp,10);
           if (Gpio_used(abs(srcpin))) {
-            AddLog(LOG_LEVEL_INFO, PSTR("gpio rx double define!"));
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for RX in meter number %d"),abs(srcpin),index+1);
 dddef_exit:
             if (script_meter) free(script_meter);
             script_meter = 0;
@@ -2625,7 +2656,7 @@ dddef_exit:
             lp++;
             script_meter_desc[index].trxpin = strtol(lp, &lp, 10);
             if (Gpio_used(script_meter_desc[index].trxpin)) {
-              AddLog(LOG_LEVEL_INFO, PSTR("gpio tx double define!"));
+              AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for TX in meter number %d"),script_meter_desc[index].trxpin,index+1);
               goto dddef_exit;
             }
             if (*lp != ',') goto next_line;
@@ -2791,9 +2822,10 @@ init10:
   // preloud counters
   for (byte i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings->pulse_counter[i];
-      sml_counters[i].sml_cnt_last_ts=millis();
+      sml_counters[i].sml_cnt_last_ts = millis();
   }
   uint32_t uart_index = 2;
+  sml_counter_pinstate = 0;
   for (uint8_t meters = 0; meters < meters_used; meters++) {
     if (meter_desc_p[meters].type == 'c') {
         if (meter_desc_p[meters].flag & 2) {
@@ -2813,11 +2845,17 @@ init10:
           // check for irq mode
           if (meter_desc_p[meters].params<=0) {
             // init irq mode
-            attachInterruptArg(meter_desc_p[meters].srcpin, SML_CounterIsr,&sml_cnt_index[cindex], CHANGE);
-            sml_counters[cindex].sml_cnt_old_state=meters;
-            sml_counters[cindex].sml_debounce=-meter_desc_p[meters].params;
+            sml_counters[cindex].sml_cnt_old_state = meters;
+            sml_counters[cindex].sml_debounce = -meter_desc_p[meters].params;
+            attachInterruptArg(meter_desc_p[meters].srcpin, SML_CounterIsr, &sml_cnt_index[cindex], CHANGE);
+            if (digitalRead(meter_desc_p[meters].srcpin) > 0) {
+              sml_counter_pinstate |= (1 << cindex);
+            }
+            sml_counters[cindex].sml_counter_ltime = millis();
           }
-          InjektCounterValue(meters,RtcSettings.pulse_counter[cindex]);
+
+          RtcSettings.pulse_counter[cindex] = Settings->pulse_counter[cindex];
+          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex]);
           cindex++;
         }
     } else {
@@ -3001,6 +3039,15 @@ char *SML_GetSVal(uint32_t index) {
   if (index < 1 || index > MAX_METERS) { index = 1;}
   return &meter_id[index - 1][0];
 }
+
+int32_t SML_Set_WStr(uint32_t meter, char *hstr) {
+  if (meter < 1 || meter > meters_used) return -1;
+  meter--;
+  if (!meter_ss[meter]) return -2;
+  script_meter_desc[meter].script_str = hstr;
+  return 0;
+}
+
 #endif // USE_SML_SCRIPT_CMD
 
 
@@ -3108,29 +3155,35 @@ char *SML_Get_Sequence(char *cp,uint32_t index) {
 void SML_Check_Send(void) {
   sml_100ms_cnt++;
   char *cp;
-  for (uint32_t cnt=sml_desc_cnt; cnt<meters_used; cnt++) {
-    if (script_meter_desc[cnt].trxpin>=0 && script_meter_desc[cnt].txmem) {
+  for (uint32_t cnt = sml_desc_cnt; cnt < meters_used; cnt++) {
+    if (script_meter_desc[cnt].trxpin >= 0 && script_meter_desc[cnt].txmem) {
       //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> %d - %s - %d"),sml_desc_cnt,script_meter_desc[cnt].txmem,script_meter_desc[cnt].tsecs);
-      if ((sml_100ms_cnt>=script_meter_desc[cnt].tsecs)) {
-        sml_100ms_cnt=0;
-        //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
-        if (script_meter_desc[cnt].max_index>1) {
-          script_meter_desc[cnt].index++;
-          if (script_meter_desc[cnt].index>=script_meter_desc[cnt].max_index) {
-            script_meter_desc[cnt].index=0;
+      if ((sml_100ms_cnt >= script_meter_desc[cnt].tsecs)) {
+        sml_100ms_cnt = 0;
+        // check for scriptsync extra output
+        if (script_meter_desc[cnt].script_str) {
+          cp = script_meter_desc[cnt].script_str;
+          script_meter_desc[cnt].script_str = 0;
+        } else {
+          //AddLog(LOG_LEVEL_INFO, PSTR("100 ms>> 2"),cp);
+          if (script_meter_desc[cnt].max_index>1) {
+            script_meter_desc[cnt].index++;
+            if (script_meter_desc[cnt].index >= script_meter_desc[cnt].max_index) {
+              script_meter_desc[cnt].index = 0;
+              sml_desc_cnt++;
+            }
+            cp=SML_Get_Sequence(script_meter_desc[cnt].txmem,script_meter_desc[cnt].index);
+            //SML_Send_Seq(cnt,cp);
+          } else {
+            cp = script_meter_desc[cnt].txmem;
+            //SML_Send_Seq(cnt,cp);
             sml_desc_cnt++;
           }
-          cp=SML_Get_Sequence(script_meter_desc[cnt].txmem,script_meter_desc[cnt].index);
-          //SML_Send_Seq(cnt,cp);
-        } else {
-          cp=script_meter_desc[cnt].txmem;
-          //SML_Send_Seq(cnt,cp);
-          sml_desc_cnt++;
         }
         //AddLog(LOG_LEVEL_INFO, PSTR(">> %s"),cp);
         SML_Send_Seq(cnt,cp);
-        if (sml_desc_cnt>=meters_used) {
-          sml_desc_cnt=0;
+        if (sml_desc_cnt >= meters_used) {
+          sml_desc_cnt = 0;
         }
         break;
       }
@@ -3138,8 +3191,8 @@ void SML_Check_Send(void) {
       sml_desc_cnt++;
     }
 
-    if (sml_desc_cnt>=meters_used) {
-      sml_desc_cnt=0;
+    if (sml_desc_cnt >= meters_used) {
+      sml_desc_cnt = 0;
     }
   }
 }
@@ -3253,9 +3306,11 @@ uint8_t parity=0;
 
 // dump to log shows serial data on console
 // has to be off for normal use
-// in console sensor53 d1,d2,d3 .. or. d0 for normal use
+// in console sensor53 d1, d2, d3 ... or d0 for normal use
 // set counter => sensor53 c1 xxxx
 // restart driver => sensor53 r
+// meter number for monitoring serial activity => sensor53 m1, m2, m3 ... or m0 for all (default)
+// LED-GPIO for monitoring serial activity => sensor53 l2, l13, l15 ... or l255 for turn off (default)
 
 bool XSNS_53_cmd(void) {
   bool serviced = true;
@@ -3272,7 +3327,7 @@ bool XSNS_53_cmd(void) {
         dump2log=index;
         ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"),dump2log);
       } else if (*cp=='c') {
-          // set ounter
+        // set counter
           cp++;
           uint8_t index=*cp&7;
           if (index<1 || index>MAX_COUNTERS) index=1;
@@ -3296,6 +3351,31 @@ bool XSNS_53_cmd(void) {
         ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"restart\"}}"));
         SML_CounterSaveState();
         SML_Init();
+      } else if (*cp=='m') {
+        // meter number for serial activity
+        cp++;
+        if (!isdigit(*cp)) {
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_meter_num: %d\"}}"),ser_act_meter_num);
+        } else {
+          ser_act_meter_num=atoi(cp);
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_meter_num: %d\"}}"),ser_act_meter_num);
+        }
+      } else if (*cp=='l') {
+        // serial activity LED-GPIO
+        cp++;
+        if (!isdigit(*cp)) {
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_LED_pin: %d\"}}"),ser_act_LED_pin);
+        } else {
+          ser_act_LED_pin=atoi(cp);
+          if (Gpio_used(ser_act_LED_pin)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Error: Duplicate GPIO %d defined. Not usable for LED."),ser_act_LED_pin);
+            ser_act_LED_pin=255;
+          }
+          if (ser_act_LED_pin!=255) {
+            pinMode(ser_act_LED_pin, OUTPUT);
+          }
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"ser_act_LED_pin: %d\"}}"),ser_act_LED_pin);
+        }
       } else {
         serviced=false;
       }

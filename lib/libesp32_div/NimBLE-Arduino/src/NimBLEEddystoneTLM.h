@@ -14,6 +14,7 @@
 
 #ifndef _NimBLEEddystoneTLM_H_
 #define _NimBLEEddystoneTLM_H_
+
 #include "NimBLEUUID.h"
 
 #include <string>

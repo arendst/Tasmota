@@ -52,7 +52,7 @@
 #define CMND_END                        0xFD
 
 #define CMND_FEATURES                   0x01
-#define CMND_JSON                       0x02
+#define CMND_GET_JSON                   0x02
 #define CMND_FUNC_EVERY_SECOND          0x03
 #define CMND_FUNC_EVERY_100_MSECOND     0x04
 #define CMND_CLIENT_SEND                0x05
@@ -438,7 +438,7 @@ bool TasmotaClient_Available(void) {
 
 void TasmotaClient_Show(void) {
   if ((TClient.type) && (TClientSettings.features.func_json_append)) {
-    TasmotaClient_sendCmnd(CMND_JSON, 0);
+    TasmotaClient_sendCmnd(CMND_GET_JSON, 0);
 
     char buffer[100];
     uint8_t len = TasmotaClient_receiveData(buffer, sizeof(buffer) -1);

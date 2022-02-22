@@ -74,9 +74,6 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define SPI_DC_LOW if (spi_dc >= 0) GPIO_CLR_SLOW(spi_dc);
 #define SPI_DC_HIGH if (spi_dc >= 0) GPIO_SET_SLOW(spi_dc);
 
-
-#define ESP32_PWM_CHANNEL 1
-
 #define LUTMAXSIZE 64
 
 class uDisplay : public Renderer {
@@ -93,7 +90,7 @@ class uDisplay : public Renderer {
   uint16_t bgcol(void);
   int8_t color_type(void);
 //   void dim(uint8_t dim);            // original version with 4 bits resolution 0..15
-  virtual void dim8(uint8_t dim, uint8_t dim_gamma);           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller
+  virtual void dim10(uint8_t dim, uint16_t dim_gamma);           // dimmer with 8 bits resolution, 0..255. Gamma correction must be done by caller with 10 bits resolution
   uint16_t GetColorFromIndex(uint8_t index);
   void setRotation(uint8_t m);
   void fillScreen(uint16_t color);
@@ -186,7 +183,7 @@ class uDisplay : public Renderer {
    int8_t bpanel;          // backbanel GPIO, -1 if none
    int8_t spi_miso;
    uint8_t dimmer8;        // 8 bits resolution, 0..255
-   uint8_t dimmer8_gamma;  // 8 bits resolution, 0..255, gamma corrected
+   uint16_t dimmer10_gamma;  // 10 bits resolution, 0..1023, gamma corrected
    SPIClass *uspi;
    uint8_t sspi;
    SPISettings spiSettings;

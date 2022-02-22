@@ -81,7 +81,7 @@
 #define USE_SHT                                // [I2cDriver8] Enable SHT1X sensor (+1k4 code)
 #define USE_HTU                                // [I2cDriver9] Enable HTU21/SI7013/SI7020/SI7021 sensor (I2C address 0x40) (+1k5 code)
 #define USE_BMP                                // [I2cDriver10] Enable BMP085/BMP180/BMP280/BME280 sensors (I2C addresses 0x76 and 0x77) (+4k4 code)
-  #define USE_BME680                           // Enable support for BME680 sensor using Bosch BME680 library (+4k code)
+  #define USE_BME68X                           // Enable support for BME680/BME688 sensor using Bosch BME68x library (+6k9 code)
 #define USE_BH1750                             // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
 #define USE_VEML6070                           // [I2cDriver12] Enable VEML6070 sensor (I2C addresses 0x38 and 0x39) (+1k5 code)
 //#define USE_VEML6075                           // [I2cDriver49] Enable VEML6075 UVA/UVB/UVINDEX Sensor (I2C address 0x10) (+2k1 code)
@@ -500,8 +500,7 @@
 // -- MQTT - TLS - AWS IoT ------------------------
 #ifdef USE_ZBBRIDGE_TLS                            // Enable TLS for ZbBridge
   #define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
-    #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
-  #define USE_TLS                                  // flag indicates we need to include TLS code
+  #define USE_MQTT_AWS_IOT_LIGHT                   // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 #endif                                             // USE_ZBBRIDGE_TLS
 
 //#undef USE_KNX                                   // Disable KNX IP Protocol Support
@@ -938,9 +937,8 @@
 #undef USE_PING
 #undef USE_AUTOCONF
 #undef USE_BERRY
-#undef USE_WEBCLIENT
-#undef USE_WEBCLIENT_HTTPS
-//#undef USE_TLS   // needed for MQTT over TLS
+//#undef USE_WEBCLIENT
+//#undef USE_WEBCLIENT_HTTPS
 
 #endif  // FIRMWARE_MINICUSTOM
 
@@ -1046,5 +1044,9 @@
 #ifdef USE_EMULATION_HUE
 #define USE_UNISHOX_COMPRESSION                // Add support for string compression
 #endif
+
+#if defined(USE_MQTT_TLS)                      // Enable TLS if required:
+  #define USE_TLS                              // flag indicates we need to include TLS code
+#endif                                         // USE_MQTT_TLS
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

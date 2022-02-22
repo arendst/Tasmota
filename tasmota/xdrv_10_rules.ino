@@ -48,6 +48,7 @@
  *   on switch1#state do power2 %value% endon
  *   on analog#a0div10 do publish cmnd/ring2/dimmer %value% endon
  *   on loadavg<50 do power 2 endon
+ *   on Time#Initialized do Backlog var1 0;event checktime=%time% endon on event#checktime>%timer1% do var1 1 endon on event#checktime>=%timer2%  do var1 0 endon * on event#checktime do Power1 %var1% endon
  *
  * Notes:
  *   Spaces after <on>, around <do> and before <endon> are mandatory
@@ -128,6 +129,13 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
   #define IF_BLOCK_ELSE           2
   #define IF_BLOCK_ENDIF          3
 #endif  // USE_EXPRESSION
+
+// Define to indicate that rules are always enabled 
+#ifdef USE_BERRY
+  #define BERRY_RULES     1
+#else
+  #define BERRY_RULES     0
+#endif
 
 const char kRulesCommands[] PROGMEM = "|"  // No prefix
   D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|"
@@ -463,14 +471,31 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     if (rule_param.startsWith(F("%TIMESTAMP%"))) {
       rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+    if (rule_param.startsWith(F("%TIMER"))) {
+      uint32_t index = rule_param.substring(6).toInt();
+      if ((index > 0) && (index <= MAX_TIMERS)) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), index);
+        if (rule_param.startsWith(stemp)) {
+          rule_param = String(Settings->timer[index -1].time);
+        }
+      }
+    }
+#if defined(USE_SUNRISE)
     if (rule_param.startsWith(F("%SUNRISE%"))) {
       rule_param = String(SunMinutes(0));
     }
     if (rule_param.startsWith(F("%SUNSET%"))) {
       rule_param = String(SunMinutes(1));
     }
-#endif  // USE_TIMERS and USE_SUNRISE
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
+#if defined(USE_LIGHT)
+    char scolor[LIGHT_COLOR_SIZE];
+    if (rule_param.startsWith(F("%COLOR%"))) {
+      rule_param = LightGetColor(scolor);
+    }
+#endif
 // #ifdef USE_ZIGBEE
 //     if (rule_param.startsWith(F("%ZBDEVICE%"))) {
 //       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
@@ -768,10 +793,20 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       snprintf_P(stemp, sizeof(stemp), PSTR("%06X"), ESP_getChipId());
       RulesVarReplace(commands, F("%DEVICEID%"), stemp);
       RulesVarReplace(commands, F("%MACADDR%"), NetworkUniqueId());
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+      for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
+        RulesVarReplace(commands, stemp, String(Settings->timer[i].time));
+      }
+#if defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
-#endif  // USE_TIMERS and USE_SUNRISE
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
+#if defined(USE_LIGHT)
+      char scolor[LIGHT_COLOR_SIZE];
+      RulesVarReplace(commands, F("%COLOR%"), LightGetColor(scolor));
+#endif
 #ifdef USE_ZIGBEE
       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
       RulesVarReplace(commands, F("%ZBDEVICE%"), String(stemp));
@@ -870,11 +905,7 @@ void RulesInit(void)
 
 void RulesEvery50ms(void)
 {
-#ifdef USE_BERRY
-  if (!Rules.busy) {  // Emitting Rules events is always enabled with Berry
-#else
-  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
-#endif
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
@@ -1026,8 +1057,7 @@ void RulesEvery50ms(void)
 
 void RulesEvery100ms(void) {
   static uint8_t xsns_index = 0;
-
-  if (Settings->rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     ResponseClear();
     int tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
@@ -1044,7 +1074,7 @@ void RulesEvery100ms(void) {
 void RulesEverySecond(void)
 {
   char json_event[120];
-  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     if (RtcTime.valid) {
       if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
         Rules.last_minute = RtcTime.minute;
@@ -1057,7 +1087,7 @@ void RulesEverySecond(void)
     if (Rules.timer[i] != 0L) {           // Timer active?
       if (TimeReached(Rules.timer[i])) {  // Timer finished?
         Rules.timer[i] = 0L;              // Turn off this timer
-        if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+        if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
           RulesProcessEvent(json_event);
         }
@@ -1068,7 +1098,7 @@ void RulesEverySecond(void)
 
 void RulesSaveBeforeRestart(void)
 {
-  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     char json_event[32];
 
     strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));
@@ -1394,12 +1424,19 @@ bool findNextVariableValue(char * &pVarname, float &value)
     value = UtcTime();
   } else if (sVarName.equals(F("LOCALTIME"))) {
     value = LocalTime();
-#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+#if defined(USE_TIMERS)
+  } else if (sVarName.startsWith(F("TIMER"))) {
+    uint32_t index = sVarName.substring(5).toInt();
+    if (index > 0 && index <= MAX_TIMERS) {
+      value = Settings->timer[index -1].time;
+    }
+#if defined(USE_SUNRISE)
   } else if (sVarName.equals(F("SUNRISE"))) {
     value = SunMinutes(0);
   } else if (sVarName.equals(F("SUNSET"))) {
     value = SunMinutes(1);
-#endif
+#endif  // USE_SUNRISE
+#endif  // USE_TIMERS
 // #ifdef USE_ZIGBEE
 //   // } else if (sVarName.equals(F("ZBDEVICE"))) {
 //   //   value = Z_GetLastDevice();

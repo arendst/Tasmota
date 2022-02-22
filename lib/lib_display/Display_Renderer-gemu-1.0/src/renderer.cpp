@@ -59,10 +59,10 @@ uint16_t Renderer::GetColorFromIndex(uint8_t index) {
 
 void Renderer::dim(uint8_t contrast) {
   uint8_t contrast8 = ((uint32_t)contrast * 255) / 15;
-  dim8(contrast8, contrast8);
+  dim10(contrast8, contrast8 * 4);
 }
 
-void Renderer::dim8(uint8_t contrast, uint8_t contrast_gamma) {
+void Renderer::dim10(uint8_t contrast, uint16_t contrast_gamma) {
 
 }
 
@@ -104,7 +104,7 @@ uint8_t *Renderer::allocate_framebuffer(uint32_t size) {
 
 void Renderer::setTextSize(uint8_t sf) {
   if (sf < 1) sf = 1;
-  if (sf > 4) sf = 4;
+  if (sf > 16) sf = 16;
   tsize = sf;
   Adafruit_GFX::setTextSize(sf);
 }

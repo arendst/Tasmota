@@ -195,11 +195,21 @@ void IrReceiveUpdateThreshold(void)
   }
 }
 
+void IrReceiveUpdateTolerance(void)
+{
+  if (irrecv != nullptr) {
+    if (Settings->param[P_IR_TOLERANCE] == 0) { Settings->param[P_IR_TOLERANCE] = IR_RCV_TOLERANCE; }
+    if (Settings->param[P_IR_TOLERANCE] > 100) { Settings->param[P_IR_TOLERANCE] = 100; }
+    irrecv->setTolerance(Settings->param[P_IR_TOLERANCE]);
+  }
+}
+
 void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
   irrecv = new IRrecv(Pin(GPIO_IRRECV), IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
   irrecv->setUnknownThreshold(Settings->param[P_IR_UNKNOW_THRESHOLD]);
+  IrReceiveUpdateTolerance();
   irrecv->enableIRIn();                  // Start the receiver
 
   //  AddLog(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));

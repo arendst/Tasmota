@@ -3,34 +3,58 @@
 #ifndef __BE_MAPPING__
 #define __BE_MAPPING__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "berry.h"
 
 // include this header to force compilation fo this module
 #define BE_MAX_CB       20      // max number of callbacks, each callback requires a distinct address
 
-/*********************************************************************************************\
- * Support for Berry int constants
- * as virtual members
- \*********************************************************************************************/
+#ifdef __cplusplus
+  #define be_const_ctype_func(_f) {                               \
+      bvaldata((const void*) &ctype_func_def##_f),                      \
+      BE_CTYPE_FUNC                                               \
+  }
+#else // __cplusplus
+typedef const void* be_constptr;
+  #define be_const_ctype_func(_f) {                               \
+      .v.nf = (const void*) &ctype_func_def##_f,                  \
+      .type = BE_CTYPE_FUNC                                       \
+  }
+#endif // __cplusplus
 
-typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intptr_t p3,
-                                    intptr_t p4, intptr_t p5, intptr_t p6, intptr_t p7);
+#define BE_FUNC_CTYPE_DECLARE(_name, _ret_arg, _in_arg) \
+    static const be_ctype_args_t ctype_func_def##_name = { (const void*) &_name, _ret_arg, _in_arg };
+#define BE_VAR_CTYPE_DECLARE(_name, _ret_arg) \
+    static const be_ctype_var_args_t ctype_func_def##_name = { (const void*) &_name, _ret_arg };
+
+#define be_cconst_int(_v)                   ((intptr_t)(_v))
+#define be_cconst_string(_v)                ((intptr_t)(_v))
+#define be_cconst_ptr(_v)                   ((intptr_t)(_v))
+#define be_cconst_func(_v)                  ((intptr_t)(_v))
+#define be_ctype(_name)                     ((intptr_t) &ctype_func_def##_name)
+
+/* C arguments are coded as an array of 3 pointers */
+typedef struct be_ctype_args_t {
+  const void* func;
+  const char* return_type;
+  const char* arg_type;
+} be_ctype_args_t;
+
+/* ctype constant function as an array of 2 pointers: function and return type. arg_type is always NULL */
+typedef struct be_ctype_var_args_t {
+  const void* func;
+  const char* return_type;
+} be_ctype_var_args_t;
+
 
 typedef struct be_const_member_t {
     const char * name;
-    int        value;
+    intptr_t     value;
 } be_const_member_t;
 
 // table of functions per class
 typedef struct be_ntv_func_def_t {
     const char * name;
-    void * func;
-    const char * return_type;
-    const char * arg_type;
+    be_ctype_args_t args;
 } be_ntv_func_def_t;
 
 struct bclass;
@@ -41,6 +65,17 @@ typedef struct be_ntv_class_def_t {
     const be_ntv_func_def_t * func_table;
     size_t size;
 } be_ntv_class_def_t;
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/*********************************************************************************************\
+ * Support for Berry int constants
+ * as virtual members
+ \*********************************************************************************************/
 
 void be_raisef(bvm *vm, const char *except, const char *msg, ...);
 
@@ -55,10 +90,12 @@ extern int be_map_bin_search(const char * needle, const void * table, size_t elt
 extern void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr);
 extern int be_find_global_or_module_member(bvm *vm, const char * cl_name);
 
-extern bbool be_const_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern bbool be_const_module_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern bbool be_const_class_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
 extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *len);
 extern int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);
-extern int be_call_c_func(bvm *vm, void * func, const char * return_type, const char * arg_type);
+extern int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type);
+extern int be_call_ctype_func(bvm *vm, const void *definition);     /* handler for Berry vm */
 
 #ifdef __cplusplus
 }

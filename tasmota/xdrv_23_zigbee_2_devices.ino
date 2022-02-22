@@ -823,7 +823,7 @@ public:
   // If light, returns the number of channels, or 0xFF if unknown
   int8_t getLightChannels(void)        const {
     const Z_Data_Light & light = data.find<Z_Data_Light>(0);
-    if (&light != nullptr) {
+    if (&light != &z_data_unk) {
       return light.getConfig();
     } else {
       return -1;

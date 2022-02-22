@@ -214,7 +214,7 @@ a_features = [[
     ],[
     "USE_COUNTER","USE_ADC_VCC","USE_ENERGY_SENSOR","USE_PZEM004T",
     "USE_DS18B20","USE_DS18x20_LEGACY","USE_DS18x20","USE_DHT",
-    "USE_SHT","USE_HTU","USE_BMP","USE_BME680",
+    "USE_SHT","USE_HTU","USE_BMP","USE_BME68X",
     "USE_BH1750","USE_VEML6070","USE_ADS1115_I2CDEV","USE_ADS1115",
     "USE_INA219","USE_SHT3X","USE_MHZ19","USE_TSL2561",
     "USE_SENSEAIR","USE_PMS5003","USE_MGS","USE_NOVA_SDS",
@@ -262,7 +262,7 @@ a_features = [[
     "USE_MCP2515","USE_TASMESH","USE_WIFI_RANGE_EXTENDER","USE_INFLUXDB",
     "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
-    "USE_SDM230","","","",
+    "USE_SDM230","USE_CM110x","USE_BL6523","",
     "","","","",
     "","","",""
     ]]
@@ -292,7 +292,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20220115 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v11.0.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

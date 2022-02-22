@@ -14,17 +14,16 @@
 
 #ifndef COMPONENTS_NIMBLEREMOTECHARACTERISTIC_H_
 #define COMPONENTS_NIMBLEREMOTECHARACTERISTIC_H_
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
 
 #include "NimBLERemoteService.h"
 #include "NimBLERemoteDescriptor.h"
 
 #include <vector>
 #include <functional>
+#include "NimBLELog.h"
 
 class NimBLERemoteService;
 class NimBLERemoteDescriptor;
@@ -62,47 +61,15 @@ public:
     uint16_t                                       getHandle();
     uint16_t                                       getDefHandle();
     NimBLEUUID                                     getUUID();
-    std::string                                    readValue(time_t *timestamp = nullptr);
-
-    /**
-     * @brief A template to convert the remote characteristic data to <type\>.
-     * @tparam T The type to convert the data to.
-     * @param [in] timestamp A pointer to a time_t struct to store the time the value was read.
-     * @param [in] skipSizeCheck If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
-     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is
-     * less than <tt>sizeof(<type\>)</tt>.
-     * @details <b>Use:</b> <tt>readValue<type>(&timestamp, skipSizeCheck);</tt>
-     */
-    template<typename T>
-    T                                              readValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
-        std::string value = readValue(timestamp);
-        if(!skipSizeCheck && value.size() < sizeof(T)) return T();
-        const char *pData = value.data();
-        return *((T *)pData);
-    }
+    NimBLEAttValue                                 readValue(time_t *timestamp = nullptr);
+    std::string                                    toString();
+    NimBLERemoteService*                           getRemoteService();
 
     uint8_t                                        readUInt8()  __attribute__ ((deprecated("Use template readValue<uint8_t>()")));
     uint16_t                                       readUInt16() __attribute__ ((deprecated("Use template readValue<uint16_t>()")));
     uint32_t                                       readUInt32() __attribute__ ((deprecated("Use template readValue<uint32_t>()")));
     float                                          readFloat()  __attribute__ ((deprecated("Use template readValue<float>()")));
-    std::string                                    getValue(time_t *timestamp = nullptr);
-
-    /**
-     * @brief A template to convert the remote characteristic data to <type\>.
-     * @tparam T The type to convert the data to.
-     * @param [in] timestamp A pointer to a time_t struct to store the time the value was read.
-     * @param [in] skipSizeCheck If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
-     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is
-     * less than <tt>sizeof(<type\>)</tt>.
-     * @details <b>Use:</b> <tt>getValue<type>(&timestamp, skipSizeCheck);</tt>
-     */
-    template<typename T>
-    T                                              getValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
-        std::string value = getValue(timestamp);
-        if(!skipSizeCheck && value.size() < sizeof(T)) return T();
-        const char *pData = value.data();
-        return *((T *)pData);
-    }
+    NimBLEAttValue                                 getValue(time_t *timestamp = nullptr);
 
     bool                                           subscribe(bool notifications = true,
                                                              notify_callback notifyCallback = nullptr,
@@ -115,20 +82,74 @@ public:
     bool                                           writeValue(const uint8_t* data,
                                                               size_t length,
                                                               bool response = false);
-    bool                                           writeValue(const std::string &newValue,
-                                                              bool response = false);
+    bool                                           writeValue(const std::vector<uint8_t>& v, bool response = false);
+    bool                                           writeValue(const char* s, bool response = false);
+
+
+    /*********************** Template Functions ************************/
+
     /**
-     * @brief Convenience template to set the remote characteristic value to <type\>val.
+     * @brief Template to set the remote characteristic value to <type\>val.
      * @param [in] s The value to write.
      * @param [in] response True == request write response.
+     * @details Only used for non-arrays and types without a `c_str()` method.
      */
     template<typename T>
-    bool writeValue(const T &s, bool response = false) {
+#ifdef _DOXYGEN_
+    bool
+#else
+    typename std::enable_if<!std::is_array<T>::value && !Has_c_str_len<T>::value, bool>::type
+#endif
+    writeValue(const T& s, bool response = false) {
         return writeValue((uint8_t*)&s, sizeof(T), response);
     }
 
-    std::string                                    toString();
-    NimBLERemoteService*                           getRemoteService();
+    /**
+     * @brief Template to set the remote characteristic value to <type\>val.
+     * @param [in] s The value to write.
+     * @param [in] response True == request write response.
+     * @details Only used if the <type\> has a `c_str()` method.
+     */
+    template<typename T>
+#ifdef _DOXYGEN_
+    bool
+#else
+    typename std::enable_if<Has_c_str_len<T>::value, bool>::type
+#endif
+    writeValue(const T& s, bool response = false) {
+        return writeValue((uint8_t*)s.c_str(), s.length(), response);
+    }
+
+    /**
+     * @brief Template to convert the remote characteristic data to <type\>.
+     * @tparam T The type to convert the data to.
+     * @param [in] timestamp A pointer to a time_t struct to store the time the value was read.
+     * @param [in] skipSizeCheck If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
+     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is
+     * less than <tt>sizeof(<type\>)</tt>.
+     * @details <b>Use:</b> <tt>getValue<type>(&timestamp, skipSizeCheck);</tt>
+     */
+    template<typename T>
+    T getValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
+        if(!skipSizeCheck && m_value.size() < sizeof(T)) return T();
+        return *((T *)m_value.getValue(timestamp));
+    }
+
+    /**
+     * @brief Template to convert the remote characteristic data to <type\>.
+     * @tparam T The type to convert the data to.
+     * @param [in] timestamp A pointer to a time_t struct to store the time the value was read.
+     * @param [in] skipSizeCheck If true it will skip checking if the data size is less than <tt>sizeof(<type\>)</tt>.
+     * @return The data converted to <type\> or NULL if skipSizeCheck is false and the data is
+     * less than <tt>sizeof(<type\>)</tt>.
+     * @details <b>Use:</b> <tt>readValue<type>(&timestamp, skipSizeCheck);</tt>
+     */
+    template<typename T>
+    T readValue(time_t *timestamp = nullptr, bool skipSizeCheck = false) {
+        NimBLEAttValue value = readValue();
+        if(!skipSizeCheck && value.size() < sizeof(T)) return T();
+        return *((T *)value.getValue(timestamp));
+    }
 
 private:
 
@@ -158,15 +179,12 @@ private:
     uint16_t                m_defHandle;
     uint16_t                m_endHandle;
     NimBLERemoteService*    m_pRemoteService;
-    std::string             m_value;
+    NimBLEAttValue          m_value;
     notify_callback         m_notifyCallback;
-    time_t                  m_timestamp;
-    portMUX_TYPE            m_valMux;
 
     // We maintain a vector of descriptors owned by this characteristic.
     std::vector<NimBLERemoteDescriptor*> m_descriptorVector;
 }; // NimBLERemoteCharacteristic
 
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
 #endif /* COMPONENTS_NIMBLEREMOTECHARACTERISTIC_H_ */

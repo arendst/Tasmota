@@ -100,8 +100,10 @@ void EthernetEvent(WiFiEvent_t event) {
         ETH.macAddress().c_str(), (uint32_t)ETH.localIP(), eth_hostname);
       Settings->eth_ipv4_address[1] = (uint32_t)ETH.gatewayIP();
       Settings->eth_ipv4_address[2] = (uint32_t)ETH.subnetMask();
-      Settings->eth_ipv4_address[3] = (uint32_t)ETH.dnsIP();
-      Settings->eth_ipv4_address[4] = (uint32_t)ETH.dnsIP(1);
+      if (0 == Settings->eth_ipv4_address[0]) {  // At this point ETH.dnsIP() are NOT correct unless DHCP
+        Settings->eth_ipv4_address[3] = (uint32_t)ETH.dnsIP();
+        Settings->eth_ipv4_address[4] = (uint32_t)ETH.dnsIP(1);
+      }
       TasmotaGlobal.rules_flag.eth_connected = 1;
       TasmotaGlobal.global_state.eth_down = 0;
       break;

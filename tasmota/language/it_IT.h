@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.5.0.9 - Last update 15.01.2022
+ * Updated until v10.1.0.6 - Last update 20.02.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -137,6 +137,7 @@
 #define D_ORP                  "ORP"
 #define D_PASSWORD             "Password"
 #define D_PH                   "pH"
+#define D_MQ                   "MQ"
 #define D_PORT                 "Porta"
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
@@ -788,6 +789,7 @@
 #define D_SENSOR_ADC_CT_POWER           "ADC - CTR alimentazione"
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
 #define D_SENSOR_ADC_PH                 "ADC pH"
+#define D_SENSOR_ADC_MQ                 "ADC MQ"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
@@ -845,11 +847,15 @@
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
 #define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
+#define D_SENSOR_BL6523_TX              "BL6523 - TX"
+#define D_SENSOR_BL6523_RX              "BL6523 - RX"
 #define D_SENSOR_HEARTBEAT              "Battito cardiaco"
 #define D_GPIO_SHIFT595_SRCLK           "74x595 - SRCLK"
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"
 #define D_GPIO_SHIFT595_SER             "74x595 - SER"
+#define D_SENSOR_CM11_TX                "CM110x - TX"
+#define D_SENSOR_CM11_RX                "CM110x - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -936,8 +942,8 @@
 #define D_SOLAX_ERROR_1   "Griglia errore persa"
 #define D_SOLAX_ERROR_2   "Griglia errore tensione"
 #define D_SOLAX_ERROR_3   "Griglia errore frequenza"
-#define D_SOLAX_ERROR_4   "Errore tensione PV"
-#define D_SOLAX_ERROR_5   "Errore isolamento"
+#define D_SOLAX_ERROR_4   "Errore tensione troppo bassa"
+#define D_SOLAX_ERROR_5   "Errore isolamento PV"
 #define D_SOLAX_ERROR_6   "Errore temperatura eccessiva"
 #define D_SOLAX_ERROR_7   "Errore ventilatore"
 #define D_SOLAX_ERROR_8   "Altro errore dispositivo"

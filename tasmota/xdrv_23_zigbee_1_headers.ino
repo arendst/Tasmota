@@ -80,6 +80,7 @@ const uint8_t  ZIGBEE_LABEL_INIT_DEVICE = 14;    // Init ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_DEVICE = 15;    // Start ZNP as end-device
 const uint8_t  ZIGBEE_LABEL_START_ROUTER_DEVICE = 16;    // Start common to router and device
 const uint8_t  ZIGBEE_LABEL_ZB3_INIT = 17;        // check parameters for ZB3
+const uint8_t  ZIGBEE_LABEL_COORD_STARTED = 18;     // Coordinator has started
 const uint8_t  ZIGBEE_LABEL_FACT_RESET_ROUTER_DEVICE_POST = 19;   // common post configuration for router and device
 const uint8_t  ZIGBEE_LABEL_READY = 20;   // goto label 20 for main loop
 const uint8_t  ZIGBEE_LABEL_MAIN_LOOP = 21;   // main loop

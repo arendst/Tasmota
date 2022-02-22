@@ -42,7 +42,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS_SEND
   D_CMND_DEVGROUP_SHARE "|" D_CMND_DEVGROUPSTATUS "|" D_CMND_DEVGROUP_TIE "|"
 #endif  // USE_DEVICE_GROUPS
-  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER
+  D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
    "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
 #endif  // ESP32
@@ -74,7 +74,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS_SEND
   &CmndDevGroupShare, &CmndDevGroupStatus, &CmndDevGroupTie,
 #endif  // USE_DEVICE_GROUPS
-  &CmndSetSensor, &CmndSensor, &CmndDriver
+  &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
   , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
 #endif  // ESP32
@@ -255,26 +255,24 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     }
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmnd '%s', Idx %d, Len %d, Data '%s'"),
-    grpflg, type, index, data_len, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
+  int32_t payload = -99;
+  if (!binary_data) {
+    if (!strcmp(dataBuf,"?")) { data_len = 0; }
+
+    char *p;
+    payload = strtol(dataBuf, &p, 0);  // decimal, octal (0) or hex (0x)
+    if (p == dataBuf) { payload = -99; }
+    int temp_payload = GetStateNumber(dataBuf);
+    if (temp_payload > -1) { payload = temp_payload; }
+  }
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CMD: Grp %d, Cmd '%s', Idx %d, Len %d, Pld %d, Data '%s'"),
+    grpflg, type, index, data_len, payload, (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : dataBuf);
 
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
 
     if (Settings->ledstate &0x02) { TasmotaGlobal.blinks++; }
-
-    int32_t payload = -99;
-    if (!binary_data) {
-      if (!strcmp(dataBuf,"?")) { data_len = 0; }
-
-      char *p;
-      payload = strtol(dataBuf, &p, 0);  // decimal, octal (0) or hex (0x)
-      if (p == dataBuf) { payload = -99; }
-      int temp_payload = GetStateNumber(dataBuf);
-      if (temp_payload > -1) { payload = temp_payload; }
-    }
-
-    DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
 //    TasmotaGlobal.backlog_timer = millis() + (100 * MIN_BACKLOG_DELAY);
     TasmotaGlobal.backlog_timer = millis() + Settings->param[P_BACKLOG_DELAY];  // SetOption34
@@ -388,6 +386,73 @@ void CmndBacklog(void) {
     TasmotaGlobal.backlog_pointer = TasmotaGlobal.backlog_index;
 #endif
     ResponseCmndChar(blflag ? PSTR(D_JSON_EMPTY) : PSTR(D_JSON_ABORTED));
+  }
+}
+
+void CmndJson(void) {
+  // Json {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  //
+  // Escape lower level tokens and add quotes around it
+  // Input:
+  // {"template":{"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18},"power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  // Output (escaped subtokens):
+  // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+  uint32_t bracket = 0;
+  String data_buf("");
+  data_buf.reserve(XdrvMailbox.data_len);       // We need at least the same amount of characters
+  for (uint32_t index = 0; index < XdrvMailbox.data_len; index++) {
+    char c = (char)XdrvMailbox.data[index];
+    if (c == '{') {
+      bracket++;
+      if (2 == bracket) { data_buf += '"'; }    // Add start quote
+    }
+    if (bracket > 1) {
+      if (c == '\"') { data_buf += '\\'; }      // Escape any quote within second level token
+    }
+    data_buf += c;
+    if (c == '}') {
+      bracket--;
+      if (1 == bracket) { data_buf += '"'; }    // Add end quote
+    }
+  }
+
+  JsonParser parser((char*)data_buf.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (root) {
+    // Convert to backlog commands
+    // Input (escaped subtokens):
+    // {"template":"{\"NAME\":\"Dummy\",\"GPIO\":[320,0,321],\"FLAG\":0,\"BASE\":18}","power":2,"HSBColor":"51,97,100","Channel":[100,85,3]}
+    // Output:
+    // template {"NAME":"Dummy","GPIO":[320,0,321],"FLAG":0,"BASE":18};power 2;HSBColor 51,97,100;Channel1 100;Channel2 85;Channel3 3
+    String backlog;                             // We might need a larger string than XdrvMailbox.data_len accomodating decoded arrays
+    for (auto command_key : root) {
+      const char *command = command_key.getStr();
+      JsonParserToken parameters = command_key.getValue();
+      if (parameters.isArray()) {
+        JsonParserArray parameter_arr = parameters.getArray();
+        uint32_t index = 1;
+        for (auto value : parameter_arr) {
+          if (backlog.length()) { backlog += ";"; }
+          backlog += command;
+          backlog += index++;
+          backlog += " ";
+          backlog += value.getStr();            // Channel1 100;Channel2 85;Channel3 3
+        }
+      } else if (parameters.isObject()) {       // Should have been escaped
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("JSN: Object"));
+      } else {
+        if (backlog.length()) { backlog += ";"; }
+        backlog += command;
+        backlog += " ";
+        backlog += parameters.getStr();         // HSBColor 51,97,100
+      }
+    }
+    XdrvMailbox.data = (char*)backlog.c_str();  // Backlog commands
+    XdrvMailbox.data_len = 1;                   // Any data
+    XdrvMailbox.index = 0;                      // Backlog0 - no delay
+    CmndBacklog();
+  } else {
+    ResponseCmndChar(PSTR(D_JSON_EMPTY));
   }
 }
 
@@ -992,6 +1057,9 @@ void CmndSetoptionBase(bool indexed) {
           if (P_IR_UNKNOW_THRESHOLD == pindex) {
             IrReceiveUpdateThreshold();    // SetOption38
           }
+          if (P_IR_TOLERANCE == pindex) {
+            IrReceiveUpdateTolerance();    // SetOption44
+          }
 #endif
 #ifdef ROTARY_V1
           if (P_ROTARY_MAX_STEP == pindex) {
@@ -1027,7 +1095,7 @@ void CmndSetoptionBase(bool indexed) {
               SettingsSave(2);
             }
 #ifdef USE_HOME_ASSISTANT
-            if ((19 == pindex) || (30 == pindex)) {
+            if ((19 == pindex) || (30 == pindex) || (114 == pindex)) {
               HAssDiscover();              // Delayed execution to provide enough resources during hass_discovery or hass_light
             }
 #endif  // USE_HOME_ASSISTANT
@@ -1451,56 +1519,6 @@ void CmndTemplate(void)
 #endif // FIRMWARE_MINIMAL
   }
   if (!error) { TemplateJson(); }
-}
-
-void CmndPwm(void)
-{
-  if (TasmotaGlobal.pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings->pwm_range) && PinUsed(GPIO_PWM1, XdrvMailbox.index -1)) {
-      Settings->pwm_value[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      analogWrite(Pin(GPIO_PWM1, XdrvMailbox.index -1), bitRead(TasmotaGlobal.pwm_inverted, XdrvMailbox.index -1) ? Settings->pwm_range - XdrvMailbox.payload : XdrvMailbox.payload);
-    }
-    Response_P(PSTR("{"));
-    MqttShowPWMState();  // Render the PWM status to MQTT
-    ResponseJsonEnd();
-  }
-}
-
-void CmndPwmfrequency(void)
-{
-  if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload >= PWM_MIN) && (XdrvMailbox.payload <= PWM_MAX))) {
-    Settings->pwm_frequency = (1 == XdrvMailbox.payload) ? PWM_FREQ : XdrvMailbox.payload;
-    analogWriteFreq(Settings->pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
-#ifdef USE_LIGHT
-    LightReapplyColor();
-    LightAnimate();
-#endif // USE_LIGHT
-  }
-  ResponseCmndNumber(Settings->pwm_frequency);
-}
-
-void CmndPwmrange(void) {
-  // Support only 8 (=255), 9 (=511) and 10 (=1023) bits resolution
-  if ((1 == XdrvMailbox.payload) || ((XdrvMailbox.payload > 254) && (XdrvMailbox.payload < 1024))) {
-    uint32_t pwm_range = XdrvMailbox.payload;
-    uint32_t pwm_resolution = 0;
-    while (pwm_range) {
-      pwm_resolution++;
-      pwm_range >>= 1;
-    }
-    pwm_range = (1 << pwm_resolution) - 1;
-    uint32_t old_pwm_range = Settings->pwm_range;
-    Settings->pwm_range = (1 == XdrvMailbox.payload) ? PWM_RANGE : pwm_range;
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {
-      if (Settings->pwm_value[i] > Settings->pwm_range) {
-        Settings->pwm_value[i] = Settings->pwm_range;
-      }
-    }
-    if (Settings->pwm_range != old_pwm_range) {  // On ESP32 this prevents loss of duty state
-      analogWriteRange(Settings->pwm_range);     // Default is 1023 (Arduino.h)
-    }
-  }
-  ResponseCmndNumber(Settings->pwm_range);
 }
 
 void CmndButtonDebounce(void)

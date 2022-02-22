@@ -258,8 +258,8 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_BMP)
     feature3 |= 0x00000400;  // xsns_09_bmp.ino
 #endif
-#if defined(USE_I2C) && defined(USE_BMP) && defined(USE_BME680)
-    feature3 |= 0x00000800;  // xsns_09_bmp.ino - BME680
+#if defined(USE_I2C) && defined(USE_BMP) && defined(USE_BME68X)
+    feature3 |= 0x00000800;  // xsns_09_bmp.ino - BME68x
 #endif
 #if defined(USE_I2C) && defined(USE_BH1750)
     feature3 |= 0x00001000;  // xsns_10_bh1750.ino
@@ -788,8 +788,12 @@ void ResponseAppendFeatures(void)
 #ifdef USE_SDM230
     feature8 |= 0x00100000;  // xnrg_21_sdm230.ino
 #endif
-//    feature8 |= 0x00200000;
-//    feature8 |= 0x00400000;
+#ifdef USE_CM110x
+    feature8 |= 0x00200000;  // xsns_95_cm110x.ino
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_BL6523)
+    feature8 |= 0x00400000;  // xnrg_22_bl6523.ino
+#endif
 //    feature8 |= 0x00800000;
 
 //    feature8 |= 0x01000000;

@@ -3,15 +3,86 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.01.3]
+## [11.0.0.2]
 ### Added
-- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 
 ### Changed
+- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
 
 ### Fixed
 
-## [2022.01.2] 20220116
+## [11.0.0.1] 20220220
+### Added
+- Command ``SspmMap 0`` to reset Sonoff SPM default mapping
+- Command ``TcpConnect <port><ip_address>`` to add client connection mode (#14874)
+- ESP32 support for BLE Mi scale V1 (#13517)
+- ESP32 integrate Homekit in Bluetooth binary (#14818)
+- ESP32 Berry always enable rules
+- ESP32 Berry bootloop protection
+- ESP32 Berry virtual Alexa hue device (#14833)
+
+### Changed
+- Adafruit BusIO library from v1.0.10 to v1.11.0
+- ESP32 update the internal Berry type system to sync with Skiars Berry repository. No expected impact on code, but .bec files need to be generated again. (#14811)
+- ESP32 LVGL library from v8.1.0 to v8.2.0
+- ESP32 NimBLE library from v1.3.3 to v1.3.6
+- Sonoff SPM increase max number of relays supported to 32 (8 SPM-4Relay modules)
+
+### Fixed
+- SSPM energy yesterday when zero
+- GPIO OptionE1 selection regression (#14821)
+- BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 (#14829)
+- Orno WE517 power meter phase 2 current reactive (#14841)
+- Wiegand 34-bit rfid reading and presentation (#14834)
+
+## [Released]
+
+## [11.0.0] 20220212
+- Release Olivia
+
+## [10.1.0.8] 20220212
+### Changed
+- From Calendar Versioning (CalVer) back to Semantic Versioning (SemVer) for better major change indication and future support
+
+## [2022.1.4 = 10.1.0.7] 20220205
+### Added
+- Rule variables %timer1% to %timer16% (#14619)
+
+### Changed
+- Version display from 2022.01.3 to 2022.1.4
+
+### Fixed
+- SR04 sensor driver regression from 2022.01.2
+
+## [2022.01.3 = 10.1.0.6] 20220204
+### Added
+- Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
+- ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
+- Support for BME688 with latest Bosch-Sensor-API library (#14513)
+- Command ``SetOption44 1..100`` to set base tolerance percentage for matching incoming IR messages (default 25, max 100) (#14555)
+- Command ``Json {<Tasmota commands>}`` to enable input of any command as JSON tokens (#14568)
+- Rule variable %color% (#14572)
+- Command ``SspmDisplay 1`` to display Sonoff SPM energy data in GUI for relays powered on only
+- Command ``SspmEnergyTotal<relay>`` to (p)reset Sonoff SPM total energy without today's energy
+- Command ``SspmEnergyYesterday<relay>`` to (p)reset Sonoff SPM energy yesterday
+- Command ``SspmHistory<relay>`` to retrieve Sonoff SPM daily energy up to last six month (as defined by ARM firmware)
+- Command ``SspmIAmHere<relay>`` to (faintly) blink Sonoff SPM-4Relay module error light of requested relay
+- Command ``SspmLog<relay> [x]`` to retrieve Sonoff SPM relay power state change and cause logging
+- Command ``SspmOverload<relay> <options>`` to set Sonoff SPM overload criteria for any relay
+- Command ``SspmScan`` to rescan Sonoff SPM modbus
+- Support for MQ analog sensor for air quality by Francesco Adriani (#14581)
+- Command ``SetOption134 1`` to disable PWM auto-phasing for lights by default (new behavior) (#14590)
+- Increase PWM channels to 16 (Esp32 only)
+- Initial support for ESP32S3 with support for 38 configurable GPIOs
+
+### Changed
+- BME68x-Sensor-API library from v3.5.9 to v4.4.7
+- ESP32 core library from v2.0.2 to v2.0.2.1 (#14553)
+
+### Fixed
+- OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
+
+## [2022.01.2 = 10.1.0.5] 20220116
 ### Added
 - Tasmota favicon to webbrowser tab (#14322)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
@@ -20,7 +91,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - IRremoteESP8266 library from v2.8.0 to v2.8.1
 
-## [2022.01.1] 20220107
+## [2022.01.1 = 10.1.0.4] 20220107
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)
@@ -86,8 +157,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception (#14073)
 - ESP32 Compile error when I2S_Audio is enabled (#14095)
-
-## [Released]
 
 ## [10.1.0] 20211208
 - Release Noelle

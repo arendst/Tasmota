@@ -72,7 +72,7 @@ public:
   virtual void Begin(int16_t p1,int16_t p2,int16_t p3);
   virtual void Updateframe();
   virtual void dim(uint8_t contrast);   // input has range 0..15
-  virtual void dim8(uint8_t contrast, uint8_t contrast_gamma);  // input has range 0..255, second arg has gamma correction for PWM
+  virtual void dim10(uint8_t contrast, uint16_t contrast_gamma);  // input has range 0..255, second arg has gamma correction for PWM with 10 bits resolution
   virtual void pushColors(uint16_t *data, uint16_t len, boolean first);
   virtual void setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
   virtual void invertDisplay(boolean i);

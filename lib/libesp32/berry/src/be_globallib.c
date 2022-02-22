@@ -42,6 +42,18 @@ static int m_globals(bvm *vm)
     be_return(vm);
 }
 
+static int m_contains(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1 && be_isstring(vm, 1)) {
+        const char * name = be_tostring(vm, 1);
+        int idx = be_global_find(vm, be_newstr(vm, name));
+        be_pushbool(vm, idx > -1);
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
 static int m_findglobal(bvm *vm)
 {
     int top = be_top(vm);
@@ -67,6 +79,7 @@ static int m_setglobal(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(global) {
     be_native_module_function("()", m_globals),
+    be_native_module_function("contains", m_contains),
     be_native_module_function("member", m_findglobal),
     be_native_module_function("setmember", m_setglobal),
 };
@@ -76,6 +89,7 @@ be_define_native_module(global, NULL);
 /* @const_object_info_begin
 module global (scope: global, depend: BE_USE_GLOBAL_MODULE) {
     (), func(m_globals)
+    contains, func(m_contains)
     member, func(m_findglobal)
     setmember, func(m_setglobal)
 }

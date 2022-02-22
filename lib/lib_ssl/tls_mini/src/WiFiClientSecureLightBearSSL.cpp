@@ -21,7 +21,7 @@
 */
 
 #include "tasmota_options.h"
-#if defined(USE_TLS)
+#ifdef USE_TLS
 
 // #define DEBUG_TLS
 // #define DEBUG_ESP_SSL
@@ -43,8 +43,8 @@
 #include "lwip/netif.h"
 #ifdef ESP8266
   #include <include/ClientContext.h>
+  #include "c_types.h"
 #endif
-#include "c_types.h"
 
 #include <core_version.h>
 #undef DEBUG_TLS

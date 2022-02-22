@@ -200,6 +200,7 @@ void HandleMetrics(void) {
     PSTR("image"), TasmotaGlobal.image_name,
     PSTR("build_timestamp"), GetBuildDateAndTime().c_str(),
     PSTR("devicename"), SettingsText(SET_DEVICENAME),
+    PSTR("friendlyname"), SettingsText(SET_FRIENDLYNAME1),
     nullptr);
 
   WritePromMetricInt32(PSTR("uptime_seconds"), kPromMetricGauge, TasmotaGlobal.uptime, nullptr);

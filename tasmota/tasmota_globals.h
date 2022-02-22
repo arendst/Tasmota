@@ -95,13 +95,42 @@ String EthernetMacAddress(void);
 #ifdef ESP32
 
 /*-------------------------------------------------------------------------------------------*\
+ * Start ESP32 specific parameters - disable features not present in ESP32
+\*-------------------------------------------------------------------------------------------*/
+
+#if CONFIG_IDF_TARGET_ESP32
+
+#else   // Disable features not present in other ESP32 like ESP32C3, ESP32S2, ESP32S3 etc.
+#ifdef USE_ETHERNET
+#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
+#endif
+#endif  // CONFIG_IDF_TARGET_ESP32
+
+/*-------------------------------------------------------------------------------------------*\
+ * End ESP32 specific parameters
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
+ * Start ESP32-C32 specific parameters - disable features not present in ESP32-C3
+\*-------------------------------------------------------------------------------------------*/
+
+#if CONFIG_IDF_TARGET_ESP32C3                      // ESP32-C3
+//#ifdef USE_ETHERNET
+//#undef USE_ETHERNET                                // ESP32-C3 does not support ethernet
+//#endif
+
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+
+/*-------------------------------------------------------------------------------------------*\
+ * End ESP32-C3 specific parameters
+\*-------------------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------------------*\
  * Start ESP32-S2 specific parameters - disable features not present in ESP32-S2
 \*-------------------------------------------------------------------------------------------*/
 
 #if CONFIG_IDF_TARGET_ESP32S2                      // ESP32-S2
-#ifdef USE_ETHERNET
-#undef USE_ETHERNET                                // ESP32-S2 does not support ethernet
-#endif
+//#ifdef USE_ETHERNET
+//#undef USE_ETHERNET                                // ESP32-S2 does not support ethernet
+//#endif
 #ifdef USE_BLE_ESP32
 #undef USE_BLE_ESP32                               // ESP32-S2 does not support BLE
 #endif
@@ -304,6 +333,10 @@ String EthernetMacAddress(void);
 
 #ifndef IR_RCV_MIN_UNKNOWN_SIZE
 #define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
+#endif
+
+#ifndef IR_RCV_TOLERANCE
+#define IR_RCV_TOLERANCE            25         // Base tolerance percentage for matching incoming IR messages (default 25, max 100)
 #endif
 
 #ifndef ENERGY_OVERTEMP

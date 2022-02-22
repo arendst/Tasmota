@@ -100,7 +100,7 @@ void Hdc2010Read(void) {
 	temp = (unsigned int)(byte[1]) << 8 | (unsigned int) byte[0];
   //AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature shifted data: %d"), temp);
 	HDC2010.hdc_temperature = (float)(temp) * 165 / 65536 - 40;
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature : %f"), hdc_temperature);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: temperature : %2_f"), &hdc_temperature);
 
 	byte[0] = I2cRead8(HDC2010_ADDR, HDC2010_REG_RH_LSB);
 	byte[1] = I2cRead8(HDC2010_ADDR, HDC2010_REG_RH_MSB);
@@ -108,7 +108,7 @@ void Hdc2010Read(void) {
 	humidity = (unsigned int)byte[1] << 8 | byte[0];
   //AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity shifted data: %d"), humidity);
 	HDC2010.hdc_humidity = (float)(humidity)/( 65536 )* 100;
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity : %f"), hdc_humidity);
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("HdcRead: humidity : %2_f"), &hdc_humidity);
 }
 
 /**

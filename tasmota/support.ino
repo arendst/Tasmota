@@ -687,19 +687,20 @@ bool NewerVersion(char* version_str) {
   // Loop through the version string, splitting on '.' seperators.
   for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
-    if ((0 == i) && (field > 2021) && (field < 2099)) {    // New versions look like 2022.01.1
-      version = ((field / 100) << 8) + (field - 2000);
-      i++;
-    } else {
-      // The fields in a version string can only range from 0-255.
-      if ((field < 0) || (field > 255)) {                  // Old version look like 10.1.0.1
-        return false;
-      }
-      // Shuffle the accumulated bytes across, and add the new byte.
+    // The fields in a version string can only range from 0-255.
+    if ((field < 0) || (field > 255)) {
+      return false;
+    }
+    // Shuffle the accumulated bytes across, and add the new byte.
+    version = (version << 8) + field;
+    // Check alpha delimiter after 1.2.3 only
+    if ((2 == i) && isalpha(str[strlen(str)-1])) {
+      field = str[strlen(str)-1] & 0x1f;
       version = (version << 8) + field;
+      i++;
     }
   }
-  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3.1 (Now 2022.01 or 2022.01.1)
+  // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
   // If not, then don't consider it a valid version string.
   if ((i < 2) || (i > sizeof(VERSION))) {
     return false;
@@ -1465,7 +1466,7 @@ void TemplateGpios(myio *gp)
   for (uint32_t i = 0; i < nitems(Settings->user_template.gp.io); i++) {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
     dest[i] = src[i];
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
     if (22 == i) { j = 33; }    // skip 22-32
     dest[j] = src[i];
     j++;
@@ -1534,7 +1535,7 @@ bool FlashPin(uint32_t pin)
 {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
   return (pin > 10) && (pin < 18);        // ESP32C3 has GPIOs 11-17 reserved for Flash
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
   return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
 #elif defined(CONFIG_IDF_TARGET_ESP32)
   return (pin >= 28) && (pin <= 31);      // ESP21 skip 28-31
@@ -1549,6 +1550,8 @@ bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in t
   return false;     // no red pin on ESP32C3
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
   return false;     // no red pin on ESP32S3
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+  return (33<=pin) && (37>=pin);  // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #elif defined(CONFIG_IDF_TARGET_ESP32)  // red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
   // PICO can also have 16/17/18/23 not available
   return ((6<=pin) && (11>=pin)) || (16==pin) || (17==pin);  // TODO adapt depending on the exact type of ESP32

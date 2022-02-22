@@ -126,6 +126,8 @@ String GetDeviceHardware(void) {
     #include "esp32/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
     #include "esp32s2/rom/rtc.h"
+  #elif CONFIG_IDF_TARGET_ESP32S3  // ESP32-S3
+    #include "esp32s3/rom/rtc.h"
   #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
     #include "esp32c3/rom/rtc.h"
   #else
@@ -277,6 +279,8 @@ extern "C" {
     #include "esp32/rom/spi_flash.h"
   #elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
     #include "esp32s2/rom/spi_flash.h"
+  #elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
+    #include "esp32s3/rom/spi_flash.h"
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
   #else
@@ -505,13 +509,7 @@ void *special_calloc(size_t num, size_t size) {
 
 // Variants for IRAM heap, which need all accesses to be 32 bits aligned
 void *special_malloc32(uint32_t size) {
-  return heap_caps_malloc(size, UsePSRAM() ? MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT : MALLOC_CAP_32BIT);
-}
-void *special_realloc32(void *ptr, size_t size) {
-  return heap_caps_realloc(ptr, size, UsePSRAM() ? MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT : MALLOC_CAP_32BIT);
-}
-void *special_calloc32(size_t num, size_t size) {
-  return heap_caps_calloc(num, size, UsePSRAM() ? MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT : MALLOC_CAP_32BIT);
+  return heap_caps_malloc(size, MALLOC_CAP_32BIT);
 }
 
 float CpuTemperature(void) {
@@ -524,12 +522,16 @@ float CpuTemperature(void) {
   return t;
 */
 #else
-  // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
-  static float t = NAN;
-  if (isnan(t)) {
-    t = (float)temperatureRead();  // In Celsius
-  }
-  return t;
+  #ifndef CONFIG_IDF_TARGET_ESP32S3
+    // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
+    static float t = NAN;
+    if (isnan(t)) {
+      t = (float)temperatureRead();  // In Celsius
+    }
+    return t;
+  #else
+    return NAN;
+  #endif
 #endif
 }
 
@@ -576,6 +578,8 @@ float CpuTemperature(void) {
 #endif
 */
 
+// #include "esp_chip_info.h"
+
 String GetDeviceHardware(void) {
   // https://www.espressif.com/en/products/socs
 
@@ -583,10 +587,12 @@ String GetDeviceHardware(void) {
 Source: esp-idf esp_system.h and esptool
 
 typedef enum {
-    CHIP_ESP32   = 1,  //!< ESP32
-    CHIP_ESP32S2 = 2,  //!< ESP32-S2
-    CHIP_ESP32S3 = 4,  //!< ESP32-S3
-    CHIP_ESP32C3 = 5,  //!< ESP32-C3
+    CHIP_ESP32  = 1, //!< ESP32
+    CHIP_ESP32S2 = 2, //!< ESP32-S2
+    CHIP_ESP32S3 = 9, //!< ESP32-S3
+    CHIP_ESP32C3 = 5, //!< ESP32-C3
+    CHIP_ESP32H2 = 6, //!< ESP32-H2
+    CHIP_ESP32C2 = 12, //!< ESP32-C2
 } esp_chip_model_t;
 
 // Chip feature flags, used in esp_chip_info_t
@@ -594,6 +600,9 @@ typedef enum {
 #define CHIP_FEATURE_WIFI_BGN       BIT(1)      //!< Chip has 2.4GHz WiFi
 #define CHIP_FEATURE_BLE            BIT(4)      //!< Chip has Bluetooth LE
 #define CHIP_FEATURE_BT             BIT(5)      //!< Chip has Bluetooth Classic
+#define CHIP_FEATURE_IEEE802154     BIT(6)      //!< Chip has IEEE 802.15.4
+#define CHIP_FEATURE_EMB_PSRAM      BIT(7)      //!< Chip has embedded psram
+
 
 // The structure represents information about the chip
 typedef struct {
@@ -675,7 +684,10 @@ typedef struct {
 #endif  // CONFIG_IDF_TARGET_ESP32S2
     return F("ESP32-S2");
   }
-  else if (4 == chip_model) {  // ESP32-S3
+  else if (9 == chip_model) {  // ESP32-S3
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+    // no variants for now
+#endif  // CONFIG_IDF_TARGET_ESP32S3
     return F("ESP32-S3");                                  // Max 240MHz, Dual core, QFN 7*7, ESP32-S3-WROOM-1, ESP32-S3-DevKitC-1
   }
   else if (5 == chip_model) {  // ESP32-C3

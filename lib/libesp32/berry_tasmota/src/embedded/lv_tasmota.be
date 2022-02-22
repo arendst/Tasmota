@@ -13,6 +13,7 @@ def init(lv_tasmota)
 
   lv.font_seg7 = lv_tasmota.font_seg7
   lv.seg7_font = lv_tasmota.font_seg7
+  lv.font_embedded = lv_tasmota.font_embedded
 
   lv.load_freetype_font = lv_tasmota.load_freetype_font
 

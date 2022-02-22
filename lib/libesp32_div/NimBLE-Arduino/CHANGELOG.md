@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.6] - 2022-01-18
+
+### Changed
+- When retrieving attributes from a server fails with a 128bit UUID containing the ble base UUID another attempt will be made with the 16bit version of the UUID.
+
+### Fixed
+- Memory leak when services are changed on server devices.
+- Rare crashing that occurs when BLE commands are sent from ISR context using IPC.
+- Crashing caused by uninitialized disconnect timer in client.
+- Potential crash due to unintialized advertising callback pointer.
+
 ## [1.3.5] - 2022-01-14
 
 ### Added

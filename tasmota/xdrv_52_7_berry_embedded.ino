@@ -46,8 +46,6 @@ const char berry_prog[] =
   "import autoconf "
 #endif // USE_AUTOCONF
 
-  "import tapp "
-
 #ifdef USE_LVGL
   "import lv "
   "import lv_tasmota "
@@ -69,6 +67,13 @@ const char berry_prog[] =
 #ifdef USE_LIGHT
   "import light "
 #endif // USE_LIGHT
+
+#if defined(USE_EMULATION) && defined(USE_EMULATION_HUE)
+  "import hue_bridge "
+#endif
+
+  "import tapp "
+
   ;
 
 #endif  // USE_BERRY
