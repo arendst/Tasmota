@@ -230,17 +230,7 @@ FT_FONT_STYLE_ITALIC=FT_FONT_STYLE_ITALIC
 FT_FONT_STYLE_BOLD=FT_FONT_STYLE_BOLD
 
 // following are #define, not enum
-LV_RADIUS_CIRCLE
-LV_TEXTAREA_CURSOR_LAST
-LV_STYLE_PROP_ANY
-
-LV_SIZE_CONTENT
-
 LV_GRID_FR=LV_GRID_FR(0)
-LV_GRID_CONTENT
-LV_GRID_TEMPLATE_LAST
-
-LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
 
 // ======================================================================
 // Symbols
@@ -340,4 +330,9 @@ for header_name in headers_names:
         if exclude: continue
 
         print(enum_item)
+
+    # extract `LV_EXPORT_CONST_INT()` int constants
+    constints = re.findall('LV_EXPORT_CONST_INT\((\w+)\)', raw, flags=re.DOTALL)
+    for constint in constints:
+      print(constint)
 sys.stdout.close()
