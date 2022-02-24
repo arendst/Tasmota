@@ -27,6 +27,16 @@ static int lv_get_ver_res(void) {
 /* `lv` methods */
 const be_ntv_func_def_t lv_func[] = {
 
+  { "area_align", { (const void*) &lv_area_align, "", "(lv.lv_area)(lv.lv_area)iii" } },
+  { "area_copy", { (const void*) &lv_area_copy, "", "(lv.lv_area)(lv.lv_area)" } },
+  { "area_get_height", { (const void*) &lv_area_get_height, "i", "(lv.lv_area)" } },
+  { "area_get_size", { (const void*) &lv_area_get_size, "i", "(lv.lv_area)" } },
+  { "area_get_width", { (const void*) &lv_area_get_width, "i", "(lv.lv_area)" } },
+  { "area_increase", { (const void*) &lv_area_increase, "", "(lv.lv_area)ii" } },
+  { "area_move", { (const void*) &lv_area_move, "", "(lv.lv_area)ii" } },
+  { "area_set", { (const void*) &lv_area_set, "", "(lv.lv_area)iiii" } },
+  { "area_set_height", { (const void*) &lv_area_set_height, "", "(lv.lv_area)i" } },
+  { "area_set_width", { (const void*) &lv_area_set_width, "", "(lv.lv_area)i" } },
   { "atan2", { (const void*) &lv_atan2, "i", "ii" } },
   { "bezier3", { (const void*) &lv_bezier3, "i", "iiiii" } },
   { "clamp_height", { (const void*) &lv_clamp_height, "i", "iiii" } },
@@ -121,6 +131,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "palette_darken", { (const void*) &lv_palette_darken, "lv.lv_color", "ii" } },
   { "palette_lighten", { (const void*) &lv_palette_lighten, "lv.lv_color", "ii" } },
   { "palette_main", { (const void*) &lv_palette_main, "lv.lv_color", "i" } },
+  { "pct", { (const void*) &lv_pct, "i", "i" } },
   { "qrcode_create", { (const void*) &lv_qrcode_create, "lv.lv_obj", "(lv.lv_obj)i(lv.lv_color)(lv.lv_color)" } },
   { "qrcode_delete", { (const void*) &lv_qrcode_delete, "", "(lv.lv_obj)" } },
   { "qrcode_update", { (const void*) &lv_qrcode_update, "i", "(lv.lv_obj).i" } },
