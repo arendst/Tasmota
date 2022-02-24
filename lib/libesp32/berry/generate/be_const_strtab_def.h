@@ -152,7 +152,7 @@ be_define_const_str(SERIAL_6E2, "SERIAL_6E2", 317471867u, 0, 10, &be_const_str_i
 be_define_const_str(SERIAL_6N1, "SERIAL_6N1", 198895701u, 0, 10, NULL);
 be_define_const_str(SERIAL_6N2, "SERIAL_6N2", 148562844u, 0, 10, &be_const_str_offset);
 be_define_const_str(SERIAL_6O1, "SERIAL_6O1", 266153272u, 0, 10, &be_const_str_add_header);
-be_define_const_str(SERIAL_6O2, "SERIAL_6O2", 316486129u, 0, 10, &be_const_str_function);
+be_define_const_str(SERIAL_6O2, "SERIAL_6O2", 316486129u, 0, 10, &be_const_str_driver_name);
 be_define_const_str(SERIAL_7E1, "SERIAL_7E1", 147718061u, 0, 10, &be_const_str_minute);
 be_define_const_str(SERIAL_7E2, "SERIAL_7E2", 97385204u, 0, 10, &be_const_str_fast_loop);
 be_define_const_str(SERIAL_7N1, "SERIAL_7N1", 1891060246u, 0, 10, &be_const_str_STATE_DEFAULT);
@@ -362,6 +362,7 @@ be_define_const_str(draw_ctx, "draw_ctx", 953366593u, 0, 8, &be_const_str_select
 be_define_const_str(draw_line, "draw_line", 1634465686u, 0, 9, &be_const_str_read32);
 be_define_const_str(draw_line_dsc, "draw_line_dsc", 4220676203u, 0, 13, &be_const_str_get_size);
 be_define_const_str(draw_line_dsc_init, "draw_line_dsc_init", 3866693646u, 0, 18, &be_const_str_publish_result);
+be_define_const_str(driver_name, "driver_name", 862681603u, 0, 11, &be_const_str_function);
 be_define_const_str(dump, "dump", 3663001223u, 0, 4, &be_const_str_push);
 be_define_const_str(duration, "duration", 799079693u, 0, 8, NULL);
 be_define_const_str(editable, "editable", 60532369u, 0, 8, &be_const_str_remove_timer);
@@ -1305,6 +1306,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 426,
-    .count = 875,
+    .count = 876,
     .table = m_string_table
 };

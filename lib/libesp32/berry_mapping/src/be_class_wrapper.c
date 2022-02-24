@@ -305,7 +305,7 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
   // special case when first parameter is '@', pass pointer to VM
   if (NULL != arg_type && arg_type[arg_idx] == '@') {
     arg_idx++;
-    p[p_idx] = vm;
+    p[p_idx] = (intptr_t) vm;
     p_idx++;
   }
 
