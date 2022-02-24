@@ -607,6 +607,8 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
 //  ShowSource(source);
 
+//  if (1049 == LANGUAGE_LCID) { return; }
+
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) {
     TasmotaGlobal.blink_mask &= 1;   // No blinking on the fan relays
