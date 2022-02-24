@@ -622,6 +622,7 @@ extern const bcstring be_const_str_point_arr;
 extern const bcstring be_const_str_pop;
 extern const bcstring be_const_str_pop_path;
 extern const bcstring be_const_str_pow;
+extern const bcstring be_const_str_power_off;
 extern const bcstring be_const_str_preinit;
 extern const bcstring be_const_str_print;
 extern const bcstring be_const_str_public_key;
