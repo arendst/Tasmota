@@ -68,7 +68,7 @@ be_define_const_str(_X3D_X3C_X3E_X21, "=<>!", 2664470277u, 0, 4, &be_const_str_C
 be_define_const_str(_X3D_X3D, "==", 2431966415u, 0, 2, NULL);
 be_define_const_str(_X3E, ">", 990687777u, 0, 1, &be_const_str__def);
 be_define_const_str(_X3E_X3D, ">=", 284975636u, 0, 2, &be_const_str_AudioGeneratorWAV);
-be_define_const_str(_X3F, "?", 973910158u, 0, 1, &be_const_str_web_add_handler);
+be_define_const_str(_X3F, "?", 973910158u, 0, 1, &be_const_str_now);
 be_define_const_str(AES_GCM, "AES_GCM", 3832208678u, 0, 7, NULL);
 be_define_const_str(AXP192, "AXP192", 757230128u, 0, 6, &be_const_str_depower);
 be_define_const_str(Animate_X20pc_X20is_X20out_X20of_X20range, "Animate pc is out of range", 1854929421u, 0, 26, &be_const_str_debug);
@@ -578,6 +578,7 @@ be_define_const_str(next, "next", 1555467752u, 0, 4, &be_const_str_resp_cmnd_str
 be_define_const_str(next_cron, "next_cron", 3260705337u, 0, 9, &be_const_str_seti);
 be_define_const_str(nil, "nil", 228849900u, 63, 3, NULL);
 be_define_const_str(no_X20GPIO_X20specified_X20for_X20neopixelbus, "no GPIO specified for neopixelbus", 42078528u, 0, 33, NULL);
+be_define_const_str(now, "now", 682728183u, 0, 3, &be_const_str_web_add_handler);
 be_define_const_str(null_cb, "null_cb", 2333536460u, 0, 7, NULL);
 be_define_const_str(number, "number", 467038368u, 0, 6, &be_const_str_p1);
 be_define_const_str(o, "o", 3926667934u, 0, 1, NULL);
@@ -1308,6 +1309,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 427,
-    .count = 877,
+    .count = 878,
     .table = m_string_table
 };
