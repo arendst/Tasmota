@@ -2,6 +2,7 @@
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
   Copyright (C) 2021  Maarten Damen and Theo Arends
+                      Stefan Bode (Zero-Cross Dimmer)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -90,7 +91,7 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
       // restart initiated by setting Counter.startReSync = true;
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-      if (Settings->flag4.zerocross_dimmer && ac_zero_cross_dimmer.currentPWMCycleCount[index] < ac_zero_cross_dimmer.currentPWMCycleCount[3]) {
+      if (Settings->flag4.zerocross_dimmer && ac_zero_cross_dimmer.startMeasurePhase[index] == true) {
         ac_zero_cross_dimmer.currentPWMCycleCount[index] = ESP.getCycleCount();
         ac_zero_cross_dimmer.startMeasurePhase[index] = false;
       }
@@ -99,8 +100,6 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
         // 1000µs to ensure not to fire on the next sinus wave
         if (ac_zero_cross_dimmer.lastCycleCount > 0) {
           ac_zero_cross_dimmer.startReSync = true;
-          //byte k = MAX_COUNTERS; // good to 255 elements
-          //while ( k-- ) *( ac_zero_cross_dimmer.startMeasurePhase + k ) = *( trueArray + k ); // dest and src are your 2 array names
           for (uint8_t k=0; k < MAX_COUNTERS-1; k++ ) {
             ac_zero_cross_dimmer.startMeasurePhase[k] = true;
           }
