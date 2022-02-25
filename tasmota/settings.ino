@@ -626,7 +626,7 @@ void SettingsSave(uint8_t rotate) {
     Settings->cfg_crc32 = GetSettingsCrc32();
 #ifdef USE_COUNTER    
     CounterInterruptDisable(true);
-endif
+#endif
 #ifdef ESP8266
 #ifdef USE_UFILESYS
     TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)Settings, sizeof(TSettings));
