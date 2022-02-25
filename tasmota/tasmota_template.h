@@ -183,6 +183,7 @@ enum UserSelectablePins {
   GPIO_ADC_MQ,                         // Analog MQ Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
+  GPIO_WS303U_TX, GPIO_WS303U_RX,      // WS303U wind speed and direction Serial interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -405,6 +406,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_MQ "|"
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
+  D_SENSOR_WS303U_TX "|" D_SENSOR_WS303U_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -946,6 +948,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_CM11_TXD),        // CM110x Serial interface
   AGPIO(GPIO_CM11_RXD),        // CM110x Serial interface
 #endif
+
+#ifdef USE_WS303U
+  AGPIO(GPIO_WS303U_TX),       // WS303U Serial interface
+  AGPIO(GPIO_WS303U_RX),       // WS303U Serial interface
+#endif
+
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
 \*-------------------------------------------------------------------------------------------*/
