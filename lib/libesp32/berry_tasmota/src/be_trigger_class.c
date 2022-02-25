@@ -6,6 +6,39 @@
 #include "be_constobj.h"
 
 /********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(Trigger_init,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    5,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str(trig),
+    /* K1   */  be_nested_str(f),
+    /* K2   */  be_nested_str(id),
+    /* K3   */  be_nested_str(o),
+    }),
+    &be_const_str_init,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020202,  //  0001  SETMBR	R0	K1	R2
+      0x90020403,  //  0002  SETMBR	R0	K2	R3
+      0x90020604,  //  0003  SETMBR	R0	K3	R4
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
 be_local_closure(Trigger_tostring,   /* name */
@@ -55,12 +88,12 @@ be_local_closure(Trigger_tostring,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: time_reached
 ********************************************************************/
-be_local_closure(Trigger_init,   /* name */
+be_local_closure(Trigger_time_reached,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    5,                          /* argc */
+    4,                          /* nstack */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -68,19 +101,26 @@ be_local_closure(Trigger_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(trig),
-    /* K1   */  be_nested_str(f),
-    /* K2   */  be_nested_str(id),
-    /* K3   */  be_nested_str(o),
+    /* K0   */  be_nested_str(o),
+    /* K1   */  be_nested_str(trig),
+    /* K2   */  be_const_int(0),
+    /* K3   */  be_nested_str(time_reached),
     }),
-    &be_const_str_init,
+    &be_const_str_time_reached,
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x90020202,  //  0001  SETMBR	R0	K1	R2
-      0x90020403,  //  0002  SETMBR	R0	K2	R3
-      0x90020604,  //  0003  SETMBR	R0	K3	R4
-      0x80000000,  //  0004  RET	0
+    ( &(const binstruction[12]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x78060007,  //  0001  JMPF	R1	#000A
+      0x88040101,  //  0002  GETMBR	R1	R0	K1
+      0x24040302,  //  0003  GT	R1	R1	K2
+      0x78060004,  //  0004  JMPF	R1	#000A
+      0x88040100,  //  0005  GETMBR	R1	R0	K0
+      0x8C040303,  //  0006  GETMET	R1	R1	K3
+      0x880C0101,  //  0007  GETMBR	R3	R0	K1
+      0x7C040400,  //  0008  CALL	R1	2
+      0x80040200,  //  0009  RET	1	R1
+      0x50040000,  //  000A  LDBOOL	R1	0	0
+      0x80040200,  //  000B  RET	1	R1
     })
   )
 );
@@ -92,8 +132,8 @@ be_local_closure(Trigger_init,   /* name */
 ********************************************************************/
 be_local_closure(Trigger_next,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
+    3,                          /* nstack */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -106,15 +146,14 @@ be_local_closure(Trigger_next,   /* name */
     }),
     &be_const_str_next,
     &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x780A0004,  //  0001  JMPF	R2	#0007
-      0x88080100,  //  0002  GETMBR	R2	R0	K0
-      0x8C080501,  //  0003  GETMET	R2	R2	K1
-      0x5C100200,  //  0004  MOVE	R4	R1
-      0x7C080400,  //  0005  CALL	R2	2
-      0x80040400,  //  0006  RET	1	R2
-      0x80000000,  //  0007  RET	0
+    ( &(const binstruction[ 7]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x78060003,  //  0001  JMPF	R1	#0006
+      0x88040100,  //  0002  GETMBR	R1	R0	K0
+      0x8C040301,  //  0003  GETMET	R1	R1	K1
+      0x7C040200,  //  0004  CALL	R1	1
+      0x80040200,  //  0005  RET	1	R1
+      0x80000000,  //  0006  RET	0
     })
   )
 );
@@ -127,15 +166,16 @@ be_local_closure(Trigger_next,   /* name */
 be_local_class(Trigger,
     4,
     NULL,
-    be_nested_map(7,
+    be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(f, 1), be_const_var(1) },
+        { be_const_key(id, 2), be_const_var(2) },
+        { be_const_key(f, -1), be_const_var(1) },
+        { be_const_key(next, -1), be_const_closure(Trigger_next_closure) },
+        { be_const_key(trig, 7), be_const_var(0) },
+        { be_const_key(time_reached, -1), be_const_closure(Trigger_time_reached_closure) },
+        { be_const_key(tostring, 4), be_const_closure(Trigger_tostring_closure) },
         { be_const_key(o, -1), be_const_var(3) },
         { be_const_key(init, -1), be_const_closure(Trigger_init_closure) },
-        { be_const_key(id, 4), be_const_var(2) },
-        { be_const_key(tostring, -1), be_const_closure(Trigger_tostring_closure) },
-        { be_const_key(trig, 2), be_const_var(0) },
-        { be_const_key(next, -1), be_const_closure(Trigger_next_closure) },
     })),
     be_str_literal("Trigger")
 );

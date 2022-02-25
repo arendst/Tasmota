@@ -2013,19 +2013,17 @@ be_local_closure(Tasmota_add_cron,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(check_not_method),
     /* K1   */  be_nested_str(_crons),
     /* K2   */  be_nested_str(ccronexpr),
     /* K3   */  be_nested_str(next),
-    /* K4   */  be_nested_str(rtc),
-    /* K5   */  be_nested_str(local),
-    /* K6   */  be_nested_str(push),
-    /* K7   */  be_nested_str(Trigger),
+    /* K4   */  be_nested_str(push),
+    /* K5   */  be_nested_str(Trigger),
     }),
     &be_const_str_add_cron,
     &be_const_str_solidified,
-    ( &(const binstruction[28]) {  /* code */
+    ( &(const binstruction[25]) {  /* code */
       0x8C100100,  //  0000  GETMET	R4	R0	K0
       0x5C180400,  //  0001  MOVE	R6	R2
       0x7C100400,  //  0002  CALL	R4	2
@@ -2040,20 +2038,17 @@ be_local_closure(Tasmota_add_cron,   /* name */
       0x7C140200,  //  000B  CALL	R5	1
       0x7C100200,  //  000C  CALL	R4	1
       0x8C140903,  //  000D  GETMET	R5	R4	K3
-      0x8C1C0104,  //  000E  GETMET	R7	R0	K4
-      0x7C1C0200,  //  000F  CALL	R7	1
-      0x941C0F05,  //  0010  GETIDX	R7	R7	K5
-      0x7C140400,  //  0011  CALL	R5	2
-      0x88180101,  //  0012  GETMBR	R6	R0	K1
-      0x8C180D06,  //  0013  GETMET	R6	R6	K6
-      0xB8220E00,  //  0014  GETNGBL	R8	K7
-      0x5C240A00,  //  0015  MOVE	R9	R5
-      0x5C280400,  //  0016  MOVE	R10	R2
-      0x5C2C0600,  //  0017  MOVE	R11	R3
-      0x5C300800,  //  0018  MOVE	R12	R4
-      0x7C200800,  //  0019  CALL	R8	4
-      0x7C180400,  //  001A  CALL	R6	2
-      0x80000000,  //  001B  RET	0
+      0x7C140200,  //  000E  CALL	R5	1
+      0x88180101,  //  000F  GETMBR	R6	R0	K1
+      0x8C180D04,  //  0010  GETMET	R6	R6	K4
+      0xB8220A00,  //  0011  GETNGBL	R8	K5
+      0x5C240A00,  //  0012  MOVE	R9	R5
+      0x5C280400,  //  0013  MOVE	R10	R2
+      0x5C2C0600,  //  0014  MOVE	R11	R3
+      0x5C300800,  //  0015  MOVE	R12	R4
+      0x7C200800,  //  0016  CALL	R8	4
+      0x7C180400,  //  0017  CALL	R6	2
+      0x80000000,  //  0018  RET	0
     })
   )
 );
@@ -2076,55 +2071,52 @@ be_local_closure(Tasmota_run_cron,   /* name */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str(_crons),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str(rtc),
-    /* K3   */  be_nested_str(local),
+    /* K2   */  be_nested_str(ccronexpr),
+    /* K3   */  be_nested_str(now),
     /* K4   */  be_nested_str(size),
     /* K5   */  be_nested_str(trig),
-    /* K6   */  be_nested_str(f),
-    /* K7   */  be_nested_str(next),
-    /* K8   */  be_nested_str(remove),
+    /* K6   */  be_nested_str(next),
+    /* K7   */  be_nested_str(time_reached),
+    /* K8   */  be_nested_str(f),
     /* K9   */  be_const_int(1),
     }),
     &be_const_str_run_cron,
     &be_const_str_solidified,
-    ( &(const binstruction[37]) {  /* code */
+    ( &(const binstruction[34]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x78060021,  //  0001  JMPF	R1	#0024
+      0x7806001E,  //  0001  JMPF	R1	#0021
       0x58040001,  //  0002  LDCONST	R1	K1
-      0x8C080102,  //  0003  GETMET	R2	R0	K2
-      0x7C080200,  //  0004  CALL	R2	1
-      0x94080503,  //  0005  GETIDX	R2	R2	K3
+      0xB80A0400,  //  0003  GETNGBL	R2	K2
+      0x8C080503,  //  0004  GETMET	R2	R2	K3
+      0x7C080200,  //  0005  CALL	R2	1
       0x880C0100,  //  0006  GETMBR	R3	R0	K0
       0x8C0C0704,  //  0007  GETMET	R3	R3	K4
       0x7C0C0200,  //  0008  CALL	R3	1
       0x140C0203,  //  0009  LT	R3	R1	R3
-      0x780E0018,  //  000A  JMPF	R3	#0024
+      0x780E0015,  //  000A  JMPF	R3	#0021
       0x880C0100,  //  000B  GETMBR	R3	R0	K0
       0x940C0601,  //  000C  GETIDX	R3	R3	R1
       0x88100705,  //  000D  GETMBR	R4	R3	K5
-      0x18100802,  //  000E  LE	R4	R4	R2
-      0x78120011,  //  000F  JMPF	R4	#0022
-      0x88100706,  //  0010  GETMBR	R4	R3	K6
-      0x8C140707,  //  0011  GETMET	R5	R3	K7
-      0x5C1C0400,  //  0012  MOVE	R7	R2
-      0x7C140400,  //  0013  CALL	R5	2
-      0x5C180A00,  //  0014  MOVE	R6	R5
-      0x741A0004,  //  0015  JMPT	R6	#001B
-      0x88180100,  //  0016  GETMBR	R6	R0	K0
-      0x8C180D08,  //  0017  GETMET	R6	R6	K8
-      0x5C200200,  //  0018  MOVE	R8	R1
-      0x7C180400,  //  0019  CALL	R6	2
-      0x70020001,  //  001A  JMP		#001D
-      0x900E0A05,  //  001B  SETMBR	R3	K5	R5
-      0x00040309,  //  001C  ADD	R1	R1	K9
-      0x5C180800,  //  001D  MOVE	R6	R4
-      0x5C1C0400,  //  001E  MOVE	R7	R2
-      0x5C200A00,  //  001F  MOVE	R8	R5
-      0x7C180400,  //  0020  CALL	R6	2
-      0x70020000,  //  0021  JMP		#0023
-      0x00040309,  //  0022  ADD	R1	R1	K9
-      0x7001FFE1,  //  0023  JMP		#0006
-      0x80000000,  //  0024  RET	0
+      0x1C100901,  //  000E  EQ	R4	R4	K1
+      0x78120003,  //  000F  JMPF	R4	#0014
+      0x8C100706,  //  0010  GETMET	R4	R3	K6
+      0x7C100200,  //  0011  CALL	R4	1
+      0x900E0A04,  //  0012  SETMBR	R3	K5	R4
+      0x7002000A,  //  0013  JMP		#001F
+      0x8C100707,  //  0014  GETMET	R4	R3	K7
+      0x7C100200,  //  0015  CALL	R4	1
+      0x78120007,  //  0016  JMPF	R4	#001F
+      0x88100708,  //  0017  GETMBR	R4	R3	K8
+      0x8C140706,  //  0018  GETMET	R5	R3	K6
+      0x7C140200,  //  0019  CALL	R5	1
+      0x900E0A05,  //  001A  SETMBR	R3	K5	R5
+      0x5C180800,  //  001B  MOVE	R6	R4
+      0x5C1C0400,  //  001C  MOVE	R7	R2
+      0x5C200A00,  //  001D  MOVE	R8	R5
+      0x7C180400,  //  001E  CALL	R6	2
+      0x00040309,  //  001F  ADD	R1	R1	K9
+      0x7001FFE4,  //  0020  JMP		#0006
+      0x80000000,  //  0021  RET	0
     })
   )
 );

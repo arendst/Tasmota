@@ -15,11 +15,18 @@ class Trigger
     return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
               str(self.trig), str(self.f), str(self.id))
   end
-  # next(now) returns the next trigger, or nil if no more
-  def next(now)
+  # next() returns the next trigger, or 0 if rtc is invalid, or nil if no more
+  def next()
     if self.o
-      return self.o.next(now)
+      return self.o.next()
     end
+  end
+  
+  def time_reached()
+    if self.o && self.trig > 0
+      return self.o.time_reached(self.trig)
+    end
+    return false
   end
 end
 
@@ -270,23 +277,19 @@ class Tasmota
   def run_cron()
     if self._crons
       var i=0
-      var now = self.rtc()['local']   # now in epoch seconds
+      var now = ccronexpr.now()
       while i < self._crons.size()
         var trigger = self._crons[i]
 
-        if trigger.trig <= now
+        if trigger.trig == 0        # trigger was created when RTC was invalid, try to recalculate
+          trigger.trig = trigger.next()
+        elif trigger.time_reached() # time has come
           var f = trigger.f
-          var next_time = trigger.next(now)
-          if !next_time
-            self._crons.remove(i)      # one shot event
-          else
-            trigger.trig = next_time    # recurring event
-            i += 1
-          end
+          var next_time = trigger.next()
+          trigger.trig = next_time   # update to next time
           f(now, next_time)
-        else
-          i += 1
         end
+        i += 1
       end
     end
   end
@@ -309,10 +312,11 @@ class Tasmota
   def add_cron(pattern,f,id)
     self.check_not_method(f)
     if !self._crons self._crons=[] end
-    var cron = ccronexpr(str(pattern))    # can fail, throwing an exception
-    var next_time = cron.next(self.rtc()['local'])
 
-    self._crons.push(Trigger(next_time, f, id, cron))
+    var cron_obj = ccronexpr(str(pattern))    # can fail, throwing an exception
+    var next_time = cron_obj.next()
+
+    self._crons.push(Trigger(next_time, f, id, cron_obj))
   end
 
   # remove cron by id
