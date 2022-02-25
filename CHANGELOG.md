@@ -3,13 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.2]
+## [11.0.0.3]
 ### Added
 
 ### Changed
-- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
+- Extent number of pulsetimers from 8 to 32 (#8266)
 
 ### Fixed
+
+## [11.0.0.2] 20220225
+### Changed
+- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
 
 ## [11.0.0.1] 20220220
 ### Added

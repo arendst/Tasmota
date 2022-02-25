@@ -1505,6 +1505,9 @@ void SettingsDelta(void) {
       Settings->web_time_start = 0;
       Settings->web_time_end = 0;
     }
+    if (Settings->version < 0x0B000003) {  // 11.0.0.3
+       memcpy(Settings->pulse_timer, Settings->ex_pulse_timer, 16);
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

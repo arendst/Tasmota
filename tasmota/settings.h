@@ -640,15 +640,16 @@ typedef struct {
   uint16_t      mqtt_socket_timeout;       // 52E
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
-  uint16_t      pulse_timer[MAX_PULSETIMERS];  // 532
+  uint16_t      ex_pulse_timer[8];         // 532  Free since 11.0.0.3
   uint16_t      button_debounce;           // 542
   uint32_t      ipv4_address[5];           // 544
   uint32_t      ipv4_rgx_address;          // 558
   uint32_t      ipv4_rgx_subnetmask;       // 55C
-
   uint16_t      pwm_value_ext[16-5];       // 560  Extension to pwm_value to store up to 16 PWM for ESP32. This array stores values 5..15
-  uint8_t       free_576[70];              // 576
 
+  uint8_t       free_576[6];               // 576
+
+  uint16_t      pulse_timer[MAX_PULSETIMERS];  // 57C
   SysMBitfield1 flag2;                     // 5BC
   uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
