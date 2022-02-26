@@ -627,7 +627,7 @@ AddLog(0,PSTR("TIC:Init:TSerial=0x%08X"),TInfoSerial);
     }
 #endif  // ESP32
 
-    if (TInfoSerial->begin(baudrate, SERIAL_7E1)) {
+    if (TInfoSerial && TInfoSerial->begin(baudrate, SERIAL_7E1)) {
 #ifdef ESP8266
         if (TInfoSerial->hardwareSerial() ) {
             ClaimSerial();
