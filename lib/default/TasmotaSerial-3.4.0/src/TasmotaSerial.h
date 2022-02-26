@@ -49,6 +49,7 @@ class TasmotaSerial : public Stream {
     size_t read(char* buffer, size_t size);
     int available(void) override;
     void flush(void) override;
+    bool isValid() { return m_valid; }
 
     void rxRead(void);
 
