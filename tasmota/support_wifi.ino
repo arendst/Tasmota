@@ -748,7 +748,7 @@ void WifiPollNtp() {
       Rtc.utc_time = ntp_time;
       ntp_sync_minute = 60;             // Sync so block further requests
       RtcSync();
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Synched"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Synched"));
     } else {
       ntp_sync_minute++;                // Try again in next minute
     }

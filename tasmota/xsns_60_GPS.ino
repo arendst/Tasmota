@@ -677,9 +677,11 @@ void UBXHandleTIME()
       gpsTime.minute = UBX.Message.navTime.min;
       gpsTime.second = UBX.Message.navTime.sec;
       UBX.rec_buffer.values.time = MakeTime(gpsTime);
-      if (UBX.mode.forceUTCupdate || Rtc.user_time_entry == false){
-        AddLog(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
+      if (UBX.mode.forceUTCupdate || Rtc.user_time_entry == false) {
+//        AddLog(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
         Rtc.utc_time = UBX.rec_buffer.values.time;
+        RtcSync();
+        AddLog(LOG_LEVEL_DEBUG, PSTR("UBX: Synched"));
       }
       Rtc.user_time_entry = true;
     }

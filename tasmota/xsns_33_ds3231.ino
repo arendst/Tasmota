@@ -171,7 +171,8 @@ void DS3231EverySecond(void) {
     if (ds3231_time > START_VALID_TIME) {
       Rtc.utc_time = ds3231_time;
       RtcSync();
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DS3: Synched"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DS3: Synched"));
+//      Rtc.user_time_entry = true;             // Stop NTP sync and DS3231 time write
       ds3231ReadStatus = true;                // if time in DS3231 is valid, do  not update again
     }
   }
