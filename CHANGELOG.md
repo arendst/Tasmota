@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Extent number of pulsetimers from 8 to 32 (#8266)
+- Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
 
 ### Fixed
 
