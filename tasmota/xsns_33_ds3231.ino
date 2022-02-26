@@ -90,8 +90,7 @@ struct NTP_t {
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
   ----------------------------------------------------------------------*/
-void DS3231Detect(void)
-{
+void DS3231Detect(void) {
   if (!I2cSetDevice(USE_RTC_ADDR)) { return; }
 
   if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1)) {
@@ -103,24 +102,21 @@ void DS3231Detect(void)
 /*----------------------------------------------------------------------*
   BCD-to-Decimal conversion
   ----------------------------------------------------------------------*/
-uint8_t bcd2dec(uint8_t n)
-{
+uint8_t bcd2dec(uint8_t n) {
   return n - 6 * (n >> 4);
 }
 
 /*----------------------------------------------------------------------*
    Decimal-to-BCD conversion
   ----------------------------------------------------------------------*/
-uint8_t dec2bcd(uint8_t n)
-{
+uint8_t dec2bcd(uint8_t n) {
   return n + 6 * (n / 10);
 }
 
 /*----------------------------------------------------------------------*
    Read time from DS3231 and return the epoch time (second since 1-1-1970 00:00)
   ----------------------------------------------------------------------*/
-uint32_t ReadFromDS3231(void)
-{
+uint32_t ReadFromDS3231(void) {
   TIME_T tm;
   tm.second = bcd2dec(I2cRead8(USE_RTC_ADDR, RTC_SECONDS));
   tm.minute = bcd2dec(I2cRead8(USE_RTC_ADDR, RTC_MINUTES));
@@ -147,10 +143,10 @@ void SetDS3231Time (uint32_t epoch_time) {
   I2cWrite8(USE_RTC_ADDR, RTC_STATUS, I2cRead8(USE_RTC_ADDR, RTC_STATUS) & ~_BV(OSF)); //clear the Oscillator Stop Flag
 }
 
-void DS3231EverySecond(void)
-{
-  TIME_T tmpTime;
-  if (!ds3231ReadStatus && Rtc.utc_time < START_VALID_TIME ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
+void DS3231EverySecond(void) {
+  if (!ds3231ReadStatus && (Rtc.utc_time < START_VALID_TIME)) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
+/*
+    TIME_T tmpTime;
     TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
     Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
     // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
@@ -169,15 +165,23 @@ void DS3231EverySecond(void)
     } else {
       TasmotaGlobal.rules_flag.time_set = 1;
     }
+*/
+    uint32_t ds3231_time = ReadFromDS3231();  // Read UTC TIME from DS3231
+
+    if (ds3231_time > START_VALID_TIME) {
+      Rtc.utc_time = ds3231_time;
+      RtcSync();
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DS3: Synched"));
+      ds3231ReadStatus = true;                // if time in DS3231 is valid, do  not update again
+    }
   }
-  else if (!ds3231WriteStatus && Rtc.utc_time > START_VALID_TIME && abs((int32_t)(Rtc.utc_time - ReadFromDS3231())) > 10) {  // If time is valid and has drifted from RTC more than 10 seconds
-    AddLog(LOG_LEVEL_INFO, PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
-    SetDS3231Time (Rtc.utc_time); //update the DS3231 time
+  else if (!ds3231WriteStatus && (Rtc.utc_time > START_VALID_TIME) && (abs((int32_t)(Rtc.utc_time - ReadFromDS3231())) > 10)) {  // If time is valid and has drifted from RTC more than 10 seconds
+    AddLog(LOG_LEVEL_INFO, PSTR("DS3: Write Time from NTP (" D_UTC_TIME ") %s"), GetDateAndTime(DT_UTC).c_str());
+    SetDS3231Time(Rtc.utc_time);              // Update the DS3231 time
     ds3231WriteStatus = true;
   }
   if (NTP.mode.runningNTP) {
-  timeServer.processOneRequest(Rtc.utc_time, NTP_MILLIS_OFFSET);
+    timeServer.processOneRequest(Rtc.utc_time, NTP_MILLIS_OFFSET);
   }
 }
 
@@ -185,9 +189,8 @@ void DS3231EverySecond(void)
    NTP functions
   \*********************************************************************************************/
 
-void NTPSelectMode(uint16_t mode)
-{
-  DEBUG_SENSOR_LOG(PSTR("RTC: NTP status %u"),mode);
+void NTPSelectMode(uint16_t mode) {
+  DEBUG_SENSOR_LOG(PSTR("DS3: NTP status %u"),mode);
   switch(mode){
     case 0:
       NTP.mode.runningNTP = false;
@@ -201,8 +204,7 @@ void NTPSelectMode(uint16_t mode)
   }
 }
 
-bool NTPCmd(void)
-{
+bool NTPCmd(void) {
   bool serviced = true;
   if (XdrvMailbox.data_len > 0) {
     NTPSelectMode(XdrvMailbox.payload);
@@ -215,8 +217,7 @@ bool NTPCmd(void)
    Interface
   \*********************************************************************************************/
 
-bool Xsns33(uint8_t function)
-{
+bool Xsns33(uint8_t function) {
   if (!I2cEnabled(XI2C_26)) { return false; }
 
   bool result = false;
