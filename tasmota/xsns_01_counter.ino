@@ -2,6 +2,7 @@
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
   Copyright (C) 2021  Maarten Damen and Theo Arends
+                      Stefan Bode (Zero-Cross Dimmer)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -50,12 +51,14 @@ struct COUNTER {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
 struct AC_ZERO_CROSS_DIMMER {
   bool startReSync = false;
+  bool startMeasurePhase[MAX_COUNTERS] ;
+  bool PWM_ON[MAX_COUNTERS] ;
   uint32_t current_cycle_ClockCycles = 0;
-  uint32_t dimm_timeClockCycles = 0;
-  uint32_t currentCycleCount = 0;
+  uint32_t currentPWMCycleCount[MAX_COUNTERS] ;
   uint32_t tobe_cycle_timeClockCycles = 0;
   uint32_t lastCycleCount = 0;
   uint32_t currentSteps = 100;
+  uint32_t high;
 } ac_zero_cross_dimmer;
 #endif //USE_AC_ZERO_CROSS_DIMMER
 
@@ -88,17 +91,24 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
       // restart PWM each second (german 50Hz has to up to 0.01% deviation)
       // restart initiated by setting Counter.startReSync = true;
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-      if (RtcSettings.pulse_counter[index]%(Settings->pwm_frequency / (Light.fade_running ? 10:1))== 0 && PinUsed(GPIO_PWM1, index) && Settings->flag4.zerocross_dimmer) {
-        ac_zero_cross_dimmer.currentCycleCount = ESP.getCycleCount();
-
-        // 1000µs to ensure not to fire on the next sinus wave
-        if (ac_zero_cross_dimmer.lastCycleCount>0) {
-          ac_zero_cross_dimmer.startReSync = true;
-          ac_zero_cross_dimmer.currentSteps = (ac_zero_cross_dimmer.currentCycleCount-ac_zero_cross_dimmer.lastCycleCount+(ac_zero_cross_dimmer.tobe_cycle_timeClockCycles/2))/(ac_zero_cross_dimmer.tobe_cycle_timeClockCycles);
-          ac_zero_cross_dimmer.current_cycle_ClockCycles = (ac_zero_cross_dimmer.currentCycleCount-ac_zero_cross_dimmer.lastCycleCount)/ac_zero_cross_dimmer.currentSteps;
-        }
-        ac_zero_cross_dimmer.lastCycleCount = ac_zero_cross_dimmer.currentCycleCount;
+      if (Settings->flag4.zerocross_dimmer && ac_zero_cross_dimmer.startMeasurePhase[index] == true) {
+        ac_zero_cross_dimmer.currentPWMCycleCount[index] = ESP.getCycleCount();
+        ac_zero_cross_dimmer.startMeasurePhase[index] = false;
       }
+      if (index == 3 && RtcSettings.pulse_counter[index]%(Settings->pwm_frequency / 5) == 0 && PinUsed(GPIO_CNTR1, index) && Settings->flag4.zerocross_dimmer && millis() > 10000) {
+        ac_zero_cross_dimmer.currentPWMCycleCount[index] = ESP.getCycleCount();
+        // 1000µs to ensure not to fire on the next sinus wave
+        if (ac_zero_cross_dimmer.lastCycleCount > 0) {
+          ac_zero_cross_dimmer.startReSync = true;
+          for (uint8_t k=0; k < MAX_COUNTERS-1; k++ ) {
+            ac_zero_cross_dimmer.startMeasurePhase[k] = true;
+          }
+          ac_zero_cross_dimmer.currentSteps = (ac_zero_cross_dimmer.currentPWMCycleCount[index]-ac_zero_cross_dimmer.lastCycleCount+(ac_zero_cross_dimmer.tobe_cycle_timeClockCycles/2))/(ac_zero_cross_dimmer.tobe_cycle_timeClockCycles);
+          ac_zero_cross_dimmer.current_cycle_ClockCycles = (ac_zero_cross_dimmer.currentPWMCycleCount[index]-ac_zero_cross_dimmer.lastCycleCount)/ac_zero_cross_dimmer.currentSteps-20;
+        }
+        ac_zero_cross_dimmer.lastCycleCount = ac_zero_cross_dimmer.currentPWMCycleCount[index];
+      }
+
 #endif //USE_AC_ZERO_CROSS_DIMMER
       return;
     }
@@ -117,7 +127,8 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
 
 /********************************************************************************************/
 
-void CounterInterruptDisable(bool state) {
+void CounterInterruptDisable(bool state)
+{
   if (state) {   // Disable interrupts
     if (Counter.any_counter) {
       for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
@@ -149,7 +160,11 @@ void CounterInit(void)
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-      ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
+
+      ac_zero_cross_dimmer.current_cycle_ClockCycles = ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
+      // short fire on PWM to ensure not to hit next sinus curve but trigger the TRIAC. 0.78% of duty cycle (10ms) ~4µs
+      ac_zero_cross_dimmer.high = ac_zero_cross_dimmer.current_cycle_ClockCycles / 256;
+
 #endif //USE_AC_ZERO_CROSS_DIMMER
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
@@ -232,37 +247,59 @@ void CounterShow(bool json)
 #ifdef USE_AC_ZERO_CROSS_DIMMER
 void SyncACDimmer(void)
 {
-  if (ac_zero_cross_dimmer.startReSync) {
+  if (ac_zero_cross_dimmer.startReSync ) {
     // currently only support one AC Dimmer PWM. Plan to support up to 4 Dimmer on same Phase.
-    for (uint32_t i = 0; i < 1; i++) {
-      if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i))
+    for (uint32_t i = 0; i < MAX_COUNTERS-1; i++) {
+      if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i) && (ac_zero_cross_dimmer.startMeasurePhase[i] == 0 || ac_zero_cross_dimmer.PWM_ON[i] == 0) )
       {
-        // get current time because undefined through FUNC_LOOP process.
-        const uint32_t current_cycle = ESP.getCycleCount();
-        digitalWrite(Pin(GPIO_PWM1, i), LOW);
+        uint32_t phaseStart_ActualClockCycles; // As-Is positon of PWM after Zero Cross
+        uint32_t phaseStart_ToBeClockCycles;   // To be position after zero-cross to fire PWM start
+        int16_t  phaseShift_ClockCycles; //
+
+
         // reset trigger for PWM sync
         ac_zero_cross_dimmer.startReSync = false;
-        // calculate timeoffset to fire PWM
+        // calculate timeoffset to fire PWM based on Dimmer
+        phaseStart_ToBeClockCycles = (ac_zero_cross_dimmer.tobe_cycle_timeClockCycles * (1024 - (Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1024;
 
-        ac_zero_cross_dimmer.dimm_timeClockCycles = (ac_zero_cross_dimmer.tobe_cycle_timeClockCycles * (1024 - (Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]))) / 1024;
-        ac_zero_cross_dimmer.dimm_timeClockCycles = tmax(ac_zero_cross_dimmer.dimm_timeClockCycles, 16000);
-        // because in LOOP calculate the timelag to fire PWM correctly with zero-cross
-        uint32_t timelag_ClockCycles = (current_cycle - ac_zero_cross_dimmer.currentCycleCount)%ac_zero_cross_dimmer.tobe_cycle_timeClockCycles;
-        timelag_ClockCycles = ((ac_zero_cross_dimmer.dimm_timeClockCycles + ac_zero_cross_dimmer.tobe_cycle_timeClockCycles) - timelag_ClockCycles)%ac_zero_cross_dimmer.tobe_cycle_timeClockCycles;
-        delayMicroseconds(clockCyclesToMicroseconds(timelag_ClockCycles));
+        // Limit range to avoid overshoot and undershoot
+        phaseStart_ToBeClockCycles = tmin(tmax(phaseStart_ToBeClockCycles, 160000), 0.95* ac_zero_cross_dimmer.tobe_cycle_timeClockCycles);
 
-#ifdef ESP8266
-          pinMode(Pin(GPIO_PWM1, i), OUTPUT);
-          // short fire to ensure not to hit next sinus curve. 0.78% of duty cycle (10ms) ~4µs
-          uint32_t high = ac_zero_cross_dimmer.current_cycle_ClockCycles / 256;
-          uint32_t low = ac_zero_cross_dimmer.current_cycle_ClockCycles - high;
-          // Find the first GPIO being generated by checking GCC's find-first-set (returns 1 + the bit of the first 1 in an int32_t
-          startWaveformClockCycles(Pin(GPIO_PWM1, i), high, low, 0, -1, 0, true);
-#endif  // ESP8266
-#ifdef ESP32
-          analogWrite(Pin(GPIO_PWM1, i), 5);
-#endif  // ESP32
-          //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d] dimm_time_CCs %d, current_cycle_CC: %d, timelag %lu, lastcc %lu, currentSteps %d, curr %d"), i, ac_zero_cross_dimmer.dimm_timeClockCycles,ac_zero_cross_dimmer.current_cycle_ClockCycles , timelag_ClockCycles, ac_zero_cross_dimmer.currentCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i]);
+        // Switch OFF dimmer
+        if (Light.fade_start_10[i] == 0 && !Light.fade_running) {
+          ac_zero_cross_dimmer.PWM_ON[i]=false;
+          digitalWrite(Pin(GPIO_PWM1, i), LOW);
+          return;
+        }
+
+        // Calculyte clockcycles between zero-cross [3] and start of the current PWM signal [i]
+        phaseStart_ActualClockCycles = ac_zero_cross_dimmer.currentPWMCycleCount[i]-ac_zero_cross_dimmer.currentPWMCycleCount[3];
+
+        // Calulate additional or less clockcycles to move current phase position to should be position
+        phaseShift_ClockCycles = (int32_t)((int32_t)phaseStart_ToBeClockCycles-(int32_t)phaseStart_ActualClockCycles)/100;
+        #ifdef ESP8266
+                  if ( ac_zero_cross_dimmer.PWM_ON[i] == 0 ) {
+                    // because in LOOP calculate the timelag to fire PWM correctly with zero-cross
+                    uint32_t timelag_ClockCycles = (ESP.getCycleCount() - ac_zero_cross_dimmer.currentPWMCycleCount[3])%ac_zero_cross_dimmer.tobe_cycle_timeClockCycles;
+                    timelag_ClockCycles = ((phaseStart_ToBeClockCycles + ac_zero_cross_dimmer.tobe_cycle_timeClockCycles) - timelag_ClockCycles)%ac_zero_cross_dimmer.tobe_cycle_timeClockCycles;
+
+                    delayMicroseconds(clockCyclesToMicroseconds(timelag_ClockCycles));
+                    ac_zero_cross_dimmer.PWM_ON[i]=true;
+                    pinMode(Pin(GPIO_PWM1, i), OUTPUT);
+                  } else {
+                    ac_zero_cross_dimmer.current_cycle_ClockCycles += phaseShift_ClockCycles;
+                  }
+
+                  // Find the first GPIO being generated by checking GCC's find-first-set (returns 1 + the bit of the first 1 in an int32_t
+                  startWaveformClockCycles(Pin(GPIO_PWM1, i), ac_zero_cross_dimmer.high, ac_zero_cross_dimmer.current_cycle_ClockCycles - ac_zero_cross_dimmer.high, 0, -1, 0, true);
+        #endif  // ESP8266
+        #ifdef ESP32
+                  analogWrite(Pin(GPIO_PWM1, i), 5);
+        #endif  // ESP32
+
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CNT: [%d], dimmer %d, fade %d, fade_curr: %d, dimm_time_CCs %d, phaseShift_ClockCycles %d, currentPWMcylce: %lu, current_cycle_CC: %lu, lastcc %lu, currentSteps %lu, currDIM %lu, last delta:%lu"),
+                                             i, Light.fade_start_10[i], Light.fade_running,  Light.fade_cur_10[i], phaseStart_ToBeClockCycles,phaseShift_ClockCycles,ac_zero_cross_dimmer.currentPWMCycleCount[i],ac_zero_cross_dimmer.current_cycle_ClockCycles , ac_zero_cross_dimmer.lastCycleCount, ac_zero_cross_dimmer.currentSteps, Light.fade_cur_10[i],phaseStart_ActualClockCycles);
+
       }
     }
   }

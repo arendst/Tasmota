@@ -624,7 +624,9 @@ void SettingsSave(uint8_t rotate) {
     Settings->cfg_size = sizeof(TSettings);
     Settings->cfg_crc = GetSettingsCrc();               // Keep for backward compatibility in case of fall-back just after upgrade
     Settings->cfg_crc32 = GetSettingsCrc32();
-
+#ifdef USE_COUNTER    
+    CounterInterruptDisable(true);
+#endif
 #ifdef ESP8266
 #ifdef USE_UFILESYS
     TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)Settings, sizeof(TSettings));
@@ -650,8 +652,10 @@ void SettingsSave(uint8_t rotate) {
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
+#ifdef USE_COUNTER  
+  CounterInterruptDisable(false);
+#endif
 }
-
 void SettingsLoad(void) {
 #ifdef ESP8266
   // Load configuration from optional file and flash (eeprom and 7 additonal slots) if first valid load does not stop_flash_rotate
