@@ -608,8 +608,6 @@ void TInfoInit(void)
         AddLog(LOG_LEVEL_INFO, PSTR("TIC: Enable with GPIO%d"), en_pin);
     }
 
-AddLog(0,PSTR("TIC:Init:TSerial=0x%08X"),TInfoSerial);
-
 #ifdef ESP8266
     // Allow GPIO3 AND GPIO13 with hardware fallback to 2
     // Set buffer to nnn char to support 250ms loop at 9600 baud
