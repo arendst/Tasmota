@@ -35,8 +35,9 @@
 #define XSNS_33             33
 #define XI2C_26             26  // See I2CDEVICES.md
 
-#include "NTPServer.h"
-#include "NTPPacket.h"
+#ifndef USE_GPS                 // USE_GPS provides it's own (better) NTP server so skip this one
+#define DS3231_NTP_SERVER
+#endif
 
 //DS3232 I2C Address
 #ifndef USE_RTC_ADDR
@@ -70,6 +71,10 @@ bool ds3231ReadStatus = false;
 bool ds3231WriteStatus = false;    //flag, we want to read/write to DS3231 only once
 bool DS3231chipDetected = false;
 
+#ifdef DS3231_NTP_SERVER
+#include "NTPServer.h"
+#include "NTPPacket.h"
+
 #define D_CMND_NTP "NTP"
 
 const char S_JSON_NTP_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_NTP "%s\":%d}";
@@ -86,6 +91,7 @@ struct NTP_t {
     uint32_t runningNTP:1;
   } mode;
 } NTP;
+#endif  // DS3231_NTP_SERVER
 
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
@@ -145,27 +151,7 @@ void SetDS3231Time (uint32_t epoch_time) {
 
 void DS3231EverySecond(void) {
   if (!ds3231ReadStatus && (Rtc.utc_time < START_VALID_TIME)) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
-/*
-    TIME_T tmpTime;
-    TasmotaGlobal.ntp_force_sync = true; //force to sync with ntp
-    Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
-    // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
-    // We need it to set rules etc.
-    BreakTime(Rtc.utc_time, tmpTime);
-    if (Rtc.utc_time < START_VALID_TIME ) {
-      ds3231ReadStatus = true; //if time in DS3231 is valid, do  not update again
-    }
-    RtcTime.year = tmpTime.year + 1970;
-    Rtc.daylight_saving_time = RuleToTime(Settings->tflag[1], RtcTime.year);
-    Rtc.standard_time = RuleToTime(Settings->tflag[0], RtcTime.year);
-    AddLog(LOG_LEVEL_INFO, PSTR("Set time from DS3231 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-                GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
-    if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
-      TasmotaGlobal.rules_flag.time_init = 1;
-    } else {
-      TasmotaGlobal.rules_flag.time_set = 1;
-    }
-*/
+
     uint32_t ds3231_time = ReadFromDS3231();  // Read UTC TIME from DS3231
 
     if (ds3231_time > START_VALID_TIME) {
@@ -181,17 +167,19 @@ void DS3231EverySecond(void) {
     SetDS3231Time(Rtc.utc_time);              // Update the DS3231 time
     ds3231WriteStatus = true;
   }
+#ifdef DS3231_NTP_SERVER
   if (NTP.mode.runningNTP) {
     timeServer.processOneRequest(Rtc.utc_time, NTP_MILLIS_OFFSET);
   }
+#endif  // DS3231_NTP_SERVER
 }
 
+#ifdef DS3231_NTP_SERVER
 /*********************************************************************************************\
-   NTP functions
-  \*********************************************************************************************/
+ * NTP functions
+\*********************************************************************************************/
 
 void NTPSelectMode(uint16_t mode) {
-  DEBUG_SENSOR_LOG(PSTR("DS3: NTP status %u"),mode);
   switch(mode){
     case 0:
       NTP.mode.runningNTP = false;
@@ -201,7 +189,6 @@ void NTPSelectMode(uint16_t mode) {
         NTP.mode.runningNTP = true;
       }
       break;
-
   }
 }
 
@@ -213,10 +200,11 @@ bool NTPCmd(void) {
   }
   return serviced;
 }
+#endif  // DS3231_NTP_SERVER
 
 /*********************************************************************************************\
-   Interface
-  \*********************************************************************************************/
+ * Interface
+\*********************************************************************************************/
 
 bool Xsns33(uint8_t function) {
   if (!I2cEnabled(XI2C_26)) { return false; }
@@ -228,11 +216,13 @@ bool Xsns33(uint8_t function) {
   }
   else if (DS3231chipDetected) {
     switch (function) {
+#ifdef DS3231_NTP_SERVER
       case FUNC_COMMAND_SENSOR:
         if (XSNS_33 == XdrvMailbox.index) {
           result = NTPCmd();
         }
         break;
+#endif  // DS3231_NTP_SERVER
       case FUNC_EVERY_SECOND:
         DS3231EverySecond();
         break;
