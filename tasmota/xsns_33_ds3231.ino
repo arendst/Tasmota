@@ -20,17 +20,17 @@
 #ifdef USE_I2C
 #ifdef USE_DS3231
 /*********************************************************************************************\
-   DS3231 - its a accurate RTC that used in the SONOFF for get time when you not have internet connection
-            This is minimal library that use only for read/write time !
-            We store UTC time in the DS3231 , so we can use the standart functions.
-   HOWTO Use : first time, you must to have internet connection (use your mobile phone or try in other location).
-               once you have ntp connection , the DS3231 internal clock will be updated automatically.
-               you can now power off the device, from now and on the time is stored in the module and will
-               be restored when the is no connection to NTP.
-   Source: Guy Elgabsi with special thanks to Jack Christensen
+ DS3231 - its a accurate RTC that used in the SONOFF for get time when you not have internet connection
+          This is minimal library that use only for read/write time !
+          We store UTC time in the DS3231 , so we can use the standart functions.
+  HOWTO Use : first time, you must to have internet connection (use your mobile phone or try in other location).
+              once you have ntp connection , the DS3231 internal clock will be updated automatically.
+              you can now power off the device, from now and on the time is stored in the module and will
+              be restored when the is no connection to NTP.
+  Source: Guy Elgabsi with special thanks to Jack Christensen
 
-   I2C Address: 0x68
-  \*********************************************************************************************/
+  I2C Address: 0x68
+\*********************************************************************************************/
 
 #define XSNS_33             33
 #define XI2C_26             26  // See I2CDEVICES.md
@@ -67,9 +67,12 @@
 #define HR1224 6                   //Hours register 12 or 24 hour mode (24 hour mode==0)
 #define CENTURY 7                  //Century bit in Month register
 #define DYDT 6                     //Day/Date flag bit in alarm Day/Date registers
+
 bool ds3231ReadStatus = false;
 bool ds3231WriteStatus = false;    //flag, we want to read/write to DS3231 only once
 bool DS3231chipDetected = false;
+
+/*********************************************************************************************/
 
 #ifdef DS3231_NTP_SERVER
 #include "NTPServer.h"
@@ -93,9 +96,9 @@ struct NTP_t {
 } NTP;
 #endif  // DS3231_NTP_SERVER
 
-/*----------------------------------------------------------------------*
-  Detect the DS3231 Chip
-  ----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*\
+ * Detect the DS3231 Chip
+\*----------------------------------------------------------------------*/
 void DS3231Detect(void) {
   if (!I2cSetDevice(USE_RTC_ADDR)) { return; }
 
@@ -105,23 +108,23 @@ void DS3231Detect(void) {
   }
 }
 
-/*----------------------------------------------------------------------*
-  BCD-to-Decimal conversion
-  ----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*\
+ * BCD-to-Decimal conversion
+\*----------------------------------------------------------------------*/
 uint8_t bcd2dec(uint8_t n) {
   return n - 6 * (n >> 4);
 }
 
-/*----------------------------------------------------------------------*
-   Decimal-to-BCD conversion
-  ----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*\
+ * Decimal-to-BCD conversion
+/*----------------------------------------------------------------------*/
 uint8_t dec2bcd(uint8_t n) {
   return n + 6 * (n / 10);
 }
 
-/*----------------------------------------------------------------------*
-   Read time from DS3231 and return the epoch time (second since 1-1-1970 00:00)
-  ----------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*\
+ * Read time from DS3231 and return the epoch time (second since 1-1-1970 00:00)
+\*----------------------------------------------------------------------*/
 uint32_t ReadFromDS3231(void) {
   TIME_T tm;
   tm.second = bcd2dec(I2cRead8(USE_RTC_ADDR, RTC_SECONDS));
@@ -133,9 +136,10 @@ uint32_t ReadFromDS3231(void) {
   tm.year = bcd2dec(I2cRead8(USE_RTC_ADDR, RTC_YEAR));
   return MakeTime(tm);
 }
-/*----------------------------------------------------------------------*
-   Get time as TIME_T and set the DS3231 time to this value
-  ----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------*\
+ * Get time as TIME_T and set the DS3231 time to this value
+/*----------------------------------------------------------------------*/
 void SetDS3231Time (uint32_t epoch_time) {
   TIME_T tm;
   BreakTime(epoch_time, tm);
@@ -146,25 +150,24 @@ void SetDS3231Time (uint32_t epoch_time) {
   I2cWrite8(USE_RTC_ADDR, RTC_DATE, dec2bcd(tm.day_of_month));
   I2cWrite8(USE_RTC_ADDR, RTC_MONTH, dec2bcd(tm.month));
   I2cWrite8(USE_RTC_ADDR, RTC_YEAR, dec2bcd(tm.year));
-  I2cWrite8(USE_RTC_ADDR, RTC_STATUS, I2cRead8(USE_RTC_ADDR, RTC_STATUS) & ~_BV(OSF)); //clear the Oscillator Stop Flag
+  I2cWrite8(USE_RTC_ADDR, RTC_STATUS, I2cRead8(USE_RTC_ADDR, RTC_STATUS) & ~_BV(OSF));  // Clear the Oscillator Stop Flag
 }
 
 void DS3231EverySecond(void) {
-  if (!ds3231ReadStatus && (Rtc.utc_time < START_VALID_TIME)) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
-
-    uint32_t ds3231_time = ReadFromDS3231();  // Read UTC TIME from DS3231
-
+  if (!ds3231ReadStatus && (Rtc.utc_time < START_VALID_TIME)) {         // We still did not sync with NTP (time not valid) , so, read time  from DS3231
+    uint32_t ds3231_time = ReadFromDS3231();                            // Read UTC TIME from DS3231
     if (ds3231_time > START_VALID_TIME) {
       Rtc.utc_time = ds3231_time;
-      RtcSync();
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DS3: Synched"));
-//      Rtc.user_time_entry = true;             // Stop NTP sync and DS3231 time write
-      ds3231ReadStatus = true;                // if time in DS3231 is valid, do  not update again
+      RtcSync("DS3231");
+//      Rtc.user_time_entry = true;                                       // Stop NTP sync and DS3231 time write
+      ds3231ReadStatus = true;                                          // As time in DS3231 is valid, do not update again
     }
   }
-  else if (!ds3231WriteStatus && (Rtc.utc_time > START_VALID_TIME) && (abs((int32_t)(Rtc.utc_time - ReadFromDS3231())) > 10)) {  // If time is valid and has drifted from RTC more than 10 seconds
-    AddLog(LOG_LEVEL_INFO, PSTR("DS3: Write Time from NTP (" D_UTC_TIME ") %s"), GetDateAndTime(DT_UTC).c_str());
-    SetDS3231Time(Rtc.utc_time);              // Update the DS3231 time
+  else if ((!ds3231WriteStatus || (!(TasmotaGlobal.uptime % 3600))) &&  // After restart or every hour
+           (Rtc.utc_time > START_VALID_TIME) &&                         // Valid UTC time
+           (abs((int32_t)(Rtc.utc_time - ReadFromDS3231())) > 4)) {     // Time has drifted from RTC more than 4 seconds
+    SetDS3231Time(Rtc.utc_time);                                        // Update the DS3231 time
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DS3: Re-synced (" D_UTC_TIME ") %s"), GetDateAndTime(DT_UTC).c_str());
     ds3231WriteStatus = true;
   }
 #ifdef DS3231_NTP_SERVER
