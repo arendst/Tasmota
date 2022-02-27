@@ -230,7 +230,9 @@ void UpdateQuickPowerCycle(bool update) {
 
   const uint32_t QPC_COUNT = 7;  // Number of Power Cycles before Settings erase
   const uint32_t QPC_SIGNATURE = 0xFFA55AFF;
-
+#ifdef USE_COUNTER
+  CounterInterruptDisable(true);
+#endif
 #ifdef ESP8266
   const uint32_t qpc_sector = SETTINGS_LOCATION - CFG_ROTATES;
   const uint32_t qpc_location = qpc_sector * SPI_FLASH_SEC_SIZE;
@@ -280,10 +282,11 @@ void UpdateQuickPowerCycle(bool update) {
     AddLog(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
   }
 #endif  // ESP32
-
+#ifdef USE_COUNTER
+  CounterInterruptDisable(false);
+#endif
 #endif  // FIRMWARE_MINIMAL
 }
-
 #ifdef USE_EMERGENCY_RESET
 /*********************************************************************************************\
  * Emergency reset if Rx and Tx are tied together
