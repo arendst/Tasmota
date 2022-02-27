@@ -5,7 +5,6 @@
  * Can be eventually subclassed to handle a physical light.
  * 
  *******************************************************************/
-#ifdef USE_LIGHT
 
 #include "be_constobj.h"
 #include "be_mapping.h"
@@ -79,5 +78,3 @@ class be_class_ccronexpr (scope: global, name: ccronexpr) {
   now, static_ctype_func(ccronexpr_now)
 }
 @const_object_info_end */
-
-#endif // USE_LIGHT
