@@ -41,6 +41,7 @@ class TasmotaSerial : public Stream {
     virtual ~TasmotaSerial();
 
     bool begin(uint32_t speed = TM_SERIAL_BAUDRATE, uint32_t config = SERIAL_8N1);
+    void end(bool turnOffDebug = true);
     bool hardwareSerial(void);
     int peek(void);
 
@@ -53,15 +54,18 @@ class TasmotaSerial : public Stream {
     void rxRead(void);
 
     uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
-
 #ifdef ESP32
     uint32_t getUart(void) const { return m_uart; }
 #endif
+    bool isValid() { return m_valid; }
 
     using Print::write;
 
   private:
     bool isValidGPIOpin(int pin);
+#ifdef ESP32
+    bool freeUart(void);
+#endif
     size_t txWrite(uint8_t byte);
 
     // Member variables
