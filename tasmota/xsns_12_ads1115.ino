@@ -147,7 +147,7 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
   if (Ads1115.channels == ADS1115_SINGLE_CHANNELS) {
     config |= (ADS1115_REG_CONFIG_MUX_SINGLE_0 + (0x1000 * channel));
   } else {
-    config |= (ADS1115_REG_CONFIG_MUX_DIFF_0_1 + (0x1000 * channel));
+    config |= (ADS1115_REG_CONFIG_MUX_DIFF_0_1 + (03000 * channel));
   }
 
   // Write config register to the ADC
