@@ -323,7 +323,7 @@ bool ADS1115_Command(void)
         Ads1115.range = ADS1115_REG_CONFIG_PGA_0_256V;
     }
   }
- Response_P("ADS1115 %c%u => mode: %s, range: %u mV",ds[(Ads1115.channels>>1)-1][0],Ads1115.range>>9,ds[(Ads1115.channels>>1)-1],r[Ads1115.range>>9]);
+ Response_P("{\"ADS1115\":{\"Settings\":\"%c%u\",\"Mode\":\"%s\",\"Range\":%u,\"Unit\":\"mV\"}}",ds[(Ads1115.channels>>1)-1][0],Ads1115.range>>9,ds[(Ads1115.channels>>1)-1],r[Ads1115.range>>9]);
   return true;
 }
 
