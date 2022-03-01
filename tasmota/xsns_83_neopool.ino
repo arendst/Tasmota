@@ -1673,11 +1673,8 @@ void NeoPoolShow(bool json)
 #ifndef NEOPOOL_OPTIMIZE_READINGS
     {
       // Cell runtime
-      char dt[16];
-      TIME_T tmpTime;
-      BreakTime((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16), tmpTime);
-      snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d"), tmpTime.days, tmpTime.hour, tmpTime.minute);
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_CELL_RUNTIME, neopool_type, dt);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_CELL_RUNTIME, neopool_type,
+        GetDuration((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16)).c_str());
     }
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 
