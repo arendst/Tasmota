@@ -1,7 +1,7 @@
 /*
   xsns_83_neopool.ino - Sugar Valley NeoPool Control System Modbus support for Tasmota
 
-  Copyright (C) 2021  Norbert Richter
+  Copyright (C) 2022  Norbert Richter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,18 +31,21 @@
  *   Bayrol
  *   Hay
  *
- * Sugar Valley RS485 connector inside (Display/Wifi/External)
+ * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN)
  * pins (from top to bottom):
  *
  *    RS485 MODBUS
  *      ___
- *   1 |*  |- +12V
+ *   1 |*  |- +12V (internal power supply)
  *   2 |*  |-
  *   3 |*  |- Modbus A+
  *   4 |*  |- Modbus B-
  *   5 |*__|- Modbus GND
  *
  *   RS485 Parameter: 19200 Baud / 1 Stopbit / Parity None
+ *
+ *   Channel connector DISPLAY is useless as long as the internal display is also connect,
+ *   use WIFI or EXTERN instead.
  *
  * Hardware serial will be selected if GPIO1 = [NeoPool Rx] and GPIO3 = [NeoPool Tx]
 \*********************************************************************************************/
@@ -54,7 +57,7 @@
 #endif
 
 #ifndef NEOPOOL_MODBUS_ADDRESS
-#define NEOPOOL_MODBUS_ADDRESS       1      // Modbus address
+#define NEOPOOL_MODBUS_ADDRESS       1      // Modbus address, "WIFI" uses 1, "EXTERN" defaults also 1
 #endif
 
 
