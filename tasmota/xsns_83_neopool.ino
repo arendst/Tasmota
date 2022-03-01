@@ -588,13 +588,14 @@ struct {
   const uint16_t cnt;
   uint16_t *data;
 } NeoPoolReg[] = {
-  // 6 entries so using 250ms poll interval we are through in 1,5 for all register
-  {MBF_ION_CURRENT,       MBF_NOTIFICATION      - MBF_ION_CURRENT + 1, nullptr},
-  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH - MBF_CELL_RUNTIME_LOW + 1, nullptr},
-  {MBF_PAR_VERSION,       MBF_PAR_MODEL         - MBF_PAR_VERSION + 1, nullptr},
-  {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO     - MBF_PAR_TIME_LOW + 1, nullptr},
-  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF - MBF_PAR_ION + 1, nullptr},
-  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE - MBF_PAR_UICFG_MACHINE + 1, nullptr}
+  // 7 entries each polled every 250ms needs 1750 ms for complete register set
+  {MBF_ION_CURRENT,       MBF_NOTIFICATION                - MBF_ION_CURRENT       + 1, nullptr},
+  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH           - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
+  {MBF_PAR_VERSION,       MBF_PAR_MODEL                   - MBF_PAR_VERSION       + 1, nullptr},
+  {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO               - MBF_PAR_TIME_LOW      + 1, nullptr},
+  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF         - MBF_PAR_ION           + 1, nullptr},
+  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE - MBF_PAR_UICFG_MACHINE + 1, nullptr},
+  {MBF_VOLT_24_36,        MBF_VOLT_12                     - MBF_VOLT_24_36        + 1, nullptr}
 };
 
 // NeoPool modbus function errors
@@ -680,6 +681,7 @@ const char kNeoPoolpHAlarms[] PROGMEM =
 #define D_NEOPOOL_UNIT_GPERH  "g/h"
 
 const char HTTP_SNS_NEOPOOL_TIME[]             PROGMEM = "{s}%s " D_NEOPOOL_TIME            "{m}%s"                                                               "{e}";
+const char HTTP_SNS_NEOPOOL_VOLTAGE[]          PROGMEM = "{s}%s " D_VOLTAGE                 "{m}%*_f / %*_f " D_UNIT_VOLT                                         "{e}";
 const char HTTP_SNS_NEOPOOL_HYDROLYSIS[]       PROGMEM = "{s}%s " D_NEOPOOL_HYDROLYSIS      "{m}"  NEOPOOL_FMT_HIDRO  " %s ";
 const char HTTP_SNS_NEOPOOL_PH[]               PROGMEM = "{s}%s " D_PH                      "{m}"  NEOPOOL_FMT_PH;
 const char HTTP_SNS_NEOPOOL_REDOX[]            PROGMEM = "{s}%s " D_NEOPOOL_REDOX           "{m}"  NEOPOOL_FMT_RX     " "  D_UNIT_MILLIVOLT;
@@ -1316,6 +1318,15 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\"" D_TEMPERATURE "\":%*_f"), Settings->flag2.temperature_resolution, &fvalue);
     }
 
+    // Voltage
+    {
+      float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
+      float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
+      ResponseAppend_P(PSTR(",\"" D_VOLTAGE "\":{\"12\":%*_f,\"24\":%*_f}"),
+        Settings->flag2.voltage_resolution, &f12volt,
+        Settings->flag2.voltage_resolution, &f24_36volt);
+    }
+
     // pH
     if (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_MEASURE_ACTIVE) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
@@ -1481,6 +1492,15 @@ void NeoPoolShow(bool json)
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
       fvalue = ConvertTemp((float)NeoPoolGetData(MBF_MEASURE_TEMPERATURE)/10);
       WSContentSend_PD(HTTP_SNS_F_TEMP, neopool_type, Settings->flag2.temperature_resolution, &fvalue, TempUnit());
+    }
+
+    // Voltage
+    {
+      float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
+      float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_VOLTAGE, neopool_type,
+        Settings->flag2.voltage_resolution, &f12volt,
+        Settings->flag2.voltage_resolution, &f24_36volt);
     }
 
     // Hydrolysis
