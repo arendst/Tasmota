@@ -582,35 +582,19 @@ uint8_t neopoll_cmd_delay = 0;
 void (* neopoll_cmd)(void) = nullptr;
 
 // Modbus register set to read
-// Can be either a block of register read once with a single read or a list of disjoined addr which has to read reg by reg
-// This keeps the update cycle fast even we have a lot of register to read
-#define NEOPOOL_REG_TYPE_BLOCK  0
-#define NEOPOOL_REG_TYPE_LIST   1
-typedef struct {
-    const uint16_t addr;
-    const uint16_t cnt;
-    uint16_t *data;
-} NeoPoolRegBlock;
-
-typedef struct {
-    const uint16_t addr;
-    uint16_t data;
-} NeoPoolRegList;
-
+// Defines blocks of register read once with a single read
 struct {
-  const uint16_t type;
-  union {
-    NeoPoolRegBlock block;
-    NeoPoolRegList *list;
-  };
+  const uint16_t addr;
+  const uint16_t cnt;
+  uint16_t *data;
 } NeoPoolReg[] = {
-    // 6 entries so using 250ms poll interval we are through in 1,5 for all register
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_ION_CURRENT,       MBF_NOTIFICATION      - MBF_ION_CURRENT + 1, nullptr}},
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH - MBF_CELL_RUNTIME_LOW + 1, nullptr}},
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_VERSION,       MBF_PAR_MODEL         - MBF_PAR_VERSION + 1, nullptr}},
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO     - MBF_PAR_TIME_LOW + 1, nullptr}},
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF - MBF_PAR_ION + 1, nullptr}},
-    {NEOPOOL_REG_TYPE_BLOCK, {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE - MBF_PAR_UICFG_MACHINE + 1, nullptr}}
+  // 6 entries so using 250ms poll interval we are through in 1,5 for all register
+  {MBF_ION_CURRENT,       MBF_NOTIFICATION      - MBF_ION_CURRENT + 1, nullptr},
+  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH - MBF_CELL_RUNTIME_LOW + 1, nullptr},
+  {MBF_PAR_VERSION,       MBF_PAR_MODEL         - MBF_PAR_VERSION + 1, nullptr},
+  {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO     - MBF_PAR_TIME_LOW + 1, nullptr},
+  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF - MBF_PAR_ION + 1, nullptr},
+  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE - MBF_PAR_UICFG_MACHINE + 1, nullptr}
 };
 
 // NeoPool modbus function errors
@@ -628,7 +612,7 @@ typedef struct {
   uint16_t cl : 2;
   uint16_t ion : 2;
 } NeoPoolResMBitfield;
-NeoPoolResMBitfield neopool_resolution { 
+NeoPoolResMBitfield neopool_resolution {
   .ph = 1,
   .cl = 1,
   .ion = 1
@@ -928,17 +912,17 @@ void NeoPool250ms(void)              // Every 250 mSec
 
   bool data_ready = NeoPoolModbus->ReceiveReady();
 
-  if (data_ready && nullptr != NeoPoolReg[neopool_read_state].block.data) {
-    uint8_t *buffer = (uint8_t *)malloc(5+(NeoPoolReg[neopool_read_state].block.cnt)*2);
+  if (data_ready && nullptr != NeoPoolReg[neopool_read_state].data) {
+    uint8_t *buffer = (uint8_t *)malloc(5+(NeoPoolReg[neopool_read_state].cnt)*2);
 
     if (nullptr != buffer) {
-      uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, NeoPoolReg[neopool_read_state].block.cnt);  // cnt x 16bit register
+      uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, NeoPoolReg[neopool_read_state].cnt);  // cnt x 16bit register
 
       if (0 == error) {
         neopool_failed_count = 0;
         neopool_error = false;
-        for (uint32_t i = 0; i < NeoPoolReg[neopool_read_state].block.cnt; i++) {
-          NeoPoolReg[neopool_read_state].block.data[i] = (buffer[i*2+3] << 8) | buffer[i*2+4];
+        for (uint32_t i = 0; i < NeoPoolReg[neopool_read_state].cnt; i++) {
+          NeoPoolReg[neopool_read_state].data[i] = (buffer[i*2+3] << 8) | buffer[i*2+4];
         }
       }
 #ifdef DEBUG_TASMOTA_SENSOR
@@ -950,7 +934,7 @@ void NeoPool250ms(void)              // Every 250 mSec
     }
 #ifdef DEBUG_TASMOTA_SENSOR
     else {
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus block 0x%04X - 0x%04X skipped"), NeoPoolReg[neopool_read_state].block.addr, NeoPoolReg[neopool_read_state].block.addr+NeoPoolReg[neopool_read_state].block.cnt);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus block 0x%04X - 0x%04X skipped"), NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].addr+NeoPoolReg[neopool_read_state].cnt);
     }
 #endif  // DEBUG_TASMOTA_SENSOR
 
@@ -962,24 +946,24 @@ void NeoPool250ms(void)              // Every 250 mSec
 #endif  // NEOPOOL_OPTIMIZE_READINGS
   }
 
-  if (nullptr != NeoPoolReg[neopool_read_state].block.data) {
+  if (nullptr != NeoPoolReg[neopool_read_state].data) {
     if (0 == neopool_send_retry || data_ready) {
       neopool_send_retry = SENSOR_MAX_MISS;   // controller sometimes takes long time to answer
 #ifdef NEOPOOL_OPTIMIZE_READINGS
       // optimize register block reads by attend to MBF_NOTIFICATION bits
-      if (neopool_first_read || 0x0100 == (NeoPoolReg[neopool_read_state].block.addr & 0x0700) ||
-            (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].block.addr >> 8)-1))) {
+      if (neopool_first_read || 0x0100 == (NeoPoolReg[neopool_read_state].addr & 0x0700) ||
+            (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].addr >> 8)-1))) {
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 #ifdef DEBUG_TASMOTA_SENSOR
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus send(%d, %d, 0x%04X, %d)"), NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].block.addr, NeoPoolReg[neopool_read_state].block.cnt);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus send(%d, %d, 0x%04X, %d)"), NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
-        NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].block.addr, NeoPoolReg[neopool_read_state].block.cnt);
+        NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
 #ifdef NEOPOOL_OPTIMIZE_READINGS
       } else {
         // search next addr block having notification
-        while ((NeoPoolReg[neopool_read_state].block.addr & 0x0F00) != 0x100 || (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].block.addr >> 8)-1))) {
+        while ((NeoPoolReg[neopool_read_state].addr & 0x0F00) != 0x100 || (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].addr >> 8)-1))) {
 #ifdef DEBUG_TASMOTA_SENSOR
-          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].block.addr);
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].addr);
 #endif  // DEBUG_TASMOTA_SENSOR
           ++neopool_read_state %= nitems(NeoPoolReg);
         }
@@ -1029,12 +1013,12 @@ bool NeoPoolInitData(void)
 
   neopool_error = true;
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
-    if (nullptr == NeoPoolReg[i].block.data) {
-      NeoPoolReg[i].block.data = (uint16_t *)malloc(sizeof(uint16_t)*NeoPoolReg[i].block.cnt);
-      if (nullptr != NeoPoolReg[i].block.data) {
-        memset(NeoPoolReg[i].block.data, 0, sizeof(uint16_t)*NeoPoolReg[i].block.cnt);
+    if (nullptr == NeoPoolReg[i].data) {
+      NeoPoolReg[i].data = (uint16_t *)malloc(sizeof(uint16_t)*NeoPoolReg[i].cnt);
+      if (nullptr != NeoPoolReg[i].data) {
+        memset(NeoPoolReg[i].data, 0, sizeof(uint16_t)*NeoPoolReg[i].cnt);
 #ifdef DEBUG_TASMOTA_SENSOR
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: Init - addr 0x%04x cnt %d data %p"), NeoPoolReg[i].block.addr, NeoPoolReg[i].block.cnt, NeoPoolReg[i].block.data);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: Init - addr 0x%04x cnt %d data %p"), NeoPoolReg[i].addr, NeoPoolReg[i].cnt, NeoPoolReg[i].data);
 #endif  // DEBUG_TASMOTA_SENSOR
         res = true;
       }
@@ -1075,7 +1059,7 @@ void NeoPool250msSetStatus(bool status)
   if (!status) {
     // clear rec buffer from possible prev periodical communication
     uint32_t timeoutMS = millis() + 100 * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
-    while (NeoPoolModbus->available() && millis() < timeoutMS) { 
+    while (NeoPoolModbus->available() && millis() < timeoutMS) {
       NeoPoolModbus->read();
       SleepDelay(0);
     }
@@ -1242,8 +1226,8 @@ uint8_t NeoPoolWriteRegisterWord(uint16_t addr, uint16_t data)
 uint16_t NeoPoolGetData(uint16_t addr)
 {
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
-    if (nullptr != NeoPoolReg[i].block.data && addr >= NeoPoolReg[i].block.addr && addr < NeoPoolReg[i].block.addr+NeoPoolReg[i].block.cnt) {
-      return NeoPoolReg[i].block.data[addr - NeoPoolReg[i].block.addr];
+    if (nullptr != NeoPoolReg[i].data && addr >= NeoPoolReg[i].addr && addr < NeoPoolReg[i].addr+NeoPoolReg[i].cnt) {
+      return NeoPoolReg[i].data[addr - NeoPoolReg[i].addr];
     }
   }
   return 0;
@@ -1317,7 +1301,7 @@ void NeoPoolShow(bool json)
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
     // Time
-    ResponseAppend_P(PSTR("\"" D_JSON_TIME "\":\"%s\""), 
+    ResponseAppend_P(PSTR("\"" D_JSON_TIME "\":\"%s\""),
       GetDT((uint32_t)NeoPoolGetData(MBF_PAR_TIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_PAR_TIME_HIGH) << 16)).c_str());
 
     // Type
@@ -1404,7 +1388,7 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":\"%s\""), 
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":\"%s\""),
         GetDuration((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16)).c_str());
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 
@@ -1886,8 +1870,8 @@ void CmndNeopoolFiltration(void)
   }
   uint16_t speed = (NeoPoolGetData(MBF_RELAY_STATE) >> 8) & 0x07;
   if (speed) {
-    Response_P(PSTR("{\"%s\":\"%s\",\""  D_NEOPOOL_JSON_FILTRATION_SPEED  "\":\"%d\"}"), 
-      XdrvMailbox.command, 
+    Response_P(PSTR("{\"%s\":\"%s\",\""  D_NEOPOOL_JSON_FILTRATION_SPEED  "\":\"%d\"}"),
+      XdrvMailbox.command,
       GetStateText(data),
       (speed < 3) ? speed : 3);
   } else {
