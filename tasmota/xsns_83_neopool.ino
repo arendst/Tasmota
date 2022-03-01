@@ -731,6 +731,44 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *                  prg change by switch light of for delay time then switch on
  *                  delay in ms from 0.5 - 10 sec
  *
+ * NPpHMin {<ph>}
+ *            (only available if pH module is installed)
+ *            get/set pH lower limit (ph = 0..14)
+ *            get current limit if <ph> is omitted, otherwise set
+ *
+ * NPpHMax {<ph>}
+ *            (only available if pH module is installed)
+ *            get/set pH upper limit (ph = 0..14)
+ *            get current limit if <ph> is omitted, otherwise set
+ *
+ * NPpH {<ph>}
+ *            (only available if pH module is installed)
+ *            get/set pH upper limit (ph = 0..14)
+ *            same as NPpHMax
+ *
+ * NPRedox {<setpoint>}
+ *            (only available if redox module is installed)
+ *            get/set redox set point in mV (setpoint = 0..100, the upper limit of the range may vary depending on the MBF_PAR_HIDRO_NOM register)
+ *            get current set point if <setpoint> is omitted, otherwise set
+ *
+ * NPHydrolysis {<level>}
+ *            (only available if hydrolysis/electrolysis control is present)
+ *            get/set hydrolysis/electrolysis level in % (level = 0..100)
+ *            get current level if <level> is omitted, otherwise set
+ *
+ * NPIonization {<level>}
+ *            (only available if ionization control is present)
+ *            get/set ionization target production level (level = 0..x, the upper limit of the range may vary depending on the MBF_PAR_ION_NOM register)
+ *            get current level if <level> is omitted, otherwise set
+ *
+ * NPChlorine {<setpoint>}
+ *            (only available if free chlorine probe detector is installed)
+ *            get/set chlorine set point in ppm (setpoint = 0..10)
+ *            get current set point if <setpoint> is omitted, otherwise set
+ *
+ * NPControl
+ *            Show information about system controls
+ *
  * NPSave
  *            write data permanently into EEPROM
  *
@@ -845,6 +883,14 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_FILTRATIONMODE "Filtrationmode"
 #define D_CMND_NP_TIME "Time"
 #define D_CMND_NP_LIGHT "Light"
+#define D_CMND_NP_PHMIN "pHMin"
+#define D_CMND_NP_PHMAX "pHMax"
+#define D_CMND_NP_PH "pH"
+#define D_CMND_NP_REDOX "Redox"
+#define D_CMND_NP_HYDROLYSIS "Hydrolysis"
+#define D_CMND_NP_IONIZATION "Ionization"
+#define D_CMND_NP_CHLORINE "Chlorine"
+#define D_CMND_NP_CONTROL "Control"
 #define D_CMND_NP_SAVE "Save"
 #define D_CMND_NP_EXEC "Exec"
 #define D_CMND_NP_ESCAPE "Escape"
@@ -865,6 +911,14 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_FILTRATIONMODE "|"
   D_CMND_NP_TIME "|"
   D_CMND_NP_LIGHT "|"
+  D_CMND_NP_PHMIN "|"
+  D_CMND_NP_PHMAX "|"
+  D_CMND_NP_PH "|"
+  D_CMND_NP_REDOX "|"
+  D_CMND_NP_HYDROLYSIS "|"
+  D_CMND_NP_IONIZATION "|"
+  D_CMND_NP_CHLORINE "|"
+  D_CMND_NP_CONTROL "|"
   D_CMND_NP_SAVE "|"
   D_CMND_NP_EXEC "|"
   D_CMND_NP_ESCAPE "|"
@@ -886,6 +940,14 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolFiltrationMode,
   &CmndNeopoolTime,
   &CmndNeopoolLight,
+  &CmndNeopoolpHMin,
+  &CmndNeopoolpHMax,
+  &CmndNeopoolpHMax,
+  &CmndNeopoolRedox,
+  &CmndNeopoolHydrolysis,
+  &CmndNeopoolIonization,
+  &CmndNeopoolChlorine,
+  &CmndNeopoolControl,
   &CmndNeopoolSave,
   &CmndNeopoolExec,
   &CmndNeopoolEscape,
@@ -1253,6 +1315,42 @@ uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
 }
 
 
+bool NeoPoolIsHydrolysis(void)
+{
+    return (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
+            (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
+}
+
+
+bool NeoPoolIspHModule(void)
+{
+  return (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_MEASURE_ACTIVE);
+}
+
+
+bool NeoPoolIsRedox(void)
+{
+  return (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_MEASURE_ACTIVE);
+}
+
+
+bool NeoPoolIsChlorine(void)
+{
+  return (NeoPoolGetData(MBF_CL_STATUS) & MBMSK_CL_STATUS_MEASURE_ACTIVE);
+}
+
+
+bool NeoPoolIsConductivity(void)
+{
+  return (NeoPoolGetData(MBF_CD_STATUS) & MBMSK_CD_STATUS_MEASURE_ACTIVE);
+}
+
+
+bool NeoPoolIsIonization(void)
+{
+  return (NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_ION);
+}
+
 
 /*********************************************************************************************/
 
@@ -1330,7 +1428,7 @@ void NeoPoolShow(bool json)
     }
 
     // pH
-    if (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIspHModule()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
       ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), neopool_resolution.ph, &fvalue);
 
@@ -1363,30 +1461,29 @@ void NeoPoolShow(bool json)
     }
 
     // Redox
-    if (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIsRedox()) {
       ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_REDOX "\":" NEOPOOL_FMT_RX), NeoPoolGetData(MBF_MEASURE_RX));
     }
 
     // Chlorine
-    if (NeoPoolGetData(MBF_CL_STATUS) & MBMSK_CL_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIsChlorine()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
       ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_CHLORINE "\":" NEOPOOL_FMT_CL), neopool_resolution.cl, &fvalue);
     }
 
     // Conductivity
-    if (NeoPoolGetData(MBF_CD_STATUS) & MBMSK_CD_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIsConductivity()) {
       ResponseAppend_P(PSTR(",\"" D_NEOPOOL_CONDUCTIVITY "\":" NEOPOOL_FMT_CD), NeoPoolGetData(MBF_MEASURE_CONDUCTIVITY));
     }
 
     // Ionization
-    if (NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_ION) {
+    if (NeoPoolIsIonization()) {
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
       ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_IONIZATION "\":" NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
     }
 
     // Hydrolysis
-    if (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
-        (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE))) {
+    if (NeoPoolIsHydrolysis()) {
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
       const char *sunit;
       int dec = 1;
@@ -1506,8 +1603,7 @@ void NeoPoolShow(bool json)
     }
 
     // Hydrolysis
-    if (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
-        (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE))) {
+    if (NeoPoolIsHydrolysis()) {
       // Data
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
       const char *sunit = PSTR("%");
@@ -1555,7 +1651,7 @@ void NeoPoolShow(bool json)
     }
 
     // pH
-    if (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIspHModule()) {
       // Data
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
       WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, neopool_resolution.ph, &fvalue);
@@ -1598,7 +1694,7 @@ void NeoPoolShow(bool json)
     // Status/Alarm: S1 S2
     // S1: 0
     // S2: FL1
-    if (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIsRedox()) {
       WSContentSend_PD(HTTP_SNS_NEOPOOL_REDOX, neopool_type, NeoPoolGetData(MBF_MEASURE_RX));
       WSContentSend_PD(PSTR("&nbsp;"));
       // S1
@@ -1610,18 +1706,18 @@ void NeoPoolShow(bool json)
     }
 
     // Chlorine
-    if (NeoPoolGetData(MBF_CL_STATUS) & MBMSK_CL_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIsChlorine()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
       WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, neopool_resolution.ph, &fvalue);
     }
 
     // Conductivity
-    if (NeoPoolGetData(MBF_CD_STATUS) & MBMSK_CD_STATUS_MEASURE_ACTIVE) {
+    if (NeoPoolIsConductivity()) {
       WSContentSend_PD(HTTP_SNS_NEOPOOL_CONDUCTIVITY, neopool_type, NeoPoolGetData(MBF_MEASURE_CONDUCTIVITY));
     }
 
     // Ionization
-    if (NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_ION) {
+    if (NeoPoolIsIonization()) {
       char spol[32];
       snprintf_P(spol, sizeof(spol), PSTR(" " D_NEOPOOL_POLARIZATION "%d"), NeoPoolGetData(MBF_ION_STATUS)>>13);
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s%s"),
@@ -2061,6 +2157,152 @@ void CmndNeopoolLightPrgEnd(void)
   NeoPoolWriteRegisterWord(MBF_EXEC, 1);
 }
 
+
+bool CmndNeopoolSetParam(uint16_t reg, uint16_t factor, float min, float max)
+{
+  uint16_t data;
+
+  if (XdrvMailbox.data_len) {
+    data = (int)(CharToFloat(XdrvMailbox.data) * (float)factor);
+    if (data >= min*(float)factor && data <= max*(float)factor) {
+      if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(reg, data) ||
+          NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_EXEC, 1) ||
+          NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_SAVE_TO_EEPROM, 1)) {
+        NeopoolResponseError();
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+void CmndNeopoolGetParam(uint16_t reg, uint16_t factor, uint16_t res)
+{
+  uint16_t data;
+
+  if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(reg, &data, 1)) {
+      NeopoolResponseError();
+      return;
+  }
+  ResponseCmndFloat((float)(data) / (float)factor, res);
+}
+
+void CmndNeopoolpHMin(void)
+{
+  if (NeoPoolIspHModule()) {
+    uint16_t data;
+    // read pH max
+    if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_PH1, &data, 1)) {
+        NeopoolResponseError();
+        return;
+    }
+    if (CmndNeopoolSetParam(MBF_PAR_PH2, 100, 0, (float)data/100)) {
+      CmndNeopoolGetParam(MBF_PAR_PH2, 100, neopool_resolution.ph);
+    }
+  } else {
+    NeopoolCmndError();
+  }
+}
+
+void CmndNeopoolpHMax(void)
+{
+  if (NeoPoolIspHModule()) {
+    uint16_t data;
+    // read pH min
+    if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_PH2, &data, 1)) {
+        NeopoolResponseError();
+        return;
+    }
+    if (CmndNeopoolSetParam(MBF_PAR_PH1, 100, (float)data/100, 14)) {
+      CmndNeopoolGetParam(MBF_PAR_PH1, 100, neopool_resolution.ph);
+    }
+  } else {
+    NeopoolCmndError();
+  }
+}
+
+
+void CmndNeopoolRedox(void)
+{
+  if (NeoPoolIsRedox()) {
+    if (CmndNeopoolSetParam(MBF_PAR_RX1, 1, 0, 1000)) {
+      CmndNeopoolGetParam(MBF_PAR_RX1, 1, 0);
+    }
+  } else {
+    NeopoolCmndError();
+  }
+}
+
+
+void CmndNeopoolHydrolysis(void)
+{
+  if (NeoPoolIsHydrolysis()) {
+    uint16_t data;
+    // read hydrolysis maximum production level
+    if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_HIDRO_NOM, &data, 1)) {
+        NeopoolResponseError();
+        return;
+    }
+    if (CmndNeopoolSetParam(MBF_PAR_HIDRO, 10, 0, (float)data/10)) {
+      CmndNeopoolGetParam(MBF_PAR_HIDRO, 10, 0);
+    }
+  } else {
+    NeopoolCmndError();
+  }
+}
+
+
+void CmndNeopoolIonization(void)
+{
+  if (NeoPoolIsIonization()) {
+    uint16_t data;
+    // read ionization maximum production level
+    if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_ION_NOM, &data, 1)) {
+        NeopoolResponseError();
+        return;
+    }
+    if (CmndNeopoolSetParam(MBF_PAR_ION, 1, 0, (float)data)) {
+      CmndNeopoolGetParam(MBF_PAR_ION, 1, neopool_resolution.ion);
+    }
+  } else {
+    NeopoolCmndError();
+  }
+}
+
+
+void CmndNeopoolChlorine(void)
+{
+  if (NeoPoolIsChlorine()) {
+    if (CmndNeopoolSetParam(MBF_PAR_CL1, 100, 0, 10)) {
+      CmndNeopoolGetParam(MBF_PAR_CL1, 100, neopool_resolution.cl);
+    }
+  } else {
+    NeopoolCmndError();
+  }
+}
+
+void CmndNeopoolControl(void)
+{
+  Response_P(PSTR("{\"Modules\":{"));
+  ResponseAppend_P(PSTR( "\"" D_NEOPOOL_JSON_HYDROLYSIS "\":%d"), NeoPoolIsHydrolysis());
+  ResponseAppend_P(PSTR(",\"" D_JSON_PH "\":%d"), NeoPoolIspHModule());
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_REDOX "\":%d"), NeoPoolIsRedox());
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_CHLORINE "\":%d"), NeoPoolIsChlorine());
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_CONDUCTIVITY "\":%d"), NeoPoolIsConductivity());
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_IONIZATION "\":%d"), NeoPoolIsIonization());
+  ResponseJsonEnd();
+  ResponseAppend_P(PSTR(",\"Relay\":{"));
+  ResponseAppend_P(PSTR( "\"" D_NEOPOOL_JSON_RELAY_PH_ACID "\":%d"), NeoPoolGetData(MBF_PAR_PH_ACID_RELAY_GPIO));
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_RELAY_PH_BASE "\":%d"), NeoPoolGetData(MBF_PAR_PH_BASE_RELAY_GPIO));
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_RELAY_RX "\":%d"), NeoPoolGetData(MBF_PAR_RX_RELAY_GPIO));
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_RELAY_CL "\":%d"), NeoPoolGetData(MBF_PAR_CL_RELAY_GPIO));
+  ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_RELAY_CD "\":%d"), NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO));
+  ResponseJsonEndEnd();
+}
 
 void CmndNeopoolSave(void)
 {

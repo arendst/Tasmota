@@ -7,11 +7,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 - TasmotaSerial implement ``end()``
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
+- Neopool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl``
+- NeoPool system voltages display
 
 ### Changed
 - Extent number of pulsetimers from 8 to 32 (#8266)
 - Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
 - TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
+- NeoPool limit relay output to the number actually available
 
 ### Fixed
 
