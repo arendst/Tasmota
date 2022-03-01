@@ -555,6 +555,8 @@ enum NeoPoolConstAndBitMask {
 #include <TasmotaModbus.h>
 TasmotaModbus *NeoPoolModbus;
 
+#define NEOPOOL_RELAY_MAX           7     // Number of relais build-in
+
 enum NeoPoolResult {
   NEOPOOL_RESULT_DEC = false,
   NEOPOOL_RESULT_HEX,
@@ -1445,7 +1447,7 @@ void NeoPoolShow(bool json)
 
     // Relays
     ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY  "\":{\""  D_NEOPOOL_JSON_STATE  "\":["));
-    for(uint16_t i = 0; i < 8; i++) {
+    for(uint16_t i = 0; i < NEOPOOL_RELAY_MAX; i++) {
       ResponseAppend_P(PSTR("%s%d"), i ? PSTR(",") : PSTR(""), (NeoPoolGetData(MBF_RELAY_STATE) >> i) & 1);
     }
     ResponseAppend_P(PSTR("]"));
@@ -1636,7 +1638,7 @@ void NeoPoolShow(bool json)
     WSContentSend_PD(HTTP_SNS_NEOPOOL_FILT_MODE, neopool_type, stemp);
 
     // Relays
-    for (uint32_t i = 0; i < 8; i++) {
+    for (uint32_t i = 0; i < NEOPOOL_RELAY_MAX; i++) {
       char sdesc[24];
       memset(sdesc, 0, nitems(sdesc));
       memset(stemp, 0, nitems(stemp));
@@ -1664,7 +1666,7 @@ void NeoPoolShow(bool json)
           snprintf_P(sdesc, sizeof(sdesc), PSTR(D_NEOPOOL_RELAY  " %d"), i+1);
       }
 
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_RELAY,neopool_type, sdesc,
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_RELAY, neopool_type, sdesc,
         '\0' == *stemp ? ((NeoPoolGetData(MBF_RELAY_STATE) & (1<<i))?PSTR(D_ON):PSTR(D_OFF)) : stemp);
     }
 
@@ -1982,7 +1984,7 @@ void CmndNeopoolLight(void)
     NeopoolResponseError();
     return;
   }
-  if (neopool_light_relay >= 1 && neopool_light_relay <= 8) {
+  if (neopool_light_relay >= 1 && neopool_light_relay <= NEOPOOL_RELAY_MAX) {
     // get/set light
     if (1 == params_cnt && XdrvMailbox.payload >= 0 && XdrvMailbox.payload < nitems(timer_val)) {
       if (POWER_TOGGLE == timer_val[XdrvMailbox.payload]) {
