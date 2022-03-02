@@ -24,10 +24,10 @@
  *
  * DS3231 - An accurate RTC that used for get time when you do not have internet connection.
  *          We store UTC time in the DS3231, so we can use the standart functions.
- * HOWTO Use : Initially the time needs to be set into the DS3231 either by
- *             - hand using command TIME <epochtime>
- *             - internet using NTP
- *             - GPS using UBX driver
+ * HOWTO Use : Initially the time needs to be set into the DS3231 either
+ *             - manual using command TIME <epochtime>
+ *             - by internet using NTP
+ *             - by GPS using UBX driver
  *             Once stored the time will be automaticaly updated by the DS2331 after power on
  * Source: Guy Elgabsi with special thanks to Jack Christensen
  *
@@ -41,8 +41,8 @@
 #define USE_RTC_ADDR        0x68    // DS3231 I2C Address
 #endif
 
-#ifndef USE_GPS                     // USE_GPS provides it's own (better) NTP server so skip this one
-#define DS3231_NTP_SERVER
+#ifndef USE_GPS                     // GPS driver has it's own NTP server
+#define DS3231_NTP_SERVER           // Enable NTP server (+0k8 code)
 #endif
 
 // DS3231 Register Addresses
