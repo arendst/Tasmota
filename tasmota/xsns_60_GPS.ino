@@ -280,6 +280,8 @@ struct UBX_t {
     CFG_RATE cfgRate;
     } Message;
 
+  uint32_t utc_time;
+
   uint8_t TCPbuf[UBX_SERIAL_BUFFER_SIZE];
   size_t TCPbufSize;
 } UBX;
@@ -668,7 +670,8 @@ void UBXHandleTIME()
   if (UBX.Message.navTime.valid.UTC == 1) {
     UBX.state.timeOffset =  millis(); // iTOW%1000 should be 0 here, when NTP-server is enabled and in "pure mode"
     DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time is valid"));
-    if (Rtc.user_time_entry == false || UBX.mode.forceUTCupdate || UBX.mode.runningNTP) {
+    bool resync = (Rtc.utc_time > UBX.utc_time);  // Sync local time every hour
+    if (Rtc.user_time_entry == false || UBX.mode.forceUTCupdate || UBX.mode.runningNTP || resync) {
       TIME_T gpsTime;
       gpsTime.year = UBX.Message.navTime.year - 1970;
       gpsTime.month = UBX.Message.navTime.month;
@@ -677,8 +680,9 @@ void UBXHandleTIME()
       gpsTime.minute = UBX.Message.navTime.min;
       gpsTime.second = UBX.Message.navTime.sec;
       UBX.rec_buffer.values.time = MakeTime(gpsTime);
-      if (UBX.mode.forceUTCupdate || Rtc.user_time_entry == false) {
+      if (UBX.mode.forceUTCupdate || (Rtc.user_time_entry == false) || resync) {
 //        AddLog(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
+        UBX.utc_time = UBX.rec_buffer.values.time + 3600;
         Rtc.utc_time = UBX.rec_buffer.values.time;
         RtcSync("UBX");
       }
