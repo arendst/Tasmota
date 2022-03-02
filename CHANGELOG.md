@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - TasmotaSerial implement ``end()``
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
-- Neopool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl``
+- Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes (#15001)
+- NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` (#15015)
 - NeoPool system voltages display
 
 ### Changed
