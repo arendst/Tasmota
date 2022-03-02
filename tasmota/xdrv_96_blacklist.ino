@@ -25,8 +25,8 @@ typedef struct {
   uint16_t lcid;
 } tBlArray;
 
-//const char BlacklistText[] PROGMEM = "Stop war, Help Ukrain|Stop war, Help Ukrain|";
-const char BlacklistText[] PROGMEM = "Стоп войну, помоги Украине";  // Stop war, Help Ukraine
+//const char BlacklistText[] PROGMEM = "No to war, Help Ukrain|No to war, Help Ukrain|";
+const char BlacklistText[] PROGMEM = "Нет войне, помоги Украине";  // No to war, Help Ukrain
 
 //                   lat_tl lon_tl lat_br lon_br lcid
 tBlArray BlArray[] {  5900,  3200,  5300,  4400, 1049,   // Around Moscow
@@ -68,7 +68,7 @@ void BListEverySecond(void) {
 
 //        char bl_text[100];
 //        AddLog(LOG_LEVEL_NONE, PSTR("**** %s ****"), GetTextIndexed(bl_text, sizeof(bl_text), i, BlacklistText));
-        AddLog(LOG_LEVEL_NONE, PSTR("**** Stop war, Help Ukrain ****"));
+        AddLog(LOG_LEVEL_NONE, PSTR("**** No to war, Help Ukrain ****"));
         blist_show = blist_loc;                          // Set GUI message id
       }
     } else if (0 == (TasmotaGlobal.uptime % 10)) {       // Only every 10 seconds
