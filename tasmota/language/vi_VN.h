@@ -856,6 +856,8 @@
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
 #define D_SENSOR_CM11_TX       "CM110x TX" 
 #define D_SENSOR_CM11_RX       "CM110x RX" 
+#define D_SENSOR_WS303U_TX     "WS303U TX"
+#define D_SENSOR_WS303U_RX     "WS303U RX"
 
 // Units
 #define D_UNIT_AMPERE "A"
