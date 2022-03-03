@@ -1665,6 +1665,23 @@ uint32_t vbus_get_septet(uint8_t *cp) {
 }
 
 
+char *skip_double(char *cp) {
+  if (*cp == '+' || *cp == '-') {
+    cp++;
+  }
+  while (*cp) {
+    if (*cp == '.') {
+      cp++;
+    }
+    if (!isdigit(*cp)) {
+      return cp;
+    }
+    cp++;
+  }
+  return 0;
+}
+
+
 void SML_Decode(uint8_t index) {
   const char *mp=(const char*)meter_p;
   int8_t mindex;
@@ -2168,6 +2185,12 @@ void SML_Decode(uint8_t index) {
           //AddLog(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
           // get scaling factor
           double fac = CharToDouble((char*)mp);
+          // get optional offset to calibrate meter
+          char *cp = skip_double((char*)mp);
+          if (cp && (*cp == '+' || *cp == '-')) {
+            double offset = CharToDouble(cp);
+            meter_vars[vindex] += offset;
+          }
           meter_vars[vindex] /= fac;
           SML_Immediate_MQTT((const char*)mp, vindex, mindex);
         }
@@ -2436,10 +2459,10 @@ uint8_t sml_counter_pinstate;
 
 uint8_t sml_cnt_index[MAX_COUNTERS] =  { 0, 1, 2, 3 };
 void IRAM_ATTR SML_CounterIsr(void *arg) {
-  uint32_t index = *static_cast<uint8_t*>(arg);
+uint32_t index = *static_cast<uint8_t*>(arg);
 
-  uint32_t time = millis();
-  uint32_t debounce_time;
+uint32_t time = millis();
+uint32_t debounce_time;
 
   if (digitalRead(meter_desc_p[sml_counters[index].sml_cnt_old_state].srcpin) == bitRead(sml_counter_pinstate, index)) {
     return;
@@ -3066,8 +3089,8 @@ void SetDBGLed(uint8_t srcpin, uint8_t ledpin) {
 
 // fast counter polling
 void SML_Counter_Poll(void) {
-  uint16_t meters,cindex=0;
-  uint32_t ctime=millis();
+uint16_t meters,cindex=0;
+uint32_t ctime=millis();
 
   for (meters=0; meters<meters_used; meters++) {
     if (meter_desc_p[meters].type=='c') {
