@@ -6,7 +6,7 @@
   SPDX-License-Identifier: GPL-3.0-only
 */
 
-#define USE_BLACKLIST
+//#define USE_BLACKLIST
 
 #ifdef USE_BLACKLIST
 /*********************************************************************************************\
@@ -25,7 +25,7 @@ typedef struct {
   uint16_t lcid;
 } tBlArray;
 
-//const char BlacklistText[] PROGMEM = "No to war, Help Ukrain|No to war, Help Ukrain|";
+//const char BlacklistText[] PROGMEM = "Stop war, Help Ukraine|Stop war, Help Ukraine|";
 const char BlacklistText[] PROGMEM = "Нет войне, помоги Украине";  // No to war, Help Ukrain
 
 //                   lat_tl lon_tl lat_br lon_br lcid
@@ -68,7 +68,7 @@ void BListEverySecond(void) {
 
 //        char bl_text[100];
 //        AddLog(LOG_LEVEL_NONE, PSTR("**** %s ****"), GetTextIndexed(bl_text, sizeof(bl_text), i, BlacklistText));
-        AddLog(LOG_LEVEL_NONE, PSTR("**** No to war, Help Ukrain ****"));
+        AddLog(LOG_LEVEL_NONE, PSTR("**** Stop war, Help Ukraine ****"));
         blist_show = blist_loc;                          // Set GUI message id
       }
     } else if (0 == (TasmotaGlobal.uptime % 10)) {       // Only every 10 seconds
