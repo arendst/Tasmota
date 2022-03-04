@@ -29,8 +29,8 @@ typedef struct {
 const char BlacklistText[] PROGMEM = "Нет войне, помоги Украине";  // No to war, Help Ukrain
 
 //                   lat_tl lon_tl lat_br lon_br lcid
-tBlArray BlArray[] {  5900,  3200,  5300,  4400, 1049,   // Around Moscow
-                      5450,  2633,  5280,  2900, 1049    // Around Minsk
+tBlArray BlArray[] {  5576,  3760,  5574,  3764, 1049,   // Around Moscow Kremlin
+                      5391,  2755,  5389,  2757, 1049    // Around Minsk Government
                    };
 
 uint8_t blist_loc;
