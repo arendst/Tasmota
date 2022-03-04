@@ -1021,7 +1021,7 @@ void TM1637ShowTime()
   }
   else if (MAX7219 == TM1637Data.display_type)
   {
-    for (uint32_t i = 0; i < 4; i++)
+    for (uint32_t i = 0; i < 6; i++)
     {
       //if ((millis() % 1000) > 500 && (i == 3))
       if ((i == 1) || (i == 3))
