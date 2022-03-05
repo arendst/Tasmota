@@ -504,7 +504,7 @@ void HueLightStatus1(uint8_t device, String *response)
   uint16_t ct = 0;
   uint8_t  color_mode;
   String light_status = "";
-  uint16_t hue = 0;
+  uint16_t hue16 = 0;
   uint8_t  sat = 0;
   uint8_t  bri = 254;
   uint32_t echo_gen = findEchoGeneration();   // 1 for 1st gen =+ Echo Dot 2nd gen, 2 for 2nd gen and above
@@ -523,11 +523,11 @@ void HueLightStatus1(uint8_t device, String *response)
 #endif
 
   if (TasmotaGlobal.light_type) {
-    light_state.getHSB(&hue, &sat, nullptr);
+    light_state.getHSB(nullptr, &sat, nullptr);
+    hue16 = light_state.getHue16();
     if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
-    hue = changeUIntScale(hue, 0, 360, 0, 65535);
 
-    if ((sat != prev_sat) || (hue != prev_hue)) { // if sat or hue was changed outside of Alexa, reset xy
+    if ((sat != prev_sat) || (hue16 != prev_hue)) { // if sat or hue was changed outside of Alexa, reset xy
       prev_x_str[0] = prev_y_str[0] = 0;
     }
 
@@ -557,7 +557,7 @@ void HueLightStatus1(uint8_t device, String *response)
       light_state.getXY(&x, &y);
       snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x, 5).c_str(), String(y, 5).c_str());
     }
-    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue, sat);
+    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue16, sat);
   }
   if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     snprintf_P(buf, buf_size, PSTR("%s\"ct\":%d,"), buf, ct > 0 ? ct : 284);
@@ -732,7 +732,7 @@ void CheckHue(String * response, bool &appending) {
 }
 
 void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
-  uint16_t hue = 0;
+  uint16_t hue16 = 0;   // hue over 0..65536
   uint8_t  sat = 0;
   uint8_t  bri = 254;
   uint16_t ct = 0;
@@ -783,7 +783,8 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
 
     if (TasmotaGlobal.light_type && (local_light_subtype >= LST_SINGLE)) {
       if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
-        light_state.getHSB(&hue, &sat, nullptr);
+        light_state.getHSB(nullptr, &sat, nullptr);
+        hue16 = light_state.getHue16();
         bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
         ct = light_state.getCT();
         uint8_t color_mode = light_state.getColorMode();
@@ -828,8 +829,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       strlcpy(prev_y_str, tok_y.getStr(), sizeof(prev_y_str));
       uint8_t rr,gg,bb;
       XyToRgb(x, y, &rr, &gg, &bb);
+
+      uint16_t hue;
       RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
-      prev_hue = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
+      hue16 = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
+      prev_hue = hue16;
       prev_sat = (sat > 254 ? 254 : sat);
       //AddLog(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
       if (resp) { response += ","; }
@@ -845,16 +849,14 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     parser.setCurrent();
     JsonParserToken hue_hue = root[PSTR("hue")];
     if (hue_hue) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
-      hue = hue_hue.getUInt();
-      prev_hue = hue;
+      hue16 = hue_hue.getUInt();
+      prev_hue = hue16;
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, PSTR("hue"), hue);
+                 device_id, PSTR("hue"), hue16);
       response += buf;
       if (LST_RGB <= Light.subtype) {
-        // change range from 0..65535 to 0..360
-        hue = changeUIntScale(hue, 0, 65535, 0, 360);
         g_gotct = false;
         change = true;
       }
@@ -909,7 +911,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
           if (g_gotct) {
             light_controller.changeCTB(ct, bri);
           } else {
-            light_controller.changeHSB(hue, sat, bri);
+            light_controller.changeH16SB(hue16, sat, bri);
           }
           LightPreparePower();
         } else {  // SetOption68 On, each channel is a dimmer

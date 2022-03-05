@@ -936,6 +936,15 @@ public:
     calcLevels();
   }
 
+  /* special version for Alexa Hue maintaining a 16 bits Hue value */
+  void changeH16SB(uint16_t hue, uint8_t sat, uint8_t briRGB) {
+    _state->setH16S(hue, sat);
+    _state->setBriRGB(briRGB);
+    if (_ct_rgb_linked) { _state->setColorMode(LCM_RGB); }   // try to force RGB
+    saveSettings();
+    calcLevels();
+  }
+
   // save the current light state to Settings
   void saveSettings() {
     if (Light.pwm_multi_channels) {
