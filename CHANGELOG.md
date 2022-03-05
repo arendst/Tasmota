@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` (#15015)
 - NeoPool system voltages display
 - Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
+- LVGL Splash screen and ``SetOption135 1`` to disable splash screen
 
 ### Changed
 - Extent number of pulsetimers from 8 to 32 (#8266)
