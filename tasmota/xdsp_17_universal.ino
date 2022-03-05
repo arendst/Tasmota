@@ -324,7 +324,9 @@ int8_t cs;
     ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH
-    renderer->Splash();
+    if (!Settings->flag5.display_no_splash) {
+      renderer->Splash();
+    }
 #endif // SHOW_SPLASH
 
     udisp_init_done = true;

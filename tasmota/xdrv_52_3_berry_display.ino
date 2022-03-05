@@ -79,15 +79,25 @@ void be_ntv_display_touch_update(int32_t touches, int32_t raw_x, int32_t raw_y, 
 }
 
 const char* be_ntv_display_driver_name(void) {
+#ifdef USE_UNIVERSAL_DISPLAY
   if (renderer) {
     char* devname = renderer->devname();
     if (devname) {
       return devname;
     }
   }
+#endif
   return "";
 }
 
+bool be_ntv_display_started(void) {
+#ifdef USE_UNIVERSAL_DISPLAY
+  if (renderer) {
+    return true;
+  }
+#endif
+  return false;
+}
 
 #endif // USE_DISPLAY
 #endif  // USE_BERRY
