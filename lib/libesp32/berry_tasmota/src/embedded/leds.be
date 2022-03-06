@@ -52,6 +52,44 @@ class Leds : Leds_ntv
 
   end
 
+  # assign RMT
+  static def assign_rmt(gpio_phy)
+    gpio_phy = int(gpio_phy)
+    if gpio_phy < 0   raise "value_error", "invalid GPIO number" end
+
+    import global
+    var rmt
+    # if "_rmt" is not initialized, set to an array of GPIO of size MAX_RMT
+    if !global.contains("_rmt")
+      rmt = []
+      global._rmt = rmt
+      for i:0..gpio.MAX_RMT-1
+        rmt.push(-1)
+      end
+      # if default WS2812 is set, assign RMT0
+      if gpio.pin_used(gpio.WS2812, 0)
+        rmt[0] = gpio.pin(gpio.WS2812, 0)
+      end
+    end
+
+    rmt = global._rmt
+    # find an already assigned slot or try to assign a new one
+    var i = 0
+    var first_free = -1
+    while i < gpio.MAX_RMT
+      var elt = rmt[i]
+      if elt == gpio_phy    return i end      # already assigned
+      if elt < 0 && first_free < 0    first_free = i end    # found a free slot
+      i += 1
+    end
+    if first_free >= 0
+      rmt[first_free] = gpio_phy
+      return first_free
+    end
+    # no more slot
+    raise "internal_error", "no more RMT channel available"
+  end
+
   def clear()
     self.clear_to(0x000000)
     self.show()
