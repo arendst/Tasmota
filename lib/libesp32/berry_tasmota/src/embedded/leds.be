@@ -29,21 +29,17 @@ class Leds : Leds_ntv
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
   # type:int (optional) = Type of LED, defaults to WS2812 RGB
   # rmt:int (optional) = RMT hardware channel to use, leave default unless you have a good reason 
-  def init(leds, gpio, type, rmt)   # rmt is optional
+  def init(leds, gpio_phy, type, rmt)   # rmt is optional
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
     self.leds = int(leds)
 
-    if gpio == nil && gpio.pin(gpio.WS2812) >= 0
-      gpio = gpio.pin(gpio.WS2812)
-    end
-
     # if no GPIO, abort
-    if gpio == nil
+    if gpio_phy == nil
       raise "valuer_error", "no GPIO specified for neopixelbus"
     end
 
     # initialize the structure
-    self.ctor(self.leds, gpio, type, rmt)
+    self.ctor(self.leds, gpio_phy, type, rmt)
 
     if self._p == nil raise "internal_error", "couldn't not initialize noepixelbus" end
 
@@ -95,16 +91,14 @@ class Leds : Leds_ntv
     self.show()
   end
 
-  def ctor(leds, gpio, type, rmt)
+  def ctor(leds, gpio_phy, type, rmt)
     if type == nil
-      self.call_native(0, leds, gpio)
-    else
-      if rmt == nil
-        self.call_native(0, leds, gpio, type)
-      else
-        self.call_native(0, leds, gpio, type, rmt)
-      end
+      type = self.WS2812_GRB
     end
+    if rmt == nil
+      rmt = self.assign_rmt(gpio_phy)
+    end
+    self.call_native(0, leds, gpio_phy, type, rmt)
   end
   def begin()
     self.call_native(1)

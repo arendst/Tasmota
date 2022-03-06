@@ -1425,23 +1425,20 @@ be_local_closure(Leds_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(gamma),
     /* K1   */  be_nested_str(leds),
-    /* K2   */  be_nested_str(pin),
-    /* K3   */  be_nested_str(WS2812),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str(valuer_error),
-    /* K6   */  be_nested_str(no_X20GPIO_X20specified_X20for_X20neopixelbus),
-    /* K7   */  be_nested_str(ctor),
-    /* K8   */  be_nested_str(_p),
-    /* K9   */  be_nested_str(internal_error),
-    /* K10  */  be_nested_str(couldn_X27t_X20not_X20initialize_X20noepixelbus),
-    /* K11  */  be_nested_str(begin),
+    /* K2   */  be_nested_str(valuer_error),
+    /* K3   */  be_nested_str(no_X20GPIO_X20specified_X20for_X20neopixelbus),
+    /* K4   */  be_nested_str(ctor),
+    /* K5   */  be_nested_str(_p),
+    /* K6   */  be_nested_str(internal_error),
+    /* K7   */  be_nested_str(couldn_X27t_X20not_X20initialize_X20noepixelbus),
+    /* K8   */  be_nested_str(begin),
     }),
     &be_const_str_init,
     &be_const_str_solidified,
-    ( &(const binstruction[36]) {  /* code */
+    ( &(const binstruction[24]) {  /* code */
       0x50140200,  //  0000  LDBOOL	R5	1	0
       0x90020005,  //  0001  SETMBR	R0	K0	R5
       0x60140009,  //  0002  GETGBL	R5	G9
@@ -1450,34 +1447,22 @@ be_local_closure(Leds_init,   /* name */
       0x90020205,  //  0005  SETMBR	R0	K1	R5
       0x4C140000,  //  0006  LDNIL	R5
       0x1C140405,  //  0007  EQ	R5	R2	R5
-      0x78160008,  //  0008  JMPF	R5	#0012
-      0x8C140502,  //  0009  GETMET	R5	R2	K2
-      0x881C0503,  //  000A  GETMBR	R7	R2	K3
-      0x7C140400,  //  000B  CALL	R5	2
-      0x28140B04,  //  000C  GE	R5	R5	K4
-      0x78160003,  //  000D  JMPF	R5	#0012
-      0x8C140502,  //  000E  GETMET	R5	R2	K2
-      0x881C0503,  //  000F  GETMBR	R7	R2	K3
-      0x7C140400,  //  0010  CALL	R5	2
-      0x5C080A00,  //  0011  MOVE	R2	R5
-      0x4C140000,  //  0012  LDNIL	R5
-      0x1C140405,  //  0013  EQ	R5	R2	R5
-      0x78160000,  //  0014  JMPF	R5	#0016
-      0xB0060B06,  //  0015  RAISE	1	K5	K6
-      0x8C140107,  //  0016  GETMET	R5	R0	K7
-      0x881C0101,  //  0017  GETMBR	R7	R0	K1
-      0x5C200400,  //  0018  MOVE	R8	R2
-      0x5C240600,  //  0019  MOVE	R9	R3
-      0x5C280800,  //  001A  MOVE	R10	R4
-      0x7C140A00,  //  001B  CALL	R5	5
-      0x88140108,  //  001C  GETMBR	R5	R0	K8
-      0x4C180000,  //  001D  LDNIL	R6
-      0x1C140A06,  //  001E  EQ	R5	R5	R6
-      0x78160000,  //  001F  JMPF	R5	#0021
-      0xB006130A,  //  0020  RAISE	1	K9	K10
-      0x8C14010B,  //  0021  GETMET	R5	R0	K11
-      0x7C140200,  //  0022  CALL	R5	1
-      0x80000000,  //  0023  RET	0
+      0x78160000,  //  0008  JMPF	R5	#000A
+      0xB0060503,  //  0009  RAISE	1	K2	K3
+      0x8C140104,  //  000A  GETMET	R5	R0	K4
+      0x881C0101,  //  000B  GETMBR	R7	R0	K1
+      0x5C200400,  //  000C  MOVE	R8	R2
+      0x5C240600,  //  000D  MOVE	R9	R3
+      0x5C280800,  //  000E  MOVE	R10	R4
+      0x7C140A00,  //  000F  CALL	R5	5
+      0x88140105,  //  0010  GETMBR	R5	R0	K5
+      0x4C180000,  //  0011  LDNIL	R6
+      0x1C140A06,  //  0012  EQ	R5	R5	R6
+      0x78160000,  //  0013  JMPF	R5	#0015
+      0xB0060D07,  //  0014  RAISE	1	K6	K7
+      0x8C140108,  //  0015  GETMET	R5	R0	K8
+      0x7C140200,  //  0016  CALL	R5	1
+      0x80000000,  //  0017  RET	0
     })
   )
 );
@@ -1824,40 +1809,34 @@ be_local_closure(Leds_ctor,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(call_native),
-    /* K1   */  be_const_int(0),
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str(WS2812_GRB),
+    /* K1   */  be_nested_str(assign_rmt),
+    /* K2   */  be_nested_str(call_native),
+    /* K3   */  be_const_int(0),
     }),
     &be_const_str_ctor,
     &be_const_str_solidified,
-    ( &(const binstruction[27]) {  /* code */
+    ( &(const binstruction[19]) {  /* code */
       0x4C140000,  //  0000  LDNIL	R5
       0x1C140605,  //  0001  EQ	R5	R3	R5
-      0x78160005,  //  0002  JMPF	R5	#0009
-      0x8C140100,  //  0003  GETMET	R5	R0	K0
-      0x581C0001,  //  0004  LDCONST	R7	K1
-      0x5C200200,  //  0005  MOVE	R8	R1
-      0x5C240400,  //  0006  MOVE	R9	R2
-      0x7C140800,  //  0007  CALL	R5	4
-      0x70020010,  //  0008  JMP		#001A
-      0x4C140000,  //  0009  LDNIL	R5
-      0x1C140805,  //  000A  EQ	R5	R4	R5
-      0x78160006,  //  000B  JMPF	R5	#0013
-      0x8C140100,  //  000C  GETMET	R5	R0	K0
-      0x581C0001,  //  000D  LDCONST	R7	K1
-      0x5C200200,  //  000E  MOVE	R8	R1
-      0x5C240400,  //  000F  MOVE	R9	R2
-      0x5C280600,  //  0010  MOVE	R10	R3
-      0x7C140A00,  //  0011  CALL	R5	5
-      0x70020006,  //  0012  JMP		#001A
-      0x8C140100,  //  0013  GETMET	R5	R0	K0
-      0x581C0001,  //  0014  LDCONST	R7	K1
-      0x5C200200,  //  0015  MOVE	R8	R1
-      0x5C240400,  //  0016  MOVE	R9	R2
-      0x5C280600,  //  0017  MOVE	R10	R3
-      0x5C2C0800,  //  0018  MOVE	R11	R4
-      0x7C140C00,  //  0019  CALL	R5	6
-      0x80000000,  //  001A  RET	0
+      0x78160000,  //  0002  JMPF	R5	#0004
+      0x880C0100,  //  0003  GETMBR	R3	R0	K0
+      0x4C140000,  //  0004  LDNIL	R5
+      0x1C140805,  //  0005  EQ	R5	R4	R5
+      0x78160003,  //  0006  JMPF	R5	#000B
+      0x8C140101,  //  0007  GETMET	R5	R0	K1
+      0x5C1C0400,  //  0008  MOVE	R7	R2
+      0x7C140400,  //  0009  CALL	R5	2
+      0x5C100A00,  //  000A  MOVE	R4	R5
+      0x8C140102,  //  000B  GETMET	R5	R0	K2
+      0x581C0003,  //  000C  LDCONST	R7	K3
+      0x5C200200,  //  000D  MOVE	R8	R1
+      0x5C240400,  //  000E  MOVE	R9	R2
+      0x5C280600,  //  000F  MOVE	R10	R3
+      0x5C2C0800,  //  0010  MOVE	R11	R4
+      0x7C140C00,  //  0011  CALL	R5	6
+      0x80000000,  //  0012  RET	0
     })
   )
 );
