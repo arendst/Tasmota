@@ -326,7 +326,7 @@ int32_t Ade7880ReadVerify(uint16_t reg) {
   return result;
 }
 
-void Ade7880Init(void) {
+bool Ade7880Init(void) {
   // Init sequence about 100mS after reset - See page 40 (takes about 60ms)
   uint32_t status1 = Ade7880ReadVerify(ADE7880_STATUS1);                   // 0x01A08000
   if (bitSet(status1, 15)) {                                               // RSTDONE
@@ -354,50 +354,41 @@ void Ade7880Init(void) {
   Ade7880WriteVerify(ADE7880_APHCAL, ADE7880_APHCAL_INIT);
   Ade7880WriteVerify(ADE7880_BPHCAL, ADE7880_BPHCAL_INIT);
   Ade7880WriteVerify(ADE7880_CPHCAL, ADE7880_CPHCAL_INIT);
-  if (ADE7880_AVGAIN_INIT != Ade7880ReadVerify(ADE7880_AVGAIN)) {
-    Ade7880WriteVerify(ADE7880_AVGAIN, ADE7880_AVGAIN_INIT);
+  bool error = false;
+  if (ADE7880_AVGAIN_INIT != Ade7880ReadVerify(ADE7880_AVGAIN)) { error = true; }
+  if (ADE7880_BVGAIN_INIT != Ade7880ReadVerify(ADE7880_BVGAIN)) { error = true; }
+  if (ADE7880_CVGAIN_INIT != Ade7880ReadVerify(ADE7880_CVGAIN)) { error = true; }
+  if (ADE7880_AIGAIN_INIT != Ade7880ReadVerify(ADE7880_AIGAIN)) { error = true; }
+  if (ADE7880_BIGAIN_INIT != Ade7880ReadVerify(ADE7880_BIGAIN)) { error = true; }
+  if (ADE7880_CIGAIN_INIT != Ade7880ReadVerify(ADE7880_CIGAIN)) { error = true; }
+  if (ADE7880_NIGAIN_INIT != Ade7880ReadVerify(ADE7880_NIGAIN)) { error = true; }
+  if (ADE7880_APGAIN_INIT != Ade7880ReadVerify(ADE7880_APGAIN)) { error = true; }
+  if (ADE7880_BPGAIN_INIT != Ade7880ReadVerify(ADE7880_BPGAIN)) { error = true; }
+  if (ADE7880_CPGAIN_INIT != Ade7880ReadVerify(ADE7880_CPGAIN)) { error = true; }
+  if (ADE7880_APHCAL_INIT != Ade7880ReadVerify(ADE7880_APHCAL)) { error = true; }
+  if (ADE7880_BPHCAL_INIT != Ade7880ReadVerify(ADE7880_BPHCAL)) { error = true; }
+  if (ADE7880_CPHCAL_INIT != Ade7880ReadVerify(ADE7880_CPHCAL)) { error = true; }
+  if (error) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error initializing parameters"));
+    return false;
   }
-  if (ADE7880_BVGAIN_INIT != Ade7880ReadVerify(ADE7880_BVGAIN)) {
-    Ade7880WriteVerify(ADE7880_BVGAIN, ADE7880_BVGAIN_INIT);
-  }
-  if (ADE7880_CVGAIN_INIT != Ade7880ReadVerify(ADE7880_CVGAIN)) {
-    Ade7880WriteVerify(ADE7880_CVGAIN, ADE7880_CVGAIN_INIT);
-  }
-  if (ADE7880_AIGAIN_INIT != Ade7880ReadVerify(ADE7880_AIGAIN)) {
-    Ade7880WriteVerify(ADE7880_AIGAIN, ADE7880_AIGAIN_INIT);
-  }
-  if (ADE7880_BIGAIN_INIT != Ade7880ReadVerify(ADE7880_BIGAIN)) {
-    Ade7880WriteVerify(ADE7880_BIGAIN, ADE7880_BIGAIN_INIT);
-  }
-  if (ADE7880_CIGAIN_INIT != Ade7880ReadVerify(ADE7880_CIGAIN)) {
-    Ade7880WriteVerify(ADE7880_CIGAIN, ADE7880_CIGAIN_INIT);
-  }
-  if (ADE7880_NIGAIN_INIT != Ade7880ReadVerify(ADE7880_NIGAIN)) {
-    Ade7880WriteVerify(ADE7880_NIGAIN, ADE7880_NIGAIN_INIT);
-  }
-  if (ADE7880_APGAIN_INIT != Ade7880ReadVerify(ADE7880_APGAIN)) {
-    Ade7880WriteVerify(ADE7880_APGAIN, ADE7880_APGAIN_INIT);
-  }
-  if (ADE7880_BPGAIN_INIT != Ade7880ReadVerify(ADE7880_BPGAIN)) {
-    Ade7880WriteVerify(ADE7880_BPGAIN, ADE7880_BPGAIN_INIT);
-  }
-  if (ADE7880_CPGAIN_INIT != Ade7880ReadVerify(ADE7880_CPGAIN)) {
-    Ade7880WriteVerify(ADE7880_CPGAIN, ADE7880_CPGAIN_INIT);
-  }
-  if (ADE7880_APHCAL_INIT != Ade7880ReadVerify(ADE7880_APHCAL)) {
-    Ade7880WriteVerify(ADE7880_APHCAL, ADE7880_APHCAL_INIT);
-  }
-  if (ADE7880_BPHCAL_INIT != Ade7880ReadVerify(ADE7880_BPHCAL)) {
-    Ade7880WriteVerify(ADE7880_BPHCAL, ADE7880_BPHCAL_INIT);
-  }
-  if (ADE7880_CPHCAL_INIT != Ade7880ReadVerify(ADE7880_CPHCAL)) {
-    Ade7880WriteVerify(ADE7880_CPHCAL, ADE7880_CPHCAL_INIT);
+  if (!Ade7880WriteVerify(ADE7880_LCYCMODE, 0x09)) {                       // Line cycle accumulation mode
+                                                                           // - Watt-hour accumulation registers (AWATTHR, BWATTHR, CWATTHR, AFWATTHR, BFWATTHR, and CFWATTHR) are placed into line cycle accumulation mode.
+                                                                           // - Phase A is selected for zero-crossings counts in the line cycle accumulation mode.
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting LCYCMODE register"));
+    return false;
   }
 
-  Ade7880WriteVerify(ADE7880_LCYCMODE, 0x09);
-  Ade7880WriteVerify(ADE7880_LINECYC, 0x0064);
+  if (!Ade7880WriteVerify(ADE7880_LINECYC, 0x0064)) {                      // = 100
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting LINECYC register"));
+    return false;
+  }
+
   Ade7880WriteVerify(ADE7880_MASK0, 0x00000020);                           // IRQ0 at end of an integration over an integer number of half line cycles set in the LINECYC register.
-  Ade7880VerifyWrite(ADE7880_MASK0);
+  if (!Ade7880VerifyWrite(ADE7880_MASK0)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting MASK0 register"));
+    return false;
+  }
   Ade7880Write(ADE7880_MASK0, 0x00000020);
   Ade7880Write(ADE7880_MASK0, 0x00000020);
   Ade7880Write(ADE7880_MASK0, 0x00000020);
@@ -406,6 +397,7 @@ void Ade7880Init(void) {
   Ade7880Write(ADE7880_DSPWP_SET, 0x80);                                   // Write protect DSP area
 
   Ade7880WriteVerify(ADE7880_Run, 0x0201);                                 // Start DSP
+  return true;
 }
 
 void Ade7880Cycle(void) {
@@ -459,7 +451,7 @@ void Ade7880Reset(void) {
   pinMode(16, INPUT);
 }
 
-void Ade7880Isr0(void) {
+void IRAM_ATTR Ade7880Isr0(void) {
   // Poll sequence
   if (!Ade7880.irq0_state) { Ade7880.irq0_state = 1; }
 }
@@ -470,15 +462,16 @@ void Ade7880Service0(void) {
   Ade7880.irq0_state = 0;
 }
 
-void Ade7880Isr1(void) {
+void IRAM_ATTR Ade7880Isr1(void) {
   // Init sequence
   if (!Ade7880.irq1_state) { Ade7880.irq1_state = 1; }
 }
 
-void Ade7880Service1(void) {
+bool Ade7880Service1(void) {
   // Init sequence
-  Ade7880Init();
+  bool result = Ade7880Init();
   Ade7880.irq1_state = 0;
+  return result;
 }
 
 void Ade7880EnergyEverySecond(void) {
@@ -501,14 +494,14 @@ void Ade7880DrvInit(void) {
 
     uint32_t timeout = millis() + 400;
     while (!TimeReached(timeout)) {                                        // Wait up to 400 mSec
-      if (1 == Ade7880.irq0_state) {
-        Ade7880Service1();
-
-        if (I2cSetDevice(ADE7880_ADDR)) {
-          I2cSetActiveFound(ADE7880_ADDR, "ADE7880");
-          Energy.phase_count = 3;                                          // Three phases
-//         Energy.use_overtemp = true;                                       // Use global temperature for overtemp detection
-          TasmotaGlobal.energy_driver = XNRG_23;
+      if (1 == Ade7880.irq1_state) {
+        if (Ade7880Service1()) {
+          if (I2cSetDevice(ADE7880_ADDR)) {
+            I2cSetActiveFound(ADE7880_ADDR, "ADE7880");
+            Energy.phase_count = 3;                                        // Three phases
+  //         Energy.use_overtemp = true;                                     // Use global temperature for overtemp detection
+            TasmotaGlobal.energy_driver = XNRG_23;
+          }
         }
         break;
       }
@@ -536,7 +529,7 @@ bool Xnrg23(uint8_t function) {
   switch (function) {
     case FUNC_LOOP:
       if (1 == Ade7880.irq0_state) { Ade7880Service0(); }
-      if (1 == Ade7880.irq1_state) { Ade7880Service1(); }
+//      if (1 == Ade7880.irq1_state) { Ade7880Service1(); }
       break;
     case FUNC_ENERGY_EVERY_SECOND:
       Ade7880EnergyEverySecond();
