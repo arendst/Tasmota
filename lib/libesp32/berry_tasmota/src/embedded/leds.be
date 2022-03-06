@@ -4,7 +4,7 @@
 
 
 # Native commands
-# 00 : ctor         (leds:int, gpio:int) -> void
+# 00 : ctor         (leds:int, gpio:int[, type:int, rmt:int]) -> void
 # 01 : begin        void -> void
 # 02 : show         void -> void
 # 03 : CanShow      void -> bool
@@ -57,11 +57,15 @@ class Leds : Leds_ntv
     self.show()
   end
 
-  def ctor(leds, gpio, rmt)
-    if rmt == nil
+  def ctor(leds, gpio, type, rmt)
+    if type == nil
       self.call_native(0, leds, gpio)
     else
-      self.call_native(0, leds, gpio, rmt)
+      if rmt == nil
+        self.call_native(0, leds, gpio, type)
+      else
+        self.call_native(0, leds, gpio, type, rmt)
+      end
     end
   end
   def begin()
