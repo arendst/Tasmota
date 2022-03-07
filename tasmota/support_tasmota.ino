@@ -921,6 +921,19 @@ void MqttPublishTeleperiodSensor(void) {
   }
 }
 
+void SkipSleep(bool state) {
+  if (state) {
+    TasmotaGlobal.skip_sleep += 2;
+  } else {
+    if (TasmotaGlobal.skip_sleep) {
+      TasmotaGlobal.skip_sleep--;
+    }
+    if (TasmotaGlobal.skip_sleep) {
+      TasmotaGlobal.skip_sleep--;
+    }
+  }
+}
+
 /*********************************************************************************************\
  * State loops
 \*********************************************************************************************/
@@ -1043,6 +1056,10 @@ void Every100mSeconds(void)
   if (TasmotaGlobal.latching_relay_pulse) {
     TasmotaGlobal.latching_relay_pulse--;
     if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
+  }
+
+  if (TasmotaGlobal.skip_sleep) {
+    TasmotaGlobal.skip_sleep--;                         // Clean up possible residue
   }
 
   for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {

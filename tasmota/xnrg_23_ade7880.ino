@@ -12,7 +12,7 @@
 /*********************************************************************************************\
  * ADE7880 - Energy used in Shelly 3EM
  *
- * {"NAME":"Shelly 3EM","GPIO":[1,1,544,1,32,8065,0,0,640,8064,608,224,0,0],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly 3EM","GPIO":[1,1,544,1,32,8065,0,0,640,8064,608,224,8096,0],"FLAG":0,"BASE":18}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7880.html
  *
@@ -37,6 +37,7 @@
 #define ADE7880_APHCAL_INIT     0xD895       // = 55445 (149)
 #define ADE7880_BPHCAL_INIT     0xD8A9       // = 55456 (169)
 #define ADE7880_CPHCAL_INIT     0xD89D       // = 55453 (157)
+//#define ADE7880_COMPMODE_FREQ   0x4000       // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default 45 Hz to 55 Hz
 
 enum Ade7880DspRegisters {
   ADE7880_AIGAIN = 0x4380,         // 0x4380  R/W  24  32 ZPSE  S   0x000000    Phase A current gain adjust.
@@ -332,13 +333,13 @@ bool Ade7880Init(void) {
   if (bitSet(status1, 15)) {                                               // RSTDONE
     // Power on or Reset
     Ade7880WriteVerify(ADE7880_CONFIG2, 0x02);                             // ADE7880_I2C_LOCK
-    Ade7880WriteVerify(ADE7880_STATUS1, 0x3FFE8930);                       // Acknowledge RSTDONE
+    Ade7880WriteVerify(ADE7880_STATUS1, 0x3FFE8930);                       // Acknowledge RSTDONE - Reset IRQ1 line
     status1 = Ade7880ReadVerify(ADE7880_STATUS1);                          // 0x01A00007
 
     uint8_t version = Ade7880ReadVerify(ADE7880_Version);                  // 0x01
   }
 
-  delayMicroseconds(240);
+  delayMicroseconds(240);                                                  // Grab parameters from flash/filesystem
 
   Ade7880WriteVerify(ADE7880_Gain, 0x0000);                                // Gain register set to 1 for current, and voltage
   Ade7880WriteVerify(ADE7880_APGAIN, ADE7880_APGAIN_INIT);
@@ -354,20 +355,26 @@ bool Ade7880Init(void) {
   Ade7880WriteVerify(ADE7880_APHCAL, ADE7880_APHCAL_INIT);
   Ade7880WriteVerify(ADE7880_BPHCAL, ADE7880_BPHCAL_INIT);
   Ade7880WriteVerify(ADE7880_CPHCAL, ADE7880_CPHCAL_INIT);
+#ifdef ADE7880_COMPMODE_FREQ
+  Ade7880WriteVerify(ADE7880_COMPMODE, 0x01FF | ADE7880_COMPMODE_FREQ);    // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default is 45 Hz and 55 Hz.
+#endif
   bool error = false;
   if (ADE7880_AVGAIN_INIT != Ade7880ReadVerify(ADE7880_AVGAIN)) { error = true; }
-  if (ADE7880_BVGAIN_INIT != Ade7880ReadVerify(ADE7880_BVGAIN)) { error = true; }
-  if (ADE7880_CVGAIN_INIT != Ade7880ReadVerify(ADE7880_CVGAIN)) { error = true; }
-  if (ADE7880_AIGAIN_INIT != Ade7880ReadVerify(ADE7880_AIGAIN)) { error = true; }
-  if (ADE7880_BIGAIN_INIT != Ade7880ReadVerify(ADE7880_BIGAIN)) { error = true; }
-  if (ADE7880_CIGAIN_INIT != Ade7880ReadVerify(ADE7880_CIGAIN)) { error = true; }
-  if (ADE7880_NIGAIN_INIT != Ade7880ReadVerify(ADE7880_NIGAIN)) { error = true; }
-  if (ADE7880_APGAIN_INIT != Ade7880ReadVerify(ADE7880_APGAIN)) { error = true; }
-  if (ADE7880_BPGAIN_INIT != Ade7880ReadVerify(ADE7880_BPGAIN)) { error = true; }
-  if (ADE7880_CPGAIN_INIT != Ade7880ReadVerify(ADE7880_CPGAIN)) { error = true; }
-  if (ADE7880_APHCAL_INIT != Ade7880ReadVerify(ADE7880_APHCAL)) { error = true; }
-  if (ADE7880_BPHCAL_INIT != Ade7880ReadVerify(ADE7880_BPHCAL)) { error = true; }
-  if (ADE7880_CPHCAL_INIT != Ade7880ReadVerify(ADE7880_CPHCAL)) { error = true; }
+  else if (ADE7880_BVGAIN_INIT != Ade7880ReadVerify(ADE7880_BVGAIN)) { error = true; }
+  else if (ADE7880_CVGAIN_INIT != Ade7880ReadVerify(ADE7880_CVGAIN)) { error = true; }
+  else if (ADE7880_AIGAIN_INIT != Ade7880ReadVerify(ADE7880_AIGAIN)) { error = true; }
+  else if (ADE7880_BIGAIN_INIT != Ade7880ReadVerify(ADE7880_BIGAIN)) { error = true; }
+  else if (ADE7880_CIGAIN_INIT != Ade7880ReadVerify(ADE7880_CIGAIN)) { error = true; }
+  else if (ADE7880_NIGAIN_INIT != Ade7880ReadVerify(ADE7880_NIGAIN)) { error = true; }
+  else if (ADE7880_APGAIN_INIT != Ade7880ReadVerify(ADE7880_APGAIN)) { error = true; }
+  else if (ADE7880_BPGAIN_INIT != Ade7880ReadVerify(ADE7880_BPGAIN)) { error = true; }
+  else if (ADE7880_CPGAIN_INIT != Ade7880ReadVerify(ADE7880_CPGAIN)) { error = true; }
+  else if (ADE7880_APHCAL_INIT != Ade7880ReadVerify(ADE7880_APHCAL)) { error = true; }
+  else if (ADE7880_BPHCAL_INIT != Ade7880ReadVerify(ADE7880_BPHCAL)) { error = true; }
+  else if (ADE7880_CPHCAL_INIT != Ade7880ReadVerify(ADE7880_CPHCAL)) { error = true; }
+#ifdef ADE7880_COMPMODE_FREQ
+  else if ((0x01FF | ADE7880_COMPMODE_FREQ) != Ade7880ReadVerify(ADE7880_COMPMODE)) { error = true; }
+#endif
   if (error) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error initializing parameters"));
     return false;
@@ -400,16 +407,32 @@ bool Ade7880Init(void) {
   return true;
 }
 
+bool Ade7880Service1(void) {
+  // Init sequence
+  SkipSleep(false);
+  bool result = Ade7880Init();
+  Ade7880.irq1_state = 0;
+  return result;
+}
+
+void IRAM_ATTR Ade7880Isr1(void) {
+  // Init sequence
+  if (!Ade7880.irq1_state) {
+    Ade7880.irq1_state = 1;
+    SkipSleep(true);
+  }
+}
+
 void Ade7880Cycle(void) {
   // Cycle sequence (takes 5ms)
   uint32_t status0 = Ade7880ReadVerify(ADE7880_STATUS0);                   // 0x000FEFE0
   if (!bitSet(status0, 5)) {                                               // LENERGY
     return;
   } else {
-    Ade7880WriteVerify(ADE7880_STATUS0, 0x00000020);                       // Acknowledge LENERGY
+    Ade7880WriteVerify(ADE7880_STATUS0, 0x00000020);                       // Acknowledge LENERGY - Reset IRQ0 line
     status0 = Ade7880ReadVerify(ADE7880_STATUS0);                          // 0x000FEFC0
   }
-  if (Ade7880.cycle_count < 3) {
+  if (Ade7880.cycle_count < 2) {                                           // Allow calibration stabilization
     Ade7880.cycle_count++;
     return;                                                                // Skip first two cycles
   }
@@ -436,42 +459,30 @@ void Ade7880Cycle(void) {
   Ade7880.apparent_energy[1] = Ade7880ReadVerify(ADE7880_BVAHR);           // 0xFFFFFFC7
   Ade7880.apparent_energy[2] = Ade7880ReadVerify(ADE7880_CVAHR);           // 0xFFFFFFC6
 
-  uint16_t comp_mode = Ade7880ReadVerify(ADE7880_COMPMODE);                // 0x01FF
-
-  Ade7880.angle[0] = Ade7880ReadVerify(ADE7880_ANGLE0);                    // 0x13FD
+  uint16_t comp_mode = Ade7880ReadVerify(ADE7880_COMPMODE);                // 0x01FF (or 0x41FF) = Angles between phase voltages and phase currents are measured
+  uint32_t fline = (bitSet(comp_mode, 14)) ? 60 : 50;                      // Line frequency in Hz
+  Ade7880.angle[0] = Ade7880ReadVerify(ADE7880_ANGLE0);                    // 0x13FD = cos(5117 * 360 * fline / 256000) = cos_phi
   Ade7880.angle[1] = Ade7880ReadVerify(ADE7880_ANGLE1);                    // 0x0706
   Ade7880.angle[2] = Ade7880ReadVerify(ADE7880_ANGLE2);                    // 0x0859
-}
 
-void Ade7880Reset(void) {
-  pinMode(16, OUTPUT);                                                     // Reset pin ADE7880
-  digitalWrite(16, 0);
-  delay(1);
-  digitalWrite(16, 1);
-  pinMode(16, INPUT);
-}
-
-void IRAM_ATTR Ade7880Isr0(void) {
-  // Poll sequence
-  if (!Ade7880.irq0_state) { Ade7880.irq0_state = 1; }
+  Energy.frequency[0] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD);    // Page 34 and based on ADE7880_COMPMODE_FREQ
+  Energy.frequency[1] = 256000.0f / Ade7880ReadVerify(ADE7880_BPERIOD);
+  Energy.frequency[2] = 256000.0f / Ade7880ReadVerify(ADE7880_CPERIOD);
 }
 
 void Ade7880Service0(void) {
   // Poll sequence
+  SkipSleep(false);
   Ade7880Cycle();
   Ade7880.irq0_state = 0;
 }
 
-void IRAM_ATTR Ade7880Isr1(void) {
-  // Init sequence
-  if (!Ade7880.irq1_state) { Ade7880.irq1_state = 1; }
-}
-
-bool Ade7880Service1(void) {
-  // Init sequence
-  bool result = Ade7880Init();
-  Ade7880.irq1_state = 0;
-  return result;
+void IRAM_ATTR Ade7880Isr0(void) {
+  // Poll sequence
+  if (!Ade7880.irq0_state) {
+    Ade7880.irq0_state = 1;
+    SkipSleep(true);
+  }
 }
 
 void Ade7880EnergyEverySecond(void) {
@@ -490,7 +501,13 @@ void Ade7880DrvInit(void) {
     pinMode(Pin(GPIO_ADE7880_IRQ, 1), INPUT);
     attachInterrupt(Pin(GPIO_ADE7880_IRQ, 1), Ade7880Isr1, FALLING);
 
-    Ade7880Reset();
+    int reset = Pin(GPIO_RESET);
+    if (-1 == reset) { reset = 16; }                                       // Reset pin ADE7880 in Shelly 3EM
+    pinMode(reset, OUTPUT);
+    digitalWrite(reset, 0);
+    delay(1);
+    digitalWrite(reset, 1);
+    pinMode(reset, INPUT);
 
     uint32_t timeout = millis() + 400;
     while (!TimeReached(timeout)) {                                        // Wait up to 400 mSec

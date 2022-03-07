@@ -184,6 +184,7 @@ enum UserSelectablePins {
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
   GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
+  GPIO_RESET,                          // Generic reset
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -407,6 +408,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
   D_SENSOR_ADE7880_IRQ "|"
+  D_SENSOR_RESET "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -468,8 +470,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
-  AGPIO(GPIO_HEARTBEAT),                 // Every second pulsed high
-  AGPIO(GPIO_HEARTBEAT_INV),             // Every second pulsed low
+  AGPIO(GPIO_HEARTBEAT),                // Every second pulsed high
+  AGPIO(GPIO_HEARTBEAT_INV),            // Every second pulsed low
+  AGPIO(GPIO_RESET),                    // Generic reset
 #ifdef USE_FTC532
   AGPIO(GPIO_FTC532),                   // FTC532 touch input
 #endif

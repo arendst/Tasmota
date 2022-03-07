@@ -851,6 +851,7 @@
 #define D_SENSOR_BL6523_TX "BL6523 Tx"
 #define D_SENSOR_BL6523_RX "BL6523 Rx"
 #define D_SENSOR_HEARTBEAT     "Heartbeat"
+#define D_SENSOR_RESET         "Reset"
 #define D_GPIO_SHIFT595_SRCLK  "74x595 SRCLK"
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
