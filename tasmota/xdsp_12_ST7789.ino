@@ -96,11 +96,13 @@ void ST7789_InitDriver(void) {
     renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
-    renderer->setTextFont(2);
-    renderer->DrawStringAt(30, (Settings->display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
-    delay(1000);
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
+      renderer->setTextFont(2);
+      renderer->DrawStringAt(30, (Settings->display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
+      delay(1000);
+    }
 #endif
 
     color_type = COLOR_COLOR;
@@ -118,7 +120,7 @@ void ST7789_InitDriver(void) {
     #define SDA_2 4
     #define SCL_2 0
   #endif // USE_LANBON_L8
-    Wire1.begin(SDA_2, SCL_2, 400000);
+    Wire1.begin(SDA_2, SCL_2, (uint32_t)400000);
     FT5206_Touch_Init(Wire1);
 #endif // USE_FT5206
 #endif // ESP32

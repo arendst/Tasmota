@@ -22,13 +22,15 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.5.1 20220209  changed - rename YEERC to YLYK01, add dimmer YLKG08 (incl. YLKG07), change button report scheme
+  -------
   0.9.5.0 20211016  changed - major rewrite, added mi32cfg (file and command), Homekit-Bridge,
                               extended GUI, 
                               removed BLOCK, PERIOD, TIME, UNIT, BATTERY and PAGE -> replaced via Berry-Support
   -------
   0.9.1.7 20201116  changed - small bugfixes, add BLOCK and OPTION command, send BLE scan via MQTT
   -------
-  0.9.1.0 20200712  changed - add lights and yeerc, add pure passive mode with decryption,
+  0.9.1.0 20200712  changed - add lights and YLYK01, add pure passive mode with decryption,
                               lots of refactoring
   -------
   0.9.0.1 20200706  changed - adapt to new NimBLE-API, tweak scan process
@@ -39,12 +41,12 @@
 */
 #ifndef USE_BLE_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
-#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3
+#if defined CONFIG_IDF_TARGET_ESP32 || defined CONFIG_IDF_TARGET_ESP32C3 || defined CONFIG_IDF_TARGET_ESP32S3
 
 #ifdef USE_MI_ESP32
 
 #ifdef USE_ENERGY_SENSOR
-// #define USE_MI_ESP32_ENERGY //perpare for some GUI extensions
+// #define USE_MI_ESP32_ENERGY //prepare for some GUI extensions
 #endif
 
 #define XSNS_62                    62
@@ -256,6 +258,7 @@ void MI32AddKey(mi_bindKey_t keyMAC){
       _sensor.key = _key;
       unknownMAC=false;
       _sensor.status.hasWrongKey = 0;
+      AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) _sensor.key, 16);
     }
   }
   if(unknownMAC){
@@ -278,7 +281,7 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   mi_beacon_t *_beacon = (mi_beacon_t *)_buf;
 
   uint8_t nonce[13]; //v3:13, v5:12
-  uint32_t nonceLen =12; // most devices are v5
+  uint32_t nonceLen = 12; // most devices are v5
   uint8_t tag[4] = {0};
   const unsigned char authData[1] = {0x11};
   size_t dataLen = _bufSize - 11 ; // _bufsize - frame - type - frame.counter - MAC
@@ -287,13 +290,6 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
     // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: No Key found !!"));
     return -2;
   }
-
-  // uint8_t _testBuf[] = {0x58,0x30,0xb6,0x03,0x36,0x8b,0x98,0xc5,0x41,0x24,0xf8,0x8b,0xb8,0xf2,0x66,0x13,0x51,0x00,0x00,0x00,0xd6};
-  // uint8_t _testKey[] = {0xb8,0x53,0x07,0x51,0x58,0x48,0x8d,0x3d,0x3c,0x97,0x7c,0xa3,0x9a,0x5b,0x5e,0xa9};
-  // _beacon = (mi_beacon_t *)_testBuf;
-  // _bufSize = sizeof(_testBuf);
-  // dataLen = _bufSize - 11 ; // _bufsize - frame - type - frame.counter - MAC
-
 
   uint32_t _version = (uint32_t)_beacon->frame.version;
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: encrypted msg from %s with version:%u"),kMI32DeviceType[MIBLEsensors[_slot].type-1],_version);
@@ -335,8 +331,7 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
     for (uint32_t i = 0; i<5; i++){
       nonce[i+8] = _beacon->MAC[i];
     }
-    tag[0] = _buf[_bufSize-1];
-    // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) nonce, 13);
+    // tag[0] = _buf[_bufSize-1]; // it is unclear, if this value is a checksum
     dataLen -= 4;
   }
   else{
@@ -345,7 +340,6 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
 
   br_aes_small_ctrcbc_keys keyCtx;
   br_aes_small_ctrcbc_init(&keyCtx, MIBLEsensors[_slot].key, 16);
-  // br_aes_small_ctrcbc_init(&keyCtx, _testKey, 16);
 
   br_ccm_context ctx;
   br_ccm_init(&ctx, &keyCtx.vtable);
@@ -355,9 +349,9 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   br_ccm_run(&ctx, 0, _payload, dataLen);
 
   if(br_ccm_check_tag(&ctx, &tag)) return 0;
-
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decrypted in %.2f mSec"),enctime);
   // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) _payload, dataLen);
+  if(_version == 3 && _payload[1] == 0x10) return 0; // no known way to really verify decryption, but 0x10 is expected here for button events
   return -1; // wrong key ... maybe corrupt data packet too
 }
 
@@ -457,9 +451,13 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, uint8_t counter)
       _newSensor.feature.bat=1;
       _newSensor.NMT=0;
       break;
-    case YEERC: case YLKG08:
-      _newSensor.feature.Btn=1;
-      _newSensor.Btn=99;
+    case YLYK01: case YLKG08:
+      _newSensor.feature.Btn = 1;
+      _newSensor.Btn = 99;
+      if(_type == YLKG08){
+        _newSensor.feature.knob = 1;
+        _newSensor.dimmer = 0;
+      }
 #ifdef USE_MI_HOMEKIT
       _newSensor.button_hap_service[0] = nullptr;
 #endif //USE_MI_HOMEKIT
@@ -1222,40 +1220,46 @@ if(decryptRet!=0){
   MIBLEsensors[_slot].lastTime = millis();
   switch(_payload.type){
     case 0x01:
-      if(_payload.Btn.type == 4){ //knob dimmer
+      if(_payload.Btn.type == 4){     //dimmer knob rotation
+        MIBLEsensors[_slot].eventType.knob = 1;
         if(_payload.Btn.num == 0){
-          if(_payload.Btn.value<128){
-            AddLog(LOG_LEVEL_DEBUG,PSTR("Rotate right: %u"),_payload.Btn.value);
-          }
-          else{
-            AddLog(LOG_LEVEL_DEBUG,PSTR("Rotate left: %u"),256 - _payload.Btn.value);
-          }
+          MIBLEsensors[_slot].pressed = 0;
+          MIBLEsensors[_slot].dimmer = _payload.Btn.value;
         }
-        else if(_payload.Btn.num<128){
-            AddLog(LOG_LEVEL_DEBUG,PSTR("Rotate right: %u"),_payload.Btn.num);    
+        else {
+          MIBLEsensors[_slot].pressed = 1;
+          MIBLEsensors[_slot].dimmer = _payload.Btn.num;
         }
-        else{
-            AddLog(LOG_LEVEL_DEBUG,PSTR("Rotate left: %u"),256 - _payload.Btn.num);
-        }
-        return; //TODO: implement MQTT later 
+      MI32.mode.shallTriggerTele = 1;
+      break; //To-Do: Map to HomeKit somehow or wait for real support of this device class  in HomeKit
       }
-      MIBLEsensors[_slot].Btn=_payload.Btn.num + (_payload.Btn.type/2)*6;
+      if(_payload.Btn.num == 1 && MIBLEsensors[_slot].feature.knob){ //dimmer knob long press
+        MIBLEsensors[_slot].longpress = _payload.Btn.value;
+        MI32.mode.shallTriggerTele = 1;
+        MIBLEsensors[_slot].eventType.longpress = 1;
+#ifdef USE_MI_HOMEKIT
+      if((void**)MIBLEsensors[_slot].button_hap_service[0] != nullptr){
+        mi_homekit_update_value(MIBLEsensors[_slot].button_hap_service[0], (float)2.0f, 0x01); // only one button, long press = 2
+        }
+#endif //USE_MI_HOMEKIT 
+        break;
+      }
+      // single, double, long
+      MIBLEsensors[_slot].Btn = _payload.Btn.num;
+      if(MIBLEsensors[_slot].feature.knob){
+        MIBLEsensors[_slot].BtnType = _payload.Btn.value - 1;
+      }
+      else{
+        MIBLEsensors[_slot].BtnType = _payload.Btn.type;
+      }
       MIBLEsensors[_slot].eventType.Btn = 1;
       MI32.mode.shallTriggerTele = 1;
 #ifdef USE_MI_HOMEKIT
-      {
-        // {uint32_t _button = _payload.Btn.num + (_payload.Btn.type/2)*6;
-        uint32_t _singleLong = 0;      
-        if(MIBLEsensors[_slot].Btn>5){
-          MIBLEsensors[_slot].Btn = MIBLEsensors[_slot].Btn - 6;
-          _singleLong = 2;
-      }
-      if(MIBLEsensors[_slot].Btn>5) break; //
+      if(MIBLEsensors[_slot].Btn>5) break; // hard coded limit for now
       if((void**)MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn] != nullptr){
         // AddLog(LOG_LEVEL_DEBUG,PSTR("Send Button %u:  SingleLong:%u, pointer: %x"), MIBLEsensors[_slot].Btn,_singleLong,MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn] );
-        mi_homekit_update_value(MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn], (float)_singleLong, 0x01);
-      }
-      }
+        mi_homekit_update_value(MIBLEsensors[_slot].button_hap_service[MIBLEsensors[_slot].Btn], (float)MIBLEsensors[_slot].BtnType, 0x01);
+        }
 #endif //USE_MI_HOMEKIT
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
     break;
@@ -1774,8 +1778,19 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("</p>"));
     }
   }
+  if(_sensor.feature.knob){
+      if(_sensor.pressed == 0) {
+        WSContentSend_P(PSTR("<p>Dimmer Steps: %d</p>"),_sensor.dimmer);
+      }
+      else {
+        WSContentSend_P(PSTR("<p>Dimmer Steps pressed: %d</p>"),_sensor.dimmer);
+      }
+      WSContentSend_P(PSTR("<p>Long: %u</p>"),_sensor.longpress);
+  }
   if(_sensor.feature.Btn){
-      if(_sensor.Btn<12) WSContentSend_P(PSTR("<p>Last Button: %u</p>"),_sensor.Btn);
+      char _message[16];
+      GetTextIndexed(_message, sizeof(_message), _sensor.BtnType, kMI32_ButtonMsg);
+      if(_sensor.Btn<12) WSContentSend_P(PSTR("<p>Button%u: %s</p>"),_sensor.Btn,_message);
   }
   if(_sensor.feature.motion){
       WSContentSend_P(PSTR("<p>Events: %u</p>"),_sensor.events);
@@ -1797,7 +1812,7 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("<p>Leak !!!</p>"));
     }
     else{
-      WSContentSend_P(PSTR("<p>no leak</p>"));
+      WSContentSend_P(PSTR("<p>No leak</p>"));
     }
   }
   WSContentSend_P(PSTR("</div>"));
@@ -1990,7 +2005,29 @@ void MI32Show(bool json)
 #endif //USE_HOME_ASSISTANT
           ){
             MI32ShowContinuation(&commaflg);
-            ResponseAppend_P(PSTR("\"Btn\":%u"),MIBLEsensors[i].Btn);
+            ResponseAppend_P(PSTR("\"Button%u\":%u"),MIBLEsensors[i].Btn,MIBLEsensors[i].BtnType + 1); //internal type is Xiaomi/Homekit 0,1,2 -> Tasmota 1,2,3
+          }
+        }
+        if (MIBLEsensors[i].feature.knob){
+          if(MIBLEsensors[i].eventType.knob
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+          ){
+            MI32ShowContinuation(&commaflg);
+            char _pressed[3] = {'_','P',0};
+            if (MIBLEsensors[i].pressed == 0){
+              _pressed[0] = 0;
+            }
+            ResponseAppend_P(PSTR("\"Dimmer%s\":%d"),_pressed, MIBLEsensors[i].dimmer);
+          }
+          if(MIBLEsensors[i].eventType.longpress
+#ifdef USE_HOME_ASSISTANT
+              ||(hass_mode==2)
+#endif //USE_HOME_ASSISTANT
+          ){
+            MI32ShowContinuation(&commaflg);
+            ResponseAppend_P(PSTR("\"Hold\":%d"), MIBLEsensors[i].longpress);
           }
         }
       } // minimal summary
@@ -1998,14 +2035,14 @@ void MI32Show(bool json)
         if(MIBLEsensors[i].eventType.motion || !MI32.mode.triggeredTele){
           if(MI32.mode.triggeredTele) {
             MI32ShowContinuation(&commaflg);
-            ResponseAppend_P(PSTR("\"motion\":1")); // only real-time
+            ResponseAppend_P(PSTR("\"Motion\":1")); // only real-time
           }
           MI32ShowContinuation(&commaflg);
           ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
         }
         else if(MIBLEsensors[i].eventType.noMotion && MI32.mode.triggeredTele){
           MI32ShowContinuation(&commaflg);
-          ResponseAppend_P(PSTR("\"motion\":0"));
+          ResponseAppend_P(PSTR("\"Motion\":0"));
         }
       }
 
@@ -2013,7 +2050,7 @@ void MI32Show(bool json)
         if(MIBLEsensors[i].eventType.door || !MI32.mode.triggeredTele){
           if(MI32.mode.triggeredTele) {
             MI32ShowContinuation(&commaflg);
-            ResponseAppend_P(PSTR("\"DOOR\":%u"),MIBLEsensors[i].door); // only real-time
+            ResponseAppend_P(PSTR("\"Door\":%u"),MIBLEsensors[i].door);
           }
           MI32ShowContinuation(&commaflg);
           ResponseAppend_P(PSTR("\"Events\":%u"),MIBLEsensors[i].events);
@@ -2131,7 +2168,7 @@ void MI32Show(bool json)
         if(MIBLEsensors[i].bat!=0x00){
             WSContentSend_PD(HTTP_BATTERY, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].bat);
         }
-        if (MIBLEsensors[i].type==YEERC){
+        if (MIBLEsensors[i].type==YLYK01){
           WSContentSend_PD(HTTP_LASTBUTTON, kMI32DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].Btn);
         }
       }

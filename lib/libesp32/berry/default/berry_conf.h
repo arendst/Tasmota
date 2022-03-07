@@ -175,6 +175,14 @@
  **/
 #define BE_USE_DEBUG_GC                  0
 
+/* Macro: BE_USE_MEM_ALIGNED
+ * Some embedded processors have special memory areas
+ * with read/write constraints of being aligned to 32 bits boundaries.
+ * This options tries to move such memory areas to this region.
+ * Default: 0
+ **/
+#define BE_USE_MEM_ALIGNED               1
+
 /* Macro: BE_USE_XXX_MODULE
  * These macros control whether the related module is compiled.
  * When they are true, they will enable related modules. At this
@@ -215,8 +223,6 @@ extern "C" {
   extern void  berry_free(void *ptr);
   extern void *berry_realloc(void *ptr, size_t size);
   extern void *berry_malloc32(size_t size);
-  extern void  berry_free32(void *ptr);
-  extern void *berry_realloc32(void *ptr, size_t size);
 #ifdef __cplusplus
 }
 #endif

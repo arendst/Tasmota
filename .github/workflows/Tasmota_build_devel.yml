@@ -33,11 +33,9 @@ jobs:
           - tasmota32
           - tasmota32-webcam
           - tasmota32-bluetooth
-          - tasmota32-core2
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
-          - tasmota32-odroidgo
           - tasmota32c3
           - tasmota32solo1
     steps:

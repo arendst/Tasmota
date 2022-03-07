@@ -64,12 +64,14 @@ lv_fun_globs = [
                   "extra/themes/default/*.h",
                   "extra/themes/mono/*.h",
                   "extra/layouts/**/*.h",
+                  "extra/libs/qrcode/lv_qrcode.h",
                   "core/*.h",
                   "draw/*.h",
                   "misc/lv_style_gen.h",
                   "misc/lv_color.h",
                   "misc/lv_style.h",
-                  #"misc/lv_area.h",
+                  "misc/lv_math.h",
+                  "misc/lv_area.h",
                   #"**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
@@ -161,8 +163,11 @@ for header_name in headers_names:
               "^lv_img_cf_",
               "^lv_img_buf_",
               "^lv_indev_scroll_",
+              "^lv_pow",
               "^lv_keyboard_def_event_cb",  # need to fix conditional include
               "^lv_event_get_",            # event_getters not needed
+              "^lv_refr_reset_fps_counter",
+              "^lv_refr_get_fps_avg",
             ]:
           if re.search(exclude_pattern, fun_name): exclude = True
         if exclude: continue
@@ -225,17 +230,7 @@ FT_FONT_STYLE_ITALIC=FT_FONT_STYLE_ITALIC
 FT_FONT_STYLE_BOLD=FT_FONT_STYLE_BOLD
 
 // following are #define, not enum
-LV_RADIUS_CIRCLE
-LV_TEXTAREA_CURSOR_LAST
-LV_STYLE_PROP_ANY
-
-LV_SIZE_CONTENT
-
 LV_GRID_FR=LV_GRID_FR(0)
-LV_GRID_CONTENT
-LV_GRID_TEMPLATE_LAST
-
-LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
 
 // ======================================================================
 // Symbols
@@ -329,9 +324,15 @@ for header_name in headers_names:
         # item is ready
         exclude = False
         for exclude_prefix in ["_", "LV_BIDI_DIR_", "LV_FONT_", "LV_IMG_CF_RESERVED_", "LV_IMG_CF_USER_",
-                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_", "LV_KEYBOARD_"]:
+                               "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_", "LV_KEYBOARD_",
+                               "LV_LRU_"]:
           if enum_item.startswith(exclude_prefix): exclude = True
         if exclude: continue
 
         print(enum_item)
+
+    # extract `LV_EXPORT_CONST_INT()` int constants
+    constints = re.findall('LV_EXPORT_CONST_INT\((\w+)\)', raw, flags=re.DOTALL)
+    for constint in constints:
+      print(constint)
 sys.stdout.close()

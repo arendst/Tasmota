@@ -376,11 +376,11 @@ void EnergyMarginCheck(void)
           uint16_t min_power = (Energy.power_history[phase][0] > active_power) ? active_power : Energy.power_history[phase][0];
           if (0 == min_power) { min_power++; }    // Fix divide by 0 exception (#6741)
           delta = (delta * 100) / min_power;
-          if (delta > Settings->energy_power_delta[phase]) {
+          if (delta >= Settings->energy_power_delta[phase]) {
             threshold_met = true;
           }
         } else {                                  // 101..32000 = Absolute
-          if (delta > (Settings->energy_power_delta[phase] -100)) {
+          if (delta >= (Settings->energy_power_delta[phase] -100)) {
             threshold_met = true;
           }
         }

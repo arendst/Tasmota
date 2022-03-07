@@ -51,7 +51,7 @@ void EZ_RSTACK(uint8_t reset_code) {
     default: reason_str = PSTR("Unknown"); break;
   }
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"EFR32 booted\",\"RestartReason\":\"%s\""
+                  "\"Status\":%d,\"Message\":\"EFR32 EZSP booted\",\"RestartReason\":\"%s\""
                   ",\"Code\":%d}}"),
                   ZIGBEE_STATUS_BOOT, reason_str, reset_code);
 
@@ -418,7 +418,7 @@ int32_t ZNP_Reboot(int32_t res, SBuffer &buf) {
   }
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
-                  "\"Status\":%d,\"Message\":\"CCxxxx booted\",\"RestartReason\":\"%s\""
+                  "\"Status\":%d,\"Message\":\"CCxxxx ZNP booted\",\"RestartReason\":\"%s\""
                   ",\"MajorRel\":%d,\"MinorRel\":%d}}"),
                   ZIGBEE_STATUS_BOOT, reason_str,
                   major_rel, minor_rel);

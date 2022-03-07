@@ -3,7 +3,62 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [2022.1.4]
+## [11.0.0.3]
+### Added
+- TasmotaSerial implement ``end()``
+- ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
+- Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes (#15001)
+- NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` (#15015)
+- NeoPool system voltages display
+- Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
+- LVGL Splash screen and ``SetOption135 1`` to disable splash screen
+
+### Changed
+- Extent number of pulsetimers from 8 to 32 (#8266)
+- Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
+- TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
+- NeoPool limit relay output to the number actually available
+
+### Fixed
+
+## [11.0.0.2] 20220225
+### Changed
+- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
+
+## [11.0.0.1] 20220220
+### Added
+- Command ``SspmMap 0`` to reset Sonoff SPM default mapping
+- Command ``TcpConnect <port><ip_address>`` to add client connection mode (#14874)
+- ESP32 support for BLE Mi scale V1 (#13517)
+- ESP32 integrate Homekit in Bluetooth binary (#14818)
+- ESP32 Berry always enable rules
+- ESP32 Berry bootloop protection
+- ESP32 Berry virtual Alexa hue device (#14833)
+
+### Changed
+- Adafruit BusIO library from v1.0.10 to v1.11.0
+- ESP32 update the internal Berry type system to sync with Skiars Berry repository. No expected impact on code, but .bec files need to be generated again. (#14811)
+- ESP32 LVGL library from v8.1.0 to v8.2.0
+- ESP32 NimBLE library from v1.3.3 to v1.3.6
+- Sonoff SPM increase max number of relays supported to 32 (8 SPM-4Relay modules)
+
+### Fixed
+- SSPM energy yesterday when zero
+- GPIO OptionE1 selection regression (#14821)
+- BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 (#14829)
+- Orno WE517 power meter phase 2 current reactive (#14841)
+- Wiegand 34-bit rfid reading and presentation (#14834)
+
+## [Released]
+
+## [11.0.0] 20220212
+- Release Olivia
+
+## [10.1.0.8] 20220212
+### Changed
+- From Calendar Versioning (CalVer) back to Semantic Versioning (SemVer) for better major change indication and future support
+
+## [2022.1.4 = 10.1.0.7] 20220205
 ### Added
 - Rule variables %timer1% to %timer16% (#14619)
 
@@ -13,7 +68,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - SR04 sensor driver regression from 2022.01.2
 
-## [2022.01.3]
+## [2022.01.3 = 10.1.0.6] 20220204
 ### Added
 - Command ``WebTime <start_pos>,<end_pos>`` to show part of date and/or time in web gui based on "2017-03-07T11:08:02-07:00"
 - ESP32 disable serial console when 3 (ESP32) or 2 (Other models) serial interfaces are requested (#14487)
@@ -41,7 +96,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - OneWire-Stickbreaker (DS18x20) library support for ESP32S2 (#14338)
 
-## [2022.01.2] 20220116
+## [2022.01.2 = 10.1.0.5] 20220116
 ### Added
 - Tasmota favicon to webbrowser tab (#14322)
 - Commands for ESP32 ethernet configuration ``EthIpAddress``, ``EthGateway``, ``EthSubnetmask``, ``EthDnsServer1`` and ``EthDnsServer2`` (#14385)
@@ -50,7 +105,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - IRremoteESP8266 library from v2.8.0 to v2.8.1
 
-## [2022.01.1] 20220107
+## [2022.01.1 = 10.1.0.4] 20220107
 ### Added
 - Experimental ADE7953 (Shelly EM) reset on restart (#14261)
 - Command ``SspmMap 2,1,..`` to map Sonoff SPM scanned module to physical module (#14281)
@@ -116,8 +171,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Webcam exception during flashwrites
 - ESP32 LedPwmMode exception (#14073)
 - ESP32 Compile error when I2S_Audio is enabled (#14095)
-
-## [Released]
 
 ## [10.1.0] 20211208
 - Release Noelle

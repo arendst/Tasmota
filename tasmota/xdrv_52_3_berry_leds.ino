@@ -90,32 +90,23 @@ extern "C" {
       int32_t cmd = be_toint(vm, 2);
       
       if (0 == cmd) { // 00 : ctor         (leds:int, gpio:int) -> void
-        if (!(argc >= 4 && be_isint(vm, 3) && be_isint(vm, 4))) {
+        if (!(argc >= 6 && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6))) {
           be_raise(vm, "value_error", "bad arguments for neopixelbus:ctor");
         }
         int32_t leds = be_toint(vm, 3);
         int32_t gpio = be_toint(vm, 4);
-        int32_t rmt = 0;
-        int32_t neopixel_type = ws2812_grb;
-        if (argc >= 5 && !(be_isnil(vm, 5))) {
-          neopixel_type = be_toint(vm, 5);
-        }
+        int32_t neopixel_type = be_toint(vm, 5);
+        int32_t rmt = be_toint(vm, 6);
         if (neopixel_type < 1) { neopixel_type = 1; }
         if (neopixel_type >= neopixel_type_end) { neopixel_type = neopixel_type_end - 1; }
+        if (rmt < 0) { rmt = 0; }
+        if (rmt >= MAX_RMT) { rmt = MAX_RMT - 1; }
 
         // store type in attribute `_t`
         be_pushint(vm, neopixel_type);
         be_setmember(vm, 1, "_t");
         be_pop(vm, 1);
 
-        if (PinUsed(GPIO_WS2812)) {
-          rmt = 1;    // if WS2812 is already configured by Tasmota UI, we switch to RMT1
-        }
-        if (argc >= 6 && !(be_isnil(vm, 6))) {
-          rmt = be_toint(vm, 6);  // if arg5, then RMT channel is specified
-        }
-        if (rmt < 0) { rmt = 0; }
-        if (rmt >= MAX_RMT) { rmt = MAX_RMT - 1; }
         void * strip = nullptr;
         switch (neopixel_type) {
           case ws2812_grb:    strip = new neopixel_ws2812_grb_t(leds, gpio, (NeoBusChannel) rmt);

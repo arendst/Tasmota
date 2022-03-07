@@ -182,6 +182,9 @@ enum UserSelectablePins {
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
+  GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
+  GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
+  GPIO_RESET,                          // Generic reset
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -199,7 +202,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t udisplay_driver : 1;          // bit 2 (v9.3.1.2)   - Option_A3 - (Display) Universal display driver
     uint32_t enable_ccloader : 1;          // bit 3 (v9.4.0.5)   - Option_A4 - (Zigbee) Enable CCLoader using Zigbee Rx/Tx/Rst Gpios
     uint32_t rotary_mi_desk : 1;           // bit 4 (v9.5.0.5)   - Option_A5 - (Rotary) Enable Mi Desk emulation
-    uint32_t linkind_support : 1;          // bit 5 (v2022.01.1) - Option_A6 - (Light) LinkInd support
+    uint32_t linkind_support : 1;          // bit 5 (v10.1.0.4)  - Option_A6 - (Light) LinkInd support
     uint32_t spare06 : 1;                  // bit 6
     uint32_t spare07 : 1;                  // bit 7
     uint32_t spare08 : 1;                  // bit 8
@@ -244,7 +247,7 @@ enum SupportedEmulationModules {
 #define MAX_OPTIONS_E  1                   // Increase if more emulated modules are supported from kModuleEmulationList
 
 const uint8_t kModuleEmulationList[] PROGMEM = {
-  PWM_DIMMER                               // (v2022.01.1) - Option_E1 - (Light) USE_PWM_DIMMER support
+  PWM_DIMMER                               // (v10.1.0.4)  - Option_E1 - (Light) USE_PWM_DIMMER support
 };
 #endif  // ESP32
 
@@ -403,6 +406,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
   D_SENSOR_ADC_MQ "|"
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
+  D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
+  D_SENSOR_ADE7880_IRQ "|"
+  D_SENSOR_RESET "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -464,8 +470,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
-  AGPIO(GPIO_HEARTBEAT),                 // Every second pulsed high
-  AGPIO(GPIO_HEARTBEAT_INV),             // Every second pulsed low
+  AGPIO(GPIO_HEARTBEAT),                // Every second pulsed high
+  AGPIO(GPIO_HEARTBEAT_INV),            // Every second pulsed low
+  AGPIO(GPIO_RESET),                    // Generic reset
 #ifdef USE_FTC532
   AGPIO(GPIO_FTC532),                   // FTC532 touch input
 #endif
@@ -612,7 +619,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_P9813_CLK),      // P9813 CLOCK
   AGPIO(GPIO_P9813_DAT),      // P9813 DATA
 #else
-  AGPIO(GPIO_WS2812) + MAX_RMT,// WS2812 Led string, using RMT on ESP32
+  AGPIO(GPIO_WS2812) + (MAX_RMT ? MAX_RMT + 1 : 0),// WS2812 Led string, using RMT on ESP32
 #endif  // NEO_HW_P9813
 #endif
 #ifdef USE_ARILUX_RF
@@ -695,6 +702,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HLW_CF),         // HLW8012 CF power
   AGPIO(GPIO_HJL_CF),         // HJL-01/BL0937 CF power
 #endif
+#if defined(USE_I2C) && defined(USE_ADE7880)
+  AGPIO(GPIO_ADE7880_IRQ) + 2,  // ADE7880 IRQ
+#endif
 #if defined(USE_I2C) && defined(USE_ADE7953)
   AGPIO(GPIO_ADE7953_IRQ) + 2,  // ADE7953 IRQ
 #endif
@@ -769,6 +779,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDM230
   AGPIO(GPIO_SDM230_TX),      // SDM230 Serial interface
   AGPIO(GPIO_SDM230_RX),      // SDM230 Serial interface
+#endif
+#ifdef USE_BL6523
+  AGPIO(GPIO_BL6523_TX),       // BL6523 based Watt meter Serial interface
+  AGPIO(GPIO_BL6523_RX),       // BL6523 based Watt meter Serial interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 

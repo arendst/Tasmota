@@ -32,6 +32,13 @@
 
 #include "UnishoxStrings.h"
 
+#ifdef USE_BERRY
+  // not sure why they are not infered automatically
+  bool be_hue_status(String* response, uint32_t device_id);
+  void be_hue_discovery(String* response, bool* appending);
+  void be_hue_groups(String* response);
+#endif
+
 const char HUE_RESP_MSG_U[] PROGMEM =
   //=HUE_RESP_RESPONSE
   "HTTP/1.1 200 OK\r\n"
@@ -497,7 +504,7 @@ void HueLightStatus1(uint8_t device, String *response)
   uint16_t ct = 0;
   uint8_t  color_mode;
   String light_status = "";
-  uint16_t hue = 0;
+  uint16_t hue16 = 0;
   uint8_t  sat = 0;
   uint8_t  bri = 254;
   uint32_t echo_gen = findEchoGeneration();   // 1 for 1st gen =+ Echo Dot 2nd gen, 2 for 2nd gen and above
@@ -516,11 +523,11 @@ void HueLightStatus1(uint8_t device, String *response)
 #endif
 
   if (TasmotaGlobal.light_type) {
-    light_state.getHSB(&hue, &sat, nullptr);
+    light_state.getHSB(nullptr, &sat, nullptr);
+    hue16 = light_state.getHue16();
     if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
-    hue = changeUIntScale(hue, 0, 360, 0, 65535);
 
-    if ((sat != prev_sat) || (hue != prev_hue)) { // if sat or hue was changed outside of Alexa, reset xy
+    if ((sat != prev_sat) || (hue16 != prev_hue)) { // if sat or hue was changed outside of Alexa, reset xy
       prev_x_str[0] = prev_y_str[0] = 0;
     }
 
@@ -550,7 +557,7 @@ void HueLightStatus1(uint8_t device, String *response)
       light_state.getXY(&x, &y);
       snprintf_P(buf, buf_size, PSTR("%s\"xy\":[%s,%s],"), buf, String(x, 5).c_str(), String(y, 5).c_str());
     }
-    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue, sat);
+    snprintf_P(buf, buf_size, PSTR("%s\"hue\":%d,\"sat\":%d,"), buf, hue16, sat);
   }
   if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     snprintf_P(buf, buf_size, PSTR("%s\"ct\":%d,"), buf, ct > 0 ? ct : 284);
@@ -572,8 +579,9 @@ bool HueActive(uint8_t device) {
  * HueLightStatus2Generic
  * 
  * Adds specific information for a newly discovered device
+ * Returns a (char*) pointer that the caller needs to `free()`
 \*********************************************************************************/
-void HueLightStatus2Generic(String *response, const char * name, const char * modelid, const char * manuf, const char * uniqueid) {
+char* HueLightStatus2Generic(const char * name, const char * modelid, const char * manuf, const char * uniqueid) {
   // //=HUE_LIGHTS_STATUS_JSON2
   // ",\"type\":\"Extended color light\","
   // "\"name\":\"%s\","
@@ -583,8 +591,7 @@ void HueLightStatus2Generic(String *response, const char * name, const char * mo
 
   UnishoxStrings msg(HUE_LIGHTS);
   char * buf = ext_snprintf_malloc_P(msg[HUE_LIGHTS_STATUS_JSON2], EscapeJSONString(name).c_str(), EscapeJSONString(modelid).c_str(), EscapeJSONString(manuf).c_str(), uniqueid);
-  *response += buf;
-  free(buf);
+  return buf;
 }
 
 void HueLightStatus2(uint8_t device, String *response)
@@ -606,7 +613,9 @@ void HueLightStatus2(uint8_t device, String *response)
     fname[fname_len] = 0x00;
   }
 
-  HueLightStatus2Generic(response, fname, Settings->user_template_name, PSTR("Tasmota"), GetHueDeviceId(device).c_str());
+  char* buf = HueLightStatus2Generic(fname, Settings->user_template_name, PSTR("Tasmota"), GetHueDeviceId(device).c_str());
+  *response += buf;
+  free(buf);
 }
 #endif // USE_LIGHT
 
@@ -614,11 +623,7 @@ void HueLightStatus2(uint8_t device, String *response)
 // it is limited to 32 devices.
 // last 24 bits of Mac address + 4 bits of local light + high bit for relays 16-31, relay 32 is mapped to 0
 // Zigbee extension: bit 29 = 1, and last 16 bits = short address of Zigbee device
-#ifndef USE_ZIGBEE
-uint32_t EncodeLightId(uint8_t relay_id)
-#else
-uint32_t EncodeLightId(uint8_t relay_id, uint16_t z_shortaddr = 0)
-#endif
+uint32_t EncodeLightIdZigbee(uint8_t relay_id, uint16_t z_shortaddr)
 {
   uint8_t mac[6];
   WiFi.macAddress(mac);
@@ -641,17 +646,17 @@ uint32_t EncodeLightId(uint8_t relay_id, uint16_t z_shortaddr = 0)
   return id;
 }
 
+uint32_t EncodeLightId(uint8_t relay_id)
+{
+  return EncodeLightIdZigbee(relay_id, 0);
+}
 
 // get hue_id and decode the relay_id
 // 4 LSB decode to 1-15, if bit 28 is set, it encodes 16-31, if 0 then 32
 // Zigbee:
 // If the Id encodes a Zigbee device (meaning bit 29 is set)
 // it returns 0 and sets the 'shortaddr' to the device short address
-#ifndef USE_ZIGBEE
-uint32_t DecodeLightId(uint32_t hue_id)
-#else
-uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
-#endif
+uint32_t DecodeLightIdZigbee(uint32_t hue_id, uint16_t * shortaddr)
 {
   uint8_t relay_id = hue_id & 0xF;
   if (hue_id & (1 << 28)) {   // check if bit 25 is set, if so we have
@@ -669,6 +674,11 @@ uint32_t DecodeLightId(uint32_t hue_id, uint16_t * shortaddr = nullptr)
   }
 #endif // USE_ZIGBEE
   return relay_id;
+}
+
+uint32_t DecodeLightId(uint32_t hue_id)
+{
+  return DecodeLightIdZigbee(hue_id, nullptr);
 }
 
 // Check if the Echo device is of 1st generation, which triggers different results
@@ -722,7 +732,7 @@ void CheckHue(String * response, bool &appending) {
 }
 
 void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
-  uint16_t hue = 0;
+  uint16_t hue16 = 0;   // hue over 0..65536
   uint8_t  sat = 0;
   uint8_t  bri = 254;
   uint16_t ct = 0;
@@ -773,7 +783,8 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
 
     if (TasmotaGlobal.light_type && (local_light_subtype >= LST_SINGLE)) {
       if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
-        light_state.getHSB(&hue, &sat, nullptr);
+        light_state.getHSB(nullptr, &sat, nullptr);
+        hue16 = light_state.getHue16();
         bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
         ct = light_state.getCT();
         uint8_t color_mode = light_state.getColorMode();
@@ -818,8 +829,11 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
       strlcpy(prev_y_str, tok_y.getStr(), sizeof(prev_y_str));
       uint8_t rr,gg,bb;
       XyToRgb(x, y, &rr, &gg, &bb);
+
+      uint16_t hue;
       RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
-      prev_hue = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
+      hue16 = changeUIntScale(hue, 0, 360, 0, 65535);  // calculate back prev_hue
+      prev_hue = hue16;
       prev_sat = (sat > 254 ? 254 : sat);
       //AddLog(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
       if (resp) { response += ","; }
@@ -835,16 +849,14 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
     parser.setCurrent();
     JsonParserToken hue_hue = root[PSTR("hue")];
     if (hue_hue) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
-      hue = hue_hue.getUInt();
-      prev_hue = hue;
+      hue16 = hue_hue.getUInt();
+      prev_hue = hue16;
       if (resp) { response += ","; }
       snprintf_P(buf, buf_size,
                  msg[HUE_RESP_NUM],
-                 device_id, PSTR("hue"), hue);
+                 device_id, PSTR("hue"), hue16);
       response += buf;
       if (LST_RGB <= Light.subtype) {
-        // change range from 0..65535 to 0..360
-        hue = changeUIntScale(hue, 0, 65535, 0, 360);
         g_gotct = false;
         change = true;
       }
@@ -899,7 +911,7 @@ void HueLightsCommand(uint8_t device, uint32_t device_id, String &response) {
           if (g_gotct) {
             light_controller.changeCTB(ct, bri);
           } else {
-            light_controller.changeHSB(hue, sat, bri);
+            light_controller.changeH16SB(hue16, sat, bri);
           }
           LightPreparePower();
         } else {  // SetOption68 On, each channel is a dimmer
@@ -947,6 +959,9 @@ void HueLights(String *path_req)
 #ifdef USE_ZIGBEE
     ZigbeeCheckHue(response, &appending);
 #endif // USE_ZIGBEE
+#ifdef USE_BERRY
+    be_hue_discovery(&response, &appending);
+#endif
 #ifdef USE_SCRIPT_HUE
     Script_Check_Hue(&response);
 #endif
@@ -959,12 +974,19 @@ void HueLights(String *path_req)
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
     uint16_t shortaddr;
-    device = DecodeLightId(device_id, &shortaddr);
+    device = DecodeLightIdZigbee(device_id, &shortaddr);
     if (shortaddr) {
       code = ZigbeeHandleHue(shortaddr, device_id, response);
       goto exit;
     }
 #endif // USE_ZIGBEE
+
+#ifdef USE_BERRY
+  if (be_hue_command(device, device_id, &response)) {
+    // code is already 200
+    goto exit;
+  }
+#endif
 
 #ifdef USE_SCRIPT_HUE
     if (device > TasmotaGlobal.devices_present) {
@@ -985,12 +1007,18 @@ void HueLights(String *path_req)
     device = DecodeLightId(device_id);
 #ifdef USE_ZIGBEE
     uint16_t shortaddr;
-    device = DecodeLightId(device_id, &shortaddr);
+    device = DecodeLightIdZigbee(device_id, &shortaddr);
     if (shortaddr) {
       code = ZigbeeHueStatus(&response, shortaddr);
       goto exit;
     }
 #endif // USE_ZIGBEE
+
+#ifdef USE_BERRY
+    if (be_hue_status(&response, device_id)) {
+      goto exit;
+    }
+#endif
 
 #ifdef USE_SCRIPT_HUE
     if (device > TasmotaGlobal.devices_present) {
@@ -998,6 +1026,7 @@ void HueLights(String *path_req)
       goto exit;
     }
 #endif
+
 
 #ifdef USE_LIGHT
     if ((device < 1) || (device > maxhue)) {
@@ -1037,21 +1066,25 @@ void HueGroups(String *path)
   if (path->endsWith(F("/0"))) {
     UnishoxStrings msg(HUE_LIGHTS);
     response = msg[HUE_GROUP0_STATUS_JSON];
-    String lights = F("\"1\"");
-    for (uint32_t i = 2; i <= maxhue; i++) {
+    String lights;
+    for (uint32_t i = 1; i <= maxhue; i++) {
       lights += F(",\"");
       lights += EncodeLightId(i);
       lights += F("\"");
     }
 
 #ifdef USE_ZIGBEE
-    ZigbeeHueGroups(&response);
+    ZigbeeHueGroups(&lights);
 #endif // USE_ZIGBEE
+#ifdef USE_BERRY
+    be_hue_groups(&lights);
+#endif
+    lights.remove(0,1);     // remove first ','
     response.replace(F("{l1"), lights);
 #ifdef USE_LIGHT
-    HueLightStatus1(1, &response);
+    // HueLightStatus1(1, &response);   // Not sure it is useful
 #endif // USE_LIGHT
-    response += F("}");
+    response += F("{}}");
   }
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " HueGroups Result (%s)"), path->c_str());

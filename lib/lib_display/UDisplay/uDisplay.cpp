@@ -483,6 +483,11 @@ Renderer *uDisplay::Init(void) {
     }
 #endif // ESP32
 
+
+    spiSettings = SPISettings((uint32_t)spi_speed*1000000, MSBFIRST, SPI_MODE3);
+    SPI_BEGIN_TRANSACTION
+
+
     if (reset >= 0) {
       pinMode(reset, OUTPUT);
       digitalWrite(reset, HIGH);
@@ -493,11 +498,7 @@ Renderer *uDisplay::Init(void) {
       delay(200);
     }
 
-    spiSettings = SPISettings((uint32_t)spi_speed*1000000, MSBFIRST, SPI_MODE3);
-
     uint16_t index = 0;
-
-    SPI_BEGIN_TRANSACTION
     while (1) {
       uint8_t iob;
       SPI_CS_LOW
@@ -1213,7 +1214,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
       // special version 8 bit spi I or II
   #ifdef ESP8266
       while (len--) {
-        uspi->write(*data++);
+        //uspi->write(*data++);
+        WriteColor(*data++);
       }
   #else
       uspi->writePixels(data, len * 2);

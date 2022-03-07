@@ -46,10 +46,14 @@ typedef struct {
     int status;
 } bcallframe;
 
+struct gc16_t;           /* memory pool for 0-16 bytes or less objects */
+struct gc32_t;           /* memory pool for 17-32 bytes */
 struct bgc {
     bgcobject *list; /* the GC-object list */
     bgcobject *gray; /* the gray object list */
     bgcobject *fixed; /* the fixed objecct list  */
+    struct gc16_t* pool16;
+    struct gc32_t* pool32;
     size_t usage; /* the count of bytes currently allocated */
     size_t threshold; /* he threshold of allocation for the next GC */
     bbyte steprate; /* the rate of increase in the distribution between two GCs (percentage) */
@@ -80,7 +84,6 @@ struct bupval {
     } u;
     int refcnt;
 };
-
 struct bvm {
     bglobaldesc gbldesc; /* global description */
     bvalue *stack; /* stack space */

@@ -1,17 +1,32 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
-class Timer
-  var due, f, id
-  def init(due, f, id)
-    self.due = due
+class Trigger
+  var trig, f, id
+  var o             # optional object
+  def init(trig, f, id, o)
+    self.trig = trig
     self.f = f
     self.id = id
+    self.o = o
   end
   def tostring()
     import string
     return string.format("<instance: %s(%s, %s, %s)", str(classof(self)),
-              str(self.due), str(self.f), str(self.id))
+              str(self.trig), str(self.f), str(self.id))
+  end
+  # next() returns the next trigger, or 0 if rtc is invalid, or nil if no more
+  def next()
+    if self.o
+      return self.o.next()
+    end
+  end
+  
+  def time_reached()
+    if self.o && self.trig > 0
+      return self.o.time_reached(self.trig)
+    end
+    return false
   end
 end
 
@@ -19,7 +34,8 @@ tasmota = nil
 class Tasmota
   var _fl             # list of fast_loop registered closures
   var _rules
-  var _timers
+  var _timers         # holds both timers and cron
+  var _crons
   var _ccmd
   var _drivers
   var wire1
@@ -50,23 +66,12 @@ class Tasmota
   # check that the parameter is not a method, it would require a closure instead
   def check_not_method(f)
     import introspect
+    if type(f) != 'function'
+      raise "type_error", "BRY: argument must be a function"
+    end
     if introspect.ismethod(f) == true
       raise "type_error", "BRY: method not allowed, use a closure like '/ args -> obj.func(args)'"
     end
-  end
-
-  # create a specific sub-class for rules: pattern(string) -> closure
-  # Classs KV has two members k and v
-  def kv(k, v)
-    class KV
-      var k, v
-      def init(k,v)
-        self.k = k
-        self.v = v
-      end
-    end
-
-    return KV(k, v)
   end
 
   # add `chars_in_string(s:string,c:string) -> int``
@@ -127,23 +132,23 @@ class Tasmota
   end
 
   # Rules
-  def add_rule(pat,f)
+  def add_rule(pat, f, id)
     self.check_not_method(f)
     if !self._rules
       self._rules=[]
     end
     if type(f) == 'function'
-      self._rules.push(self.kv(pat, f))
+      self._rules.push(Trigger(pat, f, id))
     else
       raise 'value_error', 'the second argument is not a function'
     end
   end
 
-  def remove_rule(pat)
+  def remove_rule(pat, id)
     if self._rules
       var i = 0
       while i < size(self._rules)
-        if self._rules[i].k == pat
+        if self._rules[i].trig == pat && self._rules[i].id == id
           self._rules.remove(i)  #- don't increment i since we removed the object -#
         else
           i += 1
@@ -211,8 +216,8 @@ class Tasmota
       if self._rules
         var i = 0
         while i < size(self._rules)
-          var kv = self._rules[i]
-          ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut if ret is already true -#
+          var tr = self._rules[i]
+          ret = self.try_rule(ev,tr.trig,tr.f) || ret  #- call should be first to avoid evaluation shortcut if ret is already true -#
           i += 1
         end
       end
@@ -236,8 +241,8 @@ class Tasmota
 
       var i = 0
       while i < size(self._rules)
-        var kv = self._rules[i]
-        ret = self.try_rule(ev,kv.k,kv.v) || ret  #- call should be first to avoid evaluation shortcut -#
+        var tr = self._rules[i]
+        ret = self.try_rule(ev,tr.trig,tr.f) || ret  #- call should be first to avoid evaluation shortcut -#
         i += 1
       end
       return ret
@@ -248,18 +253,80 @@ class Tasmota
   def set_timer(delay,f,id)
     self.check_not_method(f)
     if !self._timers self._timers=[] end
-    self._timers.push(Timer(self.millis(delay),f,id))
+    self._timers.push(Trigger(self.millis(delay),f,id))
   end
 
   # run every 50ms tick
   def run_deferred()
     if self._timers
       var i=0
-      while i<self._timers.size()
-        if self.time_reached(self._timers[i].due)
-          var f=self._timers[i].f
-          self._timers.remove(i)
+      while i < self._timers.size()
+        var trigger = self._timers[i]
+
+        if self.time_reached(trigger.trig)
+          var f = trigger.f
+          self._timers.remove(i)      # one shot event
           f()
+        else
+          i += 1
+        end
+      end
+    end
+  end
+
+  def run_cron()
+    if self._crons
+      var i=0
+      var now = ccronexpr.now()
+      while i < self._crons.size()
+        var trigger = self._crons[i]
+
+        if trigger.trig == 0        # trigger was created when RTC was invalid, try to recalculate
+          trigger.trig = trigger.next()
+        elif trigger.time_reached() # time has come
+          var f = trigger.f
+          var next_time = trigger.next()
+          trigger.trig = next_time   # update to next time
+          f(now, next_time)
+        end
+        i += 1
+      end
+    end
+  end
+
+  def remove_timer(id)
+    var timers = self._timers
+    if timers
+      var i=0
+      while i < timers.size()
+        if timers[i].id == id
+          timers.remove(i)
+        else
+          i=i+1
+        end
+      end
+    end
+  end
+  
+  # crontab style recurring events
+  def add_cron(pattern,f,id)
+    self.check_not_method(f)
+    if !self._crons self._crons=[] end
+
+    var cron_obj = ccronexpr(str(pattern))    # can fail, throwing an exception
+    var next_time = cron_obj.next()
+
+    self._crons.push(Trigger(next_time, f, id, cron_obj))
+  end
+
+  # remove cron by id
+  def remove_cron(id)
+    var crons = self._crons
+    if crons
+      var i=0
+      while i < crons.size()
+        if crons[i].id == id
+          crons.remove(i)
         else
           i=i+1
         end
@@ -267,15 +334,14 @@ class Tasmota
     end
   end
 
-  # remove timers by id
-  def remove_timer(id)
-    if tasmota._timers
+  # get next timestamp for cron
+  def next_cron(id)
+    var crons = self._crons
+    if crons
       var i=0
-      while i<tasmota._timers.size()
-        if self._timers[i].id == id
-          self._timers.remove(i)
-        else
-          i=i+1
+      while i < crons.size()
+        if crons[i].id == id
+          return crons[i].trig
         end
       end
     end
@@ -465,7 +531,13 @@ class Tasmota
   def event(event_type, cmd, idx, payload, raw)
     import introspect
     import string
-    if event_type=='every_50ms' self.run_deferred() end  #- first run deferred events -#
+    if event_type=='every_50ms'
+      self.run_deferred()
+    end  #- first run deferred events -#
+
+    if event_type=='every_250ms'
+      self.run_cron()
+    end
 
     var done = false
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)

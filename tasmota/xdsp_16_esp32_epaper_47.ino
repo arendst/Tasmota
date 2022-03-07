@@ -57,10 +57,12 @@ void EpdInitDriver47(void) {
     renderer->setTextColor(EPD47_BLACK, EPD47_WHITE);
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->setTextFont(2);
-    renderer->DrawStringAt(50, 50, "LILGO 4.7 E-Paper Display!", EPD47_BLACK, 0);
-    renderer->Updateframe();
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->setTextFont(2);
+      renderer->DrawStringAt(50, 50, "LILGO 4.7 E-Paper Display!", EPD47_BLACK, 0);
+      renderer->Updateframe();
+    }
 #endif
 
     fg_color = EPD47_BLACK;

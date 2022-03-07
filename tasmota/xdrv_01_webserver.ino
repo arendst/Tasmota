@@ -881,12 +881,28 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 #endif
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
-    WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
-      NetworkHostname(),
-      (Mdns.begun) ? PSTR(".local") : "",
-      (lip) ? WiFi.localIP().toString().c_str() : "",
-      (lip && sip) ? ", " : "",
-      (sip) ? WiFi.softAPIP().toString().c_str() : "");
+    bool eip = false;
+    if (lip || sip) {
+      WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)"),    // tasmota.local (192.168.2.12, 192.168.4.1)
+        TasmotaGlobal.hostname,
+        (Mdns.begun) ? PSTR(".local") : "",
+        (lip) ? WiFi.localIP().toString().c_str() : "",
+        (lip && sip) ? ", " : "",
+        (sip) ? WiFi.softAPIP().toString().c_str() : "");
+    }
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+    eip = (static_cast<uint32_t>(EthernetLocalIP()) != 0);
+    if (eip) {
+      WSContentSend_P(PSTR("%s%s%s (%s)"),          // tasmota-eth.local (192.168.2.13)
+        (lip || sip) ? PSTR("</br>") : PSTR("<h4>"),
+        EthernetHostname(),
+        (Mdns.begun) ? PSTR(".local") : "",
+        (eip) ? EthernetLocalIP().toString().c_str() : "");
+    }
+#endif
+    if (lip || sip || eip) {
+      WSContentSend_P(PSTR("</h4>"));
+    }
   }
   WSContentSend_P(PSTR("</div>"));
 }

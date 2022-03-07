@@ -634,7 +634,7 @@
 //  #define USE_DHT12                              // [I2cDriver41] Enable DHT12 humidity and temperature sensor (I2C address 0x5C) (+0k7 code)
 //  #define USE_DS1624                             // [I2cDriver42] Enable DS1624, DS1621 temperature sensor (I2C addresses 0x48 - 0x4F) (+1k2 code)
 //  #define USE_AHT1x                              // [I2cDriver43] Enable AHT10/15 humidity and temperature sensor (I2C address 0x38, 0x39) (+0k8 code)
-//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20 instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
+//  #define USE_AHT2x                              // [I2cDriver43] Enable AHT20/AM2301B instead of AHT1x humidity and temperature sensor (I2C address 0x38) (+0k8 code)
 //  #define USE_WEMOS_MOTOR_V1                     // [I2cDriver44] Enable Wemos motor driver V1 (I2C addresses 0x2D - 0x30) (+0k7 code)
 //    #define WEMOS_MOTOR_V1_ADDR  0x30            // Default I2C address 0x30
 //    #define WEMOS_MOTOR_V1_FREQ  1000            // Default frequency
@@ -983,9 +983,9 @@
 
 #define SET_ESP32_STACK_SIZE  (8 * 1024)         // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
 
-//#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter(+6k3 code)
+//#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
 
-//#define USE_ETHERNET                             // Add support for ethernet (Currently fixed for Olimex ESP32-PoE)
+//#define USE_ETHERNET                             // Add support for ethernet (+20k code)
 //  #define USE_WT32_ETH01                         // Add support for Wireless-Tag WT32-ETH01
 //  #define ETH_TYPE          0                    // [EthType] 0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_DM9051, 5 = ETH_PHY_KSZ8081
 //  #define ETH_ADDRESS       1                    // [EthAddress] 0 = PHY0 .. 31 = PHY31
@@ -1028,6 +1028,7 @@
   #define USE_LVGL_OPENHASP                      // Enable OpenHASP template compatiblity (adds LVGL template and some fonts)
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
   #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
+  //#define USE_LVGL_TOUCHSCREEN                   // Use virtual touch screen with Berry driver
   //#define USE_LVGL_FREETYPE                      // Use the FreeType renderer to display fonts using native TTF files in file system (+77KB flash)
     #define LV_USE_FT_CACHE_MANAGER 1            // define whether glyphs are cached by FreeType library
     #define USE_LVGL_FREETYPE_MAX_FACES 64       // max number of FreeType faces in cache

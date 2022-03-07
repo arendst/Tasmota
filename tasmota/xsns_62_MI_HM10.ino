@@ -343,20 +343,20 @@ const char HTTP_MISCALE_STABILIZED[] PROGMEM = "{s}%s" " Stabilized" "{m}%s{e}";
 void (*const HM10_Commands[])(void) PROGMEM = { &CmndHM10Scan, &CmndHM10AT, &CmndHM10Period, &CmndHM10Baud, &CmndHM10Time, &CmndHM10Auto, &CmndHM10Page, &CmndHM10Beacon, &CmndHM10Block, &CmndHM10Option };
 
 
-#define FLORA       1
-#define MJ_HT_V1    2
-#define LYWSD02     3
-#define LYWSD03MMC  4
-#define CGG1        5
-#define CGD1        6
-#define NLIGHT      7
-#define MJYD2S      8
-#define YEERC       9
-#define MHOC401     10
-#define MHOC303     11
-#define ATC         12
-#define MI_SCALE_V1    13
-#define MI_SCALE_V2    14
+#define HM10_FLORA        1
+#define HM10_MJ_HT_V1     2
+#define HM10_LYWSD02      3
+#define HM10_LYWSD03MMC   4
+#define HM10_CGG1         5
+#define HM10_CGD1         6
+#define HM10_NLIGHT       7
+#define HM10_MJYD2S       8
+#define HM10_YEERC        9
+#define HM10_MHOC401      10
+#define HM10_MHOC303      11
+#define HM10_ATC          12
+#define HM10_MI_SCALE_V1  13
+#define HM10_MI_SCALE_V2  14
 
 #define HM10_TYPES    14 //count this manually
 
@@ -635,7 +635,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, int _rssi){
   _newSensor.rssi=_rssi;
   _newSensor.lux = 0x00ffffff;
   switch (_type){
-    case FLORA:
+    case HM10_FLORA:
       _newSensor.moisture =0xff;
       _newSensor.fertility =0xffff;
       _newSensor.firmware[0]='\0';
@@ -645,12 +645,12 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, int _rssi){
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=1;
       break;
-    case NLIGHT:
+    case HM10_NLIGHT:
       _newSensor.events=0x00;
       _newSensor.feature.PIR=1;
       _newSensor.feature.NMT=1;
       break;
-    case MJYD2S:
+    case HM10_MJYD2S:
       _newSensor.NMT=0;
       _newSensor.events=0x00;
       _newSensor.feature.PIR=1;
@@ -658,14 +658,14 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_MAC)[6], uint16_t _type, int _rssi){
       _newSensor.feature.lux=1;
       _newSensor.feature.bat=1;
       break;
-    case YEERC:
+    case HM10_YEERC:
       _newSensor.feature.Btn=1;
       break;
-    case MI_SCALE_V1:
+    case HM10_MI_SCALE_V1:
       _newSensor.weight=NAN;
       _newSensor.feature.scale=1;
     break;
-    case MI_SCALE_V2:
+    case HM10_MI_SCALE_V2:
       _newSensor.weight=NAN;
       _newSensor.feature.scale=1;
       _newSensor.feature.impedance=1;
@@ -726,7 +726,7 @@ void HM10SerialInit(void) {
 void HM10parseMiBeacon(char * _buf, uint32_t _slot){
   float _tempFloat;
   mi_beacon_t _beacon;
-  if (MIBLEsensors[_slot].type==MJ_HT_V1 || MIBLEsensors[_slot].type==CGG1 || MIBLEsensors[_slot].type==YEERC){
+  if (MIBLEsensors[_slot].type==HM10_MJ_HT_V1 || MIBLEsensors[_slot].type==HM10_CGG1 || MIBLEsensors[_slot].type==HM10_YEERC){
     memcpy((uint8_t*)&_beacon+1,(uint8_t*)_buf, sizeof(_beacon)-1); // shift by one byte for the MJ_HT_V1
     memcpy((uint8_t*)&_beacon.MAC,(uint8_t*)&_beacon.MAC+1,6);    // but shift back the MAC
   }
@@ -748,7 +748,7 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
   DEBUG_SENSOR_LOG(PSTR("         type:%02x: %02x %02x %02x %02x %02x %02x %02x %02x"),_beacon.type, (uint8_t)_buf[8],(uint8_t)_buf[9],(uint8_t)_buf[10],(uint8_t)_buf[11],(uint8_t)_buf[12],(uint8_t)_buf[13],(uint8_t)_buf[14],(uint8_t)_buf[15]);
 
   // MIBLEsensors[_slot].rssi = _rssi;
-  if(MIBLEsensors[_slot].type==LYWSD03MMC || MIBLEsensors[_slot].type==CGD1 || MIBLEsensors[_slot].type==MHOC401){
+  if(MIBLEsensors[_slot].type==HM10_LYWSD03MMC || MIBLEsensors[_slot].type==HM10_CGD1 || MIBLEsensors[_slot].type==HM10_MHOC401){
     DEBUG_SENSOR_LOG(PSTR("LYWSD03 and CGD1 no support for MiBeacon, type %u"),MIBLEsensors[_slot].type);
     return;
   }
@@ -781,7 +781,7 @@ void HM10parseMiBeacon(char * _buf, uint32_t _slot){
     DEBUG_SENSOR_LOG(PSTR("Mode 6: U16:  %u Hum"), _beacon.hum);
     break;
     case 0x07:
-    if(MIBLEsensors[_slot].type==MJYD2S){
+    if(MIBLEsensors[_slot].type==HM10_MJYD2S){
       MIBLEsensors[_slot].eventType.noMotion  = 1;
     }
     MIBLEsensors[_slot].lux=_beacon.lux & 0x00ffffff;
@@ -877,7 +877,7 @@ void HM10parseCGD1Packet(char * _buf, uint32_t _slot){ // no MiBeacon
 
 void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
 //void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t *addr, int RSSI, int UUID){
-    
+
   uint8_t impedance_stabilized = 0;
   uint8_t weight_stabilized = 0;
   uint8_t weight_removed = 0;
@@ -906,7 +906,7 @@ void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
 
       weight_stabilized = (_packetV1->status & (1 << 5)) ? 1 : 0;
       weight_removed = (_packetV1->status & (1 << 7)) ? 1 : 0;
-      
+
       // Set sensor values for every packet in BridgedMode and for every packet with stable weight
       if (HM10.option.directBridgeMode || (weight_stabilized && !weight_removed))
       {
@@ -942,7 +942,7 @@ void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
         MIBLEsensors[_slot].datetime.second = _packetV1->second;
 
         MIBLEsensors[_slot].shallSendMQTT = 1;
- 
+
         HM10.mode.shallTriggerTele = 1;
       }
     }
@@ -994,7 +994,7 @@ void HM10ParseMiScalePacket(char * _buf, uint32_t _slot, uint16_t _type){
         if (MIBLEsensors[_slot].weight_removed)
         {
           MIBLEsensors[_slot].weight = 0.0f;
-          
+
         }
         //Set impedance to zero after every stable weight measurement
         MIBLEsensors[_slot].impedance = 0;
@@ -1067,7 +1067,7 @@ void HM10readHT_LY(char *_buf){
       DEBUG_SENSOR_LOG(PSTR("LYWSD0x: hum updated"));
     }
     MIBLEsensors[_slot].eventType.tempHum = 1;
-    if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401){
+    if (MIBLEsensors[_slot].type == HM10_LYWSD03MMC || MIBLEsensors[_slot].type == HM10_MHOC401){
       MIBLEsensors[_slot].bat = ((float)packet->volt-2100.0f)/12.0f;
       MIBLEsensors[_slot].eventType.bat  = 1;
     }
@@ -1166,7 +1166,7 @@ bool HM10readBat(char *_buf){
   if(_buf[0]==0x4f && _buf[1]==0x4b) return false; // "OK"
   uint32_t _slot = HM10.state.sensor;
   // if(HM10.option.ignoreBogusBattery){
-  //   if (MIBLEsensors[_slot].type == LYWSD03MMC || MIBLEsensors[_slot].type == MHOC401) return true;
+  //   if (MIBLEsensors[_slot].type == HM10_LYWSD03MMC || MIBLEsensors[_slot].type == HM10_MHOC401) return true;
   // }
   if(_buf[0] != 0){
     AddLog(LOG_LEVEL_DEBUG,PSTR("%s: Battery: %u"),D_CMND_HM10,_buf[0]);
@@ -1514,7 +1514,7 @@ void HM10_TaskEvery100ms(){
           HM10.mode.awaiting = tempHumLY;
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
-          if(MIBLEsensors[HM10.state.sensor].type == LYWSD02) HM10Serial->write("AT+NOTIFY_ON003C");
+          if(MIBLEsensors[HM10.state.sensor].type == HM10_LYWSD02) HM10Serial->write("AT+NOTIFY_ON003C");
           else HM10Serial->write("AT+NOTIFY_ON004B"); //MHO-C303
           break;
         case TASK_HM10_UN_L2:
@@ -1523,7 +1523,7 @@ void HM10_TaskEvery100ms(){
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
           HM10.mode.awaiting = none;
-          if(MIBLEsensors[HM10.state.sensor].type == LYWSD02) HM10Serial->write("AT+NOTIFY_OFF003C");
+          if(MIBLEsensors[HM10.state.sensor].type == HM10_LYWSD02) HM10Serial->write("AT+NOTIFY_OFF003C");
           else HM10Serial->write("AT+NOTIFY_OFF004B"); //MHO-C303
           break;
         case TASK_HM10_TIME_L2:
@@ -1550,7 +1550,7 @@ void HM10_TaskEvery100ms(){
           HM10.current_task_delay = 2;                    // set task delay
           HM10_TaskReplaceInSlot(TASK_HM10_FEEDBACK,i);
           runningTaskLoop = false;
-          if(MIBLEsensors[HM10.state.sensor].type == LYWSD02) HM10Serial->write("AT+READDATA0043?");
+          if(MIBLEsensors[HM10.state.sensor].type == HM10_LYWSD02) HM10Serial->write("AT+READDATA0043?");
           else HM10Serial->write("AT+READDATA0052?"); //MHO-C303
           HM10.mode.awaiting = bat;
           break;
@@ -1735,19 +1735,19 @@ void HM10EverySecond(bool restart){
     _nextSensorSlot++;
     HM10.mode.pending_task = 1;
     switch(MIBLEsensors[HM10.state.sensor].type){
-      case FLORA:
+      case HM10_FLORA:
         HM10_Read_Flora();
         break;
-      case MJ_HT_V1: case CGG1:
+      case HM10_MJ_HT_V1: case HM10_CGG1:
         HM10_Read_MJ_HT_V1();
         break;
-      case LYWSD02: case MHOC303:
+      case HM10_LYWSD02: case HM10_MHOC303:
         HM10_Read_LYWSD02();
         break;
-      case LYWSD03MMC: case MHOC401:
+      case HM10_LYWSD03MMC: case HM10_MHOC401:
         HM10_Read_LYWSD03();
         break;
-      case CGD1:
+      case HM10_CGD1:
         HM10_Read_CGD1();
         break;
       default:
@@ -1827,7 +1827,7 @@ void CmndHM10Baud() {
 void CmndHM10Time() {
   if (XdrvMailbox.data_len > 0) {
     if(MIBLEsensors.size()>XdrvMailbox.payload){
-      if(MIBLEsensors[XdrvMailbox.payload].type == LYWSD02){
+      if(MIBLEsensors[XdrvMailbox.payload].type == HM10_LYWSD02){
         HM10.state.sensor = XdrvMailbox.payload;
         HM10_Time_LYWSD02();
         }
@@ -2116,7 +2116,7 @@ void HM10Show(bool json)
         }
       }
 
-      if (MIBLEsensors[i].type == FLORA && !HM10.mode.triggeredTele) {
+      if (MIBLEsensors[i].type == HM10_FLORA && !HM10.mode.triggeredTele) {
         if (MIBLEsensors[i].firmware[0] != '\0') { // this is the error code -> no firmware
           HM10ShowContinuation(&commaflg);
           ResponseAppend_P(PSTR("\"Firmware\":\"%s\""), MIBLEsensors[i].firmware);
@@ -2231,7 +2231,7 @@ void HM10Show(bool json)
         char _MAC[18];
         ToHex_P(MIBLEsensors[i].MAC,6,_MAC,18,':');
         WSContentSend_PD(HTTP_HM10_MAC, kHM10DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, _MAC);
-        if (MIBLEsensors[i].type==FLORA){
+        if (MIBLEsensors[i].type==HM10_FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             WSContentSend_Temp(kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
           }
@@ -2245,8 +2245,8 @@ void HM10Show(bool json)
             WSContentSend_PD(HTTP_HM10_FLORA_DATA, kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].fertility);
           }
         }
-        if (MIBLEsensors[i].type==MI_SCALE_V1 || MIBLEsensors[i].type==MI_SCALE_V2){
-          
+        if (MIBLEsensors[i].type==HM10_MI_SCALE_V1 || MIBLEsensors[i].type==HM10_MI_SCALE_V2){
+
           if (MIBLEsensors[i].feature.scale){
               WSContentSend_PD(HTTP_MISCALE_WEIGHT, kHM10DeviceType[MIBLEsensors[i].type-1], Settings->flag2.weight_resolution, &MIBLEsensors[i].weight, MIBLEsensors[i].weight_unit);
               WSContentSend_PD(HTTP_MISCALE_WEIGHT_REMOVED, kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].weight_removed ? PSTR("yes") : PSTR("no"));
@@ -2256,7 +2256,7 @@ void HM10Show(bool json)
               WSContentSend_PD(HTTP_MISCALE_IMPEDANCE, kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].has_impedance ? MIBLEsensors[i].impedance : 0);
           }
         }
-        else if (MIBLEsensors[i].type>FLORA){ // everything "above" Flora
+        else if (MIBLEsensors[i].type>HM10_FLORA){ // everything "above" Flora
           if(!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)){
             WSContentSend_THD(kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }

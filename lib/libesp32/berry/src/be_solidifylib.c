@@ -148,7 +148,7 @@ static void m_solidify_list(bvm *vm, blist * list, const char *class_name)
 // pass key name in case of class, or NULL if none
 static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, const char *key)
 {
-    int type = var_type(value);
+    int type = var_primetype(value);
     switch (type) {
     case BE_NIL:
         logfmt("be_const_nil()");
@@ -197,7 +197,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
             char func_name_id[id_len];
             toidentifier(func_name_id, func_name);
             logfmt("be_const_%sclosure(%s%s%s_closure)",
-                func_isstatic(value) ? "static_" : "",
+                var_isstatic(value) ? "static_" : "",
                 classname ? classname : "", classname ? "_" : "",
                 func_name_id);
         }
@@ -210,7 +210,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_NTVFUNC:
         logfmt("be_const_%sfunc(be_ntv_%s_%s)",
-            func_isstatic(value) ? "static_" : "",
+            var_isstatic(value) ? "static_" : "",
             classname ? classname : "unknown", key ? key : "unknown");
         break;
     case BE_INSTANCE:

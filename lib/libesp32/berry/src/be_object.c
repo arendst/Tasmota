@@ -15,7 +15,7 @@
 
 const char* be_vtype2str(bvalue *v)
 {
-    switch(var_type(v)) {
+    switch(var_primetype(v)) {
     case BE_NIL: return "nil";
     case BE_INT: return "int";
     case BE_REAL: return "real";

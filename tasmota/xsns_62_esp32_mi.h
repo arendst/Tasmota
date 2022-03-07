@@ -236,6 +236,7 @@ struct mi_sensor_t{
       uint32_t NMT:1;
       uint32_t motion:1;
       uint32_t Btn:1;
+      uint32_t knob:1;
       uint32_t door:1;
       uint32_t leak:1;
     };
@@ -254,6 +255,8 @@ struct mi_sensor_t{
       uint32_t motion:1;
       uint32_t noMotion:1;
       uint32_t Btn:1;
+      uint32_t knob:1;
+      uint32_t longpress:1; //needs no extra feature bit, because knob is sufficient
       uint32_t door:1;
       uint32_t leak:1;
     };
@@ -285,11 +288,15 @@ struct mi_sensor_t{
     }; // MJ_HT_V1, LYWSD0x
     struct {
       uint16_t events; //"alarms" since boot
-      uint32_t NMT;    // no motion time in seconds for the MJYD2S
+      uint32_t NMT;    // no motion time in seconds for the MJYD2S and NLIGHT
     };
     struct {
-      uint16_t Btn;
-      uint8_t leak;
+      uint8_t Btn;     // number starting with 0
+      uint8_t BtnType; // 0 -single, 1 - double, 2 - hold
+      uint8_t leak; // the leak sensor is the only non-RC device so far with a button fuctionality, so we handle it here
+      int8_t dimmer;
+      uint8_t pressed; // dimmer knob pressed while rotating
+      uint8_t longpress; // dimmer knob pressed without rotating
     };
     uint8_t door;
   };
@@ -315,9 +322,9 @@ struct mi_sensor_t{
 
 #define D_CMND_MI32 "MI32"
 
-const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|"/*Time|Battery|Unit|Beacon|*/"Cfg|Option";
+const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|Cfg|Option";
 
-void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, /*&CmndMi32Time, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Beacon,*/ &CmndMi32Cfg, &CmndMi32Option };
+void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Cfg, &CmndMi32Option };
 
 #define FLORA       1
 #define MJ_HT_V1    2
@@ -327,7 +334,7 @@ void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, /*&CmndMi32Time, &C
 #define CGD1        6
 #define NLIGHT      7
 #define MJYD2S      8
-#define YEERC       9
+#define YLYK01      9
 #define MHOC401     10
 #define MHOC303     11
 #define ATC         12
@@ -346,7 +353,7 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x0576, // CGD1
                                   0x03dd, // NLIGHT
                                   0x07f6, // MJYD2S
-                                  0x0153, // yee-rc
+                                  0x0153, // YLYK01, old name yee-rc
                                   0x0387, // MHO-C401
                                   0x06d3, // MHO-C303
                                   0x0a1c, // ATC -> this is a fake ID
@@ -364,7 +371,7 @@ const char kMI32DeviceType5[] PROGMEM = "CGG1";
 const char kMI32DeviceType6[] PROGMEM = "CGD1";
 const char kMI32DeviceType7[] PROGMEM = "NLIGHT";
 const char kMI32DeviceType8[] PROGMEM = "MJYD2S";
-const char kMI32DeviceType9[] PROGMEM = "YEERC";
+const char kMI32DeviceType9[] PROGMEM = "YLYK01"; //old name yeerc
 const char kMI32DeviceType10[] PROGMEM ="MHOC401";
 const char kMI32DeviceType11[] PROGMEM ="MHOC303";
 const char kMI32DeviceType12[] PROGMEM ="ATC";
@@ -382,6 +389,8 @@ const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|got no ser
 const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Start scanning";
 
 const char kMI32_HKInfoMsg[] PROGMEM = "HAP core started|HAP core did not start!!|HAP controller disconnected|HAP controller connected|HAP outlet added";
+
+const char kMI32_ButtonMsg[] PROGMEM = "Single|Double|Hold"; //mapping: in Tasmota: 1,2,3 ; for HomeKit and Xiaomi 0,1,2
 /*********************************************************************************************\
  * enumerations
 \*********************************************************************************************/

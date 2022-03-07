@@ -37,8 +37,9 @@
  * Power Type
 \*********************************************************************************************/
 
-typedef unsigned long power_t;              // Power (Relay) type
-const uint32_t POWER_MASK = 0xffffffffUL;   // Power (Relay) full mask
+typedef uint32_t power_t;                   // Power (Relay) type
+const uint32_t POWER_MASK = 0xFFFFFFFFUL;   // Power (Relay) full mask
+const uint32_t POWER_SIZE = 32;             // Power (relay) bit count
 
 /*********************************************************************************************\
  * Constants
@@ -79,7 +80,7 @@ const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in fir
 #endif
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
-const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
+const uint8_t MAX_PULSETIMERS = 32;         // Max number of supported pulse timers
 const uint8_t MAX_DOMOTICZ_IDX = 4;         // Max number of Domoticz device, key and switch indices
 const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors indices
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
@@ -375,7 +376,7 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
                     FUNC_ENERGY_EVERY_SECOND, FUNC_ENERGY_RESET,
                     FUNC_RULES_PROCESS, FUNC_TELEPERIOD_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED, FUNC_BUTTON_MULTI_PRESSED,
                     FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_CONSOLE_BUTTON, FUNC_WEB_ADD_MANAGEMENT_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON,
-                    FUNC_WEB_GET_ARG, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN,
+                    FUNC_WEB_GET_ARG, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN, FUNC_TIME_SYNCED,
                     FUNC_DEVICE_GROUP_ITEM };
 
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };

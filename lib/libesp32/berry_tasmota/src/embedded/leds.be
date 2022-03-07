@@ -4,7 +4,7 @@
 
 
 # Native commands
-# 00 : ctor         (leds:int, gpio:int) -> void
+# 00 : ctor         (leds:int, gpio:int[, type:int, rmt:int]) -> void
 # 01 : begin        void -> void
 # 02 : show         void -> void
 # 03 : CanShow      void -> bool
@@ -29,21 +29,17 @@ class Leds : Leds_ntv
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
   # type:int (optional) = Type of LED, defaults to WS2812 RGB
   # rmt:int (optional) = RMT hardware channel to use, leave default unless you have a good reason 
-  def init(leds, gpio, type, rmt)   # rmt is optional
+  def init(leds, gpio_phy, type, rmt)   # rmt is optional
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
     self.leds = int(leds)
 
-    if gpio == nil && gpio.pin(gpio.WS2812) >= 0
-      gpio = gpio.pin(gpio.WS2812)
-    end
-
     # if no GPIO, abort
-    if gpio == nil
+    if gpio_phy == nil
       raise "valuer_error", "no GPIO specified for neopixelbus"
     end
 
     # initialize the structure
-    self.ctor(self.leds, gpio, type, rmt)
+    self.ctor(self.leds, gpio_phy, type, rmt)
 
     if self._p == nil raise "internal_error", "couldn't not initialize noepixelbus" end
 
@@ -52,17 +48,57 @@ class Leds : Leds_ntv
 
   end
 
+  # assign RMT
+  static def assign_rmt(gpio_phy)
+    gpio_phy = int(gpio_phy)
+    if gpio_phy < 0   raise "value_error", "invalid GPIO number" end
+
+    import global
+    var rmt
+    # if "_rmt" is not initialized, set to an array of GPIO of size MAX_RMT
+    if !global.contains("_rmt")
+      rmt = []
+      global._rmt = rmt
+      for i:0..gpio.MAX_RMT-1
+        rmt.push(-1)
+      end
+      # if default WS2812 is set, assign RMT0
+      if gpio.pin_used(gpio.WS2812, 0)
+        rmt[0] = gpio.pin(gpio.WS2812, 0)
+      end
+    end
+
+    rmt = global._rmt
+    # find an already assigned slot or try to assign a new one
+    var i = 0
+    var first_free = -1
+    while i < gpio.MAX_RMT
+      var elt = rmt[i]
+      if elt == gpio_phy    return i end      # already assigned
+      if elt < 0 && first_free < 0    first_free = i end    # found a free slot
+      i += 1
+    end
+    if first_free >= 0
+      rmt[first_free] = gpio_phy
+      return first_free
+    end
+    # no more slot
+    raise "internal_error", "no more RMT channel available"
+  end
+
   def clear()
     self.clear_to(0x000000)
     self.show()
   end
 
-  def ctor(leds, gpio, rmt)
-    if rmt == nil
-      self.call_native(0, leds, gpio)
-    else
-      self.call_native(0, leds, gpio, rmt)
+  def ctor(leds, gpio_phy, type, rmt)
+    if type == nil
+      type = self.WS2812_GRB
     end
+    if rmt == nil
+      rmt = self.assign_rmt(gpio_phy)
+    end
+    self.call_native(0, leds, gpio_phy, type, rmt)
   end
   def begin()
     self.call_native(1)

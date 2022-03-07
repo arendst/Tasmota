@@ -100,12 +100,14 @@ void ILI9341_InitDriver()
     renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->setTextFont(2);
-    renderer->setTextSize(1);
-    renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    renderer->DrawStringAt(50, (Settings->display_height/2)-12, (Settings->display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
-    delay(1000);
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->setTextFont(2);
+      renderer->setTextSize(1);
+      renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+      renderer->DrawStringAt(50, (Settings->display_height/2)-12, (Settings->display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
+      delay(1000);
+    }
 #endif // SHOW_SPLASH
 
     color_type = COLOR_COLOR;
@@ -124,7 +126,7 @@ void ILI9341_InitDriver()
     #define SDA_2 21
     #undef SCL_2
     #define SCL_2 22
-    Wire1.begin(SDA_2, SCL_2, 400000);
+    Wire1.begin(SDA_2, SCL_2, (uint32_t)400000);
     FT5206_Touch_Init(Wire1);
 #endif // USE_FT5206
 #endif // ESP32

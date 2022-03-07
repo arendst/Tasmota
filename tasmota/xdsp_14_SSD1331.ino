@@ -76,12 +76,14 @@ void SSD1331_InitDriver() {
     renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->clearDisplay();
-    renderer->setTextFont(1);
-    renderer->DrawStringAt(24, 27, "SSD1331", SSD1331_RED, 0);
-    delay(1000);
-    renderer->clearDisplay();
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->clearDisplay();
+      renderer->setTextFont(1);
+      renderer->DrawStringAt(24, 27, "SSD1331", SSD1331_RED, 0);
+      delay(1000);
+      renderer->clearDisplay();
+    }
 #endif
 
     color_type = COLOR_COLOR;

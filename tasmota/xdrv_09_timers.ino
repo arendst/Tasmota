@@ -654,7 +654,7 @@ const char HTTP_TIMER_SCRIPT3[] PROGMEM =
     "m=qs('input[name=\"rd\"]:checked').value;"                   // Check mode
     "s|=(qs('input[name=\"rd\"]:checked').value<<29);"            // Get mode
 #endif
-    "if(%d>0){"
+    "if(%d>0){"                                                   // TasmotaGlobal.devices_present
       "i=qs('#d1').selectedIndex;if(i>=0){s|=(i<<23);}"           // Get output
       "s|=(qs('#p1').selectedIndex<<27);"                         // Get action
     "}else{"
@@ -743,7 +743,7 @@ const char HTTP_TIMER_SCRIPT4[] PROGMEM =
 #endif
     "q=(s>>11)&0xF;if(q<10){q='0'+q;}qs('#mw').value=q;"          // Set window minutes
     "for(i=0;i<7;i++){p=(s>>(16+i))&1;eb('w'+i).checked=p;}"      // Set weekdays
-    "if(%d>0){"
+    "if(%d>0){"                                                   // TasmotaGlobal.devices_present
       "p=(s>>23)&0xF;qs('#d1').value=p+1;"                        // Set output
       "p=(s>>27)&3;qs('#p1').selectedIndex=p;"                    // Set action
     "}"
@@ -763,7 +763,7 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
       "s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\""
     "}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
-    "if(%d>0){"                                                   // Create Output and Action drop down boxes
+    "if(%d>0){"                                                   // Create Output and Action drop down boxes (TasmotaGlobal.devices_present)
       "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1'></select>\";"
       "o=qs('#p1');ce('" D_OFF "',o);ce('" D_ON "',o);ce('" D_TOGGLE "',o);"  // Create offset direction select options
 #if defined(USE_RULES) || defined(USE_SCRIPT)
@@ -781,7 +781,7 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
     "o=qs('#ho');for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,o);}"     // Create hours select options
     "o=qs('#mi');for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,o);}"     // Create minutes select options
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
-    "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs
+    "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs ((TasmotaGlobal.devices_present > 16) ? 16 : TasmotaGlobal.devices_present)
     "var a='" D_DAY3LIST "';"
 
 //    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
@@ -863,7 +863,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT3, TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), TasmotaGlobal.devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, TasmotaGlobal.devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT6, TasmotaGlobal.devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT6, (TasmotaGlobal.devices_present > 16) ? 16 : TasmotaGlobal.devices_present);  // Power field is 4-bit allowing 0 to 15 devices
   WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings->flag3.timers_enable) ? PSTR(" checked") : "");  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
