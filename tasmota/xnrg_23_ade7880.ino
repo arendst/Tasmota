@@ -24,6 +24,8 @@
 
 #define ADE7880_ADDR            0x38
 
+//#define ADE7880_DEBUG
+
 #define ADE7880_APGAIN_INIT     0xFF14B7E3   // = -15419420
 #define ADE7880_BPGAIN_INIT     0xFF14A7B1   // = -15423566
 #define ADE7880_CPGAIN_INIT     0xFF14999C   // = -15427171
@@ -240,6 +242,7 @@ struct Ade7880 {
   int32_t apparent_energy[3];
   uint16_t angle[3];
 
+  uint8_t init_state;
   uint8_t cycle_count;
   uint8_t irq0_state;
   uint8_t irq1_state;
@@ -272,6 +275,11 @@ int Ade7880RegSize(uint16_t reg) {
 void Ade7880Write(uint16_t reg, uint32_t val) {
   int size = Ade7880RegSize(reg);
   if (size) {
+#ifdef ADE7880_DEBUG
+    char log_format[100];
+    snprintf_P(log_format, sizeof(log_format), PSTR("A78: Rd 0x%%04X 0x%%0%dX (%%d)"), size << 1);
+    AddLog(LOG_LEVEL_DEBUG_MORE, log_format, reg, val, val);
+#endif  // ADE7880_DEBUG
     Wire.beginTransmission(ADE7880_ADDR);
     Wire.write((reg >> 8) & 0xFF);
     Wire.write(reg & 0xFF);
@@ -312,6 +320,11 @@ int32_t Ade7880Read(uint16_t reg) {
         response = response << 8 | Wire.read();                            // receive DATA (MSB first)
       }
     }
+#ifdef ADE7880_DEBUG
+    char log_format[100];
+    snprintf_P(log_format, sizeof(log_format), PSTR("A78: Rd 0x%%04X 0x%%0%dX (%%d)"), size << 1);
+    AddLog(LOG_LEVEL_DEBUG_MORE, log_format, reg, response, response);
+#endif  // ADE7880_DEBUG
   }
 	return response;
 }
@@ -330,14 +343,15 @@ int32_t Ade7880ReadVerify(uint16_t reg) {
 bool Ade7880Init(void) {
   // Init sequence about 100mS after reset - See page 40 (takes about 60ms)
   uint32_t status1 = Ade7880ReadVerify(ADE7880_STATUS1);                   // 0x01A08000
-  if (bitSet(status1, 15)) {                                               // RSTDONE
+  if (bitRead(status1, 15)) {                                              // RSTDONE
     // Power on or Reset
     Ade7880WriteVerify(ADE7880_CONFIG2, 0x02);                             // ADE7880_I2C_LOCK
     Ade7880WriteVerify(ADE7880_STATUS1, 0x3FFE8930);                       // Acknowledge RSTDONE - Reset IRQ1 line
     status1 = Ade7880ReadVerify(ADE7880_STATUS1);                          // 0x01A00007
-
-    uint8_t version = Ade7880ReadVerify(ADE7880_Version);                  // 0x01
+  } else {
+    return false;
   }
+  uint8_t version = Ade7880ReadVerify(ADE7880_Version);                    // 0x01
 
   delayMicroseconds(240);                                                  // Grab parameters from flash/filesystem
 
@@ -359,21 +373,21 @@ bool Ade7880Init(void) {
   Ade7880WriteVerify(ADE7880_COMPMODE, 0x01FF | ADE7880_COMPMODE_FREQ);    // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default is 45 Hz and 55 Hz.
 #endif
   bool error = false;
-  if (ADE7880_AVGAIN_INIT != Ade7880ReadVerify(ADE7880_AVGAIN)) { error = true; }
-  else if (ADE7880_BVGAIN_INIT != Ade7880ReadVerify(ADE7880_BVGAIN)) { error = true; }
-  else if (ADE7880_CVGAIN_INIT != Ade7880ReadVerify(ADE7880_CVGAIN)) { error = true; }
-  else if (ADE7880_AIGAIN_INIT != Ade7880ReadVerify(ADE7880_AIGAIN)) { error = true; }
-  else if (ADE7880_BIGAIN_INIT != Ade7880ReadVerify(ADE7880_BIGAIN)) { error = true; }
-  else if (ADE7880_CIGAIN_INIT != Ade7880ReadVerify(ADE7880_CIGAIN)) { error = true; }
-  else if (ADE7880_NIGAIN_INIT != Ade7880ReadVerify(ADE7880_NIGAIN)) { error = true; }
-  else if (ADE7880_APGAIN_INIT != Ade7880ReadVerify(ADE7880_APGAIN)) { error = true; }
-  else if (ADE7880_BPGAIN_INIT != Ade7880ReadVerify(ADE7880_BPGAIN)) { error = true; }
-  else if (ADE7880_CPGAIN_INIT != Ade7880ReadVerify(ADE7880_CPGAIN)) { error = true; }
-  else if (ADE7880_APHCAL_INIT != Ade7880ReadVerify(ADE7880_APHCAL)) { error = true; }
-  else if (ADE7880_BPHCAL_INIT != Ade7880ReadVerify(ADE7880_BPHCAL)) { error = true; }
-  else if (ADE7880_CPHCAL_INIT != Ade7880ReadVerify(ADE7880_CPHCAL)) { error = true; }
+  if (Ade7880ReadVerify(ADE7880_AVGAIN) != (ADE7880_AVGAIN_INIT & 0x0FFFFFFF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_BVGAIN) != (ADE7880_BVGAIN_INIT & 0x0FFFFFFF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_CVGAIN) != (ADE7880_CVGAIN_INIT & 0x0FFFFFFF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_AIGAIN) != ADE7880_AIGAIN_INIT) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_BIGAIN) != ADE7880_BIGAIN_INIT) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_CIGAIN) != ADE7880_CIGAIN_INIT) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_NIGAIN) != ADE7880_NIGAIN_INIT) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_APGAIN) != (ADE7880_APGAIN_INIT & 0x0FFFFFFF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_BPGAIN) != (ADE7880_BPGAIN_INIT & 0x0FFFFFFF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_CPGAIN) != (ADE7880_CPGAIN_INIT & 0x0FFFFFFF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_APHCAL) != (ADE7880_APHCAL_INIT & 0x00FF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_BPHCAL) != (ADE7880_BPHCAL_INIT & 0x00FF)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_CPHCAL) != (ADE7880_CPHCAL_INIT & 0x00FF)) { error = true; }
 #ifdef ADE7880_COMPMODE_FREQ
-  else if ((0x01FF | ADE7880_COMPMODE_FREQ) != Ade7880ReadVerify(ADE7880_COMPMODE)) { error = true; }
+  else if (Ade7880ReadVerify(ADE7880_COMPMODE) != (0x01FF | ADE7880_COMPMODE_FREQ)) { error = true; }
 #endif
   if (error) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error initializing parameters"));
@@ -426,7 +440,7 @@ void IRAM_ATTR Ade7880Isr1(void) {
 void Ade7880Cycle(void) {
   // Cycle sequence (takes 5ms)
   uint32_t status0 = Ade7880ReadVerify(ADE7880_STATUS0);                   // 0x000FEFE0
-  if (!bitSet(status0, 5)) {                                               // LENERGY
+  if (!bitRead(status0, 5)) {                                              // LENERGY
     return;
   } else {
     Ade7880WriteVerify(ADE7880_STATUS0, 0x00000020);                       // Acknowledge LENERGY - Reset IRQ0 line
@@ -460,7 +474,7 @@ void Ade7880Cycle(void) {
   Ade7880.apparent_energy[2] = Ade7880ReadVerify(ADE7880_CVAHR);           // 0xFFFFFFC6
 
   uint16_t comp_mode = Ade7880ReadVerify(ADE7880_COMPMODE);                // 0x01FF (or 0x41FF) = Angles between phase voltages and phase currents are measured
-  uint32_t fline = (bitSet(comp_mode, 14)) ? 60 : 50;                      // Line frequency in Hz
+  uint32_t fline = (bitRead(comp_mode, 14)) ? 60 : 50;                      // Line frequency in Hz
   Ade7880.angle[0] = Ade7880ReadVerify(ADE7880_ANGLE0);                    // 0x13FD = cos(5117 * 360 * fline / 256000) = cos_phi
   Ade7880.angle[1] = Ade7880ReadVerify(ADE7880_ANGLE1);                    // 0x0706
   Ade7880.angle[2] = Ade7880ReadVerify(ADE7880_ANGLE2);                    // 0x0859
@@ -495,11 +509,6 @@ void Ade7880EnergyEverySecond(void) {
 
 void Ade7880DrvInit(void) {
   if (PinUsed(GPIO_ADE7880_IRQ) && PinUsed(GPIO_ADE7880_IRQ, 1)) {
-    pinMode(Pin(GPIO_ADE7880_IRQ), INPUT);
-    attachInterrupt(Pin(GPIO_ADE7880_IRQ), Ade7880Isr0, FALLING);
-
-    pinMode(Pin(GPIO_ADE7880_IRQ, 1), INPUT);
-    attachInterrupt(Pin(GPIO_ADE7880_IRQ, 1), Ade7880Isr1, FALLING);
 
     int reset = Pin(GPIO_RESET);
     if (-1 == reset) { reset = 16; }                                       // Reset pin ADE7880 in Shelly 3EM
@@ -509,6 +518,13 @@ void Ade7880DrvInit(void) {
     digitalWrite(reset, 1);
     pinMode(reset, INPUT);
 
+    pinMode(Pin(GPIO_ADE7880_IRQ), INPUT);
+    attachInterrupt(Pin(GPIO_ADE7880_IRQ), Ade7880Isr0, FALLING);
+    Ade7880.irq0_state = 0;
+    pinMode(Pin(GPIO_ADE7880_IRQ, 1), INPUT);
+    attachInterrupt(Pin(GPIO_ADE7880_IRQ, 1), Ade7880Isr1, FALLING);
+    Ade7880.irq1_state = 0;
+
     uint32_t timeout = millis() + 400;
     while (!TimeReached(timeout)) {                                        // Wait up to 400 mSec
       if (1 == Ade7880.irq1_state) {
@@ -516,7 +532,8 @@ void Ade7880DrvInit(void) {
           if (I2cSetDevice(ADE7880_ADDR)) {
             I2cSetActiveFound(ADE7880_ADDR, "ADE7880");
             Energy.phase_count = 3;                                        // Three phases
-  //         Energy.use_overtemp = true;                                     // Use global temperature for overtemp detection
+//            Settings->flag5.energy_phase = 1;                            // SetOption129 - (Energy) Show phase information
+//            Energy.use_overtemp = true;                                     // Use global temperature for overtemp detection
             TasmotaGlobal.energy_driver = XNRG_23;
           }
         }
