@@ -175,6 +175,7 @@ struct TasmotaGlobal_t {
   uint8_t latching_relay_pulse;             // Latching relay pulse timer
   uint8_t active_device;                    // Active device in ExecuteCommandPower
   uint8_t sleep;                            // Current copy of Settings->sleep
+  uint8_t skip_sleep;                       // Abandon sleep and allow loop
   uint8_t leds_present;                     // Max number of LED supported
   uint8_t led_inverted;                     // LED inverted flag (1 = (0 = On, 1 = Off))
   uint8_t led_power;                        // LED power state
@@ -514,7 +515,7 @@ void BacklogLoop(void) {
 void SleepDelay(uint32_t mseconds) {
   if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
-    while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+    while (!TimeReached(wait) && !Serial.available() && !TasmotaGlobal.skip_sleep) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       delay(1);
     }
   } else {
@@ -594,7 +595,7 @@ void loop(void) {
 
   uint32_t my_activity = millis() - my_sleep;
 
-  if (Settings->flag3.sleep_normal) {               // SetOption60 - Enable normal sleep instead of dynamic sleep
+  if (Settings->flag3.sleep_normal) {              // SetOption60 - Enable normal sleep instead of dynamic sleep
     //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
     SleepDelay(TasmotaGlobal.sleep);               // https://github.com/esp8266/Arduino/issues/2021
   } else {

@@ -3,13 +3,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.2]
+## [11.0.0.3]
 ### Added
+- TasmotaSerial implement ``end()``
+- ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
+- Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes (#15001)
+- NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` (#15015)
+- NeoPool system voltages display
+- Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
+- LVGL Splash screen and ``SetOption135 1`` to disable splash screen
 
 ### Changed
-- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
+- Extent number of pulsetimers from 8 to 32 (#8266)
+- Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
+- TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
+- NeoPool limit relay output to the number actually available
 
 ### Fixed
+
+## [11.0.0.2] 20220225
+### Changed
+- Enabled ethernet and Sonoff SPM in ``tasmota32.bin``
 
 ## [11.0.0.1] 20220220
 ### Added

@@ -480,12 +480,16 @@ void flt2char(float num, char *nbuff) {
 // convert float to char with leading zeros
 void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
   dtostrfd(num, dprec, nbuff);
-  if (lzeros>1) {
+  if (lzeros > 1) {
     // check leading zeros
-    uint32_t nd = num;
-    nd/=10;
-    nd+=1;
-    if (lzeros>nd) {
+    uint32_t nd = strlen(nbuff);
+    for (uint8_t cnt = 0; cnt < nd; cnt++) {
+      if (nbuff[cnt] == '.') {
+        nd = cnt;
+        break;
+      }
+    }
+    if (lzeros > nd) {
       // insert zeros
       char cpbuf[24];
       char *cp = cpbuf;
@@ -4191,6 +4195,8 @@ extern char *SML_GetSVal(uint32_t index);
           uint32_t cycles;
           uint64_t accu = 0;
           char sbuffer[32];
+
+          /*
           // PSTR performance test
           // this is best case since everything will be in cache
           // PSTR at least 3 times slower here, will be much slower if cache missed
@@ -4204,6 +4210,7 @@ extern char *SML_GetSVal(uint32_t index);
             accu += ESP.getCycleCount()-cycles;
           }
           fvar = accu / 1000;
+          */
           goto nfuncexit;
         }
 #endif
@@ -8296,7 +8303,6 @@ void ScriptWebShow(char mc, uint8_t page) {
           break;
       }
       if (*lp != ';') {
-
         // send this line to web
         SCRIPT_SKIP_SPACES
         if (!strncmp(lp, "%for ", 5)) {
@@ -8341,14 +8347,14 @@ void ScriptWebShow(char mc, uint8_t page) {
         } else {
           web_send_line(mc, lp);
         }
+      }
 nextwebline:
-        if (*lp == SCRIPT_EOL) {
-          lp++;
-        } else {
-          lp = strchr(lp, SCRIPT_EOL);
-          if (!lp) break;
-          lp++;
-        }
+      if (*lp == SCRIPT_EOL) {
+        lp++;
+      } else {
+        lp = strchr(lp, SCRIPT_EOL);
+        if (!lp) break;
+        lp++;
       }
     }
   }
@@ -9232,6 +9238,7 @@ int32_t url2file(uint8_t fref, char *url) {
         uint32_t read = stream->readBytes(buff, size);
         glob_script_mem.files[fref].write(buff, read);
         len -= read;
+        AddLog(LOG_LEVEL_INFO,PSTR("HTTP read %d"), len);
       }
       delayMicroseconds(1);
     }
@@ -9467,7 +9474,7 @@ uint32_t script_i2c(uint8_t sel, uint32_t val, uint32_t val1) {
 
       for (uint8_t cnt = 0; cnt < val1; cnt++) {
         rval <<= 8;
-        rval |= script_i2c_wire->read();
+        rval |= (uint8_t)script_i2c_wire->read();
       }
       break;
 

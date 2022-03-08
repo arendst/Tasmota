@@ -611,15 +611,21 @@ void TInfoInit(void)
 #ifdef ESP8266
     // Allow GPIO3 AND GPIO13 with hardware fallback to 2
     // Set buffer to nnn char to support 250ms loop at 9600 baud
-    TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 2, 0, serial_buffer_size);
+    // In case of "on-the-fly" re-init, serial is already there, don't re-allocate
+    if (!TInfoSerial) {
+        TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 2, 0, serial_buffer_size);
+    }
     //pinMode(rx_pin, INPUT_PULLUP);
 #endif  // ESP8266
 #ifdef ESP32
     // Set buffer to nnn char to support 250ms loop at 9600 baud
-    TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 1, 0, serial_buffer_size);
+    // In case of "on-the-fly" re-init, serial is already there, don't re-allocate
+    if (!TInfoSerial) {
+        TInfoSerial = new TasmotaSerial(tic_rx_pin, -1, 1, 0, serial_buffer_size);
+    }
 #endif  // ESP32
 
-    if (TInfoSerial->begin(baudrate, SERIAL_7E1)) {
+    if (TInfoSerial && TInfoSerial->begin(baudrate, SERIAL_7E1)) {
 #ifdef ESP8266
         if (TInfoSerial->hardwareSerial() ) {
             ClaimSerial();
@@ -636,6 +642,9 @@ void TInfoInit(void)
             AddLog(LOG_LEVEL_INFO, PSTR("TIC: using software serial"));
         }
 #endif  // ESP8266
+#ifdef ESP32
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: using hardserial %d"), TInfoSerial->getUart());
+#endif
         // Init teleinfo
         tinfo.init(tinfo_mode);
         // Attach needed callbacks
@@ -651,6 +660,8 @@ void TInfoInit(void)
                 AddLog(LOG_LEVEL_INFO, PSTR("TIC: Sending only one frame over %d "), raw_skip+1);
             }
         }
+    } else {
+        AddLog(LOG_LEVEL_INFO, PSTR("TIC: failed init serial"));
     }
 }
 
@@ -735,25 +746,13 @@ bool TInfoCmd(void) {
                     // Only if current settings is different than previous
                     if ( (tinfo_mode==TINFO_MODE_STANDARD && command_code==CMND_TELEINFO_HISTORIQUE) ||
                          (tinfo_mode==TINFO_MODE_HISTORIQUE && command_code==CMND_TELEINFO_STANDARD) ) {
-
-                        // Cleanup Serial not sure it will works since
-                        // there is no end() or close() on tasmotaserial class
-                        if (TInfoSerial) {
-                            TInfoSerial->flush();
-                            //TInfoSerial->end();
-                            free(TInfoSerial);
-                        }
-
                         // Change mode
                         Settings->teleinfo.mode_standard = command_code == CMND_TELEINFO_STANDARD ? 1 : 0;
-
                         AddLog(LOG_LEVEL_INFO, PSTR("TIC: '%s' mode"), mode_name);
-
                         // Re init teleinfo (LibTeleinfo always free linked list on init)
                         TInfoInit();
 
                         serviced = true;
-
                     } else {
                         AddLog(LOG_LEVEL_INFO, PSTR("TIC: No change to '%s' mode"), mode_name);
                     }

@@ -183,7 +183,8 @@ enum UserSelectablePins {
   GPIO_ADC_MQ,                         // Analog MQ Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
-  GPIO_WS303U_TX, GPIO_WS303U_RX,      // WS303U wind speed and direction Serial interface
+  GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
+  GPIO_RESET,                          // Generic reset
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -406,7 +407,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADC_MQ "|"
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
-  D_SENSOR_WS303U_TX "|" D_SENSOR_WS303U_RX "|"
+  D_SENSOR_ADE7880_IRQ "|"
+  D_SENSOR_RESET "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -468,8 +470,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
-  AGPIO(GPIO_HEARTBEAT),                 // Every second pulsed high
-  AGPIO(GPIO_HEARTBEAT_INV),             // Every second pulsed low
+  AGPIO(GPIO_HEARTBEAT),                // Every second pulsed high
+  AGPIO(GPIO_HEARTBEAT_INV),            // Every second pulsed low
+  AGPIO(GPIO_RESET),                    // Generic reset
 #ifdef USE_FTC532
   AGPIO(GPIO_FTC532),                   // FTC532 touch input
 #endif
@@ -616,7 +619,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_P9813_CLK),      // P9813 CLOCK
   AGPIO(GPIO_P9813_DAT),      // P9813 DATA
 #else
-  AGPIO(GPIO_WS2812) + MAX_RMT,// WS2812 Led string, using RMT on ESP32
+  AGPIO(GPIO_WS2812) + (MAX_RMT ? MAX_RMT + 1 : 0),// WS2812 Led string, using RMT on ESP32
 #endif  // NEO_HW_P9813
 #endif
 #ifdef USE_ARILUX_RF
@@ -698,6 +701,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_NRG_CF1),        // HLW8012/HLJ-01 CF1 voltage / current
   AGPIO(GPIO_HLW_CF),         // HLW8012 CF power
   AGPIO(GPIO_HJL_CF),         // HJL-01/BL0937 CF power
+#endif
+#if defined(USE_I2C) && defined(USE_ADE7880)
+  AGPIO(GPIO_ADE7880_IRQ) + 2,  // ADE7880 IRQ
 #endif
 #if defined(USE_I2C) && defined(USE_ADE7953)
   AGPIO(GPIO_ADE7953_IRQ) + 2,  // ADE7953 IRQ

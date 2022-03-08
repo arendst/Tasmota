@@ -40,7 +40,7 @@ TasmotaSerial *tms_obj_list[16];
 
 #include "driver/uart.h"
 
-static int tasmota_serial_index = SOC_UART_NUM -1;  // Available UART
+static uint32_t tasmota_serial_uart_bitmap = 0;      // Assigned UARTs
 
 #endif  // ESP32
 
@@ -87,13 +87,16 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   if ((receive_pin >= 0) && !GPIO_IS_VALID_GPIO(receive_pin)) { return; }
   if ((transmit_pin >= 0) && !GPIO_IS_VALID_OUTPUT_GPIO(transmit_pin)) { return; }
   m_hardserial = true;
+  TSerial = nullptr;
 #endif  // ESP32
   m_valid = true;
 }
 
-TasmotaSerial::~TasmotaSerial(void) {
+void TasmotaSerial::end(bool turnOffDebug) {
 #ifdef ESP8266
-  if (!m_hardserial) {
+  if (m_hardserial) {
+    Serial.end();
+  } else {
     if (m_rx_pin > -1) {
       detachInterrupt(m_rx_pin);
       tms_obj_list[m_rx_pin] = NULL;
@@ -105,14 +108,33 @@ TasmotaSerial::~TasmotaSerial(void) {
 #endif  // ESP8266
 
 #ifdef ESP32
-  TSerial->end();
-  tasmota_serial_index++;  // This only works if no more uarts are requested otherwise will need a global used_uart log
+//  Serial.printf("TSR: Freeing UART%d\n", m_uart);
+
+  TSerial->end(turnOffDebug);
+  bitClear(tasmota_serial_uart_bitmap, m_uart);
 #endif  // ESP32
+}
+
+TasmotaSerial::~TasmotaSerial(void) {
+  end();
 }
 
 bool TasmotaSerial::isValidGPIOpin(int pin) {
   return (pin >= -1 && pin <= 5) || (pin >= 12 && pin <= 15);
 }
+
+#ifdef ESP32
+bool TasmotaSerial::freeUart(void) {
+  for (uint32_t i = SOC_UART_NUM -1; i >= 0; i--) {
+    if (0 == bitRead(tasmota_serial_uart_bitmap, i)) {
+      m_uart = i;
+      bitSet(tasmota_serial_uart_bitmap, m_uart);
+      return true;
+    }
+  }
+  return false;
+}
+#endif
 
 bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
   if (!m_valid) { return false; }
@@ -129,41 +151,42 @@ bool TasmotaSerial::begin(uint32_t speed, uint32_t config) {
     }
 #endif  // ESP8266
 #ifdef ESP32
-    if (tasmota_serial_index >= 0) {  // We prefer UART1 and UART2 and keep UART0 for debugging
-      m_uart = tasmota_serial_index;
-      tasmota_serial_index--;
-      if (0 == m_uart) {
-          Serial.flush();
-          Serial.end();
-          delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-          TSerial = &Serial;
+    if (TSerial == nullptr) {      // Allow for dynamic change in baudrate or config
+      if (freeUart()) {            // We prefer UART1 and UART2 and keep UART0 for debugging
+        if (0 == m_uart) {
+            Serial.flush();
+            Serial.end();
+            delay(10);             // Allow time to cleanup queues - if not used hangs ESP32
+            TSerial = &Serial;
+        } else {
+          TSerial = new HardwareSerial(m_uart);
+        }
+        if (serial_buffer_size > 256) {  // RX Buffer can't be resized when Serial is already running (HardwareSerial.cpp)
+          TSerial->setRxBufferSize(serial_buffer_size);
+        }
       } else {
-        TSerial = new HardwareSerial(m_uart);
+        m_valid = false;
+        return m_valid;            // As we currently only support hardware serial on ESP32 it's safe to exit here
       }
-      if (serial_buffer_size > 256) {  // RX Buffer can't be resized when Serial is already running (HardwareSerial.cpp)
-        TSerial->setRxBufferSize(serial_buffer_size);
-      }
-      TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
-      // For low bit rate, below 9600, set the Full RX threshold at 10 bytes instead of the default 120
-      if (speed <= 9600) {
-        // At 9600, 10 chars are ~10ms
-        uart_set_rx_full_threshold(m_uart, 10);
-      } else if (speed < 115200) {
-        // At 19200, 120 chars are ~60ms
-        // At 76800, 120 chars are ~15ms
-        uart_set_rx_full_threshold(m_uart, 120);
-      } else {
-        // At 115200, 256 chars are ~20ms
-        // Zigbee requires to keep frames together, i.e. 256 bytes max
-        uart_set_rx_full_threshold(m_uart, 256);
-      }
-      // For bitrate below 115200, set the Rx time out to 6 chars instead of the default 10
-      if (speed < 115200) {
-        // At 76800 the timeout is ~1ms
-        uart_set_rx_timeout(m_uart, 6);
-      }
+    }
+    TSerial->begin(speed, config, m_rx_pin, m_tx_pin);
+    // For low bit rate, below 9600, set the Full RX threshold at 10 bytes instead of the default 120
+    if (speed <= 9600) {
+      // At 9600, 10 chars are ~10ms
+      uart_set_rx_full_threshold(m_uart, 10);
+    } else if (speed < 115200) {
+      // At 19200, 120 chars are ~60ms
+      // At 76800, 120 chars are ~15ms
+      uart_set_rx_full_threshold(m_uart, 120);
     } else {
-      m_valid = false;
+      // At 115200, 256 chars are ~20ms
+      // Zigbee requires to keep frames together, i.e. 256 bytes max
+      uart_set_rx_full_threshold(m_uart, 256);
+    }
+    // For bitrate below 115200, set the Rx time out to 6 chars instead of the default 10
+    if (speed < 115200) {
+      // At 76800 the timeout is ~1ms
+      uart_set_rx_timeout(m_uart, 6);
     }
 //    Serial.printf("TSR: Using UART%d\n", m_uart);
 #endif  // ESP32

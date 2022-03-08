@@ -18,8 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCESPIFFS_H
-#define _AUDIOFILESOURCESPIFFS_H
+#ifndef _AUDIOFILESOURCELITTLEFS_H
+#define _AUDIOFILESOURCELITTLEFS_H
 
 #include <Arduino.h>
 #include <LittleFS.h>

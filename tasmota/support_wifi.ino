@@ -226,6 +226,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
+  WiFi.waitForConnectResult(1000);
+
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
     uint16_t cfgcnt = 0;
@@ -737,7 +739,7 @@ void WifiPollNtp() {
 
     TasmotaGlobal.ntp_force_sync = false;
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Synch time..."));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Sync time..."));
     ntp_run_time = millis();
     uint32_t ntp_time = WifiGetNtp();
     ntp_run_time = (millis() - ntp_run_time) / 1000;
@@ -747,8 +749,7 @@ void WifiPollNtp() {
     if (ntp_time > START_VALID_TIME) {
       Rtc.utc_time = ntp_time;
       ntp_sync_minute = 60;             // Sync so block further requests
-      RtcSync();
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Synched"));
+      RtcSync("NTP");
     } else {
       ntp_sync_minute++;                // Try again in next minute
     }
@@ -839,7 +840,7 @@ uint32_t WifiGetNtp(void) {
       if ((packet_buffer[0] & 0b11000000) == 0b11000000) {
         // Leap-Indicator: unknown (clock unsynchronized)
         // See: https://github.com/letscontrolit/ESPEasy/issues/2886#issuecomment-586656384
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: IP %_I unsynched"), (uint32_t)time_server_ip);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: IP %_I unsynced"), (uint32_t)time_server_ip);
         ntp_server_id++;                            // Next server next time
         return 0;
       }

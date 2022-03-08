@@ -390,6 +390,17 @@ extern "C" {
         uconfig = be_tostring(vm, 1);
       }
       start_lvgl(uconfig);
+
+      // call lv.splash_remove() to kill any current splash screen
+      if (be_getglobal(vm, "lv")) {
+        if (be_getmember(vm, -1, "splash_remove")) {
+          // call it
+          be_call(vm, 0);
+        }
+        be_pop(vm, 1);
+      }
+      be_pop(vm, 1);
+
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);

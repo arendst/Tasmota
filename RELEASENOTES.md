@@ -103,21 +103,30 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v11.0.0.2
+## Changelog v11.0.0.3
 ### Added
 - Command ``SspmMap 0`` to reset Sonoff SPM default mapping
 - Command ``TcpConnect <port><ip_address>`` to add client connection mode [#14874](https://github.com/arendst/Tasmota/issues/14874)
+- Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes [#15001](https://github.com/arendst/Tasmota/issues/15001)
+- NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` [#15015](https://github.com/arendst/Tasmota/issues/15015)
+- NeoPool system voltages display
+- TasmotaSerial implement ``end()``
+- Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection
 - ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)
 - ESP32 integrate Homekit in Bluetooth binary [#14818](https://github.com/arendst/Tasmota/issues/14818)
 - ESP32 Berry virtual Alexa hue device [#14833](https://github.com/arendst/Tasmota/issues/14833)
+- ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` [#14981](https://github.com/arendst/Tasmota/issues/14981)
 
 ### Breaking Changed
 
 ### Changed
 - Adafruit BusIO library from v1.0.10 to v1.11.0
+- TasmotaSerial library from v3.4.0 to v3.5.0 [#14981](https://github.com/arendst/Tasmota/issues/14981)
 - Sonoff SPM increase max number of relays supported to 32 (8 SPM-4Relay modules)
+- Extent number of pulsetimers from 8 to 32 [#8266](https://github.com/arendst/Tasmota/issues/8266)
+- ESP32 Arduino core from v2.0.2.2 to v2.0.2.3
 - ESP32 LVGL library from v8.1.0 to v8.2.0
 - ESP32 NimBLE library from v1.3.3 to v1.3.6
 - ESP32 update the internal Berry type system to sync with Skiars Berry repository. No expected impact on code, but .bec files need to be generated again [#14811](https://github.com/arendst/Tasmota/issues/14811)

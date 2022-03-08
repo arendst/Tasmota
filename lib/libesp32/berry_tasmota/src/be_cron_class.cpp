@@ -5,12 +5,14 @@
  * Can be eventually subclassed to handle a physical light.
  * 
  *******************************************************************/
-#ifdef USE_LIGHT
 
 #include "be_constobj.h"
 #include "be_mapping.h"
 
 #include "ccronexpr.h"
+
+extern uint32_t LocalTime(void);
+static const uint32_t START_VALID_TIME = 1451602800;  // Time is synced and after 2016-01-01
 
 // create
 static cron_expr* ccronexpr_init(struct bvm* vm, char* expr) {
@@ -33,16 +35,28 @@ BE_FUNC_CTYPE_DECLARE(ccronexpr_deinit, "", ".")
 
 
 // next
-static uint32_t ccronexpr_next(cron_expr* cron, uint32_t date) {
-  return cron_next(cron, date);
+// Returns the next trigger time, or 0 if rtc is invalid
+static uint32_t ccronexpr_next(cron_expr* cron) {
+  uint32_t now_local = LocalTime();
+  return now_local > START_VALID_TIME ? cron_next(cron, now_local) : 0;
 }
-BE_FUNC_CTYPE_DECLARE(ccronexpr_next, "i", ".i")
+BE_FUNC_CTYPE_DECLARE(ccronexpr_next, "i", ".")
 
-// prev
-static uint32_t ccronexpr_prev(cron_expr* cron, uint32_t date) {
-  return cron_prev(cron, date);
+// time_reached
+// Compares as uint32_t (Berry only handles int32_t) to avoid the 2038 bug
+// Also prevents from triggering an event if the clock is not set (i.e. year is 1970)
+static bool ccronexpr_time_reached(uint32_t date) {
+  uint32_t now_local = LocalTime();
+  bool reached = (date <= now_local);
+  return now_local > START_VALID_TIME ? reached : false;
 }
-BE_FUNC_CTYPE_DECLARE(ccronexpr_prev, "i", ".i")
+BE_FUNC_CTYPE_DECLARE(ccronexpr_time_reached, "b", "i")
+
+// now (local time)
+static uint32_t ccronexpr_now(void) {
+  return LocalTime();
+}
+BE_FUNC_CTYPE_DECLARE(ccronexpr_now, "i", "")
 
 #include "be_fixed_be_class_ccronexpr.h"
 
@@ -60,7 +74,7 @@ class be_class_ccronexpr (scope: global, name: ccronexpr) {
   deinit, ctype_func(ccronexpr_init)
 
   next, ctype_func(ccronexpr_next)
+  time_reached, static_ctype_func(ccronexpr_time_reached)
+  now, static_ctype_func(ccronexpr_now)
 }
 @const_object_info_end */
-
-#endif // USE_LIGHT

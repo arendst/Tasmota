@@ -912,6 +912,7 @@ void CmndPowerOnState(void)
 void CmndPulsetime(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PULSETIMERS)) {
+/*
     uint32_t items = 1;
     if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
       items = MAX_PULSETIMERS;
@@ -930,6 +931,27 @@ void CmndPulsetime(void)
         Settings->pulse_timer[index -1], GetPulseTimer(index -1));
     }
     ResponseJsonEnd();
+*/
+    if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
+      Response_P(PSTR("{\"" D_CMND_PULSETIME "\":{\"" D_JSON_SET "\":["));
+      for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
+        ResponseAppend_P(PSTR("%s%d"), (i)?",":"", Settings->pulse_timer[i]);
+      }
+      ResponseAppend_P(PSTR("],\"" D_JSON_REMAINING "\":["));
+      for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
+        ResponseAppend_P(PSTR("%s%d"), (i)?",":"", GetPulseTimer(i));
+      }
+      ResponseAppend_P(PSTR("]}}"));
+    } else {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
+        Settings->pulse_timer[XdrvMailbox.index -1] = XdrvMailbox.payload;  // 0 - 65535
+        SetPulseTimer(XdrvMailbox.index -1, XdrvMailbox.payload);
+      }
+      uint32_t index = XdrvMailbox.index;
+      Response_P(PSTR("{\"%s%d\":{\"" D_JSON_SET "\":%d,\"" D_JSON_REMAINING "\":%d}}"),
+        XdrvMailbox.command, index,
+        Settings->pulse_timer[index -1], GetPulseTimer(index -1));
+    }
   }
 }
 

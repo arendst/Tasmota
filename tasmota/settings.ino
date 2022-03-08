@@ -230,7 +230,9 @@ void UpdateQuickPowerCycle(bool update) {
 
   const uint32_t QPC_COUNT = 7;  // Number of Power Cycles before Settings erase
   const uint32_t QPC_SIGNATURE = 0xFFA55AFF;
-
+#ifdef USE_COUNTER
+  CounterInterruptDisable(true);
+#endif
 #ifdef ESP8266
   const uint32_t qpc_sector = SETTINGS_LOCATION - CFG_ROTATES;
   const uint32_t qpc_location = qpc_sector * SPI_FLASH_SEC_SIZE;
@@ -280,10 +282,11 @@ void UpdateQuickPowerCycle(bool update) {
     AddLog(LOG_LEVEL_INFO, PSTR("QPC: Reset"));
   }
 #endif  // ESP32
-
+#ifdef USE_COUNTER
+  CounterInterruptDisable(false);
+#endif
 #endif  // FIRMWARE_MINIMAL
 }
-
 #ifdef USE_EMERGENCY_RESET
 /*********************************************************************************************\
  * Emergency reset if Rx and Tx are tied together
@@ -624,7 +627,9 @@ void SettingsSave(uint8_t rotate) {
     Settings->cfg_size = sizeof(TSettings);
     Settings->cfg_crc = GetSettingsCrc();               // Keep for backward compatibility in case of fall-back just after upgrade
     Settings->cfg_crc32 = GetSettingsCrc32();
-
+#ifdef USE_COUNTER    
+    CounterInterruptDisable(true);
+#endif
 #ifdef ESP8266
 #ifdef USE_UFILESYS
     TfsSaveFile(TASM_FILE_SETTINGS, (const uint8_t*)Settings, sizeof(TSettings));
@@ -650,8 +655,10 @@ void SettingsSave(uint8_t rotate) {
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
+#ifdef USE_COUNTER  
+  CounterInterruptDisable(false);
+#endif
 }
-
 void SettingsLoad(void) {
 #ifdef ESP8266
   // Load configuration from optional file and flash (eeprom and 7 additonal slots) if first valid load does not stop_flash_rotate
@@ -1504,6 +1511,9 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0A010006) {
       Settings->web_time_start = 0;
       Settings->web_time_end = 0;
+    }
+    if (Settings->version < 0x0B000003) {  // 11.0.0.3
+       memcpy(Settings->pulse_timer, Settings->ex_pulse_timer, 16);
     }
 
     Settings->version = VERSION;
