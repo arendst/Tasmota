@@ -3,14 +3,33 @@
 var lv_extra = module("lv_extra")
 
 class lv_coord_arr : bytes
-  def init(l)
-    if type(l) != 'instance' || !isinstance(l, list)  raise "value_error", "argument must be a list" end
-    # size of the array is 2x number of elements
-    super(self).init(size(l) * 2)
-
-    for e: l
-      self.add(int(e), 2)
+  # initializer can either create a new structure or map an existing
+  # 1. create a new
+  #    arg 1 : list of ints
+  #
+  # 2. map an existing
+  #    arg 1 : pointer of existing array
+  #    arg 2 : number of items in array
+  def init(l, n)
+    if type(l) == 'instance' && isinstance(l, list)
+      # size of the array is 2x number of elements
+      super(self).init(size(l) * 2)
+      for e: l
+        self.add(int(e), 2)
+      end
+    elif type(l) == 'ptr' && type(n) == 'int'
+      super(self).init(l, n * 2)
+    else
+      raise "value_error", "argument must be a list or a pointer+size"
     end
+  end
+
+  def item(n)
+    return self.get(n * 2, 2)
+  end
+
+  def setitem(n, v)
+    self.set(n * 2, v, 2)
   end
 end
 
