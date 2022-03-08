@@ -716,6 +716,33 @@ const be_ntv_func_def_t lv_spinner_func[] = {
 };
 #endif // BE_LV_WIDGET_SPINNER
 
+/* `lv_anim` methods */
+const be_ntv_func_def_t lv_anim_func[] = {
+  { "custom_del", { (const void*) &lv_anim_custom_del, "b", "(lv.lv_anim)c" } },
+  { "custom_get", { (const void*) &lv_anim_custom_get, "lv.lv_anim", "(lv.lv_anim)c" } },
+  { "get_delay", { (const void*) &lv_anim_get_delay, "i", "(lv.lv_anim)" } },
+  { "get_playtime", { (const void*) &lv_anim_get_playtime, "i", "(lv.lv_anim)" } },
+  { "get_user_data", { (const void*) &lv_anim_get_user_data, ".", "(lv.lv_anim)" } },
+  { "init", { (const void*) &lv_anim_init, "", "(lv.lv_anim)" } },
+  { "set_custom_exec_cb", { (const void*) &lv_anim_set_custom_exec_cb, "", "(lv.lv_anim)c" } },
+  { "set_delay", { (const void*) &lv_anim_set_delay, "", "(lv.lv_anim)i" } },
+  { "set_early_apply", { (const void*) &lv_anim_set_early_apply, "", "(lv.lv_anim)b" } },
+  { "set_exec_cb", { (const void*) &lv_anim_set_exec_cb, "", "(lv.lv_anim)c" } },
+  { "set_get_value_cb", { (const void*) &lv_anim_set_get_value_cb, "", "(lv.lv_anim)c" } },
+  { "set_path_cb", { (const void*) &lv_anim_set_path_cb, "", "(lv.lv_anim)c" } },
+  { "set_playback_delay", { (const void*) &lv_anim_set_playback_delay, "", "(lv.lv_anim)i" } },
+  { "set_playback_time", { (const void*) &lv_anim_set_playback_time, "", "(lv.lv_anim)i" } },
+  { "set_ready_cb", { (const void*) &lv_anim_set_ready_cb, "", "(lv.lv_anim)c" } },
+  { "set_repeat_count", { (const void*) &lv_anim_set_repeat_count, "", "(lv.lv_anim)i" } },
+  { "set_repeat_delay", { (const void*) &lv_anim_set_repeat_delay, "", "(lv.lv_anim)i" } },
+  { "set_start_cb", { (const void*) &lv_anim_set_start_cb, "", "(lv.lv_anim)c" } },
+  { "set_time", { (const void*) &lv_anim_set_time, "", "(lv.lv_anim)i" } },
+  { "set_user_data", { (const void*) &lv_anim_set_user_data, "", "(lv.lv_anim)." } },
+  { "set_values", { (const void*) &lv_anim_set_values, "", "(lv.lv_anim)ii" } },
+  { "set_var", { (const void*) &lv_anim_set_var, "", "(lv.lv_anim)." } },
+  { "start", { (const void*) &lv_anim_start, "lv.lv_anim", "(lv.lv_anim)" } },
+};
+
 /* `lv_timer` methods */
 const be_ntv_func_def_t lv_timer_func[] = {
   { "del", { (const void*) &lv_timer_del, "", "(lv.lv_timer)" } },
@@ -980,6 +1007,7 @@ const be_ntv_func_def_t lv_textarea_func[] = {
 };
 #endif // BE_LV_WIDGET_TEXTAREA
 
+extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_arc;
 extern const bclass be_class_lv_bar;
 extern const bclass be_class_lv_btn;
@@ -1016,6 +1044,7 @@ extern const bclass be_class_lv_timer;
 
 // map of clases
 const be_ntv_class_def_t lv_classes[] = {
+  { "lv_anim", &be_class_lv_anim, lv_anim_func, sizeof(lv_anim_func) / sizeof(lv_anim_func[0]) },
 #ifdef BE_LV_WIDGET_ARC
   { "lv_arc", &be_class_lv_arc, lv_arc_func, sizeof(lv_arc_func) / sizeof(lv_arc_func[0]) },
 #endif // BE_LV_WIDGET_ARC
@@ -1143,6 +1172,7 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_SPINNER
   int be_ntv_lv_spinner_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_spinner_create, "+_p", "(lv.lv_obj)ii"); }
 #endif // BE_LV_WIDGET_SPINNER
+  /* `lv_anim` methods */
   /* `lv_timer` methods */
   /* `lv_arc` methods */
 #ifdef BE_LV_WIDGET_ARC

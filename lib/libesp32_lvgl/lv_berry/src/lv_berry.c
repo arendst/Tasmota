@@ -86,6 +86,34 @@ int lv_be_style_init(bvm *vm) {
   be_return_nil(vm);
 }
 
+/*********************************************************************************************\
+ * Support for lv_anim `init()`
+ * 
+ * Either encapsulate the pointer passed as `comptr` as arg1
+ * Or allocate a new empty style structure in memory. In this case, it is never freed.
+\*********************************************************************************************/
+int lv_be_anim_init(bvm *vm) {
+  int argc = be_top(vm);
+  lv_anim_t * anim = NULL;
+
+  if (argc > 1) {
+    anim = (lv_anim_t*) be_convert_single_elt(vm, 2, NULL, NULL);
+  }
+  if (anim == NULL) {
+    // if no valid pointer passed, allocate a new empty style
+    anim = (lv_anim_t*) be_malloc(vm, sizeof(lv_anim_t));
+    if (anim == NULL) {
+        be_throw(vm, BE_MALLOC_FAIL);
+    }
+    if (anim != NULL) {
+      lv_anim_init(anim);
+    }
+  }
+  be_pushcomptr(vm, anim);
+  be_setmember(vm, 1, "_p");
+  be_return_nil(vm);
+}
+
 // native closure to call `be_call_c_func`
 int lv_x_call_c(bvm *vm) {
   // berry_log_C("lv_x_call_c enter");

@@ -34,6 +34,7 @@
  * - `COLOR_WHITE` int value
  * - `$SYMBOL_OK"` string pointer
  * - `&seg7_font` comptr
+ * - `@func` Berry native function
  * - `*my_func` native function - the function is called and return value passed back.
  *              This allows to create dynamic virtual members that are the result of a call.
  * 
@@ -55,8 +56,11 @@ static bbool be_const_member_dual(bvm *vm, const be_const_member_t * definitions
         case '$': // string
           be_pushstring(vm, (const char*) definitions[idx].value);
           break;
-        case '&': // native function
+        case '@': // native function
           be_pushntvfunction(vm, (bntvfunc) definitions[idx].value);
+          break;
+        case '&': // pointer
+          be_pushcomptr(vm, (void*) definitions[idx].value);
           break;
         case '*': // call to a native function
         {

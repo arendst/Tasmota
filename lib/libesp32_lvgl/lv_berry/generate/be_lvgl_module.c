@@ -27,6 +27,12 @@ static int lv_get_ver_res(void) {
 /* `lv` methods */
 const be_ntv_func_def_t lv_func[] = {
 
+  { "anim_count_running", { (const void*) &lv_anim_count_running, "i", "" } },
+  { "anim_del", { (const void*) &lv_anim_del, "b", ".c" } },
+  { "anim_del_all", { (const void*) &lv_anim_del_all, "", "" } },
+  { "anim_get", { (const void*) &lv_anim_get, "lv.lv_anim", ".c" } },
+  { "anim_refr_now", { (const void*) &lv_anim_refr_now, "", "" } },
+  { "anim_speed_to_time", { (const void*) &lv_anim_speed_to_time, "i", "iii" } },
   { "area_align", { (const void*) &lv_area_align, "", "(lv.lv_area)(lv.lv_area)iii" } },
   { "area_copy", { (const void*) &lv_area_copy, "", "(lv.lv_area)(lv.lv_area)" } },
   { "area_get_height", { (const void*) &lv_area_get_height, "i", "(lv.lv_area)" } },
@@ -144,7 +150,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "sqrt", { (const void*) &lv_sqrt, "", "i(lv.lv_sqrt_res)i" } },
   { "style_prop_get_default", { (const void*) &lv_style_prop_get_default, "i", "i" } },
   { "style_register_prop", { (const void*) &lv_style_register_prop, "i", "" } },
-  { "style_transition_dsc_init", { (const void*) &lv_style_transition_dsc_init, "", "(lv.lv_style_transition_dsc)(lv.lv_style_prop)^lv_anim_path_cb^ii." } },
+  { "style_transition_dsc_init", { (const void*) &lv_style_transition_dsc_init, "", "(lv.lv_style_transition_dsc)(lv.lv_style_prop)cii." } },
   { "task_handler", { (const void*) &lv_task_handler, "i", "" } },
   { "theme_apply", { (const void*) &lv_theme_apply, "", "(lv.lv_obj)" } },
   { "theme_default_get", { (const void*) &lv_theme_default_get, "lv.lv_theme", "" } },
@@ -799,7 +805,14 @@ const be_const_member_t lv0_constants[] = {
     { "TEXT_FLAG_FIT", be_cconst_int(LV_TEXT_FLAG_FIT) },
     { "TEXT_FLAG_NONE", be_cconst_int(LV_TEXT_FLAG_NONE) },
     { "TEXT_FLAG_RECOLOR", be_cconst_int(LV_TEXT_FLAG_RECOLOR) },
-    { "&load_font", be_cconst_ptr(&lv0_load_font) },
+    { "&anim_path_bounce", be_cconst_ptr(&lv_anim_path_bounce) },
+    { "&anim_path_ease_in", be_cconst_ptr(&lv_anim_path_ease_in) },
+    { "&anim_path_ease_in_out", be_cconst_ptr(&lv_anim_path_ease_in_out) },
+    { "&anim_path_ease_out", be_cconst_ptr(&lv_anim_path_ease_out) },
+    { "&anim_path_linear", be_cconst_ptr(&lv_anim_path_linear) },
+    { "&anim_path_overshoot", be_cconst_ptr(&lv_anim_path_overshoot) },
+    { "&anim_path_step", be_cconst_ptr(&lv_anim_path_step) },
+    { "@load_font", be_cconst_ptr(&lv0_load_font) },
 
 };
 
