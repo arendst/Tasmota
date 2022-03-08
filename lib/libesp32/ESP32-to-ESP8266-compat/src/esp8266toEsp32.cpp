@@ -97,16 +97,33 @@ void analogWriteFreq(uint32_t freq) {
   _analogWriteFreqRange();
 }
 
-int32_t analogAttach(uint32_t pin) {    // returns ledc channel used, or -1 if failed
+int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc channel used, or -1 if failed
   _analogInit();      // make sure the mapping array is initialized
   // Find if pin is already attached
-  int32_t channel = _analog_pin2chan(pin);
-  if (channel >= 0) { return channel; }
+  int32_t chan = _analog_pin2chan(pin);
+  if (chan >= 0) { return chan; }
   // Find an empty channel
-  for (channel = 0; channel < MAX_PWMS; channel++) {
-    if (255 == pwm_channel[channel]) {
-      pwm_channel[channel] = pin;
-      ledcAttachPin(pin, channel);
+  for (chan = 0; chan < MAX_PWMS; chan++) {
+    if (255 == pwm_channel[chan]) {
+      pwm_channel[chan] = pin;
+
+      // ledcAttachPin(pin, channel);  -- replicating here because we want the default duty
+      uint8_t group=(chan/8), channel=(chan%8), timer=((chan/2)%4);
+      
+      // AddLog(LOG_LEVEL_INFO, "PWM: ledc_channel pin=%i out_invert=%i", pin, output_invert);
+      ledc_channel_config_t ledc_channel = {
+          (int)pin,          // gpio
+          (ledc_mode_t)group,        // speed-mode
+          (ledc_channel_t)channel,      // channel
+          (ledc_intr_type_t)LEDC_INTR_DISABLE,  // intr_type
+          (ledc_timer_t)timer,        // timer_sel
+          0,            // duty
+          0,            // hpoint
+          { output_invert ? 1u : 0u },// output_invert
+      };
+      ledc_channel_config(&ledc_channel);
+
+
       ledcSetup(channel, pwm_frequency, pwm_bit_num);
       // Serial.printf("PWM: New attach pin %d to channel %d\n", pin, channel);
       return channel;
@@ -153,6 +170,7 @@ void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase)
     chan = analogAttach(pin);
     if (chan < 0) { return; }   // failed
   }
+  // AddLog(LOG_LEVEL_INFO, "PWM: analogWritePhase pin=%i chan=%i duty=%03X phase=%03X", pin, chan, duty, phase);
 
   if (duty >> (pwm_bit_num-1) ) ++duty;   // input is 0..1023 but PWM takes 0..1024 - so we skip at mid-range. It creates a small non-linearity
   if (phase >> (pwm_bit_num-1) ) ++phase;
@@ -163,8 +181,10 @@ void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase)
   uint32_t max_duty = (1 << channels_resolution[chan]) - 1;
   phase = phase & max_duty;
 
-  ledc_set_duty_with_hpoint((ledc_mode_t)group, (ledc_channel_t)channel, duty, phase);
-  ledc_update_duty((ledc_mode_t)group, (ledc_channel_t)channel);
+  esp_err_t err1, err2;
+  err1 = ledc_set_duty_with_hpoint((ledc_mode_t)group, (ledc_channel_t)channel, duty, phase);
+  err2 = ledc_update_duty((ledc_mode_t)group, (ledc_channel_t)channel);
+  // AddLog(LOG_LEVEL_INFO, "PWM: err1=%i err2=%i", err1, err2);
 }
 
 #endif // ESP32

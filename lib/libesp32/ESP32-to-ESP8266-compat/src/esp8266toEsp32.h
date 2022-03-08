@@ -27,7 +27,7 @@
 // input range is in full range, ledc needs bits
 void analogWriteRange(uint32_t range);
 void analogWriteFreq(uint32_t freq);
-int32_t analogAttach(uint32_t pin);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
+int32_t analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
 void analogWrite(uint8_t pin, int val);
 
 // Extended version that also allows to change phase
