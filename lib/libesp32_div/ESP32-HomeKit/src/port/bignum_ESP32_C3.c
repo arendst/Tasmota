@@ -21,7 +21,7 @@
  *
  */
 
-#if CONFIG_IDF_TARGET_ESP32C3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
 #if __has_include("esp_idf_version.h")
 #include "esp_idf_version.h"
 #endif

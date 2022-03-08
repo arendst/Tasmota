@@ -471,10 +471,11 @@ void RtcSecond(void)
   mutex = false;
 }
 
-void RtcSync(void) {
+void RtcSync(const char* source) {
   Rtc.time_synced = true;
   RtcSecond();
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: Synced"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: Synced by %s"), source);
+  XsnsCall(FUNC_TIME_SYNCED);
 }
 
 void RtcSetTime(uint32_t epoch) {
@@ -483,7 +484,9 @@ void RtcSetTime(uint32_t epoch) {
     TasmotaGlobal.ntp_force_sync = true;
   } else {
     Rtc.user_time_entry = true;
-    Rtc.utc_time = epoch -1;    // Will be corrected by RtcSecond
+//    Rtc.utc_time = epoch -1;    // Will be corrected by RtcSecond
+    Rtc.utc_time = epoch;
+    RtcSync("Time");
   }
 }
 

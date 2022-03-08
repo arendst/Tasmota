@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.6 - Last update 04.02.2022
+ * Updated until v10.1.0.6 - Last update 20.02.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -730,6 +730,7 @@
 #define D_SENSOR_ROTARY                 "Rotativo"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK              "HRE - Clock"
 #define D_SENSOR_HRE_DATA               "HRE - Dati"
+#define D_SENSOR_ADE7880_IRQ            "ADE7880 - IRQ"
 #define D_SENSOR_ADE7953_IRQ            "ADE7953 - IRQ"
 #define D_SENSOR_BUZZER                 "Cicalino"
 #define D_SENSOR_DISP_RESET             "Display - RESET"
@@ -847,7 +848,10 @@
 #define D_SENSOR_HRG15_RX               "HRG15 - RX"
 #define D_SENSOR_HRG15_TX               "HRG15 - TX"
 #define D_SENSOR_VINDRIKTNING_RX        "VINDRIKTNING"
+#define D_SENSOR_BL6523_TX              "BL6523 - TX"
+#define D_SENSOR_BL6523_RX              "BL6523 - RX"
 #define D_SENSOR_HEARTBEAT              "Battito cardiaco"
+#define D_SENSOR_RESET         "Reset"
 #define D_GPIO_SHIFT595_SRCLK           "74x595 - SRCLK"
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"

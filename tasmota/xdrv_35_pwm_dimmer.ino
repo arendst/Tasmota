@@ -893,6 +893,7 @@ bool Xdrv35(uint8_t function)
           }
           else {
             button_unprocessed[button_index] = true;
+            ignore_any_key_time = now - 1;
           }
 
           // If the power button was just released, clear the flags associated with it.

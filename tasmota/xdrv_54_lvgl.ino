@@ -348,7 +348,7 @@ void start_lvgl(const char * uconfig);
 void start_lvgl(const char * uconfig) {
 
   if (glue != nullptr) {
-    AddLog(LOG_LEVEL_INFO, D_LOG_LVGL "LVGL was already initialized");
+    AddLog(LOG_LEVEL_DEBUG, D_LOG_LVGL "LVGL was already initialized");
     return;
   }
 

@@ -11,7 +11,8 @@
  *  Created on: Jun 21, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
+
+#include "nimconfig.h"
 #if defined(CONFIG_BT_ENABLED)
 
 #include "NimBLEUtils.h"
@@ -234,8 +235,8 @@ const ble_uuid_any_t* NimBLEUUID::getNative() const {
 
 /**
  * @brief Convert a UUID to its 128 bit representation.
- * @details A UUID can be internally represented as 16bit, 32bit or the full 128bit.  This method
- * will convert 16 or 32 bit representations to the full 128bit.
+ * @details A UUID can be internally represented as 16bit, 32bit or the full 128bit.
+ * This method will convert 16 or 32bit representations to the full 128bit.
  * @return The NimBLEUUID converted to 128bit.
  */
 const NimBLEUUID &NimBLEUUID::to128() {
@@ -254,6 +255,29 @@ const NimBLEUUID &NimBLEUUID::to128() {
 
     return *this;
 } // to128
+
+
+/**
+ * @brief Convert 128 bit UUID to its 16 bit representation.
+ * @details A UUID can be internally represented as 16bit, 32bit or the full 128bit.
+ * This method will convert a 128bit uuid to 16bit if it contains the ble base uuid.
+ * @return The NimBLEUUID converted to 16bit if successful, otherwise the original uuid.
+ */
+const NimBLEUUID& NimBLEUUID::to16() {
+    if (!m_valueSet || m_uuid.u.type == BLE_UUID_TYPE_16) {
+        return *this;
+    }
+
+    if (m_uuid.u.type == BLE_UUID_TYPE_128) {
+        uint8_t base128[] = {0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00,
+                             0x00, 0x80, 0x00, 0x10, 0x00, 0x00};
+        if (memcmp(m_uuid.u128.value, base128, sizeof(base128)) == 0 ) {
+            *this = NimBLEUUID(*(uint16_t*)(m_uuid.u128.value + 12));
+        }
+    }
+
+    return *this;
+}
 
 
 /**

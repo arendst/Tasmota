@@ -142,6 +142,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'f' be_real (float)
  *   'b' be_bool
  *   's' be_str
+ *   '$' be_str but the buffer must be `free()`ed
  *   '&' bytes() object, pointer to buffer returned, and size passed with an additional (size_t*) argument
  * 
  * - arg_type: optionally check the types of input arguments, or throw an error
@@ -156,6 +157,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   '~': send the length of the previous bytes() buffer (or raise an exception if no length known)
  *   'lv_obj' be_instance of type or subtype
  *   '^lv_event_cb^' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
+ *   '@': pass a pointer to the Berry VM (virtual parameter added, must be the first argument)
  * 
  * Ex: ".ii" takes 3 arguments, first one is any type, followed by 2 ints
 \*********************************************************************************************/
@@ -299,6 +301,13 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
 
   uint32_t p_idx = 0; // index in p[], is incremented with each parameter except '-'
   int32_t buf_len = -1;   // stores the length of a bytes() buffer to be used as '~' attribute
+
+  // special case when first parameter is '@', pass pointer to VM
+  if (NULL != arg_type && arg_type[arg_idx] == '@') {
+    arg_idx++;
+    p[p_idx] = (intptr_t) vm;
+    p_idx++;
+  }
 
   // special case when no parameters are passed but all are optional
   if (NULL != arg_type && arg_type[arg_idx] == '[') {
@@ -469,7 +478,8 @@ int be_call_c_func(bvm *vm, const void * func, const char * return_type, const c
       case 'f':   be_pushreal(vm, intasreal(ret)); break;
       case 'b':   be_pushbool(vm, ret);  break;
       case 'c':   be_pushcomptr(vm, (void*) ret); break;
-      case 's':   be_pushstring(vm, (const char*) ret);  break;
+      case 's':   if (ret) {be_pushstring(vm, (const char*) ret);} else {be_pushnil(vm);} break;  // push `nil` if no string
+      case '$':   if (ret) {be_pushstring(vm, (const char*) ret);  free((void*)ret);} else {be_pushnil(vm);} break;
       case '&':   be_pushbytes(vm, (void*) ret, return_len); break;
       default:    be_raise(vm, "internal_error", "Unsupported return type"); break;
     }

@@ -50,11 +50,11 @@ extern int lvbe_style_set_prop(bvm *vm);
 extern int lvbe_style_get_prop(bvm *vm);
 extern int lvbe_style_get_prop_inlined(bvm *vm);
 extern int lvbe_style_is_empty(bvm *vm);
+extern int lvbe_style_set_size(bvm *vm);
 extern int lvbe_style_set_pad_all(bvm *vm);
 extern int lvbe_style_set_pad_hor(bvm *vm);
 extern int lvbe_style_set_pad_ver(bvm *vm);
 extern int lvbe_style_set_pad_gap(bvm *vm);
-extern int lvbe_style_set_size(bvm *vm);
 extern int lvbe_style_set_width(bvm *vm);
 extern int lvbe_style_set_min_width(bvm *vm);
 extern int lvbe_style_set_max_width(bvm *vm);
@@ -76,17 +76,6 @@ extern int lvbe_style_set_pad_left(bvm *vm);
 extern int lvbe_style_set_pad_right(bvm *vm);
 extern int lvbe_style_set_pad_row(bvm *vm);
 extern int lvbe_style_set_pad_column(bvm *vm);
-extern int lvbe_style_set_radius(bvm *vm);
-extern int lvbe_style_set_clip_corner(bvm *vm);
-extern int lvbe_style_set_opa(bvm *vm);
-extern int lvbe_style_set_color_filter_dsc(bvm *vm);
-extern int lvbe_style_set_color_filter_opa(bvm *vm);
-extern int lvbe_style_set_anim_time(bvm *vm);
-extern int lvbe_style_set_anim_speed(bvm *vm);
-extern int lvbe_style_set_transition(bvm *vm);
-extern int lvbe_style_set_blend_mode(bvm *vm);
-extern int lvbe_style_set_layout(bvm *vm);
-extern int lvbe_style_set_base_dir(bvm *vm);
 extern int lvbe_style_set_bg_color(bvm *vm);
 extern int lvbe_style_set_bg_color_filtered(bvm *vm);
 extern int lvbe_style_set_bg_opa(bvm *vm);
@@ -95,6 +84,8 @@ extern int lvbe_style_set_bg_grad_color_filtered(bvm *vm);
 extern int lvbe_style_set_bg_grad_dir(bvm *vm);
 extern int lvbe_style_set_bg_main_stop(bvm *vm);
 extern int lvbe_style_set_bg_grad_stop(bvm *vm);
+extern int lvbe_style_set_bg_grad(bvm *vm);
+extern int lvbe_style_set_bg_dither_mode(bvm *vm);
 extern int lvbe_style_set_bg_img_src(bvm *vm);
 extern int lvbe_style_set_bg_img_opa(bvm *vm);
 extern int lvbe_style_set_bg_img_recolor(bvm *vm);
@@ -107,18 +98,6 @@ extern int lvbe_style_set_border_opa(bvm *vm);
 extern int lvbe_style_set_border_width(bvm *vm);
 extern int lvbe_style_set_border_side(bvm *vm);
 extern int lvbe_style_set_border_post(bvm *vm);
-extern int lvbe_style_set_text_color(bvm *vm);
-extern int lvbe_style_set_text_color_filtered(bvm *vm);
-extern int lvbe_style_set_text_opa(bvm *vm);
-extern int lvbe_style_set_text_font(bvm *vm);
-extern int lvbe_style_set_text_letter_space(bvm *vm);
-extern int lvbe_style_set_text_line_space(bvm *vm);
-extern int lvbe_style_set_text_decor(bvm *vm);
-extern int lvbe_style_set_text_align(bvm *vm);
-extern int lvbe_style_set_img_opa(bvm *vm);
-extern int lvbe_style_set_img_recolor(bvm *vm);
-extern int lvbe_style_set_img_recolor_filtered(bvm *vm);
-extern int lvbe_style_set_img_recolor_opa(bvm *vm);
 extern int lvbe_style_set_outline_width(bvm *vm);
 extern int lvbe_style_set_outline_color(bvm *vm);
 extern int lvbe_style_set_outline_color_filtered(bvm *vm);
@@ -131,6 +110,10 @@ extern int lvbe_style_set_shadow_spread(bvm *vm);
 extern int lvbe_style_set_shadow_color(bvm *vm);
 extern int lvbe_style_set_shadow_color_filtered(bvm *vm);
 extern int lvbe_style_set_shadow_opa(bvm *vm);
+extern int lvbe_style_set_img_opa(bvm *vm);
+extern int lvbe_style_set_img_recolor(bvm *vm);
+extern int lvbe_style_set_img_recolor_filtered(bvm *vm);
+extern int lvbe_style_set_img_recolor_opa(bvm *vm);
 extern int lvbe_style_set_line_width(bvm *vm);
 extern int lvbe_style_set_line_dash_width(bvm *vm);
 extern int lvbe_style_set_line_dash_gap(bvm *vm);
@@ -144,6 +127,25 @@ extern int lvbe_style_set_arc_color(bvm *vm);
 extern int lvbe_style_set_arc_color_filtered(bvm *vm);
 extern int lvbe_style_set_arc_opa(bvm *vm);
 extern int lvbe_style_set_arc_img_src(bvm *vm);
+extern int lvbe_style_set_text_color(bvm *vm);
+extern int lvbe_style_set_text_color_filtered(bvm *vm);
+extern int lvbe_style_set_text_opa(bvm *vm);
+extern int lvbe_style_set_text_font(bvm *vm);
+extern int lvbe_style_set_text_letter_space(bvm *vm);
+extern int lvbe_style_set_text_line_space(bvm *vm);
+extern int lvbe_style_set_text_decor(bvm *vm);
+extern int lvbe_style_set_text_align(bvm *vm);
+extern int lvbe_style_set_radius(bvm *vm);
+extern int lvbe_style_set_clip_corner(bvm *vm);
+extern int lvbe_style_set_opa(bvm *vm);
+extern int lvbe_style_set_color_filter_dsc(bvm *vm);
+extern int lvbe_style_set_color_filter_opa(bvm *vm);
+extern int lvbe_style_set_anim_time(bvm *vm);
+extern int lvbe_style_set_anim_speed(bvm *vm);
+extern int lvbe_style_set_transition(bvm *vm);
+extern int lvbe_style_set_blend_mode(bvm *vm);
+extern int lvbe_style_set_layout(bvm *vm);
+extern int lvbe_style_set_base_dir(bvm *vm);
 
 /* `lv_font` external functions definitions */
 
@@ -192,6 +194,7 @@ extern int lvbe_obj_add_event_cb(bvm *vm);
 extern int lvbe_obj_remove_event_cb(bvm *vm);
 extern int lvbe_obj_remove_event_cb_with_user_data(bvm *vm);
 extern int lvbe_obj_remove_event_dsc(bvm *vm);
+extern int lvbe_obj_get_event_user_data(bvm *vm);
 extern int lvbe_obj_create(bvm *vm);
 extern int lvbe_obj_add_flag(bvm *vm);
 extern int lvbe_obj_clear_flag(bvm *vm);
@@ -242,6 +245,8 @@ extern int lvbe_obj_get_x(bvm *vm);
 extern int lvbe_obj_get_x2(bvm *vm);
 extern int lvbe_obj_get_y(bvm *vm);
 extern int lvbe_obj_get_y2(bvm *vm);
+extern int lvbe_obj_get_x_aligned(bvm *vm);
+extern int lvbe_obj_get_y_aligned(bvm *vm);
 extern int lvbe_obj_get_width(bvm *vm);
 extern int lvbe_obj_get_height(bvm *vm);
 extern int lvbe_obj_get_content_width(bvm *vm);
@@ -276,6 +281,7 @@ extern int lvbe_obj_get_scroll_left(bvm *vm);
 extern int lvbe_obj_get_scroll_right(bvm *vm);
 extern int lvbe_obj_get_scroll_end(bvm *vm);
 extern int lvbe_obj_scroll_by(bvm *vm);
+extern int lvbe_obj_scroll_by_bounded(bvm *vm);
 extern int lvbe_obj_scroll_to(bvm *vm);
 extern int lvbe_obj_scroll_to_x(bvm *vm);
 extern int lvbe_obj_scroll_to_y(bvm *vm);
@@ -302,8 +308,6 @@ extern int lvbe_obj_set_style_pad_ver(bvm *vm);
 extern int lvbe_obj_set_style_pad_gap(bvm *vm);
 extern int lvbe_obj_set_style_size(bvm *vm);
 extern int lvbe_obj_calculate_style_text_align(bvm *vm);
-extern int lvbe_obj_get_x_aligned(bvm *vm);
-extern int lvbe_obj_get_y_aligned(bvm *vm);
 extern int lvbe_obj_get_style_width(bvm *vm);
 extern int lvbe_obj_get_style_min_width(bvm *vm);
 extern int lvbe_obj_get_style_max_width(bvm *vm);
@@ -325,17 +329,6 @@ extern int lvbe_obj_get_style_pad_left(bvm *vm);
 extern int lvbe_obj_get_style_pad_right(bvm *vm);
 extern int lvbe_obj_get_style_pad_row(bvm *vm);
 extern int lvbe_obj_get_style_pad_column(bvm *vm);
-extern int lvbe_obj_get_style_radius(bvm *vm);
-extern int lvbe_obj_get_style_clip_corner(bvm *vm);
-extern int lvbe_obj_get_style_opa(bvm *vm);
-extern int lvbe_obj_get_style_color_filter_dsc(bvm *vm);
-extern int lvbe_obj_get_style_color_filter_opa(bvm *vm);
-extern int lvbe_obj_get_style_anim_time(bvm *vm);
-extern int lvbe_obj_get_style_anim_speed(bvm *vm);
-extern int lvbe_obj_get_style_transition(bvm *vm);
-extern int lvbe_obj_get_style_blend_mode(bvm *vm);
-extern int lvbe_obj_get_style_layout(bvm *vm);
-extern int lvbe_obj_get_style_base_dir(bvm *vm);
 extern int lvbe_obj_get_style_bg_color(bvm *vm);
 extern int lvbe_obj_get_style_bg_color_filtered(bvm *vm);
 extern int lvbe_obj_get_style_bg_opa(bvm *vm);
@@ -344,6 +337,8 @@ extern int lvbe_obj_get_style_bg_grad_color_filtered(bvm *vm);
 extern int lvbe_obj_get_style_bg_grad_dir(bvm *vm);
 extern int lvbe_obj_get_style_bg_main_stop(bvm *vm);
 extern int lvbe_obj_get_style_bg_grad_stop(bvm *vm);
+extern int lvbe_obj_get_style_bg_grad(bvm *vm);
+extern int lvbe_obj_get_style_bg_dither_mode(bvm *vm);
 extern int lvbe_obj_get_style_bg_img_src(bvm *vm);
 extern int lvbe_obj_get_style_bg_img_opa(bvm *vm);
 extern int lvbe_obj_get_style_bg_img_recolor(bvm *vm);
@@ -356,18 +351,6 @@ extern int lvbe_obj_get_style_border_opa(bvm *vm);
 extern int lvbe_obj_get_style_border_width(bvm *vm);
 extern int lvbe_obj_get_style_border_side(bvm *vm);
 extern int lvbe_obj_get_style_border_post(bvm *vm);
-extern int lvbe_obj_get_style_text_color(bvm *vm);
-extern int lvbe_obj_get_style_text_color_filtered(bvm *vm);
-extern int lvbe_obj_get_style_text_opa(bvm *vm);
-extern int lvbe_obj_get_style_text_font(bvm *vm);
-extern int lvbe_obj_get_style_text_letter_space(bvm *vm);
-extern int lvbe_obj_get_style_text_line_space(bvm *vm);
-extern int lvbe_obj_get_style_text_decor(bvm *vm);
-extern int lvbe_obj_get_style_text_align(bvm *vm);
-extern int lvbe_obj_get_style_img_opa(bvm *vm);
-extern int lvbe_obj_get_style_img_recolor(bvm *vm);
-extern int lvbe_obj_get_style_img_recolor_filtered(bvm *vm);
-extern int lvbe_obj_get_style_img_recolor_opa(bvm *vm);
 extern int lvbe_obj_get_style_outline_width(bvm *vm);
 extern int lvbe_obj_get_style_outline_color(bvm *vm);
 extern int lvbe_obj_get_style_outline_color_filtered(bvm *vm);
@@ -380,6 +363,10 @@ extern int lvbe_obj_get_style_shadow_spread(bvm *vm);
 extern int lvbe_obj_get_style_shadow_color(bvm *vm);
 extern int lvbe_obj_get_style_shadow_color_filtered(bvm *vm);
 extern int lvbe_obj_get_style_shadow_opa(bvm *vm);
+extern int lvbe_obj_get_style_img_opa(bvm *vm);
+extern int lvbe_obj_get_style_img_recolor(bvm *vm);
+extern int lvbe_obj_get_style_img_recolor_filtered(bvm *vm);
+extern int lvbe_obj_get_style_img_recolor_opa(bvm *vm);
 extern int lvbe_obj_get_style_line_width(bvm *vm);
 extern int lvbe_obj_get_style_line_dash_width(bvm *vm);
 extern int lvbe_obj_get_style_line_dash_gap(bvm *vm);
@@ -393,6 +380,25 @@ extern int lvbe_obj_get_style_arc_color(bvm *vm);
 extern int lvbe_obj_get_style_arc_color_filtered(bvm *vm);
 extern int lvbe_obj_get_style_arc_opa(bvm *vm);
 extern int lvbe_obj_get_style_arc_img_src(bvm *vm);
+extern int lvbe_obj_get_style_text_color(bvm *vm);
+extern int lvbe_obj_get_style_text_color_filtered(bvm *vm);
+extern int lvbe_obj_get_style_text_opa(bvm *vm);
+extern int lvbe_obj_get_style_text_font(bvm *vm);
+extern int lvbe_obj_get_style_text_letter_space(bvm *vm);
+extern int lvbe_obj_get_style_text_line_space(bvm *vm);
+extern int lvbe_obj_get_style_text_decor(bvm *vm);
+extern int lvbe_obj_get_style_text_align(bvm *vm);
+extern int lvbe_obj_get_style_radius(bvm *vm);
+extern int lvbe_obj_get_style_clip_corner(bvm *vm);
+extern int lvbe_obj_get_style_opa(bvm *vm);
+extern int lvbe_obj_get_style_color_filter_dsc(bvm *vm);
+extern int lvbe_obj_get_style_color_filter_opa(bvm *vm);
+extern int lvbe_obj_get_style_anim_time(bvm *vm);
+extern int lvbe_obj_get_style_anim_speed(bvm *vm);
+extern int lvbe_obj_get_style_transition(bvm *vm);
+extern int lvbe_obj_get_style_blend_mode(bvm *vm);
+extern int lvbe_obj_get_style_layout(bvm *vm);
+extern int lvbe_obj_get_style_base_dir(bvm *vm);
 extern int lvbe_obj_set_style_width(bvm *vm);
 extern int lvbe_obj_set_style_min_width(bvm *vm);
 extern int lvbe_obj_set_style_max_width(bvm *vm);
@@ -414,17 +420,6 @@ extern int lvbe_obj_set_style_pad_left(bvm *vm);
 extern int lvbe_obj_set_style_pad_right(bvm *vm);
 extern int lvbe_obj_set_style_pad_row(bvm *vm);
 extern int lvbe_obj_set_style_pad_column(bvm *vm);
-extern int lvbe_obj_set_style_radius(bvm *vm);
-extern int lvbe_obj_set_style_clip_corner(bvm *vm);
-extern int lvbe_obj_set_style_opa(bvm *vm);
-extern int lvbe_obj_set_style_color_filter_dsc(bvm *vm);
-extern int lvbe_obj_set_style_color_filter_opa(bvm *vm);
-extern int lvbe_obj_set_style_anim_time(bvm *vm);
-extern int lvbe_obj_set_style_anim_speed(bvm *vm);
-extern int lvbe_obj_set_style_transition(bvm *vm);
-extern int lvbe_obj_set_style_blend_mode(bvm *vm);
-extern int lvbe_obj_set_style_layout(bvm *vm);
-extern int lvbe_obj_set_style_base_dir(bvm *vm);
 extern int lvbe_obj_set_style_bg_color(bvm *vm);
 extern int lvbe_obj_set_style_bg_color_filtered(bvm *vm);
 extern int lvbe_obj_set_style_bg_opa(bvm *vm);
@@ -433,6 +428,8 @@ extern int lvbe_obj_set_style_bg_grad_color_filtered(bvm *vm);
 extern int lvbe_obj_set_style_bg_grad_dir(bvm *vm);
 extern int lvbe_obj_set_style_bg_main_stop(bvm *vm);
 extern int lvbe_obj_set_style_bg_grad_stop(bvm *vm);
+extern int lvbe_obj_set_style_bg_grad(bvm *vm);
+extern int lvbe_obj_set_style_bg_dither_mode(bvm *vm);
 extern int lvbe_obj_set_style_bg_img_src(bvm *vm);
 extern int lvbe_obj_set_style_bg_img_opa(bvm *vm);
 extern int lvbe_obj_set_style_bg_img_recolor(bvm *vm);
@@ -445,18 +442,6 @@ extern int lvbe_obj_set_style_border_opa(bvm *vm);
 extern int lvbe_obj_set_style_border_width(bvm *vm);
 extern int lvbe_obj_set_style_border_side(bvm *vm);
 extern int lvbe_obj_set_style_border_post(bvm *vm);
-extern int lvbe_obj_set_style_text_color(bvm *vm);
-extern int lvbe_obj_set_style_text_color_filtered(bvm *vm);
-extern int lvbe_obj_set_style_text_opa(bvm *vm);
-extern int lvbe_obj_set_style_text_font(bvm *vm);
-extern int lvbe_obj_set_style_text_letter_space(bvm *vm);
-extern int lvbe_obj_set_style_text_line_space(bvm *vm);
-extern int lvbe_obj_set_style_text_decor(bvm *vm);
-extern int lvbe_obj_set_style_text_align(bvm *vm);
-extern int lvbe_obj_set_style_img_opa(bvm *vm);
-extern int lvbe_obj_set_style_img_recolor(bvm *vm);
-extern int lvbe_obj_set_style_img_recolor_filtered(bvm *vm);
-extern int lvbe_obj_set_style_img_recolor_opa(bvm *vm);
 extern int lvbe_obj_set_style_outline_width(bvm *vm);
 extern int lvbe_obj_set_style_outline_color(bvm *vm);
 extern int lvbe_obj_set_style_outline_color_filtered(bvm *vm);
@@ -469,6 +454,10 @@ extern int lvbe_obj_set_style_shadow_spread(bvm *vm);
 extern int lvbe_obj_set_style_shadow_color(bvm *vm);
 extern int lvbe_obj_set_style_shadow_color_filtered(bvm *vm);
 extern int lvbe_obj_set_style_shadow_opa(bvm *vm);
+extern int lvbe_obj_set_style_img_opa(bvm *vm);
+extern int lvbe_obj_set_style_img_recolor(bvm *vm);
+extern int lvbe_obj_set_style_img_recolor_filtered(bvm *vm);
+extern int lvbe_obj_set_style_img_recolor_opa(bvm *vm);
 extern int lvbe_obj_set_style_line_width(bvm *vm);
 extern int lvbe_obj_set_style_line_dash_width(bvm *vm);
 extern int lvbe_obj_set_style_line_dash_gap(bvm *vm);
@@ -482,6 +471,25 @@ extern int lvbe_obj_set_style_arc_color(bvm *vm);
 extern int lvbe_obj_set_style_arc_color_filtered(bvm *vm);
 extern int lvbe_obj_set_style_arc_opa(bvm *vm);
 extern int lvbe_obj_set_style_arc_img_src(bvm *vm);
+extern int lvbe_obj_set_style_text_color(bvm *vm);
+extern int lvbe_obj_set_style_text_color_filtered(bvm *vm);
+extern int lvbe_obj_set_style_text_opa(bvm *vm);
+extern int lvbe_obj_set_style_text_font(bvm *vm);
+extern int lvbe_obj_set_style_text_letter_space(bvm *vm);
+extern int lvbe_obj_set_style_text_line_space(bvm *vm);
+extern int lvbe_obj_set_style_text_decor(bvm *vm);
+extern int lvbe_obj_set_style_text_align(bvm *vm);
+extern int lvbe_obj_set_style_radius(bvm *vm);
+extern int lvbe_obj_set_style_clip_corner(bvm *vm);
+extern int lvbe_obj_set_style_opa(bvm *vm);
+extern int lvbe_obj_set_style_color_filter_dsc(bvm *vm);
+extern int lvbe_obj_set_style_color_filter_opa(bvm *vm);
+extern int lvbe_obj_set_style_anim_time(bvm *vm);
+extern int lvbe_obj_set_style_anim_speed(bvm *vm);
+extern int lvbe_obj_set_style_transition(bvm *vm);
+extern int lvbe_obj_set_style_blend_mode(bvm *vm);
+extern int lvbe_obj_set_style_layout(bvm *vm);
+extern int lvbe_obj_set_style_base_dir(bvm *vm);
 extern int lvbe_obj_del(bvm *vm);
 extern int lvbe_obj_clean(bvm *vm);
 extern int lvbe_obj_del_delayed(bvm *vm);
@@ -685,6 +693,17 @@ extern int lvbe_spinbox_decrement(bvm *vm);
 /* `lv_spinner` external functions definitions */
 extern int lvbe_spinner_create(bvm *vm);
 
+/* `lv_timer` external functions definitions */
+extern int lvbe_timer_del(bvm *vm);
+extern int lvbe_timer_pause(bvm *vm);
+extern int lvbe_timer_resume(bvm *vm);
+extern int lvbe_timer_set_cb(bvm *vm);
+extern int lvbe_timer_set_period(bvm *vm);
+extern int lvbe_timer_ready(bvm *vm);
+extern int lvbe_timer_set_repeat_count(bvm *vm);
+extern int lvbe_timer_reset(bvm *vm);
+extern int lvbe_timer_get_next(bvm *vm);
+
 /* `lv_arc` external functions definitions */
 extern int lvbe_arc_create(bvm *vm);
 extern int lvbe_arc_set_start_angle(bvm *vm);
@@ -788,6 +807,7 @@ extern int lvbe_dropdown_get_selected_highlight(bvm *vm);
 extern int lvbe_dropdown_get_dir(bvm *vm);
 extern int lvbe_dropdown_open(bvm *vm);
 extern int lvbe_dropdown_close(bvm *vm);
+extern int lvbe_dropdown_is_open(bvm *vm);
 
 /* `lv_label` external functions definitions */
 extern int lvbe_label_create(bvm *vm);
@@ -910,6 +930,7 @@ extern int be_ntv_lv_meter_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_spinbox_init(bvm *vm);
 extern int be_ntv_lv_spinner_init(bvm *vm);
+extern int be_ntv_lv_timer_init(bvm *vm);
 extern int be_ntv_lv_arc_init(bvm *vm);
 extern int be_ntv_lv_bar_init(bvm *vm);
 extern int be_ntv_lv_btn_init(bvm *vm);
@@ -956,6 +977,7 @@ extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
 extern const bclass be_class_lv_textarea;
 extern const bclass be_class_lv_theme;
+extern const bclass be_class_lv_timer;
 
 
 /********************************************************************
@@ -1041,6 +1063,23 @@ be_local_class(lv_disp,
         { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_disp", 609712084, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_timer
+********************************************************************/
+be_local_class(lv_timer,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
+    })),
+    be_str_literal("lv_timer")
 );
 /*******************************************************************/
 
@@ -1336,6 +1375,12 @@ be_local_class(lv_spinner,
 void be_load_lv_spinner_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_spinner);
     be_setglobal(vm, "lv_spinner");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_timer_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_timer);
+    be_setglobal(vm, "lv_timer");
     be_pop(vm, 1);
 }
 

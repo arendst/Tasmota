@@ -7,6 +7,7 @@ class LVGL_glob
   var cb_obj                # map between a native C pointer (as int) and the corresponding lv.lv_* berry object, also helps marking the objects as non-gc-able
   var cb_event_closure      # mapping for event closures per LVGL native pointer (int)
   var event_cb              # native callback for lv.lv_event
+  var timer_cb              # native callback for lv.lv_timer
 
   #- below are native callbacks mapped to a closure to a method of this instance -#
   var null_cb               # cb called if type is not supported
@@ -52,6 +53,15 @@ class LVGL_glob
     f(obj, event)
   end
 
+  def lvgl_timer_dispatch(timer_int)
+    import introspect
+
+    var timer_ptr = introspect.toptr(timer_int)
+    var f = self.cb_event_closure[timer_ptr]
+    #print('>> lvgl_timer_dispatch', f, obj, event)
+    f(timer_ptr)
+  end
+
   def make_cb(f, obj, name)
     import cb
     # print('>> make_cb', f, name, obj)
@@ -67,6 +77,17 @@ class LVGL_glob
       end
       self.cb_event_closure[obj._p] = f     # keep a mapping of the closure to call, indexed by internal lvgl native pointer
       return self.event_cb
+    elif name == "lv_timer_cb"
+      if self.cb_event_closure == nil   self.cb_event_closure = {} end    # lazy instanciation
+      if self.timer_cb == nil			      self.timer_cb = cb.gen_cb(/ timer_ptr -> self.lvgl_timer_dispatch(timer_ptr)) end  # encapsulate 'self' in closure
+
+      # no need to register the object since it's only a pointer to a timer
+      if self.cb_event_closure.contains(obj._p)
+        tasmota.log("LVG: object:" + str(obj) + "has already an event callback", 2)
+      end
+      self.cb_event_closure[obj._p] = f     # keep a mapping of the closure to call, indexed by internal lvgl native pointer
+      return self.timer_cb
+
     # elif name == "<other_cb>"
     elif name[0..2] == "lv_"
       if self.null_cb == nil                  self.null_cb = cb.gen_cb(self.cb_do_nothing) end

@@ -25,6 +25,7 @@
 
 #ifdef USE_UNIVERSAL_DISPLAY
 Renderer *Init_uDisplay(const char *desc);
+extern Renderer *renderer;
 #endif //  USE_UNIVERSAL_DISPLAY
 
 /*********************************************************************************************\
@@ -75,6 +76,27 @@ void be_ntv_display_touch_update(int32_t touches, int32_t raw_x, int32_t raw_y, 
 #if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
   Touch_SetStatus(touches, raw_x, raw_y, gesture);
 #endif
+}
+
+const char* be_ntv_display_driver_name(void) {
+#ifdef USE_UNIVERSAL_DISPLAY
+  if (renderer) {
+    char* devname = renderer->devname();
+    if (devname) {
+      return devname;
+    }
+  }
+#endif
+  return "";
+}
+
+bool be_ntv_display_started(void) {
+#ifdef USE_UNIVERSAL_DISPLAY
+  if (renderer) {
+    return true;
+  }
+#endif
+  return false;
 }
 
 #endif // USE_DISPLAY

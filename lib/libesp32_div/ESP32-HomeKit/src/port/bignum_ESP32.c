@@ -39,6 +39,9 @@
 #if CONFIG_IDF_TARGET_ESP32C3
 #include "esp32c3/dport_access.h"
 #endif 
+#if CONFIG_IDF_TARGET_ESP32S3
+#include "esp32s3/dport_access.h"
+#endif
 
 static _lock_t mpi_lock;
 

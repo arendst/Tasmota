@@ -33,17 +33,7 @@ FT_FONT_STYLE_ITALIC=FT_FONT_STYLE_ITALIC
 FT_FONT_STYLE_BOLD=FT_FONT_STYLE_BOLD
 
 // following are #define, not enum
-LV_RADIUS_CIRCLE
-LV_TEXTAREA_CURSOR_LAST
-LV_STYLE_PROP_ANY
-
-LV_SIZE_CONTENT
-
 LV_GRID_FR=LV_GRID_FR(0)
-LV_GRID_CONTENT
-LV_GRID_TEMPLATE_LAST
-
-LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
 
 // ======================================================================
 // Symbols
@@ -173,6 +163,8 @@ LV_EVENT_SIZE_CHANGED
 LV_EVENT_STYLE_CHANGED
 LV_EVENT_LAYOUT_CHANGED
 LV_EVENT_GET_SELF_SIZE
+LV_EVENT_PREPROCESS
+
 // File: ../../lvgl/src/core/lv_group.h
 LV_KEY_UP
 LV_KEY_DOWN
@@ -226,8 +218,11 @@ LV_OBJ_FLAG_SCROLLABLE
 LV_OBJ_FLAG_SCROLL_ELASTIC
 LV_OBJ_FLAG_SCROLL_MOMENTUM
 LV_OBJ_FLAG_SCROLL_ONE
+LV_OBJ_FLAG_SCROLL_CHAIN_HOR
+LV_OBJ_FLAG_SCROLL_CHAIN_VER
 LV_OBJ_FLAG_SCROLL_CHAIN
 LV_OBJ_FLAG_SCROLL_ON_FOCUS
+LV_OBJ_FLAG_SCROLL_WITH_ARROW
 LV_OBJ_FLAG_SNAPPABLE
 LV_OBJ_FLAG_PRESS_LOCK
 LV_OBJ_FLAG_EVENT_BUBBLE
@@ -235,6 +230,7 @@ LV_OBJ_FLAG_GESTURE_BUBBLE
 LV_OBJ_FLAG_ADV_HITTEST
 LV_OBJ_FLAG_IGNORE_LAYOUT
 LV_OBJ_FLAG_FLOATING
+LV_OBJ_FLAG_OVERFLOW_VISIBLE
 LV_OBJ_FLAG_LAYOUT_1
 LV_OBJ_FLAG_LAYOUT_2
 LV_OBJ_FLAG_WIDGET_1
@@ -285,7 +281,6 @@ LV_OBJ_TREE_WALK_END
 // File: ../../lvgl/src/core/lv_theme.h
 // File: ../../lvgl/src/draw/lv_draw.h
 // File: ../../lvgl/src/draw/lv_draw_arc.h
-// File: ../../lvgl/src/draw/lv_draw_blend.h
 // File: ../../lvgl/src/draw/lv_draw_img.h
 // File: ../../lvgl/src/draw/lv_draw_label.h
 // File: ../../lvgl/src/draw/lv_draw_line.h
@@ -299,6 +294,7 @@ LV_DRAW_MASK_TYPE_ANGLE
 LV_DRAW_MASK_TYPE_RADIUS
 LV_DRAW_MASK_TYPE_FADE
 LV_DRAW_MASK_TYPE_MAP
+LV_DRAW_MASK_TYPE_POLYGON
 
 LV_DRAW_MASK_LINE_SIDE_LEFT
 LV_DRAW_MASK_LINE_SIDE_RIGHT
@@ -306,6 +302,7 @@ LV_DRAW_MASK_LINE_SIDE_TOP
 LV_DRAW_MASK_LINE_SIDE_BOTTOM
 
 // File: ../../lvgl/src/draw/lv_draw_rect.h
+LV_RADIUS_CIRCLE
 // File: ../../lvgl/src/draw/lv_draw_triangle.h
 // File: ../../lvgl/src/draw/lv_img_buf.h
 LV_IMG_CF_UNKNOWN
@@ -348,6 +345,7 @@ LV_FLEX_FLOW_COLUMN_WRAP
 LV_FLEX_FLOW_COLUMN_REVERSE
 LV_FLEX_FLOW_COLUMN_WRAP_REVERSE
 
+LV_OBJ_FLAG_FLEX_IN_NEW_TRACK
 // File: ../../lvgl/src/extra/layouts/grid/lv_grid.h
 LV_GRID_ALIGN_START
 LV_GRID_ALIGN_CENTER
@@ -357,6 +355,8 @@ LV_GRID_ALIGN_SPACE_EVENLY
 LV_GRID_ALIGN_SPACE_AROUND
 LV_GRID_ALIGN_SPACE_BETWEEN
 
+LV_GRID_CONTENT
+LV_GRID_TEMPLATE_LAST
 // File: ../../lvgl/src/extra/layouts/lv_layouts.h
 // File: ../../lvgl/src/extra/widgets/animimg/lv_animimg.h
 LV_ANIM_IMG_PART_MAIN
@@ -385,6 +385,7 @@ LV_CHART_DRAW_PART_BAR
 LV_CHART_DRAW_PART_CURSOR
 LV_CHART_DRAW_PART_TICK_LABEL
 
+LV_CHART_POINT_NONE
 // File: ../../lvgl/src/extra/widgets/colorwheel/lv_colorwheel.h
 LV_COLORWHEEL_MODE_HUE
 LV_COLORWHEEL_MODE_SATURATION
@@ -404,6 +405,12 @@ LV_LED_DRAW_PART_RECTANGLE
 
 // File: ../../lvgl/src/extra/widgets/list/lv_list.h
 // File: ../../lvgl/src/extra/widgets/lv_widgets.h
+// File: ../../lvgl/src/extra/widgets/menu/lv_menu.h
+LV_MENU_HEADER_TOP_FIXED
+LV_MENU_HEADER_TOP_UNFIXED
+LV_MENU_HEADER_BOTTOM_FIXED
+LV_MENU_ROOT_BACK_BTN_DISABLED
+LV_MENU_ROOT_BACK_BTN_ENABLED
 // File: ../../lvgl/src/extra/widgets/meter/lv_meter.h
 LV_METER_INDICATOR_TYPE_NEEDLE_IMG
 LV_METER_INDICATOR_TYPE_NEEDLE_LINE
@@ -449,6 +456,8 @@ LV_INDEV_STATE_PRESSED
 LV_ANIM_OFF
 LV_ANIM_ON
 
+LV_ANIM_REPEAT_INFINITE
+LV_ANIM_PLAYTIME_INFINITE
 // File: ../../lvgl/src/misc/lv_anim_timeline.h
 // File: ../../lvgl/src/misc/lv_area.h
 LV_ALIGN_DEFAULT
@@ -483,6 +492,9 @@ LV_DIR_HOR
 LV_DIR_VER
 LV_DIR_ALL
 
+LV_SIZE_CONTENT
+LV_COORD_MAX
+LV_COORD_MIN
 // File: ../../lvgl/src/misc/lv_assert.h
 // File: ../../lvgl/src/misc/lv_async.h
 // File: ../../lvgl/src/misc/lv_bidi.h
@@ -528,6 +540,8 @@ LV_PALETTE_BLUE_GREY
 LV_PALETTE_GREY
 LV_PALETTE_NONE
 
+LV_COLOR_DEPTH
+LV_COLOR_16_SWAP
 // File: ../../lvgl/src/misc/lv_fs.h
 LV_FS_RES_OK
 LV_FS_RES_HW_ERR
@@ -553,6 +567,13 @@ LV_FS_SEEK_END
 // File: ../../lvgl/src/misc/lv_gc.h
 // File: ../../lvgl/src/misc/lv_ll.h
 // File: ../../lvgl/src/misc/lv_log.h
+LV_LOG_LEVEL_TRACE
+LV_LOG_LEVEL_INFO
+LV_LOG_LEVEL_WARN
+LV_LOG_LEVEL_ERROR
+LV_LOG_LEVEL_USER
+LV_LOG_LEVEL_NONE
+// File: ../../lvgl/src/misc/lv_lru.h
 // File: ../../lvgl/src/misc/lv_math.h
 // File: ../../lvgl/src/misc/lv_mem.h
 // File: ../../lvgl/src/misc/lv_printf.h
@@ -561,6 +582,7 @@ LV_BLEND_MODE_NORMAL
 LV_BLEND_MODE_ADDITIVE
 LV_BLEND_MODE_SUBTRACTIVE
 LV_BLEND_MODE_MULTIPLY
+LV_BLEND_MODE_REPLACE
 
 LV_TEXT_DECOR_NONE
 LV_TEXT_DECOR_UNDERLINE
@@ -577,6 +599,10 @@ LV_BORDER_SIDE_INTERNAL
 LV_GRAD_DIR_NONE
 LV_GRAD_DIR_VER
 LV_GRAD_DIR_HOR
+
+LV_DITHER_NONE
+LV_DITHER_ORDERED
+LV_DITHER_ERR_DIFF
 
 LV_STYLE_PROP_INV
 LV_STYLE_WIDTH
@@ -608,6 +634,8 @@ LV_STYLE_BG_GRAD_COLOR_FILTERED
 LV_STYLE_BG_GRAD_DIR
 LV_STYLE_BG_MAIN_STOP
 LV_STYLE_BG_GRAD_STOP
+LV_STYLE_BG_GRAD
+LV_STYLE_BG_DITHER_MODE
 LV_STYLE_BG_IMG_SRC
 LV_STYLE_BG_IMG_OPA
 LV_STYLE_BG_IMG_RECOLOR
@@ -669,6 +697,7 @@ LV_STYLE_BLEND_MODE
 LV_STYLE_LAYOUT
 LV_STYLE_BASE_DIR
 LV_STYLE_PROP_ANY
+LV_IMG_ZOOM_NONE
 // File: ../../lvgl/src/misc/lv_style_gen.h
 // File: ../../lvgl/src/misc/lv_templ.h
 // File: ../../lvgl/src/misc/lv_timer.h
@@ -723,11 +752,13 @@ LV_BTNMATRIX_CTRL_CUSTOM_2
 
 LV_BTNMATRIX_DRAW_PART_BTN
 
+LV_BTNMATRIX_BTN_NONE
 // File: ../../lvgl/src/widgets/lv_canvas.h
 // File: ../../lvgl/src/widgets/lv_checkbox.h
 LV_CHECKBOX_DRAW_PART_BOX
 
 // File: ../../lvgl/src/widgets/lv_dropdown.h
+LV_DROPDOWN_POS_LAST
 // File: ../../lvgl/src/widgets/lv_img.h
 LV_IMG_SIZE_MODE_VIRTUAL
 LV_IMG_SIZE_MODE_REAL
@@ -739,6 +770,9 @@ LV_LABEL_LONG_SCROLL
 LV_LABEL_LONG_SCROLL_CIRCULAR
 LV_LABEL_LONG_CLIP
 
+LV_LABEL_DOT_NUM
+LV_LABEL_POS_LAST
+LV_LABEL_TEXT_SELECTION_OFF
 // File: ../../lvgl/src/widgets/lv_line.h
 // File: ../../lvgl/src/widgets/lv_objx_templ.h
 // File: ../../lvgl/src/widgets/lv_roller.h
@@ -763,6 +797,8 @@ LV_TABLE_CELL_CTRL_CUSTOM_4
 
 LV_TABLE_DRAW_PART_CELL
 
+LV_TABLE_CELL_NONE
 // File: ../../lvgl/src/widgets/lv_textarea.h
 LV_PART_TEXTAREA_PLACEHOLDER
 
+LV_TEXTAREA_CURSOR_LAST

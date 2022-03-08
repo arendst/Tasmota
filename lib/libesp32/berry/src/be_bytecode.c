@@ -176,8 +176,8 @@ static void save_class(bvm *vm, void *fp, bclass *c)
 
 static void save_value(bvm *vm, void *fp, bvalue *v)
 {
-    save_byte(fp, (uint8_t)var_type(v)); /* type */
-    switch (var_type(v)) {
+    save_byte(fp, (uint8_t)var_primetype(v)); /* type */
+    switch (var_primetype(v)) {
     case BE_INT: save_int(fp, var_toint(v)); break;
     case BE_REAL: save_real(fp, var_toreal(v)); break;
     case BE_STRING: save_string(fp, var_tostr(v)); break;
@@ -425,16 +425,16 @@ static void load_class(bvm *vm, void *fp, bvalue *v, int version)
         be_incrtop(vm);
         if (load_proto(vm, fp, (bproto**)&var_toobj(value), -3, version)) {
             /* actual method */
-            be_method_bind(vm, c, name, var_toobj(value), bfalse);
+            be_class_method_bind(vm, c, name, var_toobj(value), bfalse);
         } else {
             /* no proto, static member set to nil */
-            be_member_bind(vm, c, name, bfalse);
+            be_class_member_bind(vm, c, name, bfalse);
         }
         be_stackpop(vm, 2); /* pop the cached string and proto */
     }
     for (count = 0; count < nvar; ++count) { /* load member-variable table */
         bstring *name = cache_string(vm, fp);
-        be_member_bind(vm, c, name, btrue);
+        be_class_member_bind(vm, c, name, btrue);
         be_stackpop(vm, 1); /* pop the cached string */
     }
 }

@@ -335,7 +335,7 @@ void be_stackpush(bvm *vm)
 }
 
 /* check that the stack is able to store `count` items, and increase stack if needed */
-void be_stack_require(bvm *vm, int count)
+BERRY_API void be_stack_require(bvm *vm, int count)
 {
     if (vm->top + count >= vm->stacktop) {
         be_stack_expansion(vm, count);

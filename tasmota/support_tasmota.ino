@@ -246,7 +246,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
   TasmotaGlobal.last_source = source;
 
   if (POWER_ALL_ALWAYS_ON == Settings->poweronstate) {  // All on and stay on
-    TasmotaGlobal.power = (1 << TasmotaGlobal.devices_present) -1;
+    TasmotaGlobal.power = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     rpower = TasmotaGlobal.power;
   }
 
@@ -337,7 +337,7 @@ void SetAllPower(uint32_t state, uint32_t source)
     publish_power = false;
   }
   if ((state >= POWER_OFF) && (state <= POWER_TOGGLE)) {
-    power_t all_on = (1 << TasmotaGlobal.devices_present) -1;
+    power_t all_on = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     switch (state) {
     case POWER_OFF:
       TasmotaGlobal.power = 0;
@@ -365,6 +365,7 @@ void SetPowerOnState(void)
   if (POWER_ALL_ALWAYS_ON == Settings->poweronstate) {
     SetDevicePower(1, SRC_RESTART);
   } else {
+    power_t devices_mask = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
       switch (Settings->poweronstate) {
       case POWER_ALL_OFF:
@@ -373,24 +374,24 @@ void SetPowerOnState(void)
         SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         break;
       case POWER_ALL_ON:  // All on
-        TasmotaGlobal.power = (1 << TasmotaGlobal.devices_present) -1;
+        TasmotaGlobal.power = devices_mask;
         SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         break;
       case POWER_ALL_SAVED_TOGGLE:
-        TasmotaGlobal.power = (Settings->power & ((1 << TasmotaGlobal.devices_present) -1)) ^ POWER_MASK;
+        TasmotaGlobal.power = (Settings->power & devices_mask) ^ POWER_MASK;
         if (Settings->flag.save_state) {  // SetOption0 - Save power state and use after restart
           SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         }
         break;
       case POWER_ALL_SAVED:
-        TasmotaGlobal.power = Settings->power & ((1 << TasmotaGlobal.devices_present) -1);
+        TasmotaGlobal.power = Settings->power & devices_mask;
         if (Settings->flag.save_state) {  // SetOption0 - Save power state and use after restart
           SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
         }
         break;
       }
     } else {
-      TasmotaGlobal.power = Settings->power & ((1 << TasmotaGlobal.devices_present) -1);
+      TasmotaGlobal.power = Settings->power & devices_mask;
       if (Settings->flag.save_state) {    // SetOption0 - Save power state and use after restart
         SetDevicePower(TasmotaGlobal.power, SRC_RESTART);
       }
@@ -409,6 +410,9 @@ void SetPowerOnState(void)
     }
   }
   TasmotaGlobal.blink_powersave = TasmotaGlobal.power;
+#ifdef USE_RULES
+  RulesEvery50ms();
+#endif
 }
 
 void UpdateLedPowerAll()
@@ -602,6 +606,8 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 // state 16 = POWER_SHOW_STATE = Show power state
 
 //  ShowSource(source);
+
+//  if (1049 == LANGUAGE_LCID) { return; }
 
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) {
@@ -915,6 +921,19 @@ void MqttPublishTeleperiodSensor(void) {
   }
 }
 
+void SkipSleep(bool state) {
+  if (state) {
+    TasmotaGlobal.skip_sleep += 2;
+  } else {
+    if (TasmotaGlobal.skip_sleep) {
+      TasmotaGlobal.skip_sleep--;
+    }
+    if (TasmotaGlobal.skip_sleep) {
+      TasmotaGlobal.skip_sleep--;
+    }
+  }
+}
+
 /*********************************************************************************************\
  * State loops
 \*********************************************************************************************/
@@ -1037,6 +1056,10 @@ void Every100mSeconds(void)
   if (TasmotaGlobal.latching_relay_pulse) {
     TasmotaGlobal.latching_relay_pulse--;
     if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
+  }
+
+  if (TasmotaGlobal.skip_sleep) {
+    TasmotaGlobal.skip_sleep--;                         // Clean up possible residue
   }
 
   for (uint32_t i = 0; i < MAX_PULSETIMERS; i++) {
@@ -1762,7 +1785,7 @@ void GpioInit(void)
       }
 #ifdef ESP32
       else if ((mpin >= AGPIO(GPIO_OPTION_E)) && (mpin < (AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E))) {
-        TasmotaGlobal.emulated_module_type = pgm_read_byte(kModuleEmulationList + (mpin - AGPIO(GPIO_OPTION_A)));
+        TasmotaGlobal.emulated_module_type = pgm_read_byte(kModuleEmulationList + (mpin - AGPIO(GPIO_OPTION_E)));
         SetModuleType();
         mpin = GPIO_NONE;
       }
