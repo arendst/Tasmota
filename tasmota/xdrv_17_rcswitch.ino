@@ -1,18 +1,14 @@
 /*
   xdrv_17_rcswitch.ino - RF transceiver using RcSwitch library for Tasmota
-
   Copyright (C) 2021  Theo Arends
-
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -27,24 +23,26 @@
 #define D_JSON_RF_BITS "Bits"
 #define D_JSON_RF_DATA "Data"
 
-#define D_CMND_RFSEND "RFSend"
+#define D_CMND_RFSEND "RfSend"
 #define D_CMND_RFPROTOCOL "RfProtocol"
+#define D_CMND_RFTIMEOUT "RfTimeOut"
 
 #define D_JSON_RF_PULSE "Pulse"
 #define D_JSON_RF_REPEAT "Repeat"
 #define D_JSON_NONE_ENABLED "None Enabled"
 
 const char kRfCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_RFSEND "|" D_CMND_RFPROTOCOL;
+  D_CMND_RFSEND "|" D_CMND_RFPROTOCOL "|" D_CMND_RFTIMEOUT;
 
 void (* const RfCommands[])(void) PROGMEM = {
-  &CmndRfSend, &CmndRfProtocol };
+  &CmndRfSend, &CmndRfProtocol, &CmndRfTimeOut};
 
 #include <RCSwitch.h>
 
 RCSwitch mySwitch = RCSwitch();
 
-#define RF_TIME_AVOID_DUPLICATE 1000  // Milliseconds
+int RF_TIME_AVOID_DUPLICATE = 3000;  // Use variable to change "RfTimeOut" to get new data from RfReceive
+//#define RF_TIME_AVOID_DUPLICATE 1000  // Milliseconds
 
 uint32_t rf_lasttime = 0;
 
@@ -211,6 +209,15 @@ void CmndRfSend(void)
   }
   if (error) {
     Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_NO " " D_JSON_RF_DATA ", " D_JSON_RF_BITS ", " D_JSON_RF_PROTOCOL ", " D_JSON_RF_REPEAT " " D_JSON_OR " " D_JSON_RF_PULSE "\"}"));
+  }
+}
+
+void CmndRfTimeOut(void) { // Command to change "RfTimeOut"
+  if (XdrvMailbox.data_len > 0) {
+    RF_TIME_AVOID_DUPLICATE = atoi(XdrvMailbox.data); //Change "RfTimeOut" if signal long 1000 milliseconds
+    Response_P(PSTR("{\"RfTimeOut\":\"%d\"}"), RF_TIME_AVOID_DUPLICATE); // Write to console changed "RfTimeOut"
+  } else {
+    Response_P(PSTR("{\"RfTimeOut\":\"%d\"}"), RF_TIME_AVOID_DUPLICATE); // If "RfTimeOut" command without parameters show current "RfTimeOut" look at 48 line
   }
 }
 
