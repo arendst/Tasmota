@@ -868,6 +868,22 @@ void lv_style_set_blend_mode(lv_style_t * style, lv_blend_mode_t value)
 void lv_style_set_layout(lv_style_t * style, uint16_t value)
 void lv_style_set_base_dir(lv_style_t * style, lv_base_dir_t value)
 
+// ../../lvgl/src/misc/lv_timer.h
+uint32_t lv_timer_handler(void)
+lv_timer_t * lv_timer_create_basic(void)
+lv_timer_t * lv_timer_create(lv_timer_cb_t timer_xcb, uint32_t period, void * user_data)
+void lv_timer_del(lv_timer_t * timer)
+void lv_timer_pause(lv_timer_t * timer)
+void lv_timer_resume(lv_timer_t * timer)
+void lv_timer_set_cb(lv_timer_t * timer, lv_timer_cb_t timer_cb)
+void lv_timer_set_period(lv_timer_t * timer, uint32_t period)
+void lv_timer_ready(lv_timer_t * timer)
+void lv_timer_set_repeat_count(lv_timer_t * timer, int32_t repeat_count)
+void lv_timer_reset(lv_timer_t * timer)
+void lv_timer_enable(bool en)
+uint8_t lv_timer_get_idle(void)
+lv_timer_t * lv_timer_get_next(lv_timer_t * timer)
+
 // ../../lvgl/src/widgets/lv_arc.h
 lv_obj_t * lv_arc_create(lv_obj_t * parent)
 void lv_arc_set_start_angle(lv_obj_t * arc, uint16_t start)

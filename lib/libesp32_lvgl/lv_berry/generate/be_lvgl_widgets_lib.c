@@ -693,6 +693,17 @@ extern int lvbe_spinbox_decrement(bvm *vm);
 /* `lv_spinner` external functions definitions */
 extern int lvbe_spinner_create(bvm *vm);
 
+/* `lv_timer` external functions definitions */
+extern int lvbe_timer_del(bvm *vm);
+extern int lvbe_timer_pause(bvm *vm);
+extern int lvbe_timer_resume(bvm *vm);
+extern int lvbe_timer_set_cb(bvm *vm);
+extern int lvbe_timer_set_period(bvm *vm);
+extern int lvbe_timer_ready(bvm *vm);
+extern int lvbe_timer_set_repeat_count(bvm *vm);
+extern int lvbe_timer_reset(bvm *vm);
+extern int lvbe_timer_get_next(bvm *vm);
+
 /* `lv_arc` external functions definitions */
 extern int lvbe_arc_create(bvm *vm);
 extern int lvbe_arc_set_start_angle(bvm *vm);
@@ -919,6 +930,7 @@ extern int be_ntv_lv_meter_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_spinbox_init(bvm *vm);
 extern int be_ntv_lv_spinner_init(bvm *vm);
+extern int be_ntv_lv_timer_init(bvm *vm);
 extern int be_ntv_lv_arc_init(bvm *vm);
 extern int be_ntv_lv_bar_init(bvm *vm);
 extern int be_ntv_lv_btn_init(bvm *vm);
@@ -965,6 +977,7 @@ extern const bclass be_class_lv_switch;
 extern const bclass be_class_lv_table;
 extern const bclass be_class_lv_textarea;
 extern const bclass be_class_lv_theme;
+extern const bclass be_class_lv_timer;
 
 
 /********************************************************************
@@ -1050,6 +1063,23 @@ be_local_class(lv_disp,
         { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_disp", 609712084, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_timer
+********************************************************************/
+be_local_class(lv_timer,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
+    })),
+    be_str_literal("lv_timer")
 );
 /*******************************************************************/
 
@@ -1345,6 +1375,12 @@ be_local_class(lv_spinner,
 void be_load_lv_spinner_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_spinner);
     be_setglobal(vm, "lv_spinner");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_timer_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_timer);
+    be_setglobal(vm, "lv_timer");
     be_pop(vm, 1);
 }
 
