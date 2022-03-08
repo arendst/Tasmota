@@ -2163,7 +2163,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
       }
     }
 #ifdef ESP32
-    PwmApplyGPIO();
+    PwmApplyGPIO(false);
 #endif // ESP32
 
 #ifdef USE_PWM_DIMMER
