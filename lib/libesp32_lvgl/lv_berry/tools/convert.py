@@ -110,6 +110,7 @@ return_types = {
   "lv_grid_align_t": "i",
 
   "_lv_event_dsc_t *": "i",
+  "lv_anim_enable_t": "i",
 
   # arrays
   "char * []": "str_arr",
@@ -155,16 +156,14 @@ return_types = {
   # callbacks
   "lv_group_focus_cb_t": "lv_group_focus_cb",
   "lv_event_cb_t": "lv_event_cb",
-  # "lv_signal_cb_t": "lv_signal_cb",   # removed in LVGL8
-  # "lv_design_cb_t": "lv_design_cb",   # removed in LVGL8
-  # "lv_gauge_format_cb_t": "lv_gauge_format_cb", # removed in LVGL8
+  "lv_timer_cb_t": "lv_timer_cb",
 }
 
 lv = {}
 lvs = []   # special case for case for lv_style
 lv0 = []        # function in lvlg module
 lv_module = []
-lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb',
+lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb', 'lv_timer_cb',
                'lv_constructor_cb',                 # 'constructor_cb', addition to LVGL8, also works for 'destructor_cb'
                ]
 # list of callback types that will need each a separate C callback
@@ -182,7 +181,7 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
 # extra widgets
 
 lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
-lv_prefix = ['obj', 'group', 'style', 'indev', 'disp'] + lv_widgets
+lv_prefix = ['obj', 'group', 'style', 'indev', 'disp', 'timer'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source
 lv_widget_inheritance = {
@@ -599,6 +598,23 @@ be_local_class(lv_disp,
         { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     (be_nested_const_str("lv_disp", 609712084, 8))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_timer
+********************************************************************/
+be_local_class(lv_timer,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv0_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
+    })),
+    be_str_literal("lv_timer")
 );
 /*******************************************************************/
 

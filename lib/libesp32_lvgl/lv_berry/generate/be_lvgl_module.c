@@ -161,6 +161,11 @@ const be_ntv_func_def_t lv_func[] = {
   { "theme_openhasp_is_inited", { (const void*) &lv_theme_openhasp_is_inited, "b", "" } },
   { "theme_set_apply_cb", { (const void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" } },
   { "theme_set_parent", { (const void*) &lv_theme_set_parent, "", "(lv.lv_theme)(lv.lv_theme)" } },
+  { "timer_create", { (const void*) &lv_timer_create, "lv.lv_timer", "^lv_timer_cb^i." } },
+  { "timer_create_basic", { (const void*) &lv_timer_create_basic, "lv.lv_timer", "" } },
+  { "timer_enable", { (const void*) &lv_timer_enable, "", "b" } },
+  { "timer_get_idle", { (const void*) &lv_timer_get_idle, "i", "" } },
+  { "timer_handler", { (const void*) &lv_timer_handler, "i", "" } },
   { "trigo_cos", { (const void*) &lv_trigo_cos, "i", "i" } },
   { "trigo_sin", { (const void*) &lv_trigo_sin, "i", "i" } },
 
