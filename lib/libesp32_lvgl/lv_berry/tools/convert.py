@@ -110,7 +110,15 @@ return_types = {
   "lv_grid_align_t": "i",
 
   "_lv_event_dsc_t *": "i",
+  # lv_anim
+  "lv_anim_t *": "lv_anim",
   "lv_anim_enable_t": "i",
+  "lv_anim_exec_xcb_t": "c",
+  "lv_anim_custom_exec_cb_t": "c",
+  "lv_anim_get_value_cb_t": "c",
+  "lv_anim_path_cb_t": "c",
+  "lv_anim_ready_cb_t": "c",
+  "lv_anim_start_cb_t": "c",
 
   # arrays
   "char * []": "str_arr",
@@ -181,7 +189,7 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
 # extra widgets
 
 lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
-lv_prefix = ['obj', 'group', 'style', 'indev', 'disp', 'timer'] + lv_widgets
+lv_prefix = ['obj', 'group', 'style', 'indev', 'disp', 'timer', 'anim'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source
 lv_widget_inheritance = {
@@ -234,7 +242,7 @@ with open(lv_widgets_file) as f:
         # convert return type
         c_ret = c_convert_ret_type(ret_type)
       elif ret_type_without_t in lv_cb_types:
-        c_ret = "c"   # general callback, if not already captured by explicit type
+        c_ret = "C"   # general callback, if not already captured by explicit type
       else:
         print(f"  // Skipping unsupported return type: {ret_type}")
         continue
@@ -267,7 +275,7 @@ with open(lv_widgets_file) as f:
               ga_type = re.sub(r"_t$", "", ga_type)
             
             # if the type is a single letter, we just add it
-            if len(ga_type) == 1 and ga_type != 'c':  # callbacks are different
+            if len(ga_type) == 1 and ga_type != 'C':  # callbacks are different
               c_args += ga_type
             else:
               if ga_type.endswith("_cb"):
@@ -477,6 +485,7 @@ extern int lv_x_member(bvm *vm);
 extern int lv_x_tostring(bvm *vm);       // generic function
 
 extern int lv_be_style_init(bvm *vm);
+extern int lv_be_anim_init(bvm *vm);
 extern int lv_x_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
@@ -615,6 +624,23 @@ be_local_class(lv_timer,
         { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     be_str_literal("lv_timer")
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_anim
+********************************************************************/
+be_local_class(lv_anim,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv_be_anim_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
+    })),
+    be_str_literal("lv_anim")
 );
 /*******************************************************************/
 
@@ -803,6 +829,7 @@ for k in sorted(lv_module2):
     v_macro = "be_cconst_int"
     if v[0] == '"': v_prefix = "$"; v_macro = "be_cconst_string"
     if v[0] == '&': v_prefix = "&"; v_macro = "be_cconst_ptr"
+    if v[0] == '@': v_prefix = "@"; v_macro = "be_cconst_ptr"; v = "&" + v[1:]
     print(f"    {{ \"{v_prefix}{k}\", {v_macro}({v}) }},")
   else:
     print(f"    {{ \"{k}\", be_cconst_int(LV_{k}) }},")

@@ -517,6 +517,36 @@ lv_timer = [            # valid LVGL8.2
 ]
 lv_timer = ctypes.structure(lv_timer, "lv_timer")
 
+# #######################################################################
+# # lv_anim
+# lv_anim = [            # valid LVGL8.2
+#     [ptr, "var"],
+#     [ptr, "exec_cb"],
+#     [ptr, "start_cb"],
+#     [ptr, "ready_cb"],
+#     [ptr, "get_value_cb"],
+
+#     [ptr, "user_data"],
+
+#     [ptr, "path_cb"],
+#     [int32_t, "start_value"],
+#     [int32_t, "current_value"],
+#     [int32_t, "end_value"],
+#     [int32_t, "time"],
+#     [int32_t, "act_time"],
+#     [uint32_t, "playback_delay"],
+#     [uint32_t, "playback_time"],
+#     [uint32_t, "repeat_delay"],
+#     [uint32_t, "repeat_cnt"],
+
+#     [uint8_t_1, "early_apply"],
+#     [uint8_t_1, "playback_now"],
+#     [uint8_t_1, "run_round"],
+#     [uint8_t_1, "start_cb_called"],
+    
+# ]
+# lv_anim = ctypes.structure(lv_anim, "lv_anim")
+
 #######################################################################
 # lv_draw_ctc
 lv_draw_ctx = [            # valid LVGL8.2

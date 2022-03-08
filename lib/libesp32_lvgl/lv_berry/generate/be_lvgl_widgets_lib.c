@@ -20,6 +20,7 @@ extern int lv_x_member(bvm *vm);
 extern int lv_x_tostring(bvm *vm);       // generic function
 
 extern int lv_be_style_init(bvm *vm);
+extern int lv_be_anim_init(bvm *vm);
 extern int lv_x_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
@@ -693,6 +694,31 @@ extern int lvbe_spinbox_decrement(bvm *vm);
 /* `lv_spinner` external functions definitions */
 extern int lvbe_spinner_create(bvm *vm);
 
+/* `lv_anim` external functions definitions */
+extern int lvbe_anim_init(bvm *vm);
+extern int lvbe_anim_set_var(bvm *vm);
+extern int lvbe_anim_set_exec_cb(bvm *vm);
+extern int lvbe_anim_set_time(bvm *vm);
+extern int lvbe_anim_set_delay(bvm *vm);
+extern int lvbe_anim_set_values(bvm *vm);
+extern int lvbe_anim_set_custom_exec_cb(bvm *vm);
+extern int lvbe_anim_set_path_cb(bvm *vm);
+extern int lvbe_anim_set_start_cb(bvm *vm);
+extern int lvbe_anim_set_get_value_cb(bvm *vm);
+extern int lvbe_anim_set_ready_cb(bvm *vm);
+extern int lvbe_anim_set_playback_time(bvm *vm);
+extern int lvbe_anim_set_playback_delay(bvm *vm);
+extern int lvbe_anim_set_repeat_count(bvm *vm);
+extern int lvbe_anim_set_repeat_delay(bvm *vm);
+extern int lvbe_anim_set_early_apply(bvm *vm);
+extern int lvbe_anim_set_user_data(bvm *vm);
+extern int lvbe_anim_start(bvm *vm);
+extern int lvbe_anim_get_delay(bvm *vm);
+extern int lvbe_anim_get_playtime(bvm *vm);
+extern int lvbe_anim_get_user_data(bvm *vm);
+extern int lvbe_anim_custom_del(bvm *vm);
+extern int lvbe_anim_custom_get(bvm *vm);
+
 /* `lv_timer` external functions definitions */
 extern int lvbe_timer_del(bvm *vm);
 extern int lvbe_timer_pause(bvm *vm);
@@ -930,6 +956,7 @@ extern int be_ntv_lv_meter_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_spinbox_init(bvm *vm);
 extern int be_ntv_lv_spinner_init(bvm *vm);
+extern int be_ntv_lv_anim_init(bvm *vm);
 extern int be_ntv_lv_timer_init(bvm *vm);
 extern int be_ntv_lv_arc_init(bvm *vm);
 extern int be_ntv_lv_bar_init(bvm *vm);
@@ -946,6 +973,7 @@ extern int be_ntv_lv_switch_init(bvm *vm);
 extern int be_ntv_lv_table_init(bvm *vm);
 extern int be_ntv_lv_textarea_init(bvm *vm);
 
+extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_arc;
 extern const bclass be_class_lv_bar;
 extern const bclass be_class_lv_btn;
@@ -1080,6 +1108,23 @@ be_local_class(lv_timer,
         { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
     })),
     be_str_literal("lv_timer")
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_anim
+********************************************************************/
+be_local_class(lv_anim,
+    1,
+    NULL,
+    be_nested_map(4,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_nested_key("init", 380752755, 4, -1), be_const_func(lv_be_anim_init) },
+        { be_nested_key("tostring", -1995258651, 8, -1), be_const_func(lv_x_tostring) },
+        { be_nested_key("_p", 1594591802, 2, -1), be_const_var(0) },
+        { be_nested_key("member", 719708611, 6, 0), be_const_func(lv_x_member) },
+    })),
+    be_str_literal("lv_anim")
 );
 /*******************************************************************/
 
@@ -1375,6 +1420,12 @@ be_local_class(lv_spinner,
 void be_load_lv_spinner_class(bvm *vm) {
     be_pushntvclass(vm, &be_class_lv_spinner);
     be_setglobal(vm, "lv_spinner");
+    be_pop(vm, 1);
+}
+
+void be_load_lv_anim_class(bvm *vm) {
+    be_pushntvclass(vm, &be_class_lv_anim);
+    be_setglobal(vm, "lv_anim");
     be_pop(vm, 1);
 }
 
