@@ -24,22 +24,103 @@
 
 #define ADE7880_ADDR            0x38
 
-//#define ADE7880_DEBUG
+//#define ADE7880_COMPMODE_FREQ   0x4000       // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default 45 Hz to 55 Hz
 
-#define ADE7880_APGAIN_INIT     0xFF14B7E3   // = -15419420
-#define ADE7880_BPGAIN_INIT     0xFF14A7B1   // = -15423566
-#define ADE7880_CPGAIN_INIT     0xFF14999C   // = -15427171
-#define ADE7880_AVGAIN_INIT     0xFFF43977   // = -771720
-#define ADE7880_BVGAIN_INIT     0xFFF4DD00   // = -729855
-#define ADE7880_CVGAIN_INIT     0xFFF4A306   // = -744697
+/*********************************************************************************************/
+
+//#define ADE7880_DEBUG
+//#define ADE7880_PROFILING
+
+/*
+Derive these parameters from the original Shelly 3EM 4M firmware dump. Look for JSON file called calib.data
+{
+  "state": 0,
+  "rms": {
+    "current_a": 3166385,
+    "current_b": 3125691,
+    "current_c": 3131983,
+    "current_n": -1474892307,
+    "current_s": 1756557,
+    "voltage_a": -767262,
+    "voltage_b": -763439,
+    "voltage_c": -749854
+  },
+  "angles": {
+    "angle0": 180,
+    "angle1": 176,
+    "angle2": 176
+  },
+  "powers": {
+    "totactive": {
+      "a": -1345820,
+      "b": -1347328,
+      "c": -1351979
+    },
+    "apparent": {
+      "a": 214966,
+      "b": 214961,
+      "c": 214949
+    }
+  },
+ "energies": {
+    "totactive": {
+      "a": 8752,
+      "b": 8751,
+      "c": 8751
+    },
+    "apparent": {
+      "a": 40496,
+      "b": 40513,
+      "c": 40524
+    }
+  }
+}
+*/
+#define ADE7880_AIGAIN_INIT     3166385      // rms, current_a
+#define ADE7880_BIGAIN_INIT     3125691      // rms, current_b
+#define ADE7880_CIGAIN_INIT     3131983      // rms, current_c
+#define ADE7880_NIGAIN_INIT     1756557      // rms, current_s !!
+#define ADE7880_AVGAIN_INIT     -767262      // rms, voltage_a
+#define ADE7880_BVGAIN_INIT     -763439      // rms, voltage_b
+#define ADE7880_CVGAIN_INIT     -749854      // rms, voltage_c
+#define ADE7880_APHCAL_INIT     180          // angles, angle0
+#define ADE7880_BPHCAL_INIT     176          // angles, angle1
+#define ADE7880_CPHCAL_INIT     176          // angles, angle2
+#define ADE7880_APGAIN_INIT     -1345820     // powers, totactive, a
+#define ADE7880_BPGAIN_INIT     -1347328     // powers, totactive, b
+#define ADE7880_CPGAIN_INIT     -1351979     // powers, totactive, c
+
+/*
+// Original defines from logic analyzer
 #define ADE7880_AIGAIN_INIT     0x002FFED1   // = 3145425
 #define ADE7880_BIGAIN_INIT     0x00309661   // = 3184225
 #define ADE7880_CIGAIN_INIT     0x0030DBFD   // = 3202045
 #define ADE7880_NIGAIN_INIT     0x04D906AC   // = 81331884 (14223020)
+#define ADE7880_AVGAIN_INIT     0xFFF43977   // = -771720
+#define ADE7880_BVGAIN_INIT     0xFFF4DD00   // = -729855
+#define ADE7880_CVGAIN_INIT     0xFFF4A306   // = -744697
 #define ADE7880_APHCAL_INIT     0xD895       // = 55445 (149)
 #define ADE7880_BPHCAL_INIT     0xD8A9       // = 55456 (169)
 #define ADE7880_CPHCAL_INIT     0xD89D       // = 55453 (157)
-//#define ADE7880_COMPMODE_FREQ   0x4000       // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default 45 Hz to 55 Hz
+#define ADE7880_APGAIN_INIT     0xFF14B7E3   // = -15419420
+#define ADE7880_BPGAIN_INIT     0xFF14A7B1   // = -15423566
+#define ADE7880_CPGAIN_INIT     0xFF14999C   // = -15427171
+*/
+/*
+#define ADE7880_AIGAIN_INIT     3145425
+#define ADE7880_BIGAIN_INIT     3184225
+#define ADE7880_CIGAIN_INIT     3202045
+#define ADE7880_NIGAIN_INIT     14223020
+#define ADE7880_AVGAIN_INIT     -771720
+#define ADE7880_BVGAIN_INIT     -729855
+#define ADE7880_CVGAIN_INIT     -744697
+#define ADE7880_APHCAL_INIT     149
+#define ADE7880_BPHCAL_INIT     169
+#define ADE7880_CPHCAL_INIT     157
+#define ADE7880_APGAIN_INIT     -15419420
+#define ADE7880_BPGAIN_INIT     -15423566
+#define ADE7880_CPGAIN_INIT     -15427171
+*/
 
 enum Ade7880DspRegisters {
   ADE7880_AIGAIN = 0x4380,         // 0x4380  R/W  24  32 ZPSE  S   0x000000    Phase A current gain adjust.
@@ -248,6 +329,8 @@ struct Ade7880 {
   uint8_t irq1_state;
 } Ade7880;
 
+/*********************************************************************************************/
+
 int Ade7880RegSize(uint16_t reg) {
   int size = 0;
   switch ((reg >> 8) & 0x0F) {
@@ -340,8 +423,13 @@ int32_t Ade7880ReadVerify(uint16_t reg) {
   return result;
 }
 
+/*********************************************************************************************/
+
 bool Ade7880Init(void) {
-  // Init sequence about 100mS after reset - See page 40 (takes about 60ms)
+  // Init sequence about 100mS after reset - See page 40 (takes 68ms)
+#ifdef ADE7880_PROFILING
+  uint32_t start = millis();
+#endif  // ADE7880_PROFILING
   uint32_t status1 = Ade7880ReadVerify(ADE7880_STATUS1);                   // 0x01A08000
   if (bitRead(status1, 15)) {                                              // RSTDONE
     // Power on or Reset
@@ -418,6 +506,9 @@ bool Ade7880Init(void) {
   Ade7880Write(ADE7880_DSPWP_SET, 0x80);                                   // Write protect DSP area
 
   Ade7880WriteVerify(ADE7880_Run, 0x0201);                                 // Start DSP
+#ifdef ADE7880_PROFILING
+  AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Init done in %d ms"), millis() - start);
+#endif  // ADE7880_PROFILING
   return true;
 }
 
@@ -437,8 +528,13 @@ void IRAM_ATTR Ade7880Isr1(void) {
   }
 }
 
+/*********************************************************************************************/
+
 void Ade7880Cycle(void) {
-  // Cycle sequence (takes 5ms)
+  // Cycle sequence (takes 55ms)
+#ifdef ADE7880_PROFILING
+  uint32_t start = millis();
+#endif  // ADE7880_PROFILING
   uint32_t status0 = Ade7880ReadVerify(ADE7880_STATUS0);                   // 0x000FEFE0
   if (!bitRead(status0, 5)) {                                              // LENERGY
     return;
@@ -482,6 +578,9 @@ void Ade7880Cycle(void) {
   Energy.frequency[0] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD);    // Page 34 and based on ADE7880_COMPMODE_FREQ
   Energy.frequency[1] = 256000.0f / Ade7880ReadVerify(ADE7880_BPERIOD);
   Energy.frequency[2] = 256000.0f / Ade7880ReadVerify(ADE7880_CPERIOD);
+#ifdef ADE7880_PROFILING
+  AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Cycle in %d ms"), millis() - start);
+#endif  // ADE7880_PROFILING
 }
 
 void Ade7880Service0(void) {
@@ -499,6 +598,8 @@ void IRAM_ATTR Ade7880Isr0(void) {
   }
 }
 
+/*********************************************************************************************/
+
 void Ade7880EnergyEverySecond(void) {
   for (uint32_t i = 0; i < 3; i++) {
     if (Ade7880.active_energy[i] != 0) {
@@ -509,6 +610,10 @@ void Ade7880EnergyEverySecond(void) {
 
 void Ade7880DrvInit(void) {
   if (PinUsed(GPIO_ADE7880_IRQ) && PinUsed(GPIO_ADE7880_IRQ, 1)) {
+
+#ifdef ADE7880_PROFILING
+    uint32_t start = millis();
+#endif  // ADE7880_PROFILING
 
     int reset = Pin(GPIO_RESET);
     if (-1 == reset) { reset = 16; }                                       // Reset pin ADE7880 in Shelly 3EM
@@ -528,6 +633,11 @@ void Ade7880DrvInit(void) {
     uint32_t timeout = millis() + 400;
     while (!TimeReached(timeout)) {                                        // Wait up to 400 mSec
       if (1 == Ade7880.irq1_state) {
+
+#ifdef ADE7880_PROFILING
+        AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Reset in %d ms"), millis() - start);
+#endif  // ADE7880_PROFILING
+
         if (Ade7880Service1()) {
           if (I2cSetDevice(ADE7880_ADDR)) {
             I2cSetActiveFound(ADE7880_ADDR, "ADE7880");
