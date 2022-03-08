@@ -102,13 +102,13 @@ void PwmApplyGPIO(bool force_update_all) {
     TasmotaGlobal.pwm_cur_value[i] = pwm_val;
     TasmotaGlobal.pwm_cur_phase[i] = pwm_phase;
   }
-  AddLog(LOG_LEVEL_INFO, "PWM: Val=%03X-%03X-%03X-%03X-%03X Phase=%03X-%03X-%03X-%03X-%03X Range=%03X",
-                          TasmotaGlobal.pwm_cur_value[0], TasmotaGlobal.pwm_cur_value[1], TasmotaGlobal.pwm_cur_value[2], TasmotaGlobal.pwm_cur_value[3],
-                          TasmotaGlobal.pwm_cur_value[4],
-                          TasmotaGlobal.pwm_cur_phase[0], TasmotaGlobal.pwm_cur_phase[1], TasmotaGlobal.pwm_cur_phase[2], TasmotaGlobal.pwm_cur_phase[3],
-                          TasmotaGlobal.pwm_cur_phase[4],
-                          Settings->pwm_range
-                          );
+  // AddLog(LOG_LEVEL_INFO, "PWM: Val=%03X-%03X-%03X-%03X-%03X Phase=%03X-%03X-%03X-%03X-%03X Range=%03X",
+  //                         TasmotaGlobal.pwm_cur_value[0], TasmotaGlobal.pwm_cur_value[1], TasmotaGlobal.pwm_cur_value[2], TasmotaGlobal.pwm_cur_value[3],
+  //                         TasmotaGlobal.pwm_cur_value[4],
+  //                         TasmotaGlobal.pwm_cur_phase[0], TasmotaGlobal.pwm_cur_phase[1], TasmotaGlobal.pwm_cur_phase[2], TasmotaGlobal.pwm_cur_phase[3],
+  //                         TasmotaGlobal.pwm_cur_phase[4],
+  //                         Settings->pwm_range
+  //                         );
   PwmSaveToSettings();    // copy to Settings
   PwmRearmChanges();      // reset expected changes
 }
