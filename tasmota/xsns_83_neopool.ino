@@ -114,15 +114,15 @@ enum NeoPoolRegister {
   // GLOBAL page (0x02xx)
   MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        undocumented - cell runtime (32 bit) - low word
   MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        undocumented - cell runtime (32 bit) - high word
-  MBF_CELL_RUNTIME_PART_LOW,              // 0x0208         undocumented - cell part runtime (32 bit) - low word
-  MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209         undocumented - cell part runtime (32 bit) - high word
-  MBF_BOOST_CTRL = 0x020C,                // 0x020C         undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
-  MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214         undocumented - cell runtime polarity A (32 bit) - low word
-  MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215         undocumented - cell runtime polarity A (32 bit) - high word
-  MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216         undocumented - cell runtime polarity B (32 bit) - low word
-  MBF_CELL_RUNTIME_POLB_HIGH,             // 0x0217         undocumented - cell runtime polarity B (32 bit) - high word
-  MBF_CELL_RUNTIME_POL_CHANGES_LOW,       // 0x0218         undocumented - cell runtime polarity changes (32 bit) - low word
-  MBF_CELL_RUNTIME_POL_CHANGES_HIGH,      // 0x0219         undocumented - cell runtime polarity changes (32 bit) - high word
+  MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        undocumented - cell part runtime (32 bit) - low word
+  MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209*        undocumented - cell part runtime (32 bit) - high word
+  MBF_BOOST_CTRL = 0x020C,                // 0x020C*        undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
+  MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214*        undocumented - cell runtime polarity A (32 bit) - low word
+  MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215*        undocumented - cell runtime polarity A (32 bit) - high word
+  MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216*        undocumented - cell runtime polarity B (32 bit) - low word
+  MBF_CELL_RUNTIME_POLB_HIGH,             // 0x0217*        undocumented - cell runtime polarity B (32 bit) - high word
+  MBF_CELL_RUNTIME_POL_CHANGES_LOW,       // 0x0218*        undocumented - cell runtime polarity changes (32 bit) - low word
+  MBF_CELL_RUNTIME_POL_CHANGES_HIGH,      // 0x0219*        undocumented - cell runtime polarity changes (32 bit) - high word
   MBF_HIDRO_MODULE_VERSION = 0x0280,      // 0x0280         undocumented - Hydrolysis module version
   MBF_HIDRO_MODULE_CONNECTIVITY = 0x0281, // 0x0281         undocumented - Hydrolysis module connection quality (in myriad: 0..10000)
   MBF_SET_MANUAL_CTRL = 0x0289,           // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
@@ -609,13 +609,13 @@ struct {
   uint16_t *data;
 } NeoPoolReg[] = {
   // 7 entries each polled every 250ms needs 1750 ms for complete register set
-  {MBF_ION_CURRENT,       MBF_NOTIFICATION                - MBF_ION_CURRENT       + 1, nullptr},
-  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_HIGH           - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
-  {MBF_PAR_VERSION,       MBF_PAR_MODEL                   - MBF_PAR_VERSION       + 1, nullptr},
-  {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO               - MBF_PAR_TIME_LOW      + 1, nullptr},
-  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF         - MBF_PAR_ION           + 1, nullptr},
-  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE - MBF_PAR_UICFG_MACHINE + 1, nullptr},
-  {MBF_VOLT_24_36,        MBF_VOLT_12                     - MBF_VOLT_24_36        + 1, nullptr}
+  {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},
+  {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
+  {MBF_PAR_VERSION,       MBF_PAR_MODEL                     - MBF_PAR_VERSION       + 1, nullptr},
+  {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO                 - MBF_PAR_TIME_LOW      + 1, nullptr},
+  {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF           - MBF_PAR_ION           + 1, nullptr},
+  {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE   - MBF_PAR_UICFG_MACHINE + 1, nullptr},
+  {MBF_VOLT_24_36,        MBF_VOLT_12                       - MBF_VOLT_24_36        + 1, nullptr}
 };
 
 // NeoPool modbus function errors
@@ -1314,6 +1314,12 @@ uint16_t NeoPoolGetData(uint16_t addr)
 }
 
 
+uint32_t NeoPoolGetDataLong(uint16_t addr)
+{
+  return ((uint32_t)NeoPoolGetData(addr) + ((uint32_t)NeoPoolGetData(addr+1) << 16));
+}
+
+
 uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
 {
   if (speedvalue >= 4) {
@@ -1375,6 +1381,11 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_FILTRATION_SPEED       "Speed"
 #define D_NEOPOOL_JSON_HYDROLYSIS             "Hydrolysis"
 #define D_NEOPOOL_JSON_CELL_RUNTIME           "Runtime"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL     "Total"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_PART      "Part"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_POLA      "PolA"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_POLB      "PolB"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_CHANGES   "Changes"
 #define D_NEOPOOL_JSON_IONIZATION             "Ionization"
 #define D_NEOPOOL_JSON_LIGHT                  "Light"
 #define D_NEOPOOL_JSON_LIGHT_MODE             "Mode"
@@ -1419,7 +1430,7 @@ void NeoPoolShow(bool json)
 #ifndef NEOPOOL_OPTIMIZE_READINGS
     // Time
     ResponseAppend_P(PSTR("\"" D_JSON_TIME "\":\"%s\""),
-      GetDT((uint32_t)NeoPoolGetData(MBF_PAR_TIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_PAR_TIME_HIGH) << 16)).c_str());
+      GetDT(NeoPoolGetDataLong(MBF_PAR_TIME_LOW)).c_str());
 
     // Type
     ResponseAppend_P(PSTR(","));
@@ -1513,8 +1524,13 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":\"%s\""),
-        GetDuration((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16)).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));
+      ResponseAppend_P(PSTR( "\""  D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_LOW)).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_PART  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_PART_LOW)).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_POLA  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_POLA_LOW)).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_POLB  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_POLB_LOW)).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_CHANGES  "\":%ld"), NeoPoolGetDataLong(MBF_CELL_RUNTIME_POL_CHANGES_LOW));
+      ResponseJsonEnd();
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 
       // S1
@@ -1595,7 +1611,7 @@ void NeoPoolShow(bool json)
       // Time
       char dt[20];
       TIME_T tmpTime;
-      BreakTime((uint32_t)NeoPoolGetData(MBF_PAR_TIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_PAR_TIME_HIGH) << 16), tmpTime);
+      BreakTime(NeoPoolGetDataLong(MBF_PAR_TIME_LOW), tmpTime);
       snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02d %02d:%02d"),
         tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_TIME, neopool_type, dt);
@@ -1785,7 +1801,7 @@ void NeoPoolShow(bool json)
     {
       // Cell runtime
       WSContentSend_PD(HTTP_SNS_NEOPOOL_CELL_RUNTIME, neopool_type,
-        GetDuration((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_LOW) + ((uint32_t)NeoPoolGetData(MBF_CELL_RUNTIME_HIGH) << 16)).c_str());
+        GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_LOW)).c_str());
     }
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 
