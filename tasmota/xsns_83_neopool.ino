@@ -180,8 +180,8 @@ enum NeoPoolRegister {
   MBF_PAR_UV_HIDE_WARN,                   // 0x0428  mask   Suppression for warning messages in the UV mode.
   MBF_PAR_UV_RELAY_GPIO,                  // 0x0429         Relay number assigned to the UV function.
   MBF_PAR_PH_PUMP_REP_TIME_ON,            // 0x042A  mask   Time that the pH pump will be turn on in the repetitive mode (see MBMSK_PH_PUMP_*). Contains a special time format, see desc for MBMSK_PH_PUMP_TIME.
-  MBF_PAR_PH_PUMP_REP_TIME_OFF,           // 0x042B         Time that the pH pump will be turn off in the repetitive mode. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
-  MBF_PAR_HIDRO_COVER_ENABLE,             // 0x042C         Options for the hydrolysis/electrolysis module (see MBMSK_HIDRO_*)
+  MBF_PAR_PH_PUMP_REP_TIME_OFF,           // 0x042B  mask   Time that the pH pump will be turn off in the repetitive mode. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
+  MBF_PAR_HIDRO_COVER_ENABLE,             // 0x042C  mask   Options for the hydrolysis/electrolysis module (see MBMSK_HIDRO_*)
   MBF_PAR_HIDRO_COVER_REDUCTION,          // 0x042D         Configured levels for the cover reduction and the hydrolysis shutdown temperature options: LSB = Percentage for the cover reduction, MSB = Temperature level for the hydrolysis shutdown (see MBMSK_HIDRO_*)
   MBF_PAR_PUMP_RELAY_TIME_OFF,            // 0x042E         Time level in minutes or seconds that the dosing pump must remain off when the temporized pump mode is selected. This time level register applies to all pumps except pH. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
   MBF_PAR_PUMP_RELAY_TIME_ON,             // 0x042F         Time level in minutes or seconds that the dosing pump must remain on when the temporized pump mode is selected. This time level register applies to all pumps except pH. Contains a special time format, see desc for MBMSK_PH_PUMP_TIME, has no upper configuration bit 0x8000
@@ -292,82 +292,82 @@ enum NeoPoolConstAndBitMask {
   MBV_PH_BASE_ALARM5 = 5,                           // pH lower than the set point indicated in PH2 by 0.3
   MBV_PH_BASE_ALARM6 = 6,                           // undocumented - acid tank level alarm
 
-  MBMSK_PH_STATUS_CTRL_BY_FL              = 0x0400, // Control status of the pH module by flow detection (if enabled by MBF_PAR_HIDRO_ION_CAUDAL)
-  MBMSK_PH_STATUS_ACID_PUMP_ACTIVE        = 0x0800, // Acid pH pump relay on (pump on)
-  MBMSK_PH_STATUS_BASE_PUMP_ACTIVE        = 0x1000, // Base pH Pump Relay On (Pump On)
-  MBMSK_PH_STATUS_CTRL_ACTIVE             = 0x2000, // Active pH control module and controlling pumps
-  MBMSK_PH_STATUS_MEASURE_ACTIVE          = 0x4000, // Active pH measurement module and making measurements. If this bit is at 1, the pH bar should be displayed.
-  MBMSK_PH_STATUS_MODULE_PRESENT          = 0x8000, // Detected pH measurement module
+  MBMSK_PH_STATUS_CTRL_BY_FL              = 0x0400, // 10 Control status of the pH module by flow detection (if enabled by MBF_PAR_HIDRO_ION_CAUDAL)
+  MBMSK_PH_STATUS_ACID_PUMP_ACTIVE        = 0x0800, // 11 Acid pH pump relay on (pump on)
+  MBMSK_PH_STATUS_BASE_PUMP_ACTIVE        = 0x1000, // 12 Base pH Pump Relay On (Pump On)
+  MBMSK_PH_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active pH control module and controlling pumps
+  MBMSK_PH_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active pH measurement module and making measurements. If this bit is at 1, the pH bar should be displayed.
+  MBMSK_PH_STATUS_MODULE_PRESENT          = 0x8000, // 15 Detected pH measurement module
 
   // MBF_RX_STATUS
-  MBMSK_RX_STATUS_RX_PUMP_ACTIVE          = 0x1000, // Redox pump relay on (pump activated)
-  MBMSK_RX_STATUS_CTRL_ACTIVE             = 0x2000, // Active Redox control module and controlling pump
-  MBMSK_RX_STATUS_MEASURE_ACTIVE          = 0x4000, // Active Redox measurement module and performing measurements. If this bit is at 1, the Redox bar should be displayed on the screen.
-  MBMSK_RX_STATUS_MODULE_PRESENT          = 0x8000, // Redox measurement module detected in the system
+  MBMSK_RX_STATUS_RX_PUMP_ACTIVE          = 0x1000, // 12 Redox pump relay on (pump activated)
+  MBMSK_RX_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active Redox control module and controlling pump
+  MBMSK_RX_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active Redox measurement module and performing measurements. If this bit is at 1, the Redox bar should be displayed on the screen.
+  MBMSK_RX_STATUS_MODULE_PRESENT          = 0x8000, // 15 Redox measurement module detected in the system
 
   // MBF_CL_STATUS
-  MBMSK_CL_STATUS_CHLORINE_FLOW           = 0x0008, // Chlorine Probe Flow Sensor. This sensor is built into the probe itself and serves to detect whether there is water passing through the chlorine measurement probe. In case the sensor is at 0, the chlorine measurement will not be valid.
-  MBMSK_CL_STATUS_CL_PUMP_ACTIVE          = 0x1000, // Chlorine pump relay on (pump on)
-  MBMSK_CL_STATUS_CTRL_ACTIVE             = 0x2000, // Active chlorine control module and controlling pump
-  MBMSK_CL_STATUS_MEASURE_ACTIVE          = 0x4000, // Active chlorine measurement module and taking measurements. If this bit is 1, the chlorine bar should be displayed on the screen.
-  MBMSK_CL_STATUS_MODULE_PRESENT          = 0x8000, // Chlorine measurement module detected in the system
+  MBMSK_CL_STATUS_CHLORINE_FLOW           = 0x0008, //  3 Chlorine Probe Flow Sensor. This sensor is built into the probe itself and serves to detect whether there is water passing through the chlorine measurement probe. In case the sensor is at 0, the chlorine measurement will not be valid.
+  MBMSK_CL_STATUS_CL_PUMP_ACTIVE          = 0x1000, // 12 Chlorine pump relay on (pump on)
+  MBMSK_CL_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active chlorine control module and controlling pump
+  MBMSK_CL_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active chlorine measurement module and taking measurements. If this bit is 1, the chlorine bar should be displayed on the screen.
+  MBMSK_CL_STATUS_MODULE_PRESENT          = 0x8000, // 15 Chlorine measurement module detected in the system
 
   // MBF_CD_STATUS
-  MBMSK_CD_STATUS_RX_PUMP_ACTIVE          = 0x1000, // Conductivity pump relay on (pump active)
-  MBMSK_CD_STATUS_CTRL_ACTIVE             = 0x2000, // Active conductivity control module and controlling pump
-  MBMSK_CD_STATUS_MEASURE_ACTIVE          = 0x4000, // Active conductivity measurement module and making measurements. If this bit is 1, the conditionality bar should be displayed on the screen.
-  MBMSK_CD_STATUS_MODULE_PRESENT          = 0x8000, // Conductivity measurement module detected in the system
+  MBMSK_CD_STATUS_RX_PUMP_ACTIVE          = 0x1000, // 12 Conductivity pump relay on (pump active)
+  MBMSK_CD_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active conductivity control module and controlling pump
+  MBMSK_CD_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active conductivity measurement module and making measurements. If this bit is 1, the conditionality bar should be displayed on the screen.
+  MBMSK_CD_STATUS_MODULE_PRESENT          = 0x8000, // 15 Conductivity measurement module detected in the system
 
   // MBF_ION_STATUS
-  MBMSK_ION_STATUS_ON_TARGET              = 0x0001, // On Target - the system has reached the set point.
-  MBMSK_ION_STATUS_LOW                    = 0x0002, // Low - Ionization cannot reach the set point.
-  MBMSK_ION_STATUS_RESERVED               = 0x0004,
-  MBMSK_ION_STATUS_PROGTIME_EXCEEDED      = 0x0008, // Pr off - The programmed ionization time has been exceeded
-  MBMSK_ION_STATUS_POLOFF                 = 0x1000, // Ion Pol off - Ionization in dead time
-  MBMSK_ION_STATUS_POL1                   = 0x2000, // Ion Pol 1 - Ionization working in polarization 1
-  MBMSK_ION_STATUS_POL2                   = 0x4000, // Ion Pol 2 - Ionization working in polarization 2
+  MBMSK_ION_STATUS_ON_TARGET              = 0x0001, //  0 On Target - the system has reached the set point.
+  MBMSK_ION_STATUS_LOW                    = 0x0002, //  1 Low - Ionization cannot reach the set point.
+  MBMSK_ION_STATUS_RESERVED               = 0x0004, //  2
+  MBMSK_ION_STATUS_PROGTIME_EXCEEDED      = 0x0008, //  3 Pr off - The programmed ionization time has been exceeded
+  MBMSK_ION_STATUS_POLOFF                 = 0x1000, // 12 Ion Pol off - Ionization in dead time
+  MBMSK_ION_STATUS_POL1                   = 0x2000, // 13 Ion Pol 1 - Ionization working in polarization 1
+  MBMSK_ION_STATUS_POL2                   = 0x4000, // 14 Ion Pol 2 - Ionization working in polarization 2
 
   // MBF_HIDRO_STATUS
-  MBMSK_HIDRO_STATUS_ON_TARGET            = 0x0001, // On Target - the system has reached the set point.
-  MBMSK_HIDRO_STATUS_LOW                  = 0x0002, // Low - Hydrolysis cannot reach the set point.
-  MBMSK_HIDRO_STATUS_RESERVED             = 0x0004,
-  MBMSK_HIDRO_STATUS_FL1                  = 0x0008, // Flow - Hydrolysis cell flow indicator (FL1)
-  MBMSK_HIDRO_STATUS_COVER                = 0x0010, // Cover - Cover input activated
-  MBMSK_HIDRO_STATUS_MODULE_ACTIVE        = 0x0020, // Active - Active Module hydrolysis (hidroEnable)
-  MBMSK_HIDRO_STATUS_CTRL_ACTIVE          = 0x0040, // Control - Hydrolysis module working with regulation (hydroControlEnable)
-  MBMSK_HIDRO_STATUS_REDOX_ENABLED        = 0x0080, // Redox enable - Activation of hydrolysis by the redox module
-  MBMSK_HIDRO_STATUS_SHOCK_ENABLED        = 0x0100, // Hydro shock enabled - Chlorine shock mode enabled
-  MBMSK_HIDRO_STATUS_FL2                  = 0x0200, // FL2 - Chlorine probe flow indicator, if present
-  MBMSK_HIDRO_STATUS_ENABLED_BY_CHLORINE  = 0x0400, // Cl enable - Activation of hydrolysis by the chlorine module
-  MBMSK_HIDRO_STATUS_POLOFF               = 0x1000, // Ion Pol off - Ionization in dead time
-  MBMSK_HIDRO_STATUS_POL1                 = 0x2000, // Ion Pol 1 - Ionization working in polarization 1
-  MBMSK_HIDRO_STATUS_POL2                 = 0x4000, // Ion Pol 2 - Ionization working in polarization 2
+  MBMSK_HIDRO_STATUS_ON_TARGET            = 0x0001, //  0 On Target - the system has reached the set point.
+  MBMSK_HIDRO_STATUS_LOW                  = 0x0002, //  1 Low - Hydrolysis cannot reach the set point.
+  MBMSK_HIDRO_STATUS_RESERVED             = 0x0004, //  2
+  MBMSK_HIDRO_STATUS_FL1                  = 0x0008, //  3 Flow - Hydrolysis cell flow indicator (FL1)
+  MBMSK_HIDRO_STATUS_COVER                = 0x0010, //  4 Cover - Cover input activated
+  MBMSK_HIDRO_STATUS_MODULE_ACTIVE        = 0x0020, //  5 Active - Active Module hydrolysis (hidroEnable)
+  MBMSK_HIDRO_STATUS_CTRL_ACTIVE          = 0x0040, //  6 Control - Hydrolysis module working with regulation (hydroControlEnable)
+  MBMSK_HIDRO_STATUS_REDOX_ENABLED        = 0x0080, //  7 Redox enable - Activation of hydrolysis by the redox module
+  MBMSK_HIDRO_STATUS_SHOCK_ENABLED        = 0x0100, //  8 Hydro shock enabled - Chlorine shock mode enabled
+  MBMSK_HIDRO_STATUS_FL2                  = 0x0200, //  9 FL2 - Chlorine probe flow indicator, if present
+  MBMSK_HIDRO_STATUS_ENABLED_BY_CHLORINE  = 0x0400, // 10 Cl enable - Activation of hydrolysis by the chlorine module
+  MBMSK_HIDRO_STATUS_POLOFF               = 0x1000, // 12 Ion Pol off - Ionization in dead time
+  MBMSK_HIDRO_STATUS_POL1                 = 0x2000, // 13 Ion Pol 1 - Ionization working in polarization 1
+  MBMSK_HIDRO_STATUS_POL2                 = 0x4000, // 14 Ion Pol 2 - Ionization working in polarization 2
 
   // MBF_RELAY_STATE
-  MBMSK_RELAY_STATE1                      = 0x0001, // Relay 1 state (1 on; 0 off) (normally assigned to ph)
-  MBMSK_RELAY_STATE2                      = 0x0002, // Relay 2 state (1 on; 0 off) (normally assigned to filtering)
-  MBMSK_RELAY_STATE3                      = 0x0004, // Relay 3 status (1 on; 0 off) (normally assigned to lighting)
-  MBMSK_RELAY_STATE4                      = 0x0008, // Relay 4 status (1 on; 0 off)
-  MBMSK_RELAY_STATE5                      = 0x0010, // Relay 5 status (1 on; 0 off)
-  MBMSK_RELAY_STATE6                      = 0x0020, // Relay 6 status (1 on; 0 off)
-  MBMSK_RELAY_STATE7                      = 0x0040, // Relay 7 status (1 on; 0 off)
-  MBMSK_RELAY_FILTSPEED_LOW               = 0x0100, // Filtration low speed
-  MBMSK_RELAY_FILTSPEED_MID               = 0x0200, // Filtration mid speed
-  MBMSK_RELAY_FILTSPEED_HIGH              = 0x0400, // Filtration high speed
+  MBMSK_RELAY_STATE1                      = 0x0001, //  0 Relay 1 state (1 on; 0 off) (normally assigned to ph)
+  MBMSK_RELAY_STATE2                      = 0x0002, //  1 Relay 2 state (1 on; 0 off) (normally assigned to filtering)
+  MBMSK_RELAY_STATE3                      = 0x0004, //  2 Relay 3 status (1 on; 0 off) (normally assigned to lighting)
+  MBMSK_RELAY_STATE4                      = 0x0008, //  3 Relay 4 status (1 on; 0 off)
+  MBMSK_RELAY_STATE5                      = 0x0010, //  4 Relay 5 status (1 on; 0 off)
+  MBMSK_RELAY_STATE6                      = 0x0020, //  5 Relay 6 status (1 on; 0 off)
+  MBMSK_RELAY_STATE7                      = 0x0040, //  6 Relay 7 status (1 on; 0 off)
+  MBMSK_RELAY_FILTSPEED_LOW               = 0x0100, //  8 Filtration low speed
+  MBMSK_RELAY_FILTSPEED_MID               = 0x0200, //  9 Filtration mid speed
+  MBMSK_RELAY_FILTSPEED_HIGH              = 0x0400, // 10 Filtration high speed
 
   // MBF_NOTIFICATION
-  MBMSK_NOTIF_MODBUS_CHANGED              = 0x0001,
-  MBMSK_NOTIF_GLOBAL_CHANGED              = 0x0002,
-  MBMSK_NOTIF_FACTORY_CHANGED             = 0x0004,
-  MBMSK_NOTIF_INSTALLER_CHANGED           = 0x0008,
-  MBMSK_NOTIF_USER_CHANGED                = 0x0010,
-  MBMSK_NOTIF_MISC_CHANGED                = 0x0020,
+  MBMSK_NOTIF_MODBUS_CHANGED              = 0x0001, //  0 Modbus page changed
+  MBMSK_NOTIF_GLOBAL_CHANGED              = 0x0002, //  1 Global page changed
+  MBMSK_NOTIF_FACTORY_CHANGED             = 0x0004, //  2 Factory page changed
+  MBMSK_NOTIF_INSTALLER_CHANGED           = 0x0008, //  3 Installer page changed
+  MBMSK_NOTIF_USER_CHANGED                = 0x0010, //  4 User page changed
+  MBMSK_NOTIF_MISC_CHANGED                = 0x0020, //  5 Misc page changed
 
   // MBF_PAR_MODEL
-  MBMSK_MODEL_ION                         = 0x0001, // The equipment includes ionization control
-  MBMSK_MODEL_HIDRO                       = 0x0002, // The equipment includes hydrolysis or electrolysis
-  MBMSK_MODEL_UV                          = 0x0004, // The equipment includes disinfection control by ultraviolet lamp
-  MBMSK_MODEL_SALINITY                    = 0x0008, // The equipment includes measurement of salinity (Fanless equipment only)
+  MBMSK_MODEL_ION                         = 0x0001, //  0 The equipment includes ionization control
+  MBMSK_MODEL_HIDRO                       = 0x0002, //  1 The equipment includes hydrolysis or electrolysis
+  MBMSK_MODEL_UV                          = 0x0004, //  2 The equipment includes disinfection control by ultraviolet lamp
+  MBMSK_MODEL_SALINITY                    = 0x0008, //  3 The equipment includes measurement of salinity (Fanless equipment only)
 
   // MBF_PAR_HIDRO_FLOW_SIGNAL
   MBV_PAR_HIDRO_FLOW_SIGNAL_STD           = 0,      // Standard detection based on conduction between an auxiliary electrode and either of the two electrodes of the cell.
@@ -377,13 +377,13 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_HIDRO_FLOW_SIGNAL_PADDLE_OR_STD = 4,      // Detection based on the paddle switch, associated with the FL1 input, or the standard detector. The system will understand that there is flow when either of the two elements detects flow. Hydrolysis will stop only if both detectors detect no flow.
 
   // MBF_PAR_HIDRO_ION_CAUDAL
-  MBMSK_HIDRO_ION_CAUDAL_FL1_CTRL         = 0x0001, // If the FL1 signal is detected to be inactive, the actuation of the different elements of the system is disabled.
-  MBMSK_HIDRO_ION_CAUDAL_FL2_CTRL         = 0x0002, // If the FL2 signal is detected to be inactive, the actuation of the different elements of the system is disabled.
-  MBMSK_HIDRO_ION_CAUDAL_FULL_CL_HIDRO_CTRL=0x0004, // If there is a chlorine module installed and it is detected that its flow sensor is inactive, the action of the different elements of the system is disabled.
-  MBMSK_HIDRO_ION_CAUDAL_SLAVE            = 0x0008, // The value of the slave input is taken and if it is inactive, the action of the different elements of the system is disabled.
-  MBMSK_HIDRO_ION_CAUDAL_PADDLE_SWITCH    = 0x0010,
-  MBMSK_HIDRO_ION_CAUDAL_PADDLE_SWITCH_INV= 0x0020,
-  MBMSK_HIDRO_ION_CAUDAL_INVERSION        = 0x0080, // This bit determines if active means open or closed for the input electrical signals, and allows to reverse the operation for example to implement a paddle switch that closes when there is no flow.
+  MBMSK_HIDRO_ION_CAUDAL_FL1_CTRL         = 0x0001, //  0 If the FL1 signal is detected to be inactive, the actuation of the different elements of the system is disabled.
+  MBMSK_HIDRO_ION_CAUDAL_FL2_CTRL         = 0x0002, //  1 If the FL2 signal is detected to be inactive, the actuation of the different elements of the system is disabled.
+  MBMSK_HIDRO_ION_CAUDAL_FULL_CL_HIDRO_CTRL=0x0004, //  2 If there is a chlorine module installed and it is detected that its flow sensor is inactive, the action of the different elements of the system is disabled.
+  MBMSK_HIDRO_ION_CAUDAL_SLAVE            = 0x0008, //  3 The value of the slave input is taken and if it is inactive, the action of the different elements of the system is disabled.
+  MBMSK_HIDRO_ION_CAUDAL_PADDLE_SWITCH    = 0x0010, //  4
+  MBMSK_HIDRO_ION_CAUDAL_PADDLE_SWITCH_INV= 0x0020, //  5
+  MBMSK_HIDRO_ION_CAUDAL_INVERSION        = 0x0080, //  7 This bit determines if active means open or closed for the input electrical signals, and allows to reverse the operation for example to implement a paddle switch that closes when there is no flow.
 
   // MBF_PAR_FILT_MODE
   MBV_PAR_FILT_MANUAL                     = 0,      // This mode allows to turn the filtration (and all other systems that depend on it) on and off manually.
@@ -398,8 +398,8 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_UV_MODE1                        = 1,      // UV is switched on and it will turn on when filtration starts. Time counter for the UV lamp will be incremented.
 
   // MBF_PAR_UV_HIDE_WARN
-  MBMSK_UV_HIDE_WARN_CLEAN                = 0x0001,
-  MBMSK_UV_HIDE_WARN_REPLACE              = 0x0002,
+  MBMSK_UV_HIDE_WARN_CLEAN                = 0x0001, //  0
+  MBMSK_UV_HIDE_WARN_REPLACE              = 0x0002, //  1
 
   // MBF_PAR_PH_PUMP_REP_TIME_ON
   MBMSK_PH_PUMP_TIME                      = 0x7FFF, // Time level for the pump: The time level has a special coding format. It can cover periods of 1 to 180 seconds with 1 second granularity and from 3 to 999 minutes with 1 minute granularity. f the value is set to 30 for example, a 30 second time will be considered. If we have the value 200, we will have an on time of (200-180+3) = 23 minutes.
@@ -515,38 +515,38 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_CTIMER_FCT_AUXREL7              = 0x4000, // Auxiliary function assigned to relay 7
 
   // MBF_PAR_UICFG_SOUND
-  MBMSK_PAR_SOUND_CLICK                   = 0x0001, // Click sounds every time a key is pressed
-  MBMSK_PAR_SOUND_POPUP                   = 0x0002, // Sound plays each time a pop-up message appears
-  MBMSK_PAR_SOUND_ALERTS                  = 0x0004, // An alarm sounds when there is an alert on the equipment (AL3)
-  MBMSK_PAR_SOUND_FILTRATION              = 0x0008, // Audible warning every time the filtration is started
+  MBMSK_PAR_SOUND_CLICK                   = 0x0001, //  0 Click sounds every time a key is pressed
+  MBMSK_PAR_SOUND_POPUP                   = 0x0002, //  1 Sound plays each time a pop-up message appears
+  MBMSK_PAR_SOUND_ALERTS                  = 0x0004, //  2 An alarm sounds when there is an alert on the equipment (AL3)
+  MBMSK_PAR_SOUND_FILTRATION              = 0x0008, //  3 Audible warning every time the filtration is started
 
   // MBF_PAR_UICFG_VISUAL_OPTIONS
-  MBMSK_HIDE_TEMPERATURE                  = 0x0001, // Hide temperature measurement from main menu
-  MBMSK_HIDE_FILTRATION                   = 0x0002, // Hide filter status from main menu
-  MBMSK_HIDE_LIGHTING                     = 0x0004, // Hide lighting status from main menu
-  MBMSK_HIDE_AUX_RELAYS                   = 0x0008, // Hide auxiliary relay status from main menu.
-  MBMSK_VO_HIDE_EXTRA_REGS                = 0x0010, // Hide the option to adjust additional registers in the installer menu
-  MBMSK_VO_HIDE_RELAY_CONFIG              = 0x0020, // Hide the relay configuration option in the installer menu.
-  MBMSK_VO_SLOW_FILTER_HIDRO_LEVEL        = 0x0040, // This option enables the slow hydrolysis level filtering option when the pH module is installed. This is especially important when the acid / base dosing is done very close to the hydrolysis probe.
-  MBMSK_VO_HIDE_SALINITY_MAIN_WINDOW      = 0x0080, // Hides the salinity measurement from main screen.
-  MBMSK_VO_SHOW_SPECIAL_REGS              = 0x0100, // Displays the special register set configuration menu in the installer menu.
-  MBMSK_SHOW_HID_SHUTDOWN_BY_TEMPERATURE  = 0x0200, // Displays the option to turn off hydrolysis by temperature.
-  MBMSK_SHOW_CELL_SELECTION               = 0x0400, // Enables access to the cell selection menu from the service menu option of the configuration menu.
-  MBMSK_SHOW_PUMP_TYPE                    = 0x0800, // Displays the option for selecting the type of filtration pump (normal, three speeds, etc.).
-  MBMSK_SHOW_QUICK_MENU                   = 0x1000, // Displays the quick access menu instead of the conventional menu, when the SET key is pressed from the main display screen. Filtration (normal, three speeds, etc).
-  MBMSK_SHOW_OXI_MAIN_DATA_SCREEN         = 0x2000, // Displays main screen shown with a particular style called OXI
-  MBMSK_SHOW_INSTALLER_MENU               = 0x4000, // Shows access to the installer menu in the main menu without the need for a password.
-  MBMSK_SHOW_FACTORY_MENU                 = 0x8000, // Shows access to the factory menu in the main menu without the need for a password.
+  MBMSK_HIDE_TEMPERATURE                  = 0x0001, //  0 Hide temperature measurement from main menu
+  MBMSK_HIDE_FILTRATION                   = 0x0002, //  1 Hide filter status from main menu
+  MBMSK_HIDE_LIGHTING                     = 0x0004, //  2 Hide lighting status from main menu
+  MBMSK_HIDE_AUX_RELAYS                   = 0x0008, //  3 Hide auxiliary relay status from main menu.
+  MBMSK_VO_HIDE_EXTRA_REGS                = 0x0010, //  4 Hide the option to adjust additional registers in the installer menu
+  MBMSK_VO_HIDE_RELAY_CONFIG              = 0x0020, //  5 Hide the relay configuration option in the installer menu.
+  MBMSK_VO_SLOW_FILTER_HIDRO_LEVEL        = 0x0040, //  6 This option enables the slow hydrolysis level filtering option when the pH module is installed. This is especially important when the acid / base dosing is done very close to the hydrolysis probe.
+  MBMSK_VO_HIDE_SALINITY_MAIN_WINDOW      = 0x0080, //  7 Hides the salinity measurement from main screen.
+  MBMSK_VO_SHOW_SPECIAL_REGS              = 0x0100, //  8 Displays the special register set configuration menu in the installer menu.
+  MBMSK_SHOW_HID_SHUTDOWN_BY_TEMPERATURE  = 0x0200, //  9 Displays the option to turn off hydrolysis by temperature.
+  MBMSK_SHOW_CELL_SELECTION               = 0x0400, // 10 Enables access to the cell selection menu from the service menu option of the configuration menu.
+  MBMSK_SHOW_PUMP_TYPE                    = 0x0800, // 11 Displays the option for selecting the type of filtration pump (normal, three speeds, etc.).
+  MBMSK_SHOW_QUICK_MENU                   = 0x1000, // 12 Displays the quick access menu instead of the conventional menu, when the SET key is pressed from the main display screen. Filtration (normal, three speeds, etc).
+  MBMSK_SHOW_OXI_MAIN_DATA_SCREEN         = 0x2000, // 13 Displays main screen shown with a particular style called OXI
+  MBMSK_SHOW_INSTALLER_MENU               = 0x4000, // 14 Shows access to the installer menu in the main menu without the need for a password.
+  MBMSK_SHOW_FACTORY_MENU                 = 0x8000, // 15 Shows access to the factory menu in the main menu without the need for a password.
 
   // MBF_PAR_UICFG_VISUAL_OPTIONS_EXT
-  MBMSK_VOE_SHOW_PNEUMATIC_VALVE          = 0x0001, // Shows the pneumatic valve
-  MBMSK_VOE_HIDE_AUX_REL_DEPENDENCY       = 0x0002, // Hides the auxiliary relay dependency
-  MBMSK_VOE_SHOW_BESGO_NAME               = 0x0004, // Show “Besgo” instead of “Pneumatic” for the pneumatic valve titles.
+  MBMSK_VOE_SHOW_PNEUMATIC_VALVE          = 0x0001, //  0 Shows the pneumatic valve
+  MBMSK_VOE_HIDE_AUX_REL_DEPENDENCY       = 0x0002, //  1 Hides the auxiliary relay dependency
+  MBMSK_VOE_SHOW_BESGO_NAME               = 0x0004, //  2 Show “Besgo” instead of “Pneumatic” for the pneumatic valve titles.
 
   // MBF_PAR_UICFG_MACH_VISUAL_STYLE
-  MBMSK_VS_FORCE_UNITS_GRH                = 0x2000, // Display the hydrolysis/electrolysis in units of grams per hour (gr/h).
-  MBMSK_VS_FORCE_UNITS_PERCENTAGE         = 0x4000, // Display the hydrolysis/electrolysis in percentage units (%).
-  MBMSK_ELECTROLISIS                      = 0x8000, // Display the word electrolysis instead of hydrolysis in generic mode.
+  MBMSK_VS_FORCE_UNITS_GRH                = 0x2000, // 13 Display the hydrolysis/electrolysis in units of grams per hour (gr/h).
+  MBMSK_VS_FORCE_UNITS_PERCENTAGE         = 0x4000, // 14 Display the hydrolysis/electrolysis in percentage units (%).
+  MBMSK_ELECTROLISIS                      = 0x8000, // 15 Display the word electrolysis instead of hydrolysis in generic mode.
 
   // MBF_POWER_MODULE_REG_*
   MBV_POWER_MODULE_REG_INFO = 0,          // undocumented - set of 26-byte power module register stores an ASCIIZ string containing the subversion and timestamp of the module, e. g. ".57\nMay 26 2020\n01:08:10\n\0"
