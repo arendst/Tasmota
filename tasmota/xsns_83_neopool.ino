@@ -1380,6 +1380,7 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_FILTRATION_MODE        "Mode"
 #define D_NEOPOOL_JSON_FILTRATION_SPEED       "Speed"
 #define D_NEOPOOL_JSON_HYDROLYSIS             "Hydrolysis"
+#define D_NEOPOOL_JSON_HYDROLYSIS_LEVEL       "Level"
 #define D_NEOPOOL_JSON_CELL_RUNTIME           "Runtime"
 #define D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL     "Total"
 #define D_NEOPOOL_JSON_CELL_RUNTIME_PART      "Part"
@@ -1520,7 +1521,7 @@ void NeoPoolShow(bool json)
         dec = 0;
         sunit = PSTR("%");
       }
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_NEOPOOL_JSON_HYDROLYSIS_LEVEL  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
