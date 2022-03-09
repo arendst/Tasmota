@@ -64,7 +64,8 @@ void PwmSaveToSettings(void) {
 // or `-1` if no change.
 // Auto-phasing is recomputed, and changes are applied to GPIO if there is a physical GPIO configured and an actual change needed
 //
-void PwmApplyGPIO(void) {
+// force_update_all: force applying the PWM values even if the value didn't change (necessary at initialization)
+void PwmApplyGPIO(bool force_update_all) {
   uint32_t pwm_phase_accumulator = 0;     // dephase each PWM channel with the value of the previous
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
@@ -72,9 +73,6 @@ void PwmApplyGPIO(void) {
     uint32_t pwm_val = TasmotaGlobal.pwm_cur_value[i];      // logical value of PWM, 0..1023
     if (TasmotaGlobal.pwm_value[i] >= 0) { pwm_val = TasmotaGlobal.pwm_value[i]; }    // new value explicitly specified
     if (pwm_val > Settings->pwm_range) { pwm_val = Settings->pwm_range; } // prevent overflow
-
-    // gpio_val : actual value of GPIO, taking into account inversion
-    uint32_t gpio_val = bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - pwm_val : pwm_val;
 
     // compute phase
     uint32_t pwm_phase = TasmotaGlobal.pwm_cur_phase[i];    // pwm_phase is the logical phase of the active pulse, ignoring inverted
@@ -86,17 +84,17 @@ void PwmApplyGPIO(void) {
     } else {
       // compute auto-phase
       pwm_phase = pwm_phase_accumulator;
-      uint32_t pwm_phase_invert = bitRead(TasmotaGlobal.pwm_inverted, i) ? pwm_val : 0;   // move phase if inverted
-      gpio_phase = (pwm_phase + pwm_phase_invert) & Settings->pwm_range;
       // accumulate phase for next GPIO
       pwm_phase_accumulator = (pwm_phase + pwm_val) & Settings->pwm_range;
     }
 
     // apply new values to GPIO if GPIO is set
+    // AddLog(LOG_LEVEL_INFO, "PWM: i=%i used=%i pwm_val=%03X vs %03X pwm_phase=%03X vs %03X", i, PinUsed(GPIO_PWM1, i), pwm_val, TasmotaGlobal.pwm_cur_value[i], pwm_phase, TasmotaGlobal.pwm_cur_phase[i]);
     if (PinUsed(GPIO_PWM1, i)) {
-      if ((pwm_val != TasmotaGlobal.pwm_cur_value[i]) || (pwm_phase != TasmotaGlobal.pwm_cur_phase[i])) {
+      if (force_update_all || (pwm_val != TasmotaGlobal.pwm_cur_value[i]) || (pwm_phase != TasmotaGlobal.pwm_cur_phase[i])) {
         // GPIO has PWM and there is a chnage to apply, apply it
-        analogWritePhase(Pin(GPIO_PWM1, i), gpio_val, gpio_phase);
+        analogWritePhase(Pin(GPIO_PWM1, i), pwm_val, pwm_phase);
+        // AddLog(LOG_LEVEL_INFO, "PWM: analogWritePhase i=%i val=%03X phase=%03X", i, pwm_val, pwm_phase);
       }
     }
 
@@ -120,7 +118,7 @@ void CmndPwm(void)
   if (TasmotaGlobal.pwm_present && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PWMS)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= Settings->pwm_range) && PinUsed(GPIO_PWM1, XdrvMailbox.index -1)) {
       TasmotaGlobal.pwm_value[XdrvMailbox.index - 1] = XdrvMailbox.payload;
-      PwmApplyGPIO();
+      PwmApplyGPIO(false);
     }
     Response_P(PSTR("{"));
     MqttShowPWMState();  // Render the PWM status to MQTT
@@ -133,7 +131,7 @@ void GpioInitPwm(void) {
 
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     if (PinUsed(GPIO_PWM1, i)) {
-      analogAttach(Pin(GPIO_PWM1, i));
+      analogAttach(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i));
       if (i < TasmotaGlobal.light_type) {
         // force PWM GPIOs to black
         TasmotaGlobal.pwm_value[i] = 0;
@@ -147,7 +145,7 @@ void GpioInitPwm(void) {
       }
     }
   }
-  PwmApplyGPIO();   // apply all changes
+  PwmApplyGPIO(true);   // apply all changes
 }
 
 /********************************************************************************************/
@@ -157,7 +155,7 @@ void ResetPwm(void)
   for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
     TasmotaGlobal.pwm_value[i] = 0;
   }
-  PwmApplyGPIO();
+  PwmApplyGPIO(true);
 }
 
 #else // now for ESP8266

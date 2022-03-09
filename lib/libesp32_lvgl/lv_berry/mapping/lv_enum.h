@@ -2,7 +2,16 @@
 // Functions
 // ======================================================================
 
-load_font=&lv0_load_font
+load_font=@lv0_load_font
+
+// lv_anim_path_functions
+anim_path_bounce=&lv_anim_path_bounce
+anim_path_ease_in=&lv_anim_path_ease_in
+anim_path_ease_in_out=&lv_anim_path_ease_in_out
+anim_path_ease_out=&lv_anim_path_ease_out
+anim_path_linear=&lv_anim_path_linear
+anim_path_overshoot=&lv_anim_path_overshoot
+anim_path_step=&lv_anim_path_step
 
 // ======================================================================
 // Colors
