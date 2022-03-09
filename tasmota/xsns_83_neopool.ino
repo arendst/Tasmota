@@ -113,8 +113,16 @@ enum NeoPoolRegister {
 
   // GLOBAL page (0x02xx)
   MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        undocumented - cell runtime (32 bit) - low word
-  MBF_CELL_RUNTIME_HIGH = 0x0207,         // 0x0207*        undocumented - cell runtime (32 bit) - high word
+  MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        undocumented - cell runtime (32 bit) - high word
+  MBF_CELL_RUNTIME_PART_LOW,              // 0x0208         undocumented - cell part runtime (32 bit) - low word
+  MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209         undocumented - cell part runtime (32 bit) - high word
   MBF_BOOST_CTRL = 0x020C,                // 0x020C         undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
+  MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214         undocumented - cell runtime polarity A (32 bit) - low word
+  MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215         undocumented - cell runtime polarity A (32 bit) - high word
+  MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216         undocumented - cell runtime polarity B (32 bit) - low word
+  MBF_CELL_RUNTIME_POLB_HIGH,             // 0x0217         undocumented - cell runtime polarity B (32 bit) - high word
+  MBF_CELL_RUNTIME_POL_CHANGES_LOW,       // 0x0218         undocumented - cell runtime polarity changes (32 bit) - low word
+  MBF_CELL_RUNTIME_POL_CHANGES_HIGH,      // 0x0219         undocumented - cell runtime polarity changes (32 bit) - high word
   MBF_HIDRO_MODULE_VERSION = 0x0280,      // 0x0280         undocumented - Hydrolysis module version
   MBF_HIDRO_MODULE_CONNECTIVITY = 0x0281, // 0x0281         undocumented - Hydrolysis module connection quality (in myriad: 0..10000)
   MBF_SET_MANUAL_CTRL = 0x0289,           // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
@@ -542,6 +550,16 @@ enum NeoPoolConstAndBitMask {
   MBMSK_VOE_SHOW_PNEUMATIC_VALVE          = 0x0001, //  0 Shows the pneumatic valve
   MBMSK_VOE_HIDE_AUX_REL_DEPENDENCY       = 0x0002, //  1 Hides the auxiliary relay dependency
   MBMSK_VOE_SHOW_BESGO_NAME               = 0x0004, //  2 Show “Besgo” instead of “Pneumatic” for the pneumatic valve titles.
+  MBMSK_VOE_HIDE_SMART_INTEL_MODES        = 0x0008, //  3 Hide smart intelligent modes
+  MBMSK_VOE_ENABLE_ADVANCED_CALIBRATION   = 0x0010, //  4 Enable advanced calibration
+  MBMSK_VOE_SHOW_DOSING_PUMP_SCALING      = 0x0020, //  5 Show dosing pump scaling
+  MBMSK_VOE_HIDE_MASTER_SLAVE_SEL         = 0x0030, //  6 Hide master slave selection
+  MBMSK_VOE_ENABLE_ADVANCED_MASTER_SLAVE  = 0x0080, //  7 Enable advanced Master Slave
+  MBMSK_VOE_SHOW_OVERTEMP_PROTECTION      = 0x0100, //  8 Show overtemperature protection
+  MBMSK_VOE_SHOW_HYDRO_MODE_SEL           = 0x0200, //  9 Show hidrolysis mode selection
+  MBMSK_VOE_SHOW_ADVANCED_EXT_CONTROL     = 0x0400, // 10 Show advanced external controls
+  MBMSK_VOE_HIDE_BASIC_EXT_CONTROL        = 0x0800, // 11 Hide basic external controls
+  MBMSK_VOE_HIDE_DIAGNOSTICS              = 0x1000, // 12 Hide diagnostics
 
   // MBF_PAR_UICFG_MACH_VISUAL_STYLE
   MBMSK_VS_FORCE_UNITS_GRH                = 0x2000, // 13 Display the hydrolysis/electrolysis in units of grams per hour (gr/h).
