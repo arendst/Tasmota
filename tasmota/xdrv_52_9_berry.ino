@@ -484,7 +484,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
         "cn=0;"
       "}"
       "c.value='';"
-      "t.scrollTop=99999;"
+      "t.scrollTop=99999999;"
       "sn=t.scrollTop;"
     "}"
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
@@ -508,7 +508,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
             "t1.innerText=d1;"
             "t.appendChild(t1);"
           "}"
-          "t.scrollTop=99999;"
+          "t.scrollTop=99999999;"
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
           "lt=setTimeout(l,ltm);" // webrefresh timer....
