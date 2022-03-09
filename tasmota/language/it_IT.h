@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.6 - Last update 20.02.2022
+ * Updated until v10.1.0.6 - Last update 08.03.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -851,7 +851,7 @@
 #define D_SENSOR_BL6523_TX              "BL6523 - TX"
 #define D_SENSOR_BL6523_RX              "BL6523 - RX"
 #define D_SENSOR_HEARTBEAT              "Battito cardiaco"
-#define D_SENSOR_RESET         "Reset"
+#define D_SENSOR_RESET                  "Ripristino"
 #define D_GPIO_SHIFT595_SRCLK           "74x595 - SRCLK"
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"
