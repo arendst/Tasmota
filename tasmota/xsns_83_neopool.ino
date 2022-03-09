@@ -669,10 +669,6 @@ const char kNeoPoolpHAlarms[] PROGMEM =
   D_NEOPOOL_PUMP_TIME_EXCEEDED
   ;
 
-#ifndef D_STR_BIT
-#define D_STR_BIT "Bit"
-#endif  // D_STR_BIT
-
 #define NEOPOOL_FMT_PH        "%*_f"
 #define NEOPOOL_FMT_RX        "%d"
 #define NEOPOOL_FMT_CL        "%*_f"
@@ -1382,6 +1378,7 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_PHPUMP                 "Pump"
 #define D_NEOPOOL_JSON_FLOW1                  "FL1"
 #define D_NEOPOOL_JSON_TANK                   "Tank"
+#define D_NEOPOOL_JSON_BIT                    "Bit"
 
 void NeoPoolShow(bool json)
 {
@@ -1784,28 +1781,41 @@ void NeoPoolShow(bool json)
  * Command implementation
 \*********************************************************************************************/
 
-void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32)
+void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32, int16_t bit)
 {
+  const char *data_fmt;
+  uint32_t ldata;
+
   Response_P(PSTR("{\"%s\":{\"" D_JSON_ADDRESS "\":"), XdrvMailbox.command);
   ResponseAppend_P(NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%04X\"") : PSTR("%d"), addr);
-  ResponseAppend_P(PSTR(",\"" D_JSON_DATA"\":"));
-  const char *data_fmt;
+  ResponseAppend_P(PSTR(",\"" D_JSON_DATA "\":"));
+
+  data_fmt = PSTR("%ld");
+  if (NEOPOOL_RESULT_HEX == neopool_result) {
+    data_fmt = fbits32 ? PSTR("\"0x%08X\"") : PSTR("\"0x%04X\"");
+  }
+  ldata = (uint32_t)data[0];
   if (fbits32) {
-    data_fmt = NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%08X\"") : PSTR("%ld");
-  } else {
-    data_fmt = NEOPOOL_RESULT_HEX == neopool_result ? PSTR("\"0x%04X\"") : PSTR("%d");
+    ldata |= (uint32_t)data[1] << 16;
   }
   if ( cnt > 1 ) {
     char sdel[2] = {0};
     ResponseAppend_P(PSTR("["));
     for(uint16_t i=0; i<cnt; i++) {
       ResponseAppend_P(PSTR("%s"), sdel);
-      ResponseAppend_P(data_fmt, fbits32 ? ((uint32_t)data[i*2+1]) << 16 | (uint32_t)data[i*2] : data[i]);
+      ldata = (uint32_t)data[2*i];
+      if (fbits32) {
+        ldata |= (uint32_t)data[2*i+1] << 16;
+      }
+      ResponseAppend_P(data_fmt, ldata);
       *sdel = ',';
     }
     ResponseAppend_P(PSTR("]"));
   } else {
-    ResponseAppend_P(data_fmt, fbits32 ? ((uint32_t)data[1]) << 16 | (uint32_t)data[0] : data[0]);
+    ResponseAppend_P(data_fmt, ldata);
+  }
+  if (bit >= 0) {
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_BIT "%d\":%ld"), bit, (ldata>>bit) & 1);
   }
   ResponseJsonEndEnd();
 }
@@ -1850,7 +1860,7 @@ void CmndNeopoolReadReg(void)
       return;
     }
   }
-  NeopoolReadWriteResponse(addr, data, cnt, fbits32);
+  NeopoolReadWriteResponse(addr, data, cnt, fbits32, -1);
 }
 
 
@@ -1881,14 +1891,14 @@ void CmndNeopoolWriteReg(void)
     NeopoolResponseError();
     return;
   }
-  NeopoolReadWriteResponse(addr, data, cnt, fbits32);
+  NeopoolReadWriteResponse(addr, data, cnt, fbits32, -1);
 }
 
 
 void CmndNeopoolBit(void)
 {
   uint16_t addr, data;
-  int8_t bit;
+  uint16_t bit;
   uint32_t value[3] = { 0 };
   uint32_t params_cnt = ParseParameters(nitems(value), value);
   bool fbits32 = !strcasecmp_P(XdrvMailbox.command, PSTR(D_PRFX_NEOPOOL  D_CMND_NP_BITL));
@@ -1896,7 +1906,7 @@ void CmndNeopoolBit(void)
 
   if (params_cnt >= 2) {
     addr = value[0];
-    bit = (int8_t)value[1];
+    bit = (uint16_t)value[1];
 
     if (bit >= 0 && bit < 16<<fbits32) {
       if (3 == params_cnt) {
@@ -1925,7 +1935,7 @@ void CmndNeopoolBit(void)
         NeopoolResponseError();
         return;
       }
-      NeopoolReadWriteResponse(addr, &data, 1, fbits32);
+      NeopoolReadWriteResponse(addr, &data, 1, fbits32, bit);
       return;
     }
 
