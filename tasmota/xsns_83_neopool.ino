@@ -595,8 +595,8 @@ bool neopool_first_read = true;
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 bool neopool_error = true;
 
-uint16_t power_module_version;
-uint16_t power_module_nodeid[6];
+uint16_t neopool_power_module_version;
+uint16_t neopool_power_module_nodeid[6];
 
 #define NEOPOOL_MAX_REPEAT_ON_ERROR 10
 uint8_t neopool_repeat_on_error = 2;
@@ -1098,8 +1098,8 @@ bool NeoPoolInitData(void)
   bool res = false;
 
   neopool_error = true;
-  power_module_version = 0;
-  memset(power_module_nodeid, 0, sizeof(power_module_nodeid));
+  neopool_power_module_version = 0;
+  memset(neopool_power_module_nodeid, 0, sizeof(neopool_power_module_nodeid));
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
     if (nullptr == NeoPoolReg[i].data) {
       NeoPoolReg[i].data = (uint16_t *)malloc(sizeof(uint16_t)*NeoPoolReg[i].cnt);
@@ -1461,22 +1461,22 @@ void NeoPoolShow(bool json)
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
       float f420mA = (float)NeoPoolGetData(MBF_AMP_4_20_MICRO)/100;
       ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":{"));
-      if (power_module_version ||
-          NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_VERSION, &power_module_version, 1)) {
+      if (neopool_power_module_version ||
+          NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_VERSION, &neopool_power_module_version, 1)) {
         ResponseAppend_P(PSTR("\""  D_JSON_VERSION  "\":\"V%d.%d\","),
-          (power_module_version >> 8),
-          power_module_version & 0xff
+          (neopool_power_module_version >> 8),
+          neopool_power_module_version & 0xff
         );
       }
-      if (power_module_nodeid[0] ||
-          NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, power_module_nodeid, nitems(power_module_nodeid))) {
+      if (neopool_power_module_nodeid[0] ||
+          NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, neopool_power_module_nodeid, nitems(neopool_power_module_nodeid))) {
         ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
-          power_module_nodeid[0],
-          power_module_nodeid[1],
-          power_module_nodeid[2],
-          power_module_nodeid[3],
-          power_module_nodeid[4],
-          power_module_nodeid[5]
+          neopool_power_module_nodeid[0],
+          neopool_power_module_nodeid[1],
+          neopool_power_module_nodeid[2],
+          neopool_power_module_nodeid[3],
+          neopool_power_module_nodeid[4],
+          neopool_power_module_nodeid[5]
         );
       }
       ResponseAppend_P(PSTR("\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
