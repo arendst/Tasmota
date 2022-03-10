@@ -1,5 +1,5 @@
 /*
-  xsns_77_vl53l1x.ino - VL53L1X sensor support for Tasmota
+  xsns_77_vl53l1x_device[0].ino - VL53L1X sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends, Rui Marinho and Johann Obermeier
 
@@ -30,49 +30,69 @@
 #define XSNS_77     77
 #define XI2C_54     54  // See I2CDEVICES.md
 
-#include "VL53L1X.h"
-VL53L1X vl53l1x = VL53L1X(); // create object copy
+#define VL53LXX_MAX_SENSORS   VL53L0X_MAX_SENSORS
+#define GPIO_VL53LXX_XSHUT1   GPIO_VL53L0X_XSHUT1
 
-#define VL53L1X_ADDRESS 0x29
+#include "VL53L1X.h"
+VL53L1X vl53l1x_device[VL53LXX_MAX_SENSORS];
+
+#define VL53LXX_ADDRESS 0x29
+#ifndef VL53LXX_ADDRESS_MOVED
+#define VL53LXX_ADDRESS_MOVED 0x78
+#endif
 
 struct {
   uint16_t distance = 0;
-  bool ready = false;
-} vl53l1x_sensors;
+} vl53l1x_data[VL53LXX_MAX_SENSORS];
+
+bool VL53L1X_xshut = false;
+bool VL53L1X_detected = false;
 
 /********************************************************************************************/
 
 void Vl53l1Detect(void) {
-  if (!I2cSetDevice(VL53L1X_ADDRESS)) { return; }
-  if (!vl53l1x.init()) { return; }
 
-  I2cSetActiveFound(vl53l1x.getAddress(), "VL53L1X");
-  vl53l1x.setTimeout(500);
-  vl53l1x.setDistanceMode(VL53L1X::Long); // could be Short, Medium, Long
-  vl53l1x.setMeasurementTimingBudget(140000);
-  vl53l1x.startContinuous(50);
-  vl53l1x_sensors.ready = true;
+  for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
+    if (PinUsed(GPIO_VL53LXX_XSHUT1, i)) {
+      pinMode(Pin(GPIO_VL53LXX_XSHUT1, i), OUTPUT);
+      digitalWrite(Pin(GPIO_VL53LXX_XSHUT1, i), i==0 ? 1 : 0);
+      VL53L1X_xshut = true;
+    }
+    else {
+      break; // XSHUT indexes must be continuous. We stop at the 1st not defined one
+    }
+  }
+
+  if (!I2cSetDevice(VL53LXX_ADDRESS)) { return; }
+  if (!vl53l1x_device[0].init()) { return; }
+
+  I2cSetActiveFound(vl53l1x_device[0].getAddress(), "VL53L1X");
+  vl53l1x_device[0].setTimeout(500);
+  vl53l1x_device[0].setDistanceMode(VL53L1X::Long); // could be Short, Medium, Long
+  vl53l1x_device[0].setMeasurementTimingBudget(140000);
+  vl53l1x_device[0].startContinuous(50);
+  VL53L1X_detected = true;
 }
 
 void Vl53l1Every_250MSecond(void) {
-  uint16_t dist = vl53l1x.read();
+  uint16_t dist = vl53l1x_device[0].read();
   if (!dist || dist > 4000) {
     dist = 9999;
   }
-  vl53l1x_sensors.distance = dist;
+  vl53l1x_data[0].distance = dist;
 }
 
 #ifdef USE_DOMOTICZ
 void Vl53l1Every_Second(void) {
   char distance[FLOATSZ];
-  dtostrfd((float)vl53l1x_sensors.distance / 10, 1, distance);
+  dtostrfd((float)vl53l1x_data[0].distance / 10, 1, distance);
   DomoticzSensor(DZ_ILLUMINANCE, distance);
 }
 #endif  // USE_DOMOTICZ
 
 void Vl53l1Show(bool json) {
   if (json) {
-    ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_sensors.distance);
+    ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_data[0].distance);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period) {
       Vl53l1Every_Second();
@@ -80,7 +100,7 @@ void Vl53l1Show(bool json) {
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_sensors.distance);
+    WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_data[0].distance);
 #endif
   }
 }
@@ -97,7 +117,7 @@ bool Xsns77(uint8_t function) {
   if (FUNC_INIT == function) {
     Vl53l1Detect();
   }
-  else if (vl53l1x_sensors.ready) {
+  else if (VL53L1X_detected) {
     switch (function) {
       case FUNC_EVERY_250_MSECOND:
         Vl53l1Every_250MSecond();
