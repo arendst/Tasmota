@@ -104,6 +104,7 @@ return_types = {
   "lv_palette_t": "i",
   "lv_style_prop_t": "i",
   "lv_dither_mode_t": "i",
+  "lv_chart_update_mode_t": "i",
   # layouts
   "lv_flex_align_t": "i",
   "lv_flex_flow_t": "i",
