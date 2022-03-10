@@ -1449,7 +1449,7 @@ void NeoPoolShow(bool json)
     {
       float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
-      ResponseAppend_P(PSTR(",\"" D_VOLTAGE "\":{\"12\":%*_f,\"24\":%*_f}"),
+      ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":{\"12\":%*_f,\"24-30\":%*_f}"),
         Settings->flag2.voltage_resolution, &f12volt,
         Settings->flag2.voltage_resolution, &f24_36volt);
     }
