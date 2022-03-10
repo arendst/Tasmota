@@ -85,7 +85,7 @@ enum NeoPoolRegister {
                                           // addr    Unit   Description
                                           // ------  ------ ------------------------------------------------------------
   // MODBUS page (0x0000 - 0x002E - unknown - for internal use only)
-  MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         undocumented - power module version
+  MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         undocumented - power module version (MSB=Major, LSB=Minor)
   MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         undocumented - power module Node ID (6 register 0x0004 - 0x0009)
   MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         undocumented - Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
   MBF_POWER_MODULE_DATA = 0x000D,         // 0x000D         undocumented - power module data as requested in MBF_POWER_MODULE_REGISTER
@@ -595,6 +595,9 @@ bool neopool_first_read = true;
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 bool neopool_error = true;
 
+uint16_t power_module_version;
+uint16_t power_module_nodeid[6];
+
 #define NEOPOOL_MAX_REPEAT_ON_ERROR 10
 uint8_t neopool_repeat_on_error = 2;
 
@@ -1095,6 +1098,8 @@ bool NeoPoolInitData(void)
   bool res = false;
 
   neopool_error = true;
+  power_module_version = 0;
+  memset(power_module_nodeid, 0, sizeof(power_module_nodeid));
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
     if (nullptr == NeoPoolReg[i].data) {
       NeoPoolReg[i].data = (uint16_t *)malloc(sizeof(uint16_t)*NeoPoolReg[i].cnt);
@@ -1184,7 +1189,7 @@ uint8_t NeoPoolReadRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
 #ifdef DEBUG_TASMOTA_SENSOR
       NeoPoolLogRW("NeoPoolReadRegister", addr, origin, cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
-      return 0;
+      return NEOPOOL_MODBUS_OK;
     }
 #ifdef DEBUG_TASMOTA_SENSOR
     AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: addr 0x%04X read out of memory"), addr);
@@ -1283,7 +1288,7 @@ uint8_t NeoPoolReadRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   do {
     result = NeoPoolReadRegisterData(addr, data, cnt);
     SleepDelay(0);
-  } while(repeat-- > 0 || NEOPOOL_MODBUS_OK != result);
+  } while(repeat-- > 0 && NEOPOOL_MODBUS_OK != result);
   return result;
 }
 
@@ -1295,7 +1300,7 @@ uint8_t NeoPoolWriteRegister(uint16_t addr, uint16_t *data, uint16_t cnt)
   do {
     result = NeoPoolWriteRegisterData(addr, data, cnt);
     SleepDelay(0);
-  } while(repeat-- > 0 || NEOPOOL_MODBUS_OK != result);
+  } while(repeat-- > 0 && NEOPOOL_MODBUS_OK != result);
   return result;
 }
 
@@ -1412,6 +1417,7 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_FLOW1                  "FL1"
 #define D_NEOPOOL_JSON_TANK                   "Tank"
 #define D_NEOPOOL_JSON_BIT                    "Bit"
+#define D_NEOPOOL_JSON_NODE_ID                "NodeID"
 
 void NeoPoolShow(bool json)
 {
@@ -1454,7 +1460,26 @@ void NeoPoolShow(bool json)
       float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
       float f420mA = (float)NeoPoolGetData(MBF_AMP_4_20_MICRO)/100;
-      ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":{\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
+      ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":{"));
+      if (power_module_version ||
+          NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_VERSION, &power_module_version, 1)) {
+        ResponseAppend_P(PSTR("\""  D_JSON_VERSION  "\":\"V%d.%d\","),
+          (power_module_version >> 8),
+          power_module_version & 0xff
+        );
+      }
+      if (power_module_nodeid[0] ||
+          NEOPOOL_MODBUS_OK == NeoPoolReadRegister(MBF_POWER_MODULE_NODEID, power_module_nodeid, nitems(power_module_nodeid))) {
+        ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_NODE_ID  "\":\"%04X %04X %04X %04X %04X %04X\","),
+          power_module_nodeid[0],
+          power_module_nodeid[1],
+          power_module_nodeid[2],
+          power_module_nodeid[3],
+          power_module_nodeid[4],
+          power_module_nodeid[5]
+        );
+      }
+      ResponseAppend_P(PSTR("\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
         Settings->flag2.voltage_resolution, &f5volt,
         Settings->flag2.voltage_resolution, &f12volt,
         Settings->flag2.voltage_resolution, &f24_36volt,
