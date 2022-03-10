@@ -12,6 +12,14 @@
 
 static const char * be_ctypes_instance_mappings[];    /* forward definition */
 
+const be_ctypes_structure_t be_lv_coord = {
+  2,  /* size in bytes */
+  1,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[1]) {
+    { "v", 0, 0, 0, ctypes_i16, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_point = {
   4,  /* size in bytes */
   2,  /* number of elements */
@@ -693,6 +701,7 @@ static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ct
 static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes, "lv_chart_series");
 static be_define_ctypes_class(lv_chart_tick_dsc, &be_lv_chart_tick_dsc, &be_class_ctypes, "lv_chart_tick_dsc");
 static be_define_ctypes_class(lv_color_filter_dsc, &be_lv_color_filter_dsc, &be_class_ctypes, "lv_color_filter_dsc");
+static be_define_ctypes_class(lv_coord, &be_lv_coord, &be_class_ctypes, "lv_coord");
 static be_define_ctypes_class(lv_draw_arc_dsc, &be_lv_draw_arc_dsc, &be_class_ctypes, "lv_draw_arc_dsc");
 static be_define_ctypes_class(lv_draw_ctx, &be_lv_draw_ctx, &be_class_ctypes, "lv_draw_ctx");
 static be_define_ctypes_class(lv_draw_img_dsc, &be_lv_draw_img_dsc, &be_class_ctypes, "lv_draw_img_dsc");
@@ -738,6 +747,7 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_chart_series, &be_lv_chart_series);
   ctypes_register_class(vm, &be_class_lv_chart_tick_dsc, &be_lv_chart_tick_dsc);
   ctypes_register_class(vm, &be_class_lv_color_filter_dsc, &be_lv_color_filter_dsc);
+  ctypes_register_class(vm, &be_class_lv_coord, &be_lv_coord);
   ctypes_register_class(vm, &be_class_lv_draw_arc_dsc, &be_lv_draw_arc_dsc);
   ctypes_register_class(vm, &be_class_lv_draw_ctx, &be_lv_draw_ctx);
   ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
@@ -784,6 +794,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_chart_series", &be_class_lv_chart_series },
   { "lv_chart_tick_dsc", &be_class_lv_chart_tick_dsc },
   { "lv_color_filter_dsc", &be_class_lv_color_filter_dsc },
+  { "lv_coord", &be_class_lv_coord },
   { "lv_draw_arc_dsc", &be_class_lv_draw_arc_dsc },
   { "lv_draw_ctx", &be_class_lv_draw_ctx },
   { "lv_draw_img_dsc", &be_class_lv_draw_img_dsc },
