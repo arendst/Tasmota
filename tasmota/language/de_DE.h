@@ -1047,13 +1047,13 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (Gelb)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (Blau)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (Grün)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (Hellblau)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (Rot)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (Lila)"
-#define D_NEOPOOL_MACH_STATION            "Station (Orange)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife"
+#define D_NEOPOOL_MACH_BIONET             "Bionet"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic"
+#define D_NEOPOOL_MACH_STATION            "Station"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
 #define D_NEOPOOL_MACH_GENERIC            "Generic"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
