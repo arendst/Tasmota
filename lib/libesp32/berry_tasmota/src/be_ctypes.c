@@ -294,8 +294,13 @@ int be_ctypes_setmember(bvm *vm) {
     }
 
     // If the value is a pointer, replace with an int of same value (works only on 32 bits CPU)
-    if (be_iscomptr(vm, 3)) {
-        void * v = be_tocomptr(vm, 3);
+    if (be_iscomptr(vm, 3) || be_isstring(vm, 3)) {
+        void* v;
+        if (be_iscomptr(vm, 3)) {
+            v = be_tocomptr(vm, 3);
+        } else {
+            v = be_tostring(vm, 3);
+        }         
         be_pushint(vm, (int32_t) v);
         be_moveto(vm, -1, 3);
         be_pop(vm, 1);
