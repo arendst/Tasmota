@@ -201,6 +201,7 @@ extern const bcstring be_const_str__available;
 extern const bcstring be_const_str__begin_transmission;
 extern const bcstring be_const_str__buffer;
 extern const bcstring be_const_str__ccmd;
+extern const bcstring be_const_str__change_buffer;
 extern const bcstring be_const_str__class;
 extern const bcstring be_const_str__cmd;
 extern const bcstring be_const_str__crons;
