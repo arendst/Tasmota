@@ -91,6 +91,8 @@ enum NeoPoolRegister {
   MBF_POWER_MODULE_DATA = 0x000D,         // 0x000D         undocumented - power module data as requested in MBF_POWER_MODULE_REGISTER
   MBF_VOLT_24_36 = 0x0022,                // 0x0022         undocumented - Current 24-36V line in mV
   MBF_VOLT_12 = 0x0023,                   // 0x0023         undocumented - Current 12V line in mV
+  MBF_VOLT_5 = 0x006A,                    // 0x006A         undocumented - 5V line in mV / 0,62069
+  MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072         undocumented - 2-40mA line in µA * 10 (1=0,01mA)
 
   // MEASURE page (0x01xx)
   MBF_ION_CURRENT = 0x0100,               // 0x0100*        Current measured in the ionization system
@@ -608,14 +610,15 @@ struct {
   const uint16_t cnt;
   uint16_t *data;
 } NeoPoolReg[] = {
-  // 7 entries each polled every 250ms needs 1750 ms for complete register set
+  // 8 entries each polled needs 2s for complete register set
   {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},
   {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
   {MBF_PAR_VERSION,       MBF_PAR_MODEL                     - MBF_PAR_VERSION       + 1, nullptr},
   {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO                 - MBF_PAR_TIME_LOW      + 1, nullptr},
   {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF           - MBF_PAR_ION           + 1, nullptr},
   {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE   - MBF_PAR_UICFG_MACHINE + 1, nullptr},
-  {MBF_VOLT_24_36,        MBF_VOLT_12                       - MBF_VOLT_24_36        + 1, nullptr}
+  {MBF_VOLT_24_36,        MBF_VOLT_12                       - MBF_VOLT_24_36        + 1, nullptr},
+  {MBF_VOLT_5,            MBF_AMP_4_20_MICRO                - MBF_VOLT_5            + 1, nullptr}
 };
 
 // NeoPool modbus function errors
@@ -697,7 +700,7 @@ const char kNeoPoolpHAlarms[] PROGMEM =
 #define D_NEOPOOL_UNIT_GPERH  "g/h"
 
 const char HTTP_SNS_NEOPOOL_TIME[]             PROGMEM = "{s}%s " D_NEOPOOL_TIME            "{m}%s"                                                               "{e}";
-const char HTTP_SNS_NEOPOOL_VOLTAGE[]          PROGMEM = "{s}%s " D_VOLTAGE                 "{m}%*_f / %*_f " D_UNIT_VOLT                                         "{e}";
+const char HTTP_SNS_NEOPOOL_VOLTAGE[]          PROGMEM = "{s}%s " D_VOLTAGE                 "{m}%*_f / %*_f / %*_f " D_UNIT_VOLT                                         "{e}";
 const char HTTP_SNS_NEOPOOL_HYDROLYSIS[]       PROGMEM = "{s}%s " D_NEOPOOL_HYDROLYSIS      "{m}"  NEOPOOL_FMT_HIDRO  " %s ";
 const char HTTP_SNS_NEOPOOL_PH[]               PROGMEM = "{s}%s " D_PH                      "{m}"  NEOPOOL_FMT_PH;
 const char HTTP_SNS_NEOPOOL_REDOX[]            PROGMEM = "{s}%s " D_NEOPOOL_REDOX           "{m}"  NEOPOOL_FMT_RX     " "  D_UNIT_MILLIVOLT;
@@ -1447,11 +1450,15 @@ void NeoPoolShow(bool json)
 
     // Voltage
     {
+      float f5volt = (float)NeoPoolGetData(MBF_VOLT_5)/620.69;
       float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
-      ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":{\"12\":%*_f,\"24-30\":%*_f}"),
+      float f420mA = (float)NeoPoolGetData(MBF_AMP_4_20_MICRO)/100;
+      ResponseAppend_P(PSTR(",\"" D_JSON_POWERUSAGE "\":{\"5V\":%*_f,\"12V\":%*_f,\"24-30V\":%*_f,\"4-20mA\":%*_f}"),
+        Settings->flag2.voltage_resolution, &f5volt,
         Settings->flag2.voltage_resolution, &f12volt,
-        Settings->flag2.voltage_resolution, &f24_36volt);
+        Settings->flag2.voltage_resolution, &f24_36volt,
+        Settings->flag2.current_resolution, &f420mA);
     }
 
     // pH
@@ -1627,9 +1634,11 @@ void NeoPoolShow(bool json)
 
     // Voltage
     {
+      float f5volt = (float)NeoPoolGetData(MBF_VOLT_5)/620.69;
       float f12volt = (float)NeoPoolGetData(MBF_VOLT_12)/1000;
       float f24_36volt = (float)NeoPoolGetData(MBF_VOLT_24_36)/1000;
       WSContentSend_PD(HTTP_SNS_NEOPOOL_VOLTAGE, neopool_type,
+        Settings->flag2.voltage_resolution, &f5volt,
         Settings->flag2.voltage_resolution, &f12volt,
         Settings->flag2.voltage_resolution, &f24_36volt);
     }
