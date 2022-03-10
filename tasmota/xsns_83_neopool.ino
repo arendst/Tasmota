@@ -1847,9 +1847,9 @@ void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool 
     ResponseAppend_P(PSTR("["));
     for(uint16_t i=0; i<cnt; i++) {
       ResponseAppend_P(PSTR("%s"), sdel);
-      ldata = (uint32_t)data[2*i];
+      ldata = (uint32_t)data[(fbits32+1)*i];
       if (fbits32) {
-        ldata |= (uint32_t)data[2*i+1] << 16;
+        ldata |= (uint32_t)data[(fbits32+1)*i+1] << 16;
       }
       ResponseAppend_P(data_fmt, ldata);
       *sdel = ',';
