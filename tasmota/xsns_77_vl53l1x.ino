@@ -60,31 +60,39 @@ void Vl53l1Detect(void) {
       VL53L1X_xshut |= xshut;
     }
   }
+//Serial.print("VL0531X: xshut ");Serial.println(VL53L1X_xshut,HEX);
 
-  for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1 ) {
+  for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1) {
     if (xshut & VL53L1X_xshut) {
       digitalWrite(Pin(GPIO_VL53LXX_XSHUT1, i), 1);
       delay(2);
     }
-    if (!I2cSetDevice(VL53LXX_ADDRESS) && !I2cSetDevice((uint8_t)(VL53LXX_ADDRESS_MOVED+i))) { return; } // Detection for unconfigured OR configured sensor
-    if (VL53L1X_xshut) { vl53l1x_device[i].setAddress((uint8_t)(VL53LXX_ADDRESS_MOVED+i)); }
-    uint8_t addr = vl53l1x_device[i].getAddress();
+//Serial.print("VL0531X: A ");Serial.print(I2cSetDevice(VL53LXX_ADDRESS));Serial.print(' ');Serial.println(I2cSetDevice(VL53LXX_ADDRESS_MOVED+i));
+    if (!I2cSetDevice(VL53LXX_ADDRESS) && !I2cSetDevice((uint8_t)(VL53LXX_ADDRESS_MOVED+i))) { continue; } // Detection for unconfigured OR configured sensor
     if (vl53l1x_device[i].init()) {
+      if (VL53L1X_xshut) {
+//Serial.println("VL0531X: D");
+        vl53l1x_device[i].setAddress((uint8_t)(VL53LXX_ADDRESS_MOVED+i));
+      }
+      uint8_t addr = vl53l1x_device[i].getAddress();
+//Serial.print("VL0531X: E ");Serial.println(addr,HEX);
       vl53l1x_device[i].setTimeout(500);
       vl53l1x_device[i].setDistanceMode(VL53L1X::Long); // could be Short, Medium, Long
       vl53l1x_device[i].setMeasurementTimingBudget(140000);
       vl53l1x_device[i].startContinuous(50);
       VL53L1X_detected |= xshut;
+//Serial.println("VL0531X: F");
 
       if (VL53L1X_xshut) {
           I2cSetActive(addr);
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SENSOR " VL53L1X-%d " D_SENSOR_DETECTED " - " D_NEW_ADDRESS " 0x%02X"), i+1, addr);
       } else {
           I2cSetActiveFound(addr, "VL53L1X");
-          break;
       }
-    }
-  }
+//Serial.println("VL0531X: G");
+    } // if init
+    if (0 == VL53L1X_xshut) break;
+  } // for
 }
 
 void Vl53l1Every_250MSecond(void) {
@@ -97,9 +105,7 @@ void Vl53l1Every_250MSecond(void) {
       }
       vl53l1x_data[i].distance = dist;
     } // if detected
-    if (0 == VL53L1X_xshut) {
-      break;
-    }
+    if (0 == VL53L1X_xshut) break;
   } // for
 }
 
@@ -134,14 +140,14 @@ void Vl53l1Show(bool json) {
           WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_data[i].distance);
         }
         else {
-          WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X%c%d"), IndexSeparator(), i+1, vl53l1x_data[i].distance);
+          char tmpstr[12];
+          sprintf(tmpstr, PSTR("VL53L1X%c%d"), IndexSeparator(), i+1);
+          WSContentSend_PD(HTTP_SNS_DISTANCE, tmpstr, vl53l1x_data[i].distance);
         }
 #endif
       }
     } // if detected
-    if (0 == VL53L1X_xshut) {
-      break;
-    }
+    if (0 == VL53L1X_xshut) break;
   } // for
 }
 
