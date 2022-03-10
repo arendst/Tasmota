@@ -89,10 +89,10 @@ enum NeoPoolRegister {
   MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         undocumented - power module Node ID (6 register 0x0004 - 0x0009)
   MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         undocumented - Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
   MBF_POWER_MODULE_DATA = 0x000D,         // 0x000D         undocumented - power module data as requested in MBF_POWER_MODULE_REGISTER
-  MBF_VOLT_24_36 = 0x0022,                // 0x0022         undocumented - Current 24-36V line in mV
-  MBF_VOLT_12 = 0x0023,                   // 0x0023         undocumented - Current 12V line in mV
-  MBF_VOLT_5 = 0x006A,                    // 0x006A         undocumented - 5V line in mV / 0,62069
-  MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072         undocumented - 2-40mA line in µA * 10 (1=0,01mA)
+  MBF_VOLT_24_36 = 0x0022,                // 0x0022*        undocumented - Current 24-36V line in mV
+  MBF_VOLT_12 = 0x0023,                   // 0x0023*        undocumented - Current 12V line in mV
+  MBF_VOLT_5 = 0x006A,                    // 0x006A*        undocumented - 5V line in mV / 0,62069
+  MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072*        undocumented - 2-40mA line in µA * 10 (1=0,01mA)
 
   // MEASURE page (0x01xx)
   MBF_ION_CURRENT = 0x0100,               // 0x0100*        Current measured in the ionization system
@@ -100,16 +100,16 @@ enum NeoPoolRegister {
   MBF_MEASURE_PH,                         // 0x0102* ph     Level measured in hundredths (700 = 7.00)
   MBF_MEASURE_RX,                         // 0x0103* mV     Redox level in mV
   MBF_MEASURE_CL,                         // 0x0104* ppm    Level measured in hundredths of chlorine ppm (100 = 1.00 ppm)
-  MBF_MEASURE_CONDUCTIVITY,               // 0x0105  %      Level of conductivity measured in the water.
+  MBF_MEASURE_CONDUCTIVITY,               // 0x0105* %      Level of conductivity measured in the water.
   MBF_MEASURE_TEMPERATURE,                // 0x0106* °C     Water temperature sensor (100 = 10.0°C)
   MBF_PH_STATUS,                          // 0x0107* mask   Status of the module control pH
   MBF_RX_STATUS,                          // 0x0108* mask   Status of the Rx-module
   MBF_CL_STATUS,                          // 0x0109* mask   Status of the Chlorine-module
-  MBF_CD_STATUS,                          // 0x010A  mask   Status of the Conductivity-module
+  MBF_CD_STATUS,                          // 0x010A* mask   Status of the Conductivity-module
   MBF_ION_STATUS = 0x010C,                // 0x010C* mask   Status of the Ionization-module
   MBF_HIDRO_STATUS,                       // 0x010D* mask   Status of the Hydrolysis-module
   MBF_RELAY_STATE,                        // 0x010E* mask   Status of each configurable relays
-  MBF_HIDRO_SWITCH_VALUE,                 // 0x010F         INTERNAL - contains the opening of the hydrolysis PWM.
+  MBF_HIDRO_SWITCH_VALUE,                 // 0x010F*        INTERNAL - contains the opening of the hydrolysis PWM.
   MBF_NOTIFICATION,                       // 0x0110* mask   Reports whether a page of properties has changed since the last time it was consulted.
   MBF_HIDRO_VOLTAGE,                      // 0x0111         Reports on the stress applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolating the salinity of the water.
 
@@ -223,25 +223,25 @@ enum NeoPoolRegister {
   MBF_ACTION_COPY_TO_RTC,                 // 0x04F0         A write (any value) forces the writing of the RTC time registers MBF_PAR_TIME_LOW (0x0408) and MBF_PAR_TIME_HIGH (0x0409) into the RTC internal microcontroller clock management registers.
 
   // USER page (0x05xx)  To make the modification of this register persistent, execute the EEPROM storage procedure described in global register MBF_SAVE_TO_EEPROM.
-  MBF_PAR_ION = 0x0500,                   // 0x0500         Ionization target production level. The value adjusted in this register must not exceed the value set in the MBF_PAR_ION_NOM factory register.
-  MBF_PAR_ION_PR,                         // 0x0501         Amount of time in minutes that the ionization must be activated each time that the filtration starts.
-  MBF_PAR_HIDRO,                          // 0x0502         Hydrolisis target production level. When the hydrolysis production is to be set in percent values, this value will contain the percent of production. If the hydrolysis module is set to work in g/h production, this module will contain the desired amount of production in g/h units. The value adjusted in this register must not exceed the value set in the MBF_PAR_HIDRO_NOM factory register.
-  MBF_PAR_PH1 = 0x0504,                   // 0x0504         Higher limit of the pH regulation system. The value set in this register is multiplied by 100. This means that if we want to set a value of 7.5, the numerical content that we must write in this register is 750. This register must be always higher than MBF_PAR_PH2.
-  MBF_PAR_PH2,                            // 0x0505         Lower limit of the pH regulation system. The value set in this register is multiplied by 100. This means that if we want to set a value of 7.0, the numerical content that we must write in this register is 700. This register must be always lower than MBF_PAR_PH1.
-  MBF_PAR_RX1 = 0x0508,                   // 0x0508         Set point for the redox regulation system. This value must be in the range of 0 to 1000.
-  MBF_PAR_CL1 = 0x050A,                   // 0x050A         Set point for the chlorine regulation system. The value stored in this register is multiplied by 100. This mean that if we want to set a value of 1.5 ppm, we will have to write a numerical value of 150. This value stored in this register must be in the range of 0 to 1000.
-  MBF_PAR_FILTRATION_CONF = 0x050F,       // 0x050F  mask   undocumented - filtration type and speed, see MBMSK_PAR_FILTRATION_CONF_*
+  MBF_PAR_ION = 0x0500,                   // 0x0500*        Ionization target production level. The value adjusted in this register must not exceed the value set in the MBF_PAR_ION_NOM factory register.
+  MBF_PAR_ION_PR,                         // 0x0501*        Amount of time in minutes that the ionization must be activated each time that the filtration starts.
+  MBF_PAR_HIDRO,                          // 0x0502*        Hydrolisis target production level. When the hydrolysis production is to be set in percent values, this value will contain the percent of production. If the hydrolysis module is set to work in g/h production, this module will contain the desired amount of production in g/h units. The value adjusted in this register must not exceed the value set in the MBF_PAR_HIDRO_NOM factory register.
+  MBF_PAR_PH1 = 0x0504,                   // 0x0504*        Higher limit of the pH regulation system. The value set in this register is multiplied by 100. This means that if we want to set a value of 7.5, the numerical content that we must write in this register is 750. This register must be always higher than MBF_PAR_PH2.
+  MBF_PAR_PH2,                            // 0x0505*        Lower limit of the pH regulation system. The value set in this register is multiplied by 100. This means that if we want to set a value of 7.0, the numerical content that we must write in this register is 700. This register must be always lower than MBF_PAR_PH1.
+  MBF_PAR_RX1 = 0x0508,                   // 0x0508*        Set point for the redox regulation system. This value must be in the range of 0 to 1000.
+  MBF_PAR_CL1 = 0x050A,                   // 0x050A*        Set point for the chlorine regulation system. The value stored in this register is multiplied by 100. This mean that if we want to set a value of 1.5 ppm, we will have to write a numerical value of 150. This value stored in this register must be in the range of 0 to 1000.
+  MBF_PAR_FILTRATION_CONF = 0x050F,       // 0x050F* mask   undocumented - filtration type and speed, see MBMSK_PAR_FILTRATION_CONF_*
   MBF_PAR_FILTRATION_SPEED_FUNC = 0x0513, // 0x0513         undocumented - filtration speed function control
   MBF_PAR_FUNCTION_DEPENDENCY = 0x051B,   // 0x051B  mask   Specification for the dependency of different functions, such as heating, from external events like FL1 (see MBMSK_FCTDEP_HEATING/MBMSK_DEPENDENCY_*)
 
   // MISC page (0x06xx)
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
-  MBF_PAR_UICFG_LANGUAGE,                 // 0x0601         Selected language (see MBV_PAR_LANG_*)
-  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602         Display backlight (see MBV_PAR_BACKLIGHT_*)
-  MBF_PAR_UICFG_SOUND,                    // 0x0603  mask   Audible alerts (see MBMSK_PAR_SOUND_*)
-  MBF_PAR_UICFG_PASSWORD,                 // 0x0604         System password encoded in BCD
-  MBF_PAR_UICFG_VISUAL_OPTIONS,           // 0x0605  mask   Stores the different display options for the user interface menus (bitmask). Some bits allow you to hide options that are normally visible (bits 0 to 3) while other bits allow you to show options that are normally hidden (bits 9 to 15)
-  MBF_PAR_UICFG_VISUAL_OPTIONS_EXT,       // 0x0606  mask   This register stores additional display options for the user interface menus, see MBMSK_VOE_*
+  MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
+  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight (see MBV_PAR_BACKLIGHT_*)
+  MBF_PAR_UICFG_SOUND,                    // 0x0603* mask   Audible alerts (see MBMSK_PAR_SOUND_*)
+  MBF_PAR_UICFG_PASSWORD,                 // 0x0604*        System password encoded in BCD
+  MBF_PAR_UICFG_VISUAL_OPTIONS,           // 0x0605* mask   Stores the different display options for the user interface menus (bitmask). Some bits allow you to hide options that are normally visible (bits 0 to 3) while other bits allow you to show options that are normally hidden (bits 9 to 15)
+  MBF_PAR_UICFG_VISUAL_OPTIONS_EXT,       // 0x0606* mask   This register stores additional display options for the user interface menus, see MBMSK_VOE_*
   MBF_PAR_UICFG_MACH_VISUAL_STYLE,        // 0x0607* mask   This register is an expansion of register 0x0600 and 0x0605. The lower part of the register (8 bits LSB) is used to store the type of color selected when in register 0x600 has been specified that the machine is of type "generic". Colors and styles correspond to those listed in record 0x600 MBF_PAR_UICFG_MACHINE. The upper part (8-bit MSB) contains extra bits MBMSK_VS_FORCE_UNITS_GRH, MBMSK_VS_FORCE_UNITS_PERCENTAGE and MBMSK_ELECTROLISIS
   MBF_PAR_UICFG_MACH_NAME_BOLD_0,         // 0x0608         This set of 4 registers stores an ASCIIZ string of up to 8 characters that is used to specify the bold part of the title to be displayed at startup if the specified machine type is generic. Note: only lowercase letters (a-z) can be used.
   MBF_PAR_UICFG_MACH_NAME_BOLD_1,         // 0x0609
@@ -613,7 +613,7 @@ struct {
   const uint16_t cnt;
   uint16_t *data;
 } NeoPoolReg[] = {
-  // 8 entries each polled needs 2s for complete register set
+  // 8 entries each poll needs 2 sec for complete register set
   {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},
   {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
   {MBF_PAR_VERSION,       MBF_PAR_MODEL                     - MBF_PAR_VERSION       + 1, nullptr},
@@ -1313,12 +1313,15 @@ uint8_t NeoPoolWriteRegisterWord(uint16_t addr, uint16_t data)
 
 uint16_t NeoPoolGetData(uint16_t addr)
 {
+  uint16_t data;
+
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
     if (nullptr != NeoPoolReg[i].data && addr >= NeoPoolReg[i].addr && addr < NeoPoolReg[i].addr+NeoPoolReg[i].cnt) {
       return NeoPoolReg[i].data[addr - NeoPoolReg[i].addr];
     }
   }
-  return 0;
+  NeoPoolReadRegister(addr, &data, 1);
+  return data;
 }
 
 
