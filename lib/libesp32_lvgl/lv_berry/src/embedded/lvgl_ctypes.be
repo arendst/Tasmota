@@ -152,6 +152,28 @@ lv_draw_img_dsc = [            # valid LVGL8.2
 ]
 lv_draw_img_dsc = ctypes.structure(lv_draw_img_dsc, "lv_draw_img_dsc")
 
+lv_obj_draw_part_dsc = [            # valid LVGL8.2
+    [ptr, "draw_ctx"],
+    [ptr, "class_p"],
+    [uint32_t, "type"],
+    [ptr, "draw_area"],
+    [ptr, "rect_dsc"],
+    [ptr, "label_dsc"],
+    [ptr, "line_dsc"],
+    [ptr, "img_dsc"],
+    [ptr, "arc_dsc"],
+    [ptr, "p1"],
+    [ptr, "p2"],
+    [ptr, "text"],
+    [uint32_t, "text_length"],
+    [uint32_t, "part"],
+    [uint32_t, "id"],
+    [lv_coord, "radius"],
+    [int32_t, "value"],
+    [ptr, "sub_part_ptr"],
+]
+lv_obj_draw_part_dsc = ctypes.structure(lv_obj_draw_part_dsc, "lv_obj_draw_part_dsc")
+
 #- --------- lv_mask --------- -#
 lv_draw_mask_xcb = ptr    # callback
 lv_draw_mask_type = ctypes.u8
@@ -548,7 +570,7 @@ lv_timer = ctypes.structure(lv_timer, "lv_timer")
 # lv_anim = ctypes.structure(lv_anim, "lv_anim")
 
 #######################################################################
-# lv_draw_ctc
+# lv_draw_ctx
 lv_draw_ctx = [            # valid LVGL8.2
     [ptr, "buf"],
     [lv_area, "buf_area"],
