@@ -45,41 +45,62 @@ struct {
   uint16_t distance = 0;
 } vl53l1x_data[VL53LXX_MAX_SENSORS];
 
-bool VL53L1X_xshut = false;
-bool VL53L1X_detected = false;
+uint8_t VL53L1X_xshut = 0;
+uint8_t VL53L1X_detected = 0;
 
 /********************************************************************************************/
 
 void Vl53l1Detect(void) {
 
-  for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
+  uint32_t i, xshut;
+  for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1) {
     if (PinUsed(GPIO_VL53LXX_XSHUT1, i)) {
       pinMode(Pin(GPIO_VL53LXX_XSHUT1, i), OUTPUT);
-      digitalWrite(Pin(GPIO_VL53LXX_XSHUT1, i), i==0 ? 1 : 0);
-      VL53L1X_xshut = true;
-    }
-    else {
-      break; // XSHUT indexes must be continuous. We stop at the 1st not defined one
+      digitalWrite(Pin(GPIO_VL53LXX_XSHUT1, i), 0);
+      VL53L1X_xshut |= xshut;
     }
   }
 
-  if (!I2cSetDevice(VL53LXX_ADDRESS)) { return; }
-  if (!vl53l1x_device[0].init()) { return; }
+  for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1 ) {
+    if (xshut & VL53L1X_xshut) {
+      digitalWrite(Pin(GPIO_VL53LXX_XSHUT1, i), 1);
+      delay(2);
+    }
+    if (!I2cSetDevice(VL53LXX_ADDRESS) && !I2cSetDevice((uint8_t)(VL53LXX_ADDRESS_MOVED+i))) { return; } // Detection for unconfigured OR configured sensor
+    if (VL53L1X_xshut) { vl53l1x_device[i].setAddress((uint8_t)(VL53LXX_ADDRESS_MOVED+i)); }
+    uint8_t addr = vl53l1x_device[i].getAddress();
+    if (vl53l1x_device[i].init()) {
+      vl53l1x_device[i].setTimeout(500);
+      vl53l1x_device[i].setDistanceMode(VL53L1X::Long); // could be Short, Medium, Long
+      vl53l1x_device[i].setMeasurementTimingBudget(140000);
+      vl53l1x_device[i].startContinuous(50);
+      VL53L1X_detected |= xshut;
 
-  I2cSetActiveFound(vl53l1x_device[0].getAddress(), "VL53L1X");
-  vl53l1x_device[0].setTimeout(500);
-  vl53l1x_device[0].setDistanceMode(VL53L1X::Long); // could be Short, Medium, Long
-  vl53l1x_device[0].setMeasurementTimingBudget(140000);
-  vl53l1x_device[0].startContinuous(50);
-  VL53L1X_detected = true;
+      if (VL53L1X_xshut) {
+          I2cSetActive(addr);
+          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C D_SENSOR " VL53L1X-%d " D_SENSOR_DETECTED " - " D_NEW_ADDRESS " 0x%02X"), i+1, addr);
+      } else {
+          I2cSetActiveFound(addr, "VL53L1X");
+          break;
+      }
+    }
+  }
 }
 
 void Vl53l1Every_250MSecond(void) {
-  uint16_t dist = vl53l1x_device[0].read();
-  if (!dist || dist > 4000) {
-    dist = 9999;
-  }
-  vl53l1x_data[0].distance = dist;
+  uint32_t i, xshut;
+  for (i = 0, xshut = 1; i < VL53LXX_MAX_SENSORS; i++, xshut <<= 1) {
+    if (xshut & VL53L1X_detected) {
+      uint16_t dist = vl53l1x_device[i].read();
+      if (!dist || dist > 4000) {
+        dist = 9999;
+      }
+      vl53l1x_data[i].distance = dist;
+    } // if detected
+    if (0 == VL53L1X_xshut) {
+      break;
+    }
+  } // for
 }
 
 #ifdef USE_DOMOTICZ
@@ -91,18 +112,37 @@ void Vl53l1Every_Second(void) {
 #endif  // USE_DOMOTICZ
 
 void Vl53l1Show(bool json) {
-  if (json) {
-    ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_data[0].distance);
+  uint32_t i, xshut;
+  for (i = 0, xshut = 1 ; i < VL53LXX_MAX_SENSORS ; i++, xshut <<= 1) {
+    if (xshut & VL53L1X_detected) {
+      if (json) {
+        if (0 == VL53L1X_xshut) {
+          ResponseAppend_P(PSTR(",\"VL53L1X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l1x_data[i].distance);
+        }
+        else {
+          ResponseAppend_P(PSTR(",\"VL53L1X%c%d\":{\"" D_JSON_DISTANCE "\":%d}"), IndexSeparator(), i+1, vl53l1x_data[i].distance);
+        }
 #ifdef USE_DOMOTICZ
-    if (0 == TasmotaGlobal.tele_period) {
-      Vl53l1Every_Second();
-    }
+        if (0 == TasmotaGlobal.tele_period) {
+          Vl53l1Every_Second();
+        }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_data[0].distance);
+      }
+      else {
+        if (0 == VL53L1X_xshut) {
+          WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X"), vl53l1x_data[i].distance);
+        }
+        else {
+          WSContentSend_PD(HTTP_SNS_DISTANCE, PSTR("VL53L1X%c%d"), IndexSeparator(), i+1, vl53l1x_data[i].distance);
+        }
 #endif
-  }
+      }
+    } // if detected
+    if (0 == VL53L1X_xshut) {
+      break;
+    }
+  } // for
 }
 
 /*********************************************************************************************\
