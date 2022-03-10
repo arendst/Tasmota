@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Chloorpomp"
 #define D_NEOPOOL_RELAY_CD                "Pekelpomp"
 #define D_NEOPOOL_TIME                    "Tijd"
-#define D_NEOPOOL_FILT_MODE               "Filtratie"
+#define D_NEOPOOL_FILT_MODE               "Filtratie modus"
 #define D_NEOPOOL_CELL_RUNTIME            "Cel looptijd"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrUit"

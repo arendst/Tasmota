@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Pompa cloro"
 #define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
 #define D_NEOPOOL_TIME                    "Orario"
-#define D_NEOPOOL_FILT_MODE               "Filtrazione"
+#define D_NEOPOOL_FILT_MODE               "Modalità di filtrazione"
 #define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"

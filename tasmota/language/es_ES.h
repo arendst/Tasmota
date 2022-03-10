@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Bomba de Cloro"
 #define D_NEOPOOL_RELAY_CD                "Bomba de Salmuera"
 #define D_NEOPOOL_TIME                    "Tiempo"
-#define D_NEOPOOL_FILT_MODE               "Filtrado"
+#define D_NEOPOOL_FILT_MODE               "Modo de filtrado"
 #define D_NEOPOOL_CELL_RUNTIME            "Tiempo de actividad"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"

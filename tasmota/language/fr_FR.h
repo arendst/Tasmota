@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Pompe Chlore"
 #define D_NEOPOOL_RELAY_CD                "Pompe Brome"
 #define D_NEOPOOL_TIME                    "Durée"
-#define D_NEOPOOL_FILT_MODE               "Filtration"
+#define D_NEOPOOL_FILT_MODE               "Filtration mode"
 #define D_NEOPOOL_CELL_RUNTIME            "Cell runtime"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
