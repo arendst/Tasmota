@@ -1126,6 +1126,32 @@ static int m_buffer(bvm *vm)
 }
 
 /*
+ * Change the pointer to a mapped buffer.
+ * 
+ * This call does nothing if the buffer is not mapped (i.e. memory is managed externally)
+ * 
+ * It is typically used to reuse existing Berry object and avoid a complete reallocation
+ * 
+ * `_change_buffer(comptr) -> comptr`
+ */
+static int m_change_buffer(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 2 && be_iscomptr(vm, 2)) {
+        buf_impl attr = m_read_attributes(vm, 1);
+        if (!attr.mapped) {
+            be_raise(vm, "type_error", "bytes() object must be mapped");
+        }
+        attr.bufptr = be_tocomptr(vm, 2);
+        m_write_attributes(vm, 1, &attr);   /* write attributes back to instance */
+        be_pushcomptr(vm, attr.bufptr);
+        be_return(vm);
+    }
+    be_raise(vm, "type_error", "operand must be a comptr");
+    be_return_nil(vm);
+}
+
+/*
  * External API
  */
 BERRY_API void * be_pushbytes(bvm *vm, const void * bytes, size_t len)
@@ -1381,6 +1407,7 @@ void be_load_byteslib(bvm *vm)
         { ".size", NULL },
         { ".len", NULL },
         { "_buffer", m_buffer },
+        { "_change_buffer", m_change_buffer },
         { "init", m_init },
         { "deinit", m_deinit },
         { "tostring", m_tostring },
@@ -1419,6 +1446,7 @@ class be_class_bytes (scope: global, name: bytes) {
     .size, var
     .len, var
     _buffer, func(m_buffer)
+    _change_buffer, func(m_change_buffer)
     init, func(m_init)
     deinit, func(m_deinit)
     tostring, func(m_tostring)

@@ -193,6 +193,7 @@ be_define_const_str(_available, "_available", 1306196581u, 0, 10, &be_const_str_
 be_define_const_str(_begin_transmission, "_begin_transmission", 2779461176u, 0, 19, &be_const_str__buffer);
 be_define_const_str(_buffer, "_buffer", 2044888568u, 0, 7, &be_const_str_power_off);
 be_define_const_str(_ccmd, "_ccmd", 2163421413u, 0, 5, &be_const_str_b);
+be_define_const_str(_change_buffer, "_change_buffer", 2101848693u, 0, 14, &be_const_str_add_cron);
 be_define_const_str(_class, "_class", 2732146350u, 0, 6, &be_const_str_yield);
 be_define_const_str(_cmd, "_cmd", 3419822142u, 0, 4, &be_const_str_set_style_pad_right);
 be_define_const_str(_crons, "_crons", 1000733579u, 0, 6, &be_const_str_dimmer);
@@ -1164,7 +1165,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str__X2Ew,
     (const bstring *)&be_const_str_init,
     (const bstring *)&be_const_str_connection_error,
-    (const bstring *)&be_const_str_add_cron,
+    (const bstring *)&be_const_str__change_buffer,
     (const bstring *)&be_const_str_arc_dsc,
     (const bstring *)&be_const_str_atan2,
     NULL,
@@ -1371,6 +1372,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 448,
-    .count = 919,
+    .count = 920,
     .table = m_string_table
 };
