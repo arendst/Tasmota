@@ -595,7 +595,6 @@ bool neopool_first_read = true;
 #endif  // NEOPOOL_OPTIMIZE_READINGS
 bool neopool_error = true;
 
-uint16_t neopool_model_option;
 uint16_t neopool_power_module_version;
 uint16_t neopool_power_module_nodeid[6];
 
@@ -614,9 +613,10 @@ struct {
   const uint16_t cnt;
   uint16_t *data;
 } NeoPoolReg[] = {
-  // complete poll cycle needs 7x250 ms to read complete register set
+  // complete poll cycle needs 8x250 ms to read complete register set
   {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},
   {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
+  {MBF_PAR_VERSION,       MBF_PAR_MODEL                     - MBF_PAR_VERSION       + 1, nullptr},
   {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO                 - MBF_PAR_TIME_LOW      + 1, nullptr},
   {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF           - MBF_PAR_ION           + 1, nullptr},
   {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE   - MBF_PAR_UICFG_MACHINE + 1, nullptr},
@@ -1098,7 +1098,6 @@ bool NeoPoolInitData(void)
   bool res = false;
 
   neopool_error = true;
-  neopool_model_option = 0xFFFF;
   neopool_power_module_version = 0;
   memset(neopool_power_module_nodeid, 0, sizeof(neopool_power_module_nodeid));
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
@@ -1347,18 +1346,9 @@ uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
 }
 
 
-uint16_t NeoPoolModelOption(void)
-{
-  if (0xFFFF == neopool_model_option) {
-    neopool_model_option = NeoPoolGetData(MBF_PAR_MODEL);
-  }
-  return neopool_model_option;
-}
-
-
 bool NeoPoolIsHydrolysis(void)
 {
-    return (((NeoPoolModelOption() & MBMSK_MODEL_HIDRO)) ||
+    return (((NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_HIDRO)) ||
             (NeoPoolGetData(MBF_HIDRO_STATUS) & (MBMSK_HIDRO_STATUS_CTRL_ACTIVE | MBMSK_HIDRO_STATUS_CTRL_ACTIVE)));
 }
 
@@ -1389,7 +1379,7 @@ bool NeoPoolIsConductivity(void)
 
 bool NeoPoolIsIonization(void)
 {
-  return (NeoPoolModelOption() & MBMSK_MODEL_ION);
+  return (NeoPoolGetData(MBF_PAR_MODEL) & MBMSK_MODEL_ION);
 }
 
 
