@@ -135,9 +135,9 @@ enum NeoPoolRegister {
   // FACTORY page (0x03xx)
   MBF_PAR_VERSION = 0x0300,               // 0x0300*        Software version of the PowerBox (unused)
   MBF_PAR_MODEL,                          // 0x0301* mask   System model options
-  MBF_PAR_SERNUM,                         // 0x0302         Serial number of the PowerBox (unused)
-  MBF_PAR_ION_NOM,                        // 0x0303         Ionization maximum production level (DO NOT WRITE!)
-  MBF_PAR_HIDRO_NOM = 0x0306,             // 0x0306         Hydrolysis maximum production level. (DO NOT WRITE!) If the hydrolysis is set to work in percent mode, this value will be 100. If the hydrolysis module is set to work in g/h production, this module will contain the maximum amount of production in g/h units. (DO NOT WRITE!)
+  MBF_PAR_SERNUM,                         // 0x0302*        Serial number of the PowerBox (unused)
+  MBF_PAR_ION_NOM,                        // 0x0303*        Ionization maximum production level (DO NOT WRITE!)
+  MBF_PAR_HIDRO_NOM = 0x0306,             // 0x0306*        Hydrolysis maximum production level. (DO NOT WRITE!) If the hydrolysis is set to work in percent mode, this value will be 100. If the hydrolysis module is set to work in g/h production, this module will contain the maximum amount of production in g/h units. (DO NOT WRITE!)
   MBF_PAR_SAL_AMPS = 0x030A,              // 0x030A         Current command in regulation for which we are going to measure voltage
   MBF_PAR_SAL_CELLK,                      // 0x030B         Specifies the relationship between the resistance obtained in the measurement process and its equivalence in g / l (grams per liter)
   MBF_PAR_SAL_TCOMP,                      // 0x030C         Specifies the deviation in temperature from the conductivity.
@@ -616,7 +616,7 @@ struct {
   // complete poll cycle needs 8x250 ms to read complete register set
   {MBF_ION_CURRENT,       MBF_NOTIFICATION                  - MBF_ION_CURRENT       + 1, nullptr},
   {MBF_CELL_RUNTIME_LOW,  MBF_CELL_RUNTIME_POL_CHANGES_HIGH - MBF_CELL_RUNTIME_LOW  + 1, nullptr},
-  {MBF_PAR_VERSION,       MBF_PAR_MODEL                     - MBF_PAR_VERSION       + 1, nullptr},
+  {MBF_PAR_VERSION,       MBF_PAR_HIDRO_NOM                 - MBF_PAR_VERSION       + 1, nullptr},
   {MBF_PAR_TIME_LOW,      MBF_PAR_FILT_GPIO                 - MBF_PAR_TIME_LOW      + 1, nullptr},
   {MBF_PAR_ION,           MBF_PAR_FILTRATION_CONF           - MBF_PAR_ION           + 1, nullptr},
   {MBF_PAR_UICFG_MACHINE, MBF_PAR_UICFG_MACH_VISUAL_STYLE   - MBF_PAR_UICFG_MACHINE + 1, nullptr},
@@ -731,7 +731,13 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPFiltrationMode {<mode>}
  *            get/set filtration mode (mode = 0..4|13)
- *            get mode if <mode> is omitted, otherwise set new mode
+ *            get mode if <mode> is omitted, otherwise set new mode according:
+ *              0 - Manual
+ *              1 - Auto
+ *              2 - Heating
+ *              3 - Smart
+ *              4 - Intelligent
+ *             13 - Backwash
  *
  * NPTime {<time>}
  *            get/set system time
@@ -1391,7 +1397,6 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_FILTRATION_MODE        "Mode"
 #define D_NEOPOOL_JSON_FILTRATION_SPEED       "Speed"
 #define D_NEOPOOL_JSON_HYDROLYSIS             "Hydrolysis"
-#define D_NEOPOOL_JSON_HYDROLYSIS_LEVEL       "Level"
 #define D_NEOPOOL_JSON_CELL_RUNTIME           "Runtime"
 #define D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL     "Total"
 #define D_NEOPOOL_JSON_CELL_RUNTIME_PART      "Part"
@@ -1414,6 +1419,8 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_COVER                  "Cover"
 #define D_NEOPOOL_JSON_SHOCK                  "Boost"
 #define D_NEOPOOL_JSON_LOW                    "Low"
+#define D_NEOPOOL_JSON_LEVEL                  "Level"
+#define D_NEOPOOL_JSON_SETPOINT               "Setpoint"
 #define D_NEOPOOL_JSON_MIN                    "Min"
 #define D_NEOPOOL_JSON_MAX                    "Max"
 #define D_NEOPOOL_JSON_PHPUMP                 "Pump"
@@ -1425,7 +1432,7 @@ bool NeoPoolIsIonization(void)
 void NeoPoolShow(bool json)
 {
   char neopool_type[60];
-  char stemp[160];
+  char stemp[200];
   float fvalue;
 
   if (neopool_error) {
@@ -1524,13 +1531,20 @@ void NeoPoolShow(bool json)
 
     // Redox
     if (NeoPoolIsRedox()) {
-      ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_REDOX "\":" NEOPOOL_FMT_RX), NeoPoolGetData(MBF_MEASURE_RX));
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_REDOX  "\":{"));
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_RX), NeoPoolGetData(MBF_MEASURE_RX));
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_RX), NeoPoolGetData(MBF_PAR_RX1));
+      ResponseJsonEnd();
     }
 
     // Chlorine
     if (NeoPoolIsChlorine()) {
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CHLORINE  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_CHLORINE "\":" NEOPOOL_FMT_CL), neopool_resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), neopool_resolution.cl, &fvalue);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_CL1)/100;
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), neopool_resolution.cl, &fvalue);
+      ResponseJsonEnd();
     }
 
     // Conductivity
@@ -1540,8 +1554,14 @@ void NeoPoolShow(bool json)
 
     // Ionization
     if (NeoPoolIsIonization()) {
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_IONIZATION  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
-      ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_IONIZATION "\":" NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_ION);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      fvalue = (float)NeoPoolGetData(MBF_PAR_ION_NOM);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), neopool_resolution.ion, &fvalue);
+      ResponseJsonEnd();
     }
 
     // Hydrolysis
@@ -1556,7 +1576,7 @@ void NeoPoolShow(bool json)
         dec = 0;
         sunit = PSTR("%");
       }
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_NEOPOOL_JSON_HYDROLYSIS_LEVEL  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_NEOPOOL_JSON_LEVEL  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
@@ -1787,15 +1807,19 @@ void NeoPoolShow(bool json)
 
     // Ionization
     if (NeoPoolIsIonization()) {
-      char spol[32];
-      snprintf_P(spol, sizeof(spol), PSTR(" " D_NEOPOOL_POLARIZATION "%d"), NeoPoolGetData(MBF_ION_STATUS)>>13);
+      char spol[100];
+      snprintf_P(spol, sizeof(spol), PSTR(" " D_NEOPOOL_POLARIZATION "%d"), (NeoPoolGetData(MBF_ION_STATUS) & 0x6000) >> 13);
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s%s"),
-        NeoPoolGetData(MBF_ION_STATUS)>>13?spol:PSTR(""),
+        (NeoPoolGetData(MBF_ION_STATUS) & 0x6000) >> 13 ? spol : PSTR(""),
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_ON_TARGET ? PSTR(" " D_NEOPOOL_SETPOINT_OK) : PSTR(""),
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_PROGTIME_EXCEEDED ? PSTR(" " D_NEOPOOL_PR_OFF) : PSTR("")
         );
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_IONIZATION, neopool_type, neopool_resolution.ion, &fvalue, NeoPoolGetData(MBF_ION_STATUS)>>13, NeoPoolGetData(MBF_ION_STATUS)&0x0002?" Low":"");
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_IONIZATION, neopool_type,
+        neopool_resolution.ion, &fvalue,
+        stemp,
+        NeoPoolGetData(MBF_ION_STATUS)&0x0002?PSTR(" " D_NEOPOOL_LOW):PSTR("")
+      );
     }
 
     // Filtration mode

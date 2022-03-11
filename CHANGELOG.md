@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
 - Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes (#15001)
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` (#15015)
-- NeoPool system voltages display, add complete power module and cell info to SENSOR
+- NeoPool system voltages display, add JSON power module, cell info, chlorine, conductivity and ionization to SENSOR
 - Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
 - LVGL Splash screen and ``SetOption135 1`` to disable splash screen
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 (#15061)
