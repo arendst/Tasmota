@@ -1390,7 +1390,7 @@ bool NeoPoolIsIonization(void)
 
 
 /*********************************************************************************************/
-
+#define D_NEOPOOL_JSON_MODULES                "Modules"
 #define D_NEOPOOL_JSON_CHLORINE               "Chlorine"
 #define D_NEOPOOL_JSON_CONDUCTIVITY           "Conductivity"
 #define D_NEOPOOL_JSON_FILTRATION             "Filtration"
@@ -1449,14 +1449,21 @@ void NeoPoolShow(bool json)
 
 #ifndef NEOPOOL_OPTIMIZE_READINGS
     // Time
-    ResponseAppend_P(PSTR("\"" D_JSON_TIME "\":\"%s\""),
-      GetDT(NeoPoolGetDataLong(MBF_PAR_TIME_LOW)).c_str());
+    ResponseAppend_P(PSTR("\"" D_JSON_TIME "\":\"%s\","), GetDT(NeoPoolGetDataLong(MBF_PAR_TIME_LOW)).c_str());
+#endif  // NEOPOOL_OPTIMIZE_READINGS
 
     // Type
-    ResponseAppend_P(PSTR(","));
-#endif  // NEOPOOL_OPTIMIZE_READINGS
-    // Type
-    ResponseAppend_P(PSTR("\"" D_NEOPOOL_TYPE "\":\"%s\""), neopool_type);
+    ResponseAppend_P(PSTR("\"" D_JSON_TYPE "\":\"%s\""), neopool_type);
+
+    // Module
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_MODULES "\":{"));
+    ResponseAppend_P(PSTR( "\"" D_JSON_PH "\":%d"), NeoPoolIspHModule());
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_REDOX "\":%d"), NeoPoolIsRedox());
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_HYDROLYSIS "\":%d"), NeoPoolIsHydrolysis());
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_CHLORINE "\":%d"), NeoPoolIsChlorine());
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_CONDUCTIVITY "\":%d"), NeoPoolIsConductivity());
+    ResponseAppend_P(PSTR(",\"" D_NEOPOOL_JSON_IONIZATION "\":%d"), NeoPoolIsIonization());
+    ResponseJsonEnd();
 
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
