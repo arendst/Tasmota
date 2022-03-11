@@ -65,8 +65,6 @@
 #define NEOPOOL_WRITE_REGISTER       0x10   // Function code used to write register
 #define NEOPOOL_READ_TIMEOUT           25   // read data timeout in ms
 
-//#define NEOPOOL_OPTIMIZE_READINGS          // Optimize modbus readings by considering of MBF_NOTIFICATION register - Note: Does not work on all systems!
-
 
 // Pool LED RGB lights with different programs, the individual programs can be selected
 // by switching them off and on again for a defined time when the LED is switched on.
@@ -590,9 +588,6 @@ volatile bool neopool_poll = true;
 uint8_t neopool_read_state = 0;
 uint8_t neopool_send_retry = 0;
 uint8_t neopool_failed_count = 0;
-#ifdef NEOPOOL_OPTIMIZE_READINGS
-bool neopool_first_read = true;
-#endif  // NEOPOOL_OPTIMIZE_READINGS
 bool neopool_error = true;
 
 uint16_t neopool_power_module_version;
@@ -1031,36 +1026,15 @@ void NeoPoolPoll(void)              // Every 250 mSec
 #endif  // DEBUG_TASMOTA_SENSOR
 
     ++neopool_read_state %= nitems(NeoPoolReg);
-#ifdef NEOPOOL_OPTIMIZE_READINGS
-    if (0 == neopool_read_state) {
-      neopool_first_read = false;
-    }
-#endif  // NEOPOOL_OPTIMIZE_READINGS
   }
 
   if (nullptr != NeoPoolReg[neopool_read_state].data) {
     if (0 == neopool_send_retry || data_ready) {
       neopool_send_retry = SENSOR_MAX_MISS;   // controller sometimes takes long time to answer
-#ifdef NEOPOOL_OPTIMIZE_READINGS
-      // optimize register block reads by attend to MBF_NOTIFICATION bits
-      if (neopool_first_read || 0x0100 == (NeoPoolReg[neopool_read_state].addr & 0x0700) ||
-            (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].addr >> 8)-1))) {
-#endif  // NEOPOOL_OPTIMIZE_READINGS
 #ifdef DEBUG_TASMOTA_SENSOR
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus send(%d, %d, 0x%04X, %d)"), NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
         NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
-#ifdef NEOPOOL_OPTIMIZE_READINGS
-      } else {
-        // search next addr block having notification
-        while ((NeoPoolReg[neopool_read_state].addr & 0x0F00) != 0x100 || (NeoPoolGetData(MBF_NOTIFICATION) & (1 << (NeoPoolReg[neopool_read_state].addr >> 8)-1))) {
-#ifdef DEBUG_TASMOTA_SENSOR
-          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: notify 0x%04X - addr block 0x%04X ignored"), NeoPoolGetData(MBF_NOTIFICATION), NeoPoolReg[neopool_read_state].addr);
-#endif  // DEBUG_TASMOTA_SENSOR
-          ++neopool_read_state %= nitems(NeoPoolReg);
-        }
-      }
-#endif  // NEOPOOL_OPTIMIZE_READINGS
     } else {
       if (1 == neopool_send_retry) {
         neopool_failed_count++;
@@ -1088,9 +1062,6 @@ void NeoPoolInit(void) {
       if (2 == result) {
           ClaimSerial();
       }
-#ifdef NEOPOOL_OPTIMIZE_READINGS
-      neopool_first_read = true;
-#endif  // NEOPOOL_OPTIMIZE_READINGS
       if (NeoPoolInitData()) {  // Claims heap space
         neopool_active = true;
       }
@@ -1447,10 +1418,8 @@ void NeoPoolShow(bool json)
 
     ResponseAppend_P(PSTR(",\""  D_NEOPOOL_NAME  "\":{"));
 
-#ifndef NEOPOOL_OPTIMIZE_READINGS
     // Time
     ResponseAppend_P(PSTR("\"" D_JSON_TIME "\":\"%s\","), GetDT(NeoPoolGetDataLong(MBF_PAR_TIME_LOW)).c_str());
-#endif  // NEOPOOL_OPTIMIZE_READINGS
 
     // Type
     ResponseAppend_P(PSTR("\"" D_JSON_TYPE "\":\"%s\""), neopool_type);
@@ -1586,7 +1555,6 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_NEOPOOL_JSON_LEVEL  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
-#ifndef NEOPOOL_OPTIMIZE_READINGS
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));
       ResponseAppend_P(PSTR( "\""  D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_LOW)).c_str());
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_PART  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_PART_LOW)).c_str());
@@ -1594,7 +1562,6 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_POLB  "\":\"%s\""), GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_POLB_LOW)).c_str());
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME_CHANGES  "\":%ld"), NeoPoolGetDataLong(MBF_CELL_RUNTIME_POL_CHANGES_LOW));
       ResponseJsonEnd();
-#endif  // NEOPOOL_OPTIMIZE_READINGS
 
       // S1
       const char *state = PSTR("");
@@ -1669,7 +1636,6 @@ void NeoPoolShow(bool json)
       Settings->web_color[COL_BACKGROUND][2]   // B
       );
 
-#ifndef NEOPOOL_OPTIMIZE_READINGS
     {
       // Time
       char dt[20];
@@ -1679,7 +1645,6 @@ void NeoPoolShow(bool json)
         tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_TIME, neopool_type, dt);
     }
-#endif  // NEOPOOL_OPTIMIZE_READINGS
 
     // Temperature
     if (NeoPoolGetData(MBF_PAR_TEMPERATURE_ACTIVE)) {
@@ -1866,13 +1831,11 @@ void NeoPoolShow(bool json)
         '\0' == *stemp ? ((NeoPoolGetData(MBF_RELAY_STATE) & (1<<i))?PSTR(D_ON):PSTR(D_OFF)) : stemp);
     }
 
-#ifndef NEOPOOL_OPTIMIZE_READINGS
     {
       // Cell runtime
       WSContentSend_PD(HTTP_SNS_NEOPOOL_CELL_RUNTIME, neopool_type,
         GetDuration(NeoPoolGetDataLong(MBF_CELL_RUNTIME_LOW)).c_str());
     }
-#endif  // NEOPOOL_OPTIMIZE_READINGS
 
 #endif  // USE_WEBSERVER
   }
