@@ -638,6 +638,7 @@ be_local_closure(Tasmota_remove_driver,   /* name */
 );
 /*******************************************************************/
 
+
 /********************************************************************
 ** Solidified function: fast_loop
 ********************************************************************/
@@ -1196,7 +1197,7 @@ be_local_closure(Tasmota_load,   /* name */
       be_nested_proto(
         6,                          /* nstack */
         1,                          /* argc */
-        2,                          /* varg */
+        0,                          /* varg */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
@@ -1229,7 +1230,7 @@ be_local_closure(Tasmota_load,   /* name */
       be_nested_proto(
         7,                          /* nstack */
         1,                          /* argc */
-        2,                          /* varg */
+        0,                          /* varg */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
@@ -1795,80 +1796,6 @@ be_local_closure(Tasmota_hs2rgb,   /* name */
 /*******************************************************************/
 
 
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(KV_init,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(k),
-    /* K1   */  be_nested_str(v),
-    }),
-    &be_const_str_init,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x90020202,  //  0001  SETMBR	R0	K1	R2
-      0x80000000,  //  0002  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified class: KV
-********************************************************************/
-be_local_class(KV,
-    2,
-    NULL,
-    be_nested_map(3,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(k, 2), be_const_var(0) },
-        { be_const_key(v, -1), be_const_var(1) },
-        { be_const_key(init, -1), be_const_closure(KV_init_closure) },
-    })),
-    be_str_literal("KV")
-);
-
-/********************************************************************
-** Solidified function: kv
-********************************************************************/
-be_local_closure(Tasmota_kv,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_const_class(be_class_KV),
-    }),
-    &be_const_str_kv,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x580C0000,  //  0000  LDCONST	R3	K0
-      0xB4000000,  //  0001  CLASS	K0
-      0x5C100600,  //  0002  MOVE	R4	R3
-      0x5C140200,  //  0003  MOVE	R5	R1
-      0x5C180400,  //  0004  MOVE	R6	R2
-      0x7C100400,  //  0005  CALL	R4	2
-      0x80040800,  //  0006  RET	1	R4
-    })
-  )
-);
-/*******************************************************************/
 
 
 /********************************************************************
@@ -2136,23 +2063,24 @@ be_local_closure(Tasmota_next_cron,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
+    ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(_crons),
     /* K1   */  be_const_int(0),
     /* K2   */  be_nested_str(size),
     /* K3   */  be_nested_str(id),
     /* K4   */  be_nested_str(trig),
+    /* K5   */  be_const_int(1),
     }),
     &be_const_str_next_cron,
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
+    ( &(const binstruction[17]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x780A000C,  //  0001  JMPF	R2	#000F
+      0x780A000D,  //  0001  JMPF	R2	#0010
       0x580C0001,  //  0002  LDCONST	R3	K1
       0x8C100502,  //  0003  GETMET	R4	R2	K2
       0x7C100200,  //  0004  CALL	R4	1
       0x14100604,  //  0005  LT	R4	R3	R4
-      0x78120007,  //  0006  JMPF	R4	#000F
+      0x78120008,  //  0006  JMPF	R4	#0010
       0x94100403,  //  0007  GETIDX	R4	R2	R3
       0x88100903,  //  0008  GETMBR	R4	R4	K3
       0x1C100801,  //  0009  EQ	R4	R4	R1
@@ -2160,8 +2088,9 @@ be_local_closure(Tasmota_next_cron,   /* name */
       0x94100403,  //  000B  GETIDX	R4	R2	R3
       0x88100904,  //  000C  GETMBR	R4	R4	K4
       0x80040800,  //  000D  RET	1	R4
-      0x7001FFF3,  //  000E  JMP		#0003
-      0x80000000,  //  000F  RET	0
+      0x000C0705,  //  000E  ADD	R3	R3	K5
+      0x7001FFF2,  //  000F  JMP		#0003
+      0x80000000,  //  0010  RET	0
     })
   )
 );
@@ -2314,6 +2243,7 @@ be_local_closure(Tasmota_get_light,   /* name */
 );
 /*******************************************************************/
 
+
 /********************************************************************
 ** Solidified function: check_not_method
 ********************************************************************/
@@ -2379,9 +2309,9 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _drivers, var
     wire1, var
     wire2, var
+    cmd_res, var
     global, var
     settings, var
-    cmd_res, var
     wd, var
     _debug_present, var
 
@@ -2391,7 +2321,6 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     _settings_ptr, comptr(&Settings)
 
     init, closure(Tasmota_init_closure)
-    kv, closure(Tasmota_kv_closure)
 
     get_free_heap, func(l_getFreeHeap)
     arch, func(l_arch)
