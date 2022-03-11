@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
 - LVGL Splash screen and ``SetOption135 1`` to disable splash screen
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 (#15061)
+- Support for Shelly 3EM (#13515)
 
 ### Changed
 - Extent number of pulsetimers from 8 to 32 (#8266)

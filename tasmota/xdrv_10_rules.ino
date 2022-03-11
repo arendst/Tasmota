@@ -130,7 +130,7 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
   #define IF_BLOCK_ENDIF          3
 #endif  // USE_EXPRESSION
 
-// Define to indicate that rules are always enabled 
+// Define to indicate that rules are always enabled
 #ifdef USE_BERRY
   #define BERRY_RULES     1
 #else
@@ -761,7 +761,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 #endif
 
-    if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
+    if (!event_trigger.startsWith(F("FILE#")) && RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
       if (Rules.no_execute) return true;
       if (plen == plen2) { stop_all_rules = true; }       // If BREAK was used on a triggered rule, Stop execution of this rule set
       commands.trim();
@@ -833,6 +833,36 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     Rules.trigger_count[rule_set]++;
   }
   return serviced;
+}
+
+/*******************************************************************************************/
+
+String RuleLoadFile(const char* fname) {
+  /* Read a string from rule space data between 'ON FILE#<fname> DO ' and ' ENDON' like:
+       rule3 on file#calib.dat do {"rms":{"current_a":3166385,"voltage_a":-767262},"freq":0} endon
+     NOTE: String may not contain word 'ENDON'!!
+  */
+  String filename = F("ON FILE#");
+  filename += fname;
+  filename += F(" DO ");
+//  filename.toUpperCase();
+
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
+    if (!GetRuleLen(i)) { continue; }
+
+    String rules = GetRule(i);
+    rules.toUpperCase();
+    int start = rules.indexOf(filename);
+    if (start == -1) { continue; }
+    start += filename.length();
+    int end = rules.indexOf(F(" ENDON"), start);
+    if (end == -1) { continue; }
+
+    rules = GetRule(i);
+    return rules.substring(start, end);  // {"rms":{"current_a":3166385,"voltage_a":-767262},"freq":0}
+  }
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: File '%s' not found or empty"), fname);
+  return "";
 }
 
 /*******************************************************************************************/

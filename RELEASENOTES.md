@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` [#15015](https://github.com/arendst/Tasmota/issues/15015)
 - NeoPool system voltages display
 - TasmotaSerial implement ``end()``
+- Support for Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection

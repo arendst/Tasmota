@@ -17,6 +17,16 @@
  * Based on datasheet from https://www.analog.com/en/products/ade7880.html
  *
  * I2C Address: 0x38
+ *********************************************************************************************
+ * - ATTENTION Before installing Tasmota retrieve the calibration data from the Shelly 3EM:
+ *   - Download file calib.dat from your configured shelly 3EM http://<shelly3em_ip_address>/calib.dat
+ *   - Search your Shelly 3EM firmware dump for calib.dat
+ * - Edit the file to become a single line. Notice the removal of unneeded data to make the string as short as possible:
+ *   {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0}
+ * - Install Tasmota and use the above template.
+ * - In addition to possible rules add a rule containing the calib.dat string from above like:
+ *   rule3 on file#calib.dat do {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0} endon
+ * - Restart Tasmota and obeserve that the results seem calibrated as Tasmota now uses the information from calib.dat
 \*********************************************************************************************/
 
 #define XNRG_23                 23
@@ -29,51 +39,7 @@
 //#define ADE7880_DEBUG
 //#define ADE7880_PROFILING
 
-/*
-Derive these parameters from the original Shelly 3EM 4M firmware dump. Look for JSON file called calib.data
-{
-  "state": 0,
-  "rms": {
-    "current_a": 3166385,
-    "current_b": 3125691,
-    "current_c": 3131983,
-    "current_n": -1474892307,
-    "current_s": 1756557,
-    "voltage_a": -767262,
-    "voltage_b": -763439,
-    "voltage_c": -749854
-  },
-  "angles": {
-    "angle0": 180,
-    "angle1": 176,
-    "angle2": 176
-  },
-  "powers": {
-    "totactive": {
-      "a": -1345820,
-      "b": -1347328,
-      "c": -1351979
-    },
-    "apparent": {
-      "a": 214966,
-      "b": 214961,
-      "c": 214949
-    }
-  },
- "energies": {
-    "totactive": {
-      "a": 8752,
-      "b": 8751,
-      "c": 8751
-    },
-    "apparent": {
-      "a": 40496,
-      "b": 40513,
-      "c": 40524
-    }
-  }
-}
-*/
+// Default calibration parameters can be overridden by a rule as documented above.
 #define ADE7880_FREQ_INIT       0            // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz (1). Default 45 Hz to 55 Hz (0).
 #define ADE7880_AIGAIN_INIT     3166385      // rms, current_a
 #define ADE7880_BIGAIN_INIT     3125691      // rms, current_b
@@ -391,32 +357,32 @@ int32_t Ade7880ReadVerify(uint16_t reg) {
 /*********************************************************************************************/
 
 bool Ade7880Init(void) {
-  // Init sequence about 100mS after reset - See page 40 (takes 68ms)
+  // Init sequence about 6mS after reset - See page 40 (takes 68ms)
 #ifdef ADE7880_PROFILING
   uint32_t start = millis();
 #endif  // ADE7880_PROFILING
 
-  uint32_t status1 = Ade7880ReadVerify(ADE7880_STATUS1);                   // 0x01A08000
+  uint32_t status1 = Ade7880ReadVerify(ADE7880_STATUS1);                   // 0xE503 - 0x01A08000
   if (bitRead(status1, 15)) {                                              // RSTDONE
     // Power on or Reset
-    Ade7880WriteVerify(ADE7880_CONFIG2, 0x02);                             // ADE7880_I2C_LOCK
-    Ade7880WriteVerify(ADE7880_STATUS1, 0x3FFE8930);                       // Acknowledge RSTDONE - Reset IRQ1 line
-    status1 = Ade7880ReadVerify(ADE7880_STATUS1);                          // 0x01A00007
+    Ade7880WriteVerify(ADE7880_CONFIG2, 0x02);                             // 0xEC01 - ADE7880_I2C_LOCK
+    Ade7880WriteVerify(ADE7880_STATUS1, 0x3FFE8930);                       // 0xE503 - Acknowledge RSTDONE - Reset IRQ1 line
+    status1 = Ade7880ReadVerify(ADE7880_STATUS1);                          // 0xE503 - 0x01A00007
   } else {
     return false;
   }
-  uint8_t version = Ade7880ReadVerify(ADE7880_Version);                    // 0x01
-  Ade7880WriteVerify(ADE7880_Gain, 0x0000);                                // Gain register set to 1 for current, and voltage
+  uint8_t version = Ade7880ReadVerify(ADE7880_Version);                    // 0xE707 - 0x01
+  Ade7880WriteVerify(ADE7880_Gain, 0x0000);                                // 0xE60F - Gain register set to 1 for current, and voltage
   if (Ade7880.calib_frequency) {
-    Ade7880WriteVerify(ADE7880_COMPMODE, 0x41FF);                          // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default is 45 Hz and 55 Hz.
+    Ade7880WriteVerify(ADE7880_COMPMODE, 0x41FF);                          // 0xE60E - Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default is 45 Hz and 55 Hz.
   }
   for (uint32_t phase = 0; phase < 3; phase++) {
-    Ade7880WriteVerify(ADE7880_AVGAIN + (phase * 2), Ade7880.calib_voltage[phase]);
-    Ade7880WriteVerify(ADE7880_AIGAIN + (phase * 2), Ade7880.calib_current[phase]);
-    Ade7880WriteVerify(ADE7880_APGAIN + (phase * 2), Ade7880.calib_acpower[phase]);
-    Ade7880WriteVerify(ADE7880_APHCAL + phase, Ade7880.calib_angle[phase]);
+    Ade7880WriteVerify(ADE7880_AVGAIN + (phase * 2), Ade7880.calib_voltage[phase]);  // 0x4381
+    Ade7880WriteVerify(ADE7880_AIGAIN + (phase * 2), Ade7880.calib_current[phase]);  // 0x4380
+    Ade7880WriteVerify(ADE7880_APGAIN + (phase * 2), Ade7880.calib_acpower[phase]);  // 0x4389
+    Ade7880WriteVerify(ADE7880_APHCAL + phase, Ade7880.calib_angle[phase]);          // 0xE614
   }
-  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);
+  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386
   bool error = false;
   for (uint32_t phase = 0; phase < 3; phase++) {
     if (Ade7880ReadVerify(ADE7880_AVGAIN + (phase * 2)) != (Ade7880.calib_voltage[phase] & 0x0FFFFFFF)) { error = true; }
@@ -429,27 +395,27 @@ bool Ade7880Init(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error initializing parameters"));
     return false;
   }
-  if (!Ade7880WriteVerify(ADE7880_LCYCMODE, 0x09)) {                       // Line cycle accumulation mode
+  if (!Ade7880WriteVerify(ADE7880_LCYCMODE, 0x09)) {                       // 0xE702 - Line cycle accumulation mode
                                                                            // - Watt-hour accumulation registers (AWATTHR, BWATTHR, CWATTHR, AFWATTHR, BFWATTHR, and CFWATTHR) are placed into line cycle accumulation mode.
                                                                            // - Phase A is selected for zero-crossings counts in the line cycle accumulation mode.
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting LCYCMODE register"));
     return false;
   }
-  if (!Ade7880WriteVerify(ADE7880_LINECYC, 0x0064)) {                      // = 100
+  if (!Ade7880WriteVerify(ADE7880_LINECYC, 0x0064)) {                      // 0xE60C - = 100
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting LINECYC register"));
     return false;
   }
-  Ade7880WriteVerify(ADE7880_MASK0, 0x00000020);                           // IRQ0 at end of an integration over an integer number of half line cycles set in the LINECYC register.
-  if (!Ade7880VerifyWrite(ADE7880_MASK0)) {
+  Ade7880WriteVerify(ADE7880_MASK0, 0x00000020);                           // 0xE50A - IRQ0 at end of an integration over an integer number of half line cycles set in the LINECYC register.
+  if (!Ade7880VerifyWrite(ADE7880_MASK0)) {                                // 0xE50A
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting MASK0 register"));
     return false;
   }
-  Ade7880Write(ADE7880_MASK0, 0x00000020);
-  Ade7880Write(ADE7880_MASK0, 0x00000020);
-  Ade7880Write(ADE7880_MASK0, 0x00000020);
-  Ade7880Write(ADE7880_DSPWP_SEL, 0xAD);                                   // Select DSP write protection
-  Ade7880Write(ADE7880_DSPWP_SET, 0x80);                                   // Write protect DSP area
-  Ade7880WriteVerify(ADE7880_Run, 0x0201);                                 // Start DSP
+  Ade7880Write(ADE7880_MASK0, 0x00000020);                                 // 0xE50A
+  Ade7880Write(ADE7880_MASK0, 0x00000020);                                 // 0xE50A
+  Ade7880Write(ADE7880_MASK0, 0x00000020);                                 // 0xE50A
+  Ade7880Write(ADE7880_DSPWP_SEL, 0xAD);                                   // 0xE7FE - Select DSP write protection
+  Ade7880Write(ADE7880_DSPWP_SET, 0x80);                                   // 0xE7E3 - Write protect DSP area
+  Ade7880WriteVerify(ADE7880_Run, 0x0201);                                 // 0xE228 - Start DSP
 
 #ifdef ADE7880_PROFILING
   AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Init done in %d ms"), millis() - start);
@@ -498,12 +464,12 @@ void Ade7880Cycle(void) {
   uint32_t start = millis();
 #endif  // ADE7880_PROFILING
 
-  uint32_t status0 = Ade7880ReadVerify(ADE7880_STATUS0);                   // 0x000FEFE0
+  uint32_t status0 = Ade7880ReadVerify(ADE7880_STATUS0);                   // 0xE502 - 0x000FEFE0
   if (!bitRead(status0, 5)) {                                              // LENERGY
     return;
   } else {
-    Ade7880WriteVerify(ADE7880_STATUS0, 0x00000020);                       // Acknowledge LENERGY - Reset IRQ0 line
-    status0 = Ade7880ReadVerify(ADE7880_STATUS0);                          // 0x000FEFC0
+    Ade7880WriteVerify(ADE7880_STATUS0, 0x00000020);                       // 0xE502 - Acknowledge LENERGY - Reset IRQ0 line
+    status0 = Ade7880ReadVerify(ADE7880_STATUS0);                          // 0xE502 - 0x000FEFC0
   }
   if (Ade7880.cycle_count) {                                               // Allow calibration stabilization
     Ade7880.cycle_count--;
@@ -511,12 +477,12 @@ void Ade7880Cycle(void) {
   }
   for (uint32_t phase = 0; phase < 3; phase++) {
     Energy.data_valid[phase] = 0;
-    Energy.voltage[phase] = (float)Ade7880ReadVerify(ADE7880_AVRMS + (phase * 2)) / 10000;     // 0x0024CC94 = 241.1668 V
-    Energy.current[phase] = (float)Ade7880ReadVerify(ADE7880_AIRMS + (phase * 2)) / 1000000;   // 0x00002D6D = 0.011629 A
-    Energy.active_power[phase] = (float)Ade7880ReadVerify(ADE7880_AWATT + phase) / 100;        // 0xFFFFF524 = -27.79 W (wrong calibration)
-    Energy.apparent_power[phase] = (float)Ade7880ReadVerify(ADE7880_AVA + phase) / 100;        // 0xFFFFF50D
-    Energy.frequency[phase] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD + phase);          // Page 34 and based on ADE7880_FREQ_INIT
-    Ade7880.active_energy[phase] = Ade7880ReadVerify(ADE7880_AWATTHR + phase);                 // 0xFFFFFF8F = -1.12 Whr ??
+    Energy.voltage[phase] = (float)Ade7880ReadVerify(ADE7880_AVRMS + (phase * 2)) / 10000;     // 0x43C1 - 0x0024CC94 = 241.1668 V
+    Energy.current[phase] = (float)Ade7880ReadVerify(ADE7880_AIRMS + (phase * 2)) / 1000000;   // 0x43C0 - 0x00002D6D = 0.011629 A
+    Energy.active_power[phase] = (float)Ade7880ReadVerify(ADE7880_AWATT + phase) / 100;        // 0xE513 - 0xFFFFF524 = -27.79 W (wrong calibration)
+    Energy.apparent_power[phase] = (float)Ade7880ReadVerify(ADE7880_AVA + phase) / 100;        // 0xE519 - 0xFFFFF50D
+    Energy.frequency[phase] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD + phase);          // 0xE905 - Page 34 and based on ADE7880_FREQ_INIT
+    Ade7880.active_energy[phase] = Ade7880ReadVerify(ADE7880_AWATTHR + phase);                 // 0xE400 - 0xFFFFFF8F = -0.112 kWhr ??
   }
 
 #ifdef ADE7880_PROFILING
@@ -549,6 +515,61 @@ void Ade7880EnergyEverySecond(void) {
   }
 }
 
+bool Ade7880SetDefaults(const char* json) {
+  // {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0}
+  uint32_t len = strlen(json) +1;
+  if (len < 7) { return false; }          // Too short
+
+  char json_buffer[len];
+  memcpy(json_buffer, json, len);         // Keep original safe
+  JsonParser parser(json_buffer);
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }
+
+  // All parameters are optional allowing for partial changes
+  JsonParserToken val = root[PSTR("freq")];
+  if (val) { Ade7880.calib_frequency = val.getUInt(); }
+  JsonParserObject rms = root[PSTR("rms")].getObject();
+  if (rms) {
+    val = rms[PSTR("current_a")];
+    if (val) { Ade7880.calib_current[0] = val.getInt(); }
+    val = rms[PSTR("current_b")];
+    if (val) { Ade7880.calib_current[1] = val.getInt(); }
+    val = rms[PSTR("current_c")];
+    if (val) { Ade7880.calib_current[2] = val.getInt(); }
+    val = rms[PSTR("current_s")];
+    if (val) { Ade7880.calib_current[3] = val.getInt(); }
+    val = rms[PSTR("voltage_a")];
+    if (val) { Ade7880.calib_voltage[0] = val.getInt(); }
+    val = rms[PSTR("voltage_b")];
+    if (val) { Ade7880.calib_voltage[1] = val.getInt(); }
+    val = rms[PSTR("voltage_c")];
+    if (val) { Ade7880.calib_voltage[2] = val.getInt(); }
+  }
+  JsonParserObject angles = root[PSTR("angles")].getObject();
+  if (angles) {
+    val = angles[PSTR("angle0")];
+    if (val) { Ade7880.calib_angle[0] = val.getUInt(); }
+    val = angles[PSTR("angle1")];
+    if (val) { Ade7880.calib_angle[1] = val.getUInt(); }
+    val = angles[PSTR("angle2")];
+    if (val) { Ade7880.calib_angle[2] = val.getUInt(); }
+  }
+  JsonParserObject powers = root[PSTR("powers")].getObject();
+  if (powers) {
+    JsonParserObject totactive = powers[PSTR("totactive")].getObject();
+    if (totactive) {
+      val = totactive[PSTR("a")];
+      if (val) { Ade7880.calib_acpower[0] = val.getInt(); }
+      val = totactive[PSTR("b")];
+      if (val) { Ade7880.calib_acpower[1] = val.getInt(); }
+      val = totactive[PSTR("c")];
+      if (val) { Ade7880.calib_acpower[2] = val.getInt(); }
+    }
+  }
+  return true;
+}
+
 void Ade7880Defaults(void) {
   Ade7880.calib_frequency = ADE7880_FREQ_INIT;
   Ade7880.calib_current[0] = ADE7880_AIGAIN_INIT;
@@ -564,6 +585,15 @@ void Ade7880Defaults(void) {
   Ade7880.calib_angle[0] = ADE7880_APHCAL_INIT;
   Ade7880.calib_angle[1] = ADE7880_BPHCAL_INIT;
   Ade7880.calib_angle[2] = ADE7880_CPHCAL_INIT;
+
+#ifdef USE_RULES
+  // rule3 on file#calib.dat do {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0} endon
+  String calib = RuleLoadFile("CALIB.DAT");
+  if (calib.length()) {
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: File '%s'"), calib.c_str());
+    Ade7880SetDefaults(calib.c_str());
+  }
+#endif  // USE_RULES
 }
 
 void Ade7880DrvInit(void) {
@@ -592,54 +622,12 @@ bool Ade7880Command(void) {
   bool serviced = false;
 
   if (CMND_ENERGYCONFIG == Energy.command_code) {
+    // EnergyConfig {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0}
+    // EnergyConfig {"rms":{"voltage_c":-549854}}
+    // EnergyCOnfig {"freq":0}
     if (XdrvMailbox.data_len) {
-      // {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0}
-      JsonParser parser(XdrvMailbox.data);
-      JsonParserObject root = parser.getRootObject();
-      if (root) {
-        Ade7880Defaults();
-        // All parameters are optional allowing for partial changes
-        JsonParserToken val = root[PSTR("freq")];
-        if (val) { Ade7880.calib_frequency = val.getUInt(); }
-        JsonParserObject rms = root[PSTR("rms")].getObject();
-        if (rms) {
-          val = rms[PSTR("current_a")];
-          if (val) { Ade7880.calib_current[0] = val.getInt(); }
-          val = rms[PSTR("current_b")];
-          if (val) { Ade7880.calib_current[1] = val.getInt(); }
-          val = rms[PSTR("current_c")];
-          if (val) { Ade7880.calib_current[2] = val.getInt(); }
-          val = rms[PSTR("current_s")];
-          if (val) { Ade7880.calib_current[3] = val.getInt(); }
-          val = rms[PSTR("voltage_a")];
-          if (val) { Ade7880.calib_voltage[0] = val.getInt(); }
-          val = rms[PSTR("voltage_b")];
-          if (val) { Ade7880.calib_voltage[1] = val.getInt(); }
-          val = rms[PSTR("voltage_c")];
-          if (val) { Ade7880.calib_voltage[2] = val.getInt(); }
-        }
-        JsonParserObject angles = root[PSTR("angles")].getObject();
-        if (angles) {
-          val = angles[PSTR("angle0")];
-          if (val) { Ade7880.calib_angle[0] = val.getUInt(); }
-          val = angles[PSTR("angle1")];
-          if (val) { Ade7880.calib_angle[1] = val.getUInt(); }
-          val = angles[PSTR("angle2")];
-          if (val) { Ade7880.calib_angle[2] = val.getUInt(); }
-        }
-        JsonParserObject powers = root[PSTR("powers")].getObject();
-        if (powers) {
-          JsonParserObject totactive = powers[PSTR("totactive")].getObject();
-          if (totactive) {
-            val = totactive[PSTR("a")];
-            if (val) { Ade7880.calib_acpower[0] = val.getInt(); }
-            val = totactive[PSTR("b")];
-            if (val) { Ade7880.calib_acpower[1] = val.getInt(); }
-            val = totactive[PSTR("c")];
-            if (val) { Ade7880.calib_acpower[2] = val.getInt(); }
-          }
-        }
-
+      Ade7880Defaults();                      // Load defaults
+      if (Ade7880SetDefaults(XdrvMailbox.data)) {
         bool status = Ade7880SetCalibrate();
         AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Re-init status %d"), status);
       }
