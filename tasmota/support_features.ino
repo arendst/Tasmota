@@ -794,7 +794,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_BL6523)
     feature8 |= 0x00400000;  // xnrg_22_bl6523.ino
 #endif
-//    feature8 |= 0x00800000;
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7880)
+    feature8 |= 0x00800000;
+#endif
 
 //    feature8 |= 0x01000000;
 //    feature8 |= 0x02000000;
