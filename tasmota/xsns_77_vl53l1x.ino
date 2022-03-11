@@ -25,26 +25,39 @@
  * Source:
  *
  * I2C Address: 0x29
+ *********************************************************************************************
+ *
+ * Note: When using multiple VL53L0X, it is required to also wire the XSHUT pin of all those sensors
+ * in order to let Tasmota change by software the I2C address of those and give them an unique address
+ * for operation. The sensor don't save its address, so this procedure of changing its address is needed
+ * to be performed every restart. The Addresses used for this are 120 (0x78) to 127 (0x7F). In the I2c
+ * Standard (https://i2cdevices.org/addresses) those addresses are used by the PCA9685.
+ * The base address (0x78) can be changed as a compile option with #define VL53L1X_XSHUT_ADDRESS 0xNN in
+ * your user_config_override.h
+ *
+ * The default value of VL53LXX_MAX_SENSORS is set in the file tasmota.h
+ * Changing that is backwards incompatible - Max supported devices by this driver are 8
+ *********************************************************************************************
+ * The following settings can be overriden
+ *
+ *
 \*********************************************************************************************/
 
 #define XSNS_77     77
 #define XI2C_54     54  // See I2CDEVICES.md
 
-#define VL53LXX_MAX_SENSORS   VL53L0X_MAX_SENSORS
-#define GPIO_VL53LXX_XSHUT1   GPIO_VL53L0X_XSHUT1
-
 #include "VL53L1X.h"
-VL53L1X vl53l1x_device[VL53LXX_MAX_SENSORS];
 
-#define VL53LXX_ADDRESS 0x29
-#ifndef VL53LXX_XSHUT_ADDRESS
-#define VL53LXX_XSHUT_ADDRESS 0x78
+#define VL53L1X_ADDRESS 0x29
+#ifndef VL53L1X_XSHUT_ADDRESS
+#define VL53L1X_XSHUT_ADDRESS 0x78
 #endif
 
 #ifndef VL53L1X_DISTANCE_MODE
 #define VL53L1X_DISTANCE_MODE Long
 #endif
 
+VL53L1X vl53l1x_device[VL53LXX_MAX_SENSORS];
 
 struct {
   uint16_t distance = 0;
@@ -71,10 +84,10 @@ void Vl53l1Detect(void) {
       digitalWrite(Pin(GPIO_VL53LXX_XSHUT1, i), 1);
       delay(2);
     }
-    if (!I2cSetDevice(VL53LXX_ADDRESS) && !I2cSetDevice((uint8_t)(VL53LXX_XSHUT_ADDRESS+i))) { continue; } // Detection for unconfigured OR configured sensor
+    if (!I2cSetDevice(VL53L1X_ADDRESS) && !I2cSetDevice((uint8_t)(VL53L1X_XSHUT_ADDRESS+i))) { continue; } // Detection for unconfigured OR configured sensor
     if (vl53l1x_device[i].init()) {
       if (VL53L1X_xshut) {
-        vl53l1x_device[i].setAddress((uint8_t)(VL53LXX_XSHUT_ADDRESS+i));
+        vl53l1x_device[i].setAddress((uint8_t)(VL53L1X_XSHUT_ADDRESS+i));
       }
       uint8_t addr = vl53l1x_device[i].getAddress();
       vl53l1x_device[i].setTimeout(500);
