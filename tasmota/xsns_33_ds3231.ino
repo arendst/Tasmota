@@ -72,28 +72,18 @@
 
 bool ds3231_detected = false;
 
-/*********************************************************************************************/
-
-uint8_t DS3231bcd2dec(uint8_t n) {
-  return n - 6 * (n >> 4);
-}
-
-uint8_t DS3231dec2bcd(uint8_t n) {
-  return n + 6 * (n / 10);
-}
-
 /*-------------------------------------------------------------------------------------------*\
  * Read time from DS3231 and return the epoch time (second since 1-1-1970 00:00)
 \*-------------------------------------------------------------------------------------------*/
 uint32_t DS3231ReadTime(void) {
   TIME_T tm;
-  tm.second = DS3231bcd2dec(I2cRead8(USE_RTC_ADDR, DS3231_SECONDS));
-  tm.minute = DS3231bcd2dec(I2cRead8(USE_RTC_ADDR, DS3231_MINUTES));
-  tm.hour = DS3231bcd2dec(I2cRead8(USE_RTC_ADDR, DS3231_HOURS) & ~_BV(DS3231_HR1224));    // Assumes 24hr clock
+  tm.second = Bcd2Dec(I2cRead8(USE_RTC_ADDR, DS3231_SECONDS));
+  tm.minute = Bcd2Dec(I2cRead8(USE_RTC_ADDR, DS3231_MINUTES));
+  tm.hour = Bcd2Dec(I2cRead8(USE_RTC_ADDR, DS3231_HOURS) & ~_BV(DS3231_HR1224));    // Assumes 24hr clock
   tm.day_of_week = I2cRead8(USE_RTC_ADDR, DS3231_DAY);
-  tm.day_of_month = DS3231bcd2dec(I2cRead8(USE_RTC_ADDR, DS3231_DATE));
-  tm.month = DS3231bcd2dec(I2cRead8(USE_RTC_ADDR, DS3231_MONTH) & ~_BV(DS3231_CENTURY));  // Don't use the Century bit
-  tm.year = DS3231bcd2dec(I2cRead8(USE_RTC_ADDR, DS3231_YEAR));
+  tm.day_of_month = Bcd2Dec(I2cRead8(USE_RTC_ADDR, DS3231_DATE));
+  tm.month = Bcd2Dec(I2cRead8(USE_RTC_ADDR, DS3231_MONTH) & ~_BV(DS3231_CENTURY));  // Don't use the Century bit
+  tm.year = Bcd2Dec(I2cRead8(USE_RTC_ADDR, DS3231_YEAR));
   return MakeTime(tm);
 }
 
@@ -103,13 +93,13 @@ uint32_t DS3231ReadTime(void) {
 void DS3231SetTime (uint32_t epoch_time) {
   TIME_T tm;
   BreakTime(epoch_time, tm);
-  I2cWrite8(USE_RTC_ADDR, DS3231_SECONDS, DS3231dec2bcd(tm.second));
-  I2cWrite8(USE_RTC_ADDR, DS3231_MINUTES, DS3231dec2bcd(tm.minute));
-  I2cWrite8(USE_RTC_ADDR, DS3231_HOURS, DS3231dec2bcd(tm.hour));
+  I2cWrite8(USE_RTC_ADDR, DS3231_SECONDS, Dec2Bcd(tm.second));
+  I2cWrite8(USE_RTC_ADDR, DS3231_MINUTES, Dec2Bcd(tm.minute));
+  I2cWrite8(USE_RTC_ADDR, DS3231_HOURS, Dec2Bcd(tm.hour));
   I2cWrite8(USE_RTC_ADDR, DS3231_DAY, tm.day_of_week);
-  I2cWrite8(USE_RTC_ADDR, DS3231_DATE, DS3231dec2bcd(tm.day_of_month));
-  I2cWrite8(USE_RTC_ADDR, DS3231_MONTH, DS3231dec2bcd(tm.month));
-  I2cWrite8(USE_RTC_ADDR, DS3231_YEAR, DS3231dec2bcd(tm.year));
+  I2cWrite8(USE_RTC_ADDR, DS3231_DATE, Dec2Bcd(tm.day_of_month));
+  I2cWrite8(USE_RTC_ADDR, DS3231_MONTH, Dec2Bcd(tm.month));
+  I2cWrite8(USE_RTC_ADDR, DS3231_YEAR, Dec2Bcd(tm.year));
   I2cWrite8(USE_RTC_ADDR, DS3231_STATUS, I2cRead8(USE_RTC_ADDR, DS3231_STATUS) & ~_BV(DS3231_OSF));  // Clear the Oscillator Stop Flag
 }
 
