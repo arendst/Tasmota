@@ -172,7 +172,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_REAL:
 #if BE_USE_SINGLE_FLOAT
-        logfmt("be_const_real_hex(0x%08X)", (uint32_t) var_toobj(value));
+        logfmt("be_const_real_hex(%08" PRIX32 ")", (uint32_t)(uintptr_t)var_toobj(value));
 #else
         logfmt("be_const_real_hex(0x%016" PRIx64 ")", (uint64_t)var_toobj(value));
 #endif

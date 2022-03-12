@@ -403,6 +403,9 @@ static bbool buf_equals(buf_impl* buf1, buf_impl* buf2)
     // we know that both buf1 and buf2 are non-null
     if (buf1->len != buf2->len) { return bfalse; }
     size_t len = buf1->len;
+    if (!buf1->bufptr && !buf2->bufptr) { return btrue; }   /* if both are null then considered equal */
+    if (!buf1->bufptr || !buf2->bufptr) { return bfalse; }  /* if only one is null, then not equal */
+    /* here none of the pointer are null */
     for (uint32_t i=0; i<len; i++) {
         if (buf_get1(buf1, i) != buf_get1(buf2, i)) { return bfalse; }
     }
@@ -432,6 +435,13 @@ static void buf_add_hex(buf_impl* attr, const char *hex, size_t len)
 /********************************************************************
 ** Wrapping into lib
 ********************************************************************/
+
+/* if the bufptr is null, don't try to dereference and raise an exception instead */
+static void check_ptr(bvm *vm, buf_impl* attr) {
+    if (!attr->bufptr) {
+        be_raise(vm, "value_error", "operation not allowed on <null> pointer");
+    }
+}
 
 /* load instance attribute into a single structure, and store 'previous' values in order to later update only the changed ones */
 /* stack item 1 must contain the instance */
@@ -681,23 +691,27 @@ static int m_tostring(bvm *vm)
         max_len = be_toint(vm, 2);  /* you can specify the len as second argument, or 0 for unlimited */
     }
     buf_impl attr = m_read_attributes(vm, 1);
-    int32_t len = attr.len;
-    if (max_len > 0 && len > max_len) {
-        len = max_len;  /* limit output size */
-        truncated = 1;
-    }
-    size_t hex_len = len * 2 + 5 + 2 + 2 + 1 + truncated * 3;  /* reserve size for `bytes("")\0` - 9 chars */
+    if (attr.bufptr) {              /* pointer looks valid */
+        int32_t len = attr.len;
+        if (max_len > 0 && len > max_len) {
+            len = max_len;  /* limit output size */
+            truncated = 1;
+        }
+        size_t hex_len = len * 2 + 5 + 2 + 2 + 1 + truncated * 3;  /* reserve size for `bytes("")\0` - 9 chars */
 
-    char * hex_out = be_pushbuffer(vm, hex_len);
-    size_t l = be_strlcpy(hex_out, "bytes('", hex_len);
-    l += tohex(&hex_out[l], hex_len - l, attr.bufptr, len);
-    if (truncated) {
-        l += be_strlcpy(&hex_out[l], "...", hex_len - l);
-    }
-    l += be_strlcpy(&hex_out[l], "')", hex_len - l);
+        char * hex_out = be_pushbuffer(vm, hex_len);
+        size_t l = be_strlcpy(hex_out, "bytes('", hex_len);
+        l += tohex(&hex_out[l], hex_len - l, attr.bufptr, len);
+        if (truncated) {
+            l += be_strlcpy(&hex_out[l], "...", hex_len - l);
+        }
+        l += be_strlcpy(&hex_out[l], "')", hex_len - l);
 
-    be_pushnstring(vm, hex_out, l); /* make escape string from buffer */
-    be_remove(vm, -2); /* remove buffer */
+        be_pushnstring(vm, hex_out, l); /* make escape string from buffer */
+        be_remove(vm, -2); /* remove buffer */
+    } else {                    /* pointer is null, don't try to dereference it as it would crash */
+        be_pushstring(vm, "bytes(<null>)");
+    }
     be_return(vm);
 }
 
@@ -707,6 +721,7 @@ static int m_tostring(bvm *vm)
 static int m_asstring(bvm *vm)
 {
     buf_impl attr = bytes_check_data(vm, 0);
+    check_ptr(vm, &attr);
     be_pushnstring(vm, (const char*) attr.bufptr, attr.len);
     be_return(vm);
 }
@@ -718,6 +733,7 @@ static int m_fromstring(bvm *vm)
         const char *s = be_tostring(vm, 2);
         int32_t len = be_strlen(vm, 2);      /* calling be_strlen to support null chars in string */
         buf_impl attr = bytes_check_data(vm, 0);
+        check_ptr(vm, &attr);
         if (attr.fixed && attr.len != len) {
             be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
         }
@@ -745,6 +761,7 @@ static int m_add(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 4); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
     if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
     if (argc >= 2 && be_isint(vm, 2)) {
         int32_t v = be_toint(vm, 2);
@@ -781,6 +798,7 @@ static int m_get(bvm *vm, bbool sign)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
     if (argc >=2 && be_isint(vm, 2)) {
         int32_t idx = be_toint(vm, 2);
         int vsize = 1;
@@ -839,6 +857,7 @@ static int m_set(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
     if (argc >=3 && be_isint(vm, 2) && be_isint(vm, 3)) {
         int32_t idx = be_toint(vm, 2);
         int32_t value = be_toint(vm, 3);
@@ -867,6 +886,7 @@ static int m_setitem(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
     if (argc >=3 && be_isint(vm, 2) && be_isint(vm, 3)) {
         int index = be_toint(vm, 2);
         int val = be_toint(vm, 3);
@@ -884,6 +904,7 @@ static int m_item(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
     if (argc >=2 && be_isint(vm, 2)) {  /* single byte */
         int index = be_toint(vm,2);
         if (index < 0) {
@@ -970,12 +991,15 @@ static int m_merge(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = m_read_attributes(vm, 1); /* no resize yet */
+    check_ptr(vm, &attr);
     if (argc >= 2 && be_isbytes(vm, 2)) {
         buf_impl attr2 = m_read_attributes(vm, 2);
+        check_ptr(vm, &attr2);
 
         /* allocate new object */
         bytes_new_object(vm, attr.len + attr2.len);
         buf_impl attr3 = m_read_attributes(vm, -1);
+        check_ptr(vm, &attr3);
 
         buf_add_buf(&attr3, &attr);
         buf_add_buf(&attr3, &attr2);
@@ -990,8 +1014,10 @@ static int m_merge(bvm *vm)
 static int m_copy(bvm *vm)
 {
     buf_impl attr = m_read_attributes(vm, 1);
+    check_ptr(vm, &attr);
     bytes_new_object(vm, attr.len);
     buf_impl attr2 = m_read_attributes(vm, -1);
+    check_ptr(vm, &attr2);
     buf_add_buf(&attr2, &attr);
     m_write_attributes(vm, -1, &attr2);  /* update instance */
     be_return(vm); /* return self */
@@ -1002,6 +1028,7 @@ static int m_connect(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = m_read_attributes(vm, 1);
+    check_ptr(vm, &attr);
     if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
     if (argc >= 2 && (be_isbytes(vm, 2) || be_isint(vm, 2))) {
         if (be_isint(vm, 2)) {
@@ -1012,6 +1039,7 @@ static int m_connect(bvm *vm)
             be_return(vm); /* return self */
         } else {
             buf_impl attr2 = m_read_attributes(vm, 2);
+            check_ptr(vm, &attr2);
             bytes_resize(vm, &attr, attr.len + attr2.len); /* resize buf1 for total size */
             buf_add_buf(&attr, &attr2);
             m_write_attributes(vm, 1, &attr);  /* update instance */
@@ -1062,6 +1090,7 @@ static int m_nequal(bvm *vm)
 static int m_tob64(bvm *vm)
 {
     buf_impl attr = m_read_attributes(vm, 1);
+    check_ptr(vm, &attr);
     int32_t len = attr.len;
     int32_t b64_len = encode_base64_length(len) + 1;  /* size of base64 encoded string for this binary length, add NULL terminator */
 
@@ -1086,6 +1115,7 @@ static int m_fromb64(bvm *vm)
         int32_t bin_len = decode_base64_length((unsigned char*)s);   /* do a first pass to calculate the buffer size */
 
         buf_impl attr = m_read_attributes(vm, 1);
+        check_ptr(vm, &attr);
         if (attr.fixed && attr.len != bin_len) {
             be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
         }
@@ -1158,6 +1188,7 @@ BERRY_API void * be_pushbytes(bvm *vm, const void * bytes, size_t len)
 {
     bytes_new_object(vm, len);
     buf_impl attr = m_read_attributes(vm, -1);
+    check_ptr(vm, &attr);
     if ((int32_t)len > attr.size) { len = attr.size; } /* double check if the buffer allocated was smaller */
     if (bytes) {  /* if bytes is null, buffer is filled with zeros */
         memmove((void*)attr.bufptr, bytes, len);
@@ -1175,6 +1206,7 @@ BERRY_API const void *be_tobytes(bvm *vm, int rel_index, size_t *len)
     int index = be_absindex(vm, rel_index);
     if (be_isbytes(vm, index)) {
         buf_impl attr = m_read_attributes(vm, index);
+        check_ptr(vm, &attr);
         if (len) { *len = attr.len; }
         return (void*) attr.bufptr;
     }
