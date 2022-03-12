@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.6 - Last update 08.03.2022
+ * Updated until v10.1.0.6 - Last update 12.03.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -838,7 +838,7 @@
 #define D_SENSOR_WIEGAND_D1             "Wiegand - D1"
 #define D_SENSOR_NEOPOOL_TX             "NeoPool - TX"
 #define D_SENSOR_NEOPOOL_RX             "NeoPool - RX"
-#define D_SENSOR_VL53LXX_XSHUT "VL53LXX XSHUT"
+#define D_SENSOR_VL53LXX_XSHUT          "VL53LXX - XSHUT"
 #define D_SENSOR_TFMINIPLUS_TX          "TFmini+ - TX"
 #define D_SENSOR_TFMINIPLUS_RX          "TFmini+ - RX"
 #define D_SENSOR_ZEROCROSS              "Impulsi ZC"
