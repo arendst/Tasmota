@@ -18,6 +18,7 @@
 // Local pointer for file managment
 #ifdef USE_UFILESYS
     #include <FS.h>
+    #include <LittleFS.h>
     #include "ZipReadFS.h"
     extern FS *ffsp;
     FS zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ffsp)));
@@ -340,6 +341,15 @@ int be_unlink(const char *filename)
         strcpy(fname2 + 1, filename);   // prepend with '/'
     }
     return zip_ufsp.remove(fname2);
+#endif // USE_UFILESYS
+    return 0;
+}
+
+/* format file system - erase everything */
+extern "C" int be_format_fs(void)
+{
+#ifdef USE_UFILESYS
+    return LittleFS.format();
 #endif // USE_UFILESYS
     return 0;
 }
