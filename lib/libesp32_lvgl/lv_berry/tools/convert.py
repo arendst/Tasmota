@@ -556,7 +556,7 @@ be_local_class(lv_obj,
         { be_const_key(tostring, 4), be_const_func(lv_x_tostring) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_obj_init) },
     })),
-    (be_nested_const_str("lv_obj", -37134147, 6))
+    (be_str_literal("lv_obj"))
 );
 /*******************************************************************/
 
@@ -573,7 +573,7 @@ be_local_class(lv_group,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(be_ntv_lv_group_init) },
     })),
-    (be_nested_const_str("lv_group", -442928277, 8))
+    (be_str_literal("lv_group"))
 );
 /*******************************************************************/
 
@@ -590,7 +590,7 @@ be_local_class(lv_indev,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_nested_const_str("lv_indev", 225602374, 8))
+    (be_str_literal("lv_indev"))
 );
 /*******************************************************************/
 
@@ -607,7 +607,7 @@ be_local_class(lv_disp,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_nested_const_str("lv_disp", 609712084, 8))
+    (be_str_literal("lv_disp"))
 );
 /*******************************************************************/
 
@@ -657,7 +657,7 @@ be_local_class(lv_font,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_nested_const_str("lv_font", 1550958453, 7))
+    (be_str_literal("lv_font"))
 );
 /*******************************************************************/
 
@@ -673,7 +673,7 @@ be_local_class(lv_theme,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_nested_const_str("lv_theme", 1550958453, 7))
+    (be_str_literal("lv_theme"))
 );
 /*******************************************************************/
 
@@ -690,7 +690,7 @@ be_local_class(lv_color,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, -1), be_const_func(lco_init) },
     })),
-    (be_nested_const_str("lv_color", 1419148319, 8))
+    (be_str_literal("lv_color"))
 );
 /*******************************************************************/
 """)
@@ -712,7 +712,7 @@ be_local_class(lv_{subtype},
         {{ be_const_key(_class, -1), be_const_comptr(&lv_{subtype}_class) }},
         {{ be_const_key(init, -1), be_const_func(be_ntv_lv_{subtype}_init) }},
     }})),
-    (be_nested_const_str("lv_{subtype}", 1612829968, 6))
+    (be_str_literal("lv_{subtype}"))
 );
 /*******************************************************************/
 """)
