@@ -1021,7 +1021,7 @@ be_local_class(lv_style,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_style_init) },
     })),
-    (be_nested_const_str("lv_style", -143355747, 8))
+    (be_str_literal("lv_style"))
 );
 /*******************************************************************/
 
