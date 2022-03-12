@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.3]
+## [11.0.0.4]
+### Added
+
+### Changed
+
+### Fixed
+
+
+## [11.0.0.3] 20220312
 ### Added
 - TasmotaSerial implement ``end()``
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
@@ -21,8 +29,6 @@ All notable changes to this project will be documented in this file.
 - Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
 - TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
 - NeoPool limit relay output to the number actually available
-
-### Fixed
 
 ## [11.0.0.2] 20220225
 ### Changed
