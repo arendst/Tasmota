@@ -31,6 +31,8 @@
  * {"NAME":"Polux RGBCW E14","GPIO":[0,0,0,0,0,0,0,0,4065,0,4032,0,0,0],"FLAG":0,"BASE":18}
  * LE LampUX 907001-US
  * {"NAME":"LE LampUX 907001-US","GPIO":[0,0,0,0,0,0,0,0,4066,0,4032,0,0,0],"FLAG":0,"BASE":18}
+ * Fitop 10W RGBCCT Bulb (BA60H-W0080-RCBW-E7)
+ * {"NAME":"Fitop 10W RGBCCT","GPIO":[1,1,1,1,1,4032,1,1,4069,1,1,1,1,1],"FLAG":0,"BASE":18,"CMND":"RGBWWTable 167,102,109,255,255"}
 \*********************************************************************************************/
 
 #define XLGT_04             4
@@ -58,7 +60,7 @@
 #define SM2135_55MA         0x09
 #define SM2135_60MA         0x0A
 
-enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR, SM2135_WCGRBHI, SM2135_WCBGRHI, SM2135_WCGRB15W, SM2135_WCBGR15W };
+enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR, SM2135_WCGRBHI, SM2135_WCBGRHI, SM2135_WCGRB15W, SM2135_WCBGR15W, SM2135_WCBRG_SETALL };
 
 struct SM2135 {
   uint8_t clk = 0;
@@ -138,6 +140,22 @@ bool Sm2135SetChannels(void) {
   uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
   uint8_t data[6];
 
+  // Fitop bulbs have the behaviour that they store previous states if not explicitly overwritten.
+  // Example: If set to RGB then CCT, this bulb keeps RGB-led's on, even though they should be cleared.
+  // For correct function, we always need to send RGB AND CCT data (while mode is set to SM2135_RGB).
+  if (Sm2135.model == SM2135_WCBRG_SETALL) { // SM2135_WCBRG_SETALL
+    Sm2135Start(SM2135_ADDR_MC);
+    Sm2135Write(Sm2135.current);
+    Sm2135Write(SM2135_RGB);
+    Sm2135Write(cur_col[2]);  // Blue
+    Sm2135Write(cur_col[0]);  // Red
+    Sm2135Write(cur_col[1]);  // Green
+    Sm2135Write(cur_col[4]);  // Warm
+    Sm2135Write(cur_col[3]);  // Cold
+    Sm2135Stop();
+    return true;
+  }
+
   uint32_t light_type = 3;      // RGB and CW
   if (Sm2135.model < 2) {       // Only allow one of two options due to power supply
     if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
@@ -182,8 +200,8 @@ void Sm2135ModuleSelected(void)
     Sm2135.clk = Pin(GPIO_SM2135_CLK);
     Sm2135.data = Pin(GPIO_SM2135_DAT, GPIO_ANY);
 
-    // See #define MAX_SM2135_DAT 6 in tasmota_template.h
-    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 5
+    // See #define MAX_SM2135_DAT 7 in tasmota_template.h
+    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 6
 
     // Legacy support of model selection
     if (PinUsed(GPIO_SWT1)) {
@@ -196,6 +214,9 @@ void Sm2135ModuleSelected(void)
     //                RGB current         CW current
     Sm2135.current = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
     switch (Sm2135.model) {
+      case SM2135_WCBRG_SETALL:      // SM2135 Dat 7 - values copied from tuya implementation
+        Sm2135.current = (SM2135_15MA << 4) | SM2135_40MA;
+        break;
       case SM2135_WCGRBHI:      // SM2135 Dat 3
       case SM2135_WCBGRHI:      // SM2135 Dat 4
         Sm2135.current = (SM2135_20MA << 4) | SM2135_30MA;
