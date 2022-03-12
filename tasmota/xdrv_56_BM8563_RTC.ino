@@ -26,7 +26,7 @@
 \*********************************************************************************************/
 
 #define XDRV_56             56
-#define XI2C_59             59  // See I2CDEVICES.md
+#define XI2C_59             59       // See I2CDEVICES.md
 
 #include "BM8563.h"
 
@@ -70,25 +70,7 @@ void BM8563SetUtc(uint32_t epoch_time) {
   bm8563_driver.Rtc.SetDate(&RTCdate);
 }
 
-void InitTimeFromRTC(void) {
-  if (Rtc.utc_time < START_VALID_TIME) {
-    // set rtc from chip
-    Rtc.utc_time = BM8563GetUtc();
-
-    TIME_T tmpTime;
-    TasmotaGlobal.ntp_force_sync = true;  // Force to sync with ntp
-    BreakTime(Rtc.utc_time, tmpTime);
-    Rtc.daylight_saving_time = RuleToTime(Settings->tflag[1], RtcTime.year);
-    Rtc.standard_time = RuleToTime(Settings->tflag[0], RtcTime.year);
-    AddLog(LOG_LEVEL_INFO, PSTR("I2C: Set time from BM8563 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-      GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
-    if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
-      TasmotaGlobal.rules_flag.time_init = 1;
-    } else {
-      TasmotaGlobal.rules_flag.time_set = 1;
-    }
-  }
-}
+/*********************************************************************************************/
 
 void BM8563Detect(void) {
 #ifdef ESP32
@@ -107,15 +89,20 @@ void BM8563Detect(void) {
   bm8563_driver.Rtc.begin();
   bm8563_driver.rtc_ready = true;
 
-  InitTimeFromRTC();
+  if (Rtc.utc_time < START_VALID_TIME) {                          // Not sync with NTP/GPS (time not valid), so read time
+    uint32_t time = BM8563GetUtc();                               // Read UTC TIME
+    if (time > START_VALID_TIME) {
+      Rtc.utc_time = time;
+      RtcSync("BM8563");
+    }
+  }
 }
 
-void BM8563EverySecond(void) {
-  if (!bm8563_driver.ntp_time_ok && (Rtc.utc_time > START_VALID_TIME) && abs((int32_t)Rtc.utc_time - (int32_t)BM8563GetUtc()) > 3) {
-    BM8563SetUtc(Rtc.utc_time);
-    AddLog(LOG_LEVEL_INFO, PSTR("I2C: Write time to BM8563 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-      GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
-    bm8563_driver.ntp_time_ok = true;
+void BM8563TimeSynced(void) {
+  if ((Rtc.utc_time > START_VALID_TIME) &&                        // Valid UTC time
+      (abs((int32_t)(Rtc.utc_time - BM8563GetUtc())) > 2)) {      // Time has drifted from RTC more than 2 seconds
+    BM8563SetUtc(Rtc.utc_time);                                // Update time
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BM8: Re-synced (" D_UTC_TIME ") %s"), GetDateAndTime(DT_UTC).c_str());
   }
 }
 
@@ -133,8 +120,8 @@ bool Xdrv56(uint8_t function) {
   }
   else if (bm8563_driver.rtc_ready) {
     switch (function) {
-      case FUNC_EVERY_SECOND:
-        BM8563EverySecond();
+      case FUNC_TIME_SYNCED:
+        BM8563TimeSynced();
         break;
     }
   }
