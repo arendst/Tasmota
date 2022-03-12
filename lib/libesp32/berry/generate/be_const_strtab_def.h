@@ -351,7 +351,7 @@ be_define_const_str(deg, "deg", 3327754271u, 0, 3, &be_const_str_lv_event);
 be_define_const_str(deinit, "deinit", 2345559592u, 0, 6, NULL);
 be_define_const_str(del, "del", 3478752842u, 0, 3, &be_const_str_out_X20of_X20range);
 be_define_const_str(delay, "delay", 1322381784u, 0, 5, &be_const_str_splash);
-be_define_const_str(delete_all_configs, "delete_all_configs", 2382067578u, 0, 18, NULL);
+be_define_const_str(delete_all_configs, "delete_all_configs", 2382067578u, 0, 18, &be_const_str_toint);
 be_define_const_str(depower, "depower", 3563819571u, 0, 7, &be_const_str_files);
 be_define_const_str(deregister_obj, "deregister_obj", 3909966993u, 0, 14, &be_const_str_set_mode_rgb);
 be_define_const_str(destructor_cb, "destructor_cb", 1930283190u, 0, 13, NULL);
@@ -824,6 +824,7 @@ be_define_const_str(time_str, "time_str", 2613827612u, 0, 8, NULL);
 be_define_const_str(timer_cb, "timer_cb", 79918026u, 0, 8, NULL);
 be_define_const_str(to_gamma, "to_gamma", 1597139862u, 0, 8, NULL);
 be_define_const_str(tob64, "tob64", 373777640u, 0, 5, &be_const_str_widget_struct_default);
+be_define_const_str(toint, "toint", 3613182909u, 0, 5, NULL);
 be_define_const_str(tolower, "tolower", 1042520049u, 0, 7, NULL);
 be_define_const_str(tomap, "tomap", 612167626u, 0, 5, NULL);
 be_define_const_str(top, "top", 2802900028u, 0, 3, NULL);
@@ -1368,6 +1369,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 447,
-    .count = 917,
+    .count = 918,
     .table = m_string_table
 };
