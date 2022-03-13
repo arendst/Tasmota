@@ -291,7 +291,7 @@ void Ade7880Write(uint16_t reg, uint32_t val) {
   if (size) {
 #ifdef ADE7880_DEBUG
     char log_format[100];
-    snprintf_P(log_format, sizeof(log_format), PSTR("A78: Rd 0x%%04X 0x%%0%dX (%%d)"), size << 1);
+    snprintf_P(log_format, sizeof(log_format), PSTR("A78: Wr 0x%%04X 0x%%0%dX (%%d)"), size << 1);
     AddLog(LOG_LEVEL_DEBUG_MORE, log_format, reg, val, val);
 #endif  // ADE7880_DEBUG
     Wire.beginTransmission(ADE7880_ADDR);
@@ -306,10 +306,11 @@ void Ade7880Write(uint16_t reg, uint32_t val) {
 }
 
 bool Ade7880VerifyWrite(uint16_t reg) {
-  if (0xCA != Ade7880Read(ADE7880_LAST_OP)) {                              // Indicates the type, read (0x35) or write (0xCA), of the last successful read/write operation.
-    return false;
-  }
-  if (reg != Ade7880Read(ADE7880_LAST_ADD)) {                              // The address of the register successfully accessed during the last read/write operation.
+  uint32_t error = 0;
+  error += (0xCA != Ade7880Read(ADE7880_LAST_OP));                         // Indicates the type, read (0x35) or write (0xCA), of the last successful read/write operation.
+  error += (reg != Ade7880Read(ADE7880_LAST_ADD));                         // The address of the register successfully accessed during the last read/write operation.
+  if (error) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Write verify error"));
     return false;
   }
   return true;
@@ -335,9 +336,11 @@ int32_t Ade7880Read(uint16_t reg) {
       }
     }
 #ifdef ADE7880_DEBUG
-    char log_format[100];
-    snprintf_P(log_format, sizeof(log_format), PSTR("A78: Rd 0x%%04X 0x%%0%dX (%%d)"), size << 1);
-    AddLog(LOG_LEVEL_DEBUG_MORE, log_format, reg, response, response);
+    if ((reg != ADE7880_LAST_OP) && (reg != ADE7880_LAST_ADD)) {
+      char log_format[100];
+      snprintf_P(log_format, sizeof(log_format), PSTR("A78: Rd 0x%%04X 0x%%0%dX (%%d)"), size << 1);
+      AddLog(LOG_LEVEL_DEBUG_MORE, log_format, reg, response, response);
+    }
 #endif  // ADE7880_DEBUG
   }
 	return response;
@@ -345,11 +348,11 @@ int32_t Ade7880Read(uint16_t reg) {
 
 int32_t Ade7880ReadVerify(uint16_t reg) {
   int32_t result = Ade7880Read(reg);
-  if (0x35 != Ade7880Read(ADE7880_LAST_OP)) {                              // Indicates the type, read (0x35) or write (0xCA), of the last successful read/write operation.
-
-  }
-  if (reg != Ade7880Read(ADE7880_LAST_ADD)) {                              // The address of the register successfully accessed during the last read/write operation.
-
+  uint32_t error = 0;
+  error += (0x35 != Ade7880Read(ADE7880_LAST_OP));                         // Indicates the type, read (0x35) or write (0xCA), of the last successful read/write operation.
+  error += (reg != Ade7880Read(ADE7880_LAST_ADD));                         // The address of the register successfully accessed during the last read/write operation.
+  if (error) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Read verify error"));
   }
   return result;
 }
