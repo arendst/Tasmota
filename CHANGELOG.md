@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 
 ## [11.0.0.4]
 ### Added
+- command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
 
 ### Changed
+- Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
+- Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
+- define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 
 ### Fixed
 

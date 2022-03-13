@@ -129,6 +129,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - TasmotaSerial library from v3.4.0 to v3.5.0 [#14981](https://github.com/arendst/Tasmota/issues/14981)
 - Sonoff SPM increase max number of relays supported to 32 (8 SPM-4Relay modules)
 - Extent number of pulsetimers from 8 to 32 [#8266](https://github.com/arendst/Tasmota/issues/8266)
+- Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
+- Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
+- define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 - ESP32 Arduino core from v2.0.2.2 to v2.0.2.3
 - ESP32 LVGL library from v8.1.0 to v8.2.0
 - ESP32 NimBLE library from v1.3.3 to v1.3.6

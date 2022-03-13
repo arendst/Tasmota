@@ -475,7 +475,7 @@ void RtcSync(const char* source) {
   Rtc.time_synced = true;
   RtcSecond();
   AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: Synced by %s"), source);
-  XsnsCall(FUNC_TIME_SYNCED);
+  XdrvCall(FUNC_TIME_SYNCED);
 }
 
 void RtcSetTime(uint32_t epoch) {
