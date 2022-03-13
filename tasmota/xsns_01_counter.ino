@@ -171,6 +171,12 @@ void CounterInit(void)
         ac_zero_cross_dimmer.high = ac_zero_cross_dimmer.current_cycle_ClockCycles / 256;
         if ((i < MAX_COUNTERS-1 && PinUsed(GPIO_PWM1, i)) || ( i == MAX_COUNTERS-1) ) {
           ac_zero_cross_dimmer.pwm_defined[i] = true;
+          if (i == 3) {
+            AddLog(LOG_LEVEL_INFO, PSTR("ZeroCross initialized"));
+          } else {
+            AddLog(LOG_LEVEL_INFO, PSTR("Dimmer: [%d] initialized. READY. Dimmer %d"), i+1, Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]);
+          }
+
         }
       }
 #endif //USE_AC_ZERO_CROSS_DIMMER
