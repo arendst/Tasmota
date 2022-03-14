@@ -591,6 +591,7 @@ void Cmd_MicRec(void) {
 }
 #endif  // USE_M5STACK_CORE2
 
+#ifdef USE_WEBSERVER
 const char HTTP_WEBRADIO[] PROGMEM =
    "{s}" "I2S_WR-Title" "{m}%s{e}";
 
@@ -599,6 +600,7 @@ void I2S_WR_Show(void) {
       WSContentSend_PD(HTTP_WEBRADIO,wr_title);
     }
 }
+#endif  // USE_WEBSERVER
 
 #endif  // USE_I2S_WEBRADIO
 
