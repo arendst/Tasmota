@@ -6,13 +6,16 @@ All notable changes to this project will be documented in this file.
 ## [11.0.0.4]
 ### Added
 - command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
+- NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 
 ### Changed
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
 - Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
 - define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
+- NeoPool remove ambiguous device color names
 
 ### Fixed
+- NeoPool NPBit and NPRead/NPReadL output
 
 
 ## [11.0.0.3] 20220312
@@ -21,7 +24,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
 - Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes (#15001)
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` (#15015)
-- NeoPool system voltages display, JSON modules, power module, cell info, chlorine, conductivity and ionization
+- NeoPool system voltages display
 - Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
 - LVGL Splash screen and ``SetOption135 1`` to disable splash screen
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 (#15061)
@@ -32,7 +35,7 @@ All notable changes to this project will be documented in this file.
 - Extent number of pulsetimers from 8 to 32 (#8266)
 - Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
 - TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
-- NeoPool limit relay output to the number actually available, SENSOR JSON voltage and hydro level, remove ambiguous device color names
+- NeoPool limit relay output to the number actually available
 
 
 ## [11.0.0.2] 20220225
