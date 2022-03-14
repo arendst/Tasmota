@@ -1047,13 +1047,13 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (amarelo)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (azul)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (verde)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (azul claro)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (vermelho)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilás)"
-#define D_NEOPOOL_MACH_STATION            "Station (laranja)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife"
+#define D_NEOPOOL_MACH_BIONET             "Bionet"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic"
+#define D_NEOPOOL_MACH_STATION            "Station"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
 #define D_NEOPOOL_MACH_GENERIC            "Genérico"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Bomba de cloro"
 #define D_NEOPOOL_RELAY_CD                "Bomba de salmora"
 #define D_NEOPOOL_TIME                    "Tempo"
-#define D_NEOPOOL_FILT_MODE               "Filtragem"
+#define D_NEOPOOL_FILT_MODE               "Modo de filtragem"
 #define D_NEOPOOL_CELL_RUNTIME            "Tempo de atividade"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"

@@ -6,13 +6,16 @@ All notable changes to this project will be documented in this file.
 ## [11.0.0.4]
 ### Added
 - command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
+- NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 
 ### Changed
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
 - Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
 - define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
+- NeoPool remove ambiguous device color names
 
 ### Fixed
+- NeoPool NPBit and NPRead/NPReadL output
 
 
 ## [11.0.0.3] 20220312
@@ -33,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - Tasmota ESP32 Arduino core to v2.0.2.3 (#14979)
 - TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
 - NeoPool limit relay output to the number actually available
+
 
 ## [11.0.0.2] 20220225
 ### Changed
