@@ -1391,7 +1391,6 @@ bool NeoPoolIsIonization(void)
 #define D_NEOPOOL_JSON_COVER                  "Cover"
 #define D_NEOPOOL_JSON_SHOCK                  "Boost"
 #define D_NEOPOOL_JSON_LOW                    "Low"
-#define D_NEOPOOL_JSON_LEVEL                  "Level"
 #define D_NEOPOOL_JSON_SETPOINT               "Setpoint"
 #define D_NEOPOOL_JSON_MIN                    "Min"
 #define D_NEOPOOL_JSON_MAX                    "Max"
@@ -1554,7 +1553,7 @@ void NeoPoolShow(bool json)
         int dec = 1;
       }
       fvalue = (float)NeoPoolGetData(MBF_HIDRO_CURRENT)/10;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_NEOPOOL_JSON_LEVEL  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_HYDROLYSIS  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_HIDRO), dec, &fvalue);
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_UNIT  "\":\"%s\""), sunit);
 
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CELL_RUNTIME  "\":{"));
