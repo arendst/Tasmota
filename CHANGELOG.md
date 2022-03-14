@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - NeoPool NPBit and NPRead/NPReadL output
-
+- ESP32 PowerOnState (#15084)
 
 ## [11.0.0.3] 20220312
 ### Added

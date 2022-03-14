@@ -114,7 +114,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - TasmotaSerial implement ``end()``
 - Support for ADE7880 3 phase energy monitor as used in Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Support for PCF85363 RTC as used in Shelly 3EM (#13515)
-- Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
+- Full RTC chip integration and synchronisation when using UBX (=GPS), NTP or manual time
+- NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection
 - ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)
@@ -143,5 +144,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 [#14829](https://github.com/arendst/Tasmota/issues/14829)
 - Wiegand 34-bit rfid reading and presentation [#14834](https://github.com/arendst/Tasmota/issues/14834)
 - Orno WE517 power meter phase 2 current reactive [#14841](https://github.com/arendst/Tasmota/issues/14841)
+- NeoPool NPBit and NPRead/NPReadL output
+- ESP32 PowerOnState [#15084](https://github.com/arendst/Tasmota/issues/15084)
 
 ### Removed
