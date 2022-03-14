@@ -150,8 +150,7 @@ struct ATCPacket_t{ //and PVVX
 struct MI32connectionContextBerry_t{
   NimBLEUUID serviceUUID;
   NimBLEUUID charUUID;
-  uint16_t returnCharUUID;
-  uint8_t MAC[6];
+  uint8_t * MAC;
   uint8_t * buffer;
   uint8_t operation;
   uint8_t addrType;
@@ -178,6 +177,7 @@ struct {
 
       uint32_t shallTriggerTele:1;
       uint32_t triggeredTele:1;
+      uint32_t shallClearResults:1;   // BLE scan results
       uint32_t shallShowStatusInfo:1; // react to amount of found sensors via RULES
       uint32_t didGetConfig:1;
       uint32_t didStartHAP:1;
@@ -386,7 +386,7 @@ const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI3
 
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
-const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start scanning";
+const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Start scanning";
 
 const char kMI32_HKInfoMsg[] PROGMEM = "HAP core started|HAP core did not start!!|HAP controller disconnected|HAP controller connected|HAP outlet added";
 
@@ -402,37 +402,36 @@ enum MI32_Commands {          // commands useable in console or rules
   };
 
 enum MI32_TASK {
-  MI32_TASK_SCAN = 0,
-  MI32_TASK_CONN = 1,
+       MI32_TASK_SCAN = 0,
+       MI32_TASK_CONN = 1,
 };
 
 enum MI32_ConnErrorMsg {
-  MI32_CONN_NO_ERROR = 0,
-  MI32_CONN_NO_CONNECT,
-  MI32_CONN_NO_SERVICE,
-  MI32_CONN_NO_CHARACTERISTIC,
-  MI32_CONN_CAN_NOT_READ,
-  MI32_CONN_CAN_NOT_NOTIFY,
-  MI32_CONN_CAN_NOT_WRITE,
-  MI32_CONN_DID_NOT_WRITE,
-  MI32_CONN_NOTIFY_TIMEOUT
+       MI32_CONN_NO_ERROR = 0,
+       MI32_CONN_NO_CONNECT,
+       MI32_CONN_NO_SERVICE,
+       MI32_CONN_NO_CHARACTERISTIC,
+       MI32_CONN_CAN_NOT_READ,
+       MI32_CONN_CAN_NOT_NOTIFY,
+       MI32_CONN_CAN_NOT_WRITE,
+       MI32_CONN_DID_NOT_WRITE,
+       MI32_CONN_NOTIFY_TIMEOUT
 };
 
 enum MI32_BLEInfoMsg {
-  MI32_SCAN_ENDED = 1,
-  MI32_GOT_NOTIFICATION,
-  MI32_DID_CONNECT,
-  MI32_DID_DISCONNECT,
-  MI32_STILL_CONNECTED,
-  MI32_START_SCANNING
+       MI32_SCAN_ENDED = 1,
+       MI32_GOT_NOTIFICATION,
+       MI32_DID_CONNECT,
+       MI32_DID_DISCONNECT,
+       MI32_START_SCANNING
 };
 
 enum MI32_HKInfoMsg {
-  MI32_HAP_DID_START = 1,
-  MI32_HAP_DID_NOT_START,
-  MI32_HAP_CONTROLLER_DISCONNECTED,
-  MI32_HAP_CONTROLLER_CONNECTED,
-  MI32_HAP_OUTLET_ADDED
+       MI32_HAP_DID_START = 1,
+       MI32_HAP_DID_NOT_START,
+       MI32_HAP_CONTROLLER_DISCONNECTED,
+       MI32_HAP_CONTROLLER_CONNECTED,
+       MI32_HAP_OUTLET_ADDED
 };
 
 /*********************************************************************************************\
