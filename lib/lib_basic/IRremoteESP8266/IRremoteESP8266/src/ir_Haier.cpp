@@ -426,7 +426,7 @@ stdAc::swingv_t IRHaierAC::toCommonSwingV(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRHaierAC::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::HAIER_AC;
   result.model = -1;  // No models used.
   result.power = true;
@@ -1127,7 +1127,7 @@ stdAc::swingh_t IRHaierAC176::toCommonSwingH(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRHaierAC176::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::HAIER_AC_YRW02;
   result.model = getModel();
   result.power = _.Power;

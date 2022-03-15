@@ -575,7 +575,7 @@ stdAc::swingh_t IRGreeAC::toCommonSwingH(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRGreeAC::toCommon(void) {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::GREE;
   result.model = _model;
   result.power = _.Power;

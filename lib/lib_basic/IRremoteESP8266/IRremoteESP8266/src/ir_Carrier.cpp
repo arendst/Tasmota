@@ -511,7 +511,7 @@ String IRCarrierAc64::toString(void) const {
 /// Convert the A/C state to it's common stdAc::state_t equivalent.
 /// @return A stdAc::state_t state.
 stdAc::state_t IRCarrierAc64::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::CARRIER_AC64;
   result.model = -1;  // No models used.
   result.power = _.Power;

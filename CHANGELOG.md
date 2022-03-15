@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 - NeoPool remove ambiguous device color names
 - Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
+- IRremoteESP8266 library from v2.8.1 to v2.8.2
 
 ### Fixed
 - NeoPool NPBit and NPRead/NPReadL output

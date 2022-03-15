@@ -317,7 +317,7 @@ bool IRAirtonAc::getHealth(void) const { return _.Health; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRAirtonAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::AIRTON;
   result.power = getPower();
   result.mode = toCommonMode(getMode());

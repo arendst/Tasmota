@@ -32,8 +32,8 @@ EndOfTextEndOfTextEndOfText
 
 CLASSES=$(egrep -h \
           "^ *((enum|class|struct) [a-zA-Z0-9_]+|} [a-zA-Z0-9_]+_t;$)" src/*.h |
-          sed 's/^ *//;s/enum class//;s/\;$//' | cut -d' ' -f2 | sort -u |
-          grep -v "^__")
+          sed 's/^ *//;s/enum class//;s/\;$//' | cut -d' ' -f2 | sed 's/:$//' |
+          sort -u | grep -v "^__")
 for i in ${CLASSES}; do
   echo -e "${i}\tKEYWORD1"
 done | sort -du

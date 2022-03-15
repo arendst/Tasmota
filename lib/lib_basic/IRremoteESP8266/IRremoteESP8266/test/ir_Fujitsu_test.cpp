@@ -1271,3 +1271,93 @@ TEST(TestIRFujitsuACClass, ARREW4EShortCodes) {
   ASSERT_EQ(kFujitsuAcStateLengthShort, ac.getStateLength());
   EXPECT_STATE_EQ(stepvert, ac.getRaw(), kFujitsuAcStateLengthShort * 8);
 }
+
+// https://github.com/crankyoldgit/IRremoteESP8266/discussions/1701#discussioncomment-1910164
+TEST(TestIRFujitsuACClass, Discussion1701) {
+  IRFujitsuAC ac(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  IRac irac(kGpioUnused);
+
+  const String expected_raw_output =
+      "f38000d50"
+      "m3324s1574"
+      "m448s390m448s390m448s1182m448s390m448s1182m448s390m448s390m448s390"
+      "m448s1182m448s1182m448s390m448s390m448s390m448s1182m448s1182m448s390"
+      "m448s390m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s390m448s390m448s390m448s390m448s1182m448s390m448s390m448s390"
+      "m448s390m448s390m448s390m448s390m448s1182m448s390m448s390m448s390"
+      "m448s390m448s1182m448s1182m448s1182m448s1182m448s1182m448s1182m448s1182"
+      "m448s1182m448s390m448s390m448s1182m448s390m448s390m448s390m448s390"
+      "m448s1182m448s390m448s390m448s390m448s1182m448s1182m448s390m448s390"
+      "m448s1182m448s390m448s390m448s390m448s390m448s390m448s390m448s1182"
+      "m448s1182m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s1182m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s390m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s390m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s390m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s390m448s390m448s390m448s390m448s390m448s390m448s390m448s390"
+      "m448s390m448s390m448s1182m448s1182m448s390m448s390m448s1182m448s390"
+      "m448s8100";
+  const String expected_arrew4e_str =
+      "Model: 6 (ARREW4E), Id: 0, Power: On, Mode: 1 (Cool), Temp: 24C, "
+      "Fan: 1 (High), 10C Heat: Off, Swing: 0 (Off), Command: N/A, "
+      "Outside Quiet: Off, Timer: Off";
+  const uint8_t expected_arrew4e_state[kFujitsuAcStateLength] =
+      {0x14, 0x63, 0x00, 0x10, 0x10, 0xFE, 0x09, 0x31,
+       0x81, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x4C};
+
+  // Method used in `TurnOnFujitsuAC`
+  ac.begin();
+  ac.setModel(ARREW4E);
+  ac.setSwing(kFujitsuAcSwingOff);
+  ac.setMode(kFujitsuAcModeCool);
+  ac.setFanSpeed(kFujitsuAcFanHigh);
+  ac.setTemp(24);  // 24C
+  ac.setCmd(kFujitsuAcCmdTurnOn);
+  ASSERT_EQ(expected_arrew4e_str, ac.toString());
+  ac.send();
+  ac._irsend.makeDecodeResult();
+  // 260 = 16 (bytes) * 8 (bits) * 2 (per bit) + kHeader (2) + kFooter (2)
+  EXPECT_EQ(1 + 260, ac._irsend.capture.rawlen);
+  EXPECT_TRUE(irrecv.decode(&ac._irsend.capture));
+  ASSERT_EQ(FUJITSU_AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kFujitsuAcStateLength * 8, ac._irsend.capture.bits);
+  EXPECT_EQ(expected_arrew4e_str,
+            IRAcUtils::resultAcToString(&ac._irsend.capture));
+  EXPECT_STATE_EQ(expected_arrew4e_state, ac._irsend.capture.state,
+                  ac._irsend.capture.bits);
+  EXPECT_EQ(expected_raw_output, ac._irsend.outputStr());
+
+  // Now try to reproduce it via the IRac class.
+  ac._irsend.reset();
+  ac.stateReset();
+  ASSERT_NE(expected_arrew4e_str, ac.toString());
+
+  irac.fujitsu(&ac,
+               ARREW4E,                     // Model
+               true,                        // Power
+               stdAc::opmode_t::kCool,      // Mode
+               true,                        // Celsius
+               24,                          // Degrees
+               stdAc::fanspeed_t::kHigh,    // Fan speed
+               stdAc::swingv_t::kOff,       // Vertical swing
+               stdAc::swingh_t::kOff,       // Horizontal swing
+               false,                       // Quiet
+               false,                       // Turbo (Powerful)
+               false,                       // Econo
+               false,                       // Filter
+               false);                      // Clean
+  ASSERT_EQ(expected_arrew4e_str, ac.toString());
+  ac._irsend.makeDecodeResult();
+  // 260 = 16 (bytes) * 8 (bits) * 2 (per bit) + kHeader (2) + kFooter (2)
+  EXPECT_EQ(1 + 260, ac._irsend.capture.rawlen);
+  EXPECT_TRUE(irrecv.decode(&ac._irsend.capture));
+  ASSERT_EQ(FUJITSU_AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kFujitsuAcStateLength * 8, ac._irsend.capture.bits);
+  EXPECT_EQ(expected_arrew4e_str,
+            IRAcUtils::resultAcToString(&ac._irsend.capture));
+  EXPECT_STATE_EQ(expected_arrew4e_state, ac._irsend.capture.state,
+                  ac._irsend.capture.bits);
+  EXPECT_EQ(expected_raw_output, ac._irsend.outputStr());
+  // Success.
+}

@@ -14,6 +14,7 @@
 //   Brand: Kelvinator,  Model: KSV70HRC A/C
 //   Brand: Kelvinator,  Model: KSV80HRC A/C
 //   Brand: Green,  Model: YAPOF3 remote
+//   Brand: Gree,  Model: YAP0F8 remote
 //   Brand: Sharp,  Model: YB1FA remote
 //   Brand: Sharp,  Model: A5VEY A/C
 
@@ -39,7 +40,7 @@ union KelvinatorProtocol{
     uint8_t Mode      :3;
     uint8_t Power     :1;
     uint8_t BasicFan  :2;
-    uint8_t VentSwing :1;
+    uint8_t SwingAuto :1;
     uint8_t           :1;  // Sleep Modes 1 & 3 (1 = On, 0 = Off)
     // Byte 1
     uint8_t Temp  :4;  // Degrees C.
@@ -56,8 +57,7 @@ union KelvinatorProtocol{
     uint8_t :2;  // End of command block (B01)
     // (B010 marker and a gap of 20ms)
     // Byte 4
-    uint8_t SwingV  :1;
-    uint8_t         :3;
+    uint8_t SwingV  :4;
     uint8_t SwingH  :1;
     uint8_t         :3;
     // Byte 5~6
@@ -103,6 +103,17 @@ const uint8_t kKelvinatorMinTemp = 16;   // 16C
 const uint8_t kKelvinatorMaxTemp = 30;   // 30C
 const uint8_t kKelvinatorAutoTemp = 25;  // 25C
 
+const uint8_t kKelvinatorSwingVOff         = 0b0000;  // 0
+const uint8_t kKelvinatorSwingVAuto        = 0b0001;  // 1
+const uint8_t kKelvinatorSwingVHighest     = 0b0010;  // 2
+const uint8_t kKelvinatorSwingVUpperMiddle = 0b0011;  // 3
+const uint8_t kKelvinatorSwingVMiddle      = 0b0100;  // 4
+const uint8_t kKelvinatorSwingVLowerMiddle = 0b0101;  // 5
+const uint8_t kKelvinatorSwingVLowest      = 0b0110;  // 6
+const uint8_t kKelvinatorSwingVLowAuto     = 0b0111;  // 7
+const uint8_t kKelvinatorSwingVMiddleAuto  = 0b1001;  // 9
+const uint8_t kKelvinatorSwingVHighAuto    = 0b1011;  // 11
+
 // Legacy defines (Deprecated)
 #define KELVINATOR_MIN_TEMP kKelvinatorMinTemp
 #define KELVINATOR_MAX_TEMP kKelvinatorMaxTemp
@@ -142,8 +153,11 @@ class IRKelvinatorAC {
   uint8_t getFan(void) const;
   void setMode(const uint8_t mode);
   uint8_t getMode(void) const;
-  void setSwingVertical(const bool on);
-  bool getSwingVertical(void) const;
+  void setSwingVertical(const bool automatic, const uint8_t position);
+  bool getSwingVerticalAuto(void) const;
+  uint8_t getSwingVerticalPosition(void) const;
+  static uint8_t convertSwingV(const stdAc::swingv_t swingv);
+  static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
   void setSwingHorizontal(const bool on);
   bool getSwingHorizontal(void) const;
   void setQuiet(const bool on);

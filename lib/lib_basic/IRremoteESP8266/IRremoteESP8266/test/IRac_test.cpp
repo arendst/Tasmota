@@ -944,6 +944,63 @@ TEST(TestIRac, Hitachi1) {
   ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
 }
 
+TEST(TestIRac, Hitachi264) {
+  IRHitachiAc264 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  char expected_swingon[] =
+      "Power: On, Mode: 6 (Heat), Temp: 25C, Fan: 4 (High), "
+      "Button: 19 (Power/Mode)";
+
+  ac.begin();
+  irac.hitachi264(&ac,
+                  true,                         // Power
+                  stdAc::opmode_t::kHeat,       // Mode
+                  25,                           // Celsius
+                  stdAc::fanspeed_t::kMax);     // Fan speed
+
+  ASSERT_EQ(expected_swingon, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(HITACHI_AC264, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kHitachiAc264Bits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected_swingon, IRAcUtils::resultAcToString(&ac._irsend.capture));
+  stdAc::state_t r, p;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+  EXPECT_EQ(decode_type_t::HITACHI_AC264, r.protocol);
+  EXPECT_TRUE(r.power);
+  EXPECT_EQ(stdAc::opmode_t::kHeat, r.mode);
+  EXPECT_EQ(25, r.degrees);
+}
+
+TEST(TestIRac, Hitachi296) {
+  IRHitachiAc296 ac(kGpioUnused);
+  IRac irac(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  char expected[] =
+      "Power: On, Mode: 6 (Heat), Temp: 20C, Fan: 2 (Low)";
+
+  ac.begin();
+  irac.hitachi296(&ac,
+                  true,                         // Power
+                  stdAc::opmode_t::kHeat,       // Mode
+                  20,                           // Celsius
+                  stdAc::fanspeed_t::kLow);     // Fan speed
+
+  ASSERT_EQ(expected, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(HITACHI_AC296, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kHitachiAc296Bits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
+  stdAc::state_t r, p;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&ac._irsend.capture, &r, &p));
+  EXPECT_EQ(decode_type_t::HITACHI_AC296, r.protocol);
+  EXPECT_TRUE(r.power);
+  EXPECT_EQ(stdAc::opmode_t::kHeat, r.mode);
+  EXPECT_EQ(20, r.degrees);
+}
+
 TEST(TestIRac, Hitachi344) {
   IRHitachiAc344 ac(kGpioUnused);
   IRac irac(kGpioUnused);
@@ -1047,7 +1104,7 @@ TEST(TestIRac, Kelvinator) {
   char expected[] =
       "Power: On, Mode: 1 (Cool), Temp: 19C, Fan: 3 (Medium), Turbo: Off, "
       "Quiet: Off, XFan: On, Ion: On, Light: On, "
-      "Swing(H): Off, Swing(V): Off";
+      "Swing(H): Off, Swing(V): 0 (Off)";
 
   ac.begin();
   irac.kelvinator(&ac,
@@ -1359,8 +1416,8 @@ TEST(TestIRac, Midea) {
   char expected[] =
       "Type: 1 (Command), Power: On, Mode: 1 (Dry), Celsius: On, "
       "Temp: 27C/80F, On Timer: Off, Off Timer: Off, Fan: 2 (Medium), "
-      "Sleep: On, Swing(V) Toggle: Off, Econo Toggle: Off, "
-      "Turbo Toggle: Off, Light Toggle: Off";
+      "Sleep: On, Swing(V): -, Econo: -, "
+      "Turbo: -, Quiet: Off, Light: -, Clean: -, 8C Heat: -";
 
   ac.begin();
   irac.midea(&ac,
@@ -1370,9 +1427,12 @@ TEST(TestIRac, Midea) {
              27,                          // Degrees
              stdAc::fanspeed_t::kMedium,  // Fan speed
              stdAc::swingv_t::kOff,       // Swing(V)
+             false,                       // Silent/Quiet
+             false,                       // Previous Silent/Quiet setting
              false,                       // Turbo
              false,                       // Econo
              false,                       // Light
+             false,                       // Clean
              8 * 60 + 0);                 // Sleep time
 
   ASSERT_EQ(expected, ac.toString());
@@ -2962,7 +3022,6 @@ TEST(TestIRac, Issue1250) {
 TEST(TestIRac, Issue1339) {
   IRac irac(kGpioUnused);
   stdAc::state_t to_send;
-  IRac::initState(&to_send);
 
   to_send.protocol = decode_type_t::SAMSUNG_AC;
   ASSERT_TRUE(irac.sendAc(to_send, NULL));
@@ -3026,4 +3085,21 @@ TEST(TestIRac, Issue1424) {
   EXPECT_EQ(irac.next.swingv, stdAc::swingv_t::kOff);
   // Confirm the state really did change.
   ASSERT_TRUE(IRac::cmpStates(irac.next, copy_of_next_pre_receive));
+}
+
+// Confirm/check that the default initialisation of a state_t is as expected.
+TEST(TestIRac, initState) {
+  IRac irac(kGpioUnused);
+  stdAc::state_t builtin_init{};
+  stdAc::state_t custom_init;
+  stdAc::state_t no_init;
+  IRac::initState(&custom_init);
+
+  EXPECT_FALSE(IRac::cmpStates(builtin_init, custom_init));
+  builtin_init.protocol = decode_type_t::SAMSUNG_AC;
+  EXPECT_TRUE(IRac::cmpStates(builtin_init, custom_init));
+  EXPECT_FALSE(IRac::cmpStates(no_init, custom_init));
+  EXPECT_EQ(-1, builtin_init.model);
+  EXPECT_EQ(stdAc::swingv_t::kOff, builtin_init.swingv);
+  EXPECT_EQ(decode_type_t::UNKNOWN, no_init.protocol);
 }

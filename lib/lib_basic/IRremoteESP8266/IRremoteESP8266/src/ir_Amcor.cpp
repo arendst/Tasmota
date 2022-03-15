@@ -314,7 +314,7 @@ stdAc::fanspeed_t IRAmcorAc::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRAmcorAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::AMCOR;
   result.power = getPower();
   result.mode = toCommonMode(_.Mode);
