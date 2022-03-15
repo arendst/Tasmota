@@ -142,8 +142,8 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
   // single = 7 - single &0x03 = 3 - [xx,xx,xx]
   uint32_t index = (single > 3) ? single &0x03 : (0 == single) ? Energy.phase_count : 1;  // 1,2,3
   if (single > 2) { single = 0; }                        // 0,1,2
+  float input_sum = 0.0;
   if (single > 1) {
-    float input_sum = 0.0;
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
         input_sum += input[i];
@@ -164,8 +164,8 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
   // single = 0 - Energy.phase_count - xx / xx / xx or multi column
   // single = 1 - Energy.voltage_common or Energy.frequency_common - xx or single column using colspan (if needed)
   // single = 2 - Sum of Energy.phase_count - xx or single column using colspan (if needed)
+  float input_sum = 0.0;
   if (single > 1) {                                      // Sum and/or Single column
-    float input_sum = 0.0;
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
         input_sum += input[i];
