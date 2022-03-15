@@ -136,7 +136,7 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
 char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t single) {
   // single = 0 - Energy.phase_count - xx or [xx,xx] or [xx,xx,xx]
   // single = 1 - Energy.voltage_common or Energy.frequency_common - xx
-  // single = 2 - Sum of Energy.phase_count - xx
+  // single = 2 - Sum of Energy.phase_count if SO129 0 - xx or if SO129 1 - [xx,xx,xx]
   // single = 5 - single &0x03 = 1 - xx
   // single = 6 - single &0x03 = 2 - [xx,xx] - used by tarriff
   // single = 7 - single &0x03 = 3 - [xx,xx,xx]
@@ -149,6 +149,8 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
         input_sum += input[i];
       }
       input = &input_sum;
+    } else {
+      index = Energy.phase_count;
     }
   }
   result[0] = '\0';
@@ -163,7 +165,7 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
 char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t single) {
   // single = 0 - Energy.phase_count - xx / xx / xx or multi column
   // single = 1 - Energy.voltage_common or Energy.frequency_common - xx or single column using colspan (if needed)
-  // single = 2 - Sum of Energy.phase_count - xx or single column using colspan (if needed)
+  // single = 2 - Sum of Energy.phase_count if SO129 0 - xx or single column using colspan (if needed) or if SO129 1 - xx / xx / xx or multi column
   float input_sum = 0.0;
   if (single > 1) {                                      // Sum and/or Single column
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
