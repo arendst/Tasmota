@@ -25,6 +25,8 @@
 
 #define XNRG_18             18
 
+//#define SDM72_IMPEXP
+
 // can be user defined in my_user_config.h
 #ifndef SDM72_SPEED
   #define SDM72_SPEED       9600    // default SDM72 Modbus address
@@ -148,34 +150,58 @@ void Sdm72DrvInit(void)
   }
 }
 
-#ifdef USE_WEBSERVER
 #ifdef SDM72_IMPEXP
+
+/*
+#ifdef USE_WEBSERVER
 const char HTTP_ENERGY_SDM72[] PROGMEM =
   "{s}" D_EXPORT_POWER "{m}%*_f " D_UNIT_WATT "{e}"
   "{s}" D_IMPORT_POWER "{m}%*_f " D_UNIT_WATT "{e}";
-#endif  // SDM72_IMPEXP
 #endif  // USE_WEBSERVER
 
-void Sdm72Show(bool json)
-{
+void Sdm72Show(bool json) {
   if (isnan(Sdm72.total_active)) { return; }
 
   if (json) {
-#ifdef SDM72_IMPEXP
      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_POWER "\":%*_f,\"" D_JSON_IMPORT_POWER "\":%*_f"),
       Settings->flag2.wattage_resolution, &Sdm72.export_power,
       Settings->flag2.wattage_resolution, &Sdm72.import_power);
-#endif  // SDM72_IMPEXP
 #ifdef USE_WEBSERVER
   } else {
-#ifdef SDM72_IMPEXP
     WSContentSend_PD(HTTP_ENERGY_SDM72,
       Settings->flag2.wattage_resolution, &Sdm72.export_power,
       Settings->flag2.wattage_resolution, &Sdm72.import_power);
-#endif  // SDM72_IMPEXP
 #endif  // USE_WEBSERVER
   }
 }
+*/
+
+#ifdef USE_WEBSERVER
+const char HTTP_ENERGY_SDM72[] PROGMEM =
+  "{s}" D_EXPORT_POWER "{m}%s" D_UNIT_WATT "{e}"
+  "{s}" D_IMPORT_POWER "{m}%s" D_UNIT_WATT "{e}";
+#endif  // USE_WEBSERVER
+
+void Sdm72Show(bool json) {
+  if (isnan(Sdm72.total_active)) { return; }
+
+  char value_chr[TOPSZ];
+  char value2_chr[TOPSZ];
+
+  if (json) {
+     ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_POWER "\":%s,\"" D_JSON_IMPORT_POWER "\":%s"),
+      EnergyFormat(value_chr, &Sdm72.export_power, Settings->flag2.wattage_resolution),
+      EnergyFormat(value2_chr, &Sdm72.import_power, Settings->flag2.wattage_resolution));
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_ENERGY_SDM72, WebEnergyFormat(value_chr, &Sdm72.export_power, Settings->flag2.wattage_resolution),
+                                        WebEnergyFormat(value2_chr, &Sdm72.import_power, Settings->flag2.wattage_resolution));
+
+#endif  // USE_WEBSERVER
+  }
+}
+
+#endif  // SDM72_IMPEXP
 
 /*********************************************************************************************\
  * Interface
@@ -189,14 +215,22 @@ bool Xnrg18(uint8_t function)
     case FUNC_EVERY_250_MSECOND:
       Sdm72Every250ms();
       break;
+#ifdef SDM72_IMPEXP
     case FUNC_JSON_APPEND:
       Sdm72Show(1);
       break;
 #ifdef USE_WEBSERVER
+#ifdef USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_COL_SENSOR:
+      Sdm72Show(0);
+      break;
+#else  // not USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_SENSOR:
       Sdm72Show(0);
       break;
+#endif  // USE_ENERGY_COLUMN_GUI
 #endif  // USE_WEBSERVER
+#endif  // SDM72_IMPEXP
     case FUNC_INIT:
       Sdm72SnsInit();
       break;
