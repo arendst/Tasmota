@@ -1,7 +1,8 @@
 // Copyright 2021 Davide Depau
+// Copyright 2022 David Conran
 
 /// @file
-/// @brief Support for Kelan AC protocol.
+/// @brief Support for Kelon AC protocols.
 /// Both sending and decoding should be functional for models of series
 /// KELON ON/OFF 9000-12000.
 /// All features of the standard remote are implemented.
@@ -12,6 +13,7 @@
 ///    - Fahrenheit.
 
 #include <algorithm>
+#include <cassert>
 
 #include "ir_Kelon.h"
 
@@ -39,9 +41,13 @@ const uint16_t kKelonZeroSpace = 600;
 const uint32_t kKelonGap = 2 * kDefaultMessageGap;
 const uint16_t kKelonFreq = 38000;
 
-#if SEND_KELON
+const uint32_t kKelon168FooterSpace = 8000;
+const uint16_t kKelon168Section1Size = 6;
+const uint16_t kKelon168Section2Size = 8;
+const uint16_t kKelon168Section3Size = 7;
 
-/// Send a Kelon message.
+#if SEND_KELON
+/// Send a Kelon 48-bit message.
 /// Status: STABLE / Working.
 /// @param[in] data The data to be transmitted.
 /// @param[in] nbits Nr. of bits of data to be sent.
@@ -53,13 +59,12 @@ void IRsend::sendKelon(const uint64_t data, const uint16_t nbits,
               kKelonBitMark, kKelonZeroSpace,
               kKelonBitMark, kKelonGap,
               data, nbits, kKelonFreq, false,  // LSB First.
-              repeat, 50);
+              repeat, kDutyDefault);
 }
-
 #endif  // SEND_KELON
 
 #if DECODE_KELON
-/// Decode the supplied Kelon message.
+/// Decode the supplied Kelon 48-bit message.
 /// Status: STABLE / Working.
 /// @param[in,out] results Ptr to the data to decode & where to store the result
 /// @param[in] offset The starting index to use when attempting to decode the
@@ -67,27 +72,24 @@ void IRsend::sendKelon(const uint64_t data, const uint16_t nbits,
 /// @param[in] nbits The number of data bits to expect.
 /// @param[in] strict Flag indicating if we should perform strict matching.
 /// @return True if it can decode it, false if it can't.
-
 bool IRrecv::decodeKelon(decode_results *results, uint16_t offset,
                          const uint16_t nbits, const bool strict) {
-  if (strict && nbits != kKelonBits) {
-    return false;
-  }
-  if (!matchGeneric(results->rawbuf + offset, results->state,
+  if (strict && nbits != kKelonBits) return false;
+
+  if (!matchGeneric(results->rawbuf + offset, &(results->value),
                     results->rawlen - offset, nbits,
                     kKelonHdrMark, kKelonHdrSpace,
                     kKelonBitMark, kKelonOneSpace,
                     kKelonBitMark, kKelonZeroSpace,
-                    kKelonBitMark, 0, false,
-                    _tolerance, 0, false)) {
-    return false;
-  }
+                    kKelonBitMark, kKelonGap, true,
+                    _tolerance, 0, false)) return false;
 
   results->decode_type = decode_type_t::KELON;
+  results->address = 0;
+  results->command = 0;
   results->bits = nbits;
   return true;
 }
-
 #endif  // DECODE_KELON
 
 /// Class constructor
@@ -151,21 +153,15 @@ void IRKelonAc::ensurePower(bool on) {
 #endif  // SEND_KELON
 
 /// Set up hardware to be able to send a message.
-void IRKelonAc::begin() {
-  _irsend.begin();
-}
+void IRKelonAc::begin() { _irsend.begin(); }
 
 /// Request toggling power - will be reset to false after sending
 /// @param[in] toggle Whether to toggle the power state
-void IRKelonAc::setTogglePower(const bool toggle) {
-  _.PowerToggle = toggle;
-}
+void IRKelonAc::setTogglePower(const bool toggle) { _.PowerToggle = toggle; }
 
 /// Get whether toggling power will be requested
 /// @return The power toggle state
-bool IRKelonAc::getTogglePower() const {
-  return _.PowerToggle;
-}
+bool IRKelonAc::getTogglePower() const { return _.PowerToggle; }
 
 /// Set the temperature setting.
 /// @param[in] degrees The temperature in degrees celsius.
@@ -178,9 +174,7 @@ void IRKelonAc::setTemp(const uint8_t degrees) {
 
 /// Get the current temperature setting.
 /// @return Get current setting for temp. in degrees celsius.
-uint8_t IRKelonAc::getTemp() const {
-  return _.Temperature + kKelonMinTemp;
-}
+uint8_t IRKelonAc::getTemp() const { return _.Temperature + kKelonMinTemp; }
 
 /// Set the speed of the fan.
 /// @param[in] speed 0 is auto, 1-5 is the speed
@@ -207,11 +201,10 @@ void IRKelonAc::setDryGrade(const int8_t grade) {
 
   // Two's complement is clearly too bleeding edge for this manufacturer
   uint8_t outval;
-  if (drygrade < 0) {
+  if (drygrade < 0)
     outval = 0b100 | (-drygrade & 0b011);
-  } else {
+  else
     outval = drygrade & 0b011;
-  }
   _.DehumidifierGrade = outval;
 }
 
@@ -260,9 +253,7 @@ void IRKelonAc::setMode(const uint8_t mode) {
 
 /// Get the current operation mode setting.
 /// @return The current operation mode.
-uint8_t IRKelonAc::getMode() const {
-  return _.Mode;
-}
+uint8_t IRKelonAc::getMode() const { return _.Mode; }
 
 /// Request toggling the vertical swing - will be reset to false after sending
 /// @param[in] toggle If true, the swing mode will be toggled when sent.
@@ -272,21 +263,15 @@ void IRKelonAc::setToggleSwingVertical(const bool toggle) {
 
 /// Get whether the swing mode is set to be toggled
 /// @return Whether the toggle bit is set
-bool IRKelonAc::getToggleSwingVertical() const {
-  return _.SwingVToggle;
-}
+bool IRKelonAc::getToggleSwingVertical() const { return _.SwingVToggle; }
 
 /// Control the current sleep (quiet) setting.
 /// @param[in] on The desired setting.
-void IRKelonAc::setSleep(const bool on) {
-  _.SleepEnabled = on;
-}
+void IRKelonAc::setSleep(const bool on) { _.SleepEnabled = on; }
 
 /// Is the sleep setting on?
 /// @return The current value.
-bool IRKelonAc::getSleep() const {
-  return _.SleepEnabled;
-}
+bool IRKelonAc::getSleep() const { return _.SleepEnabled; }
 
 /// Control the current super cool mode setting.
 /// @param[in] on The desired setting.
@@ -305,9 +290,7 @@ void IRKelonAc::setSupercool(const bool on) {
 
 /// Is the super cool mode setting on?
 /// @return The current value.
-bool IRKelonAc::getSupercool() const {
-  return _.SuperCoolEnabled1;
-}
+bool IRKelonAc::getSupercool() const { return _.SuperCoolEnabled1; }
 
 /// Set the timer time and enable it. Timer is an off timer if the unit is on,
 /// it is an on timer if the unit is off.
@@ -334,54 +317,39 @@ void IRKelonAc::setTimer(uint16_t mins) {
 /// later disabled.
 /// @return The timer set minutes
 uint16_t IRKelonAc::getTimer() const {
-  if (_.TimerHours >= 10) {
+  if (_.TimerHours >= 10)
     return ((uint16_t) ((_.TimerHours << 1) | _.TimerHalfHour) - 10) * 60;
-  }
   return (((uint16_t) _.TimerHours) * 60) + (_.TimerHalfHour ? 30 : 0);
 }
 
 /// Enable or disable the timer. Note that in order to enable the timer the
 /// minutes must be set with setTimer().
 /// @param[in] on Whether to enable or disable the timer
-void IRKelonAc::setTimerEnabled(bool on) {
-  _.TimerEnabled = on;
-}
+void IRKelonAc::setTimerEnabled(bool on) { _.TimerEnabled = on; }
 
 /// Get the current timer status
 /// @return Whether the timer is enabled.
-bool IRKelonAc::getTimerEnabled() const {
-  return _.TimerEnabled;
-}
-
+bool IRKelonAc::getTimerEnabled() const { return _.TimerEnabled; }
 
 /// Get the raw state of the object, suitable to be sent with the appropriate
 /// IRsend object method.
 /// @return A PTR to the internal state.
-uint64_t IRKelonAc::getRaw() const {
-  return _.raw;
-}
+uint64_t IRKelonAc::getRaw() const { return _.raw; }
 
 /// Set the raw state of the object.
 /// @param[in] new_code The raw state from the native IR message.
-void IRKelonAc::setRaw(const uint64_t new_code) {
-  _.raw = new_code;
-}
+void IRKelonAc::setRaw(const uint64_t new_code) { _.raw = new_code; }
 
 /// Convert a standard A/C mode (stdAc::opmode_t) into it a native mode.
 /// @param[in] mode A stdAc::opmode_t operation mode.
 /// @return The native mode equivalent.
 uint8_t IRKelonAc::convertMode(const stdAc::opmode_t mode) {
   switch (mode) {
-    case stdAc::opmode_t::kCool:
-      return kKelonModeCool;
-    case stdAc::opmode_t::kHeat:
-      return kKelonModeHeat;
-    case stdAc::opmode_t::kDry:
-      return kKelonModeDry;
-    case stdAc::opmode_t::kFan:
-      return kKelonModeFan;
-    default:
-      return kKelonModeSmart;
+    case stdAc::opmode_t::kCool: return kKelonModeCool;
+    case stdAc::opmode_t::kHeat: return kKelonModeHeat;
+    case stdAc::opmode_t::kDry:  return kKelonModeDry;
+    case stdAc::opmode_t::kFan:  return kKelonModeFan;
+    default:                     return kKelonModeSmart;  // aka Auto.
   }
 }
 
@@ -391,15 +359,11 @@ uint8_t IRKelonAc::convertMode(const stdAc::opmode_t mode) {
 uint8_t IRKelonAc::convertFan(stdAc::fanspeed_t fan) {
   switch (fan) {
     case stdAc::fanspeed_t::kMin:
-    case stdAc::fanspeed_t::kLow:
-      return kKelonFanMin;
-    case stdAc::fanspeed_t::kMedium:
-      return kKelonFanMedium;
+    case stdAc::fanspeed_t::kLow:    return kKelonFanMin;
+    case stdAc::fanspeed_t::kMedium: return kKelonFanMedium;
     case stdAc::fanspeed_t::kHigh:
-    case stdAc::fanspeed_t::kMax:
-      return kKelonFanMax;
-    default:
-      return kKelonFanAuto;
+    case stdAc::fanspeed_t::kMax:    return kKelonFanMax;
+    default:                         return kKelonFanAuto;
   }
 }
 
@@ -408,16 +372,11 @@ uint8_t IRKelonAc::convertFan(stdAc::fanspeed_t fan) {
 /// @return The stdAc::opmode_t equivalent.
 stdAc::opmode_t IRKelonAc::toCommonMode(const uint8_t mode) {
   switch (mode) {
-    case kKelonModeCool:
-      return stdAc::opmode_t::kCool;
-    case kKelonModeHeat:
-      return stdAc::opmode_t::kHeat;
-    case kKelonModeDry:
-      return stdAc::opmode_t::kDry;
-    case kKelonModeFan:
-      return stdAc::opmode_t::kFan;
-    default:
-      return stdAc::opmode_t::kAuto;
+    case kKelonModeCool: return stdAc::opmode_t::kCool;
+    case kKelonModeHeat: return stdAc::opmode_t::kHeat;
+    case kKelonModeDry:  return stdAc::opmode_t::kDry;
+    case kKelonModeFan:  return stdAc::opmode_t::kFan;
+    default:             return stdAc::opmode_t::kAuto;
   }
 }
 
@@ -426,14 +385,10 @@ stdAc::opmode_t IRKelonAc::toCommonMode(const uint8_t mode) {
 /// @return The stdAc::fanspeed_t equivalent.
 stdAc::fanspeed_t IRKelonAc::toCommonFanSpeed(const uint8_t speed) {
   switch (speed) {
-    case kKelonFanMin:
-      return stdAc::fanspeed_t::kLow;
-    case kKelonFanMedium:
-      return stdAc::fanspeed_t::kMedium;
-    case kKelonFanMax:
-      return stdAc::fanspeed_t::kHigh;
-    default:
-      return stdAc::fanspeed_t::kAuto;
+    case kKelonFanMin:    return stdAc::fanspeed_t::kLow;
+    case kKelonFanMedium: return stdAc::fanspeed_t::kMedium;
+    case kKelonFanMax:    return stdAc::fanspeed_t::kHigh;
+    default:              return stdAc::fanspeed_t::kAuto;
   }
 }
 
@@ -443,21 +398,20 @@ stdAc::state_t IRKelonAc::toCommon(const stdAc::state_t *prev) const {
   stdAc::state_t result{};
   result.protocol = decode_type_t::KELON;
   result.model = -1;  // Unused.
+  // AC only supports toggling it
+  result.power = (prev == nullptr || prev->power) ^ _.PowerToggle;
   result.mode = toCommonMode(getMode());
   result.celsius = true;
   result.degrees = getTemp();
   result.fanspeed = toCommonFanSpeed(getFan());
+  // AC only supports toggling it
+  result.swingv = stdAc::swingv_t::kAuto;
+  if (prev != nullptr &&
+      (prev->swingv != stdAc::swingv_t::kAuto) ^ _.SwingVToggle)
+    result.swingv = stdAc::swingv_t::kOff;
   result.turbo = getSupercool();
   result.sleep = getSleep() ? 0 : -1;
   // Not supported.
-  // N/A, AC only supports toggling it
-  result.power = (prev == nullptr || prev->power) ^ _.PowerToggle;
-  // N/A, AC only supports toggling it
-  result.swingv = stdAc::swingv_t::kAuto;
-  if (prev != nullptr &&
-      (prev->swingv != stdAc::swingv_t::kAuto) ^ _.SwingVToggle) {
-    result.swingv = stdAc::swingv_t::kOff;
-  }
   result.swingh = stdAc::swingh_t::kOff;
   result.light = true;
   result.beep = true;
@@ -483,20 +437,115 @@ String IRKelonAc::toString() const {
   result += addBoolToString(_.SleepEnabled, kSleepStr);
   result += addSignedIntToString(getDryGrade(), kDryStr);
   result += addLabeledString(
-      getTimerEnabled()
-      ? (
-          getTimer() > 0
-          ? minsToString(getTimer())
-          : kOnStr
-      )
-      : kOffStr,
+      getTimerEnabled() ? (getTimer() > 0 ? minsToString(getTimer()) : kOnStr)
+                        : kOffStr,
       kTimerStr);
   result += addBoolToString(getSupercool(), kTurboStr);
-  if (getTogglePower()) {
+  if (getTogglePower())
     result += addBoolToString(true, kPowerToggleStr);
-  }
-  if (getToggleSwingVertical()) {
+  if (getToggleSwingVertical())
     result += addBoolToString(true, kSwingVToggleStr);
-  }
   return result;
 }
+
+#if SEND_KELON168
+/// Send a Kelon 168 bit / 21 byte message.
+/// Status: BETA / Probably works.
+/// @param[in] data The data to be transmitted.
+/// @param[in] nbytes Nr. of bytes of data to be sent.
+/// @param[in] repeat The number of times the command is to be repeated.
+void IRsend::sendKelon168(const uint8_t data[], const uint16_t nbytes,
+                          const uint16_t repeat) {
+  assert(kKelon168StateLength == kKelon168Section1Size + kKelon168Section2Size +
+                                 kKelon168Section3Size);
+  // Enough bytes to send a proper message?
+  if (nbytes < kKelon168StateLength) return;
+
+  for (uint16_t r = 0; r <= repeat; r++) {
+    // Section #1 (48 bits)
+    sendGeneric(kKelonHdrMark, kKelonHdrSpace,
+                kKelonBitMark, kKelonOneSpace,
+                kKelonBitMark, kKelonZeroSpace,
+                kKelonBitMark, kKelon168FooterSpace,
+                data, kKelon168Section1Size, kKelonFreq, false,  // LSB First.
+                0,  // No repeats here
+                kDutyDefault);
+    // Section #2 (64 bits)
+    sendGeneric(0, 0,
+                kKelonBitMark, kKelonOneSpace,
+                kKelonBitMark, kKelonZeroSpace,
+                kKelonBitMark, kKelon168FooterSpace,
+                data + kKelon168Section1Size, kKelon168Section2Size,
+                kKelonFreq, false,  // LSB First.
+                0,  // No repeats here
+                kDutyDefault);
+    // Section #3 (56 bits)
+    sendGeneric(0, 0,
+                kKelonBitMark, kKelonOneSpace,
+                kKelonBitMark, kKelonZeroSpace,
+                kKelonBitMark, kKelonGap,
+                data + kKelon168Section1Size + kKelon168Section2Size,
+                nbytes - (kKelon168Section1Size + kKelon168Section2Size),
+                kKelonFreq, false,  // LSB First.
+                0,  // No repeats here
+                kDutyDefault);
+  }
+}
+#endif  // SEND_KELON168
+
+#if DECODE_KELON168
+/// Decode the supplied Kelon 168 bit / 21 byte message.
+/// Status: BETA / Probably Working.
+/// @param[in,out] results Ptr to the data to decode & where to store the result
+/// @param[in] offset The starting index to use when attempting to decode the
+///   raw data. Typically/Defaults to kStartOffset.
+/// @param[in] nbits The number of data bits to expect.
+/// @param[in] strict Flag indicating if we should perform strict matching.
+/// @return True if it can decode it, false if it can't.
+bool IRrecv::decodeKelon168(decode_results *results, uint16_t offset,
+                            const uint16_t nbits, const bool strict) {
+  if (strict && nbits != kKelon168Bits) return false;
+  if (results->rawlen <= 2 * nbits + kHeader + kFooter * 2 - 1 + offset)
+    return false;  // Can't possibly be a valid Kelon 168 bit message.
+
+  uint16_t used = 0;
+
+  used = matchGeneric(results->rawbuf + offset, results->state,
+                      results->rawlen - offset, kKelon168Section1Size * 8,
+                      kKelonHdrMark, kKelonHdrSpace,
+                      kKelonBitMark, kKelonOneSpace,
+                      kKelonBitMark, kKelonZeroSpace,
+                      kKelonBitMark, kKelon168FooterSpace,
+                      false, _tolerance, 0, false);
+  if (!used) return false;  // Failed to match.
+  offset += used;
+
+  used = matchGeneric(results->rawbuf + offset,
+                      results->state + kKelon168Section1Size,
+                      results->rawlen - offset, kKelon168Section2Size * 8,
+                      0, 0,
+                      kKelonBitMark, kKelonOneSpace,
+                      kKelonBitMark, kKelonZeroSpace,
+                      kKelonBitMark, kKelon168FooterSpace,
+                      false, _tolerance, 0, false);
+  if (!used) return false;  // Failed to match.
+  offset += used;
+
+  used = matchGeneric(results->rawbuf + offset,
+                      results->state + (kKelon168Section1Size +
+                                        kKelon168Section2Size),
+                      results->rawlen - offset,
+                      nbits - (kKelon168Section1Size +
+                               kKelon168Section2Size) * 8,
+                      0, 0,
+                      kKelonBitMark, kKelonOneSpace,
+                      kKelonBitMark, kKelonZeroSpace,
+                      kKelonBitMark, kKelonGap,
+                      true, _tolerance, 0, false);
+  if (!used) return false;  // Failed to match.
+
+  results->decode_type = decode_type_t::KELON168;
+  results->bits = nbits;
+  return true;
+}
+#endif  // DECODE_KELON168

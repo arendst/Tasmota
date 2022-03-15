@@ -24,6 +24,10 @@
  * ## Before First Boot (i.e. Compile time)
  * - Disable MQTT if desired. (see '#define MQTT_ENABLE' in IRMQTTServer.h).
  *
+ * - The MQTT server IP is detected automatically through mDNS (aka avahi,
+ *   bonjour, zeroconf) if the server advertises _mqtt._tcp. Disable this if
+ *   desired (see '#define MQTT_SERVER_AUTODETECT_ENABLE' in IRMQTTServer.h).
+ *
  * - Site specific settings:
  *   o Search for 'CHANGE_ME' in IRMQTTServer.h for the things you probably
  *     need to change for your particular situation.
@@ -1973,6 +1977,29 @@ void handleNotFound(void) {
   server.send(404, "text/plain", message);
 }
 
+#if (MQTT_ENABLE && MQTT_SERVER_AUTODETECT_ENABLE)
+void mqtt_detect_server(void) {
+  debug("Looking for the MQTT server...");
+  int nrOfServices = MDNS.queryService("mqtt", "tcp");
+  if (nrOfServices == 0) {
+    debug("MQTT server not found");
+    return;
+  }
+
+  debug(("Number of MQTT servers found: " + String(nrOfServices)).c_str());
+  for (int i = 0; i < nrOfServices; i=i+1) {
+    debug(("Hostname: " + MDNS.hostname(i)).c_str());
+    debug(("IP address: " + MDNS.IP(i).toString()).c_str());
+    debug(("Port: " + String(MDNS.port(i))).c_str());
+  }
+  strncpy(MqttServer, MDNS.IP(0).toString().c_str(), kHostnameLength);
+  strncpy(MqttPort, String(MDNS.port(0)).c_str(), kPortLength);
+
+  debug(("First one selected: " + String(MqttServer) + ":" +
+         String(MqttPort)).c_str());
+}
+#endif  // (MQTT_ENABLE && MQTT_SERVER_AUTODETECT_ENABLE))
+
 void setup_wifi(void) {
   delay(10);
   loadConfigFile();
@@ -2000,6 +2027,12 @@ void setup_wifi(void) {
   WiFiManagerParameter custom_mqtt_text(
       "<br><br><center>MQTT Broker details</center>");
   wifiManager.addParameter(&custom_mqtt_text);
+#if MQTT_SERVER_AUTODETECT_ENABLE
+  WiFiManagerParameter custom_mqtt_server_text(
+      "<br><left>NOTE: if _mqtt._tcp mDNS service is found, it will be "
+      "used instead of the mqtt server:port below</left><br><br>");
+  wifiManager.addParameter(&custom_mqtt_server_text);
+#endif  // MQTT_SERVER_AUTODETECT_ENABLE
   WiFiManagerParameter custom_mqtt_server(
       kMqttServerKey, "mqtt server", MqttServer, kHostnameLength);
   wifiManager.addParameter(&custom_mqtt_server);
@@ -2196,6 +2229,9 @@ void setup(void) {
   // Finish setup of the mqtt clent object.
   if (!mqtt_client.setBufferSize(kMqttBufferSize))
     debug("Can't fully allocate MQTT buffer! Try a smaller value.");
+#if MQTT_SERVER_AUTODETECT_ENABLE
+  mqtt_detect_server();
+#endif  // MQTT_SERVER_AUTODETECT_ENABLE
   mqtt_client.setServer(MqttServer, atoi(MqttPort));
   mqtt_client.setCallback(mqttCallback);
   // Set various variables
@@ -2308,6 +2344,10 @@ bool reconnect(void) {
   uint16_t tries = 1;
   while (!mqtt_client.connected() && tries <= 3) {
     int connected = false;
+#if MQTT_SERVER_AUTODETECT_ENABLE
+    mqtt_detect_server();
+    mqtt_client.setServer(MqttServer, atoi(MqttPort));
+#endif  // MQTT_SERVER_AUTODETECT_ENABLE
     // Attempt to connect
     debug(("Attempting MQTT connection to " + String(MqttServer) + ":" +
            String(MqttPort) + "... ").c_str());
@@ -2863,7 +2903,8 @@ bool sendInt(const String topic, const int32_t num, const bool retain) {
 bool sendBool(const String topic, const bool on, const bool retain) {
 #if MQTT_ENABLE
   mqttSentCounter++;
-  return mqtt_client.publish(topic.c_str(), (on ? "on" : "off"), retain);
+  return mqtt_client.publish(topic.c_str(), (on ? D_STR_ON : D_STR_OFF),
+                             retain);
 #else  // MQTT_ENABLE
   return true;
 #endif  // MQTT_ENABLE
@@ -2991,12 +3032,14 @@ void updateClimate(stdAc::state_t *state, const String str,
   } else if (str.equals(prefix + F(KEY_POWER))) {
     state->power = IRac::strToBool(payload.c_str());
 #if MQTT_CLIMATE_HA_MODE
+    // When in Home Assistant mode, Power Off, means turn the Mode to Off too.
     if (!state->power) state->mode = stdAc::opmode_t::kOff;
 #endif  // MQTT_CLIMATE_HA_MODE
   } else if (str.equals(prefix + F(KEY_MODE))) {
     state->mode = IRac::strToOpmode(payload.c_str());
 #if MQTT_CLIMATE_HA_MODE
-    state->power = (state->mode != stdAc::opmode_t::kOff);
+    // When in Home Assistant mode, a Mode of Off, means turn the Power off too.
+    if (state->mode == stdAc::opmode_t::kOff) state->power = false;
 #endif  // MQTT_CLIMATE_HA_MODE
   } else if (str.equals(prefix + F(KEY_TEMP))) {
     state->degrees = payload.toFloat();
@@ -3055,7 +3098,7 @@ bool sendClimate(const String topic_prefix, const bool retain,
   // Home Assistant want's these two bound together.
   if (prev.power != next.power || prev.mode != next.mode || forceMQTT) {
     success &= sendBool(topic_prefix + KEY_POWER, next.power, retain);
-    if (!next.power) mode_str = F("off");
+    if (!next.power) mode_str = kOffStr;
 #else  // MQTT_CLIMATE_HA_MODE
   // In non-Home Assistant mode, power and mode are not bound together.
   if (prev.power != next.power || forceMQTT) {

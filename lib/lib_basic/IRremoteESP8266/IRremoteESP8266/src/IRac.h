@@ -300,6 +300,16 @@ void electra(IRElectraAc *ac,
                 const stdAc::swingv_t swingv, const stdAc::swingh_t swingh,
                 const bool swing_toggle, const int16_t sleep = -1);
 #endif  // SEND_HITACHI_AC1
+#if SEND_HITACHI_AC264
+  void hitachi264(IRHitachiAc264 *ac,
+                  const bool on, const stdAc::opmode_t mode,
+                  const float degrees, const stdAc::fanspeed_t fan);
+#endif  // SEND_HITACHI_AC264
+#if SEND_HITACHI_AC296
+  void hitachi296(IRHitachiAc296 *ac,
+                  const bool on, const stdAc::opmode_t mode,
+                  const float degrees, const stdAc::fanspeed_t fan);
+#endif  // SEND_HITACHI_AC296
 #if SEND_HITACHI_AC344
   void hitachi344(IRHitachiAc344 *ac,
                   const bool on, const stdAc::opmode_t mode,
@@ -338,8 +348,10 @@ void electra(IRElectraAc *ac,
   void midea(IRMideaAC *ac,
              const bool on, const stdAc::opmode_t mode, const bool celsius,
              const float degrees, const stdAc::fanspeed_t fan,
-             const stdAc::swingv_t swingv, const bool turbo, const bool econo,
-             const bool light, const int16_t sleep = -1);
+             const stdAc::swingv_t swingv,
+             const bool quiet, const bool quiet_prev, const bool turbo,
+             const bool econo, const bool light, const bool clean,
+             const int16_t sleep = -1);
 #endif  // SEND_MIDEA
 #if SEND_MIRAGE
   void mirage(IRMirageAc *ac, const stdAc::state_t state);

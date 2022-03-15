@@ -454,7 +454,7 @@ stdAc::swingv_t IRMitsubishiHeavy152Ac::toCommonSwingV(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRMitsubishiHeavy152Ac::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::MITSUBISHI_HEAVY_152;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -899,7 +899,7 @@ stdAc::swingv_t IRMitsubishiHeavy88Ac::toCommonSwingV(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRMitsubishiHeavy88Ac::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::MITSUBISHI_HEAVY_88;
   result.model = -1;  // No models used.
   result.power = _.Power;

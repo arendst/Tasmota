@@ -733,7 +733,7 @@ stdAc::swingv_t IRMirageAc::toCommonSwingV(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRMirageAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::MIRAGE;
   result.model = _model;
   result.power = getPower();

@@ -359,7 +359,7 @@ uint8_t IRElectraAc::getSensorTemp(void) const {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRElectraAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::ELECTRA_AC;
   result.power = _.Power;
   result.mode = toCommonMode(_.Mode);

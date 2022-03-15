@@ -5,6 +5,7 @@
 /// Midea added by crankyoldgit & bwze
 /// @see https://docs.google.com/spreadsheets/d/1TZh4jWrx4h9zzpYUI9aYXMl1fYOiqu-xVuOOMqagxrs/edit?usp=sharing
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1342#issuecomment-733721085
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1733
 
 // Supports:
 //   Brand: Pioneer System,  Model: RYBO12GMFILCAD A/C (12K BTU) (MIDEA)
@@ -24,6 +25,18 @@
 //   Brand: Danby,  Model: R09C/BCGE remote (MIDEA)
 //   Brand: Trotec,  Model: TROTEC PAC 3900 X (MIDEA)
 //   Brand: Trotec,  Model: RG57H(B)/BGE remote (MIDEA)
+//   Brand: Lennox,  Model: RG57A6/BGEFU1 remote (MIDEA)
+//   Brand: Lennox,  Model: MWMA009S4-3P A/C (MIDEA)
+//   Brand: Lennox,  Model: MWMA012S4-3P A/C (MIDEA)
+//   Brand: Lennox,  Model: MCFA indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: MCFB indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: MMDA indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: MMDB indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: MWMA indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: MWMB indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: M22A indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: M33A indoor split A/C (MIDEA)
+//   Brand: Lennox,  Model: M33B indoor split A/C (MIDEA)
 
 #ifndef IR_MIDEA_H_
 #define IR_MIDEA_H_
@@ -123,9 +136,16 @@ const uint8_t kMideaACFanHigh = 3;  // 0b11
   // const uint64_t kMideaACToggleIonizer = 0xA201FFFFFF7C;
   kSwingVToggleStr = kIonStr;
 #endif  // DANBY_DAC
-const uint64_t kMideaACToggleEcono = 0xA202FFFFFF7E;
-const uint64_t kMideaACToggleLight = 0xA208FFFFFF75;
-const uint64_t kMideaACToggleTurbo = 0xA209FFFFFF74;
+const uint64_t kMideaACToggleEcono =            0xA202FFFFFF7E;
+const uint64_t kMideaACToggleLight =            0xA208FFFFFF75;
+const uint64_t kMideaACToggleTurbo =            0xA209FFFFFF74;
+// Mode must be Auto, Cool, or Dry
+const uint64_t kMideaACToggleSelfClean =        0xA20DFFFFFF70;
+// 8C Heat AKA Freeze Protection
+const uint64_t kMideaACToggle8CHeat =           0xA20FFFFFFF73;  // Only in Heat
+const uint64_t kMideaACQuietOn =                0xA212FFFFFF6E;
+const uint64_t kMideaACQuietOff =               0xA213FFFFFF6F;
+
 const uint8_t kMideaACTypeCommand = 0b001;  ///< Message type
 const uint8_t kMideaACTypeSpecial = 0b010;  ///< Message type
 const uint8_t kMideaACTypeFollow =  0b100;  ///< Message type
@@ -202,6 +222,16 @@ class IRMideaAC {
   bool isLightToggle(void) const;
   void setLightToggle(const bool on);
   bool getLightToggle(void);
+  bool isCleanToggle(void) const;
+  void setCleanToggle(const bool on);
+  bool getCleanToggle(void);
+  bool is8CHeatToggle(void) const;
+  void set8CHeatToggle(const bool on);
+  bool get8CHeatToggle(void);
+  bool isQuiet(void) const;
+  void setQuiet(const bool on);
+  void setQuiet(const bool on, const bool prev);
+  bool getQuiet(void) const;
   uint8_t getType(void) const;
   bool isOnTimerEnabled(void) const;
   uint16_t getOnTimer(void) const;
@@ -225,13 +255,17 @@ class IRMideaAC {
   /// @endcond
 #endif  // UNIT_TEST
   MideaProtocol _;
+  bool _CleanToggle;
+  bool _EconoToggle;
+  bool _8CHeatToggle;
+  bool _LightToggle;
+  bool _Quiet;
+  bool _Quiet_prev;
   bool _SwingVToggle;
   #if KAYSUN_AC
   bool _SwingVStep;
   #endif  // KAYSUN_AC
-  bool _EconoToggle;
   bool _TurboToggle;
-  bool _LightToggle;
   void checksum(void);
   static uint8_t calcChecksum(const uint64_t state);
   void setType(const uint8_t type);
