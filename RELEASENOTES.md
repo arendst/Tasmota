@@ -132,7 +132,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Extent number of pulsetimers from 8 to 32 [#8266](https://github.com/arendst/Tasmota/issues/8266)
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
 - Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
-- define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
+- DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
+- Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 - ESP32 Arduino core from v2.0.2.2 to v2.0.2.3
 - ESP32 LVGL library from v8.1.0 to v8.2.0
 - ESP32 NimBLE library from v1.3.3 to v1.3.6

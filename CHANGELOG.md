@@ -11,8 +11,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
 - Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
-- define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
+- DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 - NeoPool remove ambiguous device color names
+- Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 
 ### Fixed
 - NeoPool NPBit and NPRead/NPReadL output
