@@ -481,7 +481,7 @@ void Ade7880Cycle(void) {
   for (uint32_t phase = 0; phase < 3; phase++) {
     Energy.data_valid[phase] = 0;
     Energy.voltage[phase] = (float)Ade7880ReadVerify(ADE7880_AVRMS + (phase * 2)) / 10000;     // 0x43C1 - 0x0024CC94 = 241.1668 V
-    Energy.current[phase] = (float)Ade7880ReadVerify(ADE7880_AIRMS + (phase * 2)) / 1000000;   // 0x43C0 - 0x00002D6D = 0.011629 A
+    Energy.current[phase] = (float)Ade7880ReadVerify(ADE7880_AIRMS + (phase * 2)) / 100000;    // 0x43C0 - 0x00002D6D = 0.11629 A
     Energy.active_power[phase] = (float)Ade7880ReadVerify(ADE7880_AWATT + phase) / 100;        // 0xE513 - 0xFFFFF524 = -27.79 W (wrong calibration)
     Energy.apparent_power[phase] = (float)Ade7880ReadVerify(ADE7880_AVA + phase) / 100;        // 0xE519 - 0xFFFFF50D
     Energy.frequency[phase] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD + phase);          // 0xE905 - Page 34 and based on ADE7880_FREQ_INIT
