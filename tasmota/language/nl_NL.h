@@ -838,7 +838,7 @@
 #define D_SENSOR_WIEGAND_D1    "Wiegand D1"
 #define D_SENSOR_NEOPOOL_TX    "NeoPool Tx"
 #define D_SENSOR_NEOPOOL_RX    "NeoPool Rx"
-#define D_SENSOR_VL53L0X_XSHUT "VL53L0X XSHUT"
+#define D_SENSOR_VL53LXX_XSHUT "VL53LXX XSHUT"
 #define D_SENSOR_TFMINIPLUS_TX  "TFmini+ TX"
 #define D_SENSOR_TFMINIPLUS_RX  "TFmini+ RX"
 #define D_SENSOR_ZEROCROSS     "ZC Pulse"
@@ -1047,13 +1047,13 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (geel)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blauw)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (groen)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (licht blauw)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (rood)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (paars)"
-#define D_NEOPOOL_MACH_STATION            "Station (oranje)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife"
+#define D_NEOPOOL_MACH_BIONET             "Bionet"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic"
+#define D_NEOPOOL_MACH_STATION            "Station"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
 #define D_NEOPOOL_MACH_GENERIC            "Generic"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Chloorpomp"
 #define D_NEOPOOL_RELAY_CD                "Pekelpomp"
 #define D_NEOPOOL_TIME                    "Tijd"
-#define D_NEOPOOL_FILT_MODE               "Filtratie"
+#define D_NEOPOOL_FILT_MODE               "Filtratie modus"
 #define D_NEOPOOL_CELL_RUNTIME            "Cel looptijd"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrUit"

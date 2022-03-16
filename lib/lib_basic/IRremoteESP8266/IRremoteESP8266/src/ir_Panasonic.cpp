@@ -760,7 +760,7 @@ stdAc::swingv_t IRPanasonicAc::toCommonSwingV(const uint8_t pos) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRPanasonicAc::toCommon(void) {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::PANASONIC_AC;
   result.model = getModel();
   result.power = getPower();
@@ -1307,7 +1307,7 @@ String IRPanasonicAc32::toString(void) const {
 /// @param[in] prev Ptr to the previous state if required.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRPanasonicAc32::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) {
     result = *prev;

@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.3]
+## [11.0.0.4]
+### Added
+- command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
+- NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
+
+### Changed
+- Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
+- Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
+- DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
+- NeoPool remove ambiguous device color names
+- Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
+- IRremoteESP8266 library from v2.8.1 to v2.8.2
+
+### Fixed
+- NeoPool NPBit and NPRead/NPReadL output
+- ESP32 PowerOnState (#15084)
+
+## [11.0.0.3] 20220312
 ### Added
 - TasmotaSerial implement ``end()``
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` (#14981)
@@ -12,6 +29,9 @@ All notable changes to this project will be documented in this file.
 - NeoPool system voltages display
 - Full DS3231 integration and synchronisation when using UBX (=GPS), NTP or manual time
 - LVGL Splash screen and ``SetOption135 1`` to disable splash screen
+- Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 (#15061)
+- Support for ADE7880 3 phase energy monitor as used in Shelly 3EM (#13515)
+- Support for PCF85363 RTC as used in Shelly 3EM (#13515)
 
 ### Changed
 - Extent number of pulsetimers from 8 to 32 (#8266)
@@ -19,7 +39,6 @@ All notable changes to this project will be documented in this file.
 - TasmotaSerial library from v3.4.0 to v3.5.0 (#14981)
 - NeoPool limit relay output to the number actually available
 
-### Fixed
 
 ## [11.0.0.2] 20220225
 ### Changed

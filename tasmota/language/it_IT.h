@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.6 - Last update 20.02.2022
+ * Updated until v10.1.0.6 - Last update 12.03.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -838,7 +838,7 @@
 #define D_SENSOR_WIEGAND_D1             "Wiegand - D1"
 #define D_SENSOR_NEOPOOL_TX             "NeoPool - TX"
 #define D_SENSOR_NEOPOOL_RX             "NeoPool - RX"
-#define D_SENSOR_VL53L0X_XSHUT          "VL53L0X XSHUT"
+#define D_SENSOR_VL53LXX_XSHUT          "VL53LXX - XSHUT"
 #define D_SENSOR_TFMINIPLUS_TX          "TFmini+ - TX"
 #define D_SENSOR_TFMINIPLUS_RX          "TFmini+ - RX"
 #define D_SENSOR_ZEROCROSS              "Impulsi ZC"
@@ -851,7 +851,7 @@
 #define D_SENSOR_BL6523_TX              "BL6523 - TX"
 #define D_SENSOR_BL6523_RX              "BL6523 - RX"
 #define D_SENSOR_HEARTBEAT              "Battito cardiaco"
-#define D_SENSOR_RESET         "Reset"
+#define D_SENSOR_RESET                  "Ripristino"
 #define D_GPIO_SHIFT595_SRCLK           "74x595 - SRCLK"
 #define D_GPIO_SHIFT595_RCLK            "74x595 - RCLK"
 #define D_GPIO_SHIFT595_OE              "74x595 - OE"
@@ -1047,13 +1047,13 @@
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names
-#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife (giallo)"
-#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic (blu)"
-#define D_NEOPOOL_MACH_OXILIFE            "Oxilife (verde)"
-#define D_NEOPOOL_MACH_BIONET             "Bionet (azzurro)"
-#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser (rosso)"
-#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic (lilac)"
-#define D_NEOPOOL_MACH_STATION            "Station (arancio)"
+#define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife"
+#define D_NEOPOOL_MACH_AQUASCENIC         "Aquascenic"
+#define D_NEOPOOL_MACH_OXILIFE            "Oxilife"
+#define D_NEOPOOL_MACH_BIONET             "Bionet"
+#define D_NEOPOOL_MACH_HIDRONISER         "Hidroniser"
+#define D_NEOPOOL_MACH_UVSCENIC           "UVScenic"
+#define D_NEOPOOL_MACH_STATION            "Station"
 #define D_NEOPOOL_MACH_BRILIX             "Brilix"
 #define D_NEOPOOL_MACH_GENERIC            "Generico"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
@@ -1083,7 +1083,7 @@
 #define D_NEOPOOL_RELAY_CL                "Pompa cloro"
 #define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
 #define D_NEOPOOL_TIME                    "Orario"
-#define D_NEOPOOL_FILT_MODE               "Filtrazione"
+#define D_NEOPOOL_FILT_MODE               "Modalità di filtrazione"
 #define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"

@@ -17,7 +17,7 @@ lv_meter_indicator_type_t = ctypes.u8
 lv_opa = ctypes.u8
 lv_blend_mode = ctypes.u8
 lv_align = ctypes.u8
-lv_coord = ctypes.i16
+lv_coord_t = ctypes.i16
 lv_bidi_dir = ctypes.u8
 lv_txt_flag = ctypes.u8
 lv_text_decor = ctypes.u8
@@ -40,17 +40,22 @@ uint32_t = ctypes.u32
 int32_t = ctypes.i32
 ptr = ctypes.ptr32
 
+lv_coord = [            # valid LVGL8
+    [lv_coord_t, "v"],
+]
+lv_coord = ctypes.structure(lv_coord, "lv_coord")
+
 lv_point = [            # valid LVGL8
-    [lv_coord, "x"],
-    [lv_coord, "y"],
+    [lv_coord_t, "x"],
+    [lv_coord_t, "y"],
 ]
 lv_point = ctypes.structure(lv_point, "lv_point")
 
 lv_area = [            # valid LVGL8
-    [lv_coord, "x1"],
-    [lv_coord, "y1"],
-    [lv_coord, "x2"],
-    [lv_coord, "y2"],
+    [lv_coord_t, "x1"],
+    [lv_coord_t, "y1"],
+    [lv_coord_t, "x2"],
+    [lv_coord_t, "y2"],
 ]
 lv_area = ctypes.structure(lv_area, "lv_area")
 
@@ -72,7 +77,7 @@ lv_grad_dsc = [
 lv_grad_dsc = ctypes.structure(lv_grad_dsc, "lv_grad_dsc")
 
 lv_draw_rect_dsc = [            # valid LVGL8.2
-    [lv_coord, "radius"],
+    [lv_coord_t, "radius"],
     [lv_blend_mode, "blend_mode"],
 
     #/*Background*/
@@ -90,32 +95,32 @@ lv_draw_rect_dsc = [            # valid LVGL8.2
 
     #/*Border*/
     [lv_color, "border_color"],
-    [lv_coord, "border_width"],
+    [lv_coord_t, "border_width"],
     [lv_opa, "border_opa"],
     [uint8_t_1, "border_post"],
     [uint8_t_5, "border_side"],
 
     #/*Outline*/
     [lv_color, "outline_color"],
-    [lv_coord, "outline_width"],
-    [lv_coord, "outline_pad"],
+    [lv_coord_t, "outline_width"],
+    [lv_coord_t, "outline_pad"],
     [lv_opa, "outline_opa"],
 
     #/*Shadow*/
     [lv_color, "shadow_color"],
-    [lv_coord, "shadow_width"],
-    [lv_coord, "shadow_ofs_x"],
-    [lv_coord, "shadow_ofs_y"],
-    [lv_coord, "shadow_spread"],
+    [lv_coord_t, "shadow_width"],
+    [lv_coord_t, "shadow_ofs_x"],
+    [lv_coord_t, "shadow_ofs_y"],
+    [lv_coord_t, "shadow_spread"],
     [lv_opa, "shadow_opa"],
 ]
 lv_draw_rect_dsc = ctypes.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 
 lv_draw_line_dsc = [            # valid LVGL8.2
     [lv_color, "color"],
-    [lv_coord, "width"],
-    [lv_coord, "dash_width"],
-    [lv_coord, "dash_gap"],
+    [lv_coord_t, "width"],
+    [lv_coord_t, "dash_width"],
+    [lv_coord_t, "dash_gap"],
     [lv_opa, "opa"],
     [uint8_t_2, "blend_mode"],
     [uint8_t_1, "round_start"],
@@ -126,7 +131,7 @@ lv_draw_line_dsc = ctypes.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 
 lv_draw_arc_dsc = [            # valid LVGL8.2
     [lv_color, "color"],
-    [lv_coord, "width"],
+    [lv_coord_t, "width"],
     [uint16_t, "start_angle"],
     [uint16_t, "end_angle"],
     [ptr, "img_src"],
@@ -151,6 +156,28 @@ lv_draw_img_dsc = [            # valid LVGL8.2
     [uint8_t_1, "antialias"],
 ]
 lv_draw_img_dsc = ctypes.structure(lv_draw_img_dsc, "lv_draw_img_dsc")
+
+lv_obj_draw_part_dsc = [            # valid LVGL8.2
+    [ptr, "draw_ctx"],
+    [ptr, "class_p"],
+    [uint32_t, "type"],
+    [ptr, "draw_area"],
+    [ptr, "rect_dsc"],
+    [ptr, "label_dsc"],
+    [ptr, "line_dsc"],
+    [ptr, "img_dsc"],
+    [ptr, "arc_dsc"],
+    [ptr, "p1"],
+    [ptr, "p2"],
+    [ptr, "text"],
+    [uint32_t, "text_length"],
+    [uint32_t, "part"],
+    [uint32_t, "id"],
+    [lv_coord_t, "radius"],
+    [int32_t, "value"],
+    [ptr, "sub_part_ptr"],
+]
+lv_obj_draw_part_dsc = ctypes.structure(lv_obj_draw_part_dsc, "lv_obj_draw_part_dsc")
 
 #- --------- lv_mask --------- -#
 lv_draw_mask_xcb = ptr    # callback
@@ -199,8 +226,8 @@ lv_draw_mask_line_param = ctypes.structure(lv_draw_mask_line_param, "lv_draw_mas
 
 lv_draw_mask_angle_param_cfg = [            # valid LVGL8.2
     [lv_point, "vertex_p"],
-    [lv_coord, "start_angle"],
-    [lv_coord, "end_angle"],
+    [lv_coord_t, "start_angle"],
+    [lv_coord_t, "end_angle"],
 ]
 lv_draw_mask_angle_param_cfg = ctypes.structure(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg")
 
@@ -218,7 +245,7 @@ lv_draw_mask_angle_param = ctypes.structure(lv_draw_mask_angle_param, "lv_draw_m
 
 lv_draw_mask_radius_param_cfg = [            # valid LVGL8.2
     [lv_area, "rect"],
-    [lv_coord, "radius"],
+    [lv_coord_t, "radius"],
     [uint8_t_1, "outer"],
 ]
 lv_draw_mask_radius_param_cfg = ctypes.structure(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg")
@@ -230,7 +257,7 @@ lv_draw_mask_radius_circle_dsc = [            # valid LVGL8.2
     [ptr, "opa_start_on_y"],
     [int32_t, "life"],
     [uint32_t, "used_cnt"],
-    [lv_coord, "radius"],
+    [lv_coord_t, "radius"],
 ]
 lv_draw_mask_radius_circle_dsc = ctypes.structure(lv_draw_mask_radius_circle_dsc, "lv_draw_mask_radius_circle_dsc")
 
@@ -245,8 +272,8 @@ lv_draw_mask_radius_param = ctypes.structure(lv_draw_mask_radius_param, "lv_draw
 
 lv_draw_mask_fade_param_cfg = [            # valid LVGL8.2
     [lv_area, "coords"],
-    [lv_coord, "y_top"],
-    [lv_coord, "y_bottom"],
+    [lv_coord_t, "y_top"],
+    [lv_coord_t, "y_bottom"],
     [lv_opa, "opa_top"],
     [lv_opa, "opa_bottom"],
 ]
@@ -409,9 +436,9 @@ lv_chart_cursor = [            # valid LVGL8.2
 lv_chart_cursor = ctypes.structure(lv_chart_cursor, "lv_chart_cursor")
 
 lv_chart_tick_dsc = [            # valid LVGL8.2
-    [lv_coord, "major_len"],
-    [lv_coord, "minor_len"],
-    [lv_coord, "draw_size"],
+    [lv_coord_t, "major_len"],
+    [lv_coord_t, "minor_len"],
+    [lv_coord_t, "draw_size"],
     [uint16_t_15, "minor_cnt"],
     [uint16_t_15, "major_cnt"],
     [uint8_t_1, "label_en"],
@@ -434,8 +461,8 @@ lv_obj_class = [            # valid LVGL8.2
     [destructor_cb, "destructor_cb"],
     [ptr, "user_data"],
     [event_cb, "event_cb"],
-    [lv_coord, "width_def"],
-    [lv_coord, "height_def"],
+    [lv_coord_t, "width_def"],
+    [lv_coord_t, "height_def"],
     [uint8_t_2, "editable"],
     [uint8_t_2, "group_def"],
     [uint16_t_16, "instance_size"],
@@ -548,7 +575,7 @@ lv_timer = ctypes.structure(lv_timer, "lv_timer")
 # lv_anim = ctypes.structure(lv_anim, "lv_anim")
 
 #######################################################################
-# lv_draw_ctc
+# lv_draw_ctx
 lv_draw_ctx = [            # valid LVGL8.2
     [ptr, "buf"],
     [lv_area, "buf_area"],
@@ -570,10 +597,10 @@ lv_draw_ctx = ctypes.structure(lv_draw_ctx, "lv_draw_ctx")
 # Special structure used to calibrate resistive touchscreens
 #######################################################################
 lv_ts_calibration = [            # valid LVGL8
-    [lv_coord, "raw_x"],
-    [lv_coord, "raw_y"],
-    [lv_coord, "x"],
-    [lv_coord, "y"],
+    [lv_coord_t, "raw_x"],
+    [lv_coord_t, "raw_y"],
+    [lv_coord_t, "x"],
+    [lv_coord_t, "y"],
     [int32_t, "state"],
 ]
 lv_ts_calibration = ctypes.structure(lv_ts_calibration, "lv_ts_calibration")

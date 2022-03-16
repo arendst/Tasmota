@@ -71,7 +71,7 @@ class be_class_ccronexpr (scope: global, name: ccronexpr) {
   .p, var       // pointer to cron_expr*
 
   init, ctype_func(ccronexpr_init)
-  deinit, ctype_func(ccronexpr_init)
+  // deinit, ctype_func(ccronexpr_deinit)
 
   next, ctype_func(ccronexpr_next)
   time_reached, static_ctype_func(ccronexpr_time_reached)

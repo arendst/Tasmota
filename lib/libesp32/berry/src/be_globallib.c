@@ -13,6 +13,7 @@
 #include "be_debug.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_var.h"
 #include <string.h>
 
 #if BE_USE_GLOBAL_MODULE

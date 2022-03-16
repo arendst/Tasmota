@@ -1902,6 +1902,7 @@ char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, uint8_t*
   return result;
 }
 
+#ifdef USE_WEBSERVER
 const char HTTP_SSPM_VOLTAGE[] PROGMEM =
   "{s}" D_VOLTAGE "</th>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
 const char HTTP_SSPM_CURRENT[] PROGMEM =
@@ -1916,6 +1917,7 @@ const char HTTP_SSPM_ENERGY[] PROGMEM =
   "{s}" D_ENERGY_TODAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "</th>%s" D_UNIT_KILOWATTHOUR "{e}";
+#endif  // USE_WEBSERVER
 
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
@@ -1962,6 +1964,7 @@ void SSPMEnergyShow(bool json) {
       ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.current_resolution, &Sspm->current[i >>2][i &3]);
     }
     ResponseAppend_P(PSTR("]}"));
+#ifdef USE_WEBSERVER
   } else {
     uint8_t relay[SSPM_MAX_MODULES * 4];
     uint8_t indirect[SSPM_MAX_MODULES * 4];
@@ -2008,6 +2011,7 @@ void SSPMEnergyShow(bool json) {
                                           SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
       WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
+#endif  // USE_WEBSERVER
   }
 }
 

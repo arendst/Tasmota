@@ -52,14 +52,15 @@ struct COUNTER {
 struct AC_ZERO_CROSS_DIMMER {
   bool startReSync = false;                      // set to TRUE if zero-cross event occurs
   bool startMeasurePhase[MAX_COUNTERS] ;         // set to TRUE if channel is ON and zero-cross occurs to initiate phase measure on channel
+  bool pwm_defined[MAX_COUNTERS];                // check if all GPIO are set and zerocross enabled. Then ADD dimmer.
   bool PWM_ON[MAX_COUNTERS] ;                    // internal ON/OFF of the channel
   uint32_t current_cycle_ClockCycles = 0;        // amount of clock cycles between two zero-cross events.
   uint32_t currentPWMCycleCount[MAX_COUNTERS] ;  // clock cycle time of PWM channel, required to measure actual phase. [3] is phase of zero-cross
   int16_t  currentShiftClockCycle[MAX_COUNTERS]; // dynamic phase correction per channel in clock cycles
   uint32_t tobe_cycle_timeClockCycles = 0;       // clock cycles between zero-cross events. Depend on main frequency and CPU speed
-  uint32_t lastCycleCount = 0;
-  uint32_t currentSteps = 100;
-  uint32_t high;
+  uint32_t lastCycleCount = 0;                   // Last value of GetCycleCount during zero-cross sychronisation
+  uint32_t currentSteps = 100;                   // dynamic value of zero-crosses between two sychronisation intervalls (default=20 == 200ms at 100Hz)
+  uint32_t high;                                 // cycle counts for PWM high vaule. needs long enough (4µs) to secure fire TRIAC
 } ac_zero_cross_dimmer;
 #endif //USE_AC_ZERO_CROSS_DIMMER
 
@@ -93,14 +94,14 @@ void IRAM_ATTR CounterIsrArg(void *arg) {
       // restart initiated by setting Counter.startReSync = true;
 #ifdef USE_AC_ZERO_CROSS_DIMMER
       // if zero-cross events occur ond channel is on. phase on PWM must be measured
-      if ( Settings->flag4.zerocross_dimmer && ac_zero_cross_dimmer.startMeasurePhase[index] == true ) {
+      if ( ac_zero_cross_dimmer.startMeasurePhase[index] == true ) {
         ac_zero_cross_dimmer.currentPWMCycleCount[index] = ESP.getCycleCount();
         ac_zero_cross_dimmer.startMeasurePhase[index] = false;
       }
-      // if zero-cross event occurs (200ms window, 5-times a second) and device is online for 10sec
-      if (index == 3 && RtcSettings.pulse_counter[index]%(Settings->pwm_frequency / 5) == 0 && PinUsed(GPIO_CNTR1, index) && Settings->flag4.zerocross_dimmer && millis() > 10000) {
+      // if zero-cross event occurs (200ms window, 5-times a second) and device is online for >10sec
+      if (index == 3 && RtcSettings.pulse_counter[index]%(Settings->pwm_frequency / 5) == 0 && ac_zero_cross_dimmer.pwm_defined[index] && millis() > 10000) {
         ac_zero_cross_dimmer.currentPWMCycleCount[index] = ESP.getCycleCount();
-        // 1000µs to ensure not to fire on the next sinus wave
+
         if (ac_zero_cross_dimmer.lastCycleCount > 0) {
           // start phase measure on PWM channels and initiate phase sync with zero-cross.
           ac_zero_cross_dimmer.startReSync = true;
@@ -164,11 +165,22 @@ void CounterInit(void)
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
+      if (Settings->flag4.zerocross_dimmer) {
+        ac_zero_cross_dimmer.current_cycle_ClockCycles = ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
+        // short fire on PWM to ensure not to hit next sinus curve but trigger the TRIAC. 0.78% of duty cycle (10ms) ~4µs
+        ac_zero_cross_dimmer.high = ac_zero_cross_dimmer.current_cycle_ClockCycles / 256;
 
-      ac_zero_cross_dimmer.current_cycle_ClockCycles = ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
-      // short fire on PWM to ensure not to hit next sinus curve but trigger the TRIAC. 0.78% of duty cycle (10ms) ~4µs
-      ac_zero_cross_dimmer.high = ac_zero_cross_dimmer.current_cycle_ClockCycles / 256;
+        // Support for dimmer 1-3. Counter4 reseverd for zero-cross signal
+        if ((i < MAX_COUNTERS-1 && PinUsed(GPIO_PWM1, i)) || ( i == MAX_COUNTERS-1) ) {
+          ac_zero_cross_dimmer.pwm_defined[i] = true;
+          if (i == 3) {
+            AddLog(LOG_LEVEL_INFO, PSTR("ZeroCross initialized"));
+          } else {
+            AddLog(LOG_LEVEL_INFO, PSTR("Dimmer: [%d] initialized. READY. Dimmer %d"), i+1, Light.fade_running ? Light.fade_cur_10[i] : Light.fade_start_10[i]);
+          }
 
+        }
+      }
 #endif //USE_AC_ZERO_CROSS_DIMMER
       Counter.any_counter = true;
       pinMode(Pin(GPIO_CNTR1, i), bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
@@ -255,7 +267,7 @@ void SyncACDimmer(void)
     // currently only support one AC Dimmer PWM. Plan to support up to 4 Dimmer on same Phase.
     for (uint32_t i = 0; i < MAX_COUNTERS-1; i++) {
       if (Light.fade_start_10[i] == 0 && Light.fade_cur_10[i] == 0 && ac_zero_cross_dimmer.PWM_ON[i]==false ) continue;
-      if (PinUsed(GPIO_PWM1, i) && PinUsed(GPIO_CNTR1, i) && (ac_zero_cross_dimmer.startMeasurePhase[i] == 0 || ac_zero_cross_dimmer.PWM_ON[i] == false ) )
+      if (ac_zero_cross_dimmer.pwm_defined[i] && (ac_zero_cross_dimmer.startMeasurePhase[i] == 0 || ac_zero_cross_dimmer.PWM_ON[i] == false ) )
       {
         uint32_t phaseStart_ActualClockCycles; // As-Is positon of PWM after Zero Cross
         uint32_t phaseStart_ToBeClockCycles;   // To be position after zero-cross to fire PWM start
@@ -293,6 +305,7 @@ void SyncACDimmer(void)
           ac_zero_cross_dimmer.PWM_ON[i]=true;
           pinMode(Pin(GPIO_PWM1, i), OUTPUT);
         } else {
+          // currentShiftClockCycle is an I-Controller (not PID) to realign the phase. grace time are 5 clock cycles
           ac_zero_cross_dimmer.currentShiftClockCycle[i] += phaseShift_ClockCycles > 5 ? 1 : (phaseShift_ClockCycles < -5 ? -1 : 0);
           ac_zero_cross_dimmer.current_cycle_ClockCycles += ac_zero_cross_dimmer.currentShiftClockCycle[i]+phaseShift_ClockCycles;
         }
@@ -301,6 +314,7 @@ void SyncACDimmer(void)
           startWaveformClockCycles(Pin(GPIO_PWM1, i), ac_zero_cross_dimmer.high, ac_zero_cross_dimmer.current_cycle_ClockCycles - ac_zero_cross_dimmer.high, 0, -1, 0, true);
 #endif  // ESP8266
 #ifdef ESP32
+          // Under investigation. Still not working
           double esp32freq =  1000000.0 / clockCyclesToMicroseconds(ac_zero_cross_dimmer.current_cycle_ClockCycles);
           ledcSetup(i, esp32freq, 10);
           ledcAttachPin(Pin(GPIO_PWM1, i), i);

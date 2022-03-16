@@ -121,6 +121,8 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
 }
 
 BERRY_API void* be_move_to_aligned(bvm *vm, void *ptr, size_t size) {
+    (void)vm;
+    (void)size;
 #if BE_USE_MEM_ALIGNED
     if (size <= POOL32_SIZE) {
         return ptr;     /* if in memory pool, don't move it so be_free() will continue to work */
@@ -303,7 +305,6 @@ BERRY_API void be_gc_free_memory_pools(bvm *vm) {
         gc16_t* pool_to_freed = pool16;
         pool16 = pool16->next;
         be_os_free(pool_to_freed);
-        pool16 = pool16->next;
     }
     vm->gc.pool16 = NULL;
 
@@ -312,12 +313,12 @@ BERRY_API void be_gc_free_memory_pools(bvm *vm) {
         gc32_t* pool_to_freed = pool32;
         pool32 = pool32->next;
         be_os_free(pool_to_freed);
-        pool32 = pool32->next;
     }
     vm->gc.pool32 = NULL;
 }
 
 /* https://github.com/hcs0/Hackers-Delight/blob/master/pop.c.txt - count number of 1-bits */
+static int pop0(uint32_t n) __attribute__((unused));
 static int pop0(uint32_t n) {
     n = (n & 0x55555555u) + ((n >> 1) & 0x55555555u);
     n = (n & 0x33333333u) + ((n >> 2) & 0x33333333u);

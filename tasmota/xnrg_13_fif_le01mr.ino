@@ -243,8 +243,8 @@ const char HTTP_ENERGY_LE01MR[] PROGMEM =
   ;
 #endif  // USE_WEBSERVER
 
-void FifLEShow(bool json)
-{
+/*
+void FifLEShow(bool json) {
   char total_reactive_chr[FLOATSZ];
   dtostrfd(Le01mr.total_reactive, Settings->flag2.energy_resolution, total_reactive_chr);
   char total_active_chr[FLOATSZ];
@@ -256,6 +256,24 @@ void FifLEShow(bool json)
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_ENERGY_LE01MR, total_active_chr, total_reactive_chr);
+#endif  // USE_WEBSERVER
+  }
+}
+*/
+
+void FifLEShow(bool json) {
+  char value_chr[TOPSZ];
+  char value2_chr[TOPSZ];
+
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s"),
+      EnergyFormat(value_chr, &Le01mr.total_active, Settings->flag2.energy_resolution),
+      EnergyFormat(value2_chr, &Le01mr.total_reactive, Settings->flag2.energy_resolution));
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_ENERGY_LE01MR, WebEnergyFormat(value_chr, &Le01mr.total_active, Settings->flag2.energy_resolution),
+                                         WebEnergyFormat(value2_chr, &Le01mr.total_reactive, Settings->flag2.energy_resolution));
+
 #endif  // USE_WEBSERVER
   }
 }
@@ -276,9 +294,15 @@ bool Xnrg13(uint8_t function)
       FifLEShow(1);
       break;
 #ifdef USE_WEBSERVER
+#ifdef USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_COL_SENSOR:
+      FifLEShow(0);
+      break;
+#else  // not USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_SENSOR:
       FifLEShow(0);
       break;
+#endif  // USE_ENERGY_COLUMN_GUI
 #endif  // USE_WEBSERVER
     case FUNC_ENERGY_RESET:
       FifLEReset();

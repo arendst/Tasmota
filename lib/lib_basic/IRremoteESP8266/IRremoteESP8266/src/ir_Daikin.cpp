@@ -529,7 +529,7 @@ stdAc::fanspeed_t IRDaikinESP::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikinESP::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -1199,7 +1199,7 @@ stdAc::swingh_t IRDaikin2::toCommonSwingH(const uint8_t setting) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin2::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN2;
   result.model = -1;  // No models used.
   result.power = getPower();
@@ -1621,7 +1621,7 @@ bool IRDaikin216::getPowerful(void) const { return _.Powerful; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin216::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN216;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -1971,7 +1971,7 @@ stdAc::swingv_t IRDaikin160::toCommonSwingV(const uint8_t setting) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin160::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN160;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -2362,7 +2362,7 @@ stdAc::fanspeed_t IRDaikin176::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin176::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN176;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -2883,7 +2883,7 @@ String IRDaikin128::toString(void) const {
 /// @param[in] prev Ptr to a previous state.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin128::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::DAIKIN128;
   result.model = -1;  // No models used.
@@ -3285,7 +3285,7 @@ bool IRDaikin152::getComfort(void) const { return _.Comfort; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin152::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::DAIKIN152;
   result.model = -1;  // No models used.
   result.power = _.Power;
@@ -3710,7 +3710,7 @@ String IRDaikin64::toString(void) const {
 /// @param[in] prev Ptr to a previous state.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRDaikin64::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   if (prev != NULL) result = *prev;
   result.protocol = decode_type_t::DAIKIN64;
   result.model = -1;  // No models used.

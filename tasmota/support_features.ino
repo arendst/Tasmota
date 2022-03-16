@@ -794,12 +794,15 @@ void ResponseAppendFeatures(void)
 #if defined(USE_ENERGY_SENSOR) && defined(USE_BL6523)
     feature8 |= 0x00400000;  // xnrg_22_bl6523.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DS3502)
-    feature8 |= 0x00800000;// xdrv_65_ds3502.ino
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7880)
+    feature8 |= 0x00800000;  // xnrg_23_ade7880.ino
 #endif
-
-//    feature8 |= 0x01000000;
-//    feature8 |= 0x02000000;
+#if defined(USE_I2C) && defined(USE_PCF85363)
+    feature8 |= 0x01000000;  // xsns_96_pcf85393.ino
+#endif
+#if defined(USE_I2C) && defined(USE_DS3502)
+    feature8 |= 0x02000000;// xdrv_65_ds3502.ino
+#endif
 //    feature8 |= 0x04000000;
 //    feature8 |= 0x08000000;
 

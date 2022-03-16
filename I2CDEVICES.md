@@ -99,4 +99,5 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   63  | USE_HM330X          | xsns_93 | HM330X   | 0x40        | Particule sensor
   64  | USE_HDC2010         | xsns_94 | HDC2010  | 0x40        | Temperature and Humidity sensor
   65  | USE_ADE7880         | xnrg_23 | ADE7880  | 0x38        | Energy monitor
-  65  | USE_DS3502          | xdrv_65 | DS3502   | 0x28 - 0x2B | Digital Potentiometer  
+  66  | USE_PCF85363        | xsns_99 | PCF85363 | 0x51        | Real time clock
+  65  | USE_DS3502          | xdrv_65 | DS3502   | 0x28 - 0x2B | Digital Potentiometer 

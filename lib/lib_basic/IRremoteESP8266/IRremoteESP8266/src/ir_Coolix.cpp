@@ -32,7 +32,7 @@ const uint16_t kCoolixHdrSpaceTicks = 16;
 const uint16_t kCoolixHdrSpace = kCoolixHdrSpaceTicks * kCoolixTick;  // 4416us
 const uint16_t kCoolixMinGapTicks = kCoolixHdrMarkTicks + kCoolixZeroSpaceTicks;
 const uint16_t kCoolixMinGap = kCoolixMinGapTicks * kCoolixTick;  // 5244us
-const uint8_t  kCoolix48ExtraTolerance = 5;  // Percent
+const uint8_t  kCoolixExtraTolerance = 5;  // Percent
 
 using irutils::addBoolToString;
 using irutils::addIntToString;
@@ -496,7 +496,7 @@ stdAc::fanspeed_t IRCoolixAC::toCommonFanSpeed(const uint8_t speed) {
 /// @param[in] prev Ptr to the previous state if required.
 /// @return A stdAc::state_t state.
 stdAc::state_t IRCoolixAC::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) {
     result = *prev;
@@ -648,41 +648,39 @@ bool IRrecv::decodeCOOLIX(decode_results *results, uint16_t offset,
     return false;  // We can't possibly capture a Coolix packet that big.
 
   // Header
-  if (!matchMark(results->rawbuf[offset], kCoolixHdrMark)) return false;
-  // Calculate how long the common tick time is based on the header mark.
-  uint32_t m_tick = results->rawbuf[offset++] * kRawTick / kCoolixHdrMarkTicks;
-  if (!matchSpace(results->rawbuf[offset], kCoolixHdrSpace)) return false;
-  // Calculate how long the common tick time is based on the header space.
-  uint32_t s_tick = results->rawbuf[offset++] * kRawTick / kCoolixHdrSpaceTicks;
+  if (!matchMark(results->rawbuf[offset++], kCoolixHdrMark)) return false;
+  if (!matchSpace(results->rawbuf[offset++], kCoolixHdrSpace)) return false;
 
   // Data
   // Twice as many bits as there are normal plus inverted bits.
-  for (uint16_t i = 0; i < nbits * 2; i++, offset++) {
-    bool flip = (i / 8) % 2;
-    if (!matchMark(results->rawbuf[offset++], kCoolixBitMarkTicks * m_tick))
-      return false;
-    if (matchSpace(results->rawbuf[offset], kCoolixOneSpaceTicks * s_tick)) {
-      if (flip)
-        inverted = (inverted << 1) | 1;
-      else
-        data = (data << 1) | 1;
-    } else if (matchSpace(results->rawbuf[offset],
-                          kCoolixZeroSpaceTicks * s_tick)) {
-      if (flip)
-        inverted <<= 1;
-      else
-        data <<= 1;
+  for (uint16_t i = 0; i < nbits * 2; i += 8) {
+    const bool flip = (i / 8) % 2;
+    uint64_t result = 0;
+    // Read the next byte of data.
+    const uint16_t used = matchGeneric(results->rawbuf + offset, &result,
+                                       results->rawlen - offset, 8,
+                                       0, 0,  // No Header
+                                       kCoolixBitMark, kCoolixOneSpace,  // Data
+                                       kCoolixBitMark, kCoolixZeroSpace,
+                                       0, 0,  // No Footer
+                                       false,
+                                       _tolerance + kCoolixExtraTolerance,
+                                       0, true);
+    if (!used) return false;  // Didn't match a bytes worth of data.
+    offset += used;
+    if (flip) {  // The inverted byte.
+      inverted <<= 8;
+      inverted |= result;
     } else {
-      return false;
+      data <<= 8;
+      data |= result;
     }
   }
 
   // Footer
-  if (!matchMark(results->rawbuf[offset++], kCoolixBitMarkTicks * m_tick))
-    return false;
+  if (!matchMark(results->rawbuf[offset++], kCoolixBitMark)) return false;
   if (offset < results->rawlen &&
-      !matchAtLeast(results->rawbuf[offset], kCoolixMinGapTicks * s_tick))
-    return false;
+      !matchAtLeast(results->rawbuf[offset], kCoolixMinGap)) return false;
 
   // Compliance
   uint64_t orig = data;  // Save a copy of the data.
@@ -744,7 +742,7 @@ bool IRrecv::decodeCoolix48(decode_results *results, uint16_t offset,
                     kCoolixBitMark, kCoolixOneSpace,
                     kCoolixBitMark, kCoolixZeroSpace,
                     kCoolixBitMark, kCoolixMinGap,
-                    true, _tolerance + kCoolix48ExtraTolerance, 0, true))
+                    true, _tolerance + kCoolixExtraTolerance, 0, true))
     return false;
 
   // Success

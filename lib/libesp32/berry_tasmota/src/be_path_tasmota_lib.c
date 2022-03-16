@@ -59,12 +59,27 @@ static int m_path_remove(bvm *vm)
     be_return(vm);
 }
 
+extern int be_format_fs(void);
+static int m_path_format(bvm *vm)
+{
+    const char *path = NULL;
+    if (be_top(vm) >= 1 && be_isbool(vm, 1)) {
+        if (be_tobool(vm, 1)) {
+            be_pushbool(vm, be_format_fs());
+            be_return(vm);
+        }
+    }
+    be_pushbool(vm, bfalse);
+    be_return(vm);
+}
+
 /* @const_object_info_begin
 module path (scope: global, file: tasmota_path) {
     exists, func(m_path_exists)
     last_modified, func(m_path_last_modified)
     listdir, func(m_path_listdir)
     remove, func(m_path_remove)
+    format, func(m_path_format)
 }
 @const_object_info_end */
 #include "be_fixed_tasmota_path.h"

@@ -13,6 +13,7 @@
 //   Brand: Subtropic,  Model: YKR-H/102E remote
 //   Brand: Centek,  Model: SCT-65Q09 A/C
 //   Brand: Centek,  Model: YKR-P/002E remote
+//   Brand: AEG,  Model: Chillflex Pro AXP26U338CW A/C
 
 #ifndef IR_ELECTRA_H_
 #define IR_ELECTRA_H_

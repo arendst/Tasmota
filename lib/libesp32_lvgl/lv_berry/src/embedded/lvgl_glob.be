@@ -8,6 +8,7 @@ class LVGL_glob
   var cb_event_closure      # mapping for event closures per LVGL native pointer (int)
   var event_cb              # native callback for lv.lv_event
   var timer_cb              # native callback for lv.lv_timer
+  var event                 # keep aroud the current lv_event to avoid repeated allocation
 
   #- below are native callbacks mapped to a closure to a method of this instance -#
   var null_cb               # cb called if type is not supported
@@ -41,16 +42,19 @@ class LVGL_glob
     end
   end
 
-  def lvgl_event_dispatch(event_ptr)
+  def lvgl_event_dispatch(event_ptr_i)
     import introspect
+    var event_ptr = introspect.toptr(event_ptr_i)
 
-    var event = lv.lv_event(introspect.toptr(event_ptr))
+    if self.event   self.event._change_buffer(event_ptr)
+    else            self.event = lv.lv_event(event_ptr)
+    end
 
-    var target = event.target
+    var target = self.event.target
     var f = self.cb_event_closure[target]
     var obj = self.get_object_from_ptr(target)
     #print('>> lvgl_event_dispatch', f, obj, event)
-    f(obj, event)
+    f(obj, self.event)
   end
 
   def lvgl_timer_dispatch(timer_int)

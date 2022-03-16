@@ -109,6 +109,7 @@
 #define USE_SCD30                              // [I2cDriver29] Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 //#define USE_SCD40                              // [I2cDriver62] Enable Sensiron SCd40 CO2 sensor (I2C address 0x62) (+3k5 code)
 //#define USE_SPS30                              // [I2cDriver30] Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
+//#define USE_ADE7880                            // [I2cDriver65] Enable ADE7880 Energy monitor as used on Shelly 3EM (I2C address 0x38) (+3k8)
 #define USE_ADE7953                            // [I2cDriver7] Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 #define USE_VL53L0X                            // [I2cDriver31] Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 //#define USE_VL53L1X                            // [I2cDriver54] Enable VL53L1X time of flight sensor (I2C address 0x29) using Pololu VL53L1X library (+2k9 code)
@@ -149,6 +150,7 @@
 //#define USE_AM2320                             // [I2cDriver60] Enable AM2320 temperature and humidity Sensor (I2C address 0x5C) (+1k code)
 //#define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
 //#define USE_HDC2010                            // [I2cDriver64] Enable HDC2010 temperature/humidity sensor (I2C address 0x40) (+1k5 code)
+//#define USE_PCF85363                           // [I2cDriver66] Enable PCF85363 RTC (I2C address 0x51) (+0k7 code)
 //#define USE_DS3502                             // [I2cDriver65] Enable DS3502 digital potentiometer. (I2C address 0x28-0x2B) (+1k code)
 //  #define USE_DS3502_ADDR 0x28                 // Enable DS3502 I2C Address to use (Must be within range 0x28 through 0x2B - set according to your wired setup)
 
@@ -583,6 +585,7 @@
 #undef USE_PROJECTOR_CTRL                        // Disable support for LCD/DLP Projector serial control interface
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors
+#undef USE_ADE7880                               // Disable ADE7880 Energy monitor as used on Shelly 3EM (I2C address 0x38) (+3k8)
 #undef USE_ADE7953                               // Disable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 #undef USE_PZEM004T                              // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                               // Disable PZEM014,016 Energy monitor
