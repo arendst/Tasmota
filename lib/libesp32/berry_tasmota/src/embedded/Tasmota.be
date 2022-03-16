@@ -343,6 +343,7 @@ class Tasmota
         if crons[i].id == id
           return crons[i].trig
         end
+        i += 1
       end
     end
   end

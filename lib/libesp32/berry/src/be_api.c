@@ -652,10 +652,7 @@ static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
         bmodule *module = var_toobj(o);
         type = be_module_attr(vm, module, be_newstr(vm, k), top);
     }
-    if (type == BE_NONE) {
-        type = BE_NIL;
-    }
-    return type;
+    return type == BE_NONE ? BE_NIL : type;
 }
 
 BERRY_API bbool be_getmember(bvm *vm, int index, const char *k)

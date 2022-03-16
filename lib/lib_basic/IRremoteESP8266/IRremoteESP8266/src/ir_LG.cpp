@@ -22,6 +22,7 @@ using irutils::addModeToString;
 using irutils::addModelToString;
 using irutils::addFanToString;
 using irutils::addTempToString;
+using irutils::addToggleToString;
 using irutils::addSwingVToString;
 using irutils::addIntToString;
 
@@ -255,6 +256,11 @@ void IRLgAc::send(const uint16_t repeat) {
     _irsend.send(_protocol, getRaw(), kLgBits, repeat);
     // Some models have extra/special settings & controls
     switch (getModel()) {
+      case lg_ac_remote_model_t::LG6711A20083V:
+        // Only send the swing setting if we need to.
+        if (_swingv != _swingv_prev)
+          _irsend.send(_protocol, _swingv, kLgBits, repeat);
+        break;
       case lg_ac_remote_model_t::AKB74955603:
         // Only send the swing setting if we need to.
         if (_swingv != _swingv_prev)
@@ -309,6 +315,7 @@ void IRLgAc::setModel(const lg_ac_remote_model_t model) {
       _protocol = decode_type_t::LG2;
       break;
     case lg_ac_remote_model_t::GE6711AR2853M:
+    case lg_ac_remote_model_t::LG6711A20083V:
       _protocol = decode_type_t::LG;
       break;
     default:
@@ -319,24 +326,25 @@ void IRLgAc::setModel(const lg_ac_remote_model_t model) {
 
 /// Get the model of the A/C.
 /// @return The enum of the compatible model.
-lg_ac_remote_model_t IRLgAc::getModel(void) const {
-  return _model;
-}
+lg_ac_remote_model_t IRLgAc::getModel(void) const { return _model; }
 
 /// Check if the stored code must belong to a AKB74955603 model.
 /// @return true, if it is AKB74955603 message. Otherwise, false.
 /// @note Internal use only.
 bool IRLgAc::_isAKB74955603(void) const {
   return ((_.raw & kLgAcAKB74955603DetectionMask) && _isNormal()) ||
-      isSwingV() || isLightToggle();
+      (isSwingV() && !isSwingVToggle()) || isLightToggle();
 }
 
 /// Check if the stored code must belong to a AKB73757604 model.
 /// @return true, if it is AKB73757604 message. Otherwise, false.
 /// @note Internal use only.
-bool IRLgAc::_isAKB73757604(void) const {
-  return isSwingH() || isVaneSwingV();
-}
+bool IRLgAc::_isAKB73757604(void) const { return isSwingH() || isVaneSwingV(); }
+
+/// Check if the stored code must belong to a LG6711A20083V model.
+/// @return true, if it is LG6711A20083V message. Otherwise, false.
+/// @note Internal use only.
+bool IRLgAc::_isLG6711A20083V(void) const { return isSwingVToggle(); }
 
 /// Get a copy of the internal state/code for this protocol.
 /// @return The code for this protocol based on the current internal state.
@@ -353,7 +361,10 @@ void IRLgAc::setRaw(const uint32_t new_code, const decode_type_t protocol) {
   // Set the default model for this protocol, if the protocol is supplied.
   switch (protocol) {
     case decode_type_t::LG:
-      setModel(lg_ac_remote_model_t::GE6711AR2853M);
+      if (isSwingVToggle())  // This model uses a swingv toggle message.
+        setModel(lg_ac_remote_model_t::LG6711A20083V);
+      else  // Assume others are a different model.
+        setModel(lg_ac_remote_model_t::GE6711AR2853M);
       break;
     case decode_type_t::LG2:
       setModel(lg_ac_remote_model_t::AKB75215403);
@@ -521,18 +532,22 @@ void IRLgAc::setMode(const uint8_t mode) {
   }
 }
 
+/// Check if the stored code is a SwingV Toggle message.
+/// @return true, if it is. Otherwise, false.
+bool IRLgAc::isSwingVToggle(void) const { return _.raw == kLgAcSwingVToggle; }
+
 /// Check if the stored code is a Swing message.
 /// @return true, if it is. Otherwise, false.
 bool IRLgAc::isSwing(void) const {
-  return (_.raw >> 12) == kLgAcSwingSignature;
+  return ((_.raw >> 12) == kLgAcSwingSignature) || isSwingVToggle();
 }
 
 /// Check if the stored code is a non-vane SwingV message.
 /// @return true, if it is. Otherwise, false.
 bool IRLgAc::isSwingV(void) const {
   const uint32_t code = _.raw >> kLgAcChecksumSize;
-  return code >= (kLgAcSwingVLowest >> kLgAcChecksumSize) &&
-      code < (kLgAcSwingHAuto >> kLgAcChecksumSize);
+  return (code >= (kLgAcSwingVLowest >> kLgAcChecksumSize) &&
+          code < (kLgAcSwingHAuto >> kLgAcChecksumSize)) || isSwingVToggle();
 }
 
 /// Check if the stored code is a SwingH message.
@@ -562,7 +577,7 @@ bool IRLgAc::isVaneSwingV(void) const {
 /// @param[in] position The position/mode to set the vanes to.
 void IRLgAc::setSwingV(const uint32_t position) {
   // Is it a valid position code?
-  if (position == kLgAcSwingVOff ||
+  if (position == kLgAcSwingVOff || position == kLgAcSwingVToggle ||
       toCommonSwingV(position) != stdAc::swingv_t::kOff) {
     if (position <= 0xFF) {  // It's a short code, convert it.
       _swingv = (kLgAcSwingSignature << 8 | position) << kLgAcChecksumSize;
@@ -703,6 +718,7 @@ stdAc::swingv_t IRLgAc::toCommonSwingV(const uint32_t code) {
     case kLgAcSwingVLow:     return stdAc::swingv_t::kLow;
     case kLgAcSwingVLowest_Short:
     case kLgAcSwingVLowest:  return stdAc::swingv_t::kLowest;
+    case kLgAcSwingVToggle:
     case kLgAcSwingVSwing_Short:
     case kLgAcSwingVSwing:   return stdAc::swingv_t::kAuto;
     default:                 return stdAc::swingv_t::kOff;
@@ -740,7 +756,7 @@ uint8_t IRLgAc::convertVaneSwingV(const stdAc::swingv_t swingv) {
 /// @param[in] prev Ptr to the previous state if required.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRLgAc::toCommon(const stdAc::state_t *prev) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   // Start with the previous state if given it.
   if (prev != NULL) {
     result = *prev;
@@ -752,13 +768,18 @@ stdAc::state_t IRLgAc::toCommon(const stdAc::state_t *prev) const {
     result.swingv = toCommonSwingV(getSwingV());
   }
   result.protocol = _protocol;
+  if (isLightToggle()) {
+    result.light = !result.light;
+    return result;
+  } else {
+    result.light = _light;
+  }
   result.model = getModel();
   result.power = getPower();
   result.mode = toCommonMode(_.Mode);
   result.celsius = true;
   result.degrees = getTemp();
   result.fanspeed = toCommonFanSpeed(_.Fan);
-  result.light = isLightToggle() ? !result.light : _light;
   if (isSwingV()) result.swingv = toCommonSwingV(getSwingV());
   if (isVaneSwingV())
     result.swingv = toCommonVaneSwingV(VANESWINGVPOS(getVaneCode(_.raw)));
@@ -800,18 +821,21 @@ String IRLgAc::toString(void) const {
     } else if (isSwingH()) {
       result += addBoolToString(_swingh, kSwingHStr);
     } else if (isSwingV()) {
-      result += addSwingVToString((uint8_t)(_swingv >> kLgAcChecksumSize),
-                                  0,  // No Auto, See "swing". Unused
-                                  kLgAcSwingVHighest_Short,
-                                  kLgAcSwingVHigh_Short,
-                                  kLgAcSwingVUpperMiddle_Short,
-                                  kLgAcSwingVMiddle_Short,
-                                  0,  // Unused
-                                  kLgAcSwingVLow_Short,
-                                  kLgAcSwingVLowest_Short,
-                                  kLgAcSwingVOff_Short,
-                                  kLgAcSwingVSwing_Short,
-                                  0, 0);
+      if (isSwingVToggle())
+        result += addToggleToString(isSwingVToggle(), kSwingVStr);
+      else
+        result += addSwingVToString((uint8_t)(_swingv >> kLgAcChecksumSize),
+                                    0,  // No Auto, See "swing". Unused
+                                    kLgAcSwingVHighest_Short,
+                                    kLgAcSwingVHigh_Short,
+                                    kLgAcSwingVUpperMiddle_Short,
+                                    kLgAcSwingVMiddle_Short,
+                                    0,  // Unused
+                                    kLgAcSwingVLow_Short,
+                                    kLgAcSwingVLowest_Short,
+                                    kLgAcSwingVOff_Short,
+                                    kLgAcSwingVSwing_Short,
+                                    0, 0);
     } else if (isVaneSwingV()) {
       const uint8_t vane = getVaneCode(_.raw) / kLgAcVaneSwingVSize;
       result += addIntToString(vane, kVaneStr);

@@ -615,7 +615,7 @@ const be_ntv_func_def_t lv_chart_func[] = {
   { "set_range", { (const void*) &lv_chart_set_range, "", "(lv.lv_obj)iii" } },
   { "set_series_color", { (const void*) &lv_chart_set_series_color, "", "(lv.lv_obj)(lv.lv_chart_series)(lv.lv_color)" } },
   { "set_type", { (const void*) &lv_chart_set_type, "", "(lv.lv_obj)i" } },
-  { "set_update_mode", { (const void*) &lv_chart_set_update_mode, "", "(lv.lv_obj)(lv.lv_chart_update_mode)" } },
+  { "set_update_mode", { (const void*) &lv_chart_set_update_mode, "", "(lv.lv_obj)i" } },
   { "set_value_by_id", { (const void*) &lv_chart_set_value_by_id, "", "(lv.lv_obj)(lv.lv_chart_series)ii" } },
   { "set_value_by_id2", { (const void*) &lv_chart_set_value_by_id2, "", "(lv.lv_obj)(lv.lv_chart_series)iii" } },
   { "set_x_start_point", { (const void*) &lv_chart_set_x_start_point, "", "(lv.lv_obj)(lv.lv_chart_series)i" } },

@@ -21,7 +21,7 @@ bytecode_file:  -- little endian
 
 header: 8
     magic_number: 3 -- 0xbecdfe (berry code file)
-    version: 2      -- update with file structure definition
+    version: 1      -- 0x03 update with file structure definition
     integer_size: .1
     float_size: .1
     -- reserved space

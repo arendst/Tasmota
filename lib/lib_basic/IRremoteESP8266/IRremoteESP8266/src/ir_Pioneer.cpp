@@ -9,6 +9,7 @@
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/pull/547
 /// @see https://www.pioneerelectronics.com/PUSA/Support/Home-Entertainment-Custom-Install/IR+Codes/A+V+Receivers
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1220
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1749#issuecomment-1028122645
 
 // Supports:
 //   Brand: Pioneer,  Model: AV Receivers
@@ -74,6 +75,10 @@ void IRsend::sendPioneer(const uint64_t data, const uint16_t nbits,
 ///   and the second the command.
 ///  e.g.
 ///  "A556+AF20" is an Address of 0xA556 & a Command of 0xAF20.
+/// @note If the Address is 0, use it like the following:
+///    `irsend.sendPioneer(irsend.encodePioneer(0, 0xAA1C), 32, 1);` or
+///    `irsend.sendPioneer(irsend.encodePioneer(0xAA1C, 0xAA1C), 64, 0);`
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1749#issuecomment-1028122645
 uint64_t IRsend::encodePioneer(const uint16_t address, const uint16_t command) {
   return (((uint64_t)encodeNEC(address >> 8, address & 0xFF)) << 32) |
          encodeNEC(command >> 8, command & 0xFF);

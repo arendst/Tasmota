@@ -851,19 +851,12 @@ be_local_closure(lv_lv_module_init,   /* name */
 );
 /*******************************************************************/
 
-
-/********************************************************************
-** Solidified module: lv
-********************************************************************/
-be_local_module(lv,
-    "lv",
-    be_nested_map(2,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(lv_lv_module_init_closure) },
-        { be_const_key(member, 0), be_const_func(lv0_member) },
-    }))
-);
-BE_EXPORT_VARIABLE be_define_const_native_module(lv);
-/********************************************************************/
+/* @const_object_info_begin
+module lv (scope: global, file: lv) {
+    init, closure(lv_lv_module_init_closure)
+    member, func(lv0_member)
+}
+@const_object_info_end */
+#include "be_fixed_lv.h"
 
 /********************************************************************/

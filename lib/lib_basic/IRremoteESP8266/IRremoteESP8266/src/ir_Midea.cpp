@@ -42,6 +42,7 @@ using irutils::addIntToString;
 using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addTempToString;
+using irutils::addToggleToString;
 using irutils::minsToString;
 
 #if SEND_MIDEA
@@ -100,10 +101,13 @@ IRMideaAC::IRMideaAC(const uint16_t pin, const bool inverted,
 void IRMideaAC::stateReset(void) {
   // Power On, Mode Auto, Fan Auto, Temp = 25C/77F
   _.remote_state = 0xA1826FFFFF62;
-  _SwingVToggle = false;
+  _CleanToggle = false;
   _EconoToggle = false;
-  _TurboToggle = false;
+  _8CHeatToggle = false;
   _LightToggle = false;
+  _Quiet = _Quiet_prev = false;
+  _SwingVToggle = false;
+  _TurboToggle = false;
 #if KAYSUN_AC
   _SwingVStep = false;
 #endif  // KAYSUN_AC
@@ -135,6 +139,19 @@ void IRMideaAC::send(const uint16_t repeat) {
   if (_LightToggle && !isLightToggle())
     _irsend.sendMidea(kMideaACToggleLight, kMideaBits, repeat);
   _LightToggle = false;
+  if (getMode() <= kMideaACAuto) {  // Only available in Cool, Dry, or Auto mode
+    if (_CleanToggle && !isCleanToggle())
+      _irsend.sendMidea(kMideaACToggleSelfClean, kMideaBits, repeat);
+    _CleanToggle = false;
+  } else if (getMode() == kMideaACHeat) {  // Only available in Heat mode
+    if (_8CHeatToggle && !is8CHeatToggle())
+      _irsend.sendMidea(kMideaACToggle8CHeat, kMideaBits, repeat);
+    _8CHeatToggle = false;
+  }
+  if (_Quiet != _Quiet_prev)
+    _irsend.sendMidea(_Quiet ? kMideaACQuietOn : kMideaACQuietOff,
+                      kMideaBits, repeat);
+  _Quiet_prev = _Quiet;
 }
 #endif  // SEND_MIDEA
 
@@ -410,6 +427,75 @@ bool IRMideaAC::getLightToggle(void) {
   return _LightToggle;
 }
 
+/// Is the current state a Self-Clean toggle message?
+/// @return true, it is. false, it isn't.
+bool IRMideaAC::isCleanToggle(void) const {
+  return _.remote_state == kMideaACToggleSelfClean;
+}
+
+/// Set the A/C to toggle the Self Clean mode for the next send.
+/// @note Only works in Cool, Dry, or Auto modes.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRMideaAC::setCleanToggle(const bool on) {
+  _CleanToggle = on && getMode() <= kMideaACAuto;
+}
+
+// Get the Self-Clean toggle state of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRMideaAC::getCleanToggle(void) {
+  _CleanToggle |= isCleanToggle();
+  return _CleanToggle;
+}
+
+/// Is the current state a 8C Heat (Freeze Protect) toggle message?
+/// @note Only works in Heat mode.
+/// @return true, it is. false, it isn't.
+bool IRMideaAC::is8CHeatToggle(void) const {
+  return _.remote_state == kMideaACToggle8CHeat;
+}
+
+/// Set the A/C to toggle the 8C Heat (Freeze Protect) mode for the next send.
+/// @note Only works in Heat mode.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRMideaAC::set8CHeatToggle(const bool on) {
+  _8CHeatToggle = on && getMode() == kMideaACHeat;
+}
+
+// Get the 8C Heat (Freeze Protect) toggle state of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRMideaAC::get8CHeatToggle(void) {
+  _8CHeatToggle |= is8CHeatToggle();
+  return _8CHeatToggle;
+}
+
+/// Is the current state a Quiet(Silent) message?
+/// @return true, it is. false, it isn't.
+bool IRMideaAC::isQuiet(void) const {
+  return (_.remote_state == kMideaACQuietOff ||
+          _.remote_state == kMideaACQuietOn);
+}
+
+/// Set the Quiet (Silent) mode for the next send.
+/// @param[in] on true, the setting is on. false, the setting is off.
+void IRMideaAC::setQuiet(const bool on) { _Quiet = on; }
+
+/// Set the Quiet (Silent) mode for the next send.
+/// @param[in] on true, the setting is on. false, the setting is off.
+/// @param[in] prev true, previously the setting was on. false, setting was off.
+void IRMideaAC::setQuiet(const bool on, const bool prev) {
+  setQuiet(on);
+  _Quiet_prev = prev;
+}
+
+// Get the Quiet (Silent) mode state of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRMideaAC::getQuiet(void) const {
+  if (isQuiet())
+    return _.remote_state == kMideaACQuietOn;
+  else
+    return _Quiet;
+}
+
 /// Calculate the checksum for a given state.
 /// @param[in] state The value to calc the checksum of.
 /// @return The calculated checksum value.
@@ -566,7 +652,7 @@ stdAc::fanspeed_t IRMideaAC::toCommonFanSpeed(const uint8_t speed) {
 /// @param[in] prev A Ptr to the previous state.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRMideaAC::toCommon(const stdAc::state_t *prev) {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   if (prev != NULL) {
     result = *prev;
   } else {
@@ -577,7 +663,6 @@ stdAc::state_t IRMideaAC::toCommon(const stdAc::state_t *prev) {
     result.swingv = stdAc::swingv_t::kOff;
     result.quiet = false;
     result.turbo = false;
-    result.clean = false;
     result.econo = false;
     result.filter = false;
     result.light = false;
@@ -597,6 +682,7 @@ stdAc::state_t IRMideaAC::toCommon(const stdAc::state_t *prev) {
   result.fanspeed = toCommonFanSpeed(_.Fan);
   result.sleep = _.Sleep ? 0 : -1;
   result.econo = getEconoToggle();
+  result.clean ^= getCleanToggle();
   return result;
 }
 
@@ -612,7 +698,7 @@ String IRMideaAC::toString(void) {
     case kMideaACTypeCommand: result += kCommandStr; break;
     case kMideaACTypeSpecial: result += kSpecialStr; break;
     case kMideaACTypeFollow:  result += kFollowStr; break;
-    default: result += kUnknownStr;
+    default:                  result += kUnknownStr;
   }
   result += ')';
   if (message_type != kMideaACTypeSpecial) {
@@ -643,13 +729,16 @@ String IRMideaAC::toString(void) {
                              kMideaACFanAuto, kMideaACFanAuto, kMideaACFanMed);
     result += addBoolToString(_.Sleep, kSleepStr);
   }
-  result += addBoolToString(getSwingVToggle(), kSwingVToggleStr);
+  result += addToggleToString(getSwingVToggle(), kSwingVStr);
 #if KAYSUN_AC
   result += addBoolToString(getSwingVStep(), kStepStr);
 #endif  // KAYSUN_AC
-  result += addBoolToString(getEconoToggle(), kEconoToggleStr);
-  result += addBoolToString(getTurboToggle(), kTurboToggleStr);
-  result += addBoolToString(getLightToggle(), kLightToggleStr);
+  result += addToggleToString(getEconoToggle(), kEconoStr);
+  result += addToggleToString(getTurboToggle(), kTurboStr);
+  result += addBoolToString(getQuiet(), kQuietStr);
+  result += addToggleToString(getLightToggle(), kLightStr);
+  result += addToggleToString(getCleanToggle(), kCleanStr);
+  result += addToggleToString(get8CHeatToggle(), k8CHeatStr);
   return result;
 }
 

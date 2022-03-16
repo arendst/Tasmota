@@ -261,13 +261,20 @@ static void USE_IRAM_ATTR gpio_intr() {
 ///   capturing data. (Default: kTimeoutMs)
 /// @param[in] save_buffer Use a second (save) buffer to decode from.
 ///   (Default: false)
-/// @param[in] timer_num Nr. of the ESP32 timer to use (0 to 3) (ESP32 Only)
+/// @param[in] timer_num Nr. of the ESP32 timer to use. (0 to 3) (ESP32 Only)
+///   or (0 to 1) (ESP32-C3)
 #if defined(ESP32)
 IRrecv::IRrecv(const uint16_t recvpin, const uint16_t bufsize,
                const uint8_t timeout, const bool save_buffer,
                const uint8_t timer_num) {
-  // There are only 4 timers. 0 to 3.
-  _timer_num = std::min(timer_num, (uint8_t)3);
+  // Ensure we use a valid timer number.
+  _timer_num = std::min(timer_num,
+                        (uint8_t)(
+#ifdef SOC_TIMER_GROUP_TOTAL_TIMERS
+                                  SOC_TIMER_GROUP_TOTAL_TIMERS - 1));
+#else  // SOC_TIMER_GROUP_TOTAL_TIMERS
+                                  3));
+#endif  // SOC_TIMER_GROUP_TOTAL_TIMERS
 #else  // ESP32
 /// @cond IGNORE
 /// Class constructor
@@ -353,6 +360,13 @@ void IRrecv::enableIRIn(const bool pullup) {
   // Initialise the ESP32 timer.
   // 80MHz / 80 = 1 uSec granularity.
   timer = timerBegin(_timer_num, 80, true);
+#ifdef DEBUG
+  if (timer == NULL) {
+    DPRINT("FATAL: Unable enable system timer: ");
+    DPRINTLN((uint16_t)_timer_num);
+  }
+#endif  // DEBUG
+  assert(timer != NULL);  // Check we actually got the timer.
   // Set the timer so it only fires once, and set it's trigger in uSeconds.
   timerAlarmWrite(timer, MS_TO_USEC(params.timeout), ONCE);
   // Note: Interrupt needs to be attached before it can be enabled or disabled.
@@ -830,6 +844,18 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     if (decodeHitachiAC(results, offset, kHitachiAc344Bits, true, false))
       return true;
 #endif  // DECODE_HITACHI_AC344
+#if DECODE_HITACHI_AC264
+    // HitachiAC264 should be checked before HitachiAC
+    DPRINTLN("Attempting Hitachi AC264 decode");
+    if (decodeHitachiAC(results, offset, kHitachiAc264Bits, true, false))
+      return true;
+#endif  // DECODE_HITACHI_AC264
+#if DECODE_HITACHI_AC296
+    // HitachiAC296 should be checked before HitachiAC
+    DPRINTLN("Attempting Hitachi AC296 decode");
+    if (decodeHitachiAc296(results, offset, kHitachiAc296Bits, true))
+      return true;
+#endif  // DECODE_HITACHI_AC296
 #if DECODE_HITACHI_AC2
     // HitachiAC2 should be checked before HitachiAC
     DPRINTLN("Attempting Hitachi AC2 decode");
@@ -1044,8 +1070,12 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting Teknopoint decode");
     if (decodeTeknopoint(results, offset)) return true;
 #endif  // DECODE_TEKNOPOINT
+#if DECODE_KELON168
+    DPRINTLN("Attempting Kelon 168-bit decode");
+    if (decodeKelon168(results, offset)) return true;
+#endif  // DECODE_KELON168
 #if DECODE_KELON
-    DPRINTLN("Attempting Kelon decode");
+    DPRINTLN("Attempting Kelon 48-bit decode");
     if (decodeKelon(results, offset)) return true;
 #endif  // DECODE_KELON
 #if DECODE_SANYO_AC88
@@ -1166,8 +1196,8 @@ bool IRrecv::matchAtLeast(uint32_t measured, uint32_t desired,
   DPRINT(". Matching: ");
   DPRINT(measured);
   DPRINT(" >= ");
-  DPRINT(ticksLow(std::min(desired, MS_TO_USEC(params.timeout)), tolerance,
-                  delta));
+  DPRINT(ticksLow(std::min(desired, (uint32_t)MS_TO_USEC(params.timeout)),
+                  tolerance, delta));
   DPRINT(" [min(");
   DPRINT(ticksLow(desired, tolerance, delta));
   DPRINT(", ");

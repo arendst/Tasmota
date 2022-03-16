@@ -1965,6 +1965,16 @@ void SerialSendDecimal(char *values)
   }
 }
 
+/*********************************************************************************************/
+
+uint8_t Bcd2Dec(uint8_t n) {
+  return n - 6 * (n >> 4);
+}
+
+uint8_t Dec2Bcd(uint8_t n) {
+  return n + 6 * (n / 10);
+}
+
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
@@ -2295,8 +2305,7 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1)
 }
 
 void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus = 0);
-void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus)
-{
+void I2cSetActiveFound(uint32_t addr, const char *types, uint32_t bus) {
   I2cSetActive(addr);
 #ifdef ESP32
   if (0 == bus) {
@@ -2318,13 +2327,8 @@ bool I2cActive(uint32_t addr)
   return false;
 }
 
-#ifdef ESP32
 bool I2cSetDevice(uint32_t addr, uint32_t bus = 0);
-bool I2cSetDevice(uint32_t addr, uint32_t bus)
-#else
-bool I2cSetDevice(uint32_t addr)
-#endif
-{
+bool I2cSetDevice(uint32_t addr, uint32_t bus) {
 #ifdef ESP32
   if (!TasmotaGlobal.i2c_enabled_2) { bus = 0; }
   TwoWire & myWire = (bus == 0) ? Wire : Wire1;

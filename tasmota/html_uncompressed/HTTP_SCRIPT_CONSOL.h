@@ -9,7 +9,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "c=eb('c1');"                       // Console command id
       "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
-      "t.scrollTop=99999;"
+      "t.scrollTop=99999999;"
       "sn=t.scrollTop;"
     "}"
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
@@ -23,7 +23,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "if(d.shift()==0){t.value='';}"
           "z=d.shift();"
           "if(z.length>0){t.value+=z;}"
-          "t.scrollTop=99999;"
+          "t.scrollTop=99999999;"
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
           "lt=setTimeout(l,ltm);" // webrefresh timer....
@@ -52,4 +52,4 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "});"
   "}"
   "wl(h);";                               // Add console command key eventlistener after name has been synced with id (= wl(jd))
-  
+

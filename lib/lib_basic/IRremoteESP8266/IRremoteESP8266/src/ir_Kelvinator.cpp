@@ -53,6 +53,7 @@ using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addFanToString;
 using irutils::addTempToString;
+using irutils::addSwingVToString;
 
 #if SEND_KELVINATOR
 /// Send a Kelvinator A/C message.
@@ -274,16 +275,47 @@ void IRKelvinatorAC::setMode(const uint8_t mode) {
   }
 }
 
-/// Control the current vertical swing setting.
-/// @param[in] on The desired setting.
-void IRKelvinatorAC::setSwingVertical(const bool on) {
-  _.SwingV = on;
-  _.VentSwing = (on || _.SwingH);
+/// Set the Vertical Swing mode of the A/C.
+/// @param[in] automatic Do we use the automatic setting?
+/// @param[in] position The position/mode to set the vanes to.
+void IRKelvinatorAC::setSwingVertical(const bool automatic,
+                                      const uint8_t position) {
+  _.SwingAuto = (automatic || _.SwingH);
+  uint8_t new_position = position;
+  if (!automatic) {
+    switch (position) {
+      case kKelvinatorSwingVHighest:
+      case kKelvinatorSwingVUpperMiddle:
+      case kKelvinatorSwingVMiddle:
+      case kKelvinatorSwingVLowerMiddle:
+      case kKelvinatorSwingVLowest:
+        break;
+      default:
+        new_position = kKelvinatorSwingVOff;
+    }
+  } else {
+    switch (position) {
+      case kKelvinatorSwingVAuto:
+      case kKelvinatorSwingVLowAuto:
+      case kKelvinatorSwingVMiddleAuto:
+      case kKelvinatorSwingVHighAuto:
+        break;
+      default:
+        new_position = kKelvinatorSwingVAuto;
+    }
+  }
+  _.SwingV = new_position;
 }
 
-/// Is the vertical swing setting on?
-/// @return The current value.
-bool IRKelvinatorAC::getSwingVertical(void) const {
+/// Get the Vertical Swing Automatic mode setting of the A/C.
+/// @return true, the setting is on. false, the setting is off.
+bool IRKelvinatorAC::getSwingVerticalAuto(void) const {
+  return _.SwingV & 0b0001;
+}
+
+/// Get the Vertical Swing position setting of the A/C.
+/// @return The native position/mode.
+uint8_t IRKelvinatorAC::getSwingVerticalPosition(void) const {
   return _.SwingV;
 }
 
@@ -291,7 +323,7 @@ bool IRKelvinatorAC::getSwingVertical(void) const {
 /// @param[in] on The desired setting.
 void IRKelvinatorAC::setSwingHorizontal(const bool on) {
   _.SwingH = on;
-  _.VentSwing = (on || _.SwingV);
+  _.SwingAuto = (on || (_.SwingV & 0b0001));
 }
 
 /// Is the horizontal swing setting on?
@@ -378,6 +410,20 @@ uint8_t IRKelvinatorAC::convertMode(const stdAc::opmode_t mode) {
   }
 }
 
+/// Convert a stdAc::swingv_t enum into it's native setting.
+/// @param[in] swingv The enum to be converted.
+/// @return The native equivalent of the enum.
+uint8_t IRKelvinatorAC::convertSwingV(const stdAc::swingv_t swingv) {
+  switch (swingv) {
+    case stdAc::swingv_t::kHighest: return kKelvinatorSwingVHighest;
+    case stdAc::swingv_t::kHigh:    return kKelvinatorSwingVHighAuto;
+    case stdAc::swingv_t::kMiddle:  return kKelvinatorSwingVMiddle;
+    case stdAc::swingv_t::kLow:     return kKelvinatorSwingVLowAuto;
+    case stdAc::swingv_t::kLowest:  return kKelvinatorSwingVLowest;
+    default:                        return kKelvinatorSwingVAuto;
+  }
+}
+
 /// Convert a native mode to it's stdAc::opmode_t equivalent.
 /// @param[in] mode A native operating mode value.
 /// @return The stdAc::opmode_t equivalent.
@@ -401,7 +447,7 @@ stdAc::fanspeed_t IRKelvinatorAC::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the internal A/C object state to it's stdAc::state_t equivalent.
 /// @return A stdAc::state_t containing the current settings.
 stdAc::state_t IRKelvinatorAC::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::KELVINATOR;
   result.model = -1;  // Unused.
   result.power = _.Power;
@@ -442,7 +488,17 @@ String IRKelvinatorAC::toString(void) const {
   result += addBoolToString(_.IonFilter, kIonStr);
   result += addBoolToString(_.Light, kLightStr);
   result += addBoolToString(_.SwingH, kSwingHStr);
-  result += addBoolToString(_.SwingV, kSwingVStr);
+  result += addSwingVToString(_.SwingV, kKelvinatorSwingVAuto,
+                              kKelvinatorSwingVHighest,
+                              kKelvinatorSwingVHighAuto,
+                              kKelvinatorSwingVUpperMiddle,
+                              kKelvinatorSwingVMiddle,
+                              kKelvinatorSwingVLowerMiddle,
+                              kKelvinatorSwingVLowAuto,
+                              kKelvinatorSwingVLowest,
+                              kKelvinatorSwingVOff,
+                              kKelvinatorSwingVAuto, kKelvinatorSwingVAuto,
+                              kKelvinatorSwingVAuto);
   return result;
 }
 
