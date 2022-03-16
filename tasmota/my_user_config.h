@@ -673,6 +673,8 @@
 //    #define HM330X_WARMUP_DELAY       30         // Option: change warmup delay during which data are not read from sensor after a power up
 //    #define HM330X_HIDE_OUT_OF_DATE   false      // Option: change to true to hide data from web GUI and SENSOR while sensor is asleep
 //  #define USE_PCF85363                           // [I2cDriver66] Enable PCF85363 RTC (I2C address 0x51) (+0k7 code)
+//  #define USE_DS3502                             // [I2cDriver65] Enable DS3502 digital potentiometer. (I2C address 0x28-0x2B) (+1k code)
+//    #define USE_DS3502_ADDR 0x28                 // Enable DS3502 I2C Address to use (Must be within range 0x28 through 0x2B - set according to your wired setup)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
