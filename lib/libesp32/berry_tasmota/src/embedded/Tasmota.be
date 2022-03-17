@@ -426,6 +426,64 @@ class Tasmota
         path.remove(idx)
       end
     end
+    # load prefix for bec file and return version nunmber
+    # arg: filename with `.bec` suffix
+    # returns: version number (int) or nil if error or does not exist
+    #    does not raise any exception
+    def try_get_bec_version(fname_bec)
+      var f
+      try
+        f = open(fname_bec, "r")
+        var f_sign = f.readbytes(3)
+        var f_version = f.readbytes(1)
+        if f_sign == bytes('BECDFE')
+          return f_version[0]
+        end
+        f.close()
+      except .. as e
+        if f != nil     f.close() end
+        import string
+        print(string.format('BRY: failed to load compiled \'%s\' (%s)',fname_bec,e))
+      end
+      return nil
+    end
+    # try to delete a file, report errors but don't throw any exception
+    def try_remove_file(f_name)
+      import path
+      try
+        return path.remove(f_name)
+      except ..
+      end
+      return false
+    end
+    # try to compile a file
+    # arg: filename
+    # returns: compiled code (function) or `nil` if failed
+    #   does not raise an exception
+    def try_compile(f_name)
+      try
+        var compiled = compile(f_name, 'file')
+        return compiled
+      except .. as e
+        import string
+        print(string.format('BRY: failed to load \'%s\' (%s)',f_name,e))
+      end
+      return nil
+    end
+    # try to run the compiled code
+    # arg: compiled code (function) or `nil` if failed
+    # returns: `true` if succesful, `false` if code failed
+    def try_run_compiled(compiled_code)
+      if compiled_code != nil
+        try
+          compiled_code()
+          return true
+        except .. as e
+          print('BRY: failed to run compiled code')
+        end
+      end
+      return false
+    end
 
     import string
     import path
@@ -450,7 +508,7 @@ class Tasmota
     end
     # Ex: f = '/app.zip#autoexec.be'
 
-    # if the filename has no '.' append '.be'
+    # is the suffix .be or .bec ?
     var suffix_be  = f_suffix[-3..-1] == '.be'
     var suffix_bec = f_suffix[-4..-1] == '.bec'
     # Ex: f = '/app.zip#autoexec.be', f_suffix = 'autoexec.be', suffix_be = true, suffix_bec = false
@@ -460,20 +518,22 @@ class Tasmota
       raise "io_error", "file extension is not '.be' or '.bec'"
     end
 
-    var f_time = path.last_modified(f_prefix)
+    # get the last_modified time of the file or archive, returns `nil` if the file does not exist
+    var f_time = path.last_modified(f)
+    var f_name_bec = suffix_bec ? f : f + "c"      # f_name_bec holds the bec version of the filename
 
     if suffix_bec
-      if f_time == nil  return false end      # file does not exist
-      # f is the right file, continue
+      if f_time == nil  return false end      # file requested is .bec but does not exist, fail
+      # from now, .bec file does exist
     else
-      var f_time_bc = path.last_modified(f + "c") # timestamp for bytecode
-      if f_time == nil && f_time_bc == nil  return false end
-      if f_time_bc != nil && (f_time == nil || f_time_bc >= f_time)
+      var f_time_bec = path.last_modified(f_name_bec) # timestamp for .bec bytecode, nil if does not exist
+      if f_time == nil && f_time_bec == nil  return false end   # abort if neither .be nor .bec file exist
+      if f_time_bec != nil && (f_time == nil || f_time_bec >= f_time)
         # bytecode exists and is more recent than berry source, use bytecode
         ##### temporarily disable loading from bec file
-        # f = f + "c"   # use bytecode name
         suffix_bec = true
       end
+      # print("f_time",f_time,"f_time_bec",f_time_bec,"suffix_bec",suffix_bec)
     end
     
     # recall the working directory
@@ -484,17 +544,48 @@ class Tasmota
       self.wd = ""
     end
 
-    var c = compile(f, 'file')
-    # save the compiled bytecode
-    if !suffix_bec && !f_archive
+    # try to load code into `compiled_code`, or `nil` if didn't succeed
+    var compiled_code
+    if suffix_bec     # try the .bec version
+      # in this section we try to load the pre-compiled bytecode first
+      # (we already know that the file exists)
+      var bec_version = try_get_bec_version(f_name_bec)
+      var version_ok = true
+      if bec_version == nil
+        print(string.format('BRY: corrupt bytecode \'%s\'',f_name_bec))
+        version_ok = false
+      elif bec_version != 0x04          # -- this is the currenlty supported version
+        print(string.format('BRY: bytecode has wrong version \'%s\' (%i)',f_name_bec,bec_version))
+        version_ok = false
+      end
+
+      if version_ok
+        compiled_code = try_compile(f_name_bec)
+      end
+
+      if compiled_code == nil         # bytecode is bad, try to delete it and fallback
+        try_remove_file(f_name_bec)
+        suffix_bec = false
+      end
+    end
+
+    if suffix_be && compiled_code == nil
+      # the pre-compiled is absent to failed, load the be file instead
+      compiled_code = try_compile(f)
+    end
+
+    # save the compiled bytecode unless it's an archive
+    # print("compiled_code",compiled_code,"suffix_be",suffix_be,"suffix_bec",suffix_bec,"archive",f_archive,"f_name_bec",f_name_bec)
+    if compiled_code != nil && !suffix_bec && !f_archive
+      # try to save the pre-compiled version
       try
-        self.save(f + 'c', c)
+        self.save(f_name_bec, compiled_code)
       except .. as e
-        print(string.format('BRY: could not save compiled file %s (%s)',f+'c',e))
+        print(string.format('BRY: could not save compiled file %s (%s)',f_name_bec,e))
       end
     end
     # call the compiled code
-    c()
+    var run_ok = try_run_compiled(compiled_code)
     # call successfuls
 
     # remove path prefix
@@ -502,7 +593,7 @@ class Tasmota
       pop_path(f_prefix + "#")
     end
 
-    return true
+    return run_ok
   end
 
   # fast_loop() is a trimmed down version of event() called at every Tasmota loop iteration

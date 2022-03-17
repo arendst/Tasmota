@@ -388,7 +388,7 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
 
   if (strchr(path, '#')) {
     // we don't support any other mode than "r" and no-create
-    if (strcmp(mode, "r") != 0 || create)  {
+    if (strchr(mode, 'r') == NULL || create)  {
       AddLog(LOG_LEVEL_INFO, "ZIP: writing to zip is not supported");
       return ZipReadFileImplPtr();    // return an error
     }
