@@ -2050,7 +2050,7 @@ void CmndNeopoolFiltration(void)
       return;
     }
   }
-  if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILT_MANUAL_STATE, &data, 1)) {
+  if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILTRATION_STATE, &data, 1)) {
     NeopoolResponseError();
     return;
   }
