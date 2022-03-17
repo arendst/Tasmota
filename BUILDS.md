@@ -127,6 +127,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SCD30             | - | - / x | - | x | - | - |
 | USE_SCD40             | - | - / x | - | - | - | - |
 | USE_SPS30             | - | - / - | - | - | - | - |
+| USE_ADE7880           | - | - / - | - | - | - | - |
 | USE_ADE7953           | - | x / x | x | x | - | x |
 | USE_VL53L0X           | - | - / x | - | x | - | - |
 | USE_VL53L1X           | - | - / - | - | - | - | - |
@@ -162,9 +163,13 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_EZORTD            | - | - / - | - | - | - | - |
 | USE_SEESAW_SOIL       | - | - / - | - | - | - | - |
 | USE_TOF10120          | - | - / - | - | - | - | - |
+| USE_BM8563            | - | - / - | - | - | - | - |
 | USE_AM2320            | - | - / - | - | - | - | - |
 | USE_T67XX             | - | - / - | - | - | - | - |
 | USE_HM330X            | - | - / - | - | - | - | - |
+| USE_HDC2010           | - | - / - | - | - | - | - |
+| USE_PCF85363          | - | - / - | - | - | - | - |
+| USE_DS3502            | - | - / - | - | - | - | - |
 |                       |   |       |   |   |   |   |
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 | USE_SPI               | - | - / - | - | - | - | x |

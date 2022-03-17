@@ -5,8 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ## [11.0.0.4]
 ### Added
-- command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
+- Command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
+- Support for up to four DS3502 digital potentiometers with command ``Wiper<x> 0..127``
 
 ### Changed
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart

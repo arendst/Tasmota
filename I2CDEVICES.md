@@ -100,3 +100,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   64  | USE_HDC2010         | xsns_94 | HDC2010  | 0x40        | Temperature and Humidity sensor
   65  | USE_ADE7880         | xnrg_23 | ADE7880  | 0x38        | Energy monitor
   66  | USE_PCF85363        | xsns_99 | PCF85363 | 0x51        | Real time clock
+  67  | USE_DS3502          | xdrv_61 | DS3502   | 0x28 - 0x2B | Digital potentiometer

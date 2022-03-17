@@ -112,8 +112,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` [#15015](https://github.com/arendst/Tasmota/issues/15015)
 - NeoPool system voltages display
 - TasmotaSerial implement ``end()``
+- Support for up to four DS3502 digital potentiometers with command ``Wiper<x> 0..127``
 - Support for ADE7880 3 phase energy monitor as used in Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)
-- Support for PCF85363 RTC as used in Shelly 3EM (#13515)
+- Support for PCF85363 RTC as used in Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Full RTC chip integration and synchronisation when using UBX (=GPS), NTP or manual time
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 - ESP32 Berry always enable rules
