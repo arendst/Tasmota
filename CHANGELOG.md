@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool remove ambiguous device color names
 - Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 - IRremoteESP8266 library from v2.8.1 to v2.8.2
+- ESP8266 Shrinked tasmota-minimal.bin by removing all commands except ``Upgrade``, ``Upload``, ``OtaUrl``, ``Seriallog``, ``Weblog`` and ``Restart``
 
 ### Fixed
 - NeoPool NPBit and NPRead/NPReadL output

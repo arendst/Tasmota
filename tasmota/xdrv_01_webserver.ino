@@ -3300,6 +3300,8 @@ const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|
 ;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_WEBLOG "|"
+#ifndef FIRMWARE_MINIMAL
   D_CMND_WEBTIME "|"
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
@@ -3307,7 +3309,7 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
   D_CMND_SENDMAIL "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBQUERY "|"
   D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON
 #ifdef USE_WEBGETCONFIG
   "|" D_CMND_WEBGETCONFIG
@@ -3315,9 +3317,12 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_CORS
   "|" D_CMND_CORS
 #endif
+#endif  // FIRMWARE_MINIMAL
 ;
 
 void (* const WebCommand[])(void) PROGMEM = {
+  &CmndWeblog,
+#ifndef FIRMWARE_MINIMAL
   &CmndWebTime,
 #ifdef USE_EMULATION
   &CmndEmulation,
@@ -3325,7 +3330,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
   &CmndSendmail,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
+  &CmndWebServer, &CmndWebPassword, &CmndWebRefresh, &CmndWebSend, &CmndWebQuery,
   &CmndWebColor, &CmndWebSensor, &CmndWebButton
 #ifdef USE_WEBGETCONFIG
   , &CmndWebGetConfig
@@ -3333,6 +3338,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_CORS
   , &CmndCors
 #endif
+#endif  // FIRMWARE_MINIMAL
   };
 
 /*********************************************************************************************\
