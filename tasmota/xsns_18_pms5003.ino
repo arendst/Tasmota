@@ -45,7 +45,7 @@ TasmotaSerial *PmsSerial;
 struct PMS5003 {
   uint16_t time = 0;
   uint8_t type = 1;
-  uint8_t valid = 0;
+  uint8_t valid = 10;
   uint8_t wake_mode = 1;
   uint8_t ready = 1;
   bool discovery_triggered = false;
@@ -85,6 +85,7 @@ struct pmsX003data {
 
 size_t PmsSendCmd(uint8_t command_id)
 {
+  delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
   return PmsSerial->write(kPmsCommands[command_id], sizeof(kPmsCommands[command_id]));
 }
 
@@ -215,6 +216,11 @@ void PmsSecond(void)                 // Every second
     if (Pms.time >= Settings->pms_wake_interval) {
       // sensor is awake and warmed up, set up for reading
       PmsSendCmd(CMD_READ_DATA);
+      if (!Pms.ready) {
+        // the first value is always incorrect, so read it and ask for new
+        PmsReadData();
+        PmsSendCmd(CMD_READ_DATA);
+      }
       Pms.ready = 1;
       Pms.time = 0;
     }
@@ -235,6 +241,10 @@ void PmsSecond(void)                 // Every second
           PmsSendCmd(CMD_READ_DATA);
           Pms.ready = 1;
         }
+      } else if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        PmsSendCmd(CMD_SLEEP);
+        Pms.wake_mode = 0;
+        Pms.ready = 0;
       }
     }
   }
@@ -252,21 +262,39 @@ void PmsInit(void)
 
       if (!PinUsed(GPIO_PMS5003_TX)) {  // setting interval not supported if TX pin not connected
         Settings->pms_wake_interval = 0;
-        Pms.ready = 1;
+      }
+      if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        // Passive Mode
+        PmsSendCmd(CMD_MODE_PASSIVE);
+        Pms.wake_mode = 0;
+        Pms.ready = 0;
+        Pms.time = Settings->pms_wake_interval - WARMUP_PERIOD; // Let it wake up in the next second
       } else {
-        if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
-          // Passive Mode
-          PmsSendCmd(CMD_MODE_PASSIVE);
-          Pms.wake_mode = 0;
-          Pms.ready = 0;
-          Pms.time = Settings->pms_wake_interval - WARMUP_PERIOD; // Let it wake up in the next second
-        }
+        // Active Mode
+        PmsSendCmd(CMD_MODE_ACTIVE);
+        PmsSendCmd(CMD_WAKEUP);
+        Pms.wake_mode = 1;
+        Pms.ready = 1;
       }
 
       Pms.type = 1;
     }
   }
 }
+
+#ifdef USE_DEEPSLEEP
+
+void Pms_EnterSleep(void)
+{
+  if (DeepSleepEnabled()) {
+    PmsSendCmd(CMD_MODE_PASSIVE);
+    PmsSendCmd(CMD_SLEEP);
+    Pms.wake_mode = 0;
+    Pms.ready = 0;
+  }
+}
+
+#endif // USE_DEEPSLEEP
 
 #ifdef USE_WEBSERVER
 #ifdef PMS_MODEL_PMS3003
@@ -362,6 +390,11 @@ bool Xsns18(uint8_t function)
         PmsShow(0);
         break;
 #endif  // USE_WEBSERVER
+#ifdef USE_DEEPSLEEP
+      case FUNC_SAVE_BEFORE_RESTART:
+        Pms_EnterSleep();
+        break;
+#endif // USE_DEEPSLEEP 
     }
   }
   return result;
