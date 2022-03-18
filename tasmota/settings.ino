@@ -1435,7 +1435,7 @@ void SettingsDelta(void) {
         Settings->switchmode[i] = (i < 8) ? Settings->ex_switchmode[i] : SWITCH_MODE;
       }
       for (uint32_t i = 0; i < MAX_INTERLOCKS_SET; i++) {
-        Settings->interlock[i] = (i < 4) ? Settings->ex_interlock[i] : 0;
+        Settings->interlock[i] = (i < 4) ? Settings->ds3502_state[i] : 0;
       }
     }
     if (Settings->version < 0x09020007) {

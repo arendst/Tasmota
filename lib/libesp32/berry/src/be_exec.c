@@ -258,7 +258,7 @@ BERRY_API int be_loadmode(bvm *vm, const char *name, bbool islocal)
 {
     int res = load_bytecode(vm, name);
 #if BE_USE_SCRIPT_COMPILER
-    if (res && res != BE_IO_ERROR) {
+    if (res && res != BE_IO_ERROR && res != BE_EXCEPTION) {
         res = fileparser(vm, name, islocal);
     }
 #else

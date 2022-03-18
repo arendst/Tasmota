@@ -151,6 +151,7 @@
 //#define USE_T67XX                              // [I2cDriver61] Enable Telaire T67XX CO2 sensor (I2C address 0x15) (+1k3 code)
 //#define USE_HDC2010                            // [I2cDriver64] Enable HDC2010 temperature/humidity sensor (I2C address 0x40) (+1k5 code)
 //#define USE_PCF85363                           // [I2cDriver66] Enable PCF85363 RTC (I2C address 0x51) (+0k7 code)
+//#define USE_DS3502                             // [I2CDriver67] Enable DS3502 digital potentiometer (I2C address 0x28 - 0x2B) (+0k4 code)
 
 //#define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 //#define USE_RC522                              // Add support for MFRC522 13.56Mhz Rfid reader (+6k code)
