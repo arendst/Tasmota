@@ -211,6 +211,8 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 
 #endif // LITTLEFS_SCRIPT_SIZE
 
+#include <uri/UriGlob.h>
+
 #include <TasmotaSerial.h>
 
 #ifdef TESLA_POWERWALL
@@ -1706,6 +1708,32 @@ int32_t extract_from_file(uint8_t fref,  char *ts_from, char *ts_to, int8_t coff
 }
 #endif // USE_FEXTRACT
 
+
+uint32_t script_bcd(uint8_t sel, uint32_t val) {
+uint32_t res = 0;
+  if (sel) {
+    // to bcd
+    uint32_t mfac = 1;
+    for (uint32_t cnt = 0; cnt < 6; cnt++) {
+      res |= (val % 10) << 24;
+      val /= 10;
+      res >>= 4;
+    }
+  } else {
+    // from bcd
+    uint32_t mfac = 1;
+    for (uint32_t cnt = 0; cnt < 6; cnt++) {
+      res += (val & 0xf) * mfac;
+      val >>= 4;
+      mfac *= 10;
+    }
+  }
+  return res;
+}
+
+
+
+
 #ifdef USE_LIGHT
 uint32_t HSVToRGB(uint16_t hue, uint8_t saturation, uint8_t value) {
 float r = 0, g = 0, b = 0;
@@ -2301,6 +2329,14 @@ chknext:
           goto nfuncexit;
         }
 #endif //USE_BUTTON_EVENT
+        if (!strncmp(lp, "bcd(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          uint32_t sel = fvar;
+          while (*lp==' ') lp++;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          fvar = script_bcd(sel, fvar);
+          goto nfuncexit;
+        }
         break;
       case 'c':
         if (!strncmp(lp, "chg[", 4)) {
@@ -7251,12 +7287,17 @@ bool ScriptCommand(void) {
   }
   else if ((CMND_SCRIPT == command_code) && (index > 0)) {
 
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 9)) {
       switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
           bitWrite(Settings->rule_enabled, index -1, XdrvMailbox.payload);
           break;
+        case 8: // stop on error Off
+        case 9: // On
+          bitWrite(Settings->rule_stop, index -1, XdrvMailbox.payload &1);
+          break;
+
 #ifdef xSCRIPT_STRIP_COMMENTS
         case 2:
           bitWrite(Settings->rule_enabled, 1, 0);
@@ -7265,6 +7306,8 @@ bool ScriptCommand(void) {
           bitWrite(Settings->rule_enabled, 1, 1);
           break;
 #endif //xSCRIPT_STRIP_COMMENTS
+        default:
+          break;
       }
     } else {
       if ('>' == XdrvMailbox.data[0]) {
@@ -7296,7 +7339,7 @@ bool ScriptCommand(void) {
       }
       return serviced;
     }
-    Response_P(PSTR("{\"%s\":\"%s\",\"Free\":%d}"), command, GetStateText(bitRead(Settings->rule_enabled, 0)), glob_script_mem.script_size - strlen(glob_script_mem.script_ram));
+    Response_P(PSTR("{\"%s\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d}"), command, GetStateText(bitRead(Settings->rule_enabled, 0)), GetStateText(bitRead(Settings->rule_stop, 0)),glob_script_mem.script_size - strlen(glob_script_mem.script_ram));
 #ifdef SUPPORT_MQTT_EVENT
   } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
       String result = ScriptSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
@@ -7656,23 +7699,19 @@ String ScriptUnsubscribe(const char * data, int data_len)
 
 const char HTTP_SCRIPT_MIMES[] PROGMEM =
   "HTTP/1.1 200 OK\r\n"
-  "Content-disposition: inline; filename=%s"
+  "Content-disposition: inline; "
   "Content-type: %s\r\n\r\n";
 
-void ScriptGetSDCard(void) {
+void ScriptServeFile(void) {
 
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   String stmp = Webserver->uri();
 
   char *cp = strstr_P(stmp.c_str(), PSTR("/ufs/"));
-//  if (cp) Serial.printf(">>>%s\n",cp);
+
   if (cp) {
-#ifdef ESP32
     cp += 4;
-#else
-    cp += 5;
-#endif
     if (ufsp) {
       if (strstr_P(cp, PSTR("scrdmp.bmp"))) {
         SendFile(cp);
@@ -7727,9 +7766,7 @@ void script_download_task(void *path) {
 
 void SendFile_sub(char *fname) {
 char buff[512];
-  const char *mime = 0;
   uint8_t sflg = 0;
-
 
 #ifdef USE_DISPLAY_DUMP
   char *sbmp = strstr_P(fname, PSTR("scrdmp.bmp"));
@@ -7738,26 +7775,25 @@ char buff[512];
   }
 #endif // USE_DISPLAY_DUMP
 
-  char *jpg = strstr_P(fname, PSTR(".jpg"));
-  if (jpg) {
-    mime = "image/jpeg";
-  }
-  char *bmp = strstr_P(fname, PSTR(".bmp"));
-  if (bmp) {
-    mime = "image/bmp";
-  }
-  char *html = strstr_P(fname, PSTR(".html"));
-  if (html) {
-    mime = "text/html";
-  }
-  char *txt = strstr_P(fname, PSTR(".txt"));
-  if (txt) {
-    mime = "text/plain";
+  if ( strstr_P(fname, PSTR(".jpg"))) {
+    strcpy_P(buff,PSTR("image/jpeg"));
+  } else if (strstr_P(fname, PSTR(".bmp"))) {
+    strcpy_P(buff,PSTR("image/bmp"));
+  } else if (strstr_P(fname, PSTR(".html"))) {
+    strcpy_P(buff,PSTR("text/html"));
+  } else if (strstr_P(fname, PSTR(".txt"))) {
+    strcpy_P(buff,PSTR("text/plain"));
+  } else if (strstr_P(fname, PSTR(".pdf"))) {
+    strcpy_P(buff,PSTR("application/pdf"));
+  } else {
+    strcpy_P(buff,PSTR("text/plain"));
   }
 
-  if (!mime) return;
+  if (!buff[0]) return;
 
-  WSContentSend_P(HTTP_SCRIPT_MIMES, fname, mime);
+  WSContentSend_P(HTTP_SCRIPT_MIMES, buff);
+  WSContentFlush();
+
 
   if (sflg) {
 #ifdef USE_DISPLAY_DUMP
@@ -10144,9 +10180,6 @@ bool Xdrv10(uint8_t function)
         script_add_subpage(4);
 #endif // SCRIPT_FULL_WEBPAGE
 
-#ifdef USE_UFILESYS
-        Webserver->onNotFound(ScriptGetSDCard);
-#endif // USE_UFILESYS
       }
       break;
 #endif // USE_SCRIPT_WEB_DISPLAY
@@ -10155,6 +10188,9 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
       Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);}, script_upload_start);
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
+#ifdef USE_UFILESYS
+      Webserver->on(UriGlob("/ufs/*"), HTTP_GET, ScriptServeFile);
+#endif
 #endif // USE_WEBSERVER
       break;
 
