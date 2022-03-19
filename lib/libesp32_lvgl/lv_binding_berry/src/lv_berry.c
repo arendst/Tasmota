@@ -9,19 +9,6 @@
 
 #include "../generate/be_lv_c_mapping.h"
 
-extern void be_load_lv_color_class(bvm *vm);
-extern void be_load_lv_font_class(bvm *vm);
-extern void be_load_LVGL_glob_class(bvm *vm);
-
-/*********************************************************************************************\
- * Load all LVGL classes, including widgets
-\*********************************************************************************************/
-void be_load_lvgl_classes(bvm *vm) {
-  be_load_lv_color_class(vm);
-  be_load_lv_font_class(vm);
-  be_load_LVGL_glob_class(vm);
-}
-
 /*********************************************************************************************\
  * Retrieve the value of `self._p`
 \*********************************************************************************************/
