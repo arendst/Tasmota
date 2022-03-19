@@ -174,6 +174,11 @@ typedef struct bntvmodule {
     const struct bmodule *module; /* const module object */
 } bntvmodule;
 
+/* native class object */
+struct bclass;    /* we need only the pointer to `bclass` here */
+typedef const struct bclass *bclass_ptr;
+typedef bclass_ptr bclass_array[];              /* array of bclass* pointers, NULL terminated */
+
 /* native module node definition macro */
 #ifndef __cplusplus
 #define be_native_module_nil(_name)                     \
@@ -223,10 +228,15 @@ typedef struct bntvmodule {
     static const bntvmodobj name##_attrs[] =
 
 #define be_native_module(name)  be_native_module_##name
+#define be_native_class(name)  be_class_##name
 
 /* native module declaration macro */
 #define be_extern_native_module(name)                   \
     extern const bntvmodule be_native_module(name)
+
+/* native class declaration macro */
+#define be_extern_native_class(name)                   \
+    extern const struct bclass be_native_class(name)
 
 /* native module definition macro */
 #ifndef __cplusplus

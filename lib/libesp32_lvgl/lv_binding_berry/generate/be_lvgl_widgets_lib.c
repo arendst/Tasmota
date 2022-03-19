@@ -1177,30 +1177,6 @@ be_local_class(lv_color,
 );
 /*******************************************************************/
 
-void be_load_lv_style_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_style);
-    be_setglobal(vm, "lv_style");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_font_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_font);
-    be_setglobal(vm, "lv_font");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_color_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_color);
-    be_setglobal(vm, "lv_color");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_theme_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_theme);
-    be_setglobal(vm, "lv_theme");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_img
 ********************************************************************/
@@ -1216,36 +1192,6 @@ be_local_class(lv_img,
     (be_str_literal("lv_img"))
 );
 /*******************************************************************/
-
-void be_load_lv_img_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_img);
-    be_setglobal(vm, "lv_img");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_disp_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_disp);
-    be_setglobal(vm, "lv_disp");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_obj_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_obj);
-    be_setglobal(vm, "lv_obj");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_group_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_group);
-    be_setglobal(vm, "lv_group");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_indev_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_indev);
-    be_setglobal(vm, "lv_indev");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_chart
@@ -1263,12 +1209,6 @@ be_local_class(lv_chart,
 );
 /*******************************************************************/
 
-void be_load_lv_chart_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_chart);
-    be_setglobal(vm, "lv_chart");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_colorwheel
 ********************************************************************/
@@ -1284,12 +1224,6 @@ be_local_class(lv_colorwheel,
     (be_str_literal("lv_colorwheel"))
 );
 /*******************************************************************/
-
-void be_load_lv_colorwheel_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_colorwheel);
-    be_setglobal(vm, "lv_colorwheel");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_imgbtn
@@ -1307,12 +1241,6 @@ be_local_class(lv_imgbtn,
 );
 /*******************************************************************/
 
-void be_load_lv_imgbtn_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_imgbtn);
-    be_setglobal(vm, "lv_imgbtn");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_led
 ********************************************************************/
@@ -1328,12 +1256,6 @@ be_local_class(lv_led,
     (be_str_literal("lv_led"))
 );
 /*******************************************************************/
-
-void be_load_lv_led_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_led);
-    be_setglobal(vm, "lv_led");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_meter
@@ -1351,12 +1273,6 @@ be_local_class(lv_meter,
 );
 /*******************************************************************/
 
-void be_load_lv_meter_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_meter);
-    be_setglobal(vm, "lv_meter");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_msgbox
 ********************************************************************/
@@ -1372,12 +1288,6 @@ be_local_class(lv_msgbox,
     (be_str_literal("lv_msgbox"))
 );
 /*******************************************************************/
-
-void be_load_lv_msgbox_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_msgbox);
-    be_setglobal(vm, "lv_msgbox");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_spinbox
@@ -1395,12 +1305,6 @@ be_local_class(lv_spinbox,
 );
 /*******************************************************************/
 
-void be_load_lv_spinbox_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_spinbox);
-    be_setglobal(vm, "lv_spinbox");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_spinner
 ********************************************************************/
@@ -1416,24 +1320,6 @@ be_local_class(lv_spinner,
     (be_str_literal("lv_spinner"))
 );
 /*******************************************************************/
-
-void be_load_lv_spinner_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_spinner);
-    be_setglobal(vm, "lv_spinner");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_anim_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_anim);
-    be_setglobal(vm, "lv_anim");
-    be_pop(vm, 1);
-}
-
-void be_load_lv_timer_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_timer);
-    be_setglobal(vm, "lv_timer");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_arc
@@ -1451,12 +1337,6 @@ be_local_class(lv_arc,
 );
 /*******************************************************************/
 
-void be_load_lv_arc_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_arc);
-    be_setglobal(vm, "lv_arc");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_bar
 ********************************************************************/
@@ -1472,12 +1352,6 @@ be_local_class(lv_bar,
     (be_str_literal("lv_bar"))
 );
 /*******************************************************************/
-
-void be_load_lv_bar_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_bar);
-    be_setglobal(vm, "lv_bar");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_btn
@@ -1495,12 +1369,6 @@ be_local_class(lv_btn,
 );
 /*******************************************************************/
 
-void be_load_lv_btn_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_btn);
-    be_setglobal(vm, "lv_btn");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_btnmatrix
 ********************************************************************/
@@ -1516,12 +1384,6 @@ be_local_class(lv_btnmatrix,
     (be_str_literal("lv_btnmatrix"))
 );
 /*******************************************************************/
-
-void be_load_lv_btnmatrix_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_btnmatrix);
-    be_setglobal(vm, "lv_btnmatrix");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_canvas
@@ -1539,12 +1401,6 @@ be_local_class(lv_canvas,
 );
 /*******************************************************************/
 
-void be_load_lv_canvas_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_canvas);
-    be_setglobal(vm, "lv_canvas");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_checkbox
 ********************************************************************/
@@ -1560,12 +1416,6 @@ be_local_class(lv_checkbox,
     (be_str_literal("lv_checkbox"))
 );
 /*******************************************************************/
-
-void be_load_lv_checkbox_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_checkbox);
-    be_setglobal(vm, "lv_checkbox");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_dropdown
@@ -1583,12 +1433,6 @@ be_local_class(lv_dropdown,
 );
 /*******************************************************************/
 
-void be_load_lv_dropdown_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_dropdown);
-    be_setglobal(vm, "lv_dropdown");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_label
 ********************************************************************/
@@ -1604,12 +1448,6 @@ be_local_class(lv_label,
     (be_str_literal("lv_label"))
 );
 /*******************************************************************/
-
-void be_load_lv_label_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_label);
-    be_setglobal(vm, "lv_label");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_line
@@ -1627,12 +1465,6 @@ be_local_class(lv_line,
 );
 /*******************************************************************/
 
-void be_load_lv_line_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_line);
-    be_setglobal(vm, "lv_line");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_roller
 ********************************************************************/
@@ -1648,12 +1480,6 @@ be_local_class(lv_roller,
     (be_str_literal("lv_roller"))
 );
 /*******************************************************************/
-
-void be_load_lv_roller_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_roller);
-    be_setglobal(vm, "lv_roller");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_slider
@@ -1671,12 +1497,6 @@ be_local_class(lv_slider,
 );
 /*******************************************************************/
 
-void be_load_lv_slider_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_slider);
-    be_setglobal(vm, "lv_slider");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_switch
 ********************************************************************/
@@ -1692,12 +1512,6 @@ be_local_class(lv_switch,
     (be_str_literal("lv_switch"))
 );
 /*******************************************************************/
-
-void be_load_lv_switch_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_switch);
-    be_setglobal(vm, "lv_switch");
-    be_pop(vm, 1);
-}
 
 /********************************************************************
 ** Solidified class: lv_table
@@ -1715,12 +1529,6 @@ be_local_class(lv_table,
 );
 /*******************************************************************/
 
-void be_load_lv_table_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_table);
-    be_setglobal(vm, "lv_table");
-    be_pop(vm, 1);
-}
-
 /********************************************************************
 ** Solidified class: lv_textarea
 ********************************************************************/
@@ -1736,10 +1544,4 @@ be_local_class(lv_textarea,
     (be_str_literal("lv_textarea"))
 );
 /*******************************************************************/
-
-void be_load_lv_textarea_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_lv_textarea);
-    be_setglobal(vm, "lv_textarea");
-    be_pop(vm, 1);
-}
 

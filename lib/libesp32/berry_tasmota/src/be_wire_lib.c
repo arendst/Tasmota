@@ -118,16 +118,11 @@ be_local_closure(read_bytes,   /* name */
 /*******************************************************************/
 
 
-#include "be_fixed_be_class_tasmota_wire.h"
+#include "be_fixed_be_class_Wire.h"
 
-void be_load_wirelib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_tasmota_wire);
-    be_setglobal(vm, "Wire");
-    be_pop(vm, 1);
-}
 /* @const_object_info_begin
 
-class be_class_tasmota_wire (scope: global, name: Wire) {
+class be_class_Wire (scope: global, name: Wire) {
     bus, var
 
     init, func(b_wire_init)

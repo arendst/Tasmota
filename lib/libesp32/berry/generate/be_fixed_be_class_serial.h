@@ -1,6 +1,6 @@
 #include "be_constobj.h"
 
-static be_define_const_map_slots(be_class_tasmota_serial_map) {
+static be_define_const_map_slots(be_class_serial_map) {
     { be_const_key(SERIAL_5E2, 3), be_const_int(SERIAL_5E2) },
     { be_const_key(SERIAL_8E1, -1), be_const_int(SERIAL_8E1) },
     { be_const_key(SERIAL_8O1, 22), be_const_int(SERIAL_8O1) },
@@ -35,12 +35,12 @@ static be_define_const_map_slots(be_class_tasmota_serial_map) {
 };
 
 static be_define_const_map(
-    be_class_tasmota_serial_map,
+    be_class_serial_map,
     31
 );
 
 BE_EXPORT_VARIABLE be_define_const_class(
-    be_class_tasmota_serial,
+    be_class_serial,
     1,
     NULL,
     serial

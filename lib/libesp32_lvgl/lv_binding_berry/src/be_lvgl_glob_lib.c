@@ -1037,9 +1037,3 @@ be_local_class(LVGL_glob,
     be_str_literal("LVGL_glob")
 );
 /*******************************************************************/
-
-void be_load_LVGL_glob_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_LVGL_glob);
-    be_setglobal(vm, "LVGL_glob");
-    be_pop(vm, 1);
-}
