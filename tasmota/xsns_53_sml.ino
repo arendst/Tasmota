@@ -1852,7 +1852,7 @@ void SML_Decode(uint8_t index) {
               found=0;
             }
           } else {
-            // ebus mbus pzem vbus or raw
+            // ebus modbus pzem vbus or raw
             // XXHHHHSSUU
             if (*mp == 'x') {
               if (*(mp + 1) == 'x') {
@@ -1976,6 +1976,22 @@ void SML_Decode(uint8_t index) {
               mbus_dval = (float)((cp[0]<<8) | cp[1]);
               mp += 4;
               cp += 2;
+            } else if (!strncmp(mp, "bcd", 3)) {
+              mp += 3;
+              uint8_t digits = strtol((char*)mp, (char**)&mp, 10);
+              if (digits < 2) digits = 2;
+              if (digits > 12) digits = 12;
+              uint64_t bcdval = 0;
+              uint64_t mfac = 1;
+              for (uint32_t cnt = 0; cnt < digits; cnt += 2) {
+                uint8_t iob = *cp++;
+                bcdval += (iob & 0xf) * mfac;
+                mfac *= 10;
+                bcdval += (iob >> 4) * mfac;
+                mfac *= 10;
+              }
+              mbus_dval = bcdval;
+              ebus_dval = bcdval;
             } else if (*mp == 'v') {
               // vbus values vul, vsl, vuwh, vuwl, wswh, vswl, vswh
               // vub3, vsb3 etc
