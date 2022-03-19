@@ -716,13 +716,6 @@ be_local_class(lv_{subtype},
 );
 /*******************************************************************/
 """)
-  # class definitions
-  print(f"""void be_load_lv_{subtype}_class(bvm *vm) {{
-    be_pushntvclass(vm, &be_class_lv_{subtype});
-    be_setglobal(vm, \"lv_{subtype}\");
-    be_pop(vm, 1);
-}}
-""")
 
 sys.stdout.close()
 

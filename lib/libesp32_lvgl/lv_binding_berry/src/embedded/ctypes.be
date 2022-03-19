@@ -225,7 +225,7 @@ ctypes.print_classes = def (module_name)
   ctypes.sort(global_classes)
 
   for elt:global_classes
-    print(string.format("static be_define_ctypes_class(%s, &be_%s, &be_class_ctypes, \"%s\");", elt, elt, elt))
+    print(string.format("static be_define_ctypes_class(%s, &be_%s, &be_class_ctypes_bytes, \"%s\");", elt, elt, elt))
   end
 
   print()

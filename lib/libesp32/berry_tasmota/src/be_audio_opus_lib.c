@@ -74,17 +74,11 @@ int32_t be_audio_opus_decoder_decode(struct bvm *vm) {
   be_return(vm);
 }
 
-#include "be_fixed_be_class_audio_opus_decoder.h"
-
-void be_load_driver_audio_opus_decoder(bvm *vm) {
-  be_pushntvclass(vm, &be_class_audio_opus_decoder);
-  be_setglobal(vm, "OpusDecoder");
-  be_pop(vm, 1);
-}
+#include "be_fixed_be_class_AudioOpusDecoder.h"
 
 /* @const_object_info_begin
 
-class be_class_audio_opus_decoder (scope: global, name: OpusDecoder) {
+class be_class_AudioOpusDecoder (scope: global, name: AudioOpusDecoder) {
   .p, var
   init, func(be_audio_opus_decoder_init)
   deinit, func(be_audio_opus_decoder_deinit)

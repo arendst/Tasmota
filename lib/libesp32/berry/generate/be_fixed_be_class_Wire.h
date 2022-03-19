@@ -1,6 +1,6 @@
 #include "be_constobj.h"
 
-static be_define_const_map_slots(be_class_tasmota_wire_map) {
+static be_define_const_map_slots(be_class_Wire_map) {
     { be_const_key(init, -1), be_const_func(b_wire_init) },
     { be_const_key(_available, -1), be_const_func(b_wire_available) },
     { be_const_key(bus, -1), be_const_var(0) },
@@ -19,12 +19,12 @@ static be_define_const_map_slots(be_class_tasmota_wire_map) {
 };
 
 static be_define_const_map(
-    be_class_tasmota_wire_map,
+    be_class_Wire_map,
     15
 );
 
 BE_EXPORT_VARIABLE be_define_const_class(
-    be_class_tasmota_wire,
+    be_class_Wire,
     1,
     NULL,
     Wire

@@ -2530,14 +2530,6 @@ be_local_closure(Tasmota_check_not_method,   /* name */
 #include "be_fixed_be_class_tasmota.h"
 
 
-// Class definition
-void be_load_tasmota_ntvlib(bvm *vm)
-{
-    be_pushntvclass(vm, &be_class_tasmota);
-    be_setglobal(vm, "Tasmota");
-    be_pop(vm, 1);
-}
-
 /* @const_object_info_begin
 class be_class_tasmota (scope: global, name: Tasmota) {
     _fl, var

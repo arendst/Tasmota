@@ -79,6 +79,7 @@ be_define_const_str(AudioFileSourceFS, "AudioFileSourceFS", 1839147653u, 0, 17, 
 be_define_const_str(AudioGenerator, "AudioGenerator", 1839297342u, 0, 14, &be_const_str_full_state);
 be_define_const_str(AudioGeneratorMP3, "AudioGeneratorMP3", 2199818488u, 0, 17, &be_const_str_files);
 be_define_const_str(AudioGeneratorWAV, "AudioGeneratorWAV", 2746509368u, 0, 17, &be_const_str_EVENT_DRAW_PART_BEGIN);
+be_define_const_str(AudioOpusDecoder, "AudioOpusDecoder", 1187272062u, 0, 16, &be_const_str_coord_arr);
 be_define_const_str(AudioOutput, "AudioOutput", 3257792048u, 0, 11, NULL);
 be_define_const_str(AudioOutputI2S, "AudioOutputI2S", 638031784u, 0, 14, &be_const_str_obj_class_create_obj);
 be_define_const_str(Auto_X2Dconfiguration, "Auto-configuration", 1665006109u, 0, 18, &be_const_str_EXTERNAL_I2S);
@@ -140,7 +141,6 @@ be_define_const_str(MD5, "MD5", 1935726387u, 0, 3, &be_const_str_ctypes_bytes_dy
 be_define_const_str(None, "None", 810547195u, 0, 4, &be_const_str_dump);
 be_define_const_str(OPTION_A, "OPTION_A", 1133299440u, 0, 8, &be_const_str_signal_bars);
 be_define_const_str(OneWire, "OneWire", 2298990722u, 0, 7, &be_const_str_font_montserrat);
-be_define_const_str(OpusDecoder, "OpusDecoder", 3618742074u, 0, 11, &be_const_str_get_style_pad_right);
 be_define_const_str(PART_MAIN, "PART_MAIN", 2473491508u, 0, 9, &be_const_str_Tasmota);
 be_define_const_str(POST, "POST", 1929554311u, 0, 4, NULL);
 be_define_const_str(Parameter_X20error, "Parameter error", 3840042038u, 0, 15, &be_const_str_find);
@@ -974,7 +974,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_set_mode_ct,
     (const bstring *)&be_const_str__X3Coption_X20value_X3D_X27_X25s_X27_X3E_X25s_X3C_X2Foption_X3E,
     (const bstring *)&be_const_str__X2504d_X2D_X2502d_X2D_X2502dT_X2502d_X3A_X2502d_X3A_X2502d,
-    (const bstring *)&be_const_str_coord_arr,
+    (const bstring *)&be_const_str_AudioOpusDecoder,
     (const bstring *)&be_const_str_sat,
     (const bstring *)&be_const_str__X2Elen,
     (const bstring *)&be_const_str_ALIGN_BOTTOM_MID,
@@ -1170,7 +1170,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str__settings_def,
     (const bstring *)&be_const_str_AudioOutput,
     (const bstring *)&be_const_str_BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson,
-    (const bstring *)&be_const_str_OpusDecoder,
+    (const bstring *)&be_const_str_get_style_pad_right,
     (const bstring *)&be_const_str_content_stop,
     NULL,
     NULL,

@@ -146,51 +146,113 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif // USE_WEBSERVER
     &be_native_module(flash),
 
-
     /* user-defined modules register end */
     NULL /* do not remove */
 };
 
-#ifdef ESP32
-extern void be_load_tasmota_ntvlib(bvm *vm);
-extern void be_load_tasmota_log_reader_class(bvm *vm);
-extern void be_load_light_state_class(bvm *vm);
-extern void be_load_wirelib(bvm *vm);
-extern void be_load_onewirelib(bvm *vm);
-extern void be_load_serial_lib(bvm *vm);
-extern void be_load_Driver_class(bvm *vm);
-extern void be_load_Trigger_class(bvm *vm);
-extern void be_load_I2C_Driver_class(bvm *vm);
-extern void be_load_AXP192_class(bvm *vm);
-extern void be_load_md5_lib(bvm *vm);
-extern void be_load_webclient_lib(bvm *vm);
-extern void be_load_tcpclient_lib(bvm *vm);
-extern void be_load_udp_lib(bvm *vm);
-extern void be_load_crypto_lib(bvm *vm);
-extern void be_load_ccronexpr_class(bvm *vm);
-extern void be_load_Leds_ntv_class(bvm *vm);
-extern void be_load_Leds_class(bvm *vm);
-extern void be_load_Leds_animator_class(bvm *vm);
+be_extern_native_class(tasmota);
+be_extern_native_class(Trigger);
+be_extern_native_class(Driver);
+be_extern_native_class(ctypes_bytes);
+be_extern_native_class(ctypes_bytes_dyn);
+be_extern_native_class(serial);
+be_extern_native_class(ccronexpr);
+be_extern_native_class(tasmota_log_reader);
+be_extern_native_class(light_state);
+be_extern_native_class(Wire);
+be_extern_native_class(I2C_Driver);
+be_extern_native_class(AXP192);
+be_extern_native_class(OneWire);
+be_extern_native_class(Leds_ntv);
+be_extern_native_class(Leds);
+be_extern_native_class(Leds_animator);
+be_extern_native_class(AudioOutput);
+be_extern_native_class(AudioGenerator);
+be_extern_native_class(AudioFileSource);
+be_extern_native_class(AudioOutputI2S);
+be_extern_native_class(AudioGeneratorWAV);
+be_extern_native_class(AudioGeneratorMP3);
+be_extern_native_class(AudioFileSourceFS);
+be_extern_native_class(AudioOpusDecoder);
+be_extern_native_class(md5);
+be_extern_native_class(udp);
+be_extern_native_class(webclient);
+be_extern_native_class(tcpclient);
+// LVGL core classes
+be_extern_native_class(lv_color);
+be_extern_native_class(lv_font);
+be_extern_native_class(LVGL_glob);
+// LVGL custom classes
+be_extern_native_class(lv_signal_bars);
+be_extern_native_class(lv_wifi_bars);
+be_extern_native_class(lv_wifi_bars_icon);
+be_extern_native_class(lv_signal_arcs);
+be_extern_native_class(lv_wifi_arcs);
+be_extern_native_class(lv_wifi_arcs_icon);
+be_extern_native_class(lv_clock_icon);
 
-extern void be_load_ctypes_lib(bvm *vm);
-extern void be_load_ctypes_energy_definitions_lib(bvm *vm);
-
-#ifdef USE_I2S_AUDIO_BERRY
-extern void be_load_driver_audio_lib(bvm *vm);
-extern void be_load_driver_audio_opus_decoder(bvm *vm);
+BERRY_LOCAL bclass_array be_class_table = {
+    /* first list are direct classes */
+    &be_native_class(tasmota),
+    &be_native_class(Trigger),
+    &be_native_class(Driver),
+    &be_native_class(serial),
+    &be_native_class(ccronexpr),
+    &be_native_class(ctypes_bytes),
+    &be_native_class(ctypes_bytes_dyn),
+    &be_native_class(tasmota_log_reader),
+#ifdef USE_LIGHT
+    &be_native_class(light_state),
 #endif
+#if defined(USE_ONEWIRE) || defined(USE_DS18x20)
+    &be_native_class(OneWire),
+#endif
+#ifdef USE_I2C
+    &be_native_class(Wire),
+    &be_native_class(I2C_Driver),
+    &be_native_class(AXP192),
+#endif // USE_I2C
+    &be_native_class(md5),
+#ifdef USE_WEBCLIENT
+    &be_native_class(udp),
+    &be_native_class(webclient),
+    &be_native_class(tcpclient),
+#endif // USE_WEBCLIENT
+#ifdef USE_WS2812
+    &be_native_class(Leds_ntv),
+    &be_native_class(Leds),
+    &be_native_class(Leds_animator),
+#endif // USE_WS2812
 
 #ifdef USE_LVGL
-#include "lv_berry.h"
-// custom widgets
-extern void be_load_lv_signal_bars_class(bvm *vm);
-extern void be_load_lv_wifi_bars_class(bvm *vm);
-extern void be_load_lv_wifi_bars_icon_class(bvm *vm);
-extern void be_load_lv_signal_arcs_class(bvm *vm);
-extern void be_load_lv_wifi_arcs_class(bvm *vm);
-extern void be_load_lv_wifi_arcs_icon_class(bvm *vm);
-extern void be_load_lv_clock_icon_class(bvm *vm);
-#endif// USE_LVGL
+    &be_native_class(LVGL_glob),
+    
+    &be_native_class(lv_signal_bars),
+    &be_native_class(lv_wifi_bars),
+    &be_native_class(lv_wifi_bars_icon),
+    &be_native_class(lv_signal_arcs),
+    &be_native_class(lv_wifi_arcs),
+    &be_native_class(lv_wifi_arcs_icon),
+    &be_native_class(lv_clock_icon),
+#endif // USE_LVGL
+
+#ifdef USE_I2S_AUDIO_BERRY
+    &be_native_class(AudioOutput),
+    &be_native_class(AudioGenerator),
+    &be_native_class(AudioFileSource),
+    &be_native_class(AudioOutputI2S),
+    &be_native_class(AudioGeneratorWAV),
+    &be_native_class(AudioGeneratorMP3),
+#ifdef USE_UFILESYS
+    &be_native_class(AudioFileSourceFS),
+#endif // USE_UFILESYS
+    &be_native_class(AudioOpusDecoder),
+#endif // USE_I2S_AUDIO_BERRY
+    NULL, /* do not remove */
+};
+
+extern void be_load_crypto_lib(bvm *vm);
+extern void be_load_ctypes_energy_definitions_lib(bvm *vm);
 
 /* this code loads the native class definitions */
 BERRY_API void be_load_custom_libs(bvm *vm)
@@ -201,60 +263,14 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
     /* be_load_xxxlib(vm); */
 #endif
-    be_load_Trigger_class(vm);
-    be_load_tasmota_ntvlib(vm);
-    be_load_tasmota_log_reader_class(vm);
-    be_load_Driver_class(vm);
-    be_load_md5_lib(vm);
-    be_load_serial_lib(vm);
-    be_load_ctypes_lib(vm);
-    be_load_ccronexpr_class(vm);
-#ifdef USE_LIGHT
-    be_load_light_state_class(vm);
-#endif
 #ifdef USE_ALEXA_AVS
-    be_load_crypto_lib(vm);
+    be_load_crypto_lib(vm);     // sub-module
 #endif
-#ifdef USE_I2C
-    be_load_wirelib(vm);
-    be_load_I2C_Driver_class(vm);
-    be_load_AXP192_class(vm);
-#endif // USE_I2C
 #ifdef USE_ENERGY_SENSOR
-    be_load_ctypes_energy_definitions_lib(vm);
+    be_load_ctypes_energy_definitions_lib(vm);      // ctype class
 #endif // USE_ENERGY_SENSOR
-#ifdef USE_WEBCLIENT
-    be_load_webclient_lib(vm);
-    be_load_tcpclient_lib(vm);
-    be_load_udp_lib(vm);
-#endif // USE_WEBCLIENT
-#if defined(USE_ONEWIRE) || defined(USE_DS18x20)
-    be_load_onewirelib(vm);
-#endif
-#ifdef USE_WS2812
-    be_load_Leds_ntv_class(vm);
-    be_load_Leds_class(vm);
-    be_load_Leds_animator_class(vm);
-#endif // USE_WS2812
-#ifdef USE_I2S_AUDIO_BERRY
-    be_load_driver_audio_lib(vm);
-    be_load_driver_audio_opus_decoder(vm);
-#endif
-#ifdef USE_LVGL
-    // LVGL
-    be_load_lvgl_classes(vm);
-    // custom widgets
-    be_load_lv_signal_bars_class(vm);
-    be_load_lv_wifi_bars_class(vm);
-    be_load_lv_wifi_bars_icon_class(vm);
-    be_load_lv_signal_arcs_class(vm);
-    be_load_lv_wifi_arcs_class(vm);
-    be_load_lv_wifi_arcs_icon_class(vm);
-    be_load_lv_clock_icon_class(vm);
-#endif // USE_LVGL
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
     be_load_MI32_class(vm);
     be_load_BLE_class(vm);
 #endif //USE_MI_ESP32
 }
-#endif

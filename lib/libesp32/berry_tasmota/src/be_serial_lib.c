@@ -17,17 +17,11 @@ extern int b_serial_read(bvm *vm);
 extern int b_serial_available(bvm *vm);
 extern int b_serial_flush(bvm *vm);
 
-#include "be_fixed_be_class_tasmota_serial.h"
-
-void be_load_serial_lib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_tasmota_serial);
-    be_setglobal(vm, "serial");
-    be_pop(vm, 1);
-}
+#include "be_fixed_be_class_serial.h"
 
 /* @const_object_info_begin
 
-class be_class_tasmota_serial (scope: global, name: serial) {
+class be_class_serial (scope: global, name: serial) {
     .p, var
 
     SERIAL_5N1, int(SERIAL_5N1)

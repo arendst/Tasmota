@@ -1,6 +1,6 @@
 #include "be_constobj.h"
 
-static be_define_const_map_slots(be_class_tasmota_onewire_map) {
+static be_define_const_map_slots(be_class_OneWire_map) {
     { be_const_key(reset, -1), be_const_func(b_onewire_reset) },
     { be_const_key(search, 10), be_const_func(b_onewire_search) },
     { be_const_key(depower, -1), be_const_func(b_onewire_depower) },
@@ -16,12 +16,12 @@ static be_define_const_map_slots(be_class_tasmota_onewire_map) {
 };
 
 static be_define_const_map(
-    be_class_tasmota_onewire_map,
+    be_class_OneWire_map,
     12
 );
 
 BE_EXPORT_VARIABLE be_define_const_class(
-    be_class_tasmota_onewire,
+    be_class_OneWire,
     1,
     NULL,
     OneWire

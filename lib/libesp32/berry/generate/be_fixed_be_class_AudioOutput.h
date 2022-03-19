@@ -1,6 +1,6 @@
 #include "be_constobj.h"
 
-static be_define_const_map_slots(be_class_audio_output_map) {
+static be_define_const_map_slots(be_class_AudioOutput_map) {
     { be_const_key(set_bits_per_sample, -1), be_const_func(be_audio_output_set_bits_per_sample) },
     { be_const_key(flush, -1), be_const_func(be_audio_output_flush) },
     { be_const_key(consume_stereo, -1), be_const_func(be_audio_output_consume_stereo) },
@@ -16,12 +16,12 @@ static be_define_const_map_slots(be_class_audio_output_map) {
 };
 
 static be_define_const_map(
-    be_class_audio_output_map,
+    be_class_AudioOutput_map,
     12
 );
 
 BE_EXPORT_VARIABLE be_define_const_class(
-    be_class_audio_output,
+    be_class_AudioOutput,
     1,
     NULL,
     AudioOutput
