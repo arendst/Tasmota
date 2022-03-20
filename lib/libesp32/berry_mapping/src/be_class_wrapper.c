@@ -216,7 +216,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
   if (provided_type) {
     bbool type_ok = bfalse;
     type_ok = (arg_type[0] == '.');                           // any type is accepted
-    type_ok = type_ok || (arg_type[0] == provided_type);      // or type is a match
+    type_ok = type_ok || (arg_type[0] == provided_type && arg_type[1] == 0);      // or type is a match (single char only)
     type_ok = type_ok || (ret == 0 && arg_type_len != 1);     // or NULL is accepted for an instance
     
     if (!type_ok) {
