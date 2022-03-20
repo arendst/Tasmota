@@ -85,7 +85,6 @@ struct pmsX003data {
 
 size_t PmsSendCmd(uint8_t command_id)
 {
-  delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
   return PmsSerial->write(kPmsCommands[command_id], sizeof(kPmsCommands[command_id]));
 }
 
@@ -185,11 +184,13 @@ bool PmsCommandSensor(void)
       Pms.wake_mode = 1;
       Pms.ready = 1;
       PmsSendCmd(CMD_MODE_ACTIVE);
+      delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
       PmsSendCmd(CMD_WAKEUP);
     } else {
       // Set Passive Mode and schedule read once per interval time
       Settings->pms_wake_interval = XdrvMailbox.payload;
       PmsSendCmd(CMD_MODE_PASSIVE);
+      delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
       PmsSendCmd(CMD_SLEEP);
       Pms.wake_mode = 0;
       Pms.ready = 0;
@@ -219,6 +220,7 @@ void PmsSecond(void)                 // Every second
       if (!Pms.ready) {
         // the first value is always incorrect, so read it and ask for new
         PmsReadData();
+        delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
         PmsSendCmd(CMD_READ_DATA);
       }
       Pms.ready = 1;
@@ -230,6 +232,7 @@ void PmsSecond(void)                 // Every second
     if (PmsReadData()) {
       Pms.valid = 10;
       if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
         PmsSendCmd(CMD_SLEEP);
         Pms.wake_mode = 0;
         Pms.ready = 0;
@@ -238,10 +241,12 @@ void PmsSecond(void)                 // Every second
       if (Pms.valid) {
         Pms.valid--;
         if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+          delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
           PmsSendCmd(CMD_READ_DATA);
           Pms.ready = 1;
         }
       } else if (Settings->pms_wake_interval >= MIN_INTERVAL_PERIOD) {
+        delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
         PmsSendCmd(CMD_SLEEP);
         Pms.wake_mode = 0;
         Pms.ready = 0;
@@ -272,6 +277,7 @@ void PmsInit(void)
       } else {
         // Active Mode
         PmsSendCmd(CMD_MODE_ACTIVE);
+        delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
         PmsSendCmd(CMD_WAKEUP);
         Pms.wake_mode = 1;
         Pms.ready = 1;
@@ -288,6 +294,7 @@ void Pms_EnterSleep(void)
 {
   if (DeepSleepEnabled()) {
     PmsSendCmd(CMD_MODE_PASSIVE);
+    delay(50); // sensor sometimes miss the command if multiple are send in short time, so wait 50 before that
     PmsSendCmd(CMD_SLEEP);
     Pms.wake_mode = 0;
     Pms.ready = 0;
