@@ -2589,7 +2589,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     get_power, func(l_getpower)
     set_power, func(l_setpower)
-    get_switch, func(l_getswitch)
+    get_switch, func(l_getswitch)     // depraceted
+    get_switches, func(l_getswitch)
 
     i2c_enabled, func(l_i2cenabled)
 
