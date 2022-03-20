@@ -99,6 +99,25 @@ static bclass *find_class_closure(bclass *cl, bclosure *needle)
     return NULL;  /* not found */
 }
 
+static bbool obj2int(bvm *vm, bvalue *var, bint *val)
+{
+    binstance *obj = var_toobj(var);
+    bstring *toint = str_literal(vm, "toint");
+    /* get operator method */
+    // TODO what if `tobool` is static
+    int type = be_instance_member(vm, obj, toint, vm->top);
+    if (type != BE_NONE && type != BE_NIL) {
+        vm->top[1] = *var; /* move self to argv[0] */
+        be_dofunc(vm, vm->top, 1); /* call method 'tobool' */
+        /* check the return value */
+        if (var_isint(vm->top)) {
+            *val = var_toint(vm->top);
+            return btrue;
+        }
+    }
+    return bfalse;
+}
+
 static int l_super(bvm *vm)
 {
     int argc = be_top(vm);
@@ -236,6 +255,15 @@ static int l_int(bvm *vm)
         } else if (be_iscomptr(vm, 1)) {
             intptr_t p = (intptr_t) be_tocomptr(vm, 1);
             be_pushint(vm, (int) p);
+        } else if (be_isinstance(vm, 1)) {
+            /* try to call `toint` method */
+            bvalue *v = be_indexof(vm, 1);
+            bint val;
+            if (obj2int(vm, v, &val)) {
+                be_pushint(vm, val);
+            } else {
+                be_return_nil(vm);
+            }
         } else {
             be_return_nil(vm);
         }

@@ -1248,6 +1248,18 @@ static void do_ntvfunc(bvm *vm, int pos, int argc)
     ret_native(vm);
 }
 
+static void do_cfunc(bvm *vm, int pos, int argc)
+{
+    if (vm->ctypefunc) {
+        const void* args = var_toobj(vm->reg + pos);
+        push_native(vm, vm->reg + pos, argc, 0);
+        vm->ctypefunc(vm, args);
+        ret_native(vm);
+    } else {
+        vm_error(vm, "internal_error", "missing ctype_func handler");
+    }
+}
+
 static void do_class(bvm *vm, int pos, int argc)
 {
     if (be_class_newobj(vm, var_toobj(vm->reg + pos), pos, ++argc, 0)) {
@@ -1268,6 +1280,7 @@ void be_dofunc(bvm *vm, bvalue *v, int argc)
     case BE_CLOSURE: do_closure(vm, pos, argc); break;
     case BE_NTVCLOS: do_ntvclos(vm, pos, argc); break;
     case BE_NTVFUNC: do_ntvfunc(vm, pos, argc); break;
+    case BE_CTYPE_FUNC: do_cfunc(vm, pos, argc); break;
     default: call_error(vm, v);
     }
 }
