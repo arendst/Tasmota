@@ -168,19 +168,27 @@ int lv_x_member(bvm *vm) {
   be_raise(vm, "type_error", NULL);
 }
 
-// lv_color
-// First arg is a 24 bits RGB color
-// If first arg is `nil` second arg is the native value of color
+// lv_color - constructor
+//
+// Supports either new initialization taking 24 bits RGB
+// or an existing color using native enconding
+//
+// Arg1 - the instance of the new lv_color object created
+// Arg2 - 1/ if `int` then color is 24 bits 0xRRGGBB
+//        2/ if `comptr` then color is native format (probably 16 bits)
+//        3/ if no Arg2, color is 0x000000 (black)
 int lco_init(bvm *vm) {
   int argc = be_top(vm);
+  lv_color_t lv_color = {};       // default value is all zeroes (black)
+
   uint32_t color32 = 0x000000;    // default to black
 
   if (argc > 1) {
-    color32 = be_toint(vm, 2);
-  }
-  lv_color_t lv_color = lv_color_hex(color32);
-  if (argc > 2 && be_toint(vm, 3) == -1) {
-    lv_color.full = be_toint(vm, 2);
+    if (be_isint(vm, 2)) {        // color is RGB 24 bits
+      lv_color = lv_color_hex(be_toint(vm, 2));
+    } else if (be_iscomptr(vm, 2)) {
+      lv_color.full = (intptr_t) be_tocomptr(vm, 2);
+    }
   }
   be_pushint(vm, lv_color_to_uint32(lv_color));
   be_setmember(vm, 1, "_p");
