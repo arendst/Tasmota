@@ -52,11 +52,6 @@ be_extern_native_module(lv_extra);
 be_extern_native_module(lv_tasmota);
 #endif // USE_LVGL
 
-#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
-extern void be_load_MI32_class(bvm *vm);
-extern void be_load_BLE_class(bvm *vm);
-#endif //USE_MI_ESP32
-
 /* user-defined modules declare start */
 
 /* user-defined modules declare end */
@@ -178,6 +173,9 @@ be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
+// BLE
+be_extern_native_class(MI32);
+be_extern_native_class(BLE);
 // LVGL core classes
 be_extern_native_class(lv_color);
 be_extern_native_class(lv_font);
@@ -248,6 +246,10 @@ BERRY_LOCAL bclass_array be_class_table = {
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
 #endif // USE_I2S_AUDIO_BERRY
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+    &be_native_class(MI32),
+    &be_native_class(BLE),
+#endif //USE_MI_ESP32
     NULL, /* do not remove */
 };
 
@@ -269,8 +271,4 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #ifdef USE_ENERGY_SENSOR
     be_load_ctypes_energy_definitions_lib(vm);      // ctype class
 #endif // USE_ENERGY_SENSOR
-#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
-    be_load_MI32_class(vm);
-    be_load_BLE_class(vm);
-#endif //USE_MI_ESP32
 }
