@@ -833,6 +833,30 @@ static int m_get(bvm *vm, bbool sign)
     be_return_nil(vm);
 }
 
+/*
+ * Get a float (32 bits)
+ * `getfloat(index:int [, big_endian:bool]) -> real`
+ */
+static int m_getfloat(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
+    if (argc >=2 && be_isint(vm, 2)) {
+        int32_t idx = be_toint(vm, 2);
+        bbool be = bfalse;             /* little endian? */
+        if (argc >= 3) {
+            be = be_tobool(vm, 3);
+        }
+        int32_t ret_i = be ? buf_get4_be(&attr, idx) : buf_get4_le(&attr, idx);
+        float* ret_f = (float*) &ret_i;
+        be_pop(vm, argc - 1);
+        be_pushreal(vm, *ret_f);
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
 /* signed int */
 static int m_geti(bvm *vm)
 {
@@ -875,6 +899,32 @@ static int m_set(bvm *vm)
             case -4:    buf_set4_be(&attr, idx, value);   break;
             default:    be_raise(vm, "type_error", "size must be -4, -2, -1, 0, 1, 2 or 4.");
         }
+        be_pop(vm, argc - 1);
+        m_write_attributes(vm, 1, &attr);  /* update attributes */
+        be_return_nil(vm);
+    }
+    be_return_nil(vm);
+}
+
+/*
+ * Set a 32 bits float
+ * `setfloat(index:int, value:real or int [, big_endian:bool]) -> nil`
+ * 
+ */
+static int m_setfloat(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
+    if (argc >=3 && be_isint(vm, 2) && (be_isint(vm, 3) || be_isreal(vm, 3))) {
+        int32_t idx = be_toint(vm, 2);
+        float val_f = (float) be_toreal(vm, 3);
+        int32_t* val_i = (int32_t*) &val_f;
+        bbool be = bfalse;
+        if (argc >= 4) {
+            be = be_tobool(vm, 4);
+        }
+        if (be) { buf_set4_be(&attr, idx, *val_i); } else { buf_set4_le(&attr, idx, *val_i); }
         be_pop(vm, argc - 1);
         m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return_nil(vm);
@@ -1489,6 +1539,8 @@ class be_class_bytes (scope: global, name: bytes) {
     add, func(m_add)
     get, func(m_getu)
     geti, func(m_geti)
+    getfloat, func(m_getfloat)
+    setfloat, func(m_setfloat)
     set, func(m_set)
     seti, func(m_set)
     item, func(m_item)

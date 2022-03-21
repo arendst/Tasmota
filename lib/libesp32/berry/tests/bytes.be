@@ -183,3 +183,41 @@ assert(b[5..10] == bytes("5566778899AA"))
 assert(b[-10..-5] == bytes("66778899AABB"))
 assert(b[5..-10] == bytes("5566"))
 assert(b[7..-12] == bytes())
+
+#- floats little endian -#
+b = bytes("00000000")
+b.setfloat(0, 0)
+assert(b == bytes("00000000"))
+b.setfloat(0, 1)
+assert(b == bytes("0000803F"))
+b.setfloat(0, -1)
+assert(b == bytes("000080BF"))
+b.setfloat(0, 3.5)
+assert(b == bytes("00006040"))
+import math
+b.setfloat(0, math.nan)
+assert(b == bytes("0000C07F"))
+
+assert(bytes("00000000").getfloat(0) == 0)
+assert(bytes("0000803F").getfloat(0) == 1)
+assert(bytes("000080BF").getfloat(0) == -1)
+assert(bytes("00006040").getfloat(0) == 3.5)
+
+#- floats big endian -#
+b = bytes("00000000")
+b.setfloat(0, 0, true)
+assert(b == bytes("00000000"))
+b.setfloat(0, 1, true)
+assert(b == bytes("3F800000"))
+b.setfloat(0, -1, true)
+assert(b == bytes("BF800000"))
+b.setfloat(0, 3.5, true)
+assert(b == bytes("40600000"))
+import math
+b.setfloat(0, math.nan, true)
+assert(b == bytes("7FC00000"))
+
+assert(bytes("00000000").getfloat(0, true) == 0)
+assert(bytes("3F800000").getfloat(0, true) == 1)
+assert(bytes("BF800000").getfloat(0, true) == -1)
+assert(bytes("40600000").getfloat(0, true) == 3.5)
