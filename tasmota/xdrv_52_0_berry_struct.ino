@@ -26,6 +26,10 @@
 #include "be_mapping.h"
 #include "re1.5.h"
 
+#ifdef USE_BERRY_INT64
+  #include "be_int64.h"
+#endif
+
 /*********************************************************************************************\
  * Logging for Tasmota Berry console
  *

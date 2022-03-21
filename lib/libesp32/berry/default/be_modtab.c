@@ -189,6 +189,8 @@ be_extern_native_class(lv_wifi_arcs);
 be_extern_native_class(lv_wifi_arcs_icon);
 be_extern_native_class(lv_clock_icon);
 
+be_extern_native_class(int64);
+
 BERRY_LOCAL bclass_array be_class_table = {
     /* first list are direct classes */
     &be_native_class(tasmota),
@@ -246,6 +248,9 @@ BERRY_LOCAL bclass_array be_class_table = {
 #endif // USE_UFILESYS
     &be_native_class(AudioOpusDecoder),
 #endif // USE_I2S_AUDIO_BERRY
+#ifdef USE_BERRY_INT64
+    &be_native_class(int64),
+#endif
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
     &be_native_class(MI32),
     &be_native_class(BLE),
