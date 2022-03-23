@@ -702,6 +702,12 @@ void lv_spinbox_decrement(lv_obj_t * obj)
 // ../../lvgl/src/extra/widgets/spinner/lv_spinner.h
 lv_obj_t * lv_spinner_create(lv_obj_t * parent, uint32_t time, uint32_t arc_length)
 
+// ../../lvgl/src/font/lv_font.h
+const uint8_t * lv_font_get_glyph_bitmap(const lv_font_t * font_p, uint32_t letter)
+bool lv_font_get_glyph_dsc(const lv_font_t * font_p, lv_font_glyph_dsc_t * dsc_out, uint32_t letter, uint32_t letter_next)
+uint16_t lv_font_get_glyph_width(const lv_font_t * font, uint32_t letter, uint32_t letter_next)
+static inline lv_coord_t lv_font_get_line_height(const lv_font_t * font_p)
+
 // ../../lvgl/src/lv_api_map.h
 static inline uint32_t lv_task_handler(void)
 static inline void lv_obj_move_foreground(lv_obj_t * obj)
