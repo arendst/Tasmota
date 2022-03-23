@@ -74,6 +74,7 @@ lv_fun_globs = [
                   "misc/lv_math.h",
                   "misc/lv_area.h",
                   "misc/lv_timer.h",
+                  "font/lv_font.h",
                   #"**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
