@@ -98,7 +98,7 @@ be_define_const_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s
 be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X29, "BRY: failed to load '%s' (%s)", 54995609u, 0, 29, NULL);
 be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson, "BRY: failed to load _persist.json", 2991913445u, 0, 33, &be_const_str__change_buffer);
 be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20compiled_X20_X27_X25s_X27_X20_X28_X25s_X29, "BRY: failed to load compiled '%s' (%s)", 3488122666u, 0, 38, &be_const_str_isnan);
-be_define_const_str(BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code, "BRY: failed to run compiled code", 4039762049u, 0, 32, &be_const_str_collect);
+be_define_const_str(BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code_X20_X27_X25s_X27_X20_X2D_X20_X25s, "BRY: failed to run compiled code '%s' - %s", 380265962u, 0, 42, &be_const_str_obj);
 be_define_const_str(BRY_X3A_X20invalid_X20hue_X20payload_X3A_X20, "BRY: invalid hue payload: ", 203709367u, 0, 26, &be_const_str_add_handler);
 be_define_const_str(BRY_X3A_X20method_X20not_X20allowed_X2C_X20use_X20a_X20closure_X20like_X20_X27_X2F_X20args_X20_X2D_X3E_X20obj_X2Efunc_X28args_X29_X27, "BRY: method not allowed, use a closure like '/ args -> obj.func(args)'", 177121572u, 0, 70, &be_const_str_copy);
 be_define_const_str(BUTTON_CONFIGURATION, "BUTTON_CONFIGURATION", 70820856u, 0, 20, &be_const_str_pc_rel);
@@ -1281,14 +1281,14 @@ static const bstring* const m_string_table[] = {
     NULL,
     (const bstring *)&be_const_str_manuf,
     (const bstring *)&be_const_str__X2F_X2Eautoconf,
-    (const bstring *)&be_const_str_obj,
+    (const bstring *)&be_const_str_BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code_X20_X27_X25s_X27_X20_X2D_X20_X25s,
     (const bstring *)&be_const_str_RGBCT,
     NULL,
     (const bstring *)&be_const_str_Animate_X20pc_X20is_X20out_X20of_X20range,
     (const bstring *)&be_const_str__X2F,
     (const bstring *)&be_const_str_lv_signal_bars,
     (const bstring *)&be_const_str__X2Eautoconf,
-    (const bstring *)&be_const_str_BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code,
+    (const bstring *)&be_const_str_collect,
     (const bstring *)&be_const_str__X2Ew,
     (const bstring *)&be_const_str_gamma10,
     (const bstring *)&be_const_str_add,
