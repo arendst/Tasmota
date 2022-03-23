@@ -478,8 +478,9 @@ class Tasmota
         try
           compiled_code()
           return true
-        except .. as e
-          print('BRY: failed to run compiled code')
+        except .. as e, m
+          import string
+          print(string.format("BRY: failed to run compiled code '%s' - %s", e, m))
         end
       end
       return false
