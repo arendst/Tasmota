@@ -254,6 +254,7 @@ extern "C" {
     { 28, &seg7_28 },
     { 36, &seg7_36 },
     { 48, &seg7_48 },
+    { 0, nullptr}
   };
 
   // robotocondensed-latin1
@@ -297,6 +298,7 @@ extern "C" {
 #if ROBOTOCONDENSED_REGULAR_48_LATIN1
     { 48, &robotocondensed_regular_48_latin1 },
 #endif
+    { 0, nullptr}
   };
 
   // register all included fonts
