@@ -830,7 +830,11 @@ void TuyaProcessStatePacket(void) {
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
             Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
-            MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
+            if (Settings->flag5.tuyasns_no_immediate) {
+              XdrvRulesProcess(0);
+            } else {
+              MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
+            }
           }
         }
 
