@@ -105,6 +105,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v11.0.0.4
 ### Added
+- Command ``SetOption135 1`` to disable LVGL splash screen
+- Command ``SetOption136 1`` to disable single sensor reports from Tuya devices while keeping teleperiod reports [#15216](https://github.com/arendst/Tasmota/issues/15216)
 - Command ``SspmMap 0`` to reset Sonoff SPM default mapping
 - Command ``TcpConnect <port><ip_address>`` to add client connection mode [#14874](https://github.com/arendst/Tasmota/issues/14874)
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 [#15061](https://github.com/arendst/Tasmota/issues/15061)

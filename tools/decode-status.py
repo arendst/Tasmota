@@ -188,7 +188,10 @@ a_setoption = [[
     "(Tuya) Allow save dimmer = 0 receved by MCU",
     "(TLS) Use fingerprint validation instead of CA based",
     "(Shift595) Invert outputs of 74x595 shift registers",
-    "","","","",
+    "(PWM) force PWM lights to start at same phase, default is to spread phases to minimze overlap (also needed for H-bridge)",
+    "(Display & LVGL) force disabling default splash screen",
+    "(TuyaSNS) When ON disable publish single SNS value on Tuya Receive (keep Teleperiod)",
+    "",
     "","","","",
     "","","",""
     ]]

@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 - Support for up to four DS3502 digital potentiometers with command ``Wiper<x> 0..127``
+- Command ``SetOption136 1`` to disable single sensor reports from Tuya devices while keeping teleperiod reports (#15216)
 
 ### Changed
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
