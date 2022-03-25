@@ -388,6 +388,8 @@ bool Ade7880Init(void) {
     Ade7880WriteVerify(ADE7880_APHCAL + phase, Ade7880.calib_angle[phase]);          // 0xE614
   }
   Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386
+  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386 - Multiple writes to store queued data
+  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386
   bool error = false;
   for (uint32_t phase = 0; phase < 3; phase++) {
     if (Ade7880ReadVerify(ADE7880_AVGAIN + (phase * 2)) != (Ade7880.calib_voltage[phase] & 0x0FFFFFFF)) { error = true; }
@@ -406,7 +408,8 @@ bool Ade7880Init(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting LCYCMODE register"));
     return false;
   }
-  if (!Ade7880WriteVerify(ADE7880_LINECYC, 0x0064)) {                      // 0xE60C - = 100
+  uint32_t line_cycle = (Ade7880.calib_frequency) ? 120 : 100;             // Either 60Hz or 50Hz to have 1 second interrupts
+  if (!Ade7880WriteVerify(ADE7880_LINECYC, line_cycle)) {                  // 0xE60C - = 100
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting LINECYC register"));
     return false;
   }
@@ -659,6 +662,19 @@ bool Ade7880Command(void) {
     // EnergyConfig {"rms":{"voltage_c":-549854}}
     // EnergyCOnfig {"freq":0}
     if (XdrvMailbox.data_len) {
+#ifdef ADE7880_DEBUG
+      if ('1' == XdrvMailbox.data[0]) {
+        char data[600] = { 0 };
+        for (uint32_t i = 0; i < 57; i++) {
+          int32_t value = Ade7880Read(ADE7880_AIGAIN + i);
+//          snprintf_P(data, sizeof(data), PSTR("%s%s%08X"), data, (i)?",":"", value);
+          if (bitRead(value, 27)) { value |= 0xF0000000; }  // Make negative
+          snprintf_P(data, sizeof(data), PSTR("%s%s%d"), data, (i)?",":"", value);
+        }
+        AddLog(LOG_LEVEL_DEBUG, PSTR("A78: DSP Regs 0x4380..B9 '%s'"), data);
+        return true;
+      }
+#endif  // ADE7880_DEBUG
       Ade7880Defaults();                      // Load defaults
       if (Ade7880SetDefaults(XdrvMailbox.data)) {
         bool status = Ade7880SetCalibrate();
