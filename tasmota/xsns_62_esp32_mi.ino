@@ -22,6 +22,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.5.4 20220325  changed - add Berry adv_watch and adv_block to BLE class
+  -------  
   0.9.5.3 20220315  changed - reworked Berry part, active scanning and holding active connections possible, new format of advertisement buffer
   -------  
   0.9.5.1 20220209  changed - rename YEERC to YLYK01, add dimmer YLKG08 (incl. YLKG07), change button report scheme
@@ -707,6 +709,33 @@ extern "C" {
     MI32.beAdvBuf = buffer;
   }
 
+  bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type){
+    NimBLEDevice::addIgnored(NimBLEAddress(MAC,type));
+    return NimBLEDevice::isIgnored(NimBLEAddress(MAC,type));
+  }
+
+  bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type){
+    NimBLEAddress _newAddress = NimBLEAddress(MAC,type);
+    if(MI32Scan==nullptr){
+      if(!NimBLEDevice::whiteListAdd(_newAddress)){
+        return false;
+      }
+    }
+    else{
+      bool _runningScan = MI32Scan->stop();
+      if(NimBLEDevice::whiteListAdd(_newAddress)){
+        MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL);
+        if(_runningScan) MI32Scan->start(0, MI32scanEndedCB, false);
+      }
+      else {
+        if(_runningScan) MI32Scan->start(0, MI32scanEndedCB, false);
+        return false;
+      }
+    }
+    AddLog(LOG_LEVEL_INFO,PSTR("M32: add %s to watchlist of size: %u"),_newAddress.toString().c_str(),NimBLEDevice::getWhiteListCount());
+    return true;
+  }
+
   void MI32setBatteryForSlot(uint32_t slot, uint8_t value){
     if(slot>MIBLEsensors.size()-1) return;
     if(MIBLEsensors[slot].feature.bat){
@@ -1017,9 +1046,15 @@ void MI32ScanTask(void *pvParameters){
   MI32Scan->setInterval(70);
   MI32Scan->setWindow(50);
   MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks,true);
+  if(NimBLEDevice::getWhiteListCount()>0){
+    MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL); 
+  }
+  else {
+    MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_NO_WL);
+  }
   MI32Scan->setActiveScan(MI32.option.activeScan);
   MI32Scan->setMaxResults(0);
-  MI32Scan->start(0, MI32scanEndedCB, true); // never stop scanning, will pause automatically while connecting
+  MI32Scan->start(0, MI32scanEndedCB, false); // never stop scanning, will pause automatically while connecting
   MI32.infoMsg = MI32_START_SCANNING;
   
   uint32_t timer = 0;
