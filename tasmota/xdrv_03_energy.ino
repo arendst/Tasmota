@@ -854,6 +854,7 @@ void CmndModuleAddress(void) {
 void CmndEnergyConfig(void) {
   Energy.command_code = CMND_ENERGYCONFIG;
   if (XnrgCall(FUNC_COMMAND)) {
+    ResponseClear();
     if (!ResponseLength()) {
       ResponseCmndDone();
     }
