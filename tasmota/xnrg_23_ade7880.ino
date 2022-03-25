@@ -14,7 +14,7 @@
  *
  * {"NAME":"Shelly 3EM","GPIO":[1,1,288,1,32,8065,0,0,640,8064,608,224,8096,0],"FLAG":0,"BASE":18}
  *
- * Based on datasheet from https://www.analog.com/en/products/ade7880.html
+ * Based on datasheet from https://www.analog.com/en/products/ade7880.html Rev.C
  *
  * I2C Address: 0x38
  *********************************************************************************************
@@ -36,8 +36,6 @@
 
 /*********************************************************************************************/
 
-#define ADE7880_ENERGY_OPTION                // Use energy pulse for calculation energy usage
-
 //#define ADE7880_DEBUG
 //#define ADE7880_PROFILING
 
@@ -58,6 +56,8 @@
 #define ADE7880_CPGAIN_INIT     -1351979     // powers, totactive, c
 
 enum Ade7880DspRegisters {
+  // Register Name                    Addres  R/W  Bt  CommBln  Ty  Default     Description
+  // ----------------------------     ------  ---  --  -------  --  ----------  --------------------------------------------------------------------
   ADE7880_AIGAIN = 0x4380,         // 0x4380  R/W  24  32 ZPSE  S   0x000000    Phase A current gain adjust.
   ADE7880_AVGAIN,                  // 0x4381  R/W  24  32 ZPSE  S   0x000000    Phase A voltage gain adjust.
   ADE7880_BIGAIN,                  // 0x4382  R/W  24  32 ZPSE  S   0x000000    Phase B current gain adjust.
@@ -252,7 +252,6 @@ enum Ade7880PowerQualityRegisters {
 };
 
 struct Ade7880 {
-  int32_t active_energy[3];
   int32_t calib_current[4];
   int32_t calib_voltage[3];
   int32_t calib_acpower[3];
@@ -381,15 +380,17 @@ bool Ade7880Init(void) {
   if (Ade7880.calib_frequency) {
     Ade7880WriteVerify(ADE7880_COMPMODE, 0x41FF);                          // 0xE60E - Connected to networks with fundamental frequencies between 55 Hz and 66 Hz. Default is 45 Hz and 55 Hz.
   }
+
   for (uint32_t phase = 0; phase < 3; phase++) {
     Ade7880WriteVerify(ADE7880_AVGAIN + (phase * 2), Ade7880.calib_voltage[phase]);  // 0x4381
     Ade7880WriteVerify(ADE7880_AIGAIN + (phase * 2), Ade7880.calib_current[phase]);  // 0x4380
     Ade7880WriteVerify(ADE7880_APGAIN + (phase * 2), Ade7880.calib_acpower[phase]);  // 0x4389
     Ade7880WriteVerify(ADE7880_APHCAL + phase, Ade7880.calib_angle[phase]);          // 0xE614
   }
-  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386
-  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386 - Multiple writes to store queued data
-  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);                      // 0x4386
+  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);            // 0x4386
+  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);            // 0x4386 - Write last data memory RAM three times (page 40)
+  Ade7880WriteVerify(ADE7880_NIGAIN, Ade7880.calib_current[3]);            // 0x4386
+
   bool error = false;
   for (uint32_t phase = 0; phase < 3; phase++) {
     if (Ade7880ReadVerify(ADE7880_AVGAIN + (phase * 2)) != (Ade7880.calib_voltage[phase] & 0x0FFFFFFF)) { error = true; }
@@ -402,6 +403,7 @@ bool Ade7880Init(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error initializing parameters"));
     return false;
   }
+
   if (!Ade7880WriteVerify(ADE7880_LCYCMODE, 0x09)) {                       // 0xE702 - Line cycle accumulation mode
                                                                            // - Watt-hour accumulation registers (AWATTHR, BWATTHR, CWATTHR, AFWATTHR, BFWATTHR, and CFWATTHR) are placed into line cycle accumulation mode.
                                                                            // - Phase A is selected for zero-crossings counts in the line cycle accumulation mode.
@@ -418,8 +420,6 @@ bool Ade7880Init(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error setting MASK0 register"));
     return false;
   }
-  Ade7880Write(ADE7880_MASK0, 0x00000020);                                 // 0xE50A
-  Ade7880Write(ADE7880_MASK0, 0x00000020);                                 // 0xE50A
   Ade7880Write(ADE7880_MASK0, 0x00000020);                                 // 0xE50A
   Ade7880Write(ADE7880_DSPWP_SEL, 0xAD);                                   // 0xE7FE - Select DSP write protection
   Ade7880Write(ADE7880_DSPWP_SET, 0x80);                                   // 0xE7E3 - Write protect DSP area
@@ -448,7 +448,7 @@ bool Ade7880SetCalibrate(void) {
 
   Ade7880.cycle_count = 2;                                                 // Skip first two cycles
 
-  uint32_t timeout = millis() + 40;                                        // Should be reset within 10 ms
+  uint32_t timeout = millis() + 100;                                       // Should be reset within 10 ms
   while (!TimeReached(timeout)) {                                          // Wait up to 100 ms
     if (!digitalRead(Pin(GPIO_ADE7880_IRQ, 1))) {
 
@@ -485,20 +485,19 @@ void Ade7880Cycle(void) {
   }
   for (uint32_t phase = 0; phase < 3; phase++) {
     Energy.data_valid[phase] = 0;
-    Energy.voltage[phase] = (float)Ade7880ReadVerify(ADE7880_AVRMS + (phase * 2)) / 10000;     // 0x43C1 - 0x0024CC94 = 241.1668 V
-    Energy.current[phase] = (float)Ade7880ReadVerify(ADE7880_AIRMS + (phase * 2)) / 100000;    // 0x43C0 - 0x00002D6D = 0.11629 A
-    Energy.active_power[phase] = (float)Ade7880ReadVerify(ADE7880_AWATT + phase) / 100;        // 0xE513 - 0xFFFFF524 = -27.79 W
-    Energy.apparent_power[phase] = (float)Ade7880ReadVerify(ADE7880_AVA + phase) / 100;        // 0xE519 - 0xFFFFF50D
-    Energy.frequency[phase] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD + phase);          // 0xE905 - Page 34 and based on ADE7880_FREQ_INIT
-    Ade7880.active_energy[phase] = Ade7880ReadVerify(ADE7880_AWATTHR + phase);                 // 0xE400 - 0xFFFFFF8F = -0.112
-#ifdef ADE7880_ENERGY_OPTION
-    if (Ade7880.active_energy[phase] != 0) {
-      // Suppose constant load during period of 100 periods as set by ADE7880_LINECYC disregards load change inbetween.
+    Energy.voltage[phase] = (float)Ade7880ReadVerify(ADE7880_AVRMS + (phase * 2)) / 10000;   // 0x43C1 - 0x0024CC94 = 241.1668 V
+    Energy.current[phase] = (float)Ade7880ReadVerify(ADE7880_AIRMS + (phase * 2)) / 100000;  // 0x43C0 - 0x00002D6D = 0.11629 A
+    Energy.active_power[phase] = (float)Ade7880ReadVerify(ADE7880_AWATT + phase) / 100;      // 0xE513 - 0xFFFFF524 = -27.79 W
+    Energy.apparent_power[phase] = (float)Ade7880ReadVerify(ADE7880_AVA + phase) / 100;      // 0xE519 - 0xFFFFF50D
+    Energy.frequency[phase] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD + phase);        // 0xE905 - Page 34 and based on ADE7880_FREQ_INIT
+    int32_t active_energy = Ade7880ReadVerify(ADE7880_AWATTHR + phase);                      // 0xE400 - 0xFFFFFF8F = -0.112
+    if (active_energy != 0) {
+      // Suppose constant load during period of 100/120 periods as set by ADE7880_LINECYC disregards load change inbetween.
       // ADE7880_AWATT = 6713 = 67,13 W
       // 67,13 * 1000 / 36 = 1864 decaWh
 //      Energy.kWhtoday_delta[phase] += Energy.active_power[phase] * 1000 / 36;
 
-      // By measuring load 1024000 times/second load change in 100 periods can be accounted for.
+      // By measuring load 1024000 times/second load change in 100/120 periods can be accounted for.
       // ADE7880_AWATT = 6713 = 67,13 W
       // ADE7880_AWATTHR = 273
       // AWATT multiplier is 16 (Figure 77)
@@ -510,13 +509,10 @@ void Ade7880Cycle(void) {
       // 273 * 402653184 / 16384000 = 6709 = 67,09W * 1000 / 36 = 1863 decaWh (Tasmota needs decaWh)
       // 273 * 402653184 / 16384 = 6709248 = 67092,48W / 3600 = 1863 decaWh
       // 273 * 24576 = 6709248 / 3600 = 1863 decaWh
-      Energy.kWhtoday_delta[phase] += Ade7880.active_energy[phase] * 24576 / 3600;
+      Energy.kWhtoday_delta[phase] += active_energy * 24576 / 3600;
     }
-#endif  // ADE7880_ENERGY_OPTION
   }
   EnergyUpdateToday();
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("A78: WattHr %d/%d/%d"), Ade7880.active_energy[0], Ade7880.active_energy[1], Ade7880.active_energy[2]);
 
 #ifdef ADE7880_PROFILING
   AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Cycle in %d ms"), millis() - start);
@@ -539,17 +535,6 @@ void IRAM_ATTR Ade7880Isr0(void) {
 }
 
 /*********************************************************************************************/
-
-#ifndef ADE7880_ENERGY_OPTION
-void Ade7880EnergyEverySecond(void) {
-  for (uint32_t i = 0; i < 3; i++) {
-    if (Ade7880.active_energy[i] != 0) {
-      Energy.kWhtoday_delta[i] += Energy.active_power[i] * 1000 / 36;
-    }
-  }
-  EnergyUpdateToday();
-}
-#endif  // Not ADE7880_ENERGY_OPTION
 
 bool Ade7880SetDefaults(const char* json) {
   // {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0}
@@ -658,17 +643,19 @@ bool Ade7880Command(void) {
   bool serviced = false;
 
   if (CMND_ENERGYCONFIG == Energy.command_code) {
+    // Non-pesistent settings
     // EnergyConfig {"rms":{"current_a":3166385,"current_b":3125691,"current_c":3131983,"current_s":1756557,"voltage_a":-767262,"voltage_b":-763439,"voltage_c":-749854},"angles":{"angle0":180,"angle1":176,"angle2":176},"powers":{"totactive": {"a":-1345820,"b":-1347328,"c":-1351979}},"freq":0}
     // EnergyConfig {"rms":{"voltage_c":-549854}}
-    // EnergyCOnfig {"freq":0}
+    // EnergyConfig {"freq":0}
     if (XdrvMailbox.data_len) {
 #ifdef ADE7880_DEBUG
       if ('1' == XdrvMailbox.data[0]) {
+        // EnergyConfig 1 - Dump DSP data memory (0x4380..0x43B9)
         char data[600] = { 0 };
         for (uint32_t i = 0; i < 57; i++) {
           int32_t value = Ade7880Read(ADE7880_AIGAIN + i);
 //          snprintf_P(data, sizeof(data), PSTR("%s%s%08X"), data, (i)?",":"", value);
-          if (bitRead(value, 27)) { value |= 0xF0000000; }  // Make negative
+          if (bitRead(value, 27)) { value |= 0xF0000000; }  // Make 32-bit negative (ZPSE)
           snprintf_P(data, sizeof(data), PSTR("%s%s%d"), data, (i)?",":"", value);
         }
         AddLog(LOG_LEVEL_DEBUG, PSTR("A78: DSP Regs 0x4380..B9 '%s'"), data);
@@ -709,11 +696,6 @@ bool Xnrg23(uint8_t function) {
     case FUNC_LOOP:
       if (Ade7880.irq0_state) { Ade7880Service0(); }
       break;
-#ifndef ADE7880_ENERGY_OPTION
-    case FUNC_ENERGY_EVERY_SECOND:
-      Ade7880EnergyEverySecond();
-      break;
-#endif  // Not ADE7880_ENERGY_OPTION
     case FUNC_COMMAND:
       result = Ade7880Command();
       break;
