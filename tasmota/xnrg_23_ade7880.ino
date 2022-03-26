@@ -397,11 +397,11 @@ bool Ade7880Init(void) {
   bool error = false;
   for (uint32_t phase = 0; phase < 3; phase++) {
     if (Ade7880ReadVerify(ADE7880_AVGAIN + (phase * 2)) != (Ade7880.calib_voltage[phase] & 0x0FFFFFFF)) { error = true; }
-    else if (Ade7880ReadVerify(ADE7880_AIGAIN + (phase * 2)) != Ade7880.calib_current[phase]) { error = true; }
+    else if (Ade7880ReadVerify(ADE7880_AIGAIN + (phase * 2)) != (Ade7880.calib_current[phase] & 0x0FFFFFFF)) { error = true; }
     else if (Ade7880ReadVerify(ADE7880_APGAIN + (phase * 2)) != (Ade7880.calib_acpower[phase] & 0x0FFFFFFF)) { error = true; }
     else if (Ade7880ReadVerify(ADE7880_APHCAL + phase) != (Ade7880.calib_angle[phase] & 0x00FF)) { error = true; }
   }
-  if (Ade7880ReadVerify(ADE7880_NIGAIN) != Ade7880.calib_current[3]) { error = true; }
+  if (Ade7880ReadVerify(ADE7880_NIGAIN) != (Ade7880.calib_current[3] & 0x0FFFFFFF)) { error = true; }
   if (error) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Error initializing parameters"));
     return false;
