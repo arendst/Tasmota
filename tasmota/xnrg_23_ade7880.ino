@@ -657,10 +657,26 @@ bool Ade7880Command(void) {
         for (uint32_t i = 0; i < 57; i++) {
           int32_t value = Ade7880Read(ADE7880_AIGAIN + i);
 //          snprintf_P(data, sizeof(data), PSTR("%s%s%08X"), data, (i)?",":"", value);
-          if (bitRead(value, 27)) { value |= 0xF0000000; }  // Make 32-bit negative (ZPSE)
+          if (bitRead(value, 27)) { value |= 0xF0000000; }  // Make 24-bit negative (ZPSE)
           snprintf_P(data, sizeof(data), PSTR("%s%s%d"), data, (i)?",":"", value);
         }
         AddLog(LOG_LEVEL_DEBUG, PSTR("A78: DSP Regs 0x4380..B9 '%s'"), data);
+        return true;
+      }
+      if ('2' == XdrvMailbox.data[0]) {
+        // EnergyConfig 2 - Dump DSP UI data memory (0x43C0..0x43C7)
+        char data[600] = { 0 };
+        for (uint32_t i = 0; i < 8; i++) {
+          int32_t value = Ade7880Read(ADE7880_AIRMS + i);
+          snprintf_P(data, sizeof(data), PSTR("%s%s%08X"), data, (i)?",":"", value);
+//          if (7 == i) {
+//            if (bitRead(value, 27)) { value |= 0xF0000000; }  // Make 28-bit negative (ZP)
+//          } else {
+//            if (bitRead(value, 23)) { value |= 0xFF000000; }  // Make 24-bit negative (ZP)
+//          }
+//          snprintf_P(data, sizeof(data), PSTR("%s%s%d"), data, (i)?",":"", value);
+        }
+        AddLog(LOG_LEVEL_DEBUG, PSTR("A78: DSP Regs 0x43C0..C7 '%s'"), data);
         return true;
       }
 #endif  // ADE7880_DEBUG
@@ -728,13 +744,11 @@ bool Xnrg23(uint8_t function) {
 #ifdef USE_WEBSERVER
 #ifdef USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_COL_SENSOR:
-      Ade7880Show(0);
-      break;
-#else  // not USE_ENERGY_COLUMN_GUI
+#else   // not USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_SENSOR:
+#endif  // USE_ENERGY_COLUMN_GUI
       Ade7880Show(0);
       break;
-#endif  // USE_ENERGY_COLUMN_GUI
 #endif  // USE_WEBSERVER
 #endif  // ADE7880_MORE_REGS
     case FUNC_COMMAND:

@@ -296,13 +296,11 @@ bool Xnrg13(uint8_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_COL_SENSOR:
-      FifLEShow(0);
-      break;
-#else  // not USE_ENERGY_COLUMN_GUI
+#else   // not USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_SENSOR:
+#endif  // USE_ENERGY_COLUMN_GUI
       FifLEShow(0);
       break;
-#endif  // USE_ENERGY_COLUMN_GUI
 #endif  // USE_WEBSERVER
     case FUNC_ENERGY_RESET:
       FifLEReset();

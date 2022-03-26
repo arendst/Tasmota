@@ -275,13 +275,11 @@ bool Xnrg08(uint8_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_COL_SENSOR:
-      Sdm220Show(0);
-      break;
-#else  // not USE_ENERGY_COLUMN_GUI
+#else   // not USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_SENSOR:
+#endif  // USE_ENERGY_COLUMN_GUI
       Sdm220Show(0);
       break;
-#endif  // USE_ENERGY_COLUMN_GUI
 #endif  // USE_WEBSERVER
     case FUNC_ENERGY_RESET:
       Sdm220Reset();
