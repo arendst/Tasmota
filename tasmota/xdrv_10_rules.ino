@@ -477,7 +477,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
       if ((index > 0) && (index <= MAX_TIMERS)) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), index);
         if (rule_param.startsWith(stemp)) {
-          rule_param = String(Settings->timer[index -1].time);
+          rule_param = String(TimerGetTimeOfDay(index -1));
         }
       }
     }
@@ -796,7 +796,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #if defined(USE_TIMERS)
       for (uint32_t i = 0; i < MAX_TIMERS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
-        RulesVarReplace(commands, stemp, String(Settings->timer[i].time));
+        RulesVarReplace(commands, stemp, String(TimerGetTimeOfDay(i)));
       }
 #if defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
