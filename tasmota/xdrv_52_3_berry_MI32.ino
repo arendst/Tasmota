@@ -118,7 +118,7 @@ extern "C" {
 ********************************************************************/ 
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
-  extern bool MI32runBerryConnection(uint8_t operation);
+  extern bool MI32runBerryConnection(uint8_t operation, bool response);
   extern bool MI32setBerryCtxSvc(const char *Svc);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
@@ -193,8 +193,12 @@ extern "C" {
   int be_BLE_run(bvm *vm);
   int be_BLE_run(bvm *vm){    
     int32_t argc = be_top(vm); // Get the number of arguments
-    if ((argc == 2) && be_isint(vm, 2)) {
-      if (MI32runBerryConnection(be_toint(vm, 2))) be_return(vm);
+    if ((argc > 1) && be_isint(vm, 2)) {
+      bool response = false;
+      if(argc == 3 && be_isint(vm, 3)){
+        response = be_toint(vm,3)>0;
+      }
+      if (MI32runBerryConnection(be_toint(vm, 2),response)) be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }

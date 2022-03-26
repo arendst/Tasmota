@@ -154,6 +154,7 @@ struct MI32connectionContextBerry_t{
   uint8_t addrType;
   int error;
   bool oneOp;
+  bool response;
 };
 
 struct {
@@ -180,6 +181,8 @@ struct {
       uint32_t didStartHAP:1;
       uint32_t triggerBerryAdvCB:1;
       uint32_t triggerBerryConnCB:1;
+      uint32_t triggerNextConnJob:1;
+      uint32_t readyForNextConnJob:1;
     };
     uint32_t all = 0;
   } mode;
@@ -382,7 +385,7 @@ const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI3
                                           kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,
                                           kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16};
 
-const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
+const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
 const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start scanning";
 
@@ -407,6 +410,7 @@ enum MI32_TASK {
 enum MI32_ConnErrorMsg {
   MI32_CONN_NO_ERROR = 0,
   MI32_CONN_NO_CONNECT,
+  MI32_CONN_DID_DISCCONNECT,
   MI32_CONN_NO_SERVICE,
   MI32_CONN_NO_CHARACTERISTIC,
   MI32_CONN_CAN_NOT_READ,
