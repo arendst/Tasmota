@@ -97,7 +97,9 @@ struct TUYA {
 // #define D_CMND_TUYA_SET_TIMER "SetTimer"
 
 const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expanded in the future)
+//          71              72          73            74            75
   "" D_JSON_TEMPERATURE "|TempSet|" D_JSON_HUMIDITY "|HumSet|" D_JSON_ILLUMINANCE
+//         76            77             78              79      80   81     82     83     84
   "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|" D_JSON_GAS "||Timer1|Timer2|Timer3|TImer4";
 
 const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
@@ -814,10 +816,14 @@ void TuyaProcessStatePacket(void) {
           char sname[20];
           char tempval[5];
           uint8_t res;
+          bool dont_publish = Settings->flag5.tuyasns_no_immediate;
 
           if (TasmotaGlobal.uptime < 8) { // delay to avoid multiple topics at the same time at boot time
             return;
           } else {
+            if (fnId > 80 || fnId == 74 || fnId == 72) {
+              dont_publish = false;
+            }
             if (fnId > 74) {
               res = 0;
             } else if (fnId > 72) {
@@ -830,7 +836,7 @@ void TuyaProcessStatePacket(void) {
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
             Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
-            if (Settings->flag5.tuyasns_no_immediate) {
+            if (dont_publish) {
               XdrvRulesProcess(0);
             } else {
               MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
