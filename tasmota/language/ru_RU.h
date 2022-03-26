@@ -77,6 +77,7 @@
 #define D_COUNTER "Счетчик"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "Ток"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Данные"
 #define D_DARKLIGHT "Темный"
 #define D_DEBUG "Отладка"

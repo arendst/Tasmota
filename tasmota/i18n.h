@@ -55,6 +55,7 @@
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
+#define D_JSON_CURRENT_NEUTRAL "CurrentNeutral"
 #define D_JSON_DARKNESS "Darkness"
 #define D_JSON_DATA "Data"
 #define D_JSON_DEWPOINT "DewPoint"

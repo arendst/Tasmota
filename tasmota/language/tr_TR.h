@@ -77,6 +77,7 @@
 #define D_COUNTER "Sayaç"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "Current"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Karanlık"
 #define D_DEBUG "Hata Ayıklama"

@@ -77,6 +77,7 @@
 #define D_COUNTER "Compteur"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "Courant"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Donnée"
 #define D_DARKLIGHT "Sombre"
 #define D_DEBUG "Debug"

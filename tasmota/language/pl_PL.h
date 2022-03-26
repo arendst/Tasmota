@@ -77,6 +77,7 @@
 #define D_COUNTER "Licznik"
 #define D_CT_POWER "Moc CT"
 #define D_CURRENT "Prąd"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Ciemny"
 #define D_DEBUG "Debug"

@@ -36,6 +36,8 @@
 
 /*********************************************************************************************/
 
+#define ADE7880_MORE_REGS                    // Add Neutral Current information
+
 //#define ADE7880_DEBUG
 //#define ADE7880_PROFILING
 
@@ -252,6 +254,7 @@ enum Ade7880PowerQualityRegisters {
 };
 
 struct Ade7880 {
+  float neutral_current;
   int32_t calib_current[4];
   int32_t calib_voltage[3];
   int32_t calib_acpower[3];
@@ -483,6 +486,7 @@ void Ade7880Cycle(void) {
     Ade7880.cycle_count--;
     return;                                                                // Skip first cycles
   }
+  Ade7880.neutral_current = (float)Ade7880ReadVerify(ADE7880_NIRMS) / 100000;                // 0x43C6
   for (uint32_t phase = 0; phase < 3; phase++) {
     Energy.data_valid[phase] = 0;
     Energy.voltage[phase] = (float)Ade7880ReadVerify(ADE7880_AVRMS + (phase * 2)) / 10000;   // 0x43C1 - 0x0024CC94 = 241.1668 V
@@ -682,6 +686,29 @@ bool Ade7880Command(void) {
 }
 
 /*********************************************************************************************\
+ * Show
+\*********************************************************************************************/
+
+#ifdef ADE7880_MORE_REGS
+#ifdef USE_WEBSERVER
+const char HTTP_ADE7880_CURRENT[] PROGMEM = "{s}" D_CURRENT_NEUTRAL "{m}%s " D_UNIT_AMPERE "{e}";
+#endif  // USE_WEBSERVER
+
+void Ade7880Show(bool json) {
+  char value_chr[TOPSZ];
+
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_NEUTRAL "\":%s"),
+      EnergyFormat(value_chr, &Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_ADE7880_CURRENT, WebEnergyFormat(value_chr, &Ade7880.neutral_current, Settings->flag2.current_resolution, 1));
+#endif  // USE_WEBSERVER
+  }
+}
+#endif  // ADE7880_MORE_REGS
+
+/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
@@ -694,6 +721,22 @@ bool Xnrg23(uint8_t function) {
     case FUNC_LOOP:
       if (Ade7880.irq0_state) { Ade7880Service0(); }
       break;
+#ifdef ADE7880_MORE_REGS
+    case FUNC_JSON_APPEND:
+      Ade7880Show(1);
+      break;
+#ifdef USE_WEBSERVER
+#ifdef USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_COL_SENSOR:
+      Ade7880Show(0);
+      break;
+#else  // not USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_SENSOR:
+      Ade7880Show(0);
+      break;
+#endif  // USE_ENERGY_COLUMN_GUI
+#endif  // USE_WEBSERVER
+#endif  // ADE7880_MORE_REGS
     case FUNC_COMMAND:
       result = Ade7880Command();
       break;
