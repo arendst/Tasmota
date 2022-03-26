@@ -490,27 +490,25 @@ void Ade7880Cycle(void) {
     Energy.active_power[phase] = (float)Ade7880ReadVerify(ADE7880_AWATT + phase) / 100;      // 0xE513 - 0xFFFFF524 = -27.79 W
     Energy.apparent_power[phase] = (float)Ade7880ReadVerify(ADE7880_AVA + phase) / 100;      // 0xE519 - 0xFFFFF50D
     Energy.frequency[phase] = 256000.0f / Ade7880ReadVerify(ADE7880_APERIOD + phase);        // 0xE905 - Page 34 and based on ADE7880_FREQ_INIT
-    int32_t active_energy = Ade7880ReadVerify(ADE7880_AWATTHR + phase);                      // 0xE400 - 0xFFFFFF8F = -0.112
-    if (active_energy != 0) {
-      // Suppose constant load during period of 100/120 periods as set by ADE7880_LINECYC disregards load change inbetween.
-      // ADE7880_AWATT = 6713 = 67,13 W
-      // 67,13 * 1000 / 36 = 1864 decaWh
-//      Energy.kWhtoday_delta[phase] += Energy.active_power[phase] * 1000 / 36;
+    // Suppose constant load during period of 100/120 periods as set by ADE7880_LINECYC disregards load change inbetween.
+    // ADE7880_AWATT = 6713 = 67,13 W
+    // 67,13 * 1000 / 36 = 1864 deca micro Wh (0.01864Wh)
+//    Energy.kWhtoday_delta[phase] += Energy.active_power[phase] * 1000 / 36;
 
-      // By measuring load 1024000 times/second load change in 100/120 periods can be accounted for.
-      // ADE7880_AWATT = 6713 = 67,13 W
-      // ADE7880_AWATTHR = 273
-      // AWATT multiplier is 16 (Figure 77)
-      // ADE7880_WTHR = 3 (default)
-      // Active power accumulation rate is 1.024MHz (Page 49)
-      // 1024000 * 16 * ADE7880_AWATT / ADE7880_WTHR * 0x8000000 = ADE7880_AWATTHR
-      // 1024000 * 16 * 6713          / 3            * 134217728 = 273
-      // 16384000     * 6713          / 402653184                = 273
-      // 273 * 402653184 / 16384000 = 6709 = 67,09W * 1000 / 36 = 1863 decaWh (Tasmota needs decaWh)
-      // 273 * 402653184 / 16384 = 6709248 = 67092,48W / 3600 = 1863 decaWh
-      // 273 * 24576 = 6709248 / 3600 = 1863 decaWh
-      Energy.kWhtoday_delta[phase] += active_energy * 24576 / 3600;
-    }
+    // By measuring load 1024000 times/second load change in 100/120 periods can be accounted for.
+    // ADE7880_AWATT = 6713 = 67,13 W
+    // ADE7880_AWATTHR = 273
+    // AWATT multiplier is 16 (Figure 77)
+    // ADE7880_WTHR = 3 (default)
+    // Active power accumulation rate is 1.024MHz (Page 49)
+    // 1024000 * 16 * ADE7880_AWATT / ADE7880_WTHR * 0x8000000 = ADE7880_AWATTHR
+    // 1024000 * 16 * 6713          / 3            * 134217728 = 273
+    // 16384000     * 6713          / 402653184                = 273
+    // 273 * 402653184 / 16384000 = 6709 = 67,09W * 1000 / 36 = 1863 deca micro Wh (Tasmota needs deca micro Wh)
+    // 273 * 402653184 / 16384 = 6709248 = 67092,48W / 3600 = 1863 deca micro Wh
+    // 273 * 24576 = 6709248 / 3600 = 1863 deca micro Wh
+    int32_t active_energy = Ade7880ReadVerify(ADE7880_AWATTHR + phase);    // 0xE400 - 0xFFFFFF8F = -0.112
+    Energy.kWhtoday_delta[phase] += active_energy * 24576 / 3600;          // Using int32_t allows loads up to 87kW (0x7FFFFFFF / 24576)
   }
   EnergyUpdateToday();
 
