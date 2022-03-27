@@ -128,8 +128,11 @@ static char* fixpath(bvm *vm, bstring *path, size_t *size)
     const char *split, *base;
     bvalue *func = vm->cf->func;
     bclosure *cl = var_toobj(func);
-    be_assert(var_isclosure(func));
-    base = str(cl->proto->source); /* get the source file path */
+    if (var_isclosure(func)) {
+        base = str(cl->proto->source); /* get the source file path */
+    } else {
+        base = "/";
+    }
     split = be_splitpath(base);
     *size = split - base + (size_t)str_len(path) + SUFFIX_LEN;
     buffer = be_malloc(vm, *size);
