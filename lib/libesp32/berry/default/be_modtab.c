@@ -187,6 +187,7 @@ be_extern_native_class(lv_wifi_bars_icon);
 be_extern_native_class(lv_signal_arcs);
 be_extern_native_class(lv_wifi_arcs);
 be_extern_native_class(lv_wifi_arcs_icon);
+be_extern_native_class(lv_clock);
 be_extern_native_class(lv_clock_icon);
 
 be_extern_native_class(int64);
@@ -233,6 +234,7 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(lv_signal_arcs),
     &be_native_class(lv_wifi_arcs),
     &be_native_class(lv_wifi_arcs_icon),
+    &be_native_class(lv_clock),
     &be_native_class(lv_clock_icon),
 #endif // USE_LVGL
 
