@@ -1234,9 +1234,21 @@ void EnergyShow(bool json) {
 #ifdef USE_ENERGY_COLUMN_GUI
     // Need a new table supporting more columns
     WSContentSend_P(PSTR("</table>{t}{s}</th><th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+
+    // Calculate nice inter-column spacing without using table spacing or column padding
+    uint32_t len = 6;                        // Minimum width is 60px
+    for (uint32_t i = 0; i < Energy.phase_count; i++) {
+      // Using active power expecting to be the largest number not counting increasing total energy
+      uint32_t len_new = ext_snprintf_P(value_chr, sizeof(value_chr), PSTR("%*_f"), Settings->flag2.wattage_resolution, &Energy.active_power[i]);
+      if (len_new > len) { len = len_new; }
+//      len_new = ext_snprintf_P(value_chr, sizeof(value_chr), PSTR("%*_f"), Settings->flag2.energy_resolution, &Energy.total[i]);
+//      if (len_new > len) { len = len_new; }
+    }
+    uint32_t width = len * 10;               // Default 60px. Every additonal character adds 10px
+
     bool no_label = Energy.voltage_common || (1 == Energy.phase_count);
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>%s%s"), (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
+      WSContentSend_P(PSTR("</th><th style='width:%dpx;white-space:nowrap'>%s%s"), width, (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
     }
     WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI
