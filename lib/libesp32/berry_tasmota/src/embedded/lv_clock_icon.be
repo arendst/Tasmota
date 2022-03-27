@@ -2,7 +2,7 @@
  -
 --#
 
-class lv_clock_icon: lv.label
+class lv_clock: lv.label
   var hour, minute, sec
 
   def init(parent)
@@ -10,23 +10,9 @@ class lv_clock_icon: lv.label
     var f_s7_16 = lv.seg7_font(16)
     if f_s7_16 != nil  self.set_style_text_font(f_s7_16, lv.PART_MAIN | lv.STATE_DEFAULT) end
 
-    if parent != nil
-      var parent_height = parent.get_height()
-
-      self.set_text("--:--")
-      self.refr_size()
-      var w = self.get_width()
-      self.set_y((parent.get_height() - self.get_height()) / 2)   # center vertically
-
-      var pad_right = parent.get_style_pad_right(lv.PART_MAIN | lv.STATE_DEFAULT)
-      self.set_x(parent.get_width() - w - pad_right - 3)
-      parent.set_style_pad_right(pad_right + w + 6, lv.PART_MAIN | lv.STATE_DEFAULT)
-
-      self.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
-    end
+    self.set_text("--:--")
 
     self.add_event_cb(/->self.before_del(), lv.EVENT_DELETE, 0)   # register `before_del` to be called when object is deleted
-
     tasmota.add_driver(self)
   end
 
@@ -52,4 +38,26 @@ class lv_clock_icon: lv.label
   def before_del()
     tasmota.remove_driver(self)
   end
+end
+
+class lv_clock_icon: lv_clock
+
+  def init(parent)
+    super(self).init(parent)
+
+    if parent != nil
+      var parent_height = parent.get_height()
+
+      self.refr_size()
+      var w = self.get_width()
+      self.set_y((parent.get_height() - self.get_height()) / 2)   # center vertically
+
+      var pad_right = parent.get_style_pad_right(lv.PART_MAIN | lv.STATE_DEFAULT)
+      self.set_x(parent.get_width() - w - pad_right - 3)
+      parent.set_style_pad_right(pad_right + w + 6, lv.PART_MAIN | lv.STATE_DEFAULT)
+
+      self.set_style_bg_color(lv.color(lv.COLOR_BLACK), lv.PART_MAIN | lv.STATE_DEFAULT)
+    end
+  end
+
 end
