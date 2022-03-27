@@ -76,7 +76,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.2.1**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.3**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32c3.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3 and 4M+ flash.
@@ -138,7 +138,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 - Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 - ESP8266 Shrinked tasmota-minimal.bin by removing all commands except ``Upgrade``, ``Upload``, ``OtaUrl``, ``Seriallog``, ``Weblog`` and ``Restart``
-- ESP32 Arduino core from v2.0.2.2 to v2.0.2.3
+- ESP32 Arduino core from v2.0.2.2 to v2.0.3
 - ESP32 LVGL library from v8.1.0 to v8.2.0
 - ESP32 NimBLE library from v1.3.3 to v1.3.6
 - ESP32 update the internal Berry type system to sync with Skiars Berry repository. No expected impact on code, but .bec files need to be generated again [#14811](https://github.com/arendst/Tasmota/issues/14811)
