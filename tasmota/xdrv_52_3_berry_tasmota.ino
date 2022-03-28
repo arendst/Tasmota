@@ -94,7 +94,7 @@ extern "C" {
       const char * payload = be_tostring(vm, 2);
       bool handled = XdrvRulesProcess(0, payload);
       be_pushbool(vm, handled);
-      be_return_nil(vm); // Return
+      be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
   }
