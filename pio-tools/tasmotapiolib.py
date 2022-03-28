@@ -79,7 +79,11 @@ def get_source_map_path(env) -> pathlib.Path:
     proj_dir = pathlib.Path(env["PROJECT_DIR"])
     map_name = proj_dir.parts[-1] + ".map"
     fwmap_path = proj_build_dir / get_variant(env) / map_name
+    if fwmap_path.is_file():
+        return fwmap_path
 
+    map_name = "firmware.map"
+    fwmap_path = proj_build_dir / get_variant(env) / map_name
     if fwmap_path.is_file():
         return fwmap_path
 
