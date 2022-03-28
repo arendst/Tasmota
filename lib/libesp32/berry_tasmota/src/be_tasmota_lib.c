@@ -15,6 +15,7 @@ extern int l_getFreeHeap(bvm *vm);
 extern int l_arch(bvm *vm);
 extern int l_publish(bvm *vm);
 extern int l_publish_result(bvm *vm);
+extern int l_publish_rule(bvm *vm);
 extern int l_cmd(bvm *vm);
 extern int l_getoption(bvm *vm);
 extern int l_millis(bvm *vm);
@@ -2564,6 +2565,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     arch, func(l_arch)
     publish, func(l_publish)
     publish_result, func(l_publish_result)
+    publish_rule, func(l_publish_rule)
     _cmd, func(l_cmd)
     get_option, func(l_getoption)
     millis, func(l_millis)

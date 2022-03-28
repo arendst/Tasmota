@@ -674,6 +674,7 @@ extern const bcstring be_const_str_ptr;
 extern const bcstring be_const_str_public_key;
 extern const bcstring be_const_str_publish;
 extern const bcstring be_const_str_publish_result;
+extern const bcstring be_const_str_publish_rule;
 extern const bcstring be_const_str_push;
 extern const bcstring be_const_str_push_path;
 extern const bcstring be_const_str_quality;
