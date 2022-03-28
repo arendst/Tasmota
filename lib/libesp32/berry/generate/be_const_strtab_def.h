@@ -644,7 +644,7 @@ be_define_const_str(pc, "pc", 1313756516u, 0, 2, NULL);
 be_define_const_str(pc_abs, "pc_abs", 920256495u, 0, 6, &be_const_str_signal_arcs);
 be_define_const_str(pc_rel, "pc_rel", 991921176u, 0, 6, &be_const_str_string);
 be_define_const_str(pct, "pct", 1431300144u, 0, 3, &be_const_str_remove_driver);
-be_define_const_str(percentage, "percentage", 2538831285u, 0, 10, &be_const_str_splash_init);
+be_define_const_str(percentage, "percentage", 2538831285u, 0, 10, &be_const_str_publish_rule);
 be_define_const_str(persist, "persist", 3917083779u, 0, 7, NULL);
 be_define_const_str(persist_X2E_p_X20is_X20not_X20a_X20map, "persist._p is not a map", 1176528732u, 0, 23, NULL);
 be_define_const_str(pi, "pi", 1213090802u, 0, 2, &be_const_str_range);
@@ -666,6 +666,7 @@ be_define_const_str(ptr, "ptr", 1433816073u, 0, 3, NULL);
 be_define_const_str(public_key, "public_key", 4169142980u, 0, 10, &be_const_str_refr_size);
 be_define_const_str(publish, "publish", 264247304u, 0, 7, &be_const_str_widget_width_def);
 be_define_const_str(publish_result, "publish_result", 2013351252u, 0, 14, NULL);
+be_define_const_str(publish_rule, "publish_rule", 1829459523u, 0, 12, &be_const_str_splash_init);
 be_define_const_str(push, "push", 2272264157u, 0, 4, &be_const_str_remote_port);
 be_define_const_str(push_path, "push_path", 1155254157u, 0, 9, NULL);
 be_define_const_str(quality, "quality", 2597670950u, 0, 7, &be_const_str_wifi_arcs_icon);
@@ -1425,6 +1426,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 466,
-    .count = 955,
+    .count = 956,
     .table = m_string_table
 };
