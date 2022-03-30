@@ -1254,15 +1254,9 @@ void TuyaSerialInput(void)
       ResponseAppend_P(PSTR("}}"));
 
       if (Settings->flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
-        if (Settings->flag5.tuya_exclude_heartbeat) {  // SetOption137 - (Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active
-          if (false == isHeartbeat) {
-            MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
-          }
-        }
-        else {
+        if (!(isHeartbeat && Settings->flag5.tuya_exclude_heartbeat)) {  // SetOption137 - (Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active
           MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
-        }       
-        
+        }        
       } else {
         AddLog(LOG_LEVEL_DEBUG, ResponseData());
       }
