@@ -1990,7 +1990,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
             }
             if (op->writelen){
               if(pCharacteristic->canWrite() || pCharacteristic->canWriteNoResponse() ) {
-                if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, true)){
+                if (!pCharacteristic->writeValue(op->dataToWrite, op->writelen, !pCharacteristic->canWriteNoResponse())){ // request response, unless we can't
                   newstate = GEN_STATE_FAILED_WRITE;
 #ifdef BLE_ESP32_DEBUG
                   AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: characteristic write fail"));
@@ -3720,5 +3720,3 @@ void sendExample(){
 #endif
 #endif  // CONFIG_IDF_TARGET_ESP32 or CONFIG_IDF_TARGET_ESP32C3
 #endif  // ESP32
-
-
