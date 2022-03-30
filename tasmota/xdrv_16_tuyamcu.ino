@@ -558,8 +558,6 @@ void TuyaSendString(uint8_t id, char data[]) {
 }
 
 void TuyaSendRaw(uint8_t id, char data[]) {
-  AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Send Raw-Data from string: %s"), data);
-  
   char* beginPos = strchr(data, 'x');
   if(!beginPos) {
     beginPos = strchr(data, 'X');
