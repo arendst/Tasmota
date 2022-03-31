@@ -3983,7 +3983,6 @@ extern char *SML_GetSVal(uint32_t index);
         }
         if (!strncmp(lp, "swb(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
-          fvar = -1;
           if (glob_script_mem.sp) {
             glob_script_mem.sp->write((uint8_t)fvar);
             fvar = 0;
@@ -8923,12 +8922,19 @@ exgc:
 
         int16_t divflg = 1;
         int16_t todflg = -1;
+        uint8_t hmflg = 0;
         if (!strncmp(label, "cnt", 3)) {
           char *cp = &label[3];
+          if (*cp == 'h') {
+            hmflg = 1;
+            cp++;
+          }
           //todflg=atoi(&label[3]);
           todflg = strtol(cp, &cp, 10);
-          if (todflg >= entries) todflg = entries - 1;
-          if (todflg < 0) todflg = 0;
+          if (!hmflg) {
+            if (todflg >= entries) todflg = entries - 1;
+            if (todflg < 0) todflg = 0;
+          }
           if (*cp=='/') {
             cp++;
             divflg = strtol(cp, &cp, 10);
@@ -8957,8 +8963,14 @@ exgc:
           if (todflg >= 0) {
             sprintf(lbl, "%d:%02d", todflg / divflg, (todflg % divflg) * (60 / divflg) );
             todflg++;
-            if (todflg >= entries) {
-              todflg = 0;
+            if (hmflg == 0) {
+              if (todflg >= entries) {
+                todflg = 0;
+              }
+            } else {
+              if ((todflg / divflg) >= 24) {
+                todflg = 0;
+              }
             }
           } else {
             if (todflg == -1) {
