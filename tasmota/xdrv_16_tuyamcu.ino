@@ -1243,6 +1243,7 @@ void TuyaSerialInput(void)
       uint8_t dpId = 0;
       uint8_t dpDataType = 0;
       char DataStr[15];
+      bool isHeartbeat = false;
 
       if (len > 0) {
         ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
@@ -1286,11 +1287,16 @@ void TuyaSerialInput(void)
             dpidStart += dpDataLen + 4;
           }
         }
+        else if (TUYA_CMD_HEARTBEAT == Tuya.buffer[3]) {
+          isHeartbeat = true;
+        }
       }
       ResponseAppend_P(PSTR("}}"));
 
       if (Settings->flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
+        if (!(isHeartbeat && Settings->flag5.tuya_exclude_heartbeat)) {  // SetOption137 - (Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active
+          MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
+        }        
       } else {
         AddLog(LOG_LEVEL_DEBUG, ResponseData());
       }
