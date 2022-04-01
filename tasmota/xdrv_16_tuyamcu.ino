@@ -112,8 +112,9 @@ void (* const TuyaCommand[])(void) PROGMEM = {
   &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
 };
 
-const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
-  TUYA_CMD_HEARTBEAT, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE;
+const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = { // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
+  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE
+};
 
 /*********************************************************************************************\
  * Web Interface
@@ -1304,7 +1305,9 @@ void TuyaSerialInput(void)
         }
         if (!(isCmdToSuppress && Settings->flag5.tuya_exclude_from_mqtt)) {  // SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see TuyaExcludeCMDsFromMQTT) if SetOption66 is active
           MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
-        }        
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, ResponseData());
+        }      
       } else {
         AddLog(LOG_LEVEL_DEBUG, ResponseData());
       }
