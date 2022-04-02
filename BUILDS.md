@@ -9,6 +9,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 |-----------------------|---|-------|---|---|---|---|--------
 | MY_LANGUAGE en_GB     | x | x / x | x | x | x | x |
+| USE_IMPROV            | - | x / x | x | x | x | x |
 | USE_UFILESYS          | - | - / x | - | - | - | - |
 | USE_ARDUINO_OTA       | - | - / - | - | - | - | - |
 | USE_DOMOTICZ          | - | x / x | x | x | x | - |

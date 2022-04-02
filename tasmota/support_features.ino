@@ -803,7 +803,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_DS3502)
     feature8 |= 0x02000000;  // xdrv_61_ds3502.ino
 #endif
-//    feature8 |= 0x04000000;
+#ifdef USE_IMPROV
+    feature8 |= 0x04000000;  // xdrv_62_improv.ino
+#endif
 //    feature8 |= 0x08000000;
 
 //    feature8 |= 0x10000000;

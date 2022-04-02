@@ -103,7 +103,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v11.0.0.4
+## Changelog v11.0.0.5
 ### Added
 - Command ``SetOption135 1`` to disable LVGL splash screen
 - Command ``SetOption136 1`` to disable single sensor reports from Tuya devices while keeping teleperiod reports [#15216](https://github.com/arendst/Tasmota/issues/15216)
@@ -114,6 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` [#15015](https://github.com/arendst/Tasmota/issues/15015)
 - NeoPool system voltages display
 - TasmotaSerial implement ``end()``
+- Support for improv as used by esp-web-tools
 - Support for up to four DS3502 digital potentiometers with command ``Wiper<x> 0..127``
 - Support for ADE7880 3 phase energy monitor as used in Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Support for PCF85363 RTC as used in Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)

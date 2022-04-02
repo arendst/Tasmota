@@ -833,8 +833,9 @@ typedef struct {
   uint32_t      baudrate;                  // 2CC
   uint32_t      ultradeepsleep;            // 2D0
   uint16_t      deepsleep_slip;            // 2D4
+  uint8_t       improv_state;              // 2D6
 
-  uint8_t       free_2d6[2];               // 2D6
+  uint8_t       free_2d7[1];               // 2D7
 
   int32_t       energy_kWhtoday_ph[3];     // 2D8
   int32_t       energy_kWhtotal_ph[3];     // 2E4

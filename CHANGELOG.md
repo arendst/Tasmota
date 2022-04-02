@@ -3,7 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.4]
+## [11.0.0.5]
+### Added
+- Support for improv as used by esp-web-tools
+
+### Changed
+
+
+### Fixed
+
+
+## [11.0.0.4] 20220402
 ### Added
 - Command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization

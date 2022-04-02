@@ -397,6 +397,7 @@
 
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wi-Fi Manager web GUI
+#define USE_IMPROV                               // Add support for IMPROV serial protocol as used by esp-web-tools (+2k code)
 
 // -- ESP-NOW -------------------------------------
 //#define USE_TASMESH                              // Enable Tasmota Mesh using ESP-NOW (+11k code)
