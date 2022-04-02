@@ -79,7 +79,6 @@ void ImprovWriteData(uint8_t* data, uint32_t size) {
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IMP: Send '%*_H'"), size, data);
 
-//  Serial.write(data, size);
   for (uint32_t i = 0; i < size; i++) {
     Serial.write(data[i]);
   }
@@ -223,7 +222,7 @@ bool ImprovParseSerialByte(void) {
       }
       case IMPROV_GET_WIFI_NETWORKS: {                         // 0x04
         char data[200];
-        int n = WiFi.scanNetworks();
+        int n = WiFi.scanNetworks(false, false);               // Wait for scan result, hide hidden
         if (n) {
           int indices[n];
           // Sort RSSI - strongest first
@@ -254,7 +253,6 @@ bool ImprovParseSerialByte(void) {
             if (!ssid_copy.length()) { ssid_copy = F("no_name"); }
             int32_t rssi = WiFi.RSSI(indices[i]);
             bool encryption = (ENC_TYPE_NONE == WiFi.encryptionType(indices[i]));
-
             // Send each ssid separately to avoid overflowing the buffer
             uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\n%s\n%d\n%s\n"),
                                       ssid_copy.c_str(), rssi, (encryption)?"NO":"YES");
