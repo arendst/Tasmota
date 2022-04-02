@@ -27,16 +27,18 @@
 #define TUYA_DIMMER_ID         0
 #endif
 
-#define TUYA_CMD_HEARTBEAT     0x00
-#define TUYA_CMD_QUERY_PRODUCT 0x01
-#define TUYA_CMD_MCU_CONF      0x02
-#define TUYA_CMD_WIFI_STATE    0x03
-#define TUYA_CMD_WIFI_RESET    0x04
-#define TUYA_CMD_WIFI_SELECT   0x05
-#define TUYA_CMD_SET_DP        0x06
-#define TUYA_CMD_STATE         0x07
-#define TUYA_CMD_QUERY_STATE   0x08
-#define TUYA_CMD_SET_TIME      0x1C
+#define TUYA_CMD_HEARTBEAT          0x00
+#define TUYA_CMD_QUERY_PRODUCT      0x01
+#define TUYA_CMD_MCU_CONF           0x02
+#define TUYA_CMD_WIFI_STATE         0x03
+#define TUYA_CMD_WIFI_RESET         0x04
+#define TUYA_CMD_WIFI_SELECT        0x05
+#define TUYA_CMD_SET_DP             0x06
+#define TUYA_CMD_STATE              0x07
+#define TUYA_CMD_QUERY_STATE        0x08
+#define TUYA_CMD_INITIATING_UPGRADE 0x0A
+#define TUYA_CMD_UPGRADE_PACKAGE    0x0B
+#define TUYA_CMD_SET_TIME           0x1C
 
 #define TUYA_LOW_POWER_CMD_WIFI_STATE   0x02
 #define TUYA_LOW_POWER_CMD_WIFI_RESET   0x03
@@ -108,6 +110,10 @@ const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
 
 void (* const TuyaCommand[])(void) PROGMEM = {
   &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
+};
+
+const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = { // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
+  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE
 };
 
 /*********************************************************************************************\
@@ -1243,7 +1249,7 @@ void TuyaSerialInput(void)
       uint8_t dpId = 0;
       uint8_t dpDataType = 0;
       char DataStr[15];
-      bool isHeartbeat = false;
+      bool isCmdToSuppress = false;
 
       if (len > 0) {
         ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
@@ -1287,16 +1293,21 @@ void TuyaSerialInput(void)
             dpidStart += dpDataLen + 4;
           }
         }
-        else if (TUYA_CMD_HEARTBEAT == Tuya.buffer[3]) {
-          isHeartbeat = true;
-        }
       }
       ResponseAppend_P(PSTR("}}"));
 
       if (Settings->flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
-        if (!(isHeartbeat && Settings->flag5.tuya_exclude_heartbeat)) {  // SetOption137 - (Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active
+        for (uint8_t cmdsID = 0; sizeof(TuyaExcludeCMDsFromMQTT) > cmdsID; cmdsID++){
+          if (TuyaExcludeCMDsFromMQTT[cmdsID] == Tuya.buffer[3]) {
+            isCmdToSuppress = true;
+            break;
+          }  
+        }
+        if (!(isCmdToSuppress && Settings->flag5.tuya_exclude_from_mqtt)) {  // SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see TuyaExcludeCMDsFromMQTT) if SetOption66 is active
           MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
-        }        
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, ResponseData());
+        }      
       } else {
         AddLog(LOG_LEVEL_DEBUG, ResponseData());
       }
