@@ -719,18 +719,14 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
 
     // we hit runtime.....
     case TUYA_STARTUP_STATE_SEND_CMD://10
-      // triggered from second timer
-      if (pTuya->send_heartbeat) {
-        pTuya->send_heartbeat = 0;
-        pTuya->startup_state = TUYA_STARTUP_STATE_SEND_HEARTBEAT;
-        break;
-      }
-
-      if (pTuya->send_time){
+      if (pTuya->send_time & 1){
         TuyaSetTime();
-        pTuya->send_time = 0;
-        pTuya->expectedResponseCmd = TUYA_CMD_SET_TIME;  // ??? TODO - if no MCU support, we'll just wait 300ms.
-        pTuya->timeout = 300; 
+        pTuya->send_time &= 0xfe;
+        // ??? TODO - if no MCU support, we'll just wait 100ms.
+        // we should *not* get a response - as this is normally a command which is requested
+        pTuya->expectedResponseCmd = TUYA_CMD_SET_TIME;
+        // always wait a bit before sending anything else, otherwise we may overflow the MCU input buffer.
+        pTuya->timeout = 200; 
         pTuya->timeout_state = TUYA_STARTUP_STATE_SEND_CMD; 
         pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_CMD;
         break;
@@ -795,6 +791,13 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
           // if equal values, ignore set
           dp->toSet = 0;
         }
+      }
+
+      // triggered from second timer
+      if (pTuya->send_heartbeat) {
+        pTuya->send_heartbeat = 0;
+        pTuya->startup_state = TUYA_STARTUP_STATE_SEND_HEARTBEAT;
+        break;
       }
       break;
 
@@ -1680,7 +1683,9 @@ void TuyaNormalPowerModePacketProcess(void)
       break;
 #ifdef USE_TUYA_TIME
     case TUYA_CMD_SET_TIME:
-      TuyaSetTime();
+      // send from state machine.
+      pTuya->send_time = 3;
+      //TuyaSetTime();
       break;
 #endif
     default:
@@ -2221,7 +2226,12 @@ bool Xdrv16(uint8_t function) {
           }
 #ifdef USE_TUYA_TIME
           if (!(TasmotaGlobal.uptime % 60)) {
-            pTuya->send_time = 1;
+            // if we have never been asked for time, send it ourselves
+            // as this was the original TAS implementation.
+            // if we DO get asked for time, then send_time & 2 will be set, so we no longer send from here.
+            if (!pTuya->send_time & 2){
+              pTuya->send_time |= 1;
+            }
           }
 #endif  //USE_TUYA_TIME
         } else {
