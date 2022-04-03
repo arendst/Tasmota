@@ -55,10 +55,9 @@ enum ImprovSerialType {
 static const uint8_t IMPROV_SERIAL_VERSION = 1;
 
 struct IMPROV {
-  uint32_t last_read_byte;
   uint8_t wifi_timeout;
   uint8_t seriallog_level;
-  bool message;
+  uint8_t version;
 } Improv;
 
 /*********************************************************************************************/
@@ -142,141 +141,103 @@ void ImprovSendSetting(uint32_t command) {
   ImprovSendResponse((uint8_t*)data, len +3);
 }
 
-bool ImprovParseSerialByte(void) {
-  // 0  1  2  3  4  5  6  7  8  9  10 11       8 + le +1
-  // I  M  P  R  O  V  ve ty le co pl data ... \n
-  // 49 4D 50 52 4F 56 01 03 xx yy zz ........ 0A
-  if (6 == TasmotaGlobal.serial_in_byte_counter) {
-    return (IMPROV_SERIAL_VERSION == TasmotaGlobal.serial_in_byte);
-  }
-  if (TasmotaGlobal.serial_in_byte_counter <= 8) {
-    return true;                                               // Wait for type and length
-  }
-  uint32_t data_len = TasmotaGlobal.serial_in_buffer[8];
-  if (TasmotaGlobal.serial_in_byte_counter <= 9 + data_len) {  // Receive including '\n'
-    return true;                                               // Wait for data
-  }
-
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IMP: Rcvd '%*_H'"), TasmotaGlobal.serial_in_byte_counter, TasmotaGlobal.serial_in_buffer);
-
-  TasmotaGlobal.serial_in_byte_counter--;                      // Drop '\n'
-  uint8_t checksum = 0x00;
-  for (uint32_t i = 0; i < TasmotaGlobal.serial_in_byte_counter; i++) {
-    checksum += TasmotaGlobal.serial_in_buffer[i];
-  }
-  if (checksum != TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter]) {
-    ImprovSendError(IMPROV_ERROR_INVALID_RPC);                 // 0x01 - CRC error
-    return false;
-  }
-
-  uint32_t type = TasmotaGlobal.serial_in_buffer[7];
-  if (IMPROV_TYPE_RPC == type) {                               // 0x03
-    uint32_t data_length = TasmotaGlobal.serial_in_buffer[10];
-    if (data_length != data_len - 2) {
-      return false;
-    }
-
-    uint32_t command = TasmotaGlobal.serial_in_buffer[9];
-    switch (command) {
-      case IMPROV_WIFI_SETTINGS: {                             // 0x01
-//        if (RtcSettings.improv_state != IMPROV_STATE_AUTHORIZED) {
-//          ImprovSendError(IMPROV_ERROR_NOT_AUTHORIZED);        // 0x04
-//        } else {
-          // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
-          // I  M  P  R  O  V  vs ty le co dl sl s  s  i  d  pl p  a  s  s  w  o  r  d  cr
-          uint32_t ssid_length = TasmotaGlobal.serial_in_buffer[11];
-          uint32_t ssid_end = 12 + ssid_length;
-          uint32_t pass_length = TasmotaGlobal.serial_in_buffer[ssid_end];
-          uint32_t pass_start = ssid_end + 1;
-          uint32_t pass_end = pass_start + pass_length;
-          TasmotaGlobal.serial_in_buffer[ssid_end] = '\0';
-          char* ssid = &TasmotaGlobal.serial_in_buffer[12];
-          TasmotaGlobal.serial_in_buffer[pass_end] = '\0';
-          char* password = &TasmotaGlobal.serial_in_buffer[pass_start];
+void ImprovReceived(void) {
+  uint32_t command = TasmotaGlobal.serial_in_buffer[9];
+  switch (command) {
+    case IMPROV_WIFI_SETTINGS: {                               // 0x01
+//      if (RtcSettings.improv_state != IMPROV_STATE_AUTHORIZED) {
+//        ImprovSendError(IMPROV_ERROR_NOT_AUTHORIZED);          // 0x04
+//      } else {
+        // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+        // I  M  P  R  O  V  vs ty le co dl sl s  s  i  d  pl p  a  s  s  w  o  r  d  cr
+        uint32_t ssid_length = TasmotaGlobal.serial_in_buffer[11];
+        uint32_t ssid_end = 12 + ssid_length;
+        uint32_t pass_length = TasmotaGlobal.serial_in_buffer[ssid_end];
+        uint32_t pass_start = ssid_end + 1;
+        uint32_t pass_end = pass_start + pass_length;
+        TasmotaGlobal.serial_in_buffer[ssid_end] = '\0';
+        char* ssid = &TasmotaGlobal.serial_in_buffer[12];
+        TasmotaGlobal.serial_in_buffer[pass_end] = '\0';
+        char* password = &TasmotaGlobal.serial_in_buffer[pass_start];
 #ifdef IMPROV_DEBUG
-          AddLog(LOG_LEVEL_DEBUG, PSTR("IMP: Ssid '%s', Password '%s'"), ssid, password);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("IMP: Ssid '%s', Password '%s'"), ssid, password);
 #endif  // IMPROV_DEBUG
-          Improv.wifi_timeout = IMPROV_WIFI_TIMEOUT;           // Set WiFi connect timeout
-          ImprovSendState(IMPROV_STATE_PROVISIONING);
-          Settings->flag4.network_wifi = 1;                    // Enable WiFi
-          char cmnd[TOPSZ];
-          snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_BACKLOG "0 " D_CMND_SSID "1 %s;" D_CMND_PASSWORD "1 %s"), ssid, password);
-          ExecuteCommand(cmnd, SRC_SERIAL);                    // Set SSID and Password and restart
-//        }
-        break;
-      }
-      case IMPROV_GET_CURRENT_STATE: {                         // 0x02
-        ImprovSendState(RtcSettings.improv_state);
-        if (IMPROV_STATE_PROVISIONED == RtcSettings.improv_state) {
-          ImprovSendSetting(IMPROV_GET_CURRENT_STATE);
-        }
-        break;
-      }
-      case IMPROV_GET_DEVICE_INFO: {                           // 0x03
-        char data[200];
-        uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\nTasmota\n%s\n%s\n%s\n"),
-                                  TasmotaGlobal.version, GetDeviceHardware().c_str(), SettingsText(SET_DEVICENAME));
-        data[0] = IMPROV_GET_DEVICE_INFO;
-        ImprovSendResponse((uint8_t*)data, len);
-        break;
-      }
-      case IMPROV_GET_WIFI_NETWORKS: {                         // 0x04
-        char data[200];
-        int n = WiFi.scanNetworks(false, false);               // Wait for scan result, hide hidden
-        if (n) {
-          int indices[n];
-          // Sort RSSI - strongest first
-          for (uint32_t i = 0; i < n; i++) { indices[i] = i; }
-          for (uint32_t i = 0; i < n; i++) {
-            for (uint32_t j = i + 1; j < n; j++) {
-              if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
-                std::swap(indices[i], indices[j]);
-              }
-            }
-          }
-          // Remove duplicate SSIDs - IMPROV does not distinguish between channels so no need to keep them
-          for (uint32_t i = 0; i < n; i++) {
-            if (-1 == indices[i]) { continue; }
-            String cssid = WiFi.SSID(indices[i]);
-//            uint32_t cschn = WiFi.channel(indices[i]);
-            for (uint32_t j = i + 1; j < n; j++) {
-//              if ((cssid == WiFi.SSID(indices[j])) && (cschn == WiFi.channel(indices[j]))) {
-              if (cssid == WiFi.SSID(indices[j])) {
-                indices[j] = -1;                               // Set dup aps to index -1
-              }
-            }
-          }
-          // Send networks
-          for (uint32_t i = 0; i < n; i++) {
-            if (-1 == indices[i]) { continue; }                // Skip dups
-            String ssid_copy = WiFi.SSID(indices[i]);
-            if (!ssid_copy.length()) { ssid_copy = F("no_name"); }
-            int32_t rssi = WiFi.RSSI(indices[i]);
-            bool encryption = (ENC_TYPE_NONE == WiFi.encryptionType(indices[i]));
-            // Send each ssid separately to avoid overflowing the buffer
-            uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\n%s\n%d\n%s\n"),
-                                      ssid_copy.c_str(), rssi, (encryption)?"NO":"YES");
-            data[0] = IMPROV_GET_WIFI_NETWORKS;
-            ImprovSendResponse((uint8_t*)data, len);
-          }
-        }
-
-        // Send empty response to signify the end of the list.
-        data[0] = IMPROV_GET_WIFI_NETWORKS;
-        ImprovSendResponse((uint8_t*)data, 3);                 // Empty string
-        break;
-      }
-/*
-      case IMPROV_BAD_CHECKSUM: {                              // 0xFF
-        break;
-      }
-*/
-      default:
-        ImprovSendError(IMPROV_ERROR_UNKNOWN_RPC);             // 0x02 - Unknown payload
+        Improv.wifi_timeout = IMPROV_WIFI_TIMEOUT;             // Set WiFi connect timeout
+        ImprovSendState(IMPROV_STATE_PROVISIONING);
+        Settings->flag4.network_wifi = 1;                      // Enable WiFi
+        char cmnd[TOPSZ];
+        snprintf_P(cmnd, sizeof(cmnd), PSTR(D_CMND_BACKLOG "0 " D_CMND_SSID "1 %s;" D_CMND_PASSWORD "1 %s"), ssid, password);
+        ExecuteCommand(cmnd, SRC_SERIAL);                      // Set SSID and Password and restart
+//      }
+      break;
     }
-  }
+    case IMPROV_GET_CURRENT_STATE: {                           // 0x02
+      ImprovSendState(RtcSettings.improv_state);
+      if (IMPROV_STATE_PROVISIONED == RtcSettings.improv_state) {
+        ImprovSendSetting(command);
+      }
+      break;
+    }
+    case IMPROV_GET_DEVICE_INFO: {                             // 0x03
+      char data[200];
+      uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\nTasmota\n%s\n%s\n%s\n"),
+                                TasmotaGlobal.version, GetDeviceHardware().c_str(), SettingsText(SET_DEVICENAME));
+      data[0] = command;
+      ImprovSendResponse((uint8_t*)data, len);
+      break;
+    }
+    case IMPROV_GET_WIFI_NETWORKS: {                           // 0x04
+      char data[200];
+      int n = WiFi.scanNetworks(false, false);                 // Wait for scan result, hide hidden
+      if (n) {
+        int indices[n];
+        // Sort RSSI - strongest first
+        for (uint32_t i = 0; i < n; i++) { indices[i] = i; }
+        for (uint32_t i = 0; i < n; i++) {
+          for (uint32_t j = i + 1; j < n; j++) {
+            if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
+              std::swap(indices[i], indices[j]);
+            }
+          }
+        }
+        // Remove duplicate SSIDs - IMPROV does not distinguish between channels so no need to keep them
+        for (uint32_t i = 0; i < n; i++) {
+          if (-1 == indices[i]) { continue; }
+          String cssid = WiFi.SSID(indices[i]);
+          for (uint32_t j = i + 1; j < n; j++) {
+            if (cssid == WiFi.SSID(indices[j])) {
+              indices[j] = -1;                                 // Set dup aps to index -1
+            }
+          }
+        }
+        // Send networks
+        for (uint32_t i = 0; i < n; i++) {
+          if (-1 == indices[i]) { continue; }                  // Skip dups
+          String ssid_copy = WiFi.SSID(indices[i]);
+          if (!ssid_copy.length()) { ssid_copy = F("no_name"); }
+          int32_t rssi = WiFi.RSSI(indices[i]);
+          bool encryption = (ENC_TYPE_NONE == WiFi.encryptionType(indices[i]));
+          // Send each ssid separately to avoid overflowing the buffer
+          uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\n%s\n%d\n%s\n"),
+                                    ssid_copy.c_str(), rssi, (encryption)?"NO":"YES");
+          data[0] = command;
+          ImprovSendResponse((uint8_t*)data, len);
+        }
+      }
 
-  return false;
+      // Send empty response to signify the end of the list.
+      data[0] = command;
+      ImprovSendResponse((uint8_t*)data, 3);                   // Empty string
+      break;
+    }
+/*
+    case IMPROV_BAD_CHECKSUM: {                                // 0xFF
+      break;
+    }
+*/
+    default:
+      ImprovSendError(IMPROV_ERROR_UNKNOWN_RPC);               // 0x02 - Unknown payload
+  }
 }
 
 /*********************************************************************************************/
@@ -286,26 +247,44 @@ bool ImprovSerialInput(void) {
   if (6 == TasmotaGlobal.serial_in_byte_counter) {
     TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;
     if (!strcmp_P(TasmotaGlobal.serial_in_buffer, PSTR("IMPROV"))) {
-      Improv.seriallog_level = TasmotaGlobal.seriallog_level;
-      TasmotaGlobal.seriallog_level = 0;                       // Disable seriallogging interfering with IMPROV
-      Improv.last_read_byte = millis();
-      Improv.message = true;
-    }
-  }
-  if (Improv.message) {
-    uint32_t now = millis();
-    if (now - Improv.last_read_byte < 50) {
-      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = TasmotaGlobal.serial_in_byte;
-      if (ImprovParseSerialByte()) {
-        TasmotaGlobal.serial_in_byte_counter++;
-        TasmotaGlobal.serial_in_byte = 0;
-        Improv.last_read_byte = now;
-        return false;
+      if (IMPROV_SERIAL_VERSION == TasmotaGlobal.serial_in_byte) {
+        Improv.seriallog_level = TasmotaGlobal.seriallog_level;
+        TasmotaGlobal.seriallog_level = 0;                     // Disable seriallogging interfering with IMPROV
+        Improv.version = IMPROV_SERIAL_VERSION;
       }
     }
-    Improv.message = false;
-    TasmotaGlobal.seriallog_level = Improv.seriallog_level;    // Restore seriallogging
-    return true;
+  }
+  if (IMPROV_SERIAL_VERSION == Improv.version) {
+    TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
+    // 0  1  2  3  4  5  6  7  8  9  10 11       8 + le +1
+    // I  M  P  R  O  V  ve ty le co pl data ... \n
+    // 49 4D 50 52 4F 56 01 03 xx yy zz ........ 0A
+    if (TasmotaGlobal.serial_in_byte_counter > 8) {            // Wait for length
+      uint32_t data_len = TasmotaGlobal.serial_in_buffer[8];
+      if (TasmotaGlobal.serial_in_byte_counter > 10 + data_len) {  // Receive including '\n'
+
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("IMP: Rcvd '%*_H'"), TasmotaGlobal.serial_in_byte_counter, TasmotaGlobal.serial_in_buffer);
+
+        uint32_t checksum_pos = TasmotaGlobal.serial_in_byte_counter -2;
+        uint8_t checksum = 0x00;
+        for (uint32_t i = 0; i < checksum_pos; i++) {
+          checksum += TasmotaGlobal.serial_in_buffer[i];
+        }
+        if (checksum != TasmotaGlobal.serial_in_buffer[checksum_pos]) {
+          ImprovSendError(IMPROV_ERROR_INVALID_RPC);           // 0x01 - CRC error
+        }
+        else if (IMPROV_TYPE_RPC == TasmotaGlobal.serial_in_buffer[7]) {
+          uint32_t data_length = TasmotaGlobal.serial_in_buffer[10];
+          if (data_length == data_len - 2) {
+            ImprovReceived();
+          }
+        }
+        Improv.version = 0;                                    // Done
+        TasmotaGlobal.seriallog_level = Improv.seriallog_level;  // Restore seriallogging
+        return true;
+      }
+    }
+    TasmotaGlobal.serial_in_byte = 0;
   }
   return false;
 }
@@ -313,7 +292,7 @@ bool ImprovSerialInput(void) {
 void ImprovEverySecond(void) {
   if (Improv.wifi_timeout) {
     Improv.wifi_timeout--;
-    if (Improv.wifi_timeout < IMPROV_WIFI_TIMEOUT -3) {       // Tasmota restarts after ssid or password change
+    if (Improv.wifi_timeout < IMPROV_WIFI_TIMEOUT -3) {        // Tasmota restarts after ssid or password change
       if ((!TasmotaGlobal.global_state.wifi_down)) {
         Improv.wifi_timeout = 0;
         if (IMPROV_STATE_AUTHORIZED == RtcSettings.improv_state) {
