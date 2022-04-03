@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for improv as used by esp-web-tools
 
 ### Changed
-
+- Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)
 
 ### Fixed
 

@@ -62,17 +62,9 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
 #include <DNSServer.h>
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #ifdef USE_JAVASCRIPT_ES6
-    #include "./html_compressed/HTTP_HEADER1_ES6.h"
-  #else
-    #include "./html_compressed/HTTP_HEADER1_NOES6.h"
-  #endif
+  #include "./html_compressed/HTTP_HEADER1_ES6.h"
 #else
-  #ifdef USE_JAVASCRIPT_ES6
-    #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
-  #else
-    #include "./html_uncompressed/HTTP_HEADER1_NOES6.h"
-  #endif
+  #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
 #endif
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
