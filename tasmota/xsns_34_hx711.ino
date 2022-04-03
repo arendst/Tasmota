@@ -87,11 +87,33 @@ struct HX {
 
 /*********************************************************************************************/
 
+uint8_t HxShiftIn(void) {
+  uint8_t value = 0;
+
+  for (uint32_t i = 0; i < 8; ++i) {
+    digitalWrite(Hx.pin_sck, HIGH);
+#ifdef ESP32
+    delayMicroseconds(1); // could be required for faster mcu's
+#endif
+    value |= digitalRead(Hx.pin_dout) << (7 - i);
+#ifdef ESP32
+    delayMicroseconds(1); // could be required for faster mcu's
+#endif
+    digitalWrite(Hx.pin_sck, LOW);
+#ifdef ESP32
+    delayMicroseconds(1); // could be required for faster mcu's
+#endif
+  }
+  return value;
+}
+
 bool HxIsReady(uint16_t timeout)
 {
   // A reading can take up to 100 mS or 600mS after power on
   uint32_t start = millis();
-  while ((digitalRead(Hx.pin_dout) == HIGH) && (millis() - start < timeout)) { yield(); }
+  while ((digitalRead(Hx.pin_dout) == HIGH) && (millis() - start < timeout)) {
+    yield();
+  }
   return (digitalRead(Hx.pin_dout) == LOW);
 }
 
@@ -103,13 +125,19 @@ long HxRead(void)
   uint8_t filler = 0x00;
 
   // pulse the clock pin 24 times to read the data
-  data[2] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
-  data[1] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
-  data[0] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+//  data[2] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+//  data[1] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+//  data[0] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+  data[2] = HxShiftIn();
+  data[1] = HxShiftIn();
+  data[0] = HxShiftIn();
 
   // set the channel and the gain factor for the next reading using the clock pin
   for (unsigned int i = 0; i < HX_GAIN_128; i++) {
     digitalWrite(Hx.pin_sck, HIGH);
+#ifdef ESP32
+    delayMicroseconds(1); // could be required for faster mcu's
+#endif
     digitalWrite(Hx.pin_sck, LOW);
   }
 
@@ -308,6 +336,8 @@ void HxInit(void)
 void HxEvery100mSecond(void)
 {
   long raw = HxRead();
+  if (-1 == raw) { return; }
+
   Hx.sum_raw += raw;
   Hx.sum_weight += raw;
 
