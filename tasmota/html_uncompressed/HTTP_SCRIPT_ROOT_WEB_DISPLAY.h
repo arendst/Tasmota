@@ -5,7 +5,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "clearTimeout(ft);clearTimeout(lt);"
     "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
     "x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
+    "x.onreadystatechange=()=>{"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\")"
                             ".replace(/{s}/g,\"<tr><th>\")"

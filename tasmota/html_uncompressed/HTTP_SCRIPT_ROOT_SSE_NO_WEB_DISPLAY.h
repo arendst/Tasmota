@@ -2,7 +2,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function la(p){"
     "if(typeof(EventSource)!==\"undefined\"){"
       "var e=new EventSource('?m=1');"
-      "e.onmessage=function(event){"
+      "e.onmessage=event=>{"
         "eb('l1').innerHTML=event.data.replace(/{t}/g,\"<table style='width:100%%'>\")"
                                      ".replace(/{s}/g,\"<tr><th>\")"
     //                                 ".replace(/{m}/g,\"</th><td>\")"

@@ -15,7 +15,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
       "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
-      "x.onreadystatechange=function(){"
+      "x.onreadystatechange=()=>{"
         "if(x.readyState==4&&x.status==200){"
           "var z,d;"
           "d=x.responseText.split(/}1/);"  // Field separator
@@ -43,7 +43,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var hc=[],cn=0;"                       // hc = History commands, cn = Number of history being shown
   "function h(){"
 //    "if(!(navigator.maxTouchPoints||'ontouchstart'in document.documentElement)){eb('c1').autocomplete='off';}"  // No touch so stop browser autocomplete
-    "eb('c1').addEventListener('keydown',function(e){"
+    "eb('c1').addEventListener('keydown',e=>{"
       "var b=eb('c1'),c=e.keyCode;"       // c1 = Console command id
       "if(38==c||40==c){" // ArrowUp or ArrowDown
         "b.autocomplete='off';" // ArrowUp or ArrowDown must be a keyboard so stop browser autocomplete
