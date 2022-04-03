@@ -116,7 +116,7 @@ enum NeoPoolRegister {
   MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        undocumented - cell runtime (32 bit) - high word
   MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        undocumented - cell part runtime (32 bit) - low word
   MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209*        undocumented - cell part runtime (32 bit) - high word
-  MBF_BOOST_CTRL = 0x020C,                // 0x020C*        undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
+  MBF_CELL_BOOST = 0x020C,                // 0x020C*        undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
   MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214*        undocumented - cell runtime polarity A (32 bit) - low word
   MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215*        undocumented - cell runtime polarity A (32 bit) - high word
   MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216*        undocumented - cell runtime polarity B (32 bit) - low word
@@ -1581,7 +1581,7 @@ void NeoPoolShow(bool json)
       // S2
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_COVER  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER) ? 1 : 0 );
       // S3
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? 1 : 0 );
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? ((NeoPoolGetData(MBF_CELL_BOOST) & 0x8000) ? 1 : 2) : 0 );
       // S4
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_LOW  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW) ? 1 : 0 );
 
@@ -1691,7 +1691,11 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(PSTR(" "));
       // S3
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) {
-        WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK));
+        if ((NeoPoolGetData(MBF_CELL_BOOST) & 0x8000) == 0) {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK "+" D_NEOPOOL_REDOX));
+        } else {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK));
+        }
       } else  {
         WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_SHOCK));
       }
