@@ -293,7 +293,7 @@ void ImprovEverySecond(void) {
   if (Improv.wifi_timeout) {
     Improv.wifi_timeout--;
     if (Improv.wifi_timeout < IMPROV_WIFI_TIMEOUT -3) {        // Tasmota restarts after ssid or password change
-      if ((!TasmotaGlobal.global_state.wifi_down)) {
+      if (WifiHasIP()) {
         Improv.wifi_timeout = 0;
         if (IMPROV_STATE_AUTHORIZED == RtcSettings.improv_state) {
           RtcSettings.improv_state = IMPROV_STATE_PROVISIONED;

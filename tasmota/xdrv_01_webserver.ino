@@ -105,7 +105,7 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_HIDE[] PROGMEM =
-  "function hidBtns() {"
+  "function hidBtns(){"
     "eb('butmo').style.display='none';"
     "eb('butmod').style.display='none';"
     "eb('but0').style.display='block';"
@@ -3549,7 +3549,7 @@ bool Xdrv01(uint8_t function)
       if (Web.wifi_test_counter) {
         Web.wifi_test_counter--;
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
-        if ( WifiCheck_hasIP(WiFi.localIP()) ) {  // Got IP - Connection Established
+        if (WifiHasIP()) {            // Got IP - Connection Established
           Web.wifi_test_AP_TIMEOUT = false;
           Web.wifi_test_counter = 0;
           Web.wifiTest = WIFI_TEST_FINISHED;
