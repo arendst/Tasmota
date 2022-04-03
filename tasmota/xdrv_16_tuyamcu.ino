@@ -1798,9 +1798,12 @@ void TuyaProcessCommand(unsigned char *buffer){
   uint8_t cmd = buffer[3];
 
   // see if we are awaiting this cmd ack
-  if (0x03 == ver) {
+  // some MCU send 0x00 in ver field, 
+  // so we could assume some send 0x01, some 0x02, some 0x03?
+  // I'v not seen any docs about what the VER means!....
+  //if (0x03 == ver) {
     Tuya_statemachine(cmd, len, (unsigned char *)buffer+6);
-  }
+  //}
 
   Response_P(PSTR("{\"" D_JSON_TUYA_MCU_RECEIVED "\":{\"Data\":\"%s\",\"Cmnd\":%d"), ToHex_P(buffer, totallen, hex_char, sizeof(hex_char)), cmd);
 
