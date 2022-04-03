@@ -49,7 +49,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
         "b.autocomplete='off';" // ArrowUp or ArrowDown must be a keyboard so stop browser autocomplete
         "setTimeout(function(b){" // for best compatibility (chrome) we need to schedule this function
           "b.focus();" // for best compatibility (chrome) we need to (re)focus the input element
-          "b.setSelectionRange(b.value.length,b.value.length);" // move cursor to the end of the command inserted from history
+          "b.setSelectionRange(1e9,1e9);" // move cursor to the end (hopefully) of the command inserted from history
         "},0,b);"
       "}"
       "38==c?(++cn>hc.length&&(cn=hc.length),b.value=hc[cn-1]||''):"   // ArrowUp
