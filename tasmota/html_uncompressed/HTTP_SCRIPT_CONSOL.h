@@ -9,7 +9,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "c=eb('c1');"                       // Console command id
       "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
-      "t.scrollTop=99999999;"
+      "t.scrollTop=1e8;"
       "sn=t.scrollTop;"
     "}"
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
@@ -23,7 +23,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "if(d.shift()==0){t.value='';}"
           "z=d.shift();"
           "if(z.length>0){t.value+=z;}"
-          "t.scrollTop=99999999;"
+          "t.scrollTop=1e8;"
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
           "lt=setTimeout(l,ltm);" // webrefresh timer....
@@ -31,7 +31,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "};"
       "x.open('GET','cs?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
-      "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
+      "ft=setTimeout(l,2e4);" // fail timeout, triggered 20s after asking for XHR
     "}else{"
       "lt=setTimeout(l,ltm);" // webrefresh timer....
     "}"

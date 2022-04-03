@@ -22,7 +22,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "if(rfsh){"
       "x.open('GET','.?m=1'+a,true);"       // ?m related to Webserver->hasArg("m")
       "x.send();"
-      "ft=setTimeout(la,20000);"               // 20s failure timeout
+      "ft=setTimeout(la,2e4);"              // 20s failure timeout
     "}"
   "}"
   "function seva(par,ivar){"

@@ -16,5 +16,5 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "x=new XMLHttpRequest();"
     "x.open('GET','.?m=1'+a,true);"      // ?m related to Webserver->hasArg("m")
     "x.send();"
-    "lt=setTimeout(la,20000);"           // 20s failure timeout
+    "lt=setTimeout(la,2e4);"             // 20s failure timeout
   "}";
