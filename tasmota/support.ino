@@ -1975,6 +1975,53 @@ uint8_t Dec2Bcd(uint8_t n) {
   return n + 6 * (n / 10);
 }
 
+/*********************************************************************************************/
+
+uint8_t TasShiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
+  uint8_t value = 0;
+
+  for (uint32_t i = 0; i < 8; ++i) {
+    digitalWrite(clockPin, HIGH);
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
+    if(bitOrder == LSBFIRST) {
+      value |= digitalRead(dataPin) << i;
+    } else {
+      value |= digitalRead(dataPin) << (7 - i);
+    }
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
+    digitalWrite(clockPin, LOW);
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
+  }
+  return value;
+}
+
+void TasShiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val) {
+  for (uint32_t i = 0; i < 8; i++) {
+    if(bitOrder == LSBFIRST) {
+      digitalWrite(dataPin, !!(val & (1 << i)));
+    } else {
+      digitalWrite(dataPin, !!(val & (1 << (7 - i))));
+    }
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
+    digitalWrite(clockPin, HIGH);
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
+    digitalWrite(clockPin, LOW);
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
+  }
+}
+
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/

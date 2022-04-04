@@ -9,6 +9,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 |-----------------------|---|-------|---|---|---|---|--------
 | MY_LANGUAGE en_GB     | x | x / x | x | x | x | x |
+| USE_IMPROV            | - | x / x | x | x | x | x |
 | USE_UFILESYS          | - | - / x | - | - | - | - |
 | USE_ARDUINO_OTA       | - | - / - | - | - | - | - |
 | USE_DOMOTICZ          | - | x / x | x | x | x | - |
@@ -19,7 +20,6 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_TELEGRAM          | - | - / - | - | - | - | - |
 | USE_KNX               | - | - / x | x | - | - | - |
 | USE_WEBSERVER         | x | x / x | x | x | x | x |
-| USE_JAVASCRIPT_ES6    | - | - / - | - | - | - | - |
 | USE_WEBSEND_RESPONSE  | - | - / - | - | - | - | - |
 | USE_EMULATION_HUE     | x | x / x | - | x | - | - |
 | USE_EMULATION_WEMO    | x | x / x | - | x | - | - |

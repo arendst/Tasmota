@@ -379,18 +379,16 @@ String WifiGetIPv6(void)
 #endif  // LWIP_IPV6=1
 
 // Check to see if we have any routable IP address
-inline bool WifiCheck_hasIP(IPAddress const & ip_address)
-{
+bool WifiHasIP(void) {
 #ifdef LWIP2_IPV6
   return !a.isLocal();
 #else
-  return static_cast<uint32_t>(ip_address) != 0;
+  return (uint32_t)WiFi.localIP() != 0;
 #endif
 }
 
-void WifiCheckIp(void)
-{
-  if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP())) {
+void WifiCheckIp(void) {
+  if ((WL_CONNECTED == WiFi.status()) && WifiHasIP()) {
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
@@ -520,7 +518,7 @@ void WifiCheck(uint8_t param)
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
-      if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP()) && !Wifi.config_type) {
+      if ((WL_CONNECTED == WiFi.status()) && WifiHasIP() && !Wifi.config_type) {
         WifiSetState(1);
         if (Settings->flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {

@@ -62,17 +62,9 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
 #include <DNSServer.h>
 
 #ifdef USE_UNISHOX_COMPRESSION
-  #ifdef USE_JAVASCRIPT_ES6
-    #include "./html_compressed/HTTP_HEADER1_ES6.h"
-  #else
-    #include "./html_compressed/HTTP_HEADER1_NOES6.h"
-  #endif
+  #include "./html_compressed/HTTP_HEADER1_ES6.h"
 #else
-  #ifdef USE_JAVASCRIPT_ES6
-    #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
-  #else
-    #include "./html_uncompressed/HTTP_HEADER1_NOES6.h"
-  #endif
+  #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
 #endif
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
@@ -113,7 +105,7 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_HIDE[] PROGMEM =
-  "function hidBtns() {"
+  "function hidBtns(){"
     "eb('butmo').style.display='none';"
     "eb('butmod').style.display='none';"
     "eb('but0').style.display='block';"
@@ -124,7 +116,7 @@ const char HTTP_SCRIPT_HIDE[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
-  "setTimeout(function(){location.href='.';},%d);";
+  "setTimeout(()=>{location.href='.';},%d);";
 
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_SCRIPT_CONSOL.h"
@@ -992,7 +984,7 @@ void WebRestart(uint32_t type)
 #if ((RESTART_AFTER_INITIAL_WIFI_CONFIG) && (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP))
   // In case of type 3 (New network has been configured) go to the new device's IP in the new Network
   if (3 == type) {
-    WSContentSend_P("setTimeout(function(){location.href='http://%_I';},%d);",
+    WSContentSend_P("setTimeout(()=>{location.href='http://%_I';},%d);",
       (uint32_t)WiFi.localIP(),
       HTTP_RESTART_RECONNECT_TIME
     );
@@ -3557,7 +3549,7 @@ bool Xdrv01(uint8_t function)
       if (Web.wifi_test_counter) {
         Web.wifi_test_counter--;
         AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_TRYING_TO_CONNECT " %s"), SettingsText(SET_STASSID1));
-        if ( WifiCheck_hasIP(WiFi.localIP()) ) {  // Got IP - Connection Established
+        if (WifiHasIP()) {            // Got IP - Connection Established
           Web.wifi_test_AP_TIMEOUT = false;
           Web.wifi_test_counter = 0;
           Web.wifiTest = WIFI_TEST_FINISHED;

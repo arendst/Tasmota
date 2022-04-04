@@ -451,7 +451,7 @@ const char HTTP_MI32_SCRIPT_1[] PROGMEM =
   "for(const el of ti){var t=parseInt(el.innerText);el.innerText=t+1;}}"
   "function update(){"         //source, value
     "var xr=new XMLHttpRequest();"
-    "xr.onreadystatechange=function(){"
+    "xr.onreadystatechange=()=>{"
       "if(xr.readyState==4&&xr.status==200){"
             "var r = xr.response;" // new widget
             "if(r.length>2000){return;};if(r.length==0){return;}"
