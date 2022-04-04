@@ -165,7 +165,8 @@ void CounterInit(void)
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (PinUsed(GPIO_CNTR1, i)) {
 #ifdef USE_AC_ZERO_CROSS_DIMMER
-      if (Settings->flag4.zerocross_dimmer) {
+      // BL 2022-04-04 if used GPIO_ZEROCROSS the PWM Zero crossing was managed by xdrv_62_robotdyn.ino
+      if (Settings->flag4.zerocross_dimmer && !PinUsed(GPIO_ZEROCROSS)) {
         ac_zero_cross_dimmer.current_cycle_ClockCycles = ac_zero_cross_dimmer.tobe_cycle_timeClockCycles = microsecondsToClockCycles(1000000 / Settings->pwm_frequency);
         // short fire on PWM to ensure not to hit next sinus curve but trigger the TRIAC. 0.78% of duty cycle (10ms) ~4µs
         ac_zero_cross_dimmer.high = ac_zero_cross_dimmer.current_cycle_ClockCycles / 256;

@@ -203,8 +203,15 @@ void ZeroCrossMomentEnd(void) {
 
 void IRAM_ATTR ZeroCrossIsr(void) {
   uint32_t time = micros();
-  TasmotaGlobal.zc_interval = ((int32_t) (time - TasmotaGlobal.zc_time));
-  TasmotaGlobal.zc_time = time;
+  static bool lastValue;
+  bool value = digitalRead(Pin(GPIO_ZEROCROSS));
+  if(value && !lastValue) {
+    // Zero-cross is probably in the midle of 0 pulse
+    TasmotaGlobal.zc_interval = ((int32_t) (time - TasmotaGlobal.zc_time));
+    TasmotaGlobal.zc_time = time;
+    //AddLog(LOG_LEVEL_INFO, PSTR("========== ZCD: value %d  %d µs"),value, clockCyclesToMicroseconds(ac_zero_cross_dimmer.current_cycle_ClockCycles));
+  }
+  lastValue = value;
 }
 
 void ZeroCrossInit(uint32_t offset) {
