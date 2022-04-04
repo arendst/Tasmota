@@ -144,20 +144,22 @@ enum {
   TUYA_STARTUP_STATE_PRODUCT, //2
   TUYA_STARTUP_STATE_WAIT_ACK_PRODUCT, // 3
 
-  TUYA_STARTUP_STATE_CONF, // 4
-  TUYA_STARTUP_STATE_WAIT_ACK_CONF, //5 
+  TUYA_STARTUP_STATE_WAIT_OPTIONAL_NEW_FEATURES, // 4
 
-  TUYA_STARTUP_STATE_WIFI_STATE, //6
-  TUYA_STARTUP_STATE_WAIT_ACK_WIFI,//7
+  TUYA_STARTUP_STATE_CONF, // 5
+  TUYA_STARTUP_STATE_WAIT_ACK_CONF, //6 
 
-  TUYA_STARTUP_STATE_QUERY_STATE,//8
-  TUYA_STARTUP_STATE_WAIT_ACK_QUERY,//9
+  TUYA_STARTUP_STATE_WIFI_STATE, //7
+  TUYA_STARTUP_STATE_WAIT_ACK_WIFI,//8
 
-  TUYA_STARTUP_STATE_SEND_CMD,//10
-  TUYA_STARTUP_STATE_WAIT_ACK_CMD,//11
+  TUYA_STARTUP_STATE_QUERY_STATE,//9
+  TUYA_STARTUP_STATE_WAIT_ACK_QUERY,//10
 
-  TUYA_STARTUP_STATE_SEND_HEARTBEAT,//12
-  TUYA_STARTUP_STATE_WAIT_ACK_HEARTBEAT,//13
+  TUYA_STARTUP_STATE_SEND_CMD,//11
+  TUYA_STARTUP_STATE_WAIT_ACK_CMD,//12
+
+  TUYA_STARTUP_STATE_SEND_HEARTBEAT,//13
+  TUYA_STARTUP_STATE_WAIT_ACK_HEARTBEAT,//14
 
 };
 
@@ -661,9 +663,9 @@ void Tuya_timeout(){
   pTuya->timeout = 0;
 }
 
-void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0)
+void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0, int noerror = 0)
 {
-  if (!pTuya->inStateMachine){
+  if (!pTuya->inStateMachine && !noerror){
     AddLog(LOG_LEVEL_ERROR, PSTR("TYA: TuyaSendCmd should only be called from within the state machine! - if this was a manual command, then ok."));
   }
 
@@ -719,19 +721,30 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       break;      
     case TUYA_STARTUP_STATE_WAIT_ACK_PRODUCT: // 3
       if (cmd == TUYA_CMD_QUERY_PRODUCT){
+        pTuya->timeout = 300; // Optional - we will wait 300ms for this after TUYA_CMD_QUERY_PRODUCT response 
+        pTuya->timeout_state = TUYA_STARTUP_STATE_CONF; // move on at timeout.
+        pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_OPTIONAL_NEW_FEATURES;
+      }
+      break;
+    case TUYA_STARTUP_STATE_WAIT_OPTIONAL_NEW_FEATURES: // 4
+      /* Optional - we will wait 300ms for this after TUYA_CMD_QUERY_PRODUCT response 
+         After the device is powered on, 
+         the MCU sends this command to notify the module of feature configuration 
+         after the command 0x01 and before the command 0x02.*/
+      if (cmd == TUYA_CMD_NEW_FEATURES){
         pTuya->timeout = 0; 
-        pTuya->timeout_state = TUYA_STARTUP_STATE_INIT; 
+        pTuya->timeout_state = TUYA_STARTUP_STATE_CONF; 
         pTuya->startup_state = TUYA_STARTUP_STATE_CONF;
       }
       break;
-    case TUYA_STARTUP_STATE_CONF: // 4
+    case TUYA_STARTUP_STATE_CONF: // 5
       if (cmd >= 0) break;
       TuyaSendCmd(TUYA_CMD_MCU_CONF);
       pTuya->timeout = 1000; 
       pTuya->timeout_state = TUYA_STARTUP_STATE_INIT; 
       pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_CONF; 
       break;      
-    case TUYA_STARTUP_STATE_WAIT_ACK_CONF: //5 
+    case TUYA_STARTUP_STATE_WAIT_ACK_CONF: // 
       if (cmd == TUYA_CMD_MCU_CONF){
         if (len > 0){
           pTuya->startup_state = TUYA_STARTUP_STATE_QUERY_STATE;
@@ -743,7 +756,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       }
       break;
 
-    case TUYA_STARTUP_STATE_WIFI_STATE: {//6
+    case TUYA_STARTUP_STATE_WIFI_STATE: {//
       uint8_t t = 0x04;
       if (cmd >= 0) break;
       TuyaSendCmd(TUYA_CMD_WIFI_STATE, &t, 1);
@@ -751,21 +764,21 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       pTuya->timeout_state = TUYA_STARTUP_STATE_INIT; 
       pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_WIFI; 
     } break;      
-    case TUYA_STARTUP_STATE_WAIT_ACK_WIFI://7
+    case TUYA_STARTUP_STATE_WAIT_ACK_WIFI://
       if (cmd == TUYA_CMD_WIFI_STATE){
         pTuya->timeout = 0; 
         pTuya->timeout_state = TUYA_STARTUP_STATE_INIT; 
         pTuya->startup_state = TUYA_STARTUP_STATE_QUERY_STATE;
       }
       break;
-    case TUYA_STARTUP_STATE_QUERY_STATE://8
+    case TUYA_STARTUP_STATE_QUERY_STATE://
       if (cmd >= 0) break;
       TuyaSendCmd(TUYA_CMD_QUERY_STATE);
       pTuya->timeout = 1000; 
       pTuya->timeout_state = TUYA_STARTUP_STATE_INIT; 
       pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_QUERY; 
       break;      
-    case TUYA_STARTUP_STATE_WAIT_ACK_QUERY://9
+    case TUYA_STARTUP_STATE_WAIT_ACK_QUERY://
       if (cmd == TUYA_CMD_STATE){
         // wait a further 500ms for the next command.
         // only on timeout, move on to runtime
@@ -776,7 +789,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       break;
 
     // we hit runtime.....
-    case TUYA_STARTUP_STATE_SEND_CMD://10
+    case TUYA_STARTUP_STATE_SEND_CMD://
       if (pTuya->send_time & 1){
         TuyaSetTime();
         pTuya->send_time &= 0xfe;
@@ -867,7 +880,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       }
       break;
 
-    case TUYA_STARTUP_STATE_SEND_HEARTBEAT://12
+    case TUYA_STARTUP_STATE_SEND_HEARTBEAT://
       // send a heartbeat, and wait up to a second
       if (cmd >= 0) break;
       TuyaSendCmd(TUYA_CMD_HEARTBEAT);
@@ -877,7 +890,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       break;      
 
     // wait for heartbeat return
-    case TUYA_STARTUP_STATE_WAIT_ACK_HEARTBEAT://13
+    case TUYA_STARTUP_STATE_WAIT_ACK_HEARTBEAT://
       if (cmd == TUYA_CMD_HEARTBEAT){
         pTuya->timeout = 0; 
         pTuya->timeout_state = TUYA_STARTUP_STATE_SEND_CMD; 
@@ -1320,10 +1333,6 @@ void TuyaRequestState(uint8_t state_type)
 
 void TuyaResetWifi(void)
 {
-  // ack MCU request immediately
-  // https://developer.tuya.com/en/docs/iot/wifi-module-mcu-development-overview-for-homekit?id=Kaa8fvusmgapc
-  TuyaSendCmd(TUYA_CMD_WIFI_RESET);
-
   if (!Settings->flag.button_restrict) {  // SetOption1 - Control button multipress
     if (pTuya->wifiTimer > 20000){
       char scmnd[20];
@@ -1331,6 +1340,7 @@ void TuyaResetWifi(void)
       ExecuteCommand(scmnd, SRC_BUTTON);
     }
     pTuya->wifiTimer += 10000;
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Wifi reset button pressed.  Press repeatedly to achieve reset"));
   }
 }
 
@@ -1703,10 +1713,18 @@ void TuyaNormalPowerModePacketProcess(void)
 
     case TUYA_CMD_WIFI_RESET:
       AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX WiFi Reset"));
+      // ack MCU request immediately
+      // https://developer.tuya.com/en/docs/iot/wifi-module-mcu-development-overview-for-homekit?id=Kaa8fvusmgapc
+      // set 'noerror', as we are responding
+      TuyaSendCmd(TUYA_CMD_WIFI_RESET, nullptr, 0, 1);
       TuyaResetWifi();
       break;
     case TUYA_CMD_WIFI_SELECT:
       AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: RX WiFi Select"));
+      // ack MCU request immediately
+      // https://developer.tuya.com/en/docs/iot/wifi-module-mcu-development-overview-for-homekit?id=Kaa8fvusmgapc
+      // set 'noerror', as we are responding
+      TuyaSendCmd(TUYA_CMD_WIFI_SELECT, nullptr, 0, 1);
       TuyaResetWifi();
       break;
 
@@ -2279,6 +2297,10 @@ bool Xdrv16(uint8_t function) {
       case FUNC_EVERY_SECOND:
         if (pTuya->wifiTimer > 0){
           pTuya->wifiTimer -= 1000;
+          if (pTuya->wifiTimer <= 0){
+            AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Wifi reset aborted."));
+            pTuya->wifiTimer = 0;
+          }
         }
         // now done in state machine
         //if (TuyaSerial && pTuya->wifi_state != TuyaGetTuyaWifiState()) { TuyaSetWifiLed(); }
