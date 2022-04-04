@@ -25,6 +25,7 @@ def init(lv_tasmota)
   lv.screenshot = lv_tasmota.screenshot
 
   # add widgets
+  lv.clock = lv_clock
   lv.clock_icon = lv_clock_icon
   lv.signal_arcs = lv_signal_arcs
   lv.signal_bars = lv_signal_bars

@@ -23,17 +23,25 @@
  */
 #include <stdlib.h>
 
+//Tasmota Patch
+extern void *special_malloc(uint32_t size);
+extern void *special_calloc(size_t num, size_t size);
+
+extern "C" {
 void * hap_platform_memory_malloc(size_t size)
 {
-    return malloc(size);
+    return special_malloc((uint32_t)size);
+    // return malloc(size);
 }
 
 void * hap_platform_memory_calloc(size_t count, size_t size)
 {
-    return calloc(count, size);
+    return special_calloc(count,size);
+    // return calloc(count, size);
 }
 
 void hap_platform_memory_free(void *ptr)
 {
     free(ptr);
 }
+} //extern "C"

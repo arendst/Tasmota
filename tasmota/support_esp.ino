@@ -382,6 +382,10 @@ String ESP32GetResetReason(uint32_t cpu_no) {
     case 17 : return F("Time Group1 reset CPU");                            // 17  -                 TG1WDT_CPU_RESET
     case 18 : return F("Super watchdog reset digital core and rtc module"); // 18  -                 SUPER_WDT_RESET
     case 19 : return F("Glitch reset digital core and rtc module");         // 19  -                 GLITCH_RTC_RESET
+    case 20 : return F("Efuse reset digital core");                         // 20                    EFUSE_RESET
+    case 21 : return F("Usb uart reset digital core");                      // 21                    USB_UART_CHIP_RESET
+    case 22 : return F("Usb jtag reset digital core");                      // 22                    USB_JTAG_CHIP_RESET
+    case 23 : return F("Power glitch reset digital core and rtc module");   // 23                    POWER_GLITCH_RESET
   }
 
   return F("No meaning");                                                   // 0 and undefined

@@ -77,6 +77,7 @@
 #define D_COUNTER "Counter"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "전류"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Data"
 #define D_DARKLIGHT "어둡게"
 #define D_DEBUG "디버그"

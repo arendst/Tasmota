@@ -118,10 +118,12 @@ extern "C" {
 ********************************************************************/ 
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
-  extern bool MI32runBerryConnection(uint8_t operation);
+  extern bool MI32runBerryConnection(uint8_t operation, bool response);
   extern bool MI32setBerryCtxSvc(const char *Svc);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
+  extern bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type);
+  extern bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type);
 
 
   int be_BLE_reg_conn_cb(bvm *vm);
@@ -191,11 +193,44 @@ extern "C" {
   int be_BLE_run(bvm *vm);
   int be_BLE_run(bvm *vm){    
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 2)) {
-      if (MI32runBerryConnection(be_toint(vm, 2))) be_return(vm);
+    if ((argc > 1) && be_isint(vm, 2)) {
+      bool response = false;
+      if(argc == 3 && be_isint(vm, 3)){
+        response = be_toint(vm,3)>0;
+      }
+      if (MI32runBerryConnection(be_toint(vm, 2),response)) be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }
+
+  int be_BLE_adv_block(bvm *vm);
+  int be_BLE_adv_block(bvm *vm){    
+  int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc > 1 && be_isbytes(vm, 2)) {
+      size_t len = 6;
+      uint8_t type = 0;
+      if(argc == 3 && be_isint(vm, 3)){
+        type = be_toint(vm,3);
+      }
+    if(MI32addMACtoBlockList((uint8_t*)be_tobytes(vm, 2, &len),type)) be_return(vm);
+  }
+  be_raise(vm, kTypeError, nullptr);
+  }
+
+  int be_BLE_adv_watch(bvm *vm);
+  int be_BLE_adv_watch(bvm *vm){    
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc > 1 && be_isbytes(vm, 2)) {
+    size_t len = 6;
+    uint8_t type = 0;
+    if(argc == 3 && be_isint(vm, 3)){
+      type = be_toint(vm,3);
+    }
+    if (MI32addMACtoWatchList((uint8_t*)be_tobytes(vm, 2, &len),type)) be_return(vm);
+  }
+  be_raise(vm, kTypeError, nullptr);
+  }
+
 } //extern "C"
 
 
@@ -213,16 +248,18 @@ be_BLE_op:
 1 read
 2 write
 3 subscribe
-4 unsubscribe
+4 unsubscribe - maybe later
 5 disconnect
 
 11 read once, then disconnect
 12 write once, then disconnect
 13 subscribe once, then disconnect
-14 unsubscribe once, then disconnect
+14 unsubscribe once, then disconnect - maybe later
 
 BLE.conn_cb(cb,buffer)
 BLE.adv_cb(cb,buffer)
+BLE.adv_watch(MAC)
+BLE.adv_block(MAC)
 
 MI32.devices()
 MI32.get_name(slot)

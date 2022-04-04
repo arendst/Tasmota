@@ -77,6 +77,7 @@
 #define D_COUNTER "מונה"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "נוכחי"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "נתונים"
 #define D_DARKLIGHT "חושך"
 #define D_DEBUG "באגים"

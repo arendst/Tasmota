@@ -3,11 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.4]
+## [11.0.0.5]
+### Added
+- Support for improv as used by esp-web-tools
+
+### Changed
+- Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)
+
+### Fixed
+
+
+## [11.0.0.4] 20220402
 ### Added
 - Command ``RtcNtpserver 0/1`` to enable Tasmota NTP server when enabled by define ``RTC_NTP_SERVER``
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 - Support for up to four DS3502 digital potentiometers with command ``Wiper<x> 0..127``
+- Command ``SetOption136 1`` to disable single sensor reports from Tuya devices while keeping teleperiod reports (#15216)
 
 ### Changed
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
@@ -16,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool remove ambiguous device color names
 - Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 - IRremoteESP8266 library from v2.8.1 to v2.8.2
+- Tasmota ESP32 Arduino core to v2.0.3
 - ESP8266 Shrinked tasmota-minimal.bin by removing all commands except ``Upgrade``, ``Upload``, ``OtaUrl``, ``Seriallog``, ``Weblog`` and ``Restart``
 
 ### Fixed

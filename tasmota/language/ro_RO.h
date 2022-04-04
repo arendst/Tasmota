@@ -77,6 +77,7 @@
 #define D_COUNTER "Contor"
 #define D_CT_POWER "Putere Transformată"
 #define D_CURRENT "Curent"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Date"
 #define D_DARKLIGHT "Întunecat"
 #define D_DEBUG "Depanare"

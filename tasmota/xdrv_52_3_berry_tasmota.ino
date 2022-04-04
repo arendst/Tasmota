@@ -84,6 +84,21 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: `tasmota.publish_rulet(payload:string) -> bool``
+  //
+  // Returns `true` if event was handled
+  int32_t l_publish_rule(struct bvm *vm);
+  int32_t l_publish_rule(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top >= 2 && be_isstring(vm, 2)) {  // 1 mandatory string argument
+      const char * payload = be_tostring(vm, 2);
+      bool handled = XdrvRulesProcess(0, payload);
+      be_pushbool(vm, handled);
+      be_return(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
   // Berry: `tasmota.cmd(command:string) -> string`
   //
   int32_t l_cmd(struct bvm *vm);

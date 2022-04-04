@@ -77,6 +77,7 @@
 #define D_COUNTER "Számláló"
 #define D_CT_POWER "CT erősség"
 #define D_CURRENT "Áramerősség"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Adat"
 #define D_DARKLIGHT "Min. fényerő"
 #define D_DEBUG "Debug"

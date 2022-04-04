@@ -77,6 +77,7 @@
 #define D_COUNTER "Opnemer"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "Stroom"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Donker"
 #define D_DEBUG "Ontfout"

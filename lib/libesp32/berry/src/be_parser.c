@@ -1694,7 +1694,7 @@ static void statement(bparser *parser)
     case OptSemic: scan_next_token(parser); break; /* empty statement */
     default: expr_stmt(parser); break;
     }
-    be_assert(parser->finfo->freereg == be_list_count(parser->finfo->local));
+    be_assert(parser->finfo->freereg >= be_list_count(parser->finfo->local));
 }
 
 static void stmtlist(bparser *parser)

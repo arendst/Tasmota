@@ -77,6 +77,7 @@
 #define D_COUNTER "Počítadlo"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "Prúd"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "Dáta"
 #define D_FLOW_RATE "Flow rate"
 #define D_DARKLIGHT "Tmavý"

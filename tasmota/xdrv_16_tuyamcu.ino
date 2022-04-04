@@ -27,22 +27,25 @@
 #define TUYA_DIMMER_ID         0
 #endif
 
-#define TUYA_CMD_HEARTBEAT     0x00
-#define TUYA_CMD_QUERY_PRODUCT 0x01
-#define TUYA_CMD_MCU_CONF      0x02
-#define TUYA_CMD_WIFI_STATE    0x03
-#define TUYA_CMD_WIFI_RESET    0x04
-#define TUYA_CMD_WIFI_SELECT   0x05
-#define TUYA_CMD_SET_DP        0x06
-#define TUYA_CMD_STATE         0x07
-#define TUYA_CMD_QUERY_STATE   0x08
-#define TUYA_CMD_SET_TIME      0x1C
+#define TUYA_CMD_HEARTBEAT          0x00
+#define TUYA_CMD_QUERY_PRODUCT      0x01
+#define TUYA_CMD_MCU_CONF           0x02
+#define TUYA_CMD_WIFI_STATE         0x03
+#define TUYA_CMD_WIFI_RESET         0x04
+#define TUYA_CMD_WIFI_SELECT        0x05
+#define TUYA_CMD_SET_DP             0x06
+#define TUYA_CMD_STATE              0x07
+#define TUYA_CMD_QUERY_STATE        0x08
+#define TUYA_CMD_INITIATING_UPGRADE 0x0A
+#define TUYA_CMD_UPGRADE_PACKAGE    0x0B
+#define TUYA_CMD_SET_TIME           0x1C
 
 #define TUYA_LOW_POWER_CMD_WIFI_STATE   0x02
 #define TUYA_LOW_POWER_CMD_WIFI_RESET   0x03
 #define TUYA_LOW_POWER_CMD_WIFI_CONFIG  0x04
 #define TUYA_LOW_POWER_CMD_STATE        0x05
 
+#define TUYA_TYPE_RAW          0x00
 #define TUYA_TYPE_BOOL         0x01
 #define TUYA_TYPE_VALUE        0x02
 #define TUYA_TYPE_STRING       0x03
@@ -97,7 +100,9 @@ struct TUYA {
 // #define D_CMND_TUYA_SET_TIMER "SetTimer"
 
 const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expanded in the future)
+//          71              72          73            74            75
   "" D_JSON_TEMPERATURE "|TempSet|" D_JSON_HUMIDITY "|HumSet|" D_JSON_ILLUMINANCE
+//         76            77             78              79      80   81     82     83     84
   "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|" D_JSON_GAS "||Timer1|Timer2|Timer3|TImer4";
 
 const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
@@ -105,6 +110,10 @@ const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
 
 void (* const TuyaCommand[])(void) PROGMEM = {
   &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
+};
+
+const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = { // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
+  TUYA_CMD_HEARTBEAT, TUYA_CMD_WIFI_STATE, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE
 };
 
 /*********************************************************************************************\
@@ -145,6 +154,9 @@ TuyaSend2 11,100 -> Sends integer (Type 2) data 100 to dpId 11 (Max data length 
 TuyaSend2 11,0xAABBCCDD -> Sends 4 bytes (Type 2) data to dpId 11 (Max data length 4 bytes)
 TuyaSend3 11,ThisIsTheData -> Sends the supplied string (Type 3) to dpId 11 ( Max data length not-known)
 TuyaSend4 11,1 -> Sends enum (Type 4) data 1 to dpId 11 (Max data length 1 bytes)
+TuyaSend5 11,ABCD -> Sends an HEX string (Type 3) data to dpId 
+TuyaSend6 11,ABCD -> Sends raw (Type 0) data to dpId
+
 */
 
 void CmndTuyaSend(void) {
@@ -184,6 +196,8 @@ void CmndTuyaSend(void) {
         TuyaSendHexString(dpId, data);
       } else if (4 == XdrvMailbox.index) {
         TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
+      } else if (6 == XdrvMailbox.index) {
+        TuyaSendRaw(dpId, data);
       }
     }
   }
@@ -499,6 +513,24 @@ void TuyaSendEnum(uint8_t id, uint32_t value)
   TuyaSendState(id, TUYA_TYPE_ENUM, (uint8_t*)(&value));
 }
 
+static uint16_t convertHexStringtoBytes (uint8_t * dest, char src[], uint16_t src_len){
+  if (NULL == dest || NULL == src || 0 == src_len){
+    return 0;
+  }
+  
+  char hexbyte[3];
+  hexbyte[2] = 0;
+  uint16_t i;
+
+  for (i = 0; i < src_len; i++) {
+    hexbyte[0] = src[2*i];
+    hexbyte[1] = src[2*i+1];
+    dest[i] = strtol(hexbyte, NULL, 16);
+  }
+
+  return i;
+}
+
 void TuyaSendHexString(uint8_t id, char data[]) {
 
   uint16_t len = strlen(data)/2;
@@ -509,14 +541,7 @@ void TuyaSendHexString(uint8_t id, char data[]) {
   payload_buffer[2] = len >> 8;
   payload_buffer[3] = len & 0xFF;
 
-  char hexbyte[3];
-  hexbyte[2] = 0;
-
-  for (uint16_t i = 0; i < len; i++) {
-    hexbyte[0] = data[2*i];
-    hexbyte[1] = data[2*i+1];
-    payload_buffer[4+i] = strtol(hexbyte,NULL,16);
-  }
+  (void) convertHexStringtoBytes(&payload_buffer[4], data, len);
 
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
@@ -538,6 +563,29 @@ void TuyaSendString(uint8_t id, char data[]) {
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
 
+void TuyaSendRaw(uint8_t id, char data[]) {
+  char* beginPos = strchr(data, 'x');
+  if(!beginPos) {
+    beginPos = strchr(data, 'X');
+  }
+  if(!beginPos) {
+    beginPos = data;
+  } else {
+    beginPos += 1;
+  }
+  uint16_t strSize = strlen(beginPos);
+  uint16_t len = strSize/2;
+  uint16_t payload_len = 4 + len;
+  uint8_t payload_buffer[payload_len];
+  payload_buffer[0] = id;
+  payload_buffer[1] = TUYA_TYPE_RAW;
+  payload_buffer[2] = len >> 8;
+  payload_buffer[3] = len & 0xFF;
+
+  (void) convertHexStringtoBytes(&payload_buffer[4], beginPos, len);
+
+  TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
+}
 bool TuyaSetPower(void)
 {
   bool status = false;
@@ -814,10 +862,14 @@ void TuyaProcessStatePacket(void) {
           char sname[20];
           char tempval[5];
           uint8_t res;
+          bool dont_publish = Settings->flag5.tuyasns_no_immediate;
 
           if (TasmotaGlobal.uptime < 8) { // delay to avoid multiple topics at the same time at boot time
             return;
           } else {
+            if (fnId > 80 || fnId == 74 || fnId == 72) {
+              dont_publish = false;
+            }
             if (fnId > 74) {
               res = 0;
             } else if (fnId > 72) {
@@ -830,7 +882,11 @@ void TuyaProcessStatePacket(void) {
             GetTextIndexed(sname, sizeof(sname), (fnId-71), kTuyaSensors);
             ResponseClear(); // Clear retained message
             Response_P(PSTR("{\"TuyaSNS\":{\"%s\":%s}}"), sname, dtostrfd(TuyaAdjustedTemperature(packetValue, res), res, tempval)); // sensor update is just on change
-            MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
+            if (dont_publish) {
+              XdrvRulesProcess(0);
+            } else {
+              MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_CMND_SENSOR));
+            }
           }
         }
 
@@ -1193,6 +1249,7 @@ void TuyaSerialInput(void)
       uint8_t dpId = 0;
       uint8_t dpDataType = 0;
       char DataStr[15];
+      bool isCmdToSuppress = false;
 
       if (len > 0) {
         ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
@@ -1240,7 +1297,17 @@ void TuyaSerialInput(void)
       ResponseAppend_P(PSTR("}}"));
 
       if (Settings->flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
+        for (uint8_t cmdsID = 0; sizeof(TuyaExcludeCMDsFromMQTT) > cmdsID; cmdsID++){
+          if (TuyaExcludeCMDsFromMQTT[cmdsID] == Tuya.buffer[3]) {
+            isCmdToSuppress = true;
+            break;
+          }  
+        }
+        if (!(isCmdToSuppress && Settings->flag5.tuya_exclude_from_mqtt)) {  // SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see TuyaExcludeCMDsFromMQTT) if SetOption66 is active
+          MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
+        } else {
+          AddLog(LOG_LEVEL_DEBUG, ResponseData());
+        }      
       } else {
         AddLog(LOG_LEVEL_DEBUG, ResponseData());
       }

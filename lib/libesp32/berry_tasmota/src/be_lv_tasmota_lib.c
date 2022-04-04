@@ -430,7 +430,7 @@ be_local_closure(lv_tasmota_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[31]) {     /* constants */
+    ( &(const bvalue[33]) {     /* constants */
     /* K0   */  be_nested_str(lv),
     /* K1   */  be_nested_str(start),
     /* K2   */  be_nested_str(splash_init),
@@ -445,27 +445,29 @@ be_local_closure(lv_tasmota_init,   /* name */
     /* K11  */  be_nested_str(load_freetype_font),
     /* K12  */  be_nested_str(register_button_encoder),
     /* K13  */  be_nested_str(screenshot),
-    /* K14  */  be_nested_str(clock_icon),
-    /* K15  */  be_nested_str(lv_clock_icon),
-    /* K16  */  be_nested_str(signal_arcs),
-    /* K17  */  be_nested_str(lv_signal_arcs),
-    /* K18  */  be_nested_str(signal_bars),
-    /* K19  */  be_nested_str(lv_signal_bars),
-    /* K20  */  be_nested_str(wifi_arcs_icon),
-    /* K21  */  be_nested_str(lv_wifi_arcs_icon),
-    /* K22  */  be_nested_str(wifi_arcs),
-    /* K23  */  be_nested_str(lv_wifi_arcs),
-    /* K24  */  be_nested_str(wifi_bars_icon),
-    /* K25  */  be_nested_str(lv_wifi_bars_icon),
-    /* K26  */  be_nested_str(wifi_bars),
-    /* K27  */  be_nested_str(lv_wifi_bars),
-    /* K28  */  be_nested_str(tasmota),
-    /* K29  */  be_nested_str(get_option),
-    /* K30  */  be_const_int(0),
+    /* K14  */  be_nested_str(clock),
+    /* K15  */  be_nested_str(lv_clock),
+    /* K16  */  be_nested_str(clock_icon),
+    /* K17  */  be_nested_str(lv_clock_icon),
+    /* K18  */  be_nested_str(signal_arcs),
+    /* K19  */  be_nested_str(lv_signal_arcs),
+    /* K20  */  be_nested_str(signal_bars),
+    /* K21  */  be_nested_str(lv_signal_bars),
+    /* K22  */  be_nested_str(wifi_arcs_icon),
+    /* K23  */  be_nested_str(lv_wifi_arcs_icon),
+    /* K24  */  be_nested_str(wifi_arcs),
+    /* K25  */  be_nested_str(lv_wifi_arcs),
+    /* K26  */  be_nested_str(wifi_bars_icon),
+    /* K27  */  be_nested_str(lv_wifi_bars_icon),
+    /* K28  */  be_nested_str(wifi_bars),
+    /* K29  */  be_nested_str(lv_wifi_bars),
+    /* K30  */  be_nested_str(tasmota),
+    /* K31  */  be_nested_str(get_option),
+    /* K32  */  be_const_int(0),
     }),
     &be_const_str_init,
     &be_const_str_solidified,
-    ( &(const binstruction[51]) {  /* code */
+    ( &(const binstruction[53]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x88080101,  //  0001  GETMBR	R2	R0	K1
       0x90060202,  //  0002  SETMBR	R1	K1	R2
@@ -507,16 +509,18 @@ be_local_closure(lv_tasmota_init,   /* name */
       0x90063002,  //  0026  SETMBR	R1	K24	R2
       0xB80A3600,  //  0027  GETNGBL	R2	K27
       0x90063402,  //  0028  SETMBR	R1	K26	R2
-      0xB80A3800,  //  0029  GETNGBL	R2	K28
-      0x8C08051D,  //  002A  GETMET	R2	R2	K29
-      0x54120086,  //  002B  LDINT	R4	135
-      0x7C080400,  //  002C  CALL	R2	2
-      0x1C08051E,  //  002D  EQ	R2	R2	K30
-      0x780A0001,  //  002E  JMPF	R2	#0031
-      0x8C080302,  //  002F  GETMET	R2	R1	K2
-      0x7C080200,  //  0030  CALL	R2	1
-      0x4C080000,  //  0031  LDNIL	R2
-      0x80040400,  //  0032  RET	1	R2
+      0xB80A3A00,  //  0029  GETNGBL	R2	K29
+      0x90063802,  //  002A  SETMBR	R1	K28	R2
+      0xB80A3C00,  //  002B  GETNGBL	R2	K30
+      0x8C08051F,  //  002C  GETMET	R2	R2	K31
+      0x54120086,  //  002D  LDINT	R4	135
+      0x7C080400,  //  002E  CALL	R2	2
+      0x1C080520,  //  002F  EQ	R2	R2	K32
+      0x780A0001,  //  0030  JMPF	R2	#0033
+      0x8C080302,  //  0031  GETMET	R2	R1	K2
+      0x7C080200,  //  0032  CALL	R2	1
+      0x4C080000,  //  0033  LDNIL	R2
+      0x80040400,  //  0034  RET	1	R2
     })
   )
 );

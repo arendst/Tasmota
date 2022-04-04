@@ -484,13 +484,13 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
         "cn=0;"
       "}"
       "c.value='';"
-      "t.scrollTop=99999999;"
+      "t.scrollTop=1e8;"
       "sn=t.scrollTop;"
     "}"
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
       "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
-      "x.onreadystatechange=function(){"
+      "x.onreadystatechange=()=>{"
         "if(x.readyState==4&&x.status==200){"
           "var d,t1;"
           "d=x.responseText.split(/" BERRY_CONSOLE_CMD_DELIMITER "/,2);"  // Field separator
@@ -508,7 +508,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
             "t1.innerText=d1;"
             "t.appendChild(t1);"
           "}"
-          "t.scrollTop=99999999;"
+          "t.scrollTop=1e8;"
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
           "lt=setTimeout(l,ltm);" // webrefresh timer....
@@ -516,7 +516,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
       "};"
       "x.open('GET','bc?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
-      "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
+      "ft=setTimeout(l,2e4);" // fail timeout, triggered 20s after asking for XHR
     "}else{"
       "lt=setTimeout(l,ltm);" // webrefresh timer....
     "}"

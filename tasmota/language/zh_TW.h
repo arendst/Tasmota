@@ -77,6 +77,7 @@
 #define D_COUNTER "Counter"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "電流"          // As in Voltage and Current
+#define D_CURRENT_NEUTRAL "Current Neutral"
 #define D_DATA "數據:"
 #define D_DARKLIGHT "暗光"
 #define D_DEBUG "偵錯"

@@ -32,6 +32,8 @@ extern int be_BLE_set_MAC(bvm *vm);
 extern int be_BLE_set_characteristic(bvm *vm);
 extern int be_BLE_run(bvm *vm);
 extern int be_BLE_set_service(bvm *vm);
+extern int be_BLE_adv_watch(bvm *vm);
+extern int be_BLE_adv_block(bvm *vm);
 
 #include "be_fixed_be_class_BLE.h"
 
@@ -43,6 +45,8 @@ class be_class_BLE (scope: global, name: BLE) {
   set_chr,    func(be_BLE_set_characteristic)
   adv_cb,     func(be_BLE_reg_adv_cb)
   set_MAC,    func(be_BLE_set_MAC)
+  adv_watch,  func(be_BLE_adv_watch)
+  adv_block,  func(be_BLE_adv_block)
 }
 @const_object_info_end */
 

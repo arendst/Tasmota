@@ -235,6 +235,22 @@ uint16_t SunMinutes(uint32_t dawn)
 
 #endif  // USE_SUNRISE
 
+uint16_t TimerGetTimeOfDay(uint8_t index)
+{
+  Timer xtimer = Settings->timer[index];
+  int16_t xtime = xtimer.time;
+#ifdef USE_SUNRISE
+  if (xtimer.mode) {
+  if (xtime >= 12*60) xtime = 12*60 - xtime;
+  xtime += (int16_t)SunMinutes(xtimer.mode-1);
+  if (xtime <      0) xtime += 24*60;
+  if (xtime >= 24*60) xtime -= 24*60;
+  }
+#endif
+return xtime;
+}
+
+
 /*******************************************************************************************/
 
 void TimerSetRandomWindow(uint32_t index)
