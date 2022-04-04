@@ -251,6 +251,17 @@ extern "C" {
 #ifdef USE_BERRY_DEBUG
   #undef BE_DEBUG_RUNTIME_INFO
   #define BE_DEBUG_RUNTIME_INFO 1 /* record line information in 32 bits to be places in IRAM */
+  #undef BE_DEBUG
+  #define BE_DEBUG 1
+  #undef be_assert
+  #define be_assert(expr)                                                        \
+      ((expr)                                                                \
+      ? (0)                                                \
+      : serial_debug("BRY: ASSERT '%s', %s - %i\n", #expr, __FILE__, __LINE__))
+  #ifdef USE_LVGL
+    #undef BE_STACK_START
+    #define BE_STACK_START                  200
+  #endif // USE_LVGL
 #endif // USE_BERRY_DEBUG
 
 #endif

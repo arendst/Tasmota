@@ -348,7 +348,7 @@ bool TfsLoadFile(const char *fname, uint8_t *buf, uint32_t len) {
     AddLog(LOG_LEVEL_INFO, PSTR("TFS: File '%s' not found"), fname +1);  // Skip leading slash
     return false;
   }
-  
+
   size_t flen = file.size();
   if (len > flen){
     len = flen;
@@ -888,7 +888,10 @@ uint8_t UfsDownloadFile(char *file) {
   UfsData.download_busy = true;
   char *path = (char*)malloc(128);
   strcpy(path,file);
-  xTaskCreatePinnedToCore(donload_task, "DT", 6000, (void*)path, 3, NULL, 1);
+  BaseType_t ret = xTaskCreatePinnedToCore(donload_task, "DT", 6000, (void*)path, 3, nullptr, 1);
+  if (ret != pdPASS)
+    AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download task failed with %d"), ret);
+  yield();
 #endif // ESP32_DOWNLOAD_TASK
 
   return 0;
