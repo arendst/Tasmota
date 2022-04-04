@@ -52,7 +52,62 @@
 #define TUYA_CMD_SET_DP        0x06
 #define TUYA_CMD_STATE         0x07
 #define TUYA_CMD_QUERY_STATE   0x08
-#define TUYA_CMD_SET_TIME      0x1C
+
+#define TUYA_CMD_INITIATING_UPGRADE 0x0A // not implemented
+#define TUYA_CMD_UPGRADE_PACKAGE    0x0B // not implemented
+
+// MCU sends to request a 0x0c return of GMT
+#define TUYA_CMD_GET_TIME_GMT       0x0C // not implemented
+
+// MCU sends
+#define TUYA_CMD_TEST_WIFI          0x0E // not implemented 
+// MCU sends
+#define TUYA_CMD_GET_MEMORY         0x0F // not implemented 
+
+// MCU sends to request a 0x1c return of Local Time
+// we send unsolicited??
+#define TUYA_CMD_SET_TIME           0x1C
+
+// MCU Sends, we must respond with 0x22, len1 00 failure, 01 success
+#define TUYA_CMD_STATUS_SYNC        0x22 // not implemented
+#define TUYA_CMD_STATUS_SYNC_RES    0x23 // not implemented
+
+// From MCU.  Response should be 0x0b 00/01/02
+// subcmd 03 -> request weather data
+// subcmd 06 -> get map id
+#define TUYA_CMD_REPORT_STATUS_RECORD_TYPE    0x34 // not implemented
+
+// MCU sends 'after 01 bute before 02'.  Response should be 0x37, len 2, 00, 00/01/02
+// subcmd 01->file download notification
+#define TUYA_CMD_NEW_FEATURES       0x37 // not implemented
+
+// MCU sends
+#define TUYA_CMD_ENABLE_WEATHER     0x20 // not implemented
+// we send every 30 mins, if enabled, MCU acks with 0x21
+#define TUYA_CMD_SEND_WEATHER       0x21 // not implemented
+
+// MCU sends, response 0x24, len 1, -ve dB or 0
+#define TUYA_CMD_GET_WIFI_STRENGTH  0x24 // not implemented
+
+// MCU sends, response 0x25
+#define TUYA_CMD_DISABLE_HEARTBEAT  0x25 // not implemented
+// MCU sends JSON,  response 0x2A, len1 00/01/02/03
+#define TUYA_CMD_SERIAL_PAIRING     0x2A // not implemented
+
+#define TUYA_CMD_VACUUM_MAP_STREAMING      0x28 // not implemented
+#define TUYA_CMD_VACUUM_MAP_STREAMING_MULTIPLE      0x30 // not implemented
+
+// MCU sends,  response 0x2D
+#define TUYA_CMD_GET_MAC            0x2D // not implemented
+// MCU sends,  response 0x2E
+#define TUYA_CMD_IR_STATUS          0x2E // not implemented
+// MCU sends,  response 0x2E
+#define TUYA_CMD_IR_TEST            0x2F // not implemented
+// We send, response 0x33
+// uses subcommands, 01->learning, 02->data, 03->report.
+#define TUYA_CMD_RF                 0x33 // not implemented
+
+
 
 #define TUYA_LOW_POWER_CMD_WIFI_STATE   0x02
 #define TUYA_LOW_POWER_CMD_WIFI_RESET   0x03
@@ -243,6 +298,9 @@ const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
 void (* const TuyaCommand[])(void) PROGMEM = {
   &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
 };
+
+const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
+  { TUYA_CMD_HEARTBEAT, TUYA_CMD_SET_TIME, TUYA_CMD_UPGRADE_PACKAGE };
 
 /*********************************************************************************************\
  * Web Interface
@@ -1816,7 +1874,7 @@ void TuyaProcessCommand(unsigned char *buffer){
   uint8_t dpId = 0;
   uint8_t dpDataType = 0;
   char DataStr[15];
-  bool isHeartbeat = false;
+  bool isCmdToSuppress = false;
 
   if (len > 0) {
     ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&buffer[6], len, hex_char, sizeof(hex_char)));
@@ -1860,14 +1918,20 @@ void TuyaProcessCommand(unsigned char *buffer){
         dpidStart += dpDataLen + 4;
       }
     }
-    else if (TUYA_CMD_HEARTBEAT == cmd) {
-      isHeartbeat = true;
-    }
   }
   ResponseAppend_P(PSTR("}}"));
 
-  if (Settings->flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
-    if (!(isHeartbeat && Settings->flag5.tuya_exclude_heartbeat)) {  // SetOption137 - (Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active
+  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
+  if (Settings->flag3.tuya_serial_mqtt_publish) {  
+    for (uint8_t cmdsID = 0; sizeof(TuyaExcludeCMDsFromMQTT) > cmdsID; cmdsID++){
+      if (TuyaExcludeCMDsFromMQTT[cmdsID] == cmd) {
+        isCmdToSuppress = true;
+        break;
+      }  
+    }
+    // SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs 
+    // (see TuyaExcludeCMDsFromMQTT) if SetOption66 is active
+    if (!(isCmdToSuppress && Settings->flag5.tuya_exclude_from_mqtt)) {  
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
     }        
   } else {
