@@ -695,6 +695,8 @@ typedef struct {
   uint16_t      weight_max;                // 7BE  Total max weight in kilogram
   uint32_t      weight_reference;          // 7C0  Reference weight in gram
   uint32_t      weight_calibration;        // 7C4
+  uint32_t      weight_absconv_a;        // TODO discuss
+  uint32_t      weight_absconv_b;        // TODO discuss
   uint32_t      energy_frequency_calibration;  // 7C8  Also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          script_pram[5][10];        // 7CE
@@ -796,8 +798,8 @@ typedef struct {
   uint16_t      pulse_counter_debounce_high;  // FBA
   uint32_t      keeloq_master_msb;         // FBC
   uint32_t      keeloq_master_lsb;         // FC0
-  uint32_t      keeloq_serial;             // FC4
-  uint32_t      keeloq_count;              // FC8
+  //uint32_t      keeloq_serial;             // FC4 TODO discuss
+  //uint32_t      keeloq_count;              // FC8 TODO discuss
   uint32_t      device_group_share_in;     // FCC  Bitmask of device group items imported
   uint32_t      device_group_share_out;    // FD0  Bitmask of device group items exported
   uint32_t      bootcount_reset_time;      // FD4

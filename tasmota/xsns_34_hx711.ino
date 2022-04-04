@@ -59,6 +59,8 @@
 #define D_JSON_WEIGHT_CHANGE "WeightChange"
 #define D_JSON_WEIGHT_RAW    "WeightRaw"
 #define D_JSON_WEIGHT_DELTA  "WeightDelta"
+#define D_JSON_WEIGHT_ABSCONV_A "WeightAbsConvA"
+#define D_JSON_WEIGHT_ABSCONV_B "WeightAbsConvB"
 
 enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, HX_CAL_DONE, HX_CAL_FIRST, HX_CAL_RESET, HX_CAL_START };
 
@@ -73,6 +75,8 @@ struct HX {
   long offset = 0;
   long scale = 1;
   long weight_diff = 0;
+  long absconv_a = 0;
+  long absconv_b = 0;
   uint8_t type = 1;
   uint8_t sample_count = 0;
   uint8_t calibrate_step = HX_CAL_END;
@@ -187,6 +191,8 @@ void SetWeightDelta()
  * Sensor34 8 0                    - Disable JSON weight change message
  * Sensor34 8 1                    - Enable JSON weight change message
  * Sensor34 9 <weight code>        - Set minimum delta to trigger JSON message
+ * Sensor34 10 <value A>           - Set A = a * 10^9 for raw to absolute weight conversion: y=a*x+b
+ * Sensor34 11 <value B>           - Set B = b * 10^6 for raw to absolute weight conversion: y=a*x+b
 \*********************************************************************************************/
 
 bool HxCommand(void)
@@ -251,8 +257,21 @@ bool HxCommand(void)
       break;
     case 9:  // WeightDelta
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-	Settings->weight_change = strtol(ArgV(argument, 2), nullptr, 10);
-	SetWeightDelta();
+        Settings->weight_change = strtol(ArgV(argument, 2), nullptr, 10);
+        SetWeightDelta();
+      }
+      show_parms = true;
+      break;
+    case 10:  // AbsoluteConversion, A
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
+        Settings->weight_absconv_a = strtol(ArgV(argument, 2), nullptr, 10);
+        Hx.absconv_a = Settings->weight_absconv_a;
+      }
+      show_parms = true;
+    case 11:  // AbsoluteConversion, B
+      if (strchr(XdrvMailbox.data, ',') != nullptr) {
+        Settings->weight_absconv_b = strtol(ArgV(argument, 2), nullptr, 10);
+        Hx.absconv_b = Settings->weight_absconv_b;
       }
       show_parms = true;
       break;
@@ -264,9 +283,11 @@ bool HxCommand(void)
     char item[33];
     dtostrfd((float)Settings->weight_item / 10, 1, item);
     Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
-		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
-	       Settings->weight_reference, Settings->weight_calibration, Settings->weight_max * 1000,
-	       item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change);
+         D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d,\""
+         D_JSON_WEIGHT_ABSCONV_A "\":%d,\"" D_JSON_WEIGHT_ABSCONV_B "\":%d}}"),
+         Settings->weight_reference, Settings->weight_calibration, Settings->weight_max * 1000,
+         item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change,
+         Settings->weight_absconv_a, Settings->weight_absconv_b);
   }
 
   return serviced;
@@ -293,11 +314,13 @@ void HxInit(void)
 
     SetWeightDelta();
 
-    if (HxIsReady(8 * HX_TIMEOUT)) {                 // Can take 600 milliseconds after power on
+    if (HxIsReady(8 * HX_TIMEOUT)) {  // Can take 600 milliseconds after power on
       if (!Settings->weight_max) { Settings->weight_max = HX_MAX_WEIGHT / 1000; }
       if (!Settings->weight_calibration) { Settings->weight_calibration = HX_SCALE; }
       if (!Settings->weight_reference) { Settings->weight_reference = HX_REFERENCE; }
       Hx.scale = Settings->weight_calibration;
+      if (Settings->weight_absconv_a) { Hx.absconv_a = Settings->weight_absconv_a; }
+      if (Settings->weight_absconv_b) { Hx.absconv_b = Settings->weight_absconv_b; }
       HxRead();
       HxResetPart();
       Hx.type = 1;
@@ -440,6 +463,9 @@ void HxShow(bool json)
       }
     }
     weight = (float)Hx.weight / 1000;                // kilograms
+  }
+  if (Hx.absconv_a != 0 && Hx.absconv_b != 0) {
+    weight = (float)Hx.absconv_a / 1e9 * Hx.raw + (float)Hx.absconv_b / 1e6;
   }
   char weight_chr[33];
   dtostrfd(weight, Settings->flag2.weight_resolution, weight_chr);
