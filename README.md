@@ -15,6 +15,10 @@ _Written for PlatformIO with limited support for Arduino IDE._
 
 <hr></hr>
 
+## Easy install
+
+Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/).
+
 If you like **Tasmota**, give it a star, or fork it and contribute!
 
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Tasmota/stargazers)
@@ -24,8 +28,6 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 See [RELEASENOTES.md](https://github.com/arendst/Tasmota/blob/master/RELEASENOTES.md) for release information.
 
 Firmware binaries can be downloaded from http://ota.tasmota.com/tasmota/release/ or http://ota.tasmota.com/tasmota32/release/ for ESP32 binaries.
-
-Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/).
 
 ## Development
 
