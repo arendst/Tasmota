@@ -1,5 +1,5 @@
 /*
-  xdrv_62_robotdyn.ino -support for robotdin 4 AC channel dimmer with zero crossing
+  xdrv_63_robotdyn.ino -support for robotdin 4 AC channel dimmer with zero crossing
 
   SPDX-FileCopyrightText: 2022 Benoit Lecuppe
 
@@ -25,7 +25,7 @@
  * RDB abreviation mean RoBotDyn
 \*********************************************************************************************/
 
-#define XDRV_62                 62
+#define XDRV_63                 63
 
 extern "C" int startWaveform(uint8_t pin, uint32_t timeHighUS, uint32_t timeLowUS, uint32_t runTimeUS = 0, int8_t alignPhase = -1, uint32_t phaseOffsetUS = 0, bool autoPwm = false);
 extern "C" int stopWaveform(uint8_t pin);
@@ -226,7 +226,7 @@ const char kRBDCommands[] PROGMEM = "|RBDTest" ;
 void (* const RBDCommands[])(void) PROGMEM = {&rbdCmndTest };
 // This function is ethe interface (the entry point for all action require by tastota) with tasmota program
 
-bool Xdrv62(uint8_t function) {
+bool Xdrv63(uint8_t function) {
 
   bool result = false;
   switch(function) {
