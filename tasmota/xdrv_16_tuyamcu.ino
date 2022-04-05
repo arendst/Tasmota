@@ -187,8 +187,8 @@ typedef struct TUYA_STRUCT_tag {
   // variables to handle setting of a DP.
   // DPIds are filled out by initial TUYA_CMD_QUERY_STATE
   // or by an easrly set request.
-  uint8_t numRxedDPids;
   TUYA_DP_STORE DPStore[TUYA_MAX_STORED_DPs];
+  uint8_t numRxedDPids;
 
   // set to indicate the command which is an ack to the last sent command.
   // e.g. 7 is ack to 6 and 8
@@ -212,12 +212,12 @@ typedef struct TUYA_STRUCT_tag {
   char RGBColor[7];            // Stores RGB Color string in Hex format
   uint16_t CTMin;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   uint16_t CTMax;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
-  bool ModeSet;                   // Controls 0 - Single Tone light, 1 - RGB Light
   int16_t Sensors[14];                    // Stores the values of Sensors connected to the Tuya Device
+  bool ModeSet;                   // Controls 0 - Single Tone light, 1 - RGB Light
   bool SensorsValid[14];                  // Bool used for nullify the sensor value until a real value is received from the MCU
   bool SuspendTopic;              // Used to reduce the load at init time or when polling the configuraton on demand
-  uint32_t ignore_topic_timeout;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
   bool ignore_dim;                // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
+  uint32_t ignore_topic_timeout;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
   uint8_t cmd_status;                 // Current status of serial-read
   uint8_t cmd_checksum;               // Checksum of tuya command
   uint8_t data_len;                   // Data lenght of command
@@ -233,25 +233,31 @@ typedef struct TUYA_STRUCT_tag {
 #endif // USE_ENERGY_SENSOR
   unsigned char buffer[TUYA_BUFFER_SIZE];      // Serial receive buffer
   int byte_counter;                   // Index in serial receive buffer
+  uint32_t ignore_dimmer_cmd_timeout; // Time until which received dimmer commands should be ignored
   bool low_power_mode;            // Normal or Low power mode protocol
   bool send_success_next_second;  // Second command success in low power mode
-  uint32_t ignore_dimmer_cmd_timeout; // Time until which received dimmer commands should be ignored
   bool active;
 
   int timeout; // command timeout in ms
-  char timeout_state; // state to go to if timeout.
   // every time we get a long press, add 10000.  If we get to 20000, then go to wifimanager mode, if enabled
   // decremented by 1000 each second.
   int wifiTimer;
 
   char inStateMachine;
   char startup_state;
+  char timeout_state; // state to go to if timeout.
 
   unsigned char lastByte;
   unsigned int lastByteTime; // time of last byte receipt.
 
   unsigned int errorcnt; // increment every time something goes awry
   unsigned int lasterrorcnt; // used to choose when to log errorcnt
+
+
+  int dimDelay_ms; // SIGNED the delay after a dim result after which we are allowed to send a dim value
+  int defaultDimDelay_ms; // the delay after a dim result after which we are allowed to send a dim value
+  uint8_t dimCmdEnable; // we are allowed to send a dim command
+  uint8_t dimDebug;
 
 } TUYA_STRUCT;
 
@@ -270,6 +276,7 @@ int init_tuya_struct() {
   pTuya->CTMin = 153;                   // Minimum CT level allowed - When SetOption82 is enabled will default to 200
   pTuya->CTMax = 500;                   // Maximum CT level allowed - When SetOption82 is enabled will default to 380
   pTuya->wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
+  pTuya->defaultDimDelay_ms = 2000;     // 2s delay from a power command to a dim command, or from an rxed dim command to sending one.
 #ifdef TUYA_MORE_DEBUG
   AddLog(LOG_LEVEL_INFO, PSTR("TYA: init struct done"));
 #endif
@@ -632,6 +639,7 @@ inline bool TuyaFuncIdValid(uint8_t fnId) {
           (fnId >= TUYA_MCU_FUNC_LX && fnId <= TUYA_MCU_FUNC_GAS) ||
           (fnId >= TUYA_MCU_FUNC_TIMER1 && fnId <= TUYA_MCU_FUNC_TIMER4);
 }
+
 uint8_t TuyaGetFuncId(uint8_t dpid) {
   for (uint8_t i = 0; i < MAX_TUYA_FUNCTIONS; i++) {
     if (Settings->tuya_fnid_map[i].dpid == dpid) {
@@ -650,8 +658,20 @@ uint8_t TuyaGetDpId(uint8_t fnId) {
   return 0;
 }
 
+uint8_t TuyaFnIdIsDimmer(uint8_t fnId){
+  //TUYA_MCU_FUNC_DIMMER = 21, TUYA_MCU_FUNC_DIMMER2, TUYA_MCU_FUNC_CT, TUYA_MCU_FUNC_RGB, TUYA_MCU_FUNC_WHITE,
 
+  if ((fnId >= TUYA_MCU_FUNC_DIMMER) && 
+      (fnId <= TUYA_MCU_FUNC_WHITE)){
+    return 1;
+  }
+  return 0;
+}
 
+uint8_t TuyaDpIdIsDimmer(uint8_t dpId){
+  uint8_t fnId = TuyaGetFuncId(dpId);
+  return TuyaFnIdIsDimmer(fnId);
+}
 
 // pTuya->timeout hit zero
 void Tuya_timeout(){
@@ -846,21 +866,44 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
         if (dp->toSet && dp->rxed){
           // if value is different
           if ((dp->rxedValueLen != dp->desiredValueLen) || memcmp(dp->rxedValue, dp->desiredValue, dp->desiredValueLen)){
-            TuyaSendState(dp->DPid, 
-              dp->Type,
-              (uint8_t*)dp->desiredValue, dp->desiredValueLen);
-            // assume it worked
-            dp->rxedValueLen = dp->desiredValueLen;
-            memcpy(dp->rxedValue, dp->desiredValue, dp->desiredValueLen);
+            uint8_t send = 1;
+            if (TuyaDpIdIsDimmer(dp->DPid)){
+              // set every time a dim value is rxed, and if just turned on
+              if (pTuya->dimDelay_ms){
+                if (pTuya->dimDebug){
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command deferred for %dms"), pTuya->dimDelay_ms);
+                  pTuya->dimDebug = 0;
+                }
+                send = 0;
+              }
+              // only enabled if on.
+              if (!pTuya->dimCmdEnable){
+                if (pTuya->dimDebug){
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command disabled"));
+                  pTuya->dimDebug = 0;
+                }
+                send = 0;
+              }
+            }
+  
+            if (send){
+              TuyaSendState(dp->DPid, 
+                dp->Type,
+                (uint8_t*)dp->desiredValue, dp->desiredValueLen);
+              // assume it worked
+              dp->rxedValueLen = dp->desiredValueLen;
+              memcpy(dp->rxedValue, dp->desiredValue, dp->desiredValueLen);
+              dp->toSet = 0;
+              pTuya->expectedResponseCmd = TUYA_CMD_STATE;
+              pTuya->timeout = 300; 
+              pTuya->timeout_state = TUYA_STARTUP_STATE_SEND_CMD; 
+              pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_CMD;
+              break;
+            }
+          } else {
+            // if equal values, ignore set
             dp->toSet = 0;
-            pTuya->expectedResponseCmd = TUYA_CMD_STATE;
-            pTuya->timeout = 300; 
-            pTuya->timeout_state = TUYA_STARTUP_STATE_SEND_CMD; 
-            pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_CMD;
-            break;
           }
-          // if equal values, ignore set
-          dp->toSet = 0;
         }
       }
 
@@ -981,6 +1024,10 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
           dp->desiredValueLen = len;
           dp->toSet = 1;
           pTuya->requestSend = 1;
+
+          if (TuyaDpIdIsDimmer(id)){
+            pTuya->dimDebug = 1; // enable debug to be printed once.
+          }
         } else {
           AddLog(LOG_LEVEL_ERROR, PSTR("TYA: DP %d value over len (%d > %d)"), id, len, TUYA_MAX_STRING_SIZE);
         }
@@ -1377,6 +1424,20 @@ void TuyaStoreRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen){
         AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Type change in rxed dpId=%d type %d -> %d"), dpid, dp->Type, type);
         dp->Type = type;
       }
+
+      // if a relay command, then set dim delay, and if value is zero, disable dim command.
+      // if 1, enable dim command.
+      uint8_t fnId = TuyaGetFuncId(dpid);
+      if ((fnId == TUYA_MCU_FUNC_REL1) || (fnId == TUYA_MCU_FUNC_REL1_INV)){
+        pTuya->dimDelay_ms = pTuya->defaultDimDelay_ms;
+        int value = data[0];
+        if (!value){
+          pTuya->dimCmdEnable = 0;
+        } else {
+          pTuya->dimCmdEnable = 1;
+        }
+      }
+
       if (dpDataLen <= TUYA_MAX_STRING_SIZE){
         memcpy(dp->rxedValue, data, dpDataLen);
         dp->rxedValueLen = dpDataLen;
@@ -1416,6 +1477,11 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
   bool tuya_energy_enabled = (XNRG_32 == TasmotaGlobal.energy_driver);
   uint8_t fnId = TuyaGetFuncId(dpid);
   uint32_t value = 0;
+
+  if (TuyaFnIdIsDimmer(fnId)){
+    pTuya->dimDelay_ms = pTuya->defaultDimDelay_ms;
+    //pTuya->dimCmdEnable = false;
+  }
 
   ////////////////////
   // get value for types that fit in 4 byte as uint32_t
@@ -2316,6 +2382,13 @@ bool Xdrv16(uint8_t function) {
           pTuya->timeout -= 100;
           if (pTuya->timeout <= 0){
             Tuya_timeout();
+          }
+        }
+        if (pTuya->dimDelay_ms){
+          pTuya->dimDelay_ms -= 100;
+          if (pTuya->dimDelay_ms <= 0){
+            pTuya->dimDelay_ms = 0;
+            AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim Delay -> 0."));
           }
         }
         Tuya_statemachine();
