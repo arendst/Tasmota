@@ -634,9 +634,8 @@ typedef struct {
   int8_t        shutter_tilt_pos[MAX_SHUTTERS];        //51C
   uint16_t      influxdb_period;           // 520
   uint16_t      rf_duplicate_time;         // 522
-
-  uint8_t       free_524[8];               // 524
-
+  uint32_t      weight_absconv_a;          // 524
+  uint32_t      weight_absconv_b;          // 528
   uint16_t      mqtt_keepalive;            // 52C
   uint16_t      mqtt_socket_timeout;       // 52E
   uint8_t       mqtt_wifi_timeout;         // 530
