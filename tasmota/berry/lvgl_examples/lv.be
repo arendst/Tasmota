@@ -1,4 +1,6 @@
 #- start LVGL and init environment -#
+import global
+
 lv.start()
 
 hres = lv.get_hor_res()       # should be 320
@@ -80,28 +82,33 @@ prev_btn.add_event_cb(btn_clicked_cb, lv.EVENT_CLICKED, 0)
 next_btn.add_event_cb(btn_clicked_cb, lv.EVENT_CLICKED, 0)
 home_btn.add_event_cb(btn_clicked_cb, lv.EVENT_CLICKED, 0)
 
-
 import lv_wifi_graph
 ws_h = 40
 ws_w = 80
 ws = lv_wifi_graph(scr)
 ws.set_size(ws_w,ws_h)
-ws.set_pos(hres-ws_w, stat_line.get_height())
-tasmota.add_driver(ws)
+ws.set_pos(hres-ws_w - 3, stat_line.get_height() + 3)
 
 # info bloc
 import lv_tasmota_info
 var info = lv_tasmota_info(scr)
-info.set_pos(0, stat_line.get_height())
-info.set_size(hres - 80 + 1, 40)
-tasmota.add_driver(info)
+info.set_pos(3, stat_line.get_height()+ 3)
+info.set_size(hres - 80 + 1 - 10, 40)
 
 # logs
 import lv_tasmota_log_roboto
 var lg = lv_tasmota_log_roboto(scr, 6)
-lg.set_size(hres, 90)
-lg.set_pos(0, stat_line.get_height() + 40 - 1)
-tasmota.add_driver(lg)
+lg.set_size(hres - 6, 90)
+lg.set_pos(3, stat_line.get_height() + 40 + 6)
+
+# 3D cube
+var cube
+if global.accelerator
+  import lv_3D_cube_widget
+  cube = lv_3D_cube_widget(scr, global.accelerator)
+  cube.set_pos(3,161)
+end
+
 
 #-
 sb120 = lv.load_freetype_font("sketchbook.ttf", 120, 0)

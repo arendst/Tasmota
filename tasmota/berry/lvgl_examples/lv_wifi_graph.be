@@ -38,6 +38,9 @@ class lv_wifi_graph : lv.chart
     self.wsl.set_align(lv.ALIGN_BOTTOM_MID)
 
     self.delay = 1
+
+    self.add_event_cb(/->self.before_del(), lv.EVENT_DELETE, 0)   # register `before_del` to be called when object is deleted
+    tasmota.add_driver(self)
   end
 
   def add_wifi_point()
@@ -54,6 +57,10 @@ class lv_wifi_graph : lv.chart
       self.add_wifi_point()
       self.delay = 2
     end
+  end
+
+  def before_del()
+    tasmota.remove_driver(self)
   end
 end
 
