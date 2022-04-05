@@ -181,10 +181,11 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     arg_type++;   // skip first character
     if (be_isclosure(vm, idx)) {
       ret = be_find_global_or_module_member(vm, "cb.make_cb");
+      // ret may 1 if direct function, or 2 if method+instance. 0 indicates an error
       if (ret) {
-        be_pushvalue(vm, idx);
-        be_pushvalue(vm, 1);
-        be_pushstring(vm, arg_type);
+        be_pushvalue(vm, idx);            // push function/closure as arg1
+        be_pushvalue(vm, 1);              // push `self` as arg2
+        be_pushstring(vm, arg_type);      // push name of the callback type (string) as arg3
         be_call(vm, 2 + ret);
         const void * func = be_tocomptr(vm, -(3 + ret));
         be_pop(vm, 3 + ret);

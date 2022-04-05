@@ -5,8 +5,8 @@
 class LVGL_glob
   # all variables are lazily initialized to reduce the memory pressure. Until they are used, they consume zero memory
   var cb_obj                # map between a native C pointer (as int) and the corresponding lv.lv_* berry object, also helps marking the objects as non-gc-able
-  var cb_event_closure      # mapping for event closures per LVGL native pointer (int)
-  var event_cb              # native callback for lv.lv_event
+  var cb_event_closure      # mapping for event closures per LVGL native pointer (int). For each int key, contains either a closure or an array with multiple closures
+  var event_cb              # array of native callback for lv.lv_event (when multiple are needed)
   var timer_cb              # native callback for lv.lv_timer
   var event                 # keep aroud the current lv_event to avoid repeated allocation
 
@@ -14,7 +14,7 @@ class LVGL_glob
   var null_cb               # cb called if type is not supported
   var widget_ctor_cb
   var widget_dtor_cb
-  var widget_event_cb
+  var widget_event_cb       # callback object that calls `widget_event_impl(object, event)`
   
   var widget_struct_default
   var widget_struct_by_class
@@ -36,25 +36,42 @@ class LVGL_glob
     self.cb_obj[obj._p] = obj
   end
 
+  # get event callback by rank number, expand the list if needed
+  def get_event_cb(n)
+    if self.event_cb == nil   self.event_cb = [] end          # lazy initial initialization
+
+    var cb_arr = self.event_cb
+    for i: size(cb_arr) .. n
+      var next_cb = cb.gen_cb(/ event_ptr -> self.lvgl_event_dispatch(i, event_ptr))
+      cb_arr.push(next_cb)
+    end
+
+    return cb_arr[n]
+  end
+
   def get_object_from_ptr(ptr)
     if self.cb_obj != nil
       return self.cb_obj.find(ptr)   # raise an exception if something is wrong
     end
   end
 
-  def lvgl_event_dispatch(event_ptr_i)
+  def lvgl_event_dispatch(rank, event_ptr_i)
     import introspect
     var event_ptr = introspect.toptr(event_ptr_i)
 
+    # use always the same instance of lv.lv_event by changing pointer, create a new the first time
     if self.event   self.event._change_buffer(event_ptr)
     else            self.event = lv.lv_event(event_ptr)
     end
 
-    var target = self.event.target
-    var f = self.cb_event_closure[target]
-    var obj = self.get_object_from_ptr(target)
-    #print('>> lvgl_event_dispatch', f, obj, event)
-    f(obj, self.event)
+    var target = self.event.target                # LVGL native object as target of the event (comptr)
+    var obj = self.get_object_from_ptr(target)    # get the corresponding Berry LVGL object previously recorded as its container
+    var f = self.cb_event_closure[target]         # get the closure or closure list known for this object
+    if type(f) == 'function'                      # if only one callback, just use it
+      f(obj, self.event)
+    elif rank < size(f)                           # if more than one, then it's a list - use the closure for `rank`
+      f[rank](obj, self.event)
+    end
   end
 
   def lvgl_timer_dispatch(timer_int)
@@ -63,7 +80,38 @@ class LVGL_glob
     var timer_ptr = introspect.toptr(timer_int)
     var f = self.cb_event_closure[timer_ptr]
     #print('>> lvgl_timer_dispatch', f, obj, event)
-    f(timer_ptr)
+    if type(f) == 'function'
+      f(timer_ptr)
+    else
+      # array
+      var i = 0
+      while i < size(f)
+        f[i](timer_ptr)
+        i += 1
+      end
+    end
+  end
+
+  # add a closure `f` to the object `o`
+  #
+  # returns: rank of the cb for this object, starting at `0`
+  def add_cb_event_closure(o, f)
+    if self.cb_event_closure == nil   self.cb_event_closure = {} end    # lazy instanciation
+    if self.cb_event_closure.contains(o)
+      # contains already a value, create an array if needed
+      var cur = self.cb_event_closure[o]
+      if type(cur) == 'function'
+        self.cb_event_closure[o] = [cur, f]
+        return 1
+      else
+        # should be already an array
+        self.cb_event_closure[o].push(f)
+        return size(self.cb_event_closure[o]) - 1
+      end
+    else
+      self.cb_event_closure[o] = f
+      return 0
+    end
   end
 
   def make_cb(f, obj, name)
@@ -71,25 +119,18 @@ class LVGL_glob
     # print('>> make_cb', f, name, obj)
     # record the object, whatever the callback
     
-    if name  == "lv_event_cb"
-      if self.cb_event_closure == nil   self.cb_event_closure = {} end    # lazy instanciation
-      if self.event_cb == nil			      self.event_cb = cb.gen_cb(/ event_ptr -> self.lvgl_event_dispatch(event_ptr)) end  # encapsulate 'self' in closure
-    
+    if name  == "lv_event_cb"    
       self.register_obj(obj)                # keep a record of the object to prevent from being gc'ed
-      if self.cb_event_closure.contains(obj._p)
-        tasmota.log("LVG: object:" + str(obj) + "has already an event callback", 2)
-      end
-      self.cb_event_closure[obj._p] = f     # keep a mapping of the closure to call, indexed by internal lvgl native pointer
-      return self.event_cb
+      var rank = self.add_cb_event_closure(obj._p, f)
+      # if self.cb_event_closure.contains(obj._p)
+      #   tasmota.log("LVG: object:" + str(obj) + "has already an event callback", 2)
+      # end
+      # self.cb_event_closure[obj._p] = f     # keep a mapping of the closure to call, indexed by internal lvgl native pointer
+      return self.get_event_cb(rank)
     elif name == "lv_timer_cb"
-      if self.cb_event_closure == nil   self.cb_event_closure = {} end    # lazy instanciation
       if self.timer_cb == nil			      self.timer_cb = cb.gen_cb(/ timer_ptr -> self.lvgl_timer_dispatch(timer_ptr)) end  # encapsulate 'self' in closure
 
-      # no need to register the object since it's only a pointer to a timer
-      if self.cb_event_closure.contains(obj._p)
-        tasmota.log("LVG: object:" + str(obj) + "has already an event callback", 2)
-      end
-      self.cb_event_closure[obj._p] = f     # keep a mapping of the closure to call, indexed by internal lvgl native pointer
+      self.add_cb_event_closure(obj._p, f)
       return self.timer_cb
 
     # elif name == "<other_cb>"
@@ -133,7 +174,6 @@ class LVGL_glob
         obj.widget_event(cl, event)
       end
     end
-    # print("widget_event_impl", cl, obj_ptr, obj, event)
   end
 
 

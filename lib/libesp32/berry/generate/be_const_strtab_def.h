@@ -139,13 +139,12 @@ be_define_const_str(I2C_Driver, "I2C_Driver", 1714501658u, 0, 10, &be_const_str_
 be_define_const_str(INTERNAL_DAC, "INTERNAL_DAC", 1097623719u, 0, 12, &be_const_str_flush);
 be_define_const_str(INTERNAL_PDM, "INTERNAL_PDM", 3043685628u, 0, 12, &be_const_str_SERIAL_5E2);
 be_define_const_str(LVG_X3A_X20call_X20to_X20unsupported_X20callback, "LVG: call to unsupported callback", 504176819u, 0, 33, &be_const_str_lv_wifi_arcs);
-be_define_const_str(LVG_X3A_X20object_X3A, "LVG: object:", 3824079937u, 0, 12, &be_const_str_set_chr);
 be_define_const_str(Leds, "Leds", 2709245275u, 0, 4, &be_const_str_read_sensors);
 be_define_const_str(MAX_RMT, "MAX_RMT", 1615574873u, 0, 7, NULL);
 be_define_const_str(MD5, "MD5", 1935726387u, 0, 3, &be_const_str_create_segment);
 be_define_const_str(MI32, "MI32", 4074273414u, 0, 4, &be_const_str_init_draw_line_dsc);
 be_define_const_str(None, "None", 810547195u, 0, 4, NULL);
-be_define_const_str(OPTION_A, "OPTION_A", 1133299440u, 0, 8, NULL);
+be_define_const_str(OPTION_A, "OPTION_A", 1133299440u, 0, 8, &be_const_str_get_event_cb);
 be_define_const_str(OneWire, "OneWire", 2298990722u, 0, 7, &be_const_str_set_ldo_voltage);
 be_define_const_str(PART_MAIN, "PART_MAIN", 2473491508u, 0, 9, &be_const_str_lv_clock);
 be_define_const_str(POST, "POST", 1929554311u, 0, 4, &be_const_str_has);
@@ -208,7 +207,7 @@ be_define_const_str(_ccmd, "_ccmd", 2163421413u, 0, 5, &be_const_str_argument_X2
 be_define_const_str(_change_buffer, "_change_buffer", 2101848693u, 0, 14, NULL);
 be_define_const_str(_class, "_class", 2732146350u, 0, 6, &be_const_str_delete_all_configs);
 be_define_const_str(_cmd, "_cmd", 3419822142u, 0, 4, NULL);
-be_define_const_str(_crons, "_crons", 1000733579u, 0, 6, &be_const_str_has_X20already_X20an_X20event_X20callback);
+be_define_const_str(_crons, "_crons", 1000733579u, 0, 6, &be_const_str_tasmota_X2Eget_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eget_X28_X29);
 be_define_const_str(_debug_present, "_debug_present", 4063411725u, 0, 14, &be_const_str_wifi_bars);
 be_define_const_str(_def, "_def", 1985022181u, 0, 4, &be_const_str_decode);
 be_define_const_str(_dirty, "_dirty", 283846766u, 0, 6, &be_const_str_local);
@@ -239,6 +238,7 @@ be_define_const_str(abs, "abs", 709362235u, 0, 3, NULL);
 be_define_const_str(acos, "acos", 1006755615u, 0, 4, &be_const_str_pixels_buffer);
 be_define_const_str(add, "add", 993596020u, 0, 3, &be_const_str_publish);
 be_define_const_str(add_anim, "add_anim", 3980662668u, 0, 8, &be_const_str_get_hor_res);
+be_define_const_str(add_cb_event_closure, "add_cb_event_closure", 1775958321u, 0, 20, &be_const_str_split);
 be_define_const_str(add_cmd, "add_cmd", 3361630879u, 0, 7, NULL);
 be_define_const_str(add_cron, "add_cron", 2475327477u, 0, 8, &be_const_str_content_button);
 be_define_const_str(add_driver, "add_driver", 1654458371u, 0, 10, &be_const_str_argument_X20must_X20be_X20a_X20list);
@@ -464,6 +464,7 @@ be_define_const_str(get_cb_list, "get_cb_list", 1605319182u, 0, 11, &be_const_st
 be_define_const_str(get_coords, "get_coords", 1044089006u, 0, 10, NULL);
 be_define_const_str(get_current_module_name, "get_current_module_name", 2379270740u, 0, 23, &be_const_str_param);
 be_define_const_str(get_current_module_path, "get_current_module_path", 3206673408u, 0, 23, &be_const_str_set_alternate);
+be_define_const_str(get_event_cb, "get_event_cb", 375876088u, 0, 12, NULL);
 be_define_const_str(get_free_heap, "get_free_heap", 625069757u, 0, 13, &be_const_str_rule);
 be_define_const_str(get_height, "get_height", 3571755523u, 0, 10, &be_const_str_min);
 be_define_const_str(get_hor_res, "get_hor_res", 37131144u, 0, 11, &be_const_str_get_vbus_current);
@@ -497,7 +498,6 @@ be_define_const_str(group_def, "group_def", 1524213328u, 0, 9, &be_const_str_int
 be_define_const_str(groups, "groups", 2943077229u, 0, 6, NULL);
 be_define_const_str(h, "h", 3977000791u, 0, 1, NULL);
 be_define_const_str(has, "has", 3988721635u, 0, 3, &be_const_str_tolower);
-be_define_const_str(has_X20already_X20an_X20event_X20callback, "has already an event callback", 2421565249u, 0, 29, &be_const_str_tasmota_X2Eget_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eget_X28_X29);
 be_define_const_str(has_arg, "has_arg", 424878688u, 0, 7, NULL);
 be_define_const_str(height_def, "height_def", 2348238838u, 0, 10, NULL);
 be_define_const_str(hex, "hex", 4273249610u, 0, 3, NULL);
@@ -1013,7 +1013,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str__archive,
     (const bstring *)&be_const_str_BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson,
     (const bstring *)&be_const_str_SERIAL_7O2,
-    (const bstring *)&be_const_str_LVG_X3A_X20object_X3A,
+    (const bstring *)&be_const_str_set_chr,
     (const bstring *)&be_const_str_AudioOpusDecoder,
     (const bstring *)&be_const_str_solidified,
     (const bstring *)&be_const_str_time_str,
@@ -1123,7 +1123,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_zip,
     (const bstring *)&be_const_str_widget_destructor,
     (const bstring *)&be_const_str_AXP192,
-    (const bstring *)&be_const_str_split,
+    (const bstring *)&be_const_str_add_cb_event_closure,
     (const bstring *)&be_const_str_SERIAL_6O1,
     (const bstring *)&be_const_str_out_X20of_X20range,
     (const bstring *)&be_const_str_web_send,
