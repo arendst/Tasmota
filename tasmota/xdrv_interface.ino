@@ -1095,7 +1095,7 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
 bool XdrvRulesProcess(bool teleperiod) {
 #ifdef USE_INFLUXDB
   if (!teleperiod) {           // Only process ad-hoc data here
-    InfluxDbProcessJson(1);    // Use a copy
+    InfluxDbProcess(1);        // Use a copy
   }
 #endif
 

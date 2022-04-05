@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [11.0.0.5]
 ### Added
 - Support for improv as used by esp-web-tools
-- Non-teleperiod data to influxdb
+- Command ``IfxSensor 1`` to send non-teleperiod data to influxdb
 
 ### Changed
 - Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)
