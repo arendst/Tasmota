@@ -257,15 +257,19 @@ char* InfluxDbNumber(char* alternative, JsonParserToken value) {
   return nullptr;
 }
 
-void InfluxDbProcessJson(void) {
+void InfluxDbProcessJson(bool use_copy = false) {
   if (!IFDB.init) { return; }
 
-  AddLog(IFDB.log_level, PSTR("IFX: Process %s"), ResponseData());
+  char *json_data = ResponseData();
+  if (use_copy) {
+    json_data = (char*)malloc(ResponseSize()+2);
+    if (!json_data) { return; }
+    strlcpy(json_data, ResponseData(), ResponseSize());
+  }
 
-//  String jsonStr = ResponseData();  // Make a copy before use
-//  JsonParser parser((char *)jsonStr.c_str());
-  JsonParser parser((char *)ResponseData());  // Destroys ResponseData but saves heap space
+  AddLog(IFDB.log_level, PSTR("IFX: Process %s"), json_data);
 
+  JsonParser parser(json_data);  // Destroys json_data
   JsonParserObject root = parser.getRootObject();
   if (root) {
     char number[12];     // '1' to '255'
@@ -354,6 +358,10 @@ void InfluxDbProcessJson(void) {
 //      AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Sensor data:\n%s"), data.c_str());
       InfluxDbPostData(data.c_str());
     }
+  }
+
+  if (use_copy) {
+    free(json_data);
   }
 }
 

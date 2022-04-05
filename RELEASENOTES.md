@@ -120,6 +120,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for PCF85363 RTC as used in Shelly 3EM [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Full RTC chip integration and synchronisation when using UBX (=GPS), NTP or manual time
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
+- Non-teleperiod data to influxdb
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection
 - ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)
