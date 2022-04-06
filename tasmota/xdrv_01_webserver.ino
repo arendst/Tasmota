@@ -116,7 +116,7 @@ const char HTTP_SCRIPT_HIDE[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_RELOAD_TIME[] PROGMEM =
-  "setTimeout(()=>{location.href='.';},%d);";
+  "setTimeout(function(){location.href='.';},%d);";
 
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_SCRIPT_CONSOL.h"
@@ -984,7 +984,7 @@ void WebRestart(uint32_t type)
 #if ((RESTART_AFTER_INITIAL_WIFI_CONFIG) && (AFTER_INITIAL_WIFI_CONFIG_GO_TO_NEW_IP))
   // In case of type 3 (New network has been configured) go to the new device's IP in the new Network
   if (3 == type) {
-    WSContentSend_P("setTimeout(()=>{location.href='http://%_I';},%d);",
+    WSContentSend_P("setTimeout(function(){location.href='http://%_I';},%d);",
       (uint32_t)WiFi.localIP(),
       HTTP_RESTART_RECONNECT_TIME
     );

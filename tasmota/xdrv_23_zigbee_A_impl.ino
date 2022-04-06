@@ -1716,7 +1716,7 @@ const char ZB_WEB_U[] PROGMEM =
     // index 4
     // Auto-refresh
     //=ZB_WEB_AUTO_REFRESH
-    "<script>setTimeout(()=>{location.reload();},1990);</script>"
+    "<script>setTimeout(function(){location.reload();},1990);</script>"
 
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
