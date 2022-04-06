@@ -24,14 +24,18 @@ class lv_tasmota_log : lv.obj
     self.refr_pos()
 
     self.label = lv.label(self)
-    self.label.set_width(self.get_width() - 12)
 
     self.label.set_style_text_color(lv.color(0x00FF00), lv.PART_MAIN | lv.STATE_DEFAULT)
     self.label.set_long_mode(lv.LABEL_LONG_CLIP)
     self.label.set_text("")   # bug, still displays "Text"
 
-    self.add_event_cb( / obj, evt -> self.size_changed_cb(obj, evt), lv.EVENT_SIZE_CHANGED | lv.EVENT_STYLE_CHANGED | lv.EVENT_DELETE, 0)
+    self.label.set_width(self.get_width() - 12)
+    self.label.set_height(self.get_height() - 6)
 
+    self.add_event_cb( / -> self._size_changed(), lv.EVENT_SIZE_CHANGED, 0)
+    self.add_event_cb( / -> self._size_changed(), lv.EVENT_STYLE_CHANGED, 0)
+    self.add_event_cb( / -> tasmota.remove_driver(self), lv.EVENT_DELETE, 0)
+    
   	self.lines = []
   	self.line_len = 0
   	self.log_reader = tasmota_log_reader()
@@ -54,7 +58,7 @@ class lv_tasmota_log : lv.obj
     self.line_len = line_len
   end
 
-  def _size_changed()
+  def _size_changed(obj, evt)
     # print(">>> lv.EVENT_SIZE_CHANGED")
     var pad_hor = self.get_style_pad_left(lv.PART_MAIN | lv.STATE_DEFAULT)
                 + self.get_style_pad_right(lv.PART_MAIN | lv.STATE_DEFAULT)
@@ -64,7 +68,7 @@ class lv_tasmota_log : lv.obj
                 + self.get_style_pad_bottom(lv.PART_MAIN | lv.STATE_DEFAULT)
                 + self.get_style_border_width(lv.PART_MAIN | lv.STATE_DEFAULT) * 2
                 + 3
-    var w = self.get_width() - pad_hor
+    var w = self.get_width() - pad_hor - 2
     var h = self.get_height() - pad_ver
     self.label.set_size(w, h)
     # print("w",w,"h",h,"pad_hor",pad_hor,"pad_ver",pad_ver)
@@ -74,15 +78,6 @@ class lv_tasmota_log : lv.obj
     var lines_count = ((h * 2 / h_font) + 1 ) / 2
     # print("h_font",h_font,"h",h,"lines_count",lines_count)
     self.set_lines_count(lines_count)
-  end
-
-  def size_changed_cb(obj, event)
-    var code = event.code
-    if code == lv.EVENT_SIZE_CHANGED || code == lv.EVENT_STYLE_CHANGED
-      self._size_changed()
-    elif code == lv.EVENT_DELETE
-      tasmota.remove_driver(self)
-    end
   end
 
   def every_second()

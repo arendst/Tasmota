@@ -1,5 +1,6 @@
 {"page":1,"comment":"---------- Page 1 ----------"}
 {"page":1,"id":0,"bg_color":"#FFFFFF","bg_grad_color":"#FFFFFF","text_color":"#000000","radius":0,"border_side":0}
+
 {"page":1,"id":1,"obj":"btn","x":0,"y":0,"w":240,"h":30,"text":"LIVING ROOM","value_font":22,"bg_color":"#2C3E50","bg_grad_color":"#2C3E50","text_color":"#FFFFFF","radius":0,"border_side":0}
 
 {"page":1,"id":2,"obj":"arc","x":20,"y":65,"w":80,"h":100,"max":40,"border_side":0,"type":0,"rotation":0,"start_angle":180,"end_angle":0,"start_angle1":180,"value_font":12,"value_ofs_x":0,"value_ofs_y":-14,"bg_opa":0,"text":"21.2°C","min":-20,"max":50,"val":21}
