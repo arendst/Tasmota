@@ -109,22 +109,26 @@ static void m_solidify_map(bvm *vm, bmap * map, const char *class_name)
         if (node->key.type == BE_NIL) {
             continue;   /* key not used */
         }
-        if (node->key.type != BE_STRING) {
-            char error[64];
-            snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
-            be_raise(vm, "internal_error", error);
-        }
         int key_next = node->key.next;
         if (0xFFFFFF == key_next) {
             key_next = -1;      /* more readable */
         }
-        /* convert the string literal to identifier */
-        const char * key = str(node->key.v.s);
-        size_t id_len = toidentifier_length(key);
-        char id_buf[id_len];
-        toidentifier(id_buf, key);
-        logfmt("        { be_const_key(%s, %i), ", id_buf, key_next);
-        m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
+        if (node->key.type == BE_STRING) {
+            /* convert the string literal to identifier */
+            const char * key = str(node->key.v.s);
+            size_t id_len = toidentifier_length(key);
+            char id_buf[id_len];
+            toidentifier(id_buf, key);
+            logfmt("        { be_const_key(%s, %i), ", id_buf, key_next);
+            m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
+        } else if (node->key.type == BE_INT) {
+            logfmt("        { be_const_key_int(%i, %i), ", node->key.v.i, key_next);
+            m_solidify_bvalue(vm, &node->value, class_name, NULL);
+        } else {
+            char error[64];
+            snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
+            be_raise(vm, "internal_error", error);
+        }
 
         logfmt(" },\n");
     }
@@ -358,7 +362,8 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, const char * classname, in
     const char * func_name = str(pr->name);
 
     if (cl->nupvals > 0) {
-        be_raise(vm, "internal_error", "Unsupported upvals in closure");
+        logfmt("--> Unsupported upvals in closure <---");
+        // be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
 
     int indent = 2;

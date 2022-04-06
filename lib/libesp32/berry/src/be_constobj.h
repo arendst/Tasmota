@@ -33,6 +33,12 @@ extern "C" {
     .next = (uint32_t)(_next) & 0xFFFFFF                        \
 }
 
+#define be_const_key_int(_i, _next) {                           \
+    .v.i = _i,                                                  \
+    .type = BE_INT,                                             \
+    .next = (uint32_t)(_next) & 0xFFFFFF                        \
+}
+
 #define be_const_func(_func) {                                  \
     .v.nf = (_func),                                            \
     .type = BE_NTVFUNC                                          \
@@ -246,6 +252,12 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_const_key(_str, _next) {                             \
     bvaldata(&be_const_str_##_str),                             \
         BE_STRING,                                              \
+        uint32_t((_next)&0xFFFFFF)                              \
+}
+
+#define be_const_key_int(_i, _next) {                           \
+    bvaldata(i),                                                \
+        BE_INT,                                                 \
         uint32_t((_next)&0xFFFFFF)                              \
 }
 
