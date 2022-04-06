@@ -1093,14 +1093,8 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
 }
 
 bool XdrvRulesProcess(bool teleperiod) {
-#ifdef USE_INFLUXDB
-  if (!teleperiod) {           // Only process ad-hoc data here
-    InfluxDbProcess(1);        // Use a copy
-  }
-#endif
-
   bool result = XdrvRulesProcess(teleperiod, ResponseData());
-  ResponseClear();             // Free heap space
+  ResponseClear();  // Free heap space
   return result;
 }
 
