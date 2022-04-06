@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)
 
 ### Fixed
-
+- ESP32 save settings after OTA upload regression from v10.0.0.3
 
 ## [11.0.0.4] 20220402
 ### Added

@@ -1172,7 +1172,6 @@ void Every250mSeconds(void)
       if (2 == TasmotaGlobal.ota_state_flag) {
         RtcSettings.ota_loader = 0;                       // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
-        ESPhttpUpdate.rebootOnUpdate(false);
         SettingsSave(1);                                  // Free flash for OTA update
       }
       if (TasmotaGlobal.ota_state_flag <= 0) {
@@ -1247,10 +1246,12 @@ void Every250mSeconds(void)
             AddLog(LOG_LEVEL_INFO, "OTA: unsupported protocol");
             ota_result = -999;
           } else {
+            httpUpdateLight.rebootOnUpdate(false);
             ota_result = (HTTP_UPDATE_FAILED != httpUpdateLight.update(OTAclient, version));
           }
 #else // standard OTA over HTTP
           WiFiClient OTAclient;
+          ESPhttpUpdate.rebootOnUpdate(false);
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, full_ota_url, version));
 #endif
           if (!ota_result) {
