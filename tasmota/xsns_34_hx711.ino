@@ -65,11 +65,10 @@ enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, 
 const char kHxCalibrationStates[] PROGMEM = D_HX_CAL_FAIL "|" D_HX_CAL_DONE "|" D_HX_CAL_REFERENCE "|" D_HX_CAL_REMOVE;
 
 struct HX {
+  long reads[HX_SAMPLES];
   long weight = 0;
   long raw = 0;
   long last_weight = 0;
-  long sum_weight = 0;
-  long sum_raw = 0;
   long offset = 0;
   long scale = 1;
   long weight_diff = 0;
@@ -87,8 +86,7 @@ struct HX {
 
 /*********************************************************************************************/
 
-bool HxIsReady(uint16_t timeout)
-{
+bool HxIsReady(uint16_t timeout) {
   // A reading can take up to 100 mS or 600mS after power on
   uint32_t start = millis();
   while ((digitalRead(Hx.pin_dout) == HIGH) && (millis() - start < timeout)) {
@@ -97,8 +95,7 @@ bool HxIsReady(uint16_t timeout)
   return (digitalRead(Hx.pin_dout) == LOW);
 }
 
-long HxRead(void)
-{
+long HxRead(void) {
   if (!HxIsReady(HX_TIMEOUT)) { return -1; }
 
   uint8_t data[3] = { 0 };
@@ -135,22 +132,18 @@ long HxRead(void)
 
 /*********************************************************************************************/
 
-void HxResetPart(void)
-{
+void HxResetPart(void) {
   Hx.tare_flg = true;
-  Hx.sum_weight = 0;
   Hx.sample_count = 0;
   Hx.last_weight = 0;
 }
 
-void HxReset(void)
-{
+void HxReset(void) {
   HxResetPart();
   Settings->energy_frequency_calibration = 0;
 }
 
-void HxCalibrationStateTextJson(uint8_t msg_id)
-{
+void HxCalibrationStateTextJson(uint8_t msg_id) {
   char cal_text[30];
 
   Hx.calibrate_msg = msg_id;
@@ -159,8 +152,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
   if (msg_id < 3) { MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("Sensor34")); }
 }
 
-void SetWeightDelta()
-{
+void SetWeightDelta(void) {
   // backwards compatible: restore old default value of 4 grams
   if (Settings->weight_change == 0) {
     Hx.weight_delta = 4;
@@ -197,8 +189,7 @@ void SetWeightDelta()
  * Sensor34 9 <weight code>        - Set minimum delta to trigger JSON message
 \*********************************************************************************************/
 
-bool HxCommand(void)
-{
+bool HxCommand(void) {
   bool serviced = true;
   bool show_parms = false;
   char argument[XdrvMailbox.data_len];
@@ -259,8 +250,8 @@ bool HxCommand(void)
       break;
     case 9:  // WeightDelta
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
-	Settings->weight_change = strtol(ArgV(argument, 2), nullptr, 10);
-	SetWeightDelta();
+        Settings->weight_change = strtol(ArgV(argument, 2), nullptr, 10);
+        SetWeightDelta();
       }
       show_parms = true;
       break;
@@ -282,13 +273,11 @@ bool HxCommand(void)
 
 /*********************************************************************************************/
 
-long HxWeight(void)
-{
+long HxWeight(void) {
   return (Hx.calibrate_step < HX_CAL_FAIL) ? Hx.weight : 0;
 }
 
-void HxInit(void)
-{
+void HxInit(void) {
   Hx.type = 0;
   if (PinUsed(GPIO_HX711_DAT) && PinUsed(GPIO_HX711_SCK)) {
     Hx.pin_sck = Pin(GPIO_HX711_SCK);
@@ -313,21 +302,40 @@ void HxInit(void)
   }
 }
 
-void HxEvery100mSecond(void)
-{
+void HxEvery100mSecond(void) {
   long raw = HxRead();
   if (-1 == raw) { return; }
 
-  Hx.sum_raw += raw;
-  Hx.sum_weight += raw;
+  if (Hx.sample_count < HX_SAMPLES) {                // Test for HxSaveBeforeRestart()
+    Hx.reads[Hx.sample_count] = raw;
+  }
 
   Hx.sample_count++;
   if (HX_SAMPLES == Hx.sample_count) {
-    long average = Hx.sum_weight / Hx.sample_count;  // grams
-    long raw_average = Hx.sum_raw / Hx.sample_count;  // grams
+    Hx.sample_count = 0;
+    // Sort HX_SAMPLES
+    for (uint32_t i = 0; i < HX_SAMPLES; i++) {
+      for (uint32_t j = i + 1; j < HX_SAMPLES; j++) {
+        if (Hx.reads[j] > Hx.reads[i]) {
+          std::swap(Hx.reads[i], Hx.reads[j]);
+        }
+      }
+    }
+    // Drop two lows and two highs from average
+    long sum_raw = 0;
+    for (uint32_t i = 2; i < HX_SAMPLES -2; i++) {
+      sum_raw += Hx.reads[i];
+    }
+    long average = sum_raw / (HX_SAMPLES -4);        // grams
+
+    if ((Hx.reads[0] < (average -4)) || (Hx.reads[9] > (average +4))) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("HX7: Range %d"), Hx.reads[9] - Hx.reads[0]);
+//      return;                                        // Consider to drop samples with too much deviation (will fail too on quick load changes like filling a barrel!)
+    }
+
     long value = average - Hx.offset;                // grams
     Hx.weight = value / Hx.scale;                    // grams
-    Hx.raw = raw_average / Hx.scale;
+    Hx.raw = average / Hx.scale;
     if (Hx.weight < 0) {
       if (Settings->energy_frequency_calibration) {
         long difference = Settings->energy_frequency_calibration + Hx.weight;
@@ -414,15 +422,10 @@ void HxEvery100mSecond(void)
         }
       }
     }
-
-    Hx.sum_weight = 0;
-    Hx.sum_raw = 0;
-    Hx.sample_count = 0;
   }
 }
 
-void HxSaveBeforeRestart(void)
-{
+void HxSaveBeforeRestart(void) {
   Settings->energy_frequency_calibration = Hx.weight;
   Hx.sample_count = HX_SAMPLES +1;                   // Stop updating Hx.weight
 }
@@ -436,8 +439,7 @@ const char HTTP_HX711_CAL[] PROGMEM =
   "{s}HX711 %s{m}{e}";
 #endif  // USE_WEBSERVER
 
-void HxShow(bool json)
-{
+void HxShow(bool json) {
   char scount[30] = { 0 };
 
   uint16_t count = 0;
@@ -496,8 +498,7 @@ const char HTTP_FORM_HX711[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
   "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br><input type='number' max='6.5535' step='0.0001' id='p2' placeholder='0.0' value='%s'></p>";
 
-void HandleHxAction(void)
-{
+void HandleHxAction(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
@@ -550,8 +551,7 @@ void HandleHxAction(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns34(uint8_t function)
-{
+bool Xsns34(uint8_t function) {
   bool result = false;
 
   if (Hx.type) {

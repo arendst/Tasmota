@@ -1990,9 +1990,6 @@ uint8_t TasShiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) {
     } else {
       value |= digitalRead(dataPin) << (7 - i);
     }
-#ifdef ESP32
-    delayMicroseconds(1);
-#endif
     digitalWrite(clockPin, LOW);
 #ifdef ESP32
     delayMicroseconds(1);
@@ -2008,9 +2005,6 @@ void TasShiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t va
     } else {
       digitalWrite(dataPin, !!(val & (1 << (7 - i))));
     }
-#ifdef ESP32
-    delayMicroseconds(1);
-#endif
     digitalWrite(clockPin, HIGH);
 #ifdef ESP32
     delayMicroseconds(1);

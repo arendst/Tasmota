@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 save settings after OTA upload regression from v10.0.0.3
+- HX711 false readings by removing large deviations
 
 ## [11.0.0.4] 20220402
 ### Added

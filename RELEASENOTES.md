@@ -153,6 +153,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Wiegand 34-bit rfid reading and presentation [#14834](https://github.com/arendst/Tasmota/issues/14834)
 - Orno WE517 power meter phase 2 current reactive [#14841](https://github.com/arendst/Tasmota/issues/14841)
 - NeoPool NPBit and NPRead/NPReadL output
+- HX711 false readings by removing large deviations
 - ESP32 save settings after OTA upload regression from v10.0.0.3
 - ESP32 PowerOnState [#15084](https://github.com/arendst/Tasmota/issues/15084)
 
