@@ -366,7 +366,7 @@ void InfluxDbProcessJson(bool use_copy = false) {
   }
 }
 
-void InfluxDbProcess(bool use_copy = false) {
+void InfluxDbProcess(bool use_copy) {
   if (Settings->sbflag1.influxdb_sensor) {
     InfluxDbProcessJson(use_copy);
   }
