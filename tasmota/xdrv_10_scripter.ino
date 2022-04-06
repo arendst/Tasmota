@@ -451,7 +451,7 @@ struct SCRIPT_MEM {
     char *fast_script = 0;
     char *event_script = 0;
     char *html_script = 0;
-    char *web_pages[5];
+    char *web_pages[7];
     uint32_t script_lastmillis;
     bool event_handeled = false;
 #ifdef USE_BUTTON_EVENT
@@ -4058,6 +4058,105 @@ extern char *SML_GetSVal(uint32_t index);
           len = 0;
           goto exit;
         }
+        // serial read array
+        if (!strncmp(lp, "sra(", 4)) {
+          fvar = -1;
+          if (glob_script_mem.sp) {
+            uint16_t alen;
+            float *array;
+            lp = get_array_by_name(lp + 4, &array, &alen);
+            if (!array) {
+              goto exit;
+            }
+            uint16_t index;
+            for (index = 0; index < alen; index++) {
+              if (!glob_script_mem.sp->available()) {
+                break;
+              }
+              array[index] = glob_script_mem.sp->read();
+            }
+            fvar = index;
+#ifdef USE_SML_M
+            if (index == 8) {
+              uint8_t modbus_response[10];
+              for (uint8_t cnt = 0; cnt < 8; cnt++) {
+                modbus_response[cnt] = array[cnt];
+              }
+              uint16_t crc = MBUS_calculateCRC(modbus_response, 6);
+              if  ( (lowByte(crc) != modbus_response[6]) || (highByte(crc) != modbus_response[7]) ) {
+                fvar = -2;
+              }
+            }
+#endif
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
+#ifdef USE_SML_M
+        // serial modbus write float, 010404ffffffffxxxx
+        if (!strncmp(lp, "smw(", 4)) {
+          fvar = -1;
+          if (glob_script_mem.sp) {
+            float addr;
+            lp = GetNumericArgument(lp + 4, OPER_EQU, &addr, 0);
+            SCRIPT_SKIP_SPACES
+            float mode;
+            lp = GetNumericArgument(lp, OPER_EQU, &mode, 0);
+            SCRIPT_SKIP_SPACES
+            float mval;
+            lp = GetNumericArgument(lp, OPER_EQU, &mval, 0);
+            SCRIPT_SKIP_SPACES
+            uint32_t uval, *uvp;
+            uvp = &uval;
+            *(uvp) = *(uint32_t*)&mval;
+
+            uint8_t modbus_response[10];
+
+            uint32_t ui32 = mval;
+            modbus_response[0] = addr;
+            modbus_response[1] = 4;
+            switch  ((uint8_t)mode) {
+              case 0:
+                // UINT16
+                modbus_response[2] = 2;
+                modbus_response[3] = (ui32 >> 16);
+                modbus_response[4] = (ui32 >> 0);
+                break;
+              case 1:
+                  // UINT32
+                modbus_response[2] = 4;
+                modbus_response[3] = (ui32 >> 24);
+                modbus_response[4] = (ui32 >> 16);
+                modbus_response[5] = (ui32 >> 8);
+                modbus_response[6] = (ui32 >> 0);
+                break;
+
+              default:
+                // float
+                modbus_response[2] = 4;
+                modbus_response[3] = (uval >> 24);
+                modbus_response[4] = (uval >> 16);
+                modbus_response[5] = (uval >> 8);
+                modbus_response[6] = (uval >> 0);
+                break;
+            }
+
+
+            // calc mobus checksum
+            uint16_t crc = MBUS_calculateCRC(modbus_response, modbus_response[2] + 3);
+            modbus_response[modbus_response[2] + 3] = lowByte(crc);
+            modbus_response[modbus_response[2] + 4] = highByte(crc);
+            glob_script_mem.sp->write(modbus_response, 9);
+            fvar = 0;
+
+          }
+          lp++;
+          len = 0;
+          goto exit;
+        }
+#endif
+
 #endif //USE_SCRIPT_SERIAL
 
 
@@ -4149,6 +4248,19 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
 #endif // USE_SCRIPT_SPI
+        if (!strncmp(lp, "s2hms(", 6)) {
+          lp = GetNumericArgument(lp + 6, OPER_EQU, &fvar, 0);
+          lp++;
+          char tbuff[16];
+          uint8_t hours = (uint32_t)fvar / 3600;
+          fvar -= (hours * 3600);
+          uint8_t mins = (uint32_t)fvar / 60;
+          uint8_t secs = (uint32_t)fvar % 60;
+          sprintf_P(tbuff,PSTR("%02d:%02d:%02d"), hours, mins, secs);
+          if (sp) strlcpy(sp, tbuff, glob_script_mem.max_ssize);
+          len = 0;
+          goto strexit;
+        }
         break;
 
       case 't':
@@ -6713,11 +6825,13 @@ void set_callbacks() {
 }
 
 void script_set_web_pages(void) {
-  if (Run_Scripter1(">W", -2, 0) == 99) {glob_script_mem.web_pages[0] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[0] = 0;}
-  if (Run_Scripter1(">w ", -3, 0) == 99) {glob_script_mem.web_pages[1] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[1] = 0;}
-  if (Run_Scripter1(">w1 ", -4, 0) == 99) {glob_script_mem.web_pages[2] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[2] = 0;}
-  if (Run_Scripter1(">w2 ", -4, 0) == 99) {glob_script_mem.web_pages[3] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[3] = 0;}
-  if (Run_Scripter1(">w3 ", -4, 0) == 99) {glob_script_mem.web_pages[4] = glob_script_mem.section_ptr;} else {glob_script_mem.web_pages[4] = 0;}
+  if (Run_Scripter1(">W", -2, 0) == 99) {glob_script_mem.web_pages[0] = glob_script_mem.section_ptr + 2;} else {glob_script_mem.web_pages[0] = 0;}
+  if (Run_Scripter1(">w ", -3, 0) == 99) {glob_script_mem.web_pages[1] = glob_script_mem.section_ptr + 2;} else {glob_script_mem.web_pages[1] = 0;}
+  if (Run_Scripter1(">w1 ", -4, 0) == 99) {glob_script_mem.web_pages[2] = glob_script_mem.section_ptr + 3;} else {glob_script_mem.web_pages[2] = 0;}
+  if (Run_Scripter1(">w2 ", -4, 0) == 99) {glob_script_mem.web_pages[3] = glob_script_mem.section_ptr + 3;} else {glob_script_mem.web_pages[3] = 0;}
+  if (Run_Scripter1(">w3 ", -4, 0) == 99) {glob_script_mem.web_pages[4] = glob_script_mem.section_ptr + 3;} else {glob_script_mem.web_pages[4] = 0;}
+  if (Run_Scripter1(">WS", -3, 0) == 99) {glob_script_mem.web_pages[5] = glob_script_mem.section_ptr + 3;} else {glob_script_mem.web_pages[5] = 0;}
+  if (Run_Scripter1(">WM", -3, 0) == 99) {glob_script_mem.web_pages[6] = glob_script_mem.section_ptr + 3;} else {glob_script_mem.web_pages[6] = 0;}
 }
 
 #endif // USE_WEBSERVER
@@ -7069,7 +7183,7 @@ const char sHUE_ERROR_JSON[] PROGMEM =
 
 
 // get alexa arguments
-void Script_Handle_Hue(String *path) {
+void Script_Handle_Hue(String path) {
   String response;
   int code = 200;
   uint16_t tmp = 0;
@@ -7079,7 +7193,7 @@ void Script_Handle_Hue(String *path) {
   uint16_t ct = 0;
   bool resp = false;
 
-  uint8_t device = DecodeLightId(atoi(path->c_str()));
+  uint8_t device = DecodeLightId(atoi(path.c_str()));
   uint8_t index = device - TasmotaGlobal.devices_present - 1;
 
   if (Webserver->args()) {
@@ -8308,7 +8422,7 @@ void ScriptWebShow(char mc, uint8_t page) {
 
   //uint8_t web_script;
   glob_script_mem.web_mode = mc;
-  if (mc == 'w' || mc == 'x') {
+  if (mc == 'w' || mc == 'x' || page >= 5) {
     if (mc == 'x') {
       mc = '$';
     }
@@ -8321,7 +8435,7 @@ void ScriptWebShow(char mc, uint8_t page) {
 
     chartindex = 1;
     google_libs = 0;
-    char *lp = glob_script_mem.section_ptr + 2;
+    char *lp = glob_script_mem.section_ptr;
     if (mc == 'w') {
       while (*lp) {
         if (*lp == '\n') break;
@@ -8758,10 +8872,12 @@ const char *gc_str;
     // end standard web interface
   } else {
     //  main section interface
-    if (*lin == mc) {
+    if (*lin == mc || mc == 'z') {
 
 #ifdef USE_GOOGLE_CHARTS
-      lin++;
+      if (mc != 'z') {
+        lin++;
+      }
 exgc:
       char *lp;
       if (!strncmp(lin, "gc(", 3)) {
@@ -8961,7 +9077,8 @@ exgc:
           WSContentSend_PD("['");
           char lbl[16];
           if (todflg >= 0) {
-            sprintf(lbl, "%d:%02d", todflg / divflg, (todflg % divflg) * (60 / divflg) );
+            uint16_t mins = (float)(todflg % divflg) * (float)((float)60 / (float)divflg);
+            sprintf(lbl, "%d:%02d", todflg / divflg, mins);
             todflg++;
             if (hmflg == 0) {
               if (todflg >= entries) {
@@ -9933,7 +10050,7 @@ void script_add_subpage(uint8_t num) {
   //uint8_t web_script = Run_Scripter(code, -strlen(code), 0);
   if (glob_script_mem.web_pages[num]) {
       char bname[48];
-      cpy2lf(bname, sizeof(bname), glob_script_mem.web_pages[num] + 3);
+      cpy2lf(bname, sizeof(bname), glob_script_mem.web_pages[num] + 1);
 
       void (*wptr)(void);
 
@@ -10184,7 +10301,11 @@ bool Xdrv10(uint8_t function)
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_ADD_MAIN_BUTTON:
       if (bitRead(Settings->rule_enabled, 0)) {
-        ScriptWebShow('$', 0);
+        if (glob_script_mem.web_pages[6]) {
+          ScriptWebShow('z', 6);
+        } else {
+          ScriptWebShow('$', 0);
+        }
 #ifdef SCRIPT_FULL_WEBPAGE
         script_add_subpage(1);
         script_add_subpage(2);
@@ -10225,7 +10346,11 @@ bool Xdrv10(uint8_t function)
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_SENSOR:
       if (bitRead(Settings->rule_enabled, 0)) {
-        ScriptWebShow(0, 0);
+        if (glob_script_mem.web_pages[5]) {
+          ScriptWebShow(0, 5);
+        } else {
+          ScriptWebShow(0, 0);
+        }
       }
       break;
 #endif //USE_SCRIPT_WEB_DISPLAY
