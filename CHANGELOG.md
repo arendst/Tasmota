@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for improv as used by esp-web-tools
 - Command ``IfxSensor 1`` to send non-teleperiod data to influxdb
+- ESP32 Support for OpenHASP v1.0 by Stephan Hadinger (#15307)
 
 ### Changed
 - Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)

@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - NeoPool JSON modules, power module, cell info, chlorine, conductivity and ionization
 - ESP32 Berry always enable rules
 - ESP32 Berry bootloop protection
+- ESP32 Support for OpenHASP v1.0 by Stephan Hadinger [#15307](https://github.com/arendst/Tasmota/issues/15307)
 - ESP32 support for BLE Mi scale V1 [#13517](https://github.com/arendst/Tasmota/issues/13517)
 - ESP32 integrate Homekit in Bluetooth binary [#14818](https://github.com/arendst/Tasmota/issues/14818)
 - ESP32 Berry virtual Alexa hue device [#14833](https://github.com/arendst/Tasmota/issues/14833)
