@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Commands ``Sensor34 10 <valueA>`` and ``Sensor34 11 <valueB>`` to use HX711 absolute weight conversion (#15292)
 
+### Changed
+- NeoPool: boost command with redox control state, relay and aux detail display
+
+### Fixed
+- NeoPool filtration state
+
 ## [11.0.0.5] 20220407
 ### Added
 - Support for improv as used by esp-web-tools
