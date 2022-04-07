@@ -367,14 +367,17 @@ void CmndTuyaSend(void) {
     case 3:
     case 4:
     case 5: 
-    case 6: {
+    case 6: 
+    case 7:
+    {
     if (XdrvMailbox.data_len > 0) {
       char *p;
-      char *data;
+      const char *data = "";
       uint8_t i = 0;
       uint8_t dpId = 0;
       for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 2; str = strtok_r(nullptr, ", ", &p)) {
         if ( i == 0) {
+          // note: can be a number, or 0xnn for hex because base is 0
           dpId = strtoul(str, nullptr, 0);
         } else {
           data = str;
@@ -394,13 +397,17 @@ void CmndTuyaSend(void) {
         TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
       } else if (6 == XdrvMailbox.index) {
         TuyaSendRaw(dpId, data);
+      } else if (7 == XdrvMailbox.index) {
+        uint8_t cmd = dpId;
+        // send ANY cmd with payload from hex string
+        // calculates length and checksum for you.
+        // like "0," to send a heartbeat, "3,4" to set wifi led mode, 
+        // "0x1c,0110041305060702" - set local time
+        // sends immediately....
+        TuyaSendRawCmd(cmd, data);
       }
     }
     } break;
-
-    case 7:
-      return; // don't say done
-      break;
 
     case 8:
       // product info
@@ -890,9 +897,9 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
               TuyaSendState(dp->DPid, 
                 dp->Type,
                 (uint8_t*)dp->desiredValue, dp->desiredValueLen);
-              // assume it worked
-              dp->rxedValueLen = dp->desiredValueLen;
-              memcpy(dp->rxedValue, dp->desiredValue, dp->desiredValueLen);
+              // assume it worked? maybe not
+              //dp->rxedValueLen = dp->desiredValueLen;
+              //memcpy(dp->rxedValue, dp->desiredValue, dp->desiredValueLen);
               dp->toSet = 0;
               pTuya->expectedResponseCmd = TUYA_CMD_STATE;
               pTuya->timeout = 300; 
@@ -1079,7 +1086,7 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
 }
 
 
-// note - direct send using TuyaSendCmdRaw
+// note - direct send using TuyaSendCmd
 void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value, int len)
 {
   uint16_t payload_len = 4;
@@ -1139,7 +1146,7 @@ void TuyaSendEnum(uint8_t id, uint32_t value)
   TuyaPostState(id, TUYA_TYPE_ENUM, (uint8_t*)&value, 1);
 }
 
-static uint16_t convertHexStringtoBytes (uint8_t * dest, char src[], uint16_t dest_len){
+static uint16_t convertHexStringtoBytes (uint8_t * dest, const char src[], uint16_t dest_len){
   if (NULL == dest || NULL == src || 0 == dest_len){
     return 0;
   }
@@ -1158,7 +1165,7 @@ static uint16_t convertHexStringtoBytes (uint8_t * dest, char src[], uint16_t de
 }
 
 // note - send immediate, not deferred
-void TuyaSendHexString(uint8_t id, char data[]) {
+void TuyaSendHexString(uint8_t id, const char data[]) {
 
   uint16_t len = strlen(data)/2;
   uint8_t value[len];
@@ -1167,13 +1174,13 @@ void TuyaSendHexString(uint8_t id, char data[]) {
 }
 
 // note - send immediate, not deferred
-void TuyaSendString(uint8_t id, char data[]) {
+void TuyaSendString(uint8_t id, const char data[]) {
   uint16_t len = strlen(data);
   TuyaPostState(id, TUYA_TYPE_STRING, (uint8_t*) data, len);
 }
 
-void TuyaSendRaw(uint8_t id, char data[]) {
-  char* beginPos = strchr(data, 'x');
+void TuyaSendRaw(uint8_t id, const char data[]) {
+  const char* beginPos = strchr(data, 'x');
   if(!beginPos) {
     beginPos = strchr(data, 'X');
   }
@@ -1188,6 +1195,16 @@ void TuyaSendRaw(uint8_t id, char data[]) {
   convertHexStringtoBytes(value, beginPos, len);
   TuyaPostState(id, TUYA_TYPE_RAW, value, len);
 }
+
+// send ANY cmd with payload from hex string
+void TuyaSendRawCmd(uint8_t cmd, const char data[]) {
+  uint16_t strSize = strlen(data);
+  uint16_t len = strSize/2;
+  uint8_t value[len];
+  convertHexStringtoBytes(value, data, len);
+  TuyaSendCmd(cmd, value, len, 1);
+}
+
 
 bool TuyaSetPower(void)
 {
