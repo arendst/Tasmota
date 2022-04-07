@@ -666,7 +666,7 @@ extern "C" {
       MI32.conCtx->operation = operation%10;
       MI32.conCtx->response = response;
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Berry connection op: %d, addrType: %d, oneOp: %u, response: %u"),MI32.conCtx->operation, MI32.conCtx->addrType, MI32.conCtx->oneOp, MI32.conCtx->response);
-      if(MI32.conCtx->oneOp || MI32.conCtx->operation == 5){ //...or disconnect is requested
+      if(MI32.conCtx->oneOp){
         MI32StartConnectionTask();
       }
       else{
@@ -1087,6 +1087,9 @@ void MI32ScanTask(void *pvParameters){
 }
 
 bool MI32ConnectActiveSensor(){ // only use inside a task !!
+  if(MI32.conCtx->operation == 5) {
+    return false;
+  }
   NimBLEAddress _address = NimBLEAddress(MI32.conCtx->MAC, MI32.conCtx->addrType);
   if(MI32Client != nullptr){
     if(MI32Client->isConnected() && MI32.mode.connected == 1){ //we only accept a "clean" state without obvious packet losses
@@ -1114,7 +1117,6 @@ bool MI32ConnectActiveSensor(){ // only use inside a task !!
     MI32Client->setClientCallbacks(&MI32SensorCB , false);
   }
   if (!MI32Client->connect(false)) {
-      MI32.mode.willConnect = 0;
       NimBLEDevice::deleteClient(MI32Client);
       // AddLog(LOG_LEVEL_ERROR,PSTR("M32: did not connect client"));
       return false;
@@ -1140,8 +1142,10 @@ bool MI32StartConnectionTask(){
 }
 
 void MI32ConnectionTask(void *pvParameters){
+#if !defined(CONFIG_IDF_TARGET_ESP32C3) //needs more testing ...
     NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM,false); //seems to be important for i.e. xbox controller, hopefully not breaking other things
     NimBLEDevice::setSecurityAuth(true, true, true);
+#endif //CONFIG_IDF_TARGET_ESP32C3
     MI32.conCtx->error = MI32_CONN_NO_ERROR;
     if (MI32ConnectActiveSensor()){
       MI32.mode.readingDone = 0;
@@ -1176,9 +1180,13 @@ void MI32ConnectionTask(void *pvParameters){
           }
           // AddLog(LOG_LEVEL_INFO,PSTR("M32: wait ..."));
         }
-        // AddLog(LOG_LEVEL_INFO,PSTR("M32: really start connection job now ..."));
+
         MI32.mode.triggerNextConnJob = 0;
         MI32.mode.readyForNextConnJob = 0;
+        if(MI32.conCtx->operation == 5){
+          MI32Client->disconnect();
+          break;
+        }
         pSvc = MI32Client->getService(MI32.conCtx->serviceUUID);
         if(pSvc) {
             pChr = pSvc->getCharacteristic(MI32.conCtx->charUUID);
@@ -1199,9 +1207,9 @@ void MI32ConnectionTask(void *pvParameters){
               }
               break;
             case 2:
-              if(pChr->canWrite()) {
+              if(pChr->canWrite() || pChr->canWriteNoResponse()) {
                 uint8_t len = MI32.conCtx->buffer[0];
-                if(pChr->writeValue(MI32.conCtx->buffer + 1,len,MI32.conCtx->response)) { // true is important !
+                if(pChr->writeValue(MI32.conCtx->buffer + 1,len,MI32.conCtx->response & !pChr->canWriteNoResponse())) { // falls always back to "no response" if server provides both options
                   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: write op done"));
                 }
                 else{
@@ -1228,28 +1236,28 @@ void MI32ConnectionTask(void *pvParameters){
           }
         }
         else{
-                MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
+            MI32.conCtx->error = MI32_CONN_NO_CHARACTERISTIC;
         }
         timer = 0;
 
-      while (timer<150){
-        if (MI32.mode.readingDone || !MI32.conCtx->oneOp){
-          break;
-        }
-        else{
-          if (MI32.conCtx->operation==3 && MI32.conCtx->oneOp) {
-            MI32.conCtx->error = MI32_CONN_NOTIFY_TIMEOUT; //did not read on notify - timeout only for one-shot op
+        if(MI32.conCtx->error == MI32_CONN_NO_ERROR){
+          while (timer<150){
+            if (MI32.mode.readingDone || !MI32.conCtx->oneOp){
+              break;
+            }
+            else if (timer>148){
+              if (MI32.conCtx->operation==3 && MI32.conCtx->oneOp) {
+                MI32.conCtx->error = MI32_CONN_NOTIFY_TIMEOUT; //did not read on notify - timeout only for one-shot op
+              }
+            }
+            timer++;
+            vTaskDelay(100/ portTICK_PERIOD_MS);
           }
         }
-        timer++;
-        vTaskDelay(100/ portTICK_PERIOD_MS);
-      }
       MI32.mode.readingDone = 0;
       if(MI32.conCtx->oneOp){
         MI32Client->disconnect();
-        MI32.mode.connected = 0;
         keepConnectionAlive = false;
-        MI32StartTask(MI32_TASK_SCAN);
       }
       else{
         MI32.mode.readyForNextConnJob = 1;
@@ -1258,15 +1266,10 @@ void MI32ConnectionTask(void *pvParameters){
     }
   }
   else{
-    if(MI32.conCtx->operation==5){
-      MI32.conCtx->error = MI32_CONN_DID_DISCCONNECT; // did succesfully disconnect
-    }
-    else{
-      MI32.conCtx->error = MI32_CONN_NO_CONNECT; // could not connect
-    }
-    MI32.mode.connected = 0;
-    MI32StartTask(MI32_TASK_SCAN);
+    MI32.mode.willConnect = 0;
+    MI32.conCtx->error = MI32_CONN_NO_CONNECT; // could not connect (including op:5 in not connected state)
   }
+  MI32.mode.connected = 0;
   MI32.mode.triggerBerryConnCB = 1;
   MI32StartTask(MI32_TASK_SCAN);
   vTaskDelete( NULL );
@@ -1660,9 +1663,9 @@ void MI32Every50mSecond(){
     void (*func_ptr)(int, int, int) = (void (*)(int, int, int))MI32.beConnCB;
     char _message[32];
     GetTextIndexed(_message, sizeof(_message), MI32.conCtx->error, kMI32_ConnErrorMsg);
-    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s"),_message);
+    AddLog(LOG_LEVEL_DEBUG,PSTR("M32: BryCbMsg: %s"),_message);
     func_ptr(MI32.conCtx->error, MI32.conCtx->operation , MI32.conCtx->returnCharUUID);
-    } 
+    }
     MI32.mode.triggerBerryConnCB = 0;
   }
   if(MI32.infoMsg > 0){
