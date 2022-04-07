@@ -3,7 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.5]
+## [11.0.0.6]
+### Added
+- Commands ``Sensor34 10 <valueA>`` and ``Sensor34 11 <valueB>`` to use HX711 absolute weight conversion (#15292)
+
+## [11.0.0.5] 20220407
 ### Added
 - Support for improv as used by esp-web-tools
 - Command ``IfxSensor 1`` to send non-teleperiod data to influxdb

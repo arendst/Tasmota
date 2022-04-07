@@ -52,13 +52,15 @@
 #define HX_GAIN_32           2       // Channel B, gain factor 32
 #define HX_GAIN_64           3       // Channel A, gain factor 64
 
-#define D_JSON_WEIGHT_REF    "WeightRef"
-#define D_JSON_WEIGHT_CAL    "WeightCal"
-#define D_JSON_WEIGHT_MAX    "WeightMax"
-#define D_JSON_WEIGHT_ITEM   "WeightItem"
-#define D_JSON_WEIGHT_CHANGE "WeightChange"
 #define D_JSON_WEIGHT_RAW    "WeightRaw"
-#define D_JSON_WEIGHT_DELTA  "WeightDelta"
+#define D_JSON_WEIGHT_REF    "Ref"
+#define D_JSON_WEIGHT_CAL    "Cal"
+#define D_JSON_WEIGHT_MAX    "Max"
+#define D_JSON_WEIGHT_ITEM   "Item"
+#define D_JSON_WEIGHT_CHANGE "Change"
+#define D_JSON_WEIGHT_DELTA  "Delta"
+#define D_JSON_WEIGHT_ABSC_A "AbsConvA"
+#define D_JSON_WEIGHT_ABSC_B "AbsConvB"
 
 enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, HX_CAL_DONE, HX_CAL_FIRST, HX_CAL_RESET, HX_CAL_START };
 
@@ -187,85 +189,83 @@ void SetWeightDelta(void) {
  * Sensor34 8 0                    - Disable JSON weight change message
  * Sensor34 8 1                    - Enable JSON weight change message
  * Sensor34 9 <weight code>        - Set minimum delta to trigger JSON message
+ * Sensor34 10 <value A>           - Set A = a * 10^9 for raw to absolute weight conversion: y=a*x+b
+ * Sensor34 11 <value B>           - Set B = b * 10^6 for raw to absolute weight conversion: y=a*x+b
 \*********************************************************************************************/
 
 bool HxCommand(void) {
   bool serviced = true;
-  bool show_parms = false;
+  bool show_parms = true;
   char argument[XdrvMailbox.data_len];
 
+  long value = 0;
   for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
+  bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
+  if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
 
   switch (XdrvMailbox.payload) {
     case 1:  // Reset scale
       HxReset();
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
+      show_parms = false;
       break;
     case 2:  // Calibrate
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_reference = strtol(ArgV(argument, 2), nullptr, 10);
-      }
+      if (any_value) { Settings->weight_reference = value; }
       Hx.scale = 1;
       HxReset();
       Hx.calibrate_step = HX_CAL_START;
       Hx.calibrate_timer = 1;
       HxCalibrationStateTextJson(3);
+      show_parms = false;
       break;
     case 3:  // WeightRef to user reference
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_reference = strtol(ArgV(argument, 2), nullptr, 10);
-      }
-      show_parms = true;
+      if (any_value) { Settings->weight_reference = value; }
       break;
     case 4:  // WeightCal to user calculated value
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_calibration = strtol(ArgV(argument, 2), nullptr, 10);
+      if (any_value) {
+        Settings->weight_calibration = value;
         Hx.scale = Settings->weight_calibration;
       }
-      show_parms = true;
       break;
     case 5:  // WeightMax
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_max = strtol(ArgV(argument, 2), nullptr, 10) / 1000;
-      }
-      show_parms = true;
+      if (any_value) { Settings->weight_max = value; }
       break;
     case 6:  // WeightItem
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings->weight_item = (unsigned long)(CharToFloat(ArgV(argument, 2)) * 10);
       }
-      show_parms = true;
       break;
     case 7:  // WeightSave
       Settings->energy_frequency_calibration = Hx.weight;
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, PSTR(D_JSON_DONE));
+      show_parms = false;
       break;
     case 8:  // Json on weight change
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->SensorBits1.hx711_json_weight_change = strtol(ArgV(argument, 2), nullptr, 10) & 1;
-      }
-      show_parms = true;
+      if (any_value) { Settings->SensorBits1.hx711_json_weight_change = value &1; }
       break;
     case 9:  // WeightDelta
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_change = strtol(ArgV(argument, 2), nullptr, 10);
+      if (any_value) {
+        Settings->weight_change = value;
         SetWeightDelta();
       }
-      show_parms = true;
       break;
-    default:
-      show_parms = true;
+    case 10:  // AbsoluteConversion, A
+      if (any_value) { Settings->weight_absconv_a = value; }
+      break;
+    case 11:  // AbsoluteConversion, B
+      if (any_value) { Settings->weight_absconv_b = value; }
+      break;
   }
 
   if (show_parms) {
-    char item[33];
-    dtostrfd((float)Settings->weight_item / 10, 1, item);
     Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
-		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
+         D_JSON_WEIGHT_ITEM "\":%1_f,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d,\""
+         D_JSON_WEIGHT_ABSC_A "\":%d,\"" D_JSON_WEIGHT_ABSC_B "\":%d}}"),
 	       Settings->weight_reference, Settings->weight_calibration, Settings->weight_max * 1000,
-	       item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change);
+	       &Settings->weight_item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change,
+         Settings->weight_absconv_a, Settings->weight_absconv_b);
   }
 
   return serviced;
@@ -445,13 +445,17 @@ void HxShow(bool json) {
   uint16_t count = 0;
   float weight = 0;
   if (Hx.calibrate_step < HX_CAL_FAIL) {
-    if (Hx.weight && Settings->weight_item) {
-      count = (Hx.weight * 10) / Settings->weight_item;
-      if (count > 1) {
-        snprintf_P(scount, sizeof(scount), PSTR(",\"" D_JSON_COUNT "\":%d"), count);
+    if ((Settings->weight_absconv_a != 0) && (Settings->weight_absconv_b != 0)) {
+      weight = (float)Settings->weight_absconv_a / 1e9 * Hx.raw + (float)Settings->weight_absconv_b / 1e6;
+    } else {
+      if (Hx.weight && Settings->weight_item) {
+        count = (Hx.weight * 10) / Settings->weight_item;
+        if (count > 1) {
+          snprintf_P(scount, sizeof(scount), PSTR(",\"" D_JSON_COUNT "\":%d"), count);
+        }
       }
+      weight = (float)Hx.weight / 1000;                // kilograms
     }
-    weight = (float)Hx.weight / 1000;                // kilograms
   }
   char weight_chr[33];
   dtostrfd(weight, Settings->flag2.weight_resolution, weight_chr);

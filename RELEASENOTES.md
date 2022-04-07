@@ -103,7 +103,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v11.0.0.5
+## Changelog v11.0.0.6
 ### Added
 - Command ``SetOption135 1`` to disable LVGL splash screen
 - Command ``SetOption136 1`` to disable single sensor reports from Tuya devices while keeping teleperiod reports [#15216](https://github.com/arendst/Tasmota/issues/15216)
@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 [#15061](https://github.com/arendst/Tasmota/issues/15061)
 - Command ``IfxSensor 1`` to send non-teleperiod data to influxdb
 - Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes [#15001](https://github.com/arendst/Tasmota/issues/15001)
+- Commands ``Sensor34 10 <valueA>`` and ``Sensor34 11 <valueB>`` to use HX711 absolute weight conversion [#15292](https://github.com/arendst/Tasmota/issues/15292)
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` [#15015](https://github.com/arendst/Tasmota/issues/15015)
 - NeoPool system voltages display
 - TasmotaSerial implement ``end()``
