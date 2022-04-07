@@ -15,10 +15,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)
+- NeoPool: boost command with redox control state, relay and aux detail display
 
 ### Fixed
 - ESP32 save settings after OTA upload regression from v10.0.0.3
 - HX711 false readings by removing large deviations
+- NeoPool filtration state
 
 ## [11.0.0.4] 20220402
 ### Added
