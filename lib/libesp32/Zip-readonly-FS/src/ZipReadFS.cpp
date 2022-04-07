@@ -308,7 +308,9 @@ bool ZipArchive::parse(void) {
   const size_t zip_header_size = sizeof(header) - sizeof(header.padding);
 
   while (1) {
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: f->seek(%i)", offset);
     f->seek(offset);
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: f->read(%i)", zip_header_size);
     int32_t bytes_read = f->read(sizeof(header.padding) + (uint8_t*) &header, zip_header_size);
     if (bytes_read != zip_header_size) {
       break;
@@ -348,6 +350,7 @@ bool ZipArchive::parse(void) {
 
     // read full filename
     char fname[header.filename_size + 1];
+    // AddLog(LOG_LEVEL_DEBUG, "ZIP: f->read(%i)", header.filename_size);
     if (f->read((uint8_t*) &fname[0], header.filename_size) != header.filename_size) {
       return false;
     }
@@ -388,7 +391,7 @@ FileImplPtr ZipReadFSImpl::open(const char* path, const char* mode, const bool c
 
   if (strchr(path, '#')) {
     // we don't support any other mode than "r" and no-create
-    if (strcmp(mode, "r") != 0 || create)  {
+    if (strchr(mode, 'r') == NULL || create)  {
       AddLog(LOG_LEVEL_INFO, "ZIP: writing to zip is not supported");
       return ZipReadFileImplPtr();    // return an error
     }

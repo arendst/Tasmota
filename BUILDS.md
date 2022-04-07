@@ -9,6 +9,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 |-----------------------|---|-------|---|---|---|---|--------
 | MY_LANGUAGE en_GB     | x | x / x | x | x | x | x |
+| USE_IMPROV            | - | x / x | x | x | x | x |
 | USE_UFILESYS          | - | - / x | - | - | - | - |
 | USE_ARDUINO_OTA       | - | - / - | - | - | - | - |
 | USE_DOMOTICZ          | - | x / x | x | x | x | - |
@@ -19,7 +20,6 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_TELEGRAM          | - | - / - | - | - | - | - |
 | USE_KNX               | - | - / x | x | - | - | - |
 | USE_WEBSERVER         | x | x / x | x | x | x | x |
-| USE_JAVASCRIPT_ES6    | - | - / - | - | - | - | - |
 | USE_WEBSEND_RESPONSE  | - | - / - | - | - | - | - |
 | USE_EMULATION_HUE     | x | x / x | - | x | - | - |
 | USE_EMULATION_WEMO    | x | x / x | - | x | - | - |
@@ -127,8 +127,10 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_SCD30             | - | - / x | - | x | - | - |
 | USE_SCD40             | - | - / x | - | - | - | - |
 | USE_SPS30             | - | - / - | - | - | - | - |
+| USE_ADE7880           | - | - / - | - | - | - | - |
 | USE_ADE7953           | - | x / x | x | x | - | x |
 | USE_VL53L0X           | - | - / x | - | x | - | - |
+| USE_VL53L1X           | - | - / - | - | - | - | - |
 | USE_MLX90614          | - | - / - | - | - | - | - |
 | USE_CHIRP             | - | - / - | - | - | - | - |
 | USE_PAJ7620           | - | - / - | - | - | - | - |
@@ -161,9 +163,13 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_EZORTD            | - | - / - | - | - | - | - |
 | USE_SEESAW_SOIL       | - | - / - | - | - | - | - |
 | USE_TOF10120          | - | - / - | - | - | - | - |
+| USE_BM8563            | - | - / - | - | - | - | - |
 | USE_AM2320            | - | - / - | - | - | - | - |
 | USE_T67XX             | - | - / - | - | - | - | - |
 | USE_HM330X            | - | - / - | - | - | - | - |
+| USE_HDC2010           | - | - / - | - | - | - | - |
+| USE_PCF85363          | - | - / - | - | - | - | - |
+| USE_DS3502            | - | - / - | - | - | - | - |
 |                       |   |       |   |   |   |   |
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 | USE_SPI               | - | - / - | - | - | - | x |

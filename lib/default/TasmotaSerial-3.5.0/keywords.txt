@@ -1,0 +1,31 @@
+#######################################
+# Syntax Coloring Map for TasmotaSerial
+# (esp8266 and esp32)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TasmotaSerial	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+end	 KEYWORD2
+hardwareSerial  KEYWORD2
+peek  KEYWORD2
+write	KEYWORD2
+read	KEYWORD2
+available	KEYWORD2
+flush	KEYWORD2
+rxRead	KEYWORD2
+getLoopReadMetric KEYWORD2
+getUart KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

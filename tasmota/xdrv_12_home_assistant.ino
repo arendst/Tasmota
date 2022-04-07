@@ -201,10 +201,18 @@ int hass_tele_period = 0;
 
 // NEW DISCOVERY
 void HassDiscoverMessage(void) {
+  uint32_t ip_address = (uint32_t)WiFi.localIP();
+  char* hostname = TasmotaGlobal.hostname;
+#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+  if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
+    ip_address = (uint32_t)EthernetLocalIP();
+    hostname = EthernetHostname();
+  }
+#endif
   Response_P(PSTR("{\"ip\":\"%_I\","                           // IP Address
                    "\"dn\":\"%s\","                            // Device Name
                    "\"fn\":["),                                // Friendly Names (start)
-                   (uint32_t)WiFi.localIP(),
+                   ip_address,
                    SettingsText(SET_DEVICENAME));
 
   uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
@@ -236,7 +244,7 @@ void HassDiscoverMessage(void) {
                    "\"ft\":\"%s\","                            // Full Topic
                    "\"tp\":[\"%s\",\"%s\",\"%s\"],"            // Topics for command, stat and tele
                    "\"rl\":["),                                // Relays (start)
-                   TasmotaGlobal.hostname,
+                   hostname,
                    NetworkUniqueId().c_str(),
                    ModuleName().c_str(),
                    TuyaMod, iFanMod,

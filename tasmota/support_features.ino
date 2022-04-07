@@ -789,14 +789,23 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x00100000;  // xnrg_21_sdm230.ino
 #endif
 #ifdef USE_CM110x
-    feature8 |= 0x00200000; // xsns_95_cm110x.ino
+    feature8 |= 0x00200000;  // xsns_95_cm110x.ino
 #endif
-//    feature8 |= 0x00400000;
-//    feature8 |= 0x00800000;
-
-//    feature8 |= 0x01000000;
-//    feature8 |= 0x02000000;
-//    feature8 |= 0x04000000;
+#if defined(USE_ENERGY_SENSOR) && defined(USE_BL6523)
+    feature8 |= 0x00400000;  // xnrg_22_bl6523.ino
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7880)
+    feature8 |= 0x00800000;  // xnrg_23_ade7880.ino
+#endif
+#if defined(USE_I2C) && defined(USE_PCF85363)
+    feature8 |= 0x01000000;  // xsns_96_pcf85393.ino
+#endif
+#if defined(USE_I2C) && defined(USE_DS3502)
+    feature8 |= 0x02000000;  // xdrv_61_ds3502.ino
+#endif
+#ifdef USE_IMPROV
+    feature8 |= 0x04000000;  // xdrv_62_improv.ino
+#endif
 //    feature8 |= 0x08000000;
 
 //    feature8 |= 0x10000000;

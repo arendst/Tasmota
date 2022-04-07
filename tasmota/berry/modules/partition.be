@@ -503,8 +503,8 @@ partition.Partition = Partition
 # WebUI for the partition manager
 #################################################################################
 class Partition_manager_UI
-  static app_size_max = 1984   # Max OTA size (4096 - 64) / 2 rounded to lowest 64KB
   static app_size_min = 896    # Min OTA size - let's set it at a safe 896KB for minimal Tasmota32 with TLS
+  static app_size_max = 3072   # Max OTA size - (4096 - 896 - 128)
 
   # create a method for adding a button to the main menu
   # the button 'Partition Manager' redirects to '/part_mgr?'

@@ -41,11 +41,11 @@ IPAddress    ip_filter;
 TasmotaSerial *TCPSerial = nullptr;
 
 const char kTCPCommands[] PROGMEM = "TCP" "|"    // prefix
-  "Start" "|" "Baudrate" "|" "Config"
+  "Start" "|" "Baudrate" "|" "Config" "|" "Connect"
   ;
 
 void (* const TCPCommand[])(void) PROGMEM = {
-  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig
+  &CmndTCPStart, &CmndTCPBaudrate, &CmndTCPConfig, &CmndTCPConnect
   };
 
 //
@@ -104,7 +104,7 @@ void TCPLoop(void)
       }
     }
     if (buf_len > 0) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "from MCU: %*_H"), buf_len, tcp_buf);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_TCP "from MCU: %*_H"), buf_len, tcp_buf);
 
       for (uint32_t i=0; i<nitems(client_tcp); i++) {
         WiFiClient &client = client_tcp[i];
@@ -124,7 +124,7 @@ void TCPLoop(void)
         }
       }
       if (buf_len > 0) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "to MCU/%d: %*_H"), i+1, buf_len, tcp_buf);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_TCP "to MCU/%d: %*_H"), i+1, buf_len, tcp_buf);
         TCPSerial->write(tcp_buf, buf_len);
       }
     }
@@ -144,10 +144,16 @@ void TCPInit(void) {
 
     if (!Settings->tcp_baudrate)  { Settings->tcp_baudrate = 115200 / 1200; }
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
-    TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));
-    if (TCPSerial->hardwareSerial()) {
-      ClaimSerial();
-		}
+    if (TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+      if (TCPSerial->hardwareSerial()) {
+        ClaimSerial();
+      }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "using hardserial %d"), TCPSerial->getUart());
+#endif
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed init serial"));
+    }
   }
 }
 
@@ -197,23 +203,74 @@ void CmndTCPStart(void) {
 }
 
 void CmndTCPBaudrate(void) {
+  if (!TCPSerial) { return; }
+
   if ((XdrvMailbox.payload >= 1200) && (XdrvMailbox.payload <= 115200)) {
     XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
-    Settings->tcp_baudrate = XdrvMailbox.payload;
-    TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new baud rate
+    if (Settings->tcp_baudrate != XdrvMailbox.payload) {
+      Settings->tcp_baudrate = XdrvMailbox.payload;
+      if (!TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed reinit serial"));
+      }  // Reinitialize serial port with new baud rate
+    }
   }
   ResponseCmndNumber(Settings->tcp_baudrate * 1200);
 }
 
 void CmndTCPConfig(void) {
+  if (!TCPSerial) { return; }
+
   if (XdrvMailbox.data_len > 0) {
     uint8_t serial_config = ParseSerialConfig(XdrvMailbox.data);
-    if (serial_config >= 0) {
+    if ((serial_config >= 0) && (Settings->tcp_config != (0x80 | serial_config))) {
       Settings->tcp_config = 0x80 | serial_config; // default 0x00 should be 8N1
-      TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));  // Reinitialize serial port with new config
+      if (!TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config))) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "failed reinit serial"));
+      }  // Reinitialize serial port with new config
     }
   }
   ResponseCmndChar_P(GetSerialConfig(0x7F & Settings->tcp_config).c_str());
+}
+
+//
+// Command `Connect`
+// Params: port,<IPv4>
+//
+void CmndTCPConnect(void) {
+  int32_t tcp_port = XdrvMailbox.payload;
+
+  if (!TCPSerial) { return; }
+
+  if (ArgC() == 2) {
+    char sub_string[XdrvMailbox.data_len];
+    WiFiClient new_client;
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Connecting to %s on port %d"), ArgV(sub_string, 2),tcp_port);
+    if (new_client.connect(ArgV(sub_string, 2),tcp_port)) {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "connected!"));
+    } else {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "error connecting!"));
+    }
+
+    // find an empty slot
+    uint32_t i;
+    for (i=0; i<nitems(client_tcp); i++) {
+      WiFiClient &client = client_tcp[i];
+      if (!client) {
+        client = new_client;
+        break;
+      }
+    }
+    if (i >= nitems(client_tcp)) {
+      i = client_next++ % nitems(client_tcp);
+      WiFiClient &client = client_tcp[i];
+      client.stop();
+      client = new_client;
+    }
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Usage: port,ip_address"));
+  }
+
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\

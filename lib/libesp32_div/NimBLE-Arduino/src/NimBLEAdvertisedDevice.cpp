@@ -11,11 +11,9 @@
  *  Created on: Jul 3, 2017
  *      Author: kolban
  */
-#include "sdkconfig.h"
-#if defined(CONFIG_BT_ENABLED)
 
 #include "nimconfig.h"
-#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
 
 #include "NimBLEDevice.h"
 #include "NimBLEAdvertisedDevice.h"
@@ -783,7 +781,5 @@ size_t NimBLEAdvertisedDevice::getPayloadLength() {
     return m_payload.size();
 } // getPayloadLength
 
-
-#endif // #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-#endif /* CONFIG_BT_ENABLED */
+#endif /* CONFIG_BT_ENABLED  && CONFIG_BT_NIMBLE_ROLE_CENTRAL */
 

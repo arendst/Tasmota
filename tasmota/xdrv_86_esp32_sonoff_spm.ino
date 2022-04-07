@@ -32,12 +32,12 @@
  * Green led is controlled by ARM processor indicating SD-Card access.
  * ESP32 is used as interface between eWelink and ARM processor in SPM-Main unit communicating over proprietary serial protocol.
  * Power on sequence for two SPM-4Relay modules is 00-00-15-10-(0F)-(13)-(13)-(19)-0C-09-04-09-04-0B-0B
- * Up to six months of daily energy are stored onthe SD-Card. Previous data is lost.
+ * Up to 180 days of daily energy are stored on the SD-Card. Previous data is lost.
  * Tasmota support is based on Sonoff SPM v1.0.0 ARM firmware.
  * Energy history cannot be guaranteed using either SD-Card or internal flash. As a solution Tasmota stores the total energy and yesterday energy just after midnight.
  *
  * Tasmota features:
- * - Up to 7 SPM-4Relay units supporting a total of 28 relays.
+ * - Up to 8 SPM-4Relay units supporting a total of 32 relays.
  * - Button on SPM-Main initiates re-scan of SPM-4Relay units.
  * - SPI master to ARM (ARM firmware upload from ESP using EasyFlash not supported).
  * - Ethernet support.
@@ -55,6 +55,7 @@
  *   SspmHistory<relay>         - Retrieve daily energy of last six month (as defined by ARM firmware)
  *   SspmIAmHere<relay>         - Blink ERROR in SPM-4Relay where relay resides
  *   SspmLog<relay> [x]         - Retrieve relay power state change and cause logging
+ *   SspmMap 0                  - Start a scan to fill default mapping
  *   SspmMap 2,3,1,..           - Map scanned module number to physical module number using positional numbering
  *   SspmOverload<relay> 0      - Set default overload detection parameters as read from module during initial scan
  *   SspmOverload<relay> <delay>,<min_power>,<max_power>,<min_voltage>,<max_voltage,<max_current>
@@ -119,8 +120,10 @@
 
 #define XDRV_86                      86
 
-#define SSPM_MAX_MODULES             7       // Currently supports up to 7 SPM-4RELAY units for a total of 28 relays restricted by power_t size
+#define SSPM_MAX_MODULES             8       // Currently supports up to 8 SPM-4RELAY units for a total of 32 relays restricted by 32-bit power_t size
 #define SSPM_SERIAL_BUFFER_SIZE      512     // Needs to accomodate Energy total history for 180 days (408 bytes)
+
+//#define SSPM_SIMULATE                2       // Simulate additional 4Relay modules based on first detected 4Relay module (debugging purposes only!!)
 
 // From ESP to ARM
 #define SSPM_FUNC_FIND               0       // 0x00
@@ -251,7 +254,12 @@ typedef struct {
   uint16_t serial_in_byte_counter;
   uint16_t expected_bytes;
   uint8_t module[SSPM_MAX_MODULES][SSPM_MODULE_NAME_SIZE];
+  uint8_t history_day[SSPM_MAX_MODULES][4];
 
+#ifdef SSPM_SIMULATE
+  uint8_t simulate;
+  uint8_t simulated_module;
+#endif
   uint8_t allow_updates;
   uint8_t get_energy_relay;
   uint8_t get_totals;
@@ -389,6 +397,12 @@ uint32_t SSPMGetMappedModuleId(uint32_t module) {
   if (-1 == module_nr) {
     module_nr = module;             // input module number if not found used as fallback
   }
+#ifdef SSPM_SIMULATE
+  Sspm->simulated_module = module_nr;
+  if (Sspm->simulate && (module_nr > 0) && (module_nr <= Sspm->simulate)) {
+    module_nr = 0;                  // Emulate modules by 0
+  }
+#endif
   return (uint32_t)module_nr;       // 0, 1, ...
 }
 
@@ -882,6 +896,44 @@ void SSPMSendGetEnergyPeriod(uint32_t relay) {
 
 /*********************************************************************************************/
 
+void SSPMAddModule(void) {
+  if (Sspm->module_max < SSPM_MAX_MODULES) {
+    memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
+    if (0 == Sspm->max_power) {
+      Sspm->max_current = SspmBuffer[39] + (float)SspmBuffer[40] / 100;  // x.xxA
+      Sspm->min_current = SspmBuffer[41] + (float)SspmBuffer[42] / 100;  // x.xxA
+      Sspm->max_power = SSPMGetValue(&SspmBuffer[49]);                   // x.xxVA
+      Sspm->min_power = SSPMGetValue(&SspmBuffer[52]);                   // x.xxVA
+      Sspm->max_voltage = SSPMGetValue(&SspmBuffer[43]);                 // x.xxV
+      Sspm->min_voltage = SSPMGetValue(&SspmBuffer[46]);                 // x.xxV
+    }
+    uint32_t module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
+    int mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
+    if (-1 == mapped) {
+      // Scanned module not in mapped list. Append if possible
+      for (uint32_t module = Sspm->module_max; module < SSPM_MAX_MODULES; module++) {
+        if (0 == Sspm->Settings.module_map[module]) {
+          Sspm->Settings.module_map[module] = module_id;
+          mapped = module;
+          break;
+        }
+      }
+      Sspm->map_change = true;
+    }
+    mapped++;
+    AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
+      Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
+
+    Sspm->module_max++;
+
+    if (Settings->save_data) {
+      TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all modules are scanned
+    }
+  }
+}
+
+/*********************************************************************************************/
+
 void SSPMHandleReceivedData(void) {
   /*
    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
@@ -1015,18 +1067,15 @@ void SSPMHandleReceivedData(void) {
         */
         if (!status && (0x06 == expected_bytes)) {
           // SspmBuffer[20] & 0x0F                      // Relays operational
-          power_t current_state = SspmBuffer[20] >> 4;  // Relays state
-          power_t mask = 0x0000000F;
-          for (uint32_t i = 0; i < Sspm->module_max; i++) {
-            uint32_t module = SSPMGetMappedModuleId(i);
-            if ((SspmBuffer[3] == Sspm->module[module][0]) && (SspmBuffer[4] == Sspm->module[module][1])) {
-              current_state <<= (i * 4);
-              mask <<= (i * 4);
-              TasmotaGlobal.power &= (POWER_MASK ^ mask);
-              TasmotaGlobal.power |= current_state;
-              break;
-            }
-          }
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[3] << 8 | SspmBuffer[4]);
+#ifdef SSPM_SIMULATE
+          module = Sspm->simulated_module;
+#endif
+          power_t current_state = (SspmBuffer[20] >> 4) << (module * 4);  // Relays state
+          power_t mask = 0x0000000F << (module * 4);
+          TasmotaGlobal.power &= (POWER_MASK ^ mask);
+          TasmotaGlobal.power |= current_state;
+
           Sspm->old_power = TasmotaGlobal.power;
           TasmotaGlobal.devices_present += 4;
         }
@@ -1108,6 +1157,9 @@ void SSPMHandleReceivedData(void) {
 
           uint32_t channel = SspmBuffer[32];
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
+#ifdef SSPM_SIMULATE
+          module = Sspm->simulated_module;
+#endif
           if (Sspm->history_relay < 255) {
             uint32_t history_module = Sspm->history_relay >> 2;
             uint32_t history_channel = Sspm->history_relay & 0x03;  // Channel relays are NOT bit masked this time
@@ -1136,16 +1188,22 @@ void SSPMHandleReceivedData(void) {
               energy_total += energy;
             }
           }
+
+          uint8_t history_day = SspmBuffer[36];                                    // Date of last entry
+          if (0 == Sspm->history_day[module][channel]) {                           // Initial setting
+            Sspm->history_day[module][channel] = history_day;
+          }
           if ((0 == Sspm->Settings.energy_total[module][channel]) && energy_total) {
-            Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Inital setting
+            Sspm->Settings.energy_yesterday[module][channel] = energy_yesterday;   // Initial setting
             Sspm->Settings.energy_total[module][channel] = energy_total;           // Initial setting
             if (Settings->save_data) {
               TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all relays are updated
             }
           }
-          // If received daily energy is below last daily energy then update total energy
+          // If received daily energy date is changed then update total energy
           // This happens around midnight in normal situations
-          else if (Sspm->energy_today[module][channel] < last_energy_today) {
+          else if (Sspm->history_day[module][channel] != history_day) {
+            Sspm->history_day[module][channel] = history_day;
             Sspm->Settings.energy_yesterday[module][channel] = last_energy_today;  // Daily save
             Sspm->Settings.energy_total[module][channel] += last_energy_today;     // Daily incremental save
             if (Settings->save_data) {
@@ -1282,6 +1340,9 @@ void SSPMHandleReceivedData(void) {
             SspmBuffer[31] >>= 1;
           }
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
+#ifdef SSPM_SIMULATE
+          module = Sspm->simulated_module;
+#endif
           Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
           Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[34]);         // x.xxV
           Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[37]);    // x.xxW
@@ -1304,16 +1365,12 @@ void SSPMHandleReceivedData(void) {
         aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 07 00 0d 8b 34 32 37 39 37 34 13 4b 35 36 37 02 2d bb 08  - L2 Overload triggered power off
         */
         if (!Sspm->no_send_key) {
-          power_t relay = SspmBuffer[31] & 0x0F;      // Relays active
-          power_t relay_state = SspmBuffer[31] >> 4;  // Relays state
-          for (uint32_t i = 0; i < Sspm->module_max; i++) {
-            uint32_t module = SSPMGetMappedModuleId(i);
-            if ((SspmBuffer[19] == Sspm->module[module][0]) && (SspmBuffer[20] == Sspm->module[module][1])) {
-              relay <<= (i * 4);
-              relay_state <<= (i * 4);
-              break;
-            }
-          }
+          uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
+#ifdef SSPM_SIMULATE
+//          module = Sspm->simulated_module;  // Won't work as this is initiated from device
+#endif
+          power_t relay = (SspmBuffer[31] & 0x0F) << (module * 4);      // Relays active
+          power_t relay_state = (SspmBuffer[31] >> 4) << (module * 4);  // Relays state
           for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
             if (relay &1) {
               ExecuteCommandPower(i, relay_state &1, SRC_BUTTON);
@@ -1391,27 +1448,21 @@ void SSPMHandleReceivedData(void) {
                                                                                                                 |130|  1.0.0|20.0A|0.10A| 240.00V|   0.10V|4400.00W|   0.10W|
         Ty = Type of sub-device. 130: Four-channel sub-device
         */
-        if ((0x24 == expected_bytes) && (Sspm->module_max < SSPM_MAX_MODULES)) {
-          memcpy(Sspm->module[Sspm->module_max], SspmBuffer + 19, SSPM_MODULE_NAME_SIZE);
-          if (0 == Sspm->max_power) {
-            Sspm->max_current = SspmBuffer[39] + (float)SspmBuffer[40] / 100;  // x.xxA
-            Sspm->min_current = SspmBuffer[41] + (float)SspmBuffer[42] / 100;  // x.xxA
-            Sspm->max_power = SSPMGetValue(&SspmBuffer[49]);                   // x.xxVA
-            Sspm->min_power = SSPMGetValue(&SspmBuffer[52]);                   // x.xxVA
-            Sspm->max_voltage = SSPMGetValue(&SspmBuffer[43]);                 // x.xxV
-            Sspm->min_voltage = SSPMGetValue(&SspmBuffer[46]);                 // x.xxV
+        if (0x24 == expected_bytes) {
+          SSPMAddModule();
+#ifdef SSPM_SIMULATE
+          if (0 == Sspm->simulate) {
+            uint8_t current_idh = SspmBuffer[19];
+            uint8_t current_idl = SspmBuffer[20];
+            for (Sspm->simulate = 0; Sspm->simulate < SSPM_SIMULATE; Sspm->simulate++) {
+              SspmBuffer[19] = Sspm->simulate +1;
+              SspmBuffer[20] = Sspm->simulate +1;
+              SSPMAddModule();
+            }
+            SspmBuffer[19] = current_idh;
+            SspmBuffer[20] = current_idl;
           }
-          uint32_t module_id = SspmBuffer[19] << 8 | SspmBuffer[20];
-          if (0 == Sspm->Settings.module_map[Sspm->module_max]) {
-            Sspm->Settings.module_map[Sspm->module_max] = module_id;
-          }
-          int mapped = SSPMGetModuleNumberFromMapIfFound(module_id);
-          if (-1 == mapped) { Sspm->map_change = true; }
-          mapped++;
-          AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
-            Sspm->module_max +1, mapped, SspmBuffer[35], SspmBuffer[36], SspmBuffer[37], SspmBuffer[38], Sspm->module[Sspm->module_max]);
-
-          Sspm->module_max++;
+#endif
         }
         SSPMSendAck(command_sequence);
         break;
@@ -1562,39 +1613,6 @@ bool SSPMSendSPI(uint32_t size) {
       // Complete message received
       expected_bytes += 20;
 
-/*
-  uint32_t expected_bytes = 19;                                          // Location of expected bytes (Size) - This fails probably because not on 4-byte boundary (See __spiTransferBytes)
-  SPI.transferBytes(nullptr, SspmBuffer, expected_bytes);                // First receive data up to known location of expected bytes
-  if ((0xAA == SspmBuffer[0]) && (0x55 == SspmBuffer[1]) && (0x01 == SspmBuffer[2])) {
-    // Message size known
-    expected_bytes = 3 + (SspmBuffer[17] << 8) + SspmBuffer[18];
-    if (expected_bytes < SSPM_SERIAL_BUFFER_SIZE - 19) {
-      SPI.transferBytes(nullptr, SspmBuffer +19, expected_bytes);        // Then receive the expected bytes
-      // Complete message received
-      expected_bytes += 19;
-*/
-/*
-  SPI.transferBytes(nullptr, SspmBuffer, 3);                             // First receive marker data - This fails probably because not on 4-byte boundary (See __spiTransferBytes)
-  if ((0xAA == SspmBuffer[0]) && (0x55 == SspmBuffer[1]) && (0x01 == SspmBuffer[2])) {
-    SPI.transferBytes(nullptr, SspmBuffer +3, 16);                       // Then receive data up to known location of expected bytes (Size at index 17 and 18)
-    // Message size known
-    uint32_t expected_bytes = 3 + (SspmBuffer[17] << 8) + SspmBuffer[18];
-    if (expected_bytes < SSPM_SERIAL_BUFFER_SIZE - 19) {
-      SPI.transferBytes(nullptr, SspmBuffer +19, expected_bytes);        // Then receive the expected bytes
-      // Complete message received
-      expected_bytes += 19;
-*/
-/*
-  SPI.transferBytes(nullptr, SspmBuffer, 4);                             // First receive marker data - This fails too
-  if ((0xAA == SspmBuffer[0]) && (0x55 == SspmBuffer[1]) && (0x01 == SspmBuffer[2])) {
-    SPI.transferBytes(nullptr, SspmBuffer +4, 16);                       // Then receive data up to known location of expected bytes (Size at index 17 and 18)
-    // Message size known
-    uint32_t expected_bytes = 2 + (SspmBuffer[17] << 8) + SspmBuffer[18];
-    if (expected_bytes < SSPM_SERIAL_BUFFER_SIZE - 20) {
-      SPI.transferBytes(nullptr, SspmBuffer +20, expected_bytes);        // Then receive the expected bytes
-      // Complete message received
-      expected_bytes += 20;
-*/
       bool more = (!Sspm->Settings.flag.dump && (expected_bytes > 58));  // Skip long dumps as they overwrite log buffer
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SPM: SPI %*_H%s"), (more) ? 58 : expected_bytes, SspmBuffer, (more) ? "..." : "");
 
@@ -1884,6 +1902,7 @@ char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, uint8_t*
   return result;
 }
 
+#ifdef USE_WEBSERVER
 const char HTTP_SSPM_VOLTAGE[] PROGMEM =
   "{s}" D_VOLTAGE "</th>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
 const char HTTP_SSPM_CURRENT[] PROGMEM =
@@ -1898,6 +1917,7 @@ const char HTTP_SSPM_ENERGY[] PROGMEM =
   "{s}" D_ENERGY_TODAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "</th>%s" D_UNIT_KILOWATTHOUR "{e}";
+#endif  // USE_WEBSERVER
 
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
@@ -1944,6 +1964,7 @@ void SSPMEnergyShow(bool json) {
       ResponseAppend_P(PSTR("%s%*_f"), (i>0)?",":"", Settings->flag2.current_resolution, &Sspm->current[i >>2][i &3]);
     }
     ResponseAppend_P(PSTR("]}"));
+#ifdef USE_WEBSERVER
   } else {
     uint8_t relay[SSPM_MAX_MODULES * 4];
     uint8_t indirect[SSPM_MAX_MODULES * 4];
@@ -1990,6 +2011,7 @@ void SSPMEnergyShow(bool json) {
                                           SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
       WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
+#endif  // USE_WEBSERVER
   }
 }
 
@@ -2205,9 +2227,16 @@ void CmndSSPMReset(void) {
 
 void CmndSSPMMap(void) {
   // Map scanned module number to physical module number using positional numbering
-  // SspmMap 1,3,4,2
+  // SspmMap 0        - start a scan to fill default mapping
+  // SspmMap 1,3,4,2  - map modules
   // TODO: Might need input checks on count and valid different numbers
-  if (Sspm->module_max) {  // Valid after initial scan
+  if (0 == XdrvMailbox.payload) {
+    for (uint32_t module = 0; module < SSPM_MAX_MODULES; module++) {
+      Sspm->Settings.module_map[module] = 0;               // Clear mapping slots
+    }
+    CmndSSPMScan();                                        // Start scan to fill default mapping
+  }
+  else if (Sspm->module_max) {                             // Valid after initial scan
     char *p;
     uint32_t i = 0;
     for (char* str = strtok_r(XdrvMailbox.data, ",", &p); str && i < Sspm->module_max; str = strtok_r(nullptr, ",", &p)) {

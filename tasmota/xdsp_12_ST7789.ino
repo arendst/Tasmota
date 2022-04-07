@@ -96,11 +96,13 @@ void ST7789_InitDriver(void) {
     renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
-    renderer->setTextFont(2);
-    renderer->DrawStringAt(30, (Settings->display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
-    delay(1000);
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->setTextColor(ST7789_WHITE,ST7789_BLACK);
+      renderer->setTextFont(2);
+      renderer->DrawStringAt(30, (Settings->display_height-12)/2, "ST7789 TFT!", ST7789_WHITE,0);
+      delay(1000);
+    }
 #endif
 
     color_type = COLOR_COLOR;

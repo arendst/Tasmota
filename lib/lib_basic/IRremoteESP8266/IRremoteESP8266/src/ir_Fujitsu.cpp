@@ -776,7 +776,7 @@ stdAc::fanspeed_t IRFujitsuAC::toCommonFanSpeed(const uint8_t speed) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRFujitsuAC::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::FUJITSU_AC;
   result.model = _model;
   result.power = getPower();

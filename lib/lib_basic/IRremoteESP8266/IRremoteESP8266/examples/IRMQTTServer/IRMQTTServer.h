@@ -169,6 +169,11 @@ const uint32_t kMqttReconnectTime = 5000;  // Delay(ms) between reconnect tries.
 // In theory, you shouldn't need this as you can always clean up by hand, hence
 // it is disabled by default. Note: `false` saves ~1.2k.
 #define MQTT_CLEAR_ENABLE false
+
+#ifndef MQTT_SERVER_AUTODETECT_ENABLE
+// Whether or not MQTT Server IP is detected through mDNS
+#define MQTT_SERVER_AUTODETECT_ENABLE true
+#endif  // MQTT_SERVER_AUTODETECT_ENABLE
 #endif  // MQTT_ENABLE
 
 // ------------------------ IR Capture Settings --------------------------------
@@ -285,7 +290,7 @@ const uint16_t kJsonAcStateMaxSize = 1024;  // Bytes
 // ----------------- End of User Configuration Section -------------------------
 
 // Constants
-#define _MY_VERSION_ "v1.6.0"
+#define _MY_VERSION_ "v1.7.0"
 
 const uint8_t kRebootTime = 15;  // Seconds
 const uint8_t kQuickDisplayTime = 2;  // Seconds

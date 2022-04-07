@@ -83,11 +83,6 @@ int32_t m_md5_finish(struct bvm *vm) {
 
 #include "be_fixed_be_class_md5.h"
 
-void be_load_md5_lib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_md5);
-    be_setglobal(vm, "MD5");
-    be_pop(vm, 1);
-}
 /* @const_object_info_begin
 
 class be_class_md5 (scope: global, name: MD5) {

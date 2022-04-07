@@ -225,7 +225,7 @@ ctypes.print_classes = def (module_name)
   ctypes.sort(global_classes)
 
   for elt:global_classes
-    print(string.format("static be_define_ctypes_class(%s, &be_%s, &be_class_ctypes, \"%s\");", elt, elt, elt))
+    print(string.format("static be_define_ctypes_class(%s, &be_%s, &be_class_ctypes_bytes, \"%s\");", elt, elt, elt))
   end
 
   print()
@@ -289,8 +289,14 @@ class structure
     self.size_bytes = self.cur_offset
 
     if name != nil
+      var size_aligned =  self.size_bytes
+      # as a final structure, we align to 2/4 bytesboundaries
+      if size_aligned >= 3
+        size_aligned = ((size_aligned + 3)/4)*4
+      end
+
       print(string.format("const be_ctypes_structure_t be_%s = {", name))
-      print(string.format("  %i,  /* size in bytes */", self.size_bytes))
+      print(string.format("  %i,  /* size in bytes */", size_aligned))
       print(string.format("  %i,  /* number of elements */", size(self.mapping)))
       print(string.format("  be_ctypes_instance_mappings,"))
       print(string.format("  (const be_ctypes_structure_item_t[%i]) {", size(self.mapping)))

@@ -26,6 +26,10 @@
 #include "be_mapping.h"
 #include "re1.5.h"
 
+#ifdef USE_BERRY_INT64
+  #include "be_int64.h"
+#endif
+
 /*********************************************************************************************\
  * Logging for Tasmota Berry console
  *
@@ -95,5 +99,8 @@ public:
   BerryLog log;
 };
 BerrySupport berry;
+
+// multi-purpose serial logging
+extern "C" void serial_debug(const char * berry_buf, ...);
 
 #endif  // USE_BERRY

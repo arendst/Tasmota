@@ -27,18 +27,19 @@
 #define D_JSON_RF_BITS "Bits"
 #define D_JSON_RF_DATA "Data"
 
-#define D_CMND_RFSEND "RFSend"
-#define D_CMND_RFPROTOCOL "RfProtocol"
+#define D_CMND_RFSEND "Send"
+#define D_CMND_RFPROTOCOL "Protocol"
+#define D_CMND_RFTIMEOUT "TimeOut"
 
 #define D_JSON_RF_PULSE "Pulse"
 #define D_JSON_RF_REPEAT "Repeat"
 #define D_JSON_NONE_ENABLED "None Enabled"
 
-const char kRfCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_RFSEND "|" D_CMND_RFPROTOCOL;
+const char kRfCommands[] PROGMEM = "Rf|"  // No prefix
+  D_CMND_RFSEND "|" D_CMND_RFPROTOCOL "|" D_CMND_RFTIMEOUT;
 
 void (* const RfCommands[])(void) PROGMEM = {
-  &CmndRfSend, &CmndRfProtocol };
+  &CmndRfSend, &CmndRfProtocol, &CmndRfTimeOut};
 
 #include <RCSwitch.h>
 
@@ -59,7 +60,7 @@ void RfReceiveCheck(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("RFR: Data 0x%lX (%u), Bits %d, Protocol %d, Delay %d"), data, data, bits, protocol, delay);
 
     uint32_t now = millis();
-    if ((now - rf_lasttime > RF_TIME_AVOID_DUPLICATE) && (data > 0)) {
+    if ((now - rf_lasttime > Settings->rf_duplicate_time) && (data > 0)) {
       rf_lasttime = now;
 
       char stemp[16];
@@ -84,6 +85,9 @@ void RfInit(void) {
     mySwitch.enableTransmit(Pin(GPIO_RFSEND));
   }
   if (PinUsed(GPIO_RFRECV)) {
+    if (Settings->rf_duplicate_time < 10) {
+      Settings->rf_duplicate_time = RF_TIME_AVOID_DUPLICATE;
+    }
     pinMode( Pin(GPIO_RFRECV), INPUT);
     mySwitch.enableReceive(Pin(GPIO_RFRECV));
     if (!Settings->rf_protocol_mask) {
@@ -212,6 +216,13 @@ void CmndRfSend(void)
   if (error) {
     Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_NO " " D_JSON_RF_DATA ", " D_JSON_RF_BITS ", " D_JSON_RF_PROTOCOL ", " D_JSON_RF_REPEAT " " D_JSON_OR " " D_JSON_RF_PULSE "\"}"));
   }
+}
+
+void CmndRfTimeOut(void) {
+  if (XdrvMailbox.payload >= 10) {
+    Settings->rf_duplicate_time = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings->rf_duplicate_time);
 }
 
 /*********************************************************************************************\

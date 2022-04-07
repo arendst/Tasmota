@@ -258,7 +258,7 @@ BERRY_API int be_loadmode(bvm *vm, const char *name, bbool islocal)
 {
     int res = load_bytecode(vm, name);
 #if BE_USE_SCRIPT_COMPILER
-    if (res && res != BE_IO_ERROR) {
+    if (res && res != BE_IO_ERROR && res != BE_EXCEPTION) {
         res = fileparser(vm, name, islocal);
     }
 #else
@@ -335,7 +335,7 @@ void be_stackpush(bvm *vm)
 }
 
 /* check that the stack is able to store `count` items, and increase stack if needed */
-void be_stack_require(bvm *vm, int count)
+BERRY_API void be_stack_require(bvm *vm, int count)
 {
     if (vm->top + count >= vm->stacktop) {
         be_stack_expansion(vm, count);

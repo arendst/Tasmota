@@ -980,14 +980,8 @@ void TM1637ShowTime()
   uint8_t hr = RtcTime.hour;
   uint8_t mn = RtcTime.minute;
   uint8_t sc = RtcTime.second;
-  // uint8_t hr = 1;
-  // uint8_t mn = 0;
-  char z = ' ';
-  if (TM1637Data.clock_24)
-  {
-    z = '0';
-  }
-  else
+  
+  if (!TM1637Data.clock_24)
   {
     if (hr > 12)
       hr -= 12;
@@ -995,8 +989,13 @@ void TM1637ShowTime()
       hr = 12;
   }
 
-  char tm[9];
-  snprintf_P(tm, sizeof(tm), PSTR("%c%d%02d%02d"), z, hr, mn, sc);
+  char tm[7];
+  snprintf_P(tm, sizeof(tm), PSTR("%02d%02d%02d"), hr, mn, sc);
+
+  if (!TM1637Data.clock_24 && tm[0] == '0')
+  {
+    tm[0] = ' ';
+  }
   
   if (TM1637 == TM1637Data.display_type)
   {
@@ -1021,7 +1020,7 @@ void TM1637ShowTime()
   }
   else if (MAX7219 == TM1637Data.display_type)
   {
-    for (uint32_t i = 0; i < 4; i++)
+    for (uint32_t i = 0; i < 6; i++)
     {
       //if ((millis() % 1000) > 500 && (i == 3))
       if ((i == 1) || (i == 3))

@@ -100,12 +100,14 @@ void ILI9341_InitDriver()
     renderer->dim(GetDisplayDimmer16());
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->setTextFont(2);
-    renderer->setTextSize(1);
-    renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-    renderer->DrawStringAt(50, (Settings->display_height/2)-12, (Settings->display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
-    delay(1000);
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->setTextFont(2);
+      renderer->setTextSize(1);
+      renderer->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+      renderer->DrawStringAt(50, (Settings->display_height/2)-12, (Settings->display_options.type & 3)==ILIMODE_9341?"ILI9341 TFT!":"ILI9342 TFT!", ILI9341_WHITE, 0);
+      delay(1000);
+    }
 #endif // SHOW_SPLASH
 
     color_type = COLOR_COLOR;

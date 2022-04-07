@@ -122,8 +122,12 @@ void EthernetEvent(WiFiEvent_t event) {
 }
 
 void EthernetSetIp(void) {
-  //         IPAddress local_ip,            IPAddress gateway,             IPAddress subnet,              IPAddress dns1,                IPAddress dns2
-  ETH.config(Settings->eth_ipv4_address[0], Settings->eth_ipv4_address[1], Settings->eth_ipv4_address[2], Settings->eth_ipv4_address[3], Settings->eth_ipv4_address[4]);  // Set static IP
+  // Set static IP
+  ETH.config(Settings->eth_ipv4_address[0],       // IPAddress local_ip
+             Settings->eth_ipv4_address[1],       // IPAddress gateway
+             Settings->eth_ipv4_address[2],       // IPAddress subnet
+             Settings->eth_ipv4_address[3],       // IPAddress dns1
+             Settings->eth_ipv4_address[4]);      // IPAddress dns2
 }
 
 void EthernetInit(void) {

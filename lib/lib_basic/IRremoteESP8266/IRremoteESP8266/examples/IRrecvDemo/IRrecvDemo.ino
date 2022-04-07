@@ -24,7 +24,12 @@
 // An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
 // board).
 // Note: GPIO 16 won't work on the ESP8266 as it does not have interrupts.
+// Note: GPIO 14 won't work on the ESP32-C3 as it causes the board to reboot.
+#ifdef ARDUINO_ESP32C3_DEV
+const uint16_t kRecvPin = 10;  // 14 on a ESP32-C3 causes a boot loop.
+#else  // ARDUINO_ESP32C3_DEV
 const uint16_t kRecvPin = 14;
+#endif  // ARDUINO_ESP32C3_DEV
 
 IRrecv irrecv(kRecvPin);
 

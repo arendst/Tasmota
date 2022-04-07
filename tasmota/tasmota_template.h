@@ -154,7 +154,7 @@ enum UserSelectablePins {
   GPIO_SSD1351_DC,
   GPIO_XPT2046_CS,                     // XPT2046 SPI Chip Select
   GPIO_CSE7761_TX, GPIO_CSE7761_RX,    // CSE7761 Serial interface (Dual R3)
-  GPIO_VL53L0X_XSHUT1,                 // VL53L0X_XSHUT (the max number of sensors is VL53L0X_MAX_SENSORS)- Used when connecting multiple VL53L0X
+  GPIO_VL53LXX_XSHUT1,                 // VL53LXX_XSHUT (the max number of sensors is VL53LXX_MAX_SENSORS)- Used when connecting multiple VL53LXX
   GPIO_MAX7219CLK, GPIO_MAX7219DIN, GPIO_MAX7219CS, // MAX7219 interface
   GPIO_TFMINIPLUS_TX, GPIO_TFMINIPLUS_RX,  // TFmini Plus ToF sensor
   GPIO_ZEROCROSS,
@@ -182,6 +182,9 @@ enum UserSelectablePins {
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
+  GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
+  GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
+  GPIO_RESET,                          // Generic reset
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -375,7 +378,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSD1351_DC "|"
   D_SENSOR_XPT2046_CS "|"
   D_SENSOR_CSE7761_TX "|" D_SENSOR_CSE7761_RX "|"
-  D_SENSOR_VL53L0X_XSHUT "|"
+  D_SENSOR_VL53LXX_XSHUT "|"
   D_SENSOR_MAX7219_CLK "|" D_SENSOR_MAX7219_DIN "|" D_SENSOR_MAX7219_CS "|"
   D_SENSOR_TFMINIPLUS_TX "|" D_SENSOR_TFMINIPLUS_RX "|"
   D_SENSOR_ZEROCROSS "|"
@@ -403,6 +406,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
   D_SENSOR_ADC_MQ "|"
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
+  D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
+  D_SENSOR_ADE7880_IRQ "|"
+  D_SENSOR_RESET "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -412,7 +418,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
-#define MAX_SM2135_DAT   6
+#define MAX_SM2135_DAT   7
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -464,8 +470,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
-  AGPIO(GPIO_HEARTBEAT),                 // Every second pulsed high
-  AGPIO(GPIO_HEARTBEAT_INV),             // Every second pulsed low
+  AGPIO(GPIO_HEARTBEAT),                // Every second pulsed high
+  AGPIO(GPIO_HEARTBEAT_INV),            // Every second pulsed low
+  AGPIO(GPIO_RESET),                    // Generic reset
 #ifdef USE_FTC532
   AGPIO(GPIO_FTC532),                   // FTC532 touch input
 #endif
@@ -612,7 +619,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_P9813_CLK),      // P9813 CLOCK
   AGPIO(GPIO_P9813_DAT),      // P9813 DATA
 #else
-  AGPIO(GPIO_WS2812) + MAX_RMT,// WS2812 Led string, using RMT on ESP32
+  AGPIO(GPIO_WS2812) + (MAX_RMT ? MAX_RMT + 1 : 0),// WS2812 Led string, using RMT on ESP32
 #endif  // NEO_HW_P9813
 #endif
 #ifdef USE_ARILUX_RF
@@ -695,6 +702,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HLW_CF),         // HLW8012 CF power
   AGPIO(GPIO_HJL_CF),         // HJL-01/BL0937 CF power
 #endif
+#if defined(USE_I2C) && defined(USE_ADE7880)
+  AGPIO(GPIO_ADE7880_IRQ) + 2,  // ADE7880 IRQ
+#endif
 #if defined(USE_I2C) && defined(USE_ADE7953)
   AGPIO(GPIO_ADE7953_IRQ) + 2,  // ADE7953 IRQ
 #endif
@@ -769,6 +779,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDM230
   AGPIO(GPIO_SDM230_TX),      // SDM230 Serial interface
   AGPIO(GPIO_SDM230_RX),      // SDM230 Serial interface
+#endif
+#ifdef USE_BL6523
+  AGPIO(GPIO_BL6523_TX),       // BL6523 based Watt meter Serial interface
+  AGPIO(GPIO_BL6523_RX),       // BL6523 based Watt meter Serial interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 
@@ -926,8 +940,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PROJECTOR_CTRL_TX),      // LCD/DLP Projector Serial Control
   AGPIO(GPIO_PROJECTOR_CTRL_RX),      // LCD/DLP Projector Serial Control
 #endif
-#ifdef USE_VL53L0X
-  AGPIO(GPIO_VL53L0X_XSHUT1) + VL53L0X_MAX_SENSORS,  // When using multiple VL53L0X.
+#if defined(USE_VL53L0X) or defined (USE_VL53L1X)
+  AGPIO(GPIO_VL53LXX_XSHUT1) + VL53LXX_MAX_SENSORS,  // When using multiple VL53LXX.
 #endif
 
 #ifdef USE_DISPLAY_MAX7219

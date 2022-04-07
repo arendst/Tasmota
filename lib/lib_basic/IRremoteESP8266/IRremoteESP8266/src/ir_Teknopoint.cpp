@@ -6,6 +6,7 @@
 // Supports:
 //   Brand: Teknopoint,  Model: Allegro SSA-09H A/C
 //   Brand: Teknopoint,  Model: GZ-055B-E1 remote
+//   Brand: Teknopoint,  Model: GZ01-BEJ0-000 remote
 
 #include "IRrecv.h"
 #include "IRsend.h"
@@ -73,3 +74,8 @@ bool IRrecv::decodeTeknopoint(decode_results *results, uint16_t offset,
   return true;
 }
 #endif  // DECODE_TEKNOPOINT
+
+// Looking for the IRTeknopoint/IRTeknopointAc class?
+// It doesn't exist, it is instead part of the `IRTcl112Ac` class.
+// i.e. use `IRTcl112Ac::setModel(tcl_ac_remote_model_t::GZ055BE1);` for
+// Teknopoint A/Cs.

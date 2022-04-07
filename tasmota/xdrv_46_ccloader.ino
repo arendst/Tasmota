@@ -649,9 +649,10 @@ bool CCLChipFound() {
     return CCL.chip.ID!=0;
 }
 /*********************************************************************************************\
- * oresentation
+ * presentation
 \*********************************************************************************************/
 
+#ifdef USE_WEBSERVER
 void CCLoadershow(bool json) {
     if (json) {
         // unused
@@ -664,6 +665,7 @@ void CCLoadershow(bool json) {
         }
     }
 }
+#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -682,9 +684,11 @@ bool Xdrv46(uint8_t function) {
       case FUNC_EVERY_100_MSECOND:
         CCLoaderLoop();
         break;
+#ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
         CCLoadershow(0);
         break;
+#endif  // USE_WEBSERVER
     }
   }
   return result;

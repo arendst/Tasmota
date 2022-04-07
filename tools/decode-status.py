@@ -188,7 +188,10 @@ a_setoption = [[
     "(Tuya) Allow save dimmer = 0 receved by MCU",
     "(TLS) Use fingerprint validation instead of CA based",
     "(Shift595) Invert outputs of 74x595 shift registers",
-    "","","","",
+    "(PWM) force PWM lights to start at same phase, default is to spread phases to minimze overlap (also needed for H-bridge)",
+    "(Display & LVGL) force disabling default splash screen",
+    "(TuyaSNS) When ON disable publish single SNS value on Tuya Receive (keep Teleperiod)",
+    "(Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active",
     "","","","",
     "","","",""
     ]]
@@ -262,8 +265,8 @@ a_features = [[
     "USE_MCP2515","USE_TASMESH","USE_WIFI_RANGE_EXTENDER","USE_INFLUXDB",
     "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
-    "USE_SDM230","USE_CM110x","","",
-    "","","","",
+    "USE_SDM230","USE_CM110x","USE_BL6523","USE_ADE7880",
+    "USE_PCF85363","USE_DS3502","USE_IMPROV","",
     "","","",""
     ]]
 
@@ -292,7 +295,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20220115 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v11.0.0.5 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

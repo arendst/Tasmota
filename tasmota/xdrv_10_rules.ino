@@ -130,6 +130,13 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=$>$<$|$!$^";
   #define IF_BLOCK_ENDIF          3
 #endif  // USE_EXPRESSION
 
+// Define to indicate that rules are always enabled
+#ifdef USE_BERRY
+  #define BERRY_RULES     1
+#else
+  #define BERRY_RULES     0
+#endif
+
 const char kRulesCommands[] PROGMEM = "|"  // No prefix
   D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|"
   D_CMND_ADD "|"  D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION
@@ -470,7 +477,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
       if ((index > 0) && (index <= MAX_TIMERS)) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), index);
         if (rule_param.startsWith(stemp)) {
-          rule_param = String(Settings->timer[index -1].time);
+          rule_param = String(TimerGetTimeOfDay(index -1));
         }
       }
     }
@@ -754,7 +761,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 #endif
 
-    if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
+    if (!event_trigger.startsWith(F("FILE#")) && RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
       if (Rules.no_execute) return true;
       if (plen == plen2) { stop_all_rules = true; }       // If BREAK was used on a triggered rule, Stop execution of this rule set
       commands.trim();
@@ -789,7 +796,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #if defined(USE_TIMERS)
       for (uint32_t i = 0; i < MAX_TIMERS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMER%d%%"), i +1);
-        RulesVarReplace(commands, stemp, String(Settings->timer[i].time));
+        RulesVarReplace(commands, stemp, String(TimerGetTimeOfDay(i)));
       }
 #if defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
@@ -826,6 +833,36 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     Rules.trigger_count[rule_set]++;
   }
   return serviced;
+}
+
+/*******************************************************************************************/
+
+String RuleLoadFile(const char* fname) {
+  /* Read a string from rule space data between 'ON FILE#<fname> DO ' and ' ENDON' like:
+       rule3 on file#calib.dat do {"rms":{"current_a":3166385,"voltage_a":-767262},"freq":0} endon
+     NOTE: String may not contain word 'ENDON'!!
+  */
+  String filename = F("ON FILE#");
+  filename += fname;
+  filename += F(" DO ");
+//  filename.toUpperCase();
+
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
+    if (!GetRuleLen(i)) { continue; }
+
+    String rules = GetRule(i);
+    rules.toUpperCase();
+    int start = rules.indexOf(filename);
+    if (start == -1) { continue; }
+    start += filename.length();
+    int end = rules.indexOf(F(" ENDON"), start);
+    if (end == -1) { continue; }
+
+    rules = GetRule(i);
+    return rules.substring(start, end);  // {"rms":{"current_a":3166385,"voltage_a":-767262},"freq":0}
+  }
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: File '%s' not found or empty"), fname);
+  return "";
 }
 
 /*******************************************************************************************/
@@ -898,11 +935,7 @@ void RulesInit(void)
 
 void RulesEvery50ms(void)
 {
-#ifdef USE_BERRY
-  if (!Rules.busy) {  // Emitting Rules events is always enabled with Berry
-#else
-  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
-#endif
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     char json_event[120];
 
     if (-1 == Rules.new_power) { Rules.new_power = TasmotaGlobal.power; }
@@ -1054,8 +1087,7 @@ void RulesEvery50ms(void)
 
 void RulesEvery100ms(void) {
   static uint8_t xsns_index = 0;
-
-  if (Settings->rule_enabled && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     ResponseClear();
     int tele_period_save = TasmotaGlobal.tele_period;
     TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
@@ -1072,7 +1104,7 @@ void RulesEvery100ms(void) {
 void RulesEverySecond(void)
 {
   char json_event[120];
-  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     if (RtcTime.valid) {
       if ((TasmotaGlobal.uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
         Rules.last_minute = RtcTime.minute;
@@ -1085,7 +1117,7 @@ void RulesEverySecond(void)
     if (Rules.timer[i] != 0L) {           // Timer active?
       if (TimeReached(Rules.timer[i])) {  // Timer finished?
         Rules.timer[i] = 0L;              // Turn off this timer
-        if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+        if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
           RulesProcessEvent(json_event);
         }
@@ -1096,7 +1128,7 @@ void RulesEverySecond(void)
 
 void RulesSaveBeforeRestart(void)
 {
-  if (Settings->rule_enabled && !Rules.busy) {  // Any rule enabled
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     char json_event[32];
 
     strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));

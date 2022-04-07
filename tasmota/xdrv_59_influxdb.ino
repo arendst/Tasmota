@@ -38,6 +38,7 @@
  * IfxOrg      - Set Influxdb v2 and organization
  * IfxToken    - Set Influxdb v2 and token
  * IfxPeriod   - Set Influxdb period. If not set (or 0), use Teleperiod
+ * IfxSensor   - Set Influxdb sensor logging off (0) or on (1)
  *
  * Set influxdb update interval with command teleperiod
  *
@@ -257,15 +258,19 @@ char* InfluxDbNumber(char* alternative, JsonParserToken value) {
   return nullptr;
 }
 
-void InfluxDbProcessJson(void) {
+void InfluxDbProcessJson(bool use_copy = false) {
   if (!IFDB.init) { return; }
 
-  AddLog(IFDB.log_level, PSTR("IFX: Process %s"), ResponseData());
+  char *json_data = ResponseData();
+  if (use_copy) {
+    json_data = (char*)malloc(ResponseSize()+2);
+    if (!json_data) { return; }
+    strlcpy(json_data, ResponseData(), ResponseSize());
+  }
 
-//  String jsonStr = ResponseData();  // Make a copy before use
-//  JsonParser parser((char *)jsonStr.c_str());
-  JsonParser parser((char *)ResponseData());  // Destroys ResponseData but saves heap space
+  AddLog(IFDB.log_level, PSTR("IFX: Process %s"), json_data);
 
+  JsonParser parser(json_data);  // Destroys json_data
   JsonParserObject root = parser.getRootObject();
   if (root) {
     char number[12];     // '1' to '255'
@@ -355,6 +360,16 @@ void InfluxDbProcessJson(void) {
       InfluxDbPostData(data.c_str());
     }
   }
+
+  if (use_copy) {
+    free(json_data);
+  }
+}
+
+void InfluxDbProcess(bool use_copy) {
+  if (Settings->sbflag1.influxdb_sensor) {
+    InfluxDbProcessJson(use_copy);
+  }
 }
 
 void InfluxDbPublishPowerState(uint32_t device) {
@@ -411,6 +426,7 @@ void InfluxDbLoop(void) {
 #define D_CMND_INFLUXDBDATABASE "Database"
 #define D_CMND_INFLUXDBBUCKET   "Bucket"
 #define D_CMND_INFLUXDBPERIOD   "Period"
+#define D_CMND_INFLUXDBSENSOR   "Sensor"
 
 const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   "|" D_CMND_INFLUXDBLOG "|"
@@ -418,7 +434,7 @@ const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   D_CMND_INFLUXDBUSER "|" D_CMND_INFLUXDBORG "|"
   D_CMND_INFLUXDBPASSWORD "|" D_CMND_INFLUXDBTOKEN "|"
   D_CMND_INFLUXDBDATABASE "|" D_CMND_INFLUXDBBUCKET "|"
-  D_CMND_INFLUXDBPERIOD;
+  D_CMND_INFLUXDBPERIOD "|" D_CMND_INFLUXDBSENSOR;
 
 void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbState, &CmndInfluxDbLog,
@@ -426,7 +442,7 @@ void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbUser, &CmndInfluxDbUser,
   &CmndInfluxDbPassword, &CmndInfluxDbPassword,
   &CmndInfluxDbDatabase, &CmndInfluxDbDatabase,
-  &CmndInfluxDbPeriod };
+  &CmndInfluxDbPeriod, &CmndInfluxDbSensor };
 
 void InfluxDbReinit(void) {
   IFDB.init = false;
@@ -449,6 +465,13 @@ void CmndInfluxDbState(void) {
     ResponseAppend_P(PSTR(",\"" D_CMND_INFLUXDBBUCKET "\":\"%s\",\"" D_CMND_INFLUXDBORG "\":\"%s\"}}"),
       SettingsText(SET_INFLUXDB_BUCKET), SettingsText(SET_INFLUXDB_ORG));
   }
+}
+
+void CmndInfluxDbSensor(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    Settings->sbflag1.influxdb_sensor = XdrvMailbox.payload;
+  }
+  ResponseCmndStateText(Settings->sbflag1.influxdb_sensor);
 }
 
 void CmndInfluxDbLog(void) {

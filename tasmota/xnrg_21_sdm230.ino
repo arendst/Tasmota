@@ -33,6 +33,8 @@
 
 #define XNRG_21             21
 
+//#define SDM230_MORE_REGS
+
 // can be user defined in my_user_config.h
 #ifndef SDM230_SPEED
   #define SDM230_SPEED      9600    // default SDM230 Modbus baudrate
@@ -220,11 +222,9 @@ const char HTTP_ENERGY_SDM230[] PROGMEM =
   "{s}" D_MAX_POWER "{m}%s " D_UNIT_WATT "{e}"
   "{s}" D_RESETTABLE_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
-#endif  // SDM230_MORE_REGS
 
-#ifdef SDM230_MORE_REGS
-void Sdm230Show(bool json)
-{
+/*
+void Sdm230Show(bool json) {
   char phase_angle_chr[FLOATSZ];
   dtostrfd(Sdm230.phase_angle, 2, phase_angle_chr);
   char maximum_demand_chr[FLOATSZ];
@@ -238,6 +238,26 @@ void Sdm230Show(bool json)
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_ENERGY_SDM230, phase_angle_chr, maximum_demand_chr, resettable_energy_chr);
+#endif  // USE_WEBSERVER
+  }
+}
+*/
+
+void Sdm230Show(bool json) {
+  char value_chr[TOPSZ];
+  char value2_chr[TOPSZ];
+  char value3_chr[TOPSZ];
+
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_POWERMAX "\":%s,\"" D_JSON_RESETTABLE_TOTAL_ACTIVE "\":%s"),
+      EnergyFormat(value_chr, &Sdm230.phase_angle, 2),
+      EnergyFormat(value2_chr, &Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution),
+      EnergyFormat(value3_chr, &Sdm230.resettable_total_energy, Settings->flag2.energy_resolution));
+#ifdef USE_WEBSERVER
+  } else {
+    WSContentSend_PD(HTTP_ENERGY_SDM230, WebEnergyFormat(value_chr, &Sdm230.phase_angle, 2),
+                                         WebEnergyFormat(value2_chr, &Sdm230.maximum_total_demand_power_active, Settings->flag2.wattage_resolution),
+                                         WebEnergyFormat(value3_chr, &Sdm230.resettable_total_energy, Settings->flag2.energy_resolution));
 #endif  // USE_WEBSERVER
   }
 }
@@ -260,7 +280,11 @@ bool Xnrg21(uint8_t function)
       Sdm230Show(1);
       break;
 #ifdef USE_WEBSERVER
+#ifdef USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_COL_SENSOR:
+#else   // not USE_ENERGY_COLUMN_GUI
     case FUNC_WEB_SENSOR:
+#endif  // USE_ENERGY_COLUMN_GUI
       Sdm230Show(0);
       break;
 #endif  // USE_WEBSERVER

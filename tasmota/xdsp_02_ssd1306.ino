@@ -80,12 +80,14 @@ void SSD1306InitDriver(void) {
     renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
-    renderer->setTextFont(0);
-    renderer->setTextSize(2);
-    renderer->setCursor(20,20);
-    renderer->println(F("SSD1306"));
-    renderer->Updateframe();
-    renderer->DisplayOnff(1);
+    if (!Settings->flag5.display_no_splash) {
+      renderer->setTextFont(0);
+      renderer->setTextSize(2);
+      renderer->setCursor(20,20);
+      renderer->println(F("SSD1306"));
+      renderer->Updateframe();
+      renderer->DisplayOnff(1);
+    }
 #endif
 
     AddLog(LOG_LEVEL_INFO, PSTR("DSP: SSD1306"));

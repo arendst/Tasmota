@@ -24,7 +24,7 @@
 #include <Wire.h>
 
 const uint32_t BERRY_MAX_LOGS = 16;   // max number of print output recorded when outside of REPL, used to avoid infinite grow of logs
-const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recorded when inside REPL
+const uint32_t BERRY_MAX_REPL_LOGS = 50;   // max number of print output recorded when inside REPL
 
 // /*********************************************************************************************\
 //  * Return C callback from index
@@ -68,49 +68,6 @@ const uint32_t BERRY_MAX_REPL_LOGS = 1024;   // max number of print output recor
  *
 \*********************************************************************************************/
 extern "C" {
-  // Berry: `tasmota.publish(topic, payload [, retain:bool, start:int, len:int]) -> nil``
-  //
-  int32_t l_publish(struct bvm *vm);
-  int32_t l_publish(struct bvm *vm) {
-    int32_t top = be_top(vm); // Get the number of arguments
-    if (top >= 3 && be_isstring(vm, 2) && (be_isstring(vm, 3) || be_isbytes(vm, 3))) {  // 2 mandatory string arguments
-      bool retain = false;
-      int32_t payload_start = 0;
-      int32_t len = -1;   // send all of it
-      if (top >= 4) { retain = be_tobool(vm, 4); }
-      if (top >= 5) {
-        payload_start = be_toint(vm, 5);
-        if (payload_start < 0) payload_start = 0;
-      }
-      if (top >= 6) { len = be_toint(vm, 6); }
-      const char * topic = be_tostring(vm, 2);
-      const char * payload = nullptr;
-      size_t payload_len = 0;
-
-      if (be_isstring(vm, 3)) {
-        payload = be_tostring(vm, 3);
-        payload_len = strlen(payload);
-      } else {
-        payload = (const char *) be_tobytes(vm, 3, &payload_len);
-      }
-      if (!payload) { be_raise(vm, "value_error", "Empty payload"); }
-
-      // adjust start and len
-      if (payload_start >= payload_len) { len = 0; }              // send empty packet
-      else if (len < 0) { len = payload_len - payload_start; }    // send all packet, adjust len
-      else if (payload_start + len > payload_len) { len = payload_len - payload_start; }    // len is too long, adjust
-      // adjust start
-      payload = payload + payload_start;
-
-      be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
-
-      MqttPublishPayload(topic, payload, len, retain);
-
-      be_return_nil(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
-  }
-
   // Berry: `tasmota.publish_result(payload:string, subtopic:string) -> nil``
   //
   int32_t l_publish_result(struct bvm *vm);
@@ -123,6 +80,22 @@ extern "C" {
       be_pop(vm, top);
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, subtopic);
       be_return_nil(vm); // Return
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: `tasmota.publish_rulet(payload:string) -> bool``
+  //
+  // Returns `true` if event was handled
+  int32_t l_publish_rule(struct bvm *vm);
+  int32_t l_publish_rule(struct bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    if (top >= 2 && be_isstring(vm, 2)) {  // 1 mandatory string argument
+      const char * payload = be_tostring(vm, 2);
+      be_pop(vm, top);    // clear the stack before calling, because of re-entrant call to Berry in a Rule
+      bool handled = XdrvRulesProcess(0, payload);
+      be_pushbool(vm, handled);
+      be_return(vm); // Return
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -220,11 +193,10 @@ extern "C" {
       if (UsePSRAM()) {
         be_map_insert_int(vm, "psram", ESP.getPsramSize() / 1024);
         be_map_insert_int(vm, "psram_free", ESP.getFreePsram() / 1024);
-      } else {
-        // IRAM information
-        int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
-        be_map_insert_int(vm, "iram_free", iram_free / 1024);
       }
+      // IRAM information
+      int32_t iram_free = (int32_t)heap_caps_get_free_size(MALLOC_CAP_32BIT) - (int32_t)heap_caps_get_free_size(MALLOC_CAP_8BIT);
+      be_map_insert_int(vm, "iram_free", iram_free / 1024);
       be_pop(vm, 1);
       be_return(vm);
     }
@@ -240,17 +212,22 @@ extern "C" {
       be_newobject(vm, "map");
       if (Settings->flag4.network_wifi) {
         int32_t rssi = WiFi.RSSI();
-        be_map_insert_int(vm, "rssi", rssi);
-        be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
+        bool show_rssi = false;
 #if LWIP_IPV6
         String ipv6_addr = WifiGetIPv6();
         if (ipv6_addr != "") {
           be_map_insert_str(vm, "ip6", ipv6_addr.c_str());
+          show_rssi = true;
         }
 #endif
         if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
           be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
           be_map_insert_str(vm, "ip", WiFi.localIP().toString().c_str());
+          show_rssi = true;
+        }
+        if (show_rssi) {
+          be_map_insert_int(vm, "rssi", rssi);
+          be_map_insert_int(vm, "quality", WifiGetRssiAsQuality(rssi));
         }
       }
       be_pop(vm, 1);
@@ -604,6 +581,31 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * Tasmota Log Reader
+ *
+\*********************************************************************************************/
+
+uint32_t* tlr_init(void) {
+  uint32_t* idx = new uint32_t();
+  *idx = 0;
+  return idx;
+}
+char* tlr_get_log(uint32_t* idx, int32_t log_level) {
+  // bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+  if (log_level < 0 || log_level > 4) { log_level = 2; }    // default to LOG_LEVEL_INFO
+  char* line;
+  size_t len;
+  if (GetLog(log_level, idx, &line, &len) && len > 0) {
+    char* s = (char*) malloc(len+1);
+    memmove(s, line, len);
+    s[len] = 0;
+    return s;   // caller will free()
+  } else {
+    return NULL;
+  }
+}
+
+/*********************************************************************************************\
  * Logging functions
  *
 \*********************************************************************************************/
@@ -615,7 +617,7 @@ void berry_log(const char * berry_buf) {
   if (berry.log.log.length() == 0) {
     pre_delimiter = BERRY_CONSOLE_CMD_DELIMITER;
   }
-  if (berry.log.log.length() >= BERRY_MAX_LOGS) {
+  if (berry.log.log.length() >= max_logs) {
     berry.log.log.remove(berry.log.log.head());
   }
   berry.log.addString(berry_buf, pre_delimiter, "\n");
@@ -625,6 +627,18 @@ void berry_log(const char * berry_buf) {
 const uint16_t LOGSZ = 128;                 // Max number of characters in log line
 
 extern "C" {
+  void serial_debug(const char * berry_buf, ...) {
+    // To save stack space support logging for max text length of 128 characters
+    char log_data[LOGSZ];
+
+    va_list arg;
+    va_start(arg, berry_buf);
+    uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
+    va_end(arg);
+    if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
+    Serial.printf(log_data);
+  }
+
   void berry_log_C(const char * berry_buf, ...) {
     // To save stack space support logging for max text length of 128 characters
     char log_data[LOGSZ];

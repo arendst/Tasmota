@@ -118,7 +118,7 @@ void CB_MESHDataReceived(uint8_t *MAC, uint8_t *packet, uint8_t len) {
       Rtc.user_time_entry = true;
       MESH.lastMessageFromBroker = millis();
       if (MESH.flags.nodeGotTime == 0) {
-        RtcSync();
+        RtcSync("Mesh");
         TasmotaGlobal.rules_flag.system_boot  = 1; // for now we consider the node booted and let trigger system#boot on RULES
       }
       MESH.flags.nodeGotTime = 1;

@@ -190,8 +190,11 @@ bool hasACState(const decode_type_t protocol) {
     case HITACHI_AC1:
     case HITACHI_AC2:
     case HITACHI_AC3:
+    case HITACHI_AC264:
+    case HITACHI_AC296:
     case HITACHI_AC344:
     case HITACHI_AC424:
+    case KELON168:
     case KELVINATOR:
     case MIRAGE:
     case MITSUBISHI136:
@@ -634,6 +637,7 @@ namespace irutils {
           case lg_ac_remote_model_t::AKB75215403:   return kAkb75215403Str;
           case lg_ac_remote_model_t::AKB74955603:   return kAkb74955603Str;
           case lg_ac_remote_model_t::AKB73757604:   return kAkb73757604Str;
+          case lg_ac_remote_model_t::LG6711A20083V: return kLg6711a20083vStr;
           default:                                  return kUnknownStr;
         }
         break;

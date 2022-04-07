@@ -81,12 +81,14 @@ void EpdInitDriver42() {
     renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
-    // Welcome text
-    renderer->setTextFont(2);
-    renderer->DrawStringAt(50, 140, "Waveshare E-Paper!", COLORED42,0);
-    renderer->Updateframe();
-    delay(350);
-    renderer->fillScreen(0);
+    if (!Settings->flag5.display_no_splash) {
+      // Welcome text
+      renderer->setTextFont(2);
+      renderer->DrawStringAt(50, 140, "Waveshare E-Paper!", COLORED42,0);
+      renderer->Updateframe();
+      delay(350);
+      renderer->fillScreen(0);
+    }
 #endif
 
     epd42_init_done = true;

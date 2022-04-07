@@ -26,6 +26,7 @@
 #include "berry_tasmota.h"
 #include "be_vm.h"
 #include "ZipReadFS.h"
+#include "ccronexpr.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
@@ -89,21 +90,7 @@ extern "C" {
   #ifdef USE_BERRY_IRAM
     return special_malloc32(size);
   #else
-    return special_malloc(size);
-  #endif
-  }
-  void *berry_realloc32(void *ptr, size_t size) {
-  #ifdef USE_BERRY_IRAM
-    return special_realloc32(ptr, size);
-  #else
-    return special_realloc(ptr, size);
-  #endif
-  }
-  void *berry_calloc32(size_t num, size_t size) {
-  #ifdef USE_BERRY_IRAM
-    return special_calloc32(num, size);
-  #else
-    return special_calloc(num, size);
+    return NULL;    /* return NULL to indicate that IRAM is not enabled */
   #endif
   }
 
@@ -234,8 +221,14 @@ void BerryObservability(bvm *vm, int event...) {
         uint32_t gc_elapsed = millis() - gc_time;
         uint32_t vm_scanned = va_arg(param, uint32_t);
         uint32_t vm_freed = va_arg(param, uint32_t);
-        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms)",
-                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed);
+        size_t slots_used_before_gc = va_arg(param, size_t);
+        size_t slots_allocated_before_gc = va_arg(param, size_t);
+        size_t slots_used_after_gc = va_arg(param, size_t);
+        size_t slots_allocated_after_gc = va_arg(param, size_t);
+        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC from %i to %i bytes, objects freed %i/%i (in %d ms) - slots from %i/%i to %i/%i",
+                                vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
+                                slots_used_before_gc, slots_allocated_before_gc,
+                                slots_used_after_gc, slots_allocated_after_gc);
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
@@ -270,10 +263,12 @@ void BerryObservability(bvm *vm, int event...) {
 \*********************************************************************************************/
 void BrShowState(void);
 void BrShowState(void) {
-  // trigger a gc first
-  be_gc_collect(berry.vm);
-  ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
-    berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
+  if (berry.vm) {
+    // trigger a gc first
+    be_gc_collect(berry.vm);
+    ResponseAppend_P(PSTR(",\"Berry\":{\"HeapUsed\":%u,\"Objects\":%u}"),
+      berry.vm->gc.usage / 1024, berry.vm->counter_gc_kept);
+  }
 }
 
 /*********************************************************************************************\
@@ -489,31 +484,31 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
         "cn=0;"
       "}"
       "c.value='';"
-      "t.scrollTop=99999;"
+      "t.scrollTop=1e8;"
       "sn=t.scrollTop;"
     "}"
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
       "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
-      "x.onreadystatechange=function(){"
+      "x.onreadystatechange=()=>{"
         "if(x.readyState==4&&x.status==200){"
           "var d,t1;"
-          "d=x.responseText.split(/" BERRY_CONSOLE_CMD_DELIMITER "/);"  // Field separator
-          "var d1=d.shift();"
+          "d=x.responseText.split(/" BERRY_CONSOLE_CMD_DELIMITER "/,2);"  // Field separator
+          "var d1=d.length>1?d[0]:null;"
           "if(d1){"
             "t1=document.createElement('div');"
             "t1.classList.add('br1');"
             "t1.innerText=d1;"
             "t.appendChild(t1);"
           "}"
-          "d1=d.shift();"
+          "d1=d.length>1?d[1]:d[0];"
           "if(d1){"
             "t1=document.createElement('div');"
             "t1.classList.add('br2');"
             "t1.innerText=d1;"
             "t.appendChild(t1);"
           "}"
-          "t.scrollTop=99999;"
+          "t.scrollTop=1e8;"
           "sn=t.scrollTop;"
           "clearTimeout(ft);"
           "lt=setTimeout(l,ltm);" // webrefresh timer....
@@ -521,7 +516,7 @@ const char HTTP_SCRIPT_BERRY_CONSOLE[] PROGMEM =
       "};"
       "x.open('GET','bc?c2='+id+o,true);"  // Related to Webserver->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
-      "ft=setTimeout(l,20000);" // fail timeout, triggered 20s after asking for XHR
+      "ft=setTimeout(l,2e4);" // fail timeout, triggered 20s after asking for XHR
     "}else{"
       "lt=setTimeout(l,ltm);" // webrefresh timer....
     "}"

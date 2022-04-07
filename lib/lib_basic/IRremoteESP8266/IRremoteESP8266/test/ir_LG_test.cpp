@@ -693,6 +693,10 @@ TEST(TestUtils, Housekeeping) {
             IRac::strToModel(irutils::modelToStr(
                 decode_type_t::LG2,
                 lg_ac_remote_model_t::AKB73757604).c_str()));
+  ASSERT_EQ(lg_ac_remote_model_t::LG6711A20083V,
+            IRac::strToModel(irutils::modelToStr(
+                decode_type_t::LG,
+                lg_ac_remote_model_t::LG6711A20083V).c_str()));
 }
 
 TEST(TestIRLgAcClass, KnownExamples) {
@@ -1125,4 +1129,64 @@ TEST(TestIRLgAcClass, SwingVOffAfterAuto) {
   EXPECT_EQ(kLgAcSwingVOff, ac._irsend.capture.value);
   ASSERT_EQ("Model: 3 (AKB74955603), Swing(V): 21 (Off)",
             IRAcUtils::resultAcToString(&ac._irsend.capture));
+}
+
+TEST(TestIRLgAcClass, Issue1737) {
+  // Simulate getting a light toggle while the ac class/prev state thinks the
+  // device is on.
+  IRLgAc ac(kGpioUnused);
+  ac.begin();
+
+  ac.setModel(lg_ac_remote_model_t::AKB74955603);
+  ac.setPower(true);
+  ac.setMode(kLgAcFan);
+  ac.setTemp(18);
+  ac.setFan(kLgAcFanLowest);
+  stdAc::state_t prev = ac.toCommon();
+  EXPECT_TRUE(prev.power);
+  EXPECT_TRUE(ac.toCommon().power);
+  EXPECT_TRUE(ac.toCommon(&prev).power);
+
+  ac.setRaw(kLgAcLightToggle);
+  EXPECT_TRUE(ac.isLightToggle());
+
+  EXPECT_FALSE(ac.toCommon().power);  // No previous state, so should be false.
+  EXPECT_TRUE(ac.toCommon(&prev).power);
+
+  // A better simulation of the desired use case.
+  IRsendTest irsend(kGpioUnused);
+  IRrecv capture(kGpioUnused);
+  irsend.begin();
+  irsend.reset();
+  irsend.sendLG2(kLgAcLightToggle);
+  irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&irsend.capture));
+  ASSERT_EQ(LG2, irsend.capture.decode_type);  // Not "LG"
+  ASSERT_EQ(kLgBits, irsend.capture.bits);
+  stdAc::state_t result;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &result, &prev));
+  EXPECT_TRUE(result.power);
+}
+
+TEST(TestIRLgAcClass, SwingVToggle) {
+  IRLgAc ac(kGpioUnused);
+  ac.begin();
+
+  ac.setModel(lg_ac_remote_model_t::GE6711AR2853M);
+  EXPECT_FALSE(ac.isSwingVToggle());
+  EXPECT_FALSE(ac._isLG6711A20083V());
+  EXPECT_EQ(lg_ac_remote_model_t::GE6711AR2853M, ac.getModel());
+
+  ac.setRaw(kLgAcSwingVToggle, decode_type_t::LG);
+  EXPECT_TRUE(ac.isSwingVToggle());
+  EXPECT_TRUE(ac._isLG6711A20083V());
+  EXPECT_EQ(lg_ac_remote_model_t::LG6711A20083V, ac.getModel());
+
+  EXPECT_EQ("Model: 5 (LG6711A20083V), Swing(V): Toggle", ac.toString());
+
+  ac.stateReset();
+  ac.setModel(lg_ac_remote_model_t::LG6711A20083V);
+  ac.setSwingV(kLgAcSwingVToggle);
+  EXPECT_EQ(ac._swingv, kLgAcSwingVToggle);
+  EXPECT_NE(ac._swingv_prev, kLgAcSwingVToggle);
 }

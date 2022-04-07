@@ -24,6 +24,7 @@ jobs:
       matrix:
         variant:
           - tasmota
+          - tasmota4M
           - tasmota-display
           - tasmota-ir
           - tasmota-knx
@@ -39,7 +40,7 @@ jobs:
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
-          - tasmota32-odroidgo
+          - tasmota32s2
           - tasmota32c3
           - tasmota32solo1
     steps:

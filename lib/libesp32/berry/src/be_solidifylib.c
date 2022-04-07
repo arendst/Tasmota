@@ -109,22 +109,26 @@ static void m_solidify_map(bvm *vm, bmap * map, const char *class_name)
         if (node->key.type == BE_NIL) {
             continue;   /* key not used */
         }
-        if (node->key.type != BE_STRING) {
-            char error[64];
-            snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
-            be_raise(vm, "internal_error", error);
-        }
         int key_next = node->key.next;
         if (0xFFFFFF == key_next) {
             key_next = -1;      /* more readable */
         }
-        /* convert the string literal to identifier */
-        const char * key = str(node->key.v.s);
-        size_t id_len = toidentifier_length(key);
-        char id_buf[id_len];
-        toidentifier(id_buf, key);
-        logfmt("        { be_const_key(%s, %i), ", id_buf, key_next);
-        m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
+        if (node->key.type == BE_STRING) {
+            /* convert the string literal to identifier */
+            const char * key = str(node->key.v.s);
+            size_t id_len = toidentifier_length(key);
+            char id_buf[id_len];
+            toidentifier(id_buf, key);
+            logfmt("        { be_const_key(%s, %i), ", id_buf, key_next);
+            m_solidify_bvalue(vm, &node->value, class_name, str(node->key.v.s));
+        } else if (node->key.type == BE_INT) {
+            logfmt("        { be_const_key_int(%i, %i), ", node->key.v.i, key_next);
+            m_solidify_bvalue(vm, &node->value, class_name, NULL);
+        } else {
+            char error[64];
+            snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
+            be_raise(vm, "internal_error", error);
+        }
 
         logfmt(" },\n");
     }
@@ -148,7 +152,7 @@ static void m_solidify_list(bvm *vm, blist * list, const char *class_name)
 // pass key name in case of class, or NULL if none
 static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, const char *key)
 {
-    int type = var_type(value);
+    int type = var_primetype(value);
     switch (type) {
     case BE_NIL:
         logfmt("be_const_nil()");
@@ -172,7 +176,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_REAL:
 #if BE_USE_SINGLE_FLOAT
-        logfmt("be_const_real_hex(0x%08X)", (uint32_t) var_toobj(value));
+        logfmt("be_const_real_hex(%08" PRIX32 ")", (uint32_t)(uintptr_t)var_toobj(value));
 #else
         logfmt("be_const_real_hex(0x%016" PRIx64 ")", (uint64_t)var_toobj(value));
 #endif
@@ -197,7 +201,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
             char func_name_id[id_len];
             toidentifier(func_name_id, func_name);
             logfmt("be_const_%sclosure(%s%s%s_closure)",
-                func_isstatic(value) ? "static_" : "",
+                var_isstatic(value) ? "static_" : "",
                 classname ? classname : "", classname ? "_" : "",
                 func_name_id);
         }
@@ -210,7 +214,7 @@ static void m_solidify_bvalue(bvm *vm, bvalue * value, const char *classname, co
         break;
     case BE_NTVFUNC:
         logfmt("be_const_%sfunc(be_ntv_%s_%s)",
-            func_isstatic(value) ? "static_" : "",
+            var_isstatic(value) ? "static_" : "",
             classname ? classname : "unknown", key ? key : "unknown");
         break;
     case BE_INSTANCE:
@@ -358,7 +362,8 @@ static void m_solidify_closure(bvm *vm, bclosure *cl, const char * classname, in
     const char * func_name = str(pr->name);
 
     if (cl->nupvals > 0) {
-        be_raise(vm, "internal_error", "Unsupported upvals in closure");
+        logfmt("--> Unsupported upvals in closure <---");
+        // be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
 
     int indent = 2;

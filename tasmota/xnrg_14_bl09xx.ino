@@ -84,9 +84,9 @@ const uint8_t  bl09xx_init[5][4] = {
 };
 
 struct BL09XX {
-  uint32_t voltage = 0;
-  uint32_t current[2] = { 0, };
-  uint32_t power[2] = { 0, };
+  int32_t voltage = 0;
+  int32_t current[2] = { 0, };
+  int32_t power[2] = { 0, };
   float temperature;
   uint16_t tps1 = 0;
   uint8_t *rx_buffer = nullptr;
@@ -129,12 +129,12 @@ bool Bl09XXDecode3940(void) {
   Bl09XX.voltage    = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[6]  << 16 | Bl09XX.rx_buffer[5]  << 8 | Bl09XX.rx_buffer[4];      // IA_RMS unsigned
   int32_t tmp = Bl09XX.rx_buffer[18] << 24 | Bl09XX.rx_buffer[17] << 16 | Bl09XX.rx_buffer[16] << 8;     // WATT_A signed
-  Bl09XX.power[0] = abs(tmp >> 8);                                                                       // WATT_A unsigned
+  Bl09XX.power[0] = (tmp >> 8);                                                                       // WATT_A unsigned
 
   if (Energy.phase_count > 1) {
     Bl09XX.current[1] = Bl09XX.rx_buffer[9]  << 16 | Bl09XX.rx_buffer[8]  << 8 | Bl09XX.rx_buffer[7];    // IB_RMS unsigned
     tmp = Bl09XX.rx_buffer[21] << 24 | Bl09XX.rx_buffer[20] << 16 | Bl09XX.rx_buffer[19] << 8;           // WATT_B signed
-    Bl09XX.power[1] = abs(tmp >> 8);                                                                     // WATT_B unsigned
+    Bl09XX.power[1] = (tmp >> 8);                                                                     // WATT_B unsigned
   }
 
 #ifdef DEBUG_BL09XX
@@ -172,7 +172,7 @@ bool Bl09XXDecode42(void) {
   Bl09XX.voltage    = Bl09XX.rx_buffer[6] << 16 | Bl09XX.rx_buffer[5] << 8 | Bl09XX.rx_buffer[4];        // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[3]  << 16 | Bl09XX.rx_buffer[2]  << 8 | Bl09XX.rx_buffer[1];      // IA_RMS unsigned
   int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;     // WATT_A signed
-  Bl09XX.power[0] = abs(tmp >> 8);                                                                       // WATT_A unsigned
+  Bl09XX.power[0] = (tmp >> 8);                                                                       // WATT_A unsigned
 
 #ifdef DEBUG_BL09XX
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d, P %d"),
@@ -185,21 +185,20 @@ bool Bl09XXDecode42(void) {
 void Bl09XXUpdateEnergy() {
   if (Energy.power_on) {  // Powered on
     Energy.voltage[0] = (float)Bl09XX.voltage / Settings->energy_voltage_calibration;
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Voltage %f, Temp %f"), Energy.voltage[0], Bl09XX.temperature);
+#ifdef DEBUG_BL09XX
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %2_f, T %2_f"), &Energy.voltage[0], &Bl09XX.temperature);
+#endif
     for (uint32_t chan = 0; chan < Energy.phase_count; chan++) {
       if (Bl09XX.power[chan] > Settings->energy_power_calibration) {                                     // We need at least 1W
         Energy.active_power[chan] = (float)Bl09XX.power[chan] / Settings->energy_power_calibration;
         Energy.current[chan] = (float)Bl09XX.current[chan] / Settings->energy_current_calibration;
-#ifdef DEBUG_BL09XX
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I %f, P %f"), chan, Energy.current[chan], Energy.active_power[chan]);
-#endif
       } else {
         Energy.active_power[chan] = 0;
         Energy.current[chan] = 0;
-#ifdef DEBUG_BL09XX
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I zero, P zero"), chan);
-#endif
       }
+#ifdef DEBUG_BL09XX
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Chan[%d] I %2_f, P %2_f"), chan, &Energy.current[chan], &Energy.active_power[chan]);
+#endif
     }
   } else {  // Powered off
     Energy.voltage[0] = 0;
@@ -218,11 +217,8 @@ void Bl09XXSerialInput(void) {
     }
     if (Bl09XX.received) {
       Bl09XX.rx_buffer[Bl09XX.byte_counter++] = serial_in_byte;
-      if (Bl09XX.buffer_size == Bl09XX.byte_counter -1) {
-
-#ifdef DEBUG_BL09XX
-        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Bl09XX.rx_buffer, Bl09XX.buffer_size);
-#endif
+      if (Bl09XX.buffer_size == Bl09XX.byte_counter) {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: Rx %*_H"), Bl09XX.buffer_size, Bl09XX.rx_buffer);
         uint8_t checksum = BL09XX_READ_COMMAND | Bl09XX.address;
         for (uint32_t i = 0; i < Bl09XX.buffer_size -1; i++) { checksum += Bl09XX.rx_buffer[i]; }
         checksum ^= 0xFF;
@@ -238,13 +234,15 @@ void Bl09XXSerialInput(void) {
           Bl09XX.received = false;
           return;
         } else {
+#ifdef DEBUG_BL09XX
           AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE " received 0x%02X instead of 0x%02X"), Bl09XX.rx_buffer[Bl09XX.buffer_size -1], checksum);
+#endif
           do {  // Sync buffer with data (issue #1907 and #3425)
             memmove(Bl09XX.rx_buffer, Bl09XX.rx_buffer +1, Bl09XX.buffer_size -1);
             Bl09XX.byte_counter--;
           } while ((Bl09XX.byte_counter > 1) && (BL09XX_PACKET_HEADER != Bl09XX.rx_buffer[0]));
           if (BL09XX_PACKET_HEADER != Bl09XX.rx_buffer[0]) {
-            //AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
+            AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: " D_CHECKSUM_FAILURE));
             Bl09XX.received = false;
             Bl09XX.byte_counter = 0;
           }

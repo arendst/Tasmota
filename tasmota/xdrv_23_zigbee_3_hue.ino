@@ -98,10 +98,12 @@ void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
   char shortaddrname[8];
   snprintf_P(shortaddrname, sizeof(shortaddrname), PSTR("0x%04X"), shortaddr);
 
-  HueLightStatus2Generic(response, (friendlyName) ? friendlyName : shortaddrname,
+  char* buf = HueLightStatus2Generic((friendlyName) ? friendlyName : shortaddrname,
               (modelId) ? modelId : PSTR("Unknown"),
               (manufacturerId) ? manufacturerId : PSTR("Tasmota"),
               GetHueDeviceId(shortaddr).c_str());
+  *response += buf;
+  free(buf);
 }
 
 int32_t ZigbeeHueStatus(String * response, uint16_t shortaddr) {
@@ -126,7 +128,7 @@ void ZigbeeCheckHue(String & response, bool * appending) {
       // this bulb is advertized
       if (*appending) { response += ","; }
       response += "\"";
-      response += EncodeLightId(0, shortaddr);
+      response += EncodeLightIdZigbee(0, shortaddr);
       response += F("\":{\"state\":");
       HueLightStatus1Zigbee(shortaddr, bulbtype, &response);    // TODO
       HueLightStatus2Zigbee(shortaddr, &response);
@@ -143,7 +145,7 @@ void ZigbeeHueGroups(String * lights) {
 
     if (bulbtype >= 0) {
       *lights += ",\"";
-      *lights += EncodeLightId(i);
+      *lights += EncodeLightIdZigbee(0, shortaddr);
       *lights += "\"";
     }
   }

@@ -1665,6 +1665,23 @@ uint32_t vbus_get_septet(uint8_t *cp) {
 }
 
 
+char *skip_double(char *cp) {
+  if (*cp == '+' || *cp == '-') {
+    cp++;
+  }
+  while (*cp) {
+    if (*cp == '.') {
+      cp++;
+    }
+    if (!isdigit(*cp)) {
+      return cp;
+    }
+    cp++;
+  }
+  return 0;
+}
+
+
 void SML_Decode(uint8_t index) {
   const char *mp=(const char*)meter_p;
   int8_t mindex;
@@ -1835,7 +1852,7 @@ void SML_Decode(uint8_t index) {
               found=0;
             }
           } else {
-            // ebus mbus pzem vbus or raw
+            // ebus modbus pzem vbus or raw
             // XXHHHHSSUU
             if (*mp == 'x') {
               if (*(mp + 1) == 'x') {
@@ -1959,6 +1976,22 @@ void SML_Decode(uint8_t index) {
               mbus_dval = (float)((cp[0]<<8) | cp[1]);
               mp += 4;
               cp += 2;
+            } else if (!strncmp(mp, "bcd", 3)) {
+              mp += 3;
+              uint8_t digits = strtol((char*)mp, (char**)&mp, 10);
+              if (digits < 2) digits = 2;
+              if (digits > 12) digits = 12;
+              uint64_t bcdval = 0;
+              uint64_t mfac = 1;
+              for (uint32_t cnt = 0; cnt < digits; cnt += 2) {
+                uint8_t iob = *cp++;
+                bcdval += (iob & 0xf) * mfac;
+                mfac *= 10;
+                bcdval += (iob >> 4) * mfac;
+                mfac *= 10;
+              }
+              mbus_dval = bcdval;
+              ebus_dval = bcdval;
             } else if (*mp == 'v') {
               // vbus values vul, vsl, vuwh, vuwl, wswh, vswl, vswh
               // vub3, vsb3 etc
@@ -2168,6 +2201,12 @@ void SML_Decode(uint8_t index) {
           //AddLog(LOG_LEVEL_INFO, PSTR(">> %s"),mp);
           // get scaling factor
           double fac = CharToDouble((char*)mp);
+          // get optional offset to calibrate meter
+          char *cp = skip_double((char*)mp);
+          if (cp && (*cp == '+' || *cp == '-')) {
+            double offset = CharToDouble(cp);
+            meter_vars[vindex] += offset;
+          }
           meter_vars[vindex] /= fac;
           SML_Immediate_MQTT((const char*)mp, vindex, mindex);
         }
@@ -2418,6 +2457,8 @@ struct SML_COUNTER {
   uint8_t sml_cnt_old_state;
   uint32_t sml_cnt_last_ts;
   uint32_t sml_counter_ltime;
+  uint32_t sml_counter_lfalltime;
+  uint32_t sml_counter_pulsewidth;
   uint16_t sml_debounce;
   uint8_t sml_cnt_updated;
 
@@ -2450,6 +2491,8 @@ uint32_t debounce_time;
   if bitRead(sml_counter_pinstate, index) {
     // falling edge
     RtcSettings.pulse_counter[index]++;
+    sml_counters[index].sml_counter_pulsewidth = time - sml_counters[index].sml_counter_lfalltime;
+    sml_counters[index].sml_counter_lfalltime = time;
     sml_counters[index].sml_cnt_updated = 1;
   }
   sml_counters[index].sml_counter_ltime = time;
@@ -2855,7 +2898,7 @@ init10:
           }
 
           RtcSettings.pulse_counter[cindex] = Settings->pulse_counter[cindex];
-          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex]);
+          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex],0.0);
           cindex++;
         }
     } else {
@@ -3101,7 +3144,9 @@ uint32_t ctime=millis();
               if (state==0) {
                 // inc counter
                 RtcSettings.pulse_counter[cindex]++;
-                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex]);
+                sml_counters[cindex].sml_counter_pulsewidth = ctime - sml_counters[cindex].sml_counter_lfalltime;
+                sml_counters[cindex].sml_counter_lfalltime = ctime;
+                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex],60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
               }
             }
           }
@@ -3124,7 +3169,7 @@ uint32_t ctime=millis();
         }
 
         if (sml_counters[cindex].sml_cnt_updated) {
-          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex]);
+          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex],60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
           sml_counters[cindex].sml_cnt_updated=0;
         }
 
@@ -3340,7 +3385,7 @@ bool XSNS_53_cmd(void) {
             uint8_t cindex=0;
             for (uint8_t meters=0; meters<meters_used; meters++) {
               if (meter_desc_p[meters].type=='c') {
-                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex]);
+                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex],0.0);
                 cindex++;
               }
             }
@@ -3383,8 +3428,14 @@ bool XSNS_53_cmd(void) {
   return serviced;
 }
 
-void InjektCounterValue(uint8_t meter,uint32_t counter) {
-  sprintf((char*)&smltbuf[meter][0],"1-0:1.8.0*255(%d)",counter);
+void InjektCounterValue(uint8_t meter,uint32_t counter,float rate) {
+  int dec = (int)rate;
+  int frac = (int)((rate - (float)dec) * 1000.0);
+
+  snprintf((char*)&smltbuf[meter][0],SML_BSIZ,"1-0:1.8.0*255(%d)",counter);
+  SML_Decode(meter);
+
+  snprintf((char*)&smltbuf[meter][0],SML_BSIZ,"1-0:1.7.0*255(%d.%d)",dec,frac);
   SML_Decode(meter);
 }
 

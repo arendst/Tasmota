@@ -607,7 +607,7 @@ void IRSanyoAc::setOffTimer(const uint16_t mins) {
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRSanyoAc::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::SANYO_AC;
   result.model = -1;  // Not supported.
   result.power = getPower();
@@ -935,7 +935,7 @@ bool IRSanyoAc88::getSleep(void) const { return _.Sleep; }
 /// Convert the current internal state into its stdAc::state_t equivalent.
 /// @return The stdAc equivalent of the native settings.
 stdAc::state_t IRSanyoAc88::toCommon(void) const {
-  stdAc::state_t result;
+  stdAc::state_t result{};
   result.protocol = decode_type_t::SANYO_AC88;
   result.model = -1;  // Not supported.
   result.power = getPower();

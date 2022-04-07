@@ -151,42 +151,18 @@ int32_t be_audio_output_consume_silence(struct bvm *vm) {
 
 extern "C" {
   
-#include "be_fixed_be_class_audio_output.h"
-#include "be_fixed_be_class_audio_output_i2s.h"
-#include "be_fixed_be_class_audio_generator.h"
-#include "be_fixed_be_class_audio_generator_wav.h"
-#include "be_fixed_be_class_audio_generator_mp3.h"
-#include "be_fixed_be_class_audio_file_source.h"
-#include "be_fixed_be_class_audio_file_source_fs.h"
+#include "be_fixed_be_class_AudioOutput.h"
+#include "be_fixed_be_class_AudioOutputI2S.h"
+#include "be_fixed_be_class_AudioGenerator.h"
+#include "be_fixed_be_class_AudioGeneratorWAV.h"
+#include "be_fixed_be_class_AudioGeneratorMP3.h"
+#include "be_fixed_be_class_AudioFileSource.h"
+#include "be_fixed_be_class_AudioFileSourceFS.h"
 
-  void be_load_driver_audio_lib(bvm *vm) {
-    be_pushntvclass(vm, &be_class_audio_output);
-    be_setglobal(vm, "AudioOutput");
-    be_pop(vm, 1);
-
-    be_pushntvclass(vm, &be_class_audio_output_i2s);
-    be_setglobal(vm, "AudioOutputI2S");
-    be_pop(vm, 1);
-
-    be_pushntvclass(vm, &be_class_audio_generator_wav);
-    be_setglobal(vm, "AudioGeneratorWAV");
-    be_pop(vm, 1);
-
-    be_pushntvclass(vm, &be_class_audio_generator_mp3);
-    be_setglobal(vm, "AudioGeneratorMP3");
-    be_pop(vm, 1);
-
-  #ifdef USE_UFILESYS
-    be_pushntvclass(vm, &be_class_audio_file_source_fs);
-    be_setglobal(vm, "AudioFileSourceFS");
-    be_pop(vm, 1);
-  #endif // USE_UFILESYS
-  }
 }
-
 /* @const_object_info_begin
 
-class be_class_audio_output (scope: global, name: AudioOutput) {
+class be_class_AudioOutput (scope: global, name: AudioOutput) {
     .p, var
     init, func(be_audio_output_init)
 
@@ -204,15 +180,15 @@ class be_class_audio_output (scope: global, name: AudioOutput) {
     set_gain, func(be_audio_output_set_gain)
 }
 
-class be_class_audio_generator (scope: global, name: AudioGenerator) {
+class be_class_AudioGenerator (scope: global, name: AudioGenerator) {
     .p, var
 }
 
-class be_class_audio_file_source (scope: global, name: AudioFileSource) {
+class be_class_AudioFileSource (scope: global, name: AudioFileSource) {
     .p, var
 }
 
-class be_class_audio_output_i2s (scope: global, name: AudioOutputI2S, super: be_class_audio_output) {
+class be_class_AudioOutputI2S (scope: global, name: AudioOutputI2S, super: be_class_AudioOutput) {
     EXTERNAL_I2S, int(AudioOutputI2S::EXTERNAL_I2S)
     INTERNAL_DAC, int(AudioOutputI2S::INTERNAL_DAC)
     INTERNAL_PDM, int(AudioOutputI2S::INTERNAL_PDM)
@@ -222,7 +198,7 @@ class be_class_audio_output_i2s (scope: global, name: AudioOutputI2S, super: be_
     stop, func(i2s_output_i2s_stop)
 }
 
-class be_class_audio_generator_wav (scope: global, name: AudioGeneratorWAV, super: be_class_audio_generator) {
+class be_class_AudioGeneratorWAV (scope: global, name: AudioGeneratorWAV, super: be_class_AudioGenerator) {
     init, func(i2s_generator_wav_init)
     deinit, func(i2s_generator_wav_deinit)
     begin, func(i2s_generator_wav_begin)
@@ -231,7 +207,7 @@ class be_class_audio_generator_wav (scope: global, name: AudioGeneratorWAV, supe
     isrunning, func(i2s_generator_wav_isrunning)
 }
 
-class be_class_audio_generator_mp3 (scope: global, name: AudioGeneratorMP3, super: be_class_audio_generator) {
+class be_class_AudioGeneratorMP3 (scope: global, name: AudioGeneratorMP3, super: be_class_AudioGenerator) {
     init, func(i2s_generator_mp3_init)
     deinit, func(i2s_generator_mp3_deinit)
     begin, func(i2s_generator_mp3_begin)
@@ -240,7 +216,7 @@ class be_class_audio_generator_mp3 (scope: global, name: AudioGeneratorMP3, supe
     isrunning, func(i2s_generator_mp3_isrunning)
 }
 
-class be_class_audio_file_source_fs (scope: global, name: AudioFileSourceFS, super: be_class_audio_file_source) {
+class be_class_AudioFileSourceFS (scope: global, name: AudioFileSourceFS, super: be_class_AudioFileSource) {
     init, func(i2s_file_source_fs_init)
     deinit, func(i2s_file_source_fs_deinit)
 }

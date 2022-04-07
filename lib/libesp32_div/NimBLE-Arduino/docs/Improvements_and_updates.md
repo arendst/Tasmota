@@ -69,7 +69,9 @@ Now takes 2 optional parameters, the first is the duration to advertise for (in 
 that is invoked when advertsing ends and takes a pointer to a `NimBLEAdvertising` object (similar to the `NimBLEScan::start` API).  
 
 This provides an opportunity to update the advertisment data if desired.  
-<br/>
+
+Also now returns a bool value to indicate if advertising successfully started or not.
+<br/>  
 
 <a name="client"></a>
 # Client  
@@ -100,8 +102,18 @@ Has been **deprecated** as now the internally stored characteristic value is upd
 `NimBLERemoteCharacteristic::subscribe` and `NimBLERemoteCharacteristic::unsubscribe` have been implemented to replace it.  
 A callback is no longer requred to get the most recent value unless timing is important. Instead, the application can call `NimBLERemoteCharacteristic::getValue` to  
 get the last updated value any time.  
+<br/>  
 
-In addition `NimBLERemoteCharacteristic::readValue` and `NimBLERemoteCharacteristic::getValue` take an optional timestamp parameter which will update it's value with  
+The `notifiy_callback` function is now defined as a `std::function` to take advantage of using `std::bind` to specifiy a class member function for the callback.  
+
+Example:  
+```
+using namespace std::placeholders;
+notify_callback callback = std::bind(&<ClassName>::<memberFunctionCallbackName>, this, _1, _2, _3, _4);
+<remoteCharacteristicInstance>->subscribe(true, callback);
+```
+
+`NimBLERemoteCharacteristic::readValue` and `NimBLERemoteCharacteristic::getValue` take an optional timestamp parameter which will update it's value with  
 the time the last value was recieved.  
 
 > NimBLEClient::getService  

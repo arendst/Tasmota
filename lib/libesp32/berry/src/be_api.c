@@ -34,19 +34,19 @@ static void class_init(bvm *vm, bclass *c, const bnfuncinfo *lib)
         while (lib->name) {
             bstring *s = be_newstr(vm, lib->name);
             if (lib->function) { /* method */
-                be_prim_method_bind(vm, c, s, lib->function);
+                be_class_native_method_bind(vm, c, s, lib->function);
             } else {
-                be_member_bind(vm, c, s, btrue); /* member */
+                be_class_member_bind(vm, c, s, btrue); /* member */
             }
             ++lib;
         }
-        if (lib->function == (bntvfunc) BE_CLOSURE) {
+        if (lib->function == (bntvfunc)BE_CLOSURE) {
             /* next section is closures */
             struct solidfuncinfo *slib = (struct solidfuncinfo*)++lib;
             while (slib->name) {
                 if (slib->function) { /* method */
                     bstring *s = be_newstr(vm, slib->name);
-                    be_closure_method_bind(vm, c, s, slib->function);
+                    be_class_closure_method_bind(vm, c, s, slib->function);
                 }
                 ++slib;
             }
@@ -652,10 +652,7 @@ static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
         bmodule *module = var_toobj(o);
         type = be_module_attr(vm, module, be_newstr(vm, k), top);
     }
-    if (type == BE_NONE) {
-        type = BE_NIL;
-    }
-    return type;
+    return type == BE_NONE ? BE_NIL : type;
 }
 
 BERRY_API bbool be_getmember(bvm *vm, int index, const char *k)

@@ -6,6 +6,11 @@ class AXP192 : I2C_Driver
     super(self, I2C_Driver).init("AXP192", 0x34)
   end
 
+  # power off the entire device from AXP192 - this is different from deepsleep
+  def power_off()
+    self.write_bit(0x32, 7, 1)
+  end
+
   # Return True = Battery Exist
   def battery_present()
     if self.wire.read(self.addr, 0x01, 1) & 0x20 return true

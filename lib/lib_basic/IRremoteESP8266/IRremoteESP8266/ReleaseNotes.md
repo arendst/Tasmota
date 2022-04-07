@@ -1,5 +1,38 @@
 # Release Notes
 
+## _v2.8.2 (20220314)_
+
+**[Bug Fixes]**
+- ESP32-C3: Fix reboot/crashes on ESP32-C3s when receiving. (#1768 #1751)
+
+**[Features]**
+- HITACHI_AC296: Add `IRac` class support & tests. (#1776 #1758 #1757)
+- Support for Hitachi RAS-70YHA3 (remote RAR-3U3) (#1758 #1757)
+- LG: Add Swing Toggle support for Model `LG6711A20083V` (#1771 #1770)
+- IRMQTTServer: add `MQTT_SERVER_AUTODETECT_ENABLE` via mqtt mDNS (#1769)
+- Experimental basic support for Kelon 168 bit / 21 byte protocol. (#1747 #1745 #1744)
+- MitsubishiAC: Tweak repeat gap timing. (#1760 #1759)
+- Gree YAP0F8 (Detected as Kelvinator) vertical position set support (#1756)
+- Make KELON (48 bit) protocol decoding stricter. (#1746 #1744)
+- IRMQTTServer V1.6.1 (#1740 #1739 #1729)
+- HITACHI_AC264: Add minimal detailed support. (#1735 #1729)
+- LG2: Improve Light toggle msg handling. (#1738 #1737)
+- MIDEA: Add support for Quiet, Clean & Freeze Protect controls. (#1734 #1733)
+- Add basic support for HITACHI_AC264 264bit protocol. (#1730 #1729)
+- ESP32-C3: Work around for some C3 specific compiler issues again. (#1732 #1695)
+
+**[Misc]**
+- MIDEA: Update supported devices (#1774 #1773 #1716)
+- Update devices supported by ELECTRA_AC (#1766 #1765)
+- Improve documentation for `encodePioneer()` (#1761 #1749)
+- Update (un)supported DAIKIN128 devices. (#1752)
+- Refactor `decodeCOOLIX()` code & add another test case. (#1750 #1748)
+- Simplify code based on state_t being initialised by default. (#1736 #1699)
+- Add comments to help Teknopoint users. (#1731 #1728)
+- Fix library version string calculation. (#1727 #1725)
+- Confirm we can reproduce `TurnOnFujitsuAC.ino` via IRac/IRMQTTServer. (#1726 #1701)
+
+
 ## _v2.8.1 (20220101)_
 
 **[Bug Fixes]**
