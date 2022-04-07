@@ -253,11 +253,10 @@ typedef struct TUYA_STRUCT_tag {
   unsigned int errorcnt; // increment every time something goes awry
   unsigned int lasterrorcnt; // used to choose when to log errorcnt
 
-
-  int dimDelay_ms; // SIGNED the delay after a dim result after which we are allowed to send a dim value
+  int dimDelay_ms[2]; // SIGNED the delay after a dim result after which we are allowed to send a dim value
   int defaultDimDelay_ms; // the delay after a dim result after which we are allowed to send a dim value
-  uint8_t dimCmdEnable; // we are allowed to send a dim command
-  uint8_t dimDebug;
+  uint8_t dimCmdEnable; // we are allowed to send a dim command - bitfield
+  uint8_t dimDebug; // enables a single dim debug - bitfield
 
 } TUYA_STRUCT;
 
@@ -302,10 +301,10 @@ const char kTuyaSensors[] PROGMEM = // List of available sensors (can be expande
   "|" D_JSON_TVOC "|" D_JSON_ECO2 "|" D_JSON_CO2 "|" D_JSON_GAS "||Timer1|Timer2|Timer3|TImer4";
 
 const char kTuyaCommand[] PROGMEM = D_PRFX_TUYA "|"  // Prefix
-  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST "|TempSetRes";
+  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE "|" D_CMND_TUYARGB "|" D_CMND_TUYA_ENUM "|" D_CMND_TUYA_ENUM_LIST "|TempSetRes|DimDelay";
 
 void (* const TuyaCommand[])(void) PROGMEM = {
-  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes
+  &CmndTuyaMcu, &CmndTuyaSend, &CmndTuyaRgb, &CmndTuyaEnum, &CmndTuyaEnumList, &CmndTuyaTempSetRes, &CmdTuyaSetDimDelay
 };
 
 const uint8_t TuyaExcludeCMDsFromMQTT[] PROGMEM = // don't publish this received commands via MQTT if SetOption66 and SetOption137 is active (can be expanded in the future)
@@ -358,6 +357,7 @@ TuyaSend8 -> Sends TUYA_CMD_QUERY_PRODUCT ?
 */
 
 void CmndTuyaSend(void) {
+  if (!pTuya) return;
   switch(XdrvMailbox.index){
     case 0:
     TuyaRequestState(0);
@@ -421,9 +421,32 @@ void CmndTuyaSend(void) {
   ResponseCmndDone();
 }
 
+
+void CmdTuyaSetDimDelay(void) {
+  if (!pTuya) return;
+
+  switch(XdrvMailbox.index){
+    case 1: {
+      if (XdrvMailbox.data_len > 0) {
+        int32_t delay = strtol(XdrvMailbox.data, nullptr, 0);
+        pTuya->defaultDimDelay_ms = delay;
+      } else {
+        // report only
+        Response_P(PSTR("{\"%s\":{\"dimdelay\":%d}}"), XdrvMailbox.command, pTuya->defaultDimDelay_ms);  // Builds TuyaMCU
+        return;
+      }
+    } break;
+
+    default: // no response
+      return;
+  }
+  ResponseCmndDone();
+}
+
 // TuyaMcu fnid,dpid
 
 void CmndTuyaMcu(void) {
+  if (!pTuya) return;
   if (XdrvMailbox.data_len > 0) {
     char *p;
     uint8_t i = 0;
@@ -468,6 +491,7 @@ void CmndTuyaMcu(void) {
 }
 
 void CmndTuyaRgb(void) { // Command to control the RGB format
+  if (!pTuya) return;
 
   uint16_t payload = XdrvMailbox.payload;
 
@@ -486,6 +510,7 @@ void CmndTuyaRgb(void) { // Command to control the RGB format
 
 void CmndTuyaTempSetRes(void)
 {
+  if (!pTuya) return;
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings->mbflag2.temperature_set_res = XdrvMailbox.payload;
   }
@@ -493,6 +518,7 @@ void CmndTuyaTempSetRes(void)
 }
 
 void CmndTuyaEnum(void) { // Command to control up to four type 4 Enum
+  if (!pTuya) return;
   uint16_t EnumIdx = XdrvMailbox.index;
   int32_t payload = XdrvMailbox.payload;
 
@@ -527,6 +553,7 @@ void CmndTuyaEnum(void) { // Command to control up to four type 4 Enum
 }
 
 void CmndTuyaEnumList(void) { // Command to declare the number of items in list for up to four type 4 enum. Min = 0, Max = 31, Default = 0
+  if (!pTuya) return;
 
   if (XdrvMailbox.data_len > 0) {
     char *p;
@@ -875,19 +902,24 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
           if ((dp->rxedValueLen != dp->desiredValueLen) || memcmp(dp->rxedValue, dp->desiredValue, dp->desiredValueLen)){
             uint8_t send = 1;
             if (TuyaDpIdIsDimmer(dp->DPid)){
+              uint8_t fnId = TuyaGetFuncId(dp->DPid);
+              uint8_t dimindex = 0;
+              if (fnId == TUYA_MCU_FUNC_DIMMER2){ // first dimmer
+                dimindex = 1;
+              }
               // set every time a dim value is rxed, and if just turned on
-              if (pTuya->dimDelay_ms){
-                if (pTuya->dimDebug){
-                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command deferred for %dms"), pTuya->dimDelay_ms);
-                  pTuya->dimDebug = 0;
+              if (pTuya->dimDelay_ms[dimindex]){
+                if (pTuya->dimDebug & (1<<dimindex)){
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command %d deferred for %dms"), dimindex, pTuya->dimDelay_ms[dimindex]);
+                  pTuya->dimDebug &= (0xff ^ (1<<dimindex));
                 }
                 send = 0;
               }
               // only enabled if on.
-              if (!pTuya->dimCmdEnable){
-                if (pTuya->dimDebug){
-                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command disabled"));
-                  pTuya->dimDebug = 0;
+              if (!(pTuya->dimCmdEnable & (1<<dimindex))){
+                if (pTuya->dimDebug & (1<<dimindex)){
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command %d disabled"), dimindex);
+                  pTuya->dimDebug &= (0xff ^ (1<<dimindex));
                 }
                 send = 0;
               }
@@ -1444,14 +1476,24 @@ void TuyaStoreRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen){
 
       // if a relay command, then set dim delay, and if value is zero, disable dim command.
       // if 1, enable dim command.
+      // make it work for single or dual dimmers...
       uint8_t fnId = TuyaGetFuncId(dpid);
-      if ((fnId == TUYA_MCU_FUNC_REL1) || (fnId == TUYA_MCU_FUNC_REL1_INV)){
-        pTuya->dimDelay_ms = pTuya->defaultDimDelay_ms;
+      if ((fnId == TUYA_MCU_FUNC_REL1) || 
+          (fnId == TUYA_MCU_FUNC_REL1_INV) || 
+          (fnId == TUYA_MCU_FUNC_REL2) || 
+          (fnId == TUYA_MCU_FUNC_REL2_INV)){
+        uint8_t dimindex = 0;
+        if ((fnId == TUYA_MCU_FUNC_REL2) || 
+            (fnId == TUYA_MCU_FUNC_REL2_INV)){
+          dimindex = 1;
+        }
+
+        pTuya->dimDelay_ms[dimindex] = pTuya->defaultDimDelay_ms;
         int value = data[0];
         if (!value){
-          pTuya->dimCmdEnable = 0;
+          pTuya->dimCmdEnable &= 0xfe; (0xff ^ (1<<dimindex));
         } else {
-          pTuya->dimCmdEnable = 1;
+          pTuya->dimCmdEnable |= (1<<dimindex);
         }
       }
 
@@ -1496,8 +1538,15 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
   uint32_t value = 0;
 
   if (TuyaFnIdIsDimmer(fnId)){
-    pTuya->dimDelay_ms = pTuya->defaultDimDelay_ms;
-    //pTuya->dimCmdEnable = false;
+    if (fnId == TUYA_MCU_FUNC_DIMMER){ // first dimmer
+      pTuya->dimDelay_ms[0] = pTuya->defaultDimDelay_ms;
+    } else {
+      if (fnId == TUYA_MCU_FUNC_DIMMER2){ // second dimmer
+        pTuya->dimDelay_ms[1] = pTuya->defaultDimDelay_ms;
+      } else { // must be other light, single dimmable thing
+        pTuya->dimDelay_ms[0] = pTuya->defaultDimDelay_ms;
+      }
+    }
   }
 
   ////////////////////
@@ -2401,11 +2450,13 @@ bool Xdrv16(uint8_t function) {
             Tuya_timeout();
           }
         }
-        if (pTuya->dimDelay_ms){
-          pTuya->dimDelay_ms -= 100;
-          if (pTuya->dimDelay_ms <= 0){
-            pTuya->dimDelay_ms = 0;
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim Delay -> 0."));
+        for (int i = 0; i < 2; i++){
+          if (pTuya->dimDelay_ms[i]){
+            pTuya->dimDelay_ms[i] -= 100;
+            if (pTuya->dimDelay_ms[i] <= 0){
+              pTuya->dimDelay_ms[i] = 0;
+              AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim Delay %d -> 0."), i);
+            }
           }
         }
         Tuya_statemachine();
