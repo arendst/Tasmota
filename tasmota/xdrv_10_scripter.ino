@@ -10321,7 +10321,7 @@ bool Xdrv10(uint8_t function)
       Webserver->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
       Webserver->on("/exs", HTTP_POST,[]() { Webserver->sendHeader("Location","/exs");Webserver->send(303);}, script_upload_start);
       Webserver->on("/exs", HTTP_GET, ScriptExecuteUploadSuccess);
-#ifdef USE_UFILESYS
+#if defined(USE_UFILESYS) && defined(USE_SCRIPT_WEB_DISPLAY)
       Webserver->on(UriGlob("/ufs/*"), HTTP_GET, ScriptServeFile);
 #endif
 #endif // USE_WEBSERVER
