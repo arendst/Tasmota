@@ -363,6 +363,8 @@ enum NeoPoolConstAndBitMask {
   MBMSK_RELAY_FILTSPEED_LOW               = 0x0100, //  8 Filtration low speed
   MBMSK_RELAY_FILTSPEED_MID               = 0x0200, //  9 Filtration mid speed
   MBMSK_RELAY_FILTSPEED_HIGH              = 0x0400, // 10 Filtration high speed
+  MBMSK_RELAY_FILTSPEED                   = 0x0700, // Filtration current speed mask
+  MBSHFT_RELAY_FILTSPEED                  = 8,      // Filtration current speed bit shift
 
   // MBF_NOTIFICATION
   MBMSK_NOTIF_MODBUS_CHANGED              = 0x0001, //  0 Modbus page changed
@@ -1355,16 +1357,23 @@ uint32_t NeoPoolGetDataLong(uint16_t addr)
 }
 
 
-uint32_t NeoPoolGetSpeedIndex(uint16_t speedvalue)
+uint32_t NeoPoolGetFiltrationSpeed()
 {
-  if (speedvalue >= 4) {
-    return 3;
+  switch((NeoPoolGetData(MBF_RELAY_STATE) & MBMSK_RELAY_FILTSPEED) >> MBSHFT_RELAY_FILTSPEED) {
+    case 1:
+      return 1;
+    case 2:
+      return 2;
+    case 4:
+      return 3;
   }
-  if (speedvalue >= 2) {
-    return 2;
-  }
-  if (speedvalue >= 1) {
-    return 1;
+  switch((NeoPoolGetData(MBF_PAR_FILTRATION_CONF) & MBMSK_PAR_FILTRATION_CONF_DEF_SPEED) >> MBSHFT_PAR_FILTRATION_CONF_DEF_SPEED) {
+    case MBV_PAR_FILTRATION_SPEED_SLOW:
+      return 1;
+    case MBV_PAR_FILTRATION_SPEED_MEDIUM:
+      return 2;
+    case MBV_PAR_FILTRATION_SPEED_FAST:
+      return 3;
   }
   return 0;
 }
@@ -1642,7 +1651,7 @@ void NeoPoolShow(bool json)
     if (0 != NeoPoolGetData(MBF_PAR_FILT_GPIO)) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_FILTRATION  "\":"));
       ResponseAppend_P(PSTR("{\""  D_NEOPOOL_JSON_STATE  "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_FILT_GPIO)-1)) & 1);
-      uint16_t speed = (NeoPoolGetData(MBF_RELAY_STATE) >> 8) & 0x07;
+      uint16_t speed = NeoPoolGetFiltrationSpeed();
       if (speed) {
         ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_FILTRATION_SPEED  "\":%d"), (speed < 3) ? speed : 3);
       }
@@ -1879,7 +1888,7 @@ void NeoPoolShow(bool json)
       } else if (0 != NeoPoolGetData(MBF_PAR_FILT_GPIO)          && i == NeoPoolGetData(MBF_PAR_FILT_GPIO)-1) {
           char smotorspeed[32];
           strncpy_P(sdesc, PSTR(D_NEOPOOL_RELAY_FILTRATION), sizeof(sdesc));
-          GetTextIndexed(smotorspeed, sizeof(smotorspeed), NeoPoolGetSpeedIndex((NeoPoolGetData(MBF_RELAY_STATE) >> 8) & 0x7), kNeoPoolFiltrationSpeed);
+          GetTextIndexed(smotorspeed, sizeof(smotorspeed), NeoPoolGetFiltrationSpeed(), kNeoPoolFiltrationSpeed);
           snprintf_P(stemp, sizeof(stemp), PSTR("%s%s%s%s"), ((NeoPoolGetData(MBF_RELAY_STATE) & (1<<i))?D_ON:D_OFF), *smotorspeed ? PSTR(" (") : PSTR(""), smotorspeed,  *smotorspeed ? PSTR(")") : PSTR(""));
       } else if (0 != NeoPoolGetData(MBF_PAR_LIGHTING_GPIO) && i == NeoPoolGetData(MBF_PAR_LIGHTING_GPIO)-1) {
           strncpy_P(sdesc, PSTR(D_NEOPOOL_RELAY_LIGHT), sizeof(sdesc));
@@ -2140,7 +2149,7 @@ void CmndNeopoolFiltration(void)
     NeopoolResponseError();
     return;
   }
-  uint16_t speed = (NeoPoolGetData(MBF_RELAY_STATE) >> 8) & 0x07;
+  uint16_t speed = NeoPoolGetFiltrationSpeed();
   if (speed) {
     Response_P(PSTR("{\"%s\":\"%s\",\""  D_NEOPOOL_JSON_FILTRATION_SPEED  "\":\"%d\"}"),
       XdrvMailbox.command,
