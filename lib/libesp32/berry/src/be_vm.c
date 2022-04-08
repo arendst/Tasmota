@@ -875,6 +875,11 @@ newframe: /* a new call frame */
                         }
                         var_setinstance(&a[1], obj);  /* replace superinstance by lowest subinstance */
                     }
+                } else if (var_isclass(a)) {
+                    /* in this case we have a class in a static or non-static member */
+                    /* it's always treated like a statif function */
+                    a[1] = result;
+                    var_settype(a, NOT_METHOD);
                 } else {
                     vm_error(vm, "attribute_error",
                         "class '%s' has no method '%s'",
