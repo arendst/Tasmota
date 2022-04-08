@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool: boost command with redox control state, relay and aux detail display
 
 ### Fixed
-- NeoPool filtration state
+- NeoPool filtration state and speed display
 
 ## [11.0.0.5] 20220407
 ### Added
