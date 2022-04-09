@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.6 - Last update 28.03.2022
+ * Updated until v10.1.0.6 - Last update 09.04.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1084,13 +1084,13 @@
 #define D_NEOPOOL_RELAY_CL                "Pompa cloro"
 #define D_NEOPOOL_RELAY_CD                "Conduttività"
 #define D_NEOPOOL_RELAY_HEATING           "Riscaldamento"
-#define D_NEOPOOL_RELAY_UV                "UV"
-#define D_NEOPOOL_RELAY_VALVE             "Valve"
-#define D_NEOPOOL_RELAY_AUX               "Aux"
+#define D_NEOPOOL_RELAY_UV                "Ultravioletti"
+#define D_NEOPOOL_RELAY_VALVE             "Valvola"
+#define D_NEOPOOL_RELAY_AUX               "Ausiliario"
 #define D_NEOPOOL_TIME                    "Orario"
 #define D_NEOPOOL_FILT_MODE               "Modalità di filtrazione"
 #define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
-#define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
+#define D_NEOPOOL_POLARIZATION            "Polarizzazione"     // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "OK"
 #define D_NEOPOOL_COVER                   "Copertura"
