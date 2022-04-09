@@ -3,12 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.6]
+## [11.0.0.7]
 ### Added
-- Commands ``Sensor34 10 <valueA>`` and ``Sensor34 11 <valueB>`` to use HX711 absolute weight conversion (#15292)
+- HX711 command ``Sensor34 10 0|1|<weight in gram>`` to set HX711 fixed tare (0 = use auto tare, 1 = use calibrated tare, Any other value is user selected tare)
 
 ### Changed
-- NeoPool: boost command with redox control state, relay and aux detail display
+- HX711 removed command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
+- HX711 commands ``Sensor34 11 <valueA>`` and ``Sensor34 12 <valueB>`` to use HX711 absolute weight conversion (#15292)
+
+## [11.0.0.6] 20220409
+### Added
+- HX711 commands ``Sensor34 10 <valueA>`` and ``Sensor34 11 <valueB>`` to use HX711 absolute weight conversion (#15292)
+
+### Changed
+- NeoPool boost command with redox control state, relay and aux detail display
 
 ### Fixed
 - NeoPool filtration state and speed display
