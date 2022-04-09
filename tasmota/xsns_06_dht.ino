@@ -141,6 +141,7 @@ bool DhtRead(uint32_t sensor) {
   float temperature = NAN;
   float humidity = NAN;
   float voltage = NAN;
+  float x = NAN;
   switch (Dht[sensor].type) {
     case GPIO_DHT11:                                    // DHT11
       humidity = dht_data[0];
@@ -165,11 +166,19 @@ bool DhtRead(uint32_t sensor) {
 
       // Rough approximate of soil moisture % (based on values observed in the eWeLink app)
       // Observed values are available here: https://gist.github.com/minovap/654cdcd8bc37bb0d2ff338f8d144a509
-      if (voltage < 13616) { humidity = -0.05 * voltage + 770.5; }
-      else if (voltage < 13756) { humidity = -0.0279 * voltage + 3889; }
-      else if (voltage < 14883) { humidity = -0.027 * voltage + 422; }
-      else if (voltage < 25550) { humidity = -0.00075 * voltage + 31.3; }
-      else { humidity = -0.00475 * voltage + 133.5; }
+      
+      if (voltage < 15037) {
+        x = voltage - 15200;
+        humidity = - pow(0.0024 * x, 3) - 0.0004 * x + 20.1;
+      }
+      else if (voltage < 22300) {
+        humidity = - 0.00069 * voltage + 30.6;
+      }
+      else {
+        x = voltage - 22800;
+        humidity = - pow(0.00046 * x, 3) - 0.0004 * x + 15;
+      }
+
       if (humidity < 0 ) { humidity = 0; }
 
       voltage = voltage / 10000;                        // convert sonoff 5 digit voltage to decimal
