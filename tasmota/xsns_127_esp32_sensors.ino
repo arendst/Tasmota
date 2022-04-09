@@ -121,18 +121,24 @@ bool Xsns127(uint8_t function) {
   bool result = false;
 
   switch (function) {
+#ifndef CONFIG_IDF_TARGET_ESP32S3
     case FUNC_JSON_APPEND:
       Esp32SensorShow(1);
       break;
+#endif  // CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_WEBSERVER
+#ifndef CONFIG_IDF_TARGET_ESP32S3
     case FUNC_WEB_SENSOR:
       Esp32SensorShow(0);
       break;
+#endif  // CONFIG_IDF_TARGET_ESP32S3
 #endif  // USE_WEBSERVER
 #if CONFIG_IDF_TARGET_ESP32
+#ifndef CONFIG_IDF_TARGET_ESP32S3
     case FUNC_INIT:
       Esp32SensorInit();
       break;
+#endif  // CONFIG_IDF_TARGET_ESP32S3
 #endif  // CONFIG_IDF_TARGET_ESP32
   }
   return result;
