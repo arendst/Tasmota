@@ -3166,12 +3166,14 @@ int WebQuery(char *buffer)
           ResponseClear();
           char text[2] = { 0 };
           text[0] = '.';
+          Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
           while (text[0] != '\0') {
             text[0] = *read++;
             if (text[0] > 31) {               // Remove control characters like linefeed
               if (ResponseAppend_P(text) == ResponseSize()) { break; };
             }
           }
+          ResponseJsonEnd();
 #ifdef USE_SCRIPT
           extern uint8_t tasm_cmd_activ;
           // recursive call must be possible in this case
