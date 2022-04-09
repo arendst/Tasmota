@@ -17,12 +17,30 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// The below is currenlty not used, CA validation takes too much memory and compute time.
-// Please use fingerprint validation instead
-// However, the CA are available below for future use if it appears to be useful
-
+//
+// Certificates are stored in flash (PROGMEM) to avoid consuming valuable RAM.
+//
+// To save space in flash, the Let's Encrypt and Amazon AWS certificates may be 
+// individually omitted if TLS is enabled, but the certificates are not used. 
+// This is typically the case when a locally generated root certificate is used 
+// for TLS authentication.
+// 
+// To omit these certificates, define one or both of the 
+// OMIT_LETS_ENCRYPT_CERT and/or OMIT_AWS_CERT macros in user_config_override.h.
+//
+// To include a locally generated root certificate, define the
+// INCLUDE_LOCAL_CERT macro in user_config_override.h.
+// 
+// See the files tasmota/local_ca_data_sample.h and tasmota/local_ca_descriptor_sample.h
+// in the Tasmota source for instructions for generating them from a local root
+// certificate in .crt format.
+//
+// Note: Using full certificate verification increases the amount of time
+//       required to create a TLS connection, compared to fingerprint validation.
+//
 #if defined(USE_TLS)
 
+#if ! defined(OMIT_LETS_ENCRYPT_CERT)
 /*********************************************************************************************\
  * LetsEncrypt R3 certificate, RSA 2048 bits SHA 256, valid until 20250915
  *
@@ -71,18 +89,10 @@ static const unsigned char LetsEncryptR3_RSA_E[] = {
 	0x01, 0x00, 0x01
 };
 
-static const br_x509_trust_anchor PROGMEM LetsEncryptR3_TA = {
-	{ (unsigned char *)LetsEncryptR3_DN, sizeof LetsEncryptR3_DN },
-	BR_X509_TA_CA,
-	{
-		BR_KEYTYPE_RSA,
-		{ .rsa = {
-			(unsigned char *)LetsEncryptR3_RSA_N, sizeof LetsEncryptR3_RSA_N,
-			(unsigned char *)LetsEncryptR3_RSA_E, sizeof LetsEncryptR3_RSA_E,
-		} }
-	}
-};
 
+#endif
+
+#if ! defined(OMIT_AWS_CERT)
 /*********************************************************************************************\
  * Amazon Root CA, RSA 2048 bits SHA 256, valid until 20380117
  *
@@ -132,20 +142,16 @@ static const unsigned char PROGMEM AmazonRootCA1_RSA_E[] = {
 	0x01, 0x00, 0x01
 };
 
-const br_x509_trust_anchor PROGMEM AmazonRootCA1_TA = {
-	{ (unsigned char *)AmazonRootCA1_DN, sizeof AmazonRootCA1_DN },
-	BR_X509_TA_CA,
-	{
-		BR_KEYTYPE_RSA,
-		{ .rsa = {
-			(unsigned char *)AmazonRootCA1_RSA_N, sizeof AmazonRootCA1_RSA_N,
-			(unsigned char *)AmazonRootCA1_RSA_E, sizeof AmazonRootCA1_RSA_E,
-		} }
-	}
-};
+#endif
 
-// cumulative CA
+#if  defined(INCLUDE_LOCAL_CERT)
+#include <local_ca_data.h>
+#endif
+//
+//  ========== cumulative CA =================
+//
 const br_x509_trust_anchor PROGMEM Tasmota_TA[] = {
+#if ! defined(OMIT_LETS_ENCRYPT_CERT)
 	{
 		{ (unsigned char *)LetsEncryptR3_DN, sizeof LetsEncryptR3_DN },
 		BR_X509_TA_CA,
@@ -157,7 +163,13 @@ const br_x509_trust_anchor PROGMEM Tasmota_TA[] = {
 			} }
 		}
 	}
-	,
+
+#if ! defined(OMIT_AWS_CERT) || defined(INCLUDE_LOCAL_CERT)
+    ,
+#endif
+#endif
+
+#if ! defined(OMIT_AWS_CERT)
 	{
 		{ (unsigned char *)AmazonRootCA1_DN, sizeof AmazonRootCA1_DN },
 		BR_X509_TA_CA,
@@ -169,11 +181,26 @@ const br_x509_trust_anchor PROGMEM Tasmota_TA[] = {
 			} }
 		}
 	}
+
+#if defined(INCLUDE_LOCAL_CERT)
+    ,
+#endif
+#endif
+
+
+#if defined(INCLUDE_LOCAL_CERT)
+#include <local_ca_descriptor.h>
+#endif
+
 };
 
 const size_t Tasmota_TA_size = nitems(Tasmota_TA);
 
+
+#if defined(USE_TELEGRAM)
+
 // we add a separate CA for telegram
+
 /*********************************************************************************************\
  * GoDaddy Daddy Secure Certificate Authority - G2, RSA 2048 bits SHA 256, valid until 20220523
  *
@@ -231,5 +258,6 @@ const br_x509_trust_anchor GoDaddyCAG2_TA PROGMEM = {
 		} }
 	}
 };
+#endif
 
 #endif // defined(USE_TLS)
