@@ -941,6 +941,11 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
               pTuya->timeout = 300; 
               pTuya->timeout_state = TUYA_STARTUP_STATE_SEND_CMD; 
               pTuya->startup_state = TUYA_STARTUP_STATE_WAIT_ACK_CMD;
+#ifdef TUYA_MORE_DEBUG        
+              MqttPublishLoggingAsync(false);
+              SyslogAsync(false);
+#endif
+
               break;
             }
           } else {
@@ -1414,6 +1419,7 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
 
     } else {
       if (dpid > 0 && TuyaIdx <= 2) {
+        int tasduty = duty;
 
         pTuya->ignore_dim = false;  // reset flag
 
@@ -1422,7 +1428,7 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
         } else {
           duty = changeUIntScale(duty, 0, 100, Settings->dimmer_hw_min, Settings->dimmer_hw_max);
         }
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim skipped value %d for dpid %d"), duty, dpid);  // due to 0 or already set
+        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim skipped tasduty %d value %d for dpid %d"), tasduty, duty, dpid);  // due to 0 or already set
       } else {
         AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Cannot set dimmer. Dimmer Id unknown"));
       }
@@ -2465,9 +2471,17 @@ bool Xdrv16(uint8_t function) {
         break;
       case FUNC_SET_DEVICE_POWER:
         result = TuyaSetPower();
+#ifdef TUYA_MORE_DEBUG        
+        MqttPublishLoggingAsync(false);
+        SyslogAsync(false);
+#endif
         break;
       case FUNC_BUTTON_PRESSED:
         result = TuyaButtonPressed();
+#ifdef TUYA_MORE_DEBUG        
+        MqttPublishLoggingAsync(false);
+        SyslogAsync(false);
+#endif
         break;
       case FUNC_EVERY_100_MSECOND:
         if (pTuya->timeout){
@@ -2525,6 +2539,10 @@ bool Xdrv16(uint8_t function) {
         break;
       case FUNC_SET_CHANNELS:
         result = TuyaSetChannels();
+#ifdef TUYA_MORE_DEBUG        
+        MqttPublishLoggingAsync(false);
+        SyslogAsync(false);
+#endif
         break;
       case FUNC_MQTT_INIT:
         // why here?  done as part of startup state machine        
