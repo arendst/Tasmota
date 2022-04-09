@@ -51,6 +51,7 @@ struct DHTSTRUCT {
   char     stype[12];
   float    t = NAN;
   float    h = NAN;
+  float    v = NAN;
 } Dht[DHT_MAX_SENSORS];
 
 bool DhtWaitState(uint32_t sensor, uint32_t level) {
@@ -87,6 +88,9 @@ bool DhtRead(uint32_t sensor) {
     case GPIO_SI7021:                                   // iTead SI7021
       delayMicroseconds(500);
       break;
+    case GPIO_MS01:                                     // Sonoff MS01
+      delayMicroseconds(450);
+      break;
   }
 
   if (!dht_dual_mode) {
@@ -102,6 +106,9 @@ bool DhtRead(uint32_t sensor) {
       break;
     case GPIO_SI7021:                                   // iTead SI7021
       delayMicroseconds(30);                            // See: https://github.com/letscontrolit/ESPEasy/issues/1798 and 20210524: https://github.com/arendst/Tasmota/issues/12180
+      break;
+    case GPIO_MS01:                                     // Sonoff MS01
+      delayMicroseconds(30);
       break;
   }
 
@@ -133,6 +140,7 @@ bool DhtRead(uint32_t sensor) {
 
   float temperature = NAN;
   float humidity = NAN;
+  float voltage = NAN;
   switch (Dht[sensor].type) {
     case GPIO_DHT11:                                    // DHT11
       humidity = dht_data[0];
@@ -152,6 +160,20 @@ bool DhtRead(uint32_t sensor) {
 */
       break;
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
+    case GPIO_MS01:                                     // Sonoff MS01
+      voltage = ((dht_data[0] << 8) | dht_data[1]);
+
+      // Rough approximate of soil moisture % (based on values observed in the eWeLink app)
+      // Observed values are available here: https://gist.github.com/minovap/654cdcd8bc37bb0d2ff338f8d144a509
+      if (voltage < 13616) { humidity = -0.05 * voltage + 770.5; }
+      else if (voltage < 13756) { humidity = -0.0279 * voltage + 3889; }
+      else if (voltage < 14883) { humidity = -0.027 * voltage + 422; }
+      else if (voltage < 25550) { humidity = -0.00075 * voltage + 31.3; }
+      else { humidity = -0.00475 * voltage + 133.5; }
+      if (humidity < 0 ) { humidity = 0; }
+
+      voltage = voltage / 10000;                        // convert sonoff 5 digit voltage to decimal
+      break;
     case GPIO_SI7021:                                   // iTead SI7021
       humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
       // DHT21/22 (Adafruit):
@@ -168,6 +190,7 @@ bool DhtRead(uint32_t sensor) {
 
   if (humidity > 100) { humidity = 100.0; }
   if (humidity < 0) { humidity = 0.1; }
+  Dht[sensor].v = voltage;
   Dht[sensor].h = ConvertHumidity(humidity);
   Dht[sensor].t = ConvertTemp(temperature);
   Dht[sensor].lastresult = 0;
@@ -178,7 +201,7 @@ bool DhtRead(uint32_t sensor) {
 /********************************************************************************************/
 
 bool DhtPinState() {
-  if ((XdrvMailbox.index >= AGPIO(GPIO_DHT11)) && (XdrvMailbox.index <= AGPIO(GPIO_SI7021))) {
+  if ((XdrvMailbox.index >= AGPIO(GPIO_DHT11)) && (XdrvMailbox.index <= AGPIO(GPIO_MS01))) {
     if (dht_sensors < DHT_MAX_SENSORS) {
       Dht[dht_sensors].pin = XdrvMailbox.payload;
       Dht[dht_sensors].type = BGPIO(XdrvMailbox.index);
@@ -232,7 +255,7 @@ void DhtEverySecond(void) {
 
 void DhtShow(bool json) {
   for (uint32_t i = 0; i < dht_sensors; i++) {
-    TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == i)), Dht[i].stype, Dht[i].t, Dht[i].h);
+    TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == i)), Dht[i].stype, Dht[i].t, Dht[i].h, Dht[i].v);
   }
 }
 

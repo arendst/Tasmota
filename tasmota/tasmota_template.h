@@ -185,6 +185,7 @@ enum UserSelectablePins {
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
   GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
   GPIO_RESET,                          // Generic reset
+  GPIO_MS01,                           // Sonoff MS01 Moisture Sensor 1wire interface
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -600,6 +601,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DHT22),          // DHT21, DHT22, AM2301, AM2302, AM2321
   AGPIO(GPIO_SI7021),         // iTead SI7021
   AGPIO(GPIO_DHT11_OUT),      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
+  AGPIO(GPIO_MS01),           // Sonoff MS01
 #endif
 #ifdef USE_DS18x20
   AGPIO(GPIO_DSB),            // Single wire DS18B20 or DS18S20

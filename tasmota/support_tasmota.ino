@@ -809,7 +809,7 @@ void MqttPublishTeleState(void)
   XdrvRulesProcess(1);
 }
 
-void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperature, float f_humidity)
+void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperature, float f_humidity, float f_voltage)
 {
   if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{"), types);
