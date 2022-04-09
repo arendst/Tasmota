@@ -1300,7 +1300,7 @@ uint8_t NeoPoolWriteRegisterWord(uint16_t addr, uint16_t data)
 }
 
 
-uint16_t NeoPoolGetDataTO(uint16_t addr, uint32_t timeout)
+uint16_t NeoPoolGetDataTO(uint16_t addr, int32_t timeout)
 {
   uint16_t data;
   uint16_t i;
