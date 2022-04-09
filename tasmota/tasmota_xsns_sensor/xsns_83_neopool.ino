@@ -732,8 +732,11 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  * Commands
  *
  * NPFiltration {<state> {speed}}
- *            get/set manual filtration (state = 0|1, speed = 1..3)
+ *            get/set manual filtration (state = 0..2, speed = 1..3)
  *            get filtration state if <state> is omitted, otherwise set new state
+ *              0 - switch filtration pump off
+ *              1 - switch filtration pump on
+ *              2 - toggle filtration pump
  *            for non-standard filtration types additional speed control is possible
  *
  * NPFiltrationMode {<mode>}
@@ -2129,11 +2132,18 @@ void CmndNeopoolFiltration(void)
           return;
       }
     }
-    if (value[0] >= 0 && value[0] <= 1) {
+    if (value[0] >= 0 && value[0] <= 2) {
       // Set MBF_PAR_FILT_MODE
       if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_PAR_FILT_MODE, MBV_PAR_FILT_MANUAL)) {
         NeopoolResponseError();
         return;
+      }
+      if (2 == value[0]) {
+        if (NEOPOOL_MODBUS_OK != NeoPoolReadRegister(MBF_PAR_FILTRATION_STATE, &data, 1)) {
+          NeopoolResponseError();
+          return;
+        }
+        value[0] = data ? 0 : 1;
       }
       // Set filtration mode to manual
       if (NEOPOOL_MODBUS_OK != NeoPoolWriteRegisterWord(MBF_PAR_FILT_MANUAL_STATE, value[0])) {
