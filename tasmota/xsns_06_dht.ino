@@ -173,6 +173,7 @@ bool DhtRead(uint32_t sensor) {
       if (humidity < 0 ) { humidity = 0; }
 
       voltage = voltage / 10000;                        // convert sonoff 5 digit voltage to decimal
+      temperature = 0;
       break;
     case GPIO_SI7021:                                   // iTead SI7021
       humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
