@@ -410,6 +410,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
   D_SENSOR_ADE7880_IRQ "|"
   D_SENSOR_RESET "|"
+  D_SENSOR_SONOFF_MS01 "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
