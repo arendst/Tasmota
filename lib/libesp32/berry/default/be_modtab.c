@@ -50,6 +50,9 @@ be_extern_native_module(animate);
 be_extern_native_module(lv);
 be_extern_native_module(lv_extra);
 be_extern_native_module(lv_tasmota);
+#ifdef USE_LVGL_OPENHASP
+be_extern_native_module(openhasp);
+#endif // USE_LVGL_OPENHASP
 #endif // USE_LVGL
 
 /* user-defined modules declare start */
@@ -132,6 +135,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(lv),
     &be_native_module(lv_extra),
     &be_native_module(lv_tasmota),
+#ifdef USE_LVGL_OPENHASP
+    &be_native_module(openhasp),
+#endif // USE_LVGL_OPENHASP
 #endif // USE_LVGL
 #ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),
