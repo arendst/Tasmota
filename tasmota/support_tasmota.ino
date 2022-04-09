@@ -813,7 +813,7 @@ void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperat
 {
   if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{"), types);
-    ResponseAppendTHD(f_temperature, f_humidity);
+    ResponseAppendTHD(f_temperature, f_humidity, f_voltage);
     ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
     if (pass_on) {
@@ -828,7 +828,7 @@ void TempHumDewShow(bool json, bool pass_on, const char *types, float f_temperat
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_THD(types, f_temperature, f_humidity);
+    WSContentSend_THD(types, f_temperature, f_humidity, f_voltage);
 #endif  // USE_WEBSERVER
   }
 }

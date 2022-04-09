@@ -944,14 +944,22 @@ void WSContentSend_CurrentMA(const char *types, float f_current) {
   WSContentSend_PD(HTTP_SNS_F_CURRENT_MA, types, Settings->flag2.current_resolution, &f_current);
 }
 
-void WSContentSend_THD(const char *types, float f_temperature, float f_humidity) {
-  WSContentSend_Temp(types, f_temperature);
+void WSContentSend_THD(const char *types, float f_temperature, float f_humidity, float f_voltage = NAN);              // Need to declare function in order to compile with parameter with default value
+void WSContentSend_THD(const char *types, float f_temperature, float f_humidity, float f_voltage) {
+  if (!isnan(f_voltage)) { // This is a Sonoff MS01, show only voltage and humidity with no decimals
+    char parameter[FLOATSZ];
+    dtostrfd(f_humidity, 0, parameter);
+    WSContentSend_PD(HTTP_SNS_HUM, types, parameter);
+    WSContentSend_PD(HTTP_SNS_F_VOLTAGE, types, 4, &f_voltage);
+  } else {
+    WSContentSend_Temp(types, f_temperature);
 
-  char parameter[FLOATSZ];
-  dtostrfd(f_humidity, Settings->flag2.humidity_resolution, parameter);
-  WSContentSend_PD(HTTP_SNS_HUM, types, parameter);
-  dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings->flag2.temperature_resolution, parameter);
-  WSContentSend_PD(HTTP_SNS_DEW, types, parameter, TempUnit());
+    char parameter[FLOATSZ];
+    dtostrfd(f_humidity, Settings->flag2.humidity_resolution, parameter);
+    WSContentSend_PD(HTTP_SNS_HUM, types, parameter);
+    dtostrfd(CalcTempHumToDew(f_temperature, f_humidity), Settings->flag2.temperature_resolution, parameter);
+    WSContentSend_PD(HTTP_SNS_DEW, types, parameter, TempUnit());
+  }
 }
 
 void WSContentEnd(void) {

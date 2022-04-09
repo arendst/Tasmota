@@ -1217,8 +1217,14 @@ int ResponseAppendTime(void)
   return ResponseAppendTimeFormat(Settings->flag2.time_format);
 }
 
-int ResponseAppendTHD(float f_temperature, float f_humidity)
+int ResponseAppendTHD(float f_temperature, float f_humidity, float f_voltage = NAN)
 {
+  if (!isnan(f_voltage)) { // This is a Sonoff MS01, show only voltage and humidity with no decimals
+    return ResponseAppend_P(PSTR("\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_VOLTAGE "\":%*_f"),
+                            0, &f_humidity,
+                            4, &f_voltage);
+  }
+
   float dewpoint = CalcTempHumToDew(f_temperature, f_humidity);
   return ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_HUMIDITY "\":%*_f,\"" D_JSON_DEWPOINT "\":%*_f"),
                           Settings->flag2.temperature_resolution, &f_temperature,
