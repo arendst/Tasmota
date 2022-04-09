@@ -33,6 +33,12 @@ extern "C" {
     .next = (uint32_t)(_next) & 0xFFFFFF                        \
 }
 
+#define be_const_key_literal(_str, _next) {                     \
+    .v.c = be_str_literal(_str),                                \
+    .type = BE_STRING,                                          \
+    .next = (uint32_t)(_next) & 0xFFFFFF                        \
+}
+
 #define be_const_key_int(_i, _next) {                           \
     .v.i = _i,                                                  \
     .type = BE_INT,                                             \
@@ -227,6 +233,13 @@ const bntvmodule be_native_module(_module) = {                  \
 #define be_nested_str(_name_)                                   \
   {                                                             \
     { .s=((bstring*)&be_const_str_##_name_) },                  \
+    BE_STRING                                                   \
+  }
+
+#define be_nested_str_literal(_name_)                           \
+  {                                                             \
+    { .s=(be_nested_const_str(_name_, _hash, sizeof(_name_)-1 ))\
+    },                                                          \
     BE_STRING                                                   \
   }
 
