@@ -3,7 +3,28 @@
 # use `import openhasp` and set the JSONL definitions in `pages.jsonl`
 #
 # As an optimization `0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#` is replaced with `0`
-#
+#################################################################################
+# How to solidify (needs an ESP32 with PSRAM)
+#-
+
+import path 
+path.remove("openhasp.bec")
+import solidify
+var openhasp
+load('openhasp.be')
+
+var classes = [
+  "page", "obj", "scr",
+  "btn", "switch", "checkbox",
+  "label", "spinner", "line", "img", "roller", "btnmatrix",
+  "bar", "slider", "arc", "textarea", "dropdown"
+]
+for c:classes
+  solidify.dump(openhasp.OpenHASP.("lvh_"+c), true)
+end
+solidify.dump(openhasp, true)
+
+-#
 var openhasp = module("openhasp")
 
 #################################################################################
@@ -55,8 +76,6 @@ class lvh_obj
     "end_angle1": "end_angle",
     "radius": "style_radius",
     "border_side": "style_border_side",
-    "border_width": "style_border_width",
-    "bg_opa": "style_bg_opa",
     "border_width": "style_border_width",
     "line_width": nil,                      # depends on class
     "line_width1": nil,                     # depends on class
@@ -476,7 +495,15 @@ class lvh_obj
     # self.check_label()
     var font
     if type(t) == 'int'
-      font = lv.font_robotocondensed_latin1(t)
+      try
+        font = lv.font_embedded("robotocondensed", t)
+      except ..
+        try
+          font = lv.font_embedded("montserrat", t)
+        except ..
+          return
+        end
+      end
     elif type(t) == 'string'
       import string
       var fn_split = string.split(t, '-')
@@ -981,7 +1008,8 @@ class lvh_page
     end
 
     # page object is also stored in the object map at id `0` as instance of `lvg_scr`
-    var obj_scr = lvh_scr(nil, self, nil, self._lv_scr)   # store screen in a virtual object
+    var lvh_scr_class = self._oh.lvh_scr
+    var obj_scr = lvh_scr_class(nil, self, nil, self._lv_scr)   # store screen in a virtual object
     self._obj_id[0] = obj_scr
 
     # create a global for this page of form p<page_number>, ex `p1`
@@ -1068,7 +1096,7 @@ class OpenHASP
   var dark                              # (bool) use dark theme?
   var hres, vres                        # (int) resolution
   var scr                               # (lv_obj) default LVGL screen
-  var r16, r20                          # (lv_font) robotocondensed fonts size 16 and 20
+  var r16                               # (lv_font) robotocondensed fonts size 16
   # openhasp objects
   var lvh_pages                         # (list of lvg_page) list of pages
   var lvh_page_cur_idx                  # (int) current page index number
@@ -1077,6 +1105,7 @@ class OpenHASP
 
   # assign lvh_page to a static attribute
   static lvh_page = lvh_page
+  static lvh_scr = lvh_scr
   # assign all classes as static attributes
   static lvh_btn = lvh_btn
   static lvh_switch = lvh_switch
@@ -1141,8 +1170,11 @@ class OpenHASP
     self.vres = lv.get_ver_res()       # ex: 240
     self.scr = lv.scr_act()            # LVGL default screean object
 
-    self.r20 = lv.font_robotocondensed_latin1(20) # // TODO what if does not exist
-    self.r16 = lv.font_robotocondensed_latin1(16) # // TODO what if does not exist
+    try
+      self.r16 = lv.font_embedded("robotocondensed", 16)  # TODO what if does not exist
+    except ..
+      self.r16 = lv.font_embedded("montserrat", 14)  # TODO what if does not exist
+    end
 
     # set the theme for OpenHASP
     var th2 = lv.theme_openhasp_init(0, lv.color(0xFF00FF), lv.color(0x303030), self.dark, self.r16)
@@ -1424,7 +1456,7 @@ class OpenHASP
         var lv_cl = introspect.get(global, obj_type)
         if lv_cl != nil && type(lv_cl) == 'class'
           lv_instance = lv_cl(parent_lvgl)
-          obj_class = lvh_obj           # use the basic lvh_obj component to encapsulate
+          obj_class = self.lvh_obj           # use the basic lvh_obj component to encapsulate
         end
       end
 
@@ -1433,7 +1465,7 @@ class OpenHASP
         var lv_cl = introspect.module(obj_type)
         if lv_cl != nil && type(lv_cl) == 'class'
           lv_instance = lv_cl(parent_lvgl)
-          obj_class = lvh_obj           # use the basic lvh_obj component to encapsulate
+          obj_class = self.lvh_obj           # use the basic lvh_obj component to encapsulate
         end
       end
 
@@ -1483,7 +1515,8 @@ openhasp.OpenHASP = OpenHASP
 # This means that the object is never garbage collected
 #
 openhasp.init = def (m)         # `init(m)` is called during first `import openhasp`
-  return openhasp.OpenHASP()
+  var oh = m.OpenHASP
+  return oh()
 end
 
 return openhasp

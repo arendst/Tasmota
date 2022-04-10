@@ -486,9 +486,7 @@ typedef struct {
   int32_t       energy_kWhtoday_ph[3];     // 314
   int32_t       energy_kWhyesterday_ph[3]; // 320
   int32_t       energy_kWhtotal_ph[3];     // 32C
-
-  uint8_t       free_338[4];               // 338
-
+  int32_t       weight_user_tare;          // 338
   uint8_t       web_time_start;            // 33C
   uint8_t       web_time_end;              // 33D
   uint8_t       sserial_config;            // 33E
@@ -647,8 +645,9 @@ typedef struct {
   uint32_t      ipv4_rgx_subnetmask;       // 55C
   uint16_t      pwm_value_ext[16-5];       // 560  Extension to pwm_value to store up to 16 PWM for ESP32. This array stores values 5..15
 
-  uint8_t       free_576[6];               // 576
+  uint8_t       free_576[2];               // 576
 
+  int32_t       weight_offset;             // 578
   uint16_t      pulse_timer[MAX_PULSETIMERS];  // 57C
   SysMBitfield1 flag2;                     // 5BC
   uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0

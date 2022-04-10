@@ -3164,14 +3164,23 @@ int WebQuery(char *buffer)
           // Return received data to the user - Adds 900+ bytes to the code
           const char* read = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
           ResponseClear();
+          Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
           char text[2] = { 0 };
-          text[0] = '.';
+          text[0] = *read++;
+          bool assume_json = (text[0] == '{') || (text[0] == '[');
+          if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
           while (text[0] != '\0') {
-            text[0] = *read++;
             if (text[0] > 31) {               // Remove control characters like linefeed
-              if (ResponseAppend_P(text) == ResponseSize()) { break; };
+              if (assume_json) {
+                if (ResponseAppend_P(text) == ResponseSize()) { break; };
+              } else {
+                if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
+              }
             }
+            text[0] = *read++;
           }
+          if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+          ResponseJsonEnd();
 #ifdef USE_SCRIPT
           extern uint8_t tasm_cmd_activ;
           // recursive call must be possible in this case

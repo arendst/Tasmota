@@ -387,6 +387,10 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
   MESHsetWifi(0);
   if (esp_now_init() != 0) {
     AddLog(LOG_LEVEL_INFO, PSTR("MSH: Node init failed"));
+    // try to re-launch wifi
+    MESH.role = ROLE_NONE;
+    MESHsetWifi(1);
+    WifiBegin(3, MESH.channel);
     return;
   }
 
