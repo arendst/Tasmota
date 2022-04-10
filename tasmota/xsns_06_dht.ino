@@ -167,7 +167,7 @@ bool DhtRead(uint32_t sensor) {
       break;
     }
     case GPIO_MS01: {                                    // Sonoff MS01
-      uint32_t voltage = ((dht_data[0] << 8) | dht_data[1]);
+      int32_t voltage = ((dht_data[0] << 8) | dht_data[1]);
 
 //      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: MS01 %d"), voltage);
 
