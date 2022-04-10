@@ -125,7 +125,7 @@
 
 #define TUYA_BUFFER_SIZE       256
 
-#define TUYA_BYTE_TIMEOUT_MS   100
+#define TUYA_BYTE_TIMEOUT_MS   500
 
 #define TUYA_MORE_DEBUG
 
@@ -2161,6 +2161,7 @@ void TuyaProcessCommand(unsigned char *buffer){
 // on packet complete with good CS, calls TuyaProcessCommand
 void TuyaProcessByte(unsigned char serial_in_byte){
 
+/* I don't think it's safe to do this with RGB possibly containing 55AA in the message.
   if ((pTuya->cmd_status != 1) &&
       (pTuya->lastByte == 0x55) && 
       (serial_in_byte == 0xAA)){
@@ -2172,10 +2173,11 @@ void TuyaProcessByte(unsigned char serial_in_byte){
     pTuya->cmd_status = 1;
     pTuya->errorcnt ++;
   }
+*/
 
   unsigned int  now = millis();
   if ((pTuya->cmd_status != 0) && (now - pTuya->lastByteTime > TUYA_BYTE_TIMEOUT_MS)){
-    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Reset by char timeout"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Reset by char timeout %u > %dms", now - pTuya->lastByteTime, TUYA_BYTE_TIMEOUT_MS));
     TuyaDump(pTuya->buffer, pTuya->byte_counter);
     pTuya->cmd_status = 0;
     pTuya->errorcnt ++;
