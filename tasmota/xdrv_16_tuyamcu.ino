@@ -2177,7 +2177,7 @@ void TuyaProcessByte(unsigned char serial_in_byte){
 
   unsigned int  now = millis();
   if ((pTuya->cmd_status != 0) && (now - pTuya->lastByteTime > TUYA_BYTE_TIMEOUT_MS)){
-    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Reset by char timeout %u > %dms", now - pTuya->lastByteTime, TUYA_BYTE_TIMEOUT_MS));
+    AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Reset by char timeout %u > %dms"), now - pTuya->lastByteTime, TUYA_BYTE_TIMEOUT_MS);
     TuyaDump(pTuya->buffer, pTuya->byte_counter);
     pTuya->cmd_status = 0;
     pTuya->errorcnt ++;
