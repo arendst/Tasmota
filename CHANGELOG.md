@@ -8,8 +8,13 @@ All notable changes to this project will be documented in this file.
 - HX711 command ``Sensor34 10 0|1|<weight in gram>`` to set HX711 fixed tare (0 = use auto tare, 1 = use calibrated tare, Any other value is user selected tare)
 
 ### Changed
-- HX711 removed command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
 - HX711 commands ``Sensor34 11 <valueA>`` and ``Sensor34 12 <valueB>`` to use HX711 absolute weight conversion (#15292)
+
+### Fixed
+- TasMesh relaunch wifi on esp_now_init failure (#15334)
+
+### Removed
+- HX711 command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
 
 ## [11.0.0.6] 20220409
 ### Added
