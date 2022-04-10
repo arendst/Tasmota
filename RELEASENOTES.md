@@ -139,8 +139,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Sonoff SPM increase max number of relays supported to 32 (8 SPM-4Relay modules)
 - Extent number of pulsetimers from 8 to 32 [#8266](https://github.com/arendst/Tasmota/issues/8266)
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
-- Removed command ``Sensor33`` and replaced by ``RtcNtpserver``
-- HX711 removed command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
 - Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes [#15280](https://github.com/arendst/Tasmota/issues/15280)
 - DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 - Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
@@ -152,13 +150,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Fixed
 - SSPM energy yesterday when zero
+- NeoPool NPBit and NPRead/NPReadL output
+- HX711 false readings by removing large deviations
 - GPIO OptionE1 selection regression [#14821](https://github.com/arendst/Tasmota/issues/14821)
 - BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 [#14829](https://github.com/arendst/Tasmota/issues/14829)
 - Wiegand 34-bit rfid reading and presentation [#14834](https://github.com/arendst/Tasmota/issues/14834)
 - Orno WE517 power meter phase 2 current reactive [#14841](https://github.com/arendst/Tasmota/issues/14841)
-- NeoPool NPBit and NPRead/NPReadL output
-- HX711 false readings by removing large deviations
+- TasMesh relaunch wifi on esp_now_init failure [#15334](https://github.com/arendst/Tasmota/issues/15334)
 - ESP32 save settings after OTA upload regression from v10.0.0.3
 - ESP32 PowerOnState [#15084](https://github.com/arendst/Tasmota/issues/15084)
 
 ### Removed
+- Command ``Sensor33`` and replaced by ``RtcNtpserver``
+- HX711 command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
