@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_TM1637
+#if defined(USE_DISPLAY_TM1637) || defined(USE_DISPLAY_MAX7219)
 /*********************************************************************************************\
   This driver enables the display of numbers (both integers and floats) and basic text
   on the inexpensive TM1637-, TM1638- and MAX7219-based seven-segment modules.
