@@ -806,7 +806,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_IMPROV
     feature8 |= 0x04000000;  // xdrv_62_improv.ino
 #endif
-//    feature8 |= 0x08000000;
+#if defined(USE_I2C) && defined(USE_SHT4X)
+    feature8 |= 0x08000000;
+#endif
 
 //    feature8 |= 0x10000000;
 //    feature8 |= 0x20000000;
