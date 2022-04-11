@@ -1520,6 +1520,13 @@ void SettingsDelta(void) {
         Settings->weight_absconv_a = 0;
         Settings->weight_absconv_b = 0;
     }
+    if (Settings->version < 0x0B000007) {  // 11.0.0.7
+        Settings->weight_user_tare = 0;
+        Settings->weight_offset = 0;
+#ifdef USE_HX711
+        Settings->weight_offset = Settings->energy_frequency_calibration * Settings->weight_calibration;
+#endif
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

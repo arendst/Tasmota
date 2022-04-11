@@ -615,6 +615,7 @@
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
+#define D_SENSOR_MS01          "MS01"
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCL"
 #define D_SENSOR_I2C_SDA       "I2C SDA"
