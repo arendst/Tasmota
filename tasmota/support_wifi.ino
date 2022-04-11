@@ -116,7 +116,18 @@ void WifiConfig(uint8_t type)
   }
 }
 
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  // https://github.com/espressif/arduino-esp32/issues/6264#issuecomment-1040147331
+  // There's an include for this but it doesn't define the function if it doesn't think it needs it, so manually declare the function
+extern "C" void phy_bbpll_en_usb(bool en);
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+
 void WifiSetMode(WiFiMode_t wifi_mode) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  // https://github.com/espressif/arduino-esp32/issues/6264#issuecomment-1094376906
+  // This brings the USB serial-jtag back to life. Suggest doing this immediately after wifi startup.
+  phy_bbpll_en_usb(true);
+#endif  // CONFIG_IDF_TARGET_ESP32C3
   if (WiFi.getMode() == wifi_mode) { return; }
 
   if (wifi_mode != WIFI_OFF) {
