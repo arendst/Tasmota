@@ -101,4 +101,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   65  | USE_ADE7880         | xnrg_23 | ADE7880  | 0x38        | Energy monitor
   66  | USE_PCF85363        | xsns_99 | PCF85363 | 0x51        | Real time clock
   67  | USE_DS3502          | xdrv_61 | DS3502   | 0x28 - 0x2B | Digital potentiometer
-  68  | USE_SHT4X           | xsns_97 | SHT4X    | 0x44 - 0x46 | Temperature and Humidity sensor
+  68  | USE_SHT4X           | xsns_97 | SHT4X    | 0x44 - 0x45 | Temperature and Humidity sensor
