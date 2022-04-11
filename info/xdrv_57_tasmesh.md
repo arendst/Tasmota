@@ -22,7 +22,7 @@ Add ``#define USE_TASMESH`` to your file ``user_config_override.h`` before compi
 
 ## Commands
 
-**WARNING:  The MAC address used for ESP-NOW is the *Soft AP MAC*, not the WiFi MAC.**
+**WARNING:  The MAC address used for ESP-NOW on the broker is the *Soft AP MAC*, not the WiFi MAC.**
 
 *NOTE:  The colons in the mac addresses of the commands are optional.*
 
