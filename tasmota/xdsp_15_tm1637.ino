@@ -262,7 +262,7 @@ void TM1637Init(void)
   {
     strcpy_P(TM1637Data.model_name, PSTR("MAX7219"));
     max7219display = new LedControl(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), Settings->display_width / 8);
-    for (dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
+    for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
     {
       max7219display->shutdown(MAX7219_ADDR + dev_addr, false);
     }
@@ -560,7 +560,7 @@ void TM1637ClearDisplay(void)
   }
   else if (MAX7219 == TM1637Data.display_type)
   {
-    for (dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
+    for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
     {
       max7219display->clearDisplay(MAX7219_ADDR + dev_addr);
     }
@@ -1112,7 +1112,7 @@ void TM1637Dim(void)
   }
   else if (MAX7219 == TM1637Data.display_type)
   {
-    for (dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
+    for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
     {
       max7219display->setIntensity(MAX7219_ADDR, brightness); // 0 - 7
     }
