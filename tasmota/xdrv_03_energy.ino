@@ -178,14 +178,16 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     }
   }
 #ifdef USE_ENERGY_COLUMN_GUI
+  ext_snprintf_P(result, TOPSZ *2, PSTR("</td>"));        // Skip first column
   if ((Energy.phase_count > 1) && single) {            // Need to set colspan so need a new column
-    ext_snprintf_P(result, TOPSZ, PSTR("</td><td colspan='%d' style='text-align:center;'>%*_f</td><td>"), Energy.phase_count, resolution, &input[0]);
+//    ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td colspan='%d' style='text-align:center'>%*_f</td><td>&nbsp;</td>"), result, (Energy.phase_count *2) -1, resolution, &input[0]);
+    ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td colspan='%d' style='text-align:right'>%*_f</td><td>&nbsp;</td>"), result, (Energy.phase_count *2) -1, resolution, &input[0]);
   } else {
-    ext_snprintf_P(result, TOPSZ, PSTR("</td><td>"));  // Skip first column
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      ext_snprintf_P(result, TOPSZ, PSTR("%s%*_f</td><td>"), result, resolution, &input[i]);
+      ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td style='text-align:right'>%*_f</td><td>&nbsp;</td>"), result, resolution, &input[i]);
     }
   }
+  ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td>"), result);
 #else  // not USE_ENERGY_COLUMN_GUI
   uint32_t index = (single) ? 1 : Energy.phase_count;    // 1,2,3
   result[0] = '\0';
@@ -1111,9 +1113,9 @@ void EnergyShow(bool json) {
     energy_tariff = true;
   }
 
-  char value_chr[TOPSZ];   // Used by EnergyFormatIndex
-  char value2_chr[TOPSZ];
-  char value3_chr[TOPSZ];
+  char value_chr[TOPSZ * 2];   // Used by EnergyFormatIndex
+  char value2_chr[TOPSZ * 2];
+  char value3_chr[TOPSZ * 2];
 
   if (json) {
     bool show_energy_period = (0 == TasmotaGlobal.tele_period);
@@ -1233,24 +1235,18 @@ void EnergyShow(bool json) {
   } else {
 #ifdef USE_ENERGY_COLUMN_GUI
     // Need a new table supporting more columns
-    WSContentSend_P(PSTR("</table>{t}{s}</th><th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
 
-    // Calculate nice inter-column spacing without using table spacing or column padding
-    uint32_t len = 6;                        // Minimum width is 60px
-    for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      // Using active power expecting to be the largest number not counting increasing total energy
-      uint32_t len_new = ext_snprintf_P(value_chr, sizeof(value_chr), PSTR("%*_f"), Settings->flag2.wattage_resolution, &Energy.active_power[i]);
-      if (len_new > len) { len = len_new; }
-//      len_new = ext_snprintf_P(value_chr, sizeof(value_chr), PSTR("%*_f"), Settings->flag2.energy_resolution, &Energy.total[i]);
-//      if (len_new > len) { len = len_new; }
-    }
-    uint32_t width = len * 10;               // Default 60px. Every additonal character adds 10px
+    // {s}</th><th></th><th>Head1</th><th></th><td>{e}
+    // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
+    // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
 
+    WSContentSend_P(PSTR("</table>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
     bool no_label = Energy.voltage_common || (1 == Energy.phase_count);
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      WSContentSend_P(PSTR("</th><th style='width:%dpx;white-space:nowrap'>%s%s"), width, (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
+      WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
     }
-    WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
+    WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
+
 #endif  // USE_ENERGY_COLUMN_GUI
     if (Energy.voltage_available) {
       WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy.voltage, Settings->flag2.voltage_resolution, Energy.voltage_common));
