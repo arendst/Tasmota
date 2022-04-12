@@ -20,6 +20,7 @@
 //#define USE_SONOFF_SPM
 
 #ifdef ESP32
+#ifdef USE_ENERGY_SENSOR
 #ifdef USE_SONOFF_SPM
 /*********************************************************************************************\
  * Sonoff Stackable Power Manager
@@ -1907,17 +1908,6 @@ char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, uint8_t*
   return result;
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SSPM_POWER2[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "{m}%s" D_UNIT_VA "{e}"  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
-  "{s}" D_POWERUSAGE_REACTIVE "{m}%s" D_UNIT_VAR "{e}"
-  "{s}" D_POWER_FACTOR "{m}%s{e}";
-const char HTTP_SSPM_ENERGY[] PROGMEM =
-  "{s}" D_ENERGY_TODAY "{m}%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_YESTERDAY "{m}%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_TOTAL "{m}%s" D_UNIT_KILOWATTHOUR "{e}";
-#endif  // USE_WEBSERVER
-
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
 
@@ -2007,10 +1997,10 @@ void SSPMEnergyShow(bool json) {
       WSContentSend_PD(HTTP_SNS_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
       char valu2_chr[SSPM_SIZE];
       char valu3_chr[SSPM_SIZE];
-      WSContentSend_PD(HTTP_SSPM_POWER2, SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+      WSContentSend_PD(HTTP_ENERGY_SNS1, SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
                                          SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
                                          SSPMEnergyFormat(valu3_chr, Sspm->power_factor[0], 2, indirect, offset, count));
-      WSContentSend_PD(HTTP_SSPM_ENERGY, SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
+      WSContentSend_PD(HTTP_ENERGY_SNS2, SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
                                          SSPMEnergyFormat(valu2_chr, Sspm->Settings.energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count),
                                          SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
       WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
@@ -2302,4 +2292,5 @@ bool Xdrv86(uint8_t function) {
 }
 
 #endif  // USE_SONOFF_SPM
+#endif  // USE_ENERGY_SENSOR
 #endif  // ESP32
