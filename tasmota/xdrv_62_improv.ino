@@ -179,9 +179,19 @@ void ImprovReceived(void) {
       break;
     }
     case IMPROV_GET_DEVICE_INFO: {                             // 0x03
+      // Tasmota Zbbridge 11.0.0.7 ESP8266EX Wemos4
+      // Tasmota Sensors 11.0.0.7 ESP8266EX Wemos4
+      // Tasmota DE 11.0.0.7 ESP8266EX Wemos4
+      char image_name[33];
+      snprintf_P(image_name, sizeof(image_name), PSTR(D_HTML_LANGUAGE));
+      UpperCase(image_name, image_name);
+      if (!strcmp_P(image_name, PSTR("EN"))) {                 // Non-english
+        snprintf_P(image_name, sizeof(image_name), PSTR(CODE_IMAGE_STR));
+        image_name[0] &= 0xDF;                                 // Make first character uppercase
+      }
       char data[200];
-      uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\nTasmota\n%s\n%s\n%s\n"),
-                                TasmotaGlobal.version, GetDeviceHardware().c_str(), SettingsText(SET_DEVICENAME));
+      uint32_t len = snprintf_P(data, sizeof(data), PSTR("01\nTasmota %s\n%s\n%s\n%s\n"),
+                                image_name, TasmotaGlobal.version, GetDeviceHardware().c_str(), SettingsText(SET_DEVICENAME));
       data[0] = command;
       ImprovSendResponse((uint8_t*)data, len);
       break;
