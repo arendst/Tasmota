@@ -96,7 +96,6 @@ class FrogmoreScd40
         uint8_t duringMeasurement;
         uint8_t i2cAddress;
         TwoWire *pWire;
-        uint16_t co2AvgExtra;
         uint16_t co2History[SCD40_MEDIAN_FILTER_SIZE];
         uint16_t co2EAverage;
         int8_t co2NewDataLocation; // location to put new CO2 data for median filter
