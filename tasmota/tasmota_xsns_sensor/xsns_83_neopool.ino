@@ -654,6 +654,55 @@ NeoPoolResMBitfield neopool_resolution {
 
 #define D_NEOPOOL_NAME "NeoPool"
 
+#define D_NEOPOOL_JSON_FILTRATION_NONE        ""
+#define D_NEOPOOL_JSON_FILTRATION_MANUAL      "Manual"
+#define D_NEOPOOL_JSON_FILTRATION_AUTO        "Auto"
+#define D_NEOPOOL_JSON_FILTRATION_HEATING     "Heating"
+#define D_NEOPOOL_JSON_FILTRATION_SMART       "Smart"
+#define D_NEOPOOL_JSON_FILTRATION_INTELLIGENT "Intelligent"
+#define D_NEOPOOL_JSON_FILTRATION_BACKWASH    "Backwash"
+#define D_NEOPOOL_JSON_MODULES                "Modules"
+#define D_NEOPOOL_JSON_CHLORINE               "Chlorine"
+#define D_NEOPOOL_JSON_CONDUCTIVITY           "Conductivity"
+#define D_NEOPOOL_JSON_FILTRATION             "Filtration"
+#define D_NEOPOOL_JSON_FILTRATION_MODE        "Mode"
+#define D_NEOPOOL_JSON_FILTRATION_SPEED       "Speed"
+#define D_NEOPOOL_JSON_HYDROLYSIS             "Hydrolysis"
+#define D_NEOPOOL_JSON_CELL_RUNTIME           "Runtime"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL     "Total"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_PART      "Part"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_POL1      "Pol1"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_POL2      "Pol2"
+#define D_NEOPOOL_JSON_CELL_RUNTIME_CHANGES   "Changes"
+#define D_NEOPOOL_JSON_IONIZATION             "Ionization"
+#define D_NEOPOOL_JSON_LIGHT                  "Light"
+#define D_NEOPOOL_JSON_LIGHT_MODE             "Mode"
+#define D_NEOPOOL_JSON_REDOX                  "Redox"
+#define D_NEOPOOL_JSON_RELAY                  "Relay"
+#define D_NEOPOOL_JSON_RELAY_PH_ACID          "Acid"
+#define D_NEOPOOL_JSON_RELAY_PH_BASE          "Base"
+#define D_NEOPOOL_JSON_RELAY_RX               "Redox"
+#define D_NEOPOOL_JSON_RELAY_CL               "Chlorine"
+#define D_NEOPOOL_JSON_RELAY_CD               "Conductivity"
+#define D_NEOPOOL_JSON_RELAY_HEATING          "Heating"
+#define D_NEOPOOL_JSON_RELAY_UV               "UV"
+#define D_NEOPOOL_JSON_RELAY_FILTVALVE        "Valve"
+#define D_NEOPOOL_JSON_AUX                    "Aux"
+#define D_NEOPOOL_JSON_STATE                  "State"
+#define D_NEOPOOL_JSON_TYPE                   "Type"
+#define D_NEOPOOL_JSON_UNIT                   "Unit"
+#define D_NEOPOOL_JSON_COVER                  "Cover"
+#define D_NEOPOOL_JSON_SHOCK                  "Boost"
+#define D_NEOPOOL_JSON_LOW                    "Low"
+#define D_NEOPOOL_JSON_SETPOINT               "Setpoint"
+#define D_NEOPOOL_JSON_MIN                    "Min"
+#define D_NEOPOOL_JSON_MAX                    "Max"
+#define D_NEOPOOL_JSON_PHPUMP                 "Pump"
+#define D_NEOPOOL_JSON_FLOW1                  "FL1"
+#define D_NEOPOOL_JSON_TANK                   "Tank"
+#define D_NEOPOOL_JSON_BIT                    "Bit"
+#define D_NEOPOOL_JSON_NODE_ID                "NodeID"
+
 const char kNeoPoolMachineNames[] PROGMEM =
   D_NEOPOOL_MACH_NONE "|"
   D_NEOPOOL_MACH_HIDROLIFE "|"
@@ -676,6 +725,14 @@ const char kNeoPoolFiltrationMode[] PROGMEM =
   D_NEOPOOL_FILTRATION_SMART "|"
   D_NEOPOOL_FILTRATION_INTELLIGENT "|"
   D_NEOPOOL_FILTRATION_BACKWASH
+  ;
+const char kNeoPoolFiltrationModeCmnd[] PROGMEM =
+  D_NEOPOOL_JSON_FILTRATION_MANUAL "|"
+  D_NEOPOOL_JSON_FILTRATION_AUTO "|"
+  D_NEOPOOL_JSON_FILTRATION_HEATING "|"
+  D_NEOPOOL_JSON_FILTRATION_SMART "|"
+  D_NEOPOOL_JSON_FILTRATION_INTELLIGENT "|"
+  D_NEOPOOL_JSON_FILTRATION_BACKWASH
   ;
 const uint8_t sNeoPoolFiltrationMode[] PROGMEM = {
   MBV_PAR_FILT_MANUAL,
@@ -1420,48 +1477,6 @@ bool NeoPoolIsIonization(void)
 
 
 /*********************************************************************************************/
-#define D_NEOPOOL_JSON_MODULES                "Modules"
-#define D_NEOPOOL_JSON_CHLORINE               "Chlorine"
-#define D_NEOPOOL_JSON_CONDUCTIVITY           "Conductivity"
-#define D_NEOPOOL_JSON_FILTRATION             "Filtration"
-#define D_NEOPOOL_JSON_FILTRATION_MODE        "Mode"
-#define D_NEOPOOL_JSON_FILTRATION_SPEED       "Speed"
-#define D_NEOPOOL_JSON_HYDROLYSIS             "Hydrolysis"
-#define D_NEOPOOL_JSON_CELL_RUNTIME           "Runtime"
-#define D_NEOPOOL_JSON_CELL_RUNTIME_TOTAL     "Total"
-#define D_NEOPOOL_JSON_CELL_RUNTIME_PART      "Part"
-#define D_NEOPOOL_JSON_CELL_RUNTIME_POL1      "Pol1"
-#define D_NEOPOOL_JSON_CELL_RUNTIME_POL2      "Pol2"
-#define D_NEOPOOL_JSON_CELL_RUNTIME_CHANGES   "Changes"
-#define D_NEOPOOL_JSON_IONIZATION             "Ionization"
-#define D_NEOPOOL_JSON_LIGHT                  "Light"
-#define D_NEOPOOL_JSON_LIGHT_MODE             "Mode"
-#define D_NEOPOOL_JSON_REDOX                  "Redox"
-#define D_NEOPOOL_JSON_RELAY                  "Relay"
-#define D_NEOPOOL_JSON_RELAY_PH_ACID          "Acid"
-#define D_NEOPOOL_JSON_RELAY_PH_BASE          "Base"
-#define D_NEOPOOL_JSON_RELAY_RX               "Redox"
-#define D_NEOPOOL_JSON_RELAY_CL               "Chlorine"
-#define D_NEOPOOL_JSON_RELAY_CD               "Conductivity"
-#define D_NEOPOOL_JSON_RELAY_HEATING          "Heating"
-#define D_NEOPOOL_JSON_RELAY_UV               "UV"
-#define D_NEOPOOL_JSON_RELAY_FILTVALVE        "Valve"
-#define D_NEOPOOL_JSON_AUX                    "Aux"
-#define D_NEOPOOL_JSON_STATE                  "State"
-#define D_NEOPOOL_JSON_TYPE                   "Type"
-#define D_NEOPOOL_JSON_UNIT                   "Unit"
-#define D_NEOPOOL_JSON_COVER                  "Cover"
-#define D_NEOPOOL_JSON_SHOCK                  "Boost"
-#define D_NEOPOOL_JSON_LOW                    "Low"
-#define D_NEOPOOL_JSON_SETPOINT               "Setpoint"
-#define D_NEOPOOL_JSON_MIN                    "Min"
-#define D_NEOPOOL_JSON_MAX                    "Max"
-#define D_NEOPOOL_JSON_PHPUMP                 "Pump"
-#define D_NEOPOOL_JSON_FLOW1                  "FL1"
-#define D_NEOPOOL_JSON_TANK                   "Tank"
-#define D_NEOPOOL_JSON_BIT                    "Bit"
-#define D_NEOPOOL_JSON_NODE_ID                "NodeID"
-
 void NeoPoolAppendModules(void)
 {
   ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_MODULES  "\":"));
@@ -2179,7 +2194,7 @@ void CmndNeopoolFiltrationMode(void)
 
   if (XdrvMailbox.data_len) {
     char command[CMDSZ];
-    int mode = GetCommandCode(command, sizeof(command), XdrvMailbox.data, kNeoPoolFiltrationMode);
+    int mode = GetCommandCode(command, sizeof(command), XdrvMailbox.data, kNeoPoolFiltrationModeCmnd);
     if (mode >= 0) {
       XdrvMailbox.payload = pgm_read_byte(sNeoPoolFiltrationMode + mode);
     }
@@ -2199,7 +2214,7 @@ void CmndNeopoolFiltrationMode(void)
     NeopoolResponseError();
     return;
   }
-  ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : nitems(kNeoPoolFiltrationMode)-1, kNeoPoolFiltrationMode));
+  ResponseCmndChar(GetTextIndexed(stemp, sizeof(stemp), data < MBV_PAR_FILT_INTELLIGENT ? data : nitems(kNeoPoolFiltrationModeCmnd)-1, kNeoPoolFiltrationMode));
 }
 
 
