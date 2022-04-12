@@ -691,8 +691,8 @@ int FrogmoreScd40::startLowPowerPeriodicMeasurement(void)
     if (DuringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
-    return (sendCommand(COMMAND_SCD40_START_LOW_POWER_PERIODIC_MEASUREMENT));
     DuringMeasurement = 1;
+    return (sendCommand(COMMAND_SCD40_START_LOW_POWER_PERIODIC_MEASUREMENT));
 }
 
 int FrogmoreScd40::getDataReadyStatus(bool *pIsAvailable)
