@@ -41,10 +41,13 @@
 #define MESH_MAX_PACKETS  3        // (3) Max number of packets
 #define MESH_REFRESH      50       // Number of ms
 
+// The format of the vendor-specific action frame is as follows:
 // ------------------------------------------------------------------------------------------------------------
 // | MAC Header | Category Code | Organization Identifier | Random Values | Vendor Specific Content |   FCS   |
 // ------------------------------------------------------------------------------------------------------------
 //   24 bytes         1 byte              3 bytes               4 bytes             7~255 bytes        4 bytes
+//
+// The Vendor Specific Content contains vendor-specific fields as follows:
 // -------------------------------------------------------------------------------
 // | Element ID | Length | Organization Identifier | Type | Version |    Body    |
 // -------------------------------------------------------------------------------

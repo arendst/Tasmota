@@ -288,7 +288,7 @@ bool MESHroleNode(void) {
 }
 
 /**
- * @brief Redirects the mqtt message on the node just before it would have been sended to
+ * @brief Redirects the outgoing mqtt message on the node just before it would have been sent to
  *        the broker via ESP-NOW
  *
  * @param _topic
@@ -385,8 +385,10 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
   wifi_promiscuous_enable(0);
   WiFi.disconnect();
   MESHsetWifi(0);
-  if (esp_now_init() != 0) {
-    AddLog(LOG_LEVEL_INFO, PSTR("MSH: Node init failed"));
+  esp_now_deinit();  // in case it was already initialized but disconnected
+  int init_result = esp_now_init();
+  if (init_result != 0) {
+    AddLog(LOG_LEVEL_INFO, PSTR("MSH: Node init failed with error: %d"), init_result);
     // try to re-launch wifi
     MESH.role = ROLE_NONE;
     MESHsetWifi(1);
@@ -421,8 +423,10 @@ void MESHstartBroker(void) {       // Must be called after WiFi is initialized!!
   WiFi.softAPmacAddress(MESH.broker); //set MESH.broker to the needed MAC
   uint32_t _channel = WiFi.channel();
 
-  if (esp_now_init() != 0) {
-    AddLog(LOG_LEVEL_INFO, PSTR("MSH: Broker init failed"));
+  esp_now_deinit();  // in case it was already initialized by disconnected
+  esp_err_t init_result = esp_now_init();
+  if (esp_err_t() != ESP_OK) {
+    AddLog(LOG_LEVEL_INFO, PSTR("MSH: Broker init failed with error: %s"), init_result);
     return;
   }
 
@@ -646,6 +650,7 @@ void MESHEverySecond(void) {
     if (millis() - MESH.lastMessageFromBroker > 70000) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Broker not seen for 70 secs, try to re-launch wifi"));
       MESH.role = ROLE_NONE;
+      MESHdeInit();  // if we don't deinit after losing connection, we will get an error trying to reinit later
       MESHsetWifi(1);
       WifiBegin(3, MESH.channel);
     }
@@ -733,12 +738,15 @@ void (* const MeshCommand[])(void) PROGMEM = {
   &CmndMeshBroker, &CmndMeshNode, &CmndMeshPeer, &CmndMeshChannel, &CmndMeshInterval };
 
 void CmndMeshBroker(void) {
+#ifdef ESP32  // only ESP32 currently supported as broker
   MESH.channel = WiFi.channel(); // The Broker gets the channel from the router, no need to declare it with MESHCHANNEL (will be mandatory set it when ETH will be implemented)
   MESHstartBroker();
   ResponseCmndNumber(MESH.channel);
+#endif  // ESP32
 }
 
 void CmndMeshNode(void) {
+#ifndef ESP32  // only ESP8266 current supported as node
   if (XdrvMailbox.data_len > 0) {
     MESHHexStringToBytes(XdrvMailbox.data, MESH.broker);
     if (XdrvMailbox.index != 0) { XdrvMailbox.index = 1; }    // Everything not 0 is a full node
@@ -764,6 +772,7 @@ void CmndMeshNode(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("MSH: No Mesh Broker found using MAC %s"), XdrvMailbox.data);
     }
   }
+#endif  // ESP32
 }
 
 void CmndMeshPeer(void) {
@@ -773,9 +782,16 @@ void CmndMeshPeer(void) {
     char _peerMAC[18];
     ToHex_P(_MAC, 6, _peerMAC, 18, ':');
     AddLog(LOG_LEVEL_DEBUG,PSTR("MSH: MAC-string %s (%s)"), XdrvMailbox.data, _peerMAC);
-    MESHaddPeer(_MAC);
-    MESHcountPeers();
-    ResponseCmndChar(_peerMAC);
+    if (MESHcheckPeerList((const uint8_t *)_MAC) == false) {
+      MESHaddPeer(_MAC);
+      MESHcountPeers();
+      ResponseCmndChar(_peerMAC);
+    } else if (WiFi.macAddress() == String(_peerMAC) || WiFi.softAPmacAddress() == String(_peerMAC)){
+      // a device can be added as its own peer, but every send will result in a ESP_NOW_SEND_FAIL
+      AddLog(LOG_LEVEL_DEBUG,PSTR("MSH: device %s cannot be a peer of itself"), XdrvMailbox.data, _peerMAC);
+    } else {
+      AddLog(LOG_LEVEL_DEBUG,PSTR("MSH: %s is already on peer list, will not add"), XdrvMailbox.data, _peerMAC);
+    }
   }
 }
 
