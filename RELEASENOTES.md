@@ -107,6 +107,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Added
 - Command ``SetOption135 1`` to disable LVGL splash screen
 - Command ``SetOption136 1`` to disable single sensor reports from Tuya devices while keeping teleperiod reports [#15216](https://github.com/arendst/Tasmota/issues/15216)
+- Command ``SetOption137 1`` to avoid MQTT publish of defined Tuya CMDs if SO66 is active [#15267](https://github.com/arendst/Tasmota/issues/15267)
+- Command ``SetOption138 1`` to switch GUI energy multi-column layout from left/center (0) to right (1) align [#15342](https://github.com/arendst/Tasmota/issues/15342)
 - Command ``SspmMap 0`` to reset Sonoff SPM default mapping
 - Command ``TcpConnect <port><ip_address>`` to add client connection mode [#14874](https://github.com/arendst/Tasmota/issues/14874)
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 [#15061](https://github.com/arendst/Tasmota/issues/15061)
@@ -132,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 TasmotaSerial uart mapping to support multiple ``begin()`` and implement ``getUart()`` [#14981](https://github.com/arendst/Tasmota/issues/14981)
 
 ### Breaking Changed
+- Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes [#15280](https://github.com/arendst/Tasmota/issues/15280)
 
 ### Changed
 - Adafruit BusIO library from v1.0.10 to v1.11.0
@@ -139,7 +142,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Sonoff SPM increase max number of relays supported to 32 (8 SPM-4Relay modules)
 - Extent number of pulsetimers from 8 to 32 [#8266](https://github.com/arendst/Tasmota/issues/8266)
 - Consolidate three RTC chip drivers (DS3231, BM8563, PCF85363) into one driver updating RTC as soon as possible after restart
-- Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes [#15280](https://github.com/arendst/Tasmota/issues/15280)
 - DS3231 I2C address define ``USE_RTC_ADDR`` into ``DS3231_ADDRESS``
 - Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 - ESP8266 Shrinked tasmota-minimal.bin by removing all commands except ``Upgrade``, ``Upload``, ``OtaUrl``, ``Seriallog``, ``Weblog`` and ``Restart``

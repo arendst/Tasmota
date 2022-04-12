@@ -20,6 +20,7 @@
 //#define USE_SONOFF_SPM
 
 #ifdef ESP32
+#ifdef USE_ENERGY_SENSOR
 #ifdef USE_SONOFF_SPM
 /*********************************************************************************************\
  * Sonoff Stackable Power Manager
@@ -1891,33 +1892,21 @@ bool SSPMButton(void) {
 
 /*********************************************************************************************/
 
-const uint16_t SSPM_SIZE = 128;
+const uint16_t SSPM_SIZE = 300;
 
 char* SSPMEnergyFormat(char* result, float* input, uint32_t resolution, uint8_t* indirect, uint8_t offset, uint32_t count) {
-  result[0] = '\0';
+  ext_snprintf_P(result, SSPM_SIZE, PSTR("</td>"));       // Skip first column
+  // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+  // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+  // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+  // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
   for (uint32_t i = 0; i < count; i++) {
-    ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td>%*_f</td>"), result, resolution, &input[indirect[offset +i]]);
+    ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+      result, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("left"), resolution, &input[indirect[offset +i]]);
   }
-  ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td style='white-space:nowrap'>"), result);
+  ext_snprintf_P(result, SSPM_SIZE, PSTR("%s<td>"), result);
   return result;
 }
-
-#ifdef USE_WEBSERVER
-const char HTTP_SSPM_VOLTAGE[] PROGMEM =
-  "{s}" D_VOLTAGE "</th>%s" D_UNIT_VOLT "{e}";  // {s} = <tr><th>, {m} = </th><td style='width:20px;white-space:nowrap'>, {e} = </td></tr>
-const char HTTP_SSPM_CURRENT[] PROGMEM =
-  "{s}" D_CURRENT "</th>%s" D_UNIT_AMPERE "{e}";
-const char HTTP_SSPM_POWER[] PROGMEM =
-  "{s}" D_POWERUSAGE_ACTIVE "</th>%s" D_UNIT_WATT "{e}";
-const char HTTP_SSPM_POWER2[] PROGMEM =
-  "{s}" D_POWERUSAGE_APPARENT "</th>%s" D_UNIT_VA "{e}"
-  "{s}" D_POWERUSAGE_REACTIVE "</th>%s" D_UNIT_VAR "{e}"
-  "{s}" D_POWER_FACTOR "</th>%s{e}";
-const char HTTP_SSPM_ENERGY[] PROGMEM =
-  "{s}" D_ENERGY_TODAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_YESTERDAY "</th>%s" D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_ENERGY_TOTAL "</th>%s" D_UNIT_KILOWATTHOUR "{e}";
-#endif  // USE_WEBSERVER
 
 void SSPMEnergyShow(bool json) {
   if (!TasmotaGlobal.devices_present) { return; }  // Not ready yet
@@ -1992,24 +1981,29 @@ void SSPMEnergyShow(bool json) {
       uint32_t offset = (Sspm->rotate >> 2) * 4;
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
-      WSContentSend_P(PSTR("</table>{t}{s}")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-      for (uint32_t i = 0; i < count; i++) {
-        WSContentSend_P(PSTR("</th><th style='width:60px;white-space:nowrap'>L%d"), relay[offset +i]);
-      }
-      WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
+      // {s}</th><th></th><th>Head1</th><th></th><td>{e}
+      // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
+      // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
+      // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
       char value_chr[SSPM_SIZE];
-      WSContentSend_PD(HTTP_SSPM_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[0], Settings->flag2.voltage_resolution, indirect, offset, count));
-      WSContentSend_PD(HTTP_SSPM_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[0], Settings->flag2.current_resolution, indirect, offset, count));
-      WSContentSend_PD(HTTP_SSPM_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
+      WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+      bool no_label = false;
+      for (uint32_t i = 0; i < count; i++) {
+        WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(relay[offset +i], value_chr, 10));
+      }
+      WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
+      WSContentSend_PD(HTTP_SNS_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[0], Settings->flag2.voltage_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_SNS_CURRENT, SSPMEnergyFormat(value_chr, Sspm->current[0], Settings->flag2.current_resolution, indirect, offset, count));
+      WSContentSend_PD(HTTP_SNS_POWER,   SSPMEnergyFormat(value_chr, Sspm->active_power[0], Settings->flag2.wattage_resolution, indirect, offset, count));
       char valu2_chr[SSPM_SIZE];
       char valu3_chr[SSPM_SIZE];
-      WSContentSend_PD(HTTP_SSPM_POWER2,  SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
-                                          SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
-                                          SSPMEnergyFormat(valu3_chr, Sspm->power_factor[0], 2, indirect, offset, count));
-      WSContentSend_PD(HTTP_SSPM_ENERGY,  SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
-                                          SSPMEnergyFormat(valu2_chr, Sspm->Settings.energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count),
-                                          SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
-      WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+      WSContentSend_PD(HTTP_ENERGY_SNS1, SSPMEnergyFormat(value_chr, Sspm->apparent_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+                                         SSPMEnergyFormat(valu2_chr, Sspm->reactive_power[0], Settings->flag2.wattage_resolution, indirect, offset, count),
+                                         SSPMEnergyFormat(valu3_chr, Sspm->power_factor[0], 2, indirect, offset, count));
+      WSContentSend_PD(HTTP_ENERGY_SNS2, SSPMEnergyFormat(value_chr, Sspm->energy_today[0], Settings->flag2.energy_resolution, indirect, offset, count),
+                                         SSPMEnergyFormat(valu2_chr, Sspm->Settings.energy_yesterday[0], Settings->flag2.energy_resolution, indirect, offset, count),
+                                         SSPMEnergyFormat(valu3_chr, Sspm->energy_total[0], Settings->flag2.energy_resolution, indirect, offset, count));
+      WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
     }
 #endif  // USE_WEBSERVER
   }
@@ -2298,4 +2292,5 @@ bool Xdrv86(uint8_t function) {
 }
 
 #endif  // USE_SONOFF_SPM
+#endif  // USE_ENERGY_SENSOR
 #endif  // ESP32
