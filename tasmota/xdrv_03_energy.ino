@@ -1247,7 +1247,7 @@ void EnergyShow(bool json) {
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
     // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
-    WSContentSend_P(PSTR("</table>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
+    WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
     bool no_label = Energy.voltage_common || (1 == Energy.phase_count);
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
       WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
@@ -1282,7 +1282,7 @@ void EnergyShow(bool json) {
     }
 #ifdef USE_ENERGY_COLUMN_GUI
     XnrgCall(FUNC_WEB_COL_SENSOR);
-    WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+    WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
 #endif  // USE_ENERGY_COLUMN_GUI
     XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER
