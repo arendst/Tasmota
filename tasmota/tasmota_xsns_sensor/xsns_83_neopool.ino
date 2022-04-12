@@ -117,7 +117,7 @@ enum NeoPoolRegister {
   MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        undocumented - cell runtime (32 bit) - high word
   MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        undocumented - cell part runtime (32 bit) - low word
   MBF_CELL_RUNTIME_PART_HIGH,             // 0x0209*        undocumented - cell part runtime (32 bit) - high word
-  MBF_CELL_BOOST = 0x020C,                // 0x020C*        undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
+  MBF_CELL_BOOST = 0x020C,                // 0x020C* mask   undocumented - 0x0000 = Boost Off, 0x05A0 = Boost with redox ctrl, 0x85A0 = Boost without redox ctrl
   MBF_CELL_RUNTIME_POLA_LOW = 0x0214,     // 0x0214*        undocumented - cell runtime polarity A (32 bit) - low word
   MBF_CELL_RUNTIME_POLA_HIGH,             // 0x0215*        undocumented - cell runtime polarity A (32 bit) - high word
   MBF_CELL_RUNTIME_POLB_LOW,              // 0x0216*        undocumented - cell runtime polarity B (32 bit) - low word
@@ -278,28 +278,12 @@ enum NeoPoolConstAndBitMask {
   MBMSK_PH_STATUS_ALARM                   = 0x000F, // PH alarm. The possible alarm values are depending on the regulation model:
       // Valid alarm values for pH regulation with acid and base:
   MBV_PH_ACID_BASE_ALARM0 = 0,                      // no alarm
-  MBV_PH_ACID_BASE_ALARM1 = 1,                      // pH too high; the pH value is 0.8 points higher than the setpoint value set in PH1
-  MBV_PH_ACID_BASE_ALARM2 = 2,                      // pH too low: the pH value is 0.8 points lower than the set point value set in PH2
-  MBV_PH_ACID_BASE_ALARM3 = 3,                      // pH pump (acid or base, it does not matter) has exceeded the working time set by the MBF_PAR_RELAY_PH_MAX_TIME parameter and has stopped.
-  MBV_PH_ACID_BASE_ALARM4 = 4,                      // pH higher than the set point indicated in PH1
-  MBV_PH_ACID_BASE_ALARM5 = 5,                      // pH lower than the set point indicated in PH2
-  MBV_PH_ACID_BASE_ALARM6 = 6,                      // undocumented - acid tank level alarm
-      // Valid alarm values for pH regulation with acid only:
-  MBV_PH_ACID_ALARM0 = 0,                           // no alarm
-  MBV_PH_ACID_ALARM1 = 1,                           // pH too high; the pH value is 0.8 points higher than the setpoint value set in PH1
-  MBV_PH_ACID_ALARM2 = 2,                           // pH too low: the pH value is 0.8 points lower than the setpoint value set in PH1
-  MBV_PH_ACID_ALARM3 = 3,                           // pH pump acid has exceeded the working time set by the MBF_PAR_RELAY_PH_MAX_TIME parameter and has stopped.
-  MBV_PH_ACID_ALARM4 = 4,                           // pH higher than the setpoint indicated in PH1 by 0.1
-  MBV_PH_ACID_ALARM5 = 5,                           // pH lower than the set point indicated in PH1 by 0.3
-  MBV_PH_ACID_ALARM6 = 6,                           // undocumented - acid tank level alarm
-      // Valid alarm values for pH regulation with base only:
-  MBV_PH_BASE_ALARM0 = 0,                           // no alarm
-  MBV_PH_BASE_ALARM1 = 1,                           // pH too high; the pH value is 0.8 points higher than the set point value set in PH2
-  MBV_PH_BASE_ALARM2 = 2,                           // pH too low: the pH value is 0.8 points lower than the set point value set in PH2
-  MBV_PH_BASE_ALARM3 = 3,                           // pH pump has exceeded the working time set by the MBF_PAR_RELAY_PH_MAX_TIME parameter and has stopped.
-  MBV_PH_BASE_ALARM4 = 4,                           // pH higher than the set point indicated in PH2 by 0.1
-  MBV_PH_BASE_ALARM5 = 5,                           // pH lower than the set point indicated in PH2 by 0.3
-  MBV_PH_BASE_ALARM6 = 6,                           // undocumented - acid tank level alarm
+  MBV_PH_ACID_BASE_ALARM1 = 1,                      // pH too high; the pH value is 0.8 points higher than the setpoint (PH1 on acid systems, PH2 on base systems, PH1 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM2 = 2,                      // pH too low: the pH value is 0.8 points lower than the set point value set in (PH1 on acid systems, PH2 on base systems, PH2 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM3 = 3,                      // pH pump has exceeded the working time set by the MBF_PAR_RELAY_PH_MAX_TIME parameter and has stopped.
+  MBV_PH_ACID_BASE_ALARM4 = 4,                      // pH higher than the set point (PH1 + 0.1 on acid systems, PH2 + 0.1 on base systems, PH1 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM5 = 5,                      // pH lower than the set point  (PH1 - 0.3 on acid systems, PH2 - 0.3 on base systems, PH2 on acid+base systems)
+  MBV_PH_ACID_BASE_ALARM6 = 6,                      // undocumented - tank level alarm
 
   MBMSK_PH_STATUS_CTRL_BY_FL              = 0x0400, // 10 Control status of the pH module by flow detection (if enabled by MBF_PAR_HIDRO_ION_CAUDAL)
   MBMSK_PH_STATUS_ACID_PUMP_ACTIVE        = 0x0800, // 11 Acid pH pump relay on (pump on)
@@ -373,6 +357,11 @@ enum NeoPoolConstAndBitMask {
   MBMSK_NOTIF_INSTALLER_CHANGED           = 0x0008, //  3 Installer page changed
   MBMSK_NOTIF_USER_CHANGED                = 0x0010, //  4 User page changed
   MBMSK_NOTIF_MISC_CHANGED                = 0x0020, //  5 Misc page changed
+
+  // MBF_CELL_BOOST
+  MBMSK_CELL_BOOST_REDOX_CTL              = 0x8000, // undocumented - Disable redox ctrl
+  MBMSK_CELL_BOOST_STATE                  = 0x0500, // undocumented - Boost
+  MBMSK_CELL_BOOST_START                  = 0x00A0, // undocumented - Start boost
 
   // MBF_PAR_MODEL
   MBMSK_MODEL_ION                         = 0x0001, //  0 The equipment includes ionization control
@@ -1658,7 +1647,7 @@ void NeoPoolShow(bool json)
       // S2
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_COVER  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_COVER) ? 1 : 0 );
       // S3
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? ((NeoPoolGetData(MBF_CELL_BOOST) & 0x8000) ? 1 : 2) : 0 );
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SHOCK  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) ? ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_REDOX_CTL) ? 1 : 2) : 0 );
       // S4
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_LOW  "\":%d"), (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_LOW) ? 1 : 0 );
 
@@ -1782,7 +1771,7 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(PSTR(" "));
       // S3
       if (NeoPoolGetData(MBF_HIDRO_STATUS) & MBMSK_HIDRO_STATUS_SHOCK_ENABLED) {
-        if ((NeoPoolGetData(MBF_CELL_BOOST) & 0x8000) == 0) {
+        if ((NeoPoolGetData(MBF_CELL_BOOST) & MBMSK_CELL_BOOST_REDOX_CTL) == 0) {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK "+" D_NEOPOOL_REDOX));
         } else {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_SHOCK));
@@ -1825,7 +1814,7 @@ void NeoPoolShow(bool json)
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_STATUS_TANK));
         } else if (NeoPoolGetData(MBF_PH_STATUS) & (MBMSK_PH_STATUS_ACID_PUMP_ACTIVE | MBMSK_PH_STATUS_BASE_PUMP_ACTIVE)) {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_STATUS_ON));
-        } else if (MBV_PH_ACID_ALARM0 != (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM)) {
+        } else if (MBV_PH_ACID_BASE_ALARM0 != (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM)) {
           WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_NORMAL, PSTR(D_NEOPOOL_STATUS_WAIT));
         }
       } else {
@@ -1870,9 +1859,9 @@ void NeoPoolShow(bool json)
     // Ionization
     if (NeoPoolIsIonization()) {
       char spol[100];
-      snprintf_P(spol, sizeof(spol), PSTR(" "  D_NEOPOOL_POLARIZATION  "%d"), (NeoPoolGetData(MBF_ION_STATUS) & 0x6000) >> 13);
+      snprintf_P(spol, sizeof(spol), PSTR(" "  D_NEOPOOL_POLARIZATION  "%d"), (NeoPoolGetData(MBF_ION_STATUS) & (MBMSK_ION_STATUS_POL1 | MBMSK_ION_STATUS_POL2)) >> 13);
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s%s"),
-        (NeoPoolGetData(MBF_ION_STATUS) & 0x6000) >> 13 ? spol : PSTR(""),
+        (NeoPoolGetData(MBF_ION_STATUS) & (MBMSK_ION_STATUS_POL1 | MBMSK_ION_STATUS_POL2)) ? spol : PSTR(""),
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_ON_TARGET ? PSTR(" " D_NEOPOOL_SETPOINT_OK) : PSTR(""),
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_PROGTIME_EXCEEDED ? PSTR(" " D_NEOPOOL_PR_OFF) : PSTR("")
         );
@@ -1880,7 +1869,7 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(HTTP_SNS_NEOPOOL_IONIZATION, neopool_type,
         neopool_resolution.ion, &fvalue,
         stemp,
-        NeoPoolGetData(MBF_ION_STATUS)&0x0002?PSTR(" " D_NEOPOOL_LOW):PSTR("")
+        NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_LOW ? PSTR(" " D_NEOPOOL_LOW) : PSTR("")
       );
     }
 
