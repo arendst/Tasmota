@@ -649,6 +649,9 @@ void CmndStatus(void)
                           (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
                           Settings->ipv4_address[3], Settings->ipv4_address[4],
                           WiFi.macAddress().c_str());
+#ifdef USE_TASMESH
+    ResponseAppend_P(PSTR(",\"SoftAPMac\":\"%s\""), WiFi.softAPmacAddress().c_str());
+#endif  // USE_TASMESH
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
     ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
