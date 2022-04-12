@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [11.0.0.7]
 ### Added
 - HX711 command ``Sensor34 10 0|1|<weight in gram>`` to set HX711 fixed tare (0 = use auto tare, 1 = use calibrated tare, Any other value is user selected tare)
+- Command ``SetOption138 1`` to switch GUI energy multi-column layout from left/center (0) to right (1) align (#15342)
 
 ### Changed
 - HX711 commands ``Sensor34 11 <valueA>`` and ``Sensor34 12 <valueB>`` to use HX711 absolute weight conversion (#15292)
@@ -31,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Support for improv as used by esp-web-tools
 - Command ``IfxSensor 1`` to send non-teleperiod data to influxdb
 - ESP32 Support for OpenHASP v1.0 by Stephan Hadinger (#15307)
+- Command ``SetOption137 1`` to avoid MQTT publish of defined Tuya CMDs if SO66 is active (#15267)
 
 ### Changed
 - Remove support for Internet Explorer by allowing ECMAScript6 syntax using less JavaScript code bytes (#15280)
