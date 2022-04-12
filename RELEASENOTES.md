@@ -55,6 +55,7 @@ Easy initial installation of Tasmota can be performed using the [Tasmota WebInst
 The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.4.9**.
 
 - **tasmota.bin** = The Tasmota version with most drivers for 1M+ flash. **RECOMMENDED RELEASE BINARY**
+- **tasmota4M.bin** = The Tasmota version with most drivers and filesystem for 4M+ flash.
 - **tasmota-AF.bin** to **tasmota-VN.bin** = The Tasmota version in different languages for 1M+ flash.
 - **tasmota-lite.bin** = The Lite version without most drivers and sensors for 1M+ flash.
 - **tasmota-knx.bin** = The Knx version without some features but adds KNX support for 1M+ flash.
@@ -114,8 +115,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``RfTimeout 100..60000`` to disable duplicate RfReceive. Default 1000 [#15061](https://github.com/arendst/Tasmota/issues/15061)
 - Command ``IfxSensor 1`` to send non-teleperiod data to influxdb
 - Commands ``Sensor12 D0 .. D5, S0 .. S5`` allowing differential or single-ended modes [#15001](https://github.com/arendst/Tasmota/issues/15001)
-- HX711 command ``Sensor34 10 0|1|<weight in gram>`` to set HX711 fixed tare (0 = use auto tare, 1 = use calibrated tare, Any other value is user selected tare)
-- HX711 commands ``Sensor34 11 <valueA>`` and ``Sensor34 12 <valueB>`` to use HX711 absolute weight conversion [#15292](https://github.com/arendst/Tasmota/issues/15292)
+- Command ``Sensor34 10 0|1|<weight in gram>`` to set HX711 fixed tare (0 = use auto tare, 1 = use calibrated tare, Any other value is user selected tare)
+- Commands ``Sensor34 11 <valueA>`` and ``Sensor34 12 <valueB>`` to use HX711 absolute weight conversion [#15292](https://github.com/arendst/Tasmota/issues/15292)
 - NeoPool commands ``NPpHMin``, ``NPpHMax``, ``NPpH``, ``NPRedox``, ``NPHydrolysis``, ``NPIonization``, ``NPChlorine`` and ``NPControl`` [#15015](https://github.com/arendst/Tasmota/issues/15015)
 - NeoPool system voltages display
 - TasmotaSerial implement ``end()``
@@ -164,4 +165,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Removed
 - Command ``Sensor33`` and replaced by ``RtcNtpserver``
-- HX711 command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
+- Command ``Sensor34 7`` as now active tare is persistent resulting in calculated current weight
