@@ -171,6 +171,9 @@ public:
   operator bool() {
     return (bool) _f;
   }
+  bool setBufferSize(size_t size) {
+    return true;
+  }
 
 protected:
   File _f;
@@ -224,6 +227,10 @@ public:
 
   void flush() {
     // do nothing
+  }
+
+  bool setBufferSize(size_t size) {
+    return true;
   }
 
   bool seek(uint32_t pos, SeekMode mode) {
