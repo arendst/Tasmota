@@ -3,7 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.0.0.7]
+## [11.1.0.1]
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [11.1.0] 20220413
+- Release Ostara
+
+## [11.0.0.7] 20220413
 ### Added
 - HX711 command ``Sensor34 10 0|1|<weight in gram>`` to set HX711 fixed tare (0 = use auto tare, 1 = use calibrated tare, Any other value is user selected tare)
 - Command ``SetOption138 1`` to switch GUI energy multi-column layout from left/center (0) to right (1) align (#15342)
@@ -108,8 +123,6 @@ All notable changes to this project will be documented in this file.
 - BL0939, BL0940 and BL0942 energy monitoring buffer miscompares resulting in wrong daily energy values regression from v9.5.0.8 (#14829)
 - Orno WE517 power meter phase 2 current reactive (#14841)
 - Wiegand 34-bit rfid reading and presentation (#14834)
-
-## [Released]
 
 ## [11.0.0] 20220212
 - Release Olivia
@@ -849,6 +862,16 @@ All notable changes to this project will be documented in this file.
 - ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
 - Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
 - Prometheus memory leak (#10221)
+
+## [9.2.0] 20201221
+### Fixed Backported
+- Shutter stop issue (#10170)
+- Scripter script_sub_command (#10181)
+- Scripter JSON variable above 32 chars (#10193)
+- Shelly Dimmer power on state (#10154, #10182)
+- Wemo emulation for single devices (#10165, #10194)
+- ESP32 LoadStoreError when using ``#define USER_TEMPLATE`` (#9506)
+- Compile error when ``#ifdef USE_IR_RECEIVE`` is disabled regression from 9.1.0.2
 
 ## [9.2.0] 20201216
 - Release Julie
