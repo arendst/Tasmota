@@ -317,7 +317,7 @@ int FrogmoreScd40::readRegister(uint16_t registerAddress, uint16_t* pData)
 
 void FrogmoreScd40::begin(TwoWire *pWire, uint8_t i2cAddress)
 {
-    this->duringMeasurement = 0;
+    this->duringMeasurement = false;
     this->i2cAddress = i2cAddress;
     this->co2EAverage = 0;
     if (pWire == NULL)
@@ -373,10 +373,10 @@ int FrogmoreScd40::startPeriodicMeasurement(void)
     snprintf_P(scd40log_data, sizeof(scd40log_data), "Start periodic measurement");
     AddLog(LOG_LEVEL_DEBUG_MORE);
 #endif
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
        return (ERROR_SCD40_BUSY_MEASURING);
     }
-    DuringMeasurement = 1;
+    duringMeasurement = true;
     return(sendCommand(COMMAND_SCD40_START_PERIODIC_MEASUREMENT));
 }
 
@@ -387,7 +387,7 @@ int FrogmoreScd40::readMeasurement(
     float *pHumidity
 )
 {
-// Should only be called in DuringMeasurement mode or
+// Should only be called in duringMeasurement mode or
 // after calling measure_single_hot{,_rht_only}
 // but this is currently not verified
     bool isAvailable = false;
@@ -522,16 +522,16 @@ int FrogmoreScd40::readMeasurement(
 
 int FrogmoreScd40::forceStopPeriodicMeasurement(void)
 {
-    DuringMeasurement = 0;
+    duringMeasurement = false;
     return (sendCommand(COMMAND_SCD40_STOP_PERIODIC_MEASUREMENT));
 }
 
 int FrogmoreScd40::stopPeriodicMeasurement(void)
 {
-    if (!DuringMeasurement) {
+    if (!duringMeasurement) {
         return (ERROR_SCD40_NOT_IN_MEASUREMENT_MODE);
     }
-    DuringMeasurement = 0;
+    duringMeasurement = false;
     return (sendCommand(COMMAND_SCD40_STOP_PERIODIC_MEASUREMENT));
 }
 
@@ -541,7 +541,7 @@ int FrogmoreScd40::setTemperatureOffset(float offset_degC)
 // influences RH and T readings. Does not influence CO2 measurement. Default is 4 degrees Celcius.
 // to save setting to the EEPROM, call persistSetting()
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     if (offset_degC >= 0)
@@ -557,7 +557,7 @@ int FrogmoreScd40::setTemperatureOffset(float offset_degC)
 
 int FrogmoreScd40::setTemperatureOffset(uint16_t offset_centiDegC)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     uint16_t offset_xDegC = (uint16_t) (offset_centiDegC * 3.74491);
@@ -566,7 +566,7 @@ int FrogmoreScd40::setTemperatureOffset(uint16_t offset_centiDegC)
 
 int FrogmoreScd40::getTemperatureOffset(float *pOffset_degC)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     uint16_t value;
@@ -581,7 +581,7 @@ int FrogmoreScd40::getTemperatureOffset(float *pOffset_degC)
 
 int FrogmoreScd40::getTemperatureOffset(uint16_t *pOffset_centiDegC)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     uint16_t value;
@@ -598,7 +598,7 @@ int FrogmoreScd40::setSensorAltitude(uint16_t height_meter)
 // Default is 0 meter above sea-level;
 // to save setting to the EEPROM, call persistSetting()
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (sendCommandArguments(COMMAND_SCD40_SET_SENSOR_ALTITUDE, height_meter));
@@ -606,7 +606,7 @@ int FrogmoreScd40::setSensorAltitude(uint16_t height_meter)
 
 int FrogmoreScd40::getSensorAltitude(uint16_t *pHeight_meter)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (readRegister(COMMAND_SCD40_GET_SENSOR_ALTITUDE, pHeight_meter));
@@ -615,7 +615,7 @@ int FrogmoreScd40::getSensorAltitude(uint16_t *pHeight_meter)
 int FrogmoreScd40::setAmbientPressure(uint16_t airPressure_mbar)
 // Overrides any pressure compensation based on a previously set sensor altitude
 {
-    // allowed DuringMeasurement
+    // allowed duringMeasurement
     return (sendCommandArguments(COMMAND_SCD40_SET_AMBIENT_PRESSURE, airPressure_mbar));
 }
 
@@ -627,7 +627,7 @@ int FrogmoreScd40::performForcedRecalibration(uint16_t co2_ppm)
 // issue stop_periodic_measurement, and then wait 500ms, before calling this function
 // it takes 400ms for this command to complete
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     uint16_t FRC_result;
@@ -642,7 +642,7 @@ int FrogmoreScd40::performForcedRecalibration(uint16_t co2_ppm)
 int FrogmoreScd40::setAutomaticSelfCalibrationDisabled(void)
 // to save setting to the EEPROM, call persistSetting()
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     bool isAuto = false;
@@ -652,7 +652,7 @@ int FrogmoreScd40::setAutomaticSelfCalibrationDisabled(void)
 int FrogmoreScd40::setAutomaticSelfCalibrationEnabled(void)
 // to save setting to the EEPROM, call persistSetting()
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     bool isAuto = true;
@@ -662,7 +662,7 @@ int FrogmoreScd40::setAutomaticSelfCalibrationEnabled(void)
 int FrogmoreScd40::setAutomaticSelfCalibrationEnabled(bool isAuto)
 // to save setting to the EEPROM, call persistSetting()
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     bool value = !!isAuto; // using NOT operator twice makes sure value is 0 or 1
@@ -671,7 +671,7 @@ int FrogmoreScd40::setAutomaticSelfCalibrationEnabled(bool isAuto)
 
 int FrogmoreScd40::getAutomaticSelfCalibrationEnabled(uint16_t *pIsAuto)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     uint16_t value = 0;
@@ -688,16 +688,16 @@ int FrogmoreScd40::getAutomaticSelfCalibrationEnabled(uint16_t *pIsAuto)
 int FrogmoreScd40::startLowPowerPeriodicMeasurement(void)
 // Comment: unclear how to stop this operation mode?
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
+    duringMeasurement = true;
     return (sendCommand(COMMAND_SCD40_START_LOW_POWER_PERIODIC_MEASUREMENT));
-    DuringMeasurement = 1;
 }
 
 int FrogmoreScd40::getDataReadyStatus(bool *pIsAvailable)
 {
-    // allowed DuringMeasurement
+    // allowed duringMeasurement
     uint16_t isDataAvailable = false;
     int error = readRegister(COMMAND_SCD40_GET_DATA_READY_STATUS, &isDataAvailable);
     if (!error)
@@ -715,7 +715,7 @@ int FrogmoreScd40::persistSettings(void)
 // EEPROM is guaranteed to endure at least 2000 write cycles before failure.
 // The field calibration history (FRC and ASC) is stored in a separate EEPROM.
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (sendCommand(COMMAND_SCD40_PERSIST_SETTINGS));
@@ -724,7 +724,7 @@ int FrogmoreScd40::persistSettings(void)
 int FrogmoreScd40::getSerialNumber(uint16_t *pSerialNumberArray)
 // Serialnr is 48 bits = 3 16-bit words
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     uint16_t value;
@@ -734,7 +734,7 @@ int FrogmoreScd40::getSerialNumber(uint16_t *pSerialNumberArray)
 
 int FrogmoreScd40::performSelfTest(uint16_t *pMalfunction)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (readRegister(COMMAND_SCD40_PERFORM_SELF_TEST, pMalfunction));
@@ -744,7 +744,7 @@ int FrogmoreScd40::performFactoryReset(void)
 // resets all configuration settings in EEPROM and
 // erases FRC and ASC algorithm history
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (sendCommand(COMMAND_SCD40_PERFORM_FACTORY_RESET));
@@ -753,7 +753,7 @@ int FrogmoreScd40::performFactoryReset(void)
 int FrogmoreScd40::reinit(void)
 // reinitailizes sensor from EEPROM user settings
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (sendCommand(COMMAND_SCD40_REINIT));
@@ -764,7 +764,7 @@ int FrogmoreScd40::reinit(void)
 
 int FrogmoreScd40::measureSingleShot(void)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (sendCommand(COMMAND_SCD40_MEASURE_SINGLE_SHOT));
@@ -772,7 +772,7 @@ int FrogmoreScd40::measureSingleShot(void)
 
 int FrogmoreScd40::measureSingleShotRhtOnly(void)
 {
-    if (DuringMeasurement) {
+    if (duringMeasurement) {
          return (ERROR_SCD40_BUSY_MEASURING);
     }
     return (sendCommand(COMMAND_SCD40_MEASURE_SINGLE_SHOT_RHT_ONLY));
