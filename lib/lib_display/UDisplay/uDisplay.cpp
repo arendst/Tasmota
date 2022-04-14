@@ -1282,7 +1282,7 @@ void uDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 void uDisplay::setRotation(uint8_t rotation) {
   cur_rot = rotation;
 
-  if (interface != _UDSP_SPI) {
+  if (interface != _UDSP_SPI || bpp < 16) {
     Renderer::setRotation(cur_rot);
     return;
   }
