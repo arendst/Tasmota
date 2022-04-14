@@ -2774,7 +2774,7 @@ be_local_closure(lvh_obj_set_adjustable,   /* name */
 ********************************************************************/
 be_local_closure(lvh_obj_set_text_font,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    12,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -2782,7 +2782,7 @@ be_local_closure(lvh_obj_set_text_font,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_literal("int"),
     /* K1   */  be_nested_str_literal("lv"),
     /* K2   */  be_nested_str_literal("font_embedded"),
@@ -2790,17 +2790,20 @@ be_local_closure(lvh_obj_set_text_font,   /* name */
     /* K4   */  be_nested_str_literal("montserrat"),
     /* K5   */  be_nested_str_literal("string"),
     /* K6   */  be_nested_str_literal("split"),
-    /* K7   */  be_nested_str_literal("-"),
-    /* K8   */  be_const_int(2),
-    /* K9   */  be_const_int(0),
-    /* K10  */  be_nested_str_literal("concat"),
-    /* K11  */  be_nested_str_literal("_lv_obj"),
-    /* K12  */  be_nested_str_literal("set_style_text_font"),
-    /* K13  */  be_nested_str_literal("HSP: Unsupported font:"),
+    /* K7   */  be_nested_str_literal(":"),
+    /* K8   */  be_const_int(1),
+    /* K9   */  be_nested_str_literal("-"),
+    /* K10  */  be_const_int(0),
+    /* K11  */  be_nested_str_literal("load_font"),
+    /* K12  */  be_const_int(2),
+    /* K13  */  be_nested_str_literal("concat"),
+    /* K14  */  be_nested_str_literal("_lv_obj"),
+    /* K15  */  be_nested_str_literal("set_style_text_font"),
+    /* K16  */  be_nested_str_literal("HSP: Unsupported font:"),
     }),
     be_str_literal("set_text_font"),
     &be_const_str_solidified,
-    ( &(const binstruction[93]) {  /* code */
+    ( &(const binstruction[114]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
       0x600C0004,  //  0001  GETGBL	R3	G4
       0x5C100200,  //  0002  MOVE	R4	R1
@@ -2834,66 +2837,87 @@ be_local_closure(lvh_obj_set_text_font,   /* name */
       0xB0080000,  //  001E  RAISE	2	R0	R0
       0x70020000,  //  001F  JMP		#0021
       0xB0080000,  //  0020  RAISE	2	R0	R0
-      0x7002002C,  //  0021  JMP		#004F
+      0x70020041,  //  0021  JMP		#0064
       0x600C0004,  //  0022  GETGBL	R3	G4
       0x5C100200,  //  0023  MOVE	R4	R1
       0x7C0C0200,  //  0024  CALL	R3	1
       0x1C0C0705,  //  0025  EQ	R3	R3	K5
-      0x780E0027,  //  0026  JMPF	R3	#004F
+      0x780E003C,  //  0026  JMPF	R3	#0064
       0xA40E0A00,  //  0027  IMPORT	R3	K5
       0x8C100706,  //  0028  GETMET	R4	R3	K6
       0x5C180200,  //  0029  MOVE	R6	R1
       0x581C0007,  //  002A  LDCONST	R7	K7
-      0x7C100600,  //  002B  CALL	R4	3
-      0x6014000C,  //  002C  GETGBL	R5	G12
-      0x5C180800,  //  002D  MOVE	R6	R4
-      0x7C140200,  //  002E  CALL	R5	1
-      0x28140B08,  //  002F  GE	R5	R5	K8
-      0x7816001D,  //  0030  JMPF	R5	#004F
-      0x60140009,  //  0031  GETGBL	R5	G9
-      0x5419FFFE,  //  0032  LDINT	R6	-1
-      0x94180806,  //  0033  GETIDX	R6	R4	R6
-      0x7C140200,  //  0034  CALL	R5	1
-      0x5419FFFD,  //  0035  LDINT	R6	-2
-      0x401A1206,  //  0036  CONNECT	R6	K9	R6
-      0x94180806,  //  0037  GETIDX	R6	R4	R6
-      0x8C180D0A,  //  0038  GETMET	R6	R6	K10
-      0x58200007,  //  0039  LDCONST	R8	K7
-      0x7C180400,  //  003A  CALL	R6	2
-      0x241C0B09,  //  003B  GT	R7	R5	K9
-      0x781E0011,  //  003C  JMPF	R7	#004F
-      0x601C000C,  //  003D  GETGBL	R7	G12
-      0x5C200C00,  //  003E  MOVE	R8	R6
-      0x7C1C0200,  //  003F  CALL	R7	1
-      0x241C0F09,  //  0040  GT	R7	R7	K9
-      0x781E000C,  //  0041  JMPF	R7	#004F
-      0xA8020007,  //  0042  EXBLK	0	#004B
-      0xB81E0200,  //  0043  GETNGBL	R7	K1
-      0x8C1C0F02,  //  0044  GETMET	R7	R7	K2
-      0x5C240C00,  //  0045  MOVE	R9	R6
-      0x5C280A00,  //  0046  MOVE	R10	R5
-      0x7C1C0600,  //  0047  CALL	R7	3
-      0x5C080E00,  //  0048  MOVE	R2	R7
-      0xA8040001,  //  0049  EXBLK	1	1
-      0x70020003,  //  004A  JMP		#004F
-      0xAC1C0000,  //  004B  CATCH	R7	0	0
-      0x70020000,  //  004C  JMP		#004E
-      0x70020000,  //  004D  JMP		#004F
-      0xB0080000,  //  004E  RAISE	2	R0	R0
-      0x4C0C0000,  //  004F  LDNIL	R3
-      0x200C0403,  //  0050  NE	R3	R2	R3
-      0x780E0005,  //  0051  JMPF	R3	#0058
-      0x880C010B,  //  0052  GETMBR	R3	R0	K11
-      0x8C0C070C,  //  0053  GETMET	R3	R3	K12
-      0x5C140400,  //  0054  MOVE	R5	R2
-      0x58180009,  //  0055  LDCONST	R6	K9
-      0x7C0C0600,  //  0056  CALL	R3	3
-      0x70020003,  //  0057  JMP		#005C
-      0x600C0001,  //  0058  GETGBL	R3	G1
-      0x5810000D,  //  0059  LDCONST	R4	K13
-      0x5C140200,  //  005A  MOVE	R5	R1
-      0x7C0C0400,  //  005B  CALL	R3	2
-      0x80000000,  //  005C  RET	0
+      0x58200008,  //  002B  LDCONST	R8	K8
+      0x7C100800,  //  002C  CALL	R4	4
+      0x8C140706,  //  002D  GETMET	R5	R3	K6
+      0x5C1C0200,  //  002E  MOVE	R7	R1
+      0x58200009,  //  002F  LDCONST	R8	K9
+      0x7C140600,  //  0030  CALL	R5	3
+      0x6018000C,  //  0031  GETGBL	R6	G12
+      0x5C1C0800,  //  0032  MOVE	R7	R4
+      0x7C180200,  //  0033  CALL	R6	1
+      0x24180D08,  //  0034  GT	R6	R6	K8
+      0x781A000A,  //  0035  JMPF	R6	#0041
+      0x6018000C,  //  0036  GETGBL	R6	G12
+      0x941C090A,  //  0037  GETIDX	R7	R4	K10
+      0x7C180200,  //  0038  CALL	R6	1
+      0x1C180D08,  //  0039  EQ	R6	R6	K8
+      0x781A0005,  //  003A  JMPF	R6	#0041
+      0xB81A0200,  //  003B  GETNGBL	R6	K1
+      0x8C180D0B,  //  003C  GETMET	R6	R6	K11
+      0x5C200200,  //  003D  MOVE	R8	R1
+      0x7C180400,  //  003E  CALL	R6	2
+      0x5C080C00,  //  003F  MOVE	R2	R6
+      0x70020022,  //  0040  JMP		#0064
+      0x6018000C,  //  0041  GETGBL	R6	G12
+      0x5C1C0A00,  //  0042  MOVE	R7	R5
+      0x7C180200,  //  0043  CALL	R6	1
+      0x28180D0C,  //  0044  GE	R6	R6	K12
+      0x781A001D,  //  0045  JMPF	R6	#0064
+      0x60180009,  //  0046  GETGBL	R6	G9
+      0x541DFFFE,  //  0047  LDINT	R7	-1
+      0x941C0A07,  //  0048  GETIDX	R7	R5	R7
+      0x7C180200,  //  0049  CALL	R6	1
+      0x541DFFFD,  //  004A  LDINT	R7	-2
+      0x401E1407,  //  004B  CONNECT	R7	K10	R7
+      0x941C0A07,  //  004C  GETIDX	R7	R5	R7
+      0x8C1C0F0D,  //  004D  GETMET	R7	R7	K13
+      0x58240009,  //  004E  LDCONST	R9	K9
+      0x7C1C0400,  //  004F  CALL	R7	2
+      0x24200D0A,  //  0050  GT	R8	R6	K10
+      0x78220011,  //  0051  JMPF	R8	#0064
+      0x6020000C,  //  0052  GETGBL	R8	G12
+      0x5C240E00,  //  0053  MOVE	R9	R7
+      0x7C200200,  //  0054  CALL	R8	1
+      0x2420110A,  //  0055  GT	R8	R8	K10
+      0x7822000C,  //  0056  JMPF	R8	#0064
+      0xA8020007,  //  0057  EXBLK	0	#0060
+      0xB8220200,  //  0058  GETNGBL	R8	K1
+      0x8C201102,  //  0059  GETMET	R8	R8	K2
+      0x5C280E00,  //  005A  MOVE	R10	R7
+      0x5C2C0C00,  //  005B  MOVE	R11	R6
+      0x7C200600,  //  005C  CALL	R8	3
+      0x5C081000,  //  005D  MOVE	R2	R8
+      0xA8040001,  //  005E  EXBLK	1	1
+      0x70020003,  //  005F  JMP		#0064
+      0xAC200000,  //  0060  CATCH	R8	0	0
+      0x70020000,  //  0061  JMP		#0063
+      0x70020000,  //  0062  JMP		#0064
+      0xB0080000,  //  0063  RAISE	2	R0	R0
+      0x4C0C0000,  //  0064  LDNIL	R3
+      0x200C0403,  //  0065  NE	R3	R2	R3
+      0x780E0005,  //  0066  JMPF	R3	#006D
+      0x880C010E,  //  0067  GETMBR	R3	R0	K14
+      0x8C0C070F,  //  0068  GETMET	R3	R3	K15
+      0x5C140400,  //  0069  MOVE	R5	R2
+      0x5818000A,  //  006A  LDCONST	R6	K10
+      0x7C0C0600,  //  006B  CALL	R3	3
+      0x70020003,  //  006C  JMP		#0071
+      0x600C0001,  //  006D  GETGBL	R3	G1
+      0x58100010,  //  006E  LDCONST	R4	K16
+      0x5C140200,  //  006F  MOVE	R5	R1
+      0x7C0C0400,  //  0070  CALL	R3	2
+      0x80000000,  //  0071  RET	0
     })
   )
 );
@@ -3659,68 +3683,69 @@ be_local_class(lvh_obj,
         { be_const_key_literal("set_text_font", 23), be_const_closure(lvh_obj_set_text_font_closure) },
         { be_const_key_literal("set_pad_left2", 47), be_const_closure(lvh_obj_set_pad_left2_closure) },
         { be_const_key_literal("_attr_map", -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(60,
+        be_const_map( *     be_nested_map(61,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("action", 54), be_const_nil() },
-        { be_const_key_literal("pad_bottom", -1), be_nested_str_literal("style_pad_bottom") },
-        { be_const_key_literal("min", 21), be_const_nil() },
-        { be_const_key_literal("pad_right2", 58), be_const_nil() },
-        { be_const_key_literal("angle", 1), be_const_nil() },
-        { be_const_key_literal("val", 23), be_nested_str_literal("value") },
-        { be_const_key_literal("text_color", 32), be_const_nil() },
-        { be_const_key_literal("hidden", -1), be_const_nil() },
-        { be_const_key_literal("speed", -1), be_const_nil() },
-        { be_const_key_literal("image_recolor", -1), be_nested_str_literal("style_img_recolor") },
-        { be_const_key_literal("value_str", -1), be_const_nil() },
-        { be_const_key_literal("line_color", 20), be_nested_str_literal("style_line_color") },
-        { be_const_key_literal("line_width", -1), be_const_nil() },
-        { be_const_key_literal("toggle", 7), be_const_nil() },
-        { be_const_key_literal("pad_all", -1), be_nested_str_literal("style_pad_all") },
-        { be_const_key_literal("x", -1), be_nested_str_literal("x") },
-        { be_const_key_literal("pad_left2", 5), be_const_nil() },
-        { be_const_key_literal("radius", 30), be_nested_str_literal("style_radius") },
-        { be_const_key_literal("mode", 48), be_const_nil() },
-        { be_const_key_literal("val_rule", 17), be_const_nil() },
-        { be_const_key_literal("bg_grad_color", 45), be_nested_str_literal("style_bg_grad_color") },
-        { be_const_key_literal("value_ofs_y", 51), be_const_nil() },
-        { be_const_key_literal("end_angle", -1), be_nested_str_literal("bg_end_angle") },
-        { be_const_key_literal("y", -1), be_nested_str_literal("y") },
-        { be_const_key_literal("image_recolor_opa", -1), be_nested_str_literal("style_img_recolor_opa") },
-        { be_const_key_literal("text_rule_format", -1), be_const_nil() },
-        { be_const_key_literal("value_color", 39), be_const_nil() },
-        { be_const_key_literal("asjustable", 0), be_const_nil() },
-        { be_const_key_literal("pad_all2", -1), be_const_nil() },
-        { be_const_key_literal("max", -1), be_const_nil() },
-        { be_const_key_literal("bg_opa", 53), be_nested_str_literal("style_bg_opa") },
-        { be_const_key_literal("h", -1), be_nested_str_literal("height") },
-        { be_const_key_literal("pad_left", 57), be_nested_str_literal("style_pad_left") },
-        { be_const_key_literal("type", -1), be_const_nil() },
+        { be_const_key_literal("action", 57), be_const_nil() },
         { be_const_key_literal("text", -1), be_const_nil() },
-        { be_const_key_literal("rotation", 2), be_nested_str_literal("rotation") },
-        { be_const_key_literal("value_ofs_x", -1), be_const_nil() },
-        { be_const_key_literal("src", -1), be_nested_str_literal("src") },
-        { be_const_key_literal("start_angle1", -1), be_nested_str_literal("start_angle") },
-        { be_const_key_literal("w", 43), be_nested_str_literal("width") },
-        { be_const_key_literal("pad_top2", -1), be_const_nil() },
-        { be_const_key_literal("end_angle1", 9), be_nested_str_literal("end_angle") },
-        { be_const_key_literal("enabled", -1), be_const_nil() },
-        { be_const_key_literal("align", -1), be_const_nil() },
-        { be_const_key_literal("border_width", -1), be_nested_str_literal("style_border_width") },
-        { be_const_key_literal("start_angle", -1), be_nested_str_literal("bg_start_angle") },
-        { be_const_key_literal("val_rule_formula", 52), be_const_nil() },
-        { be_const_key_literal("click", -1), be_const_nil() },
-        { be_const_key_literal("bg_color", -1), be_nested_str_literal("style_bg_color") },
-        { be_const_key_literal("text_rule", -1), be_const_nil() },
-        { be_const_key_literal("pad_top", -1), be_nested_str_literal("style_pad_top") },
-        { be_const_key_literal("line_width1", -1), be_const_nil() },
-        { be_const_key_literal("pad_bottom2", 55), be_const_nil() },
-        { be_const_key_literal("radius2", -1), be_const_nil() },
-        { be_const_key_literal("bg_grad_dir", -1), be_nested_str_literal("style_bg_grad_dir") },
-        { be_const_key_literal("text_font", -1), be_const_nil() },
-        { be_const_key_literal("text_rule_formula", -1), be_const_nil() },
-        { be_const_key_literal("value_font", -1), be_const_nil() },
-        { be_const_key_literal("border_side", -1), be_nested_str_literal("style_border_side") },
+        { be_const_key_literal("text_color", -1), be_const_nil() },
+        { be_const_key_literal("val", 42), be_nested_str_literal("value") },
         { be_const_key_literal("pad_right", -1), be_nested_str_literal("style_pad_right") },
+        { be_const_key_literal("pad_left", -1), be_nested_str_literal("style_pad_left") },
+        { be_const_key_literal("enabled", -1), be_const_nil() },
+        { be_const_key_literal("hidden", -1), be_const_nil() },
+        { be_const_key_literal("toggle", 44), be_const_nil() },
+        { be_const_key_literal("pad_bottom", -1), be_nested_str_literal("style_pad_bottom") },
+        { be_const_key_literal("line_width1", -1), be_const_nil() },
+        { be_const_key_literal("pad_left2", -1), be_const_nil() },
+        { be_const_key_literal("rotation", 36), be_nested_str_literal("rotation") },
+        { be_const_key_literal("bg_grad_color", -1), be_nested_str_literal("style_bg_grad_color") },
+        { be_const_key_literal("x", 35), be_nested_str_literal("x") },
+        { be_const_key_literal("border_side", -1), be_nested_str_literal("style_border_side") },
+        { be_const_key_literal("border_width", -1), be_nested_str_literal("style_border_width") },
+        { be_const_key_literal("h", 1), be_nested_str_literal("height") },
+        { be_const_key_literal("type", 27), be_const_nil() },
+        { be_const_key_literal("pad_all2", -1), be_const_nil() },
+        { be_const_key_literal("text_rule_format", -1), be_const_nil() },
+        { be_const_key_literal("image_recolor_opa", -1), be_nested_str_literal("style_img_recolor_opa") },
+        { be_const_key_literal("border_color", -1), be_nested_str_literal("style_border_color") },
+        { be_const_key_literal("src", -1), be_nested_str_literal("src") },
+        { be_const_key_literal("val_rule_formula", -1), be_const_nil() },
+        { be_const_key_literal("mode", -1), be_const_nil() },
+        { be_const_key_literal("text_font", 19), be_const_nil() },
+        { be_const_key_literal("y", -1), be_nested_str_literal("y") },
+        { be_const_key_literal("align", -1), be_const_nil() },
+        { be_const_key_literal("pad_bottom2", 41), be_const_nil() },
+        { be_const_key_literal("pad_right2", 3), be_const_nil() },
+        { be_const_key_literal("line_width", -1), be_const_nil() },
+        { be_const_key_literal("bg_grad_dir", 10), be_nested_str_literal("style_bg_grad_dir") },
+        { be_const_key_literal("text_rule", -1), be_const_nil() },
+        { be_const_key_literal("text_rule_formula", 0), be_const_nil() },
+        { be_const_key_literal("radius", -1), be_nested_str_literal("style_radius") },
+        { be_const_key_literal("bg_opa", -1), be_nested_str_literal("style_bg_opa") },
+        { be_const_key_literal("bg_color", -1), be_nested_str_literal("style_bg_color") },
+        { be_const_key_literal("pad_all", -1), be_nested_str_literal("style_pad_all") },
+        { be_const_key_literal("pad_top2", -1), be_const_nil() },
+        { be_const_key_literal("pad_top", 7), be_nested_str_literal("style_pad_top") },
+        { be_const_key_literal("click", 49), be_const_nil() },
+        { be_const_key_literal("line_color", -1), be_nested_str_literal("style_line_color") },
+        { be_const_key_literal("value_color", -1), be_const_nil() },
+        { be_const_key_literal("start_angle", -1), be_nested_str_literal("bg_start_angle") },
+        { be_const_key_literal("speed", -1), be_const_nil() },
+        { be_const_key_literal("angle", -1), be_const_nil() },
+        { be_const_key_literal("asjustable", 51), be_const_nil() },
+        { be_const_key_literal("end_angle1", 46), be_nested_str_literal("end_angle") },
+        { be_const_key_literal("min", -1), be_const_nil() },
+        { be_const_key_literal("end_angle", 21), be_nested_str_literal("bg_end_angle") },
+        { be_const_key_literal("start_angle1", -1), be_nested_str_literal("start_angle") },
+        { be_const_key_literal("value_ofs_y", -1), be_const_nil() },
+        { be_const_key_literal("image_recolor", -1), be_nested_str_literal("style_img_recolor") },
+        { be_const_key_literal("value_str", 2), be_const_nil() },
+        { be_const_key_literal("radius2", 59), be_const_nil() },
+        { be_const_key_literal("value_ofs_x", -1), be_const_nil() },
+        { be_const_key_literal("val_rule", -1), be_const_nil() },
+        { be_const_key_literal("w", -1), be_nested_str_literal("width") },
+        { be_const_key_literal("value_font", -1), be_const_nil() },
+        { be_const_key_literal("max", 11), be_const_nil() },
     }))    ) } )) },
         { be_const_key_literal("get_value_ofs_y", -1), be_const_closure(lvh_obj_get_value_ofs_y_closure) },
         { be_const_key_literal("_text_rule", -1), be_const_var(8) },
