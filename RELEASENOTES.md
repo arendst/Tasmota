@@ -106,11 +106,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v11.1.0.1
 ### Added
+- Support for Sonoff MS01 soil moisture sensor [#15335](https://github.com/arendst/Tasmota/issues/15335)
+- Support for daisy chaining MAX7219 displays [#15345](https://github.com/arendst/Tasmota/issues/15345)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
+- SCD40 start low power command [#15361](https://github.com/arendst/Tasmota/issues/15361)
+- Improv initial or erase device installation failing to provide Configure WiFi option
 
 ### Removed

@@ -5,10 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ## [11.1.0.1]
 ### Added
+- Support for Sonoff MS01 soil moisture sensor (#15335)
+- Support for daisy chaining MAX7219 displays (#15345)
 
 ### Changed
 
 ### Fixed
+- SCD40 start low power command (#15361)
+- Improv initial or erase device installation failing to provide Configure WiFi option
 
 ### Removed
 

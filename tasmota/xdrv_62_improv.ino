@@ -325,7 +325,8 @@ void ImprovEverySecond(void) {
 }
 
 void ImprovInit(void) {
-  if (!RtcSettings.improv_state) {
+  if (!RtcSettings.improv_state ||                             // After power on
+      !Settings->bootcount) {                                  // After reset to defaults caused by GUI option ERASE
     RtcSettings.improv_state = IMPROV_STATE_AUTHORIZED;        // Power on state (persistent during restarts)
   }
   Improv.wifi_timeout = IMPROV_WIFI_TIMEOUT;                   // Try to update state after restart
