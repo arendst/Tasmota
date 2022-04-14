@@ -184,9 +184,10 @@ void ImprovReceived(void) {
       // Tasmota DE 11.0.0.7 ESP8266EX Wemos4
       char image_name[33];
       snprintf_P(image_name, sizeof(image_name), PSTR(D_HTML_LANGUAGE));
-      UpperCase(image_name, image_name);
-      if (!strcmp_P(image_name, PSTR("EN"))) {                 // Non-english
-        snprintf_P(image_name, sizeof(image_name), PSTR(CODE_IMAGE_STR));
+      UpperCase(image_name, image_name);                       // Language id
+      if (!strcmp_P(image_name, PSTR("EN")) &&                 // English
+           strcasecmp_P("Tasmota", PSTR(CODE_IMAGE_STR))) {    // Not Tasmota
+        snprintf_P(image_name, sizeof(image_name), PSTR(CODE_IMAGE_STR));  // English image name
         image_name[0] &= 0xDF;                                 // Make first character uppercase
       }
       char data[200];
