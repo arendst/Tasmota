@@ -2883,9 +2883,7 @@ void MI32ShowSomeSensors(){
     }
     cnt++;
   }
-  if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
-  }
+  MqttAppendSensorUnits();
   ResponseAppend_P(PSTR("}"));
   //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
@@ -3274,9 +3272,7 @@ void MI32ShowTriggeredSensors(){
       }
     }
     if (cnt){ // if we got one, then publish
-      if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
-      }
+      MqttAppendSensorUnits();
       ResponseAppend_P(PSTR("}"));
       if(
     #ifdef USE_HOME_ASSISTANT
