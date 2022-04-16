@@ -120,15 +120,18 @@ struct {
   } sensorreader;
 
   struct {
-    uint32_t allwaysAggregate:1; // always show all known values of one sensor in brdigemode
-    uint32_t noSummary:1;        // no sensor values at TELE-period
-    uint32_t directBridgeMode:1; // send every received BLE-packet as a MQTT-message in real-time
-    uint32_t holdBackFirstAutodiscovery:1; // allows to trigger it later
-    uint32_t showRSSI:1;
-    uint32_t ignoreBogusBattery:1;
-    uint32_t minimalSummary:1;   // DEPRECATED!!
-    uint32_t onlyAliased:1;      // only include sensors that are aliased
-    uint32_t MQTTType:1;
+    uint32_t allwaysAggregate:1;            // Mi32Option0: always show all known values of one sensor in bridge mode
+    uint32_t noSummary:1;                   // Mi32Option1: no sensor values at TELE-period
+    uint32_t directBridgeMode:1;            // Mi32Option2: send every received BLE-packet as a MQTT-message in real-time
+    uint32_t holdBackFirstAutodiscovery:1;  //
+    uint32_t showRSSI:1;                    //
+    uint32_t ignoreBogusBattery:1;          // Mi32Option4: show BLE RSSI
+    uint32_t minimalSummary:1;              // DEPRECATED!!
+    uint32_t onlyAliased:1;                 // Mi32Option5: only include sensors that are aliased
+    uint32_t MQTTType:2;                    // Mi32Option6: publish sensor on tasmota_ble with 1 topic per sensor
+                                            //    Mi32Option6 0 : standard SENSOR message
+                                            //    Mi32Option6 1 : tasmota_ble + per sensor topic (legacy syntax)
+                                            //    MI32Option6 2 : same but add sensor name as key in JSON (same as standard SENSOR)
   } option;
 } MI32;
 
@@ -1796,7 +1799,7 @@ void MI32ParseMiScalePacket(const uint8_t * _buf, uint32_t length, const uint8_t
 
         if (weight_removed) {
           MIBLEsensors[_slot].impedance = 0;
-        } 
+        }
       }
 
       MIBLEsensors[_slot].shallSendMQTT = 1;
@@ -2145,7 +2148,7 @@ void MI32EverySecond(bool restart){
     MI32ShowSomeSensors();
   }
 
-  if (MI32.option.MQTTType == 1
+  if (MI32.option.MQTTType > 0
 #ifdef USE_HOME_ASSISTANT
     ||
     Settings->flag.hass_discovery
@@ -2156,7 +2159,7 @@ void MI32EverySecond(bool restart){
     MI32DiscoveryOneMISensor();
     // show independent style sensor MQTT
     // note - if !MQTTType, then this is IN ADDITION to 'normal'
-    MI32ShowOneMISensor();
+    MI32ShowOneMISensor(MI32.option.MQTTType < 2);
   }
 
   // read a battery if
@@ -2383,52 +2386,52 @@ void CmndMi32Option(void){
   if (strlen(XdrvMailbox.data)){
     set = true;
   }
-  int onOff = atoi(XdrvMailbox.data);
+  int value = atoi(XdrvMailbox.data);
   switch(XdrvMailbox.index) {
     case 0:
       if (set){
-        MI32.option.allwaysAggregate = onOff;
+        MI32.option.allwaysAggregate = value;
       } else {
-        onOff = MI32.option.allwaysAggregate;
+        value = MI32.option.allwaysAggregate;
       }
       break;
     case 1:
       if (set){
-        MI32.option.noSummary = onOff;
+        MI32.option.noSummary = value;
       } else {
-        onOff = MI32.option.noSummary;
+        value = MI32.option.noSummary;
       }
       break;
     case 2:
       if (set){
-        MI32.option.directBridgeMode = onOff;
+        MI32.option.directBridgeMode = value;
       } else {
-        onOff = MI32.option.directBridgeMode;
+        value = MI32.option.directBridgeMode;
       }
       break;
     case 4:{
       if (set){
-        MI32.option.ignoreBogusBattery = onOff;
+        MI32.option.ignoreBogusBattery = value;
       } else {
-        onOff = MI32.option.ignoreBogusBattery;
+        value = MI32.option.ignoreBogusBattery;
       }
     } break;
     case 5:{
       if (set){
-        MI32.option.onlyAliased = onOff;
+        MI32.option.onlyAliased = value;
         if (MI32.option.onlyAliased){
           // discard all sensors for a restart
           MIBLEsensors.clear();
         }
       } else {
-        onOff = MI32.option.onlyAliased;
+        value = MI32.option.onlyAliased;
       }
     } break;
     case 6:{
       if (set){
-        MI32.option.MQTTType = onOff;
+        MI32.option.MQTTType = value;
       } else {
-        onOff = MI32.option.MQTTType;
+        value = MI32.option.MQTTType;
       }
     } break;
     default:{
@@ -2436,7 +2439,7 @@ void CmndMi32Option(void){
       return;
     } break;
   }
-  ResponseCmndIdxNumber(onOff);
+  ResponseCmndIdxNumber(value);
   return;
 }
 
@@ -2880,12 +2883,10 @@ void MI32ShowSomeSensors(){
     }
     cnt++;
   }
-  if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
-  }
+  MqttAppendSensorUnits();
   ResponseAppend_P(PSTR("}"));
-  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
   //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
+  MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
 
 #ifdef USE_HOME_ASSISTANT
   if(hass_mode==2){
@@ -2900,7 +2901,7 @@ void MI32ShowSomeSensors(){
 // starts a completely fresh MQTT message.
 // sends ONE sensor on a dedicated topic NOT related to this TAS
 // triggered by setting MI32.mqttCurrentSingleSlot = 0
-void MI32ShowOneMISensor(){
+void MI32ShowOneMISensor(bool hidename){
   // don't detect half-added ones here
   int numsensors = MIBLEsensors.size();
   if (MI32.mqttCurrentSingleSlot >= numsensors){
@@ -2913,11 +2914,11 @@ void MI32ShowOneMISensor(){
     Settings->flag.hass_discovery
     ||
 #endif //USE_HOME_ASSISTANT
-    MI32.option.MQTTType == 1
+    MI32.option.MQTTType > 0
     ){
 
     ResponseTime_P(PSTR(","));
-    MI32GetOneSensorJson(MI32.mqttCurrentSingleSlot, 1);
+    MI32GetOneSensorJson(MI32.mqttCurrentSingleSlot, hidename);
     mi_sensor_t *p;
     p = &MIBLEsensors[MI32.mqttCurrentSingleSlot];
 
@@ -2939,8 +2940,10 @@ void MI32ShowOneMISensor(){
     char SensorTopic[TOPSZ];
     GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
 
+    //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show one %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
     MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
-    //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show some %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
+    if (MI32.option.MQTTType > 1)
+      XdrvRulesProcess(0);
   }
   MI32.mqttCurrentSingleSlot++;
 }
@@ -3234,14 +3237,16 @@ void MI32ShowTriggeredSensors(){
   int sensor = 0;
 
   int maxcnt = 4;
+  bool hidename = false;
   if(
 #ifdef USE_HOME_ASSISTANT
     Settings->flag.hass_discovery
     ||
 #endif //USE_HOME_ASSISTANT
-    MI32.option.MQTTType == 1
+    MI32.option.MQTTType > 0
     ){
     maxcnt = 1;
+    hidename = MI32.option.MQTTType < 2;
   }
 
 
@@ -3257,7 +3262,7 @@ void MI32ShowTriggeredSensors(){
       cnt++;
       ResponseAppend_P(PSTR(","));
       // hide sensor name if HASS or option6
-      MI32GetOneSensorJson(sensor, (maxcnt == 1));
+      MI32GetOneSensorJson(sensor, hidename);
       int mlen = ResponseLength();
 
       // if we ran out of room, leave here.
@@ -3267,16 +3272,14 @@ void MI32ShowTriggeredSensors(){
       }
     }
     if (cnt){ // if we got one, then publish
-      if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
-        ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
-      }
+      MqttAppendSensorUnits();
       ResponseAppend_P(PSTR("}"));
       if(
     #ifdef USE_HOME_ASSISTANT
         Settings->flag.hass_discovery
         ||
     #endif //USE_HOME_ASSISTANT
-        MI32.option.MQTTType == 1
+        MI32.option.MQTTType > 0
         ){
         char SensorTopic[TOPSZ];
         char idstr[32];
@@ -3290,10 +3293,11 @@ void MI32ShowTriggeredSensors(){
                 p->MAC[3], p->MAC[4], p->MAC[5]);
         }
         GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered %d %s"), sensor, ResponseData());
         MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
-        AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered %d %s"), sensor, ResponseData());
         XdrvRulesProcess(0);
       } else {
+        //AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered2 %d %s"), sensor, ResponseData());
         MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
       }
 
