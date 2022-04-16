@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - SCD40 start low power command (#15361)
 - Improv initial or erase device installation failing to provide Configure WiFi option
+- BL09xx negative power presentation (#15374)
 
 ### Removed
 
