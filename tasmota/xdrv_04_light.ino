@@ -2902,6 +2902,44 @@ void LightDimmerOffset(uint32_t index, int32_t offset) {
   CmndDimmer();
 }
 
+static int DimmerStep(int dimmer)
+{
+  int step;
+  int plus = 1;
+  int payload;
+
+  if (0 == XdrvMailbox.data_len) {
+    return -1;
+  }
+
+  switch (XdrvMailbox.data[0]) {
+  case '-':
+    plus = 0;
+  case '+':
+    break;
+  default:
+    return -1;
+  }
+
+  if (1 == XdrvMailbox.data_len) {
+    step = Settings->dimmer_step;
+  } else {
+    char *ep;
+    step = strtoul(XdrvMailbox.data + 1, &ep, 10);
+    if ('\0' != *ep || 1 > step) {
+      return -1;
+    }
+  }
+
+  if (plus) {
+    payload = min(100, dimmer + step);
+  } else {
+    payload = max(1, dimmer - step);
+  }
+
+  return payload;
+}
+
 void CmndDimmer(void)
 {
   // Dimmer         - Show current Dimmer state
@@ -2926,12 +2964,11 @@ void CmndDimmer(void)
     dimmer = light_state.getDimmer(XdrvMailbox.index);
   }
   // Handle +/-/!/</> special commands
-  if (1 == XdrvMailbox.data_len) {
-    if ('+' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer > (100 - Settings->dimmer_step - 1)) ? 100 : dimmer + Settings->dimmer_step;
-    } else if ('-' == XdrvMailbox.data[0]) {
-      XdrvMailbox.payload = (dimmer < (Settings->dimmer_step + 1)) ? 1 : dimmer - Settings->dimmer_step;
-    } else if ('!' == XdrvMailbox.data[0] && Light.fade_running) {
+  int payload = DimmerStep(dimmer);
+  if (-1 != payload) {
+      XdrvMailbox.payload = payload;
+  } else if (1 == XdrvMailbox.data_len) {
+    if ('!' == XdrvMailbox.data[0] && Light.fade_running) {
       XdrvMailbox.payload = LightGetCurFadeBri();
     } else if ('<' == XdrvMailbox.data[0] ) {
       XdrvMailbox.payload = 1;
