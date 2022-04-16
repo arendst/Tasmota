@@ -444,6 +444,7 @@
 #define D_CMND_ENERGYTOTAL "EnergyTotal"
 #define D_CMND_ENERGYUSAGE "EnergyUsage"
 #define D_CMND_ENERGYEXPORT "EnergyExport"
+#define D_CMND_ENERGYEXPORTACTIVE "EnergyExportActive"
 #define D_CMND_POWERSET "PowerSet"
 #define D_CMND_VOLTAGESET "VoltageSet"
 #define D_CMND_CURRENTSET "CurrentSet"

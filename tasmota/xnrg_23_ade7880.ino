@@ -635,6 +635,7 @@ void Ade7880DrvInit(void) {
         Energy.phase_count = 3;                                            // Three phases
 //        Settings->flag5.energy_phase = 1;                                  // SetOption129 - (Energy) Show phase information
 //        Energy.use_overtemp = true;                                        // Use global temperature for overtemp detection
+        Energy.local_energy_active_export = true;
         TasmotaGlobal.energy_driver = XNRG_23;
       }
     }

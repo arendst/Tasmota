@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Sonoff MS01 soil moisture sensor (#15335)
 - Support for daisy chaining MAX7219 displays (#15345)
+- Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only (#13515)
 
 ### Changed
 

@@ -779,10 +779,11 @@ typedef struct {
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f61[39];              // F61 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f61[27];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
 
+  int32_t       energy_kWhexport_ph[3];    // F7C
   uint32_t      eth_ipv4_address[5];       // F88
   uint32_t      energy_kWhtotal;           // F9C
   SBitfield1    sbflag1;                   // FA0
@@ -837,8 +838,9 @@ typedef struct {
 
   int32_t       energy_kWhtoday_ph[3];     // 2D8
   int32_t       energy_kWhtotal_ph[3];     // 2E4
+  int32_t       energy_kWhexport_ph[3];    // 2F0
 
-                                           // 2F0 - 2FF free locations
+  uint8_t       free_2fc[4];               // 2FC
 } TRtcSettings;
 TRtcSettings RtcSettings;
 #ifdef ESP32
