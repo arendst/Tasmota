@@ -88,7 +88,7 @@ String ResolveToken(const char* input) {
   return resolved;
 }
 
-char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopic)
+char* GetTopic_P(char *stopic, uint32_t prefix, const char *topic, const char* subtopic)
 {
   /* prefix 0 = Cmnd
      prefix 1 = Stat
