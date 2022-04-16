@@ -251,6 +251,7 @@ typedef struct {
 
   uint32_t timeout;
   power_t old_power;
+  power_t power_on_state;
   uint16_t last_totals;
   uint16_t serial_in_byte_counter;
   uint16_t expected_bytes;
@@ -1097,6 +1098,14 @@ void SSPMHandleReceivedData(void) {
         } else {
           AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Relay scan done"));
 
+#ifndef SSPM_SIMULATE
+          if (Sspm->power_on_state) {
+            TasmotaGlobal.power = Sspm->power_on_state;
+            Sspm->power_on_state = 0;
+            SetPowerOnState();
+          }
+#endif
+
           Sspm->mstate = SPM_SCAN_COMPLETE;
         }
         break;
@@ -1704,6 +1713,7 @@ void SSPMInit(void) {
   Sspm->history_relay = 255;                  // Disable display energy history
   Sspm->log_relay = 255;                      // Disable display logging
   Sspm->old_power = TasmotaGlobal.power;
+  Sspm->power_on_state = TasmotaGlobal.power;
   Sspm->mstate = SPM_WAIT;                    // Start init sequence
 }
 
