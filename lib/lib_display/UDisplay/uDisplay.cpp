@@ -465,7 +465,7 @@ Renderer *uDisplay::Init(void) {
       uspi->begin(spi_clk, spi_miso, spi_mosi, -1);
       if (lvgl_param.use_dma) {
         spi_host = VSPI_HOST;
-        initDMA(spi_cs);
+        initDMA(lvgl_param.async_dma ? spi_cs : -1);   // disable DMA CS if sync, we control it directly
       }
 
     } else if (spi_nr == 2) {
@@ -473,7 +473,7 @@ Renderer *uDisplay::Init(void) {
       uspi->begin(spi_clk, spi_miso, spi_mosi, -1);
       if (lvgl_param.use_dma) {
         spi_host = HSPI_HOST;
-        initDMA(spi_cs);
+        initDMA(lvgl_param.async_dma ? spi_cs : -1);   // disable DMA CS if sync, we control it directly
       }
     } else {
       pinMode(spi_clk, OUTPUT);
@@ -1974,24 +1974,13 @@ void uDisplay::beginTransaction(SPISettings s) {
 #ifdef ESP32
   if (lvgl_param.use_dma) {
     dmaWait();
-  } else {
-    uspi->beginTransaction(s);
   }
-#else
-  uspi->beginTransaction(s);
 #endif
+  uspi->beginTransaction(s);
 }
 
 void uDisplay::endTransaction(void) {
-#ifdef ESP32
-  if (lvgl_param.use_dma) {
-    dmaBusy();
-  } else {
-    uspi->endTransaction();
-  }
-#else
   uspi->endTransaction();
-#endif
 }
 
 
@@ -2002,7 +1991,7 @@ void uDisplay::endTransaction(void) {
 ** Function name:           initDMA
 ** Description:             Initialise the DMA engine - returns true if init OK
 ***************************************************************************************/
-bool uDisplay::initDMA(bool ctrl_cs)
+bool uDisplay::initDMA(int32_t ctrl_cs)
 {
   if (DMA_Enabled) return false;
 
@@ -2018,9 +2007,6 @@ bool uDisplay::initDMA(bool ctrl_cs)
     .intr_flags = 0
   };
 
-  int8_t pin = -1;
-  if (ctrl_cs) pin = spi_cs;
-
   spi_device_interface_config_t devcfg = {
     .command_bits = 0,
     .address_bits = 0,
@@ -2031,7 +2017,7 @@ bool uDisplay::initDMA(bool ctrl_cs)
     .cs_ena_posttrans = 0,
     .clock_speed_hz = spi_speed*1000000,
     .input_delay_ns = 0,
-    .spics_io_num = pin,
+    .spics_io_num = ctrl_cs,
     .flags = SPI_DEVICE_NO_DUMMY, //0,
     .queue_size = 1,
     .pre_cb = 0, //dc_callback, //Callback to handle D/C line
@@ -2119,6 +2105,9 @@ void uDisplay::pushPixelsDMA(uint16_t* image, uint32_t len) {
   assert(ret == ESP_OK);
 
   spiBusyCheck++;
+  if (!lvgl_param.async_dma) {
+    dmaWait();
+  }
 }
 
 /***************************************************************************************
@@ -2145,6 +2134,9 @@ void uDisplay::pushPixels3DMA(uint8_t* image, uint32_t len) {
   assert(ret == ESP_OK);
 
   spiBusyCheck++;
+  if (!lvgl_param.async_dma) {
+    dmaWait();
+  }
 }
 
 
