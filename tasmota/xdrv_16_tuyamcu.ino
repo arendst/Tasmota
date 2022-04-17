@@ -735,7 +735,7 @@ void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len 
   TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
   TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
   char log_data[700];                       // Was MAX_LOGSZ
-  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
+  snprintf_P(log_data, sizeof(log_data), PSTR("T:>\"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
   for (uint32_t i = 0; i < payload_len; ++i) {
     TuyaSerial->write(payload[i]);
     checksum += payload[i];
@@ -914,7 +914,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
               // set every time a dim value is rxed, and if just turned on
               if (pTuya->dimDelay_ms[dimindex]){
                 if (pTuya->dimDebug & (1<<dimindex)){
-                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command %d deferred for %dms"), dimindex, pTuya->dimDelay_ms[dimindex]);
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("T:Dim%d wait %d"), dimindex, pTuya->dimDelay_ms[dimindex]);
                   pTuya->dimDebug &= (0xff ^ (1<<dimindex));
                 }
                 send = 0;
@@ -922,7 +922,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
               // only enabled if on.
               if (!(pTuya->dimCmdEnable & (1<<dimindex))){
                 if (pTuya->dimDebug & (1<<dimindex)){
-                  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim command %d disabled"), dimindex);
+                  AddLog(LOG_LEVEL_DEBUG, PSTR("T:Dim%d disabled"), dimindex);
                   pTuya->dimDebug &= (0xff ^ (1<<dimindex));
                 }
                 send = 0;
@@ -950,7 +950,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
             }
           } else {
             // if equal values, ignore set
-            AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: DP set ignored - same value dpid %d, value 0x%8x, len %d"), dp->DPid, dp->desiredValue[0], dp->desiredValueLen);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("T:DPset ign-same value dp%d=0x%x,%d"), dp->DPid, dp->desiredValue[0], dp->desiredValueLen);
             dp->toSet = 0;
           }
         }
@@ -999,8 +999,8 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
 
   if (state != pTuya->startup_state){
     char log_data[70];                       // Was MAX_LOGSZ
-    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: s %d -> %d - sends %d, rxs %d"), state, pTuya->startup_state, pTuya->sends, pTuya->rxs);
-    AddLogData(LOG_LEVEL_DEBUG, log_data);
+    snprintf_P(log_data, sizeof(log_data), PSTR("T:%d->%d-%d/%d"), state, pTuya->startup_state, pTuya->sends, pTuya->rxs);
+    AddLogData(LOG_LEVEL_DEBUG_MORE, log_data);
   }
 
   pTuya->inStateMachine = 0;
@@ -1023,20 +1023,20 @@ void TuyaDumpDPStore(){
 
     switch(dp->Type){
       case TUYA_TYPE_RAW:
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Valid DP %d type %d (raw) mcuval[0] 0x%08X desired[0] 0x%08X setflag %d rxed %d"), 
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:DP%d T%d m:0x%X d0x%X s%d r%d"), 
           dp->DPid, dp->Type, dp->rxedValue[0], dp->desiredValue[0], dp->toSet, dp->rxed);
         break;
       case TUYA_TYPE_BOOL:
       case TUYA_TYPE_ENUM:
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Valid DP %d type %d (bool/enum) mcuval[0] 0x%08X desired[0] 0x%08X setflag %d rxed %d"), 
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:DP%d T%d m0x%X d0x%X s%d r%d"), 
           dp->DPid, dp->Type, dp->rxedValue[0], dp->desiredValue[0], dp->toSet, dp->rxed);
         break;
       case TUYA_TYPE_VALUE:
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Valid DP %d type %d (val) mcuval %d desired %d setflag %d rxed %d"), 
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:DP%d T%d m%d d%d s%d r%d"), 
           dp->DPid, dp->Type, TUYAREAD32FROMPTR(dp->rxedValue), TUYAREAD32FROMPTR(dp->desiredValue), dp->toSet, dp->rxed);
         break;
       case TUYA_TYPE_STRING:
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: Valid DP %d type %d (str) mcuval[0] 0x%08X desired[0] 0x%08X setflag %d rxed %d"), 
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:DP%d T%d m0x%X d0x%X s%d r%d"), 
           dp->DPid, dp->Type, dp->rxedValue[0], dp->desiredValue[0], dp->toSet, dp->rxed);
         break;
     }
@@ -1073,7 +1073,7 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
           dp->desiredValueLen = len;
           dp->toSet = 1;
           pTuya->requestSend = 1;
-          AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: DP %d desiredvalue set (0x%08x len %d)"), id, dp->desiredValue[0], dp->desiredValueLen);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("T:DP%d des v set (0x%x,%d)"), id, dp->desiredValue[0], dp->desiredValueLen);
 
           if (TuyaDpIdIsDimmer(id)){
             pTuya->dimDebug = 1; // enable debug to be printed once.
@@ -1116,13 +1116,13 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
     case TUYA_TYPE_RAW:
     case TUYA_TYPE_BOOL:
     case TUYA_TYPE_ENUM:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: set of dpid %d to %d requested"), id, *(uint8_t*)value);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("T:dp%d to %d req"), id, *(uint8_t*)value);
       break;
     case TUYA_TYPE_VALUE:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: set of dpid %d to %d requested"), id, TUYAREAD32FROMPTR(value));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("T:dp%d to %d req"), id, TUYAREAD32FROMPTR(value));
       break;
     case TUYA_TYPE_STRING:
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: set of dpid %d to (?) requested"), id);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("T:dp%d to (?) req"), id);
       break;
   }
   TuyaDumpDPStore();
@@ -1264,12 +1264,12 @@ bool TuyaSetPower(void)
 
   if (source != SRC_SWITCH && TuyaSerial && dpid) {  // ignore to prevent loop from pushing state from faceplate interaction
     TuyaSendBool(dpid, value);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: posted rpower %d val %d to dpid %d src %d dev %d"), rpower, value, dpid, source, dev);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("T:post rpower%d v%d dp%d s%d d%d"), rpower, value, dpid, source, dev);
     // no longer needed as commands wait for ack.
     //delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
     status = true;
   } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: rpower %d val %d dpid %d ignored src %d dev %d"), rpower, value, dpid, source, dev);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("T:rpower%d v%d dp%d ignored s%d d%d"), rpower, value, dpid, source, dev);
   }
   return status;
 }
@@ -1281,11 +1281,17 @@ bool TuyaSetChannels(void)
   uint8_t TuyaIdx = 0;
   char hex_char[15];
   bool noupd = false;
+
+  if (TasmotaGlobal.last_source == SRC_SWITCH){
+    AddLog(LOG_LEVEL_DEBUG, PSTR("T:setchan disbl SRC_SWITCH"));
+    // but pretend we did set them
+    return true;
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("T:setchan"));
+
   bool LightMode = TuyaGetDpId(TUYA_MCU_FUNC_MODESET) != 0;
   uint8_t idx = 0;
   snprintf_P(hex_char, sizeof(hex_char), PSTR("000000000000"));
-
-  AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: setchannels"));
 
   if (LT_SERIAL1 == TasmotaGlobal.light_type) {
     pTuya->Snapshot[0] = light_state.getDimmer();
@@ -1428,9 +1434,9 @@ void LightSerialDuty(uint16_t duty, char *hex_char, uint8_t TuyaIdx)
         } else {
           duty = changeUIntScale(duty, 0, 100, Settings->dimmer_hw_min, Settings->dimmer_hw_max);
         }
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim skipped tasduty %d value %d for dpid %d"), tasduty, duty, dpid);  // due to 0 or already set
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:dim skip duty%d v%d dp%d"), tasduty, duty, dpid);  // due to 0 or already set
       } else {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Cannot set dimmer. Dimmer Id unknown"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T: Cannot set dimmer. Dimmer Id unknown"));
       }
     }
   }
@@ -1627,19 +1633,19 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
 
     case TUYA_TYPE_BOOL: {  // Data Type 1
       if (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d RX Relay-%d --> MCU State: %s Current State:%s"), fnId, fnId - TUYA_MCU_FUNC_REL1 + 1, value?"On":"Off",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1 + 1, value?"On":"Off",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
         if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)) {
           if (!value) { PowerOff = true; }
           ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, value, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
         }
       } else if (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d RX Relay-%d-Inverted --> MCU State: %s Current State:%s"), fnId, fnId - TUYA_MCU_FUNC_REL1_INV + 1, value?"Off":"On",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-Inv-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1_INV + 1, value?"Off":"On",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
         if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1) {
           ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1_INV + 1, value ^ 1, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
           if (value) { PowerOff = true; }
         }
       } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d RX Switch-%d --> MCU State: %d Current State:%d"),fnId, fnId - TUYA_MCU_FUNC_SWT1 + 1, value, SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Switch%d --> M%d T%d"),fnId, fnId - TUYA_MCU_FUNC_SWT1 + 1, value, SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1));
 
         if (SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1) != value) {
           SwitchSetVirtual(fnId - TUYA_MCU_FUNC_SWT1, value);
@@ -1704,7 +1710,7 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
         pTuya->Levels[dimIndex] = changeUIntScale(packetValue, Settings->dimmer_hw_min, Settings->dimmer_hw_max, 0, 100);
       }
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d RX value %d from dpId %d "), fnId, packetValue, dpid);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d value %d dp%d "), fnId, packetValue, dpid);
 
       if ((fnId == TUYA_MCU_FUNC_DIMMER) || (fnId == TUYA_MCU_FUNC_REPORT1) ||
           (fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2) ||
@@ -1879,7 +1885,7 @@ void TuyaNormalPowerModePacketProcess(void)
 
     case TUYA_CMD_HEARTBEAT:
 #ifdef TUYA_MORE_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("T:Hbt"));
 #endif
       if (pTuya->buffer[6] == 0) {
         AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Detected MCU restart"));
@@ -2191,7 +2197,7 @@ void TuyaProcessByte(unsigned char serial_in_byte){
         pTuya->byte_counter = 0;
         pTuya->buffer[pTuya->byte_counter++] = serial_in_byte;
       } else {
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: E55 0x%02X"), serial_in_byte);
+        AddLog(LOG_LEVEL_ERROR, PSTR("T:E55 0x%02X"), serial_in_byte);
         pTuya->errorcnt ++;
       }
     } break;
@@ -2497,7 +2503,7 @@ bool Xdrv16(uint8_t function) {
             pTuya->dimDelay_ms[i] -= 100;
             if (pTuya->dimDelay_ms[i] <= 0){
               pTuya->dimDelay_ms[i] = 0;
-              AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: Dim Delay %d -> 0."), i);
+              AddLog(LOG_LEVEL_DEBUG, PSTR("T:DimDelay%d->0"), i);
             }
           }
         }
