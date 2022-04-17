@@ -1097,15 +1097,6 @@ void SSPMHandleReceivedData(void) {
           SSPMSendGetScheme(Sspm->module_selected);
         } else {
           AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Relay scan done"));
-
-#ifndef SSPM_SIMULATE
-          if (Sspm->power_on_state) {
-            TasmotaGlobal.power = Sspm->power_on_state;
-            Sspm->power_on_state = 0;
-            SetPowerOnState();
-          }
-#endif
-
           Sspm->mstate = SPM_SCAN_COMPLETE;
         }
         break;
