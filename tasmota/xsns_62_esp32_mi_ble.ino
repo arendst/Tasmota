@@ -86,10 +86,50 @@
 void MI32scanEndedCB(NimBLEScanResults results);
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 
+///////////////////////////////////////////////////////////
+// OVERRIDBLES
+//    Default values can be overrided in user_config_override.h
+
+#ifndef MI32_OPTION0_ALWAYS_AGGREGATE
+#define MI32_OPTION0_ALWAYS_AGGREGATE   true
+#endif
+
+#ifndef MI32_OPTION1_NO_SUMMARY
+#define MI32_OPTION1_NO_SUMMARY false
+#endif
+
+#ifndef MI32_OPTION2_DIRECT_BRIDGED_MODE
+#define MI32_OPTION2_DIRECT_BRIDGED_MODE false
+#endif
+
+#ifndef MI32_OPTION4_IGNORE_BOGUS_BATTERY
+#define MI32_OPTION4_IGNORE_BOGUS_BATTERY true
+#endif
+
+#ifndef MI32_OPTION5_ONLY_ALIASED
+#define MI32_OPTION5_ONLY_ALIASED false
+#endif
+
+#ifndef MI32_OPTION6_MQTT_TYPE
+#define MI32_OPTION6_MQTT_TYPE 0
+#endif
+
+#ifndef MI32_PAGE
+#define MI32_PAGE       4
+#endif
+
+#ifndef MI32_BLE_TOPIC
+#define MI32_BLE_TOPIC "tasmota_ble"
+#endif
+
+///////////////////////////////////////////////////////////
+
+
 struct {
-  uint16_t perPage = 4;
+  uint16_t perPage = MI32_PAGE;
   uint8_t mqttCurrentSlot = 0;
   uint8_t mqttCurrentSingleSlot = 0;
+  String bleTopic = MI32_BLE_TOPIC;
   uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   int secondsCounter = 0;   // counts up in MI32EverySecond to period
   int secondsCounter2 = 0;  // counts up in MI32EverySecond to period
@@ -125,12 +165,12 @@ struct {
     uint32_t directBridgeMode:1;            // Mi32Option2: send every received BLE-packet as a MQTT-message in real-time
     uint32_t holdBackFirstAutodiscovery:1;  //
     uint32_t showRSSI:1;                    //
-    uint32_t ignoreBogusBattery:1;          // Mi32Option4: show BLE RSSI
+    uint32_t ignoreBogusBattery:1;          // Mi32Option4:
     uint32_t minimalSummary:1;              // DEPRECATED!!
     uint32_t onlyAliased:1;                 // Mi32Option5: only include sensors that are aliased
-    uint32_t MQTTType:2;                    // Mi32Option6: publish sensor on tasmota_ble with 1 topic per sensor
+    uint32_t MQTTType:2;                    // Mi32Option6: publish sensor on MI32.bleTopic with 1 topic per sensor
                                             //    Mi32Option6 0 : standard SENSOR message
-                                            //    Mi32Option6 1 : tasmota_ble + per sensor topic (legacy syntax)
+                                            //    Mi32Option6 1 : MI32.bleTopic + per sensor topic (legacy syntax)
                                             //    MI32Option6 2 : same but add sensor name as key in JSON (same as standard SENSOR)
   } option;
 } MI32;
@@ -402,14 +442,15 @@ const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|"
   "Key|"
   "Keys|"
 #endif  // USE_MI_DECRYPTION
-  "Period|Time|Page|Battery|Unit|Block|Option";
+  "Period|Time|Page|Battery|Unit|Block|Option|Topic";
 
 void (*const MI32_Commands[])(void) PROGMEM = {
 #ifdef USE_MI_DECRYPTION
   &CmndMi32Key,
   &CmndMi32Keys,
 #endif  // USE_MI_DECRYPTION
-  &CmndMi32Period, &CmndMi32Time, &CmndMi32Page, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Block, &CmndMi32Option };
+  &CmndMi32Period, &CmndMi32Time, &CmndMi32Page, &CmndMi32Battery, &CmndMi32Unit, &CmndMi32Block,
+  &CmndMi32Option, &CmndMi32Topic };
 
 
 #define MI_UNKOWN      1
@@ -1560,13 +1601,23 @@ void MI32Init(void) {
   MI32.mode.init = false;
 
   //test section for options
-  MI32.option.allwaysAggregate = 1;
-  MI32.option.noSummary = 0;
-  MI32.option.minimalSummary = 0;
-  MI32.option.directBridgeMode = 0;
-  MI32.option.showRSSI = 1;
-  MI32.option.ignoreBogusBattery = 1; // from advertisements
+  MI32.option.allwaysAggregate = MI32_OPTION0_ALWAYS_AGGREGATE;       // Mi32Option0: always show all known values of one sensor in bridge mode
+  MI32.option.noSummary = MI32_OPTION1_NO_SUMMARY;                    // Mi32Option1: no sensor values at TELE-period
+  MI32.option.directBridgeMode = MI32_OPTION2_DIRECT_BRIDGED_MODE;    // Mi32Option2: send every received BLE-packet as a MQTT-message in real-time
   MI32.option.holdBackFirstAutodiscovery = 1;
+  MI32.option.showRSSI = 1;
+  MI32.option.ignoreBogusBattery = MI32_OPTION4_IGNORE_BOGUS_BATTERY; // Mi32Option4: ignore battery from ads
+  MI32.option.minimalSummary = 0;
+  MI32.option.onlyAliased = MI32_OPTION5_ONLY_ALIASED;                // Mi32Option5: only include sensors that are aliased
+  MI32.option.MQTTType = MI32_OPTION6_MQTT_TYPE;                      // Mi32Option6: publish sensor on MI32.bleTopic with 1 topic per sensor
+
+AddLog(0,PSTR("MI32Option0: %d"), MI32.option.allwaysAggregate);
+AddLog(0,PSTR("MI32Option1: %d"), MI32.option.noSummary);
+AddLog(0,PSTR("MI32Option2: %d"), MI32.option.directBridgeMode);
+AddLog(0,PSTR("MI32Option4: %d"), MI32.option.ignoreBogusBattery);
+AddLog(0,PSTR("MI32Option5: %d"), MI32.option.onlyAliased);
+AddLog(0,PSTR("MI32Option6: %d"), MI32.option.MQTTType);
+
 
   BLE_ESP32::registerForAdvertismentCallbacks((const char *)"MI32", MI32advertismentCallback);
   BLE_ESP32::registerForScanCallbacks((const char *)"MI32", MI32scanCompleteCallback);
@@ -2443,6 +2494,18 @@ void CmndMi32Option(void){
   return;
 }
 
+void CmndMi32Topic(void) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
+    MakeValidMqtt(0, XdrvMailbox.data);
+    if (SC_CLEAR == Shortcut())
+      MI32.bleTopic = MI32_BLE_TOPIC;
+    else
+      MI32.bleTopic = XdrvMailbox.data;
+  }
+  ResponseCmndChar(MI32.bleTopic.c_str());
+}
+
+
 void MI32KeyListResp(){
   Response_P(PSTR("{\"MIKeys\":{"));
   for (int i = 0; i < MIBLEbindKeys.size(); i++){
@@ -2938,7 +3001,7 @@ void MI32ShowOneMISensor(bool hidename){
             p->MAC[3], p->MAC[4], p->MAC[5]);
     }
     char SensorTopic[TOPSZ];
-    GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
+    GetTopic_P(SensorTopic, TELE, MI32.bleTopic.c_str(), id);
 
     //AddLog(LOG_LEVEL_DEBUG,PSTR("M32: %s: show one %d %s"),D_CMND_MI32, MI32.mqttCurrentSlot, ResponseData());
     MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
@@ -3076,7 +3139,7 @@ void MI32DiscoveryOneMISensor(){
     }
 
     char SensorTopic[TOPSZ];
-    GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
+    GetTopic_P(SensorTopic, TELE, MI32.bleTopic.c_str(), id);
 
     //int i = p->nextDiscoveryData*3;
     for (int i = 0; i < datacount*3; i += 3){
@@ -3292,7 +3355,7 @@ void MI32ShowTriggeredSensors(){
                 kMI32DeviceType[p->type-1],
                 p->MAC[3], p->MAC[4], p->MAC[5]);
         }
-        GetTopic_P(SensorTopic, TELE, (char*)"tasmota_ble", id);
+        GetTopic_P(SensorTopic, TELE, MI32.bleTopic.c_str(), id);
         //AddLog(LOG_LEVEL_DEBUG, PSTR("M32: triggered %d %s"), sensor, ResponseData());
         MqttPublish(SensorTopic, Settings->flag.mqtt_sensor_retain);
         XdrvRulesProcess(0);
