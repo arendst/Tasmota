@@ -119,7 +119,8 @@ void lv_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *c
 #include <FS.h>
 #include "ZipReadFS.h"
 extern FS *ffsp;
-FS lv_zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ffsp)));
+extern FS *ufsp;
+FS lv_zip_ufsp(ZipReadFSImplPtr(new ZipReadFSImpl(&ffsp, "/sd/", &ufsp)));
 
 extern "C" {
 

@@ -45,12 +45,13 @@ bool dht_active = true;                       // DHT configured
 bool dht_dual_mode = false;                   // Single pin mode
 
 struct DHTSTRUCT {
+  float    t = NAN;
+  float    h = NAN;
+  int16_t  raw;
+  char     stype[12];
   int8_t   pin;
   uint8_t  type;
   uint8_t  lastresult;
-  char     stype[12];
-  float    t = NAN;
-  float    h = NAN;
 } Dht[DHT_MAX_SENSORS];
 
 bool DhtWaitState(uint32_t sensor, uint32_t level) {
@@ -167,7 +168,7 @@ bool DhtRead(uint32_t sensor) {
       break;
     }
     case GPIO_MS01: {                                    // Sonoff MS01
-      int32_t voltage = ((dht_data[0] << 8) | dht_data[1]);
+      int16_t voltage = ((dht_data[0] << 8) | dht_data[1]);
 
 //      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: MS01 %d"), voltage);
 
@@ -187,6 +188,7 @@ bool DhtRead(uint32_t sensor) {
         humidity = - FastPrecisePowf(0.00046 * x, 3) - 0.0004 * x + 15;
       }
       temperature = 0;
+      Dht[sensor].raw = voltage;
       break;
     }
   }
@@ -264,7 +266,8 @@ void DhtShow(bool json) {
   for (uint32_t i = 0; i < dht_sensors; i++) {
     if (GPIO_MS01 == Dht[i].type) {
       if (json) {
-        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_HUMIDITY "\":%*_f}"), Dht[i].stype, Settings->flag2.humidity_resolution, &Dht[i].h);
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_HUMIDITY "\":%*_f,\"Raw\":%d}"),
+          Dht[i].stype, Settings->flag2.humidity_resolution, &Dht[i].h, Dht[i].raw);
 #ifdef USE_WEBSERVER
       } else {
         char parameter[FLOATSZ];

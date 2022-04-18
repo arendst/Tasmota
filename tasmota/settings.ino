@@ -47,6 +47,7 @@ void RtcSettingsSave(void) {
       for (uint32_t i = 0; i < 3; i++) {
         RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
         RtcSettings.energy_kWhtotal_ph[i] = Settings->energy_kWhtotal_ph[i];
+        RtcSettings.energy_kWhexport_ph[i] = Settings->energy_kWhexport_ph[i];
       }
       RtcSettings.energy_usage = Settings->energy_usage;
       for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
@@ -1225,6 +1226,9 @@ void SettingsDefaultSet2(void) {
   flag5.shift595_invert_outputs |= SHIFT595_INVERT_OUTPUTS;
   Settings->shift595_device_count = SHIFT595_DEVICE_COUNT;
   flag5.tls_use_fingerprint |= MQTT_TLS_FINGERPRINT;
+  #ifdef BLE_ESP32_ENABLE
+  flag5.mi32_enable |= BLE_ESP32_ENABLE;
+  #endif
 
   Settings->flag = flag;
   Settings->flag2 = flag2;

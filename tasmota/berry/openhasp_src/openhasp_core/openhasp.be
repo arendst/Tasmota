@@ -77,6 +77,7 @@ class lvh_obj
     "radius": "style_radius",
     "border_side": "style_border_side",
     "border_width": "style_border_width",
+    "border_color": "style_border_color",
     "line_width": nil,                      # depends on class
     "line_width1": nil,                     # depends on class
     "action": nil,                          # store the action in self.action
@@ -506,8 +507,13 @@ class lvh_obj
       end
     elif type(t) == 'string'
       import string
+      # look for 'A:name.font' style font file name
+      var drive_split = string.split(t, ':', 1)
       var fn_split = string.split(t, '-')
-      if size(fn_split) >= 2      # it does contain '-'
+      if size(drive_split) > 1 && size(drive_split[0]) == 1
+        # font is from disk
+        font = lv.load_font(t)
+      elif size(fn_split) >= 2      # it does contain '-'
         var sz = int(fn_split[-1])
         var name = fn_split[0..-2].concat('-')    # rebuild the font name
         if sz > 0 && size(name) > 0              # looks good, let's have a try

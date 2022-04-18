@@ -84,8 +84,8 @@ const uint8_t  bl09xx_init[5][4] = {
 };
 
 struct BL09XX {
-  int32_t voltage = 0;
-  int32_t current[2] = { 0, };
+  uint32_t voltage = 0;
+  uint32_t current[2] = { 0, };
   int32_t power[2] = { 0, };
   float temperature;
   uint16_t tps1 = 0;
@@ -128,13 +128,13 @@ bool Bl09XXDecode3940(void) {
 
   Bl09XX.voltage    = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[6]  << 16 | Bl09XX.rx_buffer[5]  << 8 | Bl09XX.rx_buffer[4];      // IA_RMS unsigned
-  int32_t tmp = Bl09XX.rx_buffer[18] << 24 | Bl09XX.rx_buffer[17] << 16 | Bl09XX.rx_buffer[16] << 8;     // WATT_A signed
-  Bl09XX.power[0] = (tmp >> 8);                                                                       // WATT_A unsigned
+  Bl09XX.power[0]   = Bl09XX.rx_buffer[18] << 16 | Bl09XX.rx_buffer[17] << 8 | Bl09XX.rx_buffer[16];     // WATT_A signed
+  if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                   // Extend sign bit
 
   if (Energy.phase_count > 1) {
     Bl09XX.current[1] = Bl09XX.rx_buffer[9]  << 16 | Bl09XX.rx_buffer[8]  << 8 | Bl09XX.rx_buffer[7];    // IB_RMS unsigned
-    tmp = Bl09XX.rx_buffer[21] << 24 | Bl09XX.rx_buffer[20] << 16 | Bl09XX.rx_buffer[19] << 8;           // WATT_B signed
-    Bl09XX.power[1] = (tmp >> 8);                                                                     // WATT_B unsigned
+    Bl09XX.power[1]   = Bl09XX.rx_buffer[21] << 16 | Bl09XX.rx_buffer[20] << 8 | Bl09XX.rx_buffer[19];   // WATT_B signed
+    if (bitRead(Bl09XX.power[1], 23)) { Bl09XX.power[1] |= 0xFF000000; }                                 // Extend sign bit
   }
 
 #ifdef DEBUG_BL09XX
@@ -171,8 +171,8 @@ bool Bl09XXDecode42(void) {
 
   Bl09XX.voltage    = Bl09XX.rx_buffer[6] << 16 | Bl09XX.rx_buffer[5] << 8 | Bl09XX.rx_buffer[4];        // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[3]  << 16 | Bl09XX.rx_buffer[2]  << 8 | Bl09XX.rx_buffer[1];      // IA_RMS unsigned
-  int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;     // WATT_A signed
-  Bl09XX.power[0] = (tmp >> 8);                                                                       // WATT_A unsigned
+  Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // WATT_A signed
+  if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                   // Extend sign bit
 
 #ifdef DEBUG_BL09XX
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d, P %d"),
