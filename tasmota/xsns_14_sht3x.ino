@@ -112,34 +112,6 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
   return (!isnan(t) && !isnan(h));
 }
 
-bool ShtcxReadId(uint16_t &id, uint8_t shtcx_address)
-// Read id register of SHTCx series
-{
-  uint8_t data[3];
-
-  Wire.beginTransmission(shtcx_address);
-  Wire.write(0x35);                    // Wake from
-  Wire.write(0x17);                    // sleep
-  Wire.endTransmission();
-  Wire.beginTransmission(shtcx_address);
-  Wire.write(0xEF);                    // Read-out
-  Wire.write(0xC8);                    // id register
-  if (Wire.endTransmission() != 0) {   // Stop I2C transmission
-    return false;
-  }
-  delay(1);
-  Wire.requestFrom(shtcx_address, (uint8_t)3); // Request 3 bytes of data
-  for (uint32_t i = 0; i < 3; i++) {
-    data[i] = Wire.read(); // Id (MSB, LSB, CRC)
-  };
-  // Check CRC
-  if (computeCrc(&data[0], 2) != data[2]) {
-    return false;
-  }
-  id = (data[0] << 8) | data[1];
-  return true;
-}
-
 bool ShtcxRead(float &t, float &h, uint8_t shtcx_address)
 // Read temperature and humidity for SHTCx series
 {
@@ -171,30 +143,6 @@ bool ShtcxRead(float &t, float &h, uint8_t shtcx_address)
   t = convertValue(&data[0], -45.0, 175.0, 65535.0);
   h = convertValue(&data[3], 0.0, 100.0, 65535.0);
   return (!isnan(t) && !isnan(h));
-}
-
-bool Sht4xReadSerial(uint32_t &serial, uint8_t sht4x_address)
-// Read serial number of SHT4x series
-{
-  uint8_t data[6];
-
-  Wire.beginTransmission(sht4x_address);
-  Wire.write(0x89);                    // Send command: read serial number
-  if (Wire.endTransmission() != 0) {   // Stop I2C transmission
-    return false;
-  }
-  delay(1);
-  Wire.requestFrom(sht4x_address, (uint8_t)6); // Request 6 bytes of data
-  for (uint32_t i = 0; i < 6; i++) {
-    data[i] = Wire.read(); // serial (MSB1, LSB1, CRC1, MSB2, LSB2, CRC2)
-  };
-  // Check CRCs
-  if ((computeCrc(&data[0], 2) != data[2]) || (computeCrc(&data[3], 2) != data[5])) {
-    return false;
-  }
-  // Convert to 32-bit integer
-  serial = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-  return true;
 }
 
 bool Sht4xRead(float &t, float &h, uint8_t sht4x_address)
@@ -229,11 +177,11 @@ bool Sht4xRead(float &t, float &h, uint8_t sht4x_address)
 void Sht3xDetect(void)
 {
   uint32_t i;
+  float t;
+  float h;
   // Probe SHT3x: Try reading temperature and humidity
   for (i = 0; i < SHT3X_ADDRESSES; i++) {
     if (!I2cSetDevice(sht3x_addresses[i])) { continue; }
-    float t;
-    float h;
     if (Sht3xRead(t, h, sht3x_addresses[i])) {
       sht3x_sensors[sht3x_count].type = SHT3X_TYPE_SHT3X;
       sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
@@ -245,8 +193,7 @@ void Sht3xDetect(void)
   // Probe SHTCx: Try reading id
   for (i = 0; i < SHTCX_ADDRESSES; i++) {
     if (!I2cSetDevice(shtcx_addresses[i])) { continue; }
-    uint16_t id;
-    if (ShtcxReadId(id, shtcx_addresses[i])) {
+    if (ShtcxRead(t, h, shtcx_addresses[i])) {
       sht3x_sensors[sht3x_count].type = SHT3X_TYPE_SHTCX;
       sht3x_sensors[sht3x_count].address = shtcx_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].typeString, sizeof(sht3x_sensors[sht3x_count].typeString), SHT3X_TYPE_SHTCX, kSht3xTypes);
@@ -257,8 +204,7 @@ void Sht3xDetect(void)
   // Probe SHT4x: Try reading serial number
   for (i = 0; i < SHT4X_ADDRESSES; i++) {
     if (!I2cSetDevice(sht4x_addresses[i])) { continue; }
-    uint32_t serial;
-    if (Sht4xReadSerial(serial, sht4x_addresses[i])) {
+    if (Sht4xRead(t, h, sht4x_addresses[i])) {
       sht3x_sensors[sht3x_count].type = SHT3X_TYPE_SHT4X;
       sht3x_sensors[sht3x_count].address = sht4x_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].typeString, sizeof(sht3x_sensors[sht3x_count].typeString), SHT3X_TYPE_SHT4X, kSht3xTypes);
