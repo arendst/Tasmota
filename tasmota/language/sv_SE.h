@@ -871,6 +871,7 @@
 #define D_UNIT_HOUR "Tim"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "ink"
 #define D_UNIT_KELVIN "K"
 #define D_UNIT_KILOMETER "km"

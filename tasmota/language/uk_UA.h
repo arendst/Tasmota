@@ -871,6 +871,7 @@
 #define D_UNIT_HOUR                      "г"
 #define D_UNIT_GALLONS                   "гал"
 #define D_UNIT_GALLONS_PER_MIN           "гал/хв"
+#define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS                "інк"
 #define D_UNIT_KELVIN                    "K"
 #define D_UNIT_KILOMETER                 "km"
