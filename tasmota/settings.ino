@@ -942,6 +942,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
   Settings->sbflag1.range_extender = WIFI_RGX_STATE;
   Settings->sbflag1.range_extender_napt = WIFI_RGX_NAPT;
+  flag5.wifi_no_sleep |= WIFI_NO_SLEEP;
 
   // Syslog
   SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
