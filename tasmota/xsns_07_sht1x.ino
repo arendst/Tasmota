@@ -138,14 +138,14 @@ bool ShtRead(void)
   float humRaw = ShtReadData();
 
   // Temperature conversion coefficients from SHT1X datasheet for version 4
-  const float d1 = -39.7;  // 3.5V
-  const float d2 = 0.01;   // 14-bit
+  const float d1 = -39.7f;  // 3.5V
+  const float d2 = 0.01f;   // 14-bit
   sht_temperature = d1 + (tempRaw * d2);
-  const float c1 = -2.0468;
-  const float c2 = 0.0367;
-  const float c3 = -1.5955E-6;
-  const float t1 = 0.01;
-  const float t2 = 0.00008;
+  const float c1 = -2.0468f;
+  const float c2 = 0.0367f;
+  const float c3 = -1.5955E-6f;
+  const float t1 = 0.01f;
+  const float t2 = 0.00008f;
   float rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
   sht_temperature = ConvertTemp(sht_temperature);

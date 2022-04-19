@@ -62,17 +62,17 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity) {
   //Buck (1981) 		6.1121 exp(17.502 x T)/(T + 240.97)
   //reference https://www.eas.ualberta.ca/jdwilson/EAS372_13/Vomel_CIRES_satvpformulae.html
   float temp = NAN;
-  const float mw = 18.01534; 	// molar mass of water g/mol
-  const float r = 8.31447215; 	// Universal gas constant J/mol/K
+  const float mw = 18.01534f; 	// molar mass of water g/mol
+  const float r = 8.31447215f; 	// Universal gas constant J/mol/K
 
   if (isnan(temperature) || isnan(humidity) ) {
     return NAN;
   }
 
-  temp = POW_FUNC(2.718281828, (17.67 * temperature) / (temperature + 243.5));
+  temp = POW_FUNC(2.718281828f, (17.67f * temperature) / (temperature + 243.5f));
 
   //return (6.112 * temp * humidity * 2.1674) / (273.15 + temperature); 	//simplified version
-  return (6.112 * temp * humidity * mw) / ((273.15 + temperature) * r); 	//long version
+  return (6.112f * temp * humidity * mw) / ((273.15f + temperature) * r); 	//long version
 }
 
 #define SAVE_PERIOD 30

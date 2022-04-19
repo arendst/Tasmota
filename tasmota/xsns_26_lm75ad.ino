@@ -77,7 +77,7 @@ float LM75ADGetTemp(void)
     sign = -1;
   }
   t = t >> 5; // shift value into place (5 LSB not used)
-  return ConvertTemp(sign * t * 0.125);
+  return ConvertTemp(sign * t * 0.125f);
 }
 
 void LM75ADShow(bool json)

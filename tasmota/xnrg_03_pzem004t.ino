@@ -153,10 +153,10 @@ bool PzemRecieve(uint8_t resp, float *data)
 
   switch (resp) {
     case RESP_VOLTAGE:
-      *data = (float)(buffer[1] << 8) + buffer[2] + (buffer[3] / 10.0);    // 65535.x V
+      *data = (float)(buffer[1] << 8) + buffer[2] + (buffer[3] / 10.0f);    // 65535.x V
       break;
     case RESP_CURRENT:
-      *data = (float)(buffer[1] << 8) + buffer[2] + (buffer[3] / 100.0);   // 65535.xx A
+      *data = (float)(buffer[1] << 8) + buffer[2] + (buffer[3] / 100.0f);   // 65535.xx A
       break;
     case RESP_POWER:
       *data = (float)(buffer[1] << 8) + buffer[2];                         // 65535 W
@@ -192,7 +192,7 @@ void PzemEvery250ms(void)
           Energy.active_power[Pzem.phase] = value;
           break;
         case 4:  // Total energy as 99999Wh
-          Energy.import_active[Pzem.phase] = value / 1000.0;  // 99.999kWh
+          Energy.import_active[Pzem.phase] = value / 1000.0f;  // 99.999kWh
           if (Pzem.phase == Energy.phase_count -1) {
             if (TasmotaGlobal.uptime > PZEM_STABILIZE) {
               EnergyUpdateTotal();

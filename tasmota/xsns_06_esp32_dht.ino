@@ -58,8 +58,8 @@ bool DhtRead(uint32_t sensor) {
     return false;
   }
 
-  if (humidity > 100) { humidity = 100.0; }
-  if (humidity < 0) { humidity = 0.1; }
+  if (humidity > 100) { humidity = 100.0f; }
+  if (humidity < 0) { humidity = 0.1f; }
   Dht[sensor].h = ConvertHumidity(humidity);
   Dht[sensor].t = ConvertTemp(temperature);
   Dht[sensor].lastresult = 0;

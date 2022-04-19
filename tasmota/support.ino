@@ -319,7 +319,7 @@ float CharToFloat(const char *str)
 
   strlcpy(strbuf, str, sizeof(strbuf));
   char *pt = strbuf;
-  if (*pt == '\0') { return 0.0; }
+  if (*pt == '\0') { return 0.0f; }
 
   while ((*pt != '\0') && isspace(*pt)) { pt++; }  // Trim leading spaces
 
@@ -816,12 +816,15 @@ float ConvertPressureForSeaLevel(float pressure) {
   if (pressure == 0.0f) {
     return pressure;
   }
-  return ConvertPressure((pressure / FastPrecisePow(1.0f - ((float)Settings->altitude / 44330.0f), 5.255f)) - 21.6f);
+  return ConvertPressure((pressure / FastPrecisePowf(1.0f - ((float)Settings->altitude / 44330.0f), 5.255f)) - 21.6f);
 }
 
-String PressureUnit(void)
-{
-  return (Settings->flag.pressure_conversion) ? (Settings->flag5.mm_vs_inch) ? String(F(D_UNIT_INCH_MERCURY)) : String(F(D_UNIT_MILLIMETER_MERCURY)) : String(F(D_UNIT_PRESSURE));
+const char kPressureUnit[] PROGMEM = D_UNIT_PRESSURE "|" D_UNIT_MILLIMETER_MERCURY "|" D_UNIT_INCH_MERCURY;
+
+String PressureUnit(void) {
+  uint32_t index = (Settings->flag.pressure_conversion) ? Settings->flag5.mm_vs_inch +1 : 0;
+  char text[8];
+  return String(GetTextIndexed(text, sizeof(text), index, kPressureUnit));
 }
 
 float ConvertSpeed(float s)
@@ -830,10 +833,9 @@ float ConvertSpeed(float s)
   return s * kSpeedConversionFactor[Settings->flag2.speed_conversion];
 }
 
-String SpeedUnit(void)
-{
-  char speed[8];
-  return String(GetTextIndexed(speed, sizeof(speed), Settings->flag2.speed_conversion, kSpeedUnit));
+String SpeedUnit(void) {
+  char text[8];
+  return String(GetTextIndexed(text, sizeof(text), Settings->flag2.speed_conversion, kSpeedUnit));
 }
 
 void ResetGlobalValues(void)

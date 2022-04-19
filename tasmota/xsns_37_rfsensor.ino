@@ -479,7 +479,7 @@ void RfSnsAnalyzeAlectov2()
 //  rfsns_raw_signal->Number = RFSNS_DKW2012_PULSECOUNT;  // DKW2012
 //  data[8] = 11;                                        // WSW
 
-  factor = 1.22;  // (1.08)
+  factor = 1.22f;  // (1.08)
 //  atime = rfsns_raw_signal->Time - rfsns_alecto_time;
 //  if ((atime > 10000) && (atime < 60000)) factor = (float)60000 / atime;
 //  rfsns_alecto_time = rfsns_raw_signal->Time;
@@ -493,7 +493,7 @@ void RfSnsAnalyzeAlectov2()
   // check if rain unit has been reset!
   if (rain < rfsns_alecto_rain_base) { rfsns_alecto_rain_base = rain; }
   if (rfsns_alecto_rain_base > 0) {
-    rfsns_alecto_v2->rain += ((float)rain - rfsns_alecto_rain_base) * 0.30;
+    rfsns_alecto_v2->rain += ((float)rain - rfsns_alecto_rain_base) * 0.30f;
   }
   rfsns_alecto_rain_base = rain;
   rfsns_alecto_v2->wind = (float)data[4] * factor;

@@ -54,7 +54,7 @@ bool Max4409Read_lum(void)
   if (I2cValidRead16((uint16_t *)&regdata, max44009_address, REG_LUMINANCE)) {
     int exponent = (regdata[0] & 0xF0) >> 4;
     int mantissa = ((regdata[0] & 0x0F) << 4) | (regdata[1] & 0x0F);
-    max44009_illuminance = (float)(((0x00000001 << exponent) * (float)mantissa) * 0.045);
+    max44009_illuminance = (float)(((0x00000001 << exponent) * (float)mantissa) * 0.045f);
     max44009_valid = 1;
     return true;
   } else {

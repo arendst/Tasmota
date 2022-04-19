@@ -195,7 +195,7 @@ void hreEvery50ms(void)
             if (parity_errors == 0)
             {
                float curr_usage;
-               curr_usage = 0.01 * atol(buff+24); // useage in gal
+               curr_usage = 0.01f * atol(buff+24); // useage in gal
                if (hre_usage_time)
                {
                   double dt = 1.666e-2 * (curr_start - hre_usage_time); // dt in minutes

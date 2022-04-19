@@ -167,7 +167,7 @@ bool HtuRead(void)
   }
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
 
-  Htu.temperature = ConvertTemp(0.002681 * (float)sensorval - 46.85);
+  Htu.temperature = ConvertTemp(0.002681f * (float)sensorval - 46.85f);
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READHUM);
@@ -183,15 +183,15 @@ bool HtuRead(void)
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
 
   sensorval ^= 0x02;                                           // clear status bits
-  Htu.humidity = 0.001907 * (float)sensorval - 6;
-  if (Htu.humidity > 100) { Htu.humidity = 100.0; }
-  if (Htu.humidity < 0) { Htu.humidity = 0.01; }
+  Htu.humidity = 0.001907f * (float)sensorval - 6;
+  if (Htu.humidity > 100) { Htu.humidity = 100.0f; }
+  if (Htu.humidity < 0) { Htu.humidity = 0.01f; }
 
-  if ((0.00 == Htu.humidity) && (0.00 == Htu.temperature)) {
-    Htu.humidity = 0.0;
+  if ((0.00f == Htu.humidity) && (0.00f == Htu.temperature)) {
+    Htu.humidity = 0.0f;
   }
-  if ((Htu.temperature > 0.00) && (Htu.temperature < 80.00)) {
-    Htu.humidity = (-0.15) * (25 - Htu.temperature) + Htu.humidity;
+  if ((Htu.temperature > 0.00f) && (Htu.temperature < 80.00f)) {
+    Htu.humidity = (-0.15f) * (25 - Htu.temperature) + Htu.humidity;
   }
   Htu.humidity = ConvertHumidity(Htu.humidity);
 

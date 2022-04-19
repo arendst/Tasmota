@@ -158,7 +158,7 @@ bool DhtRead(uint32_t sensor) {
       break;
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
     case GPIO_SI7021: {                                 // iTead SI7021
-      humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1;
+      humidity = ((dht_data[0] << 8) | dht_data[1]) * 0.1f;
       // DHT21/22 (Adafruit):
       int16_t temp16 = dht_data[2] << 8  | dht_data[3]; // case 1 : signed 16 bits
       if ((dht_data[2] & 0xF0) == 0x80) {               // case 2 : negative when high nibble = 0x80
@@ -178,14 +178,14 @@ bool DhtRead(uint32_t sensor) {
       float x;
       if (voltage < 15037) {
         x = voltage - 15200;
-        humidity = - FastPrecisePowf(0.0024 * x, 3) - 0.0004 * x + 20.1;
+        humidity = - FastPrecisePowf(0.0024f * x, 3) - 0.0004f * x + 20.1f;
       }
       else if (voltage < 22300) {
-        humidity = - 0.00069 * voltage + 30.6;
+        humidity = - 0.00069f * voltage + 30.6f;
       }
       else {
         x = voltage - 22800;
-        humidity = - FastPrecisePowf(0.00046 * x, 3) - 0.0004 * x + 15;
+        humidity = - FastPrecisePowf(0.00046f * x, 3) - 0.0004f * x + 15;
       }
       temperature = 0;
       Dht[sensor].raw = voltage;
@@ -197,8 +197,8 @@ bool DhtRead(uint32_t sensor) {
     return false;
   }
 
-  if (humidity > 100) { humidity = 100.0; }
-  if (humidity < 0) { humidity = 0.1; }
+  if (humidity > 100) { humidity = 100.0f; }
+  if (humidity < 0) { humidity = 0.1f; }
   Dht[sensor].h = ConvertHumidity(humidity);
   Dht[sensor].t = ConvertTemp(temperature);
   Dht[sensor].lastresult = 0;

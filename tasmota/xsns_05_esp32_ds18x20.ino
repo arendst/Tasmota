@@ -130,7 +130,7 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
     switch(ds18x20_sensor[index].address[0]) {
       case DS18S20_CHIPID: {
         int16_t tempS = (((data[1] << 8) | (data[0] & 0xFE)) << 3) | ((0x10 - data[6]) & 0x0F);
-        t = ConvertTemp(tempS * 0.0625 - 0.250);
+        t = ConvertTemp(tempS * 0.0625f - 0.250f);
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }
@@ -141,13 +141,13 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
           temp12 = (~temp12) +1;
           sign = -1;
         }
-        t = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
+        t = ConvertTemp(sign * temp12 * 0.0625f);  // Divide by 16
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }
       case MAX31850_CHIPID: {
         int16_t temp14 = (data[1] << 8) + (data[0] & 0xFC);
-        t = ConvertTemp(temp14 * 0.0625);  // Divide by 16
+        t = ConvertTemp(temp14 * 0.0625f);  // Divide by 16
         ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
         return true;
       }

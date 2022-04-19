@@ -143,7 +143,7 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
   // single = 7 - single &0x03 = 3 - [xx,xx,xx]
   uint32_t index = (single > 3) ? single &0x03 : (0 == single) ? Energy.phase_count : 1;  // 1,2,3
   if (single > 2) { single = 0; }                        // 0,1,2
-  float input_sum = 0.0;
+  float input_sum = 0.0f;
   if (single > 1) {
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
@@ -167,7 +167,7 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
   // single = 0 - Energy.phase_count - xx / xx / xx or multi column
   // single = 1 - Energy.voltage_common or Energy.frequency_common - xx or single column using colspan (if needed)
   // single = 2 - Sum of Energy.phase_count if SO129 0 - xx or single column using colspan (if needed) or if SO129 1 - xx / xx / xx or multi column
-  float input_sum = 0.0;
+  float input_sum = 0.0f;
   if (single > 1) {                                      // Sum and/or Single column
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
@@ -235,9 +235,9 @@ bool EnergyTariff1Active()  // Off-Peak hours
 }
 
 void EnergyUpdateToday(void) {
-  Energy.total_sum = 0.0;
-  Energy.yesterday_sum = 0.0;
-  Energy.daily_sum = 0.0;
+  Energy.total_sum = 0.0f;
+  Energy.yesterday_sum = 0.0f;
+  Energy.daily_sum = 0.0f;
 
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     if (abs(Energy.kWhtoday_delta[i]) > 1000) {
@@ -272,7 +272,7 @@ void EnergyUpdateToday(void) {
 //      return_diff = (uint32_t)(Energy.export_active * 100000) - RtcSettings.energy_usage.last_return_kWhtotal;
 //      RtcSettings.energy_usage.last_return_kWhtotal = (uint32_t)(Energy.export_active * 100000);
 
-      float export_active = 0.0;
+      float export_active = 0.0f;
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
         if (!isnan(Energy.export_active[i])) {
           export_active += Energy.export_active[i];
@@ -305,7 +305,7 @@ void EnergyUpdateTotal(void) {
       Energy.kWhtoday[i] = (int32_t)((Energy.import_active[i] - Energy.start_energy[i]) * 100000);
     }
 
-    if ((Energy.total[i] < (Energy.import_active[i] - 0.01)) &&   // We subtract a little offset to avoid continuous updates
+    if ((Energy.total[i] < (Energy.import_active[i] - 0.01f)) &&   // We subtract a little offset to avoid continuous updates
         Settings->flag3.hardware_energy_total) {    // SetOption72 - Enable hardware energy total counter as reference (#6561)
       RtcSettings.energy_kWhtotal_ph[i] = (int32_t)((Energy.import_active[i] * 100000) - Energy.kWhtoday_offset[i] - Energy.kWhtoday[i]);
       Settings->energy_kWhtotal_ph[i] = RtcSettings.energy_kWhtotal_ph[i];
@@ -1129,13 +1129,13 @@ void EnergyShow(bool json) {
         if (isnan(reactive_power[i])) {
           reactive_power[i] = 0;
           uint32_t difference = ((uint32_t)(apparent_power[i] * 100) - (uint32_t)(Energy.active_power[i] * 100)) / 10;
-          if ((Energy.current[i] > 0.005) && ((difference > 15) || (difference > (uint32_t)(apparent_power[i] * 100 / 1000)))) {
+          if ((Energy.current[i] > 0.005f) && ((difference > 15) || (difference > (uint32_t)(apparent_power[i] * 100 / 1000)))) {
             // calculating reactive power only if current is greater than 0.005A and
             // difference between active and apparent power is greater than 1.5W or 1%
             //reactive_power[i] = (float)(RoundSqrtInt((uint64_t)(apparent_power[i] * apparent_power[i] * 100) - (uint64_t)(Energy.active_power[i] * Energy.active_power[i] * 100))) / 10;
             float power_diff = apparent_power[i] * apparent_power[i] - Energy.active_power[i] * Energy.active_power[i];
             if (power_diff < 10737418) // 2^30 / 100 (RoundSqrtInt is limited to 2^30-1)
-              reactive_power[i] = (float)(RoundSqrtInt((uint32_t)(power_diff * 100.0))) / 10.0;
+              reactive_power[i] = (float)(RoundSqrtInt((uint32_t)(power_diff * 100.0f))) / 10.0f;
             else
               reactive_power[i] = (float)(SqrtInt((uint32_t)(power_diff)));
           }
@@ -1145,7 +1145,7 @@ void EnergyShow(bool json) {
     }
   }
 
-  float active_power_sum = 0.0;
+  float active_power_sum = 0.0f;
   float energy_yesterday_ph[Energy.phase_count];
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     energy_yesterday_ph[i] = (float)Settings->energy_kWhyesterday_ph[i] / 100000;

@@ -106,12 +106,12 @@ bool Am2320Read(void)
   unsigned int receivedCrc = (buf[7] << 8) | buf[6];  // pack high and low byte together
   if (receivedCrc == crc16(buf, 6)) {  // preamble + data
     int temperature = ((buf[4] & 0x7F) << 8) | buf[5];
-    AM2320.t = temperature / 10.0;
+    AM2320.t = temperature / 10.0f;
     // check for negative temp reading
     AM2320.t = ((buf[4] & 0x80) >> 7) == 1 ? AM2320.t * (-1) : AM2320.t;
 
     int humidity = (buf[2] << 8) | buf[3];
-    AM2320.h = humidity / 10.0;
+    AM2320.h = humidity / 10.0f;
 
     AM2320.valid = SENSOR_MAX_MISS; // reset error counter
     return true;

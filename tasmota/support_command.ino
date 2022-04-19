@@ -798,7 +798,7 @@ void CmndGlobalTemp(void)
   if (XdrvMailbox.data_len > 0) {
     float temperature = CharToFloat(XdrvMailbox.data);
     if (!isnan(temperature) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-      temperature = (temperature - 32) / 1.8;                             // Celsius
+      temperature = (temperature - 32) / 1.8f;                             // Celsius
     }
     if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
       ConvertTemp(temperature);
@@ -812,7 +812,7 @@ void CmndGlobalHum(void)
 {
   if (XdrvMailbox.data_len > 0) {
     float humidity = CharToFloat(XdrvMailbox.data);
-    if ((humidity >= 0.0) && (humidity <= 100.0)) {
+    if ((humidity >= 0.0f) && (humidity <= 100.0f)) {
       ConvertHumidity(humidity);
       TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
     }
