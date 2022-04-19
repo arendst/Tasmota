@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for daisy chaining MAX7219 displays (#15345)
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only (#13515)
 - Sonoff SPM delayed SetPowerOnState (#13447)
+- Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` (#15350)
 
 ### Changed
 

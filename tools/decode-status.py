@@ -192,7 +192,9 @@ a_setoption = [[
     "(Display & LVGL) force disabling default splash screen",
     "(TuyaSNS) When ON disable publish single SNS value on Tuya Receive (keep Teleperiod)",
     "(Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active",
-    "","","","",
+    "(GUI) Align (energy) table values left (0) or right (1)",
+    "(Pressure) Switch between mmHg (0) or inHg (1) when SO24 1",
+    "","",
     "","","",""
     ]]
 
@@ -295,7 +297,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v11.0.0.5 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v11.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

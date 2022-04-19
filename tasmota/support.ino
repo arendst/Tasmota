@@ -735,9 +735,9 @@ float ConvertTempToFahrenheit(float c) {
   float result = c;
 
   if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-    result = c * 1.8 + 32;                                     // Fahrenheit
+    result = c * 1.8f + 32;                                    // Fahrenheit
   }
-  result = result + (0.1 * Settings->temp_comp);
+  result = result + (0.1f * Settings->temp_comp);
   return result;
 }
 
@@ -745,9 +745,9 @@ float ConvertTempToCelsius(float c) {
   float result = c;
 
   if (!isnan(c) && !Settings->flag.temperature_conversion) {   // SetOption8 - Switch between Celsius or Fahrenheit
-    result = (c - 32) / 1.8;                                   // Celsius
+    result = (c - 32) / 1.8f;                                  // Celsius
   }
-  result = result + (0.1 * Settings->temp_comp);
+  result = result + (0.1f * Settings->temp_comp);
   return result;
 }
 
@@ -762,65 +762,66 @@ float ConvertTemp(float c) {
   return ConvertTempToFahrenheit(c);
 }
 
-char TempUnit(void)
-{
+char TempUnit(void) {
   // SetOption8  - Switch between Celsius or Fahrenheit
   return (Settings->flag.temperature_conversion) ? D_UNIT_FAHRENHEIT[0] : D_UNIT_CELSIUS[0];
 }
 
-float ConvertHumidity(float h)
-{
+float ConvertHumidity(float h) {
   float result = h;
 
   TasmotaGlobal.global_update = TasmotaGlobal.uptime;
   TasmotaGlobal.humidity = h;
 
-  result = result + (0.1 * Settings->hum_comp);
+  result = result + (0.1f * Settings->hum_comp);
 
   return result;
 }
 
-float CalcTempHumToDew(float t, float h)
-{
+float CalcTempHumToDew(float t, float h) {
   if (isnan(h) || isnan(t)) { return NAN; }
 
   if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
-    t = (t - 32) / 1.8;                                       // Celsius
+    t = (t - 32) / 1.8f;                                        // Celsius
   }
 
-  float gamma = TaylorLog(h / 100) + 17.62 * t / (243.5 + t);
-  float result = (243.5 * gamma / (17.62 - gamma));
+  float gamma = TaylorLog(h / 100) + 17.62f * t / (243.5f + t);
+  float result = (243.5f * gamma / (17.62f - gamma));
 
   if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
-    result = result * 1.8 + 32;                               // Fahrenheit
+    result = result * 1.8f + 32;                                // Fahrenheit
   }
   return result;
 }
 
-float ConvertPressure(float p)
-{
+float ConvertPressure(float p) {
   float result = p;
 
   TasmotaGlobal.global_update = TasmotaGlobal.uptime;
   TasmotaGlobal.pressure_hpa = p;
 
-  if (!isnan(p) && Settings->flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
-    result = p * 0.75006375541921;                       // mmHg
+  if (!isnan(p) && Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
+    if (Settings->flag5.mm_vs_inch) {                          // SetOption139 - Switch between mmHg or inHg pressure unit
+//      result = p * 0.02952998016471;                           // inHg
+      result = p * 0.0295299f;                                 // inHg (double to float saves 16 bytes!)
+    } else {
+//      result = p * 0.75006375541921;                           // mmHg
+      result = p * 0.7500637f;                                 // mmHg (double to float saves 16 bytes!)
+    }
   }
   return result;
 }
 
-float ConvertPressureForSeaLevel(float pressure)
-{
-  if (pressure == 0.0f)
+float ConvertPressureForSeaLevel(float pressure) {
+  if (pressure == 0.0f) {
     return pressure;
-
-  return ConvertPressure((pressure / FastPrecisePow(1.0 - ((float)Settings->altitude / 44330.0f), 5.255f)) - 21.6f);
+  }
+  return ConvertPressure((pressure / FastPrecisePow(1.0f - ((float)Settings->altitude / 44330.0f), 5.255f)) - 21.6f);
 }
 
 String PressureUnit(void)
 {
-  return (Settings->flag.pressure_conversion) ? String(F(D_UNIT_MILLIMETER_MERCURY)) : String(F(D_UNIT_PRESSURE));
+  return (Settings->flag.pressure_conversion) ? (Settings->flag5.mm_vs_inch) ? String(F(D_UNIT_INCH_MERCURY)) : String(F(D_UNIT_MILLIMETER_MERCURY)) : String(F(D_UNIT_PRESSURE));
 }
 
 float ConvertSpeed(float s)
