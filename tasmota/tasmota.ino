@@ -75,6 +75,7 @@
 #include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
+#include <SD_MMC.h>
 #endif  // USE_SDCARD
 #include "FFat.h"
 #include "FS.h"
