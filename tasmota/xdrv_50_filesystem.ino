@@ -170,7 +170,7 @@ void UfsCheckSDCardInit(void) {
 #endif // ESP32
     }
   }
-#ifdef ESP32 
+#if defined(ESP32) && defined(SOC_SDMMC_HOST_SUPPORTED)     // ESP32 and SDMMC supported (not Esp32C3)
   // check if SDIO is configured
   else if (PinUsed(GPIO_SDIO_CLK) && PinUsed(GPIO_SDIO_CMD) && PinUsed(GPIO_SDIO_D0)) {
     int32_t sdio_cmd = Pin(GPIO_SDIO_CMD);
