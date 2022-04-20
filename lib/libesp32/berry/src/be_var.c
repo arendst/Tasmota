@@ -55,7 +55,7 @@ static int global_native_class_find(bvm *vm, bstring *name)
             /* class name matches */
             int idx = be_global_new(vm, name);
             bvalue *v = be_global_var(vm, idx);
-            var_setclass(v, cl);
+            var_setclass(v, (void*) cl);
             return idx;
         }
     }
