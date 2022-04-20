@@ -1412,6 +1412,7 @@ void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t 
 // Write CIE address
 //
 void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending CIE Address for Cluster %d in Endpoint %d of Device 0x%04X"), cluster, endpoint, shortaddr);
   ZCLMessage zcl(12);   // message is 12 bytes
   zcl.shortaddr = shortaddr;
   zcl.cluster = 0x0500;
@@ -1428,15 +1429,15 @@ void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster,
 
 
 //
-// Write CIE address
+// Send CIE Zone Enroll Response
 //
 void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d"), Z_B0(value));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d for Cluster %d in Endpoint %d of Device 0x%04X"), Z_B0(value), cluster, endpoint, shortaddr);
   ZCLMessage zcl(2);   // message is 2 bytes
   zcl.shortaddr = shortaddr;
   zcl.cluster = 0x0500;
   zcl.endpoint = endpoint;
-  zcl.cmd = 0x00,   // Zone Enroll Response
+  zcl.cmd = 0x00;   // Zone Enroll Response
   zcl.clusterSpecific = true;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route

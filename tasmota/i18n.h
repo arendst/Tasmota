@@ -659,6 +659,8 @@
 #define D_CMND_ZIGBEE_DATA "Data"
 #define D_CMND_ZIGBEE_SCAN "Scan"
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
+#define D_CMND_ZIGBEE_CIE "CIE"
+#define D_CMND_ZIGBEE_ENROLL "Enroll"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
