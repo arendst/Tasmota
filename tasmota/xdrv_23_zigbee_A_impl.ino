@@ -39,7 +39,7 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
   D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|"
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
-  D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA "|" D_CMND_ZIGBEE_SCAN
+  D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA "|" D_CMND_ZIGBEE_SCAN "|" D_CMND_ZIGBEE_ENROLL "|" D_CMND_ZIGBEE_CIE
   ;
 
 SO_SYNONYMS(kZbSynonyms,
@@ -61,6 +61,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbLight, &CmndZbOccupancy,
   &CmndZbRestore, &CmndZbBindState, &CmndZbMap, &CmndZbLeave,
   &CmndZbConfig, &CmndZbData, &CmndZbScan,
+  &CmndZbenroll, &CmndZbcie,
   };
 
 /********************************************************************************************/
@@ -1329,6 +1330,42 @@ void CmndZbScan(void) {
 
 #endif // USE_ZIGBEE_EZSP
   ResponseCmndDone();
+}
+
+void CmndZbenroll(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+
+  if ((XdrvMailbox.data_len) && (ArgC() > 1)) {  // Process parameter entry
+    char argument[XdrvMailbox.data_len];
+    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1));
+    int enrollEndpoint = atoi(ArgV(argument, 2));
+
+    if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
+    
+    Z_SendCIEZoneEnrollResponse(device.shortaddr, 0, 500, enrollEndpoint, 1);
+    
+    ResponseCmndDone();
+  } else {
+    ResponseCmndError();
+  }
+}
+
+void CmndZbcie(void) {
+  if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
+
+  if ((XdrvMailbox.data_len) && (ArgC() > 1)) {  // Process parameter entry
+    char argument[XdrvMailbox.data_len];
+    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1));
+    int enrollEndpoint = atoi(ArgV(argument, 2));
+
+    if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
+    
+    Z_WriteCIEAddress(device.shortaddr, 0, 500, enrollEndpoint, 0);
+    
+    ResponseCmndDone();
+  } else {
+    ResponseCmndError();
+  }
 }
 
 // Restore a device configuration previously exported via `ZbStatus2``
