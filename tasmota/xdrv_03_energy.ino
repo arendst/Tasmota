@@ -244,18 +244,17 @@ void EnergyUpdateToday(void) {
       int32_t delta = Energy.kWhtoday_delta[i] / 1000;
       Energy.kWhtoday_delta[i] -= (delta * 1000);
       Energy.kWhtoday[i] += delta;
-
       if (delta < 0) {     // Export energy
         RtcSettings.energy_kWhexport_ph[i] += (delta *-1);
-        if (Energy.local_energy_active_export) {
-          Energy.export_active[i] = (float)(RtcSettings.energy_kWhexport_ph[i]) / 100000;
-        }
       }
     }
 
     RtcSettings.energy_kWhtoday_ph[i] = Energy.kWhtoday_offset[i] + Energy.kWhtoday[i];
     Energy.daily[i] = (float)(RtcSettings.energy_kWhtoday_ph[i]) / 100000;
     Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + RtcSettings.energy_kWhtoday_ph[i]) / 100000;
+    if (Energy.local_energy_active_export) {
+      Energy.export_active[i] = (float)(RtcSettings.energy_kWhexport_ph[i]) / 100000;
+    }
 
     Energy.total_sum += Energy.total[i];
     Energy.yesterday_sum += (float)Settings->energy_kWhyesterday_ph[i] / 100000;
