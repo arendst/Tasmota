@@ -186,6 +186,7 @@ enum UserSelectablePins {
   GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
   GPIO_RESET,                          // Generic reset
   GPIO_MS01,                           // Sonoff MS01 Moisture Sensor 1wire interface
+  GPIO_SDIO_CMD, GPIO_SDIO_CLK, GPIO_SDIO_D0, GPIO_SDIO_D1, GPIO_SDIO_D2, GPIO_SDIO_D3, // SD Card SDIO interface, including 1-bit and 4-bit modes
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -411,6 +412,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7880_IRQ "|"
   D_SENSOR_RESET "|"
   D_SENSOR_MS01 "|"
+  D_SENSOR_SDIO_CMD "|"
+  D_SENSOR_SDIO_CLK "|"
+  D_SENSOR_SDIO_D0 "|"
+  D_SENSOR_SDIO_D1 "|"
+  D_SENSOR_SDIO_D2 "|"
+  D_SENSOR_SDIO_D3 "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -516,12 +523,21 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RC522_RST),                // RC522 Rfid Reset
 #endif
 #ifdef USE_SDCARD
-  AGPIO(GPIO_SDCARD_CS),
+  AGPIO(GPIO_SDCARD_CS),                // SDCard in SPI mode
 #endif  // USE_SDCARD
 #ifdef USE_MCP2515
   AGPIO(GPIO_MCP2515_CS),
 #endif  // USE_MCP2515
 #endif  // USE_SPI
+
+#if defined(USE_SDCARD) && defined(ESP32)
+  AGPIO(GPIO_SDIO_CMD),                 // SDCard in SDIO mode
+  AGPIO(GPIO_SDIO_CLK),
+  AGPIO(GPIO_SDIO_D0),
+  AGPIO(GPIO_SDIO_D1),                  // (opt) if in 4-bit mode, DAT1-3 are needed
+  AGPIO(GPIO_SDIO_D2),
+  AGPIO(GPIO_SDIO_D3),
+#endif  // USE_SDCARD
 
   AGPIO(GPIO_SSPI_MISO),      // Software SPI Master Input Client Output
   AGPIO(GPIO_SSPI_MOSI),      // Software SPI Master Output Client Input

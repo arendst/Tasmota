@@ -41,10 +41,6 @@ ufsfree   free size in kB
 
 #define XDRV_50           50
 
-#ifndef SDCARD_CS_PIN
-#define SDCARD_CS_PIN     4
-#endif
-
 #define UFS_TNONE         0
 #define UFS_TSDC          1
 #define UFS_TFAT          2
@@ -141,17 +137,14 @@ void UfsInit(void) {
 
 #ifdef USE_SDCARD
 void UfsCheckSDCardInit(void) {
-  if (TasmotaGlobal.spi_enabled) {
-    int8_t cs = SDCARD_CS_PIN;
-    if (PinUsed(GPIO_SDCARD_CS)) {
-      cs = Pin(GPIO_SDCARD_CS);
-    }
-
+  // Try SPI mode first
+  // SPI mode requires SDCARD_CS to be configured
+  if (TasmotaGlobal.spi_enabled && PinUsed(GPIO_SDCARD_CS)) {
+    int8_t cs = Pin(GPIO_SDCARD_CS);
 
 #ifdef EPS8266
     SPI.begin();
 #endif // EPS8266
-
 #ifdef ESP32
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 #endif // ESP32
@@ -160,10 +153,10 @@ void UfsCheckSDCardInit(void) {
 #ifdef ESP8266
       ufsp = &SDFS;
 #endif  // ESP8266
-
 #ifdef ESP32
       ufsp = &SD;
 #endif  // ESP32
+
       ufs_type = UFS_TSDC;
       dfsp = ufsp;
       if (ffsp) {ufs_dir = 1;}
@@ -173,10 +166,38 @@ void UfsCheckSDCardInit(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted"));
 #endif // ESP8266
 #ifdef ESP32
-      AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted with %d kB free"), UfsInfo(1, 0));
+      AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted (SPI mode) with %d kB free"), UfsInfo(1, 0));
 #endif // ESP32
     }
   }
+#if defined(ESP32) && defined(SOC_SDMMC_HOST_SUPPORTED)     // ESP32 and SDMMC supported (not Esp32C3)
+  // check if SDIO is configured
+  else if (PinUsed(GPIO_SDIO_CLK) && PinUsed(GPIO_SDIO_CMD) && PinUsed(GPIO_SDIO_D0)) {
+    int32_t sdio_cmd = Pin(GPIO_SDIO_CMD);
+    int32_t sdio_clk = Pin(GPIO_SDIO_CLK);
+    int32_t sdio_d0 = Pin(GPIO_SDIO_D0);
+    int32_t sdio_d1 = Pin(GPIO_SDIO_D1);
+    int32_t sdio_d2 = Pin(GPIO_SDIO_D2);
+    int32_t sdio_d3 = Pin(GPIO_SDIO_D3);
+    bool bit_4_mode = (sdio_d1 >= 0) && (sdio_d2 >= 0) && (sdio_d3 >= 0);   // enable 4-bit mode if possible
+    if (bit_4_mode) {
+      // AddLog(LOG_LEVEL_DEBUG, "UFS: trying SDIO 4-bit clk=%i cmd=%i d0=%i d1=%i d2=%i d3=%i", sdio_clk, sdio_cmd, sdio_d0, sdio_d1, sdio_d2, sdio_d3);
+      SD_MMC.setPins(sdio_clk, sdio_cmd, sdio_d0, sdio_d1, sdio_d2, sdio_d3);
+    } else {
+      // AddLog(LOG_LEVEL_DEBUG, "UFS: trying SDIO 1-bit clk=%i cmd=%i d0=%i", sdio_clk, sdio_cmd, sdio_d0);
+      SD_MMC.setPins(sdio_clk, sdio_cmd, sdio_d0);
+    }
+    if (SD_MMC.begin("/sd", !bit_4_mode /*mode 1 bit*/, false /*format_if_failed*/)) {    // mount under "/sd" to be consistent with SD SPI
+      ufsp = &SD_MMC;
+
+      ufs_type = UFS_TSDC;
+      dfsp = ufsp;
+      if (ffsp) {ufs_dir = 1;}
+      // make sd card the global filesystem
+      AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted (SDIO %i-bit) with %d kB free"), bit_4_mode ? 4 : 1, UfsInfo(1, 0));
+    }
+  }
+#endif
 }
 #endif // USE_SDCARD
 
