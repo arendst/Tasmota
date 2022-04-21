@@ -171,8 +171,12 @@ bool Bl09XXDecode42(void) {
 
   Bl09XX.voltage    = Bl09XX.rx_buffer[6] << 16 | Bl09XX.rx_buffer[5] << 8 | Bl09XX.rx_buffer[4];        // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[3]  << 16 | Bl09XX.rx_buffer[2]  << 8 | Bl09XX.rx_buffer[1];      // IA_RMS unsigned
-  Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // WATT_A signed
-  if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                   // Extend sign bit
+
+//  Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // WATT_A signed
+//  if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                   // Extend sign bit
+  // Above reverted in favour of https://github.com/arendst/Tasmota/issues/15374#issuecomment-1105293179
+  int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;     // WATT_A signed
+  Bl09XX.power[0] = abs(tmp >> 8);
 
 #ifdef DEBUG_BL09XX
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d, P %d"),
