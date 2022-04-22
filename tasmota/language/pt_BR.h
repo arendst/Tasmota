@@ -865,7 +865,8 @@
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
 #define D_SENSOR_CM11_TX       "CM110x TX" 
-#define D_SENSOR_CM11_RX       "CM110x RX" 
+#define D_SENSOR_CM11_RX       "CM110x RX"
+#define D_SENSOR_FLOWMETER     "Flowmeter" 
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -913,6 +914,8 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "W/h"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_LITER_PER_MINUTE "l/min"
+#define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
 
 #define D_NEW_ADDRESS          "Mudança de endereço para"
 #define D_OUT_OF_RANGE         "Fora de Alcance"
@@ -1053,6 +1056,10 @@
 #define D_FP_ADDRCODE "Código do endereço"           // 0x20 Address code
 #define D_FP_PASSVERIFY "Senha verificada"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Erro"              // Any other error
+
+// xsns_96_flowmeter.ino
+#define D_FLOWMETER_NAME "Flowmeter"
+#define D_FLOWMETER_RATE "Rate"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

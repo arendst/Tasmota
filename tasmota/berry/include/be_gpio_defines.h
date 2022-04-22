@@ -73,6 +73,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ETH_PHY_POWER", (int32_t) GPIO_ETH_PHY_POWER },
     { "EXS_ENABLE", (int32_t) GPIO_EXS_ENABLE },
     { "FALLING", FALLING },
+    { "FLOWMETER_SIGNAL", (int32_t) GPIO_FLOWMETER_IN },
     { "FTC532", (int32_t) GPIO_FTC532 },
     { "GPS_RX", (int32_t) GPIO_GPS_RX },
     { "GPS_TX", (int32_t) GPIO_GPS_TX },
