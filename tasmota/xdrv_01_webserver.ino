@@ -2901,6 +2901,10 @@ void HandleHttpCommand(void)
       WSContentBegin(401, CT_APP_JSON);
       WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
       WSContentEnd();
+
+      // https://github.com/arendst/Tasmota/discussions/15420
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Bad userid and/or password"));
+
       return;
     }
   }
