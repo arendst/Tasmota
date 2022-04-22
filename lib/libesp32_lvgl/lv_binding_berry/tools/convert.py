@@ -110,7 +110,7 @@ return_types = {
   "lv_flex_flow_t": "i",
   "lv_grid_align_t": "i",
 
-  "_lv_event_dsc_t *": "i",
+  "_lv_event_dsc_t *": "c",
   # lv_anim
   "lv_anim_t *": "lv_anim",
   "lv_anim_enable_t": "i",
