@@ -287,20 +287,13 @@ class lvh_obj
     lv.EVENT_VALUE_CHANGED:       "changed",
   }
   def register_event_cb()
-    # register callback for each event
-    var f = / obj, event -> self.event_cb(obj, event)
+    var oh = self._page._oh
     for ev:self._event_map.keys()
-      self._lv_obj.add_event_cb(f, ev, 0)
+      oh.register_event(self, ev)
     end
-    # # print("register_event_cb")
-    # var mask = lv.EVENT_PRESSED | lv.EVENT_CLICKED | lv.EVENT_PRESS_LOST | lv.EVENT_RELEASED |
-    #            lv.EVENT_LONG_PRESSED | lv.EVENT_LONG_PRESSED_REPEAT | lv.EVENT_VALUE_CHANGED
-    # var target = self
-    # mask = lv.EVENT_CLICKED
-    # self._lv_obj.add_event_cb(/ obj, event -> target.event_cb(obj, event), mask, 0)
   end
 
-  def event_cb(obj, event)
+  def event_cb(event)
     # the callback avoids doing anything sophisticated in the cb
     # defer the actual action to the Tasmota event loop
     # print("-> CB fired","self",self,"obj",obj,"event",event.tomap(),"code",event.code)
@@ -314,24 +307,11 @@ class lvh_obj
     var event_hasp = self._event_map.find(code)
     if event_hasp != nil
       import string
-      var val = string.format('{"hasp":{"p%ib%i":"%s"}}', self._page._page_id, self.id, event_hasp)
-      # var pxby = "p" + self._page._page_id + "b" + self.id
-      # var val = '{"hasp":{"p' + str(self._page._page_id) + 'b' + str(self.id) +
-      #           '":"' + event_hasp + '"}}'
-      # var val = json.dump( {'hasp': {pxby: event_hasp}} )
+
       # print("val=",val)
       tasmota.set_timer(0, /-> tasmota.publish_rule(val))
     end
   end
-  
-  # def action_cb(obj, event)
-  #   # the callback avoids doing anything sophisticated in the cb
-  #   # defer the actual action to the Tasmota event loop
-  #   # print("-> CB fired","self",self,"obj",obj,"event",event.tomap(),"code",event.code)
-  #   var oh = self._page._oh         # openhasp global object
-  #   var code = event.code           # materialize to a local variable, otherwise the value can change (and don't capture event object)
-  #   tasmota.set_timer(0, /-> oh.do_action(self, code))
-  # end
 
   #====================================================================
   #  Mapping of synthetic attributes
@@ -1108,6 +1088,9 @@ class OpenHASP
   var lvh_page_cur_idx                  # (int) current page index number
   # regex patterns
   var re_page_target                    # compiled regex for action `p<number>`
+  # specific event_cb handling for less memory usage since we are registering a lot of callbacks
+  var event                             # try to keep the event object around and reuse it
+  var event_cb                          # the low-level callback for the closure to be registered
 
   # assign lvh_page to a static attribute
   static lvh_page = lvh_page
@@ -1236,19 +1219,26 @@ class OpenHASP
     self.lvh_pages[1] = lvh_page_class(1, self)   # always create page #1
 
     var f = open(templ_name,"r")
-    var jsonl = string.split(f.read(), "\n")
+    var f_content =  f.read()
     f.close()
+    
+    var jsonl = string.split(f_content, "\n")
+    f = nil   # allow deallocation
+    f_content = nil
 
     # parse each line
-    for j:jsonl
-      var jline = json.load(j)
+    while size(jsonl) > 0
+      var jline = json.load(jsonl[0])
 
       if type(jline) == 'instance'
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
         # objects are created in the current page
         self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
       end
+      jline = nil
+      jsonl.remove(0)
     end
+    jsonl = nil     # make all of it freeable
 
     # current page is always 1 when we start
     self.lvh_page_cur_idx = 1
@@ -1400,6 +1390,42 @@ class OpenHASP
         lvh_page_cur.prev = int(jline.find("prev", nil))
         lvh_page_cur.next = int(jline.find("next", nil))
         lvh_page_cur.back = int(jline.find("back", nil))
+      end
+    end
+  end
+
+  #====================================================================
+  # Event CB handling
+  #====================================================================
+  def register_event(lvh_obj, event_type)
+    import cb
+    import introspect
+
+    # create the callback to the closure only once
+    if self.event_cb == nil
+      self.event_cb = cb.gen_cb(/ event_ptr_i -> self.event_dispatch(event_ptr_i))
+    end
+    # register the C callback
+    var lv_obj = lvh_obj._lv_obj
+    # we pass the cb as a comptr so it's already a C pointer
+    lv_obj.add_event_cb(self.event_cb, event_type, introspect.toptr(lvh_obj))
+  end
+
+  def event_dispatch(event_ptr_i)
+    import introspect
+    var event_ptr = introspect.toptr(event_ptr_i)   # convert to comptr, because it was a pointer in the first place
+
+    if self.event   self.event._change_buffer(event_ptr)
+    else            self.event = lv.lv_event(event_ptr)
+    end
+
+    var user_data = self.event.user_data            # it is supposed to be a pointer to the object
+    if int(user_data) != 0
+      var target_lvh_obj = introspect.fromptr(user_data)
+      if type(target_lvh_obj) == 'instance'
+        # print("CB Fired", self.event.code, target_lvh_obj)
+        target_lvh_obj.event_cb(self.event)
+        # print("CB Fired After")
       end
     end
   end

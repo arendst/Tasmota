@@ -195,6 +195,9 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
       } else {
         be_raisef(vm, "type_error", "Can't find callback generator: 'cb.make_cb'");
       }
+    } else if (be_iscomptr(vm, idx)) {
+      // if it's a pointer, just pass it without any change
+      return (int32_t) be_tocomptr(vm, idx);;
     } else {
       be_raise(vm, "type_error", "Closure expected for callback type");
     }

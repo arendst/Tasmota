@@ -186,7 +186,7 @@ const be_ntv_func_def_t lv_disp_func[] = {
 
 /* `lv_obj` methods */
 const be_ntv_func_def_t lv_obj_func[] = {
-  { "add_event_cb", { (const void*) &lv_obj_add_event_cb, "i", "(lv.lv_obj)^lv_event_cb^i." } },
+  { "add_event_cb", { (const void*) &lv_obj_add_event_cb, "c", "(lv.lv_obj)^lv_event_cb^i." } },
   { "add_flag", { (const void*) &lv_obj_add_flag, "", "(lv.lv_obj)i" } },
   { "add_state", { (const void*) &lv_obj_add_state, "", "(lv.lv_obj)i" } },
   { "add_style", { (const void*) &lv_obj_add_style, "", "(lv.lv_obj)(lv.lv_style)i" } },
@@ -387,7 +387,7 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "refresh_style", { (const void*) &lv_obj_refresh_style, "", "(lv.lv_obj)ii" } },
   { "remove_event_cb", { (const void*) &lv_obj_remove_event_cb, "b", "(lv.lv_obj)." } },
   { "remove_event_cb_with_user_data", { (const void*) &lv_obj_remove_event_cb_with_user_data, "b", "(lv.lv_obj).." } },
-  { "remove_event_dsc", { (const void*) &lv_obj_remove_event_dsc, "b", "(lv.lv_obj)i" } },
+  { "remove_event_dsc", { (const void*) &lv_obj_remove_event_dsc, "b", "(lv.lv_obj)c" } },
   { "remove_local_style_prop", { (const void*) &lv_obj_remove_local_style_prop, "b", "(lv.lv_obj)ii" } },
   { "remove_style", { (const void*) &lv_obj_remove_style, "", "(lv.lv_obj)(lv.lv_style)i" } },
   { "remove_style_all", { (const void*) &lv_obj_remove_style_all, "", "(lv.lv_obj)" } },
