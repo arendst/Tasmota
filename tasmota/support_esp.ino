@@ -773,20 +773,13 @@ typedef struct {
 }
 
 String GetDeviceHardwareRevision(void) {
-/*
-// The structure represents information about the chip
-typedef struct {
-    esp_chip_model_t model;  //!< chip model, one of esp_chip_model_t
-    uint32_t features;       //!< bit mask of CHIP_FEATURE_x feature flags
-    uint8_t cores;           //!< number of CPU cores
-    uint8_t revision;        //!< chip revision number
-} esp_chip_info_t;
-*/
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
 
-  char revision[12];
-  snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
+  char revision[10] = { 0 };
+  if (chip_info.revision) {
+    snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
+  }
   return revision;
 }
 
