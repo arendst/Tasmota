@@ -786,7 +786,7 @@ typedef struct {
   esp_chip_info(&chip_info);
 
   char revision[12];
-  snprintf_P(revision, sizeof(revision), PSTR(" (rev. %d)"), chip_info.revision);
+  snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
   return revision;
 }
 
