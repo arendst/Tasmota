@@ -590,14 +590,14 @@ void CmndStatus(void)
                           ",\"" D_JSON_BOOTVERSION "\":%d"
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                          "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
+                          "\"CpuFrequency\":%d,\"Hardware\":\"%s%s\""
                           "%s}}"),
                           TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str()
 #ifdef ESP8266
                           , ESP.getBootVersion()
 #endif
                           , ESP.getSdkVersion(),
-                          ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
+                          ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(), GetDeviceHardwareRevision().c_str(),
                           GetStatistics().c_str());
     CmndStatusResponse(2);
   }

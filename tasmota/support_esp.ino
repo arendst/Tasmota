@@ -95,6 +95,10 @@ String GetDeviceHardware(void) {
   return F("ESP8266EX");
 }
 
+String GetDeviceHardwareRevision(void) {
+  return "";
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -659,6 +663,7 @@ typedef struct {
         if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, LGA 7*7, ESP32-PICO-V3-ZERO, ESP32-PICO-V3-ZERO-DevKit
         else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, LGA 7*7, 4MB embedded flash, ESP32-PICO-KIT
       case 6:              return F("ESP32-PICO-V3-02");   // Max 240MHz, Dual core, LGA 7*7, 8MB embedded flash, 2MB embedded PSRAM, ESP32-PICO-MINI-02, ESP32-PICO-DevKitM-2
+      case 7:              return F("ESP32-D0WDR2-V3");    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC?
     }
 #endif  // CONFIG_IDF_TARGET_ESP32
     return F("ESP32");
@@ -765,6 +770,24 @@ typedef struct {
     return F("ESP32-H2");
   }
   return F("ESP32");
+}
+
+String GetDeviceHardwareRevision(void) {
+/*
+// The structure represents information about the chip
+typedef struct {
+    esp_chip_model_t model;  //!< chip model, one of esp_chip_model_t
+    uint32_t features;       //!< bit mask of CHIP_FEATURE_x feature flags
+    uint8_t cores;           //!< number of CPU cores
+    uint8_t revision;        //!< chip revision number
+} esp_chip_info_t;
+*/
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+
+  char revision[12];
+  snprintf_P(revision, sizeof(revision), PSTR(" (rev. %d)"), chip_info.revision);
+  return revision;
 }
 
 /*
