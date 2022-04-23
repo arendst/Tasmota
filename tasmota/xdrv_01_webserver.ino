@@ -2903,6 +2903,7 @@ void HandleHttpCommand(void)
       WSContentEnd();
 
       // https://github.com/arendst/Tasmota/discussions/15420
+      ShowWebSource(SRC_WEBCOMMAND);
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Bad userid and/or password"));
 
       return;
