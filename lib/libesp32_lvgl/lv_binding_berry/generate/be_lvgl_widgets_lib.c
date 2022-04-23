@@ -585,6 +585,11 @@ extern int lvbe_indev_get_vect(bvm *vm);
 extern int lvbe_indev_wait_release(bvm *vm);
 extern int lvbe_indev_search_obj(bvm *vm);
 
+/* `lv_qrcode` external functions definitions */
+extern int lvbe_qrcode_create(bvm *vm);
+extern int lvbe_qrcode_update(bvm *vm);
+extern int lvbe_qrcode_delete(bvm *vm);
+
 /* `lv_chart` external functions definitions */
 extern int lvbe_chart_create(bvm *vm);
 extern int lvbe_chart_set_type(bvm *vm);
@@ -948,6 +953,7 @@ extern int be_ntv_lv_disp_init(bvm *vm);
 extern int be_ntv_lv_obj_init(bvm *vm);
 extern int be_ntv_lv_group_init(bvm *vm);
 extern int be_ntv_lv_indev_init(bvm *vm);
+extern int be_ntv_lv_qrcode_init(bvm *vm);
 extern int be_ntv_lv_chart_init(bvm *vm);
 extern int be_ntv_lv_colorwheel_init(bvm *vm);
 extern int be_ntv_lv_imgbtn_init(bvm *vm);
@@ -996,6 +1002,7 @@ extern const bclass be_class_lv_line;
 extern const bclass be_class_lv_meter;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
+extern const bclass be_class_lv_qrcode;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_spinbox;
@@ -1190,6 +1197,22 @@ be_local_class(lv_img,
         { be_const_key(init, -1), be_const_func(be_ntv_lv_img_init) },
     })),
     (be_str_literal("lv_img"))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_qrcode
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_qrcode,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key(_class, -1), be_const_comptr(&lv_qrcode_class) },
+        { be_const_key(init, -1), be_const_func(be_ntv_lv_qrcode_init) },
+    })),
+    (be_str_literal("lv_qrcode"))
 );
 /*******************************************************************/
 
