@@ -2420,7 +2420,7 @@ void HandleInformation(void)
 #endif  // USE_DISCOVERY
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s%s)"), ESP_getChipId(), GetDeviceHardware().c_str(), GetDeviceHardwareRevision().c_str());
+  WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardwareRevision().c_str());
 #ifdef ESP8266
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP.getFlashChipId());
 #endif

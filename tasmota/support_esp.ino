@@ -96,7 +96,8 @@ String GetDeviceHardware(void) {
 }
 
 String GetDeviceHardwareRevision(void) {
-  return "";
+  // No known revisions for ESP8266/85
+  return GetDeviceHardware();
 }
 
 #endif
@@ -773,14 +774,21 @@ typedef struct {
 }
 
 String GetDeviceHardwareRevision(void) {
+  // ESP32-S2
+  // ESP32-D0WDQ6 rev.1
+  // ESP32-C3 rev.2
+  // ESP32-C3 rev.3
+  String result = GetDeviceHardware();   // ESP32-C3
+
   esp_chip_info_t chip_info;
   esp_chip_info(&chip_info);
-
   char revision[10] = { 0 };
   if (chip_info.revision) {
     snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
   }
-  return revision;
+  result += revision;                    // ESP32-C3 rev.3
+
+  return result;
 }
 
 /*
