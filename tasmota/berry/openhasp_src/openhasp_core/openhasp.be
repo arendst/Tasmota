@@ -17,7 +17,8 @@ var classes = [
   "page", "obj", "scr",
   "btn", "switch", "checkbox",
   "label", "spinner", "line", "img", "roller", "btnmatrix",
-  "bar", "slider", "arc", "textarea", "dropdown"
+  "bar", "slider", "arc", "textarea", "dropdown",
+  "qrcode"
 ]
 for c:classes
   solidify.dump(openhasp.OpenHASP.("lvh_"+c), true)
@@ -132,6 +133,11 @@ class lvh_obj
     "text_rule": nil,
     "text_rule_formula": nil,
     "text_rule_format": nil,
+    # qrcode
+    "qr_size": nil,
+    "qr_dark_color": nil,
+    "qr_light_color": nil,
+    "qr_text": nil,
   }
 
   #====================================================================
@@ -308,6 +314,7 @@ class lvh_obj
     if event_hasp != nil
       import string
 
+      var val = string.format('{"hasp":{"p%ib%i":"%s"}}', self._page._page_id, self.id, event_hasp)
       # print("val=",val)
       tasmota.set_timer(0, /-> tasmota.publish_rule(val))
     end
@@ -925,6 +932,41 @@ class lvh_spinner : lvh_arc
   def get_speed() end
 end
 
+#====================================================================
+#  qrcode
+#====================================================================
+class lvh_qrcode : lvh_obj
+  static _lv_class = lv.qrcode
+
+  # init
+  # - create the LVGL encapsulated object
+  # arg1: parent object
+  # arg2: json line object
+  def init(parent, page, jline)
+    self._page = page
+
+    var size = jline.find("qr_size", 100)
+    var dark_col = self.parse_color(jline.find("qr_dark_color", "#000000"))
+    var light_col = self.parse_color(jline.find("qr_light_color", "#FFFFFF"))
+
+    self._lv_obj = lv.qrcode(parent, size, dark_col, light_col)
+    self.post_init()
+  end
+
+  # ignore attributes, spinner can't be changed once created
+  def set_qr_size(t) end
+  def get_qr_size() end
+  def set_qr_dark_color(t) end
+  def get_qr_dark_color() end
+  def set_qr_light_color(t) end
+  def get_qr_light_color() end
+  def set_qr_text(t)
+    t = str(t)
+    self._lv_obj.update(t, size(t))
+  end
+  def get_qr_text() end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
@@ -1118,6 +1160,7 @@ class OpenHASP
  	# static lvh_linemeter = lvh_linemeter
  	# static lvh_gauge = lvh_gauge
 	static lvh_textarea = lvh_textarea    # additional?
+  static lvh_qrcode = lvh_qrcode
 
   static def_templ_name = "pages.jsonl" # default template name
 
