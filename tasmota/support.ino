@@ -1901,7 +1901,11 @@ void SetSerialBegin(void) {
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
+#ifdef ARDUINO_USB_CDC_ON_BOOT
+  Serial.begin(TasmotaGlobal.baudrate);
+#else
   Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
+#endif  // ARDUINO_USB_CDC_ON_BOOT
 #endif  // ESP32
 }
 
