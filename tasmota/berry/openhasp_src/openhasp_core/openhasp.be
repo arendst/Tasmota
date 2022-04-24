@@ -933,6 +933,21 @@ class lvh_spinner : lvh_arc
 end
 
 #====================================================================
+#  img
+#====================================================================
+class lvh_img : lvh_obj
+  static _lv_class = lv.img
+
+  def set_angle(v)
+    v = int(v)
+    self._lv_obj.set_angle(v)
+  end
+  def get_angle()
+    return self._lv_obj.get_angle()
+  end
+end
+
+#====================================================================
 #  qrcode
 #====================================================================
 class lvh_qrcode : lvh_obj
@@ -978,7 +993,6 @@ class lvh_btn : lvh_obj         static _lv_class = lv.btn         end
 class lvh_btnmatrix : lvh_obj   static _lv_class = lv.btnmatrix   end
 class lvh_checkbox : lvh_obj    static _lv_class = lv.checkbox    end
 class lvh_dropdown : lvh_obj    static _lv_class = lv.dropdown    end
-class lvh_img : lvh_obj         static _lv_class = lv.img         end
 class lvh_line : lvh_obj        static _lv_class = lv.line        end
 class lvh_roller : lvh_obj      static _lv_class = lv.roller      end
 class lvh_slider : lvh_obj      static _lv_class = lv.slider      end
@@ -1103,6 +1117,13 @@ class lvh_page
     if anim == nil
       anim = self._oh.page_dir_to(self.id())
     end
+
+    # send page events
+    import string
+    var event_str_in = string.format('{"hasp":{"p%i":"out"}}', self._oh.lvh_page_cur_idx)
+    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
+    var event_str_out = string.format('{"hasp":{"p%i":"in"}}', self._page_id)
+    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_out))
 
     # change current page
     self._oh.lvh_page_cur_idx = self._page_id

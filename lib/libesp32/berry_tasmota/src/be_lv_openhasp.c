@@ -211,15 +211,66 @@ be_local_closure(lvh_page_get_scr,   /* name */
 ********************************************************************/
 be_local_closure(lvh_page_show,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
+    14,                          /* nstack */
     3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 2]) {
+      be_nested_proto(
+        3,                          /* nstack */
+        0,                          /* argc */
+        0,                          /* varg */
+        1,                          /* has upvals */
+        ( &(const bupvaldesc[ 1]) {  /* upvals */
+          be_local_const_upval(1, 4),
+        }),
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        1,                          /* has constants */
+        ( &(const bvalue[ 2]) {     /* constants */
+        /* K0   */  be_nested_str_literal("tasmota"),
+        /* K1   */  be_nested_str_literal("publish_rule"),
+        }),
+        be_str_literal("<lambda>"),
+        &be_const_str_solidified,
+        ( &(const binstruction[ 5]) {  /* code */
+          0xB8020000,  //  0000  GETNGBL	R0	K0
+          0x8C000101,  //  0001  GETMET	R0	R0	K1
+          0x68080000,  //  0002  GETUPV	R2	U0
+          0x7C000400,  //  0003  CALL	R0	2
+          0x80040000,  //  0004  RET	1	R0
+        })
+      ),
+      be_nested_proto(
+        3,                          /* nstack */
+        0,                          /* argc */
+        0,                          /* varg */
+        1,                          /* has upvals */
+        ( &(const bupvaldesc[ 1]) {  /* upvals */
+          be_local_const_upval(1, 5),
+        }),
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        1,                          /* has constants */
+        ( &(const bvalue[ 2]) {     /* constants */
+        /* K0   */  be_nested_str_literal("tasmota"),
+        /* K1   */  be_nested_str_literal("publish_rule"),
+        }),
+        be_str_literal("<lambda>"),
+        &be_const_str_solidified,
+        ( &(const binstruction[ 5]) {  /* code */
+          0xB8020000,  //  0000  GETNGBL	R0	K0
+          0x8C000101,  //  0001  GETMET	R0	R0	K1
+          0x68080000,  //  0002  GETUPV	R2	U0
+          0x7C000400,  //  0003  CALL	R0	2
+          0x80040000,  //  0004  RET	1	R0
+        })
+      ),
+    }),
     1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
+    ( &(const bvalue[20]) {     /* constants */
     /* K0   */  be_nested_str_literal("_lv_scr"),
     /* K1   */  be_nested_str_literal("_p"),
     /* K2   */  be_nested_str_literal("lv"),
@@ -227,17 +278,23 @@ be_local_closure(lvh_page_show,   /* name */
     /* K4   */  be_nested_str_literal("_oh"),
     /* K5   */  be_nested_str_literal("page_dir_to"),
     /* K6   */  be_nested_str_literal("id"),
-    /* K7   */  be_nested_str_literal("lvh_page_cur_idx"),
-    /* K8   */  be_nested_str_literal("_page_id"),
-    /* K9   */  be_nested_str_literal("show_anim"),
-    /* K10  */  be_nested_str_literal("find"),
-    /* K11  */  be_nested_str_literal("SCR_LOAD_ANIM_NONE"),
-    /* K12  */  be_nested_str_literal("scr_load_anim"),
+    /* K7   */  be_nested_str_literal("string"),
+    /* K8   */  be_nested_str_literal("format"),
+    /* K9   */  be_nested_str_literal("{\"hasp\":{\"p%i\":\"out\"}}"),
+    /* K10  */  be_nested_str_literal("lvh_page_cur_idx"),
+    /* K11  */  be_nested_str_literal("tasmota"),
+    /* K12  */  be_nested_str_literal("set_timer"),
     /* K13  */  be_const_int(0),
+    /* K14  */  be_nested_str_literal("{\"hasp\":{\"p%i\":\"in\"}}"),
+    /* K15  */  be_nested_str_literal("_page_id"),
+    /* K16  */  be_nested_str_literal("show_anim"),
+    /* K17  */  be_nested_str_literal("find"),
+    /* K18  */  be_nested_str_literal("SCR_LOAD_ANIM_NONE"),
+    /* K19  */  be_nested_str_literal("scr_load_anim"),
     }),
     be_str_literal("show"),
     &be_const_str_solidified,
-    ( &(const binstruction[46]) {  /* code */
+    ( &(const binstruction[67]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
       0x4C100000,  //  0001  LDNIL	R4
       0x1C0C0604,  //  0002  EQ	R3	R3	R4
@@ -266,24 +323,45 @@ be_local_closure(lvh_page_show,   /* name */
       0x7C140200,  //  0019  CALL	R5	1
       0x7C0C0400,  //  001A  CALL	R3	2
       0x5C040600,  //  001B  MOVE	R1	R3
-      0x880C0104,  //  001C  GETMBR	R3	R0	K4
-      0x88100108,  //  001D  GETMBR	R4	R0	K8
-      0x900E0E04,  //  001E  SETMBR	R3	K7	R4
-      0x880C0109,  //  001F  GETMBR	R3	R0	K9
-      0x8C0C070A,  //  0020  GETMET	R3	R3	K10
-      0x5C140200,  //  0021  MOVE	R5	R1
-      0xB81A0400,  //  0022  GETNGBL	R6	K2
-      0x88180D0B,  //  0023  GETMBR	R6	R6	K11
-      0x7C0C0600,  //  0024  CALL	R3	3
-      0xB8120400,  //  0025  GETNGBL	R4	K2
-      0x8C10090C,  //  0026  GETMET	R4	R4	K12
-      0x88180100,  //  0027  GETMBR	R6	R0	K0
-      0x5C1C0600,  //  0028  MOVE	R7	R3
-      0x5C200400,  //  0029  MOVE	R8	R2
-      0x5824000D,  //  002A  LDCONST	R9	K13
-      0x50280000,  //  002B  LDBOOL	R10	0	0
-      0x7C100C00,  //  002C  CALL	R4	6
-      0x80000000,  //  002D  RET	0
+      0xA40E0E00,  //  001C  IMPORT	R3	K7
+      0x8C100708,  //  001D  GETMET	R4	R3	K8
+      0x58180009,  //  001E  LDCONST	R6	K9
+      0x881C0104,  //  001F  GETMBR	R7	R0	K4
+      0x881C0F0A,  //  0020  GETMBR	R7	R7	K10
+      0x7C100600,  //  0021  CALL	R4	3
+      0xB8161600,  //  0022  GETNGBL	R5	K11
+      0x8C140B0C,  //  0023  GETMET	R5	R5	K12
+      0x581C000D,  //  0024  LDCONST	R7	K13
+      0x84200000,  //  0025  CLOSURE	R8	P0
+      0x7C140600,  //  0026  CALL	R5	3
+      0x8C140708,  //  0027  GETMET	R5	R3	K8
+      0x581C000E,  //  0028  LDCONST	R7	K14
+      0x8820010F,  //  0029  GETMBR	R8	R0	K15
+      0x7C140600,  //  002A  CALL	R5	3
+      0xB81A1600,  //  002B  GETNGBL	R6	K11
+      0x8C180D0C,  //  002C  GETMET	R6	R6	K12
+      0x5820000D,  //  002D  LDCONST	R8	K13
+      0x84240001,  //  002E  CLOSURE	R9	P1
+      0x7C180600,  //  002F  CALL	R6	3
+      0x88180104,  //  0030  GETMBR	R6	R0	K4
+      0x881C010F,  //  0031  GETMBR	R7	R0	K15
+      0x901A1407,  //  0032  SETMBR	R6	K10	R7
+      0x88180110,  //  0033  GETMBR	R6	R0	K16
+      0x8C180D11,  //  0034  GETMET	R6	R6	K17
+      0x5C200200,  //  0035  MOVE	R8	R1
+      0xB8260400,  //  0036  GETNGBL	R9	K2
+      0x88241312,  //  0037  GETMBR	R9	R9	K18
+      0x7C180600,  //  0038  CALL	R6	3
+      0xB81E0400,  //  0039  GETNGBL	R7	K2
+      0x8C1C0F13,  //  003A  GETMET	R7	R7	K19
+      0x88240100,  //  003B  GETMBR	R9	R0	K0
+      0x5C280C00,  //  003C  MOVE	R10	R6
+      0x5C2C0400,  //  003D  MOVE	R11	R2
+      0x5830000D,  //  003E  LDCONST	R12	K13
+      0x50340000,  //  003F  LDBOOL	R13	0	0
+      0x7C1C0C00,  //  0040  CALL	R7	6
+      0xA0000000,  //  0041  CLOSE	R0
+      0x80000000,  //  0042  RET	0
     })
   )
 );
@@ -4098,14 +4176,81 @@ void be_load_lvh_line_class(bvm *vm) {
 }
 
 /********************************************************************
+** Solidified function: set_angle
+********************************************************************/
+be_local_closure(lvh_img_set_angle,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("set_angle"),
+    }),
+    be_str_literal("set_angle"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C040400,  //  0003  MOVE	R1	R2
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x8C080501,  //  0005  GETMET	R2	R2	K1
+      0x5C100200,  //  0006  MOVE	R4	R1
+      0x7C080400,  //  0007  CALL	R2	2
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_angle
+********************************************************************/
+be_local_closure(lvh_img_get_angle,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("get_angle"),
+    }),
+    be_str_literal("get_angle"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_img
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_img,
     0,
     &be_class_lvh_obj,
-    be_nested_map(1,
+    be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_literal("set_angle", -1), be_const_closure(lvh_img_set_angle_closure) },
+        { be_const_key_literal("get_angle", 2), be_const_closure(lvh_img_get_angle_closure) },
         { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_img) },
     })),
     be_str_literal("lvh_img")
