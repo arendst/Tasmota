@@ -22,6 +22,10 @@ Add ``#define USE_TASMESH`` to your file ``user_config_override.h`` before compi
 
 ## Commands
 
+**WARNING:  The MAC address used for ESP-NOW on the broker is the *Soft AP MAC*, not the WiFi MAC.**
+
+*NOTE:  The colons in the mac addresses of the commands are optional.*
+
 ``MeshBroker``                  - starts the broker on the ESP32, printing out the MAC and used WiFi-channel to the log. Must be called after WiFi is initialized!! Example 'Rule1 on system#boot do meshbroker endon'
 
 ``MeshChannel 1..13``           - changes the WiFi-channel (on the node) to n (1-13) according to the channel of the (ESP32-)broker.
@@ -36,16 +40,24 @@ Add ``#define USE_TASMESH`` to your file ``user_config_override.h`` before compi
 
 Rules examples:
 
-- The broker must be started after wifi is up!!</br>``rule1 on system#boot do meshbroker endon``
-- The node may be started as soon as possible. Once started wifi and webserver are disabled by design</br>``rule1 on system#init do meshnode 98:F4:AB:6D:2D:B5 endon``
-- Add a known peer (another node in the mesh) after the node has initialized</br>``rule3 on mesh#node=1 do meshpeer 2cf4323cdb33 endon``
+- The broker must be started after wifi is up!!
+  - To start as ESP32 as broker after wifi and mqtt connection, use</br>``rule1 on system#boot do meshbroker endon``
+- The node may be started as soon as possible. Once started wifi and webserver are disabled by design.
+  - To start the node immediately use</br>``rule1 on system#init do meshnode FA:KE:AD:DR:ES:S1 endon``
+    - To use mesh in combination with deep sleep, you must set a rule to re-initialize the mesh on wake-up.
+The mesh status and parameters are **NOT** (yet) saved to flash and the mesh is not restarted automatically.
+    - **WARNING**:  In case of a system-wide power outage, nodes will be unable to reconnect until after the broker is ready!
+If all devices power up at the same time, a broker starting after `system#boot` will likely not be ready until *after* a node attempting to join at `system#init`.
+This will cause the node to fail to mesh and *no retrying is implemented at this time*.
+To account for this, instead of (or in addition to) using a rule on the nodes, assign all nodes to a common group topic (`GroupTopic2 tasnodes`) and have the broker send a command on that topic after it is ready:</br>`rule2 on mesh#broker=1 do publish cmnd/tasnodes/meshnode FA:KE:AD:DR:ES:S1`
+- Add a known peer (another node in the mesh) after the node has initialized</br>``rule3 on mesh#node=1 do meshpeer FA:KE:AD:DR:ES:S1 endon``
 
 ## Limitations
 
 The following limitations apply:
 - An ESP32 is only supported as a broker
 - An ESP8266 is only supported as a node
-- No command persistence is implemented so use rules to start a broker or a node
+- No command persistence is implemented so use rules to start a broker or a node after start up or deep sleep
 - Although node send queues are implemented there is no node receive queue so MQTT commands send to the node need to be as small as possible limited to a maximum of around 160 characters including the topic
 - Although broker receive queues are implemented there is no broker send queue so MQTT commands send to the node need to be as small as possible limited to a maximum of around 160 characters including the topic
 - As there is no direct connection from the node to the MQTT broker it will signal the node as LWT Offline

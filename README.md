@@ -15,6 +15,10 @@ _Written for PlatformIO with limited support for Arduino IDE._
 
 <hr></hr>
 
+## Easy install
+
+Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/).
+
 If you like **Tasmota**, give it a star, or fork it and contribute!
 
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Tasmota/stargazers)
@@ -25,11 +29,9 @@ See [RELEASENOTES.md](https://github.com/arendst/Tasmota/blob/master/RELEASENOTE
 
 Firmware binaries can be downloaded from http://ota.tasmota.com/tasmota/release/ or http://ota.tasmota.com/tasmota32/release/ for ESP32 binaries.
 
-Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/).
-
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v11.0.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v11.1.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://ota.tasmota.com/tasmota/)
 [![Tasmota CI](https://github.com/arendst/Tasmota/actions/workflows/build_all_the_things.yml/badge.svg)](https://github.com/arendst/Tasmota/actions/workflows/build_all_the_things.yml)
 [![Build_development](https://github.com/arendst/Tasmota/actions/workflows/Tasmota_build_devel.yml/badge.svg)](https://github.com/arendst/Tasmota/actions/workflows/Tasmota_build_devel.yml)
@@ -161,6 +163,7 @@ People helping to keep the show on the road:
 - Paul Diem for UDP Group communication support
 - Jörg Schüler-Maroldt for his initial ESP32 port
 - Javier Arigita for his thermostat driver
+- Simon Hailes for ESP32 Bluetooth extensions
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License

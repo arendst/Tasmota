@@ -52,24 +52,29 @@
 #define HX_GAIN_32           2       // Channel B, gain factor 32
 #define HX_GAIN_64           3       // Channel A, gain factor 64
 
-#define D_JSON_WEIGHT_REF    "WeightRef"
-#define D_JSON_WEIGHT_CAL    "WeightCal"
-#define D_JSON_WEIGHT_MAX    "WeightMax"
-#define D_JSON_WEIGHT_ITEM   "WeightItem"
-#define D_JSON_WEIGHT_CHANGE "WeightChange"
 #define D_JSON_WEIGHT_RAW    "WeightRaw"
-#define D_JSON_WEIGHT_DELTA  "WeightDelta"
+#define D_JSON_WEIGHT_RAW_ABS "AbsRaw"
+#define D_JSON_WEIGHT_REF    "Ref"
+#define D_JSON_WEIGHT_CAL    "Cal"
+#define D_JSON_WEIGHT_MAX    "Max"
+#define D_JSON_WEIGHT_ITEM   "Item"
+#define D_JSON_WEIGHT_CHANGE "Change"
+#define D_JSON_WEIGHT_DELTA  "Delta"
+#define D_JSON_WEIGHT_TARE   "Tare"
+#define D_JSON_WEIGHT_ABSC_A "AbsConvA"
+#define D_JSON_WEIGHT_ABSC_B "AbsConvB"
 
 enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, HX_CAL_DONE, HX_CAL_FIRST, HX_CAL_RESET, HX_CAL_START };
 
 const char kHxCalibrationStates[] PROGMEM = D_HX_CAL_FAIL "|" D_HX_CAL_DONE "|" D_HX_CAL_REFERENCE "|" D_HX_CAL_REMOVE;
 
 struct HX {
-  long weight = 0;
+  long reads[HX_SAMPLES];
+  long raw_empty = 0;
+  long raw_absolute;
   long raw = 0;
+  long weight = 0;
   long last_weight = 0;
-  long sum_weight = 0;
-  long sum_raw = 0;
   long offset = 0;
   long scale = 1;
   long weight_diff = 0;
@@ -87,30 +92,36 @@ struct HX {
 
 /*********************************************************************************************/
 
-bool HxIsReady(uint16_t timeout)
-{
+bool HxIsReady(uint16_t timeout) {
   // A reading can take up to 100 mS or 600mS after power on
   uint32_t start = millis();
-  while ((digitalRead(Hx.pin_dout) == HIGH) && (millis() - start < timeout)) { yield(); }
+  while ((digitalRead(Hx.pin_dout) == HIGH) && (millis() - start < timeout)) {
+    yield();
+  }
   return (digitalRead(Hx.pin_dout) == LOW);
 }
 
-long HxRead(void)
-{
+long HxRead(void) {
   if (!HxIsReady(HX_TIMEOUT)) { return -1; }
 
   uint8_t data[3] = { 0 };
   uint8_t filler = 0x00;
 
   // pulse the clock pin 24 times to read the data
-  data[2] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
-  data[1] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
-  data[0] = shiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+  data[2] = TasShiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+  data[1] = TasShiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
+  data[0] = TasShiftIn(Hx.pin_dout, Hx.pin_sck, MSBFIRST);
 
   // set the channel and the gain factor for the next reading using the clock pin
   for (unsigned int i = 0; i < HX_GAIN_128; i++) {
     digitalWrite(Hx.pin_sck, HIGH);
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
     digitalWrite(Hx.pin_sck, LOW);
+#ifdef ESP32
+    delayMicroseconds(1);
+#endif
   }
 
   // Replicate the most significant bit to pad out a 32-bit signed integer
@@ -127,22 +138,14 @@ long HxRead(void)
 
 /*********************************************************************************************/
 
-void HxResetPart(void)
-{
-  Hx.tare_flg = true;
-  Hx.sum_weight = 0;
-  Hx.sample_count = 0;
-  Hx.last_weight = 0;
+void HxTareInit(void) {
+  Hx.offset = (Settings->weight_user_tare != 0) ? Settings->weight_user_tare * Hx.scale : Settings->weight_offset;
+  if (0 == Hx.offset) {
+    Hx.tare_flg = true;
+  }
 }
 
-void HxReset(void)
-{
-  HxResetPart();
-  Settings->energy_frequency_calibration = 0;
-}
-
-void HxCalibrationStateTextJson(uint8_t msg_id)
-{
+void HxCalibrationStateTextJson(uint8_t msg_id) {
   char cal_text[30];
 
   Hx.calibrate_msg = msg_id;
@@ -151,8 +154,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
   if (msg_id < 3) { MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("Sensor34")); }
 }
 
-void SetWeightDelta()
-{
+void SetWeightDelta(void) {
   // backwards compatible: restore old default value of 4 grams
   if (Settings->weight_change == 0) {
     Hx.weight_delta = 4;
@@ -172,101 +174,112 @@ void SetWeightDelta()
 /*********************************************************************************************\
  * Supported commands for Sensor34:
  *
+ * Sensor34                        - Show current settings
  * Sensor34 1                      - Reset display to 0
  * Sensor34 2                      - Start calibration
  * Sensor34 2 <weight in gram>     - Set reference weight and start calibration
- * Sensor34 3                      - Show reference weight in gram
  * Sensor34 3 <weight in gram>     - Set reference weight
- * Sensor34 4                      - Show calibrated scale value
  * Sensor34 4 <scale value>        - Set calibrated scale value
- * Sensor34 5                      - Show max weight in gram
  * Sensor34 5 <weight in gram>     - Set max weight
- * Sensor34 6                      - Show item weight in decigram
  * Sensor34 6 <weight in decigram> - Set item weight
- * Sensor34 7                      - Save current weight to be used as start weight on restart
+ * Sensor34 7                      - Save current weight to be used as start weight on restart (removed v11.0.0.7)
  * Sensor34 8 0                    - Disable JSON weight change message
  * Sensor34 8 1                    - Enable JSON weight change message
  * Sensor34 9 <weight code>        - Set minimum delta to trigger JSON message
+ * Sensor34 10 0                   - Disable fixed tare and enable auto tare
+ * Sensor34 10 1                   - Set fixed tare offset using current calibrated raw weight value
+ * Sensor34 10 <weight in gram>    - Set fixed tare offset
+ * Sensor34 11 0                   - Disable absolute weight conversion
+ * Sensor34 11 <value A>           - Set A = a * 10^9 for raw to absolute weight conversion: y=a*x+b
+ * Sensor34 12 <value B>           - Set B = b * 10^6 for raw to absolute weight conversion: y=a*x+b
 \*********************************************************************************************/
 
-bool HxCommand(void)
-{
+bool HxCommand(void) {
   bool serviced = true;
-  bool show_parms = false;
+  bool show_parms = true;
   char argument[XdrvMailbox.data_len];
 
+  long value = 0;
   for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
+  bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
+  if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
 
   switch (XdrvMailbox.payload) {
     case 1:  // Reset scale
-      HxReset();
-      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
+      if (0 == Settings->weight_user_tare) {
+        Hx.tare_flg = true;
+        Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
+      }
+      show_parms = false;
       break;
     case 2:  // Calibrate
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_reference = strtol(ArgV(argument, 2), nullptr, 10);
-      }
-      Hx.scale = 1;
-      HxReset();
+      if (any_value) { Settings->weight_reference = value; }
+      Hx.scale = 1;                                  // Uncalibrated
+      Hx.sample_count = 0;
+      Hx.offset = 0;                                 // Disable tare while calibrating
       Hx.calibrate_step = HX_CAL_START;
       Hx.calibrate_timer = 1;
-      HxCalibrationStateTextJson(3);
+//      HxCalibrationStateTextJson(3);                 // D_HX_CAL_REMOVE
+      HxCalibrationStateTextJson(2);                 // D_HX_CAL_REMOVE
+      show_parms = false;
       break;
     case 3:  // WeightRef to user reference
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_reference = strtol(ArgV(argument, 2), nullptr, 10);
-      }
-      show_parms = true;
+      if (any_value) { Settings->weight_reference = value; }
       break;
     case 4:  // WeightCal to user calculated value
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_calibration = strtol(ArgV(argument, 2), nullptr, 10);
+      if (any_value) {
+        Settings->weight_calibration = value;
         Hx.scale = Settings->weight_calibration;
       }
-      show_parms = true;
       break;
     case 5:  // WeightMax
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->weight_max = strtol(ArgV(argument, 2), nullptr, 10) / 1000;
-      }
-      show_parms = true;
+      if (any_value) { Settings->weight_max = value; }
       break;
     case 6:  // WeightItem
       if (strchr(XdrvMailbox.data, ',') != nullptr) {
         Settings->weight_item = (unsigned long)(CharToFloat(ArgV(argument, 2)) * 10);
       }
-      show_parms = true;
       break;
-    case 7:  // WeightSave
-      Settings->energy_frequency_calibration = Hx.weight;
-      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, PSTR(D_JSON_DONE));
-      break;
+//    case 7:  // WeightSave
+//      Settings->energy_frequency_calibration = Hx.weight;
+//      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, PSTR(D_JSON_DONE));
+//      show_parms = false;
+//      break;
     case 8:  // Json on weight change
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-        Settings->SensorBits1.hx711_json_weight_change = strtol(ArgV(argument, 2), nullptr, 10) & 1;
-      }
-      show_parms = true;
+      if (any_value) { Settings->SensorBits1.hx711_json_weight_change = value &1; }
       break;
     case 9:  // WeightDelta
-      if (strchr(XdrvMailbox.data, ',') != nullptr) {
-	Settings->weight_change = strtol(ArgV(argument, 2), nullptr, 10);
-	SetWeightDelta();
+      if (any_value) {
+        Settings->weight_change = value;
+        SetWeightDelta();
       }
-      show_parms = true;
       break;
-    default:
-      show_parms = true;
+    case 10:  // Fixed (user) tare
+      if (any_value) {
+        Settings->weight_user_tare = (1 == value) ? Hx.raw : value;
+        HxTareInit();
+        Hx.weight_diff = Hx.weight_delta +1;         // Force display of current weight
+      }
+      break;
+    case 11:  // AbsoluteConversion, A
+      if (any_value) { Settings->weight_absconv_a = value; }
+      break;
+    case 12:  // AbsoluteConversion, B
+      if (any_value) { Settings->weight_absconv_b = value; }
+      break;
   }
 
   if (show_parms) {
     char item[33];
     dtostrfd((float)Settings->weight_item / 10, 1, item);
     Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
-		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
+         D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d,\""
+         D_JSON_WEIGHT_TARE "\":%d,\"" D_JSON_WEIGHT_ABSC_A "\":%d,\"" D_JSON_WEIGHT_ABSC_B "\":%d}}"),
 	       Settings->weight_reference, Settings->weight_calibration, Settings->weight_max * 1000,
-	       item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change);
+	       item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change,
+         Settings->weight_user_tare, Settings->weight_absconv_a, Settings->weight_absconv_b);
   }
 
   return serviced;
@@ -274,13 +287,11 @@ bool HxCommand(void)
 
 /*********************************************************************************************/
 
-long HxWeight(void)
-{
+long HxWeight(void) {
   return (Hx.calibrate_step < HX_CAL_FAIL) ? Hx.weight : 0;
 }
 
-void HxInit(void)
-{
+void HxInit(void) {
   Hx.type = 0;
   if (PinUsed(GPIO_HX711_DAT) && PinUsed(GPIO_HX711_SCK)) {
     Hx.pin_sck = Pin(GPIO_HX711_SCK);
@@ -298,55 +309,75 @@ void HxInit(void)
       if (!Settings->weight_calibration) { Settings->weight_calibration = HX_SCALE; }
       if (!Settings->weight_reference) { Settings->weight_reference = HX_REFERENCE; }
       Hx.scale = Settings->weight_calibration;
+      HxTareInit();
       HxRead();
-      HxResetPart();
       Hx.type = 1;
     }
   }
 }
 
-void HxEvery100mSecond(void)
-{
+void HxEvery100mSecond(void) {
   long raw = HxRead();
-  Hx.sum_raw += raw;
-  Hx.sum_weight += raw;
+  if (-1 == raw) { return; }
+
+  if (Hx.sample_count < HX_SAMPLES) {                // Test for HxSaveBeforeRestart()
+    Hx.reads[Hx.sample_count] = raw;
+  }
 
   Hx.sample_count++;
   if (HX_SAMPLES == Hx.sample_count) {
-    long average = Hx.sum_weight / Hx.sample_count;  // grams
-    long raw_average = Hx.sum_raw / Hx.sample_count;  // grams
-    long value = average - Hx.offset;                // grams
-    Hx.weight = value / Hx.scale;                    // grams
-    Hx.raw = raw_average / Hx.scale;
-    if (Hx.weight < 0) {
-      if (Settings->energy_frequency_calibration) {
-        long difference = Settings->energy_frequency_calibration + Hx.weight;
-        Hx.last_weight = difference;
-        if (difference < 0) { HxReset(); }           // Cancel last weight as there seems to be no more weight on the scale
+    Hx.sample_count = 0;
+    // Sort HX_SAMPLES
+    for (uint32_t i = 0; i < HX_SAMPLES; i++) {
+      for (uint32_t j = i + 1; j < HX_SAMPLES; j++) {
+        if (Hx.reads[j] > Hx.reads[i]) {
+          std::swap(Hx.reads[i], Hx.reads[j]);
+        }
       }
-      Hx.weight = 0;
-    } else {
-      Hx.last_weight = Settings->energy_frequency_calibration;
+    }
+    // Drop two lows and two highs from average
+    long sum_raw = 0;
+    for (uint32_t i = 2; i < HX_SAMPLES -2; i++) {
+      sum_raw += Hx.reads[i];
+    }
+    Hx.raw_absolute = sum_raw / (HX_SAMPLES -4);     // Uncalibrated value
+    Hx.raw = Hx.raw_absolute / Hx.scale;             // grams
+
+    if ((0 == Settings->weight_user_tare) && Hx.tare_flg) {  // Reset scale based on current load
+      Hx.tare_flg = false;
+      Settings->weight_offset = Hx.raw_absolute;     // Save for restart use
+      Hx.offset = Hx.raw_absolute;
     }
 
-    if (Hx.tare_flg) {
-      Hx.tare_flg = false;
-      Hx.offset = average;                           // grams
+    long value = Hx.raw_absolute - Hx.offset;        // Uncalibrated value
+    Hx.weight = value / Hx.scale;                    // grams
+    if (Hx.weight < 0) {                             // We currently do not support negative weight
+      Hx.weight = 0;
     }
 
     if (Hx.calibrate_step) {
       Hx.calibrate_timer--;
 
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("HX7: Step %d, weight %d, last %d, raw %d, empty %d"), Hx.calibrate_step, Hx.weight, Hx.last_weight, Hx.raw, Hx.raw_empty);
+
       if (HX_CAL_START == Hx.calibrate_step) {       // Skip reset just initiated
-        Hx.calibrate_step--;
+        if (0 == Hx.offset) {
+          Hx.calibrate_step--;                       // HX_CAL_RESET
+          Hx.last_weight = Hx.weight;                // Uncalibrated value
+          Hx.raw_empty = Hx.raw;
+        }
         Hx.calibrate_timer = HX_CAL_TIMEOUT * (10 / HX_SAMPLES);
       }
       else if (HX_CAL_RESET == Hx.calibrate_step) {  // Wait for stable reset
         if (Hx.calibrate_timer) {
-          if (Hx.weight < (long)Settings->weight_reference) {
-            Hx.calibrate_step--;
+          if (Hx.weight < Hx.last_weight -100) {     // Load decrease detected
+            Hx.last_weight = Hx.weight;
+            Hx.raw_empty = Hx.raw;
+//            HxCalibrationStateTextJson(2);           // D_HX_CAL_REFERENCE
+          }
+          else if (Hx.weight > Hx.last_weight +100) {  // Load increase detected
+            Hx.calibrate_step--;                     // HX_CAL_FIRST
             Hx.calibrate_timer = HX_CAL_TIMEOUT * (10 / HX_SAMPLES);
-            HxCalibrationStateTextJson(2);
           }
         } else {
           Hx.calibrate_step = HX_CAL_FAIL;
@@ -354,41 +385,46 @@ void HxEvery100mSecond(void)
       }
       else if (HX_CAL_FIRST == Hx.calibrate_step) {  // Wait for first reference weight
         if (Hx.calibrate_timer) {
-          if (Hx.weight > (long)Settings->weight_reference) {
-            Hx.calibrate_step--;
+          if (Hx.weight > Hx.last_weight +100) {
+            Hx.calibrate_step--;                     // HX_CAL_DONE
           }
         } else {
           Hx.calibrate_step = HX_CAL_FAIL;
         }
       }
       else if (HX_CAL_DONE == Hx.calibrate_step) {   // Second stable reference weight
-        if (Hx.weight > (long)Settings->weight_reference) {
+        if (Hx.weight > Hx.last_weight +100) {
           Hx.calibrate_step = HX_CAL_FINISH;         // Calibration done
-          Settings->weight_calibration = Hx.weight / Settings->weight_reference;
+          Settings->weight_offset = Hx.raw_empty;
+          Hx.offset = Hx.raw_empty;
+          Settings->weight_calibration = (Hx.weight - Hx.raw_empty) / Settings->weight_reference;  // 1 gram
           Hx.weight = 0;                             // Reset calibration value
-          HxCalibrationStateTextJson(1);
+          HxCalibrationStateTextJson(1);             // D_HX_CAL_DONE
         } else {
           Hx.calibrate_step = HX_CAL_FAIL;
         }
       }
-
       if (HX_CAL_FAIL == Hx.calibrate_step) {        // Calibration failed
-        Hx.calibrate_step--;
-        Hx.tare_flg = true;                          // Perform a reset using old scale
-        HxCalibrationStateTextJson(0);
+        Hx.calibrate_step--;                         // HX_CAL_FINISH
+        HxTareInit();
+        HxCalibrationStateTextJson(0);               // D_HX_CAL_FAIL
       }
       if (HX_CAL_FINISH == Hx.calibrate_step) {      // Calibration finished
-        Hx.calibrate_step--;
+        Hx.calibrate_step--;                         // HX_CAL_LIMBO
         Hx.calibrate_timer = 3 * (10 / HX_SAMPLES);
         Hx.scale = Settings->weight_calibration;
-      }
 
+        if (Settings->weight_user_tare != 0) {  // Re-enable fixed tare if needed
+          Settings->weight_user_tare = Hx.raw_empty / Hx.scale;
+          HxTareInit();
+        }
+
+      }
       if (!Hx.calibrate_timer) {
         Hx.calibrate_step = HX_CAL_END;              // End of calibration
+        Hx.weight_diff = Hx.weight_delta +2;
       }
     } else {
-      Hx.weight += Hx.last_weight;                   // grams
-
       if (Settings->SensorBits1.hx711_json_weight_change) {
         if (abs(Hx.weight - Hx.weight_diff) > Hx.weight_delta) {     // Use weight_delta threshold to decrease "ghost" weights
           Hx.weight_diff = Hx.weight;
@@ -404,16 +440,10 @@ void HxEvery100mSecond(void)
         }
       }
     }
-
-    Hx.sum_weight = 0;
-    Hx.sum_raw = 0;
-    Hx.sample_count = 0;
   }
 }
 
-void HxSaveBeforeRestart(void)
-{
-  Settings->energy_frequency_calibration = Hx.weight;
+void HxSaveBeforeRestart(void) {
   Hx.sample_count = HX_SAMPLES +1;                   // Stop updating Hx.weight
 }
 
@@ -426,26 +456,31 @@ const char HTTP_HX711_CAL[] PROGMEM =
   "{s}HX711 %s{m}{e}";
 #endif  // USE_WEBSERVER
 
-void HxShow(bool json)
-{
+void HxShow(bool json) {
   char scount[30] = { 0 };
 
   uint16_t count = 0;
   float weight = 0;
   if (Hx.calibrate_step < HX_CAL_FAIL) {
-    if (Hx.weight && Settings->weight_item) {
-      count = (Hx.weight * 10) / Settings->weight_item;
-      if (count > 1) {
-        snprintf_P(scount, sizeof(scount), PSTR(",\"" D_JSON_COUNT "\":%d"), count);
-      }
+    if ((Settings->weight_absconv_a != 0) && (Settings->weight_absconv_b != 0)) {
+      weight = (float)Settings->weight_absconv_a / 1e9 * Hx.raw_absolute + (float)Settings->weight_absconv_b / 1e6;
     }
-    weight = (float)Hx.weight / 1000;                // kilograms
+    else {
+      if (Hx.weight && Settings->weight_item) {
+        count = (Hx.weight * 10) / Settings->weight_item;
+        if (count > 1) {
+          snprintf_P(scount, sizeof(scount), PSTR(",\"" D_JSON_COUNT "\":%d"), count);
+        }
+      }
+      weight = (float)Hx.weight / 1000;                // kilograms
+    }
   }
   char weight_chr[33];
   dtostrfd(weight, Settings->flag2.weight_resolution, weight_chr);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s,\"" D_JSON_WEIGHT_RAW "\":%d}"), weight_chr, scount, Hx.raw);
+    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s,\"" D_JSON_WEIGHT_RAW "\":%d,\"" D_JSON_WEIGHT_RAW_ABS "\":%d}"),
+      weight_chr, scount, Hx.raw, Hx.raw_absolute);
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_HX711_WEIGHT, weight_chr);
@@ -486,8 +521,7 @@ const char HTTP_FORM_HX711[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
   "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br><input type='number' max='6.5535' step='0.0001' id='p2' placeholder='0.0' value='%s'></p>";
 
-void HandleHxAction(void)
-{
+void HandleHxAction(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_HX711));
@@ -540,8 +574,7 @@ void HandleHxAction(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns34(uint8_t function)
-{
+bool Xsns34(uint8_t function) {
   bool result = false;
 
   if (Hx.type) {
@@ -566,7 +599,9 @@ bool Xsns34(uint8_t function)
         break;
 #ifdef USE_HX711_GUI
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_MAIN_HX711);
+        if (0 == Settings->weight_user_tare) {       // Allow reset scale when no user tare is defined
+          WSContentSend_P(HTTP_BTN_MENU_MAIN_HX711);
+        }
         break;
       case FUNC_WEB_ADD_BUTTON:
         WSContentSend_P(HTTP_BTN_MENU_HX711);

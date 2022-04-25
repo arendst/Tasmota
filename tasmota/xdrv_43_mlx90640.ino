@@ -144,12 +144,12 @@ const char HTTP_MLX90640_2a_SNS_COMPRESSED[] PROGMEM = "\x33\xBF\xA0\xB7\x9A\x3E
 #else
 const char HTTP_MLX90640_2a_SNS[] PROGMEM =
   "var line = 0;"
-  "setInterval(function() {"
+  "setInterval(()=>{"
   "rl('ul',line);"   // 0 = do NOT force refresh
   "},200);"
   "function rl(s,v){"         //source, value
     "var xr=new XMLHttpRequest();"
-    "xr.onreadystatechange=function(){"
+    "xr.onreadystatechange=()=>{"
       "if(xr.readyState==4&&xr.status==200){"
             "var aB = xr.response;" // arrayBuffer
             "var i;"

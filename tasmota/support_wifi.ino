@@ -116,7 +116,18 @@ void WifiConfig(uint8_t type)
   }
 }
 
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  // https://github.com/espressif/arduino-esp32/issues/6264#issuecomment-1040147331
+  // There's an include for this but it doesn't define the function if it doesn't think it needs it, so manually declare the function
+extern "C" void phy_bbpll_en_usb(bool en);
+#endif  // CONFIG_IDF_TARGET_ESP32C3
+
 void WifiSetMode(WiFiMode_t wifi_mode) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+  // https://github.com/espressif/arduino-esp32/issues/6264#issuecomment-1094376906
+  // This brings the USB serial-jtag back to life. Suggest doing this immediately after wifi startup.
+  phy_bbpll_en_usb(true);
+#endif  // CONFIG_IDF_TARGET_ESP32C3
   if (WiFi.getMode() == wifi_mode) { return; }
 
   if (wifi_mode != WIFI_OFF) {
@@ -379,18 +390,16 @@ String WifiGetIPv6(void)
 #endif  // LWIP_IPV6=1
 
 // Check to see if we have any routable IP address
-inline bool WifiCheck_hasIP(IPAddress const & ip_address)
-{
+bool WifiHasIP(void) {
 #ifdef LWIP2_IPV6
   return !a.isLocal();
 #else
-  return static_cast<uint32_t>(ip_address) != 0;
+  return (uint32_t)WiFi.localIP() != 0;
 #endif
 }
 
-void WifiCheckIp(void)
-{
-  if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP())) {
+void WifiCheckIp(void) {
+  if ((WL_CONNECTED == WiFi.status()) && WifiHasIP()) {
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
@@ -520,7 +529,7 @@ void WifiCheck(uint8_t param)
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
-      if ((WL_CONNECTED == WiFi.status()) && WifiCheck_hasIP(WiFi.localIP()) && !Wifi.config_type) {
+      if ((WL_CONNECTED == WiFi.status()) && WifiHasIP() && !Wifi.config_type) {
         WifiSetState(1);
         if (Settings->flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {

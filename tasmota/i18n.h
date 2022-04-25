@@ -444,6 +444,7 @@
 #define D_CMND_ENERGYTOTAL "EnergyTotal"
 #define D_CMND_ENERGYUSAGE "EnergyUsage"
 #define D_CMND_ENERGYEXPORT "EnergyExport"
+#define D_CMND_ENERGYEXPORTACTIVE "EnergyExportActive"
 #define D_CMND_POWERSET "PowerSet"
 #define D_CMND_VOLTAGESET "VoltageSet"
 #define D_CMND_CURRENTSET "CurrentSet"
@@ -658,6 +659,8 @@
 #define D_CMND_ZIGBEE_DATA "Data"
 #define D_CMND_ZIGBEE_SCAN "Scan"
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
+#define D_CMND_ZIGBEE_CIE "CIE"
+#define D_CMND_ZIGBEE_ENROLL "Enroll"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
@@ -870,7 +873,7 @@ const char HTTP_SNS_DISTANCE_CM[]   PROGMEM = "{s}%s "  D_DISTANCE            "{
 const char HTTP_SNS_HALL_EFFECT[]   PROGMEM = "{s}%s "  D_HALL_EFFECT         "{m}%d"                             "{e}";
 const char HTTP_SNS_VOLTAGE[]       PROGMEM = "{s}"     D_VOLTAGE             "{m}%s " D_UNIT_VOLT                "{e}";
 const char HTTP_SNS_CURRENT[]       PROGMEM = "{s}"     D_CURRENT             "{m}%s " D_UNIT_AMPERE              "{e}";
-const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE          "{m}%s " D_UNIT_WATT                "{e}";
+const char HTTP_SNS_POWER[]         PROGMEM = "{s}"     D_POWERUSAGE_ACTIVE   "{m}%s " D_UNIT_WATT                "{e}";
 const char HTTP_SNS_ENERGY_TOTAL[]  PROGMEM = "{s}"     D_ENERGY_TOTAL        "{m}%s " D_UNIT_KILOWATTHOUR        "{e}";
 const char HTTP_SNS_PH[]            PROGMEM = "{s}%s "  D_PH                  "{m}%s "                            "{e}";
 const char HTTP_SNS_MQ[]            PROGMEM = "{s}"     D_MQ"-%s"             "{m}%s " D_UNIT_PARTS_PER_MILLION   "{e}";

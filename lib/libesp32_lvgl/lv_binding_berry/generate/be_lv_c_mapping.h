@@ -186,7 +186,7 @@ const be_ntv_func_def_t lv_disp_func[] = {
 
 /* `lv_obj` methods */
 const be_ntv_func_def_t lv_obj_func[] = {
-  { "add_event_cb", { (const void*) &lv_obj_add_event_cb, "i", "(lv.lv_obj)^lv_event_cb^i." } },
+  { "add_event_cb", { (const void*) &lv_obj_add_event_cb, "c", "(lv.lv_obj)^lv_event_cb^i." } },
   { "add_flag", { (const void*) &lv_obj_add_flag, "", "(lv.lv_obj)i" } },
   { "add_state", { (const void*) &lv_obj_add_state, "", "(lv.lv_obj)i" } },
   { "add_style", { (const void*) &lv_obj_add_style, "", "(lv.lv_obj)(lv.lv_style)i" } },
@@ -387,7 +387,7 @@ const be_ntv_func_def_t lv_obj_func[] = {
   { "refresh_style", { (const void*) &lv_obj_refresh_style, "", "(lv.lv_obj)ii" } },
   { "remove_event_cb", { (const void*) &lv_obj_remove_event_cb, "b", "(lv.lv_obj)." } },
   { "remove_event_cb_with_user_data", { (const void*) &lv_obj_remove_event_cb_with_user_data, "b", "(lv.lv_obj).." } },
-  { "remove_event_dsc", { (const void*) &lv_obj_remove_event_dsc, "b", "(lv.lv_obj)i" } },
+  { "remove_event_dsc", { (const void*) &lv_obj_remove_event_dsc, "b", "(lv.lv_obj)c" } },
   { "remove_local_style_prop", { (const void*) &lv_obj_remove_local_style_prop, "b", "(lv.lv_obj)ii" } },
   { "remove_style", { (const void*) &lv_obj_remove_style, "", "(lv.lv_obj)(lv.lv_style)i" } },
   { "remove_style_all", { (const void*) &lv_obj_remove_style_all, "", "(lv.lv_obj)" } },
@@ -582,6 +582,14 @@ const be_ntv_func_def_t lv_indev_func[] = {
   { "set_group", { (const void*) &lv_indev_set_group, "", "(lv.lv_indev)(lv.lv_group)" } },
   { "wait_release", { (const void*) &lv_indev_wait_release, "", "(lv.lv_indev)" } },
 };
+
+/* `lv_qrcode` methods */
+#ifdef BE_LV_WIDGET_QRCODE
+const be_ntv_func_def_t lv_qrcode_func[] = {
+  { "delete", { (const void*) &lv_qrcode_delete, "", "(lv.lv_obj)" } },
+  { "update", { (const void*) &lv_qrcode_update, "i", "(lv.lv_obj).i" } },
+};
+#endif // BE_LV_WIDGET_QRCODE
 
 /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
@@ -1030,6 +1038,7 @@ extern const bclass be_class_lv_line;
 extern const bclass be_class_lv_meter;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
+extern const bclass be_class_lv_qrcode;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_spinbox;
@@ -1099,6 +1108,9 @@ const be_ntv_class_def_t lv_classes[] = {
   { "lv_msgbox", &be_class_lv_msgbox, lv_msgbox_func, sizeof(lv_msgbox_func) / sizeof(lv_msgbox_func[0]) },
 #endif // BE_LV_WIDGET_MSGBOX
   { "lv_obj", &be_class_lv_obj, lv_obj_func, sizeof(lv_obj_func) / sizeof(lv_obj_func[0]) },
+#ifdef BE_LV_WIDGET_QRCODE
+  { "lv_qrcode", &be_class_lv_qrcode, lv_qrcode_func, sizeof(lv_qrcode_func) / sizeof(lv_qrcode_func[0]) },
+#endif // BE_LV_WIDGET_QRCODE
 #ifdef BE_LV_WIDGET_ROLLER
   { "lv_roller", &be_class_lv_roller, lv_roller_func, sizeof(lv_roller_func) / sizeof(lv_roller_func[0]) },
 #endif // BE_LV_WIDGET_ROLLER
@@ -1140,6 +1152,10 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
   /* `lv_group` methods */
   int be_ntv_lv_group_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_group_create, "+_p", ""); }
   /* `lv_indev` methods */
+  /* `lv_qrcode` methods */
+#ifdef BE_LV_WIDGET_QRCODE
+  int be_ntv_lv_qrcode_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_qrcode_create, "+_p", "(lv.lv_obj)i(lv.lv_color)(lv.lv_color)"); }
+#endif // BE_LV_WIDGET_QRCODE
   /* `lv_chart` methods */
 #ifdef BE_LV_WIDGET_CHART
   int be_ntv_lv_chart_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_chart_create, "+_p", "(lv.lv_obj)"); }

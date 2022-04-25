@@ -597,7 +597,7 @@ void CmndStatus(void)
                           , ESP.getBootVersion()
 #endif
                           , ESP.getSdkVersion(),
-                          ESP.getCpuFreqMHz(), GetDeviceHardware().c_str(),
+                          ESP.getCpuFreqMHz(), GetDeviceHardwareRevision().c_str(),
                           GetStatistics().c_str());
     CmndStatusResponse(2);
   }
@@ -649,6 +649,9 @@ void CmndStatus(void)
                           (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
                           Settings->ipv4_address[3], Settings->ipv4_address[4],
                           WiFi.macAddress().c_str());
+#ifdef USE_TASMESH
+    ResponseAppend_P(PSTR(",\"SoftAPMac\":\"%s\""), WiFi.softAPmacAddress().c_str());
+#endif  // USE_TASMESH
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
     ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
@@ -795,7 +798,7 @@ void CmndGlobalTemp(void)
   if (XdrvMailbox.data_len > 0) {
     float temperature = CharToFloat(XdrvMailbox.data);
     if (!isnan(temperature) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-      temperature = (temperature - 32) / 1.8;                             // Celsius
+      temperature = (temperature - 32) / 1.8f;                             // Celsius
     }
     if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
       ConvertTemp(temperature);
@@ -809,7 +812,7 @@ void CmndGlobalHum(void)
 {
   if (XdrvMailbox.data_len > 0) {
     float humidity = CharToFloat(XdrvMailbox.data);
-    if ((humidity >= 0.0) && (humidity <= 100.0)) {
+    if ((humidity >= 0.0f) && (humidity <= 100.0f)) {
       ConvertHumidity(humidity);
       TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
     }

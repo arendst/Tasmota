@@ -89,7 +89,7 @@ float MAX31855_GetProbeTemperature(int32_t RawData) {
   } else {
     RawData >>= 18;                              // Positiv value - Drop lower 18 bits
   }
-  float result = (RawData * 0.25);               // MAX31855 LSB resolution is 0.25°C for probe temperature
+  float result = (RawData * 0.25f);              // MAX31855 LSB resolution is 0.25°C for probe temperature
 
   return ConvertTemp(result);                    // Check if we have to convert to Fahrenheit
 }
@@ -104,7 +104,7 @@ float MAX31855_GetReferenceTemperature(int32_t RawData) {
   } else {
     RawData = (RawData >> 4) & 0x00000FFF;       // Positiv value - Drop lower 4 bits and mask out remaining bits (probe temp, error bit, etc.)
   }
-  float result = (RawData * 0.0625);             // MAX31855 LSB resolution is 0.0625°C for reference temperature
+  float result = (RawData * 0.0625f);            // MAX31855 LSB resolution is 0.0625°C for reference temperature
 
   return ConvertTemp(result);                    // Check if we have to convert to Fahrenheit
 }
@@ -123,7 +123,7 @@ void MAX31855_GetResult(void) {
 
     MAX31855_Result.ErrorCode = 0;
     MAX31855_Result.ReferenceTemperature = NAN;
-    MAX31855_Result.ProbeTemperature = ConvertTemp(0.25 * temp);
+    MAX31855_Result.ProbeTemperature = ConvertTemp(0.25f * temp);
   } else {
     int32_t RawData = MAX31855_ShiftIn(32);
     uint8_t probeerror = RawData & 0x7;

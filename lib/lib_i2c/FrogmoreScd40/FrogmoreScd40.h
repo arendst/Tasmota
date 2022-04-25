@@ -93,14 +93,12 @@ class FrogmoreScd40
         int measureSingleShotRhtOnly(void);
 
     private:
-        uint8_t duringMeasurement;
+        bool duringMeasurement;
         uint8_t i2cAddress;
         TwoWire *pWire;
-        uint16_t co2AvgExtra;
         uint16_t co2History[SCD40_MEDIAN_FILTER_SIZE];
         uint16_t co2EAverage;
         int8_t co2NewDataLocation; // location to put new CO2 data for median filter
-        bool DuringMeasurement;
 
         uint8_t computeCRC8(uint8_t data[], uint8_t len);
         uint16_t medianfilter(uint16_t * p);

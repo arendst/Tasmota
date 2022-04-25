@@ -110,7 +110,7 @@ return_types = {
   "lv_flex_flow_t": "i",
   "lv_grid_align_t": "i",
 
-  "_lv_event_dsc_t *": "i",
+  "_lv_event_dsc_t *": "c",
   # lv_anim
   "lv_anim_t *": "lv_anim",
   "lv_anim_enable_t": "i",
@@ -188,8 +188,11 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
               'dropdown', 'img', 'label', 'line', 'roller', 'slider',
               'switch', 'table', 'textarea' ]
 # extra widgets
-
 lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
+
+# add qrcode
+lv_widgets = lv_widgets + [ 'qrcode' ]
+
 lv_prefix = ['obj', 'group', 'style', 'indev', 'disp', 'timer', 'anim'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source

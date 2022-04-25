@@ -56,7 +56,7 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  D_CMND_ENERGYTODAY "|" D_CMND_ENERGYYESTERDAY "|" D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYUSAGE "|" D_CMND_ENERGYEXPORT "|" D_CMND_TARIFF;
+  D_CMND_ENERGYTODAY "|" D_CMND_ENERGYYESTERDAY "|" D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYEXPORTACTIVE "|" D_CMND_ENERGYUSAGE "|" D_CMND_ENERGYEXPORT "|" D_CMND_TARIFF;
 
 void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerCal, &CmndVoltageCal, &CmndCurrentCal, &CmndFrequencyCal,
@@ -69,7 +69,7 @@ void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  &CmndEnergyToday, &CmndEnergyYesterday, &CmndEnergyTotal, &CmndEnergyUsage, &CmndEnergyExport, &CmndTariff};
+  &CmndEnergyToday, &CmndEnergyYesterday, &CmndEnergyTotal, &CmndEnergyExportActive, &CmndEnergyUsage, &CmndEnergyExport, &CmndTariff};
 
 struct ENERGY {
   float voltage[ENERGY_MAX_PHASES];             // 123.1 V
@@ -105,6 +105,7 @@ struct ENERGY {
 
   bool voltage_available;                       // Enable if voltage is measured
   bool current_available;                       // Enable if current is measured
+  bool local_energy_active_export;              // Enable if support for storing energy_active
 
   bool type_dc;
   bool power_on;
@@ -142,7 +143,7 @@ char* EnergyFormat(char* result, float* input, uint32_t resolution, uint32_t sin
   // single = 7 - single &0x03 = 3 - [xx,xx,xx]
   uint32_t index = (single > 3) ? single &0x03 : (0 == single) ? Energy.phase_count : 1;  // 1,2,3
   if (single > 2) { single = 0; }                        // 0,1,2
-  float input_sum = 0.0;
+  float input_sum = 0.0f;
   if (single > 1) {
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
@@ -166,7 +167,7 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
   // single = 0 - Energy.phase_count - xx / xx / xx or multi column
   // single = 1 - Energy.voltage_common or Energy.frequency_common - xx or single column using colspan (if needed)
   // single = 2 - Sum of Energy.phase_count if SO129 0 - xx or single column using colspan (if needed) or if SO129 1 - xx / xx / xx or multi column
-  float input_sum = 0.0;
+  float input_sum = 0.0f;
   if (single > 1) {                                      // Sum and/or Single column
     if (!Settings->flag5.energy_phase) {                 // SetOption129 - (Energy) Show phase information
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
@@ -178,14 +179,24 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     }
   }
 #ifdef USE_ENERGY_COLUMN_GUI
-  if ((Energy.phase_count > 1) && single) {            // Need to set colspan so need a new column
-    ext_snprintf_P(result, TOPSZ, PSTR("</td><td colspan='%d' style='text-align:center;'>%*_f</td><td>"), Energy.phase_count, resolution, &input[0]);
+  ext_snprintf_P(result, TOPSZ *2, PSTR("</td>"));       // Skip first column
+  if ((Energy.phase_count > 1) && single) {              // Need to set colspan so need new columns
+    // </td><td colspan='3' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+    // </td><td colspan='5' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+    // </td><td colspan='7' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+    ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+      result, (Energy.phase_count *2) -1, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("center"), resolution, &input[0]);
   } else {
-    ext_snprintf_P(result, TOPSZ, PSTR("</td><td>"));  // Skip first column
+    // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+    // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+    // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
+    // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      ext_snprintf_P(result, TOPSZ, PSTR("%s%*_f</td><td>"), result, resolution, &input[i]);
+      ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+        result, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("left"), resolution, &input[i]);
     }
   }
+  ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td>"), result);
 #else  // not USE_ENERGY_COLUMN_GUI
   uint32_t index = (single) ? 1 : Energy.phase_count;    // 1,2,3
   result[0] = '\0';
@@ -224,20 +235,26 @@ bool EnergyTariff1Active()  // Off-Peak hours
 }
 
 void EnergyUpdateToday(void) {
-  Energy.total_sum = 0.0;
-  Energy.yesterday_sum = 0.0;
-  Energy.daily_sum = 0.0;
+  Energy.total_sum = 0.0f;
+  Energy.yesterday_sum = 0.0f;
+  Energy.daily_sum = 0.0f;
 
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     if (abs(Energy.kWhtoday_delta[i]) > 1000) {
       int32_t delta = Energy.kWhtoday_delta[i] / 1000;
       Energy.kWhtoday_delta[i] -= (delta * 1000);
       Energy.kWhtoday[i] += delta;
+      if (delta < 0) {     // Export energy
+        RtcSettings.energy_kWhexport_ph[i] += (delta *-1);
+      }
     }
 
     RtcSettings.energy_kWhtoday_ph[i] = Energy.kWhtoday_offset[i] + Energy.kWhtoday[i];
     Energy.daily[i] = (float)(RtcSettings.energy_kWhtoday_ph[i]) / 100000;
     Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + RtcSettings.energy_kWhtoday_ph[i]) / 100000;
+    if (Energy.local_energy_active_export) {
+      Energy.export_active[i] = (float)(RtcSettings.energy_kWhexport_ph[i]) / 100000;
+    }
 
     Energy.total_sum += Energy.total[i];
     Energy.yesterday_sum += (float)Settings->energy_kWhyesterday_ph[i] / 100000;
@@ -254,7 +271,7 @@ void EnergyUpdateToday(void) {
 //      return_diff = (uint32_t)(Energy.export_active * 100000) - RtcSettings.energy_usage.last_return_kWhtotal;
 //      RtcSettings.energy_usage.last_return_kWhtotal = (uint32_t)(Energy.export_active * 100000);
 
-      float export_active = 0.0;
+      float export_active = 0.0f;
       for (uint32_t i = 0; i < Energy.phase_count; i++) {
         if (!isnan(Energy.export_active[i])) {
           export_active += Energy.export_active[i];
@@ -287,7 +304,7 @@ void EnergyUpdateTotal(void) {
       Energy.kWhtoday[i] = (int32_t)((Energy.import_active[i] - Energy.start_energy[i]) * 100000);
     }
 
-    if ((Energy.total[i] < (Energy.import_active[i] - 0.01)) &&   // We subtract a little offset to avoid continuous updates
+    if ((Energy.total[i] < (Energy.import_active[i] - 0.01f)) &&   // We subtract a little offset to avoid continuous updates
         Settings->flag3.hardware_energy_total) {    // SetOption72 - Enable hardware energy total counter as reference (#6561)
       RtcSettings.energy_kWhtotal_ph[i] = (int32_t)((Energy.import_active[i] * 100000) - Energy.kWhtoday_offset[i] - Energy.kWhtoday[i]);
       Settings->energy_kWhtotal_ph[i] = RtcSettings.energy_kWhtotal_ph[i];
@@ -328,6 +345,8 @@ void Energy200ms(void)
           RtcSettings.energy_kWhtotal_ph[i] += RtcSettings.energy_kWhtoday_ph[i];
           Settings->energy_kWhtotal_ph[i] = RtcSettings.energy_kWhtotal_ph[i];
 
+          Settings->energy_kWhexport_ph[i] = RtcSettings.energy_kWhexport_ph[i];
+
           Energy.period[i] -= RtcSettings.energy_kWhtoday_ph[i];     // this becomes a large unsigned, effectively a negative for EnergyShow calculation
           Energy.kWhtoday[i] = 0;
           Energy.kWhtoday_offset[i] = 0;
@@ -359,6 +378,7 @@ void EnergySaveState(void)
   for (uint32_t i = 0; i < 3; i++) {
     Settings->energy_kWhtoday_ph[i] = RtcSettings.energy_kWhtoday_ph[i];
     Settings->energy_kWhtotal_ph[i] = RtcSettings.energy_kWhtotal_ph[i];
+    Settings->energy_kWhexport_ph[i] = RtcSettings.energy_kWhexport_ph[i];
   }
 
   Settings->energy_usage = RtcSettings.energy_usage;
@@ -619,13 +639,21 @@ void ResponseCmndEnergyTotalYesterdayToday(void) {
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     energy_yesterday_ph[i] = (float)Settings->energy_kWhyesterday_ph[i] / 100000;
     Energy.total[i] = (float)(RtcSettings.energy_kWhtotal_ph[i] + Energy.kWhtoday_offset[i] + Energy.kWhtoday[i]) / 100000;
+    if (Energy.local_energy_active_export) {
+      Energy.export_active[i] = (float)(RtcSettings.energy_kWhexport_ph[i]) / 100000;
+    }
   }
 
-  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s"),
     XdrvMailbox.command,
     EnergyFormat(value_chr, Energy.total, Settings->flag2.energy_resolution),
     EnergyFormat(value2_chr, energy_yesterday_ph, Settings->flag2.energy_resolution),
     EnergyFormat(value3_chr, Energy.daily, Settings->flag2.energy_resolution));
+  if (Energy.local_energy_active_export) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
+      EnergyFormat(value_chr, Energy.export_active, Settings->flag2.energy_resolution));
+  }
+  ResponseJsonEndEnd();
 }
 
 void CmndEnergyTotal(void) {
@@ -661,6 +689,7 @@ void CmndEnergyYesterday(void) {
   }
   ResponseCmndEnergyTotalYesterdayToday();
 }
+
 void CmndEnergyToday(void) {
   uint32_t values[2] = { 0 };
   uint32_t params = ParseParameters(2, values);
@@ -684,6 +713,26 @@ void CmndEnergyToday(void) {
     }
   }
   ResponseCmndEnergyTotalYesterdayToday();
+}
+
+void CmndEnergyExportActive(void) {
+  if (Energy.local_energy_active_export) {
+    // EnergyExportActive1 24
+    // EnergyExportActive1 24,1650111291
+    uint32_t values[2] = { 0 };
+    uint32_t params = ParseParameters(2, values);
+
+    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy.phase_count) && (params > 0)) {
+      uint32_t phase = XdrvMailbox.index -1;
+      // Reset Energy Export Active
+      RtcSettings.energy_kWhexport_ph[phase] = values[0] * 100;
+      Settings->energy_kWhexport_ph[phase] = RtcSettings.energy_kWhexport_ph[phase];
+      if (params > 1) {
+        Settings->energy_kWhtotal_time = values[1];
+      }
+    }
+    ResponseCmndEnergyTotalYesterdayToday();
+  }
 }
 
 void ResponseCmndEnergyUsageExport(void) {
@@ -1022,6 +1071,9 @@ void EnergySnsInit(void)
 //    Energy.kWhtoday_ph[i] = 0;
 //    Energy.kWhtoday_delta[i] = 0;
       Energy.period[i] = Energy.kWhtoday_offset[i];
+      if (Energy.local_energy_active_export) {
+        Energy.export_active[i] = 0;
+      }
     }
     EnergyUpdateToday();
     ticker_energy.attach_ms(200, Energy200ms);
@@ -1076,13 +1128,13 @@ void EnergyShow(bool json) {
         if (isnan(reactive_power[i])) {
           reactive_power[i] = 0;
           uint32_t difference = ((uint32_t)(apparent_power[i] * 100) - (uint32_t)(Energy.active_power[i] * 100)) / 10;
-          if ((Energy.current[i] > 0.005) && ((difference > 15) || (difference > (uint32_t)(apparent_power[i] * 100 / 1000)))) {
+          if ((Energy.current[i] > 0.005f) && ((difference > 15) || (difference > (uint32_t)(apparent_power[i] * 100 / 1000)))) {
             // calculating reactive power only if current is greater than 0.005A and
             // difference between active and apparent power is greater than 1.5W or 1%
             //reactive_power[i] = (float)(RoundSqrtInt((uint64_t)(apparent_power[i] * apparent_power[i] * 100) - (uint64_t)(Energy.active_power[i] * Energy.active_power[i] * 100))) / 10;
             float power_diff = apparent_power[i] * apparent_power[i] - Energy.active_power[i] * Energy.active_power[i];
             if (power_diff < 10737418) // 2^30 / 100 (RoundSqrtInt is limited to 2^30-1)
-              reactive_power[i] = (float)(RoundSqrtInt((uint32_t)(power_diff * 100.0))) / 10.0;
+              reactive_power[i] = (float)(RoundSqrtInt((uint32_t)(power_diff * 100.0f))) / 10.0f;
             else
               reactive_power[i] = (float)(SqrtInt((uint32_t)(power_diff)));
           }
@@ -1092,7 +1144,7 @@ void EnergyShow(bool json) {
     }
   }
 
-  float active_power_sum = 0.0;
+  float active_power_sum = 0.0f;
   float energy_yesterday_ph[Energy.phase_count];
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     energy_yesterday_ph[i] = (float)Settings->energy_kWhyesterday_ph[i] / 100000;
@@ -1111,9 +1163,9 @@ void EnergyShow(bool json) {
     energy_tariff = true;
   }
 
-  char value_chr[TOPSZ];   // Used by EnergyFormatIndex
-  char value2_chr[TOPSZ];
-  char value3_chr[TOPSZ];
+  char value_chr[TOPSZ * 2];   // Used by EnergyFormatIndex
+  char value2_chr[TOPSZ * 2];
+  char value3_chr[TOPSZ * 2];
 
   if (json) {
     bool show_energy_period = (0 == TasmotaGlobal.tele_period);
@@ -1232,25 +1284,17 @@ void EnergyShow(bool json) {
 #ifdef USE_WEBSERVER
   } else {
 #ifdef USE_ENERGY_COLUMN_GUI
-    // Need a new table supporting more columns
-    WSContentSend_P(PSTR("</table>{t}{s}</th><th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
-
-    // Calculate nice inter-column spacing without using table spacing or column padding
-    uint32_t len = 6;                        // Minimum width is 60px
-    for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      // Using active power expecting to be the largest number not counting increasing total energy
-      uint32_t len_new = ext_snprintf_P(value_chr, sizeof(value_chr), PSTR("%*_f"), Settings->flag2.wattage_resolution, &Energy.active_power[i]);
-      if (len_new > len) { len = len_new; }
-//      len_new = ext_snprintf_P(value_chr, sizeof(value_chr), PSTR("%*_f"), Settings->flag2.energy_resolution, &Energy.total[i]);
-//      if (len_new > len) { len = len_new; }
-    }
-    uint32_t width = len * 10;               // Default 60px. Every additonal character adds 10px
-
+    // Need a new table supporting more columns using empty columns (with &nbsp; in data rows) as easy column spacing
+    // {s}</th><th></th><th>Head1</th><th></th><td>{e}
+    // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
+    // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
+    // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
+    WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
     bool no_label = Energy.voltage_common || (1 == Energy.phase_count);
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      WSContentSend_P(PSTR("</th><th style='width:%dpx;white-space:nowrap'>%s%s"), width, (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
+      WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(i +1, value_chr, 10));
     }
-    WSContentSend_P(PSTR("</th><td>{e}"));   // Last column is units ({e} = </td></tr>)
+    WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
 #endif  // USE_ENERGY_COLUMN_GUI
     if (Energy.voltage_available) {
       WSContentSend_PD(HTTP_SNS_VOLTAGE, WebEnergyFormat(value_chr, Energy.voltage, Settings->flag2.voltage_resolution, Energy.voltage_common));
@@ -1280,7 +1324,7 @@ void EnergyShow(bool json) {
     }
 #ifdef USE_ENERGY_COLUMN_GUI
     XnrgCall(FUNC_WEB_COL_SENSOR);
-    WSContentSend_P(PSTR("</table>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
+    WSContentSend_P(PSTR("</table><hr/>{t}"));    // {t} = <table style='width:100%'> - Define for next FUNC_WEB_SENSOR
 #endif  // USE_ENERGY_COLUMN_GUI
     XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER

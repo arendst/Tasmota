@@ -88,7 +88,7 @@ String ResolveToken(const char* input) {
   return resolved;
 }
 
-char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopic)
+char* GetTopic_P(char *stopic, uint32_t prefix, const char *topic, const char* subtopic)
 {
   /* prefix 0 = Cmnd
      prefix 1 = Stat
@@ -845,6 +845,19 @@ String GetSwitchText(uint32_t i) {
   return switch_text;
 }
 
+void MqttAppendSensorUnits(void)
+{
+  if (ResponseContains_P(PSTR(D_JSON_PRESSURE))) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), PressureUnit().c_str());
+  }
+  if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
+  }
+  if (ResponseContains_P(PSTR(D_JSON_SPEED)) && Settings->flag2.speed_conversion) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPEED_UNIT "\":\"%s\""), SpeedUnit().c_str());
+  }
+}
+
 bool MqttShowSensor(bool call_show_sensor)
 {
   ResponseAppendTime();
@@ -893,15 +906,7 @@ bool MqttShowSensor(bool call_show_sensor)
   }
 
   bool json_data_available = (ResponseLength() - json_data_start);
-  if (ResponseContains_P(PSTR(D_JSON_PRESSURE))) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), PressureUnit().c_str());
-  }
-  if (ResponseContains_P(PSTR(D_JSON_TEMPERATURE))) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
-  }
-  if (ResponseContains_P(PSTR(D_JSON_SPEED)) && Settings->flag2.speed_conversion) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_SPEED_UNIT "\":\"%s\""), SpeedUnit().c_str());
-  }
+  MqttAppendSensorUnits();
   ResponseJsonEnd();
 
   if (call_show_sensor && json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
@@ -1172,7 +1177,6 @@ void Every250mSeconds(void)
       if (2 == TasmotaGlobal.ota_state_flag) {
         RtcSettings.ota_loader = 0;                       // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
-        ESPhttpUpdate.rebootOnUpdate(false);
         SettingsSave(1);                                  // Free flash for OTA update
       }
       if (TasmotaGlobal.ota_state_flag <= 0) {
@@ -1247,10 +1251,12 @@ void Every250mSeconds(void)
             AddLog(LOG_LEVEL_INFO, "OTA: unsupported protocol");
             ota_result = -999;
           } else {
+            httpUpdateLight.rebootOnUpdate(false);
             ota_result = (HTTP_UPDATE_FAILED != httpUpdateLight.update(OTAclient, version));
           }
 #else // standard OTA over HTTP
           WiFiClient OTAclient;
+          ESPhttpUpdate.rebootOnUpdate(false);
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, full_ota_url, version));
 #endif
           if (!ota_result) {

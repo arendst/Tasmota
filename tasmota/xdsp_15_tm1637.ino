@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_TM1637
+#if defined(USE_DISPLAY_TM1637) || defined(USE_DISPLAY_MAX7219)
 /*********************************************************************************************\
   This driver enables the display of numbers (both integers and floats) and basic text
   on the inexpensive TM1637-, TM1638- and MAX7219-based seven-segment modules.
@@ -225,7 +225,14 @@ void TM1637Init(void)
   else if (PinUsed(GPIO_MAX7219DIN) && PinUsed(GPIO_MAX7219CLK) && PinUsed(GPIO_MAX7219CS))
   {
     TM1637Data.display_type = MAX7219;
-    Settings->display_width = 8;
+    if (Settings->display_width)
+    {
+      Settings->display_width = (Settings->display_width / 8) * 8;
+    }
+    else
+    {
+      Settings->display_width = 8;
+    }
   }
   else
   {
@@ -254,8 +261,11 @@ void TM1637Init(void)
   else if (MAX7219 == TM1637Data.display_type)
   {
     strcpy_P(TM1637Data.model_name, PSTR("MAX7219"));
-    max7219display = new LedControl(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), 1);
-    max7219display->shutdown(MAX7219_ADDR, false);
+    max7219display = new LedControl(Pin(GPIO_MAX7219DIN), Pin(GPIO_MAX7219CLK), Pin(GPIO_MAX7219CS), Settings->display_width / 8);
+    for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
+    {
+      max7219display->shutdown(MAX7219_ADDR + dev_addr, false);
+    }
   }
   TM1637ClearDisplay();
   TM1637Dim();
@@ -266,15 +276,13 @@ void TM1637Init(void)
 // Function to display specified ascii char at specified position for MAX7219
 void displayMAX7219ASCII(uint8_t pos, char c)
 {
-  pos = 7 - pos;
-  max7219display->setChar(MAX7219_ADDR, pos, c, false);
+  max7219display->setChar(MAX7219_ADDR + (pos / 8), 7 - (pos % 8), c, false);
 }
 
 // Function to display specified ascii char with dot at specified position for MAX7219
 void displayMAX7219ASCIIwDot(uint8_t pos, char c)
 {
-  pos = 7 - pos;
-  max7219display->setChar(MAX7219_ADDR, pos, c, true);
+  max7219display->setChar(MAX7219_ADDR + (pos / 8), 7 - (pos % 8), c, true);
 }
 
 // Function to display raw segments at specified position for MAX7219
@@ -292,8 +300,7 @@ void displayMAX72197Seg(uint8_t pos, uint8_t seg)
   }
   seg = reverse_num;
 
-  pos = 7 - pos;
-  max7219display->setRow(MAX7219_ADDR, pos, seg);
+  max7219display->setRow(MAX7219_ADDR + (pos / 8), 7 - (pos % 8), seg);
 }
 
 // Function to fix order of hardware digits for different TM1637 variants
@@ -379,7 +386,7 @@ bool CmndTM1637Number(bool clear)
       tm1638display->displayASCII(i, pad);
     else if (MAX7219 == TM1637Data.display_type)
     {
-      if (i > 7)
+      if (i > Settings->display_width - 1)
         break;
       displayMAX7219ASCII(i, pad);
     }
@@ -400,7 +407,7 @@ bool CmndTM1637Number(bool clear)
       tm1638display->displayASCII(i, txt[j]);
     else if (MAX7219 == TM1637Data.display_type)
     {
-      if (i > 7)
+      if (i > Settings->display_width - 1)
         break;
       if (txt[j] == 0)
         break;
@@ -505,7 +512,7 @@ bool CmndTM1637Float(bool clear)
   {
     for (uint32_t i = 0, j = 0; i < length; i++, j++)
     {
-      if ((j + position) > 7)
+      if ((j + position) > Settings->display_width - 1)
         break;
       if (txt[i] == 0)
         break;
@@ -553,7 +560,10 @@ void TM1637ClearDisplay(void)
   }
   else if (MAX7219 == TM1637Data.display_type)
   {
-    max7219display->clearDisplay(MAX7219_ADDR);
+    for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
+    {
+      max7219display->clearDisplay(MAX7219_ADDR + dev_addr);
+    }
   }
 }
 
@@ -821,7 +831,7 @@ bool CmndTM1637Raw(void)
   {
     for (uint32_t i = position; i < position + length; i++)
     {
-      if (i > 7)
+      if (i > Settings->display_width - 1)
         break;
       displayMAX72197Seg(i, DATA[i - position]);
     }
@@ -921,7 +931,7 @@ bool CmndTM1637Text(bool clear)
     uint8_t rawBytes[1];
     for (uint32_t j = 0; i < position + length; i++, j++)
     {
-      if (i > 7)
+      if (i > Settings->display_width - 1)
         break;
       if (sString[j] == 0)
         break;
@@ -1102,7 +1112,10 @@ void TM1637Dim(void)
   }
   else if (MAX7219 == TM1637Data.display_type)
   {
-    max7219display->setIntensity(MAX7219_ADDR, brightness); // 0 - 7
+    for (uint8_t dev_addr = 0; dev_addr < Settings->display_width / 8; dev_addr++)
+    {
+      max7219display->setIntensity(MAX7219_ADDR, brightness); // 0 - 7
+    }
   }
 }
 

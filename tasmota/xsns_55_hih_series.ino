@@ -61,10 +61,10 @@ bool Hih6Read(void)
 
 //  uint8_t status = data[0] >> 6;  // 0 = Valid data, 1 = Stale data, 2 = Command mode, 3 = Not used
 
-  Hih6.humidity = ConvertHumidity(((float)(((data[0] & 0x3F) << 8) | data[1]) * 100.0) / 16383.0);
+  Hih6.humidity = ConvertHumidity(((float)(((data[0] & 0x3F) << 8) | data[1]) * 100.0f) / 16383.0f);
   // Convert the data to 14-bits
   int temp = ((data[2] << 8) | (data[3] & 0xFC)) / 4;
-  Hih6.temperature = ConvertTemp(((float)temp / 16384.0) * 165.0 - 40.0);
+  Hih6.temperature = ConvertTemp(((float)temp / 16384.0f) * 165.0f - 40.0f);
 
   Hih6.valid = SENSOR_MAX_MISS;
   return true;

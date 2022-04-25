@@ -74,8 +74,8 @@ int scd30Co2Zero_count = 0;
 int i2cReset_count = 0;
 uint16_t scd30_CO2 = 0;
 uint16_t scd30_CO2EAvg = 0;
-float scd30_Humid = 0.0;
-float scd30_Temp = 0.0;
+float scd30_Humid = 0.0f;
+float scd30_Temp = 0.0f;
 
 void Scd30Detect(void)
 {

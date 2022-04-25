@@ -175,6 +175,14 @@
  **/
 #define BE_USE_DEBUG_GC                  0
 
+/* Macro: BE_USE_DEBUG_STACK
+ * Enable Stack Resize debug mode. At each function call
+ * the stack is reallocated at a different memory location
+ * and the previous location is cleared with toxic data.
+ * Default: 0
+ **/
+#define BE_USE_DEBUG_STACK               0
+
 /* Macro: BE_USE_MEM_ALIGNED
  * Some embedded processors have special memory areas
  * with read/write constraints of being aligned to 32 bits boundaries.
@@ -251,6 +259,17 @@ extern "C" {
 #ifdef USE_BERRY_DEBUG
   #undef BE_DEBUG_RUNTIME_INFO
   #define BE_DEBUG_RUNTIME_INFO 1 /* record line information in 32 bits to be places in IRAM */
+  #undef BE_DEBUG
+  #define BE_DEBUG 1
+  #undef be_assert
+  #define be_assert(expr)                                                        \
+      ((expr)                                                                \
+      ? (0)                                                \
+      : serial_debug("BRY: ASSERT '%s', %s - %i\n", #expr, __FILE__, __LINE__))
+  #ifdef USE_LVGL
+    #undef BE_STACK_START
+    #define BE_STACK_START                  200
+  #endif // USE_LVGL
 #endif // USE_BERRY_DEBUG
 
 #endif

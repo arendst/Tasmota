@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.6 - Last update 12.03.2022
+ * Updated until v11.0.0.7 - Last update 19.04.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -77,7 +77,7 @@
 #define D_COUNTER              "Contatore"
 #define D_CT_POWER             "Alimentazione CT"
 #define D_CURRENT              "Corrente"            // As in Voltage and Current
-#define D_CURRENT_NEUTRAL      "Corrente Neutrale"
+#define D_CURRENT_NEUTRAL      "Corrente neutrale"
 #define D_DATA                 "Dati"
 #define D_DARKLIGHT            "Scuro"
 #define D_DEBUG                "Debug"
@@ -615,6 +615,7 @@
 #define D_SENSOR_DHT11                  "DHT11"
 #define D_SENSOR_AM2301                 "AM2301"
 #define D_SENSOR_SI7021                 "SI7021"
+#define D_SENSOR_MS01                   "MS01"
 #define D_SENSOR_DS18X20                "DS18x20"
 #define D_SENSOR_I2C_SCL                "I2C SCL"
 #define D_SENSOR_I2C_SDA                "I2C SDA"
@@ -650,6 +651,12 @@
 #define D_SENSOR_SPI_MISO               "SPI - MISO"
 #define D_SENSOR_SPI_MOSI               "SPI - MOSI"
 #define D_SENSOR_SPI_CLK                "SPI - CLK"
+#define D_SENSOR_SDIO_CMD               "SDIO - CMD"
+#define D_SENSOR_SDIO_CLK               "SDIO - CLK"
+#define D_SENSOR_SDIO_D0                "SDIO - D0"
+#define D_SENSOR_SDIO_D1                "SDIO - D1"
+#define D_SENSOR_SDIO_D2                "SDIO - D2"
+#define D_SENSOR_SDIO_D3                "SDIO - D3"
 #define D_SENSOR_BACKLIGHT              "Retroilluminazione"
 #define D_SENSOR_PMS5003_TX             "PMS5003 - TX"
 #define D_SENSOR_PMS5003_RX             "PMS5003 - RX"
@@ -870,6 +877,7 @@
 #define D_UNIT_HOUR                       "o"
 #define D_UNIT_GALLONS                    "gal"
 #define D_UNIT_GALLONS_PER_MIN            "g/m"
+#define D_UNIT_INCH_MERCURY               "inHg"
 #define D_UNIT_INCREMENTS                 "inc"
 #define D_UNIT_KELVIN                     "K"
 #define D_UNIT_KILOMETER                  "km"
@@ -1076,17 +1084,21 @@
 #define D_NEOPOOL_IONIZATION              "Ionizzazione"
 #define D_NEOPOOL_HYDROLYSIS              "Idrolisi"
 #define D_NEOPOOL_RELAY                   "Relay"
-#define D_NEOPOOL_RELAY_FILTRATION        "Filtrazione"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtrazione"        // Relay assignment
 #define D_NEOPOOL_RELAY_LIGHT             "Luce"
 #define D_NEOPOOL_RELAY_PH_ACID           "Pompa per acido"
 #define D_NEOPOOL_RELAY_PH_BASE           "Pompa base"
 #define D_NEOPOOL_RELAY_RX                "Livello Redox"
 #define D_NEOPOOL_RELAY_CL                "Pompa cloro"
-#define D_NEOPOOL_RELAY_CD                "Pompa salamoia"
+#define D_NEOPOOL_RELAY_CD                "Conduttività"
+#define D_NEOPOOL_RELAY_HEATING           "Riscaldamento"
+#define D_NEOPOOL_RELAY_UV                "Ultravioletti"
+#define D_NEOPOOL_RELAY_VALVE             "Valvola"
+#define D_NEOPOOL_RELAY_AUX               "Ausiliario"
 #define D_NEOPOOL_TIME                    "Orario"
-#define D_NEOPOOL_FILT_MODE               "Modalità di filtrazione"
+#define D_NEOPOOL_FILT_MODE               "Modo filtrazione"
 #define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
-#define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
+#define D_NEOPOOL_POLARIZATION            "Polarizzazione"     // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "OK"
 #define D_NEOPOOL_COVER                   "Copertura"

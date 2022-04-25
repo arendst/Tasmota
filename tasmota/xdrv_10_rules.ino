@@ -772,7 +772,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       // Use Backlog with event to prevent rule event loop exception unless IF is used which uses an implicit backlog
       if ((ucommand.indexOf(F("IF ")) == -1) &&
           (ucommand.indexOf(F("EVENT ")) != -1) &&
-          (ucommand.indexOf(F("BACKLOG ")) == -1)) {
+          (ucommand.indexOf(F("BACKLOG")) == -1)) {
         commands = String(F("backlog ")) + commands;
       }
 

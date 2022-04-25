@@ -95,6 +95,11 @@ String GetDeviceHardware(void) {
   return F("ESP8266EX");
 }
 
+String GetDeviceHardwareRevision(void) {
+  // No known revisions for ESP8266/85
+  return GetDeviceHardware();
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -382,6 +387,10 @@ String ESP32GetResetReason(uint32_t cpu_no) {
     case 17 : return F("Time Group1 reset CPU");                            // 17  -                 TG1WDT_CPU_RESET
     case 18 : return F("Super watchdog reset digital core and rtc module"); // 18  -                 SUPER_WDT_RESET
     case 19 : return F("Glitch reset digital core and rtc module");         // 19  -                 GLITCH_RTC_RESET
+    case 20 : return F("Efuse reset digital core");                         // 20                    EFUSE_RESET
+    case 21 : return F("Usb uart reset digital core");                      // 21                    USB_UART_CHIP_RESET
+    case 22 : return F("Usb jtag reset digital core");                      // 22                    USB_JTAG_CHIP_RESET
+    case 23 : return F("Power glitch reset digital core and rtc module");   // 23                    POWER_GLITCH_RESET
   }
 
   return F("No meaning");                                                   // 0 and undefined
@@ -655,6 +664,7 @@ typedef struct {
         if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, LGA 7*7, ESP32-PICO-V3-ZERO, ESP32-PICO-V3-ZERO-DevKit
         else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, LGA 7*7, 4MB embedded flash, ESP32-PICO-KIT
       case 6:              return F("ESP32-PICO-V3-02");   // Max 240MHz, Dual core, LGA 7*7, 8MB embedded flash, 2MB embedded PSRAM, ESP32-PICO-MINI-02, ESP32-PICO-DevKitM-2
+      case 7:              return F("ESP32-D0WDR2-V3");    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC?
     }
 #endif  // CONFIG_IDF_TARGET_ESP32
     return F("ESP32");
@@ -761,6 +771,24 @@ typedef struct {
     return F("ESP32-H2");
   }
   return F("ESP32");
+}
+
+String GetDeviceHardwareRevision(void) {
+  // ESP32-S2
+  // ESP32-D0WDQ6 rev.1
+  // ESP32-C3 rev.2
+  // ESP32-C3 rev.3
+  String result = GetDeviceHardware();   // ESP32-C3
+
+  esp_chip_info_t chip_info;
+  esp_chip_info(&chip_info);
+  char revision[10] = { 0 };
+  if (chip_info.revision) {
+    snprintf_P(revision, sizeof(revision), PSTR(" rev.%d"), chip_info.revision);
+  }
+  result += revision;                    // ESP32-C3 rev.3
+
+  return result;
 }
 
 /*

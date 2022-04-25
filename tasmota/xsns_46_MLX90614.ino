@@ -55,14 +55,14 @@ void MLX90614_Every_Second(void)
     if (mlx90614.value & 0x8000) {
       mlx90614.obj_temp = -999;
     } else {
-      mlx90614.obj_temp = ((float)mlx90614.value * 0.02) - 273.15;
+      mlx90614.obj_temp = ((float)mlx90614.value * 0.02f) - 273.15f;
     }
     //mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT,MLX90614_TA);
     mlx90614.value = MLX90614_read16(I2_ADR_IRT, MLX90614_TA);
     if (mlx90614.value & 0x8000) {
       mlx90614.amb_temp = -999;
     } else {
-      mlx90614.amb_temp = ((float)mlx90614.value * 0.02) - 273.15;
+      mlx90614.amb_temp = ((float)mlx90614.value * 0.02f) - 273.15f;
     }
 }
 

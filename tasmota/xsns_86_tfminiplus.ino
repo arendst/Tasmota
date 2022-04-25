@@ -115,27 +115,27 @@ void TfmpTrigger(void)
     }
 }
 
-void TfmpProcessData(void)
-{
-    uint16_t crc = 0;
-    // distance to object (default in cm)
-    tfminiplus_sensor.distance = (Tfmp_buffer[3] << 8) + Tfmp_buffer[2];
-    // signal strength (between 100 and 65535 fine, otherwise 0 due to out of range of non-reflective surface)
-    tfminiplus_sensor.sigstrength = (Tfmp_buffer[5] << 8) + Tfmp_buffer[4];
-    // chip temperature
-    tfminiplus_sensor.chiptemp = (((Tfmp_buffer[7] << 8) + Tfmp_buffer[6]) >> 3) - 256;
+void TfmpProcessData(void) {
     // check crc sum
-    for (int i = 0; i < TFMP_MAX_DATA_LEN - 1; ++i)
-    {
+    uint16_t crc = 0;
+    for (int i = 0; i < TFMP_MAX_DATA_LEN - 1; ++i) {
         crc += (uint16_t)Tfmp_buffer[i];
     }
-    if (!(char)(crc & 0xff) != Tfmp_buffer[TFMP_MAX_DATA_LEN])
-    {
+
+    if ((char)(crc & 0xff) == Tfmp_buffer[TFMP_MAX_DATA_LEN-1]) {
+        // distance to object (default in cm)
+        tfminiplus_sensor.distance = (Tfmp_buffer[3] << 8) + Tfmp_buffer[2];
+        // signal strength (between 100 and 65535 fine, otherwise 0 due to out of range of non-reflective surface)
+        tfminiplus_sensor.sigstrength = (Tfmp_buffer[5] << 8) + Tfmp_buffer[4];
+        // chip temperature
+        tfminiplus_sensor.chiptemp = (((Tfmp_buffer[7] << 8) + Tfmp_buffer[6]) >> 3) - 256;
+
+        DEBUG_SENSOR_LOG(PSTR("TFmini Plus: Distance: %d"), tfminiplus_sensor.distance);
+        DEBUG_SENSOR_LOG(PSTR("TFmini Plus: Signal: %d"), tfminiplus_sensor.sigstrength);
+        DEBUG_SENSOR_LOG(PSTR("TFmini Plus: Chip Temp: %d"), tfminiplus_sensor.chiptemp);
+    } else {
         DEBUG_SENSOR_LOG(PSTR("TFmini Plus: crc error"));
     }
-    DEBUG_SENSOR_LOG(PSTR("TFmini Plus: Distance: %d"), tfminiplus_sensor.distance);
-    DEBUG_SENSOR_LOG(PSTR("TFmini Plus: Signal: %d"), tfminiplus_sensor.sigstrength);
-    DEBUG_SENSOR_LOG(PSTR("TFmini Plus: Chip Temp: %d"), tfminiplus_sensor.chiptemp);
     TfmpSerial->flush();
 }
 
@@ -162,10 +162,14 @@ bool TfmpAddData(char nextChar)
     // Buffer position
     static uint8_t currentIndex = 0;
     // Store data into buffer at position
+    if ((currentIndex >0) && (0x59 == Tfmp_buffer[currentIndex-1]) && (0x59 == nextChar))
+    {
+        currentIndex = 1;
+    }
     Tfmp_buffer[currentIndex] = nextChar;
     currentIndex++;
     // Check for too many data
-    if (currentIndex >= TFMP_MAX_DATA_LEN)
+    if (currentIndex > TFMP_MAX_DATA_LEN)
     {
         // Terminate buffer and reset position
         Tfmp_buffer[TFMP_MAX_DATA_LEN] = '\0';

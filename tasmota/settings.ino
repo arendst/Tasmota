@@ -47,6 +47,7 @@ void RtcSettingsSave(void) {
       for (uint32_t i = 0; i < 3; i++) {
         RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
         RtcSettings.energy_kWhtotal_ph[i] = Settings->energy_kWhtotal_ph[i];
+        RtcSettings.energy_kWhexport_ph[i] = Settings->energy_kWhexport_ph[i];
       }
       RtcSettings.energy_usage = Settings->energy_usage;
       for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
@@ -627,7 +628,7 @@ void SettingsSave(uint8_t rotate) {
     Settings->cfg_size = sizeof(TSettings);
     Settings->cfg_crc = GetSettingsCrc();               // Keep for backward compatibility in case of fall-back just after upgrade
     Settings->cfg_crc32 = GetSettingsCrc32();
-#ifdef USE_COUNTER    
+#ifdef USE_COUNTER
     CounterInterruptDisable(true);
 #endif
 #ifdef ESP8266
@@ -655,7 +656,7 @@ void SettingsSave(uint8_t rotate) {
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
-#ifdef USE_COUNTER  
+#ifdef USE_COUNTER
   CounterInterruptDisable(false);
 #endif
 }
@@ -941,6 +942,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
   Settings->sbflag1.range_extender = WIFI_RGX_STATE;
   Settings->sbflag1.range_extender_napt = WIFI_RGX_NAPT;
+  flag5.wifi_no_sleep |= WIFI_NO_SLEEP;
 
   // Syslog
   SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
@@ -1208,6 +1210,7 @@ void SettingsDefaultSet2(void) {
   // Tuya
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
   flag5.tuya_allow_dimmer_0 |= TUYA_ALLOW_DIMMER_0;
+  flag5.tuya_exclude_from_mqtt |= TUYA_SETOPTION_137;
   flag3.tuya_serial_mqtt_publish |= MQTT_TUYA_RECEIVED;
   mbflag2.temperature_set_res |= TUYA_TEMP_SET_RES;
 
@@ -1224,6 +1227,9 @@ void SettingsDefaultSet2(void) {
   flag5.shift595_invert_outputs |= SHIFT595_INVERT_OUTPUTS;
   Settings->shift595_device_count = SHIFT595_DEVICE_COUNT;
   flag5.tls_use_fingerprint |= MQTT_TLS_FINGERPRINT;
+  #ifdef BLE_ESP32_ENABLE
+  flag5.mi32_enable |= BLE_ESP32_ENABLE;
+  #endif
 
   Settings->flag = flag;
   Settings->flag2 = flag2;
@@ -1488,11 +1494,11 @@ void SettingsDelta(void) {
       Settings->flag5.disable_referer_chk |= true;
 #endif
     }
-    if (Settings->version < 0x09050009) {
+    if (Settings->version < 0x09050009) {  // 9.5.0.9
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
     }
-    if (Settings->version < 0x0A000003) {
+    if (Settings->version < 0x0A000003) {  // 10.0.0.3
       if (0 == Settings->param[P_ARP_GRATUITOUS]) {
         Settings->param[P_ARP_GRATUITOUS] = WIFI_ARP_INTERVAL;
 #ifdef USE_TLS
@@ -1505,15 +1511,26 @@ void SettingsDelta(void) {
 #endif
       }
     }
-    if (Settings->version < 0x0A010003) {
+    if (Settings->version < 0x0A010003) {  // 10.1.0.3
       Settings->sserial_config = Settings->serial_config;
     }
-    if (Settings->version < 0x0A010006) {
+    if (Settings->version < 0x0A010006) {  // 10.1.0.6
       Settings->web_time_start = 0;
       Settings->web_time_end = 0;
     }
     if (Settings->version < 0x0B000003) {  // 11.0.0.3
        memcpy(Settings->pulse_timer, Settings->ex_pulse_timer, 16);
+    }
+    if (Settings->version < 0x0B000006) {  // 11.0.0.6
+        Settings->weight_absconv_a = 0;
+        Settings->weight_absconv_b = 0;
+    }
+    if (Settings->version < 0x0B000007) {  // 11.0.0.7
+        Settings->weight_user_tare = 0;
+        Settings->weight_offset = 0;
+#ifdef USE_HX711
+        Settings->weight_offset = Settings->energy_frequency_calibration * Settings->weight_calibration;
+#endif
     }
 
     Settings->version = VERSION;

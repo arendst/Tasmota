@@ -370,12 +370,12 @@ void MCP2515_Show(bool Json) {
       if (bms.setFields & BMS_CHARGE_VOLT_MAX) {
         char voltStr[6];
         dtostrf((float(bms.chargeVoltLimit) / 10), 5, 1, voltStr);
-        WSContentSend_PD(PSTR("{s}%s Max Voltage{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, voltStr);
+        WSContentSend_PD(PSTR("{s}%s Max Voltage{m}%s " D_UNIT_VOLT "{e}"), bms.manuf, voltStr);
       }
       if (bms.setFields & BMS_CHARGE_VOLT_MIN) {
         char voltStr[6];
         dtostrf((float(bms.dischargeVolt) / 10), 5, 1, voltStr);
-        WSContentSend_PD(PSTR("{s}%s Min Voltage{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, voltStr);
+        WSContentSend_PD(PSTR("{s}%s Min Voltage{m}%s " D_UNIT_VOLT "{e}"), bms.manuf, voltStr);
       }
       if (bms.setFields & BMS_CHARGE_AMP_MAX) {
         char ampStr[6];

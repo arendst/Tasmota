@@ -61,16 +61,16 @@
 // Constants:
 
 #define HDC1080_CONV_TIME   15      // Assume 6.50 + 6.35 ms + x of conversion delay for this device
-#define HDC1080_TEMP_MULT   0.0025177
-#define HDC1080_RH_MULT     0.0015258
-#define HDC1080_TEMP_OFFSET 40.0
+#define HDC1080_TEMP_MULT   0.0025177f
+#define HDC1080_RH_MULT     0.0015258f
+#define HDC1080_TEMP_OFFSET 40.0f
 
 const char* hdc_type_name = "HDC1080";
 uint16_t hdc_manufacturer_id = 0;
 uint16_t hdc_device_id = 0;
 
-float hdc_temperature = 0.0;
-float hdc_humidity = 0.0;
+float hdc_temperature = 0.0f;
+float hdc_humidity = 0.0f;
 
 uint8_t hdc_valid = 0;
 
@@ -221,8 +221,8 @@ bool HdcRead(void) {
 
   hdc_humidity = HDC1080_RH_MULT * (float) (rh_data);
 
-  if (hdc_humidity > 100) { hdc_humidity = 100.0; }
-  if (hdc_humidity < 0) { hdc_humidity = 0.01; }
+  if (hdc_humidity > 100) { hdc_humidity = 100.0f; }
+  if (hdc_humidity < 0) { hdc_humidity = 0.01f; }
   hdc_humidity = ConvertHumidity(hdc_humidity);
 
   hdc_valid = SENSOR_MAX_MISS;

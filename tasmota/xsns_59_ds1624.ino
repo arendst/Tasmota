@@ -127,7 +127,7 @@ bool DS1624GetTemp(float *value, int idx)
   uint16_t t;
   if (!I2cValidRead16(&t, DS1624_Idx2Addr(idx), DS1624_TEMP_REGISTER)) { return false; }
   if (ds1624_sns[idx].type == DS1624_TYPE_DS1624) {
-    *value = ((float)(int8_t)(t>>8)) + ((t>>4)&0xf)*0.0625;
+    *value = ((float)(int8_t)(t>>8)) + ((t>>4)&0xf)*0.0625f;
   } else { //type == DS1624_TYPE_DS1621
     // Datasheet for ds1621 is wrong for high resolution, real is:
     *value = ((float)(int8_t)(t>>8));

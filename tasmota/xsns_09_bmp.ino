@@ -167,7 +167,7 @@ void Bmp180Read(uint8_t bmp_idx)
   int32_t xt1 = (ut - (int32_t)bmp180_cal_data[bmp_idx].cal_ac6) * ((int32_t)bmp180_cal_data[bmp_idx].cal_ac5) >> 15;
   int32_t xt2 = ((int32_t)bmp180_cal_data[bmp_idx].cal_mc << 11) / (xt1 + (int32_t)bmp180_cal_data[bmp_idx].cal_md);
   int32_t bmp180_b5 = xt1 + xt2;
-  bmp_sensors[bmp_idx].bmp_temperature = ((bmp180_b5 + 8) >> 4) / 10.0;
+  bmp_sensors[bmp_idx].bmp_temperature = ((bmp180_b5 + 8) >> 4) / 10.0f;
 
   I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP180_REG_CONTROL, BMP180_PRESSURE3); // Highest resolution
   delay(2 + (4 << BMP180_OSS));                                 // 26ms conversion time at ultra high resolution
@@ -197,7 +197,7 @@ void Bmp180Read(uint8_t bmp_idx)
   x1 = (x1 * 3038) >> 16;
   x2 = (-7357 * p) >> 16;
   p += ((x1 + x2 + (int32_t)3791) >> 4);
-  bmp_sensors[bmp_idx].bmp_pressure = (float)p / 100.0;  // convert to mbar
+  bmp_sensors[bmp_idx].bmp_pressure = (float)p / 100.0f;  // convert to mbar
 }
 
 /*********************************************************************************************\
@@ -307,7 +307,7 @@ void Bme280Read(uint8_t bmp_idx)
     ((int32_t)Bme280CalibrationData[bmp_idx].dig_T3)) >> 14;
   int32_t t_fine = vart1 + vart2;
   float T = (t_fine * 5 + 128) >> 8;
-  bmp_sensors[bmp_idx].bmp_temperature = T / 100.0;
+  bmp_sensors[bmp_idx].bmp_temperature = T / 100.0f;
 
   int32_t adc_P = I2cRead24(bmp_sensors[bmp_idx].bmp_address, BME280_REGISTER_PRESSUREDATA);
   adc_P >>= 4;
@@ -326,7 +326,7 @@ void Bme280Read(uint8_t bmp_idx)
   var1 = (((int64_t)Bme280CalibrationData[bmp_idx].dig_P9) * (p >> 13) * (p >> 13)) >> 25;
   var2 = (((int64_t)Bme280CalibrationData[bmp_idx].dig_P8) * p) >> 19;
   p = ((p + var1 + var2) >> 8) + (((int64_t)Bme280CalibrationData[bmp_idx].dig_P7) << 4);
-  bmp_sensors[bmp_idx].bmp_pressure = (float)p / 25600.0;
+  bmp_sensors[bmp_idx].bmp_pressure = (float)p / 25600.0f;
 
   if (BMP280_CHIPID == bmp_sensors[bmp_idx].bmp_type) { return; }
 
@@ -343,7 +343,7 @@ void Bme280Read(uint8_t bmp_idx)
   v_x1_u32r = (v_x1_u32r < 0) ? 0 : v_x1_u32r;
   v_x1_u32r = (v_x1_u32r > 419430400) ? 419430400 : v_x1_u32r;
   float h = (v_x1_u32r >> 12);
-  bmp_sensors[bmp_idx].bmp_humidity = h / 1024.0;
+  bmp_sensors[bmp_idx].bmp_humidity = h / 1024.0f;
 }
 
 #ifdef USE_BME68X
@@ -444,16 +444,16 @@ void Bme680Read(uint8_t bmp_idx)
       if (rslt != BME68X_OK) { return; }
 
 #ifdef BME68X_DO_NOT_USE_FPU
-      bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0;  // Temperature in degree celsius x100
-      bmp_sensors[bmp_idx].bmp_humidity = data.humidity / 1000.0;       // Humidity in % relative humidity x1000
+      bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0f;  // Temperature in degree celsius x100
+      bmp_sensors[bmp_idx].bmp_humidity = data.humidity / 1000.0f;       // Humidity in % relative humidity x1000
 #else
       bmp_sensors[bmp_idx].bmp_temperature = data.temperature;          // Temperature in degree celsius
       bmp_sensors[bmp_idx].bmp_humidity = data.humidity;                // Humidity in % relative humidity
 #endif
-      bmp_sensors[bmp_idx].bmp_pressure = data.pressure / 100.0;        // Pressure in Pascal (converted to hPa)
+      bmp_sensors[bmp_idx].bmp_pressure = data.pressure / 100.0f;        // Pressure in Pascal (converted to hPa)
       // Avoid using measurements from an unstable heating setup
       if (data.status & BME68X_GASM_VALID_MSK) {
-        bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0;  // Gas resistance in Ohms (converted to kOhm)
+        bmp_sensors[bmp_idx].bmp_gas_resistance = data.gas_resistance / 1000.0f;  // Gas resistance in Ohms (converted to kOhm)
       } else {
         bmp_sensors[bmp_idx].bmp_gas_resistance = 0;
       }

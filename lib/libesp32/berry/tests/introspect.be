@@ -26,3 +26,8 @@ assert(introspect.get(a, 'a') == nil)
 
 introspect.set(a, 'a', 3)
 assert(a.a == 3)
+
+#- load module dynamically -#
+import introspect
+m = introspect.module("math") # load module `math`, assign to `m` and don't create a global variable
+assert(type(m.pi) == 'real')
