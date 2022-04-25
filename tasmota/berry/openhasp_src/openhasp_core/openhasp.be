@@ -3,6 +3,8 @@
 # use `import openhasp` and set the JSONL definitions in `pages.jsonl`
 #
 # As an optimization `0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#` is replaced with `0`
+#
+# rm openhasp.tapp; zip -j -0 openhasp.tapp openhasp_core/*
 #################################################################################
 # How to solidify (needs an ESP32 with PSRAM)
 #-
@@ -268,7 +270,8 @@ class lvh_obj
     # self._lv_obj.add_event_cb(/ obj, event -> self.action_cb(obj, event), lv.EVENT_CLICKED, 0)
   end
   def get_action()
-    return self._action
+    var action = self._action
+    return action ? action : ""     # cannot be `nil` as it would mean no member
   end
 
   #====================================================================
@@ -305,7 +308,7 @@ class lvh_obj
     # print("-> CB fired","self",self,"obj",obj,"event",event.tomap(),"code",event.code)
     var oh = self._page._oh         # openhasp global object
     var code = event.code           # materialize to a local variable, otherwise the value can change (and don't capture event object)
-    if self.action != nil && code == lv.EVENT_CLICKED
+    if self.action != "" && code == lv.EVENT_CLICKED
       # if clicked and action is declared, do the page change event
       tasmota.set_timer(0, /-> oh.do_action(self, code))
     end
@@ -1397,11 +1400,11 @@ class OpenHASP
   #  Arg2: LVGL event fired
   #  Returns: nil
   #====================================================================
-  def do_action(lvh_obj, event_code)
+  def do_action(lvh_object, event_code)
     if event_code != lv.EVENT_CLICKED    return end
-    var action = lvh_obj._action
+    var action = lvh_object._action
     var cur_page = self.lvh_pages[self.lvh_page_cur_idx]
-    # print("do_action","lvh_obj",lvh_obj,"action",action,"cur_page",cur_page,self.lvh_page_cur_idx)
+    # print("do_action","lvh_object",lvh_object,"action",action,"cur_page",cur_page,self.lvh_page_cur_idx)
 
     # action can be `prev`, `next`, `back`, or `p<number>` like `p1`
     var to_page = nil
