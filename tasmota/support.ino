@@ -1898,14 +1898,17 @@ void SetSerialBegin(void) {
   SetSerialSwap();
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef ARDUINO_USB_CDC_ON_BOOT
+//  Serial.end();
+//  Serial.begin();
+  // Above sequence ends in "Exception":5,"Reason":"Load access fault"
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "HWCDC supports 115200 bit/s only"));
+#else
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
   Serial.end();
   delay(10);  // Allow time to cleanup queues - if not used hangs ESP32
-#ifdef ARDUINO_USB_CDC_ON_BOOT
-  Serial.begin(TasmotaGlobal.baudrate);
-#else
   Serial.begin(TasmotaGlobal.baudrate, ConvertSerialConfig(Settings->serial_config));
-#endif  // ARDUINO_USB_CDC_ON_BOOT
+#endif  // Not ARDUINO_USB_CDC_ON_BOOT
 #endif  // ESP32
 }
 
