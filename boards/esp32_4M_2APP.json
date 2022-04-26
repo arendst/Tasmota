@@ -31,7 +31,7 @@
         "flash_extra_images": [
           [
             "0x2E0000",
-            "tasmota32-minicustom.bin"
+            "variants/tasmota/tasmota32-minicustom.bin"
           ]
         ]
       },
