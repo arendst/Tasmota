@@ -15,8 +15,6 @@ if env["PIOPLATFORM"] == "espressif32":
     if os.path.exists(safemode_dir):
 #        print("safemode.bin dir exists")
         if os.path.exists(variants_dir):
-            print("") # dummy print
 #            print("variants/tasmota exists")
-#            os.remove(variants_dir)  # todo PermissionError: [Errno 1] Operation not permitted:
-        else:
-            shutil.copytree(safemode_dir, variants_dir)
+            shutil.rmtree(variants_dir)
+        shutil.copytree(safemode_dir, variants_dir)
