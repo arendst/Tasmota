@@ -214,8 +214,10 @@ static void save_proto_table(bvm *vm, void *fp, bproto *proto)
 {
     bproto **p = proto->ptab, **end;
     save_long(fp, proto->nproto); /* proto count */
-    for (end = p + proto->nproto; p < end; ++p) {
-        save_proto(vm, fp, *p);
+    if (p) {
+        for (end = p + proto->nproto; p < end; ++p) {
+            save_proto(vm, fp, *p);
+        }
     }
 }
 
@@ -223,9 +225,11 @@ static void save_upvals(void *fp, bproto *proto)
 {
     bupvaldesc *uv = proto->upvals, *end;
     save_byte(fp, proto->nupvals); /* upvals count */
-    for (end = uv + proto->nupvals; uv < end; ++uv) {
-        save_byte(fp, uv->instack);
-        save_byte(fp, uv->idx);
+    if (uv) {
+        for (end = uv + proto->nupvals; uv < end; ++uv) {
+            save_byte(fp, uv->instack);
+            save_byte(fp, uv->idx);
+        }
     }
 }
 
