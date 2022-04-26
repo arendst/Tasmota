@@ -12,6 +12,7 @@
 #include "be_map.h"
 #include "be_gc.h"
 #include "be_class.h"
+#include <string.h>
 
 #define global(vm)      ((vm)->gbldesc.global)
 #define builtin(vm)     ((vm)->gbldesc.builtin)
