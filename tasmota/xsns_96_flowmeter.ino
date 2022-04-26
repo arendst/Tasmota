@@ -105,30 +105,17 @@ void FlowMeterInit(void)
 void FlowMeterShow(bool json)
 {
   for (uint32_t i = 0; i < MAX_FLOWMETER; i++) {
-    float flowmeter_period_float = 0;
-    float flowmeter_rate_float = 0;
-    float flowmeter_period_avg_float = 0;
     float flowmeter_rate_avg_float = 0;
-    float flowmeter_factor = 1.0;
-    float flowmeter_unit_factor = Settings->SensorBits1.flowmeter_unit ? 500 : 8333;;
-
-    if (Settings->flowmeter_calibration[i]) {
-      flowmeter_factor = (float)Settings->flowmeter_calibration[i] / 1000;
-    }
 
     if (flowmeter_period[i]) {
-      flowmeter_period_float = (float)flowmeter_period[i] / 1000;
-      flowmeter_period_avg_float = flowmeter_period_avg[i] / 1000;
-
-      flowmeter_rate_float = flowmeter_unit_factor / (float)flowmeter_period[i] * (flowmeter_factor * 1000);
-      flowmeter_rate_avg_float = flowmeter_unit_factor / flowmeter_period_avg[i] * (flowmeter_factor * 1000);
+      flowmeter_rate_avg_float =
+        ((Settings->SensorBits1.flowmeter_unit ? (1000000.0 / 1000.0) : (1000000 / 60.0)) / 2.0) / flowmeter_period_avg[i] * (Settings->flowmeter_calibration[i] ? (float)Settings->flowmeter_calibration[i] : 1000.0);
     }
 
     if (PinUsed(GPIO_FLOWMETER_IN, i)) {
       if (json) {
-        ResponseAppend_P(PSTR(",\"" D_FLOWMETER_NAME "-%d\":{\"" D_JSON_PERIOD "\":%*_f,\"" D_JSON_FLOWRATE "\":%*_f}"),
+        ResponseAppend_P(PSTR(",\"" D_FLOWMETER_NAME "-%d\":{\"" D_JSON_FLOWRATE "\":%*_f}"),
           i+1,
-          Settings->flag2.frequency_resolution, &flowmeter_period_float,
           Settings->flag2.frequency_resolution, &flowmeter_rate_avg_float
         );
 #ifdef USE_WEBSERVER
@@ -141,11 +128,11 @@ void FlowMeterShow(bool json)
 #endif  // USE_WEBSERVER
       }
     }
-    if (json) {
-      ResponseAppend_P(PSTR(",\"" D_JSON_FLOW_UNIT "\":\"%s\""),
-        Settings->SensorBits1.flowmeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
-      );
-    }
+  }
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_FLOW_UNIT "\":\"%s\""),
+      Settings->SensorBits1.flowmeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
+    );
   }
 }
 
