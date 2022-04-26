@@ -532,8 +532,8 @@ class Partition_manager_UI
       webserver.content_send(string.format("<p><b>Used: </b>%i KB</p>", used / 1024))
       webserver.content_send(string.format("<p><b>Free: </b>%i KB</p>", (slot.size - used) / 1024))
     else
-      webserver.content_send("<p><b>Used</b>: unknwon</p>")
-      webserver.content_send("<p><b>Free</b>: unknwon</p>")
+      webserver.content_send("<p><b>Used</b>: unknown</p>")
+      webserver.content_send("<p><b>Free</b>: unknown</p>")
     end
     if !active && used > 0
       webserver.content_send("<p><form id=setactive style='display: block;' action='/part_mgr' method='post' ")

@@ -39,6 +39,7 @@ end
 run_watch()
 
 def p5_in()
+    import global
 	global.p0b101.bg_opa = 0
 	global.p0b102.bg_opa = 0
 	global.p0b103.bg_opa = 0
@@ -46,6 +47,7 @@ def p5_in()
 end
 
 def p5_out()
+    import global
 	global.p0b101.bg_opa = 255
 	global.p0b102.bg_opa = 255
 	global.p0b103.bg_opa = 255

@@ -73,6 +73,8 @@ class AXP192_M5Stack_Core2 : AXP192
 
       # bus power mode_output
       self.set_buf_power_mode(false)
+
+      tasmota.add_driver(self)
     end
   end
 
@@ -132,5 +134,4 @@ class AXP192_M5Stack_Core2 : AXP192
 
 end
 
-axp = AXP192_M5Stack_Core2()
-tasmota.add_driver(axp)
+return AXP192_M5Stack_Core2()
