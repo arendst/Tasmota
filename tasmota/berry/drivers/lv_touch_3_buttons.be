@@ -24,6 +24,10 @@ class lv_touch_3_buttons
   # Pre-condition:
   #   LVGL must be already started
   def init(btn1, btn2, btn3, active_low)
+    import global
+    if !global.contains("lv") return end    # abort if LVGL is not there
+    lv.start()    # make sure LVGL is started, or things can go really wrong
+
     # set current values
     self.x = 0
     self.y = 0
@@ -44,6 +48,9 @@ class lv_touch_3_buttons
     var vres = lv.get_ver_res()       # should be 240
     self.x_coords = [ hres / 6, hres / 2, hres * 5 / 6]
     self.y_coords = [ vres - 10, vres - 10, vres - 10]
+
+    # add self to drivers
+    tasmota.add_driver(self)
   end
 
   # scan every 50ms
@@ -78,7 +85,7 @@ class lv_touch_3_buttons
   end
 end
 
-return lv_touch_3_buttons
+return lv_touch_3_buttons(gpio.pin(gpio.INPUT, 0), gpio.pin(gpio.INPUT, 1), gpio.pin(gpio.INPUT, 2), true)
 
 #-
 lv_btn3 = lv_touch_3_buttons(gpio.pin(gpio.INPUT, 0), gpio.pin(gpio.INPUT, 1), gpio.pin(gpio.INPUT, 2), lv_touch_3_buttons.ACTIVE_LOW)

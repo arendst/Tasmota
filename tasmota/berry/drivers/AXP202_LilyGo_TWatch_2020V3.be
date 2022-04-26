@@ -40,6 +40,8 @@ class AXP202_LilyGo_TWatch_2020V3 : AXP202
       # // No use
       # power->setPowerOutPut(AXP202_LDO3, false);
       self.set_ldo_enable(3, false)
+
+      tasmota.add_driver(self)
     end
   end
   
@@ -66,5 +68,4 @@ class AXP202_LilyGo_TWatch_2020V3 : AXP202
   end
 end
 
-axp202 = AXP202_LilyGo_TWatch_2020V3()
-tasmota.add_driver(axp202)
+return AXP202_LilyGo_TWatch_2020V3()
