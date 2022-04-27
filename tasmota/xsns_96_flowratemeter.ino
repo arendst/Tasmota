@@ -22,15 +22,11 @@
 
 #ifdef USE_FLOWRATEMETER
 
-// The Arduino standard GPIO routines are not enough,
-// must use some from the Espressif SDK as well
-// extern "C" {
-// #include "gpio.h"
-// }
-
 #define XSNS_96                       96
 
-#define FLOWRATEMETER_WEIGHT_AVG_SAMPLE   20  // samples
+
+
+#define FLOWRATEMETER_WEIGHT_AVG_SAMPLE   20  // number of samples for smooth weigted average
 #define FLOWRATEMETER_MIN_FREQ             1  // Hz
 
 #define D_JSON_FLOWRATEMETER_RATE         "Rate"
@@ -38,6 +34,8 @@
 #define D_JSON_FLOWRATEMETER_UNIT         "Unit"
 #define D_JSON_FLOWRATEMETER_VALUE_AVG    "average"
 #define D_JSON_FLOWRATEMETER_VALUE_RAW    "raw"
+
+
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_FLOWRATEMETER[] PROGMEM =
@@ -54,7 +52,9 @@ volatile uint32_t flowratemeter_last_irq[MAX_FLOWRATEMETER] = {0};
 bool flowratemeter_valuesread = false;
 bool flowratemeter_raw_value = false;
 
-void IRAM_ATTR FlowMeterIR(uint16_t irq)
+
+
+void IRAM_ATTR FlowRateMeterIR(uint16_t irq)
 {
   uint32_t time = micros();
 #if defined(ESP8266)
@@ -72,16 +72,16 @@ void IRAM_ATTR FlowMeterIR(uint16_t irq)
   }
 }
 // GPIO_STATUS is always 0 (?), so can only determine the IR source using this way
-void IRAM_ATTR FlowMeter1IR(void)
+void IRAM_ATTR FlowRateMeter1IR(void)
 {
-  FlowMeterIR(0);
+  FlowRateMeterIR(0);
 }
-void IRAM_ATTR FlowMeter2IR(void)
+void IRAM_ATTR FlowRateMeter2IR(void)
 {
-  FlowMeterIR(1);
+  FlowRateMeterIR(1);
 }
 
-void FlowMeterRead(void)
+void FlowRateMeterRead(void)
 {
   for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
     if ((micros() - flowratemeter_last_irq[i]) >= (1000000 / FLOWRATEMETER_MIN_FREQ)) {
@@ -98,9 +98,9 @@ void FlowMeterRead(void)
   }
 }
 
-void FlowMeterInit(void)
+void FlowRateMeterInit(void)
 {
-  void (* irq_service[MAX_FLOWRATEMETER])(void)= {FlowMeter1IR, FlowMeter2IR};
+  void (* irq_service[MAX_FLOWRATEMETER])(void)= {FlowRateMeter1IR, FlowRateMeter2IR};
 
   flowratemeter_valuesread = false;
   for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
@@ -109,7 +109,7 @@ void FlowMeterInit(void)
   }
 }
 
-void FlowMeterShow(bool json)
+void FlowRateMeterShow(bool json)
 {
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_FLOWRATEMETER_NAME "\":{\"" D_JSON_FLOWRATEMETER_RATE "\":["));
@@ -140,7 +140,6 @@ void FlowMeterShow(bool json)
           Settings->SensorBits1.flowratemeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
         );
 #endif  // USE_WEBSERVER
-
       }
     }
   }
@@ -153,8 +152,6 @@ void FlowMeterShow(bool json)
     );
   }
 }
-
-
 
 /*********************************************************************************************\
  * Supported commands for Sensor96:
@@ -179,8 +176,7 @@ void FlowMeterShow(bool json)
  * new <correction-factor> = M / (c * D) = 83.42 / (1 * 254.39) = 0.328
  * Cmd: Sensor96 x 328
 \*********************************************************************************************/
-
-bool FlowMeterCommand(void) {
+bool FlowRateMeterCommand(void) {
   bool show_parms = true;
   char argument[XdrvMailbox.data_len];
 
@@ -246,25 +242,24 @@ bool Xsns96(uint8_t function)
   if (PinUsed(GPIO_FLOWRATEMETER_IN, GPIO_ANY)) {
     switch (function) {
       case FUNC_INIT:
-        FlowMeterInit();
+        FlowRateMeterInit();
         break;
       case FUNC_EVERY_250_MSECOND:
-        FlowMeterRead();
+        FlowRateMeterRead();
         break;
       case FUNC_COMMAND_SENSOR:
         if (XSNS_96 == XdrvMailbox.index) {
-          result = FlowMeterCommand();
+          result = FlowRateMeterCommand();
         }
         break;
       case FUNC_JSON_APPEND:
-        FlowMeterShow(true);
+        FlowRateMeterShow(true);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        FlowMeterShow(false);
+        FlowRateMeterShow(false);
         break;
 #endif  // USE_WEBSERVER
-
     }
   }
   return result;
