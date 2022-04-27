@@ -95,7 +95,7 @@ be_define_const_str(BRY_X3A_X20argument_X20must_X20be_X20a_X20function, "BRY: ar
 be_define_const_str(BRY_X3A_X20bytecode_X20has_X20wrong_X20version_X20_X27_X25s_X27_X20_X28_X25i_X29, "BRY: bytecode has wrong version '%s' (%i)", 2140321415u, 0, 41, &be_const_str_clock);
 be_define_const_str(BRY_X3A_X20corrupt_X20bytecode_X20_X27_X25s_X27, "BRY: corrupt bytecode '%s'", 4009923544u, 0, 26, &be_const_str_codedump);
 be_define_const_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s_X20_X28_X25s_X29, "BRY: could not save compiled file %s (%s)", 736659787u, 0, 41, &be_const_str_clock_icon);
-be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X29, "BRY: failed to load '%s' (%s)", 54995609u, 0, 29, &be_const_str__rules);
+be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29, "BRY: failed to load '%s' (%s - %s)", 1047433014u, 0, 34, &be_const_str_couldn_X27t_X20not_X20initialize_X20noepixelbus);
 be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20_persist_X2Ejson, "BRY: failed to load _persist.json", 2991913445u, 0, 33, &be_const_str__global_def);
 be_define_const_str(BRY_X3A_X20failed_X20to_X20load_X20compiled_X20_X27_X25s_X27_X20_X28_X25s_X29, "BRY: failed to load compiled '%s' (%s)", 3488122666u, 0, 38, &be_const_str_connection_error);
 be_define_const_str(BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code_X20_X27_X25s_X27_X20_X2D_X20_X25s, "BRY: failed to run compiled code '%s' - %s", 380265962u, 0, 42, &be_const_str_gpio);
@@ -1109,8 +1109,8 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_coord_arr,
     (const bstring *)&be_const_str_CFG_X3A_X20multiple_X20autoconf_X20files_X20found_X2C_X20aborting_X20_X28_X27_X25s_X27_X20_X2B_X20_X27_X25s_X27_X29,
     (const bstring *)&be_const_str_line_dsc,
-    (const bstring *)&be_const_str_BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X29,
-    (const bstring *)&be_const_str_couldn_X27t_X20not_X20initialize_X20noepixelbus,
+    (const bstring *)&be_const_str__rules,
+    (const bstring *)&be_const_str_BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29,
     (const bstring *)&be_const_str__X3A,
     NULL,
     (const bstring *)&be_const_str_CFG_X3A_X20loading_X20_X27_X25s_X27,
