@@ -59,8 +59,27 @@
  * WcSaturation = Set picture Saturation -2 ... +2
  * WcBrightness = Set picture Brightness -2 ... +2
  * WcContrast   = Set picture Contrast -2 ... +2
- * WcInit       = Init Camera Interface
- * WcRtsp       = Control RTSP Server, 0=disable, 1=enable (forces restart) (if defined ENABLE_RTSPSERVER)
+ * WcSpecialEffekt = Set Special Picture Effect: 0 = off, 1 = , 2 = , 3 = , 4 = , 5 = , 6 = 
+ * WcAWB          = Auto White Balance, 0 = no, 1 = yes
+ * WcWBMode       = White Balance Mode, 0 = auto, 1 =
+ * WcAWBGain      = Auto White Balance Gain, 0 = no, 1 = yes
+ * WcAEC          = Auto exposure control (Sensor), 0 = no, 1 = yes
+ * WcAECDSP       = Auto exposure control (DSP), 0 = no, 1 = yes
+ * WcAECValue     = Auto exposure control value, 0 ... 1024
+ * WcAECLevel     = Auto exposure control level, -2 ... +2
+ * WcAGC          = Auto gain control, 0 = no, 1 = yes
+ * WcAGCGain      = Auto gain control gain, 0 .. 30
+ * WcGainCeiling  = Gain ceiling, 0 .. 6 (0 = x2, 1 = x4, 2 = x8, 3 = x16, 4 = x32, 5 = x64, 6 = x128)
+ * WcGammaCorrect = Auto Gamma Correct, 0 = no, 1 = yes
+ * WcLensCorrect  = Auto Lens Correct, 0 = no, 1 = yes
+ * WcWPC          = White Pixel Correct, 0 = no, 1 = yes
+ * WcDCW          = Downscale, 0 = no, 1 = yes
+ * WcBPC          = Black Pixel Correct, 0 = no, 1 = yes
+ * WcColorbar     = Show Colorbar, 0 = no, 1 = yes
+ * WcFeature      = Set extended Feature, 0 = off, 1 = reduce FPS, 2 = Nightmode
+ * WcStats        = Show Statistics
+ * WcInit         = Init Camera Interface
+ * WcRtsp         = Control RTSP Server, 0=disable, 1=enable (forces restart) (if defined ENABLE_RTSPSERVER)
  *
  * Only boards with PSRAM should be used. To enable PSRAM board should be se set to esp32cam in common32 of platform_override.ini
  * board                   = esp32cam
@@ -207,36 +226,37 @@ bool WcPinUsed(void) {
   return pin_used;
 }
 
-void WcStreamSpeed(int32_t value) {
-  sensor_t *wc_s = esp_camera_sensor_get();
+void WcFeature(int32_t value) {
+  sensor_t * wc_s = esp_camera_sensor_get();
   if (!wc_s) { return; }
 
-  if (value) {
-    // CLKRC: Set Clock Divider to fullspeed
-    wc_s->set_reg(wc_s, 0x111, 0x3f, 0x00);
-  } else {
-    // CLKRC: Set Clock Divider to 2
-    wc_s->set_reg(wc_s, 0x111, 0x3f, 0x02);
+  if (value != 1) {
+      // CLKRC: Set Clock Divider to 0 = fullspeed
+      wc_s->set_reg(wc_s, 0x111, 0x3f, 0x00);
+      vTaskDelay(200 / portTICK_PERIOD_MS);
+  }
+  if (value != 2) {
+      // Stop Nightmode
+      wc_s->set_reg(wc_s, 0x103, 0xff, 0x0a);   // COM1: Reset dummy frames
+      wc_s->set_reg(wc_s, 0x10f, 0xff, 0x43);   // Reserved Reg
+      wc_s->set_reg(wc_s, 0x10f, 0xff, 0x4b);   // Reserved Reg
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      wc_s->set_reg(wc_s, 0x10f, 0xff, 0x43);   // Reserved Reg
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Streamspeed: %d"), value);
-}
-
-void WcNightMode(int32_t value) {
-  sensor_t *wc_s = esp_camera_sensor_get();
-  if (!wc_s) { return; }
-
-  if (value) {
-    wc_s->set_reg(wc_s, 0x10f, 0xff, 0x4b);   // Reserved Reg
-    wc_s->set_reg(wc_s, 0x103, 0xff, 0xcf);   // COM1: Allow 7 dummy frames
-  } else {
-    wc_s->set_reg(wc_s, 0x103, 0xff, 0x0a);   // COM1: Reset dummy frames
-    wc_s->set_reg(wc_s, 0x10f, 0xff, 0x43);   // Reserved Reg
-    wc_s->set_reg(wc_s, 0x10f, 0xff, 0x4b);   // Reserved Reg
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    wc_s->set_reg(wc_s, 0x10f, 0xff, 0x43);   // Reserved Reg
+  switch(value) {
+    case 1:
+      // Reduce FPS
+      // CLKRC: Set Clock Divider to 2
+      wc_s->set_reg(wc_s, 0x111, 0x3f, 0x02);
+      break;
+    case 2:
+      // Start Nightmode
+      wc_s->set_reg(wc_s, 0x10f, 0xff, 0x4b);   // Reserved Reg
+      wc_s->set_reg(wc_s, 0x103, 0xff, 0xcf);   // COM1: Allow 7 dummy frames
+      break;
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Nightmode: %d"), value);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Feature: %d"), value);
 }
 
 void WcApplySettings() {
@@ -270,9 +290,8 @@ void WcApplySettings() {
   wc_s->set_wpc(wc_s, Settings->webcam_config.wpc);
   wc_s->set_dcw(wc_s, Settings->webcam_config.dcw);
   wc_s->set_bpc(wc_s, Settings->webcam_config.bpc);
-  
-  WcStreamSpeed(Settings->webcam_config.streamspeed);
-  WcNightMode(Settings->webcam_config.nightmode);
+
+  WcFeature(Settings->webcam_config.feature); 
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Settings updated"));
 }
@@ -294,23 +313,22 @@ void WcSetDefaults(uint32_t upgrade) {
   Settings->webcam_config2.wb_mode = 0;   // white balance mode
   Settings->webcam_config.awb_gain = 1;   // white blance gain
 
-  Settings->webcam_config.aec = 1;
-  Settings->webcam_config.aec2 = 1;
-  Settings->webcam_config2.ae_level = 2;    // = 0
-  Settings->webcam_config2.aec_value = 204;
+  Settings->webcam_config.aec = 1;          // autoexposure (sensor)
+  Settings->webcam_config.aec2 = 1;         // autoexposure (dsp)
+  Settings->webcam_config2.ae_level = 2;    // autoexposure level (-2 - +2, default 0)
+  Settings->webcam_config2.aec_value = 204; // manual exposure value
 
-  Settings->webcam_config.agc = 1;
-  Settings->webcam_config2.agc_gain = 5;
-  Settings->webcam_config2.gainceiling = 0;
+  Settings->webcam_config.agc = 1;          // auto gain control
+  Settings->webcam_config2.agc_gain = 5;    // manual gain control
+  Settings->webcam_config2.gainceiling = 0; // auto gain ceiling
 
-  Settings->webcam_config.raw_gma = 1;
-  Settings->webcam_config.lenc = 1;   // lens correction
-  Settings->webcam_config.wpc = 1;    // white pixel correct
-  Settings->webcam_config.dcw = 1;    // downsize en
-  Settings->webcam_config.bpc = 0;    // black pixel correct?
+  Settings->webcam_config.raw_gma = 1;      // gamma correct
+  Settings->webcam_config.lenc = 1;         // lens correction
+  Settings->webcam_config.wpc = 1;          // white pixel correct
+  Settings->webcam_config.dcw = 1;          // downsize en
+  Settings->webcam_config.bpc = 0;          // black pixel correct?
 
-  Settings->webcam_config.streamspeed = 1;
-  Settings->webcam_config.nightmode = 0;
+  Settings->webcam_config.feature = 0;
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Defaults set"));
 
@@ -555,10 +573,7 @@ int32_t WcSetOptions(uint32_t sel, int32_t value) {
       res = s->status.colorbar;
       break;
     case 23:
-      if (value >= 0) { WcStreamSpeed(value); }
-      break;
-    case 24:
-      if (value >= 0) { WcNightMode(value); }
+      if (value >= 0) { WcFeature(value); }
       break;
   }
 
@@ -1209,14 +1224,13 @@ void WcInit(void) {
 
 #define D_CMND_WC_COLORBAR "Colorbar"
 
-#define D_CMND_WC_STREAMSPEED "StreamSpeed"
-#define D_CMND_WC_NIGHTMODE "Nightmode"
+#define D_CMND_WC_FEATURE "Feature"
 
 #define D_CMND_WC_SETDEFAULTS "SetDefaults"
-#define D_CMND_WC_APPLYSETTINGS "ApplySettings"
 #define D_CMND_WC_STATS "Stats"
 
 #define D_CMND_WC_INIT "Init"
+#define D_CMND_WC_APPLYSETTINGS "ApplySettings"
 #define D_CMND_RTSP "Rtsp"
 
 const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
@@ -1225,9 +1239,9 @@ const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   D_CMND_WC_AWB "|" D_CMND_WC_WB_MODE "|" D_CMND_WC_AWB_GAIN "|" D_CMND_WC_AEC "|"
   D_CMND_WC_AEC_VALUE "|" D_CMND_WC_AE_LEVEL "|" D_CMND_WC_AEC2 "|" D_CMND_WC_AGC "|"
   D_CMND_WC_AGC_GAIN "|" D_CMND_WC_GAINCEILING "|" D_CMND_WC_RAW_GMA "|" D_CMND_WC_LENC "|"
-  D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|"
-  D_CMND_WC_STREAMSPEED "|" D_CMND_WC_NIGHTMODE "|"
-  D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_APPLYSETTINGS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT 
+  D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|" 
+  D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT
+  "|" D_CMND_WC_APPLYSETTINGS
 #ifdef ENABLE_RTSPSERVER
   "|" D_CMND_RTSP
 #endif // ENABLE_RTSPSERVER
@@ -1239,8 +1253,9 @@ void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcamAWB, &CmndWebcamWBMode, &CmndWebcamAWBGain, &CmndWebcamAEC, &CmndWebcamAECValue,
   &CmndWebcamAELevel, &CmndWebcamAEC2, &CmndWebcamAGC, &CmndWebcamAGCGain, &CmndWebcamGainCeiling,
   &CmndWebcamGammaCorrect, &CmndWebcamLensCorrect, &CmndWebcamWPC, &CmndWebcamDCW, &CmndWebcamBPC,
-  &CmndWebcamColorbar, &CmndWebcamStreamspeed, &CmndWebcamNightmode, 
-  &CmndWebcamSetDefaults, &CmndWebcamApplySettings, &CmndWebcamStats, &CmndWebcamInit
+  &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults, 
+  &CmndWebcamStats, &CmndWebcamInit
+  , &CmndWebcamApplySettings
 #ifdef ENABLE_RTSPSERVER
   , &CmndWebRtsp
 #endif // ENABLE_RTSPSERVER
@@ -1255,7 +1270,7 @@ void CmndWebcam(void) {
     D_CMND_WC_AE_LEVEL "\":%d,\"" D_CMND_WC_AEC2 "\":%d,\"" D_CMND_WC_AGC "\":%d,\""
     D_CMND_WC_AGC_GAIN "\":%d,\"" D_CMND_WC_GAINCEILING "\":%d,\"" D_CMND_WC_RAW_GMA "\":%d,\""
     D_CMND_WC_LENC "\":%d,\"" D_CMND_WC_WPC "\":%d,\"" D_CMND_WC_DCW "\":%d,\"" D_CMND_WC_BPC "\":%d,\""
-    D_CMND_WC_COLORBAR "\":%d,\"" D_CMND_WC_STREAMSPEED "\":%d,\"" D_CMND_WC_NIGHTMODE "\":%d"
+    D_CMND_WC_COLORBAR "\":%d,\"" D_CMND_WC_FEATURE "\":%d"
 #ifdef ENABLE_RTSPSERVER
   ",\"" D_CMND_RTSP "\":%d"
 #endif // ENABLE_RTSPSERVER
@@ -1268,7 +1283,7 @@ void CmndWebcam(void) {
     Settings->webcam_config2.ae_level -2, Settings->webcam_config.aec2, Settings->webcam_config.agc,
     Settings->webcam_config2.agc_gain, Settings->webcam_config2.gainceiling, Settings->webcam_config.raw_gma,
     Settings->webcam_config.lenc, Settings->webcam_config.wpc, Settings->webcam_config.dcw, Settings->webcam_config.bpc,
-    Settings->webcam_config.colorbar, Settings->webcam_config.streamspeed, Settings->webcam_config.nightmode
+    Settings->webcam_config.colorbar, Settings->webcam_config.feature
 #ifdef ENABLE_RTSPSERVER
   , Settings->webcam_config.rtsp
 #endif // ENABLE_RTSPSERVER
@@ -1467,20 +1482,12 @@ void CmndWebcamColorbar(void) {
   ResponseCmndStateText(Settings->webcam_config.colorbar);
 }
 
-void CmndWebcamStreamspeed(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings->webcam_config.streamspeed = XdrvMailbox.payload;
-    WcSetOptions(23, Settings->webcam_config.streamspeed);
+void CmndWebcamFeature(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+    Settings->webcam_config.feature = XdrvMailbox.payload;
+    WcSetOptions(23, Settings->webcam_config.feature);
   }
-  ResponseCmndStateText(Settings->webcam_config.streamspeed);
-}
-
-void CmndWebcamNightmode(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings->webcam_config.nightmode = XdrvMailbox.payload;
-    WcSetOptions(24, Settings->webcam_config.nightmode);
-  }
-  ResponseCmndStateText(Settings->webcam_config.nightmode);
+  ResponseCmndNumber(Settings->webcam_config.feature);
 }
 
 void CmndWebcamInit(void) {

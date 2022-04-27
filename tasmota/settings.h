@@ -322,8 +322,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t bpc : 1;
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
-    uint32_t streamspeed : 1;
-    uint32_t nightmode : 1;
+    uint32_t feature : 2;
     uint32_t contrast : 3;
     uint32_t brightness : 3;
     uint32_t saturation : 3;
