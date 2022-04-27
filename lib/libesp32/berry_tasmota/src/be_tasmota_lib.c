@@ -1365,7 +1365,7 @@ be_local_closure(Tasmota_load,   /* name */
         })
       ),
       be_nested_proto(
-        9,                          /* nstack */
+        11,                          /* nstack */
         1,                          /* argc */
         0,                          /* varg */
         0,                          /* has upvals */
@@ -1377,11 +1377,11 @@ be_local_closure(Tasmota_load,   /* name */
         /* K0   */  be_nested_str(file),
         /* K1   */  be_nested_str(string),
         /* K2   */  be_nested_str(format),
-        /* K3   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X29),
+        /* K3   */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29),
         }),
         &be_const_str_try_compile,
         &be_const_str_solidified,
-        ( &(const binstruction[23]) {  /* code */
+        ( &(const binstruction[24]) {  /* code */
           0xA8020007,  //  0000  EXBLK	0	#0009
           0x6004000D,  //  0001  GETGBL	R1	G13
           0x5C080000,  //  0002  MOVE	R2	R0
@@ -1390,21 +1390,22 @@ be_local_closure(Tasmota_load,   /* name */
           0xA8040001,  //  0005  EXBLK	1	1
           0x80040200,  //  0006  RET	1	R1
           0xA8040001,  //  0007  EXBLK	1	1
-          0x7002000B,  //  0008  JMP		#0015
-          0xAC040001,  //  0009  CATCH	R1	0	1
-          0x70020008,  //  000A  JMP		#0014
-          0xA40A0200,  //  000B  IMPORT	R2	K1
-          0x600C0001,  //  000C  GETGBL	R3	G1
-          0x8C100502,  //  000D  GETMET	R4	R2	K2
-          0x58180003,  //  000E  LDCONST	R6	K3
-          0x5C1C0000,  //  000F  MOVE	R7	R0
-          0x5C200200,  //  0010  MOVE	R8	R1
-          0x7C100800,  //  0011  CALL	R4	4
-          0x7C0C0200,  //  0012  CALL	R3	1
-          0x70020000,  //  0013  JMP		#0015
-          0xB0080000,  //  0014  RAISE	2	R0	R0
-          0x4C040000,  //  0015  LDNIL	R1
-          0x80040200,  //  0016  RET	1	R1
+          0x7002000C,  //  0008  JMP		#0016
+          0xAC040002,  //  0009  CATCH	R1	0	2
+          0x70020009,  //  000A  JMP		#0015
+          0xA40E0200,  //  000B  IMPORT	R3	K1
+          0x60100001,  //  000C  GETGBL	R4	G1
+          0x8C140702,  //  000D  GETMET	R5	R3	K2
+          0x581C0003,  //  000E  LDCONST	R7	K3
+          0x5C200000,  //  000F  MOVE	R8	R0
+          0x5C240200,  //  0010  MOVE	R9	R1
+          0x5C280400,  //  0011  MOVE	R10	R2
+          0x7C140A00,  //  0012  CALL	R5	5
+          0x7C100200,  //  0013  CALL	R4	1
+          0x70020000,  //  0014  JMP		#0016
+          0xB0080000,  //  0015  RAISE	2	R0	R0
+          0x4C040000,  //  0016  LDNIL	R1
+          0x80040200,  //  0017  RET	1	R1
         })
       ),
       be_nested_proto(

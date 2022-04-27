@@ -464,9 +464,9 @@ class Tasmota
       try
         var compiled = compile(f_name, 'file')
         return compiled
-      except .. as e
+      except .. as e, m
         import string
-        print(string.format('BRY: failed to load \'%s\' (%s)',f_name,e))
+        print(string.format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
       end
       return nil
     end
