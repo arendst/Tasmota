@@ -806,8 +806,8 @@ void ResponseAppendFeatures(void)
 #ifdef USE_IMPROV
     feature8 |= 0x04000000;  // xdrv_62_improv.ino
 #endif
-#ifdef USE_FLOWMETER
-    feature8 |= 0x08000000;  // nsns_96_flowmeter.ino
+#ifdef USE_FLOWRATEMETER
+    feature8 |= 0x08000000;  // xsns_96_flowratemeter.ino
 #endif
 
 //    feature8 |= 0x10000000;

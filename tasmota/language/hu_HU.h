@@ -1056,9 +1056,8 @@
 #define D_FP_PASSVERIFY "Jelszó ellenőrizve"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Hiba"              // Any other error
 
-// xsns_96_flowmeter.ino
-#define D_FLOWMETER_NAME "Flowmeter"
-#define D_FLOWMETER_RATE "Rate"
+// xsns_96_flowratemeter.ino
+#define D_FLOWRATEMETER_NAME "Flowrate"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

@@ -351,7 +351,7 @@ typedef union {
   uint8_t data;
   struct {
     uint8_t spare0 : 1;
-    uint8_t flowmeter_unit : 1;            // Sensor96 9,x - unit l/min (0) or m³/h (1)
+    uint8_t flowratemeter_unit : 1;        // Sensor96 9,x - unit l/min (0) or m³/h (1)
     uint8_t bh1750_2_resolution : 2;
     uint8_t bh1750_1_resolution : 2;       // Sensor10 1,2,3
     uint8_t hx711_json_weight_change : 1;  // Sensor34 8,x - Enable JSON message on weight change
@@ -782,7 +782,7 @@ typedef struct {
   uint8_t       free_f61[23];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
-  uint16_t      flowmeter_calibration[2];  // F78
+  uint16_t      flowratemeter_calibration[2];// F78
   int32_t       energy_kWhexport_ph[3];    // F7C
   uint32_t      eth_ipv4_address[5];       // F88
   uint32_t      energy_kWhtotal;           // F9C
