@@ -67,6 +67,8 @@ class AXP192_M5StickC : AXP192
       # Bit 1: APS voltage ADC enable
       # Bit 0: TS pin ADC function enable
       self.write8(0x82, 0xFF)
+
+      tasmota.add_driver(self)
     end
   end
 
@@ -103,5 +105,4 @@ class AXP192_M5StickC : AXP192
   end
 end
 
-axp = AXP192_M5StickC()
-tasmota.add_driver(axp)
+return AXP192_M5StickC()

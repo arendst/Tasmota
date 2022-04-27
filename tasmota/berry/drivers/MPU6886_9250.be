@@ -5,7 +5,7 @@
  - Alternative to xsns_85_mpu6886.ino 
  -#
 
-class MPU6886 : I2C_Driver
+class MPU6886_9250 : I2C_Driver
   var device
   var gres, ares
   var accel, gyro
@@ -49,6 +49,8 @@ class MPU6886 : I2C_Driver
 
       self.gres = 2000.0/32768.0
       self.ares = 8.0/32678.0
+
+      tasmota.add_driver(self)
     end
   end
 
@@ -133,5 +135,4 @@ class MPU6886 : I2C_Driver
 
 end
 
-mpu_accel = MPU6886()
-tasmota.add_driver(mpu_accel)
+return MPU6886_9250()

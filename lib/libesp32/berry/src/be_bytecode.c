@@ -214,8 +214,10 @@ static void save_proto_table(bvm *vm, void *fp, bproto *proto)
 {
     bproto **p = proto->ptab, **end;
     save_long(fp, proto->nproto); /* proto count */
-    for (end = p + proto->nproto; p < end; ++p) {
-        save_proto(vm, fp, *p);
+    if (p) {
+        for (end = p + proto->nproto; p < end; ++p) {
+            save_proto(vm, fp, *p);
+        }
     }
 }
 
@@ -223,9 +225,11 @@ static void save_upvals(void *fp, bproto *proto)
 {
     bupvaldesc *uv = proto->upvals, *end;
     save_byte(fp, proto->nupvals); /* upvals count */
-    for (end = uv + proto->nupvals; uv < end; ++uv) {
-        save_byte(fp, uv->instack);
-        save_byte(fp, uv->idx);
+    if (uv) {
+        for (end = uv + proto->nupvals; uv < end; ++uv) {
+            save_byte(fp, uv->instack);
+            save_byte(fp, uv->idx);
+        }
     }
 }
 
@@ -492,7 +496,7 @@ static void load_constant(bvm *vm, void *fp, bproto *proto, int version)
     }
 }
 
-static void load_proto_table(bvm *vm, void *fp, bproto *proto, int version)
+static void load_proto_table(bvm *vm, void *fp, bproto *proto, int info, int version)
 {
     int size = (int)load_long(fp); /* proto count */
     if (size) {
@@ -501,7 +505,7 @@ static void load_proto_table(bvm *vm, void *fp, bproto *proto, int version)
         proto->ptab = p;
         proto->nproto = size;
         while (size--) {
-            load_proto(vm, fp, p++, -1, version);
+            load_proto(vm, fp, p++, info, version);
         }
     }
 }
@@ -538,7 +542,7 @@ static bbool load_proto(bvm *vm, void *fp, bproto **proto, int info, int version
         }
         load_bytecode(vm, fp, *proto, info);
         load_constant(vm, fp, *proto, version);
-        load_proto_table(vm, fp, *proto, version);
+        load_proto_table(vm, fp, *proto, info, version);
         load_upvals(vm, fp, *proto);
         return btrue;
     }
