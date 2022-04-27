@@ -30,6 +30,8 @@
 #define SOLAXX1_SPEED      9600      // default solax rs485 speed
 #endif
 
+#define SOLAXX1_READCONFIG          // enable to read inverters config; disable to save codespace (3k1)
+
 #define INVERTER_ADDRESS   0x0A
 
 #define D_SOLAX_X1         "SolaxX1"
@@ -44,10 +46,12 @@ const char kSolaxError[] PROGMEM =
   D_SOLAX_ERROR_0 "|" D_SOLAX_ERROR_1 "|" D_SOLAX_ERROR_2 "|" D_SOLAX_ERROR_3 "|" D_SOLAX_ERROR_4 "|" D_SOLAX_ERROR_5 "|"
   D_SOLAX_ERROR_6 "|" D_SOLAX_ERROR_7 "|" D_SOLAX_ERROR_8;
 
+#ifdef SOLAXX1_READCONFIG
 const char kSolaxSafetyType[] PROGMEM =
   "VDE0126|ARN4105|AS4777_AU|G98/1|C10/11|OVE/ONORME8001|EN50438_NL|EN50438_DK|CEB|CEI021|NRS097_2_1|"
   "VDE0126_Gr_Is|UTE_C15_712|IEC61727|G99/1|VDE0126_Gr_Co|France_VFR2014|C15_712_is_50|C15_712_is_60|"
   "AS4777_NZ|RD1699|Chile|EN50438_Ireland|Philippines|Czech_PPDS|Czech_50438";
+#endif // SOLAXX1_READCONFIG
 
 union {
   uint32_t ErrMessage;
@@ -333,11 +337,12 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
       return;
     } // end received "Response for query (ID data)"
 
+#ifdef SOLAXX1_READCONFIG
     if (DataRead[6] == 0x11 && DataRead[7] == 0x84) { // received "Response for query (config data)"
       if (solaxX1_global.Command_QueryConfig) {
         // This values are displayed as they were received from the inverter. They are not interpreted in any way.
         TempFloat = ((DataRead[9] << 8) | DataRead[10]) * 0.1f;
-        AddLog(LOG_LEVEL_INFO, PSTR("SX1: new wVpvStart: %1_f V (Inverter launch voltage threshold)"), &TempFloat);
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVpvStart: %1_f V (Inverter launch voltage threshold)"), &TempFloat);
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wTimeStart: %d sec (launch wait time)"), (DataRead[11] << 8) | DataRead[12]);
         TempFloat = ((DataRead[13] << 8) | DataRead[14]) * 0.1f;
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: wVacMinProtect: %1_f V (allowed minimum grid voltage)"), &TempFloat);
@@ -400,6 +405,7 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
       DEBUG_SENSOR_LOG(PSTR("SX1: received config data"));
       return;
     } // end received "Response for query (config data)"
+#endif // SOLAXX1_READCONFIG
 
     if (DataRead[6] == 0x10 && DataRead[7] == 0x80) { // received "register request"
       solaxX1_global.QueryData_count = 5; // give time for next query
@@ -489,9 +495,14 @@ bool SolaxX1_cmd(void)
     AddLog(LOG_LEVEL_INFO, PSTR("SX1: ReadIDinfo sent..."));
     return true;
   } else if (!strcasecmp(XdrvMailbox.data, "ReadConfig")) {
+#ifdef SOLAXX1_READCONFIG
     solaxX1_global.Command_QueryConfig = true;
     AddLog(LOG_LEVEL_INFO, PSTR("SX1: ReadConfig sent..."));
     return true;
+#else
+    AddLog(LOG_LEVEL_INFO, PSTR("SX1: Command not available. Please set compiler directive '#define SOLAXX1_READCONFIG'."));
+    return false;
+#endif // SOLAXX1_READCONFIG
   }
   AddLog(LOG_LEVEL_INFO, PSTR("SX1: Unknown command: \"%s\""),XdrvMailbox.data);
   return false;
@@ -510,7 +521,7 @@ const char HTTP_SNS_solaxX1_DATA2[] PROGMEM =
     "{s}" D_SOLAX_X1 " " D_PV2_POWER "{m}%s " D_UNIT_WATT "{e}";
 #endif
 const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_UPTIME "{m}%s " D_UNIT_HOUR "{e}"
+    "{s}" D_SOLAX_X1 " " D_UPTIME "{m}%d " D_UNIT_HOUR "{e}"
     "{s}" D_SOLAX_X1 " " D_STATUS "{m}%s"
     "{s}" D_SOLAX_X1 " " D_ERROR "{m}%s"
     "{s}" D_SOLAX_X1 " Inverter SN{m}%s";
@@ -534,8 +545,6 @@ void solaxX1_Show(bool json)
   char pv2_power[33];
   dtostrfd(solaxX1.dc2_power, Settings->flag2.wattage_resolution, pv2_power);
 #endif
-  char runtime[33];
-  dtostrfd(solaxX1.runtime_total, 0, runtime);
   char status[33];
   GetTextIndexed(status, sizeof(status), solaxX1.runMode + 1, kSolaxMode);
 
@@ -546,8 +555,8 @@ void solaxX1_Show(bool json)
     ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
                                 pv2_voltage, pv2_current, pv2_power);
 #endif
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
-                                solaxX1.temperature, runtime, status, solaxX1.errorCode);
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_RUNTIME "\":%d,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
+                                solaxX1.temperature, solaxX1.runtime_total, status, solaxX1.errorCode);
 
 #ifdef USE_DOMOTICZ
     // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)
@@ -562,7 +571,7 @@ void solaxX1_Show(bool json)
 #endif
     WSContentSend_Temp(D_SOLAX_X1, solaxX1.temperature);
     char errorCodeString[33];
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, runtime, status,
+    WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, solaxX1.runtime_total, status,
       GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError),
       solaxX1.SerialNumber);
 #endif  // USE_WEBSERVER
