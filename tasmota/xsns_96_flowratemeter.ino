@@ -149,7 +149,7 @@ void FlowMeterShow(bool json)
         flowratemeter_raw_value ? PSTR(D_JSON_FLOWRATEMETER_VALUE_RAW) : PSTR(D_JSON_FLOWRATEMETER_VALUE_AVG)
     );
     ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\"}"),
-      Settings->SensorBits1.flowratemeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
+      Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE)
     );
   }
 }
@@ -228,7 +228,7 @@ bool FlowMeterCommand(void) {
           flowratemeter_raw_value ? PSTR(D_JSON_FLOWRATEMETER_VALUE_RAW) : PSTR(D_JSON_FLOWRATEMETER_VALUE_AVG)
           );
       ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\"}}"),
-          Settings->SensorBits1.flowratemeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
+          Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE)
           );
   }
 
