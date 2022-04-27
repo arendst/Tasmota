@@ -511,7 +511,7 @@ static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, int buil
         size_t id_len = toidentifier_length(class_name);
         char id_buf[id_len];
         toidentifier(id_buf, class_name);
-        logfmt("    &be_const_str_%s,\n", id_buf);
+        logfmt("    (bstring*) &be_const_str_%s\n", id_buf);
     } else {
         size_t id_len = toliteral_length(class_name);
         char id_buf[id_len];
