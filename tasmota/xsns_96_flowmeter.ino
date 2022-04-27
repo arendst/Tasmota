@@ -142,9 +142,9 @@ void FlowMeterShow(bool json)
  * Supported commands for Sensor96:
  *
  * Sensor96                        - Show current settings
+ * Sensor96 0 0|1                  - Show flow value in l/min (0) or m³/h (1)
  * Sensor96 1 <correction-factor>  - Set sensor 1 factor (x 1000) - to set to 0.2 enter 'Sensor96 1 200'
  * Sensor96 2 <correction-factor>  - Set sensor 2 factor (x 1000)
- * Sensor96 9 0|1                  - Show flow value in l/min (0) or m³/h (1)
  *
  * Flowmeter calibration:
  * - get the current displayed flow rate (D)
@@ -175,18 +175,18 @@ bool FlowMeterCommand(void) {
   }
 
   switch (XdrvMailbox.payload) {
-    case 1:  // Calibration value
-    case 2:  // Calibration value
-      if (any_value) {
-        Settings->flowmeter_calibration[XdrvMailbox.payload - 1] = value;
-        ResponseCmndNumber(value);
-        show_parms = false;
-      }
-      break;
-    case 9:  // Unit
+    case 0:  // Unit
       if (any_value) {
         Settings->SensorBits1.flowmeter_unit = value & 1;
         ResponseCmndNumber(value & 1);
+        show_parms = false;
+      }
+      break;
+    case 1:  // Sensor calibration value
+    case 2:
+      if (any_value) {
+        Settings->flowmeter_calibration[XdrvMailbox.payload - 1] = value;
+        ResponseCmndNumber(value);
         show_parms = false;
       }
       break;
