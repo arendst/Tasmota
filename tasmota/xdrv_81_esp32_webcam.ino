@@ -1228,12 +1228,10 @@ void WcInit(void) {
 #define D_CMND_WC_COLORBAR "Colorbar"
 
 #define D_CMND_WC_FEATURE "Feature"
-
 #define D_CMND_WC_SETDEFAULTS "SetDefaults"
 #define D_CMND_WC_STATS "Stats"
 
 #define D_CMND_WC_INIT "Init"
-#define D_CMND_WC_APPLYSETTINGS "ApplySettings"
 #define D_CMND_RTSP "Rtsp"
 
 const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
@@ -1244,7 +1242,6 @@ const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   D_CMND_WC_AGC_GAIN "|" D_CMND_WC_GAINCEILING "|" D_CMND_WC_RAW_GMA "|" D_CMND_WC_LENC "|"
   D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|" 
   D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT
-  "|" D_CMND_WC_APPLYSETTINGS
 #ifdef ENABLE_RTSPSERVER
   "|" D_CMND_RTSP
 #endif // ENABLE_RTSPSERVER
@@ -1258,7 +1255,6 @@ void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcamGammaCorrect, &CmndWebcamLensCorrect, &CmndWebcamWPC, &CmndWebcamDCW, &CmndWebcamBPC,
   &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults, 
   &CmndWebcamStats, &CmndWebcamInit
-  , &CmndWebcamApplySettings
 #ifdef ENABLE_RTSPSERVER
   , &CmndWebRtsp
 #endif // ENABLE_RTSPSERVER
@@ -1500,11 +1496,6 @@ void CmndWebcamInit(void) {
 
 void CmndWebcamSetDefaults(void) {
   WcSetDefaults(0);
-  ResponseCmndDone();
-}
-
-void CmndWebcamApplySettings(void) {
-  WcApplySettings();
   ResponseCmndDone();
 }
 
