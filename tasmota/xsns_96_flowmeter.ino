@@ -2,6 +2,7 @@
   xsns_96_flowmeter.ino - flowmeter support for Tasmota
                           Up to two flowmeter YF-DN50 and similary supported
                           (f = 1 Hz up to 5 kHz)
+                          Uses the FreqRes resolution
 
   Copyright (C) 2022  Norbert Richter
 
@@ -21,17 +22,22 @@
 
 #ifdef USE_FLOWMETER
 
+// The Arduino standard GPIO routines are not enough,
+// must use some from the Espressif SDK as well
+// extern "C" {
+// #include "gpio.h"
+// }
+
 #define XSNS_96                       96
 
 #define FLOWMETER_WEIGHT_AVG_SAMPLE   20  // samples
 #define FLOWMETER_MIN_FREQ             1  // Hz
 
-// The Arduino standard GPIO routines are not enough,
-// must use some from the Espressif SDK as well
-extern "C" {
-#include "gpio.h"
-}
-
+#define D_JSON_FLOWMETER_RATE         "Rate"
+#define D_JSON_FLOWMETER_VALUE        "Value"
+#define D_JSON_FLOWMETER_UNIT         "Unit"
+#define D_JSON_FLOWMETER_VALUE_AVG    "average"
+#define D_JSON_FLOWMETER_VALUE_RAW    "raw"
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_FLOWMETER[] PROGMEM =
@@ -46,7 +52,7 @@ uint32_t flowmeter_count[MAX_FLOWMETER] = {0};
 volatile uint32_t flowmeter_last_irq[MAX_FLOWMETER] = {0};
 
 bool flowmeter_valuesread = false;
-
+bool flowmeter_raw_value = false;
 
 void IRAM_ATTR FlowMeterIR(uint16_t irq)
 {
@@ -63,7 +69,7 @@ void IRAM_ATTR FlowMeterIR(uint16_t irq)
     flowmeter_last_irq[irq] = time;
   }
 }
-// GPIO_STATUS is always 0 (?), so can only determine the IR source using this way:
+// GPIO_STATUS is always 0 (?), so can only determine the IR source using this way
 void IRAM_ATTR FlowMeter1IR(void)
 {
   FlowMeterIR(0);
@@ -103,20 +109,27 @@ void FlowMeterInit(void)
 
 void FlowMeterShow(bool json)
 {
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" D_FLOWMETER_NAME "\":{\"" D_JSON_FLOWMETER_RATE "\":["));
+  }
+
   for (uint32_t i = 0; i < MAX_FLOWMETER; i++) {
     float flowmeter_rate_avg_float = 0;
 
     if (flowmeter_period[i]) {
       flowmeter_rate_avg_float =
-        ((Settings->SensorBits1.flowmeter_unit ? (1000000.0 / 1000.0) : (1000000 / 60.0)) / 2.0) / flowmeter_period_avg[i] * (Settings->flowmeter_calibration[i] ? (float)Settings->flowmeter_calibration[i] : 1000.0);
+        ((Settings->SensorBits1.flowmeter_unit ? (1000000.0 / 1000.0) : (1000000 / 60.0)) / 2.0)
+        / (flowmeter_raw_value ? flowmeter_period[i] : flowmeter_period_avg[i])
+        * (Settings->flowmeter_calibration[i] ? (float)Settings->flowmeter_calibration[i] : 1000.0);
     }
 
     if (PinUsed(GPIO_FLOWMETER_IN, i)) {
       if (json) {
-        ResponseAppend_P(PSTR(",\"" D_FLOWMETER_NAME "-%d\":{\"" D_JSON_FLOWRATE "\":%*_f}"),
-          i+1,
+        ResponseAppend_P(PSTR("%s%*_f"),
+          i ? PSTR(",") : PSTR(""),
           Settings->flag2.frequency_resolution, &flowmeter_rate_avg_float
         );
+
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(HTTP_SNS_FLOWMETER,
@@ -125,11 +138,15 @@ void FlowMeterShow(bool json)
           Settings->SensorBits1.flowmeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
         );
 #endif  // USE_WEBSERVER
+
       }
     }
   }
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_FLOW_UNIT "\":\"%s\""),
+    ResponseAppend_P(PSTR("],\"" D_JSON_FLOWMETER_VALUE "\":\"%s\""),
+        flowmeter_raw_value ? PSTR(D_JSON_FLOWMETER_VALUE_RAW) : PSTR(D_JSON_FLOWMETER_VALUE_AVG)
+    );
+    ResponseAppend_P(PSTR(",\"" D_JSON_FLOWMETER_UNIT "\":\"%s\"}"),
       Settings->SensorBits1.flowmeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
     );
   }
@@ -144,6 +161,7 @@ void FlowMeterShow(bool json)
  * Sensor96 0 0|1                  - Show flow value in l/min (0) or m³/h (1)
  * Sensor96 1 <correction-factor>  - Set sensor 1 factor (x 1000) - to set to 0.2 enter 'Sensor96 1 200'
  * Sensor96 2 <correction-factor>  - Set sensor 2 factor (x 1000)
+ * Sensor96 9 0|1                  - Value mode: Switch between displaying avg(0) / raw(1) readings (not permanently)
  *
  * Flowmeter calibration:
  * - get the current displayed flow rate (D)
@@ -189,15 +207,25 @@ bool FlowMeterCommand(void) {
         show_parms = false;
       }
       break;
+    case 9:  // avg/raw values
+      if (any_value) {
+        flowmeter_raw_value = value & 1;
+        ResponseCmndNumber(value & 1);
+        show_parms = false;
+      }
+      break;
   }
 
   if (show_parms) {
-      Response_P(PSTR("{\"Sensor%d\":{"), XSNS_96);
+      Response_P(PSTR("{\"Sensor%d\":{\"" D_JSON_POWERFACTOR "\":["), XSNS_96);
       for (uint32_t i = 0; i < MAX_FLOWMETER; i++) {
-        float flowmeter_factor = Settings->flowmeter_calibration[i] ? (float)Settings->flowmeter_calibration[i] / 1000 : 1.0;
-        ResponseAppend_P(PSTR("\"" D_JSON_POWERFACTOR "-%d\":%3_f,"), i+1, &flowmeter_factor);
+        float flowmeter_factor = Settings->flowmeter_calibration[i] ? (float)Settings->flowmeter_calibration[i] / 1000 : 1;
+        ResponseAppend_P(PSTR("%s%3_f"), i ? PSTR(",") : PSTR(""), &flowmeter_factor);
       }
-      ResponseAppend_P(PSTR("\"" D_JSON_FLOW_UNIT "\":\"%s\"}}"),
+      ResponseAppend_P(PSTR("],\"" D_JSON_FLOWMETER_VALUE "\":\"%s\""),
+          flowmeter_raw_value ? PSTR(D_JSON_FLOWMETER_VALUE_RAW) : PSTR(D_JSON_FLOWMETER_VALUE_AVG)
+          );
+      ResponseAppend_P(PSTR(",\"" D_JSON_FLOWMETER_UNIT "\":\"%s\"}}"),
           Settings->SensorBits1.flowmeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
           );
   }
