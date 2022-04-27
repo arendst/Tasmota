@@ -482,6 +482,9 @@ int32_t WcSetOptions(uint32_t sel, int32_t value) {
     case 0:
       if (value >= 0) { s->set_framesize(s, (framesize_t)value); }
       res = s->status.framesize;
+
+      // WcFeature is lost on resolution change
+      WcApplySettings();
       break;
     case 1:
       if (value >= 0) { s->set_special_effect(s, value); }
