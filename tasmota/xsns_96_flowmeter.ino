@@ -50,18 +50,18 @@ bool flowmeter_valuesread = false;
 
 void IRAM_ATTR FlowMeterIR(uint16_t irq)
 {
-  uint32_t gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
   uint32_t time = micros();
-  uint32_t i = irq;
+  // uint32_t gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
+  // GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
+  // uint32_t i = irq;
   if (irq < MAX_FLOWMETER) {
-    if ((time - flowmeter_last_irq[i]) < (1000000 / FLOWMETER_MIN_FREQ)) {
-      flowmeter_period[i] = time - flowmeter_last_irq[i];
+    if ((time - flowmeter_last_irq[irq]) < (1000000 / FLOWMETER_MIN_FREQ)) {
+      flowmeter_period[irq] = time - flowmeter_last_irq[irq];
     } else {
-      flowmeter_period[i] = 0;
+      flowmeter_period[irq] = 0;
     }
     flowmeter_valuesread = true;
-    flowmeter_last_irq[i] = time;
+    flowmeter_last_irq[irq] = time;
   }
 }
 // GPIO_STATUS is always 0 (?), so can only determine the IR source using this way:
