@@ -691,7 +691,7 @@ be_define_const_str(page_autoconf_ctl, "page_autoconf_ctl", 2453381496u, 0, 17, 
 be_define_const_str(page_autoconf_mgr, "page_autoconf_mgr", 3643937031u, 0, 17, &be_const_str_pixel_size);
 be_define_const_str(param, "param", 1309554226u, 0, 5, &be_const_str_super);
 be_define_const_str(parse, "parse", 1111180012u, 0, 5, NULL);
-be_define_const_str(partition, "partition", 3641267209u, 0, 9, &be_const_str_set_mode_ct);
+be_define_const_str(partition_core, "partition_core", 2913046901u, 0, 14, &be_const_str_set_bits_per_sample);
 be_define_const_str(path, "path", 2223459638u, 0, 4, &be_const_str_remove_rule);
 be_define_const_str(pc, "pc", 1313756516u, 0, 2, NULL);
 be_define_const_str(pc_abs, "pc_abs", 920256495u, 0, 6, &be_const_str_signal_arcs);
@@ -1291,7 +1291,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_id_X20must_X20be_X20of_X20type_X20_X27int_X27,
     (const bstring *)&be_const_str_autorun,
     NULL,
-    (const bstring *)&be_const_str_partition,
+    (const bstring *)&be_const_str_set_mode_ct,
     (const bstring *)&be_const_str_is_ota,
     NULL,
     (const bstring *)&be_const_str_is_first_time,
@@ -1403,7 +1403,7 @@ static const bstring* const m_string_table[] = {
     NULL,
     (const bstring *)&be_const_str_init,
     NULL,
-    (const bstring *)&be_const_str_set_bits_per_sample,
+    (const bstring *)&be_const_str_partition_core,
     (const bstring *)&be_const_str_count,
     (const bstring *)&be_const_str__X21_X3D,
     NULL,

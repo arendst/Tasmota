@@ -699,7 +699,7 @@ extern const bcstring be_const_str_page_autoconf_ctl;
 extern const bcstring be_const_str_page_autoconf_mgr;
 extern const bcstring be_const_str_param;
 extern const bcstring be_const_str_parse;
-extern const bcstring be_const_str_partition;
+extern const bcstring be_const_str_partition_core;
 extern const bcstring be_const_str_path;
 extern const bcstring be_const_str_pc;
 extern const bcstring be_const_str_pc_abs;

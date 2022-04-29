@@ -504,7 +504,7 @@ be_local_closure(Partition_load_otadata,   /* name */
     /* K6   */  be_nested_str(start),
     /* K7   */  be_nested_str(stop_iteration),
     /* K8   */  be_nested_str(otadata),
-    /* K9   */  be_nested_str(partition),
+    /* K9   */  be_nested_str(partition_core),
     /* K10  */  be_nested_str(Partition_otadata),
     }),
     &be_const_str_load_otadata,
@@ -979,7 +979,7 @@ be_local_closure(Partition_parse,   /* name */
     /* K2   */  be_const_int(1),
     /* K3   */  be_nested_str(get),
     /* K4   */  be_const_int(2),
-    /* K5   */  be_nested_str(partition),
+    /* K5   */  be_nested_str(partition_core),
     /* K6   */  be_nested_str(Partition_info),
     /* K7   */  be_nested_str(slots),
     /* K8   */  be_nested_str(push),
@@ -1744,16 +1744,46 @@ be_local_class(Partition_info,
 );
 
 /********************************************************************
-** Solidified module: partition
+** Solidified function: init
 ********************************************************************/
-be_local_module(partition,
-    "partition",
-    be_nested_map(3,
+be_local_closure(partition_core_init,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(global),
+    /* K1   */  be_nested_str(partition_core),
+    }),
+    &be_const_str_init,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 3]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x90060200,  //  0001  SETMBR	R1	K1	R0
+      0x80040000,  //  0002  RET	1	R0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified module: partition_core
+********************************************************************/
+be_local_module(partition_core,
+    "partition_core",
+    be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(Partition_info, -1), be_const_class(be_class_Partition_info) },
         { be_const_key(Partition_otadata, -1), be_const_class(be_class_Partition_otadata) },
-        { be_const_key(Partition, 0), be_const_class(be_class_Partition) },
+        { be_const_key(Partition, -1), be_const_class(be_class_Partition) },
+        { be_const_key(Partition_info, -1), be_const_class(be_class_Partition_info) },
+        { be_const_key(init, -1), be_const_closure(partition_core_init_closure) },
     }))
 );
-BE_EXPORT_VARIABLE be_define_const_native_module(partition);
+BE_EXPORT_VARIABLE be_define_const_native_module(partition_core);
 /********************************************************************/

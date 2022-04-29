@@ -1,16 +1,16 @@
 #######################################################################
 # Partition manager for ESP32 - ESP32C3 - ESP32S2
 #
-# use : `import partition`
+# use : `import partition_core`
 #
 # To solidify:
 #-
-   import solidify load("partition_embedded.be") solidify.dump(partition)
+   import solidify load("partition_core.be") solidify.dump(partition_core)
 -#
 # Provides low-level objects and a Web UI
 #######################################################################
 
-var partition = module('partition')
+var partition_core = module('partition_core')
 
 #######################################################################
 # Class for a partition table entry
@@ -186,7 +186,7 @@ class Partition_info
   end
 
 end
-partition.Partition_info = Partition_info
+partition_core.Partition_info = Partition_info
 
 #-------------------------------------------------------------
  - OTA Data
@@ -343,7 +343,7 @@ class Partition_otadata
                           self.active_otadata, self.seq0, self.seq1, self.maxota)
   end
 end
-partition.Partition_otadata = Partition_otadata
+partition_core.Partition_otadata = Partition_otadata
 
 #-------------------------------------------------------------
  - Class for a partition table entry
@@ -373,7 +373,7 @@ class Partition
       var item_raw = self.raw[i*32..(i+1)*32-1]
       var magic = item_raw.get(0,2)
       if magic == 0x50AA    #- partition entry -#
-        var slot = partition.Partition_info(item_raw)
+        var slot = partition_core.Partition_info(item_raw)
         self.slots.push(slot)
       elif magic == 0xEBEB  #- MD5 -#
         self.md5 = self.raw[i*32+16..i*33-1]
@@ -413,7 +413,7 @@ class Partition
       end
     end
 
-    self.otadata = partition.Partition_otadata(ota_max, otadata_offset)
+    self.otadata = partition_core.Partition_otadata(ota_max, otadata_offset)
   end
 
   # get the active OTA app partition number
@@ -485,16 +485,24 @@ class Partition
     flash.write(spiffs.start + 0x1000, b)    #- block #1 -#
   end  
 end
-partition.Partition = Partition
+partition_core.Partition = Partition
 
-return partition
+# init method to force the global `partition_core` is defined even if the import is done within a function
+def init(m)
+  import global
+  global.partition_core = m
+  return m
+end
+partition_core.init = init
+
+return partition_core
 
 #- Example
 
-import partition
+import partition_core
 
 # read
-p = partition.Partition()
+p = partition_core.Partition()
 print(p)
 
 -#
