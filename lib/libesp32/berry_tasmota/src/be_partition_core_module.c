@@ -504,7 +504,7 @@ be_local_closure(Partition_load_otadata,   /* name */
     /* K6   */  be_nested_str(start),
     /* K7   */  be_nested_str(stop_iteration),
     /* K8   */  be_nested_str(otadata),
-    /* K9   */  be_nested_str(partition),
+    /* K9   */  be_nested_str(partition_core),
     /* K10  */  be_nested_str(Partition_otadata),
     }),
     &be_const_str_load_otadata,
@@ -979,7 +979,7 @@ be_local_closure(Partition_parse,   /* name */
     /* K2   */  be_const_int(1),
     /* K3   */  be_nested_str(get),
     /* K4   */  be_const_int(2),
-    /* K5   */  be_nested_str(partition),
+    /* K5   */  be_nested_str(partition_core),
     /* K6   */  be_nested_str(Partition_info),
     /* K7   */  be_nested_str(slots),
     /* K8   */  be_nested_str(push),
@@ -1744,10 +1744,10 @@ be_local_class(Partition_info,
 );
 
 /********************************************************************
-** Solidified module: partition
+** Solidified module: partition_core
 ********************************************************************/
-be_local_module(partition,
-    "partition",
+be_local_module(partition_core,
+    "partition_core",
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(Partition_info, -1), be_const_class(be_class_Partition_info) },
@@ -1755,5 +1755,5 @@ be_local_module(partition,
         { be_const_key(Partition, 0), be_const_class(be_class_Partition) },
     }))
 );
-BE_EXPORT_VARIABLE be_define_const_native_module(partition);
+BE_EXPORT_VARIABLE be_define_const_native_module(partition_core);
 /********************************************************************/
