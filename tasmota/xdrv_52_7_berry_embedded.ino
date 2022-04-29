@@ -75,6 +75,10 @@ const char berry_prog[] =
 
   "import tapp "
 
+#ifdef USE_BERRY_DEBUG
+  "import debug "
+  "import solidify "
+#endif
   ;
 
 #endif  // USE_BERRY
