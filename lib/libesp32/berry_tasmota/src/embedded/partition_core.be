@@ -487,6 +487,14 @@ class Partition
 end
 partition_core.Partition = Partition
 
+# init method to force the global `partition_core` is defined even if the import is done within a function
+def init(m)
+  import global
+  global.partition_core = m
+  return m
+end
+partition_core.init = init
+
 return partition_core
 
 #- Example
