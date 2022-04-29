@@ -633,6 +633,12 @@ class Tasmota
     end
 
     var done = false
+    var keep_going = false    # if true, we continue dispatch event if done == true (for mqtt_data)
+
+    if event_type == 'mqtt_data'
+      keep_going = true
+    end
+
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif event_type=='tele' return self.exec_tele(payload)
     elif event_type=='rule' return self.exec_rules(payload)
@@ -640,13 +646,12 @@ class Tasmota
     elif self._drivers
       var i = 0
       while i < size(self._drivers)
-      #for d:self._drivers
         var d = self._drivers[i]
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
-            done = f(d, cmd, idx, payload, raw)
-            if done break end
+            done = f(d, cmd, idx, payload, raw) || done
+            if done && !keep_going   break end
           except .. as e,m
             print(string.format("BRY: Exception> '%s' - %s", e, m))
             if self._debug_present

@@ -70,20 +70,20 @@ extern "C" {
   int32_t l_publish(struct bvm *vm) {
     return be_mqtt_publish(vm, true);
   }
-}
 
-int32_t be_mqtt_publish(struct bvm *vm) {
-  return be_mqtt_publish(vm, false);
-}
+  int32_t be_mqtt_publish(struct bvm *vm) {
+    return be_mqtt_publish(vm, false);
+  }
 
-void be_mqtt_subscribe(const char* topic) {
-  if (!topic) { return; }
-  MqttSubscribe(topic);
-}
+  void be_mqtt_subscribe(const char* topic) {
+    if (!topic) { return; }
+    MqttSubscribe(topic);
+  }
 
-void be_mqtt_unsubscribe(const char* topic) {
-  if (!topic) { return; }
-  MqttUnsubscribe(topic);
+  void be_mqtt_unsubscribe(const char* topic) {
+    if (!topic) { return; }
+    MqttUnsubscribe(topic);
+  }
 }
 
 #endif  // USE_BERRY
