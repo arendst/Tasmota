@@ -108,12 +108,14 @@ extern "C" {
 
 // If event == nullptr, then take XdrvMailbox.data
 bool callBerryRule(const char *event, bool teleperiod) {
-  if (berry.rules_busy) { return false; }
+  bool save_rules_busy = berry.rules_busy;
+  bool exec_rule = !save_rules_busy;       // true if the rule is executed, false if we only record the value
+  // if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
   char * json_event = XdrvMailbox.data;
   bool serviced = false;
-  serviced = callBerryEventDispatcher(teleperiod ? "tele" : "rule", nullptr, 0, event ? event : XdrvMailbox.data);
-  berry.rules_busy = false;
+  serviced = callBerryEventDispatcher(teleperiod ? "tele" : "rule", nullptr, exec_rule, event ? event : XdrvMailbox.data);
+  berry.rules_busy = save_rules_busy;
   return serviced;     // TODO event not handled
 }
 
