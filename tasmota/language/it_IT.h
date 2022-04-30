@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v11.0.0.7 - Last update 19.04.2022
+ * Updated until v11.0.0.7 - Last update 30.04.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -710,7 +710,7 @@
 #define D_SENSOR_MAX31855_CLK           "MX31855 - CLK"
 #define D_SENSOR_MAX31855_DO            "MX31855 - DO"
 #define D_SENSOR_MAX31865_CS            "MX31865 - CS"
-#define D_SENSOR_NRG_SEL                "HLWBL - SEL"  // Suffix "i"
+#define D_SENSOR_NRG_SEL                "HLWBL - SEL"     // Suffix "i"
 #define D_SENSOR_NRG_CF1                "HLWBL - CF1"
 #define D_SENSOR_HLW_CF                 "HLW8012 - CF"
 #define D_SENSOR_HJL_CF                 "BL0937 - CF"
@@ -735,7 +735,7 @@
 #define D_SENSOR_ARIRFSEL               "IR ALux - SEL"
 #define D_SENSOR_TXD                    "Seriale - TX"
 #define D_SENSOR_RXD                    "Seriale - RX"
-#define D_SENSOR_ROTARY                 "Rotativo"     // Suffix "1A"
+#define D_SENSOR_ROTARY                 "Rotativo"       // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK              "HRE - Clock"
 #define D_SENSOR_HRE_DATA               "HRE - Dati"
 #define D_SENSOR_ADE7880_IRQ            "ADE7880 - IRQ"
@@ -866,7 +866,7 @@
 #define D_GPIO_SHIFT595_SER             "74x595 - SER"
 #define D_SENSOR_CM11_TX                "CM110x - TX"
 #define D_SENSOR_CM11_RX                "CM110x - RX"
-#define D_SENSOR_FLOWRATEMETER          "Flowrate"
+#define D_SENSOR_FLOWRATEMETER          "Portata"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -914,26 +914,26 @@
 #define D_UNIT_WATT                       "W"
 #define D_UNIT_WATTHOUR                   "Wh"
 #define D_UNIT_WATT_METER_QUADRAT         "W/m²"
-#define D_UNIT_LITER_PER_MINUTE "l/min"
-#define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
+#define D_UNIT_LITER_PER_MINUTE           "l/min"
+#define D_UNIT_CUBICMETER_PER_HOUR        "m³/ora"
 
 #define D_NEW_ADDRESS          "Imposta indirizzo a"
 #define D_OUT_OF_RANGE         "Fuori intervallo"
 #define D_SENSOR_DETECTED      "rilevato"
 
 //SDM220, SDM120, SDM72, LE01MR, SDM230
-#define D_EXPORT_POWER     "Potenza esportata"
-#define D_IMPORT_POWER 	   "Potenza importata"
-#define D_PHASE_ANGLE      "Angolo fase"
-#define D_IMPORT_ACTIVE    "Potenza attiva importata"
-#define D_EXPORT_ACTIVE    "Potenza attiva esportata"
-#define D_IMPORT_REACTIVE  "Potenza reattiva importata"
-#define D_EXPORT_REACTIVE  "Potenza reattiva esportata"
-#define D_TOTAL_REACTIVE   "Potenza reattiva totale"
-#define D_UNIT_KWARH       "kVArh"
-#define D_UNIT_ANGLE       "°"
-#define D_TOTAL_ACTIVE     "Potenza attiva totale"
-#define D_RESETTABLE_TOTAL_ACTIVE    "Potenza attiva totale (RST)"
+#define D_EXPORT_POWER             "Potenza esportata"
+#define D_IMPORT_POWER             "Potenza importata"
+#define D_PHASE_ANGLE              "Angolo fase"
+#define D_IMPORT_ACTIVE            "Potenza attiva importata"
+#define D_EXPORT_ACTIVE            "Potenza attiva esportata"
+#define D_IMPORT_REACTIVE          "Potenza reattiva importata"
+#define D_EXPORT_REACTIVE          "Potenza reattiva esportata"
+#define D_TOTAL_REACTIVE           "Potenza reattiva totale"
+#define D_UNIT_KWARH               "kVArh"
+#define D_UNIT_ANGLE               "°"
+#define D_TOTAL_ACTIVE             "Potenza attiva totale"
+#define D_RESETTABLE_TOTAL_ACTIVE  "Potenza attiva totale (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 - Voltaggio"
@@ -1058,7 +1058,7 @@
 #define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
 
 // xsns_96_flowratemeter.ino
-#define D_FLOWRATEMETER_NAME "Flowrate"
+#define D_FLOWRATEMETER_NAME "Portata"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names
