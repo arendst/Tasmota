@@ -336,6 +336,14 @@ class Partition_otadata
     flash.write(offset_to_save, bytes_to_save)
   end
 
+  # clear otadata information, which forces a boot on the safeboot partition
+  def clear()
+    import flash
+    b=bytes().resize(32)
+    flash.write(self.offset,b)
+    flash.write(self.offset + 0x1000,b)
+  end
+
   # Produce a human-readable representation of the object with relevant information
   def tostring()
     import string
@@ -483,7 +491,12 @@ class Partition
     var b = bytes("00")  #- flash memory: we can turn bits from '1' to '0' -#
     flash.write(spiffs.start         , b)    #- block #0 -#
     flash.write(spiffs.start + 0x1000, b)    #- block #1 -#
-  end  
+  end
+
+  # switch to safeboot `factory` partition
+  def switch_safeboot()
+    self.otadata.clear()
+  end
 end
 partition_core.Partition = Partition
 
