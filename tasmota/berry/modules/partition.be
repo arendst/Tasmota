@@ -183,7 +183,7 @@ class Partition_manager_UI
       webserver.content_send("<p><b>Used</b>: unknown</p>")
       webserver.content_send("<p><b>Free</b>: unknown</p>")
     end
-    if maxota > 0
+    if maxota != nil && maxota > 0
       if !active && used > 0
         webserver.content_send("<p><form id=setactive style='display: block;' action='/part_mgr' method='post' ")
         webserver.content_send("onsubmit='return confirm(\"This will change the active partition and cause a restart.\");'>")
@@ -242,6 +242,8 @@ class Partition_manager_UI
       if ota_num != nil
         # we have an OTA partition
         self.page_show_partition(slot, ota_num == p.otadata.active_otadata, ota_num, p.otadata.maxota)
+      elif slot.is_factory()
+        self.page_show_partition(slot, false, nil, nil)
       elif slot.is_spiffs()
         var flash_size = tasmota.memory()['flash'] * 1024
         var used_size = (slot.start + slot.size)

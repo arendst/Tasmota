@@ -91,6 +91,11 @@ class Partition_info
     end
   end
 
+  # check if factory 'safeboot' partition
+  def is_factory()
+    return self.type == 0 && self.subtype == 0
+  end
+
   # check if the parition is a SPIFFS partition
   # returns bool
   def is_spiffs()
@@ -101,7 +106,7 @@ class Partition_info
   # returns -1 if the partition is not an app ota partition
   def get_image_size()
     import flash
-    if self.is_ota() == nil return -1 end
+    if self.is_ota() == nil && !self.is_factory()   return -1 end
     try
       var addr = self.start
       var magic_byte = flash.read(addr, 1).get(0, 1)
@@ -494,7 +499,7 @@ class Partition
   end
 
   # switch to safeboot `factory` partition
-  def switch_safeboot()
+  def switch_factory()
     self.otadata.clear()
   end
 end
