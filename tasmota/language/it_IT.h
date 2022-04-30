@@ -1058,7 +1058,7 @@
 #define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
 
 // xsns_96_flowratemeter.ino
-#define D_FLOWRATEMETER_NAME "Flowrate"
+#define D_FLOWRATEMETER_NAME "Portata"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names
