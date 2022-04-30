@@ -276,7 +276,7 @@ be_define_const_str(adv_block, "adv_block", 4243837184u, 0, 9, NULL);
 be_define_const_str(adv_cb, "adv_cb", 1957890034u, 0, 6, &be_const_str_dirty);
 be_define_const_str(adv_watch, "adv_watch", 3871786950u, 0, 9, &be_const_str_connection_error);
 be_define_const_str(allocated, "allocated", 429986098u, 0, 9, &be_const_str_check_privileged_access);
-be_define_const_str(alternate, "alternate", 1140253277u, 0, 9, NULL);
+be_define_const_str(alternate, "alternate", 1140253277u, 0, 9, &be_const_str_switch_safeboot);
 be_define_const_str(animate, "animate", 3885786800u, 0, 7, &be_const_str_gamma10);
 be_define_const_str(animators, "animators", 279858213u, 0, 9, &be_const_str_bus);
 be_define_const_str(app, "app", 527074092u, 0, 3, &be_const_str_refr_pos);
@@ -905,6 +905,7 @@ be_define_const_str(subscribe, "subscribe", 2946386435u, 0, 9, NULL);
 be_define_const_str(subtype, "subtype", 2023873341u, 0, 7, NULL);
 be_define_const_str(success, "success", 979353360u, 0, 7, NULL);
 be_define_const_str(super, "super", 4152230356u, 0, 5, NULL);
+be_define_const_str(switch_safeboot, "switch_safeboot", 1833415835u, 0, 15, NULL);
 be_define_const_str(sys, "sys", 3277365014u, 0, 3, NULL);
 be_define_const_str(tag, "tag", 2516003219u, 0, 3, NULL);
 be_define_const_str(tan, "tan", 2633446552u, 0, 3, &be_const_str_tcpclient);
@@ -1530,6 +1531,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 501,
-    .count = 1025,
+    .count = 1026,
     .table = m_string_table
 };

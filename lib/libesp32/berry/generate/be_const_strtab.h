@@ -913,6 +913,7 @@ extern const bcstring be_const_str_subscribe;
 extern const bcstring be_const_str_subtype;
 extern const bcstring be_const_str_success;
 extern const bcstring be_const_str_super;
+extern const bcstring be_const_str_switch_safeboot;
 extern const bcstring be_const_str_sys;
 extern const bcstring be_const_str_tag;
 extern const bcstring be_const_str_tan;
