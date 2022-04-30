@@ -22,6 +22,7 @@ platform = env.PioPlatform()
 
 import sys
 from os.path import join
+import csv
 
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
@@ -31,7 +32,21 @@ def esp32_create_combined_bin(source, target, env):
 
     # The offset from begin of the file where the app0 partition starts
     # This is defined in the partition .csv file
-    app_offset = 0x10000
+    app_offset = 0x10000 # default value
+    with open(env.BoardConfig().get("build.partitions")) as csv_file:
+        print("Read partitions from ",env.BoardConfig().get("build.partitions"))
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                print(f'{",  ".join(row)}')
+                line_count += 1
+            else:
+                print(f'{row[0]}   {row[1]}   {row[2]}   {row[3]}   {row[4]}')
+                line_count += 1
+                if(row[0] == 'app0'):
+                    app_offset = int(row[3],base=16)
+#                    print("Got app_offset from .csv:", row[3])
 
     new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
     sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
