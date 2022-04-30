@@ -664,7 +664,7 @@ typedef struct {
         if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, LGA 7*7, ESP32-PICO-V3-ZERO, ESP32-PICO-V3-ZERO-DevKit
         else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, LGA 7*7, 4MB embedded flash, ESP32-PICO-KIT
       case 6:              return F("ESP32-PICO-V3-02");   // Max 240MHz, Dual core, LGA 7*7, 8MB embedded flash, 2MB embedded PSRAM, ESP32-PICO-MINI-02, ESP32-PICO-DevKitM-2
-      case 7:              return F("ESP32-D0WDR2-V3");    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC?
+      case 7:              return F("ESP32-D0WDR2-V3");    // Max 240MHz, Dual core, QFN 5*5, ESP32-WROOM-32E, ESP32_WROVER-E, ESP32-DevKitC
     }
 #endif  // CONFIG_IDF_TARGET_ESP32
     return F("ESP32");
@@ -672,16 +672,23 @@ typedef struct {
   else if (2 == chip_model) {  // ESP32-S2
 #ifdef CONFIG_IDF_TARGET_ESP32S2
 /* esptool:
-    def get_pkg_version(self):
+    def get_flash_version(self):
         num_word = 3
         block1_addr = self.EFUSE_BASE + 0x044
         word3 = self.read_reg(block1_addr + (4 * num_word))
         pkg_version = (word3 >> 21) & 0x0F
         return pkg_version
+
+    def get_psram_version(self):
+        num_word = 3
+        block1_addr = self.EFUSE_BASE + 0x044
+        word3 = self.read_reg(block1_addr + (4 * num_word))
+        pkg_version = (word3 >> 28) & 0x0F
+        return pkg_version
 */
-    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION);
-    uint32_t pkg_version = chip_ver & 0x7;
-//    uint32_t pkg_version = esp_efuse_get_pkg_ver();
+    uint32_t chip_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_FLASH_VERSION);
+    uint32_t psram_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PSRAM_VERSION);
+    uint32_t pkg_version = (chip_ver & 0xF) + ((psram_ver & 0xF) * 100);
 
 //    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d, Package %d"), chip_info.model, chip_revision, chip_info.cores, chip_ver);
 
@@ -690,6 +697,8 @@ typedef struct {
       case 1:              return F("ESP32-S2FH2");        // Max 240MHz, Single core, QFN 7*7, 2MB embedded flash, ESP32-S2-MINI-1, ESP32-S2-DevKitM-1
       case 2:              return F("ESP32-S2FH4");        // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash
       case 3:              return F("ESP32-S2FN4R2");      // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM, , ESP32-S2-MINI-1U, ESP32-S2-DevKitM-1U
+      case 100:            return F("ESP32-S2R2");
+      case 102:            return F("ESP32-S2FNR2");       // Max 240MHz, Single core, QFN 7*7, 4MB embedded flash, 2MB embedded PSRAM, , Lolin S2 mini
     }
 #endif  // CONFIG_IDF_TARGET_ESP32S2
     return F("ESP32-S2");
