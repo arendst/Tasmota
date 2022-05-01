@@ -523,6 +523,9 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "u1", HTTP_ANY, HandleUpgradeFirmwareStart },   // OTA
   { "u2", HTTP_OPTIONS, HandlePreflightRequest },
   { "u3", HTTP_ANY, HandleUploadDone },
+#ifdef ESP32
+  { "u4", HTTP_GET, HandleSwitchFactory },
+#endif // ESP32
   { "mn", HTTP_GET, HandleManagement },
   { "cs", HTTP_GET, HandleConsole },
   { "cs", HTTP_OPTIONS, HandlePreflightRequest },
@@ -2881,6 +2884,55 @@ void HandlePreflightRequest(void)
   Webserver->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
   WSSend(200, CT_HTML, "");
 }
+
+/*-------------------------------------------------------------------------------------------*/
+
+#ifdef ESP32
+// Check if we are in single-mode OTA, if so restart to factory mode
+//
+// Parameter `u4` is either `fct` or `ota` to switch to factory or ota
+//
+// The page can return the followinf (code 200)
+// `false`: the current partition is not the target, but a restart to factory is triggered (polling required)
+// `true`: the current partition is the one required
+// `none`: there is no factory partition
+void HandleSwitchFactory(void)
+{
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  char tmp1[8];
+  WebGetArg(PSTR("u4"), tmp1, sizeof(tmp1));
+
+  bool switch_factory = false;      // trigger a restart to factory partition?
+  bool switch_ota = false;          // switch back to OTA partition
+
+  // switch to factory ?
+  if (EspSingleOtaPartition()) {
+    if (strcmp("fct", tmp1) == 0 && !EspRunningFactoryPartition()) {
+      switch_factory = true;
+    }
+    // switch to OTA
+    else if (strcmp("ota", tmp1) == 0 && EspRunningFactoryPartition()) {
+      switch_ota = true;
+    }
+  }
+
+  if (switch_factory || switch_ota) {
+    SettingsSaveAll();
+    if (switch_factory) {
+      EspPrepRestartToSafeMode();
+    } else {
+      const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+      esp_ota_set_boot_partition(partition);
+    }
+    // display restart page
+    WebRestart(0);
+  } else {
+    Webserver->sendHeader("Location", "/", true);
+    Webserver->send(302, "text/plain", "");
+  }
+}
+#endif
 
 /*-------------------------------------------------------------------------------------------*/
 
