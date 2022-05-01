@@ -296,13 +296,21 @@ extern "C" {
 #endif
 
 uint32_t EspFlashBaseAddress(void) {
-  const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
-  if (!partition) { return 0; }
-  return partition->address;  // For tasmota 0x00010000 or 0x00200000
+  uint32_t part_count = esp_ota_get_app_partition_count();
+  if (1 == part_count) {       // Only one partition so start at end of sketch
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    if (!running) { return 0; }
+    return running->address + ESP_getSketchSize();
+  } else {                     // Select other partition
+    const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+    if (!partition) { return 0; }
+    return partition->address;  // For tasmota 0x00010000 or 0x00200000
+  }
 }
 
 uint32_t EspFlashBaseEndAddress(void) {
-  const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+  uint32_t part_count = esp_ota_get_app_partition_count();
+  const esp_partition_t* partition = (1 == part_count) ? esp_ota_get_running_partition() : esp_ota_get_next_update_partition(nullptr);
   if (!partition) { return 0; }
   return partition->address + partition->size;  // For tasmota 0x00200000 or 0x003F0000
 }
