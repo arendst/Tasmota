@@ -1242,6 +1242,20 @@ void Every250mSeconds(void)
             }
           }
 #endif  // ESP8266
+
+#ifdef ESP32
+#ifndef FIRMWARE_MINIMAL
+          if (EspSingleOtaPartition()) {
+            RtcSettings.ota_loader = 1;                 // Try safemode image next
+            SettingsSaveAll();
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
+            ResetPwm();
+            WifiShutdown(true);
+            EspRestartToSaveMode();
+          }
+#endif  // FIRMWARE_MINIMAL
+#endif  // ESP32
+
           char version[50];
           snprintf_P(version, sizeof(version), PSTR("%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s %s"), full_ota_url, version);

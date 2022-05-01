@@ -295,9 +295,16 @@ extern "C" {
   #include "rom/spi_flash.h"
 #endif
 
+bool EspSingleOtaPartition(void) {
+  return (1 == esp_ota_get_app_partition_count());
+}
+
+void EspRestartToSaveMode(void) {
+  esp_ota_mark_app_invalid_rollback_and_reboot();
+}
+
 uint32_t EspFlashBaseAddress(void) {
-  uint32_t part_count = esp_ota_get_app_partition_count();
-  if (1 == part_count) {       // Only one partition so start at end of sketch
+  if (EspSingleOtaPartition()) {       // Only one partition so start at end of sketch
     const esp_partition_t *running = esp_ota_get_running_partition();
     if (!running) { return 0; }
     return running->address + ESP_getSketchSize();
@@ -309,8 +316,7 @@ uint32_t EspFlashBaseAddress(void) {
 }
 
 uint32_t EspFlashBaseEndAddress(void) {
-  uint32_t part_count = esp_ota_get_app_partition_count();
-  const esp_partition_t* partition = (1 == part_count) ? esp_ota_get_running_partition() : esp_ota_get_next_update_partition(nullptr);
+  const esp_partition_t* partition = (EspSingleOtaPartition()) ? esp_ota_get_running_partition() : esp_ota_get_next_update_partition(nullptr);
   if (!partition) { return 0; }
   return partition->address + partition->size;  // For tasmota 0x00200000 or 0x003F0000
 }
