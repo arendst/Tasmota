@@ -764,7 +764,7 @@ be_define_const_str(remove_rule, "remove_rule", 3456211328u, 0, 11, NULL);
 be_define_const_str(remove_timer, "remove_timer", 4141472215u, 0, 12, NULL);
 be_define_const_str(remove_trailing_zeroes, "remove_trailing_zeroes", 2688378377u, 0, 22, NULL);
 be_define_const_str(reset, "reset", 1695364032u, 0, 5, &be_const_str_set_auth);
-be_define_const_str(reset_search, "reset_search", 1350414305u, 0, 12, NULL);
+be_define_const_str(reset_search, "reset_search", 1350414305u, 0, 12, &be_const_str_rollback);
 be_define_const_str(resize, "resize", 3514612129u, 0, 6, NULL);
 be_define_const_str(resolvecmnd, "resolvecmnd", 993361485u, 0, 11, &be_const_str_sin);
 be_define_const_str(resp_cmnd, "resp_cmnd", 2869459626u, 0, 9, NULL);
@@ -777,6 +777,7 @@ be_define_const_str(return, "return", 2246981567u, 60, 6, NULL);
 be_define_const_str(return_X20code_X3D_X25i, "return code=%i", 2127454401u, 0, 14, NULL);
 be_define_const_str(reverse, "reverse", 558918661u, 0, 7, NULL);
 be_define_const_str(reverse_gamma10, "reverse_gamma10", 739112262u, 0, 15, &be_const_str_set_style_pad_right);
+be_define_const_str(rollback, "rollback", 2093668477u, 0, 8, NULL);
 be_define_const_str(rotate, "rotate", 2784296202u, 0, 6, NULL);
 be_define_const_str(round_end, "round_end", 985288225u, 0, 9, &be_const_str_set_tasmota_logo);
 be_define_const_str(round_start, "round_start", 2949484384u, 0, 11, NULL);
@@ -1533,6 +1534,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 502,
-    .count = 1027,
+    .count = 1028,
     .table = m_string_table
 };
