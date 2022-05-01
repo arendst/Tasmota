@@ -299,8 +299,12 @@ bool EspSingleOtaPartition(void) {
   return (1 == esp_ota_get_app_partition_count());
 }
 
-void EspRestartToSaveMode(void) {
-  esp_ota_mark_app_invalid_rollback_and_reboot();
+void EspPrepRestartToSafeMode(void) {
+//  esp_ota_mark_app_invalid_rollback_and_reboot();  // Doesn't work 20220501
+  const esp_partition_t *otadata_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, NULL);
+  if (otadata_partition) {
+    esp_partition_erase_range(otadata_partition, 0, SPI_FLASH_SEC_SIZE * 2);
+  }
 }
 
 uint32_t EspFlashBaseAddress(void) {

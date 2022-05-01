@@ -1249,9 +1249,8 @@ void Every250mSeconds(void)
             RtcSettings.ota_loader = 1;                 // Try safemode image next
             SettingsSaveAll();
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-            ResetPwm();
-            WifiShutdown(true);
-            EspRestartToSaveMode();
+            EspPrepRestartToSafeMode();
+            EspRestart();
           }
 #endif  // FIRMWARE_MINIMAL
 #endif  // ESP32
