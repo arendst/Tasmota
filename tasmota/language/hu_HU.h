@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Frissítés"
 #define D_UPGRADE_BY_FILE_UPLOAD "Frissítés helyi fájllal"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Feltöltés elindítva"
 #define D_UPGRADE_STARTED "Frissítés elindítva"
 #define D_UPLOAD_DONE "Feltöltés kész"

@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA網址"
 #define D_START_UPGRADE "開始升級"
 #define D_UPGRADE_BY_FILE_UPLOAD "透過檔案升級"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "已開始上傳"
 #define D_UPGRADE_STARTED "已開始升級"
 #define D_UPLOAD_DONE "已上傳完成"

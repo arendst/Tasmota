@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Почати оновлення"
 #define D_UPGRADE_BY_FILE_UPLOAD "Оновлення шляхом завантаження файлів"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Завантаження почалось"
 #define D_UPGRADE_STARTED "Оновлення почалось"
 #define D_UPLOAD_DONE "Завантаження завершено"

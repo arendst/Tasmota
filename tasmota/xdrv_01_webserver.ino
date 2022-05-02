@@ -209,10 +209,12 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
 
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT.h"
+  #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT32.h"
   #include "./html_compressed/HTTP_HEAD_STYLE1.h"
   #include "./html_compressed/HTTP_HEAD_STYLE2.h"
 #else
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
+  #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
 #endif
@@ -352,7 +354,17 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
-  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
+
+// upload via factory partition
+const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
+  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<br><input type='file' name='u2'><br>"
+  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";return upl(this);'>" D_START " %s</button></form>"
+  "</fieldset>"
+  "</div>"
+  "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
+  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
 
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br><textarea readonly id='t1' cols='340' wrap='off'></textarea><br><br>"
@@ -844,7 +856,11 @@ void WSContentSendStyle_P(const char* formatP, ...) {
       WSContentSend_P(HTTP_SCRIPT_COUNTER);
     }
   }
+#ifdef ESP32
+  WSContentSend_P(HTTP_HEAD_LAST_SCRIPT32);
+#else
   WSContentSend_P(HTTP_HEAD_LAST_SCRIPT);
+#endif
 
   WSContentSend_P(HTTP_HEAD_STYLE1, WebColor(COL_FORM), WebColor(COL_INPUT), WebColor(COL_INPUT_TEXT), WebColor(COL_INPUT),
                   WebColor(COL_INPUT_TEXT), WebColor(COL_CONSOLE), WebColor(COL_CONSOLE_TEXT), WebColor(COL_BACKGROUND));
@@ -2286,7 +2302,15 @@ void HandleRestoreConfiguration(void)
   WSContentStart_P(PSTR(D_RESTORE_CONFIGURATION));
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_RST);
+#ifdef ESP32
+  if (EspSingleOtaPartition() && !EspRunningFactoryPartition()) {
+    WSContentSend_P(HTTP_FORM_RST_UPG_FCT, PSTR(D_RESTORE));
+  } else {
+    WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_RESTORE));
+  }
+#else
   WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_RESTORE));
+#endif
   if (WifiIsInManagerMode()) {
     WSContentSpaceButton(BUTTON_MAIN);
   } else {
@@ -2511,7 +2535,15 @@ void HandleUpgradeFirmware(void) {
   WSContentStart_P(PSTR(D_FIRMWARE_UPGRADE));
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_UPG, SettingsText(SET_OTAURL));
+#ifdef ESP32
+  if (EspSingleOtaPartition() && !EspRunningFactoryPartition()) {
+    WSContentSend_P(HTTP_FORM_RST_UPG_FCT, PSTR(D_UPGRADE));
+  } else {
+    WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_UPGRADE));
+  }
+#else
   WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_UPGRADE));
+#endif
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
@@ -2955,8 +2987,9 @@ void HandleSwitchFactory(void)
       Webserver->send(302, "text/plain", "");
     }
   }
+  Web.upload_file_type = UPL_TASMOTA;
 }
-#endif
+#endif // ESP32
 
 /*-------------------------------------------------------------------------------------------*/
 

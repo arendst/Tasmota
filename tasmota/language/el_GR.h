@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Εκκίνηση αναβάθμισης"
 #define D_UPGRADE_BY_FILE_UPLOAD "Αναβάθμιση με μεταφόρτωση αρχείου"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Η μεταφόρτωση ξεκίνησε"
 #define D_UPGRADE_STARTED "Η αναβάθμιση ξεκίνησε"
 #define D_UPLOAD_DONE "Η μεταφόρτωση ολοκληρώθηκε"
