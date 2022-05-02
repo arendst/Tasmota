@@ -2896,6 +2896,15 @@ void HandlePreflightRequest(void)
 // `false`: the current partition is not the target, but a restart to factory is triggered (polling required)
 // `true`: the current partition is the one required
 // `none`: there is no factory partition
+
+// return a simple status page as text/plain code 200
+static void WSReturnSimpleString(const char *msg) {
+  if (nullptr == msg) { msg = ""; }
+  Webserver->client().flush();
+  WSHeaderSend();
+  Webserver->send(200, "text/plain", msg);
+}
+
 void HandleSwitchFactory(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -2905,9 +2914,12 @@ void HandleSwitchFactory(void)
 
   bool switch_factory = false;      // trigger a restart to factory partition?
   bool switch_ota = false;          // switch back to OTA partition
+  bool single_ota = false;
+  bool api_mode = Webserver->hasArg("api");   // api-mode, returns `true`, `false` or `none`
 
   // switch to factory ?
   if (EspSingleOtaPartition()) {
+    single_ota = true;
     if (strcmp("fct", tmp1) == 0 && !EspRunningFactoryPartition()) {
       switch_factory = true;
     }
@@ -2917,6 +2929,7 @@ void HandleSwitchFactory(void)
     }
   }
 
+  // apply the change in flash and return result
   if (switch_factory || switch_ota) {
     SettingsSaveAll();
     if (switch_factory) {
@@ -2925,11 +2938,22 @@ void HandleSwitchFactory(void)
       const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
       esp_ota_set_boot_partition(partition);
     }
-    // display restart page
-    WebRestart(0);
+    
+    if (api_mode) {
+      WSReturnSimpleString("false");
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
+      EspRestart();
+    } else {
+      WebRestart(0);
+    }
   } else {
-    Webserver->sendHeader("Location", "/", true);
-    Webserver->send(302, "text/plain", "");
+    if (api_mode) {
+      // return `none` or `true`
+      WSReturnSimpleString(EspSingleOtaPartition() ? "true" : "none");
+    } else {
+      Webserver->sendHeader("Location", "/", true);
+      Webserver->send(302, "text/plain", "");
+    }
   }
 }
 #endif
