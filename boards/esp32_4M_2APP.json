@@ -32,10 +32,6 @@
           [
             "0x10000",
             "variants/tasmota/tasmota32-minicustom.bin"
-          ],
-          [
-            "0x3B0000",
-            "variants/tasmota/littlefs.bin"
           ]
         ]
       },
