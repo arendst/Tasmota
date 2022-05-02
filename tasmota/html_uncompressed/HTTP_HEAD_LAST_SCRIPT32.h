@@ -25,9 +25,27 @@ const char HTTP_HEAD_LAST_SCRIPT32[] PROGMEM =
     "eb('f2').style.display='block';"
     "t.form.submit();"
   "}"
+  "function upl(t){"                            // check file's first byte to decide next step
+    "var sl=t.form['u2'].files[0].slice(0,1);"  // load only first byte of file
+    // "console.log(sl);"
+    // "console.log(sl.length);"
+    "var rd=new FileReader();"
+    "rd.onload=()=>{"
+      // "console.log(\"rd.onload\");"
+      "var bb=new Uint8Array(rd.result);"
+      // "console.log(bb[0]);"
+      // "console.log(bb.length);"
+      "if(bb.length==1&&bb[0]==0xE9){"
+        "fct(t);"            // upload via factory
+      "}else{"
+        "t.form.submit();"  // normal upload
+      "};"
+    "};"
+    "rd.readAsArrayBuffer(sl);"
+    "return false;"
+  "};"
+
   "function fct(t){"
-    // "console.log('running fct');"
-    // "console.log(t);"
     "var x=new XMLHttpRequest();"
     "x.open('GET','/u4?u4=fct&api=',true);"
     "x.onreadystatechange=()=>{"
@@ -43,6 +61,5 @@ const char HTTP_HEAD_LAST_SCRIPT32[] PROGMEM =
     "};"
     "x.send();"
     // "console.log('after send');"
-    "return false;"
   "}"
   "</script>";
