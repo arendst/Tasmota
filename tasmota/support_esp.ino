@@ -299,6 +299,11 @@ bool EspSingleOtaPartition(void) {
   return (1 == esp_ota_get_app_partition_count());
 }
 
+bool EspRunningFactoryPartition(void) {
+  const esp_partition_t *cur_part = esp_ota_get_running_partition();
+  return (cur_part->type == 0 && cur_part->subtype == 0);
+}
+
 void EspPrepRestartToSafeMode(void) {
 //  esp_ota_mark_app_invalid_rollback_and_reboot();  // Doesn't work 20220501
   const esp_partition_t *otadata_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, NULL);
