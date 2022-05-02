@@ -372,6 +372,7 @@
 #define D_OTA_URL "Adres serwera"
 #define D_START_UPGRADE "Aktualizuj"
 #define D_UPGRADE_BY_FILE_UPLOAD "Aktualizacja z pliku"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Wgrywanie rozpoczęte"
 #define D_UPGRADE_STARTED "Aktualizacja rozpoczęta"
 #define D_UPLOAD_DONE "Wgrywanie zakończone"

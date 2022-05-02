@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Start opwaarderen"
 #define D_UPGRADE_BY_FILE_UPLOAD "Opwaarderen dmv verzenden bestand"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Verzending gestart"
 #define D_UPGRADE_STARTED "Opwaarderen gestart"
 #define D_UPLOAD_DONE "Opwaarderen klaar"

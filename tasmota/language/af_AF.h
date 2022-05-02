@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Begin opgradering"
 #define D_UPGRADE_BY_FILE_UPLOAD "Gradeer op volgens lêeroplaai"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Oplaai begin"
 #define D_UPGRADE_STARTED "Opgradering is begin"
 #define D_UPLOAD_DONE "Oplaai gedoen"

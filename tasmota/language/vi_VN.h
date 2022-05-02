@@ -372,6 +372,7 @@
 #define D_OTA_URL "Đường dẫn OTA"
 #define D_START_UPGRADE "Bắt đầu nâng cấp"
 #define D_UPGRADE_BY_FILE_UPLOAD "Nâng cấp thông qua tải lên tệp"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Bắt đầu tải lên"
 #define D_UPGRADE_STARTED "Bắt đầu nâng cấp"
 #define D_UPLOAD_DONE "Hoàn thành tải tệp"

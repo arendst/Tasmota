@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Starta uppdatering"
 #define D_UPGRADE_BY_FILE_UPLOAD "Uppgradering via filuppladdning"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Uppladdning startad"
 #define D_UPGRADE_STARTED "Uppgradeing startad"
 #define D_UPLOAD_DONE "Uppladdning klar"

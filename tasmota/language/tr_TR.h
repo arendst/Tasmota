@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Yükseltmeyi başlat"
 #define D_UPGRADE_BY_FILE_UPLOAD "Dosya kullanrak yükset"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Yükleme başlatıldı"
 #define D_UPGRADE_STARTED "YÜkestlme başlatıldı"
 #define D_UPLOAD_DONE "Yükleme Tamamlandı"

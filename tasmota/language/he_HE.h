@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA כתובת"
 #define D_START_UPGRADE "התחל בשדרוג"
 #define D_UPGRADE_BY_FILE_UPLOAD "שדרוג דרך קובץ נכשל"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "העלאה מתחילה"
 #define D_UPGRADE_STARTED "שדרוג מתחיל"
 #define D_UPLOAD_DONE "העלאה הסתיימה"

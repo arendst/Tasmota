@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Iniciar atualização"
 #define D_UPGRADE_BY_FILE_UPLOAD "Atualização por arquivo local"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Início do envio"
 #define D_UPGRADE_STARTED "Atualização iniciada"
 #define D_UPLOAD_DONE "Atualização finalizada"

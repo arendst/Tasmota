@@ -372,6 +372,7 @@
 #define D_OTA_URL "URL OTA"
 #define D_START_UPGRADE "Spustiť aktualizáciu"
 #define D_UPGRADE_BY_FILE_UPLOAD "Aktualizácia nahraním súboru"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Nahrávanie spustené"
 #define D_UPGRADE_STARTED "Aktualizácia spustená"
 #define D_UPLOAD_DONE "Nahrávanie ukončené"

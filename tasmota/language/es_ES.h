@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Comenzar actualización"
 #define D_UPGRADE_BY_FILE_UPLOAD "Actualizar cargando archivo bin"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Cargando archivo"
 #define D_UPGRADE_STARTED "Actualización iniciada"
 #define D_UPLOAD_DONE "Carga finalizada"

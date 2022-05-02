@@ -372,6 +372,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "업그레이드 시작"
 #define D_UPGRADE_BY_FILE_UPLOAD "파일에서 업로드해 업그레이드"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "업로드 시작됨"
 #define D_UPGRADE_STARTED "업그레이드 시작됨"
 #define D_UPLOAD_DONE "업그레이드 완료"
