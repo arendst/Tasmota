@@ -25,7 +25,6 @@ firmware.asm
 tasmota/tasmota.ino.cpp
 platformio_override.ini
 platformio_tasmota_cenv.ini
-safemode/tas*
 
 ## Visual Studio Code specific ######
 .vscode
