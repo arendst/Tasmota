@@ -169,7 +169,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t tuya_exclude_from_mqtt : 1;   // bit 23 (v11.0.0.5) - SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see xdrv_16_tuyamcu.ino) if SetOption66 is active
     uint32_t gui_table_align : 1;          // bit 24 (v11.0.0.7) - SetOption138 - (GUI) Align (energy) table values left (0) or right (1)
     uint32_t mm_vs_inch : 1;               // bit 25 (v11.1.0.1) - SetOption139 - (Pressure) Switch between mmHg (0) or inHg (1) when SO24 1
-    uint32_t spare26 : 1;                  // bit 26
+    uint32_t mqtt_persistent : 1;          // bit 26 (v11.1.0.1) - SetOption140 - 0=MQTT clean session (default), 1=MQTT persistent session
     uint32_t spare27 : 1;                  // bit 27
     uint32_t spare28 : 1;                  // bit 28
     uint32_t spare29 : 1;                  // bit 29

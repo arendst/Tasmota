@@ -1098,9 +1098,9 @@ void MqttReconnect(void) {
   }
 
   String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, ResponseData(), MQTT_CLEAN_SESSION)) {
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, ResponseData(), Settings->flag5.mqtt_persistent ? 0:1)) {
 #else
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, ResponseData(), MQTT_CLEAN_SESSION)) {
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, ResponseData(), Settings->flag5.mqtt_persistent ? 0:1)) {
 #endif  // USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
