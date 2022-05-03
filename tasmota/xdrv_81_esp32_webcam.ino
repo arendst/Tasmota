@@ -59,7 +59,7 @@
  * WcSaturation = Set picture Saturation -2 ... +2
  * WcBrightness = Set picture Brightness -2 ... +2
  * WcContrast   = Set picture Contrast -2 ... +2
- * WcSpecialEffekt = Set Special Picture Effect: 0 = off, 1 = , 2 = , 3 = , 4 = , 5 = , 6 = 
+ * WcSpecialEffekt = Set Special Picture Effect: 0 = off, 1 = , 2 = , 3 = , 4 = , 5 = , 6 =
  * WcAWB          = Auto White Balance, 0 = no, 1 = yes
  * WcWBMode       = White Balance Mode, 0 = auto, 1 =
  * WcAWBGain      = Auto White Balance Gain, 0 = no, 1 = yes
@@ -80,6 +80,15 @@
  * WcStats        = Show Statistics
  * WcInit         = Init Camera Interface
  * WcRtsp         = Control RTSP Server, 0=disable, 1=enable (forces restart) (if defined ENABLE_RTSPSERVER)
+ *
+ * WcFeature Explanation
+ * See https://hobbylad.files.wordpress.com/2020/02/ov2640-camera-module-software-application-notes.pdf
+ * for more Information
+ * 0: Normal Operation
+ * 1: Reduced FPS: Set XCLK Divisor to 2. Reduces Framerate and also increases exposure time. This causes
+ *    better low light performance. See above document, page 6
+ * 2: Night Mode: Further increase exposure time and lower the Framerate depending on available light.
+ *    See above Document, Page 8
  *
  * Only boards with PSRAM should be used. To enable PSRAM board should be se set to esp32cam in common32 of platform_override.ini
  * board                   = esp32cam
