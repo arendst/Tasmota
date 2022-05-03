@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v11.0.0.7 - Last update 30.04.2022
+ * Updated until v9.4.0.1 - Last update 03.05.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -372,7 +372,7 @@
 #define D_OTA_URL                 "URL OTA"
 #define D_START_UPGRADE           "Esegui aggiornamento"
 #define D_UPGRADE_BY_FILE_UPLOAD  "Aggiornamento tramite file locale"
-#define D_UPLOAD_FACTORY "Switching to safeboot partition"
+#define D_UPLOAD_FACTORY          "Passaggio a partizione avvio sicuro"
 #define D_UPLOAD_STARTED          "Caricamento..."
 #define D_UPGRADE_STARTED         "Aggiornamento..."
 #define D_UPLOAD_DONE             "Caricamento completato"
