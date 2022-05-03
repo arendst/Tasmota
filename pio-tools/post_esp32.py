@@ -37,9 +37,7 @@ variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
 def esp32_fetch_safemode_bin(chip):
     safemode_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + chip[3:] + "-safemode.bin"
-    safemode_fw_name = variants_dir + "/tasmota" + chip[3:] + "-safemode.bin"
-    if not os.path.exists(variants_dir):
-        os.makedirs(variants_dir)
+    safemode_fw_name = join(variants_dir,"tasmota" + chip[3:] + "-safemode.bin")
     if(exists(safemode_fw_name)):
         print("Safemode binary already in place.")
         return
@@ -51,7 +49,7 @@ def esp32_fetch_safemode_bin(chip):
 
 def esp32_copy_new_safemode_bin(chip,new_local_safemode_fw):
     print("Copy new local safemode firmware to variants dir -> using it for further flashing operations")
-    safemode_fw_name = variants_dir + "/tasmota" + chip[3:] + "-safemode.bin"
+    safemode_fw_name = join(variants_dir,"tasmota" + chip[3:] + "-safemode.bin")
     if os.path.exists(variants_dir):
         shutil.copy(new_local_safemode_fw, safemode_fw_name)
 
@@ -86,6 +84,8 @@ def esp32_create_combined_bin(source, target, env):
     sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     chip = env.get("BOARD_MCU")
+    if not os.path.exists(variants_dir):
+        os.makedirs(variants_dir)
     if("safemode" in firmware_name):
         esp32_copy_new_safemode_bin(chip,firmware_name)
     else:
