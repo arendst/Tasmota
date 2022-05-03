@@ -27,7 +27,7 @@
  * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/
 
-#ifdef FIRMWARE-SAFEMODE
+#ifdef FIRMWARE_SAFEMODE
 #define FIRMWARE_MINIMAL 
 
 #undef CODE_IMAGE_STR
