@@ -38,7 +38,7 @@ variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
 
 def esp32_fetch_safemode_bin(chip):
-    safemode_fw_url = "https://github.com/Jason2866/Tasmota-specials/raw/firmware/firmware/tasmota32/other/tasmota" + chip[3:] + "-safemode.bin"
+    safemode_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + chip[3:] + "-safemode.bin"
     safemode_fw_name = safemode_dir + "/tasmota" + chip[3:] + "-safemode.bin"
     if(exists(safemode_fw_name)):
         print("Safemode binary already downloaded.")
