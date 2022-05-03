@@ -187,6 +187,7 @@ enum UserSelectablePins {
   GPIO_RESET,                          // Generic reset
   GPIO_MS01,                           // Sonoff MS01 Moisture Sensor 1wire interface
   GPIO_SDIO_CMD, GPIO_SDIO_CLK, GPIO_SDIO_D0, GPIO_SDIO_D1, GPIO_SDIO_D2, GPIO_SDIO_D3, // SD Card SDIO interface, including 1-bit and 4-bit modes
+  GPIO_FLOWRATEMETER_IN,               // Flowrate Meter
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -418,12 +419,14 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDIO_D1 "|"
   D_SENSOR_SDIO_D2 "|"
   D_SENSOR_SDIO_D3 "|"
+  D_SENSOR_FLOWRATEMETER "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 #define MAX_MAX31865S    6
+#define MAX_FLOWRATEMETER 2
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
@@ -973,6 +976,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_CM11_TXD),        // CM110x Serial interface
   AGPIO(GPIO_CM11_RXD),        // CM110x Serial interface
 #endif
+
+#if defined(USE_FLOWRATEMETER)
+  AGPIO(GPIO_FLOWRATEMETER_IN) + MAX_FLOWRATEMETER, // Flow meter Pin
+#endif
+
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 specifics
 \*-------------------------------------------------------------------------------------------*/

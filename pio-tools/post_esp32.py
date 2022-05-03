@@ -18,25 +18,78 @@
 
 Import("env")
 
+env = DefaultEnvironment()
 platform = env.PioPlatform()
 
+from genericpath import exists
+import os
 import sys
 from os.path import join
+import csv
+import requests
+import shutil
 
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
+
+FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
+variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
+
+def esp32_fetch_safemode_bin(chip):
+    safemode_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + chip[3:] + "-safemode.bin"
+    safemode_fw_name = join(variants_dir,"tasmota" + chip[3:] + "-safemode.bin")
+    if(exists(safemode_fw_name)):
+        print("Safemode binary already in place.")
+        return
+    print("Will download safemode binary from URL:")
+    print(safemode_fw_url)
+    response = requests.get(safemode_fw_url)
+    open(safemode_fw_name, "wb").write(response.content)
+    print("Safemode binary written to variants dir.")
+
+def esp32_copy_new_safemode_bin(chip,new_local_safemode_fw):
+    print("Copy new local safemode firmware to variants dir -> using it for further flashing operations")
+    safemode_fw_name = join(variants_dir,"tasmota" + chip[3:] + "-safemode.bin")
+    if os.path.exists(variants_dir):
+        shutil.copy(new_local_safemode_fw, safemode_fw_name)
 
 def esp32_create_combined_bin(source, target, env):
     #print("Generating combined binary for serial flashing")
 
     # The offset from begin of the file where the app0 partition starts
     # This is defined in the partition .csv file
-    app_offset = 0x10000
+    factory_offset = -1      # error code value
+    app_offset = 0x10000     # default value for "old" scheme
+    spiffs_offset = -1       # error code value
+    with open(env.BoardConfig().get("build.partitions")) as csv_file:
+        print("Read partitions from ",env.BoardConfig().get("build.partitions"))
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                print(f'{",  ".join(row)}')
+                line_count += 1
+            else:
+                print(f'{row[0]}   {row[1]}   {row[2]}   {row[3]}   {row[4]}')
+                line_count += 1
+                if(row[0] == 'app0'):
+                    app_offset = int(row[3],base=16)
+                # elif(row[0] == 'factory'):
+                #     factory_offset = int(row[3],base=16)
+                # elif(row[0] == 'spiffs'):
+                #     spiffs_offset = int(row[3],base=16)
+
 
     new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
     sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     chip = env.get("BOARD_MCU")
+    if not os.path.exists(variants_dir):
+        os.makedirs(variants_dir)
+    if("safemode" in firmware_name):
+        esp32_copy_new_safemode_bin(chip,firmware_name)
+    else:
+        esp32_fetch_safemode_bin(chip)
     flash_size = env.BoardConfig().get("upload.flash_size")
     cmd = [
         "--chip",
@@ -54,8 +107,12 @@ def esp32_create_combined_bin(source, target, env):
         print(f" -  {sect_adr} | {sect_file}")
         cmd += [sect_adr, sect_file]
 
-    print(f" - {hex(app_offset)} | {firmware_name}")
-    cmd += [hex(app_offset), firmware_name]
+    # "main" firmware to app0 - mandatory, except we just built a new safemode bin locally
+    if("safemode" not in firmware_name):
+        print(f" - {hex(app_offset)} | {firmware_name}")
+        cmd += [hex(app_offset), firmware_name]
+    else:
+        print("Upload new safemode binary only")
 
     #print('Using esptool.py arguments: %s' % ' '.join(cmd))
 

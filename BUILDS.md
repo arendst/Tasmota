@@ -216,6 +216,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_HRE               | - | - / x | - | x | - | - |
 | USE_A4988_STEPPER     | - | - / - | - | - | - | - |
 | USE_NEOPOOL           | - | - / - | - | - | - | - |
+| USE_FLOWRATEMETER     | - | - / - | - | - | - | - |
 |                       |   |       |   |   |   |   |
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 | USE_DISPLAY           | - | - / - | - | - | - | x |

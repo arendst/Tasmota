@@ -199,21 +199,22 @@ class Tasmota
 
   # Run rules, i.e. check each individual rule
   # Returns true if at least one rule matched, false if none
-  def exec_rules(ev_json)
-    if self._rules || self.cmd_res != nil  # if there is a rule handler, or we record rule results
+  # `exec_rule` is true, then run the rule, else just record value
+  def exec_rules(ev_json, exec_rule)
+    var save_cmd_res = self.cmd_res     # save initial state (for reentrance)
+    if self._rules || save_cmd_res != nil  # if there is a rule handler, or we record rule results
       import json
-      var ev = json.load(ev_json)   # returns nil if invalid JSON
+      
+      self.cmd_res = nil                  # disable sunsequent recording of results
       var ret = false
+
+      var ev = json.load(ev_json)   # returns nil if invalid JSON
       if ev == nil
         self.log('BRY: ERROR, bad json: '+ev_json, 3)
         ev = ev_json                # revert to string
       end
-      # record the rule payload for tasmota.cmd()
-      if self.cmd_res != nil
-        self.cmd_res = ev
-      end
       # try all rule handlers
-      if self._rules
+      if exec_rule && self._rules
         var i = 0
         while i < size(self._rules)
           var tr = self._rules[i]
@@ -221,6 +222,12 @@ class Tasmota
           i += 1
         end
       end
+
+      # record the rule payload for tasmota.cmd()
+      if save_cmd_res != nil
+        self.cmd_res = ev
+      end
+
       return ret
     end
     return false
@@ -373,9 +380,9 @@ class Tasmota
     if self._ccmd
       import json
       var payload_json = json.load(payload)
-      var cmd_found = self.find_key_i(self._ccmd, cmd)
+      var cmd_found = self.find_key_i(self._ccmd, cmd)  # name of the command as registered (case insensitive search)
       if cmd_found != nil
-        self.resolvecmnd(cmd_found)   # set the command name in XdrvMailbox.command
+        self.resolvecmnd(cmd_found)   # set the command name in XdrvMailbox.command as it was registered first
         self._ccmd[cmd_found](cmd_found, idx, payload, payload_json)
         return true
       end
@@ -464,9 +471,9 @@ class Tasmota
       try
         var compiled = compile(f_name, 'file')
         return compiled
-      except .. as e
+      except .. as e, m
         import string
-        print(string.format('BRY: failed to load \'%s\' (%s)',f_name,e))
+        print(string.format('BRY: failed to load \'%s\' (%s - %s)',f_name,e,m))
       end
       return nil
     end
@@ -633,20 +640,25 @@ class Tasmota
     end
 
     var done = false
+    var keep_going = false    # if true, we continue dispatch event if done == true (for mqtt_data)
+
+    if event_type == 'mqtt_data'
+      keep_going = true
+    end
+
     if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
     elif event_type=='tele' return self.exec_tele(payload)
-    elif event_type=='rule' return self.exec_rules(payload)
+    elif event_type=='rule' return self.exec_rules(payload, bool(idx))
     elif event_type=='gc' return self.gc()
     elif self._drivers
       var i = 0
       while i < size(self._drivers)
-      #for d:self._drivers
         var d = self._drivers[i]
         var f = introspect.get(d, event_type)   # try to match a function or method with the same name
         if type(f) == 'function'
           try
-            done = f(d, cmd, idx, payload, raw)
-            if done break end
+            done = f(d, cmd, idx, payload, raw) || done
+            if done && !keep_going   break end
           except .. as e,m
             print(string.format("BRY: Exception> '%s' - %s", e, m))
             if self._debug_present
@@ -690,6 +702,7 @@ class Tasmota
 
   # cmd high-level function
   def cmd(command)
+    var save_cmd_res = self.cmd_res     # restore value on exit (for reentrant)
     self.cmd_res = true      # signal buffer capture
 
     self._cmd(command)
@@ -698,7 +711,7 @@ class Tasmota
     if self.cmd_res != true       # unchanged
       ret = self.cmd_res
     end
-    self.cmd_res = nil       # clear buffer
+    self.cmd_res = save_cmd_res       # restore previous state
     
     return ret
   end

@@ -30,8 +30,8 @@
       "arduino": {
         "flash_extra_images": [
           [
-            "0x2E0000",
-            "variants/tasmota/tasmota32-minicustom.bin"
+            "0x10000",
+            "variants/tasmota/tasmota32-safemode.bin"
           ]
         ]
       },

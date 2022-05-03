@@ -617,8 +617,7 @@ void WifiConnect(void)
 #endif  // WIFI_RF_PRE_INIT
 }
 
-void WifiShutdown(bool option = false)
-{
+void WifiShutdown(bool option) {
   // option = false - Legacy disconnect also used by DeepSleep
   // option = true  - Disconnect with SDK wifi calibrate sector erase when WIFI_FORCE_RF_CAL_ERASE enabled
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b

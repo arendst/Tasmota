@@ -46,6 +46,8 @@ be_extern_native_module(hue_ntv);
 be_extern_native_module(hue_bridge);
 be_extern_native_module(uuid);
 be_extern_native_module(animate);
+be_extern_native_module(partition_core);
+be_extern_native_module(crc);
 #ifdef USE_LVGL
 be_extern_native_module(lv);
 be_extern_native_module(lv_extra);
@@ -146,6 +148,8 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(webserver),
 #endif // USE_WEBSERVER
     &be_native_module(flash),
+    &be_native_module(partition_core),
+    &be_native_module(crc),
 
     /* user-defined modules register end */
     NULL /* do not remove */

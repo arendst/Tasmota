@@ -372,6 +372,7 @@
 #define D_OTA_URL "Adres serwera"
 #define D_START_UPGRADE "Aktualizuj"
 #define D_UPGRADE_BY_FILE_UPLOAD "Aktualizacja z pliku"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Wgrywanie rozpoczęte"
 #define D_UPGRADE_STARTED "Aktualizacja rozpoczęta"
 #define D_UPLOAD_DONE "Wgrywanie zakończone"
@@ -865,7 +866,8 @@
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
 #define D_SENSOR_CM11_TX       "CM110x TX" 
-#define D_SENSOR_CM11_RX       "CM110x RX" 
+#define D_SENSOR_CM11_RX       "CM110x RX"
+#define D_SENSOR_FLOWRATEMETER "Flowrate"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -913,6 +915,8 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_LITER_PER_MINUTE "l/min"
+#define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
 
 #define D_NEW_ADDRESS          "Ustawiam adres na"
 #define D_OUT_OF_RANGE         "Poza zakresem"
@@ -1053,6 +1057,9 @@
 #define D_FP_ADDRCODE "Adres kodu"           // 0x20 Address code
 #define D_FP_PASSVERIFY "Zweryfikowano poprawnie"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Błąd"              // Any other error
+
+// xsns_96_flowratemeter.ino
+#define D_FLOWRATEMETER_NAME "Flowrate"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

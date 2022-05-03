@@ -39,8 +39,7 @@
  * IfxToken    - Set Influxdb v2 and token
  * IfxPeriod   - Set Influxdb period. If not set (or 0), use Teleperiod
  * IfxSensor   - Set Influxdb sensor logging off (0) or on (1)
- *
- * Set influxdb update interval with command teleperiod
+ * IfxRP       - Set Influxdb retention policy
  *
  * The following triggers result in automatic influxdb numeric feeds without appended time:
  * - this driver initiated state message
@@ -72,6 +71,9 @@
 #endif
 #ifndef INFLUXDB_BUCKET
 #define INFLUXDB_BUCKET    "db"          // [IfxDatabase, IfxBucket] Influxdb v1 database or v2 bucket
+#endif
+#ifndef INFLUXDB_RP
+#define INFLUXDB_RP        ""          // [IfxRP] Influxdb v1 retention policy (blank is default, usually autogen infinite)
 #endif
 
 static const char UninitializedMessage[] PROGMEM = "Unconfigured instance";
@@ -132,6 +134,10 @@ bool InfluxDbParameterInit(void) {
     IFDB._writeUrl += "/write?db=";
     IFDB._writeUrl += UrlEncode(SettingsText(SET_INFLUXDB_BUCKET));
     IFDB._writeUrl += InfluxDbAuth();
+    if (strlen(SettingsText(SET_INFLUXDB_RP)) != 0) {
+      IFDB._writeUrl += "&rp=";
+      IFDB._writeUrl += UrlEncode(SettingsText(SET_INFLUXDB_RP));
+    }
   }
   AddLog(LOG_LEVEL_DEBUG, PSTR("IFX: Url %s"), IFDB._writeUrl.c_str());
 
@@ -427,6 +433,7 @@ void InfluxDbLoop(void) {
 #define D_CMND_INFLUXDBBUCKET   "Bucket"
 #define D_CMND_INFLUXDBPERIOD   "Period"
 #define D_CMND_INFLUXDBSENSOR   "Sensor"
+#define D_CMND_INFLUXDBRP "RP"
 
 const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   "|" D_CMND_INFLUXDBLOG "|"
@@ -434,7 +441,7 @@ const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   D_CMND_INFLUXDBUSER "|" D_CMND_INFLUXDBORG "|"
   D_CMND_INFLUXDBPASSWORD "|" D_CMND_INFLUXDBTOKEN "|"
   D_CMND_INFLUXDBDATABASE "|" D_CMND_INFLUXDBBUCKET "|"
-  D_CMND_INFLUXDBPERIOD "|" D_CMND_INFLUXDBSENSOR;
+  D_CMND_INFLUXDBPERIOD "|" D_CMND_INFLUXDBSENSOR "|" D_CMND_INFLUXDBRP;
 
 void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbState, &CmndInfluxDbLog,
@@ -442,7 +449,7 @@ void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbUser, &CmndInfluxDbUser,
   &CmndInfluxDbPassword, &CmndInfluxDbPassword,
   &CmndInfluxDbDatabase, &CmndInfluxDbDatabase,
-  &CmndInfluxDbPeriod, &CmndInfluxDbSensor };
+  &CmndInfluxDbPeriod, &CmndInfluxDbSensor, &CmndInfluxDbRP };
 
 void InfluxDbReinit(void) {
   IFDB.init = false;
@@ -532,6 +539,14 @@ void CmndInfluxDbDatabase(void) {
   ResponseCmndChar(SettingsText(SET_INFLUXDB_BUCKET));
 }
 
+void CmndInfluxDbRP(void) {
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_INFLUXDB_RP, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? PSTR(INFLUXDB_RP) : XdrvMailbox.data);
+    InfluxDbReinit();
+  }
+  ResponseCmndChar(SettingsText(SET_INFLUXDB_RP));
+}
+
 void CmndInfluxDbPeriod(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings->influxdb_period = XdrvMailbox.payload;
@@ -559,6 +574,7 @@ bool Xdrv59(uint8_t function) {
       SettingsUpdateText(SET_INFLUXDB_ORG, PSTR(INFLUXDB_ORG));
       SettingsUpdateText(SET_INFLUXDB_TOKEN, PSTR(INFLUXDB_TOKEN));
       SettingsUpdateText(SET_INFLUXDB_BUCKET, PSTR(INFLUXDB_BUCKET));
+      SettingsUpdateText(SET_INFLUXDB_RP, PSTR(INFLUXDB_RP));
       Settings->sbflag1.influxdb_default = 1;
     }
   } else if (FUNC_COMMAND == function) {

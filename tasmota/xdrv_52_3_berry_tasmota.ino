@@ -381,7 +381,7 @@ extern "C" {
     if (top == 2 && be_isstring(vm, 2)) {
       const char *msg = be_tostring(vm, 2);
       strlcpy(XdrvMailbox.command, msg, CMDSZ);
-      be_return_nil(vm); // Return nil when something goes wrong
+      be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }
@@ -394,7 +394,7 @@ extern "C" {
       const char *msg = be_tostring(vm, 2);
       be_pop(vm, top);  // avoid Error be_top is non zero message
       ResponseAppend_P(PSTR("%s"), msg);
-      be_return_nil(vm); // Return nil when something goes wrong
+      be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }
