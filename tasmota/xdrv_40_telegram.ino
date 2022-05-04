@@ -83,7 +83,7 @@ bool TelegramInit(void) {
     if (!telegramClient) {
       telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
 
-      if (Settings->flag5.tls_use_fingerprint) {
+      if (Settings->flag5.tls_use_fingerprint) {  // SetOption132 - (TLS) Use fingerprint validation instead of CA based
         telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
       } else {
         telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
@@ -144,7 +144,7 @@ String TelegramConnectToTelegram(const String &command) {
         }
         if (available) {
           response += c;
-          if (response.length() > 800) {  // Allow up to two messages
+          if (response.length() > 2000) {  // Allow up to 5 messages
             break;
           }
         }
