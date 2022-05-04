@@ -43,6 +43,7 @@ jobs:
           - tasmota32s2
           - tasmota32c3
           - tasmota32solo1
+          - tasmota32solo1-safemode
           - tasmota32-safemode
           - tasmota32c3-safemode
           - tasmota32s2-safemode
