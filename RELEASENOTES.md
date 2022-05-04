@@ -104,7 +104,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v11.1.0.1
+## Changelog v11.1.0.2
 ### Added
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` [#15350](https://github.com/arendst/Tasmota/issues/15350)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
@@ -114,11 +114,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for daisy chaining MAX7219 displays [#15345](https://github.com/arendst/Tasmota/issues/15345)
 - Sonoff SPM delayed SetPowerOnState [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Support for flowrate meters like YF-DN50 and similary [#15474](https://github.com/arendst/Tasmota/issues/15474)
-- ESP32 Preparations for Tasmota SafeMode with changed partition scheme allowing larger binaries
 
 ### Breaking Changed
 
 ### Changed
+- ESP32 Tasmota SafeMode with changed partition scheme allowing larger binaries
 
 ### Fixed
 - Improv initial or erase device installation failing to provide Configure WiFi option

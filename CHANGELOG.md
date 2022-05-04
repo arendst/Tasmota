@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.1.0.1]
+## [11.1.0.2]
+### Added
+
+
+### Changed
+- ESP32 Tasmota SafeMode with changed partition scheme allowing larger binaries
+
+### Fixed
+
+
+### Removed
+
+
+## [11.1.0.1] 20220504
 ### Added
 - Support for Sonoff MS01 soil moisture sensor (#15335)
 - Support for daisy chaining MAX7219 displays (#15345)
@@ -14,9 +27,6 @@ All notable changes to this project will be documented in this file.
 - Support for flowrate meters like YF-DN50 and similary (#15474)
 - Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy (#15513)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) (#15530)
-- ESP32 Preparations for Tasmota SafeMode with changed partition scheme allowing larger binaries
-
-### Changed
 
 ### Fixed
 - SCD40 start low power command (#15361)
