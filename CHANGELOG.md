@@ -11,7 +11,10 @@ All notable changes to this project will be documented in this file.
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only (#13515)
 - Sonoff SPM delayed SetPowerOnState (#13447)
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` (#15350)
-- Support for flowrate meters like YF-DN50 and similary
+- Support for flowrate meters like YF-DN50 and similary (#15474)
+- Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy (#15513)
+- Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) (#15530)
+- ESP32 Preparations for Tasmota SafeMode with changed partition scheme allowing larger binaries
 
 ### Changed
 
@@ -21,7 +24,7 @@ All notable changes to this project will be documented in this file.
 - BL09xx negative power presentation (#15374)
 
 ### Removed
-
+- Arduino IDE support
 
 ## [Released]
 

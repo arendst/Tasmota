@@ -194,7 +194,8 @@ a_setoption = [[
     "(Tuya) When Set, avoid the (mqtt-) publish of Tuya MCU Heartbeat response if SetOption66 is active",
     "(GUI) Align (energy) table values left (0) or right (1)",
     "(Pressure) Switch between mmHg (0) or inHg (1) when SO24 1",
-    "","",
+    "(MQTT) MQTT clean session (0 = default) or persistent session (1)",
+    "",
     "","","",""
     ]]
 
@@ -268,7 +269,7 @@ a_features = [[
     "USE_HRG15","USE_VINDRIKTNING","USE_SCD40","USE_HM330X",
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
     "USE_SDM230","USE_CM110x","USE_BL6523","USE_ADE7880",
-    "USE_PCF85363","USE_DS3502","USE_IMPROV","",
+    "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
     "","","",""
     ]]
 
