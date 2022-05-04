@@ -79,7 +79,7 @@ void DeepSleepPrepare(void)
 
   // Timeslip in 0.1 seconds between the real wakeup and the calculated wakeup
   // Because deepsleep is in second and timeslip in 0.1 sec the compare always check if the slip is in the 10% range
-  int16_t timeslip = (int16_t)(RtcSettings.nextwakeup + millis() / 1000 - LocalTime()) * 10;
+  int32_t timeslip = ((int32_t)RtcSettings.nextwakeup + millis() / 1000 - (int32_t)LocalTime()) * 10;
 
   // Allow 10% of deepsleep error to count as valid deepsleep; expecting 3-4%
   // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
@@ -111,11 +111,12 @@ void DeepSleepStart(void)
   WifiShutdown();
   RtcSettingsSave();
   RtcRebootReset();
+  uint64_t deepsleepticker = 100 * (uint64_t)RtcSettings.deepsleep_slip * (uint64_t)(RtcSettings.nextwakeup>LocalTime()?RtcSettings.nextwakeup - LocalTime():RtcSettings.nextwakeup);
 #ifdef ESP8266
-  ESP.deepSleep((uint64_t) 100 * RtcSettings.deepsleep_slip * (RtcSettings.nextwakeup - LocalTime()));
+  ESP.deepSleep(deepsleepticker);
 #endif  // ESP8266
 #ifdef ESP32
-  esp_sleep_enable_timer_wakeup((uint64_t) 100 * RtcSettings.deepsleep_slip * (RtcSettings.nextwakeup - LocalTime()));
+  esp_sleep_enable_timer_wakeup(deepsleepticker);
   esp_deep_sleep_start();
 #endif  // ESP32
   yield();
