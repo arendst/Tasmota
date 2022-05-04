@@ -23,6 +23,44 @@
 #include <berry.h>
 #include "esp_spi_flash.h"
 
+size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t size) {
+    uint32_t addr = address_start;
+    size_t size_left = size;
+    size_t current_offset = 0;
+    esp_err_t ret;
+    // Memory is unaligned, so we need to copy it to an aligned buffer
+    uint8_t buffer[SPI_FLASH_SEC_SIZE] __attribute__((aligned(4)));
+
+    while (size_left) {
+      uint32_t page_addr = addr & ~(SPI_FLASH_SEC_SIZE - 1);
+      uint32_t addr_in_page = addr & (SPI_FLASH_SEC_SIZE - 1);
+      uint32_t size_in_page = size_left;
+      if (addr_in_page + size_in_page > SPI_FLASH_SEC_SIZE) {
+        size_in_page = SPI_FLASH_SEC_SIZE - addr_in_page;
+      }
+
+      AddLog(LOG_LEVEL_DEBUG, ">>>: flash_write addr=%p size=%i -- page_addr=%p addr_in_page=%p size_in_page=%i size_left=%i", address_start, size, page_addr, addr_in_page, size_in_page, size_left);
+      // check if whole page?
+      if (addr_in_page == 0 && size_in_page == SPI_FLASH_SEC_SIZE) {
+        memcpy(buffer, data + current_offset, SPI_FLASH_SEC_SIZE);
+      } else {
+        ret = spi_flash_read(page_addr, buffer, SPI_FLASH_SEC_SIZE);
+        if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not read flash %p (0x%X)", page_addr, SPI_FLASH_SEC_SIZE); return 0; }
+        memcpy(buffer + addr_in_page, data + current_offset, size_in_page);
+      }
+      ret = spi_flash_erase_sector(page_addr / SPI_FLASH_SEC_SIZE);
+      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not erase flash sector 0x%X", page_addr / SPI_FLASH_SEC_SIZE); return 0; }
+      spi_flash_write(page_addr, buffer, SPI_FLASH_SEC_SIZE);
+      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not write flash %p (0x%X)", page_addr, SPI_FLASH_SEC_SIZE); return 0; }
+
+      addr += size_in_page;
+      current_offset += size_in_page;
+      size_left -= size_in_page;
+    }
+
+    return current_offset;
+}
+
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -69,9 +107,9 @@ extern "C" {
         size_t length = 0;
         const void * bytes = be_tobytes(vm, 2, &length);
         if (bytes && length > 0) {
-          esp_err_t ret = spi_flash_write(address, bytes, length);
-          if (ret)  {
-            be_raise(vm, "internal_error", "Error calling spi_flash_read()");
+          size_t ret = FlashWriteSubSector(address, (const uint8_t*)bytes, length);
+          if (ret == 0)  {
+            be_raise(vm, "internal_error", "Error calling spi_flash_write()");
           }
           be_return_nil(vm);
           // success

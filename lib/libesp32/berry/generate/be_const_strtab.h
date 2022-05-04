@@ -1016,6 +1016,7 @@ extern const bcstring be_const_str_write8;
 extern const bcstring be_const_str_write_bit;
 extern const bcstring be_const_str_write_bytes;
 extern const bcstring be_const_str_write_file;
+extern const bcstring be_const_str_write_flash;
 extern const bcstring be_const_str_write_gpio;
 extern const bcstring be_const_str_x;
 extern const bcstring be_const_str_x1;
