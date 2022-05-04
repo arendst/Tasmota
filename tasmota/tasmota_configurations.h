@@ -778,6 +778,8 @@
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "minimal"
 
+#define FIRMWARE_MINIMAL_ONLY
+
 #undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
 #undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation

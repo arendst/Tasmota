@@ -25,25 +25,14 @@
 /*********************************************************************************************\
  * [tasmota32x-safemode.bin]
  * Provide an image with useful supported sensors enabled
+ *
+ * Is a copy of FIRMWARE_MINIMAL with some additional features enabled
 \*********************************************************************************************/
 
 #ifdef FIRMWARE_SAFEMODE
-#define FIRMWARE_MINIMAL 
 
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "safemode"
-
-#define USE_TLS
-#define USE_WEBSERVER
-#define USE_WEBCLIENT
-#define USE_WEBCLIENT_HTTPS
-
-#undef USE_UFILESYS
-#undef GUI_TRASH_FILE
-#undef GUI_EDIT_FILE
-#undef USE_PING
-#undef USE_AUTOCONF
-#undef USE_BERRY
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
@@ -54,6 +43,10 @@
 #undef FIRMWARE_BLUETOOTH
 #undef FIRMWARE_LVGL
 #undef FIRMWARE_TASMOTA32
+
+/*-------------------------------------------------------------------------------------------*\
+ * Start copy of all undefines from FIRMWARE_MINIMAL
+\*-------------------------------------------------------------------------------------------*/
 
 #undef USE_IMPROV                                // Disable support for IMPROV serial protocol as used by esp-web-tools (+2k code)
 #undef USE_TASMESH                               // Disable Tasmota Mesh using ESP-NOW (+11k code)
@@ -164,6 +157,30 @@
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #undef USE_AC_ZERO_CROSS_DIMMER                  // Disable support for AC_ZERO_CROSS_DIMMER
+
+/*-------------------------------------------------------------------------------------------*\
+ * End copy of all undefines from FIRMWARE_MINIMAL
+ *
+ * Start FIRMWARE_SAFEMODE specific additions
+\*-------------------------------------------------------------------------------------------*/
+
+#define FIRMWARE_MINIMAL
+
+#undef FIRMWARE_MINIMAL_ONLY
+
+#undef USE_ESP32_SENSORS
+#undef USE_UFILESYS
+#undef GUI_TRASH_FILE
+#undef GUI_EDIT_FILE
+#undef USE_PING
+#undef USE_AUTOCONF
+#undef USE_BERRY
+
+#define USE_TLS
+#define USE_WEBSERVER
+#define USE_WEBCLIENT
+#define USE_WEBCLIENT_HTTPS
+
 #endif  // FIRMWARE_SAFEMODE
 
 /*********************************************************************************************\
