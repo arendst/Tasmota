@@ -454,7 +454,58 @@ extern "C" {
     be_pushint(vm, cl->getSize());
     be_return(vm);  /* return code */
   }
+}
 
+extern size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t size);
+
+class StreamFlash: public Stream
+{
+public:
+  StreamFlash(uint32_t addr) : addr_start(addr), offset(0) {};
+
+  size_t write(const uint8_t *buffer, size_t size) override {
+    AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
+    if (size > 0) {
+      size_t ret = FlashWriteSubSector(addr_start + offset, buffer, size);
+      if (ret == 0)  { return 0; }  // error
+      offset += size;
+    }
+    return size;
+  }
+  size_t write(uint8_t data) override {
+    write(&data, 1);
+    return 1;
+  }
+
+  int available() override { return 0; }
+  int read() override { return -1; }
+  int peek() override { return -1; }
+  void flush() override { }
+
+protected:
+  uint32_t addr_start;      // start address
+  uint32_t offset;          // how many bytes have already been written
+};
+
+extern "C" {
+  int32_t wc_writeflash(struct bvm *vm);
+  int32_t wc_writeflash(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isint(vm, 2)) {
+      HTTPClientLight * cl = wc_getclient(vm);
+      uint32_t addr = be_toint(vm, 2);
+      if (addr < 0x10000 || addr >= 0x400000) {
+        be_raise(vm, "value_error", "invalid flash address");
+      }
+
+      StreamFlash flash_writer(addr);
+      cl->writeToStream(&flash_writer);
+      
+      be_pushbool(vm, btrue);
+      be_return(vm);  /* return code */
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
 }
 
 #endif // USE_WEBCLIENT
