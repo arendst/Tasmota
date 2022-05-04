@@ -3420,7 +3420,7 @@ const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
   D_CMND_WEBLOG "|"
-#ifndef FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL_ONLY
   D_CMND_WEBTIME "|"
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
@@ -3436,12 +3436,12 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_CORS
   "|" D_CMND_CORS
 #endif
-#endif  // FIRMWARE_MINIMAL
+#endif  // FIRMWARE_MINIMAL_ONLY
 ;
 
 void (* const WebCommand[])(void) PROGMEM = {
   &CmndWeblog,
-#ifndef FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL_ONLY
   &CmndWebTime,
 #ifdef USE_EMULATION
   &CmndEmulation,
@@ -3457,7 +3457,7 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_CORS
   , &CmndCors
 #endif
-#endif  // FIRMWARE_MINIMAL
+#endif  // FIRMWARE_MINIMAL_ONLY
   };
 
 /*********************************************************************************************\
