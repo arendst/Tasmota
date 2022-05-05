@@ -36,7 +36,7 @@ FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
 def esp32_fetch_safeboot_bin(chip):
-    safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + chip[3:] + "-safeboot.bin"
+    safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin"
     safeboot_fw_name = join(variants_dir,"tasmota" +  ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin")
     if(exists(safeboot_fw_name)):
         print("safeboot binary already in place.")
