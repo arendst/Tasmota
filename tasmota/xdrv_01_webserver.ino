@@ -540,7 +540,7 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "u2", HTTP_OPTIONS, HandlePreflightRequest },
   { "u3", HTTP_ANY, HandleUploadDone },
 #ifdef ESP32
-  { "u4", HTTP_GET, HandleSwitchFactory },
+  { "u4", HTTP_GET, HandleSwitchBootPartition },
 #endif // ESP32
   { "mn", HTTP_GET, HandleManagement },
   { "cs", HTTP_GET, HandleConsole },
@@ -2924,9 +2924,10 @@ void HandlePreflightRequest(void)
 /*-------------------------------------------------------------------------------------------*/
 
 #ifdef ESP32
-// Check if we are in single-mode OTA, if so restart to factory mode
+// Switch boot partition
 //
 // Parameter `u4` is either `fct` or `ota` to switch to factory or ota
+// If not in single-OTA mode
 //
 // The page can return the followinf (code 200)
 // `false`: the current partition is not the target, but a restart to factory is triggered (polling required)
@@ -2941,7 +2942,7 @@ static void WSReturnSimpleString(const char *msg) {
   Webserver->send(200, "text/plain", msg);
 }
 
-void HandleSwitchFactory(void)
+void HandleSwitchBootPartition(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -2950,19 +2951,19 @@ void HandleSwitchFactory(void)
 
   bool switch_factory = false;      // trigger a restart to factory partition?
   bool switch_ota = false;          // switch back to OTA partition
-  bool single_ota = false;
+  bool single_ota = EspSingleOtaPartition();
   bool api_mode = Webserver->hasArg("api");   // api-mode, returns `true`, `false` or `none`
 
+  // switch to next OTA?
+  if (strcmp("ota", tmp1) == 0) {
+    switch_ota = true;
+    if (single_ota && !EspRunningFactoryPartition()) {
+      switch_ota = false;                     // if in single-OTA and already running OTA, nothing to do
+    }
+  }
   // switch to factory ?
-  if (EspSingleOtaPartition()) {
-    single_ota = true;
-    if (strcmp("fct", tmp1) == 0 && !EspRunningFactoryPartition()) {
-      switch_factory = true;
-    }
-    // switch to OTA
-    else if (strcmp("ota", tmp1) == 0 && EspRunningFactoryPartition()) {
-      switch_ota = true;
-    }
+  if (strcmp("fct", tmp1) == 0 && single_ota && !EspRunningFactoryPartition()) {
+    switch_factory = true;
   }
 
   // apply the change in flash and return result
