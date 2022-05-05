@@ -875,6 +875,14 @@ void CmndRestart(void)
     TasmotaGlobal.restart_halt = true;
     ResponseCmndChar(PSTR(D_JSON_HALTING));
     break;
+#ifdef ESP32
+  case 3:
+    if (EspPrepSwitchToOtherPartition()) {
+      TasmotaGlobal.restart_flag = 2;
+      ResponseCmndChar(PSTR("Switching"));
+    }
+    break;
+#endif  // ESP32
   case -1:
     CmndCrash();    // force a crash
     break;

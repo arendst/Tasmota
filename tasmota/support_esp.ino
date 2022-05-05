@@ -312,6 +312,20 @@ void EspPrepRestartToSafeBoot(void) {
   }
 }
 
+bool EspPrepSwitchToOtherPartition(void) {
+  bool valid = EspSingleOtaPartition();
+  if (valid) {
+    bool running_factory = EspRunningFactoryPartition();
+    if (!running_factory) {
+      EspPrepRestartToSafeBoot();
+    } else {
+      const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+      esp_ota_set_boot_partition(partition);
+    }
+  }
+  return valid;
+}
+
 uint32_t EspFlashBaseAddress(void) {
   if (EspSingleOtaPartition()) {       // Only one partition so start at end of sketch
     const esp_partition_t *running = esp_ota_get_running_partition();

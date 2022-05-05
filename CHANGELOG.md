@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [11.1.0.2]
 ### Added
-
+- ESP32 Command ``Restart 3`` to switch between SafeBoot and Production 
 
 ### Changed
 - ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
