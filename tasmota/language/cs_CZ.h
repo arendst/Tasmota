@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pro používání prostředí Tasmota povolte JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNÍ<br>prosím zaktualizujte"
 #define D_WEBSERVER_ACTIVE_ON "Aktivní Web server"
 #define D_WITH_IP_ADDRESS "na IP adrese"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "URL OTA"
 #define D_START_UPGRADE "Start aktualizace"
 #define D_UPGRADE_BY_FILE_UPLOAD "Aktualizace nahráním souboru"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Nahrávání zahájeno"
 #define D_UPGRADE_STARTED "Zahájení aktualizace"
 #define D_UPLOAD_DONE "Nahrávání ukončeno"

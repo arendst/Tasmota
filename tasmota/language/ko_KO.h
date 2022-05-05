@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Tasmota를 사용하려면 JavaScript를 활성화 하십시오."
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>업그레이드가 필요합니다"
 #define D_WEBSERVER_ACTIVE_ON "Web 서버 작동 중"
 #define D_WITH_IP_ADDRESS "IP 주소"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "업그레이드 시작"
 #define D_UPGRADE_BY_FILE_UPLOAD "파일에서 업로드해 업그레이드"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "업로드 시작됨"
 #define D_UPGRADE_STARTED "업그레이드 시작됨"
 #define D_UPLOAD_DONE "업그레이드 완료"

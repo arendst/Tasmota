@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Para usar o Tasmota, por favor habilite o  JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware mínimo<br>Atualizar por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor WEB ativo em"
 #define D_WITH_IP_ADDRESS "com o endereço IP"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Iniciar atualização"
 #define D_UPGRADE_BY_FILE_UPLOAD "Atualização por arquivo local"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Início do envio"
 #define D_UPGRADE_STARTED "Atualização iniciada"
 #define D_UPLOAD_DONE "Atualização finalizada"

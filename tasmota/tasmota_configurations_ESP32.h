@@ -23,16 +23,16 @@
 #ifdef ESP32
 
 /*********************************************************************************************\
- * [tasmota32x-safemode.bin]
+ * [tasmota32x-safeboot.bin]
  * Provide an image with useful supported sensors enabled
  *
  * Is a copy of FIRMWARE_MINIMAL with some additional features enabled
 \*********************************************************************************************/
 
-#ifdef FIRMWARE_SAFEMODE
+#ifdef FIRMWARE_SAFEBOOT
 
 #undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "safemode"
+#define CODE_IMAGE_STR "safeboot"
 
 #undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
@@ -161,7 +161,7 @@
 /*-------------------------------------------------------------------------------------------*\
  * End copy of all undefines from FIRMWARE_MINIMAL
  *
- * Start FIRMWARE_SAFEMODE specific additions
+ * Start FIRMWARE_SAFEBOOT specific additions
 \*-------------------------------------------------------------------------------------------*/
 
 #define FIRMWARE_MINIMAL
@@ -181,7 +181,7 @@
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
 
-#endif  // FIRMWARE_SAFEMODE
+#endif  // FIRMWARE_SAFEBOOT
 
 /*********************************************************************************************\
  * [tasmota32-webcam.bin]

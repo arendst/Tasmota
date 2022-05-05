@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pentru a folosi Tasmota, vă rugăm activați JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "firmware MINIMAL<br>vă rugăm actualizați"
 #define D_WEBSERVER_ACTIVE_ON "Server Web activ"
 #define D_WITH_IP_ADDRESS "cu adresa IP "
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Porneste actualizare"
 #define D_UPGRADE_BY_FILE_UPLOAD "Actualizare prin încărcare fișier"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Încărcare începută"
 #define D_UPGRADE_STARTED "Actualizare începută"
 #define D_UPLOAD_DONE "Încărcare terminată"

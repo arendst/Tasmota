@@ -39,11 +39,11 @@ jobs:
           - tasmota32-lvgl
           - tasmota32c3
           - tasmota32solo1
-          - tasmota32solo1-safemode
-          - tasmota32-safemode
-          - tasmota32c3-safemode
-          - tasmota32s2-safemode
-          - tasmota32s3-safemode
+          - tasmota32solo1-safeboot
+          - tasmota32-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s3-safeboot
     steps:
       - uses: actions/checkout@v2
         with:
@@ -122,7 +122,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32c3*.* ] || mv ./mv_firmware/firmware/tasmota32c3*.* ./firmware/tasmota32/
-        [ ! -f ./mv_firmware/firmware/tasmota32-safemode* ] || mv ./mv_firmware/firmware/tasmota32-safemode* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-safeboot* ] || mv ./mv_firmware/firmware/tasmota32-safeboot* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-* ] || mv ./mv_firmware/firmware/tasmota32-* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/

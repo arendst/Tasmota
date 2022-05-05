@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "為了要使用 Tasmota，請啟用 JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL韌體<br>請升級"
 #define D_WEBSERVER_ACTIVE_ON "網頁伺服器已經啟動，位於:"
 #define D_WITH_IP_ADDRESS "IP位址:"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA網址"
 #define D_START_UPGRADE "開始升級"
 #define D_UPGRADE_BY_FILE_UPLOAD "透過檔案升級"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "已開始上傳"
 #define D_UPGRADE_STARTED "已開始升級"
 #define D_UPLOAD_DONE "已上傳完成"

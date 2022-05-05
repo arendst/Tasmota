@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Aktivearje JavaScript foar Tasmota"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMALE firmware <br> upgrade"
 #define D_WEBSERVER_ACTIVE_ON "Webserver aktyf op"
 #define D_WITH_IP_ADDRESS "mei IP-adres"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Begjin upgrade"
 #define D_UPGRADE_BY_FILE_UPLOAD "Upgrade op bestân upload"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Upload begon"
 #define D_UPGRADE_STARTED "Upgrade begon"
 #define D_UPLOAD_DONE "Upload dien"

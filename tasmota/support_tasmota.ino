@@ -1246,10 +1246,10 @@ void Every250mSeconds(void)
 #ifdef ESP32
 #ifndef FIRMWARE_MINIMAL
           if (EspSingleOtaPartition()) {
-            RtcSettings.ota_loader = 1;                 // Try safemode image next
+            RtcSettings.ota_loader = 1;                 // Try safeboot image next
             SettingsSaveAll();
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
-            EspPrepRestartToSafeMode();
+            EspPrepRestartToSafeBoot();
             EspRestart();
           }
 #endif  // FIRMWARE_MINIMAL

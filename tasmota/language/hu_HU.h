@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "A Tasmota használatához engedélyezd a Javascriptet!"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMÁLIS firmware<br>frissítsd!"
 #define D_WEBSERVER_ACTIVE_ON "Webszerver aktív:"
 #define D_WITH_IP_ADDRESS "IP cím:"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Frissítés"
 #define D_UPGRADE_BY_FILE_UPLOAD "Frissítés helyi fájllal"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Feltöltés elindítva"
 #define D_UPGRADE_STARTED "Frissítés elindítva"
 #define D_UPLOAD_DONE "Feltöltés kész"

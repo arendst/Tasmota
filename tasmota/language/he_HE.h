@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "JavaScript - כדי להשתמש בקושחת אסמוטה אנא הפעל"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "קושחה מינימלית<br>בבקשה אנא שדרג"
 #define D_WEBSERVER_ACTIVE_ON "שרת ווב פעיל"
 #define D_WITH_IP_ADDRESS "IP עם כתובת"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA כתובת"
 #define D_START_UPGRADE "התחל בשדרוג"
 #define D_UPGRADE_BY_FILE_UPLOAD "שדרוג דרך קובץ נכשל"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "העלאה מתחילה"
 #define D_UPGRADE_STARTED "שדרוג מתחיל"
 #define D_UPLOAD_DONE "העלאה הסתיימה"
