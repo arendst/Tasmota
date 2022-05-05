@@ -21,6 +21,7 @@
 #define BE_FUNCTION     6
 
 #define BE_GCOBJECT     16      /* from this type can be gced */
+#define BE_GCOBJECT_MAX (3<<5)  /* from this type can't be gced */
 
 #define BE_STRING       16
 #define BE_CLASS        17
