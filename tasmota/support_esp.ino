@@ -303,9 +303,13 @@ bool EspSingleOtaPartition(void) {
   return (1 == esp_ota_get_app_partition_count());
 }
 
-bool EspRunningFactoryPartition(void) {
+uint32_t EspRunningFactoryPartition(void) {
   const esp_partition_t *cur_part = esp_ota_get_running_partition();
-  return (cur_part->type == 0 && cur_part->subtype == 0);
+//  return (cur_part->type == 0 && cur_part->subtype == 0);
+  if (cur_part->type == 0 && cur_part->subtype == 0) {
+    return cur_part->size;
+  }
+  return 0;
 }
 
 void EspPrepRestartToSafeBoot(void) {
@@ -459,10 +463,8 @@ uint32_t ESP_getChipId(void) {
 }
 
 uint32_t ESP_getFreeSketchSpace(void) {
-  if (EspRunningFactoryPartition()) {
-    return 0xD0000;   // SafeBoot (factory) partition size
-  }
-  return ESP.getFreeSketchSpace();
+  uint32_t size = EspRunningFactoryPartition();
+  return (size) ? size : ESP.getFreeSketchSpace();
 }
 
 uint32_t ESP_getSketchSize(void) {
