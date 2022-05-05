@@ -45,11 +45,11 @@ jobs:
           - tasmota32s2-safeboot
           - tasmota32s3-safeboot
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
           pip install -U platformio
@@ -69,11 +69,11 @@ jobs:
         variant: [ tasmota, tasmota32 ]
         language: [ AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
           pip install -U platformio
@@ -143,7 +143,7 @@ jobs:
     needs: Upload
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Creat trigger.txt
       run: |
          echo ${GITHUB_SHA}  &> trigger.txt
