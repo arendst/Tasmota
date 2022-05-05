@@ -300,7 +300,7 @@ void WcApplySettings() {
   wc_s->set_dcw(wc_s, Settings->webcam_config.dcw);
   wc_s->set_bpc(wc_s, Settings->webcam_config.bpc);
 
-  WcFeature(Settings->webcam_config.feature); 
+  WcFeature(Settings->webcam_config.feature);
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Settings updated"));
 }
@@ -405,7 +405,7 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_reset = RESET_GPIO_NUM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Default template"));
   }
-  
+
   int32_t ledc_channel = analogAttach(config.pin_xclk);
   if (ledc_channel < 0) {
     AddLog(LOG_LEVEL_ERROR, "CAM: cannot allocated ledc cahnnel, remove a PWM GPIO");
@@ -1249,7 +1249,7 @@ const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   D_CMND_WC_AWB "|" D_CMND_WC_WB_MODE "|" D_CMND_WC_AWB_GAIN "|" D_CMND_WC_AEC "|"
   D_CMND_WC_AEC_VALUE "|" D_CMND_WC_AE_LEVEL "|" D_CMND_WC_AEC2 "|" D_CMND_WC_AGC "|"
   D_CMND_WC_AGC_GAIN "|" D_CMND_WC_GAINCEILING "|" D_CMND_WC_RAW_GMA "|" D_CMND_WC_LENC "|"
-  D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|" 
+  D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|"
   D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT
 #ifdef ENABLE_RTSPSERVER
   "|" D_CMND_RTSP
@@ -1262,7 +1262,7 @@ void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcamAWB, &CmndWebcamWBMode, &CmndWebcamAWBGain, &CmndWebcamAEC, &CmndWebcamAECValue,
   &CmndWebcamAELevel, &CmndWebcamAEC2, &CmndWebcamAGC, &CmndWebcamAGCGain, &CmndWebcamGainCeiling,
   &CmndWebcamGammaCorrect, &CmndWebcamLensCorrect, &CmndWebcamWPC, &CmndWebcamDCW, &CmndWebcamBPC,
-  &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults, 
+  &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults,
   &CmndWebcamStats, &CmndWebcamInit
 #ifdef ENABLE_RTSPSERVER
   , &CmndWebRtsp
@@ -1536,8 +1536,7 @@ void WcUpdateStats(void) {
   WcStats.camcnt = 0;
 }
 
-#define D_UNIT_FPS "FPS"
-const char HTTP_WEBCAM_FPS[] PROGMEM = "{s}%s Frames per Second {m}%d " D_UNIT_FPS  "{e}";
+const char HTTP_WEBCAM_FPS[] PROGMEM = "{s}%s " D_FRAME_RATE "{m}%d " D_UNIT_FPS  "{e}";
 
 void WcStatsShow(void) {
 #ifdef USE_WEBSERVER
