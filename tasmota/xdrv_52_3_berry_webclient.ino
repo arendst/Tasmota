@@ -458,17 +458,25 @@ extern "C" {
 
 extern size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t size);
 
+const uint32_t STREAM_FLASH_PROGRESS_THRESHOLD_KB = 100;    // display log entry every 100kB
+const uint32_t STREAM_FLASH_PROGRESS_THRESHOLD = STREAM_FLASH_PROGRESS_THRESHOLD_KB * 1024;
+
 class StreamFlash: public Stream
 {
 public:
   StreamFlash(uint32_t addr) : addr_start(addr), offset(0) {};
 
   size_t write(const uint8_t *buffer, size_t size) override {
-    AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
+    // AddLog(LOG_LEVEL_INFO, "FLASH: addr=%p  hex=%*_H  size=%i", addr_start + offset, 32, buffer, size);
     if (size > 0) {
-      size_t ret = FlashWriteSubSector(addr_start + offset, buffer, size);
-      if (ret == 0)  { return 0; }  // error
+      esp_err_t ret = spi_flash_write(addr_start + offset, buffer, size);
+      if (ret != ESP_OK)  { return 0; }  // error
       offset += size;
+
+      // shall we display a progress indicator?
+      if (((offset - size) / STREAM_FLASH_PROGRESS_THRESHOLD) != (offset / STREAM_FLASH_PROGRESS_THRESHOLD)) {
+        AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "Progress %d kB", offset / 1024);
+      }
     }
     return size;
   }
@@ -495,13 +503,38 @@ extern "C" {
       HTTPClientLight * cl = wc_getclient(vm);
       uint32_t addr = be_toint(vm, 2);
       if (addr < 0x10000 || addr >= 0x400000) {
-        be_raise(vm, "value_error", "invalid flash address");
+        be_raisef(vm, "value_error", "invalid flash address 0x04X", addr);
+      }
+      if (addr & (SPI_FLASH_SEC_SIZE-1) != 0) {
+        be_raisef(vm, "value_error", "invalid flash address, must be at %iKB boundary 0x%04X", SPI_FLASH_SEC_SIZE/1024, addr);
+      }
+      int32_t size = cl->getSize();
+      if (size <= 0 || addr+size >= 0x400000) {
+        be_raisef(vm, "value_error", "invalid flash size 0x%04X", size);
+      }
+
+      int32_t size_rounded_4k = (size + SPI_FLASH_SEC_SIZE - 1) & ~(SPI_FLASH_SEC_SIZE - 1);
+
+      //  erase region
+      esp_err_t ret;
+      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "erasing flash at 0x%04X length 0x%04X", addr, size_rounded_4k);
+      ret = spi_flash_erase_range(addr, size_rounded_4k);
+      if (ret != ESP_OK) {
+        be_raisef(vm, "internal_error", "unable to erase flash region (%i)", ret);
       }
 
       StreamFlash flash_writer(addr);
-      cl->writeToStream(&flash_writer);
+      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "writing flash at 0x%04X size 0x%04X", addr, size);
+      int32_t written = cl->writeToStream(&flash_writer);
+      if (written <= 0) {
+        be_raisef(vm, "internal_error", "unable to write flash (%i)", written);
+      }
+      if (written != size) {
+        be_raisef(vm, "internal_error", "failed, written %i bytes vs %i", written, size);
+      }
+      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "flash writing succesful");
       
-      be_pushbool(vm, btrue);
+      be_pushint(vm, written);
       be_return(vm);  /* return code */
     }
     be_raise(vm, kTypeError, nullptr);
