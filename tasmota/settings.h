@@ -587,7 +587,7 @@ typedef struct {
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
-  WebCamCfg2    webcam_config2;            // 448
+  uint8_t       free_esp32_448[4];         // 448
 #ifdef CONFIG_IDF_TARGET_ESP32S2
   uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
 #endif
@@ -691,7 +691,11 @@ typedef struct {
   mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
 #endif  // ESP8266
 #ifdef ESP32
-  uint8_t       free_esp32_72f[14];        // 72F
+  uint8_t       free_esp32_72f[1];         // 72F
+
+  WebCamCfg2    webcam_config2;            // 730
+
+  uint8_t       free_esp32_734[9];         // 734
 #endif  // ESP32
 
   uint8_t       novasds_startingoffset;    // 73D
