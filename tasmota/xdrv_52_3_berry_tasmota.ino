@@ -184,7 +184,7 @@ extern "C" {
       be_newobject(vm, "map");
       be_map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
       be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
-      be_map_insert_int(vm, "program_free", ESP.getFreeSketchSpace() / 1024);
+      be_map_insert_int(vm, "program_free", ESP_getFreeSketchSpace() / 1024);
       be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
       be_map_insert_int(vm, "frag", ESP_getHeapFragmentation());
       // give info about stack size

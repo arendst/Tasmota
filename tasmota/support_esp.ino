@@ -45,6 +45,10 @@ uint32_t ESP_getChipId(void) {
   return ESP.getChipId();
 }
 
+uint32_t ESP_getFreeSketchSpace(void) {
+  return ESP.getFreeSketchSpace();
+}
+
 uint32_t ESP_getSketchSize(void) {
   return ESP.getSketchSize();
 }
@@ -452,6 +456,13 @@ uint32_t ESP_getChipId(void) {
     id |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
   }
   return id;
+}
+
+uint32_t ESP_getFreeSketchSpace(void) {
+  if (EspSingleOtaPartition()) {
+    return 0xD0000;   // SafeBoot (factory) partition size
+  }
+  return ESP.getFreeSketchSpace();
 }
 
 uint32_t ESP_getSketchSize(void) {

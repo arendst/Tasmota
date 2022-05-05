@@ -2460,7 +2460,7 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d kB"), ESP.getFlashChipSize() / 1024);
 #endif
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d kB"), ESP_getSketchSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP.getFreeSketchSpace() / 1024);
+  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP_getFreeSketchSpace() / 1024);
 #ifdef ESP32
   WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f kB (" D_FRAGMENTATION " %d%%)"), &freemem, ESP_getHeapFragmentation());
   if (UsePSRAM()) {
@@ -2786,7 +2786,7 @@ void HandleUploadLoop(void) {
           }
   //            upload.buf[2] = 3;  // Force DOUT - ESP8285
         }
-        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+        uint32_t maxSketchSpace = (ESP_getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
         if (!Update.begin(maxSketchSpace)) {         //start with max available size
           Web.upload_error = 2;  // Not enough space
           return;

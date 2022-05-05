@@ -623,7 +623,7 @@ void CmndStatus(void)
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
 #endif  // ESP8266
                           ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
-                          ESP_getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
+                          ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
 #endif  // ESP32
