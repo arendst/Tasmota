@@ -459,7 +459,7 @@ uint32_t ESP_getChipId(void) {
 }
 
 uint32_t ESP_getFreeSketchSpace(void) {
-  if (EspSingleOtaPartition()) {
+  if (EspRunningFactoryPartition()) {
     return 0xD0000;   // SafeBoot (factory) partition size
   }
   return ESP.getFreeSketchSpace();
