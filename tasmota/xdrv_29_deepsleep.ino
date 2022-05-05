@@ -25,7 +25,7 @@
  * - GPIO_DEEPSLEEP may be used to stop DeepSleep when connected to Gnd
  * - GPIO16 may be configured as GPIO_DEEPSLEEP
  *
- * See wiki https://github.com/arendst/Tasmota/wiki/DeepSleep
+ * See wiki https://tasmota.github.io/docs/DeepSleep/
 \*********************************************************************************************/
 
 #define XDRV_29                29
