@@ -243,7 +243,7 @@
 
 // webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>παρακαλώ αναβαθμίστε"
 #define D_WEBSERVER_ACTIVE_ON "Ενεργός διακομιστής Web στο"
 #define D_WITH_IP_ADDRESS "με διεύθυνση IP"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Εκκίνηση αναβάθμισης"
 #define D_UPGRADE_BY_FILE_UPLOAD "Αναβάθμιση με μεταφόρτωση αρχείου"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Η μεταφόρτωση ξεκίνησε"
 #define D_UPGRADE_STARTED "Η αναβάθμιση ξεκίνησε"
 #define D_UPLOAD_DONE "Η μεταφόρτωση ολοκληρώθηκε"

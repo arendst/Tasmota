@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "För att använda Tasmota, aktivera JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>var god uppgradera"
 #define D_WEBSERVER_ACTIVE_ON "Webbserver aktiv på"
 #define D_WITH_IP_ADDRESS "med IP-adress"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Starta uppdatering"
 #define D_UPGRADE_BY_FILE_UPLOAD "Uppgradering via filuppladdning"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Uppladdning startad"
 #define D_UPGRADE_STARTED "Uppgradeing startad"
 #define D_UPLOAD_DONE "Uppladdning klar"

@@ -243,11 +243,11 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<body>"
   "<div style='text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_TEXT
 #ifdef FIRMWARE_MINIMAL
-#ifdef FIRMWARE_SAFEMODE
-  "<span style='text-align:center;color:#%06x;'><h3>" D_SAFEMODE "</h3></span>"  // COLOR_TEXT_WARNING
+#ifdef FIRMWARE_SAFEBOOT
+  "<span style='text-align:center;color:#%06x;'><h3>" D_SAFEBOOT "</h3></span>"  // COLOR_TEXT_WARNING
 #else
   "<div style='text-align:center;color:#%06x;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"  // COLOR_TEXT_WARNING
-#endif  // FIRMWARE_SAFEMODE
+#endif  // FIRMWARE_SAFEBOOT
 #endif  // FIRMWARE_MINIMAL
   "<div style='text-align:center;color:#%06x;'><noscript>" D_NOSCRIPT "<br></noscript>" // COLOR_TITLE
 /*
@@ -2969,7 +2969,7 @@ void HandleSwitchFactory(void)
   if (switch_factory || switch_ota) {
     SettingsSaveAll();
     if (switch_factory) {
-      EspPrepRestartToSafeMode();
+      EspPrepRestartToSafeBoot();
     } else {
       const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
       esp_ota_set_boot_partition(partition);

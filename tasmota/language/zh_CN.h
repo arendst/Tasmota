@@ -243,7 +243,7 @@
 
 // webserver.ino
 #define D_NOSCRIPT "Tasmota 要求浏览器支持 JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件<br>请升级"
 #define D_WEBSERVER_ACTIVE_ON "Web 服务器地址:"
 #define D_WITH_IP_ADDRESS "IP 地址:"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA 地址"
 #define D_START_UPGRADE "开始升级"
 #define D_UPGRADE_BY_FILE_UPLOAD "通过文件升级"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "开始上传"
 #define D_UPGRADE_STARTED "开始升级"
 #define D_UPLOAD_DONE "上传完成"

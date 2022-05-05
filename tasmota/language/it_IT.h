@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT                                 "Per usare Tasmota abilita JavaScript"
-#define D_SAFEMODE                                 "SAFEMODE"
+#define D_SAFEBOOT                                 "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE          "Firmware MINIMALE<br>Effettua aggiornamento"
 #define D_WEBSERVER_ACTIVE_ON                      "Server web attivo in"
 #define D_WITH_IP_ADDRESS                          "con indirizzo IP"

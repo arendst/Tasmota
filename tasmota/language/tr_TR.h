@@ -243,7 +243,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_SAFEMODE "SAFEMODE"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Donanım yazılımı çok düşük<br>lütfen yükseltin"
 #define D_WEBSERVER_ACTIVE_ON "Web sunucusu aktif"
 #define D_WITH_IP_ADDRESS "IP adres ile"
@@ -373,7 +373,7 @@
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Yükseltmeyi başlat"
 #define D_UPGRADE_BY_FILE_UPLOAD "Dosya kullanrak yükset"
-#define D_UPLOAD_FACTORY "Switching to safemode partition"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Yükleme başlatıldı"
 #define D_UPGRADE_STARTED "YÜkestlme başlatıldı"
 #define D_UPLOAD_DONE "Yükleme Tamamlandı"

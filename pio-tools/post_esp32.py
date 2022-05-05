@@ -35,23 +35,23 @@ import esptool
 FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
-def esp32_fetch_safemode_bin(chip):
-    safemode_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + chip[3:] + "-safemode.bin"
-    safemode_fw_name = join(variants_dir,"tasmota" +  ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safemode.bin")
-    if(exists(safemode_fw_name)):
-        print("Safemode binary already in place.")
+def esp32_fetch_safeboot_bin(chip):
+    safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + chip[3:] + "-safeboot.bin"
+    safeboot_fw_name = join(variants_dir,"tasmota" +  ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin")
+    if(exists(safeboot_fw_name)):
+        print("safeboot binary already in place.")
         return
-    print("Will download safemode binary from URL:")
-    print(safemode_fw_url)
-    response = requests.get(safemode_fw_url)
-    open(safemode_fw_name, "wb").write(response.content)
-    print("Safemode binary written to variants dir.")
+    print("Will download safeboot binary from URL:")
+    print(safeboot_fw_url)
+    response = requests.get(safeboot_fw_url)
+    open(safeboot_fw_name, "wb").write(response.content)
+    print("safeboot binary written to variants dir.")
 
-def esp32_copy_new_safemode_bin(chip,new_local_safemode_fw):
-    print("Copy new local safemode firmware to variants dir -> using it for further flashing operations")
-    safemode_fw_name = join(variants_dir,"tasmota" + ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safemode.bin")
+def esp32_copy_new_safeboot_bin(chip,new_local_safeboot_fw):
+    print("Copy new local safeboot firmware to variants dir -> using it for further flashing operations")
+    safeboot_fw_name = join(variants_dir,"tasmota" + ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin")
     if os.path.exists(variants_dir):
-        shutil.copy(new_local_safemode_fw, safemode_fw_name)
+        shutil.copy(new_local_safeboot_fw, safeboot_fw_name)
 
 def esp32_create_combined_bin(source, target, env):
     #print("Generating combined binary for serial flashing")
@@ -86,10 +86,10 @@ def esp32_create_combined_bin(source, target, env):
     chip = env.get("BOARD_MCU")
     if not os.path.exists(variants_dir):
         os.makedirs(variants_dir)
-    if("safemode" in firmware_name):
-        esp32_copy_new_safemode_bin(chip,firmware_name)
+    if("safeboot" in firmware_name):
+        esp32_copy_new_safeboot_bin(chip,firmware_name)
     else:
-        esp32_fetch_safemode_bin(chip)
+        esp32_fetch_safeboot_bin(chip)
     flash_size = env.BoardConfig().get("upload.flash_size")
     cmd = [
         "--chip",
@@ -107,12 +107,12 @@ def esp32_create_combined_bin(source, target, env):
         print(f" -  {sect_adr} | {sect_file}")
         cmd += [sect_adr, sect_file]
 
-    # "main" firmware to app0 - mandatory, except we just built a new safemode bin locally
-    if("safemode" not in firmware_name):
+    # "main" firmware to app0 - mandatory, except we just built a new safeboot bin locally
+    if("safeboot" not in firmware_name):
         print(f" - {hex(app_offset)} | {firmware_name}")
         cmd += [hex(app_offset), firmware_name]
     else:
-        print("Upload new safemode binary only")
+        print("Upload new safeboot binary only")
 
     #print('Using esptool.py arguments: %s' % ' '.join(cmd))
 

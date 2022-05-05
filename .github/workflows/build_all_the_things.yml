@@ -43,11 +43,11 @@ jobs:
           - tasmota32s2
           - tasmota32c3
           - tasmota32solo1
-          - tasmota32solo1-safemode
-          - tasmota32-safemode
-          - tasmota32c3-safemode
-          - tasmota32s2-safemode
-          - tasmota32s3-safemode
+          - tasmota32solo1-safeboot
+          - tasmota32-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s3-safeboot
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
