@@ -118,7 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
-- ESP32 Tasmota SafeMode with changed partition scheme allowing larger binaries
+- ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
 ### Fixed
 - Improv initial or erase device installation failing to provide Configure WiFi option

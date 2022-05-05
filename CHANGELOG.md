@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Changed
-- ESP32 Tasmota SafeMode with changed partition scheme allowing larger binaries
+- ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
 ### Fixed
 
