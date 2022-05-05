@@ -18,4 +18,4 @@ const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
     "}"
   "}"
   "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
-  ;
+  "</script>";
