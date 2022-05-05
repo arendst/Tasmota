@@ -39,7 +39,7 @@ size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t s
         size_in_page = SPI_FLASH_SEC_SIZE - addr_in_page;
       }
 
-      AddLog(LOG_LEVEL_DEBUG, ">>>: flash_write addr=%p size=%i -- page_addr=%p addr_in_page=%p size_in_page=%i size_left=%i", address_start, size, page_addr, addr_in_page, size_in_page, size_left);
+      // AddLog(LOG_LEVEL_DEBUG, ">>>: flash_write addr=%p size=%i -- page_addr=%p addr_in_page=%p size_in_page=%i size_left=%i", address_start, size, page_addr, addr_in_page, size_in_page, size_left);
       // check if whole page?
       if (addr_in_page == 0 && size_in_page == SPI_FLASH_SEC_SIZE) {
         memcpy(buffer, data + current_offset, SPI_FLASH_SEC_SIZE);
@@ -94,9 +94,8 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `flash.write(address:int, content:bytes()) -> nil`
-  //
-  // If length is not specified, it is full block 4KB
+  // Berry: `flash.write(address:int, content:bytes() [, no_erase:bool]) -> nil`
+  // if `no_erase` is true, just call spi_flash_write
   int32_t p_flash_write(struct bvm *vm);
   int32_t p_flash_write(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
