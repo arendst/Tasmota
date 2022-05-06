@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 03.05.2022
+ * Updated until v9.4.0.1 - Last update 05.05.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -102,7 +102,7 @@
 #define D_FILE                 "File"
 #define D_FLOW_RATE            "Flusso dati"
 #define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
-#define D_FRAME_RATE           "Frame rate"
+#define D_FRAME_RATE           "Frequenza fotogrammi"
 #define D_FREE_MEMORY          "Memoria libera"
 #define D_PSR_MAX_MEMORY       "PS-RAM - Memoria"
 #define D_PSR_FREE_MEMORY      "PS-RAM - Memoria libera"
@@ -244,7 +244,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT                                 "Per usare Tasmota abilita JavaScript"
-#define D_SAFEBOOT                                 "SAFEBOOT"
+#define D_SAFEBOOT                                 "BOOT SICURO"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE          "Firmware MINIMALE<br>Effettua aggiornamento"
 #define D_WEBSERVER_ACTIVE_ON                      "Server web attivo in"
 #define D_WITH_IP_ADDRESS                          "con indirizzo IP"
@@ -552,7 +552,7 @@
 #define D_COLOR_GREEN  "Verde"
 #define D_COLOR_BLUE   "Blu"
 #define D_CCT          "CCT"
-#define D_PROXIMITY    "Vicinanza"
+#define D_PROXIMITY    "Prossimità"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accelerazione asse X"
@@ -800,8 +800,8 @@
 #define D_SENSOR_ADC_RANGE              "ADC - Intervallo"
 #define D_SENSOR_ADC_CT_POWER           "ADC - CTR alimentazione"
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
-#define D_SENSOR_ADC_PH                 "ADC pH"
-#define D_SENSOR_ADC_MQ                 "ADC MQ"
+#define D_SENSOR_ADC_PH                 "ADC - pH"
+#define D_SENSOR_ADC_MQ                 "ADC - MQ"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
