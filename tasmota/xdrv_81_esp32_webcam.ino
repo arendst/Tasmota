@@ -90,10 +90,9 @@
  * 2: Night Mode: Further increase exposure time and lower the Framerate depending on available light.
  *    See above Document, Page 8
  *
- * Only boards with PSRAM should be used. To enable PSRAM board should be se set to esp32cam in common32 of platform_override.ini
- * board                   = esp32cam
- * To speed up cam processing cpu frequency should be better set to 240Mhz in common32 of platform_override.ini
- * board_build.f_cpu       = 240000000L
+ * Only boards with PSRAM should be used.
+ * To speed up cam processing cpu frequency should be better set to 240Mhz
+ * 
  * remarks for AI-THINKER
  * GPIO0 zero must be disconnected from any wire after programming because this pin drives the cam clock and does
  * not tolerate any capictive load
@@ -110,17 +109,6 @@
 #include "esp_camera.h"
 #include "sensor.h"
 #include "fb_gfx.h"
-
-#ifdef USE_FACE_DETECT
-  #if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 0, 0)
-    #include "fd_forward.h"
-    #include "fr_forward.h"
-//    #pragma message("Face detection enabled")
-  #else
-    #pragma message("Face detection not supported from Tasmota with Arduino Core 2.0.x. Disabling")
-    #undef USE_FACE_DETECT
-  #endif
-#endif
 
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
@@ -174,12 +162,6 @@ struct {
   WiFiClient client;
   ESP8266WebServer *CamServer;
   struct PICSTORE picstore[MAX_PICSTORE];
-#ifdef USE_FACE_DETECT
-  uint8_t  faces;
-  uint16_t face_detect_time;
-  uint32_t face_ltime;
-  mtmn_config_t mtmn_config = {0};
-#endif // USE_FACE_DETECT
 #ifdef ENABLE_RTSPSERVER
   WiFiServer *rtspp;
   CStreamer *rtsp_streamer;
@@ -468,10 +450,6 @@ uint32_t WcSetup(int32_t fsiz) {
 
   WcApplySettings();
 
-#ifdef USE_FACE_DETECT
-  fd_init();
-#endif
-
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: Initialized"));
 
   Wc.up = 1;
@@ -672,143 +650,6 @@ void WcDetectMotion(void) {
     esp_camera_fb_return(wc_fb);
   }
 }
-
-/*********************************************************************************************/
-
-#ifdef USE_FACE_DETECT
-
-void fd_init(void) {
-  Wc.mtmn_config.type = FAST;
-  Wc.mtmn_config.min_face = 80;
-  Wc.mtmn_config.pyramid = 0.707;
-  Wc.mtmn_config.pyramid_times = 4;
-  Wc.mtmn_config.p_threshold.score = 0.6;
-  Wc.mtmn_config.p_threshold.nms = 0.7;
-  Wc.mtmn_config.p_threshold.candidate_number = 20;
-  Wc.mtmn_config.r_threshold.score = 0.7;
-  Wc.mtmn_config.r_threshold.nms = 0.7;
-  Wc.mtmn_config.r_threshold.candidate_number = 10;
-  Wc.mtmn_config.o_threshold.score = 0.7;
-  Wc.mtmn_config.o_threshold.nms = 0.7;
-  Wc.mtmn_config.o_threshold.candidate_number = 1;
-}
-
-#define FACE_COLOR_WHITE  0x00FFFFFF
-#define FACE_COLOR_BLACK  0x00000000
-#define FACE_COLOR_RED    0x000000FF
-#define FACE_COLOR_GREEN  0x0000FF00
-#define FACE_COLOR_BLUE   0x00FF0000
-#define FACE_COLOR_YELLOW (FACE_COLOR_RED | FACE_COLOR_GREEN)
-#define FACE_COLOR_CYAN   (FACE_COLOR_BLUE | FACE_COLOR_GREEN)
-#define FACE_COLOR_PURPLE (FACE_COLOR_BLUE | FACE_COLOR_RED)
-void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, int face_id);
-
-/*
-void draw_face_boxes(dl_matrix3du_t *image_matrix, box_array_t *boxes, int face_id) {
-    int x, y, w, h, i;
-    uint32_t color = FACE_COLOR_YELLOW;
-    if(face_id < 0){
-        color = FACE_COLOR_RED;
-    } else if(face_id > 0){
-        color = FACE_COLOR_GREEN;
-    }
-    fb_data_t fb;
-    fb.width = image_matrix->w;
-    fb.height = image_matrix->h;
-    fb.data = image_matrix->item;
-    fb.bytes_per_pixel = 3;
-    fb.format = FB_BGR888;
-    for (i = 0; i < boxes->len; i++){
-        // rectangle box
-        x = (int)boxes->box[i].box_p[0];
-        y = (int)boxes->box[i].box_p[1];
-        w = (int)boxes->box[i].box_p[2] - x + 1;
-        h = (int)boxes->box[i].box_p[3] - y + 1;
-        fb_gfx_drawFastHLine(&fb, x, y, w, color);
-        fb_gfx_drawFastHLine(&fb, x, y+h-1, w, color);
-        fb_gfx_drawFastVLine(&fb, x, y, h, color);
-        fb_gfx_drawFastVLine(&fb, x+w-1, y, h, color);
-#if 0
-        // landmark
-        int x0, y0, j;
-        for (j = 0; j < 10; j+=2) {
-            x0 = (int)boxes->landmark[i].landmark_p[j];
-            y0 = (int)boxes->landmark[i].landmark_p[j+1];
-            fb_gfx_fillRect(&fb, x0, y0, 3, 3, color);
-        }
-#endif
-    }
-}
-*/
-
-//#define DL_SPIRAM_SUPPORT
-
-uint32_t WcSetFaceDetect(int32_t value) {
-  if (value >= 0) { Wc.face_detect_time = value; }
-  return Wc.faces;
-}
-
-uint32_t WcDetectFace(void);
-
-uint32_t WcDetectFace(void) {
-  dl_matrix3du_t *image_matrix;
-  size_t out_len, out_width, out_height;
-  uint8_t * out_buf;
-  bool s;
-  bool detected = false;
-  int face_id = 0;
-  camera_fb_t *fb;
-
-  if ((millis() - Wc.face_ltime) > Wc.face_detect_time) {
-    Wc.face_ltime = millis();
-    fb = esp_camera_fb_get();
-    if (!fb) { return ESP_FAIL; }
-
-    image_matrix = dl_matrix3du_alloc(1, fb->width, fb->height, 3);
-    if (!image_matrix) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: dl_matrix3du_alloc failed"));
-      esp_camera_fb_return(fb);
-      return ESP_FAIL;
-    }
-
-    out_buf = image_matrix->item;
-    //out_len = fb->width * fb->height * 3;
-    //out_width = fb->width;
-    //out_height = fb->height;
-
-    s = fmt2rgb888(fb->buf, fb->len, fb->format, out_buf);
-    esp_camera_fb_return(fb);
-    if (!s){
-      dl_matrix3du_free(image_matrix);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: to rgb888 failed"));
-      return ESP_FAIL;
-    }
-
-    box_array_t *net_boxes = face_detect(image_matrix, &Wc.mtmn_config);
-    if (net_boxes){
-      detected = true;
-      Wc.faces = net_boxes->len;
-      //if(recognition_enabled){
-      //    face_id = run_face_recognition(image_matrix, net_boxes);
-      //}
-      //draw_face_boxes(image_matrix, net_boxes, face_id);
-      free(net_boxes->score);
-      free(net_boxes->box);
-      free(net_boxes->landmark);
-      free(net_boxes);
-    } else {
-      Wc.faces = 0;
-    }
-    dl_matrix3du_free(image_matrix);
-    //Serial.printf("face detected: %d",Wc.faces);
-
-  }
-  return 0;
-}
-#endif
-
-/*********************************************************************************************/
-
 
 #ifdef COPYFRAME
 struct PICSTORE tmp_picstore;
@@ -1119,9 +960,6 @@ void WcLoop(void) {
     if (Wc.stream_active) { HandleWebcamMjpegTask(); }
   }
   if (wc_motion.motion_detect) { WcDetectMotion(); }
-#ifdef USE_FACE_DETECT
-  if (Wc.face_detect_time) { WcDetectFace(); }
-#endif
 
 #ifdef ENABLE_RTSPSERVER
     if (Settings->webcam_config.rtsp && !TasmotaGlobal.global_state.wifi_down && Wc.up) {
