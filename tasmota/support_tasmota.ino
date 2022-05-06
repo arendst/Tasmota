@@ -1520,8 +1520,8 @@ void ArduinoOTAInit(void)
   {
     if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level)) {
       arduino_ota_progress_dot_count++;
-      Serial.printf(".");
-      if (!(arduino_ota_progress_dot_count % 80)) { Serial.println(); }
+      TasConsole.printf(".");
+      if (!(arduino_ota_progress_dot_count % 80)) { TasConsole.println(); }
     }
   });
 
@@ -1533,7 +1533,7 @@ void ArduinoOTAInit(void)
     */
     char error_str[100];
 
-    if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level) && arduino_ota_progress_dot_count) { Serial.println(); }
+    if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level) && arduino_ota_progress_dot_count) { TasConsole.println(); }
     switch (error) {
       case OTA_BEGIN_ERROR: strncpy_P(error_str, PSTR(D_UPLOAD_ERR_2), sizeof(error_str)); break;
       case OTA_RECEIVE_ERROR: strncpy_P(error_str, PSTR(D_UPLOAD_ERR_5), sizeof(error_str)); break;
@@ -1547,7 +1547,7 @@ void ArduinoOTAInit(void)
 
   ArduinoOTA.onEnd([]()
   {
-    if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level)) { Serial.println(); }
+    if ((LOG_LEVEL_DEBUG <= TasmotaGlobal.seriallog_level)) { TasConsole.println(); }
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     EspRestart();
 	});
@@ -1657,6 +1657,10 @@ void SerialInput(void)
 #endif  // USE_SONOFF_SC
 /*-------------------------------------------------------------------------------------------*/
 
+#ifdef ESP32
+    if (tasconsole_serial) {
+#endif  // ESP32
+
     if (!Settings->flag.mqtt_serial && (TasmotaGlobal.serial_in_byte == '\n')) {                // CMND_SERIALSEND and CMND_SERIALLOG
       TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                // Serial data completed
       TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
@@ -1671,7 +1675,12 @@ void SerialInput(void)
       Serial.flush();
       return;
     }
-  }
+
+#ifdef ESP32
+    }
+#endif  // ESP32
+
+  }  // endWhile
 
   if (Settings->flag.mqtt_serial && TasmotaGlobal.serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {  // CMND_SERIALSEND and CMND_SERIALLOG
     TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                  // Serial data completed
@@ -1701,6 +1710,43 @@ void SerialInput(void)
   }
 }
 
+/********************************************************************************************/
+
+#ifdef ESP32
+
+String console_buffer = "";
+
+void TasConsoleInput(void) {
+  static bool console_buffer_overrun = false;
+
+  while (TasConsole.available()) {
+    delay(0);
+    char console_in_byte = TasConsole.read();
+
+    if (isprint(console_in_byte)) {                       // Any char between 32 and 127
+      if (console_buffer.length() < INPUT_BUFFER_SIZE) {  // Add char to string if it still fits
+        console_buffer += console_in_byte;
+      } else {
+        console_buffer_overrun = true;                    // Signal overrun but continue reading input to flush until '\n' (EOL)
+      }
+    }
+    if (console_in_byte == '\n') {
+      TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+      if (console_buffer_overrun) {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Console buffer overrun"));
+      } else {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), console_buffer.c_str());
+        ExecuteCommand(console_buffer.c_str(), SRC_SERIAL);
+      }
+      console_buffer = "";
+      console_buffer_overrun = false;
+      TasConsole.flush();
+      return;
+    }
+  }
+}
+
+#endif  // ESP32
 
 /********************************************************************************************/
 

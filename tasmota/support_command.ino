@@ -857,8 +857,18 @@ void CmndOtaUrl(void)
 void CmndSeriallog(void)
 {
   if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
+
+#ifdef ESP32
+    if (tasconsole_serial) {
+#endif  // ESP32
+
     Settings->flag.mqtt_serial = 0;       // CMND_SERIALSEND and CMND_SERIALLOG
-    SetSeriallog(XdrvMailbox.payload);
+
+#ifdef ESP32
+    }
+#endif  // ESP32
+
+    SetTasConlog(XdrvMailbox.payload);
   }
   Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings->seriallog_level, TasmotaGlobal.seriallog_level);
 }

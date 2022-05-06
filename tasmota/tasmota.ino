@@ -97,6 +97,47 @@ const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A }
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
+#ifdef ESP32
+/*
+#if CONFIG_IDF_TARGET_ESP32C3 ||            // support USB via HWCDC using JTAG interface
+    CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
+    CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
+*/
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
+//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_SERIAL_CONSOLE
+#ifdef USE_USB_SERIAL_CONSOLE
+//#warning **** TasConsole use USB ****
+
+#if ARDUINO_USB_MODE
+//#warning **** TasConsole ARDUINO_USB_MODE ****
+HWCDC TasConsole;                           // ESP32C3/S3 embedded USB using JTAG interface
+bool tasconsole_serial = false;
+//#warning **** TasConsole uses HWCDC ****
+#else   // No ARDUINO_USB_MODE
+#include "USB.h"
+#include "USBCDC.h"
+USBCDC TasConsole;                          // ESP32Sx embedded USB interface
+bool tasconsole_serial = false;
+//#warning **** TasConsole uses USBCDC ****
+#endif  // ARDUINO_USB_MODE
+
+#else   // No USE_USB_SERIAL_CONSOLE
+HardwareSerial TasConsole = Serial;         // Fallback serial interface for ESP32C3, S2 and S3 if no USB_SERIAL defined
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // USE_USB_SERIAL_CONSOLE
+
+#else   // No ESP32C3, S2 or S3
+HardwareSerial TasConsole = Serial;         // Fallback serial interface for non ESP32C3, S2 and S3
+bool tasconsole_serial = true;
+//#warning **** TasConsole uses Serial ****
+#endif  // ESP32C3, S2 or S3
+
+#else   // No ESP32
+HardwareSerial TasConsole = Serial;         // Only serial interface
+#endif  // ESP32
+
 struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t baudrate;                        // Current Serial baudrate
@@ -281,6 +322,7 @@ void setup(void) {
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
   TasmotaGlobal.enable_logging = 1;
+  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   RtcRebootLoad();
   if (!RtcRebootValid()) {
@@ -301,11 +343,8 @@ void setup(void) {
     uint32_t baudrate = (RtcSettings.baudrate / 300) * 300;  // Make it a valid baudrate
     if (baudrate) { TasmotaGlobal.baudrate = baudrate; }
   }
-  Serial.begin(TasmotaGlobal.baudrate);
-  Serial.println();
-//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
-  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
+  // Init settings and logging preparing for AddLog use
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   ESP.setIramHeap();
   Settings = (TSettings*)malloc(sizeof(TSettings));             // Allocate in "new" 16k heap space
@@ -321,6 +360,31 @@ void setup(void) {
   if (Settings == nullptr) {
     Settings = (TSettings*)malloc(sizeof(TSettings));
   }
+
+  // Init command console (either serial or USB) preparing for AddLog use
+  Serial.begin(TasmotaGlobal.baudrate);
+  Serial.println();
+//  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#ifdef USE_USB_SERIAL_CONSOLE
+  TasConsole.begin(115200);    // Will always be 115200 bps
+#if !ARDUINO_USB_MODE
+  USB.begin();
+#endif  // No ARDUINO_USB_MODE
+  TasConsole.println();
+  AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using embedded USB"));
+#else   // No USE_USB_SERIAL_CONSOLE
+  TasConsole = Serial;
+#endif  // USE_USB_SERIAL_CONSOLE
+#else   // No ESP32C3, S2 or S3
+  TasConsole = Serial;
+#endif  // ESP32C3, S2 or S3
+#else   // No ESP32
+  TasConsole = Serial;
+#endif  // ESP32
+
+  // Ready for AddLog use
 
 //  AddLog(LOG_LEVEL_INFO, PSTR("ADR: Settings %p, Log %p"), Settings, TasmotaGlobal.log_buffer);
 #ifdef ESP32
@@ -583,6 +647,9 @@ void Scheduler(void) {
   }
 
   if (!TasmotaGlobal.serial_local) { SerialInput(); }
+#ifdef ESP32
+  if (!tasconsole_serial) { TasConsoleInput(); }
+#endif  // ESP32
 
 #ifdef USE_ARDUINO_OTA
   ArduinoOtaLoop();

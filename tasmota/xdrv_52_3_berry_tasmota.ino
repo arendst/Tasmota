@@ -636,7 +636,7 @@ extern "C" {
     uint32_t len = ext_vsnprintf_P(log_data, LOGSZ-3, berry_buf, arg);
     va_end(arg);
     if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
-    Serial.printf(log_data);
+    TasConsole.printf(log_data);
   }
 
   void berry_log_C(const char * berry_buf, ...) {

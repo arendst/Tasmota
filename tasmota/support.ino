@@ -2403,11 +2403,22 @@ bool I2cSetDevice(uint32_t addr, uint32_t bus) {
  *
 \*********************************************************************************************/
 
-void SetSeriallog(uint32_t loglevel)
-{
+void SetTasConlog(uint32_t loglevel) {
   Settings->seriallog_level = loglevel;
   TasmotaGlobal.seriallog_level = loglevel;
   TasmotaGlobal.seriallog_timer = 0;
+}
+
+void SetSeriallog(uint32_t loglevel) {
+#ifdef ESP32
+  if (tasconsole_serial) {
+#endif  // ESP32
+
+  SetTasConlog(loglevel);
+
+#ifdef ESP32
+  }
+#endif  // ESP32
 }
 
 void SetSyslog(uint32_t loglevel)
@@ -2576,7 +2587,7 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
-    Serial.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
   }
 
   if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
