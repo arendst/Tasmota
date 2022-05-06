@@ -4477,14 +4477,6 @@ extern char *SML_GetSVal(uint32_t index);
                 fvar = WcSetMotionDetect(fvar2);
               }
               break;
-#ifdef USE_FACE_DETECT
-            case 7:
-              { float fvar2;
-                lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
-                fvar = WcSetFaceDetect(fvar2);
-              }
-              break;
-#endif //USE_FACE_DETECT
             default:
               fvar = 0;
           }
