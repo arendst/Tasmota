@@ -139,6 +139,16 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Forces the next restart to use the `factory` partition if any is present
+  void p_factory(bbool force_ota) {
+    const esp_partition_t *otadata_partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, NULL);
+    if (otadata_partition) {
+      esp_partition_erase_range(otadata_partition, 0, SPI_FLASH_SEC_SIZE * 2);
+    }
+    if (force_ota) {
+      RtcSettings.ota_loader = 1;     // force OTA at next reboot
+    }
+  }
 }
 
 #endif  // USE_BERRY
