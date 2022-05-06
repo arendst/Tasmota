@@ -811,12 +811,14 @@ class lvh_obj
   def text_rule_matched(val)
 
     # print(">> rule matched text", "val=", val)
-    var val_n = real(val)         # force float type
+    if type(val) == 'int'
+      val = real(val)           # force float type
+    end
 
     var func = self._text_rule_function
     if func != nil
       try
-        val_n = func(val_n)
+        val = func(val)
       except .. as e, m
         import string
         print(string.format("HSP: failed to run self._text_rule_function - %s (%s)", e, m))
@@ -826,7 +828,7 @@ class lvh_obj
     var format = self._text_rule_format
     if type(format) == 'string'
       import string
-      format = string.format(format, val_n)
+      format = string.format(format, val)
     else
       format = ""
     end
