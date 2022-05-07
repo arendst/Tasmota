@@ -461,11 +461,6 @@ uint32_t ESP_getChipId(void) {
   return id;
 }
 
-uint32_t ESP_getFreeSketchSpace(void) {
-  uint32_t size = EspRunningFactoryPartition();
-  return (size) ? size : ESP.getFreeSketchSpace();
-}
-
 uint32_t ESP_getSketchSize(void) {
   static uint32_t sketchsize = 0;
 
@@ -473,6 +468,17 @@ uint32_t ESP_getSketchSize(void) {
     sketchsize = ESP.getSketchSize();  // This takes almost 2 seconds on an ESP32
   }
   return sketchsize;
+}
+
+uint32_t ESP_getFreeSketchSpace(void) {
+  if (EspSingleOtaPartition()) {
+    uint32_t size = EspRunningFactoryPartition();
+    if (!size) {
+      size = ESP.getFreeSketchSpace();
+    }
+    return size - ESP_getSketchSize();
+  }
+  return ESP.getFreeSketchSpace();
 }
 
 uint32_t ESP_getFreeHeap(void) {
