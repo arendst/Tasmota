@@ -362,6 +362,7 @@ be_define_const_str(consume_stereo, "consume_stereo", 1834661098u, 0, 14, &be_co
 be_define_const_str(contains, "contains", 1825239352u, 0, 8, &be_const_str_power_off);
 be_define_const_str(content_button, "content_button", 1956476087u, 0, 14, &be_const_str_fast_loop);
 be_define_const_str(content_flush, "content_flush", 214922475u, 0, 13, &be_const_str_min);
+be_define_const_str(content_response, "content_response", 3881475860u, 0, 16, &be_const_str_detect);
 be_define_const_str(content_send, "content_send", 1673733649u, 0, 12, &be_const_str_members);
 be_define_const_str(content_send_style, "content_send_style", 1087907647u, 0, 18, NULL);
 be_define_const_str(content_start, "content_start", 2937509069u, 0, 13, &be_const_str_json_append);
@@ -1443,7 +1444,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_cb_obj,
     (const bstring *)&be_const_str__X23,
     (const bstring *)&be_const_str_add_cmd,
-    (const bstring *)&be_const_str_detect,
+    (const bstring *)&be_const_str_content_response,
     (const bstring *)&be_const_str_content_stop,
     (const bstring *)&be_const_str__X22,
     (const bstring *)&be_const_str_gpio,
@@ -1542,6 +1543,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 505,
-    .count = 1033,
+    .count = 1034,
     .table = m_string_table
 };

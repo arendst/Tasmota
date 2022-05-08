@@ -370,6 +370,7 @@ extern const bcstring be_const_str_consume_stereo;
 extern const bcstring be_const_str_contains;
 extern const bcstring be_const_str_content_button;
 extern const bcstring be_const_str_content_flush;
+extern const bcstring be_const_str_content_response;
 extern const bcstring be_const_str_content_send;
 extern const bcstring be_const_str_content_send_style;
 extern const bcstring be_const_str_content_start;
