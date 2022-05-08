@@ -1487,6 +1487,10 @@ void SettingsDelta(void) {
       ParseIPv4(&Settings->ipv4_rgx_subnetmask, PSTR(WIFI_RGX_SUBNETMASK));
       SettingsUpdateText(SET_RGX_SSID, PSTR(WIFI_RGX_SSID));
       SettingsUpdateText(SET_RGX_PASSWORD, PSTR(WIFI_RGX_PASSWORD));
+      if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
+        // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
+        Settings->flag4.mqtt_tls = true;
+      }
     }
     if (Settings->version < 0x09050007) {
 #ifdef DISABLE_REFERER_CHK
