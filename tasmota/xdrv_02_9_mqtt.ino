@@ -202,10 +202,6 @@ void MqttInit(void) {
 #endif //USE_MQTT_AZURE_IOT
 #ifdef USE_MQTT_TLS
   bool aws_iot_host = false;
-  if ((8883 == Settings->mqtt_port) || (8884 == Settings->mqtt_port) || (443 == Settings->mqtt_port)) {
-    // Turn on TLS for port 8883 (TLS), 8884 (TLS, client certificate), 443 (TLS, user/password)
-    Settings->flag4.mqtt_tls = true;
-  }
   Mqtt.mqtt_tls = Settings->flag4.mqtt_tls;   // this flag should not change even if we change the SetOption (until reboot)
 
   // Detect AWS IoT and set default parameters
