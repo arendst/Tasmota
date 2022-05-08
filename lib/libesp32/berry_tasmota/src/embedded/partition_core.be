@@ -408,6 +408,16 @@ class Partition
     return nil
   end
 
+  def get_factory_slot()
+    for slot: self.slots
+      if slot.is_factory() return slot end
+    end
+  end
+
+  def has_factory()
+    return self.get_factory_slot() != nil
+  end
+
   #- compute the highest ota<x> partition -#
   def ota_max()
     var ota_max = 0
@@ -420,13 +430,9 @@ class Partition
     return ota_max
   end
 
-  def has_factory()
-    for slot:self.slots
-      if (slot.type == 0) && (slot.subtype == 0)
-        return true
-      end
-    end
-    return false
+  # get the active OTA app partition number
+  def get_active()
+    return self.otadata.active_otadata
   end
 
   def load_otadata()
@@ -440,11 +446,6 @@ class Partition
     end
 
     self.otadata = partition_core.Partition_otadata(ota_max, self.has_factory(), otadata_offset)
-  end
-
-  # get the active OTA app partition number
-  def get_active()
-    return self.otadata.active_otadata
   end
 
   #- change the active partition -#

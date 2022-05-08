@@ -511,6 +511,7 @@ extern const bcstring be_const_str_get_coords;
 extern const bcstring be_const_str_get_current_module_name;
 extern const bcstring be_const_str_get_current_module_path;
 extern const bcstring be_const_str_get_event_cb;
+extern const bcstring be_const_str_get_factory_slot;
 extern const bcstring be_const_str_get_free_heap;
 extern const bcstring be_const_str_get_height;
 extern const bcstring be_const_str_get_hor_res;
