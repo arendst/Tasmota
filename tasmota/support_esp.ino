@@ -57,6 +57,14 @@ uint32_t ESP_getFreeHeap(void) {
   return ESP.getFreeHeap();
 }
 
+uint32_t ESP_getFlashChipId(void) {
+  return ESP.getFlashChipId();
+}
+
+uint32_t ESP_getFlashChipRealSize(void) {
+  return ESP.getFlashChipRealSize();
+}
+
 void ESP_Restart(void) {
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
@@ -112,6 +120,7 @@ String GetDeviceHardwareRevision(void) {
 
 #ifdef ESP32
 
+#include "bootloader_flash.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
 #if CONFIG_IDF_TARGET_ESP32
   #define ESP32_ARCH              "esp32"
@@ -497,6 +506,19 @@ int32_t ESP_getHeapFragmentation(void) {
   int32_t free_maxmem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
   if (free_maxmem < 0) { free_maxmem = 0; }
   return free_maxmem;
+}
+
+uint32_t ESP_getFlashChipId(void)
+{
+  uint32_t id = bootloader_read_flash_id();
+  id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
+  return id;
+}
+
+uint32_t ESP_getFlashChipRealSize(void)
+{
+  uint32_t id = (ESP_getFlashChipId() >> 16) & 0xFF;
+  return 2 << (id - 1);
 }
 
 void ESP_Restart(void) {

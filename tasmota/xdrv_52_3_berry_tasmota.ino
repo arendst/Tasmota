@@ -182,7 +182,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 1) {  // no argument (instance only)
       be_newobject(vm, "map");
-      be_map_insert_int(vm, "flash", ESP.getFlashChipSize() / 1024);
+      be_map_insert_int(vm, "flash", ESP_getFlashChipRealSize() / 1024);
       be_map_insert_int(vm, "program", ESP_getSketchSize() / 1024);
       be_map_insert_int(vm, "program_free", ESP_getFreeSketchSpace() / 1024);
       be_map_insert_int(vm, "heap_free", ESP_getFreeHeap() / 1024);
