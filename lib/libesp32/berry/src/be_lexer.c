@@ -396,19 +396,44 @@ static btokentype scan_identifier(blexer *lexer)
     return TokenId;
 }
 
+/* munch any delimeter and return 1 if any found */
+static int skip_delimiter(blexer *lexer) {
+    int c = lgetc(lexer);
+    int delimeter_present = 0;
+    while (1) {
+        if (c == '\r' || c == '\n') {
+            skip_newline(lexer);
+        } else if (c == ' ' || c == '\t' || c == '\f' || c ==  '\v') {
+            next(lexer);
+        } else {
+            break;
+        }
+        c = lgetc(lexer);
+        delimeter_present = 1;
+    }
+    return delimeter_present;
+}
+
 static btokentype scan_string(blexer *lexer)
 {
-    int c, end = lgetc(lexer);
-    next(lexer); /* skip '"' or '\'' */
-    while ((c = lgetc(lexer)) != EOS && (c != end)) {
-        save(lexer);
-        if (c == '\\') {
-            save(lexer); /* skip '\\.' */
+    while (1) {     /* handle multiple string literals in a row */
+        int c;
+        int end = lgetc(lexer);     /* string delimiter, either '"' or '\'' */
+        next(lexer); /* skip '"' or '\'' */
+        while ((c = lgetc(lexer)) != EOS && (c != end)) {
+            save(lexer);
+            if (c == '\\') {
+                save(lexer); /* skip '\\.' */
+            }
         }
+        c = next(lexer); /* skip '"' or '\'' */
+        /* check if there's an additional string literal right after */
+        skip_delimiter(lexer);
+        c = lgetc(lexer);
+        if (c != '"' && c != '\'') { break; }
     }
     tr_string(lexer);
     setstr(lexer, buf_tostr(lexer));
-    next(lexer); /* skip '"' or '\'' */
     return TokenString;
 }
 
