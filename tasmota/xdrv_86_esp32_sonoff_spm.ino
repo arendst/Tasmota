@@ -339,8 +339,6 @@ void SSPMSettingsLoad(void) {
 #else
   AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: SPM ERROR File system not enabled"));
 #endif  // USE_UFILESYS
-
-  Sspm->Settings.crc32 = SSPMSettingsCrc32();
 }
 
 void SSPMSettingsSave(void) {
