@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
 - ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
 ### Fixed

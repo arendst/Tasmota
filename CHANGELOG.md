@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Command ``Restart 3`` to switch between SafeBoot and Production 
 
 ### Changed
+- Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
 - ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
 ### Fixed
