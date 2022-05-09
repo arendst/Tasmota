@@ -2786,7 +2786,7 @@ void HandleUploadLoop(void) {
           }
   //            upload.buf[2] = 3;  // Force DOUT - ESP8285
         }
-        uint32_t maxSketchSpace = (ESP_getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
         if (!Update.begin(maxSketchSpace)) {         //start with max available size
           Web.upload_error = 2;  // Not enough space
           return;
