@@ -45,7 +45,6 @@ extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
 #define ETS_UART_INTR_ENABLE()
 
 #define ESPhttpUpdate httpUpdate
-#define getFlashChipRealSize() getFlashChipSize()
 
 #define os_delay_us ets_delay_us
 // Serial minimal type to hold the config
