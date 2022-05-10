@@ -619,18 +619,14 @@ void CmndStatus(void)
                           D_JSON_STACKLOWMARK "\":%d,\"" D_JSON_PSRMAXMEMORY "\":%d,\"" D_JSON_PSRFREEMEMORY "\":%d,\""
 #endif  // ESP32
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
-#ifdef ESP8266
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-#endif  // ESP8266
                           ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
                           ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
 #endif  // ESP32
-                          ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
-#ifdef ESP8266
-                          , ESP.getFlashChipId()
-#endif  // ESP8266
+                          ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024
+                          , ESP_getFlashChipId()
                           , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode());
     ResponseAppendFeatures();
     XsnsDriverState();

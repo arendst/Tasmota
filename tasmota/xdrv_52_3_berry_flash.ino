@@ -86,7 +86,7 @@ extern "C" {
       auto buf = std::unique_ptr<uint8_t[]>(new uint8_t[length]);
       esp_err_t ret = spi_flash_read(address, buf.get(), length);
       if (ret)  {
-        be_raise(vm, "internal_error", "Error calling spi_flash_read()");
+        be_raisef(vm, "internal_error", "Error calling spi_flash_read(0x%X, %i)", address, length);
       }
       be_pushbytes(vm, buf.get(), length);
       be_return(vm);
