@@ -112,7 +112,7 @@ class lvh_obj
     #
     "min": nil,
     "max": nil,
-    "val": "value",
+    "val": nil,
     "rotation": "rotation",
     # img
     "src": "src",
@@ -611,6 +611,12 @@ class lvh_obj
   def get_pad_all()
   end
 
+  def set_val(t)
+    self._lv_obj.set_value(t)
+  end
+  def get_val()
+    return self._lv_obj.get_value()
+  end
   #====================================================================
   #  `radius2`
   #====================================================================
@@ -987,6 +993,25 @@ class lvh_qrcode : lvh_obj
   def get_qr_text() end
 end
 
+class lvh_slider : lvh_obj
+  static _lv_class = lv.slider
+
+  def set_val(t)
+    self._lv_obj.set_value(t, 0)    # add second parameter - no animation
+  end
+end
+
+class lvh_roller : lvh_obj
+  static _lv_class = lv.roller
+
+  def set_val(t)
+    self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
+  end
+  def get_val()
+    return self._lv_obj.get_selected()
+  end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
@@ -999,8 +1024,6 @@ class lvh_btnmatrix : lvh_obj   static _lv_class = lv.btnmatrix   end
 class lvh_checkbox : lvh_obj    static _lv_class = lv.checkbox    end
 class lvh_dropdown : lvh_obj    static _lv_class = lv.dropdown    end
 class lvh_line : lvh_obj        static _lv_class = lv.line        end
-class lvh_roller : lvh_obj      static _lv_class = lv.roller      end
-class lvh_slider : lvh_obj      static _lv_class = lv.slider      end
 class lvh_textarea : lvh_obj    static _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 class lvh_scr : lvh_obj         static _lv_class = nil            end    # no class for screen
