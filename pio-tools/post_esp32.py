@@ -90,7 +90,7 @@ def esp32_create_combined_bin(source, target, env):
         esp32_copy_new_safeboot_bin(chip,firmware_name)
     else:
         esp32_fetch_safeboot_bin(chip)
-    flash_size = env.BoardConfig().get("upload.flash_size")
+    flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
     cmd = [
         "--chip",
         chip,
