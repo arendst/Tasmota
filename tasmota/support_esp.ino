@@ -269,6 +269,17 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
+bool OtaFactoryRead(void) {
+  uint32_t pOtaLoader;
+  NvmLoad("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
+  return pOtaLoader;
+}
+
+void OtaFactoryWrite(bool value) {
+  uint32_t pOtaLoader = value;
+  NvmSave("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
+}
+
 void NvsInfo(void) {
   nvs_stats_t nvs_stats;
   nvs_get_stats(NULL, &nvs_stats);

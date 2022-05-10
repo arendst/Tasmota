@@ -1175,6 +1175,9 @@ void Every250mSeconds(void)
     if (TasmotaGlobal.ota_state_flag && CommandsReady()) {
       TasmotaGlobal.ota_state_flag--;
       if (2 == TasmotaGlobal.ota_state_flag) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+        OtaFactoryWrite(false);
+#endif
         RtcSettings.ota_loader = 0;                       // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         SettingsSave(1);                                  // Free flash for OTA update
@@ -1246,6 +1249,9 @@ void Every250mSeconds(void)
 #ifdef ESP32
 #ifndef FIRMWARE_MINIMAL
           if (EspSingleOtaPartition()) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+            OtaFactoryWrite(true);
+#endif
             RtcSettings.ota_loader = 1;                 // Try safeboot image next
             SettingsSaveAll();
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
@@ -1413,10 +1419,19 @@ void Every250mSeconds(void)
   case 3:                                                 // Every x.75 second
     if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
+
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+      if (OtaFactoryRead()) {
+        OtaFactoryWrite(false);
+        TasmotaGlobal.ota_state_flag = 3;
+      }
+#else
       if (1 == RtcSettings.ota_loader) {
         RtcSettings.ota_loader = 0;
         TasmotaGlobal.ota_state_flag = 3;
       }
+#endif
+
 #endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY

@@ -63,9 +63,9 @@ size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t s
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import flash
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: `flash.read(address:int[, length:int]) -> bytes()`
@@ -74,7 +74,7 @@ extern "C" {
   int32_t p_flash_read(struct bvm *vm);
   int32_t p_flash_read(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 1 && be_isint(vm, 1) && 
+    if (argc >= 1 && be_isint(vm, 1) &&
         (argc < 2 || be_isint(vm, 2)) ) {    // optional second argument must be int
       uint32_t address = be_toint(vm, 1);
       uint32_t length = 0x1000;
@@ -146,6 +146,9 @@ extern "C" {
       esp_partition_erase_range(otadata_partition, 0, SPI_FLASH_SEC_SIZE * 2);
     }
     if (force_ota) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+      OtaFactoryWrite(true);
+#endif
       RtcSettings.ota_loader = 1;     // force OTA at next reboot
     }
   }
