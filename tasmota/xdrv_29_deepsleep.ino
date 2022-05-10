@@ -106,7 +106,7 @@ void DeepSleepPrepare(void)
 
   // Timeslip in 0.1 seconds between the real wakeup and the calculated wakeup
   // Because deepsleep is in second and timeslip in 0.1 sec the compare always check if the slip is in the 10% range
-  int16_t timeslip = (int16_t)(RtcSettings.nextwakeup + millis() / 1000 - LocalTime()) * 10;
+  int32_t timeslip = (int32_t)(RtcSettings.nextwakeup + millis() / 1000 - LocalTime()) * 10;
 
   // Allow 10% of deepsleep error to count as valid deepsleep; expecting 3-4%
   // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
