@@ -1260,7 +1260,7 @@ void Every250mSeconds(void)
             char *pch = strrchr(bch, '-');                     // Find last dash (-) and ignore remainder - handles tasmota-DE
             if (pch == nullptr) { pch = ech; }                 // No dash so ignore filetype
             *pch = '\0';                                       // full_ota_url = http://domus1:80/api/arduino/tasmota
-            snprintf_P(full_ota_url, sizeof(full_ota_url), PSTR("%s-safeboot%s"), full_ota_url, ota_url_type);  // Saveboot filename must be filename-safeboot
+            snprintf_P(full_ota_url, sizeof(full_ota_url), PSTR("%s-safeboot%s"), full_ota_url, ota_url_type);  // Safeboot filename must be filename-safeboot
           } else
 #endif  // USE_WEBCLIENT_HTTPS
           if (EspSingleOtaPartition()) {

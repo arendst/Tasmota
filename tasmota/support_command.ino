@@ -842,7 +842,7 @@ void CmndUpgrade(void)
   else if (EspSingleOtaPartition() && !EspRunningFactoryPartition() && (1 == XdrvMailbox.data_len) && (2 == XdrvMailbox.payload)) {
     TasmotaGlobal.ota_factory = true;
     TasmotaGlobal.ota_state_flag = 3;
-    ResponseCmndChar(PSTR("Saveboot"));
+    ResponseCmndChar(PSTR("Safeboot"));
   }
 #endif  // ESP32 and WEBCLIENT_HTTPS
   else {
