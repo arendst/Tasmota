@@ -117,7 +117,7 @@ String HTTPUpdateLight::getLastErrorString(void)
     // error from Update class
     if(_lastError > 0) {
         StreamString error;
-        Update.printError(error);
+        TasUpdate.printError(error);
         error.trim(); // remove line ending
         return String("Update error: ") + error;
     }
@@ -418,14 +418,17 @@ bool HTTPUpdateLight::runUpdate(Stream& in, uint32_t size, String md5, int comma
     StreamString error;
 
     if (_cbProgress) {
-        Update.onProgress(_cbProgress);
+        TasUpdate.onProgress(_cbProgress);
     }
 
-    if(!Update.begin(size, command, _ledPin, _ledOn)) {
-        _lastError = Update.getError();
-        Update.printError(error);
+// Start Tasmota Factory patch
+//    if(!Update.begin(size, command, _ledPin, _ledOn)) {
+    if(!TasUpdate.begin(size, command, _ledPin, _ledOn, NULL, _factory)) {
+// End Tasmota Factory patch
+        _lastError = TasUpdate.getError();
+        TasUpdate.printError(error);
         error.trim(); // remove line ending
-        log_e("Update.begin failed! (%s)\n", error.c_str());
+        log_e("TasUpdate.begin failed! (%s)\n", error.c_str());
         return false;
     }
 
@@ -434,20 +437,20 @@ bool HTTPUpdateLight::runUpdate(Stream& in, uint32_t size, String md5, int comma
     }
 
     if(md5.length()) {
-        if(!Update.setMD5(md5.c_str())) {
+        if(!TasUpdate.setMD5(md5.c_str())) {
             _lastError = HTTP_UE_SERVER_FAULTY_MD5;
-            log_e("Update.setMD5 failed! (%s)\n", md5.c_str());
+            log_e("TasUpdate.setMD5 failed! (%s)\n", md5.c_str());
             return false;
         }
     }
 
 // To do: the SHA256 could be checked if the server sends it
 
-    if(Update.writeStream(in) != size) {
-        _lastError = Update.getError();
-        Update.printError(error);
+    if(TasUpdate.writeStream(in) != size) {
+        _lastError = TasUpdate.getError();
+        TasUpdate.printError(error);
         error.trim(); // remove line ending
-        log_e("Update.writeStream failed! (%s)\n", error.c_str());
+        log_e("TasUpdate.writeStream failed! (%s)\n", error.c_str());
         return false;
     }
 
@@ -455,11 +458,11 @@ bool HTTPUpdateLight::runUpdate(Stream& in, uint32_t size, String md5, int comma
         _cbProgress(size, size);
     }
 
-    if(!Update.end()) {
-        _lastError = Update.getError();
-        Update.printError(error);
+    if(!TasUpdate.end()) {
+        _lastError = TasUpdate.getError();
+        TasUpdate.printError(error);
         error.trim(); // remove line ending
-        log_e("Update.end failed! (%s)\n", error.c_str());
+        log_e("TasUpdate.end failed! (%s)\n", error.c_str());
         return false;
     }
 
