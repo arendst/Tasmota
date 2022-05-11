@@ -1419,19 +1419,16 @@ void Every250mSeconds(void)
   case 3:                                                 // Every x.75 second
     if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
-
 #ifdef CONFIG_IDF_TARGET_ESP32C3
       if (OtaFactoryRead()) {
         OtaFactoryWrite(false);
         TasmotaGlobal.ota_state_flag = 3;
       }
-#else
+#endif
       if (1 == RtcSettings.ota_loader) {
         RtcSettings.ota_loader = 0;
         TasmotaGlobal.ota_state_flag = 3;
       }
-#endif
-
 #endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
