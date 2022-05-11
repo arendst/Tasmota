@@ -24,7 +24,6 @@
 
 /*********************************************************************************************\
  * [tasmota32x-safeboot.bin]
- * Provide an image with useful supported sensors enabled
  *
  * Is a copy of FIRMWARE_MINIMAL with some additional features enabled
 \*********************************************************************************************/
@@ -607,7 +606,9 @@
 //#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter (+2k code)
 //#define USE_TELEINFO                             // Add support for French Energy Provider metering telemetry (+5k2 code, +168 RAM + SmartMeter LinkedList Values RAM)
 //#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
+#ifdef CONFIG_IDF_TARGET_ESP32                   // Sonoff SPM is ESP32 only
 #define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
+#endif // USE_SONOFF_SPM
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -630,7 +631,11 @@
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 //#define USE_THERMOSTAT                           // Add support for Thermostat
 
+#ifdef CONFIG_IDF_TARGET_ESP32                   // Enable Ethernet only for ESP32
+#if not defined(CORE32SOLO1)                     // No Ethernet for Solo1
 #define USE_ETHERNET                             // Add support for ethernet (+20k code)
+#endif // Solo1
+#endif // ESP32
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
