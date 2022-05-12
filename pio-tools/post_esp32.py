@@ -38,6 +38,13 @@ import esptool
 FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
+def esp32_create_chip_string(chip):
+    tasmota_platform = env.subst("$BUILD_DIR").split('/')[-1]
+    tasmota_platform = tasmota_platform.split('-')[0]
+    if 'tasmota' and chip[3:] not in tasmota_platform: # quick check for a valid name like 'tasmota' + '32c3'
+        print('Unexpected naming conventions in this build environment -> Undefined behavior for further build process!!')
+    return tasmota_platform
+
 def esp32_build_filesystem(fs_size):
     files = env.GetProjectOption("custom_files_upload").splitlines()
     filesystem_dir = join(env.subst("$BUILD_DIR"),"littlefs_data")
@@ -55,12 +62,12 @@ def esp32_build_filesystem(fs_size):
     tool = env.subst(env["MKSPIFFSTOOL"])
     cmd = (tool,"-c",filesystem_dir,"-s",fs_size,join(env.subst("$BUILD_DIR"),"littlefs.bin"))
     returncode = subprocess.call(cmd, shell=False)
-    # print(retrncode)
+    # print(returncode)
     return True
 
-def esp32_fetch_safeboot_bin(chip):
-    safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin"
-    safeboot_fw_name = join(variants_dir,"tasmota" +  ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin")
+def esp32_fetch_safeboot_bin(tasmota_platform):
+    safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/" + tasmota_platform + "-safeboot.bin"
+    safeboot_fw_name = join(variants_dir, tasmota_platform + "-safeboot.bin")
     if(exists(safeboot_fw_name)):
         print("safeboot binary already in place.")
         return
@@ -70,9 +77,9 @@ def esp32_fetch_safeboot_bin(chip):
     open(safeboot_fw_name, "wb").write(response.content)
     print("safeboot binary written to variants dir.")
 
-def esp32_copy_new_safeboot_bin(chip,new_local_safeboot_fw):
+def esp32_copy_new_safeboot_bin(tasmota_platform,new_local_safeboot_fw):
     print("Copy new local safeboot firmware to variants dir -> using it for further flashing operations")
-    safeboot_fw_name = join(variants_dir,"tasmota" + ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin")
+    safeboot_fw_name = join(variants_dir, tasmota_platform + "-safeboot.bin")
     if os.path.exists(variants_dir):
         shutil.copy(new_local_safeboot_fw, safeboot_fw_name)
 
@@ -108,12 +115,13 @@ def esp32_create_combined_bin(source, target, env):
     sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     chip = env.get("BOARD_MCU")
+    tasmota_platform = esp32_create_chip_string(chip)
     if not os.path.exists(variants_dir):
         os.makedirs(variants_dir)
     if("safeboot" in firmware_name):
-        esp32_copy_new_safeboot_bin(chip,firmware_name)
+        esp32_copy_new_safeboot_bin(tasmota_platform,firmware_name)
     else:
-        esp32_fetch_safeboot_bin(chip)
+        esp32_fetch_safeboot_bin(tasmota_platform)
     flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
     cmd = [
         "--chip",
