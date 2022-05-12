@@ -45,11 +45,18 @@ def esp32_build_filesystem(fs_size):
         os.makedirs(filesystem_dir)
     print("Creating filesystem with content:")
     for file in files:
+        if "no_files" in file:
+            continue
         shutil.copy(file, filesystem_dir)
+    if not os.listdir(filesystem_dir):
+        print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
+        return False
     env.Replace( MKSPIFFSTOOL=platform.get_package_dir("tool-mklittlefs") + '/mklittlefs' )
     tool = env.subst(env["MKSPIFFSTOOL"])
     cmd = (tool,"-c",filesystem_dir,"-s",fs_size,join(env.subst("$BUILD_DIR"),"littlefs.bin"))
     returncode = subprocess.call(cmd, shell=False)
+    # print(retrncode)
+    return True
 
 def esp32_fetch_safeboot_bin(chip):
     safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/tasmota" + ("32solo1" if "solo1" in env.subst("$BUILD_DIR") else chip[3:]) + "-safeboot.bin"
@@ -74,9 +81,9 @@ def esp32_create_combined_bin(source, target, env):
 
     # The offset from begin of the file where the app0 partition starts
     # This is defined in the partition .csv file
-    factory_offset = -1      # error code value
+    # factory_offset = -1      # error code value - currently unused
     app_offset = 0x10000     # default value for "old" scheme
-    fs_offset = -1       # error code value
+    fs_offset = -1           # error code value
     with open(env.BoardConfig().get("build.partitions")) as csv_file:
         print("Read partitions from ",env.BoardConfig().get("build.partitions"))
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -92,9 +99,9 @@ def esp32_create_combined_bin(source, target, env):
                     app_offset = int(row[3],base=16)
                 # elif(row[0] == 'factory'):
                 #     factory_offset = int(row[3],base=16)
-                elif(row[0] == 'spiffs'):
-                    fs_offset = int(row[3],base=16)
-                    esp32_build_filesystem(row[4])
+                elif(row[0] == 'spiffs'):    
+                    if esp32_build_filesystem(row[4]):
+                        fs_offset = int(row[3],base=16)
 
 
     new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
