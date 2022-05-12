@@ -13,6 +13,13 @@ remove in file `lib/lib_audio/ESP8266Audio/src/AudioFileSourceFS.cpp`
 #endif
 ```
 
+add in file `lib/lib_audio/ESP8266Audio/src/spiram-fast.h`
+```
+#ifndef SPECIAL
+#define SPECIAL 0xF0
+#endif
+```
+
 Files to delete:
 ```
 lib/lib_audio/ESP8266Audio/src/AudioFileSourceSPIFFS.h
