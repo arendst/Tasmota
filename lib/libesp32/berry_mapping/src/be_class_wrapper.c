@@ -222,6 +222,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     type_ok = (arg_type[0] == '.');                           // any type is accepted
     type_ok = type_ok || (arg_type[0] == provided_type && arg_type[1] == 0);      // or type is a match (single char only)
     type_ok = type_ok || (ret == 0 && arg_type_len != 1);     // or NULL is accepted for an instance
+    type_ok = type_ok || (ret == 0 && arg_type[0] == 's' && arg_type[1] == 0);  // accept nil for string, can be dangerous
     
     if (!type_ok) {
       be_raisef(vm, "type_error", "Unexpected argument type '%c', expected '%s'", provided_type, arg_type);

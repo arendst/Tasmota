@@ -5145,15 +5145,397 @@ void be_load_lvh_textarea_class(bvm *vm) {
 }
 
 /********************************************************************
+** Solidified function: get_val
+********************************************************************/
+be_local_closure(lvh_dropdown_get_val,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("get_selected"),
+    }),
+    be_str_literal("get_val"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_direction
+********************************************************************/
+be_local_closure(lvh_dropdown_set_direction,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("set_dir"),
+    /* K2   */  be_nested_str_literal("_dir"),
+    }),
+    be_str_literal("set_direction"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x60100009,  //  0002  GETGBL	R4	G9
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C100200,  //  0004  CALL	R4	1
+      0x88140102,  //  0005  GETMBR	R5	R0	K2
+      0x94100A04,  //  0006  GETIDX	R4	R5	R4
+      0x7C080400,  //  0007  CALL	R2	2
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_options
+********************************************************************/
+be_local_closure(lvh_dropdown_set_options,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("set_options"),
+    /* K2   */  be_nested_str_literal("lv"),
+    /* K3   */  be_nested_str_literal("ROLLER_MODE_NORMAL"),
+    }),
+    be_str_literal("set_options"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 7]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0xB8160400,  //  0003  GETNGBL	R5	K2
+      0x88140B03,  //  0004  GETMBR	R5	R5	K3
+      0x7C080600,  //  0005  CALL	R2	3
+      0x80000000,  //  0006  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_val
+********************************************************************/
+be_local_closure(lvh_dropdown_set_val,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("set_selected"),
+    /* K2   */  be_const_int(0),
+    }),
+    be_str_literal("set_val"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x58140002,  //  0003  LDCONST	R5	K2
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_text
+********************************************************************/
+be_local_closure(lvh_dropdown_get_text,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("get_text"),
+    /* K2   */  be_nested_str_literal("resize"),
+    /* K3   */  be_nested_str_literal("get_selected_str"),
+    /* K4   */  be_nested_str_literal("_buffer"),
+    /* K5   */  be_nested_str_literal("remove_trailing_zeroes"),
+    /* K6   */  be_nested_str_literal("asstring"),
+    }),
+    be_str_literal("get_text"),
+    &be_const_str_solidified,
+    ( &(const binstruction[27]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x4C080000,  //  0003  LDNIL	R2
+      0x1C080202,  //  0004  EQ	R2	R1	R2
+      0x780A0012,  //  0005  JMPF	R2	#0019
+      0x60080015,  //  0006  GETGBL	R2	G21
+      0x7C080000,  //  0007  CALL	R2	0
+      0x8C080502,  //  0008  GETMET	R2	R2	K2
+      0x541200FF,  //  0009  LDINT	R4	256
+      0x7C080400,  //  000A  CALL	R2	2
+      0x880C0100,  //  000B  GETMBR	R3	R0	K0
+      0x8C0C0703,  //  000C  GETMET	R3	R3	K3
+      0x8C140504,  //  000D  GETMET	R5	R2	K4
+      0x7C140200,  //  000E  CALL	R5	1
+      0x541A00FF,  //  000F  LDINT	R6	256
+      0x7C0C0600,  //  0010  CALL	R3	3
+      0x8C0C0105,  //  0011  GETMET	R3	R0	K5
+      0x5C140400,  //  0012  MOVE	R5	R2
+      0x7C0C0400,  //  0013  CALL	R3	2
+      0x5C080600,  //  0014  MOVE	R2	R3
+      0x8C0C0506,  //  0015  GETMET	R3	R2	K6
+      0x7C0C0200,  //  0016  CALL	R3	1
+      0x80040600,  //  0017  RET	1	R3
+      0x70020000,  //  0018  JMP		#001A
+      0x80040200,  //  0019  RET	1	R1
+      0x80000000,  //  001A  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_direction
+********************************************************************/
+be_local_closure(lvh_dropdown_get_direction,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("get_dir"),
+    /* K2   */  be_const_int(0),
+    /* K3   */  be_nested_str_literal("_dir"),
+    /* K4   */  be_const_int(1),
+    }),
+    be_str_literal("get_direction"),
+    &be_const_str_solidified,
+    ( &(const binstruction[18]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x58080002,  //  0003  LDCONST	R2	K2
+      0x600C000C,  //  0004  GETGBL	R3	G12
+      0x88100103,  //  0005  GETMBR	R4	R0	K3
+      0x7C0C0200,  //  0006  CALL	R3	1
+      0x140C0403,  //  0007  LT	R3	R2	R3
+      0x780E0006,  //  0008  JMPF	R3	#0010
+      0x880C0103,  //  0009  GETMBR	R3	R0	K3
+      0x940C0602,  //  000A  GETIDX	R3	R3	R2
+      0x1C0C0203,  //  000B  EQ	R3	R1	R3
+      0x780E0000,  //  000C  JMPF	R3	#000E
+      0x80040400,  //  000D  RET	1	R2
+      0x00080504,  //  000E  ADD	R2	R2	K4
+      0x7001FFF3,  //  000F  JMP		#0004
+      0x540DFFFE,  //  0010  LDINT	R3	-1
+      0x80040600,  //  0011  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_show_selected
+********************************************************************/
+be_local_closure(lvh_dropdown_set_show_selected,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("set_text"),
+    }),
+    be_str_literal("set_show_selected"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x78060003,  //  0000  JMPF	R1	#0005
+      0x88080100,  //  0001  GETMBR	R2	R0	K0
+      0x8C080501,  //  0002  GETMET	R2	R2	K1
+      0x4C100000,  //  0003  LDNIL	R4
+      0x7C080400,  //  0004  CALL	R2	2
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_text
+********************************************************************/
+be_local_closure(lvh_dropdown_set_text,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("set_text"),
+    }),
+    be_str_literal("set_text"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_options
+********************************************************************/
+be_local_closure(lvh_dropdown_get_options,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("get_options"),
+    }),
+    be_str_literal("get_options"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_show_selected
+********************************************************************/
+be_local_closure(lvh_dropdown_get_show_selected,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K1   */  be_nested_str_literal("get_text"),
+    }),
+    be_str_literal("get_show_selected"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x4C080000,  //  0003  LDNIL	R2
+      0x1C080202,  //  0004  EQ	R2	R1	R2
+      0x80040400,  //  0005  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_dropdown
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_dropdown,
     0,
     &be_class_lvh_obj,
-    be_nested_map(1,
+    be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_literal("get_show_selected", 8), be_const_closure(lvh_dropdown_get_show_selected_closure) },
+        { be_const_key_literal("set_direction", -1), be_const_closure(lvh_dropdown_set_direction_closure) },
+        { be_const_key_literal("set_options", -1), be_const_closure(lvh_dropdown_set_options_closure) },
+        { be_const_key_literal("set_val", 4), be_const_closure(lvh_dropdown_set_val_closure) },
+        { be_const_key_literal("get_text", -1), be_const_closure(lvh_dropdown_get_text_closure) },
+        { be_const_key_literal("get_direction", 9), be_const_closure(lvh_dropdown_get_direction_closure) },
         { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_dropdown) },
+        { be_const_key_literal("set_show_selected", 6), be_const_closure(lvh_dropdown_set_show_selected_closure) },
+        { be_const_key_literal("set_text", -1), be_const_closure(lvh_dropdown_set_text_closure) },
+        { be_const_key_literal("_dir", -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(4,
+    ( (struct bvalue*) &(const bvalue[]) {
+        be_const_int(8),
+        be_const_int(4),
+        be_const_int(1),
+        be_const_int(2),
+    }))    ) } )) },
+        { be_const_key_literal("get_options", -1), be_const_closure(lvh_dropdown_get_options_closure) },
+        { be_const_key_literal("get_val", 0), be_const_closure(lvh_dropdown_get_val_closure) },
     })),
     be_str_literal("lvh_dropdown")
 );

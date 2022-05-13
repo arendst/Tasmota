@@ -1022,6 +1022,9 @@ class lvh_qrcode : lvh_obj
   def get_qr_text() end
 end
 
+#====================================================================
+#  slider
+#====================================================================
 class lvh_slider : lvh_obj
   static _lv_class = lv.slider
 
@@ -1030,6 +1033,9 @@ class lvh_slider : lvh_obj
   end
 end
 
+#====================================================================
+#  roller
+#====================================================================
 class lvh_roller : lvh_obj
   static _lv_class = lv.roller
 
@@ -1059,6 +1065,73 @@ class lvh_roller : lvh_obj
   end
 end
 
+#====================================================================
+#  dropdown
+#====================================================================
+class lvh_dropdown : lvh_obj
+  static _lv_class = lv.dropdown
+  static _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
+
+  def set_val(t)
+    self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
+  end
+  def get_val()
+    return self._lv_obj.get_selected()
+  end
+
+  def set_options(t)
+    self._lv_obj.set_options(t, lv.ROLLER_MODE_NORMAL)
+  end
+  def get_options()
+    return self._lv_obj.get_options()
+  end
+
+  def set_text(t)
+    # set_text sets a static text displayed whatever the value
+    # use `nil` to set back the text of the selected value
+    self._lv_obj.set_text(t)
+  end
+  def get_text()
+    var static_text = self._lv_obj.get_text()
+    if static_text == nil
+      # allocate a bytes buffer
+      var b = bytes().resize(256)      # force 256 bytes
+      self._lv_obj.get_selected_str(b._buffer(), 256)
+      b = self.remove_trailing_zeroes(b)
+      return b.asstring()
+    else
+      return static_text
+    end
+  end
+
+  # direction needs a conversion from OpenHASP numbers and LVGL's
+  def set_direction(t)
+    # 0 = down, 1 = up, 2 = left, 3 = right
+    self._lv_obj.set_dir(self._dir[int(t)])
+  end
+  def get_direction()
+    var dir = self._lv_obj.get_dir()
+    var i = 0
+    while i < size(self._dir)
+      if dir == self._dir[i]    return i end
+      i += 1
+    end
+    return -1
+  end
+
+  # show_selected (bool) is a OpenHASP addition
+  # only meaningful if set to `true`, setting to false requires a call to `set_text`
+  def set_show_selected(t)
+    if t
+      self._lv_obj.set_text(nil)  # undo static text
+    end
+  end
+  def get_show_selected()
+    var static_text = self._lv_obj.get_text()
+    return (static_text == nil)
+  end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
@@ -1069,7 +1142,6 @@ class lvh_bar : lvh_obj         static _lv_class = lv.bar         end
 class lvh_btn : lvh_obj         static _lv_class = lv.btn         end
 class lvh_btnmatrix : lvh_obj   static _lv_class = lv.btnmatrix   end
 class lvh_checkbox : lvh_obj    static _lv_class = lv.checkbox    end
-class lvh_dropdown : lvh_obj    static _lv_class = lv.dropdown    end
 class lvh_line : lvh_obj        static _lv_class = lv.line        end
 class lvh_textarea : lvh_obj    static _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
