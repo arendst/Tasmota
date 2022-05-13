@@ -175,6 +175,21 @@ class lvh_obj
     return bool(re.search("color$", str(t)))
   end
 
+  #- remove trailing NULL chars from a bytes buffer before converting to string -#
+  #- Berry strings can contain NULL, but this messes up C-Berry interface -#
+  static def remove_trailing_zeroes(b)
+    var sz = size(b)
+    var i = 0
+    while i < sz
+      if b[-1-i] != 0   break end
+      i += 1
+    end
+    if i > 0
+      b.resize(size(b)-i)
+    end
+    return b
+  end
+
   #################################################################################
   # Parses a color attribute
   # 
@@ -324,7 +339,13 @@ class lvh_obj
         try
           # try to get the new val
           var val = self.val
-          tas_event_more = string.format(',"val":%i', val)
+          if val != nil   tas_event_more = string.format(',"val":%i', val) end
+          var text = self.text
+          if text != nil
+            import json
+            tas_event_more += ',"text":'
+            tas_event_more += json.dump(text)
+          end
         except ..
         end
       end
@@ -1024,6 +1045,17 @@ class lvh_roller : lvh_obj
   end
   def get_options()
     return self._lv_obj.get_options()
+  end
+
+  def set_text(t)
+    raise "attribute_error", "set_text unsupported on roller"
+  end
+  def get_text()
+    # allocate a bytes buffer
+    var b = bytes().resize(256)      # force 256 bytes
+    self._lv_obj.get_selected_str(b._buffer(), 256)
+    b = self.remove_trailing_zeroes(b)
+    return b.asstring()
   end
 end
 
