@@ -5349,36 +5349,34 @@ be_local_closure(lvh_dropdown_get_direction,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
+    ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_literal("_lv_obj"),
     /* K1   */  be_nested_str_literal("get_dir"),
-    /* K2   */  be_nested_str_literal("_dir"),
-    /* K3   */  be_nested_str_literal("stop_iteration"),
+    /* K2   */  be_const_int(0),
+    /* K3   */  be_nested_str_literal("_dir"),
+    /* K4   */  be_const_int(1),
     }),
     be_str_literal("get_direction"),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
+    ( &(const binstruction[18]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
       0x7C040200,  //  0002  CALL	R1	1
-      0x60080010,  //  0003  GETGBL	R2	G16
-      0x880C0102,  //  0004  GETMBR	R3	R0	K2
-      0x7C080200,  //  0005  CALL	R2	1
-      0xA8020008,  //  0006  EXBLK	0	#0010
-      0x5C0C0400,  //  0007  MOVE	R3	R2
-      0x7C0C0000,  //  0008  CALL	R3	0
-      0x88100102,  //  0009  GETMBR	R4	R0	K2
-      0x94100803,  //  000A  GETIDX	R4	R4	R3
-      0x1C100204,  //  000B  EQ	R4	R1	R4
-      0x78120001,  //  000C  JMPF	R4	#000F
-      0xA8040001,  //  000D  EXBLK	1	1
-      0x80040600,  //  000E  RET	1	R3
-      0x7001FFF6,  //  000F  JMP		#0007
-      0x58080003,  //  0010  LDCONST	R2	K3
-      0xAC080200,  //  0011  CATCH	R2	1	0
-      0xB0080000,  //  0012  RAISE	2	R0	R0
-      0x5409FFFE,  //  0013  LDINT	R2	-1
-      0x80040400,  //  0014  RET	1	R2
+      0x58080002,  //  0003  LDCONST	R2	K2
+      0x600C000C,  //  0004  GETGBL	R3	G12
+      0x88100103,  //  0005  GETMBR	R4	R0	K3
+      0x7C0C0200,  //  0006  CALL	R3	1
+      0x140C0403,  //  0007  LT	R3	R2	R3
+      0x780E0006,  //  0008  JMPF	R3	#0010
+      0x880C0103,  //  0009  GETMBR	R3	R0	K3
+      0x940C0602,  //  000A  GETIDX	R3	R3	R2
+      0x1C0C0203,  //  000B  EQ	R3	R1	R3
+      0x780E0000,  //  000C  JMPF	R3	#000E
+      0x80040400,  //  000D  RET	1	R2
+      0x00080504,  //  000E  ADD	R2	R2	K4
+      0x7001FFF3,  //  000F  JMP		#0004
+      0x540DFFFE,  //  0010  LDINT	R3	-1
+      0x80040600,  //  0011  RET	1	R3
     })
   )
 );

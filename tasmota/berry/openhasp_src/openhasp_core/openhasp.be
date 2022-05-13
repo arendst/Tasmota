@@ -1111,8 +1111,10 @@ class lvh_dropdown : lvh_obj
   end
   def get_direction()
     var dir = self._lv_obj.get_dir()
-    for i:self._dir
+    var i = 0
+    while i < size(self._dir)
       if dir == self._dir[i]    return i end
+      i += 1
     end
     return -1
   end
