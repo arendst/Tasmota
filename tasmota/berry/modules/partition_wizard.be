@@ -4,6 +4,7 @@
 # use : `import partition_wizard`
 #
 # Provides low-level objects and a Web UI
+# rm Partition_Wizard.tapp; zip Partition_Wizard.tapp -j -0 Partition_Wizard/*
 #######################################################################
 
 var partition_wizard = module('partition_wizard')
@@ -50,7 +51,7 @@ class Partition_wizard_UI
   def web_add_button()
     import webserver
     webserver.content_send(
-      "<form id=but_part_mgr style='display: block;' action='part_wiz' method='get'><button>Partition Wizard</button></form>")
+      "<form id=but_part_mgr style='display: block;' action='part_wiz' method='get'><button>Partition Wizard</button></form><p></p>")
   end
 
   #- ---------------------------------------------------------------------- -#
