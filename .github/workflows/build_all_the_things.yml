@@ -47,7 +47,7 @@ jobs:
           - tasmota32solo1-safeboot
           - tasmota32-safeboot
           - tasmota32c3-safeboot
-          - tasmota32c3usb-safebot
+          - tasmota32c3usb-safeboot
           - tasmota32s2-safeboot
           - tasmota32s3-safeboot
     steps:
