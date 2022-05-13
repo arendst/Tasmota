@@ -353,18 +353,22 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "</fieldset><br><br>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
 const char HTTP_FORM_RST_UPG[] PROGMEM =
-  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
-  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
+  "<br><button type='submit' "
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.submit();'"
+    ">" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
 
 // upload via factory partition
 const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
-  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
-  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";return upl(this);'>" D_START " %s</button></form>"
+  "<br><button type='submit' "
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;return upl(this);'"
+    ">" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
@@ -436,6 +440,7 @@ ESP8266WebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
+  uint32_t upload_size = 0;
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
@@ -2775,11 +2780,15 @@ void HandleUploadLoop(void) {
           return;
         }
         if (0xE9 == upload.buf[0]) {
-          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
 #ifdef ESP8266
+          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
           if (bin_flash_size > ESP.getFlashChipRealSize()) {
 #else
-          if (bin_flash_size > ESP.getFlashChipSize()) {   // TODO revisit this test
+          char tmp[16];
+          WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
+          uint32_t upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
+          AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "freespace=%i filesize=%i", ESP.getFreeSketchSpace(), upload_size);
+          if (upload_size > ESP.getFreeSketchSpace()) {   // TODO revisit this test
 #endif
             Web.upload_error = 4;  // Program flash size is larger than real flash size
             return;
