@@ -140,6 +140,7 @@
 #define D_PASSWORD "Mật khẩu"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Cổng"
 #define D_POWER_FACTOR "Hệ số công suất"
 #define D_POWERUSAGE "Công suất"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "nâng cấp"
 #define D_UPLOAD "Tải lên"
 #define D_UPTIME "Thời gian chạy"
+#define D_USED "used"
 #define D_USER "Người dùng"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"

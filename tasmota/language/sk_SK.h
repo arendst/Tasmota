@@ -140,6 +140,7 @@
 #define D_PASSWORD "Heslo"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Účinník"
 #define D_POWERUSAGE "Príkon"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "aktualizáciu"
 #define D_UPLOAD "Nahrávanie..."
 #define D_UPTIME "Uptime"
+#define D_USED "used"
 #define D_USER "Používateľ"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"

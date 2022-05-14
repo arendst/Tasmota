@@ -140,6 +140,7 @@
 #define D_PASSWORD "Пароль"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Порт"
 #define D_POWER_FACTOR "Коэффициент мощности"
 #define D_POWERUSAGE "Мощность"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "обновление"
 #define D_UPLOAD "Загрузить"
 #define D_UPTIME "Uptime"
+#define D_USED "used"
 #define D_USER "Пользователь"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Index"

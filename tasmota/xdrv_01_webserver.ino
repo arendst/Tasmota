@@ -2468,6 +2468,22 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
   }
+  WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
+  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+  for (; it != NULL; it = esp_partition_next(it)) {
+    const esp_partition_t *part = esp_partition_get(it);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("Partition type %d, subtype %d, name %s, size %d"), part->type, part->subtype, part->label, part->size);
+    uint32_t part_size = part->size / 1024;
+    if (0 == part->type) {                               // app
+      uint32_t prog_size = EspProgramSize(part->label);
+      uint32_t part_used = ((prog_size / 1024) * 100) / part_size;
+      WSContentSend_PD(PSTR("}1" D_PARTITION " %s}2%d kB (" D_USED " %d%%)"), part->label, part_size, part_used);
+    }
+    if ((1 == part->type) && (130 == part->subtype)) {   // data and fs
+      WSContentSend_PD(PSTR("}1" D_PARTITION " fs}2%d kB"), part_size);
+    }
+  }
+  esp_partition_iterator_release(it);
 #else // ESP32
   WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f kB"), &freemem);
 #endif // ESP32

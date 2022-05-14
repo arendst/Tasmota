@@ -140,6 +140,7 @@
 #define D_PASSWORD "Clave"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Puerto"
 #define D_POWER_FACTOR "Factor de Potencia"
 #define D_POWERUSAGE "Potencia"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "Actualización"
 #define D_UPLOAD "Carga"
 #define D_UPTIME "Tiempo Encendido"
+#define D_USED "used"
 #define D_USER "Usuario"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Índice UV"

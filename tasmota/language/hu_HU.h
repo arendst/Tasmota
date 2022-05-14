@@ -140,6 +140,7 @@
 #define D_PASSWORD "Jelszó"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Teljesítménytényező"
 #define D_POWERUSAGE "Energiafelhasználás"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "Frissítés"
 #define D_UPLOAD "Feltöltés"
 #define D_UPTIME "Üzemidő"
+#define D_USED "used"
 #define D_USER "Felhasználó"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV index"
