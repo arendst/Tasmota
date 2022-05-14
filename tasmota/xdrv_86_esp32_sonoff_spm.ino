@@ -32,7 +32,7 @@
  * Each SPM-4Relay has 4 bistable relays with their own CSE7761 energy monitoring device handled by an ARM processor.
  * Green led is controlled by ARM processor indicating SD-Card access.
  * ESP32 is used as interface between eWelink and ARM processor in SPM-Main unit communicating over proprietary serial protocol.
- * Power on sequence for two SPM-4Relay modules is 00-00-15-10-(0F)-(13)-(13)-(19)-0C-09-04-09-04-0B-0B
+ * Power on sequence for two SPM-4Relay modules is 00-00-15-10-(0F)-(13)-(13)-(19)-0C-09-04-[25]-09-04-[25]-0B-0B
  * Up to 180 days of daily energy are stored on the SD-Card. Previous data is lost.
  * Tasmota support is based on Sonoff SPM v1.0.0 ARM firmware.
  * Energy history cannot be guaranteed using either SD-Card or internal flash. As a solution Tasmota stores the total energy and yesterday energy just after midnight.
@@ -143,6 +143,7 @@
 #define SSPM_FUNC_GET_LOG            26      // 0x1A
 #define SSPM_FUNC_ENERGY_PERIOD      27      // 0x1B
 #define SSPM_FUNC_RESET              28      // 0x1C - Remove device from eWelink and factory reset
+#define SSPM_FUNC_GET_NEW1           37      // 0x25
 
 // From ARM to ESP
 #define SSPM_FUNC_ENERGY_RESULT      6       // 0x06
@@ -166,6 +167,9 @@
 
 #define SSPM_MODULE_NAME_SIZE        12
 
+#define SSPM_MAIN_V1_0_0             0x00010000
+#define SSPM_MAIN_V1_2_0             0x00010200
+
 /*********************************************************************************************/
 
 #define SSPM_TOTAL_MODULES           32            // Max number of SPM-4RELAY units for a total of 128 relays
@@ -176,9 +180,10 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_WAIT,                 // Wait 100ms
                          SPM_RESET,                // Toggle ARM reset pin
                          SPM_POLL_ARM,             // Wait for first acknowledge from ARM after reset
-                         SPM_POLL_ARM_SPI,         // Wait for first acknowledge from ARM SPI after reset
-                         SPM_POLL_ARM_2,           // Wait for second acknowledge from ARM after reset
-                         SPM_POLL_ARM_3,           // Wait for second acknowledge from ARM after reset
+// Removed to accomodate v1.2.0 too
+//                         SPM_POLL_ARM_SPI,         // Wait for first acknowledge from ARM SPI after reset
+//                         SPM_POLL_ARM_2,           // Wait for second acknowledge from ARM after reset
+//                         SPM_POLL_ARM_3,           // Wait for second acknowledge from ARM after reset
                          SPM_SEND_FUNC_UNITS,      // Get number of units
                          SPM_START_SCAN,           // Start module scan sequence
                          SPM_WAIT_FOR_SCAN,        // Wait for scan sequence to complete
@@ -250,6 +255,7 @@ typedef struct {
   float overload_max_current;
 
   uint32_t timeout;
+  uint32_t main_version;
   power_t old_power;
   power_t power_on_state;
   uint16_t last_totals;
@@ -894,6 +900,23 @@ void SSPMSendGetEnergyPeriod(uint32_t relay) {
 
 }
 
+void SSPMSendGetNew1(uint32_t module) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
+  aa 55 01 6b 7e 32 37 39 37 34 13 4b 35 36 37 00 25 00 00 08 c0 0a
+  Marker  |Module id                          |Ac|Cm|Size |Ix|Chksm|
+  */
+  if (module >= Sspm->module_max) { return; }
+
+  SSPMInitSend();
+  memcpy(SspmBuffer +3, Sspm->module[SSPMGetMappedModuleId(module)], SSPM_MODULE_NAME_SIZE);
+  SspmBuffer[16] = SSPM_FUNC_GET_NEW1;  // 0x25
+  Sspm->command_sequence++;
+  SspmBuffer[19] = Sspm->command_sequence;
+
+  SSPMSend(22);
+}
+
 /*********************************************************************************************/
 
 void SSPMAddModule(void) {
@@ -1051,11 +1074,15 @@ void SSPMHandleReceivedData(void) {
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR("SSPMOverload"));
           Sspm->overload_relay = 255;
         } else {
-          Sspm->module_selected--;
-          if (Sspm->module_selected > 0) {
-            SSPMSendGetModuleState(Sspm->module_selected -1);
+          if (Sspm->main_version > SSPM_MAIN_V1_0_0) {
+            SSPMSendGetNew1(Sspm->module_selected -1);
           } else {
-            SSPMSendGetScheme(Sspm->module_selected);
+            Sspm->module_selected--;
+            if (Sspm->module_selected > 0) {
+              SSPMSendGetModuleState(Sspm->module_selected -1);
+            } else {
+              SSPMSendGetScheme(Sspm->module_selected);
+            }
           }
         }
         break;
@@ -1101,9 +1128,14 @@ void SSPMHandleReceivedData(void) {
       case SSPM_FUNC_SET_TIME:
         /* 0x0C
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 0c 00 01 00 04 3e 62
+        v1.2.0: adds response from each 4-relay module
+        AA 55 01 8b 34 32 37 39 37 34 13 4b 35 36 37 80 0c 00 01 00 19 4c 09
         */
-        TasmotaGlobal.devices_present = 0;
-        SSPMSendGetModuleState(Sspm->module_selected -1);
+        if (0 == SspmBuffer[3]) {
+          // Discard v1.2.0 additions
+          TasmotaGlobal.devices_present = 0;
+          SSPMSendGetModuleState(Sspm->module_selected -1);
+        }
         break;
       case SSPM_FUNC_INIT_SCAN:
         /* 0x10
@@ -1117,7 +1149,11 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 15 00 04 00 01 00 00 01 81 b1
                                                                 |St|FwVersio|
                                                                 |  |   1.0.0|
+        v1.2.0:
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 15 00 04 00 01 02 00 01 41 10
+                                                                |  |   1.2.0|
         */
+        Sspm->main_version = SspmBuffer[20] << 16 | SspmBuffer[21] << 8 | SspmBuffer[22];  // 0x00010000 or 0x00010200
         AddLog(LOG_LEVEL_INFO, PSTR("SPM: Main version %d.%d.%d found"), SspmBuffer[20], SspmBuffer[21], SspmBuffer[22]);
 
         Sspm->mstate = SPM_START_SCAN;
@@ -1313,6 +1349,19 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 1c 00 01 00 0b f9 e3
         */
 //        TasmotaGlobal.restart_flag = 2;
+        break;
+      case SSPM_FUNC_GET_NEW1:
+        /* 0x25 v1.2.0
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 21 22 23
+        AA 55 01 8b 34 32 37 39 37 34 13 4b 35 36 37 80 25 00 01 01 06 98 06
+        Marker  |Module id                          |Ac|Cm|Size |St|Ix|Chksm|
+        */
+        Sspm->module_selected--;
+        if (Sspm->module_selected > 0) {
+          SSPMSendGetModuleState(Sspm->module_selected -1);
+        } else {
+          SSPMSendGetScheme(Sspm->module_selected);
+        }
         break;
     }
   } else {
@@ -1515,6 +1564,7 @@ void SSPMHandleReceivedData(void) {
           AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Relay scan done - none found"));
 
           Sspm->mstate = SPM_NONE;
+          Sspm->error_led_blinks = 255;
         }
 
         SSPMSendSetTime();
@@ -1755,6 +1805,8 @@ void SSPMEvery100ms(void) {
       // Wait for first acknowledge from ARM after reset
       SSPMSendCmnd(SSPM_FUNC_FIND);
       break;
+/*
+    // Removed to accomodate v1.2.0 too
     case SPM_POLL_ARM_SPI:
       SSPMSendSPIFind();
       Sspm->mstate = SPM_POLL_ARM_2;
@@ -1766,6 +1818,7 @@ void SSPMEvery100ms(void) {
     case SPM_POLL_ARM_3:
       // Wait for second acknowledge from ARM after reset
       break;
+*/
     case SPM_SEND_FUNC_UNITS:
       // Get number of units
       SSPMSendCmnd(SSPM_FUNC_UNITS);
