@@ -488,7 +488,7 @@ class Partition
     import flash
     #- we expect the SPIFFS partition to be the last one -#
     var spiffs = self.slots[-1]
-    if !spiffs.is_spiffs() raise 'value_error', 'No SPIFFS partition found' end
+    if !spiffs.is_spiffs() raise 'value_error', 'No FS partition found' end
 
     var b = bytes("00")  #- flash memory: we can turn bits from '1' to '0' -#
     flash.write(spiffs.start         , b)    #- block #0 -#
@@ -522,7 +522,7 @@ class Partition_manager_UI
     import string
     #- define `bdis` style for gray disabled buttons -#
     webserver.content_send("<fieldset><style>.bdis{background:#888;}.bdis:hover{background:#888;}</style>")
-    webserver.content_send(string.format("<legend><b title='Start: 0x%03X 000'>&nbsp;%s%s</b></legend>",
+    webserver.content_send(string.format("<legend><b title='Start: 0x%03X 000'>&nbsp;%s%s&nbsp;</b></legend>",
                                          slot.start / 0x1000, slot.label, active ? " (active)" : ""))
 
     webserver.content_send(string.format("<p><b>Partition size: </b>%i KB</p>", slot.size / 1024))
@@ -564,8 +564,8 @@ class Partition_manager_UI
   def page_show_spiffs(slot, free_mem)
     import webserver
     import string
-    webserver.content_send(string.format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;%s</b></legend>",
-                                         slot.start / 0x1000, slot.label))
+    webserver.content_send(string.format("<fieldset><legend><b title='Start: 0x%03X 000'>&nbsp;filesystem&nbsp;</b></legend>",
+                                         slot.start / 0x1000))
 
     webserver.content_send(string.format("<p><b>Partition size:</b> %i KB</p>", slot.size / 1024))
     
@@ -578,8 +578,8 @@ class Partition_manager_UI
     webserver.content_send("<hr><p><b>New size:</b> (multiple of 16 KB)</p>")
     webserver.content_send("<form action='/part_mgr' method='post' ")
     webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
-    webserver.content_send(string.format("<input type='number' min='0' max='%d' step='16' name='spiffs_size' value='%i'>", (slot.size + free_mem) / 1024, ((slot.size + free_mem) / 1024 / 16)*16))
-    webserver.content_send("<p></p><button name='resize' class='button bred'>Resize SPIFFS</button></form></p>")
+    webserver.content_send(string.format("<input type='number' min='0' max='%d' step='16' name='fs_size' value='%i'>", (slot.size + free_mem) / 1024, ((slot.size + free_mem) / 1024 / 16)*16))
+    webserver.content_send("<p></p><button name='resize' class='button bred'>Resize filesystem</button></form></p>")
     webserver.content_send("<p></p></fieldset><p></p>")
   end
 
@@ -624,7 +624,7 @@ class Partition_manager_UI
 
       var flash_size_kb = tasmota.memory()['flash']
 
-      webserver.content_send("<p><b>Resize app Partitions.</b><br>It is highly recommended to set<br>both partition with the same size.<br>SPIFFS is adjusted accordinlgy.</p>")
+      webserver.content_send("<p><b>Resize app Partitions.</b><br>It is highly recommended to set<br>both partition with the same size.<br>Filesystem is adjusted accordinlgy.</p>")
 
       webserver.content_send("<form action='/part_mgr' method='post' ")
       webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
@@ -659,13 +659,13 @@ class Partition_manager_UI
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     # webserver.content_send("<p style='width:340px;'><b style='color:#f56'>Warning:</b> This can brick your device. Don't use unless you know what you are doing.</p>")
-    webserver.content_send("<fieldset><legend><b>&nbsp;Partition Manager</b></legend><p></p>")
+    webserver.content_send("<fieldset><legend><b>&nbsp;Partition Manager&nbsp;</b></legend><p></p>")
     webserver.content_send("<p style='width:320px;'><b style='color:#f56'>Warning:</b> This can brick your device.</p>")
     self.page_show_partitions(p)
     webserver.content_send("<p></p></fieldset><p></p>")
 
     if p.otadata.maxota > 0
-      webserver.content_send("<fieldset><legend><b>&nbsp;Re-partition</b></legend><p></p>")
+      webserver.content_send("<fieldset><legend><b>&nbsp;Re-partition&nbsp;</b></legend><p></p>")
       self.page_show_repartition_asym(p)
       webserver.content_send("<p></p></fieldset><p></p>")
     end
@@ -711,19 +711,19 @@ class Partition_manager_UI
       #---------------------------------------------------------------------#
       # Resize the SPIFFS partition, generally to extend it to full free size
       #---------------------------------------------------------------------#
-      elif webserver.has_arg("spiffs_size")
+      elif webserver.has_arg("fs_size")
         #- SPIFFS size change -#
-        var spiffs_size_kb = int(webserver.arg("spiffs_size"))
+        var spiffs_size_kb = int(webserver.arg("fs_size"))
         var spiffs_slot = p.slots[-1]   # last slot
 
         var spiffs_max_size = ((tasmota.memory()['flash'] - (spiffs_slot.start / 1024)) / 16) * 16
         
-        if spiffs_slot == nil || !spiffs_slot.is_spiffs() raise "value_error", "Last slot is not SPIFFS type" end
+        if spiffs_slot == nil || !spiffs_slot.is_spiffs() raise "value_error", "Last slot is not FS type" end
         var flash_size_kb = tasmota.memory()['flash']
         if spiffs_size_kb < 0 || spiffs_size_kb > spiffs_max_size
-          raise "value_error", string.format("Invalid spiffs_size %i, should be between 0 and %i", spiffs_size_kb, spiffs_max_size)
+          raise "value_error", string.format("Invalid fs_size %i, should be between 0 and %i", spiffs_size_kb, spiffs_max_size)
         end
-        if spiffs_size_kb == spiffs_slot.size/1024 raise "value_error", "SPIFFS size unchanged, abort" end
+        if spiffs_size_kb == spiffs_slot.size/1024 raise "value_error", "FS size unchanged, abort" end
 
         #- write the new SPIFFS partition size -#
         spiffs_slot.size = spiffs_size_kb * 1024
@@ -743,7 +743,7 @@ class Partition_manager_UI
         var app1 = p.get_ota_slot(1)
         var spiffs = p.slots[-1]
 
-        if !spiffs.is_spiffs() raise 'internal_error', 'No SPIFFS partition found' end
+        if !spiffs.is_spiffs() raise 'internal_error', 'No FS partition found' end
         if app0 == nil || app1 == nil
           raise "internal_error", "Unable to find partitions app0 and app1"
         end
@@ -785,7 +785,7 @@ class Partition_manager_UI
         var app1 = p.get_ota_slot(1)
         var spiffs = p.slots[-1]
 
-        if !spiffs.is_spiffs() raise 'internal_error', 'No SPIFFS partition found' end
+        if !spiffs.is_spiffs() raise 'internal_error', 'No FS partition found' end
         if app0 == nil || app1 == nil
           raise "internal_error", "Unable to find partitions app0 and app1"
         end
