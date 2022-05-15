@@ -122,7 +122,7 @@
 #define XDRV_86                      86
 
 #define SSPM_MAX_MODULES             8       // Currently supports up to 8 SPM-4RELAY units for a total of 32 relays restricted by 32-bit power_t size
-#define SSPM_SERIAL_BUFFER_SIZE      512     // Needs to accomodate Energy total history for 180 days (408 bytes)
+#define SSPM_SERIAL_BUFFER_SIZE      548     // Needs to accomodate firmware upload data blocks (546 bytes)
 
 //#define SSPM_SIMULATE                2       // Simulate additional 4Relay modules based on first detected 4Relay module (debugging purposes only!!)
 
@@ -137,12 +137,16 @@
 #define SSPM_FUNC_SET_TIME           12      // 0x0C
 #define SSPM_FUNC_IAMHERE            13      // 0x0D
 #define SSPM_FUNC_INIT_SCAN          16      // 0x10
+#define SSPM_FUNC_UPLOAD_HEADER      20      // 0x14 - Upload header
 #define SSPM_FUNC_UNITS              21      // 0x15
 #define SSPM_FUNC_GET_ENERGY_TOTAL   22      // 0x16
 #define SSPM_FUNC_GET_ENERGY         24      // 0x18
 #define SSPM_FUNC_GET_LOG            26      // 0x1A
 #define SSPM_FUNC_ENERGY_PERIOD      27      // 0x1B
 #define SSPM_FUNC_RESET              28      // 0x1C - Remove device from eWelink and factory reset
+#define SSPM_FUNC_ARM_RESTART        30      // 0x1E - Restart ARM
+#define SSPM_FUNC_UPLOAD_DATA        31      // 0x1F - Upload incremental data blocks of max 512 bytes to ARM
+#define SSPM_FUNC_UPLOAD_DONE        33      // 0x21 - Finish upload
 #define SSPM_FUNC_GET_NEW1           37      // 0x25
 
 // From ARM to ESP
@@ -153,14 +157,18 @@
 #define SSPM_FUNC_SCAN_DONE          25      // 0x19
 
 // Unknown
-#define SSPM_FUNC_01
-#define SSPM_FUNC_02
-#define SSPM_FUNC_05
-#define SSPM_FUNC_14
-#define SSPM_FUNC_17
-#define SSPM_FUNC_18
-#define SSPM_FUNC_20
-#define SSPM_FUNC_23
+#define SSPM_FUNC_01                 1       // 0x01
+#define SSPM_FUNC_02                 2       // 0x02
+#define SSPM_FUNC_05                 5       // 0x05
+#define SSPM_FUNC_14                 14      // 0x0E
+#define SSPM_FUNC_17                 17      // 0x11
+#define SSPM_FUNC_18                 18      // 0x12
+#define SSPM_FUNC_23                 23      // 0x17
+#define SSPM_FUNC_29                 29      // 0x1D
+#define SSPM_FUNC_32                 32      // 0x20
+#define SSPM_FUNC_34                 34      // 0x22
+#define SSPM_FUNC_35                 35      // 0x23
+#define SSPM_FUNC_36                 36      // 0x24
 
 #define SSPM_GPIO_ARM_RESET          15
 #define SSPM_GPIO_LED_ERROR          33
@@ -791,6 +799,21 @@ void SSPMSendInitScan(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Start relay scan..."));
 }
 
+void SSPMSendUploadHeader(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 14 00 0b 09 09 00 1b e5 a4 c7 00 02 88 74 00 6d df
+  Marker  |                                   |  |Cm|Size |        |Checksum   |UploadSize |Ix|Chksm|
+  */
+  SSPMInitSend();
+  SspmBuffer[16] = SSPM_FUNC_UPLOAD_HEADER;  // 0x14
+  SspmBuffer[18] = 0x0B;
+
+
+  SspmBuffer[30] = 0;
+  SSPMSend(33);
+}
+
 void SSPMSendGetEnergyTotal(uint32_t relay) {
   /*
    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
@@ -898,6 +921,49 @@ void SSPMSendGetEnergyPeriod(uint32_t relay) {
 
   SspmBuffer[16] = SSPM_FUNC_ENERGY_PERIOD;  // 0x1B
 
+}
+
+void SSPMSendArmRestart(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+  aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 01 00 01 fe 05
+  Marker  |                                   |  |Cm|Size |  |Ix|Chksm|
+  */
+  SSPMInitSend();
+  SspmBuffer[16] = SSPM_FUNC_ARM_RESTART;  // 0x1E
+  SspmBuffer[18] = 1;
+  Sspm->command_sequence++;
+  SspmBuffer[20] = Sspm->command_sequence;
+  SSPMSend(23);
+}
+
+void SSPMSendUpload(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38    539 540 541 542 543 544 545
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 00 00 00 00 00 02 00 a2 99 c3 22 00 00 01 20 cd 95 01 08 ... 04  48  af  f3  01  xx  yy
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 00 02 00 00 00 02 00 27 f7 24 87 00 80 01 23 23 70 10 bd ... 21  fa  04  f3  02  xx  yy
+  ...
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 02 86 00 00 00 02 00 f8 f5 25 6d f1 61 00 08 02 01 ff 00 ...                 44  xx  yy
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 00 80 00 02 88 00 00 00 00 74 95 4e 01 c1 c5 e5 02 08 c5 e5 02 08 ...                 45  xx  yy
+  Marker  |                                   |  |Cm|Size |Address    |UploadSize |Checksum   |512 data bytes                            |Ix |Chksm  |
+  */
+  SSPMInitSend();
+  SspmBuffer[16] = SSPM_FUNC_UPLOAD_DATA;  // 0x1F
+
+
+
+  Sspm->command_sequence++;
+  SspmBuffer[543] = Sspm->command_sequence;
+  SSPMSend(546);
+}
+
+void SSPMSendUploadDone(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 21 00 00 46 32 da
+  Marker  |                                   |  |Cm|Size |Ix|Chksm|
+  */
+  SSPMSendCmnd(SSPM_FUNC_UPLOAD_DONE);  // 0x21
 }
 
 void SSPMSendGetNew1(uint32_t module) {
