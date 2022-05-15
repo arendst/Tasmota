@@ -2472,14 +2472,36 @@ void HandleInformation(void)
   esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
   for (; it != NULL; it = esp_partition_next(it)) {
     const esp_partition_t *part = esp_partition_get(it);
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("Partition type %d, subtype %d, name %s, size %d"), part->type, part->subtype, part->label, part->size);
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR("PRT: Type %d, Subtype %d, Name %s, Size %d"), part->type, part->subtype, part->label, part->size);
+
     uint32_t part_size = part->size / 1024;
-    if (0 == part->type) {                               // app
-      uint32_t prog_size = EspProgramSize(part->label);
+    if (ESP_PARTITION_TYPE_APP == part->type) {
+
+      uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;
+      const esp_partition_t *running_ota = esp_ota_get_running_partition();
+      if (running_ota) {
+        cur_part = running_ota->subtype;
+      }
+
+      uint32_t prog_size = 0;                     // No active ota partition
+      if (part->subtype == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
+        prog_size = EspProgramSize(part->label);  // safeboot partition
+      }
+      else if ((part->subtype >= ESP_PARTITION_SUBTYPE_APP_OTA_MIN) && (part->subtype <= ESP_PARTITION_SUBTYPE_APP_OTA_MAX)) {
+        if (running_ota->subtype == part->subtype) {
+          prog_size = ESP_getSketchSize();        // Active running ota partition
+        }
+      }
+      char running[2] = { 0 };
+      if (part->subtype == cur_part) {
+        running[0] = '*';
+      }
+
       uint32_t part_used = ((prog_size / 1024) * 100) / part_size;
-      WSContentSend_PD(PSTR("}1" D_PARTITION " %s}2%d kB (" D_USED " %d%%)"), part->label, part_size, part_used);
+      WSContentSend_PD(PSTR("}1" D_PARTITION " %s%s}2%d kB (" D_USED " %d%%)"), part->label, running, part_size, part_used);
     }
-    if ((1 == part->type) && (130 == part->subtype)) {   // data and fs
+    if ((ESP_PARTITION_TYPE_DATA == part->type) && (ESP_PARTITION_SUBTYPE_DATA_SPIFFS == part->subtype)) {
       WSContentSend_PD(PSTR("}1" D_PARTITION " fs}2%d kB"), part_size);
     }
   }

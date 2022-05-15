@@ -319,19 +319,6 @@ extern "C" {
   #include "rom/spi_flash.h"
 #endif
 
-/*
-void EspDumpPartitionTable(void) {
-  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
-  uint32_t count = 0;
-  for (; it != NULL; it = esp_partition_next(it)) {
-    ++count;
-    const esp_partition_t *partition = esp_partition_get(it);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("Partition #%d, name %s, type %d, subtype %d, size %d"), count, partition->label, partition->type, partition->subtype, partition->size);
-  }
-  esp_partition_iterator_release(it);
-}
-*/
-
 uint32_t EspProgramSize(const char *label) {
   const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_ANY, label);
   if (!part) {
