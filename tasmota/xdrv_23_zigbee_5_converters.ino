@@ -1489,8 +1489,10 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
   attr_list.addAttributePMEM(PSTR("Read")).setStrRaw(attr_numbers.toString().c_str());
   attr_list.addAttributePMEM(PSTR("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
 
-  // call auto-responder
-  autoResponder(read_attr_ids, len/2);
+  // call auto-responder only if src address if different from ourselves and it was a broadcast
+  if (_srcaddr != localShortAddr || !_wasbroadcast) {
+    autoResponder(read_attr_ids, len/2);
+  }
 }
 
 // ZCL_CONFIGURE_REPORTING_RESPONSE
