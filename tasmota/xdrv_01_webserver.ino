@@ -1002,12 +1002,16 @@ void WSContentStop(void) {
 
 /*********************************************************************************************/
 
-void WebRestart(uint32_t type)
-{
+void WebRestart(uint32_t type) {
   // type 0 = restart
   // type 1 = restart after config change
   // type 2 = Checking WiFi Connection - no restart, only refresh page.
   // type 3 = restart after WiFi Connection Test Successful
+  // type 4 = type 0 without auto switch to production
+  bool prep_switch_partition = false;
+  if (0 == type) { prep_switch_partition = true; }
+  if (4 == type) { type = 0; }
+
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
   WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only);
@@ -1040,7 +1044,7 @@ void WebRestart(uint32_t type)
 #endif
     }
   }
-  if (type<2) {
+  if (type < 2) {
     WSContentSend_P(HTTP_MSG_RSTRT);
     if (HTTP_MANAGER == Web.state || reset_only) {
       Web.state = HTTP_ADMIN;
@@ -1053,6 +1057,9 @@ void WebRestart(uint32_t type)
   if (!(2 == type)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
     ShowWebSource(SRC_WEBGUI);
+#ifdef ESP32
+    if (prep_switch_partition) { EspPrepSwitchPartition(1); }  // Switch to production partition if on safeboot
+#endif  // ESP32
     TasmotaGlobal.restart_flag = 2;
   }
 }
@@ -2495,14 +2502,14 @@ void HandleInformation(void)
     if (ESP_PARTITION_TYPE_APP == part->type) {
       uint32_t prog_size = 0;                              // No active ota partition
       if (part->subtype == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
-        prog_size = EspProgramSize(part->label);           // safeboot partition
+        prog_size = EspProgramSize(part->label);           // safeboot partition (slow response)
       }
       else if ((part->subtype >= ESP_PARTITION_SUBTYPE_APP_OTA_MIN) && (part->subtype <= ESP_PARTITION_SUBTYPE_APP_OTA_MAX)) {
         if (cur_part == part->subtype) {
-          prog_size = ESP_getSketchSize();                 // Active running ota partition
+          prog_size = ESP_getSketchSize();                 // Active running ota partition (fast response)
         }
         else if (cur_part == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
-          prog_size = EspProgramSize(part->label);         // Only app partition when safeboot partitions
+          prog_size = EspProgramSize(part->label);         // One app partition when safeboot partitions (slow response)
         }
       }
       char running[2] = { 0 };
@@ -3037,7 +3044,7 @@ void HandleSwitchBootPartition(void)
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
       EspRestart();
     } else {
-      WebRestart(0);
+      WebRestart(4);
     }
   } else {
     if (api_mode) {

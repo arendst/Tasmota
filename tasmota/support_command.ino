@@ -891,7 +891,7 @@ void CmndRestart(void)
     break;
 #ifdef ESP32
   case 3:
-    if (EspPrepSwitchToOtherPartition()) {
+    if (EspPrepSwitchPartition(2)) {  // Toggle partition between safeboot and production
       TasmotaGlobal.restart_flag = 2;
       ResponseCmndChar(PSTR("Switching"));
     }
