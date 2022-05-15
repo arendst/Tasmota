@@ -10,7 +10,7 @@
       "flash_mode": "dout",
       "mcu": "esp32c3",
       "variant": "esp32c3",
-      "partitions": "esp32_partition_app2880k_fs320k.csv"
+      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
     },
     "connectivity": [
       "wifi"
