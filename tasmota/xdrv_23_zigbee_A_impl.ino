@@ -201,8 +201,8 @@ void zigbeeZCLSendCmd(class ZCLMessage &zcl) {
     zcl.transacSet = true;
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend device: 0x%04X, group: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%_B\""),
-            zcl.shortaddr, zcl.groupaddr, zcl.endpoint, zcl.cluster, zcl.cmd, &zcl.buf);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLSend %s: 0x%04X, endpoint:%d, cluster:0x%04X, cmd:0x%02X, send:\"%_B\""),
+            zcl.validShortaddr() ? "device":"group", zcl.validShortaddr() ? zcl.shortaddr : zcl.groupaddr, zcl.endpoint, zcl.cluster, zcl.cmd, &zcl.buf);
 
   ZigbeeZCLSend_Raw(zcl);
 
