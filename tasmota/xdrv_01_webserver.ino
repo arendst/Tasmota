@@ -561,8 +561,10 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "dl", HTTP_ANY, HandleBackupConfiguration },
   { "rs", HTTP_ANY, HandleRestoreConfiguration },
   { "rt", HTTP_ANY, HandleResetConfiguration },
-  { "in", HTTP_ANY, HandleInformation },
 #endif  // Not FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL_ONLY
+  { "in", HTTP_ANY, HandleInformation },
+#endif  // Not FIRMWARE_MINIMAL_ONLY
 };
 
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
@@ -1291,7 +1293,14 @@ void HandleRoot(void)
 
   if (HTTP_ADMIN == Web.state) {
 #ifdef FIRMWARE_MINIMAL
+#ifdef ESP32
+#ifndef FIRMWARE_MINIMAL_ONLY
+    WSContentSpaceButton(BUTTON_INFORMATION);
+    WSContentButton(BUTTON_FIRMWARE_UPGRADE);
+#endif  // FIRMWARE_MINIMAL_ONLY
+#else   // ESP8266
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
+#endif  // ESP32
     WSContentButton(BUTTON_CONSOLE);
 #else
     WSContentSpaceButton(BUTTON_CONFIGURATION);
@@ -1836,25 +1845,6 @@ void ModuleSaveSettings(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-const char kUnescapeCode[] = "&><\"\'\\";
-const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
-
-String HtmlEscape(const String unescaped) {
-  char escaped[10];
-  size_t ulen = unescaped.length();
-  String result = "";
-  for (size_t i = 0; i < ulen; i++) {
-    char c = unescaped[i];
-    char *p = strchr(kUnescapeCode, c);
-    if (p != nullptr) {
-      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
-    } else {
-      result += c;
-    }
-  }
-  return result;
-}
-
 void HandleWifiConfiguration(void) {
   char tmp[TOPSZ];  // Max length is currently 150
 
@@ -2330,7 +2320,30 @@ void HandleRestoreConfiguration(void)
   Web.upload_file_type = UPL_SETTINGS;
 }
 
+#endif  // Not FIRMWARE_MINIMAL
+
 /*-------------------------------------------------------------------------------------------*/
+
+#ifndef FIRMWARE_MINIMAL_ONLY
+
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
+
+String HtmlEscape(const String unescaped) {
+  char escaped[10];
+  size_t ulen = unescaped.length();
+  String result = "";
+  for (size_t i = 0; i < ulen; i++) {
+    char c = unescaped[i];
+    char *p = strchr(kUnescapeCode, c);
+    if (p != nullptr) {
+      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
+    } else {
+      result += c;
+    }
+  }
+  return result;
+}
 
 void HandleInformation(void)
 {
@@ -2469,35 +2482,31 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
+  uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;   // 0
+  const esp_partition_t *running_ota = esp_ota_get_running_partition();
+  if (running_ota) { cur_part = running_ota->subtype; }    // 16 - 32
   esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
   for (; it != NULL; it = esp_partition_next(it)) {
     const esp_partition_t *part = esp_partition_get(it);
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PRT: Type %d, Subtype %d, Name %s, Size %d"), part->type, part->subtype, part->label, part->size);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("PRT: Type %d, Subtype %d, Name %s, Size %d"), part->type, part->subtype, part->label, part->size);
 
     uint32_t part_size = part->size / 1024;
     if (ESP_PARTITION_TYPE_APP == part->type) {
-
-      uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;
-      const esp_partition_t *running_ota = esp_ota_get_running_partition();
-      if (running_ota) {
-        cur_part = running_ota->subtype;
-      }
-
-      uint32_t prog_size = 0;                     // No active ota partition
+      uint32_t prog_size = 0;                              // No active ota partition
       if (part->subtype == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
-        prog_size = EspProgramSize(part->label);  // safeboot partition
+        prog_size = EspProgramSize(part->label);           // safeboot partition
       }
       else if ((part->subtype >= ESP_PARTITION_SUBTYPE_APP_OTA_MIN) && (part->subtype <= ESP_PARTITION_SUBTYPE_APP_OTA_MAX)) {
-        if (running_ota->subtype == part->subtype) {
-          prog_size = ESP_getSketchSize();        // Active running ota partition
+        if (cur_part == part->subtype) {
+          prog_size = ESP_getSketchSize();                 // Active running ota partition
+        }
+        else if (cur_part == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
+          prog_size = EspProgramSize(part->label);         // Only app partition when safeboot partitions
         }
       }
       char running[2] = { 0 };
-      if (part->subtype == cur_part) {
-        running[0] = '*';
-      }
-
+      if (part->subtype == cur_part) { running[0] = '*'; }
       uint32_t part_used = ((prog_size / 1024) * 100) / part_size;
       WSContentSend_PD(PSTR("}1" D_PARTITION " %s%s}2%d kB (" D_USED " %d%%)"), part->label, running, part_size, part_used);
     }
@@ -2520,7 +2529,7 @@ void HandleInformation(void)
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
-#endif  // Not FIRMWARE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL_ONLY
 
 /*-------------------------------------------------------------------------------------------*/
 
