@@ -354,33 +354,15 @@ void EspPrepRestartToSafeBoot(void) {
   }
 }
 
-bool EspPrepSwitchPartition(uint32_t state) {
+bool EspPrepSwitchToOtherPartition(void) {
   bool valid = EspSingleOtaPartition();
   if (valid) {
     bool running_factory = EspRunningFactoryPartition();
-    switch (state) {
-      case 0:  // Off = safeboot
-        if (!running_factory) {
-          EspPrepRestartToSafeBoot();
-        } else {
-          valid = false;
-        }
-        break;
-      case 1:  // On = ota0
-        if (running_factory) {
-          const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
-          esp_ota_set_boot_partition(partition);
-        } else {
-          valid = false;
-        }
-        break;
-      case 2:  // Toggle
-        if (!running_factory) {
-          EspPrepRestartToSafeBoot();
-        } else {
-          const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
-          esp_ota_set_boot_partition(partition);
-        }
+    if (!running_factory) {
+      EspPrepRestartToSafeBoot();
+    } else {
+      const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+      esp_ota_set_boot_partition(partition);
     }
   }
   return valid;

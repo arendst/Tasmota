@@ -1053,9 +1053,6 @@ void WebRestart(uint32_t type)
   if (!(2 == type)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
     ShowWebSource(SRC_WEBGUI);
-#ifdef ESP32
-    if (0 == type) { EspPrepSwitchPartition(1); }  // Switch to production partition if on safeboot
-#endif  // ESP32
     TasmotaGlobal.restart_flag = 2;
   }
 }
@@ -2498,14 +2495,14 @@ void HandleInformation(void)
     if (ESP_PARTITION_TYPE_APP == part->type) {
       uint32_t prog_size = 0;                              // No active ota partition
       if (part->subtype == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
-        prog_size = EspProgramSize(part->label);           // safeboot partition (slow response)
+        prog_size = EspProgramSize(part->label);           // safeboot partition
       }
       else if ((part->subtype >= ESP_PARTITION_SUBTYPE_APP_OTA_MIN) && (part->subtype <= ESP_PARTITION_SUBTYPE_APP_OTA_MAX)) {
         if (cur_part == part->subtype) {
-          prog_size = ESP_getSketchSize();                 // Active running ota partition (fast response)
+          prog_size = ESP_getSketchSize();                 // Active running ota partition
         }
         else if (cur_part == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
-          prog_size = EspProgramSize(part->label);         // One app partition when safeboot partitions (slow response)
+          prog_size = EspProgramSize(part->label);         // Only app partition when safeboot partitions
         }
       }
       char running[2] = { 0 };
