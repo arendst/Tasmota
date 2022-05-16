@@ -152,14 +152,14 @@ void ZigbeeHueGroups(String * lights) {
 }
 
 void ZigbeeSendHue(uint16_t shortaddr, uint16_t cluster, uint8_t cmd, const SBuffer & s) {
-  ZCLMessage zcl(s.len());
+  ZCLFrame zcl(s.len());
   zcl.shortaddr = shortaddr;
   zcl.cluster = cluster;
   zcl.cmd = cmd;
   zcl.clusterSpecific = true;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
-  zcl.buf.replace(s);
+  zcl.payload.replace(s);
   zigbeeZCLSendCmd(zcl);
 }
 
