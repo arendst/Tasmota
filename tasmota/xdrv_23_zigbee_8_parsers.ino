@@ -1380,15 +1380,15 @@ void Z_SendSimpleDescReq(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluste
 //    Iterate among
 //
 void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
-  ZCLMessage zcl(4);   // message is 4 bytes
+  ZCLFrame zcl(4);   // message is 4 bytes
   zcl.shortaddr = shortaddr;
   zcl.cluster = 0;
   zcl.cmd = ZCL_READ_ATTRIBUTES;
   zcl.clusterSpecific = false;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
-  zcl.buf.add16(0x0005);
-  zcl.buf.add16(0x0004);
+  zcl.payload.add16(0x0005);
+  zcl.payload.add16(0x0004);
   zigbeeZCLSendCmd(zcl);
 }
 
@@ -1396,15 +1396,15 @@ void Z_SendDeviceInfoRequest(uint16_t shortaddr) {
 // Send single attribute read request in Timer
 //
 void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
-  ZCLMessage zcl(2);   // message is 2 bytes
+  ZCLFrame zcl(2);   // message is 2 bytes
   zcl.shortaddr = shortaddr;
   zcl.cluster = cluster;
-  zcl.endpoint = endpoint;
+  zcl.dstendpoint = endpoint;
   zcl.cmd = ZCL_READ_ATTRIBUTES;
   zcl.clusterSpecific = false;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
-  zcl.buf.add16(value);    // 04000500
+  zcl.payload.add16(value);    // 04000500
   zigbeeZCLSendCmd(zcl);
 }
 
@@ -1413,17 +1413,17 @@ void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t 
 //
 void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending CIE Address for Cluster %d in Endpoint %d of Device 0x%04X"), cluster, endpoint, shortaddr);
-  ZCLMessage zcl(12);   // message is 12 bytes
+  ZCLFrame zcl(12);   // message is 12 bytes
   zcl.shortaddr = shortaddr;
   zcl.cluster = 0x0500;
-  zcl.endpoint = endpoint;
+  zcl.dstendpoint = endpoint;
   zcl.cmd = ZCL_WRITE_ATTRIBUTES;
   zcl.clusterSpecific = false;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
-  zcl.buf.add16(0x0010);    // attribute 0x0010
-  zcl.buf.add8(ZEUI64);
-  zcl.buf.add64(localIEEEAddr);
+  zcl.payload.add16(0x0010);    // attribute 0x0010
+  zcl.payload.add8(ZEUI64);
+  zcl.payload.add64(localIEEEAddr);
   zigbeeZCLSendCmd(zcl);
 }
 
@@ -1433,16 +1433,16 @@ void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster,
 //
 void Z_SendCIEZoneEnrollResponse(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Sending Enroll Zone %d for Cluster %d in Endpoint %d of Device 0x%04X"), Z_B0(value), cluster, endpoint, shortaddr);
-  ZCLMessage zcl(2);   // message is 2 bytes
+  ZCLFrame zcl(2);   // message is 2 bytes
   zcl.shortaddr = shortaddr;
   zcl.cluster = 0x0500;
-  zcl.endpoint = endpoint;
+  zcl.dstendpoint = endpoint;
   zcl.cmd = 0x00;   // Zone Enroll Response
   zcl.clusterSpecific = true;
   zcl.needResponse = true;
   zcl.direct = false;   // discover route
-  zcl.buf.add8(0x00);   // success
-  zcl.buf.add8(Z_B0(value)); // ZoneID
+  zcl.payload.add8(0x00);   // success
+  zcl.payload.add8(Z_B0(value)); // ZoneID
   zigbeeZCLSendCmd(zcl);
 }
 
@@ -1579,15 +1579,15 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
 
   if (buf.len() > 0) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "auto-bind `%s`"), ResponseData());
-    ZCLMessage zcl(buf.len());   // message is 4 bytes
+    ZCLFrame zcl(buf.len());   // message is 4 bytes
     zcl.shortaddr = shortaddr;
     zcl.cluster = cluster;
-    zcl.endpoint = endpoint;
+    zcl.dstendpoint = endpoint;
     zcl.cmd = ZCL_CONFIGURE_REPORTING;
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */
     zcl.direct = false;           /* discover route */
-    zcl.buf.addBuffer(buf);
+    zcl.payload.addBuffer(buf);
     zigbeeZCLSendCmd(zcl);
   }
 }
@@ -1638,6 +1638,11 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
   // log the packet details
   zcl_received.log();
+
+#ifdef USE_BERRY
+  // Berry pre-process messages
+  // callBerryZigbeeDispatcher("pre", &zcl_received);
+#endif // USE_BERRY
 
   // create the device entry if it does not exist and if it's not the local device
   Z_Device & device = (srcaddr != localShortAddr) ? zigbee_devices.getShortAddr(srcaddr) :
@@ -2097,9 +2102,9 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
 
   for (uint32_t i=0; i<attr_len; i++) {
     uint16_t attr_id = attr_list_ids[i];
-    uint32_t ccccaaaa = (_cluster_id << 16) | attr_id;
+    uint32_t ccccaaaa = (cluster << 16) | attr_id;
     Z_attribute attr;
-    attr.setKeyId(_cluster_id, attr_id);
+    attr.setKeyId(cluster, attr_id);
 
     switch (ccccaaaa) {
       case 0x00000004: attr.setStr(PSTR(USE_ZIGBEE_MANUFACTURER));                break;    // Manufacturer
@@ -2149,8 +2154,8 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         break;
     }
     if (!attr.isNone()) {
-      Z_parseAttributeKey(attr, _cluster_id);
-      attr_list.addAttribute(_cluster_id, attr_id) = attr;
+      Z_parseAttributeKey(attr, cluster);
+      attr_list.addAttribute(cluster, attr_id) = attr;
     }
   }
 
@@ -2170,21 +2175,21 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"
                                           ),
-                                          _srcaddr, _cluster_id, _srcendpoint,
+                                          shortaddr, cluster, _srcendpoint,
                                           attr_list.toString().c_str());
 
     // send
     // all good, send the packet
-    ZCLMessage zcl(buf.len());   // message is 4 bytes
-    zcl.shortaddr = _srcaddr;
-    zcl.cluster = _cluster_id;
-    zcl.endpoint = _srcendpoint;
+    ZCLFrame zcl(buf.len());   // message is 4 bytes
+    zcl.shortaddr = shortaddr;
+    zcl.cluster = cluster;
+    zcl.dstendpoint = _srcendpoint;
     zcl.cmd = ZCL_READ_ATTRIBUTES_RESPONSE;
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */
     zcl.direct = true;            /* direct response */
-    zcl.setTransac(_transact_seq);
-    zcl.buf.addBuffer(buf);
+    zcl.setTransac(transactseq);
+    zcl.payload.addBuffer(buf);
     zigbeeZCLSendCmd(zcl);
   }
 }

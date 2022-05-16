@@ -183,16 +183,16 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
       shortaddr = BAD_SHORTADDR;   // if group address, don't send to device
     }
 
-    ZCLMessage zcl(attrs_len);   // message is `attrs_len` bytes
+    ZCLFrame zcl(attrs_len);   // message is `attrs_len` bytes
     zcl.shortaddr = shortaddr;
     zcl.groupaddr = groupaddr;
     zcl.cluster = cluster;
-    zcl.endpoint = endpoint;
+    zcl.dstendpoint = endpoint;
     zcl.cmd = ZCL_READ_ATTRIBUTES;
     zcl.clusterSpecific = false;
     zcl.needResponse = true;
     zcl.direct = false;   // discover route
-    zcl.buf.addBuffer(attrs, attrs_len);
+    zcl.payload.addBuffer(attrs, attrs_len);
     zigbeeZCLSendCmd(zcl);
   }
 }

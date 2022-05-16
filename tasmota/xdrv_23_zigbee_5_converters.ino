@@ -722,18 +722,25 @@ const __FlashStringHelper* zigbeeFindAttributeById(uint16_t cluster, uint16_t at
 class ZCLFrame {
 public:
 
+  // constructor used when creating a message from scratch to send it later
+  ZCLFrame(void);            // allocate 16 bytes by default
+  ZCLFrame(size_t size);
+
+  // constructore used when receiving a Zigbee frame and populating the class
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
     const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
     uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
     uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber):
-    _manuf_code(manuf_code), _transact_seq(transact_seq), _cmd_id(cmd_id),
-    _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
-    _cluster_id(clusterid), _groupaddr(groupaddr),
-    _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
+    manuf(manuf_code), transactseq(transact_seq), cmd(cmd_id),
+    payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
+    cluster(clusterid), groupaddr(groupaddr),
+    shortaddr(srcaddr), _srcendpoint(srcendpoint), dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
     _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber)
     {
       _frame_control.d8 = frame_control;
-      _payload.addBuffer(buf, buf_len);
+      clusterSpecific = (_frame_control.b.frame_type != 0);
+      needResponse = !_frame_control.b.disable_def_resp;
+      payload.addBuffer(buf, buf_len);
     };
 
 
@@ -746,13 +753,13 @@ public:
                     "\"frametype\":%d,\"direction\":%d,\"disableresp\":%d,"
                     "\"manuf\":\"0x%04X\",\"transact\":%d,"
                     "\"cmdid\":\"0x%02X\",\"payload\":\"%_B\"}}"),
-                    _groupaddr, _cluster_id, _srcaddr,
-                    _srcendpoint, _dstendpoint, _wasbroadcast,
+                    groupaddr, cluster, shortaddr,
+                    _srcendpoint, dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _frame_control,
                     _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
-                    _manuf_code, _transact_seq, _cmd_id,
-                    &_payload);
+                    manuf, transactseq, cmd,
+                    &payload);
     if (Settings->flag3.tuya_serial_mqtt_publish) {
       MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR));
     } else {
@@ -788,6 +795,7 @@ public:
     return _frame_control.b.frame_type & 1;
   }
 
+  // parsers for received messages
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
   void removeInvalidAttributes(Z_attribute_list& attr_list);
@@ -813,46 +821,58 @@ public:
   void autoResponder(const uint16_t *attr_list_ids, size_t attr_len);
 
   inline void setGroupId(uint16_t groupid) {
-    _groupaddr = groupid;
+    groupaddr = groupid;
   }
 
   inline void setClusterId(uint16_t clusterid) {
-    _cluster_id = clusterid;
+    cluster = clusterid;
   }
 
-  inline uint16_t getSrcAddr(void) const { return _srcaddr; }
-  inline uint16_t getGroupAddr(void) const { return _groupaddr; }
-  inline uint16_t getClusterId(void) const { return _cluster_id; }
+  inline uint16_t getSrcAddr(void) const { return shortaddr; }
+  inline uint16_t getGroupAddr(void) const { return groupaddr; }
+  inline uint16_t getClusterId(void) const { return cluster; }
   inline uint8_t  getLinkQuality(void) const { return _linkquality; }
-  inline uint8_t getCmdId(void) const { return _cmd_id; }
+  inline uint8_t getCmdId(void) const { return cmd; }
   inline uint16_t getSrcEndpoint(void) const { return _srcendpoint; }
+  const SBuffer &getPayload(void) const { return payload; }
+  uint16_t getManufCode(void) const { return manuf; }
 
-  const SBuffer &getPayload(void) const {
-    return _payload;
-  }
+  inline void setTransac(uint8_t _transac) { transactseq = _transac; transacSet = true; }
 
-  uint16_t getManufCode(void) const {
-    return _manuf_code;
-  }
+  inline bool validShortaddr(void) const { return BAD_SHORTADDR != shortaddr; }
+  inline bool validCluster(void)   const { return 0xFFFF != cluster; }
+  inline bool validEndpoint(void)  const { return 0x00 != dstendpoint; }
+  inline bool validCmd(void)       const { return 0xFF != cmd; }
 
-
-private:
-  ZCLHeaderFrameControl_t _frame_control = { .d8 = 0 };
-  uint16_t                _manuf_code = 0;      // optional
-  uint8_t                 _transact_seq = 0;    // transaction sequence number
-  uint8_t                 _cmd_id = 0;
-  SBuffer                 _payload;
-  uint16_t                _cluster_id = 0;
-  uint16_t                _groupaddr = 0;
+public:
+  uint16_t                manuf = 0;      // optional
+  uint8_t                 transactseq = 0;    // transaction sequence number
+  uint8_t                 cmd = 0;
+  SBuffer                 payload;
+  uint16_t                cluster = 0;
+  uint16_t                groupaddr = 0;
   // information from decoded ZCL frame
-  uint16_t                _srcaddr;
-  uint8_t                 _srcendpoint;
-  uint8_t                 _dstendpoint;
-  uint8_t                 _wasbroadcast;
-  uint8_t                 _linkquality;
-  uint8_t                 _securityuse;
-  uint8_t                 _seqnumber;
+  uint16_t                shortaddr = BAD_SHORTADDR;   // BAD_SHORTADDR is broadcast, so considered invalid
+  uint8_t                 dstendpoint = 0x00;        // 0x00 is invalid for the dst endpoint
+  // attributes used in send-only mode
+  bool clusterSpecific = false;
+  bool needResponse = true;
+  bool direct = false;                  // true if direct, false if discover router
+  bool transacSet = false;              // is transac already set
+
+  // below private attributes are not used when sending a message
+private:
+  uint8_t                 _srcendpoint = 0x00;        // 0x00 is invalid for the src endpoint
+  ZCLHeaderFrameControl_t _frame_control = { .d8 = 0 };
+  bool                    _wasbroadcast = false;
+  uint8_t                 _linkquality = 0x00;
+  uint8_t                 _securityuse = 0;           // not used by Z2T, logging only
+  uint8_t                 _seqnumber = 0;             // not used by Z2T, logging only
 };
+
+// define constructor seperately to avoid inlining and reduce Flash size
+ZCLFrame::ZCLFrame(void) : payload(12) {};
+ZCLFrame::ZCLFrame(size_t size) : payload(size) {};
 
 // Zigbee ZCL converters
 
@@ -1197,45 +1217,45 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
 // First pass, parse all attributes in their native format
 void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
   uint32_t i = 0;
-  uint32_t len = _payload.len();
+  uint32_t len = payload.len();
 
   if (ZCL_WRITE_ATTRIBUTES == getCmdId()) {
     attr_list.addAttribute(PSTR("Command"), true).setStr(PSTR("Write"));
   }
 
   while (len >= i + 3) {
-    uint16_t attrid = _payload.get16(i);
+    uint16_t attrid = payload.get16(i);
     i += 2;
 
     // exception for Xiaomi lumi.weather - specific field to be treated as octet and not char
-    if ((0x0000 == _cluster_id) && (0xFF01 == attrid)) {
-      if (0x42 == _payload.get8(i)) {
-        _payload.set8(i, 0x41);   // change type from 0x42 to 0x41
+    if ((0x0000 == cluster) && (0xFF01 == attrid)) {
+      if (0x42 == payload.get8(i)) {
+        payload.set8(i, 0x41);   // change type from 0x42 to 0x41
       }
     }
 
     // TODO look for suffix
-    Z_attribute & attr = attr_list.addAttribute(_cluster_id, attrid);
+    Z_attribute & attr = attr_list.addAttribute(cluster, attrid);
 
-    i += parseSingleAttribute(attr, _payload, i);
+    i += parseSingleAttribute(attr, payload, i);
   }
 
   // Issue Philips outdoor motion sensor SML002, see https://github.com/Koenkk/zigbee2mqtt/issues/897
   // The sensor expects the coordinator to send a Default Response to acknowledge the attribute reporting
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
-    ZCLMessage zcl(2);   // message is 2 bytes
-    zcl.shortaddr = _srcaddr;
-    zcl.cluster = _cluster_id;
-    zcl.endpoint = _srcendpoint;
+    ZCLFrame zcl(2);   // message is 2 bytes
+    zcl.shortaddr = shortaddr;
+    zcl.cluster = cluster;
+    zcl.dstendpoint = _srcendpoint;
     zcl.cmd = ZCL_DEFAULT_RESPONSE;
-    zcl.manuf = _manuf_code;
+    zcl.manuf = manuf;
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */
     zcl.direct = true;            /* direct no retry */
-    zcl.setTransac(_transact_seq);
-    zcl.buf.add8(_cmd_id);
-    zcl.buf.add8(0);    // Status = OK
+    zcl.setTransac(transactseq);
+    zcl.payload.add8(cmd);
+    zcl.payload.add8(0);    // Status = OK
     zigbeeZCLSendCmd(zcl);
   }
 }
@@ -1295,8 +1315,8 @@ void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
 // Note: both function are now split to compute on extracted attributes
 //
 void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
-  const Z_Device & device = zigbee_devices.findShortAddr(_srcaddr);
-  const char * model_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+  const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+  const char * model_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
   String modelId((char*) model_c);
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
@@ -1324,7 +1344,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
       case 0x02010008:    // Pi Heating Demand - solve Eutotronic bug
       case 0x02014008:    // Eurotronic Host Flags decoding
         {
-          const char * manufacturer_c = zigbee_devices.getManufacturerId(_srcaddr);  // null if unknown
+          const char * manufacturer_c = zigbee_devices.getManufacturerId(shortaddr);  // null if unknown
           String manufacturerId((char*) manufacturer_c);
           if (manufacturerId.equals(F("Eurotronic"))) {
             if (ccccaaaa == 0x02010008) {
@@ -1382,7 +1402,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x05000002:    // ZoneStatus
-        const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(_srcaddr).data.find(Z_Data_Type::Z_Alarm, _srcendpoint);
+        const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, _srcendpoint);
         if (&alarm != nullptr) {
           alarm.convertZoneStatus(attr_list, attr.getUInt());
         }
@@ -1405,15 +1425,15 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
         uint32_t occupancy = attr.getUInt();
         if (occupancy) {
           uint32_t pir_timer = OCCUPANCY_TIMEOUT;
-          const Z_Data_PIR & pir_found = (const Z_Data_PIR&) zigbee_devices.getShortAddr(_srcaddr).data.find(Z_Data_Type::Z_PIR, _srcendpoint);
+          const Z_Data_PIR & pir_found = (const Z_Data_PIR&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_PIR, _srcendpoint);
           if (&pir_found != nullptr) {
             pir_timer = pir_found.getTimeoutSeconds() * 1000;
           }
           if (pir_timer > 0) {
-            zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, pir_timer, _cluster_id, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+            zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, pir_timer, cluster, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
           }
         } else {
-          zigbee_devices.resetTimersForDevice(_srcaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
+          zigbee_devices.resetTimersForDevice(shortaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
         }
         break;
     }
@@ -1460,16 +1480,16 @@ void sendHueUpdate(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uin
 // ZCL_READ_ATTRIBUTES
 void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
   uint32_t i = 0;
-  uint32_t len = _payload.len();
+  uint32_t len = payload.len();
 
   uint16_t read_attr_ids[len/2];
 
-  attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_CLUSTER)).setUInt(_cluster_id);
+  attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_CLUSTER)).setUInt(cluster);
 
   JsonGeneratorArray attr_numbers;
   Z_attribute_list attr_names;
   while (len >= 2 + i) {
-    uint16_t attrid = _payload.get16(i);
+    uint16_t attrid = payload.get16(i);
     attr_numbers.add(attrid);
     read_attr_ids[i/2] = attrid;
 
@@ -1479,7 +1499,7 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint16_t conv_attribute = pgm_read_word(&converter->attribute);
 
-      if ((conv_cluster == _cluster_id) && (conv_attribute == attrid)) {
+      if ((conv_cluster == cluster) && (conv_attribute == attrid)) {
         attr_names.addAttribute(Z_strings + pgm_read_word(&converter->name_offset), true).setBool(true);
         break;
       }
@@ -1490,29 +1510,29 @@ void ZCLFrame::parseReadAttributes(Z_attribute_list& attr_list) {
   attr_list.addAttributePMEM(PSTR("ReadNames")).setStrRaw(attr_names.toString(true).c_str());
 
   // call auto-responder only if src address if different from ourselves and it was a broadcast
-  if (_srcaddr != localShortAddr || !_wasbroadcast) {
+  if (shortaddr != localShortAddr || !_wasbroadcast) {
     autoResponder(read_attr_ids, len/2);
   }
 }
 
 // ZCL_CONFIGURE_REPORTING_RESPONSE
 void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
-  uint32_t len = _payload.len();
+  uint32_t len = payload.len();
 
   Z_attribute_list attr_config_list;
   for (uint32_t i=0; len >= i+4; i+=4) {
-    uint8_t  status = _payload.get8(i);
-    uint16_t attr_id = _payload.get8(i+2);
+    uint8_t  status = payload.get8(i);
+    uint16_t attr_id = payload.get8(i+2);
 
     Z_attribute_list attr_config_response;
     attr_config_response.addAttributePMEM(PSTR("Status")).setUInt(status);
     attr_config_response.addAttributePMEM(PSTR("StatusMsg")).setStr(getZigbeeStatusMessage(status).c_str());
 
-    const __FlashStringHelper* attr_name = zigbeeFindAttributeById(_cluster_id, attr_id, nullptr, nullptr);
+    const __FlashStringHelper* attr_name = zigbeeFindAttributeById(cluster, attr_id, nullptr, nullptr);
     if (attr_name) {
       attr_config_list.addAttribute(attr_name).setStrRaw(attr_config_response.toString(true).c_str());
     } else {
-      attr_config_list.addAttribute(_cluster_id, attr_id).setStrRaw(attr_config_response.toString(true).c_str());
+      attr_config_list.addAttribute(cluster, attr_id).setStrRaw(attr_config_response.toString(true).c_str());
     }
   }
 
@@ -1522,21 +1542,21 @@ void ZCLFrame::parseConfigAttributes(Z_attribute_list& attr_list) {
 
 // ZCL_WRITE_ATTRIBUTES_RESPONSE
 void ZCLFrame::parseWriteAttributesResponse(Z_attribute_list& attr_list) {
-  parseResponse_inner(ZCL_WRITE_ATTRIBUTES_RESPONSE, false, _payload.get8(0));
+  parseResponse_inner(ZCL_WRITE_ATTRIBUTES_RESPONSE, false, payload.get8(0));
 }
 
 // ZCL_READ_REPORTING_CONFIGURATION_RESPONSE
 void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
   uint32_t i = 0;
-  uint32_t len = _payload.len();
+  uint32_t len = payload.len();
 
   Z_attribute &attr_root = attr_list.addAttributePMEM(PSTR("ReadConfig"));
   Z_attribute_list attr_1;
 
   while (len >= i + 4) {
-    uint8_t  status = _payload.get8(i);
-    uint8_t  direction = _payload.get8(i+1);
-    uint16_t attrid = _payload.get16(i+2);
+    uint8_t  status = payload.get8(i);
+    uint8_t  direction = payload.get8(i+1);
+    uint16_t attrid = payload.get16(i+2);
 
     Z_attribute_list attr_2;
     if (direction) {
@@ -1550,7 +1570,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
       uint16_t conv_cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
       uint16_t conv_attribute = pgm_read_word(&converter->attribute);
 
-      if ((conv_cluster == _cluster_id) && (conv_attribute == attrid)) {
+      if ((conv_cluster == cluster) && (conv_attribute == attrid)) {
         const char * attr_name = Z_strings + pgm_read_word(&converter->name_offset);
         attr_2.addAttribute(attr_name, true).setBool(true);
         multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
@@ -1565,22 +1585,22 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
       // no error, decode data
       if (direction) {
         // only Timeout period is present
-        uint16_t attr_timeout = _payload.get16(i);
+        uint16_t attr_timeout = payload.get16(i);
         i += 2;
         attr_2.addAttributePMEM(PSTR("TimeoutPeriod")).setUInt((0xFFFF == attr_timeout) ? -1 : attr_timeout);
       } else {
         // direction == 0, we have a data type
-        uint8_t attr_type = _payload.get8(i);
+        uint8_t attr_type = payload.get8(i);
         bool attr_discrete = Z_isDiscreteDataType(attr_type);
-        uint16_t attr_min_interval = _payload.get16(i+1);
-        uint16_t attr_max_interval = _payload.get16(i+3);
+        uint16_t attr_min_interval = payload.get16(i+1);
+        uint16_t attr_max_interval = payload.get16(i+3);
         i += 5;
         attr_2.addAttributePMEM(PSTR("MinInterval")).setUInt((0xFFFF == attr_min_interval) ? -1 : attr_min_interval);
         attr_2.addAttributePMEM(PSTR("MaxInterval")).setUInt((0xFFFF == attr_max_interval) ? -1 : attr_max_interval);
         if (!attr_discrete) {
           // decode Reportable Change
           Z_attribute &attr_change = attr_2.addAttributePMEM(PSTR("ReportableChange"));
-          i += parseSingleAttribute(attr_change, _payload, i, attr_type);
+          i += parseSingleAttribute(attr_change, payload, i, attr_type);
           if ((1 != multiplier) && (0 != multiplier)) {
             float fval = attr_change.getFloat();
             if (multiplier > 0) { fval =  fval * multiplier; }
@@ -1590,7 +1610,7 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
         }
       }
     }
-    attr_1.addAttribute(_cluster_id, attrid).setStrRaw(attr_2.toString(true).c_str());
+    attr_1.addAttribute(cluster, attrid).setStrRaw(attr_2.toString(true).c_str());
   }
   attr_root.setStrRaw(attr_1.toString(true).c_str());
 }
@@ -1598,16 +1618,16 @@ void ZCLFrame::parseReadConfigAttributes(Z_attribute_list& attr_list) {
 // ZCL_READ_ATTRIBUTES_RESPONSE
 void ZCLFrame::parseReadAttributesResponse(Z_attribute_list& attr_list) {
   uint32_t i = 0;
-  uint32_t len = _payload.len();
+  uint32_t len = payload.len();
 
   while (len >= i + 4) {
-    uint16_t attrid = _payload.get16(i);
+    uint16_t attrid = payload.get16(i);
     i += 2;
-    uint8_t status = _payload.get8(i++);
+    uint8_t status = payload.get8(i++);
 
     if (0 == status) {
-      Z_attribute & attr = attr_list.addAttribute(_cluster_id, attrid);
-      i += parseSingleAttribute(attr, _payload, i);
+      Z_attribute & attr = attr_list.addAttribute(cluster, attrid);
+      i += parseSingleAttribute(attr, payload, i);
     }
   }
 }
@@ -1618,15 +1638,15 @@ void ZCLFrame::parseResponse_inner(uint8_t cmd, bool cluster_specific, uint8_t s
 
   // "Device"
   char s[12];
-  snprintf_P(s, sizeof(s), PSTR("0x%04X"), _srcaddr);
+  snprintf_P(s, sizeof(s), PSTR("0x%04X"), shortaddr);
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_DEVICE)).setStr(s);
   // "Name"
-  const char * friendlyName = zigbee_devices.getFriendlyName(_srcaddr);
+  const char * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
   if (friendlyName) {
     attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_NAME)).setStr(friendlyName);
   }
   // "Command"
-  snprintf_P(s, sizeof(s), PSTR("%04X%c%02X"), _cluster_id, cluster_specific ? '!' : '_', cmd);
+  snprintf_P(s, sizeof(s), PSTR("%04X%c%02X"), cluster, cluster_specific ? '!' : '_', cmd);
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_CMD)).setStr(s);
   // "Status"
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_STATUS)).setUInt(status);
@@ -1635,8 +1655,8 @@ void ZCLFrame::parseResponse_inner(uint8_t cmd, bool cluster_specific, uint8_t s
   // Add Endpoint
   attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_ENDPOINT)).setUInt(_srcendpoint);
   // Add Group if non-zero
-  if (_groupaddr) {     // TODO what about group zero
-    attr_list.group_id = _groupaddr;
+  if (groupaddr) {     // TODO what about group zero
+    attr_list.group_id = groupaddr;
   }
   // Add linkquality
   attr_list.lqi = _linkquality;
@@ -1647,9 +1667,9 @@ void ZCLFrame::parseResponse_inner(uint8_t cmd, bool cluster_specific, uint8_t s
 
 // ZCL_DEFAULT_RESPONSE
 void ZCLFrame::parseResponse(void) {
-  if (_payload.len() < 2) { return; }   // wrong format
-  uint8_t cmd = _payload.get8(0);
-  uint8_t status = _payload.get8(1);
+  if (payload.len() < 2) { return; }   // wrong format
+  uint8_t cmd = payload.get8(0);
+  uint8_t status = payload.get8(1);
 
   parseResponse_inner(cmd, true, status);
 }
@@ -1665,22 +1685,22 @@ void Z_ResetDebounce(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, u
 // Parse non-normalized attributes
 void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   // Check if debounce is active and if the packet is a duplicate
-  Z_Device & device = zigbee_devices.getShortAddr(_srcaddr);
-  if ((device.debounce_endpoint != 0) && (device.debounce_endpoint == _srcendpoint) && (device.debounce_transact == _transact_seq)) {
+  Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
+  if ((device.debounce_endpoint != 0) && (device.debounce_endpoint == _srcendpoint) && (device.debounce_transact == transactseq)) {
     // this is a duplicate, drop the packet
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), _srcaddr, _srcendpoint);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), shortaddr, _srcendpoint);
   } else {
     // reset the duplicate marker, parse the packet normally, and set a timer to reset the marker later (which will discard any existing timer for the same device/endpoint)
     device.debounce_endpoint = _srcendpoint;
-    device.debounce_transact = _transact_seq;
-    zigbee_devices.setTimer(_srcaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, _srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
+    device.debounce_transact = transactseq;
+    zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, _srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
 
-    convertClusterSpecific(attr_list, _cluster_id, _cmd_id, _frame_control.b.direction, _srcaddr, _srcendpoint, _payload);
+    convertClusterSpecific(attr_list, cluster, cmd, _frame_control.b.direction, shortaddr, _srcendpoint, payload);
     if (!Settings->flag5.zb_disable_autoquery) {
     // read attributes unless disabled
       if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
         if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
-          sendHueUpdate(BAD_SHORTADDR, _groupaddr, _cluster_id);
+          sendHueUpdate(BAD_SHORTADDR, groupaddr, cluster);
         }
       }
     }
@@ -1688,18 +1708,18 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   // Send Default Response to acknowledge the attribute reporting
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
-    ZCLMessage zcl(2);   // message is 4 bytes
-    zcl.shortaddr = _srcaddr;
-    zcl.cluster = _cluster_id;
-    zcl.endpoint = _srcendpoint;
+    ZCLFrame zcl(2);   // message is 4 bytes
+    zcl.shortaddr = shortaddr;
+    zcl.cluster = cluster;
+    zcl.dstendpoint = _srcendpoint;
     zcl.cmd = ZCL_DEFAULT_RESPONSE;
-    zcl.manuf = _manuf_code;
+    zcl.manuf = manuf;
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */
     zcl.direct = true;            /* direct no retry */
-    zcl.setTransac(_transact_seq);
-    zcl.buf.add8(_cmd_id);
-    zcl.buf.add8(0x00);   // Status = OK
+    zcl.setTransac(transactseq);
+    zcl.payload.add8(cmd);
+    zcl.payload.add8(0x00);   // Status = OK
     zigbeeZCLSendCmd(zcl);
   }
 }
@@ -1707,7 +1727,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
 // ======================================================================
 // Convert AnalogValue according to the device type
 void ZCLFrame::syntheticAnalogValue(Z_attribute_list &attr_list, class Z_attribute &attr) {
-  const char * modelId_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+  const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
   String modelId((char*) modelId_c);
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {
@@ -1731,7 +1751,7 @@ void ZCLFrame::syntheticAqaraSensor(Z_attribute_list &attr_list, class Z_attribu
     uint32_t i = 0;
     uint32_t len = buf2.len();
 
-    const char * modelId_c = zigbee_devices.getModelId(_srcaddr);  // null if unknown
+    const char * modelId_c = zigbee_devices.getModelId(shortaddr);  // null if unknown
     String modelId((char*) modelId_c);
 
     while (len >= 2 + i) {
@@ -1830,7 +1850,7 @@ void ZCLFrame::syntheticAqaraSensor2(class Z_attribute_list &attr_list, class Z_
 
 // Aqara Cube and Button
 void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, class Z_attribute &attr) {
-  const char * modelId_c = zigbee_devices.findShortAddr(_srcaddr).modelId;  // null if unknown
+  const char * modelId_c = zigbee_devices.findShortAddr(shortaddr).modelId;  // null if unknown
   String modelId((char*) modelId_c);
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {   // only for Aqara cube
