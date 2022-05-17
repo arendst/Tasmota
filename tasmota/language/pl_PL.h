@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v10.1.0.7 - Last update 04.02.2022
+ * Updated until v11.1.0.3 - Last update 17.05.2022
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -140,7 +140,7 @@
 #define D_PASSWORD "Hasło"
 #define D_PH "pH"
 #define D_MQ "MQ"
-#define D_PARTITION "Partition"      // As in flash and firmware partition
+#define D_PARTITION "Partycja"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Cosinus fi"
 #define D_POWERUSAGE "Moc"
@@ -184,7 +184,7 @@
 #define D_UPGRADE "aktualizacji"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Czas pracy"
-#define D_USED "used"
+#define D_USED "użyte"
 #define D_USER "Użytkownik"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Indeks UV"
@@ -203,8 +203,8 @@
 #define D_WEIGHT "Waga"
 #define D_WARMLIGHT "Temperatura światła"
 #define D_WEB_SERVER "Serwer Web"
-#define D_SOC "State of Charge"
-#define D_SOH "State of Health"
+#define D_SOC "Stan naładowania"
+#define D_SOH "Kondycja"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UWAGA Ta wersja nie obsługuje zapisu ustawień"
