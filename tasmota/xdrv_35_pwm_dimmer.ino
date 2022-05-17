@@ -152,7 +152,7 @@ void PWMModulePreInit(void)
 #endif  // USE_PWM_DIMMER_REMOTE
 }
 
-// bri: -1 = set to current light bri, -2 = timeout, 0-255 = set to bri
+// bri: -1 = set to last local light bri, -2 = timeout, 0-255 = set to bri
 void PWMDimmerSetBrightnessLeds(int32_t bri)
 {
   // Find out how many of the LEDs have their ledmask bit set.
@@ -169,7 +169,7 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
   if (leds) {
     led_timeout_seconds = 5;
     if (bri < 0) {
-      bri = ((bri == -2 && Settings->flag4.led_timeout) || !Light.power ? 0 : light_state.getBri());
+      bri = ((bri == -2 && Settings->flag4.led_timeout) || !Light.power ? 0 : TasmotaGlobal.pwm_dimmer_led_bri);
       if (!bri || !Settings->flag4.led_timeout) led_timeout_seconds = 0;
     }
 
@@ -438,13 +438,13 @@ void PWMDimmerHandleButton(uint32_t button_index, bool pressed)
           if (!active_remote_pwm_dimmer) {
 #endif // USE_PWM_DIMMER_REMOTE
 
-            // Toggle the powered-off LED option.
+            // Toggle the LED timeout.
             if (down_button_tapped) {
                 Settings->flag4.led_timeout ^= 1;
                 if (Light.power) PWMDimmerSetBrightnessLeds(Settings->flag4.led_timeout ? 0 : -1);
             }
 
-            // Toggle the LED timeout.
+            // Toggle the powered-off LED option.
             else {
                 Settings->flag4.powered_off_led ^= 1;
                 PWMDimmerSetPoweredOffLed();
