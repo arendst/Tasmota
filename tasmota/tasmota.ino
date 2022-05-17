@@ -240,6 +240,7 @@ struct TasmotaGlobal_t {
   uint8_t discovery_counter;                // Delayed discovery counter
 #ifdef USE_PWM_DIMMER
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
+  uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
 
 #ifndef SUPPORT_IF_STATEMENT
