@@ -2010,14 +2010,12 @@ void GpioInit(void)
     uint32_t mpin = ValidPin(i, TasmotaGlobal.my_module.io[i]);
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
     if (AGPIO(GPIO_OUTPUT_HI) == mpin) {
-//      pinMode(i, OUTPUT);
-//      digitalWrite(i, 1);
-      DigitalWrite(i, 0, 1);
+      pinMode(i, OUTPUT);
+      digitalWrite(i, 1);
     }
     else if (AGPIO(GPIO_OUTPUT_LO) == mpin) {
-//      pinMode(i, OUTPUT);
-//      digitalWrite(i, 0);
-      DigitalWrite(i, 0, 0);
+      pinMode(i, OUTPUT);
+      digitalWrite(i, 0);
     }
 
 /*
