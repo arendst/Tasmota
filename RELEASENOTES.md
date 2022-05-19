@@ -127,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Improv initial or erase device installation failing to provide Configure WiFi option
 - SCD40 start low power command [#15361](https://github.com/arendst/Tasmota/issues/15361)
 - BL09xx negative power presentation [#15374](https://github.com/arendst/Tasmota/issues/15374)
+- Possible pin output toggle after power on [#15630](https://github.com/arendst/Tasmota/issues/15630)
 
 ### Removed
 - Arduino IDE support
