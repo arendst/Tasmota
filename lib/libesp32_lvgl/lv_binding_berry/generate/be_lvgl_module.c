@@ -9,7 +9,7 @@
 #include "lvgl.h"
 #include "be_mapping.h"
 #include "lv_berry.h"
-#include "lv_theme_openhasp.h"
+#include "lv_theme_haspmota.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
@@ -163,9 +163,9 @@ const be_ntv_func_def_t lv_func[] = {
   { "theme_get_font_normal", { (const void*) &lv_theme_get_font_normal, "lv.lv_font", "(lv.lv_obj)" } },
   { "theme_get_font_small", { (const void*) &lv_theme_get_font_small, "lv.lv_font", "(lv.lv_obj)" } },
   { "theme_get_from_obj", { (const void*) &lv_theme_get_from_obj, "lv.lv_theme", "(lv.lv_obj)" } },
+  { "theme_haspmota_init", { (const void*) &lv_theme_haspmota_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" } },
+  { "theme_haspmota_is_inited", { (const void*) &lv_theme_haspmota_is_inited, "b", "" } },
   { "theme_mono_init", { (const void*) &lv_theme_mono_init, "lv.lv_theme", "(lv.lv_disp)b(lv.lv_font)" } },
-  { "theme_openhasp_init", { (const void*) &lv_theme_openhasp_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" } },
-  { "theme_openhasp_is_inited", { (const void*) &lv_theme_openhasp_is_inited, "b", "" } },
   { "theme_set_apply_cb", { (const void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" } },
   { "theme_set_parent", { (const void*) &lv_theme_set_parent, "", "(lv.lv_theme)(lv.lv_theme)" } },
   { "timer_create", { (const void*) &lv_timer_create, "lv.lv_timer", "^lv_timer_cb^i." } },
