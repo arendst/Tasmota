@@ -2514,8 +2514,11 @@ void HandleInformation(void)
       }
       char running[2] = { 0 };
       if (part->subtype == cur_part) { running[0] = '*'; }
-      uint32_t part_used = ((prog_size / 1024) * 100) / part_size;
-      WSContentSend_PD(PSTR("}1" D_PARTITION " %s%s}2%d KB (" D_USED " %d%%)"), part->label, running, part_size, part_used);
+      WSContentSend_PD(PSTR("}1" D_PARTITION " %s%s}2%d KB"), part->label, running, part_size);
+      if (prog_size) {
+        uint32_t part_used = ((prog_size / 1024) * 100) / part_size;
+        WSContentSend_PD(PSTR(" (" D_USED " %d%%)"), part_used);
+      }
     }
     if ((ESP_PARTITION_TYPE_DATA == part->type) && (ESP_PARTITION_SUBTYPE_DATA_SPIFFS == part->subtype)) {
       WSContentSend_PD(PSTR("}1" D_PARTITION " fs}2%d KB"), part_size);
