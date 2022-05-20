@@ -140,6 +140,7 @@
 #define D_PASSWORD "Parolă"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Factor de Putere"
 #define D_POWERUSAGE "Putere"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "actualizare"
 #define D_UPLOAD "Încărcăre"
 #define D_UPTIME "Folosință"
+#define D_USED "used"
 #define D_USER "Utilizator"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Index UV"

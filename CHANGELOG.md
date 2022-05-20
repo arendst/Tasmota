@@ -3,19 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.1.0.2]
+## [11.1.0.3]
 ### Added
-- ESP32 Command ``Restart 3`` to switch between SafeBoot and Production 
+- Support for Sonoff SPM v1.2.0
 
 ### Changed
-- Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
-- ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
+
 
 ### Fixed
 
 
 ### Removed
 
+
+## [11.1.0.2] 20220514
+### Added
+- ESP32 Command ``Restart 3`` to switch between SafeBoot and Production
+
+### Changed
+- Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
+- ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
 ## [11.1.0.1] 20220504
 ### Added

@@ -10,7 +10,7 @@
     "flash_mode": "dout",
     "mcu": "esp32",
     "variant": "m5stack_core2",
-    "partitions": "esp32_partition_app2944k_fs10M.csv"
+    "partitions": "partitions/esp32_partition_app2944k_fs10M.csv"
   },
   "connectivity": [
     "wifi",

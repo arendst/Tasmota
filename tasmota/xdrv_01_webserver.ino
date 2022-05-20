@@ -353,18 +353,22 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "</fieldset><br><br>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
 const char HTTP_FORM_RST_UPG[] PROGMEM =
-  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
-  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
+  "<br><button type='submit' "
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.submit();'"
+    ">" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
 
 // upload via factory partition
 const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
-  "<form method='post' action='u2' enctype='multipart/form-data'>"
+  "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
-  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";return upl(this);'>" D_START " %s</button></form>"
+  "<br><button type='submit' "
+  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;return upl(this);'"
+    ">" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"
@@ -436,6 +440,7 @@ ESP8266WebServer *Webserver;
 
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
+  uint32_t upload_size = 0;
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
@@ -556,8 +561,10 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "dl", HTTP_ANY, HandleBackupConfiguration },
   { "rs", HTTP_ANY, HandleRestoreConfiguration },
   { "rt", HTTP_ANY, HandleResetConfiguration },
-  { "in", HTTP_ANY, HandleInformation },
 #endif  // Not FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL_ONLY
+  { "in", HTTP_ANY, HandleInformation },
+#endif  // Not FIRMWARE_MINIMAL_ONLY
 };
 
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
@@ -995,12 +1002,16 @@ void WSContentStop(void) {
 
 /*********************************************************************************************/
 
-void WebRestart(uint32_t type)
-{
+void WebRestart(uint32_t type) {
   // type 0 = restart
   // type 1 = restart after config change
   // type 2 = Checking WiFi Connection - no restart, only refresh page.
   // type 3 = restart after WiFi Connection Test Successful
+  // type 4 = type 0 without auto switch to production
+  bool prep_switch_partition = false;
+  if (0 == type) { prep_switch_partition = true; }
+  if (4 == type) { type = 0; }
+
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == Web.state);
 
   WSContentStart_P((type) ? PSTR(D_SAVE_CONFIGURATION) : PSTR(D_RESTART), !reset_only);
@@ -1033,7 +1044,7 @@ void WebRestart(uint32_t type)
 #endif
     }
   }
-  if (type<2) {
+  if (type < 2) {
     WSContentSend_P(HTTP_MSG_RSTRT);
     if (HTTP_MANAGER == Web.state || reset_only) {
       Web.state = HTTP_ADMIN;
@@ -1046,6 +1057,9 @@ void WebRestart(uint32_t type)
   if (!(2 == type)) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
     ShowWebSource(SRC_WEBGUI);
+#ifdef ESP32
+    if (prep_switch_partition) { EspPrepSwitchPartition(1); }  // Switch to production partition if on safeboot
+#endif  // ESP32
     TasmotaGlobal.restart_flag = 2;
   }
 }
@@ -1286,7 +1300,14 @@ void HandleRoot(void)
 
   if (HTTP_ADMIN == Web.state) {
 #ifdef FIRMWARE_MINIMAL
+#ifdef ESP32
+#ifndef FIRMWARE_MINIMAL_ONLY
+    WSContentSpaceButton(BUTTON_INFORMATION);
+    WSContentButton(BUTTON_FIRMWARE_UPGRADE);
+#endif  // FIRMWARE_MINIMAL_ONLY
+#else   // ESP8266
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
+#endif  // ESP32
     WSContentButton(BUTTON_CONSOLE);
 #else
     WSContentSpaceButton(BUTTON_CONFIGURATION);
@@ -1831,25 +1852,6 @@ void ModuleSaveSettings(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-const char kUnescapeCode[] = "&><\"\'\\";
-const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
-
-String HtmlEscape(const String unescaped) {
-  char escaped[10];
-  size_t ulen = unescaped.length();
-  String result = "";
-  for (size_t i = 0; i < ulen; i++) {
-    char c = unescaped[i];
-    char *p = strchr(kUnescapeCode, c);
-    if (p != nullptr) {
-      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
-    } else {
-      result += c;
-    }
-  }
-  return result;
-}
-
 void HandleWifiConfiguration(void) {
   char tmp[TOPSZ];  // Max length is currently 150
 
@@ -2325,7 +2327,30 @@ void HandleRestoreConfiguration(void)
   Web.upload_file_type = UPL_SETTINGS;
 }
 
+#endif  // Not FIRMWARE_MINIMAL
+
 /*-------------------------------------------------------------------------------------------*/
+
+#ifndef FIRMWARE_MINIMAL_ONLY
+
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
+
+String HtmlEscape(const String unescaped) {
+  char escaped[10];
+  size_t ulen = unescaped.length();
+  String result = "";
+  for (size_t i = 0; i < ulen; i++) {
+    char c = unescaped[i];
+    char *p = strchr(kUnescapeCode, c);
+    if (p != nullptr) {
+      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
+    } else {
+      result += c;
+    }
+  }
+  return result;
+}
 
 void HandleInformation(void)
 {
@@ -2453,18 +2478,52 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardwareRevision().c_str());
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d kB"), ESP_getFlashChipRealSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d kB"), ESP.getFlashChipSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d kB"), ESP_getSketchSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d kB"), ESP_getFreeSketchSpace() / 1024);
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP_getFlashChipRealSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP.getFlashChipSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d KB"), ESP_getSketchSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d KB"), ESP_getFreeSketchSpace() / 1024);
 #ifdef ESP32
-  WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f kB (" D_FRAGMENTATION " %d%%)"), &freemem, ESP_getHeapFragmentation());
+  WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f KB (" D_FRAGMENTATION " %d%%)"), &freemem, ESP_getHeapFragmentation());
   if (UsePSRAM()) {
-    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d kB"), ESP.getPsramSize() / 1024);
-    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d kB"), ESP.getFreePsram() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_MAX_MEMORY "}2%d KB"), ESP.getPsramSize() / 1024);
+    WSContentSend_P(PSTR("}1" D_PSR_FREE_MEMORY "}2%d KB"), ESP.getFreePsram() / 1024);
   }
+  WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
+  uint32_t cur_part = ESP_PARTITION_SUBTYPE_APP_FACTORY;   // 0
+  const esp_partition_t *running_ota = esp_ota_get_running_partition();
+  if (running_ota) { cur_part = running_ota->subtype; }    // 16 - 32
+  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+  for (; it != NULL; it = esp_partition_next(it)) {
+    const esp_partition_t *part = esp_partition_get(it);
+
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("PRT: Type %d, Subtype %d, Name %s, Size %d"), part->type, part->subtype, part->label, part->size);
+
+    uint32_t part_size = part->size / 1024;
+    if (ESP_PARTITION_TYPE_APP == part->type) {
+      uint32_t prog_size = 0;                              // No active ota partition
+      if (part->subtype == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
+        prog_size = EspProgramSize(part->label);           // safeboot partition (slow response)
+      }
+      else if ((part->subtype >= ESP_PARTITION_SUBTYPE_APP_OTA_MIN) && (part->subtype <= ESP_PARTITION_SUBTYPE_APP_OTA_MAX)) {
+        if (cur_part == part->subtype) {
+          prog_size = ESP_getSketchSize();                 // Active running ota partition (fast response)
+        }
+        else if (cur_part == ESP_PARTITION_SUBTYPE_APP_FACTORY) {
+          prog_size = EspProgramSize(part->label);         // One app partition when safeboot partitions (slow response)
+        }
+      }
+      char running[2] = { 0 };
+      if (part->subtype == cur_part) { running[0] = '*'; }
+      uint32_t part_used = ((prog_size / 1024) * 100) / part_size;
+      WSContentSend_PD(PSTR("}1" D_PARTITION " %s%s}2%d KB (" D_USED " %d%%)"), part->label, running, part_size, part_used);
+    }
+    if ((ESP_PARTITION_TYPE_DATA == part->type) && (ESP_PARTITION_SUBTYPE_DATA_SPIFFS == part->subtype)) {
+      WSContentSend_PD(PSTR("}1" D_PARTITION " fs}2%d KB"), part_size);
+    }
+  }
+  esp_partition_iterator_release(it);
 #else // ESP32
-  WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f kB"), &freemem);
+  WSContentSend_PD(PSTR("}1" D_FREE_MEMORY "}2%1_f KB"), &freemem);
 #endif // ESP32
   WSContentSend_P(PSTR("</td></tr></table>"));
 
@@ -2477,7 +2536,7 @@ void HandleInformation(void)
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
-#endif  // Not FIRMWARE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL_ONLY
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -2775,11 +2834,15 @@ void HandleUploadLoop(void) {
           return;
         }
         if (0xE9 == upload.buf[0]) {
-          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
 #ifdef ESP8266
+          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
           if (bin_flash_size > ESP.getFlashChipRealSize()) {
 #else
-          if (bin_flash_size > ESP.getFlashChipSize()) {   // TODO revisit this test
+          char tmp[16];
+          WebGetArg("fsz", tmp, sizeof(tmp));                    // filesize
+          uint32_t upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
+          AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "freespace=%i filesize=%i", ESP.getFreeSketchSpace(), upload_size);
+          if (upload_size > ESP.getFreeSketchSpace()) {   // TODO revisit this test
 #endif
             Web.upload_error = 4;  // Program flash size is larger than real flash size
             return;
@@ -2826,7 +2889,7 @@ void HandleUploadLoop(void) {
       return;
     }
     if (upload.totalSize && !(upload.totalSize % 102400)) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d kB"), upload.totalSize / 1024);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Progress %d KB"), upload.totalSize / 1024);
     }
   }
 
@@ -2981,7 +3044,7 @@ void HandleSwitchBootPartition(void)
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_RESTART));
       EspRestart();
     } else {
-      WebRestart(0);
+      WebRestart(4);
     }
   } else {
     if (api_mode) {

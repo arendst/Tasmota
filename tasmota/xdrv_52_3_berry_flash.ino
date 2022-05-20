@@ -45,13 +45,13 @@ size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t s
         memcpy(buffer, data + current_offset, SPI_FLASH_SEC_SIZE);
       } else {
         ret = spi_flash_read(page_addr, buffer, SPI_FLASH_SEC_SIZE);
-        if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not read flash %p (0x%X)", page_addr, SPI_FLASH_SEC_SIZE); return 0; }
+        if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not read flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }
         memcpy(buffer + addr_in_page, data + current_offset, size_in_page);
       }
       ret = spi_flash_erase_sector(page_addr / SPI_FLASH_SEC_SIZE);
-      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not erase flash sector 0x%X", page_addr / SPI_FLASH_SEC_SIZE); return 0; }
+      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not erase flash sector 0x%X ret=%i", page_addr / SPI_FLASH_SEC_SIZE, ret); return 0; }
       spi_flash_write(page_addr, buffer, SPI_FLASH_SEC_SIZE);
-      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not write flash %p (0x%X)", page_addr, SPI_FLASH_SEC_SIZE); return 0; }
+      if (ret) { AddLog(LOG_LEVEL_INFO, "BRY: could not write flash %p (0x%X) ret=%i", page_addr, SPI_FLASH_SEC_SIZE, ret); return 0; }
 
       addr += size_in_page;
       current_offset += size_in_page;
@@ -63,9 +63,9 @@ size_t FlashWriteSubSector(uint32_t address_start, const uint8_t *data, size_t s
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import flash
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: `flash.read(address:int[, length:int]) -> bytes()`
@@ -74,7 +74,7 @@ extern "C" {
   int32_t p_flash_read(struct bvm *vm);
   int32_t p_flash_read(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 1 && be_isint(vm, 1) && 
+    if (argc >= 1 && be_isint(vm, 1) &&
         (argc < 2 || be_isint(vm, 2)) ) {    // optional second argument must be int
       uint32_t address = be_toint(vm, 1);
       uint32_t length = 0x1000;
@@ -102,13 +102,24 @@ extern "C" {
     if (argc >= 2 && be_isint(vm, 1) && be_isinstance(vm, 2)) {
       be_getglobal(vm, "bytes"); /* get the bytes class */ /* TODO eventually replace with be_getbuiltin */
       if (be_isderived(vm, 2)) {
+        bool no_erase = false;
+        if (argc >= 3 && be_isbool(vm, 3)) {
+          no_erase = be_tobool(vm, 3);
+        }
         uint32_t address = be_toint(vm, 1);
         size_t length = 0;
         const void * bytes = be_tobytes(vm, 2, &length);
         if (bytes && length > 0) {
-          size_t ret = FlashWriteSubSector(address, (const uint8_t*)bytes, length);
-          if (ret == 0)  {
-            be_raise(vm, "internal_error", "Error calling spi_flash_write()");
+          if (no_erase) {
+            esp_err_t ret = spi_flash_write(address, (const uint8_t*)bytes, length);
+            if (ret) {
+              be_raisef(vm, "internal_error", "Error calling spi_flash_write() ret=%i", ret);
+            }
+          } else {
+            size_t ret = FlashWriteSubSector(address, (const uint8_t*)bytes, length);
+            if (ret == 0)  {
+              be_raise(vm, "internal_error", "Error calling spi_flash_write()");
+            }
           }
           be_return_nil(vm);
           // success
@@ -146,6 +157,9 @@ extern "C" {
       esp_partition_erase_range(otadata_partition, 0, SPI_FLASH_SEC_SIZE * 2);
     }
     if (force_ota) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+      OtaFactoryWrite(true);
+#endif
       RtcSettings.ota_loader = 1;     // force OTA at next reboot
     }
   }

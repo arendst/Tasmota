@@ -140,6 +140,7 @@
 #define D_PASSWORD "Wagwoord"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Poort"
 #define D_POWER_FACTOR "Krag faktor"
 #define D_POWERUSAGE "Krag"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "opgradeer"
 #define D_UPLOAD "Laai op"
 #define D_UPTIME "Uptyd"
+#define D_USED "used"
 #define D_USER "Gebruiker"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Indeks"

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 05.05.2022
+ * Updated until v9.4.0.1 - Last update 15.05.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -140,6 +140,7 @@
 #define D_PASSWORD             "Password"
 #define D_PH                   "pH"
 #define D_MQ                   "MQ"
+#define D_PARTITION            "Partizione"      // As in flash and firmware partition
 #define D_PORT                 "Porta"
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
@@ -177,12 +178,13 @@
 #define D_TOGGLE               "ON/OFF"
 #define D_TOPIC                "Topic"
 #define D_TOTAL_USAGE          "Uso totale"
-#define D_TRANSMIT             "Trasmesso"
+#define D_TRANSMIT             "Trasmessi"
 #define D_TRUE                 "Vero"
 #define D_TVOC                 "TVOC"
 #define D_UPGRADE              "aggiornamento"
 #define D_UPLOAD               "Caricamento"
 #define D_UPTIME               "Tempo accensione"
+#define D_USED                 "usati"
 #define D_USER                 "Utente"
 #define D_UTC_TIME             "UTC"
 #define D_UV_INDEX             "Indice UV"

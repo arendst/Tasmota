@@ -109,6 +109,7 @@ class Partition_info
     if self.is_ota() == nil && !self.is_factory()   return -1 end
     try
       var addr = self.start
+      var size = self.size
       var magic_byte = flash.read(addr, 1).get(0, 1)
       if magic_byte != 0xE9 return -1 end
       
@@ -126,6 +127,7 @@ class Partition_info
         # print(string.format("Segment %i: flash_offset=0x%08X start_addr=0x%08X size=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
 
         seg_offset += seg_size + 8    # add segment_length + sizeof(esp_image_segment_header_t)
+        if seg_offset >= (addr + size)   return -1 end
 
         seg_num += 1
       end
@@ -420,11 +422,11 @@ class Partition
 
   #- compute the highest ota<x> partition -#
   def ota_max()
-    var ota_max = 0
+    var ota_max = nil
     for slot:self.slots
       if slot.type == 0 && (slot.subtype >= 0x10 && slot.subtype < 0x20)
         var ota_num = slot.subtype - 0x10
-        if ota_num > ota_max  ota_max = ota_num end
+        if (ota_max == nil) || (ota_num > ota_max)   ota_max = ota_num end
       end
     end
     return ota_max
@@ -513,9 +515,9 @@ class Partition
   end
 
   # switch to safeboot `factory` partition
-  def switch_factory()
+  def switch_factory(force_ota)
     import flash
-    flash.rollback()
+    flash.factory(force_ota)
   end
 end
 partition_core.Partition = Partition

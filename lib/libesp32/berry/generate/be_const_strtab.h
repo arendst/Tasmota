@@ -788,7 +788,6 @@ extern const bcstring be_const_str_return;
 extern const bcstring be_const_str_return_X20code_X3D_X25i;
 extern const bcstring be_const_str_reverse;
 extern const bcstring be_const_str_reverse_gamma10;
-extern const bcstring be_const_str_rollback;
 extern const bcstring be_const_str_rotate;
 extern const bcstring be_const_str_round_end;
 extern const bcstring be_const_str_round_start;

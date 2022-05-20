@@ -1175,6 +1175,9 @@ void Every250mSeconds(void)
     if (TasmotaGlobal.ota_state_flag && CommandsReady()) {
       TasmotaGlobal.ota_state_flag--;
       if (2 == TasmotaGlobal.ota_state_flag) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+        OtaFactoryWrite(false);
+#endif
         RtcSettings.ota_loader = 0;                       // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         SettingsSave(1);                                  // Free flash for OTA update
@@ -1245,7 +1248,25 @@ void Every250mSeconds(void)
 
 #ifdef ESP32
 #ifndef FIRMWARE_MINIMAL
+#ifdef USE_WEBCLIENT_HTTPS
+          if (TasmotaGlobal.ota_factory) {
+            char *bch = strrchr(full_ota_url, '/');            // Only consider filename after last backslash prevent change of urls having "-" in it
+            if (bch == nullptr) { bch = full_ota_url; }        // No path found so use filename only
+            char *ech = strchr(bch, '.');                      // Find file type in filename (none, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz)
+            if (ech == nullptr) { ech = full_ota_url + strlen(full_ota_url); }  // Point to '/0' at end of full_ota_url becoming an empty string
+            char ota_url_type[strlen(ech) +1];
+            strncpy(ota_url_type, ech, sizeof(ota_url_type));  // Either empty, .ino.bin, .ino.bin.gz, .bin, .bin.gz or .gz
+
+            char *pch = strrchr(bch, '-');                     // Find last dash (-) and ignore remainder - handles tasmota-DE
+            if (pch == nullptr) { pch = ech; }                 // No dash so ignore filetype
+            *pch = '\0';                                       // full_ota_url = http://domus1:80/api/arduino/tasmota
+            snprintf_P(full_ota_url, sizeof(full_ota_url), PSTR("%s-safeboot%s"), full_ota_url, ota_url_type);  // Safeboot filename must be filename-safeboot
+          } else
+#endif  // USE_WEBCLIENT_HTTPS
           if (EspSingleOtaPartition()) {
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+            OtaFactoryWrite(true);
+#endif
             RtcSettings.ota_loader = 1;                 // Try safeboot image next
             SettingsSaveAll();
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
@@ -1265,6 +1286,7 @@ void Every250mSeconds(void)
             ota_result = -999;
           } else {
             httpUpdateLight.rebootOnUpdate(false);
+            httpUpdateLight.setFactory(TasmotaGlobal.ota_factory);
             ota_result = (HTTP_UPDATE_FAILED != httpUpdateLight.update(OTAclient, version));
           }
 #else // standard OTA over HTTP
@@ -1413,6 +1435,12 @@ void Every250mSeconds(void)
   case 3:                                                 // Every x.75 second
     if (!TasmotaGlobal.global_state.network_down) {
 #ifdef FIRMWARE_MINIMAL
+#ifdef CONFIG_IDF_TARGET_ESP32C3
+      if (OtaFactoryRead()) {
+        OtaFactoryWrite(false);
+        TasmotaGlobal.ota_state_flag = 3;
+      }
+#endif
       if (1 == RtcSettings.ota_loader) {
         RtcSettings.ota_loader = 0;
         TasmotaGlobal.ota_state_flag = 3;

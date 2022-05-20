@@ -140,6 +140,7 @@
 #define D_PASSWORD "비밀번호"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "포트"
 #define D_POWER_FACTOR "Power Factor"
 #define D_POWERUSAGE "전원"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "업그레이드"
 #define D_UPLOAD "업로드"
 #define D_UPTIME "가동시간"
+#define D_USED "used"
 #define D_USER "User"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV 색인"

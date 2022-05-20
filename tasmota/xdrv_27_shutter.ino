@@ -1,7 +1,7 @@
 /*
   xdrv_27_Shutter[i].ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2022  Stefan Bode 
+  Copyright (C) 2022  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -126,6 +126,7 @@ struct SHUTTERGLOBAL {
 
 #define SHT_DIV_ROUND(__A, __B) (((__A) + (__B)/2) / (__B))
 
+
 void ShutterLogPos(uint32_t i)
 {
   char stemp2[10];
@@ -175,7 +176,7 @@ void ShutterRtc50mS(void)
           if (Shutter[i].accelerator) {
             //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Accelerator i=%d -> %d"),i, Shutter[i].accelerator);
             ShutterUpdateVelocity(i);
-	    digitalWrite(Pin(GPIO_PWM1, i), LOW);
+            digitalWrite(Pin(GPIO_PWM1, i), LOW);
   #ifdef ESP8266
             // Convert frequency into clock cycles
             uint32_t cc = microsecondsToClockCycles(1000000UL) / Shutter[i].pwm_velocity;
@@ -1242,8 +1243,8 @@ void CmndShutterPosition(void)
         ShutterReportPosition(true, index);
       }
       XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
-      if (XdrvMailbox.command)
-        ResponseCmndIdxNumber((Settings->shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
+      strcpy(  XdrvMailbox.command , D_CMND_SHUTTER_POSITION);
+      ResponseCmndIdxNumber((Settings->shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
     } else {
       ShutterReportPosition(true, MAX_SHUTTERS);
       if (XdrvMailbox.command)
@@ -1632,7 +1633,6 @@ void CmndShutterSetTilt(void)
   }
   XdrvMailbox.data[0] = '\0';
   AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltTarget %d, payload %d"), Shutter[XdrvMailbox.index -1].tilt_target_pos,XdrvMailbox.payload);
-  ResponseCmndNumber(Shutter[XdrvMailbox.index -1].tilt_target_pos);
   Shutter[XdrvMailbox.index -1].tiltmoving = 1;
   CmndShutterPosition();
 }
@@ -1649,27 +1649,26 @@ void CmndShutterTiltConfig(void)
       for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < 6; str = strtok_r(nullptr, " ", &str_ptr), i++) {
         Shutter[XdrvMailbox.index -1].tilt_config[i] = Settings->shutter_tilt_config[i][XdrvMailbox.index -1] = atoi(str);
       }
+      // avoid negative runtime
+      Settings->shutter_tilt_config[2][XdrvMailbox.index -1] = Shutter[XdrvMailbox.index -1].tilt_config[2] = Shutter[XdrvMailbox.index -1].tilt_config[2] >= 0 ? Shutter[XdrvMailbox.index -1].tilt_config[2] : 127;
       ShutterInit();
-      ResponseCmndIdxChar(XdrvMailbox.data);
-    } else {
-      char setting_chr[30] = "0";
-      snprintf_P(setting_chr, sizeof(setting_chr), PSTR("SHT:%d %d %d %d %d %d"), XdrvMailbox.index -1,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
-      ResponseCmndIdxChar(setting_chr);
     }
-      AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltConfig %d, min: %d, max %d, runtime %d, close_pos: %d, open_pos: %d"), XdrvMailbox.index ,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
+    char setting_chr[30] = "0";
+    snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), XdrvMailbox.index -1,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
+    ResponseCmndIdxChar(setting_chr);
+    AddLog(LOG_LEVEL_INFO, PSTR("SHT: TiltConfig %d, min: %d, max %d, runtime %d, close_pos: %d, open_pos: %d"), XdrvMailbox.index ,Shutter[XdrvMailbox.index -1].tilt_config[0], Shutter[XdrvMailbox.index -1].tilt_config[1],Shutter[XdrvMailbox.index -1].tilt_config[2],Shutter[XdrvMailbox.index -1].tilt_config[3],Shutter[XdrvMailbox.index -1].tilt_config[4]);
   }
 }
 
 void  CmndShutterTiltIncDec(void)
 {
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Change in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, TasmotaGlobal.last_source );
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present)) {
-    if (XdrvMailbox.data_len > 0) {
-      XdrvMailbox.payload = Shutter[XdrvMailbox.index -1].tilt_target_pos+XdrvMailbox.payload;
-      CmndShutterSetTilt();
-    }
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.shutters_present) && XdrvMailbox.data_len > 0) {
+    XdrvMailbox.payload = Shutter[XdrvMailbox.index -1].tilt_target_pos+XdrvMailbox.payload;
+    CmndShutterSetTilt();
+  } else {
+    ResponseCmndIdxNumber(XdrvMailbox.payload);
   }
-  ResponseCmndNumber(Shutter[XdrvMailbox.index -1].tilt_target_pos);
 }
 
 /*********************************************************************************************\

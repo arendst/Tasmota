@@ -269,6 +269,17 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
   NvmSave("qpc", "pcreg", pSettings, nSettingsLen);
 }
 
+bool OtaFactoryRead(void) {
+  uint32_t pOtaLoader;
+  NvmLoad("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
+  return pOtaLoader;
+}
+
+void OtaFactoryWrite(bool value) {
+  uint32_t pOtaLoader = value;
+  NvmSave("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
+}
+
 void NvsInfo(void) {
   nvs_stats_t nvs_stats;
   nvs_get_stats(NULL, &nvs_stats);
@@ -308,6 +319,21 @@ extern "C" {
   #include "rom/spi_flash.h"
 #endif
 
+uint32_t EspProgramSize(const char *label) {
+  const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_ANY, label);
+  if (!part) {
+    return 0;
+  }
+  const esp_partition_pos_t part_pos  = {
+    .offset = part->address,
+    .size = part->size,
+  };
+  esp_image_metadata_t data;
+  data.start_addr = part_pos.offset;
+  esp_image_verify(ESP_IMAGE_VERIFY, &part_pos, &data);
+  return data.image_len;
+}
+
 bool EspSingleOtaPartition(void) {
   return (1 == esp_ota_get_app_partition_count());
 }
@@ -328,15 +354,33 @@ void EspPrepRestartToSafeBoot(void) {
   }
 }
 
-bool EspPrepSwitchToOtherPartition(void) {
+bool EspPrepSwitchPartition(uint32_t state) {
   bool valid = EspSingleOtaPartition();
   if (valid) {
     bool running_factory = EspRunningFactoryPartition();
-    if (!running_factory) {
-      EspPrepRestartToSafeBoot();
-    } else {
-      const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
-      esp_ota_set_boot_partition(partition);
+    switch (state) {
+      case 0:  // Off = safeboot
+        if (!running_factory) {
+          EspPrepRestartToSafeBoot();
+        } else {
+          valid = false;
+        }
+        break;
+      case 1:  // On = ota0
+        if (running_factory) {
+          const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+          esp_ota_set_boot_partition(partition);
+        } else {
+          valid = false;
+        }
+        break;
+      case 2:  // Toggle
+        if (!running_factory) {
+          EspPrepRestartToSafeBoot();
+        } else {
+          const esp_partition_t* partition = esp_ota_get_next_update_partition(nullptr);
+          esp_ota_set_boot_partition(partition);
+        }
     }
   }
   return valid;

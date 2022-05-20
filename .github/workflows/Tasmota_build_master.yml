@@ -37,12 +37,14 @@ jobs:
           - tasmota32-ir
           - tasmota32-lvgl
           - tasmota32c3
+          - tasmota32c3usb
           - tasmota32solo1
           - tasmota32solo1-safeboot
           - tasmota32-safeboot
           - tasmota32c3-safeboot
           - tasmota32s2-safeboot
           - tasmota32s3-safeboot
+          - tasmota32c3usb-safeboot
     steps:
       - uses: actions/checkout@v3
         with:

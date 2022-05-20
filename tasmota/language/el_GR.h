@@ -140,6 +140,7 @@
 #define D_PASSWORD "Κωδικός"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Θύρα"
 #define D_POWER_FACTOR "Συντελεστής Ισχύος"
 #define D_POWERUSAGE "Ισχύς"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "αναβάθμιση"
 #define D_UPLOAD "Ανέβασμα"
 #define D_UPTIME "Χρόνος λειτουργίας"
+#define D_USED "used"
 #define D_USER "Χρήστης"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Δείκτης UV"

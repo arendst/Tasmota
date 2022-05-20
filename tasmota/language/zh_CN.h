@@ -140,6 +140,7 @@
 #define D_PASSWORD "密码"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因数"
 #define D_POWERUSAGE "功率"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "升级"
 #define D_UPLOAD "上传"
 #define D_UPTIME "运行时间"
+#define D_USED "used"
 #define D_USER "用户名"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "紫外线指数"

@@ -71,8 +71,8 @@ class lvh_obj
     "w": "width",
     "h": "height",
     # arc
-    "asjustable": nil,
-    "mode": nil,
+    # "asjustable": nil,
+    # "mode": nil,
     "start_angle": "bg_start_angle",
     "start_angle1": "start_angle",
     "end_angle": "bg_end_angle",
@@ -81,13 +81,13 @@ class lvh_obj
     "border_side": "style_border_side",
     "border_width": "style_border_width",
     "border_color": "style_border_color",
-    "line_width": nil,                      # depends on class
-    "line_width1": nil,                     # depends on class
-    "action": nil,                          # store the action in self.action
-    "hidden": nil,                          # apply to self
-    "enabled": nil,                         # apply to self
-    "click": nil,                           # synonym to enabled
-    "toggle": nil,
+    # "line_width": nil,                      # depends on class
+    # "line_width1": nil,                     # depends on class
+    # "action": nil,                          # store the action in self.action
+    # "hidden": nil,                          # apply to self
+    # "enabled": nil,                         # apply to self
+    # "click": nil,                           # synonym to enabled
+    # "toggle": nil,
     "bg_color": "style_bg_color",
     "bg_opa": "style_bg_opa",
     "bg_grad_color": "style_bg_grad_color",
@@ -98,48 +98,50 @@ class lvh_obj
     "pad_top": "style_pad_top",
     "pad_bottom": "style_pad_bottom",
     "pad_all": "style_pad_all",             # write-only
-    "type": nil,
+    # "type": nil,
     # below automatically create a sub-label
-    "text": nil,                            # apply to self
-    "value_str": nil,                       # synonym to 'text'
-    "align": nil,
-    "text_font": nil,
-    "value_font": nil,                      # synonym to text_font
-    "text_color": nil,
-    "value_color": nil,                     # synonym to text_color
-    "value_ofs_x": nil,
-    "value_ofs_y": nil,
+    # "text": nil,                            # apply to self
+    # "value_str": nil,                       # synonym to 'text'
+    # "align": nil,
+    # "text_font": nil,
+    # "value_font": nil,                      # synonym to text_font
+    # "text_color": nil,
+    # "value_color": nil,                     # synonym to text_color
+    # "value_ofs_x": nil,
+    # "value_ofs_y": nil,
     #
-    "min": nil,
-    "max": nil,
-    "val": "value",
+    # "min": nil,
+    # "max": nil,
+    # "val": nil,
     "rotation": "rotation",
     # img
     "src": "src",
     "image_recolor": "style_img_recolor",
     "image_recolor_opa": "style_img_recolor_opa",
     # spinner
-    "angle": nil,
-    "speed": nil,
+    # "angle": nil,
+    # "speed": nil,
     # padding of knob
-    "pad_top2": nil,
-    "pad_bottom2": nil,
-    "pad_left2": nil,
-    "pad_right2": nil,
-    "pad_all2": nil,
-    "radius2": nil,
+    # "pad_top2": nil,
+    # "pad_bottom2": nil,
+    # "pad_left2": nil,
+    # "pad_right2": nil,
+    # "pad_all2": nil,
+    # "radius2": nil,
     # rule based update of attributes
     # supporting both `val` and `text`
-    "val_rule": nil,
-    "val_rule_formula": nil,
-    "text_rule": nil,
-    "text_rule_formula": nil,
-    "text_rule_format": nil,
+    # "val_rule": nil,
+    # "val_rule_formula": nil,
+    # "text_rule": nil,
+    # "text_rule_formula": nil,
+    # "text_rule_format": nil,
+    # roller
+    # "options": nil,
     # qrcode
-    "qr_size": nil,
-    "qr_dark_color": nil,
-    "qr_light_color": nil,
-    "qr_text": nil,
+    # "qr_size": nil,
+    # "qr_dark_color": nil,
+    # "qr_light_color": nil,
+    # "qr_text": nil,
   }
 
   #====================================================================
@@ -171,6 +173,21 @@ class lvh_obj
   static def is_color_attribute(t)
     import re
     return bool(re.search("color$", str(t)))
+  end
+
+  #- remove trailing NULL chars from a bytes buffer before converting to string -#
+  #- Berry strings can contain NULL, but this messes up C-Berry interface -#
+  static def remove_trailing_zeroes(b)
+    var sz = size(b)
+    var i = 0
+    while i < sz
+      if b[-1-i] != 0   break end
+      i += 1
+    end
+    if i > 0
+      b.resize(size(b)-i)
+    end
+    return b
   end
 
   #################################################################################
@@ -317,9 +334,24 @@ class lvh_obj
     if event_hasp != nil
       import string
 
-      var val = string.format('{"hasp":{"p%ib%i":"%s"}}', self._page._page_id, self.id, event_hasp)
+      var tas_event_more = ""   # complementary data
+      if event.code == lv.EVENT_VALUE_CHANGED
+        try
+          # try to get the new val
+          var val = self.val
+          if val != nil   tas_event_more = string.format(',"val":%i', val) end
+          var text = self.text
+          if text != nil
+            import json
+            tas_event_more += ',"text":'
+            tas_event_more += json.dump(text)
+          end
+        except ..
+        end
+      end
+      var tas_event = string.format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
       # print("val=",val)
-      tasmota.set_timer(0, /-> tasmota.publish_rule(val))
+      tasmota.set_timer(0, /-> tasmota.publish_rule(tas_event))
     end
   end
 
@@ -611,6 +643,12 @@ class lvh_obj
   def get_pad_all()
   end
 
+  def set_val(t)
+    self._lv_obj.set_value(t)
+  end
+  def get_val()
+    return self._lv_obj.get_value()
+  end
   #====================================================================
   #  `radius2`
   #====================================================================
@@ -635,37 +673,35 @@ class lvh_obj
   #- ------------------------------------------------------------#
   def member(k)
     import string
-    # ignore attributes
-    # print("member","self=",self,"k=",k)
+    import introspect
+
+    # print("> getmember", k)
+    var prefix = k[0..3]
+    if prefix == "set_" || prefix == "get_" return end
+    # if attribute name is in ignore list, abort
     if self._attr_ignore.find(k) != nil return end
 
-    # check if the key is known
+    # first check if there is a method named `get_X()`
+    var f = introspect.get(self, "get_" + k)  # call self method
+    if type(f) == 'function'
+      return f(self)
+    end
+
+    # next check if there is a mapping to an LVGL attribute
     if self._attr_map.contains(k)
-      # attribute is known
-      # kv: (if string)  the LVGL attribute name of the object - direct mapping
-      # kv: (if `nil`)   call `get_<kv>` method of the object
-      import introspect
       var kv = self._attr_map[k]
 
-      if kv == nil
-        # call the object's `get_X()`
-        var f = introspect.get(self, "get_" + k)  # call self method
-        if type(f) == 'function'
-          return f(self)
-        end
-      else
-        # call the native LVGL object method
-        var f = introspect.get(self._lv_obj, "get_" + kv)
-        if type(f) == 'function'                  # found and function, call it
-          if string.find(kv, "style_") == 0
-            # style function need a selector as second parameter
-            return f(self._lv_obj, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
-          else
-            return f(self._lv_obj)
-          end
+      f = introspect.get(self._lv_obj, "get_" + kv)
+      if type(f) == 'function'                  # found and function, call it
+        if string.find(kv, "style_") == 0
+          # style function need a selector as second parameter
+          return f(self._lv_obj, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+        else
+          return f(self._lv_obj)
         end
       end
     end
+
     # fallback to exception if attribute unknown or not a function
     raise "value_error", "unknown attribute " + str(k)
   end
@@ -674,45 +710,44 @@ class lvh_obj
   # `setmember` virtual setter
   #- ------------------------------------------------------------#
   def setmember(k, v)
-    # print(">> setmember", k, v)
-    # print(">>", classname(self), self._attr_map)
-    # ignore attributes
+    import string
+    import introspect
+
+    # print("> setmember", k, v)
+    var prefix = k[0..3]
+    if prefix == "set_" || prefix == "get_" return end
+    # if attribute name is in ignore list, abort
     if self._attr_ignore.find(k) != nil return end
 
-    # is attribute known
+
+    # first check if there is a method named `set_X()`
+    var f = introspect.get(self, "set_" + k)
+    if type(f) == 'function'
+      f(self, v)
+      return
+    end
+
+    # next check if there is a mapping to an LVGL attribute
     if self._attr_map.contains(k)
-      import string
-      import introspect
-      var kv = self._attr_map[k]
-      # if a string is attached to the name, then set the corresponding LVGL attribute
-      if kv
-        var f = introspect.get(self._lv_obj, "set_" + kv)
-        # if the attribute contains 'color', convert to lv_color
-        if type(kv) == 'string' && self.is_color_attribute(kv)
-          v = self.parse_color(v)
-        end
-        # print("f=", f, v, kv, self._lv_obj, self)
-        if type(f) == 'function'
-          if string.find(kv, "style_") == 0
-            # style function need a selector as second parameter
-            f(self._lv_obj, v, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
-          else
-            f(self._lv_obj, v)
-          end
-          return
-        else
-          print("HSP: Could not find function set_"+kv)
-        end
-      else
-        # else call the specific method from self
-        var f = introspect.get(self, "set_" + k)
-        # print("f==",f)
-        if type(f) == 'function'
-          f(self, v)
-          return
-        end
-      end
       
+      var kv = self._attr_map[k]
+      f = introspect.get(self._lv_obj, "set_" + kv)
+      # if the attribute contains 'color', convert to lv_color
+      if self.is_color_attribute(kv)
+        v = self.parse_color(v)
+      end
+      # print("f=", f, v, kv, self._lv_obj, self)
+      if type(f) == 'function'
+        if string.find(kv, "style_") == 0
+          # style function need a selector as second parameter
+          f(self._lv_obj, v, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+        else
+          f(self._lv_obj, v)
+        end
+        return
+      else
+        print("HSP: Could not find function set_"+kv)
+      end
     else
       print("HSP: unknown attribute:", k)
     end
@@ -987,6 +1022,116 @@ class lvh_qrcode : lvh_obj
   def get_qr_text() end
 end
 
+#====================================================================
+#  slider
+#====================================================================
+class lvh_slider : lvh_obj
+  static _lv_class = lv.slider
+
+  def set_val(t)
+    self._lv_obj.set_value(t, 0)    # add second parameter - no animation
+  end
+end
+
+#====================================================================
+#  roller
+#====================================================================
+class lvh_roller : lvh_obj
+  static _lv_class = lv.roller
+
+  def set_val(t)
+    self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
+  end
+  def get_val()
+    return self._lv_obj.get_selected()
+  end
+
+  def set_options(t)
+    self._lv_obj.set_options(t, lv.ROLLER_MODE_NORMAL)
+  end
+  def get_options()
+    return self._lv_obj.get_options()
+  end
+
+  def set_text(t)
+    raise "attribute_error", "set_text unsupported on roller"
+  end
+  def get_text()
+    # allocate a bytes buffer
+    var b = bytes().resize(256)      # force 256 bytes
+    self._lv_obj.get_selected_str(b._buffer(), 256)
+    b = self.remove_trailing_zeroes(b)
+    return b.asstring()
+  end
+end
+
+#====================================================================
+#  dropdown
+#====================================================================
+class lvh_dropdown : lvh_obj
+  static _lv_class = lv.dropdown
+  static _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
+
+  def set_val(t)
+    self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
+  end
+  def get_val()
+    return self._lv_obj.get_selected()
+  end
+
+  def set_options(t)
+    self._lv_obj.set_options(t, lv.ROLLER_MODE_NORMAL)
+  end
+  def get_options()
+    return self._lv_obj.get_options()
+  end
+
+  def set_text(t)
+    # set_text sets a static text displayed whatever the value
+    # use `nil` to set back the text of the selected value
+    self._lv_obj.set_text(t)
+  end
+  def get_text()
+    var static_text = self._lv_obj.get_text()
+    if static_text == nil
+      # allocate a bytes buffer
+      var b = bytes().resize(256)      # force 256 bytes
+      self._lv_obj.get_selected_str(b._buffer(), 256)
+      b = self.remove_trailing_zeroes(b)
+      return b.asstring()
+    else
+      return static_text
+    end
+  end
+
+  # direction needs a conversion from OpenHASP numbers and LVGL's
+  def set_direction(t)
+    # 0 = down, 1 = up, 2 = left, 3 = right
+    self._lv_obj.set_dir(self._dir[int(t)])
+  end
+  def get_direction()
+    var dir = self._lv_obj.get_dir()
+    var i = 0
+    while i < size(self._dir)
+      if dir == self._dir[i]    return i end
+      i += 1
+    end
+    return -1
+  end
+
+  # show_selected (bool) is a OpenHASP addition
+  # only meaningful if set to `true`, setting to false requires a call to `set_text`
+  def set_show_selected(t)
+    if t
+      self._lv_obj.set_text(nil)  # undo static text
+    end
+  end
+  def get_show_selected()
+    var static_text = self._lv_obj.get_text()
+    return (static_text == nil)
+  end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
@@ -997,10 +1142,7 @@ class lvh_bar : lvh_obj         static _lv_class = lv.bar         end
 class lvh_btn : lvh_obj         static _lv_class = lv.btn         end
 class lvh_btnmatrix : lvh_obj   static _lv_class = lv.btnmatrix   end
 class lvh_checkbox : lvh_obj    static _lv_class = lv.checkbox    end
-class lvh_dropdown : lvh_obj    static _lv_class = lv.dropdown    end
 class lvh_line : lvh_obj        static _lv_class = lv.line        end
-class lvh_roller : lvh_obj      static _lv_class = lv.roller      end
-class lvh_slider : lvh_obj      static _lv_class = lv.slider      end
 class lvh_textarea : lvh_obj    static _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 class lvh_scr : lvh_obj         static _lv_class = nil            end    # no class for screen

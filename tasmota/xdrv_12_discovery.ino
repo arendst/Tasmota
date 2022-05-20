@@ -209,6 +209,18 @@ void TasDiscoverMessage(void) {
   }
 
   ResponseAppend_P(PSTR("],"                                   // Shutter Options (end)
+                        "\"sht\":["));                         // Shutter Tilt (start)
+  for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+#ifdef USE_SHUTTER
+    ResponseAppend_P(PSTR("%s[%d,%d,%d]"), (i > 0 ? "," : ""),
+                          Settings->shutter_tilt_config[0][i],
+                          Settings->shutter_tilt_config[1][i],
+                          Settings->shutter_tilt_config[2][i]);
+#else
+    ResponseAppend_P(PSTR("%s[0,0,0]"), (i > 0 ? "," : ""));
+#endif  // USE_SHUTTER
+  }
+  ResponseAppend_P(PSTR("],"                                   // Shutter Tilt (end)
                         "\"ver\":1}"));                        // Discovery version
 }
 

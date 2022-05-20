@@ -35,8 +35,10 @@ return_types = {
   "int32_t": "i",
   "void *": ".",
   "const void *": ".",
-  "char *": "s",
+  "char *": "c",
+  "uint8_t *": "c",
   "const char *": "s",
+  "constchar *": "s",       # special construct
   "lv_obj_user_data_t": "i",
 
   "lv_objmask_mask_t *": ".",
@@ -122,6 +124,7 @@ return_types = {
   "lv_anim_start_cb_t": "c",
 
   # arrays
+  "constchar * []": "str_arr",
   "char * []": "str_arr",
   "lv_coord_t []": "lv_coord_arr",
   "lv_point_t []": "lv_point_arr",
@@ -161,6 +164,7 @@ return_types = {
   "lv_timer_t *": "lv_timer",
   "lv_coord_t *": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
   "char **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
+  "constchar **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
 
   # callbacks
   "lv_group_focus_cb_t": "lv_group_focus_cb",
@@ -229,6 +233,7 @@ with open(lv_widgets_file) as f:
     l_raw = l_raw.strip(" \t\n\r")    # remove leading or trailing spaces
     l_raw = re.sub('static ', '', l_raw)
     l_raw = re.sub('inline ', '', l_raw)
+    l_raw = re.sub('const\s+char\s*\*', 'constchar *', l_raw)
     l_raw = re.sub('const ', '', l_raw)
     l_raw = re.sub('struct ', '', l_raw)
     if (len(l_raw) == 0): continue

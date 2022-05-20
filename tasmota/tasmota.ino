@@ -186,6 +186,7 @@ struct TasmotaGlobal_t {
   bool i2c_enabled;                         // I2C configured
 #ifdef ESP32
   bool i2c_enabled_2;                       // I2C configured, second controller on ESP32, Wire1
+  bool ota_factory;                         // Select safeboot binary
 #endif
   bool ntp_force_sync;                      // Force NTP sync
   bool skip_light_fade;                     // Temporarily skip light fading

@@ -607,7 +607,7 @@ be_define_const_str(length_X20in_X20bits_X20must_X20be_X20between_X200_X20and_X2
 be_define_const_str(light, "light", 3801947695u, 0, 5, &be_const_str_set_ldo_voltage);
 be_define_const_str(light_X20must_X20be_X20of_X20class_X20_X27light_state_X27, "light must be of class 'light_state'", 3669350396u, 0, 36, &be_const_str_read_sensors);
 be_define_const_str(light_state, "light_state", 905783845u, 0, 11, &be_const_str_lv_wifi_bars_icon);
-be_define_const_str(light_to_id, "light_to_id", 1117015647u, 0, 11, &be_const_str_rollback);
+be_define_const_str(light_to_id, "light_to_id", 1117015647u, 0, 11, NULL);
 be_define_const_str(lights, "lights", 425118420u, 0, 6, &be_const_str_set_size);
 be_define_const_str(line_dsc, "line_dsc", 4094490978u, 0, 8, &be_const_str_try_run_compiled);
 be_define_const_str(list, "list", 217798785u, 0, 4, &be_const_str_set_MAC);
@@ -780,7 +780,6 @@ be_define_const_str(return, "return", 2246981567u, 60, 6, NULL);
 be_define_const_str(return_X20code_X3D_X25i, "return code=%i", 2127454401u, 0, 14, &be_const_str_write_bit);
 be_define_const_str(reverse, "reverse", 558918661u, 0, 7, &be_const_str_sin);
 be_define_const_str(reverse_gamma10, "reverse_gamma10", 739112262u, 0, 15, NULL);
-be_define_const_str(rollback, "rollback", 2093668477u, 0, 8, NULL);
 be_define_const_str(rotate, "rotate", 2784296202u, 0, 6, &be_const_str_set_active);
 be_define_const_str(round_end, "round_end", 985288225u, 0, 9, NULL);
 be_define_const_str(round_start, "round_start", 2949484384u, 0, 11, &be_const_str_tolower);
@@ -1543,6 +1542,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 505,
-    .count = 1034,
+    .count = 1033,
     .table = m_string_table
 };

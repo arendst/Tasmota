@@ -837,7 +837,15 @@ void CmndUpgrade(void)
     TasmotaGlobal.ota_state_flag = 3;
     char stemp1[TOPSZ];
     Response_P(PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), XdrvMailbox.command, TasmotaGlobal.version, GetOtaUrl(stemp1, sizeof(stemp1)));
-  } else {
+  }
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  else if (EspSingleOtaPartition() && !EspRunningFactoryPartition() && (1 == XdrvMailbox.data_len) && (2 == XdrvMailbox.payload)) {
+    TasmotaGlobal.ota_factory = true;
+    TasmotaGlobal.ota_state_flag = 3;
+    ResponseCmndChar(PSTR("Safeboot"));
+  }
+#endif  // ESP32 and WEBCLIENT_HTTPS
+  else {
     Response_P(PSTR("{\"%s\":\"" D_JSON_ONE_OR_GT "\"}"), XdrvMailbox.command, TasmotaGlobal.version);
   }
 }
@@ -883,7 +891,7 @@ void CmndRestart(void)
     break;
 #ifdef ESP32
   case 3:
-    if (EspPrepSwitchToOtherPartition()) {
+    if (EspPrepSwitchPartition(2)) {  // Toggle partition between safeboot and production
       TasmotaGlobal.restart_flag = 2;
       ResponseCmndChar(PSTR("Switching"));
     }

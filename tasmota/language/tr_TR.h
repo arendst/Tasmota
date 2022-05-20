@@ -140,6 +140,7 @@
 #define D_PASSWORD "Şifre"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Güç Faktörü"
 #define D_POWERUSAGE "Güç"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "yükseltme"
 #define D_UPLOAD "Yükleme"
 #define D_UPTIME "Açık Kalma Süresi"
+#define D_USED "used"
 #define D_USER "Kullanıcı"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "UV Indeksi"

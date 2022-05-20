@@ -140,6 +140,7 @@
 #define D_PASSWORD "Гасло"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Порт"
 #define D_POWER_FACTOR "Коефіцієнт потужності"
 #define D_POWERUSAGE "Потужність"
@@ -183,6 +184,7 @@
 #define D_UPGRADE "оновлення"
 #define D_UPLOAD "Завантажити"
 #define D_UPTIME "Час роботи"
+#define D_USED "used"
 #define D_USER "Користувач"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Індекс УФ"
