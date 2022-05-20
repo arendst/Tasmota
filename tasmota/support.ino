@@ -1327,9 +1327,18 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
 }
 
 void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state) {
+#ifdef ESP8266
+  static uint32_t pinmode_init = 0;  // Pins 0 to 31 !!! - saves 40 bytes code space compared to uint64_t
+#else
+  static uint64_t pinmode_init = 0;  // Pins 0 to 63 !!!
+#endif
+
   if (PinUsed(gpio_pin, index)) {
     uint32_t pin = Pin(gpio_pin, index);
-    pinMode(pin, OUTPUT);
+    if (!bitRead(pinmode_init, pin)) {
+      pinMode(pin, OUTPUT);
+      bitSet(pinmode_init, pin);
+    }
     digitalWrite(pin, state &1);
   }
 }
