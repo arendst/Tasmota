@@ -911,7 +911,7 @@ void HandleWebcamMjpegTask(void) {
 
 void HandleWebcamRoot(void) {
   //CamServer->redirect("http://" + String(ip) + ":81/cam.mjpeg");
-  Wc.CamServer->sendHeader("Location", WiFi.localIP().toString() + ":81/cam.mjpeg");
+  Wc.CamServer->sendHeader("Location", "/cam.mjpeg");
   Wc.CamServer->send(302, "", "");
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Root called"));
 }

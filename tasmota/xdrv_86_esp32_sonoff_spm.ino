@@ -137,16 +137,15 @@
 #define SSPM_FUNC_SET_TIME           12      // 0x0C
 #define SSPM_FUNC_IAMHERE            13      // 0x0D
 #define SSPM_FUNC_INIT_SCAN          16      // 0x10
-#define SSPM_FUNC_UPLOAD_HEADER      20      // 0x14 - Upload header
+#define SSPM_FUNC_UPLOAD_HEADER      20      // 0x14 - SPI Upload header
 #define SSPM_FUNC_UNITS              21      // 0x15
 #define SSPM_FUNC_GET_ENERGY_TOTAL   22      // 0x16
 #define SSPM_FUNC_GET_ENERGY         24      // 0x18
 #define SSPM_FUNC_GET_LOG            26      // 0x1A
 #define SSPM_FUNC_ENERGY_PERIOD      27      // 0x1B
 #define SSPM_FUNC_RESET              28      // 0x1C - Remove device from eWelink and factory reset
-#define SSPM_FUNC_ARM_RESTART        30      // 0x1E - Restart ARM
-#define SSPM_FUNC_UPLOAD_DATA        31      // 0x1F - Upload incremental data blocks of max 512 bytes to ARM
-#define SSPM_FUNC_UPLOAD_DONE        33      // 0x21 - Finish upload
+#define SSPM_FUNC_UPLOAD_DATA        31      // 0x1F - SPI Upload incremental data blocks of max 512 bytes to ARM
+#define SSPM_FUNC_UPLOAD_DONE        33      // 0x21 - SPI Finish upload
 #define SSPM_FUNC_GET_NEW1           37      // 0x25
 
 // From ARM to ESP
@@ -155,6 +154,7 @@
 #define SSPM_FUNC_SCAN_START         15      // 0x0F
 #define SSPM_FUNC_SCAN_RESULT        19      // 0x13
 #define SSPM_FUNC_SCAN_DONE          25      // 0x19
+#define SSPM_FUNC_UPLOAD_DONE_ACK    30      // 0x1E - Restart ARM
 
 // Unknown
 #define SSPM_FUNC_01                 1       // 0x01
@@ -535,6 +535,20 @@ void SSPMSendCmnd(uint32_t command) {
 
 /*********************************************************************************************/
 
+void SSPMSendFindAck(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 01 00 00 FC 73
+  Marker  |Module id                          |Ac|Cm|Size |  |Ix|Chksm|
+  */
+  SSPMInitSend();
+  SspmBuffer[15] = 0x80;  // Ack
+//  SspmBuffer[16] = SSPM_FUNC_FIND;  // 0x00
+  SspmBuffer[18] = 1;
+  SspmBuffer[19] = 0;
+  SSPMSend(23);
+}
+
 void SSPMSendOPS(uint32_t relay) {
   /*
   Overload Protection
@@ -799,21 +813,6 @@ void SSPMSendInitScan(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Start relay scan..."));
 }
 
-void SSPMSendUploadHeader(void) {
-  /*
-   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
-  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 14 00 0b 09 09 00 1b e5 a4 c7 00 02 88 74 00 6d df
-  Marker  |                                   |  |Cm|Size |        |Checksum   |UploadSize |Ix|Chksm|
-  */
-  SSPMInitSend();
-  SspmBuffer[16] = SSPM_FUNC_UPLOAD_HEADER;  // 0x14
-  SspmBuffer[18] = 0x0B;
-
-
-  SspmBuffer[30] = 0;
-  SSPMSend(33);
-}
-
 void SSPMSendGetEnergyTotal(uint32_t relay) {
   /*
    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
@@ -921,49 +920,6 @@ void SSPMSendGetEnergyPeriod(uint32_t relay) {
 
   SspmBuffer[16] = SSPM_FUNC_ENERGY_PERIOD;  // 0x1B
 
-}
-
-void SSPMSendArmRestart(void) {
-  /*
-   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
-  aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 01 00 01 fe 05
-  Marker  |                                   |  |Cm|Size |  |Ix|Chksm|
-  */
-  SSPMInitSend();
-  SspmBuffer[16] = SSPM_FUNC_ARM_RESTART;  // 0x1E
-  SspmBuffer[18] = 1;
-  Sspm->command_sequence++;
-  SspmBuffer[20] = Sspm->command_sequence;
-  SSPMSend(23);
-}
-
-void SSPMSendUpload(void) {
-  /*
-   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38    539 540 541 542 543 544 545
-  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 00 00 00 00 00 02 00 a2 99 c3 22 00 00 01 20 cd 95 01 08 ... 04  48  af  f3  01  xx  yy
-  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 00 02 00 00 00 02 00 27 f7 24 87 00 80 01 23 23 70 10 bd ... 21  fa  04  f3  02  xx  yy
-  ...
-  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 02 86 00 00 00 02 00 f8 f5 25 6d f1 61 00 08 02 01 ff 00 ...                 44  xx  yy
-  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 00 80 00 02 88 00 00 00 00 74 95 4e 01 c1 c5 e5 02 08 c5 e5 02 08 ...                 45  xx  yy
-  Marker  |                                   |  |Cm|Size |Address    |UploadSize |Checksum   |512 data bytes                            |Ix |Chksm  |
-  */
-  SSPMInitSend();
-  SspmBuffer[16] = SSPM_FUNC_UPLOAD_DATA;  // 0x1F
-
-
-
-  Sspm->command_sequence++;
-  SspmBuffer[543] = Sspm->command_sequence;
-  SSPMSend(546);
-}
-
-void SSPMSendUploadDone(void) {
-  /*
-   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
-  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 21 00 00 46 32 da
-  Marker  |                                   |  |Cm|Size |Ix|Chksm|
-  */
-  SSPMSendCmnd(SSPM_FUNC_UPLOAD_DONE);  // 0x21
 }
 
 void SSPMSendGetNew1(uint32_t module) {
@@ -1635,6 +1591,14 @@ void SSPMHandleReceivedData(void) {
 
         SSPMSendSetTime();
         break;
+      case SSPM_FUNC_UPLOAD_DONE_ACK:
+        /* 0x1E
+        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+        aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 01 00 01 fe 05
+        Marker  |                                   |  |Cm|Size |  |Ix|Chksm|
+        */
+        SSPMSendFindAck();
+        break;
     }
   }
 }
@@ -1766,6 +1730,54 @@ bool SSPMSendSPIFind(void) {
   return false;
 }
 
+void SSPMSendSPIUploadHeader(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 14 00 0b 09 09 00 1b e5 a4 c7 00 02 88 74 00 6d df
+  Marker  |                                   |  |Cm|Size |        |Checksum   |UploadSize |Ix|Chksm|
+  */
+  SSPMInitSend();
+  SspmBuffer[16] = SSPM_FUNC_UPLOAD_HEADER;  // 0x14
+  SspmBuffer[18] = 0x0B;
+
+
+  SspmBuffer[30] = 0;
+  SSPMSendSPI(33);
+}
+
+void SSPMSendSPIUpload(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38    539 540 541 542 543 544 545
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 00 00 00 00 00 02 00 a2 99 c3 22 00 00 01 20 cd 95 01 08 ... 04  48  af  f3  01  xx  yy
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 00 02 00 00 00 02 00 27 f7 24 87 00 80 01 23 23 70 10 bd ... 21  fa  04  f3  02  xx  yy
+  ...
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 02 0c 00 02 86 00 00 00 02 00 f8 f5 25 6d f1 61 00 08 02 01 ff 00 ...                 44  xx  yy
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1f 00 80 00 02 88 00 00 00 00 74 95 4e 01 c1 c5 e5 02 08 c5 e5 02 08 ...                 45  xx  yy
+  Marker  |                                   |  |Cm|Size |Address    |UploadSize |Checksum   |512 data bytes                            |Ix |Chksm  |
+  */
+  SSPMInitSend();
+  SspmBuffer[16] = SSPM_FUNC_UPLOAD_DATA;  // 0x1F
+
+
+
+  Sspm->command_sequence++;
+  SspmBuffer[543] = Sspm->command_sequence;
+  SSPMSendSPI(546);
+}
+
+void SSPMSendSPIUploadDone(void) {
+  /*
+   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21
+  AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 21 00 00 46 32 da
+  Marker  |                                   |  |Cm|Size |Ix|Chksm|
+  */
+  SSPMInitSend();
+  SspmBuffer[16] = SSPM_FUNC_UPLOAD_DONE;  // 0x21
+  Sspm->command_sequence++;
+  SspmBuffer[19] = Sspm->command_sequence;
+  SSPMSendSPI(22);
+}
+
 /*********************************************************************************************/
 
 void SSPMInit(void) {
@@ -1848,7 +1860,7 @@ void SSPMEvery100ms(void) {
   // Fix race condition if the ARM doesn't respond
   if ((Sspm->mstate > SPM_NONE) && (Sspm->mstate < SPM_SEND_FUNC_UNITS)) {
     Sspm->counter++;
-    if (Sspm->counter > 20) {
+    if (Sspm->counter > 30) {
       Sspm->mstate = SPM_NONE;
       Sspm->error_led_blinks = 255;
     }
@@ -2146,13 +2158,13 @@ const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
   "Display|Dump|"                             // SetOptions
   "Log|Energy|History|Scan|IamHere|"
   "Reset|Map|Overload|"
-  D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYYESTERDAY;
+  D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYYESTERDAY "|Send";
 
 void (* const SSPMCommand[])(void) PROGMEM = {
   &CmndSSPMDisplay, &CmndSSPMDump,
   &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMHistory, &CmndSSPMScan, &CmndSSPMIamHere,
   &CmndSSPMReset, &CmndSSPMMap, &CmndSSPMOverload,
-  &CmndSpmEnergyTotal, &CmndSpmEnergyYesterday };
+  &CmndSpmEnergyTotal, &CmndSpmEnergyYesterday, &CmndSSPMSend };
 
 void CmndSSPMDisplay(void) {
   // Select either all relays or only powered on relays
@@ -2374,6 +2386,26 @@ void CmndSSPMMap(void) {
       ResponseAppend_P(PSTR("%s%d"), (i)?",":"", SSPMGetModuleNumberFromMap(SSMPGetModuleId(i)) +1);
     }
     ResponseAppend_P(PSTR("]}"));
+  }
+}
+
+void CmndSSPMSend(void) {
+  // Want to send AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 21 00 00 ix ch ks
+  // SspmSend 00 00 00 00 00 00 00 00 00 00 00 00 00 21 00 00
+  char data[TOPSZ];
+  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(data))) {
+    strlcpy(data, XdrvMailbox.data, sizeof(data));
+    uint32_t len = (XdrvMailbox.data_len +1) / 3;
+    char *p = data;
+    SSPMInitSend();
+    for (uint32_t i = 0; i < len; i++) {
+      SspmBuffer[i +3] = strtol(p, &p, 16);
+    }
+    Sspm->command_sequence++;
+    SspmBuffer[len +3] = Sspm->command_sequence;
+    SSPMSend(len +6);
+
+    ResponseCmndIdxChar(ToHex_P((unsigned char *)SspmBuffer, len +6, data, sizeof(data), ' '));
   }
 }
 

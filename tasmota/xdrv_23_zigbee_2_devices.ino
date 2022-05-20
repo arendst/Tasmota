@@ -975,7 +975,7 @@ public:
   void clean(void);   // avoid writing to flash the last changes
 
   // Find device by name, can be short_addr, long_addr, number_in_array or name
-  Z_Device & parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr = nullptr);
+  Z_Device & parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr = nullptr, int32_t mailbox_payload = 0);
 
   bool isTuyaProtocol(uint16_t shortaddr, uint8_t ep = 0) const;
 
@@ -983,13 +983,20 @@ private:
   LList<Z_Device>           _devices;     // list of devices
   LList<Z_Deferred>         _deferred;    // list of deferred calls
   uint32_t                  _saveTimer = 0;
-  uint8_t                   _seqNumber = 0;     // global seqNumber if device is unknown
+  uint8_t                   _seqnumber = 0;     // global seqNumber if device is unknown
 
   //int32_t findShortAddrIdx(uint16_t shortaddr) const;
   // Create a new entry in the devices list - must be called if it is sure it does not already exist
   Z_Device & createDeviceEntry(uint16_t shortaddr, uint64_t longaddr = 0);
   void freeDeviceEntry(Z_Device *device);
 };
+
+/*********************************************************************************************\
+ * Berry support
+\*********************************************************************************************/
+#ifdef USE_BERRY
+extern "C" void callBerryZigbeeDispatcher(const char* type, ZCLFrame* zcl_received);
+#endif // USE_BERRY
 
 /*********************************************************************************************\
  * Singleton variable

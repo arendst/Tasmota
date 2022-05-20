@@ -1326,10 +1326,16 @@ void SetPin(uint32_t lpin, uint32_t gpio) {
   TasmotaGlobal.gpio_pin[lpin] = gpio;
 }
 
-void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state)
-{
+void DigitalWrite(uint32_t gpio_pin, uint32_t index, uint32_t state) {
+  static uint32_t pinmode_init[2] = { 0 };       // Pins 0 to 63 !!!
+
   if (PinUsed(gpio_pin, index)) {
-    digitalWrite(Pin(gpio_pin, index), state &1);
+    uint32_t pin = Pin(gpio_pin, index) & 0x3F;  // Fix possible overflow over 63 gpios
+    if (!bitRead(pinmode_init[pin / 32], pin % 32)) {
+      bitSet(pinmode_init[pin / 32], pin % 32);
+      pinMode(pin, OUTPUT);
+    }
+    digitalWrite(pin, state &1);
   }
 }
 

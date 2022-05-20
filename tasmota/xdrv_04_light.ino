@@ -2168,7 +2168,10 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
 
 #ifdef USE_PWM_DIMMER
     // Animate brightness LEDs to follow PWM dimmer brightness
-    if (PWM_DIMMER == TasmotaGlobal.module_type) PWMDimmerSetBrightnessLeds(change10to8(max_col));
+    if (PWM_DIMMER == TasmotaGlobal.module_type) {
+      TasmotaGlobal.pwm_dimmer_led_bri = change10to8(max_col);
+      PWMDimmerSetBrightnessLeds(-1);
+    }
 #endif  // USE_PWM_DIMMER
   }
 //  char msg[24];

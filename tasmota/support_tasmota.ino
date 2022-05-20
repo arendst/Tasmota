@@ -2048,10 +2048,7 @@ void GpioInit(void)
 #endif  // ESP8266
   }
 
-  if (PinUsed(GPIO_HEARTBEAT)) {
-    pinMode(Pin(GPIO_HEARTBEAT), OUTPUT);
-    digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
-  }
+  DigitalWrite(GPIO_HEARTBEAT, 0, TasmotaGlobal.heartbeat_inverted);
 
   // Digital input
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -2106,10 +2103,8 @@ void GpioInit(void)
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {
       TasmotaGlobal.devices_present++;
-      pinMode(Pin(GPIO_REL1, i), OUTPUT);
 #ifdef ESP8266
       if (EXS_RELAY == TasmotaGlobal.module_type) {
-        digitalWrite(Pin(GPIO_REL1, i), bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
         if (i &1) { TasmotaGlobal.devices_present--; }
       }
 #endif  // ESP8266
@@ -2124,17 +2119,13 @@ void GpioInit(void)
       } else {
 #endif
         TasmotaGlobal.leds_present++;
-        pinMode(Pin(GPIO_LED1, i), OUTPUT);
-        digitalWrite(Pin(GPIO_LED1, i), bitRead(TasmotaGlobal.led_inverted, i));
+        DigitalWrite(GPIO_LED1, i, bitRead(TasmotaGlobal.led_inverted, i));
 #ifdef USE_ARILUX_RF
       }
 #endif
     }
   }
-  if (PinUsed(GPIO_LEDLNK)) {
-    pinMode(Pin(GPIO_LEDLNK), OUTPUT);
-    digitalWrite(Pin(GPIO_LEDLNK), TasmotaGlobal.ledlnk_inverted);
-  }
+  DigitalWrite(GPIO_LEDLNK, 0, TasmotaGlobal.ledlnk_inverted);
 
 #ifdef USE_PWM_DIMMER
   if (PWM_DIMMER == TasmotaGlobal.module_type && PinUsed(GPIO_REL1)) { TasmotaGlobal.devices_present--; }

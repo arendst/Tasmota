@@ -345,8 +345,8 @@ uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
     device.seqNumber += 1;
     return device.seqNumber;
   } else {
-    _seqNumber += 1;
-    return _seqNumber;
+    _seqnumber += 1;
+    return _seqnumber;
   }
 }
 
@@ -622,7 +622,7 @@ void Z_Devices::clean(void) {
 // - a friendly name, between quotes, example: "Room_Temp"
 //
 // In case the device is not found, the parsed 0x.... short address is passed to *parsed_shortaddr
-Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr) {
+Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr, int32_t mailbox_payload) {
   if (nullptr == param) { return device_unk; }
   size_t param_len = strlen(param);
   char dataBuf[param_len + 1];
@@ -632,8 +632,8 @@ Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_
 
   if ((dataBuf[0] >= '0') && (dataBuf[0] <= '9') && (strlen(dataBuf) < 4)) {
     // simple number 0..99
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 99)) {
-      return isKnownIndexDevice(XdrvMailbox.payload - 1);
+    if ((mailbox_payload > 0) && (mailbox_payload <= 99)) {
+      return isKnownIndexDevice(mailbox_payload - 1);
     } else {
       return device_unk;
     }
