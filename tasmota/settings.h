@@ -339,7 +339,7 @@ typedef union {
     uint32_t gainceiling : 3;
     uint32_t agc_gain: 5;
     uint32_t special_effect : 3;
-    uint32_t spare28 : 1;
+    uint32_t auth : 1;
     uint32_t spare29 : 1;
     uint32_t spare30 : 1;
     uint32_t upgraded : 1;

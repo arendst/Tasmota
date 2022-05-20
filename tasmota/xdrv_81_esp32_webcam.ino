@@ -1081,6 +1081,8 @@ void WcInit(void) {
 #define D_CMND_WC_INIT "Init"
 #define D_CMND_RTSP "Rtsp"
 
+#define D_CMND_WC_AUTH "Auth"
+
 const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   "|" D_CMND_WC_STREAM "|" D_CMND_WC_RESOLUTION "|" D_CMND_WC_MIRROR "|" D_CMND_WC_FLIP "|"
   D_CMND_WC_SATURATION "|" D_CMND_WC_BRIGHTNESS "|" D_CMND_WC_CONTRAST "|" D_CMND_WC_SPECIALEFFECT "|"
@@ -1088,7 +1090,7 @@ const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   D_CMND_WC_AEC_VALUE "|" D_CMND_WC_AE_LEVEL "|" D_CMND_WC_AEC2 "|" D_CMND_WC_AGC "|"
   D_CMND_WC_AGC_GAIN "|" D_CMND_WC_GAINCEILING "|" D_CMND_WC_RAW_GMA "|" D_CMND_WC_LENC "|"
   D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|"
-  D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT
+  D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT "|" D_CMND_WC_AUTH
 #ifdef ENABLE_RTSPSERVER
   "|" D_CMND_RTSP
 #endif // ENABLE_RTSPSERVER
@@ -1101,7 +1103,7 @@ void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcamAELevel, &CmndWebcamAEC2, &CmndWebcamAGC, &CmndWebcamAGCGain, &CmndWebcamGainCeiling,
   &CmndWebcamGammaCorrect, &CmndWebcamLensCorrect, &CmndWebcamWPC, &CmndWebcamDCW, &CmndWebcamBPC,
   &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults,
-  &CmndWebcamStats, &CmndWebcamInit
+  &CmndWebcamStats, &CmndWebcamInit, &CmndWebcamAuth
 #ifdef ENABLE_RTSPSERVER
   , &CmndWebRtsp
 #endif // ENABLE_RTSPSERVER
@@ -1116,7 +1118,7 @@ void CmndWebcam(void) {
     D_CMND_WC_AE_LEVEL "\":%d,\"" D_CMND_WC_AEC2 "\":%d,\"" D_CMND_WC_AGC "\":%d,\""
     D_CMND_WC_AGC_GAIN "\":%d,\"" D_CMND_WC_GAINCEILING "\":%d,\"" D_CMND_WC_RAW_GMA "\":%d,\""
     D_CMND_WC_LENC "\":%d,\"" D_CMND_WC_WPC "\":%d,\"" D_CMND_WC_DCW "\":%d,\"" D_CMND_WC_BPC "\":%d,\""
-    D_CMND_WC_COLORBAR "\":%d,\"" D_CMND_WC_FEATURE "\":%d"
+    D_CMND_WC_COLORBAR "\":%d,\"" D_CMND_WC_FEATURE "\":%d,\"" D_CMND_WC_AUTH "\":%d"
 #ifdef ENABLE_RTSPSERVER
   ",\"" D_CMND_RTSP "\":%d"
 #endif // ENABLE_RTSPSERVER
@@ -1129,7 +1131,7 @@ void CmndWebcam(void) {
     Settings->webcam_config2.ae_level -2, Settings->webcam_config.aec2, Settings->webcam_config.agc,
     Settings->webcam_config2.agc_gain, Settings->webcam_config2.gainceiling, Settings->webcam_config.raw_gma,
     Settings->webcam_config.lenc, Settings->webcam_config.wpc, Settings->webcam_config.dcw, Settings->webcam_config.bpc,
-    Settings->webcam_config.colorbar, Settings->webcam_config.feature
+    Settings->webcam_config.colorbar, Settings->webcam_config.feature, Settings->webcam_config2.auth
 #ifdef ENABLE_RTSPSERVER
   , Settings->webcam_config.rtsp
 #endif // ENABLE_RTSPSERVER
@@ -1334,6 +1336,14 @@ void CmndWebcamFeature(void) {
     WcSetOptions(23, Settings->webcam_config.feature);
   }
   ResponseCmndNumber(Settings->webcam_config.feature);
+}
+
+void CmndWebcamAuth(void){
+  if((XdrvMailbox.payload >=0) && (XdrvMailbox.payload <= 1)){
+    Settings->webcam_config2.auth = XdrvMailbox.payload;
+    WcSetOptions(24, Settings->webcam_config2.auth);
+  }
+  ResponseCmndNumber(Settings->webcam_config2.auth);
 }
 
 void CmndWebcamInit(void) {
