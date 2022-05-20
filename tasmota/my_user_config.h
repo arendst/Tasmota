@@ -1048,7 +1048,7 @@
 // -- LVGL Graphics Library ---------------------------------
 //#define USE_LVGL                                 // LVGL Engine, requires Berry (+382KB)
   #define USE_LVGL_PSRAM                         // Allocate LVGL memory in PSRAM if PSRAM is connected - this might be slightly slower but leaves main memory intact
-  // #define USE_LVGL_OPENHASP                      // Enable OpenHASP compatiblity and Robotocondensed fonts (+90KB flash)
+  // #define USE_LVGL_HASPMOTA                      // Enable OpenHASP compatiblity and Robotocondensed fonts (+90KB flash)
   #define USE_LVGL_MAX_SLEEP  10                 // max sleep in ms when LVGL is enabled, more than 10ms will make display less responsive
   #define USE_LVGL_PNG_DECODER                   // include a PNG image decoder from file system (+16KB)
   //#define USE_LVGL_TOUCHSCREEN                   // Use virtual touch screen with Berry driver

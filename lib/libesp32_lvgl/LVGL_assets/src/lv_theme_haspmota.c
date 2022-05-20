@@ -8,7 +8,7 @@
  *********************/
 #include "../lvgl.h" /*To see all the widgets*/
 
-#include "lv_theme_openhasp.h"
+#include "lv_theme_haspmota.h"
 #include "misc/lv_gc.h"
 
 /*********************
@@ -625,7 +625,7 @@ static void style_init(void)
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_theme_t * lv_theme_openhasp_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
+lv_theme_t * lv_theme_haspmota_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
 {
 
     /*This trick is required only to avoid the garbage collection of
@@ -658,7 +658,7 @@ lv_theme_t * lv_theme_openhasp_init(lv_disp_t * disp, lv_color_t color_primary, 
     return (lv_theme_t *)&theme;
 }
 
-bool lv_theme_openhasp_is_inited(void)
+bool lv_theme_haspmota_is_inited(void)
 {
     return inited;
 }

@@ -260,7 +260,7 @@
 #ifdef FIRMWARE_LVGL
 
 #undef CODE_IMAGE_STR
-#define CODE_IMAGE_STR "lvgl-openhasp"
+#define CODE_IMAGE_STR "lvgl-haspmota"
 
 #undef MODULE
 #define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
@@ -276,7 +276,7 @@
 #define USE_I2S
 #define USE_SPI
 #define USE_LVGL
-#define USE_LVGL_OPENHASP
+#define USE_LVGL_HASPMOTA
 #define USE_LVGL_FREETYPE
   #undef SET_ESP32_STACK_SIZE
   #define SET_ESP32_STACK_SIZE (24 * 1024)

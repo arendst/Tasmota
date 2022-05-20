@@ -741,7 +741,7 @@ print("""/********************************************************************
 #include "lvgl.h"
 #include "be_mapping.h"
 #include "lv_berry.h"
-#include "lv_theme_openhasp.h"
+#include "lv_theme_haspmota.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);

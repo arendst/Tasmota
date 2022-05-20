@@ -306,7 +306,7 @@ extern "C" {
     { "montserrat", lv_montserrat_fonts },
     { "seg7", lv_seg7_fonts },
     { "unscii", lv_unscii_fonts},
-#ifdef USE_LVGL_OPENHASP
+#ifdef USE_LVGL_HASPMOTA
     { "robotocondensed", lv_robotocondensed_fonts },
 #endif
     { nullptr, nullptr}
@@ -355,9 +355,9 @@ extern "C" {
   }
 
   int lv0_load_robotocondensed_latin1_font(bvm *vm) {
-#ifdef USE_LVGL_OPENHASP
+#ifdef USE_LVGL_HASPMOTA
     return lv_load_embedded_font(vm, "robotocondensed", 0);
-#endif // USE_LVGL_OPENHASP
+#endif // USE_LVGL_HASPMOTA
     be_raise(vm, kTypeError, nullptr);
   }
 
