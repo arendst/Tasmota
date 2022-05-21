@@ -50,6 +50,7 @@ jobs:
           - tasmota32c3usb-safeboot
           - tasmota32s2-safeboot
           - tasmota32s3-safeboot
+          - tasmota32s3usb-safeboot
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
