@@ -1311,7 +1311,7 @@ be_local_closure(Partition_info_is_factory,   /* name */
 ********************************************************************/
 be_local_closure(Partition_info_type_to_string,   /* name */
   be_nested_proto(
-    2,                          /* nstack */
+    6,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1319,16 +1319,19 @@ be_local_closure(Partition_info_type_to_string,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
+    ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(type),
     /* K1   */  be_const_int(0),
     /* K2   */  be_nested_str(app),
     /* K3   */  be_const_int(1),
     /* K4   */  be_nested_str(data),
+    /* K5   */  be_nested_str(string),
+    /* K6   */  be_nested_str(format),
+    /* K7   */  be_nested_str(0x_X2502X),
     }),
     &be_const_str_type_to_string,
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
+    ( &(const binstruction[15]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x1C040301,  //  0001  EQ	R1	R1	K1
       0x78060001,  //  0002  JMPF	R1	#0005
@@ -1338,7 +1341,12 @@ be_local_closure(Partition_info_type_to_string,   /* name */
       0x1C040303,  //  0006  EQ	R1	R1	K3
       0x78060000,  //  0007  JMPF	R1	#0009
       0x80060800,  //  0008  RET	1	K4
-      0x80000000,  //  0009  RET	0
+      0xA4060A00,  //  0009  IMPORT	R1	K5
+      0x8C080306,  //  000A  GETMET	R2	R1	K6
+      0x58100007,  //  000B  LDCONST	R4	K7
+      0x88140100,  //  000C  GETMBR	R5	R0	K0
+      0x7C080600,  //  000D  CALL	R2	3
+      0x80040400,  //  000E  RET	1	R2
     })
   )
 );
@@ -1453,7 +1461,7 @@ be_local_closure(Partition_info_init,   /* name */
 ********************************************************************/
 be_local_closure(Partition_info_subtype_to_string,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    6,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1461,7 +1469,7 @@ be_local_closure(Partition_info_subtype_to_string,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[18]) {     /* constants */
+    ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str(type),
     /* K1   */  be_const_int(0),
     /* K2   */  be_nested_str(subtype),
@@ -1480,10 +1488,13 @@ be_local_closure(Partition_info_subtype_to_string,   /* name */
     /* K15  */  be_nested_str(esphttpd),
     /* K16  */  be_nested_str(fat),
     /* K17  */  be_nested_str(spiffs),
+    /* K18  */  be_nested_str(string),
+    /* K19  */  be_nested_str(format),
+    /* K20  */  be_nested_str(0x_X2502X),
     }),
     &be_const_str_subtype_to_string,
     &be_const_str_solidified,
-    ( &(const binstruction[83]) {  /* code */
+    ( &(const binstruction[88]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x1C040301,  //  0001  EQ	R1	R1	K1
       0x7806001A,  //  0002  JMPF	R1	#001E
@@ -1566,7 +1577,12 @@ be_local_closure(Partition_info_subtype_to_string,   /* name */
       0x1C040202,  //  004F  EQ	R1	R1	R2
       0x78060000,  //  0050  JMPF	R1	#0052
       0x80062200,  //  0051  RET	1	K17
-      0x80000000,  //  0052  RET	0
+      0xA4062400,  //  0052  IMPORT	R1	K18
+      0x8C080313,  //  0053  GETMET	R2	R1	K19
+      0x58100014,  //  0054  LDCONST	R4	K20
+      0x88140102,  //  0055  GETMBR	R5	R0	K2
+      0x7C080600,  //  0056  CALL	R2	3
+      0x80040400,  //  0057  RET	1	R2
     })
   )
 );

@@ -1,5 +1,6 @@
 extern const bcstring be_const_str_;
 extern const bcstring be_const_str_00;
+extern const bcstring be_const_str_0x_X2502X;
 extern const bcstring be_const_str_AA50;
 extern const bcstring be_const_str_AES_GCM;
 extern const bcstring be_const_str_ALIGN_BOTTOM_MID;
