@@ -849,7 +849,7 @@ public:
   uint8_t                 transactseq = 0;    // transaction sequence number
   uint8_t                 cmd = 0;
   SBuffer                 payload;
-  uint16_t                cluster = 0;
+  uint16_t                cluster = 0xFFFF;   // invalid cluster by default
   uint16_t                groupaddr = 0;
   // information from decoded ZCL frame
   uint16_t                shortaddr = BAD_SHORTADDR;   // BAD_SHORTADDR is broadcast, so considered invalid
