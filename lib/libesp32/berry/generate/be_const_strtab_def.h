@@ -50,6 +50,7 @@ be_define_const_str(_X2Fac, "/ac", 3904651978u, 0, 3, &be_const_str_pow);
 be_define_const_str(_X2Flights_X2F, "/lights/", 2370247908u, 0, 8, &be_const_str_AudioGeneratorMP3);
 be_define_const_str(_X2Fstate_X2F, "/state/", 4226179876u, 0, 7, &be_const_str_keys);
 be_define_const_str(00, "00", 569209421u, 0, 2, &be_const_str_find_op);
+be_define_const_str(0x_X2502X, "0x%02X", 2626549866u, 0, 6, &be_const_str_settings);
 be_define_const_str(_X3A, ":", 1057798253u, 0, 1, &be_const_str_compile);
 be_define_const_str(_X3C, "<", 957132539u, 0, 1, &be_const_str_instance_X20required);
 be_define_const_str(_X3C_X2Fform_X3E_X3C_X2Fp_X3E, "</form></p>", 3546571739u, 0, 11, NULL);
@@ -1459,7 +1460,7 @@ static const bstring* const m_string_table[] = {
     (const bstring *)&be_const_str_TASMOTA,
     (const bstring *)&be_const_str__X2F,
     (const bstring *)&be_const_str_lower,
-    (const bstring *)&be_const_str_settings,
+    (const bstring *)&be_const_str_0x_X2502X,
     NULL,
     (const bstring *)&be_const_str__X2E,
     (const bstring *)&be_const_str_SERIAL_6N2,
@@ -1542,6 +1543,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 505,
-    .count = 1033,
+    .count = 1034,
     .table = m_string_table
 };
