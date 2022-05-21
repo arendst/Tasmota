@@ -477,6 +477,7 @@ void Ade7880Cycle(void) {
 
   uint32_t status0 = Ade7880ReadVerify(ADE7880_STATUS0);                   // 0xE502 - 0x000FEFE0
   if (!bitRead(status0, 5)) {                                              // LENERGY
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Unexpected ISR0 0x%08X"), status0);
     return;
   } else {
     Ade7880WriteVerify(ADE7880_STATUS0, 0x00000020);                       // 0xE502 - Acknowledge LENERGY - Reset IRQ0 line
