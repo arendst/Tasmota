@@ -300,11 +300,8 @@ void ZigbeeInitSerial(void)
     ZigbeeSerial->begin(115200);
     if (ZigbeeSerial->hardwareSerial()) {
       ClaimSerial();
-      uint32_t aligned_buffer = ((uint32_t)TasmotaGlobal.serial_in_buffer + 3) & ~3;
-			zigbee_buffer = new PreAllocatedSBuffer(sizeof(TasmotaGlobal.serial_in_buffer) - 3, (char*) aligned_buffer);
-		} else {
-			zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
 		}
+    zigbee_buffer = new SBuffer(ZIGBEE_BUFFER_SIZE);
 
     zigbee.active = true;
 		zigbee.init_phase = true;			// start the state machine
