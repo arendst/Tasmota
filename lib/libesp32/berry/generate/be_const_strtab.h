@@ -487,6 +487,7 @@ extern const bcstring be_const_str_format;
 extern const bcstring be_const_str_from_to;
 extern const bcstring be_const_str_fromb64;
 extern const bcstring be_const_str_frombytes;
+extern const bcstring be_const_str_fromhex;
 extern const bcstring be_const_str_fromptr;
 extern const bcstring be_const_str_fromstring;
 extern const bcstring be_const_str_full_state;
