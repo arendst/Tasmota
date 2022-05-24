@@ -889,7 +889,7 @@ be_define_const_str(skip, "skip", 1097563074u, 0, 4, NULL);
 be_define_const_str(slots, "slots", 1023330342u, 0, 5, NULL);
 be_define_const_str(solidified, "solidified", 3257553487u, 0, 10, NULL);
 be_define_const_str(spiffs, "spiffs", 994943858u, 0, 6, &be_const_str_str);
-be_define_const_str(splash, "splash", 2531464038u, 0, 6, &be_const_str_wifi_arcs);
+be_define_const_str(splash, "splash", 2531464038u, 0, 6, &be_const_str_sum);
 be_define_const_str(splash_init, "splash_init", 1522992293u, 0, 11, &be_const_str_split);
 be_define_const_str(splash_remove, "splash_remove", 3132020807u, 0, 13, NULL);
 be_define_const_str(split, "split", 2276994531u, 0, 5, NULL);
@@ -911,6 +911,7 @@ be_define_const_str(subscribe, "subscribe", 2946386435u, 0, 9, NULL);
 be_define_const_str(subtype, "subtype", 2023873341u, 0, 7, &be_const_str_toint);
 be_define_const_str(subtype_to_string, "subtype_to_string", 2996733901u, 0, 17, &be_const_str_type_to_string);
 be_define_const_str(success, "success", 979353360u, 0, 7, &be_const_str_widget_struct_by_class);
+be_define_const_str(sum, "sum", 3712891560u, 0, 3, &be_const_str_wifi_arcs);
 be_define_const_str(super, "super", 4152230356u, 0, 5, NULL);
 be_define_const_str(switch_factory, "switch_factory", 4206217516u, 0, 14, NULL);
 be_define_const_str(sys, "sys", 3277365014u, 0, 3, NULL);
@@ -1545,6 +1546,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 506,
-    .count = 1035,
+    .count = 1036,
     .table = m_string_table
 };

@@ -919,6 +919,7 @@ extern const bcstring be_const_str_subscribe;
 extern const bcstring be_const_str_subtype;
 extern const bcstring be_const_str_subtype_to_string;
 extern const bcstring be_const_str_success;
+extern const bcstring be_const_str_sum;
 extern const bcstring be_const_str_super;
 extern const bcstring be_const_str_switch_factory;
 extern const bcstring be_const_str_sys;
