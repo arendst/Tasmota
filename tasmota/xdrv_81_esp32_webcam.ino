@@ -729,6 +729,34 @@ pcopy:
   return  _jpg_buf_len;
 }
 
+//////////////// Handle authentication /////////////////
+
+
+bool WebcamAuthenticate(void)
+{
+  if (strlen(SettingsText(SET_WEBPWD)) && (HTTP_MANAGER_RESET_ONLY != Web.state)) {
+    return Wc.CamServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
+  } else {
+    return true;
+  }
+}
+
+bool WebcamCheckPriviledgedAccess(bool autorequestauth = true)
+{
+
+  if(Settings->webcam_config2.auth == 0){
+    return true;
+  }
+
+  if (autorequestauth && !WebcamAuthenticate()) {
+    Wc.CamServer->requestAuthentication();
+    return false;
+  }
+  return true;
+}
+
+///////////////////////////////////////////////////
+
 void HandleImage(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
@@ -818,6 +846,10 @@ void HandleImageBasic(void) {
 }
 
 void HandleWebcamMjpeg(void) {
+  if(!WebcamCheckPriviledgedAccess()){
+    Wc.CamServer->send(403,"","");
+    return;
+  }
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Handle camserver"));
 //  if (!Wc.stream_active) {
 // always restart stream
@@ -910,6 +942,10 @@ void HandleWebcamMjpegTask(void) {
 }
 
 void HandleWebcamRoot(void) {
+  if(!WebcamCheckPriviledgedAccess()){
+    Wc.CamServer->send(403,"","");
+    return;
+  }
   //CamServer->redirect("http://" + String(ip) + ":81/cam.mjpeg");
   Wc.CamServer->sendHeader("Location", "/cam.mjpeg");
   Wc.CamServer->send(302, "", "");
@@ -1341,7 +1377,6 @@ void CmndWebcamFeature(void) {
 void CmndWebcamAuth(void){
   if((XdrvMailbox.payload >=0) && (XdrvMailbox.payload <= 1)){
     Settings->webcam_config2.auth = XdrvMailbox.payload;
-    WcSetOptions(24, Settings->webcam_config2.auth);
   }
   ResponseCmndNumber(Settings->webcam_config2.auth);
 }
