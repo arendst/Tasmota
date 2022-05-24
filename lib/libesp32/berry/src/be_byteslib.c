@@ -1184,6 +1184,45 @@ static int m_fromb64(bvm *vm)
     be_return_nil(vm);
 }
 
+/*
+ * Converts hex to bytes()
+ * 
+ * `bytes().fromhexx() -> bytes()`
+ */
+static int m_fromhex(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 2 && be_isstring(vm, 2)) {
+        int32_t from = 0;                       // skip x chars
+        if (argc >= 3 && be_isint(vm, 3)) {
+            from = be_toint(vm, 3);
+        }
+        const char *s = be_tostring(vm, 2);
+        size_t s_len = strlen(s);
+        if (from < 0) { from = 0; }
+        if (from > s_len) { from = s_len; }
+        int32_t bin_len = (s_len - from) / 2;
+
+        buf_impl attr = m_read_attributes(vm, 1);
+        check_ptr(vm, &attr);
+        if (attr.fixed && attr.len != bin_len) {
+            be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE);
+        }
+        bytes_resize(vm, &attr, bin_len); /* resize if needed */
+        if (bin_len > attr.size) { /* avoid overflow */
+            be_raise(vm, "memory_error", "cannot allocate buffer");
+        }
+        attr.len = 0;
+        buf_add_hex(&attr, s + from, s_len - from);
+        
+        be_pop(vm, 1); /* remove arg to leave instance */
+        m_write_attributes(vm, 1, &attr);  /* update instance */
+        be_pop(vm, be_top(vm) - 1);     /* leave instance on stack */
+        be_return(vm);
+    }
+    be_raise(vm, "type_error", "operand must be a string");
+    be_return_nil(vm);
+}
 
 /*
  * Advanced API
@@ -1538,6 +1577,7 @@ class be_class_bytes (scope: global, name: bytes) {
     fromstring, func(m_fromstring)
     tob64, func(m_tob64)
     fromb64, func(m_fromb64)
+    fromhex, func(m_fromhex)
     add, func(m_add)
     get, func(m_getu)
     geti, func(m_geti)
