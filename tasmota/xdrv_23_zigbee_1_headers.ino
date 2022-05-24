@@ -73,7 +73,6 @@ public:
   bool state_machine = false;		      // the state machine is running
   bool state_waiting = false;         // the state machine is waiting for external event or timeout
   bool state_no_timeout = false;      // the current wait loop does not generate a timeout but only continues running
-  bool ready = false;								  // cc2530 initialization is complet, ready to operate
   bool init_phase = true;             // initialization phase, before accepting zigbee traffic
   bool recv_until = false;            // ignore all messages until the received frame fully matches
   bool eeprom_present = false;        // is the ZBBridge EEPROM present?

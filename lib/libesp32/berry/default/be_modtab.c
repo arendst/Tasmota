@@ -48,13 +48,16 @@ be_extern_native_module(uuid);
 be_extern_native_module(animate);
 be_extern_native_module(partition_core);
 be_extern_native_module(crc);
+#ifdef USE_ZIGBEE
+be_extern_native_module(zigbee);
+#endif // USE_ZIGBEE
 #ifdef USE_LVGL
 be_extern_native_module(lv);
 be_extern_native_module(lv_extra);
 be_extern_native_module(lv_tasmota);
-#ifdef USE_LVGL_OPENHASP
-be_extern_native_module(openhasp);
-#endif // USE_LVGL_OPENHASP
+#ifdef USE_LVGL_HASPMOTA
+be_extern_native_module(haspmota);
+#endif // USE_LVGL_HASPMOTA
 #endif // USE_LVGL
 
 /* user-defined modules declare start */
@@ -137,9 +140,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(lv),
     &be_native_module(lv_extra),
     &be_native_module(lv_tasmota),
-#ifdef USE_LVGL_OPENHASP
-    &be_native_module(openhasp),
-#endif // USE_LVGL_OPENHASP
+#ifdef USE_LVGL_HASPMOTA
+    &be_native_module(haspmota),
+#endif // USE_LVGL_HASPMOTA
 #endif // USE_LVGL
 #ifdef USE_ENERGY_SENSOR
     &be_native_module(energy),
@@ -147,6 +150,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_WEBSERVER
     &be_native_module(webserver),
 #endif // USE_WEBSERVER
+#ifdef USE_ZIGBEE
+    &be_native_module(zigbee),
+#endif // USE_ZIGBEE
     &be_native_module(flash),
     &be_native_module(partition_core),
     &be_native_module(crc),

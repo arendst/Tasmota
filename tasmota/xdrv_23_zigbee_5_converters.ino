@@ -849,16 +849,16 @@ public:
   uint8_t                 transactseq = 0;    // transaction sequence number
   uint8_t                 cmd = 0;
   SBuffer                 payload;
-  uint16_t                cluster = 0;
+  uint16_t                cluster = 0xFFFF;   // invalid cluster by default
   uint16_t                groupaddr = 0;
   // information from decoded ZCL frame
   uint16_t                shortaddr = BAD_SHORTADDR;   // BAD_SHORTADDR is broadcast, so considered invalid
   uint8_t                 dstendpoint = 0x00;        // 0x00 is invalid for the dst endpoint
   // attributes used in send-only mode
-  bool clusterSpecific = false;
-  bool needResponse = true;
-  bool direct = false;                  // true if direct, false if discover router
-  bool transacSet = false;              // is transac already set
+  bool                    clusterSpecific = false;
+  bool                    needResponse = true;
+  bool                    direct = false;                  // true if direct, false if discover router
+  bool                    transacSet = false;              // is transac already set
 
   // below private attributes are not used when sending a message
 private:

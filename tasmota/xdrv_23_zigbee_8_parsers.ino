@@ -1641,7 +1641,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
 #ifdef USE_BERRY
   // Berry pre-process messages
-  // callBerryZigbeeDispatcher("pre", &zcl_received);
+  callBerryZigbeeDispatcher("incoming", "zcl_frame", &zcl_received, 0);
 #endif // USE_BERRY
 
   // create the device entry if it does not exist and if it's not the local device

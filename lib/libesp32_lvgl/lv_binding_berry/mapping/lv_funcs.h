@@ -1151,7 +1151,7 @@ void lv_textarea_cursor_left(lv_obj_t * obj)
 void lv_textarea_cursor_down(lv_obj_t * obj)
 void lv_textarea_cursor_up(lv_obj_t * obj)
 
-// ../../LVGL_assets/src/lv_theme_openhasp.h
-lv_theme_t * lv_theme_openhasp_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
-bool lv_theme_openhasp_is_inited(void)
+// ../../LVGL_assets/src/lv_theme_haspmota.h
+lv_theme_t * lv_theme_haspmota_init(lv_disp_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
+bool lv_theme_haspmota_is_inited(void)
 

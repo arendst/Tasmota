@@ -146,6 +146,8 @@ class Partition_info
     if   self.type == 0 return "app"
     elif self.type == 1  return "data"
     end
+    import string
+    return string.format("0x%02X", self.type)
   end
 
   def subtype_to_string()
@@ -166,6 +168,8 @@ class Partition_info
       elif self.subtype == 0x82  return "spiffs"
       end
     end
+    import string
+    return string.format("0x%02X", self.subtype)
   end
 
   # Human readable version of Partition information

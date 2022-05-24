@@ -1,10 +1,10 @@
 /********************************************************************
- * Tasmota OpenHASP solidified
+ * Tasmota HASPmota solidified
  *******************************************************************/
 #include "be_constobj.h"
 
 #ifdef USE_LVGL
-#ifdef USE_LVGL_OPENHASP
+#ifdef USE_LVGL_HASPMOTA
 
 extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_arc;
@@ -5848,38 +5848,9 @@ void be_load_lvh_qrcode_class(bvm *vm) {
 }
 
 /********************************************************************
-** Solidified function: _anonymous_
-********************************************************************/
-be_local_closure(openhasp__anonymous_,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("OpenHASP"),
-    }),
-    be_str_literal("_anonymous_"),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x5C080200,  //  0001  MOVE	R2	R1
-      0x7C080000,  //  0002  CALL	R2	0
-      0x80040400,  //  0003  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: do_action
 ********************************************************************/
-be_local_closure(OpenHASP_do_action,   /* name */
+be_local_closure(HASPmota_do_action,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -5991,7 +5962,7 @@ be_local_closure(OpenHASP_do_action,   /* name */
 /********************************************************************
 ** Solidified function: pages_list_sorted
 ********************************************************************/
-be_local_closure(OpenHASP_pages_list_sorted,   /* name */
+be_local_closure(HASPmota_pages_list_sorted,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -6071,7 +6042,7 @@ be_local_closure(OpenHASP_pages_list_sorted,   /* name */
 /********************************************************************
 ** Solidified function: get_page_cur
 ********************************************************************/
-be_local_closure(OpenHASP_get_page_cur,   /* name */
+be_local_closure(HASPmota_get_page_cur,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -6101,7 +6072,7 @@ be_local_closure(OpenHASP_get_page_cur,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(OpenHASP_start,   /* name */
+be_local_closure(HASPmota_start,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -6131,7 +6102,7 @@ be_local_closure(OpenHASP_start,   /* name */
     /* K16  */  be_nested_str_literal("font_embedded"),
     /* K17  */  be_nested_str_literal("robotocondensed"),
     /* K18  */  be_nested_str_literal("montserrat"),
-    /* K19  */  be_nested_str_literal("theme_openhasp_init"),
+    /* K19  */  be_nested_str_literal("theme_haspmota_init"),
     /* K20  */  be_const_int(0),
     /* K21  */  be_nested_str_literal("color"),
     /* K22  */  be_const_int(16711935),
@@ -6263,7 +6234,7 @@ be_local_closure(OpenHASP_start,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(OpenHASP_init,   /* name */
+be_local_closure(HASPmota_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -6297,7 +6268,7 @@ be_local_closure(OpenHASP_init,   /* name */
 /********************************************************************
 ** Solidified function: register_event
 ********************************************************************/
-be_local_closure(OpenHASP_register_event,   /* name */
+be_local_closure(HASPmota_register_event,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     3,                          /* argc */
@@ -6373,7 +6344,7 @@ be_local_closure(OpenHASP_register_event,   /* name */
 /********************************************************************
 ** Solidified function: parse_page
 ********************************************************************/
-be_local_closure(OpenHASP_parse_page,   /* name */
+be_local_closure(HASPmota_parse_page,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -6465,7 +6436,7 @@ be_local_closure(OpenHASP_parse_page,   /* name */
 /********************************************************************
 ** Solidified function: deinit
 ********************************************************************/
-be_local_closure(OpenHASP_deinit,   /* name */
+be_local_closure(HASPmota_deinit,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -6512,7 +6483,7 @@ be_local_closure(OpenHASP_deinit,   /* name */
 /********************************************************************
 ** Solidified function: page_dir_to
 ********************************************************************/
-be_local_closure(OpenHASP_page_dir_to,   /* name */
+be_local_closure(HASPmota_page_dir_to,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -6573,7 +6544,7 @@ be_local_closure(OpenHASP_page_dir_to,   /* name */
 /********************************************************************
 ** Solidified function: _load
 ********************************************************************/
-be_local_closure(OpenHASP__load,   /* name */
+be_local_closure(HASPmota__load,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     2,                          /* argc */
@@ -6668,7 +6639,7 @@ be_local_closure(OpenHASP__load,   /* name */
 /********************************************************************
 ** Solidified function: parse
 ********************************************************************/
-be_local_closure(OpenHASP_parse,   /* name */
+be_local_closure(HASPmota_parse,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -6722,7 +6693,7 @@ be_local_closure(OpenHASP_parse,   /* name */
 /********************************************************************
 ** Solidified function: sort
 ********************************************************************/
-be_local_closure(OpenHASP_sort,   /* name */
+be_local_closure(HASPmota_sort,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -6778,7 +6749,7 @@ be_local_closure(OpenHASP_sort,   /* name */
 /********************************************************************
 ** Solidified function: parse_obj
 ********************************************************************/
-be_local_closure(OpenHASP_parse_obj,   /* name */
+be_local_closure(HASPmota_parse_obj,   /* name */
   be_nested_proto(
     20,                          /* nstack */
     3,                          /* argc */
@@ -7022,7 +6993,7 @@ be_local_closure(OpenHASP_parse_obj,   /* name */
 /********************************************************************
 ** Solidified function: event_dispatch
 ********************************************************************/
-be_local_closure(OpenHASP_event_dispatch,   /* name */
+be_local_closure(HASPmota_event_dispatch,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -7090,27 +7061,27 @@ be_local_closure(OpenHASP_event_dispatch,   /* name */
 
 
 /********************************************************************
-** Solidified class: OpenHASP
+** Solidified class: HASPmota
 ********************************************************************/
-be_local_class(OpenHASP,
+be_local_class(HASPmota,
     10,
     NULL,
     be_nested_map(43,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_literal("lvh_textarea", 41), be_const_class(be_class_lvh_textarea) },
         { be_const_key_literal("scr", -1), be_const_var(3) },
-        { be_const_key_literal("event_dispatch", 16), be_const_closure(OpenHASP_event_dispatch_closure) },
+        { be_const_key_literal("event_dispatch", 16), be_const_closure(HASPmota_event_dispatch_closure) },
         { be_const_key_literal("lvh_bar", -1), be_const_class(be_class_lvh_bar) },
         { be_const_key_literal("lvh_img", -1), be_const_class(be_class_lvh_img) },
         { be_const_key_literal("event", -1), be_const_var(8) },
-        { be_const_key_literal("do_action", 33), be_const_closure(OpenHASP_do_action_closure) },
-        { be_const_key_literal("pages_list_sorted", -1), be_const_closure(OpenHASP_pages_list_sorted_closure) },
+        { be_const_key_literal("do_action", 33), be_const_closure(HASPmota_do_action_closure) },
+        { be_const_key_literal("pages_list_sorted", -1), be_const_closure(HASPmota_pages_list_sorted_closure) },
         { be_const_key_literal("lvh_btnmatrix", 42), be_const_class(be_class_lvh_btnmatrix) },
-        { be_const_key_literal("start", -1), be_const_closure(OpenHASP_start_closure) },
-        { be_const_key_literal("init", 5), be_const_closure(OpenHASP_init_closure) },
+        { be_const_key_literal("start", -1), be_const_closure(HASPmota_start_closure) },
+        { be_const_key_literal("init", 5), be_const_closure(HASPmota_init_closure) },
         { be_const_key_literal("lvh_scr", -1), be_const_class(be_class_lvh_scr) },
-        { be_const_key_literal("parse_page", -1), be_const_closure(OpenHASP_parse_page_closure) },
-        { be_const_key_literal("register_event", 24), be_const_closure(OpenHASP_register_event_closure) },
+        { be_const_key_literal("parse_page", -1), be_const_closure(HASPmota_parse_page_closure) },
+        { be_const_key_literal("register_event", 24), be_const_closure(HASPmota_register_event_closure) },
         { be_const_key_literal("lvh_roller", 34), be_const_class(be_class_lvh_roller) },
         { be_const_key_literal("lvh_page", 11), be_const_class(be_class_lvh_page) },
         { be_const_key_literal("lvh_page_cur_idx", -1), be_const_var(6) },
@@ -7118,13 +7089,13 @@ be_local_class(OpenHASP,
         { be_const_key_literal("hres", 38), be_const_var(1) },
         { be_const_key_literal("dark", -1), be_const_var(0) },
         { be_const_key_literal("lvh_label", 37), be_const_class(be_class_lvh_label) },
-        { be_const_key_literal("deinit", 14), be_const_closure(OpenHASP_deinit_closure) },
-        { be_const_key_literal("page_dir_to", -1), be_const_closure(OpenHASP_page_dir_to_closure) },
-        { be_const_key_literal("parse_obj", -1), be_const_closure(OpenHASP_parse_obj_closure) },
+        { be_const_key_literal("deinit", 14), be_const_closure(HASPmota_deinit_closure) },
+        { be_const_key_literal("page_dir_to", -1), be_const_closure(HASPmota_page_dir_to_closure) },
+        { be_const_key_literal("parse_obj", -1), be_const_closure(HASPmota_parse_obj_closure) },
         { be_const_key_literal("lvh_spinner", -1), be_const_class(be_class_lvh_spinner) },
-        { be_const_key_literal("_load", -1), be_const_closure(OpenHASP__load_closure) },
+        { be_const_key_literal("_load", -1), be_const_closure(HASPmota__load_closure) },
         { be_const_key_literal("lvh_qrcode", -1), be_const_class(be_class_lvh_qrcode) },
-        { be_const_key_literal("parse", -1), be_const_closure(OpenHASP_parse_closure) },
+        { be_const_key_literal("parse", -1), be_const_closure(HASPmota_parse_closure) },
         { be_const_key_literal("lvh_pages", 2), be_const_var(5) },
         { be_const_key_literal("lvh_line", -1), be_const_class(be_class_lvh_line) },
         { be_const_key_literal("lvh_switch", -1), be_const_class(be_class_lvh_switch) },
@@ -7132,32 +7103,61 @@ be_local_class(OpenHASP,
         { be_const_key_literal("r16", -1), be_const_var(4) },
         { be_const_key_literal("def_templ_name", -1), be_nested_str_literal("pages.jsonl") },
         { be_const_key_literal("lvh_obj", 19), be_const_class(be_class_lvh_obj) },
-        { be_const_key_literal("sort", 23), be_const_static_closure(OpenHASP_sort_closure) },
+        { be_const_key_literal("sort", 23), be_const_static_closure(HASPmota_sort_closure) },
         { be_const_key_literal("lvh_dropdown", -1), be_const_class(be_class_lvh_dropdown) },
         { be_const_key_literal("lvh_checkbox", -1), be_const_class(be_class_lvh_checkbox) },
         { be_const_key_literal("lvh_slider", -1), be_const_class(be_class_lvh_slider) },
         { be_const_key_literal("vres", -1), be_const_var(2) },
         { be_const_key_literal("lvh_btn", -1), be_const_class(be_class_lvh_btn) },
         { be_const_key_literal("event_cb", -1), be_const_var(9) },
-        { be_const_key_literal("get_page_cur", -1), be_const_closure(OpenHASP_get_page_cur_closure) },
+        { be_const_key_literal("get_page_cur", -1), be_const_closure(HASPmota_get_page_cur_closure) },
     })),
-    be_str_literal("OpenHASP")
+    be_str_literal("HASPmota")
 );
 
 /********************************************************************
-** Solidified module: openhasp
+** Solidified function: _anonymous_
 ********************************************************************/
-be_local_module(openhasp,
-    "openhasp",
+be_local_closure(haspmota__anonymous_,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_literal("HASPmota"),
+    }),
+    be_str_literal("_anonymous_"),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x5C080200,  //  0001  MOVE	R2	R1
+      0x7C080000,  //  0002  CALL	R2	0
+      0x80040400,  //  0003  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified module: haspmota
+********************************************************************/
+be_local_module(haspmota,
+    "haspmota",
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("OpenHASP", -1), be_const_class(be_class_OpenHASP) },
-        { be_const_key_literal("init", 0), be_const_closure(openhasp__anonymous__closure) },
+        { be_const_key_literal("HASPmota", -1), be_const_class(be_class_HASPmota) },
+        { be_const_key_literal("init", -1), be_const_closure(haspmota__anonymous__closure) },
     }))
 );
-BE_EXPORT_VARIABLE be_define_const_native_module(openhasp);
+BE_EXPORT_VARIABLE be_define_const_native_module(haspmota);
 /********************************************************************/
 
 
-#endif // USE_LVGL_OPENHASP
+#endif // USE_LVGL_HASPMOTA
 #endif // USE_LVGL
