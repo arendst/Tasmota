@@ -855,10 +855,10 @@ public:
   uint16_t                shortaddr = BAD_SHORTADDR;   // BAD_SHORTADDR is broadcast, so considered invalid
   uint8_t                 dstendpoint = 0x00;        // 0x00 is invalid for the dst endpoint
   // attributes used in send-only mode
-  bool clusterSpecific = false;
-  bool needResponse = true;
-  bool direct = false;                  // true if direct, false if discover router
-  bool transacSet = false;              // is transac already set
+  bool                    clusterSpecific = false;
+  bool                    needResponse = true;
+  bool                    direct = false;                  // true if direct, false if discover router
+  bool                    transacSet = false;              // is transac already set
 
   // below private attributes are not used when sending a message
 private:

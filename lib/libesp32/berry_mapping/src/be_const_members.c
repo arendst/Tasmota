@@ -76,6 +76,7 @@ static bbool be_const_member_dual(bvm *vm, const be_const_member_t * definitions
         case '>': // call to a ctype function
         {
           be_ctype_var_args_t* args = (be_ctype_var_args_t*) definitions[idx].value;
+          be_pop(vm, be_top(vm) - 1);     // make sure we have only the instance left on the stack
           int ret = be_call_c_func(vm, args->func, args->return_type, NULL);
           if ((ret == BE_OK) && !be_isnil(vm, -1)) {
             return btrue;

@@ -48,6 +48,9 @@ be_extern_native_module(uuid);
 be_extern_native_module(animate);
 be_extern_native_module(partition_core);
 be_extern_native_module(crc);
+#ifdef USE_ZIGBEE
+be_extern_native_module(zigbee);
+#endif // USE_ZIGBEE
 #ifdef USE_LVGL
 be_extern_native_module(lv);
 be_extern_native_module(lv_extra);
@@ -147,6 +150,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_WEBSERVER
     &be_native_module(webserver),
 #endif // USE_WEBSERVER
+#ifdef USE_ZIGBEE
+    &be_native_module(zigbee),
+#endif // USE_ZIGBEE
     &be_native_module(flash),
     &be_native_module(partition_core),
     &be_native_module(crc),

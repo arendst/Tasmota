@@ -995,7 +995,7 @@ private:
  * Berry support
 \*********************************************************************************************/
 #ifdef USE_BERRY
-extern "C" void callBerryZigbeeDispatcher(const char* type, ZCLFrame* zcl_received);
+extern "C" int32_t callBerryZigbeeDispatcher(const char* cmd, const char* type, void* data, int32_t idx);
 #endif // USE_BERRY
 
 /*********************************************************************************************\
