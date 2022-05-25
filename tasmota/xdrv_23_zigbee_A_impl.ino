@@ -1931,6 +1931,19 @@ uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
   return 0;
 }
 
+const char HTTP_ZB_VERSION[] PROGMEM =
+  "<div style='text-align:right;font-size:11px;color:#aaa;'>"
+  "Zigbee: "
+#if defined(USE_ZIGBEE_EZSP)
+  "EZSP"
+#elif defined(USE_ZIGBEE_ZNP)
+  "ZNP"
+#else
+  "unknown"
+#endif
+  " v%d.%d.%d.%d"
+  "</div>";
+
 const char HTTP_BTN_ZB_BUTTONS[] PROGMEM =
   "<button onclick='la(\"&zbj=1\");'>" D_ZIGBEE_PERMITJOIN "</button>"
   "<p></p>"
@@ -2113,6 +2126,12 @@ void ZigbeeShow(bool json)
       // PermitJoin in progress
 
       WSContentSend_P(msg[ZB_WEB_PERMITJOIN_ACTIVE], PSTR(D_ZIGBEE_PERMITJOIN_ACTIVE));
+    }
+    // show Zigbee MCU version
+    if (!zigbee.init_phase) {
+      WSContentSend_P(HTTP_ZB_VERSION,
+                      zigbee.major_rel, zigbee.minor_rel,
+                      zigbee.maint_rel, zigbee.revision);
     }
 #endif
   }

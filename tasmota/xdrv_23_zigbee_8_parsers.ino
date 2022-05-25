@@ -447,20 +447,21 @@ int32_t ZNP_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
   // MinorRel = 6
   // MaintRel = 3
   // Revision = 20190425 d (0x013414D9)
-  uint8_t major_rel = buf.get8(4);
-  uint8_t minor_rel = buf.get8(5);
-  uint8_t maint_rel = buf.get8(6);
-  uint32_t revision = buf.get32(7);
+  zigbee.major_rel = buf.get8(4);
+  zigbee.minor_rel = buf.get8(5);
+  zigbee.maint_rel = buf.get8(6);
+  zigbee.revision = buf.get32(7);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"MajorRel\":%d,\"MinorRel\":%d"
                   ",\"MaintRel\":%d,\"Revision\":%d}}"),
-                  ZIGBEE_STATUS_CC_VERSION, major_rel, minor_rel,
-                  maint_rel, revision);
+                  ZIGBEE_STATUS_CC_VERSION,
+                  zigbee.major_rel, zigbee.minor_rel,
+                  zigbee.maint_rel, zigbee.revision);
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
 
-  if ((0x02 == major_rel) && ((0x06 == minor_rel) || (0x07 == minor_rel))) {
+  if ((0x02 == zigbee.major_rel) && ((0x06 == zigbee.minor_rel) || (0x07 == zigbee.minor_rel))) {
   	return 0;	  // version 2.6.x and 2.7.x are ok
   } else {
     return ZIGBEE_LABEL_UNSUPPORTED_VERSION;  // abort
@@ -474,14 +475,17 @@ int32_t EZ_ReceiveCheckVersion(int32_t res, SBuffer &buf) {
   uint8_t stack_type = buf.get8(3);
   zigbee.ezsp_version = buf.get16(4);
 
+  zigbee.major_rel = (zigbee.ezsp_version & 0xF000) >> 12;
+  zigbee.minor_rel = (zigbee.ezsp_version & 0x0F00) >> 8;
+  zigbee.maint_rel = (zigbee.ezsp_version & 0x00F0) >> 4;
+  zigbee.revision = zigbee.ezsp_version & 0x000F;
+
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Version\":\"%d.%d.%d.%d\",\"Protocol\":%d"
                   ",\"Stack\":%d}}"),
                   ZIGBEE_STATUS_EZ_VERSION,
-                  (zigbee.ezsp_version & 0xF000) >> 12,
-                  (zigbee.ezsp_version & 0x0F00) >> 8,
-                  (zigbee.ezsp_version & 0x00F0) >> 4,
-                  zigbee.ezsp_version & 0x000F,
+                  zigbee.major_rel, zigbee.minor_rel,
+                  zigbee.maint_rel, zigbee.revision,
                   protocol_version,
                   stack_type
                   );
