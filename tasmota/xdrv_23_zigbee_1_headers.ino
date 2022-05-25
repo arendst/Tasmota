@@ -97,6 +97,12 @@ public:
   ZB_RecvMsgFunc recv_func = nullptr;          // function to call when message is expected
   ZB_RecvMsgFunc recv_unexpected = nullptr;    // function called when unexpected message is received
 
+  // version
+  uint8_t major_rel = 0;
+  uint8_t minor_rel = 0;
+  uint8_t maint_rel = 0;
+  uint32_t revision = 0;
+  
   // Energy scan
   int8_t energy[USE_ZIGBEE_CHANNEL_COUNT];
 
