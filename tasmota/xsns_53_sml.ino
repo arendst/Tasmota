@@ -2171,7 +2171,7 @@ void SML_Decode(uint8_t index) {
               }
               uint16_t pos = smltbuf[mindex][2]+3;
               if (pos>32) pos=32;
-              uint16_t crc = MBUS_calculateCRC(&smltbuf[mindex][0],pos);
+              uint16_t crc = MBUS_calculateCRC(&smltbuf[mindex][0],pos,0xFFFF);
               if (lowByte(crc)!=smltbuf[mindex][pos]) goto nextsect;
               if (highByte(crc)!=smltbuf[mindex][pos+1]) goto nextsect;
               dval=mbus_dval;
@@ -3279,7 +3279,7 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
       slen += 2;
     }
     // append crc
-    uint16_t crc = MBUS_calculateCRC(sbuff, slen);
+    uint16_t crc = MBUS_calculateCRC(sbuff, slen, 0xFFFF);
     *ucp++ = lowByte(crc);
     *ucp++ = highByte(crc);
     slen += 2;
@@ -3313,9 +3313,10 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
 }
 #endif // USE_SCRIPT
 
-uint16_t MBUS_calculateCRC(uint8_t *frame, uint8_t num) {
+uint16_t MBUS_calculateCRC(uint8_t *frame, uint8_t num, uint16_t start) {
   uint16_t crc, flag;
-  crc = 0xFFFF;
+  //crc = 0xFFFF;
+  crc = start;
   for (uint32_t i = 0; i < num; i++) {
     crc ^= frame[i];
     for (uint32_t j = 8; j; j--) {
