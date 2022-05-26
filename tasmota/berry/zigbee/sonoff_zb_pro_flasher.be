@@ -48,8 +48,6 @@ class sonoff_zb_pro_flasher
   #################################################################################
   # Flash the firmware to the device
   #
-  # Actions:
-  # 1. 
   #################################################################################
   def flash()
     if !self.file_checked
@@ -76,12 +74,25 @@ class sonoff_zb_pro_flasher
     end
   end
 
+  #################################################################################
+  # Dump firmware to local file
+  #
+  #################################################################################
+  def dump_to_file(filename)
+    import cc2652_flasher   # this stops zigbee and configures serial
+    self.flasher = cc2652_flasher
+    print("FLH: Dump started (takes 3 minutes during which Tasmota is unresponsive)")
+    self.flasher.start()
+    self.flasher.ping()
+    self.flasher.flash_dump_to_file(filename, 0x000000, 0x58000)
+    print("FLH: Dump completed")
+  end
 
   #################################################################################
   # low-level
   #################################################################################
   def _flash_pre()
-    print("FLH: Flashing started")
+    print("FLH: Flashing started (takes 5 minutes during which Tasmota is unresponsive)")
     self.flasher.start()
     self.flasher.ping()
     # erase flash
@@ -147,27 +158,19 @@ return sonoff_zb_pro_flasher()
 
 
 #-
+# Flash local firmware
 
 import sonoff_zb_pro_flasher as cc
-cc.load("znp_patched.hex")
+cc.load("SonoffZBPro_coord_20220219.hex")
 cc.check()
 cc.flash()
 
+-#
 
-# test with invalid
+#-
+# Dump local firmware
+
 import sonoff_zb_pro_flasher as cc
-cc.load("znp_dont_use.hex")
-cc.check()
-
-
-
-
-print("start")
-var f = open("znp_patched.hex")
-while true
-  var r = f.readline()
-  if r == "" break end
-end
-print("end")
+cc.dump_to_file("SonoffZBPro_dump.bin")
 
 -#
