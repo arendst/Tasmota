@@ -281,7 +281,7 @@ class cc2652_flasher
     var b = bytes("21")
     b.add(addr, -4)
     b.add(sz, -4)
-    if self.debug print("cmd_download",b)
+    if self.debug print("cmd_download",b) end
 
     return self.send(b, true)
   end
@@ -292,7 +292,7 @@ class cc2652_flasher
     if sz > 128      raise "value_error", "len is bigger than 128" end
     var b = bytes("24")
     b += data
-    if self.debug print("cmd_send_data",b)
+    if self.debug print("cmd_send_data",b) end
 
     return self.send(b, true)
   end
