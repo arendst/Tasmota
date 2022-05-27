@@ -169,6 +169,8 @@ struct {
       uint32_t autoScan:1;
       uint32_t canScan:1;
       uint32_t runningScan:1;
+      uint32_t updateScan:1;
+      uint32_t deleteScanTask:1;
 
       uint32_t canConnect:1;
       uint32_t willConnect:1;
@@ -387,7 +389,7 @@ const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI3
 
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 
-const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start scanning";
+const char kMI32_BLEInfoMsg[] PROGMEM = "Scan ended|Got Notification|Did connect|Did disconnect|Still connected|Start passive scanning|Start active scanning";
 
 const char kMI32_HKInfoMsg[] PROGMEM = "HAP core started|HAP core did not start!!|HAP controller disconnected|HAP controller connected|HAP outlet added";
 
@@ -426,7 +428,8 @@ enum MI32_BLEInfoMsg {
   MI32_DID_CONNECT,
   MI32_DID_DISCONNECT,
   MI32_STILL_CONNECTED,
-  MI32_START_SCANNING
+  MI32_START_SCANNING_PASSIVE,
+  MI32_START_SCANNING_ACTIVE
 };
 
 enum MI32_HKInfoMsg {

@@ -81,7 +81,6 @@ std::vector<mi_sensor_t> MIBLEsensors;
 
 static BLEScan* MI32Scan;
 
-
 /*********************************************************************************************\
  * Classes
 \*********************************************************************************************/
@@ -641,6 +640,8 @@ void MI32Init(void) {
   }
   
   if (!MI32.mode.init) {
+    NimBLEDevice::setScanFilterMode(CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE);
+    NimBLEDevice::setScanDuplicateCacheSize(40); // will not be perfect for every situation (few vs many BLE devices nearby)
     NimBLEDevice::init("");
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device"));
     MI32.mode.init = 1;
@@ -1031,13 +1032,11 @@ void MI32StartTask(uint32_t task){
   switch(task){
     case MI32_TASK_SCAN:
       if (MI32.mode.connected == 1) return;
-      if(MI32.option.activeScan){
-        AddLog(LOG_LEVEL_INFO,PSTR("M32: Scan mode: active!")); // may have negative side effects!!
-      }
       MI32StartScanTask();
       break;
     case MI32_TASK_CONN:
       if (MI32.mode.canConnect == 0) return;
+      MI32.mode.deleteScanTask = 1;
       MI32StartConnectionTask();
       break;
     default:
@@ -1063,25 +1062,37 @@ void MI32ScanTask(void *pvParameters){
   if(MI32.mode.didGetConfig){
     vTaskDelay(5000/ portTICK_PERIOD_MS);
   }
-  if (MI32Scan == nullptr) MI32Scan = NimBLEDevice::getScan();
 
-  MI32Scan->setInterval(70);
-  MI32Scan->setWindow(50);
-  MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks,true);
+  MI32Scan = NimBLEDevice::getScan();
+  
+  MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks,false);
   if(NimBLEDevice::getWhiteListCount()>0){
     MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL); 
   }
   else {
     MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_NO_WL);
   }
-  MI32Scan->setActiveScan(MI32.option.activeScan);
+
+  MI32Scan->setActiveScan(MI32.option.activeScan == 1);
   MI32Scan->setMaxResults(0);
   MI32Scan->start(0, MI32scanEndedCB, false); // never stop scanning, will pause automatically while connecting
-  MI32.infoMsg = MI32_START_SCANNING;
+  MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
   
   uint32_t timer = 0;
   for(;;){
-    vTaskDelay(10000/ portTICK_PERIOD_MS);
+    vTaskDelay(1000/ portTICK_PERIOD_MS);
+    if(MI32.mode.deleteScanTask){
+      MI32Scan->stop();
+      MI32.mode.runningScan = 0;
+      break;
+    }
+    if(MI32.mode.updateScan){
+      MI32Scan->stop();
+      MI32Scan->setActiveScan(MI32.option.activeScan == 1);
+      MI32Scan->start(0,true);
+      MI32.mode.updateScan = 0;
+      MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
+    }
   }
   vTaskDelete( NULL );
 }
@@ -1742,25 +1753,55 @@ void CmndMi32Option(void){
   bool onOff = atoi(XdrvMailbox.data);
   switch(XdrvMailbox.index) {
     case 0:
-      MI32.option.allwaysAggregate = onOff;
+      if(XdrvMailbox.data_len>0){
+        MI32.option.allwaysAggregate = onOff;
+      }
+      else{
+        onOff = MI32.option.allwaysAggregate;
+      }
       break;
     case 1:
-      MI32.option.noSummary = onOff;
+      if(XdrvMailbox.data_len>0){
+        MI32.option.noSummary = onOff;
+      }
+      else{
+        onOff = MI32.option.noSummary;
+      }
       break;
     case 2:
-      MI32.option.directBridgeMode = onOff;
+      if(XdrvMailbox.data_len>0){
+        MI32.option.directBridgeMode = onOff;
+      }
+      else{
+        onOff = MI32.option.directBridgeMode;
+      }
       break;
     case 3:
-      MI32.mode.didGetConfig = onOff;
+     if(XdrvMailbox.data_len>0){
+        MI32.mode.didGetConfig = onOff;
+      }
+      else{
+        onOff = MI32.mode.didGetConfig;
+      }
       break;
     case 4:
-      if(MI32.option.activeScan != onOff){
-        MI32.option.activeScan = onOff;
-        MI32StartTask(MI32_TASK_SCAN);
+      if(XdrvMailbox.data_len>0){
+        if(MI32.option.activeScan != onOff){
+          MI32.option.activeScan = onOff;
+          if(MI32.mode.runningScan){
+            MI32.mode.updateScan = 1;
+          }
+          else{
+            MI32StartTask(MI32_TASK_SCAN);
+          }
+        }
+      }
+      else{
+        onOff = MI32.option.activeScan;
       }
       break;
   }
-  ResponseCmndDone();
+  ResponseCmndIdxNumber(onOff?1:0);
 }
 
 /*********************************************************************************************\
@@ -2301,7 +2342,7 @@ int ExtStopBLE(){
       if(Settings->flag5.mi32_enable == 0) return 0;
       if (MI32.ScanTask != nullptr){
         MI32Scan->stop();
-        vTaskDelete(MI32.ScanTask);
+        MI32.mode.deleteScanTask = 1;
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop BLE"));
       } 
 #ifdef USE_MI_HOMEKIT
