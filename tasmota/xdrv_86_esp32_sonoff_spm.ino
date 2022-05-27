@@ -49,7 +49,7 @@
  * - Yellow led blinks 2 seconds if an ARM-ESP comms CRC error is detected.
  * - Persistence for module mapping, total energy and energy yesterday
  * - Supported commands:
- *   SspmDisplay 0|1            - Select alternative GUI rotating display either all (0) or powered on only (1)
+ *   SspmDisplay 0|1|2          - Select alternative GUI rotating display either all (0), powered on only (1) or user selected (2)
  *   SspmDump 0|1               - Select shortenend (0) or full (1) serial receive buffer dumps
  *   SspmEnergyTotal<relay>     - (p)reset total energy without today's energy
  *   SspmEnergyYesterday<relay> - (p)reset energy yesterday
@@ -210,9 +210,8 @@ TasmotaSerial *SspmSerial;
 typedef union {
   uint16_t data;
   struct {
-    uint16_t dump : 1;           // bit 0  (v10.1.0.6) - SSPMDump    - Short receive dump (0) or full receive dump (1)
-    uint16_t display : 1;        // bit 1  (v10.1.0.6) - SSPMDisplay - GUI display all relays (0) or only powered on relays (1)
-    uint16_t spare02 : 1;        // bit 2
+    uint16_t dump : 1;           // bit 0   (v10.1.0.6) - SSPMDump    - Short receive dump (0) or full receive dump (1)
+    uint16_t display : 2;        // bit 1,2 (v10.1.0.6) - SSPMDisplay - GUI display all relays (0), only powered on relays (1) or user selected relays (2)
     uint16_t spare03 : 1;        // bit 3
     uint16_t spare04 : 1;        // bit 4
     uint16_t spare05 : 1;        // bit 5
@@ -2103,7 +2102,8 @@ void SSPMEnergyShow(bool json) {
     power_t power = TasmotaGlobal.power;
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       if ((0 == Sspm->Settings.flag.display) ||
-          ((1 == Sspm->Settings.flag.display) && (power >> i) &1)) {
+          ((1 == Sspm->Settings.flag.display) && (power >> i) &1) ||
+          (2 == Sspm->Settings.flag.display)) {
         relay[index] = i +1;
         indirect[index] = i;
         index++;
@@ -2111,23 +2111,40 @@ void SSPMEnergyShow(bool json) {
     }
 
     if (index) {
-      if (index > 4) {
-        Sspm->rotate++;
-      } else {
-        Sspm->rotate = 0;
+      if (Sspm->Settings.flag.display != 2) {
+        if (index > 4) {
+          Sspm->rotate++;
+        } else {
+          Sspm->rotate = 0;
+        }
       }
-      if (Sspm->rotate > ((index -1) | 0x3)) { // Always test in case index has changed due to use of SspmDisplay command
+      if (Sspm->rotate > ((index -1) | 0x3)) {  // Always test in case index has changed due to use of SspmDisplay command
         Sspm->rotate = 0;
       }
       uint32_t offset = (Sspm->rotate >> 2) * 4;
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
+      if (2 == Sspm->Settings.flag.display) {
+        uint32_t modules = index / 4;
+        if (modules > 1) {
+          WSContentSend_P(PSTR("</table><hr/>{t}<tr>"));
+          uint32_t cols_width = 100 / modules;
+          uint32_t current_module = Sspm->rotate >> 2;
+          for (uint32_t idx = 0; idx < modules; idx++) {
+            WSContentSend_P(PSTR("<td style='width:%d%%'><button style='border-radius:0;background:#%06X' onclick='la(\"&k86=%d\");'>%d</button></td>"), // &k86 is related to WebGetArg("k", tmp, sizeof(tmp));
+              cols_width, (current_module == idx) ? WebColor(COL_BACKGROUND) : WebColor(COL_TIMER_TAB_BACKGROUND), idx, idx +1);
+          }
+          WSContentSend_P(PSTR("</tr></table>"));
+        }
+      } else {
+        WSContentSend_P(PSTR("</table><hr/>"));
+      }
       // {s}</th><th></th><th>Head1</th><th></th><td>{e}
       // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
       // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><td>{e}
       // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><th>Head3</th><th></th><th>Head4</th><th></th><td>{e}
+      WSContentSend_P(PSTR("{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
       char value_chr[SSPM_SIZE];
-      WSContentSend_P(PSTR("</table><hr/>{t}{s}</th><th></th>")); // First column is empty ({t} = <table style='width:100%'>, {s} = <tr><th>)
       bool no_label = false;
       for (uint32_t i = 0; i < count; i++) {
         WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(relay[offset +i], value_chr, 10));
@@ -2150,6 +2167,16 @@ void SSPMEnergyShow(bool json) {
   }
 }
 
+#ifdef USE_WEBSERVER
+
+void SSPMWebGetArg(void) {
+  char tmp[8];                               // WebGetArg numbers only
+  WebGetArg(PSTR("k86"), tmp, sizeof(tmp));  // 1 - 8 relay modules
+  if (strlen(tmp)) { Sspm->rotate = atoi(tmp) *4; }
+}
+
+#endif  // USE_WEBSERVER
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -2167,9 +2194,9 @@ void (* const SSPMCommand[])(void) PROGMEM = {
   &CmndSpmEnergyTotal, &CmndSpmEnergyYesterday, &CmndSSPMSend };
 
 void CmndSSPMDisplay(void) {
-  // Select either all relays or only powered on relays
-  // SspmDisplay 0 or SspmDisplay 1
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+  // Select either all relays, only powered on relays or user selected relay module
+  // SspmDisplay 0, SspmDisplay 1 or SspmDisplay 2
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Sspm->Settings.flag.display = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Sspm->Settings.flag.display);
@@ -2439,6 +2466,9 @@ bool Xdrv86(uint8_t function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
         SSPMEnergyShow(false);
+        break;
+      case FUNC_WEB_GET_ARG:
+        SSPMWebGetArg();
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:

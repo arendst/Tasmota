@@ -110,10 +110,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy [#15513](https://github.com/arendst/Tasmota/issues/15513)
+- Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Support for Sonoff MS01 soil moisture sensor [#15335](https://github.com/arendst/Tasmota/issues/15335)
 - Support for daisy chaining MAX7219 displays [#15345](https://github.com/arendst/Tasmota/issues/15345)
 - Sonoff SPM delayed SetPowerOnState [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Support for Sonoff SPM v1.2.0
+- Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger [#15701](https://github.com/arendst/Tasmota/issues/15701)
 - Support for flowrate meters like YF-DN50 and similary [#15474](https://github.com/arendst/Tasmota/issues/15474)
 - ESP32 Command ``Restart 3`` to switch between SafeBoot and Production
 

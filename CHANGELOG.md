@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [11.1.0.3]
 ### Added
 - Support for Sonoff SPM v1.2.0
+- Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger (#15701)
+- Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules (#13447)
 
 ### Changed
 
