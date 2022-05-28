@@ -1024,10 +1024,10 @@
 
 //#define USE_SPI                                  // Add support for hardware SPI
 //#define USE_MI_ESP32                             // Add support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
-//#define USE_BLE_ESP32                            // Add support for ESP32 as a BLE-bridge (+9k2? mem, +292k? flash)
+#define USE_BLE_ESP32                            // Add support for ESP32 as a BLE-bridge (+9k2? mem, +292k? flash)
   //#define BLE_ESP32_ENABLE false                 // [SetOption115] Default value for SetOption115
 //#define USE_IBEACON                              // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
-//#define USE_IBEACON_ESP32
+#define USE_IBEACON_ESP32
 //#define USE_WEBCAM                               // Add support for webcam
 
 #define USE_AUTOCONF                             // Enable Esp32 autoconf feature, requires USE_BERRY and USE_WEBCLIENT_HTTPS (12KB Flash)
