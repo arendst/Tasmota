@@ -1245,6 +1245,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
 char *get_array_by_name(char *lp, float **fp, uint16_t *alen, uint16_t *ipos) {
   struct T_INDEX ind;
   uint8_t vtype;
+  while (*lp == ' ') lp++;
   lp = isvar(lp, &vtype, &ind, 0, 0, 0);
   if (vtype==VAR_NV) return 0;
   if (vtype&STYPE) return 0;
@@ -2320,6 +2321,15 @@ chknext:
           float *fpd;
           lp = get_array_by_name(lp + 3, &fpd, &alend, 0);
           SCRIPT_SKIP_SPACES
+          if (*lp != ')') {
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+            uint16_t offset = 0;
+            offset = fvar;
+            if (offset > (alend - 4)) {
+              offset = alend - 4;
+            }
+            fpd += offset;
+          }
           if (fpd) {
             uint8_t fbytes[4];
             fbytes[0] = *fpd++;
@@ -3984,7 +3994,7 @@ extern char *SML_GetSVal(uint32_t index);
           if (*lp!=')') {
               lp = GetNumericArgument(lp, OPER_EQU, &rxbsiz, gv);
           }
-          fvar= -1;
+          fvar = -1;
           if (glob_script_mem.sp) {
             fvar == -1;
           } else {
@@ -4161,12 +4171,20 @@ extern char *SML_GetSVal(uint32_t index);
           fvar = -1;
           if (glob_script_mem.sp) {
             uint16_t alen;
-            float *array;
+            float *array = 0;
             lp = get_array_by_name(lp + 4, &array, &alen, 0);
+            SCRIPT_SKIP_SPACES
             if (!array) {
               goto exit;
             }
-            uint16_t index;
+            float opts = -1;
+            if (*lp != ')') {
+              lp = GetNumericArgument(lp, OPER_EQU, &opts, 0);
+              SCRIPT_SKIP_SPACES
+              // calc modbus checksum
+            }
+
+            uint16_t index = 0;
             for (index = 0; index < alen; index++) {
               if (!glob_script_mem.sp->available()) {
                 break;
@@ -4175,14 +4193,29 @@ extern char *SML_GetSVal(uint32_t index);
             }
             fvar = index;
 #ifdef USE_SML_M
-            if (index == 8) {
-              uint8_t modbus_response[10];
-              for (uint8_t cnt = 0; cnt < 8; cnt++) {
-                modbus_response[cnt] = array[cnt];
-              }
-              uint16_t crc = MBUS_calculateCRC(modbus_response, 6, 0xFFFF);
-              if  ( (lowByte(crc) != modbus_response[6]) || (highByte(crc) != modbus_response[7]) ) {
-                fvar = -2;
+            if (index == 8 || opts >= 0) {
+              uint8_t *modbus_response = (uint8_t*)special_malloc(alen);
+              if (modbus_response) {
+                for (uint8_t cnt = 0; cnt < alen; cnt++) {
+                  modbus_response[cnt] = array[cnt];
+                }
+                uint16_t crc = 0xffff;
+                uint8_t *mbp = modbus_response;
+                if (opts == 1) {
+                  mbp++;
+                  crc = 0;
+                }
+                crc = MBUS_calculateCRC(mbp, mbp[2] + 3, crc);
+                if (opts == 1) {
+                  if ((mbp[mbp[2] + 3] != highByte(crc)) || (mbp[mbp[2] + 4] != lowByte(crc))) {
+                    fvar = -2;
+                  }
+                } else {
+                  if ((mbp[mbp[2] + 3] != lowByte(crc)) || (mbp[mbp[2] + 4] != highByte(crc))) {
+                    fvar = -2;
+                  }
+                }
+                free(modbus_response);
               }
             }
 #endif
@@ -4362,7 +4395,7 @@ extern char *SML_GetSVal(uint32_t index);
             case 1:
               // set cs
               lp = GetNumericArgument(lp , OPER_EQU, &fvar, 0);
-              index = fvar;
+              index = fvar - 1;
               index &= 3;
               lp = GetNumericArgument(lp , OPER_EQU, &fvar, 0);
               glob_script_mem.spi.cs[index] = fvar;
@@ -4376,11 +4409,23 @@ extern char *SML_GetSVal(uint32_t index);
             case 2:
               // transfer bytes
               lp = GetNumericArgument(lp , OPER_EQU, &fvar, 0);
-              uint8_t index = fvar;
+              int8_t index = fvar - 1;
+
+              float *fpd = 0;
+              uint16_t alend;
+              lp = get_array_by_name(lp, &fpd, &alend, 0);
+
+              // len
+              float len = alend;
+              lp = GetNumericArgument(lp , OPER_EQU, &len, 0);
+              if (len > alend) {
+                len = alend;
+              }
+
+              // type
               lp = GetNumericArgument(lp , OPER_EQU, &fvar, 0);
-              uint32_t val = fvar;
-              lp = GetNumericArgument(lp , OPER_EQU, &fvar, 0);
-              script_sspi_trans(index & 3, val, fvar);
+
+              script_sspi_trans(index, fpd, len, fvar);
               break;
           }
           len = 0;
@@ -6395,49 +6440,59 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 
 #ifdef USE_SCRIPT_SPI
 // transfer 1-3 bytes
-uint32_t script_sspi_trans(uint32_t cs_index, uint32_t val, uint32_t size) {
+uint32_t script_sspi_trans(int32_t cs_index, float *array, uint32_t len, uint32_t size) {
   uint32_t out = 0;
-
-  digitalWrite(glob_script_mem.spi.cs[cs_index], 0);
+  if (cs_index >= 0) {
+    cs_index &= 3;
+    digitalWrite(glob_script_mem.spi.cs[cs_index], 0);
+  }
 
   if (glob_script_mem.spi.sclk < 0) {
     // use existing hardware spi
     glob_script_mem.spi.spip->beginTransaction(glob_script_mem.spi.settings);
-    if (size == 1) {
-      out = glob_script_mem.spi.spip->transfer(val);
-    }
-    if (size == 2) {
-      out = glob_script_mem.spi.spip->transfer16(val);
-    }
-    if (size == 3) {
-      out = glob_script_mem.spi.spip->transfer(val >> 16);
-      out <<= 16;
-      out |= glob_script_mem.spi.spip->transfer16(val);
-    }
-    //SPI.transferBytes();
-    glob_script_mem.spi.spip->endTransaction();
-    digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
-    return out;
-  }
-
-  if (size < 1 || size > 3) size = 1;
-  uint32_t bit = 1 << ((size * 8) - 1);
-  while (bit) {
-    digitalWrite(glob_script_mem.spi.sclk, 0);
-    if (glob_script_mem.spi.mosi >= 0) {
-      if (val & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
-      else   digitalWrite(glob_script_mem.spi.mosi, 0);
-    }
-    digitalWrite(glob_script_mem.spi.sclk, 1);
-    if (glob_script_mem.spi.miso >= 0) {
-      if (digitalRead(glob_script_mem.spi.miso)) {
-        out |= bit;
+    for (uint32_t cnt = 0; cnt < len; cnt++) {
+      if (size == 1) {
+        out = glob_script_mem.spi.spip->transfer((uint8_t)*array);
       }
+      if (size == 2) {
+        out = glob_script_mem.spi.spip->transfer16((uint16_t)*array);
+      }
+      if (size == 3) {
+        out = glob_script_mem.spi.spip->transfer((uint32_t)*array >> 16);
+        out <<= 16;
+        out |= glob_script_mem.spi.spip->transfer16((uint32_t)*array);
+      }
+      *array++ = out;
     }
-    bit >>= 1;
+    glob_script_mem.spi.spip->endTransaction();
+
+  } else {
+    if (size < 1 || size > 3) size = 1;
+    for (uint32_t cnt = 0; cnt < len; cnt++) {
+      uint32_t bit = 1 << ((size * 8) - 1);
+      out = 0;
+      uint32_t uvar = *array;
+      while (bit) {
+        digitalWrite(glob_script_mem.spi.sclk, 0);
+        if (glob_script_mem.spi.mosi >= 0) {
+          if (uvar & bit) digitalWrite(glob_script_mem.spi.mosi, 1);
+          else   digitalWrite(glob_script_mem.spi.mosi, 0);
+        }
+        digitalWrite(glob_script_mem.spi.sclk, 1);
+        if (glob_script_mem.spi.miso >= 0) {
+          if (digitalRead(glob_script_mem.spi.miso)) {
+            out |= bit;
+          }
+        }
+        bit >>= 1;
+      }
+      *array++ = out;
+    }
   }
-  digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
-  return out;
+  if (cs_index >= 0) {
+    digitalWrite(glob_script_mem.spi.cs[cs_index], 1);
+  }
+  return len;
 }
 #endif // USE_SCRIPT_SPI
 
