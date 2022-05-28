@@ -2095,47 +2095,47 @@ void SSPMEnergyShow(bool json) {
     ResponseAppend_P(PSTR("]}"));
 #ifdef USE_WEBSERVER
   } else {
-    uint8_t relay[SSPM_MAX_MODULES * 4];
+    uint8_t relays[SSPM_MAX_MODULES * 4];
     uint8_t indirect[SSPM_MAX_MODULES * 4];
 
-    uint32_t index = 0;
+    uint32_t relay_show = 0;
     power_t power = TasmotaGlobal.power;
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       if ((0 == Sspm->Settings.flag.display) ||
           ((1 == Sspm->Settings.flag.display) && (power >> i) &1) ||
           (2 == Sspm->Settings.flag.display)) {
-        relay[index] = i +1;
-        indirect[index] = i;
-        index++;
+        relays[relay_show] = i +1;
+        indirect[relay_show] = i;
+        relay_show++;
       }
     }
 
-    if (index) {
+    if (relay_show) {
       if (Sspm->Settings.flag.display != 2) {
-        if (index > 4) {
+        if (relay_show > 4) {
           Sspm->rotate++;
         } else {
           Sspm->rotate = 0;
         }
       }
-      if (Sspm->rotate > ((index -1) | 0x3)) {  // Always test in case index has changed due to use of SspmDisplay command
+      if (Sspm->rotate > ((relay_show -1) | 0x3)) {  // Always test in case relay has changed due to use of SspmDisplay command
         Sspm->rotate = 0;
       }
       uint32_t offset = (Sspm->rotate >> 2) * 4;
-      uint32_t count = index - offset;
+      uint32_t count = relay_show - offset;
       if (count > 4) { count = 4; }
-      WSContentSend_P(PSTR("</table><hr/>"));
+      WSContentSend_P(PSTR("</table><hr/>"));        // Close current table as we will use different column count
       if (2 == Sspm->Settings.flag.display) {
-        uint32_t modules = index / 4;
+        uint32_t modules = relay_show / 4;
         if (modules > 1) {
-          WSContentSend_P(PSTR("{t}<tr>"));
+          WSContentSend_P(PSTR("{t}<tr>"));          // {t} = <table style='width:100%'>
           uint32_t cols_width = 100 / modules;
           uint32_t current_module = Sspm->rotate >> 2;
           for (uint32_t idx = 0; idx < modules; idx++) {
-            WSContentSend_P(PSTR("<td style='width:%d%%'><button style='border-radius:0;background:#%06X' onclick='la(\"&k86=%d\");'>L%d</button></td>"), // &k86 is related to WebGetArg("k", tmp, sizeof(tmp));
-              cols_width, (current_module == idx) ? WebColor(COL_BACKGROUND) : WebColor(COL_FORM), idx, (idx *4) +1);
+            WSContentSend_P(PSTR("<td style='width:%d%%'><button style='border-radius:0;background:#%06X;font-weight:%s' onclick='la(\"&k86=%d\");'>L%d</button></td>"), // &k86 is related to WebGetArg("k", tmp, sizeof(tmp));
+              cols_width, (current_module == idx) ? WebColor(COL_BACKGROUND) : WebColor(COL_FORM), (current_module == idx) ? "bold" : "normal", idx, (idx *4) +1);
           }
-          WSContentSend_P(PSTR("</tr></table>"));
+          WSContentSend_P(PSTR("</tr></table>"));    // Close current table as we will use different column count
         }
       }
       // {s}</th><th></th><th>Head1</th><th></th><td>{e}
@@ -2146,7 +2146,7 @@ void SSPMEnergyShow(bool json) {
       char value_chr[SSPM_SIZE];
       bool no_label = false;
       for (uint32_t i = 0; i < count; i++) {
-        WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(relay[offset +i], value_chr, 10));
+        WSContentSend_P(PSTR("<th style='text-align:center'>%s%s<th></th>"), (no_label)?"":"L", (no_label)?"":itoa(relays[offset +i], value_chr, 10));
       }
       WSContentSend_P(PSTR("<td>{e}"));   // Last column is units ({e} = </td></tr>)
       WSContentSend_PD(HTTP_SNS_VOLTAGE, SSPMEnergyFormat(value_chr, Sspm->voltage[0], Settings->flag2.voltage_resolution, indirect, offset, count));
