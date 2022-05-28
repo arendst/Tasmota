@@ -2124,20 +2124,19 @@ void SSPMEnergyShow(bool json) {
       uint32_t offset = (Sspm->rotate >> 2) * 4;
       uint32_t count = index - offset;
       if (count > 4) { count = 4; }
+      WSContentSend_P(PSTR("</table><hr/>"));
       if (2 == Sspm->Settings.flag.display) {
         uint32_t modules = index / 4;
         if (modules > 1) {
-          WSContentSend_P(PSTR("</table><hr/>{t}<tr>"));
+          WSContentSend_P(PSTR("{t}<tr>"));
           uint32_t cols_width = 100 / modules;
           uint32_t current_module = Sspm->rotate >> 2;
           for (uint32_t idx = 0; idx < modules; idx++) {
-            WSContentSend_P(PSTR("<td style='width:%d%%'><button style='border-radius:0;background:#%06X' onclick='la(\"&k86=%d\");'>%d</button></td>"), // &k86 is related to WebGetArg("k", tmp, sizeof(tmp));
-              cols_width, (current_module == idx) ? WebColor(COL_BACKGROUND) : WebColor(COL_TIMER_TAB_BACKGROUND), idx, idx +1);
+            WSContentSend_P(PSTR("<td style='width:%d%%'><button style='border-radius:0;background:#%06X' onclick='la(\"&k86=%d\");'>L%d</button></td>"), // &k86 is related to WebGetArg("k", tmp, sizeof(tmp));
+              cols_width, (current_module == idx) ? WebColor(COL_BACKGROUND) : WebColor(COL_FORM), idx, (idx *4) +1);
           }
           WSContentSend_P(PSTR("</tr></table>"));
         }
-      } else {
-        WSContentSend_P(PSTR("</table><hr/>"));
       }
       // {s}</th><th></th><th>Head1</th><th></th><td>{e}
       // {s}</th><th></th><th>Head1</th><th></th><th>Head2</th><th></th><td>{e}
