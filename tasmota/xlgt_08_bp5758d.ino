@@ -22,9 +22,8 @@
 /*********************************************************************************************\
  * BP5758D RGBCW Led bulbs commonly used by Tuya hardware
  *
- * TODO: Adapt 
- * Fitop 10W RGBCCT Bulb (BA60H-W0080-RCBW-E7)
- * {"NAME":"Fitop 10W RGBCCT","GPIO":[1,1,1,1,1,4032,1,1,4069,1,1,1,1,1],"FLAG":0,"BASE":18,"CMND":"RGBWWTable 167,102,109,255,255"}
+ * Example configuration for a Fitop RGBCCT filament light bulb:
+ * {"NAME":"Fitop Filament RGBCCT","GPIO":[1,1,0,1,1,0,0,0,8416,0,8384,0,0,0],"FLAG":0,"BASE":18,"CMND":"RGBWWTable 255,109,245,255,255"}
 \*********************************************************************************************/
 
 #define XLGT_08             8
@@ -60,10 +59,11 @@ struct BP5758D {
 } Bp5758d;
 
 /*********************************************************************************************\
- * Bp5758d code - mostly copied over from SM2135
+ * Bp5758d code
 \*********************************************************************************************/
 const uint8_t BP5758D_DELAY = 2;
 
+/*
 void Bp5758dSetLow(uint8_t pin) {
   noInterrupts();
   digitalWrite(pin, LOW);
@@ -76,53 +76,48 @@ void Bp5758dSetHigh(uint8_t pin) {
   pinMode(pin, INPUT_PULLUP);
   interrupts();
 }
+*/
 
-bool Bp5758dInit(void) {
-  digitalWrite(Bp5758d.data, LOW);
-  digitalWrite(Bp5758d.clk, LOW);
-  Bp5758dSetHigh(Bp5758d.data);
-  Bp5758dSetHigh(Bp5758d.clk);
-  return (!((digitalRead(Bp5758d.data) == LOW || digitalRead(Bp5758d.clk) == LOW)));
+void Bp5758dInit(void) {
+  pinMode(Bp5758d.data, OUTPUT);
+  pinMode(Bp5758d.clk, OUTPUT);
+  Bp5758dStop();
 }
 
-bool Bp5758dWrite(uint8_t value) {
+void Bp5758dWrite(uint8_t value) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Bp5758dWrite %2x"), value);
-  for (uint8_t curr = 0X80; curr != 0; curr >>= 1) {
-    if (curr & value) {
-      Bp5758dSetHigh(Bp5758d.data);
-    } else {
-      Bp5758dSetLow(Bp5758d.data);
-    }
-    Bp5758dSetHigh(Bp5758d.clk);
-    delayMicroseconds(BP5758D_DELAY);
-    Bp5758dSetLow(Bp5758d.clk);
-  }
-  // get Ack or Nak
-  Bp5758dSetHigh(Bp5758d.data);
-  Bp5758dSetHigh(Bp5758d.clk);
-  delayMicroseconds(BP5758D_DELAY / 2);
-  uint8_t ack = digitalRead(Bp5758d.data);
-  Bp5758dSetLow(Bp5758d.clk);
-  delayMicroseconds(BP5758D_DELAY / 2);
-  Bp5758dSetLow(Bp5758d.data);
-  return (0 == ack);
+  for (int bit_idx = 7; bit_idx >= 0; bit_idx--) {
+        bool bit = bitRead(value, bit_idx);
+        digitalWrite(Bp5758d.data, bit);
+        delayMicroseconds(BP5758D_DELAY);
+        digitalWrite(Bp5758d.clk, HIGH);
+        delayMicroseconds(BP5758D_DELAY);
+        digitalWrite(Bp5758d.clk, LOW);
+        delayMicroseconds(BP5758D_DELAY);
+      }
+  // Wait for ACK
+  pinMode(Bp5758d.data, INPUT);
+  digitalWrite(Bp5758d.clk, HIGH);
+  delayMicroseconds(BP5758D_DELAY);
+  digitalWrite(Bp5758d.clk, LOW);
+  delayMicroseconds(BP5758D_DELAY);
+  pinMode(Bp5758d.data, OUTPUT);
 }
 
-bool Bp5758dStart(uint8_t addr) {
+void Bp5758dStart(uint8_t addr) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Bp5758dStart"));
-  Bp5758dSetLow(Bp5758d.data);
+  digitalWrite(Bp5758d.data, LOW);
   delayMicroseconds(BP5758D_DELAY);
-  Bp5758dSetLow(Bp5758d.clk);
-  return Bp5758dWrite(addr);
+  digitalWrite(Bp5758d.clk, LOW);
+  delayMicroseconds(BP5758D_DELAY);
+  Bp5758dWrite(addr);
 }
 
 void Bp5758dStop(void) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Bp5758dStop"));
-  Bp5758dSetLow(Bp5758d.data);
+  digitalWrite(Bp5758d.clk, HIGH);
   delayMicroseconds(BP5758D_DELAY);
-  Bp5758dSetHigh(Bp5758d.clk);
-  delayMicroseconds(BP5758D_DELAY);
-  Bp5758dSetHigh(Bp5758d.data);
+  digitalWrite(Bp5758d.data, HIGH);
   delayMicroseconds(BP5758D_DELAY);
 }
 
@@ -136,16 +131,16 @@ bool Bp5758dSetChannels(void) {
   // The first 5bits of this input are transmitted in first byte, the second 5bits in the second byte.
   // Because or tasmota's controls are 8bit (0-255), we need to multiply by 4 (or shift two bits to the left).
   // We thus transmit the first 5bits of tasmota's input as byte1, and the remaining 3bits as byte2 (shifted left two bits).
-  Bp5758dWrite(cur_col[0] >> 3);           //Red: Only take first 5bits of tasmota's input
-  Bp5758dWrite((cur_col[0] & 0x07) << 2);  //Only take last 3 bits, multiplied by 4 / shifted to left
-  Bp5758dWrite(cur_col[1] >> 3); //Green
-  Bp5758dWrite((cur_col[1] & 0x07) << 2);
-  Bp5758dWrite(cur_col[2] >> 3); //Blue
-  Bp5758dWrite((cur_col[2] & 0x07) << 2);
-  Bp5758dWrite(cur_col[3] >> 3); //Warm
-  Bp5758dWrite((cur_col[3] & 0x07) << 2);
-  Bp5758dWrite(cur_col[4] >> 3); //Cold
-  Bp5758dWrite((cur_col[4] & 0x07) << 2);
+  Bp5758dWrite((cur_col[0] & 0x07) << 2);  //Red: Only take last 3 bits, multiplied by 4 / shifted to left
+  Bp5758dWrite(cur_col[0] >> 3);           //Only take first 5bits of tasmota's input
+  Bp5758dWrite((cur_col[1] & 0x07) << 2); //Green
+  Bp5758dWrite(cur_col[1] >> 3);
+  Bp5758dWrite((cur_col[2] & 0x07) << 2); //Blue
+  Bp5758dWrite(cur_col[2] >> 3);
+  Bp5758dWrite((cur_col[4] & 0x07) << 2); //Cold
+  Bp5758dWrite(cur_col[4] >> 3);
+  Bp5758dWrite((cur_col[3] & 0x07) << 2); //Warm
+  Bp5758dWrite(cur_col[3] >> 3);
   Bp5758dStop();
   return true;
 }
@@ -178,6 +173,7 @@ void Bp5758dModuleSelected(void)
     Bp5758dWrite(0x00);
     Bp5758dWrite(0x00);
     Bp5758dWrite(0x00);
+    Bp5758dStop();
 
     TasmotaGlobal.light_type = LT_RGBWC;
     TasmotaGlobal.light_driver = XLGT_08;
