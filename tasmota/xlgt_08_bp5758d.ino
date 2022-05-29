@@ -59,24 +59,9 @@ struct BP5758D {
 } Bp5758d;
 
 /*********************************************************************************************\
- * Bp5758d code
+ * Bp5758d code - inspired by SM2135 and github.com/dbuezas/esphome-bp5758
 \*********************************************************************************************/
 const uint8_t BP5758D_DELAY = 2;
-
-/*
-void Bp5758dSetLow(uint8_t pin) {
-  noInterrupts();
-  digitalWrite(pin, LOW);
-  pinMode(pin, OUTPUT);
-  interrupts();
-}
-
-void Bp5758dSetHigh(uint8_t pin) {
-  noInterrupts();
-  pinMode(pin, INPUT_PULLUP);
-  interrupts();
-}
-*/
 
 void Bp5758dInit(void) {
   pinMode(Bp5758d.data, OUTPUT);
@@ -85,7 +70,6 @@ void Bp5758dInit(void) {
 }
 
 void Bp5758dWrite(uint8_t value) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Bp5758dWrite %2x"), value);
   for (int bit_idx = 7; bit_idx >= 0; bit_idx--) {
         bool bit = bitRead(value, bit_idx);
         digitalWrite(Bp5758d.data, bit);
@@ -105,7 +89,6 @@ void Bp5758dWrite(uint8_t value) {
 }
 
 void Bp5758dStart(uint8_t addr) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Bp5758dStart"));
   digitalWrite(Bp5758d.data, LOW);
   delayMicroseconds(BP5758D_DELAY);
   digitalWrite(Bp5758d.clk, LOW);
@@ -114,7 +97,6 @@ void Bp5758dStart(uint8_t addr) {
 }
 
 void Bp5758dStop(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("LGT: Bp5758dStop"));
   digitalWrite(Bp5758d.clk, HIGH);
   delayMicroseconds(BP5758D_DELAY);
   digitalWrite(Bp5758d.data, HIGH);
