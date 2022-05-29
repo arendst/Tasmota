@@ -123,24 +123,24 @@ void Bp5758dStop(void) {
 
 /********************************************************************************************/
 
-bool Bp5758dSetChannels(void) {
-  uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
+bool Bp5758dSetChannels(void) {  
+  uint16_t *cur_col_10 = (uint16_t*)XdrvMailbox.command;
+    
   // Even though we could address changing channels only, in practice we observed that the lightbulb always sets all channels.
   Bp5758dStart(BP5758D_ADDR_OUT1_GL);
   // Brigtness values are transmitted as two bytes. The light-bulb accepts a 10-bit integer (0-1023) as an input value.
-  // The first 5bits of this input are transmitted in first byte, the second 5bits in the second byte.
-  // Because or tasmota's controls are 8bit (0-255), we need to multiply by 4 (or shift two bits to the left).
-  // We thus transmit the first 5bits of tasmota's input as byte1, and the remaining 3bits as byte2 (shifted left two bits).
-  Bp5758dWrite((cur_col[0] & 0x07) << 2);  //Red: Only take last 3 bits, multiplied by 4 / shifted to left
-  Bp5758dWrite(cur_col[0] >> 3);           //Only take first 5bits of tasmota's input
-  Bp5758dWrite((cur_col[1] & 0x07) << 2); //Green
-  Bp5758dWrite(cur_col[1] >> 3);
-  Bp5758dWrite((cur_col[2] & 0x07) << 2); //Blue
-  Bp5758dWrite(cur_col[2] >> 3);
-  Bp5758dWrite((cur_col[4] & 0x07) << 2); //Cold
-  Bp5758dWrite(cur_col[4] >> 3);
-  Bp5758dWrite((cur_col[3] & 0x07) << 2); //Warm
-  Bp5758dWrite(cur_col[3] >> 3);
+  // The first 5bits of this input are transmitted in second byte, the second 5bits in the first byte.  
+  Bp5758dWrite((uint8_t)(cur_col_10[0] & 0x1F));  //Red: Only take last 3 bits, multiplied by 4 / shifted to left
+  Bp5758dWrite((uint8_t)(cur_col_10[0] >> 5));    //Only take first 5bits of tasmota's input
+  Bp5758dWrite((uint8_t)(cur_col_10[1] & 0x1F)); //Green
+  Bp5758dWrite((uint8_t)(cur_col_10[1] >> 5));
+  Bp5758dWrite((uint8_t)(cur_col_10[2] & 0x1F)); //Blue
+  Bp5758dWrite((uint8_t)(cur_col_10[2] >> 5));
+  Bp5758dWrite((uint8_t)(cur_col_10[4] & 0x1F)); //Cold
+  Bp5758dWrite((uint8_t)(cur_col_10[4] >> 5));
+  Bp5758dWrite((uint8_t)(cur_col_10[3] & 0x1F)); //Warm
+  Bp5758dWrite((uint8_t)(cur_col_10[3] >> 5));
+  
   Bp5758dStop();
   return true;
 }

@@ -2193,12 +2193,15 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
 
   char *tmp_data = XdrvMailbox.data;
   char *tmp_topic = XdrvMailbox.topic;
+  char *tmp_command = XdrvMailbox.command;
   XdrvMailbox.data = (char*)cur_col;
   XdrvMailbox.topic = (char*)scale_col;
+  XdrvMailbox.command = (char*)cur_col_10;
   if (XlgtCall(FUNC_SET_CHANNELS)) { /* Serviced */ }
   else if (XdrvCall(FUNC_SET_CHANNELS)) { /* Serviced */ }
   XdrvMailbox.data = tmp_data;
   XdrvMailbox.topic = tmp_topic;
+  XdrvMailbox.command = tmp_command;
 }
 
 // Just apply basic Gamma to each channel
