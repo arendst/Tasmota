@@ -6,7 +6,7 @@
 #include "be_mapping.h"
 
 extern uint32_t* tlr_init(void);                            BE_FUNC_CTYPE_DECLARE(tlr_init, "+_p", "")
-extern char* tlr_get_log(uint32_t* idx, int32_t log_level); BE_FUNC_CTYPE_DECLARE(tlr_get_log, "s", ".i")
+extern char* tlr_get_log(uint32_t* idx, int32_t log_level); BE_FUNC_CTYPE_DECLARE(tlr_get_log, "$", ".i")
 
 #include "be_fixed_be_class_tasmota_log_reader.h"
 
