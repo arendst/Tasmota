@@ -188,6 +188,7 @@ enum UserSelectablePins {
   GPIO_MS01,                           // Sonoff MS01 Moisture Sensor 1wire interface
   GPIO_SDIO_CMD, GPIO_SDIO_CLK, GPIO_SDIO_D0, GPIO_SDIO_D1, GPIO_SDIO_D2, GPIO_SDIO_D3, // SD Card SDIO interface, including 1-bit and 4-bit modes
   GPIO_FLOWRATEMETER_IN,               // Flowrate Meter
+  GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -420,6 +421,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDIO_D2 "|"
   D_SENSOR_SDIO_D3 "|"
   D_SENSOR_FLOWRATEMETER "|"
+  D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -661,6 +663,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM2135_CLK),                    // SM2135 CLOCK
   AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT,   // SM2135 DATA
 #endif  // USE_SM2135
+#ifdef USE_BP5758D
+  AGPIO(GPIO_BP5758D_CLK),    // BP5758D CLOCK
+  AGPIO(GPIO_BP5758D_DAT),    // BP5758D DATA
+#endif  // USE_BP5758D
 #ifdef USE_TUYA_MCU
   AGPIO(GPIO_TUYA_TX),        // Tuya Serial interface
   AGPIO(GPIO_TUYA_RX),        // Tuya Serial interface
