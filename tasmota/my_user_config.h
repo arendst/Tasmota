@@ -750,7 +750,7 @@
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_TCP_BRIDGE                           //  Add support for Serial to TCP bridge (+1.3k code)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, pause, stop, track, volume and reset
-  #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
+  #define MP3_VOLUME           30                // Set the startup volume on init, the range can be 0..100(max)
 //  #define USE_DY_SV17F                             // Use of DY-SV17F MP3 Player commands: play, stop, track and volume
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger (+1k6 code)
 //#define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
