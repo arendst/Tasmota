@@ -124,7 +124,7 @@
 #define SSPM_MAX_MODULES             8       // Currently supports up to 8 SPM-4RELAY units for a total of 32 relays restricted by 32-bit power_t size
 #define SSPM_SERIAL_BUFFER_SIZE      548     // Needs to accomodate firmware upload data blocks (546 bytes)
 
-//#define SSPM_SIMULATE                2       // Simulate additional 4Relay modules based on first detected 4Relay module (debugging purposes only!!)
+//#define SSPM_SIMULATE                        // Simulate additional 4Relay modules based on first detected 4Relay module (debugging purposes only!!)
 
 // From ESP to ARM
 #define SSPM_FUNC_FIND               0       // 0x00
@@ -235,6 +235,7 @@ typedef struct {
   uint16_t module_map[SSPM_TOTAL_MODULES];        // Max possible SPM relay modules
   float energy_total[SSPM_TOTAL_MODULES][4];      // Total energy in kWh - float allows up to 262143.99 kWh
   float energy_yesterday[SSPM_TOTAL_MODULES][4];  // Energy yesterday in kWh - float allows up to 262143.99 kWh
+  uint32_t simulate_count;
 } tSspmSettings;
 
 typedef struct {
@@ -277,6 +278,7 @@ typedef struct {
 #endif
   uint8_t allow_updates;
   uint8_t get_energy_relay;
+  int8_t get_energy_relay_focus;
   uint8_t get_totals;
   uint8_t rotate;
   uint8_t module_max;
@@ -411,9 +413,11 @@ uint32_t SSPMGetMappedModuleId(uint32_t module) {
     module_nr = module;             // input module number if not found used as fallback
   }
 #ifdef SSPM_SIMULATE
-  Sspm->simulated_module = module_nr;
-  if (Sspm->simulate && (module_nr > 0) && (module_nr <= Sspm->simulate)) {
-    module_nr = 0;                  // Emulate modules by 0
+  if (Sspm->Settings.simulate_count) {
+    Sspm->simulated_module = module_nr;
+    if (Sspm->simulate && (module_nr > 0) && (module_nr <= Sspm->simulate)) {
+      module_nr = 0;                // Emulate modules by 0
+    }
   }
 #endif
   return (uint32_t)module_nr;       // 0, 1, ...
@@ -1117,7 +1121,7 @@ void SSPMHandleReceivedData(void) {
           // SspmBuffer[20] & 0x0F                      // Relays operational
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[3] << 8 | SspmBuffer[4]);
 #ifdef SSPM_SIMULATE
-          module = Sspm->simulated_module;
+          if (Sspm->Settings.simulate_count) { module = Sspm->simulated_module; }
 #endif
           power_t current_state = (SspmBuffer[20] >> 4) << (module * 4);  // Relays state
           power_t mask = 0x0000000F << (module * 4);
@@ -1214,7 +1218,7 @@ void SSPMHandleReceivedData(void) {
           uint32_t channel = SspmBuffer[32];
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
 #ifdef SSPM_SIMULATE
-          module = Sspm->simulated_module;
+          if (Sspm->Settings.simulate_count) { module = Sspm->simulated_module; }
 #endif
           if (Sspm->history_relay < 255) {
             uint32_t history_module = Sspm->history_relay >> 2;
@@ -1410,7 +1414,7 @@ void SSPMHandleReceivedData(void) {
           }
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
 #ifdef SSPM_SIMULATE
-          module = Sspm->simulated_module;
+          if (Sspm->Settings.simulate_count) { module = Sspm->simulated_module; }
 #endif
           Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
           Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[34]);         // x.xxV
@@ -1436,7 +1440,7 @@ void SSPMHandleReceivedData(void) {
         if (!Sspm->no_send_key) {
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
 #ifdef SSPM_SIMULATE
-//          module = Sspm->simulated_module;  // Won't work as this is initiated from device
+//          if (Sspm->Settings.simulate_count) { module = Sspm->simulated_module; }  // Won't work as this is initiated from device
 #endif
           power_t relay = (SspmBuffer[31] & 0x0F) << (module * 4);      // Relays active
           power_t relay_state = (SspmBuffer[31] >> 4) << (module * 4);  // Relays state
@@ -1520,10 +1524,10 @@ void SSPMHandleReceivedData(void) {
         if (0x24 == expected_bytes) {
           SSPMAddModule();
 #ifdef SSPM_SIMULATE
-          if (0 == Sspm->simulate) {
+          if (Sspm->Settings.simulate_count && (0 == Sspm->simulate)) {
             uint8_t current_idh = SspmBuffer[19];
             uint8_t current_idl = SspmBuffer[20];
-            for (Sspm->simulate = 0; Sspm->simulate < SSPM_SIMULATE; Sspm->simulate++) {
+            for (Sspm->simulate = 0; Sspm->simulate < Sspm->Settings.simulate_count; Sspm->simulate++) {
               SspmBuffer[19] = Sspm->simulate +1;
               SspmBuffer[20] = Sspm->simulate +1;
               SSPMAddModule();
@@ -1921,11 +1925,15 @@ void SSPMEvery100ms(void) {
       break;
     case SPM_SCAN_COMPLETE:
       // Scan sequence finished
-#ifndef SSPM_SIMULATE
-      if (Sspm->power_on_state) {
-        TasmotaGlobal.power = Sspm->power_on_state;
-        Sspm->power_on_state = 0;              // Reset power on state solving re-scan
-        SetPowerOnState();                     // Set power on state now that all relays have been detected
+#ifdef SSPM_SIMULATE
+      if (!Sspm->Settings.simulate_count) {
+#endif
+        if (Sspm->power_on_state) {
+          TasmotaGlobal.power = Sspm->power_on_state;
+          Sspm->power_on_state = 0;            // Reset power on state solving re-scan
+          SetPowerOnState();                   // Set power on state now that all relays have been detected
+        }
+#ifdef SSPM_SIMULATE
       }
 #endif
       TasmotaGlobal.discovery_counter = 1;     // Force TasDiscovery()
@@ -1948,6 +1956,7 @@ void SSPMEvery100ms(void) {
         Sspm->get_energy_relay++;
         if (Sspm->get_energy_relay >= TasmotaGlobal.devices_present) {
           Sspm->get_energy_relay = TasmotaGlobal.devices_present;
+          Sspm->get_energy_relay_focus = -1;
           Sspm->mstate = SPM_UPDATE_CHANNELS;
         }
       }
@@ -1970,6 +1979,25 @@ void SSPMEvery100ms(void) {
               Sspm->get_totals = 0;
             }
           }
+
+          // If focused on one module increase focused relay polling
+          if ((2 == Sspm->Settings.flag.display) && (TasmotaGlobal.devices_present > 8) && (0 == Sspm->get_totals)) {
+            if ((Sspm->get_energy_relay % 4) == 0) {  // Every fourth relay
+              uint32_t next = Sspm->rotate +4;
+              if (next >= TasmotaGlobal.devices_present) { next = 0; }
+              if ((Sspm->get_energy_relay_focus > -1) || !((Sspm->get_energy_relay == Sspm->rotate) || (Sspm->get_energy_relay == next)))  {
+                if (-1 == Sspm->get_energy_relay_focus) {
+                  Sspm->get_energy_relay_focus = Sspm->get_energy_relay;
+                  Sspm->get_energy_relay = Sspm->rotate;
+                } else {
+                  Sspm->get_energy_relay = Sspm->get_energy_relay_focus;
+                  Sspm->get_energy_relay_focus = -1;
+                }
+              }
+            }
+          }
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Totals %d, Relay %d"), Sspm->get_totals, Sspm->get_energy_relay);
+
           power_t powered_on = TasmotaGlobal.power >> Sspm->get_energy_relay;
           if (powered_on &1) {
             SSPMSetLock(4);
@@ -2182,12 +2210,18 @@ void SSPMWebGetArg(void) {
 
 const char kSSPMCommands[] PROGMEM = "SSPM|"  // Prefix
   "Display|Dump|"                             // SetOptions
+#ifdef SSPM_SIMULATE
+  "Simulate|"
+#endif
   "Log|Energy|History|Scan|IamHere|"
   "Reset|Map|Overload|"
   D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYYESTERDAY "|Send";
 
 void (* const SSPMCommand[])(void) PROGMEM = {
   &CmndSSPMDisplay, &CmndSSPMDump,
+#ifdef SSPM_SIMULATE
+  &CmndSSPMSimulate,
+#endif
   &CmndSSPMLog, &CmndSSPMEnergy, &CmndSSPMHistory, &CmndSSPMScan, &CmndSSPMIamHere,
   &CmndSSPMReset, &CmndSSPMMap, &CmndSSPMOverload,
   &CmndSpmEnergyTotal, &CmndSpmEnergyYesterday, &CmndSSPMSend };
@@ -2209,6 +2243,19 @@ void CmndSSPMDump(void) {
   }
   ResponseCmndNumber(Sspm->Settings.flag.dump);
 }
+
+#ifdef SSPM_SIMULATE
+void CmndSSPMSimulate(void) {
+  // Simulate 4Relay modules based on first detected 4Relay module
+  // SspmSimulate 0 to turn simulation off
+  // SspmSimulate 6 to add 6 simulated modules
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < SSPM_MAX_MODULES)) {
+    Sspm->Settings.simulate_count = XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 2;
+  }
+  ResponseCmndNumber(Sspm->Settings.simulate_count);
+}
+#endif
 
 void CmndSpmEnergyTotal(void) {
   // Reset Energy Total
