@@ -170,13 +170,51 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t gui_table_align : 1;          // bit 24 (v11.0.0.7) - SetOption138 - (GUI) Align (energy) table values left (0) or right (1)
     uint32_t mm_vs_inch : 1;               // bit 25 (v11.1.0.1) - SetOption139 - (Pressure) Switch between mmHg (0) or inHg (1) when SO24 1
     uint32_t mqtt_persistent : 1;          // bit 26 (v11.1.0.1) - SetOption140 - (MQTT) MQTT clean session (0 = default) or persistent session (1)
-    uint32_t spare27 : 1;                  // bit 27
+    uint32_t gui_module_name : 1;          // bit 27 (v11.1.0.3) - SetOption141 - (GUI) Disable display of GUI module name (1)
     uint32_t spare28 : 1;                  // bit 28
     uint32_t spare29 : 1;                  // bit 29
     uint32_t spare30 : 1;                  // bit 30
     uint32_t spare31 : 1;                  // bit 31
   };
 } SOBitfield5;
+
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint32_t data;                           // Allow bit manipulation using SetOption
+  struct {                                 // SetOption146 .. SetOption177
+    uint32_t spare00 : 1;                  // bit 0
+    uint32_t spare01 : 1;                  // bit 1
+    uint32_t spare02 : 1;                  // bit 2
+    uint32_t spare03 : 1;                  // bit 3
+    uint32_t spare04 : 1;                  // bit 4
+    uint32_t spare05 : 1;                  // bit 5
+    uint32_t spare06 : 1;                  // bit 6
+    uint32_t spare07 : 1;                  // bit 7
+    uint32_t spare08 : 1;                  // bit 8
+    uint32_t spare09 : 1;                  // bit 9
+    uint32_t spare10 : 1;                  // bit 10
+    uint32_t spare11 : 1;                  // bit 11
+    uint32_t spare12 : 1;                  // bit 12
+    uint32_t spare13 : 1;                  // bit 13
+    uint32_t spare14 : 1;                  // bit 14
+    uint32_t spare15 : 1;                  // bit 15
+    uint32_t spare16 : 1;                  // bit 16
+    uint32_t spare17 : 1;                  // bit 17
+    uint32_t spare18 : 1;                  // bit 18
+    uint32_t spare19 : 1;                  // bit 19
+    uint32_t spare20 : 1;                  // bit 20
+    uint32_t spare21 : 1;                  // bit 21
+    uint32_t spare22 : 1;                  // bit 22
+    uint32_t spare23 : 1;                  // bit 23
+    uint32_t spare24 : 1;                  // bit 24
+    uint32_t spare25 : 1;                  // bit 25
+    uint32_t spare26 : 1;                  // bit 26
+    uint32_t spare27 : 1;                  // bit 27
+    uint32_t spare28 : 1;                  // bit 28
+    uint32_t spare29 : 1;                  // bit 29
+    uint32_t spare30 : 1;                  // bit 30
+    uint32_t spare31 : 1;                  // bit 31
+  };
+} SOBitfield6;
 
 // Bitfield to be used for persistent multi bit
 typedef union {
@@ -798,9 +836,10 @@ typedef struct {
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
 
-  uint8_t       free_f61[23];              // F61 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f61[19];              // F61 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
+  SOBitfield6   flag6;                     // F74
   uint16_t      flowratemeter_calibration[2];// F78
   int32_t       energy_kWhexport_ph[3];    // F7C
   uint32_t      eth_ipv4_address[5];       // F88

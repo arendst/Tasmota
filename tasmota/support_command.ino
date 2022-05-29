@@ -605,11 +605,11 @@ void CmndStatus(void)
   if ((0 == payload) || (3 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_MQTTLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\""
                           D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\""
-                          D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\",\"%08X\"]}}"),
+                          D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]}}"),
                           Settings->seriallog_level, Settings->weblog_level, Settings->mqttlog_level, Settings->syslog_level,
                           SettingsText(SET_SYSLOG_HOST), Settings->syslog_port, EscapeJSONString(SettingsText(SET_STASSID1)).c_str(), EscapeJSONString(SettingsText(SET_STASSID2)).c_str(), Settings->tele_period,
                           Settings->flag2.data, Settings->flag.data, ToHex_P((unsigned char*)Settings->param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
-                          Settings->flag3.data, Settings->flag4.data, Settings->flag5.data);
+                          Settings->flag3.data, Settings->flag4.data, Settings->flag5.data, Settings->flag6.data);
     CmndStatusResponse(3);
   }
 
@@ -1025,28 +1025,32 @@ void CmndSetoption(void) {
   CmndSetoptionBase(1);
 }
 
-// Code called by SetOption and by Berrt
+// Code called by SetOption and by Berry
 bool SetoptionDecode(uint32_t index, uint32_t *ptype, uint32_t *pindex) {
-  if (index < 146) {
+  if (index < 178) {
     if (index <= 31) {         // SetOption0 .. 31 = Settings->flag
       *ptype = 2;
-      *pindex = index;          // 0 .. 31
+      *pindex = index;         // 0 .. 31
     }
     else if (index <= 49) {    // SetOption32 .. 49 = Settings->param
       *ptype = 1;
-      *pindex = index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
+      *pindex = index -32;     // 0 .. 17 (= PARAM8_SIZE -1)
     }
     else if (index <= 81) {    // SetOption50 .. 81 = Settings->flag3
       *ptype = 3;
-      *pindex = index -50;      // 0 .. 31
+      *pindex = index -50;     // 0 .. 31
     }
-    else if (index <= 113) {    // SetOption82 .. 113 = Settings->flag4
+    else if (index <= 113) {   // SetOption82 .. 113 = Settings->flag4
       *ptype = 4;
-      *pindex = index -82;      // 0 .. 31
+      *pindex = index -82;     // 0 .. 31
     }
-    else {                      // SetOption114 .. 145 = Settings->flag5
+    else if (index <= 145) {   // SetOption114 .. 145 = Settings->flag5
       *ptype = 5;
-      *pindex = index -114;     // 0 .. 31
+      *pindex = index -114;    // 0 .. 31
+    }
+    else {                     // SetOption146 .. 177 = Settings->flag6
+      *ptype = 6;
+      *pindex = index -146;    // 0 .. 31
     }
     return true;
   }
@@ -1069,6 +1073,9 @@ uint32_t GetOption(uint32_t index) {
       }
       else if (5 == ptype) {
         flag = Settings->flag5.data;
+      }
+      else if (6 == ptype) {
+        flag = Settings->flag6.data;
       }
       return bitRead(flag, pindex);
     }
@@ -1208,6 +1215,9 @@ void CmndSetoptionBase(bool indexed) {
                 break;
             }
           }
+          else if (6 == ptype) {           // SetOption146 .. 177
+            bitWrite(Settings->flag6.data, pindex, XdrvMailbox.payload);
+          }
         } else {
           ptype = 99;                      // Command Error
         }
@@ -1231,6 +1241,9 @@ void CmndSetoptionBase(bool indexed) {
         }
         else if (5 == ptype) {
           flag = Settings->flag5.data;
+        }
+        else if (6 == ptype) {
+          flag = Settings->flag6.data;
         }
         if (indexed) {
           ResponseCmndIdxChar(GetStateText(bitRead(flag, pindex)));

@@ -195,7 +195,16 @@ a_setoption = [[
     "(GUI) Align (energy) table values left (0) or right (1)",
     "(Pressure) Switch between mmHg (0) or inHg (1) when SO24 1",
     "(MQTT) MQTT clean session (0 = default) or persistent session (1)",
-    "",
+    "(GUI) Disable display of GUI module name (1)",
+    "","","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
     "","","",""
     ]]
 
@@ -271,6 +280,15 @@ a_features = [[
     "USE_SDM230","USE_CM110x","USE_BL6523","USE_ADE7880",
     "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
     "","","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 usage = "usage: decode-status {-d | -f} arg"
@@ -298,7 +316,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v11.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v11.1.0.3 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -334,12 +352,17 @@ def StartDecode():
                             options.append(str("{0:3d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2, 3, 4):                 #registers 1 and 4 hold binary values
+                if r in (0, 2, 3, 4, 5):              # register 1 holds binary values
                     for opt_idx, option in enumerate(opt_group):
+                        if len(option) == 0:
+                            continue                  # Skip empty line
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
                         options.append(str("{0:3d} ({1}) {2}".format(i, a_on_off[state], option)))
                         i += 1
+
+                if r >= len(obj["StatusLOG"]["SetOption"]) -1:
+                    break                             # Versions before 11.1.0.3 hold SO until 145
 
             print("\nOptions")
             for o in options:

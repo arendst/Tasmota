@@ -816,8 +816,51 @@ void ResponseAppendFeatures(void)
 //    feature8 |= 0x80000000;
   }
 
+  static uint32_t feature9 = 0x00000000;
+  if (!feature9) {           // Only fill this once
+//    feature9 |= 0x00000001;
+//    feature9 |= 0x00000002;
+//    feature9 |= 0x00000004;
+//    feature9 |= 0x00000008;
+
+//    feature9 |= 0x00000010;
+//    feature9 |= 0x00000020;
+//    feature9 |= 0x00000040;
+//    feature9 |= 0x00000080;
+
+//    feature9 |= 0x00000100;
+//    feature9 |= 0x00000200;
+//    feature9 |= 0x00000400;
+//    feature9 |= 0x00000800;
+
+//    feature9 |= 0x00001000;
+//    feature9 |= 0x00002000;
+//    feature9 |= 0x00004000;
+//    feature9 |= 0x00008000;
+
+//    feature9 |= 0x00010000;
+//    feature9 |= 0x00020000;
+//    feature9 |= 0x00040000;
+//    feature9 |= 0x00080000;
+
+//    feature9 |= 0x00100000;
+//    feature9 |= 0x00200000;
+//    feature9 |= 0x00400000;
+//    feature9 |= 0x00800000;
+
+//    feature9 |= 0x01000000;
+//    feature9 |= 0x02000000;
+//    feature9 |= 0x04000000;
+//    feature9 |= 0x08000000;
+
+//    feature9 |= 0x10000000;
+//    feature9 |= 0x20000000;
+//    feature9 |= 0x40000000;
+//    feature9 |= 0x80000000;
+  }
+
 /*********************************************************************************************/
 
-  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
-    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8);
+  ResponseAppend_P(PSTR(",\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]"),
+    LANGUAGE_LCID, feature1, feature2, feature3, feature4, feature5, feature6, feature7, feature8, feature9);
 }

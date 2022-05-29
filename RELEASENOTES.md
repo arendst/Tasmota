@@ -108,6 +108,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Added
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` [#15350](https://github.com/arendst/Tasmota/issues/15350)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
+- Command ``SetOption141 1`` to disable display of module name in GUI header
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy [#15513](https://github.com/arendst/Tasmota/issues/15513)
 - Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules [#13447](https://github.com/arendst/Tasmota/issues/13447)
