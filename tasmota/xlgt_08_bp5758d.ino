@@ -119,8 +119,8 @@ bool Bp5758dSetChannels(void) {
   Bp5758dStart(BP5758D_ADDR_OUT1_GL);
   // Brigtness values are transmitted as two bytes. The light-bulb accepts a 10-bit integer (0-1023) as an input value.
   // The first 5bits of this input are transmitted in second byte, the second 5bits in the first byte.  
-  Bp5758dWrite((uint8_t)(cur_col_10[0] & 0x1F));  //Red: Only take last 3 bits, multiplied by 4 / shifted to left
-  Bp5758dWrite((uint8_t)(cur_col_10[0] >> 5));    //Only take first 5bits of tasmota's input
+  Bp5758dWrite((uint8_t)(cur_col_10[0] & 0x1F));  //Red
+  Bp5758dWrite((uint8_t)(cur_col_10[0] >> 5));
   Bp5758dWrite((uint8_t)(cur_col_10[1] & 0x1F)); //Green
   Bp5758dWrite((uint8_t)(cur_col_10[1] >> 5));
   Bp5758dWrite((uint8_t)(cur_col_10[2] & 0x1F)); //Blue
