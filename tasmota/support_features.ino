@@ -798,7 +798,7 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x00800000;  // xnrg_23_ade7880.ino
 #endif
 #if defined(USE_I2C) && defined(USE_PCF85363)
-    feature8 |= 0x01000000;  // xsns_96_pcf85393.ino
+    feature8 |= 0x01000000;  // xdrv_56_rtc_chips.ino
 #endif
 #if defined(USE_I2C) && defined(USE_DS3502)
     feature8 |= 0x02000000;  // xdrv_61_ds3502.ino
@@ -809,8 +809,9 @@ void ResponseAppendFeatures(void)
 #ifdef USE_FLOWRATEMETER
     feature8 |= 0x08000000;  // xsns_96_flowratemeter.ino
 #endif
-
-//    feature8 |= 0x10000000;
+#if defined(USE_LIGHT) && defined(USE_BP5758D)
+    feature8 |= 0x10000000;  // xlgt_08_bp5758d.ino
+#endif
 //    feature8 |= 0x20000000;
 //    feature8 |= 0x40000000;
 //    feature8 |= 0x80000000;

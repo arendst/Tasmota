@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger (#15701)
 - Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules (#13447)
 - Command ``SetOption141 1`` to disable display of module name in GUI header
+- Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs (#15713)
 
 ### Changed
 
