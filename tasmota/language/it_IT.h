@@ -771,6 +771,8 @@
 #define D_SENSOR_DDSU666_RX             "DDSU666 - RX"
 #define D_SENSOR_SM2135_CLK             "SM2135 - CLK"
 #define D_SENSOR_SM2135_DAT             "SM2135 - DATI"
+#define D_SENSOR_BP5758D_CLK            "BP5758D Clk"
+#define D_SENSOR_BP5758D_DAT            "BP5758D DATi"
 #define D_SENSOR_DEEPSLEEP              "Sleep profondo"
 #define D_SENSOR_EXS_ENABLE             "EXS - Abilita"
 #define D_SENSOR_CLIENT_TX              "Client - TX"
