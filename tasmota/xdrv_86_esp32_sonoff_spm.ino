@@ -201,6 +201,8 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
                          SPM_UPDATE_CHANNELS       // Update Energy for powered on channels
                          };
 
+enum SspmDisplayModes { SPM_DISPLAY_ROTATE, SPM_DISPLAY_ROTATE_POWERED_ON, SPM_DISPLAY_TABS, SPM_DISPLAY_MAX_OPTION };
+
 const char kSSPMTriggers[] PROGMEM = "Tasmota|Device|Overload|Overtemp";
 const char kSSPMOverload[] PROGMEM = "Tbd1|Voltage|Current|Power|Tbd2|Tbd3|Tbd4";
 
@@ -316,6 +318,7 @@ void SSPMSettingsDefault(void) {
 
   memset(&Sspm->Settings, 0x00, sizeof(tSspmSettings));
   Sspm->Settings.version = SSPM_VERSION;
+  Sspm->Settings.flag.display = SPM_DISPLAY_TABS;
   // Init any other parameter in struct SSPMSettings
 }
 
@@ -1981,7 +1984,7 @@ void SSPMEvery100ms(void) {
           }
 
           // If focused on one module increase focused relay polling
-          if ((2 == Sspm->Settings.flag.display) && (TasmotaGlobal.devices_present > 8) && (0 == Sspm->get_totals)) {
+          if ((SPM_DISPLAY_TABS == Sspm->Settings.flag.display) && (TasmotaGlobal.devices_present > 8) && (0 == Sspm->get_totals)) {
             if ((Sspm->get_energy_relay % 4) == 0) {  // Every fourth relay
               uint32_t next = Sspm->rotate +4;
               if (next >= TasmotaGlobal.devices_present) { next = 0; }
@@ -2129,9 +2132,9 @@ void SSPMEnergyShow(bool json) {
     uint32_t relay_show = 0;
     power_t power = TasmotaGlobal.power;
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
-      if ((0 == Sspm->Settings.flag.display) ||
-          ((1 == Sspm->Settings.flag.display) && (power >> i) &1) ||
-          (2 == Sspm->Settings.flag.display)) {
+      if ((SPM_DISPLAY_ROTATE == Sspm->Settings.flag.display) ||
+          ((SPM_DISPLAY_ROTATE_POWERED_ON == Sspm->Settings.flag.display) && (power >> i) &1) ||
+          (SPM_DISPLAY_TABS == Sspm->Settings.flag.display)) {
         relays[relay_show] = i +1;
         indirect[relay_show] = i;
         relay_show++;
@@ -2139,7 +2142,7 @@ void SSPMEnergyShow(bool json) {
     }
 
     if (relay_show) {
-      if (Sspm->Settings.flag.display != 2) {
+      if (Sspm->Settings.flag.display != SPM_DISPLAY_TABS) {
         if (relay_show > 4) {
           Sspm->rotate++;
         } else {
@@ -2153,7 +2156,7 @@ void SSPMEnergyShow(bool json) {
       uint32_t count = relay_show - offset;
       if (count > 4) { count = 4; }
       WSContentSend_P(PSTR("</table><hr/>"));        // Close current table as we will use different column count
-      if (2 == Sspm->Settings.flag.display) {
+      if (SPM_DISPLAY_TABS == Sspm->Settings.flag.display) {
         uint32_t modules = relay_show / 4;
         if (modules > 1) {
           WSContentSend_P(PSTR("{t}<tr>"));          // {t} = <table style='width:100%'>
@@ -2229,7 +2232,7 @@ void (* const SSPMCommand[])(void) PROGMEM = {
 void CmndSSPMDisplay(void) {
   // Select either all relays, only powered on relays or user selected relay module
   // SspmDisplay 0, SspmDisplay 1 or SspmDisplay 2
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+  if ((XdrvMailbox.payload >= SPM_DISPLAY_ROTATE) && (XdrvMailbox.payload < SPM_DISPLAY_MAX_OPTION)) {
     Sspm->Settings.flag.display = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Sspm->Settings.flag.display);
