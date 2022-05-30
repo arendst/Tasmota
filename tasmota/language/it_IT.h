@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 15.05.2022
+ * Updated until v9.4.0.1 - Last update 30.05.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -771,8 +771,8 @@
 #define D_SENSOR_DDSU666_RX             "DDSU666 - RX"
 #define D_SENSOR_SM2135_CLK             "SM2135 - CLK"
 #define D_SENSOR_SM2135_DAT             "SM2135 - DATI"
-#define D_SENSOR_BP5758D_CLK            "BP5758D Clk"
-#define D_SENSOR_BP5758D_DAT            "BP5758D DATi"
+#define D_SENSOR_BP5758D_CLK            "BP5758D - CLK"
+#define D_SENSOR_BP5758D_DAT            "BP5758D - DATI"
 #define D_SENSOR_DEEPSLEEP              "Sleep profondo"
 #define D_SENSOR_EXS_ENABLE             "EXS - Abilita"
 #define D_SENSOR_CLIENT_TX              "Client - TX"
