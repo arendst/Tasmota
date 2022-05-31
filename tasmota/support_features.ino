@@ -812,7 +812,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_LIGHT) && defined(USE_BP5758D)
     feature8 |= 0x10000000;  // xlgt_08_bp5758d.ino
 #endif
-//    feature8 |= 0x20000000;
+#if defined(USE_I2C) && defined(USE_HYT)
+    feature8 |= 0x20000000;  // xsns_97_hyt.ino
+#endif
 //    feature8 |= 0x40000000;
 //    feature8 |= 0x80000000;
   }

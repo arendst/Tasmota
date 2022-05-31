@@ -171,6 +171,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_HDC2010           | - | - / - | - | - | - | - |
 | USE_PCF85363          | - | - / - | - | - | - | - |
 | USE_DS3502            | - | - / - | - | - | - | - |
+| USE_HYT               | - | - / - | - | - | - | - |
 |                       |   |       |   |   |   |   |
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 | USE_SPI               | - | - / - | - | - | - | x |
