@@ -76,7 +76,8 @@ const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 void (* const IrRemoteCommand[])(void) PROGMEM = {
   &CmndIrSend };
 
-char* ulltoa(unsigned long long value, char *str, int radix)
+// 20220531 renamed as newer arduino core now also has this function
+char* ir_ulltoa(unsigned long long value, char *str, int radix)
 {
   char digits[64];
   char *dst = str;
@@ -98,7 +99,7 @@ char* ulltoa(unsigned long long value, char *str, int radix)
 
 char* Uint64toHex(uint64_t value, char *str, uint16_t bits)
 {
-  ulltoa(value, str, 16);  // Get 64bit value
+  ir_ulltoa(value, str, 16);  // Get 64bit value
 
   int fill = 8;
   if ((bits > 3) && (bits < 65)) {
@@ -251,7 +252,7 @@ void IrReceiveCheck(void)
 
       char svalue[64];
       if (Settings->flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
-        ulltoa(results.value, svalue, 10);
+        ir_ulltoa(results.value, svalue, 10);
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
       }
