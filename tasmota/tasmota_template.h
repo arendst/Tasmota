@@ -189,6 +189,7 @@ enum UserSelectablePins {
   GPIO_SDIO_CMD, GPIO_SDIO_CLK, GPIO_SDIO_D0, GPIO_SDIO_D1, GPIO_SDIO_D2, GPIO_SDIO_D3, // SD Card SDIO interface, including 1-bit and 4-bit modes
   GPIO_FLOWRATEMETER_IN,               // Flowrate Meter
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
+  GPIO_ULN2003_IN1, GPIO_ULN2003_IN2, GPIO_ULN2003_IN3, GPIO_ULN2003_IN4, // ULN2003 Stepper controller
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -422,6 +423,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDIO_D3 "|"
   D_SENSOR_FLOWRATEMETER "|"
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
+  D_SENSOR_ULN2003_IN1 "|" D_SENSOR_ULN2003_IN2 "|" D_SENSOR_ULN2003_IN3 "|" D_SENSOR_ULN2003_IN4 "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -663,10 +665,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM2135_CLK),                    // SM2135 CLOCK
   AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT,   // SM2135 DATA
 #endif  // USE_SM2135
-#ifdef USE_BP5758D
-  AGPIO(GPIO_BP5758D_CLK),    // BP5758D CLOCK
-  AGPIO(GPIO_BP5758D_DAT),    // BP5758D DATA
-#endif  // USE_BP5758D
 #ifdef USE_TUYA_MCU
   AGPIO(GPIO_TUYA_TX),        // Tuya Serial interface
   AGPIO(GPIO_TUYA_RX),        // Tuya Serial interface
@@ -931,6 +929,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   // folowing are not mandatory
   AGPIO(GPIO_A4988_ENA),     // A4988 enabled pin
   AGPIO(GPIO_A4988_MS1) + MAX_A4988_MSS,  // A4988 microstep pin1 to pin3
+#endif
+#ifdef USE_ULN2003_STEPPER
+  AGPIO(GPIO_ULN2003_IN1),
+  AGPIO(GPIO_ULN2003_IN2),
+  AGPIO(GPIO_ULN2003_IN3),
+  AGPIO(GPIO_ULN2003_IN4),
 #endif
 #ifdef USE_DEEPSLEEP
   AGPIO(GPIO_DEEPSLEEP),
