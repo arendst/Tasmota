@@ -112,7 +112,7 @@
 #define ANALOG_PH_DECIMAL_MULTIPLIER              100.0
 
 // MQ-X sensor (MQ-02, MQ-03, MQ-04, MQ-05, MQ-06, MQ-07, MQ-08, MQ-09, MQ-131, MQ-135)
-//         
+//
 // A0  -------------------
 //                        |
 // GND -----------        |
@@ -121,7 +121,7 @@
 //        |       |       |
 //       3V3     GND     ADC  <- (A0 for nodemcu, wemos; GPIO34,35,36,39 and other analog IN/OUT pin for esp32)
 //means mq type (ex for mq-02 use 2, mq-131 use 131)
-#define ANALOG_MQ_TYPE                            2 
+#define ANALOG_MQ_TYPE                            2
 //exponential regression a params
 #define ANALOG_MQ_A                               574.25
 //exponential regression b params
@@ -134,13 +134,13 @@
   CO     | 521853 | -3.821
   Alcohol| 0.3934 | -1.504
   Benzene| 4.8387 | -2.68
-  Hexane | 7585.3 | -2.849  
+  Hexane | 7585.3 | -2.849
   NOx    | -462.43 | -2.204
   CL2    | 47.209 | -1.186
   O3     | 23.943 | -1.11
 */
 //ratio for alarm, NOT USED yet (RS / R0 = 15 ppm)
-#define ANALOG_MQ_RatioMQCleanAir                 15.0        
+#define ANALOG_MQ_RatioMQCleanAir                 15.0
 // Multiplier used to store pH with 2 decimal places in a non decimal datatype
 #define ANALOG_MQ_DECIMAL_MULTIPLIER              100.0
 // lenght of filter
@@ -387,7 +387,7 @@ void AddSampleMq(uint32_t idx){
   if (Adc[idx].indexOfPointer==-1)
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Init samples for mq-sensor"));
-    for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+    for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++)
       Adc[idx].mq_samples[i] = _adc;
   }
   else
@@ -402,7 +402,7 @@ float AdcGetMq(uint32_t idx) {
   float avg = 0.0;
   float _RL = 10; //Value in KiloOhms
   float _R0 = 10;
-  for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+  for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++)
     avg += Adc[idx].mq_samples[i];
   float voltage = (avg / ANALOG_MQ_SAMPLES) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
 

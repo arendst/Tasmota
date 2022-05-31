@@ -46,6 +46,7 @@
 #define D_CMND_CFGDUMP   "CfgDump"
 #define D_CMND_CFGPEEK   "CfgPeek"
 #define D_CMND_CFGPOKE   "CfgPoke"
+#define D_CMND_SHOWHEAP  "ShowHeap"
 #define D_CMND_CFGXOR    "CfgXor"
 #define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
@@ -62,6 +63,11 @@
 
 const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MEMDUMP "|" D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
+#ifdef ESP8266
+#ifdef UMM_INLINE_METRICS
+  D_CMND_SHOWHEAP "|"
+#endif
+#endif
 #ifdef USE_WEBSERVER
   D_CMND_CFGXOR "|"
 #endif
@@ -77,6 +83,11 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
 
 void (* const DebugCommand[])(void) PROGMEM = {
   &CmndMemDump, &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
+#ifdef ESP8266
+#ifdef UMM_INLINE_METRICS
+  &CmndShowHeap,
+#endif
+#endif
 #ifdef USE_WEBSERVER
   &CmndCfgXor,
 #endif
@@ -355,7 +366,6 @@ void DebugDump(uint32_t start, uint32_t size) {
   }
 }
 
-
 void DebugCfgDump(char* parms)
 {
   uint32_t CFG_COLS = 16;
@@ -521,6 +531,15 @@ void CmndCfgPoke(void)
   DebugCfgPoke(XdrvMailbox.data);
   ResponseCmndDone();
 }
+
+#ifdef ESP8266
+#ifdef UMM_INLINE_METRICS
+void CmndShowHeap(void) {
+  system_show_malloc();
+  ResponseCmndDone();
+}
+#endif
+#endif
 
 #ifdef USE_WEBSERVER
 void CmndCfgXor(void)
