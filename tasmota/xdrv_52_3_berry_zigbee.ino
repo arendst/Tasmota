@@ -234,6 +234,29 @@ extern "C" {
 #pragma GCC diagnostic pop
 }
 
+/*********************************************************************************************\
+ * Functions for zcl_frame
+ *
+\*********************************************************************************************/
+extern "C" {
+  void* zfn_get_bytes(void* sbuf_ptr, size_t *len_bytes) {
+    if (sbuf_ptr == NULL || len_bytes == NULL) { return NULL; }
+    const SBuffer &sbuf = (const SBuffer&) sbuf_ptr;
+
+    *len_bytes = sbuf.getLen();
+    return sbuf.getBuffer();
+  }
+
+  void zfn_set_bytes(void* sbuf_ptr, const uint8_t* bytes, size_t len_bytes) {
+    if (sbuf_ptr == NULL || bytes == NULL) { return; }
+
+    SBuffer &sbuf = (SBuffer&) sbuf_ptr;
+
+    sbuf.reserve(len_bytes);  // make sure it's large enough
+    sbuf.setLen(0);           // clear content
+    sbuf.addBuffer(bytes, len_bytes); // add content of bytes() buffer
+  }
+}
 
 #endif // USE_ZIGBEE
 #endif  // USE_BERRY
