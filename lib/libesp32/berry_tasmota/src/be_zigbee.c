@@ -127,6 +127,16 @@ static int zigbee_init(bvm *vm) {
   be_return(vm);
 }
 
+/*******************************************************************/
+
+extern void* zfn_get_bytes(void* sbuf_ptr, size_t *len_bytes);
+BE_FUNC_CTYPE_DECLARE(zfn_get_bytes, "&", "-c");
+
+extern void zfn_set_bytes(void* sbuf_ptr, const uint8_t* bytes, size_t len_bytes);
+BE_FUNC_CTYPE_DECLARE(zfn_set_bytes, "", "-c(bytes)~");
+
+/*******************************************************************/
+
 #include "be_fixed_be_class_zb_device.h"
 #include "be_fixed_be_class_zb_coord_ntv.h"
 #include "be_fixed_be_class_zcl_frame_ntv.h"
@@ -161,6 +171,9 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv) {
 /* @const_object_info_begin
 class be_class_zcl_frame_ntv (scope: global, name: zcl_frame_ntv, super: be_class_ctypes_bytes) {
     _def, comptr(&be_zigbee_zcl_frame_struct)
+
+    _get_bytes, ctype_func(zfn_get_bytes)
+    _set_bytes, ctype_func(zfn_set_bytes)
 }
 @const_object_info_end */
 

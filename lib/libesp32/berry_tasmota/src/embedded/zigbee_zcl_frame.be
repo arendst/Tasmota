@@ -2,7 +2,7 @@
 #
 # solidify.dump(zcl_frame,true)
 
-var zcl_frame_ntv = super(zcl_frame)
+class zcl_frame_ntv end
 
 class zcl_frame : zcl_frame_ntv
   var no_bytes
@@ -14,23 +14,17 @@ class zcl_frame : zcl_frame_ntv
 
   def member(name)
     if name == "payload"
-      return self._get_bytes()
+      return self._get_bytes(self.payload_ptr)
     else
       return super(self).member(name)
     end
   end
 
-  # return a bytes() object from a pre-populated zcl_frame payload
-  def _get_bytes()
-    import introspect
-    var payload_ptr = introspect.toptr(self.payload_ptr)
-    if int(payload_ptr) != 0
-      var sbuffer = bytes(payload_ptr, -4)
-      var sbuffer_len = sbuffer.get(2,2)
-      
-      return bytes(introspect.toptr(int(payload_ptr) + 4), sbuffer_len)
+  def setmember(name, val)
+    if name == "payload"
+      return self._set_bytes(self.payload_ptr, val)
     else
-      return self.no_bytes
+      return super(self).setmember(name, val)
     end
   end
 
