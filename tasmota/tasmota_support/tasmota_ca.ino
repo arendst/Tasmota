@@ -189,7 +189,7 @@ const br_x509_trust_anchor PROGMEM Tasmota_TA[] = {
 
 
 #if defined(INCLUDE_LOCAL_CERT)
-#include <local_ca_descriptor.h>
+#include <include/local_ca_descriptor.h>
 #endif
 
 };

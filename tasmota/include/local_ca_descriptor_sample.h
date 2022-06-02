@@ -18,14 +18,14 @@
 */
 
 /*
-To generate a version of this file containing data for your root certificate, 
-run the following command from a Linux or Cygwin bash shell, assuming that a 
+To generate a version of this file containing data for your root certificate,
+run the following command from a Linux or Cygwin bash shell, assuming that a
 copy of brssl (or brssl.exe) is in the directory where the EasyRSA shell script
-is located. 
+is located.
 
 ./brssl ta pki/ca.crt | sed -e '1,/br_x509/ d' -e '/};/,+999 d' >local_ca_descriptor.h
 
-Then copy local_ca_descriptor.h into the same directory as user_config_override.
+Then copy local_ca_descriptor.h into directory include.
 
 Add this line to user_config_override.h:
 

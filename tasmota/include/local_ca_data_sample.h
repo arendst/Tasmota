@@ -25,7 +25,7 @@ is located.
 
 ./brssl ta pki/ca.crt | sed -e '/br_x509/,+999 d' >local_ca_data.h
 
-Then copy local_ca_data.h into the same directory as user_config_override.
+Then copy local_ca_data.h into directory include.
 
 Add this line to user_config_override.h:
 
