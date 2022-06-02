@@ -65,6 +65,9 @@
 
 #include "include/xsns_62_esp32_mi.h"
 
+#if USE_MI_HOMEKIT==0
+  #undef USE_MI_HOMEKIT
+#endif
 #ifdef USE_MI_HOMEKIT
 extern "C" void mi_homekit_main(void);
 extern "C" void mi_homekit_update_value(void* handle, float value, uint32_t type);
@@ -1154,8 +1157,8 @@ bool MI32StartConnectionTask(){
 
 void MI32ConnectionTask(void *pvParameters){
 #if !defined(CONFIG_IDF_TARGET_ESP32C3) //needs more testing ...
-    NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM,false); //seems to be important for i.e. xbox controller, hopefully not breaking other things
-    NimBLEDevice::setSecurityAuth(true, true, true);
+    // NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM,false); //seems to be important for i.e. xbox controller, hopefully not breaking other things
+    // NimBLEDevice::setSecurityAuth(true, true, true);
 #endif //CONFIG_IDF_TARGET_ESP32C3
     MI32.conCtx->error = MI32_CONN_NO_ERROR;
     if (MI32ConnectActiveSensor()){
