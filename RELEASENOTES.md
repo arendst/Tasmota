@@ -104,7 +104,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v11.1.0.3
+## Changelog v11.1.0.4
 ### Added
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` [#15350](https://github.com/arendst/Tasmota/issues/15350)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
 - Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
 - ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
