@@ -202,9 +202,26 @@ bool DomoticzMqttData(void) {
     return false;  // Process unchanged data
   }
 
-  // topic is domoticz/out so try to analyse
+  // topic is domoticz/out so check if valid data could be available
   if (XdrvMailbox.data_len < 20) {
     return true;  // No valid data
+  }
+
+  // Quick check if this is mine using topic domoticz/out/{$idx}
+  if (strlen(XdrvMailbox.topic) > strlen(DOMOTICZ_OUT_TOPIC)) {
+    char* topic_index = &XdrvMailbox.topic[strlen(DOMOTICZ_OUT_TOPIC) +1];
+    uint32_t idx = atoi(topic_index);
+    uint8_t maxdev = (TasmotaGlobal.devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : TasmotaGlobal.devices_present;
+    bool not_found = true;
+    for (uint32_t i = 0; i < maxdev; i++) {
+      if (idx == Settings->domoticz_relay_idx[i]) {
+        not_found = false;
+        break;
+      }
+    }
+    if (not_found) {
+      return true;  // Idx not mine
+    }
   }
 
   String domoticz_data = XdrvMailbox.data;  // Copy the string into a new buffer that will be modified
