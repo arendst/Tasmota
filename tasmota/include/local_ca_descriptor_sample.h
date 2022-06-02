@@ -1,5 +1,5 @@
 /*
-  local_ca_sample.h - sample file for embedding a local CA certificate
+  local-ca-sample.h - sample file for embedding a local CA certificate
 
   Copyright (C) 2021  Theo Arends
 
@@ -23,9 +23,9 @@ run the following command from a Linux or Cygwin bash shell, assuming that a
 copy of brssl (or brssl.exe) is in the directory where the EasyRSA shell script
 is located. 
 
-./brssl ta pki/ca.crt | sed -e '/br_x509/,+999 d' >local_ca_data.h
+./brssl ta pki/ca.crt | sed -e '1,/br_x509/ d' -e '/};/,+999 d' >local_ca_descriptor.h
 
-Then copy local_ca_data.h into the same directory as user_config_override.
+Then copy local_ca_descriptor.h into the same directory as user_config_override.
 
 Add this line to user_config_override.h:
 
@@ -35,17 +35,16 @@ Be sure to generate both files: local_ca_data.h, and local_ca_descriptor.h
 */
 
 //
-// this is what the result will look like, except there will be
-// a lot of data bytes defined in the first three arrays 
+// this is what the result will look like
 //
-static const unsigned char PROGMEM TA0_DN[] = {
-	// variable number of bytes go here (typically 100-140 or so) for the DN
-};
-
-static const unsigned char PROGMEM TA0_RSA_N[] = {
-	// 256 bytes go here for the public key modulus
-};
-
-static const unsigned char PROGMEM TA0_RSA_E[] = {
-	// 3 bytes go here for the public key exponent
-};
+	{
+		{ (unsigned char *)TA0_DN, sizeof TA0_DN },
+		BR_X509_TA_CA,
+		{
+			BR_KEYTYPE_RSA,
+			{ .rsa = {
+				(unsigned char *)TA0_RSA_N, sizeof TA0_RSA_N,
+				(unsigned char *)TA0_RSA_E, sizeof TA0_RSA_E,
+			} }
+		}
+	}

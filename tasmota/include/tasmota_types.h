@@ -1,5 +1,5 @@
 /*
-  settings.h - setting variables for Tasmota
+  tasmota_types.h - setting variables for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -17,10 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SETTINGS_H_
-#define _SETTINGS_H_
-
-const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
+#ifndef _TASMOTA_TYPES_H_
+#define _TASMOTA_TYPES_H_
 
 // Bitfield to be used for any SetOption0 .. SetOption31 persistent single bit
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
@@ -490,6 +488,7 @@ typedef union {
 
 const uint32_t settings_text_size = 699;   // Settings->text_pool[size] = Settings->display_model (2D2) - Settings->text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
+const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
 
 typedef struct {
   uint16_t      cfg_holder;                // 000  v6 header
@@ -867,70 +866,6 @@ typedef struct {
 
 static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");
 
-typedef struct {
-  uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
-  uint8_t       fast_reboot_count;         // 282
-  uint8_t       free_003[1];               // 283
-} TRtcReboot;
-TRtcReboot RtcReboot;
-#ifdef ESP32
-RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
-#endif  // ESP32
-
-typedef struct {
-  uint16_t      valid;                     // 290  (RTC memory offset 100)
-  uint8_t       oswatch_blocked_loop;      // 292
-  uint8_t       ota_loader;                // 293
-  uint32_t      energy_kWhtoday;           // 294
-  uint32_t      energy_kWhtotal;           // 298
-  volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
-  power_t       power;                     // 2AC
-  EnergyUsage   energy_usage;              // 2B0
-  uint32_t      nextwakeup;                // 2C8
-  uint32_t      baudrate;                  // 2CC
-  uint32_t      ultradeepsleep;            // 2D0
-  uint16_t      deepsleep_slip;            // 2D4
-  uint8_t       improv_state;              // 2D6
-
-  uint8_t       free_2d7[1];               // 2D7
-
-  int32_t       energy_kWhtoday_ph[3];     // 2D8
-  int32_t       energy_kWhtotal_ph[3];     // 2E4
-  int32_t       energy_kWhexport_ph[3];    // 2F0
-
-  uint8_t       free_2fc[4];               // 2FC
-} TRtcSettings;
-TRtcSettings RtcSettings;
-#ifdef ESP32
-RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
-#endif  // ESP32
-
-struct TIME_T {
-  uint8_t       second;
-  uint8_t       minute;
-  uint8_t       hour;
-  uint8_t       day_of_week;               // sunday is day 1
-  uint8_t       day_of_month;
-  uint8_t       month;
-  char          name_of_month[4];
-  uint16_t      day_of_year;
-  uint16_t      year;
-  uint32_t      days;
-  uint32_t      valid;
-} RtcTime;
-
-struct XDRVMAILBOX {
-  bool          grpflg;
-  bool          usridx;
-  uint16_t      command_code;
-  uint32_t      index;
-  uint32_t      data_len;
-  int32_t       payload;
-  char         *topic;
-  char         *data;
-  char         *command;
-} XdrvMailbox;
-
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -974,4 +909,4 @@ typedef union {
 #endif
 #endif
 
-#endif  // _SETTINGS_H_
+#endif  // _TASMOTA_TYPES_H_

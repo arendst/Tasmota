@@ -24,15 +24,15 @@
   --------------------------------------------------------------------------------------------
   0.9.5.5 20220326  changed - refactored connection task for asynchronous op, add response option,
                               fixed MI32Key command
-  -------  
+  -------
   0.9.5.4 20220325  changed - add Berry adv_watch and adv_block to BLE class
-  -------  
+  -------
   0.9.5.3 20220315  changed - reworked Berry part, active scanning and holding active connections possible, new format of advertisement buffer
-  -------  
+  -------
   0.9.5.1 20220209  changed - rename YEERC to YLYK01, add dimmer YLKG08 (incl. YLKG07), change button report scheme
   -------
   0.9.5.0 20211016  changed - major rewrite, added mi32cfg (file and command), Homekit-Bridge,
-                              extended GUI, 
+                              extended GUI,
                               removed BLOCK, PERIOD, TIME, UNIT, BATTERY and PAGE -> replaced via Berry-Support
   -------
   0.9.1.7 20201116  changed - small bugfixes, add BLOCK and OPTION command, send BLE scan via MQTT
@@ -63,7 +63,7 @@
 
 #include <t_bearssl.h>
 
-#include "xsns_62_esp32_mi.h"
+#include "include/xsns_62_esp32_mi.h"
 
 #ifdef USE_MI_HOMEKIT
 extern "C" void mi_homekit_main(void);
@@ -140,7 +140,7 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
       _mutex = false;
       return;
     }
-    
+
     uint16_t UUID = advertisedDevice->getServiceDataUUID(0).getNative()->u16.value;
     ServiceDataLength = advertisedDevice->getServiceData(0).length();
 
@@ -517,7 +517,7 @@ void MI32StatusInfo() {
 #ifdef USE_MI_EXT_GUI
 /**
  * @brief Saves a sensor value mapped to the graph range of 0-20 pixel, this function automatically reads the actual hour from system time
- * 
+ *
  * @param history - pointer to uint8_t[23]
  * @param value - value as float, this
  * @param type  - internal type. for BLE: 0 - temperature, 1 - humidity, 2 - illuminance, for internal sensors: 100 - wattage
@@ -550,7 +550,7 @@ void MI32addHistory(uint8_t *history, float value, uint32_t type){
 
 /**
  * @brief Returns a value betwenn 0-21 for use as a data point in the history graph of the extended web UI
- * 
+ *
  * @param history - pointer to uint8_t[23]
  * @param hour  - hour of datapoint
  * @return uint8_t  - value for the y-axis, should be between 0-21
@@ -566,7 +566,7 @@ uint8_t MI32fetchHistory(uint8_t *history, uint32_t hour){
 
 /**
  * @brief Invalidates the history data of the following hour by setting MSB to 0, should be called at FUNC_JSON_APPEND
- * 
+ *
  */
 void Mi32invalidateOldHistory(){
   uint32_t _hour = (LocalTime()%SECS_PER_DAY)/SECS_PER_HOUR;
@@ -634,11 +634,11 @@ void MI32Init(void) {
     MI32getSetupCodeFromMAC(MI32.hk_setup_code);
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init HAP core"));
     mi_homekit_main();
-  #else 
+  #else
     MI32.mode.didStartHAP = 1;
   #endif //USE_MI_HOMEKIT
   }
-  
+
   if (!MI32.mode.init) {
     NimBLEDevice::setScanFilterMode(CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE);
     NimBLEDevice::setScanDuplicateCacheSize(40); // will not be perfect for every situation (few vs many BLE devices nearby)
@@ -820,8 +820,8 @@ extern "C" {
 
 /**
  * @brief Get at least a bit of the status of the HAP core, i.e. to reduce the activy of the driver while doing the pairing
- * 
- * @param event 
+ *
+ * @param event
  */
   void MI32passHapEvent(uint32_t event){
     switch(event){
@@ -852,7 +852,7 @@ extern "C" {
 
 /**
  * @brief Simply store the writeable HAP characteristics as void pointers in the "main" driver for updates of the values
- * 
+ *
  * @param slot - sensor slot in MIBLEsensors
  * @param type - sensors type, except for the buttons this is equal to the mibeacon types
  * @param handle - a void ponter to a characteristic
@@ -897,7 +897,7 @@ extern "C" {
  *        Example: AABBCC1234f2
  *              -> 111-11-234
  *        This is no security feature, only for convenience
- *  * @param setupcode 
+ *  * @param setupcode
  */
   void MI32getSetupCodeFromMAC(char *setupcode){
     uint8_t _mac[6];
@@ -1064,10 +1064,10 @@ void MI32ScanTask(void *pvParameters){
   }
 
   MI32Scan = NimBLEDevice::getScan();
-  
+
   MI32Scan->setAdvertisedDeviceCallbacks(&MI32ScanCallbacks,false);
   if(NimBLEDevice::getWhiteListCount()>0){
-    MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL); 
+    MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_USE_WL);
   }
   else {
     MI32Scan->setFilterPolicy(BLE_HCI_SCAN_FILT_NO_WL);
@@ -1077,7 +1077,7 @@ void MI32ScanTask(void *pvParameters){
   MI32Scan->setMaxResults(0);
   MI32Scan->start(0, MI32scanEndedCB, false); // never stop scanning, will pause automatically while connecting
   MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
-  
+
   uint32_t timer = 0;
   for(;;){
     vTaskDelay(1000/ portTICK_PERIOD_MS);
@@ -1224,7 +1224,7 @@ void MI32ConnectionTask(void *pvParameters){
                   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: write op done"));
                 }
                 else{
-                MI32.conCtx->error = MI32_CONN_DID_NOT_WRITE; 
+                MI32.conCtx->error = MI32_CONN_DID_NOT_WRITE;
                 }
               }
               else{
@@ -1352,7 +1352,7 @@ if(decryptRet!=0){
       if((void**)MIBLEsensors[_slot].button_hap_service[0] != nullptr){
         mi_homekit_update_value(MIBLEsensors[_slot].button_hap_service[0], (float)2.0f, 0x01); // only one button, long press = 2
         }
-#endif //USE_MI_HOMEKIT 
+#endif //USE_MI_HOMEKIT
         break;
       }
       // single, double, long
@@ -1661,10 +1661,10 @@ void MI32Every50mSecond(){
           else if(MI32.beAdvBuf[_index+1] == 0xff){
             _manu = _index + 2;
           }
-          _index += MI32.beAdvBuf[_index] + 1; 
+          _index += MI32.beAdvBuf[_index] + 1;
         }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: svc:%u , manu:%u"),_svc,_manu);
-      void (*func_ptr)(int,int) = (void (*)(int,int))MI32.beAdvCB;   
+      void (*func_ptr)(int,int) = (void (*)(int,int))MI32.beAdvCB;
       func_ptr(_svc,_manu);
     }
     MI32.mode.triggerBerryAdvCB = 0;
@@ -2344,7 +2344,7 @@ int ExtStopBLE(){
         MI32Scan->stop();
         MI32.mode.deleteScanTask = 1;
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop BLE"));
-      } 
+      }
 #ifdef USE_MI_HOMEKIT
       if(MI32.mode.didStartHAP) {
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop Homebridge"));

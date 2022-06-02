@@ -1,6 +1,6 @@
 #ifdef ESP8266
 #ifdef USE_SENDMAIL
-#include "sendemail_ESP8266.h"
+#include "include/sendemail_ESP8266.h"
 
 // enable serial debugging
 //#define DEBUG_EMAIL_PORT

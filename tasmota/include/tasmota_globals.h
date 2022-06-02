@@ -63,7 +63,7 @@ String EthernetMacAddress(void);
  * Preconfigured configurations
 \*********************************************************************************************/
 
-#include "tasmota_configurations.h"            // Preconfigured configurations
+#include "include/tasmota_configurations.h"            // Preconfigured configurations
 
 /*********************************************************************************************\
  * ESP8266 specific parameters

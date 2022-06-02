@@ -20,17 +20,17 @@
 //
 // Certificates are stored in flash (PROGMEM) to avoid consuming valuable RAM.
 //
-// To save space in flash, the Let's Encrypt and Amazon AWS certificates may be 
-// individually omitted if TLS is enabled, but the certificates are not used. 
-// This is typically the case when a locally generated root certificate is used 
+// To save space in flash, the Let's Encrypt and Amazon AWS certificates may be
+// individually omitted if TLS is enabled, but the certificates are not used.
+// This is typically the case when a locally generated root certificate is used
 // for TLS authentication.
-// 
-// To omit these certificates, define one or both of the 
+//
+// To omit these certificates, define one or both of the
 // OMIT_LETS_ENCRYPT_CERT and/or OMIT_AWS_CERT macros in user_config_override.h.
 //
 // To include a locally generated root certificate, define the
 // INCLUDE_LOCAL_CERT macro in user_config_override.h.
-// 
+//
 // See the files tasmota/local_ca_data_sample.h and tasmota/local_ca_descriptor_sample.h
 // in the Tasmota source for instructions for generating them from a local root
 // certificate in .crt format.
@@ -145,7 +145,7 @@ static const unsigned char PROGMEM AmazonRootCA1_RSA_E[] = {
 #endif
 
 #if  defined(INCLUDE_LOCAL_CERT)
-#include <local_ca_data.h>
+#include <include/local_ca_data.h>
 #endif
 //
 //  ========== cumulative CA =================

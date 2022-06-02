@@ -1239,7 +1239,7 @@ typedef struct MYTMPLT {
 //********************************************************************************************
 
 #ifdef ESP8266
-#include "tasmota_template_legacy.h"
+#include "include/tasmota_template_legacy.h"
 
 /********************************************************************************************\
  * ESP8266 Module Templates

@@ -72,7 +72,7 @@ struct projector_ctrl_command_info_s {
 	const uint8_t   fail_value_bytes;
 } __packed;
 
-#include "xdrv_53_projector_ctrl.h"
+#include "include/xdrv_53_projector_ctrl.h"
 
 struct projector_ctrl_softc_s {
 	TasmotaSerial	              *sc_serial;
