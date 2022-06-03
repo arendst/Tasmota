@@ -438,6 +438,72 @@
 
 #endif  // FIRMWARE_TASMOTA_LVGL *******************************************************************
 
+/*********************************************************************************************\
+ * [tasmota32-zbbrdgpro]
+ * Provide an image for Sonoff Zigbee Bridge Pro
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_ZBBRDGPRO
+
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "zbbrdgpro"
+
+#undef MODULE
+#define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
+#undef FALLBACK_MODULE
+#define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#undef USE_DOMOTICZ
+#undef USE_HOME_ASSISTANT
+#define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
+
+#define USE_WEBCLIENT_HTTPS
+
+#define USE_ZIGBEE
+#define USE_TCP_BRIDGE
+
+#define USE_ENHANCED_GUI_WIFI_SCAN
+
+#undef USE_ARMTRONIX_DIMMERS                    // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                             // Disable support for PS-16-DZ Dimmer (+2k code)
+#undef USE_SONOFF_IFAN                          // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+//#define USE_BUZZER                               // Add support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                            // Disable support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+//#define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                           // Disable support for EX-Store WiFi Dimmer
+#undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
+#undef USE_SONOFF_D1                            // Disable support for Sonoff D1 Dimmer (+0k7 code)
+#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
+
+#define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+#define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
+
+#define USE_ETHERNET                             // Add support for ethernet (+20k code)
+
+//#ifndef USE_KNX
+//#define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
+//#endif
+
+#endif // FIRMWARE_ZBBRDGPRO
+
+/*********************************************************************************************\
+ * [tasmota32-nspanel]
+ * Provide an image for ths Sonoff NsPanel
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_NSPANEL
+
+#undef CODE_IMAGE_STR
+#define CODE_IMAGE_STR "nspanel"
+
+#undef MODULE
+#define MODULE                 WEMOS             // [Module] Select default module from tasmota_template.h
+#undef FALLBACK_MODULE
+#define FALLBACK_MODULE        WEMOS             // [Module2] Select default module on fast reboot where USER_MODULE is user template
+
+#define FIRMWARE_TASMOTA32
+
+#endif // FIRMWARE_NSPANEL
 
 /*********************************************************************************************\
  * [tasmota32.bin]
