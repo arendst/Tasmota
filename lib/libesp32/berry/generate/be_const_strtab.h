@@ -947,6 +947,7 @@ extern const bcstring be_const_str_timer_cb;
 extern const bcstring be_const_str_to_gamma;
 extern const bcstring be_const_str_tob64;
 extern const bcstring be_const_str_tobytes;
+extern const bcstring be_const_str_tohex;
 extern const bcstring be_const_str_toint;
 extern const bcstring be_const_str_tolower;
 extern const bcstring be_const_str_tomap;
