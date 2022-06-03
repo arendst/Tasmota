@@ -999,7 +999,7 @@ void CmndBlinktime(void)
 
 void CmndBlinkcount(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 32000)) {
     Settings->blinkcount = XdrvMailbox.payload;  // 0 - 65535
     if (TasmotaGlobal.blink_counter) { TasmotaGlobal.blink_counter = Settings->blinkcount *2; }
   }
