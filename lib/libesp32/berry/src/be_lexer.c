@@ -168,21 +168,9 @@ static int check_next(blexer *lexer, int c)
     return 0;
 }
 
-static int char2hex(int c)
-{
-    if (c >= '0' && c <= '9') {
-        return c - '0';
-    } else if (c >= 'a' && c <= 'f') {
-        return c - 'a' + 0x0A;
-    } else if (c >= 'A' && c <= 'F') {
-        return c - 'A' + 0x0A;
-    }
-    return -1;
-}
-
 static int check2hex(blexer *lexer, int c)
 {
-    c = char2hex(c);
+    c = be_char2hex(c);
     if (c < 0) {
         be_lexerror(lexer, "invalid hexadecimal number");
     }
@@ -333,7 +321,7 @@ static bint scan_hexadecimal(blexer *lexer)
 {
     bint res = 0;
     int dig, num = 0;
-    while ((dig = char2hex(lgetc(lexer))) >= 0) {
+    while ((dig = be_char2hex(lgetc(lexer))) >= 0) {
         res = ((bint)res << 4) + dig;
         next(lexer);
         ++num;
