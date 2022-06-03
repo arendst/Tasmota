@@ -182,7 +182,7 @@ extern "C" {
             uint8_t g = (rgbw & 0xFF00) >> 8;
             uint8_t b = (rgbw & 0xFF);
             if (s_ws2812_grb)       s_ws2812_grb->ClearTo(RgbColor(r, g, b));
-            if (s_sk6812_grbw)      s_sk6812_grbw->ClearTo(RgbwColor(r, g, b, 0));
+            if (s_sk6812_grbw)      s_sk6812_grbw->ClearTo(RgbwColor(r, g, b, w));
             }
             break;
           case 10: // # 10 : SetPixelColor (idx:int, color:??) -> void
@@ -194,7 +194,7 @@ extern "C" {
             uint8_t g = (rgbw & 0xFF00) >> 8;
             uint8_t b = (rgbw & 0xFF);
             if (s_ws2812_grb)       s_ws2812_grb->SetPixelColor(idx, RgbColor(r, g, b));
-            if (s_sk6812_grbw)      s_sk6812_grbw->SetPixelColor(idx, RgbwColor(r, g, b, 0));
+            if (s_sk6812_grbw)      s_sk6812_grbw->SetPixelColor(idx, RgbwColor(r, g, b, w));
             }
             break;
           case 11: // # 11 : GetPixelColor (idx:int) -> color:??
