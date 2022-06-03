@@ -1954,8 +1954,6 @@ int32_t ZNP_ReceiveAfIncomingMessage(int32_t res, const SBuffer &buf) {
   // uint32_t        timestamp = buf.get32(13);
   uint8_t         seqnumber = buf.get8(17);
 
-  bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
-
   ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid,
                               srcaddr,
                               srcendpoint, dstendpoint, wasbroadcast,

@@ -76,7 +76,6 @@ void PwmApplyGPIO(bool force_update_all) {
 
     // compute phase
     uint32_t pwm_phase = TasmotaGlobal.pwm_cur_phase[i];    // pwm_phase is the logical phase of the active pulse, ignoring inverted
-    uint32_t gpio_phase = pwm_phase;          // gpio is the physical phase taking into account inverted
     if (TasmotaGlobal.pwm_phase[i] >= 0) {
       pwm_phase = TasmotaGlobal.pwm_phase[i]; // if explicit set explicitly, 
     } else if (Settings->flag5.pwm_force_same_phase) {

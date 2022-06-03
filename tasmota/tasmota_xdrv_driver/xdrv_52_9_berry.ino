@@ -112,7 +112,6 @@ bool callBerryRule(const char *event, bool teleperiod) {
   bool exec_rule = !save_rules_busy;       // true if the rule is executed, false if we only record the value
   // if (berry.rules_busy) { return false; }
   berry.rules_busy = true;
-  char * json_event = XdrvMailbox.data;
   bool serviced = false;
   serviced = callBerryEventDispatcher(teleperiod ? "tele" : "rule", nullptr, exec_rule, event ? event : XdrvMailbox.data);
   berry.rules_busy = save_rules_busy;
@@ -345,9 +344,6 @@ void BerryInit(void) {
 void BrLoad(const char * script_name) {
   if (berry.vm == nullptr || TasmotaGlobal.no_autoexec) { return; }   // abort is berry is not running, or bootloop prevention kicked in
 
-  int32_t ret_code1, ret_code2;
-  bool berry_init_ok = false;
-
   be_getglobal(berry.vm, PSTR("load"));
   if (!be_isnil(berry.vm, -1)) {
     be_pushstring(berry.vm, script_name);
@@ -376,7 +372,7 @@ void BrLoad(const char * script_name) {
 //
 void CmndBrRun(void) {
   int32_t ret_code;
-  const char * ret_type, * ret_val;
+  const char * ret_val;
 
   if (berry.vm == nullptr) { ResponseCmndChar_P(PSTR(D_BR_NOT_STARTED)); return; }
 

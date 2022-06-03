@@ -95,8 +95,6 @@ int32_t ls_get_power(class LightStateClass* l) {
 }
 void ls_set_xy(class LightStateClass* l, float x, float y) {
   uint8_t rr, gg, bb;
-  uint16_t hue;
-  uint8_t sat;
   XyToRgb(x, y, &rr, &gg, &bb);
   l->setRGB(rr, gg, bb, false);
 }
