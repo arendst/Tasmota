@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger [#15701](https://github.com/arendst/Tasmota/issues/15701)
 - Support for flowrate meters like YF-DN50 and similary [#15474](https://github.com/arendst/Tasmota/issues/15474)
 - Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs [#15713](https://github.com/arendst/Tasmota/issues/15713)
+- Support for HYTxxx temperature and humidity sensor [#15715](https://github.com/arendst/Tasmota/issues/15715)
 - ESP32 Command ``Restart 3`` to switch between SafeBoot and Production
 
 ### Breaking Changed

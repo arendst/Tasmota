@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [11.1.0.4]
 ### Added
+- Support for HYTxxx temperature and humidity sensor (#15715)
 
 ### Changed
 - Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
