@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [11.1.0.4]
 ### Added
 - Support for HYTxxx temperature and humidity sensor (#15715)
+- Support for Sensirion SHT4X using define USE_SHT3X (#15349)
 
 ### Changed
 - Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
