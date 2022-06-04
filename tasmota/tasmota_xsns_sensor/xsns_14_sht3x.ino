@@ -104,8 +104,8 @@ bool Sht3xRead(uint32_t type, float &t, float &h, uint8_t i2c_address) {
   if ((Sht3xComputeCrc(&data[0], 2) != data[2]) || (Sht3xComputeCrc(&data[3], 2) != data[5])) {
     return false;
   }
-  t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
-  h = ConvertHumidity((float)((((data[3] << 8) | data[4]) * 100) / 65535.0));
+  t = (float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45;
+  h = (float)((((data[3] << 8) | data[4]) * 100) / 65535.0);
   return (!isnan(t) && !isnan(h));
 }
 
