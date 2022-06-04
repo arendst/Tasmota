@@ -104,22 +104,29 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v11.1.0.3
+## Changelog v11.1.0.4
 ### Added
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` [#15350](https://github.com/arendst/Tasmota/issues/15350)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
+- Command ``SetOption141 1`` to disable display of module name in GUI header
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy [#15513](https://github.com/arendst/Tasmota/issues/15513)
+- Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Support for Sonoff MS01 soil moisture sensor [#15335](https://github.com/arendst/Tasmota/issues/15335)
 - Support for daisy chaining MAX7219 displays [#15345](https://github.com/arendst/Tasmota/issues/15345)
+- Support for Sensirion SHT4X using define USE_SHT3X [#15349](https://github.com/arendst/Tasmota/issues/15349)
 - Sonoff SPM delayed SetPowerOnState [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Support for Sonoff SPM v1.2.0
+- Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger [#15701](https://github.com/arendst/Tasmota/issues/15701)
 - Support for flowrate meters like YF-DN50 and similary [#15474](https://github.com/arendst/Tasmota/issues/15474)
+- Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs [#15713](https://github.com/arendst/Tasmota/issues/15713)
+- Support for HYTxxx temperature and humidity sensor [#15715](https://github.com/arendst/Tasmota/issues/15715)
 - ESP32 Command ``Restart 3`` to switch between SafeBoot and Production
 
 ### Breaking Changed
 
 ### Changed
+- Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
 - Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
 - ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
 
@@ -127,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Improv initial or erase device installation failing to provide Configure WiFi option
 - SCD40 start low power command [#15361](https://github.com/arendst/Tasmota/issues/15361)
 - BL09xx negative power presentation [#15374](https://github.com/arendst/Tasmota/issues/15374)
+- Possible pin output toggle after power on [#15630](https://github.com/arendst/Tasmota/issues/15630)
 
 ### Removed
 - Arduino IDE support

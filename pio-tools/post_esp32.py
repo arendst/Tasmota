@@ -39,7 +39,7 @@ FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
 def esp32_create_chip_string(chip):
-    tasmota_platform = env.subst("$BUILD_DIR").split('/')[-1]
+    tasmota_platform = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
     tasmota_platform = tasmota_platform.split('-')[0]
     if 'tasmota' and chip[3:] not in tasmota_platform: # quick check for a valid name like 'tasmota' + '32c3'
         print('Unexpected naming conventions in this build environment -> Undefined behavior for further build process!!')
@@ -53,6 +53,14 @@ def esp32_build_filesystem(fs_size):
     print("Creating filesystem with content:")
     for file in files:
         if "no_files" in file:
+            continue
+        if "http" and "://" in file:
+            response = requests.get(file)
+            if response.ok:
+                target = join(filesystem_dir,file.split(os.path.sep)[-1])
+                open(target, "wb").write(response.content)
+            else:
+                print("Failed to download: ",file)
             continue
         shutil.copy(file, filesystem_dir)
     if not os.listdir(filesystem_dir):
@@ -106,7 +114,7 @@ def esp32_create_combined_bin(source, target, env):
                     app_offset = int(row[3],base=16)
                 # elif(row[0] == 'factory'):
                 #     factory_offset = int(row[3],base=16)
-                elif(row[0] == 'spiffs'):    
+                elif(row[0] == 'spiffs'):
                     if esp32_build_filesystem(row[4]):
                         fs_offset = int(row[3],base=16)
 
@@ -152,7 +160,7 @@ def esp32_create_combined_bin(source, target, env):
         if exists(fs_bin):
             print(f" - {hex(fs_offset)}| {fs_bin}")
             cmd += [hex(fs_offset), fs_bin]
-            env.Replace(        
+            env.Replace(
             UPLOADERFLAGS=[
             "--chip", chip,
             "--port", '"$UPLOAD_PORT"',

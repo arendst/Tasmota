@@ -231,29 +231,54 @@ const char* be_pushvfstr(bvm *vm, const char *format, va_list arg)
     return concat2(vm);
 }
 
+int be_char2hex(int c)
+{
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 0x0A;
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 0x0A;
+    }
+    return -1;
+}
+
 /*******************************************************************
  * the function be_str2int():
- * >>-+------------+--+-----+----digits----><
- *    '-whitespace-'  +- + -+
- *                    '- - -'
+ * >>-+------------+--+--+-----+----digits-------+----------------><
+ *    '-whitespace-'  |  +- + -+                 |
+ *                    |  '- - -'                 |
+ *                    |                          |
+ *                    +- 0x or 0X ---hex_digits--+
+ * 
  *******************************************************************/
 BERRY_API bint be_str2int(const char *str, const char **endstr)
 {
     int c, sign;
     bint sum = 0;
     skip_space(str);
-    sign = c = *str++;
-    if (c == '+' || c == '-') {
-        c = *str++;
+    if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+        /* hex literal */
+        str += 2;       /* skip 0x or 0X */
+        while ((c = be_char2hex(*str++)) >= 0) {
+            sum = sum * 16 + c;
+        }
+        return sum;
+    } else {
+        /* decimal literal */
+        sign = c = *str++;
+        if (c == '+' || c == '-') {
+            c = *str++;
+        }
+        while (is_digit(c)) {
+            sum = sum * 10 + c - '0';
+            c = *str++;
+        }
+        if (endstr) {
+            *endstr = str - 1;
+        }
+        return sign == '-' ? -sum : sum;
     }
-    while (is_digit(c)) {
-        sum = sum * 10 + c - '0';
-        c = *str++;
-    }
-    if (endstr) {
-        *endstr = str - 1;
-    }
-    return sign == '-' ? -sum : sum;
 }
 
 /*******************************************************************

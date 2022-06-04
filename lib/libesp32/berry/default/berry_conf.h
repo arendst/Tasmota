@@ -12,7 +12,7 @@
 
 #ifdef COMPILE_BERRY_LIB
   #include "my_user_config.h"
-  #include "tasmota_configurations.h"
+  #include "include/tasmota_configurations.h"
 #endif
 
 /* Macro: BE_DEBUG

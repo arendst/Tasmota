@@ -48,7 +48,7 @@ public:
   inline uint8_t *buf(size_t i = 0) const { return &_buf->buf[i]; }
   inline char    *charptr(size_t i = 0) const { return (char*) &_buf->buf[i]; }
 
-  virtual ~SBuffer(void) {
+  ~SBuffer(void) {
     delete[] _buf;
   }
 
@@ -258,6 +258,12 @@ public:
     return buf2;
   }
 
+  static SBuffer SBufferFromBytes(const uint8_t *bytes, size_t len2) {
+    SBuffer buf2(len2);
+    buf2.addBuffer(bytes, len2);
+    return buf2;
+  }
+
   // nullptr accepted
   static bool equalsSBuffer(const class SBuffer * buf1, const class SBuffer * buf2) {
     if (buf1 == buf2) { return true; }
@@ -290,18 +296,3 @@ protected:
   SBuffer_impl * _buf;
 
 } SBuffer;
-
-typedef class PreAllocatedSBuffer : public SBuffer {
-
-public:
-  PreAllocatedSBuffer(const size_t size, void * buffer) {
-    _buf = (SBuffer_impl*) buffer;
-    _buf->size = size - 4;
-    _buf->len = 0;
-  }
-
-  ~PreAllocatedSBuffer(void) {
-    // don't deallocate
-    _buf = nullptr;
-  }
-} PreAllocatedSBuffer;

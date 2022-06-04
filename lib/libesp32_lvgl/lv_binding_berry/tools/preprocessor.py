@@ -78,7 +78,7 @@ lv_fun_globs = [
                   #"**/*.h",
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
-headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_openhasp.h"])
+headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_haspmota.h"])
 # headers_names += ["lv_pre_style.h"] # for LVGL v7, add pre-generated style functions from C preprocessor
 
 # unit test

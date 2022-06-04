@@ -3,18 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.1.0.3]
+## [11.1.0.4]
 ### Added
-- Support for Sonoff SPM v1.2.0
+- Support for HYTxxx temperature and humidity sensor (#15715)
+- Support for Sensirion SHT4X using define USE_SHT3X (#15349)
 
 ### Changed
-
+- Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
 
 ### Fixed
 
-
 ### Removed
 
+
+## [11.1.0.3] 20220602
+### Added
+- Support for Sonoff SPM v1.2.0
+- Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger (#15701)
+- Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules (#13447)
+- Command ``SetOption141 1`` to disable display of module name in GUI header
+- Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs (#15713)
+
+### Fixed
+- Possible pin output toggle after power on (#15630)
 
 ## [11.1.0.2] 20220514
 ### Added

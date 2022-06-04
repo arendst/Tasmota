@@ -65,6 +65,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MY92X1            | - | x / - | x | x | - | x |
 | USE_SM16716           | - | x / - | x | x | - | x |
 | USE_SM2135            | - | x / - | x | x | - | x |
+| USE_BP5758D           | - | x / - | x | x | - | x |
 | USE_SONOFF_L1         | - | x / - | x | x | - | x |
 | USE_ELECTRIQ_MOODL    | - | x / - | x | x | - | x |
 |                       |   |       |   |   |   |   |
@@ -170,6 +171,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_HDC2010           | - | - / - | - | - | - | - |
 | USE_PCF85363          | - | - / - | - | - | - | - |
 | USE_DS3502            | - | - / - | - | - | - | - |
+| USE_HYT               | - | - / - | - | - | - | - |
 |                       |   |       |   |   |   |   |
 | Feature or Sensor     | l | t     | k | s | i | d | Remarks
 | USE_SPI               | - | - / - | - | - | - | x |
@@ -241,6 +243,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MI_ESP32          |   |   / x |   |   |   |   | See SetOption115
 | USE_IBEACON_ESP32     |   |   / - |   |   |   |   |
 | USE_WEBCAM            |   |   / - |   |   |   |   |
-| USE_ETHERNET          |   |   / - |   |   |   |   |
+| USE_ETHERNET          |   |   / x |   |   |   |   |
 | USE_I2S_AUDIO         |   |   / - |   |   |   |   |
 | USE_TTGO_WATCH        |   |   / - |   |   |   |   |
+| USE_SONOFF_SPM        |   |   / x |   |   |   |   |
