@@ -31,32 +31,24 @@
 #define XSNS_14             14
 #define XI2C_15             15         // See I2CDEVICES.md
 
-#define SHT3X_ADDRESSES     2          // 2 addresses for SHT3x
-#define SHT3X_ADDR_GND      0x44       // Address A pin low (GND)
-#define SHT3X_ADDR_VDD      0x45       // Address B pin high (VDD)
-#define SHTCX_ADDRESSES     1          // 1 address for SHTCx
-#define SHTCX_ADDR          0x70       // Address for SHTCx sensors
-#define SHT4X_ADDRESSES     2          // 2 addresses for SHT4x
-#define SHT4X_ADDR_A        0x44       // Address SHT4x A
-#define SHT4X_ADDR_B        0x45       // Address SHT4x B
-
-#define SHT3X_MAX_SENSORS   3          // Only one of 0x44, 0x45 and 0x70
+#define SHT3X_TYPES         3          // SHT3X, SHTCX and SHT4X
+#define SHT3X_ADDRESSES     3          // 0x44, 0x45 and 0x70
 
 enum SHT3X_Types {
   SHT3X_TYPE_SHT3X,
   SHT3X_TYPE_SHTCX,
   SHT3X_TYPE_SHT4X
 };
-
 const char kSht3xTypes[] PROGMEM = "SHT3X|SHTC3|SHT4X";
-uint8_t sht3x_addresses[] = { SHT3X_ADDR_GND, SHT3X_ADDR_VDD, SHTCX_ADDR };
+
+uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x70 };
 
 uint8_t sht3x_count = 0;
 struct SHT3XSTRUCT {
   uint8_t type;        // Sensor type
   uint8_t address;     // I2C bus address
   char types[6];  // Sensor type name and address, e.g. "SHT3X"
-} sht3x_sensors[SHT3X_MAX_SENSORS];
+} sht3x_sensors[SHT3X_ADDRESSES];
 
 uint8_t Sht3xComputeCrc(uint8_t data[], uint8_t len) {
   // Compute CRC as per datasheet
@@ -123,26 +115,17 @@ void Sht3xDetect(void) {
   float t;
   float h;
 
-  for (uint32_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
-    if (!I2cSetDevice(sht3x_addresses[i])) { continue; }
-    if (i < 2) {  // 0x44 and 0x45
-      sht3x_sensors[sht3x_count].type = SHT3X_TYPE_SHT3X;
-      if (!Sht3xRead(sht3x_sensors[sht3x_count].type, t, h, sht3x_addresses[i])) {
-        sht3x_sensors[sht3x_count].type = SHT3X_TYPE_SHT4X;
-        if (!Sht3xRead(sht3x_sensors[sht3x_count].type, t, h, sht3x_addresses[i])) {
-          continue;
-        }
-      }
-    } else {     // 0x70
-      sht3x_sensors[sht3x_count].type = SHT3X_TYPE_SHTCX;
-      if (!Sht3xRead(sht3x_sensors[sht3x_count].type, t, h, sht3x_addresses[i])) {
-        continue;
+  for (uint32_t k = 0; k < SHT3X_TYPES; k++) {
+    sht3x_sensors[sht3x_count].type = k;
+    for (uint32_t i = 0; i < SHT3X_ADDRESSES; i++) {
+      if (!I2cSetDevice(sht3x_addresses[i])) { continue; }
+      sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
+      if (Sht3xRead(sht3x_sensors[sht3x_count].type, t, h, sht3x_sensors[sht3x_count].address)) {
+        GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
+        I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types);
+        sht3x_count++;
       }
     }
-    sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
-    GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), SHT3X_TYPE_SHT3X, kSht3xTypes);
-    I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types);
-    sht3x_count++;
   }
 }
 
