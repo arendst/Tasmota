@@ -226,7 +226,6 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
 int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
   uint8_t  bri, sat;
   uint16_t ct, hue;
-  int code = 200;
 
   int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
   if (bulbtype < 0) {  // respond only if eligible

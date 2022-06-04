@@ -717,7 +717,6 @@ static int m_tostring(bvm *vm)
 
 static int m_tohex(bvm *vm)
 {
-    int argc = be_top(vm);
     buf_impl attr = m_read_attributes(vm, 1);
     if (attr.bufptr) {              /* pointer looks valid */
         int32_t len = attr.len;

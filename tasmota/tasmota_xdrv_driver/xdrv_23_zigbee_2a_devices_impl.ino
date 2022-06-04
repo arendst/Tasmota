@@ -665,7 +665,6 @@ Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_
 // Add "Device":"0x1234","Name":"FrienflyName"
 void Z_Device::jsonAddDeviceNamme(Z_attribute_list & attr_list) const {
   const char * fname = friendlyName;
-  bool use_fname = (Settings->flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
 
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_DEVICE)).setHex32(shortaddr);
   if (fname) {

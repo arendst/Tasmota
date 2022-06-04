@@ -3797,7 +3797,7 @@ bool Xdrv01(uint8_t function)
               }
               Web.wifi_test_AP_TIMEOUT = true;
           }
-          int n = WiFi.scanNetworks(); // restart scan
+          WiFi.scanNetworks(); // restart scan
         }
       }
       break;

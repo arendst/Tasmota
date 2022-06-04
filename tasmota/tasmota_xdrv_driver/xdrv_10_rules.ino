@@ -1868,7 +1868,6 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
  */
 bool evaluateLogicalExpression(const char * expression, int len)
 {
-  bool bResult = false;
   //Make a copy first
   char expbuff[len + 1];
   memcpy(expbuff, expression, len);
