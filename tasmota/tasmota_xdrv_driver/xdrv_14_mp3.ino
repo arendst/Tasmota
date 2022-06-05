@@ -77,6 +77,10 @@
 
 #define XDRV_14             14
 
+#ifndef MP3_VOLUME
+#define MP3_VOLUME          30                // Set the startup volume on init, the range can be 0..100(max)
+#endif
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *MP3Player;
