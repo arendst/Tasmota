@@ -638,7 +638,7 @@
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 #define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
-  #define MP3_VOLUME           30                // Set the startup volume on init, the range can be 0..100(max)
+//  #define MP3_VOLUME           30                // Set the startup volume on init, the range can be 0..100(max)
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 //#define USE_ZIGBEE                               // Enable serial communication with Zigbee CC2530 flashed with ZNP
