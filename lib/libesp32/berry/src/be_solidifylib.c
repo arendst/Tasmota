@@ -170,16 +170,13 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *c
         if (node->key.type == BE_STRING) {
             /* convert the string literal to identifier */
             const char * key = str(node->key.v.s);
+            size_t id_len = toidentifier_length(key);
+            char id_buf[id_len];
+            toidentifier(id_buf, key);
             if (!str_literal) {
-                size_t id_len = toidentifier_length(key);
-                char id_buf[id_len];
-                toidentifier(id_buf, key);
                 logfmt("        { be_const_key(%s, %i), ", id_buf, key_next);
             } else {
-                size_t id_len = toliteral_length(key);
-                char id_buf[id_len];
-                toliteral(id_buf, key);
-                logfmt("        { be_const_key_literal(\"%s\", %i), ", id_buf, key_next);
+                logfmt("        { be_const_key_weak(%s, %i), ", id_buf, key_next);
             }
             m_solidify_bvalue(vm, str_literal, &node->value, class_name, str(node->key.v.s));
         } else if (node->key.type == BE_INT) {
@@ -249,16 +246,13 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
             if (len >= 255) {
                 be_raise(vm, "internal_error", "Strings greater than 255 chars not supported yet");
             }
+            size_t id_len = toidentifier_length(str);
+            char id_buf[id_len];
+            toidentifier(id_buf, str);
             if (!str_literal) {
-                size_t id_len = toidentifier_length(str);
-                char id_buf[id_len];
-                toidentifier(id_buf, str);
                 logfmt("be_nested_str(%s)", id_buf);
             } else {
-                size_t id_len = toliteral_length(str);
-                char id_buf[id_len];
-                toliteral(id_buf, str);
-                logfmt("be_nested_str_literal(\"%s\")", id_buf);
+                logfmt("be_nested_str_weak(%s)", id_buf);
             }
         }
         break;
@@ -392,18 +386,14 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char 
     }
 
     /* convert the string literal to identifier */
+    const char * key = str(pr->name);
+    size_t id_len = toidentifier_length(key);
+    char id_buf[id_len];
+    toidentifier(id_buf, key);
     if (!str_literal) {
-        const char * key = str(pr->name);
-        size_t id_len = toidentifier_length(key);
-        char id_buf[id_len];
-        toidentifier(id_buf, key);
         logfmt("%*s&be_const_str_%s,\n", indent, "", id_buf);
     } else {
-        const char * key = str(pr->name);
-        size_t id_len = toliteral_length(key);
-        char id_buf[id_len];
-        toliteral(id_buf, key);
-        logfmt("%*sbe_str_literal(\"%s\"),\n", indent, "", id_buf);
+        logfmt("%*sbe_str_weak(%s),\n", indent, "", id_buf);
     }
     // hard-code source as "solidified" for solidified
     logfmt("%*s&be_const_str_solidified,\n", indent, "");
@@ -507,21 +497,17 @@ static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, int buil
         logfmt("    NULL,\n");
     }
 
+    size_t id_len = toidentifier_length(class_name);
+    char id_buf[id_len];
+    toidentifier(id_buf, class_name);
     if (!str_literal) {
-        size_t id_len = toidentifier_length(class_name);
-        char id_buf[id_len];
-        toidentifier(id_buf, class_name);
         logfmt("    (bstring*) &be_const_str_%s\n", id_buf);
     } else {
-        size_t id_len = toliteral_length(class_name);
-        char id_buf[id_len];
-        toliteral(id_buf, class_name);
-        logfmt("    be_str_literal(\"%s\")\n", id_buf);
+        logfmt("    be_str_weak(%s)\n", id_buf);
     }
     logfmt(");\n");
 
 }
-
 
 static void m_solidify_class(bvm *vm, bbool str_literal, bclass *cl, int builtins)
 {

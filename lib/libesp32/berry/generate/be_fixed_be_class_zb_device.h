@@ -1,10 +1,10 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(be_class_zb_device_map) {
-    { be_const_key(init, -1), be_const_ctype_func(zd_init) },
-    { be_const_key(tostring, -1), be_const_closure(zb_device_tostring_closure) },
-    { be_const_key(_p, -1), be_const_var(0) },
-    { be_const_key(member, 0), be_const_func(zd_member) },
+    { be_const_key_weak(init, -1), be_const_ctype_func(zd_init) },
+    { be_const_key_weak(tostring, -1), be_const_closure(zb_device_tostring_closure) },
+    { be_const_key_weak(_p, -1), be_const_var(0) },
+    { be_const_key_weak(member, 0), be_const_func(zd_member) },
 };
 
 static be_define_const_map(

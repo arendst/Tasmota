@@ -368,7 +368,7 @@ be_local_class(Leds_animator,
         { be_const_key(animators, -1), be_const_var(4) },
         { be_const_key(set_bri, 1), be_const_closure(Leds_animator_set_bri_closure) },
     })),
-    be_str_literal("Leds_animator")
+    be_str_weak(Leds_animator)
 );
 /*******************************************************************/
 

@@ -1,4 +1,5 @@
 import copy
+import json
 from hash_map import *
 
 class block:
@@ -21,6 +22,7 @@ class block_builder:
     def __init__(self, obj, macro):
         self.block = block()
         self.strtab = []
+        self.strtab_weak = []
 
         self.block.name = obj.name
         if depend(obj, macro):
@@ -28,19 +30,25 @@ class block_builder:
             self.block.attr = obj.attr
             
             if "name" in obj.attr:
-                self.strtab.append(obj.attr["name"])
+                if not self.get_strings_literal(self.block):
+                    self.strtab.append(obj.attr["name"])
+                else:
+                    self.strtab_weak.append(obj.attr["name"])
             
             for key in obj.data_ordered:
                 second = obj.data[key]
                 if second.depend == None or macro.query(second.depend):
                     self.block.data[key] = second.value
-                    self.strtab.append(key)
+                    if not self.get_strings_literal(self.block):
+                        self.strtab.append(key)
+                    else:
+                        self.strtab_weak.append(key)
                     self.block.data_ordered.append(key)
     
     def block_tostring(self, block):
         ostr = ""
         if block.type == "map":
-            ostr += self.map_tostring(block, block.name)
+            ostr += self.map_tostring(block, block.name, False, self.get_strings_literal(block))
         elif block.type == "class":
             ostr += self.class_tostring(block)
         elif block.type == "vartab":
@@ -54,7 +62,7 @@ class block_builder:
         hmap = hash_map(block.data)
         map_name = block.name + "_map"
         if len(block.data) > 0:
-            ostr += self.map_tostring(block, map_name, True) + "\n"
+            ostr += self.map_tostring(block, map_name, True, self.get_strings_literal(block)) + "\n"
         
         ostr += self.scope(block) + " be_define_const_class(\n    "
         ostr += block.name + ",\n    "
@@ -63,12 +71,17 @@ class block_builder:
         ostr += self.name(block) + "\n);\n"
         return ostr
     
-    def map_tostring(self, block, name, local):
+    def map_tostring(self, block, name, local, literal):
         hmap = hash_map(block.data)
         entlist = hmap.entry_list()
-        ostr = "static be_define_const_map_slots(" + name + ") {\n"
+        ostr = ""
+
+        ostr += "static be_define_const_map_slots(" + name + ") {\n"
         for ent in entlist:
-            ostr += "    { be_const_key(" + ent.key + ", "
+            if literal:
+                ostr += "    { be_const_key_weak(" + ent.key + ", "
+            else:
+                ostr += "    { be_const_key(" + ent.key + ", "
             ostr += str(ent.next) + "), " + ent.value + " },\n"
         ostr += "};\n\n"
 
@@ -92,7 +105,7 @@ class block_builder:
             idxblk.data[key] = "int(" + str(index) + ")"
             index += 1
         
-        ostr += self.map_tostring(idxblk, block.name + "_map", True) + "\n"
+        ostr += self.map_tostring(idxblk, block.name + "_map", True, False) + "\n"
         ostr += "static const bvalue __vlist_array[] = {\n";
         for it in varvec:
             ostr += "    be_const_" + it + ",\n"
@@ -108,7 +121,7 @@ class block_builder:
         name = "m_lib" + block.name
         map_name = name + "_map"
 
-        ostr += self.map_tostring(block, map_name, True) + "\n"
+        ostr += self.map_tostring(block, map_name, True, self.get_strings_literal(block)) + "\n"
         ostr += "static be_define_const_module(\n    "
         ostr += name + ",\n    "
         ostr += "\"" + block.name + "\"\n);\n"
@@ -131,6 +144,13 @@ class block_builder:
         else:
             return "NULL"
     
+    def get_strings_literal(self, block):
+        if "strings" in block.attr:
+            a = block.attr["strings"]
+            return block.attr["strings"] == "weak"
+        else:
+            return False
+
     def name(self, block):
         if "name" in block.attr:
             return block.attr["name"]

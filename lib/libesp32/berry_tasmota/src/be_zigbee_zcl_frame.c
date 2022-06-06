@@ -23,12 +23,12 @@ be_local_closure(zcl_frame_member,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("payload"),
-    /* K1   */  be_nested_str_literal("_get_bytes"),
-    /* K2   */  be_nested_str_literal("payload_ptr"),
-    /* K3   */  be_nested_str_literal("member"),
+    /* K0   */  be_nested_str_weak(payload),
+    /* K1   */  be_nested_str_weak(_get_bytes),
+    /* K2   */  be_nested_str_weak(payload_ptr),
+    /* K3   */  be_nested_str_weak(member),
     }),
-    be_str_literal("member"),
+    be_str_weak(member),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x1C080300,  //  0000  EQ	R2	R1	K0
@@ -66,12 +66,12 @@ be_local_closure(zcl_frame_setmember,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("payload"),
-    /* K1   */  be_nested_str_literal("_set_bytes"),
-    /* K2   */  be_nested_str_literal("payload_ptr"),
-    /* K3   */  be_nested_str_literal("setmember"),
+    /* K0   */  be_nested_str_weak(payload),
+    /* K1   */  be_nested_str_weak(_set_bytes),
+    /* K2   */  be_nested_str_weak(payload_ptr),
+    /* K3   */  be_nested_str_weak(setmember),
     }),
-    be_str_literal("setmember"),
+    be_str_weak(setmember),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
       0x1C0C0300,  //  0000  EQ	R3	R1	K0
@@ -111,10 +111,10 @@ be_local_closure(zcl_frame_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("init"),
-    /* K1   */  be_nested_str_literal("no_bytes"),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(no_bytes),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -147,15 +147,15 @@ be_local_closure(zcl_frame_tomap,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_literal("string"),
-    /* K1   */  be_nested_str_literal("tomap"),
-    /* K2   */  be_nested_str_literal("shortaddr_hex"),
-    /* K3   */  be_nested_str_literal("format"),
-    /* K4   */  be_nested_str_literal("0x%04X"),
-    /* K5   */  be_nested_str_literal("shortaddr"),
-    /* K6   */  be_nested_str_literal("payload"),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(tomap),
+    /* K2   */  be_nested_str_weak(shortaddr_hex),
+    /* K3   */  be_nested_str_weak(format),
+    /* K4   */  be_nested_str_weak(0x_X2504X),
+    /* K5   */  be_nested_str_weak(shortaddr),
+    /* K6   */  be_nested_str_weak(payload),
     }),
-    be_str_literal("tomap"),
+    be_str_weak(tomap),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
@@ -192,9 +192,9 @@ be_local_closure(zcl_frame_tostring,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("tomap"),
+    /* K0   */  be_nested_str_weak(tomap),
     }),
-    be_str_literal("tostring"),
+    be_str_weak(tostring),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
@@ -218,14 +218,14 @@ be_local_class(zcl_frame,
     &be_class_zcl_frame_ntv,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("no_bytes", -1), be_const_var(0) },
-        { be_const_key_literal("member", 2), be_const_closure(zcl_frame_member_closure) },
-        { be_const_key_literal("tostring", 5), be_const_closure(zcl_frame_tostring_closure) },
-        { be_const_key_literal("init", -1), be_const_closure(zcl_frame_init_closure) },
-        { be_const_key_literal("tomap", -1), be_const_closure(zcl_frame_tomap_closure) },
-        { be_const_key_literal("setmember", -1), be_const_closure(zcl_frame_setmember_closure) },
+        { be_const_key_weak(no_bytes, -1), be_const_var(0) },
+        { be_const_key_weak(member, 2), be_const_closure(zcl_frame_member_closure) },
+        { be_const_key_weak(tostring, 5), be_const_closure(zcl_frame_tostring_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(zcl_frame_init_closure) },
+        { be_const_key_weak(tomap, -1), be_const_closure(zcl_frame_tomap_closure) },
+        { be_const_key_weak(setmember, -1), be_const_closure(zcl_frame_setmember_closure) },
     })),
-    be_str_literal("zcl_frame")
+    be_str_weak(zcl_frame)
 );
 /*******************************************************************/
 

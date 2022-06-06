@@ -36,7 +36,7 @@ void be_load_crypto_lib(bvm *vm) {
 }
 /* @const_object_info_begin
 
-class be_class_aes_gcm (scope: global, name: AES_GCM) {
+class be_class_aes_gcm (scope: global, name: AES_GCM, strings: weak) {
     .p1, var
     .p2, var
 
@@ -46,7 +46,7 @@ class be_class_aes_gcm (scope: global, name: AES_GCM) {
     tag, func(m_aes_gcm_tag)
 }
 
-class be_class_ec_c25519 (scope: global, name: EC_C25519) {
+class be_class_ec_c25519 (scope: global, name: EC_C25519, strings: weak) {
     public_key, func(m_ec_c25519_pubkey)
     shared_key, func(m_ec_c25519_sharedkey)
 }

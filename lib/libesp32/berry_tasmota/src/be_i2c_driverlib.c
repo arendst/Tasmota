@@ -414,7 +414,7 @@ be_local_class(I2C_Driver,
         { be_const_key(init, -1), be_const_closure(I2C_Driver_init_closure) },
         { be_const_key(write_bit, -1), be_const_closure(I2C_Driver_write_bit_closure) },
     })),
-    be_str_literal("I2C_Driver")
+    be_str_weak(I2C_Driver)
 );
 /*******************************************************************/
 

@@ -667,7 +667,7 @@ be_local_class(hue_bridge_monad,
         { be_const_key(discover, -1), be_const_closure(hue_bridge_monad_discover_closure) },
         { be_const_key(full_status, 1), be_const_closure(hue_bridge_monad_full_status_closure) },
     })),
-    be_str_literal("hue_bridge_monad")
+    be_str_weak(hue_bridge_monad)
 );
 
 /********************************************************************

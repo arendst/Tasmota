@@ -1,7 +1,7 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(m_libzigbee_map) {
-    { be_const_key(init, -1), be_const_func(zigbee_init) },
+    { be_const_key_weak(init, -1), be_const_func(zigbee_init) },
 };
 
 static be_define_const_map(
