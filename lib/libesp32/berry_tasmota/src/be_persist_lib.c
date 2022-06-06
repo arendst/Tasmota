@@ -656,7 +656,7 @@ be_local_class(Persist,
         { be_const_key(_dirty, -1), be_const_var(2) },
         { be_const_key(member, -1), be_const_closure(Persist_member_closure) },
     })),
-    be_str_literal("Persist")
+    be_str_weak(Persist)
 );
 
 /********************************************************************

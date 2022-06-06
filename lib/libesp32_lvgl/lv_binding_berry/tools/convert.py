@@ -546,7 +546,7 @@ be_local_class(lv_style,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_style_init) },
     })),
-    (be_str_literal("lv_style"))
+    (be_str_weak(lv_style))
 );
 /*******************************************************************/
 
@@ -564,7 +564,7 @@ be_local_class(lv_obj,
         { be_const_key(tostring, 4), be_const_func(lv_x_tostring) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_obj_init) },
     })),
-    (be_str_literal("lv_obj"))
+    (be_str_weak(lv_obj))
 );
 /*******************************************************************/
 
@@ -581,7 +581,7 @@ be_local_class(lv_group,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(be_ntv_lv_group_init) },
     })),
-    (be_str_literal("lv_group"))
+    (be_str_weak(lv_group))
 );
 /*******************************************************************/
 
@@ -598,7 +598,7 @@ be_local_class(lv_indev,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_str_literal("lv_indev"))
+    (be_str_weak(lv_indev))
 );
 /*******************************************************************/
 
@@ -615,7 +615,7 @@ be_local_class(lv_disp,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_str_literal("lv_disp"))
+    (be_str_weak(lv_disp))
 );
 /*******************************************************************/
 
@@ -632,7 +632,7 @@ be_local_class(lv_timer,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    be_str_literal("lv_timer")
+    be_str_weak(lv_timer)
 );
 /*******************************************************************/
 
@@ -649,7 +649,7 @@ be_local_class(lv_anim,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_anim_init) },
     })),
-    be_str_literal("lv_anim")
+    be_str_weak(lv_anim)
 );
 /*******************************************************************/
 
@@ -665,7 +665,7 @@ be_local_class(lv_font,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_str_literal("lv_font"))
+    (be_str_weak(lv_font))
 );
 /*******************************************************************/
 
@@ -681,7 +681,7 @@ be_local_class(lv_theme,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_str_literal("lv_theme"))
+    (be_str_weak(lv_theme))
 );
 /*******************************************************************/
 
@@ -698,7 +698,7 @@ be_local_class(lv_color,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, -1), be_const_func(lco_init) },
     })),
-    (be_str_literal("lv_color"))
+    (be_str_weak(lv_color))
 );
 /*******************************************************************/
 """)
@@ -720,7 +720,7 @@ be_local_class(lv_{subtype},
         {{ be_const_key(_class, -1), be_const_comptr(&lv_{subtype}_class) }},
         {{ be_const_key(init, -1), be_const_func(be_ntv_lv_{subtype}_init) }},
     }})),
-    (be_str_literal("lv_{subtype}"))
+    (be_str_weak(lv_{subtype}))
 );
 /*******************************************************************/
 """)

@@ -78,7 +78,7 @@ int32_t be_audio_opus_decoder_decode(struct bvm *vm) {
 
 /* @const_object_info_begin
 
-class be_class_AudioOpusDecoder (scope: global, name: AudioOpusDecoder) {
+class be_class_AudioOpusDecoder (scope: global, name: AudioOpusDecoder, strings: weak) {
   .p, var
   init, func(be_audio_opus_decoder_init)
   deinit, func(be_audio_opus_decoder_deinit)

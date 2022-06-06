@@ -27,14 +27,33 @@ extern "C" {
     .type = (_t),                                               \
     .marked = GC_CONST
 
+#define be_define_const_str_weak(_name, _s, _len)               \
+    const bcstring be_const_str_##_name = {                     \
+        .next = NULL,                                           \
+        .type = BE_STRING,                                      \
+        .marked = GC_CONST,                                     \
+        .extra = 0,                                             \
+        .slen = _len,                                           \
+        .hash = 0,                                              \
+        .s = _s                                                 \
+    }
+
 #define be_const_key(_str, _next) {                             \
     .v.c = &be_const_str_##_str,                                \
     .type = BE_STRING,                                          \
     .next = (uint32_t)(_next) & 0xFFFFFF                        \
 }
 
+/* try to use the predefined string in strtab, but don't create an instance if none is present */
+/* the behavior is exactly the same as `be_const_key()` but it not detected by pycoc */
+#define be_const_key_weak(_str, _next) {                        \
+    .v.c = &be_const_str_##_str,                                \
+    .type = BE_STRING,                                          \
+    .next = (uint32_t)(_next) & 0xFFFFFF                        \
+}
+
 #define be_const_key_literal(_str, _next) {                     \
-    .v.c = be_str_literal(_str),                                \
+    .v.c = be_str_literal(#_str),                                \
     .type = BE_STRING,                                          \
     .next = (uint32_t)(_next) & 0xFFFFFF                        \
 }
@@ -236,6 +255,13 @@ const bntvmodule be_native_module(_module) = {                  \
     BE_STRING                                                   \
   }
 
+/* variant that does not trigger strtab */
+#define be_nested_str_weak(_name_)                              \
+  {                                                             \
+    { .s=((bstring*)&be_const_str_##_name_) },                  \
+    BE_STRING                                                   \
+  }
+
 #define be_nested_str_literal(_name_)                           \
   {                                                             \
     { .s=(be_nested_const_str(_name_, _hash, sizeof(_name_)-1 ))\
@@ -245,6 +271,9 @@ const bntvmodule be_native_module(_module) = {                  \
 
 #define be_str_literal(_str)                                    \
   be_nested_const_str(_str, 0, sizeof(_str)-1 )
+
+#define be_str_weak(_str)                                       \
+  (bstring*) &be_const_str_##_str
 
 #define be_nested_string(_str, _hash, _len)                     \
   {                                                             \
@@ -262,7 +291,26 @@ const bntvmodule be_native_module(_module) = {                  \
 
 #else
 
+#define be_define_const_str_weak(_name, _s, _len)               \
+const bcstring be_const_str_##_name = {                         \
+    NULL,                                                       \
+    BE_STRING,                                                  \
+    GC_CONST,                                                   \
+    0,                                                          \
+    _len,                                                       \
+    0,                                                          \
+    _s                                                          \
+}
+
 #define be_const_key(_str, _next) {                             \
+    bvaldata(&be_const_str_##_str),                             \
+        BE_STRING,                                              \
+        uint32_t((_next)&0xFFFFFF)                              \
+}
+
+/* try to use the predefined string in strtab, but don't create an instance if none is present */
+/* the behavior is exactly the same as `be_const_key()` but it not detected by pycoc */
+#define be_const_key_weak(_str, _next) {                        \
     bvaldata(&be_const_str_##_str),                             \
         BE_STRING,                                              \
         uint32_t((_next)&0xFFFFFF)                              \

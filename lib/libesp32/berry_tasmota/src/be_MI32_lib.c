@@ -38,7 +38,7 @@ extern int be_BLE_adv_block(bvm *vm);
 #include "be_fixed_be_class_BLE.h"
 
 /* @const_object_info_begin
-class be_class_BLE (scope: global, name: BLE) {
+class be_class_BLE (scope: global, name: BLE, strings: weak) {
   conn_cb,    func(be_BLE_reg_conn_cb)
   set_svc,    func(be_BLE_set_service)
   run,        func(be_BLE_run)

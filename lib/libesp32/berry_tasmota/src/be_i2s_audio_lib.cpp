@@ -162,7 +162,7 @@ extern "C" {
 }
 /* @const_object_info_begin
 
-class be_class_AudioOutput (scope: global, name: AudioOutput) {
+class be_class_AudioOutput (scope: global, name: AudioOutput, strings: weak) {
     .p, var
     init, func(be_audio_output_init)
 
@@ -180,15 +180,15 @@ class be_class_AudioOutput (scope: global, name: AudioOutput) {
     set_gain, func(be_audio_output_set_gain)
 }
 
-class be_class_AudioGenerator (scope: global, name: AudioGenerator) {
+class be_class_AudioGenerator (scope: global, name: AudioGenerator, strings: weak) {
     .p, var
 }
 
-class be_class_AudioFileSource (scope: global, name: AudioFileSource) {
+class be_class_AudioFileSource (scope: global, name: AudioFileSource, strings: weak) {
     .p, var
 }
 
-class be_class_AudioOutputI2S (scope: global, name: AudioOutputI2S, super: be_class_AudioOutput) {
+class be_class_AudioOutputI2S (scope: global, name: AudioOutputI2S, super: be_class_AudioOutput, strings: weak) {
     EXTERNAL_I2S, int(AudioOutputI2S::EXTERNAL_I2S)
     INTERNAL_DAC, int(AudioOutputI2S::INTERNAL_DAC)
     INTERNAL_PDM, int(AudioOutputI2S::INTERNAL_PDM)
@@ -198,7 +198,7 @@ class be_class_AudioOutputI2S (scope: global, name: AudioOutputI2S, super: be_cl
     stop, func(i2s_output_i2s_stop)
 }
 
-class be_class_AudioGeneratorWAV (scope: global, name: AudioGeneratorWAV, super: be_class_AudioGenerator) {
+class be_class_AudioGeneratorWAV (scope: global, name: AudioGeneratorWAV, super: be_class_AudioGenerator, strings: weak) {
     init, func(i2s_generator_wav_init)
     deinit, func(i2s_generator_wav_deinit)
     begin, func(i2s_generator_wav_begin)
@@ -207,7 +207,7 @@ class be_class_AudioGeneratorWAV (scope: global, name: AudioGeneratorWAV, super:
     isrunning, func(i2s_generator_wav_isrunning)
 }
 
-class be_class_AudioGeneratorMP3 (scope: global, name: AudioGeneratorMP3, super: be_class_AudioGenerator) {
+class be_class_AudioGeneratorMP3 (scope: global, name: AudioGeneratorMP3, super: be_class_AudioGenerator, strings: weak) {
     init, func(i2s_generator_mp3_init)
     deinit, func(i2s_generator_mp3_deinit)
     begin, func(i2s_generator_mp3_begin)
@@ -216,7 +216,7 @@ class be_class_AudioGeneratorMP3 (scope: global, name: AudioGeneratorMP3, super:
     isrunning, func(i2s_generator_mp3_isrunning)
 }
 
-class be_class_AudioFileSourceFS (scope: global, name: AudioFileSourceFS, super: be_class_AudioFileSource) {
+class be_class_AudioFileSourceFS (scope: global, name: AudioFileSourceFS, super: be_class_AudioFileSource, strings: weak) {
     init, func(i2s_file_source_fs_init)
     deinit, func(i2s_file_source_fs_deinit)
 }

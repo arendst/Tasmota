@@ -23,9 +23,9 @@ be_local_closure(zb_coord_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("init"),
+    /* K0   */  be_nested_str_weak(init),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
@@ -54,13 +54,13 @@ be_local_closure(zb_coord_add_handler,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("instance"),
-    /* K1   */  be_nested_str_literal("value_error"),
-    /* K2   */  be_nested_str_literal("instance required"),
-    /* K3   */  be_nested_str_literal("_handlers"),
-    /* K4   */  be_nested_str_literal("push"),
+    /* K0   */  be_nested_str_weak(instance),
+    /* K1   */  be_nested_str_weak(value_error),
+    /* K2   */  be_nested_str_weak(instance_X20required),
+    /* K3   */  be_nested_str_weak(_handlers),
+    /* K4   */  be_nested_str_weak(push),
     }),
-    be_str_literal("add_handler"),
+    be_str_weak(add_handler),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x60080004,  //  0000  GETGBL	R2	G4
@@ -101,22 +101,22 @@ be_local_closure(zb_coord_dispatch,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_handlers"),
-    /* K1   */  be_nested_str_literal("introspect"),
-    /* K2   */  be_nested_str_literal("string"),
-    /* K3   */  be_nested_str_literal("zcl_frame"),
+    /* K0   */  be_nested_str_weak(_handlers),
+    /* K1   */  be_nested_str_weak(introspect),
+    /* K2   */  be_nested_str_weak(string),
+    /* K3   */  be_nested_str_weak(zcl_frame),
     /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_literal("get"),
-    /* K6   */  be_nested_str_literal("function"),
-    /* K7   */  be_nested_str_literal("format"),
-    /* K8   */  be_nested_str_literal("BRY: Exception> '%s' - %s"),
-    /* K9   */  be_nested_str_literal("tasmota"),
-    /* K10  */  be_nested_str_literal("_debug_present"),
-    /* K11  */  be_nested_str_literal("debug"),
-    /* K12  */  be_nested_str_literal("traceback"),
+    /* K5   */  be_nested_str_weak(get),
+    /* K6   */  be_nested_str_weak(function),
+    /* K7   */  be_nested_str_weak(format),
+    /* K8   */  be_nested_str_weak(BRY_X3A_X20Exception_X3E_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+    /* K9   */  be_nested_str_weak(tasmota),
+    /* K10  */  be_nested_str_weak(_debug_present),
+    /* K11  */  be_nested_str_weak(debug),
+    /* K12  */  be_nested_str_weak(traceback),
     /* K13  */  be_const_int(1),
     }),
-    be_str_literal("dispatch"),
+    be_str_weak(dispatch),
     &be_const_str_solidified,
     ( &(const binstruction[61]) {  /* code */
       0x88140100,  //  0000  GETMBR	R5	R0	K0
@@ -195,12 +195,12 @@ be_local_class(zb_coord,
     &be_class_zb_coord_ntv,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("dispatch", 1), be_const_closure(zb_coord_dispatch_closure) },
-        { be_const_key_literal("add_handler", 2), be_const_closure(zb_coord_add_handler_closure) },
-        { be_const_key_literal("_handlers", -1), be_const_var(0) },
-        { be_const_key_literal("init", 0), be_const_closure(zb_coord_init_closure) },
+        { be_const_key_weak(dispatch, 1), be_const_closure(zb_coord_dispatch_closure) },
+        { be_const_key_weak(add_handler, 2), be_const_closure(zb_coord_add_handler_closure) },
+        { be_const_key_weak(_handlers, -1), be_const_var(0) },
+        { be_const_key_weak(init, 0), be_const_closure(zb_coord_init_closure) },
     })),
-    be_str_literal("zb_coord")
+    be_str_weak(zb_coord)
 );
 /*******************************************************************/
 

@@ -653,7 +653,7 @@ be_local_class(Leds_segment,
         { be_const_key(begin, 6), be_const_closure(Leds_segment_begin_closure) },
         { be_const_key(pixels_buffer, -1), be_const_closure(Leds_segment_pixels_buffer_closure) },
     })),
-    be_str_literal("Leds_segment")
+    be_str_weak(Leds_segment)
 );
 
 /********************************************************************
@@ -1314,7 +1314,7 @@ be_local_class(Leds_matrix,
         { be_const_key(is_dirty, -1), be_const_closure(Leds_matrix_is_dirty_closure) },
         { be_const_key(can_show, -1), be_const_closure(Leds_matrix_can_show_closure) },
     })),
-    be_str_literal("Leds_matrix")
+    be_str_weak(Leds_matrix)
 );
 
 /********************************************************************
@@ -1904,7 +1904,7 @@ be_local_class(Leds,
         { be_const_key(gamma, -1), be_const_var(0) },
         { be_const_key(can_show, -1), be_const_closure(Leds_can_show_closure) },
     })),
-    be_str_literal("Leds")
+    be_str_weak(Leds)
 );
 /*******************************************************************/
 

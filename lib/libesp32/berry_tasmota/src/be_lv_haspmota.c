@@ -56,10 +56,10 @@ be_local_closure(lvh_page_get_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_obj_id"),
-    /* K1   */  be_nested_str_literal("find"),
+    /* K0   */  be_nested_str_weak(_obj_id),
+    /* K1   */  be_nested_str_weak(find),
     }),
-    be_str_literal("get_obj"),
+    be_str_weak(get_obj),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -87,24 +87,24 @@ be_local_closure(lvh_page_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
-    /* K0   */  be_nested_str_literal("global"),
-    /* K1   */  be_nested_str_literal("_oh"),
+    /* K0   */  be_nested_str_weak(global),
+    /* K1   */  be_nested_str_weak(_oh),
     /* K2   */  be_const_int(1),
-    /* K3   */  be_nested_str_literal("_page_id"),
-    /* K4   */  be_nested_str_literal("_obj_id"),
-    /* K5   */  be_nested_str_literal("_lv_scr"),
-    /* K6   */  be_nested_str_literal("lv"),
-    /* K7   */  be_nested_str_literal("scr_act"),
+    /* K3   */  be_nested_str_weak(_page_id),
+    /* K4   */  be_nested_str_weak(_obj_id),
+    /* K5   */  be_nested_str_weak(_lv_scr),
+    /* K6   */  be_nested_str_weak(lv),
+    /* K7   */  be_nested_str_weak(scr_act),
     /* K8   */  be_const_int(0),
-    /* K9   */  be_nested_str_literal("layer_top"),
-    /* K10  */  be_nested_str_literal("obj"),
-    /* K11  */  be_nested_str_literal("get_style_bg_color"),
-    /* K12  */  be_nested_str_literal("set_style_bg_color"),
-    /* K13  */  be_nested_str_literal("lvh_scr"),
-    /* K14  */  be_nested_str_literal("p"),
-    /* K15  */  be_nested_str_literal("b0"),
+    /* K9   */  be_nested_str_weak(layer_top),
+    /* K10  */  be_nested_str_weak(obj),
+    /* K11  */  be_nested_str_weak(get_style_bg_color),
+    /* K12  */  be_nested_str_weak(set_style_bg_color),
+    /* K13  */  be_nested_str_weak(lvh_scr),
+    /* K14  */  be_nested_str_weak(p),
+    /* K15  */  be_nested_str_weak(b0),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[66]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
@@ -193,9 +193,9 @@ be_local_closure(lvh_page_get_scr,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_scr"),
+    /* K0   */  be_nested_str_weak(_lv_scr),
     }),
-    be_str_literal("get_scr"),
+    be_str_weak(get_scr),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -230,10 +230,10 @@ be_local_closure(lvh_page_show,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
-        /* K0   */  be_nested_str_literal("tasmota"),
-        /* K1   */  be_nested_str_literal("publish_rule"),
+        /* K0   */  be_nested_str_weak(tasmota),
+        /* K1   */  be_nested_str_weak(publish_rule),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0xB8020000,  //  0000  GETNGBL	R0	K0
@@ -255,10 +255,10 @@ be_local_closure(lvh_page_show,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
-        /* K0   */  be_nested_str_literal("tasmota"),
-        /* K1   */  be_nested_str_literal("publish_rule"),
+        /* K0   */  be_nested_str_weak(tasmota),
+        /* K1   */  be_nested_str_weak(publish_rule),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0xB8020000,  //  0000  GETNGBL	R0	K0
@@ -271,28 +271,28 @@ be_local_closure(lvh_page_show,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[20]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_scr"),
-    /* K1   */  be_nested_str_literal("_p"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("scr_act"),
-    /* K4   */  be_nested_str_literal("_oh"),
-    /* K5   */  be_nested_str_literal("page_dir_to"),
-    /* K6   */  be_nested_str_literal("id"),
-    /* K7   */  be_nested_str_literal("string"),
-    /* K8   */  be_nested_str_literal("format"),
-    /* K9   */  be_nested_str_literal("{\"hasp\":{\"p%i\":\"out\"}}"),
-    /* K10  */  be_nested_str_literal("lvh_page_cur_idx"),
-    /* K11  */  be_nested_str_literal("tasmota"),
-    /* K12  */  be_nested_str_literal("set_timer"),
+    /* K0   */  be_nested_str_weak(_lv_scr),
+    /* K1   */  be_nested_str_weak(_p),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(scr_act),
+    /* K4   */  be_nested_str_weak(_oh),
+    /* K5   */  be_nested_str_weak(page_dir_to),
+    /* K6   */  be_nested_str_weak(id),
+    /* K7   */  be_nested_str_weak(string),
+    /* K8   */  be_nested_str_weak(format),
+    /* K9   */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22out_X22_X7D_X7D),
+    /* K10  */  be_nested_str_weak(lvh_page_cur_idx),
+    /* K11  */  be_nested_str_weak(tasmota),
+    /* K12  */  be_nested_str_weak(set_timer),
     /* K13  */  be_const_int(0),
-    /* K14  */  be_nested_str_literal("{\"hasp\":{\"p%i\":\"in\"}}"),
-    /* K15  */  be_nested_str_literal("_page_id"),
-    /* K16  */  be_nested_str_literal("show_anim"),
-    /* K17  */  be_nested_str_literal("find"),
-    /* K18  */  be_nested_str_literal("SCR_LOAD_ANIM_NONE"),
-    /* K19  */  be_nested_str_literal("scr_load_anim"),
+    /* K14  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22in_X22_X7D_X7D),
+    /* K15  */  be_nested_str_weak(_page_id),
+    /* K16  */  be_nested_str_weak(show_anim),
+    /* K17  */  be_nested_str_weak(find),
+    /* K18  */  be_nested_str_weak(SCR_LOAD_ANIM_NONE),
+    /* K19  */  be_nested_str_weak(scr_load_anim),
     }),
-    be_str_literal("show"),
+    be_str_weak(show),
     &be_const_str_solidified,
     ( &(const binstruction[67]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
@@ -382,9 +382,9 @@ be_local_closure(lvh_page_set_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_obj_id"),
+    /* K0   */  be_nested_str_weak(_obj_id),
     }),
-    be_str_literal("set_obj"),
+    be_str_weak(set_obj),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x880C0100,  //  0000  GETMBR	R3	R0	K0
@@ -410,9 +410,9 @@ be_local_closure(lvh_page_id,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_page_id"),
+    /* K0   */  be_nested_str_weak(_page_id),
     }),
-    be_str_literal("id"),
+    be_str_weak(id),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -431,9 +431,9 @@ be_local_class(lvh_page,
     NULL,
     be_nested_map(14,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("prev", 2), be_const_var(4) },
-        { be_const_key_literal("_obj_id", -1), be_const_var(0) },
-        { be_const_key_literal("show_anim", -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(prev, 2), be_const_var(4) },
+        { be_const_key_weak(_obj_id, -1), be_const_var(0) },
+        { be_const_key_weak(show_anim, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(0, 3), be_const_int(0) },
@@ -442,19 +442,19 @@ be_local_class(lvh_page,
         { be_const_key_int(-1, -1), be_const_int(6) },
         { be_const_key_int(-2, -1), be_const_int(7) },
     }))    ) } )) },
-        { be_const_key_literal("_oh", -1), be_const_var(3) },
-        { be_const_key_literal("id", -1), be_const_closure(lvh_page_id_closure) },
-        { be_const_key_literal("init", -1), be_const_closure(lvh_page_init_closure) },
-        { be_const_key_literal("next", 13), be_const_var(5) },
-        { be_const_key_literal("_page_id", -1), be_const_var(1) },
-        { be_const_key_literal("show", -1), be_const_closure(lvh_page_show_closure) },
-        { be_const_key_literal("_lv_scr", -1), be_const_var(2) },
-        { be_const_key_literal("back", 4), be_const_var(6) },
-        { be_const_key_literal("get_obj", 12), be_const_closure(lvh_page_get_obj_closure) },
-        { be_const_key_literal("set_obj", -1), be_const_closure(lvh_page_set_obj_closure) },
-        { be_const_key_literal("get_scr", -1), be_const_closure(lvh_page_get_scr_closure) },
+        { be_const_key_weak(_oh, -1), be_const_var(3) },
+        { be_const_key_weak(id, -1), be_const_closure(lvh_page_id_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lvh_page_init_closure) },
+        { be_const_key_weak(next, 13), be_const_var(5) },
+        { be_const_key_weak(_page_id, -1), be_const_var(1) },
+        { be_const_key_weak(show, -1), be_const_closure(lvh_page_show_closure) },
+        { be_const_key_weak(_lv_scr, -1), be_const_var(2) },
+        { be_const_key_weak(back, 4), be_const_var(6) },
+        { be_const_key_weak(get_obj, 12), be_const_closure(lvh_page_get_obj_closure) },
+        { be_const_key_weak(set_obj, -1), be_const_closure(lvh_page_set_obj_closure) },
+        { be_const_key_weak(get_scr, -1), be_const_closure(lvh_page_get_scr_closure) },
     })),
-    be_str_literal("lvh_page")
+    be_str_weak(lvh_page)
 );
 /*******************************************************************/
 
@@ -478,13 +478,13 @@ be_local_closure(lvh_obj_set_radius2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_style_radius"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_style_radius),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_radius2"),
+    be_str_weak(set_radius2),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -522,14 +522,14 @@ be_local_closure(lvh_obj_register_event_cb,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_page"),
-    /* K1   */  be_nested_str_literal("_oh"),
-    /* K2   */  be_nested_str_literal("_event_map"),
-    /* K3   */  be_nested_str_literal("keys"),
-    /* K4   */  be_nested_str_literal("register_event"),
-    /* K5   */  be_nested_str_literal("stop_iteration"),
+    /* K0   */  be_nested_str_weak(_page),
+    /* K1   */  be_nested_str_weak(_oh),
+    /* K2   */  be_nested_str_weak(_event_map),
+    /* K3   */  be_nested_str_weak(keys),
+    /* K4   */  be_nested_str_weak(register_event),
+    /* K5   */  be_nested_str_weak(stop_iteration),
     }),
-    be_str_literal("register_event_cb"),
+    be_str_weak(register_event_cb),
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -571,10 +571,10 @@ be_local_closure(lvh_obj_get_value_ofs_x,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_label"),
-    /* K1   */  be_nested_str_literal("get_x"),
+    /* K0   */  be_nested_str_weak(_lv_label),
+    /* K1   */  be_nested_str_weak(get_x),
     }),
-    be_str_literal("get_value_ofs_x"),
+    be_str_weak(get_value_ofs_x),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -601,11 +601,11 @@ be_local_closure(lvh_obj_set_value_ofs_x,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("check_label"),
-    /* K1   */  be_nested_str_literal("_lv_label"),
-    /* K2   */  be_nested_str_literal("set_x"),
+    /* K0   */  be_nested_str_weak(check_label),
+    /* K1   */  be_nested_str_weak(_lv_label),
+    /* K2   */  be_nested_str_weak(set_x),
     }),
-    be_str_literal("set_value_ofs_x"),
+    be_str_weak(set_value_ofs_x),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -637,13 +637,13 @@ be_local_closure(lvh_obj_get_radius2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("get_style_radius"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(get_style_radius),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("get_radius2"),
+    be_str_weak(get_radius2),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -679,9 +679,9 @@ be_local_closure(lvh_obj_get_text_rule,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_text_rule"),
+    /* K0   */  be_nested_str_weak(_text_rule),
     }),
-    be_str_literal("get_text_rule"),
+    be_str_weak(get_text_rule),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -706,13 +706,13 @@ be_local_closure(lvh_obj_get_pad_right,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("get_style_pad_right"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(get_style_pad_right),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("get_pad_right"),
+    be_str_weak(get_pad_right),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -748,11 +748,11 @@ be_local_closure(lvh_obj_set_value_ofs_y,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("check_label"),
-    /* K1   */  be_nested_str_literal("_lv_label"),
-    /* K2   */  be_nested_str_literal("set_y"),
+    /* K0   */  be_nested_str_weak(check_label),
+    /* K1   */  be_nested_str_weak(_lv_label),
+    /* K2   */  be_nested_str_weak(set_y),
     }),
-    be_str_literal("set_value_ofs_y"),
+    be_str_weak(set_value_ofs_y),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -792,21 +792,21 @@ be_local_closure(lvh_obj_parse_color,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[13]) {     /* constants */
-        /* K0   */  be_nested_str_literal("string"),
-        /* K1   */  be_nested_str_literal("toupper"),
+        /* K0   */  be_nested_str_weak(string),
+        /* K1   */  be_nested_str_weak(toupper),
         /* K2   */  be_const_int(0),
         /* K3   */  be_const_int(1),
-        /* K4   */  be_nested_str_literal("#"),
-        /* K5   */  be_nested_str_literal("x"),
-        /* K6   */  be_nested_str_literal("X"),
-        /* K7   */  be_nested_str_literal("A"),
-        /* K8   */  be_nested_str_literal("F"),
-        /* K9   */  be_nested_str_literal("byte"),
-        /* K10  */  be_nested_str_literal("0"),
-        /* K11  */  be_nested_str_literal("9"),
-        /* K12  */  be_nested_str_literal("stop_iteration"),
+        /* K4   */  be_nested_str_weak(_X23),
+        /* K5   */  be_nested_str_weak(x),
+        /* K6   */  be_nested_str_weak(X),
+        /* K7   */  be_nested_str_weak(A),
+        /* K8   */  be_nested_str_weak(F),
+        /* K9   */  be_nested_str_weak(byte),
+        /* K10  */  be_nested_str_weak(0),
+        /* K11  */  be_nested_str_weak(9),
+        /* K12  */  be_nested_str_weak(stop_iteration),
         }),
-        be_str_literal("parse_hex"),
+        be_str_weak(parse_hex),
         &be_const_str_solidified,
         ( &(const binstruction[57]) {  /* code */
           0xA4060000,  //  0000  IMPORT	R1	K0
@@ -872,16 +872,16 @@ be_local_closure(lvh_obj_parse_color,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_literal("#"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("color"),
-    /* K4   */  be_nested_str_literal("string"),
-    /* K5   */  be_nested_str_literal("introspect"),
-    /* K6   */  be_nested_str_literal("COLOR_"),
-    /* K7   */  be_nested_str_literal("toupper"),
-    /* K8   */  be_nested_str_literal("get"),
+    /* K1   */  be_nested_str_weak(_X23),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(color),
+    /* K4   */  be_nested_str_weak(string),
+    /* K5   */  be_nested_str_weak(introspect),
+    /* K6   */  be_nested_str_weak(COLOR_),
+    /* K7   */  be_nested_str_weak(toupper),
+    /* K8   */  be_nested_str_weak(get),
     }),
-    be_str_literal("parse_color"),
+    be_str_weak(parse_color),
     &be_const_str_solidified,
     ( &(const binstruction[39]) {  /* code */
       0x84040000,  //  0000  CLOSURE	R1	P0
@@ -943,7 +943,7 @@ be_local_closure(lvh_obj_get_text_font,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_text_font"),
+    be_str_weak(get_text_font),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -967,16 +967,16 @@ be_local_closure(lvh_obj_text_rule_matched,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_literal("int"),
-    /* K1   */  be_nested_str_literal("_text_rule_function"),
-    /* K2   */  be_nested_str_literal("string"),
-    /* K3   */  be_nested_str_literal("format"),
-    /* K4   */  be_nested_str_literal("HSP: failed to run self._text_rule_function - %s (%s)"),
-    /* K5   */  be_nested_str_literal("_text_rule_format"),
-    /* K6   */  be_nested_str_literal(""),
-    /* K7   */  be_nested_str_literal("text"),
+    /* K0   */  be_nested_str_weak(int),
+    /* K1   */  be_nested_str_weak(_text_rule_function),
+    /* K2   */  be_nested_str_weak(string),
+    /* K3   */  be_nested_str_weak(format),
+    /* K4   */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20run_X20self_X2E_text_rule_function_X20_X2D_X20_X25s_X20_X28_X25s_X29),
+    /* K5   */  be_nested_str_weak(_text_rule_format),
+    /* K6   */  be_nested_str_weak(),
+    /* K7   */  be_nested_str_weak(text),
     }),
-    be_str_literal("text_rule_matched"),
+    be_str_weak(text_rule_matched),
     &be_const_str_solidified,
     ( &(const binstruction[49]) {  /* code */
       0x60080004,  //  0000  GETGBL	R2	G4
@@ -1048,13 +1048,13 @@ be_local_closure(lvh_obj_set_pad_bottom2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_style_pad_bottom"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_style_pad_bottom),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_pad_bottom2"),
+    be_str_weak(set_pad_bottom2),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -1092,21 +1092,21 @@ be_local_closure(lvh_obj_set_align,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_str_literal("check_label"),
+    /* K0   */  be_nested_str_weak(check_label),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_literal("left"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("TEXT_ALIGN_LEFT"),
+    /* K2   */  be_nested_str_weak(left),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(TEXT_ALIGN_LEFT),
     /* K5   */  be_const_int(1),
-    /* K6   */  be_nested_str_literal("center"),
-    /* K7   */  be_nested_str_literal("TEXT_ALIGN_CENTER"),
+    /* K6   */  be_nested_str_weak(center),
+    /* K7   */  be_nested_str_weak(TEXT_ALIGN_CENTER),
     /* K8   */  be_const_int(2),
-    /* K9   */  be_nested_str_literal("right"),
-    /* K10  */  be_nested_str_literal("TEXT_ALIGN_RIGHT"),
-    /* K11  */  be_nested_str_literal("_lv_label"),
-    /* K12  */  be_nested_str_literal("set_style_text_align"),
+    /* K9   */  be_nested_str_weak(right),
+    /* K10  */  be_nested_str_weak(TEXT_ALIGN_RIGHT),
+    /* K11  */  be_nested_str_weak(_lv_label),
+    /* K12  */  be_nested_str_weak(set_style_text_align),
     }),
-    be_str_literal("set_align"),
+    be_str_weak(set_align),
     &be_const_str_solidified,
     ( &(const binstruction[29]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
@@ -1158,9 +1158,9 @@ be_local_closure(lvh_obj_set_text_rule_format,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_text_rule_format"),
+    /* K0   */  be_nested_str_weak(_text_rule_format),
     }),
-    be_str_literal("set_text_rule_format"),
+    be_str_weak(set_text_rule_format),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x60080008,  //  0000  GETGBL	R2	G8
@@ -1188,10 +1188,10 @@ be_local_closure(lvh_obj_set_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_value"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_value),
     }),
-    be_str_literal("set_val"),
+    be_str_weak(set_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -1219,9 +1219,9 @@ be_local_closure(lvh_obj_get_text_rule_format,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_text_rule_format"),
+    /* K0   */  be_nested_str_weak(_text_rule_format),
     }),
-    be_str_literal("get_text_rule_format"),
+    be_str_weak(get_text_rule_format),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -1246,9 +1246,9 @@ be_local_closure(lvh_obj_set_action,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_action"),
+    /* K0   */  be_nested_str_weak(_action),
     }),
-    be_str_literal("set_action"),
+    be_str_weak(set_action),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x60080008,  //  0000  GETGBL	R2	G8
@@ -1276,15 +1276,15 @@ be_local_closure(lvh_obj_set_text_rule_formula,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_text_rule_formula"),
-    /* K1   */  be_nested_str_literal("return / val -> ("),
-    /* K2   */  be_nested_str_literal(")"),
-    /* K3   */  be_nested_str_literal("_text_rule_function"),
-    /* K4   */  be_nested_str_literal("string"),
-    /* K5   */  be_nested_str_literal("format"),
-    /* K6   */  be_nested_str_literal("HSP: failed to compile '%s' - %s (%s)"),
+    /* K0   */  be_nested_str_weak(_text_rule_formula),
+    /* K1   */  be_nested_str_weak(return_X20_X2F_X20val_X20_X2D_X3E_X20_X28),
+    /* K2   */  be_nested_str_weak(_X29),
+    /* K3   */  be_nested_str_weak(_text_rule_function),
+    /* K4   */  be_nested_str_weak(string),
+    /* K5   */  be_nested_str_weak(format),
+    /* K6   */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20compile_X20_X27_X25s_X27_X20_X2D_X20_X25s_X20_X28_X25s_X29),
     }),
-    be_str_literal("set_text_rule_formula"),
+    be_str_weak(set_text_rule_formula),
     &be_const_str_solidified,
     ( &(const binstruction[30]) {  /* code */
       0x60080008,  //  0000  GETGBL	R2	G8
@@ -1337,13 +1337,13 @@ be_local_closure(lvh_obj_val_rule_matched,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_val_rule_function"),
-    /* K1   */  be_nested_str_literal("string"),
-    /* K2   */  be_nested_str_literal("format"),
-    /* K3   */  be_nested_str_literal("HSP: failed to run self._val_rule_function - %s (%s)"),
-    /* K4   */  be_nested_str_literal("val"),
+    /* K0   */  be_nested_str_weak(_val_rule_function),
+    /* K1   */  be_nested_str_weak(string),
+    /* K2   */  be_nested_str_weak(format),
+    /* K3   */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20run_X20self_X2E_val_rule_function_X20_X2D_X20_X25s_X20_X28_X25s_X29),
+    /* K4   */  be_nested_str_weak(val),
     }),
-    be_str_literal("val_rule_matched"),
+    be_str_weak(val_rule_matched),
     &be_const_str_solidified,
     ( &(const binstruction[32]) {  /* code */
       0x6008000A,  //  0000  GETGBL	R2	G10
@@ -1400,9 +1400,9 @@ be_local_closure(lvh_obj_remove_trailing_zeroes,   /* name */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_const_int(1),
-    /* K2   */  be_nested_str_literal("resize"),
+    /* K2   */  be_nested_str_weak(resize),
     }),
-    be_str_literal("remove_trailing_zeroes"),
+    be_str_weak(remove_trailing_zeroes),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0x6004000C,  //  0000  GETGBL	R1	G12
@@ -1448,9 +1448,9 @@ be_local_closure(lvh_obj_post_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("register_event_cb"),
+    /* K0   */  be_nested_str_weak(register_event_cb),
     }),
-    be_str_literal("post_init"),
+    be_str_weak(post_init),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
@@ -1476,7 +1476,7 @@ be_local_closure(lvh_obj_get_mode,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_mode"),
+    be_str_weak(get_mode),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -1500,13 +1500,13 @@ be_local_closure(lvh_obj_set_pad_top2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_style_pad_top"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_style_pad_top),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_pad_top2"),
+    be_str_weak(set_pad_top2),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -1544,9 +1544,9 @@ be_local_closure(lvh_obj_set_value_font,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("set_text_font"),
+    /* K0   */  be_nested_str_weak(set_text_font),
     }),
-    be_str_literal("set_value_font"),
+    be_str_weak(set_value_font),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -1573,13 +1573,13 @@ be_local_closure(lvh_obj_set_enabled,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("add_flag"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("OBJ_FLAG_CLICKABLE"),
-    /* K4   */  be_nested_str_literal("clear_flag"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(add_flag),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(OBJ_FLAG_CLICKABLE),
+    /* K4   */  be_nested_str_weak(clear_flag),
     }),
-    be_str_literal("set_enabled"),
+    be_str_weak(set_enabled),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x78060005,  //  0000  JMPF	R1	#0007
@@ -1615,18 +1615,18 @@ be_local_closure(lvh_obj_get_align,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_label"),
-    /* K1   */  be_nested_str_literal("get_style_text_align"),
+    /* K0   */  be_nested_str_weak(_lv_label),
+    /* K1   */  be_nested_str_weak(get_style_text_align),
     /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("TEXT_ALIGN_LEFT"),
-    /* K5   */  be_nested_str_literal("left"),
-    /* K6   */  be_nested_str_literal("TEXT_ALIGN_CENTER"),
-    /* K7   */  be_nested_str_literal("center"),
-    /* K8   */  be_nested_str_literal("TEXT_ALIGN_RIGHT"),
-    /* K9   */  be_nested_str_literal("right"),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(TEXT_ALIGN_LEFT),
+    /* K5   */  be_nested_str_weak(left),
+    /* K6   */  be_nested_str_weak(TEXT_ALIGN_CENTER),
+    /* K7   */  be_nested_str_weak(center),
+    /* K8   */  be_nested_str_weak(TEXT_ALIGN_RIGHT),
+    /* K9   */  be_nested_str_weak(right),
     }),
-    be_str_literal("get_align"),
+    be_str_weak(get_align),
     &be_const_str_solidified,
     ( &(const binstruction[32]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -1681,13 +1681,13 @@ be_local_closure(lvh_obj_get_pad_left,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("get_style_pad_left"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(get_style_pad_left),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("get_pad_left"),
+    be_str_weak(get_pad_left),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -1723,25 +1723,25 @@ be_local_closure(lvh_obj_set_text_font,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_literal("int"),
-    /* K1   */  be_nested_str_literal("lv"),
-    /* K2   */  be_nested_str_literal("font_embedded"),
-    /* K3   */  be_nested_str_literal("robotocondensed"),
-    /* K4   */  be_nested_str_literal("montserrat"),
-    /* K5   */  be_nested_str_literal("string"),
-    /* K6   */  be_nested_str_literal("split"),
-    /* K7   */  be_nested_str_literal(":"),
+    /* K0   */  be_nested_str_weak(int),
+    /* K1   */  be_nested_str_weak(lv),
+    /* K2   */  be_nested_str_weak(font_embedded),
+    /* K3   */  be_nested_str_weak(robotocondensed),
+    /* K4   */  be_nested_str_weak(montserrat),
+    /* K5   */  be_nested_str_weak(string),
+    /* K6   */  be_nested_str_weak(split),
+    /* K7   */  be_nested_str_weak(_X3A),
     /* K8   */  be_const_int(1),
-    /* K9   */  be_nested_str_literal("-"),
+    /* K9   */  be_nested_str_weak(_X2D),
     /* K10  */  be_const_int(0),
-    /* K11  */  be_nested_str_literal("load_font"),
+    /* K11  */  be_nested_str_weak(load_font),
     /* K12  */  be_const_int(2),
-    /* K13  */  be_nested_str_literal("concat"),
-    /* K14  */  be_nested_str_literal("_lv_obj"),
-    /* K15  */  be_nested_str_literal("set_style_text_font"),
-    /* K16  */  be_nested_str_literal("HSP: Unsupported font:"),
+    /* K13  */  be_nested_str_weak(concat),
+    /* K14  */  be_nested_str_weak(_lv_obj),
+    /* K15  */  be_nested_str_weak(set_style_text_font),
+    /* K16  */  be_nested_str_weak(HSP_X3A_X20Unsupported_X20font_X3A),
     }),
-    be_str_literal("set_text_font"),
+    be_str_weak(set_text_font),
     &be_const_str_solidified,
     ( &(const binstruction[114]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
@@ -1890,9 +1890,9 @@ be_local_closure(lvh_obj_event_cb,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_str_literal("do_action"),
+        /* K0   */  be_nested_str_weak(do_action),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x68000000,  //  0000  GETUPV	R0	U0
@@ -1915,10 +1915,10 @@ be_local_closure(lvh_obj_event_cb,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
-        /* K0   */  be_nested_str_literal("tasmota"),
-        /* K1   */  be_nested_str_literal("publish_rule"),
+        /* K0   */  be_nested_str_weak(tasmota),
+        /* K1   */  be_nested_str_weak(publish_rule),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0xB8020000,  //  0000  GETNGBL	R0	K0
@@ -1931,32 +1931,32 @@ be_local_closure(lvh_obj_event_cb,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[24]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_page"),
-    /* K1   */  be_nested_str_literal("_oh"),
-    /* K2   */  be_nested_str_literal("code"),
-    /* K3   */  be_nested_str_literal("action"),
-    /* K4   */  be_nested_str_literal(""),
-    /* K5   */  be_nested_str_literal("lv"),
-    /* K6   */  be_nested_str_literal("EVENT_CLICKED"),
-    /* K7   */  be_nested_str_literal("tasmota"),
-    /* K8   */  be_nested_str_literal("set_timer"),
+    /* K0   */  be_nested_str_weak(_page),
+    /* K1   */  be_nested_str_weak(_oh),
+    /* K2   */  be_nested_str_weak(code),
+    /* K3   */  be_nested_str_weak(action),
+    /* K4   */  be_nested_str_weak(),
+    /* K5   */  be_nested_str_weak(lv),
+    /* K6   */  be_nested_str_weak(EVENT_CLICKED),
+    /* K7   */  be_nested_str_weak(tasmota),
+    /* K8   */  be_nested_str_weak(set_timer),
     /* K9   */  be_const_int(0),
-    /* K10  */  be_nested_str_literal("_event_map"),
-    /* K11  */  be_nested_str_literal("find"),
-    /* K12  */  be_nested_str_literal("string"),
-    /* K13  */  be_nested_str_literal("EVENT_VALUE_CHANGED"),
-    /* K14  */  be_nested_str_literal("val"),
-    /* K15  */  be_nested_str_literal("format"),
-    /* K16  */  be_nested_str_literal(",\"val\":%i"),
-    /* K17  */  be_nested_str_literal("text"),
-    /* K18  */  be_nested_str_literal("json"),
-    /* K19  */  be_nested_str_literal(",\"text\":"),
-    /* K20  */  be_nested_str_literal("dump"),
-    /* K21  */  be_nested_str_literal("{\"hasp\":{\"p%ib%i\":{\"event\":\"%s\"%s}}}"),
-    /* K22  */  be_nested_str_literal("_page_id"),
-    /* K23  */  be_nested_str_literal("id"),
+    /* K10  */  be_nested_str_weak(_event_map),
+    /* K11  */  be_nested_str_weak(find),
+    /* K12  */  be_nested_str_weak(string),
+    /* K13  */  be_nested_str_weak(EVENT_VALUE_CHANGED),
+    /* K14  */  be_nested_str_weak(val),
+    /* K15  */  be_nested_str_weak(format),
+    /* K16  */  be_nested_str_weak(_X2C_X22val_X22_X3A_X25i),
+    /* K17  */  be_nested_str_weak(text),
+    /* K18  */  be_nested_str_weak(json),
+    /* K19  */  be_nested_str_weak(_X2C_X22text_X22_X3A),
+    /* K20  */  be_nested_str_weak(dump),
+    /* K21  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25ib_X25i_X22_X3A_X7B_X22event_X22_X3A_X22_X25s_X22_X25s_X7D_X7D_X7D),
+    /* K22  */  be_nested_str_weak(_page_id),
+    /* K23  */  be_nested_str_weak(id),
     }),
-    be_str_literal("event_cb"),
+    be_str_weak(event_cb),
     &be_const_str_solidified,
     ( &(const binstruction[71]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -2050,9 +2050,9 @@ be_local_closure(lvh_obj_get_value_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("get_value_color"),
+    /* K0   */  be_nested_str_weak(get_value_color),
     }),
-    be_str_literal("get_value_color"),
+    be_str_weak(get_value_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
@@ -2078,9 +2078,9 @@ be_local_closure(lvh_obj_get_val_rule,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_val_rule"),
+    /* K0   */  be_nested_str_weak(_val_rule),
     }),
-    be_str_literal("get_val_rule"),
+    be_str_weak(get_val_rule),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2105,10 +2105,10 @@ be_local_closure(lvh_obj_get_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_value"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_value),
     }),
-    be_str_literal("get_val"),
+    be_str_weak(get_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2135,9 +2135,9 @@ be_local_closure(lvh_obj_get_click,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("get_enabled"),
+    /* K0   */  be_nested_str_weak(get_enabled),
     }),
-    be_str_literal("get_click"),
+    be_str_weak(get_click),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
@@ -2163,9 +2163,9 @@ be_local_closure(lvh_obj_set_click,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("set_enabled"),
+    /* K0   */  be_nested_str_weak(set_enabled),
     }),
-    be_str_literal("set_click"),
+    be_str_weak(set_click),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -2192,24 +2192,24 @@ be_local_closure(lvh_obj_member,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
-    /* K0   */  be_nested_str_literal("string"),
-    /* K1   */  be_nested_str_literal("introspect"),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(introspect),
     /* K2   */  be_const_int(0),
     /* K3   */  be_const_int(3),
-    /* K4   */  be_nested_str_literal("set_"),
-    /* K5   */  be_nested_str_literal("get_"),
-    /* K6   */  be_nested_str_literal("_attr_ignore"),
-    /* K7   */  be_nested_str_literal("find"),
-    /* K8   */  be_nested_str_literal("get"),
-    /* K9   */  be_nested_str_literal("function"),
-    /* K10  */  be_nested_str_literal("_attr_map"),
-    /* K11  */  be_nested_str_literal("contains"),
-    /* K12  */  be_nested_str_literal("_lv_obj"),
-    /* K13  */  be_nested_str_literal("style_"),
-    /* K14  */  be_nested_str_literal("unknown attribute "),
-    /* K15  */  be_nested_str_literal("value_error"),
+    /* K4   */  be_nested_str_weak(set_),
+    /* K5   */  be_nested_str_weak(get_),
+    /* K6   */  be_nested_str_weak(_attr_ignore),
+    /* K7   */  be_nested_str_weak(find),
+    /* K8   */  be_nested_str_weak(get),
+    /* K9   */  be_nested_str_weak(function),
+    /* K10  */  be_nested_str_weak(_attr_map),
+    /* K11  */  be_nested_str_weak(contains),
+    /* K12  */  be_nested_str_weak(_lv_obj),
+    /* K13  */  be_nested_str_weak(style_),
+    /* K14  */  be_nested_str_weak(unknown_X20attribute_X20),
+    /* K15  */  be_nested_str_weak(value_error),
     }),
-    be_str_literal("member"),
+    be_str_weak(member),
     &be_const_str_solidified,
     ( &(const binstruction[69]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
@@ -2301,9 +2301,9 @@ be_local_closure(lvh_obj_get_text_rule_formula,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_text_rule_formula"),
+    /* K0   */  be_nested_str_weak(_text_rule_formula),
     }),
-    be_str_literal("get_text_rule_formula"),
+    be_str_weak(get_text_rule_formula),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2328,10 +2328,10 @@ be_local_closure(lvh_obj_get_value_ofs_y,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_label"),
-    /* K1   */  be_nested_str_literal("get_y"),
+    /* K0   */  be_nested_str_weak(_lv_label),
+    /* K1   */  be_nested_str_weak(get_y),
     }),
-    be_str_literal("get_value_ofs_y"),
+    be_str_weak(get_value_ofs_y),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2358,9 +2358,9 @@ be_local_closure(lvh_obj_get_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
     }),
-    be_str_literal("get_obj"),
+    be_str_weak(get_obj),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2385,11 +2385,11 @@ be_local_closure(lvh_obj_is_color_attribute,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("re"),
-    /* K1   */  be_nested_str_literal("search"),
-    /* K2   */  be_nested_str_literal("color$"),
+    /* K0   */  be_nested_str_weak(re),
+    /* K1   */  be_nested_str_weak(search),
+    /* K2   */  be_nested_str_weak(color_X24),
     }),
-    be_str_literal("is_color_attribute"),
+    be_str_weak(is_color_attribute),
     &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
@@ -2422,26 +2422,26 @@ be_local_closure(lvh_obj_set_mode,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
-    /* K0   */  be_nested_str_literal("expand"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_width"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("SIZE_CONTENT"),
-    /* K5   */  be_nested_str_literal("break"),
-    /* K6   */  be_nested_str_literal("LABEL_LONG_WRAP"),
-    /* K7   */  be_nested_str_literal("dots"),
-    /* K8   */  be_nested_str_literal("LABEL_LONG_DOT"),
-    /* K9   */  be_nested_str_literal("scroll"),
-    /* K10  */  be_nested_str_literal("LABEL_LONG_SCROLL"),
-    /* K11  */  be_nested_str_literal("loop"),
-    /* K12  */  be_nested_str_literal("LABEL_LONG_SCROLL_CIRCULAR"),
-    /* K13  */  be_nested_str_literal("crop"),
-    /* K14  */  be_nested_str_literal("LABEL_LONG_CLIP"),
-    /* K15  */  be_nested_str_literal("check_label"),
-    /* K16  */  be_nested_str_literal("_lv_label"),
-    /* K17  */  be_nested_str_literal("set_long_mode"),
+    /* K0   */  be_nested_str_weak(expand),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_width),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(SIZE_CONTENT),
+    /* K5   */  be_nested_str_weak(break),
+    /* K6   */  be_nested_str_weak(LABEL_LONG_WRAP),
+    /* K7   */  be_nested_str_weak(dots),
+    /* K8   */  be_nested_str_weak(LABEL_LONG_DOT),
+    /* K9   */  be_nested_str_weak(scroll),
+    /* K10  */  be_nested_str_weak(LABEL_LONG_SCROLL),
+    /* K11  */  be_nested_str_weak(loop),
+    /* K12  */  be_nested_str_weak(LABEL_LONG_SCROLL_CIRCULAR),
+    /* K13  */  be_nested_str_weak(crop),
+    /* K14  */  be_nested_str_weak(LABEL_LONG_CLIP),
+    /* K15  */  be_nested_str_weak(check_label),
+    /* K16  */  be_nested_str_weak(_lv_label),
+    /* K17  */  be_nested_str_weak(set_long_mode),
     }),
-    be_str_literal("set_mode"),
+    be_str_weak(set_mode),
     &be_const_str_solidified,
     ( &(const binstruction[43]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
@@ -2507,9 +2507,9 @@ be_local_closure(lvh_obj_set_value_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("set_text_color"),
+    /* K0   */  be_nested_str_weak(set_text_color),
     }),
-    be_str_literal("set_value_color"),
+    be_str_weak(set_value_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -2546,9 +2546,9 @@ be_local_closure(lvh_obj_set_text_rule,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_str_literal("text_rule_matched"),
+        /* K0   */  be_nested_str_weak(text_rule_matched),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0x68040000,  //  0000  GETUPV	R1	U0
@@ -2561,12 +2561,12 @@ be_local_closure(lvh_obj_set_text_rule,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_text_rule"),
-    /* K1   */  be_nested_str_literal("tasmota"),
-    /* K2   */  be_nested_str_literal("remove_rule"),
-    /* K3   */  be_nested_str_literal("add_rule"),
+    /* K0   */  be_nested_str_weak(_text_rule),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(remove_rule),
+    /* K3   */  be_nested_str_weak(add_rule),
     }),
-    be_str_literal("set_text_rule"),
+    be_str_weak(set_text_rule),
     &be_const_str_solidified,
     ( &(const binstruction[21]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -2610,12 +2610,12 @@ be_local_closure(lvh_obj_get_adjustable,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("has_flag"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("OBJ_FLAG_CLICKABLE"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(has_flag),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(OBJ_FLAG_CLICKABLE),
     }),
-    be_str_literal("get_adjustable"),
+    be_str_weak(get_adjustable),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2644,12 +2644,12 @@ be_local_closure(lvh_obj_get_toggle,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("has_state"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("STATE_CHECKED"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(has_state),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(STATE_CHECKED),
     }),
-    be_str_literal("get_toggle"),
+    be_str_weak(get_toggle),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2678,9 +2678,9 @@ be_local_closure(lvh_obj_get_value_str,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("get_text"),
+    /* K0   */  be_nested_str_weak(get_text),
     }),
-    be_str_literal("get_value_str"),
+    be_str_weak(get_value_str),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
@@ -2706,13 +2706,13 @@ be_local_closure(lvh_obj_set_pad_right2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_style_pad_right"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_style_pad_right),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_pad_right2"),
+    be_str_weak(set_pad_right2),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -2750,15 +2750,15 @@ be_local_closure(lvh_obj_set_val_rule_formula,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_val_rule_formula"),
-    /* K1   */  be_nested_str_literal("return / val -> ("),
-    /* K2   */  be_nested_str_literal(")"),
-    /* K3   */  be_nested_str_literal("_val_rule_function"),
-    /* K4   */  be_nested_str_literal("string"),
-    /* K5   */  be_nested_str_literal("format"),
-    /* K6   */  be_nested_str_literal("HSP: failed to compile '%s' - %s (%s)"),
+    /* K0   */  be_nested_str_weak(_val_rule_formula),
+    /* K1   */  be_nested_str_weak(return_X20_X2F_X20val_X20_X2D_X3E_X20_X28),
+    /* K2   */  be_nested_str_weak(_X29),
+    /* K3   */  be_nested_str_weak(_val_rule_function),
+    /* K4   */  be_nested_str_weak(string),
+    /* K5   */  be_nested_str_weak(format),
+    /* K6   */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20compile_X20_X27_X25s_X27_X20_X2D_X20_X25s_X20_X28_X25s_X29),
     }),
-    be_str_literal("set_val_rule_formula"),
+    be_str_weak(set_val_rule_formula),
     &be_const_str_solidified,
     ( &(const binstruction[30]) {  /* code */
       0x60080008,  //  0000  GETGBL	R2	G8
@@ -2811,11 +2811,11 @@ be_local_closure(lvh_obj_get_line_width,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_style_line_width"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_style_line_width),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("get_line_width"),
+    be_str_weak(get_line_width),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2843,13 +2843,13 @@ be_local_closure(lvh_obj_set_pad_left2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_style_pad_left"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_style_pad_left),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_pad_left2"),
+    be_str_weak(set_pad_left2),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -2887,9 +2887,9 @@ be_local_closure(lvh_obj_get_val_rule_formula,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_val_rule_formula"),
+    /* K0   */  be_nested_str_weak(_val_rule_formula),
     }),
-    be_str_literal("get_val_rule_formula"),
+    be_str_weak(get_val_rule_formula),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2914,14 +2914,14 @@ be_local_closure(lvh_obj_check_label,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_label"),
-    /* K1   */  be_nested_str_literal("lv"),
-    /* K2   */  be_nested_str_literal("label"),
-    /* K3   */  be_nested_str_literal("get_obj"),
-    /* K4   */  be_nested_str_literal("set_align"),
-    /* K5   */  be_nested_str_literal("ALIGN_CENTER"),
+    /* K0   */  be_nested_str_weak(_lv_label),
+    /* K1   */  be_nested_str_weak(lv),
+    /* K2   */  be_nested_str_weak(label),
+    /* K3   */  be_nested_str_weak(get_obj),
+    /* K4   */  be_nested_str_weak(set_align),
+    /* K5   */  be_nested_str_weak(ALIGN_CENTER),
     }),
-    be_str_literal("check_label"),
+    be_str_weak(check_label),
     &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2960,10 +2960,10 @@ be_local_closure(lvh_obj_get_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_label"),
-    /* K1   */  be_nested_str_literal("get_text"),
+    /* K0   */  be_nested_str_weak(_lv_label),
+    /* K1   */  be_nested_str_weak(get_text),
     }),
-    be_str_literal("get_text"),
+    be_str_weak(get_text),
     &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -2996,13 +2996,13 @@ be_local_closure(lvh_obj_set_hidden,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("add_flag"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("OBJ_FLAG_HIDDEN"),
-    /* K4   */  be_nested_str_literal("clear_flag"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(add_flag),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(OBJ_FLAG_HIDDEN),
+    /* K4   */  be_nested_str_weak(clear_flag),
     }),
-    be_str_literal("set_hidden"),
+    be_str_weak(set_hidden),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x78060005,  //  0000  JMPF	R1	#0007
@@ -3038,13 +3038,13 @@ be_local_closure(lvh_obj_set_pad_all2,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("set_style_pad_all"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_style_pad_all),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_pad_all2"),
+    be_str_weak(set_pad_all2),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -3082,12 +3082,12 @@ be_local_closure(lvh_obj_set_text_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_style_text_color"),
-    /* K2   */  be_nested_str_literal("parse_color"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_style_text_color),
+    /* K2   */  be_nested_str_weak(parse_color),
     /* K3   */  be_const_int(0),
     }),
-    be_str_literal("set_text_color"),
+    be_str_weak(set_text_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -3118,13 +3118,13 @@ be_local_closure(lvh_obj_get_pad_bottom,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("get_style_pad_bottom"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(get_style_pad_bottom),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("get_pad_bottom"),
+    be_str_weak(get_pad_bottom),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -3160,13 +3160,13 @@ be_local_closure(lvh_obj_get_pad_top,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_part2_selector"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("get_style_pad_top"),
-    /* K3   */  be_nested_str_literal("lv"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_part2_selector),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(get_style_pad_top),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("get_pad_top"),
+    be_str_weak(get_pad_top),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -3202,13 +3202,13 @@ be_local_closure(lvh_obj_set_adjustable,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("add_flag"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("OBJ_FLAG_CLICKABLE"),
-    /* K4   */  be_nested_str_literal("clear_flag"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(add_flag),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(OBJ_FLAG_CLICKABLE),
+    /* K4   */  be_nested_str_weak(clear_flag),
     }),
-    be_str_literal("set_adjustable"),
+    be_str_weak(set_adjustable),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0x78060005,  //  0000  JMPF	R1	#0007
@@ -3244,12 +3244,12 @@ be_local_closure(lvh_obj_get_enabled,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("has_flag"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("OBJ_FLAG_CLICKABLE"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(has_flag),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(OBJ_FLAG_CLICKABLE),
     }),
-    be_str_literal("get_enabled"),
+    be_str_weak(get_enabled),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -3278,26 +3278,26 @@ be_local_closure(lvh_obj_setmember,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
-    /* K0   */  be_nested_str_literal("string"),
-    /* K1   */  be_nested_str_literal("introspect"),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(introspect),
     /* K2   */  be_const_int(0),
     /* K3   */  be_const_int(3),
-    /* K4   */  be_nested_str_literal("set_"),
-    /* K5   */  be_nested_str_literal("get_"),
-    /* K6   */  be_nested_str_literal("_attr_ignore"),
-    /* K7   */  be_nested_str_literal("find"),
-    /* K8   */  be_nested_str_literal("get"),
-    /* K9   */  be_nested_str_literal("function"),
-    /* K10  */  be_nested_str_literal("_attr_map"),
-    /* K11  */  be_nested_str_literal("contains"),
-    /* K12  */  be_nested_str_literal("_lv_obj"),
-    /* K13  */  be_nested_str_literal("is_color_attribute"),
-    /* K14  */  be_nested_str_literal("parse_color"),
-    /* K15  */  be_nested_str_literal("style_"),
-    /* K16  */  be_nested_str_literal("HSP: Could not find function set_"),
-    /* K17  */  be_nested_str_literal("HSP: unknown attribute:"),
+    /* K4   */  be_nested_str_weak(set_),
+    /* K5   */  be_nested_str_weak(get_),
+    /* K6   */  be_nested_str_weak(_attr_ignore),
+    /* K7   */  be_nested_str_weak(find),
+    /* K8   */  be_nested_str_weak(get),
+    /* K9   */  be_nested_str_weak(function),
+    /* K10  */  be_nested_str_weak(_attr_map),
+    /* K11  */  be_nested_str_weak(contains),
+    /* K12  */  be_nested_str_weak(_lv_obj),
+    /* K13  */  be_nested_str_weak(is_color_attribute),
+    /* K14  */  be_nested_str_weak(parse_color),
+    /* K15  */  be_nested_str_weak(style_),
+    /* K16  */  be_nested_str_weak(HSP_X3A_X20Could_X20not_X20find_X20function_X20set_),
+    /* K17  */  be_nested_str_weak(HSP_X3A_X20unknown_X20attribute_X3A),
     }),
-    be_str_literal("setmember"),
+    be_str_weak(setmember),
     &be_const_str_solidified,
     ( &(const binstruction[83]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
@@ -3403,12 +3403,12 @@ be_local_closure(lvh_obj_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_page"),
-    /* K1   */  be_nested_str_literal("_lv_class"),
-    /* K2   */  be_nested_str_literal("_lv_obj"),
-    /* K3   */  be_nested_str_literal("post_init"),
+    /* K0   */  be_nested_str_weak(_page),
+    /* K1   */  be_nested_str_weak(_lv_class),
+    /* K2   */  be_nested_str_weak(_lv_obj),
+    /* K3   */  be_nested_str_weak(post_init),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
       0x90020002,  //  0000  SETMBR	R0	K0	R2
@@ -3447,9 +3447,9 @@ be_local_closure(lvh_obj_set_value_str,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("set_text"),
+    /* K0   */  be_nested_str_weak(set_text),
     }),
-    be_str_literal("set_value_str"),
+    be_str_weak(set_value_str),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -3476,11 +3476,11 @@ be_local_closure(lvh_obj_set_line_width,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_style_line_width"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_style_line_width),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("set_line_width"),
+    be_str_weak(set_line_width),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -3511,17 +3511,17 @@ be_local_closure(lvh_obj_set_toggle,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_literal("string"),
-    /* K1   */  be_nested_str_literal("toupper"),
-    /* K2   */  be_nested_str_literal("TRUE"),
-    /* K3   */  be_nested_str_literal("FALSE"),
-    /* K4   */  be_nested_str_literal("_lv_obj"),
-    /* K5   */  be_nested_str_literal("add_state"),
-    /* K6   */  be_nested_str_literal("lv"),
-    /* K7   */  be_nested_str_literal("STATE_CHECKED"),
-    /* K8   */  be_nested_str_literal("clear_state"),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(toupper),
+    /* K2   */  be_nested_str_weak(TRUE),
+    /* K3   */  be_nested_str_weak(FALSE),
+    /* K4   */  be_nested_str_weak(_lv_obj),
+    /* K5   */  be_nested_str_weak(add_state),
+    /* K6   */  be_nested_str_weak(lv),
+    /* K7   */  be_nested_str_weak(STATE_CHECKED),
+    /* K8   */  be_nested_str_weak(clear_state),
     }),
-    be_str_literal("set_toggle"),
+    be_str_weak(set_toggle),
     &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
@@ -3580,9 +3580,9 @@ be_local_closure(lvh_obj_set_val_rule,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_str_literal("val_rule_matched"),
+        /* K0   */  be_nested_str_weak(val_rule_matched),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0x68040000,  //  0000  GETUPV	R1	U0
@@ -3595,12 +3595,12 @@ be_local_closure(lvh_obj_set_val_rule,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_val_rule"),
-    /* K1   */  be_nested_str_literal("tasmota"),
-    /* K2   */  be_nested_str_literal("remove_rule"),
-    /* K3   */  be_nested_str_literal("add_rule"),
+    /* K0   */  be_nested_str_weak(_val_rule),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(remove_rule),
+    /* K3   */  be_nested_str_weak(add_rule),
     }),
-    be_str_literal("set_val_rule"),
+    be_str_weak(set_val_rule),
     &be_const_str_solidified,
     ( &(const binstruction[21]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -3644,11 +3644,11 @@ be_local_closure(lvh_obj_set_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("check_label"),
-    /* K1   */  be_nested_str_literal("_lv_label"),
-    /* K2   */  be_nested_str_literal("set_text"),
+    /* K0   */  be_nested_str_weak(check_label),
+    /* K1   */  be_nested_str_weak(_lv_label),
+    /* K2   */  be_nested_str_weak(set_text),
     }),
-    be_str_literal("set_text"),
+    be_str_weak(set_text),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -3680,10 +3680,10 @@ be_local_closure(lvh_obj_get_action,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_action"),
-    /* K1   */  be_nested_str_literal(""),
+    /* K0   */  be_nested_str_weak(_action),
+    /* K1   */  be_nested_str_weak(),
     }),
-    be_str_literal("get_action"),
+    be_str_weak(get_action),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -3712,9 +3712,9 @@ be_local_closure(lvh_obj_get_value_font,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("get_text_font"),
+    /* K0   */  be_nested_str_weak(get_text_font),
     }),
-    be_str_literal("get_value_font"),
+    be_str_weak(get_value_font),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
       0x8C040100,  //  0000  GETMET	R1	R0	K0
@@ -3740,12 +3740,12 @@ be_local_closure(lvh_obj_get_hidden,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("has_flag"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("OBJ_FLAG_HIDDEN"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(has_flag),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(OBJ_FLAG_HIDDEN),
     }),
-    be_str_literal("get_hidden"),
+    be_str_weak(get_hidden),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -3774,7 +3774,7 @@ be_local_closure(lvh_obj_get_pad_all,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_pad_all"),
+    be_str_weak(get_pad_all),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -3798,11 +3798,11 @@ be_local_closure(lvh_obj_get_text_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_style_text_color"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_style_text_color),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("get_text_color"),
+    be_str_weak(get_text_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -3824,148 +3824,148 @@ be_local_class(lvh_obj,
     NULL,
     be_nested_map(88,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("set_radius2", 68), be_const_closure(lvh_obj_set_radius2_closure) },
-        { be_const_key_literal("register_event_cb", -1), be_const_closure(lvh_obj_register_event_cb_closure) },
-        { be_const_key_literal("get_text_rule_format", -1), be_const_closure(lvh_obj_get_text_rule_format_closure) },
-        { be_const_key_literal("set_value_ofs_x", -1), be_const_closure(lvh_obj_set_value_ofs_x_closure) },
-        { be_const_key_literal("get_radius2", -1), be_const_closure(lvh_obj_get_radius2_closure) },
-        { be_const_key_literal("_attr_ignore", 30), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        { be_const_key_weak(set_radius2, 68), be_const_closure(lvh_obj_set_radius2_closure) },
+        { be_const_key_weak(register_event_cb, -1), be_const_closure(lvh_obj_register_event_cb_closure) },
+        { be_const_key_weak(get_text_rule_format, -1), be_const_closure(lvh_obj_get_text_rule_format_closure) },
+        { be_const_key_weak(set_value_ofs_x, -1), be_const_closure(lvh_obj_set_value_ofs_x_closure) },
+        { be_const_key_weak(get_radius2, -1), be_const_closure(lvh_obj_get_radius2_closure) },
+        { be_const_key_weak(_attr_ignore, 30), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(10,
     ( (struct bvalue*) &(const bvalue[]) {
-        be_nested_str_literal("tostring"),
-        be_nested_str_literal("obj"),
-        be_nested_str_literal("page"),
-        be_nested_str_literal("comment"),
-        be_nested_str_literal("parentid"),
-        be_nested_str_literal("auto_size"),
-        be_nested_str_literal("prev"),
-        be_nested_str_literal("next"),
-        be_nested_str_literal("back"),
-        be_nested_str_literal("berry_run"),
+        be_nested_str_weak(tostring),
+        be_nested_str_weak(obj),
+        be_nested_str_weak(page),
+        be_nested_str_weak(comment),
+        be_nested_str_weak(parentid),
+        be_nested_str_weak(auto_size),
+        be_nested_str_weak(prev),
+        be_nested_str_weak(next),
+        be_nested_str_weak(back),
+        be_nested_str_weak(berry_run),
     }))    ) } )) },
-        { be_const_key_literal("val_rule_matched", -1), be_const_closure(lvh_obj_val_rule_matched_closure) },
-        { be_const_key_literal("set_pad_top2", -1), be_const_closure(lvh_obj_set_pad_top2_closure) },
-        { be_const_key_literal("get_value_font", -1), be_const_closure(lvh_obj_get_value_font_closure) },
-        { be_const_key_literal("_text_rule_function", -1), be_const_var(10) },
-        { be_const_key_literal("_text_rule_format", -1), be_const_var(11) },
-        { be_const_key_literal("set_text_font", -1), be_const_closure(lvh_obj_set_text_font_closure) },
-        { be_const_key_literal("parse_color", -1), be_const_static_closure(lvh_obj_parse_color_closure) },
-        { be_const_key_literal("get_text_font", -1), be_const_closure(lvh_obj_get_text_font_closure) },
-        { be_const_key_literal("text_rule_matched", 70), be_const_closure(lvh_obj_text_rule_matched_closure) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_obj) },
-        { be_const_key_literal("set_text", 78), be_const_closure(lvh_obj_set_text_closure) },
-        { be_const_key_literal("set_align", -1), be_const_closure(lvh_obj_set_align_closure) },
-        { be_const_key_literal("set_val_rule", 35), be_const_closure(lvh_obj_set_val_rule_closure) },
-        { be_const_key_literal("set_val", -1), be_const_closure(lvh_obj_set_val_closure) },
-        { be_const_key_literal("get_pad_right", 80), be_const_closure(lvh_obj_get_pad_right_closure) },
-        { be_const_key_literal("_text_rule_formula", 79), be_const_var(9) },
-        { be_const_key_literal("set_action", -1), be_const_closure(lvh_obj_set_action_closure) },
-        { be_const_key_literal("get_value_ofs_x", 86), be_const_closure(lvh_obj_get_value_ofs_x_closure) },
-        { be_const_key_literal("set_value_ofs_y", 6), be_const_closure(lvh_obj_set_value_ofs_y_closure) },
-        { be_const_key_literal("remove_trailing_zeroes", 41), be_const_static_closure(lvh_obj_remove_trailing_zeroes_closure) },
-        { be_const_key_literal("post_init", 18), be_const_closure(lvh_obj_post_init_closure) },
-        { be_const_key_literal("get_mode", -1), be_const_closure(lvh_obj_get_mode_closure) },
-        { be_const_key_literal("_action", -1), be_const_var(4) },
-        { be_const_key_literal("_lv_label", 7), be_const_var(2) },
-        { be_const_key_literal("set_toggle", 31), be_const_closure(lvh_obj_set_toggle_closure) },
-        { be_const_key_literal("_attr_map", -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(val_rule_matched, -1), be_const_closure(lvh_obj_val_rule_matched_closure) },
+        { be_const_key_weak(set_pad_top2, -1), be_const_closure(lvh_obj_set_pad_top2_closure) },
+        { be_const_key_weak(get_value_font, -1), be_const_closure(lvh_obj_get_value_font_closure) },
+        { be_const_key_weak(_text_rule_function, -1), be_const_var(10) },
+        { be_const_key_weak(_text_rule_format, -1), be_const_var(11) },
+        { be_const_key_weak(set_text_font, -1), be_const_closure(lvh_obj_set_text_font_closure) },
+        { be_const_key_weak(parse_color, -1), be_const_static_closure(lvh_obj_parse_color_closure) },
+        { be_const_key_weak(get_text_font, -1), be_const_closure(lvh_obj_get_text_font_closure) },
+        { be_const_key_weak(text_rule_matched, 70), be_const_closure(lvh_obj_text_rule_matched_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_obj) },
+        { be_const_key_weak(set_text, 78), be_const_closure(lvh_obj_set_text_closure) },
+        { be_const_key_weak(set_align, -1), be_const_closure(lvh_obj_set_align_closure) },
+        { be_const_key_weak(set_val_rule, 35), be_const_closure(lvh_obj_set_val_rule_closure) },
+        { be_const_key_weak(set_val, -1), be_const_closure(lvh_obj_set_val_closure) },
+        { be_const_key_weak(get_pad_right, 80), be_const_closure(lvh_obj_get_pad_right_closure) },
+        { be_const_key_weak(_text_rule_formula, 79), be_const_var(9) },
+        { be_const_key_weak(set_action, -1), be_const_closure(lvh_obj_set_action_closure) },
+        { be_const_key_weak(get_value_ofs_x, 86), be_const_closure(lvh_obj_get_value_ofs_x_closure) },
+        { be_const_key_weak(set_value_ofs_y, 6), be_const_closure(lvh_obj_set_value_ofs_y_closure) },
+        { be_const_key_weak(remove_trailing_zeroes, 41), be_const_static_closure(lvh_obj_remove_trailing_zeroes_closure) },
+        { be_const_key_weak(post_init, 18), be_const_closure(lvh_obj_post_init_closure) },
+        { be_const_key_weak(get_mode, -1), be_const_closure(lvh_obj_get_mode_closure) },
+        { be_const_key_weak(_action, -1), be_const_var(4) },
+        { be_const_key_weak(_lv_label, 7), be_const_var(2) },
+        { be_const_key_weak(set_toggle, 31), be_const_closure(lvh_obj_set_toggle_closure) },
+        { be_const_key_weak(_attr_map, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(26,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("rotation", -1), be_nested_str_literal("rotation") },
-        { be_const_key_literal("bg_opa", -1), be_nested_str_literal("style_bg_opa") },
-        { be_const_key_literal("end_angle", 3), be_nested_str_literal("bg_end_angle") },
-        { be_const_key_literal("w", 18), be_nested_str_literal("width") },
-        { be_const_key_literal("src", 6), be_nested_str_literal("src") },
-        { be_const_key_literal("x", -1), be_nested_str_literal("x") },
-        { be_const_key_literal("border_color", -1), be_nested_str_literal("style_border_color") },
-        { be_const_key_literal("bg_grad_color", 0), be_nested_str_literal("style_bg_grad_color") },
-        { be_const_key_literal("pad_all", -1), be_nested_str_literal("style_pad_all") },
-        { be_const_key_literal("bg_color", 20), be_nested_str_literal("style_bg_color") },
-        { be_const_key_literal("y", 8), be_nested_str_literal("y") },
-        { be_const_key_literal("line_color", -1), be_nested_str_literal("style_line_color") },
-        { be_const_key_literal("image_recolor_opa", 10), be_nested_str_literal("style_img_recolor_opa") },
-        { be_const_key_literal("start_angle", 5), be_nested_str_literal("bg_start_angle") },
-        { be_const_key_literal("end_angle1", 11), be_nested_str_literal("end_angle") },
-        { be_const_key_literal("border_side", -1), be_nested_str_literal("style_border_side") },
-        { be_const_key_literal("pad_bottom", 9), be_nested_str_literal("style_pad_bottom") },
-        { be_const_key_literal("radius", 4), be_nested_str_literal("style_radius") },
-        { be_const_key_literal("pad_left", -1), be_nested_str_literal("style_pad_left") },
-        { be_const_key_literal("image_recolor", -1), be_nested_str_literal("style_img_recolor") },
-        { be_const_key_literal("border_width", -1), be_nested_str_literal("style_border_width") },
-        { be_const_key_literal("pad_right", -1), be_nested_str_literal("style_pad_right") },
-        { be_const_key_literal("start_angle1", -1), be_nested_str_literal("start_angle") },
-        { be_const_key_literal("h", -1), be_nested_str_literal("height") },
-        { be_const_key_literal("pad_top", 16), be_nested_str_literal("style_pad_top") },
-        { be_const_key_literal("bg_grad_dir", 14), be_nested_str_literal("style_bg_grad_dir") },
+        { be_const_key_weak(rotation, -1), be_nested_str_weak(rotation) },
+        { be_const_key_weak(bg_opa, -1), be_nested_str_weak(style_bg_opa) },
+        { be_const_key_weak(end_angle, 3), be_nested_str_weak(bg_end_angle) },
+        { be_const_key_weak(w, 18), be_nested_str_weak(width) },
+        { be_const_key_weak(src, 6), be_nested_str_weak(src) },
+        { be_const_key_weak(x, -1), be_nested_str_weak(x) },
+        { be_const_key_weak(border_color, -1), be_nested_str_weak(style_border_color) },
+        { be_const_key_weak(bg_grad_color, 0), be_nested_str_weak(style_bg_grad_color) },
+        { be_const_key_weak(pad_all, -1), be_nested_str_weak(style_pad_all) },
+        { be_const_key_weak(bg_color, 20), be_nested_str_weak(style_bg_color) },
+        { be_const_key_weak(y, 8), be_nested_str_weak(y) },
+        { be_const_key_weak(line_color, -1), be_nested_str_weak(style_line_color) },
+        { be_const_key_weak(image_recolor_opa, 10), be_nested_str_weak(style_img_recolor_opa) },
+        { be_const_key_weak(start_angle, 5), be_nested_str_weak(bg_start_angle) },
+        { be_const_key_weak(end_angle1, 11), be_nested_str_weak(end_angle) },
+        { be_const_key_weak(border_side, -1), be_nested_str_weak(style_border_side) },
+        { be_const_key_weak(pad_bottom, 9), be_nested_str_weak(style_pad_bottom) },
+        { be_const_key_weak(radius, 4), be_nested_str_weak(style_radius) },
+        { be_const_key_weak(pad_left, -1), be_nested_str_weak(style_pad_left) },
+        { be_const_key_weak(image_recolor, -1), be_nested_str_weak(style_img_recolor) },
+        { be_const_key_weak(border_width, -1), be_nested_str_weak(style_border_width) },
+        { be_const_key_weak(pad_right, -1), be_nested_str_weak(style_pad_right) },
+        { be_const_key_weak(start_angle1, -1), be_nested_str_weak(start_angle) },
+        { be_const_key_weak(h, -1), be_nested_str_weak(height) },
+        { be_const_key_weak(pad_top, 16), be_nested_str_weak(style_pad_top) },
+        { be_const_key_weak(bg_grad_dir, 14), be_nested_str_weak(style_bg_grad_dir) },
     }))    ) } )) },
-        { be_const_key_literal("set_line_width", -1), be_const_closure(lvh_obj_set_line_width_closure) },
-        { be_const_key_literal("set_value_str", 72), be_const_closure(lvh_obj_set_value_str_closure) },
-        { be_const_key_literal("is_color_attribute", -1), be_const_static_closure(lvh_obj_is_color_attribute_closure) },
-        { be_const_key_literal("_lv_obj", -1), be_const_var(1) },
-        { be_const_key_literal("set_value_color", -1), be_const_closure(lvh_obj_set_value_color_closure) },
-        { be_const_key_literal("get_value_color", -1), be_const_closure(lvh_obj_get_value_color_closure) },
-        { be_const_key_literal("get_val_rule", -1), be_const_closure(lvh_obj_get_val_rule_closure) },
-        { be_const_key_literal("get_val", -1), be_const_closure(lvh_obj_get_val_closure) },
-        { be_const_key_literal("get_click", -1), be_const_closure(lvh_obj_get_click_closure) },
-        { be_const_key_literal("get_enabled", 81), be_const_closure(lvh_obj_get_enabled_closure) },
-        { be_const_key_literal("set_adjustable", -1), be_const_closure(lvh_obj_set_adjustable_closure) },
-        { be_const_key_literal("get_pad_left", 16), be_const_closure(lvh_obj_get_pad_left_closure) },
-        { be_const_key_literal("get_value_ofs_y", -1), be_const_closure(lvh_obj_get_value_ofs_y_closure) },
-        { be_const_key_literal("_val_rule_formula", 76), be_const_var(6) },
-        { be_const_key_literal("get_text_rule", 34), be_const_closure(lvh_obj_get_text_rule_closure) },
-        { be_const_key_literal("set_value_font", 74), be_const_closure(lvh_obj_set_value_font_closure) },
-        { be_const_key_literal("_val_rule", -1), be_const_var(5) },
-        { be_const_key_literal("event_cb", 58), be_const_closure(lvh_obj_event_cb_closure) },
-        { be_const_key_literal("set_text_rule", -1), be_const_closure(lvh_obj_set_text_rule_closure) },
-        { be_const_key_literal("get_adjustable", -1), be_const_closure(lvh_obj_get_adjustable_closure) },
-        { be_const_key_literal("get_toggle", -1), be_const_closure(lvh_obj_get_toggle_closure) },
-        { be_const_key_literal("get_value_str", -1), be_const_closure(lvh_obj_get_value_str_closure) },
-        { be_const_key_literal("set_pad_right2", -1), be_const_closure(lvh_obj_set_pad_right2_closure) },
-        { be_const_key_literal("set_val_rule_formula", 66), be_const_closure(lvh_obj_set_val_rule_formula_closure) },
-        { be_const_key_literal("id", 5), be_const_var(0) },
-        { be_const_key_literal("set_pad_bottom2", 33), be_const_closure(lvh_obj_set_pad_bottom2_closure) },
-        { be_const_key_literal("get_pad_top", 36), be_const_closure(lvh_obj_get_pad_top_closure) },
-        { be_const_key_literal("get_val_rule_formula", -1), be_const_closure(lvh_obj_get_val_rule_formula_closure) },
-        { be_const_key_literal("set_hidden", -1), be_const_closure(lvh_obj_set_hidden_closure) },
-        { be_const_key_literal("_page", -1), be_const_var(3) },
-        { be_const_key_literal("check_label", -1), be_const_closure(lvh_obj_check_label_closure) },
-        { be_const_key_literal("get_text", -1), be_const_closure(lvh_obj_get_text_closure) },
-        { be_const_key_literal("set_text_rule_format", 60), be_const_closure(lvh_obj_set_text_rule_format_closure) },
-        { be_const_key_literal("set_pad_all2", -1), be_const_closure(lvh_obj_set_pad_all2_closure) },
-        { be_const_key_literal("_event_map", -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(set_line_width, -1), be_const_closure(lvh_obj_set_line_width_closure) },
+        { be_const_key_weak(set_value_str, 72), be_const_closure(lvh_obj_set_value_str_closure) },
+        { be_const_key_weak(is_color_attribute, -1), be_const_static_closure(lvh_obj_is_color_attribute_closure) },
+        { be_const_key_weak(_lv_obj, -1), be_const_var(1) },
+        { be_const_key_weak(set_value_color, -1), be_const_closure(lvh_obj_set_value_color_closure) },
+        { be_const_key_weak(get_value_color, -1), be_const_closure(lvh_obj_get_value_color_closure) },
+        { be_const_key_weak(get_val_rule, -1), be_const_closure(lvh_obj_get_val_rule_closure) },
+        { be_const_key_weak(get_val, -1), be_const_closure(lvh_obj_get_val_closure) },
+        { be_const_key_weak(get_click, -1), be_const_closure(lvh_obj_get_click_closure) },
+        { be_const_key_weak(get_enabled, 81), be_const_closure(lvh_obj_get_enabled_closure) },
+        { be_const_key_weak(set_adjustable, -1), be_const_closure(lvh_obj_set_adjustable_closure) },
+        { be_const_key_weak(get_pad_left, 16), be_const_closure(lvh_obj_get_pad_left_closure) },
+        { be_const_key_weak(get_value_ofs_y, -1), be_const_closure(lvh_obj_get_value_ofs_y_closure) },
+        { be_const_key_weak(_val_rule_formula, 76), be_const_var(6) },
+        { be_const_key_weak(get_text_rule, 34), be_const_closure(lvh_obj_get_text_rule_closure) },
+        { be_const_key_weak(set_value_font, 74), be_const_closure(lvh_obj_set_value_font_closure) },
+        { be_const_key_weak(_val_rule, -1), be_const_var(5) },
+        { be_const_key_weak(event_cb, 58), be_const_closure(lvh_obj_event_cb_closure) },
+        { be_const_key_weak(set_text_rule, -1), be_const_closure(lvh_obj_set_text_rule_closure) },
+        { be_const_key_weak(get_adjustable, -1), be_const_closure(lvh_obj_get_adjustable_closure) },
+        { be_const_key_weak(get_toggle, -1), be_const_closure(lvh_obj_get_toggle_closure) },
+        { be_const_key_weak(get_value_str, -1), be_const_closure(lvh_obj_get_value_str_closure) },
+        { be_const_key_weak(set_pad_right2, -1), be_const_closure(lvh_obj_set_pad_right2_closure) },
+        { be_const_key_weak(set_val_rule_formula, 66), be_const_closure(lvh_obj_set_val_rule_formula_closure) },
+        { be_const_key_weak(id, 5), be_const_var(0) },
+        { be_const_key_weak(set_pad_bottom2, 33), be_const_closure(lvh_obj_set_pad_bottom2_closure) },
+        { be_const_key_weak(get_pad_top, 36), be_const_closure(lvh_obj_get_pad_top_closure) },
+        { be_const_key_weak(get_val_rule_formula, -1), be_const_closure(lvh_obj_get_val_rule_formula_closure) },
+        { be_const_key_weak(set_hidden, -1), be_const_closure(lvh_obj_set_hidden_closure) },
+        { be_const_key_weak(_page, -1), be_const_var(3) },
+        { be_const_key_weak(check_label, -1), be_const_closure(lvh_obj_check_label_closure) },
+        { be_const_key_weak(get_text, -1), be_const_closure(lvh_obj_get_text_closure) },
+        { be_const_key_weak(set_text_rule_format, 60), be_const_closure(lvh_obj_set_text_rule_format_closure) },
+        { be_const_key_weak(set_pad_all2, -1), be_const_closure(lvh_obj_set_pad_all2_closure) },
+        { be_const_key_weak(_event_map, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(28, 2), be_nested_str_literal("changed") },
-        { be_const_key_int(8, 4), be_nested_str_literal("release") },
-        { be_const_key_int(7, -1), be_nested_str_literal("up") },
-        { be_const_key_int(3, -1), be_nested_str_literal("lost") },
-        { be_const_key_int(1, -1), be_nested_str_literal("down") },
-        { be_const_key_int(5, -1), be_nested_str_literal("long") },
-        { be_const_key_int(6, -1), be_nested_str_literal("hold") },
+        { be_const_key_int(28, 2), be_nested_str_weak(changed) },
+        { be_const_key_int(8, 4), be_nested_str_weak(release) },
+        { be_const_key_int(7, -1), be_nested_str_weak(up) },
+        { be_const_key_int(3, -1), be_nested_str_weak(lost) },
+        { be_const_key_int(1, -1), be_nested_str_weak(down) },
+        { be_const_key_int(5, -1), be_nested_str_weak(long) },
+        { be_const_key_int(6, -1), be_nested_str_weak(hold) },
     }))    ) } )) },
-        { be_const_key_literal("set_text_color", -1), be_const_closure(lvh_obj_set_text_color_closure) },
-        { be_const_key_literal("_text_rule", -1), be_const_var(8) },
-        { be_const_key_literal("get_pad_bottom", -1), be_const_closure(lvh_obj_get_pad_bottom_closure) },
-        { be_const_key_literal("_lv_part2_selector", -1), be_const_nil() },
-        { be_const_key_literal("set_pad_left2", 42), be_const_closure(lvh_obj_set_pad_left2_closure) },
-        { be_const_key_literal("get_line_width", 11), be_const_closure(lvh_obj_get_line_width_closure) },
-        { be_const_key_literal("setmember", -1), be_const_closure(lvh_obj_setmember_closure) },
-        { be_const_key_literal("set_mode", -1), be_const_closure(lvh_obj_set_mode_closure) },
-        { be_const_key_literal("init", -1), be_const_closure(lvh_obj_init_closure) },
-        { be_const_key_literal("get_obj", -1), be_const_closure(lvh_obj_get_obj_closure) },
-        { be_const_key_literal("set_enabled", 32), be_const_closure(lvh_obj_set_enabled_closure) },
-        { be_const_key_literal("get_text_rule_formula", -1), be_const_closure(lvh_obj_get_text_rule_formula_closure) },
-        { be_const_key_literal("get_align", -1), be_const_closure(lvh_obj_get_align_closure) },
-        { be_const_key_literal("set_click", 2), be_const_closure(lvh_obj_set_click_closure) },
-        { be_const_key_literal("_val_rule_function", -1), be_const_var(7) },
-        { be_const_key_literal("get_action", -1), be_const_closure(lvh_obj_get_action_closure) },
-        { be_const_key_literal("member", 8), be_const_closure(lvh_obj_member_closure) },
-        { be_const_key_literal("get_hidden", -1), be_const_closure(lvh_obj_get_hidden_closure) },
-        { be_const_key_literal("get_pad_all", -1), be_const_closure(lvh_obj_get_pad_all_closure) },
-        { be_const_key_literal("set_text_rule_formula", -1), be_const_closure(lvh_obj_set_text_rule_formula_closure) },
-        { be_const_key_literal("get_text_color", -1), be_const_closure(lvh_obj_get_text_color_closure) },
+        { be_const_key_weak(set_text_color, -1), be_const_closure(lvh_obj_set_text_color_closure) },
+        { be_const_key_weak(_text_rule, -1), be_const_var(8) },
+        { be_const_key_weak(get_pad_bottom, -1), be_const_closure(lvh_obj_get_pad_bottom_closure) },
+        { be_const_key_weak(_lv_part2_selector, -1), be_const_nil() },
+        { be_const_key_weak(set_pad_left2, 42), be_const_closure(lvh_obj_set_pad_left2_closure) },
+        { be_const_key_weak(get_line_width, 11), be_const_closure(lvh_obj_get_line_width_closure) },
+        { be_const_key_weak(setmember, -1), be_const_closure(lvh_obj_setmember_closure) },
+        { be_const_key_weak(set_mode, -1), be_const_closure(lvh_obj_set_mode_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lvh_obj_init_closure) },
+        { be_const_key_weak(get_obj, -1), be_const_closure(lvh_obj_get_obj_closure) },
+        { be_const_key_weak(set_enabled, 32), be_const_closure(lvh_obj_set_enabled_closure) },
+        { be_const_key_weak(get_text_rule_formula, -1), be_const_closure(lvh_obj_get_text_rule_formula_closure) },
+        { be_const_key_weak(get_align, -1), be_const_closure(lvh_obj_get_align_closure) },
+        { be_const_key_weak(set_click, 2), be_const_closure(lvh_obj_set_click_closure) },
+        { be_const_key_weak(_val_rule_function, -1), be_const_var(7) },
+        { be_const_key_weak(get_action, -1), be_const_closure(lvh_obj_get_action_closure) },
+        { be_const_key_weak(member, 8), be_const_closure(lvh_obj_member_closure) },
+        { be_const_key_weak(get_hidden, -1), be_const_closure(lvh_obj_get_hidden_closure) },
+        { be_const_key_weak(get_pad_all, -1), be_const_closure(lvh_obj_get_pad_all_closure) },
+        { be_const_key_weak(set_text_rule_formula, -1), be_const_closure(lvh_obj_set_text_rule_formula_closure) },
+        { be_const_key_weak(get_text_color, -1), be_const_closure(lvh_obj_get_text_color_closure) },
     })),
-    be_str_literal("lvh_obj")
+    be_str_weak(lvh_obj)
 );
 /*******************************************************************/
 
@@ -3984,9 +3984,9 @@ be_local_class(lvh_scr,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_nil() },
+        { be_const_key_weak(_lv_class, -1), be_const_nil() },
     })),
-    be_str_literal("lvh_scr")
+    be_str_weak(lvh_scr)
 );
 /*******************************************************************/
 
@@ -4005,9 +4005,9 @@ be_local_class(lvh_btn,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_btn) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_btn) },
     })),
-    be_str_literal("lvh_btn")
+    be_str_weak(lvh_btn)
 );
 /*******************************************************************/
 
@@ -4026,10 +4026,10 @@ be_local_class(lvh_switch,
     &be_class_lvh_obj,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_part2_selector", -1), be_const_int(196608) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_switch) },
+        { be_const_key_weak(_lv_part2_selector, -1), be_const_int(196608) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_switch) },
     })),
-    be_str_literal("lvh_switch")
+    be_str_weak(lvh_switch)
 );
 /*******************************************************************/
 
@@ -4048,9 +4048,9 @@ be_local_class(lvh_checkbox,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_checkbox) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_checkbox) },
     })),
-    be_str_literal("lvh_checkbox")
+    be_str_weak(lvh_checkbox)
 );
 /*******************************************************************/
 
@@ -4074,11 +4074,11 @@ be_local_closure(lvh_label_post_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_label"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("post_init"),
+    /* K0   */  be_nested_str_weak(_lv_label),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(post_init),
     }),
-    be_str_literal("post_init"),
+    be_str_weak(post_init),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88040101,  //  0000  GETMBR	R1	R0	K1
@@ -4104,10 +4104,10 @@ be_local_class(lvh_label,
     &be_class_lvh_obj,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("post_init", -1), be_const_closure(lvh_label_post_init_closure) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_label) },
+        { be_const_key_weak(post_init, -1), be_const_closure(lvh_label_post_init_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_label) },
     })),
-    be_str_literal("lvh_label")
+    be_str_weak(lvh_label)
 );
 /*******************************************************************/
 
@@ -4131,7 +4131,7 @@ be_local_closure(lvh_spinner_get_speed,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_speed"),
+    be_str_weak(get_speed),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -4155,16 +4155,16 @@ be_local_closure(lvh_spinner_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_page"),
-    /* K1   */  be_nested_str_literal("find"),
-    /* K2   */  be_nested_str_literal("angle"),
-    /* K3   */  be_nested_str_literal("speed"),
-    /* K4   */  be_nested_str_literal("_lv_obj"),
-    /* K5   */  be_nested_str_literal("lv"),
-    /* K6   */  be_nested_str_literal("spinner"),
-    /* K7   */  be_nested_str_literal("post_init"),
+    /* K0   */  be_nested_str_weak(_page),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(angle),
+    /* K3   */  be_nested_str_weak(speed),
+    /* K4   */  be_nested_str_weak(_lv_obj),
+    /* K5   */  be_nested_str_weak(lv),
+    /* K6   */  be_nested_str_weak(spinner),
+    /* K7   */  be_nested_str_weak(post_init),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
       0x90020002,  //  0000  SETMBR	R0	K0	R2
@@ -4206,7 +4206,7 @@ be_local_closure(lvh_spinner_set_speed,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("set_speed"),
+    be_str_weak(set_speed),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -4230,7 +4230,7 @@ be_local_closure(lvh_spinner_set_angle,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("set_angle"),
+    be_str_weak(set_angle),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -4254,7 +4254,7 @@ be_local_closure(lvh_spinner_get_angle,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_angle"),
+    be_str_weak(get_angle),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -4273,14 +4273,14 @@ be_local_class(lvh_spinner,
     &be_class_lvh_arc,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("get_angle", 5), be_const_closure(lvh_spinner_get_angle_closure) },
-        { be_const_key_literal("_lv_class", 0), be_const_class(be_class_lv_spinner) },
-        { be_const_key_literal("set_angle", 4), be_const_closure(lvh_spinner_set_angle_closure) },
-        { be_const_key_literal("init", 2), be_const_closure(lvh_spinner_init_closure) },
-        { be_const_key_literal("set_speed", -1), be_const_closure(lvh_spinner_set_speed_closure) },
-        { be_const_key_literal("get_speed", -1), be_const_closure(lvh_spinner_get_speed_closure) },
+        { be_const_key_weak(get_angle, 5), be_const_closure(lvh_spinner_get_angle_closure) },
+        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_spinner) },
+        { be_const_key_weak(set_angle, 4), be_const_closure(lvh_spinner_set_angle_closure) },
+        { be_const_key_weak(init, 2), be_const_closure(lvh_spinner_init_closure) },
+        { be_const_key_weak(set_speed, -1), be_const_closure(lvh_spinner_set_speed_closure) },
+        { be_const_key_weak(get_speed, -1), be_const_closure(lvh_spinner_get_speed_closure) },
     })),
-    be_str_literal("lvh_spinner")
+    be_str_weak(lvh_spinner)
 );
 /*******************************************************************/
 
@@ -4299,9 +4299,9 @@ be_local_class(lvh_line,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_line) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_line) },
     })),
-    be_str_literal("lvh_line")
+    be_str_weak(lvh_line)
 );
 /*******************************************************************/
 
@@ -4325,10 +4325,10 @@ be_local_closure(lvh_img_set_angle,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_angle"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_angle),
     }),
-    be_str_literal("set_angle"),
+    be_str_weak(set_angle),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x60080009,  //  0000  GETGBL	R2	G9
@@ -4360,10 +4360,10 @@ be_local_closure(lvh_img_get_angle,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_angle"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_angle),
     }),
-    be_str_literal("get_angle"),
+    be_str_weak(get_angle),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4385,11 +4385,11 @@ be_local_class(lvh_img,
     &be_class_lvh_obj,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("set_angle", -1), be_const_closure(lvh_img_set_angle_closure) },
-        { be_const_key_literal("get_angle", 2), be_const_closure(lvh_img_get_angle_closure) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_img) },
+        { be_const_key_weak(set_angle, -1), be_const_closure(lvh_img_set_angle_closure) },
+        { be_const_key_weak(get_angle, 2), be_const_closure(lvh_img_get_angle_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_img) },
     })),
-    be_str_literal("lvh_img")
+    be_str_weak(lvh_img)
 );
 /*******************************************************************/
 
@@ -4413,12 +4413,12 @@ be_local_closure(lvh_roller_set_options,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_options"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("ROLLER_MODE_NORMAL"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_options),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(ROLLER_MODE_NORMAL),
     }),
-    be_str_literal("set_options"),
+    be_str_weak(set_options),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -4448,14 +4448,14 @@ be_local_closure(lvh_roller_get_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_literal("resize"),
-    /* K1   */  be_nested_str_literal("_lv_obj"),
-    /* K2   */  be_nested_str_literal("get_selected_str"),
-    /* K3   */  be_nested_str_literal("_buffer"),
-    /* K4   */  be_nested_str_literal("remove_trailing_zeroes"),
-    /* K5   */  be_nested_str_literal("asstring"),
+    /* K0   */  be_nested_str_weak(resize),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(get_selected_str),
+    /* K3   */  be_nested_str_weak(_buffer),
+    /* K4   */  be_nested_str_weak(remove_trailing_zeroes),
+    /* K5   */  be_nested_str_weak(asstring),
     }),
-    be_str_literal("get_text"),
+    be_str_weak(get_text),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x60040015,  //  0000  GETGBL	R1	G21
@@ -4496,10 +4496,10 @@ be_local_closure(lvh_roller_get_options,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_options"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_options),
     }),
-    be_str_literal("get_options"),
+    be_str_weak(get_options),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4526,11 +4526,11 @@ be_local_closure(lvh_roller_set_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_selected"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_selected),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("set_val"),
+    be_str_weak(set_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -4559,10 +4559,10 @@ be_local_closure(lvh_roller_set_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("attribute_error"),
-    /* K1   */  be_nested_str_literal("set_text unsupported on roller"),
+    /* K0   */  be_nested_str_weak(attribute_error),
+    /* K1   */  be_nested_str_weak(set_text_X20unsupported_X20on_X20roller),
     }),
-    be_str_literal("set_text"),
+    be_str_weak(set_text),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0xB0060101,  //  0000  RAISE	1	K0	K1
@@ -4587,10 +4587,10 @@ be_local_closure(lvh_roller_get_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_selected"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_selected),
     }),
-    be_str_literal("get_val"),
+    be_str_weak(get_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4612,15 +4612,15 @@ be_local_class(lvh_roller,
     &be_class_lvh_obj,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("set_options", 2), be_const_closure(lvh_roller_set_options_closure) },
-        { be_const_key_literal("get_text", -1), be_const_closure(lvh_roller_get_text_closure) },
-        { be_const_key_literal("get_options", -1), be_const_closure(lvh_roller_get_options_closure) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_roller) },
-        { be_const_key_literal("set_text", -1), be_const_closure(lvh_roller_set_text_closure) },
-        { be_const_key_literal("set_val", 4), be_const_closure(lvh_roller_set_val_closure) },
-        { be_const_key_literal("get_val", -1), be_const_closure(lvh_roller_get_val_closure) },
+        { be_const_key_weak(set_options, 2), be_const_closure(lvh_roller_set_options_closure) },
+        { be_const_key_weak(get_text, -1), be_const_closure(lvh_roller_get_text_closure) },
+        { be_const_key_weak(get_options, -1), be_const_closure(lvh_roller_get_options_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_roller) },
+        { be_const_key_weak(set_text, -1), be_const_closure(lvh_roller_set_text_closure) },
+        { be_const_key_weak(set_val, 4), be_const_closure(lvh_roller_set_val_closure) },
+        { be_const_key_weak(get_val, -1), be_const_closure(lvh_roller_get_val_closure) },
     })),
-    be_str_literal("lvh_roller")
+    be_str_weak(lvh_roller)
 );
 /*******************************************************************/
 
@@ -4639,9 +4639,9 @@ be_local_class(lvh_btnmatrix,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_btnmatrix) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_btnmatrix) },
     })),
-    be_str_literal("lvh_btnmatrix")
+    be_str_weak(lvh_btnmatrix)
 );
 /*******************************************************************/
 
@@ -4660,9 +4660,9 @@ be_local_class(lvh_bar,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_bar) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_bar) },
     })),
-    be_str_literal("lvh_bar")
+    be_str_weak(lvh_bar)
 );
 /*******************************************************************/
 
@@ -4686,11 +4686,11 @@ be_local_closure(lvh_slider_set_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_value"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_value),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("set_val"),
+    be_str_weak(set_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -4714,10 +4714,10 @@ be_local_class(lvh_slider,
     &be_class_lvh_obj,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("set_val", -1), be_const_closure(lvh_slider_set_val_closure) },
-        { be_const_key_literal("_lv_class", 0), be_const_class(be_class_lv_slider) },
+        { be_const_key_weak(set_val, -1), be_const_closure(lvh_slider_set_val_closure) },
+        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_slider) },
     })),
-    be_str_literal("lvh_slider")
+    be_str_weak(lvh_slider)
 );
 /*******************************************************************/
 
@@ -4741,13 +4741,13 @@ be_local_closure(lvh_arc_set_line_width1,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_style_arc_width"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("PART_INDICATOR"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_style_arc_width),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(PART_INDICATOR),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("set_line_width1"),
+    be_str_weak(set_line_width1),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -4782,10 +4782,10 @@ be_local_closure(lvh_arc_get_min,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_min_value"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_min_value),
     }),
-    be_str_literal("get_min"),
+    be_str_weak(get_min),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4812,10 +4812,10 @@ be_local_closure(lvh_arc_get_max,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_max_value"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_max_value),
     }),
-    be_str_literal("get_max"),
+    be_str_weak(get_max),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4842,11 +4842,11 @@ be_local_closure(lvh_arc_get_line_width,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_arc_line_width"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_arc_line_width),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("get_line_width"),
+    be_str_weak(get_line_width),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4874,10 +4874,10 @@ be_local_closure(lvh_arc_get_type,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_mode"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_mode),
     }),
-    be_str_literal("get_type"),
+    be_str_weak(get_type),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4904,11 +4904,11 @@ be_local_closure(lvh_arc_set_min,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_range"),
-    /* K2   */  be_nested_str_literal("get_max"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_range),
+    /* K2   */  be_nested_str_weak(get_max),
     }),
-    be_str_literal("set_min"),
+    be_str_weak(set_min),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -4940,13 +4940,13 @@ be_local_closure(lvh_arc_get_line_width1,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_arc_line_width"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("PART_INDICATOR"),
-    /* K4   */  be_nested_str_literal("STATE_DEFAULT"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_arc_line_width),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(PART_INDICATOR),
+    /* K4   */  be_nested_str_weak(STATE_DEFAULT),
     }),
-    be_str_literal("get_line_width1"),
+    be_str_weak(get_line_width1),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -4978,11 +4978,11 @@ be_local_closure(lvh_arc_set_line_width,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_style_arc_width"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_style_arc_width),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("set_line_width"),
+    be_str_weak(set_line_width),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -5013,11 +5013,11 @@ be_local_closure(lvh_arc_set_max,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_range"),
-    /* K2   */  be_nested_str_literal("get_min"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_range),
+    /* K2   */  be_nested_str_weak(get_min),
     }),
-    be_str_literal("set_max"),
+    be_str_weak(set_max),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -5050,16 +5050,16 @@ be_local_closure(lvh_arc_set_type,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_literal("lv"),
-    /* K2   */  be_nested_str_literal("ARC_MODE_NORMAL"),
+    /* K1   */  be_nested_str_weak(lv),
+    /* K2   */  be_nested_str_weak(ARC_MODE_NORMAL),
     /* K3   */  be_const_int(1),
-    /* K4   */  be_nested_str_literal("ARC_MODE_REVERSE"),
+    /* K4   */  be_nested_str_weak(ARC_MODE_REVERSE),
     /* K5   */  be_const_int(2),
-    /* K6   */  be_nested_str_literal("ARC_MODE_SYMMETRICAL"),
-    /* K7   */  be_nested_str_literal("_lv_obj"),
-    /* K8   */  be_nested_str_literal("set_mode"),
+    /* K6   */  be_nested_str_weak(ARC_MODE_SYMMETRICAL),
+    /* K7   */  be_nested_str_weak(_lv_obj),
+    /* K8   */  be_nested_str_weak(set_mode),
     }),
-    be_str_literal("set_type"),
+    be_str_weak(set_type),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0x4C080000,  //  0000  LDNIL	R2
@@ -5100,20 +5100,20 @@ be_local_class(lvh_arc,
     &be_class_lvh_obj,
     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("set_line_width1", 1), be_const_closure(lvh_arc_set_line_width1_closure) },
-        { be_const_key_literal("set_type", -1), be_const_closure(lvh_arc_set_type_closure) },
-        { be_const_key_literal("set_max", -1), be_const_closure(lvh_arc_set_max_closure) },
-        { be_const_key_literal("set_line_width", -1), be_const_closure(lvh_arc_set_line_width_closure) },
-        { be_const_key_literal("get_type", 11), be_const_closure(lvh_arc_get_type_closure) },
-        { be_const_key_literal("get_line_width1", -1), be_const_closure(lvh_arc_get_line_width1_closure) },
-        { be_const_key_literal("_lv_part2_selector", -1), be_const_int(196608) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_arc) },
-        { be_const_key_literal("get_min", 5), be_const_closure(lvh_arc_get_min_closure) },
-        { be_const_key_literal("get_line_width", 3), be_const_closure(lvh_arc_get_line_width_closure) },
-        { be_const_key_literal("get_max", 2), be_const_closure(lvh_arc_get_max_closure) },
-        { be_const_key_literal("set_min", -1), be_const_closure(lvh_arc_set_min_closure) },
+        { be_const_key_weak(set_line_width1, 1), be_const_closure(lvh_arc_set_line_width1_closure) },
+        { be_const_key_weak(set_type, -1), be_const_closure(lvh_arc_set_type_closure) },
+        { be_const_key_weak(set_max, -1), be_const_closure(lvh_arc_set_max_closure) },
+        { be_const_key_weak(set_line_width, -1), be_const_closure(lvh_arc_set_line_width_closure) },
+        { be_const_key_weak(get_type, 11), be_const_closure(lvh_arc_get_type_closure) },
+        { be_const_key_weak(get_line_width1, -1), be_const_closure(lvh_arc_get_line_width1_closure) },
+        { be_const_key_weak(_lv_part2_selector, -1), be_const_int(196608) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_arc) },
+        { be_const_key_weak(get_min, 5), be_const_closure(lvh_arc_get_min_closure) },
+        { be_const_key_weak(get_line_width, 3), be_const_closure(lvh_arc_get_line_width_closure) },
+        { be_const_key_weak(get_max, 2), be_const_closure(lvh_arc_get_max_closure) },
+        { be_const_key_weak(set_min, -1), be_const_closure(lvh_arc_set_min_closure) },
     })),
-    be_str_literal("lvh_arc")
+    be_str_weak(lvh_arc)
 );
 /*******************************************************************/
 
@@ -5132,9 +5132,9 @@ be_local_class(lvh_textarea,
     &be_class_lvh_obj,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_textarea) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_textarea) },
     })),
-    be_str_literal("lvh_textarea")
+    be_str_weak(lvh_textarea)
 );
 /*******************************************************************/
 
@@ -5158,10 +5158,10 @@ be_local_closure(lvh_dropdown_get_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_selected"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_selected),
     }),
-    be_str_literal("get_val"),
+    be_str_weak(get_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -5188,11 +5188,11 @@ be_local_closure(lvh_dropdown_set_direction,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_dir"),
-    /* K2   */  be_nested_str_literal("_dir"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_dir),
+    /* K2   */  be_nested_str_weak(_dir),
     }),
-    be_str_literal("set_direction"),
+    be_str_weak(set_direction),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -5224,12 +5224,12 @@ be_local_closure(lvh_dropdown_set_options,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_options"),
-    /* K2   */  be_nested_str_literal("lv"),
-    /* K3   */  be_nested_str_literal("ROLLER_MODE_NORMAL"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_options),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(ROLLER_MODE_NORMAL),
     }),
-    be_str_literal("set_options"),
+    be_str_weak(set_options),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -5259,11 +5259,11 @@ be_local_closure(lvh_dropdown_set_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_selected"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_selected),
     /* K2   */  be_const_int(0),
     }),
-    be_str_literal("set_val"),
+    be_str_weak(set_val),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -5292,15 +5292,15 @@ be_local_closure(lvh_dropdown_get_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_text"),
-    /* K2   */  be_nested_str_literal("resize"),
-    /* K3   */  be_nested_str_literal("get_selected_str"),
-    /* K4   */  be_nested_str_literal("_buffer"),
-    /* K5   */  be_nested_str_literal("remove_trailing_zeroes"),
-    /* K6   */  be_nested_str_literal("asstring"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_text),
+    /* K2   */  be_nested_str_weak(resize),
+    /* K3   */  be_nested_str_weak(get_selected_str),
+    /* K4   */  be_nested_str_weak(_buffer),
+    /* K5   */  be_nested_str_weak(remove_trailing_zeroes),
+    /* K6   */  be_nested_str_weak(asstring),
     }),
-    be_str_literal("get_text"),
+    be_str_weak(get_text),
     &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -5350,13 +5350,13 @@ be_local_closure(lvh_dropdown_get_direction,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_dir"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_dir),
     /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_literal("_dir"),
+    /* K3   */  be_nested_str_weak(_dir),
     /* K4   */  be_const_int(1),
     }),
-    be_str_literal("get_direction"),
+    be_str_weak(get_direction),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -5397,10 +5397,10 @@ be_local_closure(lvh_dropdown_set_show_selected,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_text"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_text),
     }),
-    be_str_literal("set_show_selected"),
+    be_str_weak(set_show_selected),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x78060003,  //  0000  JMPF	R1	#0005
@@ -5429,10 +5429,10 @@ be_local_closure(lvh_dropdown_set_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("set_text"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_text),
     }),
-    be_str_literal("set_text"),
+    be_str_weak(set_text),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -5460,10 +5460,10 @@ be_local_closure(lvh_dropdown_get_options,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_options"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_options),
     }),
-    be_str_literal("get_options"),
+    be_str_weak(get_options),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -5490,10 +5490,10 @@ be_local_closure(lvh_dropdown_get_show_selected,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("get_text"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_text),
     }),
-    be_str_literal("get_show_selected"),
+    be_str_weak(get_show_selected),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -5517,16 +5517,16 @@ be_local_class(lvh_dropdown,
     &be_class_lvh_obj,
     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("get_show_selected", 8), be_const_closure(lvh_dropdown_get_show_selected_closure) },
-        { be_const_key_literal("set_direction", -1), be_const_closure(lvh_dropdown_set_direction_closure) },
-        { be_const_key_literal("set_options", -1), be_const_closure(lvh_dropdown_set_options_closure) },
-        { be_const_key_literal("set_val", 4), be_const_closure(lvh_dropdown_set_val_closure) },
-        { be_const_key_literal("get_text", -1), be_const_closure(lvh_dropdown_get_text_closure) },
-        { be_const_key_literal("get_direction", 9), be_const_closure(lvh_dropdown_get_direction_closure) },
-        { be_const_key_literal("_lv_class", -1), be_const_class(be_class_lv_dropdown) },
-        { be_const_key_literal("set_show_selected", 6), be_const_closure(lvh_dropdown_set_show_selected_closure) },
-        { be_const_key_literal("set_text", -1), be_const_closure(lvh_dropdown_set_text_closure) },
-        { be_const_key_literal("_dir", -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        { be_const_key_weak(get_show_selected, 8), be_const_closure(lvh_dropdown_get_show_selected_closure) },
+        { be_const_key_weak(set_direction, -1), be_const_closure(lvh_dropdown_set_direction_closure) },
+        { be_const_key_weak(set_options, -1), be_const_closure(lvh_dropdown_set_options_closure) },
+        { be_const_key_weak(set_val, 4), be_const_closure(lvh_dropdown_set_val_closure) },
+        { be_const_key_weak(get_text, -1), be_const_closure(lvh_dropdown_get_text_closure) },
+        { be_const_key_weak(get_direction, 9), be_const_closure(lvh_dropdown_get_direction_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_dropdown) },
+        { be_const_key_weak(set_show_selected, 6), be_const_closure(lvh_dropdown_set_show_selected_closure) },
+        { be_const_key_weak(set_text, -1), be_const_closure(lvh_dropdown_set_text_closure) },
+        { be_const_key_weak(_dir, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(4,
     ( (struct bvalue*) &(const bvalue[]) {
         be_const_int(8),
@@ -5534,10 +5534,10 @@ be_local_class(lvh_dropdown,
         be_const_int(1),
         be_const_int(2),
     }))    ) } )) },
-        { be_const_key_literal("get_options", -1), be_const_closure(lvh_dropdown_get_options_closure) },
-        { be_const_key_literal("get_val", 0), be_const_closure(lvh_dropdown_get_val_closure) },
+        { be_const_key_weak(get_options, -1), be_const_closure(lvh_dropdown_get_options_closure) },
+        { be_const_key_weak(get_val, 0), be_const_closure(lvh_dropdown_get_val_closure) },
     })),
-    be_str_literal("lvh_dropdown")
+    be_str_weak(lvh_dropdown)
 );
 /*******************************************************************/
 
@@ -5561,7 +5561,7 @@ be_local_closure(lvh_qrcode_get_qr_size,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_qr_size"),
+    be_str_weak(get_qr_size),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5585,7 +5585,7 @@ be_local_closure(lvh_qrcode_set_qr_size,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("set_qr_size"),
+    be_str_weak(set_qr_size),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5609,7 +5609,7 @@ be_local_closure(lvh_qrcode_get_qr_light_color,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_qr_light_color"),
+    be_str_weak(get_qr_light_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5633,7 +5633,7 @@ be_local_closure(lvh_qrcode_get_qr_dark_color,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_qr_dark_color"),
+    be_str_weak(get_qr_dark_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5657,20 +5657,20 @@ be_local_closure(lvh_qrcode_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_page"),
-    /* K1   */  be_nested_str_literal("find"),
-    /* K2   */  be_nested_str_literal("qr_size"),
-    /* K3   */  be_nested_str_literal("parse_color"),
-    /* K4   */  be_nested_str_literal("qr_dark_color"),
-    /* K5   */  be_nested_str_literal("#000000"),
-    /* K6   */  be_nested_str_literal("qr_light_color"),
-    /* K7   */  be_nested_str_literal("#FFFFFF"),
-    /* K8   */  be_nested_str_literal("_lv_obj"),
-    /* K9   */  be_nested_str_literal("lv"),
-    /* K10  */  be_nested_str_literal("qrcode"),
-    /* K11  */  be_nested_str_literal("post_init"),
+    /* K0   */  be_nested_str_weak(_page),
+    /* K1   */  be_nested_str_weak(find),
+    /* K2   */  be_nested_str_weak(qr_size),
+    /* K3   */  be_nested_str_weak(parse_color),
+    /* K4   */  be_nested_str_weak(qr_dark_color),
+    /* K5   */  be_nested_str_weak(_X23000000),
+    /* K6   */  be_nested_str_weak(qr_light_color),
+    /* K7   */  be_nested_str_weak(_X23FFFFFF),
+    /* K8   */  be_nested_str_weak(_lv_obj),
+    /* K9   */  be_nested_str_weak(lv),
+    /* K10  */  be_nested_str_weak(qrcode),
+    /* K11  */  be_nested_str_weak(post_init),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[28]) {  /* code */
       0x90020002,  //  0000  SETMBR	R0	K0	R2
@@ -5721,7 +5721,7 @@ be_local_closure(lvh_qrcode_set_qr_light_color,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("set_qr_light_color"),
+    be_str_weak(set_qr_light_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5745,7 +5745,7 @@ be_local_closure(lvh_qrcode_get_qr_text,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("get_qr_text"),
+    be_str_weak(get_qr_text),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5769,7 +5769,7 @@ be_local_closure(lvh_qrcode_set_qr_dark_color,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_literal("set_qr_dark_color"),
+    be_str_weak(set_qr_dark_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -5793,10 +5793,10 @@ be_local_closure(lvh_qrcode_set_qr_text,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_lv_obj"),
-    /* K1   */  be_nested_str_literal("update"),
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(update),
     }),
-    be_str_literal("set_qr_text"),
+    be_str_weak(set_qr_text),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x60080008,  //  0000  GETGBL	R2	G8
@@ -5826,18 +5826,18 @@ be_local_class(lvh_qrcode,
     &be_class_lvh_obj,
     be_nested_map(10,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("set_qr_text", -1), be_const_closure(lvh_qrcode_set_qr_text_closure) },
-        { be_const_key_literal("set_qr_size", -1), be_const_closure(lvh_qrcode_set_qr_size_closure) },
-        { be_const_key_literal("get_qr_light_color", 6), be_const_closure(lvh_qrcode_get_qr_light_color_closure) },
-        { be_const_key_literal("set_qr_dark_color", -1), be_const_closure(lvh_qrcode_set_qr_dark_color_closure) },
-        { be_const_key_literal("get_qr_text", -1), be_const_closure(lvh_qrcode_get_qr_text_closure) },
-        { be_const_key_literal("init", -1), be_const_closure(lvh_qrcode_init_closure) },
-        { be_const_key_literal("set_qr_light_color", -1), be_const_closure(lvh_qrcode_set_qr_light_color_closure) },
-        { be_const_key_literal("_lv_class", 4), be_const_class(be_class_lv_qrcode) },
-        { be_const_key_literal("get_qr_dark_color", 3), be_const_closure(lvh_qrcode_get_qr_dark_color_closure) },
-        { be_const_key_literal("get_qr_size", 0), be_const_closure(lvh_qrcode_get_qr_size_closure) },
+        { be_const_key_weak(set_qr_text, -1), be_const_closure(lvh_qrcode_set_qr_text_closure) },
+        { be_const_key_weak(set_qr_size, -1), be_const_closure(lvh_qrcode_set_qr_size_closure) },
+        { be_const_key_weak(get_qr_light_color, 6), be_const_closure(lvh_qrcode_get_qr_light_color_closure) },
+        { be_const_key_weak(set_qr_dark_color, -1), be_const_closure(lvh_qrcode_set_qr_dark_color_closure) },
+        { be_const_key_weak(get_qr_text, -1), be_const_closure(lvh_qrcode_get_qr_text_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lvh_qrcode_init_closure) },
+        { be_const_key_weak(set_qr_light_color, -1), be_const_closure(lvh_qrcode_set_qr_light_color_closure) },
+        { be_const_key_weak(_lv_class, 4), be_const_class(be_class_lv_qrcode) },
+        { be_const_key_weak(get_qr_dark_color, 3), be_const_closure(lvh_qrcode_get_qr_dark_color_closure) },
+        { be_const_key_weak(get_qr_size, 0), be_const_closure(lvh_qrcode_get_qr_size_closure) },
     })),
-    be_str_literal("lvh_qrcode")
+    be_str_weak(lvh_qrcode)
 );
 /*******************************************************************/
 
@@ -5861,22 +5861,22 @@ be_local_closure(HASPmota_do_action,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_str_literal("lv"),
-    /* K1   */  be_nested_str_literal("EVENT_CLICKED"),
-    /* K2   */  be_nested_str_literal("_action"),
-    /* K3   */  be_nested_str_literal("lvh_pages"),
-    /* K4   */  be_nested_str_literal("lvh_page_cur_idx"),
-    /* K5   */  be_nested_str_literal("pages_list_sorted"),
+    /* K0   */  be_nested_str_weak(lv),
+    /* K1   */  be_nested_str_weak(EVENT_CLICKED),
+    /* K2   */  be_nested_str_weak(_action),
+    /* K3   */  be_nested_str_weak(lvh_pages),
+    /* K4   */  be_nested_str_weak(lvh_page_cur_idx),
+    /* K5   */  be_nested_str_weak(pages_list_sorted),
     /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str_literal("prev"),
-    /* K8   */  be_nested_str_literal("next"),
-    /* K9   */  be_nested_str_literal("back"),
-    /* K10  */  be_nested_str_literal("re_page_target"),
-    /* K11  */  be_nested_str_literal("match"),
+    /* K7   */  be_nested_str_weak(prev),
+    /* K8   */  be_nested_str_weak(next),
+    /* K9   */  be_nested_str_weak(back),
+    /* K10  */  be_nested_str_weak(re_page_target),
+    /* K11  */  be_nested_str_weak(match),
     /* K12  */  be_const_int(0),
-    /* K13  */  be_nested_str_literal("show"),
+    /* K13  */  be_nested_str_weak(show),
     }),
-    be_str_literal("do_action"),
+    be_str_weak(do_action),
     &be_const_str_solidified,
     ( &(const binstruction[74]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
@@ -5974,16 +5974,16 @@ be_local_closure(HASPmota_pages_list_sorted,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
-    /* K1   */  be_nested_str_literal("lvh_page_cur_idx"),
-    /* K2   */  be_nested_str_literal("lvh_pages"),
-    /* K3   */  be_nested_str_literal("keys"),
-    /* K4   */  be_nested_str_literal("push"),
-    /* K5   */  be_nested_str_literal("stop_iteration"),
-    /* K6   */  be_nested_str_literal("sort"),
-    /* K7   */  be_nested_str_literal("find"),
+    /* K1   */  be_nested_str_weak(lvh_page_cur_idx),
+    /* K2   */  be_nested_str_weak(lvh_pages),
+    /* K3   */  be_nested_str_weak(keys),
+    /* K4   */  be_nested_str_weak(push),
+    /* K5   */  be_nested_str_weak(stop_iteration),
+    /* K6   */  be_nested_str_weak(sort),
+    /* K7   */  be_nested_str_weak(find),
     /* K8   */  be_const_int(1),
     }),
-    be_str_literal("pages_list_sorted"),
+    be_str_weak(pages_list_sorted),
     &be_const_str_solidified,
     ( &(const binstruction[47]) {  /* code */
       0x60080012,  //  0000  GETGBL	R2	G18
@@ -6053,10 +6053,10 @@ be_local_closure(HASPmota_get_page_cur,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_literal("lvh_pages"),
-    /* K1   */  be_nested_str_literal("lvh_page_cur_idx"),
+    /* K0   */  be_nested_str_weak(lvh_pages),
+    /* K1   */  be_nested_str_weak(lvh_page_cur_idx),
     }),
-    be_str_literal("get_page_cur"),
+    be_str_weak(get_page_cur),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040101,  //  0000  GETMBR	R1	R0	K1
@@ -6083,41 +6083,41 @@ be_local_closure(HASPmota_start,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[33]) {     /* constants */
-    /* K0   */  be_nested_str_literal("path"),
-    /* K1   */  be_nested_str_literal("def_templ_name"),
-    /* K2   */  be_nested_str_literal("exists"),
-    /* K3   */  be_nested_str_literal("file '"),
-    /* K4   */  be_nested_str_literal("' not found"),
-    /* K5   */  be_nested_str_literal("io_erorr"),
-    /* K6   */  be_nested_str_literal("lv"),
-    /* K7   */  be_nested_str_literal("start"),
-    /* K8   */  be_nested_str_literal("dark"),
-    /* K9   */  be_nested_str_literal("hres"),
-    /* K10  */  be_nested_str_literal("get_hor_res"),
-    /* K11  */  be_nested_str_literal("vres"),
-    /* K12  */  be_nested_str_literal("get_ver_res"),
-    /* K13  */  be_nested_str_literal("scr"),
-    /* K14  */  be_nested_str_literal("scr_act"),
-    /* K15  */  be_nested_str_literal("r16"),
-    /* K16  */  be_nested_str_literal("font_embedded"),
-    /* K17  */  be_nested_str_literal("robotocondensed"),
-    /* K18  */  be_nested_str_literal("montserrat"),
-    /* K19  */  be_nested_str_literal("theme_haspmota_init"),
+    /* K0   */  be_nested_str_weak(path),
+    /* K1   */  be_nested_str_weak(def_templ_name),
+    /* K2   */  be_nested_str_weak(exists),
+    /* K3   */  be_nested_str_weak(file_X20_X27),
+    /* K4   */  be_nested_str_weak(_X27_X20not_X20found),
+    /* K5   */  be_nested_str_weak(io_erorr),
+    /* K6   */  be_nested_str_weak(lv),
+    /* K7   */  be_nested_str_weak(start),
+    /* K8   */  be_nested_str_weak(dark),
+    /* K9   */  be_nested_str_weak(hres),
+    /* K10  */  be_nested_str_weak(get_hor_res),
+    /* K11  */  be_nested_str_weak(vres),
+    /* K12  */  be_nested_str_weak(get_ver_res),
+    /* K13  */  be_nested_str_weak(scr),
+    /* K14  */  be_nested_str_weak(scr_act),
+    /* K15  */  be_nested_str_weak(r16),
+    /* K16  */  be_nested_str_weak(font_embedded),
+    /* K17  */  be_nested_str_weak(robotocondensed),
+    /* K18  */  be_nested_str_weak(montserrat),
+    /* K19  */  be_nested_str_weak(theme_haspmota_init),
     /* K20  */  be_const_int(0),
-    /* K21  */  be_nested_str_literal("color"),
+    /* K21  */  be_nested_str_weak(color),
     /* K22  */  be_const_int(16711935),
     /* K23  */  be_const_int(3158064),
-    /* K24  */  be_nested_str_literal("get_disp"),
-    /* K25  */  be_nested_str_literal("set_theme"),
-    /* K26  */  be_nested_str_literal("set_style_bg_color"),
+    /* K24  */  be_nested_str_weak(get_disp),
+    /* K25  */  be_nested_str_weak(set_theme),
+    /* K26  */  be_nested_str_weak(set_style_bg_color),
     /* K27  */  be_const_int(16777215),
-    /* K28  */  be_nested_str_literal("theme_apply"),
-    /* K29  */  be_nested_str_literal("layer_top"),
-    /* K30  */  be_nested_str_literal("set_style_bg_opa"),
-    /* K31  */  be_nested_str_literal("lvh_pages"),
-    /* K32  */  be_nested_str_literal("_load"),
+    /* K28  */  be_nested_str_weak(theme_apply),
+    /* K29  */  be_nested_str_weak(layer_top),
+    /* K30  */  be_nested_str_weak(set_style_bg_opa),
+    /* K31  */  be_nested_str_weak(lvh_pages),
+    /* K32  */  be_nested_str_weak(_load),
     }),
-    be_str_literal("start"),
+    be_str_weak(start),
     &be_const_str_solidified,
     ( &(const binstruction[105]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
@@ -6245,12 +6245,12 @@ be_local_closure(HASPmota_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("re"),
-    /* K1   */  be_nested_str_literal("re_page_target"),
-    /* K2   */  be_nested_str_literal("compile"),
-    /* K3   */  be_nested_str_literal("p\\d+"),
+    /* K0   */  be_nested_str_weak(re),
+    /* K1   */  be_nested_str_weak(re_page_target),
+    /* K2   */  be_nested_str_weak(compile),
+    /* K3   */  be_nested_str_weak(p_X5Cd_X2B),
     }),
-    be_str_literal("init"),
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
@@ -6289,9 +6289,9 @@ be_local_closure(HASPmota_register_event,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_str_literal("event_dispatch"),
+        /* K0   */  be_nested_str_weak(event_dispatch),
         }),
-        be_str_literal("<lambda>"),
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 5]) {  /* code */
           0x68040000,  //  0000  GETUPV	R1	U0
@@ -6304,15 +6304,15 @@ be_local_closure(HASPmota_register_event,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_literal("cb"),
-    /* K1   */  be_nested_str_literal("introspect"),
-    /* K2   */  be_nested_str_literal("event_cb"),
-    /* K3   */  be_nested_str_literal("gen_cb"),
-    /* K4   */  be_nested_str_literal("_lv_obj"),
-    /* K5   */  be_nested_str_literal("add_event_cb"),
-    /* K6   */  be_nested_str_literal("toptr"),
+    /* K0   */  be_nested_str_weak(cb),
+    /* K1   */  be_nested_str_weak(introspect),
+    /* K2   */  be_nested_str_weak(event_cb),
+    /* K3   */  be_nested_str_weak(gen_cb),
+    /* K4   */  be_nested_str_weak(_lv_obj),
+    /* K5   */  be_nested_str_weak(add_event_cb),
+    /* K6   */  be_nested_str_weak(toptr),
     }),
-    be_str_literal("register_event"),
+    be_str_weak(register_event),
     &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
@@ -6355,22 +6355,22 @@ be_local_closure(HASPmota_parse_page,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_str_literal("has"),
-    /* K1   */  be_nested_str_literal("page"),
-    /* K2   */  be_nested_str_literal("int"),
-    /* K3   */  be_nested_str_literal("lvh_page_cur_idx"),
-    /* K4   */  be_nested_str_literal("lvh_pages"),
-    /* K5   */  be_nested_str_literal("contains"),
-    /* K6   */  be_nested_str_literal("lvh_page"),
-    /* K7   */  be_nested_str_literal("find"),
-    /* K8   */  be_nested_str_literal("id"),
+    /* K0   */  be_nested_str_weak(has),
+    /* K1   */  be_nested_str_weak(page),
+    /* K2   */  be_nested_str_weak(int),
+    /* K3   */  be_nested_str_weak(lvh_page_cur_idx),
+    /* K4   */  be_nested_str_weak(lvh_pages),
+    /* K5   */  be_nested_str_weak(contains),
+    /* K6   */  be_nested_str_weak(lvh_page),
+    /* K7   */  be_nested_str_weak(find),
+    /* K8   */  be_nested_str_weak(id),
     /* K9   */  be_const_int(0),
-    /* K10  */  be_nested_str_literal("get_page_cur"),
-    /* K11  */  be_nested_str_literal("prev"),
-    /* K12  */  be_nested_str_literal("next"),
-    /* K13  */  be_nested_str_literal("back"),
+    /* K10  */  be_nested_str_weak(get_page_cur),
+    /* K11  */  be_nested_str_weak(prev),
+    /* K12  */  be_nested_str_weak(next),
+    /* K13  */  be_nested_str_weak(back),
     }),
-    be_str_literal("parse_page"),
+    be_str_weak(parse_page),
     &be_const_str_solidified,
     ( &(const binstruction[54]) {  /* code */
       0x8C080300,  //  0000  GETMET	R2	R1	K0
@@ -6447,12 +6447,12 @@ be_local_closure(HASPmota_deinit,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_literal("_val_rule"),
-    /* K1   */  be_nested_str_literal("tasmota"),
-    /* K2   */  be_nested_str_literal("remove_rule"),
-    /* K3   */  be_nested_str_literal("_text_rule"),
+    /* K0   */  be_nested_str_weak(_val_rule),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(remove_rule),
+    /* K3   */  be_nested_str_weak(_text_rule),
     }),
-    be_str_literal("deinit"),
+    be_str_weak(deinit),
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -6494,13 +6494,13 @@ be_local_closure(HASPmota_page_dir_to,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_literal("pages_list_sorted"),
+    /* K0   */  be_nested_str_weak(pages_list_sorted),
     /* K1   */  be_const_int(0),
     /* K2   */  be_const_int(1),
     /* K3   */  be_const_int(2),
-    /* K4   */  be_nested_str_literal("find"),
+    /* K4   */  be_nested_str_weak(find),
     }),
-    be_str_literal("page_dir_to"),
+    be_str_weak(page_dir_to),
     &be_const_str_solidified,
     ( &(const binstruction[32]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
@@ -6555,25 +6555,25 @@ be_local_closure(HASPmota__load,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_literal("string"),
-    /* K1   */  be_nested_str_literal("json"),
-    /* K2   */  be_nested_str_literal("lvh_page_cur_idx"),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(json),
+    /* K2   */  be_nested_str_weak(lvh_page_cur_idx),
     /* K3   */  be_const_int(1),
-    /* K4   */  be_nested_str_literal("lvh_page"),
-    /* K5   */  be_nested_str_literal("lvh_pages"),
-    /* K6   */  be_nested_str_literal("r"),
-    /* K7   */  be_nested_str_literal("read"),
-    /* K8   */  be_nested_str_literal("close"),
-    /* K9   */  be_nested_str_literal("split"),
-    /* K10  */  be_nested_str_literal("\n"),
+    /* K4   */  be_nested_str_weak(lvh_page),
+    /* K5   */  be_nested_str_weak(lvh_pages),
+    /* K6   */  be_nested_str_weak(r),
+    /* K7   */  be_nested_str_weak(read),
+    /* K8   */  be_nested_str_weak(close),
+    /* K9   */  be_nested_str_weak(split),
+    /* K10  */  be_nested_str_weak(_X0A),
     /* K11  */  be_const_int(0),
-    /* K12  */  be_nested_str_literal("load"),
-    /* K13  */  be_nested_str_literal("instance"),
-    /* K14  */  be_nested_str_literal("parse_page"),
-    /* K15  */  be_nested_str_literal("parse_obj"),
-    /* K16  */  be_nested_str_literal("remove"),
+    /* K12  */  be_nested_str_weak(load),
+    /* K13  */  be_nested_str_weak(instance),
+    /* K14  */  be_nested_str_weak(parse_page),
+    /* K15  */  be_nested_str_weak(parse_obj),
+    /* K16  */  be_nested_str_weak(remove),
     }),
-    be_str_literal("_load"),
+    be_str_weak(_load),
     &be_const_str_solidified,
     ( &(const binstruction[54]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
@@ -6650,17 +6650,17 @@ be_local_closure(HASPmota_parse,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("load"),
-    /* K2   */  be_nested_str_literal("instance"),
-    /* K3   */  be_nested_str_literal("parse_page"),
-    /* K4   */  be_nested_str_literal("parse_obj"),
-    /* K5   */  be_nested_str_literal("lvh_pages"),
-    /* K6   */  be_nested_str_literal("lvh_page_cur_idx"),
-    /* K7   */  be_nested_str_literal("value_error"),
-    /* K8   */  be_nested_str_literal("unable to parse JSON line"),
+    /* K0   */  be_nested_str_weak(json),
+    /* K1   */  be_nested_str_weak(load),
+    /* K2   */  be_nested_str_weak(instance),
+    /* K3   */  be_nested_str_weak(parse_page),
+    /* K4   */  be_nested_str_weak(parse_obj),
+    /* K5   */  be_nested_str_weak(lvh_pages),
+    /* K6   */  be_nested_str_weak(lvh_page_cur_idx),
+    /* K7   */  be_nested_str_weak(value_error),
+    /* K8   */  be_nested_str_weak(unable_X20to_X20parse_X20JSON_X20line),
     }),
-    be_str_literal("parse"),
+    be_str_weak(parse),
     &be_const_str_solidified,
     ( &(const binstruction[21]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
@@ -6706,9 +6706,9 @@ be_local_closure(HASPmota_sort,   /* name */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(1),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_literal("stop_iteration"),
+    /* K2   */  be_nested_str_weak(stop_iteration),
     }),
-    be_str_literal("sort"),
+    be_str_weak(sort),
     &be_const_str_solidified,
     ( &(const binstruction[29]) {  /* code */
       0x60040010,  //  0000  GETGBL	R1	G16
@@ -6760,38 +6760,38 @@ be_local_closure(HASPmota_parse_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[30]) {     /* constants */
-    /* K0   */  be_nested_str_literal("global"),
-    /* K1   */  be_nested_str_literal("string"),
-    /* K2   */  be_nested_str_literal("introspect"),
-    /* K3   */  be_nested_str_literal("find"),
-    /* K4   */  be_nested_str_literal("id"),
-    /* K5   */  be_nested_str_literal("obj"),
-    /* K6   */  be_nested_str_literal("get_page_cur"),
-    /* K7   */  be_nested_str_literal("berry_run"),
-    /* K8   */  be_nested_str_literal("nil"),
-    /* K9   */  be_nested_str_literal("format"),
-    /* K10  */  be_nested_str_literal("HSP: unable to run berry code \"%s\" - '%s' - %s"),
+    /* K0   */  be_nested_str_weak(global),
+    /* K1   */  be_nested_str_weak(string),
+    /* K2   */  be_nested_str_weak(introspect),
+    /* K3   */  be_nested_str_weak(find),
+    /* K4   */  be_nested_str_weak(id),
+    /* K5   */  be_nested_str_weak(obj),
+    /* K6   */  be_nested_str_weak(get_page_cur),
+    /* K7   */  be_nested_str_weak(berry_run),
+    /* K8   */  be_nested_str_weak(nil),
+    /* K9   */  be_nested_str_weak(format),
+    /* K10  */  be_nested_str_weak(HSP_X3A_X20unable_X20to_X20run_X20berry_X20code_X20_X22_X25s_X22_X20_X2D_X20_X27_X25s_X27_X20_X2D_X20_X25s),
     /* K11  */  be_const_int(1),
-    /* K12  */  be_nested_str_literal("HSP: invalid 'id': "),
-    /* K13  */  be_nested_str_literal(" for 'obj':"),
-    /* K14  */  be_nested_str_literal("parentid"),
-    /* K15  */  be_nested_str_literal("get_obj"),
-    /* K16  */  be_nested_str_literal("_lv_obj"),
-    /* K17  */  be_nested_str_literal("get_scr"),
-    /* K18  */  be_nested_str_literal("get"),
-    /* K19  */  be_nested_str_literal("lvh_"),
-    /* K20  */  be_nested_str_literal("class"),
-    /* K21  */  be_nested_str_literal("lvh_obj"),
-    /* K22  */  be_nested_str_literal("module"),
-    /* K23  */  be_nested_str_literal("HSP: cannot find object of type "),
-    /* K24  */  be_nested_str_literal("set_obj"),
-    /* K25  */  be_nested_str_literal("p%ib%i"),
+    /* K12  */  be_nested_str_weak(HSP_X3A_X20invalid_X20_X27id_X27_X3A_X20),
+    /* K13  */  be_nested_str_weak(_X20for_X20_X27obj_X27_X3A),
+    /* K14  */  be_nested_str_weak(parentid),
+    /* K15  */  be_nested_str_weak(get_obj),
+    /* K16  */  be_nested_str_weak(_lv_obj),
+    /* K17  */  be_nested_str_weak(get_scr),
+    /* K18  */  be_nested_str_weak(get),
+    /* K19  */  be_nested_str_weak(lvh_),
+    /* K20  */  be_nested_str_weak(class),
+    /* K21  */  be_nested_str_weak(lvh_obj),
+    /* K22  */  be_nested_str_weak(module),
+    /* K23  */  be_nested_str_weak(HSP_X3A_X20cannot_X20find_X20object_X20of_X20type_X20),
+    /* K24  */  be_nested_str_weak(set_obj),
+    /* K25  */  be_nested_str_weak(p_X25ib_X25i),
     /* K26  */  be_const_int(0),
-    /* K27  */  be_nested_str_literal("HSP: cannot specify 'obj' for 'id':0"),
-    /* K28  */  be_nested_str_literal("keys"),
-    /* K29  */  be_nested_str_literal("stop_iteration"),
+    /* K27  */  be_nested_str_weak(HSP_X3A_X20cannot_X20specify_X20_X27obj_X27_X20for_X20_X27id_X27_X3A0),
+    /* K28  */  be_nested_str_weak(keys),
+    /* K29  */  be_nested_str_weak(stop_iteration),
     }),
-    be_str_literal("parse_obj"),
+    be_str_weak(parse_obj),
     &be_const_str_solidified,
     ( &(const binstruction[190]) {  /* code */
       0xA40E0000,  //  0000  IMPORT	R3	K0
@@ -7004,19 +7004,19 @@ be_local_closure(HASPmota_event_dispatch,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_str_literal("introspect"),
-    /* K1   */  be_nested_str_literal("toptr"),
-    /* K2   */  be_nested_str_literal("event"),
-    /* K3   */  be_nested_str_literal("_change_buffer"),
-    /* K4   */  be_nested_str_literal("lv"),
-    /* K5   */  be_nested_str_literal("lv_event"),
-    /* K6   */  be_nested_str_literal("user_data"),
+    /* K0   */  be_nested_str_weak(introspect),
+    /* K1   */  be_nested_str_weak(toptr),
+    /* K2   */  be_nested_str_weak(event),
+    /* K3   */  be_nested_str_weak(_change_buffer),
+    /* K4   */  be_nested_str_weak(lv),
+    /* K5   */  be_nested_str_weak(lv_event),
+    /* K6   */  be_nested_str_weak(user_data),
     /* K7   */  be_const_int(0),
-    /* K8   */  be_nested_str_literal("fromptr"),
-    /* K9   */  be_nested_str_literal("instance"),
-    /* K10  */  be_nested_str_literal("event_cb"),
+    /* K8   */  be_nested_str_weak(fromptr),
+    /* K9   */  be_nested_str_weak(instance),
+    /* K10  */  be_nested_str_weak(event_cb),
     }),
-    be_str_literal("event_dispatch"),
+    be_str_weak(event_dispatch),
     &be_const_str_solidified,
     ( &(const binstruction[35]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
@@ -7068,51 +7068,51 @@ be_local_class(HASPmota,
     NULL,
     be_nested_map(43,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("lvh_textarea", 41), be_const_class(be_class_lvh_textarea) },
-        { be_const_key_literal("scr", -1), be_const_var(3) },
-        { be_const_key_literal("event_dispatch", 16), be_const_closure(HASPmota_event_dispatch_closure) },
-        { be_const_key_literal("lvh_bar", -1), be_const_class(be_class_lvh_bar) },
-        { be_const_key_literal("lvh_img", -1), be_const_class(be_class_lvh_img) },
-        { be_const_key_literal("event", -1), be_const_var(8) },
-        { be_const_key_literal("do_action", 33), be_const_closure(HASPmota_do_action_closure) },
-        { be_const_key_literal("pages_list_sorted", -1), be_const_closure(HASPmota_pages_list_sorted_closure) },
-        { be_const_key_literal("lvh_btnmatrix", 42), be_const_class(be_class_lvh_btnmatrix) },
-        { be_const_key_literal("start", -1), be_const_closure(HASPmota_start_closure) },
-        { be_const_key_literal("init", 5), be_const_closure(HASPmota_init_closure) },
-        { be_const_key_literal("lvh_scr", -1), be_const_class(be_class_lvh_scr) },
-        { be_const_key_literal("parse_page", -1), be_const_closure(HASPmota_parse_page_closure) },
-        { be_const_key_literal("register_event", 24), be_const_closure(HASPmota_register_event_closure) },
-        { be_const_key_literal("lvh_roller", 34), be_const_class(be_class_lvh_roller) },
-        { be_const_key_literal("lvh_page", 11), be_const_class(be_class_lvh_page) },
-        { be_const_key_literal("lvh_page_cur_idx", -1), be_const_var(6) },
-        { be_const_key_literal("lvh_arc", 12), be_const_class(be_class_lvh_arc) },
-        { be_const_key_literal("hres", 38), be_const_var(1) },
-        { be_const_key_literal("dark", -1), be_const_var(0) },
-        { be_const_key_literal("lvh_label", 37), be_const_class(be_class_lvh_label) },
-        { be_const_key_literal("deinit", 14), be_const_closure(HASPmota_deinit_closure) },
-        { be_const_key_literal("page_dir_to", -1), be_const_closure(HASPmota_page_dir_to_closure) },
-        { be_const_key_literal("parse_obj", -1), be_const_closure(HASPmota_parse_obj_closure) },
-        { be_const_key_literal("lvh_spinner", -1), be_const_class(be_class_lvh_spinner) },
-        { be_const_key_literal("_load", -1), be_const_closure(HASPmota__load_closure) },
-        { be_const_key_literal("lvh_qrcode", -1), be_const_class(be_class_lvh_qrcode) },
-        { be_const_key_literal("parse", -1), be_const_closure(HASPmota_parse_closure) },
-        { be_const_key_literal("lvh_pages", 2), be_const_var(5) },
-        { be_const_key_literal("lvh_line", -1), be_const_class(be_class_lvh_line) },
-        { be_const_key_literal("lvh_switch", -1), be_const_class(be_class_lvh_switch) },
-        { be_const_key_literal("re_page_target", -1), be_const_var(7) },
-        { be_const_key_literal("r16", -1), be_const_var(4) },
-        { be_const_key_literal("def_templ_name", -1), be_nested_str_literal("pages.jsonl") },
-        { be_const_key_literal("lvh_obj", 19), be_const_class(be_class_lvh_obj) },
-        { be_const_key_literal("sort", 23), be_const_static_closure(HASPmota_sort_closure) },
-        { be_const_key_literal("lvh_dropdown", -1), be_const_class(be_class_lvh_dropdown) },
-        { be_const_key_literal("lvh_checkbox", -1), be_const_class(be_class_lvh_checkbox) },
-        { be_const_key_literal("lvh_slider", -1), be_const_class(be_class_lvh_slider) },
-        { be_const_key_literal("vres", -1), be_const_var(2) },
-        { be_const_key_literal("lvh_btn", -1), be_const_class(be_class_lvh_btn) },
-        { be_const_key_literal("event_cb", -1), be_const_var(9) },
-        { be_const_key_literal("get_page_cur", -1), be_const_closure(HASPmota_get_page_cur_closure) },
+        { be_const_key_weak(lvh_textarea, 41), be_const_class(be_class_lvh_textarea) },
+        { be_const_key_weak(scr, -1), be_const_var(3) },
+        { be_const_key_weak(event_dispatch, 16), be_const_closure(HASPmota_event_dispatch_closure) },
+        { be_const_key_weak(lvh_bar, -1), be_const_class(be_class_lvh_bar) },
+        { be_const_key_weak(lvh_img, -1), be_const_class(be_class_lvh_img) },
+        { be_const_key_weak(event, -1), be_const_var(8) },
+        { be_const_key_weak(do_action, 33), be_const_closure(HASPmota_do_action_closure) },
+        { be_const_key_weak(pages_list_sorted, -1), be_const_closure(HASPmota_pages_list_sorted_closure) },
+        { be_const_key_weak(lvh_btnmatrix, 42), be_const_class(be_class_lvh_btnmatrix) },
+        { be_const_key_weak(start, -1), be_const_closure(HASPmota_start_closure) },
+        { be_const_key_weak(init, 5), be_const_closure(HASPmota_init_closure) },
+        { be_const_key_weak(lvh_scr, -1), be_const_class(be_class_lvh_scr) },
+        { be_const_key_weak(parse_page, -1), be_const_closure(HASPmota_parse_page_closure) },
+        { be_const_key_weak(register_event, 24), be_const_closure(HASPmota_register_event_closure) },
+        { be_const_key_weak(lvh_roller, 34), be_const_class(be_class_lvh_roller) },
+        { be_const_key_weak(lvh_page, 11), be_const_class(be_class_lvh_page) },
+        { be_const_key_weak(lvh_page_cur_idx, -1), be_const_var(6) },
+        { be_const_key_weak(lvh_arc, 12), be_const_class(be_class_lvh_arc) },
+        { be_const_key_weak(hres, 38), be_const_var(1) },
+        { be_const_key_weak(dark, -1), be_const_var(0) },
+        { be_const_key_weak(lvh_label, 37), be_const_class(be_class_lvh_label) },
+        { be_const_key_weak(deinit, 14), be_const_closure(HASPmota_deinit_closure) },
+        { be_const_key_weak(page_dir_to, -1), be_const_closure(HASPmota_page_dir_to_closure) },
+        { be_const_key_weak(parse_obj, -1), be_const_closure(HASPmota_parse_obj_closure) },
+        { be_const_key_weak(lvh_spinner, -1), be_const_class(be_class_lvh_spinner) },
+        { be_const_key_weak(_load, -1), be_const_closure(HASPmota__load_closure) },
+        { be_const_key_weak(lvh_qrcode, -1), be_const_class(be_class_lvh_qrcode) },
+        { be_const_key_weak(parse, -1), be_const_closure(HASPmota_parse_closure) },
+        { be_const_key_weak(lvh_pages, 2), be_const_var(5) },
+        { be_const_key_weak(lvh_line, -1), be_const_class(be_class_lvh_line) },
+        { be_const_key_weak(lvh_switch, -1), be_const_class(be_class_lvh_switch) },
+        { be_const_key_weak(re_page_target, -1), be_const_var(7) },
+        { be_const_key_weak(r16, -1), be_const_var(4) },
+        { be_const_key_weak(def_templ_name, -1), be_nested_str_weak(pages_X2Ejsonl) },
+        { be_const_key_weak(lvh_obj, 19), be_const_class(be_class_lvh_obj) },
+        { be_const_key_weak(sort, 23), be_const_static_closure(HASPmota_sort_closure) },
+        { be_const_key_weak(lvh_dropdown, -1), be_const_class(be_class_lvh_dropdown) },
+        { be_const_key_weak(lvh_checkbox, -1), be_const_class(be_class_lvh_checkbox) },
+        { be_const_key_weak(lvh_slider, -1), be_const_class(be_class_lvh_slider) },
+        { be_const_key_weak(vres, -1), be_const_var(2) },
+        { be_const_key_weak(lvh_btn, -1), be_const_class(be_class_lvh_btn) },
+        { be_const_key_weak(event_cb, -1), be_const_var(9) },
+        { be_const_key_weak(get_page_cur, -1), be_const_closure(HASPmota_get_page_cur_closure) },
     })),
-    be_str_literal("HASPmota")
+    be_str_weak(HASPmota)
 );
 
 /********************************************************************
@@ -7129,9 +7129,9 @@ be_local_closure(haspmota__anonymous_,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_literal("HASPmota"),
+    /* K0   */  be_nested_str_weak(HASPmota),
     }),
-    be_str_literal("_anonymous_"),
+    be_str_weak(_anonymous_),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -7151,8 +7151,8 @@ be_local_module(haspmota,
     "haspmota",
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_literal("HASPmota", -1), be_const_class(be_class_HASPmota) },
-        { be_const_key_literal("init", -1), be_const_closure(haspmota__anonymous__closure) },
+        { be_const_key_weak(HASPmota, -1), be_const_class(be_class_HASPmota) },
+        { be_const_key_weak(init, -1), be_const_closure(haspmota__anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(haspmota);
