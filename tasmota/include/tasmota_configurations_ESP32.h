@@ -180,6 +180,7 @@
 #define USE_WEBSERVER
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
+#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+0k8 code)
 
 #endif  // FIRMWARE_SAFEBOOT
 
