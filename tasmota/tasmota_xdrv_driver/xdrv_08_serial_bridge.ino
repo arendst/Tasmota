@@ -25,6 +25,8 @@
 #define XDRV_08                    8
 #define HARDWARE_FALLBACK          2
 
+#define USE_SERIAL_BRIDGE_TEE
+
 #ifdef ESP8266
 const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 #else
@@ -63,6 +65,7 @@ void SetSSerialConfig(uint32_t serial_config) {
 }
 
 void SerialBridgeLog(const char *mxtime, const char *log_data, const char *log_data_payload, const char *log_data_retained) {
+#ifdef USE_SERIAL_BRIDGE_TEE
   if (Settings->sbflag1.serbridge_console && serial_bridge_buffer) {
     char empty[2] = { 0 };
     if (!log_data) { log_data = empty; }
@@ -70,6 +73,7 @@ void SerialBridgeLog(const char *mxtime, const char *log_data, const char *log_d
     if (!log_data_retained) { log_data_retained = empty; }
     SerialBridgeSerial->printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
   }
+#endif  // USE_SERIAL_BRIDGE_TEE
 }
 
 /********************************************************************************************/
@@ -79,6 +83,7 @@ void SerialBridgeInput(void) {
     yield();
     uint8_t serial_in_byte = SerialBridgeSerial->read();
 
+#ifdef USE_SERIAL_BRIDGE_TEE
     if (Settings->sbflag1.serbridge_console) {
       static bool serial_bridge_overrun = false;
 
@@ -104,6 +109,7 @@ void SerialBridgeInput(void) {
         return;
       }
     } else {
+#endif  // USE_SERIAL_BRIDGE_TEE
       serial_bridge_raw = (254 == Settings->serial_delimiter);
       if ((serial_in_byte > 127) && !serial_bridge_raw) {                        // Discard binary data above 127 if no raw reception allowed
         serial_bridge_in_byte_counter = 0;
@@ -128,32 +134,38 @@ void SerialBridgeInput(void) {
         }
       }
       serial_bridge_polling_window = millis();                                   // Wait for more data
+#ifdef USE_SERIAL_BRIDGE_TEE
     }
+#endif  // USE_SERIAL_BRIDGE_TEE
   }
 
-  if (!Settings->sbflag1.serbridge_console) {
-    if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
-      serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
-      bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
+#ifdef USE_SERIAL_BRIDGE_TEE
+  if (Settings->sbflag1.serbridge_console) {
+    return;
+  }
+#endif  // USE_SERIAL_BRIDGE_TEE
 
-      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
-      if (assume_json) {
-        ResponseAppend_P(serial_bridge_buffer);
+  if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
+    serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
+    bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
+
+    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
+    if (assume_json) {
+      ResponseAppend_P(serial_bridge_buffer);
+    } else {
+      ResponseAppend_P(PSTR("\""));
+      if (serial_bridge_raw) {
+        char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
+        ResponseAppend_P(ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)));
       } else {
-        ResponseAppend_P(PSTR("\""));
-        if (serial_bridge_raw) {
-          char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
-          ResponseAppend_P(ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)));
-        } else {
-          ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
-        }
-        ResponseAppend_P(PSTR("\""));
+        ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
       }
-      ResponseJsonEnd();
-
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-      serial_bridge_in_byte_counter = 0;
+      ResponseAppend_P(PSTR("\""));
     }
+    ResponseJsonEnd();
+
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+    serial_bridge_in_byte_counter = 0;
   }
 }
 
@@ -221,12 +233,14 @@ void CmndSSerialSend(void) {
       ResponseCmndDone();
     }
   }
+#ifdef USE_SERIAL_BRIDGE_TEE
   if (9 == XdrvMailbox.index) {
-    if (XdrvMailbox.payload >= 0) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
       Settings->sbflag1.serbridge_console = XdrvMailbox.payload &1;
     }
     ResponseCmndStateText(Settings->sbflag1.serbridge_console);
   }
+#endif  // USE_SERIAL_BRIDGE_TEE
 }
 
 void CmndSBaudrate(void) {
