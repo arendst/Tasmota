@@ -112,6 +112,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only [#13515](https://github.com/arendst/Tasmota/issues/13515)
 - Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy [#15513](https://github.com/arendst/Tasmota/issues/15513)
 - Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules [#13447](https://github.com/arendst/Tasmota/issues/13447)
+- Command ``SSerialSend9 0/1`` to enable Serial Bridge console Tee for debugging purposes
 - Support for Sonoff MS01 soil moisture sensor [#15335](https://github.com/arendst/Tasmota/issues/15335)
 - Support for daisy chaining MAX7219 displays [#15345](https://github.com/arendst/Tasmota/issues/15345)
 - Support for Sensirion SHT4X using define USE_SHT3X [#15349](https://github.com/arendst/Tasmota/issues/15349)
@@ -129,6 +130,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
 - Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
 - ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
+- ESP32 increase Serial Bridge input buffer from 130 to 520 characters
 
 ### Fixed
 - Improv initial or erase device installation failing to provide Configure WiFi option

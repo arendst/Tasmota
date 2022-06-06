@@ -1634,38 +1634,38 @@ void SerialInput(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-    if (TasmotaGlobal.serial_in_byte > 127 && !Settings->flag.mqtt_serial_raw) {                // Discard binary data above 127 if no raw reception allowed - CMND_SERIALSEND3
+    if (TasmotaGlobal.serial_in_byte > 127 && !Settings->flag.mqtt_serial_raw) {   // Discard binary data above 127 if no raw reception allowed - CMND_SERIALSEND3
       TasmotaGlobal.serial_in_byte_counter = 0;
       Serial.flush();
       return;
     }
-    if (!Settings->flag.mqtt_serial) {                                            // SerialSend active - CMND_SERIALSEND and CMND_SERIALLOG
-      if (isprint(TasmotaGlobal.serial_in_byte)) {                                             // Any char between 32 and 127
-        if (TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {       // Add char to string if it still fits
+    if (!Settings->flag.mqtt_serial) {                                             // SerialSend active - CMND_SERIALSEND and CMND_SERIALLOG
+      if (isprint(TasmotaGlobal.serial_in_byte)) {                                 // Any char between 32 and 127
+        if (TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {         // Add char to string if it still fits
           TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
         } else {
-          serial_buffer_overrun = true;                                          // Signal overrun but continue reading input to flush until '\n' (EOL)
+          serial_buffer_overrun = true;                                            // Signal overrun but continue reading input to flush until '\n' (EOL)
         }
       }
     } else {
-      if (TasmotaGlobal.serial_in_byte || Settings->flag.mqtt_serial_raw) {                     // Any char between 1 and 127 or any char (0 - 255) - CMND_SERIALSEND3
-        bool in_byte_is_delimiter =                                              // Char is delimiter when...
+      if (TasmotaGlobal.serial_in_byte || Settings->flag.mqtt_serial_raw) {        // Any char between 1 and 127 or any char (0 - 255) - CMND_SERIALSEND3
+        bool in_byte_is_delimiter =                                                // Char is delimiter when...
           (((Settings->serial_delimiter < 128) && (TasmotaGlobal.serial_in_byte == Settings->serial_delimiter)) || // Any char between 1 and 127 and being delimiter
           ((Settings->serial_delimiter == 128) && !isprint(TasmotaGlobal.serial_in_byte))) &&   // Any char not between 32 and 127
-          !Settings->flag.mqtt_serial_raw;                                        // In raw mode (CMND_SERIALSEND3) there is never a delimiter
+          !Settings->flag.mqtt_serial_raw;                                         // In raw mode (CMND_SERIALSEND3) there is never a delimiter
 
-        if ((TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&     // Add char to string if it still fits and ...
-            !in_byte_is_delimiter) {                                             // Char is not a delimiter
+        if ((TasmotaGlobal.serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&       // Add char to string if it still fits and ...
+            !in_byte_is_delimiter) {                                               // Char is not a delimiter
           TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter++] = TasmotaGlobal.serial_in_byte;
         }
 
-        if ((TasmotaGlobal.serial_in_byte_counter >= INPUT_BUFFER_SIZE -1) ||    // Send message when buffer is full or ...
-            in_byte_is_delimiter) {                                              // Char is delimiter
-          serial_polling_window = 0;                                             // Reception done - send mqtt
+        if ((TasmotaGlobal.serial_in_byte_counter >= INPUT_BUFFER_SIZE -1) ||      // Send message when buffer is full or ...
+            in_byte_is_delimiter) {                                                // Char is delimiter
+          serial_polling_window = 0;                                               // Reception done - send mqtt
           break;
         }
 
-        serial_polling_window = millis();                                        // Wait for next char
+        serial_polling_window = millis();                                          // Wait for next char
       }
     }
 
@@ -1674,8 +1674,8 @@ void SerialInput(void)
  * Sonoff SC 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
     if (SONOFF_SC == TasmotaGlobal.module_type) {
-      if (TasmotaGlobal.serial_in_byte == '\x1B') {                                            // Sonoff SC status from ATMEGA328P
-        TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;              // Serial data completed
+      if (TasmotaGlobal.serial_in_byte == '\x1B') {                                // Sonoff SC status from ATMEGA328P
+        TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;  // Serial data completed
         SonoffScSerialInput(TasmotaGlobal.serial_in_buffer);
         TasmotaGlobal.serial_in_byte_counter = 0;
         Serial.flush();
@@ -1689,8 +1689,8 @@ void SerialInput(void)
     if (tasconsole_serial) {
 #endif  // ESP32
 
-    if (!Settings->flag.mqtt_serial && (TasmotaGlobal.serial_in_byte == '\n')) {                // CMND_SERIALSEND and CMND_SERIALLOG
-      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                // Serial data completed
+    if (!Settings->flag.mqtt_serial && (TasmotaGlobal.serial_in_byte == '\n')) {   // CMND_SERIALSEND and CMND_SERIALLOG
+      TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;    // Serial data completed
       TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
       if (serial_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Serial buffer overrun"));
@@ -1711,7 +1711,7 @@ void SerialInput(void)
   }  // endWhile
 
   if (Settings->flag.mqtt_serial && TasmotaGlobal.serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {  // CMND_SERIALSEND and CMND_SERIALLOG
-    TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;                  // Serial data completed
+    TasmotaGlobal.serial_in_buffer[TasmotaGlobal.serial_in_byte_counter] = 0;      // Serial data completed
     bool assume_json = (!Settings->flag.mqtt_serial_raw && (TasmotaGlobal.serial_in_buffer[0] == '{'));
 
     if (serial_buffer_overrun) {
@@ -1758,7 +1758,7 @@ void TasConsoleInput(void) {
         console_buffer_overrun = true;                    // Signal overrun but continue reading input to flush until '\n' (EOL)
       }
     }
-    if (console_in_byte == '\n') {
+    else if (console_in_byte == '\n') {
       TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
       if (console_buffer_overrun) {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Console buffer overrun"));

@@ -7,9 +7,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for HYTxxx temperature and humidity sensor (#15715)
 - Support for Sensirion SHT4X using define USE_SHT3X (#15349)
+- Command ``SSerialSend9 0/1`` to enable Serial Bridge console Tee for debugging purposes
 
 ### Changed
 - Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
+- ESP32 increase Serial Bridge input buffer from 130 to 520 characters
 
 ### Fixed
 
