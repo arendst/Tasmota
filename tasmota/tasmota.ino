@@ -169,8 +169,8 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 */
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 
-//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_SERIAL_CONSOLE
-#ifdef USE_USB_SERIAL_CONSOLE
+//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
 //#warning **** TasConsole use USB ****
 
 #if ARDUINO_USB_MODE
@@ -186,11 +186,11 @@ bool tasconsole_serial = false;
 //#warning **** TasConsole uses USBCDC ****
 #endif  // ARDUINO_USB_MODE
 
-#else   // No USE_USB_SERIAL_CONSOLE
+#else   // No USE_USB_CDC_CONSOLE
 HardwareSerial TasConsole = Serial;         // Fallback serial interface for ESP32C3, S2 and S3 if no USB_SERIAL defined
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
-#endif  // USE_USB_SERIAL_CONSOLE
+#endif  // USE_USB_CDC_CONSOLE
 
 #else   // No ESP32C3, S2 or S3
 HardwareSerial TasConsole = Serial;         // Fallback serial interface for non ESP32C3, S2 and S3
@@ -433,16 +433,16 @@ void setup(void) {
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-#ifdef USE_USB_SERIAL_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
   TasConsole.begin(115200);    // Will always be 115200 bps
 #if !ARDUINO_USB_MODE
   USB.begin();                 // This needs a serial console with DTR/DSR support
 #endif  // No ARDUINO_USB_MODE
   TasConsole.println();
-  AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using embedded USB"));
-#else   // No USE_USB_SERIAL_CONSOLE
+  AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
+#else   // No USE_USB_CDC_CONSOLE
   TasConsole = Serial;
-#endif  // USE_USB_SERIAL_CONSOLE
+#endif  // USE_USB_CDC_CONSOLE
 #else   // No ESP32C3, S2 or S3
   TasConsole = Serial;
 #endif  // ESP32C3, S2 or S3
