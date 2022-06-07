@@ -471,6 +471,9 @@ struct SCRIPT_MEM {
 #ifdef USE_SCRIPT_SPI
     struct SCRIPT_SPI spi;
 #endif
+#if defined(USE_SML_M) && defined(USE_SML_SCRIPT_CMD) && defined(USE_SCRIPT_SERIAL)
+    char *hstr;
+#endif
 
 } glob_script_mem;
 
@@ -1026,6 +1029,15 @@ char *script;
 }
 
 
+int32_t udp_call(char *url, uint32_t port, char *sbuf) {
+  WiFiUDP udp;
+  IPAddress adr = adr.fromString(url);
+  udp.beginPacket(adr, port);
+  udp.write((const uint8_t*)sbuf, strlen(sbuf));
+  udp.endPacket();
+  return 0;
+}
+
 #ifdef USE_SCRIPT_GLOBVARS
 #define SCRIPT_UDP_BUFFER_SIZE 128
 #define SCRIPT_UDP_PORT 1999
@@ -1284,10 +1296,17 @@ float Get_MFVal(uint8_t index, int16_t bind) {
         if (!bind) {
           return mflp->index;
         }
-        if (bind<0) {
+        if (bind == -1) {
           return maxind;
         }
-        if (bind < 1 || bind > maxind ) bind = 1;
+        if (bind == -2) {
+          float summ = 0;
+          for (uint32_t cnt = 0; cnt < maxind; cnt++) {
+            summ += mflp->rbuff[cnt];
+          }
+          return summ / maxind;
+        }
+        if (bind < -2 || bind > maxind ) bind = 1;
         return mflp->rbuff[bind - 1];
     }
     mp += sizeof(struct M_FILT) + ((mflp->numvals & AND_FILT_MASK) - 1) * sizeof(float);
@@ -2122,21 +2141,48 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
         }
     }
 
-#define USE_JSON
+#define USE_SCRIPT_JSON
+//#define USE_SCRIPT_FULL_JSON_PARSER
 
-#ifdef USE_JSON
+#ifdef USE_SCRIPT_JSON
     if (gv && gv->jo) {
       // look for json input
 
-#if 0
-      char sbuf[SCRIPT_MAXSSIZE];
-      sbuf[0]=0;
-      char tmp[128];
-      Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
-      uint32_t res = JsonParsePath(gv->jo, tmp, '#', NULL, sbuf, sizeof(sbuf)); // software_version
-      AddLog(LOG_LEVEL_INFO, PSTR("json string: %s %s"),tmp,  sbuf);
-#endif
+#ifdef USE_SCRIPT_FULL_JSON_PARSER
+  // epoch offset missing in this version
+      char str_value[SCRIPT_MAXSSIZE];
+      str_value[0]=0;
+      float fv;
+      uint32_t res = JsonParsePath(gv->jo, vname, '#', &fv, str_value, sizeof(str_value));
+      if (!res) {
+        goto chknext;
+      }
+      if (res == 1) {
+        // numeric
+nexit:
+        if (fp) *fp = fv;
+        *vtype = NUM_RES;
+        tind->bits.constant = 1;
+        tind->bits.is_string = 0;
+        return lp + len;
+      } else {
+        // string
+        if (!strncmp(str_value, "ON", 2)) {
+          if (fp) *fp = 1;
+          goto nexit;
+        } else if (!strncmp(str_value, "OFF", 3)) {
+          if (fp) *fp = 0;
+          goto nexit;
+        } else {
+          *vtype = STR_RES;
+          tind->bits.constant = 1;
+          tind->bits.is_string = 1;
+          if (sp) strlcpy(sp, str_value, SCRIPT_MAXSSIZE);
+          return lp + len;
+        }
+      }
 
+#else
       JsonParserObject *jpo = gv->jo;
       char jvname[64];
       strcpy(jvname, vname);
@@ -2238,7 +2284,10 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
           }
         }
       }
+#endif
+
     }
+
 #endif
 
 
@@ -3733,8 +3782,10 @@ chknext:
           if (fvar1<0) {
             fvar1 = strlen(str) + fvar1;
           }
-          memcpy(sp, &str[(uint8_t)fvar1], (uint8_t)fvar2);
-          sp[(uint8_t)fvar2] = '\0';
+          if (sp) {
+            memcpy(sp, &str[(uint8_t)fvar1], (uint8_t)fvar2);
+            sp[(uint8_t)fvar2] = '\0';
+          }
           goto strexit;
         }
         if (!strncmp(lp, "st(", 3)) {
@@ -4110,54 +4161,84 @@ extern char *SML_GetSVal(uint32_t index);
         // serial write array
         if (!strncmp(lp, "swa(", 4)) {
           fvar = -1;
-          if (glob_script_mem.sp) {
-            uint8_t modbus_buffer[64];
-            uint16_t alen;
-            float *array;
-            lp = get_array_by_name(lp + 4, &array, &alen, 0);
+          uint8_t modbus_buffer[64];
+          uint16_t alen;
+          float *array;
+          lp = get_array_by_name(lp + 4, &array, &alen, 0);
+          SCRIPT_SKIP_SPACES
+          if (!array) {
+            goto exit;
+          }
+          float len;
+          lp = GetNumericArgument(lp, OPER_EQU, &len, 0);
+          SCRIPT_SKIP_SPACES
+          if (len > alen) len = alen;
+          if (len < 1) len = 1;
+          if (*lp != ')') {
+            float opt;
+            lp = GetNumericArgument(lp, OPER_EQU, &opt, 0);
             SCRIPT_SKIP_SPACES
-            if (!array) {
-              goto exit;
-            }
-            float len;
-            lp = GetNumericArgument(lp, OPER_EQU, &len, 0);
-            SCRIPT_SKIP_SPACES
-            if (len > alen) len = alen;
-            if (len < 1) len = 1;
-            if (*lp != ')') {
-              float opts = 0;
-              lp = GetNumericArgument(lp, OPER_EQU, &opts, 0);
-              SCRIPT_SKIP_SPACES
-              // calc modbus checksum
+            uint16_t opts = opt;
+            // calc modbus checksum
+            uint16_t meter = opts >> 4;
+            opts &= 3;
 #ifdef USE_SML_M
-              // calc modbus checksum
-              if (len > sizeof(modbus_buffer)) len = sizeof(modbus_buffer);
-              for (uint32_t cnt = 0; cnt < len; cnt++) {
-                modbus_buffer[cnt] = *array++;
-              }
-              uint16_t crc = 0xffff;
-              uint8_t *mbp = modbus_buffer;
-              if (opts == 1) {
-                mbp++;
-                crc = 0;
-              }
-              crc = MBUS_calculateCRC(mbp, mbp[2] + 3, crc);
-              if (opts == 1) {
-                mbp[mbp[2] + 3] = highByte(crc);
-                mbp[mbp[2] + 4] = lowByte(crc);
-              } else {
-                mbp[mbp[2] + 3] = lowByte(crc);
-                mbp[mbp[2] + 4] = highByte(crc);
-              }
-#endif
-              uint8_t *ucp = modbus_buffer;
-              while (len) {
-                glob_script_mem.sp->write(*ucp);
-                //AddLog(LOG_LEVEL_INFO,PSTR(">> %02x"),*ucp);
-                ucp++;
-                len--;
-              }
+            // calc modbus checksum
+            if (len > sizeof(modbus_buffer)) len = sizeof(modbus_buffer);
+            for (uint32_t cnt = 0; cnt < len; cnt++) {
+              modbus_buffer[cnt] = *array++;
+            }
+            uint16_t crc = 0xffff;
+            uint8_t *mbp = modbus_buffer;
+            if (opts == 1) {
+              mbp++;
+              crc = 0;
+            }
+            uint8_t index = 6;
+            crc = MBUS_calculateCRC(mbp, index, crc);
+            if (opts == 1) {
+              mbp[index] = highByte(crc);
+              mbp[index + 1] = lowByte(crc);
             } else {
+              mbp[index] = lowByte(crc);
+              mbp[index + 1] = highByte(crc);
+            }
+
+#define SCRIPT_HSTR_LEN 32
+#ifdef USE_SML_SCRIPT_CMD
+            if (meter) {
+              if (!glob_script_mem.hstr) {
+                glob_script_mem.hstr = (char*)malloc(SCRIPT_HSTR_LEN);
+              }
+              if (len > SCRIPT_HSTR_LEN/2) {
+                len = SCRIPT_HSTR_LEN/2;
+              }
+              char *cp = glob_script_mem.hstr;
+              *cp++ = 'r';
+
+              uint8_t *mbp = modbus_buffer;
+              for (uint32_t cnt = 0; cnt < len; cnt++) {
+                sprintf(cp,"%02x",*mbp++);
+                cp += 2;
+              }
+              //01 06 00 03 00 20 78 12 00 02 81 c1
+              SML_Set_WStr(meter, glob_script_mem.hstr);
+            }
+#endif
+#endif
+            if (!meter) {
+              uint8_t *ucp = modbus_buffer;
+              if (glob_script_mem.sp) {
+                while (len) {
+                  glob_script_mem.sp->write(*ucp);
+                  //AddLog(LOG_LEVEL_INFO,PSTR(">> %02x"),*ucp);
+                  ucp++;
+                  len--;
+                }
+              }
+            }
+          } else {
+            if (glob_script_mem.sp) {
               while (len) {
                 glob_script_mem.sp->write((uint8_t)*array++);
                 len--;
@@ -4613,6 +4694,16 @@ extern char *SML_GetSVal(uint32_t index);
             }
           }
           goto notfound;
+        }
+        if (!strncmp(lp, "udp(", 4)) {
+          char url[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 4, OPER_EQU, url, 0);
+          float port;
+          lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+          char payload[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, payload, 0);
+          fvar = udp_call(url, port, payload);
+          goto nfuncexit;
         }
         break;
 
@@ -6180,6 +6271,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         sysv_type = 0;
                       }
                       numeric = 1;
+                      SCRIPT_SKIP_SPACES
                       lp = getop(lp, &lastop);
 #ifdef SCRIPT_LM_SUB
                       if (*lp=='#') {
@@ -6288,6 +6380,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                     saindex = gv->strind;
                     // string result
                     char str[SCRIPT_MAXSSIZE];
+                    SCRIPT_SKIP_SPACES
                     lp = getop(lp, &lastop);
 #ifdef SCRIPT_LM_SUB
                     if (*lp=='#') {
@@ -7558,7 +7651,7 @@ bool Script_SubCmd(void) {
   strcpy(cp, command);
   uint8_t tlen = strlen(command);
   cp += tlen;
-  if (XdrvMailbox.data_len>0) {
+  if (XdrvMailbox.data_len > 0) {
     *cp++ = '(';
     strncpy(cp, XdrvMailbox.data,XdrvMailbox.data_len);
     cp += XdrvMailbox.data_len;
@@ -7572,7 +7665,7 @@ bool Script_SubCmd(void) {
     return false;
   }
   else {
-    cp=XdrvMailbox.data;
+    cp = XdrvMailbox.data;
     while (*cp==' ') cp++;
     if (isdigit(*cp) || *cp=='-') {
       Response_P(S_JSON_COMMAND_NVALUE, command, XdrvMailbox.payload);
@@ -7655,14 +7748,33 @@ bool ScriptCommand(void) {
         float fvar;
         char str[SCRIPT_MAXSSIZE];
         glob_script_mem.glob_error = 0;
-        GetNumericArgument(lp, OPER_EQU, &fvar, 0);
-        if (glob_script_mem.glob_error==1) {
-          // was string, not number
-          GetStringArgument(lp, OPER_EQU, str, 0);
-          Response_P(PSTR("{\"script\":{\"%s\":\"%s\"}}"), lp, str);
+        float *fpd = 0;
+        uint16_t alend;
+        char *cp = get_array_by_name(lp, &fpd, &alend, 0);
+        if (fpd && cp) {
+          // is array
+          Response_P(PSTR("{\"script\":{\"%s\":["), lp);
+          for (uint16_t cnt = 0; cnt < alend; cnt++) {
+            ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, fpd);
+            fpd++;
+            if (cnt) {
+              ResponseAppend_P(PSTR(",%s"), str);
+            } else {
+              ResponseAppend_P(PSTR("%s"), str);
+            }
+          }
+          ResponseAppend_P(PSTR("]}}"));
         } else {
-          dtostrfd(fvar, 6, str);
-          Response_P(PSTR("{\"script\":{\"%s\":%s}}"), lp, str);
+          glob_script_mem.glob_error = 0;
+          GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+          if (glob_script_mem.glob_error==1) {
+            // was string, not number
+            GetStringArgument(lp, OPER_EQU, str, 0);
+            Response_P(PSTR("{\"script\":{\"%s\":\"%s\"}}"), lp, str);
+          } else {
+            ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &fvar);
+            Response_P(PSTR("{\"script\":{\"%s\":%s}}"), lp, str);
+          }
         }
       }
       return serviced;
@@ -8380,7 +8492,13 @@ void Script_Check_HTML_Setvars(void) {
 
   if (!HttpCheckPriviledgedAccess()) { return; }
 
+  //if (Webserver->hasArg("gv")) {
+    // get variable
+  //  String stmp = Webserver->arg("gv");
+  //}
+
   if (Webserver->hasArg("sv")) {
+    // set variable
     String stmp = Webserver->arg("sv");
     //Serial.printf("fwp has arg dv %s\n", stmp.c_str());
     char cmdbuf[64];
@@ -9187,6 +9305,17 @@ exgc:
         uint16_t alend;
         uint16_t ipos;
         lp = get_array_by_name(cp + 5, &fpd, &alend, &ipos);
+        SCRIPT_SKIP_SPACES
+        if (*lp != ')') {
+          // limit array lenght
+          float val;
+          lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
+          if (val > alend) {
+            val = alend;
+          }
+          alend = val;
+        }
+
         if (ipos >= alend) ipos = 0;
         if (fpd) {
           for (uint32_t cnt = 0; cnt < alend; cnt++) {
@@ -9215,8 +9344,11 @@ exgc:
         strncpy(valstr, lin, len);
         valstr[len] = 0;
         WSContentSend_PD(PSTR("%s"), valstr);
-        lp = scripter_sub(cp , 0);
-        WSContentSend_PD(PSTR("%s"), lp);
+        scripter_sub(cp , 0);
+        cp = strchr(cp, ')');
+        if (cp) {
+          WSContentSend_PD(PSTR("%s"), cp + 1);
+        }
         return lp;
       }
 
@@ -10629,6 +10761,10 @@ bool Xdrv10(uint8_t function)
 #if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
 #endif //USE_SCRIPT_HUE
+
+#if defined(USE_SML_M) && defined(USE_SML_SCRIPT_CMD) && defined(USE_SCRIPT_SERIAL)
+      glob_script_mem.hstr = 0;
+#endif
       }
       break;
     case FUNC_EVERY_100_MSECOND:

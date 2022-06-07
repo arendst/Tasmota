@@ -1734,7 +1734,7 @@ uint32_t JsonParsePath(JsonParserObject *jobj, const char *spath, char delim, fl
 #endif
   JsonParserObject obj = *jobj;
   JsonParserObject lastobj = obj;
-  char selem[32];
+  char selem[64];
   uint8_t aindex = 0;
   String value = "";
   while (1) {
