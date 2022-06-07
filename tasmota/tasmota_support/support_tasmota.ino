@@ -1761,10 +1761,10 @@ void TasConsoleInput(void) {
     else if (console_in_byte == '\n') {
       TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
       if (console_buffer_overrun) {
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "Console buffer overrun"));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "USB buffer overrun"));
       } else {
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), console_buffer.c_str());
-        ExecuteCommand(console_buffer.c_str(), SRC_SERIAL);
+        ExecuteCommand(console_buffer.c_str(), SRC_USBCONSOLE);
       }
       console_buffer = "";
       console_buffer_overrun = false;

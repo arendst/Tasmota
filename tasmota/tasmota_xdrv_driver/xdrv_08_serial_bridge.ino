@@ -104,7 +104,7 @@ void SerialBridgeInput(void) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "SSerial buffer overrun"));
         } else {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_bridge_buffer);
-          ExecuteCommand(serial_bridge_buffer, SRC_SERIAL);
+          ExecuteCommand(serial_bridge_buffer, SRC_SSERIAL);
         }
         serial_bridge_in_byte_counter = 0;
         serial_bridge_overrun = false;
