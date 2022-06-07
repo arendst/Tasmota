@@ -80,14 +80,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.3**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
-- **tasmota32c3.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3 and 4M+ flash.
+- **tasmota32xx.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
+- **tasmota32xxusb.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 with embedded USB only and 4M+ flash.
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
 - **tasmota32-AF.bin** to **tasmota32-VN.bin** = The Tasmota version in different languages for 4M+ flash.
-- **tasmota32-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features for 4M+ flash.
-- **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support for 4M+ flash.
-- **tasmota32-lvgl.bin** = The LVGL version adds Light and Versatile Graphics Library (LVGL) display support for 4M+ flash.
-- **tasmota32-webcam.bin** = The Webcam version adds webcam support for 4M+ flash.
 - **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support for 4M+ flash.
+- **tasmota32-display.bin** = The Display version without Energy Monitoring but adds display support for 4M+ flash.
+- **tasmota32-ir.bin** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features for 4M+ flash.
+- **tasmota32-lvgl.bin** = The LVGL version adds Light and Versatile Graphics Library (LVGL) display support for 4M+ flash.
+- **tasmota32-nspanel.bin** = The Sonoff NSPanel Smart Scene Wall Switch version with HASPmota display support.
+- **tasmota32-webcam.bin** = The Webcam version adds webcam support for 4M+ flash.
+- **tasmota32-zbbridgepro.bin** - The Sonoff Zigbee Bridge Pro version with CC2652P firmware load support.
 
 Latest released binaries can be downloaded from
 - https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
@@ -119,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Sonoff SPM delayed SetPowerOnState [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Support for Sonoff SPM v1.2.0
 - Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger [#15701](https://github.com/arendst/Tasmota/issues/15701)
+- Support for Sonoff NSPanel Smart Scene Wall Switch
 - Support for flowrate meters like YF-DN50 and similary [#15474](https://github.com/arendst/Tasmota/issues/15474)
 - Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs [#15713](https://github.com/arendst/Tasmota/issues/15713)
 - Support for HYTxxx temperature and humidity sensor [#15715](https://github.com/arendst/Tasmota/issues/15715)
