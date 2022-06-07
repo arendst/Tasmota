@@ -436,7 +436,7 @@ void setup(void) {
 #ifdef USE_USB_SERIAL_CONSOLE
   TasConsole.begin(115200);    // Will always be 115200 bps
 #if !ARDUINO_USB_MODE
-  USB.begin();
+  USB.begin();                 // This needs a serial console with DTR/DSR support
 #endif  // No ARDUINO_USB_MODE
   TasConsole.println();
   AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using embedded USB"));
