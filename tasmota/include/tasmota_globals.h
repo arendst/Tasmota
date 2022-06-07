@@ -46,7 +46,7 @@ extern "C" void resetPins();
 extern "C" int startWaveformClockCycles(uint8_t pin, uint32_t highCcys, uint32_t lowCcys,
   uint32_t runTimeCcys, int8_t alignPhase, uint32_t phaseOffsetCcys, bool autoPwm);
 #ifdef USE_SERIAL_BRIDGE
-void SerialBridgeLog(const char *mxtime, const char *log_data = nullptr, const char *log_data_payload = nullptr, const char *log_data_retained = nullptr);
+void SerialBridgePrintf(PGM_P formatP, ...);
 #endif
 #ifdef USE_INFLUXDB
 void InfluxDbProcess(bool use_copy = false);

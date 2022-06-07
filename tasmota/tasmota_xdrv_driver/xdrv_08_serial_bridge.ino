@@ -64,14 +64,17 @@ void SetSSerialConfig(uint32_t serial_config) {
   }
 }
 
-void SerialBridgeLog(const char *mxtime, const char *log_data, const char *log_data_payload, const char *log_data_retained) {
+void SerialBridgePrintf(PGM_P formatP, ...) {
 #ifdef USE_SERIAL_BRIDGE_TEE
   if (Settings->sbflag1.serbridge_console && serial_bridge_buffer) {
-    char empty[2] = { 0 };
-    if (!log_data) { log_data = empty; }
-    if (!log_data_payload) { log_data_payload = empty; }
-    if (!log_data_retained) { log_data_retained = empty; }
-    SerialBridgeSerial->printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    va_list arg;
+    va_start(arg, formatP);
+    char* data = ext_vsnprintf_malloc_P(formatP, arg);
+    va_end(arg);
+    if (data == nullptr) { return; }
+
+    SerialBridgeSerial->printf(data);
+    free(data);
   }
 #endif  // USE_SERIAL_BRIDGE_TEE
 }
@@ -182,6 +185,7 @@ void SerialBridgeInit(void) {
         serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFFER_SIZE));
       }
       SerialBridgeSerial->flush();
+      SerialBridgePrintf("\n");
     }
   }
 }
@@ -236,7 +240,7 @@ void CmndSSerialSend(void) {
 #ifdef USE_SERIAL_BRIDGE_TEE
   if (9 == XdrvMailbox.index) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-      Settings->sbflag1.serbridge_console = XdrvMailbox.payload &1;
+      Settings->sbflag1.serbridge_console = XdrvMailbox.payload;
     }
     ResponseCmndStateText(Settings->sbflag1.serbridge_console);
   }
