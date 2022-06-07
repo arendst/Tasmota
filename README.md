@@ -17,7 +17,7 @@ _Written for PlatformIO._
 
 ## Easy install
 
-Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://arendst.github.io/Tasmota-firmware/).
+Easy initial installation of Tasmota can be performed using the [Tasmota WebInstaller](https://tasmota.github.io/install/).
 
 If you like **Tasmota**, give it a star, or fork it and contribute!
 
