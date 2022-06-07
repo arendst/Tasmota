@@ -185,7 +185,7 @@ void SerialBridgeInit(void) {
         serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFFER_SIZE));
       }
       SerialBridgeSerial->flush();
-      SerialBridgePrintf("\n");
+      SerialBridgePrintf("\r\n");
     }
   }
 }
