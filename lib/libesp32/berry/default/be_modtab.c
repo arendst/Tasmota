@@ -193,6 +193,7 @@ be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
+be_extern_native_class(energy_struct);
 // BLE
 be_extern_native_class(MI32);
 be_extern_native_class(BLE);
@@ -244,6 +245,9 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(Leds),
     &be_native_class(Leds_animator),
 #endif // USE_WS2812
+#ifdef USE_ENERGY_SENSOR
+    &be_native_class(energy_struct),
+#endif // USE_ENERGY_SENSOR
 
 #ifdef USE_LVGL
     &be_native_class(LVGL_glob),
@@ -291,7 +295,4 @@ BERRY_API void be_load_custom_libs(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
     /* be_load_xxxlib(vm); */
 #endif
-#ifdef USE_ENERGY_SENSOR
-    be_load_ctypes_energy_definitions_lib(vm);      // ctype class
-#endif // USE_ENERGY_SENSOR
 }

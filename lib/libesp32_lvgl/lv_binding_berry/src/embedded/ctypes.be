@@ -231,7 +231,7 @@ ctypes.print_classes = def (module_name)
   print()
   print(string.format("void be_load_ctypes_%s_definitions_lib(bvm *vm) {", module_name))
   for elt:global_classes
-    print(string.format("  ctypes_register_class(vm, &be_class_%s, &be_%s);", elt, elt))
+    print(string.format("  ctypes_register_class(vm, &be_class_%s);", elt))
   end
   print("}")
   print()
