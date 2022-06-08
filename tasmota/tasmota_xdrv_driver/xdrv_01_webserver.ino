@@ -2308,15 +2308,7 @@ void HandleRestoreConfiguration(void)
   WSContentStart_P(PSTR(D_RESTORE_CONFIGURATION));
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_RST);
-#ifdef ESP32
-  if (EspSingleOtaPartition() && !EspRunningFactoryPartition()) {
-    WSContentSend_P(HTTP_FORM_RST_UPG_FCT, PSTR(D_RESTORE));
-  } else {
-    WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_RESTORE));
-  }
-#else
   WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_RESTORE));
-#endif
   if (WifiIsInManagerMode()) {
     WSContentSpaceButton(BUTTON_MAIN);
   } else {
