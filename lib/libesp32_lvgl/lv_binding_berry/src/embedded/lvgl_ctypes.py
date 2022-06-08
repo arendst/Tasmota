@@ -1,55 +1,61 @@
-#
-# ctype buidings for LVGL
-#
-# To generate C bindings, do:
-# > compile("lvgl_ctypes.be","file")()
-#
-# and copy/paste output in C format in `be_lvgl_ctypes_definitions.c`
-#
-import ctypes
+# define LVGL low-level C structures
 
-ctypes.print_types()
+import sys
+import berry_ctypes as ct
 
-lv_style_int = ctypes.i16
-lv_color = [ctypes.u16, "lv_color"]        # cast to the class instance, constructor is called with 2 args: (nil, value)
-lv_grad_dir = ctypes.u8
-lv_meter_indicator_type_t = ctypes.u8
-lv_opa = ctypes.u8
-lv_blend_mode = ctypes.u8
-lv_align = ctypes.u8
-lv_coord_t = ctypes.i16
-lv_bidi_dir = ctypes.u8
-lv_txt_flag = ctypes.u8
-lv_text_decor = ctypes.u8
-lv_font = ctypes.u32
-lv_blend_mode = ctypes.u8
-lv_draw_mask_line_side = ctypes.u8
-lv_dir = ctypes.u8
-uint8_t_1 = ctypes.bf_1
-uint8_t_2 = ctypes.bf_2
-uint8_t_3 = ctypes.bf_3
-uint8_t_4 = ctypes.bf_4
-uint8_t_5 = ctypes.bf_5
-uint8_t_11 = ctypes.bf_11
-uint8_t = ctypes.u8
-int16_t = ctypes.i16
-uint16_t = ctypes.u16
-uint16_t_15 = ctypes.bf_15
-uint16_t_16 = ctypes.bf_16
-uint32_t = ctypes.u32
-int32_t = ctypes.i32
-ptr = ctypes.ptr32
+sys.stdout = open("../be_lvgl_ctypes_definitions.c", 'w')
+
+print("""/********************************************************************
+ * Tasmota LVGL ctypes mapping
+ *******************************************************************/
+#include "be_ctypes.h"
+#include "lvgl.h"
+#include "be_mapping.h"
+
+""")
+
+ct.print_types()
+
+lv_style_int = ct.i16
+lv_color = [ct.u16, "lv_color"]        # cast to the class instance, constructor is called with 2 args: (nil, value)
+lv_grad_dir = ct.u8
+lv_meter_indicator_type_t = ct.u8
+lv_opa = ct.u8
+lv_blend_mode = ct.u8
+lv_align = ct.u8
+lv_coord_t = ct.i16
+lv_bidi_dir = ct.u8
+lv_txt_flag = ct.u8
+lv_text_decor = ct.u8
+lv_font = ct.u32
+lv_blend_mode = ct.u8
+lv_draw_mask_line_side = ct.u8
+lv_dir = ct.u8
+uint8_t_1 = ct.bf_1
+uint8_t_2 = ct.bf_2
+uint8_t_3 = ct.bf_3
+uint8_t_4 = ct.bf_4
+uint8_t_5 = ct.bf_5
+uint8_t_11 = ct.bf_11
+uint8_t = ct.u8
+int16_t = ct.i16
+uint16_t = ct.u16
+uint16_t_15 = ct.bf_15
+uint16_t_16 = ct.bf_16
+uint32_t = ct.u32
+int32_t = ct.i32
+ptr = ct.ptr32
 
 lv_coord = [            # valid LVGL8
     [lv_coord_t, "v"],
 ]
-lv_coord = ctypes.structure(lv_coord, "lv_coord")
+lv_coord = ct.structure(lv_coord, "lv_coord")
 
 lv_point = [            # valid LVGL8
     [lv_coord_t, "x"],
     [lv_coord_t, "y"],
 ]
-lv_point = ctypes.structure(lv_point, "lv_point")
+lv_point = ct.structure(lv_point, "lv_point")
 
 lv_area = [            # valid LVGL8
     [lv_coord_t, "x1"],
@@ -57,7 +63,7 @@ lv_area = [            # valid LVGL8
     [lv_coord_t, "x2"],
     [lv_coord_t, "y2"],
 ]
-lv_area = ctypes.structure(lv_area, "lv_area")
+lv_area = ct.structure(lv_area, "lv_area")
 
 #######################################################################
 # lv_grad_dsc
@@ -65,7 +71,7 @@ lv_gradient_stop = [
     [lv_color, "color"],
     [uint8_t, "frac"],
 ]
-lv_gradient_stop = ctypes.structure(lv_gradient_stop, "lv_gradient_stop")
+lv_gradient_stop = ct.structure(lv_gradient_stop, "lv_gradient_stop")
 
 lv_grad_dsc = [
     [lv_gradient_stop, "stops_0"],
@@ -74,7 +80,7 @@ lv_grad_dsc = [
     [uint8_t_3, "dir"],
     [uint8_t_3, "dither"],
 ]
-lv_grad_dsc = ctypes.structure(lv_grad_dsc, "lv_grad_dsc")
+lv_grad_dsc = ct.structure(lv_grad_dsc, "lv_grad_dsc")
 
 lv_draw_rect_dsc = [            # valid LVGL8.2
     [lv_coord_t, "radius"],
@@ -114,7 +120,7 @@ lv_draw_rect_dsc = [            # valid LVGL8.2
     [lv_coord_t, "shadow_spread"],
     [lv_opa, "shadow_opa"],
 ]
-lv_draw_rect_dsc = ctypes.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
+lv_draw_rect_dsc = ct.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 
 lv_draw_line_dsc = [            # valid LVGL8.2
     [lv_color, "color"],
@@ -127,7 +133,7 @@ lv_draw_line_dsc = [            # valid LVGL8.2
     [uint8_t_1, "round_end"],
     [uint8_t_1, "raw_end"],
 ]
-lv_draw_line_dsc = ctypes.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
+lv_draw_line_dsc = ct.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 
 lv_draw_arc_dsc = [            # valid LVGL8.2
     [lv_color, "color"],
@@ -139,7 +145,7 @@ lv_draw_arc_dsc = [            # valid LVGL8.2
     [uint8_t_2, "blend_mode"],
     [uint8_t_1, "rounded"],
 ]
-lv_draw_arc_dsc = ctypes.structure(lv_draw_arc_dsc, "lv_draw_arc_dsc")
+lv_draw_arc_dsc = ct.structure(lv_draw_arc_dsc, "lv_draw_arc_dsc")
 
 lv_draw_img_dsc = [            # valid LVGL8.2
     [uint16_t, "angle"],
@@ -155,7 +161,7 @@ lv_draw_img_dsc = [            # valid LVGL8.2
     [int32_t, "frame_id"],
     [uint8_t_1, "antialias"],
 ]
-lv_draw_img_dsc = ctypes.structure(lv_draw_img_dsc, "lv_draw_img_dsc")
+lv_draw_img_dsc = ct.structure(lv_draw_img_dsc, "lv_draw_img_dsc")
 
 lv_obj_draw_part_dsc = [            # valid LVGL8.2
     [ptr, "draw_ctx"],
@@ -177,18 +183,18 @@ lv_obj_draw_part_dsc = [            # valid LVGL8.2
     [int32_t, "value"],
     [ptr, "sub_part_ptr"],
 ]
-lv_obj_draw_part_dsc = ctypes.structure(lv_obj_draw_part_dsc, "lv_obj_draw_part_dsc")
+lv_obj_draw_part_dsc = ct.structure(lv_obj_draw_part_dsc, "lv_obj_draw_part_dsc")
 
 #- --------- lv_mask --------- -#
 lv_draw_mask_xcb = ptr    # callback
-lv_draw_mask_type = ctypes.u8
-lv_draw_mask_line_side = ctypes.u8
+lv_draw_mask_type = ct.u8
+lv_draw_mask_line_side = ct.u8
 
 lv_draw_mask_common_dsc = [            # valid LVGL8.2
     [lv_draw_mask_xcb, "cb"],
     [lv_draw_mask_type, "type"],
 ]
-lv_draw_mask_common_dsc = ctypes.structure(lv_draw_mask_common_dsc, "lv_draw_mask_common_dsc")
+lv_draw_mask_common_dsc = ct.structure(lv_draw_mask_common_dsc, "lv_draw_mask_common_dsc")
 
 lv_draw_mask_line_param_cfg = [            # valid LVGL8.2
     #/*First point */
@@ -200,7 +206,7 @@ lv_draw_mask_line_param_cfg = [            # valid LVGL8.2
     #/*Which side to keep?*/
     [uint8_t_2, "side"],
 ]
-lv_draw_mask_line_param_cfg = ctypes.structure(lv_draw_mask_line_param_cfg, "lv_draw_mask_line_param_cfg")
+lv_draw_mask_line_param_cfg = ct.structure(lv_draw_mask_line_param_cfg, "lv_draw_mask_line_param_cfg")
 
 lv_draw_mask_line_param = [            # valid LVGL8.2
     #/*The first element must be the common descriptor*/
@@ -222,14 +228,14 @@ lv_draw_mask_line_param = [            # valid LVGL8.2
     # * It is used to select left/right/top/bottom*/
     [uint8_t_1, "inv"],
 ]
-lv_draw_mask_line_param = ctypes.structure(lv_draw_mask_line_param, "lv_draw_mask_line_param")
+lv_draw_mask_line_param = ct.structure(lv_draw_mask_line_param, "lv_draw_mask_line_param")
 
 lv_draw_mask_angle_param_cfg = [            # valid LVGL8.2
     [lv_point, "vertex_p"],
     [lv_coord_t, "start_angle"],
     [lv_coord_t, "end_angle"],
 ]
-lv_draw_mask_angle_param_cfg = ctypes.structure(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg")
+lv_draw_mask_angle_param_cfg = ct.structure(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg")
 
 lv_draw_mask_angle_param = [            # valid LVGL8.2
     #/*The first element must be the common descriptor*/
@@ -240,7 +246,7 @@ lv_draw_mask_angle_param = [            # valid LVGL8.2
     [lv_draw_mask_line_param, "end_line"],
     [uint16_t, "delta_deg"],
 ]
-lv_draw_mask_angle_param = ctypes.structure(lv_draw_mask_angle_param, "lv_draw_mask_angle_param")
+lv_draw_mask_angle_param = ct.structure(lv_draw_mask_angle_param, "lv_draw_mask_angle_param")
 
 
 lv_draw_mask_radius_param_cfg = [            # valid LVGL8.2
@@ -248,7 +254,7 @@ lv_draw_mask_radius_param_cfg = [            # valid LVGL8.2
     [lv_coord_t, "radius"],
     [uint8_t_1, "outer"],
 ]
-lv_draw_mask_radius_param_cfg = ctypes.structure(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg")
+lv_draw_mask_radius_param_cfg = ct.structure(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg")
 
 lv_draw_mask_radius_circle_dsc = [            # valid LVGL8.2
     [ptr, "buf"],
@@ -259,7 +265,7 @@ lv_draw_mask_radius_circle_dsc = [            # valid LVGL8.2
     [uint32_t, "used_cnt"],
     [lv_coord_t, "radius"],
 ]
-lv_draw_mask_radius_circle_dsc = ctypes.structure(lv_draw_mask_radius_circle_dsc, "lv_draw_mask_radius_circle_dsc")
+lv_draw_mask_radius_circle_dsc = ct.structure(lv_draw_mask_radius_circle_dsc, "lv_draw_mask_radius_circle_dsc")
 
 lv_draw_mask_radius_param = [            # valid LVGL8.2
     #/*The first element must be the common descriptor*/
@@ -267,7 +273,7 @@ lv_draw_mask_radius_param = [            # valid LVGL8.2
     [lv_draw_mask_radius_param_cfg, "cfg"],
     [lv_draw_mask_radius_circle_dsc, "circle"],
 ]
-lv_draw_mask_radius_param = ctypes.structure(lv_draw_mask_radius_param, "lv_draw_mask_radius_param")
+lv_draw_mask_radius_param = ct.structure(lv_draw_mask_radius_param, "lv_draw_mask_radius_param")
 
 
 lv_draw_mask_fade_param_cfg = [            # valid LVGL8.2
@@ -277,47 +283,47 @@ lv_draw_mask_fade_param_cfg = [            # valid LVGL8.2
     [lv_opa, "opa_top"],
     [lv_opa, "opa_bottom"],
 ]
-lv_draw_mask_fade_param_cfg = ctypes.structure(lv_draw_mask_fade_param_cfg, "lv_draw_mask_fade_param_cfg")
+lv_draw_mask_fade_param_cfg = ct.structure(lv_draw_mask_fade_param_cfg, "lv_draw_mask_fade_param_cfg")
 
 lv_draw_mask_fade_param = [            # valid LVGL8.2
     # /*The first element must be the common descriptor*/
     [lv_draw_mask_common_dsc, "dsc"],
     [lv_draw_mask_fade_param_cfg, "cfg"],
 ]
-lv_draw_mask_fade_param = ctypes.structure(lv_draw_mask_fade_param, "lv_draw_mask_fade_param")
+lv_draw_mask_fade_param = ct.structure(lv_draw_mask_fade_param, "lv_draw_mask_fade_param")
 
 
 lv_draw_mask_map_param_cfg = [            # valid LVGL8.2
     [lv_area, "coords"],
     [ptr, "map"],
 ]
-lv_draw_mask_map_param_cfg = ctypes.structure(lv_draw_mask_map_param_cfg, "lv_draw_mask_map_param_cfg")
+lv_draw_mask_map_param_cfg = ct.structure(lv_draw_mask_map_param_cfg, "lv_draw_mask_map_param_cfg")
 
 lv_draw_mask_map_param = [            # valid LVGL8.2
     [lv_draw_mask_common_dsc, "dsc"],
     [lv_draw_mask_map_param_cfg, "cfg"],
 ]
-lv_draw_mask_map_param = ctypes.structure(lv_draw_mask_map_param, "lv_draw_mask_map_param")
+lv_draw_mask_map_param = ct.structure(lv_draw_mask_map_param, "lv_draw_mask_map_param")
 
 
 lv_draw_mask_polygon_param_cfg = [            # valid LVGL8.2
     [ptr, "points"],
     [uint16_t, "point_cnt"],
 ]
-lv_draw_mask_polygon_param_cfg = ctypes.structure(lv_draw_mask_polygon_param_cfg, "lv_draw_mask_polygon_param_cfg")
+lv_draw_mask_polygon_param_cfg = ct.structure(lv_draw_mask_polygon_param_cfg, "lv_draw_mask_polygon_param_cfg")
 
 lv_draw_mask_polygon_param = [            # valid LVGL8.2
     [lv_draw_mask_common_dsc, "dsc"],
     [lv_draw_mask_polygon_param_cfg, "cfg"],
 ]
-lv_draw_mask_polygon_param = ctypes.structure(lv_draw_mask_polygon_param, "lv_draw_mask_polygon_param")
+lv_draw_mask_polygon_param = ct.structure(lv_draw_mask_polygon_param, "lv_draw_mask_polygon_param")
 
 
 lv_draw_mask_saved = [            # valid LVGL8.2
     [ptr, "param"],
     [ptr, "custom_id"],
 ]
-lv_draw_mask_saved = ctypes.structure(lv_draw_mask_saved, "lv_draw_mask_saved")
+lv_draw_mask_saved = ct.structure(lv_draw_mask_saved, "lv_draw_mask_saved")
 
 # lv_meter
 
@@ -342,7 +348,7 @@ lv_meter_scale = [            # valid LVGL8.2
     [uint16_t, "angle_range"],
     [int16_t, "rotation"],
 ]
-lv_meter_scale = ctypes.structure(lv_meter_scale, "lv_meter_scale")
+lv_meter_scale = ct.structure(lv_meter_scale, "lv_meter_scale")
 
 # lv_meter_indicator_t
 lv_meter_indicator = [            # valid LVGL8.2
@@ -356,7 +362,7 @@ lv_meter_indicator = [            # valid LVGL8.2
     [ptr, "data1"],
     [ptr, "data2"],
 ]
-lv_meter_indicator = ctypes.structure(lv_meter_indicator, "lv_meter_indicator")
+lv_meter_indicator = ct.structure(lv_meter_indicator, "lv_meter_indicator")
 
 # variants
 lv_meter_indicator_needle_img = [            # valid LVGL8.2
@@ -369,7 +375,7 @@ lv_meter_indicator_needle_img = [            # valid LVGL8.2
     [ptr, "src"],
     [lv_point, "pivot"],
 ]
-lv_meter_indicator_needle_img = ctypes.structure(lv_meter_indicator_needle_img, "lv_meter_indicator_needle_img")
+lv_meter_indicator_needle_img = ct.structure(lv_meter_indicator_needle_img, "lv_meter_indicator_needle_img")
 
 lv_meter_indicator_needle_line = [            # valid LVGL8.2
     [ptr, "scale"],
@@ -382,7 +388,7 @@ lv_meter_indicator_needle_line = [            # valid LVGL8.2
     [int16_t, "r_mod"],
     [lv_color, "color"],
 ]
-lv_meter_indicator_needle_line = ctypes.structure(lv_meter_indicator_needle_line, "lv_meter_indicator_needle_line")
+lv_meter_indicator_needle_line = ct.structure(lv_meter_indicator_needle_line, "lv_meter_indicator_needle_line")
 
 lv_meter_indicator_arc = [            # valid LVGL8.2
     [ptr, "scale"],
@@ -396,7 +402,7 @@ lv_meter_indicator_arc = [            # valid LVGL8.2
     [lv_color, "color"],
     [int16_t, "r_mod"],
 ]
-lv_meter_indicator_arc = ctypes.structure(lv_meter_indicator_arc, "lv_meter_indicator_arc")
+lv_meter_indicator_arc = ct.structure(lv_meter_indicator_arc, "lv_meter_indicator_arc")
 
 lv_meter_indicator_scale_lines = [            # valid LVGL8.2
     [ptr, "scale"],
@@ -410,7 +416,7 @@ lv_meter_indicator_scale_lines = [            # valid LVGL8.2
     [lv_color, "color_end"],
     [uint8_t_1, "local_grad"],
 ]
-lv_meter_indicator_scale_lines = ctypes.structure(lv_meter_indicator_scale_lines, "lv_meter_indicator_scale_lines")
+lv_meter_indicator_scale_lines = ct.structure(lv_meter_indicator_scale_lines, "lv_meter_indicator_scale_lines")
 
 lv_chart_series = [            # valid LVGL8.2
     [ptr, "x_points"],
@@ -423,7 +429,7 @@ lv_chart_series = [            # valid LVGL8.2
     [uint8_t_1, "x_axis_sec"],
     [uint8_t_1, "y_axis_sec"],
 ]
-lv_chart_series = ctypes.structure(lv_chart_series, "lv_chart_series")
+lv_chart_series = ct.structure(lv_chart_series, "lv_chart_series")
 
 lv_chart_cursor = [            # valid LVGL8.2
     [lv_point, "pos"],
@@ -433,7 +439,7 @@ lv_chart_cursor = [            # valid LVGL8.2
     [lv_dir, "dir"],
     [uint8_t_1, "pos_set"],
 ]
-lv_chart_cursor = ctypes.structure(lv_chart_cursor, "lv_chart_cursor")
+lv_chart_cursor = ct.structure(lv_chart_cursor, "lv_chart_cursor")
 
 lv_chart_tick_dsc = [            # valid LVGL8.2
     [lv_coord_t, "major_len"],
@@ -443,7 +449,7 @@ lv_chart_tick_dsc = [            # valid LVGL8.2
     [uint16_t_15, "major_cnt"],
     [uint8_t_1, "label_en"],
 ]
-lv_chart_tick_dsc = ctypes.structure(lv_chart_tick_dsc, "lv_chart_tick_dsc")
+lv_chart_tick_dsc = ct.structure(lv_chart_tick_dsc, "lv_chart_tick_dsc")
 
 
 #- --------- class system --------- -#
@@ -453,7 +459,7 @@ lv_event_ptr = ptr
 constructor_cb = ptr    # callback
 destructor_cb = ptr    # callback
 event_cb = ptr    # callback
-lv_event_code = ctypes.i32
+lv_event_code = ct.i32
 
 lv_obj_class = [            # valid LVGL8.2
     [lv_obj_class_ptr, "base_class"],
@@ -467,7 +473,7 @@ lv_obj_class = [            # valid LVGL8.2
     [uint8_t_2, "group_def"],
     [uint16_t_16, "instance_size"],
 ]
-lv_obj_class = ctypes.structure(lv_obj_class, "lv_obj_class")
+lv_obj_class = ct.structure(lv_obj_class, "lv_obj_class")
 
 lv_event = [            # valid LVGL8.2
     [lv_obj_ptr, "target"],
@@ -480,13 +486,13 @@ lv_event = [            # valid LVGL8.2
     [uint8_t_1, "stop_processing"],
     [uint8_t_1, "stop_bubbling"],
 ]
-lv_event = ctypes.structure(lv_event, "lv_event")
+lv_event = ct.structure(lv_event, "lv_event")
 
 lv_sqrt_res = [            # valid LVGL8.2
     [uint16_t, "i"],
     [uint16_t, "f"],
 ]
-lv_sqrt_res = ctypes.structure(lv_sqrt_res, "lv_sqrt_res")
+lv_sqrt_res = ct.structure(lv_sqrt_res, "lv_sqrt_res")
 
 #######################################################################
 # lv_img structures
@@ -497,14 +503,14 @@ lv_img_header = [            # valid LVGL8.2
     [uint8_t_11, "w"],
     [uint8_t_11, "h"],
 ]
-lv_img_header = ctypes.structure(lv_img_header, "lv_img_header")
+lv_img_header = ct.structure(lv_img_header, "lv_img_header")
 
 lv_img_dsc = [            # valid LVGL8.2
     [lv_img_header, "header"],
     [uint32_t, "data_size"],
     [ptr, "data"],
 ]
-lv_img_dsc = ctypes.structure(lv_img_dsc, "lv_img_dsc")
+lv_img_dsc = ct.structure(lv_img_dsc, "lv_img_dsc")
 
 #######################################################################
 # lv_style
@@ -515,7 +521,7 @@ lv_style_transition_dsc = [            # valid LVGL8.2
     [uint32_t, "time"],
     [uint32_t, "delay"],
 ]
-lv_style_transition_dsc = ctypes.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
+lv_style_transition_dsc = ct.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
 
 #######################################################################
 # lv_color
@@ -524,13 +530,13 @@ lv_style_transition_dsc = ctypes.structure(lv_style_transition_dsc, "lv_style_tr
 #     [uint8_t, "s"],
 #     [uint8_t, "v"],
 # ]
-# lv_color_hsv = ctypes.structure(lv_color_hsv, "lv_color_hsv")
+# lv_color_hsv = ct.structure(lv_color_hsv, "lv_color_hsv")
 
 lv_color_filter_dsc = [            # valid LVGL8.2
     [ptr, "filter_cb"],
     [ptr, "user_data"],
 ]
-lv_color_filter_dsc = ctypes.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
+lv_color_filter_dsc = ct.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
 
 #######################################################################
 # lv_timer
@@ -542,7 +548,7 @@ lv_timer = [            # valid LVGL8.2
     [int32_t, "repeat_count"],
     [uint8_t_1, "paused"],
 ]
-lv_timer = ctypes.structure(lv_timer, "lv_timer")
+lv_timer = ct.structure(lv_timer, "lv_timer")
 
 # #######################################################################
 # # lv_anim
@@ -572,7 +578,7 @@ lv_timer = ctypes.structure(lv_timer, "lv_timer")
 #     [uint8_t_1, "start_cb_called"],
     
 # ]
-# lv_anim = ctypes.structure(lv_anim, "lv_anim")
+# lv_anim = ct.structure(lv_anim, "lv_anim")
 
 #######################################################################
 # lv_draw_ctx
@@ -591,7 +597,7 @@ lv_draw_ctx = [            # valid LVGL8.2
     [ptr, "wait_for_finish"],
     [ptr, "user_data"],
 ]
-lv_draw_ctx = ctypes.structure(lv_draw_ctx, "lv_draw_ctx")
+lv_draw_ctx = ct.structure(lv_draw_ctx, "lv_draw_ctx")
 
 #######################################################################
 # Special structure used to calibrate resistive touchscreens
@@ -603,45 +609,7 @@ lv_ts_calibration = [            # valid LVGL8
     [lv_coord_t, "y"],
     [int32_t, "state"],
 ]
-lv_ts_calibration = ctypes.structure(lv_ts_calibration, "lv_ts_calibration")
+lv_ts_calibration = ct.structure(lv_ts_calibration, "lv_ts_calibration")
 
 #
-ctypes.print_classes("lvgl")
-
-# Ex:
-# bb = ctypes.buffer(test_t, bytes("0101020203030404FFFFFEFEFCFC8080"))
-
-# Ex:
-# bb = ctypes.buffer(lv_draw_rect)
-
-#- Ex
-
-bb=ctypes.buffer(lv_draw_line_dsc)
-bb.color
-bb.blend_mode
-
-bb.color = -1
-- bytes('FFFF0000000000000003')
-
-bb.blend_mode=3
-- bytes('FFFF0000000000000003')
-
-bb.raw_end = 1
-- bytes('FFFF0000000000000013')
-
-bb.blend_mode=0
-- bytes('FFFF0000000000000010')
-
-lv_draw_line_dsc = [
-    [lv_color, "color"],
-    [lv_style_int, "width"],
-    [lv_style_int, "dash_width"],
-    [lv_style_int, "dash_gap"],
-    [lv_opa, "opa"],
-    [uint8_t_2, "blend_mode"],
-    [uint8_t_1, "round_start"],
-    [uint8_t_1, "round_end"],
-    [uint8_t_1, "raw_end"],
-]
-
--#
+ct.print_classes("lvgl")
