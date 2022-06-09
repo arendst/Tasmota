@@ -157,6 +157,11 @@ struct MI32connectionContextBerry_t{
   bool response;
 };
 
+struct MI32notificationBuffer_t{
+  uint8_t buffer[256];
+  uint16_t returnCharUUID;
+};
+
 struct {
   // uint32_t period;             // set manually in addition to TELE-period, is set to TELE-period after start
   TaskHandle_t ScanTask = nullptr;
@@ -185,6 +190,7 @@ struct {
       uint32_t triggerBerryConnCB:1;
       uint32_t triggerNextConnJob:1;
       uint32_t readyForNextConnJob:1;
+      uint32_t discoverAttributes:1;
     };
     uint32_t all = 0;
   } mode;

@@ -119,7 +119,7 @@ extern "C" {
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
   extern bool MI32runBerryConnection(uint8_t operation, bool response);
-  extern bool MI32setBerryCtxSvc(const char *Svc);
+  extern bool MI32setBerryCtxSvc(const char *Svc, bool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
   extern bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type);
@@ -175,8 +175,12 @@ extern "C" {
   int be_BLE_set_service(bvm *vm);
   int be_BLE_set_service(bvm *vm){    
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isstring(vm, 2)) {
-      if (MI32setBerryCtxSvc(be_tostring(vm, 2))) be_return(vm);
+    if (argc > 1 && be_isstring(vm, 2)) {
+      bool discoverAttributes = false;
+      if(argc == 3 && be_isint(vm, 3)){
+        discoverAttributes = be_toint(vm,3)>0;
+      }
+      if (MI32setBerryCtxSvc(be_tostring(vm, 2),discoverAttributes)) be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }
