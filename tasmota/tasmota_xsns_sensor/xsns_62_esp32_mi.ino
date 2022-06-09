@@ -60,6 +60,7 @@
 
 #include <NimBLEDevice.h>
 #include <vector>
+#include <queue>
 
 #include <t_bearssl.h>
 
@@ -164,6 +165,7 @@ class MI32AdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 static MI32AdvCallbacks MI32ScanCallbacks;
 static MI32SensorCallback MI32SensorCB;
 static NimBLEClient* MI32Client;
+static std::queue<MI32notificationBuffer_t> MI32NotificationQueue;
 
 /*********************************************************************************************\
  * BLE callback functions
@@ -175,16 +177,17 @@ void MI32scanEndedCB(NimBLEScanResults results){
 }
 
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
-    if(MI32.mode.triggerBerryConnCB) return; //discard data, if we did not pass the old to Berry yet
-    if(isNotify){
-      MI32.infoMsg = MI32_GOT_NOTIFICATION;
-      MI32.conCtx->buffer[0] = (uint8_t)length;
-      memcpy(MI32.conCtx->buffer + 1, pData, length);
-      MI32.conCtx->returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
-      MI32.conCtx->operation = 103;
-      MI32.mode.triggerBerryConnCB = 1;
-      MI32.mode.readingDone = 1;
-    }
+  if(isNotify){
+    MI32notificationBuffer_t _buf;
+    _buf.buffer[0] = (uint8_t)length;
+    memcpy(_buf.buffer+1, pData, length);
+    _buf.returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
+    MI32NotificationQueue.push(_buf);
+    MI32.mode.readingDone = 1;
+    MI32.mode.triggerBerryConnCB = 1;
+    MI32.infoMsg = MI32_GOT_NOTIFICATION;
+    return; // do not discard data
+  }
 }
 /*********************************************************************************************\
  * Helper functions
@@ -1141,6 +1144,7 @@ bool MI32ConnectActiveSensor(){ // only use inside a task !!
 bool MI32StartConnectionTask(){
     if(MI32.conCtx == nullptr) return false;
     if(MI32.conCtx->buffer == nullptr) return false;
+    MI32NotificationQueue = {};
     MI32.mode.willConnect = 1;
     MI32Scan->stop();
     MI32suspendScanTask();
@@ -1178,7 +1182,8 @@ void MI32ConnectionTask(void *pvParameters){
         timer++;
         vTaskDelay(10/ portTICK_PERIOD_MS);
       }
-      MI32Client->discoverAttributes(); // solves connection problems on i.e. yeelight dimmer
+      // TODO: make next line optional
+      // MI32Client->discoverAttributes(); // solves connection problems on i.e. yeelight dimmer
       NimBLERemoteService* pSvc = nullptr;
       NimBLERemoteCharacteristic* pChr = nullptr;
 
@@ -1672,7 +1677,15 @@ void MI32Every50mSecond(){
     }
     MI32.mode.triggerBerryAdvCB = 0;
   }
-  if(MI32.mode.triggerBerryConnCB == 1){
+  if(MI32.mode.triggerBerryConnCB || !MI32NotificationQueue.empty()){
+    if(!MI32NotificationQueue.empty()){
+      MI32notificationBuffer_t _buf = MI32NotificationQueue.front();
+      MI32NotificationQueue.pop();
+      memcpy(MI32.conCtx->buffer,_buf.buffer,_buf.buffer[0]+1);
+      MI32.conCtx->returnCharUUID = _buf.returnCharUUID;
+      MI32.conCtx->operation = 103;
+      MI32.conCtx->error = 0;
+    }
     if(MI32.beConnCB != nullptr){
     void (*func_ptr)(int, int, int) = (void (*)(int, int, int))MI32.beConnCB;
     char _message[32];
