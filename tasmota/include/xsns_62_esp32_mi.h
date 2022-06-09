@@ -190,6 +190,7 @@ struct {
       uint32_t triggerBerryConnCB:1;
       uint32_t triggerNextConnJob:1;
       uint32_t readyForNextConnJob:1;
+      uint32_t discoverAttributes:1;
     };
     uint32_t all = 0;
   } mode;

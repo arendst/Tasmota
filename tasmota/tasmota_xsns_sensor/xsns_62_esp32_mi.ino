@@ -702,10 +702,11 @@ extern "C" {
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Connection Ctx created"));
   }
 
-  bool MI32setBerryCtxSvc(const char *Svc){
+  bool MI32setBerryCtxSvc(const char *Svc, bool discoverAttributes){
     if(MI32.conCtx != nullptr){
       MI32.conCtx->serviceUUID = NimBLEUUID(Svc);
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: SVC: %s"),MI32.conCtx->serviceUUID.toString().c_str());
+      MI32.mode.discoverAttributes = discoverAttributes;
       return true;
     }
     return false;
@@ -1182,8 +1183,9 @@ void MI32ConnectionTask(void *pvParameters){
         timer++;
         vTaskDelay(10/ portTICK_PERIOD_MS);
       }
-      // TODO: make next line optional
-      // MI32Client->discoverAttributes(); // solves connection problems on i.e. yeelight dimmer
+      if(MI32.mode.discoverAttributes){
+        MI32Client->discoverAttributes(); // solves connection problems on i.e. yeelight dimmer
+      }
       NimBLERemoteService* pSvc = nullptr;
       NimBLERemoteCharacteristic* pChr = nullptr;
 
