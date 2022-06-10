@@ -257,6 +257,13 @@ void TasDiscoverInit(void) {
 }
 
 /*********************************************************************************************\
+ * Stubs replacing legacy Hass discovery
+\*********************************************************************************************/
+
+void HAssPublishStatus(void) { return; }
+void HAssDiscover(void) { TasRediscover(); }
+
+/*********************************************************************************************\
  * Commands
  *
  * Discover 0        - Disables discovery and removes retained message from MQTT server
@@ -281,7 +288,7 @@ void (* const TasDiscoverCommand[])(void) PROGMEM = {
 
 void CmndTasDiscover(void) {
   if (XdrvMailbox.payload >= 0) {
-    Settings->flag.hass_discovery = !(XdrvMailbox.payload & 1);
+    Settings->flag.hass_discovery = !(XdrvMailbox.payload & 1);  // SetOption19 - Tasmota discovery (0)
     TasRediscover();
   }
   ResponseCmndChar(GetStateText(!Settings->flag.hass_discovery));
