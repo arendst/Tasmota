@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for HYTxxx temperature and humidity sensor (#15715)
 - Support for Sensirion SHT4X using define USE_SHT3X (#15349)
-- Command ``SSerialSend9 0/1`` to enable Serial Bridge console Tee for debugging purposes
+- Command ``SSerialSend9 1`` to enable Serial Bridge console Tee for debugging purposes
+- Command ``SetOption142 1`` to wait 1 second for wifi connection solving some FRITZ!Box modem issues (#14985)
 
 ### Changed
 - Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2

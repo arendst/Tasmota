@@ -169,7 +169,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mm_vs_inch : 1;               // bit 25 (v11.1.0.1) - SetOption139 - (Pressure) Switch between mmHg (0) or inHg (1) when SO24 1
     uint32_t mqtt_persistent : 1;          // bit 26 (v11.1.0.1) - SetOption140 - (MQTT) MQTT clean session (0 = default) or persistent session (1)
     uint32_t gui_module_name : 1;          // bit 27 (v11.1.0.3) - SetOption141 - (GUI) Disable display of GUI module name (1)
-    uint32_t spare28 : 1;                  // bit 28
+    uint32_t wait_for_wifi_result : 1;     // bit 28 (v11.1.0.4) - SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
     uint32_t spare29 : 1;                  // bit 29
     uint32_t spare30 : 1;                  // bit 30
     uint32_t spare31 : 1;                  // bit 31

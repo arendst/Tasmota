@@ -33,7 +33,7 @@
 #define WIFI_RESCAN_MINUTES     44         // Number of minutes between wifi network rescan
 #endif
 #ifndef WIFI_RETRY_SECONDS
-#define WIFI_RETRY_SECONDS      12         // Number of seconds connection to wifi network will retry
+#define WIFI_RETRY_SECONDS      20         // Number of seconds connection to wifi network will retry
 #endif
 
 const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
@@ -237,7 +237,9 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
 
-  WiFi.waitForConnectResult(1000);
+  if (Settings->flag5.wait_for_wifi_result) {  // SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
+    WiFi.waitForConnectResult(1000);  // https://github.com/arendst/Tasmota/issues/14985
+  }
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
@@ -421,7 +423,7 @@ void WifiCheckIp(void) {
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings->sta_config;
-    Wifi.status = WiFi.status();
+    Wifi.status = (Wifi.retry &1) ? WiFi.status() : 0;  // Skip every second to reset result WiFi.status()
     switch (Wifi.status) {
       case WL_CONNECTED:
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_FAILED_NO_IP_ADDRESS));
@@ -483,13 +485,12 @@ void WifiCheckIp(void) {
           WifiBegin(2, 0);        // Select alternate SSID
         }
       }
-      Wifi.counter = 1;
       Wifi.retry--;
     } else {
       WifiConfig(wifi_config_tool);
-      Wifi.counter = 1;
       Wifi.retry = Wifi.retry_init;
     }
+    Wifi.counter = 1;             // Re-check in 1 second
   }
 }
 
