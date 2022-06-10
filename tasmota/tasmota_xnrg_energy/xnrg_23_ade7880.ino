@@ -41,7 +41,7 @@
 //#define ADE7880_DEBUG
 //#define ADE7880_PROFILING
 
-#define ADE7880_HEARTBEAT       5            // Allow x seconds of missed interrupts before reinit
+#define ADE7880_WATCHDOG        5            // Allow x seconds of missed interrupts before reinit
 
 // Default calibration parameters can be overridden by a rule as documented above.
 #define ADE7880_FREQ_INIT       0            // Connected to networks with fundamental frequencies between 55 Hz and 66 Hz (1). Default 45 Hz to 55 Hz (0).
@@ -264,7 +264,7 @@ struct Ade7880 {
   bool calib_frequency;
   bool irq0_state;
   uint8_t cycle_count;
-  uint8_t heartbeat;
+  uint8_t watchdog;
 } Ade7880;
 
 /*********************************************************************************************/
@@ -463,7 +463,7 @@ bool Ade7880SetCalibrate(void) {
 #endif  // ADE7880_PROFILING
 
       if (Ade7880Init()) {
-        Ade7880.heartbeat = 0;
+        Ade7880.watchdog = 0;
         return true;
       }
     }
@@ -538,7 +538,7 @@ void Ade7880Service0(void) {
   // Poll sequence
   SkipSleep(false);
   Ade7880Cycle();
-  Ade7880.heartbeat = 0;
+  Ade7880.watchdog = 0;
   Ade7880.irq0_state = 0;
 }
 
@@ -550,10 +550,10 @@ void IRAM_ATTR Ade7880Isr0(void) {
   }
 }
 
-void Ade7880Heartbeat(void) {
+void Ade7880Watchdog(void) {
   // Reinit if interrupt stopped
-  Ade7880.heartbeat++;
-  if (Ade7880.heartbeat > ADE7880_HEARTBEAT) {
+  Ade7880.watchdog++;
+  if (Ade7880.watchdog > ADE7880_WATCHDOG) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Reinit"));
     Ade7880SetCalibrate();
   }
@@ -762,7 +762,7 @@ bool Xnrg23(uint8_t function) {
       if (Ade7880.irq0_state) { Ade7880Service0(); }
       break;
     case FUNC_EVERY_SECOND:
-      Ade7880Heartbeat();
+      Ade7880Watchdog();
       break;
 #ifdef ADE7880_MORE_REGS
     case FUNC_JSON_APPEND:
