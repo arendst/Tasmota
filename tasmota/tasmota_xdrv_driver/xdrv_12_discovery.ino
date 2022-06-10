@@ -22,8 +22,7 @@
 /*********************************************************************************************\
  * Tasmota discovery
  *
- * A version of xdrv_12_home_assistant supporting the new Tasmota Discovery used by
- * latest versions of Home Assistant or TasmoManager.
+ * Supported by latest versions of Home Assistant (with hatasmota) and TasmoManager.
  *
  * SetOption19 0   - [DiscoverOff 0] [Discover 1] Enables discovery (default)
  * SetOption19 1   - [DiscoverOff 1] [Discover 0] Disables discovery and removes retained message from MQTT server
@@ -129,7 +128,7 @@ void TasDiscoverMessage(void) {
       if (Shutter[i] != 0) {                                   // Check if there are shutters present
         Relay[i] = 3;                                          // Relay is a shutter
       } else {
-        if (i >= light_idx || (iFanMod && (0 == i))) {          // First relay on Ifan controls the light
+        if (i >= light_idx || (iFanMod && (0 == i))) {         // First relay on Ifan controls the light
           Relay[i] = 2;                                        // Relay is a light
         } else {
           if (!iFanMod) {                                      // Relays 2-4 for ifan are controlled by FANSPEED and don't need to be present if TasmotaGlobal.module_type = SONOFF_IFAN02 or SONOFF_IFAN03
@@ -228,14 +227,14 @@ void TasDiscovery(void) {
   TasmotaGlobal.masterlog_level = LOG_LEVEL_DEBUG_MORE;        // Hide topic on clean and remove use weblog 4 to show it
 
   ResponseClear();                                             // Clear retained message
-  if (!Settings->flag.hass_discovery) {                         // SetOption19 - Clear retained message
+  if (!Settings->flag.hass_discovery) {                        // SetOption19 - Clear retained message
     TasDiscoverMessage();                                      // Build discovery message
   }
   char stopic[TOPSZ];
   snprintf_P(stopic, sizeof(stopic), PSTR("tasmota/discovery/%s/config"), NetworkUniqueId().c_str());
   MqttPublish(stopic, true);
 
-  if (!Settings->flag.hass_discovery) {                         // SetOption19 - Clear retained message
+  if (!Settings->flag.hass_discovery) {                        // SetOption19 - Clear retained message
     Response_P(PSTR("{\"sn\":"));
     MqttShowSensor(true);
     ResponseAppend_P(PSTR(",\"ver\":1}"));
@@ -252,7 +251,7 @@ void TasRediscover(void) {
 
 void TasDiscoverInit(void) {
   if (ResetReason() != REASON_DEEP_SLEEP_AWAKE) {
-    Settings->flag.hass_discovery = 0;                          // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
+    Settings->flag.hass_discovery = 0;                         // SetOption19 - Enable Tasmota discovery and Disable legacy Hass discovery
     TasmotaGlobal.discovery_counter = 10;                      // Delayed discovery
   }
 }
@@ -295,7 +294,7 @@ void CmndTasDiscover(void) {
 bool Xdrv12(uint8_t function) {
   bool result = false;
 
-  if (Settings->flag.mqtt_enabled) {                            // SetOption3 - Enable MQTT
+  if (Settings->flag.mqtt_enabled) {                           // SetOption3 - Enable MQTT
     switch (function) {
     case FUNC_EVERY_SECOND:
       if (TasmotaGlobal.discovery_counter) {

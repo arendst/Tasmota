@@ -1,22 +1,39 @@
 /*
   xdrv_12_home_assistant.ino - home assistant support for Tasmota
+
   Copyright (C) 2021  Erik Montnemery, Federico Leoni and Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_HOME_ASSISTANT
 #undef USE_TASMOTA_DISCOVERY
+/*********************************************************************************************\
+ * Legacy Home Assistant discovery now replaced by Tasmota Discovery and hatasmota in HASS
+\*********************************************************************************************/
 
 #define XDRV_12 12
+
+#ifndef HOME_ASSISTANT_DISCOVERY_PREFIX
+#define HOME_ASSISTANT_DISCOVERY_PREFIX   "homeassistant"  // Home Assistant discovery prefix
+#endif
+#ifndef HOME_ASSISTANT_LWT_TOPIC
+#define HOME_ASSISTANT_LWT_TOPIC   "homeassistant/status"  // home Assistant Birth and Last Will Topic (default = homeassistant/status)
+#endif
+#ifndef HOME_ASSISTANT_LWT_SUBSCRIBE
+#define HOME_ASSISTANT_LWT_SUBSCRIBE    true               // Subscribe to Home Assistant Birth and Last Will Topic (default = true)
+#endif
 
 // List of sensors ready for discovery
 const char kHAssJsonSensorTypes[] PROGMEM =
@@ -199,7 +216,16 @@ const char kHAssError3[] PROGMEM =
 uint8_t hass_mode = 0;
 int hass_tele_period = 0;
 
-// NEW DISCOVERY
+/*********************************************************************************************\
+ * New discovery direct copy of Tasmota discovery
+ *
+ * Supported by latest versions of Home Assistant (with hatasmota) and TasmoManager.
+ *
+ * SetOption19 0   - [DiscoverOff 0] [Discover 1] Enables discovery (default)
+ * SetOption19 1   - [DiscoverOff 1] [Discover 0] Disables discovery and removes retained message from MQTT server
+ * SetOption73 1   - [DiscoverButton] Enable discovery for buttons
+ * SetOption114 1  - [DiscoverSwitch] Enable discovery for switches
+\*********************************************************************************************/
 void HassDiscoverMessage(void) {
   uint32_t ip_address = (uint32_t)WiFi.localIP();
   char* hostname = TasmotaGlobal.hostname;
@@ -412,7 +438,10 @@ void NewHAssDiscovery(void) {
 
   TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;              // Restore WebLog state
 }
-// NEW DISCOVERY
+
+/*********************************************************************************************\
+ * Legacy discovery
+\*********************************************************************************************/
 
 void TryResponseAppend_P(const char *format, ...) {
 #ifdef MQTT_DATA_STRING
