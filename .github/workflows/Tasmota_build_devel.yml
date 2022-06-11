@@ -139,6 +139,7 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32-safeboot* ] || mv ./mv_firmware/firmware/tasmota32-safeboot* ./firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-* ] || mv ./mv_firmware/firmware/tasmota32-* ./firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin ] || rm -rf ./mv_firmware/firmware/tasmota-minimal.bin
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./firmware/tasmota/languages/
     - name: Display files to transfer
       run: ls -R ./*
