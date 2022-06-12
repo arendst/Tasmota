@@ -729,30 +729,6 @@ void wifiKeepAlive(void) {
 }
 #endif  // ESP8266
 
-bool WifiPollDns(void) {
-  // WiFi.hostByName takes over ten seconds if no DNS server found
-  // This function checks to find the DNS server within 1 second
-  // This is an alternative for ping using less resources
-  WiFiClient DnsClient;
-
-#ifdef ESP8266
-  DnsClient.setTimeout(1000);
-#else
-  DnsClient.setTimeout(1);
-#endif
-  uint32_t i = 3;            // Check DNS1 only (to keep blocking to a minimum of 1 second)
-//  for (i = 3; i < 5; i++) {  // Check DNS1 and DNS2
-    uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[i] : Settings->ipv4_address[i];
-    if (DnsClient.connect((IPAddress)dns_address, 53)) {
-      DnsClient.stop();
-      return true;
-    }
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Disconnected %_I"), dns_address);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Disconnected"));
-//  }
-  return false;
-}
-
 void WifiPollNtp() {
   static uint8_t ntp_sync_minute = 0;
   static uint32_t ntp_run_time = 0;
@@ -799,26 +775,24 @@ uint32_t WifiGetNtp(void) {
 
   char* ntp_server;
   bool resolved_ip = false;
-  if (WifiPollDns()) {
-    for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
-      if (ntp_server_id > 2) { ntp_server_id = 0; }
-      if (i < MAX_NTP_SERVERS) {
-        ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
-      } else {
-        ntp_server = fallback_ntp_server;
-      }
-      if (strlen(ntp_server)) {
-        resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
-        if ((255 == time_server_ip[0]) ||                                                                // No valid name resolved (255.255.255.255)
-            ((255 == time_server_ip[1]) && (255 == time_server_ip[2]) && (255 == time_server_ip[3]))) {  // No valid name resolved (x.255.255.255)
-          resolved_ip = false;
-        }
-        yield();
-        if (resolved_ip) { break; }
-  //      AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve '%s'"), ntp_server);
-      }
-      ntp_server_id++;
+  for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
+    if (ntp_server_id > 2) { ntp_server_id = 0; }
+    if (i < MAX_NTP_SERVERS) {
+      ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
+    } else {
+      ntp_server = fallback_ntp_server;
     }
+    if (strlen(ntp_server)) {
+      resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
+      if ((255 == time_server_ip[0]) ||                                                                // No valid name resolved (255.255.255.255)
+          ((255 == time_server_ip[1]) && (255 == time_server_ip[2]) && (255 == time_server_ip[3]))) {  // No valid name resolved (x.255.255.255)
+        resolved_ip = false;
+      }
+      yield();
+      if (resolved_ip) { break; }
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve '%s'"), ntp_server);
+    }
+    ntp_server_id++;
   }
   if (!resolved_ip) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve IP address"));
