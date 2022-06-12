@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 increase Serial Bridge input buffer from 130 to 520 characters
 
 ### Fixed
+- ESP32 Arduino Core WiFi timeout is changed from msec to seconds
+- Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names (#14394)
 
 ### Removed
 

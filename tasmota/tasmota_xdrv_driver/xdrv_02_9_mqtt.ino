@@ -193,6 +193,17 @@ void MqttDisableLogging(bool state) {
 
 PubSubClient MqttClient;
 
+void MqttSetClientTimeout(void) {
+#ifdef ESP8266
+  // setTimeout in msecs
+  EspClient.setTimeout(Settings->mqtt_wifi_timeout * 100);
+#else
+  // setTimeout in secs
+  uint32_t timeout = (Settings->mqtt_wifi_timeout < 10) ? 1 : Settings->mqtt_wifi_timeout / 10;
+  EspClient.setTimeout(timeout);
+#endif
+}
+
 void MqttInit(void) {
   // Force buffer size since the #define may not be visible from Arduino lib
   MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
@@ -860,6 +871,20 @@ uint16_t MqttConnectCount(void) {
 }
 
 void MqttDisconnected(int state) {
+  /*
+  // Possible values for state - PubSubClient.h
+  Tasmota MQTT_DNS_DISCONNECTED       -5
+  #define MQTT_CONNECTION_TIMEOUT     -4
+  #define MQTT_CONNECTION_LOST        -3
+  #define MQTT_CONNECT_FAILED         -2
+  #define MQTT_DISCONNECTED           -1
+  #define MQTT_CONNECTED               0
+  #define MQTT_CONNECT_BAD_PROTOCOL    1
+  #define MQTT_CONNECT_BAD_CLIENT_ID   2
+  #define MQTT_CONNECT_UNAVAILABLE     3
+  #define MQTT_CONNECT_BAD_CREDENTIALS 4
+  #define MQTT_CONNECT_UNAUTHORIZED    5
+  */
   Mqtt.connected = false;
 
   Mqtt.retry_counter = Settings->mqtt_retry * Mqtt.retry_counter_delay;
@@ -1028,7 +1053,9 @@ void MqttReconnect(void) {
   Response_P(S_LWT_OFFLINE);
 
   if (MqttClient.connected()) { MqttClient.disconnect(); }
-  EspClient.setTimeout(Settings->mqtt_wifi_timeout * 100);
+
+  MqttSetClientTimeout();
+
 #ifdef USE_MQTT_TLS
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
@@ -1056,6 +1083,11 @@ void MqttReconnect(void) {
     }
   }
 #endif
+
+  if (!WifiPollDns()) {
+    MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
+    return;
+  }
   MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
 
   uint32_t mqtt_connect_time = millis();
@@ -1363,7 +1395,7 @@ void CmndMqttWifiTimeout(void) {
   // Set timeout between 100 and 20000 mSec
   if ((XdrvMailbox.payload >= 100) && (XdrvMailbox.payload <= 20000)) {
     Settings->mqtt_wifi_timeout = XdrvMailbox.payload / 100;
-    EspClient.setTimeout(Settings->mqtt_wifi_timeout * 100);
+    MqttSetClientTimeout();
   }
   ResponseCmndNumber(Settings->mqtt_wifi_timeout * 100);
 }
