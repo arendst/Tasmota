@@ -732,7 +732,8 @@ void wifiKeepAlive(void) {
 bool WifiPollDns(void) {
   // WiFi.hostByName takes over ten seconds if no DNS server found
   // This function checks to find the DNS server within 1 second
-  // This is an alternative for ping using less resources
+  // This is an alternative for ping using less resources and some DNS server do not respond to pings (ICMP)
+  // See https://github.com/letscontrolit/ESPEasy/issues/1494#issuecomment-397872538
   WiFiClient DnsClient;
 
 #ifdef ESP8266
@@ -747,10 +748,23 @@ bool WifiPollDns(void) {
       DnsClient.stop();
       return true;
     }
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Disconnected %_I"), dns_address);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Disconnected"));
 //  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Disconnected"));
   return false;
+}
+
+int WifiHostByName(const char* aHostname, IPAddress& aResult) {
+  // Use this instead of WiFi.hostByName or connect(host_name,.. to block less if DNS server is not found
+  aResult = (uint32_t)(0);
+  if (aResult.fromString(aHostname)) {
+    // Host name is already an IP address so use it!
+    return 1;
+  }
+  else if (WifiPollDns() && WiFi.hostByName(aHostname, aResult)) {
+    // Host name resolved
+    return 1;
+  }
+  return 0;
 }
 
 void WifiPollNtp() {
@@ -809,6 +823,7 @@ uint32_t WifiGetNtp(void) {
       }
       if (strlen(ntp_server)) {
         resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
+//        resolved_ip = (WifiHostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
         if ((255 == time_server_ip[0]) ||                                                                // No valid name resolved (255.255.255.255)
             ((255 == time_server_ip[1]) && (255 == time_server_ip[2]) && (255 == time_server_ip[3]))) {  // No valid name resolved (x.255.255.255)
           resolved_ip = false;

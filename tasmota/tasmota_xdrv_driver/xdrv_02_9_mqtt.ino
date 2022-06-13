@@ -1083,12 +1083,12 @@ void MqttReconnect(void) {
     }
   }
 #endif
-
-  if (!WifiPollDns()) {
+  IPAddress mqtt_host_ip;
+  if (!WifiHostByName(SettingsText(SET_MQTT_HOST), mqtt_host_ip)) {
     MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
     return;
   }
-  MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
+  MqttClient.setServer(mqtt_host_ip, Settings->mqtt_port);
 
   uint32_t mqtt_connect_time = millis();
 #if defined(USE_MQTT_TLS)
