@@ -1,8 +1,8 @@
 /********************************************************************
  * UDP lib
- * 
+ *
  * To use: `d = udp()`
- * 
+ *
  *******************************************************************/
 #include "be_constobj.h"
 
@@ -19,7 +19,7 @@
 #include "be_mapping.h"
 
 extern "C" {
-  
+
   // init()
   WiFiUDP *be_udp_init_ntv(void) {
     return new WiFiUDP();
@@ -39,7 +39,7 @@ extern "C" {
 
   // udp.begin(address:string, port:int) -> nil
   int32_t be_udp_begin_ntv(WiFiUDP *udp, const char *host, int32_t port) {
-    IPAddress addr(INADDR_ANY);
+    IPAddress addr((uint32_t)0);
     // if no host or host is "" then we defult to INADDR_ANY (0.0.0.0)
     if(host && (*host != 0) && !WiFiGenericClass::hostByName(host, addr)){
         return 0;

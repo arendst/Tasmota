@@ -980,7 +980,7 @@ be_local_class(AXP192,
         { be_const_key(json_append, -1), be_const_closure(AXP192_json_append_closure) },
         { be_const_key(get_input_power_status, -1), be_const_closure(AXP192_get_input_power_status_closure) },
     })),
-    be_str_literal("AXP192")
+    be_str_weak(AXP192)
 );
 /*******************************************************************/
 

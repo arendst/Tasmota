@@ -21,6 +21,7 @@
 #define BE_FUNCTION     6
 
 #define BE_GCOBJECT     16      /* from this type can be gced */
+#define BE_GCOBJECT_MAX (3<<5)  /* from this type can't be gced */
 
 #define BE_STRING       16
 #define BE_CLASS        17
@@ -44,7 +45,6 @@
 /* values for bproto.varg */
 #define BE_VA_VARARG    (1 << 0)    /* function has variable number of arguments */
 #define BE_VA_METHOD    (1 << 1)    /* function is a method (this is only a hint) */
-
 #define array_count(a)   (sizeof(a) / sizeof((a)[0]))
 
 #define bcommon_header          \

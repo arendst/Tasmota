@@ -34,7 +34,7 @@ typedef struct LVGL_PARAMS {
     struct {
       uint8_t use_dma : 1;
       uint8_t swap_color : 1;
-      uint8_t resvd_0 : 1;
+      uint8_t async_dma : 1;   // force DMA completion before returning, avoid conflict with other devices on same bus. If set you should make sure the display is the only device on the bus
       uint8_t resvd_1 : 1;
       uint8_t resvd_2 : 1;
       uint8_t resvd_3 : 1;

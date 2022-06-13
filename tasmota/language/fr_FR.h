@@ -102,6 +102,7 @@
 #define D_FILE "Fichier"
 #define D_FLOW_RATE "Débit"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
+#define D_FRAME_RATE "Frame rate"
 #define D_FREE_MEMORY "Mémoire libre"
 #define D_PSR_MAX_MEMORY "Mémoire PS-RAM"
 #define D_PSR_FREE_MEMORY "Mémoire PS-RAM libre"
@@ -139,6 +140,7 @@
 #define D_PASSWORD "Mot de passe"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
@@ -182,6 +184,7 @@
 #define D_UPGRADE "la mise à jour" 	 // "Lancer la mise à jour"
 #define D_UPLOAD "Upload"    // Not better in french
 #define D_UPTIME "Durée d'activité"
+#define D_USED "used"
 #define D_USER "Utilisateur"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Indice UV"
@@ -243,6 +246,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br>merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
@@ -372,6 +376,7 @@
 #define D_OTA_URL "URL OTA"
 #define D_START_UPGRADE "Lancer la mise à jour"
 #define D_UPGRADE_BY_FILE_UPLOAD "Mise à jour par téléchargement fichier"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Téléchargement lancé"
 #define D_UPGRADE_STARTED "Mise à jour lancée"
 #define D_UPLOAD_DONE "Téléchargement terminé"
@@ -651,7 +656,13 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
-#define D_SENSOR_BACKLIGHT     "RétroÉcl"
+#define D_SENSOR_SDIO_CMD      "SDIO CMD"
+#define D_SENSOR_SDIO_CLK      "SDIO CLK"
+#define D_SENSOR_SDIO_D0       "SDIO D0"
+#define D_SENSOR_SDIO_D1       "SDIO D1"
+#define D_SENSOR_SDIO_D2       "SDIO D2"
+#define D_SENSOR_SDIO_D3       "SDIO D3"
+#define D_SENSOR_BACKLIGHT    "RétroÉcl"
 #define D_SENSOR_PMS5003_TX    "PMS5003 TX"
 #define D_SENSOR_PMS5003_RX    "PMS5003 RX"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 RX"
@@ -762,6 +773,8 @@
 #define D_SENSOR_DDSU666_RX    "DDSU666 RX"
 #define D_SENSOR_SM2135_CLK    "SM2135 CLK"
 #define D_SENSOR_SM2135_DAT    "SM2135 DAT"
+#define D_SENSOR_BP5758D_CLK    "BP5758D Clk"
+#define D_SENSOR_BP5758D_DAT    "BP5758D Dat"
 #define D_SENSOR_DEEPSLEEP     "Hibernation"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
 #define D_SENSOR_CLIENT_TX      "Esclave TX"
@@ -859,7 +872,8 @@
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
 #define D_SENSOR_CM11_TX       "CM110x TX" 
-#define D_SENSOR_CM11_RX       "CM110x RX" 
+#define D_SENSOR_CM11_RX       "CM110x RX"
+#define D_SENSOR_FLOWRATEMETER "Flowrate"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -867,10 +881,12 @@
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_DEGREE "°"
 #define D_UNIT_FAHRENHEIT "F"
+#define D_UNIT_FPS "FPS"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "gal/mn"
+#define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"
 #define D_UNIT_KILOMETER "km"
@@ -906,6 +922,8 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_LITER_PER_MINUTE "l/min"
+#define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
 
 #define D_NEW_ADDRESS          "Positionner l'adresse à"
 #define D_OUT_OF_RANGE         "Hors limites"
@@ -1046,6 +1064,9 @@
 #define D_FP_ADDRCODE "Code adresse"           // 0x20 Address code
 #define D_FP_PASSVERIFY "Mot-de-passe vérifié" // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Erreur"             // Any other error
+
+// xsns_96_flowratemeter.ino
+#define D_FLOWRATEMETER_NAME "Flowrate"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

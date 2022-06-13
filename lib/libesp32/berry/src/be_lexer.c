@@ -168,21 +168,9 @@ static int check_next(blexer *lexer, int c)
     return 0;
 }
 
-static int char2hex(int c)
-{
-    if (c >= '0' && c <= '9') {
-        return c - '0';
-    } else if (c >= 'a' && c <= 'f') {
-        return c - 'a' + 0x0A;
-    } else if (c >= 'A' && c <= 'F') {
-        return c - 'A' + 0x0A;
-    }
-    return -1;
-}
-
 static int check2hex(blexer *lexer, int c)
 {
-    c = char2hex(c);
+    c = be_char2hex(c);
     if (c < 0) {
         be_lexerror(lexer, "invalid hexadecimal number");
     }
@@ -333,7 +321,7 @@ static bint scan_hexadecimal(blexer *lexer)
 {
     bint res = 0;
     int dig, num = 0;
-    while ((dig = char2hex(lgetc(lexer))) >= 0) {
+    while ((dig = be_char2hex(lgetc(lexer))) >= 0) {
         res = ((bint)res << 4) + dig;
         next(lexer);
         ++num;
@@ -396,19 +384,44 @@ static btokentype scan_identifier(blexer *lexer)
     return TokenId;
 }
 
+/* munch any delimeter and return 1 if any found */
+static int skip_delimiter(blexer *lexer) {
+    int c = lgetc(lexer);
+    int delimeter_present = 0;
+    while (1) {
+        if (c == '\r' || c == '\n') {
+            skip_newline(lexer);
+        } else if (c == ' ' || c == '\t' || c == '\f' || c ==  '\v') {
+            next(lexer);
+        } else {
+            break;
+        }
+        c = lgetc(lexer);
+        delimeter_present = 1;
+    }
+    return delimeter_present;
+}
+
 static btokentype scan_string(blexer *lexer)
 {
-    int c, end = lgetc(lexer);
-    next(lexer); /* skip '"' or '\'' */
-    while ((c = lgetc(lexer)) != EOS && (c != end)) {
-        save(lexer);
-        if (c == '\\') {
-            save(lexer); /* skip '\\.' */
+    while (1) {     /* handle multiple string literals in a row */
+        int c;
+        int end = lgetc(lexer);     /* string delimiter, either '"' or '\'' */
+        next(lexer); /* skip '"' or '\'' */
+        while ((c = lgetc(lexer)) != EOS && (c != end)) {
+            save(lexer);
+            if (c == '\\') {
+                save(lexer); /* skip '\\.' */
+            }
         }
+        c = next(lexer); /* skip '"' or '\'' */
+        /* check if there's an additional string literal right after */
+        skip_delimiter(lexer);
+        c = lgetc(lexer);
+        if (c != '"' && c != '\'') { break; }
     }
     tr_string(lexer);
     setstr(lexer, buf_tostr(lexer));
-    next(lexer); /* skip '"' or '\'' */
     return TokenString;
 }
 

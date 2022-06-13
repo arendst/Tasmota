@@ -12,7 +12,7 @@
 
 #ifdef COMPILE_BERRY_LIB
   #include "my_user_config.h"
-  #include "tasmota_configurations.h"
+  #include "include/tasmota_configurations.h"
 #endif
 
 /* Macro: BE_DEBUG
@@ -174,6 +174,14 @@
  * Default: 0
  **/
 #define BE_USE_DEBUG_GC                  0
+
+/* Macro: BE_USE_DEBUG_STACK
+ * Enable Stack Resize debug mode. At each function call
+ * the stack is reallocated at a different memory location
+ * and the previous location is cleared with toxic data.
+ * Default: 0
+ **/
+#define BE_USE_DEBUG_STACK               0
 
 /* Macro: BE_USE_MEM_ALIGNED
  * Some embedded processors have special memory areas

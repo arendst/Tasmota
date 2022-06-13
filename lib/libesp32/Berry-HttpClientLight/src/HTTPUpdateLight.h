@@ -31,7 +31,7 @@
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 #include <HttpClientLight.h>
-#include <Update.h>
+#include <TasUpdate.h>
 #include <HTTPUpdate.h>
 
 /// note we use HTTP client errors too so we start at 100
@@ -69,7 +69,7 @@ public:
     {
         _rebootOnUpdate = reboot;
     }
-    
+
     /**
       * set redirect follow mode. See `followRedirects_t` enum for avaliable modes.
       * @param follow
@@ -84,6 +84,13 @@ public:
         _ledPin = ledPin;
         _ledOn = ledOn;
     }
+
+// Start Tasmota Factory patch
+    void setFactory(bool factory = false)
+    {
+        _factory = factory;
+    }
+// End Tasmota Factory patch
 
     // t_httpUpdate_return update(WiFiClient& client, const String& url, const String& currentVersion = "");
 
@@ -131,6 +138,9 @@ private:
 
     int _ledPin;
     uint8_t _ledOn;
+// Start Tasmota Factory patch
+    bool _factory;
+// End Tasmota Factory patch
 };
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_HTTPUPDATE)

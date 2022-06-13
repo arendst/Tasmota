@@ -585,6 +585,11 @@ extern int lvbe_indev_get_vect(bvm *vm);
 extern int lvbe_indev_wait_release(bvm *vm);
 extern int lvbe_indev_search_obj(bvm *vm);
 
+/* `lv_qrcode` external functions definitions */
+extern int lvbe_qrcode_create(bvm *vm);
+extern int lvbe_qrcode_update(bvm *vm);
+extern int lvbe_qrcode_delete(bvm *vm);
+
 /* `lv_chart` external functions definitions */
 extern int lvbe_chart_create(bvm *vm);
 extern int lvbe_chart_set_type(bvm *vm);
@@ -948,6 +953,7 @@ extern int be_ntv_lv_disp_init(bvm *vm);
 extern int be_ntv_lv_obj_init(bvm *vm);
 extern int be_ntv_lv_group_init(bvm *vm);
 extern int be_ntv_lv_indev_init(bvm *vm);
+extern int be_ntv_lv_qrcode_init(bvm *vm);
 extern int be_ntv_lv_chart_init(bvm *vm);
 extern int be_ntv_lv_colorwheel_init(bvm *vm);
 extern int be_ntv_lv_imgbtn_init(bvm *vm);
@@ -996,6 +1002,7 @@ extern const bclass be_class_lv_line;
 extern const bclass be_class_lv_meter;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
+extern const bclass be_class_lv_qrcode;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_spinbox;
@@ -1021,7 +1028,7 @@ be_local_class(lv_style,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_style_init) },
     })),
-    (be_str_literal("lv_style"))
+    (be_str_weak(lv_style))
 );
 /*******************************************************************/
 
@@ -1039,7 +1046,7 @@ be_local_class(lv_obj,
         { be_const_key(tostring, 4), be_const_func(lv_x_tostring) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_obj_init) },
     })),
-    (be_str_literal("lv_obj"))
+    (be_str_weak(lv_obj))
 );
 /*******************************************************************/
 
@@ -1056,7 +1063,7 @@ be_local_class(lv_group,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(be_ntv_lv_group_init) },
     })),
-    (be_str_literal("lv_group"))
+    (be_str_weak(lv_group))
 );
 /*******************************************************************/
 
@@ -1073,7 +1080,7 @@ be_local_class(lv_indev,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_str_literal("lv_indev"))
+    (be_str_weak(lv_indev))
 );
 /*******************************************************************/
 
@@ -1090,7 +1097,7 @@ be_local_class(lv_disp,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_str_literal("lv_disp"))
+    (be_str_weak(lv_disp))
 );
 /*******************************************************************/
 
@@ -1107,7 +1114,7 @@ be_local_class(lv_timer,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    be_str_literal("lv_timer")
+    be_str_weak(lv_timer)
 );
 /*******************************************************************/
 
@@ -1124,7 +1131,7 @@ be_local_class(lv_anim,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_anim_init) },
     })),
-    be_str_literal("lv_anim")
+    be_str_weak(lv_anim)
 );
 /*******************************************************************/
 
@@ -1140,7 +1147,7 @@ be_local_class(lv_font,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_str_literal("lv_font"))
+    (be_str_weak(lv_font))
 );
 /*******************************************************************/
 
@@ -1156,7 +1163,7 @@ be_local_class(lv_theme,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_str_literal("lv_theme"))
+    (be_str_weak(lv_theme))
 );
 /*******************************************************************/
 
@@ -1173,7 +1180,7 @@ be_local_class(lv_color,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, -1), be_const_func(lco_init) },
     })),
-    (be_str_literal("lv_color"))
+    (be_str_weak(lv_color))
 );
 /*******************************************************************/
 
@@ -1189,7 +1196,23 @@ be_local_class(lv_img,
         { be_const_key(_class, -1), be_const_comptr(&lv_img_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_img_init) },
     })),
-    (be_str_literal("lv_img"))
+    (be_str_weak(lv_img))
+);
+/*******************************************************************/
+
+/********************************************************************
+** Solidified class: lv_qrcode
+********************************************************************/
+extern const bclass be_class_lv_obj;
+be_local_class(lv_qrcode,
+    0,
+    &be_class_lv_obj,
+    be_nested_map(2,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key(_class, -1), be_const_comptr(&lv_qrcode_class) },
+        { be_const_key(init, -1), be_const_func(be_ntv_lv_qrcode_init) },
+    })),
+    (be_str_weak(lv_qrcode))
 );
 /*******************************************************************/
 
@@ -1205,7 +1228,7 @@ be_local_class(lv_chart,
         { be_const_key(_class, -1), be_const_comptr(&lv_chart_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_chart_init) },
     })),
-    (be_str_literal("lv_chart"))
+    (be_str_weak(lv_chart))
 );
 /*******************************************************************/
 
@@ -1221,7 +1244,7 @@ be_local_class(lv_colorwheel,
         { be_const_key(_class, -1), be_const_comptr(&lv_colorwheel_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_colorwheel_init) },
     })),
-    (be_str_literal("lv_colorwheel"))
+    (be_str_weak(lv_colorwheel))
 );
 /*******************************************************************/
 
@@ -1237,7 +1260,7 @@ be_local_class(lv_imgbtn,
         { be_const_key(_class, -1), be_const_comptr(&lv_imgbtn_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_imgbtn_init) },
     })),
-    (be_str_literal("lv_imgbtn"))
+    (be_str_weak(lv_imgbtn))
 );
 /*******************************************************************/
 
@@ -1253,7 +1276,7 @@ be_local_class(lv_led,
         { be_const_key(_class, -1), be_const_comptr(&lv_led_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_led_init) },
     })),
-    (be_str_literal("lv_led"))
+    (be_str_weak(lv_led))
 );
 /*******************************************************************/
 
@@ -1269,7 +1292,7 @@ be_local_class(lv_meter,
         { be_const_key(_class, -1), be_const_comptr(&lv_meter_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_meter_init) },
     })),
-    (be_str_literal("lv_meter"))
+    (be_str_weak(lv_meter))
 );
 /*******************************************************************/
 
@@ -1285,7 +1308,7 @@ be_local_class(lv_msgbox,
         { be_const_key(_class, -1), be_const_comptr(&lv_msgbox_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_msgbox_init) },
     })),
-    (be_str_literal("lv_msgbox"))
+    (be_str_weak(lv_msgbox))
 );
 /*******************************************************************/
 
@@ -1301,7 +1324,7 @@ be_local_class(lv_spinbox,
         { be_const_key(_class, -1), be_const_comptr(&lv_spinbox_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_spinbox_init) },
     })),
-    (be_str_literal("lv_spinbox"))
+    (be_str_weak(lv_spinbox))
 );
 /*******************************************************************/
 
@@ -1317,7 +1340,7 @@ be_local_class(lv_spinner,
         { be_const_key(_class, -1), be_const_comptr(&lv_spinner_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_spinner_init) },
     })),
-    (be_str_literal("lv_spinner"))
+    (be_str_weak(lv_spinner))
 );
 /*******************************************************************/
 
@@ -1333,7 +1356,7 @@ be_local_class(lv_arc,
         { be_const_key(_class, -1), be_const_comptr(&lv_arc_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_arc_init) },
     })),
-    (be_str_literal("lv_arc"))
+    (be_str_weak(lv_arc))
 );
 /*******************************************************************/
 
@@ -1349,7 +1372,7 @@ be_local_class(lv_bar,
         { be_const_key(_class, -1), be_const_comptr(&lv_bar_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_bar_init) },
     })),
-    (be_str_literal("lv_bar"))
+    (be_str_weak(lv_bar))
 );
 /*******************************************************************/
 
@@ -1365,7 +1388,7 @@ be_local_class(lv_btn,
         { be_const_key(_class, -1), be_const_comptr(&lv_btn_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_btn_init) },
     })),
-    (be_str_literal("lv_btn"))
+    (be_str_weak(lv_btn))
 );
 /*******************************************************************/
 
@@ -1381,7 +1404,7 @@ be_local_class(lv_btnmatrix,
         { be_const_key(_class, -1), be_const_comptr(&lv_btnmatrix_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_btnmatrix_init) },
     })),
-    (be_str_literal("lv_btnmatrix"))
+    (be_str_weak(lv_btnmatrix))
 );
 /*******************************************************************/
 
@@ -1397,7 +1420,7 @@ be_local_class(lv_canvas,
         { be_const_key(_class, -1), be_const_comptr(&lv_canvas_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_canvas_init) },
     })),
-    (be_str_literal("lv_canvas"))
+    (be_str_weak(lv_canvas))
 );
 /*******************************************************************/
 
@@ -1413,7 +1436,7 @@ be_local_class(lv_checkbox,
         { be_const_key(_class, -1), be_const_comptr(&lv_checkbox_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_checkbox_init) },
     })),
-    (be_str_literal("lv_checkbox"))
+    (be_str_weak(lv_checkbox))
 );
 /*******************************************************************/
 
@@ -1429,7 +1452,7 @@ be_local_class(lv_dropdown,
         { be_const_key(_class, -1), be_const_comptr(&lv_dropdown_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_dropdown_init) },
     })),
-    (be_str_literal("lv_dropdown"))
+    (be_str_weak(lv_dropdown))
 );
 /*******************************************************************/
 
@@ -1445,7 +1468,7 @@ be_local_class(lv_label,
         { be_const_key(_class, -1), be_const_comptr(&lv_label_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_label_init) },
     })),
-    (be_str_literal("lv_label"))
+    (be_str_weak(lv_label))
 );
 /*******************************************************************/
 
@@ -1461,7 +1484,7 @@ be_local_class(lv_line,
         { be_const_key(_class, -1), be_const_comptr(&lv_line_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_line_init) },
     })),
-    (be_str_literal("lv_line"))
+    (be_str_weak(lv_line))
 );
 /*******************************************************************/
 
@@ -1477,7 +1500,7 @@ be_local_class(lv_roller,
         { be_const_key(_class, -1), be_const_comptr(&lv_roller_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_roller_init) },
     })),
-    (be_str_literal("lv_roller"))
+    (be_str_weak(lv_roller))
 );
 /*******************************************************************/
 
@@ -1493,7 +1516,7 @@ be_local_class(lv_slider,
         { be_const_key(_class, -1), be_const_comptr(&lv_slider_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_slider_init) },
     })),
-    (be_str_literal("lv_slider"))
+    (be_str_weak(lv_slider))
 );
 /*******************************************************************/
 
@@ -1509,7 +1532,7 @@ be_local_class(lv_switch,
         { be_const_key(_class, -1), be_const_comptr(&lv_switch_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_switch_init) },
     })),
-    (be_str_literal("lv_switch"))
+    (be_str_weak(lv_switch))
 );
 /*******************************************************************/
 
@@ -1525,7 +1548,7 @@ be_local_class(lv_table,
         { be_const_key(_class, -1), be_const_comptr(&lv_table_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_table_init) },
     })),
-    (be_str_literal("lv_table"))
+    (be_str_weak(lv_table))
 );
 /*******************************************************************/
 
@@ -1541,7 +1564,7 @@ be_local_class(lv_textarea,
         { be_const_key(_class, -1), be_const_comptr(&lv_textarea_class) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_textarea_init) },
     })),
-    (be_str_literal("lv_textarea"))
+    (be_str_weak(lv_textarea))
 );
 /*******************************************************************/
 

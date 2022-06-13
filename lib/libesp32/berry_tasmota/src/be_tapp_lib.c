@@ -121,7 +121,7 @@ be_local_class(Tapp,
         { be_const_key(autoexec, -1), be_const_closure(Tapp_autoexec_closure) },
         { be_const_key(init, 0), be_const_closure(Tapp_init_closure) },
     })),
-    be_str_literal("Tapp")
+    be_str_weak(Tapp)
 );
 
 /********************************************************************

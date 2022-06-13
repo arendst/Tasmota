@@ -213,7 +213,7 @@ be_local_class(lv_coord_arr,
         { be_const_key(item, -1), be_const_closure(lv_coord_arr_item_closure) },
         { be_const_key(setitem, -1), be_const_closure(lv_coord_arr_setitem_closure) },
     })),
-    be_str_literal("lv_coord_arr")
+    be_str_weak(lv_coord_arr)
 );
 
 /********************************************************************
@@ -315,7 +315,7 @@ be_local_class(lv_point_arr,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(init, -1), be_const_closure(lv_point_arr_init_closure) },
     })),
-    be_str_literal("lv_point_arr")
+    be_str_weak(lv_point_arr)
 );
 
 /********************************************************************
@@ -397,7 +397,7 @@ be_local_class(lv_style_prop_arr,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(init, -1), be_const_closure(lv_style_prop_arr_init_closure) },
     })),
-    be_str_literal("lv_style_prop_arr")
+    be_str_weak(lv_style_prop_arr)
 );
 
 /********************************************************************

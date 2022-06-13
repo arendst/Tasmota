@@ -21,6 +21,7 @@
 # 22 : ShiftLeft    (rot:int [, first:int, last:int]) -> void
 # 23 : ShiftRight   (rot:int [, first:int, last:int]) -> void
 
+class Leds_ntv end
 
 class Leds : Leds_ntv
   var gamma       # if true, apply gamma (true is default)

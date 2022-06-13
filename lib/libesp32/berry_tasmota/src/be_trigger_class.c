@@ -177,7 +177,7 @@ be_local_class(Trigger,
         { be_const_key(o, -1), be_const_var(3) },
         { be_const_key(init, -1), be_const_closure(Trigger_init_closure) },
     })),
-    be_str_literal("Trigger")
+    be_str_weak(Trigger)
 );
 /*******************************************************************/
 

@@ -28,7 +28,7 @@ extern int b_onewire_search(bvm *vm);
 
 /* @const_object_info_begin
 
-class be_class_OneWire (scope: global, name: OneWire) {
+class be_class_OneWire (scope: global, name: OneWire, strings: weak) {
     .p, var
 
     init, func(b_onewire_init)

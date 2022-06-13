@@ -3,7 +3,6 @@
     "displayName": "Berry Script Language",
     "description": "A small embedded script language.",
     "version": "0.1.0",
-    "icon": "berry-icon.png",
     "publisher": "skiars",
     "engines": {
         "vscode": "^1.15.1"

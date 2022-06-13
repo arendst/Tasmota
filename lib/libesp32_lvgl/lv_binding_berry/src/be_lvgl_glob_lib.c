@@ -1157,6 +1157,6 @@ be_local_class(LVGL_glob,
         { be_const_key(widget_struct_by_class, 1), be_const_var(10) },
         { be_const_key(widget_cb, 0), be_const_closure(LVGL_glob_widget_cb_closure) },
     })),
-    be_str_literal("LVGL_glob")
+    be_str_weak(LVGL_glob)
 );
 /*******************************************************************/

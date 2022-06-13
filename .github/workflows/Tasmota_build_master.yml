@@ -31,19 +31,34 @@ jobs:
           - tasmota-zbbridge
           - tasmota-zigbee
           - tasmota32
+          - tasmota32-zbbrdgpro
           - tasmota32-webcam
           - tasmota32-bluetooth
+          - tasmota32-nspanel
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
           - tasmota32c3
+          - tasmota32c3cdc
+          - tasmota32s2
+          - tasmota32s2cdc
+          - tasmota32s3
+          - tasmota32s3cdc
           - tasmota32solo1
+          - tasmota32solo1-safeboot
+          - tasmota32-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c3cdc-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s2cdc-safeboot
+          - tasmota32s3-safeboot
+          - tasmota32s3cdc-safeboot
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
           pip install -U platformio
@@ -63,11 +78,11 @@ jobs:
         variant: [ tasmota, tasmota32 ]
         language: [ AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
           pip install -U platformio
@@ -83,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/download-artifact@v2
       with:
         name: firmware
@@ -121,11 +136,18 @@ jobs:
         [ ! -f ./mv_firmware/firmware/tasmota32-display.* ] || mv ./mv_firmware/firmware/tasmota32-display.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-lvgl.* ] || mv ./mv_firmware/firmware/tasmota32-lvgl.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-web*.* ] || mv ./mv_firmware/firmware/tasmota32-web*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-zbbrdgpro.* ] || mv ./mv_firmware/firmware/tasmota32-zbbrdgpro.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-nspanel.* ] || mv ./mv_firmware/firmware/tasmota32-nspanel.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-odroidgo.* ] || mv ./mv_firmware/firmware/tasmota32-odroidgo.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-core2.* ] || mv ./mv_firmware/firmware/tasmota32-core2.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32-bluetooth.* ] || mv ./mv_firmware/firmware/tasmota32-bluetooth.* ./release-firmware/tasmota32/
         [ ! -f ./mv_firmware/firmware/tasmota32c3*.* ] || mv ./mv_firmware/firmware/tasmota32c3*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32s2*.* ] || mv ./mv_firmware/firmware/tasmota32s2*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32s3*.* ] || mv ./mv_firmware/firmware/tasmota32s3*.* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-safeboot* ] || mv ./mv_firmware/firmware/tasmota32-safeboot* ./release-firmware/tasmota32/
+        [ ! -f ./mv_firmware/firmware/tasmota32-* ] || mv ./mv_firmware/firmware/tasmota32-* ./release-firmware/tasmota32/languages/
         [ ! -f ./mv_firmware/firmware/tasmota32* ] || mv ./mv_firmware/firmware/tasmota32* ./release-firmware/tasmota32/languages/
+        [ ! -f ./mv_firmware/firmware/tasmota-minimal.bin ] || rm -rf ./mv_firmware/firmware/tasmota-minimal.bin
         [ ! -f ./mv_firmware/firmware/* ] || mv ./mv_firmware/firmware/* ./release-firmware/tasmota/languages/
     - name: Display files to transfer
       run: ls -R ./*
@@ -144,7 +166,7 @@ jobs:
     needs: Upload
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Creat trigger.txt
       run: |
          echo ${GITHUB_SHA}  &> trigger.txt

@@ -181,8 +181,6 @@ int lco_init(bvm *vm) {
   int argc = be_top(vm);
   lv_color_t lv_color = {};       // default value is all zeroes (black)
 
-  uint32_t color32 = 0x000000;    // default to black
-
   if (argc > 1) {
     if (be_isint(vm, 2)) {        // color is RGB 24 bits
       lv_color = lv_color_hex(be_toint(vm, 2));
@@ -209,7 +207,6 @@ int lco_tostring(bvm *vm) {
 }
 
 int lco_toint(bvm *vm) {
-  lv_color_t lv_color = {};
   be_getmember(vm, 1, "_p");
   uint32_t ntv_color = be_toint(vm, -1);
   be_pushint(vm, ntv_color);

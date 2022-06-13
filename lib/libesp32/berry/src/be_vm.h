@@ -84,6 +84,7 @@ struct bupval {
     } u;
     int refcnt;
 };
+
 struct bvm {
     bglobaldesc gbldesc; /* global description */
     bvalue *stack; /* stack space */

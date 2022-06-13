@@ -15,6 +15,7 @@
 #include "be_bytecode.h"
 #include "be_decoder.h"
 #include <stdlib.h>
+#include <string.h>
 
 #if !BE_USE_SCRIPT_COMPILER && !BE_USE_BYTECODE_LOADER
   #error no compiler or bytecode loader enabled.
@@ -337,9 +338,13 @@ void be_stackpush(bvm *vm)
 /* check that the stack is able to store `count` items, and increase stack if needed */
 BERRY_API void be_stack_require(bvm *vm, int count)
 {
+#if BE_USE_DEBUG_STACK == 0
     if (vm->top + count >= vm->stacktop) {
         be_stack_expansion(vm, count);
     }
+#else
+    be_stack_expansion(vm, vm->top - vm->stacktop + count);     /* force exact resize each time */
+#endif
 }
 
 /* Scan the entire callstack and adjust all pointer by `offset` */
@@ -372,7 +377,16 @@ static void stack_resize(bvm *vm, size_t size)
     intptr_t offset;
     bvalue *old = vm->stack;  /* save original pointer of stack before resize */
     size_t os = (vm->stacktop - old) * sizeof(bvalue);  /* size of current stack allocated in bytes */
+#if BE_USE_DEBUG_STACK == 0
     vm->stack = be_realloc(vm, old, os, sizeof(bvalue) * size);  /* reallocate with the new size */
+#else   /* force a reallocation */
+    size_t ns = sizeof(bvalue) * size;
+    vm->stack = be_malloc(vm, ns);
+    size_t transf = (os < ns) ? os : ns;        /* min size */
+    memmove(vm->stack, old, transf);            /* copy to new location */
+    memset(old, 0xFF, os);                      /* fill the structure with invalid pointers */
+    be_free(vm, old, os);
+#endif
     vm->stacktop = vm->stack + size;  /* compute new stacktop */
     offset = ptr_offset(vm->stack, old);  /* compute the address difference between old and ne stack addresses */
     /* update callframes */
@@ -386,7 +400,7 @@ static void stack_resize(bvm *vm, size_t size)
 /* Check if we are above the max allowed stack */
 void be_stack_expansion(bvm *vm, int n)
 {
-    size_t size = vm->stacktop - vm->stack;
+    int size = vm->stacktop - vm->stack;    /* with debug enabled, stack increase may be negative */
     /* check new stack size */
     if (size + n > BE_STACK_TOTAL_MAX) {
         /* ensure the stack is enough when generating error messages. */

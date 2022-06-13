@@ -102,6 +102,7 @@
 #define D_FILE "Αρχείο"
 #define D_FLOW_RATE "Flow rate"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
+#define D_FRAME_RATE "Frame rate"
 #define D_FREE_MEMORY "Ελεύθερη μνήμη"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"
@@ -139,6 +140,7 @@
 #define D_PASSWORD "Κωδικός"
 #define D_PH "pH"
 #define D_MQ "MQ"
+#define D_PARTITION "Partition"      // As in flash and firmware partition
 #define D_PORT "Θύρα"
 #define D_POWER_FACTOR "Συντελεστής Ισχύος"
 #define D_POWERUSAGE "Ισχύς"
@@ -182,6 +184,7 @@
 #define D_UPGRADE "αναβάθμιση"
 #define D_UPLOAD "Ανέβασμα"
 #define D_UPTIME "Χρόνος λειτουργίας"
+#define D_USED "used"
 #define D_USER "Χρήστης"
 #define D_UTC_TIME "UTC"
 #define D_UV_INDEX "Δείκτης UV"
@@ -243,6 +246,7 @@
 
 // webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
+#define D_SAFEBOOT "SAFEBOOT"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>παρακαλώ αναβαθμίστε"
 #define D_WEBSERVER_ACTIVE_ON "Ενεργός διακομιστής Web στο"
 #define D_WITH_IP_ADDRESS "με διεύθυνση IP"
@@ -372,6 +376,7 @@
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Εκκίνηση αναβάθμισης"
 #define D_UPGRADE_BY_FILE_UPLOAD "Αναβάθμιση με μεταφόρτωση αρχείου"
+#define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Η μεταφόρτωση ξεκίνησε"
 #define D_UPGRADE_STARTED "Η αναβάθμιση ξεκίνησε"
 #define D_UPLOAD_DONE "Η μεταφόρτωση ολοκληρώθηκε"
@@ -651,7 +656,13 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
-#define D_SENSOR_BACKLIGHT     "Backlight"
+#define D_SENSOR_SDIO_CMD      "SDIO CMD"
+#define D_SENSOR_SDIO_CLK      "SDIO CLK"
+#define D_SENSOR_SDIO_D0       "SDIO D0"
+#define D_SENSOR_SDIO_D1       "SDIO D1"
+#define D_SENSOR_SDIO_D2       "SDIO D2"
+#define D_SENSOR_SDIO_D3       "SDIO D3"
+#define D_SENSOR_BACKLIGHT    "Backlight"
 #define D_SENSOR_PMS5003_TX    "PMS5003 Tx"
 #define D_SENSOR_PMS5003_RX    "PMS5003 Rx"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
@@ -762,6 +773,8 @@
 #define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
 #define D_SENSOR_SM2135_CLK    "SM2135 Clk"
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
+#define D_SENSOR_BP5758D_CLK    "BP5758D Clk"
+#define D_SENSOR_BP5758D_DAT    "BP5758D Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
 #define D_SENSOR_CLIENT_TX    "Client TX"
@@ -859,7 +872,8 @@
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
 #define D_SENSOR_CM11_TX       "CM110x TX" 
-#define D_SENSOR_CM11_RX       "CM110x RX" 
+#define D_SENSOR_CM11_RX       "CM110x RX"
+#define D_SENSOR_FLOWRATEMETER "Flowrate"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -867,10 +881,12 @@
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_DEGREE "°"
 #define D_UNIT_FAHRENHEIT "F"
+#define D_UNIT_FPS "FPS"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_INCH_MERCURY "inHg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KELVIN "K"
 #define D_UNIT_KILOMETER "km"
@@ -906,6 +922,8 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
+#define D_UNIT_LITER_PER_MINUTE "l/min"
+#define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
 
 #define D_NEW_ADDRESS          "Setting address to"
 #define D_OUT_OF_RANGE         "Out of Range"
@@ -1046,6 +1064,9 @@
 #define D_FP_ADDRCODE "Address code"           // 0x20 Address code
 #define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Error"              // Any other error
+
+// xsns_96_flowratemeter.ino
+#define D_FLOWRATEMETER_NAME "Flowrate"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

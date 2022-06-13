@@ -12,6 +12,7 @@
 #include "be_map.h"
 #include "be_gc.h"
 #include "be_class.h"
+#include <string.h>
 
 #define global(vm)      ((vm)->gbldesc.global)
 #define builtin(vm)     ((vm)->gbldesc.builtin)
@@ -55,7 +56,7 @@ static int global_native_class_find(bvm *vm, bstring *name)
             /* class name matches */
             int idx = be_global_new(vm, name);
             bvalue *v = be_global_var(vm, idx);
-            var_setclass(v, cl);
+            var_setclass(v, (void*) cl);
             return idx;
         }
     }

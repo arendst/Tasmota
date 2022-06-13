@@ -9,7 +9,7 @@
 #include "lvgl.h"
 #include "be_mapping.h"
 #include "lv_berry.h"
-#include "lv_theme_openhasp.h"
+#include "lv_theme_haspmota.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);
@@ -75,7 +75,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "draw_arc_dsc_init", { (const void*) &lv_draw_arc_dsc_init, "", "(lv.lv_draw_arc_dsc)" } },
   { "draw_arc_get_area", { (const void*) &lv_draw_arc_get_area, "", "iiiiiib(lv.lv_area)" } },
   { "draw_img", { (const void*) &lv_draw_img, "", "(lv.lv_draw_ctx)(lv.lv_draw_img_dsc)(lv.lv_area)." } },
-  { "draw_img_decoded", { (const void*) &lv_draw_img_decoded, "", "(lv.lv_draw_ctx)(lv.lv_draw_img_dsc)(lv.lv_area)(lv.uint8)i" } },
+  { "draw_img_decoded", { (const void*) &lv_draw_img_decoded, "", "(lv.lv_draw_ctx)(lv.lv_draw_img_dsc)(lv.lv_area)ci" } },
   { "draw_img_dsc_init", { (const void*) &lv_draw_img_dsc_init, "", "(lv.lv_draw_img_dsc)" } },
   { "draw_init", { (const void*) &lv_draw_init, "", "" } },
   { "draw_label", { (const void*) &lv_draw_label, "", "(lv.lv_draw_ctx)(lv.lv_draw_label_dsc)(lv.lv_area)s(lv.lv_draw_label_hint)" } },
@@ -109,6 +109,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "event_stop_bubbling", { (const void*) &lv_event_stop_bubbling, "", "(lv.lv_event)" } },
   { "event_stop_processing", { (const void*) &lv_event_stop_processing, "", "(lv.lv_event)" } },
   { "flex_init", { (const void*) &lv_flex_init, "", "" } },
+  { "font_get_glyph_bitmap", { (const void*) &lv_font_get_glyph_bitmap, "c", "(lv.lv_font)i" } },
   { "font_get_glyph_dsc", { (const void*) &lv_font_get_glyph_dsc, "b", "(lv.lv_font)(lv.lv_font_glyph_dsc)ii" } },
   { "font_get_glyph_width", { (const void*) &lv_font_get_glyph_width, "i", "(lv.lv_font)ii" } },
   { "font_get_line_height", { (const void*) &lv_font_get_line_height, "i", "(lv.lv_font)" } },
@@ -141,9 +142,6 @@ const be_ntv_func_def_t lv_func[] = {
   { "palette_lighten", { (const void*) &lv_palette_lighten, "lv.lv_color", "ii" } },
   { "palette_main", { (const void*) &lv_palette_main, "lv.lv_color", "i" } },
   { "pct", { (const void*) &lv_pct, "i", "i" } },
-  { "qrcode_create", { (const void*) &lv_qrcode_create, "lv.lv_obj", "(lv.lv_obj)i(lv.lv_color)(lv.lv_color)" } },
-  { "qrcode_delete", { (const void*) &lv_qrcode_delete, "", "(lv.lv_obj)" } },
-  { "qrcode_update", { (const void*) &lv_qrcode_update, "i", "(lv.lv_obj).i" } },
   { "rand", { (const void*) &lv_rand, "i", "ii" } },
   { "refr_now", { (const void*) &lv_refr_now, "", "(lv.lv_disp)" } },
   { "refr_obj", { (const void*) &lv_refr_obj, "", "(lv.lv_draw_ctx)(lv.lv_obj)" } },
@@ -165,9 +163,9 @@ const be_ntv_func_def_t lv_func[] = {
   { "theme_get_font_normal", { (const void*) &lv_theme_get_font_normal, "lv.lv_font", "(lv.lv_obj)" } },
   { "theme_get_font_small", { (const void*) &lv_theme_get_font_small, "lv.lv_font", "(lv.lv_obj)" } },
   { "theme_get_from_obj", { (const void*) &lv_theme_get_from_obj, "lv.lv_theme", "(lv.lv_obj)" } },
+  { "theme_haspmota_init", { (const void*) &lv_theme_haspmota_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" } },
+  { "theme_haspmota_is_inited", { (const void*) &lv_theme_haspmota_is_inited, "b", "" } },
   { "theme_mono_init", { (const void*) &lv_theme_mono_init, "lv.lv_theme", "(lv.lv_disp)b(lv.lv_font)" } },
-  { "theme_openhasp_init", { (const void*) &lv_theme_openhasp_init, "lv.lv_theme", "(lv.lv_disp)(lv.lv_color)(lv.lv_color)b(lv.lv_font)" } },
-  { "theme_openhasp_is_inited", { (const void*) &lv_theme_openhasp_is_inited, "b", "" } },
   { "theme_set_apply_cb", { (const void*) &lv_theme_set_apply_cb, "", "(lv.lv_theme)^lv_theme_apply_cb^" } },
   { "theme_set_parent", { (const void*) &lv_theme_set_parent, "", "(lv.lv_theme)(lv.lv_theme)" } },
   { "timer_create", { (const void*) &lv_timer_create, "lv.lv_timer", "^lv_timer_cb^i." } },

@@ -3,6 +3,64 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [12.0.0] 20220615
+- Release Paul
+
+## [11.1.0.4] 20220615
+### Added
+- Support for HYTxxx temperature and humidity sensor (#15715)
+- Support for Sensirion SHT4X using define USE_SHT3X (#15349)
+- Command ``SSerialSend9 1`` to enable Serial Bridge console Tee for debugging purposes
+- Command ``SetOption142 1`` to wait 1 second for wifi connection solving some FRITZ!Box modem issues (#14985)
+
+### Changed
+- Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
+- ESP32 increase Serial Bridge input buffer from 130 to 520 characters
+
+### Fixed
+- ESP32 Arduino Core WiFi timeout is changed from msec to seconds
+- Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names (#14394)
+- SHT1X driver hangs and wrong values on ESP32 (#15790)
+
+## [11.1.0.3] 20220602
+### Added
+- Support for Sonoff SPM v1.2.0
+- Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger (#15701)
+- Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules (#13447)
+- Command ``SetOption141 1`` to disable display of module name in GUI header
+- Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs (#15713)
+
+### Fixed
+- Possible pin output toggle after power on (#15630)
+
+## [11.1.0.2] 20220514
+### Added
+- ESP32 Command ``Restart 3`` to switch between SafeBoot and Production
+
+### Changed
+- Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
+- ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
+
+## [11.1.0.1] 20220504
+### Added
+- Support for Sonoff MS01 soil moisture sensor (#15335)
+- Support for daisy chaining MAX7219 displays (#15345)
+- Support for light schemes via DDP as default for ESP32x (#15436)
+- Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only (#13515)
+- Sonoff SPM delayed SetPowerOnState (#13447)
+- Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` (#15350)
+- Support for flowrate meters like YF-DN50 and similary (#15474)
+- Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy (#15513)
+- Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) (#15530)
+
+### Fixed
+- SCD40 start low power command (#15361)
+- Improv initial or erase device installation failing to provide Configure WiFi option
+- BL09xx negative power presentation (#15374)
+
+### Removed
+- Arduino IDE support
+
 ## [11.1.0] 20220413
 - Release Ostara
 

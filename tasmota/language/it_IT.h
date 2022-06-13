@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v11.0.0.7 - Last update 10.04.2022
+ * Updated until v9.4.0.1 - Last update 30.05.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -102,6 +102,7 @@
 #define D_FILE                 "File"
 #define D_FLOW_RATE            "Flusso dati"
 #define D_FRAGMENTATION        "framm."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
+#define D_FRAME_RATE           "Frequenza fotogrammi"
 #define D_FREE_MEMORY          "Memoria libera"
 #define D_PSR_MAX_MEMORY       "PS-RAM - Memoria"
 #define D_PSR_FREE_MEMORY      "PS-RAM - Memoria libera"
@@ -139,6 +140,7 @@
 #define D_PASSWORD             "Password"
 #define D_PH                   "pH"
 #define D_MQ                   "MQ"
+#define D_PARTITION            "Partizione"      // As in flash and firmware partition
 #define D_PORT                 "Porta"
 #define D_POWER_FACTOR         "Fattore di potenza"
 #define D_POWERUSAGE           "Potenza"
@@ -176,12 +178,13 @@
 #define D_TOGGLE               "ON/OFF"
 #define D_TOPIC                "Topic"
 #define D_TOTAL_USAGE          "Uso totale"
-#define D_TRANSMIT             "Trasmesso"
+#define D_TRANSMIT             "Trasmessi"
 #define D_TRUE                 "Vero"
 #define D_TVOC                 "TVOC"
 #define D_UPGRADE              "aggiornamento"
 #define D_UPLOAD               "Caricamento"
 #define D_UPTIME               "Tempo accensione"
+#define D_USED                 "usati"
 #define D_USER                 "Utente"
 #define D_UTC_TIME             "UTC"
 #define D_UV_INDEX             "Indice UV"
@@ -243,6 +246,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT                                 "Per usare Tasmota abilita JavaScript"
+#define D_SAFEBOOT                                 "BOOT SICURO"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE          "Firmware MINIMALE<br>Effettua aggiornamento"
 #define D_WEBSERVER_ACTIVE_ON                      "Server web attivo in"
 #define D_WITH_IP_ADDRESS                          "con indirizzo IP"
@@ -372,6 +376,7 @@
 #define D_OTA_URL                 "URL OTA"
 #define D_START_UPGRADE           "Esegui aggiornamento"
 #define D_UPGRADE_BY_FILE_UPLOAD  "Aggiornamento tramite file locale"
+#define D_UPLOAD_FACTORY          "Passaggio a partizione avvio sicuro"
 #define D_UPLOAD_STARTED          "Caricamento..."
 #define D_UPGRADE_STARTED         "Aggiornamento..."
 #define D_UPLOAD_DONE             "Caricamento completato"
@@ -549,7 +554,7 @@
 #define D_COLOR_GREEN  "Verde"
 #define D_COLOR_BLUE   "Blu"
 #define D_CCT          "CCT"
-#define D_PROXIMITY    "Vicinanza"
+#define D_PROXIMITY    "Prossimità"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accelerazione asse X"
@@ -651,6 +656,12 @@
 #define D_SENSOR_SPI_MISO               "SPI - MISO"
 #define D_SENSOR_SPI_MOSI               "SPI - MOSI"
 #define D_SENSOR_SPI_CLK                "SPI - CLK"
+#define D_SENSOR_SDIO_CMD               "SDIO - CMD"
+#define D_SENSOR_SDIO_CLK               "SDIO - CLK"
+#define D_SENSOR_SDIO_D0                "SDIO - D0"
+#define D_SENSOR_SDIO_D1                "SDIO - D1"
+#define D_SENSOR_SDIO_D2                "SDIO - D2"
+#define D_SENSOR_SDIO_D3                "SDIO - D3"
 #define D_SENSOR_BACKLIGHT              "Retroilluminazione"
 #define D_SENSOR_PMS5003_TX             "PMS5003 - TX"
 #define D_SENSOR_PMS5003_RX             "PMS5003 - RX"
@@ -704,7 +715,7 @@
 #define D_SENSOR_MAX31855_CLK           "MX31855 - CLK"
 #define D_SENSOR_MAX31855_DO            "MX31855 - DO"
 #define D_SENSOR_MAX31865_CS            "MX31865 - CS"
-#define D_SENSOR_NRG_SEL                "HLWBL - SEL"  // Suffix "i"
+#define D_SENSOR_NRG_SEL                "HLWBL - SEL"     // Suffix "i"
 #define D_SENSOR_NRG_CF1                "HLWBL - CF1"
 #define D_SENSOR_HLW_CF                 "HLW8012 - CF"
 #define D_SENSOR_HJL_CF                 "BL0937 - CF"
@@ -729,7 +740,7 @@
 #define D_SENSOR_ARIRFSEL               "IR ALux - SEL"
 #define D_SENSOR_TXD                    "Seriale - TX"
 #define D_SENSOR_RXD                    "Seriale - RX"
-#define D_SENSOR_ROTARY                 "Rotativo"     // Suffix "1A"
+#define D_SENSOR_ROTARY                 "Rotativo"       // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK              "HRE - Clock"
 #define D_SENSOR_HRE_DATA               "HRE - Dati"
 #define D_SENSOR_ADE7880_IRQ            "ADE7880 - IRQ"
@@ -760,6 +771,8 @@
 #define D_SENSOR_DDSU666_RX             "DDSU666 - RX"
 #define D_SENSOR_SM2135_CLK             "SM2135 - CLK"
 #define D_SENSOR_SM2135_DAT             "SM2135 - DATI"
+#define D_SENSOR_BP5758D_CLK            "BP5758D - CLK"
+#define D_SENSOR_BP5758D_DAT            "BP5758D - DATI"
 #define D_SENSOR_DEEPSLEEP              "Sleep profondo"
 #define D_SENSOR_EXS_ENABLE             "EXS - Abilita"
 #define D_SENSOR_CLIENT_TX              "Client - TX"
@@ -791,8 +804,8 @@
 #define D_SENSOR_ADC_RANGE              "ADC - Intervallo"
 #define D_SENSOR_ADC_CT_POWER           "ADC - CTR alimentazione"
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
-#define D_SENSOR_ADC_PH                 "ADC pH"
-#define D_SENSOR_ADC_MQ                 "ADC MQ"
+#define D_SENSOR_ADC_PH                 "ADC - pH"
+#define D_SENSOR_ADC_MQ                 "ADC - MQ"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
@@ -860,6 +873,7 @@
 #define D_GPIO_SHIFT595_SER             "74x595 - SER"
 #define D_SENSOR_CM11_TX                "CM110x - TX"
 #define D_SENSOR_CM11_RX                "CM110x - RX"
+#define D_SENSOR_FLOWRATEMETER          "Portata"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -867,10 +881,12 @@
 #define D_UNIT_CENTIMETER                 "cm"
 #define D_UNIT_DEGREE                     "°"
 #define D_UNIT_FAHRENHEIT                 "F"
+#define D_UNIT_FPS                        "FPS"
 #define D_UNIT_HERTZ                      "Hz"
 #define D_UNIT_HOUR                       "o"
 #define D_UNIT_GALLONS                    "gal"
 #define D_UNIT_GALLONS_PER_MIN            "g/m"
+#define D_UNIT_INCH_MERCURY               "inHg"
 #define D_UNIT_INCREMENTS                 "inc"
 #define D_UNIT_KELVIN                     "K"
 #define D_UNIT_KILOMETER                  "km"
@@ -906,24 +922,26 @@
 #define D_UNIT_WATT                       "W"
 #define D_UNIT_WATTHOUR                   "Wh"
 #define D_UNIT_WATT_METER_QUADRAT         "W/m²"
+#define D_UNIT_LITER_PER_MINUTE           "l/min"
+#define D_UNIT_CUBICMETER_PER_HOUR        "m³/ora"
 
 #define D_NEW_ADDRESS          "Imposta indirizzo a"
 #define D_OUT_OF_RANGE         "Fuori intervallo"
 #define D_SENSOR_DETECTED      "rilevato"
 
 //SDM220, SDM120, SDM72, LE01MR, SDM230
-#define D_EXPORT_POWER     "Potenza esportata"
-#define D_IMPORT_POWER 	   "Potenza importata"
-#define D_PHASE_ANGLE      "Angolo fase"
-#define D_IMPORT_ACTIVE    "Potenza attiva importata"
-#define D_EXPORT_ACTIVE    "Potenza attiva esportata"
-#define D_IMPORT_REACTIVE  "Potenza reattiva importata"
-#define D_EXPORT_REACTIVE  "Potenza reattiva esportata"
-#define D_TOTAL_REACTIVE   "Potenza reattiva totale"
-#define D_UNIT_KWARH       "kVArh"
-#define D_UNIT_ANGLE       "°"
-#define D_TOTAL_ACTIVE     "Potenza attiva totale"
-#define D_RESETTABLE_TOTAL_ACTIVE    "Potenza attiva totale (RST)"
+#define D_EXPORT_POWER             "Potenza esportata"
+#define D_IMPORT_POWER             "Potenza importata"
+#define D_PHASE_ANGLE              "Angolo fase"
+#define D_IMPORT_ACTIVE            "Potenza attiva importata"
+#define D_EXPORT_ACTIVE            "Potenza attiva esportata"
+#define D_IMPORT_REACTIVE          "Potenza reattiva importata"
+#define D_EXPORT_REACTIVE          "Potenza reattiva esportata"
+#define D_TOTAL_REACTIVE           "Potenza reattiva totale"
+#define D_UNIT_KWARH               "kVArh"
+#define D_UNIT_ANGLE               "°"
+#define D_TOTAL_ACTIVE             "Potenza attiva totale"
+#define D_RESETTABLE_TOTAL_ACTIVE  "Potenza attiva totale (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 - Voltaggio"
@@ -1047,6 +1065,9 @@
 #define D_FP_PASSVERIFY          "Password verificata"            // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
 
+// xsns_96_flowratemeter.ino
+#define D_FLOWRATEMETER_NAME "Portata"
+
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names
 #define D_NEOPOOL_MACH_HIDROLIFE          "Hidrolife"
@@ -1089,7 +1110,7 @@
 #define D_NEOPOOL_RELAY_VALVE             "Valvola"
 #define D_NEOPOOL_RELAY_AUX               "Ausiliario"
 #define D_NEOPOOL_TIME                    "Orario"
-#define D_NEOPOOL_FILT_MODE               "Modalità di filtrazione"
+#define D_NEOPOOL_FILT_MODE               "Modo filtrazione"
 #define D_NEOPOOL_CELL_RUNTIME            "Cella attiva"
 #define D_NEOPOOL_POLARIZATION            "Polarizzazione"     // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"

@@ -233,7 +233,7 @@ class uDisplay : public Renderer {
    spi_device_handle_t dmaHAL;
    spi_host_device_t spi_host = VSPI_HOST;
    // spi_host_device_t spi_host = VSPI_HOST;
-   bool initDMA(bool ctrl_cs);
+   bool initDMA(int32_t ctrl_cs);
    void deInitDMA(void);
    bool dmaBusy(void);
    void dmaWait(void);

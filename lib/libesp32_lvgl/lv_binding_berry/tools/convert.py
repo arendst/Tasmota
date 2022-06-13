@@ -35,8 +35,10 @@ return_types = {
   "int32_t": "i",
   "void *": ".",
   "const void *": ".",
-  "char *": "s",
+  "char *": "c",
+  "uint8_t *": "c",
   "const char *": "s",
+  "constchar *": "s",       # special construct
   "lv_obj_user_data_t": "i",
 
   "lv_objmask_mask_t *": ".",
@@ -110,7 +112,7 @@ return_types = {
   "lv_flex_flow_t": "i",
   "lv_grid_align_t": "i",
 
-  "_lv_event_dsc_t *": "i",
+  "_lv_event_dsc_t *": "c",
   # lv_anim
   "lv_anim_t *": "lv_anim",
   "lv_anim_enable_t": "i",
@@ -122,6 +124,7 @@ return_types = {
   "lv_anim_start_cb_t": "c",
 
   # arrays
+  "constchar * []": "str_arr",
   "char * []": "str_arr",
   "lv_coord_t []": "lv_coord_arr",
   "lv_point_t []": "lv_point_arr",
@@ -161,6 +164,7 @@ return_types = {
   "lv_timer_t *": "lv_timer",
   "lv_coord_t *": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
   "char **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
+  "constchar **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
 
   # callbacks
   "lv_group_focus_cb_t": "lv_group_focus_cb",
@@ -188,8 +192,11 @@ lv_widgets = ['arc', 'bar', 'btn', 'btnmatrix', 'canvas', 'checkbox',
               'dropdown', 'img', 'label', 'line', 'roller', 'slider',
               'switch', 'table', 'textarea' ]
 # extra widgets
-
 lv_widgets = lv_widgets + [ 'chart', 'colorwheel', 'imgbtn', 'led', 'meter', 'msgbox', 'spinbox', 'spinner' ]
+
+# add qrcode
+lv_widgets = lv_widgets + [ 'qrcode' ]
+
 lv_prefix = ['obj', 'group', 'style', 'indev', 'disp', 'timer', 'anim'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source
@@ -226,6 +233,7 @@ with open(lv_widgets_file) as f:
     l_raw = l_raw.strip(" \t\n\r")    # remove leading or trailing spaces
     l_raw = re.sub('static ', '', l_raw)
     l_raw = re.sub('inline ', '', l_raw)
+    l_raw = re.sub('const\s+char\s*\*', 'constchar *', l_raw)
     l_raw = re.sub('const ', '', l_raw)
     l_raw = re.sub('struct ', '', l_raw)
     if (len(l_raw) == 0): continue
@@ -538,7 +546,7 @@ be_local_class(lv_style,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_style_init) },
     })),
-    (be_str_literal("lv_style"))
+    (be_str_weak(lv_style))
 );
 /*******************************************************************/
 
@@ -556,7 +564,7 @@ be_local_class(lv_obj,
         { be_const_key(tostring, 4), be_const_func(lv_x_tostring) },
         { be_const_key(init, -1), be_const_func(be_ntv_lv_obj_init) },
     })),
-    (be_str_literal("lv_obj"))
+    (be_str_weak(lv_obj))
 );
 /*******************************************************************/
 
@@ -573,7 +581,7 @@ be_local_class(lv_group,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(be_ntv_lv_group_init) },
     })),
-    (be_str_literal("lv_group"))
+    (be_str_weak(lv_group))
 );
 /*******************************************************************/
 
@@ -590,7 +598,7 @@ be_local_class(lv_indev,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_str_literal("lv_indev"))
+    (be_str_weak(lv_indev))
 );
 /*******************************************************************/
 
@@ -607,7 +615,7 @@ be_local_class(lv_disp,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    (be_str_literal("lv_disp"))
+    (be_str_weak(lv_disp))
 );
 /*******************************************************************/
 
@@ -624,7 +632,7 @@ be_local_class(lv_timer,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv0_init) },
     })),
-    be_str_literal("lv_timer")
+    be_str_weak(lv_timer)
 );
 /*******************************************************************/
 
@@ -641,7 +649,7 @@ be_local_class(lv_anim,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, 0), be_const_func(lv_be_anim_init) },
     })),
-    be_str_literal("lv_anim")
+    be_str_weak(lv_anim)
 );
 /*******************************************************************/
 
@@ -657,7 +665,7 @@ be_local_class(lv_font,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_str_literal("lv_font"))
+    (be_str_weak(lv_font))
 );
 /*******************************************************************/
 
@@ -673,7 +681,7 @@ be_local_class(lv_theme,
         { be_const_key(tostring, -1), be_const_func(lv_x_tostring) },
         { be_const_key(_p, -1), be_const_var(0) },
     })),
-    (be_str_literal("lv_theme"))
+    (be_str_weak(lv_theme))
 );
 /*******************************************************************/
 
@@ -690,7 +698,7 @@ be_local_class(lv_color,
         { be_const_key(_p, -1), be_const_var(0) },
         { be_const_key(init, -1), be_const_func(lco_init) },
     })),
-    (be_str_literal("lv_color"))
+    (be_str_weak(lv_color))
 );
 /*******************************************************************/
 """)
@@ -712,7 +720,7 @@ be_local_class(lv_{subtype},
         {{ be_const_key(_class, -1), be_const_comptr(&lv_{subtype}_class) }},
         {{ be_const_key(init, -1), be_const_func(be_ntv_lv_{subtype}_init) }},
     }})),
-    (be_str_literal("lv_{subtype}"))
+    (be_str_weak(lv_{subtype}))
 );
 /*******************************************************************/
 """)
@@ -733,7 +741,7 @@ print("""/********************************************************************
 #include "lvgl.h"
 #include "be_mapping.h"
 #include "lv_berry.h"
-#include "lv_theme_openhasp.h"
+#include "lv_theme_haspmota.h"
 
 extern int lv0_member(bvm *vm);     // resolve virtual members
 extern int lv0_load_font(bvm *vm);

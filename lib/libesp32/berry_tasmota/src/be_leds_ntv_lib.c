@@ -36,7 +36,7 @@ be_local_class(Leds_ntv,
         { be_const_key(SK6812_GRBW, 4), be_const_int(2) },
         { be_const_key(WS2812_GRB, -1), be_const_int(1) },
     })),
-    be_str_literal("Leds_ntv")
+    be_str_weak(Leds_ntv)
 );
 /*******************************************************************/
 

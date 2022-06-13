@@ -20,7 +20,7 @@ extern const char* be_ntv_display_driver_name(void);
             BE_FUNC_CTYPE_DECLARE(be_ntv_display_driver_name, "s", "")
 
 /* @const_object_info_begin
-module display (scope: global) {
+module display (scope: global, strings: weak) {
     start, func(be_ntv_display_start)
     started, ctype_func(be_ntv_display_started)
     dimmer, func(be_ntv_display_dimmer)
