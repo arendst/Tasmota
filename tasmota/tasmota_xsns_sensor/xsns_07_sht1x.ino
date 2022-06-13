@@ -71,7 +71,7 @@ bool ShtSendCommand(const uint8_t cmd)
   digitalWrite(sht_sda_pin, HIGH);
   digitalWrite(sht_scl_pin, LOW);
   // Send the command (address must be 000b)
-  shiftOut(sht_sda_pin, sht_scl_pin, MSBFIRST, cmd);
+  TasShiftOut(sht_sda_pin, sht_scl_pin, MSBFIRST, cmd);
   // Wait for ACK
   bool ackerror = false;
   digitalWrite(sht_scl_pin, HIGH);
@@ -110,7 +110,7 @@ int ShtReadData(void)
   int val = 0;
 
   // Read most significant byte
-  val = shiftIn(sht_sda_pin, sht_scl_pin, 8);
+  val = TasShiftIn(sht_sda_pin, sht_scl_pin, 8);
   val <<= 8;
   // Send ACK
   pinMode(sht_sda_pin, OUTPUT);
@@ -119,7 +119,7 @@ int ShtReadData(void)
   digitalWrite(sht_scl_pin, LOW);
   pinMode(sht_sda_pin, INPUT_PULLUP);
   // Read least significant byte
-  val |= shiftIn(sht_sda_pin, sht_scl_pin, 8);
+  val |= TasShiftIn(sht_sda_pin, sht_scl_pin, 8);
   // Keep DATA pin high to skip CRC
   digitalWrite(sht_scl_pin, HIGH);
   digitalWrite(sht_scl_pin, LOW);
