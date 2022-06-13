@@ -143,6 +143,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - BL09xx negative power presentation [#15374](https://github.com/arendst/Tasmota/issues/15374)
 - Possible pin output toggle after power on [#15630](https://github.com/arendst/Tasmota/issues/15630)
 - Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names [#14394](https://github.com/arendst/Tasmota/issues/14394)
+- SHT1X driver hangs and wrong values on ESP32 [#15790](https://github.com/arendst/Tasmota/issues/15790)
 - ESP32 Arduino Core WiFi timeout is changed from msec to seconds
 
 ### Removed

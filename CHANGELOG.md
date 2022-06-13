@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - ESP32 Arduino Core WiFi timeout is changed from msec to seconds
 - Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names (#14394)
+- SHT1X driver hangs and wrong values on ESP32 (#15790)
 
 ### Removed
 
