@@ -264,8 +264,8 @@ int be_ctypes_member(bvm *vm) {
         }
         be_return(vm);
     }
-
-    be_return_nil(vm);
+    be_module_load(vm, be_newstr(vm, "undefined"));
+    be_return(vm);
 }
 
 // setmember takes 3 arguments:
