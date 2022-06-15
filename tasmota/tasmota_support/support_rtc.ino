@@ -51,23 +51,19 @@ struct RTC {
   bool user_time_entry = false;               // Override NTP by user setting
 } Rtc;
 
-uint32_t UtcTime(void)
-{
+uint32_t UtcTime(void) {
   return Rtc.utc_time;
 }
 
-uint32_t LocalTime(void)
-{
+uint32_t LocalTime(void) {
   return Rtc.local_time;
 }
 
-uint32_t Midnight(void)
-{
+uint32_t Midnight(void) {
   return Rtc.midnight;
 }
 
-bool MidnightNow(void)
-{
+bool MidnightNow(void) {
   if (Rtc.midnight_now) {
     Rtc.midnight_now = false;
     return true;
@@ -75,16 +71,11 @@ bool MidnightNow(void)
   return false;
 }
 
-bool IsDst(void)
-{
-  if (Rtc.time_timezone == Settings->toffset[1]) {
-    return true;
-  }
-  return false;
+bool IsDst(void) {
+  return (Rtc.time_timezone == Settings->toffset[1]);
 }
 
-String GetBuildDateAndTime(void)
-{
+String GetBuildDateAndTime(void) {
   // "2017-03-07T11:08:02" - ISO8601:2004
   char bdt[21];
   char *p;
@@ -116,24 +107,21 @@ String GetBuildDateAndTime(void)
   return String(bdt);  // 2017-03-07T11:08:02
 }
 
-String GetMinuteTime(uint32_t minutes)
-{
+String GetMinuteTime(uint32_t minutes) {
   char tm[6];
   snprintf_P(tm, sizeof(tm), PSTR("%02d:%02d"), minutes / 60, minutes % 60);
 
   return String(tm);  // 03:45
 }
 
-String GetTimeZone(void)
-{
+String GetTimeZone(void) {
   char tz[7];
   snprintf_P(tz, sizeof(tz), PSTR("%+03d:%02d"), Rtc.time_timezone / 60, abs(Rtc.time_timezone % 60));
 
   return String(tz);  // -03:45
 }
 
-String GetDuration(uint32_t time)
-{
+String GetDuration(uint32_t time) {
   char dt[16];
 
   TIME_T ut;
@@ -149,8 +137,7 @@ String GetDuration(uint32_t time)
   return String(dt);  // 128T14:35:44
 }
 
-String GetDT(uint32_t time)
-{
+String GetDT(uint32_t time) {
   // "2017-03-07T11:08:02" - ISO8601:2004
 
   char dt[20];
@@ -174,8 +161,7 @@ String GetDT(uint32_t time)
  *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and SetOption52 = 1
  *  "2017-03-07T11:08:02"       - otherwise
  */
-String GetDateAndTime(uint8_t time_type)
-{
+String GetDateAndTime(uint8_t time_type) {
   // "2017-03-07T11:08:02-07:00" - ISO8601:2004
   uint32_t time = Rtc.local_time;
 
@@ -220,8 +206,7 @@ String GetDateAndTime(uint8_t time_type)
   return dt;  // 2017-03-07T11:08:02-07:00
 }
 
-uint32_t UpTime(void)
-{
+uint32_t UpTime(void) {
   if (Rtc.restart_time) {
     return Rtc.utc_time - Rtc.restart_time;
   } else {
@@ -229,18 +214,15 @@ uint32_t UpTime(void)
   }
 }
 
-uint32_t MinutesUptime(void)
-{
+uint32_t MinutesUptime(void) {
   return (UpTime() / 60);
 }
 
-String GetUptime(void)
-{
+String GetUptime(void) {
   return GetDuration(UpTime());
 }
 
-uint32_t MinutesPastMidnight(void)
-{
+uint32_t MinutesPastMidnight(void) {
   uint32_t minutes = 0;
 
   if (RtcTime.valid) {
@@ -253,8 +235,7 @@ uint32_t RtcMillis(void) {
   return (millis() - Rtc.millis) % 1000;
 }
 
-void BreakTime(uint32_t time_input, TIME_T &tm)
-{
+void BreakTime(uint32_t time_input, TIME_T &tm) {
 // break the given time_input into time components
 // this is a more compact version of the C library localtime function
 // note that year is offset from 1970 !!!
@@ -309,8 +290,7 @@ void BreakTime(uint32_t time_input, TIME_T &tm)
   tm.valid = (time_input > START_VALID_TIME);  // 2016-01-01
 }
 
-uint32_t MakeTime(TIME_T &tm)
-{
+uint32_t MakeTime(TIME_T &tm) {
 // assemble time elements into time_t
 // note year argument is offset from 1970
 
@@ -340,8 +320,7 @@ uint32_t MakeTime(TIME_T &tm)
   return seconds;
 }
 
-uint32_t RuleToTime(TimeRule r, int yr)
-{
+uint32_t RuleToTime(TimeRule r, int yr) {
   TIME_T tm;
   uint32_t t;
   uint8_t m;
@@ -372,8 +351,49 @@ uint32_t RuleToTime(TimeRule r, int yr)
   return t;
 }
 
-void RtcSecond(void)
-{
+void RtcGetDaylightSavingTimes(uint32_t local_time) {
+  TIME_T tmpTime;
+  BreakTime(local_time, tmpTime);
+  tmpTime.year += 1970;
+  Rtc.daylight_saving_time = RuleToTime(Settings->tflag[1], tmpTime.year);
+  Rtc.standard_time = RuleToTime(Settings->tflag[0], tmpTime.year);
+}
+
+uint32_t RtcTimeZoneOffset(uint32_t local_time) {
+  int16_t timezone_minutes = Settings->timezone_minutes;
+  if (Settings->timezone < 0) { timezone_minutes *= -1; }
+  uint32_t timezone = (Settings->timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
+  if (99 == Settings->timezone) {
+    int32_t dstoffset = Settings->toffset[1] * SECS_PER_MIN;
+    int32_t stdoffset = Settings->toffset[0] * SECS_PER_MIN;
+    if (Settings->tflag[1].hemis) {
+      // Southern hemisphere
+      if ((local_time >= (Rtc.standard_time - dstoffset)) && (local_time < (Rtc.daylight_saving_time - stdoffset))) {
+        timezone = stdoffset;  // Standard Time
+      } else {
+        timezone = dstoffset;  // Daylight Saving Time
+      }
+    } else {
+      // Northern hemisphere
+      if ((local_time >= (Rtc.daylight_saving_time - stdoffset)) && (local_time < (Rtc.standard_time - dstoffset))) {
+        timezone = dstoffset;  // Daylight Saving Time
+      } else {
+        timezone = stdoffset;  // Standard Time
+      }
+    }
+  }
+  return timezone;
+}
+
+void RtcSetTimeOfDay(uint32_t local_time) {
+  // Sync Core/RTOS time to be used by file system time stamps
+  struct timeval tv;
+  tv.tv_sec = local_time;
+  tv.tv_usec = 0;
+  settimeofday(&tv, nullptr);
+}
+
+void RtcSecond(void) {
   static uint32_t last_sync = 0;
   static bool mutex = false;
 
@@ -389,11 +409,7 @@ void RtcSecond(void)
       Rtc.restart_time = Rtc.utc_time - TasmotaGlobal.uptime;  // save first synced time as restart time
     }
 
-    TIME_T tmpTime;
-    BreakTime(Rtc.utc_time, tmpTime);
-    RtcTime.year = tmpTime.year + 1970;
-    Rtc.daylight_saving_time = RuleToTime(Settings->tflag[1], RtcTime.year);
-    Rtc.standard_time = RuleToTime(Settings->tflag[0], RtcTime.year);
+    RtcGetDaylightSavingTimes(Rtc.utc_time);
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: " D_UTC_TIME " %s, " D_DST_TIME " %s, " D_STD_TIME " %s"),
       GetDateAndTime(DT_UTC).c_str(), GetDateAndTime(DT_DST).c_str(), GetDateAndTime(DT_STD).c_str());
@@ -415,28 +431,7 @@ void RtcSecond(void)
 
   Rtc.local_time = Rtc.utc_time;
   if (Rtc.local_time > START_VALID_TIME) {  // 2016-01-01
-    int16_t timezone_minutes = Settings->timezone_minutes;
-    if (Settings->timezone < 0) { timezone_minutes *= -1; }
-    Rtc.time_timezone = (Settings->timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
-    if (99 == Settings->timezone) {
-      int32_t dstoffset = Settings->toffset[1] * SECS_PER_MIN;
-      int32_t stdoffset = Settings->toffset[0] * SECS_PER_MIN;
-      if (Settings->tflag[1].hemis) {
-        // Southern hemisphere
-        if ((Rtc.utc_time >= (Rtc.standard_time - dstoffset)) && (Rtc.utc_time < (Rtc.daylight_saving_time - stdoffset))) {
-          Rtc.time_timezone = stdoffset;  // Standard Time
-        } else {
-          Rtc.time_timezone = dstoffset;  // Daylight Saving Time
-        }
-      } else {
-        // Northern hemisphere
-        if ((Rtc.utc_time >= (Rtc.daylight_saving_time - stdoffset)) && (Rtc.utc_time < (Rtc.standard_time - dstoffset))) {
-          Rtc.time_timezone = dstoffset;  // Daylight Saving Time
-        } else {
-          Rtc.time_timezone = stdoffset;  // Standard Time
-        }
-      }
-    }
+    Rtc.time_timezone = RtcTimeZoneOffset(Rtc.utc_time);
     Rtc.local_time += Rtc.time_timezone;
     Rtc.time_timezone /= 60;
     if (!Settings->energy_kWhtotal_time) {
@@ -459,10 +454,7 @@ void RtcSecond(void)
 
     if (mutex) {  // Time is just synced and is valid
       // Sync Core/RTOS time to be used by file system time stamps
-      struct timeval tv;
-      tv.tv_sec = Rtc.local_time;
-      tv.tv_usec = 0;
-      settimeofday(&tv, nullptr);
+      RtcSetTimeOfDay(Rtc.local_time);
     }
   }
 
@@ -494,6 +486,14 @@ void RtcInit(void) {
   Rtc.utc_time = 0;
   BreakTime(Rtc.utc_time, RtcTime);
   TickerRtc.attach(1, RtcSecond);
+
+  if (Settings->cfg_timestamp > START_VALID_TIME) {
+    // Fix file timestamp while utctime is not synced
+    uint32_t local_time = Settings->cfg_timestamp +2;
+    RtcGetDaylightSavingTimes(local_time);
+    local_time += RtcTimeZoneOffset(local_time);
+    RtcSetTimeOfDay(local_time);
+  }
 }
 
 void RtcPreInit(void) {

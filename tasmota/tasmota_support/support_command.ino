@@ -2262,7 +2262,13 @@ void CmndWifi(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings->flag4.network_wifi = XdrvMailbox.payload;
-    if (Settings->flag4.network_wifi) { WifiEnable(); }
+    if (Settings->flag4.network_wifi) {
+#ifdef ESP32
+      WifiConnect();
+#else
+      WifiEnable();
+#endif
+    }
 #ifdef ESP8266
   } else if ((XdrvMailbox.payload >= 2) && (XdrvMailbox.payload <= 4)) {
     WiFi.setPhyMode(WiFiPhyMode_t(XdrvMailbox.payload - 1));  // 1-B/2-BG/3-BGN

@@ -762,7 +762,9 @@ int WifiHostByName(const char* aHostname, IPAddress& aResult) {
   }
   else if (WifiPollDns() && WiFi.hostByName(aHostname, aResult)) {
     // Host name resolved
-    return 1;
+    if (0xFFFFFFFF != (uint32_t)aResult) {
+      return 1;
+    }
   }
   return 0;
 }
@@ -806,41 +808,29 @@ void WifiPollNtp() {
 uint32_t WifiGetNtp(void) {
   static uint8_t ntp_server_id = 0;
 
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Start NTP Sync %d ..."), ntp_server_id);
+
   IPAddress time_server_ip;
 
   char fallback_ntp_server[16];
   snprintf_P(fallback_ntp_server, sizeof(fallback_ntp_server), PSTR("%d.pool.ntp.org"), random(0,3));
 
   char* ntp_server;
-  bool resolved_ip = false;
-  if (WifiPollDns()) {
-    for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
-      if (ntp_server_id > 2) { ntp_server_id = 0; }
-      if (i < MAX_NTP_SERVERS) {
-        ntp_server = SettingsText(SET_NTPSERVER1 + ntp_server_id);
-      } else {
-        ntp_server = fallback_ntp_server;
-      }
-      if (strlen(ntp_server)) {
-        resolved_ip = (WiFi.hostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
-//        resolved_ip = (WifiHostByName(ntp_server, time_server_ip) == 1);  // DNS timeout set to (ESP8266) 10s / (ESP32) 14s
-        if ((255 == time_server_ip[0]) ||                                                                // No valid name resolved (255.255.255.255)
-            ((255 == time_server_ip[1]) && (255 == time_server_ip[2]) && (255 == time_server_ip[3]))) {  // No valid name resolved (x.255.255.255)
-          resolved_ip = false;
-        }
-        yield();
-        if (resolved_ip) { break; }
-  //      AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve '%s'"), ntp_server);
-      }
-      ntp_server_id++;
+  for (uint32_t i = 0; i <= MAX_NTP_SERVERS; i++) {
+    if (ntp_server_id > MAX_NTP_SERVERS) { ntp_server_id = 0; }
+    ntp_server = (ntp_server_id < MAX_NTP_SERVERS) ? SettingsText(SET_NTPSERVER1 + ntp_server_id) : fallback_ntp_server;
+    if (strlen(ntp_server)) {
+      break;
     }
+    ntp_server_id++;
   }
-  if (!resolved_ip) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve IP address"));
+  if (!WifiHostByName(ntp_server, time_server_ip)) {
+    ntp_server_id++;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Unable to resolve '%s'"), ntp_server);
     return 0;
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Host %s IP %_I"), ntp_server, (uint32_t)time_server_ip);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: NtpServer '%s' IP %_I"), ntp_server, (uint32_t)time_server_ip);
 
   WiFiUDP udp;
 
@@ -910,7 +900,7 @@ uint32_t WifiGetNtp(void) {
     delay(10);
   }
   // Timeout.
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: No reply"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: No reply from %_I"), (uint32_t)time_server_ip);
   udp.stop();
   ntp_server_id++;                                  // Next server next time
   return 0;
