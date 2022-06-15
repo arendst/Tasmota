@@ -128,6 +128,7 @@ struct bvm {
 #define BASE_FRAME          (1 << 0)
 #define PRIM_FUNC           (1 << 1)
 
+int be_default_init_native_function(bvm *vm);
 void be_dofunc(bvm *vm, bvalue *v, int argc);
 bbool be_value2bool(bvm *vm, bvalue *v);
 bbool be_vm_iseq(bvm *vm, bvalue *a, bvalue *b);

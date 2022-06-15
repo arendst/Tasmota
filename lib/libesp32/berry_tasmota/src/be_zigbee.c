@@ -45,11 +45,8 @@ const be_const_member_t zd_members[] = {
 };
 
 static int zd_member(bvm *vm) {
-  if (be_const_class_member(vm, zd_members, ARRAY_SIZE(zd_members))) {
-    be_return(vm);
-  } else {
-    be_return_nil(vm);
-  }
+  be_const_class_member_raise(vm, zd_members, ARRAY_SIZE(zd_members));
+  be_return(vm);
 }
 
 extern int zc_info(struct bvm *vm);
