@@ -3,7 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.1.0.4]
+## [12.0.0.1]
+### Added
+
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+
+
+## [Released]
+
+## [12.0.0] 20220615
+- Release Paul
+
+## [11.1.0.4] 20220615
 ### Added
 - Support for HYTxxx temperature and humidity sensor (#15715)
 - Support for Sensirion SHT4X using define USE_SHT3X (#15349)
@@ -18,9 +36,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Arduino Core WiFi timeout is changed from msec to seconds
 - Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names (#14394)
 - SHT1X driver hangs and wrong values on ESP32 (#15790)
-
-### Removed
-
 
 ## [11.1.0.3] 20220602
 ### Added
@@ -60,8 +75,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Arduino IDE support
-
-## [Released]
 
 ## [11.1.0] 20220413
 - Release Ostara
