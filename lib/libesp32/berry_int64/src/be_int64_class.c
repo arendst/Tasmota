@@ -35,12 +35,14 @@ static void int64_toa(int64_t num, uint8_t* str) {
 void* int64_init(bvm *vm, int32_t val) {
   int64_t *i64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
   *i64 = (int64_t) val;
+  // serial_debug("int64_init p=%p\n", i64);
   return i64;
 }
 BE_FUNC_CTYPE_DECLARE(int64_init, "+_p", "@[i]")
 
 void int64_deinit(bvm *vm, int64_t *i64) {
-  // TODO
+  // serial_debug("int64_deinit p=%p\n", i64);
+  be_free(vm, i64, sizeof(int64_t));
 }
 BE_FUNC_CTYPE_DECLARE(int64_deinit, "", "@.")
 
@@ -168,7 +170,6 @@ void* int64_tobytes(int64_t *i64, size_t *len) {
 BE_FUNC_CTYPE_DECLARE(int64_tobytes, "&", ".")
 
 void int64_frombytes(int64_t *i64, uint8_t* ptr, size_t len, int32_t idx) {
-  serial_debug("int64_frombytes p=%p len=%i idx=%i\n", ptr, len, idx);
   if (idx < 0) { idx = len + idx; }   // support negative index, counting from the end
   if (idx < 0) { idx = 0; }           // sanity check
   if (idx > len) { idx = len; }
