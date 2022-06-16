@@ -71,3 +71,14 @@ void be_commonobj_delete(bvm *vm, bgcobject *obj)
         be_free(vm, co, sizeof(bcommomobj));
     }
 }
+
+/* generic destroy method for comobj, just call be_os_free() on the pointer */
+int be_commonobj_destroy_generic(bvm* vm)
+{
+    int argc = be_top(vm);
+    if (argc > 0) {
+        void * obj = be_tocomptr(vm, 1);
+        if (obj != NULL) { be_os_free(obj); }
+    }
+    be_return_nil(vm);
+}
