@@ -40,11 +40,8 @@ extern "C" {
   // virtual member
   int gp_member(bvm *vm);
   int gp_member(bvm *vm) {
-    if (be_const_module_member(vm, lv_gpio_constants, lv_gpio_constants_size)) {
-      be_return(vm);
-    } else {
-      be_return_nil(vm);
-    }
+    be_const_module_member_raise(vm, lv_gpio_constants, lv_gpio_constants_size);
+    be_return(vm);
   }
 
   int gp_pin_mode(bvm *vm);

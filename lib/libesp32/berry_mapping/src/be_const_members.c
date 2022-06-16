@@ -22,6 +22,7 @@
 
 #include "be_mapping.h"
 #include "be_exec.h"
+#include "be_string.h"
 #include <string.h>
 /*********************************************************************************************\
  * Takes a pointer to be_const_member_t array and size
@@ -99,6 +100,20 @@ bbool be_const_module_member(bvm *vm, const be_const_member_t * definitions, siz
   return be_const_member_dual(vm, definitions, def_len, bfalse);   // call for module, non-method
 }
 
+/* This version raises an exception if the attribute is not found */
+void be_const_module_member_raise(bvm *vm, const be_const_member_t * definitions, size_t def_len) {
+  if (!be_const_member_dual(vm, definitions, def_len, bfalse)) {
+    be_module_load(vm, be_newstr(vm, "undefined"));
+  }
+}
+
 bbool be_const_class_member(bvm *vm, const be_const_member_t * definitions, size_t def_len) {
   return be_const_member_dual(vm, definitions, def_len, btrue);   // call for method
+}
+
+/* This version raises an exception if the attribute is not found */
+void be_const_class_member_raise(bvm *vm, const be_const_member_t * definitions, size_t def_len) {
+  if (!be_const_member_dual(vm, definitions, def_len, btrue)) {
+    be_module_load(vm, be_newstr(vm, "undefined"));
+  }
 }

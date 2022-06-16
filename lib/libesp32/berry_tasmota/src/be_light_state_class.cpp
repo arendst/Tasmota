@@ -70,11 +70,8 @@ const be_const_member_t light_state_members[] = {
 extern "C" int light_state_get(bvm *vm);
 
 static int light_state_member(bvm *vm) {
-  if (be_const_class_member(vm, light_state_members, ARRAY_SIZE(light_state_members))) {
-    be_return(vm);
-  } else {
-    be_return_nil(vm);
-  }
+  be_const_class_member_raise(vm, light_state_members, ARRAY_SIZE(light_state_members));
+  be_return(vm);
 }
 
 #include "be_fixed_be_class_light_state.h"

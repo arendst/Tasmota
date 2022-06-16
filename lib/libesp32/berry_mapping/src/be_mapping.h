@@ -100,7 +100,9 @@ extern void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr
 extern int be_find_global_or_module_member(bvm *vm, const char * cl_name);
 
 extern bbool be_const_module_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern void be_const_module_member_raise(bvm *vm, const be_const_member_t * definitions, size_t def_len);  /* raise an exception if not found */
 extern bbool be_const_class_member(bvm *vm, const be_const_member_t * definitions, size_t def_len);
+extern void be_const_class_member_raise(bvm *vm, const be_const_member_t * definitions, size_t def_len);  /* raise an exception if not found */
 extern intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *len);
 extern int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]);
 extern int be_call_c_func(bvm *vm, const void * func, const char * return_type, const char * arg_type);

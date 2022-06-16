@@ -489,7 +489,7 @@ void RtcInit(void) {
 
   if (Settings->cfg_timestamp > START_VALID_TIME) {
     // Fix file timestamp while utctime is not synced
-    uint32_t local_time = Settings->cfg_timestamp +2;
+    uint32_t local_time = Settings->cfg_timestamp +1;
     RtcGetDaylightSavingTimes(local_time);
     local_time += RtcTimeZoneOffset(local_time);
     RtcSetTimeOfDay(local_time);

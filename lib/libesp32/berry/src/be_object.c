@@ -46,14 +46,14 @@ bvalue* be_indexof(bvm *vm, int idx)
     return vm->top + idx;
 }
 
-BERRY_API void be_newcomobj(bvm *vm, void *data, bntvfunc destory)
+BERRY_API void be_newcomobj(bvm *vm, void *data, bntvfunc destroy)
 {
     bcommomobj *obj;
     bgcobject *gco = be_gcnew(vm, BE_COMOBJ, bcommomobj);
     if ((obj = cast_comobj(gco)) != NULL) {
         bvalue* top = be_incrtop(vm);
         obj->data = data;
-        obj->destory = destory;
+        obj->destroy = destroy;
         var_setobj(top, BE_COMOBJ, obj);
     }
 }
@@ -62,8 +62,8 @@ void be_commonobj_delete(bvm *vm, bgcobject *obj)
 {
     bcommomobj *co = cast_comobj(obj);
     if (co) {
-        if (co->destory && co->data) {
-            be_pushntvfunction(vm, co->destory);
+        if (co->destroy && co->data) {
+            be_pushntvfunction(vm, co->destroy);
             be_pushcomptr(vm, co->data);
             be_call(vm, 1);
             be_pop(vm, 2);

@@ -1291,6 +1291,18 @@ void be_dofunc(bvm *vm, bvalue *v, int argc)
     }
 }
 
+/* Default empty constructor */
+int be_default_init_native_function(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 1) {
+        be_pushvalue(vm, 1);
+    } else {
+        be_pushnil(vm);
+    }
+    be_return(vm);
+}
+
 BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook)
 {
     (void)vm;       /* avoid comiler warning */

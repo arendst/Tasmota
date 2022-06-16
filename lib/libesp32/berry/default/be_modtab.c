@@ -22,6 +22,7 @@ be_extern_native_module(gc);
 be_extern_native_module(solidify);
 be_extern_native_module(introspect);
 be_extern_native_module(strict);
+be_extern_native_module(undefined);
 
 /* Berry extensions */
 #include "be_mapping.h"
@@ -104,6 +105,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #if BE_USE_STRICT_MODULE
     &be_native_module(strict),
 #endif
+    &be_native_module(undefined),
 
     /* Berry extensions */
     &be_native_module(cb),
