@@ -37,6 +37,9 @@ uint32_t GetRtcSettingsCrc(void) {
 
 void RtcSettingsSave(void) {
   RtcSettings.baudrate = Settings->baudrate * 300;
+  if (UtcTime() > START_VALID_TIME) {  // 2016-01-01
+    RtcSettings.utc_time = UtcTime();
+  }
   if (GetRtcSettingsCrc() != rtc_settings_crc) {
 
     if (RTC_MEM_VALID != RtcSettings.valid) {

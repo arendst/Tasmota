@@ -489,10 +489,15 @@ void RtcInit(void) {
 
   if (Settings->cfg_timestamp > START_VALID_TIME) {
     // Fix file timestamp while utctime is not synced
-    uint32_t local_time = Settings->cfg_timestamp +1;
-    RtcGetDaylightSavingTimes(local_time);
-    local_time += RtcTimeZoneOffset(local_time);
+    uint32_t utc_time = Settings->cfg_timestamp;
+    if (RtcSettings.utc_time > utc_time) {
+      utc_time = RtcSettings.utc_time;
+    }
+    utc_time++;
+    RtcGetDaylightSavingTimes(utc_time);
+    uint32_t local_time = utc_time + RtcTimeZoneOffset(utc_time);
     RtcSetTimeOfDay(local_time);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("RTC: Timestamp %s"), GetDT(local_time).c_str());
   }
 }
 
