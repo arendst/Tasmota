@@ -729,30 +729,6 @@ void wifiKeepAlive(void) {
 }
 #endif  // ESP8266
 
-bool WifiPollDns(void) {
-  // WiFi.hostByName takes over ten seconds if no DNS server found
-  // This function checks to find the DNS server within 1 second
-  // This is an alternative for ping using less resources and some DNS server do not respond to pings (ICMP)
-  // See https://github.com/letscontrolit/ESPEasy/issues/1494#issuecomment-397872538
-  WiFiClient DnsClient;
-
-#ifdef ESP8266
-  DnsClient.setTimeout(1000);
-#else
-  DnsClient.setTimeout(1);
-#endif
-  uint32_t i = 3;            // Check DNS1 only (to keep blocking to a minimum of 1 second)
-//  for (i = 3; i < 5; i++) {  // Check DNS1 and DNS2
-    uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[i] : Settings->ipv4_address[i];
-    if (DnsClient.connect((IPAddress)dns_address, 53)) {
-      DnsClient.stop();
-      return true;
-    }
-//  }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Disconnected"));
-  return false;
-}
-
 int WifiHostByName(const char* aHostname, IPAddress& aResult) {
   // Use this instead of WiFi.hostByName or connect(host_name,.. to block less if DNS server is not found
   aResult = (uint32_t)(0);
@@ -760,7 +736,7 @@ int WifiHostByName(const char* aHostname, IPAddress& aResult) {
     // Host name is already an IP address so use it!
     return 1;
   }
-  else if (WifiPollDns() && WiFi.hostByName(aHostname, aResult)) {
+  else if (WiFi.hostByName(aHostname, aResult)) {
     // Host name resolved
     if (0xFFFFFFFF != (uint32_t)aResult) {
       return 1;

@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [12.0.1] 20220617
+- Release Paul
+
+### Fixed
+- Resolving NTP and/or MQTT server names regression from v12.0.0 (#15816)
+
 ## [12.0.0] 20220615
 - Release Paul
 

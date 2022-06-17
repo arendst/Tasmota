@@ -72,7 +72,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-12.0.0
+- http://ota.tasmota.com/tasmota/release-12.0.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -97,7 +97,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota32/release-12.0.0
+- http://ota.tasmota.com/tasmota32/release-12.0.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.0.0 Paul
+## Changelog v12.0.1 Paul
 ### Added
 - Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` [#15350](https://github.com/arendst/Tasmota/issues/15350)
 - Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
@@ -142,8 +142,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - SCD40 start low power command [#15361](https://github.com/arendst/Tasmota/issues/15361)
 - BL09xx negative power presentation [#15374](https://github.com/arendst/Tasmota/issues/15374)
 - Possible pin output toggle after power on [#15630](https://github.com/arendst/Tasmota/issues/15630)
-- Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names [#14394](https://github.com/arendst/Tasmota/issues/14394)
 - SHT1X driver hangs and wrong values on ESP32 [#15790](https://github.com/arendst/Tasmota/issues/15790)
+- Resolving NTP and/or MQTT server names regression from v12.0.0 [#15816](https://github.com/arendst/Tasmota/issues/15816)
 - ESP32 Arduino Core WiFi timeout is changed from msec to seconds
 
 ### Removed
