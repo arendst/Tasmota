@@ -3,9 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.0.1.1]
+## [12.0.1.2]
 ### Added
-
+- Command ``DnsTimeout 100..20000`` to change default DNS timeout from 1000 msec blocking if no DNS server found
 
 ### Changed
 

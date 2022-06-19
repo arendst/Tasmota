@@ -675,8 +675,9 @@ typedef struct {
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
   uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A9
 
-  uint8_t       free_4c5[5];               // 4C5
+  uint8_t       free_4c5[3];               // 4C5
 
+  uint16_t      dns_timeout;               // 4C8
   uint8_t       ds3502_state[MAX_DS3502];  // 4CA
   uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2

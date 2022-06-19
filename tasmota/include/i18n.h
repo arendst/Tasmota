@@ -317,6 +317,7 @@
   #define D_WCFG_5_WAIT "Wait"
   #define D_WCFG_6_SERIAL "Serial"
   #define D_WCFG_7_WIFIMANAGER_RESET_ONLY "ManagerRst"
+#define D_CMND_DNSTIMEOUT "DnsTimeout"
 #define D_CMND_DEVICENAME "DeviceName"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_FN "FN"
