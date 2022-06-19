@@ -733,10 +733,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
   // Use this instead of WiFi.hostByName or connect(host_name,.. to block less if DNS server is not found
   uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[3] : Settings->ipv4_address[3];
   DnsClient.begin((IPAddress)dns_address);
-  if (1 == DnsClient.getHostByName(aHostname, aResult)) {
-    return true;
-  }
-  return false;
+  return (1 == DnsClient.getHostByName(aHostname, aResult));
 }
 
 void WifiPollNtp() {
