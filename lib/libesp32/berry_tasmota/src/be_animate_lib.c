@@ -74,7 +74,7 @@ be_local_class(Animate_rotate,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(init, -1), be_const_closure(Animate_rotate_init_closure) },
     })),
-    be_str_literal("Animate_rotate")
+    be_str_weak(Animate_rotate)
 );
 
 /********************************************************************
@@ -134,7 +134,7 @@ be_local_class(Animate_from_to,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(init, -1), be_const_closure(Animate_from_to_init_closure) },
     })),
-    be_str_literal("Animate_from_to")
+    be_str_weak(Animate_from_to)
 );
 
 /********************************************************************
@@ -215,7 +215,7 @@ be_local_class(Animate_back_forth,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(init, -1), be_const_closure(Animate_back_forth_init_closure) },
     })),
-    be_str_literal("Animate_back_forth")
+    be_str_weak(Animate_back_forth)
 );
 
 /********************************************************************
@@ -262,7 +262,7 @@ be_local_class(Animate_ins_goto,
         { be_const_key(pc_abs, -1), be_const_var(1) },
         { be_const_key(init, 2), be_const_closure(Animate_ins_goto_init_closure) },
     })),
-    be_str_literal("Animate_ins_goto")
+    be_str_weak(Animate_ins_goto)
 );
 
 /********************************************************************
@@ -309,7 +309,7 @@ be_local_class(Animate_ins_ramp,
         { be_const_key(duration, -1), be_const_var(2) },
         { be_const_key(init, -1), be_const_closure(Animate_ins_ramp_init_closure) },
     })),
-    be_str_literal("Animate_ins_ramp")
+    be_str_weak(Animate_ins_ramp)
 );
 
 /********************************************************************
@@ -690,7 +690,7 @@ be_local_class(Animate_engine,
         { be_const_key(closure, -1), be_const_var(1) },
         { be_const_key(ins_time, 9), be_const_var(3) },
     })),
-    be_str_literal("Animate_engine")
+    be_str_weak(Animate_engine)
 );
 
 /********************************************************************

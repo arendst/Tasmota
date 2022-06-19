@@ -21,12 +21,16 @@ class coc_parser:
         """Parse text file"""
         self.objects = []
         self.strtab = set()
+        self.strtab_weak = set()
         self.text = text
         self.parsers = {
             "@const_object_info_begin": self.parse_object,
             "be_const_str_": self.parse_string,
             "be_const_key(": self.parse_string,
             "be_nested_str(": self.parse_string,
+            "be_const_key_weak(": self.parse_string_weak,
+            "be_nested_str_weak(": self.parse_string_weak,
+            "be_str_weak(": self.parse_string_weak,
         }
 
         while len(self.text) > 0:
@@ -117,6 +121,14 @@ class coc_parser:
         literal = unescape_operator(ident)
         if not literal in self.strtab:
             self.strtab.add(literal)
+            # print(f"str '{ident}' -> {literal}")
+
+    def parse_string_weak(self):
+        if not self.text[0].isalnum() and self.text[0] != '_': return      # do not proceed, maybe false positive in solidify
+        ident = self.parse_word()
+        literal = unescape_operator(ident)
+        if not literal in self.strtab:
+            self.strtab_weak.add(literal)
             # print(f"str '{ident}' -> {literal}")
 
     #################################################################################

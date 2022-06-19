@@ -19,6 +19,7 @@ class builder:
         self.config = macro_files
         self.macro = None
         self.strmap = {}
+        self.strmap_weak = {}
 
         self.macro = macro_table()
         for path in self.config:
@@ -27,7 +28,7 @@ class builder:
         for d in self.input:
             self.scandir(d)
         
-        sb = str_build(self.strmap)
+        sb = str_build(self.strmap, self.strmap_weak)
         sb.build(self.output)
     
     def parse_file(self, filename):
@@ -40,10 +41,14 @@ class builder:
             parser = coc_parser(text)
             for s in parser.strtab:
                 self.strmap[s] = 0
+            for s in parser.strtab_weak:
+                self.strmap_weak[s] = 0
             for obj in parser.objects:
                 builder = block_builder(obj, self.macro)
                 for s in builder.strtab:
                     self.strmap[s] = 0
+                for s in builder.strtab_weak:
+                    self.strmap_weak[s] = 0
                 builder.dumpfile(self.output)
 
     def scandir(self, srcpath):

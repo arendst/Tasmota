@@ -30,7 +30,7 @@ persist_module.init = def (m)
       # print("Persist init")
     end
 
-    #- virtual member getter, if a key does not exists return `nil`-#
+    #- virtual member getter, if a key does not exists return `nil` instead of exception -#
     def member(key)
       return self._p.find(key)
     end

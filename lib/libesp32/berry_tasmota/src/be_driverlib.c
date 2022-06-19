@@ -89,7 +89,7 @@ be_local_class(Driver,
         { be_const_key(json_append, -1), be_const_var(10) },
         { be_const_key(web_add_button, -1), be_const_var(3) },
     })),
-    be_str_literal("Driver")
+    be_str_weak(Driver)
 );
 /*******************************************************************/
 

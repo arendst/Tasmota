@@ -107,11 +107,6 @@ static const char * be_ctypes_instance_mappings[] = {
   NULL
 };
 
-static be_define_ctypes_class(energy_struct, &be_energy_struct, &be_class_ctypes_bytes, "energy_struct");
-
-void be_load_ctypes_energy_definitions_lib(bvm *vm) {
-  ctypes_register_class(vm, &be_class_energy_struct, &be_energy_struct);
-}
-/********************************************************************/
+be_define_ctypes_class(energy_struct, &be_energy_struct, &be_class_ctypes_bytes, "energy_struct");
 
 #endif // USE_ENERGY_SENSOR

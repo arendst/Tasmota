@@ -2,9 +2,9 @@
  * Tasmota LVGL ctypes mapping
  *******************************************************************/
 #include "be_ctypes.h"
-
 #include "lvgl.h"
 #include "be_mapping.h"
+
 
 /********************************************************************
  * Generated code, don't edit
@@ -742,50 +742,50 @@ static be_define_ctypes_class(lv_timer, &be_lv_timer, &be_class_ctypes_bytes, "l
 static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes_bytes, "lv_ts_calibration");
 
 void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
-  ctypes_register_class(vm, &be_class_lv_area, &be_lv_area);
-  ctypes_register_class(vm, &be_class_lv_chart_cursor, &be_lv_chart_cursor);
-  ctypes_register_class(vm, &be_class_lv_chart_series, &be_lv_chart_series);
-  ctypes_register_class(vm, &be_class_lv_chart_tick_dsc, &be_lv_chart_tick_dsc);
-  ctypes_register_class(vm, &be_class_lv_color_filter_dsc, &be_lv_color_filter_dsc);
-  ctypes_register_class(vm, &be_class_lv_coord, &be_lv_coord);
-  ctypes_register_class(vm, &be_class_lv_draw_arc_dsc, &be_lv_draw_arc_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_ctx, &be_lv_draw_ctx);
-  ctypes_register_class(vm, &be_class_lv_draw_img_dsc, &be_lv_draw_img_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_line_dsc, &be_lv_draw_line_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param, &be_lv_draw_mask_angle_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param_cfg, &be_lv_draw_mask_angle_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_common_dsc, &be_lv_draw_mask_common_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param, &be_lv_draw_mask_fade_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param_cfg, &be_lv_draw_mask_fade_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param, &be_lv_draw_mask_line_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_cfg, &be_lv_draw_mask_line_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param, &be_lv_draw_mask_map_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_cfg, &be_lv_draw_mask_map_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param, &be_lv_draw_mask_polygon_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param_cfg, &be_lv_draw_mask_polygon_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_circle_dsc, &be_lv_draw_mask_radius_circle_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param, &be_lv_draw_mask_radius_param);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_cfg, &be_lv_draw_mask_radius_param_cfg);
-  ctypes_register_class(vm, &be_class_lv_draw_mask_saved, &be_lv_draw_mask_saved);
-  ctypes_register_class(vm, &be_class_lv_draw_rect_dsc, &be_lv_draw_rect_dsc);
-  ctypes_register_class(vm, &be_class_lv_event, &be_lv_event);
-  ctypes_register_class(vm, &be_class_lv_grad_dsc, &be_lv_grad_dsc);
-  ctypes_register_class(vm, &be_class_lv_gradient_stop, &be_lv_gradient_stop);
-  ctypes_register_class(vm, &be_class_lv_img_dsc, &be_lv_img_dsc);
-  ctypes_register_class(vm, &be_class_lv_img_header, &be_lv_img_header);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator, &be_lv_meter_indicator);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator_arc, &be_lv_meter_indicator_arc);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator_needle_img, &be_lv_meter_indicator_needle_img);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator_needle_line, &be_lv_meter_indicator_needle_line);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator_scale_lines, &be_lv_meter_indicator_scale_lines);
-  ctypes_register_class(vm, &be_class_lv_meter_scale, &be_lv_meter_scale);
-  ctypes_register_class(vm, &be_class_lv_obj_class, &be_lv_obj_class);
-  ctypes_register_class(vm, &be_class_lv_obj_draw_part_dsc, &be_lv_obj_draw_part_dsc);
-  ctypes_register_class(vm, &be_class_lv_point, &be_lv_point);
-  ctypes_register_class(vm, &be_class_lv_sqrt_res, &be_lv_sqrt_res);
-  ctypes_register_class(vm, &be_class_lv_style_transition_dsc, &be_lv_style_transition_dsc);
-  ctypes_register_class(vm, &be_class_lv_timer, &be_lv_timer);
-  ctypes_register_class(vm, &be_class_lv_ts_calibration, &be_lv_ts_calibration);
+  ctypes_register_class(vm, &be_class_lv_area);
+  ctypes_register_class(vm, &be_class_lv_chart_cursor);
+  ctypes_register_class(vm, &be_class_lv_chart_series);
+  ctypes_register_class(vm, &be_class_lv_chart_tick_dsc);
+  ctypes_register_class(vm, &be_class_lv_color_filter_dsc);
+  ctypes_register_class(vm, &be_class_lv_coord);
+  ctypes_register_class(vm, &be_class_lv_draw_arc_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_ctx);
+  ctypes_register_class(vm, &be_class_lv_draw_img_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_line_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_angle_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_common_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_fade_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_line_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_map_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_polygon_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_circle_dsc);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_radius_param_cfg);
+  ctypes_register_class(vm, &be_class_lv_draw_mask_saved);
+  ctypes_register_class(vm, &be_class_lv_draw_rect_dsc);
+  ctypes_register_class(vm, &be_class_lv_event);
+  ctypes_register_class(vm, &be_class_lv_grad_dsc);
+  ctypes_register_class(vm, &be_class_lv_gradient_stop);
+  ctypes_register_class(vm, &be_class_lv_img_dsc);
+  ctypes_register_class(vm, &be_class_lv_img_header);
+  ctypes_register_class(vm, &be_class_lv_meter_indicator);
+  ctypes_register_class(vm, &be_class_lv_meter_indicator_arc);
+  ctypes_register_class(vm, &be_class_lv_meter_indicator_needle_img);
+  ctypes_register_class(vm, &be_class_lv_meter_indicator_needle_line);
+  ctypes_register_class(vm, &be_class_lv_meter_indicator_scale_lines);
+  ctypes_register_class(vm, &be_class_lv_meter_scale);
+  ctypes_register_class(vm, &be_class_lv_obj_class);
+  ctypes_register_class(vm, &be_class_lv_obj_draw_part_dsc);
+  ctypes_register_class(vm, &be_class_lv_point);
+  ctypes_register_class(vm, &be_class_lv_sqrt_res);
+  ctypes_register_class(vm, &be_class_lv_style_transition_dsc);
+  ctypes_register_class(vm, &be_class_lv_timer);
+  ctypes_register_class(vm, &be_class_lv_ts_calibration);
 }
 
 be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {

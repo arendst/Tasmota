@@ -45,11 +45,8 @@ const be_const_member_t zd_members[] = {
 };
 
 static int zd_member(bvm *vm) {
-  if (be_const_class_member(vm, zd_members, ARRAY_SIZE(zd_members))) {
-    be_return(vm);
-  } else {
-    be_return_nil(vm);
-  }
+  be_const_class_member_raise(vm, zd_members, ARRAY_SIZE(zd_members));
+  be_return(vm);
 }
 
 extern int zc_info(struct bvm *vm);
@@ -76,19 +73,19 @@ be_local_closure(zb_device_tostring,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_str_literal("json"),
-    /* K1   */  be_nested_str_literal("string"),
-    /* K2   */  be_nested_str_literal("longaddr"),
-    /* K3   */  be_nested_str_literal("format"),
-    /* K4   */  be_nested_str_literal("<instance: %s(0x%04X, 0x%08X%08X, name:'%s', model:'%s', manufacturer:'%s')>"),
-    /* K5   */  be_nested_str_literal("shortaddr"),
-    /* K6   */  be_nested_str_literal("get"),
+    /* K0   */  be_nested_str_weak(json),
+    /* K1   */  be_nested_str_weak(string),
+    /* K2   */  be_nested_str_weak(longaddr),
+    /* K3   */  be_nested_str_weak(format),
+    /* K4   */  be_nested_str_weak(_X3Cinstance_X3A_X20_X25s_X280x_X2504X_X2C_X200x_X2508X_X2508X_X2C_X20name_X3A_X27_X25s_X27_X2C_X20model_X3A_X27_X25s_X27_X2C_X20manufacturer_X3A_X27_X25s_X27_X29_X3E),
+    /* K5   */  be_nested_str_weak(shortaddr),
+    /* K6   */  be_nested_str_weak(get),
     /* K7   */  be_const_int(0),
-    /* K8   */  be_nested_str_literal("name"),
-    /* K9   */  be_nested_str_literal("model"),
-    /* K10  */  be_nested_str_literal("manufacturer"),
+    /* K8   */  be_nested_str_weak(name),
+    /* K9   */  be_nested_str_weak(model),
+    /* K10  */  be_nested_str_weak(manufacturer),
     }),
-    be_str_literal("tostring"),
+    be_str_weak(tostring),
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
@@ -143,7 +140,7 @@ BE_FUNC_CTYPE_DECLARE(zfn_set_bytes, "", "-c(bytes)~");
 #include "be_fixed_zigbee.h"
 
 /* @const_object_info_begin
-class be_class_zb_device (scope: global, name: zb_device) {
+class be_class_zb_device (scope: global, name: zb_device, strings: weak) {
   _p, var
   init, ctype_func(zd_init)
 
@@ -154,7 +151,7 @@ class be_class_zb_device (scope: global, name: zb_device) {
 @const_object_info_end */
 
 /* @const_object_info_begin
-class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv) {
+class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
   zcl_frame, class(be_class_zcl_frame)
   zb_device, class(be_class_zb_device)
 
@@ -169,7 +166,7 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv) {
 
 
 /* @const_object_info_begin
-class be_class_zcl_frame_ntv (scope: global, name: zcl_frame_ntv, super: be_class_ctypes_bytes) {
+class be_class_zcl_frame_ntv (scope: global, name: zcl_frame_ntv, super: be_class_ctypes_bytes, strings: weak) {
     _def, comptr(&be_zigbee_zcl_frame_struct)
 
     _get_bytes, ctype_func(zfn_get_bytes)
@@ -178,7 +175,7 @@ class be_class_zcl_frame_ntv (scope: global, name: zcl_frame_ntv, super: be_clas
 @const_object_info_end */
 
 /* @const_object_info_begin
-module zigbee (scope: global) {
+module zigbee (scope: global, strings: weak) {
   init, func(zigbee_init)
 }
 @const_object_info_end */

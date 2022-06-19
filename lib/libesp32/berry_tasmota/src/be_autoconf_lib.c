@@ -1347,7 +1347,7 @@ be_local_class(Autoconf,
         { be_const_key(_error, -1), be_const_var(1) },
         { be_const_key(set_first_time, -1), be_const_closure(Autoconf_set_first_time_closure) },
     })),
-    be_str_literal("Autoconf")
+    be_str_weak(Autoconf)
 );
 
 /********************************************************************

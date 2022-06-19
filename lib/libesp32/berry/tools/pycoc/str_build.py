@@ -8,19 +8,28 @@ class str_info:
         self.extra = 0
 
 class str_build:
-    def __init__(self, map):
-        size = int(len(map) / 2)         # voluntarily reduce hash size to half
+    def __init__(self, map, map_weak):
+        self.map = map.copy()
+        self.str_weak = []
+
+        size = int(len(self.map) / 2)         # voluntarily reduce hash size to half
         if size < 4: size = 4
         self.buckets = []
         for i in range(size):
             self.buckets.append([])
         
+        self.keywords()     # add keywords to self.map
+
         self.make_ceil("", 0)   # add empty string as it is always useful
-        self.count = len(map) + 1       # TODO it is not actually accurate since keywords are not counted
-        for k in sorted(map.keys()):
-            self.make_ceil(k, map[k])
-        self.keywords()
-    
+        self.count = len(self.map) + 1       # TODO it is not actually accurate since keywords are not counted
+        for k in sorted(self.map.keys()):
+            self.make_ceil(k, self.map[k])
+
+        # handle weak strings
+        for k in sorted(map_weak.keys()):
+            if not k in self.map:
+                self.str_weak.append(k)
+
     def build(self, path):
         prefix = path + "/be_const_strtab"
         self.writefile(prefix + "_def.h", self.build_table_def())
@@ -47,8 +56,8 @@ class str_build:
             "try": opif + 18 ,      "except": opif + 19 ,
             "raise": opif + 20 ,    "static": opif + 21,
         }
-        for key in sorted(tab.keys()):
-            self.make_ceil(key, tab[key])
+        for key, v in tab.items():
+            self.map[key] = v
     
     def make_ceil(self, name, extra):
         info = str_info()
@@ -91,6 +100,14 @@ class str_build:
         for s in sorted(strings.keys()):
             ostr += strings[s]
         ostr += "\n"
+
+        ostr += "\n/* weak strings */\n"
+        for k in self.str_weak:
+            ostr += "be_define_const_str("
+            ostr += escape_operator(k) + ", " + json.dumps(k) + ", "
+            ostr += "0u, 0, " + str(len(k)) + ", NULL);\n"
+
+        ostr += "\n"
         ostr += "static const bstring* const m_string_table[] = {\n"
 
 
@@ -120,4 +137,9 @@ class str_build:
                 all.add(escape_operator(info.str))
         for s in sorted(all):
             ostr += "extern const bcstring be_const_str_" + s + ";\n"
+            # ostr += "#define BE_CONST_STR_" + s + "\n"
+        # weak strings
+        ostr += "\n/* weak strings */\n"
+        for s in self.str_weak:
+            ostr += "extern const bcstring be_const_str_" + escape_operator(s) + ";\n"
         return ostr

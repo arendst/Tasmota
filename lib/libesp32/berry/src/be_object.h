@@ -191,7 +191,7 @@ struct bntvclos {
 typedef struct {
     bcommon_header;
     void *data;
-    bntvfunc destory;
+    bntvfunc destroy;
 } bcommomobj;
 
 typedef const char* (*breader)(void*, size_t*);
@@ -259,5 +259,6 @@ typedef const char* (*breader)(void*, size_t*);
 const char* be_vtype2str(bvalue *v);
 bvalue* be_indexof(bvm *vm, int idx);
 void be_commonobj_delete(bvm *vm, bgcobject *obj);
+int be_commonobj_destroy_generic(bvm* vm);
 
 #endif

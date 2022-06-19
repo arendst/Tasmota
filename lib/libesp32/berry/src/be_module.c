@@ -255,7 +255,7 @@ static void cache_module(bvm *vm, bstring *name)
     *v = vm->top[-1];
 }
 
-/* Try to run '()' function of module. Module is already loaded. */
+/* Try to run 'init(m)' function of module. Module is already loaded. */
 static void module_init(bvm *vm) {
     if (be_ismodule(vm, -1)) {
         if (be_getmember(vm, -1, "init")) {
@@ -318,6 +318,11 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
 {
     bvalue *member = be_map_findstr(vm, module->table, attr);
     if (!member) {  /* try the 'member' function */
+        /* if 'init' does not exist, don't call member() */
+        if (strcmp(str(attr), "init") == 0) {
+            var_setntvfunc(dst, be_default_init_native_function);
+            return var_primetype(dst);
+        }
         member = be_map_findstr(vm, module->table, str_literal(vm, "member"));
         if (member && var_basetype(member) == BE_FUNCTION) {
             bvalue *top = vm->top;
@@ -327,9 +332,16 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
             be_dofunc(vm, top, 1); /* call method 'method' */
             vm->top -= 2;
             *dst = *vm->top;   /* copy result to R(A) */
-            if (var_basetype(dst) != BE_NIL) {
-                return var_type(dst);
+            
+            int type = var_type(dst);
+            if (type == BE_MODULE) {
+                /* check if the module is named `undefined` */
+                bmodule *mod = var_toobj(dst);
+                if (strcmp(be_module_name(mod), "undefined") == 0) {
+                    return BE_NONE;     /* if the return value is module `undefined`, consider it is an error */
+                }
             }
+            return type;
         }
         return BE_NONE;
     }

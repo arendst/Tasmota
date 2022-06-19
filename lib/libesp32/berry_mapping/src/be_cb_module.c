@@ -153,7 +153,6 @@ static int32_t be_cb_make_cb(bvm *vm) {
   int32_t argc = be_top(vm);
   if (argc >= 1 && be_isfunction(vm, 1)) {
 
-    bvalue *v = be_indexof(vm, 1);
     for (be_callback_handler_list_t *elt = be_callback_handler_list_head; elt != NULL; elt = elt->next) {
       if (elt->vm == vm || elt->vm == NULL) {   // if elt->vm is NULL then we accept any VM
         // call the handler and check result
@@ -215,7 +214,6 @@ static int32_t be_cb_gen_cb(bvm *vm) {
 \*********************************************************************************************/
 static int32_t be_cb_get_cb_list(bvm *vm) {
   be_newobject(vm, "list");
-  int32_t i;
   for (uint32_t i=0; i < BE_MAX_CB; i++) {
     if (be_cb_hooks[i].vm) {
       if (vm == be_cb_hooks[i].vm) {  // make sure it corresponds to this vm

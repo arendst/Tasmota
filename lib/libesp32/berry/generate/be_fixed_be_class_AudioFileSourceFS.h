@@ -1,8 +1,8 @@
 #include "be_constobj.h"
 
 static be_define_const_map_slots(be_class_AudioFileSourceFS_map) {
-    { be_const_key(deinit, -1), be_const_func(i2s_file_source_fs_deinit) },
-    { be_const_key(init, -1), be_const_func(i2s_file_source_fs_init) },
+    { be_const_key_weak(deinit, -1), be_const_func(i2s_file_source_fs_deinit) },
+    { be_const_key_weak(init, -1), be_const_func(i2s_file_source_fs_init) },
 };
 
 static be_define_const_map(

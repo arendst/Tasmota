@@ -144,8 +144,6 @@ int be_ctypes_init(bvm *vm) {
 // copy ctypes_bytes, with same class and same content
 //
 int be_ctypes_copy(bvm *vm) {
-    size_t len;
-    const void * src = be_tobytes(vm, 1, &len);
     be_classof(vm, 1);
     // stack: 1/self + class_object
     be_call(vm, 0);     // call empty constructor to build empty resizable copy
@@ -184,7 +182,6 @@ int be_ctypes_copy(bvm *vm) {
 // arg2: name of the argument
 // The class has a `_def` static class attribute with the C low-level mapping definition
 int be_ctypes_member(bvm *vm) {
-    int argc = be_top(vm);
     be_getmember(vm, 1, "_def");
     const be_ctypes_structure_t *definitions;
     definitions = (const be_ctypes_structure_t *) be_tocomptr(vm, -1);
@@ -267,8 +264,8 @@ int be_ctypes_member(bvm *vm) {
         }
         be_return(vm);
     }
-
-    be_return_nil(vm);
+    be_module_load(vm, be_newstr(vm, "undefined"));
+    be_return(vm);
 }
 
 // setmember takes 3 arguments:
@@ -276,8 +273,6 @@ int be_ctypes_member(bvm *vm) {
 // 2: name of member
 // 3: value
 int be_ctypes_setmember(bvm *vm) {
-    int argc = be_top(vm);
-
     // If the value is an instance, we call 'toint()' and replace the value
     if (be_isinstance(vm, 3)) {
 

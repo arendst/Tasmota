@@ -10,18 +10,6 @@
 #include "be_exec.h"
 #include "esp_rom_md5.h"
 
-int free_ctx(bvm* vm) {
-  int argc = be_top(vm);
-  if (argc > 0) {
-    be_getmember(vm, 1, ".p");
-    md5_context_t * ctx = (md5_context_t *) be_tocomptr(vm, -1);
-    if (ctx != NULL) {
-      be_os_free(ctx);
-    }
-  }
-  be_return_nil(vm);
-}
-
 // `Md5.init() -> `
 int32_t m_md5_init(struct bvm *vm);
 int32_t m_md5_init(struct bvm *vm) {
@@ -32,7 +20,7 @@ int32_t m_md5_init(struct bvm *vm) {
   }
   esp_rom_md5_init(ctx);
 
-  be_newcomobj(vm, ctx, &free_ctx);
+  be_newcomobj(vm, ctx, &be_commonobj_destroy_generic);
   be_setmember(vm, 1, ".p");
   be_return_nil(vm);
 }

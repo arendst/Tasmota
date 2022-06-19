@@ -21,20 +21,21 @@
 #ifndef ESP32_STAGE                         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #endif // ESP32_STAGE
-#include "tasmota_compat.h"
-#include "tasmota_version.h"                // Tasmota version information
-#include "tasmota.h"                        // Enumeration used in my_user_config.h
+#include "include/tasmota_compat.h"
+#include "include/tasmota_version.h"        // Tasmota version information
+#include "include/tasmota.h"                // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
 #ifdef USE_TLS
   #include <t_bearssl.h>                    // We need to include before "tasmota_globals.h" to take precedence over the BearSSL version in Arduino
 #endif // USE_TLS
-#include "tasmota_globals.h"                // Function prototypes and global configuration
-#include "i18n.h"                           // Language support configured by my_user_config.h
-#include "tasmota_template.h"               // Hardware configuration
+#include "include/tasmota_globals.h"        // Function prototypes and global configuration
+#include "include/i18n.h"                   // Language support configured by my_user_config.h
+#include "include/tasmota_template.h"       // Hardware configuration
 
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
+#include <DnsClient.h>                      // Any getHostByName
 #ifdef ESP32
   #ifdef USE_TLS
   #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
@@ -83,7 +84,7 @@
 #endif  // USE_UFILESYS
 
 // Structs
-#include "settings.h"
+#include "include/tasmota_types.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "soc/efuse_reg.h"
@@ -95,6 +96,70 @@
 
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
+typedef struct {
+  uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
+  uint8_t       fast_reboot_count;         // 282
+  uint8_t       free_003[1];               // 283
+} TRtcReboot;
+TRtcReboot RtcReboot;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcReboot RtcDataReboot;
+#endif  // ESP32
+
+typedef struct {
+  uint16_t      valid;                     // 290  (RTC memory offset 100)
+  uint8_t       oswatch_blocked_loop;      // 292
+  uint8_t       ota_loader;                // 293
+  uint32_t      energy_kWhtoday;           // 294
+  uint32_t      energy_kWhtotal;           // 298
+  volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
+  power_t       power;                     // 2AC
+  EnergyUsage   energy_usage;              // 2B0
+  uint32_t      nextwakeup;                // 2C8
+  uint32_t      baudrate;                  // 2CC
+  uint32_t      ultradeepsleep;            // 2D0
+  uint16_t      deepsleep_slip;            // 2D4
+  uint8_t       improv_state;              // 2D6
+
+  uint8_t       free_2d7[1];               // 2D7
+
+  int32_t       energy_kWhtoday_ph[3];     // 2D8
+  int32_t       energy_kWhtotal_ph[3];     // 2E4
+  int32_t       energy_kWhexport_ph[3];    // 2F0
+  uint32_t      utc_time;                  // 2FC
+} TRtcSettings;
+TRtcSettings RtcSettings;
+#ifdef ESP32
+RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
+#endif  // ESP32
+
+struct TIME_T {
+  uint8_t       second;
+  uint8_t       minute;
+  uint8_t       hour;
+  uint8_t       day_of_week;               // sunday is day 1
+  uint8_t       day_of_month;
+  uint8_t       month;
+  char          name_of_month[4];
+  uint16_t      day_of_year;
+  uint16_t      year;
+  uint32_t      days;
+  uint32_t      valid;
+} RtcTime;
+
+struct XDRVMAILBOX {
+  bool          grpflg;
+  bool          usridx;
+  uint16_t      command_code;
+  uint32_t      index;
+  uint32_t      data_len;
+  int32_t       payload;
+  char         *topic;
+  char         *data;
+  char         *command;
+} XdrvMailbox;
+
+DNSClient DnsClient;
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #ifdef ESP32
@@ -105,8 +170,8 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 */
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 
-//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_SERIAL_CONSOLE
-#ifdef USE_USB_SERIAL_CONSOLE
+//#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
 //#warning **** TasConsole use USB ****
 
 #if ARDUINO_USB_MODE
@@ -122,11 +187,11 @@ bool tasconsole_serial = false;
 //#warning **** TasConsole uses USBCDC ****
 #endif  // ARDUINO_USB_MODE
 
-#else   // No USE_USB_SERIAL_CONSOLE
+#else   // No USE_USB_CDC_CONSOLE
 HardwareSerial TasConsole = Serial;         // Fallback serial interface for ESP32C3, S2 and S3 if no USB_SERIAL defined
 bool tasconsole_serial = true;
 //#warning **** TasConsole uses Serial ****
-#endif  // USE_USB_SERIAL_CONSOLE
+#endif  // USE_USB_CDC_CONSOLE
 
 #else   // No ESP32C3, S2 or S3
 HardwareSerial TasConsole = Serial;         // Fallback serial interface for non ESP32C3, S2 and S3
@@ -369,16 +434,16 @@ void setup(void) {
 //  Serial.setRxBufferSize(INPUT_BUFFER_SIZE);  // Default is 256 chars
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
-#ifdef USE_USB_SERIAL_CONSOLE
+#ifdef USE_USB_CDC_CONSOLE
   TasConsole.begin(115200);    // Will always be 115200 bps
 #if !ARDUINO_USB_MODE
-  USB.begin();
+  USB.begin();                 // This needs a serial console with DTR/DSR support
 #endif  // No ARDUINO_USB_MODE
   TasConsole.println();
-  AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using embedded USB"));
-#else   // No USE_USB_SERIAL_CONSOLE
+  AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
+#else   // No USE_USB_CDC_CONSOLE
   TasConsole = Serial;
-#endif  // USE_USB_SERIAL_CONSOLE
+#endif  // USE_USB_CDC_CONSOLE
 #else   // No ESP32C3, S2 or S3
   TasConsole = Serial;
 #endif  // ESP32C3, S2 or S3
@@ -525,6 +590,7 @@ void setup(void) {
   TasmotaGlobal.init_state = INIT_GPIOS;
 
   SetPowerOnState();
+  DnsClient.setTimeout(Settings->dns_timeout);
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),

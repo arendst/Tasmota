@@ -3,7 +3,47 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [11.1.0.3]
+## [12.0.1.2]
+### Added
+- Command ``DnsTimeout 100..20000`` to change default DNS timeout from 1000 msec blocking if no DNS server found
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+
+
+## [Released]
+
+## [12.0.1] 20220617
+- Release Paul
+
+### Fixed
+- Resolving NTP and/or MQTT server names regression from v12.0.0 (#15816)
+
+## [12.0.0] 20220615
+- Release Paul
+
+## [11.1.0.4] 20220615
+### Added
+- Support for HYTxxx temperature and humidity sensor (#15715)
+- Support for Sensirion SHT4X using define USE_SHT3X (#15349)
+- Command ``SSerialSend9 1`` to enable Serial Bridge console Tee for debugging purposes
+- Command ``SetOption142 1`` to wait 1 second for wifi connection solving some FRITZ!Box modem issues (#14985)
+
+### Changed
+- Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
+- ESP32 increase Serial Bridge input buffer from 130 to 520 characters
+
+### Fixed
+- ESP32 Arduino Core WiFi timeout is changed from msec to seconds
+- Reduce blocking by adding WifiPollDns before resolving NTP and/or MQTT server names (#14394)
+- SHT1X driver hangs and wrong values on ESP32 (#15790)
+
+## [11.1.0.3] 20220602
 ### Added
 - Support for Sonoff SPM v1.2.0
 - Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger (#15701)
@@ -11,14 +51,8 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption141 1`` to disable display of module name in GUI header
 - Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs (#15713)
 
-### Changed
-
-
 ### Fixed
 - Possible pin output toggle after power on (#15630)
-
-### Removed
-
 
 ## [11.1.0.2] 20220514
 ### Added
@@ -47,8 +81,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Arduino IDE support
-
-## [Released]
 
 ## [11.1.0] 20220413
 - Release Ostara
