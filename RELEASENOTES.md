@@ -109,7 +109,44 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.0.2 Paul
 ### Added
+- Command ``SetOption139 0/1`` to switch between pressure unit "mmHg" (0) or "inHg" (1) when ``SO24 1`` [#15350](https://github.com/arendst/Tasmota/issues/15350)
+- Command ``SetOption140 0/1`` to switch between MQTT Clean Session (0) or Persistent Session (1) [#15530](https://github.com/arendst/Tasmota/issues/15530)
+- Command ``SetOption141 1`` to disable display of module name in GUI header
+- Command ``SetOption142 1`` to wait 1 second for wifi connection solving some FRITZ!Box modem issues [#14985](https://github.com/arendst/Tasmota/issues/14985)
 - Command ``DnsTimeout 100..20000`` to change default DNS timeout from 1000 msec blocking if no DNS server found
+- Command ``EnergyExportActive<phase>`` to (p)reset energy export active for supported devices. Currently ADE7880 only [#13515](https://github.com/arendst/Tasmota/issues/13515)
+- Command ``IfxRp ""|<policy>`` adds optional InfluxDb Retention Policy [#15513](https://github.com/arendst/Tasmota/issues/15513)
+- Command ``SspmDisplay 2`` to display Sonoff SPM energy data in GUI for user tab-selected relay modules [#13447](https://github.com/arendst/Tasmota/issues/13447)
+- Command ``SSerialSend9 0/1`` to enable Serial Bridge console Tee for debugging purposes
+- Support for Sonoff MS01 soil moisture sensor [#15335](https://github.com/arendst/Tasmota/issues/15335)
+- Support for daisy chaining MAX7219 displays [#15345](https://github.com/arendst/Tasmota/issues/15345)
+- Support for Sensirion SHT4X using define USE_SHT3X [#15349](https://github.com/arendst/Tasmota/issues/15349)
+- Support for Sonoff SPM v1.2.0
+- Support for Sonoff Zigbee Bridge Pro by Stephan Hadinger [#15701](https://github.com/arendst/Tasmota/issues/15701)
+- Support for Sonoff NSPanel Smart Scene Wall Switch
+- Support for flowrate meters like YF-DN50 and similary [#15474](https://github.com/arendst/Tasmota/issues/15474)
+- Support for 5-channel light dimmer driver BP5758D used in Tuya bulbs [#15713](https://github.com/arendst/Tasmota/issues/15713)
+- Support for HYTxxx temperature and humidity sensor [#15715](https://github.com/arendst/Tasmota/issues/15715)
+- Sonoff SPM delayed SetPowerOnState [#13447](https://github.com/arendst/Tasmota/issues/13447)
+- ESP32 Command ``Restart 3`` to switch between SafeBoot and Production
+
+### Breaking Changed
+
+### Changed
+- Restructured tasmota source directories taking benefit from PlatformIO Core v6.0.2
+- Prepare to remove dedicated Home Assistant discovery in favour of Tasmota Discovery and hatasmota
+- ESP32 Tasmota SafeBoot with changed partition scheme allowing larger binaries
+- ESP32 increase Serial Bridge input buffer from 130 to 520 characters
 
 ### Fixed
-- MQTT rc -4 on TLS connections regression from v12.0.0 [#15809](https://github.com/arendst/Tasmota/issues/15809)
+- Improv initial or erase device installation failing to provide Configure WiFi option
+- SCD40 start low power command [#15361](https://github.com/arendst/Tasmota/issues/15361)
+- BL09xx negative power presentation [#15374](https://github.com/arendst/Tasmota/issues/15374)
+- Possible pin output toggle after power on [#15630](https://github.com/arendst/Tasmota/issues/15630)
+- SHT1X driver hangs and wrong values on ESP32 [#15790](https://github.com/arendst/Tasmota/issues/15790)
+- Resolving NTP and/or MQTT server names regression from v12.0.0 [#15816](https://github.com/arendst/Tasmota/issues/15816)
+- MQTT rc -4 connection regression from v12.0.0 [#15809](https://github.com/arendst/Tasmota/issues/15809)
+- ESP32 Arduino Core WiFi timeout is changed from msec to seconds
+
+### Removed
+- Arduino IDE support
