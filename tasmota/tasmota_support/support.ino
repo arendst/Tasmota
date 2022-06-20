@@ -2455,7 +2455,7 @@ void SyslogAsync(bool refresh) {
         if (!WifiHostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr)) {  // If sleep enabled this might result in exception so try to do it once using hash
           TasmotaGlobal.syslog_level = 0;
           TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Loghost DNS resolve failed (%s). " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_SYSLOG_HOST), SYSLOG_TIMER);
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
           return;
         }
         syslog_host_hash = current_hash;

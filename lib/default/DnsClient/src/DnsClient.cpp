@@ -51,23 +51,20 @@
 #define htons(x) ( ((x)<< 8 & 0xFF00) | ((x)>> 8 & 0x00FF) )
 #endif
 
-
 void DNSClient::begin(const IPAddress& aDNSServer) {
   iDNSServer = aDNSServer;
   iRequestId = 0;
 }
 
-void DNSClient::setTimeout(uint16_t aTimeout) {
+void DNSClient::setTimeout(uint32_t aTimeout) {
   iTimeout = aTimeout;
 }
 
 int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult) {
-  int ret =0;
-
   // See if it's a numeric IP address
   if (aResult.fromString(aHostname)) {
     // It is, our work here is done
-    return 1;
+    return SUCCESS;
   }
 
   // Check we've got a valid DNS server to use
@@ -75,6 +72,7 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult) {
     return INVALID_SERVER;
   }
 
+  int ret = 0;
   // Find a socket to use
   if (iUdp.begin(1024+(millis() & 0xF)) == 1) {
     // Try up to three times
@@ -107,10 +105,9 @@ int DNSClient::getHostByName(const char* aHostname, IPAddress& aResult) {
   return ret;
 }
 
-uint16_t DNSClient::BuildRequest(const char* aName) {
+int DNSClient::BuildRequest(const char* aName) {
   // Build header
-  //                                    1  1  1  1  1  1
-  //      0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+  //      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
   //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
   //    |                      ID                       |
   //    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
@@ -178,10 +175,10 @@ uint16_t DNSClient::BuildRequest(const char* aName) {
   twoByteBuffer = htons(CLASS_IN);  // Internet class of question
   iUdp.write((uint8_t*)&twoByteBuffer, sizeof(twoByteBuffer));
   // Success!  Everything buffered okay
-  return 1;
+  return SUCCESS;
 }
 
-uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress) {
+int DNSClient::ProcessResponse(uint32_t aTimeout, IPAddress& aAddress) {
   uint32_t startTime = millis();
 
   // Wait for a response packet
@@ -236,7 +233,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress) {
 
   // Skip over any questions
   memcpy(&staging, &header[4], sizeof(uint16_t));
-  for (uint16_t i =0; i < htons(staging); i++) {
+  for (uint32_t i = 0; i < htons(staging); i++) {
     // Skip over the name
     uint8_t len;
     do {
@@ -251,7 +248,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress) {
     } while (len != 0);
 
     // Now jump over the type and class
-    for (int i =0; i < 4; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
       iUdp.read(); // we don't care about the returned byte
     }
   }
@@ -261,7 +258,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress) {
   // type A answer) and some authority and additional resource records but
   // we're going to ignore all of them.
 
-  for (uint16_t i =0; i < answerCount; i++) {
+  for (uint32_t i = 0; i < answerCount; i++) {
     // Skip the name
     uint8_t len;
     do {
@@ -297,7 +294,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress) {
     iUdp.read((uint8_t*)&answerClass, sizeof(answerClass));
 
     // Ignore the Time-To-Live as we don't do any caching
-    for (int i =0; i < TTL_SIZE; i++) {
+    for (uint32_t i = 0; i < TTL_SIZE; i++) {
       iUdp.read();  // We don't care about the returned byte
     }
 
@@ -323,7 +320,7 @@ uint16_t DNSClient::ProcessResponse(uint16_t aTimeout, IPAddress& aAddress) {
       }
     } else {
       // This isn't an answer type we're after, move onto the next one
-      for (uint16_t i =0; i < htons(header_flags); i++) {
+      for (uint32_t i = 0; i < htons(header_flags); i++) {
         iUdp.read();  // we don't care about the returned byte
       }
     }

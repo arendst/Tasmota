@@ -107,9 +107,13 @@ String TelegramConnectToTelegram(const String &command) {
 
   String host = F("api.telegram.org");
   String response = "";
+  IPAddress telegram_host_ip;
+  if (!WifiHostByName(host.c_str(), telegram_host_ip)) {
+    return response;
+  }
   uint32_t tls_connect_time = millis();
-  if (telegramClient->connect(host.c_str(), 443)) {
-
+//  if (telegramClient->connect(host.c_str(), 443)) {
+  if (telegramClient->connect(telegram_host_ip, 443)) {
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
 
 //    telegramClient->println("GET /"+command);  // Fails after 20210621

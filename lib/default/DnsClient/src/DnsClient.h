@@ -20,7 +20,7 @@
 class DNSClient {
 public:
   void begin(const IPAddress& aDNSServer);
-  void setTimeout(uint16_t aTimeout = 1000);
+  void setTimeout(uint32_t aTimeout = 1000);
 
   /* Resolve the given hostname to an IP address.
      @param aHostname Name to be resolved
@@ -30,8 +30,8 @@ public:
   int getHostByName(const char* aHostname, IPAddress& aResult);
 
 protected:
-  uint16_t BuildRequest(const char* aName);
-  uint16_t ProcessResponse(uint16_t aTimeout, IPAddress& aAddress);
+  int BuildRequest(const char* aName);
+  int ProcessResponse(uint32_t aTimeout, IPAddress& aAddress);
 
   IPAddress iDNSServer;
   uint16_t iRequestId;
