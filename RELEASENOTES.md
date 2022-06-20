@@ -72,7 +72,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-12.0.0
+- http://ota.tasmota.com/tasmota/release-12.0.2
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -97,7 +97,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota32/release-12.0.0
+- http://ota.tasmota.com/tasmota32/release-12.0.2
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -107,15 +107,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.0.1.2
+## Changelog v12.0.2.1
 ### Added
-- Command ``DnsTimeout 100..20000`` to change default DNS timeout from 1000 msec blocking if no DNS server found
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
-- MQTT rc -4 on TLS connections regression from v12.0.0 [#15809](https://github.com/arendst/Tasmota/issues/15809)
 
 ### Removed
