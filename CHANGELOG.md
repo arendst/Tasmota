@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Fixed
-
+- MQTT rc -4 on TLS connections regression from v12.0.0 (#15809)
 
 ### Removed
 
