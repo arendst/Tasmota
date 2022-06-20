@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- ESP32 SendMail not working over ethernet (#15794)
 
 ### Removed
 
@@ -23,8 +24,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - MQTT rc -4 on connections regression from v12.0.0 (#15809)
-
-## [Released]
 
 ## [12.0.1] 20220617
 - Release Paul

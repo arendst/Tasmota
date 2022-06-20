@@ -115,5 +115,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Changed
 
 ### Fixed
+- ESP32 SendMail not working over ethernet [#15794](https://github.com/arendst/Tasmota/issues/15794)
 
 ### Removed

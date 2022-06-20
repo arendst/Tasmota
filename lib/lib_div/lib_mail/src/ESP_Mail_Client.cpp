@@ -5417,7 +5417,8 @@ bool ESP_Mail_Client::ethLinkUp()
 #if defined(ESP32)
   char *ip = strP(esp_mail_str_328);
   if (strcmp(ETH.localIP().toString().c_str(), ip) != 0)
-    ret = ETH.linkUp();
+//    ret = ETH.linkUp();
+    ret = true;
   delS(ip);
 #endif
   return ret;
