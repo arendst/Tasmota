@@ -268,6 +268,10 @@ String EthernetMacAddress(void);
 #define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
 #define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
 
+#ifndef DNS_TIMEOUT
+#define DNS_TIMEOUT                 1000       // Milliseconds
+#endif
+
 #ifndef MQTT_MAX_PACKET_SIZE
 #define MQTT_MAX_PACKET_SIZE        1200       // Bytes
 //#define MQTT_MAX_PACKET_SIZE        2048       // Bytes

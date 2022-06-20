@@ -992,8 +992,6 @@ void MqttConnected(void) {
 }
 
 void MqttReconnect(void) {
-  char stopic[TOPSZ];
-
   Mqtt.allowed = Settings->flag.mqtt_enabled && (TasmotaGlobal.restart_flag == 0);  // SetOption3 - Enable MQTT, and don't connect if restart in process
   if (Mqtt.allowed) {
 #if defined(USE_MQTT_AZURE_DPS_SCOPEID) && defined(USE_MQTT_AZURE_DPS_PRESHAREDKEY)
@@ -1040,6 +1038,23 @@ void MqttReconnect(void) {
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_ATTEMPTING_CONNECTION));
 
+  if (MqttClient.connected()) { MqttClient.disconnect(); }
+
+  MqttSetClientTimeout();
+
+  MqttClient.setCallback(MqttDataHandler);
+
+  // Keep using hostname to solve rc -4 issues
+  if (!WifiDnsPresent(SettingsText(SET_MQTT_HOST))) {
+    MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
+    return;
+  }
+  MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
+
+  if (2 == Mqtt.initial_connection_state) {  // Executed once just after power on and wifi is connected
+    Mqtt.initial_connection_state = 1;
+  }
+
   char *mqtt_user = nullptr;
   char *mqtt_pwd = nullptr;
   if (strlen(SettingsText(SET_MQTT_USER))) {
@@ -1049,49 +1064,37 @@ void MqttReconnect(void) {
     mqtt_pwd = SettingsText(SET_MQTT_PWD);
   }
 
-  GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
-  Response_P(S_LWT_OFFLINE);
-
-  if (MqttClient.connected()) { MqttClient.disconnect(); }
-
-  MqttSetClientTimeout();
-
 #ifdef USE_MQTT_TLS
+  uint32_t mqtt_connect_time = millis();
   if (Mqtt.mqtt_tls) {
     tlsClient->stop();
   } else {
-//    EspClient = WiFiClient();                // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
     MqttClient.setClient(EspClient);
   }
-#else
-//  EspClient = WiFiClient();                  // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
-  MqttClient.setClient(EspClient);
-#endif
-
-  if (2 == Mqtt.initial_connection_state) {  // Executed once just after power on and wifi is connected
-    Mqtt.initial_connection_state = 1;
-  }
-
-  MqttClient.setCallback(MqttDataHandler);
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#ifdef USE_MQTT_AWS_IOT
   // re-assign private keys in case it was updated in between
   if (Mqtt.mqtt_tls) {
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      // if private key is there, we remove user/pwd
+      mqtt_user = nullptr;
+      mqtt_pwd  = nullptr;
       tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
                                 AWS_IoT_Private_Key,
                                 0xFFFF /* all usages, don't care */, 0);
     }
   }
-#endif
-  IPAddress mqtt_host_ip;
-  if (!WifiHostByName(SettingsText(SET_MQTT_HOST), mqtt_host_ip)) {
-    MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
-    return;
+#endif  // USE_MQTT_AWS_IOT
+#ifdef USE_MQTT_AZURE_IOT
+  String azureMqtt_password = SettingsText(SET_MQTT_PWD);
+  if (azureMqtt_password.indexOf("SharedAccessSignature") == -1) {
+    // assuming a PreSharedKey was provided, calculating a SAS Token into azureMqtt_password
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Authenticating with an Azure IoT Hub Token"));
+    azureMqtt_password = AzurePSKtoToken(SettingsText(SET_MQTT_HOST), SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_PWD));
   }
-  MqttClient.setServer(mqtt_host_ip, Settings->mqtt_port);
-
-  uint32_t mqtt_connect_time = millis();
-#if defined(USE_MQTT_TLS)
+  String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
+  mqtt_user = (char*)azureMqtt_userString.c_str();
+  mqtt_pwd  = (char*)azureMqtt_password.c_str();
+#endif  // USE_MQTT_AZURE_IOT
   bool allow_all_fingerprints = false;
   bool learn_fingerprint1 = false;
   bool learn_fingerprint2 = false;
@@ -1105,31 +1108,21 @@ void MqttReconnect(void) {
     allow_all_fingerprints |= learn_fingerprint2;
     tlsClient->setPubKeyFingerprint(Settings->mqtt_fingerprint[0], Settings->mqtt_fingerprint[1], allow_all_fingerprints);
   }
-#endif
-  bool lwt_retain = Settings->flag4.mqtt_no_retain ? false : true;   // no retained last will if "no_retain"
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (Mqtt.mqtt_tls) {
-    if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
-      // if private key is there, we remove user/pwd
-      mqtt_user = nullptr;
-      mqtt_pwd  = nullptr;
-    }
-  }
-#endif
+#else   // No USE_MQTT_TLS
+  MqttClient.setClient(EspClient);
+#endif  // USE_MQTT_TLS
 
-#ifdef USE_MQTT_AZURE_IOT
-  String azureMqtt_password = SettingsText(SET_MQTT_PWD);
-  if (azureMqtt_password.indexOf("SharedAccessSignature") == -1) {
-    // assuming a PreSharedKey was provided, calculating a SAS Token into azureMqtt_password
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Authenticating with an Azure IoT Hub Token"));
-    azureMqtt_password = AzurePSKtoToken(SettingsText(SET_MQTT_HOST), SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_PWD));
-  }
-
-  String azureMqtt_userString = String(SettingsText(SET_MQTT_HOST)) + "/" + String(SettingsText(SET_MQTT_CLIENT)); + "/?api-version=2018-06-30";
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, azureMqtt_userString.c_str(), azureMqtt_password.c_str(), stopic, 1, lwt_retain, ResponseData(), Settings->flag5.mqtt_persistent ? 0:1)) {
-#else
-  if (MqttClient.connect(TasmotaGlobal.mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, lwt_retain, ResponseData(), Settings->flag5.mqtt_persistent ? 0:1)) {
-#endif  // USE_MQTT_AZURE_IOT
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, TELE, TasmotaGlobal.mqtt_topic, S_LWT);
+  Response_P(S_LWT_OFFLINE);
+  if (MqttClient.connect(TasmotaGlobal.mqtt_client,
+                         mqtt_user,
+                         mqtt_pwd,
+                         stopic,                                         // Will topic
+                         1,                                              // Will QoS
+                         Settings->flag4.mqtt_no_retain ? false : true,  // No retained last will if "no_retain",
+                         ResponseData(),                                 // Will message
+                         Settings->flag5.mqtt_persistent ? 0 : 1)) {     // Clean Session
 #ifdef USE_MQTT_TLS
     if (Mqtt.mqtt_tls) {
 #ifdef ESP8266

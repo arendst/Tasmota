@@ -244,7 +244,7 @@ extern "C" {
   // -2: unable to resolve address
   int32_t t_ping_start(const char *hostname, uint32_t count) {
     IPAddress ipfull;
-    if (!WiFi.hostByName(hostname, ipfull)) {
+    if (!WifiHostByName(hostname, ipfull)) {
       ipfull = 0xFFFFFFFF;
     }
 

@@ -35,6 +35,7 @@
 // Libraries
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
+#include <DnsClient.h>                      // Any getHostByName
 #ifdef ESP32
   #ifdef USE_TLS
   #include "HTTPUpdateLight.h"              // Ota over HTTPS for ESP32
@@ -125,8 +126,7 @@ typedef struct {
   int32_t       energy_kWhtoday_ph[3];     // 2D8
   int32_t       energy_kWhtotal_ph[3];     // 2E4
   int32_t       energy_kWhexport_ph[3];    // 2F0
-
-  uint8_t       free_2fc[4];               // 2FC
+  uint32_t      utc_time;                  // 2FC
 } TRtcSettings;
 TRtcSettings RtcSettings;
 #ifdef ESP32
@@ -159,6 +159,7 @@ struct XDRVMAILBOX {
   char         *command;
 } XdrvMailbox;
 
+DNSClient DnsClient;
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 #ifdef ESP32
@@ -589,6 +590,7 @@ void setup(void) {
   TasmotaGlobal.init_state = INIT_GPIOS;
 
   SetPowerOnState();
+  DnsClient.setTimeout(Settings->dns_timeout);
   WifiConnect();
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s - %s " D_VERSION " %s%s-" ARDUINO_CORE_RELEASE "(%s)"),
