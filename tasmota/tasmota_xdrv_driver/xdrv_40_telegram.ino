@@ -105,8 +105,11 @@ String TelegramConnectToTelegram(const String &command) {
 
   if (!TelegramInit()) { return ""; }
 
-  String host = F("api.telegram.org");
   String response = "";
+  String host = F("api.telegram.org");
+  if (!WifiDnsPresent(host.c_str())) {
+    return response;
+  }
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect(host.c_str(), 443)) {
 

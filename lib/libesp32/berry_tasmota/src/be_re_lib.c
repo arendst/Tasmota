@@ -7,6 +7,7 @@
  *******************************************************************/
 #include "be_constobj.h"
 #include "be_mem.h"
+#include "be_object.h"
 #include "re1.5.h"
 
 /********************************************************************
@@ -33,15 +34,6 @@ re.split = def (regex_str, str) end # native
 
 extern const bclass be_class_re_pattern;
 
-int be_free_comobj(bvm* vm) {
-  int argc = be_top(vm);
-  if (argc > 0) {
-    void * obj = be_tocomptr(vm, 1);
-    if (obj != NULL) { be_os_free(obj); }
-  }
-  be_return_nil(vm);
-}
-
 // Native functions be_const_func()
 // Berry: `re.compile(pattern:string) -> instance(be_pattern)`
 int be_re_compile(bvm *vm) {
@@ -60,7 +52,7 @@ int be_re_compile(bvm *vm) {
     }
     be_pushntvclass(vm, &be_class_re_pattern);
     be_call(vm, 0);
-    be_newcomobj(vm, code, &be_free_comobj);
+    be_newcomobj(vm, code, &be_commonobj_destroy_generic);
     be_setmember(vm, -2, "_p");
     be_pop(vm, 1);
     be_return(vm);

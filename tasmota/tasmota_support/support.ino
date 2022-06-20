@@ -2452,11 +2452,10 @@ void SyslogAsync(bool refresh) {
       uint32_t current_hash = GetHash(SettingsText(SET_SYSLOG_HOST), strlen(SettingsText(SET_SYSLOG_HOST)));
       if (syslog_host_hash != current_hash) {
         IPAddress temp_syslog_host_addr;
-        int ok = WiFi.hostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
-        if (!ok || (0xFFFFFFFF == (uint32_t)temp_syslog_host_addr)) { // 255.255.255.255 is assumed a DNS problem
+        if (!WifiHostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr)) {  // If sleep enabled this might result in exception so try to do it once using hash
           TasmotaGlobal.syslog_level = 0;
           TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Loghost DNS resolve failed (%s). " D_RETRY_IN " %d " D_UNIT_SECOND), SettingsText(SET_SYSLOG_HOST), SYSLOG_TIMER);
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
           return;
         }
         syslog_host_hash = current_hash;

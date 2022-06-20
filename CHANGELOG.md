@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file.
 
 ## [Released]
+## [12.0.2] 20220620
+- Release Paul
+
+## [12.0.1.2]
+### Added
+- Command ``DnsTimeout 100..20000`` to change default DNS timeout from 1000 msec blocking if no DNS server found
+
+### Fixed
+- MQTT rc -4 connections regression from v12.0.0 (#15809)
+
+## [12.0.1] 20220617
+- Release Paul
+
+### Fixed
+- Resolving NTP and/or MQTT server names regression from v12.0.0 (#15816)
 
 ## [12.0.1] 20220617
 - Release Paul

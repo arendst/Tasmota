@@ -23,21 +23,13 @@
 
 #include <berry.h>
 #include "be_mem.h"
+#include "be_object.h"
 
 /*********************************************************************************************\
  * AES class
  * 
 \*********************************************************************************************/
 extern "C" {
-
-  int free_br_obj(bvm* vm) {
-    int argc = be_top(vm);
-    if (argc > 0) {
-      void * obj = be_tocomptr(vm, 1);
-      if (obj != NULL) { be_os_free(obj); }
-    }
-    be_return_nil(vm);
-  }
 
   // `AES_GCM.init(secret_key:bytes(32), iv:bytes(12)) -> instance`
   int32_t m_aes_gcm_init(struct bvm *vm);
@@ -64,14 +56,14 @@ extern "C" {
         br_aes_small_ctr_keys * ctr_ctx = (br_aes_small_ctr_keys *) be_os_malloc(sizeof(br_aes_small_ctr_keys));
         if (!ctr_ctx) { be_throw(vm, BE_MALLOC_FAIL); }
         br_aes_small_ctr_init(ctr_ctx, bytes, length);
-        be_newcomobj(vm, ctr_ctx, &free_br_obj);
+        be_newcomobj(vm, ctr_ctx, &be_commonobj_destroy_generic);
         be_setmember(vm, 1, ".p1");
 
         // Initialize an AES GCM structure based on this CTR engine
         br_gcm_context * gcm_ctx = (br_gcm_context *) be_os_malloc(sizeof(br_gcm_context));
         if (!gcm_ctx) { be_throw(vm, BE_MALLOC_FAIL); }
 		    br_gcm_init(gcm_ctx, &ctr_ctx->vtable, &br_ghash_ctmul32);
-        be_newcomobj(vm, gcm_ctx, &free_br_obj);
+        be_newcomobj(vm, gcm_ctx, &be_commonobj_destroy_generic);
         be_setmember(vm, 1, ".p2");
 
         // Reset GCM context with provided IV
