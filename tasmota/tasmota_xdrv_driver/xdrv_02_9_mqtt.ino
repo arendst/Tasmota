@@ -1038,6 +1038,19 @@ void MqttReconnect(void) {
 
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_ATTEMPTING_CONNECTION));
 
+  if (MqttClient.connected()) { MqttClient.disconnect(); }
+
+  MqttSetClientTimeout();
+
+  MqttClient.setCallback(MqttDataHandler);
+
+  // Keep using hostname to solve rc -4 issues
+  if (!WifiDnsPresent(SettingsText(SET_MQTT_HOST))) {
+    MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
+    return;
+  }
+  MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
+
   if (2 == Mqtt.initial_connection_state) {  // Executed once just after power on and wifi is connected
     Mqtt.initial_connection_state = 1;
   }
@@ -1050,10 +1063,6 @@ void MqttReconnect(void) {
   if (strlen(SettingsText(SET_MQTT_PWD))) {
     mqtt_pwd = SettingsText(SET_MQTT_PWD);
   }
-
-  if (MqttClient.connected()) { MqttClient.disconnect(); }
-  MqttSetClientTimeout();
-  MqttClient.setCallback(MqttDataHandler);
 
 #ifdef USE_MQTT_TLS
   uint32_t mqtt_connect_time = millis();
@@ -1099,17 +1108,8 @@ void MqttReconnect(void) {
     allow_all_fingerprints |= learn_fingerprint2;
     tlsClient->setPubKeyFingerprint(Settings->mqtt_fingerprint[0], Settings->mqtt_fingerprint[1], allow_all_fingerprints);
   }
-
-  MqttClient.setServer(SettingsText(SET_MQTT_HOST), Settings->mqtt_port);
 #else   // No USE_MQTT_TLS
   MqttClient.setClient(EspClient);
-
-  IPAddress mqtt_host_ip;
-  if (!WifiHostByName(SettingsText(SET_MQTT_HOST), mqtt_host_ip)) {
-    MqttDisconnected(-5);  // MQTT_DNS_DISCONNECTED
-    return;
-  }
-  MqttClient.setServer(mqtt_host_ip, Settings->mqtt_port);
 #endif  // USE_MQTT_TLS
 
   char stopic[TOPSZ];

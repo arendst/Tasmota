@@ -740,6 +740,11 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
   return true;
 }
 
+bool WifiDnsPresent(const char* aHostname) {
+  IPAddress aResult;
+  return WifiHostByName(aHostname, aResult);
+}
+
 void WifiPollNtp() {
   static uint8_t ntp_sync_minute = 0;
   static uint32_t ntp_run_time = 0;
