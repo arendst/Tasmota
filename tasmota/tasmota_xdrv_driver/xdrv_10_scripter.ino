@@ -6139,7 +6139,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             }
 
 
-#if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
+#ifdef USE_SENDMAIL
             else if (!strncmp(lp, "mail", 4)) {
               lp+=5;
               //char tmp[256];
@@ -6151,7 +6151,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               }
               goto next_line;
             }
-#endif
+#endif  // USE_SENDMAIL
             else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
                 uint8_t sflag = 0,pflg = 0,svmqtt,swll;
@@ -9720,7 +9720,7 @@ exgc:
 #endif //USE_SCRIPT_WEB_DISPLAY
 
 
-#if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
+#ifdef USE_SENDMAIL
 
 void script_send_email_body(void(*func)(char *)) {
 uint8_t msect = Run_Scripter1(">m", -2, 0);
@@ -9753,7 +9753,7 @@ uint8_t msect = Run_Scripter1(">m", -2, 0);
     func((char*)"*");
   }
 }
-#endif //USE_SENDMAIL
+#endif  // USE_SENDMAIL
 
 #ifdef USE_SCRIPT_JSON_EXPORT
 void ScriptJsonAppend(void) {

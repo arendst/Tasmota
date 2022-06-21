@@ -1129,7 +1129,15 @@
 \*********************************************************************************************/
 
 #ifdef USE_CONFIG_OVERRIDE
-  #include "user_config_override.h"         // Configuration overrides for my_user_config.h
+  #include "user_config_override.h"              // Configuration overrides for my_user_config.h
+#endif
+
+/*********************************************************************************************\
+ * Post-process obsoletes
+\*********************************************************************************************/
+
+#ifdef USE_ESP32MAIL
+#define USE_SENDMAIL                             // USE_ESP32MAIL is replaced by USE_SENDMAIL
 #endif
 
 /*********************************************************************************************\
@@ -1168,8 +1176,14 @@
  * Post-process compile options for TLS
 \*********************************************************************************************/
 
-#if defined(USE_MQTT_TLS) || defined(USE_SENDMAIL) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS) || defined(USE_ALEXA_AVS)
-  #define USE_TLS                                  // flag indicates we need to include TLS code
+#ifdef ESP8266
+#ifdef USE_SENDMAIL
+  #define USE_TLS                                // flag indicates we need to include TLS code
+#endif
+#endif
+
+#if defined(USE_MQTT_TLS) || defined(USE_TELEGRAM) || defined(USE_WEBCLIENT_HTTPS) || defined(USE_ALEXA_AVS)
+  #define USE_TLS                                // flag indicates we need to include TLS code
 #endif
 
 /*********************************************************************************************\
