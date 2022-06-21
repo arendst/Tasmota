@@ -96,7 +96,7 @@ void SM2335Write(uint8_t value) {
   pinMode(Sm2335.data, OUTPUT);
 }
 
-void SM2335Start(uint16_t addr) {
+void SM2335Start(uint8_t addr) {
   digitalWrite(Sm2335.data, LOW);
   delayMicroseconds(SM2335_DELAY);
   digitalWrite(Sm2335.clk, LOW);
