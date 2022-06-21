@@ -815,7 +815,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_HYT)
     feature8 |= 0x20000000;  // xsns_97_hyt.ino
 #endif
-//    feature8 |= 0x40000000;
+#if defined(USE_LIGHT) && defined(USE_SM2335)
+    feature8 |= 0x40000000;  // xlgt_09_sm2335.ino
+#endif
 //    feature8 |= 0x80000000;
   }
 

@@ -280,7 +280,7 @@ a_features = [[
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
     "USE_SDM230","USE_CM110x","USE_BL6523","USE_ADE7880",
     "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
-    "USE_BP5758D","USE_HYT","",""
+    "USE_BP5758D","USE_HYT","USE_SM2335",""
     ],[
     "","","","",
     "","","","",

@@ -189,6 +189,7 @@ enum UserSelectablePins {
   GPIO_SDIO_CMD, GPIO_SDIO_CLK, GPIO_SDIO_D0, GPIO_SDIO_D1, GPIO_SDIO_D2, GPIO_SDIO_D3, // SD Card SDIO interface, including 1-bit and 4-bit modes
   GPIO_FLOWRATEMETER_IN,               // Flowrate Meter
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
+  GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -422,6 +423,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDIO_D3 "|"
   D_SENSOR_FLOWRATEMETER "|"
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
+  D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -433,6 +435,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
 #define MAX_SM2135_DAT   7
+#define MAX_SM2335_DAT   16
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -663,6 +666,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SM2135_CLK),                    // SM2135 CLOCK
   AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT,   // SM2135 DATA
 #endif  // USE_SM2135
+#ifdef USE_SM2335
+  AGPIO(GPIO_SM2335_CLK),                    // SM2335 CLOCK
+  AGPIO(GPIO_SM2335_DAT) + MAX_SM2335_DAT,   // SM2335 DATA
+#endif  // USE_SM2335
 #ifdef USE_BP5758D
   AGPIO(GPIO_BP5758D_CLK),    // BP5758D CLOCK
   AGPIO(GPIO_BP5758D_DAT),    // BP5758D DATA

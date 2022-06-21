@@ -65,6 +65,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MY92X1            | - | x / - | x | x | - | x |
 | USE_SM16716           | - | x / - | x | x | - | x |
 | USE_SM2135            | - | x / - | x | x | - | x |
+| USE_SM2335            | - | x / - | x | x | - | x |
 | USE_BP5758D           | - | x / - | x | x | - | x |
 | USE_SONOFF_L1         | - | x / - | x | x | - | x |
 | USE_ELECTRIQ_MOODL    | - | x / - | x | x | - | x |
