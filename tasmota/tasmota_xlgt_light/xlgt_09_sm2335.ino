@@ -129,7 +129,7 @@ bool SM2335SetChannels(void) {
     SM2335Write(0); // Cold White 1/2
     SM2335Write(0); // Cold White 2/2
     SM2335Write(0); // Warm White 1/2
-    SM2335Write(0); // WarmW hite 2/2
+    SM2335Write(0); // Warm White 2/2
     SM2335Stop();
     return true;
   }
