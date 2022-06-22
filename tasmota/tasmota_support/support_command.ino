@@ -803,7 +803,7 @@ void CmndGlobalTemp(void) {
       // Temperature is now Celsius
       if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
         TasmotaGlobal.temperature_celsius = temperature;
-        TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+        TasmotaGlobal.global_update = TasmotaGlobal.uptime;
         TasmotaGlobal.user_globals[0] = 1;
       }
     }
@@ -823,7 +823,7 @@ void CmndGlobalHum(void) {
       float humidity = CharToFloat(XdrvMailbox.data);
       if ((humidity >= 0.0f) && (humidity <= 100.0f)) {
         TasmotaGlobal.humidity = humidity;
-        TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+        TasmotaGlobal.global_update = TasmotaGlobal.uptime;
         TasmotaGlobal.user_globals[1] = 1;
       }
     }
@@ -845,7 +845,7 @@ void CmndGlobalPress(void) {
       // Pressure is now hPa
       if ((pressure >= 0.0f) && (pressure <= 1200.0f)) {
         TasmotaGlobal.pressure_hpa = pressure;
-        TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+        TasmotaGlobal.global_update = TasmotaGlobal.uptime;
         TasmotaGlobal.user_globals[2] = 1;
       }
     }
