@@ -696,7 +696,7 @@
 #define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 //#define USE_THERMOSTAT                           // Add support for Thermostat
-
+#define USE_SM2335                               // Add support for SM2335 RGBCW led control as used in Switchbot Bulb
 #define USE_ETHERNET                             // Add support for ethernet (+20k code)
 
 #ifndef USE_KNX

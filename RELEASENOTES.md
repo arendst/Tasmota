@@ -109,6 +109,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.0.2.1
 ### Added
+- Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs
 
 ### Breaking Changed
 
