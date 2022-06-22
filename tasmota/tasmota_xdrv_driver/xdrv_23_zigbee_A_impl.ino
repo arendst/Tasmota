@@ -1524,12 +1524,14 @@ void CmndZbEZSPListen(void) {
 
   ResponseCmndDone();
 }
+#endif // USE_ZIGBEE_EZSP
 
 void ZigbeeGlowPermitJoinLight(void) {
-#ifdef ESP8266  // quick fix since this causes a crash on ESP32
   static const uint16_t cycle_time = 1000;    // cycle up and down in 1000 ms
   static const uint16_t half_cycle_time = cycle_time / 2;    // cycle up and down in 1000 ms
 
+  int led_pin = Pin(GPIO_LEDLNK);
+  if (led_pin >= 0) {
   uint16_t led_power = 0;         // turn led off
   if (zigbee.permit_end_time) {
     uint32_t millis_to_go = millis() - zigbee.permit_end_time;
@@ -1543,13 +1545,15 @@ void ZigbeeGlowPermitJoinLight(void) {
   }
 
   // change the led state
-  int led_pin = Pin(GPIO_LEDLNK);
-  if (led_pin >= 0) {
+#ifdef ESP32
+    if (analogAttach(led_pin, TasmotaGlobal.ledlnk_inverted) >= 0) {
+      analogWritePhase(led_pin, led_power, 0);
+    }
+#else
     analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
-  }
 #endif
 }
-#endif // USE_ZIGBEE_EZSP
+}
 
 // check if the permitjoin timer has expired
 void ZigbeePermitJoinUpdate(void) {
@@ -1559,9 +1563,7 @@ void ZigbeePermitJoinUpdate(void) {
       zigbee.permit_end_time = 0;   // disable timer
       Z_PermitJoinDisable();
     }
-#ifdef USE_ZIGBEE_EZSP
     ZigbeeGlowPermitJoinLight();    // update glowing light accordingly
-#endif // USE_ZIGBEE_EZSP
   }
 }
 
