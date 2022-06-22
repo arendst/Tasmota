@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.0.2.1]
 ### Added
+- Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs (#15839)
 
 ### Changed
 
