@@ -115,8 +115,7 @@ bool SM2335SetChannels(void) {
   if (cur_col_10[0] == 0 && cur_col_10[1] == 0 && cur_col_10[2] == 0 && cur_col_10[3] == 0 && cur_col_10[4] == 0) {
     SM2335Start(SM2335_ADDR_STANDBY);
     // Clear all remaining data.  This clears out Current, Red, Green, Blue, Cold White, Warm White.
-    for (int i = 0; i < 11; i++)
-    {
+    for (int i = 0; i < 11; i++) {
       SM2335Write(0);
     }
     SM2335Stop();
@@ -128,8 +127,7 @@ bool SM2335SetChannels(void) {
   // Set the current defined in ModuleSelected.
   SM2335Write(Sm2335.current);
   // Set RGB and CW grayscale.
-  for (int i = 0; i < 5; i++)
-  {
+  for (int i = 0; i < 5; i++) {
     SM2335Write((uint8_t)(cur_col_10[i] >> 8));
     SM2335Write((uint8_t)(cur_col_10[i] & 0xFF));
   }
