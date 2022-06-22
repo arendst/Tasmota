@@ -1263,6 +1263,20 @@ static int m_buffer(bvm *vm)
 }
 
 /*
+ * Returns `btrue` if the buffer is mapped to memory
+ * or `bfalse` if memory was allocated by us.
+ * 
+ * `ismapped() -> bool`
+ */
+static int m_is_mapped(bvm *vm)
+{
+    buf_impl attr = m_read_attributes(vm, 1);
+    bbool mapped = (attr.mapped || (attr.bufptr == NULL));
+    be_pushbool(vm, mapped);
+    be_return(vm);
+}
+
+/*
  * Change the pointer to a mapped buffer.
  * 
  * This call does nothing if the buffer is not mapped (i.e. memory is managed externally)
@@ -1547,6 +1561,7 @@ void be_load_byteslib(bvm *vm)
         { ".len", NULL },
         { "_buffer", m_buffer },
         { "_change_buffer", m_change_buffer },
+        { "ismapped", m_is_mapped },
         { "init", m_init },
         { "deinit", m_deinit },
         { "tostring", m_tostring },
@@ -1590,6 +1605,7 @@ class be_class_bytes (scope: global, name: bytes) {
     .len, var
     _buffer, func(m_buffer)
     _change_buffer, func(m_change_buffer)
+    ismapped, func(m_is_mapped)
     init, func(m_init)
     deinit, func(m_deinit)
     tostring, func(m_tostring)
