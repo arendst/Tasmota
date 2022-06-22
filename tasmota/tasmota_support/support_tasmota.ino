@@ -849,7 +849,7 @@ const char kGlobalValues[] PROGMEM = D_JSON_TEMPERATURE "|" D_JSON_HUMIDITY "|" 
 
 void GetGlobalValues(void) {
   for (uint32_t type = 0; type < 3; type++) {
-    if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[0]) { continue; }
+    if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
 
     char key[20];
     GetTextIndexed(key, sizeof(key), type, kGlobalValues);
