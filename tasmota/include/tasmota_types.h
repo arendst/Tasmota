@@ -674,9 +674,7 @@ typedef struct {
   uint16_t      light_wakeup;              // 4A6
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
   uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A9
-
-  uint8_t       free_4c5[3];               // 4C5
-
+  uint8_t       global_sensor_index[3];    // 4C5
   uint16_t      dns_timeout;               // 4C8
   uint8_t       ds3502_state[MAX_DS3502];  // 4CA
   uint16_t      influxdb_port;             // 4CE

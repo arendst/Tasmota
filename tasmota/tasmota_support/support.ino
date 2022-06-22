@@ -743,17 +743,17 @@ float ConvertTempToFahrenheit(float c) {
 
 float ConvertTempToCelsius(float c) {
   float result = c;
-
-  if (!isnan(c) && !Settings->flag.temperature_conversion) {   // SetOption8 - Switch between Celsius or Fahrenheit
+  if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = (c - 32) / 1.8f;                                  // Celsius
   }
-  result = result + (0.1f * Settings->temp_comp);
   return result;
 }
 
 void UpdateGlobalTemperature(float c) {
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.temperature_celsius = c;
+  if (!Settings->global_sensor_index[0] && !TasmotaGlobal.user_globals[0]) {
+    TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    TasmotaGlobal.temperature_celsius = c;
+  }
 }
 
 float ConvertTemp(float c) {
@@ -770,8 +770,10 @@ char TempUnit(void) {
 float ConvertHumidity(float h) {
   float result = h;
 
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.humidity = h;
+  if (!Settings->global_sensor_index[1] && !TasmotaGlobal.user_globals[1]) {
+    TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    TasmotaGlobal.humidity = h;
+  }
 
   result = result + (0.1f * Settings->hum_comp);
 
@@ -794,11 +796,27 @@ float CalcTempHumToDew(float t, float h) {
   return result;
 }
 
+float ConvertHgToHpa(float p) {
+  // Convert mmHg (or inHg) to hPa
+  float result = p;
+  if (!isnan(p) && Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
+    if (Settings->flag5.mm_vs_inch) {                          // SetOption139 - Switch between mmHg or inHg pressure unit
+      result = p * 33.86389f;                                  // inHg (double to float saves 16 bytes!)
+    } else {
+      result = p * 1.3332239f;                                 // mmHg (double to float saves 16 bytes!)
+    }
+  }
+  return result;
+}
+
 float ConvertPressure(float p) {
+  // Convert hPa to mmHg (or inHg)
   float result = p;
 
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.pressure_hpa = p;
+  if (!Settings->global_sensor_index[2] && !TasmotaGlobal.user_globals[2]) {
+    TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    TasmotaGlobal.pressure_hpa = p;
+  }
 
   if (!isnan(p) && Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
     if (Settings->flag5.mm_vs_inch) {                          // SetOption139 - Switch between mmHg or inHg pressure unit

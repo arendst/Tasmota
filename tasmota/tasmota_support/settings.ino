@@ -1544,6 +1544,11 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0C000102) {  // 12.0.1.2
       Settings->dns_timeout = DNS_TIMEOUT;
     }
+    if (Settings->version < 0x0C000202) {  // 12.0.2.2
+      for (uint32_t i = 0; i < 3; i++) {
+        Settings->global_sensor_index[i] = 0;
+      }
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

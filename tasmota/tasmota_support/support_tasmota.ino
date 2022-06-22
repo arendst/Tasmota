@@ -845,6 +845,51 @@ String GetSwitchText(uint32_t i) {
   return switch_text;
 }
 
+const char kGlobalValues[] PROGMEM = D_JSON_TEMPERATURE "|" D_JSON_HUMIDITY "|" D_JSON_PRESSURE;
+
+void GetGlobalValues(void) {
+  for (uint32_t type = 0; type < 3; type++) {
+    if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[0]) { continue; }
+
+    char key[20];
+    GetTextIndexed(key, sizeof(key), type, kGlobalValues);
+
+    float value = -9999;
+    uint32_t idx = 0;
+    char *data = ResponseData();
+    while (data) {
+      data = strstr(data, key);
+      if (data) {
+        idx++;
+        data += strlen(key) + 2;
+        float new_value = CharToFloat(data);
+        if (1 == idx) { value = new_value; }
+
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: %s value%d = %2_f"), key, idx, &new_value);
+
+        if (idx == Settings->global_sensor_index[type]) {
+          value = new_value;
+          break;
+        }
+      }
+    }
+    if (value != -9999) {
+      switch (type) {
+        case 0:  // Temperature
+          TasmotaGlobal.temperature_celsius = ConvertTempToCelsius(value);
+          break;
+        case 1:  // Humidity
+          TasmotaGlobal.humidity = value;
+          break;
+        case 2:  // Pressure
+          TasmotaGlobal.pressure_hpa = ConvertHgToHpa(value);
+          break;
+      }
+      TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    }
+  }
+}
+
 void MqttAppendSensorUnits(void)
 {
   if (ResponseContains_P(PSTR(D_JSON_PRESSURE))) {
@@ -875,7 +920,9 @@ bool MqttShowSensor(bool call_show_sensor)
   XsnsCall(FUNC_JSON_APPEND);
   XdrvCall(FUNC_JSON_APPEND);
 
-  if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {
+  GetGlobalValues();
+
+  if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {  // SetOption2 (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
       uint32_t add_comma = 0;
       ResponseAppend_P(PSTR(",\"Global\":{"));

@@ -33,7 +33,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|" D_CMND_WIFI "|" D_CMND_DNSTIMEOUT "|"
   D_CMND_DEVICENAME "|" D_CMND_FN "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
-  D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_SWITCHTEXT "|"
+  D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -68,7 +68,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig, &CmndWifi, &CmndDnsTimeout,
   &CmndDevicename, &CmndFriendlyname, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
-  &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndSwitchText,
+  &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -789,31 +789,68 @@ void CmndHumOffset(void)
   ResponseCmndFloat((float)(Settings->hum_comp) / 10, 1);
 }
 
-void CmndGlobalTemp(void)
-{
-  if (XdrvMailbox.data_len > 0) {
-    float temperature = CharToFloat(XdrvMailbox.data);
-    if (!isnan(temperature) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
-      temperature = (temperature - 32) / 1.8f;                             // Celsius
+void CmndGlobalTemp(void) {
+  if (2 == XdrvMailbox.index) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 251)) {
+      Settings->global_sensor_index[0] = XdrvMailbox.payload;
+      TasmotaGlobal.user_globals[0] = 0;
     }
-    if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
-      ConvertTemp(temperature);
-      TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+    ResponseCmndIdxNumber(Settings->global_sensor_index[0]);
+  } else {
+    if (XdrvMailbox.data_len > 0) {
+      // Set temperature based on SO8 (Celsius or Fahrenheit)
+      float temperature = ConvertTempToCelsius(CharToFloat(XdrvMailbox.data));
+      // Temperature is now Celsius
+      if ((temperature >= -50.0f) && (temperature <= 100.0f)) {
+        TasmotaGlobal.temperature_celsius = temperature;
+        TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+        TasmotaGlobal.user_globals[0] = 1;
+      }
     }
+    ResponseCmndFloat(TasmotaGlobal.temperature_celsius, 1);
   }
-  ResponseCmndFloat(TasmotaGlobal.temperature_celsius, 1);
 }
 
-void CmndGlobalHum(void)
-{
-  if (XdrvMailbox.data_len > 0) {
-    float humidity = CharToFloat(XdrvMailbox.data);
-    if ((humidity >= 0.0f) && (humidity <= 100.0f)) {
-      ConvertHumidity(humidity);
-      TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+void CmndGlobalHum(void) {
+  if (2 == XdrvMailbox.index) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 251)) {
+      Settings->global_sensor_index[1] = XdrvMailbox.payload;
+      TasmotaGlobal.user_globals[1] = 0;
     }
+    ResponseCmndIdxNumber(Settings->global_sensor_index[1]);
+  } else {
+    if (XdrvMailbox.data_len > 0) {
+      float humidity = CharToFloat(XdrvMailbox.data);
+      if ((humidity >= 0.0f) && (humidity <= 100.0f)) {
+        TasmotaGlobal.humidity = humidity;
+        TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+        TasmotaGlobal.user_globals[1] = 1;
+      }
+    }
+    ResponseCmndFloat(TasmotaGlobal.humidity, 1);
   }
-  ResponseCmndFloat(TasmotaGlobal.humidity, 1);
+}
+
+void CmndGlobalPress(void) {
+  if (2 == XdrvMailbox.index) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 251)) {
+      Settings->global_sensor_index[2] = XdrvMailbox.payload;
+      TasmotaGlobal.user_globals[2] = 0;
+    }
+    ResponseCmndIdxNumber(Settings->global_sensor_index[2]);
+  } else {
+    if (XdrvMailbox.data_len > 0) {
+      // Set pressure based on SO24 (hPa or mmHg (or inHg based on SO139))
+      float pressure = ConvertHgToHpa(CharToFloat(XdrvMailbox.data));
+      // Pressure is now hPa
+      if ((pressure >= 0.0f) && (pressure <= 1200.0f)) {
+        TasmotaGlobal.pressure_hpa = pressure;
+        TasmotaGlobal.global_update = 1;  // Keep global values just entered valid
+        TasmotaGlobal.user_globals[2] = 1;
+      }
+    }
+    ResponseCmndFloat(TasmotaGlobal.pressure_hpa, 1);
+  }
 }
 
 void CmndSleep(void)

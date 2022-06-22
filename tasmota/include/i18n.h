@@ -364,6 +364,7 @@
 #define D_CMND_HUMOFFSET "HumOffset"
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"
 #define D_CMND_GLOBAL_HUM "GlobalHum"
+#define D_CMND_GLOBAL_PRESS "GlobalPress"
 
 #define D_SO_WIFINOSLEEP "WifiNoSleep"
 

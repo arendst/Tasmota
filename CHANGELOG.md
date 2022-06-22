@@ -3,16 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.0.2.1]
+## [12.0.2.2]
 ### Added
-- Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs (#15839)
+- Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data (#15834)
+- Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data (#15834)
+- Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data (#15834)
 
 ### Changed
 
 ### Fixed
-- ESP32 SendMail not working over ethernet (#15794)
 
 ### Removed
+
+## [12.0.2.1] 20220622
+### Added
+- Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs (#15839)
+
+### Fixed
+- ESP32 SendMail not working over ethernet (#15794)
 
 ## [Released]
 

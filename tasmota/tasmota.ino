@@ -241,6 +241,15 @@ struct TasmotaGlobal_t {
   int16_t save_data_counter;                // Counter and flag for config save to Flash
   RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
+  StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+  uint16_t pwm_inverted;                    // PWM inverted flag (1 = inverted) - extended to 16 bits for ESP32
+#ifdef ESP32
+  int16_t pwm_cur_value[MAX_PWMS];          // Current effective values of PWMs as applied to GPIOs
+  int16_t pwm_cur_phase[MAX_PWMS];          // Current phase values of PWMs as applied to GPIOs
+  int16_t pwm_value[MAX_PWMS];              // Wanted values of PWMs after update - -1 means no change
+  int16_t pwm_phase[MAX_PWMS];              // Wanted phase of PWMs after update - -1 means no change
+#endif // ESP32
+
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
   bool backlog_nodelay;                     // Execute all backlog commands with no delay
@@ -261,14 +270,7 @@ struct TasmotaGlobal_t {
   bool no_autoexec;                         // Disable autoexec
   bool enable_logging;                      // Enable logging
 
-  StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
-  uint16_t pwm_inverted;                    // PWM inverted flag (1 = inverted) - extended to 16 bits for ESP32
-#ifdef ESP32
-  int16_t pwm_cur_value[MAX_PWMS];          // Current effective values of PWMs as applied to GPIOs
-  int16_t pwm_cur_phase[MAX_PWMS];          // Current phase values of PWMs as applied to GPIOs
-  int16_t pwm_value[MAX_PWMS];              // Wanted values of PWMs after update - -1 means no change
-  int16_t pwm_phase[MAX_PWMS];              // Wanted phase of PWMs after update - -1 means no change
-#endif // ESP32
+  uint8_t user_globals[3];                  // User set global temp/hum/press
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured
