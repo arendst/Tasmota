@@ -54,6 +54,7 @@ enum UserSelectablePins {
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_TM1638CLK, GPIO_TM1638DIO, GPIO_TM1638STB,  // TM1638 interface
   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
+  GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_HX711_SCK, GPIO_HX711_DAT,      // HX711 Load Cell interface
   GPIO_TX2X_TXD_BLACK,                 // TX20/TX23 Transmission Pin
   GPIO_TUYA_TX, GPIO_TUYA_RX,          // Tuya Serial interface
@@ -286,7 +287,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
   D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
-  D_SENSOR_DFR562 "|"
+  D_SENSOR_DFR562 "|" D_SENSOR_DFR562_BUSY "|"
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX2X_TX "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
@@ -872,7 +873,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_MP3_PLAYER
   AGPIO(GPIO_MP3_DFR562),     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
-#endif
+  AGPIO(GPIO_MP3_DFR562_BUSY),// RB-DFR-562, DFPlayer Mini MP3 Player optional Busy flag
+  #endif
 #ifdef USE_AZ7798
   AGPIO(GPIO_AZ_TXD),         // AZ-Instrument 7798 CO2 datalogger Serial interface
   AGPIO(GPIO_AZ_RXD),         // AZ-Instrument 7798 CO2 datalogger Serial interface
