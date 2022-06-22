@@ -74,7 +74,7 @@ def esp32_build_filesystem(fs_size):
     return True
 
 def esp32_fetch_safeboot_bin(tasmota_platform):
-    safeboot_fw_url = "https://github.com/arendst/Tasmota-firmware/raw/main/firmware/tasmota32/" + tasmota_platform + "-safeboot.bin"
+    safeboot_fw_url = "http://ota.tasmota.com/tasmota32/release/" + tasmota_platform + "-safeboot.bin"
     safeboot_fw_name = join(variants_dir, tasmota_platform + "-safeboot.bin")
     if(exists(safeboot_fw_name)):
         print("safeboot binary already in place.")
