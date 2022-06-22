@@ -221,38 +221,6 @@ uint16_t SendMail(char *buffer) {
 
 #ifdef USE_SCRIPT
 
-void send_message_txt(char *txt) {
-  if (*txt == '@') {
-    txt++;
-    attach_File(txt);
-  } else if (*txt == '&') {
-    txt++;
-    attach_Array(txt);
-  } else if (*txt == '$') {
-    txt++;
-#if defined(ESP32) && defined(USE_WEBCAM)
-    if (num_attachments < MAX_ATTCHMENTS) {
-      attachments[num_attachments] = (char*)malloc(32);
-      uint32_t cnt;
-      uint8_t *buff;
-      uint32_t len, picmax;
-      picmax = WcGetPicstore(-1, 0);
-      cnt = *txt&7;
-      if (cnt < 1 || cnt > picmax) cnt = 1;
-      len = WcGetPicstore(cnt - 1, &buff);
-      if (len) {
-        sprintf(attachments[num_attachments], "img_%1d.jpg", cnt);
-        attach_Data(attachments[num_attachments], buff, len);
-      }
-      num_attachments++;
-    }
-#endif
-  } else {
-    html_content += txt;
-    email_mptr->html.content  = html_content.c_str();
-  }
-}
-
 void attach_File(char *path) {
   SMTP_Attachment att;
   if (num_attachments < MAX_ATTCHMENTS) {
@@ -272,6 +240,17 @@ void attach_File(char *path) {
     email_mptr->resetAttachItem(att);
     num_attachments++;
   }
+}
+
+void attach_Data(char *name, uint8_t *buff, uint32_t len) {
+  SMTP_Attachment att;
+  att.descr.filename = name;
+  att.descr.mime = "application/octet-stream";
+  att.blob.data = buff;
+  att.blob.size = len;
+  att.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
+  email_mptr->addAttachment(att);
+  email_mptr->resetAttachItem(att);
 }
 
 float *get_array_by_name(char *name, uint16_t *alen);
@@ -308,15 +287,36 @@ void attach_Array(char *aname) {
   }
 }
 
-void attach_Data(char *name, uint8_t *buff, uint32_t len) {
-  SMTP_Attachment att;
-  att.descr.filename = name;
-  att.descr.mime = "application/octet-stream";
-  att.blob.data = buff;
-  att.blob.size = len;
-  att.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
-  email_mptr->addAttachment(att);
-  email_mptr->resetAttachItem(att);
+void send_message_txt(char *txt) {
+  if (*txt == '&') {
+    txt++;
+    attach_Array(txt);
+  } else if (*txt == '@') {
+    txt++;
+    attach_File(txt);
+  } else if (*txt == '$') {
+    txt++;
+#ifdef USE_WEBCAM
+    if (num_attachments < MAX_ATTCHMENTS) {
+      attachments[num_attachments] = (char*)malloc(32);
+      uint32_t cnt;
+      uint8_t *buff;
+      uint32_t len, picmax;
+      picmax = WcGetPicstore(-1, 0);
+      cnt = *txt &7;
+      if (cnt < 1 || cnt > picmax) cnt = 1;
+      len = WcGetPicstore(cnt - 1, &buff);
+      if (len) {
+        sprintf(attachments[num_attachments], "img_%1d.jpg", cnt);
+        attach_Data(attachments[num_attachments], buff, len);
+      }
+      num_attachments++;
+    }
+#endif  // USE_WEBCAM
+  } else {
+    html_content += txt;
+    email_mptr->html.content = html_content.c_str();
+  }
 }
 
 #endif  // USE_SCRIPT

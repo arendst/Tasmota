@@ -243,7 +243,7 @@ bool SendEmail::send(const String& from, const String& to, const String& subject
     buffer = F("Content-Type: Multipart/mixed; boundary=frontier\r\n\r\n");
     client->print(buffer);
     g_client = client;
-    script_send_email_body(xsend_message_txt);
+    script_send_email_body(send_message_txt);
   } else {
 #endif  // USE_SCRIPT
     buffer = F("\r\n");
@@ -362,112 +362,90 @@ uint16_t SendMail(char *buffer) {
 /*********************************************************************************************/
 
 #ifdef USE_SCRIPT
-void xsend_message_txt(char *msg) {
-
-#ifdef DEBUG_EMAIL_PORT
-  AddLog(LOG_LEVEL_INFO, PSTR("MAI: '%s'"), msg);
-#endif
-
-#ifdef USE_UFILESYS
-  if (*msg=='@') {
-    msg++;
-    attach_File(msg);
-  } else if (*msg=='&') {
-    msg++;
-    attach_Array(msg);
-  } else {
-    g_client->print(F("--frontier\r\n"));
-    g_client->print(F("Content-Type: text/plain\r\n\r\n"));
-    g_client->println(msg);
-    g_client->print(F("\r\n--frontier\r\n"));
-  }
-#else  // No USE_UFILESYS
-  if (*msg=='&') {
-    msg++;
-    attach_Array(msg);
-  } else {
-    g_client->print(F("--frontier\r\n"));
-    g_client->print(F("Content-Type: text/plain\r\n\r\n"));
-    g_client->println(msg);
-    g_client->print(F("\r\n--frontier\r\n"));
-  }
-#endif  // USE_UFILESYS
-}
-
-float *get_array_by_name(char *name, uint16_t *alen);
-void flt2char(float num, char *nbuff);
-
-void attach_Array(char *aname) {
-  float *array = 0;
-  uint16_t alen;
-  array = get_array_by_name(aname, &alen);
-  g_client->print(F("--frontier\r\n"));
-  g_client->print(F("Content-Type: text/plain\r\n"));
-  if (array && alen) {
-#ifdef DEBUG_EMAIL_PORT
-    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Array found %d"), alen);
-#endif
-    char buff[64];
-    sprintf_P(buff,PSTR("Content-Disposition: attachment; filename=\"%s.txt\"\r\n\r\n"), aname);
-    g_client->write(buff);
-    // send timestamp
-    strcpy(buff, GetDateAndTime(DT_LOCAL).c_str());
-    strcat(buff,"\t");
-    g_client->write(buff);
-
-    float *fp=array;
-    for (uint32_t cnt = 0; cnt<alen; cnt++) {
-      // export array as tab gelimited text
-      char nbuff[16];
-      flt2char(*fp++, nbuff);
-      if (cnt < (alen - 1)) {
-        strcat(nbuff,"\t");
-      } else {
-        strcat(nbuff,"\n");
-      }
-      g_client->write(nbuff, strlen(nbuff));
-    }
-  } else {
-    g_client->print(F("\r\n\r\narray not found!\r\n"));
-  }
-  g_client->print(F("\r\n--frontier\r\n"));
-}
-#endif  // USE_SCRIPT
-
-/*********************************************************************************************/
-
 #ifdef USE_UFILESYS
 
 #include <LittleFS.h>
 extern FS *ufsp;
 
 void attach_File(char *path) {
-  g_client->print(F("--frontier\r\n"));
-  g_client->print(F("Content-Type: text/plain\r\n"));
-  char buff[64];
   char *cp = path;
-  while (*cp=='/') cp++;
+  while (*cp == '/') { cp++; }
   File file = ufsp->open(path, "r");
   if (file) {
-    sprintf_P(buff,PSTR("Content-Disposition: attachment; filename=\"%s\"\r\n\r\n"), cp);
+    char buff[64];
+    snprintf_P(buff, sizeof(buff), PSTR("Content-Disposition: attachment; filename=\"%s\"\r\n\r\n"), cp);
     g_client->write(buff);
     uint16_t flen = file.size();
     uint8_t fbuff[64];
     uint16_t blen = sizeof(fbuff);
-    while (flen>0) {
+    while (flen > 0) {
       file.read(fbuff, blen);
       flen -= blen;
       g_client->write(fbuff, blen);
-      if (flen<blen) blen = flen;
+      if (flen < blen) { blen = flen; }
     }
     file.close();
   } else {
     g_client->print(F("\r\n\r\nfile not found!\r\n"));
   }
-  g_client->print(F("\r\n--frontier\r\n"));
 }
 
 #endif  // USE_UFILESYS
+
+float *get_array_by_name(char *name, uint16_t *alen);
+void flt2char(float num, char *nbuff);
+
+void attach_Array(char *aname) {
+  uint16_t alen;
+  float *array = get_array_by_name(aname, &alen);
+  if (array && alen) {
+#ifdef DEBUG_EMAIL_PORT
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Array found %d"), alen);
+#endif
+    char buff[64];
+    snprintf_P(buff, sizeof(buff), PSTR("Content-Disposition: attachment; filename=\"%s.txt\"\r\n\r\n"), aname);
+    g_client->write(buff);
+    // send timestamp
+    strcpy(buff, GetDateAndTime(DT_LOCAL).c_str());
+    strcat(buff, "\t");
+    g_client->write(buff);
+
+    float *fp=array;
+    for (uint32_t cnt = 0; cnt < alen; cnt++) {
+      // export array as tab gelimited text
+      char nbuff[16];
+      flt2char(*fp++, nbuff);
+      if (cnt < (alen - 1)) {
+        strcat(nbuff, "\t");
+      } else {
+        strcat(nbuff, "\n");
+      }
+      g_client->write(nbuff, strlen(nbuff));
+    }
+  } else {
+    g_client->print(F("\r\n\r\narray not found!\r\n"));
+  }
+}
+
+void send_message_txt(char *txt) {
+  g_client->print(F("--frontier\r\n"));
+  g_client->print(F("Content-Type: text/plain\r\n"));
+  if (*txt == '&') {
+    txt++;
+    attach_Array(txt);
+#ifdef USE_UFILESYS
+  } else if (*txt == '@') {
+    txt++;
+    attach_File(txt);
+#endif  // USE_UFILESYS
+  } else {
+    g_client->print(F("\r\n"));
+    g_client->println(txt);
+  }
+  g_client->print(F("\r\n--frontier\r\n"));
+}
+
+#endif  // USE_SCRIPT
 
 /*********************************************************************************************/
 
