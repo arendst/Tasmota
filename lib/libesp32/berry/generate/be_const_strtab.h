@@ -519,6 +519,7 @@ extern const bcstring be_const_str_is_ota;
 extern const bcstring be_const_str_is_running;
 extern const bcstring be_const_str_is_spiffs;
 extern const bcstring be_const_str_isinstance;
+extern const bcstring be_const_str_ismapped;
 extern const bcstring be_const_str_ismethod;
 extern const bcstring be_const_str_isnan;
 extern const bcstring be_const_str_issubclass;
