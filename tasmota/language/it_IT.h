@@ -632,6 +632,7 @@
 #define D_SENSOR_I2S_IN_SLCT            "I2S - Sel. in"
 #define D_SENSOR_WS2812                 "WS2812"
 #define D_SENSOR_DFR562                 "Riproduttore MP3"
+#define D_SENSOR_DFR562_BUSY            "MP3 Busy"
 #define D_SENSOR_IRSEND                 "IR - TX"
 #define D_SENSOR_SWITCH                 "Switch"          // Suffix "1"
 #define D_SENSOR_BUTTON                 "Pulsante"        // Suffix "1"

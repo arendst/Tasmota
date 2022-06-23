@@ -632,6 +632,7 @@
 #define D_SENSOR_I2S_IN_SLCT   "I2S In Slct"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
+#define D_SENSOR_DFR562_BUSY   "MP3 Busy"
 #define D_SENSOR_IRSEND        "IRsend"
 #define D_SENSOR_SWITCH        "Spínač"     // Suffix "1"
 #define D_SENSOR_BUTTON        "Tlačítko"   // Suffix "1"

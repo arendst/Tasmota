@@ -77,7 +77,7 @@
 
 
                   Ver 12.1.0.4x
-                  /tasmota/tasmota_template.h
+                  /include/tasmota/tasmota_template.h
                   @ line 56
                   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
                   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
