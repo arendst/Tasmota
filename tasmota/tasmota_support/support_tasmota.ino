@@ -847,7 +847,15 @@ String GetSwitchText(uint32_t i) {
 
 const char kGlobalValues[] PROGMEM = D_JSON_TEMPERATURE "|" D_JSON_HUMIDITY "|" D_JSON_PRESSURE;
 
-void GetGlobalValues(void) {
+void GetSensorValues(void) {
+  char *start = ResponseData();
+  int data_start = ResponseLength();
+
+  XsnsCall(FUNC_JSON_APPEND);
+  XdrvCall(FUNC_JSON_APPEND);
+
+  if (data_start == ResponseLength()) { return; }
+
   for (uint32_t type = 0; type < 3; type++) {
     if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
 
@@ -856,7 +864,8 @@ void GetGlobalValues(void) {
 
     float value = -9999;
     uint32_t idx = 0;
-    char *data = ResponseData();
+//    char *data = ResponseData();
+    char *data = start;
     while (data) {
       data = strstr(data, key);
       if (data) {
@@ -903,8 +912,7 @@ void MqttAppendSensorUnits(void)
   }
 }
 
-bool MqttShowSensor(bool call_show_sensor)
-{
+bool MqttShowSensor(bool call_show_sensor) {
   ResponseAppendTime();
 
   int json_data_start = ResponseLength();
@@ -917,10 +925,8 @@ bool MqttShowSensor(bool call_show_sensor)
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetSwitchText(i).c_str(), GetStateText(SwitchState(i)));
     }
   }
-  XsnsCall(FUNC_JSON_APPEND);
-  XdrvCall(FUNC_JSON_APPEND);
 
-  GetGlobalValues();
+  GetSensorValues();
 
   if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {  // SetOption2 (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
@@ -1056,6 +1062,7 @@ void PerformEverySecond(void)
     digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
   }
 
+  // Teleperiod
   if (Settings->tele_period || (3601 == TasmotaGlobal.tele_period)) {
     if (TasmotaGlobal.tele_period >= 9999) {
       if (!TasmotaGlobal.global_state.network_down) {
@@ -1072,6 +1079,15 @@ void PerformEverySecond(void)
         XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);
       }
+    }
+  }
+
+  // Global values (Temperature, Humidity and Pressure) update every 10 seconds
+  if (!(TasmotaGlobal.uptime % 10)) {
+    for (uint32_t type = 0; type < 3; type++) {
+      if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
+      GetSensorValues();
+      break;
     }
   }
 
