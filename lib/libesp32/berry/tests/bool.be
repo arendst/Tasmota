@@ -33,7 +33,11 @@ assert(bool(nil) == false)
 
 assert(bool(-1) == true)
 assert(bool(3.5) == true)
-assert(bool('') == true)
+assert(bool('') == false)       # changed behavior
 assert(bool('a') == true)
 assert(bool(list) == true)
 assert(bool(list()) == true)
+
+import introspect
+assert(bool(introspect.toptr(0x1000)) == true)
+assert(bool(introspect.toptr(0)) == false)
