@@ -1245,7 +1245,12 @@ void CmndShutterPosition(void)
         ShutterReportPosition(true, index);
       }
       XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
-      strcpy(  XdrvMailbox.command , D_CMND_SHUTTER_POSITION);
+
+      // As this function is called three times from outside the command handler
+      // XdrvMailbox.command may not point to a char string resulting in exception 29 on strcpy
+      char command[CMDSZ] = { 0 };
+      XdrvMailbox.command = command;
+      strcpy(XdrvMailbox.command, D_CMND_SHUTTER_POSITION);
       ResponseCmndIdxNumber((Settings->shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent);
     } else {
       ShutterReportPosition(true, MAX_SHUTTERS);
