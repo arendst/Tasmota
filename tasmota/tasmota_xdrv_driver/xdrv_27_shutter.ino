@@ -549,7 +549,6 @@ void ShutterUpdatePosition(void)
     if (Shutter[i].direction != 0) {
       if (!ShutterGlobal.start_reported) {
         ShutterReportPosition(true, i);
-        XdrvRulesProcess(0);
         ShutterGlobal.start_reported = 1;
       }
       int32_t deltatime = Shutter[i].time-Shutter[i].last_reported_time;
@@ -585,14 +584,16 @@ void ShutterUpdatePosition(void)
         }
         ShutterLogPos(i);
 
-        // sending MQTT result to broker
-        snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
-        GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-        Response_P("%d", (Settings->shutter_options[i] & 1) ? 100 - Settings->shutter_position[i]: Settings->shutter_position[i]);
-        MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
+        if (!Settings->flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
+          // sending MQTT result to broker
+          snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
+          GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
+          Response_P("%d", (Settings->shutter_options[i] & 1) ? 100 - Settings->shutter_position[i]: Settings->shutter_position[i]);
+          MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
+        }
+
         ShutterReportPosition(true, i);
         TasmotaGlobal.rules_flag.shutter_moved = 1;
-        XdrvRulesProcess(0);
       }
     }
   }
@@ -607,12 +608,13 @@ bool ShutterState(uint32_t device)
           (ShutterGlobal.RelayShutterMask & (1 << (Settings->shutter_startrelay[device]-1))) );
 }
 
-void ShutterAllowPreStartProcedure(uint8_t i)
-{
+void ShutterAllowPreStartProcedure(uint8_t i) {
+  // Tricky!!! Execute command status 2 while in the 10 sec loop and you'll end up in an exception
+  // What PreStartProcedure do you want to execute here?
+  // Anyway, as long var1 != 99 this is skipped (luckily)
 #ifdef USE_RULES
   uint32_t uptime_Local=0;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i+1, rules_vars[i]);
-  XdrvRulesProcess(0);
   uptime_Local = TasmotaGlobal.uptime;
   while (uptime_Local+10 > TasmotaGlobal.uptime && (String)rules_vars[i] == "99") {
     loop();
