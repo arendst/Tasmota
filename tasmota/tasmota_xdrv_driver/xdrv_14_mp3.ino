@@ -20,7 +20,7 @@
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
 
-  1.0.0.6 22Jun2022 added   - Busy flag on optional GPIO pin
+  1.0.0.6 20220624  added   - Busy flag on optional GPIO pin
                     added   - command for MP3Folder, folder/track format
                     added   - an event so that busy flag can be used in Berry
                     ToDo    - test changes with SV17F
@@ -412,11 +412,8 @@ bool Xdrv14(uint8_t function)
         break;
 
       case FUNC_EVERY_SECOND:
-
-        TasmotaGlobal.seriallog_timer = 600;          // DEBUG Tool   <---------- TRL
-
-      MP3_EVERY_SECOND();
-      break;
+        MP3_EVERY_SECOND();
+        break;
     }
   }
   return result;

@@ -54,7 +54,6 @@ enum UserSelectablePins {
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
   GPIO_TM1638CLK, GPIO_TM1638DIO, GPIO_TM1638STB,  // TM1638 interface
   GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
-  GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_HX711_SCK, GPIO_HX711_DAT,      // HX711 Load Cell interface
   GPIO_TX2X_TXD_BLACK,                 // TX20/TX23 Transmission Pin
   GPIO_TUYA_TX, GPIO_TUYA_RX,          // Tuya Serial interface
@@ -191,6 +190,7 @@ enum UserSelectablePins {
   GPIO_FLOWRATEMETER_IN,               // Flowrate Meter
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
+  GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -287,7 +287,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
   D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
-  D_SENSOR_DFR562 "|" D_SENSOR_DFR562_BUSY "|"
+  D_SENSOR_DFR562 "|" 
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX2X_TX "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
@@ -425,6 +425,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_FLOWRATEMETER "|"
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
+  D_SENSOR_DFR562_BUSY "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
