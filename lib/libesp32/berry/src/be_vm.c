@@ -281,6 +281,12 @@ bbool be_value2bool(bvm *vm, bvalue *v)
         return val2bool(v->v.i);
     case BE_REAL:
         return val2bool(v->v.r);
+    case BE_STRING:
+        return str_len(var_tostr(v)) != 0;
+    case BE_COMPTR:
+        return var_toobj(v) != NULL;
+    case BE_COMOBJ:
+        return ((bcommomobj*)var_toobj(v))->data != NULL;
     case BE_INSTANCE:
         return obj2bool(vm, v);
     default:
