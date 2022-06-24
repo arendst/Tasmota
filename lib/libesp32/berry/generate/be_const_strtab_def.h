@@ -660,8 +660,9 @@ be_define_const_str(remove_cron, "remove_cron", 2914538962u, 0, 11, &be_const_st
 be_define_const_str(remove_driver, "remove_driver", 1030243768u, 0, 13, &be_const_str_send_multicast);
 be_define_const_str(remove_light, "remove_light", 1783624394u, 0, 12, &be_const_str_set_temp);
 be_define_const_str(remove_rule, "remove_rule", 3456211328u, 0, 11, NULL);
-be_define_const_str(remove_timer, "remove_timer", 4141472215u, 0, 12, &be_const_str_set_bat);
+be_define_const_str(remove_timer, "remove_timer", 4141472215u, 0, 12, &be_const_str_replace);
 be_define_const_str(remove_trailing_zeroes, "remove_trailing_zeroes", 2688378377u, 0, 22, &be_const_str_run_cron);
+be_define_const_str(replace, "replace", 2704835779u, 0, 7, &be_const_str_set_bat);
 be_define_const_str(reset, "reset", 1695364032u, 0, 5, &be_const_str_widget_ctor_cb);
 be_define_const_str(resize, "resize", 3514612129u, 0, 6, &be_const_str_setbits);
 be_define_const_str(resolvecmnd, "resolvecmnd", 993361485u, 0, 11, NULL);
@@ -1878,6 +1879,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 426,
-    .count = 875,
+    .count = 876,
     .table = m_string_table
 };

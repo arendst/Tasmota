@@ -845,6 +845,26 @@ static int str_tr(bvm *vm)
     be_return_nil(vm);
 }
 
+static int str_replace(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 3 && be_isstring(vm, 1) && be_isstring(vm, 2) && be_isstring(vm, 3)) {
+        be_pushntvfunction(vm, &str_split);
+        be_pushvalue(vm, 1);
+        be_pushvalue(vm, 2);
+        be_call(vm, 2);
+        be_pop(vm, 2);
+
+        be_getmember(vm, -1, "concat");     /* get `concat` method of list */
+        be_pushvalue(vm, -2);               /* get list instance as first arg */
+        be_pushvalue(vm, 3);
+        be_call(vm, 2);
+        be_pop(vm, 2);
+        be_return(vm);
+    }
+    be_return_nil(vm);
+}
+
 static int str_escape(bvm *vm)
 {
     int top = be_top(vm);
@@ -876,6 +896,7 @@ be_native_module_attr_table(string) {
     be_native_module_function("toupper", str_toupper),
     be_native_module_function("tr", str_tr),
     be_native_module_function("escape", str_escape),
+    be_native_module_function("replace", str_replace),
 };
 
 be_define_native_module(string, NULL);
@@ -893,6 +914,7 @@ module string (scope: global, depend: BE_USE_STRING_MODULE) {
     toupper, func(str_toupper)
     tr, func(str_tr)
     escape, func(str_escape)
+    replace, func(str_replace)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_string.h"
