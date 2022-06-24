@@ -80,3 +80,11 @@ assert(string.tr("qwerty", "qwe", "_") == '_rty')
 # the following should not crash
 var s1 = 'A string of more than 128 bytes 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789'
 var s2 = string.format("%i, %s", 1, s1)
+
+# replace
+assert(string.replace("hello", "ll", "xx") == "hexxo")
+assert(string.replace("hellollo", "ll", "xx") == "hexxoxxo")
+assert(string.replace("hellollo", "aa", "xx") == "hellollo")
+assert(string.replace("hello", "ll", "") == "heo")
+assert(string.replace("hello", "", "xx") == "hello")
+assert(string.replace("hello", "", "") == "hello")

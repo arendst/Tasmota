@@ -670,6 +670,7 @@ extern const bcstring be_const_str_remove_light;
 extern const bcstring be_const_str_remove_rule;
 extern const bcstring be_const_str_remove_timer;
 extern const bcstring be_const_str_remove_trailing_zeroes;
+extern const bcstring be_const_str_replace;
 extern const bcstring be_const_str_reset;
 extern const bcstring be_const_str_resize;
 extern const bcstring be_const_str_resolvecmnd;
