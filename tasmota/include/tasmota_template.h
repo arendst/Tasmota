@@ -190,6 +190,7 @@ enum UserSelectablePins {
   GPIO_FLOWRATEMETER_IN,               // Flowrate Meter
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
+  GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -286,7 +287,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
   D_SENSOR_TM1638_CLK "|" D_SENSOR_TM1638_DIO "|" D_SENSOR_TM1638_STB "|"
-  D_SENSOR_DFR562 "|"
+  D_SENSOR_DFR562 "|" 
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX2X_TX "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
@@ -424,6 +425,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_FLOWRATEMETER "|"
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
+  D_SENSOR_DFR562_BUSY "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -872,7 +874,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_MP3_PLAYER
   AGPIO(GPIO_MP3_DFR562),     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
-#endif
+  AGPIO(GPIO_MP3_DFR562_BUSY),// RB-DFR-562, DFPlayer Mini MP3 Player optional Busy flag
+  #endif
 #ifdef USE_AZ7798
   AGPIO(GPIO_AZ_TXD),         // AZ-Instrument 7798 CO2 datalogger Serial interface
   AGPIO(GPIO_AZ_RXD),         // AZ-Instrument 7798 CO2 datalogger Serial interface

@@ -632,6 +632,7 @@
 #define D_SENSOR_I2S_IN_SLCT   "I2S In Slct"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 lejátszó"
+#define D_SENSOR_DFR562_BUSY   "MP3 elfoglalt"
 #define D_SENSOR_IRSEND        "IR adó"
 #define D_SENSOR_SWITCH        "Kapcsoló"   // Suffix "1"
 #define D_SENSOR_BUTTON        "Gomb"       // Suffix "1"
