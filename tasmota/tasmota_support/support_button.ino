@@ -43,7 +43,9 @@ struct BUTTON {
   uint16_t hold_timer[MAX_KEYS] = { 0 };     // Timer for button hold
   uint16_t dual_code = 0;                    // Sonoff dual received code
 
+  uint8_t debounce_phase = 0;                // 0 = regular iteration; 1 = read data for debouncing only
   uint8_t last_state[MAX_KEYS];              // Last button states
+  uint8_t last_state_between[MAX_KEYS];      // Last button states at the half time read
   uint8_t window_timer[MAX_KEYS] = { 0 };    // Max time between button presses to record press count
   uint8_t press_counter[MAX_KEYS] = { 0 };   // Number of button presses within Button.window_timer
 
@@ -91,6 +93,7 @@ void ButtonInit(void) {
 #endif  // ESP8266
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     Button.last_state[i] = NOT_PRESSED;
+    Button.last_state_between[i] = NOT_PRESSED;
     if (PinUsed(GPIO_KEY1, i)) {
       Button.present++;
 #ifdef ESP8266
@@ -204,6 +207,18 @@ void ButtonHandler(void) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON_INV, button_index));
     }
 #endif  // USE_ADC
+    if (Button.debounce_phase == 1) {
+      // adjust values
+      Button.last_state_between[button_index] = button;
+
+      continue;
+    }
+
+    if (button != Button.last_state_between[button_index]) {
+       // no clean signal, just keep the previous one
+       button = Button.last_state[button_index];
+    }
+
     if (button_present) {
       XdrvMailbox.index = button_index;
       XdrvMailbox.payload = button;
@@ -374,6 +389,8 @@ void ButtonHandler(void) {
     }
     Button.last_state[button_index] = button;
   }
+
+  Button.debounce_phase = (Button.debounce_phase + 1) & 1;
 }
 
 /*
@@ -409,7 +426,7 @@ void MqttButtonTopic(uint32_t button_id, uint32_t action, uint32_t hold) {
 void ButtonLoop(void) {
   if (Button.present) {
     if (TimeReached(Button.debounce)) {
-      SetNextTimeInterval(Button.debounce, Settings->button_debounce);  // ButtonDebounce (50)
+      SetNextTimeInterval(Button.debounce, Settings->button_debounce / 2);
       ButtonHandler();
     }
   }
