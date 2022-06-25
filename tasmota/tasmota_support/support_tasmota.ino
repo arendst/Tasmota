@@ -865,7 +865,7 @@ void GetSensorValues(void) {
     float value = -9999;
     uint32_t idx = 0;
 //    char *data = ResponseData();
-    char *data = start;
+    char *data = start;  // Invalid JSON ,"HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}
     while (data) {
       data = strstr(data, key);
       if (data) {
@@ -1078,16 +1078,16 @@ void PerformEverySecond(void)
 
         XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);
+      } else {
+        // Global values (Temperature, Humidity and Pressure) update every 10 seconds
+        if (!(TasmotaGlobal.tele_period % 10)) {
+          for (uint32_t type = 0; type < 3; type++) {
+            if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
+            GetSensorValues();
+            break;
+          }
+        }
       }
-    }
-  }
-
-  // Global values (Temperature, Humidity and Pressure) update every 10 seconds
-  if (!(TasmotaGlobal.uptime % 10)) {
-    for (uint32_t type = 0; type < 3; type++) {
-      if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
-      GetSensorValues();
-      break;
     }
   }
 
