@@ -171,7 +171,7 @@ enum UserSelectablePins {
   GPIO_INTERRUPT,
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_HRG15_TX, GPIO_HRG15_RX,        // Hydreon RG-15 rain sensor serial interface
-  GPIO_VINDRIKTNING_RX, GPIO_VINDRIKTNING_TX, GPIO_VINDRIKTNING_FAN, // IKEA VINDRIKTNING Serial interface Rx, Tx and direct output pin fan control
+  GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial Tx
   GPIO_BL0939_RX,                      // BL0939 Serial interface (Dual R3 v2)
   GPIO_BL0942_RX,                      // BL0942 Serial interface
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
@@ -191,6 +191,7 @@ enum UserSelectablePins {
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
+  GPIO_VINDRIKTNING_TX, GPIO_VINDRIKTNING_FAN, // IKEA VINDRIKTNING Serial Tx and direct output pin fan control
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
