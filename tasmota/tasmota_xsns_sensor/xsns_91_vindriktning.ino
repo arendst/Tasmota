@@ -23,6 +23,9 @@
  *
  * This sensor uses a subset of the PM1006K LED particle sensor
  * To use Tasmota the user needs to add an ESP8266 or ESP32
+ * 
+ * Added support to control PM1006 directly from ESP8266 or ESP32 without need to keep original
+ * board. ESP can now generate requests (Tx) to PM1006 and control fan
 \*********************************************************************************************/
 
 #define XSNS_91                   91
@@ -47,6 +50,7 @@ struct VINDRIKTNING {
   uint8_t type = 1;
   uint8_t valid = 0;
   bool discovery_triggered = false;
+  uint16_t seconds_counter = 0;
 } Vindriktning;
 
 bool VindriktningReadData(void) {
@@ -96,7 +100,65 @@ bool VindriktningReadData(void) {
 
 /*********************************************************************************************/
 
+void VindriktningWriteData(uint8_t cmd_len, const uint8_t *cmd_data) {
+
+  uint8_t tx_buffer[5];
+  int len = 0;
+  int i = 0;
+  uint8_t sum = 0;
+
+  if (cmd_len > 2) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("VDN: VINDRIKTNING PM1006 command too long"));
+    return;
+  }
+
+  tx_buffer[len++] = 0x11; // PM1006 header
+  tx_buffer[len++] = cmd_len; // command length
+  for (i = 0; i < cmd_len; i++) {
+    tx_buffer[len++] = cmd_data[i];
+  }
+  
+  for (i = 0; i < len; i++) { // calculate PM1006 checksum
+    sum += tx_buffer[i];
+  }
+
+  tx_buffer[len++] = (256 - sum) & 0xFF;
+
+  VindriktningSerial->write(tx_buffer, len);
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("VDN: Tx %*_H"), len, tx_buffer);
+}
+
+void VindriktningSendRequest() {
+
+    uint8_t cmd[] = {0x0B, 0x01}; // PM1006 command
+    
+    VindriktningWriteData(2, cmd);
+}
+
+/*********************************************************************************************/
+
 void VindriktningSecond(void) {                // Every second
+
+  if (PinUsed(GPIO_VINDRIKTNING_TX)) { // commands for PM1006 has to be sent by ESP
+
+    if (PinUsed(GPIO_VINDRIKTNING_FAN)) {
+      if (Vindriktning.seconds_counter == 50) { // VINDRIKTNING PM1006 fan control - switch fan on 10 seconds before measurement
+        digitalWrite(Pin(GPIO_VINDRIKTNING_FAN), HIGH);
+      } else if (Vindriktning.seconds_counter == 1) { // VINDRIKTNING PM1006 fan control - switch fan off 1 second after measurement
+        digitalWrite(Pin(GPIO_VINDRIKTNING_FAN), LOW);
+      }
+    } 
+
+    if (!Vindriktning.seconds_counter) { // timeout left -> send new request to PM1006
+      VindriktningSendRequest();
+    }
+
+    if (++Vindriktning.seconds_counter >= 60) { // update once per minute
+      Vindriktning.seconds_counter = 0;
+    }
+  }
+
   if (VindriktningReadData()) {
     Vindriktning.valid = 60;
   } else {
@@ -111,7 +173,15 @@ void VindriktningSecond(void) {                // Every second
 void VindriktningInit(void) {
   Vindriktning.type = 0;
   if (PinUsed(GPIO_VINDRIKTNING_RX)) {
-    VindriktningSerial = new TasmotaSerial(Pin(GPIO_VINDRIKTNING_RX), -1, 1);
+    if (PinUsed(GPIO_VINDRIKTNING_TX)) {        // both RX and TX are used - CUBIC PM1006 triffered by ESP
+      VindriktningSerial = new TasmotaSerial(Pin(GPIO_VINDRIKTNING_RX), Pin(GPIO_VINDRIKTNING_TX), 1);
+      if (PinUsed(GPIO_VINDRIKTNING_FAN)) {
+        pinMode(Pin(GPIO_VINDRIKTNING_FAN), OUTPUT);
+      }
+
+    } else {                                    // only RX are used - for cases CUBIC PM1006 is triggered by original VINDRIKTNING MCU, not by ESP
+      VindriktningSerial = new TasmotaSerial(Pin(GPIO_VINDRIKTNING_RX), -1, 1);
+    }
     if (VindriktningSerial->begin(9600)) {
       if (VindriktningSerial->hardwareSerial()) { ClaimSerial(); }
       Vindriktning.type = 1;
