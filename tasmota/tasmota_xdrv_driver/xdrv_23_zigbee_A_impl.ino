@@ -1552,7 +1552,7 @@ void ZigbeeGlowPermitJoinLight(void) {
 #else
     analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
 #endif
-}
+  }
 }
 
 // check if the permitjoin timer has expired
