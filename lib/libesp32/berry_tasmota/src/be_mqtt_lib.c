@@ -10,16 +10,22 @@
 
 /*
 
-def subscribe(topic, closure)
+def _(action, topic, closure)   # inner class for subscribe and unsubscribe
   class mqtt_listener
-    var topic
+    var topic           # topic as a list of subtopics
+    var fulltopic       # fulltopic as string
     var closure
 
     def init(topic, closure)
       import string
+      self.fulltopic = topic
       self.topic = string.split(topic, '/')
       self.closure = closure
       tasmota.add_driver(self)
+    end
+
+    def remove()
+      tasmota.remove_driver(self)
     end
 
     def mqtt_data(topic, idx, payload_s, payload_b)
@@ -63,16 +69,149 @@ def subscribe(topic, closure)
   end
 
   import mqtt
-  mqtt._subscribe(topic)
-  if type(closure) == 'function'
-    tasmota.check_not_method(closure)
-    mqtt_listener(topic, closure)
+  if action
+    # subscribe
+    mqtt._subscribe(topic)
+    if type(closure) == 'function'
+      tasmota.check_not_method(closure)
+      mqtt_listener(topic, closure)
+    end
+  else
+    # unsubscribe
+    if topic != nil
+      mqtt._unsubscribe(topic)
+    end
+
+    # scan through drivers if any matches the topic
+    for d: tasmota._drivers.copy()    # make a copy of the list since we might modify it on the fly
+      if isinstance(d, mqtt_listener)
+        # class of interest
+        # topic was specified
+        if topic != nil
+          if d.fulltopic == topic
+            d.remove()
+          end
+        else
+          # remove all topics
+          if d.fulltopic != topic       # don't call again unsubscribe if we just did
+            mqtt._unsubscribe(d.fulltopic)
+          end
+          d.remove()
+        end
+      end
+    end
   end
 end
+
+def subscribe(topic, closure)
+  import mqtt
+  mqtt._(true, topic, closure)
+end
+
+def unsubscribe(topic)
+  import mqtt
+  mqtt._(false, topic)
+end
+
+solidify.dump(_) solidify.dump(subscribe) solidify.dump(unsubscribe)
+
+#-
+# example
+
+import mqtt
+def p(a,b,c) print("mqtt",a,b,c) end
+
+mqtt.subscribe("/a/b", p)
+mqtt.subscribe("/a/b/c", p)
+mqtt.subscribe("#", p)
+
+print(">unsub /a/b")
+mqtt.unsubscribe("/a/b")
+print(">unsub all")
+mqtt.unsubscribe()
+
+
+-#
 
 
 */
 
+
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+be_local_closure(mqtt_listener_init,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+    /* K0   */  be_nested_str(string),
+    /* K1   */  be_nested_str(fulltopic),
+    /* K2   */  be_nested_str(topic),
+    /* K3   */  be_nested_str(split),
+    /* K4   */  be_nested_str(_X2F),
+    /* K5   */  be_nested_str(closure),
+    /* K6   */  be_nested_str(tasmota),
+    /* K7   */  be_nested_str(add_driver),
+    }),
+    &be_const_str_init,
+    &be_const_str_solidified,
+    ( &(const binstruction[13]) {  /* code */
+      0xA40E0000,  //  0000  IMPORT	R3	K0
+      0x90020201,  //  0001  SETMBR	R0	K1	R1
+      0x8C100703,  //  0002  GETMET	R4	R3	K3
+      0x5C180200,  //  0003  MOVE	R6	R1
+      0x581C0004,  //  0004  LDCONST	R7	K4
+      0x7C100600,  //  0005  CALL	R4	3
+      0x90020404,  //  0006  SETMBR	R0	K2	R4
+      0x90020A02,  //  0007  SETMBR	R0	K5	R2
+      0xB8120C00,  //  0008  GETNGBL	R4	K6
+      0x8C100907,  //  0009  GETMET	R4	R4	K7
+      0x5C180000,  //  000A  MOVE	R6	R0
+      0x7C100400,  //  000B  CALL	R4	2
+      0x80000000,  //  000C  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: remove
+********************************************************************/
+be_local_closure(mqtt_listener_remove,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(tasmota),
+    /* K1   */  be_nested_str(remove_driver),
+    }),
+    &be_const_str_remove,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0xB8060000,  //  0000  GETNGBL	R1	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x5C0C0000,  //  0002  MOVE	R3	R0
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
 
 
 /********************************************************************
@@ -162,42 +301,116 @@ be_local_closure(mqtt_listener_mqtt_data,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified class: mqtt_listener
 ********************************************************************/
-be_local_closure(mqtt_listener_init,   /* name */
+be_local_class(mqtt_listener,
+    3,
+    NULL,
+    be_nested_map(6,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key(remove, -1), be_const_closure(mqtt_listener_remove_closure) },
+        { be_const_key(mqtt_data, -1), be_const_closure(mqtt_listener_mqtt_data_closure) },
+        { be_const_key(topic, -1), be_const_var(0) },
+        { be_const_key(init, 0), be_const_closure(mqtt_listener_init_closure) },
+        { be_const_key(closure, 1), be_const_var(2) },
+        { be_const_key(fulltopic, -1), be_const_var(1) },
+    })),
+    (bstring*) &be_const_str_mqtt_listener
+);
+
+/********************************************************************
+** Solidified function: _
+********************************************************************/
+be_local_closure(_,   /* name */
   be_nested_proto(
-    8,                          /* nstack */
+    10,                          /* nstack */
     3,                          /* argc */
-    2,                          /* varg */
+    0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(string),
-    /* K1   */  be_nested_str(topic),
-    /* K2   */  be_nested_str(split),
-    /* K3   */  be_nested_str(_X2F),
-    /* K4   */  be_nested_str(closure),
-    /* K5   */  be_nested_str(tasmota),
-    /* K6   */  be_nested_str(add_driver),
+    ( &(const bvalue[12]) {     /* constants */
+    /* K0   */  be_const_class(be_class_mqtt_listener),
+    /* K1   */  be_nested_str(mqtt),
+    /* K2   */  be_nested_str(_subscribe),
+    /* K3   */  be_nested_str(function),
+    /* K4   */  be_nested_str(tasmota),
+    /* K5   */  be_nested_str(check_not_method),
+    /* K6   */  be_nested_str(_unsubscribe),
+    /* K7   */  be_nested_str(_drivers),
+    /* K8   */  be_nested_str(copy),
+    /* K9   */  be_nested_str(fulltopic),
+    /* K10  */  be_nested_str(remove),
+    /* K11  */  be_nested_str(stop_iteration),
     }),
-    &be_const_str_init,
+    &be_const_str__,
     &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0xA40E0000,  //  0000  IMPORT	R3	K0
-      0x8C100702,  //  0001  GETMET	R4	R3	K2
-      0x5C180200,  //  0002  MOVE	R6	R1
-      0x581C0003,  //  0003  LDCONST	R7	K3
-      0x7C100600,  //  0004  CALL	R4	3
-      0x90020204,  //  0005  SETMBR	R0	K1	R4
-      0x90020802,  //  0006  SETMBR	R0	K4	R2
-      0xB8120A00,  //  0007  GETNGBL	R4	K5
-      0x8C100906,  //  0008  GETMET	R4	R4	K6
-      0x5C180000,  //  0009  MOVE	R6	R0
-      0x7C100400,  //  000A  CALL	R4	2
-      0x80000000,  //  000B  RET	0
+    ( &(const binstruction[63]) {  /* code */
+      0x580C0000,  //  0000  LDCONST	R3	K0
+      0xB4000000,  //  0001  CLASS	K0
+      0xA4120200,  //  0002  IMPORT	R4	K1
+      0x78020010,  //  0003  JMPF	R0	#0015
+      0x8C140902,  //  0004  GETMET	R5	R4	K2
+      0x5C1C0200,  //  0005  MOVE	R7	R1
+      0x7C140400,  //  0006  CALL	R5	2
+      0x60140004,  //  0007  GETGBL	R5	G4
+      0x5C180400,  //  0008  MOVE	R6	R2
+      0x7C140200,  //  0009  CALL	R5	1
+      0x1C140B03,  //  000A  EQ	R5	R5	K3
+      0x78160007,  //  000B  JMPF	R5	#0014
+      0xB8160800,  //  000C  GETNGBL	R5	K4
+      0x8C140B05,  //  000D  GETMET	R5	R5	K5
+      0x5C1C0400,  //  000E  MOVE	R7	R2
+      0x7C140400,  //  000F  CALL	R5	2
+      0x5C140600,  //  0010  MOVE	R5	R3
+      0x5C180200,  //  0011  MOVE	R6	R1
+      0x5C1C0400,  //  0012  MOVE	R7	R2
+      0x7C140400,  //  0013  CALL	R5	2
+      0x70020028,  //  0014  JMP		#003E
+      0x4C140000,  //  0015  LDNIL	R5
+      0x20140205,  //  0016  NE	R5	R1	R5
+      0x78160002,  //  0017  JMPF	R5	#001B
+      0x8C140906,  //  0018  GETMET	R5	R4	K6
+      0x5C1C0200,  //  0019  MOVE	R7	R1
+      0x7C140400,  //  001A  CALL	R5	2
+      0x60140010,  //  001B  GETGBL	R5	G16
+      0xB81A0800,  //  001C  GETNGBL	R6	K4
+      0x88180D07,  //  001D  GETMBR	R6	R6	K7
+      0x8C180D08,  //  001E  GETMET	R6	R6	K8
+      0x7C180200,  //  001F  CALL	R6	1
+      0x7C140200,  //  0020  CALL	R5	1
+      0xA8020018,  //  0021  EXBLK	0	#003B
+      0x5C180A00,  //  0022  MOVE	R6	R5
+      0x7C180000,  //  0023  CALL	R6	0
+      0x601C000F,  //  0024  GETGBL	R7	G15
+      0x5C200C00,  //  0025  MOVE	R8	R6
+      0x5C240600,  //  0026  MOVE	R9	R3
+      0x7C1C0400,  //  0027  CALL	R7	2
+      0x781E0010,  //  0028  JMPF	R7	#003A
+      0x4C1C0000,  //  0029  LDNIL	R7
+      0x201C0207,  //  002A  NE	R7	R1	R7
+      0x781E0005,  //  002B  JMPF	R7	#0032
+      0x881C0D09,  //  002C  GETMBR	R7	R6	K9
+      0x1C1C0E01,  //  002D  EQ	R7	R7	R1
+      0x781E0001,  //  002E  JMPF	R7	#0031
+      0x8C1C0D0A,  //  002F  GETMET	R7	R6	K10
+      0x7C1C0200,  //  0030  CALL	R7	1
+      0x70020007,  //  0031  JMP		#003A
+      0x881C0D09,  //  0032  GETMBR	R7	R6	K9
+      0x201C0E01,  //  0033  NE	R7	R7	R1
+      0x781E0002,  //  0034  JMPF	R7	#0038
+      0x8C1C0906,  //  0035  GETMET	R7	R4	K6
+      0x88240D09,  //  0036  GETMBR	R9	R6	K9
+      0x7C1C0400,  //  0037  CALL	R7	2
+      0x8C1C0D0A,  //  0038  GETMET	R7	R6	K10
+      0x7C1C0200,  //  0039  CALL	R7	1
+      0x7001FFE6,  //  003A  JMP		#0022
+      0x5814000B,  //  003B  LDCONST	R5	K11
+      0xAC140200,  //  003C  CATCH	R5	1	0
+      0xB0080000,  //  003D  RAISE	2	R0	R0
+      0x80000000,  //  003E  RET	0
     })
   )
 );
@@ -205,27 +418,11 @@ be_local_closure(mqtt_listener_init,   /* name */
 
 
 /********************************************************************
-** Solidified class: mqtt_listener
-********************************************************************/
-be_local_class(mqtt_listener,
-    2,
-    NULL,
-    be_nested_map(4,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(topic, 1), be_const_var(0) },
-        { be_const_key(mqtt_data, -1), be_const_closure(mqtt_listener_mqtt_data_closure) },
-        { be_const_key(closure, -1), be_const_var(1) },
-        { be_const_key(init, -1), be_const_closure(mqtt_listener_init_closure) },
-    })),
-    (bstring*) &be_const_str_mqtt_listener
-);
-
-/********************************************************************
 ** Solidified function: subscribe
 ********************************************************************/
 be_local_closure(subscribe,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
+    8,                          /* nstack */
     2,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -233,42 +430,56 @@ be_local_closure(subscribe,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_const_class(be_class_mqtt_listener),
-    /* K1   */  be_nested_str(mqtt),
-    /* K2   */  be_nested_str(_subscribe),
-    /* K3   */  be_nested_str(function),
-    /* K4   */  be_nested_str(tasmota),
-    /* K5   */  be_nested_str(check_not_method),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(mqtt),
+    /* K1   */  be_nested_str(_),
     }),
     &be_const_str_subscribe,
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x58080000,  //  0000  LDCONST	R2	K0
-      0xB4000000,  //  0001  CLASS	K0
-      0xA40E0200,  //  0002  IMPORT	R3	K1
-      0x8C100702,  //  0003  GETMET	R4	R3	K2
-      0x5C180000,  //  0004  MOVE	R6	R0
-      0x7C100400,  //  0005  CALL	R4	2
-      0x60100004,  //  0006  GETGBL	R4	G4
-      0x5C140200,  //  0007  MOVE	R5	R1
-      0x7C100200,  //  0008  CALL	R4	1
-      0x1C100903,  //  0009  EQ	R4	R4	K3
-      0x78120007,  //  000A  JMPF	R4	#0013
-      0xB8120800,  //  000B  GETNGBL	R4	K4
-      0x8C100905,  //  000C  GETMET	R4	R4	K5
-      0x5C180200,  //  000D  MOVE	R6	R1
-      0x7C100400,  //  000E  CALL	R4	2
-      0x5C100400,  //  000F  MOVE	R4	R2
-      0x5C140000,  //  0010  MOVE	R5	R0
-      0x5C180200,  //  0011  MOVE	R6	R1
-      0x7C100400,  //  0012  CALL	R4	2
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[ 7]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0x8C0C0501,  //  0001  GETMET	R3	R2	K1
+      0x50140200,  //  0002  LDBOOL	R5	1	0
+      0x5C180000,  //  0003  MOVE	R6	R0
+      0x5C1C0200,  //  0004  MOVE	R7	R1
+      0x7C0C0800,  //  0005  CALL	R3	4
+      0x80000000,  //  0006  RET	0
     })
   )
 );
 /*******************************************************************/
 
+
+/********************************************************************
+** Solidified function: unsubscribe
+********************************************************************/
+be_local_closure(unsubscribe,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    1,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(mqtt),
+    /* K1   */  be_nested_str(_),
+    }),
+    &be_const_str_unsubscribe,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x8C080301,  //  0001  GETMET	R2	R1	K1
+      0x50100000,  //  0002  LDBOOL	R4	0	0
+      0x5C140000,  //  0003  MOVE	R5	R0
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
 
 
 
@@ -281,8 +492,10 @@ extern void be_mqtt_unsubscribe(const char* topic);   BE_FUNC_CTYPE_DECLARE(be_m
 module mqtt (scope: global) {
   publish, func(be_mqtt_publish)
   subscribe, closure(subscribe_closure)
+  unsubscribe, closure(unsubscribe_closure)
+  _, closure(__closure)
   _subscribe, ctype_func(be_mqtt_subscribe)
-  unsubscribe, ctype_func(be_mqtt_unsubscribe)
+  _unsubscribe, ctype_func(be_mqtt_unsubscribe)
 }
 @const_object_info_end */
 #include "be_fixed_mqtt.h"
