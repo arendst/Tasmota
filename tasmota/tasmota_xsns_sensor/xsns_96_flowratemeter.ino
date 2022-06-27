@@ -104,8 +104,10 @@ void FlowRateMeterInit(void)
 
   flowratemeter_valuesread = false;
   for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
-    pinMode(Pin(GPIO_FLOWRATEMETER_IN, i), INPUT);
-    attachInterrupt(Pin(GPIO_FLOWRATEMETER_IN, i), irq_service[i], RISING);
+    if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+      pinMode(Pin(GPIO_FLOWRATEMETER_IN, i), INPUT);
+      attachInterrupt(Pin(GPIO_FLOWRATEMETER_IN, i), irq_service[i], RISING);
+    }
   }
 }
 
