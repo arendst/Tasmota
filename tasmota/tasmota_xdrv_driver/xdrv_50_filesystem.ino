@@ -790,44 +790,47 @@ void UfsListDir(char *path, uint8_t depth) {
 
       if (!hiddable || !isSDC() ) {
 
-      for (uint8_t cnt = 0; cnt<depth; cnt++) {
-        *cp++ = '-';
-      }
-
-      sprintf(cp, format, ep);
-      if (entry.isDirectory()) {
-        ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
-        WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
-        uint8_t plen = strlen(path);
-        if (plen > 1) {
-          strcat(path, "/");
+        for (uint8_t cnt = 0; cnt<depth; cnt++) {
+          *cp++ = '-';
         }
-        strcat(path, ep);
-        UfsListDir(path, depth + 4);
-        path[plen] = 0;
-      } else {
-#ifdef GUI_TRASH_FILE
-        char delpath[128];
-        ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, pp, ep);
-#else
-        char delpath[2];
-        delpath[0]=0;
-#endif // GUI_TRASH_FILE
-#ifdef GUI_EDIT_FILE
-        char editpath[128];
-        ext_snprintf_P(editpath, sizeof(editpath), UFS_FORM_SDC_HREFedit, pp, ep);
-#else
-        char editpath[2];
-        editpath[0]=0;
-#endif // GUI_TRASH_FILE
-        ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, pp, ep);
-        WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, ep, name, tstr.c_str(), entry.size(), delpath, editpath);
+
+        String pp_escaped_string = UrlEscape(pp);
+        String ep_escaped_string = UrlEscape(ep);
+        const char* ppe = pp_escaped_string.c_str();    // this can't be merged on a single line otherwise the String object can be freed
+        const char* epe = ep_escaped_string.c_str();
+        sprintf(cp, format, ep);
+        if (entry.isDirectory()) {
+          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, ppe, epe);
+          WSContentSend_P(UFS_FORM_SDC_DIRd, npath, ep, name);
+          uint8_t plen = strlen(path);
+          if (plen > 1) {
+            strcat(path, "/");
+          }
+          strcat(path, ep);
+          UfsListDir(path, depth + 4);
+          path[plen] = 0;
+        } else {
+  #ifdef GUI_TRASH_FILE
+          char delpath[128];
+          ext_snprintf_P(delpath, sizeof(delpath), UFS_FORM_SDC_HREFdel, ppe, epe);
+  #else
+          char delpath[2];
+          delpath[0]=0;
+  #endif // GUI_TRASH_FILE
+  #ifdef GUI_EDIT_FILE
+          char editpath[128];
+          ext_snprintf_P(editpath, sizeof(editpath), UFS_FORM_SDC_HREFedit, ppe, epe);
+  #else
+          char editpath[2];
+          editpath[0]=0;
+  #endif // GUI_TRASH_FILE
+          ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, ppe, epe);
+          WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, epe, 
+                          HtmlEscape(name).c_str(), tstr.c_str(), entry.size(), delpath, editpath);
+        }
+        entry.close();
       }
-      entry.close();
     }
-
-  }
-
     dir.close();
   }
 }

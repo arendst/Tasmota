@@ -2734,6 +2734,54 @@ void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
 }
 
 /*********************************************************************************************\
+ * HTML and URL encode
+\*********************************************************************************************/
+
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
+
+String HtmlEscape(const String unescaped) {
+  char escaped[10];
+  size_t ulen = unescaped.length();
+  String result;
+  result.reserve(ulen);          // pre-reserve the required space to avoid mutiple reallocations
+  for (size_t i = 0; i < ulen; i++) {
+    char c = unescaped[i];
+    char *p = strchr(kUnescapeCode, c);
+    if (p != nullptr) {
+      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
+    } else {
+      result += c;
+    }
+  }
+  return result;
+}
+
+String UrlEscape(const char *unescaped) {
+  static const char *hex = "0123456789ABCDEF";
+  String result;
+  result.reserve(strlen(unescaped));
+
+  while (*unescaped != '\0') {
+    if (('a' <= *unescaped && *unescaped <= 'z') ||
+        ('A' <= *unescaped && *unescaped <= 'Z') ||
+        ('0' <= *unescaped && *unescaped <= '9') ||
+        *unescaped == '-' || *unescaped == '_' || *unescaped == '.' || *unescaped == '~')
+    {
+      result += *unescaped;
+    }
+    else
+    {
+      result += '%';
+      result += hex[*unescaped >> 4];
+      result += hex[*unescaped & 0xf];
+    }
+    unescaped++;
+  }
+  return result;
+}
+
+/*********************************************************************************************\
  * Uncompress static PROGMEM strings
 \*********************************************************************************************/
 
