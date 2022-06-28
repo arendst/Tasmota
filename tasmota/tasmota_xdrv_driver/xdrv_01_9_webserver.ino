@@ -2325,25 +2325,6 @@ void HandleRestoreConfiguration(void)
 
 #ifndef FIRMWARE_MINIMAL_ONLY
 
-const char kUnescapeCode[] = "&><\"\'\\";
-const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
-
-String HtmlEscape(const String unescaped) {
-  char escaped[10];
-  size_t ulen = unescaped.length();
-  String result = "";
-  for (size_t i = 0; i < ulen; i++) {
-    char c = unescaped[i];
-    char *p = strchr(kUnescapeCode, c);
-    if (p != nullptr) {
-      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
-    } else {
-      result += c;
-    }
-  }
-  return result;
-}
-
 void HandleInformation(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
