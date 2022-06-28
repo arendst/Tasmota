@@ -3993,7 +3993,7 @@ extern char *SML_GetSVal(uint32_t index);
           } else {
 
 
-#ifdef ED300L
+#if defined(ED300L) || defined(AS2020)
             fvar = SML_Status(fvar1);
 #else
             fvar = 0;
