@@ -336,7 +336,7 @@ static btokentype scan_decimal(blexer *lexer)
 {
     btokentype type = TokenInteger;
     match(lexer, is_digit);
-    if (decimal_dots(lexer) | scan_realexp(lexer)) {
+    if (decimal_dots(lexer) || scan_realexp(lexer)) {
         type = TokenReal;
     }
     lexer->buf.s[lexer->buf.len] = '\0';
