@@ -1446,26 +1446,32 @@ static void classdef_stmt(bparser *parser, bclass *c, bbool is_static)
 static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
 {
     bstring *name;
-    /* 'static' ID ['=' expr] {',' ID ['=' expr] } */
+    /* 'static' ['var'] ID ['=' expr] {',' ID ['=' expr] } */
+    /* 'static' 'def' ID '(' varlist ')' block 'end' */
     scan_next_token(parser); /* skip 'static' */
     if (next_type(parser) == KeyDef) {  /* 'static' 'def' ... */
         classdef_stmt(parser, c, btrue);
-    } else if (match_id(parser, name) != NULL) {
-        check_class_attr(parser, c, name);
-        be_class_member_bind(parser->vm, c, name, bfalse);
-        class_static_assignment_expr(parser, e, name);
-
-        while (match_skip(parser, OptComma)) { /* ',' */
-            if (match_id(parser, name) != NULL) {
-                check_class_attr(parser, c, name);
-                be_class_member_bind(parser->vm, c, name, bfalse);
-                class_static_assignment_expr(parser, e, name);
-            } else {
-                parser_error(parser, "class static error");
-            }
-        }
     } else {
-        parser_error(parser, "class static error");
+        if (next_type(parser) == KeyVar) {
+            scan_next_token(parser); /* skip 'var' if any */
+        }
+        if (match_id(parser, name) != NULL) {
+            check_class_attr(parser, c, name);
+            be_class_member_bind(parser->vm, c, name, bfalse);
+            class_static_assignment_expr(parser, e, name);
+
+            while (match_skip(parser, OptComma)) { /* ',' */
+                if (match_id(parser, name) != NULL) {
+                    check_class_attr(parser, c, name);
+                    be_class_member_bind(parser->vm, c, name, bfalse);
+                    class_static_assignment_expr(parser, e, name);
+                } else {
+                    parser_error(parser, "class static error");
+                }
+            }
+        } else {
+            parser_error(parser, "class static error");
+        }
     }
 }
 
