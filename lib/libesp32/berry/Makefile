@@ -11,7 +11,7 @@ GENERATE  = generate
 CONFIG    = default/berry_conf.h
 COC		  = tools/coc/coc
 PY        = python3
-PYCOC     = tools/pycoc/main.py
+PYCOC     = tools/coc/coc
 CONST_TAB = $(GENERATE)/be_const_strtab.h
 MAKE_COC  = $(MAKE) -C tools/coc
 
