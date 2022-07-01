@@ -45,7 +45,7 @@ extern "C" {
 }
 
 /* try to use the predefined string in strtab, but don't create an instance if none is present */
-/* the behavior is exactly the same as `be_const_key()` but it not detected by pycoc */
+/* the behavior is exactly the same as `be_const_key()` but it not detected by coc */
 #define be_const_key_weak(_str, _next) {                        \
     .v.c = &be_const_str_##_str,                                \
     .type = BE_STRING,                                          \
@@ -309,7 +309,7 @@ const bcstring be_const_str_##_name = {                         \
 }
 
 /* try to use the predefined string in strtab, but don't create an instance if none is present */
-/* the behavior is exactly the same as `be_const_key()` but it not detected by pycoc */
+/* the behavior is exactly the same as `be_const_key()` but it not detected by coc */
 #define be_const_key_weak(_str, _next) {                        \
     bvaldata(&be_const_str_##_str),                             \
         BE_STRING,                                              \
