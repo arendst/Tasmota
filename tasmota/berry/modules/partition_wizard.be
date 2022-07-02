@@ -17,7 +17,7 @@ var partition_wizard = module('partition_wizard')
 class Partition_wizard_UI
   static app_size_min = 832    # Min OTA size - let's set it at a safe 896KB for minimal Tasmota32 with TLS
   static app_size_max = 3072   # Max OTA size - (4096 - 896 - 128)
-  static _default_safeboot_URL = "https://raw.githubusercontent.com/arendst/Tasmota-firmware/main/firmware/tasmota32/tasmota32%s-safeboot.bin"
+  static _default_safeboot_URL = "http://ota.tasmota.com/tasmota32/release/tasmota32%s-safeboot.bin"
 
   def init()
     import persist
