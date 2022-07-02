@@ -23,11 +23,9 @@ Berry has the following advantages:
 
 ## Documents
 
-LaTeX documents repository: [https://github.com/Skiars/berry_doc](https://github.com/Skiars/berry_doc)
+Reference Manual: [Wiki](https://github.com/berry-lang/berry/wiki/Reference)
 
-Short Manual: [berry_short_manual.pdf](https://github.com/Skiars/berry_doc/releases/download/latest/berry_short_manual.pdf).
-
-Reference Manual: [berry_rm_en_us.pdf](https://github.com/Skiars/berry_doc/releases/download/latest/berry_rm_en_us.pdf), [berry_rm_zh_cn.pdf](https://github.com/Skiars/berry_doc/releases/download/latest/berry_rm_zh_cn.pdf).
+Short Manual (slightly outdated): [berry_short_manual.pdf](https://github.com/Skiars/berry_doc/releases/download/latest/berry_short_manual.pdf).
 
 Berry's EBNF grammar definition: [tools/grammar/berry.ebnf](./tools/grammar/berry.ebnf)
 
@@ -111,9 +109,9 @@ Berry's EBNF grammar definition: [tools/grammar/berry.ebnf](./tools/grammar/berr
    make install
    ```
 
-## Editor pulgins
+## Editor plugins
 
-[Visual Studio Code](https://code.visualstudio.com/) pulgin are in this directory: [./tools/pulgins/vscode](./tools/pulgins/vscode).
+[Visual Studio Code](https://code.visualstudio.com/) plugin are in this directory: [./tools/plugins/vscode](./tools/plugins/vscode).
 
 ## Examples
 

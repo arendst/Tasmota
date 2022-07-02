@@ -12,6 +12,7 @@
 #include "be_exec.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_strlib.h"
 
 #define SHORT_STR_LEN       32
 #define EOS                 '\0' /* end of source */
