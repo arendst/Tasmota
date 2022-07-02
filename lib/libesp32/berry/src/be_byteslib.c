@@ -1216,7 +1216,7 @@ static int m_fromhex(bvm *vm)
             from = be_toint(vm, 3);
         }
         const char *s = be_tostring(vm, 2);
-        size_t s_len = strlen(s);
+        int32_t s_len = strlen(s);
         if (from < 0) { from = 0; }
         if (from > s_len) { from = s_len; }
         int32_t bin_len = (s_len - from) / 2;
