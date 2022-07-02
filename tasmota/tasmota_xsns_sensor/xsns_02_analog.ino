@@ -146,6 +146,9 @@
 // lenght of filter
 #define ANALOG_MQ_SAMPLES                         60
 
+#define ANALOG_TDS_COMPENSATION_TEMPERATURE       25.0 
+#define ANALOG_TDS_SAMPLES                        30
+
 struct {
   uint8_t present = 0;
   uint8_t type = 0;
@@ -164,6 +167,7 @@ struct {
   uint8_t type = 0;
   uint8_t pin = 0;
   float mq_samples[ANALOG_MQ_SAMPLES];
+  int tds_samples[ANALOG_TDS_SAMPLES];
   int indexOfPointer = -1;
 } Adc[MAX_ADCS];
 
@@ -232,6 +236,12 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
       Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
     }
+    else if (ADC_MQ == Adc[idx].type) {
+      Adc[idx].param1 = ANALOG_TDS_COMPENSATION_TEMPERATURE;  // Default value 25.0
+      Adc[idx].param2 = 0;
+      Adc[idx].param3 = 0;
+      Adc[idx].param4 = 0;
+    }    
   }
   if ((Adcs.type != Adc[idx].type) || (0 == Adc[idx].param1) || (Adc[idx].param1 > ANALOG_RANGE)) {
     if ((ADC_BUTTON == Adc[idx].type) || (ADC_BUTTON_INV == Adc[idx].type)) {
@@ -280,6 +290,9 @@ void AdcInit(void) {
     if (PinUsed(GPIO_ADC_MQ, i)) {
       AdcAttach(Pin(GPIO_ADC_MQ, i), ADC_MQ);
     }
+    if (PinUsed(GPIO_ADC_TDS, i)) {
+      AdcAttach(Pin(GPIO_ADC_TDS, i), ADC_TDS);
+    }    
   }
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
     if (PinUsed(GPIO_ADC_BUTTON, i)) {
@@ -313,6 +326,7 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 4 = 16 samples
   // factor 5 = 32 samples
   uint32_t samples = 1 << factor;
+
   uint32_t analog = 0;
   for (uint32_t i = 0; i < samples; i++) {
     analog += analogRead(pin);
@@ -417,6 +431,76 @@ float AdcGetMq(uint32_t idx) {
   return ppm;
 }
 
+void AddSampleTds(uint32_t idx){
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Adding sample for tds-sensor"));
+  
+  int _adc = AdcRead(Adc[idx].pin, 2);
+
+  // init af array at same value
+  if (Adc[idx].indexOfPointer==-1)
+  {
+    for (int i = 0; i < ANALOG_TDS_SAMPLES; i ++) 
+      Adc[idx].tds_samples[i] = _adc;
+  }
+  else
+    Adc[idx].tds_samples[Adc[idx].indexOfPointer] = _adc;
+  Adc[idx].indexOfPointer++;
+  if (Adc[idx].indexOfPointer==ANALOG_TDS_SAMPLES)
+    Adc[idx].indexOfPointer=0;
+  
+}
+
+// median filtering algorithm
+int getMedianNum(int bArray[], int iFilterLen){
+  int bTab[iFilterLen];
+  for (byte i = 0; i<iFilterLen; i++)
+  bTab[i] = bArray[i];
+  int i, j, bTemp;
+  for (j = 0; j < iFilterLen - 1; j++) {
+    for (i = 0; i < iFilterLen - j - 1; i++) {
+      if (bTab[i] > bTab[i + 1]) {
+        bTemp = bTab[i];
+        bTab[i] = bTab[i + 1];
+        bTab[i + 1] = bTemp;
+      }
+    }
+  }
+  if ((iFilterLen & 1) > 0){
+    bTemp = bTab[(iFilterLen - 1) / 2];
+  }
+  else {
+    bTemp = (bTab[iFilterLen / 2] + bTab[iFilterLen / 2 - 1]) / 2;
+  }
+  return bTemp;
+}
+
+float AdcGetTds(uint32_t idx) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Getting value for tds-sensor "));
+  
+  
+  float temp = (float)Adc[idx].param1;
+
+  temp = ANALOG_TDS_COMPENSATION_TEMPERATURE; // TODO:  Adc[idx].param1 is not init with ANALOG_TDS_COMPENSATION_TEMPERATURE
+  // it would be better if we can read temperature sensor directly for compensation
+
+  int median = getMedianNum(Adc[idx].tds_samples, ANALOG_TDS_SAMPLES);
+  float voltage = median * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
+
+
+  //ANALOG_TDS_COMPENSATION_TEMPERATURE compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0)); 
+  // https://wiki.keyestudio.com/KS0429_keyestudio_TDS_Meter_V1.0#Test_Code
+  float compensationCoefficient = 1.0+0.02*(temp -25.0);
+
+   //ANALOG_TDS_COMPENSATION_TEMPERATURE compensation
+  float compensationVoltage=voltage/compensationCoefficient;
+
+  //convert voltage value to tds value
+  float ppm=(133.42*compensationVoltage*compensationVoltage*compensationVoltage - 255.86*compensationVoltage*compensationVoltage + 857.39*compensationVoltage)*0.5;
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Ppm read. ADC-RAW: %2_f, ppm: %2_f, temp: %2_f"), &voltage, &ppm, &temp);
+  return ppm;
+}
+
 float AdcGetPh(uint32_t idx) {
   int adc = AdcRead(Adc[idx].pin, 2);
 
@@ -444,6 +528,9 @@ float AdcGetRange(uint32_t idx) {
   // Example: 514, 632, 236, 0, 100
   // int( ((<param2> - <analog-value>) / (<param2> - <param1>) ) * (<param3> - <param4>) ) + <param4> )
   int adc = AdcRead(Adc[idx].pin, 2);
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Get range %d"), adc);  
+
   double adcrange = ( ((double)Adc[idx].param2 - (double)adc) / ( ((double)Adc[idx].param2 - (double)Adc[idx].param1)) * ((double)Adc[idx].param3 - (double)Adc[idx].param4) + (double)Adc[idx].param4 );
   return (float)adcrange;
 }
@@ -512,6 +599,10 @@ void AdcEverySecond(void) {
       AddSampleMq(idx);
       AdcGetMq(idx);
     }
+    else if (ADC_TDS == Adc[idx].type) {
+      AddSampleTds(idx);
+      AdcGetTds(idx);
+    }    
   }
 }
 
@@ -683,6 +774,28 @@ void AdcShow(bool json) {
           WSContentSend_PD(HTTP_SNS_MQ, mqnumber_chr, mq_chr);
   #endif // USE_WEBSERVER
         }
+        break;  
+      }
+      case ADC_TDS: {
+        float tds = AdcGetTds(idx);
+        char tds_chr[6];
+        dtostrfd(tds, 2, tds_chr);
+
+        float tdsnumber =Adc[idx].param1;
+        char tdsnumber_chr[6];
+        dtostrfd(tdsnumber, 0, tdsnumber_chr);
+
+
+        if (json) {
+          AdcShowContinuation(&jsonflg);
+          //ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%*_f"), adc_idx, Settings->flag2.temperature_resolution, &Adc[idx].temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TDS "%d_%d\":%s"), Adc[idx].param1, idx + offset, tds_chr);
+          //ResponseAppend_P(PSTR("\"TDS%d_%d\":%s"), Adc[idx].param1, idx + offset, tds_chr);
+  #ifdef USE_WEBSERVER
+        } else {
+          WSContentSend_PD(HTTP_SNS_TDS, tdsnumber_chr, tds_chr);
+  #endif // USE_WEBSERVER
+        }
         break;
       }
     }
@@ -781,6 +894,15 @@ void CmndAdcParam(void) {
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog MQ reset: mq%d, a=%2_f, b=%2_f, ratioMQCleanAir=%2_f"),
               Adc[idx].param1, &a, &b, &ratioMQCleanAir);
           }
+          if (ADC_TDS == XdrvMailbox.payload) {
+            float temp = CharToFloat(ArgV(argument, 2));
+            Adc[idx].param1 = temp;
+            Adc[idx].param2 = 0;
+            Adc[idx].param3 = 0;
+            Adc[idx].param4 = 0;
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Analog TDS probe calibrated. Compensation temperature  = %2_f (Default %2_f)"), 
+            Adc[idx].param1, ANALOG_TDS_COMPENSATION_TEMPERATURE);
+          }          
         } else {                                         // Set default values based on current adc type
           // AdcParam 2
           // AdcParam 3

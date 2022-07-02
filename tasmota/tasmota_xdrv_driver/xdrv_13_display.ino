@@ -1628,7 +1628,9 @@ enum SensorQuantity {
   JSON_VOLTAGE,
   JSON_POWERUSAGE,
   JSON_CO2,
-  JSON_FREQUENCY };
+  JSON_FREQUENCY,
+  JSON_TDS,
+  };
 const char kSensorQuantity[] PROGMEM =
   D_JSON_TEMPERATURE "|"                                                        // degrees
   D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
@@ -1642,7 +1644,8 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_VOLTAGE "|"                                                            // Volt
   D_JSON_POWERUSAGE "|"                                                         // Watt
   D_JSON_CO2 "|"                                                                // ppm
-  D_JSON_FREQUENCY ;                                                            // Hz
+  D_JSON_FREQUENCY "|"                                                          // Hz
+  D_JSON_TDS ;                                                            // ppm
 
 void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
@@ -1701,6 +1704,10 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   else if (JSON_FREQUENCY == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_HERTZ), value);
   }
+  else if (JSON_TDS == quantity_code) {
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
+  }
+
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);

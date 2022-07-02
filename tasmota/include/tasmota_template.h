@@ -181,6 +181,7 @@ enum UserSelectablePins {
   GPIO_OPTION_E,                       // Emulated module
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
+  GPIO_ADC_TDS,                         // Analog TDS Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
   GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
@@ -411,6 +412,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_OPTION " E|"
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
   D_SENSOR_ADC_MQ "|"
+  D_SENSOR_ADC_TDS "|"
+  
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
   D_SENSOR_ADE7880_IRQ "|"
@@ -1039,6 +1042,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY) + MAX_ADCS,         // Joystick
   AGPIO(GPIO_ADC_PH) + MAX_ADCS,          // Analog PH Sensor
   AGPIO(GPIO_ADC_MQ) + MAX_ADCS,          // Analog MQ Sensor
+  AGPIO(GPIO_ADC_TDS) + MAX_ADCS,          // Analog TDS Sensor
 #endif  // ESP32
 
 #ifdef USE_SHIFT595
@@ -1066,6 +1070,7 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_JOY),                    // Joystick
   AGPIO(GPIO_ADC_PH),                     // Analog PH Sensor
   AGPIO(GPIO_ADC_MQ),                     // Analog MQ Sensor
+  AGPIO(GPIO_ADC_TDS),                     // Analog TDS Sensor
 };
 #endif  // ESP8266
 
@@ -1082,6 +1087,7 @@ enum UserSelectableAdc {
   ADC_JOY,            // Joystick
   ADC_PH,             // Analog PH Sensor
   ADC_MQ,             // Analog MQ Sensor
+  ADC_TDS,             // Analog TDS Sensor
 //  ADC_SWITCH,         // Switch
 //  ADC_SWITCH_INV,
   ADC_END };
