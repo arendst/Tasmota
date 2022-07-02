@@ -28,8 +28,8 @@ BE_FUNC_CTYPE_DECLARE(be_ULP_get_mem, "i", "i");
 extern int32_t be_ULP_gpio_init(gpio_num_t pin, rtc_gpio_mode_t mode);
 BE_FUNC_CTYPE_DECLARE(be_ULP_gpio_init, "i", "ii");
 
-extern int32_t be_ULP_adc_config(adc1_channel_t channel, adc_atten_t attenuation, adc_bits_width_t width);
-BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "i", "iii");
+extern void be_ULP_adc_config(struct bvm *vm, adc1_channel_t channel, adc_atten_t attenuation, adc_bits_width_t width);
+BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "", "iii");
 
 extern void be_ULP_sleep(int32_t wake_up_s);
 BE_FUNC_CTYPE_DECLARE(be_ULP_sleep, "", "[i]");   // optional int arg

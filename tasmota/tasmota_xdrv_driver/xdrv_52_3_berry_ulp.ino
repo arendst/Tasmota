@@ -67,23 +67,24 @@ extern "C" {
     }
   }
 
-  // `ULP.adc_config(channel:int, attenuation:int, width:int) -> err:int`
-  // returns combined error like xxx000yyy, xxx for adc1_config_channel_atten and yyy for adc1_config_width
+  // `ULP.adc_config(channel:int, attenuation:int, width:int) -> nil`
+  // 
   // enums: channel 0-7, attenuation 0-3, width  0-3
-  int32_t be_ULP_adc_config(adc1_channel_t channel, adc_atten_t attenuation, adc_bits_width_t width) {
-    esp_err_t err = adc1_config_channel_atten(channel, attenuation) * 1000000; //shift error left
+  void be_ULP_adc_config(struct bvm *vm, adc1_channel_t channel, adc_atten_t attenuation, adc_bits_width_t width) {
+    esp_err_t err = adc1_config_channel_atten(channel, attenuation);
     err += adc1_config_width(width);
-    if(err==ESP_OK){
-      adc1_ulp_enable();
-    } 
-    return err;
+    if (err != ESP_OK) {
+      be_raisef(vm, "ulp_adc_config_error", "ULP: invalid code err=%i", err);
+    } else {
+        adc1_ulp_enable();
+    }
   }
 
   /**
    * @brief Load a Berry byte buffer containing a ULP program as raw byte data
    * 
    * @param vm as `ULP.load(code:bytes) -> nil`
-   * @return int 
+   * @return void 
    */
   void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size) {
     // AddLog(LOG_LEVEL_INFO, "ULP: load addr=%p size=%i %*_H", buf, size/4, size, buf);
