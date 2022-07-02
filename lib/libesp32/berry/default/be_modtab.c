@@ -50,6 +50,7 @@ be_extern_native_module(animate);
 be_extern_native_module(partition_core);
 be_extern_native_module(crc);
 be_extern_native_module(crypto);
+be_extern_native_module(ULP);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
 #endif // USE_ZIGBEE
@@ -162,6 +163,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_ALEXA_AVS
     &be_native_module(crypto),
 #endif
+#if defined(USE_BERRY_ULP) && defined(CONFIG_IDF_TARGET_ESP32)
+    &be_native_module(ULP),
+#endif // USE_BERRY_ULP
 
     /* user-defined modules register end */
     NULL /* do not remove */
