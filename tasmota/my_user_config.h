@@ -953,7 +953,7 @@
 //#define USE_NEOPOOL                              // Add support for Sugar Valley NeoPool Controller - also known under brands Hidrolife, Aquascenic, Oxilife, Bionet, Hidroniser, UVScenic, Station, Brilix, Bayrol and Hay (+6k flash, +60 mem)
 //  #define NEOPOOL_MODBUS_ADDRESS       1         // Any modbus address
 
-//#define FLOWRATEMETER                            // Add support for water flow meter YF-DN50 and similary (+1k7 code)
+//#define USE_FLOWRATEMETER                        // Add support for water flow meter YF-DN50 and similary (+1k7 code)
 
 // -- Thermostat control ----------------------------
 //#define USE_THERMOSTAT                           // Add support for Thermostat
