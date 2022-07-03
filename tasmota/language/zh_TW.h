@@ -806,7 +806,6 @@
 #define D_SENSOR_ADC_LIGHT     "ADC Light"
 #define D_SENSOR_ADC_BUTTON    "ADC Button"
 #define D_SENSOR_ADC_RANGE     "ADC Range"
-#define D_SENSOR_ADC_TDS       "ADC TDS"
 #define D_SENSOR_ADC_CT_POWER  "ADC CT Power"
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
