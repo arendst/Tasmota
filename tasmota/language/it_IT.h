@@ -140,7 +140,7 @@
 #define D_PASSWORD             "Password"
 #define D_PH                   "pH"
 #define D_MQ                   "MQ"
-#define D_MQ                   "TDS"
+#define D_TDS                  "TDS"
 #define D_PARTITION            "Partizione"      // As in flash and firmware partition
 #define D_PORT                 "Porta"
 #define D_POWER_FACTOR         "Fattore di potenza"
