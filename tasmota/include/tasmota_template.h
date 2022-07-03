@@ -181,7 +181,6 @@ enum UserSelectablePins {
   GPIO_OPTION_E,                       // Emulated module
   GPIO_SDM230_TX, GPIO_SDM230_RX,      // SDM230 Serial interface
   GPIO_ADC_MQ,                         // Analog MQ Sensor
-  GPIO_ADC_TDS,                         // Analog TDS Sensor
   GPIO_CM11_TXD, GPIO_CM11_RXD,        // CM11 Serial interface
   GPIO_BL6523_TX, GPIO_BL6523_RX,      // BL6523 based Watt meter Serial interface
   GPIO_ADE7880_IRQ,                    // ADE7880 IRQ
@@ -192,6 +191,7 @@ enum UserSelectablePins {
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
+  GPIO_ADC_TDS,                        // Analog TDS Sensor
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -411,8 +411,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SOLAXX1_RTS "|"
   D_SENSOR_OPTION " E|"
   D_SENSOR_SDM230_TX "|" D_SENSOR_SDM230_RX "|"
-  D_SENSOR_ADC_MQ "|"
-  D_SENSOR_ADC_TDS "|"
+  D_SENSOR_ADC_MQ "|"  
   
   D_SENSOR_CM11_TX "|" D_SENSOR_CM11_RX "|"
   D_SENSOR_BL6523_TX "|" D_SENSOR_BL6523_RX "|"
@@ -429,6 +428,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
   D_SENSOR_DFR562_BUSY "|"
+  D_SENSOR_ADC_TDS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
