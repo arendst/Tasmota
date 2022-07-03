@@ -169,7 +169,7 @@ struct {
   uint16_t last_value = 0;
   uint8_t type = 0;
   uint8_t pin = 0;
-  float samples[MAX(ANALOG_MQ_SAMPLES,ANALOG_TDS_SAMPLES)];
+  float analog_sensor_samples[MAX(ANALOG_MQ_SAMPLES,ANALOG_TDS_SAMPLES)];
   int indexOfPointer = -1;
 } Adc[MAX_ADCS];
 
@@ -239,7 +239,7 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
     }
     else if (ADC_MQ == Adc[idx].type) {
-      Adc[idx].param1 = ANALOG_TDS_COMPENSATION_TEMPERATURE;  // Default value 25.0
+      Adc[idx].param1 = 0;
       Adc[idx].param2 = 0;
       Adc[idx].param3 = 0;
       Adc[idx].param4 = 0;
@@ -404,10 +404,10 @@ void AddSampleMq(uint32_t idx){
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Init samples for mq-sensor"));
     for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
-      Adc[idx].samples[i] = _adc;
+      Adc[idx].analog_sensor_samples[i] = _adc;
   }
   else
-    Adc[idx].samples[Adc[idx].indexOfPointer] = _adc;
+    Adc[idx].analog_sensor_samples[Adc[idx].indexOfPointer] = _adc;
   Adc[idx].indexOfPointer++;
   if (Adc[idx].indexOfPointer==ANALOG_MQ_SAMPLES)
     Adc[idx].indexOfPointer=0;
@@ -419,7 +419,7 @@ float AdcGetMq(uint32_t idx) {
   float _RL = 10; //Value in KiloOhms
   float _R0 = 10;
   for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
-    avg += Adc[idx].samples[i];
+    avg += Adc[idx].analog_sensor_samples[i];
   float voltage = (avg / ANALOG_MQ_SAMPLES) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
 
   float _RS_Calc = ((ANALOG_V33 * _RL) / voltage) -_RL; //Get value of RS in a gas
@@ -442,10 +442,10 @@ void AddSampleTds(uint32_t idx){
   if (Adc[idx].indexOfPointer==-1)
   {
     for (int i = 0; i < ANALOG_TDS_SAMPLES; i ++) 
-      Adc[idx].samples[i] = _adc;
+      Adc[idx].analog_sensor_samples[i] = _adc;
   }
   else
-    Adc[idx].samples[Adc[idx].indexOfPointer] = _adc;
+    Adc[idx].analog_sensor_samples[Adc[idx].indexOfPointer] = _adc;
   Adc[idx].indexOfPointer++;
   if (Adc[idx].indexOfPointer==ANALOG_TDS_SAMPLES)
     Adc[idx].indexOfPointer=0;
@@ -479,13 +479,17 @@ float getMedianNum(float bArray[], int iFilterLen){
 float AdcGetTds(uint32_t idx) {
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Getting value for tds-sensor "));
   
-  
-  float temp = (float)Adc[idx].param1;
+  // read current temperature for compensation
+  float temp = TasmotaGlobal.temperature_celsius;
 
-  temp = ANALOG_TDS_COMPENSATION_TEMPERATURE; // TODO:  Adc[idx].param1 is not init with ANALOG_TDS_COMPENSATION_TEMPERATURE
-  // it would be better if we can read temperature sensor directly for compensation
+  if(temp == NAN){
+      // if temperature sensor not exist on device then we use fallback constant value (25^C)
+      temp = ANALOG_TDS_COMPENSATION_TEMPERATURE;
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Temperature sensor is not attach on device. Precise TDS  value is dependent on  current value of temperature. Please attach temperature sensor."));
+  }
 
-  int median = getMedianNum(Adc[idx].samples, ANALOG_TDS_SAMPLES);
+
+  int median = getMedianNum(Adc[idx].analog_sensor_samples, ANALOG_TDS_SAMPLES);
   float voltage = median * ANALOG_V33 / ((ANALOG_RESOLUTION << 1) - 1);
 
 
