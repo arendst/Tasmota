@@ -191,6 +191,7 @@ enum UserSelectablePins {
   GPIO_BP5758D_CLK, GPIO_BP5758D_DAT,  // BP5758D PWM controller
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
+  GPIO_TM1621_CS, GPIO_TM1621_WR, GPIO_TM1621_RD, GPIO_TM1621_DAT,  // Sonoff POWR3xxD and THR3xxD LCD display
   GPIO_SENSOR_END };
 
 enum ProgramSelectablePins {
@@ -426,6 +427,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
   D_SENSOR_DFR562_BUSY "|"
+  D_GPIO_TM1621_CS "|" D_GPIO_TM1621_WR "|" D_GPIO_TM1621_RD "|" D_GPIO_TM1621_DAT "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -611,6 +613,14 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_EPD_DATA),       // Base connection EPD driver
 #endif
 #endif  // USE_DISPLAY
+
+#ifdef USE_DISPLAY_TM1621_SONOFF
+// Initial support outside display driver
+  AGPIO(GPIO_TM1621_CS),
+  AGPIO(GPIO_TM1621_WR),
+  AGPIO(GPIO_TM1621_RD),
+  AGPIO(GPIO_TM1621_DAT),
+#endif  // USE_DISPLAY_TM1621_SONOFF
 
 #ifdef USE_MAX31865
   AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
