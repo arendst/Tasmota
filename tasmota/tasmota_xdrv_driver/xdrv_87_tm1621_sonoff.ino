@@ -12,6 +12,7 @@
  *
  * {"NAME":"Sonoff POWR316D","GPIO":[32,0,0,0,0,576,0,0,0,224,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff POWR320D","GPIO":[32,0,224,0,225,576,0,0,0,0,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff THR316D","GPIO":[32,0,0,0,225,9280,0,0,0,321,0,576,320,9184,9216,0,0,224,0,9248,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 \*********************************************************************************************/
 
 #define XDRV_87              87
@@ -25,6 +26,8 @@
 #define TM1621_TONE_OFF      0x08  // 0b00001000
 #define TM1621_BIAS          0x29  // 0b00101001 = LCD 1/3 bias 4 commons option
 #define TM1621_IRQ_DIS       0x80  // 0b100x0xxx
+
+enum Tm1621Device { TM1621_USER, TM1621_POWR316D, TM1621_THR316D };
 
 const uint8_t tm1621_commands[] = { TM1621_SYS_EN, TM1621_LCD_ON, TM1621_BIAS, TM1621_TIMER_DIS, TM1621_WDT_DIS, TM1621_TONE_OFF, TM1621_IRQ_DIS };
 
@@ -41,6 +44,7 @@ struct Tm1621 {
   uint8_t pin_rd;
   uint8_t pin_wr;
   uint8_t state;
+  uint8_t device;
   bool celsius;
   bool fahrenheit;
   bool humidity;
@@ -165,6 +169,7 @@ void TM1621SendRows(void) {
 void TM1621PreInit(void) {
   if (!PinUsed(GPIO_TM1621_CS) || !PinUsed(GPIO_TM1621_WR) || !PinUsed(GPIO_TM1621_RD) || !PinUsed(GPIO_TM1621_DAT)) { return; }
 
+  Tm1621.device = (14 == Pin(GPIO_TM1621_DAT)) ? TM1621_POWR316D : (5 == Pin(GPIO_TM1621_DAT)) ? TM1621_THR316D : TM1621_USER;
   Tm1621.present = true;
   Tm1621.pin_da = Pin(GPIO_TM1621_DAT);
   Tm1621.pin_cs = Pin(GPIO_TM1621_CS);
@@ -211,23 +216,45 @@ void TM1621Init(void) {
 }
 
 void TM1621Show(void) {
-  static uint32_t display = 0;
-
-  if (0 == display) {
-    Tm1621.kwh = false;
-    ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.voltage[0]);
-    ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.current[0]);
-    Tm1621.voltage = true;
-    display = 1;
-  } else {
-    Tm1621.voltage = false;
-    ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.total[0]);
-    ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.active_power[0]);
-    Tm1621.kwh = true;
-    display = 0;
+  if (TM1621_POWR316D == Tm1621.device) {
+    static uint32_t display = 0;
+    if (0 == display) {
+      Tm1621.kwh = false;
+      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.voltage[0]);
+      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.current[0]);
+      Tm1621.voltage = true;
+      display = 1;
+    } else {
+      Tm1621.voltage = false;
+      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.total[0]);
+      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.active_power[0]);
+      Tm1621.kwh = true;
+      display = 0;
+    }
+    TM1621SendRows();
   }
 
-  TM1621SendRows();
+  if (TM1621_THR316D == Tm1621.device) {
+    Tm1621.celsius = false;
+    Tm1621.fahrenheit = false;
+    Tm1621.humidity = false;
+    snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("    "));
+    snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("    "));
+    if (!isnan(TasmotaGlobal.temperature_celsius)) {
+      float temperature = ConvertTempToFahrenheit(TasmotaGlobal.temperature_celsius);
+      ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &temperature);
+      if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+        Tm1621.fahrenheit = true;
+      } else {
+        Tm1621.celsius = true;
+      }
+    }
+    if (TasmotaGlobal.humidity > 0.0f) {
+      Tm1621.humidity = true;
+      ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &TasmotaGlobal.humidity);
+    }
+    TM1621SendRows();
+  }
 }
 
 void TM1621EverySecond(void) {
