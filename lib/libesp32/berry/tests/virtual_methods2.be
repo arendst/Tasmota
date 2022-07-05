@@ -1,4 +1,14 @@
 #- virtual attributes -#
+
+def assert_attribute_error(f)
+    try
+        f()
+        assert(false, 'unexpected execution flow')
+    except .. as e, m
+        assert(e == 'attribute_error')
+    end
+end
+
 class Ta
     var a, b, virtual_c
     def init()
@@ -26,3 +36,4 @@ assert(ta.c == 3)
 ta.c = 30
 assert(ta.c == 30)
 assert(ta.virtual_c == 30)
+assert_attribute_error(def() ta.d = 0 end)
