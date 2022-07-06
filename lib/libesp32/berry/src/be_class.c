@@ -299,8 +299,8 @@ int be_instance_member(bvm *vm, binstance *instance, bstring *name, bvalue *dst)
                         return BE_NONE;     /* if the return value is module `undefined`, consider it is an error */
                     }
                 }
-                var_clearstatic(dst);
-                return type;
+                    var_clearstatic(dst);
+                    return type;
             }
         }
     }
@@ -339,6 +339,20 @@ bbool be_instance_setmember(bvm *vm, binstance *o, bstring *name, bvalue *src)
             vm->top += 4;   /* prevent collection results */
             be_dofunc(vm, top, 3); /* call method 'member' */
             vm->top -= 4;
+            /* if return value is `false` or `undefined` signal an unknown attribute */
+            int type = var_type(vm->top);
+            if (type == BE_BOOL) {
+                bbool ret = var_tobool(vm->top);
+                if (!ret) {
+                    return bfalse;
+                }
+            } else if (type == BE_MODULE) {
+                /* check if the module is named `undefined` */
+                bmodule *mod = var_toobj(vm->top);
+                if (strcmp(be_module_name(mod), "undefined") == 0) {
+                    return bfalse;     /* if the return value is module `undefined`, consider it is an error */
+                }
+            }
             return btrue;
         }
     }

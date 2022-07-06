@@ -190,3 +190,15 @@ b.setfloat(0, 0.33)
 assert(b == bytes('C3F5A83E'))
 b = bytes("0000C03F")
 assert(b.getfloat(0) == 1.5)
+
+#- fromhex -#
+b = bytes("112233")
+b.fromhex("FFFEAABBCC")
+assert(b == bytes("FFFEAABBCC"))
+b.fromhex("")
+assert(b == bytes())
+
+#- tohex -#
+b = bytes("FFFEAABBCC")
+assert(b.tohex() == "FFFEAABBCC")
+assert(bytes().tohex() == "")

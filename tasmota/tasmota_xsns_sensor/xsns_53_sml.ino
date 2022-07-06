@@ -1236,7 +1236,7 @@ void Hexdump(uint8_t *sbuff, uint32_t slen) {
   AddLogData(LOG_LEVEL_INFO, cbuff);
 }
 
-#ifdef ED300L
+#if defined(ED300L) || defined(AS2020)
 uint8_t sml_status[MAX_METERS];
 uint8_t g_mindex;
 #endif
@@ -1281,6 +1281,16 @@ double dval;
   }
   if (*cp==0x63 && *cpx==0 && *(cpx+1)==0x01 && *(cpx+2)==0x08 && *(cpx+3)==0) {
       sml_status[g_mindex]=*(cp+2);
+  }
+#endif
+#ifdef AS2020
+  unsigned char *cpx=cp-5;
+  // decode OBIS 0180 amd extract direction info
+  if (*cp==0x64 && *cpx==0 && *(cpx+1)==0x01 && *(cpx+2)==0x08 && *(cpx+3)==0) {
+      sml_status[g_mindex]=*(cp+2);
+  }
+  if (*cp==0x63 && *cpx==0 && *(cpx+1)==0x01 && *(cpx+2)==0x08 && *(cpx+3)==0) {
+      sml_status[g_mindex]=*(cp+1);
   }
 #endif
 
@@ -1394,6 +1404,15 @@ double dval;
     // decode current power OBIS 00 0F 07 00
     if (*cpx==0x00 && *(cpx+1)==0x0f && *(cpx+2)==0x07 && *(cpx+3)==0) {
         if (sml_status[g_mindex]&0x20) {
+          // and invert sign on solar feed
+          dval*=-1;
+        }
+    }
+  #endif
+  #ifdef AS2020
+    // decode current power OBIS 00 10 07 00
+    if (*cpx==0x00 && *(cpx+1)==0x10 && *(cpx+2)==0x07 && *(cpx+3)==0) {
+        if (sml_status[g_mindex]&0x08) {
           // and invert sign on solar feed
           dval*=-1;
         }
@@ -2099,7 +2118,7 @@ void SML_Decode(uint8_t index) {
         // matches, get value
         dvalid[vindex] = 1;
         mp++;
-#ifdef ED300L
+#if defined(ED300L) || defined(AS2020)
         g_mindex=mindex;
 #endif
         if (*mp == '#') {
@@ -2867,7 +2886,7 @@ init10:
       RtcSettings.pulse_counter[i] = Settings->pulse_counter[i];
       sml_counters[i].sml_cnt_last_ts = millis();
   }
-  uint32_t uart_index = 2;
+  uint32_t uart_index = SOC_UART_NUM - 1;
   sml_counter_pinstate = 0;
   for (uint8_t meters = 0; meters < meters_used; meters++) {
     if (meter_desc_p[meters].type == 'c') {
@@ -3026,7 +3045,7 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
 uint32_t SML_Status(uint32_t meter) {
   if (meter<1 || meter>meters_used) return 0;
   meter--;
-#ifdef ED300L
+#if defined(ED300L) || defined(AS2020)
   return sml_status[meter];
 #else
   return 0;
