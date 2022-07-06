@@ -3,17 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [12.0.2.3]
+### Added
+- Support for Sonoff POWR3xxD and THR3xxD (#15856)
+
+### Changed
+- Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
+
+### Fixed
+
+### Removed
+
 ## [12.0.2.2]
 ### Added
 - Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data (#15834)
 - Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data (#15834)
 - Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data (#15834)
-
-### Changed
-
-### Fixed
-
-### Removed
 
 ## [12.0.2.1] 20220622
 ### Added

@@ -1,31 +1,22 @@
 /*
   xsns_06_dht.ino - DHTxx, AM23xx and SI7021 temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  SPDX-FileCopyrightText: 2022 Theo Arends
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  SPDX-License-Identifier: GPL-3.0-only
 */
 
-#ifdef ESP8266
 #ifdef USE_DHT
 /*********************************************************************************************\
- * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidity
+ * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021, THS01, MS01 - Temperature and Humidity
  *
  * Reading temperature or humidity takes about 250 milliseconds!
  * Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
  *
  * Changelog
+ * 20220706 - v6
+ *          - Consolidate Adafruit DHT library
+ *          - Fix ESP32 interrupt control to solve intermittent results
  * 20211229 - Change poll time from to 2 to 4 seconds for better results
  * 20211226 - https://github.com/arendst/Tasmota/pull/14173
  * 20210524 - https://github.com/arendst/Tasmota/issues/12180
@@ -38,8 +29,10 @@
 #define DHT_MAX_SENSORS  4
 #define DHT_MAX_RETRY    8
 
+uint32_t dht_maxcycles;
 uint8_t dht_data[5];
 uint8_t dht_sensors = 0;
+uint8_t dht_pin;
 uint8_t dht_pin_out = 0;                      // Shelly GPIO00 output only
 bool dht_active = true;                       // DHT configured
 bool dht_dual_mode = false;                   // Single pin mode
@@ -50,33 +43,43 @@ struct DHTSTRUCT {
   int16_t  raw;
   char     stype[12];
   int8_t   pin;
-  uint8_t  type;
+  uint16_t type;
   uint8_t  lastresult;
 } Dht[DHT_MAX_SENSORS];
 
-bool DhtWaitState(uint32_t sensor, uint32_t level) {
-  unsigned long timeout = micros() + 100;
-  while (digitalRead(Dht[sensor].pin) != level) {
-    if (TimeReachedUsec(timeout)) {
+// Expect the signal line to be at the specified level for a period of time and
+// return a count of loop cycles spent at that level (this cycle count can be
+// used to compare the relative time of two pulses).  If more than a millisecond
+// ellapses without the level changing then the call fails with a 0 response.
+// This is adapted from Arduino's pulseInLong function
+uint32_t DhtExpectPulse(bool level) {
+  uint32_t count = 0;
+  while (digitalRead(dht_pin) == level) {
+    if (count++ >= dht_maxcycles) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " %s " D_PULSE),
         (level) ? D_START_SIGNAL_HIGH : D_START_SIGNAL_LOW);
-      return false;
+      return UINT32_MAX;  // Exceeded timeout, fail.
     }
-    delayMicroseconds(1);
   }
-  return true;
+  return count;
 }
 
 bool DhtRead(uint32_t sensor) {
   dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
 
+  dht_pin = Dht[sensor].pin;
   if (!dht_dual_mode) {
-    pinMode(Dht[sensor].pin, OUTPUT);
-    digitalWrite(Dht[sensor].pin, LOW);
+    // Go into high impedence state to let pull-up raise data line level and
+    // start the reading process.
+    pinMode(dht_pin, INPUT_PULLUP);
+    delay(1);
+
+    // First set data line low for a period according to sensor type
+    pinMode(dht_pin, OUTPUT);
+    digitalWrite(dht_pin, LOW);
   } else {
     digitalWrite(dht_pin_out, LOW);
   }
-
   switch (Dht[sensor].type) {
     case GPIO_DHT11:                                    // DHT11
       delay(19);  // minimum 18ms
@@ -86,19 +89,25 @@ bool DhtRead(uint32_t sensor) {
       delayMicroseconds(2000);                          // 20200621: See https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
       break;
     case GPIO_SI7021:                                   // iTead SI7021
-      delayMicroseconds(500);
+//      delayMicroseconds(500);
+      delayMicroseconds(400);                           // Higher results in Timeout waiting for start signal high pulse
       break;
     case GPIO_MS01:                                     // Sonoff MS01
       delayMicroseconds(450);
       break;
   }
 
+  uint32_t cycles[80];
+  uint32_t i = 0;
+
+  // End the start signal by setting data line high for 40 microseconds.
   if (!dht_dual_mode) {
-    pinMode(Dht[sensor].pin, INPUT_PULLUP);
+    pinMode(dht_pin, INPUT_PULLUP);
   } else {
     digitalWrite(dht_pin_out, HIGH);
   }
 
+  // Delay a moment to let sensor pull data line low.
   switch (Dht[sensor].type) {
     case GPIO_DHT11:                                    // DHT11
     case GPIO_DHT22:                                    // DHT21, DHT22, AM2301, AM2302, AM2321
@@ -110,23 +119,60 @@ bool DhtRead(uint32_t sensor) {
       break;
   }
 
-  uint32_t i = 0;
+  // Now start reading the data line to get the value from the DHT sensor.
+
+  // Turn off interrupts temporarily because the next sections
+  // are timing critical and we don't want any interruptions.
+#ifdef ESP32
+  {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+  portENTER_CRITICAL(&mux);
+#else
   noInterrupts();
-  if (DhtWaitState(sensor, 0) && DhtWaitState(sensor, 1) && DhtWaitState(sensor, 0)) {
-    for (i = 0; i < 40; i++) {
-      if (!DhtWaitState(sensor, 1)) { break; }
-      delayMicroseconds(32);                            // Was 30
-      if (digitalRead(Dht[sensor].pin)) {
-        dht_data[i / 8] |= (1 << (7 - i % 8));
-      }
-      if (!DhtWaitState(sensor, 0)) { break; }
+#endif
+
+  // First expect a low signal for ~80 microseconds followed by a high signal
+  // for ~80 microseconds again.
+  if ((DhtExpectPulse(LOW) != UINT32_MAX) && (DhtExpectPulse(HIGH) != UINT32_MAX)) {
+    // Now read the 40 bits sent by the sensor.  Each bit is sent as a 50
+    // microsecond low pulse followed by a variable length high pulse.  If the
+    // high pulse is ~28 microseconds then it's a 0 and if it's ~70 microseconds
+    // then it's a 1.  We measure the cycle count of the initial 50us low pulse
+    // and use that to compare to the cycle count of the high pulse to determine
+    // if the bit is a 0 (high state cycle count < low state cycle count), or a
+    // 1 (high state cycle count > low state cycle count). Note that for speed
+    // all the pulses are read into a array and then examined in a later step.
+    for (i = 0; i < 80; i += 2) {
+      cycles[i] = DhtExpectPulse(LOW);
+      if (cycles[i] == UINT32_MAX) { break; }
+      cycles[i + 1] = DhtExpectPulse(HIGH);
+      if (cycles[1 + i] == UINT32_MAX) { break; }
     }
   }
+#ifdef ESP32
+  portEXIT_CRITICAL(&mux);}
+#else
   interrupts();
+#endif
+
+  if (i < 80) { return false; }
+
+  // Inspect pulses and determine which ones are 0 (high state cycle count < low
+  // state cycle count), or 1 (high state cycle count > low state cycle count).
+  for (int i = 0; i < 40; ++i) {
+    uint32_t lowCycles = cycles[2 * i];
+    uint32_t highCycles = cycles[2 * i + 1];
+    dht_data[i / 8] <<= 1;
+    // Now compare the low and high cycle times to see if the bit is a 0 or 1.
+    if (highCycles > lowCycles) {
+      // High cycles are greater than 50us low cycle count, must be a 1.
+      dht_data[i / 8] |= 1;
+    }
+    // Else high cycles are less than (or equal to, a weird case) the 50us low
+    // cycle count so this must be a zero.  Nothing needs to be changed in the
+    // stored data.
+  }
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Read %5_H"), dht_data);
-
-  if (i < 40) { return false; }
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
@@ -241,7 +287,10 @@ void DhtInit(void) {
         snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
       }
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v5) " D_SENSORS_FOUND " %d"), dht_sensors);
+
+    dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
+
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v6) " D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }
@@ -313,4 +362,3 @@ bool Xsns06(uint8_t function) {
 }
 
 #endif  // USE_DHT
-#endif  // ESP8266

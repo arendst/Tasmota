@@ -818,7 +818,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_LIGHT) && defined(USE_SM2335)
     feature8 |= 0x40000000;  // xlgt_09_sm2335.ino
 #endif
-//    feature8 |= 0x80000000;
+#ifdef USE_DISPLAY_TM1621_SONOFF
+    feature8 |= 0x80000000;  // xdrv_87_tm1621_sonoff.ino
+#endif
   }
 
   static uint32_t feature9 = 0x00000000;
