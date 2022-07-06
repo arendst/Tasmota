@@ -22,6 +22,7 @@
 
 // User selectable GPIO functionality
 // ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
+//            Same order of new GPIO names have to be set it array kSensorNames
 //            Then add the same name(s) in a nice location in array kGpioNiceList
 enum UserSelectablePins {
   GPIO_NONE,                           // Not used
@@ -402,7 +403,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_INTERRUPT "|"
   D_SENSOR_MCP2515_CS "|"
   D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX "|"
-  D_SENSOR_VINDRIKTNING_RX "|" D_SENSOR_VINDRIKTNING_TX "|" D_SENSOR_VINDRIKTNING_FAN "|"
+  D_SENSOR_VINDRIKTNING_RX "|"
   D_SENSOR_BL0939_RX "|"
   D_SENSOR_BL0942_RX "|"
   D_SENSOR_HM330X_SET "|"
@@ -427,6 +428,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BP5758D_CLK "|" D_SENSOR_BP5758D_DAT "|"
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
   D_SENSOR_DFR562_BUSY "|"
+  D_SENSOR_VINDRIKTNING_TX "|" D_SENSOR_VINDRIKTNING_FAN "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
