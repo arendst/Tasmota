@@ -54,6 +54,10 @@
 #include "AudioFileSourceBuffer.h"
 #include "AudioGeneratorAAC.h"
 
+#ifdef ESP32
+#include <driver/i2s.h>
+#endif
+
 #undef AUDIO_PWR_ON
 #undef AUDIO_PWR_OFF
 #define AUDIO_PWR_ON
@@ -78,6 +82,24 @@
 #define DAC_IIS_WS        0
 #define DAC_IIS_DOUT      2
 #endif  // USE_M5STACK_CORE2
+
+
+#ifdef ESP32S3_BOX
+#undef AUDIO_PWR_ON
+#undef AUDIO_PWR_OFF
+#define AUDIO_PWR_ON S3boxAudioPower(true);
+#define AUDIO_PWR_OFF S3boxAudioPower(false);
+
+#undef DAC_IIS_BCK
+#undef DAC_IIS_WS
+#undef DAC_IIS_DOUT
+#define DAC_IIS_BCK       17
+#define DAC_IIS_WS        47
+#define DAC_IIS_DOUT      15
+#define DAC_IIS_DIN       16
+#define DAC_IIS_MCLK      2
+
+#endif // ESP32S3_BOX
 
 AudioGeneratorMP3 *mp3 = nullptr;
 AudioFileSourceFS *file;
@@ -264,8 +286,14 @@ void I2S_Init(void) {
   out = new AudioOutputI2S();
   #endif  // USE_I2S_NO_DAC
 #ifdef ESP32
+#ifdef ESP32S3_BOX
+  S3boxInit();
+  out->SetPinout(DAC_IIS_BCK, DAC_IIS_WS, DAC_IIS_DOUT, DAC_IIS_MCLK, DAC_IIS_DIN);
+#else
   out->SetPinout(DAC_IIS_BCK, DAC_IIS_WS, DAC_IIS_DOUT);
+#endif
 #endif  // ESP32
+
 #else
   #ifdef USE_I2S_NO_DAC
   out = new AudioOutputI2SNoDAC();
@@ -306,8 +334,6 @@ void I2S_Init(void) {
 #define Speak_I2S_NUMBER I2S_NUM_0
 //#define MICSRATE 44100
 #define MICSRATE 16000
-
-#include <driver/i2s.h>
 
 uint32_t SpeakerMic(uint8_t spkr) {
   esp_err_t err = ESP_OK;
@@ -469,6 +495,7 @@ void mp3_task(void *arg) {
       if (!mp3->loop()) {
         mp3->stop();
         mp3_delete();
+        out->stop();
         if (mp3_task_h) {
           vTaskDelete(mp3_task_h);
           mp3_task_h = 0;
@@ -610,6 +637,10 @@ void Play_mp3(const char *path) {
   if (decoder || mp3) return;
   if (!out) return;
 
+  if (!ufsp->exists(path)) {
+    return;
+  }
+
   bool I2S_Task;
 
   AUDIO_PWR_ON
@@ -641,6 +672,7 @@ void Play_mp3(const char *path) {
       }
       OsWatchLoop();
     }
+    out->stop();
     mp3_delete();
   }
 
