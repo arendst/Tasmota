@@ -176,6 +176,7 @@ class uDisplay : public Renderer {
    uint16_t bg_col;
    uint16_t gxs;
    uint16_t gys;
+   int8_t bpmode;
    int8_t spi_cs;
    int8_t spi_clk;
    int8_t spi_mosi;
