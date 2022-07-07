@@ -1,0 +1,7 @@
+{
+    "name": "ES7243e",
+    "description": "Audio codec",
+    "keywords": "ESP32, MP3, AAC, WAV, MOD, FLAC, RTTTL, MIDI, I2S, DAC, Delta-Sigma, TTS",
+    "version": "1.0.0",
+    "frameworks": "Arduino"
+}
