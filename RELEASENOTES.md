@@ -77,7 +77,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.3**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.4**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 [#15940](https://github.com/arendst/Tasmota/issues/15940)
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 [#15856](https://github.com/arendst/Tasmota/issues/15856)
 
 ### Fixed

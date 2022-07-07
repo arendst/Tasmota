@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
+- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 (#15940)
 
 ### Fixed
 
