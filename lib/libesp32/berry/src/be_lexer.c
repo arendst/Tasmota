@@ -419,6 +419,9 @@ static btokentype scan_string(blexer *lexer)
                 save(lexer); /* skip '\\.' */
             }
         }
+        if (c == EOS) {
+            be_lexerror(lexer, "unfinished string");
+        }
         c = next(lexer); /* skip '"' or '\'' */
         /* check if there's an additional string literal right after */
         skip_delimiter(lexer);
