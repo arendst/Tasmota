@@ -33,6 +33,9 @@ extern "C" {
     if (tcp_port > 0 && tcp_port < 65535) {
       WiFiServer *server_tcp = new WiFiServer(tcp_port);
       server_tcp->begin(); // start TCP server
+      if (!*server_tcp) {
+        be_raise(vm, "network_error", "Failed to open socket");
+      }
       server_tcp->setNoDelay(true);
       return server_tcp;
     } else {
