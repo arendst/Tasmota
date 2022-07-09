@@ -6,7 +6,6 @@ All notable changes to this project will be documented in this file.
 ## [12.0.2.3]
 ### Added
 - Support for Sonoff POWR3xxD and THR3xxD (#15856)
-- Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi
 
 ### Changed
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
