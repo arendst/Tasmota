@@ -192,7 +192,11 @@ enum UserSelectablePins {
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_TM1621_CS, GPIO_TM1621_WR, GPIO_TM1621_RD, GPIO_TM1621_DAT,  // Sonoff POWR3xxD and THR3xxD LCD display
+  GPIO_REL1_BI, GPIO_REL1_BI_INV,      // 8 x Relays bistable
   GPIO_SENSOR_END };
+
+// Error as warning to rethink GPIO usage
+static_assert(GPIO_SENSOR_END < 2000, "Too many UserSelectablePins");
 
 enum ProgramSelectablePins {
   GPIO_FIX_START = 2046,
@@ -428,6 +432,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
   D_SENSOR_DFR562_BUSY "|"
   D_GPIO_TM1621_CS "|" D_GPIO_TM1621_WR "|" D_GPIO_TM1621_RD "|" D_GPIO_TM1621_DAT "|"
+  D_SENSOR_RELAY "_b|" D_SENSOR_RELAY "_bi|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -471,6 +476,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
   AGPIO(GPIO_REL1_INV) + MAX_RELAYS,
+
+#ifdef USE_BISTABLE_RELAY_SUPPORT
+  AGPIO(GPIO_REL1_BI) + MAX_RELAYS,     // Bistable (Latching) two coil relays
+  AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS,
+#endif
+
   AGPIO(GPIO_LED1) + MAX_LEDS,          // Leds
   AGPIO(GPIO_LED1_INV) + MAX_LEDS,
 #ifdef USE_COUNTER
