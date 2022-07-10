@@ -673,6 +673,7 @@ extern const bcstring be_const_str_remove;
 extern const bcstring be_const_str_remove_cmd;
 extern const bcstring be_const_str_remove_cron;
 extern const bcstring be_const_str_remove_driver;
+extern const bcstring be_const_str_remove_fast_loop;
 extern const bcstring be_const_str_remove_light;
 extern const bcstring be_const_str_remove_rule;
 extern const bcstring be_const_str_remove_timer;
