@@ -1048,7 +1048,4 @@
   #define USE_TLS                                // flag indicates we need to include TLS code
 #endif                                           // USE_MQTT_TLS
 
-// -- Basic features ------------------------------
-#define USE_BISTABLE_RELAY_SUPPORT               // Add support for bistable (latching) relays using GPIO Relay_b or Relay_bi
-
 #endif  // _TASMOTA_CONFIGURATIONS_H_

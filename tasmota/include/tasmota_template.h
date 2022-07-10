@@ -476,18 +476,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
   AGPIO(GPIO_REL1_INV) + MAX_RELAYS,
-#ifdef USE_BISTABLE_RELAY_SUPPORT
   AGPIO(GPIO_REL1_BI) + MAX_RELAYS,     // Bistable (Latching) two coil relays
   AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS,
-#endif
   AGPIO(GPIO_LED1) + MAX_LEDS,          // Leds
   AGPIO(GPIO_LED1_INV) + MAX_LEDS,
 #ifdef USE_COUNTER
   AGPIO(GPIO_CNTR1) + MAX_COUNTERS,     // Counters
   AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS,
 #endif
-  AGPIO(GPIO_PWM1) + MAX_PWMS,      // RGB   Red   or C  Cold White
-  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,  // or extended PWM for ESP32
+  AGPIO(GPIO_PWM1) + MAX_PWMS,          // RGB   Red   or C  Cold White
+  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,      // or extended PWM for ESP32
 #ifdef USE_BUZZER
   AGPIO(GPIO_BUZZER),                   // Buzzer
   AGPIO(GPIO_BUZZER_INV),               // Inverted buzzer
