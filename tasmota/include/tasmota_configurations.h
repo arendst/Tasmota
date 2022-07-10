@@ -919,11 +919,11 @@
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "mini-custom"
 
-#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
-#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
-#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
-#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
-#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
+#undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
+#undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
+#undef FIRMWARE_DISPLAYS                         // Disable tasmota-display with display drivers enabled
+#undef FIRMWARE_IR                               // Disable tasmota-ir with IR full protocols activated
 #undef FIRMWARE_WEBCAM
 #undef FIRMWARE_ODROID_GO
 #undef FIRMWARE_M5STACK_CORE2
@@ -953,12 +953,12 @@
 // IR_SEND has two mode: minimal or full (USE_IR_REMOTE_FULL)
 #ifdef USE_IR_REMOTE_FULL
   // Enable all protocols except PRONTO
-  #ifndef _IR_ENABLE_DEFAULT_                  // it is possible to define this value previously in config
-    #define _IR_ENABLE_DEFAULT_ true           // Enable all protocols except exluded below
+  #ifndef _IR_ENABLE_DEFAULT_                    // it is possible to define this value previously in config
+    #define _IR_ENABLE_DEFAULT_ true             // Enable all protocols except exluded below
   #endif
   // PRONTO protocol cannot be supported because it requires specific APIs which are not supported in Tasmota
-  #define DECODE_PRONTO false                  // Exclude PRONTO protocol
-  #define SEND_PRONTO false                    // Exclude PRONTO protocol
+  #define DECODE_PRONTO false                    // Exclude PRONTO protocol
+  #define SEND_PRONTO false                      // Exclude PRONTO protocol
 #else
   #define _IR_ENABLE_DEFAULT_ false              // disable all protocols by default
   // below are the default IR protocols
@@ -982,7 +982,7 @@
 \*********************************************************************************************/
 
 #ifndef ESP8266_1M
-  #ifndef FIRMWARE_MINIMAL    // there might be a ESP32-minimal
+  #ifndef FIRMWARE_MINIMAL                       // There might be a ESP32-minimal
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
@@ -1035,17 +1035,20 @@
 #endif
 
 #ifdef USE_SCRIPT
-#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif
 #ifdef USE_ZIGBEE
-#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif
 #ifdef USE_EMULATION_HUE
-#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif
 
-#if defined(USE_MQTT_TLS)                      // Enable TLS if required:
-  #define USE_TLS                              // flag indicates we need to include TLS code
-#endif                                         // USE_MQTT_TLS
+#if defined(USE_MQTT_TLS)                        // Enable TLS if required:
+  #define USE_TLS                                // flag indicates we need to include TLS code
+#endif                                           // USE_MQTT_TLS
+
+// -- Basic features ------------------------------
+#define USE_BISTABLE_RELAY_SUPPORT               // Add support for bistable (latching) relays using GPIO Relay_b or Relay_bi
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_
