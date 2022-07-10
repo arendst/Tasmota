@@ -344,7 +344,7 @@ be_define_const_str(create_matrix, "create_matrix", 3528185923u, 0, 13, &be_cons
 be_define_const_str(create_segment, "create_segment", 3863522719u, 0, 14, NULL);
 be_define_const_str(ct, "ct", 1261010898u, 0, 2, &be_const_str_has_factory);
 be_define_const_str(ctor, "ctor", 375399343u, 0, 4, &be_const_str_math);
-be_define_const_str(ctypes_bytes, "ctypes_bytes", 3879019703u, 0, 12, NULL);
+be_define_const_str(ctypes_bytes, "ctypes_bytes", 3879019703u, 0, 12, &be_const_str_remove_fast_loop);
 be_define_const_str(ctypes_bytes_dyn, "ctypes_bytes_dyn", 915205307u, 0, 16, &be_const_str_energy_struct);
 be_define_const_str(dac_voltage, "dac_voltage", 1552257222u, 0, 11, &be_const_str_reverse_gamma10);
 be_define_const_str(data, "data", 3631407781u, 0, 4, &be_const_str_display);
@@ -665,6 +665,7 @@ be_define_const_str(remove, "remove", 3683784189u, 0, 6, NULL);
 be_define_const_str(remove_cmd, "remove_cmd", 3832315702u, 0, 10, NULL);
 be_define_const_str(remove_cron, "remove_cron", 2914538962u, 0, 11, NULL);
 be_define_const_str(remove_driver, "remove_driver", 1030243768u, 0, 13, &be_const_str_settings);
+be_define_const_str(remove_fast_loop, "remove_fast_loop", 3811152503u, 0, 16, NULL);
 be_define_const_str(remove_light, "remove_light", 1783624394u, 0, 12, &be_const_str_run);
 be_define_const_str(remove_rule, "remove_rule", 3456211328u, 0, 11, NULL);
 be_define_const_str(remove_timer, "remove_timer", 4141472215u, 0, 12, NULL);
@@ -1896,6 +1897,6 @@ static const bstring* const m_string_table[] = {
 
 static const struct bconststrtab m_const_string_table = {
     .size = 432,
-    .count = 887,
+    .count = 888,
     .table = m_string_table
 };

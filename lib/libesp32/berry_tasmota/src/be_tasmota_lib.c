@@ -735,6 +735,47 @@ be_local_closure(Tasmota_add_fast_loop,   /* name */
 );
 /*******************************************************************/
 
+/********************************************************************
+** Solidified function: remove_fast_loop
+********************************************************************/
+be_local_closure(Tasmota_remove_fast_loop,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str(_fl),
+    /* K1   */  be_nested_str(find),
+    /* K2   */  be_nested_str(remove),
+    }),
+    &be_const_str_remove_fast_loop,
+    &be_const_str_solidified,
+    ( &(const binstruction[15]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x740A0000,  //  0001  JMPT	R2	#0003
+      0x80000400,  //  0002  RET	0
+      0x88080100,  //  0003  GETMBR	R2	R0	K0
+      0x8C080501,  //  0004  GETMET	R2	R2	K1
+      0x5C100200,  //  0005  MOVE	R4	R1
+      0x7C080400,  //  0006  CALL	R2	2
+      0x4C0C0000,  //  0007  LDNIL	R3
+      0x200C0403,  //  0008  NE	R3	R2	R3
+      0x780E0003,  //  0009  JMPF	R3	#000E
+      0x880C0100,  //  000A  GETMBR	R3	R0	K0
+      0x8C0C0702,  //  000B  GETMET	R3	R3	K2
+      0x5C140400,  //  000C  MOVE	R5	R2
+      0x7C0C0400,  //  000D  CALL	R3	2
+      0x80000000,  //  000E  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
 
 /********************************************************************
 ** Solidified function: event
@@ -2621,6 +2662,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     fast_loop, closure(Tasmota_fast_loop_closure)
     add_fast_loop, closure(Tasmota_add_fast_loop_closure)
+    remove_fast_loop, closure(Tasmota_remove_fast_loop_closure)
     cmd, closure(Tasmota_cmd_closure)
     chars_in_string, closure(Tasmota_chars_in_string_closure)
     find_key_i, closure(Tasmota_find_key_i_closure)
