@@ -193,6 +193,7 @@ enum UserSelectablePins {
   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_TM1621_CS, GPIO_TM1621_WR, GPIO_TM1621_RD, GPIO_TM1621_DAT,  // Sonoff POWR3xxD and THR3xxD LCD display
   GPIO_REL1_BI, GPIO_REL1_BI_INV,      // 8 x Relays bistable
+  GPIO_I2S_MCLK, GPIO_I2S_BCLK, GPIO_I2S_WS, GPIO_I2S_DIN, GPIO_I2S_DOUT,
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage
@@ -433,6 +434,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DFR562_BUSY "|"
   D_GPIO_TM1621_CS "|" D_GPIO_TM1621_WR "|" D_GPIO_TM1621_RD "|" D_GPIO_TM1621_DAT "|"
   D_SENSOR_RELAY "_b|" D_SENSOR_RELAY "_bi|"
+  D_SENSOR_I2S_MCLK "|" D_SENSOR_I2S_BCLK "|" D_SENSOR_I2S_WS "|" D_SENSOR_I2S_DIN "|" D_SENSOR_I2S_DOUT  "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -525,6 +527,14 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_I2S_IN_DATA) + MAX_I2S,    // I2S In Data
   AGPIO(GPIO_I2S_IN_CLK) + MAX_I2S,     // I2C In Clock
   AGPIO(GPIO_I2S_IN_SLCT) + MAX_I2S,    // I2C In Word Select
+#endif
+
+#ifdef USE_I2S_AUDIO
+  AGPIO(GPIO_I2S_MCLK) + MAX_I2S,   // I2S master clock
+  AGPIO(GPIO_I2S_BCLK) + MAX_I2S,   // I2S bit clock
+  AGPIO(GPIO_I2S_WS) + MAX_I2S,   // I2S word select
+  AGPIO(GPIO_I2S_DIN) + MAX_I2S,   // I2S IN Data
+  AGPIO(GPIO_I2S_DOUT) + MAX_I2S,   // I2S Out Data
 #endif
 
 #ifdef USE_SPI
