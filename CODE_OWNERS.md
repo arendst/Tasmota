@@ -60,7 +60,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_49_pid                | Colin Law, Thomas Herrmann
 | xdrv_50_filesystem         | @gemu, @barbudor
 | xdrv_51_bs814a2            | Peter Franck
-| xdrv_52_berry              | @s-hadinger
+| xdrv_52_berry              | @s-hadinger, @staars (ULP)
 | xdrv_53_projector_ctrl     | Jan Bubík
 | xdrv_54_lvgl               | @s-hadinger
 | xdrv_55_touch              | @gemu, @s-hadinger
