@@ -526,6 +526,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_I2S_WS) + MAX_I2S,         // I2S word select
   AGPIO(GPIO_I2S_DIN) + MAX_I2S,        // I2S IN Data
   AGPIO(GPIO_I2S_DOUT) + MAX_I2S,       // I2S Out Data
+#endif
+#ifdef USE_I2S
   AGPIO(GPIO_I2S_BCLK_IN) + MAX_I2S,    // I2S bit clock in
   AGPIO(GPIO_I2S_WS_IN) + MAX_I2S,      // I2S word select in
 #endif
