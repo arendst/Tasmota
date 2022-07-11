@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 30.05.2022
+ * Updated until v9.4.0.1 - Last update 11.07.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -622,14 +622,15 @@
 #define D_SENSOR_SI7021                 "SI7021"
 #define D_SENSOR_MS01                   "MS01"
 #define D_SENSOR_DS18X20                "DS18x20"
-#define D_SENSOR_I2C_SCL                "I2C SCL"
-#define D_SENSOR_I2C_SDA                "I2C SDA"
-#define D_SENSOR_I2S_OUT_DATA           "I2S - Dati out"
-#define D_SENSOR_I2S_OUT_CLK            "I2S - Clk out"
-#define D_SENSOR_I2S_OUT_SLCT           "I2S - Sel. out"
-#define D_SENSOR_I2S_IN_DATA            "I2S - Dati in"
-#define D_SENSOR_I2S_IN_CLK             "I2S - Clk in"
-#define D_SENSOR_I2S_IN_SLCT            "I2S - Sel. in"
+#define D_SENSOR_I2C_SCL                "I2C - SCL"
+#define D_SENSOR_I2C_SDA                "I2C - SDA"
+#define D_SENSOR_I2S_MCLK               "I2S - MCLK"
+#define D_SENSOR_I2S_BCLK               "I2S - BCLK"
+#define D_SENSOR_I2S_WS_IN              "I2S - BCLK IN"
+#define D_SENSOR_I2S_WS                 "I2S - WS"
+#define D_SENSOR_I2S_BCLK_IN            "I2S - WS IN"
+#define D_SENSOR_I2S_DIN                "I2S - DIN"
+#define D_SENSOR_I2S_DOUT               "I2S - DOUT"
 #define D_SENSOR_WS2812                 "WS2812"
 #define D_SENSOR_DFR562                 "Riproduttore MP3"
 #define D_SENSOR_DFR562_BUSY            "MP3 occupato"

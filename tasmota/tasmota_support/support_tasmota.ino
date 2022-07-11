@@ -221,8 +221,7 @@ void ZeroCrossInit(uint32_t offset) {
 
 /********************************************************************************************/
 
-void SetLatchingRelay(power_t lpower, uint32_t state)
-{
+void SetLatchingRelay(power_t lpower, uint32_t state) {
   // TasmotaGlobal.power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
   // TasmotaGlobal.power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
   // TasmotaGlobal.power xx10 - toggle REL1 (Off) and REL4 (On)  - device 1 Off, device 2 On
@@ -240,8 +239,15 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
   }
 }
 
-void SetDevicePower(power_t rpower, uint32_t source)
-{
+void ResetBistableRelays(void) {
+  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+    if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+      DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
+    }
+  }
+}
+
+void SetDevicePower(power_t rpower, uint32_t source) {
   ShowSource(source);
   TasmotaGlobal.last_source = source;
 
@@ -298,11 +304,22 @@ void SetDevicePower(power_t rpower, uint32_t source)
   {
     ZeroCrossMomentStart();
 
+    uint32_t port = 0;
+    uint32_t port_next;
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       power_t state = rpower &1;
-      if (i < MAX_RELAYS) {
-        DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? !state : state);
+
+      port_next = 1;                              // Select next relay
+      if (bitRead(TasmotaGlobal.rel_bistable, port)) {
+        if (!state) { port_next = 2; }            // Skip highest relay
+        TasmotaGlobal.latching_relay_pulse = 2;   // max 200mS (initiated by stateloop())
+        port += state;                            // Relay<lowest> = Off, Relay<highest> = On
+        state = 1;                                // Set pulse
       }
+      if (i < MAX_RELAYS) {
+        DigitalWrite(GPIO_REL1, port, bitRead(TasmotaGlobal.rel_inverted, port) ? !state : state);
+      }
+      port += port_next;                          // Select next relay
       rpower >>= 1;
     }
 
@@ -399,18 +416,25 @@ void SetPowerOnState(void)
   }
 
   // Issue #526 and #909
+  uint32_t port = 0;
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
 #ifdef ESP8266
     if (!Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-      if ((i < MAX_RELAYS) && PinUsed(GPIO_REL1, i)) {
-        bitWrite(TasmotaGlobal.power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(TasmotaGlobal.rel_inverted, i));
+      if ((port < MAX_RELAYS) && PinUsed(GPIO_REL1, port)) {
+        if (bitRead(TasmotaGlobal.rel_bistable, port)) {
+          port++;                              // Skip both bistable relays as always 0
+        } else {
+          bitWrite(TasmotaGlobal.power, i, digitalRead(Pin(GPIO_REL1, port)) ^ bitRead(TasmotaGlobal.rel_inverted, port));
+        }
       }
+      port++;
     }
 #endif  // ESP8266
     if (bitRead(TasmotaGlobal.power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings->poweronstate)) {
       SetPulseTimer(i % MAX_PULSETIMERS, Settings->pulse_timer[i % MAX_PULSETIMERS]);
     }
   }
+
   TasmotaGlobal.blink_powersave = TasmotaGlobal.power;
 #ifdef USE_RULES
   RulesEvery50ms();
@@ -1125,7 +1149,14 @@ void Every100mSeconds(void)
 
   if (TasmotaGlobal.latching_relay_pulse) {
     TasmotaGlobal.latching_relay_pulse--;
-    if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
+    if (!TasmotaGlobal.latching_relay_pulse) {
+#ifdef ESP8266
+      if (EXS_RELAY == TasmotaGlobal.module_type) {
+        SetLatchingRelay(0, 0);
+      }
+#endif  // ESP8266
+      ResetBistableRelays();
+    }
   }
 
   if (TasmotaGlobal.skip_sleep) {
@@ -1969,6 +2000,15 @@ void GpioInit(void)
         bitSet(TasmotaGlobal.rel_inverted, mpin - AGPIO(GPIO_REL1_INV));
         mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
       }
+      else if ((mpin >= AGPIO(GPIO_REL1_BI)) && (mpin < (AGPIO(GPIO_REL1_BI) + MAX_RELAYS))) {
+        bitSet(TasmotaGlobal.rel_bistable, mpin - AGPIO(GPIO_REL1_BI));
+        mpin -= (AGPIO(GPIO_REL1_BI) - AGPIO(GPIO_REL1));
+      }
+      else if ((mpin >= AGPIO(GPIO_REL1_BI_INV)) && (mpin < (AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS))) {
+        bitSet(TasmotaGlobal.rel_bistable, mpin - AGPIO(GPIO_REL1_BI_INV));
+        bitSet(TasmotaGlobal.rel_inverted, mpin - AGPIO(GPIO_REL1_BI_INV));
+        mpin -= (AGPIO(GPIO_REL1_BI_INV) - AGPIO(GPIO_REL1));
+      }
       else if ((mpin >= AGPIO(GPIO_LED1_INV)) && (mpin < (AGPIO(GPIO_LED1_INV) + MAX_LEDS))) {
         bitSet(TasmotaGlobal.led_inverted, mpin - AGPIO(GPIO_LED1_INV));
         mpin -= (AGPIO(GPIO_LED1_INV) - AGPIO(GPIO_LED1));
@@ -2163,6 +2203,7 @@ void GpioInit(void)
 
   GpioInitPwm();
 
+  uint32_t bi_device = 0;
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {
       TasmotaGlobal.devices_present++;
@@ -2171,6 +2212,10 @@ void GpioInit(void)
         if (i &1) { TasmotaGlobal.devices_present--; }
       }
 #endif  // ESP8266
+      if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+        if (bi_device &1) { TasmotaGlobal.devices_present--; }
+        bi_device++;
+      }
     }
   }
 

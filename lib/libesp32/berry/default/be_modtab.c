@@ -199,6 +199,7 @@ be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
+be_extern_native_class(tcpserver);
 be_extern_native_class(energy_struct);
 // BLE
 be_extern_native_class(MI32);
@@ -246,6 +247,9 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(webclient),
     &be_native_class(tcpclient),
 #endif // USE_WEBCLIENT
+#ifdef USE_BERRY_TCPSERVER
+    &be_native_class(tcpserver),
+#endif // USE_BERRY_TCPSERVER
 #ifdef USE_WS2812
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),

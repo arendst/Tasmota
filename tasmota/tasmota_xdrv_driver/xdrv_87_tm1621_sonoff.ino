@@ -11,8 +11,9 @@
  * Sonoff POWR3xxD and THR3xxD LCD support
  *
  * {"NAME":"Sonoff POWR316D","GPIO":[32,0,0,0,0,576,0,0,0,224,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
- * {"NAME":"Sonoff POWR320D","GPIO":[32,0,224,0,225,576,0,0,0,0,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
- * {"NAME":"Sonoff THR316D","GPIO":[32,0,0,0,225,9280,0,0,0,321,0,576,320,9184,9216,0,0,224,0,9248,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff POWR320D","GPIO":[32,0,9312,0,9313,576,0,0,0,0,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff THR316D","GPIO":[32,0,0,0,225,9280,0,0,0,321,0,576,320,9184,9216,0,0,224,0,9248,0,1,0,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff THR320D","GPIO":[32,0,0,0,226,9280,0,0,0,321,0,576,320,9184,9216,9312,0,0,9313,9248,0,1,0,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 \*********************************************************************************************/
 
 #define XDRV_87              87
@@ -112,6 +113,9 @@ void TM1621SendCommon(uint8_t common) {
 }
 
 void TM1621SendRows(void) {
+  // Tm1621.row[x] = "text", "----", "    " or a number with one decimal like "0.4", "237.5", "123456.7"
+  // "123456.7" will be shown as "9999" being a four digit overflow
+
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TM1: Row1 '%s', Row2 '%s'"), Tm1621.row[0], Tm1621.row[1]);
 
   uint8_t buffer[8] = { 0 };  // TM1621 16-segment 4-bit common buffer
@@ -119,11 +123,15 @@ void TM1621SendRows(void) {
   for (uint32_t j = 0; j < 2; j++) {
     // 0.4V => "  04", 0.0A => "  ", 1234.5V => "1234"
     uint32_t len = strlen(Tm1621.row[j]);
-    char *dp = nullptr;
-    int row_idx = len -3;
-    if (len <= 5) {
+    char *dp = nullptr;           // Expect number larger than "123"
+    int row_idx = len -3;         // "1234.5"
+    if (len <= 5) {               // "----", "    ", "0.4", "237.5"
       dp = strchr(Tm1621.row[j], '.');
       row_idx = len -1;
+    }
+    else if (len > 6) {           // "12345.6"
+      snprintf_P(Tm1621.row[j], sizeof(Tm1621.row[j]), PSTR("9999"));
+      row_idx = 3;
     }
     row[3] = (row_idx >= 0) ? Tm1621.row[j][row_idx--] : ' ';
     if ((row_idx >= 0) && dp) { row_idx--; }

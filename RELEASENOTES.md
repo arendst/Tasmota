@@ -77,7 +77,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.3**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.4**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
@@ -107,16 +107,21 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.0.2.2
+## Changelog v12.0.2.3
 ### Added
 - Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs [#15839](https://github.com/arendst/Tasmota/issues/15839)
+- Support for Sonoff POWR3xxD and THR3xxD [#15856](https://github.com/arendst/Tasmota/issues/15856)
+- Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
+- ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars [#15916](https://github.com/arendst/Tasmota/issues/15916)
 
 ### Breaking Changed
 
 ### Changed
+- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 [#15940](https://github.com/arendst/Tasmota/issues/15940)
+- Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 [#15856](https://github.com/arendst/Tasmota/issues/15856)
 
 ### Fixed
 - ESP32 SendMail not working over ethernet [#15794](https://github.com/arendst/Tasmota/issues/15794)

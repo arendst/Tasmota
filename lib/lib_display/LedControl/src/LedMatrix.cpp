@@ -330,7 +330,22 @@ void LedMatrix::refresh()
             }
             else // ORIENTATION_TURN_RIGHT || ORIENTATION_TURN_LEFT
             {
-                // not implemented yet
+                col = addr % modulesPerRow;
+                pixelRow = (addr / modulesPerRow) * 8 + ledRow;
+                bufPos = pixelRow * modulesPerRow + col;
+
+                if (moduleOrientation == ORIENTATION_TURN_RIGHT)
+                {
+                    // ORIENTATION_TURN_RIGHT
+                    deviceDataBuff[addr] = buffer[bufPos];
+                    deviceRow = ledRow;
+                }
+                else
+                {
+                    // ORIENTATION_TURN_LEFT
+                    deviceDataBuff[maxDevices - 1 - addr] = revereBitorder(buffer[bufPos]);
+                    deviceRow = 7 - ledRow; // upside down
+                }
             }
         }
         setRow_allDevices(deviceRow, deviceDataBuff); 

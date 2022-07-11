@@ -64,6 +64,9 @@ void CseReceived(void) {
   // F2 5A 02 F7 60 00 03 61 00 40 10 05 72 40 51 A6 58 63 10 1B E1 7F 4D 4E - F2 = Power cycle exceeds range - takes too long - No load
   // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - 55 = Ok, 61 = Power not valid (load below 5W)
   // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36 - 55 = Ok, 71 = Ok
+
+  // 55 5A 02 DB 40 00 03 25 00 3D 18 03 8E CD 4F 0A 60 2A 56 85 61 01 02 1A - OK voltage
+  // 55 5A 02 DB 40 07 17 1D 00 3D 18 03 8E CD 4F 0A 60 2B EF EA 61 01 02 2C - Wrong voltage
   // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
 
   uint8_t header = Cse.rx_buffer[0];

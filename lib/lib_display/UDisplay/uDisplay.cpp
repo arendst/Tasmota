@@ -62,6 +62,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   sa_mode = 16;
   saw_3 = 0xff;
   dim_op = 0xff;
+  bpmode = 0;
   dsp_off = 0xff;
   dsp_on = 0xff;
   lutpsize = 0;
@@ -304,6 +305,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             rotmap_xmax = next_val(&lp1);
             rotmap_ymin = next_val(&lp1);
             rotmap_ymax = next_val(&lp1);
+            break;
+          case 'b':
+            bpmode = next_val(&lp1);
             break;
         }
       }
@@ -1344,7 +1348,7 @@ void uDisplay::DisplayOnff(int8_t on) {
     pwr_cbp(on);
   }
 
-//  udisp_bpwr(on);
+#define AW_PWMRES 1024
 
   if (interface == _UDSP_I2C) {
     if (on) {
@@ -1357,10 +1361,17 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_on != 0xff) spi_command_one(dsp_on);
       if (bpanel >= 0) {
 #ifdef ESP32
-        analogWrite(bpanel, dimmer10_gamma);
-        // ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
+        if (!bpmode) {
+          analogWrite(bpanel, dimmer10_gamma);
+        } else {
+          analogWrite(bpanel, AW_PWMRES - dimmer10_gamma);
+        }
 #else
-        digitalWrite(bpanel, HIGH);
+        if (!bpmode) {
+          digitalWrite(bpanel, HIGH);
+        } else {
+          digitalWrite(bpanel, LOW);
+        }
 #endif
       }
 
@@ -1368,10 +1379,17 @@ void uDisplay::DisplayOnff(int8_t on) {
       if (dsp_off != 0xff) spi_command_one(dsp_off);
       if (bpanel >= 0) {
 #ifdef ESP32
-        analogWrite(bpanel, 0);
-        // ledcWrite(ESP32_PWM_CHANNEL, 0);
+        if (!bpmode) {
+          analogWrite(bpanel, 0);
+        } else {
+          analogWrite(bpanel, AW_PWMRES - 1);
+        }
 #else
-        digitalWrite(bpanel, LOW);
+        if (!bpmode) {
+          digitalWrite(bpanel, LOW);
+        } else {
+          digitalWrite(bpanel, HIGH);
+        }
 #endif
       }
     }
@@ -1417,7 +1435,12 @@ void uDisplay::dim10(uint8_t dim, uint16_t dim_gamma) {           // dimmer with
 
 #ifdef ESP32              // TODO should we also add a ESP8266 version for bpanel?
   if (bpanel >= 0) {      // is the BaclPanel GPIO configured
-    analogWrite(bpanel, dimmer10_gamma);
+    if (!bpmode) {
+      analogWrite(bpanel, dimmer10_gamma);
+    } else {
+      analogWrite(bpanel, AW_PWMRES - dimmer10_gamma);
+    }
+
     // ledcWrite(ESP32_PWM_CHANNEL, dimmer8_gamma);
   } else if (dim_cbp) {
     dim_cbp(dim);

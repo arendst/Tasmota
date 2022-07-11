@@ -2886,7 +2886,9 @@ init10:
       RtcSettings.pulse_counter[i] = Settings->pulse_counter[i];
       sml_counters[i].sml_cnt_last_ts = millis();
   }
+  #ifdef ESP32
   uint32_t uart_index = SOC_UART_NUM - 1;
+  #endif
   sml_counter_pinstate = 0;
   for (uint8_t meters = 0; meters < meters_used; meters++) {
     if (meter_desc_p[meters].type == 'c') {

@@ -628,6 +628,14 @@ class Tasmota
     self._fl.push(cl)
   end
 
+  def remove_fast_loop(cl)
+    if !self._fl return end
+    var idx = self._fl.find(cl)
+    if idx != nil
+      self._fl.remove(idx)
+    end
+  end
+
   def event(event_type, cmd, idx, payload, raw)
     import introspect
     import string

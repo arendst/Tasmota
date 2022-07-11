@@ -167,8 +167,8 @@ enum UserSelectablePins {
 #ifdef ESP32
   GPIO_KEY1_PD, GPIO_KEY1_INV_PD, GPIO_SWT1_PD,
 #endif
-  GPIO_I2S_OUT_DATA, GPIO_I2S_OUT_CLK, GPIO_I2S_OUT_SLCT,
-  GPIO_I2S_IN_DATA,  GPIO_I2S_IN_CLK,  GPIO_I2S_IN_SLCT,
+  GPIO_I2S_DOUT, GPIO_I2S_BCLK, GPIO_I2S_WS,
+  GPIO_I2S_DIN,  GPIO_I2S_BCLK_IN,  GPIO_I2S_WS_IN,
   GPIO_INTERRUPT,
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_HRG15_TX, GPIO_HRG15_RX,        // Hydreon RG-15 rain sensor serial interface
@@ -193,8 +193,13 @@ enum UserSelectablePins {
   GPIO_SM2335_CLK, GPIO_SM2335_DAT,    // SM2335 PWM controller
   GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
   GPIO_TM1621_CS, GPIO_TM1621_WR, GPIO_TM1621_RD, GPIO_TM1621_DAT,  // Sonoff POWR3xxD and THR3xxD LCD display
+  GPIO_REL1_BI, GPIO_REL1_BI_INV,      // 8 x Relays bistable
+  GPIO_I2S_MCLK,
   GPIO_VINDRIKTNING_TX, GPIO_VINDRIKTNING_FAN, // IKEA VINDRIKTNING Serial Tx and direct output pin fan control
   GPIO_SENSOR_END };
+
+// Error as warning to rethink GPIO usage
+static_assert(GPIO_SENSOR_END < 2000, "Too many UserSelectablePins");
 
 enum ProgramSelectablePins {
   GPIO_FIX_START = 2046,
@@ -399,8 +404,8 @@ const char kSensorNames[] PROGMEM =
 #ifdef ESP32
   D_SENSOR_BUTTON "_d|" D_SENSOR_BUTTON "_id|" D_SENSOR_SWITCH "_d|"
 #endif
-  D_SENSOR_I2S_OUT_DATA "|" D_SENSOR_I2S_OUT_CLK "|" D_SENSOR_I2S_OUT_SLCT "|"
-  D_SENSOR_I2S_IN_DATA  "|" D_SENSOR_I2S_IN_CLK  "|" D_SENSOR_I2S_IN_SLCT  "|"
+  D_SENSOR_I2S_DOUT "|" D_SENSOR_I2S_BCLK "|" D_SENSOR_I2S_WS "|"
+  D_SENSOR_I2S_DIN "|" D_SENSOR_I2S_BCLK_IN "|" D_SENSOR_I2S_WS_IN "|"
   D_SENSOR_INTERRUPT "|"
   D_SENSOR_MCP2515_CS "|"
   D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX "|"
@@ -430,6 +435,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SM2335_CLK "|" D_SENSOR_SM2335_DAT "|"
   D_SENSOR_DFR562_BUSY "|"
   D_GPIO_TM1621_CS "|" D_GPIO_TM1621_WR "|" D_GPIO_TM1621_RD "|" D_GPIO_TM1621_DAT "|"
+  D_SENSOR_RELAY "_b|" D_SENSOR_RELAY "_bi|"
+  D_SENSOR_I2S_MCLK "|"
   D_SENSOR_VINDRIKTNING_TX "|" D_SENSOR_VINDRIKTNING_FAN "|"
   ;
 
@@ -474,14 +481,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
   AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
   AGPIO(GPIO_REL1_INV) + MAX_RELAYS,
+  AGPIO(GPIO_REL1_BI) + MAX_RELAYS,     // Bistable (Latching) two coil relays
+  AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS,
   AGPIO(GPIO_LED1) + MAX_LEDS,          // Leds
   AGPIO(GPIO_LED1_INV) + MAX_LEDS,
 #ifdef USE_COUNTER
   AGPIO(GPIO_CNTR1) + MAX_COUNTERS,     // Counters
   AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS,
 #endif
-  AGPIO(GPIO_PWM1) + MAX_PWMS,      // RGB   Red   or C  Cold White
-  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,  // or extended PWM for ESP32
+  AGPIO(GPIO_PWM1) + MAX_PWMS,          // RGB   Red   or C  Cold White
+  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,      // or extended PWM for ESP32
 #ifdef USE_BUZZER
   AGPIO(GPIO_BUZZER),                   // Buzzer
   AGPIO(GPIO_BUZZER_INV),               // Inverted buzzer
@@ -514,13 +523,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_I2C_SDA) + MAX_I2C,        // I2C SDA
 #endif
 
+#if defined(USE_I2S_AUDIO) || defined (USE_I2S)
+  AGPIO(GPIO_I2S_MCLK) + MAX_I2S,       // I2S master clock
+  AGPIO(GPIO_I2S_BCLK) + MAX_I2S,       // I2S bit clock
+  AGPIO(GPIO_I2S_WS) + MAX_I2S,         // I2S word select
+  AGPIO(GPIO_I2S_DIN) + MAX_I2S,        // I2S IN Data
+  AGPIO(GPIO_I2S_DOUT) + MAX_I2S,       // I2S Out Data
+#endif
 #ifdef USE_I2S
-  AGPIO(GPIO_I2S_OUT_DATA) + MAX_I2S,   // I2S Out Data
-  AGPIO(GPIO_I2S_OUT_CLK) + MAX_I2S,    // I2C Out Clock
-  AGPIO(GPIO_I2S_OUT_SLCT) + MAX_I2S,   // I2C Out Word Select
-  AGPIO(GPIO_I2S_IN_DATA) + MAX_I2S,    // I2S In Data
-  AGPIO(GPIO_I2S_IN_CLK) + MAX_I2S,     // I2C In Clock
-  AGPIO(GPIO_I2S_IN_SLCT) + MAX_I2S,    // I2C In Word Select
+  AGPIO(GPIO_I2S_BCLK_IN) + MAX_I2S,    // I2S bit clock in
+  AGPIO(GPIO_I2S_WS_IN) + MAX_I2S,      // I2S word select in
 #endif
 
 #ifdef USE_SPI

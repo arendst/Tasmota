@@ -221,6 +221,7 @@ struct TasmotaGlobal_t {
 
   power_t power;                            // Current copy of Settings->power
   power_t rel_inverted;                     // Relay inverted flag (1 = (0 = On, 1 = Off))
+  power_t rel_bistable;                     // Relay bistable bitmap
   power_t last_power;                       // Last power set state
   power_t blink_power;                      // Blink power state
   power_t blink_powersave;                  // Blink start power save state
