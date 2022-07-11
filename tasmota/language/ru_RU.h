@@ -878,9 +878,15 @@
 #define D_GPIO_SHIFT595_RCLK   "74x595 RCLK"
 #define D_GPIO_SHIFT595_OE     "74x595 OE"
 #define D_GPIO_SHIFT595_SER    "74x595 SER"
-#define D_SENSOR_CM11_TX       "CM110x TX" 
+#define D_SENSOR_CM11_TX       "CM110x TX"
 #define D_SENSOR_CM11_RX       "CM110x RX"
 #define D_SENSOR_FLOWRATEMETER "Flowrate"
+
+#define D_SENSOR_I2S_MCLK      "I2S_MCLK"
+#define D_SENSOR_I2S_BCLK      "I2S_BCLK"
+#define D_SENSOR_I2S_WS        "I2S_WS"
+#define D_SENSOR_I2S_DIN       "I2S_DIN"
+#define D_SENSOR_I2S_DOUT      "I2S_DOUT"
 
 // Units
 #define D_UNIT_AMPERE "А"
