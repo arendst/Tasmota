@@ -63,6 +63,50 @@
 #define AUDIO_PWR_ON
 #define AUDIO_PWR_OFF
 
+#ifdef ESP8266
+#define i2s_port_t uint8_t
+#endif
+
+struct AUDIO_I2S {
+  uint8_t is2_volume; // should be in settings
+  i2s_port_t i2s_port;
+  int8_t mclk = -1;
+  int8_t bclk = -1;
+  int8_t ws = -1;
+  int8_t dout = -1;
+  int8_t din = -1;
+  AudioGeneratorMP3 *mp3 = nullptr;
+  AudioFileSourceFS *file;
+#ifdef USE_I2S_NO_DAC
+  AudioOutputI2SNoDAC *out;
+#else
+  AudioOutputI2S *out;
+#endif  // USE_I2S_NO_DAC
+  AudioFileSourceID3 *id3;
+  AudioGeneratorMP3 *decoder = NULL;
+  void *mp3ram = NULL;
+#ifdef USE_I2S_WEBRADIO
+  AudioFileSourceICYStream *ifile = NULL;
+  AudioFileSourceBuffer *buff = NULL;
+  char wr_title[64];
+  void *preallocateBuffer = NULL;
+  void *preallocateCodec = NULL;
+  uint32_t retryms = 0;
+#endif  // USE_I2S_WEBRADIO
+
+#ifdef ESP32
+  TaskHandle_t mp3_task_h;
+  TaskHandle_t mic_task_h;
+  uint32_t mic_size;
+  uint8_t *mic_buff;
+  char mic_path[32];
+#endif
+
+} audio_i2s;
+
+
+#define MIC_CHANNELS 1
+
 #ifdef USE_TTGO_WATCH
 #undef AUDIO_PWR_ON
 #undef AUDIO_PWR_OFF
@@ -71,6 +115,7 @@
 #endif  // USE_TTGO_WATCH
 
 #ifdef USE_M5STACK_CORE2
+// leave this predefined currently
 #undef AUDIO_PWR_ON
 #undef AUDIO_PWR_OFF
 #define AUDIO_PWR_ON Core2AudioPower(true);
@@ -89,28 +134,9 @@
 #undef AUDIO_PWR_OFF
 #define AUDIO_PWR_ON S3boxAudioPower(true);
 #define AUDIO_PWR_OFF S3boxAudioPower(false);
-
-#undef DAC_IIS_BCK
-#undef DAC_IIS_WS
-#undef DAC_IIS_DOUT
-#define DAC_IIS_BCK       17
-#define DAC_IIS_WS        47
-#define DAC_IIS_DOUT      15
-#define DAC_IIS_DIN       16
-#define DAC_IIS_MCLK      2
-
+#undef MIC_CHANNELS
+#define MIC_CHANNELS 2
 #endif // ESP32S3_BOX
-
-AudioGeneratorMP3 *mp3 = nullptr;
-AudioFileSourceFS *file;
-#ifdef USE_I2S_NO_DAC
-  AudioOutputI2SNoDAC *out;
-#else
-  AudioOutputI2S *out;
-#endif  // USE_I2S_NO_DAC
-AudioFileSourceID3 *id3;
-AudioGeneratorMP3 *decoder = NULL;
-void *mp3ram = NULL;
 
 extern FS *ufsp;
 
@@ -124,54 +150,6 @@ const int preallocateCodecSize = 29192; // MP3 codec max mem needed
 //const int preallocateCodecSize = 85332; // AAC+SBR codec max mem needed
 #endif  // ESP32
 
-#ifdef USE_I2S_WEBRADIO
-AudioFileSourceICYStream *ifile = NULL;
-AudioFileSourceBuffer *buff = NULL;
-char wr_title[64];
-//char status[64];
-
-void *preallocateBuffer = NULL;
-void *preallocateCodec = NULL;
-uint32_t retryms = 0;
-#endif  // USE_I2S_WEBRADIO
-
-#ifdef USE_I2S_SAY_TIME
-AudioGeneratorTalkie *talkie = nullptr;
-#endif  // USE_I2S_SAY_TIME
-
-//! MAX98357A + INMP441 DOUBLE I2S BOARD
-#ifdef ESP8266
-#undef DAC_IIS_BCK
-#undef DAC_IIS_WS
-#undef DAC_IIS_DOUT
-#define DAC_IIS_BCK       15
-#define DAC_IIS_WS        2
-#define DAC_IIS_DOUT      3
-#endif  // ESP8266
-
-// defaults to TTGO WATCH
-#ifdef ESP32
-#ifndef DAC_IIS_BCK
-#undef DAC_IIS_BCK
-#define DAC_IIS_BCK       26
-#endif  // DAC_IIS_BCK
-
-#ifndef DAC_IIS_WS
-#undef DAC_IIS_WS
-#define DAC_IIS_WS        25
-#endif  // DAC_IIS_WS
-
-#ifndef DAC_IIS_DOUT
-#undef DAC_IIS_DOUT
-#define DAC_IIS_DOUT      33
-#endif  // DAC_IIS_DOUT
-
-#ifndef DAC_IIS_DIN
-#undef DAC_IIS_DIN
-#define DAC_IIS_DIN       34
-#endif  // DAC_IIS_DIN
-
-#endif  // ESP32
 
 #ifdef USE_I2S_SAY_TIME
 long timezone = 2;
@@ -213,15 +191,16 @@ uint8_t spAFTERNOON[] PROGMEM = {0xC7,0xCE,0xCE,0x3A,0xCB,0x58,0x1F,0x3B,0x07,0x
 uint8_t spEVENING[]   PROGMEM = {0xCD,0x6D,0x98,0x73,0x47,0x65,0x0D,0x6D,0x10,0xB2,0x5D,0x93,0x35,0x94,0xC1,0xD0,0x76,0x4D,0x66,0x93,0xA7,0x04,0xBD,0x71,0xD9,0x45,0xAE,0x92,0xD5,0xAC,0x53,0x07,0x6D,0xA5,0x76,0x63,0x51,0x92,0xD4,0xA1,0x83,0xD4,0xCB,0xB2,0x51,0x88,0xCD,0xF5,0x50,0x45,0xCE,0xA2,0x2E,0x27,0x28,0x54,0x15,0x37,0x0A,0xCF,0x75,0x61,0x5D,0xA2,0xC4,0xB5,0xC7,0x44,0x55,0x8A,0x0B,0xA3,0x6E,0x17,0x95,0x21,0xA9,0x0C,0x37,0xCD,0x15,0xBA,0xD4,0x2B,0x6F,0xB3,0x54,0xE4,0xD2,0xC8,0x64,0xBC,0x4C,0x91,0x49,0x12,0xE7,0xB2,0xB1,0xD0,0x22,0x0D,0x9C,0xDD,0xAB,0x62,0xA9,0x38,0x53,0x11,0xA9,0x74,0x2C,0xD2,0xCA,0x59,0x34,0xA3,0xE5,0xFF,0x03};
 uint8_t spPAUSE1[]    PROGMEM = {0x00,0x00,0x00,0x00,0xFF,0x0F};
 
-void sayTime(int hour, int minutes, AudioGeneratorTalkie *talkie) ;
+void sayTime(int hour, int minutes) ;
 
-void sayTime(int hour, int minutes, AudioGeneratorTalkie *talkie) {
+void sayTime(int hour, int minutes) {
+AudioGeneratorTalkie *talkie = nullptr;
 
-  if (!out) return;
+  if (!audio_i2s.out) return;
 
   AUDIO_PWR_ON
   talkie = new AudioGeneratorTalkie();
-  talkie->begin(nullptr, out);
+  talkie->begin(nullptr, audio_i2s.out);
 
   bool pm = (hour >= 12);
   uint8_t *spHour[] = { spTWELVE, spONE, spTWO, spTHREE, spFOUR, spFIVE, spSIX,
@@ -269,58 +248,113 @@ void sayTime(int hour, int minutes, AudioGeneratorTalkie *talkie) {
     talkie->say(spA_M_, sizeof(spA_M_));
   }
   delete talkie;
-  out->stop();
+  audio_i2s.out->stop();
   AUDIO_PWR_OFF
 }
 #endif  // USE_I2S_SAY_TIME
 
-// should be in settings
-uint8_t is2_volume;
+
+int32_t I2S_Init_0(void) {
+
+  audio_i2s.i2s_port = (i2s_port_t)0;
+
+#if USE_I2S_EXTERNAL_DAC
+  // use i2s
+#if (defined(USE_I2S_NO_DAC) && defined(DAC_IIS_DOUT)) || (defined(DAC_IIS_BCK) && defined(DAC_IIS_WS) && defined(DAC_IIS_DOUT))
+    audio_i2s.i2s_port = (i2s_port_t)0;
+#ifdef USE_I2S_NO_DAC
+    audio_i2s.out = new AudioOutputI2SNoDAC();
+#else
+    audio_i2s.out = new AudioOutputI2S();
+#endif
+    audio_i2s.bclk = DAC_IIS_BCK;
+    audio_i2s.ws = DAC_IIS_WS;
+    audio_i2s.dout = DAC_IIS_DOUT;
+#else
+#ifdef USE_I2S_NO_DAC
+  if (PinUsed(GPIO_I2S_DOUT)) {
+#else
+  if (PinUsed(GPIO_I2S_BCLK) && PinUsed(GPIO_I2S_WS) && PinUsed(GPIO_I2S_DOUT)) {
+#endif // USE_I2S_NO_DAC
+    audio_i2s.i2s_port = (i2s_port_t)0;
+    #ifdef USE_I2S_NO_DAC
+        audio_i2s.out = new AudioOutputI2SNoDAC();
+    #else
+        audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port);
+    #endif // USE_I2S_NO_DAC
+    audio_i2s.mclk = Pin(GPIO_I2S_MCLK);
+    audio_i2s.bclk = Pin(GPIO_I2S_BCLK);
+    audio_i2s.ws = Pin(GPIO_I2S_WS);
+    audio_i2s.dout = Pin(GPIO_I2S_DOUT);
+    audio_i2s.din = Pin(GPIO_I2S_DIN);
+  } else if (PinUsed(GPIO_I2S_BCLK, 1) && PinUsed(GPIO_I2S_WS, 1) && PinUsed(GPIO_I2S_DOUT), 1) {
+    audio_i2s.i2s_port = (i2s_port_t)1;
+    #ifdef USE_I2S_NO_DAC
+        audio_i2s.out = new AudioOutputI2SNoDAC();
+    #else
+        audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port);
+    #endif // USE_I2S_NO_DAC
+    audio_i2s.mclk = Pin(GPIO_I2S_MCLK, 1);
+    audio_i2s.bclk = Pin(GPIO_I2S_BCLK, 1);
+    audio_i2s.ws = Pin(GPIO_I2S_WS, 1);
+    audio_i2s.dout = Pin(GPIO_I2S_DOUT, 1);
+    audio_i2s.din = Pin(GPIO_I2S_DIN, 1);
+  } else {
+    return -1;
+  }
+#ifdef ESP8266
+  // esp8266 have fixed pins
+  if  ((audio_i2s.bclk != 15) || (audio_i2s.ws != 2) || (audio_i2s.dout!= 3)) {
+    return -2;
+  }
+#endif // ESP8266
+#endif // defined(DAC_IIS_BCK)
+
+  audio_i2s.out->SetPinout(audio_i2s.bclk, audio_i2s.ws, audio_i2s.dout, audio_i2s.mclk, audio_i2s.din);
+
+  AddLog(LOG_LEVEL_INFO, PSTR("Init audio I2S: bclk=%d, ws=%d, dout=%d, mclk=%d, din=%d"), audio_i2s.bclk, audio_i2s.ws, audio_i2s.dout, audio_i2s.mclk, audio_i2s.din);
+
+#if defined(ESP32) && defined(ESP32S3_BOX)
+    S3boxInit();
+#endif
+
+#else
+
+#ifdef USE_I2S_NO_DAC
+  audio_i2s.out = new AudioOutputI2SNoDAC();
+#else
+  audio_i2s.out = new AudioOutputI2S(0, 1);    // Internal DAC port 0
+#endif  // USE_I2S_NO_DAC
+#endif  // USE_I2S_EXTERNAL_DAC
+
+  return 0;
+}
 
 void I2S_Init(void) {
 
-#if USE_I2S_EXTERNAL_DAC
-  #ifdef USE_I2S_NO_DAC
-  out = new AudioOutputI2SNoDAC();
-  #else
-  out = new AudioOutputI2S();
-  #endif  // USE_I2S_NO_DAC
-#ifdef ESP32
-#ifdef ESP32S3_BOX
-  S3boxInit();
-  out->SetPinout(DAC_IIS_BCK, DAC_IIS_WS, DAC_IIS_DOUT, DAC_IIS_MCLK, DAC_IIS_DIN);
-#else
-  out->SetPinout(DAC_IIS_BCK, DAC_IIS_WS, DAC_IIS_DOUT);
-#endif
-#endif  // ESP32
+  if (I2S_Init_0()) {
+    return;
+  }
 
-#else
-  #ifdef USE_I2S_NO_DAC
-  out = new AudioOutputI2SNoDAC();
-  #else
-  out = new AudioOutputI2S(0, 1);    // Internal DAC port 0
-  #endif  // USE_I2S_NO_DAC
-#endif  // USE_I2S_EXTERNAL_DAC
-
-  is2_volume=10;
-  out->SetGain(((float)is2_volume/100.0)*4.0);
-  out->stop();
-  mp3ram = nullptr;
+  audio_i2s.is2_volume=10;
+  audio_i2s.out->SetGain(((float)audio_i2s.is2_volume/100.0)*4.0);
+  audio_i2s.out->stop();
+  audio_i2s.mp3ram = nullptr;
 
 #ifdef ESP32
   if (UsePSRAM()) {
-    mp3ram = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    audio_i2s.mp3ram = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   }
 
 #ifdef USE_I2S_WEBRADIO
   if (UsePSRAM()) {
-    preallocateBuffer = heap_caps_malloc(preallocateBufferSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    preallocateCodec = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    audio_i2s.preallocateBuffer = heap_caps_malloc(preallocateBufferSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    audio_i2s.preallocateCodec = heap_caps_malloc(preallocateCodecSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   } else {
-    preallocateBuffer = malloc(preallocateBufferSize);
-    preallocateCodec = malloc(preallocateCodecSize);
+    audio_i2s.preallocateBuffer = malloc(preallocateBufferSize);
+    audio_i2s.preallocateCodec = malloc(preallocateCodecSize);
   }
-  if (!preallocateBuffer || !preallocateCodec) {
+  if (!audio_i2s.preallocateBuffer || !audio_i2s.preallocateCodec) {
     //Serial.printf_P(PSTR("FATAL ERROR:  Unable to preallocate %d bytes for app\n"), preallocateBufferSize+preallocateCodecSize);
   }
 #endif  // USE_I2S_WEBRADIO
@@ -331,29 +365,24 @@ void I2S_Init(void) {
 #ifdef ESP32
 #define MODE_MIC 0
 #define MODE_SPK 1
-#define Speak_I2S_NUMBER I2S_NUM_0
 //#define MICSRATE 44100
 #define MICSRATE 16000
 
 uint32_t SpeakerMic(uint8_t spkr) {
   esp_err_t err = ESP_OK;
 
-  if (out) {
-    out->stop();
-    delete out;
-    out = nullptr;
+  if (audio_i2s.out) {
+    audio_i2s.out->stop();
+    delete audio_i2s.out;
+    audio_i2s.out = nullptr;
   }
 
-  i2s_driver_uninstall(Speak_I2S_NUMBER);
-  if (spkr==MODE_SPK) {
-    #ifdef USE_I2S_NO_DAC
-      out = new AudioOutputI2SNoDAC();
-      #else
-      out = new AudioOutputI2S(0, 1);
-    #endif
-    out->SetPinout(DAC_IIS_BCK, DAC_IIS_WS, DAC_IIS_DOUT);
-    out->SetGain(((float)is2_volume/100.0)*4.0);
-    out->stop();
+  i2s_driver_uninstall(audio_i2s.i2s_port);
+
+  if (spkr == MODE_SPK) {
+    I2S_Init_0();
+    audio_i2s.out->SetGain(((float)(audio_i2s.is2_volume-2)/100.0)*4.0);
+    audio_i2s.out->stop();
   } else {
     // config mic
     i2s_config_t i2s_config = {
@@ -366,48 +395,65 @@ uint32_t SpeakerMic(uint8_t spkr) {
         .dma_buf_count = 2,
         //.dma_buf_len = 128,
         .dma_buf_len = 1024,
+        .use_apll = 0, // Use audio PLL
+        .tx_desc_auto_clear     = true,
+        .fixed_mclk             = 0,
+        .mclk_multiple          = I2S_MCLK_MULTIPLE_DEFAULT,
+        .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT
     };
+
+#ifdef ESP32S3_BOX
+    i2s_config.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
+    i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+#else
     i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
-    err += i2s_driver_install(Speak_I2S_NUMBER, &i2s_config, 0, NULL);
+#endif
+
+    err += i2s_driver_install(audio_i2s.i2s_port, &i2s_config, 0, NULL);
 
     i2s_pin_config_t tx_pin_config;
-    tx_pin_config.bck_io_num = DAC_IIS_BCK;
-    tx_pin_config.ws_io_num = DAC_IIS_WS;
-    tx_pin_config.data_out_num = DAC_IIS_DOUT;
-    tx_pin_config.data_in_num = DAC_IIS_DIN;
-    err += i2s_set_pin(Speak_I2S_NUMBER, &tx_pin_config);
+#ifdef ESP32S3_BOX
+    tx_pin_config.mck_io_num = audio_i2s.mclk;
+#else
+    tx_pin_config.mck_io_num = I2S_PIN_NO_CHANGE;
+#endif
+    tx_pin_config.bck_io_num = audio_i2s.bclk;
+    tx_pin_config.ws_io_num = audio_i2s.ws;
+    tx_pin_config.data_out_num = audio_i2s.dout;
+    tx_pin_config.data_in_num = audio_i2s.din;
 
-    err += i2s_set_clk(Speak_I2S_NUMBER, MICSRATE, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO);
+    err += i2s_set_pin(audio_i2s.i2s_port, &tx_pin_config);
+#ifdef ESP32S3_BOX
+    err += i2s_set_clk(audio_i2s.i2s_port, MICSRATE, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_STEREO);
+#else
+    err += i2s_set_clk(audio_i2s.i2s_port, MICSRATE, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO);
+#endif
   }
   return err;
 }
 
 #define DATA_SIZE 1024
 
-TaskHandle_t mic_task_h;
-uint32_t mic_size;
-uint8_t *mic_buff;
-char mic_path[32];
-
 void mic_task(void *arg){
   uint32_t data_offset = 0;
   while (1) {
       uint32_t bytes_read;
-      i2s_read(Speak_I2S_NUMBER, (char *)(mic_buff + data_offset), DATA_SIZE, &bytes_read, (100 / portTICK_RATE_MS));
+      i2s_read(audio_i2s.i2s_port, (char *)(audio_i2s.mic_buff + data_offset), DATA_SIZE, &bytes_read, (100 / portTICK_RATE_MS));
       if (bytes_read != DATA_SIZE) break;
       data_offset += DATA_SIZE;
-      if (data_offset >= mic_size-DATA_SIZE) break;
+      if (data_offset >= audio_i2s.mic_size-DATA_SIZE) break;
   }
   SpeakerMic(MODE_SPK);
-  SaveWav(mic_path, mic_buff, mic_size);
-  free(mic_buff);
-  vTaskDelete(mic_task_h);
+  SaveWav(audio_i2s.mic_path, audio_i2s.mic_buff, audio_i2s.mic_size);
+  free(audio_i2s.mic_buff);
+  vTaskDelete(audio_i2s.mic_task_h);
 }
 
 uint32_t i2s_record(char *path, uint32_t secs) {
   esp_err_t err = ESP_OK;
 
-  if (decoder || mp3) return 0;
+  if (audio_i2s.decoder || audio_i2s.mp3) return 0;
 
   err = SpeakerMic(MODE_MIC);
   if (err) {
@@ -415,15 +461,15 @@ uint32_t i2s_record(char *path, uint32_t secs) {
     return err;
   }
 
-  mic_size = secs * MICSRATE * 2;
+  audio_i2s.mic_size = secs * MICSRATE * 2 * MIC_CHANNELS;
 
-  mic_buff = (uint8_t*)heap_caps_malloc(mic_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-  if (!mic_buff) return 2;
+  audio_i2s.mic_buff = (uint8_t*)heap_caps_malloc(audio_i2s.mic_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (!audio_i2s.mic_buff) return 2;
 
   if (*path=='+') {
     path++;
-    strlcpy(mic_path, path , sizeof(mic_path));
-    xTaskCreatePinnedToCore(mic_task, "MIC", 4096, NULL, 3, &mic_task_h, 1);
+    strlcpy(audio_i2s.mic_path, path , sizeof(audio_i2s.mic_path));
+    xTaskCreatePinnedToCore(mic_task, "MIC", 4096, NULL, 3, &audio_i2s.mic_task_h, 1);
     return 0;
   }
 
@@ -431,17 +477,17 @@ uint32_t i2s_record(char *path, uint32_t secs) {
   uint32_t stime=millis();
   while (1) {
     uint32_t bytes_read;
-    i2s_read(Speak_I2S_NUMBER, (char *)(mic_buff + data_offset), DATA_SIZE, &bytes_read, (100 / portTICK_RATE_MS));
+    i2s_read(audio_i2s.i2s_port, (char *)(audio_i2s.mic_buff + data_offset), DATA_SIZE, &bytes_read, (100 / portTICK_RATE_MS));
     if (bytes_read != DATA_SIZE) break;
     data_offset += DATA_SIZE;
-    if (data_offset >= mic_size-DATA_SIZE) break;
+    if (data_offset >= audio_i2s.mic_size-DATA_SIZE) break;
     delay(0);
   }
   //AddLog(LOG_LEVEL_INFO, PSTR("rectime: %d ms"), millis()-stime);
   SpeakerMic(MODE_SPK);
   // save to path
-  SaveWav(path, mic_buff, mic_size);
-  free(mic_buff);
+  SaveWav(path, audio_i2s.mic_buff, audio_i2s.mic_size);
+  free(audio_i2s.mic_buff);
   return 0;
 }
 
@@ -456,7 +502,7 @@ bool SaveWav(char *path, uint8_t *buff, uint32_t size) {
   uint8_t wavHeader[sizeof(wavHTemplate)];
   memcpy_P(wavHeader, wavHTemplate, sizeof(wavHTemplate));
 
-  uint8_t channels = 1;
+  uint8_t channels = MIC_CHANNELS;
   uint32_t hertz = MICSRATE;
   uint8_t bps = 16;
 
@@ -487,18 +533,17 @@ bool SaveWav(char *path, uint8_t *buff, uint32_t size) {
 #endif  // ESP32
 
 #ifdef ESP32
-TaskHandle_t mp3_task_h;
 
 void mp3_task(void *arg) {
   while (1) {
-    while (mp3->isRunning()) {
-      if (!mp3->loop()) {
-        mp3->stop();
+    while (audio_i2s.mp3->isRunning()) {
+      if (!audio_i2s.mp3->loop()) {
+        audio_i2s.mp3->stop();
         mp3_delete();
-        out->stop();
-        if (mp3_task_h) {
-          vTaskDelete(mp3_task_h);
-          mp3_task_h = 0;
+        audio_i2s.out->stop();
+        if (audio_i2s.mp3_task_h) {
+          vTaskDelete(audio_i2s.mp3_task_h);
+          audio_i2s.mp3_task_h = 0;
         }
         //mp3_task_h=nullptr;
       }
@@ -514,8 +559,8 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str)
   (void) isUnicode; // Punt this ball for now
   (void) ptr;
   if (strstr_P(type, PSTR("Title"))) {
-    strncpy(wr_title, str, sizeof(wr_title));
-    wr_title[sizeof(wr_title)-1] = 0;
+    strncpy(audio_i2s.wr_title, str, sizeof(audio_i2s.wr_title));
+    audio_i2s.wr_title[sizeof(audio_i2s.wr_title)-1] = 0;
     //AddLog(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
   } else {
     // Who knows what to do?  Not me!
@@ -531,30 +576,30 @@ void StatusCallback(void *cbData, int code, const char *string) {
 }
 
 void Webradio(const char *url) {
-  if (decoder || mp3) return;
-  if (!out) return;
+  if (audio_i2s.decoder || audio_i2s.mp3) return;
+  if (!audio_i2s.out) return;
   AUDIO_PWR_ON
-  ifile = new AudioFileSourceICYStream(url);
-  ifile->RegisterMetadataCB(MDCallback, NULL);
-  buff = new AudioFileSourceBuffer(ifile, preallocateBuffer, preallocateBufferSize);
-  buff->RegisterStatusCB(StatusCallback, NULL);
-  decoder = new AudioGeneratorMP3(preallocateCodec, preallocateCodecSize);
-  decoder->RegisterStatusCB(StatusCallback, NULL);
-  decoder->begin(buff, out);
-  if (!decoder->isRunning()) {
+  audio_i2s.ifile = new AudioFileSourceICYStream(url);
+  audio_i2s.ifile->RegisterMetadataCB(MDCallback, NULL);
+  audio_i2s.buff = new AudioFileSourceBuffer(audio_i2s.ifile, audio_i2s.preallocateBuffer, preallocateBufferSize);
+  audio_i2s.buff->RegisterStatusCB(StatusCallback, NULL);
+  audio_i2s.decoder = new AudioGeneratorMP3(audio_i2s.preallocateCodec, preallocateCodecSize);
+  audio_i2s.decoder->RegisterStatusCB(StatusCallback, NULL);
+  audio_i2s.decoder->begin(audio_i2s.buff, audio_i2s.out);
+  if (!audio_i2s.decoder->isRunning()) {
   //  Serial.printf_P(PSTR("Can't connect to URL"));
     StopPlaying();
   //  strcpy_P(status, PSTR("Unable to connect to URL"));
-    retryms = millis() + 2000;
+    audio_i2s.retryms = millis() + 2000;
   }
 
-  xTaskCreatePinnedToCore(mp3_task2, "MP3-2", 8192, NULL, 3, &mp3_task_h, 1);
+  xTaskCreatePinnedToCore(mp3_task2, "MP3-2", 8192, NULL, 3, &audio_i2s.mp3_task_h, 1);
 }
 
 void mp3_task2(void *arg){
   while (1) {
-    if (decoder && decoder->isRunning()) {
-      if (!decoder->loop()) {
+    if (audio_i2s.decoder && audio_i2s.decoder->isRunning()) {
+      if (!audio_i2s.decoder->loop()) {
         StopPlaying();
         //retryms = millis() + 2000;
       }
@@ -565,31 +610,33 @@ void mp3_task2(void *arg){
 
 void StopPlaying() {
 
-  if (mp3_task_h) {
-    vTaskDelete(mp3_task_h);
-    mp3_task_h = nullptr;
+  if (audio_i2s.mp3_task_h) {
+    vTaskDelete(audio_i2s.mp3_task_h);
+    audio_i2s.mp3_task_h = nullptr;
   }
 
-  if (decoder) {
-    decoder->stop();
-    delete decoder;
-    decoder = NULL;
+  if (audio_i2s.decoder) {
+    audio_i2s.decoder->stop();
+    delete audio_i2s.decoder;
+    audio_i2s.decoder = NULL;
   }
-  if (buff) {
-    buff->close();
-    delete buff;
-    buff = NULL;
+
+  if (audio_i2s.buff) {
+    audio_i2s.buff->close();
+    delete audio_i2s.buff;
+    audio_i2s.buff = NULL;
   }
-  if (ifile) {
-    ifile->close();
-    delete ifile;
-    ifile = NULL;
+
+  if (audio_i2s.ifile) {
+    audio_i2s.ifile->close();
+    delete audio_i2s.ifile;
+    audio_i2s.ifile = NULL;
   }
   AUDIO_PWR_OFF
 }
 
 void Cmd_WebRadio(void) {
-  if (decoder) {
+  if (audio_i2s.decoder) {
     StopPlaying();
   }
   if (XdrvMailbox.data_len > 0) {
@@ -598,10 +645,22 @@ void Cmd_WebRadio(void) {
   } else {
     ResponseCmndChar_P(PSTR("Stopped"));
   }
-
 }
 
-#ifdef USE_M5STACK_CORE2
+#ifdef USE_WEBSERVER
+const char HTTP_WEBRADIO[] PROGMEM =
+   "{s}" "I2S_WR-Title" "{m}%s{e}";
+
+void I2S_WR_Show(void) {
+    if (audio_i2s.decoder) {
+      WSContentSend_PD(HTTP_WEBRADIO,audio_i2s.wr_title);
+    }
+}
+#endif  // USE_WEBSERVER
+
+#endif  // USE_I2S_WEBRADIO
+
+#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX)
 void Cmd_MicRec(void) {
   if (XdrvMailbox.data_len > 0) {
     uint16 time = 10;
@@ -618,24 +677,11 @@ void Cmd_MicRec(void) {
 }
 #endif  // USE_M5STACK_CORE2
 
-#ifdef USE_WEBSERVER
-const char HTTP_WEBRADIO[] PROGMEM =
-   "{s}" "I2S_WR-Title" "{m}%s{e}";
-
-void I2S_WR_Show(void) {
-    if (decoder) {
-      WSContentSend_PD(HTTP_WEBRADIO,wr_title);
-    }
-}
-#endif  // USE_WEBSERVER
-
-#endif  // USE_I2S_WEBRADIO
-
 #ifdef ESP32
 void Play_mp3(const char *path) {
-#if (defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)) || defined(USE_UFILESYS)
-  if (decoder || mp3) return;
-  if (!out) return;
+#ifdef USE_UFILESYS
+  if (audio_i2s.decoder || audio_i2s.mp3) return;
+  if (!audio_i2s.out) return;
 
   if (!ufsp->exists(path)) {
     return;
@@ -651,54 +697,54 @@ void Play_mp3(const char *path) {
     I2S_Task = false;
   }
 
-  file = new AudioFileSourceFS(*ufsp, path);
+  audio_i2s.file = new AudioFileSourceFS(*ufsp, path);
 
-  id3 = new AudioFileSourceID3(file);
+  audio_i2s.id3 = new AudioFileSourceID3(audio_i2s.file);
 
-  if (mp3ram) {
-    mp3 = new AudioGeneratorMP3(mp3ram, preallocateCodecSize);
+  if (audio_i2s.mp3ram) {
+    audio_i2s.mp3 = new AudioGeneratorMP3(audio_i2s.mp3ram, preallocateCodecSize);
   } else {
-    mp3 = new AudioGeneratorMP3();
+    audio_i2s.mp3 = new AudioGeneratorMP3();
   }
-  mp3->begin(id3, out);
+  audio_i2s.mp3->begin(audio_i2s.id3, audio_i2s.out);
 
   if (I2S_Task) {
-    xTaskCreatePinnedToCore(mp3_task, "MP3", 8192, NULL, 3, &mp3_task_h, 1);
+    xTaskCreatePinnedToCore(mp3_task, "MP3", 8192, NULL, 3, &audio_i2s.mp3_task_h, 1);
   } else {
-    while (mp3->isRunning()) {
-      if (!mp3->loop()) {
-        mp3->stop();
+    while (audio_i2s.mp3->isRunning()) {
+      if (!audio_i2s.mp3->loop()) {
+        audio_i2s.mp3->stop();
         break;
       }
       OsWatchLoop();
     }
-    out->stop();
+    audio_i2s.out->stop();
     mp3_delete();
   }
 
-#endif  // USE_SCRIPT
+#endif  // USE_UFILESYS
 }
 
 void mp3_delete(void) {
-  delete file;
-  delete id3;
-  delete mp3;
-  mp3=nullptr;
+  delete audio_i2s.file;
+  delete audio_i2s.id3;
+  delete audio_i2s.mp3;
+  audio_i2s.mp3=nullptr;
   AUDIO_PWR_OFF
 }
 #endif  // ESP32
 
 void Say(char *text) {
 
-  if (!out) return;
+  if (!audio_i2s.out) return;
 
   AUDIO_PWR_ON
 
-  out->begin();
+  audio_i2s.out->begin();
   ESP8266SAM *sam = new ESP8266SAM;
-  sam->Say(out, text);
+  sam->Say(audio_i2s.out, text);
   delete sam;
-  out->stop();
+  audio_i2s.out->stop();
 
   AUDIO_PWR_OFF
 }
@@ -711,7 +757,7 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 #ifdef USE_I2S_WEBRADIO
   "|WR"
 #endif  // USE_I2S_WEBRADIO
-#ifdef USE_M5STACK_CORE2
+#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX)
   "|REC"
 #endif  // USE_M5STACK_CORE2
 #endif  // ESP32
@@ -724,7 +770,7 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #ifdef USE_I2S_WEBRADIO
   ,&Cmd_WebRadio
 #endif // USE_I2S_WEBRADIO
-#ifdef USE_M5STACK_CORE2
+#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX)
   ,&Cmd_MicRec
 #endif // USE_M5STACK_CORE2
 #endif // ESP32
@@ -741,12 +787,12 @@ void Cmd_Play(void) {
 
 void Cmd_Gain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    if (out) {
-      is2_volume=XdrvMailbox.payload;
-      out->SetGain(((float)(is2_volume-2)/100.0)*4.0);
+    if (audio_i2s.out) {
+      audio_i2s.is2_volume=XdrvMailbox.payload;
+      audio_i2s.out->SetGain(((float)(audio_i2s.is2_volume-2)/100.0)*4.0);
     }
   }
-  ResponseCmndNumber(is2_volume);
+  ResponseCmndNumber(audio_i2s.is2_volume);
 }
 
 void Cmd_Say(void) {
@@ -758,7 +804,7 @@ void Cmd_Say(void) {
 
 void Cmd_Time(void) {
 #ifdef USE_I2S_SAY_TIME
-  sayTime(RtcTime.hour, RtcTime.minute, talkie);
+  sayTime(RtcTime.hour, RtcTime.minute);
 #endif  // USE_I2S_SAY_TIME
   ResponseCmndDone();
 }
