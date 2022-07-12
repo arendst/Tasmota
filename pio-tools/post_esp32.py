@@ -132,12 +132,18 @@ def esp32_create_combined_bin(source, target, env):
     else:
         esp32_fetch_safeboot_bin(tasmota_platform)
     flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
+    flash_freq = "keep"
+    flash_mode = env.BoardConfig().get("build.flash_mode", "dout")
     cmd = [
         "--chip",
         chip,
         "merge_bin",
         "-o",
         new_file_name,
+        "--flash_mode",
+        flash_mode,
+        "--flash_freq",
+        flash_freq,
         "--flash_size",
         flash_size,
     ]
