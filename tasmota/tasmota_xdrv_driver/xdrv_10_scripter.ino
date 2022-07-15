@@ -3595,6 +3595,48 @@ chknext:
           goto strexit;
         }
 #endif //USE_MORITZ
+#ifdef ESP32_FAST_MUX
+        if (!strncmp(lp, "mux(", 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          if (fvar == 0) {
+            // start
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+            uint16_t alen;
+            float *fa;
+            lp = get_array_by_name(lp, &fa, &alen, 0);
+            if (!fa) {
+              fvar = -1;
+              goto nfuncexit;
+            }
+            float falen;
+            lp = GetNumericArgument(lp, OPER_EQU, &falen, gv);
+            if (falen > alen) {
+              falen = alen;
+            }
+            fvar = fast_mux(0, fvar, fa, falen);
+          } else if (fvar == 1) {
+            // stop
+            fvar = fast_mux(1, 0, 0, 0);
+          } else if (fvar == 2) {
+            // set array
+            uint16_t alen;
+            float *fa;
+            lp = get_array_by_name(lp, &fa, &alen, 0);
+            if (!fa) {
+              fvar = -1;
+              goto nfuncexit;
+            }
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+            if (fvar > alen) {
+              fvar = alen;
+            }
+            fvar = fast_mux(2, 0, fa, fvar);
+          } else {
+            fvar = fast_mux(3, 0, 0, 0);
+          }
+          goto nfuncexit;
+        }
+#endif
         break;
 
       case 'n':
@@ -3721,6 +3763,36 @@ chknext:
           // skip ] bracket
           len++;
           goto exit;
+        }
+        if (!strncmp(lp, "rma(", 4)) {
+          uint16_t alen;
+          float *array;
+          lp = get_array_by_name(lp + 4, &array, &alen, 0);
+          char str[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, str, 0);
+          uint32_t raddr = strtol(str, NULL, 16);
+          raddr &= 0xfffffffc;
+          const uint32_t *addr = (const uint32_t*)raddr;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          uint32_t mlen = fvar;
+          mlen &= 0xfffffffc;
+          uint32_t *lp = (uint32_t*)special_malloc(mlen);
+          if (lp) {
+            for (uint32_t cnt = 0; cnt < mlen/4; cnt++) {
+              lp[cnt] = addr[cnt];
+            }
+            //esp_flash_read();
+
+            uint8_t *ucp = (uint8_t*)lp;
+            for (uint32_t cnt = 0; cnt < mlen; cnt++) {
+              array[cnt] = ucp[cnt];
+            }
+            free(lp);
+            fvar = 0;
+          } else {
+            fvar = -1;
+          }
+          goto nfuncexit;
         }
 #if  defined(ESP32) && (defined(USE_M5STACK_CORE2))
         if (!strncmp(lp, "rec(", 4)) {
@@ -6115,13 +6187,17 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               lp += 4;
               // skip one space after cmd
               web_send_line(0, lp);
-              WSContentFlush();
+              //WSContentFlush();
               goto next_line;
             }
             else if (!strncmp(lp, "wfs", 3)) {
               lp += 4;
               // skip one space after cmd
               web_send_file(0, lp);
+              //WSContentFlush();
+              goto next_line;
+            }
+            else if (!strncmp(lp, "wcf", 3)) {
               WSContentFlush();
               goto next_line;
             }
@@ -6139,7 +6215,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             }
 
 
-#ifdef USE_SENDMAIL
+#if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
             else if (!strncmp(lp, "mail", 4)) {
               lp+=5;
               //char tmp[256];
@@ -6151,7 +6227,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               }
               goto next_line;
             }
-#endif  // USE_SENDMAIL
+#endif
             else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
                 uint8_t sflag = 0,pflg = 0,svmqtt,swll;
@@ -7755,8 +7831,8 @@ bool ScriptCommand(void) {
           // is array
           Response_P(PSTR("{\"script\":{\"%s\":["), lp);
           for (uint16_t cnt = 0; cnt < alend; cnt++) {
-            ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, fpd);
-            fpd++;
+            float tvar = *fpd++;
+            ext_snprintf_P(str, sizeof(str), PSTR("%*_f"), -glob_script_mem.script_dprec, &tvar);
             if (cnt) {
               ResponseAppend_P(PSTR(",%s"), str);
             } else {
@@ -9720,7 +9796,7 @@ exgc:
 #endif //USE_SCRIPT_WEB_DISPLAY
 
 
-#ifdef USE_SENDMAIL
+#if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
 
 void script_send_email_body(void(*func)(char *)) {
 uint8_t msect = Run_Scripter1(">m", -2, 0);
@@ -9753,7 +9829,7 @@ uint8_t msect = Run_Scripter1(">m", -2, 0);
     func((char*)"*");
   }
 }
-#endif  // USE_SENDMAIL
+#endif //USE_SENDMAIL
 
 #ifdef USE_SCRIPT_JSON_EXPORT
 void ScriptJsonAppend(void) {
@@ -9798,6 +9874,122 @@ bool RulesProcessEvent(const char *json_event) {
   }
   return true;
 }
+
+#ifdef ESP32
+#ifdef ESP32_FAST_MUX
+
+#define MUX_SIZE 128
+struct FAST_PIN_MUX {
+  volatile uint8_t scan_cnt;
+  uint8_t scan_buff[MUX_SIZE];
+  uint8_t scan_buff_size;
+  uint8_t time;
+  uint32_t low_pins;
+  uint32_t high_pins;
+  hw_timer_t * scan_timer = NULL;
+  portMUX_TYPE scan_timerMux = portMUX_INITIALIZER_UNLOCKED;
+} fast_pin_mux;
+
+
+void IRAM_ATTR fast_mux_irq() {
+  portENTER_CRITICAL_ISR(&fast_pin_mux.scan_timerMux);
+  // this could be optimized for multiple pins
+  if (fast_pin_mux.scan_buff_size) {
+    while (fast_pin_mux.scan_cnt < fast_pin_mux.scan_buff_size) {
+      uint8_t iob = fast_pin_mux.scan_buff[fast_pin_mux.scan_cnt];
+      if (iob & 0x20) {
+        if (iob & 1) {
+          GPIO.out_w1tc = fast_pin_mux.low_pins;
+        }
+        if (iob & 2) {
+          GPIO.out_w1ts = fast_pin_mux.high_pins;
+        }
+        if (iob & 4) {
+          // modify mux timer
+          uint8_t fac = (iob & 0x1f) >> 2;
+          timerAlarmWrite(fast_pin_mux.scan_timer, fast_pin_mux.time * fac, true);
+        }
+      } else {
+        uint8_t mode = (iob >> 6) & 1;
+        digitalWrite(iob & 0x1f, mode);
+      }
+      fast_pin_mux.scan_cnt++;
+      if (iob & 0x80) {
+        break;
+      }
+    }
+    if (fast_pin_mux.scan_cnt >= fast_pin_mux.scan_buff_size) {
+      fast_pin_mux.scan_cnt = 0;
+    }
+  }
+  portEXIT_CRITICAL_ISR(&fast_pin_mux.scan_timerMux);
+}
+
+/* uint8_t pin nr, 0x40 = value, 0x80 = next
+*/
+
+int32_t fast_mux(uint32_t flag, uint32_t time, float *buf, uint32_t len) {
+int32_t retval;
+  if (!flag) {
+    if (len > MUX_SIZE) {
+      len = MUX_SIZE;
+    }
+    fast_pin_mux.high_pins = 0;
+    fast_pin_mux.low_pins = 0;
+    for (uint32_t cnt = 0; cnt < len; cnt++) {
+      uint8_t iob = *buf++;
+      fast_pin_mux.scan_buff[cnt] = iob;
+      uint8_t pin = iob & 0x1f;
+      pinMode(pin, OUTPUT);
+      if (iob & 0x40) {
+        digitalWrite(pin, 1);
+        fast_pin_mux.high_pins |= (1 << pin);
+      } else {
+        digitalWrite(pin, 0);
+        fast_pin_mux.low_pins |= (1 << pin);
+      }
+    }
+    fast_pin_mux.scan_buff_size = 0;
+
+    if (fast_pin_mux.scan_timer) {
+      timerStop(fast_pin_mux.scan_timer);
+      timerDetachInterrupt(fast_pin_mux.scan_timer);
+      timerEnd(fast_pin_mux.scan_timer);
+    }
+    fast_pin_mux.scan_timer = timerBegin(3, 1000, true);
+    if (!fast_pin_mux.scan_timer) {
+      return -1;
+    }
+    fast_pin_mux.time = time;
+    timerAttachInterrupt(fast_pin_mux.scan_timer, &fast_mux_irq, true);
+    timerSetAutoReload(fast_pin_mux.scan_timer, true);
+    timerAlarmWrite(fast_pin_mux.scan_timer, fast_pin_mux.time, true);
+    timerAlarmEnable(fast_pin_mux.scan_timer);
+    timerStart(fast_pin_mux.scan_timer);
+  } else if (flag == 1) {
+    if (fast_pin_mux.scan_timer) {
+      timerStop(fast_pin_mux.scan_timer);
+      timerDetachInterrupt(fast_pin_mux.scan_timer);
+      timerEnd(fast_pin_mux.scan_timer);
+      fast_pin_mux.scan_timer = 0;
+    }
+  } else if (flag == 2) {
+    portENTER_CRITICAL(&fast_pin_mux.scan_timerMux);
+    for (uint32_t cnt = 0; cnt < len; cnt++) {
+      fast_pin_mux.scan_buff[cnt] = *buf++;
+    }
+    fast_pin_mux.scan_buff_size = len;
+    portEXIT_CRITICAL(&fast_pin_mux.scan_timerMux);
+  } else {
+    portENTER_CRITICAL(&fast_pin_mux.scan_timerMux);
+    retval = fast_pin_mux.scan_cnt;
+    portEXIT_CRITICAL(&fast_pin_mux.scan_timerMux);
+    return retval;
+  }
+  return 0;
+}
+#endif // ESP32_FAST_MUX
+#endif // ESP32
 
 #ifdef ESP32
 #ifdef USE_SCRIPT_TASK
@@ -9912,7 +10104,7 @@ int32_t url2file(uint8_t fref, char *url) {
         uint32_t read = stream->readBytes(buff, size);
         glob_script_mem.files[fref].write(buff, read);
         len -= read;
-        AddLog(LOG_LEVEL_INFO,PSTR("HTTP read %d"), len);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("HTTP read %d"), len);
       }
       delayMicroseconds(1);
     }
@@ -10610,6 +10802,9 @@ bool Xdrv10(uint8_t function)
   switch (function) {
     //case FUNC_PRE_INIT:
     case FUNC_INIT:
+
+      //bitWrite(Settings->rule_enabled, 0, 0); // >>>>>>>>>>>
+
       // set defaults to rules memory
       //bitWrite(Settings->rule_enabled,0,0);
       glob_script_mem.script_ram = Settings->rules[0];
