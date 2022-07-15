@@ -105,6 +105,16 @@ struct AUDIO_I2S {
 } audio_i2s;
 
 
+// because S3 box mclk severly disturbs WLAN
+// we must slow down after each sound
+#ifdef ESP32S3_BOX
+#undef DOWNRATE
+#define DOWNRATE audio_i2s.out->SetRate(1000);
+#else
+#undef DOWNRATE
+#define DOWNRATE
+#endif
+
 #define MIC_CHANNELS 1
 
 #ifdef USE_TTGO_WATCH
@@ -249,10 +259,18 @@ AudioGeneratorTalkie *talkie = nullptr;
   }
   delete talkie;
   audio_i2s.out->stop();
+  DOWNRATE
   AUDIO_PWR_OFF
 }
 #endif  // USE_I2S_SAY_TIME
 
+
+enum : int { APLL_AUTO = -1, APLL_ENABLE = 1, APLL_DISABLE = 0 };
+enum : int { EXTERNAL_I2S = 0, INTERNAL_DAC = 1, INTERNAL_PDM = 2 };
+
+#ifdef ESP8266
+#define I2S_MCLK_MULTIPLE_128 0
+#endif
 
 int32_t I2S_Init_0(void) {
 
@@ -280,7 +298,8 @@ int32_t I2S_Init_0(void) {
     #ifdef USE_I2S_NO_DAC
         audio_i2s.out = new AudioOutputI2SNoDAC();
     #else
-        audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port);
+        //audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port);
+        audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port, EXTERNAL_I2S, 8, APLL_DISABLE, I2S_MCLK_MULTIPLE_128, 12000000);
     #endif // USE_I2S_NO_DAC
     audio_i2s.mclk = Pin(GPIO_I2S_MCLK);
     audio_i2s.bclk = Pin(GPIO_I2S_BCLK);
@@ -292,7 +311,8 @@ int32_t I2S_Init_0(void) {
     #ifdef USE_I2S_NO_DAC
         audio_i2s.out = new AudioOutputI2SNoDAC();
     #else
-        audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port);
+        //audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port);
+        audio_i2s.out = new AudioOutputI2S(audio_i2s.i2s_port, EXTERNAL_I2S, 8, APLL_DISABLE, I2S_MCLK_MULTIPLE_128, 12000000);
     #endif // USE_I2S_NO_DAC
     audio_i2s.mclk = Pin(GPIO_I2S_MCLK, 1);
     audio_i2s.bclk = Pin(GPIO_I2S_BCLK, 1);
@@ -304,7 +324,7 @@ int32_t I2S_Init_0(void) {
   }
 #ifdef ESP8266
   // esp8266 have fixed pins
-  if  ((audio_i2s.bclk != 15) || (audio_i2s.ws != 2) || (audio_i2s.dout!= 3)) {
+  if  ((audio_i2s.bclk != 15) || (audio_i2s.ws != 2) || (audio_i2s.dout != 3)) {
     return -2;
   }
 #endif // ESP8266
@@ -312,11 +332,8 @@ int32_t I2S_Init_0(void) {
 
   audio_i2s.out->SetPinout(audio_i2s.bclk, audio_i2s.ws, audio_i2s.dout, audio_i2s.mclk, audio_i2s.din);
 
-  AddLog(LOG_LEVEL_INFO, PSTR("Init audio I2S: bclk=%d, ws=%d, dout=%d, mclk=%d, din=%d"), audio_i2s.bclk, audio_i2s.ws, audio_i2s.dout, audio_i2s.mclk, audio_i2s.din);
+  AddLog(LOG_LEVEL_INFO, PSTR("Init audio I2S: port=%d, bclk=%d, ws=%d, dout=%d, mclk=%d, din=%d"), audio_i2s.i2s_port, audio_i2s.bclk, audio_i2s.ws, audio_i2s.dout, audio_i2s.mclk, audio_i2s.din);
 
-#if defined(ESP32) && defined(ESP32S3_BOX)
-    S3boxInit();
-#endif
 
 #else
 
@@ -330,12 +347,19 @@ int32_t I2S_Init_0(void) {
   return 0;
 }
 
+
+
 void I2S_Init(void) {
+
+  #if defined(ESP32) && defined(ESP32S3_BOX)
+      S3boxInit();
+  #endif
 
   if (I2S_Init_0()) {
     return;
   }
 
+  DOWNRATE
   audio_i2s.is2_volume=10;
   audio_i2s.out->SetGain(((float)audio_i2s.is2_volume/100.0)*4.0);
   audio_i2s.out->stop();
@@ -383,6 +407,7 @@ uint32_t SpeakerMic(uint8_t spkr) {
     I2S_Init_0();
     audio_i2s.out->SetGain(((float)(audio_i2s.is2_volume-2)/100.0)*4.0);
     audio_i2s.out->stop();
+    DOWNRATE
   } else {
     // config mic
     i2s_config_t i2s_config = {
@@ -398,7 +423,7 @@ uint32_t SpeakerMic(uint8_t spkr) {
         .use_apll = 0, // Use audio PLL
         .tx_desc_auto_clear     = true,
         .fixed_mclk             = 0,
-        .mclk_multiple          = I2S_MCLK_MULTIPLE_DEFAULT,
+        .mclk_multiple          = I2S_MCLK_MULTIPLE_DEFAULT,  // I2S_MCLK_MULTIPLE_128
         .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT
     };
 
@@ -406,7 +431,16 @@ uint32_t SpeakerMic(uint8_t spkr) {
     i2s_config.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
     i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
     i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
-#else
+#endif
+
+#ifdef USE_I2S_MIC
+    i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+    // mic select to GND
+    i2s_config.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT;
+    i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+#endif
+
+#ifdef USE_M5STACK_CORE2
     i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
 #endif
 
@@ -632,6 +666,7 @@ void StopPlaying() {
     delete audio_i2s.ifile;
     audio_i2s.ifile = NULL;
   }
+  DOWNRATE
   AUDIO_PWR_OFF
 }
 
@@ -651,16 +686,20 @@ void Cmd_WebRadio(void) {
 const char HTTP_WEBRADIO[] PROGMEM =
    "{s}" "I2S_WR-Title" "{m}%s{e}";
 
-void I2S_WR_Show(void) {
+void I2S_WR_Show(bool json) {
     if (audio_i2s.decoder) {
-      WSContentSend_PD(HTTP_WEBRADIO,audio_i2s.wr_title);
+      if (json) {
+        ResponseAppend_P(PSTR(",\"WebRadio\":{\"Title\":\"%s\"}"), audio_i2s.wr_title);
+      } else {
+        WSContentSend_PD(HTTP_WEBRADIO,audio_i2s.wr_title);
+      }
     }
 }
 #endif  // USE_WEBSERVER
 
 #endif  // USE_I2S_WEBRADIO
 
-#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX)
+#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) || defined(USE_I2S_MIC)
 void Cmd_MicRec(void) {
   if (XdrvMailbox.data_len > 0) {
     uint16 time = 10;
@@ -683,19 +722,20 @@ void Play_mp3(const char *path) {
   if (audio_i2s.decoder || audio_i2s.mp3) return;
   if (!audio_i2s.out) return;
 
-  if (!ufsp->exists(path)) {
-    return;
-  }
-
   bool I2S_Task;
 
-  AUDIO_PWR_ON
   if (*path=='+') {
     I2S_Task = true;
     path++;
   } else {
     I2S_Task = false;
   }
+
+  if (!ufsp->exists(path)) {
+    return;
+  }
+
+  AUDIO_PWR_ON
 
   audio_i2s.file = new AudioFileSourceFS(*ufsp, path);
 
@@ -730,6 +770,7 @@ void mp3_delete(void) {
   delete audio_i2s.id3;
   delete audio_i2s.mp3;
   audio_i2s.mp3=nullptr;
+  DOWNRATE
   AUDIO_PWR_OFF
 }
 #endif  // ESP32
@@ -746,6 +787,7 @@ void Say(char *text) {
   delete sam;
   audio_i2s.out->stop();
 
+  DOWNRATE
   AUDIO_PWR_OFF
 }
 
@@ -757,7 +799,7 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 #ifdef USE_I2S_WEBRADIO
   "|WR"
 #endif  // USE_I2S_WEBRADIO
-#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX)
+#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) || defined(USE_I2S_MIC)
   "|REC"
 #endif  // USE_M5STACK_CORE2
 #endif  // ESP32
@@ -770,7 +812,7 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #ifdef USE_I2S_WEBRADIO
   ,&Cmd_WebRadio
 #endif // USE_I2S_WEBRADIO
-#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX)
+#if defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) || defined(USE_I2S_MIC)
   ,&Cmd_MicRec
 #endif // USE_M5STACK_CORE2
 #endif // ESP32
@@ -826,10 +868,15 @@ bool Xdrv42(uint8_t function) {
 #ifdef USE_WEBSERVER
 #ifdef USE_I2S_WEBRADIO
     case FUNC_WEB_SENSOR:
-      I2S_WR_Show();
+      I2S_WR_Show(false);
       break;
 #endif  // USE_I2S_WEBRADIO
 #endif  // USE_WEBSERVER
+#ifdef USE_I2S_WEBRADIO
+    case FUNC_JSON_APPEND:
+      I2S_WR_Show(true);
+    break;
+#endif  // USE_I2S_WEBRADIO
   }
   return result;
 }

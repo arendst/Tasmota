@@ -29,7 +29,7 @@
 #include "AudioOutputI2S.h"
 
 #if defined(ESP32) || defined(ESP8266)
-AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int use_apll)
+AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int use_apll, uint8_t mult, uint32_t freq)
 {
   this->portNo = port;
   this->i2sOn = false;
@@ -49,6 +49,8 @@ AudioOutputI2S::AudioOutputI2S(int port, int output_mode, int dma_buf_count, int
   bclkPin = 26;
   wclkPin = 25;
   doutPin = 22;
+  mcmult = mult;
+  mclk_freq = freq;
   SetGain(1.0);
 }
 
@@ -83,7 +85,6 @@ bool AudioOutputI2S::SetPinout(int bclk, int wclk, int dout, int mclk, int din)
   doutPin = dout;
   mclkPin = mclk;
   dinPin = din;
-
 
   if (i2sOn)
     return SetPinout();
@@ -238,10 +239,12 @@ bool AudioOutputI2S::begin(bool txDAC)
           .dma_buf_len = 128,
           .use_apll = use_apll, // Use audio PLL
           .tx_desc_auto_clear     = true,
-          .fixed_mclk             = 0,
+#ifdef ESP32
+          .fixed_mclk             = (int)mclk_freq,
           //.mclk_multiple          = I2S_MCLK_MULTIPLE_DEFAULT,
-          .mclk_multiple          = I2S_MCLK_MULTIPLE_128,
-          .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT,
+          .mclk_multiple          = (i2s_mclk_multiple_t)mcmult,
+#endif
+          .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT
       };
       audioLogger->printf("+%d %p\n", portNo, &i2s_config_dac);
       if (i2s_driver_install((i2s_port_t)portNo, &i2s_config_dac, 0, NULL) != ESP_OK)
