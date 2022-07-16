@@ -95,7 +95,7 @@ a_setoption = [[
     "(Wifi) Gratuitous ARP repeat time",
     "(Temperature) Over temperature threshold (celsius)",
     "(Rotary) Max allowed steps",
-    "(not used) Tuya MCU voltage Id",
+    "(Bistable) Pulse time for two coil bistable latching relays (default 40)",
     "(not used) Tuya MCU current Id",
     "(not used) Tuya MCU power Id",
     "(not used) Energy Tariff1 start hour",
@@ -317,7 +317,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.0.2.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.0.2.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

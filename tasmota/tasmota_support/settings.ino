@@ -905,6 +905,7 @@ void SettingsDefaultSet2(void) {
 //  Settings->ledpwm_mask = 0;
   Settings->pulse_timer[0] = APP_PULSETIME;
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings->pulse_timer[i] = 0; }
+  Settings->param[P_BISTABLE_PULSE] = APP_BISTABLE_PULSE;
 
   // Serial
   Settings->serial_config = TS_SERIAL_8N1;
@@ -1548,6 +1549,9 @@ void SettingsDelta(void) {
       for (uint32_t i = 0; i < 3; i++) {
         Settings->global_sensor_index[i] = 0;
       }
+    }
+    if (Settings->version < 0x0C000204) {  // 12.0.2.4
+      Settings->param[P_BISTABLE_PULSE] = APP_BISTABLE_PULSE;
     }
 
     Settings->version = VERSION;

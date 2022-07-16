@@ -318,7 +318,7 @@ void SetDevicePower(power_t rpower, uint32_t source) {
 
     // Reset bistable relay here to fix non-interlock situations due to fast switching
     if (TasmotaGlobal.rel_bistable) {             // If bistable relays in the mix reset them after 40ms
-      delay(40);                                  // Keep energized for about 5 x operation time
+      delay(Settings->param[P_BISTABLE_PULSE]);   // SetOption45 - Keep energized for about 5 x operation time
       for (uint32_t i = 0; i < port; i++) {       // Reset up to detected amount of ports
         if (bitRead(TasmotaGlobal.rel_bistable, i)) {
           DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
