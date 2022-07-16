@@ -239,14 +239,6 @@ void SetLatchingRelay(power_t lpower, uint32_t state) {
   }
 }
 
-void ResetBistableRelays(void) {
-  for (uint32_t i = 0; i < MAX_RELAYS; i++) {
-    if (bitRead(TasmotaGlobal.rel_bistable, i)) {
-      DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
-    }
-  }
-}
-
 void SetDevicePower(power_t rpower, uint32_t source) {
   ShowSource(source);
   TasmotaGlobal.last_source = source;
@@ -300,19 +292,18 @@ void SetDevicePower(power_t rpower, uint32_t source) {
     SetLatchingRelay(rpower, 1);
   }
 #endif  // ESP8266
-  else
-  {
-    ZeroCrossMomentStart();
-
+  else {
     uint32_t port = 0;
     uint32_t port_next;
+
+    ZeroCrossMomentStart();
+
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       power_t state = rpower &1;
 
       port_next = 1;                              // Select next relay
       if (bitRead(TasmotaGlobal.rel_bistable, port)) {
         if (!state) { port_next = 2; }            // Skip highest relay
-        TasmotaGlobal.latching_relay_pulse = 2;   // max 200mS (initiated by stateloop())
         port += state;                            // Relay<lowest> = Off, Relay<highest> = On
         state = 1;                                // Set pulse
       }
@@ -320,10 +311,20 @@ void SetDevicePower(power_t rpower, uint32_t source) {
         DigitalWrite(GPIO_REL1, port, bitRead(TasmotaGlobal.rel_inverted, port) ? !state : state);
       }
       port += port_next;                          // Select next relay
-      rpower >>= 1;
+      rpower >>= 1;                               // Select next power
     }
 
     ZeroCrossMomentEnd();
+
+    // Reset bistable relay here to fix non-interlock situations due to fast switching
+    if (TasmotaGlobal.rel_bistable) {             // If bistable relays in the mix reset them after 40ms
+      delay(40);                                  // About 5 x operation time
+      for (uint32_t i = 0; i < MAX_RELAYS; i++) {
+        if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+          DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
+        }
+      }
+    }
   }
 }
 
@@ -1155,7 +1156,6 @@ void Every100mSeconds(void)
         SetLatchingRelay(0, 0);
       }
 #endif  // ESP8266
-      ResetBistableRelays();
     }
   }
 
