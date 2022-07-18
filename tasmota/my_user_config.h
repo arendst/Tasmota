@@ -1049,6 +1049,8 @@
                                                  // Note that only one cipher is enabled: ECDHE_RSA_WITH_AES_128_GCM_SHA256 which is very commonly used and highly secure
     #define USE_BERRY_WEBCLIENT_USERAGENT  "TasmotaClient" // default user-agent used, can be changed with `wc.set_useragent()`
     #define USE_BERRY_WEBCLIENT_TIMEOUT  2000    // Default timeout in milliseconds
+  #define USE_BERRY_TCPSERVER                    // Enable TCP socket server (+0.6k)
+  // #define USE_BERRY_ULP                          // Enable ULP (Ultra Low Power) support (+4.9k)
 #define USE_CSE7761                              // Add support for CSE7761 Energy monitor as used in Sonoff Dual R3
 
 // -- LVGL Graphics Library ---------------------------------
