@@ -55,7 +55,6 @@ int32_t  current_stop_way = 0;
 int32_t  next_possible_stop_position = 0;
 int32_t  current_real_position = 0;
 int32_t  current_pwm_velocity = 0;
-int8_t   savedata_original = 0;
 
 const uint8_t MAX_MODES = 7;
 enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
@@ -536,8 +535,9 @@ void ShutterPowerOff(uint8_t i)
   #endif
       break;
   }
-  Settings->save_data = savedata_original;
-  TasmotaGlobal.save_data_counter = Settings->save_data;
+  if (Settings->save_data) {
+    TasmotaGlobal.save_data_counter = Settings->save_data;
+  }
   delay(MOTOR_STOP_TIME);
 }
 
@@ -649,11 +649,6 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterAllowPreStartProcedure(i);
     Shutter[i].time = Shutter[i].last_reported_time = 0;
 
-    // avoid file system writes during move to minimize missing steps
-    savedata_original = Settings->save_data;
-    Settings->save_data = 0; // will be restored after movement
-
-    TasmotaGlobal.save_data_counter = Settings->save_data;
     ShutterGlobal.skip_relay_change = 0;
     TasmotaGlobal.rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
@@ -664,6 +659,12 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , direction ,ShutterGlobal.open_velocity_max );
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Dur: %d, StartP: %d, TgtP: %d"),
         Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
+    }
+
+    // avoid file system writes during move to minimize missing steps
+    if (Settings->save_data) {
+      uint32_t move_duration = (direction > 0) ? Shutter[i].open_time : Shutter[i].close_time;
+      TasmotaGlobal.save_data_counter = Settings->save_data + (move_duration / 10) +1;
     }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
