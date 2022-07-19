@@ -501,7 +501,9 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_CTIMER_ENABLED_LINKED           = 2,      // Timer enabled and linked to relay from timer 0
   MBV_PAR_CTIMER_ALWAYS_ON                = 3,      // Relay assigned to this timer always on
   MBV_PAR_CTIMER_ALWAYS_OFF               = 4,      // Relay assigned to this timer always off
-  MBV_PAR_CTIMER_COUNTDOWN                = 5,      // Timer in countdown mode
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_PLUS       = 0x0105, // Timer in countdown mode using + key
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_MINUS      = 0x0205, // Timer in countdown mode using - key
+
   // MBV_TIMER_OFFMB_TIMER_FUNCTION codes:
   MBV_PAR_CTIMER_FCT_FILTRATION           = 0x0001, // Filtration function of the system
   MBV_PAR_CTIMER_FCT_LIGHTING             = 0x0002, // Lighting function of the system
