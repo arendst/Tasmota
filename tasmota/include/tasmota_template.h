@@ -49,6 +49,7 @@ enum UserSelectablePins {
   GPIO_PMS5003_TX, GPIO_PMS5003_RX,    // Plantower PMS5003 Serial interface
   GPIO_SDS0X1_TX, GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX, GPIO_SBR_RX,            // Serial Bridge Serial interface
+  GPIO_MBR_TX, GPIO_MBR_RX,            // Modbus Bridge Serial interface
   GPIO_SR04_TRIG, GPIO_SR04_ECHO,      // SR04 interface
   GPIO_SDM120_TX, GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX, GPIO_SDM630_RX,      // SDM630 Serial interface
@@ -289,6 +290,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_PMS5003_TX "|" D_SENSOR_PMS5003_RX "|"
   D_SENSOR_SDS0X1_TX "|" D_SENSOR_SDS0X1_RX "|"
   D_SENSOR_SBR_TX "|" D_SENSOR_SBR_RX "|"
+  D_SENSOR_MBR_TX "|" D_SENSOR_MBR_RX "|"
   D_SENSOR_SR04_TRIG "|" D_SENSOR_SR04_ECHO "|"
   D_SENSOR_SDM120_TX "|" D_SENSOR_SDM120_RX "|"
   D_SENSOR_SDM630_TX "|" D_SENSOR_SDM630_RX "|"
@@ -852,6 +854,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SERIAL_BRIDGE
   AGPIO(GPIO_SBR_TX),         // Serial Bridge Serial interface
   AGPIO(GPIO_SBR_RX),         // Serial Bridge Serial interface
+#endif
+#ifdef USE_MODBUS_BRIDGE
+  AGPIO(GPIO_MBR_TX),         // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBR_RX),         // Modbus Bridge Serial interface
 #endif
 #ifdef USE_TCP_BRIDGE
   AGPIO(GPIO_TCP_TX),         // TCP Serial bridge
