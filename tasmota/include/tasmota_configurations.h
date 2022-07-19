@@ -235,6 +235,7 @@
 #define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 //#define USE_THERMOSTAT                           // Add support for Thermostat
+//#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_SENSORS

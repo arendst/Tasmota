@@ -183,6 +183,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_NOVA_SDS              | - | - / x | - | x | - | - |
 | USE_HPMA                  | - | - / x | - | x | - | - |
 | USE_SERIAL_BRIDGE         | - | x / x | x | x | - | x |
+| USE_MODBUS_BRIDGE         | - | - / - | - | - | - | - |
 | USE_MP3_PLAYER            | - | - / x | - | x | - | - |
 | USE_AZ7798                | - | - / - | - | - | - | - |
 | USE_PN532_HSU             | - | - / x | - | x | - | - |
