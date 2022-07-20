@@ -17,13 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-  Example Command: modbussend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint8", "count":4}
-*/
-
 #ifdef USE_MODBUS_BRIDGE
 /*********************************************************************************************\
  * Modbus Bridge using Modbus library (TasmotaModbus)
+ *
+ * Example Command:
+ *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint8", "count":4}
 \*********************************************************************************************/
 
 #define XDRV_63               63
