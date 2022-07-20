@@ -111,7 +111,7 @@ struct ModbusBridge
   uint8_t count = 0;
   uint16_t registerCount = 0;
   uint8_t deviceAddress = 0;
-  uint8_t startAddress = 0;
+  uint16_t startAddress = 0;
 };
 
 ModbusBridge modbusBridge;
