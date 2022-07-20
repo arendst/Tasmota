@@ -61,9 +61,9 @@ void ResponseAppendFeatures(void)
 //#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
 //    feature1 |= 0x00000800;  // xdrv_02_mqtt.ino
 //#endif
-//#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)      // Obsolete since 6.2.1.11
-//    feature1 |= 0x00001000;  // xdrv_02_mqtt.ino
-//#endif
+#ifdef USE_MODBUS_BRIDGE
+    feature1 |= 0x00001000;  // xdrv_63_modbus_bridge.ino
+#endif
 #if defined(USE_DISCOVERY) && defined(MQTT_HOST_DISCOVERY)
     feature1 |= 0x00002000;  // xdrv_02_mqtt.ino
 #endif

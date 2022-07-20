@@ -176,6 +176,7 @@
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
+//#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+3k code)
 #define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -235,7 +236,6 @@
 #define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_A4988_STEPPER                        // Add support for A4988/DRV8825 stepper-motor-driver-circuit (+10k5 code)
 //#define USE_THERMOSTAT                           // Add support for Thermostat
-//#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
 #endif  // FIRMWARE_SENSORS
@@ -448,6 +448,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -576,6 +577,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -722,6 +724,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -862,6 +865,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_TCP_BRIDGE                            // DIsable support for Serial to TCP bridge (+1.3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger

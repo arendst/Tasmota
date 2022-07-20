@@ -1,7 +1,7 @@
 /*
-  xdrv_100_modbus_bridge.ino - modbus bridge support for Tasmota
+  xdrv_63_modbus_bridge.ino - modbus bridge support for Tasmota
 
-  Copyright (C) 2021  Theo Arends and Dániel Zoltán Tolnai
+  Copyright (C) 2021  Theo Arends and Jeroenst
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,15 +26,15 @@
  * Modbus Bridge using Modbus library (TasmotaModbus)
 \*********************************************************************************************/
 
-#define XDRV_100 100
-#define HARDWARE_FALLBACK 2
-#define MBR_MAX_VALUE_LENGTH 30
-#define MBR_SPEED TM_MODBUS_BAUDRATE
-#define MBR_MAX_REGISTERS 64
+#define XDRV_63               63
 
-#define D_CMND_MODBUS_SEND "ModbusSend"
-#define D_CMND_MODBUS_SETBAUDRATE "ModbusSetBaudrate"
-#define D_CMND_MODBUS_SETSERIALCONFIG "ModbusSetSerialConfig"
+#define MBR_MAX_VALUE_LENGTH  30
+#define MBR_SPEED             TM_MODBUS_BAUDRATE
+#define MBR_MAX_REGISTERS     64
+
+#define D_CMND_MODBUS_SEND "Send"
+#define D_CMND_MODBUS_SETBAUDRATE "Baudrate"
+#define D_CMND_MODBUS_SETSERIALCONFIG "SerialConfig"
 
 #define D_JSON_MODBUS_RECEIVED "ModbusReceived"
 #define D_JSON_MODBUS_DEVICE_ADDRESS "DeviceAddress"
@@ -46,7 +46,7 @@
 #define D_JSON_MODBUS_VALUES "Values"
 #define D_JSON_MODBUS_LENGTH "Length"
 
-const char kModbusBridgeCommands[] PROGMEM = "|" // No prefix
+const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
     D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
 
 void (*const ModbusBridgeCommand[])(void) PROGMEM = {
@@ -103,15 +103,15 @@ struct ModbusBridge
 {
   unsigned long polling_window = 0;
   int in_byte_counter = 0;
-  bool raw = false;
 
   ModbusBridgeFunctionCode functionCode = ModbusBridgeFunctionCode::mb_undefined;
   ModbusBridgeType type = ModbusBridgeType::mb_undefined;
 
-  uint8_t count = 0;
   uint16_t registerCount = 0;
+  uint16_t startAddress = 0;
   uint8_t deviceAddress = 0;
-  uint8_t startAddress = 0;
+  uint8_t count = 0;
+  bool raw = false;
 };
 
 ModbusBridge modbusBridge;
@@ -412,7 +412,7 @@ void CmndModbusBridgeSetConfig(void)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv100(uint8_t function)
+bool Xdrv63(uint8_t function)
 {
   bool result = false;
 
