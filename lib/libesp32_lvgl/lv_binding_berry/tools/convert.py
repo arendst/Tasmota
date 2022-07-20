@@ -73,7 +73,7 @@ return_types = {
   "lv_textarea_style_t": "i",
   "lv_slider_type_t": "i",
   "lv_spinner_type_t": "i",
-  "lv_spinner_dir_t": "i",
+  "lv_spinner_dir_t": "i",  
   "lv_blend_mode_t": "i",
   "lv_grad_dir_t": "i",
   "lv_border_side_t": "i",
@@ -107,6 +107,7 @@ return_types = {
   "lv_style_prop_t": "i",
   "lv_dither_mode_t": "i",
   "lv_chart_update_mode_t": "i",
+  "lv_style_res_t": "i",
   # layouts
   "lv_flex_align_t": "i",
   "lv_flex_flow_t": "i",
@@ -157,11 +158,13 @@ return_types = {
   "lv_style_transition_dsc_t *": "lv_style_transition_dsc",
   "lv_draw_ctx_t *": "lv_draw_ctx",
   "_lv_draw_ctx_t *": "lv_draw_ctx",
+  "_lv_draw_layer_ctx_t *": "lv_draw_layer_ctx",
   "lv_grad_dsc_t *": "lv_grad_dsc",
   "lv_sqrt_res_t *": "lv_sqrt_res",
   # "lv_color_hsv_t *": "lv_color_hsv",
   "lv_color_filter_dsc_t *": "lv_color_filter_dsc",
   "lv_timer_t *": "lv_timer",
+  "_lv_timer_t *": "lv_timer",
   "lv_coord_t *": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
   "char **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
   "constchar **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level

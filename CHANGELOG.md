@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.0.2.4]
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
+- ESP32 LVGL library from v8.2.0 to v8.3.0
 
 ### Changed
 
