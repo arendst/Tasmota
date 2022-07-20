@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 11.07.2022
+ * Updated until v9.4.0.1 - Last update 19.07.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -673,8 +673,8 @@
 #define D_SENSOR_HPMA_TX                "HPMA - TX"
 #define D_SENSOR_SBR_RX                 "SerBr - RX"
 #define D_SENSOR_SBR_TX                 "SerBr - TX"
-#define D_SENSOR_MBR_TX                 "ModBr - Tx"
-#define D_SENSOR_MBR_RX                 "ModBr - Rx"
+#define D_SENSOR_MBR_TX                 "ModBr - TX"
+#define D_SENSOR_MBR_RX                 "ModBr - RX"
 #define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
 #define D_SENSOR_SDM72_TX               "SDM72 - TX"
