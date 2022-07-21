@@ -68,12 +68,19 @@ int32_t _analog_pin2chan(uint32_t pin) {    // returns -1 if uallocated
   return -1;
 }
 
-void _analogWriteFreqRange(void) {
+void _analogWriteFreqRange(uint8_t pin) {
   _analogInit();      // make sure the mapping array is initialized
-  for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
-    if (pwm_channel[channel] < 255) {
-      ledcSetup(channel, pwm_frequency, pwm_bit_num);
-    }
+  if (pin = 255) {
+   for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
+     if (pwm_channel[channel] < 255) {
+       ledcSetup(channel, pwm_frequency, pwm_bit_num);
+     }
+   }
+  } else {
+   int32_t chan = _analog_pin2chan(pin);
+   if (chan >= 0) {
+     ledcSetup(chan, pwm_frequency, pwm_bit_num);
+   }
   }
 }
 
@@ -89,12 +96,22 @@ uint32_t _analogGetResolution(uint32_t x) {
 
 void analogWriteRange(uint32_t range) {
   pwm_bit_num = _analogGetResolution(range);
-  _analogWriteFreqRange();
+  _analogWriteFreqRange(255);
+}
+
+void analogWriteRange(uint32_t range, uint8_t pin) {
+  pwm_bit_num = _analogGetResolution(range);
+  _analogWriteFreqRange(pin);
 }
 
 void analogWriteFreq(uint32_t freq) {
   pwm_frequency = freq;
-  _analogWriteFreqRange();
+  _analogWriteFreqRange(255);
+}
+
+void analogWriteFreq(uint32_t freq, uint8_t pin) {
+  pwm_frequency = freq;
+  _analogWriteFreqRange(pin);
 }
 
 int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc channel used, or -1 if failed
