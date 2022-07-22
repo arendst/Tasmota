@@ -182,8 +182,9 @@ void ShutterRtc50mS(void)
             startWaveformClockCycles(Pin(GPIO_PWM1, i), cc/2, cc/2, 0, -1, 0, false);
   #endif  // ESP8266
   #ifdef ESP32
-            analogWriteFreq(Shutter[i].pwm_velocity);
-            analogWrite(Pin(GPIO_PWM1, i), 50);
+            analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
+            TasmotaGlobal.pwm_value[i] = 512;
+            PwmApplyGPIO(false);
   #endif  // ESP32
           }
         break;
@@ -467,7 +468,6 @@ void ShutterDecellerateForStop(uint8_t i)
 	      delay(50);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         // Control will be done in RTC Ticker.
-
       }
       if (ShutterGlobal.position_mode == SHT_COUNTER){
         missing_steps = ((Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) - RtcSettings.pulse_counter[i];
@@ -477,7 +477,13 @@ void ShutterDecellerateForStop(uint8_t i)
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain %d count %d -> target %d, dir %d"), missing_steps, RtcSettings.pulse_counter[i], (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].direction);
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
+#ifdef ESP8266
         analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
+#endif
+#ifdef ESP32
+        TasmotaGlobal.pwm_value[i] = 0;
+        PwmApplyGPIO(false);
+#endif  // ESP32
         Shutter[i].real_position = ShutterCalculatePosition(i);
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, tobe %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i],  (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].start_position);
@@ -635,8 +641,15 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
+#ifdef ESP8266
         analogWriteFreq(Shutter[i].pwm_velocity);
         analogWrite(Pin(GPIO_PWM1, i), 0);
+#endif
+#ifdef ESP32
+        analogWriteFreq(PWM_MIN,Pin(GPIO_PWM1, i));
+        TasmotaGlobal.pwm_value[i] = 0;
+        PwmApplyGPIO(false);
+#endif
         RtcSettings.pulse_counter[i] = 0;
       break;
 #endif
