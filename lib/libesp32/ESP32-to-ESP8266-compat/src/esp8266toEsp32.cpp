@@ -11,7 +11,6 @@
 
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
  */
 
 #ifdef ESP32
@@ -70,16 +69,16 @@ int32_t _analog_pin2chan(uint32_t pin) {    // returns -1 if uallocated
 
 void _analogWriteFreqRange(uint8_t pin) {
   _analogInit();      // make sure the mapping array is initialized
-  if (pin = 255) {
+  if (pin == 255) {
    for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
      if (pwm_channel[channel] < 255) {
        ledcSetup(channel, pwm_frequency, pwm_bit_num);
      }
    }
   } else {
-   int32_t chan = _analog_pin2chan(pin);
-   if (chan >= 0) {
-     ledcSetup(chan, pwm_frequency, pwm_bit_num);
+   int32_t channel = _analog_pin2chan(pin);
+   if (channel >= 0) {
+     ledcSetup(channel, pwm_frequency, pwm_bit_num);
    }
   }
 }
@@ -126,7 +125,7 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
 
       // ledcAttachPin(pin, channel);  -- replicating here because we want the default duty
       uint8_t group=(chan/8), channel=(chan%8), timer=((chan/2)%4);
-      
+
       // AddLog(LOG_LEVEL_INFO, "PWM: ledc_channel pin=%i out_invert=%i", pin, output_invert);
       ledc_channel_config_t ledc_channel = {
           (int)pin,          // gpio
@@ -139,7 +138,6 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
           { output_invert ? 1u : 0u },// output_invert
       };
       ledc_channel_config(&ledc_channel);
-
 
       ledcSetup(channel, pwm_frequency, pwm_bit_num);
       // Serial.printf("PWM: New attach pin %d to channel %d\n", pin, channel);
@@ -160,19 +158,18 @@ extern "C" void __wrap__Z11analogWritehi(uint8_t pin, int val) {
 /*
   The primary goal of this function is to add phase control to PWM ledc
   functions.
-
+  
   Phase control allows to stress less the power supply of LED lights.
   By default all phases are starting at the same moment. This means
   the the power supply always takes a power hit at the start of each
   new cycle, even if the average power is low.
-
-  Phase control is also of major importance for H-bridge where 
+  Phase control is also of major importance for H-bridge where
   both PWM lines should NEVER be active at the same time.
-
+  
   Unfortunately Arduino Core does not allow any customization nor
   extendibility for the ledc/analogWrite functions. We have therefore
   no other choice than duplicating part of Arduino code.
-
+  
   WARNING: this means it can easily break if ever Arduino internal
   implementation changes.
 */
