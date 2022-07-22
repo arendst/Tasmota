@@ -57,7 +57,7 @@ void _analogInit(void) {
   pwm_impl_inited = true;
 }
 
-int32_t _analog_pin2chan(uint32_t pin) {    // returns -1 if uallocated
+int _analog_pin2chan(uint32_t pin) {    // returns -1 if uallocated
   _analogInit();      // make sure the mapping array is initialized
   for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
     if ((pwm_channel[channel] < 255) && (pwm_channel[channel] == pin)) {
@@ -67,16 +67,16 @@ int32_t _analog_pin2chan(uint32_t pin) {    // returns -1 if uallocated
   return -1;
 }
 
-void _analogWriteFreqRange(uint8_t pin) {
+void _analogWriteFreqRange(uint32_t pin) {
   _analogInit();      // make sure the mapping array is initialized
-  if (pin == 255) {
-   for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
-     if (pwm_channel[channel] < 255) {
-       ledcSetup(channel, pwm_frequency, pwm_bit_num);
-     }
-   }
+  if (255 == pin) {
+    for (uint32_t channel = 0; channel < MAX_PWMS; channel++) {
+      if (pwm_channel[channel] < 255) {
+        ledcSetup(channel, pwm_frequency, pwm_bit_num);
+      }
+    }
   } else {
-   int32_t channel = _analog_pin2chan(pin);
+   int channel = _analog_pin2chan(pin);
    if (channel >= 0) {
      ledcSetup(channel, pwm_frequency, pwm_bit_num);
    }
@@ -93,30 +93,20 @@ uint32_t _analogGetResolution(uint32_t x) {
   return bits;
 }
 
-void analogWriteRange(uint32_t range) {
-  pwm_bit_num = _analogGetResolution(range);
-  _analogWriteFreqRange(255);
-}
-
-void analogWriteRange(uint32_t range, uint8_t pin) {
+void analogWriteRange(uint32_t range, uint32_t pin) {
   pwm_bit_num = _analogGetResolution(range);
   _analogWriteFreqRange(pin);
 }
 
-void analogWriteFreq(uint32_t freq) {
-  pwm_frequency = freq;
-  _analogWriteFreqRange(255);
-}
-
-void analogWriteFreq(uint32_t freq, uint8_t pin) {
+void analogWriteFreq(uint32_t freq, uint32_t pin) {
   pwm_frequency = freq;
   _analogWriteFreqRange(pin);
 }
 
-int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc channel used, or -1 if failed
+int analogAttach(uint32_t pin, bool output_invert) {    // returns ledc channel used, or -1 if failed
   _analogInit();      // make sure the mapping array is initialized
   // Find if pin is already attached
-  int32_t chan = _analog_pin2chan(pin);
+  int chan = _analog_pin2chan(pin);
   if (chan >= 0) { return chan; }
   // Find an empty channel
   for (chan = 0; chan < MAX_PWMS; chan++) {
@@ -154,22 +144,21 @@ extern "C" void __wrap__Z11analogWritehi(uint8_t pin, int val) {
   analogWritePhase(pin, val, 0);      // if unspecified, use phase = 0
 }
 
-
 /*
   The primary goal of this function is to add phase control to PWM ledc
   functions.
-  
+
   Phase control allows to stress less the power supply of LED lights.
   By default all phases are starting at the same moment. This means
   the the power supply always takes a power hit at the start of each
   new cycle, even if the average power is low.
   Phase control is also of major importance for H-bridge where
   both PWM lines should NEVER be active at the same time.
-  
+
   Unfortunately Arduino Core does not allow any customization nor
   extendibility for the ledc/analogWrite functions. We have therefore
   no other choice than duplicating part of Arduino code.
-  
+
   WARNING: this means it can easily break if ever Arduino internal
   implementation changes.
 */
@@ -179,7 +168,7 @@ extern uint8_t channels_resolution[MAX_PWMS];
 
 void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase)
 {
-  int32_t chan = _analog_pin2chan(pin);
+  int chan = _analog_pin2chan(pin);
   if (chan < 0) {    // not yet allocated, try to allocate
     chan = analogAttach(pin);
     if (chan < 0) { return; }   // failed
