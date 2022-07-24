@@ -72,7 +72,7 @@ void CmdSet(void)
       for (uint32_t i = 0; i < 3; i++) {
         if (param[i] < 1) { param[i] = 1; }  // msb, lsb, serial, counter
       }
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("params: %08x %08x %08x %08x"), param[0], param[1], param[2], param[3]);
+      DEBUG_DRIVER_LOG(PSTR("params: %08x %08x %08x %08x"), param[0], param[1], param[2], param[3]);
       Settings->keeloq_master_msb = param[0];
       Settings->keeloq_master_lsb = param[1];
       Settings->keeloq_serial = param[2];
@@ -84,10 +84,10 @@ void CmdSet(void)
       GenerateDeviceCryptKey();
       ResponseCmndDone();
     } else {
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no payload"));
+      DEBUG_DRIVER_LOG(PSTR("no payload"));
     }
   } else {
-    DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no param"));
+    DEBUG_DRIVER_LOG(PSTR("no param"));
   }
 }
 
@@ -110,10 +110,11 @@ void CmdSendButton(void)
     if (XdrvMailbox.payload > 0)
     {
       jaroliftDevice.button = strtoul(XdrvMailbox.data, nullptr, 0);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("msb: %08x"), jaroliftDevice.device_key_msb);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("lsb: %08x"), jaroliftDevice.device_key_lsb);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("serial: %08x"), jaroliftDevice.serial);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("disc: %08x"), jaroliftDevice.disc);
+      DEBUG_DRIVER_LOG(PSTR("msb: %08x"), jaroliftDevice.device_key_msb);
+      DEBUG_DRIVER_LOG(PSTR("lsb: %08x"), jaroliftDevice.device_key_lsb);
+      DEBUG_DRIVER_LOG(PSTR("serial: %08x"), jaroliftDevice.serial);
+      DEBUG_DRIVER_LOG(PSTR("disc: %08x"), jaroliftDevice.disc);
+      DEBUG_DRIVER_LOG(PSTR("button: %08x"), jaroliftDevice.button);
       AddLog(LOG_LEVEL_DEBUG, PSTR("KLQ: count: %08x"), jaroliftDevice.count);
 
       CreateKeeloqPacket();
@@ -132,7 +133,7 @@ void CmdSendButton(void)
           SendBit(bitsToSend & 0x0000000000000001);
           bitsToSend >>= 1;
         }
-        DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
+        DEBUG_DRIVER_LOG(PSTR("finished sending bits at %d"), micros());
 
         delay(16); // delay in loop context is save for wdt
       }
@@ -165,7 +166,7 @@ void SendBit(byte bitToSend)
 
 void CmndSendRaw(void)
 {
-  DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cmd send called at %d"), micros());
+  DEBUG_DRIVER_LOG(PSTR("cmd send called at %d"), micros());
   noInterrupts();
   entertx();
   for(int repeat = 0; repeat <= 1; repeat++)
@@ -181,7 +182,7 @@ void CmndSendRaw(void)
       {
         SendBit(XdrvMailbox.data[i] == '1');
       }
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
+      DEBUG_DRIVER_LOG(PSTR("finished sending bits at %d"), micros());
 
       delay(16);                       // delay in loop context is save for wdt
     }
@@ -245,7 +246,7 @@ void KeeloqInit()
   jaroliftDevice.port_tx = Pin(GPIO_CC1101_GDO2);              // Output port for transmission
   jaroliftDevice.port_rx = Pin(GPIO_CC1101_GDO0);              // Input port for reception
 
-  DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cc1101.init()"));
+  DEBUG_DRIVER_LOG(PSTR("cc1101.init()"));
   delay(100);
   cc1101.init();
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CC1101 done."));
@@ -277,7 +278,7 @@ bool Xdrv36(uint8_t function)
       break;
     case FUNC_INIT:
       KeeloqInit();
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("init done."));
+      DEBUG_DRIVER_LOG(PSTR("init done."));
       break;
   }
 
