@@ -17,19 +17,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_MODBUS_BRIDGE
+#if defined(USE_MODBUS_BRIDGE)
 /*********************************************************************************************\
  * Modbus Bridge using Modbus library (TasmotaModbus)
  *
+ * Can be used trough web/mqtt commands and also via direct TCP connection (when defined)
+ * 
+ * When USE_MODBUS_BRIDGE_TCP is also defined, this bridge can also be used as an ModbusTCP
+ * bridge.
+ *
  * Example Command:
- *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint8", "count":4}
+ *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint16", "count":2}
 \*********************************************************************************************/
 
-#define XDRV_63               63
+#define XDRV_63 63
 
-#define MBR_MAX_VALUE_LENGTH  30
-#define MBR_SPEED             TM_MODBUS_BAUDRATE
-#define MBR_MAX_REGISTERS     64
+#define MBR_MAX_VALUE_LENGTH 30
+#define MBR_SPEED TM_MODBUS_BAUDRATE
+#define MBR_MAX_REGISTERS 64
 
 #define D_CMND_MODBUS_SEND "Send"
 #define D_CMND_MODBUS_SETBAUDRATE "Baudrate"
@@ -45,11 +50,41 @@
 #define D_JSON_MODBUS_VALUES "Values"
 #define D_JSON_MODBUS_LENGTH "Length"
 
+#ifndef USE_MODBUS_BRIDGE_TCP
 const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
     D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
 
 void (*const ModbusBridgeCommand[])(void) PROGMEM = {
     &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig};
+#endif
+
+#ifdef USE_MODBUS_BRIDGE_TCP
+
+#define MODBUS_BRIDGE_TCP_CONNECTIONS 1 // number of maximum parallel connections, only 1 supported with modbus
+#define MODBUS_BRIDGE_TCP_BUF_SIZE 255  // size of the buffer, above 132 required for efficient XMODEM
+
+#define D_CMND_MODBUS_TCP_START "TCPStart"
+#define D_CMND_MODBUS_TCP_CONNECT "TCPConnect"
+
+const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
+    D_CMND_MODBUS_TCP_START "|" D_CMND_MODBUS_TCP_CONNECT "|" D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
+
+void (*const ModbusBridgeCommand[])(void) PROGMEM = {
+    &CmndModbusTCPStart, &CmndModbusTCPConnect,
+    &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig};
+
+struct ModbusBridgeTCP
+{
+  WiFiServer *server_tcp = nullptr;
+  WiFiClient client_tcp[MODBUS_BRIDGE_TCP_CONNECTIONS];
+  uint8_t client_next = 0;
+  uint8_t *tcp_buf = nullptr; // data transfer buffer
+  IPAddress ip_filter;
+  uint16_t tcp_transaction_id = 0;
+};
+
+ModbusBridgeTCP modbusBridgeTCP;
+#endif
 
 #include <TasmotaModbus.h>
 TasmotaModbus *tasmotaModbus = nullptr;
@@ -80,15 +115,13 @@ enum class ModbusBridgeFunctionCode
 enum class ModbusBridgeType
 {
   mb_undefined,
-  mb_uint8,
   mb_uint16,
   mb_uint32,
-  mb_int8,
   mb_int16,
   mb_int32,
   mb_float,
   mb_raw,
-  mb_bit8
+  mb_bit
 };
 
 enum class ModbusBridgeEndian
@@ -116,10 +149,21 @@ struct ModbusBridge
 ModbusBridge modbusBridge;
 
 /********************************************************************************************/
-
-bool SetModbusBridgeBegin(void)
+//
+// Applies serial configuration to modbus serial port
+//
+bool ModbusBridgeBegin(void)
 {
-  return tasmotaModbus->begin(Settings->baudrate * 300, ConvertSerialConfig(Settings->sserial_config)); // Reinitialize modbus port with new baud rate
+  int result = tasmotaModbus->Begin(Settings->baudrate * 300, ConvertSerialConfig(Settings->sserial_config)); // Reinitialize modbus port with new baud rate
+  if (result)
+  {
+    if (2 == result)
+    {
+      ClaimSerial();
+    }
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->baudrate * 300);
+  }
+  return result;
 }
 
 void SetModbusBridgeConfig(uint32_t serial_config)
@@ -131,33 +175,83 @@ void SetModbusBridgeConfig(uint32_t serial_config)
   if (serial_config != Settings->sserial_config)
   {
     Settings->sserial_config = serial_config;
-    SetModbusBridgeBegin();
+    ModbusBridgeBegin();
+  }
+}
+
+void SetModbusBridgeBaudrate(uint32_t baudrate)
+{
+  if (baudrate >= 300)
+  {
+    Settings->baudrate = baudrate / 300;
+    ModbusBridgeBegin();
   }
 }
 
 /********************************************************************************************/
-
+//
+// Handles data received from tasmota modbus wrapper and send this to (TCP or) MQTT client
+//
 void ModbusBridgeHandle(void)
 {
   bool data_ready = tasmotaModbus->ReceiveReady();
   if (data_ready)
   {
     uint8_t *buffer;
-    buffer = (uint8_t *)malloc(5 + modbusBridge.registerCount); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
+    buffer = (uint8_t *)malloc(5 + (modbusBridge.registerCount * 2)); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
     uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, modbusBridge.registerCount);
 
-    ModbusBridgeError errorcode = ModbusBridgeError::noerror;
     if (error)
     {
       AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver error %d"), error);
+      free(buffer);
+      return;
     }
-    else if (modbusBridge.deviceAddress == 0)
+
+#ifdef USE_MODBUS_BRIDGE_TCP
+    for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
+    {
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      if (client)
+      {
+        uint8_t MBAP_Header[7];
+        MBAP_Header[0] = modbusBridgeTCP.tcp_transaction_id >> 8;
+        MBAP_Header[1] = modbusBridgeTCP.tcp_transaction_id;
+        MBAP_Header[2] = 0;
+        MBAP_Header[3] = 0;
+        MBAP_Header[4] = ((modbusBridge.registerCount * 2) + 3) >> 8;
+        MBAP_Header[5] = (modbusBridge.registerCount * 2) + 3;
+        MBAP_Header[6] = buffer[0]; // Send slave address
+        client.write(MBAP_Header, 7);
+        client.write(buffer + 1, 1);                                // Send Functioncode
+        uint8_t bytecount[1];
+        bytecount[0] = modbusBridge.registerCount * 2;
+        client.write(bytecount, 1);                                  // Send length of rtu data
+        client.write(buffer + 3, (modbusBridge.registerCount * 2)); // Don't send CRC
+        client.flush();
+        AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus deviceAddress %d, writing %d bytes to client"), buffer[0], (modbusBridge.registerCount * 2) + 9);
+      }
+    }
+#endif
+
+    ModbusBridgeError errorcode = ModbusBridgeError::noerror;
+    if (modbusBridge.deviceAddress == 0)
+    {
+#ifdef USE_MODBUS_BRIDGE_TCP
+      // If tcp client connected don't log error and exit this function (do not process)
+      if (nitems(modbusBridgeTCP.client_tcp))
+      {
+        free(buffer);
+        return;
+      }
+#endif
       errorcode = ModbusBridgeError::nodataexpected;
+    }
     else if (modbusBridge.deviceAddress != (uint8_t)buffer[0])
       errorcode = ModbusBridgeError::wrongdeviceaddress;
     else if ((uint8_t)modbusBridge.functionCode != (uint8_t)buffer[1])
       errorcode = ModbusBridgeError::wrongfunctioncode;
-    else if ((uint8_t)modbusBridge.registerCount != (uint8_t)buffer[2])
+    else if ((uint8_t)modbusBridge.registerCount * 2 != (uint8_t)buffer[2])
       errorcode = ModbusBridgeError::wrongregistercount;
     else
     {
@@ -174,7 +268,7 @@ void ModbusBridgeHandle(void)
         ResponseJsonEnd();
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
       }
-      else if ((buffer[1] > 0) && (buffer[0] < 5)) // Read Registers, writing is not supported at this moment
+      else if ((buffer[1] > 0) && (buffer[1] < 5)) // Read Registers, writing is not supported at this moment
       {
         Response_P(PSTR("{\"" D_JSON_MODBUS_RECEIVED "\":{"));
         ResponseAppend_P(PSTR("\"" D_JSON_MODBUS_DEVICE_ADDRESS "\":%d,"), buffer[0]);
@@ -222,15 +316,7 @@ void ModbusBridgeHandle(void)
               else
                 snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%u", value);
             }
-            else if ((modbusBridge.type == ModbusBridgeType::mb_int8) ||
-                     (modbusBridge.type == ModbusBridgeType::mb_uint8))
-            {
-              if (modbusBridge.type == ModbusBridgeType::mb_int8)
-                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", (int8_t)(buffer[3 + count]));
-              else
-                snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%u", (uint8_t)(buffer[3 + count]));
-            }
-            else if (modbusBridge.type == ModbusBridgeType::mb_bit8)
+            else if (modbusBridge.type == ModbusBridgeType::mb_bit)
             {
               uint8_t value = (uint8_t)(buffer[3 + count]);
               snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d%d%d%d%d%d%d%d", ((value >> 7) & 1), ((value >> 6) & 1), ((value >> 5) & 1), ((value >> 4) & 1), ((value >> 3) & 1), ((value >> 2) & 1), ((value >> 1) & 1), (value & 1));
@@ -247,6 +333,8 @@ void ModbusBridgeHandle(void)
         if (errorcode == ModbusBridgeError::noerror)
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
       }
+      else
+        errorcode = ModbusBridgeError::wrongfunctioncode;
     }
     if (errorcode != ModbusBridgeError::noerror)
     {
@@ -258,24 +346,119 @@ void ModbusBridgeHandle(void)
 }
 
 /********************************************************************************************/
-
+//
+// Inits the tasmota modbus driver, sets serialport and if TCP enabled allocates a TCP buffer
+//
 void ModbusBridgeInit(void)
 {
   if (PinUsed(GPIO_MBR_RX) && PinUsed(GPIO_MBR_TX))
   {
     tasmotaModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX));
-    uint8_t result = tasmotaModbus->Begin(MBR_SPEED);
-    if (result)
+    SetModbusBridgeConfig(TS_SERIAL_8E1);
+    SetModbusBridgeBaudrate(MBR_SPEED);
+
+#ifdef USE_MODBUS_BRIDGE_TCP
+    // If TCP bridge is enabled allocate a TCP receive buffer
+    modbusBridgeTCP.tcp_buf = (uint8_t *)malloc(MODBUS_BRIDGE_TCP_BUF_SIZE);
+    if (!modbusBridgeTCP.tcp_buf)
     {
-      if (2 == result)
-      {
-        Serial.begin(MBR_SPEED, SERIAL_8E1);
-        ClaimSerial();
-      }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), MBR_SPEED);
+      AddLog(LOG_LEVEL_ERROR, PSTR("MBS: MBRTCP could not allocate buffer"));
+      return;
     }
+#endif
   }
 }
+
+#ifdef USE_MODBUS_BRIDGE_TCP
+/********************************************************************************************/
+//
+// Handles data for TCP server and TCP client. Sends requests to Modbus Devices
+//
+void ModbusTCPHandle(void)
+{
+  uint8_t c;
+  bool busy; // did we transfer some data?
+  int32_t buf_len;
+
+  if (!tasmotaModbus)
+    return;
+
+  // check for a new client connection
+  if ((modbusBridgeTCP.server_tcp) && (modbusBridgeTCP.server_tcp->hasClient()))
+  {
+    WiFiClient new_client = modbusBridgeTCP.server_tcp->available();
+
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBRTCP Got connection from %s"), new_client.remoteIP().toString().c_str());
+    // Check for IP filtering if it's enabled.
+    if (modbusBridgeTCP.ip_filter)
+    {
+      if (modbusBridgeTCP.ip_filter != new_client.remoteIP())
+      {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBRTCP Rejected due to filtering"));
+        new_client.stop();
+      }
+      else
+      {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBRTCP Allowed through filter"));
+      }
+    }
+
+    // find an empty slot
+    uint32_t i;
+    for (i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
+    {
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      if (!client)
+      {
+        client = new_client;
+        break;
+      }
+    }
+    if (i >= nitems(modbusBridgeTCP.client_tcp))
+    {
+      i = modbusBridgeTCP.client_next++ % nitems(modbusBridgeTCP.client_tcp);
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      client.stop();
+      client = new_client;
+    }
+  }
+
+  do
+  {
+    busy = false; // exit loop if no data was transferred
+
+    // handle data received from TCP
+    for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
+    {
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      buf_len = 0;
+      while (client && (buf_len < MODBUS_BRIDGE_TCP_BUF_SIZE) && (client.available()))
+      {
+        c = client.read();
+        if (c >= 0)
+        {
+          modbusBridgeTCP.tcp_buf[buf_len++] = c;
+          busy = true;
+        }
+      }
+      if (buf_len == 12)
+      {
+        uint8_t mbdeviceaddress = (uint8_t)modbusBridgeTCP.tcp_buf[6];
+        uint8_t mbfunctioncode = (uint8_t)modbusBridgeTCP.tcp_buf[7];
+        uint16_t mbstartaddress = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[8]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[9]));
+        modbusBridge.registerCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+        modbusBridgeTCP.tcp_transaction_id = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[0]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[1]));
+
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus Transactionid:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, Count:%d"),
+               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, modbusBridge.registerCount);
+
+        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, modbusBridge.registerCount);
+      }
+    }
+    yield(); // avoid WDT if heavy traffic
+  } while (busy);
+}
+#endif
 
 /*********************************************************************************************\
  * Commands
@@ -309,55 +492,46 @@ void CmndModbusBridgeSend(void)
   }
 
   modbusBridge.type = ModbusBridgeType::mb_undefined;
-  if (strcmp(stype, "int8") == 0)
-  {
-    modbusBridge.type = ModbusBridgeType::mb_int8;
-    modbusBridge.registerCount = 1 * modbusBridge.count;
-  }
-  else if (strcmp(stype, "int16") == 0)
+  if (strcmp(stype, "int16") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int16;
-    modbusBridge.registerCount = 2 * modbusBridge.count;
+    modbusBridge.registerCount = modbusBridge.count;
   }
   else if (strcmp(stype, "int32") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int32;
-    modbusBridge.registerCount = 4 * modbusBridge.count;
-  }
-  else if (strcmp(stype, "uint8") == 0)
-  {
-    modbusBridge.type = ModbusBridgeType::mb_uint8;
-    modbusBridge.registerCount = 1 * modbusBridge.count;
+    modbusBridge.registerCount = 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "uint16") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_uint16;
-    modbusBridge.registerCount = 2 * modbusBridge.count;
+    modbusBridge.registerCount = modbusBridge.count;
   }
   else if (strcmp(stype, "uint32") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_uint32;
-    modbusBridge.registerCount = 4 * modbusBridge.count;
+    modbusBridge.registerCount = 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "float") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_float;
-    modbusBridge.registerCount = 4 * modbusBridge.count;
+    modbusBridge.registerCount = 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "raw") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_raw;
     modbusBridge.registerCount = modbusBridge.count;
   }
-  else if (strcmp(stype, "bit8") == 0)
+  else if (strcmp(stype, "bit") == 0)
   {
-    modbusBridge.type = ModbusBridgeType::mb_bit8;
+    modbusBridge.type = ModbusBridgeType::mb_bit;
     modbusBridge.registerCount = modbusBridge.count;
   }
   else
     errorcode = ModbusBridgeError::wrongtype;
 
-  if (modbusBridge.registerCount > MBR_MAX_REGISTERS) errorcode = ModbusBridgeError::wrongcount;
+  if (modbusBridge.registerCount > MBR_MAX_REGISTERS)
+    errorcode = ModbusBridgeError::wrongcount;
 
   if (errorcode != ModbusBridgeError::noerror)
   {
@@ -371,13 +545,8 @@ void CmndModbusBridgeSend(void)
 
 void CmndModbusBridgeSetBaudrate(void)
 {
-  if (XdrvMailbox.payload >= 300)
-  {
-    XdrvMailbox.payload /= 300; // Make it a valid baudrate
-    Settings->sbaudrate = XdrvMailbox.payload;
-    SetModbusBridgeBegin();
-  }
-  ResponseCmndNumber(Settings->sbaudrate * 300);
+  SetModbusBridgeBaudrate(XdrvMailbox.payload);
+  ResponseCmndNumber(Settings->baudrate * 300);
 }
 
 void CmndModbusBridgeSetConfig(void)
@@ -407,6 +576,114 @@ void CmndModbusBridgeSetConfig(void)
   ResponseCmndChar(GetSerialConfig(Settings->sserial_config).c_str());
 }
 
+#ifdef USE_MODBUS_BRIDGE_TCP
+//
+// Command `TCPStart`
+// Params: port,<IPv4 allow>
+//
+void CmndModbusTCPStart(void)
+{
+
+  if (!tasmotaModbus)
+  {
+    return;
+  }
+
+  int32_t tcp_port = XdrvMailbox.payload;
+  if (ArgC() == 2)
+  {
+    char sub_string[XdrvMailbox.data_len];
+    modbusBridgeTCP.ip_filter.fromString(ArgV(sub_string, 2));
+  }
+  else
+  {
+    // Disable whitelist if previously set
+    modbusBridgeTCP.ip_filter = (uint32_t)0;
+  }
+
+  if (modbusBridgeTCP.server_tcp)
+  {
+    AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Stopping server"));
+    modbusBridgeTCP.server_tcp->stop();
+    delete modbusBridgeTCP.server_tcp;
+    modbusBridgeTCP.server_tcp = nullptr;
+
+    for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
+    {
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      client.stop();
+    }
+  }
+  if (tcp_port > 0)
+  {
+    AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Starting server on port %d"), tcp_port);
+    if (modbusBridgeTCP.ip_filter)
+    {
+      AddLog(LOG_LEVEL_INFO, PSTR("MBS: MBRTCP Filtering %s"), modbusBridgeTCP.ip_filter.toString().c_str());
+    }
+    modbusBridgeTCP.server_tcp = new WiFiServer(tcp_port);
+    modbusBridgeTCP.server_tcp->begin(); // start TCP server
+    modbusBridgeTCP.server_tcp->setNoDelay(true);
+  }
+
+  ResponseCmndDone();
+}
+
+//
+// Command `Connect`
+// Params: port,<IPv4>
+//
+void CmndModbusTCPConnect(void)
+{
+  int32_t tcp_port = XdrvMailbox.payload;
+
+  if (!tasmotaModbus)
+  {
+    return;
+  }
+
+  if (ArgC() == 2)
+  {
+    char sub_string[XdrvMailbox.data_len];
+    WiFiClient new_client;
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBRTCP Connecting to %s on port %d"), ArgV(sub_string, 2), tcp_port);
+    if (new_client.connect(ArgV(sub_string, 2), tcp_port))
+    {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBRTCP connected!"));
+    }
+    else
+    {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBRTCP error connecting!"));
+    }
+
+    // find an empty slot
+    uint32_t i;
+    for (i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
+    {
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      if (!client)
+      {
+        client = new_client;
+        break;
+      }
+    }
+    if (i >= nitems(modbusBridgeTCP.client_tcp))
+    {
+      i = modbusBridgeTCP.client_next++ % nitems(modbusBridgeTCP.client_tcp);
+      WiFiClient &client = modbusBridgeTCP.client_tcp[i];
+      client.stop();
+      client = new_client;
+    }
+  }
+  else
+  {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "MBS: MBR Usage: port,ip_address"));
+  }
+
+  ResponseCmndDone();
+}
+#endif
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -423,11 +700,14 @@ bool Xdrv63(uint8_t function)
   {
     switch (function)
     {
-    case FUNC_EVERY_250_MSECOND:
-      ModbusBridgeHandle();
-      break;
     case FUNC_COMMAND:
       result = DecodeCommand(kModbusBridgeCommands, ModbusBridgeCommand);
+      break;
+    case FUNC_LOOP:
+      ModbusBridgeHandle();
+#ifdef USE_MODBUS_BRIDGE_TCP
+      ModbusTCPHandle();
+#endif
       break;
     }
   }
