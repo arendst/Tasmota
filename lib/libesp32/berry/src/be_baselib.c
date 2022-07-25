@@ -333,7 +333,6 @@ static int l_call(bvm *vm)
                 be_moveto(vm, top + 1, top + 1 + list_size);
                 be_moveto(vm, top, top + list_size);
 
-                be_refpush(vm, -2);
                 be_pushiter(vm, -1);
                 while (be_iter_hasnext(vm, -2)) {
                     be_iter_next(vm, -2);
@@ -342,7 +341,6 @@ static int l_call(bvm *vm)
                     be_pop(vm, 1);
                 }
                 be_pop(vm, 1);  /* remove iterator */
-                be_refpop(vm);
             }
             be_pop(vm, 2);
             arg_count = arg_count - 1 + list_size;
