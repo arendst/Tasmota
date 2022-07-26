@@ -33,7 +33,7 @@
 #define XDRV_63 63
 
 #define MBR_MAX_VALUE_LENGTH 30
-#define MBR_SPEED TM_MODBUS_BAUDRATE
+#define MBR_BAUDRATE TM_MODBUS_BAUDRATE
 #define MBR_MAX_REGISTERS 64
 
 #define D_CMND_MODBUS_SEND "Send"
@@ -154,14 +154,17 @@ ModbusBridge modbusBridge;
 //
 bool ModbusBridgeBegin(void)
 {
-  int result = tasmotaModbus->Begin(Settings->baudrate * 300, ConvertSerialConfig(Settings->sserial_config)); // Reinitialize modbus port with new baud rate
+   if ((Settings->modbus_sbaudrate < 300 / 300) || (Settings->modbus_sbaudrate > 115200 / 300)) Settings->modbus_sbaudrate = (uint8_t)MBR_BAUDRATE / 300;
+  if (Settings->modbus_sconfig > TS_SERIAL_8O2) Settings->modbus_sconfig = TS_SERIAL_8N1;
+
+  int result = tasmotaModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
   if (result)
   {
     if (2 == result)
     {
       ClaimSerial();
     }
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->baudrate * 300);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
   }
   return result;
 }
@@ -172,19 +175,22 @@ void SetModbusBridgeConfig(uint32_t serial_config)
   {
     serial_config = TS_SERIAL_8N1;
   }
-  if (serial_config != Settings->sserial_config)
+  if (serial_config != Settings->modbus_sconfig)
   {
-    Settings->sserial_config = serial_config;
+    Settings->modbus_sconfig = serial_config;
     ModbusBridgeBegin();
   }
 }
 
 void SetModbusBridgeBaudrate(uint32_t baudrate)
 {
-  if (baudrate >= 300)
+  if ((baudrate >= 300) && (baudrate <= 115200))
   {
-    Settings->baudrate = baudrate / 300;
-    ModbusBridgeBegin();
+    if (baudrate / 300 != Settings->modbus_sbaudrate) 
+    {
+      Settings->modbus_sbaudrate = baudrate / 300;
+      ModbusBridgeBegin();
+    }
   }
 }
 
@@ -354,8 +360,6 @@ void ModbusBridgeInit(void)
   if (PinUsed(GPIO_MBR_RX) && PinUsed(GPIO_MBR_TX))
   {
     tasmotaModbus = new TasmotaModbus(Pin(GPIO_MBR_RX), Pin(GPIO_MBR_TX));
-    SetModbusBridgeConfig(TS_SERIAL_8E1);
-    SetModbusBridgeBaudrate(MBR_SPEED);
 
 #ifdef USE_MODBUS_BRIDGE_TCP
     // If TCP bridge is enabled allocate a TCP receive buffer
@@ -546,7 +550,7 @@ void CmndModbusBridgeSend(void)
 void CmndModbusBridgeSetBaudrate(void)
 {
   SetModbusBridgeBaudrate(XdrvMailbox.payload);
-  ResponseCmndNumber(Settings->baudrate * 300);
+  ResponseCmndNumber(Settings->modbus_sbaudrate * 300);
 }
 
 void CmndModbusBridgeSetConfig(void)
@@ -573,7 +577,7 @@ void CmndModbusBridgeSetConfig(void)
       }
     }
   }
-  ResponseCmndChar(GetSerialConfig(Settings->sserial_config).c_str());
+  ResponseCmndChar(GetSerialConfig(Settings->modbus_sconfig).c_str());
 }
 
 #ifdef USE_MODBUS_BRIDGE_TCP
