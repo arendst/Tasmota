@@ -580,11 +580,6 @@ BERRY_API void be_module_path_set(bvm *vm, const char *path);
 BERRY_API void* be_pushbytes(bvm *vm, const void *buf, size_t len);
 BERRY_API const void* be_tobytes(bvm *vm, int index, size_t *len);
 
-/* registry operation */
-BERRY_API int be_register(bvm *vm, int index);
-BERRY_API void be_unregister(bvm *vm, int id);
-BERRY_API void be_getregister(bvm *vm, int id);
-
 /* debug APIs */
 BERRY_API void be_sethook(bvm *vm, const char *mask);
 BERRY_API void be_setntvhook(bvm *vm, bntvhook hook, void *data, int mask);

@@ -1142,29 +1142,3 @@ BERRY_API bbool be_isge(bvm *vm)
     be_assert(vm->reg + 2 <= vm->top);
     return be_vm_isge(vm, vm->top - 2, vm->top - 1);
 }
-
-BERRY_API int be_register(bvm *vm, int index)
-{
-    bvalue *v;
-    if (!vm->registry) {
-        vm->registry = be_list_new(vm);
-        be_list_pool_init(vm, vm->registry);
-    }
-    be_assert(vm->registry != NULL);
-    v = be_indexof(vm, index);
-    return be_list_pool_alloc(vm, vm->registry, v);
-}
-
-BERRY_API void be_unregister(bvm *vm, int id)
-{
-    be_assert(vm->registry != NULL);
-    be_list_pool_free(vm->registry, id);
-}
-
-BERRY_API void be_getregister(bvm *vm, int id)
-{
-    blist *reg = vm->registry;
-    be_assert(reg && id > 0 && id < be_list_count(reg));
-    var_setval(vm->top, be_list_at(reg, id));
-    be_incrtop(vm);
-}
