@@ -78,6 +78,10 @@ int32_t web_send_file(char mc, char *file);
 
 #define SPECIAL_EEPMODE_SIZE 6200
 
+#ifndef STASK_STACK
+#define STASK_STACK 8192-2048
+#endif
+
 #ifdef USE_UFILESYS
 
 #undef USE_SCRIPT_FATFS
@@ -2318,17 +2322,21 @@ chknext:
         if (!strncmp(lp, "adc(", 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
-          float fvar1 = 1;
+          float pin = 1;
           if (*lp!=')') {
-            lp = GetNumericArgument(lp, OPER_EQU, &fvar1, gv);
-            if (fvar1<32 || fvar1>39) fvar1 = 32;
+            lp = GetNumericArgument(lp, OPER_EQU, &pin, gv);
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+            if (pin<1 || pin>20) pin = 1;
+#else
+            if (pin<32 || pin>39) pin = 32;
+#endif
           }
           lp++;
           if (fvar > 7) fvar = 7;
 #ifdef ESP32
           // ESP32
 #ifdef USE_ADC
-          fvar = AdcRead(fvar1, fvar);
+          fvar = AdcRead(pin, fvar);
 #else
           fvar = 999.999;
 #endif // USE_ADC
@@ -2466,11 +2474,17 @@ chknext:
           while (*lp==' ') lp++;
           float fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
+          SCRIPT_SKIP_SPACES
           float prio = STASK_PRIO;
           if (*lp!=')') {
             lp = GetNumericArgument(lp, OPER_EQU, &prio, gv);
           }
-          fvar = scripter_create_task(fvar, fvar1, fvar2, prio);
+          SCRIPT_SKIP_SPACES
+          float stack = STASK_STACK;
+          if (*lp!=')') {
+            lp = GetNumericArgument(lp, OPER_EQU, &stack, gv);
+          }
+          fvar = scripter_create_task(fvar, fvar1, fvar2, prio, stack);
           goto nfuncexit;
         }
 #endif //USE_SCRIPT_TASK
@@ -3794,15 +3808,33 @@ chknext:
           }
           goto nfuncexit;
         }
-#if  defined(ESP32) && (defined(USE_M5STACK_CORE2))
+/*
+#if defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) || defined(USE_I2S_MIC))
         if (!strncmp(lp, "rec(", 4)) {
           char str[SCRIPT_MAXSSIZE];
           lp = GetStringArgument(lp + 4, OPER_EQU, str, 0);
-          SCRIPT_SKIP_SPACES
-          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-          fvar = i2s_record(str, fvar);
+          //SCRIPT_SKIP_SPACES
+          //lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          fvar = i2s_record_shine(str);
           len++;
           goto exit;
+        }
+#endif
+*/
+
+#ifdef ESP32
+        if (!strncmp(lp, "rr(", 3)) {
+          lp+=4;
+          len = 0;
+          const char *cp = GetResetReason().c_str();
+          if (sp) {
+              if (cp) {
+                strlcpy(sp, cp, glob_script_mem.max_ssize);
+              } else {
+                strlcpy(sp, "-", glob_script_mem.max_ssize);
+              }
+          }
+          goto strexit;
         }
 #endif
         break;
@@ -4883,6 +4915,14 @@ extern char *SML_GetSVal(uint32_t index);
           fvar = !TasmotaGlobal.global_state.wifi_down;
           goto exit;
         }
+#ifdef xUSE_SHINE
+        if (!strncmp(vname, "wav2mp3(", 8)) {
+          char path[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp + 8, OPER_EQU, path, 0);
+          fvar = wav2mp3(path);
+          goto nfuncexit;
+        }
+#endif
         break;
       case 'y':
         if (!strncmp(vname, "year", 4)) {
@@ -8208,6 +8248,81 @@ String ScriptUnsubscribe(const char * data, int data_len)
 #endif //     SUPPORT_MQTT_EVENT
 
 
+#if defined(ESP32) && defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
+ESP8266WebServer *http82_Server;
+bool download82_busy;
+
+void script_download_task82(void *path) {
+  SendFile_sub((char*) path, 1);
+  free(path);
+  download82_busy = false;
+  //AddLog(LOG_LEVEL_INFO, PSTR("UFS 82: Download finished"));
+  vTaskDelete( NULL );
+}
+void ScriptServeFile82(void) {
+  String stmp = http82_Server->uri();
+
+  char *cp = strstr_P(stmp.c_str(), PSTR("/ufs/"));
+  if (cp) {
+    cp += 4;
+    if (ufsp) {
+      if (ufsp->exists(cp)) {
+        if (download82_busy == true) {
+          AddLog(LOG_LEVEL_INFO, PSTR("UFS 82: Download is busy"));
+          return;
+        }
+        download82_busy = true;
+        char *path = (char*)malloc(128);
+        strcpy(path, cp);
+        xTaskCreatePinnedToCore(script_download_task82, "DT", 6000, (void*)path, 3, NULL, 1);
+        //AddLog(LOG_LEVEL_INFO, PSTR("Sendfile 82 started"));
+        return;
+      }
+    }
+  }
+
+  Handle82NotFound();
+}
+
+void Handle82NotFound(void) {
+  Send82Header(404, "not found");
+}
+
+void Handle82Root(void) {
+  Send82Header(403, "forbidden");
+}
+
+void WebServer82Loop(void) {
+  if (http82_Server != nullptr) {
+    http82_Server->handleClient();
+  }
+}
+
+void Send82Header(uint32_t type, const char *message) {
+  http82_Server->client().printf_P(PSTR("HTTP/1.1 %d\r\n"), type);
+  http82_Server->client().printf_P(PSTR("Content-type: text/plain\r\n\r\n"));
+  http82_Server->client().printf_P(PSTR("%s\n"), message);
+}
+
+void WebServer82Init(void) {
+  if (http82_Server != nullptr) {
+    return;
+  }
+  http82_Server = new ESP8266WebServer(82);
+  if (http82_Server != nullptr) {
+    http82_Server->on(UriGlob("/ufs/*"), HTTP_GET, ScriptServeFile82);
+    http82_Server->on("/", HTTP_GET, Handle82Root);
+    http82_Server->onNotFound(Handle82NotFound);
+    http82_Server->begin();
+    AddLog(LOG_LEVEL_INFO, PSTR("HTTP Server 82 started"));
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("HTTP Server 82 failed"));
+  }
+}
+
+#endif // USE_SCRIPT_ALT_DOWNLOAD
+
+
 
 #ifdef USE_SCRIPT_WEB_DISPLAY
 
@@ -8251,7 +8366,7 @@ bool script_download_busy;
 void SendFile(char *fname) {
 
 #ifdef ESP8266
-  SendFile_sub(fname);
+  SendFile_sub(fname, 0);
 #endif // ESP8266
 
 #ifdef ESP32
@@ -8265,7 +8380,7 @@ void SendFile(char *fname) {
   strcpy(path, fname);
   xTaskCreatePinnedToCore(script_download_task, "DT", 6000, (void*)path, 3, NULL, 1);
 #else
-  SendFile_sub(fname);
+  SendFile_sub(fname, 0);
 #endif
 
 #endif // ESP32
@@ -8273,7 +8388,7 @@ void SendFile(char *fname) {
 
 #ifdef USE_DLTASK
 void script_download_task(void *path) {
-  SendFile_sub((char*) path);
+  SendFile_sub((char*) path, 0);
   free(path);
   script_download_busy = false;
   vTaskDelete( NULL );
@@ -8282,26 +8397,29 @@ void script_download_task(void *path) {
 
 #define REVERT_M5EPD
 
-void SendFile_sub(char *fname) {
+void SendFile_sub(char *path, uint8_t stype) {
 char buff[512];
-  uint8_t sflg = 0;
+WiFiClient client;
+uint8_t sflg = 0;
+File file;
+uint32_t fsize;
 
 #ifdef USE_DISPLAY_DUMP
-  char *sbmp = strstr_P(fname, PSTR("scrdmp.bmp"));
+  char *sbmp = strstr_P(path, PSTR("scrdmp.bmp"));
   if (sbmp) {
     sflg = 1;
   }
 #endif // USE_DISPLAY_DUMP
 
-  if ( strstr_P(fname, PSTR(".jpg"))) {
+  if ( strstr_P(path, PSTR(".jpg"))) {
     strcpy_P(buff,PSTR("image/jpeg"));
-  } else if (strstr_P(fname, PSTR(".bmp"))) {
+  } else if (strstr_P(path, PSTR(".bmp"))) {
     strcpy_P(buff,PSTR("image/bmp"));
-  } else if (strstr_P(fname, PSTR(".html"))) {
+  } else if (strstr_P(path, PSTR(".html"))) {
     strcpy_P(buff,PSTR("text/html"));
-  } else if (strstr_P(fname, PSTR(".txt"))) {
+  } else if (strstr_P(path, PSTR(".txt"))) {
     strcpy_P(buff,PSTR("text/plain"));
-  } else if (strstr_P(fname, PSTR(".pdf"))) {
+  } else if (strstr_P(path, PSTR(".pdf"))) {
     strcpy_P(buff,PSTR("application/pdf"));
   } else {
     strcpy_P(buff,PSTR("text/plain"));
@@ -8309,9 +8427,33 @@ char buff[512];
 
   if (!buff[0]) return;
 
-  WSContentSend_P(HTTP_SCRIPT_MIMES, buff);
-  WSContentFlush();
+  if (!sflg) {
+    file = ufsp->open(path, FS_FILE_READ);
+    fsize = file.size();
+  }
 
+  if (0 == stype) {
+    WSContentSend_P(HTTP_SCRIPT_MIMES, buff);
+    WSContentFlush();
+    client = Webserver->client();
+  } else {
+#ifdef USE_SCRIPT_ALT_DOWNLOAD
+    client = http82_Server->client();
+#else
+    client = Webserver->client();
+#endif
+    client.printf_P(PSTR("HTTP/1.1 200 OK\r\n"));
+    char *cp = path;
+    for (uint32_t cnt = strlen(path) - 1; cnt >= 0; cnt--) {
+      if (path[cnt] == '/') {
+        cp = &path[cnt + 1];
+        break;
+      }
+    }
+    client.printf_P(PSTR("Content-Disposition: attachment; filename=\"%s\"\r\n"), cp);
+    client.printf_P(PSTR("Content-Length: %d\r\n"), fsize);
+    client.printf_P(PSTR("Content-type: application/octet-stream\r\n\r\n"));
+  }
 
   if (sflg) {
 #ifdef USE_DISPLAY_DUMP
@@ -8335,10 +8477,10 @@ char buff[512];
       uint8_t *lbp;
       uint8_t fileHeader[fileHeaderSize];
       createBitmapFileHeader(Settings->display_height , Settings->display_width , fileHeader);
-      Webserver->client().write((uint8_t *)fileHeader, fileHeaderSize);
+      client.write((uint8_t *)fileHeader, fileHeaderSize);
       uint8_t infoHeader[infoHeaderSize];
       createBitmapInfoHeader(Settings->display_height, Settings->display_width, infoHeader );
-      Webserver->client().write((uint8_t *)infoHeader, infoHeaderSize);
+      client.write((uint8_t *)infoHeader, infoHeaderSize);
       if (bpp < 0) {
         for (uint32_t lins = Settings->display_height - 1; lins >= 0 ; lins--) {
           lbp = lbuf;
@@ -8351,7 +8493,7 @@ char buff[512];
             *lbp++ = pixel;
             *lbp++ = pixel;
           }
-          Webserver->client().write((const char*)lbuf, Settings->display_width * 3);
+          client.write((const char*)lbuf, Settings->display_width * 3);
         }
       } else {
         for (uint32_t lins = 0; lins < Settings->display_height; lins++) {
@@ -8421,25 +8563,23 @@ char buff[512];
               bp++;
             }
           }
-          Webserver->client().write((const char*)lbuf, Settings->display_width * 3);
+          client.write((const char*)lbuf, Settings->display_width * 3);
         }
       }
       if (lbuf) free(lbuf);
-      Webserver->client().stop();
+      client.stop();
     }
 #endif // USE_DISPLAY_DUMP
   } else {
-    File file = ufsp->open(fname, FS_FILE_READ);
-    uint32_t siz = file.size();
     uint32_t len = sizeof(buff);
-    while (siz > 0) {
-      if (len > siz) len = siz;
+    while (fsize > 0) {
+      if (len > fsize) len = fsize;
       file.read((uint8_t *)buff, len);
-      Webserver->client().write((const char*)buff, len);
-      siz -= len;
+      client.write((const char*)buff, len);
+      fsize -= len;
     }
     file.close();
-    Webserver->client().stop();
+    client.stop();
   }
 }
 #endif // USE_UFILESYS
@@ -9994,9 +10134,7 @@ int32_t retval;
 #ifdef ESP32
 #ifdef USE_SCRIPT_TASK
 
-#ifndef STASK_STACK
-#define STASK_STACK 8192-2048
-#endif
+
 
 struct ESP32_Task {
   uint16_t task_timer;
@@ -10039,7 +10177,7 @@ void script_task2(void *arg) {
     }
   }
 }
-uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_t prio) {
+uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_t prio,  int32_t stack) {
   //return 0;
   BaseType_t res = 0;
   if (core > 1) { core = 1; }
@@ -10056,12 +10194,12 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_
     if (!num) {
       if (Run_Scripter1(">t1", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
-        res = xTaskCreatePinnedToCore(script_task1, "T1", STASK_STACK, NULL, prio, &esp32_tasks[num].task_t, core);
+        res = xTaskCreatePinnedToCore(script_task1, "T1", stack, NULL, prio, &esp32_tasks[num].task_t, core);
       }
     } else {
       if (Run_Scripter1(">t2", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
-        res = xTaskCreatePinnedToCore(script_task2, "T2", STASK_STACK, NULL, prio, &esp32_tasks[num].task_t, core);
+        res = xTaskCreatePinnedToCore(script_task2, "T2", stack, NULL, prio, &esp32_tasks[num].task_t, core);
       }
     }
     esp32_tasks[num].tstart = sp;
@@ -11044,8 +11182,11 @@ bool Xdrv10(uint8_t function)
 #if defined(USE_UFILESYS) && defined(USE_SCRIPT_WEB_DISPLAY)
       Webserver->on(UriGlob("/ufs/*"), HTTP_GET, ScriptServeFile);
 #endif
-#endif // USE_WEBSERVER
+#if defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
+      WebServer82Init();
+#endif // USE_SCRIPT_ALT_DOWNLOAD
       break;
+#endif // USE_WEBSERVER
 
     case FUNC_SAVE_BEFORE_RESTART:
       if (bitRead(Settings->rule_enabled, 0)) {
@@ -11094,11 +11235,14 @@ bool Xdrv10(uint8_t function)
       break;
 #endif //USE_BUTTON_EVENT
 
-#ifdef USE_SCRIPT_GLOBVARS
     case FUNC_LOOP:
+#ifdef USE_SCRIPT_GLOBVARS
       Script_PollUdp();
-      break;
 #endif //USE_SCRIPT_GLOBVARS
+#ifdef USE_SCRIPT_ALT_DOWNLOAD
+      WebServer82Loop();
+#endif
+      break;
 
   }
   return result;
