@@ -1,4 +1,23 @@
 
+/*
+  audio is2 support for ESP32-S3 box and box lite
+
+  Copyright (C) 2022  Gerhard Mutz and Theo Arends
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifdef ESP32
 #ifdef ESP32S3_BOX
 #include <driver/i2s.h>
@@ -7,9 +26,11 @@
 #include <es7243e.h>
 #include <es7210.h>
 
+
+#define S3BOX_APWR_GPIO 46
+
 void S3boxAudioPower(uint8_t pwr) {
-  pinMode(46 , OUTPUT);
-  digitalWrite(46, pwr);
+  digitalWrite(S3BOX_APWR_GPIO, pwr);
 }
 
 // box lite dac init
@@ -111,130 +132,9 @@ void S3boxInit() {
     // box full
     ES8311_init();
     es7210_init();
+
+    pinMode(S3BOX_APWR_GPIO , OUTPUT);
   }
 }
 #endif // ESP32S3_BOX
-
-#ifdef USE_SHINE
-#ifdef WAV2MP3
-
-#include <layer3.h>
-#include <types.h>
-
-typedef uint8_t mp3buf_t;
-
-
-// min freq = 16 KHz Stereo or 32 KHz Mono
-int32_t wav2mp3(char *path) {
-  int32_t error = 0;
-  shine_config_t  config;
-  shine_t s = nullptr;
-  File wav_in = (File)nullptr;
-  File mp3_out = (File)nullptr;
-  uint8_t *ucp;
-  int written;
-  int16_t *buffer = nullptr;
-  uint32_t bread;
-  uint16_t samples_per_pass;
-  char mpath[64];
-  char *cp;
-  uint8_t chans = 1;
-  uint32_t sfreq = 16000;
-
-  strlcpy(mpath, path, sizeof(mpath));
-
-  wav_in = ufsp->open(mpath, FS_FILE_READ);
-  if (!wav_in) {
-    error = -1;
-    goto exit;
-  }
-
-  // script>wav2mp3("/test2.wav")
-  uint8_t wavHeader[sizeof(wavHTemplate)];
-  wav_in.read((uint8_t*)wavHeader, sizeof(wavHTemplate));
-  chans = wavHeader[22];
-  sfreq = wavHeader[24]|(wavHeader[25]<<8)|(wavHeader[26]<<16)|(wavHeader[27]<<24);
-
-  cp = strchr(mpath, '.');
-  if (!cp) {
-    error = -6;
-    goto exit;
-  }
-
-  strcpy(cp, ".mp3");
-
-  mp3_out = ufsp->open(mpath, FS_FILE_WRITE);
-  if (!mp3_out) {
-    error = -2;
-    goto exit;
-  }
-
-  shine_set_config_mpeg_defaults(&config.mpeg);
-
-  if (chans == 1) {
-    config.mpeg.mode = MONO;
-  } else {
-    config.mpeg.mode = STEREO;
-  }
-  config.mpeg.bitr = 128;
-  config.wave.samplerate = sfreq;
-  config.wave.channels = (channels)chans;
-
-
-  if (shine_check_config(config.wave.samplerate, config.mpeg.bitr) < 0) {
-    error = -3;
-    goto exit;
-  }
-
-  s = shine_initialise(&config);
-  if (!s) {
-    error = -4;
-    goto exit;
-  }
-
-  samples_per_pass = shine_samples_per_pass(s);
-
-
-  buffer = (int16_t*)malloc(samples_per_pass * 2 * chans);
-  if (!buffer) {
-    error = -5;
-    goto exit;
-  }
-
-  AddLog(LOG_LEVEL_INFO, PSTR("mp3 encoding %d channels with freq %d Hz"), chans, sfreq);
-
-  while (1) {
-    bread = wav_in.read((uint8_t*)buffer, samples_per_pass * 2 * chans);
-    if (!bread) {
-      break;
-    }
-    ucp = shine_encode_buffer_interleaved(s, buffer, &written);
-    mp3_out.write(ucp, written);
-  }
-  ucp = shine_flush(s, &written);
-  mp3_out.write(ucp, written);
-
-exit:
-  if (s) {
-    shine_close(s);
-  }
-  if (wav_in) {
-    wav_in.close();
-  }
-  if (mp3_out) {
-    mp3_out.close();
-  }
-
-  if (buffer) {
-    free(buffer);
-  }
-
-  AddLog(LOG_LEVEL_INFO, PSTR("mp3 encoding exit with code: %d"), error);
-
-  return error;
-}
-#endif  // WAV2MP3
-#endif // USE_SHINE
-
-
-#endif
+#endif // ESP32
