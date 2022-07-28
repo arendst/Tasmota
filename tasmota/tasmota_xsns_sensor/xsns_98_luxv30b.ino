@@ -199,7 +199,7 @@ bool Xsns98(byte function)
     case FUNC_JSON_APPEND:
       if (0 < luxv30b.lux())
       {
-        ResponseAppend_P(PSTR(",\"LUXV30B\":{\"" D_JSON_ILLUMINANCE "\":%s\"}"), lux);
+        ResponseAppend_P(PSTR(",\"LUXV30B\":{\"" D_JSON_ILLUMINANCE "\":%s}"), lux);
       }
       break;
 #ifdef USE_WEBSERVER
