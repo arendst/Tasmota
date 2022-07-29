@@ -60,6 +60,11 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXSSIZE 48
 #endif
 
+#ifndef SCRIPT_CMDMEM
+#define SCRIPT_CMDMEM 512
+#endif
+#define MAX_SCRIPT_CMDBUFFER 4096
+
 
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
@@ -235,7 +240,7 @@ extern Renderer *renderer;
 #endif
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU,OPER_SHLEQU,OPER_SHREQU,OPER_SHL,OPER_SHR};
-enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS};
+enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD,SCRIPT_EVENT_HANDLED,SML_JSON_ENABLE,SCRIPT_EPOFFS,SCRIPT_CBSIZE};
 
 
 #ifdef USE_UFILESYS
@@ -425,6 +430,7 @@ struct SCRIPT_MEM {
     uint8_t *script_pram;
     uint16_t script_pram_size;
     uint8_t numvars;
+    uint8_t arres;
     void *script_mem;
     uint16_t script_mem_size;
     uint8_t script_dprec;
@@ -438,6 +444,7 @@ struct SCRIPT_MEM {
     uint8_t siro_num[3];
     uint8_t sind_num;
     char *last_index_string[3];
+    uint16_t cmdbuffer_size = SCRIPT_CMDMEM / 2;
 
 #ifdef USE_SCRIPT_FATFS
     File files[SFS_MAX];
@@ -1293,9 +1300,9 @@ float *get_array_by_name(char *name, uint16_t *alen) {
 
 float Get_MFVal(uint8_t index, int16_t bind) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
-  for (uint8_t count = 0; count<MAXFILT; count++) {
+  for (uint8_t count = 0; count < MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
-    if (count==index) {
+    if (count == index) {
         uint16_t maxind = mflp->numvals & AND_FILT_MASK;
         if (!bind) {
           return mflp->index;
@@ -1320,12 +1327,11 @@ float Get_MFVal(uint8_t index, int16_t bind) {
 
 void Set_MFVal(uint8_t index, uint16_t bind, float val) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
-  for (uint8_t count = 0; count<MAXFILT; count++) {
+  for (uint8_t count = 0; count < MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
-    if (count==index) {
+    if (count == index) {
         uint16_t maxind = mflp->numvals & AND_FILT_MASK;
         if (!bind) {
-
           if (val < 0) {
             // shift whole array by value
           } else {
@@ -1335,7 +1341,7 @@ void Set_MFVal(uint8_t index, uint16_t bind, float val) {
           }
         } else {
           if (bind >= 1 && bind <= maxind) {
-            mflp->rbuff[bind-1] = val;
+            mflp->rbuff[bind - 1] = val;
           }
         }
         return;
@@ -1347,9 +1353,9 @@ void Set_MFVal(uint8_t index, uint16_t bind, float val) {
 
 float Get_MFilter(uint8_t index) {
   uint8_t *mp = (uint8_t*)glob_script_mem.mfilt;
-  for (uint8_t count = 0; count<MAXFILT; count++) {
+  for (uint8_t count = 0; count < MAXFILT; count++) {
     struct M_FILT *mflp = (struct M_FILT*)mp;
-    if (count==index) {
+    if (count == index) {
       if (mflp->numvals & OR_FILT_MASK) {
         // moving average
         return mflp->maccu / (mflp->numvals & AND_FILT_MASK);
@@ -2110,6 +2116,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
       olen = strlen(dvnam);
     }
 
+    glob_script_mem.arres = 0;
     for (count = 0; count < glob_script_mem.numvars; count++) {
         char *cp = glob_script_mem.glob_vnp + glob_script_mem.vnp_offset[count];
         uint8_t slen = strlen(cp);
@@ -2129,6 +2136,7 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
                         len = 1;
                       } else {
                         fvar = Get_MFilter(index);
+                        glob_script_mem.arres = 1;
                       }
                     } else {
                       if (ja) continue;
@@ -2514,7 +2522,11 @@ chknext:
           goto strexit;
         }
 #endif // USE_FEXTRACT
-
+        if (!strncmp(lp, "cbs", 3)) {
+          fvar = glob_script_mem.cmdbuffer_size;
+          tind->index = SCRIPT_CBSIZE;
+          goto exit_settable;
+        }
         break;
       case 'd':
         if (!strncmp(vname, "day", 3)) {
@@ -6282,12 +6294,11 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                 }
                 char *slp = lp;
                 SCRIPT_SKIP_SPACES
-                #define SCRIPT_CMDMEM 512
-                char *cmdmem = (char*)malloc(SCRIPT_CMDMEM);
+                char *cmdmem = (char*)malloc(glob_script_mem.cmdbuffer_size * 2);
                 if (cmdmem) {
                   char *cmd = cmdmem;
                   uint16_t count;
-                  for (count = 0; count<SCRIPT_CMDMEM/2-2; count++) {
+                  for (count = 0; count < glob_script_mem.cmdbuffer_size-2; count++) {
                     //if (*lp=='\r' || *lp=='\n' || *lp=='}') {
                     if (!*lp || *lp=='\r' || *lp=='\n') {
                         cmd[count] = 0;
@@ -6297,8 +6308,8 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                   }
                   //AddLog(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
-                  char *tmp = cmdmem + SCRIPT_CMDMEM / 2;
-                  Replace_Cmd_Vars(cmd, 0, tmp, SCRIPT_CMDMEM / 2);
+                  char *tmp = cmdmem + glob_script_mem.cmdbuffer_size;
+                  Replace_Cmd_Vars(cmd, 0, tmp, glob_script_mem.cmdbuffer_size);
                   //toSLog(tmp);
 
                   if (!strncmp(tmp, "print", 5) || pflg) {
@@ -6308,7 +6319,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                     if (!sflag) {
                       tasm_cmd_activ = 1;
                       AddLog(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
-                    } else if (sflag==2) {
+                    } else if (sflag == 2) {
                       // allow recursive call
                     } else {
                       tasm_cmd_activ = 1;
@@ -6319,7 +6330,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                     }
                     ExecuteCommand((char*)tmp, SRC_RULE);
                     tasm_cmd_activ = 0;
-                    if (sflag==1) {
+                    if (sflag == 1) {
                       Settings->flag.mqtt_enabled = svmqtt;  // SetOption3  - Enable MQTT
                       Settings->weblog_level = swll;
                     }
@@ -6371,6 +6382,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                   // found variable as result
                   globvindex = ind.index; // save destination var index here
                   if (gv) globaindex = gv->numind;
+                  else globaindex = -1;
                   uint8_t index = glob_script_mem.type[ind.index].index;
                   if ((vtype&STYPE)==0) {
                       // numeric result
@@ -6381,7 +6393,6 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         } else {
                           sysv_type = 0;
                         }
-
                       } else {
                         dfvar = &glob_script_mem.fvars[index];
                         sysv_type = 0;
@@ -6395,15 +6406,20 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         lp = eval_sub(lp, &fvar, 0);
                       } else {
 #endif
-                        char *slp = lp;
-                        glob_script_mem.glob_error = 0;
-                        //Serial.printf("Stack 1: %d\n",GetStack());
-                        lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-                        if (glob_script_mem.glob_error == 1) {
-                          // mismatch was string, not number
-                          // get the string and convert to number
-                          lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
-                          fvar = CharToFloat(cmpstr);
+                        SCRIPT_SKIP_SPACES
+                        if ( (glob_script_mem.arres > 0) && (lastop == OPER_EQU) && (*lp == '{') ) {
+                          glob_script_mem.arres = 2;
+                        } else {
+                          char *slp = lp;
+                          glob_script_mem.glob_error = 0;
+                          //Serial.printf("Stack 1: %d\n",GetStack());
+                          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+                          if (glob_script_mem.glob_error == 1) {
+                            // mismatch was string, not number
+                            // get the string and convert to number
+                            lp = isvar(slp, &vtype, &ind, 0, cmpstr, gv);
+                            fvar = CharToFloat(cmpstr);
+                          }
                         }
 #ifdef SCRIPT_LM_SUB
                       }
@@ -6461,7 +6477,20 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         if (globaindex >= 0) {
                           Set_MFVal(glob_script_mem.type[globvindex].index, globaindex, *dfvar);
                         } else {
-                          Set_MFilter(glob_script_mem.type[globvindex].index, *dfvar);
+                          if (glob_script_mem.arres == 2) {
+                            // fetch var preset
+                            lp++;
+                            while (*lp && *lp != SCRIPT_EOL) {
+                              if (*lp == '}') {
+                                lp++;
+                                break;
+                              }
+                              lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+                              Set_MFilter(glob_script_mem.type[globvindex].index, fvar);
+                            }
+                          }  else {
+                              Set_MFilter(glob_script_mem.type[globvindex].index, *dfvar);
+                          }
                         }
                       }
 
@@ -6480,6 +6509,12 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                             break;
                           case SCRIPT_EPOFFS:
                             glob_script_mem.epoch_offset = *dfvar;
+                            break;
+                          case SCRIPT_CBSIZE:
+                            if (*dfvar > MAX_SCRIPT_CMDBUFFER) {
+                              *dfvar = MAX_SCRIPT_CMDBUFFER;
+                            }
+                            glob_script_mem.cmdbuffer_size = *dfvar;
                             break;
 #if defined(USE_SML_M) && defined (USE_SML_SCRIPT_CMD)
                           case SML_JSON_ENABLE:
