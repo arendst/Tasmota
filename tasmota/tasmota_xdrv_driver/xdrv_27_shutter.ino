@@ -156,6 +156,9 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterRtc50mS(void)
 {
+#ifdef ESP32
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+#endif
     // No Logging allowed. RTC Timer
   for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     if (Shutter[i].direction) {
@@ -184,13 +187,16 @@ void ShutterRtc50mS(void)
   #ifdef ESP32
             analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
             TasmotaGlobal.pwm_value[i] = 512;
-            PwmApplyGPIO(false);
+            pwm_apply = true;
   #endif  // ESP32
           }
         break;
       }
     } // if (Shutter[i].direction)
   }
+#ifdef ESP32
+  if (pwm_apply) { PwmApplyGPIO(false); }
+#endif
 }
 
 int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
@@ -458,6 +464,9 @@ void ShutterCalculateAccelerator(uint8_t i)
 
 void ShutterDecellerateForStop(uint8_t i)
 {
+#ifdef ESP32
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+#endif
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
@@ -482,7 +491,7 @@ void ShutterDecellerateForStop(uint8_t i)
 #endif
 #ifdef ESP32
         TasmotaGlobal.pwm_value[i] = 0;
-        PwmApplyGPIO(false);
+        pwm_apply = true;
 #endif  // ESP32
         Shutter[i].real_position = ShutterCalculatePosition(i);
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
@@ -492,6 +501,9 @@ void ShutterDecellerateForStop(uint8_t i)
       Shutter[i].pwm_velocity = 0;
     break;
   }
+#ifdef ESP32
+  if (pwm_apply) { PwmApplyGPIO(false); }
+#endif
 }
 
 void ShutterPowerOff(uint8_t i)
