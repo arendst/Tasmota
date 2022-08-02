@@ -721,7 +721,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
-  AGPIO(GPIO_IRSEND),         // IR remote
+  AGPIO(GPIO_IRSEND) + MAX_IRSEND,         // IR remote
 #if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
   AGPIO(GPIO_IRRECV),         // IR receiver
 #endif
