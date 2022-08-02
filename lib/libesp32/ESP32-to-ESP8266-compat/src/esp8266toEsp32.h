@@ -43,7 +43,7 @@
  * So it all happens like if there were only 4 timers and a single group of PWM channels.
 \*******************************************************************************************/
 
-extern "C" uint32_t ledcReadFreq(uint8_t chan);
+extern "C" uint32_t ledcReadFreq2(uint8_t chan);
 uint8_t ledcReadResolution(uint8_t chan);
 //
 // analogAttach - attach a GPIO to a hardware PWM

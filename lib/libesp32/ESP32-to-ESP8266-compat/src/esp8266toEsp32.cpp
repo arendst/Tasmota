@@ -318,8 +318,8 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
   return chan;
 }
 
-// uint32_t ledcReadFreq2(uint8_t chan) {
-extern "C" uint32_t __wrap_ledcReadFreq(uint8_t chan) {
+extern "C" uint32_t ledcReadFreq2(uint8_t chan) {
+// extern "C" uint32_t __wrap_ledcReadFreq(uint8_t chan) {
   if (chan > MAX_PWMS) {
     return 0;     // wrong channel
   }
