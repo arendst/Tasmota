@@ -839,6 +839,13 @@ void IrRemoteCmndResponse(uint32_t error)
 void IrInit(void) {
   ir_send_active = PinUsed(GPIO_IRSEND, GPIO_ANY);
   ir_recv_active = PinUsed(GPIO_IRRECV, GPIO_ANY);
+  if (ir_send_active) {
+    for (uint32_t chan = 0; chan < MAX_IRSEND; chan++) {
+      if (PinUsed(GPIO_IRSEND, chan)) {
+        IrSendInitGPIO(chan);
+      }
+    }
+  }
 }
 
 /*********************************************************************************************\
