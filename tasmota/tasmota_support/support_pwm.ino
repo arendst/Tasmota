@@ -83,7 +83,6 @@ void PwmApplyGPIO(bool force_update_all) {
     if (PinUsed(GPIO_PWM1, i)) {
       int32_t pin = Pin(GPIO_PWM1, i);
       int32_t chan = analogGetChannel2(pin);
-      // int32_t timer = analogGetTimer(pin);
       uint32_t res = ledcReadResolution(chan);
       uint32_t range = (1 << res) - 1;
       uint32_t freq = ledcReadFreq2(chan);

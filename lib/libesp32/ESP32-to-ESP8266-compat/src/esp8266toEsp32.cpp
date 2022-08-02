@@ -147,6 +147,30 @@ int32_t _analog_pin2timer(uint32_t pin) {    // returns -1 if uallocated
   return timer;
 }
 
+// get the next unused timer, returns -1 if no free timer is available
+// Keep in mind that Timer 0 is reserved, which leaves only 3 timers available
+//
+// This function does not reserve the timer, it is reserved only when you assign a GPIO to it
+static int32_t analogNextFreeTimer() {
+  _analogInit();      // make sure the mapping array is initialized
+  bool assigned[MAX_TIMERS] = {};
+  assigned[0] = true;
+
+  for (uint32_t chan = 0; chan < MAX_PWMS; chan++) {
+    assigned[pwm_timer[chan]] = true;
+  }
+
+  // find first free
+  for (uint32_t j = 0; j < MAX_TIMERS; j++) {
+    if (!assigned[j]) {
+      // AddLog(LOG_LEVEL_INFO, "PWM: analogNextFreeTimer next_timer=%i", j);
+      return j;
+      }
+  }
+  // AddLog(LOG_LEVEL_INFO, "PWM: analogNextFreeTimer no free timer");
+  return -1;    // none available
+}
+
 // input range is in full range, ledc needs bits
 uint32_t _analogGetResolution(uint32_t x) {
   uint32_t bits = 0;
@@ -177,7 +201,7 @@ void analogWriteRange(uint32_t range, int32_t pin) {
 // `-1`: keep unchanged
 // if pin < 0 then change global value for timer 0
 void analogWriteFreqRange(int32_t freq, int32_t range, int32_t pin) {
-  AddLog(LOG_LEVEL_INFO, "PWM: analogWriteFreqRange freq=%i range=%i pin=%i", freq, range, pin);
+  // AddLog(LOG_LEVEL_INFO, "PWM: analogWriteFreqRange freq=%i range=%i pin=%i", freq, range, pin);
   _analogInit();      // make sure the mapping array is initialized
   uint32_t timer0_freq = timer_freq_hz[0];          // global values
   uint8_t  timer0_res = timer_duty_resolution[0];
@@ -389,27 +413,6 @@ int32_t analogGetTimerForChannel(uint8_t chan) {
 // get the next unused timer, returns -1 if no free timer is available
 // Keep in mind that Timer 0 is reserved, which leaves only 3 timers available
 //
-// This function does not reserve the timer, it is reserved only when you assign a GPIO to it
-int32_t analogNextFreeTimer() {
-  _analogInit();      // make sure the mapping array is initialized
-  bool assigned[MAX_TIMERS] = {};
-  assigned[0] = true;
-
-  for (uint32_t chan = 0; chan < MAX_PWMS; chan++) {
-    assigned[pwm_timer[chan]] = true;
-  }
-
-  // find first free
-  for (uint32_t j = 0; j < MAX_TIMERS; j++) {
-    if (!assigned[j]) {
-      // AddLog(LOG_LEVEL_INFO, "PWM: analogNextFreeTimer next_timer=%i", j);
-      return j;
-      }
-  }
-  // AddLog(LOG_LEVEL_INFO, "PWM: analogNextFreeTimer no free timer");
-  return -1;    // none available
-}
-
 // Get timer resolution (in bits) - default 10
 uint8_t analogGetTimerResolution(uint8_t timer) {
   _analogInit();      // make sure the mapping array is initialized
