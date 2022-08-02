@@ -511,6 +511,7 @@
   #define D_JSON_IR_HASH "Hash"
   #define D_JSON_IR_RAWDATA "RawData"
   #define D_JSON_IR_REPEAT "Repeat"
+  #define D_JSON_IR_CHANNEL "Channel"
 #define D_CMND_IRHVAC "IRHVAC"
   #define D_JSON_IRHVAC_VENDOR "Vendor"
   #define D_JSON_IRHVAC_PROTOCOL "Protocol"
