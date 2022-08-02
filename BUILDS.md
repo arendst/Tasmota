@@ -15,7 +15,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_DOMOTICZ          | - | x / x | x | x | x | - |
 | USE_HOME_ASSISTANT    | - | - / - | - | - | - | - |
 | USE_TASMOTA_DISCOVERY | x | x / x | x | x | x | x |
-| USE_MQTT_TLS          | - | - / - | - | - | - | - |
+| USE_MQTT_TLS*         | - | - / x | - | - | - | - |
 | USE_MQTT_AWS_IOT      | - | - / - | - | - | - | - |
 | USE_4K_RSA            | - | - / - | - | - | - | - |
 | USE_TELEGRAM          | - | - / - | - | - | - | - |
@@ -251,3 +251,5 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_I2S_AUDIO             |   |   / - |   |   |   |   |
 | USE_TTGO_WATCH            |   |   / - |   |   |   |   |
 | USE_SONOFF_SPM            |   |   / x |   |   |   |   |
+
+* USE_MQTT_TLS is enabled by default in every ESP32 variants
