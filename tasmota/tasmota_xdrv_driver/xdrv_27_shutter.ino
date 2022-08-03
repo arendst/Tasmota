@@ -1767,7 +1767,7 @@ bool Xdrv27(uint8_t function)
         }
       break;
       case FUNC_BUTTON_PRESSED:
-        if (Settings->shutter_button[XdrvMailbox.index] & (1<<31)) {
+        if (XdrvMailbox.index < MAX_SHUTTER_KEYS && Settings->shutter_button[XdrvMailbox.index] & (1<<31)) {
           ShutterButtonHandler();
           result = true;
         }
