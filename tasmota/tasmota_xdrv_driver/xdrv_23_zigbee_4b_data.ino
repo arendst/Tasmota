@@ -47,6 +47,9 @@ int32_t hydrateDeviceWideData(class Z_Device & device, const SBuffer & buf, size
   device.last_seen = buf.get32(start+1);
   device.lqi = buf.get8(start + 5);
   device.batterypercent = buf.get8(start + 6);
+  if (segment_len >= 10) {
+    device.batt_last_seen = buf.get32(start+7);
+  }
   return segment_len + 1;
 }
 
@@ -118,10 +121,12 @@ SBuffer hibernateDeviceData(const struct Z_Device & device) {
     buf.add16(device.shortaddr);
 
     // device wide data
-    buf.add8(6);        // 6 bytes
+    buf.add8(10);        // 10 bytes
     buf.add32(device.last_seen);
     buf.add8(device.lqi);
     buf.add8(device.batterypercent);
+    // now storing batt_last_seen
+    buf.add32(device.batt_last_seen);
 
     for (const auto & data_elt : device.data) {
       size_t item_len = data_elt.DataTypeToLength(data_elt.getType());
