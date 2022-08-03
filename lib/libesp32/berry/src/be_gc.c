@@ -370,7 +370,6 @@ static void premark_internal(bvm *vm)
     mark_gray(vm, gc_object(vm->module.loaded));
     mark_gray(vm, gc_object(vm->module.path));
     mark_gray(vm, gc_object(vm->ntvclass));
-    mark_gray(vm, gc_object(vm->registry));
 #if BE_USE_DEBUG_HOOK
     if (be_isgcobj(&vm->hook)) {
         mark_gray(vm, gc_object(var_toobj(&vm->hook)));

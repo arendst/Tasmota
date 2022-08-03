@@ -195,6 +195,7 @@ enum UserSelectablePins {
   GPIO_TM1621_CS, GPIO_TM1621_WR, GPIO_TM1621_RD, GPIO_TM1621_DAT,  // Sonoff POWR3xxD and THR3xxD LCD display
   GPIO_REL1_BI, GPIO_REL1_BI_INV,      // 8 x Relays bistable
   GPIO_I2S_MCLK,
+  GPIO_MBR_TX, GPIO_MBR_RX,            // Modbus Bridge Serial interface
   GPIO_VINDRIKTNING_TX, GPIO_VINDRIKTNING_FAN, // IKEA VINDRIKTNING Serial Tx and direct output pin fan control
   GPIO_SENSOR_END };
 
@@ -437,6 +438,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_TM1621_CS "|" D_GPIO_TM1621_WR "|" D_GPIO_TM1621_RD "|" D_GPIO_TM1621_DAT "|"
   D_SENSOR_RELAY "_b|" D_SENSOR_RELAY "_bi|"
   D_SENSOR_I2S_MCLK "|"
+  D_SENSOR_MBR_TX "|" D_SENSOR_MBR_RX "|"
   D_SENSOR_VINDRIKTNING_TX "|" D_SENSOR_VINDRIKTNING_FAN "|"
   ;
 
@@ -722,7 +724,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
-  AGPIO(GPIO_IRSEND),         // IR remote
+  AGPIO(GPIO_IRSEND) + MAX_IRSEND,         // IR remote
 #if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
   AGPIO(GPIO_IRRECV),         // IR receiver
 #endif
@@ -855,6 +857,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SERIAL_BRIDGE
   AGPIO(GPIO_SBR_TX),         // Serial Bridge Serial interface
   AGPIO(GPIO_SBR_RX),         // Serial Bridge Serial interface
+#endif
+#ifdef USE_MODBUS_BRIDGE
+  AGPIO(GPIO_MBR_TX),         // Modbus Bridge Serial interface
+  AGPIO(GPIO_MBR_RX),         // Modbus Bridge Serial interface
 #endif
 #ifdef USE_TCP_BRIDGE
   AGPIO(GPIO_TCP_TX),         // TCP Serial bridge

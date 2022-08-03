@@ -13,8 +13,9 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_UFILESYS          | - | - / x | - | - | - | - |
 | USE_ARDUINO_OTA       | - | - / - | - | - | - | - |
 | USE_DOMOTICZ          | - | x / x | x | x | x | - |
-| USE_HOME_ASSISTANT    | - | x / x | x | x | x | - |
-| USE_MQTT_TLS          | - | - / - | - | - | - | - |
+| USE_HOME_ASSISTANT    | - | - / - | - | - | - | - |
+| USE_TASMOTA_DISCOVERY | x | x / x | x | x | x | x |
+| USE_MQTT_TLS*         | - | - / x | - | - | - | - |
 | USE_MQTT_AWS_IOT      | - | - / - | - | - | - | - |
 | USE_4K_RSA            | - | - / - | - | - | - | - |
 | USE_TELEGRAM          | - | - / - | - | - | - | - |
@@ -183,6 +184,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_NOVA_SDS              | - | - / x | - | x | - | - |
 | USE_HPMA                  | - | - / x | - | x | - | - |
 | USE_SERIAL_BRIDGE         | - | x / x | x | x | - | x |
+| USE_MODBUS_BRIDGE         | - | - / x | - | - | - | - |
 | USE_MP3_PLAYER            | - | - / x | - | x | - | - |
 | USE_AZ7798                | - | - / - | - | - | - | - |
 | USE_PN532_HSU             | - | - / x | - | x | - | - |
@@ -249,3 +251,5 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_I2S_AUDIO             |   |   / - |   |   |   |   |
 | USE_TTGO_WATCH            |   |   / - |   |   |   |   |
 | USE_SONOFF_SPM            |   |   / x |   |   |   |   |
+
+* USE_MQTT_TLS is enabled by default in every ESP32 variants

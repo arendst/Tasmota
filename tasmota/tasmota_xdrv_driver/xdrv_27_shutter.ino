@@ -55,7 +55,6 @@ int32_t  current_stop_way = 0;
 int32_t  next_possible_stop_position = 0;
 int32_t  current_real_position = 0;
 int32_t  current_pwm_velocity = 0;
-int8_t   savedata_original = 0;
 
 const uint8_t MAX_MODES = 7;
 enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
@@ -157,6 +156,9 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterRtc50mS(void)
 {
+#ifdef ESP32
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+#endif
     // No Logging allowed. RTC Timer
   for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
     if (Shutter[i].direction) {
@@ -183,14 +185,18 @@ void ShutterRtc50mS(void)
             startWaveformClockCycles(Pin(GPIO_PWM1, i), cc/2, cc/2, 0, -1, 0, false);
   #endif  // ESP8266
   #ifdef ESP32
-            analogWriteFreq(Shutter[i].pwm_velocity);
-            analogWrite(Pin(GPIO_PWM1, i), 50);
+            analogWriteFreq(Shutter[i].pwm_velocity,Pin(GPIO_PWM1, i));
+            TasmotaGlobal.pwm_value[i] = 512;
+            pwm_apply = true;
   #endif  // ESP32
           }
         break;
       }
     } // if (Shutter[i].direction)
   }
+#ifdef ESP32
+  if (pwm_apply) { PwmApplyGPIO(false); }
+#endif
 }
 
 int32_t ShutterPercentToRealPosition(int16_t percent, uint32_t index)
@@ -458,6 +464,9 @@ void ShutterCalculateAccelerator(uint8_t i)
 
 void ShutterDecellerateForStop(uint8_t i)
 {
+#ifdef ESP32
+  bool pwm_apply = false;   // ESP32 only, do we need to apply PWM changes
+#endif
   switch (ShutterGlobal.position_mode) {
     case SHT_PWM_VALUE:
     case SHT_COUNTER:
@@ -468,7 +477,6 @@ void ShutterDecellerateForStop(uint8_t i)
 	      delay(50);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Velocity %ld, Delta %d"), Shutter[i].pwm_velocity, Shutter[i].accelerator );
         // Control will be done in RTC Ticker.
-
       }
       if (ShutterGlobal.position_mode == SHT_COUNTER){
         missing_steps = ((Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND) - RtcSettings.pulse_counter[i];
@@ -478,7 +486,13 @@ void ShutterDecellerateForStop(uint8_t i)
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain %d count %d -> target %d, dir %d"), missing_steps, RtcSettings.pulse_counter[i], (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].direction);
         while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND && missing_steps > 0) {
         }
+#ifdef ESP8266
         analogWrite(Pin(GPIO_PWM1, i), 0); // removed with 8.3 because of reset caused by watchog
+#endif
+#ifdef ESP32
+        TasmotaGlobal.pwm_value[i] = 0;
+        pwm_apply = true;
+#endif  // ESP32
         Shutter[i].real_position = ShutterCalculatePosition(i);
         //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Remain steps %d"), missing_steps);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Real %d, Pulsecount %d, tobe %d, Start %d"), Shutter[i].real_position,RtcSettings.pulse_counter[i],  (uint32_t)(Shutter[i].target_position-Shutter[i].start_position)*Shutter[i].direction*ShutterGlobal.open_velocity_max/RESOLUTION/STEPS_PER_SECOND, Shutter[i].start_position);
@@ -487,6 +501,9 @@ void ShutterDecellerateForStop(uint8_t i)
       Shutter[i].pwm_velocity = 0;
     break;
   }
+#ifdef ESP32
+  if (pwm_apply) { PwmApplyGPIO(false); }
+#endif
 }
 
 void ShutterPowerOff(uint8_t i)
@@ -536,8 +553,9 @@ void ShutterPowerOff(uint8_t i)
   #endif
       break;
   }
-  Settings->save_data = savedata_original;
-  TasmotaGlobal.save_data_counter = Settings->save_data;
+  if (Settings->save_data) {
+    TasmotaGlobal.save_data_counter = Settings->save_data;
+  }
   delay(MOTOR_STOP_TIME);
 }
 
@@ -635,8 +653,15 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     switch (ShutterGlobal.position_mode) {
 #ifdef SHUTTER_STEPPER
       case SHT_COUNTER:
+#ifdef ESP8266
         analogWriteFreq(Shutter[i].pwm_velocity);
         analogWrite(Pin(GPIO_PWM1, i), 0);
+#endif
+#ifdef ESP32
+        analogWriteFreq(PWM_MIN,Pin(GPIO_PWM1, i));
+        TasmotaGlobal.pwm_value[i] = 0;
+        PwmApplyGPIO(false);
+#endif
         RtcSettings.pulse_counter[i] = 0;
       break;
 #endif
@@ -649,11 +674,6 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     ShutterAllowPreStartProcedure(i);
     Shutter[i].time = Shutter[i].last_reported_time = 0;
 
-    // avoid file system writes during move to minimize missing steps
-    savedata_original = Settings->save_data;
-    Settings->save_data = 0; // will be restored after movement
-
-    TasmotaGlobal.save_data_counter = Settings->save_data;
     ShutterGlobal.skip_relay_change = 0;
     TasmotaGlobal.rules_flag.shutter_moved  = 0;
     ShutterGlobal.start_reported = 0;
@@ -664,6 +684,12 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
       //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: real %d, start %d, counter %d,freq_max %d, dir %d, freq %d"),Shutter[i].real_position, Shutter[i].start_position ,RtcSettings.pulse_counter[i],ShutterGlobal.open_velocity_max , direction ,ShutterGlobal.open_velocity_max );
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: VenetianDelay: %d, Pos: %d, Dir: %d, Delta: %d, Dur: %d, StartP: %d, TgtP: %d"),
         Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
+    }
+
+    // avoid file system writes during move to minimize missing steps
+    if (Settings->save_data) {
+      uint32_t move_duration = (direction > 0) ? Shutter[i].open_time : Shutter[i].close_time;
+      TasmotaGlobal.save_data_counter = Settings->save_data + (move_duration / 10) +1;
     }
   }
   //AddLog(LOG_LEVEL_DEBUG,  PSTR("SHT: Start shtr%d from %d to %d in dir: %d"), i, Shutter[i].start_position, Shutter[i].target_position, direction);
@@ -1741,7 +1767,7 @@ bool Xdrv27(uint8_t function)
         }
       break;
       case FUNC_BUTTON_PRESSED:
-        if (Settings->shutter_button[XdrvMailbox.index] & (1<<31)) {
+        if (XdrvMailbox.index < MAX_SHUTTER_KEYS && Settings->shutter_button[XdrvMailbox.index] & (1<<31)) {
           ShutterButtonHandler();
           result = true;
         }

@@ -101,7 +101,7 @@ bool Bh1750Read(uint32_t sensor_index) {
   if (2 != Wire.requestFrom(Bh1750_sensors[sensor_index].address, (uint8_t)2)) { return false; }
 
   float illuminance = (Wire.read() << 8) | Wire.read();
-  illuminance /= (1.2 * (69 / (float)Bh1750_sensors[sensor_index].mtreg));
+  illuminance *= 57.5 / (float)Bh1750_sensors[sensor_index].mtreg;  // Fix #16022
   if (1 == Bh1750Resolution(sensor_index)) {
     illuminance /= 2;
   }

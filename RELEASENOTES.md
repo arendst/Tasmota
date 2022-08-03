@@ -107,20 +107,24 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.0.2.3
+## Changelog v12.0.2.4
 ### Added
+- Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
 - Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
+- Command ``Sleep2 !`` to cancel pending one-shot speed setting [#15954](https://github.com/arendst/Tasmota/issues/15954)
 - Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs [#15839](https://github.com/arendst/Tasmota/issues/15839)
 - Support for Sonoff POWR3xxD and THR3xxD [#15856](https://github.com/arendst/Tasmota/issues/15856)
 - Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
+- Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` [#16013](https://github.com/arendst/Tasmota/issues/16013)
 - ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars [#15916](https://github.com/arendst/Tasmota/issues/15916)
 
 ### Breaking Changed
 
 ### Changed
-- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 [#15940](https://github.com/arendst/Tasmota/issues/15940)
+- ESP32 Arduino core from v2.0.3 to v2.0.4 [#15940](https://github.com/arendst/Tasmota/issues/15940)
+- ESP32 LVGL library from v8.2.0 to v8.3.0
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 [#15856](https://github.com/arendst/Tasmota/issues/15856)
 
 ### Fixed

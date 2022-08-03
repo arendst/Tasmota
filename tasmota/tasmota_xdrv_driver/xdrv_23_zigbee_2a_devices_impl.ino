@@ -725,6 +725,9 @@ void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
 void Z_Device::jsonAddDeviceAttributes(Z_attribute_list & attr_list) const {
   attr_list.addAttributePMEM(PSTR("Reachable")).setBool(getReachable());
   if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batterypercent); }
+  if (validBattLastSeen()) {
+    attr_list.addAttributePMEM(PSTR("BatteryLastSeenEpoch")).setUInt(batt_last_seen);
+  }
   if (validLastSeen())        {
     if (Rtc.utc_time >= last_seen) {
       attr_list.addAttributePMEM(PSTR("LastSeen")).setUInt(Rtc.utc_time - last_seen);

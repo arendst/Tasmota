@@ -3,19 +3,30 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.0.2.3]
+## [12.0.2.4]
 ### Added
-- Support for Sonoff POWR3xxD and THR3xxD (#15856)
-- Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
-- ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars (#15916)
+- Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
+- Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` (#16013)
+- Support for multiple `IRsend` GPIOs
+- Zigbee added recording of when the battery was last reported
 
 ### Changed
-- Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
-- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 (#15940)
+- ESP32 LVGL library from v8.2.0 to v8.3.0
 
 ### Fixed
 
 ### Removed
+
+## [12.0.2.3] 20220716
+### Added
+- Support for Sonoff POWR3xxD and THR3xxD (#15856)
+- Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
+- ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars (#15916)
+- Command ``Sleep2 !`` to cancel pending one-shot speed setting (#15954)
+
+### Changed
+- Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
+- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 (#15940)
 
 ## [12.0.2.2]
 ### Added

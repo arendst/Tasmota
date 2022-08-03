@@ -56,8 +56,8 @@ uint32_t DhtExpectPulse(bool level) {
   uint32_t count = 0;
   while (digitalRead(dht_pin) == level) {
     if (count++ >= dht_maxcycles) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " %s " D_PULSE),
-        (level) ? D_START_SIGNAL_HIGH : D_START_SIGNAL_LOW);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: Pin%d timeout waiting for %s pulse"),
+        dht_pin, (level) ? "high" : "low");
       return UINT32_MAX;  // Exceeded timeout, fail.
     }
   }
@@ -65,8 +65,6 @@ uint32_t DhtExpectPulse(bool level) {
 }
 
 bool DhtRead(uint32_t sensor) {
-  dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
-
   dht_pin = Dht[sensor].pin;
   if (!dht_dual_mode) {
     // Go into high impedence state to let pull-up raise data line level and
@@ -89,11 +87,18 @@ bool DhtRead(uint32_t sensor) {
       delayMicroseconds(2000);                          // 20200621: See https://github.com/arendst/Tasmota/pull/7468#issuecomment-647067015
       break;
     case GPIO_SI7021:                                   // iTead SI7021
-//      delayMicroseconds(500);
-      delayMicroseconds(400);                           // Higher results in Timeout waiting for start signal high pulse
+#ifdef ESP8266
+      delayMicroseconds(500);
+#else
+      delayMicroseconds(400);                           // Higher (or lower) results in Timeout waiting for high pulse on ESP32
+#endif
       break;
     case GPIO_MS01:                                     // Sonoff MS01
+#ifdef ESP8266
       delayMicroseconds(450);
+#else
+      delayMicroseconds(400);                           // Higher (or lower) results in Timeout waiting for high pulse on ESP32
+#endif
       break;
   }
 
@@ -156,6 +161,37 @@ bool DhtRead(uint32_t sensor) {
 
   if (i < 80) { return false; }
 
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Pin%d cycles %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u .."),
+//    dht_pin, cycles[0], cycles[1], cycles[2], cycles[3], cycles[4], cycles[5], cycles[6], cycles[7], cycles[8], cycles[9], cycles[10], cycles[11], cycles[12], cycles[13], cycles[14], cycles[15]);
+  // DHT11 on ESP8266 - 80MHz
+  // 10:49:06.532 DHT: Pin14 cycles 81 35 74 34 81 106 81 35 81 34 81 34 81 106 81 35 ..
+  // 10:49:06.533 DHT: Pin14 read 22001A003C
+  // DHT11 on ESP32 - 80MHz
+  // 10:55:51.868 DHT: Pin25 cycles 94 33 86 41 94 124 94 40 95 40 94 41 94 124 94 40 ..
+  // 10:55:51.872 DHT: Pin25 read 22001A003C
+  // DHT11 on ESP32-S3 - 240MHz
+  // 11:13:44.712 DHT: Pin21 cycles 264 116 264 117 267 350 258 117 267 117 267 117 267 349 268 116 ..
+  // 11:13:44.713 DHT: Pin21 read 22001A003C
+  // AM2301 on ESP8266 - 80MHz
+  // 11:00:06.423 DHT: Pin14 cycles 92 38 83 38 89 38 89 38 90 38 89 38 89 38 89 114 ..
+  // 11:00:06.425 DHT: Pin14 read 01F900FCF6
+  // AM2301 on ESP32 - 80MHz
+  // 14:54:15.930 DHT: Pin25 cycles 99 45 96 45 104 45 103 45 104 45 103 46 103 132 104 45 ..
+  // 14:54:15.932 DHT: Pin25 read 020B010513
+  // AM2301 on ESP32-S3 - 240MHz
+  // 11:07:29.700 DHT: Pin21 cycles 301 129 290 129 294 127 293 129 294 129 294 129 293 129 294 374 ..
+  // 11:07:29.701 DHT: Pin21 read 01E300FFE3
+  // Sonoff MS01 on ESP8266 - 80MHz
+  // 10:54:38.409 DHT: Pin14 cycles 80 39 72 105 79 105 79 39 78 106 78 106 79 105 79 39 ..
+  // 10:54:38.412 DHT: Pin14 read 6E620FA07F
+  // Sonoff MS01 on ESP32 - 80MHz
+  // 14:34:34.811 DHT: Pin25 cycles 84 47 83 123 91 123 91 46 91 123 91 123 91 123 91 47 ..
+  // 14:34:34.816 DHT: Pin25 read 6EE30FA000
+  // Sonoff THS01 on ESP32 - 80MHz
+  // 14:36:43.787 DHT: Pin25 cycles 67 42 66 41 75 42 74 42 75 42 75 41 75 131 74 52 ..
+  // 14:36:43.789 DHT: Pin25 read 020B00FC09
+
+  dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
   // Inspect pulses and determine which ones are 0 (high state cycle count < low
   // state cycle count), or 1 (high state cycle count > low state cycle count).
   for (int i = 0; i < 40; ++i) {
@@ -172,15 +208,14 @@ bool DhtRead(uint32_t sensor) {
     // stored data.
   }
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Read %5_H"), dht_data);
-
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
-    char hex_char[15];
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %s =? %02X"),
-      ToHex_P(dht_data, 5, hex_char, sizeof(hex_char), ' '), checksum);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: Pin%d checksum failure %5_H =? %02X"),
+      dht_pin, dht_data, checksum);
     return false;
   }
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Pin%d read %5_H"), dht_pin, dht_data);
 
   float temperature = NAN;
   float humidity = NAN;
@@ -216,7 +251,7 @@ bool DhtRead(uint32_t sensor) {
     case GPIO_MS01: {                                    // Sonoff MS01
       int16_t voltage = ((dht_data[0] << 8) | dht_data[1]);
 
-//      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: MS01 %d"), voltage);
+//      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DHT: Pin%d MS01 %d"), dht_pin, voltage);
 
       // Rough approximate of soil moisture % (based on values observed in the eWeLink app)
       // Observed values are available here: https://gist.github.com/minovap/654cdcd8bc37bb0d2ff338f8d144a509
@@ -239,7 +274,7 @@ bool DhtRead(uint32_t sensor) {
     }
   }
   if (isnan(temperature) || isnan(humidity)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "Invalid reading"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: Pin%d invalid reading"), dht_pin);
     return false;
   }
 
@@ -290,7 +325,7 @@ void DhtInit(void) {
 
     dht_maxcycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT "(v6) " D_SENSORS_FOUND " %d"), dht_sensors);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DHT: (v6) " D_SENSORS_FOUND " %d"), dht_sensors);
   } else {
     dht_active = false;
   }

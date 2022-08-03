@@ -24,6 +24,10 @@
  *
  * if email body consist of a single * and scripter is present
  * and a section >m is found, the lines in this section (until #) are sent as email body
+ * 
+ * Some mail servers do not accept the IP address in the HELO (or EHLO) message but only a fully qualified 
+ * domain name (FQDN). To overcome this, use the following define to override this behavior and enter the desired FQDN
+ * #define EMAIL_USER_DOMAIN "googlemail.com"
  *
  * sendmail works with pre2.6 using Light BearSSL
  * HW Watchdog 8.44 sec.
@@ -132,7 +136,11 @@ bool SendEmail::send(const String& from, const String& to, const String& subject
   if (!buffer.startsWith(F("220"))) { return false; }
 
   buffer = F("EHLO ");
+#ifdef EMAIL_USER_DOMAIN
+  buffer += EMAIL_USER_DOMAIN;
+#else
   buffer += client->localIP().toString();
+#endif
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
   MailWriteAddLogBuffer(&buffer);

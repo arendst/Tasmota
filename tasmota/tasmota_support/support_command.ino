@@ -1138,6 +1138,7 @@ void CmndSetoptionBase(bool indexed) {
         switch (pindex) {
           case P_HOLD_TIME:
           case P_MAX_POWER_RETRY:
+          case P_BISTABLE_PULSE:
             param_low = 1;
             param_high = 250;
             break;
