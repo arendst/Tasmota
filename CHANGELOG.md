@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
 - Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` (#16013)
 - Support for multiple `IRsend` GPIOs
+- Zigbee added recording of when the battery was last reported
 
 ### Changed
 - ESP32 LVGL library from v8.2.0 to v8.3.0
