@@ -373,6 +373,7 @@
   // If non selected the default en-GB will be used
 //#define MY_LANGUAGE            af_AF           // Afrikaans in South Africa
 //#define MY_LANGUAGE            bg_BG           // Bulgarian in Bulgaria
+//#define MY_LANGUAGE            ca_AD           // Catalan in All catalan speaking countries ( Andorra )
 //#define MY_LANGUAGE            cs_CZ           // Czech in Czech
 //#define MY_LANGUAGE            de_DE           // German in Germany
 //#define MY_LANGUAGE            el_GR           // Greek in Greece
