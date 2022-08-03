@@ -23,18 +23,96 @@
 //
 #include <Esp.h>
 
+/*******************************************************************************************\
+ * ESP32/S2/S3/C3... PWM analog support
+ * 
+ * The following supersedes Arduino framework and provides more granular control:
+ * - fine grained phase control (in addition to duty cycle)
+ * - fine control of PWM frequency and resolution per GPIO
+ * 
+ * By default, all PWM are using the same timer called Timer 0.
+ * Changes in frequency of resolution apply to all PWM using Timer 0.
+ * 
+ * You can specify a different a different resolution/frequency for
+ * specific GPIOs, this will internally assign a new timer to the GPIO.
+ * The limit is 3 specific values in addition to the global value.
+ *
+ * Note: on ESP32-only, there are 2 groups of PWM and 2 groups of timers.
+ * Although there are internally 8 timers, to simplifiy management,
+ * Timer 4..7 are mirrored from Timer 0..3.
+ * So it all happens like if there were only 4 timers and a single group of PWM channels.
+\*******************************************************************************************/
 
-// input range is in full range, ledc needs bits
-//void analogWriteRange(uint32_t range);
-void analogWriteRange(uint32_t range, uint32_t pin = 255);
-//void analogWriteFreq(uint32_t freq);
-void analogWriteFreq(uint32_t freq, uint32_t pin = 255);
+extern "C" uint32_t ledcReadFreq2(uint8_t chan);
+uint8_t ledcReadResolution(uint8_t chan);
+//
+// analogAttach - attach a GPIO to a hardware PWM
+//
+// Calling explcitly analogAttach() allows to specify the `output_invert` flag
+// However it is called implicitly if `analogWrite()` is called and the GPIO
+// was not yet attached.
+//
+// Returns: hardware channel number, or -1 if it failed
 int analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
+
+// change both freq and range
+// `0`: set to global value
+// `-1`: keep unchanged
+// if pin < 0 then change global value for timer 0
+
+//
+// analogWriteFreqRange - change the range and/or frequency of a GPIO
+//
+// `void analogWriteFreqRange(int32_t freq, int32_t range, int32_t pin)`
+//
+// The range is converted to a number of bits, so range must be a power of 2 minus 1.
+// By default, the resolution is 10 bits, i.e. a range of 1023.
+//
+// Special cases:
+// - if `pin < 0`, changes the global value for Timer 0 and all PWM using default
+// - if `range == 0` or `freq == 0`, revert to using Timer 0 (i.e. reassign to global values)
+// - if `range < 0` or `freq < 0`, keep the previous value unchanged
+// - if `pin` is unassigned, silently ignore
+void analogWriteFreqRange(int32_t freq, int32_t range, int32_t pin = -1);
+
+//
+// analogWriteRange - change the range of PWM
+//
+// short-cut for:
+// `analogWriteFreqRange(-1, range, pin)`
+void analogWriteRange(uint32_t range, int32_t pin = -1);
+
+//
+// analogWriteFreq - change the frequency of PWM in Hz
+//
+// short-cut for:
+// `analogWriteFreqRange(-1, range, pin)`
+void analogWriteFreq(uint32_t freq, int32_t pin = -1);
+
+//
+// analogWrite - change the value of PWM
+//
+// val must be in range.
 void analogWrite(uint8_t pin, int val);
 
 // Extended version that also allows to change phase
 extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
 
+// return the channel assigned to a GPIO, or -1 if none
+extern int32_t analogGetChannel2(uint32_t pin);
+
+/*******************************************************************************************\
+ * Low-level Timer management
+\*******************************************************************************************/
+// get the timer number for a GPIO, -1 if not found
+int32_t analogGetTimer(uint8_t pin);
+int32_t analogGetTimerForChannel(uint8_t chan);
+
+// Get timer resolution (in bits) - default 10
+uint8_t analogGetTimerResolution(uint8_t timer);
+
+// Get timer frequency (in Hz) - default 977
+uint32_t analogGetTimerFrequency(uint8_t timer);
 
 /*********************************************************************************************/
 
