@@ -127,8 +127,9 @@ void CmndWifiScan(void)
         delay(0);
 
         char stemp1[20];
+        ResponseAppend_P(PSTR("{"));
         for (uint32_t i = 0; i < WiFi.scanComplete(); i++) {
-          ResponseAppend_P(PSTR("{\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\", \"" D_BSSID "\":\"%s\", \"" D_CHANNEL
+          ResponseAppend_P(PSTR("\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\", \"" D_BSSID "\":\"%s\", \"" D_CHANNEL
                           "\":\"%d\", \"" D_JSON_SIGNAL "\":\"%d\", \"" D_RSSI "\":\"%d\", \"" D_JSON_ENCRYPTION "\":\"%s\"}"),
                           i+1,
                           WiFi.SSID(indexes[i]).c_str(),
