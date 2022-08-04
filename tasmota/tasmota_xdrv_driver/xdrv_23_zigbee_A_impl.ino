@@ -2024,7 +2024,7 @@ void ZigbeeShow(bool json)
           name = sdevice;
         }
 
-        char sbatt[64];
+        char sbatt[96];
         char dhm[48];
         snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
         if (device.validBatteryPercent()) {

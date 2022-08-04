@@ -150,6 +150,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
 
 // Below are the attributes we wand to read from each cluster
+const uint8_t CLUSTER_0001[] = { ZLE(0x0020), ZLE(0x0021) };    // BatteryVoltage, BatteryPercentage
 const uint8_t CLUSTER_0006[] = { ZLE(0x0000) };    // Power
 const uint8_t CLUSTER_0008[] = { ZLE(0x0000) };    // CurrentLevel
 const uint8_t CLUSTER_0009[] = { ZLE(0x0000) };    // AlarmCount
@@ -161,6 +162,10 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
   const uint8_t* attrs = nullptr;
 
   switch (cluster) {
+    case 0x0001:
+      attrs = CLUSTER_0001;
+      attrs_len = sizeof(CLUSTER_0001);
+      break;
     case 0x0006:                              // for On/Off
       attrs = CLUSTER_0006;
       attrs_len = sizeof(CLUSTER_0006);
