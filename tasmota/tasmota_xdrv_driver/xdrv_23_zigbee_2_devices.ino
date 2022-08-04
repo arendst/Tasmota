@@ -801,7 +801,7 @@ public:
     }
   }
   inline void setHasNoBattery(void)           { batt_last_seen = 0xFFFFFFFF; }
-  inline bool hasNoBattery(void)        const { return 0xFFFFFFFF != batt_last_seen; }
+  inline bool hasNoBattery(void)        const { return 0xFFFFFFFF == batt_last_seen; }
 
   // Add an endpoint to a device
   bool addEndpoint(uint8_t endpoint);
@@ -958,6 +958,9 @@ public:
 
   // device is reachable
   void deviceWasReached(uint16_t shortaddr);
+
+  // device has no battery
+  void deviceHasNoBattery(uint16_t shortaddr);
 
   // Timers
   void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster = 0xFFFF, uint8_t endpoint = 0xFF);

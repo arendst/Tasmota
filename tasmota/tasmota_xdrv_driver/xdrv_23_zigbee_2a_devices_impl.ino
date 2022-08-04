@@ -338,6 +338,13 @@ void Z_Devices::deviceWasReached(uint16_t shortaddr) {
   }
 }
 
+void Z_Devices::deviceHasNoBattery(uint16_t shortaddr) {
+  Z_Device & device = findShortAddr(shortaddr);
+  if (device.valid()) {
+    device.setHasNoBattery();     // mark device as reachable
+  }
+}
+
 // get the next sequance number for the device, or use the global seq number if device is unknown
 uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
   Z_Device & device = findShortAddr(shortaddr);
