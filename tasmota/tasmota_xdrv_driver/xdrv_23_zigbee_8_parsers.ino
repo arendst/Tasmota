@@ -1700,6 +1700,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseWriteAttributesResponse(attr_list);
     } else if (zcl_received.isClusterSpecificCommand()) {
       zcl_received.parseClusterSpecificCommand(attr_list);
+      Z_Query_Battery(srcaddr);   // do battery auto-probing when receiving commands
     }
 
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
