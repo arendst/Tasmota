@@ -197,7 +197,8 @@ a_setoption = [[
     "(MQTT) MQTT clean session (0 = default) or persistent session (1)",
     "(GUI) Disable display of GUI module name (1)",
     "(Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)",
-    "","",""
+    "(Zigbee) Disable Battery auto-probe and using auto-binding",
+    "",""
     ],[
     "","","","",
     "","","","",

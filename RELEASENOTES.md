@@ -118,6 +118,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for Sonoff POWR3xxD and THR3xxD [#15856](https://github.com/arendst/Tasmota/issues/15856)
 - Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
 - Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` [#16013](https://github.com/arendst/Tasmota/issues/16013)
+- Support for multiple ``IRsend`` GPIOs
+- Zigbee added recording of when the battery was last reported
+- Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``)
 - ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars [#15916](https://github.com/arendst/Tasmota/issues/15916)
 
 ### Breaking Changed
@@ -128,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 [#15856](https://github.com/arendst/Tasmota/issues/15856)
 
 ### Fixed
+- Restore EnergyToday after using command ``restart 2`` and power cycle [#16118](https://github.com/arendst/Tasmota/issues/16118)
 - ESP32 SendMail not working over ethernet [#15794](https://github.com/arendst/Tasmota/issues/15794)
 
 ### Removed
