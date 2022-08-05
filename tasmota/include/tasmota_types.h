@@ -550,8 +550,8 @@ typedef struct {
   uint32_t      energy_power_calibration;    // 364
   uint32_t      energy_voltage_calibration;  // 368
   uint32_t      energy_current_calibration;  // 36C
-  uint32_t      energy_kWhtoday;           // 370
-  uint32_t      energy_kWhyesterday;       // 374
+  uint32_t      ex_energy_kWhtoday;        // 370
+  uint32_t      ex_energy_kWhyesterday;    // 374
   uint16_t      energy_kWhdoy;             // 378
   uint16_t      energy_min_power;          // 37A
   uint16_t      energy_max_power;          // 37C
@@ -843,7 +843,7 @@ typedef struct {
   uint16_t      flowratemeter_calibration[2];// F78
   int32_t       energy_kWhexport_ph[3];    // F7C
   uint32_t      eth_ipv4_address[5];       // F88
-  uint32_t      energy_kWhtotal;           // F9C
+  uint32_t      ex_energy_kWhtotal;        // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8

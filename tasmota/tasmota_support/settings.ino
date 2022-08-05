@@ -45,8 +45,8 @@ void RtcSettingsSave(void) {
     if (RTC_MEM_VALID != RtcSettings.valid) {
       memset(&RtcSettings, 0, sizeof(RtcSettings));
       RtcSettings.valid = RTC_MEM_VALID;
-      RtcSettings.energy_kWhtoday = Settings->energy_kWhtoday;
-      RtcSettings.energy_kWhtotal = Settings->energy_kWhtotal;
+//      RtcSettings.ex_energy_kWhtoday = Settings->ex_energy_kWhtoday;
+//      RtcSettings.ex_energy_kWhtotal = Settings->ex_energy_kWhtotal;
       for (uint32_t i = 0; i < 3; i++) {
         RtcSettings.energy_kWhtoday_ph[i] = Settings->energy_kWhtoday_ph[i];
         RtcSettings.energy_kWhtotal_ph[i] = Settings->energy_kWhtotal_ph[i];
@@ -60,6 +60,8 @@ void RtcSettingsSave(void) {
   //    RtcSettings.baudrate = Settings->baudrate * 300;
       RtcSettings.baudrate = APP_BAUDRATE;
     }
+
+//    AddLog(LOG_LEVEL_INFO, PSTR("DBG: energy_kWhtoday_ph[0] %d/%d"), RtcSettings.energy_kWhtoday_ph[0], Settings->energy_kWhtoday_ph[0]);
 
 #ifdef ESP8266
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RtcSettings));
@@ -1037,8 +1039,12 @@ void SettingsDefaultSet2(void) {
   Settings->energy_power_calibration = HLW_PREF_PULSE;
   Settings->energy_voltage_calibration = HLW_UREF_PULSE;
   Settings->energy_current_calibration = HLW_IREF_PULSE;
-//  Settings->energy_kWhtoday = 0;
-//  Settings->energy_kWhyesterday = 0;
+//  Settings->energy_kWhtoday_ph[0] = 0;
+//  Settings->energy_kWhtoday_ph[1] = 0;
+//  Settings->energy_kWhtoday_ph[2] = 0;
+//  Settings->energy_kWhyesterday_ph[0] = 0;
+//  Settings->energy_kWhyesterday_ph[1] = 0;
+//  Settings->energy_kWhyesterday_ph[2] = 0;
 //  Settings->energy_kWhdoy = 0;
 //  Settings->energy_min_power = 0;
 //  Settings->energy_max_power = 0;
@@ -1054,8 +1060,12 @@ void SettingsDefaultSet2(void) {
   Settings->energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
 //  Settings->energy_max_energy = 0;                                 // MaxEnergy
 //  Settings->energy_max_energy_start = 0;                           // MaxEnergyStart
-//  Settings->energy_kWhtotal = 0;
-  RtcSettings.energy_kWhtotal = 0;
+//  Settings->energy_kWhtotal_ph[0] = 0;
+//  Settings->energy_kWhtotal_ph[1] = 0;
+//  Settings->energy_kWhtotal_ph[2] = 0;
+  RtcSettings.energy_kWhtotal_ph[0] = 0;
+  RtcSettings.energy_kWhtotal_ph[1] = 0;
+  RtcSettings.energy_kWhtotal_ph[2] = 0;
 //  memset((char*)&Settings->energy_usage, 0x00, sizeof(Settings->energy_usage));
   memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
   Settings->param[P_OVER_TEMP] = ENERGY_OVERTEMP;
@@ -1482,7 +1492,7 @@ void SettingsDelta(void) {
       memset(&Settings->sensors, 0xFF, 16);  // Enable all possible sensors
     }
     if (Settings->version < 0x09050004) {
-      Settings->energy_kWhtotal = Settings->ipv4_address[4];
+      Settings->ex_energy_kWhtotal = Settings->ipv4_address[4];
       ParseIPv4(&Settings->ipv4_address[4], PSTR(WIFI_DNS2));
     }
     if (Settings->version < 0x09050005) {
@@ -1507,6 +1517,11 @@ void SettingsDelta(void) {
     if (Settings->version < 0x09050009) {  // 9.5.0.9
       memset(&Settings->energy_kWhtoday_ph, 0, 36);
       memset(&RtcSettings.energy_kWhtoday_ph, 0, 24);
+      Settings->energy_kWhtotal_ph[0] = Settings->ex_energy_kWhtotal;
+      Settings->energy_kWhtoday_ph[0] = Settings->ex_energy_kWhtoday;
+      Settings->energy_kWhyesterday_ph[0] = Settings->ex_energy_kWhyesterday;
+      RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.ex_energy_kWhtoday;
+      RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.ex_energy_kWhtotal;
     }
     if (Settings->version < 0x0A000003) {  // 10.0.0.3
       if (0 == Settings->param[P_ARP_GRATUITOUS]) {

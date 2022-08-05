@@ -570,7 +570,6 @@ void TInfoDrvInit(void) {
         Energy.phase_count = 1;
         // init hardware energy counters
         Settings->flag3.hardware_energy_total = true;
-        Settings->energy_kWhtotal = 0;
     }
 }
 

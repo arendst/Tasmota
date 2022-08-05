@@ -2473,7 +2473,7 @@ void SyslogAsync(bool refresh) {
         if (!WifiHostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr)) {  // If sleep enabled this might result in exception so try to do it once using hash
           TasmotaGlobal.syslog_level = 0;
           TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+          AddLog(LOG_LEVEL_INFO, PSTR("SLG: " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
           return;
         }
         syslog_host_hash = current_hash;
@@ -2482,7 +2482,7 @@ void SyslogAsync(bool refresh) {
       if (!PortUdp.beginPacket(syslog_host_addr, Settings->syslog_port)) {
         TasmotaGlobal.syslog_level = 0;
         TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+        AddLog(LOG_LEVEL_INFO, PSTR("SLG: " D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
         return;
       }
 
