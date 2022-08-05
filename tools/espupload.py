@@ -19,8 +19,8 @@ HOST_ADDR = "domus1"
 HOST_PORT = 80
 HOST_URL = "/api/upload-arduino.php"
 
-def upload(hostAddr, hostPort, filename):
-  url = 'http://%s:%d%s' % (hostAddr, hostPort, HOST_URL)
+def upload(hostAddr, hostPort, hostUrl, filename):
+  url = 'http://%s:%d%s' % (hostAddr, hostPort, hostUrl)
   c = pycurl.Curl()
   c.setopt(c.URL, url)
   # The "Expect:" is there to suppress "Expect: 100-continue" behaviour that is
@@ -36,19 +36,25 @@ def parser():
     description = "Upload image to over the air Host server for the esp8266 module with OTA support."
   )
 
-  # destination ip and port
+  # destination ip, port and url
   group = optparse.OptionGroup(parser, "Destination")
   group.add_option("-i", "--host_ip",
     dest = "host_ip",
     action = "store",
-    help = "Host IP Address.",
+    help = "Host IP Address. Default: " + HOST_ADDR,
     default = HOST_ADDR
   )
   group.add_option("-p", "--host_port",
     dest = "host_port",
     type = "int",
-    help = "Host server ota Port. Default 80",
+    help = "Host server ota Port. Default: " + str(HOST_PORT),
     default = HOST_PORT
+  )
+  group.add_option("-u", "--host_url",
+    dest = "host_url",
+    action = "store",
+    help = "Host Url with / at beginning. Default: '" + HOST_URL + "'",
+    default = HOST_URL
   )
   parser.add_option_group(group)
 
@@ -104,7 +110,7 @@ def main(args):
     return 1
   # end if
 
-  upload(options.host_ip, options.host_port, options.image)
+  upload(options.host_ip, options.host_port, options.host_url, options.image)
 # end main
 
 if __name__ == '__main__':
