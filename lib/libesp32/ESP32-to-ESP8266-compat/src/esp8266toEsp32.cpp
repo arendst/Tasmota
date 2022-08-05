@@ -37,7 +37,9 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 
 // define our limits to ease any change from esp-idf
 #define MAX_TIMERS              LEDC_TIMER_MAX            // 4 timers for all ESP32 variants
-#define HAS_HIGHSPEED           SOC_LEDC_SUPPORT_HS_MODE  // are there 2 banks of timers/ledc
+#ifdef SOC_LEDC_SUPPORT_HS_MODE
+  #define PWM_HAS_HIGHSPEED  SOC_LEDC_SUPPORT_HS_MODE     // are there 2 banks of timers/ledc
+#endif
 
 
 // replicated from `tasmota.h`
@@ -89,7 +91,7 @@ void _analog_applyTimerConfig(int32_t timer) {
   if (ret != ESP_OK) {
     AddLog(LOG_LEVEL_ERROR, "PWM: ledc_timer_config %i failed ret=%i", timer, ret);
   }
-#ifdef HAS_HIGHSPEED
+#ifdef PWM_HAS_HIGHSPEED
   // apply the same parameter to the low-speed timer as well
   cfg.speed_mode = (ledc_mode_t) 1;         // first bank
   ret = ledc_timer_config(&cfg);
