@@ -33,7 +33,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|" D_CMND_WIFI "|" D_CMND_DNSTIMEOUT "|"
   D_CMND_DEVICENAME "|" D_CMND_FN "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
-  D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|"
+  D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -68,7 +68,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig, &CmndWifi, &CmndDnsTimeout,
   &CmndDevicename, &CmndFriendlyname, &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
-  &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText,
+  &CmndWifiPower, &CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -90,6 +90,155 @@ const char kWifiConfig[] PROGMEM =
   D_WCFG_0_RESTART "||" D_WCFG_2_WIFIMANAGER "||" D_WCFG_4_RETRY "|" D_WCFG_5_WAIT "|" D_WCFG_6_SERIAL "|" D_WCFG_7_WIFIMANAGER_RESET_ONLY;
 
 /********************************************************************************************/
+
+#ifndef FIRMWARE_MINIMAL_ONLY
+void CmndWifiScan(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    if ( !Wifi.scan_state || Wifi.scan_state > 7 ) {
+      ResponseCmndChar(D_JSON_SCANNING);
+      Wifi.scan_state = 6;
+    } else {
+      ResponseCmndChar(D_JSON_BUSY);
+    }
+  } else {
+    if ( !Wifi.scan_state ) {
+      ResponseCmndChar(D_JSON_NOT_STARTED);
+    } else if ( Wifi.scan_state >= 1 && Wifi.scan_state <= 5 ) {
+      ResponseCmndChar(D_JSON_BUSY);
+    } else if ( Wifi.scan_state >= 6 && Wifi.scan_state <= 7 ) {
+      ResponseCmndChar(D_JSON_SCANNING);
+    } else {  //show scan result
+      Response_P(PSTR("{\"" D_CMND_WIFISCAN "\":"));
+
+      if (WiFi.scanComplete() > 0) {
+        // Sort networks by RSSI
+        uint32_t indexes[WiFi.scanComplete()];
+        for (uint32_t i = 0; i < WiFi.scanComplete(); i++) {
+          indexes[i] = i;
+        }
+        for (uint32_t i = 0; i < WiFi.scanComplete(); i++) {
+          for (uint32_t j = i + 1; j < WiFi.scanComplete(); j++) {
+            if (WiFi.RSSI(indexes[j]) > WiFi.RSSI(indexes[i])) {
+              std::swap(indexes[i], indexes[j]);
+            }
+          }
+        }
+        delay(0);
+
+        char stemp1[20];
+        ResponseAppend_P(PSTR("{"));
+        for (uint32_t i = 0; i < WiFi.scanComplete(); i++) {
+          ResponseAppend_P(PSTR("\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\", \"" D_BSSID "\":\"%s\", \"" D_CHANNEL
+                          "\":\"%d\", \"" D_JSON_SIGNAL "\":\"%d\", \"" D_RSSI "\":\"%d\", \"" D_JSON_ENCRYPTION "\":\"%s\"}"),
+                          i+1,
+                          WiFi.SSID(indexes[i]).c_str(),
+                          WiFi.BSSIDstr(indexes[i]).c_str(),
+                          WiFi.channel(indexes[i]),
+                          WiFi.RSSI(indexes[i]),
+                          WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
+                          GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
+          if ( ResponseSize() < ResponseLength() + 300 ) { break; }
+          if ( i < WiFi.scanComplete() -1 ) { ResponseAppend_P(PSTR(", ")); }
+          //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "MAX SIZE: %d, SIZE: %d"),ResponseSize(),ResponseLength());
+        }
+        ResponseJsonEnd();
+      } else {
+        ResponseAppend_P(PSTR("\"" D_NO_NETWORKS_FOUND "\""));
+      }
+      ResponseJsonEnd();
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WIFISCAN));
+    }
+  }
+}
+
+void CmndWifiTest(void)
+{
+  // Test WIFI Connection to Router if Tasmota is in AP mode since in AP mode, a STA connection can be established
+  // at the same time for testing the connection.
+
+#ifdef USE_WEBSERVER
+  if (!WifiIsInManagerMode()) { ResponseCmndError(); return; }
+
+  if ( (XdrvMailbox.data_len > 0) ) {
+
+    if (Wifi.wifiTest != WIFI_TESTING) { // Start Test
+      char* pos = strchr(XdrvMailbox.data, '+');
+      if (pos != nullptr) {
+        char ssid_test[XdrvMailbox.data_len];
+        char pswd_test[XdrvMailbox.data_len];
+        subStr(ssid_test, XdrvMailbox.data, "+", 1);
+        subStr(pswd_test, XdrvMailbox.data, "+", 2);
+        ResponseCmndIdxChar(D_JSON_TESTING);
+        //Response_P(PSTR("{\"%s%d\":{\"Network\":\"%s,\"PASS\":\"%s\"}}"), XdrvMailbox.command, XdrvMailbox.index, ssid_test, pswd_test);
+
+        if (WIFI_NOT_TESTING == Wifi.wifiTest) {
+          if (MAX_WIFI_OPTION == Wifi.old_wificonfig) { Wifi.old_wificonfig = Settings->sta_config; }
+          TasmotaGlobal.wifi_state_flag = Settings->sta_config = WIFI_MANAGER;
+          Wifi.save_data_counter = TasmotaGlobal.save_data_counter;
+        }
+
+        Wifi.wifi_test_counter = 9;   // seconds to test user's proposed AP
+        Wifi.wifiTest = WIFI_TESTING;
+        TasmotaGlobal.save_data_counter = 0;               // Stop auto saving data - Updating Settings
+        Settings->save_data = 0;
+        TasmotaGlobal.sleep = 0;                           // Disable sleep
+        TasmotaGlobal.restart_flag = 0;                    // No restart
+        TasmotaGlobal.ota_state_flag = 0;                  // No OTA
+
+        Wifi.wifi_Test_Restart = false;
+        Wifi.wifi_Test_Save_SSID2 = false;
+        if (0 == XdrvMailbox.index) { Wifi.wifi_Test_Restart = true; }      // If WifiTest is successful, save data on SSID1 and restart
+        if (2 == XdrvMailbox.index) { Wifi.wifi_Test_Save_SSID2 = true; }   // If WifiTest is successful, save data on SSID2
+
+        SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1, ssid_test);
+        SettingsUpdateText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1, pswd_test);
+
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
+          SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), TasmotaGlobal.hostname);
+
+        WiFi.begin(SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STASSID2 : SET_STASSID1), SettingsText(Wifi.wifi_Test_Save_SSID2 ? SET_STAPWD2 : SET_STAPWD1));
+      }
+    } else {
+      ResponseCmndChar(D_JSON_BUSY);
+    }
+
+  } else {
+    switch (Wifi.wifiTest) {
+      case WIFI_TESTING:
+        ResponseCmndChar(D_JSON_TESTING);
+        break;
+      case WIFI_NOT_TESTING:
+        ResponseCmndChar(D_JSON_NOT_STARTED);
+        break;
+      case WIFI_TEST_FINISHED:
+        ResponseCmndChar(Wifi.wifi_test_AP_TIMEOUT ? D_CONNECT_FAILED_AP_TIMEOUT : D_JSON_SUCCESSFUL);
+        break;
+      case WIFI_TEST_FINISHED_BAD:
+
+          switch (WiFi.status()) {
+            case WL_CONNECTED:
+              ResponseCmndChar(D_CONNECT_FAILED_NO_IP_ADDRESS);
+              break;
+            case WL_NO_SSID_AVAIL:
+              ResponseCmndChar(D_CONNECT_FAILED_AP_NOT_REACHED);
+              break;
+            case WL_CONNECT_FAILED:
+              ResponseCmndChar(D_CONNECT_FAILED_WRONG_PASSWORD);
+              break;
+            default:  // WL_IDLE_STATUS and WL_DISCONNECTED - SSId in range but no answer from the router
+              ResponseCmndChar(D_CONNECT_FAILED_AP_TIMEOUT);
+          }
+
+        break;
+    }
+  }
+#else
+  ResponseCmndError();
+#endif //USE_WEBSERVER
+}
+
+#endif  // not defined FIRMWARE_MINIMAL_ONLY
 
 void ResponseCmndNumber(int value) {
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);

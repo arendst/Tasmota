@@ -593,4 +593,38 @@ bool first_device_group_is_local = true;
 
 /*********************************************************************************************/
 
+
+enum WifiTestOptions { WIFI_NOT_TESTING, WIFI_TESTING, WIFI_TEST_FINISHED, WIFI_TEST_FINISHED_BAD };
+
+struct WIFI {
+  uint32_t last_event = 0;                 // Last wifi connection event
+  uint32_t downtime = 0;                   // Wifi down duration
+  uint16_t link_count = 0;                 // Number of wifi re-connect
+  uint8_t counter;
+  uint8_t retry_init;
+  uint8_t retry;
+  uint8_t max_retry;
+  uint8_t status;
+  uint8_t config_type = 0;
+  uint8_t config_counter = 0;
+  uint8_t scan_state;
+  uint8_t bssid[6];
+  int8_t best_network_db;
+  uint8_t wifiTest = WIFI_NOT_TESTING;
+  uint8_t wifi_test_counter = 0;
+  uint16_t save_data_counter = 0;
+  uint8_t old_wificonfig = MAX_WIFI_OPTION; // means "nothing yet saved here"
+  bool wifi_test_AP_TIMEOUT = false;
+  bool wifi_Test_Restart = false;
+  bool wifi_Test_Save_SSID2 = false;
+} Wifi;
+
+// Reference. WiFi.encryptionType =
+// 2 : ENC_TYPE_TKIP - WPA / PSK
+// 4 : ENC_TYPE_CCMP - WPA2 / PSK
+// 5 : ENC_TYPE_WEP  - WEP
+// 7 : ENC_TYPE_NONE - open network
+// 8 : ENC_TYPE_AUTO - WPA / WPA2 / PSK
+const char kWifiEncryptionTypes[] PROGMEM = "0" "|" "1" "|" "WPA/PSK" "|" "3" "|" "WPA2/PSK" "|" "WEP" "|" "6" "|" "OPEN" "|" "WPA/WPA2/PSK";
+
 #endif  // _TASMOTA_GLOBALS_H_
