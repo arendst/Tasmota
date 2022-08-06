@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for multiple ``IRsend`` GPIOs
 - Zigbee added recording of when the battery was last reported
 - Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``)
+- Zigbee include "BatteryPercentage" in all messages
 
 ### Changed
 - ESP32 LVGL library from v8.2.0 to v8.3.0

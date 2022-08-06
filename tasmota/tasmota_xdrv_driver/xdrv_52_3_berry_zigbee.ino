@@ -66,7 +66,7 @@ extern "C" {
     return d->lqi == 255 ? -1 : d->lqi;
   }
   int32_t zd_battery(const class Z_Device* d) {
-    return d->batterypercent == 255 ? -1 : d->batterypercent;
+    return d->batt_percent == 255 ? -1 : d->batt_percent;
   }
   int32_t zd_battery_lastseen(const class Z_Device* d) {
     return 0;   // TODO not yet known

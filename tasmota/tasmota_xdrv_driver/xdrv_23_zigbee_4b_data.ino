@@ -46,7 +46,7 @@ int32_t hydrateDeviceWideData(class Z_Device & device, const SBuffer & buf, size
   }
   device.last_seen = buf.get32(start+1);
   device.lqi = buf.get8(start + 5);
-  device.batterypercent = buf.get8(start + 6);
+  device.batt_percent = buf.get8(start + 6);
   if (segment_len >= 10) {
     device.batt_last_seen = buf.get32(start+7);
   }
@@ -124,7 +124,7 @@ SBuffer hibernateDeviceData(const struct Z_Device & device) {
     buf.add8(10);        // 10 bytes
     buf.add32(device.last_seen);
     buf.add8(device.lqi);
-    buf.add8(device.batterypercent);
+    buf.add8(device.batt_percent);
     // now storing batt_last_seen
     buf.add32(device.batt_last_seen);
 
@@ -279,6 +279,19 @@ void Z_SaveDataTimer(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, u
   hibernateAllData();
   Z_Set_Save_Data_Timer(0);     // set a new timer
 }
+
+//
+// Callback for saving all data once, used after receiving important events
+//
+int32_t Z_Set_Save_Data_Timer_Once(uint8_t value) {
+  zigbee_devices.setTimer(0x0000, 0, 0 /* now */, 0, 0, Z_CAT_ALWAYS, 0 /* value */, &Z_SaveDataTimerOnce);
+  return 0;                              // continue
+}
+
+void Z_SaveDataTimerOnce(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  hibernateAllData();
+}
+
 
 #ifdef USE_ZIGBEE_EEPROM
 void ZFS_Erase(void) {

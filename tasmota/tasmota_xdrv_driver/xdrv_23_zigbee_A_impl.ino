@@ -2039,8 +2039,8 @@ void ZigbeeShow(bool json)
           }
           snprintf_P(sbatt, sizeof(sbatt),
             msg[ZB_WEB_BATTERY],
-            device.batterypercent, dhm,
-            changeUIntScale(device.batterypercent, 0, 100, 0, 14),
+            device.batt_percent, dhm,
+            changeUIntScale(device.batt_percent, 0, 100, 0, 14),
             (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF)
           );
         }
