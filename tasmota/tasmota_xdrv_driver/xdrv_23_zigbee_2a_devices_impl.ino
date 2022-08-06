@@ -491,12 +491,12 @@ bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_
   }
 
   // compare groups
-  if (device.attr_list.isValidGroupId() && attr_list.isValidGroupId()) {
+  if (device.attr_list.validGroupId() && attr_list.validGroupId()) {
     if (device.attr_list.group_id != attr_list.group_id) { return true; }     // groups are in conflict
   }
 
   // compare src_ep
-  if (device.attr_list.isValidSrcEp() && attr_list.isValidSrcEp()) {
+  if (device.attr_list.validSrcEp() && attr_list.validSrcEp()) {
     if (device.attr_list.src_ep != attr_list.src_ep) { return true; }
   }
 
@@ -547,7 +547,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(friendlyName).c_str());
   }
   // Add all other attributes
-  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false).c_str());
+  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false, true).c_str());   // (false, true) - include battery
 
   if (!Settings->flag5.zb_omit_json_addr) {
     ResponseAppend_P(PSTR("}"));
@@ -577,7 +577,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
       }
     }
     if (Settings->flag5.zb_topic_endpoint) {
-      if (attr_list.isValidSrcEp()) {
+      if (attr_list.validSrcEp()) {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s_%d"), subtopic, attr_list.src_ep);
       }
     }
@@ -603,6 +603,11 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     gZbLastMessage.device = shortaddr;                // %zbdevice%
     gZbLastMessage.groupaddr = attr_list.group_id;      // %zbgroup%
     gZbLastMessage.endpoint = attr_list.src_ep;    // %zbendpoint%
+
+    // add battery percentage from last known value
+    if (device.validBatteryPercent()) {
+      attr_list.setBattPercent(device.batt_percent);
+    }
 
     device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_RECEIVED), attr_list);
     attr_list.reset();    // clear the attributes
@@ -731,7 +736,7 @@ void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
 // Add "BatteryPercentage", "LastSeen", "LastSeenEpoch", "LinkQuality"
 void Z_Device::jsonAddDeviceAttributes(Z_attribute_list & attr_list) const {
   attr_list.addAttributePMEM(PSTR("Reachable")).setBool(getReachable());
-  if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batterypercent); }
+  if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batt_percent); }
   if (validBattLastSeen()) {
     attr_list.addAttributePMEM(PSTR("BatteryLastSeenEpoch")).setUInt(batt_last_seen);
   }

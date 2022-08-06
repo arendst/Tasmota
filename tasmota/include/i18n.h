@@ -628,6 +628,7 @@
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
   #define D_CMND_ZIGBEE_CLUSTER "Cluster"
+  #define D_CMND_ZIGBEE_BATTPERCENT "BatteryPercentage"
   #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
   #define D_CMND_ZIGBEE_GROUP "Group"
   #define D_CMND_ZIGBEE_MANUF "Manuf"
