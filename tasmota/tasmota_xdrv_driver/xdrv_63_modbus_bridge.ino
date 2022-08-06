@@ -154,7 +154,7 @@ ModbusBridge modbusBridge;
 //
 bool ModbusBridgeBegin(void)
 {
-   if ((Settings->modbus_sbaudrate < 300 / 300) || (Settings->modbus_sbaudrate > 115200 / 300)) Settings->modbus_sbaudrate = (uint8_t)MBR_BAUDRATE / 300;
+  if ((Settings->modbus_sbaudrate < 300 / 300) || (Settings->modbus_sbaudrate > 115200 / 300)) Settings->modbus_sbaudrate = (uint8_t)((uint32_t)MBR_BAUDRATE / 300);
   if (Settings->modbus_sconfig > TS_SERIAL_8O2) Settings->modbus_sconfig = TS_SERIAL_8N1;
 
   int result = tasmotaModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
