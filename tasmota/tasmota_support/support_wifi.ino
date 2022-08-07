@@ -61,8 +61,8 @@ int WifiGetRssiAsQuality(int rssi) {
 //                                           0    1   2       3        4
 const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/PSK"
 #ifdef ESP32
-//                                            5              6        7             8
-                                            "|WPA2ENTERPRISE|WPA3/PSK|WPA2/WPA3/PSK|WAPI/PSK"
+//                                            5               6        7             8
+                                            "|WPA2-Enterprise|WPA3/PSK|WPA2/WPA3/PSK|WAPI/PSK"
 #endif  // ESP32
 ;
 
@@ -75,10 +75,11 @@ String WifiEncryptionType(uint32_t i) {
   // 7 : ENC_TYPE_NONE - open network
   // 8 : ENC_TYPE_AUTO - WPA / WPA2 / PSK
   uint8_t typea[] = { 0,2,0,3,1,0,0,4 };
-  uint32_t type = typea[WiFi.encryptionType(i) -1 &7];
+  int type = typea[WiFi.encryptionType(i) -1 &7];
 #else
-  uint32_t type = WiFi.encryptionType(i);
+  int type = WiFi.encryptionType(i);
 #endif
+  if ((type < 0) || (type > 8)) { type = 0; }
   char stemp1[20];
   GetTextIndexed(stemp1, sizeof(stemp1), type, kWifiEncryptionTypes);
   return stemp1;
