@@ -137,7 +137,8 @@ void CmndWifiScan(void)
                           WiFi.channel(indexes[i]),
                           WiFi.RSSI(indexes[i]),
                           WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
-                          GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
+//                          GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
+                          WifiEncryptionType(indexes[i]).c_str());
           if ( ResponseSize() < ResponseLength() + 300 ) { break; }
           if ( i < WiFi.scanComplete() -1 ) { ResponseAppend_P(PSTR(",")); }
           //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "MAX SIZE: %d, SIZE: %d"),ResponseSize(),ResponseLength());

@@ -96,6 +96,29 @@
 
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
+struct WIFI {
+  uint32_t last_event = 0;                 // Last wifi connection event
+  uint32_t downtime = 0;                   // Wifi down duration
+  uint16_t link_count = 0;                 // Number of wifi re-connect
+  uint8_t counter;
+  uint8_t retry_init;
+  uint8_t retry;
+  uint8_t max_retry;
+  uint8_t status;
+  uint8_t config_type = 0;
+  uint8_t config_counter = 0;
+  uint8_t scan_state;
+  uint8_t bssid[6];
+  int8_t best_network_db;
+  uint8_t wifiTest = WIFI_NOT_TESTING;
+  uint8_t wifi_test_counter = 0;
+  uint16_t save_data_counter = 0;
+  uint8_t old_wificonfig = MAX_WIFI_OPTION; // means "nothing yet saved here"
+  bool wifi_test_AP_TIMEOUT = false;
+  bool wifi_Test_Restart = false;
+  bool wifi_Test_Save_SSID2 = false;
+} Wifi;
+
 typedef struct {
   uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282

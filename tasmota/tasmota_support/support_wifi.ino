@@ -45,8 +45,7 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 #include <AddrList.h>                      // IPv6 DualStack
 #endif  // LWIP_IPV6=1
 
-int WifiGetRssiAsQuality(int rssi)
-{
+int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
 
   if (rssi <= -100) {
@@ -57,6 +56,32 @@ int WifiGetRssiAsQuality(int rssi)
     quality = 2 * (rssi + 100);
   }
   return quality;
+}
+
+//                                           0    1   2       3        4
+const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/PSK"
+#ifdef ESP32
+//                                            5              6        7             8
+                                            "|WPA2ENTERPRISE|WPA3/PSK|WPA2/WPA3/PSK|WAPI/PSK"
+#endif  // ESP32
+;
+
+String WifiEncryptionType(uint32_t i) {
+#ifdef ESP8266
+  // Reference. WiFi.encryptionType =
+  // 2 : ENC_TYPE_TKIP - WPA / PSK
+  // 4 : ENC_TYPE_CCMP - WPA2 / PSK
+  // 5 : ENC_TYPE_WEP  - WEP
+  // 7 : ENC_TYPE_NONE - open network
+  // 8 : ENC_TYPE_AUTO - WPA / WPA2 / PSK
+  uint8_t typea[] = { 0,2,0,3,1,0,0,4 };
+  uint32_t type = typea[WiFi.encryptionType(i) -1 &7];
+#else
+  uint32_t type = WiFi.encryptionType(i);
+#endif
+  char stemp1[20];
+  GetTextIndexed(stemp1, sizeof(stemp1), type, kWifiEncryptionTypes);
+  return stemp1;
 }
 
 bool WifiConfigCounter(void)
@@ -388,7 +413,8 @@ void WifiBeginAfterScan(void)
                         WiFi.channel(indexes[i]),
                         WiFi.RSSI(indexes[i]),
                         WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
-                        GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
+//                        GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
+                        WifiEncryptionType(indexes[i]).c_str());
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WIFISCAN));
       }
     } else if (9 == Wifi.scan_state) {
