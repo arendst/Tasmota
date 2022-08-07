@@ -980,6 +980,10 @@ void ShutterButtonHandler(void)
                 XdrvMailbox.payload = XdrvMailbox.index;
                 CmndShutterToggle();
               } else {
+		if (position == ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1) ) {
+                  Shutter[XdrvMailbox.index -1].tilt_target_pos = position==0? Shutter[XdrvMailbox.index -1].tilt_config[0]:(position==100?Shutter[XdrvMailbox.index -1].tilt_config[1]:Shutter[XdrvMailbox.index -1].tilt_target_pos);
+                  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> Endpoint movement detected at %d. Set Tilt: %d"), shutter_index+1, position, Shutter[XdrvMailbox.index -1].tilt_target_pos);
+                }
                 CmndShutterPosition();
               }
               if (Settings->shutter_button[button_index] & ((0x01<<26)<<pos_press_index)) {
