@@ -7,13 +7,16 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
 - Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` (#16013)
-- Support for multiple ``IRsend`` GPIOs
-- Zigbee added recording of when the battery was last reported
-- Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``)
+- Support for multiple ``IRsend`` GPIOs (#16138)
+- Zigbee added recording of when the battery was last reported (#16146)
+- Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``) (#16148)
 - Zigbee include "BatteryPercentage" in all messages
+- Commands ``WifiScan`` and ``WifiTest`` (#16141)
+- Support for Catalan language translations by HardwareBoffin (#16145)
 
 ### Changed
-- ESP32 LVGL library from v8.2.0 to v8.3.0
+- ESP32 LVGL library from v8.2.0 to v8.3.0 (#16019)
+- Tasmota ESP32 Arduino core from v2.0.4 to v2.0.4.1 (#16110)
 
 ### Fixed
 - Restore EnergyToday after using command ``restart 2`` and power cycle (#16118)
