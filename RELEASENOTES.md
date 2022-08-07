@@ -120,7 +120,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
 - Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` [#16013](https://github.com/arendst/Tasmota/issues/16013)
 - Support for multiple ``IRsend`` GPIOs [#16138](https://github.com/arendst/Tasmota/issues/16138)
-- Support for Catalan language translations by HardwareBoffin [#16145](https://github.com/arendst/Tasmota/issues/16145)
+- Support for Catalan language translations by Albert Gonzalez [#16145](https://github.com/arendst/Tasmota/issues/16145)
 - Zigbee added recording of when the battery was last reported [#16146](https://github.com/arendst/Tasmota/issues/16146)
 - Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``) [#16148](https://github.com/arendst/Tasmota/issues/16148)
 - ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars [#15916](https://github.com/arendst/Tasmota/issues/15916)

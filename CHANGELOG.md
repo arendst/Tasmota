@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``) (#16148)
 - Zigbee include "BatteryPercentage" in all messages
 - Commands ``WifiScan`` and ``WifiTest`` (#16141)
-- Support for Catalan language translations by HardwareBoffin (#16145)
+- Support for Catalan language translations by Albert Gonzalez (#16145)
 
 ### Changed
 - ESP32 LVGL library from v8.2.0 to v8.3.0 (#16019)

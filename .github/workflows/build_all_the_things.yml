@@ -80,7 +80,7 @@ jobs:
     strategy:
       matrix:
         variant: [ tasmota ]
-        language: [ AF, BG, BR, CA, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
