@@ -358,7 +358,7 @@ void WifiBeginAfterScan(void)
     Wifi.scan_state++;
 
     ResponseClear();
-    
+
     uint32_t initial_item = (Wifi.scan_state - 9)*10;
 
     if ( wifi_scan_result > initial_item ) {
@@ -380,8 +380,8 @@ void WifiBeginAfterScan(void)
       char stemp1[20];
       uint32_t end_item = ( wifi_scan_result > initial_item + 10 ) ? initial_item + 10 : wifi_scan_result;
       for (uint32_t i = initial_item; i < end_item; i++) {
-        Response_P(PSTR("{\"" D_CMND_WIFISCAN "\":{\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\", \"" D_BSSID "\":\"%s\", \"" D_CHANNEL
-                        "\":\"%d\", \"" D_JSON_SIGNAL "\":\"%d\", \"" D_RSSI "\":\"%d\", \"" D_JSON_ENCRYPTION "\":\"%s\"}}}"),
+        Response_P(PSTR("{\"" D_CMND_WIFISCAN "\":{\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\",\"" D_BSSID "\":\"%s\",\"" D_CHANNEL
+                        "\":\"%d\",\"" D_JSON_SIGNAL "\":\"%d\",\"" D_RSSI "\":\"%d\",\"" D_JSON_ENCRYPTION "\":\"%s\"}}}"),
                         i+1,
                         WiFi.SSID(indexes[i]).c_str(),
                         WiFi.BSSIDstr(indexes[i]).c_str(),

@@ -129,8 +129,8 @@ void CmndWifiScan(void)
         char stemp1[20];
         ResponseAppend_P(PSTR("{"));
         for (uint32_t i = 0; i < WiFi.scanComplete(); i++) {
-          ResponseAppend_P(PSTR("\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\", \"" D_BSSID "\":\"%s\", \"" D_CHANNEL
-                          "\":\"%d\", \"" D_JSON_SIGNAL "\":\"%d\", \"" D_RSSI "\":\"%d\", \"" D_JSON_ENCRYPTION "\":\"%s\"}"),
+          ResponseAppend_P(PSTR("\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\",\"" D_BSSID "\":\"%s\",\"" D_CHANNEL
+                          "\":\"%d\",\"" D_JSON_SIGNAL "\":\"%d\",\"" D_RSSI "\":\"%d\",\"" D_JSON_ENCRYPTION "\":\"%s\"}"),
                           i+1,
                           WiFi.SSID(indexes[i]).c_str(),
                           WiFi.BSSIDstr(indexes[i]).c_str(),
@@ -139,7 +139,7 @@ void CmndWifiScan(void)
                           WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
                           GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
           if ( ResponseSize() < ResponseLength() + 300 ) { break; }
-          if ( i < WiFi.scanComplete() -1 ) { ResponseAppend_P(PSTR(", ")); }
+          if ( i < WiFi.scanComplete() -1 ) { ResponseAppend_P(PSTR(",")); }
           //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "MAX SIZE: %d, SIZE: %d"),ResponseSize(),ResponseLength());
         }
         ResponseJsonEnd();
