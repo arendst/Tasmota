@@ -126,7 +126,6 @@ void CmndWifiScan(void)
         }
         delay(0);
 
-        char stemp1[20];
         ResponseAppend_P(PSTR("{"));
         for (uint32_t i = 0; i < WiFi.scanComplete(); i++) {
           ResponseAppend_P(PSTR("\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\",\"" D_BSSID "\":\"%s\",\"" D_CHANNEL
@@ -137,7 +136,6 @@ void CmndWifiScan(void)
                           WiFi.channel(indexes[i]),
                           WiFi.RSSI(indexes[i]),
                           WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
-//                          GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
                           WifiEncryptionType(indexes[i]).c_str());
           if ( ResponseSize() < ResponseLength() + 300 ) { break; }
           if ( i < WiFi.scanComplete() -1 ) { ResponseAppend_P(PSTR(",")); }

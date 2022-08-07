@@ -402,7 +402,6 @@ void WifiBeginAfterScan(void)
       delay(0);
 
       // Publish the list
-      char stemp1[20];
       uint32_t end_item = ( wifi_scan_result > initial_item + 10 ) ? initial_item + 10 : wifi_scan_result;
       for (uint32_t i = initial_item; i < end_item; i++) {
         Response_P(PSTR("{\"" D_CMND_WIFISCAN "\":{\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\",\"" D_BSSID "\":\"%s\",\"" D_CHANNEL
@@ -413,7 +412,6 @@ void WifiBeginAfterScan(void)
                         WiFi.channel(indexes[i]),
                         WiFi.RSSI(indexes[i]),
                         WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
-//                        GetTextIndexed(stemp1, sizeof(stemp1), WiFi.encryptionType(indexes[i]), kWifiEncryptionTypes));
                         WifiEncryptionType(indexes[i]).c_str());
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WIFISCAN));
       }
