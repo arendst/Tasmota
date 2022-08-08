@@ -137,6 +137,7 @@ class IRrecv {
               uint8_t max_skip = 0, uint16_t noise_floor = 0);
   void enableIRIn(const bool pullup = false);
   void disableIRIn(void);
+  void pause(void);
   void resume(void);
   uint16_t getBufSize(void);
 #if DECODE_HASH

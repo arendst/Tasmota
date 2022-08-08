@@ -405,6 +405,17 @@ void IRrecv::disableIRIn(void) {
 #endif  // UNIT_TEST
 }
 
+/// Pause collection of received IR data.
+/// @see IRrecv class constructor
+void IRrecv::pause(void) {
+  params.rcvstate = kStopState;
+  params.rawlen = 0;
+  params.overflow = false;
+#if defined(ESP32)
+  gpio_intr_disable((gpio_num_t)params.recvpin);
+#endif  // ESP32
+}
+
 /// Resume collection of received IR data.
 /// @note This is required if `decode()` is successful and `save_buffer` was
 ///   not set when the class was instanciated.
@@ -415,6 +426,7 @@ void IRrecv::resume(void) {
   params.overflow = false;
 #if defined(ESP32)
   timerAlarmDisable(timer);
+  gpio_intr_enable((gpio_num_t)params.recvpin);
 #endif  // ESP32
 }
 
