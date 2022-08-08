@@ -72,6 +72,7 @@ esp_err_t es7243e_adc_init(TwoWire *tw, audio_hal_codec_config_t *codec_cfg);
  */
 // esp_err_t es7243_adc_set_gain(es7243_input_mics_t mic_mask, es7243_gain_value_t gain);
 
+void es7243e_setgain(uint8_t gain);
 
 #ifdef __cplusplus
 }
