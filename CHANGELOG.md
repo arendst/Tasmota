@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Restore EnergyToday after using command ``restart 2`` and power cycle (#16118)
+- Fixed IR crash on ESP32 (#16173)
 
 ### Removed
 

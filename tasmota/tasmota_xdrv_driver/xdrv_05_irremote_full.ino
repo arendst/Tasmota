@@ -469,7 +469,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
     int8_t channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
     if (channel < 0) { channel = GPIO_ANY; }    // take first available GPIO
@@ -485,7 +485,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
@@ -544,10 +544,10 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   IRsend irsend = IrSendInitGPIO(channel);
   bool success = irsend.send(protocol, data, bits, repeat);
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
   if (!success) {
       ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -570,12 +570,12 @@ uint32_t IrRemoteSendGC(char ** pp, uint32_t count, uint32_t repeat) {
     GC[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
     if (!GC[i]) { return IE_INVALID_RAWDATA; }
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   IRsend irsend = IrSendInitGPIO();
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend.sendGC(GC, count+1);
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
   return IE_NO_ERROR;
 }
 
@@ -626,7 +626,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         raw_array[i++] = mark;                    // Mark
       }
     }
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
     IRsend irsend = IrSendInitGPIO();
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
@@ -635,7 +635,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         irsend.space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
   } else if (6 == count) {                          // NEC Protocol
     // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
     uint16_t raw_array[strlen(*pp)*2+3];            // Header + bits + end
@@ -654,7 +654,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
       }
     }
     raw_array[i++] = parm[2];                     // Trailing mark
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
     IRsend irsend = IrSendInitGPIO();
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
@@ -663,7 +663,7 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         irsend.space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
   }
   else { return IE_INVALID_RAWDATA; }                   // Invalid number of parameters
   return IE_NO_ERROR;
@@ -732,12 +732,12 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   // AddLog(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   IRsend irsend = IrSendInitGPIO();
   for (uint32_t r = 0; r <= repeat; r++) {
     irsend.sendRaw(arr, count, freq);
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
   if (nullptr != arr) {
     free(arr);
