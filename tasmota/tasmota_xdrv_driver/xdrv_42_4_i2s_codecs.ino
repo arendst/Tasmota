@@ -70,7 +70,6 @@ uint32_t es7243e_init() {
 
     return ret_val;
 }
-
 // box adc init
 uint32_t es7210_init() {
   uint32_t ret_val = ESP_OK;
@@ -124,7 +123,7 @@ uint32_t ES8311_init() {
   return ret_val;
 }
 
-void S3boxInit() {
+void S3boxInit(void) {
   if (TasmotaGlobal.i2c_enabled_2) {
     // box lite
     ES8156_init();
@@ -137,4 +136,20 @@ void S3boxInit() {
   }
 }
 #endif // ESP32S3_BOX
+
+
+#ifdef USE_W8960
+
+#include <wm8960.h>
+
+void W8960_Init(void) {
+  if (TasmotaGlobal.i2c_enabled_2) {
+    if (I2cSetDevice(W8960_ADDR, 1)) {
+      I2cSetActiveFound(W8960_ADDR, "W8960-I2C", 1);
+      W8960_Init(&Wire1);
+    }
+  }
+}
+#endif // USE_W8960
+
 #endif // ESP32
