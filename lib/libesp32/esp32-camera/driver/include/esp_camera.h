@@ -70,6 +70,7 @@
 #include "driver/ledc.h"
 #include "sensor.h"
 #include "sys/time.h"
+#include "sdkconfig.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,6 +91,19 @@ typedef enum {
     CAMERA_FB_IN_PSRAM,         /*!< Frame buffer is placed in external PSRAM */
     CAMERA_FB_IN_DRAM           /*!< Frame buffer is placed in internal DRAM */
 } camera_fb_location_t;
+
+#if CONFIG_CAMERA_CONVERTER_ENABLED
+/**
+ * @brief Camera RGB\YUV conversion mode
+ */
+typedef enum {
+    CONV_DISABLE,
+    RGB565_TO_YUV422,
+        
+    YUV422_TO_RGB565,
+    YUV422_TO_YUV420
+} camera_conv_mode_t;
+#endif
 
 /**
  * @brief Configuration structure for camera initialization
@@ -124,6 +138,9 @@ typedef struct {
     size_t fb_count;                /*!< Number of frame buffers to be allocated. If more than one, then each frame will be acquired (double speed)  */
     camera_fb_location_t fb_location; /*!< The location where the frame buffer will be allocated */
     camera_grab_mode_t grab_mode;   /*!< When buffers should be filled */
+#if CONFIG_CAMERA_CONVERTER_ENABLED
+    camera_conv_mode_t conv_mode;   /*!< RGB<->YUV Conversion mode */
+#endif
 } camera_config_t;
 
 /**
