@@ -2102,7 +2102,22 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       switch (ccccaaaa) {
         case 0x00000004: device.setManufId(attr.getStr());                            break;
         case 0x00000005: device.setModelId(attr.getStr());                            break;
-        case 0x00010021: device.setBatteryPercent(uval16 / 2);                        break;
+        case 0x00010021:
+          {
+            // if both BatteryVoltage and BatteryPercentage are zero, ignore
+            // Behavior seen on Aqara device when requesting cluster 0x0001
+            bool valid_batt_voltage = true;
+            const Z_attribute * battVoltage_attr = attr_list.findAttribute(0x0001, 0x0020);
+            if (battVoltage_attr != nullptr) {
+              if (battVoltage_attr->getUInt() == 0) {
+                valid_batt_voltage = false;
+              }
+            }
+            if (valid_batt_voltage || uval16 > 0) {
+              device.setBatteryPercent(uval16 / 2);     // set value only if both are not zero
+            }
+          }
+          break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
       }
