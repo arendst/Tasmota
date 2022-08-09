@@ -45,7 +45,7 @@ static es7210_gain_value_t gain;
 /*
  * Clock coefficient structer
  */
-struct _coeff_div {
+struct _coeff_div_es7210 {
     uint32_t mclk;            /* mclk frequency */
     uint32_t lrck;            /* lrck */
     uint8_t  ss_ds;
@@ -75,7 +75,7 @@ static es7210_input_mics_t mic_select = (es7210_input_mics_t)(ES7210_INPUT_MIC1 
  *           lrckh:      0x04
  *           lrckl:      0x05
 */
-static const struct _coeff_div coeff_div[] = {
+static const struct _coeff_div_es7210 coeff_div[] = {
     //mclk      lrck    ss_ds adc_div  dll  doubler osr  mclk_src  lrckh   lrckl
     /* 8k */
     {12288000,  8000 ,  0x00,  0x03,  0x01,  0x00,  0x20,  0x00,    0x06,  0x00},
