@@ -522,14 +522,22 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list
 //
 // internal function to publish device information with respect to all `SetOption`s
 //
-void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const {
+void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list, bool include_time) const {
   bool use_fname = (Settings->flag4.zigbee_use_names) && (friendlyName);    // should we replace shortaddr with friendlyname?
 
   ResponseClear(); // clear string
+
   // Do we prefix with `ZbReceived`?
   if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
-    Response_P(PSTR("{\"%s\":"), json_prefix);
+    if (include_time && Rtc.utc_time >= START_VALID_TIME) {
+      // Add time if needed (and if time is valide)
+      ResponseAppendTimeFormat(Settings->flag2.time_format);
+      ResponseAppend_P(PSTR(",\"%s\":"), json_prefix);
+    } else {
+      ResponseAppend_P(PSTR("{\"%s\":"), json_prefix);
+    }
   }
+
   // What key do we use, shortaddr or name?
   if (!Settings->flag5.zb_omit_json_addr) {
     if (use_fname) {
@@ -609,7 +617,7 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
       attr_list.setBattPercent(device.batt_percent);
     }
 
-    device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_RECEIVED), attr_list);
+    device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_RECEIVED), attr_list, Settings->flag5.zigbee_include_time);
     attr_list.reset();    // clear the attributes
   }
 }
