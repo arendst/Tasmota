@@ -215,6 +215,8 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
   }
 }
 
+// Definitive doc for Tuya protocol:
+// https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
 // Special encoding for multiplier:
 // multiplier == 0: ignore
 // multiplier == 1: ignore
@@ -246,8 +248,8 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
 
   uint8_t tuyatype = (attr.key.id.attr_id >> 8);
   uint8_t dpid = (attr.key.id.attr_id & 0xFF);
-  buf.add8(tuyatype);
   buf.add8(dpid);
+  buf.add8(tuyatype);
 
   // the next attribute is length 16 bits in big endian
   // high byte is always 0x00
