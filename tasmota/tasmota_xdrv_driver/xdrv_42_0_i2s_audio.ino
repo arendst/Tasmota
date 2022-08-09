@@ -67,13 +67,13 @@
 #define i2s_port_t uint8_t
 #endif
 
-#ifdef ESP32
 #define MODE_MIC 0
 #define MODE_SPK 1
+
 #ifndef MICSRATE
-#define MICSRATE 16000
+#define MICSRATE 32000
 #endif
-#endif // ESP32
+
 
 struct AUDIO_I2S_t {
   uint8_t is2_volume; // should be in settings
@@ -105,6 +105,7 @@ struct AUDIO_I2S_t {
 #ifdef ESP32
   TaskHandle_t mp3_task_h;
   TaskHandle_t mic_task_h;
+#endif // ESP32
   uint32_t mic_size;
   uint32_t mic_rate;
   uint8_t *mic_buff;
@@ -118,9 +119,10 @@ struct AUDIO_I2S_t {
   int8_t mic_ws = -1;
   int8_t mic_din = -1;
   int8_t mic_dout = -1;
+  uint8_t mic_gain = 1;
   bool use_stream = false;
   i2s_port_t mic_port;
-#endif // ESP32
+
 
 #ifdef USE_SHINE
   uint32_t recdur;
@@ -130,10 +132,13 @@ struct AUDIO_I2S_t {
   ESP8266WebServer *MP3Server;
 #endif
 
+  uint8_t mode;
+
 } audio_i2s;
 
-
+#ifndef MIC_CHANNELS
 #define MIC_CHANNELS 1
+#endif
 
 #ifdef USE_TTGO_WATCH
 #undef AUDIO_PWR_ON
@@ -198,6 +203,15 @@ void Cmd_MicRec(void);
 void Cmd_wav2mp3(void);
 void Cmd_Time(void);
 
+void copy_micpars(uint32_t port) {
+  audio_i2s.mic_mclk = audio_i2s.mclk;
+  audio_i2s.mic_bclk = audio_i2s.bclk;
+  audio_i2s.mic_ws = audio_i2s.ws;
+  audio_i2s.mic_dout = audio_i2s.dout;
+  audio_i2s.mic_din = audio_i2s.din;
+  audio_i2s.mic_port = (i2s_port_t)port;
+}
+
 int32_t I2S_Init_0(void) {
 
   audio_i2s.i2s_port = (i2s_port_t)0;
@@ -216,6 +230,9 @@ int32_t I2S_Init_0(void) {
     audio_i2s.ws = DAC_IIS_WS;
     audio_i2s.dout = DAC_IIS_DOUT;
     audio_i2s.din = DAC_IIS_DIN;
+
+    copy_micpars(0);
+
 #else
 #ifdef USE_I2S_NO_DAC
   if (PinUsed(GPIO_I2S_DOUT)) {
@@ -235,12 +252,7 @@ int32_t I2S_Init_0(void) {
     audio_i2s.dout = Pin(GPIO_I2S_DOUT);
     audio_i2s.din = Pin(GPIO_I2S_DIN);
 
-    audio_i2s.mic_mclk = audio_i2s.mclk;
-    audio_i2s.mic_bclk = audio_i2s.bclk;
-    audio_i2s.mic_ws = audio_i2s.ws;
-    audio_i2s.mic_dout = audio_i2s.dout;
-    audio_i2s.mic_din = audio_i2s.din;
-    audio_i2s.mic_port = (i2s_port_t)0;
+    copy_micpars(0);
 
     // check if 2 ports used, use second for micro
     if (PinUsed(GPIO_I2S_BCLK, 1) && PinUsed(GPIO_I2S_WS, 1) && PinUsed(GPIO_I2S_DIN, 1)) {
@@ -265,12 +277,7 @@ int32_t I2S_Init_0(void) {
     audio_i2s.dout = Pin(GPIO_I2S_DOUT, 1);
     audio_i2s.din = Pin(GPIO_I2S_DIN, 1);
 
-    audio_i2s.mic_mclk = audio_i2s.mclk;
-    audio_i2s.mic_bclk = audio_i2s.bclk;
-    audio_i2s.mic_ws = audio_i2s.ws;
-    audio_i2s.mic_dout = audio_i2s.dout;
-    audio_i2s.mic_din = audio_i2s.din;
-    audio_i2s.mic_port = (i2s_port_t)1;
+    copy_micpars(1);
 
   } else {
     return -1;
@@ -299,21 +306,32 @@ int32_t I2S_Init_0(void) {
 
 #endif  // USE_I2S_EXTERNAL_DAC
 
+  audio_i2s.mode = MODE_SPK;
+
+#ifdef USE_I2S_COMMON_IO
+  audio_i2s.out->SetRate(MICSRATE);
+#endif
+
+
   return 0;
 }
 
 void I2S_Init(void) {
 
-  #if defined(ESP32) && defined(ESP32S3_BOX)
-      S3boxInit();
-  #endif
-
   if (I2S_Init_0()) {
     return;
   }
 
-  audio_i2s.is2_volume=10;
-  audio_i2s.out->SetGain(((float)audio_i2s.is2_volume/100.0)*4.0);
+#if defined(ESP32) && defined(ESP32S3_BOX)
+  S3boxInit();
+#endif
+
+#ifdef USE_W8960
+  W8960_Init();
+#endif
+
+  audio_i2s.is2_volume = 10;
+  audio_i2s.out->SetGain(((float)audio_i2s.is2_volume / 100.0) * 4.0);
   audio_i2s.out->stop();
   audio_i2s.mp3ram = nullptr;
 
@@ -517,12 +535,17 @@ void Play_mp3(const char *path) {
   if (I2S_Task) {
     xTaskCreatePinnedToCore(mp3_task, "MP3", 8192, NULL, 3, &audio_i2s.mp3_task_h, 1);
   } else {
+#define MP3_TIMEOUT 30000
+    uint32_t tout = millis();
     while (audio_i2s.mp3->isRunning()) {
       if (!audio_i2s.mp3->loop()) {
         audio_i2s.mp3->stop();
         break;
       }
       OsWatchLoop();
+      if (millis()-tout > MP3_TIMEOUT) {
+        break;
+      }
     }
     audio_i2s.out->stop();
     mp3_delete();
@@ -568,6 +591,7 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 #endif  // USE_I2S_WEBRADIO
 #if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
   "|REC"
+  "|MGain"
 #ifdef MP3_MIC_STREAM
   "|STREAM"
 #endif // MP3_MIC_STREAM
@@ -587,6 +611,7 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #endif // USE_I2S_WEBRADIO
 #if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
   ,&Cmd_MicRec
+  ,&Cmd_MicGain
 #ifdef MP3_MIC_STREAM
   ,&Cmd_MP3Stream
 #endif // MP3_MIC_STREAM

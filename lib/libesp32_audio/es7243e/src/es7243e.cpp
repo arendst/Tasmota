@@ -95,4 +95,11 @@ esp_err_t es7243e_adc_init(TwoWire *tw, audio_hal_codec_config_t *codec_cfg)
     }
     return ret;
 }
+
+void es7243e_setgain(uint8_t gain) {
+  uint8_t gaintab[8] = {0x10, 0x12, 0x20, 0x22, 0x04, 0x40, 0x06, 0x42};
+  es7243e_write_reg(0x08, gaintab[gain & 7] | 0x09);
+}
+
+
 #endif

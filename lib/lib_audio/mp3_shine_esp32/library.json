@@ -1,7 +1,0 @@
-{
-    "name": "mp3_shine_esp32",
-    "description": "mp3 encoder",
-    "keywords": "ESP32, MP3",
-    "version": "1.0.0",
-    "frameworks": "Arduino"
-}
