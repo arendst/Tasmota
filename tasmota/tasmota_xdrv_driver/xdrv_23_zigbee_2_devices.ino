@@ -828,7 +828,7 @@ public:
   void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
   void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
   void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;
-  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const;
+  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list, bool include_time = false) const;
   void jsonLightState(Z_attribute_list & attr_list) const;
 
   // dump device attributes to ZbData
