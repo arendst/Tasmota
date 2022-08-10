@@ -1386,6 +1386,9 @@ void CmndSetoptionBase(bool indexed) {
               case 25:                     // SetOption107 - Virtual CT Channel - signals whether the hardware white is cold CW (true) or warm WW (false)
                 TasmotaGlobal.restart_flag = 2;
                 break;
+              case 5:                      // SetOption87 - (PWM Dimmer) Turn red LED on (1) when powered off
+                TasmotaGlobal.restore_powered_off_led_counter = 1;
+                break;
             }
           }
           else if (5 == ptype) {           // SetOption114 .. 145
