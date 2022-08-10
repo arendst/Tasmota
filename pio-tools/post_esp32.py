@@ -171,6 +171,8 @@ def esp32_create_combined_bin(source, target, env):
     if(fs_offset != -1):
         fs_bin = join(env.subst("$BUILD_DIR"),"littlefs.bin")
         if exists(fs_bin):
+            before_reset = env.BoardConfig().get("upload.before_reset", "default_reset")
+            after_reset = env.BoardConfig().get("upload.after_reset", "hard_reset")
             print(f" - {hex(fs_offset)}| {fs_bin}")
             cmd += [hex(fs_offset), fs_bin]
             env.Replace(
@@ -178,8 +180,8 @@ def esp32_create_combined_bin(source, target, env):
             "--chip", chip,
             "--port", '"$UPLOAD_PORT"',
             "--baud", "$UPLOAD_SPEED",
-            "--before", "default_reset",
-            "--after", "hard_reset",
+            "--before", before_reset,
+            "--after", after_reset,
             "write_flash", "-z",
             "--flash_mode", "${__get_board_flash_mode(__env__)}",
             "--flash_freq", "${__get_board_f_flash(__env__)}",
