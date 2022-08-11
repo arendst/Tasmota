@@ -110,6 +110,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v12.0.2.4
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
+- Command ``SetOption144 1`` includes a timestamp in zigbee `ZbReceived` messages
 - Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
 - Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)

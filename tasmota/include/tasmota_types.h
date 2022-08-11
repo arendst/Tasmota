@@ -162,7 +162,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - (TLS) Use fingerprint validation instead of CA based
     uint32_t shift595_invert_outputs : 1;  // bit 19 (v10.0.0.4) - SetOption133 - (Shift595) Invert outputs of 74x595 shift registers
     uint32_t pwm_force_same_phase : 1;     // bit 20 (v10.1.0.6) - SetOption134 - (PWM) force PWM lights to start at same phase, default is to spread phases to minimze overlap (also needed for H-bridge)
-    uint32_t display_no_splash : 1;        // bit 21 (v11.0.0.2) - SetOption135 - (Display & LVGL) forece disbabling default splash screen
+    uint32_t display_no_splash : 1;        // bit 21 (v11.0.0.2) - SetOption135 - (Display & LVGL) force disabling default splash screen
     uint32_t tuyasns_no_immediate : 1;     // bit 22 (v11.0.0.4) - SetOption136 - (TuyaSNS) When ON disable publish single SNS value on Tuya Receive (keep Teleperiod)
     uint32_t tuya_exclude_from_mqtt : 1;   // bit 23 (v11.0.0.5) - SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see xdrv_16_tuyamcu.ino) if SetOption66 is active
     uint32_t gui_table_align : 1;          // bit 24 (v11.0.0.7) - SetOption138 - (GUI) Align (energy) table values left (0) or right (1)
@@ -171,7 +171,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t gui_module_name : 1;          // bit 27 (v11.1.0.3) - SetOption141 - (GUI) Disable display of GUI module name (1)
     uint32_t wait_for_wifi_result : 1;     // bit 28 (v11.1.0.4) - SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
     uint32_t zigbee_no_batt_autoprobe : 1; // bit 29 (v12.0.2.4) - SetOption143 - (Zigbee) Disable Battery auto-probe and using auto-binding
-    uint32_t zigbee_include_time : 1;      // bit 30 (v12.0.2.4) - SetOption144 - (Zigbee) include time in `ZbReceived` messages like other sensors
+    uint32_t zigbee_include_time : 1;      // bit 30 (v12.0.2.4) - SetOption144 - (Zigbee) Include time in `ZbReceived` messages like other sensors
     uint32_t spare31 : 1;                  // bit 31
   };
 } SOBitfield5;

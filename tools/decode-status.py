@@ -198,7 +198,8 @@ a_setoption = [[
     "(GUI) Disable display of GUI module name (1)",
     "(Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)",
     "(Zigbee) Disable Battery auto-probe and using auto-binding",
-    "",""
+    "(Zigbee) Include time in `ZbReceived` messages like other sensors",
+    ""
     ],[
     "","","","",
     "","","","",
