@@ -45,24 +45,7 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 #include <AddrList.h>                      // IPv6 DualStack
 #endif  // LWIP_IPV6=1
 
-struct WIFI {
-  uint32_t last_event = 0;                 // Last wifi connection event
-  uint32_t downtime = 0;                   // Wifi down duration
-  uint16_t link_count = 0;                 // Number of wifi re-connect
-  uint8_t counter;
-  uint8_t retry_init;
-  uint8_t retry;
-  uint8_t max_retry;
-  uint8_t status;
-  uint8_t config_type = 0;
-  uint8_t config_counter = 0;
-  uint8_t scan_state;
-  uint8_t bssid[6];
-  int8_t best_network_db;
-} Wifi;
-
-int WifiGetRssiAsQuality(int rssi)
-{
+int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
 
   if (rssi <= -100) {
@@ -73,6 +56,33 @@ int WifiGetRssiAsQuality(int rssi)
     quality = 2 * (rssi + 100);
   }
   return quality;
+}
+
+//                                           0    1   2       3        4
+const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/PSK"
+#ifdef ESP32
+//                                            5               6        7             8
+                                            "|WPA2-Enterprise|WPA3/PSK|WPA2/WPA3/PSK|WAPI/PSK"
+#endif  // ESP32
+;
+
+String WifiEncryptionType(uint32_t i) {
+#ifdef ESP8266
+  // Reference. WiFi.encryptionType =
+  // 2 : ENC_TYPE_TKIP - WPA / PSK
+  // 4 : ENC_TYPE_CCMP - WPA2 / PSK
+  // 5 : ENC_TYPE_WEP  - WEP
+  // 7 : ENC_TYPE_NONE - open network
+  // 8 : ENC_TYPE_AUTO - WPA / WPA2 / PSK
+  uint8_t typea[] = { 0,2,0,3,1,0,0,4 };
+  int type = typea[WiFi.encryptionType(i) -1 &7];
+#else
+  int type = WiFi.encryptionType(i);
+#endif
+  if ((type < 0) || (type > 8)) { type = 0; }
+  char stemp1[20];
+  GetTextIndexed(stemp1, sizeof(stemp1), type, kWifiEncryptionTypes);
+  return stemp1;
 }
 
 bool WifiConfigCounter(void)
@@ -351,6 +361,74 @@ void WifiBeginAfterScan(void)
       }
     }
   }
+
+  // Init scan for wifiscan command
+  if (6 == Wifi.scan_state) {
+    if (wifi_scan_result != WIFI_SCAN_RUNNING) {
+      WiFi.scanNetworks(true);                      // Start wifi scan async
+      Wifi.scan_state++;
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan started..."));
+      return;
+    }
+  }
+  // Check scan done
+  if (7 == Wifi.scan_state) {
+    if (wifi_scan_result != WIFI_SCAN_RUNNING) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan finished..."));
+      Wifi.scan_state++;
+      return;
+    }
+  }
+  // Scan done. Show SSId's scan result by MQTT and in console
+  if (7 < Wifi.scan_state) {
+    Wifi.scan_state++;
+
+    ResponseClear();
+
+    uint32_t initial_item = (Wifi.scan_state - 9)*10;
+
+    if ( wifi_scan_result > initial_item ) {
+      // Sort networks by RSSI
+      uint32_t indexes[wifi_scan_result];
+      for (uint32_t i = 0; i < wifi_scan_result; i++) {
+        indexes[i] = i;
+      }
+      for (uint32_t i = 0; i < wifi_scan_result; i++) {
+        for (uint32_t j = i + 1; j < wifi_scan_result; j++) {
+          if (WiFi.RSSI(indexes[j]) > WiFi.RSSI(indexes[i])) {
+            std::swap(indexes[i], indexes[j]);
+          }
+        }
+      }
+      delay(0);
+
+      // Publish the list
+      uint32_t end_item = ( wifi_scan_result > initial_item + 10 ) ? initial_item + 10 : wifi_scan_result;
+      for (uint32_t i = initial_item; i < end_item; i++) {
+        Response_P(PSTR("{\"" D_CMND_WIFISCAN "\":{\"" D_STATUS5_NETWORK "%d\":{\"" D_SSID "\":\"%s\",\"" D_BSSID "\":\"%s\",\"" D_CHANNEL
+                        "\":\"%d\",\"" D_JSON_SIGNAL "\":\"%d\",\"" D_RSSI "\":\"%d\",\"" D_JSON_ENCRYPTION "\":\"%s\"}}}"),
+                        i+1,
+                        WiFi.SSID(indexes[i]).c_str(),
+                        WiFi.BSSIDstr(indexes[i]).c_str(),
+                        WiFi.channel(indexes[i]),
+                        WiFi.RSSI(indexes[i]),
+                        WifiGetRssiAsQuality(WiFi.RSSI(indexes[i])),
+                        WifiEncryptionType(indexes[i]).c_str());
+        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WIFISCAN));
+      }
+    } else if (9 == Wifi.scan_state) {
+      Response_P(PSTR("{\"" D_CMND_WIFISCAN "\":\"" D_NO_NETWORKS_FOUND "\"}"));
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_WIFISCAN));
+    }
+    delay(0);
+  }
+  // Wait 1 minute before cleaning the results so the user can ask for the them using wifiscan command (HTTP use-case)
+  if (69 == Wifi.scan_state) {
+    //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network scan results deleted..."));
+    Wifi.scan_state = 0;
+    WiFi.scanDelete();                            // Clean up Ram
+  }
+
 }
 
 uint16_t WifiLinkCount(void)
@@ -523,8 +601,6 @@ void WifiCheck(uint8_t param)
         TasmotaGlobal.restart_flag = 2;
       }
     } else {
-      if (Wifi.scan_state) { WifiBeginAfterScan(); }
-
       if (Wifi.counter <= 0) {
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
         Wifi.counter = WIFI_CHECK_SEC;
@@ -534,7 +610,7 @@ void WifiCheck(uint8_t param)
         WifiSetState(1);
         if (Settings->flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(TasmotaGlobal.uptime % (60 * WIFI_RESCAN_MINUTES))) {
-            Wifi.scan_state = 2;
+            if (!Wifi.scan_state) { Wifi.scan_state = 2; } // If wifi scan routine is free, use it. Otherwise, wait for next RESCAN TIME
           }
         }
       } else {
@@ -542,6 +618,7 @@ void WifiCheck(uint8_t param)
         Mdns.begun = 0;
       }
     }
+    if (Wifi.scan_state) { WifiBeginAfterScan(); }
   }
 }
 
@@ -881,5 +958,3 @@ uint32_t WifiGetNtp(void) {
   ntp_server_id++;                                  // Next server next time
   return 0;
 }
-
-

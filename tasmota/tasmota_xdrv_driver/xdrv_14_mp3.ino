@@ -19,6 +19,14 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+
+  1.0.0.6 20220624  added   - Busy flag on optional GPIO pin
+                    added   - command for MP3Folder, folder/track format
+                    added   - an event so that busy flag can be used in Berry
+                    ToDo    - test changes with SV17F
+                    ToDo    - change MP3Folder format to use two arguments MP3Folder 3,9
+                            - Tom@lafleur.us
+
   1.0.0.5 20210121  added   - support for DY_SV17F Player (#define USE_DY_SV17F)
                             - cmds supported:
                             - track
@@ -67,6 +75,27 @@
                     base    - code base from gemu2015 ;-)     - https://github.com/gemu2015/Sonoff-Tasmota
                     forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
+
+                  Ver 12.1.0.4x
+                  /include/tasmota/tasmota_template.h
+                  @ line 56
+                  GPIO_MP3_DFR562,                     // RB-DFR-562, DFPlayer Mini MP3 Player
+                  GPIO_MP3_DFR562_BUSY,                // RB-DFR-562, DFPlayer Mini MP3 Player busy flag
+
+                  @ Line 290
+                  D_SENSOR_DFR562 "|" D_SENSOR_DFR562_BUSY "|"
+
+                  @ line 870
+                  #ifdef USE_MP3_PLAYER
+                  AGPIO(GPIO_MP3_DFR562),     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+                  AGPIO(GPIO_MP3_DFR562_BUSY),// RB-DFR-562, DFPlayer Mini MP3 Player optional Busy flag
+                  #endif
+
+                  /tasmota/language/el_GB.h
+                  @ line 634
+                  #define D_SENSOR_DFR562        "MP3 Player"
+                  #define D_SENSOR_DFR562_BUSY   "MP3 Busy"
+
 */
 
 #ifdef USE_MP3_PLAYER
@@ -76,10 +105,6 @@
 \*********************************************************************************************/
 
 #define XDRV_14             14
-
-#ifndef MP3_VOLUME
-#define MP3_VOLUME          30                // Set the startup volume on init, the range can be 0..100(max)
-#endif
 
 #include <TasmotaSerial.h>
 
@@ -91,9 +116,11 @@ TasmotaSerial *MP3Player;
 
 #define D_CMND_MP3 "MP3"
 
-const char S_JSON_MP3_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_MP3 "%s\":%d}";
-const char S_JSON_MP3_COMMAND[] PROGMEM        = "{\"" D_CMND_MP3 "%s\"}";
-const char kMP3_Commands[] PROGMEM             = "Track|Play|Pause|Stop|Volume|EQ|Device|Reset|DAC";
+const char S_JSON_MP3_COMMAND_NVALUE[]  PROGMEM = "{\"" D_CMND_MP3 "%s\":%d}";
+const char S_JSON_MP3_COMMAND[]         PROGMEM = "{\"" D_CMND_MP3 "%s\"}";
+const char kMP3_Commands[]              PROGMEM = "Track|Folder|Play|Pause|Stop|Volume|EQ|Device|Reset|DAC";    // <-------- trl
+uint32_t   MP2BusyFlag;                 // low is busy
+
 
 /*********************************************************************************************\
  * enumerationsines
@@ -101,6 +128,7 @@ const char kMP3_Commands[] PROGMEM             = "Track|Play|Pause|Stop|Volume|E
 
 enum MP3_Commands {                                 // commands useable in console or rules
   CMND_MP3_TRACK,                                   // MP3Track 001...255
+  CMND_MP3_FOLDER,                                  // MP3Folder folder 01-99, track 0001...0255    // <-------- trl
   CMND_MP3_PLAY,                                    // MP3Play, after pause or normal start to play
   CMND_MP3_PAUSE,                                   // MP3Pause
   CMND_MP3_STOP,                                    // MP3Stop, real stop, original version was pause function
@@ -115,9 +143,10 @@ enum MP3_Commands {                                 // commands useable in conso
  * command defines
 \*********************************************************************************************/
 
-#define MP3_CMD_RESET_VALUE 0                       // mp3 reset command value
+#define MP3_CMD_RESET_VALUE 0x00                    // mp3 reset command value
 // player commands
 #define MP3_CMD_TRACK       0x03                    // specify playback of a track, e.g. MP3Track 003
+#define MP3_CMD_FOLDER      0x0f                    // specify playback of a track, e.g. MP3Folder 03,0255  <--------------  TRL
 #define MP3_CMD_PLAY        0x0d                    // Play, works as a normal play on a real MP3 Player, starts at 001.mp3 file on the selected device
 #define MP3_CMD_PAUSE       0x0e                    // Pause, was original designed as stop, see data sheet
 #define MP3_CMD_STOP        0x16                    // Stop, it's a real stop now, in the original version it was a pause command
@@ -147,16 +176,26 @@ uint16_t MP3_Checksum(uint8_t *array)
  * define serial tx port fixed with 9600 baud
 \*********************************************************************************************/
 
-void MP3PlayerInit(void) {
+void MP3PlayerInit(void) 
+{
   MP3Player = new TasmotaSerial(-1, Pin(GPIO_MP3_DFR562));
+
   // start serial communication fixed to 9600 baud
-  if (MP3Player->begin(9600)) {
+  if (MP3Player->begin(9600)) 
+  {
     MP3Player->flush();
     delay(1000);
     MP3_CMD(MP3_CMD_RESET, MP3_CMD_RESET_VALUE);    // reset the player to defaults
     delay(3000);
     MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the my_user_config.h
+
   }
+
+  if (PinUsed(GPIO_MP3_DFR562_BUSY))                // optional MP3 player busy pin...
+  {  
+      pinMode(Pin(GPIO_MP3_DFR562_BUSY), INPUT);    // set pin to Input
+  }
+
   return;
 }
 
@@ -169,32 +208,38 @@ void MP3PlayerInit(void) {
  * only track,play,stop and volume supported
 \*********************************************************************************************/
 
-void MP3_SendCmd(uint8_t *scmd, uint8_t len) {
+void MP3_SendCmd(uint8_t *scmd, uint8_t len) 
+{
 uint16_t sum = 0;
-  for (uint32_t cnt = 0; cnt < len; cnt++) {
+  for (uint32_t cnt = 0; cnt < len; cnt++) 
+  {
     sum += scmd[cnt];
   }
   scmd[len] = sum;
   MP3Player->write(scmd, len + 1);
 }
 
-void MP3_CMD(uint8_t mp3cmd, uint16_t val) {
+void MP3_CMD(uint8_t mp3cmd, uint16_t val) 
+{
   uint8_t scmd[8];
   uint8_t len = 0;
   scmd[0]=0xAA;
-  switch (mp3cmd) {
+  switch (mp3cmd) 
+  {
     case MP3_CMD_TRACK:
       scmd[1]=0x07;
       scmd[2]=0x02;
       scmd[3]=val>>8;
       scmd[4]=val;
       MP3_SendCmd(scmd, 5);
+
     case MP3_CMD_PLAY:
       scmd[1]=0x02;
       scmd[2]=0x00;
       scmd[3]=0xAC;
       len = 4;
       break;
+
     case MP3_CMD_STOP:
       scmd[1]=0x10;
       scmd[2]=0x00;
@@ -207,6 +252,7 @@ void MP3_CMD(uint8_t mp3cmd, uint16_t val) {
       scmd[3]=val;
       len = 4;
       break;
+
     default:
       return;
   }
@@ -222,7 +268,8 @@ void MP3_CMD(uint8_t mp3cmd, uint16_t val) {
  * {0x7e      , 0xff   , 6     , 0      , 0/1     , 0       , 0       , 0       , 0       , 0xef    };
 \*********************************************************************************************/
 
-void MP3_CMD(uint8_t mp3cmd,uint16_t val) {
+void MP3_CMD(uint8_t mp3cmd,uint16_t val) 
+{
   uint8_t i       = 0;
   uint8_t cmd[10] = {0x7e,0xff,6,0,0,0,0,0,0,0xef}; // fill array
   cmd[3]          = mp3cmd;                         // mp3 command value
@@ -234,33 +281,41 @@ void MP3_CMD(uint8_t mp3cmd,uint16_t val) {
   cmd[8]          = chks;                           // checksum low byte
   MP3Player->write(cmd, sizeof(cmd));               // write mp3 data array to player
   delay(1000);
-  if (mp3cmd == MP3_CMD_RESET) {
+  if (mp3cmd == MP3_CMD_RESET) 
+  {
     MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the my_user_config.h
   }
   return;
 }
 #endif // USE_DY_SV17F
+
 /*********************************************************************************************\
  * check the MP3 commands
 \*********************************************************************************************/
 
-bool MP3PlayerCmd(void) {
+bool MP3PlayerCmd(void) 
+{
   char command[CMDSZ];
   bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_MP3);
 
-  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // prefix
+  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len))  // prefix
+  { 
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kMP3_Commands);
 
-    switch (command_code) {
+    switch (command_code) 
+    {
       case CMND_MP3_TRACK:
+      case CMND_MP3_FOLDER:     // <-------- trl
       case CMND_MP3_VOLUME:
       case CMND_MP3_EQ:
       case CMND_MP3_DEVICE:
       case CMND_MP3_DAC:
-        // play a track, set volume, select EQ, sepcify file device
-        if (XdrvMailbox.data_len > 0) {
+        // play a track, set volume, select EQ, specify file device
+        if (XdrvMailbox.data_len > 0) 
+        {
           if (command_code == CMND_MP3_TRACK)  { MP3_CMD(MP3_CMD_TRACK,  XdrvMailbox.payload); }
+          if (command_code == CMND_MP3_FOLDER) { MP3_CMD(MP3_CMD_FOLDER, XdrvMailbox.payload); }      // <-------- trl
           if (command_code == CMND_MP3_VOLUME) { MP3_CMD(MP3_CMD_VOLUME, XdrvMailbox.payload * 30 / 100); }
           if (command_code == CMND_MP3_EQ)     { MP3_CMD(MP3_CMD_EQ,     XdrvMailbox.payload); }
           if (command_code == CMND_MP3_DEVICE) { MP3_CMD(MP3_CMD_DEVICE, XdrvMailbox.payload); }
@@ -268,6 +323,7 @@ bool MP3PlayerCmd(void) {
         }
         Response_P(S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
         break;
+
 #ifndef USE_DY_SV17F
       case CMND_MP3_PLAY:
 #endif // USE_DY_SV17F
@@ -284,7 +340,8 @@ bool MP3PlayerCmd(void) {
 
 #ifdef USE_DY_SV17F
       case CMND_MP3_PLAY:
-        if (XdrvMailbox.data_len > 0) {
+        if (XdrvMailbox.data_len > 0) 
+        {
           uint8_t scmd[64];
           scmd[0] = 0xAA;
           scmd[1] = 0x08;
@@ -301,22 +358,38 @@ bool MP3PlayerCmd(void) {
           }
           MP3_SendCmd(scmd, XdrvMailbox.data_len + 4);
           Response_P(S_JSON_COMMAND_SVALUE, command, XdrvMailbox.data);
-        } else {
+        } else 
+        {
           MP3_CMD(MP3_CMD_PLAY, 0);
-          Response_P(S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
+          Response_P(S_JSON_MP3_COMMAND, command, XdrvMailbox.payload)
         }
         break;
 #endif // USE_DY_SV17F
+
       default:
     	  // else for Unknown command
     	  serviced = false;
     	break;
     }
-  } else {
-    return false;
-  }
+  } else 
+    {
+      return false;
+    }
   return serviced;
 }
+
+void MP3_EVERY_SECOND(void)
+{
+
+if (PinUsed(GPIO_MP3_DFR562_BUSY))                // optional MP3 player busy pin...      // <-------- trl
+  {      
+  // Low is busy... we are using this format to allow Berry to receive a busy event
+  MP2BusyFlag = digitalRead(Pin(GPIO_MP3_DFR562_BUSY));
+  Response_P(PSTR("{\"MP3Player\":{\"MP3Busy\":%u}}"), MP2BusyFlag);
+  XdrvRulesProcess(0);
+  }
+}
+
 
 /*********************************************************************************************\
  * Interface
@@ -326,13 +399,20 @@ bool Xdrv14(uint8_t function)
 {
   bool result = false;
 
-  if (PinUsed(GPIO_MP3_DFR562)) {
-    switch (function) {
+  if (PinUsed(GPIO_MP3_DFR562)) 
+  {
+    switch (function) 
+    {
       case FUNC_PRE_INIT:
         MP3PlayerInit();                              // init and start communication
         break;
+
       case FUNC_COMMAND:
         result = MP3PlayerCmd();                      // return result from mp3 player command
+        break;
+
+      case FUNC_EVERY_SECOND:
+        MP3_EVERY_SECOND();
         break;
     }
   }

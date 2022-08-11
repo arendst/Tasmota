@@ -50,6 +50,7 @@ be_extern_native_module(animate);
 be_extern_native_module(partition_core);
 be_extern_native_module(crc);
 be_extern_native_module(crypto);
+be_extern_native_module(ULP);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
 #endif // USE_ZIGBEE
@@ -162,6 +163,9 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #ifdef USE_ALEXA_AVS
     &be_native_module(crypto),
 #endif
+#if defined(USE_BERRY_ULP) && defined(CONFIG_IDF_TARGET_ESP32)
+    &be_native_module(ULP),
+#endif // USE_BERRY_ULP
 
     /* user-defined modules register end */
     NULL /* do not remove */
@@ -195,6 +199,7 @@ be_extern_native_class(md5);
 be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
+be_extern_native_class(tcpserver);
 be_extern_native_class(energy_struct);
 // BLE
 be_extern_native_class(MI32);
@@ -242,6 +247,9 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(webclient),
     &be_native_class(tcpclient),
 #endif // USE_WEBCLIENT
+#ifdef USE_BERRY_TCPSERVER
+    &be_native_class(tcpserver),
+#endif // USE_BERRY_TCPSERVER
 #ifdef USE_WS2812
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),

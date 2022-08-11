@@ -30,7 +30,7 @@ void be_load_tcpclient_lib(bvm *vm) {
 /* @const_object_info_begin
 
 class be_class_tcpclient (scope: global, name: tcpclient) {
-    .w, var
+    .p, var
     init, func(wc_tcp_init)
     deinit, func(wc_tcp_deinit)
 

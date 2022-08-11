@@ -18,7 +18,7 @@
 */
 
 #ifdef ESP32
-#ifdef USE_DHT
+#ifdef USE_DHT_V5
 /*********************************************************************************************\
  * DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321), SI7021 - Temperature and Humidity
  *
@@ -155,5 +155,5 @@ bool Xsns06(uint8_t function) {
   return result;
 }
 
-#endif  // USE_DHT
+#endif  // USE_DHT_V5
 #endif  // ESP32

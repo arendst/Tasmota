@@ -12,6 +12,7 @@
 #include "be_exec.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_strlib.h"
 
 #define SHORT_STR_LEN       32
 #define EOS                 '\0' /* end of source */
@@ -336,7 +337,11 @@ static btokentype scan_decimal(blexer *lexer)
 {
     btokentype type = TokenInteger;
     match(lexer, is_digit);
-    if (decimal_dots(lexer) | scan_realexp(lexer)) {
+    /* decimal_dots() and scan_realexp() have side effect, so we call each explicitly */
+    /* to prevent binary shortcut if the first is true */
+    bbool has_decimal_dots = decimal_dots(lexer);
+    bbool is_realexp = scan_realexp(lexer);
+    if (has_decimal_dots || is_realexp) {
         type = TokenReal;
     }
     lexer->buf.s[lexer->buf.len] = '\0';
@@ -413,6 +418,9 @@ static btokentype scan_string(blexer *lexer)
             if (c == '\\') {
                 save(lexer); /* skip '\\.' */
             }
+        }
+        if (c == EOS) {
+            be_lexerror(lexer, "unfinished string");
         }
         c = next(lexer); /* skip '"' or '\'' */
         /* check if there's an additional string literal right after */

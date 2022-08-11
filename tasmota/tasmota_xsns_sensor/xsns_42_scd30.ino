@@ -356,6 +356,8 @@ bool Scd30CommandSensor()
         serviced = false;
       break;
     }
+  } else {
+    serviced = false;
   }
   return serviced;
 }

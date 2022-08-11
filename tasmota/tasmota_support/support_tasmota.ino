@@ -221,8 +221,7 @@ void ZeroCrossInit(uint32_t offset) {
 
 /********************************************************************************************/
 
-void SetLatchingRelay(power_t lpower, uint32_t state)
-{
+void SetLatchingRelay(power_t lpower, uint32_t state) {
   // TasmotaGlobal.power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
   // TasmotaGlobal.power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
   // TasmotaGlobal.power xx10 - toggle REL1 (Off) and REL4 (On)  - device 1 Off, device 2 On
@@ -240,8 +239,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
   }
 }
 
-void SetDevicePower(power_t rpower, uint32_t source)
-{
+void SetDevicePower(power_t rpower, uint32_t source) {
   ShowSource(source);
   TasmotaGlobal.last_source = source;
 
@@ -294,19 +292,39 @@ void SetDevicePower(power_t rpower, uint32_t source)
     SetLatchingRelay(rpower, 1);
   }
 #endif  // ESP8266
-  else
-  {
+  else {
+    uint32_t port = 0;
+    uint32_t port_next;
+
     ZeroCrossMomentStart();
 
     for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
       power_t state = rpower &1;
-      if (i < MAX_RELAYS) {
-        DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? !state : state);
+
+      port_next = 1;                              // Select next relay
+      if (bitRead(TasmotaGlobal.rel_bistable, port)) {
+        if (!state) { port_next = 2; }            // Skip highest relay
+        port += state;                            // Relay<lowest> = Off, Relay<highest> = On
+        state = 1;                                // Set pulse
       }
-      rpower >>= 1;
+      if (i < MAX_RELAYS) {
+        DigitalWrite(GPIO_REL1, port, bitRead(TasmotaGlobal.rel_inverted, port) ? !state : state);
+      }
+      port += port_next;                          // Select next relay
+      rpower >>= 1;                               // Select next power
     }
 
     ZeroCrossMomentEnd();
+
+    // Reset bistable relay here to fix non-interlock situations due to fast switching
+    if (TasmotaGlobal.rel_bistable) {             // If bistable relays in the mix reset them after 40ms
+      delay(Settings->param[P_BISTABLE_PULSE]);   // SetOption45 - Keep energized for about 5 x operation time
+      for (uint32_t i = 0; i < port; i++) {       // Reset up to detected amount of ports
+        if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+          DigitalWrite(GPIO_REL1, i, bitRead(TasmotaGlobal.rel_inverted, i) ? 1 : 0);
+        }
+      }
+    }
   }
 }
 
@@ -399,18 +417,25 @@ void SetPowerOnState(void)
   }
 
   // Issue #526 and #909
+  uint32_t port = 0;
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
 #ifdef ESP8266
     if (!Settings->flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-      if ((i < MAX_RELAYS) && PinUsed(GPIO_REL1, i)) {
-        bitWrite(TasmotaGlobal.power, i, digitalRead(Pin(GPIO_REL1, i)) ^ bitRead(TasmotaGlobal.rel_inverted, i));
+      if ((port < MAX_RELAYS) && PinUsed(GPIO_REL1, port)) {
+        if (bitRead(TasmotaGlobal.rel_bistable, port)) {
+          port++;                              // Skip both bistable relays as always 0
+        } else {
+          bitWrite(TasmotaGlobal.power, i, digitalRead(Pin(GPIO_REL1, port)) ^ bitRead(TasmotaGlobal.rel_inverted, port));
+        }
       }
+      port++;
     }
 #endif  // ESP8266
     if (bitRead(TasmotaGlobal.power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings->poweronstate)) {
       SetPulseTimer(i % MAX_PULSETIMERS, Settings->pulse_timer[i % MAX_PULSETIMERS]);
     }
   }
+
   TasmotaGlobal.blink_powersave = TasmotaGlobal.power;
 #ifdef USE_RULES
   RulesEvery50ms();
@@ -845,6 +870,60 @@ String GetSwitchText(uint32_t i) {
   return switch_text;
 }
 
+const char kGlobalValues[] PROGMEM = D_JSON_TEMPERATURE "|" D_JSON_HUMIDITY "|" D_JSON_PRESSURE;
+
+void GetSensorValues(void) {
+  char *start = ResponseData();
+  int data_start = ResponseLength();
+
+  XsnsCall(FUNC_JSON_APPEND);
+  XdrvCall(FUNC_JSON_APPEND);
+
+  if (data_start == ResponseLength()) { return; }
+
+  for (uint32_t type = 0; type < 3; type++) {
+    if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
+
+    char key[20];
+    GetTextIndexed(key, sizeof(key), type, kGlobalValues);
+
+    float value = -9999;
+    uint32_t idx = 0;
+//    char *data = ResponseData();
+    char *data = start;  // Invalid JSON ,"HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}
+    while (data) {
+      data = strstr(data, key);
+      if (data) {
+        idx++;
+        data += strlen(key) + 2;
+        float new_value = CharToFloat(data);
+        if (1 == idx) { value = new_value; }
+
+//        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: %s value%d = %2_f"), key, idx, &new_value);
+
+        if (idx == Settings->global_sensor_index[type]) {
+          value = new_value;
+          break;
+        }
+      }
+    }
+    if (value != -9999) {
+      switch (type) {
+        case 0:  // Temperature
+          TasmotaGlobal.temperature_celsius = ConvertTempToCelsius(value);
+          break;
+        case 1:  // Humidity
+          TasmotaGlobal.humidity = value;
+          break;
+        case 2:  // Pressure
+          TasmotaGlobal.pressure_hpa = ConvertHgToHpa(value);
+          break;
+      }
+      TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    }
+  }
+}
+
 void MqttAppendSensorUnits(void)
 {
   if (ResponseContains_P(PSTR(D_JSON_PRESSURE))) {
@@ -858,8 +937,7 @@ void MqttAppendSensorUnits(void)
   }
 }
 
-bool MqttShowSensor(bool call_show_sensor)
-{
+bool MqttShowSensor(bool call_show_sensor) {
   ResponseAppendTime();
 
   int json_data_start = ResponseLength();
@@ -872,10 +950,10 @@ bool MqttShowSensor(bool call_show_sensor)
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetSwitchText(i).c_str(), GetStateText(SwitchState(i)));
     }
   }
-  XsnsCall(FUNC_JSON_APPEND);
-  XdrvCall(FUNC_JSON_APPEND);
 
-  if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {
+  GetSensorValues();
+
+  if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {  // SetOption2 (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
       uint32_t add_comma = 0;
       ResponseAppend_P(PSTR(",\"Global\":{"));
@@ -1009,6 +1087,7 @@ void PerformEverySecond(void)
     digitalWrite(Pin(GPIO_HEARTBEAT), TasmotaGlobal.heartbeat_inverted);
   }
 
+  // Teleperiod
   if (Settings->tele_period || (3601 == TasmotaGlobal.tele_period)) {
     if (TasmotaGlobal.tele_period >= 9999) {
       if (!TasmotaGlobal.global_state.network_down) {
@@ -1024,6 +1103,15 @@ void PerformEverySecond(void)
 
         XsnsCall(FUNC_AFTER_TELEPERIOD);
         XdrvCall(FUNC_AFTER_TELEPERIOD);
+      } else {
+        // Global values (Temperature, Humidity and Pressure) update every 10 seconds
+        if (!(TasmotaGlobal.tele_period % 10)) {
+          for (uint32_t type = 0; type < 3; type++) {
+            if (!Settings->global_sensor_index[type] || TasmotaGlobal.user_globals[type]) { continue; }
+            GetSensorValues();
+            break;
+          }
+        }
       }
     }
   }
@@ -1062,7 +1150,13 @@ void Every100mSeconds(void)
 
   if (TasmotaGlobal.latching_relay_pulse) {
     TasmotaGlobal.latching_relay_pulse--;
-    if (!TasmotaGlobal.latching_relay_pulse) SetLatchingRelay(0, 0);
+    if (!TasmotaGlobal.latching_relay_pulse) {
+#ifdef ESP8266
+      if (EXS_RELAY == TasmotaGlobal.module_type) {
+        SetLatchingRelay(0, 0);
+      }
+#endif  // ESP8266
+    }
   }
 
   if (TasmotaGlobal.skip_sleep) {
@@ -1906,6 +2000,15 @@ void GpioInit(void)
         bitSet(TasmotaGlobal.rel_inverted, mpin - AGPIO(GPIO_REL1_INV));
         mpin -= (AGPIO(GPIO_REL1_INV) - AGPIO(GPIO_REL1));
       }
+      else if ((mpin >= AGPIO(GPIO_REL1_BI)) && (mpin < (AGPIO(GPIO_REL1_BI) + MAX_RELAYS))) {
+        bitSet(TasmotaGlobal.rel_bistable, mpin - AGPIO(GPIO_REL1_BI));
+        mpin -= (AGPIO(GPIO_REL1_BI) - AGPIO(GPIO_REL1));
+      }
+      else if ((mpin >= AGPIO(GPIO_REL1_BI_INV)) && (mpin < (AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS))) {
+        bitSet(TasmotaGlobal.rel_bistable, mpin - AGPIO(GPIO_REL1_BI_INV));
+        bitSet(TasmotaGlobal.rel_inverted, mpin - AGPIO(GPIO_REL1_BI_INV));
+        mpin -= (AGPIO(GPIO_REL1_BI_INV) - AGPIO(GPIO_REL1));
+      }
       else if ((mpin >= AGPIO(GPIO_LED1_INV)) && (mpin < (AGPIO(GPIO_LED1_INV) + MAX_LEDS))) {
         bitSet(TasmotaGlobal.led_inverted, mpin - AGPIO(GPIO_LED1_INV));
         mpin -= (AGPIO(GPIO_LED1_INV) - AGPIO(GPIO_LED1));
@@ -2100,6 +2203,7 @@ void GpioInit(void)
 
   GpioInitPwm();
 
+  uint32_t bi_device = 0;
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (PinUsed(GPIO_REL1, i)) {
       TasmotaGlobal.devices_present++;
@@ -2108,6 +2212,10 @@ void GpioInit(void)
         if (i &1) { TasmotaGlobal.devices_present--; }
       }
 #endif  // ESP8266
+      if (bitRead(TasmotaGlobal.rel_bistable, i)) {
+        if (bi_device &1) { TasmotaGlobal.devices_present--; }
+        bi_device++;
+      }
     }
   }
 

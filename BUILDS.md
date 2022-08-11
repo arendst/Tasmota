@@ -13,8 +13,9 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_UFILESYS          | - | - / x | - | - | - | - |
 | USE_ARDUINO_OTA       | - | - / - | - | - | - | - |
 | USE_DOMOTICZ          | - | x / x | x | x | x | - |
-| USE_HOME_ASSISTANT    | - | x / x | x | x | x | - |
-| USE_MQTT_TLS          | - | - / - | - | - | - | - |
+| USE_HOME_ASSISTANT    | - | - / - | - | - | - | - |
+| USE_TASMOTA_DISCOVERY | x | x / x | x | x | x | x |
+| USE_MQTT_TLS*         | - | - / x | - | - | - | - |
 | USE_MQTT_AWS_IOT      | - | - / - | - | - | - | - |
 | USE_4K_RSA            | - | - / - | - | - | - | - |
 | USE_TELEGRAM          | - | - / - | - | - | - | - |
@@ -65,6 +66,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MY92X1            | - | x / - | x | x | - | x |
 | USE_SM16716           | - | x / - | x | x | - | x |
 | USE_SM2135            | - | x / - | x | x | - | x |
+| USE_SM2335            | - | x / - | x | x | - | x |
 | USE_BP5758D           | - | x / - | x | x | - | x |
 | USE_SONOFF_L1         | - | x / - | x | x | - | x |
 | USE_ELECTRIQ_MOODL    | - | x / - | x | x | - | x |
@@ -166,84 +168,88 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_TOF10120          | - | - / - | - | - | - | - |
 | USE_BM8563            | - | - / - | - | - | - | - |
 | USE_AM2320            | - | - / - | - | - | - | - |
-| USE_T67XX             | - | - / - | - | - | - | - |
-| USE_HM330X            | - | - / - | - | - | - | - |
-| USE_HDC2010           | - | - / - | - | - | - | - |
-| USE_PCF85363          | - | - / - | - | - | - | - |
-| USE_DS3502            | - | - / - | - | - | - | - |
-| USE_HYT               | - | - / - | - | - | - | - |
-|                       |   |       |   |   |   |   |
-| Feature or Sensor     | l | t     | k | s | i | d | Remarks
-| USE_SPI               | - | - / - | - | - | - | x |
-| USE_RC522             | - | - / - | - | - | - | - |
-| USE_MHZ19             | - | - / x | - | x | - | - |
-| USE_SENSEAIR          | - | - / x | - | x | - | - |
-| USE_PMS5003           | - | - / x | - | x | - | - |
-| USE_NOVA_SDS          | - | - / x | - | x | - | - |
-| USE_HPMA              | - | - / x | - | x | - | - |
-| USE_SERIAL_BRIDGE     | - | x / x | x | x | - | x |
-| USE_MP3_PLAYER        | - | - / x | - | x | - | - |
-| USE_AZ7798            | - | - / - | - | - | - | - |
-| USE_PN532_HSU         | - | - / x | - | x | - | - |
-| USE_RDM6300           | - | - / x | - | x | - | - |
-| USE_IBEACON           | - | - / x | - | x | - | - |
-| USE_GPS               | - | - / - | - | - | - | - |
-| USE_HM10              | - | - / - | - | x | - | - |
-| USE_HRXL              | - | - / x | - | x | - | - |
-| USE_TASMOTA_CLIENT    | - | - / - | - | - | - | - |
-| USE_OPENTHERM         | - | - / - | - | - | - | - |
-| USE_MIEL_HVAC         | - | - / - | - | - | - | - |
-| USE_PROJECTOR_CTRL    | - | - / - | - | - | - | - |
-| USE_AS608             | - | - / - | - | - | - | - |
-| USE_TCP_BRIDGE        | - | - / - | - | - | - | - | zbbridge
-|                       |   |       |   |   |   |   |
-| USE_NRF24             | - | - / - | - | - | - | - |
-| USE_MIBLE             | - | - / - | - | - | - | - |
-| USE_ZIGBEE            | - | - / - | - | - | - | - |
-| USE_ZIGBEE_ZNP        | - | - / - | - | - | - | - |
-| USE_ZIGBEE_EZSP       | - | - / - | - | - | - | - | Sonoff ZbBridge
-|                       |   |       |   |   |   |   |
-| USE_IR_REMOTE         | - | x / - | x | x | x | x |
-| USE_IR_RECEIVE        | - | x / - | x | x | x | x |
-| USE_IR_REMOTE_FULL    | - | - / - | - | - | x | - | Enable ALL protocols
-|                       |   |       |   |   |   |   |
-| USE_SR04              | - | - / - | - | x | - | - |
-| USE_DYP               | - | - / - | - | - | - | - |
-| USE_TM1638            | - | - / x | - | x | - | - |
-| USE_HX711             | - | - / x | - | x | - | - |
-| USE_TX2x_WIND_SENSOR  | - | - / - | - | - | - | - |
-| USE_WINDMETER         | - | - / - | - | - | - | - |
-| USE_RC_SWITCH         | - | - / x | - | x | - | - |
-| USE_RF_SENSOR         | - | - / x | - | x | - | - | AlectoV2 only
-| USE_HRE               | - | - / x | - | x | - | - |
-| USE_A4988_STEPPER     | - | - / - | - | - | - | - |
-| USE_NEOPOOL           | - | - / - | - | - | - | - |
-| USE_FLOWRATEMETER     | - | - / - | - | - | - | - |
-|                       |   |       |   |   |   |   |
-| Feature or Sensor     | l | t     | k | s | i | d | Remarks
-| USE_DISPLAY           | - | - / - | - | - | - | x |
-| USE_DISPLAY_LCD       | - | - / - | - | - | - | x |
-| USE_DISPLAY_SSD1306   | - | - / - | - | - | - | x |
-| USE_DISPLAY_MATRIX    | - | - / - | - | - | - | x |
-| USE_DISPLAY_SH1106    | - | - / - | - | - | - | x |
-| USE_DISPLAY_ILI9341   | - | - / - | - | - | - | x |
-| USE_DISPLAY_EPAPER_29 | - | - / - | - | - | - | x |
-| USE_DISPLAY_EPAPER_42 | - | - / - | - | - | - | x |
-| USE_DISPLAY_SSD1351   | - | - / - | - | - | - | x |
-| USE_DISPLAY_RA8876    | - | - / - | - | - | - | x |
-| USE_DISPLAY_ST7789    | - | - / - | - | - | - | x |
-| USE_DISPLAY_TM1637    | - | - / - | - | - | - | x |
-|                       |   |       |   |   |   |   |
-| USE_FT5206            | - | - / - | - | - | - | - |
-| USE_FTC532            | - | - / - | - | - | - | - |
-| USE_BS814A2           | - | - / - | - | - | - | - |
-|                       |   |       |   |   |   |   |
-| ESP32 Feature         | l | t     | k | s | i | d | Remarks
-| USE_HALLEFFECT        |   |   / x |   |   |   |   |
-| USE_MI_ESP32          |   |   / x |   |   |   |   | See SetOption115
-| USE_IBEACON_ESP32     |   |   / - |   |   |   |   |
-| USE_WEBCAM            |   |   / - |   |   |   |   |
-| USE_ETHERNET          |   |   / x |   |   |   |   |
-| USE_I2S_AUDIO         |   |   / - |   |   |   |   |
-| USE_TTGO_WATCH        |   |   / - |   |   |   |   |
-| USE_SONOFF_SPM        |   |   / x |   |   |   |   |
+| USE_T67XX                 | - | - / - | - | - | - | - |
+| USE_HM330X                | - | - / - | - | - | - | - |
+| USE_HDC2010               | - | - / - | - | - | - | - |
+| USE_PCF85363              | - | - / - | - | - | - | - |
+| USE_DS3502                | - | - / - | - | - | - | - |
+| USE_HYT                   | - | - / - | - | - | - | - |
+|                           |   |       |   |   |   |   |
+| Feature or Sensor         | l | t     | k | s | i | d | Remarks
+| USE_SPI                   | - | - / - | - | - | - | x |
+| USE_RC522                 | - | - / - | - | - | - | - |
+| USE_MHZ19                 | - | - / x | - | x | - | - |
+| USE_SENSEAIR              | - | - / x | - | x | - | - |
+| USE_PMS5003               | - | - / x | - | x | - | - |
+| USE_NOVA_SDS              | - | - / x | - | x | - | - |
+| USE_HPMA                  | - | - / x | - | x | - | - |
+| USE_SERIAL_BRIDGE         | - | x / x | x | x | - | x |
+| USE_MODBUS_BRIDGE         | - | - / x | - | - | - | - |
+| USE_MP3_PLAYER            | - | - / x | - | x | - | - |
+| USE_AZ7798                | - | - / - | - | - | - | - |
+| USE_PN532_HSU             | - | - / x | - | x | - | - |
+| USE_RDM6300               | - | - / x | - | x | - | - |
+| USE_IBEACON               | - | - / x | - | x | - | - |
+| USE_GPS                   | - | - / - | - | - | - | - |
+| USE_HM10                  | - | - / - | - | x | - | - |
+| USE_HRXL                  | - | - / x | - | x | - | - |
+| USE_TASMOTA_CLIENT        | - | - / - | - | - | - | - |
+| USE_OPENTHERM             | - | - / - | - | - | - | - |
+| USE_MIEL_HVAC             | - | - / - | - | - | - | - |
+| USE_PROJECTOR_CTRL        | - | - / - | - | - | - | - |
+| USE_AS608                 | - | - / - | - | - | - | - |
+| USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge
+|                           |   |       |   |   |   |   |
+| USE_NRF24                 | - | - / - | - | - | - | - |
+| USE_MIBLE                 | - | - / - | - | - | - | - |
+| USE_ZIGBEE                | - | - / - | - | - | - | - |
+| USE_ZIGBEE_ZNP            | - | - / - | - | - | - | - |
+| USE_ZIGBEE_EZSP           | - | - / - | - | - | - | - | Sonoff ZbBridge
+|                           |   |       |   |   |   |   |
+| USE_IR_REMOTE             | - | x / - | x | x | x | x |
+| USE_IR_RECEIVE            | - | x / - | x | x | x | x |
+| USE_IR_REMOTE_FULL        | - | - / - | - | - | x | - | Enable ALL protocols
+|                           |   |       |   |   |   |   |
+| USE_SR04                  | - | - / - | - | x | - | - |
+| USE_DYP                   | - | - / - | - | - | - | - |
+| USE_TM1638                | - | - / x | - | x | - | - |
+| USE_HX711                 | - | - / x | - | x | - | - |
+| USE_TX2x_WIND_SENSOR      | - | - / - | - | - | - | - |
+| USE_WINDMETER             | - | - / - | - | - | - | - |
+| USE_RC_SWITCH             | - | - / x | - | x | - | - |
+| USE_RF_SENSOR             | - | - / x | - | x | - | - | AlectoV2 only
+| USE_HRE                   | - | - / x | - | x | - | - |
+| USE_A4988_STEPPER         | - | - / - | - | - | - | - |
+| USE_NEOPOOL               | - | - / - | - | - | - | - |
+| USE_FLOWRATEMETER         | - | - / - | - | - | - | - |
+|                           |   |       |   |   |   |   |
+| Feature or Sensor         | l | t     | k | s | i | d | Remarks
+| USE_DISPLAY               | - | - / - | - | - | - | x |
+| USE_DISPLAY_LCD           | - | - / - | - | - | - | x |
+| USE_DISPLAY_SSD1306       | - | - / - | - | - | - | x |
+| USE_DISPLAY_MATRIX        | - | - / - | - | - | - | x |
+| USE_DISPLAY_SH1106        | - | - / - | - | - | - | x |
+| USE_DISPLAY_ILI9341       | - | - / - | - | - | - | x |
+| USE_DISPLAY_EPAPER_29     | - | - / - | - | - | - | x |
+| USE_DISPLAY_EPAPER_42     | - | - / - | - | - | - | x |
+| USE_DISPLAY_SSD1351       | - | - / - | - | - | - | x |
+| USE_DISPLAY_RA8876        | - | - / - | - | - | - | x |
+| USE_DISPLAY_ST7789        | - | - / - | - | - | - | x |
+| USE_DISPLAY_TM1637        | - | - / - | - | - | - | x |
+| USE_DISPLAY_TM1621_SONOFF | - | - / x | - | - | - | - |
+|                           |   |       |   |   |   |   |
+| USE_FT5206                | - | - / - | - | - | - | - |
+| USE_FTC532                | - | - / - | - | - | - | - |
+| USE_BS814A2               | - | - / - | - | - | - | - |
+|                           |   |       |   |   |   |   |
+| ESP32 Feature             | l | t     | k | s | i | d | Remarks
+| USE_HALLEFFECT            |   |   / x |   |   |   |   |
+| USE_MI_ESP32              |   |   / x |   |   |   |   | See SetOption115
+| USE_IBEACON_ESP32         |   |   / - |   |   |   |   |
+| USE_WEBCAM                |   |   / - |   |   |   |   |
+| USE_ETHERNET              |   |   / x |   |   |   |   |
+| USE_I2S_AUDIO             |   |   / - |   |   |   |   |
+| USE_TTGO_WATCH            |   |   / - |   |   |   |   |
+| USE_SONOFF_SPM            |   |   / x |   |   |   |   |
+
+* USE_MQTT_TLS is enabled by default in every ESP32 variants

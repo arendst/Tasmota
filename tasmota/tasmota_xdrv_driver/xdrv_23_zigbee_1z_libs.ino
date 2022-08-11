@@ -231,6 +231,7 @@ public:
   uint8_t       src_ep;   // source endpoint, 0xFF if unknown
   uint8_t       lqi;      // linkquality, 0xFF if unknown
   uint16_t      group_id; // group address OxFFFF if inknown
+  uint8_t       batt_percent; // battery percentage
 
   Z_attribute_list():
     LList<Z_attribute>(), // call superclass constructor
@@ -248,11 +249,15 @@ public:
     src_ep = 0xFF;
     lqi = 0xFF;
     group_id = 0xFFFF;
+    batt_percent = 0xFF;
   }
 
-  inline bool isValidSrcEp(void) const { return 0xFF != src_ep; }
-  inline bool isValidLQI(void) const { return 0xFF != lqi; }
-  inline bool isValidGroupId(void) const { return 0xFFFF != group_id; }
+  inline bool validSrcEp(void) const { return 0xFF != src_ep; }
+  inline bool validLQI(void) const { return 0xFF != lqi; }
+  inline bool validGroupId(void) const { return 0xFFFF != group_id; }
+  inline bool validBattPercent(void) const { return 0xFF != batt_percent; }
+
+  inline void setBattPercent(uint8_t batt) { batt_percent = batt; }
 
   // the following addAttribute() compute the suffix and increments it
   // Add attribute to the list, given cluster and attribute id
@@ -273,7 +278,7 @@ public:
   // dump the entire structure as JSON, starting from head (as parameter)
   // does not start not end with a comma
   // do we enclosed in brackets '{' '}'
-  String toString(bool enclose_brackets = false) const;
+  String toString(bool enclose_brackets = false, bool include_battery = false) const;
 
   // find if attribute with same key already exists, return null if not found
   const Z_attribute * findAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) const;
@@ -765,7 +770,7 @@ Z_attribute & Z_attribute_list::addAttribute(const char * name, const char * nam
   return attr;
 }
 
-String Z_attribute_list::toString(bool enclose_brackets) const {
+String Z_attribute_list::toString(bool enclose_brackets, bool include_battery) const {
   String res = "";
   if (enclose_brackets) { res += '{'; }
   bool prefix_comma = false;
@@ -773,22 +778,29 @@ String Z_attribute_list::toString(bool enclose_brackets) const {
     res += attr.toString(prefix_comma);
     prefix_comma = true;
   }
+  // add battery percentage if available, and if BatteryPercentage is not already present
+  if (include_battery && validBattPercent() && countAttribute(PSTR(D_CMND_ZIGBEE_BATTPERCENT)) == 0) {
+    if (prefix_comma) { res += ','; }
+    prefix_comma = true;
+    res += F("\"" D_CMND_ZIGBEE_BATTPERCENT "\":");
+    res += batt_percent;
+  }
   // add source endpoint
-  if (0xFF != src_ep) {
+  if (validSrcEp()) {
     if (prefix_comma) { res += ','; }
     prefix_comma = true;
     res += F("\"" D_CMND_ZIGBEE_ENDPOINT "\":");
     res += src_ep;
   }
   // add group address
-  if (0xFFFF != group_id) {
+  if (validGroupId()) {
     if (prefix_comma) { res += ','; }
     prefix_comma = true;
     res += F("\"" D_CMND_ZIGBEE_GROUP "\":");
     res += group_id;
   }
   // add lqi
-  if (0xFF != lqi) {
+  if (validLQI()) {
     if (prefix_comma) { res += ','; }
     prefix_comma = true;
     res += F("\"" D_CMND_ZIGBEE_LINKQUALITY "\":");

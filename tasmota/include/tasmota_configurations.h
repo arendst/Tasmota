@@ -69,6 +69,7 @@
 #define USE_MY92X1                               // Add support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 #define USE_SM2135                               // Add support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
+#define USE_SM2335                               // Add support for SM2335 RGBCW led control as used in Switchbot Bulb
 #define USE_BP5758D                              // Add support for BP5758D RGBCW led control as used in some Tuya lightbulbs (+0k8 code)
 #define USE_SONOFF_L1                            // Add support for Sonoff L1 led control
 #define USE_ELECTRIQ_MOODL                       // Add support for ElectriQ iQ-wifiMOODL RGBW LED controller
@@ -175,6 +176,7 @@
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
+//#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+3k code)
 #define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -403,6 +405,7 @@
 #undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
+#undef USE_SM2335                                // Disable support for SM2335 RGBCW led control as used in Switchbot Bulb
 #undef USE_BP5758D                               // Disable support for BP5758D RGBCW led control as used in some Tuya lightbulbs (+0k8 code)
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
 #undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
@@ -445,6 +448,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -552,6 +556,7 @@
 #undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
+#undef USE_SM2335                                // Disable support for SM2335 RGBCW led control as used in Switchbot Bulb
 #undef USE_BP5758D                               // Disable support for BP5758D RGBCW led control as used in some Tuya lightbulbs (+0k8 code)
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
 #undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
@@ -572,6 +577,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -697,6 +703,7 @@
 #undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
+#undef USE_SM2335                                // Disable support for SM2335 RGBCW led control as used in Switchbot Bulb
 #undef USE_BP5758D                               // Disable support for BP5758D RGBCW led control as used in some Tuya lightbulbs (+0k8 code)
 #undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
 #undef USE_ELECTRIQ_MOODL                        // Disable support for ElectriQ iQ-wifiMOODL RGBW LED controller
@@ -717,6 +724,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
@@ -857,6 +865,7 @@
 #undef USE_SR04                                  // Disable support for HC-SR04 ultrasonic devices (+1k code)
 #undef USE_DYP                                   // Disable support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
+#undef USE_MODBUS_BRIDGE                         // Disable support for software Modbus Bridge (+3k code)
 #undef USE_TCP_BRIDGE                            // DIsable support for Serial to TCP bridge (+1.3k code)
 #undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
@@ -915,11 +924,11 @@
 #undef CODE_IMAGE_STR
 #define CODE_IMAGE_STR "mini-custom"
 
-#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
-#undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
-#undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
-#undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
-#undef FIRMWARE_IR                              // Disable tasmota-ir with IR full protocols activated
+#undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
+#undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
+#undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
+#undef FIRMWARE_DISPLAYS                         // Disable tasmota-display with display drivers enabled
+#undef FIRMWARE_IR                               // Disable tasmota-ir with IR full protocols activated
 #undef FIRMWARE_WEBCAM
 #undef FIRMWARE_ODROID_GO
 #undef FIRMWARE_M5STACK_CORE2
@@ -949,12 +958,12 @@
 // IR_SEND has two mode: minimal or full (USE_IR_REMOTE_FULL)
 #ifdef USE_IR_REMOTE_FULL
   // Enable all protocols except PRONTO
-  #ifndef _IR_ENABLE_DEFAULT_                  // it is possible to define this value previously in config
-    #define _IR_ENABLE_DEFAULT_ true           // Enable all protocols except exluded below
+  #ifndef _IR_ENABLE_DEFAULT_                    // it is possible to define this value previously in config
+    #define _IR_ENABLE_DEFAULT_ true             // Enable all protocols except exluded below
   #endif
   // PRONTO protocol cannot be supported because it requires specific APIs which are not supported in Tasmota
-  #define DECODE_PRONTO false                  // Exclude PRONTO protocol
-  #define SEND_PRONTO false                    // Exclude PRONTO protocol
+  #define DECODE_PRONTO false                    // Exclude PRONTO protocol
+  #define SEND_PRONTO false                      // Exclude PRONTO protocol
 #else
   #define _IR_ENABLE_DEFAULT_ false              // disable all protocols by default
   // below are the default IR protocols
@@ -978,7 +987,7 @@
 \*********************************************************************************************/
 
 #ifndef ESP8266_1M
-  #ifndef FIRMWARE_MINIMAL    // there might be a ESP32-minimal
+  #ifndef FIRMWARE_MINIMAL                       // There might be a ESP32-minimal
     #define USE_UFILESYS
       #define GUI_TRASH_FILE
       #define GUI_EDIT_FILE
@@ -1031,17 +1040,17 @@
 #endif
 
 #ifdef USE_SCRIPT
-#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif
 #ifdef USE_ZIGBEE
-#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif
 #ifdef USE_EMULATION_HUE
-#define USE_UNISHOX_COMPRESSION                // Add support for string compression
+#define USE_UNISHOX_COMPRESSION                  // Add support for string compression
 #endif
 
-#if defined(USE_MQTT_TLS)                      // Enable TLS if required:
-  #define USE_TLS                              // flag indicates we need to include TLS code
-#endif                                         // USE_MQTT_TLS
+#if defined(USE_MQTT_TLS)                        // Enable TLS if required:
+  #define USE_TLS                                // flag indicates we need to include TLS code
+#endif                                           // USE_MQTT_TLS
 
 #endif  // _TASMOTA_CONFIGURATIONS_H_

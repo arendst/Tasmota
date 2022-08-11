@@ -8,11 +8,11 @@ def assert_attribute_error(f)
 end
 
 class A
-    static a
+    static a    #- deprecated syntax -#
     def init() self.b = 2 end
     def f() end 
     var b 
-    static c, s, r
+    static var c, s, r  #- preferred syntax -#
 end
 
 assert(A.a == nil)

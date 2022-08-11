@@ -61,6 +61,7 @@ struct pcall {
 
 struct vmstate {
     int top, reg, depth;
+    int refcount;
 };
 
 struct strbuf {
@@ -125,6 +126,7 @@ static void vm_state_save(bvm *vm, struct vmstate *state)
     state->depth = be_stack_count(&vm->callstack);
     state->top = cast_int(vm->top - vm->stack);
     state->reg = cast_int(vm->reg - vm->stack);
+    state->refcount = vm->refstack.count;
 }
 
 static void copy_exception(bvm *vm, int res, int dstindex)
@@ -143,6 +145,7 @@ static void copy_exception(bvm *vm, int res, int dstindex)
 static void vm_state_restore(bvm *vm, const struct vmstate *state, int res)
 {
     vm->reg = vm->stack + state->reg;
+    be_vector_resize(vm, &vm->refstack, state->refcount);
     /* copy exception information to top */
     copy_exception(vm, res, state->top);
     be_assert(be_stack_count(&vm->callstack) >= state->depth);
@@ -444,6 +447,7 @@ void be_except_block_setup(bvm *vm)
     /* set longjmp() jump point */
     frame->errjmp.status = 0;
     frame->errjmp.prev = vm->errjmp; /* save long jump list */
+    frame->refcount = vm->refstack.count; /* save reference pointer */
     vm->errjmp = &frame->errjmp;
     fixup_exceptstack(vm, lbase);
 }
@@ -455,6 +459,7 @@ void be_except_block_resume(bvm *vm)
     struct bexecptframe *frame = be_stack_top(&vm->exceptstack);
     if (errorcode == BE_EXCEPTION) {
         vm->errjmp = vm->errjmp->prev;
+        be_vector_resize(vm, &vm->refstack, frame->refcount);
         /* jump to except instruction */
         vm->ip = frame->ip + IGET_sBx(frame->ip[-1]);
         if (be_stack_count(&vm->callstack) > frame->depth) {

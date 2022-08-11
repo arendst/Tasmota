@@ -61,9 +61,9 @@ void ResponseAppendFeatures(void)
 //#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
 //    feature1 |= 0x00000800;  // xdrv_02_mqtt.ino
 //#endif
-//#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)      // Obsolete since 6.2.1.11
-//    feature1 |= 0x00001000;  // xdrv_02_mqtt.ino
-//#endif
+#ifdef USE_MODBUS_BRIDGE
+    feature1 |= 0x00001000;  // xdrv_63_modbus_bridge.ino
+#endif
 #if defined(USE_DISCOVERY) && defined(MQTT_HOST_DISCOVERY)
     feature1 |= 0x00002000;  // xdrv_02_mqtt.ino
 #endif
@@ -815,8 +815,12 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_HYT)
     feature8 |= 0x20000000;  // xsns_97_hyt.ino
 #endif
-//    feature8 |= 0x40000000;
-//    feature8 |= 0x80000000;
+#if defined(USE_LIGHT) && defined(USE_SM2335)
+    feature8 |= 0x40000000;  // xlgt_09_sm2335.ino
+#endif
+#ifdef USE_DISPLAY_TM1621_SONOFF
+    feature8 |= 0x80000000;  // xdrv_87_tm1621_sonoff.ino
+#endif
   }
 
   static uint32_t feature9 = 0x00000000;

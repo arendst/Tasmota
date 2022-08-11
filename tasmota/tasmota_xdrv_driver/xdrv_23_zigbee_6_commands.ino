@@ -91,8 +91,11 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   { Z_(Shutter),        0x0102, 0xFF, 0x01,   Z_() },
   // Legrand - Manuf 1021
   { Z_(LegrandMode),    0xFC40, 0x00, 0x01,   Z_(xx) },
+  // Tuya Generix
+  { Z_(TuyaQuery),      0xEF00, 0x03, 0x01,   Z_()},               // Generic Tuya command to ask for reporting of all attributes
+  { Z_(TuyaMCUVersion), 0xEF00, 0x10, 0x01,   Z_(0101)},           // Generic Tuya command to ask MCU version (includes a dummy seq number for now)
   // Blitzwolf PIR
-  { Z_(Occupancy),      0xEF00, 0x01, 0x82,   Z_()},                // Specific decoder for Blitzwolf PIR, empty name means special treatment
+  { Z_(Occupancy),      0xEF00, 0x01, 0x82,   Z_()},               // Specific decoder for Blitzwolf PIR, empty name means special treatment
   // Decoders only - normally not used to send, and names may be masked by previous definitions
   { Z_(Dimmer),         0x0008, 0x00, 0x01,   Z_(xx) },
   { Z_(DimmerMove),     0x0008, 0x01, 0x01,   Z_(xx0A) },
@@ -150,6 +153,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
 
 // Below are the attributes we wand to read from each cluster
+const uint8_t CLUSTER_0001[] = { ZLE(0x0020), ZLE(0x0021) };    // BatteryVoltage, BatteryPercentage
 const uint8_t CLUSTER_0006[] = { ZLE(0x0000) };    // Power
 const uint8_t CLUSTER_0008[] = { ZLE(0x0000) };    // CurrentLevel
 const uint8_t CLUSTER_0009[] = { ZLE(0x0000) };    // AlarmCount
@@ -161,6 +165,10 @@ void Z_ReadAttrCallback(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster
   const uint8_t* attrs = nullptr;
 
   switch (cluster) {
+    case 0x0001:
+      attrs = CLUSTER_0001;
+      attrs_len = sizeof(CLUSTER_0001);
+      break;
     case 0x0006:                              // for On/Off
       attrs = CLUSTER_0006;
       attrs_len = sizeof(CLUSTER_0006);

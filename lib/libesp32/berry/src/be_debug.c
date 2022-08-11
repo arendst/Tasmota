@@ -15,6 +15,7 @@
 #include "be_strlib.h"
 #include "be_exec.h"
 #include "be_mem.h"
+#include "be_sys.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -46,13 +47,17 @@ static const char* opc2str(bopcode op)
     return op < array_count(opc_tab) ? opc_tab[op] : "ERROP";
 }
 
-void be_print_inst(binstruction ins, int pc)
+void be_print_inst(binstruction ins, int pc, void* fout)
 {
     char __lbuf[INST_BUF_SIZE];
     bopcode op = IGET_OP(ins);
 
     logbuf("  %.4X  ", pc);
-    be_writestring(__lbuf);
+    if (fout) {
+        be_fwrite(fout, __lbuf, strlen(__lbuf));
+    } else {
+        be_writestring(__lbuf);
+    }                            
     switch (op) {
     case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
     case OP_MOD: case OP_LT: case OP_LE: case OP_EQ:
@@ -132,8 +137,12 @@ void be_print_inst(binstruction ins, int pc)
         logbuf("%s", opc2str(op));
         break;
     }
-    be_writestring(__lbuf);
-    be_writenewline();
+    logbuf("%s\n", __lbuf);
+    if (fout) {
+        be_fwrite(fout, __lbuf, strlen(__lbuf));
+    } else {
+        be_writestring(__lbuf);
+    }                   
 }
 #endif
 
@@ -159,7 +168,7 @@ void be_dumpclosure(bclosure *cl)
             logfmt("; line %d\n", (++lineinfo)->linenumber);
         }
 #endif
-        be_print_inst(*code++, pc);
+        be_print_inst(*code++, pc, NULL);
     }
 }
 #endif

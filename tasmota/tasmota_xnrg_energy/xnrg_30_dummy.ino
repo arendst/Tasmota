@@ -83,28 +83,28 @@ bool NrgDummyCommand(void) {
   }
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((abs_value > 100) && (abs_value < 200000)) {    // Between 1.00 and 2000.00 W
+      if ((abs_value >= 100) && (abs_value <= 16000000)) {   // Between 1.00 and 160000.00 W
         Settings->energy_power_calibration = abs_value;
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((abs_value > 10000) && (abs_value < 26000)) {   // Between 100.00 and 260.00 V
+      if ((abs_value >= 10000) && (abs_value <= 40000)) {    // Between 100.00 and 400.00 V
         Settings->energy_voltage_calibration = abs_value;
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((abs_value > 1000) && (abs_value < 1000000)) {  // Between 10.00 mA and 10.00000 A
+      if ((abs_value >= 1000) && (abs_value <= 40000000)) {  // Between 10.00 mA and 400.00000 A
         Settings->energy_current_calibration = abs_value;
       }
     }
   }
   else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len) {
-      if ((abs_value > 4500) && (abs_value < 6500)) {     // Between 45.00 and 65.00 Hz
+      if ((abs_value >= 4500) && (abs_value <= 6500)) {      // Between 45.00 and 65.00 Hz
         Settings->energy_frequency_calibration = abs_value;
       }
     }

@@ -1040,7 +1040,7 @@ void EnergyDrvInit(void) {
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
   TasmotaGlobal.energy_driver = ENERGY_NONE;
-  XnrgCall(FUNC_PRE_INIT);  // Find first energy driver
+  XnrgCall(FUNC_PRE_INIT);             // Find first energy driver
 }
 
 void EnergySnsInit(void)
@@ -1048,31 +1048,19 @@ void EnergySnsInit(void)
   XnrgCall(FUNC_INIT);
 
   if (TasmotaGlobal.energy_driver) {
-
-    // Update for split phase totals (v9.5.0.9)
-    if ((Settings->energy_kWhtotal > 0) && (0 == Settings->energy_kWhtotal_ph[0])) {
-      Settings->energy_kWhtotal_ph[0] = Settings->energy_kWhtotal;
-      Settings->energy_kWhtoday_ph[0] = Settings->energy_kWhtoday;
-      Settings->energy_kWhyesterday_ph[0] = Settings->energy_kWhyesterday;
-      RtcSettings.energy_kWhtoday_ph[0] = RtcSettings.energy_kWhtoday;
-      RtcSettings.energy_kWhtotal_ph[0] = RtcSettings.energy_kWhtotal;
-      Settings->energy_kWhtotal = 0;
-    }
-
-//    Energy.kWhtoday_offset = 0;
-    // Do not use at Power On as Rtc was invalid (but has been restored from Settings already)
-    if ((ResetReason() != REASON_DEFAULT_RST) && RtcSettingsValid()) {
-      for (uint32_t i = 0; i < 3; i++) {
-        Energy.kWhtoday_offset[i] = RtcSettings.energy_kWhtoday_ph[i];
-      }
-      Energy.kWhtoday_offset_init = true;
-    }
     for (uint32_t i = 0; i < 3; i++) {
-//    Energy.kWhtoday_ph[i] = 0;
-//    Energy.kWhtoday_delta[i] = 0;
+//    Energy.kWhtoday_offset[i] = 0;   // Reset by EnergyDrvInit()
+      // 20220805 - Change from https://github.com/arendst/Tasmota/issues/16118
+      if (RtcSettingsValid()) {
+        Energy.kWhtoday_offset[i] = RtcSettings.energy_kWhtoday_ph[i];
+        RtcSettings.energy_kWhtoday_ph[i] = 0;
+        Energy.kWhtoday_offset_init = true;
+      }
+//    Energy.kWhtoday_ph[i] = 0;       // Reset by EnergyDrvInit()
+//    Energy.kWhtoday_delta[i] = 0;    // Reset by EnergyDrvInit()
       Energy.period[i] = Energy.kWhtoday_offset[i];
       if (Energy.local_energy_active_export) {
-        Energy.export_active[i] = 0;
+        Energy.export_active[i] = 0;   // Was set to NAN by EnergyDrvInit()
       }
     }
     EnergyUpdateToday();

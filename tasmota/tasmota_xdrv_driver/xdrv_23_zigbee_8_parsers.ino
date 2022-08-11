@@ -727,7 +727,8 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
   for (uint32_t i=0; i<nitems(Z_bindings); i++) {
     if (bitRead(cluster_in_map, i)) {
       uint16_t cluster = CxToCluster(pgm_read_byte(&Z_bindings[i]));
-      if ((cluster == 0x0001) && (!Z_BatteryReportingDeviceSpecific(shortaddr))) { continue; }
+      // don't configure Battery reporting if `SetOption143 0` or if device is on the exception list
+      if ((cluster == 0x0001) && (!Settings->flag5.zigbee_no_batt_autoprobe) || !Z_BatteryReportingDeviceSpecific(shortaddr)) { continue; }
       zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, cluster, endpoint, Z_CAT_CONFIG_ATTR, 0 /* value */, &Z_AutoConfigReportingForCluster);
     }
   }
@@ -951,11 +952,16 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const SBuffer &buf) {
   // device is reachable
   zigbee_devices.deviceWasReached(nwkAddr);
 
+  bool power_source = (capabilities & 0x04);
+  if (power_source) {
+    zigbee_devices.deviceHasNoBattery(nwkAddr);
+  }
+
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"IEEEAddr\":\"0x%_X\",\"ShortAddr\":\"0x%04X\""
                   ",\"PowerSource\":%s,\"ReceiveWhenIdle\":%s,\"Security\":%s}}"),
                   ZIGBEE_STATUS_DEVICE_ANNOUNCE, &ieeeAddr, nwkAddr,
-                  (capabilities & 0x04) ? PSTR("true") : PSTR("false"),
+                  power_source ? PSTR("true") : PSTR("false"),
                   (capabilities & 0x08) ? PSTR("true") : PSTR("false"),
                   (capabilities & 0x40) ? PSTR("true") : PSTR("false")
                   );
@@ -1673,6 +1679,12 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     // Build the ZbReceive list
     if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId() || ZCL_WRITE_ATTRIBUTES == zcl_received.getCmdId())) {
       zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
+
+      // since we receive a sensor value, and the device is still awake,
+      // try to read the battery value
+      if (clusterid != 0x0001) {    // avoid sending Battery probe if we already received info from cluster 0x0001
+        Z_Query_Battery(srcaddr);
+      }
       if (clusterid && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) { defer_attributes = true; }  // don't defer system Cluster=0 messages or Write Attribute
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseReadAttributesResponse(attr_list);
@@ -1688,9 +1700,10 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseWriteAttributesResponse(attr_list);
     } else if (zcl_received.isClusterSpecificCommand()) {
       zcl_received.parseClusterSpecificCommand(attr_list);
+      Z_Query_Battery(srcaddr);   // do battery auto-probing when receiving commands
     }
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString().c_str());
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString(false, false).c_str()); // don't include battery
 
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
@@ -2067,6 +2080,30 @@ void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
       wait_ms += inter_message_ms;
       zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
       wait_ms += 1000;              // wait 1 second between devices
+    }
+  }
+}
+
+//
+// Query the status of the battery (auto-probe)
+//
+void Z_Query_Battery(uint16_t shortaddr) {
+  if (Settings->flag5.zigbee_no_batt_autoprobe) { return; }   // don't do auto-probe if `SetOption143 1`
+  if (0 == shortaddr) { return; }
+  Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+  if (device.valid()) {
+    uint32_t now = Rtc.utc_time;
+    if (now < START_VALID_TIME) { return; }     // internal time is not valid
+    if (device.hasNoBattery()) { return; }      // device is known to have no battery
+    if (device.batt_last_seen + USE_ZIGBEE_BATT_REPROBE > now) { return; }     // battery status is fresh enough
+    if (device.batt_last_probed + USE_ZIGBEE_BATT_REPROBE_PAUSE > now) { return; }  // battery has been probed soon enough
+
+    uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
+    if (endpoint) {   // send only if we know the endpoint
+      device.batt_last_probed = now;                   // we are probing now
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, 0 /* now */, 0x0001, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      AddLog(LOG_LEVEL_INFO, PSTR("ZIG: Battery auto-probe "
+             "`ZbSend {\"Device\":\"0x%04X\",\"Read\":{\"BatteryPercentage\":true,\"BatteryVoltage\":true}}`"), shortaddr);
     }
   }
 }

@@ -80,6 +80,9 @@ const char kIrRemoteCommands[] PROGMEM = "|"
 void (* const IrRemoteCommand[])(void) PROGMEM = {
   &CmndIrHvac, &CmndIrSend };
 
+bool ir_send_active = false;    // do we have a GPIO configured for IR_SEND
+bool ir_recv_active = false;    // do we have a GPIO configured for IR_RECV
+
 /*********************************************************************************************\
  * Class used to make a compact IR Raw format.
  *
@@ -122,7 +125,6 @@ protected:
  * IR Send
 \*********************************************************************************************/
 
-IRsend *irsend = nullptr;
 // some ACs send toggle messages rather than state. we need to help IRremoteESP8266 keep track of the state
 // have a flag that is a variable, can be later used to convert this functionality to an option (as in SetOptionXX)
 bool irhvac_stateful = true;
@@ -134,10 +136,18 @@ enum class StateModes { SEND_ONLY, // just send the IR signal, this is the defau
   SEND_STORE }; // send IR signal but also update stored state. this is for use cases when there is just one transmitter and there is no receiver in the device.
 StateModes strToStateMode(class JsonParserToken token, StateModes def); // declate to prevent errors related to ino files
 
-void IrSendInit(void)
-{
-  irsend = new IRsend(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
-  irsend->begin();
+// initialize an `IRsend` static instance
+// channel is the IRSEND channel number (from 0..)
+class IRsend IrSendInitGPIO(int32_t channel = -1) {
+  if (channel < 0) { channel = GPIO_ANY; }    // take first available GPIO
+  int32_t pin = Pin(GPIO_IRSEND, channel);
+  if (pin < 0) {
+    pin = Pin(GPIO_IRSEND, GPIO_ANY);
+    AddLog(LOG_LEVEL_INFO, PSTR("IR : GPIO 'IRsend-%i' not assigned, revert to GPIO %i"), channel+1, pin);
+  }
+  IRsend irsend(pin, IR_SEND_INVERTED, IR_SEND_USE_MODULATION); // an IR led is at GPIO_IRSEND
+  irsend.begin();
+  return irsend;
 }
 
 // from https://stackoverflow.com/questions/2602823/in-c-c-whats-the-simplest-way-to-reverse-the-order-of-bits-in-a-byte
@@ -279,8 +289,7 @@ void sendIRJsonState(const struct decode_results &results) {
   }
 }
 
-void IrReceiveCheck(void)
-{
+void IrReceiveCheck(void) {
   decode_results results;
 
   if (irrecv->decode(&results)) {
@@ -460,16 +469,23 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   state.sleep = root.getInt(PSTR(D_JSON_IRHVAC_SLEEP), state.sleep);
   //if (json[D_JSON_IRHVAC_CLOCK]) { state.clock = json[D_JSON_IRHVAC_CLOCK]; }   // not sure it's useful to support 'clock'
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
   if (stateMode == StateModes::SEND_ONLY || stateMode == StateModes::SEND_STORE) {
-    IRac ac(Pin(GPIO_IRSEND), IR_SEND_INVERTED, IR_SEND_USE_MODULATION);
+    int8_t channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
+    if (channel < 0) { channel = GPIO_ANY; }    // take first available GPIO
+    int32_t pin = Pin(GPIO_IRSEND, channel);
+    if (pin < 0) {
+      pin = Pin(GPIO_IRSEND, GPIO_ANY);
+      AddLog(LOG_LEVEL_INFO, PSTR("IR : GPIO 'IRsend-%i' not assigned, revert to GPIO %i"), channel+1, pin);
+    }
+    IRac ac(pin, IR_SEND_INVERTED, IR_SEND_USE_MODULATION);
     bool success = ac.sendAc(state, irhvac_stateful && irac_prev_state.protocol == state.protocol ? &irac_prev_state : nullptr);
     if (!success) { return IE_SYNTAX_IRHVAC; }
   }
   if (stateMode == StateModes::STORE_ONLY || stateMode == StateModes::SEND_STORE) { // store state in memory
     irac_prev_state = state;
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
   Response_P(PSTR("{\"" D_CMND_IRHVAC "\":%s}"), sendACJsonState(state).c_str());
   return IE_RESPONSE_PROVIDED;
@@ -511,6 +527,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   uint16_t bits = root.getUInt(PSTR(D_JSON_IR_BITS), 0);
   uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
+  int8_t channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
 
   uint64_t data;
   value = root[PSTR(D_JSON_IR_DATALSB)];
@@ -527,9 +544,10 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // AddLog(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
   //   protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
-  bool success = irsend->send(protocol, data, bits, repeat);
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+  IRsend irsend = IrSendInitGPIO(channel);
+  bool success = irsend.send(protocol, data, bits, repeat);
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
   if (!success) {
       ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -552,11 +570,12 @@ uint32_t IrRemoteSendGC(char ** pp, uint32_t count, uint32_t repeat) {
     GC[i] = strtol(strtok_r(nullptr, ",", pp), nullptr, 0);
     if (!GC[i]) { return IE_INVALID_RAWDATA; }
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+  IRsend irsend = IrSendInitGPIO();
   for (uint32_t r = 0; r <= repeat; r++) {
-    irsend->sendGC(GC, count+1);
+    irsend.sendGC(GC, count+1);
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
   return IE_NO_ERROR;
 }
 
@@ -607,15 +626,16 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
         raw_array[i++] = mark;                    // Mark
       }
     }
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+    IRsend irsend = IrSendInitGPIO();
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw count=%d, space=%d, mark=%d, freq=%d"), count, space, mark, freq);
-      irsend->sendRaw(raw_array, i, freq);
+      irsend.sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
-        irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
+        irsend.space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
   } else if (6 == count) {                          // NEC Protocol
     // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
     uint16_t raw_array[strlen(*pp)*2+3];            // Header + bits + end
@@ -634,15 +654,16 @@ uint32_t IrRemoteSendRawFormatted(char ** pp, uint32_t count, uint32_t repeat) {
       }
     }
     raw_array[i++] = parm[2];                     // Trailing mark
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+    IRsend irsend = IrSendInitGPIO();
     for (uint32_t r = 0; r <= repeat; r++) {
       // AddLog(LOG_LEVEL_DEBUG, PSTR("sendRaw %d %d %d %d %d %d"), raw_array[0], raw_array[1], raw_array[2], raw_array[3], raw_array[4], raw_array[5]);
-      irsend->sendRaw(raw_array, i, freq);
+      irsend.sendRaw(raw_array, i, freq);
       if (r < repeat) {         // if it's not the last message
-        irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
+        irsend.space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
       }
     }
-    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+    if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
   }
   else { return IE_INVALID_RAWDATA; }                   // Invalid number of parameters
   return IE_NO_ERROR;
@@ -711,11 +732,12 @@ uint32_t IrRemoteSendRawStandard(char ** pp, uint16_t freq, uint32_t count, uint
   // AddLog(LOG_LEVEL_DEBUG, PSTR("Arr %d %d %d %d %d %d %d %d"), arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7]);
   if (0 == count) { return IE_INVALID_RAWDATA; }
 
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->disableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->pause(); }
+  IRsend irsend = IrSendInitGPIO();
   for (uint32_t r = 0; r <= repeat; r++) {
-    irsend->sendRaw(arr, count, freq);
+    irsend.sendRaw(arr, count, freq);
   }
-  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->enableIRIn(); }
+  if (!IR_RCV_WHILE_SENDING && (irrecv != nullptr)) { irrecv->resume(); }
 
   if (nullptr != arr) {
     free(arr);
@@ -772,8 +794,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
   }
 }
 
-void CmndIrSend(void)
-{
+void CmndIrSend(void) {
   uint8_t error = IE_SYNTAX_IRSEND;
 
   if (XdrvMailbox.data_len) {
@@ -815,6 +836,18 @@ void IrRemoteCmndResponse(uint32_t error)
   }
 }
 
+void IrInit(void) {
+  ir_send_active = PinUsed(GPIO_IRSEND, GPIO_ANY);
+  ir_recv_active = PinUsed(GPIO_IRRECV, GPIO_ANY);
+  if (ir_send_active) {
+    for (uint32_t chan = 0; chan < MAX_IRSEND; chan++) {
+      if (PinUsed(GPIO_IRSEND, chan)) {
+        IrSendInitGPIO(chan);
+      }
+    }
+  }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -823,27 +856,23 @@ bool Xdrv05(uint8_t function)
 {
   bool result = false;
 
-  if (PinUsed(GPIO_IRSEND) || PinUsed(GPIO_IRRECV)) {
-    switch (function) {
-      case FUNC_PRE_INIT:
-        if (PinUsed(GPIO_IRSEND)) {
-          IrSendInit();
-        }
-        if (PinUsed(GPIO_IRRECV)) {
-          IrReceiveInit();
-        }
-        break;
-      case FUNC_EVERY_50_MSECOND:
-        if (PinUsed(GPIO_IRRECV)) {
-          IrReceiveCheck();  // check if there's anything on IR side
-        }
-        break;
-      case FUNC_COMMAND:
-        if (PinUsed(GPIO_IRSEND)) {
-          result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
-        }
-        break;
-    }
+  switch (function) {
+    case FUNC_PRE_INIT:
+      IrInit();
+      if (ir_recv_active) {
+        IrReceiveInit();
+      }
+      break;
+    case FUNC_EVERY_50_MSECOND:
+      if (ir_recv_active) {
+        IrReceiveCheck();  // check if there's anything on IR side
+      }
+      break;
+    case FUNC_COMMAND:
+      if (ir_send_active) {
+        result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
+      }
+      break;
   }
   return result;
 }

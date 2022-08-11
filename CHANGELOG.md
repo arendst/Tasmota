@@ -2,6 +2,55 @@
 All notable changes to this project will be documented in this file.
 
 ## [Released]
+
+## [12.1.0] 20220817
+- Release Patricia
+
+## [12.0.2.4] 20220817
+### Added
+- Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
+- Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` (#16013)
+- Support for multiple ``IRsend`` GPIOs (#16138)
+- Zigbee added recording of when the battery was last reported (#16146)
+- Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``) (#16148)
+- Zigbee include "BatteryPercentage" in all messages
+- Commands ``WifiScan`` and ``WifiTest`` (#16141)
+- Support for Catalan language translations by Albert Gonzalez (#16145)
+- Zigbee ``SetOption144 1`` includes a timestamp in `ZbReceived` messages
+
+### Changed
+- ESP32 LVGL library from v8.2.0 to v8.3.0 (#16019)
+- Tasmota ESP32 Arduino core from v2.0.4 to v2.0.4.1 (#16110)
+
+### Fixed
+- Restore EnergyToday after using command ``restart 2`` and power cycle (#16118)
+- Fixed IR crash on ESP32 (#16173)
+- Zigbee fix Tuya for writing attributes
+
+## [12.0.2.3] 20220716
+### Added
+- Support for Sonoff POWR3xxD and THR3xxD (#15856)
+- Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
+- ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars (#15916)
+- Command ``Sleep2 !`` to cancel pending one-shot speed setting (#15954)
+
+### Changed
+- Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 (#15856)
+- Tasmota ESP32 Arduino core from v2.0.3 to v2.0.4 (#15940)
+
+## [12.0.2.2] 20220701
+### Added
+- Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data (#15834)
+- Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data (#15834)
+- Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data (#15834)
+
+## [12.0.2.1] 20220622
+### Added
+- Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs (#15839)
+
+### Fixed
+- ESP32 SendMail not working over ethernet (#15794)
+
 ## [12.0.2] 20220620
 - Release Paul
 
@@ -10,13 +59,7 @@ All notable changes to this project will be documented in this file.
 - Command ``DnsTimeout 100..20000`` to change default DNS timeout from 1000 msec blocking if no DNS server found
 
 ### Fixed
-- MQTT rc -4 connections regression from v12.0.0 (#15809)
-
-## [12.0.1] 20220617
-- Release Paul
-
-### Fixed
-- Resolving NTP and/or MQTT server names regression from v12.0.0 (#15816)
+- MQTT rc -4 on connections regression from v12.0.0 (#15809)
 
 ## [12.0.1] 20220617
 - Release Paul

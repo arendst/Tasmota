@@ -743,17 +743,17 @@ float ConvertTempToFahrenheit(float c) {
 
 float ConvertTempToCelsius(float c) {
   float result = c;
-
-  if (!isnan(c) && !Settings->flag.temperature_conversion) {   // SetOption8 - Switch between Celsius or Fahrenheit
+  if (!isnan(c) && Settings->flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = (c - 32) / 1.8f;                                  // Celsius
   }
-  result = result + (0.1f * Settings->temp_comp);
   return result;
 }
 
 void UpdateGlobalTemperature(float c) {
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.temperature_celsius = c;
+  if (!Settings->global_sensor_index[0] && !TasmotaGlobal.user_globals[0]) {
+    TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    TasmotaGlobal.temperature_celsius = c;
+  }
 }
 
 float ConvertTemp(float c) {
@@ -770,8 +770,10 @@ char TempUnit(void) {
 float ConvertHumidity(float h) {
   float result = h;
 
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.humidity = h;
+  if (!Settings->global_sensor_index[1] && !TasmotaGlobal.user_globals[1]) {
+    TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    TasmotaGlobal.humidity = h;
+  }
 
   result = result + (0.1f * Settings->hum_comp);
 
@@ -794,11 +796,27 @@ float CalcTempHumToDew(float t, float h) {
   return result;
 }
 
+float ConvertHgToHpa(float p) {
+  // Convert mmHg (or inHg) to hPa
+  float result = p;
+  if (!isnan(p) && Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
+    if (Settings->flag5.mm_vs_inch) {                          // SetOption139 - Switch between mmHg or inHg pressure unit
+      result = p * 33.86389f;                                  // inHg (double to float saves 16 bytes!)
+    } else {
+      result = p * 1.3332239f;                                 // mmHg (double to float saves 16 bytes!)
+    }
+  }
+  return result;
+}
+
 float ConvertPressure(float p) {
+  // Convert hPa to mmHg (or inHg)
   float result = p;
 
-  TasmotaGlobal.global_update = TasmotaGlobal.uptime;
-  TasmotaGlobal.pressure_hpa = p;
+  if (!Settings->global_sensor_index[2] && !TasmotaGlobal.user_globals[2]) {
+    TasmotaGlobal.global_update = TasmotaGlobal.uptime;
+    TasmotaGlobal.pressure_hpa = p;
+  }
 
   if (!isnan(p) && Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
     if (Settings->flag5.mm_vs_inch) {                          // SetOption139 - Switch between mmHg or inHg pressure unit
@@ -2455,7 +2473,7 @@ void SyslogAsync(bool refresh) {
         if (!WifiHostByName(SettingsText(SET_SYSLOG_HOST), temp_syslog_host_addr)) {  // If sleep enabled this might result in exception so try to do it once using hash
           TasmotaGlobal.syslog_level = 0;
           TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+          AddLog(LOG_LEVEL_INFO, PSTR("SLG: " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
           return;
         }
         syslog_host_hash = current_hash;
@@ -2464,7 +2482,7 @@ void SyslogAsync(bool refresh) {
       if (!PortUdp.beginPacket(syslog_host_addr, Settings->syslog_port)) {
         TasmotaGlobal.syslog_level = 0;
         TasmotaGlobal.syslog_timer = SYSLOG_TIMER;
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
+        AddLog(LOG_LEVEL_INFO, PSTR("SLG: " D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
         return;
       }
 
@@ -2713,6 +2731,54 @@ void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
         (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi, miso);
       break;
   }
+}
+
+/*********************************************************************************************\
+ * HTML and URL encode
+\*********************************************************************************************/
+
+const char kUnescapeCode[] = "&><\"\'\\";
+const char kEscapeCode[] PROGMEM = "&amp;|&gt;|&lt;|&quot;|&apos;|&#92;";
+
+String HtmlEscape(const String unescaped) {
+  char escaped[10];
+  size_t ulen = unescaped.length();
+  String result;
+  result.reserve(ulen);          // pre-reserve the required space to avoid mutiple reallocations
+  for (size_t i = 0; i < ulen; i++) {
+    char c = unescaped[i];
+    char *p = strchr(kUnescapeCode, c);
+    if (p != nullptr) {
+      result += GetTextIndexed(escaped, sizeof(escaped), p - kUnescapeCode, kEscapeCode);
+    } else {
+      result += c;
+    }
+  }
+  return result;
+}
+
+String UrlEscape(const char *unescaped) {
+  static const char *hex = "0123456789ABCDEF";
+  String result;
+  result.reserve(strlen(unescaped));
+
+  while (*unescaped != '\0') {
+    if (('a' <= *unescaped && *unescaped <= 'z') ||
+        ('A' <= *unescaped && *unescaped <= 'Z') ||
+        ('0' <= *unescaped && *unescaped <= '9') ||
+        *unescaped == '-' || *unescaped == '_' || *unescaped == '.' || *unescaped == '~')
+    {
+      result += *unescaped;
+    }
+    else
+    {
+      result += '%';
+      result += hex[*unescaped >> 4];
+      result += hex[*unescaped & 0xf];
+    }
+    unescaped++;
+  }
+  return result;
 }
 
 /*********************************************************************************************\

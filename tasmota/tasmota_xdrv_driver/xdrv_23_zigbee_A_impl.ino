@@ -215,6 +215,8 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
   }
 }
 
+// Definitive doc for Tuya protocol:
+// https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
 // Special encoding for multiplier:
 // multiplier == 0: ignore
 // multiplier == 1: ignore
@@ -246,8 +248,8 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
 
   uint8_t tuyatype = (attr.key.id.attr_id >> 8);
   uint8_t dpid = (attr.key.id.attr_id & 0xFF);
-  buf.add8(tuyatype);
   buf.add8(dpid);
+  buf.add8(tuyatype);
 
   // the next attribute is length 16 bits in big endian
   // high byte is always 0x00
@@ -1524,12 +1526,14 @@ void CmndZbEZSPListen(void) {
 
   ResponseCmndDone();
 }
+#endif // USE_ZIGBEE_EZSP
 
 void ZigbeeGlowPermitJoinLight(void) {
-#ifdef ESP8266  // quick fix since this causes a crash on ESP32
   static const uint16_t cycle_time = 1000;    // cycle up and down in 1000 ms
   static const uint16_t half_cycle_time = cycle_time / 2;    // cycle up and down in 1000 ms
 
+  int led_pin = Pin(GPIO_LEDLNK);
+  if (led_pin >= 0) {
   uint16_t led_power = 0;         // turn led off
   if (zigbee.permit_end_time) {
     uint32_t millis_to_go = millis() - zigbee.permit_end_time;
@@ -1543,13 +1547,15 @@ void ZigbeeGlowPermitJoinLight(void) {
   }
 
   // change the led state
-  int led_pin = Pin(GPIO_LEDLNK);
-  if (led_pin >= 0) {
+#ifdef ESP32
+    if (analogAttach(led_pin, TasmotaGlobal.ledlnk_inverted) >= 0) {
+      analogWritePhase(led_pin, led_power, 0);
+    }
+#else
     analogWrite(led_pin, TasmotaGlobal.ledlnk_inverted ? 1023 - led_power : led_power);
-  }
 #endif
+  }
 }
-#endif // USE_ZIGBEE_EZSP
 
 // check if the permitjoin timer has expired
 void ZigbeePermitJoinUpdate(void) {
@@ -1559,9 +1565,7 @@ void ZigbeePermitJoinUpdate(void) {
       zigbee.permit_end_time = 0;   // disable timer
       Z_PermitJoinDisable();
     }
-#ifdef USE_ZIGBEE_EZSP
     ZigbeeGlowPermitJoinLight();    // update glowing light accordingly
-#endif // USE_ZIGBEE_EZSP
   }
 }
 
@@ -1774,7 +1778,7 @@ const char ZB_WEB_U[] PROGMEM =
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_BATTERY
-    "<i class=\"bt\" title=\"%d%%\" style=\"--bl:%dpx\"></i>"
+    "<i class=\"bt\" title=\"%d%%%s\" style=\"--bl:%dpx;color:#%02x%02x%02x\"></i>"
     "\0"
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //=ZB_WEB_LAST_SEEN
@@ -1816,16 +1820,16 @@ enum {
   ZB_WEB_MAP_REFRESH=1164,
   ZB_WEB_STATUS_LINE=1230,
   ZB_WEB_BATTERY=1338,
-  ZB_WEB_LAST_SEEN=1388,
-  ZB_WEB_COLOR_RGB=1436,
-  ZB_WEB_LINE_START=1496,
-  ZB_WEB_LIGHT_CT=1536,
-  ZB_WEB_END_STATUS=1591,
-  ZB_WEB_LINE_END=1608,
+  ZB_WEB_LAST_SEEN=1410,
+  ZB_WEB_COLOR_RGB=1458,
+  ZB_WEB_LINE_START=1518,
+  ZB_WEB_LIGHT_CT=1558,
+  ZB_WEB_END_STATUS=1613,
+  ZB_WEB_LINE_END=1630,
 };
 
-// Compressed from 1627 to 1118, -31.3%
-const char ZB_WEB[] PROGMEM = "\x00\x66\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\x3D\x3D\x46\x41\x33\xF0\xE8\x6D"
+// Compressed from 1649 to 1124, -31.8%
+const char ZB_WEB[] PROGMEM = "\x00\x68\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\x3D\x3D\x46\x41\x33\xF0\xE8\x6D"
                              "\xA1\x15\x08\x79\xF6\x51\xDD\x3C\xCC\x6F\xFD\x47\x58\x62\xB4\x21\x0E\xF1\xED\x1F"
                              "\xD1\x28\x51\xE6\x72\x99\x0C\x36\x1E\x0C\x67\x51\xD7\xED\x36\xB3\xCC\xE7\x99\xF4"
                              "\x7D\x1E\xE2\x04\x3C\x40\x2B\x04\x3C\x28\x10\xB0\x93\x99\xA4\x30\xD8\x08\x36\x8E"
@@ -1871,16 +1875,17 @@ const char ZB_WEB[] PROGMEM = "\x00\x66\x3D\x0E\xCA\xB1\xC1\x33\xF0\xF6\xD1\xEE\
                              "\x64\x6C\x3E\x8E\x3C\x22\x36\x23\xEB\xC8\xEB\x47\xD7\x81\x07\xA0\x7E\x38\xFC\x3D"
                              "\x0E\xCA\x10\xFC\x3D\x28\x43\xF0\xFA\xF0\x22\x47\x3D\x04\xD3\x30\x43\xC4\x88\x22"
                              "\x35\x16\xA3\xEB\xC7\xD8\x21\xE7\x1E\xD3\xEC\xFC\x9C\x2F\x9E\x9A\x08\x52\xCF\x60"
-                             "\xEA\x3D\x80\x85\x82\x9E\xC3\xE8\x43\xE8\xFA\x04\x4E\x7F\x8E\xB3\xAC\x70\x47\x99"
-                             "\xF4\x20\xC3\x61\xEC\x3F\x0F\x43\xB3\x4F\xC9\xC2\xF9\xE9\x42\x02\x1D\x70\x44\xE8"
-                             "\xA7\x1C\xA2\x36\x1F\x47\x1D\x11\xB0\xFA\x38\xE8\x8D\x87\xB0\xFC\x3F\x47\x91\xB0"
-                             "\xE4\x22\x30\x73\x77\xC7\x83\xE9\xD1\x08\x7D\x07\x38\x5F\x40\x8D\x9F\x9B\x01\x1B"
-                             "\x32\x0C\x23\xCC\xF2\x3E\x8E\x3A\x22\x36\x1F\x47\x1D\x11\x1B\x0F\xA3\x8E\x88\x8D"
-                             "\x80\x83\x9D\x82\x44\xF0\x47\xE1\x98\x10\xF8\x62\x41\xE0\x5E\x19\x7C\x7C\x3D\x87"
-                             "\x30\xF6\x1F\x87\xE8\xF2\x59\xEF\x9E\x0A\x70\xBE\x08\x5D\x15\xA0\x42\xE0\x6C\x83"
-                             "\x2A\x2B\x47\xD0\x87\xB0\xFC\x3D\x3C\x36\xC2\x08\xFC\x3F\x47\x91\xC5\xF5\xF3\xC1"
-                             "\xDC\x3D\x0E\xC2\x04\x19\x87\xD0\x84\x68\x08\x5D\x16\xC9\xC2\xF8\x21\x74\x18\x4E"
-                             "\xCA\x10\xFC\x3E\xBC\x7B\x59\xEE\x9C\x2F\x82\x3F\x4E\x90\x10\x79\x23\x9C\x2F\x9B";
+                             "\xEA\x3D\x80\x85\x82\x9E\xC3\xE8\x43\xE8\xFA\x3E\xBC\x08\x9D\x2A\x01\x03\xAC\xEB"
+                             "\x1C\x11\xE6\x7D\x08\x30\xD8\x08\x7C\xFA\x1F\x47\x1D\x11\xB0\xFA\x38\xE8\x8D\x87"
+                             "\xD1\xC7\x44\x6C\x3D\x87\xE1\xE8\x76\x69\xF9\x38\x5F\x3D\x28\x40\x43\xC2\xC1\x43"
+                             "\x01\x3F\x47\x91\xB0\xE4\x22\x30\x73\x77\xC7\x83\xE9\xD1\x08\x7D\x07\x38\x5F\x40"
+                             "\x8D\xAA\x9B\x01\x1B\x46\x0C\x23\xCC\xF2\x3E\x8E\x3A\x22\x36\x1F\x47\x1D\x11\x1B"
+                             "\x0F\xA3\x8E\x88\x8D\x80\x83\x9D\x82\x44\xF0\x47\xE1\xF0\x10\xF8\x78\x41\xE0\x5E"
+                             "\x19\x7C\x7C\x3D\x87\x30\xF6\x1F\x87\xE8\xF2\x59\xEF\x9E\x0A\x70\xBE\x08\x5D\x17"
+                             "\x2A\x01\x42\xE0\xC4\x83\x2A\x2B\x47\xD0\x87\xB0\xFC\x3D\x3C\x36\xC2\x08\xFC\x3F"
+                             "\x47\x91\xC5\xF5\xF3\xC1\xDC\x3D\x0E\xC2\x04\x19\x87\xD0\x84\x68\x08\x5D\x18\x29"
+                             "\xC2\xF8\x21\x74\x1D\xCE\xCA\x10\xFC\x3E\xBC\x7B\x59\xEE\x9C\x2F\x82\x3F\x4E\xE8"
+                             "\x10\x79\x39\x9C\x2F\x9B";
 
 // ++++++++++++++++++++^^^^^^^^^^^^^^^^^^^++++++++++++++++++++
 // ++++++++++++++++++++ DO NOT EDIT ABOVE ++++++++++++++++++++
@@ -1913,16 +1918,44 @@ int device_cmp(uint8_t a, uint8_t b) {
 // - char for unit (d for day, h for hour, m for minute)
 // - the hex color to be used to display the text
 //
-uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint8_t *color){
-  static uint32_t conversions[3] = {24 * 3600, 3600, 60};
-  static char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
-  uint8_t color_text_8 = WebColor(COL_TEXT) & 0xFF;    // color of text on 8 bits
-  uint8_t color_back_8 = WebColor(COL_BACKGROUND) & 0xFF;    // color of background on 8 bits
-  uint8_t  colors[3] = { (uint8_t) changeUIntScale(6, 0, 16, color_back_8, color_text_8),   // 6/16 of text
-                          (uint8_t) changeUIntScale(10, 0, 16, color_back_8, color_text_8),  // 10/16 of text color
-                          color_text_8};
-  for(int i = 0; i < 3; ++i) {
-    *color = colors[i];
+uint32_t convert_seconds_to_dhm(uint32_t seconds,  char *unit, uint32_t *color, bool days = false){
+  static const uint32_t conversions[3] = {24 * 3600, 3600, 60};
+  static const char     units[3] = { 'd', 'h', 'm'};   // day, hour, minute
+  static const uint32_t color_threshold_hours[2] = {24 * 3600, 3600};               // 0 - 1 hour - 1 day
+  static const uint32_t color_threshold_days[2] = {7 * 24 * 3600, 2 * 24 * 3600};    // 0 - 2 days - 7 days
+
+  uint32_t color_text_8 = WebColor(COL_TEXT);    // color of text on 8 bits
+  uint8_t color_text_8_r = (color_text_8 & 0xFF0000) >> 16;
+  uint8_t color_text_8_g = (color_text_8 & 0x00FF00) >> 8;
+  uint8_t color_text_8_b = (color_text_8 & 0x0000FF);
+
+  uint32_t color_back_8 = WebColor(COL_BACKGROUND);    // color of background on 8 bits
+  uint8_t color_back_8_r = (color_back_8 & 0xFF0000) >> 16;
+  uint8_t color_back_8_g = (color_back_8 & 0x00FF00) >> 8;
+  uint8_t color_back_8_b = (color_back_8 & 0x0000FF);
+
+  int32_t colors[3] = {
+    ((changeUIntScale( 6, 0, 16, color_back_8_r, color_text_8_r) & 0xFF) << 16U) |   //  6/16 of text
+    ((changeUIntScale( 6, 0, 16, color_back_8_g, color_text_8_g) & 0xFF) <<  8U) |   //  6/16 of text
+    ( changeUIntScale( 6, 0, 16, color_back_8_b, color_text_8_r) & 0xFF),            //  6/16 of text
+
+    ((changeUIntScale(10, 0, 16, color_back_8_r, color_text_8_r) & 0xFF) << 16U) |   // 10/16 of text
+    ((changeUIntScale(10, 0, 16, color_back_8_g, color_text_8_g) & 0xFF) <<  8U) |   // 10/16 of text
+    ( changeUIntScale(10, 0, 16, color_back_8_b, color_text_8_r) & 0xFF),            // 10/16 of text
+
+    (color_text_8_r << 16U) |
+    (color_text_8_g <<  8U) |
+    (color_text_8_b)
+  };
+
+  *color = (uint32_t)colors[2];
+  for (uint32_t i = 0; i < 2; i++) {
+    if (seconds > (days ? color_threshold_days[i] : color_threshold_hours[i])) {
+      *color = (uint32_t)colors[i];
+      break;
+    }
+  }
+  for(uint32_t i = 0; i < 3; ++i) {
     *unit = units[i];
     if (seconds > conversions[i]) {    // always pass even if 00m
       return seconds / conversions[i];
@@ -1993,15 +2026,26 @@ void ZigbeeShow(bool json)
           name = sdevice;
         }
 
-        char sbatt[64];
+        char sbatt[96];
+        char dhm[48];
         snprintf_P(sbatt, sizeof(sbatt), PSTR("&nbsp;"));
         if (device.validBatteryPercent()) {
+          char unit;
+          uint32_t color = WebColor(COL_TEXT);    // color of text
+          dhm[0] = 0;   // start with empty string
+          if (device.validBattLastSeen()) {
+            uint16_t val = convert_seconds_to_dhm(now - device.batt_last_seen, &unit, &color, true);
+            if (val < 100) {
+              snprintf_P(dhm, sizeof(dhm), PSTR(" (%02d%c)"), val, unit);
+            }
+          }
           snprintf_P(sbatt, sizeof(sbatt),
             msg[ZB_WEB_BATTERY],
-            device.batterypercent, changeUIntScale(device.batterypercent, 0, 100, 0, 14)
+            device.batt_percent, dhm,
+            changeUIntScale(device.batt_percent, 0, 100, 0, 14),
+            (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF)
           );
         }
-
         uint32_t num_bars = 0;
 
         char slqi[4];
@@ -2023,15 +2067,15 @@ void ZigbeeShow(bool json)
               WSContentSend_PD(PSTR("<i class='b%d%s'></i>"), j, (num_bars < j) ? PSTR(" o30") : PSTR(""));
             }
         }
-        char dhm[48];
         snprintf_P(dhm, sizeof(dhm), PSTR("<td>&nbsp;"));
         if (device.validLastSeen()) {
           char unit;
-          uint8_t color;
+          uint32_t color;
           uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
           if (val < 100) {
-            snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],
-                                        color, color, color, val, unit);
+            snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],                         
+                                         (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF),
+                                         val, unit);
           }
         }
 

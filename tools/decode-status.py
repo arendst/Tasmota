@@ -83,20 +83,20 @@ a_setoption = [[
     "(HAss) enforce autodiscovery as light (1)",
     "(Wifi, MQTT) Control link led blinking (1)"
     ],[
-    "(Button) Key hold time (ms)",
-    "(Pow) Sonoff POW Max_Power_Retry",
-    "(Backlog) Delay (ms)",
+    "(Button/Switch) Key hold time detection in decaseconds (default 40)",
+    "(Energy) Maximum number of retries before deciding power limit overflow (default 5)",
+    "(Backlog) Minimal delay in milliseconds between executing backlog commands (default 200)",
     "(not used) mDNS delayed start (Sec)",
-    "(Boot loop) Retry offset (0 = disable)",
-    "(Light) RGBWW remap",
-    "(IR) Unknown threshold",
-    "(CSE7766) invalid power margin",
-    "(Button) Ignore hold time (s)",
-    "(Wifi) Gratuitous ARP repeat time",
-    "(Temperature) Over temperature threshold (celsius)",
-    "(Rotary) Max allowed steps",
-    "(not used) Tuya MCU voltage Id",
-    "(not used) Tuya MCU current Id",
+    "(Restart) Number of restarts to start detecting boot loop (default 1)",
+    "(Light) RGB and White channel separation (default 0)",
+    "(IR) Set the smallest sized UNKNOWN message packets we actually care about (default 6, max 255)",
+    "(CSE7766) Number of invalid power measurements before declaring it invalid allowing low load measurments (default 128)",
+    "(Button/Shutter) Ignore button change in seconds (default 0)",
+    "(Wifi) Interval in seconds between gratuitous ARP requests (default 60)",
+    "(Energy) Turn all power off at or above this temperature (default 90C)",
+    "(Rotary) Rotary step boundary (default 10)",
+    "(IR) Base tolerance percentage for matching incoming IR messages (default 25, max 100)",
+    "(Bistable) Pulse time in milliseconds for two coil bistable latching relays (default 40)",
     "(not used) Tuya MCU power Id",
     "(not used) Energy Tariff1 start hour",
     "(not used) Energy Tariff2 start hour",
@@ -197,7 +197,9 @@ a_setoption = [[
     "(MQTT) MQTT clean session (0 = default) or persistent session (1)",
     "(GUI) Disable display of GUI module name (1)",
     "(Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)",
-    "","",""
+    "(Zigbee) Disable Battery auto-probe and using auto-binding",
+    "(Zigbee) Include time in `ZbReceived` messages like other sensors",
+    ""
     ],[
     "","","","",
     "","","","",
@@ -213,7 +215,7 @@ a_features = [[
     "USE_ENERGY_MARGIN_DETECTION","USE_LIGHT","USE_I2C","USE_SPI",
     "USE_DISCOVERY","USE_ARDUINO_OTA","USE_MQTT_TLS","USE_WEBSERVER",
     "WEBSERVER_ADVERTISE","USE_EMULATION_HUE","MQTT_PUBSUBCLIENT","MQTT_TASMOTAMQTT",
-    "MQTT_ESPMQTTARDUINO","MQTT_HOST_DISCOVERY","USE_ARILUX_RF","USE_WS2812",
+    "USE_MODBUS_BRIDGE","MQTT_HOST_DISCOVERY","USE_ARILUX_RF","USE_WS2812",
     "USE_WS2812_DMA","USE_IR_REMOTE","USE_IR_HVAC","USE_IR_RECEIVE",
     "USE_DOMOTICZ","USE_DISPLAY","USE_HOME_ASSISTANT","USE_SERIAL_BRIDGE",
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
@@ -280,7 +282,7 @@ a_features = [[
     "USE_HDC2010","USE_LSC_MCSL","USE_SONOFF_SPM","USE_SHIFT595",
     "USE_SDM230","USE_CM110x","USE_BL6523","USE_ADE7880",
     "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
-    "USE_BP5758D","USE_HYT","",""
+    "USE_BP5758D","USE_HYT","USE_SM2335","USE_DISPLAY_TM1621_SONOFF"
     ],[
     "","","","",
     "","","","",
@@ -317,7 +319,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v11.1.0.3 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.0.2.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -17,6 +17,11 @@ extern "C" {
 
 #if LV_USE_IMG != 0
 
+/*Testing of dependencies*/
+#if LV_USE_LABEL == 0
+#error "lv_img: lv_label is required. Enable it in lv_conf.h (LV_USE_LABEL 1)"
+#endif
+
 #include "../core/lv_obj.h"
 #include "../misc/lv_fs.h"
 #include "../draw/lv_draw.h"
@@ -109,6 +114,7 @@ void lv_img_set_offset_y(lv_obj_t * obj, lv_coord_t y);
 /**
  * Set the rotation angle of the image.
  * The image will be rotated around the set pivot set by `lv_img_set_pivot()`
+ * Note that indexed and alpha only images can't be transformed.
  * @param obj       pointer to an image object
  * @param angle     rotation angle in degree with 0.1 degree resolution (0..3600: clock wise)
  */
@@ -116,7 +122,7 @@ void lv_img_set_angle(lv_obj_t * obj, int16_t angle);
 
 /**
  * Set the rotation center of the image.
- * The image will be rotated around this point
+ * The image will be rotated around this point.
  * @param obj       pointer to an image object
  * @param x         rotation center x of the image
  * @param y         rotation center y of the image
@@ -126,6 +132,7 @@ void lv_img_set_pivot(lv_obj_t * obj, lv_coord_t x, lv_coord_t y);
 
 /**
  * Set the zoom factor of the image.
+ * Note that indexed and alpha only images can't be transformed.
  * @param img       pointer to an image object
  * @param zoom      the zoom factor.
  * @example 256 or LV_ZOOM_IMG_NONE for no zoom

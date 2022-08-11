@@ -224,7 +224,7 @@ This phase is specific to Berry pre-compiled modules and classes.
 ```
 (berry)
 
-> python3 tools/pycoc/main.py -o generate src default ../berry_mapping/src ../lv_berry/src ../lv_berry/generate -c default/berry_conf.h
+> python3 tools/coc/coc -o generate src default ../berry_mapping/src ../lv_berry/src ../lv_berry/generate -c default/berry_conf.h
 (no output)
 ```
 

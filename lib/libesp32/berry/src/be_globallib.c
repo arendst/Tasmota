@@ -72,7 +72,6 @@ static int m_setglobal(bvm *vm)
     if (top >= 2 && be_isstring(vm, 1)) {
         const char * name = be_tostring(vm, 1);
         be_setglobal(vm, name);
-        be_return(vm);
     }
     be_return_nil(vm);
 }

@@ -338,6 +338,13 @@ void Z_Devices::deviceWasReached(uint16_t shortaddr) {
   }
 }
 
+void Z_Devices::deviceHasNoBattery(uint16_t shortaddr) {
+  Z_Device & device = findShortAddr(shortaddr);
+  if (device.valid()) {
+    device.setHasNoBattery();     // mark device as reachable
+  }
+}
+
 // get the next sequance number for the device, or use the global seq number if device is unknown
 uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
   Z_Device & device = findShortAddr(shortaddr);
@@ -484,12 +491,12 @@ bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_
   }
 
   // compare groups
-  if (device.attr_list.isValidGroupId() && attr_list.isValidGroupId()) {
+  if (device.attr_list.validGroupId() && attr_list.validGroupId()) {
     if (device.attr_list.group_id != attr_list.group_id) { return true; }     // groups are in conflict
   }
 
   // compare src_ep
-  if (device.attr_list.isValidSrcEp() && attr_list.isValidSrcEp()) {
+  if (device.attr_list.validSrcEp() && attr_list.validSrcEp()) {
     if (device.attr_list.src_ep != attr_list.src_ep) { return true; }
   }
 
@@ -515,14 +522,22 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, const Z_attribute_list &attr_list
 //
 // internal function to publish device information with respect to all `SetOption`s
 //
-void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const {
+void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list, bool include_time) const {
   bool use_fname = (Settings->flag4.zigbee_use_names) && (friendlyName);    // should we replace shortaddr with friendlyname?
 
   ResponseClear(); // clear string
+
   // Do we prefix with `ZbReceived`?
   if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
-    Response_P(PSTR("{\"%s\":"), json_prefix);
+    if (include_time && Rtc.utc_time >= START_VALID_TIME) {
+      // Add time if needed (and if time is valide)
+      ResponseAppendTimeFormat(Settings->flag2.time_format);
+      ResponseAppend_P(PSTR(",\"%s\":"), json_prefix);
+    } else {
+      ResponseAppend_P(PSTR("{\"%s\":"), json_prefix);
+    }
   }
+
   // What key do we use, shortaddr or name?
   if (!Settings->flag5.zb_omit_json_addr) {
     if (use_fname) {
@@ -540,7 +555,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(friendlyName).c_str());
   }
   // Add all other attributes
-  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false).c_str());
+  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false, true).c_str());   // (false, true) - include battery
 
   if (!Settings->flag5.zb_omit_json_addr) {
     ResponseAppend_P(PSTR("}"));
@@ -570,7 +585,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
       }
     }
     if (Settings->flag5.zb_topic_endpoint) {
-      if (attr_list.isValidSrcEp()) {
+      if (attr_list.validSrcEp()) {
         snprintf_P(subtopic, sizeof(subtopic), PSTR("%s_%d"), subtopic, attr_list.src_ep);
       }
     }
@@ -597,7 +612,12 @@ void Z_Devices::jsonPublishFlush(uint16_t shortaddr) {
     gZbLastMessage.groupaddr = attr_list.group_id;      // %zbgroup%
     gZbLastMessage.endpoint = attr_list.src_ep;    // %zbendpoint%
 
-    device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_RECEIVED), attr_list);
+    // add battery percentage from last known value
+    if (device.validBatteryPercent()) {
+      attr_list.setBattPercent(device.batt_percent);
+    }
+
+    device.jsonPublishAttrList(PSTR(D_JSON_ZIGBEE_RECEIVED), attr_list, Settings->flag5.zigbee_include_time);
     attr_list.reset();    // clear the attributes
   }
 }
@@ -724,7 +744,10 @@ void Z_Device::jsonAddDataAttributes(Z_attribute_list & attr_list) const {
 // Add "BatteryPercentage", "LastSeen", "LastSeenEpoch", "LinkQuality"
 void Z_Device::jsonAddDeviceAttributes(Z_attribute_list & attr_list) const {
   attr_list.addAttributePMEM(PSTR("Reachable")).setBool(getReachable());
-  if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batterypercent); }
+  if (validBatteryPercent())  { attr_list.addAttributePMEM(PSTR("BatteryPercentage")).setUInt(batt_percent); }
+  if (validBattLastSeen()) {
+    attr_list.addAttributePMEM(PSTR("BatteryLastSeenEpoch")).setUInt(batt_last_seen);
+  }
   if (validLastSeen())        {
     if (Rtc.utc_time >= last_seen) {
       attr_list.addAttributePMEM(PSTR("LastSeen")).setUInt(Rtc.utc_time - last_seen);

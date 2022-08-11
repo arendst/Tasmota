@@ -102,7 +102,6 @@ struct bvm {
     struct bstringtable strtab; /* short string table */
     bstack tracestack; /* call state trace-stack */
     bmap *ntvclass; /* native class table */
-    blist *registry; /* registry list */
     struct bgc gc;
     bctypefunc ctypefunc; /* handler to ctype_func */
     bbyte compopt; /* compilation options */

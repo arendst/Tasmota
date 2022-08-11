@@ -31,8 +31,8 @@ const char berry_prog[] =
 #ifdef USE_BERRY_PYTHON_COMPAT
   // enable python syntax compatibility mode
   "import python_compat "
-  "import cb "
 #endif
+  "import cb "
 
 #ifdef USE_ENERGY_SENSOR
   "import energy "

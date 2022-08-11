@@ -123,7 +123,11 @@ String GetDeviceHardwareRevision(void) {
 #include "bootloader_flash.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
 #if CONFIG_IDF_TARGET_ESP32
-  #define ESP32_ARCH              "esp32"
+  #ifdef CORE32SOLO1
+    #define ESP32_ARCH            "esp32solo1"
+  #else
+    #define ESP32_ARCH            "esp32"
+  #endif
 #elif CONFIG_IDF_TARGET_ESP32S2
   #define ESP32_ARCH              "esp32s2"
 #elif CONFIG_IDF_TARGET_ESP32S3

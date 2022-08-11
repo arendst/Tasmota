@@ -730,12 +730,14 @@ public:
   // Light information for Hue integration integration, last known values
 
   // New version of device data handling
-  Z_Data_Set            data;            // Linkedlist of device data per endpoint
+  Z_Data_Set            data;               // Linkedlist of device data per endpoint
   // other status - device wide data is 8 bytes
   // START OF DEVICE WIDE DATA
-  uint32_t              last_seen;      // Last seen time (epoch)
-  uint8_t               lqi;            // lqi from last message, 0xFF means unknown
-  uint8_t               batterypercent; // battery percentage (0..100), 0xFF means unknwon
+  uint32_t              last_seen;          // Last seen time (epoch)
+  uint32_t              batt_last_seen;     // Time when we last received battery status (epoch), 0 means unknown, 0xFFFFFFFF means that the device has no battery
+  uint32_t              batt_last_probed;   // Time when the device was last probed for batteyr values
+  uint8_t               lqi;                // lqi from last message, 0xFF means unknown
+  uint8_t               batt_percent;       // battery percentage (0..100), 0xFF means unknwon
   uint16_t              reserved_for_alignment;
   // Debounce informmation when receiving commands
   // If we receive the same ZCL transaction number from the same device and the same endpoint within 300ms
@@ -760,8 +762,10 @@ public:
     reachable(false),
     data(),
     last_seen(0),
+    batt_last_seen(0),
+    batt_last_probed(0),
     lqi(0xFF),
-    batterypercent(0xFF),
+    batt_percent(0xFF),
     reserved_for_alignment(0xFFFF),
     debounce_endpoint(0),
     debounce_transact(0)
@@ -777,8 +781,9 @@ public:
   inline bool validPower(uint8_t ep =0)          const;
 
   inline bool validLqi(void)            const { return 0xFF != lqi; }
-  inline bool validBatteryPercent(void) const { return 0xFF != batterypercent; }
+  inline bool validBatteryPercent(void) const { return 0xFF != batt_percent; }
   inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
+  inline bool validBattLastSeen(void)   const { return (0x0 != batt_last_seen) && (0xFFFFFFFF != batt_last_seen); }
 
   inline void setReachable(bool _reachable)   { reachable = _reachable; }
   inline bool getReachable(void)        const { return reachable; }
@@ -789,7 +794,19 @@ public:
   inline void setRouter(bool router)          { is_router = router; }
 
   inline void setLQI(uint8_t _lqi)            { lqi = _lqi; }
-  inline void setBatteryPercent(uint8_t bp)   { batterypercent = bp; }
+  // set battery percentage to new value - and mark timestamp only if time is valid
+  // trigger an immediate `ZbSave` since it's important information to keep
+  void setBatteryPercent(uint8_t bp)   {
+    if (batt_percent != bp) {
+      batt_percent = bp;
+      Z_Set_Save_Data_Timer_Once(0);
+    }
+    if (Rtc.utc_time >= START_VALID_TIME) {
+      batt_last_seen = Rtc.utc_time;
+    }
+  }
+  inline void setHasNoBattery(void)           { batt_last_seen = 0xFFFFFFFF; }
+  inline bool hasNoBattery(void)        const { return 0xFFFFFFFF == batt_last_seen; }
 
   // Add an endpoint to a device
   bool addEndpoint(uint8_t endpoint);
@@ -811,7 +828,7 @@ public:
   void jsonAddDataAttributes(Z_attribute_list & attr_list) const;
   void jsonAddDeviceAttributes(Z_attribute_list & attr_list) const;
   void jsonDumpSingleDevice(Z_attribute_list & attr_list, uint32_t dump_mode, bool add_name) const;
-  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list) const;
+  void jsonPublishAttrList(const char * json_prefix, const Z_attribute_list &attr_list, bool include_time = false) const;
   void jsonLightState(Z_attribute_list & attr_list) const;
 
   // dump device attributes to ZbData
@@ -946,6 +963,9 @@ public:
 
   // device is reachable
   void deviceWasReached(uint16_t shortaddr);
+
+  // device has no battery
+  void deviceHasNoBattery(uint16_t shortaddr);
 
   // Timers
   void resetTimersForDevice(uint16_t shortaddr, uint16_t groupaddr, uint8_t category, uint16_t cluster = 0xFFFF, uint8_t endpoint = 0xFF);

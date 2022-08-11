@@ -72,7 +72,7 @@ void CmdSet(void)
       for (uint32_t i = 0; i < 3; i++) {
         if (param[i] < 1) { param[i] = 1; }  // msb, lsb, serial, counter
       }
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("params: %08x %08x %08x %08x"), param[0], param[1], param[2], param[3]);
+      DEBUG_DRIVER_LOG(PSTR("KLQ: params %08x %08x %08x %08x"), param[0], param[1], param[2], param[3]);
       Settings->keeloq_master_msb = param[0];
       Settings->keeloq_master_lsb = param[1];
       Settings->keeloq_serial = param[2];
@@ -84,10 +84,10 @@ void CmdSet(void)
       GenerateDeviceCryptKey();
       ResponseCmndDone();
     } else {
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no payload"));
+      DEBUG_DRIVER_LOG(PSTR("KLQ: no payload"));
     }
   } else {
-    DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("no param"));
+    DEBUG_DRIVER_LOG(PSTR("KLQ: no param"));
   }
 }
 
@@ -97,7 +97,7 @@ void GenerateDeviceCryptKey()
   jaroliftDevice.device_key_msb = k.decrypt(jaroliftDevice.serial | 0x60000000L);
   jaroliftDevice.device_key_lsb = k.decrypt(jaroliftDevice.serial | 0x20000000L);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("generated device keys: %08x %08x"), jaroliftDevice.device_key_msb, jaroliftDevice.device_key_lsb);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("KLQ: generated device keys %08x %08x"), jaroliftDevice.device_key_msb, jaroliftDevice.device_key_lsb);
 }
 
 void CmdSendButton(void)
@@ -110,11 +110,9 @@ void CmdSendButton(void)
     if (XdrvMailbox.payload > 0)
     {
       jaroliftDevice.button = strtoul(XdrvMailbox.data, nullptr, 0);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("msb: %08x"), jaroliftDevice.device_key_msb);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("lsb: %08x"), jaroliftDevice.device_key_lsb);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("serial: %08x"), jaroliftDevice.serial);
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("disc: %08x"), jaroliftDevice.disc);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("KLQ: count: %08x"), jaroliftDevice.count);
+      DEBUG_DRIVER_LOG(PSTR("KLQ: msb %08x, lsb %08x, serial %08x, disc %08x, button %08x"),
+        jaroliftDevice.device_key_msb, jaroliftDevice.device_key_lsb, jaroliftDevice.serial, jaroliftDevice.disc, jaroliftDevice.button);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("KLQ: count %08x"), jaroliftDevice.count);
 
       CreateKeeloqPacket();
       jaroliftDevice.count++;
@@ -132,7 +130,7 @@ void CmdSendButton(void)
           SendBit(bitsToSend & 0x0000000000000001);
           bitsToSend >>= 1;
         }
-        DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
+        DEBUG_DRIVER_LOG(PSTR("KLQ: finished sending bits at %d"), micros());
 
         delay(16); // delay in loop context is save for wdt
       }
@@ -165,7 +163,7 @@ void SendBit(byte bitToSend)
 
 void CmndSendRaw(void)
 {
-  DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cmd send called at %d"), micros());
+  DEBUG_DRIVER_LOG(PSTR("KLQ: cmd send called at %d"), micros());
   noInterrupts();
   entertx();
   for(int repeat = 0; repeat <= 1; repeat++)
@@ -181,7 +179,7 @@ void CmndSendRaw(void)
       {
         SendBit(XdrvMailbox.data[i] == '1');
       }
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("finished sending bits at %d"), micros());
+      DEBUG_DRIVER_LOG(PSTR("KLQ: finished sending bits at %d"), micros());
 
       delay(16);                       // delay in loop context is save for wdt
     }
@@ -236,8 +234,7 @@ void CreateKeeloqPacket()
   jaroliftDevice.enc = k.encrypt(result);
   jaroliftDevice.pack |= jaroliftDevice.enc;
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("pack high: %08x"), jaroliftDevice.pack>>32);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("pack low:  %08x"), jaroliftDevice.pack);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("KLQ: pack high %08x, low %08x"), jaroliftDevice.pack>>32, jaroliftDevice.pack);
 }
 
 void KeeloqInit()
@@ -245,10 +242,10 @@ void KeeloqInit()
   jaroliftDevice.port_tx = Pin(GPIO_CC1101_GDO2);              // Output port for transmission
   jaroliftDevice.port_rx = Pin(GPIO_CC1101_GDO0);              // Input port for reception
 
-  DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("cc1101.init()"));
+  DEBUG_DRIVER_LOG(PSTR("KLQ: cc1101.init()"));
   delay(100);
   cc1101.init();
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CC1101 done."));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("KLQ: CC1101 done"));
   cc1101.setSyncWord(SYNC_WORD, false);
   cc1101.setCarrierFreq(CFREQ_433);
   cc1101.disableAddressCheck();
@@ -272,12 +269,12 @@ bool Xdrv36(uint8_t function)
 
   switch (function) {
     case FUNC_COMMAND:
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("calling command"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("KLQ: calling command"));
       result = DecodeCommand(kJaroliftCommands, jaroliftCommand);
       break;
     case FUNC_INIT:
       KeeloqInit();
-      DEBUG_DRIVER_LOG(LOG_LEVEL_DEBUG_MORE, PSTR("init done."));
+      DEBUG_DRIVER_LOG(PSTR("KLQ: init done"));
       break;
   }
 

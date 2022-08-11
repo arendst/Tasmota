@@ -3130,6 +3130,14 @@ void CmndFade(void)
 void CmndSpeed(void)
 {
   if (2 == XdrvMailbox.index) {
+    // Speed2 ! cancels use of Speed2 in the future
+    if ((1 == XdrvMailbox.data_len) && ('!' == XdrvMailbox.data[0])) {
+      Light.fade_once_enabled = false;
+      Light.speed_once_enabled = false;
+      ResponseCmndDone();
+      return;
+    }
+
     // Speed2 setting will be used only once, then revert to fade/speed
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 40)) {
       Light.fade_once_enabled = true;
