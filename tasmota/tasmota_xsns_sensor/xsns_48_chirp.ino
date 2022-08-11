@@ -509,6 +509,8 @@ bool ChirpCmd(void) {
         serviced = false;
       break;
     }
+  } else {
+    serviced = false;
   }
   return serviced;
 }

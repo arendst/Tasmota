@@ -77,7 +77,7 @@ const char S_JSON_SCD40_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_SCD40 "%s\":%d}"
 const char kSCD40_Commands[] PROGMEM             = "Alt|Auto|Toff|Pres|Cal|Test|StLP|Strt|Stop|Pers|Rein|Fact|Sing|SRHT";
 
 /*********************************************************************************************\
- * enumerations    
+ * enumerations
 \*********************************************************************************************/
 
 enum SCD40_Commands {         // commands useable in console or rules
@@ -358,56 +358,56 @@ bool Scd40CommandSensor()
       }
       break;
 
-      case CMND_SCD40_START_MEASUREMENT_LOW_POWER: 
+      case CMND_SCD40_START_MEASUREMENT_LOW_POWER:
       {
-        error = scd40.startLowPowerPeriodicMeasurement(); 
+        error = scd40.startLowPowerPeriodicMeasurement();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_START_MEASUREMENT:           
+      case CMND_SCD40_START_MEASUREMENT:
       {
-        error = scd40.startPeriodicMeasurement();          
+        error = scd40.startPeriodicMeasurement();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_STOP_MEASUREMENT:            
+      case CMND_SCD40_STOP_MEASUREMENT:
       {
-        error = scd40.stopPeriodicMeasurement();          
+        error = scd40.stopPeriodicMeasurement();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_PERSIST:                     
+      case CMND_SCD40_PERSIST:
       {
-        error = scd40.persistSettings();                  
+        error = scd40.persistSettings();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_REINIT:                      
+      case CMND_SCD40_REINIT:
       {
-        error = scd40.reinit();                           
+        error = scd40.reinit();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_FACTORYRESET:                
+      case CMND_SCD40_FACTORYRESET:
       {
-        error = scd40.performFactoryReset();              
+        error = scd40.performFactoryReset();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_SINGLESHOT:                
+      case CMND_SCD40_SINGLESHOT:
       {
         error = scd40.measureSingleShot();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
       }
       break;
 
-      case CMND_SCD40_SINGLESHOT_RHT_ONLY:                
+      case CMND_SCD40_SINGLESHOT_RHT_ONLY:
       {
         error = scd40.measureSingleShotRhtOnly();
         Response_P(S_JSON_SCD40_COMMAND_NVALUE, command, error?-1:0);
@@ -419,6 +419,8 @@ bool Scd40CommandSensor()
         serviced = false;
       break;
     }
+  } else {
+    serviced = false;
   }
   return serviced;
 }
