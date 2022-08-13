@@ -1561,7 +1561,7 @@ void SetModuleType(void)
 bool FlashPin(uint32_t pin)
 {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-  return (pin > 10) && (pin < 18);        // ESP32C3 has GPIOs 11-17 reserved for Flash
+  return (((pin > 10) && (pin < 12)) || ((pin > 13) && (pin < 18)));  // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 12 13 are useable
 #elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
   return (pin > 21) && (pin < 33);        // ESP32S2 skip 22-32
 #elif defined(CONFIG_IDF_TARGET_ESP32)
@@ -1574,7 +1574,7 @@ bool FlashPin(uint32_t pin)
 bool RedPin(uint32_t pin) // pin may be dangerous to change, display in RED in template console
 {
 #if defined(ESP32) && CONFIG_IDF_TARGET_ESP32C3
-  return false;     // no red pin on ESP32C3
+  return (12==pin)||(13==pin);  // ESP32C3: GPIOs 12 13 are usually used for Flash (mode QIO/QOUT)
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
   return false;     // no red pin on ESP32S3
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
