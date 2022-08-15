@@ -109,6 +109,10 @@ void W8960_SetGain(uint8_t sel, uint16_t value) {
       W8960_Write(0x15, value);
       W8960_Write(0x16, value);
       break;
+    case 3:
+      // audio interface
+      W8960_Write(0x07, value);
+      break;
   }
 }
 #endif // ESP32

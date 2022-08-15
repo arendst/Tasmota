@@ -19,7 +19,7 @@
 
 
 #ifdef ESP32
-#if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
+#if ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
 
 
 uint32_t SpeakerMic(uint8_t spkr) {
@@ -27,7 +27,11 @@ esp_err_t err = ESP_OK;
 
 #ifndef USE_I2S_COMMON_IO
 
+  if (audio_i2s.mode == spkr) {
+    return 0;
+  }
   if (spkr == MODE_SPK) {
+
     if (audio_i2s.i2s_port == audio_i2s.mic_port) {
       if (audio_i2s.mode != MODE_SPK) {
         i2s_driver_uninstall(audio_i2s.mic_port);
@@ -61,24 +65,26 @@ esp_err_t err = ESP_OK;
       .channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
       .communication_format = I2S_COMM_FORMAT_I2S,
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+      //.dma_buf_count = 8,
       .dma_buf_count = 2,
       //.dma_buf_len = 128,
       .dma_buf_len = 1024,
       .use_apll = 0, // Use audio PLL
       .tx_desc_auto_clear     = true,
-      .fixed_mclk             = 0,
+      .fixed_mclk             = 12000000,
       .mclk_multiple          = I2S_MCLK_MULTIPLE_DEFAULT,  // I2S_MCLK_MULTIPLE_128
       .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT
   };
 
-#ifdef ESP32S3_BOX
+
+#ifdef USE_I2S_MIC
+  // mic select to GND
   i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
   i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
 #endif
 
-#ifdef USE_I2S_MIC
-  // mic select to GND
-  i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+#ifdef ESP32S3_BOX
+  i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
   i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
 #endif
 
@@ -117,8 +123,8 @@ esp_err_t err = ESP_OK;
   return err;
 }
 
-
 #ifdef USE_SHINE
+
 #include <layer3.h>
 #include <types.h>
 
@@ -306,6 +312,8 @@ void Cmd_MicRec(void) {
   }
 
 }
+#endif // USE_SHINE
+
 
 // mic gain in factor not percent
 void Cmd_MicGain(void) {
@@ -315,6 +323,5 @@ void Cmd_MicGain(void) {
   ResponseCmndNumber(audio_i2s.mic_gain);
 }
 
-#endif // USE_SHINE
 #endif // USE_I2S_AUDIO
 #endif // ESP32
