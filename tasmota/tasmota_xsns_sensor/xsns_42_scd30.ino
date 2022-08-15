@@ -1,5 +1,5 @@
 /*
-  xsns_42_scd30.ino - SC30 CO2 sensor support for Tasmota
+  xsns_42_scd30.ino - SCD30 CO2 sensor support for Tasmota
 
   Copyright (C) 2021  Frogmore42
 
@@ -61,6 +61,7 @@ enum SCD30_Commands {         // commands useable in console or rules
 
 FrogmoreScd30 scd30;
 
+bool scd30InitOnce = false;
 bool scd30Found = false;
 bool scd30IsDataValid = false;
 int scd30ErrorState = SCD30_STATE_NO_ERROR;
@@ -71,7 +72,7 @@ int scd30GoodMeas_count = 0;
 int scd30Reset_count = 0;
 int scd30CrcError_count = 0;
 int scd30Co2Zero_count = 0;
-int i2cReset_count = 0;
+int scd30i2cReset_count = 0;
 uint16_t scd30_CO2 = 0;
 uint16_t scd30_CO2EAvg = 0;
 float scd30_Humid = 0.0f;
@@ -121,7 +122,7 @@ void Scd30Update(void)
             scd30CrcError_count++;
 #ifdef SCD30_DEBUG
             AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: CRC error, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
-              scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
+              scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
 #endif
             break;
 
@@ -129,7 +130,7 @@ void Scd30Update(void)
             scd30Co2Zero_count++;
 #ifdef SCD30_DEBUG
             AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: CO2 zero, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
-              scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
+              scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
 #endif
             break;
 
@@ -149,7 +150,7 @@ void Scd30Update(void)
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
+          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: got CRC error, try again, counter: %ld"), scd30Loop_count);
 #endif
         scd30ErrorState = ERROR_SCD30_NO_ERROR;
@@ -160,7 +161,7 @@ void Scd30Update(void)
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
+          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: not answering, sending soft reset, counter: %ld"), scd30Loop_count);
 #endif
         scd30Reset_count++;
@@ -185,10 +186,10 @@ void Scd30Update(void)
         //scd30IsDataValid = false;
 #ifdef SCD30_DEBUG
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, i2cReset_count);
+          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: clearing i2c bus"));
 #endif
-        i2cReset_count++;
+        scd30i2cReset_count++;
         error = scd30.clearI2CBus();
         if (error) {
           scd30ErrorState = SCD30_STATE_ERROR_I2C_RESET;
@@ -399,7 +400,14 @@ bool Xsns42(byte function)
 
   bool result = false;
 
+  // https://github.com/arendst/Tasmota/issues/15438 and datasheet (The boot-up time is < 2 s.)
+/*
   if (FUNC_INIT == function) {
+    Scd30Detect();
+  }
+*/
+  if (!scd30InitOnce && (FUNC_EVERY_SECOND == function) && (TasmotaGlobal.uptime > 2)) {
+    scd30InitOnce = true;
     Scd30Detect();
   }
   else if (scd30Found) {
