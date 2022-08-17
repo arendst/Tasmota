@@ -27,7 +27,10 @@
  * bridge.
  *
  * Example Command:
+ *   -- Read Input Register --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint16", "count":2}
+ *   -- Write multiple coils --
+ *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":14, "data":[1,2,3,4,5,6,7,8,9,10,11,12,13,14]}
 \*********************************************************************************************/
 
 #define XDRV_63 63
@@ -49,6 +52,7 @@
 #define D_JSON_MODBUS_TYPE "Type" // allready defined
 #define D_JSON_MODBUS_VALUES "Values"
 #define D_JSON_MODBUS_LENGTH "Length"
+#define D_JSON_MODBUS_DATA "Data"
 
 #ifndef USE_MODBUS_BRIDGE_TCP
 const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
@@ -104,12 +108,14 @@ enum class ModbusBridgeError
 enum class ModbusBridgeFunctionCode
 {
   mb_undefined = 0,
-  mb_readCoilstartregister = 1,
-  mb_readContactstartregister = 2,
-  mb_readHoldingstartregister = 3,
-  mb_readInputstartregister = 4,
+  mb_readCoilStatus = 1,
+  mb_readContactStatus = 2,
+  mb_readHoldingRegisters = 3,
+  mb_readInputRegisters = 4,
   mb_writeSingleCoil = 5,
-  mb_writeSinglestartregister = 6
+  mb_writeSingleRegister = 6,
+  mb_writeMultipleCoils = 15,
+  mb_writeMultipleRegisters = 16
 };
 
 enum class ModbusBridgeType
@@ -144,6 +150,7 @@ struct ModbusBridge
   uint8_t deviceAddress = 0;
   uint8_t count = 0;
   bool raw = false;
+
 };
 
 ModbusBridge modbusBridge;
@@ -154,7 +161,7 @@ ModbusBridge modbusBridge;
 //
 bool ModbusBridgeBegin(void)
 {
-  if ((Settings->modbus_sbaudrate < 300 / 300) || (Settings->modbus_sbaudrate > 115200 / 300)) Settings->modbus_sbaudrate = (uint8_t)((uint32_t)MBR_BAUDRATE / 300);
+  if ((Settings->modbus_sbaudrate < 1) || (Settings->modbus_sbaudrate > (115200 / 300))) Settings->modbus_sbaudrate = (uint8_t)((uint32_t)MBR_BAUDRATE / 300);
   if (Settings->modbus_sconfig > TS_SERIAL_8O2) Settings->modbus_sconfig = TS_SERIAL_8N1;
 
   int result = tasmotaModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
@@ -257,8 +264,10 @@ void ModbusBridgeHandle(void)
       errorcode = ModbusBridgeError::wrongdeviceaddress;
     else if ((uint8_t)modbusBridge.functionCode != (uint8_t)buffer[1])
       errorcode = ModbusBridgeError::wrongfunctioncode;
-    else if ((uint8_t)modbusBridge.registerCount * 2 != (uint8_t)buffer[2])
+    else if (((uint8_t)modbusBridge.functionCode < 5) && ((uint8_t)modbusBridge.registerCount * 2 != (uint8_t)buffer[2]))
+    {
       errorcode = ModbusBridgeError::wrongregistercount;
+    }
     else
     {
       if (modbusBridge.type == ModbusBridgeType::mb_raw)
@@ -470,6 +479,10 @@ void ModbusTCPHandle(void)
 
 void CmndModbusBridgeSend(void)
 {
+  uint16_t *writeData = NULL;
+  uint8_t writeDataSize = 0;
+  ModbusBridgeError errorcode = ModbusBridgeError::noerror;
+
   JsonParser parser(XdrvMailbox.data);
   JsonParserObject root = parser.getRootObject();
   if (!root)
@@ -478,16 +491,16 @@ void CmndModbusBridgeSend(void)
   modbusBridge.deviceAddress = root.getUInt(PSTR(D_JSON_MODBUS_DEVICE_ADDRESS), 0);
   uint8_t functionCode = root.getUInt(PSTR(D_JSON_MODBUS_FUNCTION_CODE), 0);
   modbusBridge.startAddress = root.getULong(PSTR(D_JSON_MODBUS_START_ADDRESS), 0);
+
   const char *stype = root.getStr(PSTR(D_JSON_MODBUS_TYPE), "uint8");
   modbusBridge.count = root.getUInt(PSTR(D_JSON_MODBUS_COUNT), 1);
-  ModbusBridgeError errorcode = ModbusBridgeError::noerror;
 
   if (modbusBridge.deviceAddress == 0)
     errorcode = ModbusBridgeError::wrongdeviceaddress;
-  else if (modbusBridge.startAddress == 0)
-    ;
-  else if (functionCode > 4)
-    errorcode = ModbusBridgeError::wrongfunctioncode; // Writing is not supported
+  else if ((functionCode > (uint8_t)ModbusBridgeFunctionCode::mb_writeSingleRegister) &&
+           (functionCode != (uint8_t)ModbusBridgeFunctionCode::mb_writeMultipleCoils) &&
+           (functionCode != (uint8_t)ModbusBridgeFunctionCode::mb_writeMultipleRegisters))
+    errorcode = ModbusBridgeError::wrongfunctioncode; // Invalid function code
   else
   {
     modbusBridge.functionCode = static_cast<ModbusBridgeFunctionCode>(functionCode);
@@ -506,7 +519,7 @@ void CmndModbusBridgeSend(void)
     modbusBridge.type = ModbusBridgeType::mb_int32;
     modbusBridge.registerCount = 2 * modbusBridge.count;
   }
-  else if (strcmp(stype, "uint16") == 0)
+  else if ((strcmp(stype, "uint16") == 0) || (strcmp(stype, "") == 0)) // Default is uint16
   {
     modbusBridge.type = ModbusBridgeType::mb_uint16;
     modbusBridge.registerCount = modbusBridge.count;
@@ -537,13 +550,39 @@ void CmndModbusBridgeSend(void)
   if (modbusBridge.registerCount > MBR_MAX_REGISTERS)
     errorcode = ModbusBridgeError::wrongcount;
 
+  // If write data is specified in JSON copy it into writeData array
+  JsonParserArray jsonDataArray = root[PSTR(D_JSON_MODBUS_DATA)].getArray();
+  if (jsonDataArray.isArray())
+  {
+    writeDataSize = jsonDataArray.size();
+
+    if (modbusBridge.registerCount != writeDataSize)
+    {
+      errorcode = ModbusBridgeError::wrongcount;
+    }
+    else
+    {
+      writeData = (uint16_t *)malloc(writeDataSize);
+      for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
+      {
+        writeData[jsonDataArrayPointer] = jsonDataArray[jsonDataArrayPointer].getUInt(0);
+      }
+    }
+  }
+
+  // Handle errorcode and exit function when an error has occured
   if (errorcode != ModbusBridgeError::noerror)
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Send Error %d"), (uint8_t)errorcode);
+    free(writeData);
     return;
   }
 
-  tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.registerCount);
+  // If writing a single coil or single register, the register count is always 1. We also prevent writing data out of range
+  if ((modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil) || (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleRegister)) modbusBridge.registerCount = 1;
+
+  tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.registerCount, writeData);
+  free(writeData);
   ResponseCmndDone();
 }
 

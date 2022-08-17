@@ -15,6 +15,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  Documentation about modbus protocol: https://www.modbustools.com/modbus.html
 */
 
 #include "TasmotaModbus.h"
@@ -53,24 +55,82 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   return result;
 }
 
-void TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count)
+uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers)
 {
-  uint8_t frame[8];
+  uint8_t *frame;
+  uint8_t framepointer = 0;
+
+  if (function_code < 5)
+  {
+    frame = (uint8_t *)malloc(8); // Addres(1), Function(1), Start Address(2), Registercount (2) or Data(2), CRC(2)
+  }
+  else
+  {
+    if (register_count > 40) return 14; // Prevent to many allocation of memory while writing data
+    frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start Address(2), Quantity of registers (2), Bytecount(1), Data(2..n), CRC(2)
+  }
 
   mb_address = device_address;  // Save address for receipt check
 
-  frame[0] = mb_address;        // 0xFE default device address or dedicated like 0x01
-  frame[1] = function_code;
-  frame[2] = (uint8_t)(start_address >> 8);   // MSB
-  frame[3] = (uint8_t)(start_address);        // LSB
-  frame[4] = (uint8_t)(register_count >> 8);  // MSB
-  frame[5] = (uint8_t)(register_count);       // LSB
-  uint16_t crc = CalculateCRC(frame, 6);
-  frame[6] = (uint8_t)(crc);
-  frame[7] = (uint8_t)(crc >> 8);
+  frame[framepointer++] = mb_address;        // 0xFE default device address or dedicated like 0x01
+  frame[framepointer++] = function_code;
+  frame[framepointer++] = (uint8_t)(start_address >> 8);   // MSB
+  frame[framepointer++] = (uint8_t)(start_address);        // LSB
+  if ((function_code < 5) || (function_code == 15) || (function_code == 16))
+  {
+    frame[framepointer++] = (uint8_t)(register_count >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(register_count);       // LSB
+  }
+  
+  if ((function_code == 5) || (function_code == 6))
+  {
+    if (registers == NULL) 
+    {
+      free(frame);
+      return 13; // Register data not specified
+    }
+    if (register_count != 1)
+    {
+      free(frame);
+      return 12; // Wrong register count
+    }
+    frame[framepointer++] = (uint8_t)(registers[0] >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(registers[0]);       // LSB
+  }
+  
+  if ((function_code == 15) || (function_code == 16))
+  {
+    frame[framepointer++] = register_count * 2;
+    if (registers == NULL) 
+    {
+      free(frame);
+      return 13; // Register data not specified
+    }
+    if (register_count == 0)
+    {
+      free(frame);
+      return 12; // Wrong register count
+    }
+    for (int registerpointer = 0; registerpointer < register_count; registerpointer++)
+    {
+      frame[framepointer++] = (uint8_t)(registers[registerpointer] >> 8);  // MSB
+      frame[framepointer++] = (uint8_t)(registers[registerpointer]);       // LSB
+    }
+  }
+  else 
+  {
+    free(frame);
+    return 1; // Wrong function code
+  }
+
+  uint16_t crc = CalculateCRC(frame, framepointer);
+  frame[framepointer++] = (uint8_t)(crc);
+  frame[framepointer++] = (uint8_t)(crc >> 8);
 
   flush();
-  write(frame, sizeof(frame));
+  write(frame, framepointer);
+  free(frame);
+  return 0;
 }
 
 bool TasmotaModbus::ReceiveReady()
