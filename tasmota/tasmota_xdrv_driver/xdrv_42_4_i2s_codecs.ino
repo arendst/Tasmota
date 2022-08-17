@@ -142,7 +142,7 @@ void S3boxInit(void) {
 
 #include <wm8960.h>
 
-void W8960_Init(void) {
+void W8960_Init1(void) {
   if (TasmotaGlobal.i2c_enabled_2) {
     if (I2cSetDevice(W8960_ADDR, 1)) {
       I2cSetActiveFound(W8960_ADDR, "W8960-I2C", 1);

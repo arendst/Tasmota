@@ -20,11 +20,11 @@
 
 ////////////////////////////////////////
 // Commands:
-// iBeacon 0/1 - Enable 
-// iBeaconOnlyAliased 0/1/2 - 
-//   0 = all BLE devices, 
+// iBeacon 0/1 - Enable
+// iBeaconOnlyAliased 0/1/2 -
+//   0 = all BLE devices,
 //   1 = only devices with any BLEAlias
-//   2 = only devices which have BLEAlias starting "iB" 
+//   2 = only devices which have BLEAlias starting "iB"
 // iBeaconClear - clear list NOW
 // iBeaconPeriod (sec) - update period - default 10s
 // iBeaconTimeout (sec) - timeout period - default 30s
@@ -548,7 +548,7 @@ void ibeacon_mqtt(const char *mac,const char *rssi,const char *uid,const char *m
     }
   } else {
     if (name[0]) {
-      ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "\":{\"MAC\":\"%s\",\"NAME\":\"%s\",\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"MAC\":\"%s\",\"RSSI\":%d,\"STATE\":\"%s\",\"PERSEC\":%d}}"),s_uid,s_name,s_major,s_minor,s_mac,n_rssi,s_state,count);
+      ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "\":{\"UID\":\"%s\",\"NAME\":\"%s\",\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"MAC\":\"%s\",\"RSSI\":%d,\"STATE\":\"%s\",\"PERSEC\":%d}}"),s_uid,s_name,s_major,s_minor,s_mac,n_rssi,s_state,count);
     } else {
       ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "\":{\"UID\":\"%s\",\"MAJOR\":\"%s\",\"MINOR\":\"%s\",\"MAC\":\"%s\",\"RSSI\":%d,\"STATE\":\"%s\",\"PERSEC\":%d}}"),s_uid,s_major,s_minor,s_mac,n_rssi,s_state,count);
     }
