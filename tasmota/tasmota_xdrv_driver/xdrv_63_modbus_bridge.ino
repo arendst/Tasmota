@@ -287,7 +287,7 @@ void ModbusBridgeHandle(void)
           && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
         else if ((modbusBridge.type == ModbusBridgeType::mb_int32 || modbusBridge.type == ModbusBridgeType::mb_uint32 || modbusBridge.type == ModbusBridgeType::mb_float)
-          && ((uint8_t)modbusBridge.dataCount * 4 != (uint8_t)buffer[2]))
+          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
       }
     }
