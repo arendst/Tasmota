@@ -711,7 +711,6 @@ void CmndModbusBridgeSend(void)
           {
             case ModbusBridgeType::mb_bit:
               {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("jsonDataArrayPointer[%u]=%u"), (uint8_t)jsonDataArrayPointer, (uint8_t)jsonDataArray[jsonDataArrayPointer].getUInt(0));
                 // Set 2 following bytes to 0
                 if (jsonDataArrayPointer % 16 == 0)
                 {
@@ -723,8 +722,6 @@ void CmndModbusBridgeSend(void)
                 if (bitPointer > 15) bitPointer -= 16;
 
                 writeData[jsonDataArrayPointer/15] += bitValue << bitPointer;
-
-                AddLog(LOG_LEVEL_DEBUG, PSTR("writeDataPointer[%u]=%u  bitPointer=[%u]=[%u]"), jsonDataArrayPointer/15, writeData[jsonDataArrayPointer/15], bitPointer, bitValue);
               }
             break;
             case ModbusBridgeType::mb_int8:
