@@ -377,7 +377,7 @@ void ModbusBridgeHandle(void)
           else if (modbusBridge.type == ModbusBridgeType::mb_bit)
           {
             uint8_t value = (uint8_t)(buffer[dataOffset + (count >> 3)]);
-            snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", ((value >> (7 - (count & 7))) & 1));
+            snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", ((value >> (count & 7)) & 1));
           }
           else
           {
@@ -633,7 +633,7 @@ void CmndModbusBridgeSend(void)
   if (strcmp(stype, "int8") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int8;
-    modbusBridge.dataCount = ((modbusBridge.count - 1) >> 1) + 1;
+    modbusBridge.dataCount = modbusBridge.count;
   }
   else if (strcmp(stype, "int16") == 0)
   {
@@ -648,7 +648,7 @@ void CmndModbusBridgeSend(void)
   else if ((strcmp(stype, "uint8") == 0))
   {
     modbusBridge.type = ModbusBridgeType::mb_uint8;
-    modbusBridge.dataCount = ((modbusBridge.count - 1) >> 1) + 1;
+    modbusBridge.dataCount = modbusBridge.count;
   }
   else if ((strcmp(stype, "uint16") == 0) || (strcmp(stype, "") == 0)) // Default is uint16
   {
