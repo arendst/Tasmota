@@ -1,4 +1,4 @@
-/*
+  /*
   TasmotaModbus.cpp - Basic modbus wrapper for TasmotaSerial for Tasmota
 
   Copyright (C) 2021  Theo Arends
@@ -60,13 +60,13 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   uint8_t *frame;
   uint8_t framepointer = 0;
 
-  if (function_code < 5)
+  if (function_code < 7)
   {
-    frame = (uint8_t *)malloc(8); // Addres(1), Function(1), Start Address(2), Registercount (2) or Data(2), CRC(2)
+    frame = (uint8_t *)malloc(8); // Addres(1), Function(1), Start/Coil Address(2), Registercount or Data (2), CRC(2)
   }
   else
   {
-    frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start Address(2), Quantity of registers (2), Bytecount(1), Data(2..n), CRC(2)
+    frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start/Coil Address(2),Quantity of registers (2), Bytecount(1), Data(1..n), CRC(2)
   }
 
   mb_address = device_address;  // Save address for receipt check
