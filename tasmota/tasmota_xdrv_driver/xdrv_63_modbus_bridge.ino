@@ -562,7 +562,7 @@ void CmndModbusBridgeSend(void)
     }
     else
     {
-      writeData = (uint16_t *)malloc(writeDataSize);
+      writeData = (uint16_t *)malloc(writeDataSize*2);
       for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
       {
         writeData[jsonDataArrayPointer] = jsonDataArray[jsonDataArrayPointer].getUInt(0);
