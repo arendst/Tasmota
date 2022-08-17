@@ -232,6 +232,166 @@ STATS_NAME_END(ble_ll_conn_stats)
 
 static void ble_ll_conn_event_end(struct ble_npl_event *ev);
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+struct ble_ll_conn_cth_flow {
+    bool enabled;
+    uint16_t max_buffers;
+    uint16_t num_buffers;
+};
+
+static struct ble_ll_conn_cth_flow g_ble_ll_conn_cth_flow;
+
+static struct ble_npl_event g_ble_ll_conn_cth_flow_error_ev;
+
+static bool
+ble_ll_conn_cth_flow_is_enabled(void)
+{
+    return g_ble_ll_conn_cth_flow.enabled;
+}
+
+static bool
+ble_ll_conn_cth_flow_alloc_credit(struct ble_ll_conn_sm *connsm)
+{
+    struct ble_ll_conn_cth_flow *cth = &g_ble_ll_conn_cth_flow;
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
+
+    if (!cth->num_buffers) {
+        OS_EXIT_CRITICAL(sr);
+        return false;
+    }
+
+    connsm->cth_flow_pending++;
+    cth->num_buffers--;
+
+    OS_EXIT_CRITICAL(sr);
+
+    return true;
+}
+
+static void
+ble_ll_conn_cth_flow_free_credit(struct ble_ll_conn_sm *connsm, uint16_t credits)
+{
+    struct ble_ll_conn_cth_flow *cth = &g_ble_ll_conn_cth_flow;
+    os_sr_t sr;
+
+    OS_ENTER_CRITICAL(sr);
+
+    /*
+     * It's not quite clear what we should do if host gives back more credits
+     * that we have allocated. For now let's just set invalid values back to
+     * sane values and continue.
+     */
+
+    cth->num_buffers += credits;
+    if (cth->num_buffers > cth->max_buffers) {
+        cth->num_buffers = cth->max_buffers;
+    }
+
+    if (connsm->cth_flow_pending < credits) {
+        connsm->cth_flow_pending = 0;
+    } else {
+        connsm->cth_flow_pending -= credits;
+    }
+
+    OS_EXIT_CRITICAL(sr);
+}
+
+static void
+ble_ll_conn_cth_flow_error_fn(struct ble_npl_event *ev)
+{
+    struct ble_hci_ev *hci_ev;
+    struct ble_hci_ev_command_complete *hci_ev_cp;
+    uint16_t opcode;
+
+    hci_ev = (void *)ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
+    if (!hci_ev) {
+        /* Not much we can do anyway... */
+        return;
+    }
+
+    /*
+     * We are here in case length of HCI_Host_Number_Of_Completed_Packets was
+     * invalid. We will send an error back to host and we can only hope host is
+     * reasonable and will do some actions to recover, e.g. it should disconnect
+     * all connections to guarantee that all credits are back in pool and we're
+     * back in sync (although spec does not really say what should happen).
+     */
+
+    opcode = BLE_HCI_OP(BLE_HCI_OGF_CTLR_BASEBAND,
+                        BLE_HCI_OCF_CB_HOST_NUM_COMP_PKTS);
+
+    hci_ev->opcode = BLE_HCI_EVCODE_COMMAND_COMPLETE;
+    hci_ev->length = sizeof(*hci_ev_cp);
+
+    hci_ev_cp = (void *)hci_ev->data;
+    hci_ev_cp->num_packets = BLE_LL_CFG_NUM_HCI_CMD_PKTS;
+    hci_ev_cp->opcode = htole16(opcode);
+    hci_ev_cp->status = BLE_ERR_INV_HCI_CMD_PARMS;
+
+    ble_ll_hci_event_send(hci_ev);
+}
+
+void
+ble_ll_conn_cth_flow_set_buffers(uint16_t num_buffers)
+{
+    BLE_LL_ASSERT(num_buffers);
+
+    g_ble_ll_conn_cth_flow.max_buffers = num_buffers;
+    g_ble_ll_conn_cth_flow.num_buffers = num_buffers;
+}
+
+bool
+ble_ll_conn_cth_flow_enable(bool enabled)
+{
+    struct ble_ll_conn_cth_flow *cth = &g_ble_ll_conn_cth_flow;
+
+    if (cth->enabled == enabled) {
+        return true;
+    }
+
+    if (!SLIST_EMPTY(&g_ble_ll_conn_active_list)) {
+        return false;
+    }
+
+    cth->enabled = enabled;
+
+    return true;
+}
+
+void
+ble_ll_conn_cth_flow_process_cmd(const uint8_t *cmdbuf)
+{
+    const struct ble_hci_cmd *cmd;
+    const struct ble_hci_cb_host_num_comp_pkts_cp *cp;
+    struct ble_ll_conn_sm *connsm;
+    int i;
+
+    cmd = (const void *)cmdbuf;
+    cp = (const void *)cmd->data;
+
+    if (cmd->length != sizeof(cp->handles) + cp->handles * sizeof(cp->h[0])) {
+        ble_npl_eventq_put(&g_ble_ll_data.ll_evq, &g_ble_ll_conn_cth_flow_error_ev);
+        return;
+    }
+
+    for (i = 0; i < cp->handles; i++) {
+        /*
+         * It's probably ok that we do not have active connection with given
+         * handle - this can happen if disconnection already happened in LL but
+         * host sent credits back before processing disconnection event. In such
+         * case we can simply ignore command for that connection since credits
+         * are returned by LL already.
+         */
+        connsm = ble_ll_conn_find_active_conn(cp->h[i].handle);
+        if (connsm) {
+            ble_ll_conn_cth_flow_free_credit(connsm, cp->h[i].count);
+        }
+    }
+}
+#endif
+
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
 /**
  * Checks to see if we should start a PHY update procedure
@@ -339,7 +499,7 @@ ble_ll_conn_is_lru(struct ble_ll_conn_sm *s1, struct ble_ll_conn_sm *s2)
     int rc;
 
     /* Set time that we last serviced the schedule */
-    if ((int32_t)(s1->last_scheduled - s2->last_scheduled) < 0) {
+    if (CPUTIME_LT(s1->last_scheduled, s2->last_scheduled)) {
         rc = 1;
     } else {
         rc = 0;
@@ -862,8 +1022,14 @@ ble_ll_conn_tx_pdu(struct ble_ll_conn_sm *connsm)
         /*
          * If we are encrypting, we are only allowed to send certain
          * kinds of LL control PDU's. If none is enqueued, send empty pdu!
+         *
+         * In Slave role, we are allowed to send unencrypted packets until
+         * LL_ENC_RSP is sent.
          */
-        if (connsm->enc_data.enc_state > CONN_ENC_S_ENCRYPTED) {
+        if (((connsm->enc_data.enc_state > CONN_ENC_S_ENCRYPTED) &&
+             CONN_IS_MASTER(connsm)) ||
+            ((connsm->enc_data.enc_state > CONN_ENC_S_ENC_RSP_TO_BE_SENT) &&
+             CONN_IS_SLAVE(connsm))) {
             if (!ble_ll_ctrl_enc_allowed_pdu_tx(pkthdr)) {
                 CONN_F_EMPTY_PDU_TXD(connsm) = 1;
                 goto conn_tx_pdu;
@@ -998,10 +1164,10 @@ ble_ll_conn_tx_pdu(struct ble_ll_conn_sm *connsm)
         }
 
         ticks = os_cputime_usecs_to_ticks(ticks);
-        if ((int32_t)((os_cputime_get32() + ticks) - next_event_time) < 0) {
+        if (CPUTIME_LT(os_cputime_get32() + ticks, next_event_time)) {
             md = 1;
         }
-     }
+    }
 
     /* If we send an empty PDU we need to initialize the header */
 conn_tx_pdu:
@@ -1457,10 +1623,10 @@ ble_ll_conn_master_common_init(struct ble_ll_conn_sm *connsm)
      */
     connsm->tx_win_size = BLE_LL_CONN_TX_WIN_MIN + 1;
     connsm->tx_win_off = 0;
-    connsm->master_sca = MYNEWT_VAL(BLE_LL_MASTER_SCA);
+    connsm->master_sca = BLE_LL_SCA_ENUM;
 
     /* Hop increment is a random value between 5 and 16. */
-    connsm->hop_inc = (rand() % 12) + 5;
+    connsm->hop_inc = (ble_ll_rand() % 12) + 5;
 
     /* Set channel map to map requested by host */
     connsm->num_used_chans = g_ble_ll_conn_params.num_used_chans;
@@ -1469,7 +1635,7 @@ ble_ll_conn_master_common_init(struct ble_ll_conn_sm *connsm)
 
     /*  Calculate random access address and crc initialization value */
     connsm->access_addr = ble_ll_utils_calc_access_addr();
-    connsm->crcinit = rand() & 0xffffff;
+    connsm->crcinit = ble_ll_rand() & 0xffffff;
 
     /* Set initial schedule callback */
     connsm->conn_sch.sched_cb = ble_ll_conn_event_start_cb;
@@ -1867,6 +2033,10 @@ ble_ll_conn_end(struct ble_ll_conn_sm *connsm, uint8_t ble_err)
 
     /* Remove from the active connection list */
     SLIST_REMOVE(&g_ble_ll_conn_active_list, connsm, ble_ll_conn_sm, act_sle);
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    ble_ll_conn_cth_flow_free_credit(connsm, connsm->cth_flow_pending);
+#endif
 
     /* Free the current transmit pdu if there is one. */
     if (connsm->cur_tx_pdu) {
@@ -3246,6 +3416,13 @@ ble_ll_init_rx_isr_end(uint8_t *rxbuf, uint8_t crcok,
              */
             memcpy(init_addr, rl->rl_local_rpa, BLE_DEV_ADDR_LEN);
         }
+    } else if (!ble_ll_is_rpa(adv_addr, adv_addr_type)) {
+        /* undirected with ID address, assure privacy if on RL */
+        rl = ble_ll_resolv_list_find(adv_addr, adv_addr_type);
+        if (rl && (rl->rl_priv_mode == BLE_HCI_PRIVACY_NETWORK) &&
+            rl->rl_has_peer) {
+            goto init_rx_isr_exit;
+        }
     }
 #endif
 
@@ -3459,129 +3636,142 @@ ble_ll_conn_rx_data_pdu(struct os_mbuf *rxpdu, struct ble_mbuf_hdr *hdr)
     uint16_t acl_hdr;
     struct ble_ll_conn_sm *connsm;
 
-    if (BLE_MBUF_HDR_CRC_OK(hdr)) {
-        /* XXX: there is a chance that the connection was thrown away and
-           re-used before processing packets here. Fix this. */
-        /* We better have a connection state machine */
-        connsm = ble_ll_conn_find_active_conn(hdr->rxinfo.handle);
-        if (connsm) {
-            /* Check state machine */
-            ble_ll_conn_chk_csm_flags(connsm);
+    /* Packets with invalid CRC are not sent to LL */
+    BLE_LL_ASSERT(BLE_MBUF_HDR_CRC_OK(hdr));
 
-            /* Validate rx data pdu */
-            rxbuf = rxpdu->om_data;
-            hdr_byte = rxbuf[0];
-            acl_len = rxbuf[1];
-            llid = hdr_byte & BLE_LL_DATA_HDR_LLID_MASK;
+    /* XXX: there is a chance that the connection was thrown away and
+       re-used before processing packets here. Fix this. */
+    /* We better have a connection state machine */
+    connsm = ble_ll_conn_find_active_conn(hdr->rxinfo.handle);
+    if (!connsm) {
+       STATS_INC(ble_ll_conn_stats, no_conn_sm);
+       goto conn_rx_data_pdu_end;
+    }
 
-            /*
-             * Check that the LLID and payload length are reasonable.
-             * Empty payload is only allowed for LLID == 01b.
-             *  */
-            if ((llid == 0) ||
-                ((acl_len == 0) && (llid != BLE_LL_LLID_DATA_FRAG))) {
-                STATS_INC(ble_ll_conn_stats, rx_bad_llid);
-                goto conn_rx_data_pdu_end;
-            }
+    /* Check state machine */
+    ble_ll_conn_chk_csm_flags(connsm);
+
+    /* Validate rx data pdu */
+    rxbuf = rxpdu->om_data;
+    hdr_byte = rxbuf[0];
+    acl_len = rxbuf[1];
+    llid = hdr_byte & BLE_LL_DATA_HDR_LLID_MASK;
+
+    /*
+     * Check that the LLID and payload length are reasonable.
+     * Empty payload is only allowed for LLID == 01b.
+     *  */
+    if ((llid == 0) || ((acl_len == 0) && (llid != BLE_LL_LLID_DATA_FRAG))) {
+        STATS_INC(ble_ll_conn_stats, rx_bad_llid);
+        goto conn_rx_data_pdu_end;
+    }
 
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
-            /* Check if PDU is allowed when encryption is started. If not,
-             * terminate connection.
-             *
-             * Reference: Core 5.0, Vol 6, Part B, 5.1.3.1
-             */
-            if ((connsm->enc_data.enc_state > CONN_ENC_S_PAUSE_ENC_RSP_WAIT) &&
-                    !ble_ll_ctrl_enc_allowed_pdu_rx(rxpdu)) {
-                ble_ll_conn_timeout(connsm, BLE_ERR_CONN_TERM_MIC);
-                goto conn_rx_data_pdu_end;
-            }
+    /* Check if PDU is allowed when encryption is started. If not,
+     * terminate connection.
+     *
+     * Reference: Core 5.0, Vol 6, Part B, 5.1.3.1
+     */
+    if ((connsm->enc_data.enc_state > CONN_ENC_S_PAUSE_ENC_RSP_WAIT &&
+         CONN_IS_MASTER(connsm)) ||
+        (connsm->enc_data.enc_state >= CONN_ENC_S_ENC_RSP_TO_BE_SENT &&
+         CONN_IS_SLAVE(connsm))) {
+        if (!ble_ll_ctrl_enc_allowed_pdu_rx(rxpdu)) {
+            ble_ll_conn_timeout(connsm, BLE_ERR_CONN_TERM_MIC);
+            goto conn_rx_data_pdu_end;
+        }
+    }
 #endif
 
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_PING)
-            /*
-             * Reset authenticated payload timeout if valid MIC. NOTE: we dont
-             * check the MIC failure bit as that would have terminated the
-             * connection
-             */
-            if ((connsm->enc_data.enc_state == CONN_ENC_S_ENCRYPTED) &&
-                CONN_F_LE_PING_SUPP(connsm) && (acl_len != 0)) {
-                ble_ll_conn_auth_pyld_timer_start(connsm);
-            }
+    /*
+     * Reset authenticated payload timeout if valid MIC. NOTE: we dont
+     * check the MIC failure bit as that would have terminated the
+     * connection
+     */
+    if ((connsm->enc_data.enc_state == CONN_ENC_S_ENCRYPTED) &&
+        CONN_F_LE_PING_SUPP(connsm) && (acl_len != 0)) {
+        ble_ll_conn_auth_pyld_timer_start(connsm);
+    }
 #endif
 
-            /* Update RSSI */
-            connsm->conn_rssi = hdr->rxinfo.rssi;
+    /* Update RSSI */
+    connsm->conn_rssi = hdr->rxinfo.rssi;
 
-            /*
-             * If we are a slave, we can only start to use slave latency
-             * once we have received a NESN of 1 from the master
-             */
-            if (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) {
-                if (hdr_byte & BLE_LL_DATA_HDR_NESN_MASK) {
-                    connsm->csmflags.cfbit.allow_slave_latency = 1;
-                }
-            }
-
-            /*
-             * Discard the received PDU if the sequence number is the same
-             * as the last received sequence number
-             */
-            rxd_sn = hdr_byte & BLE_LL_DATA_HDR_SN_MASK;
-            if (rxd_sn != connsm->last_rxd_sn) {
-                /* Update last rxd sn */
-                connsm->last_rxd_sn = rxd_sn;
-
-                /* No need to do anything if empty pdu */
-                if ((llid == BLE_LL_LLID_DATA_FRAG) && (acl_len == 0)) {
-                    goto conn_rx_data_pdu_end;
-                }
-
-#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
-                /*
-                 * XXX: should we check to see if we are in a state where we
-                 * might expect to get an encrypted PDU?
-                 */
-                if (BLE_MBUF_HDR_MIC_FAILURE(hdr)) {
-                    STATS_INC(ble_ll_conn_stats, mic_failures);
-                    ble_ll_conn_timeout(connsm, BLE_ERR_CONN_TERM_MIC);
-                    goto conn_rx_data_pdu_end;
-                }
-#endif
-
-                if (llid == BLE_LL_LLID_CTRL) {
-                    /* Process control frame */
-                    STATS_INC(ble_ll_conn_stats, rx_ctrl_pdus);
-                    if (ble_ll_ctrl_rx_pdu(connsm, rxpdu)) {
-                        STATS_INC(ble_ll_conn_stats, rx_malformed_ctrl_pdus);
-                    }
-                } else {
-                    /* Count # of received l2cap frames and byes */
-                    STATS_INC(ble_ll_conn_stats, rx_l2cap_pdus);
-                    STATS_INCN(ble_ll_conn_stats, rx_l2cap_bytes, acl_len);
-
-                    /* NOTE: there should be at least two bytes available */
-                    BLE_LL_ASSERT(OS_MBUF_LEADINGSPACE(rxpdu) >= 2);
-                    os_mbuf_prepend(rxpdu, 2);
-                    rxbuf = rxpdu->om_data;
-
-                    acl_hdr = (llid << 12) | connsm->conn_handle;
-                    put_le16(rxbuf, acl_hdr);
-                    put_le16(rxbuf + 2, acl_len);
-                    ble_hci_trans_ll_acl_tx(rxpdu);
-                }
-
-                /* NOTE: we dont free the mbuf since we handed it off! */
-                return;
-            } else {
-                STATS_INC(ble_ll_conn_stats, data_pdu_rx_dup);
-            }
-        } else {
-            STATS_INC(ble_ll_conn_stats, no_conn_sm);
+    /*
+     * If we are a slave, we can only start to use slave latency
+     * once we have received a NESN of 1 from the master
+     */
+    if (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) {
+        if (hdr_byte & BLE_LL_DATA_HDR_NESN_MASK) {
+            connsm->csmflags.cfbit.allow_slave_latency = 1;
         }
     }
 
+    /*
+     * Discard the received PDU if the sequence number is the same
+     * as the last received sequence number
+     */
+    rxd_sn = hdr_byte & BLE_LL_DATA_HDR_SN_MASK;
+    if (rxd_sn == connsm->last_rxd_sn) {
+       STATS_INC(ble_ll_conn_stats, data_pdu_rx_dup);
+       goto conn_rx_data_pdu_end;
+   }
+
+    /* Update last rxd sn */
+    connsm->last_rxd_sn = rxd_sn;
+
+    /* No need to do anything if empty pdu */
+    if ((llid == BLE_LL_LLID_DATA_FRAG) && (acl_len == 0)) {
+        goto conn_rx_data_pdu_end;
+    }
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
+    /*
+     * XXX: should we check to see if we are in a state where we
+     * might expect to get an encrypted PDU?
+     */
+    if (BLE_MBUF_HDR_MIC_FAILURE(hdr)) {
+        STATS_INC(ble_ll_conn_stats, mic_failures);
+        ble_ll_conn_timeout(connsm, BLE_ERR_CONN_TERM_MIC);
+        goto conn_rx_data_pdu_end;
+    }
+#endif
+
+    if (llid == BLE_LL_LLID_CTRL) {
+        /* Process control frame */
+        STATS_INC(ble_ll_conn_stats, rx_ctrl_pdus);
+        if (ble_ll_ctrl_rx_pdu(connsm, rxpdu)) {
+            STATS_INC(ble_ll_conn_stats, rx_malformed_ctrl_pdus);
+        }
+    } else {
+        /* Count # of received l2cap frames and byes */
+        STATS_INC(ble_ll_conn_stats, rx_l2cap_pdus);
+        STATS_INCN(ble_ll_conn_stats, rx_l2cap_bytes, acl_len);
+
+        /* NOTE: there should be at least two bytes available */
+        BLE_LL_ASSERT(OS_MBUF_LEADINGSPACE(rxpdu) >= 2);
+        os_mbuf_prepend(rxpdu, 2);
+        rxbuf = rxpdu->om_data;
+
+        acl_hdr = (llid << 12) | connsm->conn_handle;
+        put_le16(rxbuf, acl_hdr);
+        put_le16(rxbuf + 2, acl_len);
+        ble_hci_trans_ll_acl_tx(rxpdu);
+    }
+
+    /* NOTE: we dont free the mbuf since we handed it off! */
+    return;
+
     /* Free buffer */
 conn_rx_data_pdu_end:
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    /* Need to give credit back if we allocated one for this PDU */
+    if (hdr->rxinfo.flags & BLE_MBUF_HDR_F_CONN_CREDIT) {
+        ble_ll_conn_cth_flow_free_credit(connsm, 1);
+    }
+#endif
+
     os_mbuf_free_chain(rxpdu);
 }
 
@@ -3602,7 +3792,6 @@ int
 ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
 {
     int rc;
-    int is_ctrl;
     uint8_t hdr_byte;
     uint8_t hdr_sn;
     uint8_t hdr_nesn;
@@ -3616,13 +3805,42 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
     uint32_t add_usecs;
     struct os_mbuf *txpdu;
     struct ble_ll_conn_sm *connsm;
-    struct os_mbuf *rxpdu;
+    struct os_mbuf *rxpdu = NULL;
     struct ble_mbuf_hdr *txhdr;
     int rx_phy_mode;
+    bool alloc_rxpdu = true;
+
+    rc = -1;
+    connsm = g_ble_ll_conn_cur_sm;
 
     /* Retrieve the header and payload length */
     hdr_byte = rxbuf[0];
     rx_pyld_len = rxbuf[1];
+
+    /*
+     * No need to alloc rxpdu for packets with invalid CRC, we would throw them
+     * away instantly from LL anyway.
+     */
+    if (!BLE_MBUF_HDR_CRC_OK(rxhdr)) {
+        alloc_rxpdu = false;
+    }
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    /*
+     * If flow control is enabled, we need to have credit available for each
+     * non-empty data packet that LL may send to host. If there are no credits
+     * available, we don't need to allocate buffer for this packet so LL will
+     * nak it.
+     */
+    if (alloc_rxpdu && ble_ll_conn_cth_flow_is_enabled() &&
+        BLE_LL_LLID_IS_DATA(hdr_byte) && (rx_pyld_len > 0)) {
+        if (ble_ll_conn_cth_flow_alloc_credit(connsm)) {
+            rxhdr->rxinfo.flags |= BLE_MBUF_HDR_F_CONN_CREDIT;
+        } else {
+            alloc_rxpdu = false;
+        }
+    }
+#endif
 
     /*
      * We need to attempt to allocate a buffer here. The reason we do this
@@ -3631,14 +3849,14 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
      * acked, but we should not ack the received frame if we cant hand it up.
      * NOTE: we hand up empty pdu's to the LL task!
      */
-    rxpdu = ble_ll_rxpdu_alloc(rx_pyld_len + BLE_LL_PDU_HDR_LEN);
+    if (alloc_rxpdu) {
+        rxpdu = ble_ll_rxpdu_alloc(rx_pyld_len + BLE_LL_PDU_HDR_LEN);
+    }
 
     /*
      * We should have a current connection state machine. If we dont, we just
      * hand the packet to the higher layer to count it.
      */
-    rc = -1;
-    connsm = g_ble_ll_conn_cur_sm;
     if (!connsm) {
         STATS_INC(ble_ll_conn_stats, rx_data_pdu_no_conn);
         goto conn_exit;
@@ -3700,9 +3918,7 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
         /* Set last received header byte */
         connsm->last_rxd_hdr_byte = hdr_byte;
 
-        is_ctrl = 0;
-        if ((hdr_byte & BLE_LL_DATA_HDR_LLID_MASK) == BLE_LL_LLID_CTRL) {
-            is_ctrl = 1;
+        if (BLE_LL_LLID_IS_CTRL(hdr_byte)) {
             opcode = rxbuf[2];
         }
 
@@ -3791,7 +4007,7 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
                         /* Adjust payload for max TX time and octets */
 
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
-                        if (is_ctrl &&
+                        if (BLE_LL_LLID_IS_CTRL(hdr_byte) &&
                             (connsm->conn_role == BLE_LL_CONN_ROLE_SLAVE) &&
                             (opcode == BLE_LL_CTRL_PHY_UPDATE_IND)) {
                             connsm->phy_tx_transition =
@@ -3810,8 +4026,9 @@ ble_ll_conn_rx_isr_end(uint8_t *rxbuf, struct ble_mbuf_hdr *rxhdr)
         /* If this is a TERMINATE_IND, we have to reply */
 chk_rx_terminate_ind:
         /* If we received a terminate IND, we must set some flags */
-        if (is_ctrl && (opcode == BLE_LL_CTRL_TERMINATE_IND)
-                    && (rx_pyld_len == (1 + BLE_LL_CTRL_TERMINATE_IND_LEN))) {
+        if (BLE_LL_LLID_IS_CTRL(hdr_byte) &&
+            (opcode == BLE_LL_CTRL_TERMINATE_IND) &&
+            (rx_pyld_len == (1 + BLE_LL_CTRL_TERMINATE_IND_LEN))) {
             connsm->csmflags.cfbit.terminate_ind_rxd = 1;
             connsm->rxd_disconnect_reason = rxbuf[3];
         }
@@ -4233,6 +4450,12 @@ ble_ll_conn_module_reset(void)
     g_ble_ll_conn_sync_transfer_params.mode = 0;
     g_ble_ll_conn_sync_transfer_params.sync_timeout_us = 0;
 #endif
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    g_ble_ll_conn_cth_flow.enabled = false;
+    g_ble_ll_conn_cth_flow.max_buffers = 1;
+    g_ble_ll_conn_cth_flow.num_buffers = 1;
+#endif
 }
 
 /* Initialize the connection module */
@@ -4271,6 +4494,11 @@ ble_ll_conn_module_init(void)
                             STATS_NAME_INIT_PARMS(ble_ll_conn_stats),
                             "ble_ll_conn");
     BLE_LL_ASSERT(rc == 0);
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    ble_npl_event_init(&g_ble_ll_conn_cth_flow_error_ev,
+                       ble_ll_conn_cth_flow_error_fn, NULL);
+#endif
 
     /* Call reset to finish reset of initialization */
     ble_ll_conn_module_reset();

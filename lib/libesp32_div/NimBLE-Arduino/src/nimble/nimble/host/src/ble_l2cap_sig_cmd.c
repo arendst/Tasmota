@@ -20,6 +20,7 @@
 #include <string.h>
 #include "ble_hs_priv.h"
 
+#if NIMBLE_BLE_CONNECT
 int
 ble_l2cap_sig_tx(uint16_t conn_handle, struct os_mbuf *txom)
 {
@@ -112,3 +113,5 @@ ble_l2cap_sig_cmd_get(uint8_t opcode, uint8_t id, uint16_t len,
 
     return hdr->data;
 }
+
+#endif

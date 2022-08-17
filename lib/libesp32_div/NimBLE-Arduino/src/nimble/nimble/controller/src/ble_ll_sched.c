@@ -91,14 +91,14 @@ ble_ll_sched_is_overlap(struct ble_ll_sched_item *s1,
     int rc;
 
     rc = 1;
-    if ((int32_t)(s1->start_time - s2->start_time) < 0) {
+    if (CPUTIME_LT(s1->start_time, s2->start_time)) {
         /* Make sure this event does not overlap current event */
-        if ((int32_t)(s1->end_time - s2->start_time) <= 0) {
+        if (CPUTIME_LEQ(s1->end_time, s2->start_time)) {
             rc = 0;
         }
     } else {
         /* Check for overlap */
-        if ((int32_t)(s1->start_time - s2->end_time) >= 0) {
+        if (CPUTIME_GEQ(s1->start_time, s2->end_time)) {
             rc = 0;
         }
     }
@@ -119,7 +119,7 @@ ble_ll_sched_overlaps_current(struct ble_ll_sched_item *sch)
     rc = 0;
     if (ble_ll_state_get() == BLE_LL_STATE_CONNECTION) {
         ce_end_time = ble_ll_conn_get_ce_end_time();
-        if ((int32_t)(ce_end_time - sch->start_time) > 0) {
+        if (CPUTIME_GT(ce_end_time, sch->start_time)) {
             rc = 1;
         }
     }
@@ -186,7 +186,7 @@ ble_ll_sched_conn_reschedule(struct ble_ll_conn_sm *connsm)
     sch->end_time = connsm->ce_end_time;
 
     /* Better be past current time or we just leave */
-    if ((int32_t)(sch->start_time - os_cputime_get32()) < 0) {
+    if (CPUTIME_LT(sch->start_time, os_cputime_get32())) {
         return -1;
     }
 
@@ -224,7 +224,7 @@ ble_ll_sched_conn_reschedule(struct ble_ll_conn_sm *connsm)
                 end_overlap = entry;
             }
         } else {
-            if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+            if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                 rc = 0;
                 TAILQ_INSERT_BEFORE(entry, sch, link);
                 break;
@@ -476,7 +476,7 @@ ble_ll_sched_master_new(struct ble_ll_conn_sm *connsm,
             sch->end_time = earliest_end;
 
             /* We can insert if before entry in list */
-            if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+            if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                 if ((earliest_start - initial_start) <= itvl_t) {
                     rc = 0;
                     TAILQ_INSERT_BEFORE(entry, sch, link);
@@ -663,7 +663,7 @@ ble_ll_sched_master_new(struct ble_ll_conn_sm *connsm,
             sch->end_time = earliest_end;
 
             /* We can insert if before entry in list */
-            if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+            if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                 if ((earliest_start - initial_start) <= itvl_t) {
                     rc = 0;
                     TAILQ_INSERT_BEFORE(entry, sch, link);
@@ -778,7 +778,7 @@ ble_ll_sched_slave_new(struct ble_ll_conn_sm *connsm)
         while (1) {
             next_sch = entry->link.tqe_next;
             /* Insert if event ends before next starts */
-            if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+            if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                 rc = 0;
                 TAILQ_INSERT_BEFORE(entry, sch, link);
                 break;
@@ -1055,7 +1055,7 @@ ble_ll_sched_adv_new(struct ble_ll_sched_item *sch, ble_ll_sched_adv_new_cb cb,
         os_cputime_timer_stop(&g_ble_ll_sched_timer);
         TAILQ_FOREACH(entry, &g_ble_ll_sched_q, link) {
             /* We can insert if before entry in list */
-            if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+            if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                 TAILQ_INSERT_BEFORE(entry, sch, link);
                 break;
             }
@@ -1119,7 +1119,7 @@ ble_ll_sched_periodic_adv(struct ble_ll_sched_item *sch, uint32_t *start,
         os_cputime_timer_stop(&g_ble_ll_sched_timer);
         TAILQ_FOREACH(entry, &g_ble_ll_sched_q, link) {
             /* We can insert if before entry in list */
-            if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+            if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                 TAILQ_INSERT_BEFORE(entry, sch, link);
                 break;
             }
@@ -1208,7 +1208,7 @@ ble_ll_sched_adv_reschedule(struct ble_ll_sched_item *sch, uint32_t *start,
                     end_overlap = entry;
                 }
             } else {
-                if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+                if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                     before = entry;
                     break;
                 }
@@ -1241,7 +1241,7 @@ ble_ll_sched_adv_reschedule(struct ble_ll_sched_item *sch, uint32_t *start,
             sch->end_time = sch->start_time + duration;
             while (1) {
                 next_sch = entry->link.tqe_next;
-                if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+                if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
                     rand_ticks = entry->start_time - sch->end_time;
                     before = entry;
                     TAILQ_INSERT_BEFORE(before, sch, link);
@@ -1274,7 +1274,7 @@ ble_ll_sched_adv_reschedule(struct ble_ll_sched_item *sch, uint32_t *start,
     if (!rc) {
         sch->enqueued = 1;
         if (rand_ticks) {
-            sch->start_time += rand() % rand_ticks;
+            sch->start_time += ble_ll_rand() % rand_ticks;
         }
         sch->end_time = sch->start_time + duration;
         *start = sch->start_time;
@@ -1588,7 +1588,7 @@ ble_ll_sched_scan_req_over_aux_ptr(uint32_t chan, uint8_t phy_mode)
     while (sch) {
         /* Let's check if there is no scheduled item which want to start within
          * given usecs.*/
-        if ((int32_t)(sch->start_time - now + os_cputime_usecs_to_ticks(usec_dur)) > 0) {
+        if (CPUTIME_GT(sch->start_time, now + os_cputime_usecs_to_ticks(usec_dur))) {
             /* We are fine. Have time for scan req */
             return 0;
         }
@@ -1678,7 +1678,7 @@ ble_ll_sched_aux_scan(struct ble_mbuf_hdr *ble_hdr,
     os_cputime_timer_stop(&g_ble_ll_sched_timer);
     TAILQ_FOREACH(entry, &g_ble_ll_sched_q, link) {
         /* We can insert if before entry in list */
-        if ((int32_t)(sch->end_time - entry->start_time) <= 0) {
+        if (CPUTIME_LEQ(sch->end_time, entry->start_time)) {
             rc = 0;
             TAILQ_INSERT_BEFORE(entry, sch, link);
             sch->enqueued = 1;

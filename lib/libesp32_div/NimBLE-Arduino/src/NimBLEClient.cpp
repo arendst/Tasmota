@@ -65,6 +65,11 @@ NimBLEClient::NimBLEClient(const NimBLEAddress &peerAddress) : m_peerAddress(pee
     m_pTaskData        = nullptr;
     m_connEstablished  = false;
     m_lastErr          = 0;
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    m_phyMask          = BLE_GAP_LE_PHY_1M_MASK |
+                         BLE_GAP_LE_PHY_2M_MASK |
+                         BLE_GAP_LE_PHY_CODED_MASK;
+#endif
 
     m_pConnParams.scan_itvl = 16;          // Scan interval in 0.625ms units (NimBLE Default)
     m_pConnParams.scan_window = 16;        // Scan window in 0.625ms units (NimBLE Default)
@@ -93,6 +98,8 @@ NimBLEClient::~NimBLEClient() {
     if(m_deleteCallbacks && m_pClientCallbacks != &defaultCallbacks) {
         delete m_pClientCallbacks;
     }
+
+    ble_npl_callout_deinit(&m_dcTimer);
 
 } // ~NimBLEClient
 
@@ -150,35 +157,35 @@ size_t NimBLEClient::deleteService(const NimBLEUUID &uuid) {
 
 /**
  * @brief Connect to the BLE Server.
- * @param [in] deleteAttibutes If true this will delete any attribute objects this client may already\n
+ * @param [in] deleteAttributes If true this will delete any attribute objects this client may already\n
  * have created and clears the vectors after successful connection.
  * @return True on success.
  */
-bool NimBLEClient::connect(bool deleteAttibutes) {
-    return connect(m_peerAddress, deleteAttibutes);
+bool NimBLEClient::connect(bool deleteAttributes) {
+    return connect(m_peerAddress, deleteAttributes);
 }
 
 /**
  * @brief Connect to an advertising device.
  * @param [in] device The device to connect to.
- * @param [in] deleteAttibutes If true this will delete any attribute objects this client may already\n
+ * @param [in] deleteAttributes If true this will delete any attribute objects this client may already\n
  * have created and clears the vectors after successful connection.
  * @return True on success.
  */
-bool NimBLEClient::connect(NimBLEAdvertisedDevice* device, bool deleteAttibutes) {
+bool NimBLEClient::connect(NimBLEAdvertisedDevice* device, bool deleteAttributes) {
     NimBLEAddress address(device->getAddress());
-    return connect(address, deleteAttibutes);
+    return connect(address, deleteAttributes);
 }
 
 
 /**
  * @brief Connect to the BLE Server.
  * @param [in] address The address of the server.
- * @param [in] deleteAttibutes If true this will delete any attribute objects this client may already\n
+ * @param [in] deleteAttributes If true this will delete any attribute objects this client may already\n
  * have created and clears the vectors after successful connection.
  * @return True on success.
  */
-bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
+bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttributes) {
     NIMBLE_LOGD(LOG_TAG, ">> connect(%s)", address.toString().c_str());
 
     if(!NimBLEDevice::m_synced) {
@@ -218,9 +225,22 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
      *  Loop on BLE_HS_EBUSY if the scan hasn't stopped yet.
      */
     do {
+#if CONFIG_BT_NIMBLE_EXT_ADV
+        rc = ble_gap_ext_connect(NimBLEDevice::m_own_addr_type,
+                                 &peerAddr_t,
+                                 m_connectTimeout,
+                                 m_phyMask,
+                                 &m_pConnParams,
+                                 &m_pConnParams,
+                                 &m_pConnParams,
+                                 NimBLEClient::handleGapEvent,
+                                 this);
+
+#else
         rc = ble_gap_connect(NimBLEDevice::m_own_addr_type, &peerAddr_t,
                              m_connectTimeout, &m_pConnParams,
                              NimBLEClient::handleGapEvent, this);
+#endif
         switch (rc) {
             case 0:
                 break;
@@ -239,7 +259,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
                 break;
 
             case BLE_HS_EALREADY:
-                // Already attemting to connect to this device, cancel the previous
+                // Already attempting to connect to this device, cancel the previous
                 // attempt and report failure here so we don't get 2 connections.
                 NIMBLE_LOGE(LOG_TAG, "Already attempting to connect to %s - cancelling",
                             std::string(m_peerAddress).c_str());
@@ -297,7 +317,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttibutes) {
         NIMBLE_LOGI(LOG_TAG, "Connection established");
     }
 
-    if(deleteAttibutes) {
+    if(deleteAttributes) {
         deleteServices();
     }
 
@@ -370,8 +390,8 @@ int NimBLEClient::disconnect(uint8_t reason) {
         // We use a timer to detect a controller error in the event that it does
         // not inform the stack when disconnection is complete.
         // This is a common error in certain esp-idf versions.
-        // The disconnect timeout time is the supervison timeout time + 1 second.
-        // In the case that the event happenss shortly after the supervision timeout
+        // The disconnect timeout time is the supervision timeout time + 1 second.
+        // In the case that the event happens shortly after the supervision timeout
         // we don't want to prematurely reset the host.
         ble_npl_time_t ticks;
         ble_npl_time_ms_to_ticks((desc.supervision_timeout + 100) * 10, &ticks);
@@ -395,8 +415,23 @@ int NimBLEClient::disconnect(uint8_t reason) {
 } // disconnect
 
 
+#if CONFIG_BT_NIMBLE_EXT_ADV
 /**
- * @brief Set the connection paramaters to use when connecting to a server.
+ * @brief Set the PHY types to use when connecting to a server.
+ * @param [in] mask A bitmask indicating what PHYS to connect with.\n
+ * The available bits are:
+ * * 0x01 BLE_GAP_LE_PHY_1M_MASK
+ * * 0x02 BLE_GAP_LE_PHY_2M_MASK
+ * * 0x04 BLE_GAP_LE_PHY_CODED_MASK
+ */
+void NimBLEClient::setConnectPhy(uint8_t mask) {
+    m_phyMask = mask;
+}
+#endif
+
+
+/**
+ * @brief Set the connection parameters to use when connecting to a server.
  * @param [in] minInterval The minimum connection interval in 1.25ms units.
  * @param [in] maxInterval The maximum connection interval in 1.25ms units.
  * @param [in] latency The number of packets allowed to skip (extends max interval).
@@ -464,8 +499,8 @@ void NimBLEClient::updateConnParams(uint16_t minInterval, uint16_t maxInterval,
  * @param [in] tx_octets The preferred number of payload octets to use (Range 0x001B-0x00FB).
  */
 void NimBLEClient::setDataLen(uint16_t tx_octets) {
-#if defined(CONFIG_NIMBLE_CPP_IDF) && defined(ESP_IDF_VERSION) && \
-           ESP_IDF_VERSION_MAJOR >= 4 && ESP_IDF_VERSION_MINOR >= 3 && ESP_IDF_VERSION_PATCH >= 2
+#if defined(CONFIG_NIMBLE_CPP_IDF) && !defined(ESP_IDF_VERSION) || \
+  (ESP_IDF_VERSION_MAJOR * 100 + ESP_IDF_VERSION_MINOR * 10 + ESP_IDF_VERSION_PATCH) < 432
     return;
 #else
     uint16_t tx_time = (tx_octets + 14) * 8;
@@ -618,7 +653,11 @@ NimBLERemoteService* NimBLEClient::getService(const NimBLEUUID &uuid) {
         {
             NimBLEUUID uuid128(uuid);
             uuid128.to128();
-            return getService(uuid128);
+            if(retrieveServices(&uuid128)) {
+                if(m_servicesVector.size() > prev_size) {
+                    return m_servicesVector.back();
+                }
+            }
         } else {
             // If the request was successful but the 128 bit uuid not found
             // try again with the 16 bit uuid.
@@ -626,7 +665,11 @@ NimBLERemoteService* NimBLEClient::getService(const NimBLEUUID &uuid) {
             uuid16.to16();
             // if the uuid was 128 bit but not of the BLE base type this check will fail
             if (uuid16.bitSize() == BLE_UUID_TYPE_16) {
-                return getService(uuid16);
+                if(retrieveServices(&uuid16)) {
+                    if(m_servicesVector.size() > prev_size) {
+                        return m_servicesVector.back();
+                    }
+                }
             }
         }
     }
@@ -660,13 +703,29 @@ std::vector<NimBLERemoteService*>* NimBLEClient::getServices(bool refresh) {
 
 /**
  * @brief Retrieves the full database of attributes that the peripheral has available.
+ * @return True if successful.
  */
-void NimBLEClient::discoverAttributes() {
-    for(auto svc: *getServices(true)) {
-        for(auto chr: *svc->getCharacteristics(true)) {
-            chr->getDescriptors(true);
+bool NimBLEClient::discoverAttributes() {
+    deleteServices();
+
+    if (!retrieveServices()){
+        return false;
+    }
+
+
+    for(auto svc: m_servicesVector) {
+        if (!svc->retrieveCharacteristics()) {
+            return false;
+        }
+
+        for(auto chr: svc->m_characteristicVector) {
+            if (!chr->retrieveDescriptors()) {
+                return false;
+            }
         }
     }
+
+    return true;
 } // discoverAttributes
 
 
@@ -758,7 +817,7 @@ int NimBLEClient::serviceDiscoveredCB(
     if(error->status == BLE_HS_EDONE) {
         pTaskData->rc = 0;
     } else {
-        NIMBLE_LOGE(LOG_TAG, "characteristicDiscCB() rc=%d %s",
+        NIMBLE_LOGE(LOG_TAG, "serviceDiscoveredCB() rc=%d %s",
                              error->status,
                              NimBLEUtils::returnCodeToString(error->status));
         pTaskData->rc = error->status;
@@ -766,7 +825,7 @@ int NimBLEClient::serviceDiscoveredCB(
 
     xTaskNotifyGive(pTaskData->task);
 
-    NIMBLE_LOGD(LOG_TAG,"<< << Service Discovered");
+    NIMBLE_LOGD(LOG_TAG,"<< Service Discovered");
     return error->status;
 }
 
@@ -791,7 +850,7 @@ NimBLEAttValue NimBLEClient::getValue(const NimBLEUUID &serviceUUID, const NimBL
         }
     }
 
-    NIMBLE_LOGD(LOG_TAG, "<<getValue");
+    NIMBLE_LOGD(LOG_TAG, "<< getValue");
     return ret;
 } // getValue
 

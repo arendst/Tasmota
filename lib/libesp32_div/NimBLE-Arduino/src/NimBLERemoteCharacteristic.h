@@ -73,8 +73,8 @@ public:
 
     bool                                           subscribe(bool notifications = true,
                                                              notify_callback notifyCallback = nullptr,
-                                                             bool response = false);
-    bool                                           unsubscribe(bool response = false);
+                                                             bool response = true);
+    bool                                           unsubscribe(bool response = true);
     bool                                           registerForNotify(notify_callback notifyCallback,
                                                                      bool notifications = true,
                                                                      bool response = true)

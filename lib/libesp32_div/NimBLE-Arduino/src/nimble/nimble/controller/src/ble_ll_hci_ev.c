@@ -463,6 +463,37 @@ ble_ll_hci_ev_phy_update(struct ble_ll_conn_sm *connsm, uint8_t status)
 }
 #endif
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+void
+ble_ll_hci_ev_sca_update(struct ble_ll_conn_sm *connsm, uint8_t status,
+                         uint8_t peer_sca)
+{
+    struct ble_hci_ev_le_subev_peer_sca_complete *ev;
+    struct ble_hci_ev *hci_ev;
+
+    if (!ble_ll_hci_is_le_event_enabled(BLE_HCI_LE_SUBEV_REQ_PEER_SCA_COMP)) {
+        return;
+    }
+
+    hci_ev = (void *) ble_hci_trans_buf_alloc(BLE_HCI_TRANS_BUF_EVT_HI);
+    if (!hci_ev) {
+        return;
+    }
+
+    hci_ev->opcode = BLE_HCI_EVCODE_LE_META;
+    hci_ev->length = sizeof(*ev);
+    ev = (void *) hci_ev->data;
+
+    ev->subev_code = BLE_HCI_LE_SUBEV_REQ_PEER_SCA_COMP;
+    ev->status = status;
+    ev->conn_handle = htole16(connsm->conn_handle);
+    ev->sca = peer_sca;
+
+    ble_ll_hci_event_send(hci_ev);
+}
+
+#endif
+
 void
 ble_ll_hci_ev_send_vendor_err(const char *file, uint32_t line)
 {

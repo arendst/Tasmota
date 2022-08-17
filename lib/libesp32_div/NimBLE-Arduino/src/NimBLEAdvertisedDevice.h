@@ -71,7 +71,7 @@ public:
     std::string     getName();
     int             getRSSI();
     NimBLEScan*     getScan();
-    size_t          getServiceDataCount();
+    uint8_t         getServiceDataCount();
     std::string     getServiceData(uint8_t index = 0);
     std::string     getServiceData(const NimBLEUUID &uuid);
 
@@ -111,9 +111,9 @@ public:
 
     NimBLEUUID      getServiceDataUUID(uint8_t index = 0);
     NimBLEUUID      getServiceUUID(uint8_t index = 0);
-    size_t          getServiceUUIDCount();
+    uint8_t         getServiceUUIDCount();
     NimBLEAddress   getTargetAddress(uint8_t index = 0);
-    size_t          getTargetAddressCount();
+    uint8_t         getTargetAddressCount();
     int8_t          getTXPower();
     uint8_t*        getPayload();
     uint8_t         getAdvLength();
@@ -133,16 +133,30 @@ public:
     bool            haveTargetAddress();
     bool            haveURI();
     std::string     toString();
+    bool            isConnectable();
+    bool            isLegacyAdvertisement();
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    uint8_t         getSetId();
+    uint8_t         getPrimaryPhy();
+    uint8_t         getSecondaryPhy();
+    uint16_t        getPeriodicInterval();
+#endif
 
 private:
     friend class NimBLEScan;
 
     void    setAddress(NimBLEAddress address);
-    void    setAdvType(uint8_t advType);
+    void    setAdvType(uint8_t advType, bool isLegacyAdv);
     void    setPayload(const uint8_t *payload, uint8_t length, bool append);
     void    setRSSI(int rssi);
-    uint8_t findAdvField(uint8_t type, uint8_t index = 0, uint8_t *data_loc = nullptr);
-    uint8_t findServiceData(uint8_t index, uint8_t* bytes);
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    void    setSetId(uint8_t sid)              { m_sid = sid; }
+    void    setPrimaryPhy(uint8_t phy)         { m_primPhy = phy; }
+    void    setSecondaryPhy(uint8_t phy)       { m_secPhy = phy; }
+    void    setPeriodicInterval(uint16_t itvl) { m_periodicItvl = itvl; }
+#endif
+    uint8_t findAdvField(uint8_t type, uint8_t index = 0, size_t * data_loc = nullptr);
+    size_t  findServiceData(uint8_t index, uint8_t* bytes);
 
     NimBLEAddress   m_address = NimBLEAddress("");
     uint8_t         m_advType;
@@ -150,6 +164,13 @@ private:
     time_t          m_timestamp;
     bool            m_callbackSent;
     uint8_t         m_advLength;
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    bool            m_isLegacyAdv;
+    uint8_t         m_sid;
+    uint8_t         m_primPhy;
+    uint8_t         m_secPhy;
+    uint16_t        m_periodicItvl;
+#endif
 
     std::vector<uint8_t>    m_payload;
 };

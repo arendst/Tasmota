@@ -58,6 +58,8 @@ extern "C" {
 /* Definition for RSSI when the RSSI is unknown */
 #define BLE_LL_CONN_UNKNOWN_RSSI        (127)
 
+#define BLE_LL_CONN_HANDLE_ISO_OFFSET   (0x0100)
+
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
 /*
  * Encryption states for a connection
@@ -69,6 +71,7 @@ extern "C" {
 enum conn_enc_state {
     CONN_ENC_S_UNENCRYPTED = 1,
     CONN_ENC_S_ENCRYPTED,
+    CONN_ENC_S_ENC_RSP_TO_BE_SENT,
     CONN_ENC_S_ENC_RSP_WAIT,
     CONN_ENC_S_PAUSE_ENC_RSP_WAIT,
     CONN_ENC_S_PAUSED,
@@ -269,6 +272,10 @@ struct ble_ll_conn_sm
     uint8_t last_rxd_sn;        /* note: cant be 1 bit given current code */
     uint8_t last_rxd_hdr_byte;  /* note: possibly can make 1 bit since we
                                    only use the MD bit now */
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    uint16_t cth_flow_pending;
+#endif
 
     /* connection event mgmt */
     uint8_t reject_reason;

@@ -145,9 +145,9 @@ put_be24(void *buf, uint32_t x)
     uint8_t *u8ptr;
 
     u8ptr = buf;
-    u8ptr[0] = (uint8_t)(x >> 24);
-    u8ptr[1] = (uint8_t)(x >> 16);
-    u8ptr[2] = (uint8_t)(x >> 8);
+    u8ptr[0] = (uint8_t)(x >> 16);
+    u8ptr[1] = (uint8_t)(x >> 8);
+    u8ptr[2] = (uint8_t)x;
 }
 
 void
@@ -198,9 +198,9 @@ get_be24(const void *buf)
     uint32_t x;
 
     u8ptr = buf;
-    x = (uint32_t)u8ptr[0] << 24;
-    x |= (uint32_t)u8ptr[1] << 16;
-    x |= (uint32_t)u8ptr[2] << 8;
+    x = (uint32_t)u8ptr[0] << 16;
+    x |= (uint32_t)u8ptr[1] << 8;
+    x |= (uint32_t)u8ptr[2];
 
     return x;
 }

@@ -94,7 +94,7 @@ ble_hci_trans_hs_cmd_tx(uint8_t *cmd)
 }
 
 int
-ble_hci_trans_ll_evt_tx(uint8_t *hci_ev)
+IRAM_ATTR ble_hci_trans_ll_evt_tx(uint8_t *hci_ev)
 {
     int rc;
 
@@ -127,7 +127,7 @@ ble_hci_trans_ll_acl_tx(struct os_mbuf *om)
 }
 
 uint8_t *
-ble_hci_trans_buf_alloc(int type)
+IRAM_ATTR ble_hci_trans_buf_alloc(int type)
 {
     uint8_t *buf;
 
@@ -159,7 +159,7 @@ ble_hci_trans_buf_alloc(int type)
 }
 
 void
-ble_hci_trans_buf_free(uint8_t *buf)
+IRAM_ATTR ble_hci_trans_buf_free(uint8_t *buf)
 {
     int rc;
 

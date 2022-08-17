@@ -92,7 +92,7 @@ ble_hs_flow_tx_num_comp_pkts(void)
              * response from the controller, so don't use the normal blocking
              * HCI API when sending it.
              */
-            rc = ble_hs_hci_cmd_send_buf(
+            rc = ble_hs_hci_cmd_tx_no_rsp(
                 BLE_HCI_OP(BLE_HCI_OGF_CTLR_BASEBAND,
                            BLE_HCI_OCF_CB_HOST_NUM_COMP_PKTS),
                 buf, sizeof(buf));
@@ -235,7 +235,9 @@ ble_hs_flow_startup(void)
     };
     int rc;
 
-    ble_npl_event_init(&ble_hs_flow_ev, ble_hs_flow_event_cb, NULL);
+    /* Remove previous event from queue, if any*/
+    ble_npl_eventq_remove(ble_hs_evq_get(), &ble_hs_flow_ev);
+   
 
     /* Assume failure. */
     ble_hci_trans_set_acl_free_cb(NULL, NULL);
@@ -267,8 +269,8 @@ ble_hs_flow_startup(void)
     /* Flow control successfully enabled. */
     ble_hs_flow_num_completed_pkts = 0;
     ble_hci_trans_set_acl_free_cb(ble_hs_flow_acl_free, NULL);
-    ble_npl_callout_init(&ble_hs_flow_timer, ble_hs_evq_get(),
-                         ble_hs_flow_event_cb, NULL);
+    /* Stop flow control timer, if not already */
+    ble_npl_callout_stop(&ble_hs_flow_timer);
 #endif
 
     return 0;
@@ -280,4 +282,23 @@ ble_hs_flow_stop(void)
 #if MYNEWT_VAL(BLE_HS_FLOW_CTRL)
     ble_npl_callout_deinit(&ble_hs_flow_timer);
 #endif
+}
+
+void
+ble_hs_flow_init(void)
+{
+#if MYNEWT_VAL(BLE_HS_FLOW_CTRL)
+    ble_npl_event_init(&ble_hs_flow_ev, ble_hs_flow_event_cb, NULL);
+    ble_npl_callout_init(&ble_hs_flow_timer, ble_hs_evq_get(),
+                         ble_hs_flow_event_cb, NULL);
+#endif //MYNEWT_VAL(BLE_HS_FLOW_CTRL)
+}
+
+void
+ble_hs_flow_deinit(void)
+{
+#if MYNEWT_VAL(BLE_HS_FLOW_CTRL)
+    ble_npl_event_deinit(&ble_hs_flow_ev);
+    ble_npl_callout_deinit(&ble_hs_flow_timer);
+#endif //MYNEWT_VAL(BLE_HS_FLOW_CTRL)
 }
