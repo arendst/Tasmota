@@ -714,16 +714,16 @@ void CmndModbusBridgeSend(void)
           switch (modbusBridge.type)
           {
             case ModbusBridgeType::mb_int8:
-              writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
-            break;
-            case ModbusBridgeType::mb_uint8:
               writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
             break;
-            case ModbusBridgeType::mb_int16:
+            case ModbusBridgeType::mb_uint8:
               writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
             break;
+            case ModbusBridgeType::mb_int16:
+              writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
+            break;
             case ModbusBridgeType::mb_uint16:
-              writeData[jsonDataArrayPointer] = (int16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
+              writeData[jsonDataArrayPointer] = (int16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
             break;
             case ModbusBridgeType::mb_float:
               // TODO
