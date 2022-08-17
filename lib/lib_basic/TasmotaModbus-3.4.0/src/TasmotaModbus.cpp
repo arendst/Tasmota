@@ -66,7 +66,6 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   }
   else
   {
-    if (register_count > 40) return 14; // Prevent to many allocation of memory while writing data
     frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start Address(2), Quantity of registers (2), Bytecount(1), Data(2..n), CRC(2)
   }
 
@@ -138,11 +137,12 @@ bool TasmotaModbus::ReceiveReady()
   return (available() > 4);
 }
 
-uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
+uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
 {
   mb_len = 0;
   uint32_t timeout = millis() + 10;
-  while ((mb_len < (register_count *2) + 5) && (millis() < timeout)) {
+  uint8_t header_length = 3;
+  while ((mb_len < (data_count * 2) + header_length + 2) && (millis() < timeout)) {
     if (available()) {
       uint8_t data = (uint8_t)read();
       if (!mb_len) {               // Skip leading data as provided by hardware serial
@@ -166,6 +166,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
                                    // 10 = Gateway Path Unavailable
                                    // 11 = Gateway Target device failed to respond
           }
+          if ((buffer[2] == 5) || (buffer[2] == 6) || (buffer[2] == 15) || (buffer[2] == 16)) header_length = 2; // Addr, Func
         }
       }
 
