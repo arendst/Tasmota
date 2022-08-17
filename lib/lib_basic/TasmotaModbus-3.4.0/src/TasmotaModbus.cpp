@@ -75,13 +75,12 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   frame[framepointer++] = function_code;
   frame[framepointer++] = (uint8_t)(start_address >> 8);   // MSB
   frame[framepointer++] = (uint8_t)(start_address);        // LSB
-  if ((function_code < 5) || (function_code == 15) || (function_code == 16))
+  if (function_code < 5)
   {
     frame[framepointer++] = (uint8_t)(register_count >> 8);  // MSB
     frame[framepointer++] = (uint8_t)(register_count);       // LSB
   }
-  
-  if ((function_code == 5) || (function_code == 6))
+  else if ((function_code == 5) || (function_code == 6))
   {
     if (registers == NULL) 
     {
@@ -96,9 +95,10 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
     frame[framepointer++] = (uint8_t)(registers[0] >> 8);  // MSB
     frame[framepointer++] = (uint8_t)(registers[0]);       // LSB
   }
-  
-  if ((function_code == 15) || (function_code == 16))
+  else if ((function_code == 15) || (function_code == 16))
   {
+    frame[framepointer++] = (uint8_t)(register_count >> 8);   // MSB
+    frame[framepointer++] = (uint8_t)(register_count);        // LSB
     frame[framepointer++] = register_count * 2;
     if (registers == NULL) 
     {
@@ -166,7 +166,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
                                    // 10 = Gateway Path Unavailable
                                    // 11 = Gateway Target device failed to respond
           }
-          if ((buffer[2] == 5) || (buffer[2] == 6) || (buffer[2] == 15) || (buffer[2] == 16)) header_length = 2; // Addr, Func
+          if ((buffer[1] == 5) || (buffer[1] == 6) || (buffer[1] == 15) || (buffer[1] == 16)) header_length = 4; // Addr, Func, StartAddr
         }
       }
 
