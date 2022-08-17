@@ -278,10 +278,10 @@ void ModbusBridgeHandle(void)
       else
       {
         if ((modbusBridge.type == ModbusBridgeType::mb_int8 || modbusBridge.type == ModbusBridgeType::mb_uint8)
-          && ((uint8_t)modbusBridge.dataCount * 1 != (uint8_t)buffer[2]))
+          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
         else if ((modbusBridge.type == ModbusBridgeType::mb_bit)
-          && ((uint8_t)(((modbusBridge.dataCount - 1) >> 3) + 1) != (uint8_t)buffer[2]))
+          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
         else if ((modbusBridge.type == ModbusBridgeType::mb_int16 || modbusBridge.type == ModbusBridgeType::mb_uint16)
           && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
@@ -350,7 +350,6 @@ void ModbusBridgeHandle(void)
         }
         for (uint8_t count = 0; count < data_count; count++)
         {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: for count %d %d"), (uint8_t)count, (uint8_t)data_count);
           char svalue[MBR_MAX_VALUE_LENGTH + 1] = "";
           if (modbusBridge.type == ModbusBridgeType::mb_float)
           {
@@ -415,7 +414,6 @@ void ModbusBridgeHandle(void)
               uint16_t value = 0;
               if (buffer[1] < 3)
               {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: mb_int16 and func < 3 | %d %d %d"),dataOffset, (uint8_t)buffer[1], (uint8_t)buffer[2]);
                 if (buffer[2] - (count * 2))
                   ((uint8_t *)&value)[0] = buffer[dataOffset + (count * 2)];
                 if ((buffer[2] - (count * 2)) >> 1)
@@ -423,7 +421,6 @@ void ModbusBridgeHandle(void)
               }
               else
               {
-                AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: mb_int16 and func < 3 %d %d %d"),dataOffset, (uint8_t)buffer[1], (uint8_t)buffer[2]);
                 ((uint8_t *)&value)[1] = buffer[dataOffset + (count * 2)];
                 ((uint8_t *)&value)[0] = buffer[dataOffset + 1 + (count * 2)];
               }
@@ -636,7 +633,7 @@ void CmndModbusBridgeSend(void)
   if (strcmp(stype, "int8") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int8;
-    modbusBridge.dataCount = modbusBridge.count;
+    modbusBridge.dataCount = ((modbusBridge.count - 1) / 2) + 1;
   }
   else if (strcmp(stype, "int16") == 0)
   {
@@ -651,7 +648,7 @@ void CmndModbusBridgeSend(void)
   else if ((strcmp(stype, "uint8") == 0))
   {
     modbusBridge.type = ModbusBridgeType::mb_uint8;
-    modbusBridge.dataCount = modbusBridge.count;
+    modbusBridge.dataCount = ((modbusBridge.count - 1) / 2) + 1;
   }
   else if ((strcmp(stype, "uint16") == 0) || (strcmp(stype, "") == 0)) // Default is uint16
   {
@@ -681,7 +678,7 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "bit") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_bit;
-    modbusBridge.dataCount = modbusBridge.count;
+    modbusBridge.dataCount = (modbusBridge.count / 8) + 1;
   }
   else
     errorcode = ModbusBridgeError::wrongtype;
