@@ -175,7 +175,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
     }
   }
 
-  if (mb_len < 7) { return 7; }  // 7 = Not enough data
+  if (mb_len < 6) { return 7; }  // 7 = Not enough data
 
 /*
   if (mb_len != buffer[2] + 5) {
@@ -190,6 +190,22 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
   }
 
   return 0;                      // 0 = No error
+}
+
+uint8_t TasmotaModbus::Receive8BitRegister(uint8_t *value)
+{
+  //  0  1  2  3    4  5
+  // 01 04 02 43    HH LL
+  // Id Cc Sz Regis Crc--
+
+  uint8_t buffer[6];
+
+  uint8_t error = ReceiveBuffer(buffer, 1);  // 1 x 16bit register
+  if (!error) {
+    *value = buffer[3];
+  }
+
+  return error;
 }
 
 uint8_t TasmotaModbus::Receive16BitRegister(uint16_t *value)

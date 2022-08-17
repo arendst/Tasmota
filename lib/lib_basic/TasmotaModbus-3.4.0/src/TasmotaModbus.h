@@ -55,6 +55,7 @@ class TasmotaModbus : public TasmotaSerial {
      */
     uint8_t Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers = NULL);
     uint8_t ReceiveBuffer(uint8_t *buffer, uint8_t register_count);
+    uint8_t Receive8BitRegister(uint8_t *value);
     uint8_t Receive16BitRegister(uint16_t *value);
     uint8_t Receive32BitRegister(float *value);
 
