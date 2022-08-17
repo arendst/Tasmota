@@ -22,7 +22,7 @@
  * Modbus Bridge using Modbus library (TasmotaModbus)
  *
  * Can be used trough web/mqtt commands and also via direct TCP connection (when defined)
- * 
+ *
  * When USE_MODBUS_BRIDGE_TCP is also defined, this bridge can also be used as an ModbusTCP
  * bridge.
  *
@@ -102,7 +102,8 @@ enum class ModbusBridgeError
   wrongstartaddress = 4,
   wrongtype = 5,
   wrongregistercount = 6,
-  wrongcount = 7
+  wrongcount = 7,
+  tomanydata = 8
 };
 
 enum class ModbusBridgeFunctionCode
@@ -150,7 +151,6 @@ struct ModbusBridge
   uint8_t deviceAddress = 0;
   uint8_t count = 0;
   bool raw = false;
-
 };
 
 ModbusBridge modbusBridge;
@@ -161,8 +161,10 @@ ModbusBridge modbusBridge;
 //
 bool ModbusBridgeBegin(void)
 {
-  if ((Settings->modbus_sbaudrate < 1) || (Settings->modbus_sbaudrate > (115200 / 300))) Settings->modbus_sbaudrate = (uint8_t)((uint32_t)MBR_BAUDRATE / 300);
-  if (Settings->modbus_sconfig > TS_SERIAL_8O2) Settings->modbus_sconfig = TS_SERIAL_8N1;
+  if ((Settings->modbus_sbaudrate < 1) || (Settings->modbus_sbaudrate > (115200 / 300)))
+    Settings->modbus_sbaudrate = (uint8_t)((uint32_t)MBR_BAUDRATE / 300);
+  if (Settings->modbus_sconfig > TS_SERIAL_8O2)
+    Settings->modbus_sconfig = TS_SERIAL_8N1;
 
   int result = tasmotaModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
   if (result)
@@ -193,7 +195,7 @@ void SetModbusBridgeBaudrate(uint32_t baudrate)
 {
   if ((baudrate >= 300) && (baudrate <= 115200))
   {
-    if (baudrate / 300 != Settings->modbus_sbaudrate) 
+    if (baudrate / 300 != Settings->modbus_sbaudrate)
     {
       Settings->modbus_sbaudrate = baudrate / 300;
       ModbusBridgeBegin();
@@ -236,10 +238,10 @@ void ModbusBridgeHandle(void)
         MBAP_Header[5] = (modbusBridge.registerCount * 2) + 3;
         MBAP_Header[6] = buffer[0]; // Send slave address
         client.write(MBAP_Header, 7);
-        client.write(buffer + 1, 1);                                // Send Functioncode
+        client.write(buffer + 1, 1); // Send Functioncode
         uint8_t bytecount[1];
         bytecount[0] = modbusBridge.registerCount * 2;
-        client.write(bytecount, 1);                                  // Send length of rtu data
+        client.write(bytecount, 1);                                 // Send length of rtu data
         client.write(buffer + 3, (modbusBridge.registerCount * 2)); // Don't send CRC
         client.flush();
         AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus deviceAddress %d, writing %d bytes to client"), buffer[0], (modbusBridge.registerCount * 2) + 9);
@@ -554,18 +556,25 @@ void CmndModbusBridgeSend(void)
   JsonParserArray jsonDataArray = root[PSTR(D_JSON_MODBUS_DATA)].getArray();
   if (jsonDataArray.isArray())
   {
-    writeDataSize = jsonDataArray.size();
-
-    if (modbusBridge.registerCount != writeDataSize)
+    if (modbusBridge.registerCount > 40)
     {
-      errorcode = ModbusBridgeError::wrongcount;
+      errorcode = ModbusBridgeError::tomanydata;
     }
     else
     {
-      writeData = (uint16_t *)malloc(writeDataSize*2);
-      for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
+      writeDataSize = jsonDataArray.size();
+
+      if (modbusBridge.registerCount != writeDataSize)
       {
-        writeData[jsonDataArrayPointer] = jsonDataArray[jsonDataArrayPointer].getUInt(0);
+        errorcode = ModbusBridgeError::wrongcount;
+      }
+      else
+      {
+        writeData = (uint16_t *)malloc(writeDataSize * 2);
+        for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
+        {
+          writeData[jsonDataArrayPointer] = jsonDataArray[jsonDataArrayPointer].getUInt(0);
+        }
       }
     }
   }
@@ -579,7 +588,8 @@ void CmndModbusBridgeSend(void)
   }
 
   // If writing a single coil or single register, the register count is always 1. We also prevent writing data out of range
-  if ((modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil) || (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleRegister)) modbusBridge.registerCount = 1;
+  if ((modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil) || (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleRegister))
+    modbusBridge.registerCount = 1;
 
   tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.registerCount, writeData);
   free(writeData);
