@@ -34,8 +34,6 @@ class TasmotaModbus : public TasmotaSerial {
 
     uint16_t CalculateCRC(uint8_t *frame, uint8_t num);
 
-    void Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count);
-
     bool ReceiveReady();
 
     /* Return codes:
@@ -51,8 +49,13 @@ class TasmotaModbus : public TasmotaSerial {
      * 9 = Crc error
      * 10 = Gateway Path Unavailable
      * 11 = Gateway Target device failed to respond
+     * 12 = Wrong number of registers
+     * 13 = Register data not specified
+     * 14 = To many registers
      */
+    uint8_t Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers = NULL);
     uint8_t ReceiveBuffer(uint8_t *buffer, uint8_t register_count);
+    uint8_t Receive8BitRegister(uint8_t *value);
     uint8_t Receive16BitRegister(uint16_t *value);
     uint8_t Receive32BitRegister(float *value);
 

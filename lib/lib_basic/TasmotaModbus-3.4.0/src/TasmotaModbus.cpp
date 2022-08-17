@@ -1,4 +1,4 @@
-/*
+  /*
   TasmotaModbus.cpp - Basic modbus wrapper for TasmotaSerial for Tasmota
 
   Copyright (C) 2021  Theo Arends
@@ -15,6 +15,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  Documentation about modbus protocol: https://www.modbustools.com/modbus.html
 */
 
 #include "TasmotaModbus.h"
@@ -53,24 +55,81 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   return result;
 }
 
-void TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count)
+uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers)
 {
-  uint8_t frame[8];
+  uint8_t *frame;
+  uint8_t framepointer = 0;
+
+  if (function_code < 7)
+  {
+    frame = (uint8_t *)malloc(8); // Addres(1), Function(1), Start/Coil Address(2), Registercount or Data (2), CRC(2)
+  }
+  else
+  {
+    frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start/Coil Address(2),Quantity of registers (2), Bytecount(1), Data(1..n), CRC(2)
+  }
 
   mb_address = device_address;  // Save address for receipt check
 
-  frame[0] = mb_address;        // 0xFE default device address or dedicated like 0x01
-  frame[1] = function_code;
-  frame[2] = (uint8_t)(start_address >> 8);   // MSB
-  frame[3] = (uint8_t)(start_address);        // LSB
-  frame[4] = (uint8_t)(register_count >> 8);  // MSB
-  frame[5] = (uint8_t)(register_count);       // LSB
-  uint16_t crc = CalculateCRC(frame, 6);
-  frame[6] = (uint8_t)(crc);
-  frame[7] = (uint8_t)(crc >> 8);
+  frame[framepointer++] = mb_address;        // 0xFE default device address or dedicated like 0x01
+  frame[framepointer++] = function_code;
+  frame[framepointer++] = (uint8_t)(start_address >> 8);   // MSB
+  frame[framepointer++] = (uint8_t)(start_address);        // LSB
+  if (function_code < 5)
+  {
+    frame[framepointer++] = (uint8_t)(register_count >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(register_count);       // LSB
+  }
+  else if ((function_code == 5) || (function_code == 6))
+  {
+    if (registers == NULL) 
+    {
+      free(frame);
+      return 13; // Register data not specified
+    }
+    if (register_count != 1)
+    {
+      free(frame);
+      return 12; // Wrong register count
+    }
+    frame[framepointer++] = (uint8_t)(registers[0] >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(registers[0]);       // LSB
+  }
+  else if ((function_code == 15) || (function_code == 16))
+  {
+    frame[framepointer++] = (uint8_t)(register_count >> 8);   // MSB
+    frame[framepointer++] = (uint8_t)(register_count);        // LSB
+    frame[framepointer++] = register_count * 2;
+    if (registers == NULL) 
+    {
+      free(frame);
+      return 13; // Register data not specified
+    }
+    if (register_count == 0)
+    {
+      free(frame);
+      return 12; // Wrong register count
+    }
+    for (int registerpointer = 0; registerpointer < register_count; registerpointer++)
+    {
+      frame[framepointer++] = (uint8_t)(registers[registerpointer] >> 8);  // MSB
+      frame[framepointer++] = (uint8_t)(registers[registerpointer]);       // LSB
+    }
+  }
+  else 
+  {
+    free(frame);
+    return 1; // Wrong function code
+  }
+
+  uint16_t crc = CalculateCRC(frame, framepointer);
+  frame[framepointer++] = (uint8_t)(crc);
+  frame[framepointer++] = (uint8_t)(crc >> 8);
 
   flush();
-  write(frame, sizeof(frame));
+  write(frame, framepointer);
+  free(frame);
+  return 0;
 }
 
 bool TasmotaModbus::ReceiveReady()
@@ -78,11 +137,12 @@ bool TasmotaModbus::ReceiveReady()
   return (available() > 4);
 }
 
-uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
+uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
 {
   mb_len = 0;
   uint32_t timeout = millis() + 10;
-  while ((mb_len < (register_count *2) + 5) && (millis() < timeout)) {
+  uint8_t header_length = 3;
+  while ((mb_len < (data_count * 2) + header_length + 2) && (millis() < timeout)) {
     if (available()) {
       uint8_t data = (uint8_t)read();
       if (!mb_len) {               // Skip leading data as provided by hardware serial
@@ -106,6 +166,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
                                    // 10 = Gateway Path Unavailable
                                    // 11 = Gateway Target device failed to respond
           }
+          if ((buffer[1] == 5) || (buffer[1] == 6) || (buffer[1] == 15) || (buffer[1] == 16)) header_length = 4; // Addr, Func, StartAddr
         }
       }
 
@@ -114,7 +175,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
     }
   }
 
-  if (mb_len < 7) { return 7; }  // 7 = Not enough data
+  if (mb_len < 6) { return 7; }  // 7 = Not enough data
 
 /*
   if (mb_len != buffer[2] + 5) {
@@ -129,6 +190,22 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
   }
 
   return 0;                      // 0 = No error
+}
+
+uint8_t TasmotaModbus::Receive8BitRegister(uint8_t *value)
+{
+  //  0  1  2  3    4  5
+  // 01 04 02 43    HH LL
+  // Id Cc Sz Regis Crc--
+
+  uint8_t buffer[6];
+
+  uint8_t error = ReceiveBuffer(buffer, 1);  // 1 x 16bit register
+  if (!error) {
+    *value = buffer[3];
+  }
+
+  return error;
 }
 
 uint8_t TasmotaModbus::Receive16BitRegister(uint16_t *value)
