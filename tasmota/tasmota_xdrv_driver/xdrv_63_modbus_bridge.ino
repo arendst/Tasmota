@@ -30,7 +30,7 @@
  *   -- Read Input Register --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint16", "count":2}
  *   -- Write multiple coils --
- *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":14, "data":[1,2,3,4,5,6,7,8,9,10,11,12,13,14]}
+ *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":4, "values":[1,2,3,4]}
 \*********************************************************************************************/
 
 #define XDRV_63 63
@@ -52,7 +52,6 @@
 #define D_JSON_MODBUS_TYPE "Type" // allready defined
 #define D_JSON_MODBUS_VALUES "Values"
 #define D_JSON_MODBUS_LENGTH "Length"
-#define D_JSON_MODBUS_DATA "Data"
 
 #ifndef USE_MODBUS_BRIDGE_TCP
 const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
@@ -575,7 +574,7 @@ void CmndModbusBridgeSend(void)
     errorcode = ModbusBridgeError::wrongcount;
 
   // If write data is specified in JSON copy it into writeData array
-  JsonParserArray jsonDataArray = root[PSTR(D_JSON_MODBUS_DATA)].getArray();
+  JsonParserArray jsonDataArray = root[PSTR(D_JSON_MODBUS_VALUES)].getArray();
   if (jsonDataArray.isArray())
   {
     if (modbusBridge.dataCount > 40)
@@ -586,7 +585,7 @@ void CmndModbusBridgeSend(void)
     {
       writeDataSize = jsonDataArray.size();
 
-      if (modbusBridge.dataCount != writeDataSize)
+      if (modbusBridge.count != writeDataSize)
       {
         errorcode = ModbusBridgeError::wrongcount;
       }
