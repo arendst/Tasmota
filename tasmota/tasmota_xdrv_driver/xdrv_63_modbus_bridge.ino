@@ -29,6 +29,7 @@
  * Example Command:
  *   -- Read Input Register --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint16", "count":2}
+ * 
  *   -- Write multiple coils --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":4, "values":[1,2,3,4]}
 \*********************************************************************************************/
