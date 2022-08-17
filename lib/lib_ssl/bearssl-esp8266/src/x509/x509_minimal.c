@@ -347,6 +347,7 @@ const br_x509_class br_x509_minimal_vtable PROGMEM = {
 #define CONTEXT_NAME   br_x509_minimal_context
 
 #define DNHASH_LEN   ((CTX->dn_hash_impl->desc >> BR_HASHDESC_OUT_OFF) & BR_HASHDESC_OUT_MASK)
+#define dnhash_len   ((ctx->dn_hash_impl->desc >> BR_HASHDESC_OUT_OFF) & BR_HASHDESC_OUT_MASK)
 
 /*
  * Hash a DN (from a trust anchor) into the provided buffer. This uses the
@@ -416,9 +417,85 @@ eqnocase(const void *s1, const void *s2, size_t len)
 static int verify_signature(br_x509_minimal_context *ctx,
 	const br_x509_pkey *pk);
 
+/*
+ * Check whether the current certificate (EE) is directly trusted against
+ * a single trust anchor
+ */
+static int check_single_direct_trust(br_x509_minimal_context *ctx,
+	unsigned char hashed_DN[64],
+	const br_x509_trust_anchor *ta)
+{
+	int kt;
+
+	if (ta->flags & BR_X509_TA_CA) {
+		return 0;
+	}
+	if (memcmp(hashed_DN, ctx->current_dn_hash, dnhash_len)) {
+		return 0;
+	}
+	kt = ctx->pkey.key_type;
+	if ((pgm_read_byte(&ta->pkey.key_type) & 0x0F) != kt) {
+		return 0;
+	}
+	switch (kt) {
+	case BR_KEYTYPE_RSA:
+		if (!eqbigint(ctx->pkey.key.rsa.n,
+			ctx->pkey.key.rsa.nlen,
+			ta->pkey.key.rsa.n,
+			ta->pkey.key.rsa.nlen)
+			|| !eqbigint(ctx->pkey.key.rsa.e,
+			ctx->pkey.key.rsa.elen,
+			ta->pkey.key.rsa.e,
+			ta->pkey.key.rsa.elen))
+		{
+			return 0;
+		}
+		return 1;
+	case BR_KEYTYPE_EC:
+		if (ctx->pkey.key.ec.curve != ta->pkey.key.ec.curve
+			|| ctx->pkey.key.ec.qlen != ta->pkey.key.ec.qlen
+			|| memcmp_P(ctx->pkey.key.ec.q,
+				ta->pkey.key.ec.q,
+				ta->pkey.key.ec.qlen) != 0)
+		{
+			return 0;
+		}
+		return 1;
+	default:
+		return 0;
+	}
+	return 0; /* Should not get here */
+}
+
+
+/*
+ * Check whether the current certificate (EE) is directly trusted against
+ * a single CA trust anchor. We use the issuer hash (in saved_dn_hash[])
+ * as the CA identifier.
+ */
+static int check_single_trust_anchor_CA(br_x509_minimal_context *ctx,
+        unsigned char hashed_DN[64],
+        const br_x509_trust_anchor *ta)
+{
+	if (!(ta->flags & BR_X509_TA_CA)) {
+		return 0;
+	}
+	if (memcmp(hashed_DN, ctx->saved_dn_hash, dnhash_len)) {
+		return 0;
+	}
+	if (verify_signature(ctx, &ta->pkey) == 0) {
+		return 1;
+	}
+        return 0;
+}
+
+/* State machine should be squeezed for size, not performance critical */
+#pragma GCC optimize ("Os")
+
 
 
 static const unsigned char t0_datablock[] PROGMEM = {
+
 	0x00, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x09,
 	0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x05, 0x09, 0x2A, 0x86,
 	0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x0E, 0x09, 0x2A, 0x86, 0x48, 0x86,
@@ -447,6 +524,7 @@ static const unsigned char t0_datablock[] PROGMEM = {
 };
 
 static const unsigned char t0_codeblock[] PROGMEM = {
+
 	0x00, 0x01, 0x00, 0x0D, 0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x00, 0x01,
 	0x00, 0x11, 0x00, 0x00, 0x01, 0x01, 0x09, 0x00, 0x00, 0x01, 0x01, 0x0A,
 	0x00, 0x00, 0x25, 0x25, 0x00, 0x00, 0x01,
@@ -708,6 +786,7 @@ static const unsigned char t0_codeblock[] PROGMEM = {
 };
 
 static const uint16_t t0_caddr[] PROGMEM = {
+
 	0,
 	5,
 	10,
@@ -1116,60 +1195,36 @@ br_x509_minimal_run(void *t0ctx)
 				/* check-direct-trust */
 
 	size_t u;
-
-	for (u = 0; u < CTX->trust_anchors_num; u ++) {
 	const br_x509_trust_anchor *ta;
 	unsigned char hashed_DN[64];
-		int kt;
 
+	for (u = 0; u < CTX->trust_anchors_num; u ++) {
 		ta = &CTX->trust_anchors[u];
-		if (ta->flags & BR_X509_TA_CA) {
-			continue;
-		}
 		hash_dn(CTX, ta->dn.data, ta->dn.len, hashed_DN);
-		if (memcmp(hashed_DN, CTX->current_dn_hash, DNHASH_LEN)) {
-			continue;
+		if (check_single_direct_trust(CTX, hashed_DN, ta)) {
+			/*
+			 * Direct trust match!
+			 */
+			CTX->err = BR_ERR_X509_OK;
+			T0_CO();
 		}
-		kt = CTX->pkey.key_type;
-		if ((pgm_read_byte(&ta->pkey.key_type) & 0x0F) != kt) {
-			continue;
-		}
-		switch (kt) {
-
-		case BR_KEYTYPE_RSA:
-			if (!eqbigint(CTX->pkey.key.rsa.n,
-				CTX->pkey.key.rsa.nlen,
-				ta->pkey.key.rsa.n,
-				ta->pkey.key.rsa.nlen)
-				|| !eqbigint(CTX->pkey.key.rsa.e,
-				CTX->pkey.key.rsa.elen,
-				ta->pkey.key.rsa.e,
-				ta->pkey.key.rsa.elen))
-			{
-				continue;
-		}
-			break;
-
-		case BR_KEYTYPE_EC:
-			if (CTX->pkey.key.ec.curve != ta->pkey.key.ec.curve
-				|| CTX->pkey.key.ec.qlen != ta->pkey.key.ec.qlen
-				|| memcmp_P(CTX->pkey.key.ec.q,
-					ta->pkey.key.ec.q,
-					ta->pkey.key.ec.qlen) != 0)
-			{
-				continue;
 	}
-			break;
-
-		default:
-			continue;
+	if (CTX->err != BR_ERR_X509_OK && CTX->trust_anchor_dynamic) {
+		ta = CTX->trust_anchor_dynamic(CTX->trust_anchor_dynamic_ctx, CTX->current_dn_hash, DNHASH_LEN);
+		if (ta) {
+			memcpy(hashed_DN, ta->dn.data, DNHASH_LEN);
+			int ret = check_single_direct_trust(CTX, hashed_DN, ta);
+			if (CTX->trust_anchor_dynamic_free) {
+				CTX->trust_anchor_dynamic_free(CTX->trust_anchor_dynamic_ctx, ta);
 			}
-
+			if (ret) {
 				/*
 				 * Direct trust match!
 				 */
 				CTX->err = BR_ERR_X509_OK;
 				T0_CO();
+			}
+		}
 	}
 
 				}
@@ -1178,23 +1233,32 @@ br_x509_minimal_run(void *t0ctx)
 				/* check-trust-anchor-CA */
 
 	size_t u;
-
-	for (u = 0; u < CTX->trust_anchors_num; u ++) {
 	const br_x509_trust_anchor *ta;
 	unsigned char hashed_DN[64];
 
+	for (u = 0; u < CTX->trust_anchors_num; u ++) {
 		ta = &CTX->trust_anchors[u];
-		if (!(ta->flags & BR_X509_TA_CA)) {
-			continue;
-		}
 		hash_dn(CTX, ta->dn.data, ta->dn.len, hashed_DN);
-		if (memcmp(hashed_DN, CTX->saved_dn_hash, DNHASH_LEN)) {
-			continue;
-		}
-		if (verify_signature(CTX, &ta->pkey) == 0) {
+		if (check_single_trust_anchor_CA(CTX, hashed_DN, ta)) {
 			CTX->err = BR_ERR_X509_OK;
 			T0_CO();
 		}
+	}
+	if (CTX->err != BR_ERR_X509_OK && CTX->trust_anchor_dynamic) {
+		ta = CTX->trust_anchor_dynamic(CTX->trust_anchor_dynamic_ctx, CTX->saved_dn_hash, DNHASH_LEN);
+		if (ta) {
+			memcpy(hashed_DN, ta->dn.data, DNHASH_LEN);
+			int ret;
+			ret = check_single_trust_anchor_CA(CTX, hashed_DN, ta);
+			if (CTX->trust_anchor_dynamic_free) {
+				CTX->trust_anchor_dynamic_free(CTX->trust_anchor_dynamic_ctx, ta);
+			}
+			if (ret) {
+			CTX->err = BR_ERR_X509_OK;
+			T0_CO();
+		}
+		}
+
 	}
 
 				}
@@ -1679,6 +1743,7 @@ t0_exit:
 static int
 verify_signature(br_x509_minimal_context *ctx, const br_x509_pkey *pk)
 {
+	unsigned char tmp[64];
 	unsigned char tmp2[64];
 	int kt;
 
@@ -1687,7 +1752,6 @@ verify_signature(br_x509_minimal_context *ctx, const br_x509_pkey *pk)
 		return BR_ERR_X509_WRONG_KEY_TYPE;
 	}
 	switch (kt) {
-		unsigned char tmp[64];
 
 	case BR_KEYTYPE_RSA:
 		if (ctx->irsa == 0) {
