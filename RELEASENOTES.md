@@ -107,35 +107,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.0.2.4
+## Changelog v12.1.0.1
 ### Added
-- Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
-- Command ``SetOption144 1`` includes a timestamp in zigbee `ZbReceived` messages
-- Command ``GlobalTemp2 1..250`` to select Global Temperature source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
-- Command ``GlobalHum2 1..250`` to select Global Humidity source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
-- Command ``GlobalPress2 1..250`` to select Global Pressure source indexed from teleperiod occurance data [#15834](https://github.com/arendst/Tasmota/issues/15834)
-- Command ``Sleep2 !`` to cancel pending one-shot speed setting [#15954](https://github.com/arendst/Tasmota/issues/15954)
-- Commands ``WifiScan`` and ``WifiTest`` [#16141](https://github.com/arendst/Tasmota/issues/16141)
-- Support for 5-channel light dimmer driver SM2335 used in SwitchBot Color Bulbs [#15839](https://github.com/arendst/Tasmota/issues/15839)
-- Support for Sonoff POWR3xxD and THR3xxD [#15856](https://github.com/arendst/Tasmota/issues/15856)
-- Support for bistable (latching) relays mixed with monostable relays using GPIO Relay_b or Relay_bi as used by Sonoff POWR320D and THR320D
-- Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` [#16013](https://github.com/arendst/Tasmota/issues/16013)
-- Support for multiple ``IRsend`` GPIOs [#16138](https://github.com/arendst/Tasmota/issues/16138)
-- Support for Catalan language translations by Albert Gonzalez [#16145](https://github.com/arendst/Tasmota/issues/16145)
-- Zigbee added recording of when the battery was last reported [#16146](https://github.com/arendst/Tasmota/issues/16146)
-- Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``) [#16148](https://github.com/arendst/Tasmota/issues/16148)
-- ESP32 Support for Ultra Low Power (ULP) coprocessor via Berry by Christian Staars [#15916](https://github.com/arendst/Tasmota/issues/15916)
 
 ### Breaking Changed
 
 ### Changed
-- TasmotaModbus library from v3.4.0 to v3.5.0 [#16245](https://github.com/arendst/Tasmota/issues/16245)
-- ESP32 Arduino core from v2.0.3 to v2.0.4.1 [#15940](https://github.com/arendst/Tasmota/issues/15940)
-- ESP32 LVGL library from v8.2.0 to v8.3.0 [#16019](https://github.com/arendst/Tasmota/issues/16019)
-- Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 [#15856](https://github.com/arendst/Tasmota/issues/15856)
 
 ### Fixed
-- Restore EnergyToday after using command ``restart 2`` and power cycle [#16118](https://github.com/arendst/Tasmota/issues/16118)
-- ESP32 SendMail not working over ethernet [#15794](https://github.com/arendst/Tasmota/issues/15794)
 
 ### Removed

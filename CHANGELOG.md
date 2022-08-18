@@ -3,6 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [12.1.0.1]
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [Released]
+
+## [12.1.0] 20220818
+- Release Patricia
+
 ## [12.0.2.4] 20220818
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
@@ -24,8 +38,6 @@ All notable changes to this project will be documented in this file.
 - Restore EnergyToday after using command ``restart 2`` and power cycle (#16118)
 - Fixed IR crash on ESP32 (#16173)
 - Zigbee fix Tuya for writing attributes
-
-### Removed
 
 ## [12.0.2.3] 20220716
 ### Added
@@ -50,8 +62,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 SendMail not working over ethernet (#15794)
-
-## [Released]
 
 ## [12.0.2] 20220620
 - Release Paul
