@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- RTC not detected when lights are present (#16242)
 
 ### Removed
 

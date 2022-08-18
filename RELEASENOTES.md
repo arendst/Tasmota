@@ -115,5 +115,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Changed
 
 ### Fixed
+- RTC not detected when lights are present [#16242](https://github.com/arendst/Tasmota/issues/16242)
 
 ### Removed
