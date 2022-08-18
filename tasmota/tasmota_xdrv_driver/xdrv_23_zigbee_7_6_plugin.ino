@@ -72,7 +72,7 @@ Z_attribute_match Z_plugin_matchAttributeByName(const char *model, const char *m
   return attr;
 }
 
-bool Zb_readline(File *f, char* buf, size_t size) {
+bool Zb_readline(class File *f, char* buf, size_t size) {
   bool eof = 0;
   while (1) {
     // read line
