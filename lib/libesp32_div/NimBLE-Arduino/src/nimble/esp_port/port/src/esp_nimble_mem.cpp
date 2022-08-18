@@ -1,35 +1,3 @@
-Attention when updating library. Changes in lib needed!!
-
-Changes in src/nimble/porting/nimble/include/log_common/log_common.h
-
-```
-/*
-#define LOG_LEVEL_DEBUG    (0)
-#define LOG_LEVEL_INFO     (1)
-#define LOG_LEVEL_WARN     (2)
-#define LOG_LEVEL_ERROR    (3)
-#define LOG_LEVEL_CRITICAL (4)
-#define LOG_LEVEL_NONE     (5)
-*/
-#define LOG_LEVEL_DEBUG    (3)
-#define LOG_LEVEL_INFO     (2)
-#define LOG_LEVEL_WARN     (4)
-#define LOG_LEVEL_ERROR    (1)
-#define LOG_LEVEL_CRITICAL (5)
-#define LOG_LEVEL_NONE     (0)
-```
-
-Change in nimconfig.h
-
-`#define CONFIG_BT_NIMBLE_NVS_PERSIST 1`
-to
-`#define CONFIG_BT_NIMBLE_NVS_PERSIST 0`
-
-Rename /src/nimble/esp_port/port/src/esp_nimble_mem.c to esp_nimble_mem.c
-
-and replace all in the file with
-
-```
 /*
  * SPDX-FileCopyrightText: 2015-2021 Espressif Systems (Shanghai) CO LTD
  *
@@ -83,4 +51,3 @@ IRAM_ATTR void nimble_platform_mem_free(void *ptr)
 }
 } //extern "C"
 #endif
-```
