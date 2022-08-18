@@ -2026,12 +2026,13 @@ api_mul(unsigned char *G, size_t Glen,
 	p256_jacobian P;
 
 	(void)curve;
+	if (Glen != 65) {
+		return 0;
+	}
 	r = p256_decode(&P, G, Glen);
 	p256_mul(&P, x, xlen);
-	if (Glen >= 65) {
-		p256_to_affine(&P);
-		p256_encode(G, &P);
-	}
+	p256_to_affine(&P);
+	p256_encode(G, &P);
 	return r;
 }
 
@@ -2046,16 +2047,6 @@ api_mulgen(unsigned char *R,
 	p256_to_affine(&P);
 	p256_encode(R, &P);
 	return 65;
-
-	/*
-	const unsigned char *G;
-	size_t Glen;
-
-	G = api_generator(curve, &Glen);
-	memcpy(R, G, Glen);
-	api_mul(R, Glen, x, xlen, curve);
-	return Glen;
-	*/
 }
 
 static uint32_t
@@ -2068,6 +2059,9 @@ api_muladd(unsigned char *A, const unsigned char *B, size_t len,
 	int i;
 
 	(void)curve;
+	if (len != 65) {
+		return 0;
+	}
 	r = p256_decode(&P, A, len);
 	p256_mul(&P, x, xlen);
 	if (B == NULL) {
