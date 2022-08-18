@@ -529,6 +529,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Load_Data, 0)
     ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
@@ -966,6 +967,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Load_Data, 0)
     ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)

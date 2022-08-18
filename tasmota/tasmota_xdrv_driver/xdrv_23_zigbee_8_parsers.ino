@@ -1553,25 +1553,24 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
       uint16_t max_interval = pgm_read_word(&(Z_autoAttributeReporting[i].max_interval));
       float  report_change_raw = Z_autoAttributeReporting[i].report_change;
       double report_change = report_change_raw;
-      uint8_t attr_type;
-      int8_t  multiplier;
+      // uint8_t attr_type;
+      // int8_t  multiplier;
 
-      const __FlashStringHelper* attr_name = zigbeeFindAttributeById(cluster, attr_id, &attr_type, &multiplier);
-
-      if (attr_name) {
+      Z_attribute_match attr_matched = Z_findAttributeMatcherById(shortaddr, cluster, attr_id, false);
+      if (attr_matched.found()) {
         if (comma) { ResponseAppend_P(PSTR(",")); }
         comma = true;
-        ResponseAppend_P(PSTR("\"%s\":{\"MinInterval\":%d,\"MaxInterval\":%d"), attr_name, min_interval, max_interval);
+        ResponseAppend_P(PSTR("\"%s\":{\"MinInterval\":%d,\"MaxInterval\":%d"), attr_matched.name, min_interval, max_interval);
 
         buf.add8(0);            // direction, always 0
         buf.add16(attr_id);
-        buf.add8(attr_type);
+        buf.add8(attr_matched.zigbee_type);
         buf.add16(min_interval);
         buf.add16(max_interval);
-        if (!Z_isDiscreteDataType(attr_type)) {   // report_change is only valid for non-discrete data types (numbers)
-          ZbApplyMultiplier(report_change, multiplier);
+        if (!Z_isDiscreteDataType(attr_matched.zigbee_type)) {   // report_change is only valid for non-discrete data types (numbers)
+          ZbApplyMultiplier(report_change, attr_matched.multiplier);
           // encode value
-          int32_t res = encodeSingleAttribute(buf, report_change, "", attr_type);
+          int32_t res = encodeSingleAttribute(buf, report_change, "", attr_matched.zigbee_type);
           if (res < 0) {
             AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "internal error, unsupported attribute type"));
           } else {
@@ -1690,12 +1689,12 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
       zcl_received.parseReadAttributesResponse(attr_list);
       if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseReadAttributes(attr_list);
+      zcl_received.parseReadAttributes(srcaddr, attr_list);
       // never defer read_attributes, so the auto-responder can send response back on a per cluster basis
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_REPORTING_CONFIGURATION_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseReadConfigAttributes(attr_list);
+      zcl_received.parseReadConfigAttributes(srcaddr, attr_list);
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_CONFIGURE_REPORTING_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseConfigAttributes(attr_list);
+      zcl_received.parseConfigAttributes(srcaddr, attr_list);
     } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_WRITE_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
       zcl_received.parseWriteAttributesResponse(attr_list);
     } else if (zcl_received.isClusterSpecificCommand()) {
@@ -2124,6 +2123,15 @@ int32_t Z_Query_Bulbs(uint8_t value) {
 }
 
 //
+// Z_ZbAutoload - autoload all definitions from filesystem
+// files with ending '.zb' suffix
+//
+int32_t Z_ZbAutoload(uint8_t value) {
+  ZbAutoload();
+  return 0;
+}
+
+//
 // Zigbee initialization is complete, let the party begin
 //
 int32_t Z_State_Ready(uint8_t value) {
@@ -2193,7 +2201,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         break;
     }
     if (!attr.isNone()) {
-      Z_parseAttributeKey(attr, cluster);
+      Z_parseAttributeKey(shortaddr, attr, cluster);
       attr_list.addAttribute(cluster, attr_id) = attr;
     }
   }
