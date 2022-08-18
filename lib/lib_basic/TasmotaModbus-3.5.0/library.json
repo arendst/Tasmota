@@ -1,10 +1,10 @@
 {
     "name": "TasmotaModbus",
-    "version": "3.4.0",
+    "version": "3.5.0",
     "keywords": [
       "serial", "io", "TasmotaModbus"
     ],
-    "description": "Basic modbus wrapper for TasmotaSerial for ESP8266.",
+    "description": "Modbus wrapper for TasmotaSerial.",
     "repository":
     {
         "type": "git",
