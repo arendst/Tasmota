@@ -25,7 +25,7 @@ Change in nimconfig.h
 to
 `#define CONFIG_BT_NIMBLE_NVS_PERSIST 0`
 
-Rename /src/nimble/esp_port/port/src/esp_nimble_mem.c to esp_nimble_mem.c
+Rename /src/nimble/esp_port/port/src/esp_nimble_mem.c to esp_nimble_mem.cpp
 
 and replace all in the file with
 
