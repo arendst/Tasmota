@@ -39,7 +39,8 @@ const char kZbCommands[] PROGMEM = D_PRFX_ZB "|"    // prefix
   D_CMND_ZIGBEE_BIND "|" D_CMND_ZIGBEE_UNBIND "|" D_CMND_ZIGBEE_PING "|" D_CMND_ZIGBEE_MODELID "|"
   D_CMND_ZIGBEE_LIGHT "|" D_CMND_ZIGBEE_OCCUPANCY "|"
   D_CMND_ZIGBEE_RESTORE "|" D_CMND_ZIGBEE_BIND_STATE "|" D_CMND_ZIGBEE_MAP "|" D_CMND_ZIGBEE_LEAVE "|"
-  D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA "|" D_CMND_ZIGBEE_SCAN "|" D_CMND_ZIGBEE_ENROLL "|" D_CMND_ZIGBEE_CIE
+  D_CMND_ZIGBEE_CONFIG "|" D_CMND_ZIGBEE_DATA "|" D_CMND_ZIGBEE_SCAN "|" D_CMND_ZIGBEE_ENROLL "|" D_CMND_ZIGBEE_CIE "|"
+  D_CMND_ZIGBEE_LOAD "|" D_CMND_ZIGBEE_UNLOAD "|" D_CMND_ZIGBEE_LOADDUMP
   ;
 
 SO_SYNONYMS(kZbSynonyms,
@@ -62,6 +63,7 @@ void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZbRestore, &CmndZbBindState, &CmndZbMap, &CmndZbLeave,
   &CmndZbConfig, &CmndZbData, &CmndZbScan,
   &CmndZbenroll, &CmndZbcie,
+  &CmndZbLoad, &CmndZbUnload, &CmndZbLoadDump,
   };
 
 /********************************************************************************************/
@@ -339,7 +341,7 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
 
     Z_attribute attr;
     attr.setKeyName(key.getStr());
-    if (Z_parseAttributeKey(attr, tuya_protocol ? 0xEF00 : 0xFFFF)) {   // favor tuya protocol if needed
+    if (Z_parseAttributeKey(zcl.shortaddr, attr, tuya_protocol ? 0xEF00 : 0xFFFF)) {   // favor tuya protocol if needed
       // Buffer ready, do some sanity checks
 
       // all attributes must use the same cluster
@@ -352,11 +354,11 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
 
     } else {
       if (attr.key_is_str) {
-        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNKNOWN_ATTRIBUTE " "), key);
+        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNKNOWN_ATTRIBUTE " "), key.getStr());
         return;
       }
       if (Zunk == attr.attr_type) {
-        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " "), key);
+        Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " "), key.getStr());
         return;
       }
     }
@@ -623,34 +625,26 @@ void ZbSendRead(JsonParserToken val_attr, ZCLFrame & zcl) {
 
       bool found = false;
       // scan attributes to find by name, and retrieve type
-      for (uint32_t i = 0; i < nitems(Z_PostProcess); i++) {
-        const Z_AttributeConverter *converter = &Z_PostProcess[i];
-        uint16_t local_attr_id = pgm_read_word(&converter->attribute);
-        uint16_t local_cluster_id = CxToCluster(pgm_read_byte(&converter->cluster_short));
-        // uint8_t  local_type_id = pgm_read_byte(&converter->type);
-
-        if ((pgm_read_word(&converter->name_offset)) && (0 == strcasecmp_P(key.getStr(), Z_strings + pgm_read_word(&converter->name_offset)))) {
-          // match name
-          // check if there is a conflict with cluster
-          // TODO
-          if (!(value.getBool()) && attr_item_offset) {
-            // If value is false (non-default) then set direction to 1 (for ReadConfig)
-            attrs[actual_attr_len] = 0x01;
-          }
-          actual_attr_len += attr_item_offset;
-          attrs[actual_attr_len++] = local_attr_id & 0xFF;
-          attrs[actual_attr_len++] = local_attr_id >> 8;
-          actual_attr_len += attr_item_len - 2 - attr_item_offset;    // normally 0
-          found = true;
-          // check cluster
-          if (!zcl.validCluster()) {
-            zcl.cluster = local_cluster_id;
-          } else if (zcl.cluster != local_cluster_id) {
-            ResponseCmndChar_P(PSTR(D_ZIGBEE_TOO_MANY_CLUSTERS));
-            if (attrs) { free(attrs); }
-            return;
-          }
-          break;    // found, exit loop
+      Z_attribute_match matched_attr = Z_findAttributeMatcherByName(zcl.shortaddr, key.getStr());
+      if (matched_attr.found()) {
+        // match name
+        // check if there is a conflict with cluster
+        if (!(value.getBool()) && attr_item_offset) {
+          // If value is false (non-default) then set direction to 1 (for ReadConfig)
+          attrs[actual_attr_len] = 0x01;
+        }
+        actual_attr_len += attr_item_offset;
+        attrs[actual_attr_len++] = matched_attr.attribute & 0xFF;
+        attrs[actual_attr_len++] = matched_attr.attribute >> 8;
+        actual_attr_len += attr_item_len - 2 - attr_item_offset;    // normally 0
+        found = true;
+        // check cluster
+        if (!zcl.validCluster()) {
+          zcl.cluster = matched_attr.cluster;
+        } else if (zcl.cluster != matched_attr.cluster) {
+          ResponseCmndChar_P(PSTR(D_ZIGBEE_TOO_MANY_CLUSTERS));
+          if (attrs) { free(attrs); }
+          return;
         }
       }
       if (!found) {
@@ -863,7 +857,10 @@ void ZbBindUnbind(bool unbind) {    // false = bind, true = unbind
   if (val_cluster) {
     cluster = val_cluster.getUInt(cluster);   // first convert as number
     if (0 == cluster) {
-      zigbeeFindAttributeByName(val_cluster.getStr(), &cluster, nullptr, nullptr);
+      Z_attribute_match attr_matched = Z_findAttributeMatcherByName(BAD_SHORTADDR, val_cluster.getStr());
+      if (attr_matched.found()) {
+        cluster = attr_matched.cluster;
+      }
     }
   }
 
@@ -1303,6 +1300,53 @@ void CmndZbSave(void) {
       saveZigbeeDevices();
       break;
   }
+  ResponseCmndDone();
+}
+
+//
+// Command `ZbLoad`
+// Load a device specific zigbee template
+//
+void CmndZbLoad(void) {
+  // can be called before Zigbee is initialized
+  RemoveSpace(XdrvMailbox.data);
+  
+  bool ret = true;;
+  if (strcmp(XdrvMailbox.data, "*") == 0) {
+    ZbAutoload();
+  } else {
+    ret = ZbLoad(XdrvMailbox.data);
+  }
+  if (ret) {
+    ResponseCmndDone();
+  } else {
+    ResponseCmndError();
+  }
+}
+
+//
+// Command `ZbUnload`
+// Unload a template previously loaded
+//
+void CmndZbUnload(void) {
+  // can be called before Zigbee is initialized
+  RemoveSpace(XdrvMailbox.data);
+  
+  bool ret = ZbUnload(XdrvMailbox.data);
+  if (ret) {
+    ResponseCmndDone();
+  } else {
+    ResponseCmndError();
+  }
+}
+
+//
+// Command `ZbLoadDump`
+// Load a device specific zigbee template
+//
+void CmndZbLoadDump(void) {
+  // can be called before Zigbee is initialized
+  ZbLoadDump();
   ResponseCmndDone();
 }
 

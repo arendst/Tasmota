@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.1.0.1]
 ### Added
+- Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump``
 
 ### Changed
 
