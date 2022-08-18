@@ -136,7 +136,7 @@ cbc_decrypt(br_sslrec_in_cbc_context *cc,
 
 	/*
 	 * Use the last decrypted byte to compute the actual payload
-	 * length. Take care not to underflow (we use unsigned types).
+	 * length. Take care not to overflow (we use unsigned types).
 	 */
 	pad_len = buf[max_len];
 	good = LE(pad_len, (uint32_t)(max_len - min_len));

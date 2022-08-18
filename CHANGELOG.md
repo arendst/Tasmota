@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [12.1.0] 20220817
+## [12.1.0] 20220818
 - Release Patricia
 
-## [12.0.2.4] 20220817
+## [12.0.2.4] 20220818
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
 - Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` (#16013)
@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 LVGL library from v8.2.0 to v8.3.0 (#16019)
 - Tasmota ESP32 Arduino core from v2.0.4 to v2.0.4.1 (#16110)
+- TasmotaModbus library from v3.4.0 to v3.5.0 (#16245)
 
 ### Fixed
 - Restore EnergyToday after using command ``restart 2`` and power cycle (#16118)

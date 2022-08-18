@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- TasmotaModbus library from v3.4.0 to v3.5.0 [#16245](https://github.com/arendst/Tasmota/issues/16245)
 - ESP32 Arduino core from v2.0.3 to v2.0.4.1 [#15940](https://github.com/arendst/Tasmota/issues/15940)
 - ESP32 LVGL library from v8.2.0 to v8.3.0 [#16019](https://github.com/arendst/Tasmota/issues/16019)
 - Driver DHT v6 consolidation for both ESP8266 and ESP32 to support SI7021, THS01 and MS01 on ESP32 [#15856](https://github.com/arendst/Tasmota/issues/15856)
