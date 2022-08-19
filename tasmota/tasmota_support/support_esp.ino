@@ -657,13 +657,12 @@ float CpuTemperature(void) {
 */
 #else
     // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
-static float t = NAN;
-  if (isnan(t)) {
-    t = (float)temperatureRead();  // In Celsius
+    static float t = NAN;
+    if (isnan(t)) {
+      t = (float)temperatureRead();  // In Celsius
     }
     return t;
-  #endif
-return NAN;
+#endif
 }
 
 /*
