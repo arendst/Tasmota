@@ -1652,43 +1652,42 @@ void CmndInfoRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
-      char stemp1[10];  // STATUS11
+      char stemp1[10];
       for (uint32_t i = 1; i <= 3; i++) {                                          // Relates to INFO1, INFO2 and INFO3
         snprintf_P(stemp1, sizeof(stemp1), PSTR(D_RSLT_INFO "%d"), i);
-        MqttPublishPrefixTopic_P(TELE, stemp1, Settings->flag5.mqtt_info_retain);  // CMND_INFORETAIN
+        MqttPublishPrefixTopic_P(TELE, stemp1, Settings->flag5.mqtt_info_retain);
       }
     }
-    Settings->flag5.mqtt_info_retain = XdrvMailbox.payload;                        // CMND_INFORETAIN
+    Settings->flag5.mqtt_info_retain = XdrvMailbox.payload;
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_info_retain);                         // CMND_INFORETAIN
+  ResponseCmndStateText(Settings->flag5.mqtt_info_retain);
 }
 
 void CmndStateRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_STATE), Settings->flag5.mqtt_state_retain);  // CMND_STATERETAIN
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_STATE), Settings->flag5.mqtt_state_retain);
     }
-    Settings->flag5.mqtt_state_retain = XdrvMailbox.payload;                                  // CMND_STATERETAIN
+    Settings->flag5.mqtt_state_retain = XdrvMailbox.payload;
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_state_retain);                                   // CMND_STATERETAIN
+  ResponseCmndStateText(Settings->flag5.mqtt_state_retain);
 }
 
 void CmndStatusRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
-      char cmnd_status[10];  // STATUS11
-      char number[4] = { 0 };
-      for (uint32_t i = 0; i <= 13; i++) {                                                // Relates to STATUS, STATUS1 .. STATUS13
-        snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "%s"), (i) ? itoa(i, number, 10) : "");
-        MqttPublishPrefixTopic_P(STAT, cmnd_status, Settings->flag5.mqtt_status_retain);  // CMND_STATUSRETAIN
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS), Settings->flag5.mqtt_status_retain);  // Relates to STATUS
+      char stemp1[10];
+      for (uint32_t i = 0; i <= 13; i++) {                                                      // Relates to STATUS0, STATUS1 .. STATUS13
+        snprintf_P(stemp1, sizeof(stemp1), PSTR(D_CMND_STATUS "%d"), i);
+        MqttPublishPrefixTopic_P(STAT, stemp1, Settings->flag5.mqtt_status_retain);
       }
-
     }
-    Settings->flag5.mqtt_status_retain = XdrvMailbox.payload;                             // CMND_STATUSRETAIN
+    Settings->flag5.mqtt_status_retain = XdrvMailbox.payload;
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_status_retain);                              // CMND_STATUSRETAIN
+  ResponseCmndStateText(Settings->flag5.mqtt_status_retain);
 }
 
 /*********************************************************************************************\
