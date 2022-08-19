@@ -66,7 +66,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
   D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|" D_CMND_MQTTLOG "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|"
-  D_CMND_SENSORRETAIN "|" D_CMND_INFORETAIN "|" D_CMND_STATERETAIN
+  D_CMND_SENSORRETAIN "|" D_CMND_INFORETAIN "|" D_CMND_STATERETAIN "|" D_CMND_STATUSRETAIN
 #endif  // FIRMWARE_MINIMAL_ONLY
   ;
 
@@ -92,8 +92,8 @@ void (* const MqttCommand[])(void) PROGMEM = {
 #endif  // USE_MQTT_FILE
   &CmndMqttHost, &CmndMqttPort, &CmndMqttRetry, &CmndStateText, &CmndMqttClient,
   &CmndFullTopic, &CmndPrefix, &CmndGroupTopic, &CmndTopic, &CmndPublish, &CmndMqttlog,
-  &CmndButtonTopic, &CmndSwitchTopic, &CmndButtonRetain, &CmndSwitchRetain, &CmndPowerRetain, &CmndSensorRetain,
-  &CmndInfoRetain, &CmndStateRetain
+  &CmndButtonTopic, &CmndSwitchTopic, &CmndButtonRetain, &CmndSwitchRetain, &CmndPowerRetain,
+  &CmndSensorRetain, &CmndInfoRetain, &CmndStateRetain, &CmndStatusRetain
 #endif  // FIRMWARE_MINIMAL_ONLY
   };
 
@@ -1654,9 +1654,9 @@ void CmndInfoRetain(void) {
       ResponseClear();
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO), Settings->flag5.mqtt_info_retain);  // CMND_INFORETAIN
     }
-    Settings->flag5.mqtt_info_retain = XdrvMailbox.payload;                                   // CMND_INFORETAIN
+    Settings->flag5.mqtt_info_retain = XdrvMailbox.payload;                                 // CMND_INFORETAIN
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_info_retain);                                    // CMND_INFORETAIN
+  ResponseCmndStateText(Settings->flag5.mqtt_info_retain);                                  // CMND_INFORETAIN
 }
 
 void CmndStateRetain(void) {
@@ -1665,9 +1665,20 @@ void CmndStateRetain(void) {
       ResponseClear();
       MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_STATE), Settings->flag5.mqtt_state_retain);  // CMND_STATERETAIN
     }
-    Settings->flag5.mqtt_state_retain = XdrvMailbox.payload;                                   // CMND_STATERETAIN
+    Settings->flag5.mqtt_state_retain = XdrvMailbox.payload;                                  // CMND_STATERETAIN
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_state_retain);                                    // CMND_STATERETAIN
+  ResponseCmndStateText(Settings->flag5.mqtt_state_retain);                                   // CMND_STATERETAIN
+}
+
+void CmndStatusRetain(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+    if (!XdrvMailbox.payload) {
+      ResponseClear();
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_STATE), Settings->flag5.mqtt_status_retain);  // CMND_STATUSRETAIN
+    }
+    Settings->flag5.mqtt_status_retain = XdrvMailbox.payload;                                  // CMND_STATUSRETAIN
+  }
+  ResponseCmndStateText(Settings->flag5.mqtt_status_retain);                                   // CMND_STATUSRETAIN
 }
 
 /*********************************************************************************************\

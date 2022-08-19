@@ -109,6 +109,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.1.0.1
 ### Added
+- Command ``StatusRetain`` (#11109)
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - ESP32-S3 support for internal temperature sensor
 

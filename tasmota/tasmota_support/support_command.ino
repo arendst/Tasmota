@@ -651,7 +651,7 @@ void CmndStatusResponse(uint32_t index) {
       all_status.replace("}{", ",");
       char cmnd_status[10];  // STATUS11
       snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "0"));
-      MqttPublishPayloadPrefixTopicRulesProcess_P(STAT, cmnd_status, all_status.c_str());
+      MqttPublishPayloadPrefixTopicRulesProcess_P(STAT, cmnd_status, all_status.c_str(), Settings->flag5.mqtt_status_retain);
       all_status = (const char*) nullptr;
     } else {
       if (0 == index) { all_status = ""; }
@@ -662,7 +662,7 @@ void CmndStatusResponse(uint32_t index) {
     char cmnd_status[10];  // STATUS11
     char number[4] = { 0 };
     snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "%s"), (index) ? itoa(index, number, 10) : "");
-    MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status);
+    MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status, Settings->flag5.mqtt_status_retain);
   }
 }
 
@@ -698,7 +698,7 @@ void CmndStatus(void)
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
-                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d}}"),
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"" D_CMND_STATUSRETAIN "\":%d}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings->poweronstate, Settings->ledstate,
                           Settings->ledmask, Settings->save_data,
@@ -710,7 +710,9 @@ void CmndStatus(void)
                           Settings->flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
                           Settings->flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings->flag5.mqtt_info_retain,    // CMND_INFORETAIN
-                          Settings->flag5.mqtt_state_retain);  // CMND_STATERETAIN
+                          Settings->flag5.mqtt_state_retain,   // CMND_STATERETAIN
+                          Settings->flag5.mqtt_status_retain   // CMND_STATUSRETAIN
+                          );
     CmndStatusResponse(0);
   }
 

@@ -989,6 +989,7 @@ void SettingsDefaultSet2(void) {
   flag.mqtt_sensor_retain |= MQTT_SENSOR_RETAIN;
   flag5.mqtt_info_retain |= MQTT_INFO_RETAIN;
   flag5.mqtt_state_retain |= MQTT_STATE_RETAIN;
+  flag5.mqtt_status_retain |= MQTT_STATUS_RETAIN;
   flag5.mqtt_switches |= MQTT_SWITCHES;
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
 //  flag.mqtt_serial |= 0;

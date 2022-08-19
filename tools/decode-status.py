@@ -199,7 +199,7 @@ a_setoption = [[
     "(Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)",
     "(Zigbee) Disable Battery auto-probe and using auto-binding",
     "(Zigbee) Include time in `ZbReceived` messages like other sensors",
-    ""
+    "(MQTT) Retain on Status"
     ],[
     "","","","",
     "","","","",
@@ -319,7 +319,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.0.2.4 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

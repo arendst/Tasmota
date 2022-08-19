@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` (#16252)
 - ESP32-S3 support for internal temperature sensor
+- Command ``StatusRetain`` (#11109)
 
 ### Changed
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
