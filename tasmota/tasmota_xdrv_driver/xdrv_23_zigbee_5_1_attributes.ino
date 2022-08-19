@@ -482,7 +482,6 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zstring,  Cx0000, 0x000B,  Z_(ProductURL),           Cm1, 0 },
   { Zstring,  Cx0000, 0x4000,  Z_(SWBuildID),            Cm1, 0 },
   { Zuint8,   Cx0000, 0x4005,  Z_(MullerLightMode),      Cm1, 0 },
-  // { Zunk,     Cx0000, 0xFFFF,  nullptr,                 Cm0, 0 },    // Remove all other values
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
   { Zmap8,    Cx0000, 0xFF01,  Z_(),                     Cm0, 0 },
   { Zmap8,    Cx0000, 0xFF02,  Z_(),                     Cm0, 0 },
@@ -807,20 +806,20 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0400, 0x0002,  Z_(IlluminanceMaxMeasuredValue),     Cm1, 0 },    //
   { Zuint16,  Cx0400, 0x0003,  Z_(IlluminanceTolerance),            Cm1, 0 },    //
   { Zenum8,   Cx0400, 0x0004,  Z_(IlluminanceLightSensorType),      Cm1, 0 },    //
-  { Zunk,     Cx0400, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
+  // { Zunk,     Cx0400, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
 
   // Illuminance Level Sensing cluster
   { Zenum8,   Cx0401, 0x0000,  Z_(IlluminanceLevelStatus),          Cm1, 0 },    // Illuminance (in Lux)
   { Zenum8,   Cx0401, 0x0001,  Z_(IlluminanceLightSensorType),      Cm1, 0 },    // LightSensorType
   { Zuint16,  Cx0401, 0x0010,  Z_(IlluminanceTargetLevel),          Cm1, 0 },    //
-  { Zunk,     Cx0401, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
+  // { Zunk,     Cx0401, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
 
   // Temperature Measurement cluster
   { Zint16,   Cx0402, 0x0000,  Z_(Temperature),          Cm_100 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, temperature) },
   { Zint16,   Cx0402, 0x0001,  Z_(TemperatureMinMeasuredValue),     Cm_100, 0 },    //
   { Zint16,   Cx0402, 0x0002,  Z_(TemperatureMaxMeasuredValue),     Cm_100, 0 },    //
   { Zuint16,  Cx0402, 0x0003,  Z_(TemperatureTolerance),            Cm_100, 0 },    //
-  { Zunk,     Cx0402, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other values
+  // { Zunk,     Cx0402, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other values
 
   // Pressure Measurement cluster
   { Zint16,   Cx0403, 0x0000,  Z_(Pressure),                     Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, pressure) },     // Pressure
@@ -833,26 +832,26 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0403, 0x0013,  Z_(PressureScaledTolerance),      Cm1, 0 },    //
   { Zint8,    Cx0403, 0x0014,  Z_(PressureScale),                Cm1, 0 },    //
   { Zint16,   Cx0403, 0xFFF0,  Z_(SeaPressure),                  Cm1, Z_MAPPING(Z_Data_Thermo, pressure) },     // Pressure at Sea Level, Tasmota specific
-  { Zunk,     Cx0403, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other Pressure values
+  // { Zunk,     Cx0403, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other Pressure values
 
   // Flow Measurement cluster
   { Zuint16,  Cx0404, 0x0000,  Z_(FlowRate),             Cm_10, 0 },    // Flow (in m3/h)
   { Zuint16,  Cx0404, 0x0001,  Z_(FlowMinMeasuredValue), Cm1, 0 },    //
   { Zuint16,  Cx0404, 0x0002,  Z_(FlowMaxMeasuredValue), Cm1, 0 },    //
   { Zuint16,  Cx0404, 0x0003,  Z_(FlowTolerance),        Cm1, 0 },    //
-  { Zunk,     Cx0404, 0xFFFF,  Z_(),                     Cm0, 0 },    // Remove all other values
+  // { Zunk,     Cx0404, 0xFFFF,  Z_(),                     Cm0, 0 },    // Remove all other values
 
   // Relative Humidity Measurement cluster
   { Zuint16,  Cx0405, 0x0000,  Z_(Humidity),                     Cm_100 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Thermo, humidity) },   // Humidity
   { Zuint16,  Cx0405, 0x0001,  Z_(HumidityMinMeasuredValue),     Cm1, 0 },    //
   { Zuint16,  Cx0405, 0x0002,  Z_(HumidityMaxMeasuredValue),     Cm1, 0 },    //
   { Zuint16,  Cx0405, 0x0003,  Z_(HumidityTolerance),            Cm1, 0 },    //
-  { Zunk,     Cx0405, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other values
+  // { Zunk,     Cx0405, 0xFFFF,  Z_(),                    Cm0, 0 },     // Remove all other values
 
   // Occupancy Sensing cluster
   { Zmap8,    Cx0406, 0x0000,  Z_(Occupancy),            Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_PIR, occupancy) }, // Occupancy (map8)
   { Zenum8,   Cx0406, 0x0001,  Z_(OccupancySensorType),  Cm1, 0 },    // OccupancySensorType
-  { Zunk,     Cx0406, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
+  // { Zunk,     Cx0406, 0xFFFF,  Z_(),                    Cm0, 0 },    // Remove all other values
 
   // IAS Cluster (Intruder Alarm System)
   { Zenum8,   Cx0500, 0x0000,  Z_(ZoneState),             Cm1, 0 },    // Occupancy (map8)
