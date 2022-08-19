@@ -21,6 +21,7 @@
 #define H_BLE_HS_LOG_
 
 #include "nimble/porting/nimble/include/modlog/modlog.h"
+#include "nimble/porting/nimble/include/log/log.h"
 
 /* Only include the logcfg header if this version of newt can generate it. */
 #if MYNEWT_VAL(NEWT_FEATURE_LOGCFG)

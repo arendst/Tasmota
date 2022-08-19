@@ -97,6 +97,7 @@ ble_rpa_remove_peer_dev_rec(struct ble_hs_dev_records *p_dev_rec)
     if ((i != ble_store_num_peer_dev_rec) && (ble_store_num_peer_dev_rec != 0)) {
         memmove(&peer_dev_rec[i], &peer_dev_rec[i + 1],
                 (ble_store_num_peer_dev_rec - i) * sizeof(struct ble_hs_dev_records ));
+        memset(&peer_dev_rec[ble_store_num_peer_dev_rec], 0, sizeof(struct ble_hs_dev_records));
     }
 
     BLE_HS_LOG(DEBUG, " RPA: removed device at index = %d, no. of peer records"

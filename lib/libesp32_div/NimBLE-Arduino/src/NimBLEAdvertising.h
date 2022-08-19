@@ -15,7 +15,9 @@
 #ifndef MAIN_BLEADVERTISING_H_
 #define MAIN_BLEADVERTISING_H_
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+#if (defined(CONFIG_BT_ENABLED) && \
+    defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
+    !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
 
 #if defined(CONFIG_NIMBLE_CPP_IDF)
 #include "host/ble_gap.h"
@@ -89,7 +91,7 @@ public:
     void addServiceUUID(const char* serviceUUID);
     void removeServiceUUID(const NimBLEUUID &serviceUUID);
     bool start(uint32_t duration = 0, void (*advCompleteCB)(NimBLEAdvertising *pAdv) = nullptr);
-    void stop();
+    bool stop();
     void setAppearance(uint16_t appearance);
     void setName(const std::string &name);
     void setManufacturerData(const std::string &data);
@@ -111,6 +113,7 @@ public:
 
 private:
     friend class NimBLEDevice;
+    friend class NimBLEServer;
 
     void                    onHostSync();
     static int              handleGapEvent(struct ble_gap_event *event, void *arg);
@@ -134,5 +137,5 @@ private:
     std::vector<uint8_t>    m_uri;
 };
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER */
+#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER  && !CONFIG_BT_NIMBLE_EXT_ADV */
 #endif /* MAIN_BLEADVERTISING_H_ */

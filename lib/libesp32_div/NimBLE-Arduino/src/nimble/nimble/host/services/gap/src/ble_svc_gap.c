@@ -41,6 +41,7 @@ static char ble_svc_gap_name[BLE_SVC_GAP_NAME_MAX_LEN + 1] =
         MYNEWT_VAL(BLE_SVC_GAP_DEVICE_NAME);
 static uint16_t ble_svc_gap_appearance = MYNEWT_VAL(BLE_SVC_GAP_APPEARANCE);
 
+#if NIMBLE_BLE_CONNECT
 static int
 ble_svc_gap_access(uint16_t conn_handle, uint16_t attr_handle,
                    struct ble_gatt_access_ctxt *ctxt, void *arg);
@@ -239,6 +240,7 @@ ble_svc_gap_access(uint16_t conn_handle, uint16_t attr_handle,
         return BLE_ATT_ERR_UNLIKELY;
     }
 }
+#endif
 
 const char *
 ble_svc_gap_device_name(void)
@@ -285,14 +287,18 @@ ble_svc_gap_set_chr_changed_cb(ble_svc_gap_chr_changed_fn *cb)
 void
 ble_svc_gap_init(void)
 {
+#if NIMBLE_BLE_CONNECT
     int rc;
+#endif
 
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
+#if NIMBLE_BLE_CONNECT
     rc = ble_gatts_count_cfg(ble_svc_gap_defs);
     SYSINIT_PANIC_ASSERT(rc == 0);
 
     rc = ble_gatts_add_svcs(ble_svc_gap_defs);
     SYSINIT_PANIC_ASSERT(rc == 0);
+#endif
 }

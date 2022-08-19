@@ -189,7 +189,7 @@ extern "C" {
 #endif
 
 #ifndef htobe64
-#define htobe64(x) os_bswap64(x)
+#define htobe64(x) os_bswap_64(x)
 #endif
 
 #ifndef htole64
@@ -197,7 +197,7 @@ extern "C" {
 #endif
 
 #ifndef be64toh
-#define be64toh(x) os_bswap64(x)
+#define be64toh(x) os_bswap_64(x)
 #endif
 
 #ifndef le64toh
@@ -206,6 +206,63 @@ extern "C" {
 
 #endif
 
+#if SOC_ESP_NIMBLE_CONTROLLER
+void r_put_le16(void *buf, uint16_t x);
+#define put_le16 r_put_le16
+
+void r_put_le24(void *buf, uint32_t x);
+#define put_le24 r_put_le24
+
+void r_put_le32(void *buf, uint32_t x);
+#define put_le32 r_put_le32
+
+void r_put_le64(void *buf, uint64_t x);
+#define put_le64 r_put_le64
+
+uint16_t r_get_le16(const void *buf);
+#define get_le16 r_get_le16
+
+uint32_t r_get_le24(const void *buf);
+#define get_le24 r_get_le24
+
+uint32_t r_get_le32(const void *buf);
+#define get_le32 r_get_le32
+
+uint64_t r_get_le64(const void *buf);
+#define get_le64 r_get_le64
+
+void r_put_be16(void *buf, uint16_t x);
+#define put_be16 r_put_be16
+
+void r_put_be24(void *buf, uint32_t x);
+#define put_be24 r_put_be24
+
+void r_put_be32(void *buf, uint32_t x);
+#define put_be32 r_put_be32
+
+void r_put_be64(void *buf, uint64_t x);
+#define put_be64 r_put_be64
+
+uint16_t r_get_be16(const void *buf);
+#define get_be16 r_get_be16
+
+uint32_t r_get_be24(const void *buf);
+#define get_be24 r_get_be24
+
+uint32_t r_get_be32(const void *buf);
+#define get_be32 r_get_be32
+
+uint64_t r_get_be64(const void *buf);
+#define get_be64 r_get_be64
+
+void r_swap_in_place(void *buf, int len);
+#define swap_in_place r_swap_in_place
+
+void r_swap_buf(uint8_t *dst, const uint8_t *src, int len);
+#define swap_buf r_swap_buf
+
+
+#else
 void put_le16(void *buf, uint16_t x);
 void put_le24(void *buf, uint32_t x);
 void put_le32(void *buf, uint32_t x);
@@ -224,7 +281,7 @@ uint32_t get_be32(const void *buf);
 uint64_t get_be64(const void *buf);
 void swap_in_place(void *buf, int len);
 void swap_buf(uint8_t *dst, const uint8_t *src, int len);
-
+#endif
 #ifdef __cplusplus
 }
 #endif

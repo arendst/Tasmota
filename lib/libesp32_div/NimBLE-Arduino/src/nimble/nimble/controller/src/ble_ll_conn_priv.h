@@ -164,7 +164,7 @@ bool ble_ll_conn_init_pending_aux_conn_rsp(void);
 void ble_ll_disconn_comp_event_send(struct ble_ll_conn_sm *connsm,
                                     uint8_t reason);
 void ble_ll_auth_pyld_tmo_event_send(struct ble_ll_conn_sm *connsm);
-int ble_ll_conn_hci_disconnect_cmd(const uint8_t *cmdbuf, uint8_t len);
+int ble_ll_conn_hci_disconnect_cmd(const struct ble_hci_lc_disconnect_cp *cmd);
 int ble_ll_conn_hci_rd_rem_ver_cmd(const uint8_t *cmdbuf, uint8_t len);
 int ble_ll_conn_create(const uint8_t *cmdbuf, uint8_t len);
 int ble_ll_conn_hci_update(const uint8_t *cmdbuf, uint8_t len);
@@ -196,10 +196,21 @@ int ble_ll_conn_hci_wr_auth_pyld_tmo(const uint8_t *cmdbuf, uint8_t len,
                                      uint8_t *rspbuf, uint8_t *rsplen);
 int ble_ll_conn_hci_rd_auth_pyld_tmo(const uint8_t *cmdbuf, uint8_t len,
                                      uint8_t *rspbuf, uint8_t *rsplen);
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+int ble_ll_conn_req_peer_sca(const uint8_t *cmdbuf, uint8_t len,
+                             uint8_t *rspbuf, uint8_t *rsplen);
+#endif
+
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_PING)
 void ble_ll_conn_auth_pyld_timer_start(struct ble_ll_conn_sm *connsm);
 #else
 #define ble_ll_conn_auth_pyld_timer_start(x)
+#endif
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+void ble_ll_conn_cth_flow_set_buffers(uint16_t num_buffers);
+bool ble_ll_conn_cth_flow_enable(bool enabled);
+void ble_ll_conn_cth_flow_process_cmd(const uint8_t *cmdbuf);
 #endif
 
 int ble_ll_hci_cmd_rx(uint8_t *cmd, void *arg);

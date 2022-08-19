@@ -79,25 +79,11 @@ os_cputime_ticks_to_usecs(uint32_t ticks)
 {
     uint32_t usecs;
     uint32_t shift;
-    uint32_t freq;
 
-    /* Given: `freq = 2^n`, calculate `n`. */
-    /* Note: this looks like a lot of work, but gcc can optimize it away since
-     * `freq` is known at compile time.
-     */
-    freq = MYNEWT_VAL(OS_CPUTIME_FREQ);
-    shift = 0;
-    while (freq != 0) {
-        freq >>= 1;
-        shift++;
-    }
+    shift = __builtin_popcount(MYNEWT_VAL(OS_CPUTIME_FREQ) - 1) - 6;
 
-    if (shift <= 7) {
-        return 0;
-    }
-    shift -= 7;
-
-    usecs = ((ticks >> shift) * 15625) + (((ticks & 0x1ff) * 15625) >> shift);
+    usecs = ((ticks >> shift) * 15625) +
+            (((ticks & ~(~0U << shift)) * 15625) >> shift);
     return usecs;
 }
 

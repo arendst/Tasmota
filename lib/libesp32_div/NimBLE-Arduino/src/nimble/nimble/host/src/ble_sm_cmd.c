@@ -24,6 +24,7 @@
 #include "nimble/nimble/host/include/host/ble_sm.h"
 #include "ble_hs_priv.h"
 
+#if NIMBLE_BLE_CONNECT
 void *
 ble_sm_cmd_get(uint8_t opcode, size_t len, struct os_mbuf **txom)
 {
@@ -66,3 +67,5 @@ ble_sm_tx(uint16_t conn_handle, struct os_mbuf *txom)
 
     return rc;
 }
+
+#endif

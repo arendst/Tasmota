@@ -35,6 +35,7 @@
 #include "../include/controller/ble_ll_whitelist.h"
 #include "../include/controller/ble_ll_resolv.h"
 #include "../include/controller/ble_ll_sync.h"
+#include "../include/controller/ble_ll_iso.h"
 #include "ble_ll_priv.h"
 #include "ble_ll_conn_priv.h"
 
@@ -329,6 +330,31 @@ ble_ll_hci_le_read_bufsize(uint8_t *rspbuf, uint8_t *rsplen)
     return BLE_ERR_SUCCESS;
 }
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+/**
+ * HCI read buffer size v2 command. Returns the ACL and ISO data packet length and
+ * num data packets.
+ *
+ * @param rspbuf Pointer to response buffer
+ * @param rsplen Length of response buffer
+ *
+ * @return int BLE error code
+ */
+static int
+ble_ll_hci_le_read_bufsize_v2(uint8_t *rspbuf, uint8_t *rsplen)
+{
+    struct ble_hci_le_rd_buf_size_v2_rp *rp = (void *) rspbuf;
+
+    rp->data_len = htole16(g_ble_ll_data.ll_acl_pkt_size);
+    rp->data_packets = g_ble_ll_data.ll_num_acl_pkts;
+    rp->iso_data_len = 0;
+    rp->iso_data_packets = 0;
+
+    *rsplen = sizeof(*rp);
+    return BLE_ERR_SUCCESS;
+}
+#endif
+
 #if (BLE_LL_BT5_PHY_SUPPORTED == 1)
 /**
  * Checks the preferred phy masks for validity and places the preferred masks
@@ -620,6 +646,9 @@ ble_ll_hci_le_cmd_send_cmd_status(uint16_t ocf)
     case BLE_HCI_OCF_LE_GEN_DHKEY:
     case BLE_HCI_OCF_LE_SET_PHY:
     case BLE_HCI_OCF_LE_PERIODIC_ADV_CREATE_SYNC:
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+    case BLE_HCI_OCF_LE_REQ_PEER_SCA:
+#endif
         rc = 1;
         break;
     default:
@@ -1151,9 +1180,76 @@ ble_ll_hci_le_cmd_proc(const uint8_t *cmdbuf, uint8_t len, uint16_t ocf,
         rc = ble_ll_set_default_sync_transfer_params(cmdbuf, len);
         break;
 #endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+    case BLE_HCI_OCF_LE_READ_ISO_TX_SYNC:
+        rc = ble_ll_iso_read_tx_sync(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_SET_CIG_PARAM:
+        rc = ble_ll_iso_set_cig_param(cmdbuf, len, rspbuf, rsplen);
+        break;
+    case BLE_HCI_OCF_LE_CREATE_CIS:
+        rc = ble_ll_iso_create_cis(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_REMOVE_CIG:
+        rc = ble_ll_iso_remove_cig(cmdbuf, len, rspbuf, rsplen);
+        break;
+    case BLE_HCI_OCF_LE_ACCEPT_CIS_REQ:
+        rc = ble_ll_iso_accept_cis_req(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_REJECT_CIS_REQ:
+        rc = ble_ll_iso_reject_cis_req(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_CREATE_BIG:
+        rc = ble_ll_iso_create_big(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_TERMINATE_BIG:
+        rc = ble_ll_iso_terminate_big(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_BIG_CREATE_SYNC:
+        rc = ble_ll_iso_big_create_sync(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_BIG_TERMINATE_SYNC:
+        rc = ble_ll_iso_big_terminate_sync(cmdbuf,len);
+        break;
+    case BLE_HCI_OCF_LE_SETUP_ISO_DATA_PATH:
+        rc = ble_ll_iso_setup_iso_data_path(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_REMOVE_ISO_DATA_PATH:
+        rc = ble_ll_iso_remove_iso_data_path(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_RD_BUF_SIZE_V2:
+        rc = ble_ll_hci_le_read_bufsize_v2(rspbuf, rsplen);
+        break;
+#endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO_TEST)
+    case BLE_HCI_OCF_LE_SET_CIG_PARAM_TEST:
+        rc = ble_ll_iso_set_cig_param_test(cmdbuf, len, rspbuf, rsplen);
+        break;
+    case BLE_HCI_OCF_LE_CREATE_BIG_TEST:
+        rc = ble_ll_iso_create_big_test(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_ISO_TRANSMIT_TEST:
+        rc = ble_ll_iso_transmit_test(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_ISO_RECEIVE_TEST:
+        rc = ble_ll_iso_receive_test(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_ISO_READ_TEST_COUNTERS:
+        rc = ble_ll_iso_read_counters_test(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_LE_ISO_TEST_END:
+        rc = ble_ll_iso_end_test(cmdbuf, len);
+        break;
+#endif
 #if MYNEWT_VAL(BLE_VERSION) >= 52
     case BLE_HCI_OCF_LE_SET_HOST_FEAT:
         rc = ble_ll_set_host_feat(cmdbuf, len);
+        break;
+#endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+    case BLE_HCI_OCF_LE_REQ_PEER_SCA:
+        rc = ble_ll_conn_req_peer_sca(cmdbuf, len,
+                                      rspbuf, rsplen);
         break;
 #endif
     default:
@@ -1176,6 +1272,26 @@ ble_ll_hci_le_cmd_proc(const uint8_t *cmdbuf, uint8_t len, uint16_t ocf,
     return rc;
 }
 
+static int
+ble_ll_hci_disconnect(const uint8_t *cmdbuf, uint8_t len)
+{
+    const struct ble_hci_lc_disconnect_cp *cmd;
+
+    cmd = (const void *) cmdbuf;
+
+    if (len != sizeof (*cmd)) {
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+    if (le16toh(cmd->conn_handle) >= BLE_LL_CONN_HANDLE_ISO_OFFSET) {
+        return ble_ll_iso_disconnect_cmd(cmd);
+    }
+#endif
+
+    return ble_ll_conn_hci_disconnect_cmd(cmd);
+}
+
 /**
  * Process a link control command sent from the host to the controller. The HCI
  * command has a 3 byte command header followed by data. The header is:
@@ -1196,7 +1312,7 @@ ble_ll_hci_link_ctrl_cmd_proc(const uint8_t *cmdbuf, uint8_t len, uint16_t ocf)
 
     switch (ocf) {
     case BLE_HCI_OCF_DISCONNECT_CMD:
-        rc = ble_ll_conn_hci_disconnect_cmd(cmdbuf, len);
+        rc = ble_ll_hci_disconnect(cmdbuf, len);
         /* Send command status instead of command complete */
         rc += (BLE_ERR_MAX + 1);
         break;
@@ -1228,6 +1344,64 @@ ble_ll_hci_cb_set_event_mask(const uint8_t *cmdbuf, uint8_t len)
 
     return BLE_ERR_SUCCESS;
 }
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+static int
+ble_ll_hci_cb_set_ctrlr_to_host_fc(const uint8_t *cmdbuf, uint8_t len)
+{
+    const struct ble_hci_cb_ctlr_to_host_fc_cp *cmd = (const void *) cmdbuf;
+
+    if (len != sizeof (*cmd)) {
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+    /* We only allow to either disable flow control or enable for ACL only */
+    if (cmd->enable > 1) {
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+    if (!ble_ll_conn_cth_flow_enable(cmd->enable)) {
+        return BLE_ERR_CMD_DISALLOWED;
+    }
+
+    return BLE_ERR_SUCCESS;
+}
+
+static int
+ble_ll_hci_cb_host_buf_size(const uint8_t *cmdbuf, uint8_t len)
+{
+    const struct ble_hci_cb_host_buf_size_cp *cmd = (const void *) cmdbuf;
+    uint16_t acl_num;
+    uint16_t acl_data_len;
+
+    if (len != sizeof (*cmd)) {
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+    /* We do not support SCO so those parameters should be set to 0 */
+    if (cmd->sco_num || cmd->sco_data_len) {
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+    /*
+     * Core 5.2 Vol 4 Part E section 7.3.39 states that "Both the Host and the
+     * Controller shall support command and event packets, where the data portion
+     * (excluding header) contained in the packets is 255 octets in size.".
+     * This means we can basically accept any allowed value since LL does not
+     * reassemble incoming data thus will not send more than 255 octets in single
+     * data packet.
+     */
+    acl_num = le16toh(cmd->acl_num);
+    acl_data_len = le16toh(cmd->acl_data_len);
+    if (acl_data_len < 255) {
+        return BLE_ERR_INV_HCI_CMD_PARMS;
+    }
+
+    ble_ll_conn_cth_flow_set_buffers(acl_num);
+
+    return BLE_ERR_SUCCESS;
+}
+#endif
 
 static int
 ble_ll_hci_cb_set_event_mask2(const uint8_t *cmdbuf, uint8_t len)
@@ -1261,6 +1435,22 @@ ble_ll_hci_ctlr_bb_cmd_proc(const uint8_t *cmdbuf, uint8_t len, uint16_t ocf,
             rc = ble_ll_reset();
         }
         break;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    case BLE_HCI_OCF_CB_SET_CTLR_TO_HOST_FC:
+        rc = ble_ll_hci_cb_set_ctrlr_to_host_fc(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_CB_HOST_BUF_SIZE:
+        rc = ble_ll_hci_cb_host_buf_size(cmdbuf, len);
+        break;
+    case BLE_HCI_OCF_CB_HOST_NUM_COMP_PKTS:
+        /*
+         * HCI_Host_Number_Of_Completed_Packets is handled immediately when
+         * received from transport so we should never receive it here.
+         */
+        BLE_LL_ASSERT(0);
+        rc = BLE_ERR_UNKNOWN_HCI_CMD;
+        break;
+#endif
     case BLE_HCI_OCF_CB_SET_EVENT_MASK2:
         rc = ble_ll_hci_cb_set_event_mask2(cmdbuf, len);
         break;
@@ -1337,6 +1527,47 @@ ble_ll_hci_status_params_cmd_proc(const uint8_t *cmdbuf, uint8_t len,
     return rc;
 }
 
+#if MYNEWT_VAL(BLE_HCI_VS)
+static int
+ble_ll_hci_vs_rd_static_addr(uint8_t *rspbuf, uint8_t *rsplen)
+{
+    struct ble_hci_vs_rd_static_addr_rp *rsp = (void *) rspbuf;
+    ble_addr_t addr;
+
+    if (ble_hw_get_static_addr(&addr) < 0) {
+        return BLE_ERR_UNSPECIFIED;
+    }
+
+    memcpy(rsp->addr, addr.val, sizeof(rsp->addr));
+
+    *rsplen = sizeof(*rsp);
+    return BLE_ERR_SUCCESS;
+}
+
+static int
+ble_ll_hci_vs_cmd_proc(const uint8_t *cmdbuf, uint8_t len, uint16_t ocf,
+                       uint8_t *rspbuf, uint8_t *rsplen)
+{
+    int rc;
+
+    /* Assume error; if all pass rc gets set to 0 */
+    rc = BLE_ERR_INV_HCI_CMD_PARMS;
+
+    switch (ocf) {
+    case BLE_HCI_OCF_VS_RD_STATIC_ADDR:
+        if (len == 0) {
+            rc = ble_ll_hci_vs_rd_static_addr(rspbuf, rsplen);
+        }
+        break;
+    default:
+        rc = BLE_ERR_UNKNOWN_HCI_CMD;
+        break;
+    }
+
+    return rc;
+}
+#endif
+
 /**
  * Called to process an HCI command from the host.
  *
@@ -1396,6 +1627,11 @@ ble_ll_hci_cmd_proc(struct ble_npl_event *ev)
     case BLE_HCI_OGF_LE:
         rc = ble_ll_hci_le_cmd_proc(cmd->data, cmd->length, ocf, rspbuf, &rsplen, &post_cb);
         break;
+#if MYNEWT_VAL(BLE_HCI_VS)
+    case BLE_HCI_OGF_VENDOR:
+        rc = ble_ll_hci_vs_cmd_proc(cmd->data, cmd->length, ocf, rspbuf, &rsplen);
+        break;
+#endif
     default:
         /* XXX: Need to support other OGF. For now, return unsupported */
         rc = BLE_ERR_UNKNOWN_HCI_CMD;
@@ -1456,9 +1692,33 @@ ble_ll_hci_cmd_proc(struct ble_npl_event *ev)
  *                              BLE_ERR_MEM_CAPACITY on HCI buffer exhaustion.
  */
 int
-ble_ll_hci_cmd_rx(uint8_t *cmd, void *arg)
+ble_ll_hci_cmd_rx(uint8_t *cmdbuf, void *arg)
 {
     struct ble_npl_event *ev;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+    const struct ble_hci_cmd *cmd;
+    uint16_t opcode;
+    uint16_t ocf;
+    uint16_t ogf;
+
+    cmd = (const void *)cmdbuf;
+    opcode = le16toh(cmd->opcode);
+    ogf = BLE_HCI_OGF(opcode);
+    ocf = BLE_HCI_OCF(opcode);
+
+    /*
+     * HCI_Host_Number_Of_Completed_Packets is processed outside standard flow
+     * thus it can be sent at any time, even if another command is already
+     * pending. This means we should better process it here and send an event to
+     * LL in case of error.
+     */
+    if ((ogf == BLE_HCI_OGF_CTLR_BASEBAND) &&
+        (ocf == BLE_HCI_OCF_CB_HOST_NUM_COMP_PKTS)) {
+        ble_ll_conn_cth_flow_process_cmd(cmdbuf);
+        ble_hci_trans_buf_free(cmdbuf);
+        return 0;
+    }
+#endif
 
     /* Get an event structure off the queue */
     ev = &g_ble_ll_hci_cmd_ev;
@@ -1467,7 +1727,7 @@ ble_ll_hci_cmd_rx(uint8_t *cmd, void *arg)
     }
 
     /* Fill out the event and post to Link Layer */
-    ble_npl_event_set_arg(ev, cmd);
+    ble_npl_event_set_arg(ev, cmdbuf);
     ble_npl_eventq_put(&g_ble_ll_data.ll_evq, ev);
 
     return 0;

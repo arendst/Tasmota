@@ -297,7 +297,7 @@ std::string NimBLEUUID::toString() const {
 
 
 /**
- * @brief Convienience operator to check if this UUID is equal to another.
+ * @brief Convenience operator to check if this UUID is equal to another.
  */
 bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
     if(m_valueSet && rhs.m_valueSet) {
@@ -336,7 +336,7 @@ bool NimBLEUUID::operator ==(const NimBLEUUID & rhs) const {
 
 
 /**
- * @brief Convienience operator to check if this UUID is not equal to another.
+ * @brief Convenience operator to check if this UUID is not equal to another.
  */
 bool NimBLEUUID::operator !=(const NimBLEUUID & rhs) const {
     return !this->operator==(rhs);
@@ -344,7 +344,7 @@ bool NimBLEUUID::operator !=(const NimBLEUUID & rhs) const {
 
 
 /**
- * @brief Convienience operator to convert this UUID to string representation.
+ * @brief Convenience operator to convert this UUID to string representation.
  * @details This allows passing NimBLEUUID to functions
  * that accept std::string and/or or it's methods as a parameter.
  */

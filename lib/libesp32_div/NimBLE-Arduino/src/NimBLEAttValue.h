@@ -54,7 +54,7 @@ struct Has_c_str_len<T, decltype(void(std::declval<T &>().c_str())),
 /**
  * @brief A specialized container class to hold BLE attribute values.
  * @details This class is designed to be more memory efficient than using\n
- * standard container types for value storage, while being convertable to\n
+ * standard container types for value storage, while being convertible to\n
  * many different container classes.
  */
 class NimBLEAttValue

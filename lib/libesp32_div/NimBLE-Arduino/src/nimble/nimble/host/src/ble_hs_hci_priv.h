@@ -81,6 +81,8 @@ struct hci_periodic_adv_params
 
 extern uint16_t ble_hs_hci_avail_pkts;
 
+/* This function is not waiting for command status/complete HCI events */
+int ble_hs_hci_cmd_tx_no_rsp(uint16_t opcode, const void *cmd, uint8_t cmd_len);
 int ble_hs_hci_cmd_tx(uint16_t opcode, const void *cmd, uint8_t cmd_len,
                       void *rsp, uint8_t rsp_len);
 void ble_hs_hci_init(void);

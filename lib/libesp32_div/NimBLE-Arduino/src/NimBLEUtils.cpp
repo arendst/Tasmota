@@ -355,7 +355,7 @@ const char* NimBLEUtils::returnCodeToString(int rc) {
  * @return A string representation of the advertising flags.
  */
 const char* NimBLEUtils::advTypeToString(uint8_t advType) {
-#if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
+#if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISEMENT_TYPE_TEXT)
     switch(advType) {
         case BLE_HCI_ADV_TYPE_ADV_IND :                     //0
             return "Undirected - Connectable / Scannable";
@@ -370,10 +370,10 @@ const char* NimBLEUtils::advTypeToString(uint8_t advType) {
         default:
             return "Unknown flag";
     }
-#else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
+#else // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISEMENT_TYPE_TEXT)
     (void)advType;
     return "";
-#endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT)
+#endif // #if defined(CONFIG_NIMBLE_CPP_ENABLE_ADVERTISEMENT_TYPE_TEXT)
 } // adFlagsToString
 
 

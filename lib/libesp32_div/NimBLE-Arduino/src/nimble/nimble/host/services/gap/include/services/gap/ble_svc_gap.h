@@ -34,6 +34,7 @@ extern "C" {
 
 #define BLE_SVC_GAP_APPEARANCE_GEN_UNKNOWN                         0
 #define BLE_SVC_GAP_APPEARANCE_GEN_COMPUTER                        128
+#define BLE_SVC_GAP_APPEARANCE_GEN_HID                             960
 #define BLE_SVC_GAP_APPEARANCE_CYC_SPEED_AND_CADENCE_SENSOR        1157
 
 typedef void (ble_svc_gap_chr_changed_fn) (uint16_t uuid);

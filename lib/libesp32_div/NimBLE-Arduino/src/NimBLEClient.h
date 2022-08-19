@@ -38,9 +38,9 @@ class NimBLEAdvertisedDevice;
  */
 class NimBLEClient {
 public:
-    bool                                        connect(NimBLEAdvertisedDevice* device, bool deleteAttibutes = true);
-    bool                                        connect(const NimBLEAddress &address, bool deleteAttibutes = true);
-    bool                                        connect(bool deleteAttibutes = true);
+    bool                                        connect(NimBLEAdvertisedDevice* device, bool deleteAttributes = true);
+    bool                                        connect(const NimBLEAddress &address, bool deleteAttributes = true);
+    bool                                        connect(bool deleteAttributes = true);
     int                                         disconnect(uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
     NimBLEAddress                               getPeerAddress();
     void                                        setPeerAddress(const NimBLEAddress &address);
@@ -70,9 +70,12 @@ public:
     void                                        updateConnParams(uint16_t minInterval, uint16_t maxInterval,
                                                                  uint16_t latency, uint16_t timeout);
     void                                        setDataLen(uint16_t tx_octets);
-    void                                        discoverAttributes();
+    bool                                        discoverAttributes();
     NimBLEConnInfo                              getConnInfo();
     int                                         getLastError();
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    void                                        setConnectPhy(uint8_t mask);
+#endif
 
 private:
     NimBLEClient(const NimBLEAddress &peerAddress);
@@ -98,6 +101,9 @@ private:
     NimBLEClientCallbacks*  m_pClientCallbacks;
     ble_task_data_t*        m_pTaskData;
     ble_npl_callout         m_dcTimer;
+#if CONFIG_BT_NIMBLE_EXT_ADV
+    uint8_t                 m_phyMask;
+#endif
 
     std::vector<NimBLERemoteService*> m_servicesVector;
 
@@ -131,7 +137,7 @@ public:
      * @brief Called when server requests to update the connection parameters.
      * @param [in] pClient A pointer to the calling client object.
      * @param [in] params A pointer to the struct containing the connection parameters requested.
-     * @return True to accept the parmeters.
+     * @return True to accept the parameters.
      */
     virtual bool onConnParamsUpdateRequest(NimBLEClient* pClient, const ble_gap_upd_params* params);
 

@@ -116,7 +116,11 @@ NimBLERemoteCharacteristic* NimBLERemoteService::getCharacteristic(const NimBLEU
         {
             NimBLEUUID uuid128(uuid);
             uuid128.to128();
-            return getCharacteristic(uuid128);
+            if (retrieveCharacteristics(&uuid128)) {
+                if(m_characteristicVector.size() > prev_size) {
+                    return m_characteristicVector.back();
+                }
+            }
         } else {
             // If the request was successful but the 128 bit uuid not found
             // try again with the 16 bit uuid.
@@ -124,7 +128,11 @@ NimBLERemoteCharacteristic* NimBLERemoteService::getCharacteristic(const NimBLEU
             uuid16.to16();
             // if the uuid was 128 bit but not of the BLE base type this check will fail
             if (uuid16.bitSize() == BLE_UUID_TYPE_16) {
-                return getCharacteristic(uuid16);
+                if(retrieveCharacteristics(&uuid16)) {
+                    if(m_characteristicVector.size() > prev_size) {
+                        return m_characteristicVector.back();
+                    }
+                }
             }
         }
     }
@@ -157,7 +165,7 @@ std::vector<NimBLERemoteCharacteristic*>* NimBLERemoteService::getCharacteristic
 
 
 /**
- * @brief Callback for Characterisic discovery.
+ * @brief Callback for Characteristic discovery.
  * @return success == 0 or error code.
  */
 int NimBLERemoteService::characteristicDiscCB(uint16_t conn_handle,
@@ -248,7 +256,9 @@ bool NimBLERemoteService::retrieveCharacteristics(const NimBLEUUID *uuid_filter)
                 }
             }
 
-            m_characteristicVector.back()->m_endHandle = getEndHandle();
+            if (m_characteristicVector.size() > 0) {
+                m_characteristicVector.back()->m_endHandle = getEndHandle();
+            }
         }
 
         NIMBLE_LOGD(LOG_TAG, "<< retrieveCharacteristics()");

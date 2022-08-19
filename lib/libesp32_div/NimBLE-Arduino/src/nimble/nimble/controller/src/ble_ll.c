@@ -248,9 +248,6 @@ uint8_t g_dev_addr[BLE_DEV_ADDR_LEN];
 /** Our random address */
 uint8_t g_random_addr[BLE_DEV_ADDR_LEN];
 
-/** Our supported features which can be controller by the host */
-uint64_t g_ble_ll_supported_host_features = 0;
-
 static const uint16_t g_ble_ll_pdu_header_tx_time[BLE_PHY_NUM_MODE] =
 {
     [BLE_PHY_MODE_1M] =
@@ -715,6 +712,7 @@ ble_ll_tx_pkt_in(void)
     uint16_t pb;
     struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
+    os_sr_t sr;
 
     /* Drain all packets off the queue */
     while (STAILQ_FIRST(&g_ble_ll_data.ll_tx_pkt_q)) {
@@ -723,7 +721,9 @@ ble_ll_tx_pkt_in(void)
         om = (struct os_mbuf *)((uint8_t *)pkthdr - sizeof(struct os_mbuf));
 
         /* Remove from queue */
+        OS_ENTER_CRITICAL(sr);
         STAILQ_REMOVE_HEAD(&g_ble_ll_data.ll_tx_pkt_q, omp_next);
+        OS_EXIT_CRITICAL(sr);
 
         /* Strip HCI ACL header to get handle and length */
         handle = get_le16(om->om_data);
@@ -1210,8 +1210,6 @@ ble_ll_task(void *arg)
     /* Tell the host that we are ready to receive packets */
     ble_ll_hci_send_noop();
 
-    ble_ll_rand_start();
-
     while (1) {
         ev = ble_npl_eventq_get(&g_ble_ll_data.ll_evq, BLE_NPL_TIME_FOREVER);
         assert(ev);
@@ -1309,10 +1307,6 @@ ble_ll_set_host_feat(const uint8_t *cmdbuf, uint8_t len)
 
     mask = (uint64_t)1 << (cmd->bit_num);
     if (!(mask & BLE_LL_HOST_CONTROLLED_FEATURES)) {
-        return BLE_ERR_INV_HCI_CMD_PARMS;
-    }
-
-    if (!(mask & g_ble_ll_supported_host_features)) {
         return BLE_ERR_UNSUPPORTED;
     }
 
@@ -1376,6 +1370,20 @@ ble_ll_mbuf_init(struct os_mbuf *m, uint8_t pdulen, uint8_t hdr)
     ble_hdr->txinfo.hdr_byte = hdr;
 }
 
+static void
+ble_ll_validate_task(void)
+{
+#ifdef MYNEWT
+#ifndef NDEBUG
+    struct os_task_info oti;
+
+    os_task_info_get(&g_ble_ll_task, &oti);
+
+    BLE_LL_ASSERT(oti.oti_stkusage < oti.oti_stksize);
+#endif
+#endif
+}
+
 /**
  * Called to reset the controller. This performs a "software reset" of the link
  * layer; it does not perform a HW reset of the controller nor does it reset
@@ -1391,6 +1399,9 @@ ble_ll_reset(void)
 {
     int rc;
     os_sr_t sr;
+
+    /* do sanity check on LL task stack */
+    ble_ll_validate_task();
 
     OS_ENTER_CRITICAL(sr);
     ble_phy_disable();
@@ -1449,23 +1460,6 @@ ble_ll_reset(void)
     rc = ble_phy_init();
 
     return rc;
-}
-
-static void
-ble_ll_seed_prng(void)
-{
-    uint32_t seed;
-    int i;
-
-    /* Seed random number generator with least significant bytes of device
-     * address.
-     */
-    seed = 0;
-    for (i = 0; i < 4; ++i) {
-        seed |= g_dev_addr[i];
-        seed <<= 8;
-    }
-    srand(seed);
 }
 
 uint32_t
@@ -1685,15 +1679,23 @@ ble_ll_init(void)
     features |= BLE_LL_FEAT_SYNC_TRANS_SEND;
 #endif
 
-    /* Initialize random number generation */
-    ble_ll_rand_init();
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+    features |= BLE_LL_FEAT_SCA_UPDATE;
+#endif
 
-    /* XXX: This really doesn't belong here, as the address probably has not
-     * been set yet.
-     */
-    ble_ll_seed_prng();
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+    features |= BLE_LL_FEAT_CIS_MASTER;
+    features |= BLE_LL_FEAT_CIS_SLAVE;
+    features |= BLE_LL_FEAT_ISO_BROADCASTER;
+    features |= BLE_LL_FEAT_ISO_HOST_SUPPORT;
+#endif
 
     lldata->ll_supp_features = features;
+
+    /* Initialize random number generation */
+    ble_ll_rand_init();
+    /* Start the random number generator */
+    ble_ll_rand_start();
 
     rc = stats_init_and_reg(STATS_HDR(ble_ll_stats),
                             STATS_SIZE_INIT_PARMS(ble_ll_stats, STATS_SIZE_32),

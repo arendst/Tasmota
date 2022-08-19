@@ -130,7 +130,7 @@ void NimBLEBeacon::setManufacturerId(uint16_t manufacturerId) {
  */
 void NimBLEBeacon::setMinor(uint16_t minor) {
     m_beaconData.minor = ENDIAN_CHANGE_U16(minor);
-} // setMinior
+} // setMinor
 
 
 /**

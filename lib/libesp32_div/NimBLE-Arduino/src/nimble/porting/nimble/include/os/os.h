@@ -26,6 +26,10 @@
 extern "C" {
 #endif
 
+#if !defined __cplusplus
+#define static_assert _Static_assert
+#endif
+
 #ifndef min
 #define min(a, b) ((a)<(b)?(a):(b))
 #endif
