@@ -113,6 +113,7 @@ public:
   uint8_t       key_suffix;       // append a suffix to key (default is 1, explicitly output if >1)
   uint8_t       attr_type;        // [opt] type of the attribute, default to Zunk (0xFF)
   uint8_t       attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
+  uint16_t      manuf;            // manufacturer id (0 if none)
 
   // Constructor with all defaults
   Z_attribute():
@@ -124,7 +125,8 @@ public:
     val_str_raw(false),
     key_suffix(1),
     attr_type(0xFF),
-    attr_multiplier(1)
+    attr_multiplier(1),
+    manuf(0)
     {};
 
   Z_attribute(const Z_attribute & rhs) {

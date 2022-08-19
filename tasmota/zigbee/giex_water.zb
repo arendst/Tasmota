@@ -9,6 +9,6 @@ EF00/0267,CycleIrrigationNumTimes   # number of cycle irrigation times, set to 0
 EF00/0268,IrrigationTarget          # duration in minutes or capacity in Liters (depending on mode)
 EF00/0269,CycleIrrigationInterval   # cycle irrigation interval (minutes, max 1440)
 EF00/026A,CurrentTemperature        # (value ignored because isn't a valid tempurature reading.  Misdocumented and usage unclear)
-EF00/026C=0001/0021,2               # match to BatteryPercentage
+EF00/026C=0001/0021,mul:2           # match to BatteryPercentage
 EF00/026F,WaterConsumed             # water consumed (Litres)
 EF00/0372,LastIrrigationDuration    # (string) Ex: "00:01:10,0"

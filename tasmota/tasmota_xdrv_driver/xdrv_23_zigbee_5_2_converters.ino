@@ -1509,6 +1509,7 @@ void Z_parseAttributeKey_inner(uint16_t shortaddr, class Z_attribute & attr, uin
         attr.setKeyId(matched_attr.cluster, matched_attr.attribute);
         attr.attr_type = matched_attr.zigbee_type;
         attr.attr_multiplier = matched_attr.multiplier;
+        attr.manuf = matched_attr.manuf;
       }
     }
   } else {
@@ -1516,6 +1517,7 @@ void Z_parseAttributeKey_inner(uint16_t shortaddr, class Z_attribute & attr, uin
     Z_attribute_match matched_attr = Z_findAttributeMatcherById(shortaddr, attr.key.id.cluster, attr.key.id.attr_id, false);
     if (matched_attr.found()) {
       attr.attr_type = matched_attr.zigbee_type;
+      attr.manuf = matched_attr.manuf;
     }
   }
 }

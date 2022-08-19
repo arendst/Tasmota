@@ -271,7 +271,7 @@ class Z_plugin_attribute {
 public:
   
   Z_plugin_attribute(void) :
-    type(Zunk), multiplier(1), cluster(0xFFFF), attribute(0xFFFF)
+    type(Zunk), multiplier(1), cluster(0xFFFF), attribute(0xFFFF), manuf(0)
     {};
 
   void set(uint16_t cluster, uint16_t attribute, const char *name, uint8_t type = Zunk) {
@@ -285,6 +285,7 @@ public:
   int8_t        multiplier;       // multiplier, values 0, 1, 2, 5, 10, 100, -2, -5, -10, -100,
   uint16_t      cluster;          // cluster number
   uint16_t      attribute;        // attribute number
+  uint16_t      manuf;            // manufacturer code, 0 if none
   String        name;             // name of attribute once converted
 };
 
@@ -456,6 +457,7 @@ public:
   int8_t multiplier = 1;
   uint8_t map_offset = 0;
   Z_Data_Type map_type = Z_Data_Type::Z_Unknown;
+  uint16_t manuf = 0x0000;      // manuf code (if any)
 };
 
 Z_attribute_match Z_plugin_matchAttributeById(const char *model, const char *manufacturer, uint16_t cluster, uint16_t attribute);
@@ -472,8 +474,6 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint8,   Cx0000, 0x0003,  Z_(HWVersion),            Cm1, 0 },
   { Zstring,  Cx0000, 0x0004,  Z_(Manufacturer),         Cm1, 0 },    // record Manufacturer
   { Zstring,  Cx0000, 0x0005,  Z_(ModelId),              Cm1, 0 },    // record Model
-  // { Zstring,  Cx0000, 0x0004,  Z_(Manufacturer),         Cm1,  Z_ManufKeep, 0 },    // record Manufacturer
-  // { Zstring,  Cx0000, 0x0005,  Z_(ModelId),              Cm1,  Z_ModelKeep, 0 },    // record Model
   { Zstring,  Cx0000, 0x0006,  Z_(DateCode),             Cm1, 0 },
   { Zenum8,   Cx0000, 0x0007,  Z_(PowerSource),          Cm1, 0 },
   { Zenum8,   Cx0000, 0x0008,  Z_(GenericDeviceClass),   Cm1, 0 },
@@ -524,8 +524,8 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
   // Level Control cluster
   { Zuint8,   Cx0008, 0x0000,  Z_(Dimmer),               Cm1 + Z_EXPORT_DATA, Z_MAPPING(Z_Data_Light, dimmer) },
-  { Zmap8,    Cx0008, 0x000F,  Z_(DimmerOptions),        Cm1, 0 },
   { Zuint16,  Cx0008, 0x0001,  Z_(DimmerRemainingTime),  Cm1, 0 },
+  { Zmap8,    Cx0008, 0x000F,  Z_(DimmerOptions),        Cm1, 0 },
   { Zuint16,  Cx0008, 0x0010,  Z_(OnOffTransitionTime),   Cm1, 0 },
   // { Zuint8, Cx0008, 0x0011,  (OnLevel),              Cm1, 0 },
   // { Zuint16, Cx0008, 0x0012,  (OnTransitionTime),     Cm1, 0 },
