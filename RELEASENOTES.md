@@ -115,6 +115,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Breaking Changed
 
 ### Changed
+- ESP32 NimBLE library from v1.3.6 to v1.4.0
 
 ### Fixed
 - RTC not detected when lights are present [#16242](https://github.com/arendst/Tasmota/issues/16242)

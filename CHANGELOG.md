@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-S3 support for internal temperature sensor
 
 ### Changed
+- ESP32 NimBLE library from v1.3.6 to v1.4.0
 
 ### Fixed
 - RTC not detected when lights are present (#16242)
