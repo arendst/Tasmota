@@ -1597,24 +1597,24 @@ void CmndButtonRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_KEYS; i++) {
-        SendKey(KEY_BUTTON, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
+        SendKey(KEY_BUTTON, i, CLEAR_RETAIN);                      // Clear MQTT retain in broker
       }
     }
-    Settings->flag.mqtt_button_retain = XdrvMailbox.payload;  // CMND_BUTTONRETAIN
+    Settings->flag.mqtt_button_retain = XdrvMailbox.payload;       // CMND_BUTTONRETAIN
   }
-  ResponseCmndStateText(Settings->flag.mqtt_button_retain);   // CMND_BUTTONRETAIN
+  ResponseCmndStateText(Settings->flag.mqtt_button_retain);        // CMND_BUTTONRETAIN
 }
 
 void CmndSwitchRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_SWITCHES; i++) {
-        SendKey(KEY_SWITCH, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
+        SendKey(KEY_SWITCH, i, CLEAR_RETAIN);                      // Clear MQTT retain in broker
       }
     }
-    Settings->flag.mqtt_switch_retain = XdrvMailbox.payload;  // CMND_SWITCHRETAIN
+    Settings->flag.mqtt_switch_retain = XdrvMailbox.payload;       // CMND_SWITCHRETAIN
   }
-  ResponseCmndStateText(Settings->flag.mqtt_switch_retain);   // CMND_SWITCHRETAIN
+  ResponseCmndStateText(Settings->flag.mqtt_switch_retain);        // CMND_SWITCHRETAIN
 }
 
 void CmndPowerRetain(void) {
@@ -1625,27 +1625,27 @@ void CmndPowerRetain(void) {
       for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {  // Clear MQTT retain in broker
         GetTopic_P(stemp1, STAT, TasmotaGlobal.mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings->flag.device_index_enable));  // SetOption26 - Switch between POWER or POWER1
         ResponseClear();
-        MqttPublish(stemp1, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
+        MqttPublish(stemp1, true);
       }
     }
-    Settings->flag.mqtt_power_retain = XdrvMailbox.payload;     // CMND_POWERRETAIN
+    Settings->flag.mqtt_power_retain = XdrvMailbox.payload;        // CMND_POWERRETAIN
     if (Settings->flag.mqtt_power_retain) {
-      Settings->flag4.only_json_message = 0;                    // SetOption90 - Disable non-json MQTT response
+      Settings->flag4.only_json_message = 0;                       // SetOption90 - Disable non-json MQTT response
     }
   }
-  ResponseCmndStateText(Settings->flag.mqtt_power_retain);      // CMND_POWERRETAIN
+  ResponseCmndStateText(Settings->flag.mqtt_power_retain);         // CMND_POWERRETAIN
 }
 
 void CmndSensorRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings->flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), true);   // Remove retained SENSOR
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), true);   // Remove retained ENERGY
     }
-    Settings->flag.mqtt_sensor_retain = XdrvMailbox.payload;                                   // CMND_SENSORRETAIN
+    Settings->flag.mqtt_sensor_retain = XdrvMailbox.payload;       // CMND_SENSORRETAIN
   }
-  ResponseCmndStateText(Settings->flag.mqtt_sensor_retain);                                    // CMND_SENSORRETAIN
+  ResponseCmndStateText(Settings->flag.mqtt_sensor_retain);        // CMND_SENSORRETAIN
 }
 
 void CmndInfoRetain(void) {
@@ -1653,41 +1653,41 @@ void CmndInfoRetain(void) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
       char stemp1[10];
-      for (uint32_t i = 1; i <= 3; i++) {                                          // Relates to INFO1, INFO2 and INFO3
+      for (uint32_t i = 1; i <= 3; i++) {                          // Remove retained INFO1, INFO2 and INFO3
         snprintf_P(stemp1, sizeof(stemp1), PSTR(D_RSLT_INFO "%d"), i);
-        MqttPublishPrefixTopic_P(TELE, stemp1, Settings->flag5.mqtt_info_retain);
+        MqttPublishPrefixTopic_P(TELE, stemp1, true);
       }
     }
-    Settings->flag5.mqtt_info_retain = XdrvMailbox.payload;
+    Settings->flag5.mqtt_info_retain = XdrvMailbox.payload;        // CMND_INFORETAIN
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_info_retain);
+  ResponseCmndStateText(Settings->flag5.mqtt_info_retain);         // CMND_INFORETAIN
 }
 
 void CmndStateRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_STATE), Settings->flag5.mqtt_state_retain);
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_RSLT_STATE), true);    // Remove retained STATE
     }
-    Settings->flag5.mqtt_state_retain = XdrvMailbox.payload;
+    Settings->flag5.mqtt_state_retain = XdrvMailbox.payload;       // CMND_STATERETAIN
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_state_retain);
+  ResponseCmndStateText(Settings->flag5.mqtt_state_retain);        // CMND_STATERETAIN
 }
 
 void CmndStatusRetain(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       ResponseClear();
-      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS), Settings->flag5.mqtt_status_retain);  // Relates to STATUS
+      MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_STATUS), true);   // Remove retained STATUS
       char stemp1[10];
-      for (uint32_t i = 0; i <= 13; i++) {                                                      // Relates to STATUS0, STATUS1 .. STATUS13
+      for (uint32_t i = 0; i <= MAX_STATUS; i++) {                 // Remove retained STATUS0, STATUS1 .. STATUS13
         snprintf_P(stemp1, sizeof(stemp1), PSTR(D_CMND_STATUS "%d"), i);
-        MqttPublishPrefixTopic_P(STAT, stemp1, Settings->flag5.mqtt_status_retain);
+        MqttPublishPrefixTopic_P(STAT, stemp1, true);
       }
     }
-    Settings->flag5.mqtt_status_retain = XdrvMailbox.payload;
+    Settings->flag5.mqtt_status_retain = XdrvMailbox.payload;      // CMND_STATUSRETAIN
   }
-  ResponseCmndStateText(Settings->flag5.mqtt_status_retain);
+  ResponseCmndStateText(Settings->flag5.mqtt_status_retain);       // CMND_STATUSRETAIN
 }
 
 /*********************************************************************************************\
