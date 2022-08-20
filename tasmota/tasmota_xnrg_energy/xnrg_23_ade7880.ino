@@ -570,7 +570,10 @@ bool Ade7880SetDefaults(const char* json) {
   memcpy(json_buffer, json, len);         // Keep original safe
   JsonParser parser(json_buffer);
   JsonParserObject root = parser.getRootObject();
-  if (!root) { return false; }
+  if (!root) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Invalid JSON"));
+    return false;
+  }
 
   // All parameters are optional allowing for partial changes
   JsonParserToken val = root[PSTR("freq")];
