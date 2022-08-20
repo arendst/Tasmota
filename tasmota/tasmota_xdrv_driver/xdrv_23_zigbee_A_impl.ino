@@ -352,6 +352,15 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
         return;
       }
 
+      // check for manuf code
+      if (attr.manuf) {
+        if (zcl.manuf != 0 && zcl.manuf != attr.manuf) {
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "conflicting manuf code 0x%04X (was 0x%04X)"), attr.manuf, zcl.manuf);
+        } else {
+          zcl.manuf = attr.manuf;
+        }
+      }
+
     } else {
       if (attr.key_is_str) {
         Response_P(PSTR("{\"%s\":\"%s'%s'\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNKNOWN_ATTRIBUTE " "), key.getStr());
@@ -645,6 +654,14 @@ void ZbSendRead(JsonParserToken val_attr, ZCLFrame & zcl) {
           ResponseCmndChar_P(PSTR(D_ZIGBEE_TOO_MANY_CLUSTERS));
           if (attrs) { free(attrs); }
           return;
+        }
+        // check for manuf code
+        if (matched_attr.manuf) {
+          if (zcl.manuf != 0 && zcl.manuf != matched_attr.manuf) {
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "conflicting manuf code 0x%04X (was 0x%04X)"), matched_attr.manuf, zcl.manuf);
+          } else {
+            zcl.manuf = matched_attr.manuf;
+          }
         }
       }
       if (!found) {

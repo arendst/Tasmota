@@ -19,6 +19,18 @@
 
 #ifdef USE_ZIGBEE
 
+const char Z_MUL[] PROGMEM = "mul:";
+const char Z_DIV[] PROGMEM = "div:";
+const char Z_MANUF[] PROGMEM = "manuf:";
+
+char * Z_subtoken(char * token, const char * prefix) {
+  size_t prefix_len = strlen_P(prefix);
+  if (!strncmp_P(token, prefix, prefix_len)) {
+    return token + prefix_len;
+  }
+  return nullptr;
+}
+
 // global singleton
 Z_plugin_templates g_plugin_templates;
 
@@ -48,6 +60,7 @@ Z_attribute_match Z_plugin_matchAttributeById(const char *model, const char *man
     attr.name = attr_tmpl->name.c_str();
     attr.zigbee_type = attr_tmpl->type;
     attr.multiplier = attr_tmpl->multiplier;
+    attr.manuf = attr_tmpl->manuf;
   }
   return attr;
 }
@@ -67,6 +80,7 @@ Z_attribute_match Z_plugin_matchAttributeByName(const char *model, const char *m
       attr.name = attr_tmpl->name.c_str();
       attr.zigbee_type = attr_tmpl->type;
       attr.multiplier = attr_tmpl->multiplier;
+      attr.manuf = attr_tmpl->manuf;
     }
   }
   return attr;
@@ -205,6 +219,7 @@ bool ZbLoad(const char *filename_raw) {
         char * delimiter_equal = strchr(token, '=');
 
         if (delimiter_equal == nullptr) {
+          // NORMAL ATTRIBUTE
           // token is of from '0000/0000' or '0000/0000%00'
           char * delimiter_slash = strchr(token, '/');
           char * delimiter_percent = strchr(token, '%');
@@ -215,6 +230,9 @@ bool ZbLoad(const char *filename_raw) {
           uint16_t attr_id = 0xFFFF;
           uint16_t cluster_id = 0xFFFF;
           uint8_t  type_id = Zunk;
+          int8_t   multiplier = 1;
+          char *   name = nullptr;
+          uint16_t manuf = 0;
 
           cluster_id = strtoul(token, &delimiter_slash, 16);
           if (!delimiter_percent) {
@@ -223,19 +241,44 @@ bool ZbLoad(const char *filename_raw) {
             attr_id = strtoul(delimiter_slash+1, &delimiter_percent, 16);
             type_id = Z_getTypeByName(delimiter_percent+1);
           }
-          // name of the attribute
+          // NAME of the attribute
           token = strtok_r(rest, ",", &rest);
           if (token == nullptr) {
             AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad '%s' ignore missing name '%s'", filename_raw, buf_line);
             continue;
           }
+          name = token;
+          // ADDITIONAL ELEMENTS?
+          // Ex: `manuf:1037`
+          while (token = strtok_r(rest, ",", &rest)) {
+            char * sub_token;
+            // look for multiplier
+            if (sub_token = Z_subtoken(token, Z_MUL))  {
+              multiplier = strtoul(sub_token, nullptr, 10);
+            }
+            // look for divider
+            else if (sub_token = Z_subtoken(token, Z_DIV))  {
+              multiplier = - strtoul(sub_token, nullptr, 10);    // negative to indicate divider
+            }
+            // look for `manuf:HHHH`
+            else if (sub_token = Z_subtoken(token, Z_MANUF))  {
+              manuf = strtoul(sub_token, nullptr, 16);
+            }
+            else {
+              AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
+            }
+          }
+          
           // token contains the name of the attribute
           Z_plugin_attribute & plugin_attr = tmpl->attributes.addToLast();
           plugin_attr.cluster = cluster_id;
           plugin_attr.attribute = attr_id;
           plugin_attr.type = type_id;
-          plugin_attr.name = token;
+          plugin_attr.name = name;
+          plugin_attr.multiplier = multiplier;
+          plugin_attr.manuf = manuf;
         } else {
+          // ATTRIBUTE SYNONYM
           // token is of from '0000/0000=0000/0000,1'
           char * rest2 = token;
           char * tok2 = strtok_r(rest2, "=", &rest2);
@@ -246,11 +289,22 @@ bool ZbLoad(const char *filename_raw) {
           char * delimiter_slash2 = strchr(tok2, '/');
           uint16_t new_cluster_id = strtoul(tok2, &delimiter_slash2, 16);
           uint16_t new_attr_id = strtoul(delimiter_slash2+1, nullptr, 16);
-          // multiplier
-          token = strtok_r(rest, ",", &rest);
           int8_t multiplier = 1;
-          if (token != nullptr) {
-            multiplier = strtol(token, nullptr, 10);
+
+          // ADDITIONAL ELEMENTS?
+          while (token = strtok_r(rest, ",", &rest)) {
+            char * sub_token;
+            // look for multiplier
+            if (sub_token = Z_subtoken(token, Z_MUL))  {
+              multiplier = strtoul(sub_token, nullptr, 10);
+            }
+            // look for divider
+            else if (sub_token = Z_subtoken(token, Z_DIV))  {
+              multiplier = - strtoul(sub_token, nullptr, 10);    // negative to indicate divider
+            }
+            else {
+              AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
+            }
           }
           // create the synonym
           Z_attribute_synonym & syn = tmpl->synonyms.addToLast();
@@ -305,21 +359,35 @@ bool ZbUnload(const char *filename_raw) {
   return false;
 }
 
+// append modifiers like mul/div/manuf
+void Z_AppendModifiers(char * buf, size_t buf_len, int8_t multiplier, uint16_t manuf) {
+  if (multiplier != 0 && multiplier != 1) {
+    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, multiplier > 0 ? Z_MUL : Z_DIV, multiplier > 0 ? multiplier : -multiplier);
+  }
+  if (manuf) {
+    ext_snprintf_P(buf, buf_len, "%s,%s%04X", buf, Z_MANUF, manuf);
+  }
+}
+
 // Dump the ZbLoad structure in a format compatible with ZbLoad
 void ZbLoadDump(void) {
+  char buf[96];
   AddLog(LOG_LEVEL_INFO, "ZIG: ZbLoad dump all current information");
   AddLog(LOG_LEVEL_INFO, "====> START");
 
   for (const Z_plugin_template & tmpl : g_plugin_templates) {
     if (tmpl.filename != nullptr) {
-      AddLog(LOG_LEVEL_INFO, "# imported from '%s'", tmpl.filename);
+      ext_snprintf_P(buf, sizeof(buf), "# imported from '%s'", tmpl.filename);
+      AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
     }
     // marchers
     if (tmpl.matchers.length() == 0) {
-      AddLog(LOG_LEVEL_INFO, ":    # no matcher");
+      ext_snprintf_P(buf, sizeof(buf), ":    # no matcher");
+      AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
     } else {
       for (const Z_plugin_matcher & matcher : tmpl.matchers) {
-        AddLog(LOG_LEVEL_INFO, ":%s,%s", matcher.model.c_str(), matcher.manufacturer.c_str());
+        ext_snprintf_P(buf, sizeof(buf), ":%s,%s", matcher.model.c_str(), matcher.manufacturer.c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
     }
     // attributes
@@ -328,16 +396,20 @@ void ZbLoadDump(void) {
       AddLog(LOG_LEVEL_INFO, "");
     } else {
       for (const Z_plugin_attribute & attr : tmpl.attributes) {
-        if (attr.type == Zunk) {
-          AddLog(LOG_LEVEL_INFO, "%04X/%04X,%s", attr.cluster, attr.attribute, attr.name.c_str());
-        } else {
-          char type[16];
-          Z_getTypeByNumber(type, sizeof(type), attr.type);
-          AddLog(LOG_LEVEL_INFO, "%04X/%04X%%%s,%s", attr.cluster, attr.attribute, type, attr.name.c_str());
+        ext_snprintf_P(buf, sizeof(buf), "%04X/%04X", attr.cluster, attr.attribute);
+        // add type if known
+        if (attr.type != Zunk) {
+          char type_str[16];
+          Z_getTypeByNumber(type_str, sizeof(type_str), attr.type);
+          ext_snprintf_P(buf, sizeof(buf), "%s%%%s", buf, type_str);
         }
+        Z_AppendModifiers(buf, sizeof(buf), attr.multiplier, attr.manuf);
+        AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
       for (const Z_attribute_synonym & syn : tmpl.synonyms) {
-        AddLog(LOG_LEVEL_INFO, "%04X/%04X=%04X/%04X,%i", syn.cluster, syn.attribute, syn.new_cluster, syn.new_attribute, syn.multiplier);
+        ext_snprintf_P(buf, sizeof(buf), "%04X/%04X=%04X/%04X", syn.cluster, syn.attribute, syn.new_cluster, syn.new_attribute);
+        Z_AppendModifiers(buf, sizeof(buf), syn.multiplier, 0);
+        AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
     }
   }
