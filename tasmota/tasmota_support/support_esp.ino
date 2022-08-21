@@ -558,6 +558,7 @@ int32_t ESP_getHeapFragmentation(void) {
 
 uint32_t ESP_getFlashChipId(void)
 {
+//  uint32_t id = bootloader_read_flash_id();
   uint32_t id = g_rom_flashchip.device_id;
   id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
   return id;
@@ -966,6 +967,14 @@ float ESP_getFreeHeap1024(void) {
   return ((float)ESP_getFreeHeap()) / 1024;
 }
 */
+
+const char kFlashModes[] PROGMEM = "QIO|QOUT|DIO|DOUT";
+
+String ESP_getFlashChipMode(void) {
+  uint32_t flash_mode = ESP.getFlashChipMode() &3;
+  char stemp[6];
+  return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);
+}
 
 /*********************************************************************************************\
  * High entropy hardware random generator

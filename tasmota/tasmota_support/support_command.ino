@@ -770,14 +770,14 @@ void CmndStatus(void)
 #endif  // ESP32
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
+                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":\"%s\""),
                           ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
 #endif  // ESP32
                           ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024
                           , ESP_getFlashChipId()
-                          , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode());
+                          , ESP.getFlashChipSpeed()/1000000, ESP_getFlashChipMode().c_str());
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
