@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - RTC not detected when lights are present (#16242)
+- DNS lookup for .local domains (#16273)
 
 ### Removed
 
