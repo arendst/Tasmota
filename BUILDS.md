@@ -151,6 +151,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_VEML6075          | - | - / - | - | - | - | - |
 | USE_VEML7700          | - | - / - | - | - | - | - |
 | USE_MCP9808           | - | - / - | - | - | - | - |
+| USE_MLX90640          | - | - / - | - | - | - | - |
 | USE_HP303B            | - | - / - | - | - | - | - |
 | USE_EZOCO2            | - | - / - | - | - | - | - |
 | USE_EZODO             | - | - / - | - | - | - | - |
