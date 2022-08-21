@@ -151,6 +151,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_VEML6075          | - | - / - | - | - | - | - |
 | USE_VEML7700          | - | - / - | - | - | - | - |
 | USE_MCP9808           | - | - / - | - | - | - | - |
+| USE_MLX90640          | - | - / - | - | - | - | - |
 | USE_HP303B            | - | - / - | - | - | - | - |
 | USE_EZOCO2            | - | - / - | - | - | - | - |
 | USE_EZODO             | - | - / - | - | - | - | - |
@@ -198,7 +199,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MIEL_HVAC             | - | - / - | - | - | - | - |
 | USE_PROJECTOR_CTRL        | - | - / - | - | - | - | - |
 | USE_AS608                 | - | - / - | - | - | - | - |
-| USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge
+| USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge / zbbrdgpro
 |                           |   |       |   |   |   |   |
 | USE_NRF24                 | - | - / - | - | - | - | - |
 | USE_MIBLE                 | - | - / - | - | - | - | - |
