@@ -558,7 +558,7 @@ int32_t ESP_getHeapFragmentation(void) {
 
 uint32_t ESP_getFlashChipId(void)
 {
-  uint32_t id = bootloader_read_flash_id();
+  uint32_t id = g_rom_flashchip.device_id;
   id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
   return id;
 }
