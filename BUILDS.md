@@ -199,7 +199,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_MIEL_HVAC             | - | - / - | - | - | - | - |
 | USE_PROJECTOR_CTRL        | - | - / - | - | - | - | - |
 | USE_AS608                 | - | - / - | - | - | - | - |
-| USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge
+| USE_TCP_BRIDGE            | - | - / - | - | - | - | - | zbbridge / zbbrdgpro
 |                           |   |       |   |   |   |   |
 | USE_NRF24                 | - | - / - | - | - | - | - |
 | USE_MIBLE                 | - | - / - | - | - | - | - |
