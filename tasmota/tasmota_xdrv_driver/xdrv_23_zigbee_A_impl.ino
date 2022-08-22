@@ -241,15 +241,15 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
   double val_d = attr.getOptimisticDouble();
   const char * val_str = attr.getStr();
 
-  if (attr.key_is_str) { return false; }    // couldn't find attr if so skip
+  if (attr.key_is_str || attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
   if (attr.isNum() && (1 != attr.attr_multiplier)) {
     ZbApplyMultiplier(val_d, attr.attr_multiplier);
   }
   uint32_t u32 = val_d;
   int32_t  i32 = val_d;
 
-  uint8_t tuyatype = (attr.key.id.attr_id >> 8);
-  uint8_t dpid = (attr.key.id.attr_id & 0xFF);
+  uint8_t tuyatype = (attr.attr_id >> 8);
+  uint8_t dpid = (attr.attr_id & 0xFF);
   buf.add8(dpid);
   buf.add8(tuyatype);
 
@@ -300,13 +300,13 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
   double val_d = attr.getOptimisticDouble();
   const char * val_str = attr.getStr();
 
-  if (attr.key_is_str) { return false; }    // couldn't find attr if so skip
+  if (attr.key_is_str && attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
   if (attr.isNum() && (1 != attr.attr_multiplier)) {
     ZbApplyMultiplier(val_d, attr.attr_multiplier);
   }
 
   // push the value in the buffer
-  buf.add16(attr.key.id.attr_id);        // prepend with attribute identifier
+  buf.add16(attr.attr_id);        // prepend with attribute identifier
   if (prepend_status_ok) {
     buf.add8(Z_SUCCESS);  // status OK = 0x00
   }
@@ -315,7 +315,7 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
   if (res < 0) {
     // remove the attribute type we just added
     // buf.setLen(buf.len() - (operation == ZCL_READ_ATTRIBUTES_RESPONSE ? 4 : 3));
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " %04X/%04X '0x%02X'"), attr.key.id.cluster, attr.key.id.attr_id, attr.attr_type);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " %04X/%04X '0x%02X'"), attr.cluster, attr.attr_id, attr.attr_type);
     return false;
   }
   return true;
@@ -346,8 +346,8 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
 
       // all attributes must use the same cluster
       if (0xFFFF == zcl.cluster) {
-        zcl.cluster = attr.key.id.cluster;       // set the cluster for this packet
-      } else if (zcl.cluster != attr.key.id.cluster) {
+        zcl.cluster = attr.cluster;       // set the cluster for this packet
+      } else if (zcl.cluster != attr.cluster) {
         ResponseCmndChar_P(PSTR(D_ZIGBEE_TOO_MANY_CLUSTERS));
         return;
       }
@@ -432,7 +432,7 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
       // all fields are gathered, output the butes into the buffer, ZCL 2.5.7.1
       // common bytes
       buf.add8(attr_direction ? 0x01 : 0x00);
-      buf.add16(attr.key.id.attr_id);
+      buf.add16(attr.attr_id);
       if (attr_direction) {
         buf.add16(attr_timeout);
       } else {
