@@ -986,7 +986,11 @@ String ESP_getFlashChipMode(void) {
 #if ESP8266
   uint32_t flash_mode = ESP.getFlashChipMode();
 #else
-  uint32_t spi_ctrl = REG_READ(SPI_CTRL_REG(0));
+  #if CONFIG_IDF_TARGET_ESP32S2
+  const uint32_t spi_ctrl = REG_READ(PERIPHS_SPI_FLASH_CTRL);
+  #else
+  const uint32_t spi_ctrl = REG_READ(SPI_CTRL_REG(0));
+  #endif
   uint32_t flash_mode;
   /* Not all of the following constants are already defined in older versions of spi_reg.h, so do it manually for now*/
   if (spi_ctrl & BIT(24)) { //SPI_FREAD_QIO
