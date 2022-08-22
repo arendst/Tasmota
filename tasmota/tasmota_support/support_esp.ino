@@ -983,7 +983,7 @@ typedef enum {
 } FlashMode_t;
 */
 String ESP_getFlashChipMode(void) {
-#if ESP8266
+#if ESP8266 || CONFIG_IDF_TARGET_ESP32S2
   uint32_t flash_mode = ESP.getFlashChipMode();
 #else
   uint32_t spi_ctrl = REG_READ(SPI_CTRL_REG(0));
