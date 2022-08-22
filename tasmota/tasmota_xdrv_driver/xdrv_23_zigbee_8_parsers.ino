@@ -1650,7 +1650,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
 #ifdef USE_BERRY
   // Berry pre-process messages
-  callBerryZigbeeDispatcher("incoming", "zcl_frame", &zcl_received, 0);
+  callBerryZigbeeDispatcher("frame_received", &zcl_received, nullptr, srcaddr);
 #endif // USE_BERRY
 
   // create the device entry if it does not exist and if it's not the local device
@@ -1704,6 +1704,11 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString(false, false).c_str()); // don't include battery
 
+#ifdef USE_BERRY
+    // Berry pre-process messages
+    callBerryZigbeeDispatcher("attributes_raw", &zcl_received, &attr_list, srcaddr);
+#endif // USE_BERRY
+
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE  "loopback message, ignoring"));
@@ -1715,6 +1720,11 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     zcl_received.computeSyntheticAttributes(attr_list);
     zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
     Z_postProcessAttributes(srcaddr, zcl_received.getSrcEndpoint(), attr_list);
+
+#ifdef USE_BERRY
+    // Berry pre-process messages
+    callBerryZigbeeDispatcher("attributes_refined", &zcl_received, &attr_list, srcaddr);
+#endif // USE_BERRY
 
     if (defer_attributes) {
       // Prepare for publish

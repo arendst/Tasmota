@@ -555,7 +555,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     ResponseAppend_P(PSTR("\"" D_JSON_ZIGBEE_NAME "\":\"%s\","), EscapeJSONString(friendlyName).c_str());
   }
   // Add all other attributes
-  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false, true).c_str());   // (false, true) - include battery
+  ResponseAppend_P(PSTR("%s}"), attr_list.toString(false).c_str());
 
   if (!Settings->flag5.zb_omit_json_addr) {
     ResponseAppend_P(PSTR("}"));

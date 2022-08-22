@@ -636,8 +636,8 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
 void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
-    if (attr.key_is_str) { continue; }    // pass if key is a name
-    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+    if (attr.key_is_str && attr.key_is_cmd) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.cluster << 16) | attr.attr_id;
 
     switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
       case 0x0000FF01:
@@ -666,8 +666,8 @@ void ZCLFrame::generateSyntheticAttributes(Z_attribute_list& attr_list) {
 void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
-    if (attr.key_is_str) { continue; }    // pass if key is a name
-    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+    if (attr.key_is_str && attr.key_is_cmd) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.cluster << 16) | attr.attr_id;
 
     switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
       case 0x04020000:       // Temperature
@@ -694,7 +694,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
 
     // first apply synonyms from plugins
     Z_attribute_synonym syn = Z_plugin_matchAttributeSynonym(device.modelId, device.manufacturerId,
-                                                              attr.key.id.cluster, attr.key.id.attr_id);
+                                                              attr.cluster, attr.attr_id);
     if (syn.found()) {
       attr.setKeyId(syn.new_cluster, syn.new_attribute);
       if (syn.multiplier != 1 && syn.multiplier != 0) {
@@ -706,7 +706,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
       }
     }
 
-    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+    uint32_t ccccaaaa = (attr.cluster << 16) | attr.attr_id;
 
     switch (ccccaaaa) {      // 0xccccaaaa . c=cluster, a=attribute
       case 0x00010020:       // BatteryVoltage
@@ -802,8 +802,8 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
   static const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
   // scan through attributes and apply specific converters
   for (auto &attr : attr_list) {
-    if (attr.key_is_str) { continue; }    // pass if key is a name
-    uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+    if (attr.key_is_str && attr.key_is_cmd) { continue; }    // pass if key is a name
+    uint32_t ccccaaaa = (attr.cluster << 16) | attr.attr_id;
 
     switch (ccccaaaa) {       // 0xccccaaaa . c=cluster, a=attribute
       case 0x04060000:        // Occupancy
@@ -1330,7 +1330,7 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
 
 // Aqara vibration device
 void ZCLFrame::syntheticAqaraVibration(class Z_attribute_list &attr_list, class Z_attribute &attr) {
-  switch (attr.key.id.attr_id) {
+  switch (attr.attr_id) {
     case 0x0055:
       {
         int32_t ivalue = attr.getInt();
@@ -1400,10 +1400,10 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
     }
 
     // attr is Z_attribute&
-    if (!attr.key_is_str) {
-      uint16_t cluster = attr.key.id.cluster;
-      uint16_t attribute = attr.key.id.attr_id;
-      uint32_t ccccaaaa = (attr.key.id.cluster << 16) | attr.key.id.attr_id;
+    if (!attr.key_is_str && !attr.key_is_cmd) {
+      uint16_t cluster = attr.cluster;
+      uint16_t attribute = attr.attr_id;
+      uint32_t ccccaaaa = (attr.cluster << 16) | attr.attr_id;
 
       // Look for an entry in the converter table
       bool found = false;
@@ -1501,7 +1501,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
 void Z_parseAttributeKey_inner(uint16_t shortaddr, class Z_attribute & attr, uint16_t preferred_cluster) {
   if (attr.key_is_str) {
     // find the attribute name
-    Z_attribute_match matched_attr = Z_findAttributeMatcherByName(shortaddr, attr.key.key);
+    Z_attribute_match matched_attr = Z_findAttributeMatcherByName(shortaddr, attr.key);
     if (matched_attr.found()) {
       if ((preferred_cluster == 0xFFFF) ||    // any cluster
           (matched_attr.cluster == preferred_cluster)) {
@@ -1514,7 +1514,7 @@ void Z_parseAttributeKey_inner(uint16_t shortaddr, class Z_attribute & attr, uin
     }
   } else {
     // find by cluster/attribute
-    Z_attribute_match matched_attr = Z_findAttributeMatcherById(shortaddr, attr.key.id.cluster, attr.key.id.attr_id, false);
+    Z_attribute_match matched_attr = Z_findAttributeMatcherById(shortaddr, attr.cluster, attr.attr_id, false);
     if (matched_attr.found()) {
       attr.attr_type = matched_attr.zigbee_type;
       attr.manuf = matched_attr.manuf;
@@ -1542,7 +1542,7 @@ bool Z_parseAttributeKey(uint16_t shortaddr, class Z_attribute & attr, uint16_t 
   // check if the name has the format "XXXX/YYYY" where XXXX is the cluster, YYYY the attribute id
   // alternative "XXXX/YYYY%ZZ" where ZZ is the type (for unregistered attributes)
   if (attr.key_is_str) {
-    const char * key = attr.key.key;
+    const char * key = attr.key;
     char * delimiter = strchr(key, '/');
     char * delimiter2 = strchr(key, '%');
     if (delimiter) {
@@ -1572,7 +1572,7 @@ bool Z_parseAttributeKey(uint16_t shortaddr, class Z_attribute & attr, uint16_t 
   }
   // special case for Tuya attributes, where Zunk is allowed
   if (Zunk == attr.attr_type) {
-    if (!attr.key_is_str && attr.key.id.cluster == 0xEF00) {
+    if (!attr.key_is_str && attr.cluster == 0xEF00) {
       return true;
     }
     return false;   // couldn't find any match
