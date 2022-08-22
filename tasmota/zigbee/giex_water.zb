@@ -4,7 +4,7 @@
 EF00/0101,WaterMode                 # duration=0 / capacity=1
 EF00/0102,WaterState                # off=0 / on=1
 EF00/0365,IrrigationStartTime       # (string) ex: "08:12:26"
-EF00/0366,IrrigationTarget          # (string) ex: "08:13:36"
+EF00/0366,IrrigationStopTime        # (string) ex: "08:13:36"
 EF00/0267,CycleIrrigationNumTimes   # number of cycle irrigation times, set to 0 for single cycle
 EF00/0268,IrrigationTarget          # duration in minutes or capacity in Liters (depending on mode)
 EF00/0269,CycleIrrigationInterval   # cycle irrigation interval (minutes, max 1440)
