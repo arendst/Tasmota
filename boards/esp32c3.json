@@ -13,7 +13,8 @@
       "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
     },
     "connectivity": [
-      "wifi"
+      "wifi",
+      "bluetooth"
     ],
     "debug": {
       "openocd_target": "esp32c3.cfg"
