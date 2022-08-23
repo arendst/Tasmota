@@ -7,7 +7,7 @@
     "extra_flags": "-DARDUINO_ODROID_ESP32 -DBOARD_HAS_PSRAM -DHAS_PSRAM_FIX -mfix-esp32-psram-cache-issue -mfix-esp32-psram-cache-strategy=memw -DARDUINO_USB_CDC_ON_BOOT=0 -DESP32_16M",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
-    "flash_mode": "dout",
+    "flash_mode": "dio",
     "mcu": "esp32",
     "variant": "odroid_esp32",
     "partitions": "partitions/esp32_partition_app2944k_fs10M.csv"
