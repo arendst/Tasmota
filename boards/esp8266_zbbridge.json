@@ -15,9 +15,7 @@
     "wifi"
   ],
   "frameworks": [
-    "arduino",
-    "esp8266-rtos-sdk",
-    "esp8266-nonos-sdk"
+    "arduino"
   ],
   "name": "Sonoff ZbBridge Tasmota 1M sketch 772k OTA 256k FS",
   "upload": {
