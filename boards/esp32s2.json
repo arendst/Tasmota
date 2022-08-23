@@ -7,7 +7,7 @@
     "extra_flags": "-DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=0 -DARDUINO_USB_CDC_ON_BOOT=0 -DARDUINO_USB_MSC_ON_BOOT=0 -DARDUINO_USB_DFU_ON_BOOT=0 -DESP32_4M -DESP32S2",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
-    "flash_mode": "dout",
+    "flash_mode": "dio",
     "mcu": "esp32s2",
     "variant": "esp32s2",
     "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
