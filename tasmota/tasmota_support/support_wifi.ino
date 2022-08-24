@@ -817,14 +817,16 @@ void wifiKeepAlive(void) {
 #endif  // ESP8266
 
 bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
+#ifdef ESP8266
+  if (WiFi.hostByName(aHostname, aResult, Settings->dns_timeout)) {
+    return true;
+  }
+#else
   // DnsClient can't do one-shot mDNS queries so use WiFi.hostByName() for *.local
   size_t hostname_len = strlen(aHostname);
   if (strstr_P(aHostname, PSTR(".local")) == &aHostname[hostname_len] - 6) {
     if (WiFi.hostByName(aHostname, aResult)) {
-      // Host name resolved
-      if (0xFFFFFFFF != (uint32_t)aResult) {
-        return true;
-      }
+      return true;
     }
   } else {
   // Use this instead of WiFi.hostByName or connect(host_name,.. to block less if DNS server is not found
@@ -834,6 +836,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
       return true;
     }
   }
+#endif
   AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Unable to resolve '%s'"), aHostname);
   return false;
 }
