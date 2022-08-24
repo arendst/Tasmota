@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - RTC not detected when lights are present (#16242)
 - DNS lookup for .local domains (#16273)
 - Button response delay regression from v12.0.2.4 (#16319)
+- Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
 
 ### Removed
 

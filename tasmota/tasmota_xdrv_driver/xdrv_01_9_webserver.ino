@@ -602,7 +602,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // Not FIRMWARE_MINIMAL
 
       if (!Web.initial_config) {
-        Web.initial_config = !strlen(SettingsText(SET_STASSID1)) || !strlen(SettingsText(SET_STASSID2));
+        Web.initial_config = (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2)));
         if (Web.initial_config) { AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Blank Device - Initial Configuration")); }
       }
     }
