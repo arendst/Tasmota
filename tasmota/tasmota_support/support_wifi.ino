@@ -807,14 +807,25 @@ void wifiKeepAlive(void) {
 #endif  // ESP8266
 
 bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
+  // DnsClient can't do one-shot mDNS queries so use WiFi.hostByName() for *.local
+  size_t hostname_len = strlen(aHostname);
+  if (strstr_P(aHostname, PSTR(".local")) == &aHostname[hostname_len] - 6) {
+    if (WiFi.hostByName(aHostname, aResult)) {
+      // Host name resolved
+      if (0xFFFFFFFF != (uint32_t)aResult) {
+        return true;
+      }
+    }
+  } else {
   // Use this instead of WiFi.hostByName or connect(host_name,.. to block less if DNS server is not found
-  uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[3] : Settings->ipv4_address[3];
-  DnsClient.begin((IPAddress)dns_address);
-  if (DnsClient.getHostByName(aHostname, aResult) != 1) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Unable to resolve '%s'"), aHostname);
-    return false;
+    uint32_t dns_address = (!TasmotaGlobal.global_state.eth_down) ? Settings->eth_ipv4_address[3] : Settings->ipv4_address[3];
+    DnsClient.begin((IPAddress)dns_address);
+    if (1 == DnsClient.getHostByName(aHostname, aResult)) {
+      return true;
+    }
   }
-  return true;
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DNS: Unable to resolve '%s'"), aHostname);
+  return false;
 }
 
 bool WifiDnsPresent(const char* aHostname) {

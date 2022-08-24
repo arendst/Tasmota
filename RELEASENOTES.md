@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.1.0 Patricia
+## Changelog v12.1.1 Patricia
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
 - Command ``SetOption144 1`` includes a timestamp in zigbee `ZbReceived` messages
@@ -137,6 +137,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Fixed
 - Restore EnergyToday after using command ``restart 2`` and power cycle [#16118](https://github.com/arendst/Tasmota/issues/16118)
 - ESP32 SendMail not working over ethernet [#15794](https://github.com/arendst/Tasmota/issues/15794)
+- RTC not detected when lights are present [#16242](https://github.com/arendst/Tasmota/issues/16242)
+- DNS lookup for .local domains [#16273](https://github.com/arendst/Tasmota/issues/16273)
+- Button response delay regression from v12.0.2.4 [#16319](https://github.com/arendst/Tasmota/issues/16319)
+- Lost module name in GUI regression from v12.0.2.4 - 20220803 [#16324](https://github.com/arendst/Tasmota/issues/16324)
 
 ### Removed
 - Arduino IDE support
