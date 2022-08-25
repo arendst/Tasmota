@@ -825,6 +825,9 @@ void ResponseAppendFeatures(void)
 
   static uint32_t feature9 = 0x00000000;
   if (!feature9) {           // Only fill this once
+#if defined(USE_I2C) && defined(USE_SGP40)
+    feature9 |= 0x00000001;  // xsns_98_sgp40.ino
+#endif
 //    feature9 |= 0x00000001;
 //    feature9 |= 0x00000002;
 //    feature9 |= 0x00000004;
