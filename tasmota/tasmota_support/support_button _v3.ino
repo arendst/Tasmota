@@ -121,7 +121,8 @@ void ButtonProbe(void) {
     if (!PinUsed(GPIO_KEY1, i)) { continue; }
 
     // Olimex user_switch2.c code to fix 50Hz induced pulses
-    if (1 == digitalRead(Pin(GPIO_KEY1, i))) {
+//    if (1 == digitalRead(Pin(GPIO_KEY1, i))) {
+    if (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i)) {
 
       if (ac_detect) {                                     // Enabled with ButtonDebounce x9
         Button.state[i] |= 0x80;
@@ -220,7 +221,8 @@ void ButtonInit(void) {
         Button.state[i] = 0x80 + 2 * BUTTON_AC_PERIOD;
         Button.last_state[i] = 0;				// Will set later in the debouncing code
       } else {
-        Button.last_state[i] = digitalRead(Pin(GPIO_KEY1, i));  // Set global now so doesn't change the saved power state on first button check
+//        Button.last_state[i] = digitalRead(Pin(GPIO_KEY1, i));  // Set global now so doesn't change the saved power state on first button check
+        Button.last_state[i] = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
       }
       Button.virtual_state[i] = Button.last_state[i];
     }
@@ -504,24 +506,6 @@ void ButtonHandler(void) {
     Button.last_state[button_index] = button;
   }
 }
-
-/*
-void MqttButtonTopic(uint8_t button_id, uint8_t action, uint8_t hold) {
-  char scommand[CMDSZ];
-  char stopic[TOPSZ];
-  char mqttstate[7];
-
-  SendKey(KEY_BUTTON, button_id, (hold) ? 3 : action +9);
-
-  if (!Settings->flag.hass_discovery) {
-    GetTextIndexed(mqttstate, sizeof(mqttstate), action, kMultiPress);
-    snprintf_P(scommand, sizeof(scommand), PSTR("BUTTON%d"), button_id);
-    GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-    Response_P(S_JSON_COMMAND_SVALUE, "ACTION", (hold) ? SettingsText(SET_STATE_TXT4) : mqttstate);
-    MqttPublish(stopic);
-  }
-}
-*/
 
 void MqttButtonTopic(uint32_t button_id, uint32_t action, uint32_t hold) {
   SendKey(KEY_BUTTON, button_id, (hold) ? 3 : action +9);
