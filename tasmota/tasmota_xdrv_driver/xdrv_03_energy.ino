@@ -87,6 +87,10 @@ struct ENERGY {
   float daily_sum;                              // 123.123 kWh
   float total_sum;                              // 12345.12345 kWh total energy
   float yesterday_sum;                          // 123.123 kWh
+  float daily_sum_consumption_balanced;         // 
+  float daily_sum_export_balanced;              //
+  float yesterday_sum_consumption_balanced;     // 
+  float yesterday_sum_export_balanced;          //
 
   int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
   int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
@@ -239,11 +243,15 @@ void EnergyUpdateToday(void) {
   Energy.yesterday_sum = 0.0f;
   Energy.daily_sum = 0.0f;
 
+  int32_t balanced_delta_sum = 0; 
+
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     if (abs(Energy.kWhtoday_delta[i]) > 1000) {
       int32_t delta = Energy.kWhtoday_delta[i] / 1000;
       Energy.kWhtoday_delta[i] -= (delta * 1000);
       Energy.kWhtoday[i] += delta;
+
+      balanced_delta_sum += delta;
       if (delta < 0) {     // Export energy
         RtcSettings.energy_kWhexport_ph[i] += (delta *-1);
       }
@@ -261,6 +269,22 @@ void EnergyUpdateToday(void) {
     Energy.daily_sum += Energy.daily[i];
   }
 
+  if (balanced_delta_sum > 0)
+  {
+    Energy.daily_sum_consumption_balanced += (float) balanced_delta_sum / 100000;
+  }
+  else
+  {
+    Energy.daily_sum_export_balanced += (float) abs(balanced_delta_sum) / 100000;
+  }
+  
+  /*
+  AddLog(LOG_LEVEL_INFO, PSTR("daily_sum_consumption_balanced %4_f kWh"), &Energy.daily_sum_consumption_balanced);
+  AddLog(LOG_LEVEL_INFO, PSTR("daily_sum_export_balanced %4_f kWh"), &Energy.daily_sum_export_balanced);
+  AddLog(LOG_LEVEL_INFO, PSTR("yesterday_sum_consumption_balanced %4_f kWh"), &Energy.yesterday_sum_consumption_balanced);
+  AddLog(LOG_LEVEL_INFO, PSTR("yesterday_sum_export_balanced %4_f kWh"), &Energy.yesterday_sum_export_balanced);
+  */
+ 
   if (RtcTime.valid){ // We calc the difference only if we have a valid RTC time.
 
     uint32_t energy_diff = (uint32_t)(Energy.total_sum * 100000) - RtcSettings.energy_usage.last_usage_kWhtotal;
@@ -353,6 +377,10 @@ void Energy200ms(void)
           RtcSettings.energy_kWhtoday_ph[i] = 0;
           Energy.start_energy[i] = 0;
 //        Energy.kWhtoday_delta = 0;                                 // dont zero this, we need to carry the remainder over to tomorrow
+          Energy.yesterday_sum_consumption_balanced = Energy.daily_sum_consumption_balanced;
+          Energy.yesterday_sum_export_balanced = Energy.daily_sum_export_balanced;
+          Energy.daily_sum_consumption_balanced = 0.0;
+          Energy.daily_sum_export_balanced = 0.0;
         }
         EnergyUpdateToday();
 #if defined(USE_ENERGY_MARGIN_DETECTION) && defined(USE_ENERGY_POWER_LIMIT)
@@ -1170,6 +1198,18 @@ void EnergyShow(bool json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s"),
       EnergyFormat(value_chr, energy_yesterday_ph, Settings->flag2.energy_resolution, 2),
       EnergyFormat(value2_chr, Energy.daily, Settings->flag2.energy_resolution, 2));
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_DAILY_SUM_CON_BAL "\":%s"),
+        EnergyFormat(value_chr, &Energy.daily_sum_consumption_balanced, Settings->flag2.energy_resolution, 1));
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_DAILY_SUM_EXP_BAL "\":%s"),
+        EnergyFormat(value_chr, &Energy.daily_sum_export_balanced, Settings->flag2.energy_resolution, 1));
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_YEST_SUM_CON_BAL "\":%s"),
+        EnergyFormat(value_chr, &Energy.yesterday_sum_consumption_balanced, Settings->flag2.energy_resolution, 1));
+
+    ResponseAppend_P(PSTR(",\"" D_JSON_YEST_SUM_EXP_BAL "\":%s"),
+        EnergyFormat(value_chr, &Energy.yesterday_sum_export_balanced, Settings->flag2.energy_resolution, 1));
 
 /*
  #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
