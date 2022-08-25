@@ -3,7 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.0.1]
+## [12.1.1.1]
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.1.0.1] 20220825
 ### Added
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` (#16252)
 - ESP32-S3 support for internal temperature sensor
@@ -13,14 +22,19 @@ All notable changes to this project will be documented in this file.
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
 
 ### Fixed
-- RTC not detected when lights are present (#16242)
-- DNS lookup for .local domains (#16273)
-- Button response delay regression from v12.0.2.4 (#16319)
-- Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
 
 ### Removed
 
 ## [Released]
+
+## [12.1.1] 20220825
+- Release Patricia
+
+### Fixed
+- RTC not detected when lights are present (#16242)
+- DNS lookup for .local domains (#16273)
+- Button response delay regression from v12.0.2.4 (#16319)
+- Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
 
 ## [12.1.0] 20220818
 - Release Patricia
