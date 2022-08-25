@@ -22,6 +22,7 @@
 const char Z_MUL[] PROGMEM = "mul:";
 const char Z_DIV[] PROGMEM = "div:";
 const char Z_MANUF[] PROGMEM = "manuf:";
+const char Z_OFFSET[] PROGMEM = "offset:";
 
 char * Z_subtoken(char * token, const char * prefix) {
   size_t prefix_len = strlen_P(prefix);
@@ -60,6 +61,8 @@ Z_attribute_match Z_plugin_matchAttributeById(const char *model, const char *man
     attr.name = attr_tmpl->name.c_str();
     attr.zigbee_type = attr_tmpl->type;
     attr.multiplier = attr_tmpl->multiplier;
+    attr.divider = attr_tmpl->divider;
+    attr.base = attr_tmpl->base;
     attr.manuf = attr_tmpl->manuf;
   }
   return attr;
@@ -80,6 +83,8 @@ Z_attribute_match Z_plugin_matchAttributeByName(const char *model, const char *m
       attr.name = attr_tmpl->name.c_str();
       attr.zigbee_type = attr_tmpl->type;
       attr.multiplier = attr_tmpl->multiplier;
+      attr.divider = attr_tmpl->divider;
+      attr.base = attr_tmpl->base;
       attr.manuf = attr_tmpl->manuf;
     }
   }
@@ -231,6 +236,8 @@ bool ZbLoad(const char *filename_raw) {
           uint16_t cluster_id = 0xFFFF;
           uint8_t  type_id = Zunk;
           int8_t   multiplier = 1;
+          int8_t   divider = 1;
+          int16_t  base = 0;
           char *   name = nullptr;
           uint16_t manuf = 0;
 
@@ -254,11 +261,15 @@ bool ZbLoad(const char *filename_raw) {
             char * sub_token;
             // look for multiplier
             if (sub_token = Z_subtoken(token, Z_MUL))  {
-              multiplier = strtoul(sub_token, nullptr, 10);
+              multiplier = strtol(sub_token, nullptr, 10);
             }
             // look for divider
             else if (sub_token = Z_subtoken(token, Z_DIV))  {
-              multiplier = - strtoul(sub_token, nullptr, 10);    // negative to indicate divider
+              divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
+            }
+            // look for offset (base)
+            else if (sub_token = Z_subtoken(token, Z_OFFSET))  {
+              base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
             }
             // look for `manuf:HHHH`
             else if (sub_token = Z_subtoken(token, Z_MANUF))  {
@@ -276,6 +287,8 @@ bool ZbLoad(const char *filename_raw) {
           plugin_attr.type = type_id;
           plugin_attr.name = name;
           plugin_attr.multiplier = multiplier;
+          plugin_attr.divider = divider;
+          plugin_attr.base = base;
           plugin_attr.manuf = manuf;
         } else {
           // ATTRIBUTE SYNONYM
@@ -290,17 +303,23 @@ bool ZbLoad(const char *filename_raw) {
           uint16_t new_cluster_id = strtoul(tok2, &delimiter_slash2, 16);
           uint16_t new_attr_id = strtoul(delimiter_slash2+1, nullptr, 16);
           int8_t multiplier = 1;
+          int8_t divider = 1;
+          int16_t base = 0;
 
           // ADDITIONAL ELEMENTS?
           while (token = strtok_r(rest, ",", &rest)) {
             char * sub_token;
             // look for multiplier
             if (sub_token = Z_subtoken(token, Z_MUL))  {
-              multiplier = strtoul(sub_token, nullptr, 10);
+              multiplier = strtol(sub_token, nullptr, 10);
             }
             // look for divider
             else if (sub_token = Z_subtoken(token, Z_DIV))  {
-              multiplier = - strtoul(sub_token, nullptr, 10);    // negative to indicate divider
+              divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
+            }
+            // look for offset (base)
+            else if (sub_token = Z_subtoken(token, Z_OFFSET))  {
+              base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
             }
             else {
               AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
@@ -313,6 +332,8 @@ bool ZbLoad(const char *filename_raw) {
           syn.new_cluster = new_cluster_id;
           syn.new_attribute = new_attr_id;
           syn.multiplier = multiplier;
+          syn.divider = divider;
+          syn.base = base;
         }
       }
     }
@@ -360,9 +381,15 @@ bool ZbUnload(const char *filename_raw) {
 }
 
 // append modifiers like mul/div/manuf
-void Z_AppendModifiers(char * buf, size_t buf_len, int8_t multiplier, uint16_t manuf) {
+void Z_AppendModifiers(char * buf, size_t buf_len, int8_t multiplier, int8_t divider, int16_t base, uint16_t manuf) {
   if (multiplier != 0 && multiplier != 1) {
-    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, multiplier > 0 ? Z_MUL : Z_DIV, multiplier > 0 ? multiplier : -multiplier);
+    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_MUL, multiplier);
+  }
+  if (divider != 0 && divider != 1) {
+    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_DIV, divider);
+  }
+  if (base != 0) {
+    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_OFFSET, base);
   }
   if (manuf) {
     ext_snprintf_P(buf, buf_len, "%s,%s%04X", buf, Z_MANUF, manuf);
@@ -403,12 +430,12 @@ void ZbLoadDump(void) {
           Z_getTypeByNumber(type_str, sizeof(type_str), attr.type);
           ext_snprintf_P(buf, sizeof(buf), "%s%%%s", buf, type_str);
         }
-        Z_AppendModifiers(buf, sizeof(buf), attr.multiplier, attr.manuf);
+        Z_AppendModifiers(buf, sizeof(buf), attr.multiplier, attr.divider, attr.base, attr.manuf);
         AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
       for (const Z_attribute_synonym & syn : tmpl.synonyms) {
         ext_snprintf_P(buf, sizeof(buf), "%04X/%04X=%04X/%04X", syn.cluster, syn.attribute, syn.new_cluster, syn.new_attribute);
-        Z_AppendModifiers(buf, sizeof(buf), syn.multiplier, 0);
+        Z_AppendModifiers(buf, sizeof(buf), syn.multiplier, syn.divider, syn.base, 0);
         AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
     }

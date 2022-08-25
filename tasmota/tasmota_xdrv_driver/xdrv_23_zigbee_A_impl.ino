@@ -222,15 +222,15 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
 // Special encoding for multiplier:
 // multiplier == 0: ignore
 // multiplier == 1: ignore
-// multiplier > 0: divide by the multiplier
-// multiplier < 0: multiply by the -multiplier (positive)
-void ZbApplyMultiplier(double &val_d, int8_t multiplier) {
+void ZbApplyMultiplier(double &val_d, int8_t multiplier, int8_t divider, int8_t base) {
   if ((0 != multiplier) && (1 != multiplier)) {
-    if (multiplier > 0) {         // inverse of decoding
-      val_d = val_d / multiplier;
-    } else {
-      val_d = val_d * (-multiplier);
-    }
+    val_d = val_d * multiplier;
+  }
+  if ((0 != divider) && (1 != divider)) {
+    val_d = val_d / divider;
+  }
+  if (0 != base) {
+    val_d = val_d + base;
   }
 }
 
@@ -242,8 +242,8 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
   const char * val_str = attr.getStr();
 
   if (attr.key_is_str || attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
-  if (attr.isNum() && (1 != attr.attr_multiplier)) {
-    ZbApplyMultiplier(val_d, attr.attr_multiplier);
+  if (attr.isNum()) {
+    ZbApplyMultiplier(val_d, attr.attr_multiplier, attr.attr_divider, 0);
   }
   uint32_t u32 = val_d;
   int32_t  i32 = val_d;
@@ -301,8 +301,8 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
   const char * val_str = attr.getStr();
 
   if (attr.key_is_str && attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
-  if (attr.isNum() && (1 != attr.attr_multiplier)) {
-    ZbApplyMultiplier(val_d, attr.attr_multiplier);
+  if (attr.isNum()) {
+    ZbApplyMultiplier(val_d, attr.attr_multiplier, attr.attr_divider, 0);
   }
 
   // push the value in the buffer
@@ -421,7 +421,7 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
       if (val_attr_rc) {
         val_d = val_attr_rc.getFloat();
         val_str = val_attr_rc.getStr();
-        ZbApplyMultiplier(val_d, attr.attr_multiplier);
+        ZbApplyMultiplier(val_d, attr.attr_multiplier, attr.attr_divider, 0);
       }
 
       // read TimeoutPeriod
