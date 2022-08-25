@@ -46,7 +46,9 @@ class Z_attribute_match Z_findAttributeMatcherByName(uint16_t shortaddr, const c
         matched_attr.cluster = CxToCluster(pgm_read_byte(&converter->cluster_short));
         matched_attr.attribute = pgm_read_word(&converter->attribute);
         matched_attr.name = (Z_strings + pgm_read_word(&converter->name_offset));
-        matched_attr.multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        if (multiplier8 > 1) { matched_attr.multiplier = multiplier8; }
+        if (multiplier8 < 0) { matched_attr.divider = -multiplier8; }
         matched_attr.zigbee_type = pgm_read_byte(&converter->type);
         uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
         matched_attr.map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
@@ -77,7 +79,9 @@ class Z_attribute_match Z_findAttributeMatcherById(uint16_t shortaddr, uint16_t 
         matched_attr.cluster = cluster;
         matched_attr.attribute = attr_id;
         matched_attr.name = (Z_strings + pgm_read_word(&converter->name_offset));
-        matched_attr.multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+        if (multiplier8 > 1) { matched_attr.multiplier = multiplier8; }
+        if (multiplier8 < 0) { matched_attr.divider = -multiplier8; }
         matched_attr.zigbee_type = pgm_read_byte(&converter->type);
         uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
         matched_attr.map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
@@ -697,11 +701,18 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
                                                               attr.cluster, attr.attr_id);
     if (syn.found()) {
       attr.setKeyId(syn.new_cluster, syn.new_attribute);
-      if (syn.multiplier != 1 && syn.multiplier != 0) {
+      if ((syn.multiplier != 1 && syn.multiplier != 0) || (syn.divider != 1 && syn.divider != 0) || (syn.base != 0)) {
         // we need to change the value
         float fval = attr.getFloat();
-        if (syn.multiplier > 0) { fval =  fval * syn.multiplier; }
-        else                    { fval =  fval / (-syn.multiplier); }
+        if (syn.multiplier != 1 && syn.multiplier != 0) {
+          fval = fval * syn.multiplier;
+        }
+        if (syn.divider != 1 && syn.divider != 0) {
+          fval = fval / syn.divider;
+        }
+        if (syn.base != 0) {
+          fval = fval + syn.base;
+        }
         attr.setFloat(fval);
       }
     }
@@ -945,10 +956,14 @@ void ZCLFrame::parseReadConfigAttributes(uint16_t shortaddr, Z_attribute_list& a
 
     // find the multiplier
     int8_t multiplier = 1;
+    int8_t divider = 1;
+    int16_t base = 0;
     Z_attribute_match matched_attr = Z_findAttributeMatcherById(shortaddr, cluster, attrid, false);
     if (matched_attr.found()) {
       attr_2.addAttribute(matched_attr.name, true).setBool(true);
       multiplier = matched_attr.multiplier;
+      divider = matched_attr.divider;
+      base = matched_attr.base;
     }
     i += 4;
     if (0 != status) {
@@ -974,10 +989,18 @@ void ZCLFrame::parseReadConfigAttributes(uint16_t shortaddr, Z_attribute_list& a
           // decode Reportable Change
           Z_attribute &attr_change = attr_2.addAttributePMEM(PSTR("ReportableChange"));
           i += parseSingleAttribute(attr_change, payload, i, attr_type);
-          if ((1 != multiplier) && (0 != multiplier)) {
+          
+          if ((multiplier != 1 && multiplier != 0) || (divider != 1 && divider != 0) || (base != 0)) {
             float fval = attr_change.getFloat();
-            if (multiplier > 0) { fval =  fval * multiplier; }
-            else                { fval =  fval / (-multiplier); }
+            if (multiplier != 1 && multiplier != 0) {
+              fval = fval * multiplier;
+            }
+            if (divider != 1 && divider != 0) {
+              fval = fval / divider;
+            }
+            if (base != 0) {
+              fval = fval + base;
+            }
             attr_change.setFloat(fval);
           }
         }
@@ -1480,9 +1503,16 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       // now apply the multiplier to make it human readable
       if (found) {
         if (0 == matched_attr.multiplier)  { attr_list.removeAttribute(&attr); continue; }      // remove attribute if multiplier is zero
-        if (1 != matched_attr.multiplier) {
-          if (matched_attr.multiplier > 0) { fval =  fval * matched_attr.multiplier; }
-          else                     { fval =  fval / (-matched_attr.multiplier); }
+        if ((matched_attr.multiplier != 1 && matched_attr.multiplier != 0) || (matched_attr.divider != 1 && matched_attr.divider != 0) || (matched_attr.base != 0)) {
+          if (matched_attr.multiplier != 1 && matched_attr.multiplier != 0) {
+            fval = fval * matched_attr.multiplier;
+          }
+          if (matched_attr.divider != 1 && matched_attr.divider != 0) {
+            fval = fval / matched_attr.divider;
+          }
+          if (matched_attr.base != 0) {
+            fval = fval + matched_attr.base;
+          }
           attr.setFloat(fval);
         }
       }
@@ -1509,6 +1539,7 @@ void Z_parseAttributeKey_inner(uint16_t shortaddr, class Z_attribute & attr, uin
         attr.setKeyId(matched_attr.cluster, matched_attr.attribute);
         attr.attr_type = matched_attr.zigbee_type;
         attr.attr_multiplier = matched_attr.multiplier;
+        attr.attr_divider = matched_attr.divider;
         attr.manuf = matched_attr.manuf;
       }
     }
@@ -1592,7 +1623,11 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
     const Z_AttributeConverter *converter = &Z_PostProcess[i];
     uint8_t conv_export = pgm_read_byte(&converter->multiplier_idx) & Z_EXPORT_DATA;
     uint8_t conv_mapping = pgm_read_byte(&converter->mapping);
-    int8_t  multiplier = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+    int8_t multiplier = 1;
+    int8_t divider = 1;
+    int8_t multiplier8 = CmToMultiplier(pgm_read_byte(&converter->multiplier_idx));
+    if (multiplier8 > 1) { multiplier = multiplier8; }
+    if (multiplier8 < 0) { divider = -multiplier8; }
     Z_Data_Type map_type = (Z_Data_Type) ((conv_mapping & 0xF0)>>4);
     uint8_t map_offset = (conv_mapping & 0x0F);
 
@@ -1624,9 +1659,13 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
         float fval;
         if (data_size > 0) { fval = uval32; }
         else               { fval = ival32; }
-        if ((1 != multiplier) && (0 != multiplier)) {
-          if (multiplier > 0) { fval =  fval * multiplier; }
-          else                { fval =  fval / (-multiplier); }
+        if ((multiplier != 1 && multiplier != 0) || (divider != 1 && divider != 0)) {
+          if (multiplier != 1 && multiplier != 0) {
+            fval = fval * multiplier;
+          }
+          if (divider != 1 && divider != 0) {
+            fval = fval / divider;
+          }
         }
         attr.setFloat(fval);
       }

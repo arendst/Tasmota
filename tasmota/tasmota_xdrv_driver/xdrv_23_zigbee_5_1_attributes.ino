@@ -273,7 +273,9 @@ class Z_plugin_attribute {
 public:
   
   Z_plugin_attribute(void) :
-    type(Zunk), multiplier(1), cluster(0xFFFF), attribute(0xFFFF), manuf(0)
+    type(Zunk),
+    multiplier(1), divider(1), base(0),
+    cluster(0xFFFF), attribute(0xFFFF), manuf(0)
     {};
 
   void set(uint16_t cluster, uint16_t attribute, const char *name, uint8_t type = Zunk) {
@@ -284,7 +286,9 @@ public:
   }
 
   uint8_t       type;             // zigbee type, Zunk by default
-  int8_t        multiplier;       // multiplier, values 0, 1, 2, 5, 10, 100, -2, -5, -10, -100,
+  int8_t        multiplier;       // multiply by x (ignore if 0 or 1)
+  int8_t        divider;          // divide by x (ignore if 0 or 1)
+  int16_t       base;             // add x (ignore if 0)
   uint16_t      cluster;          // cluster number
   uint16_t      attribute;        // attribute number
   uint16_t      manuf;            // manufacturer code, 0 if none
@@ -298,15 +302,18 @@ class Z_attribute_synonym {
 public:
   Z_attribute_synonym(void) :
     cluster(0xFFFF), attribute(0xFFFF), new_cluster(0xFFFF), new_attribute(0xFFFF),
-    multiplier(1)
+    multiplier(1), divider(1), base(0)
     {};
   
-  void set(uint16_t cluster, uint16_t attribute, uint16_t new_cluster, uint16_t new_attribute, int8_t multiplier = 1) {
+  void set(uint16_t cluster, uint16_t attribute, uint16_t new_cluster, uint16_t new_attribute,
+          int8_t multiplier = 1, int8_t divider = 1, int16_t base = 0) {
     this->cluster = cluster;
     this->attribute = attribute;
     this->new_cluster = new_cluster;
     this->new_attribute = new_attribute;
     this->multiplier = multiplier;
+    this->divider = divider;
+    this->base = base;
   }
 
   inline bool found(void) const { return cluster != 0xFFFF && attribute != 0xFFFF; }
@@ -315,7 +322,9 @@ public:
   uint16_t      attribute;        // attribute to match
   uint16_t      new_cluster;      // replace with this cluster
   uint16_t      new_attribute;    // replace with this attribute
-  int8_t        multiplier;       // mutliplier if different than 1 (otherwise don't change value)
+  int8_t        multiplier;       // multiply by x (ignore if 0 or 1)
+  int8_t        divider;          // divide by x (ignore if 0 or 1)
+  int16_t       base;           // add x (ignore if 0)
 };
 
 //
@@ -457,6 +466,8 @@ public:
   const char * name = nullptr;
   uint8_t zigbee_type = Znodata;
   int8_t multiplier = 1;
+  int8_t divider = 1;
+  int8_t base = 0;
   uint8_t map_offset = 0;
   Z_Data_Type map_type = Z_Data_Type::Z_Unknown;
   uint16_t manuf = 0x0000;      // manuf code (if any)
