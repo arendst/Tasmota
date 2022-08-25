@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define BUTTON_V2
+//#define BUTTON_V2
 #ifdef BUTTON_V2
 /*********************************************************************************************\
  * Button support

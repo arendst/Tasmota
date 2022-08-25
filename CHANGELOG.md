@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- Button debouncing V3 by adopting switch debounce code (#16339)
 
 ### Fixed
 

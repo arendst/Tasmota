@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
+- Button debouncing V3 by adopting switch debounce code [#16339](https://github.com/arendst/Tasmota/issues/16339)
 
 ### Fixed
 - RTC not detected when lights are present [#16242](https://github.com/arendst/Tasmota/issues/16242)
