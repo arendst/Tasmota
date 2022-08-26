@@ -552,8 +552,8 @@ lv_color_filter_dsc = [            # valid LVGL8.3
 lv_color_filter_dsc = ct.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
 
 #######################################################################
-# lv_timer
-lv_timer = [            # valid LVGL8.3
+# lv_timer native, superseded by lv_timer
+lv_timer_ntv = [            # valid LVGL8.3
     [uint32_t, "period"],
     [uint32_t, "last_run"],
     [ptr, "timer_cb"],
@@ -561,37 +561,38 @@ lv_timer = [            # valid LVGL8.3
     [int32_t, "repeat_count"],
     [uint8_t_1, "paused"],
 ]
-lv_timer = ct.structure(lv_timer, "lv_timer")
+lv_timer_ntv = ct.structure(lv_timer_ntv, "lv_timer_ntv")
 
 # #######################################################################
-# # lv_anim
-# lv_anim = [            # valid LVGL8.2
-#     [ptr, "var"],
-#     [ptr, "exec_cb"],
-#     [ptr, "start_cb"],
-#     [ptr, "ready_cb"],
-#     [ptr, "get_value_cb"],
+# lv_anim native structure, is superseded by lv_anim
+lv_anim_ntv = [            # valid LVGL8.3
+    [ptr, "var"],
+    [ptr, "exec_cb"],
+    [ptr, "start_cb"],
+    [ptr, "ready_cb"],
+    [ptr, "deleted_cb"],
+    [ptr, "get_value_cb"],
 
-#     [ptr, "user_data"],
+    [ptr, "user_data"],
 
-#     [ptr, "path_cb"],
-#     [int32_t, "start_value"],
-#     [int32_t, "current_value"],
-#     [int32_t, "end_value"],
-#     [int32_t, "time"],
-#     [int32_t, "act_time"],
-#     [uint32_t, "playback_delay"],
-#     [uint32_t, "playback_time"],
-#     [uint32_t, "repeat_delay"],
-#     [uint32_t, "repeat_cnt"],
+    [ptr, "path_cb"],
+    [int32_t, "start_value"],
+    [int32_t, "current_value"],
+    [int32_t, "end_value"],
+    [int32_t, "time"],
+    [int32_t, "act_time"],
+    [uint32_t, "playback_delay"],
+    [uint32_t, "playback_time"],
+    [uint32_t, "repeat_delay"],
+    [uint32_t, "repeat_cnt"],
 
-#     [uint8_t_1, "early_apply"],
-#     [uint8_t_1, "playback_now"],
-#     [uint8_t_1, "run_round"],
-#     [uint8_t_1, "start_cb_called"],
+    [uint8_t_1, "early_apply"],
+    [uint8_t_1, "playback_now"],
+    [uint8_t_1, "run_round"],
+    [uint8_t_1, "start_cb_called"],
     
-# ]
-# lv_anim = ct.structure(lv_anim, "lv_anim")
+]
+lv_anim_ntv = ct.structure(lv_anim_ntv, "lv_anim_ntv")
 
 #######################################################################
 # lv_draw_ctx

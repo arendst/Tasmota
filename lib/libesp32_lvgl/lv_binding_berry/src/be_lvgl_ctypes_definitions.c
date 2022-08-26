@@ -599,7 +599,7 @@ const be_ctypes_structure_t be_lv_color_filter_dsc = {
     { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
-const be_ctypes_structure_t be_lv_timer = {
+const be_ctypes_structure_t be_lv_timer_ntv = {
   24,  /* size in bytes */
   6,  /* number of elements */
   be_ctypes_instance_mappings,
@@ -610,6 +610,34 @@ const be_ctypes_structure_t be_lv_timer = {
     { "repeat_count", 16, 0, 0, ctypes_i32, 0 },
     { "timer_cb", 8, 0, 0, ctypes_ptr32, 0 },
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
+}};
+
+const be_ctypes_structure_t be_lv_anim_ntv = {
+  72,  /* size in bytes */
+  21,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[21]) {
+    { "act_time", 48, 0, 0, ctypes_i32, 0 },
+    { "current_value", 36, 0, 0, ctypes_i32, 0 },
+    { "deleted_cb", 16, 0, 0, ctypes_ptr32, 0 },
+    { "early_apply", 68, 0, 1, ctypes_bf, 0 },
+    { "end_value", 40, 0, 0, ctypes_i32, 0 },
+    { "exec_cb", 4, 0, 0, ctypes_ptr32, 0 },
+    { "get_value_cb", 20, 0, 0, ctypes_ptr32, 0 },
+    { "path_cb", 28, 0, 0, ctypes_ptr32, 0 },
+    { "playback_delay", 52, 0, 0, ctypes_u32, 0 },
+    { "playback_now", 68, 1, 1, ctypes_bf, 0 },
+    { "playback_time", 56, 0, 0, ctypes_u32, 0 },
+    { "ready_cb", 12, 0, 0, ctypes_ptr32, 0 },
+    { "repeat_cnt", 64, 0, 0, ctypes_u32, 0 },
+    { "repeat_delay", 60, 0, 0, ctypes_u32, 0 },
+    { "run_round", 68, 2, 1, ctypes_bf, 0 },
+    { "start_cb", 8, 0, 0, ctypes_ptr32, 0 },
+    { "start_cb_called", 68, 3, 1, ctypes_bf, 0 },
+    { "start_value", 32, 0, 0, ctypes_i32, 0 },
+    { "time", 44, 0, 0, ctypes_i32, 0 },
+    { "user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "var", 0, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_draw_ctx = {
@@ -662,6 +690,7 @@ static const char * be_ctypes_instance_mappings[] = {
   NULL
 };
 
+static be_define_ctypes_class(lv_anim_ntv, &be_lv_anim_ntv, &be_class_ctypes_bytes, "lv_anim_ntv");
 static be_define_ctypes_class(lv_area, &be_lv_area, &be_class_ctypes_bytes, "lv_area");
 static be_define_ctypes_class(lv_chart_cursor, &be_lv_chart_cursor, &be_class_ctypes_bytes, "lv_chart_cursor");
 static be_define_ctypes_class(lv_chart_series, &be_lv_chart_series, &be_class_ctypes_bytes, "lv_chart_series");
@@ -701,10 +730,11 @@ static be_define_ctypes_class(lv_obj_draw_part_dsc, &be_lv_obj_draw_part_dsc, &b
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes_bytes, "lv_point");
 static be_define_ctypes_class(lv_sqrt_res, &be_lv_sqrt_res, &be_class_ctypes_bytes, "lv_sqrt_res");
 static be_define_ctypes_class(lv_style_transition_dsc, &be_lv_style_transition_dsc, &be_class_ctypes_bytes, "lv_style_transition_dsc");
-static be_define_ctypes_class(lv_timer, &be_lv_timer, &be_class_ctypes_bytes, "lv_timer");
+static be_define_ctypes_class(lv_timer_ntv, &be_lv_timer_ntv, &be_class_ctypes_bytes, "lv_timer_ntv");
 static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes_bytes, "lv_ts_calibration");
 
 void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
+  ctypes_register_class(vm, &be_class_lv_anim_ntv);
   ctypes_register_class(vm, &be_class_lv_area);
   ctypes_register_class(vm, &be_class_lv_chart_cursor);
   ctypes_register_class(vm, &be_class_lv_chart_series);
@@ -744,11 +774,12 @@ void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
   ctypes_register_class(vm, &be_class_lv_point);
   ctypes_register_class(vm, &be_class_lv_sqrt_res);
   ctypes_register_class(vm, &be_class_lv_style_transition_dsc);
-  ctypes_register_class(vm, &be_class_lv_timer);
+  ctypes_register_class(vm, &be_class_lv_timer_ntv);
   ctypes_register_class(vm, &be_class_lv_ts_calibration);
 }
 
 be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
+  { "lv_anim_ntv", &be_class_lv_anim_ntv },
   { "lv_area", &be_class_lv_area },
   { "lv_chart_cursor", &be_class_lv_chart_cursor },
   { "lv_chart_series", &be_class_lv_chart_series },
@@ -788,7 +819,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_point", &be_class_lv_point },
   { "lv_sqrt_res", &be_class_lv_sqrt_res },
   { "lv_style_transition_dsc", &be_class_lv_style_transition_dsc },
-  { "lv_timer", &be_class_lv_timer },
+  { "lv_timer_ntv", &be_class_lv_timer_ntv },
   { "lv_ts_calibration", &be_class_lv_ts_calibration },
 };
 const size_t be_ctypes_lvgl_classes_size = sizeof(be_ctypes_lvgl_classes)/sizeof(be_ctypes_lvgl_classes[0]);
