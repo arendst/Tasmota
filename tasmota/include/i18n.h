@@ -28,8 +28,6 @@
 
 #define D_JSON_DAILY_SUM_CON_BAL "DailySumConsumptionBalanced"
 #define D_JSON_DAILY_SUM_EXP_BAL "DailySumExportBalanced"
-#define D_JSON_YEST_SUM_CON_BAL "YesterdaySumConsumptionBalanced"
-#define D_JSON_YEST_SUM_EXP_BAL "YesterdaySumExportBalanced"
 
 #define D_JSON_ABORTED "Aborted"
 #define D_JSON_ACK "Ack"

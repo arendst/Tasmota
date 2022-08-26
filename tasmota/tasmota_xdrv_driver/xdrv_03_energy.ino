@@ -89,8 +89,6 @@ struct ENERGY {
   float yesterday_sum;                          // 123.123 kWh
   float daily_sum_consumption_balanced;         // 
   float daily_sum_export_balanced;              //
-  float yesterday_sum_consumption_balanced;     // 
-  float yesterday_sum_export_balanced;          //
 
   int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
   int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
@@ -277,13 +275,6 @@ void EnergyUpdateToday(void) {
   {
     Energy.daily_sum_export_balanced += (float) abs(balanced_delta_sum) / 100000;
   }
-  
-  /*
-  AddLog(LOG_LEVEL_INFO, PSTR("daily_sum_consumption_balanced %4_f kWh"), &Energy.daily_sum_consumption_balanced);
-  AddLog(LOG_LEVEL_INFO, PSTR("daily_sum_export_balanced %4_f kWh"), &Energy.daily_sum_export_balanced);
-  AddLog(LOG_LEVEL_INFO, PSTR("yesterday_sum_consumption_balanced %4_f kWh"), &Energy.yesterday_sum_consumption_balanced);
-  AddLog(LOG_LEVEL_INFO, PSTR("yesterday_sum_export_balanced %4_f kWh"), &Energy.yesterday_sum_export_balanced);
-  */
  
   if (RtcTime.valid){ // We calc the difference only if we have a valid RTC time.
 
@@ -377,8 +368,6 @@ void Energy200ms(void)
           RtcSettings.energy_kWhtoday_ph[i] = 0;
           Energy.start_energy[i] = 0;
 //        Energy.kWhtoday_delta = 0;                                 // dont zero this, we need to carry the remainder over to tomorrow
-          Energy.yesterday_sum_consumption_balanced = Energy.daily_sum_consumption_balanced;
-          Energy.yesterday_sum_export_balanced = Energy.daily_sum_export_balanced;
           Energy.daily_sum_consumption_balanced = 0.0;
           Energy.daily_sum_export_balanced = 0.0;
         }
@@ -1204,12 +1193,6 @@ void EnergyShow(bool json) {
 
     ResponseAppend_P(PSTR(",\"" D_JSON_DAILY_SUM_EXP_BAL "\":%s"),
         EnergyFormat(value_chr, &Energy.daily_sum_export_balanced, Settings->flag2.energy_resolution, 1));
-
-    ResponseAppend_P(PSTR(",\"" D_JSON_YEST_SUM_CON_BAL "\":%s"),
-        EnergyFormat(value_chr, &Energy.yesterday_sum_consumption_balanced, Settings->flag2.energy_resolution, 1));
-
-    ResponseAppend_P(PSTR(",\"" D_JSON_YEST_SUM_EXP_BAL "\":%s"),
-        EnergyFormat(value_chr, &Energy.yesterday_sum_export_balanced, Settings->flag2.energy_resolution, 1));
 
 /*
  #if defined(SDM630_IMPORT) || defined(SDM72_IMPEXP)
