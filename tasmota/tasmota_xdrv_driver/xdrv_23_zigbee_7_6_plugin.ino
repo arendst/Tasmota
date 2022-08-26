@@ -22,7 +22,7 @@
 const char Z_MUL[] PROGMEM = "mul:";
 const char Z_DIV[] PROGMEM = "div:";
 const char Z_MANUF[] PROGMEM = "manuf:";
-const char Z_OFFSET[] PROGMEM = "offset:";
+const char Z_ADD[] PROGMEM = "add:";
 
 char * Z_subtoken(char * token, const char * prefix) {
   size_t prefix_len = strlen_P(prefix);
@@ -268,7 +268,7 @@ bool ZbLoad(const char *filename_raw) {
               divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
             }
             // look for offset (base)
-            else if (sub_token = Z_subtoken(token, Z_OFFSET))  {
+            else if (sub_token = Z_subtoken(token, Z_ADD))  {
               base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
             }
             // look for `manuf:HHHH`
@@ -318,7 +318,7 @@ bool ZbLoad(const char *filename_raw) {
               divider = strtol(sub_token, nullptr, 10);    // negative to indicate divider
             }
             // look for offset (base)
-            else if (sub_token = Z_subtoken(token, Z_OFFSET))  {
+            else if (sub_token = Z_subtoken(token, Z_ADD))  {
               base = strtol(sub_token, nullptr, 10);    // negative to indicate divider
             }
             else {
@@ -389,7 +389,7 @@ void Z_AppendModifiers(char * buf, size_t buf_len, int8_t multiplier, int8_t div
     ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_DIV, divider);
   }
   if (base != 0) {
-    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_OFFSET, base);
+    ext_snprintf_P(buf, buf_len, "%s,%s%i", buf, Z_ADD, base);
   }
   if (manuf) {
     ext_snprintf_P(buf, buf_len, "%s,%s%04X", buf, Z_MANUF, manuf);
