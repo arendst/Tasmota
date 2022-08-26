@@ -4118,23 +4118,37 @@ void be_load_lvh_label_class(bvm *vm) {
 }
 
 /********************************************************************
-** Solidified function: get_speed
+** Solidified function: set_angle
 ********************************************************************/
-be_local_closure(lvh_spinner_get_speed,   /* name */
+be_local_closure(lvh_spinner_set_angle,   /* name */
   be_nested_proto(
-    1,                          /* nstack */
-    1,                          /* argc */
+    4,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(get_speed),
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_anim_end),
+    /* K1   */  be_nested_str_weak(start_value),
+    /* K2   */  be_nested_str_weak(end_value),
+    }),
+    be_str_weak(set_angle),
     &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
+    ( &(const binstruction[11]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C040400,  //  0003  MOVE	R1	R2
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x900A0201,  //  0005  SETMBR	R2	K1	R1
+      0x88080100,  //  0006  GETMBR	R2	R0	K0
+      0x540E0167,  //  0007  LDINT	R3	360
+      0x000C0203,  //  0008  ADD	R3	R1	R3
+      0x900A0403,  //  0009  SETMBR	R2	K2	R3
+      0x80000000,  //  000A  RET	0
     })
   )
 );
@@ -4154,7 +4168,7 @@ be_local_closure(lvh_spinner_init,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
+    ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(_page),
     /* K1   */  be_nested_str_weak(find),
     /* K2   */  be_nested_str_weak(angle),
@@ -4163,10 +4177,17 @@ be_local_closure(lvh_spinner_init,   /* name */
     /* K5   */  be_nested_str_weak(lv),
     /* K6   */  be_nested_str_weak(spinner),
     /* K7   */  be_nested_str_weak(post_init),
+    /* K8   */  be_nested_str_weak(anim_get),
+    /* K9   */  be_nested_str_weak(_arc_anim_start_angle),
+    /* K10  */  be_nested_str_weak(_arc_anim_end_angle),
+    /* K11  */  be_nested_str_weak(_anim_start),
+    /* K12  */  be_nested_str_weak(anim_ntv),
+    /* K13  */  be_nested_str_weak(_p),
+    /* K14  */  be_nested_str_weak(_anim_end),
     }),
     be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[19]) {  /* code */
+    ( &(const binstruction[41]) {  /* code */
       0x90020002,  //  0000  SETMBR	R0	K0	R2
       0x8C100701,  //  0001  GETMET	R4	R3	K1
       0x58180002,  //  0002  LDCONST	R6	K2
@@ -4185,55 +4206,29 @@ be_local_closure(lvh_spinner_init,   /* name */
       0x90020806,  //  000F  SETMBR	R0	K4	R6
       0x8C180107,  //  0010  GETMET	R6	R0	K7
       0x7C180200,  //  0011  CALL	R6	1
-      0x80000000,  //  0012  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_speed
-********************************************************************/
-be_local_closure(lvh_spinner_set_speed,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(set_speed),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_angle
-********************************************************************/
-be_local_closure(lvh_spinner_set_angle,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(set_angle),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
+      0xB81A0A00,  //  0012  GETNGBL	R6	K5
+      0x8C180D08,  //  0013  GETMET	R6	R6	K8
+      0x88200104,  //  0014  GETMBR	R8	R0	K4
+      0x88240104,  //  0015  GETMBR	R9	R0	K4
+      0x88241309,  //  0016  GETMBR	R9	R9	K9
+      0x7C180600,  //  0017  CALL	R6	3
+      0xB81E0A00,  //  0018  GETNGBL	R7	K5
+      0x8C1C0F08,  //  0019  GETMET	R7	R7	K8
+      0x88240104,  //  001A  GETMBR	R9	R0	K4
+      0x88280104,  //  001B  GETMBR	R10	R0	K4
+      0x8828150A,  //  001C  GETMBR	R10	R10	K10
+      0x7C1C0600,  //  001D  CALL	R7	3
+      0xB8220A00,  //  001E  GETNGBL	R8	K5
+      0x8C20110C,  //  001F  GETMET	R8	R8	K12
+      0x88280D0D,  //  0020  GETMBR	R10	R6	K13
+      0x7C200400,  //  0021  CALL	R8	2
+      0x90021608,  //  0022  SETMBR	R0	K11	R8
+      0xB8220A00,  //  0023  GETNGBL	R8	K5
+      0x8C20110C,  //  0024  GETMET	R8	R8	K12
+      0x88280F0D,  //  0025  GETMBR	R10	R7	K13
+      0x7C200400,  //  0026  CALL	R8	2
+      0x90021C08,  //  0027  SETMBR	R0	K14	R8
+      0x80000000,  //  0028  RET	0
     })
   )
 );
@@ -4245,19 +4240,93 @@ be_local_closure(lvh_spinner_set_angle,   /* name */
 ********************************************************************/
 be_local_closure(lvh_spinner_get_angle,   /* name */
   be_nested_proto(
-    1,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_anim_end),
+    /* K1   */  be_nested_str_weak(start_value),
+    /* K2   */  be_nested_str_weak(_anim_start),
+    }),
     be_str_weak(get_angle),
     &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x88040301,  //  0001  GETMBR	R1	R1	K1
+      0x88080102,  //  0002  GETMBR	R2	R0	K2
+      0x88080501,  //  0003  GETMBR	R2	R2	K1
+      0x04040202,  //  0004  SUB	R1	R1	R2
+      0x80040200,  //  0005  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_speed
+********************************************************************/
+be_local_closure(lvh_spinner_get_speed,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_anim_start),
+    /* K1   */  be_nested_str_weak(time),
+    }),
+    be_str_weak(get_speed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 3]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x88040301,  //  0001  GETMBR	R1	R1	K1
+      0x80040200,  //  0002  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_speed
+********************************************************************/
+be_local_closure(lvh_spinner_set_speed,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_anim_start),
+    /* K1   */  be_nested_str_weak(time),
+    /* K2   */  be_nested_str_weak(_anim_end),
+    }),
+    be_str_weak(set_speed),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x60080009,  //  0000  GETGBL	R2	G9
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C040400,  //  0003  MOVE	R1	R2
+      0x88080100,  //  0004  GETMBR	R2	R0	K0
+      0x900A0201,  //  0005  SETMBR	R2	K1	R1
+      0x88080102,  //  0006  GETMBR	R2	R0	K2
+      0x900A0201,  //  0007  SETMBR	R2	K1	R1
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -4269,16 +4338,18 @@ be_local_closure(lvh_spinner_get_angle,   /* name */
 ********************************************************************/
 extern const bclass be_class_lvh_arc;
 be_local_class(lvh_spinner,
-    0,
+    2,
     &be_class_lvh_arc,
-    be_nested_map(6,
+    be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(get_angle, 5), be_const_closure(lvh_spinner_get_angle_closure) },
-        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_spinner) },
-        { be_const_key_weak(set_angle, 4), be_const_closure(lvh_spinner_set_angle_closure) },
+        { be_const_key_weak(set_speed, 1), be_const_closure(lvh_spinner_set_speed_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_spinner) },
+        { be_const_key_weak(get_speed, 6), be_const_closure(lvh_spinner_get_speed_closure) },
         { be_const_key_weak(init, 2), be_const_closure(lvh_spinner_init_closure) },
-        { be_const_key_weak(set_speed, -1), be_const_closure(lvh_spinner_set_speed_closure) },
-        { be_const_key_weak(get_speed, -1), be_const_closure(lvh_spinner_get_speed_closure) },
+        { be_const_key_weak(_anim_start, -1), be_const_var(0) },
+        { be_const_key_weak(_anim_end, -1), be_const_var(1) },
+        { be_const_key_weak(get_angle, -1), be_const_closure(lvh_spinner_get_angle_closure) },
+        { be_const_key_weak(set_angle, 0), be_const_closure(lvh_spinner_set_angle_closure) },
     })),
     be_str_weak(lvh_spinner)
 );

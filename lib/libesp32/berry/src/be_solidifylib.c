@@ -132,7 +132,11 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *c
             }
             m_solidify_bvalue(vm, str_literal, &node->value, class_name, str(node->key.v.s), fout);
         } else if (node->key.type == BE_INT) {
+#if BE_INTGER_TYPE == 2
             logfmt("        { be_const_key_int(%lli, %i), ", node->key.v.i, key_next);
+#else
+            logfmt("        { be_const_key_int(%li, %i), ", node->key.v.i, key_next);
+#endif
             m_solidify_bvalue(vm, str_literal, &node->value, class_name, NULL, fout);
         } else {
             char error[64];
