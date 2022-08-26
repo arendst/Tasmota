@@ -232,6 +232,7 @@
 #define D_JSON_RESETTABLE_TOTAL_ACTIVE "ResetTotalActive"
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
+#define D_JSON_RAW "Raw"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
