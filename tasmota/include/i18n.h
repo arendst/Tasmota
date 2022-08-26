@@ -187,6 +187,8 @@
 #define D_JSON_TEMPERATURE_UNIT "TempUnit"
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
+#define D_JSON_TODAY_SUM_EXPORT "TodaySumExport"
+#define D_JSON_TODAY_SUM_IMPORT "TodaySumImport"
 #define D_JSON_TOTAL "Total"
 #define D_JSON_TOTAL_USAGE "TotalUsage"
 #define D_JSON_TOTAL_REACTIVE "TotalReactive"
