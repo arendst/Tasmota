@@ -317,6 +317,7 @@ void ModbusBridgeHandle(void)
 
     modbusBridge.byteCount = 0;
     ModbusBridgeError errorcode = ModbusBridgeError::noerror;
+
     if (modbusBridge.deviceAddress == 0)
     {
 #ifdef USE_MODBUS_BRIDGE_TCP
@@ -682,12 +683,10 @@ void ModbusTCPHandle(void)
             if (dataPointer % 2 == 0)
             {
               writeData[dataPointer / 2] = (uint16_t)(((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + dataPointer]) << 8);
-              AddLog(LOG_LEVEL_DEBUG_MORE, "%d=%04X", dataPointer/2, writeData[dataPointer/2]);
             }
             else
             { 
               writeData[dataPointer / 2] |= ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + dataPointer]);
-              AddLog(LOG_LEVEL_DEBUG_MORE, "%d=%04X", dataPointer/2, writeData[dataPointer/2]);
             }
           }
         }
@@ -806,7 +805,10 @@ void CmndModbusBridgeSend(void)
   }
 
   // Prevent buffer overflow due to usage of to many registers
-  if (modbusBridge.dataCount > MBR_MAX_REGISTERS)
+  if ((!bitMode) && (modbusBridge.dataCount > MBR_MAX_REGISTERS))
+    errorcode = ModbusBridgeError::wrongcount;
+
+  if ((bitMode) && (modbusBridge.dataCount > MBR_MAX_REGISTERS * 8))
     errorcode = ModbusBridgeError::wrongcount;
 
   // Get Json data for writing
