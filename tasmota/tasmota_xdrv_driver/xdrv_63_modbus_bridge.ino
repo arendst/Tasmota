@@ -634,11 +634,12 @@ void ModbusTCPHandle(void)
         if (mbfunctioncode <= 4)
         {
           modbusBridge.dataCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+          dataSendCount = 1;
         }
         else
         {
           // For functioncode 15 & 16 ignore bytecount, tasmotaModbus does calculate this
-          uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 11;
+          uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 13;
           modbusBridge.dataCount = 1;
           dataSendCount = (buf_len - dataStartByte) / 2;
           writeData = (uint16_t *)malloc(dataSendCount);
@@ -653,7 +654,7 @@ void ModbusTCPHandle(void)
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus Transactionid:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, sendCount:%d, recvCount:%d"),
                modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, dataSendCount, modbusBridge.dataCount);
 
-        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, dataSendCount, writeData);
+        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, dataSendCount, writeData, modbusBridge.dataCount);
 
         free(writeData);
       }
