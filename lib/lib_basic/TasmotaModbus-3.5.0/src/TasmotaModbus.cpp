@@ -19,7 +19,12 @@
   Documentation about modbus protocol: https://www.modbustools.com/modbus.html
 */
 
+#include "Arduino.h"
 #include "TasmotaModbus.h"
+
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+
 
 TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(receive_pin, transmit_pin, 1)
 {
@@ -135,7 +140,17 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   uint16_t crc = CalculateCRC(frame, framepointer);
   frame[framepointer++] = (uint8_t)(crc);
   frame[framepointer++] = (uint8_t)(crc >> 8);
-
+  
+  uint8_t *buf;
+  uint16_t bufsize=(framepointer + 1) * 3;
+  buf = (uint8_t *)malloc(bufsize);
+  memset(buf, 0, bufsize);
+  uint16_t i;
+  for (i = 0; i < framepointer;i++)
+    snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",frame[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBR Serial Send: %s"), buf);
+  free(buf);
+  
   flush();
   write(frame, framepointer);
   free(frame);
@@ -162,20 +177,6 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
       } else {
         buffer[mb_len++] = data;
         if (3 == mb_len) {
-          if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
-            if (0 == buffer[2]) {
-              return 3;            // 3 = Illegal Data Value,
-            }
-            return buffer[2];      // 1 = Illegal Function,
-                                   // 2 = Illegal Data Address,
-                                   // 3 = Illegal Data Value,
-                                   // 4 = Slave Error
-                                   // 5 = Acknowledge but not finished (no error)
-                                   // 6 = Slave Busy
-                                   // 8 = Memory Parity error
-                                   // 10 = Gateway Path Unavailable
-                                   // 11 = Gateway Target device failed to respond
-          }
           if ((buffer[1] == 5) || (buffer[1] == 6) || (buffer[1] == 15) || (buffer[1] == 16)) header_length = 4; // Addr, Func, StartAddr
         }
       }
@@ -185,6 +186,34 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
     }
   }
 
+// RX Logging
+  uint8_t *buf;
+  uint16_t bufsize=(mb_len + 1) * 3;
+  buf = (uint8_t *)malloc(bufsize);
+  memset(buf, 0, bufsize);
+  uint16_t i;
+  for (i = 0; i < mb_len;i++)
+    snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",buffer[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBR Serial Received: %s"), buf);
+  free(buf);
+
+  if (buffer[1] & 0x80)
+  { // 01 84 02 f2 f1
+    if (0 == buffer[2])
+    {
+      return 3; // 3 = Illegal Data Value,
+    }
+    return buffer[2]; // 1 = Illegal Function,
+                      // 2 = Illegal Data Address,
+                      // 3 = Illegal Data Value,
+                      // 4 = Slave Error
+                      // 5 = Acknowledge but not finished (no error)
+                      // 6 = Slave Busy
+                      // 8 = Memory Parity error
+                      // 10 = Gateway Path Unavailable
+                      // 11 = Gateway Target device failed to respond
+  }
+  
   if (mb_len < 6) { return 7; }  // 7 = Not enough data
 
 /*
