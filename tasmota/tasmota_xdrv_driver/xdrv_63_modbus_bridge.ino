@@ -250,7 +250,6 @@ void ModbusBridgeHandle(void)
     buffer = (uint8_t *)malloc(9 + modbusBridge.byteCount); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
     memset(buffer, 0, 9 + modbusBridge.byteCount);
     uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, 0, modbusBridge.byteCount);
-    modbusBridge.byteCount = 0;
 
 #ifdef USE_MODBUS_BRIDGE_TCP
     for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
@@ -316,6 +315,7 @@ void ModbusBridgeHandle(void)
       return;
     }
 
+    modbusBridge.byteCount = 0;
     ModbusBridgeError errorcode = ModbusBridgeError::noerror;
     if (modbusBridge.deviceAddress == 0)
     {
@@ -654,7 +654,6 @@ void ModbusTCPHandle(void)
 
         if (mbfunctioncode <= 2)
         {
-          // Odd number of bytes for registers is not supported at this moment (TasmotaModbus reads registers (words) not bytes)
           count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
           modbusBridge.byteCount = ((count - 1) >> 3) + 1; 
           modbusBridge.dataCount = ((count - 1) >> 4) + 1; 
@@ -693,8 +692,8 @@ void ModbusTCPHandle(void)
           }
         }
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, count:%d, recvCount:%d"),
-               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, count, modbusBridge.dataCount);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, count:%d, recvCount:%d, recvBytes:%d"),
+               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, count, modbusBridge.dataCount, modbusBridge.byteCount);
 
         tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, count, writeData);
 
