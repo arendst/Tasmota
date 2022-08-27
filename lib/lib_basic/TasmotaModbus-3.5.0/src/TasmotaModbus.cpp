@@ -148,7 +148,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   uint16_t i;
   for (i = 0; i < framepointer;i++)
     snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",frame[i]);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBR Serial Send: %s"), buf);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: %s"), buf);
   free(buf);
   
   flush();
@@ -194,7 +194,7 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
   uint16_t i;
   for (i = 0; i < mb_len;i++)
     snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",buffer[i]);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBR Serial Received: %s"), buf);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Received: %s"), buf);
   free(buf);
 
   if (buffer[1] & 0x80)
