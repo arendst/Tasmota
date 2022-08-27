@@ -644,8 +644,8 @@ void ModbusTCPHandle(void)
           writeData = (uint16_t *)malloc(dataSendCount);
           for (uint8_t dataPointer = 0; dataPointer < dataSendCount; dataPointer++)
           {
-            writeData[dataPointer] = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte+dataPointer]) << 8) 
-                            | ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + 1 + dataPointer]));
+            writeData[dataPointer] = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte+(dataPointer*2)]) << 8) 
+                            | ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + 1 + (dataPointer*2)]));
           }
         }
 
