@@ -35,6 +35,8 @@
  *
  *   -- Write multiple coils --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":4, "values":[1,2,3,4]}
+ * 
+ * Info for modbusBridgeTCPServer: https://ipc2u.com/articles/knowledge-base/detailed-description-of-the-modbus-tcp-protocol-with-command-examples/
 \*********************************************************************************************/
 
 #define XDRV_63 63
