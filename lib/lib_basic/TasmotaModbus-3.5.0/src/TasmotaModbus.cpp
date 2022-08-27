@@ -66,7 +66,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   uint8_t framepointer = 0;
 
   uint16_t byte_count = count * 2; // In register mode count is nr of registers (2 bytes)
-  if ((function_code == 1) || (function_code == 2) || (function_code == 15)) byte_count = (count / 8) + 1; // In bitmode count is nr of bits
+  if ((function_code == 1) || (function_code == 2) || (function_code == 15)) byte_count = ((count-1) / 8) + 1; // In bitmode count is nr of bits
 
   if (function_code < 7)
   {
@@ -122,7 +122,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
     }
     for (uint16_t bytepointer = 0; bytepointer < byte_count; bytepointer++)
     {
-      frame[framepointer++] = (uint8_t)(write_data[bytepointer/2] >> (byte_count % 2 ? 0 : 1));  // MSB, LSB, MSB ....
+      frame[framepointer++] = (uint8_t)(write_data[bytepointer/2] >> (bytepointer % 2 ? 0 : 8));  // MSB, LSB, MSB ....
     }
   }
   else 
