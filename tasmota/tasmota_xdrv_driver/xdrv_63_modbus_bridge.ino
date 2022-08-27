@@ -240,13 +240,6 @@ void ModbusBridgeHandle(void)
     buffer = (uint8_t *)malloc(9 + (modbusBridge.dataCount * 2)); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
     uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, modbusBridge.dataCount);
 
-    if (error)
-    {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver receive error %d"), error);
-      free(buffer);
-      return;
-    }
-
 #ifdef USE_MODBUS_BRIDGE_TCP
     for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
     {
@@ -261,7 +254,15 @@ void ModbusBridgeHandle(void)
         header[3] = 0;
         header[6] = buffer[0]; // Send slave address
         header[7] = buffer[1]; // Send function code
-        if (buffer[1] <= 4) 
+        if (error)
+        {
+          header[4] = 0; // Message Length Hi-Byte
+          header[5] = 3; // Message Length Low-Byte
+          header[8] = error;
+          nrOfBytes += 1;
+          client.write(header, 9);
+        }
+        else if (buffer[1] <= 4) 
         {
           header[4] = ((modbusBridge.dataCount * 2) + 3) >> 8;
           header[5] = (modbusBridge.dataCount * 2) + 3;
@@ -284,6 +285,13 @@ void ModbusBridgeHandle(void)
       }
     }
 #endif
+
+    if (error)
+    {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver receive error %d"), error);
+      free(buffer);
+      return;
+    }
 
     ModbusBridgeError errorcode = ModbusBridgeError::noerror;
     if (modbusBridge.deviceAddress == 0)
