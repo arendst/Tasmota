@@ -109,7 +109,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.1.1.1
 ### Added
-- Command ``StatusRetain`` (#11109)
+- Command ``StatusRetain`` [#11109](https://github.com/arendst/Tasmota/issues/11109)
+- Add support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - ESP32-S3 support for internal temperature sensor
 
@@ -117,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ### Changed
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
+- TasmotaModbus library from v3.5.0 to v3.6.0 [#16351](https://github.com/arendst/Tasmota/issues/16351)
 - Button debouncing V3 by adopting switch debounce code [#16339](https://github.com/arendst/Tasmota/issues/16339)
 
 ### Fixed
