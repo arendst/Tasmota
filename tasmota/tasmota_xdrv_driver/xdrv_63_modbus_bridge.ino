@@ -155,6 +155,7 @@ struct ModbusBridge
   ModbusBridgeType type = ModbusBridgeType::mb_undefined;
 
   uint16_t dataCount = 0;
+  uint16_t byteCount = 0;
   uint16_t startAddress = 0;
   uint8_t deviceAddress = 0;
   uint8_t count = 0;
@@ -239,9 +240,10 @@ void ModbusBridgeHandle(void)
   if (data_ready)
   {
     uint8_t *buffer;
-    buffer = (uint8_t *)malloc(9 + (modbusBridge.dataCount * 2)); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
-    memset(buffer, 0, 9 + (modbusBridge.dataCount * 2));
-    uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, modbusBridge.dataCount);
+    if (modbusBridge.byteCount == 0) modbusBridge.byteCount = modbusBridge.dataCount * 2;
+    buffer = (uint8_t *)malloc(9 + modbusBridge.byteCount); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
+    memset(buffer, 0, 9 + modbusBridge.byteCount);
+    uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, modbusBridge.byteCount);
 
 #ifdef USE_MODBUS_BRIDGE_TCP
     for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
@@ -268,23 +270,23 @@ void ModbusBridgeHandle(void)
         }
         else if (buffer[1] <= 2) 
         {
-          header[4] = ((modbusBridge.dataCount * 2) + 3) >> 8;
-          header[5] = (modbusBridge.dataCount * 2) + 3;
-          header[8] = modbusBridge.dataCount * 2;
+          header[4] = modbusBridge.byteCount >> 8;
+          header[5] = modbusBridge.byteCount + 3;
+          header[8] = modbusBridge.byteCount;
           client.write(header, 9);
           nrOfBytes += 1;
-          client.write(buffer + 3, modbusBridge.dataCount * 2); // Don't send CRC
-          nrOfBytes += modbusBridge.dataCount * 2;
+          client.write(buffer + 3, modbusBridge.byteCount); // Don't send CRC
+          nrOfBytes += modbusBridge.byteCount;
         }
         else if (buffer[1] <= 4) 
         {
-          header[4] = ((modbusBridge.dataCount * 2) + 3) >> 8;
-          header[5] = (modbusBridge.dataCount * 2) + 3;
-          header[8] = modbusBridge.dataCount * 2;
+          header[4] = modbusBridge.byteCount >> 8;
+          header[5] = modbusBridge.byteCount + 3;
+          header[8] = modbusBridge.byteCount;
           client.write(header, 9);
           nrOfBytes += 1;
-          client.write(buffer + 3, (modbusBridge.dataCount * 2)); // Don't send CRC
-          nrOfBytes += modbusBridge.dataCount * 2;
+          client.write(buffer + 3, modbusBridge.byteCount); // Don't send CRC
+          nrOfBytes += modbusBridge.byteCount;
         }
         else
         {
@@ -646,13 +648,15 @@ void ModbusTCPHandle(void)
 
         if (mbfunctioncode <= 2)
         {
-          // Odd number of bytes for registers is not supported at this moment
+          // Odd number of bytes for registers is not supported at this moment (TasmotaModbus reads registers (words) not bytes)
           registerCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+          modbusBridge.byteCount = ((registerCount - 1) >> 3) + 1; 
           modbusBridge.dataCount = ((registerCount - 1) >> 4) + 1; 
         }
         else if (mbfunctioncode <= 4)
         {
           registerCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+          modbusBridge.byteCount = registerCount * 2;
           modbusBridge.dataCount = registerCount;
         }
         else
@@ -660,6 +664,7 @@ void ModbusTCPHandle(void)
           // For functioncode 15 & 16 ignore bytecount, tasmotaModbus does calculate this
           uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 13;
           registerCount = (buf_len - dataStartByte) / 2;
+          modbusBridge.byteCount = 2;
           modbusBridge.dataCount = 1;
           writeData = (uint16_t *)malloc(registerCount);
           if (mbfunctioncode == 15) bitCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
@@ -671,10 +676,10 @@ void ModbusTCPHandle(void)
           }
         }
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, registerCount:%d, recvCount:%d bitCount:%d"),
-               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, registerCount, modbusBridge.dataCount, bitCount);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, registerCount:%d, recvCount:%d bitCount:%d bytecount:%d"),
+               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, registerCount, modbusBridge.dataCount, bitCount, modbusBridge.byteCount);
 
-        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, registerCount, writeData, bitCount);
+        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, registerCount, writeData, bitCount, modbusBridge.byteCount);
 
         free(writeData);
       }

@@ -60,18 +60,18 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   return result;
 }
 
-uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers, uint16_t bit_count)
+uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers, uint16_t bit_count, uint16_t byte_count)
 {
   uint8_t *frame;
   uint8_t framepointer = 0;
-
+  if (byte_count == 0) byte_count = register_count * 2;
   if (function_code < 7)
   {
     frame = (uint8_t *)malloc(8); // Addres(1), Function(1), Start/Coil Address(2), Registercount or Data (2), CRC(2)
   }
   else
   {
-    frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start/Coil Address(2),Quantity of registers (2), Bytecount(1), Data(1..n), CRC(2)
+    frame = (uint8_t *)malloc(9 + byte_count); // Addres(1), Function(1), Start/Coil Address(2),Quantity of registers (2), Bytecount(1), Data(1..n), CRC(2)
   }
 
   mb_address = device_address;  // Save address for receipt check
@@ -125,10 +125,9 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
       free(frame);
       return 12; // Wrong register count
     }
-    for (int registerpointer = 0; registerpointer < register_count; registerpointer++)
+    for (int bytepointer = 0; bytepointer < byte_count; bytepointer++)
     {
-      frame[framepointer++] = (uint8_t)(registers[registerpointer] >> 8);  // MSB
-      frame[framepointer++] = (uint8_t)(registers[registerpointer]);       // LSB
+      frame[framepointer++] = (uint8_t)(registers[bytepointer/2] >> (byte_count % 2 ? 0 : 1));  // MSB, LSB, MSB ....
     }
   }
   else 
@@ -162,12 +161,13 @@ bool TasmotaModbus::ReceiveReady()
   return (available() > 4);
 }
 
-uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
+uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count, uint16_t byte_count)
 {
   mb_len = 0;
   uint32_t timeout = millis() + 10;
   uint8_t header_length = 3;
-  while ((mb_len < (data_count * 2) + header_length + 2) && (millis() < timeout)) {
+  if (byte_count == 0) byte_count = (register_count * 2);
+  while ((mb_len < byte_count + header_length + 2) && (millis() < timeout)) {
     if (available()) {
       uint8_t data = (uint8_t)read();
       if (!mb_len) {               // Skip leading data as provided by hardware serial
