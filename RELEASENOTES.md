@@ -110,7 +110,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ## Changelog v12.1.1.1
 ### Added
 - Command ``StatusRetain`` [#11109](https://github.com/arendst/Tasmota/issues/11109)
-- Add support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
+- Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
+- Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - ESP32-S3 support for internal temperature sensor
 

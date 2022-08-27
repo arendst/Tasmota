@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [12.1.1.1]
 ### Added
-- Add support for SGP40 gas and air quality sensor (#16341)
+- Support for SGP40 gas and air quality sensor (#16341)
+- Support for Modbus writing using ModbusBridge by JeroenSt (#16351)
 
 ### Changed
 - TasmotaModbus library from v3.5.0 to v3.6.0 (#16351)
