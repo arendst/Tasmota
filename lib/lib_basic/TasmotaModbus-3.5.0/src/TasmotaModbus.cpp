@@ -19,7 +19,13 @@
   Documentation about modbus protocol: https://www.modbustools.com/modbus.html
 */
 
+#include "Arduino.h"
 #include "TasmotaModbus.h"
+
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+
+//#define TASMOTAMODBUSDEBUG
 
 TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(receive_pin, transmit_pin, 1)
 {
@@ -55,10 +61,13 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   return result;
 }
 
-uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers)
+uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t count, uint16_t *write_data)
 {
   uint8_t *frame;
   uint8_t framepointer = 0;
+
+  uint16_t byte_count = count * 2; // In register mode count is nr of registers (2 bytes)
+  if ((function_code == 1) || (function_code == 2) || (function_code == 15)) byte_count = ((count-1) / 8) + 1; // In bitmode count is nr of bits
 
   if (function_code < 7)
   {
@@ -66,7 +75,7 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   }
   else
   {
-    frame = (uint8_t *)malloc(9 + (register_count * 2)); // Addres(1), Function(1), Start/Coil Address(2),Quantity of registers (2), Bytecount(1), Data(1..n), CRC(2)
+    frame = (uint8_t *)malloc(9 + byte_count); // Addres(1), Function(1), Start/Coil Address(2),Quantity of registers (2), Bytecount(1), Data(1..n), CRC(2)
   }
 
   mb_address = device_address;  // Save address for receipt check
@@ -77,43 +86,44 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   frame[framepointer++] = (uint8_t)(start_address);        // LSB
   if (function_code < 5)
   {
-    frame[framepointer++] = (uint8_t)(register_count >> 8);  // MSB
-    frame[framepointer++] = (uint8_t)(register_count);       // LSB
+    frame[framepointer++] = (uint8_t)(count >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(count);       // LSB
   }
   else if ((function_code == 5) || (function_code == 6))
   {
-    if (registers == NULL) 
+    if (write_data == NULL) 
     {
       free(frame);
       return 13; // Register data not specified
     }
-    if (register_count != 1)
+    if (count != 1)
     {
       free(frame);
       return 12; // Wrong register count
     }
-    frame[framepointer++] = (uint8_t)(registers[0] >> 8);  // MSB
-    frame[framepointer++] = (uint8_t)(registers[0]);       // LSB
+    frame[framepointer++] = (uint8_t)(write_data[0] >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(write_data[0]);       // LSB
   }
   else if ((function_code == 15) || (function_code == 16))
   {
-    frame[framepointer++] = (uint8_t)(register_count >> 8);   // MSB
-    frame[framepointer++] = (uint8_t)(register_count);        // LSB
-    frame[framepointer++] = register_count * 2;
-    if (registers == NULL) 
+    frame[framepointer++] = (uint8_t)(count >> 8);   // MSB
+    frame[framepointer++] = (uint8_t)(count);        // LSB
+    
+    frame[framepointer++] = byte_count;
+
+    if (write_data == NULL) 
     {
       free(frame);
       return 13; // Register data not specified
     }
-    if (register_count == 0)
+    if (count == 0)
     {
       free(frame);
       return 12; // Wrong register count
     }
-    for (int registerpointer = 0; registerpointer < register_count; registerpointer++)
+    for (uint16_t bytepointer = 0; bytepointer < byte_count; bytepointer++)
     {
-      frame[framepointer++] = (uint8_t)(registers[registerpointer] >> 8);  // MSB
-      frame[framepointer++] = (uint8_t)(registers[registerpointer]);       // LSB
+      frame[framepointer++] = (uint8_t)(write_data[bytepointer/2] >> (bytepointer % 2 ? 0 : 8));  // MSB, LSB, MSB ....
     }
   }
   else 
@@ -126,6 +136,18 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   frame[framepointer++] = (uint8_t)(crc);
   frame[framepointer++] = (uint8_t)(crc >> 8);
 
+#ifdef TASMOTAMODBUSDEBUG  
+  uint8_t *buf;
+  uint16_t bufsize=(framepointer + 1) * 3;
+  buf = (uint8_t *)malloc(bufsize);
+  memset(buf, 0, bufsize);
+  uint16_t i;
+  for (i = 0; i < framepointer;i++)
+    snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",frame[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Send: %s"), buf);
+  free(buf);
+#endif
+  
   flush();
   write(frame, framepointer);
   free(frame);
@@ -137,12 +159,13 @@ bool TasmotaModbus::ReceiveReady()
   return (available() > 4);
 }
 
-uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
+uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count, uint16_t byte_count)
 {
   mb_len = 0;
   uint32_t timeout = millis() + 10;
   uint8_t header_length = 3;
-  while ((mb_len < (data_count * 2) + header_length + 2) && (millis() < timeout)) {
+  if (byte_count == 0) byte_count = (register_count * 2);
+  while ((mb_len < byte_count + header_length + 2) && (millis() < timeout)) {
     if (available()) {
       uint8_t data = (uint8_t)read();
       if (!mb_len) {               // Skip leading data as provided by hardware serial
@@ -152,20 +175,6 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
       } else {
         buffer[mb_len++] = data;
         if (3 == mb_len) {
-          if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
-            if (0 == buffer[2]) {
-              return 3;            // 3 = Illegal Data Value,
-            }
-            return buffer[2];      // 1 = Illegal Function,
-                                   // 2 = Illegal Data Address,
-                                   // 3 = Illegal Data Value,
-                                   // 4 = Slave Error
-                                   // 5 = Acknowledge but not finished (no error)
-                                   // 6 = Slave Busy
-                                   // 8 = Memory Parity error
-                                   // 10 = Gateway Path Unavailable
-                                   // 11 = Gateway Target device failed to respond
-          }
           if ((buffer[1] == 5) || (buffer[1] == 6) || (buffer[1] == 15) || (buffer[1] == 16)) header_length = 4; // Addr, Func, StartAddr
         }
       }
@@ -175,6 +184,36 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t data_count)
     }
   }
 
+#ifdef TASMOTAMODBUSDEBUG
+// RX Logging
+  uint8_t *buf;
+  uint16_t bufsize=(mb_len + 1) * 3;
+  buf = (uint8_t *)malloc(bufsize);
+  memset(buf, 0, bufsize);
+  uint16_t i;
+  for (i = 0; i < mb_len;i++)
+    snprintf((char *)&buf[i*3], (bufsize-i*3), "%02X ",buffer[i]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: Serial Received: %s"), buf);
+  free(buf);
+#endif
+
+  if (buffer[1] & 0x80)
+  { // 01 84 02 f2 f1
+    if (0 == buffer[2])
+    {
+      return 3; // 3 = Illegal Data Value,
+    }
+    return buffer[2]; // 1 = Illegal Function,
+                      // 2 = Illegal Data Address,
+                      // 3 = Illegal Data Value,
+                      // 4 = Slave Error
+                      // 5 = Acknowledge but not finished (no error)
+                      // 6 = Slave Busy
+                      // 8 = Memory Parity error
+                      // 10 = Gateway Path Unavailable
+                      // 11 = Gateway Target device failed to respond
+  }
+  
   if (mb_len < 6) { return 7; }  // 7 = Not enough data
 
 /*
