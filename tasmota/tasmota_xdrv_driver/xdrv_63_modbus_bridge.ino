@@ -26,10 +26,13 @@
  * When USE_MODBUS_BRIDGE_TCP is also defined, this bridge can also be used as an ModbusTCP
  * bridge.
  *
- * Example Command:
+ * Example Commands:
+ *   -- Read Coils --
+ *   ModbusSend {"deviceaddress": 1, "functioncode": 1, "startaddress": 1, "type":"bit", "count":2}
+ *
  *   -- Read Input Register --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint16", "count":2}
- * 
+ *
  *   -- Write multiple coils --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":4, "values":[1,2,3,4]}
 \*********************************************************************************************/
@@ -110,7 +113,7 @@ enum class ModbusBridgeFunctionCode
 {
   mb_undefined = 0,
   mb_readCoilStatus = 1,
-  mb_readContactStatus = 2,
+  mb_readInputStatus = 2,
   mb_readHoldingRegisters = 3,
   mb_readInputRegisters = 4,
   mb_writeSingleCoil = 5,
@@ -157,6 +160,24 @@ struct ModbusBridge
 };
 
 ModbusBridge modbusBridge;
+
+/********************************************************************************************/
+//
+// Helper functions for data conversion between little and big endian
+//
+uint16_t swap_endian16(uint16_t num)
+{
+  return (num>>8) | (num<<8);
+}
+
+uint32_t swap_endian32(uint32_t num)
+{
+  return ((num>>24)&0xff) | // move byte 3 to byte 0
+         ((num<<8)&0xff0000) | // move byte 1 to byte 2
+         ((num>>8)&0xff00) | // move byte 2 to byte 1
+         ((num<<24)&0xff000000); // byte 0 to byte 3
+}
+
 
 /********************************************************************************************/
 //
@@ -232,22 +253,34 @@ void ModbusBridgeHandle(void)
       WiFiClient &client = modbusBridgeTCP.client_tcp[i];
       if (client)
       {
-        uint8_t MBAP_Header[7];
-        MBAP_Header[0] = modbusBridgeTCP.tcp_transaction_id >> 8;
-        MBAP_Header[1] = modbusBridgeTCP.tcp_transaction_id;
-        MBAP_Header[2] = 0;
-        MBAP_Header[3] = 0;
-        MBAP_Header[4] = ((modbusBridge.dataCount * 2) + 3) >> 8;
-        MBAP_Header[5] = (modbusBridge.dataCount * 2) + 3;
-        MBAP_Header[6] = buffer[0]; // Send slave address
-        client.write(MBAP_Header, 7);
-        client.write(buffer + 1, 1); // Send Functioncode
-        uint8_t bytecount[1];
-        bytecount[0] = modbusBridge.dataCount * 2;
-        client.write(bytecount, 1);                             // Send length of rtu data
-        client.write(buffer + 3, (modbusBridge.dataCount * 2)); // Don't send CRC
+        uint8_t header[8];
+        uint8_t nrOfBytes = 8;
+        header[0] = modbusBridgeTCP.tcp_transaction_id >> 8;
+        header[1] = modbusBridgeTCP.tcp_transaction_id;
+        header[2] = 0;
+        header[3] = 0;
+        header[6] = buffer[0]; // Send slave address
+        header[7] = buffer[1]; // Send function code
+        if (buffer[1] <= 4) 
+        {
+          header[4] = ((modbusBridge.dataCount * 2) + 3) >> 8;
+          header[5] = (modbusBridge.dataCount * 2) + 3;
+          header[8] = modbusBridge.dataCount * 2;
+          client.write(header, 9);
+          nrOfBytes += 1;
+          client.write(buffer + 3, (modbusBridge.dataCount * 2)); // Don't send CRC
+          nrOfBytes += modbusBridge.dataCount * 2;
+        }
+        else
+        {
+          header[4] = 0; // Message Length Hi-Byte
+          header[5] = 6; // Message Length Low-Byte
+          client.write(header, 8);
+          client.write(buffer + 2, 4); // Don't send CRC
+          nrOfBytes += 4;
+        }
         client.flush();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus deviceAddress %d, writing %d bytes to client"), buffer[0], (modbusBridge.dataCount * 2) + 9);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus deviceAddress %d, writing %d bytes to client"), buffer[0], nrOfBytes);
       }
     }
 #endif
@@ -278,17 +311,13 @@ void ModbusBridgeHandle(void)
       }
       else
       {
-        if ((modbusBridge.type == ModbusBridgeType::mb_int8 || modbusBridge.type == ModbusBridgeType::mb_uint8)
-          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
+        if ((modbusBridge.type == ModbusBridgeType::mb_int8 || modbusBridge.type == ModbusBridgeType::mb_uint8) && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
-        else if ((modbusBridge.type == ModbusBridgeType::mb_bit)
-          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
+        else if ((modbusBridge.type == ModbusBridgeType::mb_bit) && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
-        else if ((modbusBridge.type == ModbusBridgeType::mb_int16 || modbusBridge.type == ModbusBridgeType::mb_uint16)
-          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
+        else if ((modbusBridge.type == ModbusBridgeType::mb_int16 || modbusBridge.type == ModbusBridgeType::mb_uint16) && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
-        else if ((modbusBridge.type == ModbusBridgeType::mb_int32 || modbusBridge.type == ModbusBridgeType::mb_uint32 || modbusBridge.type == ModbusBridgeType::mb_float)
-          && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
+        else if ((modbusBridge.type == ModbusBridgeType::mb_int32 || modbusBridge.type == ModbusBridgeType::mb_uint32 || modbusBridge.type == ModbusBridgeType::mb_float) && ((uint8_t)modbusBridge.dataCount * 2 != (uint8_t)buffer[2]))
           errorcode = ModbusBridgeError::wrongdataCount;
       }
     }
@@ -354,11 +383,13 @@ void ModbusBridgeHandle(void)
           char svalue[MBR_MAX_VALUE_LENGTH + 1] = "";
           if (modbusBridge.type == ModbusBridgeType::mb_float)
           {
+            // Convert next 4 bytes to float
             float value = 0;
             if (buffer[1] < 3)
             {
+              // In bit mode  only convert returned bytes
               if (buffer[2] - (count * 4))
-                ((uint8_t *)&value)[0] = buffer[dataOffset + (count * 4)]; // Get int values
+                ((uint8_t *)&value)[0] = buffer[dataOffset + (count * 4)]; // Get float values
               if ((buffer[2] - (count * 4)) >> 1)
                 ((uint8_t *)&value)[1] = buffer[dataOffset + 1 + (count * 4)];
               if ((buffer[2] - (count * 4) - 1) >> 1)
@@ -377,7 +408,17 @@ void ModbusBridgeHandle(void)
           }
           else if (modbusBridge.type == ModbusBridgeType::mb_bit)
           {
-            uint8_t value = (uint8_t)(buffer[dataOffset + (count >> 3)]);
+            uint8_t bits_left = modbusBridge.count - ((count/8) * 8);
+            uint8_t value = 0;
+            if (bits_left < 8)
+            {
+              uint8_t bits_skip = 8 - bits_left;
+              value = (uint8_t)(buffer[dataOffset + ((count + bits_skip) >> 3)]);
+            }
+            else
+            {
+              value = (uint8_t)(buffer[dataOffset + (count >> 3)]);
+            }
             snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d", ((value >> (count & 7)) & 1));
           }
           else
@@ -389,17 +430,17 @@ void ModbusBridgeHandle(void)
               if (buffer[1] < 3)
               {
                 if (buffer[2] - (count * 4))
-                  ((uint8_t *)&value)[0] = buffer[dataOffset + (count * 4)]; // Get int values
-                if ((buffer[2] - (count * 4)) >> 1)
+                  ((uint8_t *)&value)[0] = buffer[dataOffset + (count * 4)]; // Get uint values
+                if (buffer[2] - ((count * 4) - 1))
                   ((uint8_t *)&value)[1] = buffer[dataOffset + 1 + (count * 4)];
-                if ((buffer[2] - (count * 4) - 1) >> 1)
+                if (buffer[2] - ((count * 4) - 2))
                   ((uint8_t *)&value)[2] = buffer[dataOffset + 2 + (count * 4)];
-                if ((buffer[2] - (count * 4)) >> 2)
+                if (buffer[2] - ((count * 4) - 3))
                   ((uint8_t *)&value)[3] = buffer[dataOffset + 3 + (count * 4)];
               }
               else
               {
-                ((uint8_t *)&value)[3] = buffer[dataOffset + (count * 4)]; // Get int values
+                ((uint8_t *)&value)[3] = buffer[dataOffset + (count * 4)]; // Get uint values
                 ((uint8_t *)&value)[2] = buffer[dataOffset + 1 + (count * 4)];
                 ((uint8_t *)&value)[1] = buffer[dataOffset + 2 + (count * 4)];
                 ((uint8_t *)&value)[0] = buffer[dataOffset + 3 + (count * 4)];
@@ -417,7 +458,7 @@ void ModbusBridgeHandle(void)
               {
                 if (buffer[2] - (count * 2))
                   ((uint8_t *)&value)[0] = buffer[dataOffset + (count * 2)];
-                if ((buffer[2] - (count * 2)) >> 1)
+                if (buffer[2] - ((count * 2) - 1))
                   ((uint8_t *)&value)[1] = buffer[dataOffset + 1 + (count * 2)];
               }
               else
@@ -439,12 +480,6 @@ void ModbusBridgeHandle(void)
               else
                 snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%u", value);
             }
-            /*
-            else if (modbusBridge.type == ModbusBridgeType::mb_bit)
-            {
-              uint8_t value = (uint8_t)(buffer[dataOffset + count]);
-              snprintf(svalue, MBR_MAX_VALUE_LENGTH, "%d%d%d%d%d%d%d%d", ((value >> 7) & 1), ((value >> 6) & 1), ((value >> 5) & 1), ((value >> 4) & 1), ((value >> 3) & 1), ((value >> 2) & 1), ((value >> 1) & 1), (value & 1));
-            }*/
           }
           ResponseAppend_P(PSTR("%s"), svalue);
           if (count < data_count - 1)
@@ -576,18 +611,40 @@ void ModbusTCPHandle(void)
           busy = true;
         }
       }
-      if (buf_len == 12)
+      if (buf_len >= 12)
       {
         uint8_t mbdeviceaddress = (uint8_t)modbusBridgeTCP.tcp_buf[6];
         uint8_t mbfunctioncode = (uint8_t)modbusBridgeTCP.tcp_buf[7];
         uint16_t mbstartaddress = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[8]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[9]));
-        modbusBridge.dataCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+        uint16_t *writeData = NULL;
+
         modbusBridgeTCP.tcp_transaction_id = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[0]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[1]));
+        uint8_t dataSendCount = 0;
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus Transactionid:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, Count:%d"),
-               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, modbusBridge.dataCount);
+        if (mbfunctioncode <= 4)
+        {
+          modbusBridge.dataCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+        }
+        else
+        {
+          // For functioncode 15 & 16 ignore bytecount, tasmotaModbus does calculate this
+          uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 11;
+          modbusBridge.dataCount = 1;
+          dataSendCount = (buf_len - dataStartByte) / 2;
+          writeData = (uint16_t *)malloc(dataSendCount);
+          for (uint8_t dataPointer = 0; dataPointer < dataSendCount; dataPointer++)
+          {
+            writeData[dataPointer] = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte+dataPointer]) << 8) 
+                            | ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + 1 + dataPointer]));
+          }
+        }
 
-        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, modbusBridge.dataCount);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus Transactionid:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, sendCount:%d, recvCount:%d"),
+               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, dataSendCount, modbusBridge.dataCount);
+
+        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, modbusBridge.dataCount, writeData, dataSendCount);
+
+        free(writeData);
       }
     }
     yield(); // avoid WDT if heavy traffic
@@ -603,6 +660,7 @@ void CmndModbusBridgeSend(void)
 {
   uint16_t *writeData = NULL;
   uint8_t writeDataSize = 0;
+  bool bitMode = false;
   ModbusBridgeError errorcode = ModbusBridgeError::noerror;
 
   JsonParser parser(XdrvMailbox.data);
@@ -615,7 +673,9 @@ void CmndModbusBridgeSend(void)
   modbusBridge.startAddress = root.getULong(PSTR(D_JSON_MODBUS_START_ADDRESS), 0);
 
   const char *stype = root.getStr(PSTR(D_JSON_MODBUS_TYPE), "uint8");
-  modbusBridge.count = root.getUInt(PSTR(D_JSON_MODBUS_COUNT), 1);
+  modbusBridge.count = root.getUInt(PSTR(D_JSON_MODBUS_COUNT), 1); // Number of bits or bytes to read / write
+
+  if ((functionCode == 1) || (functionCode == 2) || (functionCode == 15)) bitMode = true;
 
   if (modbusBridge.deviceAddress == 0)
     errorcode = ModbusBridgeError::wrongdeviceaddress;
@@ -634,7 +694,7 @@ void CmndModbusBridgeSend(void)
   if (strcmp(stype, "int8") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int8;
-    modbusBridge.dataCount = ((modbusBridge.count - 1)/ 2) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if (strcmp(stype, "int16") == 0)
   {
@@ -644,12 +704,12 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "int32") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int32;
-    modbusBridge.dataCount = 2 * modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : 2 * modbusBridge.count;
   }
   else if ((strcmp(stype, "uint8") == 0))
   {
     modbusBridge.type = ModbusBridgeType::mb_uint8;
-    modbusBridge.dataCount = ((modbusBridge.count - 1)/ 2) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if ((strcmp(stype, "uint16") == 0) || (strcmp(stype, "") == 0)) // Default is uint16
   {
@@ -659,37 +719,82 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "uint32") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_uint32;
-    modbusBridge.dataCount = 2 * modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "float") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_float;
-    modbusBridge.dataCount = 2 * modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? 2 * modbusBridge.count : modbusBridge.dataCount = modbusBridge.count;
   }
   else if (strcmp(stype, "raw") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_raw;
-    modbusBridge.dataCount = modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if (strcmp(stype, "hex") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_hex;
-    modbusBridge.dataCount = modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if (strcmp(stype, "bit") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_bit;
-    modbusBridge.dataCount = ((modbusBridge.count - 1) / 16) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 16) + 1 ;
   }
   else
     errorcode = ModbusBridgeError::wrongtype;
 
+  // If functioncode is 15, the count is not the number of registers but the number
+  // of bit to write, so calculate the number data bytes to write.
+  if (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeMultipleCoils)
+  {
+    modbusBridge.dataCount = (((modbusBridge.count - 1) / 16) + 1);
+  }
+
+  // Prevent buffer overflow due to usage of to many registers
   if (modbusBridge.dataCount > MBR_MAX_REGISTERS)
     errorcode = ModbusBridgeError::wrongcount;
 
-  // If write data is specified in JSON copy it into writeData array
+  // Get Json data for writing
   JsonParserArray jsonDataArray = root[PSTR(D_JSON_MODBUS_VALUES)].getArray();
-  if (jsonDataArray.isArray())
+  writeDataSize = jsonDataArray.size();
+
+  // Check if number of supplied data items is valid
+  switch (modbusBridge.functionCode)
+  {
+    case ModbusBridgeFunctionCode::mb_writeMultipleCoils:
+    // In writeMultipleCoil mode the amount of given data bits is less or equal to the count
+    switch (modbusBridge.type)
+    {
+      case ModbusBridgeType::mb_bit:
+        if (modbusBridge.count > writeDataSize) errorcode = ModbusBridgeError::wrongcount;
+      break;
+      case ModbusBridgeType::mb_uint8:
+      case ModbusBridgeType::mb_int8:
+      case ModbusBridgeType::mb_raw:
+      case ModbusBridgeType::mb_hex:
+        if (modbusBridge.count > writeDataSize * 8)  errorcode = ModbusBridgeError::wrongcount;
+      break;
+      case ModbusBridgeType::mb_uint16:
+      case ModbusBridgeType::mb_int16:
+        if (modbusBridge.count > writeDataSize * 16) errorcode = ModbusBridgeError::wrongcount;
+      break;
+      case ModbusBridgeType::mb_uint32:
+      case ModbusBridgeType::mb_int32:
+        if (modbusBridge.count > writeDataSize * 32) errorcode = ModbusBridgeError::wrongcount;
+      break;
+    }
+    break;
+    case ModbusBridgeFunctionCode::mb_writeSingleRegister:
+    case ModbusBridgeFunctionCode::mb_writeSingleCoil:
+      if (modbusBridge.count != 1) errorcode = ModbusBridgeError::wrongcount;
+    case ModbusBridgeFunctionCode::mb_writeMultipleRegisters:
+      if (modbusBridge.count != writeDataSize) errorcode = ModbusBridgeError::wrongcount;
+    break;
+  }
+
+  // If write data is specified in JSON copy it into writeData array
+  if ((errorcode == ModbusBridgeError::noerror) && (jsonDataArray.isArray()))
   {
     if (modbusBridge.dataCount > 40)
     {
@@ -697,72 +802,83 @@ void CmndModbusBridgeSend(void)
     }
     else
     {
-      writeDataSize = jsonDataArray.size();
+      writeData = (uint16_t *)malloc(modbusBridge.dataCount);
 
-      if (modbusBridge.count != writeDataSize)
+      for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
       {
-        errorcode = ModbusBridgeError::wrongcount;
-      }
-      else
-      {
-        writeData = (uint16_t *)malloc(writeDataSize * 2);
-        for (uint8_t jsonDataArrayPointer = 0; jsonDataArrayPointer < writeDataSize; jsonDataArrayPointer++)
+        if (errorcode != ModbusBridgeError::noerror) break;
+        switch (modbusBridge.type)
         {
-          switch (modbusBridge.type)
+        case ModbusBridgeType::mb_bit:
+        {
+          // Initialize current data/register to 0
+          if (jsonDataArrayPointer % 16 == 0)
           {
-            case ModbusBridgeType::mb_bit:
-              {
-                // Set 2 following bytes to 0
-                if (jsonDataArrayPointer % 16 == 0)
-                {
-                  writeData[jsonDataArrayPointer/15] = 0;
-                }
-                // Swap low and high bytes according to modbus specification
-                uint16_t bitValue = (jsonDataArray[jsonDataArrayPointer].getUInt(0) == 1) ? 1 : 0;
-                uint8_t bitPointer = (jsonDataArrayPointer % 15) + 8;
-                if (bitPointer > 15) bitPointer -= 16;
-
-                writeData[jsonDataArrayPointer/15] += bitValue << bitPointer;
-              }
-            break;
-            case ModbusBridgeType::mb_int8:
-              if (jsonDataArrayPointer % 2) writeData[jsonDataArrayPointer / 2] += (int8_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
-              else writeData[jsonDataArrayPointer] = (int8_t)jsonDataArray[jsonDataArrayPointer / 2].getInt(0) << 8;
-            break;
-            case ModbusBridgeType::mb_uint8:
-              if (jsonDataArrayPointer % 2) writeData[jsonDataArrayPointer / 2] += (uint8_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
-              else writeData[jsonDataArrayPointer / 2] = (uint8_t)jsonDataArray[jsonDataArrayPointer].getInt(0) << 8;
-            break;
-            case ModbusBridgeType::mb_int16:
-              writeData[jsonDataArrayPointer] = (int16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
-            break;
-            case ModbusBridgeType::mb_uint16:
-              writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
-            break;
-            case ModbusBridgeType::mb_float:
-              // TODO
-              errorcode = ModbusBridgeError::wrongtype;
-            break;
-            case ModbusBridgeType::mb_int32:
-              writeData[jsonDataArrayPointer++] = (int16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16);
-              writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
-            break;
-            case ModbusBridgeType::mb_uint32:
-              writeData[jsonDataArrayPointer++] = (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16);
-              writeData[jsonDataArrayPointer] = (uint16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
-            break;
-            case ModbusBridgeType::mb_raw:
-              writeData[jsonDataArrayPointer] = (uint8_t)jsonDataArray[jsonDataArrayPointer*2].getUInt(0) << 8 + (uint8_t)jsonDataArray[(jsonDataArrayPointer*2)+1].getUInt(0);
-            break;
-            case ModbusBridgeType::mb_hex:
-              writeData[jsonDataArrayPointer] = (uint8_t)jsonDataArray[jsonDataArrayPointer*2].getUInt(0) << 8 + (uint8_t)jsonDataArray[(jsonDataArrayPointer*2)+1].getUInt(0);
-            break;
-            default:
-              errorcode = ModbusBridgeError::wrongtype;
-            break;
+            writeData[jsonDataArrayPointer / 15] = 0;
           }
+          // Swap low and high bytes according to modbus specification
+          uint16_t bitValue = (jsonDataArray[jsonDataArrayPointer].getUInt(0) == 1) ? 1 : 0;
+          uint8_t bitPointer = (jsonDataArrayPointer % 16) + 8;
+          if (bitPointer > 15) bitPointer -= 16;
+
+          writeData[jsonDataArrayPointer / 16] += bitValue << bitPointer;
+        }
+        break;
+
+        case ModbusBridgeType::mb_int8:
+          if (jsonDataArrayPointer % 2)
+            writeData[jsonDataArrayPointer / 2] += (int8_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
+          else
+            writeData[jsonDataArrayPointer / 2] = (int8_t)jsonDataArray[jsonDataArrayPointer / 2].getInt(0) << 8;
+          if (modbusBridge.dataCount != writeDataSize / 2) errorcode = ModbusBridgeError::wrongcount;
+          break;
+        
+        case ModbusBridgeType::mb_hex:
+        case ModbusBridgeType::mb_raw:
+        case ModbusBridgeType::mb_uint8:
+          if (jsonDataArrayPointer % 2)
+            writeData[jsonDataArrayPointer / 2] += (uint8_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
+          else
+            writeData[jsonDataArrayPointer / 2] = (uint8_t)jsonDataArray[jsonDataArrayPointer].getUInt(0) << 8;
+          if (modbusBridge.dataCount != writeDataSize / 2) errorcode = ModbusBridgeError::wrongcount;
+          break;
+        
+        case ModbusBridgeType::mb_int16:
+          writeData[jsonDataArrayPointer] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0)) 
+            : (int16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
+          break;
+        
+        case ModbusBridgeType::mb_uint16:
+          writeData[jsonDataArrayPointer] = (uint16_t)swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0));
+          break;
+        
+        case ModbusBridgeType::mb_int32:
+          writeData[(jsonDataArrayPointer * 2)] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0)) 
+            : (int16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16);
+          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16) 
+            : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0));
+          break;
+        
+        case ModbusBridgeType::mb_uint32:
+          writeData[(jsonDataArrayPointer * 2)] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0)) 
+            : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16);
+          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16) 
+            : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0));
+          break;
+        
+        case ModbusBridgeType::mb_float:
+          // TODO
+        default:
+          errorcode = ModbusBridgeError::wrongtype;
+          break;
         }
       }
+    }
+
+    // Adapt data according to modbus protocol
+    if (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil)
+    {
+      writeData[0] = writeData[0] ? 0xFF00 : 0x0000; // High Byte
     }
   }
 
@@ -774,22 +890,13 @@ void CmndModbusBridgeSend(void)
     return;
   }
 
-  // Adapt data according to modbus protocol
-  for (uint8_t writeDataPointer = 0; writeDataPointer < modbusBridge.dataCount; writeDataPointer++)
-  {
-    // For function code 5, on and off are 0xFF00 and 0x0000, not 1 and 0      
-    if (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil)
-    {
-      writeData[writeDataPointer] = writeData[writeDataPointer] ? 0xFF00 : 0x0000; 
-    }
-  }
-
   // If writing a single coil or single register, the register count is always 1. We also prevent writing data out of range
   if ((modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil) || (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleRegister))
     modbusBridge.dataCount = 1;
 
-  uint8_t error = tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.dataCount, writeData);
-  if (error) AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver send error %u"), error);
+  uint8_t error = tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.dataCount, writeData, modbusBridge.count);
+  if (error)
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver send error %u"), error);
   free(writeData);
   ResponseCmndDone();
 }

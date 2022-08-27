@@ -55,7 +55,7 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   return result;
 }
 
-uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers)
+uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers, uint16_t bit_count)
 {
   uint8_t *frame;
   uint8_t framepointer = 0;
@@ -97,9 +97,19 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   }
   else if ((function_code == 15) || (function_code == 16))
   {
-    frame[framepointer++] = (uint8_t)(register_count >> 8);   // MSB
-    frame[framepointer++] = (uint8_t)(register_count);        // LSB
+    if (function_code == 15)
+    {
+      frame[framepointer++] = (uint8_t)(bit_count >> 8);   // MSB
+      frame[framepointer++] = (uint8_t)(bit_count);        // LSB
+    }
+    else
+    {
+      frame[framepointer++] = (uint8_t)(register_count >> 8);   // MSB
+      frame[framepointer++] = (uint8_t)(register_count);        // LSB
+    }
+    
     frame[framepointer++] = register_count * 2;
+
     if (registers == NULL) 
     {
       free(frame);
