@@ -383,7 +383,6 @@ void ModbusBridgeHandle(void)
       else if ((buffer[1] > 0) && (buffer[1] < 7)) // Read Registers
       {
         uint8_t dataOffset = 3;
-        if (buffer[1] == 6) dataOffset = 4;
         Response_P(PSTR("{\"" D_JSON_MODBUS_RECEIVED "\":{"));
         ResponseAppend_P(PSTR("\"" D_JSON_MODBUS_DEVICE_ADDRESS "\":%d,"), buffer[0]);
         ResponseAppend_P(PSTR("\"" D_JSON_MODBUS_FUNCTION_CODE "\":%d,"), buffer[1]);
@@ -906,7 +905,8 @@ void CmndModbusBridgeSend(void)
           break;
         
         case ModbusBridgeType::mb_uint16:
-          writeData[jsonDataArrayPointer] = (uint16_t)swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0));
+          writeData[jsonDataArrayPointer] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0)) 
+            : (int16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
           break;
         
         case ModbusBridgeType::mb_int32:
