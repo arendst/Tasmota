@@ -646,13 +646,14 @@ void ModbusTCPHandle(void)
           {
             writeData[dataPointer] = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte+(dataPointer*2)]) << 8) 
                             | ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + 1 + (dataPointer*2)]));
+            AddLog(LOG_LEVEL_DEBUG_MORE, "%d=%04X", dataPointer, writeData[dataPointer]);
           }
         }
 
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus Transactionid:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, sendCount:%d, recvCount:%d"),
                modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, dataSendCount, modbusBridge.dataCount);
 
-        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, modbusBridge.dataCount, writeData, dataSendCount);
+        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, dataSendCount, writeData);
 
         free(writeData);
       }
