@@ -34,9 +34,15 @@
  *   ModbusSend {"deviceaddress": 1, "functioncode": 3, "startaddress": 1, "type":"uint16", "count":2}
  *
  *   -- Write multiple coils --
- *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"uint16", "count":4, "values":[1,2,3,4]}
+ *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"bit", "count":4, "values":[1,0,1,1]}
  * 
- * Info for modbusBridgeTCPServer: https://ipc2u.com/articles/knowledge-base/detailed-description-of-the-modbus-tcp-protocol-with-command-examples/
+ * Info for modbusBridgeTCPServer: 
+ *    https://ipc2u.com/articles/knowledge-base/detailed-description-of-the-modbus-tcp-protocol-with-command-examples/
+ * 
+ * Info for modbus serial communications:
+ *    https://ozeki.hu/p_5879-mobdbus-function-code-4-read-input-registers.html
+ *    https://www.modbustools.com/modbus.html
+ *    https://ipc2u.com/articles/knowledge-base/modbus-rtu-made-simple-with-detailed-descriptions-and-examples/
 \*********************************************************************************************/
 
 #define XDRV_63 63
@@ -243,7 +249,8 @@ void ModbusBridgeHandle(void)
     if (modbusBridge.byteCount == 0) modbusBridge.byteCount = modbusBridge.dataCount * 2;
     buffer = (uint8_t *)malloc(9 + modbusBridge.byteCount); // Addres(1), Function(1), Length(1), Data(1..n), CRC(2)
     memset(buffer, 0, 9 + modbusBridge.byteCount);
-    uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, modbusBridge.byteCount);
+    uint32_t error = tasmotaModbus->ReceiveBuffer(buffer, 0, modbusBridge.byteCount);
+    modbusBridge.byteCount = 0;
 
 #ifdef USE_MODBUS_BRIDGE_TCP
     for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
@@ -376,6 +383,7 @@ void ModbusBridgeHandle(void)
       else if ((buffer[1] > 0) && (buffer[1] < 7)) // Read Registers
       {
         uint8_t dataOffset = 3;
+        if (buffer[1] == 6) dataOffset = 4;
         Response_P(PSTR("{\"" D_JSON_MODBUS_RECEIVED "\":{"));
         ResponseAppend_P(PSTR("\"" D_JSON_MODBUS_DEVICE_ADDRESS "\":%d,"), buffer[0]);
         ResponseAppend_P(PSTR("\"" D_JSON_MODBUS_FUNCTION_CODE "\":%d,"), buffer[1]);
@@ -641,45 +649,55 @@ void ModbusTCPHandle(void)
         uint8_t mbfunctioncode = (uint8_t)modbusBridgeTCP.tcp_buf[7];
         uint16_t mbstartaddress = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[8]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[9]));
         uint16_t *writeData = NULL;
-        uint16_t bitCount = 0;
-        uint16_t registerCount = 0;
+        uint16_t count = 0;
 
         modbusBridgeTCP.tcp_transaction_id = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[0]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[1]));
 
         if (mbfunctioncode <= 2)
         {
           // Odd number of bytes for registers is not supported at this moment (TasmotaModbus reads registers (words) not bytes)
-          registerCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
-          modbusBridge.byteCount = ((registerCount - 1) >> 3) + 1; 
-          modbusBridge.dataCount = ((registerCount - 1) >> 4) + 1; 
+          count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+          modbusBridge.byteCount = ((count - 1) >> 3) + 1; 
+          modbusBridge.dataCount = ((count - 1) >> 4) + 1; 
         }
         else if (mbfunctioncode <= 4)
         {
-          registerCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
-          modbusBridge.byteCount = registerCount * 2;
-          modbusBridge.dataCount = registerCount;
+          count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+          modbusBridge.byteCount = count * 2;
+          modbusBridge.dataCount = count;
         }
         else
         {
           // For functioncode 15 & 16 ignore bytecount, tasmotaModbus does calculate this
           uint8_t dataStartByte = mbfunctioncode <= 6 ? 10 : 13;
-          registerCount = (buf_len - dataStartByte) / 2;
+          uint16_t byteCount = (buf_len - dataStartByte);
           modbusBridge.byteCount = 2;
           modbusBridge.dataCount = 1;
-          writeData = (uint16_t *)malloc(registerCount);
-          if (mbfunctioncode == 15) bitCount = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
-          for (uint8_t dataPointer = 0; dataPointer < registerCount; dataPointer++)
+
+          writeData = (uint16_t *)malloc((byteCount / 2)+1);
+          
+          if ((mbfunctioncode == 15) || (mbfunctioncode == 16)) count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
+          else count = 1;
+          
+          for (uint16_t dataPointer = 0; dataPointer < byteCount; dataPointer++)
           {
-            writeData[dataPointer] = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte+(dataPointer*2)]) << 8) 
-                            | ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + 1 + (dataPointer*2)]));
-            AddLog(LOG_LEVEL_DEBUG_MORE, "%d=%04X", dataPointer, writeData[dataPointer]);
+            if (dataPointer % 2 == 0)
+            {
+              writeData[dataPointer / 2] = (uint16_t)(((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + dataPointer]) << 8);
+              AddLog(LOG_LEVEL_DEBUG_MORE, "%d=%04X", dataPointer/2, writeData[dataPointer/2]);
+            }
+            else
+            { 
+              writeData[dataPointer / 2] |= ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + dataPointer]);
+              AddLog(LOG_LEVEL_DEBUG_MORE, "%d=%04X", dataPointer/2, writeData[dataPointer/2]);
+            }
           }
         }
 
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, registerCount:%d, recvCount:%d bitCount:%d bytecount:%d"),
-               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, registerCount, modbusBridge.dataCount, bitCount, modbusBridge.byteCount);
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, count:%d, recvCount:%d"),
+               modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, count, modbusBridge.dataCount);
 
-        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, registerCount, writeData, bitCount, modbusBridge.byteCount);
+        tasmotaModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, count, writeData);
 
         free(writeData);
       }
@@ -731,7 +749,8 @@ void CmndModbusBridgeSend(void)
   if (strcmp(stype, "int8") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int8;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
+    if (bitMode) modbusBridge.byteCount = (modbusBridge.count / 8) + 1;
   }
   else if (strcmp(stype, "int16") == 0)
   {
@@ -741,12 +760,12 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "int32") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_int32;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : 2 * modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : 2 * modbusBridge.count;
   }
   else if ((strcmp(stype, "uint8") == 0))
   {
     modbusBridge.type = ModbusBridgeType::mb_uint8;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if ((strcmp(stype, "uint16") == 0) || (strcmp(stype, "") == 0)) // Default is uint16
   {
@@ -756,27 +775,27 @@ void CmndModbusBridgeSend(void)
   else if (strcmp(stype, "uint32") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_uint32;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : 2 * modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : 2 * modbusBridge.count;
   }
   else if (strcmp(stype, "float") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_float;
-    modbusBridge.dataCount = bitMode ? 2 * modbusBridge.count : modbusBridge.dataCount = modbusBridge.count;
+    modbusBridge.dataCount = bitMode ? 2 * modbusBridge.count : modbusBridge.count;
   }
   else if (strcmp(stype, "raw") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_raw;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if (strcmp(stype, "hex") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_hex;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : ((modbusBridge.count - 1) / 2) + 1;
   }
   else if (strcmp(stype, "bit") == 0)
   {
     modbusBridge.type = ModbusBridgeType::mb_bit;
-    modbusBridge.dataCount = bitMode ? modbusBridge.dataCount = modbusBridge.count : ((modbusBridge.count - 1) / 16) + 1 ;
+    modbusBridge.dataCount = bitMode ? modbusBridge.count : ((modbusBridge.count - 1) / 16) + 1 ;
   }
   else
     errorcode = ModbusBridgeError::wrongtype;
@@ -785,7 +804,7 @@ void CmndModbusBridgeSend(void)
   // of bit to write, so calculate the number data bytes to write.
   if (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeMultipleCoils)
   {
-    modbusBridge.dataCount = (((modbusBridge.count - 1) / 16) + 1);
+    modbusBridge.dataCount = modbusBridge.count;
   }
 
   // Prevent buffer overflow due to usage of to many registers
@@ -825,6 +844,7 @@ void CmndModbusBridgeSend(void)
     case ModbusBridgeFunctionCode::mb_writeSingleRegister:
     case ModbusBridgeFunctionCode::mb_writeSingleCoil:
       if (modbusBridge.count != 1) errorcode = ModbusBridgeError::wrongcount;
+    break;
     case ModbusBridgeFunctionCode::mb_writeMultipleRegisters:
       if (modbusBridge.count != writeDataSize) errorcode = ModbusBridgeError::wrongcount;
     break;
@@ -931,10 +951,14 @@ void CmndModbusBridgeSend(void)
   if ((modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleCoil) || (modbusBridge.functionCode == ModbusBridgeFunctionCode::mb_writeSingleRegister))
     modbusBridge.dataCount = 1;
 
-  uint8_t error = tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.dataCount, writeData, modbusBridge.count);
-  if (error)
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver send error %u"), error);
+  uint8_t error = tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.dataCount, writeData);
   free(writeData);
+ 
+  if (error)
+  {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver send error %u"), error);
+    return;
+  } 
   ResponseCmndDone();
 }
 

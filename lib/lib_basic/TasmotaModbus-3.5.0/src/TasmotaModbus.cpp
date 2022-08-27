@@ -60,11 +60,14 @@ int TasmotaModbus::Begin(long speed, uint32_t config)
   return result;
 }
 
-uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers, uint16_t bit_count, uint16_t byte_count)
+uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t count, uint16_t *write_data)
 {
   uint8_t *frame;
   uint8_t framepointer = 0;
-  if (byte_count == 0) byte_count = register_count * 2;
+
+  uint16_t byte_count = count * 2; // In register mode count is nr of registers (2 bytes)
+  if ((function_code == 1) || (function_code == 2) || (function_code == 15)) byte_count = (count / 8) + 1; // In bitmode count is nr of bits
+
   if (function_code < 7)
   {
     frame = (uint8_t *)malloc(8); // Addres(1), Function(1), Start/Coil Address(2), Registercount or Data (2), CRC(2)
@@ -82,52 +85,44 @@ uint8_t TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint1
   frame[framepointer++] = (uint8_t)(start_address);        // LSB
   if (function_code < 5)
   {
-    frame[framepointer++] = (uint8_t)(register_count >> 8);  // MSB
-    frame[framepointer++] = (uint8_t)(register_count);       // LSB
+    frame[framepointer++] = (uint8_t)(count >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(count);       // LSB
   }
   else if ((function_code == 5) || (function_code == 6))
   {
-    if (registers == NULL) 
+    if (write_data == NULL) 
     {
       free(frame);
       return 13; // Register data not specified
     }
-    if (register_count != 1)
+    if (count != 1)
     {
       free(frame);
       return 12; // Wrong register count
     }
-    frame[framepointer++] = (uint8_t)(registers[0] >> 8);  // MSB
-    frame[framepointer++] = (uint8_t)(registers[0]);       // LSB
+    frame[framepointer++] = (uint8_t)(write_data[0] >> 8);  // MSB
+    frame[framepointer++] = (uint8_t)(write_data[0]);       // LSB
   }
   else if ((function_code == 15) || (function_code == 16))
   {
-    if (function_code == 15)
-    {
-      frame[framepointer++] = (uint8_t)(bit_count >> 8);   // MSB
-      frame[framepointer++] = (uint8_t)(bit_count);        // LSB
-    }
-    else
-    {
-      frame[framepointer++] = (uint8_t)(register_count >> 8);   // MSB
-      frame[framepointer++] = (uint8_t)(register_count);        // LSB
-    }
+    frame[framepointer++] = (uint8_t)(count >> 8);   // MSB
+    frame[framepointer++] = (uint8_t)(count);        // LSB
     
-    frame[framepointer++] = register_count * 2;
+    frame[framepointer++] = byte_count;
 
-    if (registers == NULL) 
+    if (write_data == NULL) 
     {
       free(frame);
       return 13; // Register data not specified
     }
-    if (register_count == 0)
+    if (count == 0)
     {
       free(frame);
       return 12; // Wrong register count
     }
-    for (int bytepointer = 0; bytepointer < byte_count; bytepointer++)
+    for (uint16_t bytepointer = 0; bytepointer < byte_count; bytepointer++)
     {
-      frame[framepointer++] = (uint8_t)(registers[bytepointer/2] >> (byte_count % 2 ? 0 : 1));  // MSB, LSB, MSB ....
+      frame[framepointer++] = (uint8_t)(write_data[bytepointer/2] >> (byte_count % 2 ? 0 : 1));  // MSB, LSB, MSB ....
     }
   }
   else 

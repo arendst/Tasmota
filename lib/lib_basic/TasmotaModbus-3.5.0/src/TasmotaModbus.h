@@ -53,11 +53,12 @@ class TasmotaModbus : public TasmotaSerial {
      * 13 = Register data not specified
      * 14 = To many registers
      */
-    uint8_t Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t register_count, uint16_t *registers = NULL, uint16_t bit_count = 0, uint16_t byte_count = 0);
-    // Registercount is nr of registers for function code 3,4 and 16, 1 for function code 5 & 6 and nr of coils/inputs for function code 1,2 and 15
-    // Bitcount is used for function code 15 to specify how many bits have to be set
-    // Bytecount is used for function code 1,2 and 15 to specify how many bytes have to be written
+    uint8_t Send(uint8_t device_address, uint8_t function_code, uint16_t start_address, uint16_t count, uint16_t *writeData = NULL);
+    // Count is nr of registers for function code 3,4,6 and 16, nr of coils/inputs for function code 1,2 and 15 and must be 1 for function code 5 and 6
+
     uint8_t ReceiveBuffer(uint8_t *buffer, uint8_t register_count, uint16_t byte_count = 0);
+    // Bytecount is mandatory for functioncode 1 and 2 because they can return an odd number of bytes.
+
     uint8_t Receive8BitRegister(uint8_t *value);
     uint8_t Receive16BitRegister(uint16_t *value);
     uint8_t Receive32BitRegister(float *value);
