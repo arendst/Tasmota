@@ -224,13 +224,13 @@ void ButtonInit(void) {
 //        Button.last_state[i] = digitalRead(Pin(GPIO_KEY1, i));  // Set global now so doesn't change the saved power state on first button check
         Button.last_state[i] = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
       }
-      Button.virtual_state[i] = Button.last_state[i];
     }
 #ifdef USE_ADC
     else if (PinUsed(GPIO_ADC_BUTTON, i) || PinUsed(GPIO_ADC_BUTTON_INV, i)) {
       Button.present++;
     }
 #endif  // USE_ADC
+    Button.virtual_state[i] = Button.last_state[i];
   }
   if (Button.present) {
     Button.first_change = true;

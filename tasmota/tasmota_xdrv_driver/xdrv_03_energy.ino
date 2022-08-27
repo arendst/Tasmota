@@ -266,9 +266,9 @@ void EnergyUpdateToday(void) {
   }
 
   if (delta_sum_balanced > 0) {
-    Energy.daily_sum_import_balanced += (float) delta_sum_balanced / 100000;
+    Energy.daily_sum_import_balanced += (float)delta_sum_balanced / 100000;
   } else {
-    Energy.daily_sum_export_balanced += (float) abs(delta_sum_balanced) / 100000;
+    Energy.daily_sum_export_balanced += (float)abs(delta_sum_balanced) / 100000;
   }
 
   if (RtcTime.valid){ // We calc the difference only if we have a valid RTC time.
