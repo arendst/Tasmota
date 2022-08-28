@@ -1830,15 +1830,18 @@ void CmndSerialConfig(void)
 
 void CmndSerialBuffer(void) {
   // Allow non-pesistent serial receive buffer size change
-  //   between 256 (default) and 520 (INPUT_BUFFER_SIZE) characters
+  //   between MIN_INPUT_BUFFER_SIZE and MAX_INPUT_BUFFER_SIZE characters
   size_t size = 0;
   if (XdrvMailbox.data_len > 0) {
     size = XdrvMailbox.payload;
-    if (XdrvMailbox.payload < 256) {
-      size = 256;
-    }
-    if ((1 == XdrvMailbox.payload) || (XdrvMailbox.payload > INPUT_BUFFER_SIZE)) {
+    if (1 == XdrvMailbox.payload) {
       size = INPUT_BUFFER_SIZE;
+    }
+    else if (XdrvMailbox.payload < MIN_INPUT_BUFFER_SIZE) {
+      size = MIN_INPUT_BUFFER_SIZE;
+    }
+    else if (XdrvMailbox.payload > MAX_INPUT_BUFFER_SIZE) {
+      size = MAX_INPUT_BUFFER_SIZE;
     }
     Serial.setRxBufferSize(size);
   }
