@@ -46,6 +46,8 @@ struct Tm1621 {
   uint8_t pin_wr;
   uint8_t state;
   uint8_t device;
+  uint8_t temp_sensors;
+  uint8_t temp_sensors_rotate;
   bool celsius;
   bool fahrenheit;
   bool humidity;
@@ -223,6 +225,38 @@ void TM1621Init(void) {
   TM1621SendRows();
 }
 
+float TM1621GetTemperatureValues(uint32_t index) {
+  char *start = ResponseData();
+  int data_start = ResponseLength();
+
+  XsnsCall(FUNC_JSON_APPEND);
+  XdrvCall(FUNC_JSON_APPEND);
+
+  if (data_start == ResponseLength()) { return NAN; }
+
+  float value = NAN;
+  uint32_t idx = 0;
+  char *data = start;  // Invalid JSON ,"HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}
+  while (data) {
+    data = strstr_P(data, PSTR(D_JSON_TEMPERATURE));
+    if (data) {
+      idx++;
+      data += 13;      // strlen("Temperature") + 2;
+      float new_value = CharToFloat(data);
+      if (idx == index) {
+        value = new_value;
+        if (Tm1621.temp_sensors) {
+          break;
+        }
+      }
+    }
+  }
+  if (0 == Tm1621.temp_sensors) {
+    Tm1621.temp_sensors = idx;
+  }
+  return value;
+}
+
 void TM1621Show(void) {
   if (TM1621_POWR316D == Tm1621.device) {
     static uint32_t display = 0;
@@ -250,8 +284,26 @@ void TM1621Show(void) {
     snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("    "));
     if (!isnan(TasmotaGlobal.temperature_celsius)) {
       float temperature = ConvertTempToFahrenheit(TasmotaGlobal.temperature_celsius);
+      if (TasmotaGlobal.humidity == 0.0f) {  // No humidity so check for more temperature sensors
+        if (0 == Tm1621.temp_sensors) {
+          TM1621GetTemperatureValues(100);   // Find max number of temperature sensors
+        }
+        if (Tm1621.temp_sensors > 1) {
+          if (Tm1621.temp_sensors > 2) {
+            Tm1621.temp_sensors_rotate++;
+            if (Tm1621.temp_sensors_rotate > Tm1621.temp_sensors) {
+              Tm1621.temp_sensors_rotate = 1;
+            }
+            temperature = TM1621GetTemperatureValues(Tm1621.temp_sensors_rotate);
+            ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%d"), Tm1621.temp_sensors_rotate);
+          } else {
+            float temperature2 = TM1621GetTemperatureValues(2);
+            ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &temperature2);
+          }
+        }
+      }
       ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &temperature);
-      if (Settings->flag.temperature_conversion) {                 // SetOption8 - Switch between Celsius or Fahrenheit
+      if (Settings->flag.temperature_conversion) {  // SetOption8 - Switch between Celsius or Fahrenheit
         Tm1621.fahrenheit = true;
       } else {
         Tm1621.celsius = true;
