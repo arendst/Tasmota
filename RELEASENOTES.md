@@ -121,11 +121,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
 - TasmotaModbus library from v3.5.0 to v3.6.0 [#16351](https://github.com/arendst/Tasmota/issues/16351)
 - Button debouncing V3 by adopting switch debounce code [#16339](https://github.com/arendst/Tasmota/issues/16339)
+- Thermostat max allowed temperature from 100 to 200C [#16363](https://github.com/arendst/Tasmota/issues/16363)
 
 ### Fixed
 - RTC not detected when lights are present [#16242](https://github.com/arendst/Tasmota/issues/16242)
 - DNS lookup for .local domains [#16273](https://github.com/arendst/Tasmota/issues/16273)
 - Button response delay regression from v12.0.2.4 [#16319](https://github.com/arendst/Tasmota/issues/16319)
 - Lost module name in GUI regression from v12.0.2.4 - 20220803 [#16324](https://github.com/arendst/Tasmota/issues/16324)
+- Removed whitespace from JSON values with no decimals [#16365](https://github.com/arendst/Tasmota/issues/16365)
+
 
 ### Removed
