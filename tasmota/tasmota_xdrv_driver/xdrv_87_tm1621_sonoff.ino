@@ -242,9 +242,8 @@ float TM1621GetTemperatureValues(uint32_t index) {
     if (data) {
       idx++;
       data += 13;      // strlen("Temperature") + 2;
-      float new_value = CharToFloat(data);
       if (idx == index) {
-        value = new_value;
+        value = CharToFloat(data);
         if (Tm1621.temp_sensors) {
           break;
         }
