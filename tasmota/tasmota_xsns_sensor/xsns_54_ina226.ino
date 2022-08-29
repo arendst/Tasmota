@@ -94,6 +94,7 @@ typedef struct Ina226Info_tag {
   uint16_t config;
   uint8_t present : 1;
   float i_lsb;
+  float vbus_lsb;
 } Ina226Info_t;
 
 /*
@@ -267,6 +268,7 @@ void Ina226Init()
     //AddLog( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings->ina226_i_fs[i]);
     p->i_lsb = (((float) Settings->ina226_i_fs[i])/10.0f)/32768.0f;
     //_debug_fval("i_lsb: %s", p->i_lsb, 7);
+    p->vbus_lsb = 40.96 / 32768.0; // default 40.96V full scale on 32768 points = 0.00125
 
     // Get shunt resistor value in micro ohms
     uint32_t r_shunt_uohms = _expand_r_shunt(Settings->ina226_r_shunt[i]);
@@ -295,7 +297,7 @@ float Ina226ReadBus_v(uint8_t device)
   uint8_t addr = Ina226Info[device].address;
   int16_t reg_bus_v = I2cReadS16( addr, INA226_REG_BUSVOLTAGE);
 
-  float result = ((float) reg_bus_v) * 0.00125f;
+  float result = ((float) reg_bus_v) * Ina226Info[device].vbus_lsb;
 
   return result;
 
@@ -384,6 +386,7 @@ bool Ina226CommandSensor()
   uint8_t i, param_count, device, p1 = XdrvMailbox.payload;
   uint32_t r_shunt_uohms;
   uint16_t compact_r_shunt_uohms;
+  float vbus_fs;
   //AddLog( LOG_LEVEL_NONE, "Command received: %d", XdrvMailbox.payload);
   //AddLog( LOG_LEVEL_NONE, "Command data received: %s", XdrvMailbox.data);
 
@@ -455,6 +458,12 @@ bool Ina226CommandSensor()
         show_config = true;
         break;
 
+      case 3: // Set full scale VBus
+        vbus_fs = CharToFloat(params[1]);
+        Ina226Info[device].vbus_lsb = vbus_fs / 32768.0;
+        AddLog(LOG_LEVEL_INFO, PSTR("INA226[%d]: VBusFS=%_f, LSB=%_f"), device, vbus_fs, Ina226Info[device].vbus_lsb);
+        show_config = true;
+        break;
 
       default:
         serviced = false;
@@ -467,15 +476,18 @@ bool Ina226CommandSensor()
   if (show_config) {
     char shunt_r_str[16];
     char fs_i_str[16];
+    char fs_vbus_str[16];
 
     // Shunt resistance is stored in EEPROM in microohms. Convert to ohms
     r_shunt_uohms = _expand_r_shunt(Settings->ina226_r_shunt[device]);
     dtostrfd(((float)r_shunt_uohms)/1000000.0f, 6, shunt_r_str);
     // Full scale current is stored in EEPROM in tenths of an amp. Convert to amps.
     dtostrfd(((float)Settings->ina226_i_fs[device])/10.0f, 1, fs_i_str);
+    // Full scale vbus is volatile (saved in RAM)
+    dtostrfd((Ina226Info[device].vbus_lsb*32768.0), 2, fs_vbus_str);
     // Send json response
-    Response_P(PSTR("{\"Sensor54-device-settings-%d\":{\"SHUNT_R\":%s,\"FS_I\":%s}}"),
-      device + 1, shunt_r_str, fs_i_str);
+    Response_P(PSTR("{\"Sensor54-device-settings-%d\":{\"SHUNT_R\":%s,\"FS_I\":%s\"FS_V\":%s}}"),
+      device + 1, shunt_r_str, fs_i_str, fs_vbus_str);
   }
 
   return serviced;
