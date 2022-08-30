@@ -41,6 +41,14 @@
  **/
 #define BE_USE_SINGLE_FLOAT             1           // use `float` not `double`
 
+/* Macro: BE_BYTES_MAX_SIZE
+ * Maximum size in bytes of a `bytes()` object.
+ * Putting too much pressure on the memory allocator can do
+ * harm, so we limit the maximum size.
+ * Default: 32kb
+ **/
+#define BE_BYTES_MAX_SIZE               (32*1024)   /* 32 kb default value */
+
 /* Macro: BE_USE_PRECOMPILED_OBJECT
  * Use precompiled objects to avoid creating these objects at
  * runtime. Enable this macro can greatly optimize RAM usage.

@@ -18,7 +18,6 @@
 #include <ctype.h>
 
 #define BYTES_DEFAULT_SIZE          28              // default pre-reserved size for buffer (keep 4 bytes for len/size)
-#define BYTES_MAX_SIZE              (32*1024)       // max 32Kb
 #define BYTES_OVERHEAD              4               // bytes overhead to be added when allocating (used to store len and size)
 #define BYTES_HEADROOM              8               // keep a natural headroom of 8 bytes when resizing
 
@@ -506,7 +505,7 @@ void m_write_attributes(bvm *vm, int rel_idx, const buf_impl * attr)
 void bytes_realloc(bvm *vm, buf_impl * attr, int32_t size)
 {
     if (!attr->fixed && size < 4) { size = 4; }
-    if (size > BYTES_MAX_SIZE) { size = BYTES_MAX_SIZE; }
+    if (size > vm->bytesmaxsize) { size = vm->bytesmaxsize; }
     size_t oldsize = attr->bufptr ? attr->size : 0;
     attr->bufptr = (uint8_t*) be_realloc(vm, attr->bufptr, oldsize, size);  /* malloc */
     attr->size = size;
