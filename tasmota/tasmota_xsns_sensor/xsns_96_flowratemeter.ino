@@ -25,11 +25,8 @@
 #define XSNS_96                       96
 
 
-
 #define FLOWRATEMETER_WEIGHT_AVG_SAMPLE   20  // number of samples for smooth weigted average
 #define FLOWRATEMETER_MIN_FREQ             1  // Hz
-
-#define D_UNIT_CUBIC_METER                  "m³"
 
 #define D_JSON_FLOWRATEMETER_RATE           "Rate"
 #define D_JSON_FLOWRATEMETER_VALUE          "Source"
@@ -239,7 +236,7 @@ void FlowRateMeterShow(bool json)
       WSContentSend_PD(PSTR("<td>%s{e}"), Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE));
 
       // Amount today
-      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME " Amount Today" "{m}&nbsp;</td>"));
+      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME " " D_FLOWRATEMETER_AMOUNT_TODAY "{m}&nbsp;</td>"));
       for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
         if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
           float amount_today = Settings->SensorBits1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
@@ -252,7 +249,7 @@ void FlowRateMeterShow(bool json)
       WSContentSend_PD(PSTR("<td>%s{e}"), Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS));
 
       // Duration today
-      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME " Duration Today" "{m}&nbsp;</td>"));
+      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME " " D_FLOWRATEMETER_DURATION_TODAY "{m}&nbsp;</td>"));
       for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
         if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
           float amount_today = Settings->SensorBits1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
