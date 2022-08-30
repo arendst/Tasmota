@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for SGP40 gas and air quality sensor (#16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt (#16351)
+- Support for Ethernet in ESP32 safeboot firmware
 
 ### Changed
 - TasmotaModbus library from v3.5.0 to v3.6.0 (#16351)
