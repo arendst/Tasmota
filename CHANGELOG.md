@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - TasmotaModbus library from v3.5.0 to v3.6.0 (#16351)
 - Button debouncing V3 by adopting switch debounce code (#16339)
 - Thermostat max allowed temperature from 100 to 200C (#16363)
+- Flowrate meter add flow amount/duration, show values in table format
 
 ### Fixed
 - Removed whitespace from JSON values with no decimals (#16365)
