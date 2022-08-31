@@ -317,6 +317,7 @@ public:
   // if suffix == 0, we don't care and find the first match
   Z_attribute & findOrCreateAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0);
   Z_attribute & findOrCreateAttribute(const char * name, uint8_t suffix = 0);
+  Z_attribute & findOrCreateCmd(uint16_t cluster, uint8_t cmd_id, bool direction, uint8_t suffix = 0);
   // always care about suffix
   Z_attribute & findOrCreateAttribute(const Z_attribute &attr);
   // replace attribute with new value, suffix does care
@@ -558,27 +559,25 @@ bool Z_attribute::equalsKey(const Z_attribute & attr2, bool ignore_key_suffix) c
 }
 
 bool Z_attribute::equalsId(uint16_t _cluster, uint16_t _attr_id, uint8_t suffix) const {
-  if (!key_is_str) {
-    if ((this->cluster == _cluster) && (this->attr_id == _attr_id) && (!this->key_is_cmd)) {
-      if (suffix) {
-        if (key_suffix == suffix) { return true; }
-      } else {
-        return true;
-      }
+  if (key_is_cmd || key_is_str) { return false; }
+  if ((this->cluster == _cluster) && (this->attr_id == _attr_id) && (!this->key_is_cmd)) {
+    if (suffix) {
+      if (key_suffix == suffix) { return true; }
+    } else {
+      return true;
     }
   }
   return false;
 }
 
 bool Z_attribute::equalsCmd(uint16_t _cluster, uint8_t _cmd_id, bool _direction, uint8_t suffix) const {
-  if (!key_is_str) {
-    uint16_t _attr_id = _cmd_id | (_direction ? 0x100 : 0x000);
-    if ((this->cluster == _cluster) && (this->attr_id == _attr_id) && (!this->key_is_cmd)) {
-      if (suffix) {
-        if (key_suffix == suffix) { return true; }
-      } else {
-        return true;
-      }
+  if (!key_is_cmd ||key_is_str) { return false; }
+  uint16_t _attr_id = _cmd_id | (_direction ? 0x100 : 0x000);
+  if ((this->cluster == _cluster) && (this->attr_id == _attr_id) && (!this->key_is_cmd)) {
+    if (suffix) {
+      if (key_suffix == suffix) { return true; }
+    } else {
+      return true;
     }
   }
   return false;
@@ -813,7 +812,7 @@ Z_attribute & Z_attribute_list::addAttributeCmd(uint16_t cluster, uint8_t cmd_id
   Z_attribute & attr = addToLast();
   attr.cluster = cluster;
   attr.attr_id = cmd_id | (direction ? 0x100 : 0);
-  attr.key_is_str = true;
+  attr.key_is_cmd = true;
   if (!suffix) { attr.key_suffix = countAttribute(attr.cluster, attr.attr_id); }
   else { attr.key_suffix = suffix; }
   return attr;
@@ -891,7 +890,7 @@ const Z_attribute * Z_attribute_list::findAttribute(const Z_attribute &attr) con
 
 const Z_attribute * Z_attribute_list::findAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix) const {
   for (const auto & attr : *this) {
-    if (attr.equalsId(cluster, attr_id, suffix)) { return &attr; }
+    if (attr.equalsId(cluster, attr_id, suffix) && !attr.key_is_cmd) { return &attr; }
   }
   return nullptr;
 }
@@ -916,6 +915,11 @@ Z_attribute & Z_attribute_list::findOrCreateAttribute(uint16_t cluster, uint16_t
   return found ? *found : addAttribute(cluster, attr_id, suffix);
 }
 
+Z_attribute & Z_attribute_list::findOrCreateCmd(uint16_t cluster, uint8_t cmd_id, bool direction, uint8_t suffix) {
+  Z_attribute * found = findAttributeCmd(cluster, cmd_id, direction, suffix);
+  return found ? *found : addAttributeCmd(cluster, cmd_id, direction, suffix);
+}
+
 const Z_attribute * Z_attribute_list::findAttribute(const char * name, uint8_t suffix) const {
   for (const auto & attr : *this) {
     if (attr.equalsKey(name, suffix)) { return &attr; }
@@ -938,7 +942,9 @@ Z_attribute & Z_attribute_list::findOrCreateAttribute(const char * name, uint8_t
 // same but passing a Z_attribute as key
 Z_attribute & Z_attribute_list::findOrCreateAttribute(const Z_attribute &attr) {
   Z_attribute & ret = attr.key_is_str ? findOrCreateAttribute(attr.key, attr.key_suffix)
-                                      : findOrCreateAttribute(attr.cluster, attr.attr_id, attr.key_suffix);
+                                      : attr.key_is_cmd ?
+                                            findOrCreateCmd(attr.cluster, attr.attr_id & 0xFF, attr.attr_id & 0x100 ? true : false, attr.key_suffix)
+                                          : findOrCreateAttribute(attr.cluster, attr.attr_id, attr.key_suffix);
   ret.key_suffix = attr.key_suffix;
   return ret;
 }
