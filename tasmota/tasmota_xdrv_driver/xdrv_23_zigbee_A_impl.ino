@@ -730,8 +730,17 @@ void CmndZbSend(void) {
   // parse "Device" and "Group"
   JsonParserToken val_device = root[PSTR(D_CMND_ZIGBEE_DEVICE)];
   if (val_device) {
-    zcl.shortaddr = zigbee_devices.parseDeviceFromName(val_device.getStr()).shortaddr;
-    if (!zcl.validShortaddr()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_INVALID_PARAM)); return; }
+    uint16_t parsed_shortaddr = BAD_SHORTADDR;
+    zcl.shortaddr = zigbee_devices.parseDeviceFromName(val_device.getStr(), &parsed_shortaddr).shortaddr;
+    if (!zcl.validShortaddr()) {
+      if (parsed_shortaddr != BAD_SHORTADDR) {
+        // we still got a short address
+        zcl.shortaddr = parsed_shortaddr;
+      } else {
+        ResponseCmndChar_P(PSTR(D_ZIGBEE_INVALID_PARAM));
+        return;
+      }
+    }
   }
   if (!zcl.validShortaddr()) {     // if not found, check if we have a group
     JsonParserToken val_group = root[PSTR(D_CMND_ZIGBEE_GROUP)];
@@ -759,6 +768,10 @@ void CmndZbSend(void) {
   if (!zcl.validEndpoint()) {                // after this, if it is still zero, then it's an error
       ResponseCmndChar_P(PSTR("Missing endpoint"));
       return;
+  }
+  // Special case for Green Power, if dstendpoint is 0xF2, then source endpoint should also be 0xF2
+  if (zcl.dstendpoint == 0xF2) {
+    zcl.srcendpoint = 0xF2;
   }
   // from here endpoint is valid and non-zero
   // cluster may be already specified or 0xFFFF
@@ -1517,6 +1530,7 @@ void CmndZbPermitJoin(void) {
 
 // ZNP Version
 #ifdef USE_ZIGBEE_ZNP
+  // put all routers in pairing mode
   SBuffer buf(34);
   buf.add8(Z_SREQ | Z_ZDO);             // 25
   buf.add8(ZDO_MGMT_PERMIT_JOIN_REQ);   // 36
@@ -1526,6 +1540,22 @@ void CmndZbPermitJoin(void) {
   buf.add8(0x00);                       // TCSignificance
 
   ZigbeeZNPSend(buf.getBuffer(), buf.len());
+
+  // send Green Power pairing mode
+  ZCLFrame zcl(4);   // message is 4 bytes max
+
+  zcl.cmd = 0x02;                       // GP Proxy Commissioning Mode
+  zcl.cluster = 0x0021;                 // GP cluster
+  zcl.shortaddr = 0xFFFC;               // Broadcast to all routers
+  zcl.srcendpoint = 0xF2;               // GP endpoint
+  zcl.dstendpoint = 0xF2;               // GP endpoint
+  zcl.needResponse = false;             // as per GP spec The Disable default response sub-field of the Frame Control Field of the ZCL header shall be set to 0b1."
+  zcl.clusterSpecific = true;           // command
+  zcl.direct = true;                    // broadcast so no need to discover routes
+  zcl.direction = true;                 // server to client
+  zcl.payload.add8(0x0B);               // Action=1, gpsCommissioningExitMode=0b101 (window expiration + GP Proxy Commissioning Mode)
+  zcl.payload.add16(duration);
+  zigbeeZCLSendCmd(zcl);
 
 #endif // USE_ZIGBEE_ZNP
 
