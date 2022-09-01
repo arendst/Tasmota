@@ -2232,7 +2232,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"
                                           ),
-                                          shortaddr, cluster, _srcendpoint,
+                                          shortaddr, cluster, srcendpoint,
                                           attr_list.toString().c_str());
 
     // send
@@ -2240,7 +2240,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     ZCLFrame zcl(buf.len());   // message is 4 bytes
     zcl.shortaddr = shortaddr;
     zcl.cluster = cluster;
-    zcl.dstendpoint = _srcendpoint;
+    zcl.dstendpoint = srcendpoint;
     zcl.cmd = ZCL_READ_ATTRIBUTES_RESPONSE;
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */

@@ -923,6 +923,8 @@ enum Z_App_Profiles {
   Z_PROF_TA = 0x0107,     // Telecom Applications
   Z_PROF_PHHC = 0x0108,   // Personal Home & Hospital Care
   Z_PROF_AMI = 0x0109,    // Advanced Metering Initiative
+  // Green Power
+  Z_PROF_GP = 0xa1e0,     // Green Power profile
 };
 
 enum Z_Device_Ids {
