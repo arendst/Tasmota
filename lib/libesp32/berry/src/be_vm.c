@@ -477,6 +477,7 @@ BERRY_API bvm* be_vm_new(void)
     be_gc_setpause(vm, 1);
     be_loadlibs(vm);
     vm->compopt = 0;
+    vm->bytesmaxsize = BE_BYTES_MAX_SIZE;
     vm->obshook = NULL;
     vm->ctypefunc = NULL;
 #if BE_USE_PERF_COUNTERS

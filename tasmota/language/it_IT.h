@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 19.07.2022
+ * Updated until v9.4.0.1 - Last update 31.08.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -934,6 +934,7 @@
 #define D_UNIT_WATT_METER_QUADRAT         "W/m²"
 #define D_UNIT_LITER_PER_MINUTE           "l/min"
 #define D_UNIT_CUBICMETER_PER_HOUR        "m³/ora"
+#define D_UNIT_CUBIC_METER                "m³"
 
 #define D_NEW_ADDRESS          "Imposta indirizzo a"
 #define D_OUT_OF_RANGE         "Fuori intervallo"
@@ -1076,7 +1077,9 @@
 #define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
 
 // xsns_96_flowratemeter.ino
-#define D_FLOWRATEMETER_NAME "Portata"
+#define D_FLOWRATEMETER_NAME              "Portata"
+#define D_FLOWRATEMETER_AMOUNT_TODAY      "Valore odierno"
+#define D_FLOWRATEMETER_DURATION_TODAY    "Durata odierna"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names

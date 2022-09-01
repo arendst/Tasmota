@@ -263,6 +263,9 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
         while ((c = be_char2hex(*str++)) >= 0) {
             sum = sum * 16 + c;
         }
+        if (endstr) {
+            *endstr = str - 1;
+        }
         return sum;
     } else {
         /* decimal literal */
