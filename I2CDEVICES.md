@@ -103,4 +103,5 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   66  | USE_PCF85363        | xsns_99 | PCF85363 | 0x51        | Real time clock
   67  | USE_DS3502          | xdrv_61 | DS3502   | 0x28 - 0x2B | Digital potentiometer
   68  | USE_HYT             | xsns_97 | HYTxxx   | 0x28        | Temperature and Humidity sensor
-  69  | USE_SGP40           | xsns_98 | SGP40    | 0x59        | Gas (TVOC) and air quality 
+  69  | USE_SGP40           | xsns_98 | SGP40    | 0x59        | Gas (TVOC) and air quality
+  70  | USE_LUXV30B         | xsns_99 | LUXV30B  | 0x4A        | DFRobot SEN0390 V30B lux sensor
