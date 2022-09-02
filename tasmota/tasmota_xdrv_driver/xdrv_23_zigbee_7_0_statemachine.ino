@@ -473,7 +473,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredCoord)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)          // set any failure to ABORT
     ZI_SEND(ZBS_STARTUPFROMAPP)                   // start coordinator
-    ZI_WAIT_RECV(5000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
+    ZI_WAIT_RECV(10000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
     ZI_WAIT_UNTIL_FUNC(20000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started, max 20s
     ZI_GOTO(ZIGBEE_LABEL_COORD_STARTED)
 
@@ -493,7 +493,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(2000, ZBR_W_BDB_CHANN_OK)
     // all is good, we can start
     ZI_SEND(ZBS_BDB_START_COMMIS)                 // start coordinator
-    ZI_WAIT_RECV(5000, ZBR_BDB_START_COMMIS)      // wait for sync ack of command
+    ZI_WAIT_RECV(10000, ZBR_BDB_START_COMMIS)      // wait for sync ack of command
     ZI_WAIT_UNTIL_FUNC(20000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started, max 20s
 
   // ======================================================================
