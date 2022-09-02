@@ -734,7 +734,7 @@ public:
   // other status - device wide data is 8 bytes
   // START OF DEVICE WIDE DATA
   uint32_t              last_seen;          // Last seen time (epoch)
-  uint32_t              batt_last_seen;     // Time when we last received battery status (epoch), 0 means unknown, 0xFFFFFFFF means that the device has no battery
+  uint32_t              batt_last_seen;     // Time when we last received battery status (epoch), 0 means unknown, 0xFFFFFFFF means that the device has no battery, 0xFFFFFFFE means the device is Green Power, all values above 0xFFFFFFF0 are reserved
   uint32_t              batt_last_probed;   // Time when the device was last probed for batteyr values
   uint8_t               lqi;                // lqi from last message, 0xFF means unknown
   uint8_t               batt_percent;       // battery percentage (0..100), 0xFF means unknwon
@@ -783,7 +783,7 @@ public:
   inline bool validLqi(void)            const { return 0xFF != lqi; }
   inline bool validBatteryPercent(void) const { return 0xFF != batt_percent; }
   inline bool validLastSeen(void)       const { return 0x0 != last_seen; }
-  inline bool validBattLastSeen(void)   const { return (0x0 != batt_last_seen) && (0xFFFFFFFF != batt_last_seen); }
+  inline bool validBattLastSeen(void)   const { return (0x0 != batt_last_seen) && (batt_last_seen < 0xFFFFFFF0); }
 
   inline void setReachable(bool _reachable)   { reachable = _reachable; }
   inline bool getReachable(void)        const { return reachable; }
@@ -806,7 +806,9 @@ public:
     }
   }
   inline void setHasNoBattery(void)           { batt_last_seen = 0xFFFFFFFF; }
-  inline bool hasNoBattery(void)        const { return 0xFFFFFFFF == batt_last_seen; }
+  inline bool hasNoBattery(void)        const { return batt_last_seen >= 0xFFFFFFF0; }
+  inline void setGP(void)                     { batt_last_seen = 0xFFFFFFFE; }            // Green Power
+  inline bool isGP(void)                const { return 0xFFFFFFFE == batt_last_seen; }
 
   // Add an endpoint to a device
   bool addEndpoint(uint8_t endpoint);
