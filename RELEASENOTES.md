@@ -109,6 +109,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.1.1.1
 ### Added
+- Command ``SetOption146 1`` to enable display of ESP32 internal temperature
 - Command ``StatusRetain`` [#11109](https://github.com/arendst/Tasmota/issues/11109)
 - Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)
