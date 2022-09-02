@@ -113,6 +113,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``StatusRetain`` [#11109](https://github.com/arendst/Tasmota/issues/11109)
 - Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)
+- Support for DFRobot SEN0390 V30B ambient light sensor [#16105](https://github.com/arendst/Tasmota/issues/16105)
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - Zigbee prepare for Green Power support [#16407](https://github.com/arendst/Tasmota/issues/16407)
 - Flowrate meter flow amount/duration, show values in table format [#16385](https://github.com/arendst/Tasmota/issues/16385)
