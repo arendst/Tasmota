@@ -500,6 +500,8 @@
 #undef FALLBACK_MODULE
 #define FALLBACK_MODULE        SONOFF_ZB_BRIDGE  // [Module2] Select default module on fast reboot where USER_MODULE is user template
 
+#define USE_INFLUXDB                             // Enable influxdb support (+5k code)
+
 #undef  SERIAL_LOG_LEVEL
 #define SERIAL_LOG_LEVEL       LOG_LEVEL_NONE    // [SerialLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
