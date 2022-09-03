@@ -22,10 +22,13 @@ var classes = [
   "bar", "slider", "arc", "textarea", "dropdown",
   "qrcode"
 ]
+var f = open("haspmota.c", "w")
 for c:classes
-  solidify.dump(haspmota.HASPmota.("lvh_"+c), true)
+  solidify.dump(haspmota.HASPmota.("lvh_"+c), true, f)
 end
-solidify.dump(haspmota, true)
+solidify.dump(haspmota, true, f)
+f.close()
+print("Ok")
 
 -#
 var haspmota = module("haspmota")
@@ -952,6 +955,7 @@ end
 #====================================================================
 class lvh_spinner : lvh_arc
   static _lv_class = lv.spinner
+  var _anim_start, _anim_end        # the two raw (lv_anim_ntv) objects used for the animation
 
   # init
   # - create the LVGL encapsulated object
@@ -963,13 +967,30 @@ class lvh_spinner : lvh_arc
     var speed = jline.find("speed", 1000)
     self._lv_obj = lv.spinner(parent, speed, angle)
     self.post_init()
+    # do some black magic to get the two lv_anim objects used to animate the spinner
+    var anim_start = lv.anim_get(self._lv_obj, self._lv_obj._arc_anim_start_angle)
+    var anim_end = lv.anim_get(self._lv_obj, self._lv_obj._arc_anim_end_angle)
+    # convert to a ctype C structure via pointer
+    self._anim_start = lv.anim_ntv(anim_start._p)
+    self._anim_end = lv.anim_ntv(anim_end._p)
   end
 
-  # ignore attributes, spinner can't be changed once created
-  def set_angle(t) end
-  def get_angle() end
-  def set_speed(t) end
-  def get_speed() end
+  def set_angle(t)
+    t = int(t)
+    self._anim_end.start_value = t
+    self._anim_end.end_value = t + 360
+  end
+  def get_angle()
+    return self._anim_end.start_value - self._anim_start.start_value
+  end
+  def set_speed(t)
+    t = int(t)
+    self._anim_start.time = t
+    self._anim_end.time = t
+  end
+  def get_speed()
+    return self._anim_start.time
+  end
 end
 
 #====================================================================

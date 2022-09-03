@@ -152,7 +152,7 @@ std::string NimBLEEddystoneURL::getDecodedURL() {
 
 
 /**
- * @brief Set the raw data for the beacon advertisment.
+ * @brief Set the raw data for the beacon advertisement.
  * @param [in] data The raw data to advertise.
  */
 void NimBLEEddystoneURL::setData(const std::string &data) {

@@ -1,0 +1,31 @@
+#Z2Tv1
+# DEPRECATED
+# Legacy Tuya attributes from before Zigbee Device plugins
+# Use only if you need to legacy behavior, prefer device specific
+:                                   # apply to all devices
+EF00/0070,TuyaScheduleWorkdays
+EF00/0071,TuyaScheduleHolidays
+EF00/0101,Power
+EF00/0102,Power2
+EF00/0103,Power3
+EF00/0104,Power4
+EF00/0107,TuyaChildLock
+EF00/0112,TuyaWindowDetection
+EF00/0114,TuyaValveDetection
+EF00/0174,TuyaAutoLock
+EF00/0202,TuyaTempTarget
+EF00/0202=0201/FFF1,mul:10          # TempTarget
+EF00/0203=0402/0000,mul:10          # Temperature
+EF00/0215,TuyaBattery
+EF00/0266,TuyaMinTemp
+EF00/0267,TuyaMaxTemp
+EF00/0269,TuyaBoostTime
+EF00/026B,TuyaComfortTemp
+EF00/026C,TuyaEcoTemp
+EF00/026D=0201/FFF0
+EF00/0272,TuyaAwayTemp
+EF00/0275,TuyaAwayDays
+EF00/0404,TuyaPreset
+EF00/0405,TuyaFanMode
+EF00/046A,TuyaForceMode
+EF00/046F,TuyaWeekSelect

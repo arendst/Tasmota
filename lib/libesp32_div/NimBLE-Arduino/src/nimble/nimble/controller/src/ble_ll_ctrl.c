@@ -114,6 +114,10 @@ const uint8_t g_ble_ll_ctrl_pkt_lengths[BLE_LL_CTRL_OPCODES] =
     BLE_LL_CTRL_PERIODIC_SYNC_IND_LEN,
     BLE_LL_CTRL_CLOCK_ACCURACY_REQ_LEN,
     BLE_LL_CTRL_CLOCK_ACCURACY_RSP_LEN,
+    BLE_LL_CTRL_CIS_REQ_LEN,
+    BLE_LL_CTRL_CIS_RSP_LEN,
+    BLE_LL_CTRL_CIS_IND_LEN,
+    BLE_LL_CTRL_CIS_TERMINATE_LEN
 };
 
 /**
@@ -509,6 +513,12 @@ ble_ll_ctrl_proc_unk_rsp(struct ble_ll_conn_sm *connsm, uint8_t *dptr, uint8_t *
         ctrl_proc = BLE_LL_CTRL_PROC_PHY_UPDATE;
         break;
 #endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+    case BLE_LL_CTRL_CLOCK_ACCURACY_REQ:
+        ble_ll_hci_ev_sca_update(connsm, BLE_ERR_UNSUPPORTED, 0);
+        ctrl_proc = BLE_LL_CTRL_PROC_SCA_UPDATE;
+        break;
+#endif
     default:
         ctrl_proc = BLE_LL_CTRL_PROC_NUM;
         break;
@@ -839,6 +849,20 @@ ble_ll_ctrl_phy_req_rsp_make(struct ble_ll_conn_sm *connsm, uint8_t *ctrdata)
     }
 }
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+/**
+ * Create a LL_CLOCK_ACCURACY_REQ or LL_CLOCK_ACCURACY_RSP pdu
+ *
+ * @param connsm Pointer to connection state machine
+ * @param ctrdata: Pointer to where CtrData starts in pdu
+ */
+static void
+ble_ll_ctrl_sca_req_rsp_make(struct ble_ll_conn_sm *connsm, uint8_t *ctrdata)
+{
+    ctrdata[0] = BLE_LL_SCA_ENUM;
+}
+#endif
+
 static uint8_t
 ble_ll_ctrl_rx_phy_req(struct ble_ll_conn_sm *connsm, uint8_t *req,
                        uint8_t *rsp)
@@ -1043,11 +1067,70 @@ ble_ll_ctrl_rx_periodic_sync_ind(struct ble_ll_conn_sm *connsm, uint8_t *dptr)
                                  connsm->sync_transfer_skip,
                                  connsm->sync_transfer_sync_timeout);
     }
-
     return BLE_ERR_MAX;
 }
 #endif
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+/**
+ * Called when a BLE_LL_CTRL_CLOCK_ACCURACY_REQ PDU is received
+ *
+ * @param connsm
+ * @param dptr
+ * @param rsp Pointer to CtrData of BLE_LL_CTRL_CLOCK_ACCURACY_RSP.
+ *
+ * @return uint8_t
+ */
+static uint8_t
+ble_ll_ctrl_rx_sca_req(struct ble_ll_conn_sm *connsm, uint8_t *dptr,
+                       uint8_t *rsp)
+{
+    ble_ll_ctrl_sca_req_rsp_make(connsm, rsp);
+    return BLE_LL_CTRL_CLOCK_ACCURACY_RSP;
+}
+
+/**
+ * Called when a BLE_LL_CTRL_CLOCK_ACCURACY_RSP PDU is received
+ *
+ * @param connsm
+ * @param dptr
+ *
+ * @return uint8_t
+ */
+static uint8_t
+ble_ll_ctrl_rx_sca_rsp(struct ble_ll_conn_sm *connsm, uint8_t *dptr)
+{
+    if (connsm->cur_ctrl_proc != BLE_LL_CTRL_PROC_SCA_UPDATE) {
+        return BLE_LL_CTRL_UNKNOWN_RSP;
+    }
+    ble_ll_ctrl_proc_stop(connsm, BLE_LL_CTRL_PROC_SCA_UPDATE);
+    ble_ll_hci_ev_sca_update(connsm, BLE_ERR_SUCCESS, dptr[0]);
+    return BLE_ERR_MAX;
+}
+
+#endif
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+static uint8_t
+ble_ll_ctrl_rx_cis_req(struct ble_ll_conn_sm *connsm, uint8_t *dptr,
+                       uint8_t *rspdata)
+{
+    return BLE_LL_CTRL_UNKNOWN_RSP;
+}
+
+static uint8_t
+ble_ll_ctrl_rx_cis_rsp(struct ble_ll_conn_sm *connsm, uint8_t *dptr,
+                       uint8_t *rspdata)
+{
+    return BLE_LL_CTRL_UNKNOWN_RSP;
+}
+
+static uint8_t
+ble_ll_ctrl_rx_cis_ind(struct ble_ll_conn_sm *connsm, uint8_t *dptr)
+{
+    return BLE_LL_CTRL_UNKNOWN_RSP;
+}
+#endif
 /**
  * Create a link layer length request or length response PDU.
  *
@@ -1253,6 +1336,15 @@ ble_ll_ctrl_start_enc_send(struct ble_ll_conn_sm *connsm)
     return rc;
 }
 
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+static void
+ble_ll_ctrl_cis_create(struct ble_ll_conn_sm *connsm, uint8_t *dptr)
+{
+    /* TODO Implement */
+    return;
+}
+#endif
+
 /**
  * Create a link layer control "encrypt request" PDU.
  *
@@ -1354,7 +1446,7 @@ ble_ll_ctrl_rx_enc_req(struct ble_ll_conn_sm *connsm, uint8_t *dptr,
         return BLE_LL_CTRL_UNKNOWN_RSP;
     }
 
-    connsm->enc_data.enc_state = CONN_ENC_S_LTK_REQ_WAIT;
+    connsm->enc_data.enc_state = CONN_ENC_S_ENC_RSP_TO_BE_SENT;
 
     /* In case we were already encrypted we need to reset packet counters */
     connsm->enc_data.rx_pkt_cntr = 0;
@@ -1679,6 +1771,12 @@ ble_ll_ctrl_rx_reject_ind(struct ble_ll_conn_sm *connsm, uint8_t *dptr,
          */
         ble_ll_ctrl_proc_stop(connsm, BLE_LL_CTRL_PROC_DATA_LEN_UPD);
         break;
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+    case BLE_LL_CTRL_PROC_SCA_UPDATE:
+        ble_ll_hci_ev_sca_update(connsm, ble_error, 0);
+        ble_ll_ctrl_proc_stop(connsm, BLE_LL_CTRL_PROC_SCA_UPDATE);
+        break;
+#endif
     default:
         break;
     }
@@ -2142,6 +2240,18 @@ ble_ll_ctrl_proc_init(struct ble_ll_conn_sm *connsm, int ctrl_proc)
             ble_ll_ctrl_phy_req_rsp_make(connsm, ctrdata);
             break;
 #endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+        case BLE_LL_CTRL_PROC_SCA_UPDATE:
+            opcode = BLE_LL_CTRL_CLOCK_ACCURACY_REQ;
+            ble_ll_ctrl_sca_req_rsp_make(connsm, ctrdata);
+            break;
+#endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+        case BLE_LL_CTRL_PROC_CIS_CREATE:
+            opcode = BLE_LL_CTRL_CIS_REQ;
+            ble_ll_ctrl_cis_create(connsm, ctrdata);
+            break;
+#endif
         default:
             BLE_LL_ASSERT(0);
             break;
@@ -2571,6 +2681,26 @@ ble_ll_ctrl_rx_pdu(struct ble_ll_conn_sm *connsm, struct os_mbuf *om)
         rsp_opcode = ble_ll_ctrl_rx_phy_update_ind(connsm, dptr);
         break;
 #endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+    case BLE_LL_CTRL_CLOCK_ACCURACY_REQ:
+        rsp_opcode = ble_ll_ctrl_rx_sca_req(connsm, dptr, rspdata);
+        break;
+    case BLE_LL_CTRL_CLOCK_ACCURACY_RSP:
+        rsp_opcode = ble_ll_ctrl_rx_sca_rsp(connsm, dptr);
+        break;
+#endif
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+    case BLE_LL_CTRL_CIS_REQ:
+        rsp_opcode = ble_ll_ctrl_rx_cis_req(connsm, dptr, rspdata);
+        break;
+    case BLE_LL_CTRL_CIS_RSP:
+        rsp_opcode = ble_ll_ctrl_rx_cis_rsp(connsm, dptr, rspdata);
+        break;
+    case BLE_LL_CTRL_CIS_IND:
+        rsp_opcode = ble_ll_ctrl_rx_cis_ind(connsm, dptr);
+        break;
+#endif
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PERIODIC_ADV_SYNC_TRANSFER)
     case BLE_LL_CTRL_PERIODIC_SYNC_IND:
         rsp_opcode = ble_ll_ctrl_rx_periodic_sync_ind(connsm, dptr);
@@ -2712,6 +2842,7 @@ ble_ll_ctrl_tx_done(struct os_mbuf *txpdu, struct ble_ll_conn_sm *connsm)
         connsm->enc_data.enc_state = CONN_ENC_S_ENC_RSP_WAIT;
         break;
     case BLE_LL_CTRL_ENC_RSP:
+        connsm->enc_data.enc_state = CONN_ENC_S_LTK_REQ_WAIT;
         connsm->csmflags.cfbit.send_ltk_req = 1;
         break;
     case BLE_LL_CTRL_START_ENC_RSP:

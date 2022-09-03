@@ -2173,6 +2173,8 @@ void GpioInit(void)
 #endif
 #endif  // USE_I2C
 
+  XdrvCall(FUNC_I2C_INIT);                                 // Init RTC
+
   TasmotaGlobal.devices_present = 0;
   TasmotaGlobal.light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
 

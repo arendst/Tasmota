@@ -18,6 +18,9 @@
  */
 #ifndef ESP_PLATFORM
 
+/* for jrand48 */
+#define _XOPEN_SOURCE
+#include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
@@ -119,6 +122,21 @@ ble_ll_rand_data_get(uint8_t *buf, uint8_t len)
     }
 #endif
     return BLE_ERR_SUCCESS;
+}
+
+/* Simple wrapper to allow easy replacement of rand() */
+uint32_t
+ble_ll_rand(void)
+{
+    static unsigned short xsubi[3];
+    static bool init = true;
+
+    if (init) {
+        init = false;
+        ble_ll_rand_data_get((uint8_t *)xsubi, sizeof(xsubi));
+    }
+
+    return (uint32_t) jrand48(xsubi);
 }
 
 /**

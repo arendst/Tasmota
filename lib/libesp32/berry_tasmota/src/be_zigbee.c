@@ -55,9 +55,16 @@ extern int32_t zc_size(void* d);               BE_FUNC_CTYPE_DECLARE(zc_size, "i
 extern int zc_iter(bvm *vm);
 extern void zc_abort(void);                    BE_FUNC_CTYPE_DECLARE(zc_abort, "", ".");
 
+extern int zigbee_test_attr(struct bvm *vm);
+extern int zigbee_test_msg(struct bvm *vm);
+
 extern const bclass be_class_ctypes_bytes;
 extern const be_ctypes_structure_t be_zigbee_zcl_frame_struct;
 extern const bclass be_class_zcl_frame;
+extern const bclass be_class_zcl_attribute_list_ntv;
+extern const bclass be_class_zcl_attribute_ntv;
+extern const bclass be_class_zcl_attribute;
+extern const bclass be_class_zcl_attribute_list;
 
 /********************************************************************
 ** Solidified function: tostring
@@ -153,6 +160,10 @@ class be_class_zb_device (scope: global, name: zb_device, strings: weak) {
 /* @const_object_info_begin
 class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
   zcl_frame, class(be_class_zcl_frame)
+  zcl_attribute_list_ntv, class(be_class_zcl_attribute_list_ntv)
+  zcl_attribute_ntv, class(be_class_zcl_attribute_ntv)
+  zcl_attribute, class(be_class_zcl_attribute)
+  zcl_attribute_list, class(be_class_zcl_attribute_list)
   zb_device, class(be_class_zb_device)
 
   info, func(zc_info)
@@ -161,6 +172,9 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
   iter, func(zc_iter)
 
   abort, ctype_func(zc_abort)
+
+  test_attr, func(zigbee_test_attr)
+  test_msg, func(zigbee_test_msg)
 }
 @const_object_info_end */
 
@@ -169,8 +183,8 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
 class be_class_zcl_frame_ntv (scope: global, name: zcl_frame_ntv, super: be_class_ctypes_bytes, strings: weak) {
     _def, comptr(&be_zigbee_zcl_frame_struct)
 
-    _get_bytes, ctype_func(zfn_get_bytes)
-    _set_bytes, ctype_func(zfn_set_bytes)
+  _get_bytes, ctype_func(zfn_get_bytes)
+  _set_bytes, ctype_func(zfn_set_bytes)
 }
 @const_object_info_end */
 

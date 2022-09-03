@@ -22,11 +22,11 @@
 #include "NimBLE2904.h"
 
 
-NimBLE2904::NimBLE2904(NimBLECharacteristic* pCharacterisitic)
+NimBLE2904::NimBLE2904(NimBLECharacteristic* pCharacteristic)
 : NimBLEDescriptor(NimBLEUUID((uint16_t) 0x2904),
                             BLE_GATT_CHR_F_READ,
                             sizeof(BLE2904_Data),
-                            pCharacterisitic)
+                            pCharacteristic)
 {
     m_data.m_format      = 0;
     m_data.m_exponent    = 0;

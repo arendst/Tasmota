@@ -135,22 +135,44 @@ bbool be_gc_fix_set(bvm *vm, bgcobject *obj, bbool fix)
     return was_fixed;
 }
 
+
+#if BE_USE_PERF_COUNTERS
+#define GC_MARK(type) do { vm->gc_mark_##type++; } while (0);
+#else
+#define GC_MARK(type) do { } while (0);
+#endif
+
+static void mark_gray_reset_counters(bvm *vm) {
+#if BE_USE_PERF_COUNTERS
+    vm->gc_mark_string = 0;
+    vm->gc_mark_class = 0;
+    vm->gc_mark_proto = 0;
+    vm->gc_mark_instance = 0;
+    vm->gc_mark_map = 0;
+    vm->gc_mark_list = 0;
+    vm->gc_mark_closure = 0;
+    vm->gc_mark_ntvclos = 0;
+    vm->gc_mark_module = 0;
+    vm->gc_mark_comobj = 0;
+#endif
+}
+
 static void mark_gray(bvm *vm, bgcobject *obj)
 {
     if (obj && gc_iswhite(obj) && !gc_isconst(obj)) {
         gc_setgray(obj);
         be_assert(!var_isstatic(obj));
         switch (var_primetype(obj)) {
-        case BE_STRING: gc_setdark(obj); break; /* just set dark */
-        case BE_CLASS: link_gray(vm, cast_class(obj)); break;
-        case BE_PROTO: link_gray(vm, cast_proto(obj)); break;
-        case BE_INSTANCE: link_gray(vm, cast_instance(obj)); break;
-        case BE_MAP: link_gray(vm, cast_map(obj)); break;
-        case BE_LIST: link_gray(vm, cast_list(obj)); break;
-        case BE_CLOSURE: link_gray(vm, cast_closure(obj)); break;
-        case BE_NTVCLOS: link_gray(vm, cast_ntvclos(obj)); break;
-        case BE_MODULE: link_gray(vm, cast_module(obj)); break;
-        case BE_COMOBJ: gc_setdark(obj); break; /* just set dark */
+        case BE_STRING: gc_setdark(obj); GC_MARK(string); break; /* just set dark */
+        case BE_CLASS: link_gray(vm, cast_class(obj)); GC_MARK(class); break;
+        case BE_PROTO: link_gray(vm, cast_proto(obj)); GC_MARK(proto); break;
+        case BE_INSTANCE: link_gray(vm, cast_instance(obj)); GC_MARK(instance); break;
+        case BE_MAP: link_gray(vm, cast_map(obj)); GC_MARK(map); break;
+        case BE_LIST: link_gray(vm, cast_list(obj)); GC_MARK(list); break;
+        case BE_CLOSURE: link_gray(vm, cast_closure(obj)); GC_MARK(closure); break;
+        case BE_NTVCLOS: link_gray(vm, cast_ntvclos(obj)); GC_MARK(ntvclos); break;
+        case BE_MODULE: link_gray(vm, cast_module(obj)); GC_MARK(module); break;
+        case BE_COMOBJ: gc_setdark(obj); GC_MARK(comobj); break; /* just set dark */
         default: break;
         }
     }
@@ -537,6 +559,12 @@ size_t be_gc_memcount(bvm *vm)
     return vm->gc.usage;
 }
 
+#if BE_USE_PERF_COUNTERS
+#define GC_TIMER(i)  if (vm->microsfnct) { vm->micros_gc##i = vm->microsfnct(); }
+#else
+#define GC_TIMER(i)
+#endif
+
 void be_gc_collect(bvm *vm)
 {
     if (vm->gc.status & GC_HALT) {
@@ -549,23 +577,30 @@ void be_gc_collect(bvm *vm)
     vm->counter_gc_freed = 0;
 #endif
     if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_GC_START, vm->gc.usage);
+    GC_TIMER(0);
     /* step 1: set root-set reference objects to unscanned */
+    mark_gray_reset_counters(vm); /* reset all internal counters */
     premark_internal(vm); /* object internal the VM */
     premark_global(vm); /* global objects */
     premark_stack(vm); /* stack objects */
     premark_tracestack(vm); /* trace stack objects */
     premark_fixed(vm); /* fixed objects */
+    GC_TIMER(1);
     /* step 2: set unscanned objects to black */
     mark_unscanned(vm);
+    GC_TIMER(2);
     /* step 3: destruct and delete unreachable objects */
     destruct_white(vm);
     delete_white(vm);
     be_gcstrtab(vm);
+    GC_TIMER(3);
     /* step 4: reset the fixed objects */
     reset_fixedlist(vm);
+    GC_TIMER(4);
     /* step 5: calculate the next GC threshold */
     vm->gc.threshold = next_threshold(vm->gc);
     be_gc_memory_pools(vm); /* free unsued memory pools */
+    GC_TIMER(5);
 #if BE_USE_PERF_COUNTERS
     size_t slors_used_after_gc, slots_allocated_after_gc;
     be_gc_memory_pools_info(vm, &slors_used_after_gc, &slots_allocated_after_gc);

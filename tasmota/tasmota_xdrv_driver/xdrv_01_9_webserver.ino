@@ -602,7 +602,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // Not FIRMWARE_MINIMAL
 
       if (!Web.initial_config) {
-        Web.initial_config = !strlen(SettingsText(SET_STASSID1)) || !strlen(SettingsText(SET_STASSID2));
+        Web.initial_config = (!strlen(SettingsText(SET_STASSID1)) && !strlen(SettingsText(SET_STASSID2)));
         if (Web.initial_config) { AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Blank Device - Initial Configuration")); }
       }
     }
@@ -2444,7 +2444,7 @@ void HandleInformation(void)
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardwareRevision().c_str());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X (%s)"), ESP_getFlashChipId(), ESP_getFlashChipMode().c_str());
   WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP_getFlashChipRealSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP.getFlashChipSize() / 1024);
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d KB"), ESP_getSketchSize() / 1024);

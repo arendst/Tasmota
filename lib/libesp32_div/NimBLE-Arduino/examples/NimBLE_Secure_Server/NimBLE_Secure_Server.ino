@@ -1,5 +1,5 @@
 /** NimBLE_Secure_Server Demo:
- *  
+ *
  * This example demonstrates the secure passkey protected conenction and communication between an esp32 server and an esp32 client.
  * Please note that esp32 stores auth info in nvs memory. After a successful connection it is possible that a passkey change will be ineffective.
  * To avoid this clear the memory of the esp32's between security testings. esptool.py is capable of this, example: esptool.py --port /dev/ttyUSB0 erase_flash.
@@ -14,7 +14,11 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Starting NimBLE Server");
   NimBLEDevice::init("NimBLE");
-  NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+#ifdef ESP_PLATFORM
+    NimBLEDevice::setPower(ESP_PWR_LVL_P9); /** +9db */
+#else
+    NimBLEDevice::setPower(9); /** +9db */
+#endif
 
   NimBLEDevice::setSecurityAuth(true, true, true);
   NimBLEDevice::setSecurityPasskey(123456);

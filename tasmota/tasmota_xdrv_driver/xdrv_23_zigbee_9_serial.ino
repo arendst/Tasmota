@@ -775,14 +775,19 @@ void ZigbeeZCLSend_Raw(const ZCLFrame &zcl) {
     buf.add8(zcl.dstendpoint);             // dest endpoint
   }
   buf.add16(0x0000);                // dest Pan ID, 0x0000 = intra-pan
-  buf.add8(0x01);                   // source endpoint
+  if (zcl.srcendpoint) {
+    buf.add8(zcl.srcendpoint);        // source endpoint
+  } else {
+    buf.add8(1);                      // set endpoint to 1 if not specified
+  }
   buf.add16(zcl.cluster);
   buf.add8(zcl.transactseq);              // transactseq
-  buf.add8(0x30);                   // 30 options
+  buf.add8(zcl.direct ? 0x00 : 0x30);                   // 30 options
   buf.add8(0x1E);                   // 1E radius
 
   buf.add16(3 + zcl.payload.len() + (zcl.manuf ? 2 : 0));
-  buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) | (zcl.manuf ? 0x04 : 0x00));                 // Frame Control Field
+  buf.add8((zcl.needResponse ? 0x00 : 0x10) | (zcl.clusterSpecific ? 0x01 : 0x00) |
+           (zcl.manuf ? 0x04 : 0x00) | (zcl.direction ? 0x08 : 0x00));                 // Frame Control Field
   if (zcl.manuf) {
     buf.add16(zcl.manuf);               // add Manuf Id if not null
   }

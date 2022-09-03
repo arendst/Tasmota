@@ -187,6 +187,8 @@
 #define D_JSON_TEMPERATURE_UNIT "TempUnit"
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
+#define D_JSON_TODAY_SUM_EXPORT "TodaySumExport"
+#define D_JSON_TODAY_SUM_IMPORT "TodaySumImport"
 #define D_JSON_TOTAL "Total"
 #define D_JSON_TOTAL_USAGE "TotalUsage"
 #define D_JSON_TOTAL_REACTIVE "TotalReactive"
@@ -230,6 +232,7 @@
 #define D_JSON_RESETTABLE_TOTAL_ACTIVE "ResetTotalActive"
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
+#define D_JSON_RAW "Raw"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
@@ -416,6 +419,7 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
+#define D_CMND_STATUSRETAIN "StatusRetain"
 #define D_CMND_PUBLISH "Publish"
 #define D_CMND_FILEUPLOAD "FileUpload"
 #define D_CMND_FILEDOWNLOAD "FileDownload"
@@ -672,6 +676,9 @@
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
 #define D_CMND_ZIGBEE_CIE "CIE"
 #define D_CMND_ZIGBEE_ENROLL "Enroll"
+#define D_CMND_ZIGBEE_LOAD "Load"
+#define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
+#define D_CMND_ZIGBEE_UNLOAD "Unload"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"

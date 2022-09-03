@@ -328,6 +328,7 @@ ble_hs_conn_find_by_addr(const ble_addr_t *addr)
 #endif
 
     struct ble_hs_conn *conn;
+    struct ble_hs_conn_addrs addrs;
 
     BLE_HS_DBG_ASSERT(ble_hs_locked_by_cur_task());
 
@@ -342,6 +343,14 @@ ble_hs_conn_find_by_addr(const ble_addr_t *addr)
             }
         } else {
             if (ble_addr_cmp(&conn->bhc_peer_addr, addr) == 0) {
+                return conn;
+            }
+            if (conn->bhc_peer_addr.type < BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT) {
+                continue;
+            }
+            /*If type 0x02 or 0x03 is used, let's double check if address is good */
+            ble_hs_conn_addrs(conn, &addrs);
+            if (ble_addr_cmp(&addrs.peer_id_addr, addr) == 0) {
                 return conn;
             }
         }

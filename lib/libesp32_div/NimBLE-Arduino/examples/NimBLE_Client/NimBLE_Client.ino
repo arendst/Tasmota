@@ -347,7 +347,11 @@ void setup (){
     NimBLEDevice::setSecurityAuth(/*BLE_SM_PAIR_AUTHREQ_BOND | BLE_SM_PAIR_AUTHREQ_MITM |*/ BLE_SM_PAIR_AUTHREQ_SC);
 
     /** Optional: set the transmit power, default is 3db */
+#ifdef ESP_PLATFORM
     NimBLEDevice::setPower(ESP_PWR_LVL_P9); /** +9db */
+#else
+    NimBLEDevice::setPower(9); /** +9db */
+#endif
 
     /** Optional: set any devices you don't want to get advertisments from */
     // NimBLEDevice::addIgnored(NimBLEAddress ("aa:bb:cc:dd:ee:ff"));

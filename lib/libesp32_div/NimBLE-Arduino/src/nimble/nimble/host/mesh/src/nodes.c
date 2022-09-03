@@ -161,4 +161,4 @@ void bt_mesh_node_del(struct bt_mesh_node *node, bool store)
 }
 
 #endif
-#endif
+#endif /* MYNEWT_VAL(BLE_MESH) */

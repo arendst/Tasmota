@@ -23,6 +23,7 @@
 #include "nimble/porting/nimble/include/syscfg/syscfg.h"
 #include "nimble/nimble/include/nimble/nimble_opt.h"
 
+#if NIMBLE_BLE_CONNECT
 #if NIMBLE_BLE_SM
 
 #include "nimble/nimble/include/nimble/ble.h"
@@ -62,6 +63,20 @@ static mbedtls_ecp_keypair keypair;
 #else
 #if MYNEWT_VAL(BLE_SM_SC) && MYNEWT_VAL(TRNG)
 static struct trng_dev *g_trng;
+#endif
+#endif
+
+/**
+  * Keep forward-compatibility with Mbed TLS 3.x.
+  *
+  * Direct access to fields of structures declared in public headers is no longer
+  * supported. In Mbed TLS 3, the layout of structures is not considered part of
+  * the stable API, and minor versions (3.1, 3.2, etc.) may add, remove, rename,
+  * reorder or change the type of structure fields.
+  */
+#if (MBEDTLS_VERSION_NUMBER < 0x03000000)
+#ifndef MBEDTLS_PRIVATE
+#define MBEDTLS_PRIVATE(member) member
 #endif
 #endif
 
@@ -533,15 +548,15 @@ ble_sm_alg_gen_dhkey(const uint8_t *peer_pub_key_x, const uint8_t *peer_pub_key_
     mbedtls_mpi_init(&z);
 
     /* Below 3 steps are to validate public key on curve secp256r1 */
-    if (mbedtls_ecp_group_load(&keypair.grp, MBEDTLS_ECP_DP_SECP256R1) != 0) {
+    if (mbedtls_ecp_group_load(&keypair.MBEDTLS_PRIVATE(grp), MBEDTLS_ECP_DP_SECP256R1) != 0) {
         goto exit;
     }
 
-    if (mbedtls_ecp_point_read_binary(&keypair.grp, &pt, pub, 65) != 0) {
+    if (mbedtls_ecp_point_read_binary(&keypair.MBEDTLS_PRIVATE(grp), &pt, pub, 65) != 0) {
         goto exit;
     }
 
-    if (mbedtls_ecp_check_pubkey(&keypair.grp, &pt) != 0) {
+    if (mbedtls_ecp_check_pubkey(&keypair.MBEDTLS_PRIVATE(grp), &pt) != 0) {
         goto exit;
     }
 
@@ -552,7 +567,7 @@ ble_sm_alg_gen_dhkey(const uint8_t *peer_pub_key_x, const uint8_t *peer_pub_key_
     }
 
     /* Prepare point Q from pub key */
-    if (mbedtls_ecp_point_read_binary(&keypair.grp, &Q, pub, 65) != 0) {
+    if (mbedtls_ecp_point_read_binary(&keypair.MBEDTLS_PRIVATE(grp), &Q, pub, 65) != 0) {
         goto exit;
     }
 
@@ -560,7 +575,7 @@ ble_sm_alg_gen_dhkey(const uint8_t *peer_pub_key_x, const uint8_t *peer_pub_key_
         goto exit;
     }
 
-    rc = mbedtls_ecdh_compute_shared(&keypair.grp, &z, &Q, &d,
+    rc = mbedtls_ecdh_compute_shared(&keypair.MBEDTLS_PRIVATE(grp), &z, &Q, &d,
                                      mbedtls_ctr_drbg_random, &ctr_drbg);
     if (rc != 0) {
         goto exit;
@@ -628,6 +643,10 @@ mbedtls_gen_keypair(uint8_t *public_key, uint8_t *private_key)
 
     mbedtls_entropy_init(&entropy);
     mbedtls_ctr_drbg_init(&ctr_drbg);
+
+    /* Free the previously allocate keypair */
+    mbedtls_ecp_keypair_free(&keypair);
+
     mbedtls_ecp_keypair_init(&keypair);
 
     if (( rc = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy,
@@ -640,14 +659,14 @@ mbedtls_gen_keypair(uint8_t *public_key, uint8_t *private_key)
         goto exit;
     }
 
-    if (( rc = mbedtls_mpi_write_binary(&keypair.d, private_key, 32)) != 0) {
+    if (( rc = mbedtls_mpi_write_binary(&keypair.MBEDTLS_PRIVATE(d), private_key, 32)) != 0) {
         goto exit;
     }
 
     size_t olen = 0;
     uint8_t pub[65] = {0};
 
-    if ((rc = mbedtls_ecp_point_write_binary(&keypair.grp, &keypair.Q, MBEDTLS_ECP_PF_UNCOMPRESSED,
+    if ((rc = mbedtls_ecp_point_write_binary(&keypair.MBEDTLS_PRIVATE(grp), &keypair.MBEDTLS_PRIVATE(Q), MBEDTLS_ECP_PF_UNCOMPRESSED,
                                              &olen, pub, 65)) != 0) {
         goto exit;
     }
@@ -663,6 +682,11 @@ exit:
     }
 
     return 0;
+}
+
+void mbedtls_free_keypair(void)
+{
+    mbedtls_ecp_keypair_free(&keypair);
 }
 #endif
 
@@ -703,7 +727,10 @@ ble_sm_alg_gen_key_pair(uint8_t *pub, uint8_t *priv)
     return 0;
 }
 
-#if !(MYNEWT_VAL(BLE_CRYPTO_STACK_MBEDTLS))
+#if MYNEWT_VAL(SELFTEST)
+/* Unit tests rely on custom RNG function not being set */
+#define ble_sm_alg_rand NULL
+#elif !(MYNEWT_VAL(BLE_CRYPTO_STACK_MBEDTLS))
 /* used by uECC to get random data */
 static int
 ble_sm_alg_rand(uint8_t *dst, unsigned int size)
@@ -740,5 +767,6 @@ ble_sm_alg_ecc_init(void)
     return;
 }
 
+#endif
 #endif
 #endif

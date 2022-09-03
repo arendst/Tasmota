@@ -121,6 +121,8 @@ String GetDeviceHardwareRevision(void) {
 #ifdef ESP32
 
 #include "bootloader_flash.h"
+#include "soc/soc.h"
+#include "soc/spi_reg.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
 #if CONFIG_IDF_TARGET_ESP32
   #ifdef CORE32SOLO1
@@ -558,7 +560,8 @@ int32_t ESP_getHeapFragmentation(void) {
 
 uint32_t ESP_getFlashChipId(void)
 {
-  uint32_t id = bootloader_read_flash_id();
+//  uint32_t id = bootloader_read_flash_id();
+  uint32_t id = g_rom_flashchip.device_id;
   id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
   return id;
 }
@@ -656,16 +659,12 @@ float CpuTemperature(void) {
   return t;
 */
 #else
-  #ifndef CONFIG_IDF_TARGET_ESP32S3
     // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
     static float t = NAN;
     if (isnan(t)) {
       t = (float)temperatureRead();  // In Celsius
     }
     return t;
-  #else
-    return NAN;
-  #endif
 #endif
 }
 
@@ -970,6 +969,48 @@ float ESP_getFreeHeap1024(void) {
   return ((float)ESP_getFreeHeap()) / 1024;
 }
 */
+
+const char kFlashModes[] PROGMEM = "QIO|QOUT|DIO|DOUT|Fast|Slow";
+/*
+typedef enum {
+    FM_QIO = 0x00,
+    FM_QOUT = 0x01,
+    FM_DIO = 0x02,
+    FM_DOUT = 0x03,
+    FM_FAST_READ = 0x04,
+    FM_SLOW_READ = 0x05,
+    FM_UNKNOWN = 0xff
+} FlashMode_t;
+*/
+String ESP_getFlashChipMode(void) {
+#if ESP8266
+  uint32_t flash_mode = ESP.getFlashChipMode();
+#else
+  #if CONFIG_IDF_TARGET_ESP32S2
+  const uint32_t spi_ctrl = REG_READ(PERIPHS_SPI_FLASH_CTRL);
+  #else
+  const uint32_t spi_ctrl = REG_READ(SPI_CTRL_REG(0));
+  #endif
+  uint32_t flash_mode;
+  /* Not all of the following constants are already defined in older versions of spi_reg.h, so do it manually for now*/
+  if (spi_ctrl & BIT(24)) { //SPI_FREAD_QIO
+      flash_mode = 0;
+  } else if (spi_ctrl & BIT(20)) { //SPI_FREAD_QUAD
+      flash_mode = 1;
+  } else if (spi_ctrl &  BIT(23)) { //SPI_FREAD_DIO
+      flash_mode = 2;
+  } else if (spi_ctrl & BIT(14)) { // SPI_FREAD_DUAL
+      flash_mode = 3;
+  } else if (spi_ctrl & BIT(13)) { //SPI_FASTRD_MODE
+      flash_mode = 4;
+  } else {
+      flash_mode = 5;
+  }
+#endif
+  if (flash_mode > 5) { flash_mode = 3; }
+  char stemp[6];
+  return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);
+}
 
 /*********************************************************************************************\
  * High entropy hardware random generator

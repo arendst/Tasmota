@@ -155,6 +155,7 @@ int NimBLEDescriptor::handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
 
     const ble_uuid_t *uuid;
     int rc;
+    struct ble_gap_conn_desc desc;
     NimBLEDescriptor* pDescriptor = (NimBLEDescriptor*)arg;
 
     NIMBLE_LOGD(LOG_TAG, "Descriptor %s %s event", pDescriptor->getUUID().toString().c_str(),
@@ -164,9 +165,13 @@ int NimBLEDescriptor::handleGapEvent(uint16_t conn_handle, uint16_t attr_handle,
     if(ble_uuid_cmp(uuid, &pDescriptor->getUUID().getNative()->u) == 0){
         switch(ctxt->op) {
             case BLE_GATT_ACCESS_OP_READ_DSC: {
-                // If the packet header is only 8 bytes this is a follow up of a long read
-                // so we don't want to call the onRead() callback again.
-                if(ctxt->om->om_pkthdr_len > 8) {
+                rc = ble_gap_conn_find(conn_handle, &desc);
+                assert(rc == 0);
+
+                 // If the packet header is only 8 bytes this is a follow up of a long read
+                 // so we don't want to call the onRead() callback again.
+                if(ctxt->om->om_pkthdr_len > 8 ||
+                   pDescriptor->m_value.size() <= (ble_att_mtu(desc.conn_handle) - 3)) {
                     pDescriptor->m_pCallbacks->onRead(pDescriptor);
                 }
 
@@ -256,7 +261,7 @@ void NimBLEDescriptor::setValue(const std::vector<uint8_t>& vec) {
 
 /**
  * @brief Set the characteristic this descriptor belongs to.
- * @param [in] pChar A pointer to the characteristic this descriptior belongs to.
+ * @param [in] pChar A pointer to the characteristic this descriptor belongs to.
  */
 void NimBLEDescriptor::setCharacteristic(NimBLECharacteristic* pChar) {
     m_pCharacteristic = pChar;

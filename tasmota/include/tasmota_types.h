@@ -172,14 +172,14 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t wait_for_wifi_result : 1;     // bit 28 (v11.1.0.4) - SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
     uint32_t zigbee_no_batt_autoprobe : 1; // bit 29 (v12.0.2.4) - SetOption143 - (Zigbee) Disable Battery auto-probe and using auto-binding
     uint32_t zigbee_include_time : 1;      // bit 30 (v12.0.2.4) - SetOption144 - (Zigbee) Include time in `ZbReceived` messages like other sensors
-    uint32_t spare31 : 1;                  // bit 31
+    uint32_t mqtt_status_retain : 1;       // bit 31 (v12.1.0.1) - CMND_STATUSRETAIN
   };
 } SOBitfield5;
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption146 .. SetOption177
-    uint32_t spare00 : 1;                  // bit 0
+    uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
     uint32_t spare01 : 1;                  // bit 1
     uint32_t spare02 : 1;                  // bit 2
     uint32_t spare03 : 1;                  // bit 3

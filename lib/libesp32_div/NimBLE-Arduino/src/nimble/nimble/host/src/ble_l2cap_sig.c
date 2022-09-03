@@ -48,6 +48,7 @@
 #include "nimble/nimble/host/include/host/ble_monitor.h"
 #include "ble_hs_priv.h"
 
+#if NIMBLE_BLE_CONNECT
 /*****************************************************************************
  * $definitions / declarations                                               *
  *****************************************************************************/
@@ -661,8 +662,8 @@ ble_l2cap_sig_coc_connect_cb(struct ble_l2cap_sig_proc *proc, int status)
             continue;
         }
 
-        if ((status == 0) && (chan->dcid != 0)) {
-            ble_l2cap_event_coc_connected(chan, status);
+        if (chan->dcid != 0) {
+            ble_l2cap_event_coc_connected(chan, 0);
             /* Let's forget about connected channel now.
              * Not connected will be freed later on.
              */
@@ -864,6 +865,7 @@ ble_l2cap_sig_credit_base_reconfig_rsp_rx(uint16_t conn_handle,
 
     rsp = (struct ble_l2cap_sig_credit_base_reconfig_rsp *)(*om)->om_data;
     ble_l2cap_sig_coc_reconfig_cb(proc, (rsp->result > 0) ? BLE_HS_EREJECT : 0);
+    ble_l2cap_sig_proc_free(proc);
 
     return 0;
 }
@@ -1066,7 +1068,15 @@ ble_l2cap_sig_credit_base_con_rsp_rx(uint16_t conn_handle,
 
     if (rsp->result) {
         rc = ble_l2cap_sig_coc_err2ble_hs_err(le16toh(rsp->result));
-        goto done;
+        /* Below results means that some of the channels has not been created
+         * and we have to look closer into the response.
+         * Any other results means that all the connections has been refused.
+         */
+        if ((rsp->result != BLE_L2CAP_COC_ERR_NO_RESOURCES) &&
+            (rsp->result != BLE_L2CAP_COC_ERR_INVALID_SOURCE_CID) &&
+            (rsp->result != BLE_L2CAP_COC_ERR_SOURCE_CID_ALREADY_USED)) {
+            goto done;
+        }
     }
 
     ble_hs_lock();
@@ -1630,6 +1640,10 @@ ble_l2cap_sig_disconnect(struct ble_l2cap_chan *chan)
     struct ble_l2cap_sig_proc *proc;
     int rc;
 
+    if (chan->flags & BLE_L2CAP_CHAN_F_DISCONNECTING) {
+        return 0;
+    }
+
     proc = ble_l2cap_sig_proc_alloc();
     if (proc == NULL) {
         return BLE_HS_ENOMEM;
@@ -1651,6 +1665,10 @@ ble_l2cap_sig_disconnect(struct ble_l2cap_chan *chan)
     req->scid = htole16(chan->scid);
 
     rc = ble_l2cap_sig_tx(proc->conn_handle, txom);
+    /* Mark channel as disconnecting */
+    if (rc == 0) {
+        chan->flags |= BLE_L2CAP_CHAN_F_DISCONNECTING;
+    }
 
 done:
     ble_l2cap_sig_process_status(proc, rc);
@@ -1944,3 +1962,5 @@ ble_l2cap_sig_init(void)
 
     return 0;
 }
+
+#endif

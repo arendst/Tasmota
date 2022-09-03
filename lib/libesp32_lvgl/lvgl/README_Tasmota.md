@@ -18,3 +18,7 @@ because parameters depend on Tasmota defines and presence of PSRAM.
 // #  endif
 // #endif
 ```
+
+## lv_spinner
+
+Both function `arc_anim_start_angle()` and `arc_anim_end_angle()` are made non-static. This allows to search for `lv_anim` object based on their `exec_cb` callbacks and change properties on-the-fly.
