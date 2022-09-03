@@ -1,4 +1,6 @@
 Import("env")
+env = DefaultEnvironment()
+platform = env.PioPlatform()
 import os
 import subprocess
 from os.path import join
