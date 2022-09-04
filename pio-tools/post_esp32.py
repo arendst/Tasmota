@@ -138,7 +138,7 @@ def esp32_create_combined_bin(source, target, env):
     flash_mode = env.BoardConfig().get("build.flash_mode", "dio")
     memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
 
-    if flash_mode == "qio" or flash_mode == "qout"
+    if flash_mode == "qio" or flash_mode == "qout":
         flash_mode = "dio"
     if memory_type == "opi_opi" or memory_type == "opi_qspi":
         flash_mode = "dout"
