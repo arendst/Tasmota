@@ -126,6 +126,7 @@ class LuxV30b {
     float Lux();
     bool _found;
     uint32_t _lux;
+    uint32_t _lux_last;
 };
 
 LuxV30b::LuxV30b() {
@@ -145,13 +146,18 @@ bool LuxV30b::Found() {
 }
 
 void LuxV30b::Read() {
-  _lux  = I2cRead8(LUXV30B_ADDR, 0);
-  delay(8);
-  _lux |= I2cRead8(LUXV30B_ADDR, 1) << 8;
-  delay(8);
-  _lux |= I2cRead8(LUXV30B_ADDR, 2) << 16;
-  delay(8);
-  _lux |= I2cRead8(LUXV30B_ADDR, 3) << 24;
+  uint32_t lux  = I2cRead8(LUXV30B_ADDR, 0);
+//  delay(8);
+  lux |= I2cRead8(LUXV30B_ADDR, 1) << 8;
+//  delay(8);
+  lux |= I2cRead8(LUXV30B_ADDR, 2) << 16;
+//  delay(8);
+  lux |= I2cRead8(LUXV30B_ADDR, 3) << 24;
+
+  _lux = (lux > (_lux_last << 4)) ? _lux_last : lux;  // Filter large deviations due to misreads
+  _lux_last = lux;
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: Raw %d/%d"), lux, _lux);
 }
 
 float LuxV30b::Lux() {
