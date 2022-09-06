@@ -702,7 +702,7 @@
 #undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
 // -- Optional light modules ----------------------
-#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
+//#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
 #undef USE_WS2812                                // Disable WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 #undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
 #undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)

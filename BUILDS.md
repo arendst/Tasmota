@@ -60,7 +60,7 @@ Note: `minimal` variant is not listed as it shouldn't be used outside of the [up
 | USE_AC_ZERO_CROSS_DIMMER  | - | x / x | x | x | x | x |
 |                           |   |       |   |   |   |   |
 | Feature or Sensor         | l | t     | k | s | i | d | Remarks
-| USE_LIGHT                 | - | x / x | x | x | x | x |
+| USE_LIGHT                 | x | x / x | x | x | x | x |
 | USE_WS2812                | - | x / x | x | x | - | x |
 | USE_WS2812_DMA            | - | - / - | - | - | - | - |
 | USE_MY92X1                | - | x / - | x | x | - | x |
