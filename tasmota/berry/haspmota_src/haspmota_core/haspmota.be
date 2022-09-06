@@ -1021,11 +1021,11 @@ class lvh_qrcode : lvh_obj
   def init(parent, page, jline)
     self._page = page
 
-    var size = jline.find("qr_size", 100)
+    var sz = jline.find("qr_size", 100)
     var dark_col = self.parse_color(jline.find("qr_dark_color", "#000000"))
     var light_col = self.parse_color(jline.find("qr_light_color", "#FFFFFF"))
 
-    self._lv_obj = lv.qrcode(parent, size, dark_col, light_col)
+    self._lv_obj = lv.qrcode(parent, sz, dark_col, light_col)
     self.post_init()
   end
 
