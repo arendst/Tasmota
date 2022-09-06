@@ -132,21 +132,6 @@ int be_builtin_find(bvm *vm, bstring *name)
     return -1; /* not found */
 }
 
-/* find in the list of builtins or classes - used by strict to avoid accidental change of those */
-int be_builtin_class_find(bvm *vm, bstring *name)
-{
-    bvalue *res = be_map_findstr(vm, builtin(vm).vtab, name);
-    if (res) {
-        return var_toidx(res);
-    } else {
-        int idx = global_native_class_find(vm, name);
-        if (idx >= 0) {
-            return idx;
-        }
-    }
-    return -1; /* not found */
-}
-
 bstring* be_builtin_name(bvm *vm, int index)
 {
     bmap *map = builtin(vm).vtab;

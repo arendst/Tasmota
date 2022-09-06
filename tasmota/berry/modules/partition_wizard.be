@@ -62,7 +62,7 @@ class Partition_wizard_UI
     if last_slot.is_spiffs()
       # verify that last slot is filesystem
       var flash_size_k = self.get_max_flash_size_k(p)
-      var partition_end_k = (last_slot.start + last_slot.size) / 1024   # last kb used for fs
+      var partition_end_k = (last_slot.start + last_slot.sz) / 1024   # last kb used for fs
       if  partition_end_k < flash_size_k
         return flash_size_k - partition_end_k
       end
@@ -143,7 +143,7 @@ class Partition_wizard_UI
   def get_cur_fs_size_k(p)
     var last_slot = p.slots[-1]
     if last_slot.is_spiffs()    # verify that last slot is filesystem
-      return (last_slot.size + 1023) / 1024
+      return (last_slot.sz + 1023) / 1024
     end
     return 0
   end
@@ -265,7 +265,7 @@ class Partition_wizard_UI
     var app0 = p.get_ota_slot(0)
     var app1 = p.get_ota_slot(0)
     var app0_firmware_size = (app0 != nil) ? app0.get_image_size() : -1
-    var app1_size          = (app1 != nil) ? app1.size : -1
+    var app1_size          = (app1 != nil) ? app1.sz : -1
     if app0_firmware_size < 0 || app1_size < 0 return "can't find app0/1 sizes" end
     if app0_firmware_size >= app1_size  return "`app1` is too small" end
     return false
@@ -295,7 +295,7 @@ class Partition_wizard_UI
     if !self.factory_migrate_eligible(p)    return "not eligible to migration" end
 
     var app0 = p.get_ota_slot(0)
-    if app0.size < (self.app_size_min * 1024)        return "`app0` is too small for `safeboot`" end
+    if app0.sz < (self.app_size_min * 1024)        return "`app0` is too small for `safeboot`" end
     var app0_image_size = app0.get_image_size()
     if (app0_image_size > 0) && (app0_image_size < (self.app_size_min * 1024))        return true end
     return false
@@ -347,13 +347,13 @@ class Partition_wizard_UI
     # if app0.get_image_size() > (self.app_size_min * 1024)        return "`app0` is too small for `safeboot`" end
   end
 
-  static def copy_ota(from_addr, to_addr, size)
+  static def copy_ota(from_addr, to_addr, sz)
     import flash
     import string
-    var size_left = size
+    var size_left = sz
     var offset = 0
   
-    tasmota.log(string.format("UPL: Copy flash from 0x%06X to 0x%06X (size: %ikB)", from_addr, to_addr, size / 1024), 2)
+    tasmota.log(string.format("UPL: Copy flash from 0x%06X to 0x%06X (size: %ikB)", from_addr, to_addr, sz / 1024), 2)
     while size_left > 0
       var b = flash.read(from_addr + offset, 4096)
       flash.erase(to_addr + offset, 4096)
@@ -376,7 +376,7 @@ class Partition_wizard_UI
     var app0 = p.get_ota_slot(0)
     var app1 = p.get_ota_slot(1)
     var app0_size = app0.get_image_size()
-    if app0_size > app1.size  raise "internal_error", "`app1` too small to copy firmware form `app0`" end
+    if app0_size > app1.sz  raise "internal_error", "`app1` too small to copy firmware form `app0`" end
     self.copy_ota(app0.start, app1.start, app0_size)
 
     p.set_active(1)
@@ -433,14 +433,14 @@ class Partition_wizard_UI
 
     # do the change
     app0.subtype = 0        # factory subtype
-    app0.size = factory_size
+    app0.sz = factory_size
     app0.label = 'safeboot'
 
     app1.subtype = 0x10     # app1 becomes app0
     app1.label = 'app0'
     var f1_start = app1.start
     app1.start = app0.start + factory_size
-    app1.size += f1_start - app1.start
+    app1.sz += f1_start - app1.start
 
     # swicth partitions
     p.set_active(0)
@@ -526,10 +526,10 @@ class Partition_wizard_UI
 
         var usage_str = "unknown"
         var used = slot.get_image_size()
-        if (used >= 0) && (used <= slot.size)
-          usage_str = string.format("used %i%%", ((used / 1024) * 100) / (slot.size / 1024))
+        if (used >= 0) && (used <= slot.sz)
+          usage_str = string.format("used %i%%", ((used / 1024) * 100) / (slot.sz / 1024))
         end
-        var title = string.format("%ssubtype:%s offset:0x%06X size:0x%06X", current_boot_partition ? "booted " : "", slot.subtype_to_string(), slot.start, slot.size)
+        var title = string.format("%ssubtype:%s offset:0x%06X size:0x%06X", current_boot_partition ? "booted " : "", slot.subtype_to_string(), slot.start, slot.sz)
         var col_before = ""
         var col_after = ""
         if current_boot_partition
@@ -538,11 +538,11 @@ class Partition_wizard_UI
         end
         # webserver.content_send(string.format("<p><b>%s</b> [%s]: %i KB (%s)</p>", slot.label, slot.subtype_to_string(), slot.size / 1024, usage_str))
         webserver.content_send(string.format("<tr><td title='%s'><b>%s%s%s</b>:&nbsp;</td><td align='right'> %i KB </td><td>&nbsp;(%s)</td></tr>",
-                                             title, col_before, slot.label, col_after, slot.size / 1024, usage_str))
+                                             title, col_before, slot.label, col_after, slot.sz / 1024, usage_str))
       elif slot.is_spiffs()
         # spiffs partition
-        var title = string.format("subtype:%s offset:0x%06X size:0x%06X", slot.subtype_to_string(), slot.start, slot.size)
-        webserver.content_send(string.format("<tr><td title='%s'><b>fs</b>:&nbsp;</td><td align='right'> %i KB</td></tr>", title, slot.size / 1024))
+        var title = string.format("subtype:%s offset:0x%06X size:0x%06X", slot.subtype_to_string(), slot.start, slot.sz)
+        webserver.content_send(string.format("<tr><td title='%s'><b>fs</b>:&nbsp;</td><td align='right'> %i KB</td></tr>", title, slot.sz / 1024))
       end
     end
 
@@ -550,7 +550,7 @@ class Partition_wizard_UI
     if unallocated > 0
       var last_slot = p.slots[-1]
       # verify that last slot is file-system
-      var partition_end_k = (last_slot.start + last_slot.size) / 1024   # last kb used for fs
+      var partition_end_k = (last_slot.start + last_slot.sz) / 1024   # last kb used for fs
       webserver.content_send(string.format("<tr><td title='offset:0x%06X size:0x%06X'>&lt;free&gt;:&nbsp;</td><td align='right'> %i KB</td></tr>",
                                             partition_end_k * 1024, unallocated * 1024, unallocated))
     end
@@ -621,7 +621,7 @@ class Partition_wizard_UI
 
         # since unallocated succeeded, we know the last slot is FS
         var fs_slot = p.slots[-1]
-        fs_slot.size += unallocated * 1024
+        fs_slot.sz += unallocated * 1024
         p.save()
         p.invalidate_spiffs()   # erase SPIFFS or data is corrupt
 
@@ -649,12 +649,12 @@ class Partition_wizard_UI
 
         # apply the change
         # shrink last OTA App
-        var delta = (fs_target * 1024) - fs.size
-        last_app.size -= delta
+        var delta = (fs_target * 1024) - fs.sz
+        last_app.sz -= delta
 
         # move fs
         fs.start -= delta
-        fs.size += delta
+        fs.sz += delta
         p.save()
         p.invalidate_spiffs()
 
