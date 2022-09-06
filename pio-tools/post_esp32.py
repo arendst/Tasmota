@@ -136,9 +136,11 @@ def esp32_create_combined_bin(source, target, env):
     flash_freq = str(flash_freq).replace("L", "")
     flash_freq = str(int(int(flash_freq) / 1000000)) + "m"
     flash_mode = env.BoardConfig().get("build.flash_mode", "dio")
-    if flash_mode == "qio":
+    memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
+
+    if flash_mode == "qio" or flash_mode == "qout":
         flash_mode = "dio"
-    elif flash_mode == "qout":
+    if memory_type == "opi_opi" or memory_type == "opi_qspi":
         flash_mode = "dout"
     cmd = [
         "--chip",
@@ -168,7 +170,9 @@ def esp32_create_combined_bin(source, target, env):
     else:
         print("Upload new safeboot binary only")
 
-    if(fs_offset != -1):
+#    if(fs_offset != -1):
+    upload_port = env.subst("$UPLOAD_PORT")
+    if("upload-tasmota.php" not in upload_port) and (fs_offset != -1):
         fs_bin = join(env.subst("$BUILD_DIR"),"littlefs.bin")
         if exists(fs_bin):
             before_reset = env.BoardConfig().get("upload.before_reset", "default_reset")

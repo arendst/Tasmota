@@ -19,67 +19,56 @@
 */
 #ifdef USE_I2C
 #ifdef USE_SCD30
+/*********************************************************************************************\
+ * SCD30 NDIR CO2 Temperature and Humidity sensor
+\*********************************************************************************************/
 
-#define XSNS_42        42
-#define XI2C_29        29  // See I2CDEVICES.md
+#define XSNS_42                       42
+#define XI2C_29                       29  // See I2CDEVICES.md
 
 //#define SCD30_DEBUG
 
-#define SCD30_ADDRESS  0x61
+#define SCD30_ADDRESS                 0x61
 
-#define SCD30_MAX_MISSED_READS 3
-#define SCD30_STATE_NO_ERROR 0
-#define SCD30_STATE_ERROR_DATA_CRC 1
-#define SCD30_STATE_ERROR_READ_MEAS 2
-#define SCD30_STATE_ERROR_SOFT_RESET 3
-#define SCD30_STATE_ERROR_I2C_RESET 4
-#define SCD30_STATE_ERROR_UNKNOWN 5
+#define SCD30_MAX_MISSED_READS        3
+#define SCD30_STATE_NO_ERROR          0
+#define SCD30_STATE_ERROR_DATA_CRC    1
+#define SCD30_STATE_ERROR_READ_MEAS   2
+#define SCD30_STATE_ERROR_SOFT_RESET  3
+#define SCD30_STATE_ERROR_I2C_RESET   4
+#define SCD30_STATE_ERROR_UNKNOWN     5
 
-#include "Arduino.h"
+const char kScd30Commands[] PROGMEM = "Scd30|"  // Prefix
+  "Alt|Auto|Cal|FW|Int|Pres|TOff";
+void (*const kScd30Command[])(void) PROGMEM = {
+  &CmndScd30Altitude, &CmndScd30AutoMode, &CmndScd30Calibrate, &CmndScd30Firmware, &CmndScd30Interval, &CmndScd30Pressure, &CmndScd30TempOffset };
+
+/********************************************************************************************/
+
 #include <FrogmoreScd30.h>
-
-#define D_CMND_SCD30 "SCD30"
-
-const char S_JSON_SCD30_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_SCD30 "%s\":%d}";
-const char S_JSON_SCD30_COMMAND_NFW_VALUE[] PROGMEM = "{\"" D_CMND_SCD30 "%s\":%d.%d}";
-const char S_JSON_SCD30_COMMAND[] PROGMEM        = "{\"" D_CMND_SCD30 "%s\"}";
-const char kSCD30_Commands[] PROGMEM             = "Alt|Auto|Cal|FW|Int|Pres|TOff";
-
-/*********************************************************************************************\
- * enumerationsines
-\*********************************************************************************************/
-
-enum SCD30_Commands {         // commands useable in console or rules
-  CMND_SCD30_ALTITUDE,
-  CMND_SCD30_AUTOMODE,
-  CMND_SCD30_CALIBRATE,
-  CMND_SCD30_FW,
-  CMND_SCD30_INTERVAL,
-  CMND_SCD30_PRESSURE,
-  CMND_SCD30_TEMPOFFSET
-};
 
 FrogmoreScd30 scd30;
 
-bool scd30InitOnce = false;
-bool scd30Found = false;
-bool scd30IsDataValid = false;
-int scd30ErrorState = SCD30_STATE_NO_ERROR;
-uint16_t scd30Interval_sec;
-int scd30Loop_count = 0;
-int scd30DataNotAvailable_count = 0;
-int scd30GoodMeas_count = 0;
-int scd30Reset_count = 0;
-int scd30CrcError_count = 0;
-int scd30Co2Zero_count = 0;
-int scd30i2cReset_count = 0;
-uint16_t scd30_CO2 = 0;
-uint16_t scd30_CO2EAvg = 0;
-float scd30_Humid = 0.0f;
-float scd30_Temp = 0.0f;
+struct {
+  float humidity = 0.0f;
+  float temperature = 0.0f;
+  int error_state = SCD30_STATE_NO_ERROR;
+  int loop_count = 0;
+  int data_not_available_count = 0;
+  int good_measure_count = 0;
+  int reset_count = 0;
+  int error_count = 0;
+  int co2_zero_count = 0;
+  int i2c_reset_count = 0;
+  uint16_t interval;
+  uint16_t co2 = 0;
+  uint16_t co2e_avg = 0;
+  bool init_once;
+  bool found = false;
+  bool data_valid = false;
+} Scd30;
 
-void Scd30Detect(void)
-{
+void Scd30Detect(void) {
   if (!I2cSetDevice(SCD30_ADDRESS)) { return; }
 
   scd30.begin();
@@ -87,57 +76,55 @@ void Scd30Detect(void)
   uint8_t major = 0;
   uint8_t minor = 0;
   if (scd30.getFirmwareVersion(&major, &minor)) { return; }
-  uint16_t interval_sec;
-  if (scd30.getMeasurementInterval(&scd30Interval_sec)) { return; }
+  if (scd30.getMeasurementInterval(&Scd30.interval)) { return; }
   if (scd30.beginMeasuring()) { return; }
 
   I2cSetActiveFound(SCD30_ADDRESS, "SCD30");
-  scd30Found = true;
+  Scd30.found = true;
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: FW v%d.%d"), major, minor);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("SCD: FW v%d.%d"), major, minor);
 }
 
 // gets data from the sensor every 3 seconds or so to give the sensor time to gather new data
-void Scd30Update(void)
-{
-  scd30Loop_count++;
-  if (scd30Loop_count > (scd30Interval_sec - 1)) {
+void Scd30Update(void) {
+  Scd30.loop_count++;
+  if (Scd30.loop_count > (Scd30.interval - 1)) {
     uint32_t error = 0;
-    switch (scd30ErrorState) {
+    switch (Scd30.error_state) {
       case SCD30_STATE_NO_ERROR: {
-        error = scd30.readMeasurement(&scd30_CO2, &scd30_CO2EAvg, &scd30_Temp, &scd30_Humid);
+        error = scd30.readMeasurement(&Scd30.co2, &Scd30.co2e_avg, &Scd30.temperature, &Scd30.humidity);
         switch (error) {
           case ERROR_SCD30_NO_ERROR:
-            scd30Loop_count = 0;
-            scd30IsDataValid = true;
-            scd30GoodMeas_count++;
+            Scd30.loop_count = 0;
+            Scd30.data_valid = true;
+            Scd30.good_measure_count++;
             break;
 
           case ERROR_SCD30_NO_DATA:
-            scd30DataNotAvailable_count++;
+            Scd30.data_not_available_count++;
             break;
 
           case ERROR_SCD30_CRC_ERROR:
-            scd30ErrorState = SCD30_STATE_ERROR_DATA_CRC;
-            scd30CrcError_count++;
+            Scd30.error_state = SCD30_STATE_ERROR_DATA_CRC;
+            Scd30.error_count++;
 #ifdef SCD30_DEBUG
             AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: CRC error, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
-              scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
+              Scd30.error_count, Scd30.co2_zero_count, Scd30.good_measure_count, Scd30.data_not_available_count, Scd30.reset_count, Scd30.i2c_reset_count);
 #endif
             break;
 
           case ERROR_SCD30_CO2_ZERO:
-            scd30Co2Zero_count++;
+            Scd30.co2_zero_count++;
 #ifdef SCD30_DEBUG
             AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: CO2 zero, CRC error: %ld, CO2 zero: %ld, good: %ld, no data: %ld, sc30_reset: %ld, i2c_reset: %ld"),
-              scd30CrcError_count, scd30Co2Zero_count, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
+              Scd30.error_count, Scd30.co2_zero_count, Scd30.good_measure_count, Scd30.data_not_available_count, Scd30.reset_count, Scd30.i2c_reset_count);
 #endif
             break;
 
           default: {
-            scd30ErrorState = SCD30_STATE_ERROR_READ_MEAS;
+            Scd30.error_state = SCD30_STATE_ERROR_READ_MEAS;
 #ifdef SCD30_DEBUG
-            AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, scd30Loop_count);
+            AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: Update: ReadMeasurement error: 0x%lX, counter: %ld"), error, Scd30.loop_count);
 #endif
              return;
           }
@@ -147,24 +134,24 @@ void Scd30Update(void)
       break;
 
       case SCD30_STATE_ERROR_DATA_CRC: {
-        //scd30IsDataValid = false;
+        //Scd30.data_valid = false;
 #ifdef SCD30_DEBUG
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
-        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: got CRC error, try again, counter: %ld"), scd30Loop_count);
+          Scd30.error_state, Scd30.good_measure_count, Scd30.data_not_available_count, Scd30.reset_count, Scd30.i2c_reset_count);
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: got CRC error, try again, counter: %ld"), Scd30.loop_count);
 #endif
-        scd30ErrorState = ERROR_SCD30_NO_ERROR;
+        Scd30.error_state = ERROR_SCD30_NO_ERROR;
       }
       break;
 
       case SCD30_STATE_ERROR_READ_MEAS: {
-        //scd30IsDataValid = false;
+        //Scd30.data_valid = false;
 #ifdef SCD30_DEBUG
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
-        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: not answering, sending soft reset, counter: %ld"), scd30Loop_count);
+          Scd30.error_state, Scd30.good_measure_count, Scd30.data_not_available_count, Scd30.reset_count, Scd30.i2c_reset_count);
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: not answering, sending soft reset, counter: %ld"), Scd30.loop_count);
 #endif
-        scd30Reset_count++;
+        Scd30.reset_count++;
         error = scd30.softReset();
         if (error) {
 #ifdef SCD30_DEBUG
@@ -172,218 +159,154 @@ void Scd30Update(void)
 #endif
           error >>= 8;
           if (error == 4) {
-            scd30ErrorState = SCD30_STATE_ERROR_SOFT_RESET;
+            Scd30.error_state = SCD30_STATE_ERROR_SOFT_RESET;
           } else {
-            scd30ErrorState = SCD30_STATE_ERROR_UNKNOWN;
+            Scd30.error_state = SCD30_STATE_ERROR_UNKNOWN;
           }
         } else {
-          scd30ErrorState = ERROR_SCD30_NO_ERROR;
+          Scd30.error_state = ERROR_SCD30_NO_ERROR;
         }
       }
       break;
 
       case SCD30_STATE_ERROR_SOFT_RESET: {
-        //scd30IsDataValid = false;
+        //Scd30.data_valid = false;
 #ifdef SCD30_DEBUG
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: in error state: %d, good: %ld, no data: %ld, sc30 reset: %ld, i2c reset: %ld"),
-          scd30ErrorState, scd30GoodMeas_count, scd30DataNotAvailable_count, scd30Reset_count, scd30i2cReset_count);
+          Scd30.error_state, Scd30.good_measure_count, Scd30.data_not_available_count, Scd30.reset_count, Scd30.i2c_reset_count);
         AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: clearing i2c bus"));
 #endif
-        scd30i2cReset_count++;
+        Scd30.i2c_reset_count++;
         error = scd30.clearI2CBus();
         if (error) {
-          scd30ErrorState = SCD30_STATE_ERROR_I2C_RESET;
+          Scd30.error_state = SCD30_STATE_ERROR_I2C_RESET;
 #ifdef SCD30_DEBUG
           AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: error clearing i2c bus: 0x%lX"), error);
 #endif
         } else {
-          scd30ErrorState = ERROR_SCD30_NO_ERROR;
+          Scd30.error_state = ERROR_SCD30_NO_ERROR;
         }
       }
       break;
 
       default: {
-        //scd30IsDataValid = false;
+        //Scd30.data_valid = false;
 #ifdef SCD30_DEBUG
-        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: unknown error state: 0x%lX"), scd30ErrorState);
+        AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: unknown error state: 0x%lX"), Scd30.error_state);
 #endif
-        scd30ErrorState = SCD30_STATE_ERROR_SOFT_RESET; // try again
+        Scd30.error_state = SCD30_STATE_ERROR_SOFT_RESET; // try again
       }
     }
 
-    if (scd30Loop_count > (SCD30_MAX_MISSED_READS * scd30Interval_sec)) {
-      scd30IsDataValid = false;
+    if (Scd30.loop_count > (SCD30_MAX_MISSED_READS * Scd30.interval)) {
+      Scd30.data_valid = false;
     }
   }
-}
-
-
-int Scd30GetCommand(int command_code, uint16_t *pvalue)
-{
-  switch (command_code)
-  {
-    case CMND_SCD30_ALTITUDE:
-      return scd30.getAltitudeCompensation(pvalue);
-      break;
-
-    case CMND_SCD30_AUTOMODE:
-      return scd30.getCalibrationType(pvalue);
-      break;
-
-    case CMND_SCD30_CALIBRATE:
-      return scd30.getForcedRecalibrationFactor(pvalue);
-      break;
-
-    case CMND_SCD30_INTERVAL:
-      return scd30.getMeasurementInterval(pvalue);
-      break;
-
-    case CMND_SCD30_PRESSURE:
-      return scd30.getAmbientPressure(pvalue);
-      break;
-
-    case CMND_SCD30_TEMPOFFSET:
-      return scd30.getTemperatureOffset(pvalue);
-      break;
-
-      default:
-        // else for Unknown command
-      break;
-  }
-  return 0;  // Fix GCC 10.1 warning
-}
-
-int Scd30SetCommand(int command_code, uint16_t value)
-{
-  switch (command_code)
-  {
-    case CMND_SCD30_ALTITUDE:
-      return scd30.setAltitudeCompensation(value);
-      break;
-
-    case CMND_SCD30_AUTOMODE:
-      return scd30.setCalibrationType(value);
-      break;
-
-    case CMND_SCD30_CALIBRATE:
-      return scd30.setForcedRecalibrationFactor(value);
-      break;
-
-    case CMND_SCD30_INTERVAL:
-    {
-      int error = scd30.setMeasurementInterval(value);
-      if (!error)
-      {
-        scd30Interval_sec = value;
-      }
-
-      return error;
-    }
-      break;
-
-    case CMND_SCD30_PRESSURE:
-      return scd30.setAmbientPressure(value);
-      break;
-
-    case CMND_SCD30_TEMPOFFSET:
-      return scd30.setTemperatureOffset(value);
-      break;
-
-      default:
-        // else for Unknown command
-      break;
-  }
-  return 0;  // Fix GCC 10.1 warning
 }
 
 /*********************************************************************************************\
- * Command Sensor42
+ * Command Scd30
 \*********************************************************************************************/
 
-bool Scd30CommandSensor()
-{
-  char command[CMDSZ];
-  bool serviced = true;
-  uint8_t prefix_len = strlen(D_CMND_SCD30);
-
-  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_SCD30), prefix_len)) {  // prefix
-    int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + prefix_len, kSCD30_Commands);
-
-    switch (command_code) {
-      case CMND_SCD30_ALTITUDE:
-      case CMND_SCD30_AUTOMODE:
-      case CMND_SCD30_CALIBRATE:
-      case CMND_SCD30_INTERVAL:
-      case CMND_SCD30_PRESSURE:
-      case CMND_SCD30_TEMPOFFSET:
-      {
-        uint16_t value = 0;
-        if (XdrvMailbox.data_len > 0)
-        {
-          value = XdrvMailbox.payload;
-          Scd30SetCommand(command_code, value);
-        }
-        else
-        {
-          Scd30GetCommand(command_code, &value);
-        }
-
-        Response_P(S_JSON_SCD30_COMMAND_NVALUE, command, value);
-      }
-        break;
-
-      case CMND_SCD30_FW:
-      {
-        uint8_t major = 0;
-        uint8_t minor = 0;
-        int error;
-        error = scd30.getFirmwareVersion(&major, &minor);
-        if (error)
-        {
-#ifdef SCD30_DEBUG
-          AddLog(LOG_LEVEL_ERROR, PSTR("SCD30: error getting FW version: 0x%lX"), error);
-#endif
-          serviced = false;
-        }
-        else
-        {
-          Response_P(S_JSON_SCD30_COMMAND_NFW_VALUE, command, major, minor);
-        }
-      }
-        break;
-
-      default:
-        // else for Unknown command
-        serviced = false;
-      break;
-    }
+void CmndScd30Altitude(void) {
+  uint16_t value = 0;
+  if (XdrvMailbox.data_len > 0) {
+    value = XdrvMailbox.payload;
+    scd30.setAltitudeCompensation(value);
   } else {
-    serviced = false;
+    scd30.getAltitudeCompensation(&value);
   }
-  return serviced;
-}
+  ResponseCmndNumber(value);
+};
 
-void Scd30Show(bool json)
-{
-  if (scd30IsDataValid)
-  {
-    float t = ConvertTemp(scd30_Temp);
-    float h = ConvertHumidity(scd30_Humid);
+void CmndScd30AutoMode(void) {
+  uint16_t value = 0;
+  if (XdrvMailbox.data_len > 0) {
+    value = XdrvMailbox.payload;
+    scd30.setCalibrationType(value);
+  } else {
+    scd30.getCalibrationType(&value);
+  }
+  ResponseCmndNumber(value);
+};
+
+void CmndScd30Calibrate(void) {
+  uint16_t value = 0;
+  if (XdrvMailbox.data_len > 0) {
+    value = XdrvMailbox.payload;
+    scd30.setForcedRecalibrationFactor(value);
+  } else {
+    scd30.getForcedRecalibrationFactor(&value);
+  }
+  ResponseCmndNumber(value);
+};
+
+void CmndScd30Firmware(void) {
+  uint8_t major = 0;
+  uint8_t minor = 0;
+  int error = scd30.getFirmwareVersion(&major, &minor);
+  if (!error) {
+    float firmware = major + ((float)minor / 100);
+    ResponseCmndFloat(firmware, 2);
+  }
+};
+
+void CmndScd30Interval(void) {
+  uint16_t value = 0;
+  if (XdrvMailbox.data_len > 0) {
+    value = XdrvMailbox.payload;
+    int error = scd30.setMeasurementInterval(value);
+    if (!error) {
+      Scd30.interval = value;
+    }
+  }
+  scd30.getMeasurementInterval(&value);
+  ResponseCmndNumber(value);
+};
+
+void CmndScd30Pressure(void) {
+  uint16_t value = 0;
+  if (XdrvMailbox.data_len > 0) {
+    value = XdrvMailbox.payload;
+    scd30.setAmbientPressure(value);
+  } else {
+    scd30.getAmbientPressure(&value);
+  }
+  ResponseCmndNumber(value);
+};
+
+void CmndScd30TempOffset(void) {
+  uint16_t value = 0;
+  if (XdrvMailbox.data_len > 0) {
+    value = XdrvMailbox.payload;
+    scd30.setTemperatureOffset(value);
+  } else {
+    scd30.getTemperatureOffset(&value);
+  }
+  ResponseCmndNumber(value);
+};
+
+/********************************************************************************************/
+
+void Scd30Show(bool json) {
+  if (Scd30.data_valid) {
+    float t = ConvertTemp(Scd30.temperature);
+    float h = ConvertHumidity(Scd30.humidity);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,"), scd30_CO2, scd30_CO2EAvg);
+      ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,"), Scd30.co2, Scd30.co2e_avg);
       ResponseAppendTHD(t, h);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
-        DomoticzSensor(DZ_AIRQUALITY, scd30_CO2);
+        DomoticzSensor(DZ_AIRQUALITY, Scd30.co2);
         DomoticzTempHumPressureSensor(t, h);
       }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_CO2EAVG, "SCD30", scd30_CO2EAvg);
-      WSContentSend_PD(HTTP_SNS_CO2, "SCD30", scd30_CO2);
+      WSContentSend_PD(HTTP_SNS_CO2EAVG, "SCD30", Scd30.co2e_avg);
+      WSContentSend_PD(HTTP_SNS_CO2, "SCD30", Scd30.co2);
       WSContentSend_THD("SCD30", t, h);
 #endif  // USE_WEBSERVER
     }
@@ -394,8 +317,7 @@ void Scd30Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns42(byte function)
-{
+bool Xsns42(byte function) {
   if (!I2cEnabled(XI2C_29)) { return false; }
 
   bool result = false;
@@ -406,26 +328,26 @@ bool Xsns42(byte function)
     Scd30Detect();
   }
 */
-  if (!scd30InitOnce && (FUNC_EVERY_SECOND == function) && (TasmotaGlobal.uptime > 2)) {
-    scd30InitOnce = true;
+  if (!Scd30.init_once && (FUNC_EVERY_SECOND == function) && (TasmotaGlobal.uptime > 2)) {
+    Scd30.init_once = true;
     Scd30Detect();
   }
-  else if (scd30Found) {
+  else if (Scd30.found) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         Scd30Update();
         break;
       case FUNC_COMMAND:
-        result = Scd30CommandSensor();
+        result = DecodeCommand(kScd30Commands, kScd30Command);
         break;
       case FUNC_JSON_APPEND:
         Scd30Show(1);
         break;
-  #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
         Scd30Show(0);
         break;
-  #endif  // USE_WEBSERVER
+#endif  // USE_WEBSERVER
     }
   }
   return result;

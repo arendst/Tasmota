@@ -1,9 +1,9 @@
 import os
 
-def strfind(str, char)
-    var len = size(str)
+def strfind(st, char)
+    var len = size(st)
     for i : 0 .. len - 1
-        if str[i] == char
+        if st[i] == char
             return true
         end
     end

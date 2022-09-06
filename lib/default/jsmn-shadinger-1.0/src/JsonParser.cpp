@@ -408,6 +408,8 @@ void JsonParser::parse(char * json_in) {
   // TODO error checking
   if (_token_len >= 0) {
     postProcess(json_len);
+  } else {
+    this->free();   // invalid JSON
   }
 }
 

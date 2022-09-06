@@ -828,7 +828,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_SGP40)
     feature9 |= 0x00000001;  // xsns_98_sgp40.ino
 #endif
-//    feature9 |= 0x00000002;
+#if defined(USE_I2C) && defined(USE_LUXV30B)
+    feature9 |= 0x00000002;
+#endif
 //    feature9 |= 0x00000004;
 //    feature9 |= 0x00000008;
 

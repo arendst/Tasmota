@@ -565,6 +565,10 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
     ResponseAppend_P(PSTR("}"));
   }
 
+#ifdef USE_INFLUXDB
+  InfluxDbProcess(1);        // Use a copy of ResponseData
+#endif
+
   if (Settings->flag4.zigbee_distinct_topics) {
     char subtopic[TOPSZ];
     if (Settings->flag4.zb_topic_fname && friendlyName && strlen(friendlyName)) {

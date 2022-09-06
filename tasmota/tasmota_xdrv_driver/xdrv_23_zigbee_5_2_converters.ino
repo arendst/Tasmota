@@ -108,7 +108,7 @@ public:
     manuf(manuf_code), transactseq(transact_seq), cmd(cmd_id),
     payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
     cluster(clusterid), groupaddr(groupaddr),
-    shortaddr(srcaddr), _srcendpoint(srcendpoint), dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
+    shortaddr(srcaddr), srcendpoint(srcendpoint), dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
     _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber)
     {
       _frame_control.d8 = frame_control;
@@ -128,7 +128,7 @@ public:
                     "\"manuf\":\"0x%04X\",\"transact\":%d,"
                     "\"cmdid\":\"0x%02X\",\"payload\":\"%_B\"}}"),
                     groupaddr, cluster, shortaddr,
-                    _srcendpoint, dstendpoint, _wasbroadcast,
+                    srcendpoint, dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _frame_control,
                     _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
@@ -207,7 +207,7 @@ public:
   inline uint16_t getClusterId(void) const { return cluster; }
   inline uint8_t  getLinkQuality(void) const { return _linkquality; }
   inline uint8_t getCmdId(void) const { return cmd; }
-  inline uint16_t getSrcEndpoint(void) const { return _srcendpoint; }
+  inline uint16_t getSrcEndpoint(void) const { return srcendpoint; }
   const SBuffer &getPayload(void) const { return payload; }
   uint16_t getManufCode(void) const { return manuf; }
 
@@ -234,9 +234,11 @@ public:
   bool                    direct = false;                  // true if direct, false if discover router
   bool                    transacSet = false;              // is transac already set
 
+  uint8_t                 srcendpoint = 0x00;        // 0x00 is invalid for the src endpoint
+  bool                    direction = false;         // false = client to server (default), true = server to client (rare)
+
   // below private attributes are not used when sending a message
 private:
-  uint8_t                 _srcendpoint = 0x00;        // 0x00 is invalid for the src endpoint
   ZCLHeaderFrameControl_t _frame_control = { .d8 = 0 };
   bool                    _wasbroadcast = false;
   uint8_t                 _linkquality = 0x00;
@@ -531,6 +533,16 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
         attr.setUInt(uint16_val);
       }
       break;
+    case Zdata24:      // data16
+    case Zmap24:      // map16
+      {
+        uint32_t uint32_val = buf.get16(i);
+        uint8_t high = buf.get8(i+2);
+        uint32_val = uint32_val | (high << 16);
+        // i += 3;
+        attr.setUInt(uint32_val);
+      }
+      break;
     case Zdata32:      // data32
     case Zmap32:      // map32
       {
@@ -549,7 +561,7 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
       }
       break;
 
-    // TODO
+    // All other fixed size, convert to a HEX dump
     case ZToD:      // ToD
     case Zdate:      // date
     case ZclusterId:      // clusterId
@@ -558,17 +570,19 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
     case ZEUI64:      // EUI64
     case Zkey128:      // key128
     case Zsemi:      // semi (float on 2 bytes)
+      {
+          attr.setBuf(buf, i, len);
+      }
+      // i += 16;
       break;
 
     // Other un-implemented data types
-    case Zdata24:      // data24
     case Zdata40:      // data40
     case Zdata48:      // data48
     case Zdata56:      // data56
     case Zdata64:      // data64
       break;
     // map<x>
-    case Zmap24:      // map24
     case Zmap40:      // map40
     case Zmap48:      // map48
     case Zmap56:      // map56
@@ -621,7 +635,7 @@ void ZCLFrame::parseReportAttributes(Z_attribute_list& attr_list) {
     ZCLFrame zcl(2);   // message is 2 bytes
     zcl.shortaddr = shortaddr;
     zcl.cluster = cluster;
-    zcl.dstendpoint = _srcendpoint;
+    zcl.dstendpoint = srcendpoint;
     zcl.cmd = ZCL_DEFAULT_RESPONSE;
     zcl.manuf = manuf;
     zcl.clusterSpecific = false;  /* not cluster specific */
@@ -768,7 +782,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           if (attr_rgb == nullptr) {      // make sure we didn't already computed it
             uint8_t brightness = 255;
             if (device.valid()) {
-              const Z_Data_Light & light = device.data.find<Z_Data_Light>(_srcendpoint);
+              const Z_Data_Light & light = device.data.find<Z_Data_Light>(srcendpoint);
               if ((&light != &z_data_unk) && (light.validDimmer())) {
                 // Dimmer has a valid value
                 brightness = changeUIntScale(light.getDimmer(), 0, 254, 0, 255);   // range is 0..255
@@ -798,7 +812,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x05000002:    // ZoneStatus
-        const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, _srcendpoint);
+        const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, srcendpoint);
         if (&alarm != nullptr) {
           alarm.convertZoneStatus(attr_list, attr.getUInt());
         }
@@ -821,12 +835,12 @@ void ZCLFrame::generateCallBacks(Z_attribute_list& attr_list) {
         uint32_t occupancy = attr.getUInt();
         if (occupancy) {
           uint32_t pir_timer = OCCUPANCY_TIMEOUT;
-          const Z_Data_PIR & pir_found = (const Z_Data_PIR&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_PIR, _srcendpoint);
+          const Z_Data_PIR & pir_found = (const Z_Data_PIR&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_PIR, srcendpoint);
           if (&pir_found != nullptr) {
             pir_timer = pir_found.getTimeoutSeconds() * 1000;
           }
           if (pir_timer > 0) {
-            zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, pir_timer, cluster, _srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
+            zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, pir_timer, cluster, srcendpoint, Z_CAT_VIRTUAL_OCCUPANCY, 0, &Z_OccupancyCallback);
           }
         } else {
           zigbee_devices.resetTimersForDevice(shortaddr, 0 /* groupaddr */, Z_CAT_VIRTUAL_OCCUPANCY);
@@ -1049,7 +1063,7 @@ void ZCLFrame::parseResponse_inner(uint8_t cmd, bool cluster_specific, uint8_t s
   // "StatusMessage"
   attr_list.addAttributePMEM(PSTR(D_JSON_ZIGBEE_STATUS_MSG)).setStr(getZigbeeStatusMessage(status).c_str());
   // Add Endpoint
-  attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_ENDPOINT)).setUInt(_srcendpoint);
+  attr_list.addAttributePMEM(PSTR(D_CMND_ZIGBEE_ENDPOINT)).setUInt(srcendpoint);
   // Add Group if non-zero
   if (groupaddr) {     // TODO what about group zero
     attr_list.group_id = groupaddr;
@@ -1082,16 +1096,16 @@ void Z_ResetDebounce(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, u
 void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
   // Check if debounce is active and if the packet is a duplicate
   Z_Device & device = zigbee_devices.getShortAddr(shortaddr);
-  if ((device.debounce_endpoint != 0) && (device.debounce_endpoint == _srcendpoint) && (device.debounce_transact == transactseq)) {
+  if ((device.debounce_endpoint != 0) && (device.debounce_endpoint == srcendpoint) && (device.debounce_transact == transactseq)) {
     // this is a duplicate, drop the packet
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), shortaddr, _srcendpoint);
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Discarding duplicate command from 0x%04X, endpoint %d"), shortaddr, srcendpoint);
   } else {
     // reset the duplicate marker, parse the packet normally, and set a timer to reset the marker later (which will discard any existing timer for the same device/endpoint)
-    device.debounce_endpoint = _srcendpoint;
+    device.debounce_endpoint = srcendpoint;
     device.debounce_transact = transactseq;
-    zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, _srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
+    zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
 
-    convertClusterSpecific(attr_list, cluster, cmd, _frame_control.b.direction, shortaddr, _srcendpoint, payload);
+    convertClusterSpecific(attr_list, cluster, cmd, _frame_control.b.direction, shortaddr, srcendpoint, payload);
     if (!Settings->flag5.zb_disable_autoquery) {
     // read attributes unless disabled
       if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
@@ -1107,7 +1121,7 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
     ZCLFrame zcl(2);   // message is 4 bytes
     zcl.shortaddr = shortaddr;
     zcl.cluster = cluster;
-    zcl.dstendpoint = _srcendpoint;
+    zcl.dstendpoint = srcendpoint;
     zcl.cmd = ZCL_DEFAULT_RESPONSE;
     zcl.manuf = manuf;
     zcl.clusterSpecific = false;  /* not cluster specific */
