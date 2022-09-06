@@ -23,7 +23,6 @@ int be_global_new(bvm *vm, bstring *name);
 bvalue* be_global_var(bvm *vm, int index);
 void be_global_release_space(bvm *vm);
 int be_builtin_find(bvm *vm, bstring *name);
-int be_builtin_class_find(bvm *vm, bstring *name);
 bstring* be_builtin_name(bvm *vm, int index);
 int be_builtin_new(bvm *vm, bstring *name);
 void be_bulitin_release_space(bvm *vm);

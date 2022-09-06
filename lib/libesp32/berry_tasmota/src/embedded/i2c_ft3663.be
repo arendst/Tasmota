@@ -29,23 +29,25 @@ class FT3663 : I2C_Driver
   def init()
     super(self).init("FT3663", 0x38)
     # check that ID from register 0xA8 is 0x11
-    var vendid = self.read8(0xA8)
-    var chipid = self.read8(0xA3)
-    if vendid != 0x11 || chipid != 0x64
-      tasmota.log("I2C: ignoring address 0x38, not FT3663", 2)
-      self.wire = nil
-      return
+    if self.wire
+      var vendid = self.read8(0xA8)
+      var chipid = self.read8(0xA3)
+      if vendid != 0x11 || chipid != 0x64
+        tasmota.log("I2C: ignoring address 0x38, not FT3663", 2)
+        self.wire = nil
+        return
+      end
+
+      # FT3663 is now confirmed
+      tasmota.log("TS : FT3663 Touch Screen detected")
+
+      self.write8(0x00, 0x00)     # writeRegister8(FT6X36_REG_DEVICE_MODE, 0x00);
+      self.write8(0x80, 22)       # writeRegister8(FT6X36_REG_THRESHHOLD, FT6X36_DEFAULT_THRESHOLD);
+      self.write8(0x88, 0x0E)     # writeRegister8(FT6X36_REG_TOUCHRATE_ACTIVE, 0x0E);
+
+      # register ourself
+      tasmota.add_driver(self)
     end
-
-    # FT3663 is now confirmed
-    tasmota.log("TS : FT3663 Touch Screen detected")
-
-    self.write8(0x00, 0x00)     # writeRegister8(FT6X36_REG_DEVICE_MODE, 0x00);
-    self.write8(0x80, 22)       # writeRegister8(FT6X36_REG_THRESHHOLD, FT6X36_DEFAULT_THRESHOLD);
-    self.write8(0x88, 0x0E)     # writeRegister8(FT6X36_REG_TOUCHRATE_ACTIVE, 0x0E);
-
-    # register ourself
-    tasmota.add_driver(self)
   end
 
   # read touch screen and publish result

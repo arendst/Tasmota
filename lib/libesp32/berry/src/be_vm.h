@@ -105,7 +105,7 @@ struct bvm {
     struct bgc gc;
     bctypefunc ctypefunc; /* handler to ctype_func */
     bbyte compopt; /* compilation options */
-    uint32_t bytesmaxsize; /* max allowed size for bytes() object, default 32kb but can be increased */
+    int32_t bytesmaxsize; /* max allowed size for bytes() object, default 32kb but can be increased */
     bobshook obshook;
     bmicrosfnct microsfnct; /* fucntion to get time as a microsecond resolution */
 #if BE_USE_PERF_COUNTERS

@@ -471,7 +471,7 @@ static void new_var(bparser *parser, bstring *name, bexpdesc *var)
     bfuncinfo *finfo = parser->finfo;
     if (comp_is_strict(parser->vm)) {
         /* check if we are masking a builtin */
-        if (be_builtin_class_find(parser->vm, name) >= 0) {
+        if (be_builtin_find(parser->vm, name) >= 0) {
             push_error(parser, "strict: redefinition of builtin '%s'", str(name));
         }
     }

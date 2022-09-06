@@ -4,7 +4,7 @@
 
 
 # Native commands
-# 00 : ctor         (leds:int, gpio:int[, type:int, rmt:int]) -> void
+# 00 : ctor         (leds:int, gpio:int[, typ:int, rmt:int]) -> void
 # 01 : begin        void -> void
 # 02 : show         void -> void
 # 03 : CanShow      void -> bool
@@ -28,9 +28,9 @@ class Leds : Leds_ntv
   var leds        # number of leds
   # leds:int = number of leds of the strip
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
-  # type:int (optional) = Type of LED, defaults to WS2812 RGB
+  # typ:int (optional) = Type of LED, defaults to WS2812 RGB
   # rmt:int (optional) = RMT hardware channel to use, leave default unless you have a good reason 
-  def init(leds, gpio_phy, type, rmt)   # rmt is optional
+  def init(leds, gpio_phy, typ, rmt)   # rmt is optional
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
     self.leds = int(leds)
 
@@ -40,7 +40,7 @@ class Leds : Leds_ntv
     end
 
     # initialize the structure
-    self.ctor(self.leds, gpio_phy, type, rmt)
+    self.ctor(self.leds, gpio_phy, typ, rmt)
 
     if self._p == nil raise "internal_error", "couldn't not initialize noepixelbus" end
 
@@ -92,14 +92,14 @@ class Leds : Leds_ntv
     self.show()
   end
 
-  def ctor(leds, gpio_phy, type, rmt)
-    if type == nil
-      type = self.WS2812_GRB
+  def ctor(leds, gpio_phy, typ, rmt)
+    if typ == nil
+      typ = self.WS2812_GRB
     end
     if rmt == nil
       rmt = self.assign_rmt(gpio_phy)
     end
-    self.call_native(0, leds, gpio_phy, type, rmt)
+    self.call_native(0, leds, gpio_phy, typ, rmt)
   end
   def begin()
     self.call_native(1)

@@ -2,22 +2,13 @@
 
 def assert_syntax_error(code)
     try
-        f = compile(code)
+        var f = compile(code)
         assert(false, 'unexpected execution flow')
     except .. as e, m
         assert(e == 'syntax_error')
     end
 end
-def assert_attribute_error(f)
-    try
-        f()
-        assert(false, 'unexpected execution flow')
-    except .. as e, m
-        assert(e == 'attribute_error')
-    end
-end
 def findinlist(l, e)
-    var i
     for i: 0..size(l)-1
         if l[i] == e return i end
     end
@@ -42,8 +33,8 @@ global.global_c = 3
 f = compile("return global_c")
 assert(f() == 3)
 
-#- check that access to non-existent global returns an exception -#
-assert_attribute_error(/-> global.d)
+#- check that access to non-existent global returns nil (new behavior) -#
+assert(global.d == nil)
 
 #- check the glbal list -#
 assert(findinlist(global(), 'global_a') != nil)

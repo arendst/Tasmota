@@ -30,7 +30,7 @@ class Partition_info
   var type
   var subtype
   var start
-  var size
+  var sz
   var label
   var flags
 
@@ -54,7 +54,7 @@ class Partition_info
     self.type = 0
     self.subtype = 0
     self.start = 0
-    self.size = 0
+    self.sz = 0
     self.label = ''
     self.flags = 0
 
@@ -69,7 +69,7 @@ class Partition_info
       self.type = raw.get(2,1)
       self.subtype = raw.get(3,1)
       self.start = raw.get(4,4)
-      self.size = raw.get(8,4)
+      self.sz = raw.get(8,4)
       self.label = self.remove_trailing_zeroes(raw[12..27]).asstring()
       self.flags = raw.get(28,4)
 
@@ -109,7 +109,7 @@ class Partition_info
     if self.is_ota() == nil && !self.is_factory()   return -1 end
     try
       var addr = self.start
-      var size = self.size
+      var sz = self.sz
       var magic_byte = flash.read(addr, 1).get(0, 1)
       if magic_byte != 0xE9 return -1 end
       
@@ -124,10 +124,10 @@ class Partition_info
         var segment_header = flash.read(seg_offset - 8, 8)
         var seg_start_addr = segment_header.get(0, 4)
         var seg_size = segment_header.get(4,4)
-        # print(string.format("Segment %i: flash_offset=0x%08X start_addr=0x%08X size=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
+        # print(string.format("Segment %i: flash_offset=0x%08X start_addr=0x%08X sz=0x%08X", seg_num, seg_offset, seg_start_addr, seg_size))
 
         seg_offset += seg_size + 8    # add segment_length + sizeof(esp_image_segment_header_t)
-        if seg_offset >= (addr + size)   return -1 end
+        if seg_offset >= (addr + sz)   return -1 end
 
         seg_num += 1
       end
@@ -186,7 +186,7 @@ class Partition_info
     return string.format("<instance: Partition_info(%d%s,%d%s,0x%08X,0x%08X,'%s',0x%X)>",
                           self.type, type_s,
                           self.subtype, subtype_s,
-                          self.start, self.size,
+                          self.start, self.sz,
                           self.label, self.flags)
   end
 
@@ -197,7 +197,7 @@ class Partition_info
     b.add(self.type, 1)
     b.add(self.subtype, 1)
     b.add(self.start, 4)
-    b.add(self.size, 4)
+    b.add(self.sz, 4)
     var label = bytes().fromstring(self.label)
     label.resize(16)
     b = b + label
