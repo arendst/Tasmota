@@ -15,7 +15,7 @@ uint8 = ctypes.u8
 uint16 = ctypes.u16
 uint32 = ctypes.u32
 int32 = ctypes.i32
-bool = ctypes.u8
+bol = ctypes.u8
 
 energy_struct = [
     [float, "voltage"],
@@ -80,16 +80,16 @@ energy_struct = [
 
     [uint8, "phase_count"],
 
-    [bool, "voltage_common"],
-    [bool, "frequency_common"],
-    [bool, "use_overtemp"],
-    [bool, "today_offset_init_kwh"],
+    [bol, "voltage_common"],
+    [bol, "frequency_common"],
+    [bol, "use_overtemp"],
+    [bol, "today_offset_init_kwh"],
 
-    [bool, "voltage_available"],
-    [bool, "current_available"],
+    [bol, "voltage_available"],
+    [bol, "current_available"],
 
-    [bool, "type_dc"],
-    [bool, "power_on"],
+    [bol, "type_dc"],
+    [bol, "power_on"],
 # #ifdef USE_ENERGY_MARGIN_DETECTION
     [uint16, "power_history_0"],
     [uint16, "power_history_0_2"],
@@ -103,12 +103,12 @@ energy_struct = [
 
     [uint8, "power_steady_counter"],
 
-    [bool, "min_power_flag"],
-    [bool, "max_power_flag"],
-    [bool, "min_voltage_flag"],
-    [bool, "max_voltage_flag"],
-    [bool, "min_current_flag"],
-    [bool, "max_current_flag"],
+    [bol, "min_power_flag"],
+    [bol, "max_power_flag"],
+    [bol, "min_voltage_flag"],
+    [bol, "max_voltage_flag"],
+    [bol, "min_current_flag"],
+    [bol, "max_current_flag"],
     
 # #ifdef USE_ENERGY_POWER_LIMIT
     [uint16, "mplh_counter"],
