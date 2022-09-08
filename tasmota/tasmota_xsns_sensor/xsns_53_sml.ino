@@ -1630,7 +1630,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
     if (meter_spos[meters] >= SML_BSIZ) {
       meter_spos[meters] = 0;
     }
-    if (iob == 0x0a) {
+    if ((iob == 0x0a) || (iob == 0x0d)) {
       SML_Decode(meters);
       meter_spos[meters] = 0;
     }
@@ -2433,7 +2433,12 @@ void SML_Show(boolean json) {
           tststr:
           if (*cp=='#') {
             // meter id
-            sprintf(tpowstr,"\"%s\"",&meter_id[mindex][0]);
+            if (*(cp + 1) == 'x') {
+              // convert hex to asci
+              sml_hex_asci(mindex, tpowstr);
+            } else {
+              sprintf(tpowstr,"\"%s\"",&meter_id[mindex][0]);
+            }
             mid=1;
           } else if (*cp=='(') {
             if (meter_desc_p[mindex].type=='o') {
@@ -3049,13 +3054,13 @@ init10:
 #endif
         } else {
           // counters, set to input with pullup
-          if (meter_desc_p[meters].flag&1) {
-            pinMode(meter_desc_p[meters].srcpin,INPUT_PULLUP);
+          if (meter_desc_p[meters].flag & 1) {
+            pinMode(meter_desc_p[meters].srcpin, INPUT_PULLUP);
           } else {
-            pinMode(meter_desc_p[meters].srcpin,INPUT);
+            pinMode(meter_desc_p[meters].srcpin, INPUT);
           }
           // check for irq mode
-          if (meter_desc_p[meters].params<=0) {
+          if (meter_desc_p[meters].params <= 0) {
             // init irq mode
             sml_counters[cindex].sml_cnt_old_state = meters;
             sml_counters[cindex].sml_debounce = -meter_desc_p[meters].params;
@@ -3067,7 +3072,7 @@ init10:
           }
 
           RtcSettings.pulse_counter[cindex] = Settings->pulse_counter[cindex];
-          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex],0.0);
+          InjektCounterValue(meters, RtcSettings.pulse_counter[cindex], 0.0);
           cindex++;
         }
     } else {
@@ -3275,74 +3280,73 @@ void SetDBGLed(uint8_t srcpin, uint8_t ledpin) {
 
 // fast counter polling
 void SML_Counter_Poll(void) {
-uint16_t meters,cindex=0;
-uint32_t ctime=millis();
+uint16_t meters, cindex = 0;
+uint32_t ctime = millis();
 
-  for (meters=0; meters<meters_used; meters++) {
-    if (meter_desc_p[meters].type=='c') {
+  for (meters = 0; meters < meters_used; meters++) {
+    if (meter_desc_p[meters].type == 'c') {
       // poll for counters and debouce
-      if (meter_desc_p[meters].params>0) {
-        if (ctime-sml_counters[cindex].sml_cnt_last_ts>meter_desc_p[meters].params) {
-          sml_counters[cindex].sml_cnt_last_ts=ctime;
+      if (meter_desc_p[meters].params > 0) {
+        if (ctime - sml_counters[cindex].sml_cnt_last_ts > meter_desc_p[meters].params) {
+          sml_counters[cindex].sml_cnt_last_ts = ctime;
 
-          if (meter_desc_p[meters].flag&2) {
+          if (meter_desc_p[meters].flag & 2) {
             // analog mode, get next value
 #ifdef ANALOG_OPTO_SENSOR
             if (ads1115_up) {
               int16_t val = adc.read_sample();
-              if (val>sml_counters[cindex].ana_max) sml_counters[cindex].ana_max=val;
-              if (val<sml_counters[cindex].ana_min) sml_counters[cindex].ana_min=val;
-              sml_counters[cindex].ana_curr=val;
-              int16_t range=sml_counters[cindex].ana_max-sml_counters[cindex].ana_min;
+              if (val>sml_counters[cindex].ana_max) sml_counters[cindex].ana_max = val;
+              if (val<sml_counters[cindex].ana_min) sml_counters[cindex].ana_min = val;
+              sml_counters[cindex].ana_curr = val;
+              int16_t range = sml_counters[cindex].ana_max - sml_counters[cindex].ana_min;
             }
 #endif
           } else {
             // poll digital input
             uint8_t state;
-            sml_counters[cindex].sml_cnt_debounce<<=1;
-            sml_counters[cindex].sml_cnt_debounce|=(digitalRead(meter_desc_p[meters].srcpin)&1)|0x80;
-            if (sml_counters[cindex].sml_cnt_debounce==0xc0) {
+            sml_counters[cindex].sml_cnt_debounce <<= 1;
+            sml_counters[cindex].sml_cnt_debounce |= (digitalRead(meter_desc_p[meters].srcpin) & 1) | 0x80;
+            if (sml_counters[cindex].sml_cnt_debounce == 0xc0) {
               // is 1
-              state=1;
+              state = 1;
             } else {
               // is 0, means switch down
-              state=0;
+              state = 0;
             }
-            if (sml_counters[cindex].sml_cnt_old_state!=state) {
+            if (sml_counters[cindex].sml_cnt_old_state != state) {
               // state has changed
-              sml_counters[cindex].sml_cnt_old_state=state;
-              if (state==0) {
+              sml_counters[cindex].sml_cnt_old_state = state;
+              if (state == 0) {
                 // inc counter
                 RtcSettings.pulse_counter[cindex]++;
                 sml_counters[cindex].sml_counter_pulsewidth = ctime - sml_counters[cindex].sml_counter_lfalltime;
                 sml_counters[cindex].sml_counter_lfalltime = ctime;
-                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex],60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
+                InjektCounterValue(meters, RtcSettings.pulse_counter[cindex], 60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
               }
             }
           }
         }
 #ifdef DEBUG_CNT_LED1
-        if (cindex==0) SetDBGLed(meter_desc_p[meters].srcpin,DEBUG_CNT_LED1);
+        if (cindex == 0) SetDBGLed(meter_desc_p[meters].srcpin, DEBUG_CNT_LED1);
 #endif
 #ifdef DEBUG_CNT_LED2
-        if (cindex==1) SetDBGLed(meter_desc_p[meters].srcpin,DEBUG_CNT_LED2);
+        if (cindex == 1) SetDBGLed(meter_desc_p[meters].srcpin, DEBUG_CNT_LED2);
 #endif
       } else {
-        if (ctime-sml_counters[cindex].sml_cnt_last_ts>10) {
-          sml_counters[cindex].sml_cnt_last_ts=ctime;
+        if (ctime - sml_counters[cindex].sml_cnt_last_ts > 10) {
+          sml_counters[cindex].sml_cnt_last_ts = ctime;
 #ifdef DEBUG_CNT_LED1
-          if (cindex==0) SetDBGLed(meter_desc_p[meters].srcpin,DEBUG_CNT_LED1);
+          if (cindex == 0) SetDBGLed(meter_desc_p[meters].srcpin, DEBUG_CNT_LED1);
 #endif
 #ifdef DEBUG_CNT_LED2
-          if (cindex==1) SetDBGLed(meter_desc_p[meters].srcpin,DEBUG_CNT_LED2);
+          if (cindex == 1) SetDBGLed(meter_desc_p[meters].srcpin, DEBUG_CNT_LED2);
 #endif
         }
 
         if (sml_counters[cindex].sml_cnt_updated) {
-          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state,RtcSettings.pulse_counter[cindex],60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
-          sml_counters[cindex].sml_cnt_updated=0;
+          InjektCounterValue(sml_counters[cindex].sml_cnt_old_state, RtcSettings.pulse_counter[cindex], 60000.0 / (float)sml_counters[cindex].sml_counter_pulsewidth);
+          sml_counters[cindex].sml_cnt_updated = 0;
         }
-
 
       }
       cindex++;
@@ -3411,6 +3415,21 @@ void SML_Check_Send(void) {
     }
   }
 }
+
+void sml_hex_asci(uint32_t mindex, char *tpowstr) {
+  char *cp = &meter_id[mindex][0];
+  uint16_t slen = strlen(cp);
+  slen &= 0xfffe;
+  uint16_t cnt;
+  *tpowstr++ = '"';
+  for (cnt = 0; cnt < slen; cnt += 2) {
+    uint8_t iob = (sml_hexnibble(cp[cnt]) << 4) | sml_hexnibble(cp[cnt + 1]);
+    *tpowstr++ = iob;
+  }
+  *tpowstr++ = '"';
+  *tpowstr = 0;
+}
+
 
 uint8_t sml_hexnibble(char chr) {
   uint8_t rVal = 0;
@@ -3531,37 +3550,37 @@ uint8_t parity=0;
 bool XSNS_53_cmd(void) {
   bool serviced = true;
   if (XdrvMailbox.data_len > 0) {
-      char *cp=XdrvMailbox.data;
-      if (*cp=='d') {
+      char *cp = XdrvMailbox.data;
+      if (*cp == 'd') {
         // set dump mode
         cp++;
-        uint8_t index=atoi(cp);
-        if ((index&7)>meters_used) index=1;
-        if (index>0 && meter_desc_p[(index&7)-1].type=='c') {
-          index=0;
+        uint8_t index = atoi(cp);
+        if ((index & 7) > meters_used) index = 1;
+        if (index > 0 && meter_desc_p[(index & 7) - 1].type == 'c') {
+          index = 0;
         }
-        dump2log=index;
-        ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"),dump2log);
-      } else if (*cp=='c') {
+        dump2log = index;
+        ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"), dump2log);
+      } else if (*cp == 'c') {
         // set counter
           cp++;
-          uint8_t index=*cp&7;
-          if (index<1 || index>MAX_COUNTERS) index=1;
+          uint8_t index = *cp&7;
+          if (index < 1 || index > MAX_COUNTERS) index = 1;
           cp++;
-          while (*cp==' ') cp++;
+          while (*cp == ' ') cp++;
           if (isdigit(*cp)) {
-            uint32_t cval=atoi(cp);
+            uint32_t cval = atoi(cp);
             while (isdigit(*cp)) cp++;
-            RtcSettings.pulse_counter[index-1]=cval;
-            uint8_t cindex=0;
-            for (uint8_t meters=0; meters<meters_used; meters++) {
-              if (meter_desc_p[meters].type=='c') {
-                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex],0.0);
+            RtcSettings.pulse_counter[index - 1] = cval;
+            uint8_t cindex = 0;
+            for (uint8_t meters = 0; meters < meters_used; meters++) {
+              if (meter_desc_p[meters].type == 'c') {
+                InjektCounterValue(meters,RtcSettings.pulse_counter[cindex], 0.0);
                 cindex++;
               }
             }
           }
-          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"counter%d: %d\"}}"),index,RtcSettings.pulse_counter[index-1]);
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"counter%d: %d\"}}"), index,RtcSettings.pulse_counter[index - 1]);
       } else if (*cp=='r') {
         // restart
         ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"restart\"}}"));
@@ -3599,14 +3618,14 @@ bool XSNS_53_cmd(void) {
   return serviced;
 }
 
-void InjektCounterValue(uint8_t meter,uint32_t counter,float rate) {
+void InjektCounterValue(uint8_t meter, uint32_t counter, float rate) {
   int dec = (int)rate;
   int frac = (int)((rate - (float)dec) * 1000.0);
 
-  snprintf((char*)&smltbuf[meter][0],SML_BSIZ,"1-0:1.8.0*255(%d)",counter);
+  snprintf((char*)&smltbuf[meter][0], SML_BSIZ, "1-0:1.8.0*255(%d)", counter);
   SML_Decode(meter);
 
-  snprintf((char*)&smltbuf[meter][0],SML_BSIZ,"1-0:1.7.0*255(%d.%d)",dec,frac);
+  snprintf((char*)&smltbuf[meter][0], SML_BSIZ, "1-0:1.7.0*255(%d.%d)", dec, frac);
   SML_Decode(meter);
 }
 
