@@ -2154,6 +2154,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
 
+    int32_t channel_ct = ChannelCT();  // Channel for PWM CT or -1 if no CT or regular CT
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
 #ifdef USE_I2C
@@ -2166,7 +2167,6 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
     } else
 #endif  // USE_I2C
 #endif  // USE_PWM_DIMMER
-    int32_t channel_ct = ChannelCT();  // Channel for PWM CT or -1 if no CT or regular CT
     for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
       uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
 #ifdef USE_PWM_DIMMER
