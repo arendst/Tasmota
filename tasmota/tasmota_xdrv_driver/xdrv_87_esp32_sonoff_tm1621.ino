@@ -26,8 +26,12 @@
  *        3 = Both V (Line 1 only) / A (Line 2 only)
  *        4 = Both kWh (Line 1 only) / W (Line 2 only)
  * DspLine1 0 and DspLine2 0 = Default of temperature/humidity
+ * DspLine9 = Show sensor data
  *
- * Example: "SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}
+ * Example: {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
+ *   index:   1        2                   3          4                  5               6
+ *    unit:   0        0                   0          1                  2               1
+ *
  *   DspLine1 4,1,3,0 = Temperature and eCO2
  *   DspLine2 2,0,5,2 = CarbonDioxide and humidity
 \*********************************************************************************************/
@@ -338,30 +342,32 @@ void TM1621Init(void) {
   TM1621SendRows();
 }
 
-float TM1621GetValues(uint32_t index, bool refresh) {
+uint32_t TM1621GetSensors(bool refresh) {
   if (refresh) {
     ResponseClear();
     XsnsCall(FUNC_JSON_APPEND);
     XdrvCall(FUNC_JSON_APPEND);
+    ResponseJsonStart();  // Overwrite first comma
+    ResponseJsonEnd();    // Append }
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TM1: Sensors %s"), ResponseData());
   }
-  if (!ResponseLength()) { return NAN; }
-  char *start = ResponseData() +1;  // Starts with ",..." so skip comma
+  return ResponseLength();
+}
 
-  if (refresh) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TM1: Sensors '%s'"), start);
-  }
-
+float TM1621GetValues(uint32_t index, bool refresh) {
   float value = NAN;
-  uint32_t idx = 0;
-  char *data = start;  // "HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}
-  while (data) {
-    data = strstr_P(data, PSTR("\":"));
-    if (data) {
-      idx++;
-      data += 2;
-      if (idx == index) {
-        value = CharToFloat(data);
-        break;
+  if (TM1621GetSensors(refresh)) {
+    uint32_t idx = 0;
+    char *data = ResponseData();  // {"HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}}
+    while (data) {
+      data = strstr_P(data, PSTR("\":"));
+      if (data) {
+        idx++;
+        data += 2;
+        if (idx == index) {
+          value = CharToFloat(data);
+          break;
+        }
       }
     }
   }
@@ -369,32 +375,26 @@ float TM1621GetValues(uint32_t index, bool refresh) {
 }
 
 float TM1621GetTemperatureValues(uint32_t index) {
-  ResponseClear();
-  XsnsCall(FUNC_JSON_APPEND);
-  XdrvCall(FUNC_JSON_APPEND);
-  if (!ResponseLength()) { return NAN; }
-
-  char *start = ResponseData() +1;  // Starts with ",..." so skip comma
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TM1: Sensors '%s'"), start);
-
   float value = NAN;
-  uint32_t idx = 0;
-  char *data = start;  // "HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}
-  while (data) {
-    data = strstr_P(data, PSTR(D_JSON_TEMPERATURE));
-    if (data) {
-      idx++;
-      data += 13;      // strlen("Temperature") + 2;
-      if (idx == index) {
-        value = CharToFloat(data);
-        if (Tm1621.temp_sensors) {
-          break;
+  if (TM1621GetSensors(1)) {
+    uint32_t idx = 0;
+    char *data = ResponseData();  // {"HTU21":{"Temperature":30.7,"Humidity":39.0,"DewPoint":15.2},"BME680":{"Temperature":30.0,"Humidity":50.4,"DewPoint":18.5,"Pressure":1009.6,"Gas":1660.52},"ESP32":{"Temperature":53.3}}
+    while (data) {
+      data = strstr_P(data, PSTR(D_JSON_TEMPERATURE));
+      if (data) {
+        idx++;
+        data += 13;      // strlen("Temperature") + 2;
+        if (idx == index) {
+          value = CharToFloat(data);
+          if (Tm1621.temp_sensors) {
+            break;
+          }
         }
       }
     }
-  }
-  if (0 == Tm1621.temp_sensors) {
-    Tm1621.temp_sensors = idx;
+    if (0 == Tm1621.temp_sensors) {
+      Tm1621.temp_sensors = idx;
+    }
   }
   return value;
 }
@@ -441,13 +441,11 @@ void TM1621Show(void) {
 
   if (TM1621_POWR316D == Tm1621.device) {
     if (0 == Tm1621.display_rotate) {
-//      Tm1621.kwh = false;
       ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.voltage[0]);
       ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.current[0]);
       Tm1621.voltage = true;
       Tm1621.display_rotate = 1;
     } else {
-//      Tm1621.voltage = false;
       ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy.total[0]);
       ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy.active_power[0]);
       Tm1621.kwh = true;
@@ -518,16 +516,20 @@ void (*const kTm1621Command[])(void) PROGMEM = {
   &CmndDspLine, &CmndDspSpeed };
 
 void CmndDspLine(void) {
-  // DspLine1 <index>,<unit>,<index>,<unit>,... = Rotate between indexes
+  // DspLine1 <index>,<unit>,<index>,<unit>,... = Display specific JSON value and rotate between them
+  //   unit 0 = None
+  //        1 = temperature (Line 1 only)
+  //        2 = %RH (Line 2 only)
+  //        3 = Both V (Line 1 only) / A (Line 2 only)
+  //        4 = Both kWh (Line 1 only) / W (Line 2 only)
   // DspLine1 0 and DspLine2 0 = Default of temperature/humidity
-  // Teleperiod: "SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}
+  //
+  //      {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
+  // index: 1        2                   3          4                  5               6
+  //  unit: 0        0                   0          1                  2               1
+  //
   //  DspLine1 4,1,3,0 = Temperature and eCO2
   //  DspLine2 2,0,5,2 = CarbonDioxide and humidity
-  // Unit 0 = None
-  //      1 = temperature (Line 1 only)
-  //      2 = %RH (Line 2 only)
-  //      3 = Both V (Line 1 only) / A (Line 2 only)
-  //      4 = Both kWh (Line 1 only) / W (Line 2 only)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     if (XdrvMailbox.data_len > 0) {
       uint32_t parm[2 * TM1621_MAX_VALUES] = { 0 };
@@ -548,10 +550,20 @@ void CmndDspLine(void) {
     } while ((i < TM1621_MAX_VALUES) && (Xdrv87Settings.line[XdrvMailbox.index -1][i] > 0));
     ResponseCmndIdxChar(values);
   }
+  if (9 == XdrvMailbox.index) {
+    // DspLine9 = Show sensor JSON
+    //      {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
+    // index: 1        2                   3          4                  5               6
+    //  unit: 0        0                   0          1                  2               1
+    //      {"ENERGY":{"TotalStartTime":"2022-07-15T13:44:23","Total":0.086,"Yesterday":0.002,"Today":0.005,"Power":0.96,"ApparentPower":7.60,"ReactivePower":7.50,"Factor":0.13,"Voltage":227.9,"Current":0.033}}
+    // index: 1         2                                      3             4                 5             6            7                    8                    9             10              11
+    //  unit: 0         0                                      4             4                 4             4            0                    0                    0             3               3
+    TM1621GetSensors(1);
+  }
 }
 
 void CmndDspSpeed(void) {
-  // DspSpeed 2..127 = Rotation speed
+  // DspSpeed 2..127 = Display rotation speed in seconds if more than one value is requested
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload > 1) {  // We need at least 2 seconds to poll all sensors
       Xdrv87Settings.rotate = XdrvMailbox.payload &0x7F;  // Max 127 seconds
