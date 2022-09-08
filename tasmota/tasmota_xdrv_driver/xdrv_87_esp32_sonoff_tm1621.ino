@@ -30,7 +30,7 @@
  *
  * Example: {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
  *   index:   1        2                   3          4                  5               6
- *    unit:   0        0                   0          1                  2               1
+ *    unit:   0        0 (ppm)             0 (ppm)    1 (C or F)         2 (%RH)         1 (C or F)
  *
  *   DspLine1 4,1,3,0 = Temperature and eCO2
  *   DspLine2 2,0,5,2 = CarbonDioxide and humidity
@@ -526,7 +526,7 @@ void CmndDspLine(void) {
   //
   //      {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
   // index: 1        2                   3          4                  5               6
-  //  unit: 0        0                   0          1                  2               1
+  //  unit: 0        0 (ppm)             0 (ppm)    1 (C or F)         2 (%RH)         1 (C or F)
   //
   //  DspLine1 4,1,3,0 = Temperature and eCO2
   //  DspLine2 2,0,5,2 = CarbonDioxide and humidity
@@ -554,10 +554,10 @@ void CmndDspLine(void) {
     // DspLine9 = Show sensor JSON
     //      {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
     // index: 1        2                   3          4                  5               6
-    //  unit: 0        0                   0          1                  2               1
+    //  unit: 0        0 (ppm)             0 (ppm)    1 (C or F)         2 (%RH)         1 (C or F)
     //      {"ENERGY":{"TotalStartTime":"2022-07-15T13:44:23","Total":0.086,"Yesterday":0.002,"Today":0.005,"Power":0.96,"ApparentPower":7.60,"ReactivePower":7.50,"Factor":0.13,"Voltage":227.9,"Current":0.033}}
     // index: 1         2                                      3             4                 5             6            7                    8                    9             10              11
-    //  unit: 0         0                                      4             4                 4             4            0                    0                    0             3               3
+    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (VAr)              0             3 (V)           3 (A)
     TM1621GetSensors(1);
   }
 }
