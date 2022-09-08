@@ -819,7 +819,7 @@ void ResponseAppendFeatures(void)
     feature8 |= 0x40000000;  // xlgt_09_sm2335.ino
 #endif
 #ifdef USE_DISPLAY_TM1621_SONOFF
-    feature8 |= 0x80000000;  // xdrv_87_tm1621_sonoff.ino
+    feature8 |= 0x80000000;  // xdrv_87_esp32_sonoff_tm1621.ino
 #endif
   }
 

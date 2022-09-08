@@ -111,6 +111,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 ### Added
 - Command ``SetOption146 1`` to enable display of ESP32 internal temperature
 - Command ``StatusRetain`` [#11109](https://github.com/arendst/Tasmota/issues/11109)
+- Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
+- Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
 - Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)
 - Support for DFRobot SEN0390 V30B ambient light sensor [#16105](https://github.com/arendst/Tasmota/issues/16105)

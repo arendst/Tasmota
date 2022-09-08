@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Zigbee prepare for Green Power support (#16407)
 - Command ``SetOption146 1`` to enable display of ESP32 internal temperature
 - Support for DFRobot SEN0390 V30B ambient light sensor (#16105)
+- Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
+- Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
 
 ### Changed
 - TasmotaModbus library from v3.5.0 to v3.6.0 (#16351)
