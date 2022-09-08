@@ -107,9 +107,11 @@ String EthernetMacAddress(void);
 
 #if CONFIG_IDF_TARGET_ESP32
 
-#ifdef CORE32SOLO1
+#ifdef CORE32SOLO1                                 // ESP32-SOLO-1 OEM variant (Xiaomi devices) does not support ethernet...
+#ifndef FORCE_USE_ETHERNET                         // ...but ESP32-MINI-1 single core supports ethernet.
 #ifdef USE_ETHERNET
-#undef USE_ETHERNET                                // ESP32-Solo1 does not support ethernet
+#undef USE_ETHERNET                                
+#endif
 #endif
 #endif  // CORE32SOLO1
 
