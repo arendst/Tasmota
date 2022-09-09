@@ -836,6 +836,7 @@ class lvh_obj
 
     # print(">> rule matched", "val=", val)
     var val_n = real(val)         # force float type
+    if val_n == nil  return false end   # if the matched value is not a number, ignore
     var func = self._val_rule_function
     if func != nil
       try
