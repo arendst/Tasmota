@@ -85,7 +85,7 @@ struct Tm1621 {
  * Driver Settings load and save using filesystem
 \*********************************************************************************************/
 
-const uint32_t XDRV_87_VERSION = 0x0100;          // Latest driver version (See settings deltas below)
+const uint32_t XDRV_87_VERSION = 0x0104;          // Latest driver version (See settings deltas below)
 
 typedef struct {
   uint32_t crc32;                                 // To detect file changes
@@ -97,76 +97,65 @@ typedef struct {
 } tXdrv87Settings;
 tXdrv87Settings Xdrv87Settings;
 
-uint32_t Xdrv87SettingsCrc32(void) {
-  // Use Tasmota CRC calculation function
-  return GetCfgCrc32((uint8_t*)&Xdrv87Settings +4, sizeof(tXdrv87Settings) -4);  // Skip crc32
-}
-
-void Xdrv87SettingsDefault(void) {
-  // Init default values in case file is not found
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 " D_USE_DEFAULTS));
-
-  memset(&Xdrv87Settings, 0x00, sizeof(tXdrv87Settings));
-  Xdrv87Settings.version = XDRV_87_VERSION;
-  // Init any other parameter in struct Xdrv87Settings
-  Xdrv87Settings.rotate = TM1621_ROTATE;
-}
-
-void Xdrv87SettingsDelta(void) {
-  // Fix possible setting deltas
-  if (Xdrv87Settings.version != SSPM_VERSION) {      // Fix version dependent changes
-
-    // Set current version and save settings
-    Xdrv87Settings.version = SSPM_VERSION;
-    Xdrv87SettingsSave();
-  }
-}
+/*********************************************************************************************/
 
 void Xdrv87SettingsLoad(void) {
-  // Init default values in case file is not found
-  Xdrv87SettingsDefault();
+  // *** Start init default values in case file is not found ***
+  memset(&Xdrv87Settings, 0x00, sizeof(tXdrv87Settings));
+  Xdrv87Settings.version = XDRV_87_VERSION;
+  // Init any other parameter in struct
+  Xdrv87Settings.rotate = TM1621_ROTATE;
 
+  // *** End Init default values ***
+
+#ifndef USE_UFILESYS
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 Use defaults as file system not enabled"));
+#else
   // Try to load file /.drvset087
   char filename[20];
   // Use for drivers:
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_87);
-
-#ifdef USE_UFILESYS
   if (TfsLoadFile(filename, (uint8_t*)&Xdrv87Settings, sizeof(tXdrv87Settings))) {
-    // Fix possible setting deltas
-    Xdrv87SettingsDelta();
+    if (Xdrv87Settings.version != XDRV_87_VERSION) {      // Fix version dependent changes
 
+      // *** Start fix possible setting deltas ***
+//      if (Xdrv87Settings.version < 0x0105) {
+//        Xdrv87Settings.spare = test;
+//      }
+
+      // *** End setting deltas ***
+
+      // Set current version and save settings
+      Xdrv87Settings.version = XDRV_87_VERSION;
+      Xdrv87SettingsSave();
+    }
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: XDRV87 loaded from file"));
   } else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 ERROR File system not ready or file not found"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 Use defaults as file system not ready or file not found"));
   }
-#else
-  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 ERROR File system not enabled"));
 #endif  // USE_UFILESYS
 }
 
 void Xdrv87SettingsSave(void) {
+#ifdef USE_UFILESYS
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
-  if (Xdrv87SettingsCrc32() != Xdrv87Settings.crc32) {
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&Xdrv87Settings +4, sizeof(tXdrv87Settings) -4);  // Skip crc32
+  if (crc32 != Xdrv87Settings.crc32) {
     // Try to save file /.drvset087
-    Xdrv87Settings.crc32 = Xdrv87SettingsCrc32();
+    Xdrv87Settings.crc32 = crc32;
 
     char filename[20];
     // Use for drivers:
     snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), XDRV_87);
-
-#ifdef USE_UFILESYS
     if (TfsSaveFile(filename, (const uint8_t*)&Xdrv87Settings, sizeof(tXdrv87Settings))) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
       AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 ERROR File system not ready or unable to save file"));
     }
-#else
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: XDRV87 ERROR File system not enabled"));
-#endif  // USE_UFILESYS
   }
+#endif  // USE_UFILESYS
 }
 
 /*********************************************************************************************/
