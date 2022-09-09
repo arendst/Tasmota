@@ -2077,7 +2077,14 @@ const char HTTP_ZB_VERSION[] PROGMEM =
 const char HTTP_BTN_ZB_BUTTONS[] PROGMEM =
   "<button onclick='la(\"&zbj=1\");'>" D_ZIGBEE_PERMITJOIN "</button>"
   "<p></p>"
-  "<form action='zbm' method='get'><button>" D_ZIGBEE_MAP "</button></form>";
+  "<a href='zbm'><button>" D_ZIGBEE_MAP "</button></a>"
+  "<p></p>";
+
+const char HTTP_BTN_ZB_BUTTONS_DISABLED[] PROGMEM =
+  "<button style='background-color:#%06X' disabled>" D_ZIGBEE_PERMITJOIN "</button>"
+  "<p></p>"
+  "<button style='background-color:#%06X' disabled>" D_ZIGBEE_MAP "</button>"
+  "<p></p>";
 
 void ZigbeeShow(bool json)
 {
@@ -2275,6 +2282,10 @@ void ZigbeeShow(bool json)
       WSContentSend_P(HTTP_ZB_VERSION,
                       zigbee.major_rel, zigbee.minor_rel,
                       zigbee.maint_rel, zigbee.revision);
+      WSContentSend_P(HTTP_BTN_ZB_BUTTONS);
+    } else {
+      uint32_t grey = WebColor(COL_FORM);
+      WSContentSend_P(HTTP_BTN_ZB_BUTTONS_DISABLED, grey, grey);
     }
 #endif
   }
@@ -2365,9 +2376,6 @@ bool Xdrv23(uint8_t function) {
 #endif  // USE_ZIGBEE_EZSP
         WebServer_on(PSTR("/zbm"), ZigbeeShowMap, HTTP_GET);     // add web handler for Zigbee map
         WebServer_on(PSTR("/zbr"), ZigbeeMapRefresh, HTTP_GET);     // add web handler for Zigbee map refresh
-        break;
-      case FUNC_WEB_ADD_MAIN_BUTTON:
-        WSContentSend_P(HTTP_BTN_ZB_BUTTONS);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_PRE_INIT:
