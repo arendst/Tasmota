@@ -4,7 +4,6 @@
  * To use: `import tasmota`
  *******************************************************************/
 #include "be_constobj.h"
-#include "be_mapping.h"
 #include "be_ctypes.h"
 
 extern struct TasmotaGlobal_t TasmotaGlobal;
@@ -55,8 +54,7 @@ extern int l_setpower(bvm *vm);
 extern int l_getswitch(bvm *vm);
 
 extern int l_i2cenabled(bvm *vm);
-
-extern int32_t tasm_find_op(const char* hay, bbool second_phase);   BE_FUNC_CTYPE_DECLARE(tasm_find_op, "i", "-sb");
+extern int tasm_find_op(bvm *vm);
 
 /********************************************************************
 ** Solidified function: add_driver
@@ -2608,7 +2606,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     add_fast_loop, closure(Tasmota_add_fast_loop_closure)
     remove_fast_loop, closure(Tasmota_remove_fast_loop_closure)
     cmd, closure(Tasmota_cmd_closure)
-    _find_op, ctype_func(tasm_find_op)        // new C version for finding a rule operator
+    _find_op, func(tasm_find_op)        // new C version for finding a rule operator
     find_key_i, closure(Tasmota_find_key_i_closure)
     find_op, closure(Tasmota_find_op_closure)
     add_rule, closure(Tasmota_add_rule_closure)
