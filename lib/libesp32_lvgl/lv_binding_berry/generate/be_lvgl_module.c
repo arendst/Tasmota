@@ -297,6 +297,7 @@ const be_const_member_t lv0_constants[] = {
     { "COLOR_MAROON", be_cconst_int(0x800000) },
     { "COLOR_NAVY", be_cconst_int(0x000080) },
     { "COLOR_OLIVE", be_cconst_int(0x808000) },
+    { "COLOR_ORANGE", be_cconst_int(0xFF7F00) },
     { "COLOR_PURPLE", be_cconst_int(0x800080) },
     { "COLOR_RED", be_cconst_int(0xFF0000) },
     { "COLOR_SILVER", be_cconst_int(0xC0C0C0) },
