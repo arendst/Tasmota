@@ -58,7 +58,7 @@ jobs:
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
           pip install -U platformio
@@ -82,7 +82,7 @@ jobs:
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
           pip install -U platformio
