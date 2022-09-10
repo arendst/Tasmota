@@ -400,6 +400,74 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Find for an operator in the string
+  // takes a string, an offset to start the search from, and works in 2 modes.
+  // mode1 (false): loog for the first char of an operato
+  // mode2 (true): finds the last char of the operator
+  int32_t tasm_find_op(bvm *vm);
+  int32_t tasm_find_op(bvm *vm) {
+    int32_t top = be_top(vm); // Get the number of arguments
+    bool second_phase = false;
+    int32_t ret = -1;
+    if (top >= 2 && be_isstring(vm, 2)) {
+      const char *c = be_tostring(vm, 2);
+      if (top >= 3) {
+        second_phase = be_tobool(vm, 3);
+      }
+
+      if (!second_phase) {
+        int32_t idx = 0;
+        // search for `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`
+        while (*c && ret < 0) {
+          switch (c[0]) {
+            case '=':
+            case '<':
+            case '>':
+              ret = idx;
+              break;   // anything starting with `=`, `<` or `>` is a valid operator
+            case '!':
+              if (c[1] == '=') {
+                ret = idx; // needs to start with `!=`
+              }
+              break;
+            default:
+              break;
+          }
+          c++;
+          idx++;
+        }
+      } else {
+        // second phase
+        switch (c[0]) {
+          case '<':
+          case '>':
+          case '=':
+            if (c[1] != '=') { ret = 1; }    // `<` or `>` or `=`
+            else             { ret = 2; }    // `<=` or `>=` or `==`
+            break;
+          case '!':
+            if (c[1] != '=') { ; }         // this is invalid if isolated `!`
+            if (c[2] != '=') { ret = 2; }    // `!=`
+            else             { ret = 3; }    // `!==`
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    be_pushint(vm, ret);
+    be_return(vm);
+  }
+  /*
+
+  # test patterns
+  assert(tasmota._find_op("aaa#bbc==23",false) == 7)
+  assert(tasmota._find_op("==23",true) == 2)
+  assert(tasmota._find_op(">23",true) == 1)
+  assert(tasmota._find_op("aaa#bbc!23",false) == -1)
+
+  */
+
   // web append with decimal conversion
   int32_t l_webSend(bvm *vm);
   int32_t l_webSend(bvm *vm) {

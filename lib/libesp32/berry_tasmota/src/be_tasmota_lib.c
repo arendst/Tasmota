@@ -54,7 +54,7 @@ extern int l_setpower(bvm *vm);
 extern int l_getswitch(bvm *vm);
 
 extern int l_i2cenabled(bvm *vm);
-
+extern int tasm_find_op(bvm *vm);
 
 /********************************************************************
 ** Solidified function: add_driver
@@ -152,22 +152,22 @@ be_local_closure(Tasmota_find_op,   /* name */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(string),
     /* K1   */  be_nested_str(_X3D_X3C_X3E_X21),
-    /* K2   */  be_nested_str(chars_in_string),
+    /* K2   */  be_nested_str(_find_op),
     /* K3   */  be_const_int(0),
     /* K4   */  be_nested_str(split),
     /* K5   */  be_const_int(1),
     }),
     &be_const_str_find_op,
     &be_const_str_solidified,
-    ( &(const binstruction[42]) {  /* code */
+    ( &(const binstruction[41]) {  /* code */
       0xA40A0000,  //  0000  IMPORT	R2	K0
       0x580C0001,  //  0001  LDCONST	R3	K1
       0x8C100102,  //  0002  GETMET	R4	R0	K2
       0x5C180200,  //  0003  MOVE	R6	R1
-      0x5C1C0600,  //  0004  MOVE	R7	R3
+      0x501C0000,  //  0004  LDBOOL	R7	0	0
       0x7C100600,  //  0005  CALL	R4	3
       0x28140903,  //  0006  GE	R5	R4	K3
-      0x78160019,  //  0007  JMPF	R5	#0022
+      0x78160018,  //  0007  JMPF	R5	#0021
       0x8C140504,  //  0008  GETMET	R5	R2	K4
       0x5C1C0200,  //  0009  MOVE	R7	R1
       0x5C200800,  //  000A  MOVE	R8	R4
@@ -176,32 +176,31 @@ be_local_closure(Tasmota_find_op,   /* name */
       0x941C0B05,  //  000D  GETIDX	R7	R5	K5
       0x8C200102,  //  000E  GETMET	R8	R0	K2
       0x5C280E00,  //  000F  MOVE	R10	R7
-      0x5C2C0600,  //  0010  MOVE	R11	R3
-      0x50300200,  //  0011  LDBOOL	R12	1	0
-      0x7C200800,  //  0012  CALL	R8	4
-      0x5C101000,  //  0013  MOVE	R4	R8
-      0x28200903,  //  0014  GE	R8	R4	K3
-      0x7822000B,  //  0015  JMPF	R8	#0022
-      0x8C200504,  //  0016  GETMET	R8	R2	K4
-      0x5C280E00,  //  0017  MOVE	R10	R7
-      0x5C2C0800,  //  0018  MOVE	R11	R4
-      0x7C200600,  //  0019  CALL	R8	3
-      0x94241103,  //  001A  GETIDX	R9	R8	K3
-      0x94281105,  //  001B  GETIDX	R10	R8	K5
-      0x602C0012,  //  001C  GETGBL	R11	G18
-      0x7C2C0000,  //  001D  CALL	R11	0
-      0x40301606,  //  001E  CONNECT	R12	R11	R6
-      0x40301609,  //  001F  CONNECT	R12	R11	R9
-      0x4030160A,  //  0020  CONNECT	R12	R11	R10
-      0x80041600,  //  0021  RET	1	R11
-      0x60140012,  //  0022  GETGBL	R5	G18
-      0x7C140000,  //  0023  CALL	R5	0
-      0x40180A01,  //  0024  CONNECT	R6	R5	R1
-      0x4C180000,  //  0025  LDNIL	R6
-      0x40180A06,  //  0026  CONNECT	R6	R5	R6
-      0x4C180000,  //  0027  LDNIL	R6
-      0x40180A06,  //  0028  CONNECT	R6	R5	R6
-      0x80040A00,  //  0029  RET	1	R5
+      0x502C0200,  //  0010  LDBOOL	R11	1	0
+      0x7C200600,  //  0011  CALL	R8	3
+      0x5C101000,  //  0012  MOVE	R4	R8
+      0x28200903,  //  0013  GE	R8	R4	K3
+      0x7822000B,  //  0014  JMPF	R8	#0021
+      0x8C200504,  //  0015  GETMET	R8	R2	K4
+      0x5C280E00,  //  0016  MOVE	R10	R7
+      0x5C2C0800,  //  0017  MOVE	R11	R4
+      0x7C200600,  //  0018  CALL	R8	3
+      0x94241103,  //  0019  GETIDX	R9	R8	K3
+      0x94281105,  //  001A  GETIDX	R10	R8	K5
+      0x602C0012,  //  001B  GETGBL	R11	G18
+      0x7C2C0000,  //  001C  CALL	R11	0
+      0x40301606,  //  001D  CONNECT	R12	R11	R6
+      0x40301609,  //  001E  CONNECT	R12	R11	R9
+      0x4030160A,  //  001F  CONNECT	R12	R11	R10
+      0x80041600,  //  0020  RET	1	R11
+      0x60140012,  //  0021  GETGBL	R5	G18
+      0x7C140000,  //  0022  CALL	R5	0
+      0x40180A01,  //  0023  CONNECT	R6	R5	R1
+      0x4C180000,  //  0024  LDNIL	R6
+      0x40180A06,  //  0025  CONNECT	R6	R5	R6
+      0x4C180000,  //  0026  LDNIL	R6
+      0x40180A06,  //  0027  CONNECT	R6	R5	R6
+      0x80040A00,  //  0028  RET	1	R5
     })
   )
 );
@@ -1718,63 +1717,6 @@ be_local_closure(Tasmota_load,   /* name */
 
 
 /********************************************************************
-** Solidified function: chars_in_string
-********************************************************************/
-be_local_closure(Tasmota_chars_in_string,   /* name */
-  be_nested_proto(
-    10,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_const_int(1),
-    }),
-    &be_const_str_chars_in_string,
-    &be_const_str_solidified,
-    ( &(const binstruction[31]) {  /* code */
-      0x780E0001,  //  0000  JMPF	R3	#0003
-      0x50100200,  //  0001  LDBOOL	R4	1	0
-      0x70020000,  //  0002  JMP		#0004
-      0x50100000,  //  0003  LDBOOL	R4	0	0
-      0x58140000,  //  0004  LDCONST	R5	K0
-      0x6018000C,  //  0005  GETGBL	R6	G12
-      0x5C1C0200,  //  0006  MOVE	R7	R1
-      0x7C180200,  //  0007  CALL	R6	1
-      0x14180A06,  //  0008  LT	R6	R5	R6
-      0x781A0012,  //  0009  JMPF	R6	#001D
-      0x50180000,  //  000A  LDBOOL	R6	0	0
-      0x581C0000,  //  000B  LDCONST	R7	K0
-      0x6020000C,  //  000C  GETGBL	R8	G12
-      0x5C240400,  //  000D  MOVE	R9	R2
-      0x7C200200,  //  000E  CALL	R8	1
-      0x14200E08,  //  000F  LT	R8	R7	R8
-      0x78220006,  //  0010  JMPF	R8	#0018
-      0x94200205,  //  0011  GETIDX	R8	R1	R5
-      0x94240407,  //  0012  GETIDX	R9	R2	R7
-      0x1C201009,  //  0013  EQ	R8	R8	R9
-      0x78220000,  //  0014  JMPF	R8	#0016
-      0x50180200,  //  0015  LDBOOL	R6	1	0
-      0x001C0F01,  //  0016  ADD	R7	R7	K1
-      0x7001FFF3,  //  0017  JMP		#000C
-      0x20200806,  //  0018  NE	R8	R4	R6
-      0x78220000,  //  0019  JMPF	R8	#001B
-      0x80040A00,  //  001A  RET	1	R5
-      0x00140B01,  //  001B  ADD	R5	R5	K1
-      0x7001FFE7,  //  001C  JMP		#0005
-      0x5419FFFE,  //  001D  LDINT	R6	-1
-      0x80040C00,  //  001E  RET	1	R6
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: cmd
 ********************************************************************/
 be_local_closure(Tasmota_cmd,   /* name */
@@ -2655,7 +2597,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     get_power, func(l_getpower)
     set_power, func(l_setpower)
-    get_switch, func(l_getswitch)     // depraceted
+    get_switch, func(l_getswitch)     // deprecated
     get_switches, func(l_getswitch)
 
     i2c_enabled, func(l_i2cenabled)
@@ -2664,7 +2606,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     add_fast_loop, closure(Tasmota_add_fast_loop_closure)
     remove_fast_loop, closure(Tasmota_remove_fast_loop_closure)
     cmd, closure(Tasmota_cmd_closure)
-    chars_in_string, closure(Tasmota_chars_in_string_closure)
+    _find_op, func(tasm_find_op)        // new C version for finding a rule operator
     find_key_i, closure(Tasmota_find_key_i_closure)
     find_op, closure(Tasmota_find_op_closure)
     add_rule, closure(Tasmota_add_rule_closure)
