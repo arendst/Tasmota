@@ -17,10 +17,61 @@ on:
       - '.github/workflows/build_all_the_things.yml'
 
 jobs:
+  os-check-win:
+    runs-on: windows-latest
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota32s3
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+      - name: Install dependencies
+        run: |
+          #python -m pip install --upgrade pip
+          pip install -U platformio
+          #platformio upgrade --dev
+          #platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: firmware
+          path: ./build_output
+
+  os-check-mac:
+    runs-on: macos-latest
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota32-webcam
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+      - name: Install dependencies
+        run: |
+          #python -m pip install --upgrade pip
+          pip install -U platformio
+          #platformio upgrade --dev
+          #platformio update
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: firmware
+          path: ./build_output
+
   base-images:
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     strategy:
+      fail-fast: true
       matrix:
         variant:
           - tasmota
@@ -32,21 +83,19 @@ jobs:
           - tasmota-minimal
           - tasmota-sensors
           - tasmota-zbbridge
+          - tasmota32
+          - tasmota32c3
+          - tasmota32s2
           - tasmota32-zbbrdgpro
           - tasmota-zigbee
-          - tasmota32
-          - tasmota32-webcam
           - tasmota32-bluetooth
           - tasmota32-core2
           - tasmota32-nspanel
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
-          - tasmota32c3
           - tasmota32c3cdc
-          - tasmota32s2
           - tasmota32s2cdc
-          - tasmota32s3
           - tasmota32s3cdc
           - tasmota32solo1
           - tasmota32solo1-safeboot
@@ -58,9 +107,9 @@ jobs:
           - tasmota32s3-safeboot
           - tasmota32s3cdc-safeboot
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
           #python -m pip install --upgrade pip
@@ -78,13 +127,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     strategy:
+      fail-fast: true
       matrix:
         variant: [ tasmota ]
         language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
           #python -m pip install --upgrade pip
