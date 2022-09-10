@@ -3,7 +3,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.1.1]
+## [12.1.1.2]
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.1.1.1] 20220910
 ### Added
 - Support for SGP40 gas and air quality sensor (#16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt (#16351)
@@ -24,8 +33,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Removed whitespace from JSON values with no decimals (#16365)
 
-### Removed
-
 ## [12.1.0.1] 20220825
 ### Added
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` (#16252)
@@ -34,10 +41,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
-
-### Fixed
-
-### Removed
 
 ## [Released]
 

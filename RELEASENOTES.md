@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.1.1.1
+## Changelog v12.1.1.2
 ### Added
 - Command ``SetOption146 1`` to enable display of ESP32 internal temperature
 - Command ``StatusRetain`` [#11109](https://github.com/arendst/Tasmota/issues/11109)
