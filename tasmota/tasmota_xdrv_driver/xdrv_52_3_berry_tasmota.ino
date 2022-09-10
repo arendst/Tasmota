@@ -400,6 +400,59 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Find for an operator in the string
+  // takes a string, an offset to start the search from, and works in 2 modes.
+  // mode1 (false): loog for the first char of an operato
+  // mode2 (true): finds the last char of the operator
+  int32_t tasm_find_op(const char* hay, bbool second_phase) {
+    const char *c = hay;    // starting point
+    int32_t ret = 0;
+    if (!second_phase) {
+      // search for `=`, `==`, `!=`, `!==`, `<`, `<=`, `>`, `>=`
+      while (*c) {
+        switch (c[0]) {
+          case '=':
+          case '<':
+          case '>':
+            return ret;   // anything starting with `=`, `<` or `>` is a valid operator
+          case '!':
+            if (c[1] == '=') {
+              return ret; // needs to start with `!=`
+            }
+            break;
+          default:
+            break;
+        }
+        c++;
+        ret++;
+      }
+      return -1;          // no operator found
+    } else {
+      switch (c[0]) {
+        case '<':
+        case '>':
+        case '=':
+          if (c[1] != '=') { return ret + 1; }    // `<` or `>` or `=`
+          else             { return ret + 2; }    // `<=` or `>=` or `==`
+        case '!':
+          if (c[1] != '=') { return -1; }         // this is invalid if isolated `!`
+          if (c[2] != '=') { return ret + 2; }    // `!=`
+          else             { return ret + 3; }    // `!==`
+        default:
+          break;
+      }
+      return -1;
+    }
+  }
+  /*
+
+  # test patterns
+  assert(tasmota._find_op("aaa#bbc==23",false) == 7)
+  assert(tasmota._find_op("==23",true) == 2)
+  assert(tasmota._find_op("aaa#bbc!23",false) == -1)
+
+  */
+
   // web append with decimal conversion
   int32_t l_webSend(bvm *vm);
   int32_t l_webSend(bvm *vm) {

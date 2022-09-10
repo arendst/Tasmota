@@ -74,28 +74,6 @@ class Tasmota
     end
   end
 
-  # add `chars_in_string(s:string,c:string) -> int``
-  # looks for any char in c, and return the position of the first char
-  # or -1 if not found
-  # inv is optional and inverses the behavior, i.e. look for chars not in the list
-  def chars_in_string(s,c,inv)
-    var inverted = inv ? true : false
-    var i = 0
-    while i < size(s)
-    # for i:0..size(s)-1
-      var found = false
-      var j = 0
-      while j < size(c)
-      # for j:0..size(c)-1
-        if s[i] == c[j] found = true end
-        j += 1
-      end
-      if inverted != found return i end
-      i += 1
-    end
-    return -1
-  end
-
   # find a key in map, case insensitive, return actual key or nil if not found
   def find_key_i(m,keyi)
     import string
@@ -115,12 +93,12 @@ class Tasmota
   def find_op(item)
     import string
     var op_chars = '=<>!'
-    var pos = self.chars_in_string(item, op_chars)
+    var pos = self._find_op(item, false)   # initial run
     if pos >= 0
       var op_split = string.split(item,pos)
       var op_left = op_split[0]
       var op_rest = op_split[1]
-      pos = self.chars_in_string(op_rest, op_chars, true)
+      pos = self._find_op(op_rest, true)
       if pos >= 0
         var op_split2 = string.split(op_rest,pos)
         var op_middle = op_split2[0]
