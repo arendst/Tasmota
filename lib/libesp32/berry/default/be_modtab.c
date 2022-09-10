@@ -54,6 +54,9 @@ be_extern_native_module(ULP);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
 #endif // USE_ZIGBEE
+// BLE
+be_extern_native_module(MI32);
+be_extern_native_module(BLE);
 #ifdef USE_LVGL
 be_extern_native_module(lv);
 be_extern_native_module(lv_extra);
@@ -166,7 +169,10 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #if defined(USE_BERRY_ULP) && defined(CONFIG_IDF_TARGET_ESP32)
     &be_native_module(ULP),
 #endif // USE_BERRY_ULP
-
+#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
+    &be_native_module(MI32),
+    &be_native_module(BLE),
+#endif //USE_MI_ESP32
     /* user-defined modules register end */
     NULL /* do not remove */
 };
@@ -201,9 +207,6 @@ be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
 be_extern_native_class(tcpserver);
 be_extern_native_class(energy_struct);
-// BLE
-be_extern_native_class(MI32);
-be_extern_native_class(BLE);
 // LVGL core classes
 be_extern_native_class(lv_color);
 be_extern_native_class(lv_font);
@@ -287,10 +290,6 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_BERRY_INT64
     &be_native_class(int64),
 #endif
-#if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
-    &be_native_class(MI32),
-    &be_native_class(BLE),
-#endif //USE_MI_ESP32
     NULL, /* do not remove */
 };
 
