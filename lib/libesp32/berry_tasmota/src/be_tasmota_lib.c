@@ -13,7 +13,7 @@ extern const be_ctypes_structure_t be_tasmota_settings_struct;
 
 extern int l_getFreeHeap(bvm *vm);
 extern int l_arch(bvm *vm);
-extern int l_publish(bvm *vm);
+extern int be_mqtt_publish(bvm *vm);
 extern int l_publish_result(bvm *vm);
 extern int l_publish_rule(bvm *vm);
 extern int l_cmd(bvm *vm);
@@ -2562,7 +2562,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
 
     get_free_heap, func(l_getFreeHeap)
     arch, func(l_arch)
-    publish, func(l_publish)
+    publish, func(be_mqtt_publish)
     publish_result, func(l_publish_result)
     publish_rule, func(l_publish_rule)
     _cmd, func(l_cmd)

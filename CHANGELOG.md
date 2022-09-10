@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.1.1.2]
 ### Added
+- Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
 
 ### Changed
 
