@@ -42,74 +42,33 @@ extern "C" {
   extern void MI32setTemperatureForSlot(uint32_t slot, float value);
   extern uint8_t * MI32getDeviceMAC(uint32_t slot);
 
-  int be_MI32_devices(bvm *vm);
-  int be_MI32_devices(bvm *vm) {
-    uint32_t devices  = MI32numberOfDevices();
-    be_pushint(vm, devices);
-    be_return(vm);
+  int be_MI32_devices(void) {
+    return MI32numberOfDevices();
   }
 
-  int be_MI32_set_bat(bvm *vm);
-  int be_MI32_set_bat(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_isint(vm, 2) && be_isint(vm, 3)) {
-      uint32_t slot = be_toint(vm, 2);
-      int32_t bat_val = be_toint(vm, 3);
-      MI32setBatteryForSlot(slot,bat_val);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_MI32_set_bat(int slot, int bat_val){    
+    MI32setBatteryForSlot(slot,bat_val);
   }
 
-  int be_MI32_get_name(bvm *vm);
-  int be_MI32_get_name(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 2)) {
-      uint32_t slot = be_toint(vm, 2);
-      const char * name = MI32getDeviceName(slot);
-      be_pushstring(vm,name);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  const char* be_MI32_get_name(int slot){    
+    return  MI32getDeviceName(slot);
   }
 
-  int be_MI32_get_MAC(bvm *vm);
-  int be_MI32_get_MAC(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 2)) {
-      uint32_t slot = be_toint(vm, 2);
-      uint8_t *buffer = MI32getDeviceMAC(slot);
-      size_t len = 6;
-      if(buffer != NULL) {
-        be_pushbytes(vm,buffer,len);
-        be_return(vm); // Return
-      }
+  uint8_t *be_MI32_get_MAC(int32_t slot, size_t *size){
+    *size = 6;
+    uint8_t * buffer = MI32getDeviceMAC(slot);
+    if(buffer == nullptr){
+      *size = 0;
     }
-    be_raise(vm, kTypeError, nullptr);
+    return buffer;
   }
 
-  int be_MI32_set_hum(bvm *vm);
-  int be_MI32_set_hum(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_isint(vm, 2) && be_isreal(vm, 3)) {
-      uint32_t slot = be_toint(vm, 2);
-      float hum_val = be_toreal(vm, 3);
-      MI32setHumidityForSlot(slot,hum_val);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_MI32_set_hum(int slot, int hum_val){    
+    MI32setHumidityForSlot(slot,hum_val);
   }
 
-  int be_MI32_set_temp(bvm *vm);
-  int be_MI32_set_temp(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_isint(vm, 2) && be_isreal(vm, 3)) {
-      uint32_t slot = be_toint(vm, 2);
-      float temp_val = be_toreal(vm, 3);
-      MI32setTemperatureForSlot(slot,temp_val);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_MI32_set_temp(int slot, int temp_val){    
+    MI32setTemperatureForSlot(slot,temp_val);
   }
 
 
@@ -233,7 +192,7 @@ BLE.set_svc
 BLE.set_chr
 
 BLE.set_MAC
-BLE.run(op)
+BLE.run(op, optional: bool response)
 be_BLE_op:
 1 read
 2 write
