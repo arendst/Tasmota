@@ -382,8 +382,11 @@ autoconf_module.init = def (m)
 
   return Autoconf()    # return an instance of this class
 end
+#@ solidify:autoconf_module
 
+#-
 aa = autoconf_module.init(autoconf_module)
 import webserver
 webserver.on('/ac2', / -> aa.page_autoconf_mgr(), webserver.HTTP_GET)
 return autoconf_module
+-#

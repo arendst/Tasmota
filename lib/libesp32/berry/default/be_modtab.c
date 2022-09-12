@@ -25,7 +25,6 @@ be_extern_native_module(strict);
 be_extern_native_module(undefined);
 
 /* Berry extensions */
-#include "be_mapping.h"
 be_extern_native_module(cb);
 
 /* Tasmota specific */
@@ -111,13 +110,14 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
 #endif
     &be_native_module(undefined),
 
+    &be_native_module(re),
+#ifdef TASMOTA
     /* Berry extensions */
     &be_native_module(cb),
 
     /* user-defined modules register start */
     
     &be_native_module(python_compat),
-    &be_native_module(re),
     &be_native_module(path),
     &be_native_module(mqtt),
     &be_native_module(persist),
@@ -173,6 +173,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(MI32),
     &be_native_module(BLE),
 #endif //USE_MI_ESP32
+#endif // TASMOTA
     /* user-defined modules register end */
     NULL /* do not remove */
 };
@@ -224,6 +225,7 @@ be_extern_native_class(lv_clock_icon);
 be_extern_native_class(int64);
 
 BERRY_LOCAL bclass_array be_class_table = {
+#ifdef TASMOTA
     /* first list are direct classes */
     &be_native_class(tasmota),
     &be_native_class(Trigger),
@@ -290,6 +292,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_BERRY_INT64
     &be_native_class(int64),
 #endif
+#endif // TASMOTA
     NULL, /* do not remove */
 };
 

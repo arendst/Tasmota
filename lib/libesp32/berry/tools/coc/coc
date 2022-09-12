@@ -31,7 +31,7 @@ class builder:
         sb.build(self.output)
     
     def parse_file(self, filename):
-        if re.search(r"\.(c|cc|cpp)$", filename):
+        if re.search(r"\.(h|c|cc|cpp)$", filename):
             # print(f"> parse {filename}")
             text = ""
             with open(filename) as f:

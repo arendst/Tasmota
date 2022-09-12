@@ -1,6 +1,7 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
+#@ solidify:Trigger
 class Trigger
   var trig, f, id
   var o             # optional object
@@ -31,6 +32,7 @@ class Trigger
 end
 
 tasmota = nil
+#@ solidify:Tasmota
 class Tasmota
   var _fl             # list of fast_loop registered closures
   var _rules
