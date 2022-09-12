@@ -23,6 +23,7 @@
 
 class Leds_ntv end
 
+#@ solidify:Leds
 class Leds : Leds_ntv
   var gamma       # if true, apply gamma (true is default)
   var leds        # number of leds

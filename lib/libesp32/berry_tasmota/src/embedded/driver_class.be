@@ -1,6 +1,7 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
+#@ solidify:Driver
 class Driver
   var every_second
   var every_100ms

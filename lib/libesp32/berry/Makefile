@@ -1,4 +1,4 @@
-CFLAGS      = -Wall -Wextra -std=c99 -pedantic-errors -O2
+CFLAGS      = -Wall -Wextra -std=c99 -O2 -Wno-zero-length-array -Wno-empty-translation-unit
 DEBUG_FLAGS = -O0 -g -DBE_DEBUG
 TEST_FLAGS  = $(DEBUG_FLAGS) --coverage -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined
 LIBS        = -lm
@@ -7,8 +7,8 @@ CC          = gcc
 MKDIR       = mkdir
 LFLAGS      =
 
-INCPATH     = src default
-SRCPATH     = src default
+INCPATH     = src default ../re1.5
+SRCPATH     = src default ../re1.5
 GENERATE    = generate
 CONFIG      = default/berry_conf.h
 COC         = tools/coc/coc

@@ -182,6 +182,7 @@ class Animate_back_forth : Animate_engine
 
 end
 animate.back_forth = Animate_back_forth
+#@ solidify:animate
 
 #-
 a=Animate_back_forth(nil, 0, 100, 5000)

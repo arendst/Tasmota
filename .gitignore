@@ -26,6 +26,7 @@ tasmota/tasmota.ino.cpp
 platformio_override.ini
 platformio_tasmota_cenv.ini
 lib/libesp32/berry/generate/*
+lib/libesp32/berry/berry
 
 ## Visual Studio Code specific ######
 .vscode
