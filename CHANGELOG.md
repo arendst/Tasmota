@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
 - Berry automated solidification of code
+- Support of optional file calib.dat on ADE7953 based energy monitors like Shelly EM (#16486)
 
 ### Changed
 
