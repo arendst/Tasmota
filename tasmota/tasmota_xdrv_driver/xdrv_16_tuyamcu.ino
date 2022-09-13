@@ -802,7 +802,7 @@ void TuyaProcessStatePacket(void) {
     if (Tuya.buffer[dpidStart + 1] == 0) {
 #ifdef USE_ENERGY_SENSOR
         if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER_COMBINED) {
-          if (dpDataLen == 8) {
+          if (dpDataLen >= 8) {
             uint16_t tmpVol = Tuya.buffer[dpidStart + 4] << 8 | Tuya.buffer[dpidStart + 5];
             uint16_t tmpCur = Tuya.buffer[dpidStart + 7] << 8 | Tuya.buffer[dpidStart + 8];
             uint16_t tmpPow = Tuya.buffer[dpidStart + 10] << 8 | Tuya.buffer[dpidStart + 11];
