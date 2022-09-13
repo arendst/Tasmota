@@ -33,7 +33,7 @@
  * Optionally allowing users to tweak calibration registers:
  * - In addition to possible rules add a rule containing the calib.dat string like:
  *   - rule3 on file#calib.dat do {"angles":{"angle0":180,"angle1":176}} endon
- *   - rule3 on file#calib.dat do {"rms":{"current_a":3166385,"current_b":3125691,"voltage":767262},"angles":{"angle0":180,"angle1":176},"powers":{"totactive":{"a":1345820,"b":1347328},"apparent":{"a":1345820,"b":1347328},"reactive":{"a":1345820,"b":1347328}}} endon
+ *   - rule3 on file#calib.dat do {"rms":{"current_a":4194303,"current_b":4194303,"voltage":1613194},"angles":{"angle0":0,"angle1":0},"powers":{"totactive":{"a":2723574,"b":2723574},"apparent":{"a":2723574,"b":2723574},"reactive":{"a":2723574,"b":2723574}}} endon
  * - Restart Tasmota and obeserve that the results seem calibrated as Tasmota now uses the information from calib.dat
  * To restore standard calibration using commands like VoltSet remove above entry from rule3
 \*********************************************************************************************/
@@ -47,22 +47,15 @@
 
 //#define ADE7953_DEBUG
 
-#define ADE7953_PREF            1540
-#define ADE7953_UREF            26000
-#define ADE7953_IREF            10000
+#define ADE7953_PREF            1540         // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
+#define ADE7953_UREF            26000        // 4194304 / (26000 / 10000) = 1613194 (= VGAIN)
+#define ADE7953_IREF            10000        // 4194304 / (10000 / 10000) = 4194303 (= IGAIN, needs to be less than 4194304 in order to use calib.dat)
 
 // Default calibration parameters can be overridden by a rule as documented above.
-#define ADE7953_AVGAIN_INIT     4194304      // rms, voltage
-#define ADE7953_AIGAIN_INIT     4194304      // rms, current_a
-#define ADE7953_BIGAIN_INIT     4194304      // rms, current_b
-#define ADE7953_AWGAIN_INIT     4194304      // powers, totactive, a
-#define ADE7953_BWGAIN_INIT     4194304      // powers, totactive, b
-#define ADE7953_AVAGAIN_INIT    4194304      // powers, apparent, a
-#define ADE7953_BVAGAIN_INIT    4194304      // powers, apparent, b
-#define ADE7953_AVARGAIN_INIT   4194304      // powers, reactive, a
-#define ADE7953_BVARGAIN_INIT   4194304      // powers, reactive, b
-#define ADE7943_PHCALA_INIT     0            // angles, angle0
-#define ADE7943_PHCALB_INIT     0            // angles, angle1
+#define ADE7953_GAIN_DEFAULT    4194304      // = 0x400000
+#define ADE7953_PHCAL_DEFAULT   0
+
+enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM };
 
 enum Ade7953_16BitRegisters {
   // Register Name                    Addres  R/W  Bt  Ty  Default     Description
@@ -138,7 +131,33 @@ enum Ade7953_32BitRegisters {
   ADE7953_BVAOS                    // 0x397   R/W  24  S   0x000000    Apparent power offset correction (Current Channel B)
 };
 
-enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM };
+enum Ade7953CalibrationRegisters {
+  ADE7953_CAL_AVGAIN,
+  ADE7953_CAL_AIGAIN,
+  ADE7953_CAL_BIGAIN,
+  ADE7953_CAL_AWGAIN,
+  ADE7953_CAL_BWGAIN,
+  ADE7953_CAL_AVAGAIN,
+  ADE7953_CAL_BVAGAIN,
+  ADE7953_CAL_AVARGAIN,
+  ADE7953_CAL_BVARGAIN,
+  ADE7943_CAL_PHCALA,
+  ADE7943_CAL_PHCALB
+};
+
+const uint16_t Ade7953CalibRegs[] {
+  ADE7953_AVGAIN,
+  ADE7953_AIGAIN,
+  ADE7953_BIGAIN,
+  ADE7953_AWGAIN,
+  ADE7953_BWGAIN,
+  ADE7953_AVAGAIN,
+  ADE7953_BVAGAIN,
+  ADE7953_AVARGAIN,
+  ADE7953_BVARGAIN,
+  ADE7943_PHCALA,
+  ADE7943_PHCALB
+};
 
 // 24-bit data registers
 const uint16_t Ade7953Registers[] {
@@ -171,12 +190,7 @@ struct Ade7953 {
   uint32_t period = 0;
   uint32_t current_rms[2] = { 0, 0 };
   uint32_t active_power[2] = { 0, 0 };
-  uint32_t calib_igain[2];
-  uint32_t calib_wgain[2];
-  uint32_t calib_vagain[2];
-  uint32_t calib_vargain[2];
-  uint32_t calib_vgain;
-  int16_t calib_phcal[2];
+  int32_t calib_data[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
   uint8_t init_step = 0;
   uint8_t model = 0;          // 0 = Shelly 2.5, 1 = Shelly EM
 } Ade7953;
@@ -236,49 +250,26 @@ void Ade7953Init(void) {
   Ade7953Write(0x0FE, 0x00AD);             // Unlock register 0x120
   Ade7953Write(0x120, 0x0030);             // Configure optimum setting
 
+  int32_t regs[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
 #ifdef ADE7953_DEBUG
-  uint32_t aigain = Ade7953Read(ADE7953_AIGAIN);
-  uint32_t avgain = Ade7953Read(ADE7953_AVGAIN);
-  uint32_t bigain = Ade7953Read(ADE7953_BIGAIN);
-  uint32_t awgain = Ade7953Read(ADE7953_AWGAIN);
-  uint32_t bwgain = Ade7953Read(ADE7953_BWGAIN);
-  uint32_t avagain = Ade7953Read(ADE7953_AVAGAIN);
-  uint32_t bvagain = Ade7953Read(ADE7953_BVAGAIN);
-  uint32_t avargain = Ade7953Read(ADE7953_AVARGAIN);
-  uint32_t bvargain = Ade7953Read(ADE7953_BVARGAIN);
-  int32_t phcala  = Ade7953Read(ADE7943_PHCALA);
-  int32_t phcalb  = Ade7953Read(ADE7943_PHCALB);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs V %06X, AI %06X, BI %06X, AW %06X, BW %06X, AVA %06X, BVA %06X, AVAr %06X, BVAr %06X, PA %06X, PB %06X"),
-    avgain, aigain, bigain, awgain, bwgain, avagain, bvagain, avargain, bvargain, phcala, phcalb);
+  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
+    regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: CalibRegs V %06X, aI %06X, bI %06X, aW %06X, bW %06X, aVA %06X, bVA %06X, aVAr %06X, bVAr %06X, aP %06X, bP %06X"),
+    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
 #endif  // ADE7953_DEBUG
-
-  Ade7953Write(ADE7953_AVGAIN, Ade7953.calib_vgain);
-  Ade7953Write(ADE7953_AIGAIN, Ade7953.calib_igain[0]);
-  Ade7953Write(ADE7953_BIGAIN, Ade7953.calib_igain[1]);
-  Ade7953Write(ADE7953_AWGAIN, Ade7953.calib_wgain[0]);
-  Ade7953Write(ADE7953_BWGAIN, Ade7953.calib_wgain[1]);
-  Ade7953Write(ADE7953_AVAGAIN, Ade7953.calib_vagain[0]);
-  Ade7953Write(ADE7953_BVAGAIN, Ade7953.calib_vagain[1]);
-  Ade7953Write(ADE7953_AVARGAIN, Ade7953.calib_vargain[0]);
-  Ade7953Write(ADE7953_BVARGAIN, Ade7953.calib_vargain[1]);
-  Ade7953Write(ADE7943_PHCALA, Ade7953.calib_phcal[0]);
-  Ade7953Write(ADE7943_PHCALB, Ade7953.calib_phcal[1]);
-
+  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
+    Ade7953Write(Ade7953CalibRegs[i], Ade7953.calib_data[i]);
+  }
+  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
+    regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
+  }
 #ifdef ADE7953_DEBUG
-  aigain = Ade7953Read(ADE7953_AIGAIN);
-  avgain = Ade7953Read(ADE7953_AVGAIN);
-  bigain = Ade7953Read(ADE7953_BIGAIN);
-  awgain = Ade7953Read(ADE7953_AWGAIN);
-  bwgain = Ade7953Read(ADE7953_BWGAIN);
-  avagain = Ade7953Read(ADE7953_AVAGAIN);
-  bvagain = Ade7953Read(ADE7953_BVAGAIN);
-  avargain = Ade7953Read(ADE7953_AVARGAIN);
-  bvargain = Ade7953Read(ADE7953_BVARGAIN);
-  phcala  = Ade7953Read(ADE7943_PHCALA);
-  phcalb  = Ade7953Read(ADE7943_PHCALB);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs V %06X, AI %06X, BI %06X, AW %06X, BW %06X, AVA %06X, BVA %06X, AVAr %06X, BVAr %06X, PA %06X, PB %06X"),
-    avgain, aigain, bigain, awgain, bwgain, avagain, bvagain, avargain, bvargain, phcala, phcalb);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: CalibRegs V %06X, aI %06X, bI %06X, aW %06X, bW %06X, aVA %06X, bVA %06X, aVAr %06X, bVAr %06X, aP %06X, bP %06X"),
+    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
 #endif  // ADE7953_DEBUG
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs V %d, aI %d, bI %d, aW %d, bW %d, aVA %d, bVA %d, aVAr %d, bVAr %d, aP %d, bP %d"),
+    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
 }
 
 void Ade7953GetData(void) {
@@ -332,16 +323,16 @@ void Ade7953GetData(void) {
     Ade7953.active_power[0], Ade7953.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
-    Energy.voltage[0] = (Ade7953.calib_vgain != ADE7953_AVGAIN_INIT) ? (float)Ade7953.voltage_rms / 10000
-                                                                     : (float)Ade7953.voltage_rms / Settings->energy_voltage_calibration;
+    float divider = (Ade7953.calib_data[ADE7953_CAL_AVGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : Settings->energy_voltage_calibration;
+    Energy.voltage[0] = (float)Ade7953.voltage_rms / divider;
     Energy.frequency[0] = 223750.0f / ((float)Ade7953.period + 1);
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
-      Energy.active_power[channel] = (Ade7953.calib_wgain[channel] != ADE7953_AWGAIN_INIT) ? (float)Ade7953.active_power[channel] / 100
-                                                                                           : (float)Ade7953.active_power[channel] / (Settings->energy_power_calibration / 10);
-      Energy.reactive_power[channel] = (Ade7953.calib_vargain[channel] != ADE7953_AVARGAIN_INIT) ? (float)reactive_power[channel] / 100
-                                                                                                 : (float)reactive_power[channel] / (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[ADE7953_CAL_AWGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
+      Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
+      divider = (Ade7953.calib_data[ADE7953_CAL_AVARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
+      Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if ((acc_mode & APSIGN[channel]) != 0) {
           Energy.active_power[channel] = Energy.active_power[channel] * -1;
@@ -350,13 +341,13 @@ void Ade7953GetData(void) {
           Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
         }
       }
-      Energy.apparent_power[channel] = (Ade7953.calib_vagain[channel] != ADE7953_AVAGAIN_INIT) ? (float)apparent_power[channel] / 100
-                                                                                               : (float)apparent_power[channel] / (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[ADE7953_CAL_AVAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
+      Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        Energy.current[channel] = (Ade7953.calib_igain[channel] != ADE7953_AIGAIN_INIT) ? (float)Ade7953.current_rms[channel] / 100000
-                                                                                        : (float)Ade7953.current_rms[channel] / (Settings->energy_current_calibration * 10);
+        divider = (Ade7953.calib_data[ADE7953_CAL_AIGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : (Settings->energy_current_calibration * 10);
+        Energy.current[channel] = (float)Ade7953.current_rms[channel] / divider;
         Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
       }
     }
@@ -384,7 +375,7 @@ void Ade7953EnergyEverySecond(void) {
 
 bool Ade7953SetDefaults(const char* json) {
   // {"angles":{"angle0":180,"angle1":176}}
-  // {"rms":{"current_a":3166385,"current_b":3125691,"voltage":767262},"angles":{"angle0":180,"angle1":176},"powers":{"totactive":{"a":1345820,"b":1347328},"apparent":{"a":1345820,"b":1347328},"reactive":{"a":1345820,"b":1347328}}}
+  // {"rms":{"current_a":4194303,"current_b":4194303,"voltage":1613194},"angles":{"angle0":0,"angle1":0},"powers":{"totactive":{"a":2723574,"b":2723574},"apparent":{"a":2723574,"b":2723574},"reactive":{"a":2723574,"b":2723574}}}
   uint32_t len = strlen(json) +1;
   if (len < 7) { return false; }          // Too short
 
@@ -402,58 +393,54 @@ bool Ade7953SetDefaults(const char* json) {
   JsonParserObject rms = root[PSTR("rms")].getObject();
   if (rms) {
     val = rms[PSTR("voltage")];
-    if (val) { Ade7953.calib_vgain = val.getInt(); }
+    if (val) { Ade7953.calib_data[ADE7953_CAL_AVGAIN] = val.getInt(); }
     val = rms[PSTR("current_a")];
-    if (val) { Ade7953.calib_igain[0] = val.getInt(); }
+    if (val) { Ade7953.calib_data[ADE7953_CAL_AIGAIN] = val.getInt(); }
     val = rms[PSTR("current_b")];
-    if (val) { Ade7953.calib_igain[1] = val.getInt(); }
+    if (val) { Ade7953.calib_data[ADE7953_CAL_BIGAIN] = val.getInt(); }
   }
   JsonParserObject angles = root[PSTR("angles")].getObject();
   if (angles) {
     val = angles[PSTR("angle0")];
-    if (val) { Ade7953.calib_phcal[0] = val.getUInt(); }
+    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALA] = val.getUInt(); }
     val = angles[PSTR("angle1")];
-    if (val) { Ade7953.calib_phcal[1] = val.getUInt(); }
+    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALB] = val.getUInt(); }
   }
   JsonParserObject powers = root[PSTR("powers")].getObject();
   if (powers) {
     JsonParserObject totactive = powers[PSTR("totactive")].getObject();
     if (totactive) {
       val = totactive[PSTR("a")];
-      if (val) { Ade7953.calib_wgain[0] = val.getInt(); }
+      if (val) { Ade7953.calib_data[ADE7953_CAL_AWGAIN] = val.getInt(); }
       val = totactive[PSTR("b")];
-      if (val) { Ade7953.calib_wgain[1] = val.getInt(); }
+      if (val) { Ade7953.calib_data[ADE7953_CAL_BWGAIN] = val.getInt(); }
     }
     JsonParserObject apparent = powers[PSTR("apparent")].getObject();
     if (apparent) {
       val = totactive[PSTR("a")];
-      if (val) { Ade7953.calib_vagain[0] = val.getInt(); }
+      if (val) { Ade7953.calib_data[ADE7953_CAL_AVAGAIN] = val.getInt(); }
       val = totactive[PSTR("b")];
-      if (val) { Ade7953.calib_vagain[1] = val.getInt(); }
+      if (val) { Ade7953.calib_data[ADE7953_CAL_BVAGAIN] = val.getInt(); }
     }
     JsonParserObject reactive = powers[PSTR("reactive")].getObject();
     if (reactive) {
       val = totactive[PSTR("a")];
-      if (val) { Ade7953.calib_vargain[0] = val.getInt(); }
+      if (val) { Ade7953.calib_data[ADE7953_CAL_AVARGAIN] = val.getInt(); }
       val = totactive[PSTR("b")];
-      if (val) { Ade7953.calib_vargain[1] = val.getInt(); }
+      if (val) { Ade7953.calib_data[ADE7953_CAL_BVARGAIN] = val.getInt(); }
     }
   }
   return true;
 }
 
 void Ade7953Defaults(void) {
-  Ade7953.calib_vgain = ADE7953_AVGAIN_INIT;
-  Ade7953.calib_igain[0] = ADE7953_AIGAIN_INIT;
-  Ade7953.calib_igain[1] = ADE7953_BIGAIN_INIT;
-  Ade7953.calib_wgain[0] = ADE7953_AWGAIN_INIT;
-  Ade7953.calib_wgain[1] = ADE7953_BWGAIN_INIT;
-  Ade7953.calib_vagain[0] = ADE7953_AVAGAIN_INIT;
-  Ade7953.calib_vagain[1] = ADE7953_BVAGAIN_INIT;
-  Ade7953.calib_vargain[0] = ADE7953_AVARGAIN_INIT;
-  Ade7953.calib_vargain[1] = ADE7953_BVARGAIN_INIT;
-  Ade7953.calib_phcal[0] = ADE7943_PHCALA_INIT;
-  Ade7953.calib_phcal[1] = ADE7943_PHCALB_INIT;
+  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
+    if (i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t) -2) {
+      Ade7953.calib_data[i] = ADE7953_GAIN_DEFAULT;
+    } else {
+      Ade7953.calib_data[i] = ADE7953_PHCAL_DEFAULT;
+    }
+  }
 
 #ifdef USE_RULES
   // rule3 on file#calib.dat do {"angles":{"angle0":180,"angle1":176}} endon
