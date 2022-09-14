@@ -14,9 +14,10 @@ import re
 # sys.path().push('src/embedded')   # allow to import from src/embedded
 
 # globals that need to exist to make compilation succeed
-var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load"
+var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state"
 
-var files = ['tasmota_class.be', 'leds.be', 'animate_module.be', 'autoconf_module.be','driver_class.be']
+var files = ['tasmota_class.be', 'leds.be', 'animate_module.be', 'autoconf_module.be','driver_class.be',
+  'partition_core.be','i2c_driver.be','hue_bridge.be','persist.be','uuid.be']
 
 for g:string.split(globs, ",")
   global.(g) = nil

@@ -30,7 +30,11 @@
  * type when the value is 2.
  * Default: 2
  */
+#ifdef TASMOTA
 #define BE_INTGER_TYPE                  1           // use long int = uint32_t
+#else
+#define BE_INTGER_TYPE                  0
+#endif
 
 /* Macro: BE_USE_SINGLE_FLOAT
  * Select floating point precision.
