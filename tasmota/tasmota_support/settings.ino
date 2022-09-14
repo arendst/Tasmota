@@ -749,7 +749,7 @@ uint32_t CfgTime(void) {
 void SettingsErase(uint8_t type) {
   /*
     For Arduino core and SDK:
-    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
+    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP_getFlashChipMagicSize).
     Addresses above SDK recognized size (up to ESP.getFlashChipRealSize) are not accessable.
     For Esptool:
     The only way to erase whole flash is esptool which uses direct SPI writes to flash.
@@ -766,7 +766,7 @@ void SettingsErase(uint8_t type) {
 #ifndef FIRMWARE_MINIMAL
                            // Reset 2 = Erase all flash from program end to end of physical flash
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
-  uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;  // Flash size as reported by hardware
+  uint32_t _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as reported by hardware
   if (1 == type) {         // Reset 3 = SDK parameter area
     // source Esp.cpp and core_esp8266_phy.cpp
     _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;
@@ -779,7 +779,7 @@ void SettingsErase(uint8_t type) {
 */
     EsptoolErase(_sectorStart, FLASH_FS_START);
     _sectorStart = EEPROM_LOCATION;
-    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
+    _sectorEnd = ESP_getFlashChipMagicSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (3 == type) {    // QPC Reached = QPC and Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 #ifdef USE_UFILESYS
@@ -787,7 +787,7 @@ void SettingsErase(uint8_t type) {
 #endif
     EsptoolErase(SETTINGS_LOCATION - CFG_ROTATES, SETTINGS_LOCATION +1);
     _sectorStart = EEPROM_LOCATION;
-    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
+    _sectorEnd = ESP_getFlashChipMagicSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (4 == type) {    // WIFI_FORCE_RF_CAL_ERASE = SDK wifi calibration
     _sectorStart = EEPROM_LOCATION +1;                         // SDK phy area and Core calibration sector (0x0XFC000)

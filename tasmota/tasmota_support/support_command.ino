@@ -775,7 +775,7 @@ void CmndStatus(void)
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
 #endif  // ESP32
-                          ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024
+                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
                           , ESP_getFlashChipId()
                           , ESP.getFlashChipSpeed()/1000000, ESP_getFlashChipMode().c_str());
     ResponseAppendFeatures();
