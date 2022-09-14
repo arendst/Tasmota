@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support of optional file calib.dat on ADE7953 based energy monitors like Shelly EM (#16486)
 
 ### Changed
+- ESP32 Increase number of button GPIOs from 8 to 28 (#16518)
 
 ### Fixed
 
