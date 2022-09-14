@@ -18,7 +18,7 @@ on:
 
 jobs:
   os-check-win:
-    runs-on: windows-latest
+    runs-on: windows-2019
     if: github.repository == 'arendst/Tasmota'
     strategy:
       fail-fast: true
