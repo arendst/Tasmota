@@ -13,7 +13,8 @@
  -   addr: I2C address of device, will probe all I2C buses for it
  -   i2c_index: (optional) check is the device is not disabled
  -------------------------------------------------------------#
-
+ 
+#@ solidify:I2C_Driver
 class I2C_Driver
   var wire          #- wire object to reach the device, if nil then the module is not initialized -#
   var addr          #- I2C address of the device -#

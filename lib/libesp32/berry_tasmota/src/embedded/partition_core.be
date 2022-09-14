@@ -10,6 +10,7 @@
 # Provides low-level objects and a Web UI
 #######################################################################
 
+#@ solidify:partition_core
 var partition_core = module('partition_core')
 
 #######################################################################
