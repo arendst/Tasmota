@@ -65,6 +65,10 @@ uint32_t ESP_getFlashChipRealSize(void) {
   return ESP.getFlashChipRealSize();
 }
 
+uint32_t ESP_getFlashChipSize(void) {
+  return ESP.getFlashChipSize();
+}
+
 void ESP_Restart(void) {
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
@@ -312,17 +316,22 @@ extern "C" {
 #if ESP_IDF_VERSION_MAJOR > 3       // IDF 4+
   #if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
     #include "esp32/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
   #elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
     #include "esp32s2/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
   #elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
     #include "esp32s3/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
   #else
     #error Target CONFIG_IDF_TARGET is not supported
   #endif
 #else // ESP32 Before IDF 4.0
   #include "rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x1000
 #endif
 
 uint32_t EspProgramSize(const char *label) {
@@ -520,6 +529,33 @@ uint32_t ESP_getChipId(void) {
   return id;
 }
 
+uint32_t ESP_getFlashChipMagicSize(void)
+{
+    esp_image_header_t fhdr;
+    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+        return 0;
+    }
+    return ESP_magicFlashChipSize(fhdr.spi_size);
+}
+
+uint32_t ESP_magicFlashChipSize(uint8_t byte)
+{
+    switch(byte & 0x0F) {
+    case 0x0: // 8 MBit (1MB)
+        return 1048576;
+    case 0x1: // 16 MBit (2MB)
+        return 2097152;
+    case 0x2: // 32 MBit (4MB)
+        return 4194304;
+    case 0x3: // 64 MBit (8MB)
+        return 8388608;
+    case 0x4: // 128 MBit (16MB)
+        return 16777216;
+    default: // fail?
+        return 0;
+    }
+}
+
 uint32_t ESP_getSketchSize(void) {
   static uint32_t sketchsize = 0;
 
@@ -556,20 +592,6 @@ int32_t ESP_getHeapFragmentation(void) {
   int32_t free_maxmem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
   if (free_maxmem < 0) { free_maxmem = 0; }
   return free_maxmem;
-}
-
-uint32_t ESP_getFlashChipId(void)
-{
-//  uint32_t id = bootloader_read_flash_id();
-  uint32_t id = g_rom_flashchip.device_id;
-  id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
-  return id;
-}
-
-uint32_t ESP_getFlashChipRealSize(void)
-{
-  uint32_t id = (ESP_getFlashChipId() >> 16) & 0xFF;
-  return 2 << (id - 1);
 }
 
 void ESP_Restart(void) {
@@ -983,30 +1005,7 @@ typedef enum {
 } FlashMode_t;
 */
 String ESP_getFlashChipMode(void) {
-#if ESP8266
   uint32_t flash_mode = ESP.getFlashChipMode();
-#else
-  #if CONFIG_IDF_TARGET_ESP32S2
-  const uint32_t spi_ctrl = REG_READ(PERIPHS_SPI_FLASH_CTRL);
-  #else
-  const uint32_t spi_ctrl = REG_READ(SPI_CTRL_REG(0));
-  #endif
-  uint32_t flash_mode;
-  /* Not all of the following constants are already defined in older versions of spi_reg.h, so do it manually for now*/
-  if (spi_ctrl & BIT(24)) { //SPI_FREAD_QIO
-      flash_mode = 0;
-  } else if (spi_ctrl & BIT(20)) { //SPI_FREAD_QUAD
-      flash_mode = 1;
-  } else if (spi_ctrl &  BIT(23)) { //SPI_FREAD_DIO
-      flash_mode = 2;
-  } else if (spi_ctrl & BIT(14)) { // SPI_FREAD_DUAL
-      flash_mode = 3;
-  } else if (spi_ctrl & BIT(13)) { //SPI_FASTRD_MODE
-      flash_mode = 4;
-  } else {
-      flash_mode = 5;
-  }
-#endif
   if (flash_mode > 5) { flash_mode = 3; }
   char stemp[6];
   return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);

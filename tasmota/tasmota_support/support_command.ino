@@ -774,8 +774,11 @@ void CmndStatus(void)
                           ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
+                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
 #endif  // ESP32
-                          ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024
+#ifdef ESP8266
+                          ESP_getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
+#endif // ESP8266
                           , ESP_getFlashChipId()
                           , ESP.getFlashChipSpeed()/1000000, ESP_getFlashChipMode().c_str());
     ResponseAppendFeatures();
