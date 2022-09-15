@@ -328,7 +328,7 @@ bool Xsns42(byte function) {
     Scd30Detect();
   }
 */
-  if (!Scd30.init_once && (FUNC_EVERY_SECOND == function) && (TasmotaGlobal.uptime > 2)) {
+  if (!Scd30.init_once && (FUNC_EVERY_SECOND == function) && (TasmotaGlobal.uptime > 3)) {
     Scd30.init_once = true;
     Scd30Detect();
   }
