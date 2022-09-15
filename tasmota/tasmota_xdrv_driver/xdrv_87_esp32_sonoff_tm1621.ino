@@ -541,12 +541,14 @@ void CmndDspLine(void) {
   }
   if (9 == XdrvMailbox.index) {
     // DspLine9 = Show sensor JSON
+    // Example 1: SCD30 I2C connected (GPIO25 = I2C SCL, GPIO26 = I2C SDA)
     //      {"SCD30":{"CarbonDioxide":746,"eCO2":727,"Temperature":30.6,"Humidity":43.6,"DewPoint":16.8}}
     // index: 1        2                   3          4                  5               6
     //  unit: 0        0 (ppm)             0 (ppm)    1 (C or F)         2 (%RH)         1 (C or F)
-    //      {"ENERGY":{"TotalStartTime":"2022-07-15T13:44:23","Total":0.086,"Yesterday":0.002,"Today":0.005,"Power":0.96,"ApparentPower":7.60,"ReactivePower":7.50,"Factor":0.13,"Voltage":227.9,"Current":0.033}}
-    // index: 1         2                                      3             4                 5             6            7                    8                    9             10              11
-    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (VAr)              0             3 (V)           3 (A)
+    // Example 2: PZEM016 serial connected (GPIO25 = PZEM0XX Tx, GPIO26 = PZEM016 Rx)
+    //      {"ENERGY":{"TotalStartTime":"2022-07-05T16:01:39","Total":0.000,"Yesterday":0.000,"Today":0.000,"Power":0.00,"ApparentPower":0.00,"ReactivePower":0.00,"Factor":0.00,"Frequency":50,"Voltage":231.7,"Current":0.000}}
+    // index: 1         2                                      3             4                 5             6            7                    8                    9             10             11              12
+    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (VAr)              0             0              3 (V)           3 (A)
     TM1621GetSensors(1);
   }
 }

@@ -417,16 +417,16 @@ bool Ade7953SetDefaults(const char* json) {
     }
     JsonParserObject apparent = powers[PSTR("apparent")].getObject();
     if (apparent) {
-      val = totactive[PSTR("a")];
+      val = apparent[PSTR("a")];
       if (val) { Ade7953.calib_data[ADE7953_CAL_AVAGAIN] = val.getInt(); }
-      val = totactive[PSTR("b")];
+      val = apparent[PSTR("b")];
       if (val) { Ade7953.calib_data[ADE7953_CAL_BVAGAIN] = val.getInt(); }
     }
     JsonParserObject reactive = powers[PSTR("reactive")].getObject();
     if (reactive) {
-      val = totactive[PSTR("a")];
+      val = reactive[PSTR("a")];
       if (val) { Ade7953.calib_data[ADE7953_CAL_AVARGAIN] = val.getInt(); }
-      val = totactive[PSTR("b")];
+      val = reactive[PSTR("b")];
       if (val) { Ade7953.calib_data[ADE7953_CAL_BVARGAIN] = val.getInt(); }
     }
   }
