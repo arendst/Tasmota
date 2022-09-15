@@ -416,6 +416,8 @@ void SetPowerOnState(void)
     }
   }
 
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("PWR: PowerOnState %d restored"), Settings->poweronstate);
+
   // Issue #526 and #909
   uint32_t port = 0;
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
@@ -2159,6 +2161,8 @@ void GpioInit(void)
       pinMode(Pin(GPIO_INPUT, i), INPUT);
     }
   }
+
+  delay(Settings->param[P_POWER_ON_DELAY] * 10);  // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
 
 #ifdef USE_I2C
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));
