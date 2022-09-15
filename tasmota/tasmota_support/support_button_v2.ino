@@ -24,10 +24,9 @@
 \*********************************************************************************************/
 
 #define MAX_RELAY_BUTTON1       5  // Max number of relay controlled by BUTTON1
-#ifdef ESP32
+
 #define TOUCH_PIN_THRESHOLD     12 // Smaller value will treated as button press
 #define TOUCH_HIT_THRESHOLD     3  // successful hits to filter out noise
-#endif  // ESP32
 
 const char kMultiPress[] PROGMEM =
   "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
@@ -56,9 +55,9 @@ struct BUTTON {
 
 #ifdef ESP32
 struct TOUCH_BUTTON {
-  uint8_t pin_threshold = TOUCH_PIN_THRESHOLD;
+  uint32_t calibration = 0;                  // Bitfield
+  uint32_t pin_threshold = TOUCH_PIN_THRESHOLD;
   uint8_t hit_threshold = TOUCH_HIT_THRESHOLD;
-  uint32_t calibration = 0; // Bitfield
 } TOUCH_BUTTON;
 #endif  // ESP32
 

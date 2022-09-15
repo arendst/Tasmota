@@ -2605,39 +2605,34 @@ void CmndCpuFrequency(void) {
   ResponseCmndNumber(getCpuFrequencyMhz());
 }
 
-void CmndTouchCal(void)
-{
+void CmndTouchCal(void) {
   if (XdrvMailbox.payload >= 0) {
-    if (XdrvMailbox.payload < MAX_KEYS + 1) TOUCH_BUTTON.calibration = bitSet(TOUCH_BUTTON.calibration, XdrvMailbox.payload);
-    if (XdrvMailbox.payload == 0) TOUCH_BUTTON.calibration = 0;
-    if (XdrvMailbox.payload == 255) TOUCH_BUTTON.calibration = 255; // all pinss
+    if (XdrvMailbox.payload == 0) {
+      TOUCH_BUTTON.calibration = 0;
+    }
+    else if (XdrvMailbox.payload < MAX_KEYS + 1) {
+      TOUCH_BUTTON.calibration = bitSet(TOUCH_BUTTON.calibration, XdrvMailbox.payload);
+    }
+    else if (XdrvMailbox.payload == 255) {
+      TOUCH_BUTTON.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
+    }
   }
-  Response_P(PSTR("{\"" D_CMND_TOUCH_CAL "\": %u"), TOUCH_BUTTON.calibration);
-  ResponseJsonEnd();
+  ResponseCmndNumber(TOUCH_BUTTON.calibration);
   AddLog(LOG_LEVEL_INFO, PSTR("Button Touchvalue Hits,"));
 }
 
-void CmndTouchThres(void)
-{
-  if (XdrvMailbox.payload >= 0) {
-    if (XdrvMailbox.payload<256){
-      TOUCH_BUTTON.pin_threshold = XdrvMailbox.payload;
-    }
+void CmndTouchThres(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32000)) {
+    TOUCH_BUTTON.pin_threshold = XdrvMailbox.payload;
   }
-  Response_P(PSTR("{\"" D_CMND_TOUCH_THRES "\": %u"), TOUCH_BUTTON.pin_threshold);
-  ResponseJsonEnd();
+  ResponseCmndNumber(TOUCH_BUTTON.pin_threshold);
 }
 
-void CmndTouchNum(void)
-{
-  if (XdrvMailbox.payload >= 0) {
-    if (XdrvMailbox.payload<32){
-      TOUCH_BUTTON.hit_threshold = XdrvMailbox.payload;
-    }
+void CmndTouchNum(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
+    TOUCH_BUTTON.hit_threshold = XdrvMailbox.payload;
   }
-  Response_P(PSTR("{\"" D_CMND_TOUCH_NUM "\": %u"), TOUCH_BUTTON.hit_threshold);
-  ResponseJsonEnd();
-
+  ResponseCmndNumber(TOUCH_BUTTON.hit_threshold);
 }
 
 #endif  // ESP32
