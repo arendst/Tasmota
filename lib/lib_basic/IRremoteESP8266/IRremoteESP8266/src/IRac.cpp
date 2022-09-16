@@ -20,6 +20,7 @@
 #include "ir_Airwell.h"
 #include "ir_Amcor.h"
 #include "ir_Argo.h"
+#include "ir_Bosch.h"
 #include "ir_Carrier.h"
 #include "ir_Coolix.h"
 #include "ir_Corona.h"
@@ -161,6 +162,9 @@ bool IRac::isProtocolSupported(const decode_type_t protocol) {
 #if SEND_ARGO
     case decode_type_t::ARGO:
 #endif
+#if SEND_BOSCH144
+    case decode_type_t::BOSCH144:
+#endif
 #if SEND_CARRIER_AC64
     case decode_type_t::CARRIER_AC64:
 #endif  // SEND_CARRIER_AC64
@@ -215,6 +219,9 @@ bool IRac::isProtocolSupported(const decode_type_t protocol) {
 #if SEND_HAIER_AC
     case decode_type_t::HAIER_AC:
 #endif
+#if SEND_HAIER_AC160
+    case decode_type_t::HAIER_AC160:
+#endif  // SEND_HAIER_AC160
 #if SEND_HAIER_AC176
     case decode_type_t::HAIER_AC176:
 #endif  // SEND_HAIER_AC176
@@ -458,6 +465,47 @@ void IRac::argo(IRArgoAC *ac,
   ac->send();
 }
 #endif  // SEND_ARGO
+
+#if SEND_BOSCH144
+/// Send a Bosch144 A/C message with the supplied settings.
+/// @note May result in multiple messages being sent.
+/// @param[in, out] ac A Ptr to an IRBosch144AC object to use.
+/// @param[in] on The power setting.
+/// @param[in] mode The operation mode setting.
+/// @param[in] degrees The temperature setting in degrees.
+/// @param[in] fan The speed setting for the fan.
+/// @param[in] quiet Run the device in quiet/silent mode.
+/// @note -1 is Off, >= 0 is on.
+void IRac::bosch144(IRBosch144AC *ac,
+                  const bool on, const stdAc::opmode_t mode,
+                  const float degrees, const stdAc::fanspeed_t fan,
+                  const bool quiet) {
+  ac->begin();
+  ac->setPower(on);
+  if (!on) {
+      // after turn off AC no more commands should
+      // be accepted
+      ac->send();
+      return;
+  }
+  ac->setTemp(degrees);
+  ac->setFan(ac->convertFan(fan));
+  ac->setMode(ac->convertMode(mode));
+  ac->setQuiet(quiet);
+  ac->send();  // Send the state, which will also power on the unit.
+  // The following are all options/settings that create their own special
+  // messages. Often they only make sense to be sent after the unit is turned
+  // on. For instance, assuming a person wants to have the a/c on and in turbo
+  // mode. If we send the turbo message, it is ignored if the unit is off.
+  // Hence we send the special mode/setting messages after a normal message
+  // which will turn on the device.
+  // No Filter setting available.
+  // No Beep setting available.
+  // No Clock setting available.
+  // No Econo setting available.
+  // No Sleep setting available.
+}
+#endif  // SEND_BOSCH144
 
 #if SEND_CARRIER_AC64
 /// Send a Carrier 64-bit A/C message with the supplied settings.
@@ -1155,6 +1203,52 @@ void IRac::haier(IRHaierAC *ac,
 }
 #endif  // SEND_HAIER_AC
 
+#if SEND_HAIER_AC160
+/// Send a Haier 160 bit A/C message with the supplied settings.
+/// @param[in, out] ac A Ptr to an IRHaierAC160 object to use.
+/// @param[in] on The power setting.
+/// @param[in] mode The operation mode setting.
+/// @param[in] celsius Temperature units. True is Celsius, False is Fahrenheit.
+/// @param[in] degrees The temperature setting in degrees.
+/// @param[in] fan The speed setting for the fan.
+/// @param[in] swingv The vertical swing setting.
+/// @param[in] turbo Run the device in turbo/powerful mode.
+/// @param[in] quiet Run the device in quiet mode.
+/// @param[in] filter Turn on the (ion/pollen/etc) filter mode.
+/// @param[in] clean Turn on the clean mode.
+/// @param[in] light Turn on the LED/Display mode.
+/// @param[in] prevlight Previous LED/Display mode.
+/// @param[in] sleep Nr. of minutes for sleep mode. -1 is Off, >= 0 is on.
+void IRac::haier160(IRHaierAC160 *ac,
+                    const bool on, const stdAc::opmode_t mode,
+                    const bool celsius, const float degrees,
+                    const stdAc::fanspeed_t fan,
+                    const stdAc::swingv_t swingv,
+                    const bool turbo, const bool quiet, const bool filter,
+                    const bool clean, const bool light, const bool prevlight,
+                    const int16_t sleep) {
+  ac->begin();
+  // No Model setting available.
+  ac->setMode(ac->convertMode(mode));
+  ac->setUseFahrenheit(!celsius);
+  ac->setTemp(degrees);
+  ac->setFan(ac->convertFan(fan));
+  ac->setSwingV(ac->convertSwingV(swingv));
+  // No Horizontal Swing setting available.
+  ac->setQuiet(quiet);
+  ac->setTurbo(turbo);
+  ac->setHealth(filter);
+  ac->setClean(clean);
+  // No Clean setting available.
+  // No Beep setting available.
+  ac->setSleep(sleep >= 0);  // Sleep on this A/C is either on or off.
+  ac->setPower(on);
+  // Light needs to be sent last as the "button" value seems to control it.
+  ac->setLightToggle(light ^ prevlight);
+  ac->send();
+}
+#endif  // SEND_HAIER_AC160
+
 #if SEND_HAIER_AC176
 /// Send a Haier 176 bit A/C message with the supplied settings.
 /// @param[in, out] ac A Ptr to an IRHaierAC176 object to use.
@@ -1642,6 +1736,7 @@ void IRac::mitsubishi(IRMitsubishiAC *ac,
   ac->setTemp(degrees);
   ac->setFan(ac->convertFan(fan));
   ac->setVane(ac->convertSwingV(swingv));
+  ac->setVaneLeft(ac->convertSwingV(swingv));
   ac->setWideVane(ac->convertSwingH(swingh));
   if (quiet) ac->setFan(kMitsubishiAcFanSilent);
   ac->setISave10C(false);
@@ -2718,6 +2813,9 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
   const stdAc::swingv_t prev_swingv = (prev != NULL) ? prev->swingv
                                                      : stdAc::swingv_t::kOff;
 #endif  // (SEND_LG || SEND_SHARP_AC)
+#if (SEND_HAIER_AC160)
+  const bool prev_light = (prev != NULL) ? prev->light : !send.light;
+#endif  // (SEND_HAIER_AC160)
 #if SEND_MIDEA
   const bool prev_quiet = (prev != NULL) ? prev->quiet : !send.quiet;
 #endif  // SEND_MIDEA
@@ -2758,6 +2856,14 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
       break;
     }
 #endif  // SEND_ARGO
+#if SEND_BOSCH144
+    case BOSCH144:
+    {
+      IRBosch144AC ac(_pin, _inverted, _modulation);
+      bosch144(&ac, send.power, send.mode, degC, send.fanspeed, send.quiet);
+      break;
+    }
+#endif  // SEND_BOSCH144
 #if SEND_CARRIER_AC64
     case CARRIER_AC64:
     {
@@ -2924,6 +3030,16 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
       break;
     }
 #endif  // SEND_HAIER_AC
+#if SEND_HAIER_AC160
+    case HAIER_AC160:
+    {
+      IRHaierAC160 ac(_pin, _inverted, _modulation);
+      haier160(&ac, send.power, send.mode, send.celsius, send.degrees,
+               send.fanspeed, send.swingv, send.turbo, send.filter, send.clean,
+               send.light, prev_light, send.sleep);
+      break;
+    }
+#endif  // SEND_HAIER_AC160
 #if SEND_HAIER_AC176
     case HAIER_AC176:
     {
@@ -3472,6 +3588,8 @@ int16_t IRac::strToModel(const char *str, const int16_t def) {
     return gree_ac_remote_model_t::YAW1F;
   } else if (!STRCASECMP(str, kYbofbStr)) {
     return gree_ac_remote_model_t::YBOFB;
+  } else if (!STRCASECMP(str, kYx1fsfStr)) {
+    return gree_ac_remote_model_t::YX1FSF;
   // Haier models
   } else if (!STRCASECMP(str, kV9014557AStr)) {
     return haier_ac176_remote_model_t::V9014557_A;
@@ -3683,6 +3801,13 @@ namespace IRAcUtils {
         return ac.toString();
       }
 #endif  // DECODE_ARGO
+#if DECODE_BOSCH144
+      case decode_type_t::BOSCH144: {
+        IRBosch144AC ac(kGpioUnused);
+        ac.setRaw(result->state);
+        return ac.toString();
+      }
+#endif  // DECODE_BOSCH144
 #if DECODE_CARRIER_AC64
       case decode_type_t::CARRIER_AC64: {
         IRCarrierAc64 ac(kGpioUnused);
@@ -3813,6 +3938,13 @@ namespace IRAcUtils {
         return ac.toString();
       }
 #endif  // DECODE_HAIER_AC
+#if DECODE_HAIER_AC160
+      case decode_type_t::HAIER_AC160: {
+        IRHaierAC160 ac(kGpioUnused);
+        ac.setRaw(result->state);
+        return ac.toString();
+      }
+#endif  // DECODE_HAIER_AC160
 #if DECODE_HAIER_AC176
       case decode_type_t::HAIER_AC176: {
         IRHaierAC176 ac(kGpioUnused);
@@ -4132,6 +4264,14 @@ namespace IRAcUtils {
         break;
       }
 #endif  // DECODE_ARGO
+#if DECODE_BOSCH144
+      case decode_type_t::BOSCH144: {
+        IRBosch144AC ac(kGpioUnused);
+        ac.setRaw(decode->state);
+        *result = ac.toCommon();
+        break;
+      }
+#endif  // DECODE_BOSCH144
 #if DECODE_CARRIER_AC64
       case decode_type_t::CARRIER_AC64: {
         IRCarrierAc64 ac(kGpioUnused);
@@ -4168,7 +4308,7 @@ namespace IRAcUtils {
       case decode_type_t::DAIKIN128: {
         IRDaikin128 ac(kGpioUnused);
         ac.setRaw(decode->state);
-        *result = ac.toCommon();
+        *result = ac.toCommon(prev);
         break;
       }
 #endif  // DECODE_DAIKIN128
@@ -4252,7 +4392,7 @@ namespace IRAcUtils {
       case decode_type_t::FUJITSU_AC: {
         IRFujitsuAC ac(kGpioUnused);
         ac.setRaw(decode->state, decode->bits / 8);
-        *result = ac.toCommon();
+        *result = ac.toCommon(prev);
         break;
       }
 #endif  // DECODE_FUJITSU_AC
@@ -4280,6 +4420,14 @@ namespace IRAcUtils {
         break;
       }
 #endif  // DECODE_HAIER_AC
+#if DECODE_HAIER_AC160
+      case decode_type_t::HAIER_AC160: {
+        IRHaierAC160 ac(kGpioUnused);
+        ac.setRaw(decode->state);
+        *result = ac.toCommon(prev);
+        break;
+      }
+#endif  // DECODE_HAIER_AC160
 #if DECODE_HAIER_AC176
       case decode_type_t::HAIER_AC176: {
         IRHaierAC176 ac(kGpioUnused);
@@ -4348,7 +4496,7 @@ namespace IRAcUtils {
       case decode_type_t::KELON: {
         IRKelonAc ac(kGpioUnused);
         ac.setRaw(decode->value);
-        *result = ac.toCommon();
+        *result = ac.toCommon(prev);
         break;
       }
 #endif  // DECODE_KELON

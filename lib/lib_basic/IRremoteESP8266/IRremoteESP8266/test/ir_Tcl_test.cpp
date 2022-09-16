@@ -1,4 +1,4 @@
-// Copyright 2019 David Conran
+// Copyright 2019-2022 David Conran
 
 #include "ir_Tcl.h"
 #include "IRac.h"
@@ -22,6 +22,13 @@ TEST(TestTcl112Ac, Housekeeping) {
   ASSERT_EQ(tcl_ac_remote_model_t::GZ055BE1, IRac::strToModel("GZ055BE1"));
   ASSERT_EQ(irutils::modelToStr(decode_type_t::TCL112AC,
                                 tcl_ac_remote_model_t::GZ055BE1), "GZ055BE1");
+
+  ASSERT_EQ("TCL96AC", typeToString(decode_type_t::TCL96AC));
+  ASSERT_EQ(decode_type_t::TCL96AC, strToDecodeType("TCL96AC"));
+  ASSERT_TRUE(hasACState(decode_type_t::TCL96AC));
+  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::TCL96AC));
+  ASSERT_EQ(kTcl96AcBits, IRsend::defaultBits(decode_type_t::TCL96AC));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::TCL96AC));
 }
 
 // Tests for decodeTcl112Ac().
@@ -702,4 +709,65 @@ TEST(TestTcl112AcClass, Timers) {
       "Fan: 0 (Auto), Swing(V): 7 (Swing), "
       "On Timer: Off, Off Timer: 02:00",
       ac.toString());
+}
+
+// Decode a real Tcl96Ac A/C example from Issue #619
+TEST(TestDecodeTcl96Ac, DecodeRealExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  irsend.reset();
+  // Tcl96Ac A/C example from Issue #1810 row_data.txt
+  const uint16_t rawData[99] = {
+      1056, 550,
+      608, 2182, 608, 1444, 606, 840, 608, 2182,
+      608, 360, 612, 2182, 608, 356, 616, 1446,
+      608, 354, 618, 366, 608, 366, 606, 356,
+      618, 356, 618, 838, 608, 364, 608, 364,
+      608, 2182, 608, 360, 612, 840, 608, 838,
+      610, 364, 608, 360, 612, 2182, 608, 838,
+      608, 838, 608, 2182, 608, 366, 606, 1444,
+      608, 358, 614, 1444, 608, 838, 608, 366,
+      606, 368, 606, 366, 606, 366, 606, 366,
+      608, 364, 608, 342, 632, 840, 606, 340,
+      606, 364, 634, 338, 634, 340, 632, 340,
+      634, 814, 632, 814, 632, 2156, 634, 2156,
+      634};  // UNKNOWN AE10E0CB
+
+  const uint8_t expectedState[kTcl96AcStateLength] = {
+      0xB6, 0x23, 0x00, 0x10, 0x85, 0x09, 0x63, 0x34, 0x00, 0x04, 0x00, 0x5A};
+
+  irsend.sendRaw(rawData, 99, 38000);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(TCL96AC, irsend.capture.decode_type);
+  EXPECT_EQ(kTcl96AcBits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
+}
+
+// Decode a synthetic Tcl96Ac A/C message
+TEST(TestDecodeTcl96Ac, SyntheticExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+  irsend.reset();
+
+  const uint8_t expectedState[kTcl96AcStateLength] = {
+      0xB6, 0x23, 0x00, 0x10, 0x85, 0x09, 0x63, 0x34, 0x00, 0x04, 0x00, 0x5A};
+
+  irsend.sendTcl96Ac(expectedState);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(TCL96AC, irsend.capture.decode_type);
+  EXPECT_EQ(kTcl96AcBits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
 }

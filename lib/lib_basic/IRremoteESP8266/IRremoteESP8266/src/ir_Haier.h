@@ -8,6 +8,7 @@
 /// @see https://www.dropbox.com/s/mecyib3lhdxc8c6/IR%20data%20reverse%20engineering.xlsx?dl=0
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/485
 /// @see https://www.dropbox.com/sh/w0bt7egp0fjger5/AADRFV6Wg4wZskJVdFvzb8Z0a?dl=0&preview=haer2.ods
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1804
 
 // Supports:
 //   Brand: Haier,  Model: HSU07-HEA03 remote (HAIER_AC)
@@ -17,6 +18,7 @@
 //   Brand: Mabe,   Model: MMI18HDBWCA6MI8 A/C (HAIER_AC176)
 //   Brand: Mabe,   Model: V12843 HJ200223 remote (HAIER_AC176)
 //   Brand: Daichi, Model: D-H A/C (HAIER_AC176)
+//   Brand: Haier,  Model: KFR-26GW/83@UI-Ge A/C (HAIER_AC160)
 
 #ifndef IR_HAIER_H_
 #define IR_HAIER_H_
@@ -144,6 +146,7 @@ const uint8_t kHaierAcYrw02DefTempC = 25;
 const uint8_t kHaierAcYrw02ModelA = 0xA6;
 const uint8_t kHaierAcYrw02ModelB = 0x59;
 const uint8_t kHaierAc176Prefix = 0xB7;
+const uint8_t kHaierAc160Prefix = 0xB5;
 
 const uint8_t kHaierAcYrw02SwingVOff = 0x0;
 const uint8_t kHaierAcYrw02SwingVTop = 0x1;
@@ -151,6 +154,15 @@ const uint8_t kHaierAcYrw02SwingVMiddle = 0x2;  // Not available in heat mode.
 const uint8_t kHaierAcYrw02SwingVBottom = 0x3;  // Only available in heat mode.
 const uint8_t kHaierAcYrw02SwingVDown = 0xA;
 const uint8_t kHaierAcYrw02SwingVAuto = 0xC;  // Airflow
+
+const uint8_t kHaierAc160SwingVOff =     0b0000;
+const uint8_t kHaierAc160SwingVTop =     0b0001;
+const uint8_t kHaierAc160SwingVHighest = 0b0010;
+const uint8_t kHaierAc160SwingVHigh =    0b0100;
+const uint8_t kHaierAc160SwingVMiddle =  0b0110;
+const uint8_t kHaierAc160SwingVLow =     0b1000;
+const uint8_t kHaierAc160SwingVLowest =  0b0011;
+const uint8_t kHaierAc160SwingVAuto =    0b1100;  // Airflow
 
 const uint8_t kHaierAcYrw02SwingHMiddle = 0x0;
 const uint8_t kHaierAcYrw02SwingHLeftMax = 0x3;
@@ -182,6 +194,9 @@ const uint8_t kHaierAcYrw02ButtonTurbo =    0b01000;
 const uint8_t kHaierAcYrw02ButtonSleep =    0b01011;
 const uint8_t kHaierAcYrw02ButtonTimer =    0b10000;
 const uint8_t kHaierAcYrw02ButtonLock =     0b10100;
+const uint8_t kHaierAc160ButtonLight =      0b10101;
+const uint8_t kHaierAc160ButtonAuxHeating = 0b10110;
+const uint8_t kHaierAc160ButtonClean =      0b11001;
 const uint8_t kHaierAcYrw02ButtonCFAB =     0b11010;
 
 const uint8_t kHaierAcYrw02NoTimers       = 0b000;
@@ -256,6 +271,75 @@ union HaierAc176Protocol{
     // Byte 20
     uint8_t             :8;
     // Byte 21
+    uint8_t Sum2        :8;
+  };
+};
+
+/// Native representation of a Haier 160 bit A/C message.
+union HaierAc160Protocol{
+  uint8_t raw[kHaierAC160StateLength];  ///< The state in native form
+  struct {
+    // Byte 0
+    uint8_t Model       :8;
+    // Byte 1
+    uint8_t SwingV      :4;
+    uint8_t Temp        :4;  // 16C~30C
+    // Byte 2
+    uint8_t             :5;
+    uint8_t SwingH      :3;
+    // Byte 3
+    uint8_t             :1;
+    uint8_t Health      :1;
+    uint8_t             :3;
+    uint8_t TimerMode   :3;
+    // Byte 4
+    uint8_t             :6;
+    uint8_t Power       :1;
+    uint8_t AuxHeating  :1;
+    // Byte 5
+    uint8_t OffTimerHrs :5;
+    uint8_t Fan         :3;
+    // Byte 6
+    uint8_t OffTimerMins:6;
+    uint8_t Turbo       :1;
+    uint8_t Quiet       :1;
+    // Byte 7
+    uint8_t OnTimerHrs  :5;
+    uint8_t Mode        :3;
+    // Byte 8
+    uint8_t OnTimerMins :6;
+    uint8_t             :1;
+    uint8_t Sleep       :1;
+    // Byte 9
+    uint8_t             :8;
+    // Byte 10
+    uint8_t ExtraDegreeF :1;
+    uint8_t              :3;
+    uint8_t Clean        :1;
+    uint8_t UseFahrenheit:1;
+    uint8_t              :2;
+    // Byte 11
+    uint8_t             :8;
+    // Byte 12
+    uint8_t Button      :5;
+    uint8_t Lock        :1;
+    uint8_t             :2;
+    // Byte 13
+    uint8_t Sum         :8;
+    // Byte 14
+    uint8_t Prefix     :8;
+    // Byte 15
+    uint8_t             :6;
+    uint8_t Clean2      :1;
+    uint8_t             :1;
+    // Byte 16
+    uint8_t             :5;
+    uint8_t Fan2        :3;
+    // Byte 17
+    uint8_t             :8;
+    // Byte 18
+    uint8_t             :8;
+    // Byte 19
     uint8_t Sum2        :8;
   };
 };
@@ -473,5 +557,97 @@ class IRHaierACYRW02 : public IRHaierAC176 {
   static bool validChecksum(
       const uint8_t state[],
       const uint16_t length = kHaierACYRW02StateLength);
+};
+
+/// Class for handling detailed Haier 160 bit A/C messages.
+class IRHaierAC160 {
+ public:
+  explicit IRHaierAC160(const uint16_t pin, const bool inverted = false,
+                        const bool use_modulation = true);
+#if SEND_HAIER_AC160
+  virtual void send(const uint16_t repeat = kHaierAc160DefaultRepeat);
+  /// Run the calibration to calculate uSec timing offsets for this platform.
+  /// @return The uSec timing offset needed per modulation of the IR Led.
+  /// @note This will produce a 65ms IR signal pulse at 38kHz.
+  ///   Only ever needs to be run once per object instantiation, if at all.
+  int8_t calibrate(void) { return _irsend.calibrate(); }
+#endif  // SEND_HAIER_AC160
+  void begin(void);
+  void stateReset(void);
+
+  void setButton(const uint8_t button);
+  uint8_t getButton(void) const;
+
+  void setUseFahrenheit(const bool on);
+  bool getUseFahrenheit(void) const;
+  void setTemp(const uint8_t temp, const bool fahrenheit = false);
+  uint8_t getTemp(void) const;
+
+  void setFan(const uint8_t speed);
+  uint8_t getFan(void) const;
+
+  uint8_t getMode(void) const;
+  void setMode(const uint8_t mode);
+
+  bool getPower(void) const;
+  void setPower(const bool on);
+  void on(void);
+  void off(void);
+
+  bool getSleep(void) const;
+  void setSleep(const bool on);
+  bool getClean(void) const;
+  void setClean(const bool on);
+  bool getLightToggle(void) const;
+  void setLightToggle(const bool on);
+
+  bool getTurbo(void) const;
+  void setTurbo(const bool on);
+  bool getQuiet(void) const;
+  void setQuiet(const bool on);
+  bool getAuxHeating(void) const;
+  void setAuxHeating(const bool on);
+
+  uint8_t getSwingV(void) const;
+  void setSwingV(const uint8_t pos);
+
+  void setTimerMode(const uint8_t setting);
+  uint8_t getTimerMode(void) const;
+  void setOnTimer(const uint16_t mins);
+  uint16_t getOnTimer(void) const;
+  void setOffTimer(const uint16_t mins);
+  uint16_t getOffTimer(void) const;
+
+  bool getLock(void) const;
+  void setLock(const bool on);
+
+  bool getHealth(void) const;
+  void setHealth(const bool on);
+
+  uint8_t* getRaw(void);
+  virtual void setRaw(const uint8_t new_code[]);
+  static bool validChecksum(const uint8_t state[],
+                            const uint16_t length = kHaierAC160StateLength);
+  static uint8_t convertMode(const stdAc::opmode_t mode);
+  static uint8_t convertFan(const stdAc::fanspeed_t speed);
+  static uint8_t convertSwingV(const stdAc::swingv_t position);
+  static stdAc::opmode_t toCommonMode(const uint8_t mode);
+  static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
+  static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
+  static bool toCommonTurbo(const uint8_t speed);
+  static bool toCommonQuiet(const uint8_t speed);
+  stdAc::state_t toCommon(const stdAc::state_t *prev = NULL) const;
+  String toString(void) const;
+#ifndef UNIT_TEST
+
+ private:
+  IRsend _irsend;  ///< Instance of the IR send class
+#else  // UNIT_TEST
+  /// @cond IGNORE
+  IRsendTest _irsend;  ///< Instance of the testing IR send class
+  /// @endcond
+#endif  // UNIT_TEST
+  HaierAc160Protocol _;
+  void checksum(void);
 };
 #endif  // IR_HAIER_H_

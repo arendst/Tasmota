@@ -100,7 +100,6 @@ class RawIRMessage():
 
   def add_data_code(self, bin_str, name="", footer=True):
     """Add the common "data" sequence of code to send the bulk of a message."""
-    # pylint: disable=no-self-use
     code = []
     nbits = len(bin_str)
     code.append(f"    // Data Section #{self.section_count}")
@@ -115,7 +114,6 @@ class RawIRMessage():
 
   def add_data_decode_code(self, bin_str, name="", footer=True):
     """Add the common "data" sequence code to decode the bulk of a message."""
-    # pylint: disable=no-self-use
     code = []
     nbits = len(bin_str)
     code.extend([
@@ -139,7 +137,6 @@ class RawIRMessage():
 
   def add_data_byte_code(self, bin_str, name="", ambles=None):
     """Add the code to send the data from an array."""
-    # pylint: disable=no-self-use
     code = []
     nbits = len(bin_str)
     nbytes = nbits / 8
@@ -173,7 +170,6 @@ class RawIRMessage():
 
   def add_data_byte_decode_code(self, bin_str, name="", ambles=None):
     """Add the common byte-wise "data" sequence decode code."""
-    # pylint: disable=no-self-use
     code = []
     nbits = len(bin_str)
     nbytes = nbits / 8

@@ -741,6 +741,11 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting Sharp decode");
     if (decodeSharp(results, offset)) return true;
 #endif
+#if DECODE_BOSCH144
+    DPRINTLN("Attempting Bosch 144-bit decode");
+    // Bosch is similar to Coolix, so it must be attempted before decodeCOOLIX.
+    if (decodeBosch144(results, offset)) return true;
+#endif  // DECODE_BOSCH144
 #if DECODE_COOLIX
     DPRINTLN("Attempting Coolix 24-bit decode");
     if (decodeCOOLIX(results, offset)) return true;
@@ -1114,6 +1119,39 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
     DPRINTLN("Attempting Coolix 48-bit decode");
     if (decodeCoolix48(results, offset)) return true;
 #endif  // DECODE_COOLIX48
+#if DECODE_DAIKIN200
+    DPRINTLN("Attempting Daikin 200-bit decode");
+    if (decodeDaikin200(results, offset)) return true;
+#endif  // DECODE_DAIKIN200
+#if DECODE_HAIER_AC160
+    DPRINTLN("Attempting Haier AC 160 bit decode");
+    if (decodeHaierAC160(results, offset)) return true;
+#endif  // DECODE_HAIER_AC160
+#if DECODE_CARRIER_AC128
+    DPRINTLN("Attempting Carrier AC 128-bit decode");
+    if (decodeCarrierAC128(results, offset)) return true;
+#endif  // DECODE_CARRIER_AC128
+#if DECODE_TOTO
+    DPRINTLN("Attempting Toto 48/24-bit decode");
+    if (decodeToto(results, offset, kTotoLongBits) ||  // Long needs to be first
+        decodeToto(results, offset, kTotoShortBits)) return true;
+#endif  // DECODE_TOTO
+#if DECODE_CLIMABUTLER
+    DPRINTLN("Attempting ClimaButler decode");
+    if (decodeClimaButler(results)) return true;
+#endif  // DECODE_CLIMABUTLER
+#if DECODE_TCL96AC
+    DPRINTLN("Attempting TCL AC 96-bit decode");
+    if (decodeTcl96Ac(results, offset)) return true;
+#endif  // DECODE_TCL96AC
+#if DECODE_SANYO_AC152
+    DPRINTLN("Attempting Sanyo AC 152-bit decode");
+    if (decodeSanyoAc152(results, offset)) return true;
+#endif  // DECODE_SANYO_AC152
+#if DECODE_DAIKIN312
+    DPRINTLN("Attempting Daikin 312-bit decode");
+    if (decodeDaikin312(results, offset)) return true;
+#endif  // DECODE_DAIKIN312
   // Typically new protocols are added above this line.
   }
 #if DECODE_HASH
@@ -1128,7 +1166,7 @@ bool IRrecv::decode(decode_results *results, irparams_t *save,
   if (!resumed)  // Check if we have already resumed.
     resume();
   return false;
-}
+}  // NOLINT(readability/fn_size)
 
 /// Convert the tolerance percentage into something valid.
 /// @param[in] percentage An integer percentage.
