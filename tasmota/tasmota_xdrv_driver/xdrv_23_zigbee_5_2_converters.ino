@@ -703,7 +703,7 @@ void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
 // Note: both function are now split to compute on extracted attributes
 //
 void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
-  const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+  Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
 
   String modelId((char*) device.modelId);
   // scan through attributes and apply specific converters
@@ -812,9 +812,29 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       case 0x05000002:    // ZoneStatus
-        const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, srcendpoint);
-        if (&alarm != nullptr) {
-          alarm.convertZoneStatus(attr_list, attr.getUInt());
+        {
+          const Z_Data_Alarm & alarm = (const Z_Data_Alarm&) zigbee_devices.getShortAddr(shortaddr).data.find(Z_Data_Type::Z_Alarm, srcendpoint);
+          if (&alarm != nullptr) {
+            alarm.convertZoneStatus(attr_list, attr.getUInt());
+          }
+        }
+        break;
+      // convert AC multipliers/dividers
+      case 0x0B040600 ... 0x0B040605:   // cluser 0x0B04 - attr 0x0600..0x0605
+        {
+          uint16_t val = attr.getUInt();
+          Z_Data_Plug & plug = device.data.get<Z_Data_Plug>();
+          if (&plug != &z_data_unk) {
+            switch (ccccaaaa) {
+              case 0x0B040600:  plug.setACVoltageMul(val);    break;
+              case 0x0B040601:  plug.setACVoltageDiv(val);    break;
+              case 0x0B040602:  plug.setACCurrentMul(val);    break;
+              case 0x0B040603:  plug.setACCurrentDiv(val);    break;
+              case 0x0B040604:  plug.setACPowerMul(val);      break;
+              case 0x0B040605:  plug.setACPowerDiv(val);      break;
+            }
+          }
+          // AddLog(LOG_LEVEL_INFO, ">>>: cluster=0x%04X attr=0x%04X v=%i", attr.cluster, attr.attr_id, attr.getUInt());
         }
         break;
     }
@@ -1452,14 +1472,14 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       float    fval   = attr.getFloat();
       if (found && (matched_attr.map_type != Z_Data_Type::Z_Unknown)) {
         // We apply an automatic mapping to Z_Data_XXX object
-        // First we find or instantiate the correct Z_Data_XXX accorfing to the endpoint
+        // First we find or instantiate the correct Z_Data_XXX according to the endpoint
         // Then store the attribute at the attribute addres (via offset) and according to size 8/16/32 bits
 
         // add the endpoint if it was not already known
         device.addEndpoint(src_ep);
         // we don't apply the multiplier, but instead store in Z_Data_XXX object
         Z_Data & data = device.data.getByType(matched_attr.map_type, src_ep);
-        uint8_t *attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + matched_attr.map_offset;
+        uint8_t * attr_address = ((uint8_t*)&data) + sizeof(Z_Data) + matched_attr.map_offset;
         uint32_t uval32 = attr.getUInt();     // call converter to uint only once
         int32_t  ival32 = attr.getInt();     // call converter to int only once
         // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Mapping type=%d offset=%d zigbee_type=%02X value=%d\n"), (uint8_t) matched_attr.matched_attr, matched_attr.map_offset, matched_attr.zigbee_type, ival32);
@@ -1512,6 +1532,22 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
           break;
         case 0x00060000:
         case 0x00068000: device.setPower(attr.getBool(), src_ep);                     break;
+        // apply multiplier/divisor to AC values
+        case 0x0B040505:    // RMSVoltage
+        case 0x0B040508:    // RMSCurrent
+        case 0x0B04050B:    // ActivePower
+          {
+            const Z_Data_Plug & plug = device.data.find<Z_Data_Plug>();
+            if (&plug != &z_data_unk) {
+              switch (ccccaaaa) {
+                case 0x0B040505:  fval = fval * plug.getACVoltageMul() / plug.getACVoltageDiv();    break;
+                case 0x0B040508:  fval = fval * plug.getACCurrentMul() / plug.getACCurrentDiv();    break;
+                case 0x0B04050B:  fval = fval * plug.getACPowerMul() / plug.getACPowerDiv();    break;
+              }
+              attr.setFloat(fval);
+            }
+          }
+          break;
       }
 
       // now apply the multiplier to make it human readable
@@ -1681,7 +1717,19 @@ void Z_Data::toAttributes(Z_attribute_list & attr_list) const {
             fval = fval / divider;
           }
         }
+        // special case for plugs, with parametric multiplier/divisor
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"   // avoid warnings since we're using offsetof() in a risky way
+        const Z_Data_Plug * plug = (Z_Data_Plug*) this;
+        if (map_type == Z_Data_Type::Z_Plug) {
+          if (map_offset == Z_OFFSET(Z_Data_Plug, mains_voltage)) {
+            fval = fval * plug->getACVoltageMul() / plug->getACVoltageDiv();
+          } else if (map_offset == Z_OFFSET(Z_Data_Plug, mains_power)) {
+            fval = fval * plug->getACPowerMul() / plug->getACPowerDiv();
+          }
+        }
         attr.setFloat(fval);
+#pragma GCC diagnostic pop
       }
     }
   }
