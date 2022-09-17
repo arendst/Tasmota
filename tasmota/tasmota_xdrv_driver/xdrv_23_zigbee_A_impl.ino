@@ -2260,10 +2260,12 @@ void ZigbeeShow(bool json)
           if (plug_voltage || plug_power) {
             WSContentSend_P(PSTR(" &#9889; "));
             if (plug_voltage) {
-              WSContentSend_P(PSTR(" %dV"), plug.getMainsVoltage());
+              float mains_voltage = plug.getMainsVoltage();
+              WSContentSend_P(PSTR(" %-1_fV"), &mains_voltage);
             }
             if (plug_power) {
-              WSContentSend_P(PSTR(" %dW"), plug.getMainsPower());
+              float mains_power = plug.getMainsPower();
+              WSContentSend_P(PSTR(" %-1_fW"), &mains_power);
             }
           }
           WSContentSend_P(PSTR("{e}"));

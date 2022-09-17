@@ -24,6 +24,91 @@
 #endif
 const uint16_t kZigbeeSaveDelaySeconds = ZIGBEE_SAVE_DELAY_SECONDS;    // wait for x seconds
 
+// Convert a multiplier or divisor initially on 2 bytes, to a single byte
+// We use a property that values are usually powers of 10 or 2/5/25/50...
+// Values can range from 0 to 31e7
+typedef struct uint8log_t {
+  uint8_t mantissa : 6;         // 0..63
+  uint8_t exponent10 : 2;       // 0..3
+} uint8log_t;
+
+// convert uint8log to uint, lossless conversion, but can create an overflow with high exponent
+uint16_t uint8log_to_uint16(uint8_t v8) {
+  uint8log_t * v_log = (uint8log_t*) &v8;
+  uint32_t val = v_log->mantissa;
+  for (uint32_t i = 0; i < v_log->exponent10; i++) {
+    val = val * 10;
+  }
+  return val;
+}
+
+// convert uint16_t to uint8log, ther is potential rounding happening above 63, except when a multiple of 10
+uint8_t uint16_to_uint8log(uint16_t val) {
+  uint8log_t v_log;
+  uint32_t mantissa = val;  // mantissa must be 0..63
+  uint32_t expo10 = 0;      // exponent in base 10
+
+  while (mantissa > 63) {
+    expo10++;
+    mantissa = mantissa / 10;
+  }
+  // test overflow
+  if (expo10 > 3) {
+    expo10 = 3;
+    mantissa = 63;    // max value is 63000
+  }
+  v_log.mantissa = mantissa;
+  v_log.exponent10 = expo10;
+  uint8_t * v8 = (uint8_t*) &v_log;
+  return *v8;
+}
+
+const uint16_t uint8log_test_vectors[] = {
+  0,1,2,5,10,20,33,50,66,75,100,150,200,300,500,1000,2500,3000,5000,10000,20000,25000,30000,50000,60000,65535
+};
+
+// uint8log unit tests (normally not called)
+void uint8log_tests(void) {
+  AddLog(LOG_LEVEL_INFO, "ZIG: sizeof(uint8log_t)=%i", sizeof(uint8log_t));
+
+  for (uint32_t i = 0; i < sizeof(uint8log_test_vectors)/2; i++) {
+    uint16_t v16 = uint8log_test_vectors[i];
+    uint8_t v = uint16_to_uint8log(v16);
+    uint16_t v16_out = uint8log_to_uint16(v);
+    AddLog(LOG_LEVEL_INFO, ">>>: v16=%5i out=%5i %s hex=0x%02X", v16, v16_out, v16 != v16_out ? "<>" : "", v);
+  }
+}
+/*
+Output:
+00:00:00.128 ZIG: sizeof(uint8log_t)=1
+00:00:00.129 >>>: v16=    0 out=    0  hex=0x00
+00:00:00.129 >>>: v16=    1 out=    1  hex=0x01
+00:00:00.130 >>>: v16=    2 out=    2  hex=0x02
+00:00:00.140 >>>: v16=    5 out=    5  hex=0x05
+00:00:00.140 >>>: v16=   10 out=   10  hex=0x0A
+00:00:00.151 >>>: v16=   20 out=   20  hex=0x14
+00:00:00.151 >>>: v16=   33 out=   33  hex=0x21
+00:00:00.152 >>>: v16=   50 out=   50  hex=0x32
+00:00:00.162 >>>: v16=   66 out=   60 <> hex=0x46
+00:00:00.163 >>>: v16=   75 out=   70 <> hex=0x47
+00:00:00.173 >>>: v16=  100 out=  100  hex=0x4A
+00:00:00.174 >>>: v16=  150 out=  150  hex=0x4F
+00:00:00.174 >>>: v16=  200 out=  200  hex=0x54
+00:00:00.185 >>>: v16=  300 out=  300  hex=0x5E
+00:00:00.185 >>>: v16=  500 out=  500  hex=0x72
+00:00:00.185 >>>: v16= 1000 out= 1000  hex=0x8A
+00:00:00.196 >>>: v16= 2500 out= 2500  hex=0x99
+00:00:00.196 >>>: v16= 3000 out= 3000  hex=0x9E
+00:00:00.207 >>>: v16= 5000 out= 5000  hex=0xB2
+00:00:00.207 >>>: v16=10000 out=10000  hex=0xCA
+00:00:00.208 >>>: v16=20000 out=20000  hex=0xD4
+00:00:00.219 >>>: v16=25000 out=25000  hex=0xD9
+00:00:00.219 >>>: v16=30000 out=30000  hex=0xDE
+00:00:00.219 >>>: v16=50000 out=50000  hex=0xF2
+00:00:00.230 >>>: v16=60000 out=60000  hex=0xFC
+00:00:00.231 >>>: v16=65535 out=63000 <> hex=0xFF
+*/
+
 enum class Z_Data_Type : uint8_t {
   Z_Unknown = 0x00,
   Z_Light = 1,              // Lights 1-5 channels
@@ -180,22 +265,50 @@ public:
   Z_Data_Plug(uint8_t endpoint = 0) :
     Z_Data(Z_Data_Type::Z_Plug, endpoint),
     mains_voltage(0xFFFF),
-    mains_power(-0x8000)
+    mains_power(-0x8000),
+    ac_voltage_div(1),
+    ac_voltage_mul(1),
+    ac_current_div(1),
+    ac_current_mul(1),
+    ac_power_div(1),
+    ac_power_mul(1)
     {}
 
   inline bool validMainsVoltage(void)   const { return 0xFFFF != mains_voltage; }
   inline bool validMainsPower(void)     const { return -0x8000 != mains_power; }
 
-  inline uint16_t getMainsVoltage(void) const { return mains_voltage; }
-  inline int16_t  getMainsPower(void)   const { return mains_power; }
+  inline uint16_t getMainsVoltageRaw(void) const { return mains_voltage; }
+  inline int16_t  getMainsPowerRaw(void)   const { return mains_power; }
+  inline float getMainsVoltage(void)    const { return (float)mains_voltage * getACVoltageMul() / getACVoltageDiv(); }
+  inline float getMainsPower(void)      const { return (float)mains_power * getACPowerMul() / getACPowerDiv(); }
 
-  inline void setMainsVoltage(uint16_t _mains_voltage)  { mains_voltage = _mains_voltage; }
-  inline void setMainsPower(int16_t _mains_power)       { mains_power = _mains_power; }
+  inline void setMainsVoltageRaw(uint16_t _mains_voltage)  { mains_voltage = _mains_voltage; }
+  inline void setMainsPowerRaw(int16_t _mains_power)       { mains_power = _mains_power; }
+
+  inline uint16_t getACVoltageDiv(void) const { return uint8log_to_uint16(ac_voltage_div); }
+  inline uint16_t getACVoltageMul(void) const { return uint8log_to_uint16(ac_voltage_mul); }
+  inline uint16_t getACCurrentDiv(void) const { return uint8log_to_uint16(ac_current_div); }
+  inline uint16_t getACCurrentMul(void) const { return uint8log_to_uint16(ac_current_mul); }
+  inline uint16_t getACPowerDiv(void)   const { return uint8log_to_uint16(ac_power_div); }
+  inline uint16_t getACPowerMul(void)   const { return uint8log_to_uint16(ac_power_mul); }
+
+  inline void setACVoltageDiv(uint16_t v)   { ac_voltage_div = uint16_to_uint8log(v); }
+  inline void setACVoltageMul(uint16_t v)   { ac_voltage_mul = uint16_to_uint8log(v); }
+  inline void setACCurrentDiv(uint16_t v)   { ac_current_div = uint16_to_uint8log(v); }
+  inline void setACCurrentMul(uint16_t v)   { ac_current_mul = uint16_to_uint8log(v); }
+  inline void setACPowerDiv(uint16_t v)     { ac_power_div = uint16_to_uint8log(v); }
+  inline void setACPowerMul(uint16_t v)     { ac_power_mul = uint16_to_uint8log(v); }
 
   static const Z_Data_Type type = Z_Data_Type::Z_Plug;
   // 4 bytes
   uint16_t              mains_voltage;  // AC voltage
   int16_t               mains_power;    // Active power
+  uint8_t               ac_voltage_div;
+  uint8_t               ac_voltage_mul;
+  uint8_t               ac_current_div;
+  uint8_t               ac_current_mul;
+  uint8_t               ac_power_div;
+  uint8_t               ac_power_mul;
 };
 
 /*********************************************************************************************\
