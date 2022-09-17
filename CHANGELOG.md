@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 Increase number of button GPIOs from 8 to 28 (#16518)
+- IRremoteESP8266 library from v2.8.2 to v2.8.3
 
 ### Fixed
 

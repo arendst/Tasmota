@@ -284,6 +284,14 @@ TEST(TestUtils, Housekeeping) {
   ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::SANYO_AC88));
   ASSERT_EQ(kSanyoAc88Bits, IRsend::defaultBits(decode_type_t::SANYO_AC88));
   ASSERT_EQ(kSanyoAc88MinRepeat, IRsend::minRepeats(decode_type_t::SANYO_AC88));
+  // Sanyo A/C 152 Bit.
+  ASSERT_EQ("SANYO_AC152", typeToString(decode_type_t::SANYO_AC152));
+  ASSERT_EQ(decode_type_t::SANYO_AC152, strToDecodeType("SANYO_AC152"));
+  ASSERT_TRUE(hasACState(decode_type_t::SANYO_AC152));
+  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::SANYO_AC152));
+  ASSERT_EQ(kSanyoAc152Bits, IRsend::defaultBits(decode_type_t::SANYO_AC152));
+  ASSERT_EQ(kSanyoAc152MinRepeat,
+            IRsend::minRepeats(decode_type_t::SANYO_AC152));
 }
 
 TEST(TestDecodeSanyoAc, DecodeRealExamples) {
@@ -819,4 +827,71 @@ TEST(TestSanyoAc88Class, Clock) {
 
   ac.setClock(25 * 60 + 61);
   EXPECT_EQ(23 * 60 + 59, ac.getClock());
+}
+
+TEST(TestDecodeSanyoAc152, DecodeRealExamples) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  // Ref: "16c" from https://github.com/crankyoldgit/IRremoteESP8266/issues/1826#issuecomment-1160708653
+  const uint16_t rawData[307] = {
+      3294, 1726, 420, 330, 458, 462, 382, 452, 438, 330, 456, 458, 384, 454,
+      384, 1312, 422, 324, 512, 336, 454, 458, 384, 450, 438, 358, 436, 464,
+      424, 326, 458, 476, 372, 458, 430, 328, 458, 464, 382, 1308, 424, 326,
+      510, 1264, 424, 268, 520, 460, 380, 460, 436, 324, 462, 400, 436, 474,
+      372, 456, 430, 342, 452, 450, 388, 446, 442, 1262, 422, 266, 520, 1314,
+      372, 1306, 424, 1258, 370, 390, 448, 1314, 372, 1310, 426, 308, 522, 338,
+      454, 470, 370, 454, 438, 330, 456, 468, 370, 456, 384, 464, 384, 1306,
+      422, 328, 460, 472, 374, 448, 442, 1258, 426, 1256, 426, 268, 520, 464,
+      382, 460, 430, 328, 508, 1264, 426, 262, 572, 1262, 424, 228, 604, 1262,
+      372, 1312, 372, 1310, 426, 1256, 422, 1258, 424, 262, 524, 418, 428, 456,
+      382, 1308, 372, 456, 386, 456, 382, 464, 378, 1308, 424, 360, 436, 454,
+      430, 344, 450, 1306, 372, 1310, 424, 326, 510, 338, 452, 456, 384, 456,
+      436, 328, 510, 1258, 372, 1310, 422, 338, 454, 466, 424, 328, 460, 1310,
+      372, 1312, 424, 1258, 450, 262, 496, 1310, 372, 1310, 426, 1260, 424, 260,
+      526, 442, 442, 1264, 426, 268, 520, 458, 380, 450, 386, 462, 436, 320,
+      518, 1256, 372, 394, 446, 398, 494, 334, 506, 326, 510, 276, 518, 460,
+      430, 332, 508, 326, 510, 356, 440, 448, 444, 264, 572, 336, 456, 408, 434,
+      454, 438, 332, 506, 336, 454, 460, 384, 448, 444, 326, 510, 332, 456, 442,
+      400, 456, 384, 456, 386, 452, 388, 454, 440, 326, 512, 272, 518, 450, 440,
+      334, 454, 458, 440, 320, 516, 268, 570, 340, 452, 468, 424, 260, 574, 336,
+      456, 394, 444, 458, 438, 328, 508, 1258, 370, 1312, 372, 1312, 424, 314,
+      468, 1312, 450, 1232, 370, 1314, 420, 324, 514};  // UNKNOWN 584FBE80
+
+  const uint8_t expectedState[kSanyoAc152StateLength] = {
+        0x40, 0x00, 0x14, 0x80, 0x6E, 0x80, 0x18, 0xEA, 0x23, 0x62,
+        0x30, 0xEE, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0x77};
+  irsend.begin();
+  irsend.reset();
+  irsend.sendRaw(rawData, 307, 38000);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(SANYO_AC152, irsend.capture.decode_type);
+  EXPECT_EQ(kSanyoAc152Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
+}
+
+TEST(TestDecodeSanyoAc152, SyntheticSelfDecode) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  const uint8_t expectedState[kSanyoAc152StateLength] = {
+        0x40, 0x00, 0x14, 0x80, 0x6E, 0x80, 0x18, 0xEA, 0x23, 0x62,
+        0x30, 0xEE, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0x77};
+  irsend.begin();
+  irsend.reset();
+  irsend.sendSanyoAc152(expectedState);
+  irsend.makeDecodeResult();
+
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  EXPECT_EQ(SANYO_AC152, irsend.capture.decode_type);
+  EXPECT_EQ(kSanyoAc152Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
 }

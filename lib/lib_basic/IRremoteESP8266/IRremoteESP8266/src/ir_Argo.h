@@ -131,6 +131,8 @@ class IRArgoAC {
 
 #if SEND_ARGO
   void send(const uint16_t repeat = kArgoDefaultRepeat);
+  void sendSensorTemp(const uint8_t temp,
+                      const uint16_t repeat = kArgoDefaultRepeat);
   /// Run the calibration to calculate uSec timing offsets for this platform.
   /// @return The uSec timing offset needed per modulation of the IR Led.
   /// @note This will produce a 65ms IR signal pulse at 38kHz.

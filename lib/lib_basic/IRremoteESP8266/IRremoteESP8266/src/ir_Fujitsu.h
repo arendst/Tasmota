@@ -1,5 +1,5 @@
 // Copyright 2017 Jonny Graham
-// Copyright 2018-2021 David Conran
+// Copyright 2018-2022 David Conran
 // Copyright 2021 siriuslzx
 
 /// @file
@@ -30,6 +30,7 @@
 //   Brand: Fujitsu,  Model: AR-DL10 remote (ARDB1)
 //   Brand: Fujitsu,  Model: ASU30C1 A/C (ARDB1)
 //   Brand: Fujitsu,  Model: AR-RAH1U remote (ARREB1E)
+//   Brand: Fujitsu,  Model: AR-RAH2U remote (ARRAH2E)
 //   Brand: Fujitsu,  Model: ASU12RLF A/C (ARREB1E)
 //   Brand: Fujitsu,  Model: AR-REW4E remote (ARREW4E)
 //   Brand: Fujitsu,  Model: ASYG09KETA-B A/C (ARREW4E)
@@ -37,6 +38,9 @@
 //   Brand: Fujitsu,  Model: ASTG09K A/C (ARREW4E)
 //   Brand: Fujitsu,  Model: ASTG18K A/C (ARREW4E)
 //   Brand: Fujitsu,  Model: AR-REW1E remote (ARREW4E)
+//   Brand: Fujitsu,  Model: AR-REG1U remote (ARRAH2E)
+//   Brand: OGeneral,  Model: AR-RCL1E remote (ARRAH2E)
+//   Brand: Fujitsu General,  Model: AR-JW17 remote (ARDB1)
 
 #ifndef IR_FUJITSU_H_
 #define IR_FUJITSU_H_
@@ -128,9 +132,11 @@ const uint8_t kFujitsuAcFanMed = 0x02;
 const uint8_t kFujitsuAcFanLow = 0x03;
 const uint8_t kFujitsuAcFanQuiet = 0x04;
 
+const float   kFujitsuAcMinHeat =     10;  // 10C
 const float   kFujitsuAcMinTemp =     16;  // 16C
 const float   kFujitsuAcMaxTemp =     30;  // 30C
 const uint8_t kFujitsuAcTempOffsetC = kFujitsuAcMinTemp;
+const float   kFujitsuAcMinHeatF =    50;  // 50F
 const float   kFujitsuAcMinTempF =    60;  // 60F
 const float   kFujitsuAcMaxTempF =    88;  // 88F
 const uint8_t kFujitsuAcTempOffsetF = 44;
@@ -206,6 +212,7 @@ class IRFujitsuAC {
   bool setRaw(const uint8_t newState[], const uint16_t length);
   uint8_t getStateLength(void);
   static bool validChecksum(uint8_t* state, const uint16_t length);
+  bool isLongCode(void) const;
   void setPower(const bool on);
   void off(void);
   void on(void);
@@ -233,7 +240,7 @@ class IRFujitsuAC {
   static uint8_t convertFan(stdAc::fanspeed_t speed);
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
-  stdAc::state_t toCommon(void) const;
+  stdAc::state_t toCommon(const stdAc::state_t *prev = NULL);
   String toString(void) const;
 #ifndef UNIT_TEST
 
@@ -249,6 +256,7 @@ class IRFujitsuAC {
   fujitsu_ac_remote_model_t _model;
   uint8_t _state_length;
   uint8_t _state_length_short;
+  bool _rawstatemodified;
   void checkSum(void);
   bool updateUseLongOrShort(void);
   void buildFromState(const uint16_t length);

@@ -10,6 +10,7 @@
 //   Brand: Teknopoint,  Model: GZ-055B-E1 remote (GZ055BE1)
 //   Brand: Daewoo,  Model: DSB-F0934ELH-V A/C
 //   Brand: Daewoo,  Model: GYKQ-52E remote
+//   Brand: TCL,  Model: GYKQ-58(XM) remote (TCL96AC)
 
 #ifndef IR_TCL_H_
 #define IR_TCL_H_

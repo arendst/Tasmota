@@ -13,6 +13,7 @@
 /// @see https://docs.google.com/spreadsheets/d/1dYfLsnYvpjV-SgO8pdinpfuBIpSzm8Q1R5SabrLeskw/edit?usp=sharing
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1503
 /// @see https://docs.google.com/spreadsheets/d/1weUmGAsEpfX38gg5rlDN69Uchnbr6gQl9FqHffLBIRk/edit#gid=0
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1826
 
 // Supports:
 //   Brand: Sanyo,  Model: SA 8650B - disabled
@@ -21,6 +22,8 @@
 //   Brand: Sanyo,  Model: RCS-2HS4E remote (SANYO_AC)
 //   Brand: Sanyo,  Model: SAP-K242AH A/C (SANYO_AC)
 //   Brand: Sanyo,  Model: RCS-2S4E remote (SANYO_AC)
+//   Brand: Sanyo,  Model: RCS-4MHVPIS4EE remote (SANYO_AC152)
+//   Brand: Sanyo,  Model: SAP-KMRV124EHE A/C (SANYO_AC152)
 
 #ifndef IR_SANYO_H_
 #define IR_SANYO_H_

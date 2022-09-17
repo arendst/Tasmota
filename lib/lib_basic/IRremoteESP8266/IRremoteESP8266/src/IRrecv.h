@@ -326,6 +326,12 @@ class IRrecv {
                        const uint16_t nbits = kSanyoAc88Bits,
                        const bool strict = true);
 #endif  // DECODE_SANYO_AC88
+#if DECODE_SANYO_AC152
+  bool decodeSanyoAc152(decode_results *results,
+                        uint16_t offset = kStartOffset,
+                        const uint16_t nbits = kSanyoAc152Bits,
+                        const bool strict = true);
+#endif  // DECODE_SANYO_AC152
 #if DECODE_MITSUBISHI
   bool decodeMitsubishi(decode_results *results, uint16_t offset = kStartOffset,
                         const uint16_t nbits = kMitsubishiBits,
@@ -508,11 +514,21 @@ class IRrecv {
                      const uint16_t nbits = kDaikin2Bits,
                      const bool strict = true);
 #endif
+#if DECODE_DAIKIN200
+  bool decodeDaikin200(decode_results *results, uint16_t offset = kStartOffset,
+                       const uint16_t nbits = kDaikin200Bits,
+                       const bool strict = true);
+#endif  // DECODE_DAIKIN200
 #if DECODE_DAIKIN216
   bool decodeDaikin216(decode_results *results, uint16_t offset = kStartOffset,
                        const uint16_t nbits = kDaikin216Bits,
                        const bool strict = true);
-#endif
+#endif  // DECODE_DAIKIN216
+#if DECODE_DAIKIN312
+  bool decodeDaikin312(decode_results *results, uint16_t offset = kStartOffset,
+                       const uint16_t nbits = kDaikin312Bits,
+                       const bool strict = true);
+#endif  // DECODE_DAIKIN312
 #if DECODE_TOSHIBA_AC
   bool decodeToshibaAC(decode_results *results, uint16_t offset = kStartOffset,
                        const uint16_t nbits = kToshibaACBits,
@@ -570,6 +586,12 @@ class IRrecv {
                          const uint16_t nbits = kCarrierAc64Bits,
                          const bool strict = true);
 #endif  // DECODE_CARRIER_AC64
+#if DECODE_CARRIER_AC128
+  bool decodeCarrierAC128(decode_results *results,
+                          uint16_t offset = kStartOffset,
+                          const uint16_t nbits = kCarrierAc128Bits,
+                          const bool strict = true);
+#endif  // DECODE_CARRIER_AC128
 #if DECODE_GOODWEATHER
   bool decodeGoodweather(decode_results *results,
                          uint16_t offset = kStartOffset,
@@ -581,7 +603,8 @@ class IRrecv {
                   const uint16_t nbits = kGreeBits,
                   const bool strict = true);
 #endif
-#if (DECODE_HAIER_AC | DECODE_HAIER_AC_YRW02)
+#if (DECODE_HAIER_AC | DECODE_HAIER_AC_YRW02 || DECODE_HAIER_AC160 || \
+     DECODE_HAIER_AC176)
   bool decodeHaierAC(decode_results *results, uint16_t offset = kStartOffset,
                      const uint16_t nbits = kHaierACBits,
                      const bool strict = true);
@@ -592,6 +615,12 @@ class IRrecv {
                           const uint16_t nbits = kHaierACYRW02Bits,
                           const bool strict = true);
 #endif
+#if DECODE_HAIER_AC160
+  bool decodeHaierAC160(decode_results *results,
+                        uint16_t offset = kStartOffset,
+                        const uint16_t nbits = kHaierAC160Bits,
+                        const bool strict = true);
+#endif  // DECODE_HAIER_AC160
 #if DECODE_HAIER_AC176
   bool decodeHaierAC176(decode_results *results,
                         uint16_t offset = kStartOffset,
@@ -805,6 +834,29 @@ class IRrecv {
                     const uint16_t nbits = kAirtonBits,
                     const bool strict = true);
 #endif  // DECODE_AIRTON
+#if DECODE_TOTO
+  bool decodeToto(decode_results *results, uint16_t offset = kStartOffset,
+                    const uint16_t nbits = kTotoBits,
+                    const bool strict = true);
+#endif  // DECODE_TOTO
+#if DECODE_CLIMABUTLER
+  bool decodeClimaButler(decode_results *results,
+                         uint16_t offset = kStartOffset,
+                         const uint16_t nbits = kClimaButlerBits,
+                         const bool strict = true);
+#endif  // DECODE_CLIMABUTLER
+#if DECODE_TCL96AC
+  bool decodeTcl96Ac(decode_results *results,
+                     uint16_t offset = kStartOffset,
+                     const uint16_t nbits = kTcl96AcBits,
+                     const bool strict = true);
+#endif  // DECODE_TCL96AC
+#if DECODE_BOSCH144
+  bool decodeBosch144(decode_results *results,
+                      uint16_t offset = kStartOffset,
+                      const uint16_t nbits = kBosch144Bits,
+                      const bool strict = true);
+#endif  // DECODE_BOSCH144
 };
 
 #endif  // IRRECV_H_

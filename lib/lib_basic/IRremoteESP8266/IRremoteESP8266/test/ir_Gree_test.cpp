@@ -326,6 +326,9 @@ TEST(TestGreeClass, OperatingMode) {
   ac.setMode(kGreeHeat);
   EXPECT_EQ(kGreeHeat, ac.getMode());
 
+  ac.setMode(kGreeEcono);
+  EXPECT_EQ(kGreeEcono, ac.getMode());
+
   ASSERT_NE(kGreeFanMax, 1);
   ac.setFan(kGreeFanMax);
   ac.setMode(kGreeDry);  // Dry should lock the fan to speed 1.
@@ -337,7 +340,7 @@ TEST(TestGreeClass, OperatingMode) {
   ac.setMode(kGreeFan);
   EXPECT_EQ(kGreeFan, ac.getMode());
 
-  ac.setMode(kGreeHeat + 1);
+  ac.setMode(kGreeEcono + 1);
   EXPECT_EQ(kGreeAuto, ac.getMode());
 
   ac.setMode(255);
@@ -797,4 +800,41 @@ TEST(TestGreeClass, DisplayTempSource) {
   const uint8_t state[8] = {0x4C, 0x04, 0x60, 0x50, 0x01, 0x02, 0x00, 0xA0};
   ac.setRaw(state);
   EXPECT_EQ(2, ac.getDisplayTempSource());
+}
+
+TEST(TestUtils, Housekeeping) {
+  ASSERT_EQ("GREE", typeToString(decode_type_t::GREE));
+  ASSERT_EQ(decode_type_t::GREE, strToDecodeType("GREE"));
+  ASSERT_TRUE(hasACState(decode_type_t::GREE));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::GREE));
+  ASSERT_EQ(kGreeBits, IRsend::defaultBits(decode_type_t::GREE));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::GREE));
+  ASSERT_EQ(gree_ac_remote_model_t::YAW1F, IRac::strToModel("YAW1F"));
+  ASSERT_EQ(irutils::modelToStr(decode_type_t::GREE,
+                                gree_ac_remote_model_t::YAW1F), "YAW1F");
+  ASSERT_EQ(gree_ac_remote_model_t::YBOFB, IRac::strToModel("YBOFB"));
+  ASSERT_EQ(irutils::modelToStr(decode_type_t::GREE,
+                                gree_ac_remote_model_t::YBOFB), "YBOFB");
+  ASSERT_EQ(gree_ac_remote_model_t::YX1FSF, IRac::strToModel("YX1FSF"));
+  ASSERT_EQ(irutils::modelToStr(decode_type_t::GREE,
+                                gree_ac_remote_model_t::YX1FSF), "YX1FSF");
+}
+
+TEST(TestGreeClass, Issue1821EnergySaver) {
+  IRGreeAC ac(kGpioUnused);
+  ac.begin();
+
+  // https://github.com/crankyoldgit/IRremoteESP8266/issues/1821#issue-1271458457
+  const uint8_t energy[8] = {0x1D, 0x09, 0x60, 0x58, 0x00, 0x20, 0x00, 0xA0};
+
+  ac.setRaw(energy);
+  EXPECT_EQ(kGreeEcono, ac.getMode());
+  EXPECT_TRUE(ac.getEcono());
+  EXPECT_EQ(gree_ac_remote_model_t::YX1FSF, ac.getModel());
+  EXPECT_EQ(
+      "Model: 3 (YX1FSF), Power: On, Mode: 5 (Econo), Temp: 77F, Fan: 1 (Low), "
+      "Turbo: Off, Econo: Off, IFeel: Off, WiFi: Off, XFan: Off, Light: On, "
+      "Sleep: Off, Swing(V) Mode: Manual, Swing(V): 0 (Last), "
+      "Swing(H): 0 (Off), Timer: Off, Display Temp: 0 (Off)",
+      ac.toString());
 }
