@@ -1357,6 +1357,13 @@ TEST(TestUtils, Housekeeping) {
   ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::HAIER_AC176));
   ASSERT_EQ(kHaierAC176Bits, IRsend::defaultBits(decode_type_t::HAIER_AC176));
   ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::HAIER_AC176));
+
+  ASSERT_EQ("HAIER_AC160", typeToString(decode_type_t::HAIER_AC160));
+  ASSERT_EQ(decode_type_t::HAIER_AC160, strToDecodeType("HAIER_AC160"));
+  ASSERT_TRUE(hasACState(decode_type_t::HAIER_AC160));
+  ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::HAIER_AC160));
+  ASSERT_EQ(kHaierAC160Bits, IRsend::defaultBits(decode_type_t::HAIER_AC160));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::HAIER_AC160));
 }
 
 TEST(TestHaierAC176Class, BuildKnownState) {
@@ -1533,5 +1540,494 @@ TEST(TestHaierAC176Class, Models) {
       "Mode: 6 (Fan), Temp: 24C, Fan: 3 (Low), Turbo: Off, Quiet: Off, "
       "Swing(V): 2 (Middle), Swing(H): 0 (Middle), Sleep: Off, Health: Off, "
       "Timer Mode: 0 (N/A), On Timer: Off, Off Timer: Off, Lock: Off",
+      ac.toString());
+}
+
+TEST(TestDecodeHaierAC160, RealExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  irsend.reset();
+  // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1804#issue-1236115063
+  const uint16_t rawData[325] = {
+      3078, 3002,
+      3058, 4338,
+      590, 1612, 588, 516, 584, 1588, 586, 542, 560, 540, 560, 1590, 584, 1618,
+      584, 542, 558, 1592, 584, 542, 582, 1594, 584, 542, 582, 1592, 560, 1642,
+      560, 516, 558, 544, 558, 542, 558, 542, 582, 518, 558, 542, 558, 516, 558,
+      542, 558, 542, 582, 520, 558, 542, 558, 542, 564, 510, 608, 492, 558, 542,
+      582, 520, 558, 542, 558, 544, 582, 492, 608, 1594, 558, 544, 558, 542,
+      582, 494, 608, 494, 558, 544, 558, 542, 558, 544, 558, 1616, 582, 1620,
+      560, 542, 558, 542, 582, 494, 558, 542, 558, 542, 558, 544, 556, 542, 582,
+      520, 580, 494, 582, 520, 582, 520, 558, 542, 558, 542, 582, 520, 582, 492,
+      608, 1592, 582, 520, 558, 544, 558, 516, 584, 518, 558, 542, 582, 520,
+      580, 520, 582, 520, 580, 492, 584, 516, 556, 544, 582, 518, 580, 520, 580,
+      520, 580, 494, 606, 494, 580, 520, 580, 520, 582, 520, 580, 520, 556, 518,
+      608, 492, 580, 520, 556, 544, 580, 520, 580, 520, 580, 494, 606, 494, 580,
+      520, 580, 520, 580, 520, 580, 520, 580, 494, 606, 496, 578, 522, 580, 520,
+      580, 520, 580, 520, 580, 494, 606, 494, 580, 520, 580, 520, 580, 1594,
+      608, 494, 580, 1620, 580, 522, 580, 520, 580, 494, 578, 1620, 582, 520,
+      580, 1596, 582, 1620, 582, 1594, 608, 1594, 582, 522, 580, 1594, 582,
+      1620, 582, 520, 580, 1596, 582, 520, 580, 1620, 582, 494, 606, 496, 580,
+      522, 580, 522, 580, 520, 580, 520, 580, 496, 604, 496, 580, 520, 580,
+      1620, 582, 1594, 582, 522, 578, 522, 580, 522, 578, 522, 580, 496, 580,
+      522, 578, 522, 578, 522, 578, 524, 578, 522, 578, 496, 578, 522, 578, 522,
+      578, 546, 554, 522, 578, 522, 578, 520, 556, 546, 554, 546, 554, 546, 556,
+      544, 556, 546, 554, 520, 554, 544, 556, 1620, 582, 544, 556, 1594, 580,
+      546, 556, 1594, 580};  // UNKNOWN B6B57D85
+  const uint8_t expectedState[kHaierAC160StateLength] = {
+      0xA6, 0xAC, 0x00, 0x00, 0x40, 0x60, 0x00, 0x20, 0x00, 0x00,
+      0x00, 0x00, 0x05, 0x17, 0xB5, 0x00, 0x60, 0x00, 0x00, 0x15};
+
+  irsend.sendRaw(rawData, 325, 38000);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(HAIER_AC160, irsend.capture.decode_type);
+  ASSERT_EQ(kHaierAC160Bits, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "Power: On, Button: 5 (Power), Mode: 1 (Cool), Temp: 26C, Fan: 3 (Low), "
+      "Turbo: Off, Quiet: Off, Health: Off, Swing(V): 12 (Auto), Sleep: Off, "
+      "Clean: Off, "
+      "Timer Mode: 0 (N/A), On Timer: Off, Off Timer: Off, Lock: Off, "
+      "Heating: Off",
+      IRAcUtils::resultAcToString(&irsend.capture));
+  stdAc::state_t result, prev;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &result, &prev));
+}
+
+// Decoding a message we entirely constructed based solely on a given state.
+TEST(TestDecodeHaierAC160, SyntheticExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  const uint8_t expectedState[kHaierAC160StateLength] = {
+        0xA6, 0xAC, 0x00, 0x00, 0x40, 0x60, 0x00, 0x20, 0x00, 0x00,
+        0x00, 0x00, 0x05, 0x17, 0xB5, 0x00, 0x60, 0x00, 0x00, 0x15};
+
+  irsend.reset();
+  irsend.sendHaierAC160(expectedState);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(HAIER_AC160, irsend.capture.decode_type);
+  ASSERT_EQ(kHaierAC160Bits, irsend.capture.bits);
+  EXPECT_FALSE(irsend.capture.repeat);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "Power: On, Button: 5 (Power), Mode: 1 (Cool), Temp: 26C, Fan: 3 (Low), "
+      "Turbo: Off, Quiet: Off, Health: Off, Swing(V): 12 (Auto), Sleep: Off, "
+      "Clean: Off, "
+      "Timer Mode: 0 (N/A), On Timer: Off, Off Timer: Off, Lock: Off, "
+      "Heating: Off",
+      IRAcUtils::resultAcToString(&irsend.capture));
+  stdAc::state_t result, prev;
+  ASSERT_TRUE(IRAcUtils::decodeToState(&irsend.capture, &result, &prev));
+}
+
+// Tests for the IRHaierAC160 class.
+
+TEST(TestHaierAC160Class, Button) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setButton(kHaierAcYrw02ButtonPower);
+  EXPECT_EQ(kHaierAcYrw02ButtonPower, ac.getButton());
+  ac.setButton(kHaierAcYrw02ButtonMode);
+  EXPECT_EQ(kHaierAcYrw02ButtonMode, ac.getButton());
+  ac.setButton(kHaierAcYrw02ButtonSleep);
+  EXPECT_EQ(kHaierAcYrw02ButtonSleep, ac.getButton());
+  ac.setButton(kHaierAcYrw02ButtonFan);
+
+  // Test unexpected values.
+  ac.setButton(0xFF);
+  EXPECT_EQ(kHaierAcYrw02ButtonFan, ac.getButton());
+  ac.setButton(0x10);
+  EXPECT_EQ(kHaierAcYrw02ButtonFan, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, OperatingMode) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setButton(kHaierAcYrw02ButtonPower);
+  ac.setMode(kHaierAcYrw02Auto);
+  EXPECT_EQ(kHaierAcYrw02Auto, ac.getMode());
+  EXPECT_EQ(kHaierAcYrw02ButtonMode, ac.getButton());
+
+  ac.setMode(kHaierAcYrw02Cool);
+  EXPECT_EQ(kHaierAcYrw02Cool, ac.getMode());
+  EXPECT_FALSE(ac.getAuxHeating());
+
+  ac.setMode(kHaierAcYrw02Heat);
+  EXPECT_EQ(kHaierAcYrw02Heat, ac.getMode());
+  EXPECT_TRUE(ac.getAuxHeating());
+
+  ac.setMode(kHaierAcYrw02Fan);
+  EXPECT_EQ(kHaierAcYrw02Fan, ac.getMode());
+  EXPECT_FALSE(ac.getAuxHeating());
+
+  ac.setMode(kHaierAcYrw02Dry);
+  EXPECT_EQ(kHaierAcYrw02Dry, ac.getMode());
+
+  ac.setMode(kHaierAcYrw02Auto - 1);
+  EXPECT_EQ(kHaierAcYrw02Auto, ac.getMode());
+
+  ac.setMode(kHaierAcYrw02Cool);
+  EXPECT_EQ(kHaierAcYrw02Cool, ac.getMode());
+
+  ac.setMode(kHaierAcYrw02Fan + 1);
+  EXPECT_EQ(kHaierAcYrw02Auto, ac.getMode());
+
+  ac.setMode(255);
+  EXPECT_EQ(kHaierAcYrw02Auto, ac.getMode());
+}
+
+TEST(TestHaierAC160Class, Temperature) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setTemp(kHaierAcYrw02MinTempC);
+  EXPECT_EQ(kHaierAcYrw02MinTempC, ac.getTemp());
+
+  ac.setButton(kHaierAcYrw02ButtonPower);
+  ac.setTemp(kHaierAcYrw02MinTempC + 1);
+  EXPECT_EQ(kHaierAcYrw02MinTempC + 1, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MaxTempC);
+  EXPECT_EQ(kHaierAcYrw02MaxTempC, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MinTempC - 1);
+  EXPECT_EQ(kHaierAcYrw02MinTempC, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempDown, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MaxTempC + 1);
+  EXPECT_EQ(kHaierAcYrw02MaxTempC, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+
+  ac.setTemp(23);
+  EXPECT_EQ(23, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempDown, ac.getButton());
+  ac.setButton(kHaierAcYrw02ButtonPower);
+  ac.setTemp(23);
+  EXPECT_EQ(23, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonPower, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MinTempF, true);
+  EXPECT_EQ(kHaierAcYrw02MinTempF, ac.getTemp());
+
+  ac.setButton(kHaierAcYrw02ButtonPower);
+  ac.setTemp(kHaierAcYrw02MinTempF + 1, true);
+  EXPECT_EQ(kHaierAcYrw02MinTempF + 1, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MaxTempF, true);
+  EXPECT_EQ(kHaierAcYrw02MaxTempF, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MinTempF - 1, true);
+  EXPECT_EQ(kHaierAcYrw02MinTempF, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempDown, ac.getButton());
+
+  ac.setTemp(kHaierAcYrw02MaxTempF + 1, true);
+  EXPECT_EQ(kHaierAcYrw02MaxTempF, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+
+  ac.setTemp(66, true);
+  EXPECT_EQ(66, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempDown, ac.getButton());
+  ac.setButton(kHaierAcYrw02ButtonPower);
+  ac.setTemp(66, true);
+  EXPECT_EQ(66, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonPower, ac.getButton());
+
+  // Test specific cases for converting to Fahrenheit
+  ac.setTemp(76, true);
+  EXPECT_EQ(76, ac.getTemp());
+  ac.setTemp(77, true);
+  EXPECT_EQ(77, ac.getTemp());
+  ac.setTemp(78, true);
+  EXPECT_EQ(78, ac.getTemp());
+
+  ac.setTemp(24);
+  EXPECT_EQ(kHaierAcYrw02ButtonCFAB, ac.getButton());
+
+  ac.setTemp(0);
+  EXPECT_EQ(kHaierAcYrw02MinTempC, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempDown, ac.getButton());
+
+  ac.setTemp(255);
+  EXPECT_EQ(kHaierAcMaxTemp, ac.getTemp());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, CleanMode) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setClean(true);
+  EXPECT_TRUE(ac.getClean());
+  EXPECT_EQ(kHaierAc160ButtonClean, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setClean(false);
+  EXPECT_FALSE(ac.getClean());
+  EXPECT_EQ(kHaierAc160ButtonClean, ac.getButton());
+
+  ac.setClean(true);
+  EXPECT_TRUE(ac.getClean());
+  EXPECT_EQ(kHaierAc160ButtonClean, ac.getButton());
+
+  ac.stateReset();
+  EXPECT_FALSE(ac.getClean());
+  // clean button pressed.
+  // https://docs.google.com/spreadsheets/d/1RNJ7esbArS5fy1lmiM-i1PekXSNojCMad4WuuyunsC8/edit#gid=2048081808&range=FR22
+  const uint8_t clean_on[kHaierAC160StateLength] = {
+      0xA6, 0xAC, 0x00, 0x00, 0x40, 0x60, 0x00, 0x20, 0x00, 0x00,
+      0x10, 0x00, 0x19, 0x3B, 0xB5, 0x40, 0x60, 0x00, 0x00, 0x55};
+  ac.setRaw(clean_on);
+  EXPECT_TRUE(ac.getClean());
+  EXPECT_EQ(
+      "Power: On, Button: 25 (Clean), Mode: 1 (Cool), Temp: 26C, "
+      "Fan: 3 (Low), Turbo: Off, Quiet: Off, Health: Off, Swing(V): 12 (Auto), "
+      "Sleep: Off, Clean: On, Timer Mode: 0 (N/A), "
+      "On Timer: Off, Off Timer: Off, Lock: Off, Heating: Off",
+      ac.toString());
+  // No clean set.
+  // https://docs.google.com/spreadsheets/d/1RNJ7esbArS5fy1lmiM-i1PekXSNojCMad4WuuyunsC8/edit#gid=2048081808&range=FR4
+  const uint8_t clean_off[kHaierAC160StateLength] = {
+      0xA6, 0xAC, 0x00, 0x00, 0x40, 0x60, 0x00, 0x20, 0x00, 0x00,
+      0x00, 0x00, 0x05, 0x17, 0xB5, 0x00, 0x60, 0x00, 0x00, 0x15};
+  ac.setRaw(clean_off);
+  EXPECT_FALSE(ac.getClean());
+  EXPECT_EQ(
+      "Power: On, Button: 5 (Power), Mode: 1 (Cool), Temp: 26C, "
+      "Fan: 3 (Low), Turbo: Off, Quiet: Off, Health: Off, Swing(V): 12 (Auto), "
+      "Sleep: Off, Clean: Off, Timer Mode: 0 (N/A), "
+      "On Timer: Off, Off Timer: Off, Lock: Off, Heating: Off",
+      ac.toString());
+}
+
+TEST(TestHaierAC160Class, Power) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setPower(true);
+  EXPECT_TRUE(ac.getPower());
+  EXPECT_EQ(kHaierAcYrw02ButtonPower, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setPower(false);
+  EXPECT_FALSE(ac.getPower());
+  EXPECT_EQ(kHaierAcYrw02ButtonPower, ac.getButton());
+
+  ac.setPower(true);
+  EXPECT_TRUE(ac.getPower());
+  EXPECT_EQ(kHaierAcYrw02ButtonPower, ac.getButton());
+
+  ac.off();
+  EXPECT_FALSE(ac.getPower());
+  ac.on();
+  EXPECT_TRUE(ac.getPower());
+}
+
+TEST(TestHaierAC160Class, SleepMode) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setSleep(true);
+  EXPECT_TRUE(ac.getSleep());
+  EXPECT_EQ(kHaierAcYrw02ButtonSleep, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setSleep(false);
+  EXPECT_FALSE(ac.getSleep());
+  EXPECT_EQ(kHaierAcYrw02ButtonSleep, ac.getButton());
+
+  ac.setSleep(true);
+  EXPECT_TRUE(ac.getSleep());
+  EXPECT_EQ(kHaierAcYrw02ButtonSleep, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, Health) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setHealth(true);
+  EXPECT_TRUE(ac.getHealth());
+  EXPECT_EQ(kHaierAcYrw02ButtonHealth, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setHealth(false);
+  EXPECT_FALSE(ac.getHealth());
+  EXPECT_EQ(kHaierAcYrw02ButtonHealth, ac.getButton());
+
+  ac.setHealth(true);
+  EXPECT_TRUE(ac.getHealth());
+  EXPECT_EQ(kHaierAcYrw02ButtonHealth, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, TurboAndQuiet) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setMode(kHaierAcYrw02Cool);  // Turbo & Quiet is allowed in this mode.
+  ac.setTurbo(false);
+  ac.setQuiet(false);
+  EXPECT_FALSE(ac.getTurbo());
+  EXPECT_FALSE(ac.getQuiet());
+  EXPECT_EQ(kHaierAcYrw02ButtonTurbo, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+
+  ac.setTurbo(true);
+  EXPECT_TRUE(ac.getTurbo());
+  EXPECT_FALSE(ac.getQuiet());
+  EXPECT_EQ(kHaierAcYrw02ButtonTurbo, ac.getButton());
+
+  ac.setQuiet(true);
+  EXPECT_FALSE(ac.getTurbo());
+  EXPECT_TRUE(ac.getQuiet());
+  EXPECT_EQ(kHaierAcYrw02ButtonTurbo, ac.getButton());
+
+  ac.setTurbo(false);
+  ac.setQuiet(false);
+  EXPECT_FALSE(ac.getTurbo());
+  EXPECT_FALSE(ac.getQuiet());
+  EXPECT_EQ(kHaierAcYrw02ButtonTurbo, ac.getButton());
+
+  ac.setMode(kHaierAcYrw02Auto);  // Turbo & Quiet is not allowed in this mode.
+  EXPECT_FALSE(ac.getTurbo());
+  EXPECT_FALSE(ac.getQuiet());
+  ac.setTurbo(true);
+  EXPECT_FALSE(ac.getTurbo());
+  EXPECT_NE(kHaierAcYrw02ButtonTurbo, ac.getButton());
+  ac.setQuiet(true);
+  EXPECT_FALSE(ac.getQuiet());
+  EXPECT_NE(kHaierAcYrw02ButtonTurbo, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, Fan) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setFan(kHaierAcYrw02FanAuto);
+  EXPECT_EQ(kHaierAcYrw02FanAuto, ac.getFan());
+  EXPECT_EQ(kHaierAcYrw02ButtonFan, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+
+  ac.setFan(kHaierAcYrw02FanLow);
+  EXPECT_EQ(kHaierAcYrw02FanLow, ac.getFan());
+  EXPECT_EQ(kHaierAcYrw02ButtonFan, ac.getButton());
+
+  ac.setFan(kHaierAcYrw02FanHigh);
+  EXPECT_EQ(kHaierAcYrw02FanHigh, ac.getFan());
+  EXPECT_EQ(kHaierAcYrw02ButtonFan, ac.getButton());
+
+  ac.setFan(kHaierAcYrw02FanMed);
+  EXPECT_EQ(kHaierAcYrw02FanMed, ac.getFan());
+  EXPECT_EQ(kHaierAcYrw02ButtonFan, ac.getButton());
+
+  // Test unexpected values.
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setFan(0x00);
+  EXPECT_EQ(kHaierAcYrw02FanMed, ac.getFan());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, SwingV) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setSwingV(kHaierAc160SwingVOff);
+  EXPECT_EQ(kHaierAc160SwingVOff, ac.getSwingV());
+  EXPECT_EQ(kHaierAcYrw02ButtonSwingV, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+
+  ac.setSwingV(kHaierAc160SwingVAuto);
+  EXPECT_EQ(kHaierAc160SwingVAuto, ac.getSwingV());
+  EXPECT_EQ(kHaierAcYrw02ButtonSwingV, ac.getButton());
+
+  ac.setSwingV(kHaierAc160SwingVTop);
+  EXPECT_EQ(kHaierAc160SwingVTop, ac.getSwingV());
+  EXPECT_EQ(kHaierAcYrw02ButtonSwingV, ac.getButton());
+
+  ac.setSwingV(kHaierAc160SwingVLow);
+  EXPECT_EQ(kHaierAc160SwingVLow, ac.getSwingV());
+  EXPECT_EQ(kHaierAcYrw02ButtonSwingV, ac.getButton());
+
+  // Test unexpected values.
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setSwingV(0xFF);
+  EXPECT_EQ(kHaierAc160SwingVLow, ac.getSwingV());
+  EXPECT_EQ(kHaierAcYrw02ButtonTempUp, ac.getButton());
+}
+
+TEST(TestHaierAC160Class, Light) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setLightToggle(true);
+  EXPECT_TRUE(ac.getLightToggle());
+  EXPECT_EQ(kHaierAc160ButtonLight, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setLightToggle(false);
+  EXPECT_FALSE(ac.getLightToggle());
+  EXPECT_NE(kHaierAc160ButtonLight, ac.getButton());
+
+  ac.setLightToggle(true);
+  EXPECT_TRUE(ac.getLightToggle());
+  EXPECT_EQ(kHaierAc160ButtonLight, ac.getButton());
+
+  const uint8_t light_press[kHaierAC160StateLength] = {
+      0xA6, 0xAC, 0x00, 0x00, 0x40, 0x60, 0x00, 0x20, 0x00, 0x00,
+      0x00, 0x00, 0x15, 0x27, 0xB5, 0x00, 0x60, 0x00, 0x00, 0x15};
+  ac.setRaw(light_press);
+  EXPECT_TRUE(ac.getLightToggle());
+  EXPECT_EQ(kHaierAc160ButtonLight, ac.getButton());
+  EXPECT_EQ(
+      "Power: On, Button: 21 (Light), Mode: 1 (Cool), Temp: 26C, "
+      "Fan: 3 (Low), Turbo: Off, Quiet: Off, Health: Off, Swing(V): 12 (Auto), "
+      "Sleep: Off, Clean: Off, Timer Mode: 0 (N/A), "
+      "On Timer: Off, Off Timer: Off, Lock: Off, Heating: Off",
+      ac.toString());
+}
+
+TEST(TestHaierAC160Class, AuxHeating) {
+  IRHaierAC160 ac(kGpioUnused);
+  ac.begin();
+
+  ac.setAuxHeating(true);
+  EXPECT_TRUE(ac.getAuxHeating());
+  EXPECT_EQ(kHaierAc160ButtonAuxHeating, ac.getButton());
+
+  ac.setButton(kHaierAcYrw02ButtonTempUp);
+  ac.setAuxHeating(false);
+  EXPECT_FALSE(ac.getAuxHeating());
+  EXPECT_EQ(kHaierAc160ButtonAuxHeating, ac.getButton());
+
+  ac.setAuxHeating(true);
+  EXPECT_TRUE(ac.getAuxHeating());
+  EXPECT_EQ(kHaierAc160ButtonAuxHeating, ac.getButton());
+
+  // https://docs.google.com/spreadsheets/d/1RNJ7esbArS5fy1lmiM-i1PekXSNojCMad4WuuyunsC8/edit#gid=2048081808&range=A124:W143
+  const uint8_t aux_button_off[kHaierAC160StateLength] = {
+      0xA6, 0xAC, 0x00, 0x00, 0x40, 0x60, 0x00, 0x80, 0x00, 0x00,
+      0x00, 0x00, 0x16, 0x88, 0xB5, 0x00, 0x60, 0x00, 0x00, 0x15};
+  ac.setRaw(aux_button_off);
+  EXPECT_FALSE(ac.getAuxHeating());
+  EXPECT_EQ(kHaierAc160ButtonAuxHeating, ac.getButton());
+  EXPECT_EQ(
+      "Power: On, Button: 22 (Heating), Mode: 4 (Heat), Temp: 26C, "
+      "Fan: 3 (Low), Turbo: Off, Quiet: Off, Health: Off, Swing(V): 12 (Auto), "
+      "Sleep: Off, Clean: Off, Timer Mode: 0 (N/A), "
+      "On Timer: Off, Off Timer: Off, Lock: Off, Heating: Off",
       ac.toString());
 }

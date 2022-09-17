@@ -9,6 +9,7 @@
 //
 // Ref: https://docs.google.com/spreadsheets/d/1zzDEUQ52y7MZ7_xCU3pdjdqbRXOwZLsbTGvKWcicqCI/
 // Ref: https://www.corona.co.jp/box/download.php?id=145060636229
+// Ref: https://github.com/crankyoldgit/IRremoteESP8266/files/8646964/Voltas.Window.AC.122LZF.Remote.Instructions.pdf
 
 #ifndef IR_VOLTAS_H_
 #define IR_VOLTAS_H_

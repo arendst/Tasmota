@@ -1552,6 +1552,20 @@ TEST(TestUtils, Housekeeping) {
   ASSERT_EQ(decode_type_t::DAIKIN64, strToDecodeType("DAIKIN64"));
   ASSERT_FALSE(hasACState(decode_type_t::DAIKIN64));
   ASSERT_TRUE(IRac::isProtocolSupported(decode_type_t::DAIKIN64));
+
+  ASSERT_EQ("DAIKIN200", typeToString(decode_type_t::DAIKIN200));
+  ASSERT_EQ(decode_type_t::DAIKIN200, strToDecodeType("DAIKIN200"));
+  ASSERT_TRUE(hasACState(decode_type_t::DAIKIN200));
+  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::DAIKIN200));
+  ASSERT_EQ(kDaikin200Bits, IRsend::defaultBits(decode_type_t::DAIKIN200));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::DAIKIN200));
+
+  ASSERT_EQ("DAIKIN312", typeToString(decode_type_t::DAIKIN312));
+  ASSERT_EQ(decode_type_t::DAIKIN312, strToDecodeType("DAIKIN312"));
+  ASSERT_TRUE(hasACState(decode_type_t::DAIKIN312));
+  ASSERT_FALSE(IRac::isProtocolSupported(decode_type_t::DAIKIN312));
+  ASSERT_EQ(kDaikin312Bits, IRsend::defaultBits(decode_type_t::DAIKIN312));
+  ASSERT_EQ(kNoRepeat, IRsend::minRepeats(decode_type_t::DAIKIN312));
 }
 
 // https://github.com/crankyoldgit/IRremoteESP8266/issues/582#issuecomment-453863879
@@ -3878,4 +3892,229 @@ TEST(TestDaikin176Class, UnitId) {
   ac.setId(0);
   ASSERT_EQ(0, ac.getId());
   EXPECT_STATE_EQ(unita, ac.getRaw(), kDaikin176Bits);
+}
+
+TEST(TestDaikin128Class, Issue1754_HeatMode) {
+  // Data from "MODE HEAT"
+  // Mesg Desc.: Power Toggle: Off, Mode: 8 (Heat), Temp: 19C, Fan: 4 (Medium),
+  // Powerful: Off, Quiet: Off, Swing(V): Off, Sleep: Off, Econo: Off,
+  // Clock: 20:22, On Timer: Off, On Timer: 10:00, Off Timer: Off,
+  // Off Timer: 16:30, Light Toggle: 0 (Off)
+  // Ref: https://docs.google.com/document/d/1bhPlwsUE4ppL1dlX6_aYmqCSxeE6HlOumYsR35S0CKA/edit#heading=h.luu34vdlzof1
+
+  const uint8_t heatmode[16] = {  // As recorded from a real remote.
+      0x16, 0x48, 0x22, 0x20, 0x10, 0x56, 0x19, 0x34,
+      0xA1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0B};
+
+  IRDaikin128 ac(kGpioUnused);
+  // Try to reproduce the exact same state.
+  ac.setClock(20 * 60 + 22);
+  ac.setOnTimer(10 * 60);
+  ac.setOnTimerEnabled(false);
+  ac.setOffTimer(16 * 60 + 30);
+  ac.setOffTimerEnabled(false);
+  ac.setPowerToggle(false);
+  ac.setTemp(19);
+  ac.setFan(kDaikin128FanMed);
+  ac.setPowerful(false);
+  ac.setQuiet(false);
+  ac.setSwingVertical(false);
+  ac.setSleep(false);
+  ac.setEcono(false);
+  ac.setLightToggle(0);
+  ac.setMode(kDaikin128Heat);
+
+  EXPECT_EQ(
+      "Power Toggle: Off, Mode: 8 (Heat), Temp: 19C, Fan: 4 (Medium), "
+      "Powerful: Off, Quiet: Off, Swing(V): Off, Sleep: Off, Econo: Off, "
+      "Clock: 20:22, On Timer: Off, On Timer: 10:00, Off Timer: Off, "
+      "Off Timer: 16:30, Light Toggle: 0 (Off)",
+      ac.toString());
+  // Compare the synthetic state to the captured one.
+  EXPECT_STATE_EQ(heatmode, ac.getRaw(), kDaikin128Bits);
+}
+
+// Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1802
+TEST(TestDecodeDaikin200, RealExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  const uint16_t rawData[407] = {
+      4852, 2298,
+      202, 1942, 202, 870, 200, 870, 202, 868, 202, 1942, 202, 870, 202, 870,
+      202, 870, 202, 870, 202, 1942, 202, 870, 202, 1942, 202, 1942, 202, 868,
+      202, 1942, 202, 1942, 202, 1912, 232, 1942, 202, 1942, 202, 868, 202,
+      1942, 202, 870, 202, 870, 202, 868, 202, 868, 204, 868, 202, 870, 202,
+      1942, 202, 868, 204, 868, 202, 1942, 202, 870, 202, 870, 200, 870, 202,
+      1942, 202, 868, 202, 870, 202, 870, 202, 870, 202, 870, 202, 870, 202,
+      870, 202, 870, 202, 868, 202, 868, 204, 868, 202, 870, 202, 870, 202, 870,
+      202, 1942, 202, 1942, 202, 1942, 202, 868, 202, 868, 204, 1942, 202, 870,
+      202, 29468,
+      4880, 2266,
+      256, 1888, 230, 844, 202, 868, 202, 870, 256, 1888, 230, 842, 228, 842,
+      230, 842, 256, 814, 232, 1914, 254, 816, 230, 1916, 256, 1888, 256, 814,
+      256, 1890, 254, 1888, 256, 1888, 256, 1888, 256, 1888, 256, 816, 230,
+      1912, 258, 814, 256, 816, 256, 816, 282, 790, 280, 790, 282, 790, 282,
+      1862, 258, 814, 280, 790, 282, 1862, 280, 792, 280, 790, 282, 788, 282,
+      790, 282, 790, 282, 790, 282, 790, 282, 788, 282, 790, 282, 1862, 282,
+      1862, 282, 790, 282, 788, 282, 1862, 282, 1864, 280, 1862, 282, 790, 280,
+      790, 282, 790, 282, 790, 282, 788, 284, 790, 282, 760, 310, 790, 282, 788,
+      282, 1862, 282, 788, 282, 790, 282, 788, 282, 788, 282, 1862, 284, 788,
+      282, 788, 284, 788, 282, 790, 282, 788, 284, 788, 282, 790, 282, 788, 284,
+      758, 312, 788, 284, 788, 282, 788, 284, 788, 282, 788, 284, 788, 282, 788,
+      284, 788, 284, 758, 314, 786, 284, 788, 284, 1860, 282, 790, 282, 790,
+      282, 1862, 282, 758, 312, 762, 310, 788, 284, 788, 282, 758, 314, 758,
+      314, 1862, 282, 760, 312, 1860, 284, 760, 310, 788, 282, 760, 312, 788,
+      284, 760, 312, 788, 282, 790, 282, 788, 284, 788, 282, 790, 282, 788, 282,
+      758, 314, 788, 282, 758, 314, 1862, 282, 758, 312, 788, 284, 758, 312,
+      758, 314, 788, 282, 758, 314, 758, 312, 788, 284, 788, 284, 758, 312, 760,
+      312, 762, 310, 790, 284, 788, 282, 758, 314, 758, 312, 788, 282, 760, 312,
+      760, 312, 760, 312, 788, 282, 758, 314, 788, 284, 788, 284, 758, 312, 788,
+      282, 790, 282, 1832, 310, 758, 316, 788, 284, 1862, 282, 1862, 282, 1832,
+      310, 788, 284};  // UNKNOWN 3BFB2888
+
+  const uint8_t expectedState[kDaikin200StateLength] = {
+      0x11, 0xDA, 0x17, 0x48, 0x04, 0x00, 0x4E,              // Section 1
+      0x11, 0xDA, 0x17, 0x48, 0x00, 0x73, 0x00, 0x21, 0x00,  // Section 2
+      0x00, 0x24, 0x50, 0x00, 0x20, 0x00, 0x00, 0x00, 0x72};
+  irsend.begin();
+  irsend.reset();
+  irsend.sendRaw(rawData, 407, kDaikin64Freq);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(decode_type_t::DAIKIN200, irsend.capture.decode_type);
+  ASSERT_EQ(kDaikin200Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
+  stdAc::state_t result, prev;
+  ASSERT_FALSE(IRAcUtils::decodeToState(&irsend.capture, &result, &prev));
+}
+
+// Decoding a message we entirely constructed based solely on a given state.
+TEST(TestDecodeDaikin200, SyntheticExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  const uint8_t expectedState[kDaikin200StateLength] = {
+      0x11, 0xDA, 0x17, 0x48, 0x04, 0x00, 0x4E,              // Section 1
+      0x11, 0xDA, 0x17, 0x48, 0x00, 0x73, 0x00, 0x21, 0x00,  // Section 2
+      0x00, 0x24, 0x50, 0x00, 0x20, 0x00, 0x00, 0x00, 0x72};
+
+  irsend.reset();
+  irsend.sendDaikin200(expectedState);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(DAIKIN200, irsend.capture.decode_type);
+  ASSERT_EQ(kDaikin200Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
+}
+
+/// https://github.com/crankyoldgit/IRremoteESP8266/issues/1829#issuecomment-1173077011
+TEST(TestDecodeDaikin312, RealExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  // Ref: https://github.com/crankyoldgit/IRremoteESP8266/files/9034763/on_coling_210_fan_auto.txt.out.txt
+  const uint16_t rawData[643] = {
+      508, 390, 452, 414, 452, 414, 452, 414, 452, 414,
+      452, 25104,
+      3518, 1688,
+      478, 1256, 478, 414, 452, 414, 452, 414, 452, 1282, 452, 414, 452, 414,
+      452, 414, 452, 414, 452, 1280, 454, 414, 452, 1256, 478, 1254, 478, 414,
+      452, 1280, 452, 1282, 452, 1282, 452, 1282, 478, 1256, 480, 386, 452, 414,
+      452, 1282, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414,
+      454, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 1280, 452, 414,
+      452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 1282,
+      452, 414, 452, 414, 452, 414, 452, 1280, 452, 1280, 452, 418, 450, 1280,
+      452, 1282, 452, 414, 452, 1282, 452, 414, 452, 416, 452, 1280, 454, 414,
+      452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452,
+      414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 454, 414,
+      452, 414, 452, 1282, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414,
+      452, 414, 454, 414, 452, 414, 452, 414, 452, 414, 452, 414, 478, 388, 452,
+      414, 452, 414, 452, 414, 452, 414, 452, 414, 454, 414, 452, 414, 452, 414,
+      452, 414, 452, 414, 452, 414, 452, 1282, 452, 414, 452, 414, 452, 414,
+      452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452,
+      414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414,
+      478, 388, 452, 414, 478, 388, 452, 414, 452, 414, 452, 414, 452, 414, 452,
+      414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414,
+      452, 414, 452, 414, 452, 414, 452, 414, 448, 418, 448, 418, 448, 418, 448,
+      418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418,
+      448, 418, 448, 418, 448, 418, 448, 418, 448, 420, 448, 418, 450, 418, 448,
+      1286, 448, 1286, 448, 420, 448, 418, 448, 418, 448, 418, 448, 1284, 448,
+      1286,
+      448, 35512,
+      3518, 1688,
+      478, 1282, 452, 414, 452, 414, 452, 414, 452, 1282, 452, 414, 452, 414,
+      452, 414, 452, 414, 452, 1280, 452, 414, 452, 1256, 478, 1254, 478, 414,
+      452, 1280, 452, 1282, 452, 1282, 452, 1282, 452, 1280, 452, 414, 452, 414,
+      452, 1280, 452, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418,
+      448, 418, 448, 418, 452, 414, 448, 418, 448, 418, 448, 418, 448, 418, 448,
+      418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 1286, 452, 414, 452,
+      414, 452, 1280, 452, 1282, 452, 1282, 452, 414, 452, 414, 452, 414, 452,
+      1256, 478, 414, 452, 1282, 452, 414, 452, 1256, 478, 414, 452, 414, 452,
+      414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414,
+      454, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 1282, 452, 414,
+      452, 1256, 478, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414,
+      452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452, 414, 452,
+      414, 452, 414, 452, 414, 452, 414, 452, 1286, 448, 1286, 448, 418, 448,
+      418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418,
+      448, 418, 448, 1286, 448, 1286, 448, 418, 448, 418, 448, 418, 448, 418,
+      448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 420, 448,
+      418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 1260, 474,
+      418, 448, 1264, 470, 418, 448, 418, 448, 418, 448, 1258, 474, 1260, 474,
+      418, 448, 418, 448, 418, 448, 418, 448, 418, 448, 418, 452, 414, 452, 414,
+      452, 414, 452, 416, 452, 414, 448, 1264, 478, 384, 474, 418, 448, 418,
+      448, 418, 448, 418, 448, 418, 448, 418, 448, 1260, 504, 362, 474, 418,
+      448, 1260, 478, 388, 474};  // UNKNOWN 34EEF8FF
+
+  const uint8_t expectedState[kDaikin312StateLength] = {
+      // Section 1
+      0x11, 0xDA, 0x27, 0x00, 0x02, 0x62, 0x4B, 0x00, 0x00, 0x01,
+      0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC3,
+      // Section 2
+      0x11, 0xDA, 0x27, 0x00, 0x00, 0x39, 0x2A, 0x00, 0xA0, 0x00,
+      0x00, 0x06, 0x60, 0x00, 0x00, 0xC5, 0x00, 0x08, 0x48};
+  irsend.begin();
+  irsend.reset();
+  irsend.sendRaw(rawData, 643, kDaikin64Freq);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(decode_type_t::DAIKIN312, irsend.capture.decode_type);
+  ASSERT_EQ(kDaikin312Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
+  stdAc::state_t result, prev;
+  ASSERT_FALSE(IRAcUtils::decodeToState(&irsend.capture, &result, &prev));
+}
+
+// Decoding a message we entirely constructed based solely on a given state.
+TEST(TestDecodeDaikin312, SyntheticExample) {
+  IRsendTest irsend(kGpioUnused);
+  IRrecv irrecv(kGpioUnused);
+  irsend.begin();
+
+  const uint8_t expectedState[kDaikin312StateLength] = {
+      // Section 1
+      0x11, 0xDA, 0x27, 0x00, 0x02, 0x62, 0x4B, 0x00, 0x00, 0x01,
+      0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC3,
+      // Section 2
+      0x11, 0xDA, 0x27, 0x00, 0x00, 0x39, 0x2A, 0x00, 0xA0, 0x00,
+      0x00, 0x06, 0x60, 0x00, 0x00, 0xC5, 0x00, 0x08, 0x48};
+
+  irsend.reset();
+  irsend.sendDaikin312(expectedState);
+  irsend.makeDecodeResult();
+  ASSERT_TRUE(irrecv.decode(&irsend.capture));
+  ASSERT_EQ(DAIKIN312, irsend.capture.decode_type);
+  ASSERT_EQ(kDaikin312Bits, irsend.capture.bits);
+  EXPECT_STATE_EQ(expectedState, irsend.capture.state, irsend.capture.bits);
+  EXPECT_EQ(
+      "",
+      IRAcUtils::resultAcToString(&irsend.capture));
 }

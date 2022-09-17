@@ -118,7 +118,8 @@ struct state_t {
 
 /// Fujitsu A/C model numbers
 enum fujitsu_ac_remote_model_t {
-  ARRAH2E = 1,  ///< (1) AR-RAH2E, AR-RAC1E, AR-RAE1E, AR-RCE1E (Default)
+  ARRAH2E = 1,  ///< (1) AR-RAH2E, AR-RAC1E, AR-RAE1E, AR-RCE1E, AR-RAH2U,
+                ///<     AR-REG1U (Default)
                 ///< Warning: Use on incorrect models can cause the A/C to lock
                 ///< up, requring the A/C to be physically powered off to fix.
                 ///< e.g. AR-RAH1U may lock up with a Swing command.
@@ -133,7 +134,9 @@ enum fujitsu_ac_remote_model_t {
 /// Gree A/C model numbers
 enum gree_ac_remote_model_t {
   YAW1F = 1,  // (1) Ultimate, EKOKAI, RusClimate (Default)
-  YBOFB,     // (2) Green, YBOFB2, YAPOF3
+  YBOFB,      // (2) Green, YBOFB2, YAPOF3
+  YX1FSF,     // (3) Soleus Air window unit (Similar to YAW1F, but with an
+              //     Operation mode of Energy Saver (Econo))
 };
 
 /// HAIER_AC176 A/C model numbers
@@ -343,6 +346,11 @@ class IRsend {
                      const uint16_t nbytes = kSanyoAc88StateLength,
                      const uint16_t repeat = kSanyoAc88MinRepeat);
 #endif  // SEND_SANYO_AC88
+#if SEND_SANYO_AC152
+  void sendSanyoAc152(const uint8_t *data,
+                     const uint16_t nbytes = kSanyoAc152StateLength,
+                     const uint16_t repeat = kSanyoAc152MinRepeat);
+#endif  // SEND_SANYO_AC152
 #if SEND_DISH
   // sendDISH() should typically be called with repeat=3 as DISH devices
   // expect the code to be sent at least 4 times. (code + 3 repeats = 4 codes)
@@ -481,11 +489,21 @@ class IRsend {
                    const uint16_t nbytes = kDaikin2StateLength,
                    const uint16_t repeat = kDaikin2DefaultRepeat);
 #endif
+#if SEND_DAIKIN200
+  void sendDaikin200(const unsigned char data[],
+                     const uint16_t nbytes = kDaikin200StateLength,
+                     const uint16_t repeat = kDaikin200DefaultRepeat);
+#endif  // SEND_DAIKIN200
 #if SEND_DAIKIN216
   void sendDaikin216(const unsigned char data[],
                      const uint16_t nbytes = kDaikin216StateLength,
                      const uint16_t repeat = kDaikin216DefaultRepeat);
-#endif
+#endif  // SEND_DAIKIN216
+#if SEND_DAIKIN312
+  void sendDaikin312(const unsigned char data[],
+                     const uint16_t nbytes = kDaikin312StateLength,
+                     const uint16_t repeat = kDaikin312DefaultRepeat);
+#endif  // SEND_DAIKIN312
 #if SEND_AIWA_RC_T501
   void sendAiwaRCT501(uint64_t data, uint16_t nbits = kAiwaRcT501Bits,
                       uint16_t repeat = kAiwaRcT501MinRepeats);
@@ -557,6 +575,11 @@ class IRsend {
   void sendCarrierAC64(uint64_t data, uint16_t nbits = kCarrierAc64Bits,
                        uint16_t repeat = kCarrierAc64MinRepeat);
 #endif
+#if SEND_CARRIER_AC128
+  void sendCarrierAC128(const uint8_t data[],
+                        uint16_t nbytes = kCarrierAc128StateLength,
+                        uint16_t repeat = kCarrierAc128MinRepeat);
+#endif  // SEND_CARRIER_AC128
 #if (SEND_HAIER_AC || SEND_HAIER_AC_YRW02 || SEND_HAIER_AC176)
   void sendHaierAC(const unsigned char data[],
                    const uint16_t nbytes = kHaierACStateLength,
@@ -567,6 +590,11 @@ class IRsend {
                         const uint16_t nbytes = kHaierACYRW02StateLength,
                         const uint16_t repeat = kHaierAcYrw02DefaultRepeat);
 #endif  // SEND_HAIER_AC_YRW02
+#if SEND_HAIER_AC160
+  void sendHaierAC160(const unsigned char data[],
+                      const uint16_t nbytes = kHaierAC160StateLength,
+                      const uint16_t repeat = kHaierAc160DefaultRepeat);
+#endif  // SEND_HAIER_AC160
 #if SEND_HAIER_AC176
   void sendHaierAC176(const unsigned char data[],
                       const uint16_t nbytes = kHaierAC176StateLength,
@@ -654,11 +682,16 @@ class IRsend {
   void sendVestelAc(const uint64_t data, const uint16_t nbits = kVestelAcBits,
                     const uint16_t repeat = kNoRepeat);
 #endif
+#if SEND_TCL96AC
+  void sendTcl96Ac(const unsigned char data[],
+                    const uint16_t nbytes = kTcl96AcStateLength,
+                    const uint16_t repeat = kTcl96AcDefaultRepeat);
+#endif  // SEND_TCL96AC
 #if SEND_TCL112AC
   void sendTcl112Ac(const unsigned char data[],
                     const uint16_t nbytes = kTcl112AcStateLength,
                     const uint16_t repeat = kTcl112AcDefaultRepeat);
-#endif
+#endif  // SEND_TCL112AC
 #if SEND_TECO
   void sendTeco(const uint64_t data, const uint16_t nbits = kTecoBits,
                 const uint16_t repeat = kNoRepeat);
@@ -790,6 +823,20 @@ class IRsend {
   void sendAirton(const uint64_t data, const uint16_t nbits = kAirtonBits,
                   const uint16_t repeat = kAirtonDefaultRepeat);
 #endif  // SEND_AIRTON
+#if SEND_TOTO
+  void sendToto(const uint64_t data, const uint16_t nbits = kTotoBits,
+                const uint16_t repeat = kTotoDefaultRepeat);
+#endif  // SEND_TOTO
+#if SEND_CLIMABUTLER
+  void sendClimaButler(const uint64_t data,
+                       const uint16_t nbits = kClimaButlerBits,
+                       const uint16_t repeat = kNoRepeat);
+#endif  // SEND_CLIMABUTLER
+#if SEND_BOSCH144
+  void sendBosch144(const unsigned char data[],
+                    const uint16_t nbytes = kBosch144StateLength,
+                    const uint16_t repeat = kNoRepeat);
+#endif  // SEND_BOSCH144
 
  protected:
 #ifdef UNIT_TEST
