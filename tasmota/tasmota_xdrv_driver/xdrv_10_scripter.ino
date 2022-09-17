@@ -80,7 +80,7 @@ uint32_t EncodeLightId(uint8_t relay_id);
 uint32_t DecodeLightId(uint32_t hue_id);
 char *web_send_line(char mc, char *lp);
 int32_t web_send_file(char mc, char *file);
-
+char *Get_esc_char(char *cp, char *esc_chr);
 #define SPECIAL_EEPMODE_SIZE 6200
 
 #ifndef STASK_STACK
@@ -438,6 +438,7 @@ struct SCRIPT_MEM {
     void *script_mem;
     uint16_t script_mem_size;
     uint8_t script_dprec;
+    char script_sepc;
     uint8_t script_lzero;
     uint8_t var_not_found;
     uint8_t glob_error;
@@ -499,7 +500,7 @@ void flt2char(float num, char *nbuff) {
   dtostrfd(num, glob_script_mem.script_dprec, nbuff);
 }
 // convert float to char with leading zeros
-void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
+void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff, char dsep) {
   dtostrfd(num, dprec, nbuff);
   if (lzeros > 1) {
     // check leading zeros
@@ -520,6 +521,13 @@ void f2char(float num, uint32_t dprec, uint32_t lzeros, char *nbuff) {
       *cp=0;
       strcat(cpbuf,nbuff);
       strcpy(nbuff,cpbuf);
+    }
+  }
+  if (dsep != '.') {
+    for (uint16_t cnt = 0; cnt < strlen(nbuff); cnt++) {
+      if (nbuff[cnt] == '.') {
+        nbuff[cnt] = dsep;
+      }
     }
   }
 }
@@ -789,9 +797,12 @@ char *script;
                     // string vars
                     op++;
                     *snp_p ++= strings_p;
-                    while (*op!='\"') {
-                      if (*op==SCRIPT_EOL) break;
-                      *strings_p++ = *op++;
+                    while (*op != '\"') {
+                      if (*op == SCRIPT_EOL) break;
+                      char iob;
+                      op = Get_esc_char(op, &iob);
+                      //*strings_p++ = *op++;
+                      *strings_p++ = iob;
                     }
                     *strings_p++ = 0;
                     vtypes[vars].bits.is_string = 1;
@@ -970,6 +981,7 @@ char *script;
     glob_script_mem.numvars = vars;
     glob_script_mem.script_dprec = SCRIPT_FLOAT_PRECISION;
     glob_script_mem.script_lzero = 0;
+    glob_script_mem.script_sepc = '.';
     glob_script_mem.script_loglevel = LOG_LEVEL_INFO;
 
 
@@ -980,7 +992,7 @@ char *script;
 
       } else {
         char string[32];
-        f2char(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, glob_script_mem.script_lzero, string);
+        f2char(glob_script_mem.fvars[dvtp[count].index], glob_script_mem.script_dprec, glob_script_mem.script_lzero, string, '.');
         toLog(string);
       }
     }
@@ -1997,6 +2009,33 @@ char *isargs(char *lp, uint32_t isind) {
   return lp;
 }
 
+char *Get_esc_char(char *cp, char *esc_chr) {
+char iob = *cp;
+  if (iob == '\\') {
+    cp++;
+    if (*cp == 't') {
+      iob = '\t';
+    } else if (*cp == 'n') {
+      iob = '\n';
+    } else if (*cp == 'r') {
+      iob = '\r';
+    } else if (*cp == '0' && *(cp + 1) == 'x') {
+      cp += 2;
+      iob = strtol(cp, 0, 16);
+      cp++;
+    } else if (*cp == '\\') {
+      iob = '\\';
+    }
+     else {
+      cp--;
+    }
+  }
+  *esc_chr = iob;
+  cp++;
+  return cp;
+}
+
+
 char *isget(char *lp, char *sp, uint32_t isind, struct GVARS *gv) {
 float fvar;
   lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
@@ -2061,29 +2100,9 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, float *fp, char *sp,
       lp++;
       while (*lp != '"') {
         if (*lp == 0 || *lp == SCRIPT_EOL) break;
-        uint8_t iob = *lp;
-        if (iob == '\\') {
-          lp++;
-          if (*lp == 't') {
-            iob = '\t';
-          } else if (*lp == 'n') {
-            iob = '\n';
-          } else if (*lp == 'r') {
-            iob = '\r';
-          } else if (*lp == '0' && *(lp+1) == 'x') {
-            lp += 2;
-            iob = strtol(lp, 0, 16);
-            lp++;
-          } else if (*lp == '\\') {
-            iob = '\\';
-          } else {
-            lp--;
-          }
-          if (sp) *sp++ = iob;
-        } else {
-          if (sp) *sp++ = iob;
-        }
-        lp++;
+        char iob;
+        lp = Get_esc_char(lp, &iob);
+        if (sp) *sp++ = iob;
       }
       if (sp) *sp = 0;
       *vtype = STR_RES;
@@ -2569,6 +2588,10 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           glob_script_mem.script_lzero = fvar;
+          if (*lp == ',' || *lp == '.') {
+            glob_script_mem.script_sepc = *lp;
+            lp++;
+          }
           lp = GetNumericArgument(lp , OPER_EQU, &fvar, gv);
           while (*lp==' ') lp++;
           glob_script_mem.script_dprec = fvar;
@@ -3979,7 +4002,13 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           lp = GetStringArgument(lp + 3, OPER_EQU, str, 0);
           SCRIPT_SKIP_SPACES
           char token[2];
-          token[0] = *lp++;
+          if (*lp == '\'') {
+            lp++;
+            lp = Get_esc_char(lp, token);
+            lp++;
+          } else {
+            token[0] = *lp++;
+          }
           token[1] = 0;
           SCRIPT_SKIP_SPACES
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
@@ -4033,8 +4062,10 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           lp += 2;
           uint8_t dprec = glob_script_mem.script_dprec;
           uint8_t lzero = glob_script_mem.script_lzero;
+          char dsep = glob_script_mem.script_sepc;
           if (isdigit(*lp)) {
-            if (*(lp + 1) == '.') {
+            if (*(lp + 1) == '.' || *(lp + 1) == ',') {
+              dsep = *(lp + 1);
               lzero = *lp & 0xf;
               lp += 2;
               dprec = *lp & 0xf;
@@ -4046,7 +4077,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
           char str[SCRIPT_MAXSSIZE];
-          f2char(fvar, dprec, lzero, str);
+          f2char(fvar, dprec, lzero, str, dsep);
           if (sp) strlcpy(sp, str, glob_script_mem.max_ssize);
           lp++;
           len = 0;
@@ -4853,6 +4884,16 @@ extern char *SML_GetSVal(uint32_t index);
           goto nfuncexit;
         }
 #endif
+        if (!strncmp(lp, "tc(", 3)) {
+          lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
+          lp++;
+          if (sp) {
+            sp[0] = fvar;
+            sp[1] = 0;
+          }
+          len = 0;
+          goto strexit;
+        }
         break;
       case 'u':
         if (!strncmp(vname, "uptime", 6)) {
@@ -5446,6 +5487,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
     uint16_t count;
     uint8_t vtype;
     uint8_t dprec = glob_script_mem.script_dprec;
+    char dsep = glob_script_mem.script_sepc;
     uint8_t lzero = glob_script_mem.script_lzero;
     float fvar;
     cp = srcbuf;
@@ -5460,7 +5502,8 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               dstbuf[count] = *cp++;
             } else {
               if (isdigit(*cp)) {
-                if (*(cp+1) == '.') {
+                if (*(cp + 1) == '.' || *(cp + 1) == ',') {
+                  dsep = *(cp + 1);
                   lzero = *cp & 0xf;
                   cp+=2;
                 }
@@ -5469,6 +5512,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
               } else {
                 dprec = glob_script_mem.script_dprec;
                 lzero = glob_script_mem.script_lzero;
+                dsep = glob_script_mem.script_sepc;
               }
               if (*cp=='(') {
                 // math expression
@@ -5480,7 +5524,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                   glob_script_mem.glob_error = 0;
                   cp = GetStringArgument(slp, OPER_EQU, string, 0);
                 } else {
-                  f2char(fvar, dprec, lzero, string);
+                  f2char(fvar, dprec, lzero, string, dsep);
                 }
                 uint8_t slen = strlen(string);
                 if (count + slen < dstsize - 1) {
@@ -5494,7 +5538,7 @@ void Replace_Cmd_Vars(char *srcbuf, uint32_t srcsize, char *dstbuf, uint32_t dst
                   // found variable as result
                   if (vtype==NUM_RES || (vtype&STYPE)==0) {
                     // numeric result
-                    f2char(fvar, dprec, lzero, string);
+                    f2char(fvar, dprec, lzero, string, dsep);
                   } else {
                     // string result
                   }
@@ -5871,9 +5915,15 @@ int16_t retval;
     return retval;
 }
 
+#define SCRIPT_LOOP_NEST 3
 int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
-    uint8_t vtype = 0, sindex, xflg, floop = 0, globvindex, fromscriptcmd = 0;
-    char *lp_next;
+    uint8_t vtype = 0, sindex, xflg, globvindex, fromscriptcmd = 0;
+    // 22 bytes per nested loop
+    uint8_t floop[SCRIPT_LOOP_NEST] = {0, 0, 0};
+    int8_t loopdepth = -1;
+    char *lp_next[SCRIPT_LOOP_NEST];
+    char *cv_ptr[SCRIPT_LOOP_NEST];
+    float *cv_count[SCRIPT_LOOP_NEST], cv_max[SCRIPT_LOOP_NEST], cv_inc[SCRIPT_LOOP_NEST];
     int16_t globaindex, saindex;
     struct T_INDEX ind;
     uint8_t operand, lastop, numeric = 1, if_state[IF_NEST], if_exe[IF_NEST], if_result[IF_NEST], and_or, ifstck = 0;
@@ -5881,8 +5931,8 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     if_result[ifstck] = 0;
     if_exe[ifstck] = 1;
     char cmpstr[SCRIPT_MAXSSIZE];
-    float *dfvar, *cv_count, cv_max, cv_inc;
-    char *cv_ptr;
+    float *dfvar;
+
     float fvar = 0, fvar1, sysvar, swvar;
     uint8_t section = 0, sysv_type = 0, swflg = 0;
 
@@ -5895,7 +5945,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
     }
 
     uint8_t check = 0;
-    if (tlen<0) {
+    if (tlen < 0) {
       tlen = abs(tlen);
       check = 1;
     }
@@ -5903,22 +5953,23 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 
     while (1) {
         // check line
-        // skip leading spaces
-        startline:
-        SCRIPT_SKIP_SPACES
-        while (*lp == '\t') {lp++;}
+        // skip leading spaces and tabs
+startline:
+        while (*lp == '\t' || *lp == ' ') {
+          lp++;
+        }
         // skip empty line
         SCRIPT_SKIP_EOL
         // skip comment
-        if (*lp==';') goto next_line;
+        if (*lp == ';') goto next_line;
         if (!*lp) break;
 
         if (section) {
             // we are in section
-            if (*lp=='>') {
+            if (*lp == '>') {
                 return 0;
             }
-            if (*lp=='#') {
+            if (*lp == '#') {
                 return 0;
             }
             glob_script_mem.var_not_found = 0;
@@ -5935,59 +5986,59 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 
             if (!strncmp(lp, "if", 2)) {
                 lp += 2;
-                if (ifstck<IF_NEST-1) ifstck++;
+                if (ifstck < IF_NEST - 1) ifstck++;
                 if_state[ifstck] = 1;
                 if_result[ifstck] = 0;
-                if (ifstck==1) if_exe[ifstck] = 1;
+                if (ifstck == 1) if_exe[ifstck] = 1;
                 else if_exe[ifstck] = if_exe[ifstck - 1];
                 and_or = 0;
-            } else if (!strncmp(lp, "then", 4) && if_state[ifstck]==1) {
+            } else if (!strncmp(lp, "then", 4) && if_state[ifstck] == 1) {
                 lp += 4;
                 if_state[ifstck] = 2;
                 if (if_exe[ifstck - 1]) if_exe[ifstck] = if_result[ifstck];
-            } else if (!strncmp(lp, "else", 4) && if_state[ifstck]==2) {
+            } else if (!strncmp(lp, "else", 4) && if_state[ifstck] == 2) {
                 lp += 4;
                 if_state[ifstck] = 3;
                 if (if_exe[ifstck - 1]) if_exe[ifstck] = !if_result[ifstck];
-            } else if (!strncmp(lp, "endif", 5) && if_state[ifstck]>=2) {
+            } else if (!strncmp(lp, "endif", 5) && if_state[ifstck] >= 2) {
                 lp += 5;
                 if (ifstck>0) {
                   if_state[ifstck] = 0;
                   ifstck--;
                 }
                 goto next_line;
-            } else if (!strncmp(lp, "or", 2) && if_state[ifstck]==1) {
+            } else if (!strncmp(lp, "or", 2) && if_state[ifstck] == 1) {
                 lp += 2;
                 and_or = 1;
-            } else if (!strncmp(lp, "and", 3) && if_state[ifstck]==1) {
+            } else if (!strncmp(lp, "and", 3) && if_state[ifstck] == 1) {
                 lp += 3;
                 and_or = 2;
             }
 
-            if (*lp=='{' && if_state[ifstck]==1) {
+            if (*lp == '{' && if_state[ifstck] == 1) {
               lp += 1; // then
               if_state[ifstck] = 2;
-              if (if_exe[ifstck - 1]) if_exe[ifstck]=if_result[ifstck];
-            } else if (*lp=='{' && if_state[ifstck]==3) {
+              if (if_exe[ifstck - 1]) if_exe[ifstck] = if_result[ifstck];
+            } else if (*lp == '{' && if_state[ifstck] == 3) {
               lp += 1; // after else
               //if_state[ifstck]=3;
-            } else if (*lp=='}' && if_state[ifstck]>=2) {
+            } else if (*lp == '}' && if_state[ifstck] >= 2) {
               lp++; // must check for else
               char *slp = lp;
               uint8_t iselse = 0;
-              for (uint8_t count = 0; count<8;count++) {
-                if (*lp=='}') {
+              for (uint8_t count = 0; count < 8; count++) {
+                if (*lp == '}') {
                   // must be endif
                   break;
                 }
                 if (!strncmp(lp, "else", 4)) {
                   // is before else, no endif
                   if_state[ifstck] = 3;
-                  if (if_exe[ifstck-1]) if_exe[ifstck]=!if_result[ifstck];
+                  if (if_exe[ifstck - 1]) if_exe[ifstck] =! if_result[ifstck];
                   lp += 4;
                   iselse = 1;
                   SCRIPT_SKIP_SPACES
-                  if (*lp=='{') lp++;
+                  if (*lp == '{') lp++;
                   break;
                 }
                 lp++;
@@ -5995,7 +6046,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               if (!iselse) {
                 lp = slp;
                 // endif
-                if (ifstck>0) {
+                if (ifstck > 0) {
                   if_state[ifstck] = 0;
                   ifstck--;
                 }
@@ -6008,28 +6059,29 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               // simple implementation, zero loop count not supported
               lp += 3;
               SCRIPT_SKIP_SPACES
-              lp_next = 0;
+              loopdepth++;
+              if (loopdepth >= SCRIPT_LOOP_NEST) {
+                loopdepth = SCRIPT_LOOP_NEST - 1;
+              }
+              lp_next[loopdepth] = 0;
               lp = isvar(lp, &vtype, &ind, 0, 0, gv);
-              if ((vtype!=VAR_NV) && (vtype&STYPE)==0) {
+              if ((vtype != VAR_NV) && (vtype & STYPE) == 0) {
                   // numeric var
                   uint8_t index = glob_script_mem.type[ind.index].index;
-                  cv_count = &glob_script_mem.fvars[index];
-                  SCRIPT_SKIP_SPACES
-                  lp = GetNumericArgument(lp, OPER_EQU, cv_count, 0);
-                  SCRIPT_SKIP_SPACES
-                  lp = GetNumericArgument(lp, OPER_EQU, &cv_max, 0);
-                  SCRIPT_SKIP_SPACES
-                  lp = GetNumericArgument(lp, OPER_EQU, &cv_inc, 0);
+                  cv_count[loopdepth] = &glob_script_mem.fvars[index];
+                  lp = GetNumericArgument(lp, OPER_EQU, cv_count[loopdepth], 0);
+                  lp = GetNumericArgument(lp, OPER_EQU, &cv_max[loopdepth], 0);
+                  lp = GetNumericArgument(lp, OPER_EQU, &cv_inc[loopdepth], 0);
                   //SCRIPT_SKIP_EOL
-                  cv_ptr = lp;
-                  if (*cv_count<=cv_max && cv_inc>0) {
+                  cv_ptr[loopdepth] = lp;
+                  if (*cv_count[loopdepth] <= cv_max[loopdepth] && cv_inc[loopdepth] > 0) {
                     // inc loop
-                    floop = 1;
+                    floop[loopdepth] = 1;
                   } else {
                     // dec loop
-                    floop = 2;
-                    if (cv_inc>0) {
-                      floop = 1;
+                    floop[loopdepth]  = 2;
+                    if (cv_inc[loopdepth] > 0) {
+                      floop[loopdepth] = 1;
                     }
                   }
               } else {
@@ -6037,23 +6089,40 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                   toLogEOL("for error", lp);
               }
             } else if (!strncmp(lp, "next", 4)) {
-              lp_next = lp;
-              if (floop>0) {
-                // for next loop
-                *cv_count += cv_inc;
-                if (floop==1) {
-                  if (*cv_count<=cv_max) {
-                    lp = cv_ptr;
+getnext:
+              if (loopdepth >= 0) {
+                lp_next[loopdepth] = lp;
+                if (floop[loopdepth] > 0) {
+                  // for next loop
+                  *cv_count[loopdepth] += cv_inc[loopdepth];
+                  if (floop[loopdepth] == 1) {
+                    if (*cv_count[loopdepth] <= cv_max[loopdepth]) {
+                      lp = cv_ptr[loopdepth];
+                    } else {
+                      lp += 4;
+                      floop[loopdepth] = 0;
+                      loopdepth--;
+                      if (loopdepth < -1) {
+                        loopdepth = -1;
+                      }
+                    }
                   } else {
-                    lp += 4;
-                    floop = 0;
+                    if (*cv_count[loopdepth] >= cv_max[loopdepth]) {
+                      lp = cv_ptr[loopdepth];
+                    } else {
+                      lp += 4;
+                      floop[loopdepth] = 0;
+                      loopdepth--;
+                      if (loopdepth < -1) {
+                        loopdepth = -1;
+                      }
+                    }
                   }
                 } else {
-                  if (*cv_count>=cv_max) {
-                    lp = cv_ptr;
-                  } else {
-                    lp += 4;
-                    floop = 0;
+                  lp += 4;
+                  loopdepth--;
+                  if (loopdepth < -1) {
+                    loopdepth = -1;
                   }
                 }
               }
@@ -6064,7 +6133,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               SCRIPT_SKIP_SPACES
               char *slp = lp;
               lp = GetNumericArgument(lp, OPER_EQU, &swvar, 0);
-              if (glob_script_mem.glob_error==1) {
+              if (glob_script_mem.glob_error == 1) {
                 // was string, not number
                 lp = slp;
                 // get the string
@@ -6079,7 +6148,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               float cvar;
               if (!(swflg & 0x80)) {
                 lp = GetNumericArgument(lp, OPER_EQU, &cvar, 0);
-                if (swvar!=cvar) {
+                if (swvar != cvar) {
                   swflg = 2;
                 } else {
                   swflg = 1;
@@ -6093,20 +6162,20 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                   swflg = 0x82;
                 }
               }
-            } else if (!strncmp(lp, "ends", 4) && swflg>0) {
+            } else if (!strncmp(lp, "ends", 4) && swflg > 0) {
               lp += 4;
               swflg = 0;
             }
-            if ((swflg & 3)==2) goto next_line;
+            if ((swflg & 3) == 2) goto next_line;
 
             SCRIPT_SKIP_SPACES
             //SCRIPT_SKIP_EOL
-            if (*lp==SCRIPT_EOL) {
+            if (*lp == SCRIPT_EOL) {
              goto next_line;
             }
 
             //toLogN(lp,16);
-            if (!if_exe[ifstck] && if_state[ifstck]!=1) goto next_line;
+            if (!if_exe[ifstck] && if_state[ifstck] != 1) goto next_line;
 
 #ifdef IFTHEN_DEBUG
             sprintf(tbuff, "stack=%d,exe=%d,state=%d,cmpres=%d execute line: ", ifstck, if_exe[ifstck], if_state[ifstck], if_result[ifstck]);
@@ -6137,23 +6206,28 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               goto next_line;
             } else if (!strncmp(lp, "break", 5)) {
               lp += 5;
-              if (floop) {
-                // should break loop
-                if (lp_next) {
-                  lp = lp_next;
+              if (loopdepth >= 0) {
+                if (floop[loopdepth] ) {
+                  // should break loop
+                  if (lp_next[loopdepth]) {
+                    lp = lp_next[loopdepth];
+                  }
+                  floop[loopdepth]  = 0;
+                  goto getnext;
                 }
-                floop = 0;
               } else {
                 section = 99;
                 // leave immediately
+                goto next_line;
               }
-              goto next_line;
+
             } else if (!strncmp(lp, "dp", 2) && isdigit(*(lp + 2))) {
               lp += 2;
               // number precision
-              if (*(lp + 1)== '.') {
+              if (*(lp + 1) == '.' || *(lp + 1) == ',' ) {
+                glob_script_mem.script_sepc = *(lp + 1);
                 glob_script_mem.script_lzero = atoi(lp);
-                lp+=2;
+                lp += 2;
               }
               glob_script_mem.script_dprec = atoi(lp);
               goto next_line;
@@ -6190,7 +6264,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               }
               SCRIPT_SKIP_SPACES
               uint8_t mode = 0;
-              if ((*lp=='I') || (*lp=='O') || (*lp=='P')) {
+              if ((*lp == 'I') || (*lp == 'O') || (*lp == 'P')) {
                 switch (*lp) {
                   case 'I':
                     mode = 0;
@@ -6207,10 +6281,10 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
                 mode = fvar;
               }
-              uint8_t pm=0;
-              if (mode==0) pm = INPUT;
-              if (mode==1) pm = OUTPUT;
-              if (mode==2) pm = INPUT_PULLUP;
+              uint8_t pm = 0;
+              if (mode == 0) pm = INPUT;
+              if (mode == 1) pm = OUTPUT;
+              if (mode == 2) pm = INPUT_PULLUP;
               pinMode(pinnr, pm);
               goto next_line;
             } else if (!strncmp(lp, "spin(", 5)) {
@@ -6240,16 +6314,16 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 #ifdef USE_WS2812
             else if (!strncmp(lp, "ws2812(", 7)) {
               lp = isvar(lp + 7, &vtype, &ind, 0, 0, gv);
-              if (vtype!=VAR_NV) {
+              if (vtype != VAR_NV) {
                 SCRIPT_SKIP_SPACES
-                if (*lp!=')') {
+                if (*lp != ')') {
                   lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
                 } else {
                   fvar = 0;
                 }
                 // found variable as result
                 uint8_t index = glob_script_mem.type[ind.index].index;
-                if ((vtype&STYPE)==0) {
+                if ((vtype & STYPE) == 0) {
                     // numeric result
                   if (glob_script_mem.type[ind.index].bits.is_filter) {
                     uint16_t len = 0;
@@ -6278,7 +6352,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
             else if (!strncmp(lp, "pwm", 3)) {
               lp += 3;
               uint8_t channel = 1;
-              if (*(lp+1)=='(') {
+              if (*(lp+1) == '(') {
                 channel = *lp & 0x0f;
 #ifdef ESP8266
                 if (channel > 5) {channel = 5;}
@@ -6289,7 +6363,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                 if (channel < 1) {channel = 1;}
                 lp += 2;
               } else {
-                if (*lp=='(') {
+                if (*lp == '(') {
                   lp++;
                 } else {
                   goto next_line;
@@ -6298,7 +6372,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
               SCRIPT_SKIP_SPACES
               float fvar1=4000;
-              if (*lp!=')') {
+              if (*lp != ')') {
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar1, 0);
               }
               esp_pwm(fvar, fvar1, channel);
@@ -6340,7 +6414,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 
 #if defined(USE_SENDMAIL) || defined(USE_ESP32MAIL)
             else if (!strncmp(lp, "mail", 4)) {
-              lp+=5;
+              lp += 5;
               //char tmp[256];
               char *tmp = (char*)malloc(256);
               if (tmp) {
@@ -6351,16 +6425,16 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
               goto next_line;
             }
 #endif
-            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
+            else if (!strncmp(lp, "=>", 2) || !strncmp(lp, "->", 2) || !strncmp(lp, "+>", 2) || !strncmp(lp, "print", 5)) {
                 // execute cmd
                 uint8_t sflag = 0,pflg = 0,svmqtt,swll;
-                if (*lp=='p') {
+                if (*lp == 'p') {
                  pflg = 1;
                  lp += 5;
                 }
                 else {
-                  if (*lp=='-') sflag = 1;
-                  if (*lp=='+') sflag = 2;
+                  if (*lp == '-') sflag = 1;
+                  if (*lp == '+') sflag = 2;
                   lp += 2;
                 }
                 char *slp = lp;
@@ -6371,7 +6445,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                   uint16_t count;
                   for (count = 0; count < glob_script_mem.cmdbuffer_size-2; count++) {
                     //if (*lp=='\r' || *lp=='\n' || *lp=='}') {
-                    if (!*lp || *lp=='\r' || *lp=='\n') {
+                    if (!*lp || *lp == '\r' || *lp == '\n') {
                         cmd[count] = 0;
                         break;
                     }
@@ -6455,7 +6529,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                   if (gv) globaindex = gv->numind;
                   else globaindex = -1;
                   uint8_t index = glob_script_mem.type[ind.index].index;
-                  if ((vtype&STYPE)==0) {
+                  if ((vtype & STYPE) == 0) {
                       // numeric result
                       if (ind.bits.settable || ind.bits.is_filter) {
                         dfvar = &sysvar;
@@ -6472,7 +6546,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                       SCRIPT_SKIP_SPACES
                       lp = getop(lp, &lastop);
 #ifdef SCRIPT_LM_SUB
-                      if (*lp=='#') {
+                      if (*lp == '#') {
                         // subroutine
                         lp = eval_sub(lp, &fvar, 0);
                       } else {
@@ -6571,8 +6645,8 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                             glob_script_mem.script_loglevel = *dfvar;
                             break;
                           case SCRIPT_TELEPERIOD:
-                            if (*dfvar<10) *dfvar = 10;
-                            if (*dfvar>300) *dfvar = 300;
+                            if (*dfvar < 10) *dfvar = 10;
+                            if (*dfvar > 300) *dfvar = 300;
                             Settings->tele_period = *dfvar;
                             break;
                           case SCRIPT_EVENT_HANDLED:
@@ -6605,7 +6679,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                     SCRIPT_SKIP_SPACES
                     lp = getop(lp, &lastop);
 #ifdef SCRIPT_LM_SUB
-                    if (*lp=='#') {
+                    if (*lp == '#') {
                       // subroutine
                       lp = eval_sub(lp, 0, str);
                     } else {
@@ -6630,17 +6704,17 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                         script_udp_sendvar(varname, 0, str);
                       }
 #endif //USE_SCRIPT_GLOBVARS
-                      if (saindex>=0) {
-                        if (lastop==OPER_EQU) {
+                      if (saindex >= 0) {
+                        if (lastop == OPER_EQU) {
                           strlcpy(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
-                        } else if (lastop==OPER_PLSEQU) {
+                        } else if (lastop == OPER_PLSEQU) {
                           strncat(glob_script_mem.last_index_string[glob_script_mem.sind_num] + (saindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         }
                         gv->strind = -1;
                       } else {
-                        if (lastop==OPER_EQU) {
+                        if (lastop == OPER_EQU) {
                           strlcpy(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
-                        } else if (lastop==OPER_PLSEQU) {
+                        } else if (lastop == OPER_PLSEQU) {
                           strncat(glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
                         }
                       }
@@ -6649,7 +6723,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
 
             }
             SCRIPT_SKIP_SPACES
-            if (*lp=='{' && if_state[ifstck]==3) {
+            if (*lp == '{' && if_state[ifstck] == 3) {
               lp += 1; // else
               //if_state[ifstck]=3;
             }
@@ -6658,7 +6732,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
         } else {
             //Serial.printf(">> decode %s\n",lp );
             // decode line
-            if (*lp=='>' && tlen==1) {
+            if (*lp == '>' && tlen == 1) {
               // called from cmdline
               lp++;
               section = 1;
@@ -6686,7 +6760,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
                       numeric = 1;
                       glob_script_mem.glob_error = 0;
                       argptr = GetNumericArgument((char*)ctype + 1, OPER_EQU, &fparam, 0);
-                      if (glob_script_mem.glob_error==1) {
+                      if (glob_script_mem.glob_error == 1) {
                         // was string, not number
                         numeric = 0;
                         // get the string
@@ -6735,7 +6809,7 @@ int16_t Run_script_sub(const char *type, int8_t tlen, struct GVARS *gv) {
         // next line
     next_line:
         if (section == 99) return 0;
-        if (*lp==SCRIPT_EOL) {
+        if (*lp == SCRIPT_EOL) {
           lp++;
         } else {
           lp = strchr(lp, SCRIPT_EOL);
@@ -9943,7 +10017,7 @@ exgc:
             } else {
               fval = fp[cnt];
             }
-            f2char(fval, glob_script_mem.script_dprec, glob_script_mem.script_lzero, acbuff);
+            f2char(fval, glob_script_mem.script_dprec, glob_script_mem.script_lzero, acbuff, '.');
             WSContentSend_P("%s", acbuff);
             if (ind < anum - 1) { WSContentSend_P(","); }
           }
