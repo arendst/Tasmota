@@ -749,7 +749,7 @@ uint32_t CfgTime(void) {
 void SettingsErase(uint8_t type) {
   /*
     For Arduino core and SDK:
-    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
+    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP_getFlashChipSize).
     Addresses above SDK recognized size (up to ESP.getFlashChipRealSize) are not accessable.
     For Esptool:
     The only way to erase whole flash is esptool which uses direct SPI writes to flash.
@@ -779,7 +779,7 @@ void SettingsErase(uint8_t type) {
 */
     EsptoolErase(_sectorStart, FLASH_FS_START);
     _sectorStart = EEPROM_LOCATION;
-    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
+    _sectorEnd = ESP_getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (3 == type) {    // QPC Reached = QPC and Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 #ifdef USE_UFILESYS
