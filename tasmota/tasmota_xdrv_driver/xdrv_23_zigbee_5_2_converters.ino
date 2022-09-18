@@ -278,10 +278,12 @@ uint8_t toPercentageCR2032(uint32_t voltage) {
 // Adds to buf:
 // - n bytes: value (typically between 1 and 4 bytes, or bigger for strings)
 // returns number of bytes of attribute, or <0 if error
+// If the value is `NAN`, the value encoded is the "zigbee invalid value"
 int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, uint8_t attrtype) {
   uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute length, overloaded for variable length attributes
-  uint32_t u32 = val_d;
-  int32_t  i32 = val_d;
+  bool nan = isnan(val_d);
+  uint32_t u32 = nan ? 0xFFFFFFFF : roundf(val_d);
+  int32_t  i32 = roundf(val_d);
   float    f32 = val_d;
 
   switch (attrtype) {
@@ -315,13 +317,13 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
 
     // signed 8
     case Zint8:      // int8
-      buf.add8(i32);
+      buf.add8(nan ? 0x80 : i32);
       break;
     case Zint16:      // int16
-      buf.add16(i32);
+      buf.add16(nan ? 0x8000 : i32);
       break;
     case Zint32:      // int32
-      buf.add32(i32);
+      buf.add32(nan ? 0x80000000 : i32);
       break;
 
     case Zsingle:      // float

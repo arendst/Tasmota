@@ -219,18 +219,20 @@ void zigbeeZCLSendCmd(class ZCLFrame &zcl) {
 
 // Definitive doc for Tuya protocol:
 // https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
-// Special encoding for multiplier:
+
+// Special encoding for multiplier when sending writes or reportable attributes,
+// I.e. multipliers and dividers are inversed
 // multiplier == 0: ignore
 // multiplier == 1: ignore
-void ZbApplyMultiplier(double &val_d, int8_t multiplier, int8_t divider, int8_t base) {
+void ZbApplyMultiplierForWrites(double &val_d, int8_t multiplier, int8_t divider, int8_t base) {
+  if (0 != base) {
+    val_d = val_d - base;
+  }
   if ((0 != multiplier) && (1 != multiplier)) {
-    val_d = val_d * multiplier;
+    val_d = val_d / multiplier;
   }
   if ((0 != divider) && (1 != divider)) {
-    val_d = val_d / divider;
-  }
-  if (0 != base) {
-    val_d = val_d + base;
+    val_d = val_d * divider;
   }
 }
 
@@ -243,7 +245,7 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
 
   if (attr.key_is_str || attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
   if (attr.isNum()) {
-    ZbApplyMultiplier(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+    ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, 0);
   }
   uint32_t u32 = val_d;
   int32_t  i32 = val_d;
@@ -302,7 +304,7 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
 
   if (attr.key_is_str && attr.key_is_cmd) { return false; }    // couldn't find attr if so skip
   if (attr.isNum()) {
-    ZbApplyMultiplier(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+    ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, 0);
   }
 
   // push the value in the buffer
@@ -419,9 +421,14 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
       // read ReportableChange
       JsonParserToken val_attr_rc = attr_config[PSTR("ReportableChange")];
       if (val_attr_rc) {
-        val_d = val_attr_rc.getFloat();
+        // If value is `null` then we send 0xFFFF for invalid value
         val_str = val_attr_rc.getStr();
-        ZbApplyMultiplier(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+        if (!val_attr_rc.isNull()) {
+          val_d = val_attr_rc.getFloat();
+          ZbApplyMultiplierForWrites(val_d, attr.attr_multiplier, attr.attr_divider, 0);
+        } else {
+          val_d = NAN;
+        }
       }
 
       // read TimeoutPeriod
