@@ -1594,7 +1594,7 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
         buf.add16(min_interval);
         buf.add16(max_interval);
         if (!Z_isDiscreteDataType(attr_matched.zigbee_type)) {   // report_change is only valid for non-discrete data types (numbers)
-          ZbApplyMultiplier(report_change, attr_matched.multiplier, attr_matched.divider, attr_matched.base);
+          ZbApplyMultiplierForWrites(report_change, attr_matched.multiplier, attr_matched.divider, attr_matched.base);
           // encode value
           int32_t res = encodeSingleAttribute(buf, report_change, "", attr_matched.zigbee_type);
           if (res < 0) {
