@@ -1,5 +1,11 @@
 # Release Notes
 
+## _v2.8.4 (20220918)_
+
+**[Bug Fixes]**
+ - [Bugfix] Handle gcc unsupported __VA_OPT___ macro (#1880 #1881)
+
+
 ## _v2.8.3 (20220915)_
 
 **[Bug Fixes]**
