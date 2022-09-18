@@ -1,6 +1,8 @@
 #- Native code used for testing and code solidification -#
 #- Do not use it -#
 
+#@ solidify:Wire.read_bytes
+#@ solidify:Wire.write_bytes
 class Wire
   var bus
 

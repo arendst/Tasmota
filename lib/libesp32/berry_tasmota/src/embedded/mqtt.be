@@ -17,7 +17,7 @@ print("Ok")
 
 class MQTT_ntv end    # for solidification only
 
-
+#@ solidify:MQTT
 class MQTT : MQTT_ntv
   var topics
 

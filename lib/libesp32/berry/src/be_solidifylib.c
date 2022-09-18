@@ -190,7 +190,7 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
         break;
     case BE_REAL:
 #if BE_USE_SINGLE_FLOAT
-        logfmt("be_const_real_hex(%08" PRIX32 ")", (uint32_t)(uintptr_t)var_toobj(value));
+        logfmt("be_const_real_hex(0x%08" PRIX32 ")", (uint32_t)(uintptr_t)var_toobj(value));
 #else
         logfmt("be_const_real_hex(0x%016" PRIx64 ")", (uint64_t)var_toobj(value));
 #endif
@@ -537,8 +537,12 @@ static int m_dump(bvm *vm)
             }
             be_pop(vm, 1);
         }
+        const char *classname = NULL;  /* allow to specify an explicit prefix */
+        if (top >= 4 && be_isstring(vm, 4)) {
+            classname = be_tostring(vm, 4);
+        }
         if (var_isclosure(v)) {
-            m_solidify_closure(vm, str_literal, var_toobj(v), NULL, fout);
+            m_solidify_closure(vm, str_literal, var_toobj(v), classname, fout);
         } else if (var_isclass(v)) {
             m_solidify_class(vm, str_literal, var_toobj(v), fout);
         } else if (var_ismodule(v)) {

@@ -4,6 +4,7 @@
 class zb_coord_ntv end      # fake class replaced with native one
 #zb_coord_ntv = classof(super(zigbee))
 
+#@ solidify:zb_coord,weak
 class zb_coord : zb_coord_ntv
   var _handlers
 

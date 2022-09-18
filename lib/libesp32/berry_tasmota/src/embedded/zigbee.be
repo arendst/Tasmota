@@ -1,5 +1,6 @@
 # zigbee code
 
+#@ solidify:zb_device.tostring,weak
 class zb_device
 
   def tostring()

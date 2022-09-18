@@ -1,3 +1,4 @@
+#-
 ec = crypto.EC_C25519()
 
 # Alice
@@ -14,6 +15,7 @@ psk = ec.shared_key(sk_A, pk_B)
 assert(psk == bytes('4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742'))
 psk2 = ec.shared_key(sk_B, pk_A)
 assert(psk2 == bytes('4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742'))
+-#
 
 #- test vectors from RFC77748
 
