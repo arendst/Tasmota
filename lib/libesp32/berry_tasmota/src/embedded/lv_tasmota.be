@@ -3,6 +3,7 @@
 #- ------------------------------------------------------------ -#
 lv_tasmota = module("lv_tasmota")
 
+#@ solidify:lv_tasmota
 # rename `lv` to `lv_ntv` and replace `lv` with `lv_tasmota`
 def init(lv_tasmota)
   import lv

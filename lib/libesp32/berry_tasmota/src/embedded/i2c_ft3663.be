@@ -1,6 +1,9 @@
 #-------------------------------------------------------------
  - Driver for FT3663 - Capacitive Touch Screen
  -------------------------------------------------------------#
+class I2C_Driver end    # for solidification
+
+ #@ solidify:FT3663
 class FT3663 : I2C_Driver
   static gest_id_codes = {
     0x00: 0x00,
@@ -90,4 +93,4 @@ class FT3663 : I2C_Driver
 
 end
 
-ts = FT3663()
+#ts = FT3663()

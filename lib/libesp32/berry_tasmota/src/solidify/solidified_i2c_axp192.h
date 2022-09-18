@@ -1,6 +1,7 @@
-/********************************************************************
- * Tasmota LVGL lv_signal_bars widget
- *******************************************************************/
+/* Solidification of i2c_axp192.h */
+/********************************************************************\
+* Generated code, don't edit                                         *
+\********************************************************************/
 #include "be_constobj.h"
 
 /********************************************************************
@@ -69,7 +70,7 @@ be_local_closure(AXP192_get_bat_power,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read24),
-    /* K1   */  be_const_real_hex(0x3A102DE1),
+    /* K1   */  be_const_real_hex(0x3A102DE0),
     }),
     &be_const_str_get_bat_power,
     &be_const_str_solidified,
@@ -980,7 +981,7 @@ be_local_class(AXP192,
         { be_const_key(json_append, -1), be_const_closure(AXP192_json_append_closure) },
         { be_const_key(get_input_power_status, -1), be_const_closure(AXP192_get_input_power_status_closure) },
     })),
-    be_str_weak(AXP192)
+    (bstring*) &be_const_str_AXP192
 );
 /*******************************************************************/
 
@@ -989,3 +990,5 @@ void be_load_AXP192_class(bvm *vm) {
     be_setglobal(vm, "AXP192");
     be_pop(vm, 1);
 }
+/********************************************************************/
+/* End of solidification */

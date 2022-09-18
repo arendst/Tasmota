@@ -6,6 +6,7 @@
 class zcl_attribute_ntv end
 class zcl_attribute_list_ntv end
 
+#@ solidify:zcl_attribute,weak
 class zcl_attribute : zcl_attribute_ntv
 
   def init(ptr)
@@ -149,6 +150,7 @@ class zcl_attribute : zcl_attribute_ntv
 
 end
 
+#@ solidify:zcl_attribute_list,weak
 class zcl_attribute_list : zcl_attribute_list_ntv
   var shortaddr
   # in the bytes object we have:
@@ -238,6 +240,7 @@ class zcl_attribute_list : zcl_attribute_list_ntv
   end
 end
 
+#@ solidify:zcl_attributes,weak
 class zcl_attributes
   var shortaddr
   var groupaddr

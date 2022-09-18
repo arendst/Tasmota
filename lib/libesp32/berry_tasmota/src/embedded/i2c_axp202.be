@@ -1,7 +1,8 @@
 #-------------------------------------------------------------
  - Generic driver for AXP202 - solidified
  -------------------------------------------------------------#
-class AXP202 : I2C_Driver
+ #@ solidify:AXP202
+ class AXP202 : I2C_Driver
   def init()
     super(self, I2C_Driver).init("AXP202", 0x35)
   end

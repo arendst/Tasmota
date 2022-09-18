@@ -14,10 +14,10 @@ import re
 # sys.path().push('src/embedded')   # allow to import from src/embedded
 
 # globals that need to exist to make compilation succeed
-var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state"
-
-var files = ['tasmota_class.be', 'leds.be', 'animate_module.be', 'autoconf_module.be','driver_class.be',
-  'partition_core.be','i2c_driver.be','hue_bridge.be','persist.be','uuid.be']
+var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,"
+            "lv_clock,lv_clock_icon,lv_signal_arcs,lv_signal_bars,lv_wifi_arcs_icon,lv_wifi_arcs,"
+            "lv_wifi_bars_icon,lv_wifi_bars,"
+            "_lvgl"
 
 for g:string.split(globs, ",")
   global.(g) = nil
@@ -34,7 +34,7 @@ def clean_directory(dir)
   end
 end
 
-var pattern = "#@\\s*solidify:([A-Za-z0-9_,]+)"
+var pattern = "#@\\s*solidify:([A-Za-z0-9_.,]+)"
 
 def parse_file(fname)
   print("Parsing: ", fname)
@@ -60,8 +60,15 @@ def parse_file(fname)
     var object_list = string.split(directive[1], ',')
     var object_name = object_list[0]
     var weak = (object_list.find('weak') != nil)          # do we solidify with weak strings?
-    var o = global.(object_name)
-    solidify.dump(o, weak, fout)
+    var o = global
+    var cl_name = nil
+    var obj_name = nil
+    for subname : string.split(object_name, '.')
+      o = o.(subname)
+      cl_name = obj_name
+      obj_name = subname
+    end
+    solidify.dump(o, weak, fout, cl_name)
   end
 
   fout.write("/********************************************************************/\n")
@@ -74,9 +81,5 @@ clean_directory(prefix_out)
 var src_file_list = os.listdir(prefix_dir)
 for src_file : src_file_list
   if src_file[0] == '.'  continue end
-end
-
-# manual
-for f : files
-  parse_file(f)
+  parse_file(src_file)
 end
