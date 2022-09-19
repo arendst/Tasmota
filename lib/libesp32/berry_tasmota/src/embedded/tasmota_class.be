@@ -35,6 +35,8 @@ class Tasmota
       self._debug_present = true
     except .. 
     end
+    # declare `UrlFetch` command
+    self.add_cmd('UrlFetch', def (cmd, idx, payload, payload_json) self.urlfetch_cmd(cmd, idx, payload, payload_json) end)
   end
 
   # check that the parameter is not a method, it would require a closure instead
@@ -750,5 +752,45 @@ class Tasmota
     end
   
     return (r << 16) | (g << 8) | b
+  end
+
+  # urlfetch - add a Tasmota command to download a file from a URL to file-system
+  def urlfetch(url,file)
+    if file==nil
+      import string
+      file = string.split(url,'/').pop()
+      if size(file) == 0
+        file = 'index.html'   # fallback in case you fetch a root file
+      end
+    end
+    var wc = webclient()
+    wc.begin(url)
+    var st = wc.GET()
+    if st != 200
+      raise 'connection_error','status: '+str(st)
+    end
+    var ret = wc.write_file(file)
+    wc.close()
+    self.log('BRY: Fetched '+str(ret), 3)
+    return st
+  end
+
+  def urlfetch_cmd(cmd, idx, payload, payload_json)
+    import string
+    if string.find(payload, "http") != 0
+      self.resp_cmnd_str("URL must start with 'http(s)'")
+      return
+    end
+    try
+      var ret = self.urlfetch(payload)
+      if ret < 0
+        self.resp_cmnd_failed()
+        return
+      end
+    except .. as e, m
+      self.resp_cmnd_failed()
+      return
+    end
+    tasmota.resp_cmnd_done()
   end
 end
