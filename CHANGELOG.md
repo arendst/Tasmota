@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support of optional file calib.dat on ADE7953 based energy monitors like Shelly EM (#16486)
 - Command ``SetOption46 0..255`` to add 0..255 * 10 milliseconds power on delay before initializing I/O (#15438)
 - Zigbee support for decimal Voltage/Current/Power on power metering plugs
+- Command ``UrlFetch <url>`` to download a file to filesystem
 
 ### Changed
 - ESP32 Increase number of button GPIOs from 8 to 28 (#16518)

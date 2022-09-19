@@ -151,6 +151,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     load, closure(Tasmota_load_closure)
     wire_scan, closure(Tasmota_wire_scan_closure)
     time_str, closure(Tasmota_time_str_closure)
+    urlfetch, closure(Tasmota_urlfetch_closure)
+    urlfetch_cmd, closure(Tasmota_urlfetch_cmd_closure)
 
     add_cron, closure(Tasmota_add_cron_closure)
     run_cron, closure(Tasmota_run_cron_closure)
