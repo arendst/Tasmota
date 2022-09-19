@@ -254,13 +254,14 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_zigbee_zcl_attribute_struct = {
     sizeof(Z_attribute),  /* size in bytes */
-    9,  /* number of elements */
+    10,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[9]) {
+    (const be_ctypes_structure_item_t[10]) {
       { "_attr_id", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u16, 0 },
       { "_cluster", offsetof(Z_attribute, cluster), 0, 0, ctypes_u16, 0 },
       { "_cmd", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u8, 0 },       // low 8 bits of attr_id
-      { "_direction", offsetof(Z_attribute, attr_id) + 1, 0, 0, ctypes_u8, 0 },       // high 8 bits of attr_id
+      { "_cmd_general", offsetof(Z_attribute, attr_id) + 1, 1, 1, ctypes_u8, 0 },       // bit #1 of byte+1
+      { "_direction", offsetof(Z_attribute, attr_id) + 1, 0, 1, ctypes_u8, 0 },         // bit #0 of byte+1
       { "_iscmd", offsetof(Z_attribute, key_is_cmd), 0, 0, ctypes_u8, 0 },
       { "attr_multiplier", offsetof(Z_attribute, attr_multiplier), 0, 0, ctypes_i8, 0 },
       { "attr_divider", offsetof(Z_attribute, attr_divider), 0, 0, ctypes_i8, 0 },

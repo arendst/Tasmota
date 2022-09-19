@@ -556,6 +556,11 @@ void ZbSendSend(class JsonParserToken val_cmd, ZCLFrame & zcl) {
     // Now parse the string to extract cluster, command, and payload
     // Parse 'cmd' in the form "AAAA_BB/CCCCCCCC" or "AAAA!BB/CCCCCCCC"
     // where AAAA is the cluster number, BB the command number, CCCC... the payload
+    // Possible delimiters:
+    //   "AAAA_BB/...": general cluster, sent to device (direction == 0)
+    //   "AAAA^BB/...": general cluster, recevied from device (direction == 1)
+    //   "AAAA!BB/...": cluster specific, sent to device (direction == 0)
+    //   "AAAA?BB/...": cluster specific, recevied from device (direction == 1)
     // First delimiter is '_' for a global command, or '!' for a cluster specific command
     const char * data = val_cmd.getStr();
     uint16_t local_cluster_id = parseHex(&data, 4);
@@ -569,8 +574,9 @@ void ZbSendSend(class JsonParserToken val_cmd, ZCLFrame & zcl) {
     }
 
     // delimiter
-    if (('_' == *data) || ('!' == *data)) {
-      if ('_' == *data) { zcl.clusterSpecific = false; }
+    if (('_' == *data) || ('^' == *data) || ('!' == *data) || ('?' == *data)) {
+      if ('_' == *data || '^' == *data) { zcl.clusterSpecific = false; }
+      if ('^' == *data || '?' == *data) { zcl.direction = true; }
       data++;
     } else {
       ResponseCmndChar_P(PSTR(D_ZIGBEE_WRONG_DELIMITER));

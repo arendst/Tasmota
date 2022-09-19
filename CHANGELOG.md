@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - IRremoteESP8266 library from v2.8.2 to v2.8.3
 - Tasmota Core32 from 2.0.4.1 to 2.0.5
 - IRremoteESP8266 library from v2.8.3 to v2.8.4
+- Zigbee report unprocessed attributes
 
 ### Fixed
 

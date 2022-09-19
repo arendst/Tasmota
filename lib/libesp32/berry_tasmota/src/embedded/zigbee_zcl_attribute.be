@@ -34,8 +34,9 @@ class zcl_attribute : zcl_attribute_ntv
       var v = self._cmd
       return ((v != 0xFF) && self._iscmd) ? v : nil
     elif k == "direction"
-      var v = self._direction
-      return ((v != 0xFF) && self._iscmd) ? (v & 0x01) : nil
+      return self._direction
+    elif k == "cmd_general"
+      return self._cmd_general
     elif k == "val"
       var v = self._get_val()
       if isinstance(v, bytes)
@@ -69,13 +70,13 @@ class zcl_attribute : zcl_attribute_ntv
       else
         self._cmd = v
         self._iscmd = 1
-        if self._direction == 0xFF    # default direction
-          self._direction = 0
-        end
+        # if self._direction == 0xFF    # default direction
+        #   self._direction = 0
+        # end
       end
     elif k == "direction"
       if v == nil
-        self._direction = 0xFF
+        self._direction = 0
       else
         self._direction = v ? 0x01 : 0x00
         self._iscmd = 1
@@ -117,7 +118,7 @@ class zcl_attribute : zcl_attribute_ntv
         s += "+" + str(self.key_suffix)
       end
     elif (self.cluster != nil) && (self.cmd != nil) && (self.direction != nil)
-      s = string.format("%04X%s%02X", self.cluster, self.direction ? "<" : "!" ,self.cmd)
+      s = string.format("%04X%s%02X", self.cluster, self.direction ? "?" : "!" ,self.cmd)
       if self.key_suffix > 1
         s += "+" + str(self.key_suffix)
       end
