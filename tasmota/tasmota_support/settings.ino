@@ -1238,6 +1238,7 @@ void SettingsDefaultSet2(void) {
   flag4.zigbee_distinct_topics |= ZIGBEE_DISTINCT_TOPICS;
   flag4.remove_zbreceived |= ZIGBEE_RMV_ZBRECEIVED;
   flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
+  flag4.zb_topic_fname |= ZIGBEE_TOPIC_FNAME;
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
