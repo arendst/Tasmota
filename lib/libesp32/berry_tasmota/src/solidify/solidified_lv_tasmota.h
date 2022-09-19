@@ -5,35 +5,109 @@
 #include "be_constobj.h"
 
 /********************************************************************
-** Solidified function: splash_remove
+** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_tasmota_splash_remove,   /* name */
+be_local_closure(lv_tasmota_init,   /* name */
   be_nested_proto(
-    3,                          /* nstack */
-    0,                          /* argc */
+    5,                          /* nstack */
+    1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(lv),
-    /* K1   */  be_nested_str(_splash),
-    /* K2   */  be_nested_str(del),
+    ( &(const bvalue[33]) {     /* constants */
+    /* K0   */  be_nested_str_weak(lv),
+    /* K1   */  be_nested_str_weak(start),
+    /* K2   */  be_nested_str_weak(splash_init),
+    /* K3   */  be_nested_str_weak(splash_remove),
+    /* K4   */  be_nested_str_weak(splash),
+    /* K5   */  be_nested_str_weak(_splash),
+    /* K6   */  be_nested_str_weak(font_montserrat),
+    /* K7   */  be_nested_str_weak(montserrat_font),
+    /* K8   */  be_nested_str_weak(font_seg7),
+    /* K9   */  be_nested_str_weak(seg7_font),
+    /* K10  */  be_nested_str_weak(font_embedded),
+    /* K11  */  be_nested_str_weak(load_freetype_font),
+    /* K12  */  be_nested_str_weak(register_button_encoder),
+    /* K13  */  be_nested_str_weak(screenshot),
+    /* K14  */  be_nested_str_weak(clock),
+    /* K15  */  be_nested_str_weak(lv_clock),
+    /* K16  */  be_nested_str_weak(clock_icon),
+    /* K17  */  be_nested_str_weak(lv_clock_icon),
+    /* K18  */  be_nested_str_weak(signal_arcs),
+    /* K19  */  be_nested_str_weak(lv_signal_arcs),
+    /* K20  */  be_nested_str_weak(signal_bars),
+    /* K21  */  be_nested_str_weak(lv_signal_bars),
+    /* K22  */  be_nested_str_weak(wifi_arcs_icon),
+    /* K23  */  be_nested_str_weak(lv_wifi_arcs_icon),
+    /* K24  */  be_nested_str_weak(wifi_arcs),
+    /* K25  */  be_nested_str_weak(lv_wifi_arcs),
+    /* K26  */  be_nested_str_weak(wifi_bars_icon),
+    /* K27  */  be_nested_str_weak(lv_wifi_bars_icon),
+    /* K28  */  be_nested_str_weak(wifi_bars),
+    /* K29  */  be_nested_str_weak(lv_wifi_bars),
+    /* K30  */  be_nested_str_weak(tasmota),
+    /* K31  */  be_nested_str_weak(get_option),
+    /* K32  */  be_const_int(0),
     }),
-    &be_const_str_splash_remove,
+    be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0xB8020000,  //  0000  GETNGBL	R0	K0
-      0x88000101,  //  0001  GETMBR	R0	R0	K1
-      0x78020004,  //  0002  JMPF	R0	#0008
-      0xB8060000,  //  0003  GETNGBL	R1	K0
-      0x4C080000,  //  0004  LDNIL	R2
-      0x90060202,  //  0005  SETMBR	R1	K1	R2
-      0x8C040102,  //  0006  GETMET	R1	R0	K2
-      0x7C040200,  //  0007  CALL	R1	1
-      0x80000000,  //  0008  RET	0
+    ( &(const binstruction[53]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x90060202,  //  0002  SETMBR	R1	K1	R2
+      0x88080102,  //  0003  GETMBR	R2	R0	K2
+      0x90060402,  //  0004  SETMBR	R1	K2	R2
+      0x88080103,  //  0005  GETMBR	R2	R0	K3
+      0x90060602,  //  0006  SETMBR	R1	K3	R2
+      0x88080104,  //  0007  GETMBR	R2	R0	K4
+      0x90060802,  //  0008  SETMBR	R1	K4	R2
+      0x4C080000,  //  0009  LDNIL	R2
+      0x90060A02,  //  000A  SETMBR	R1	K5	R2
+      0x88080106,  //  000B  GETMBR	R2	R0	K6
+      0x90060C02,  //  000C  SETMBR	R1	K6	R2
+      0x88080106,  //  000D  GETMBR	R2	R0	K6
+      0x90060E02,  //  000E  SETMBR	R1	K7	R2
+      0x88080108,  //  000F  GETMBR	R2	R0	K8
+      0x90061002,  //  0010  SETMBR	R1	K8	R2
+      0x88080108,  //  0011  GETMBR	R2	R0	K8
+      0x90061202,  //  0012  SETMBR	R1	K9	R2
+      0x8808010A,  //  0013  GETMBR	R2	R0	K10
+      0x90061402,  //  0014  SETMBR	R1	K10	R2
+      0x8808010B,  //  0015  GETMBR	R2	R0	K11
+      0x90061602,  //  0016  SETMBR	R1	K11	R2
+      0x8808010C,  //  0017  GETMBR	R2	R0	K12
+      0x90061802,  //  0018  SETMBR	R1	K12	R2
+      0x8808010D,  //  0019  GETMBR	R2	R0	K13
+      0x90061A02,  //  001A  SETMBR	R1	K13	R2
+      0xB80A1E00,  //  001B  GETNGBL	R2	K15
+      0x90061C02,  //  001C  SETMBR	R1	K14	R2
+      0xB80A2200,  //  001D  GETNGBL	R2	K17
+      0x90062002,  //  001E  SETMBR	R1	K16	R2
+      0xB80A2600,  //  001F  GETNGBL	R2	K19
+      0x90062402,  //  0020  SETMBR	R1	K18	R2
+      0xB80A2A00,  //  0021  GETNGBL	R2	K21
+      0x90062802,  //  0022  SETMBR	R1	K20	R2
+      0xB80A2E00,  //  0023  GETNGBL	R2	K23
+      0x90062C02,  //  0024  SETMBR	R1	K22	R2
+      0xB80A3200,  //  0025  GETNGBL	R2	K25
+      0x90063002,  //  0026  SETMBR	R1	K24	R2
+      0xB80A3600,  //  0027  GETNGBL	R2	K27
+      0x90063402,  //  0028  SETMBR	R1	K26	R2
+      0xB80A3A00,  //  0029  GETNGBL	R2	K29
+      0x90063802,  //  002A  SETMBR	R1	K28	R2
+      0xB80A3C00,  //  002B  GETNGBL	R2	K30
+      0x8C08051F,  //  002C  GETMET	R2	R2	K31
+      0x54120086,  //  002D  LDINT	R4	135
+      0x7C080400,  //  002E  CALL	R2	2
+      0x1C080520,  //  002F  EQ	R2	R2	K32
+      0x780A0001,  //  0030  JMPF	R2	#0033
+      0x8C080302,  //  0031  GETMET	R2	R1	K2
+      0x7C080200,  //  0032  CALL	R2	1
+      0x4C080000,  //  0033  LDNIL	R2
+      0x80040400,  //  0034  RET	1	R2
     })
   )
 );
@@ -54,10 +128,10 @@ be_local_closure(splash_runner_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(add_driver),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(add_driver),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -85,15 +159,15 @@ be_local_closure(splash_runner_display,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(display),
-    /* K1   */  be_nested_str(dim),
-    /* K2   */  be_nested_str(started),
-    /* K3   */  be_nested_str(tasmota),
-    /* K4   */  be_nested_str(remove_driver),
-    /* K5   */  be_nested_str(lv),
-    /* K6   */  be_nested_str(splash),
+    /* K0   */  be_nested_str_weak(display),
+    /* K1   */  be_nested_str_weak(dim),
+    /* K2   */  be_nested_str_weak(started),
+    /* K3   */  be_nested_str_weak(tasmota),
+    /* K4   */  be_nested_str_weak(remove_driver),
+    /* K5   */  be_nested_str_weak(lv),
+    /* K6   */  be_nested_str_weak(splash),
     }),
-    &be_const_str_display,
+    be_str_weak(display),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0xA4160000,  //  0000  IMPORT	R5	K0
@@ -124,10 +198,10 @@ be_local_class(splash_runner,
     NULL,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(display, -1), be_const_closure(splash_runner_display_closure) },
-        { be_const_key(init, 0), be_const_closure(splash_runner_init_closure) },
+        { be_const_key_weak(display, -1), be_const_closure(splash_runner_display_closure) },
+        { be_const_key_weak(init, 0), be_const_closure(splash_runner_init_closure) },
     })),
-    (bstring*) &be_const_str_splash_runner
+    be_str_weak(splash_runner)
 );
 
 /********************************************************************
@@ -144,13 +218,13 @@ be_local_closure(lv_tasmota_splash_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str(display),
-    /* K1   */  be_nested_str(started),
-    /* K2   */  be_nested_str(lv),
-    /* K3   */  be_nested_str(splash),
+    /* K0   */  be_nested_str_weak(display),
+    /* K1   */  be_nested_str_weak(started),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(splash),
     /* K4   */  be_const_class(be_class_splash_runner),
     }),
-    &be_const_str_splash_init,
+    be_str_weak(splash_init),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0xA4020000,  //  0000  IMPORT	R0	K0
@@ -173,6 +247,42 @@ be_local_closure(lv_tasmota_splash_init,   /* name */
 
 
 /********************************************************************
+** Solidified function: splash_remove
+********************************************************************/
+be_local_closure(lv_tasmota_splash_remove,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    0,                          /* argc */
+    0,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(lv),
+    /* K1   */  be_nested_str_weak(_splash),
+    /* K2   */  be_nested_str_weak(del),
+    }),
+    be_str_weak(splash_remove),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0xB8020000,  //  0000  GETNGBL	R0	K0
+      0x88000101,  //  0001  GETMBR	R0	R0	K1
+      0x78020004,  //  0002  JMPF	R0	#0008
+      0xB8060000,  //  0003  GETNGBL	R1	K0
+      0x4C080000,  //  0004  LDNIL	R2
+      0x90060202,  //  0005  SETMBR	R1	K1	R2
+      0x8C040102,  //  0006  GETMET	R1	R0	K2
+      0x7C040200,  //  0007  CALL	R1	1
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: splash
 ********************************************************************/
 be_local_closure(lv_tasmota_splash,   /* name */
@@ -186,50 +296,50 @@ be_local_closure(lv_tasmota_splash,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[42]) {     /* constants */
-    /* K0   */  be_nested_str(display),
-    /* K1   */  be_nested_str(started),
-    /* K2   */  be_nested_str(lv),
-    /* K3   */  be_nested_str(start),
-    /* K4   */  be_nested_str(obj),
-    /* K5   */  be_nested_str(scr_act),
-    /* K6   */  be_nested_str(montserrat_font),
-    /* K7   */  be_nested_str(color),
-    /* K8   */  be_nested_str(COLOR_WHITE),
-    /* K9   */  be_nested_str(set_style_bg_color),
+    /* K0   */  be_nested_str_weak(display),
+    /* K1   */  be_nested_str_weak(started),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(start),
+    /* K4   */  be_nested_str_weak(obj),
+    /* K5   */  be_nested_str_weak(scr_act),
+    /* K6   */  be_nested_str_weak(montserrat_font),
+    /* K7   */  be_nested_str_weak(color),
+    /* K8   */  be_nested_str_weak(COLOR_WHITE),
+    /* K9   */  be_nested_str_weak(set_style_bg_color),
     /* K10  */  be_const_int(0),
-    /* K11  */  be_nested_str(set_style_radius),
-    /* K12  */  be_nested_str(set_style_pad_all),
-    /* K13  */  be_nested_str(set_style_border_width),
-    /* K14  */  be_nested_str(set_size),
-    /* K15  */  be_nested_str(pct),
-    /* K16  */  be_nested_str(refr_pos),
-    /* K17  */  be_nested_str(refr_size),
-    /* K18  */  be_nested_str(set_user_data),
+    /* K11  */  be_nested_str_weak(set_style_radius),
+    /* K12  */  be_nested_str_weak(set_style_pad_all),
+    /* K13  */  be_nested_str_weak(set_style_border_width),
+    /* K14  */  be_nested_str_weak(set_size),
+    /* K15  */  be_nested_str_weak(pct),
+    /* K16  */  be_nested_str_weak(refr_pos),
+    /* K17  */  be_nested_str_weak(refr_size),
+    /* K18  */  be_nested_str_weak(set_user_data),
     /* K19  */  be_const_int(1399876712),
-    /* K20  */  be_nested_str(img),
-    /* K21  */  be_nested_str(set_tasmota_logo),
-    /* K22  */  be_nested_str(set_zoom),
-    /* K23  */  be_nested_str(set_style_img_recolor_opa),
-    /* K24  */  be_nested_str(set_style_img_recolor),
-    /* K25  */  be_nested_str(set_align),
-    /* K26  */  be_nested_str(ALIGN_LEFT_MID),
-    /* K27  */  be_nested_str(set_x),
-    /* K28  */  be_nested_str(label),
-    /* K29  */  be_nested_str(set_style_text_color),
-    /* K30  */  be_nested_str(set_text),
-    /* K31  */  be_nested_str(TASMOTA),
-    /* K32  */  be_nested_str(get_hor_res),
-    /* K33  */  be_nested_str(set_style_text_font),
-    /* K34  */  be_nested_str(driver_name),
-    /* K35  */  be_nested_str(ALIGN_BOTTOM_MID),
+    /* K20  */  be_nested_str_weak(img),
+    /* K21  */  be_nested_str_weak(set_tasmota_logo),
+    /* K22  */  be_nested_str_weak(set_zoom),
+    /* K23  */  be_nested_str_weak(set_style_img_recolor_opa),
+    /* K24  */  be_nested_str_weak(set_style_img_recolor),
+    /* K25  */  be_nested_str_weak(set_align),
+    /* K26  */  be_nested_str_weak(ALIGN_LEFT_MID),
+    /* K27  */  be_nested_str_weak(set_x),
+    /* K28  */  be_nested_str_weak(label),
+    /* K29  */  be_nested_str_weak(set_style_text_color),
+    /* K30  */  be_nested_str_weak(set_text),
+    /* K31  */  be_nested_str_weak(TASMOTA),
+    /* K32  */  be_nested_str_weak(get_hor_res),
+    /* K33  */  be_nested_str_weak(set_style_text_font),
+    /* K34  */  be_nested_str_weak(driver_name),
+    /* K35  */  be_nested_str_weak(ALIGN_BOTTOM_MID),
     /* K36  */  be_const_int(16777215),
-    /* K37  */  be_nested_str(refr_now),
-    /* K38  */  be_nested_str(_splash),
-    /* K39  */  be_nested_str(tasmota),
-    /* K40  */  be_nested_str(set_timer),
-    /* K41  */  be_nested_str(splash_remove),
+    /* K37  */  be_nested_str_weak(refr_now),
+    /* K38  */  be_nested_str_weak(_splash),
+    /* K39  */  be_nested_str_weak(tasmota),
+    /* K40  */  be_nested_str_weak(set_timer),
+    /* K41  */  be_nested_str_weak(splash_remove),
     }),
-    &be_const_str_splash,
+    be_str_weak(splash),
     &be_const_str_solidified,
     ( &(const binstruction[166]) {  /* code */
       0xA4020000,  //  0000  IMPORT	R0	K0
@@ -403,131 +513,5 @@ be_local_closure(lv_tasmota_splash,   /* name */
 );
 /*******************************************************************/
 
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-be_local_closure(lv_tasmota_init,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    1,                          /* argc */
-    0,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[33]) {     /* constants */
-    /* K0   */  be_nested_str(lv),
-    /* K1   */  be_nested_str(start),
-    /* K2   */  be_nested_str(splash_init),
-    /* K3   */  be_nested_str(splash_remove),
-    /* K4   */  be_nested_str(splash),
-    /* K5   */  be_nested_str(_splash),
-    /* K6   */  be_nested_str(font_montserrat),
-    /* K7   */  be_nested_str(montserrat_font),
-    /* K8   */  be_nested_str(font_seg7),
-    /* K9   */  be_nested_str(seg7_font),
-    /* K10  */  be_nested_str(font_embedded),
-    /* K11  */  be_nested_str(load_freetype_font),
-    /* K12  */  be_nested_str(register_button_encoder),
-    /* K13  */  be_nested_str(screenshot),
-    /* K14  */  be_nested_str(clock),
-    /* K15  */  be_nested_str(lv_clock),
-    /* K16  */  be_nested_str(clock_icon),
-    /* K17  */  be_nested_str(lv_clock_icon),
-    /* K18  */  be_nested_str(signal_arcs),
-    /* K19  */  be_nested_str(lv_signal_arcs),
-    /* K20  */  be_nested_str(signal_bars),
-    /* K21  */  be_nested_str(lv_signal_bars),
-    /* K22  */  be_nested_str(wifi_arcs_icon),
-    /* K23  */  be_nested_str(lv_wifi_arcs_icon),
-    /* K24  */  be_nested_str(wifi_arcs),
-    /* K25  */  be_nested_str(lv_wifi_arcs),
-    /* K26  */  be_nested_str(wifi_bars_icon),
-    /* K27  */  be_nested_str(lv_wifi_bars_icon),
-    /* K28  */  be_nested_str(wifi_bars),
-    /* K29  */  be_nested_str(lv_wifi_bars),
-    /* K30  */  be_nested_str(tasmota),
-    /* K31  */  be_nested_str(get_option),
-    /* K32  */  be_const_int(0),
-    }),
-    &be_const_str_init,
-    &be_const_str_solidified,
-    ( &(const binstruction[53]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x88080101,  //  0001  GETMBR	R2	R0	K1
-      0x90060202,  //  0002  SETMBR	R1	K1	R2
-      0x88080102,  //  0003  GETMBR	R2	R0	K2
-      0x90060402,  //  0004  SETMBR	R1	K2	R2
-      0x88080103,  //  0005  GETMBR	R2	R0	K3
-      0x90060602,  //  0006  SETMBR	R1	K3	R2
-      0x88080104,  //  0007  GETMBR	R2	R0	K4
-      0x90060802,  //  0008  SETMBR	R1	K4	R2
-      0x4C080000,  //  0009  LDNIL	R2
-      0x90060A02,  //  000A  SETMBR	R1	K5	R2
-      0x88080106,  //  000B  GETMBR	R2	R0	K6
-      0x90060C02,  //  000C  SETMBR	R1	K6	R2
-      0x88080106,  //  000D  GETMBR	R2	R0	K6
-      0x90060E02,  //  000E  SETMBR	R1	K7	R2
-      0x88080108,  //  000F  GETMBR	R2	R0	K8
-      0x90061002,  //  0010  SETMBR	R1	K8	R2
-      0x88080108,  //  0011  GETMBR	R2	R0	K8
-      0x90061202,  //  0012  SETMBR	R1	K9	R2
-      0x8808010A,  //  0013  GETMBR	R2	R0	K10
-      0x90061402,  //  0014  SETMBR	R1	K10	R2
-      0x8808010B,  //  0015  GETMBR	R2	R0	K11
-      0x90061602,  //  0016  SETMBR	R1	K11	R2
-      0x8808010C,  //  0017  GETMBR	R2	R0	K12
-      0x90061802,  //  0018  SETMBR	R1	K12	R2
-      0x8808010D,  //  0019  GETMBR	R2	R0	K13
-      0x90061A02,  //  001A  SETMBR	R1	K13	R2
-      0xB80A1E00,  //  001B  GETNGBL	R2	K15
-      0x90061C02,  //  001C  SETMBR	R1	K14	R2
-      0xB80A2200,  //  001D  GETNGBL	R2	K17
-      0x90062002,  //  001E  SETMBR	R1	K16	R2
-      0xB80A2600,  //  001F  GETNGBL	R2	K19
-      0x90062402,  //  0020  SETMBR	R1	K18	R2
-      0xB80A2A00,  //  0021  GETNGBL	R2	K21
-      0x90062802,  //  0022  SETMBR	R1	K20	R2
-      0xB80A2E00,  //  0023  GETNGBL	R2	K23
-      0x90062C02,  //  0024  SETMBR	R1	K22	R2
-      0xB80A3200,  //  0025  GETNGBL	R2	K25
-      0x90063002,  //  0026  SETMBR	R1	K24	R2
-      0xB80A3600,  //  0027  GETNGBL	R2	K27
-      0x90063402,  //  0028  SETMBR	R1	K26	R2
-      0xB80A3A00,  //  0029  GETNGBL	R2	K29
-      0x90063802,  //  002A  SETMBR	R1	K28	R2
-      0xB80A3C00,  //  002B  GETNGBL	R2	K30
-      0x8C08051F,  //  002C  GETMET	R2	R2	K31
-      0x54120086,  //  002D  LDINT	R4	135
-      0x7C080400,  //  002E  CALL	R2	2
-      0x1C080520,  //  002F  EQ	R2	R2	K32
-      0x780A0001,  //  0030  JMPF	R2	#0033
-      0x8C080302,  //  0031  GETMET	R2	R1	K2
-      0x7C080200,  //  0032  CALL	R2	1
-      0x4C080000,  //  0033  LDNIL	R2
-      0x80040400,  //  0034  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified module: lv_tasmota
-********************************************************************/
-be_local_module(lv_tasmota,
-    "lv_tasmota",
-    be_nested_map(4,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(lv_tasmota_init_closure) },
-        { be_const_key(splash_init, -1), be_const_closure(lv_tasmota_splash_init_closure) },
-        { be_const_key(splash, -1), be_const_closure(lv_tasmota_splash_closure) },
-        { be_const_key(splash_remove, 0), be_const_closure(lv_tasmota_splash_remove_closure) },
-    }))
-);
-BE_EXPORT_VARIABLE be_define_const_native_module(lv_tasmota);
-/********************************************************************/
 /********************************************************************/
 /* End of solidification */
