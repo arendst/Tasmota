@@ -347,9 +347,9 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
   // Format: "0001!06": "00" = "<cluster>!<cmd>": "<payload>" for commands to devices
   // Format: "0004<00": "00" = "<cluster><<cmd>": "<payload>" for commands to devices
   // char attrid_str[12];
-  // snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X%c%02X"), cluster, direction ? '<' : '!', cmd);
+  // snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X%c%02X"), cluster, direction ? '?' : '!', cmd);
   // Z_attribute & attr_raw = attr_list.addAttribute(attrid_str);
-  Z_attribute & attr_raw = attr_list.addAttributeCmd(cluster, cmd, direction);
+  Z_attribute & attr_raw = attr_list.addAttributeCmd(cluster, cmd, direction, false /* cluster specific */);
   attr_raw.setBuf(payload, 0, payload.len());
 
   // TODO Berry encode command

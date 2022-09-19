@@ -112,6 +112,7 @@ public:
     _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber)
     {
       _frame_control.d8 = frame_control;
+      direction = _frame_control.b.direction;
       clusterSpecific = (_frame_control.b.frame_type != 0);
       needResponse = !_frame_control.b.disable_def_resp;
       payload.addBuffer(buf, buf_len);
@@ -131,7 +132,7 @@ public:
                     srcendpoint, dstendpoint, _wasbroadcast,
                     _linkquality, _securityuse, _seqnumber,
                     _frame_control,
-                    _frame_control.b.frame_type, _frame_control.b.direction, _frame_control.b.disable_def_resp,
+                    _frame_control.b.frame_type, direction, _frame_control.b.disable_def_resp,
                     manuf, transactseq, cmd,
                     &payload);
     if (Settings->flag3.tuya_serial_mqtt_publish) {
@@ -165,9 +166,8 @@ public:
     return zcl_frame;
   }
 
-  bool isClusterSpecificCommand(void) {
-    return _frame_control.b.frame_type & 1;
-  }
+  bool isClusterSpecificCommand(void) const { return _frame_control.b.frame_type & 1; }
+  uint8_t getDirection(void)          const { return direction; }
 
   // parsers for received messages
   void parseReportAttributes(Z_attribute_list& attr_list);
@@ -1127,10 +1127,10 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
     device.debounce_transact = transactseq;
     zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
 
-    convertClusterSpecific(attr_list, cluster, cmd, _frame_control.b.direction, shortaddr, srcendpoint, payload);
+    convertClusterSpecific(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload);
     if (!Settings->flag5.zb_disable_autoquery) {
     // read attributes unless disabled
-      if (!_frame_control.b.direction) {    // only handle server->client (i.e. device->coordinator)
+      if (!direction) {    // only handle server->client (i.e. device->coordinator)
         if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
           sendHueUpdate(BAD_SHORTADDR, groupaddr, cluster);
         }
