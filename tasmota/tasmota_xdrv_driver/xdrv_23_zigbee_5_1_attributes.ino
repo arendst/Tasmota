@@ -753,6 +753,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zuint16,  Cx0020, 0x0006,  Z_(FastPollTimeoutMax),   Cm1, 0 },
 
   // Green Power
+  // Server attributes
   { Zuint8,   Cx0021, 0x0000,  Z_(MaxSinkTableEntries),  Cm1, 0 },
   { Zoctstr16,Cx0021, 0x0001,  Z_(SinkTable),            Cm1, 0 },
   { Zmap8,    Cx0021, 0x0002,  Z_(CommunicationMode),    Cm1, 0 },
@@ -769,6 +770,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zoctstr16,Cx0021, 0x0015,  Z_(BlockedGPDID),         Cm1, 0 },
   { Zmap24,   Cx0021, 0x0016,  Z_(ClientFunctionality),  Cm1, 0 },
   { Zmap24,   Cx0021, 0x0017,  Z_(ClientActiveFunctionality),  Cm1, 0 },
+  // Shared by Server and Client
   { Zmap8,    Cx0021, 0x0020,  Z_(SharedSecurityKeyType),Cm1, 0 },
   { Zkey128,  Cx0021, 0x0021,  Z_(SharedSecurityKey),    Cm1, 0 },
   { Zkey128,  Cx0021, 0x0022,  Z_(LinkKey),  Cm1, 0 },
