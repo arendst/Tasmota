@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption46 0..255`` to add 0..255 * 10 milliseconds power on delay before initializing I/O (#15438)
 - Zigbee support for decimal Voltage/Current/Power on power metering plugs
 - Command ``UrlFetch <url>`` to download a file to filesystem
+- Zigbee basic support for Green Power
 
 ### Changed
 - ESP32 Increase number of button GPIOs from 8 to 28 (#16518)

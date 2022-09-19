@@ -619,6 +619,7 @@
   #define D_JSON_ZIGBEE_EZSP_SENT "ZbEZSPSent"
   #define D_JSON_ZIGBEE_EZSP_SENT_RAW "ZbEZSPSentRaw"
   #define D_JSON_ZIGBEEZCL_RECEIVED "ZbZCLReceived"
+  #define D_JSON_ZIGBEEGP_RECEIVED "ZbGPReceived"
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
   #define D_JSON_ZIGBEE_NAME "Name"

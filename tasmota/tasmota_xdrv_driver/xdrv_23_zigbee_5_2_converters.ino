@@ -1127,17 +1127,26 @@ void ZCLFrame::parseClusterSpecificCommand(Z_attribute_list& attr_list) {
     device.debounce_transact = transactseq;
     zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, USE_ZIGBEE_DEBOUNCE_COMMANDS, 0 /*clusterid*/, srcendpoint, Z_CAT_DEBOUNCE_CMD, 0, &Z_ResetDebounce);
 
-    convertClusterSpecific(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload);
-    if (!Settings->flag5.zb_disable_autoquery) {
-    // read attributes unless disabled
-      if (!direction) {    // only handle server->client (i.e. device->coordinator)
-        if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
-          sendHueUpdate(BAD_SHORTADDR, groupaddr, cluster);
+    bool cmd_parsed = false;
+    if (srcendpoint == 0xF2 && dstendpoint == 0xF2 && cluster == 0x0021) {
+      // handle Green Power commands
+      cmd_parsed = convertGPSpecific(attr_list, cmd, direction, shortaddr, _wasbroadcast, payload);
+    }
+    // was it successfully parsed already?
+    if (!cmd_parsed) {
+      // handle normal commands
+      convertClusterSpecific(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload);
+      if (!Settings->flag5.zb_disable_autoquery) {
+      // read attributes unless disabled
+        if (!direction) {    // only handle server->client (i.e. device->coordinator)
+          if (_wasbroadcast) {                // only update for broadcast messages since we don't see unicast from device to device and we wouldn't know the target
+            sendHueUpdate(BAD_SHORTADDR, groupaddr, cluster);
+          }
         }
       }
     }
   }
-  // Send Default Response to acknowledge the attribute reporting
+  // Send Default Response to acknowledge the command
   if (0 == _frame_control.b.disable_def_resp) {
     // the device expects a default response
     ZCLFrame zcl(2);   // message is 4 bytes
