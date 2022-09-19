@@ -3,8 +3,8 @@
 #- ------------------------------------------------------------ -#
 lv_tasmota = module("lv_tasmota")
 
-#@ solidify:lv_tasmota
 # rename `lv` to `lv_ntv` and replace `lv` with `lv_tasmota`
+#@ solidify:lv_tasmota.init,weak
 def init(lv_tasmota)
   import lv
   lv.start = lv_tasmota.start
@@ -45,6 +45,7 @@ end
 lv_tasmota.init = init
 
 # run splash now or schedlue later
+#@ solidify:lv_tasmota.splash_init,weak
 def splash_init()
   import display
   if display.started()
@@ -73,6 +74,7 @@ end
 lv_tasmota.splash_init = splash_init
 
 # remove splash
+#@ solidify:lv_tasmota.splash_remove,weak
 def splash_remove()
   var _splash = lv._splash
   if _splash
@@ -82,6 +84,7 @@ def splash_remove()
 end
 lv_tasmota.splash_remove = splash_remove
 
+#@ solidify:lv_tasmota.splash,weak
 def splash()
   import display
 

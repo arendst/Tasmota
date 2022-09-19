@@ -18,18 +18,18 @@ be_local_closure(lv_clock_set_time,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str(string),
-    /* K1   */  be_nested_str(hour),
-    /* K2   */  be_nested_str(minute),
-    /* K3   */  be_nested_str(sec),
-    /* K4   */  be_nested_str(format),
-    /* K5   */  be_nested_str(_X2502d_X25s_X2502d),
+    /* K0   */  be_nested_str_weak(string),
+    /* K1   */  be_nested_str_weak(hour),
+    /* K2   */  be_nested_str_weak(minute),
+    /* K3   */  be_nested_str_weak(sec),
+    /* K4   */  be_nested_str_weak(format),
+    /* K5   */  be_nested_str_weak(_X2502d_X25s_X2502d),
     /* K6   */  be_const_int(2),
-    /* K7   */  be_nested_str(_X3A),
-    /* K8   */  be_nested_str(_X20),
-    /* K9   */  be_nested_str(set_text),
+    /* K7   */  be_nested_str_weak(_X3A),
+    /* K8   */  be_nested_str_weak(_X20),
+    /* K9   */  be_nested_str_weak(set_text),
     }),
-    &be_const_str_set_time,
+    be_str_weak(set_time),
     &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
       0xA4120000,  //  0000  IMPORT	R4	K0
@@ -79,17 +79,17 @@ be_local_closure(lv_clock_every_second,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(time_dump),
-    /* K2   */  be_nested_str(rtc),
-    /* K3   */  be_nested_str(local),
-    /* K4   */  be_nested_str(year),
-    /* K5   */  be_nested_str(set_time),
-    /* K6   */  be_nested_str(hour),
-    /* K7   */  be_nested_str(min),
-    /* K8   */  be_nested_str(sec),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(time_dump),
+    /* K2   */  be_nested_str_weak(rtc),
+    /* K3   */  be_nested_str_weak(local),
+    /* K4   */  be_nested_str_weak(year),
+    /* K5   */  be_nested_str_weak(set_time),
+    /* K6   */  be_nested_str_weak(hour),
+    /* K7   */  be_nested_str_weak(min),
+    /* K8   */  be_nested_str_weak(sec),
     }),
-    &be_const_str_every_second,
+    be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -139,9 +139,9 @@ be_local_closure(lv_clock_init,   /* name */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
-        /* K0   */  be_nested_str(before_del),
+        /* K0   */  be_nested_str_weak(before_del),
         }),
-        &be_const_str__X3Clambda_X3E,
+        be_str_weak(_X3Clambda_X3E),
         &be_const_str_solidified,
         ( &(const binstruction[ 4]) {  /* code */
           0x68000000,  //  0000  GETUPV	R0	U0
@@ -153,21 +153,21 @@ be_local_closure(lv_clock_init,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_str(init),
-    /* K1   */  be_nested_str(lv),
-    /* K2   */  be_nested_str(seg7_font),
-    /* K3   */  be_nested_str(set_style_text_font),
-    /* K4   */  be_nested_str(PART_MAIN),
-    /* K5   */  be_nested_str(STATE_DEFAULT),
-    /* K6   */  be_nested_str(set_text),
-    /* K7   */  be_nested_str(_X2D_X2D_X3A_X2D_X2D),
-    /* K8   */  be_nested_str(add_event_cb),
-    /* K9   */  be_nested_str(EVENT_DELETE),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(lv),
+    /* K2   */  be_nested_str_weak(seg7_font),
+    /* K3   */  be_nested_str_weak(set_style_text_font),
+    /* K4   */  be_nested_str_weak(PART_MAIN),
+    /* K5   */  be_nested_str_weak(STATE_DEFAULT),
+    /* K6   */  be_nested_str_weak(set_text),
+    /* K7   */  be_nested_str_weak(_X2D_X2D_X3A_X2D_X2D),
+    /* K8   */  be_nested_str_weak(add_event_cb),
+    /* K9   */  be_nested_str_weak(EVENT_DELETE),
     /* K10  */  be_const_int(0),
-    /* K11  */  be_nested_str(tasmota),
-    /* K12  */  be_nested_str(add_driver),
+    /* K11  */  be_nested_str_weak(tasmota),
+    /* K12  */  be_nested_str_weak(add_driver),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[36]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -226,10 +226,10 @@ be_local_closure(lv_clock_before_del,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(remove_driver),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(remove_driver),
     }),
-    &be_const_str_before_del,
+    be_str_weak(before_del),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -252,15 +252,15 @@ be_local_class(lv_clock,
     &be_class_lv_label,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(sec, -1), be_const_var(2) },
-        { be_const_key(hour, -1), be_const_var(0) },
-        { be_const_key(before_del, 6), be_const_closure(lv_clock_before_del_closure) },
-        { be_const_key(every_second, -1), be_const_closure(lv_clock_every_second_closure) },
-        { be_const_key(minute, -1), be_const_var(1) },
-        { be_const_key(set_time, 2), be_const_closure(lv_clock_set_time_closure) },
-        { be_const_key(init, -1), be_const_closure(lv_clock_init_closure) },
+        { be_const_key_weak(sec, -1), be_const_var(2) },
+        { be_const_key_weak(hour, -1), be_const_var(0) },
+        { be_const_key_weak(before_del, 6), be_const_closure(lv_clock_before_del_closure) },
+        { be_const_key_weak(every_second, -1), be_const_closure(lv_clock_every_second_closure) },
+        { be_const_key_weak(minute, -1), be_const_var(1) },
+        { be_const_key_weak(set_time, 2), be_const_closure(lv_clock_set_time_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_clock_init_closure) },
     })),
-    (bstring*) &be_const_str_lv_clock
+    be_str_weak(lv_clock)
 );
 /*******************************************************************/
 
@@ -284,24 +284,24 @@ be_local_closure(lv_clock_icon_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
-    /* K0   */  be_nested_str(init),
-    /* K1   */  be_nested_str(get_height),
-    /* K2   */  be_nested_str(refr_size),
-    /* K3   */  be_nested_str(get_width),
-    /* K4   */  be_nested_str(set_y),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(get_height),
+    /* K2   */  be_nested_str_weak(refr_size),
+    /* K3   */  be_nested_str_weak(get_width),
+    /* K4   */  be_nested_str_weak(set_y),
     /* K5   */  be_const_int(2),
-    /* K6   */  be_nested_str(get_style_pad_right),
-    /* K7   */  be_nested_str(lv),
-    /* K8   */  be_nested_str(PART_MAIN),
-    /* K9   */  be_nested_str(STATE_DEFAULT),
-    /* K10  */  be_nested_str(set_x),
+    /* K6   */  be_nested_str_weak(get_style_pad_right),
+    /* K7   */  be_nested_str_weak(lv),
+    /* K8   */  be_nested_str_weak(PART_MAIN),
+    /* K9   */  be_nested_str_weak(STATE_DEFAULT),
+    /* K10  */  be_nested_str_weak(set_x),
     /* K11  */  be_const_int(3),
-    /* K12  */  be_nested_str(set_style_pad_right),
-    /* K13  */  be_nested_str(set_style_bg_color),
-    /* K14  */  be_nested_str(color),
-    /* K15  */  be_nested_str(COLOR_BLACK),
+    /* K12  */  be_nested_str_weak(set_style_pad_right),
+    /* K13  */  be_nested_str_weak(set_style_bg_color),
+    /* K14  */  be_nested_str_weak(color),
+    /* K15  */  be_nested_str_weak(COLOR_BLACK),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[60]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -379,9 +379,9 @@ be_local_class(lv_clock_icon,
     &be_class_lv_clock,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(lv_clock_icon_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_clock_icon_init_closure) },
     })),
-    (bstring*) &be_const_str_lv_clock_icon
+    be_str_weak(lv_clock_icon)
 );
 /*******************************************************************/
 
@@ -405,11 +405,11 @@ be_local_closure(lv_signal_arcs_set_percentage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(percentage),
+    /* K0   */  be_nested_str_weak(percentage),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str(invalidate),
+    /* K2   */  be_nested_str_weak(invalidate),
     }),
-    &be_const_str_set_percentage,
+    be_str_weak(set_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -450,18 +450,18 @@ be_local_closure(lv_signal_arcs_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str(_lvgl),
-    /* K1   */  be_nested_str(create_custom_widget),
-    /* K2   */  be_nested_str(percentage),
-    /* K3   */  be_nested_str(p1),
-    /* K4   */  be_nested_str(lv),
-    /* K5   */  be_nested_str(point),
-    /* K6   */  be_nested_str(p2),
-    /* K7   */  be_nested_str(area),
-    /* K8   */  be_nested_str(arc_dsc),
-    /* K9   */  be_nested_str(draw_arc_dsc),
+    /* K0   */  be_nested_str_weak(_lvgl),
+    /* K1   */  be_nested_str_weak(create_custom_widget),
+    /* K2   */  be_nested_str_weak(percentage),
+    /* K3   */  be_nested_str_weak(p1),
+    /* K4   */  be_nested_str_weak(lv),
+    /* K5   */  be_nested_str_weak(point),
+    /* K6   */  be_nested_str_weak(p2),
+    /* K7   */  be_nested_str_weak(area),
+    /* K8   */  be_nested_str_weak(arc_dsc),
+    /* K9   */  be_nested_str_weak(draw_arc_dsc),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[24]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
@@ -518,7 +518,7 @@ be_local_closure(lv_signal_arcs_widget_event,   /* name */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_const_int(1),
         }),
-        &be_const_str_atleast1,
+        be_str_weak(atleast1),
         &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x28040100,  //  0000  GE	R1	R0	K0
@@ -532,43 +532,43 @@ be_local_closure(lv_signal_arcs_widget_event,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[35]) {     /* constants */
-    /* K0   */  be_nested_str(lv),
-    /* K1   */  be_nested_str(obj_event_base),
-    /* K2   */  be_nested_str(RES_OK),
-    /* K3   */  be_nested_str(code),
-    /* K4   */  be_nested_str(math),
-    /* K5   */  be_nested_str(get_height),
-    /* K6   */  be_nested_str(get_width),
+    /* K0   */  be_nested_str_weak(lv),
+    /* K1   */  be_nested_str_weak(obj_event_base),
+    /* K2   */  be_nested_str_weak(RES_OK),
+    /* K3   */  be_nested_str_weak(code),
+    /* K4   */  be_nested_str_weak(math),
+    /* K5   */  be_nested_str_weak(get_height),
+    /* K6   */  be_nested_str_weak(get_width),
     /* K7   */  be_const_int(2),
     /* K8   */  be_const_int(3),
-    /* K9   */  be_nested_str(EVENT_DRAW_MAIN),
-    /* K10  */  be_nested_str(draw_ctx),
-    /* K11  */  be_nested_str(param),
-    /* K12  */  be_nested_str(get_coords),
-    /* K13  */  be_nested_str(area),
-    /* K14  */  be_nested_str(x1),
-    /* K15  */  be_nested_str(y1),
-    /* K16  */  be_nested_str(draw_arc_dsc_init),
-    /* K17  */  be_nested_str(arc_dsc),
-    /* K18  */  be_nested_str(init_draw_arc_dsc),
-    /* K19  */  be_nested_str(PART_MAIN),
-    /* K20  */  be_nested_str(rounded),
+    /* K9   */  be_nested_str_weak(EVENT_DRAW_MAIN),
+    /* K10  */  be_nested_str_weak(draw_ctx),
+    /* K11  */  be_nested_str_weak(param),
+    /* K12  */  be_nested_str_weak(get_coords),
+    /* K13  */  be_nested_str_weak(area),
+    /* K14  */  be_nested_str_weak(x1),
+    /* K15  */  be_nested_str_weak(y1),
+    /* K16  */  be_nested_str_weak(draw_arc_dsc_init),
+    /* K17  */  be_nested_str_weak(arc_dsc),
+    /* K18  */  be_nested_str_weak(init_draw_arc_dsc),
+    /* K19  */  be_nested_str_weak(PART_MAIN),
+    /* K20  */  be_nested_str_weak(rounded),
     /* K21  */  be_const_int(1),
-    /* K22  */  be_nested_str(width),
-    /* K23  */  be_nested_str(get_style_line_color),
-    /* K24  */  be_nested_str(STATE_DEFAULT),
-    /* K25  */  be_nested_str(get_style_bg_color),
-    /* K26  */  be_nested_str(deg),
-    /* K27  */  be_nested_str(acos),
-    /* K28  */  be_nested_str(p1),
-    /* K29  */  be_nested_str(x),
-    /* K30  */  be_nested_str(y),
-    /* K31  */  be_nested_str(color),
-    /* K32  */  be_nested_str(percentage),
-    /* K33  */  be_nested_str(draw_arc),
+    /* K22  */  be_nested_str_weak(width),
+    /* K23  */  be_nested_str_weak(get_style_line_color),
+    /* K24  */  be_nested_str_weak(STATE_DEFAULT),
+    /* K25  */  be_nested_str_weak(get_style_bg_color),
+    /* K26  */  be_nested_str_weak(deg),
+    /* K27  */  be_nested_str_weak(acos),
+    /* K28  */  be_nested_str_weak(p1),
+    /* K29  */  be_nested_str_weak(x),
+    /* K30  */  be_nested_str_weak(y),
+    /* K31  */  be_nested_str_weak(color),
+    /* K32  */  be_nested_str_weak(percentage),
+    /* K33  */  be_nested_str_weak(draw_arc),
     /* K34  */  be_const_int(0),
     }),
-    &be_const_str_widget_event,
+    be_str_weak(widget_event),
     &be_const_str_solidified,
     ( &(const binstruction[171]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
@@ -762,9 +762,9 @@ be_local_closure(lv_signal_arcs_get_percentage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str(percentage),
+    /* K0   */  be_nested_str_weak(percentage),
     }),
-    &be_const_str_get_percentage,
+    be_str_weak(get_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -784,17 +784,17 @@ be_local_class(lv_signal_arcs,
     &be_class_lv_obj,
     be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(percentage, -1), be_const_var(0) },
-        { be_const_key(area, 4), be_const_var(3) },
-        { be_const_key(p2, -1), be_const_var(2) },
-        { be_const_key(get_percentage, -1), be_const_closure(lv_signal_arcs_get_percentage_closure) },
-        { be_const_key(p1, -1), be_const_var(1) },
-        { be_const_key(arc_dsc, -1), be_const_var(4) },
-        { be_const_key(init, 5), be_const_closure(lv_signal_arcs_init_closure) },
-        { be_const_key(widget_event, -1), be_const_closure(lv_signal_arcs_widget_event_closure) },
-        { be_const_key(set_percentage, 3), be_const_closure(lv_signal_arcs_set_percentage_closure) },
+        { be_const_key_weak(percentage, -1), be_const_var(0) },
+        { be_const_key_weak(area, 4), be_const_var(3) },
+        { be_const_key_weak(p2, -1), be_const_var(2) },
+        { be_const_key_weak(get_percentage, -1), be_const_closure(lv_signal_arcs_get_percentage_closure) },
+        { be_const_key_weak(p1, -1), be_const_var(1) },
+        { be_const_key_weak(arc_dsc, -1), be_const_var(4) },
+        { be_const_key_weak(init, 5), be_const_closure(lv_signal_arcs_init_closure) },
+        { be_const_key_weak(widget_event, -1), be_const_closure(lv_signal_arcs_widget_event_closure) },
+        { be_const_key_weak(set_percentage, 3), be_const_closure(lv_signal_arcs_set_percentage_closure) },
     })),
-    (bstring*) &be_const_str_lv_signal_arcs
+    be_str_weak(lv_signal_arcs)
 );
 /*******************************************************************/
 
@@ -818,10 +818,10 @@ be_local_closure(lv_wifi_arcs_before_del,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(remove_driver),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(remove_driver),
     }),
-    &be_const_str_before_del,
+    be_str_weak(before_del),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -849,13 +849,13 @@ be_local_closure(lv_wifi_arcs_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str(init),
-    /* K1   */  be_nested_str(tasmota),
-    /* K2   */  be_nested_str(add_driver),
-    /* K3   */  be_nested_str(set_percentage),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(add_driver),
+    /* K3   */  be_nested_str_weak(set_percentage),
     /* K4   */  be_const_int(0),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -892,15 +892,15 @@ be_local_closure(lv_wifi_arcs_every_second,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(wifi),
-    /* K2   */  be_nested_str(find),
-    /* K3   */  be_nested_str(quality),
-    /* K4   */  be_nested_str(ip),
-    /* K5   */  be_nested_str(set_percentage),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(wifi),
+    /* K2   */  be_nested_str_weak(find),
+    /* K3   */  be_nested_str_weak(quality),
+    /* K4   */  be_nested_str_weak(ip),
+    /* K5   */  be_nested_str_weak(set_percentage),
     /* K6   */  be_const_int(0),
     }),
-    &be_const_str_every_second,
+    be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -941,11 +941,11 @@ be_local_class(lv_wifi_arcs,
     &be_class_lv_signal_arcs,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(before_del, 1), be_const_closure(lv_wifi_arcs_before_del_closure) },
-        { be_const_key(every_second, 2), be_const_closure(lv_wifi_arcs_every_second_closure) },
-        { be_const_key(init, -1), be_const_closure(lv_wifi_arcs_init_closure) },
+        { be_const_key_weak(before_del, 1), be_const_closure(lv_wifi_arcs_before_del_closure) },
+        { be_const_key_weak(every_second, 2), be_const_closure(lv_wifi_arcs_every_second_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_wifi_arcs_init_closure) },
     })),
-    (bstring*) &be_const_str_lv_wifi_arcs
+    be_str_weak(lv_wifi_arcs)
 );
 /*******************************************************************/
 
@@ -969,26 +969,26 @@ be_local_closure(lv_wifi_arcs_icon_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
-    /* K0   */  be_nested_str(init),
-    /* K1   */  be_nested_str(set_style_line_color),
-    /* K2   */  be_nested_str(lv),
-    /* K3   */  be_nested_str(color),
-    /* K4   */  be_nested_str(COLOR_WHITE),
-    /* K5   */  be_nested_str(PART_MAIN),
-    /* K6   */  be_nested_str(STATE_DEFAULT),
-    /* K7   */  be_nested_str(set_style_bg_color),
-    /* K8   */  be_nested_str(COLOR_BLACK),
-    /* K9   */  be_nested_str(get_height),
-    /* K10  */  be_nested_str(get_style_pad_right),
-    /* K11  */  be_nested_str(set_height),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(set_style_line_color),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(color),
+    /* K4   */  be_nested_str_weak(COLOR_WHITE),
+    /* K5   */  be_nested_str_weak(PART_MAIN),
+    /* K6   */  be_nested_str_weak(STATE_DEFAULT),
+    /* K7   */  be_nested_str_weak(set_style_bg_color),
+    /* K8   */  be_nested_str_weak(COLOR_BLACK),
+    /* K9   */  be_nested_str_weak(get_height),
+    /* K10  */  be_nested_str_weak(get_style_pad_right),
+    /* K11  */  be_nested_str_weak(set_height),
     /* K12  */  be_const_int(3),
-    /* K13  */  be_nested_str(set_width),
-    /* K14  */  be_nested_str(set_x),
-    /* K15  */  be_nested_str(get_width),
-    /* K16  */  be_nested_str(set_style_pad_right),
+    /* K13  */  be_nested_str_weak(set_width),
+    /* K14  */  be_nested_str_weak(set_x),
+    /* K15  */  be_nested_str_weak(get_width),
+    /* K16  */  be_nested_str_weak(set_style_pad_right),
     /* K17  */  be_const_int(1),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[67]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -1073,9 +1073,9 @@ be_local_class(lv_wifi_arcs_icon,
     &be_class_lv_wifi_arcs,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(lv_wifi_arcs_icon_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_wifi_arcs_icon_init_closure) },
     })),
-    (bstring*) &be_const_str_lv_wifi_arcs_icon
+    be_str_weak(lv_wifi_arcs_icon)
 );
 /*******************************************************************/
 
@@ -1099,11 +1099,11 @@ be_local_closure(lv_signal_bars_set_percentage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(percentage),
+    /* K0   */  be_nested_str_weak(percentage),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str(invalidate),
+    /* K2   */  be_nested_str_weak(invalidate),
     }),
-    &be_const_str_set_percentage,
+    be_str_weak(set_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
@@ -1144,18 +1144,18 @@ be_local_closure(lv_signal_bars_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str(_lvgl),
-    /* K1   */  be_nested_str(create_custom_widget),
-    /* K2   */  be_nested_str(percentage),
-    /* K3   */  be_nested_str(p1),
-    /* K4   */  be_nested_str(lv),
-    /* K5   */  be_nested_str(point),
-    /* K6   */  be_nested_str(p2),
-    /* K7   */  be_nested_str(area),
-    /* K8   */  be_nested_str(line_dsc),
-    /* K9   */  be_nested_str(draw_line_dsc),
+    /* K0   */  be_nested_str_weak(_lvgl),
+    /* K1   */  be_nested_str_weak(create_custom_widget),
+    /* K2   */  be_nested_str_weak(percentage),
+    /* K3   */  be_nested_str_weak(p1),
+    /* K4   */  be_nested_str_weak(lv),
+    /* K5   */  be_nested_str_weak(point),
+    /* K6   */  be_nested_str_weak(p2),
+    /* K7   */  be_nested_str_weak(area),
+    /* K8   */  be_nested_str_weak(line_dsc),
+    /* K9   */  be_nested_str_weak(draw_line_dsc),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[24]) {  /* code */
       0xB80A0000,  //  0000  GETNGBL	R2	K0
@@ -1212,7 +1212,7 @@ be_local_closure(lv_signal_bars_widget_event,   /* name */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_const_int(1),
         }),
-        &be_const_str_atleast1,
+        be_str_weak(atleast1),
         &be_const_str_solidified,
         ( &(const binstruction[ 6]) {  /* code */
           0x28040100,  //  0000  GE	R1	R0	K0
@@ -1226,46 +1226,46 @@ be_local_closure(lv_signal_bars_widget_event,   /* name */
     }),
     1,                          /* has constants */
     ( &(const bvalue[38]) {     /* constants */
-    /* K0   */  be_nested_str(lv),
-    /* K1   */  be_nested_str(obj_event_base),
-    /* K2   */  be_nested_str(RES_OK),
-    /* K3   */  be_nested_str(code),
-    /* K4   */  be_nested_str(get_height),
-    /* K5   */  be_nested_str(get_width),
+    /* K0   */  be_nested_str_weak(lv),
+    /* K1   */  be_nested_str_weak(obj_event_base),
+    /* K2   */  be_nested_str_weak(RES_OK),
+    /* K3   */  be_nested_str_weak(code),
+    /* K4   */  be_nested_str_weak(get_height),
+    /* K5   */  be_nested_str_weak(get_width),
     /* K6   */  be_const_int(3),
     /* K7   */  be_const_int(2),
-    /* K8   */  be_nested_str(EVENT_DRAW_MAIN),
-    /* K9   */  be_nested_str(draw_ctx),
-    /* K10  */  be_nested_str(param),
-    /* K11  */  be_nested_str(get_coords),
-    /* K12  */  be_nested_str(area),
-    /* K13  */  be_nested_str(x1),
-    /* K14  */  be_nested_str(y1),
-    /* K15  */  be_nested_str(draw_line_dsc_init),
-    /* K16  */  be_nested_str(line_dsc),
-    /* K17  */  be_nested_str(init_draw_line_dsc),
-    /* K18  */  be_nested_str(PART_MAIN),
-    /* K19  */  be_nested_str(round_start),
+    /* K8   */  be_nested_str_weak(EVENT_DRAW_MAIN),
+    /* K9   */  be_nested_str_weak(draw_ctx),
+    /* K10  */  be_nested_str_weak(param),
+    /* K11  */  be_nested_str_weak(get_coords),
+    /* K12  */  be_nested_str_weak(area),
+    /* K13  */  be_nested_str_weak(x1),
+    /* K14  */  be_nested_str_weak(y1),
+    /* K15  */  be_nested_str_weak(draw_line_dsc_init),
+    /* K16  */  be_nested_str_weak(line_dsc),
+    /* K17  */  be_nested_str_weak(init_draw_line_dsc),
+    /* K18  */  be_nested_str_weak(PART_MAIN),
+    /* K19  */  be_nested_str_weak(round_start),
     /* K20  */  be_const_int(1),
-    /* K21  */  be_nested_str(round_end),
-    /* K22  */  be_nested_str(width),
-    /* K23  */  be_nested_str(get_style_line_color),
-    /* K24  */  be_nested_str(STATE_DEFAULT),
-    /* K25  */  be_nested_str(get_style_bg_color),
-    /* K26  */  be_nested_str(event_send),
-    /* K27  */  be_nested_str(EVENT_DRAW_PART_BEGIN),
+    /* K21  */  be_nested_str_weak(round_end),
+    /* K22  */  be_nested_str_weak(width),
+    /* K23  */  be_nested_str_weak(get_style_line_color),
+    /* K24  */  be_nested_str_weak(STATE_DEFAULT),
+    /* K25  */  be_nested_str_weak(get_style_bg_color),
+    /* K26  */  be_nested_str_weak(event_send),
+    /* K27  */  be_nested_str_weak(EVENT_DRAW_PART_BEGIN),
     /* K28  */  be_const_int(0),
-    /* K29  */  be_nested_str(color),
-    /* K30  */  be_nested_str(percentage),
-    /* K31  */  be_nested_str(p1),
-    /* K32  */  be_nested_str(y),
-    /* K33  */  be_nested_str(x),
-    /* K34  */  be_nested_str(p2),
-    /* K35  */  be_nested_str(draw_line),
-    /* K36  */  be_nested_str(stop_iteration),
-    /* K37  */  be_nested_str(EVENT_DRAW_PART_END),
+    /* K29  */  be_nested_str_weak(color),
+    /* K30  */  be_nested_str_weak(percentage),
+    /* K31  */  be_nested_str_weak(p1),
+    /* K32  */  be_nested_str_weak(y),
+    /* K33  */  be_nested_str_weak(x),
+    /* K34  */  be_nested_str_weak(p2),
+    /* K35  */  be_nested_str_weak(draw_line),
+    /* K36  */  be_nested_str_weak(stop_iteration),
+    /* K37  */  be_nested_str_weak(EVENT_DRAW_PART_END),
     }),
-    &be_const_str_widget_event,
+    be_str_weak(widget_event),
     &be_const_str_solidified,
     ( &(const binstruction[138]) {  /* code */
       0xB80E0000,  //  0000  GETNGBL	R3	K0
@@ -1426,9 +1426,9 @@ be_local_closure(lv_signal_bars_get_percentage,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str(percentage),
+    /* K0   */  be_nested_str_weak(percentage),
     }),
-    &be_const_str_get_percentage,
+    be_str_weak(get_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -1448,17 +1448,17 @@ be_local_class(lv_signal_bars,
     &be_class_lv_obj,
     be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(percentage, 4), be_const_var(0) },
-        { be_const_key(p1, 5), be_const_var(1) },
-        { be_const_key(p2, -1), be_const_var(2) },
-        { be_const_key(get_percentage, -1), be_const_closure(lv_signal_bars_get_percentage_closure) },
-        { be_const_key(line_dsc, -1), be_const_var(4) },
-        { be_const_key(area, -1), be_const_var(3) },
-        { be_const_key(init, -1), be_const_closure(lv_signal_bars_init_closure) },
-        { be_const_key(widget_event, -1), be_const_closure(lv_signal_bars_widget_event_closure) },
-        { be_const_key(set_percentage, 3), be_const_closure(lv_signal_bars_set_percentage_closure) },
+        { be_const_key_weak(percentage, 4), be_const_var(0) },
+        { be_const_key_weak(p1, 5), be_const_var(1) },
+        { be_const_key_weak(p2, -1), be_const_var(2) },
+        { be_const_key_weak(get_percentage, -1), be_const_closure(lv_signal_bars_get_percentage_closure) },
+        { be_const_key_weak(line_dsc, -1), be_const_var(4) },
+        { be_const_key_weak(area, -1), be_const_var(3) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_signal_bars_init_closure) },
+        { be_const_key_weak(widget_event, -1), be_const_closure(lv_signal_bars_widget_event_closure) },
+        { be_const_key_weak(set_percentage, 3), be_const_closure(lv_signal_bars_set_percentage_closure) },
     })),
-    (bstring*) &be_const_str_lv_signal_bars
+    be_str_weak(lv_signal_bars)
 );
 /*******************************************************************/
 
@@ -1482,10 +1482,10 @@ be_local_closure(lv_wifi_bars_before_del,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(remove_driver),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(remove_driver),
     }),
-    &be_const_str_before_del,
+    be_str_weak(before_del),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -1513,13 +1513,13 @@ be_local_closure(lv_wifi_bars_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str(init),
-    /* K1   */  be_nested_str(tasmota),
-    /* K2   */  be_nested_str(add_driver),
-    /* K3   */  be_nested_str(set_percentage),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(tasmota),
+    /* K2   */  be_nested_str_weak(add_driver),
+    /* K3   */  be_nested_str_weak(set_percentage),
     /* K4   */  be_const_int(0),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -1556,15 +1556,15 @@ be_local_closure(lv_wifi_bars_every_second,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(wifi),
-    /* K2   */  be_nested_str(find),
-    /* K3   */  be_nested_str(quality),
-    /* K4   */  be_nested_str(ip),
-    /* K5   */  be_nested_str(set_percentage),
+    /* K0   */  be_nested_str_weak(tasmota),
+    /* K1   */  be_nested_str_weak(wifi),
+    /* K2   */  be_nested_str_weak(find),
+    /* K3   */  be_nested_str_weak(quality),
+    /* K4   */  be_nested_str_weak(ip),
+    /* K5   */  be_nested_str_weak(set_percentage),
     /* K6   */  be_const_int(0),
     }),
-    &be_const_str_every_second,
+    be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
@@ -1605,11 +1605,11 @@ be_local_class(lv_wifi_bars,
     &be_class_lv_signal_bars,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(before_del, 1), be_const_closure(lv_wifi_bars_before_del_closure) },
-        { be_const_key(every_second, 2), be_const_closure(lv_wifi_bars_every_second_closure) },
-        { be_const_key(init, -1), be_const_closure(lv_wifi_bars_init_closure) },
+        { be_const_key_weak(before_del, 1), be_const_closure(lv_wifi_bars_before_del_closure) },
+        { be_const_key_weak(every_second, 2), be_const_closure(lv_wifi_bars_every_second_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_wifi_bars_init_closure) },
     })),
-    (bstring*) &be_const_str_lv_wifi_bars
+    be_str_weak(lv_wifi_bars)
 );
 /*******************************************************************/
 
@@ -1633,25 +1633,25 @@ be_local_closure(lv_wifi_bars_icon_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str(init),
-    /* K1   */  be_nested_str(set_style_line_color),
-    /* K2   */  be_nested_str(lv),
-    /* K3   */  be_nested_str(color),
-    /* K4   */  be_nested_str(COLOR_WHITE),
-    /* K5   */  be_nested_str(PART_MAIN),
-    /* K6   */  be_nested_str(STATE_DEFAULT),
-    /* K7   */  be_nested_str(set_style_bg_color),
-    /* K8   */  be_nested_str(COLOR_BLACK),
-    /* K9   */  be_nested_str(get_height),
-    /* K10  */  be_nested_str(get_style_pad_right),
-    /* K11  */  be_nested_str(set_height),
-    /* K12  */  be_nested_str(set_width),
-    /* K13  */  be_nested_str(set_x),
-    /* K14  */  be_nested_str(get_width),
-    /* K15  */  be_nested_str(set_style_pad_right),
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(set_style_line_color),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(color),
+    /* K4   */  be_nested_str_weak(COLOR_WHITE),
+    /* K5   */  be_nested_str_weak(PART_MAIN),
+    /* K6   */  be_nested_str_weak(STATE_DEFAULT),
+    /* K7   */  be_nested_str_weak(set_style_bg_color),
+    /* K8   */  be_nested_str_weak(COLOR_BLACK),
+    /* K9   */  be_nested_str_weak(get_height),
+    /* K10  */  be_nested_str_weak(get_style_pad_right),
+    /* K11  */  be_nested_str_weak(set_height),
+    /* K12  */  be_nested_str_weak(set_width),
+    /* K13  */  be_nested_str_weak(set_x),
+    /* K14  */  be_nested_str_weak(get_width),
+    /* K15  */  be_nested_str_weak(set_style_pad_right),
     /* K16  */  be_const_int(1),
     }),
-    &be_const_str_init,
+    be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[64]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
@@ -1733,9 +1733,9 @@ be_local_class(lv_wifi_bars_icon,
     &be_class_lv_wifi_bars,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(lv_wifi_bars_icon_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(lv_wifi_bars_icon_init_closure) },
     })),
-    (bstring*) &be_const_str_lv_wifi_bars_icon
+    be_str_weak(lv_wifi_bars_icon)
 );
 /*******************************************************************/
 

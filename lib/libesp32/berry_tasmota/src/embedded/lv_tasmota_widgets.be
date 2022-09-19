@@ -21,7 +21,7 @@ solidify.dump(lv_wifi_bars_icon, true)
 
 class lv_label end    # for solidification
 
-#@ solidify:lv_clock
+#@ solidify:lv_clock,weak
 class lv_clock: lv_label
   var hour, minute, sec
 
@@ -60,7 +60,7 @@ class lv_clock: lv_label
   end
 end
 
-#@ solidify:lv_clock_icon
+#@ solidify:lv_clock_icon,weak
 class lv_clock_icon: lv_clock
 
   def init(parent)
@@ -86,7 +86,7 @@ end
 # ##########################################################################################
 class lv_obj end    # for solidification
 
-#@ solidify:lv_signal_arcs
+#@ solidify:lv_signal_arcs,weak
 class lv_signal_arcs : lv_obj
   var percentage          # value to display, range 0..100
   var p1, p2, area, arc_dsc    # instances of objects kept to avoid re-instanciating at each call
@@ -175,7 +175,7 @@ class lv_signal_arcs : lv_obj
   end
 end
 
-#@ solidify:lv_wifi_arcs
+#@ solidify:lv_wifi_arcs,weak
 class lv_wifi_arcs: lv_signal_arcs
   def init(parent)
     super(self).init(parent)
@@ -199,7 +199,7 @@ class lv_wifi_arcs: lv_signal_arcs
   end
 end
 
-#@ solidify:lv_wifi_arcs_icon
+#@ solidify:lv_wifi_arcs_icon,weak
 class lv_wifi_arcs_icon: lv_wifi_arcs
   def init(parent)
     super(self).init(parent)
@@ -219,7 +219,7 @@ end
 
 # ##########################################################################################
 
-#@ solidify:lv_signal_bars
+#@ solidify:lv_signal_bars,weak
 class lv_signal_bars : lv_obj
   var percentage              # value to display, range 0..100
   var p1, p2, area, line_dsc  # instances of objects kept to avoid re-instanciating at each call
@@ -295,7 +295,7 @@ class lv_signal_bars : lv_obj
   end
 end
 
-#@ solidify:lv_wifi_bars
+#@ solidify:lv_wifi_bars,weak
 class lv_wifi_bars: lv_signal_bars
   def init(parent)
     super(self).init(parent)
@@ -319,7 +319,7 @@ class lv_wifi_bars: lv_signal_bars
   end
 end
 
-#@ solidify:lv_wifi_bars_icon
+#@ solidify:lv_wifi_bars_icon,weak
 class lv_wifi_bars_icon: lv_wifi_bars
   def init(parent)
     super(self).init(parent)
