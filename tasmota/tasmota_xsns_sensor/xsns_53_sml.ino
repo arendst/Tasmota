@@ -53,7 +53,7 @@
 #define TMSBSIZ 256
 #endif
 
-#define MODBUS_DEBUG
+//#define MODBUS_DEBUG
 
 // addresses a bug in meter DWS74
 //#define DWS74_BUG
