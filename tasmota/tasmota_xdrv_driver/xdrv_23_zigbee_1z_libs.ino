@@ -572,9 +572,9 @@ bool Z_attribute::equalsId(uint16_t _cluster, uint16_t _attr_id, uint8_t suffix)
 }
 
 bool Z_attribute::equalsCmd(uint16_t _cluster, uint8_t _cmd_id, bool _direction, bool cmd_general, uint8_t suffix) const {
-  if (!key_is_cmd ||key_is_str) { return false; }
+  if (!key_is_cmd || key_is_str) { return false; }
   uint16_t _attr_id = _cmd_id | (_direction ? 0x100 : 0x000) | (cmd_general ? 0x200 : 0x000);
-  if ((this->cluster == _cluster) && (this->attr_id == _attr_id) && (!this->key_is_cmd)) {
+  if ((this->cluster == _cluster) && (this->attr_id == _attr_id) && (this->key_is_cmd)) {
     if (suffix) {
       if (key_suffix == suffix) { return true; }
     } else {
