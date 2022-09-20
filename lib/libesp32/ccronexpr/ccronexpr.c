@@ -49,7 +49,6 @@
 
 #define CRON_CF_ARR_LEN 7
 
-#define CRON_INVALID_INSTANT ((time_t) -1)
 
 static const char* const DAYS_ARR[] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
 #define CRON_DAYS_ARR_LEN 7
@@ -85,7 +84,7 @@ void cron_free(void* p);
 
 /* forward declarations for platforms that may need them */
 /* can be hidden in time.h */
-#if !defined(_WIN32) && !defined(__AVR__) && !defined(ESP8266) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(__AVR__) && !defined(ESP8266) && !defined(ESP_PLATFORM) && !defined(ANDROID)
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 time_t timegm(struct tm* __tp);
 struct tm *localtime_r(const time_t *timep, struct tm *result);
@@ -103,15 +102,16 @@ time_t cron_mktime_gm(struct tm* tm) {
 #elif defined(__AVR__)
 /* https://www.nongnu.org/avr-libc/user-manual/group__avr__time.html */
     return mk_gmtime(tm);
-#elif defined(ESP8266)
+#elif defined(ESP8266) || defined(ESP_PLATFORM)
     /* https://linux.die.net/man/3/timegm */
     /* http://www.catb.org/esr/time-programming/ */
     /* portable version of timegm() */
-    time_t ret;
-    char *tz;
-    tz = getenv("TZ");
-    if (tz)
-        tz = strdup(tz);
+    time_t ret = -1;
+    char *tz_orig = NULL;
+    char *tz = NULL;
+    tz_orig = getenv("TZ");
+    if (tz_orig)
+        tz = strdup(tz_orig);
     setenv("TZ", "UTC+0", 1);
     tzset();
     ret = mktime(tm);
@@ -282,6 +282,7 @@ static int add_to_field(struct tm* calendar, int field, int val) {
         calendar->tm_hour = calendar->tm_hour + val;
         break;
     case CRON_CF_DAY_OF_WEEK: /* mkgmtime ignores this field */
+        break;
     case CRON_CF_DAY_OF_MONTH:
         calendar->tm_mday = calendar->tm_mday + val;
         break;
@@ -521,11 +522,11 @@ static int do_next(cron_expr* expr, struct tm* calendar, unsigned int dot) {
     if (!resets || !empty_list) {
         res = -1;
     }
-    if (resets) {
-        cron_free(resets);
-    }
     if (empty_list) {
         cron_free(empty_list);
+    }
+    if (resets) {
+        cron_free(resets);
     }
     return res;
 }
@@ -649,6 +650,7 @@ static char** split_str(const char* str, char del, size_t* len_out) {
         int c = str[i];
         if (del == str[i]) {
             if (bi > 0) {
+                if (ri >= len)  goto return_error;
                 tmp = strdupl(buf, bi);
                 if (!tmp) goto return_error;
                 res[ri++] = tmp;
@@ -661,6 +663,7 @@ static char** split_str(const char* str, char del, size_t* len_out) {
     }
     /* tail */
     if (bi > 0) {
+        if (ri >= len)  goto return_error;
         tmp = strdupl(buf, bi);
         if (!tmp) goto return_error;
         res[ri++] = tmp;
@@ -670,10 +673,10 @@ static char** split_str(const char* str, char del, size_t* len_out) {
     return res;
 
     return_error:
+    free_splitted(res, len);
     if (buf) {
         cron_free(buf);
     }
-    free_splitted(res, len);
     *len_out = 0;
     return NULL;
 }
