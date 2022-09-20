@@ -167,7 +167,11 @@ void SerialBridgeInput(void) {
     }
     ResponseJsonEnd();
 
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+    if (Settings->flag6.mqtt_sserialreceived) {  // SetOption147  (MQTT) Enable publish SSerialReceived MQTT messages. If disabled, use event rules instead.
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+    } else {
+      XdrvRulesProcess(0);
+    }
     serial_bridge_in_byte_counter = 0;
   }
 }
