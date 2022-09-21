@@ -338,10 +338,29 @@ void parseXYZ(const char *model, const SBuffer &payload, struct Z_XYZ_Var *xyz) 
 }
 
 // Parse a cluster specific command, and try to convert into human readable
+// Includes specific handling for Tuya attributes
 void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &payload) {
   const char * command_name = nullptr;
   uint8_t conv_direction;
   Z_XYZ_Var xyz;
+
+  // always report attribute in raw format
+  // Format: "0001!06": "00" = "<cluster>!<cmd>": "<payload>" for commands to devices
+  // Format: "0004<00": "00" = "<cluster><<cmd>": "<payload>" for commands to devices
+  // char attrid_str[12];
+  // snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X%c%02X"), cluster, direction ? '?' : '!', cmd);
+  // Z_attribute & attr_raw = attr_list.addAttribute(attrid_str);
+  Z_attribute & attr_raw = attr_list.addAttributeCmd(cluster, cmd, direction, false /* cluster specific */);
+  attr_raw.setBuf(payload, 0, payload.len());
+
+  // Take a shotcut in case of Tuya attribute which follow a different scheme
+  if (cluster == 0xEF00) {
+    // Tuya Cmd
+    if (convertTuyaSpecificCluster(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload)) {
+      attr_list.removeAttribute(&attr_raw);   // remove raw command
+    }
+    return;     // abort, normal processing doesn't apply here
+  }
 
   //AddLog(LOG_LEVEL_INFO, PSTR(">>> len = %d - %02X%02X%02X"), payload.len(), payload.get8(0), payload.get8(1), payload.get8(2));
   for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
@@ -395,15 +414,6 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
       }
     }
   }
-
-  // always report attribute in raw format
-  // Format: "0001!06": "00" = "<cluster>!<cmd>": "<payload>" for commands to devices
-  // Format: "0004<00": "00" = "<cluster><<cmd>": "<payload>" for commands to devices
-  // char attrid_str[12];
-  // snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X%c%02X"), cluster, direction ? '?' : '!', cmd);
-  // Z_attribute & attr_raw = attr_list.addAttribute(attrid_str);
-  Z_attribute & attr_raw = attr_list.addAttributeCmd(cluster, cmd, direction, false /* cluster specific */);
-  attr_raw.setBuf(payload, 0, payload.len());
 
   // TODO Berry encode command
 
@@ -570,22 +580,21 @@ void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
 
 //
 // Tuya - MOES specifc cluster 0xEF00
-// See https://medium.com/@dzegarra/zigbee2mqtt-how-to-add-support-for-a-new-tuya-based-device-part-2-5492707e882d
-// and https://github.com/Koenkk/zigbee-herdsman-converters/blob/9f503d47d3df6a99d133b78d2b52aa5c701ddddf/converters/fromZigbee.js#L339
+// https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
 //
 bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &buf) {
-  // uint8_t status = buf.get8(0);
-  // uint8_t transid = buf.get8(1);
-  uint8_t dp = buf.get8(2);   // dpid from Tuya documentation
+  // uint16_t seq_number = buf.get16BigEndian(0)
+  uint8_t dpid = buf.get8(2);   // dpid from Tuya documentation
   uint8_t attr_type = buf.get8(3);   // data type from Tuya documentation
   uint16_t len = buf.get16BigEndian(4);
 
   if ((1 == cmd) || (2 == cmd)) {   // attribute report or attribute response
-    // create a synthetic attribute with id 'dp'
-    Z_attribute & attr = attr_list.addAttribute(cluster, (attr_type << 8) | dp);
+    // create a synthetic attribute with id 'dpid'
+    Z_attribute & attr = attr_list.addAttribute(cluster, (attr_type << 8) | dpid);
     parseSingleTuyaAttribute(attr, buf, 6, len, attr_type);
     return true;    // true = remove the original Tuya attribute
   }
+  // TODO Cmd 0x24 to sync clock with coordinator time
   return false;
 }
 
