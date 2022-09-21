@@ -838,7 +838,7 @@ void SettingsDefaultSet2(void) {
   SOBitfield3  flag3 = { 0 };
   SOBitfield4  flag4 = { 0 };
   SOBitfield5  flag5 = { 0 };
-  SOBitfield5  flag6 = { 0 };
+  SOBitfield6  flag6 = { 0 };
   SysMBitfield1  flag2 = { 0 };
   SysMBitfield2  mbflag2 = { 0 };
 
