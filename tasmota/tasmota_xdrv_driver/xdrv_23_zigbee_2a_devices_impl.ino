@@ -651,7 +651,7 @@ Z_Device & Z_Devices::parseDeviceFromName(const char * param, uint16_t * parsed_
   size_t param_len = strlen(param);
   char dataBuf[param_len + 1];
   strcpy(dataBuf, param);
-  RemoveSpace(dataBuf);
+  TrimSpace(dataBuf);
   if (parsed_shortaddr != nullptr) { *parsed_shortaddr = BAD_SHORTADDR; }   // if it goes wrong, mark as bad
 
   if ((dataBuf[0] >= '0') && (dataBuf[0] <= '9') && (strlen(dataBuf) < 4)) {

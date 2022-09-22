@@ -1091,13 +1091,13 @@ void ZigbeeMapAllDevices(void) {
 //
 void CmndZbMap(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
 
   if (strlen(XdrvMailbox.data) == 0) {
     ZigbeeMapAllDevices();
     ResponseCmndDone();
   } else {
-  CmndZbBindState_or_Map(true);
+    CmndZbBindState_or_Map(true);
   }
 }
 
@@ -1301,7 +1301,7 @@ void CmndZbInfo_inner(const Z_Device & device) {
 }
 void CmndZbInfo(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
 
   if (strlen(XdrvMailbox.data) == 0) {
     // if empty, dump for all values
@@ -1352,7 +1352,7 @@ void CmndZbSave(void) {
 //
 void CmndZbLoad(void) {
   // can be called before Zigbee is initialized
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
   
   bool ret = true;;
   if (strcmp(XdrvMailbox.data, "*") == 0) {
@@ -1373,7 +1373,7 @@ void CmndZbLoad(void) {
 //
 void CmndZbUnload(void) {
   // can be called before Zigbee is initialized
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
   
   bool ret = ZbUnload(XdrvMailbox.data);
   if (ret) {
@@ -1466,7 +1466,7 @@ void CmndZbcie(void) {
 //   ZbRestore {"Device":"0x5ADF","Name":"Petite_Lampe","IEEEAddr":"0x90FD9FFFFE03B051","ModelId":"TRADFRI bulb E27 WS opal 980lm","Manufacturer":"IKEA of Sweden","Endpoints":["0x01","0xF2"]}
 void CmndZbRestore(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
 
   if (strlen(XdrvMailbox.data) == 0) {
     // if empty, log values for all devices
@@ -1703,7 +1703,7 @@ void CmndZbStatus(void) {
 //
 void CmndZbData(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
 
   if (strlen(XdrvMailbox.data) == 0) {
     // if empty, log values for all devices
@@ -1748,7 +1748,7 @@ void CmndZbConfig(void) {
   int8_t      zb_txradio_dbm = Settings->zb_txradio_dbm;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  RemoveSpace(XdrvMailbox.data);
+  TrimSpace(XdrvMailbox.data);
   if (strlen(XdrvMailbox.data) > 0) {
     JsonParser parser(XdrvMailbox.data);
     JsonParserObject root = parser.getRootObject();
