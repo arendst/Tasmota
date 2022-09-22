@@ -223,7 +223,7 @@ void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
   light.setHue(hue);
 }
 
-int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, String &response) {
+int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint, String &response) {
   uint8_t  bri, sat;
   uint16_t ct, hue;
 
