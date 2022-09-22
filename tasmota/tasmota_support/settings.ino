@@ -1256,6 +1256,7 @@ void SettingsDefaultSet2(void) {
   Settings->flag3 = flag3;
   Settings->flag4 = flag4;
   Settings->flag5 = flag5;
+  Settings->flag6 = flag6;
 }
 
 void SettingsDefaultSet3(void) {
