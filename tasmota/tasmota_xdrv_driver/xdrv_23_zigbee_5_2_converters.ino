@@ -173,6 +173,7 @@ public:
   void parseReportAttributes(Z_attribute_list& attr_list);
   void generateSyntheticAttributes(Z_attribute_list& attr_list);
   void removeInvalidAttributes(Z_attribute_list& attr_list);
+  void applySynonymAttributes(Z_attribute_list& attr_list);
   void computeSyntheticAttributes(Z_attribute_list& attr_list);
   void generateCallBacks(Z_attribute_list& attr_list);
   void parseReadAttributes(uint16_t shortaddr, Z_attribute_list& attr_list);
@@ -700,11 +701,11 @@ void ZCLFrame::removeInvalidAttributes(Z_attribute_list& attr_list) {
   }
 }
 
+
 //
-// Compute new attributes based on the standard set
-// Note: both function are now split to compute on extracted attributes
+// Apply synonyms from the plug-in synonym definitions
 //
-void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+void ZCLFrame::applySynonymAttributes(Z_attribute_list& attr_list) {
   Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
 
   String modelId((char*) device.modelId);
@@ -732,6 +733,20 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         attr.setFloat(fval);
       }
     }
+  }
+}
+
+//
+// Compute new attributes based on the standard set
+// Note: both function are now split to compute on extracted attributes
+//
+void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
+  Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+
+  String modelId((char*) device.modelId);
+  // scan through attributes and apply specific converters
+  for (auto &attr : attr_list) {
+    if (attr.key_is_str) { continue; }    // pass if key is a name
 
     uint32_t ccccaaaa = (attr.cluster << 16) | attr.attr_id;
 
