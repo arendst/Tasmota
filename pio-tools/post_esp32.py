@@ -49,7 +49,7 @@ if "CORE32SOLO1" in extra_flags:
     print ("Build with Solo1 framework")
 elif "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
-    print ("Build with ITEAD framework)
+    print ("Build with ITEAD framework")
 
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
