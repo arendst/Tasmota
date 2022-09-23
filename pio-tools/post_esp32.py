@@ -44,7 +44,8 @@ import esptool
 
 FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 if "CORE32SOLO1" in extra_flags:
-    FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
+    # enable next line when one Platform PR is done!
+    #FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
     #print ("-----extra_flags----", extra_flags)
 elif "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
