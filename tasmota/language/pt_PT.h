@@ -45,7 +45,7 @@
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
 #define D_DAY3LIST "DomSegTerQuaQuiSexSab"
-#define D_MONTH3LIST "JanFevMarAbrMaiJunJulAgoSepOutNovDez"
+#define D_MONTH3LIST "JanFevMarAbrMaiJunJulAgoSetOutNovDez"
 
 // Non JSON decimal separator
 #define D_DECIMAL_SEPARATOR "."
@@ -77,15 +77,15 @@
 #define D_COUNTER "Contador"
 #define D_CT_POWER "CT Power"
 #define D_CURRENT "Corrente"          // As in Voltage and Current
-#define D_CURRENT_NEUTRAL "Current Neutral"
+#define D_CURRENT_NEUTRAL "Corrente Neutra"
 #define D_DATA "Dados"
 #define D_DARKLIGHT "Luz Escura"
 #define D_DEBUG "Depurar"
-#define D_DEWPOINT "Dew point"
+#define D_DEWPOINT "Ponto de Condensação"
 #define D_DISABLED "Disabilitado"
 #define D_DISTANCE "Distância"
 #define D_DNS_SERVER "Servidor DNS"
-#define D_DO "Disolved Oxygen"
+#define D_DO "Oxigénio Dissolvido"
 #define D_DONE "Concluído"
 #define D_DST_TIME "DST"
 #define D_EC "EC"
@@ -96,14 +96,14 @@
 #define D_ERROR "Erro"
 #define D_FAHRENHEIT "Fahrenheit"
 #define D_FAILED "Falha"
-#define D_FALLBACK "Retornar"
-#define D_FALLBACK_TOPIC "Tópico para retornar"
+#define D_FALLBACK "Contingência"
+#define D_FALLBACK_TOPIC "Tópico de contingência"
 #define D_FALSE "Falso"
 #define D_FILE "Ficheiro"
 #define D_FLOW_RATE "Taxa de Fluxo"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
 #define D_FRAME_RATE "Frame rate"
-#define D_FREE_MEMORY "Memoria Livre"
+#define D_FREE_MEMORY "Memória Livre"
 #define D_PSR_MAX_MEMORY "PS-RAM Memory"
 #define D_PSR_FREE_MEMORY "PS-RAM free Memory"
 #define D_FREQUENCY "Frequência"
@@ -116,7 +116,7 @@
 #define D_HUMIDITY "Humidade"
 #define D_ILLUMINANCE "Luminâcia"
 #define D_IMMEDIATE "Immediato"      // Button immediate
-#define D_INDEX "Indíce"
+#define D_INDEX "Índice"
 #define D_INFO "Info"
 #define D_INFRARED "Infravermelho"
 #define D_INITIALIZED "Inicializado"
@@ -130,17 +130,17 @@
 #define D_MULTI_PRESS "multi-pressão"
 #define D_NOISE "Ruído"
 #define D_NONE "Nenhum"
-#define D_O2 "Oxygen"
+#define D_O2 "Oxigénio"
 #define D_OFF "Off"
 #define D_OFFLINE "Desconetado"
 #define D_OK "Ok"
 #define D_ON "On"
 #define D_ONLINE "Conetado"
 #define D_ORP "ORP"
-#define D_PASSWORD "Palavra Chave"
+#define D_PASSWORD "Palavra-passe"
 #define D_PH "pH"
 #define D_MQ "MQ"
-#define D_PARTITION "Partition"      // As in flash and firmware partition
+#define D_PARTITION "Partição"      // As in flash and firmware partition
 #define D_PORT "Porta"
 #define D_POWER_FACTOR "Factor de Potência"
 #define D_POWERUSAGE "Potência"
@@ -167,7 +167,7 @@
 #define D_START "Início"
 #define D_STD_TIME "STD"
 #define D_STOP "Parar"
-#define D_SUBNET_MASK "Mascara sub rede"
+#define D_SUBNET_MASK "Mascara sub-rede"
 #define D_SUBSCRIBE_TO "Subscrever"
 #define D_UNSUBSCRIBE_FROM "Cancelar subscrição de"
 #define D_SUCCESSFUL "Successo"
@@ -214,7 +214,7 @@
 #define D_SYSLOG_LOGGING_REENABLED "Registro do Syslog reativado"
 
 #define D_SET_BAUDRATE_TO "Ajuste da velocidade para"
-#define D_RECEIVED_TOPIC "Topico Recebido"
+#define D_RECEIVED_TOPIC "Tópico Recebido"
 #define D_DATA_SIZE "Tamanho de Dados"
 #define D_ANALOG_INPUT "Entrada Analógica"
 
@@ -223,7 +223,7 @@
 #define D_BLOCKED_LOOP "Loop Bloqueado"
 #define D_WPS_FAILED_WITH_STATUS "WPSconfig FALHOU com estado"
 #define D_ACTIVE_FOR_3_MINUTES "ativo por 3 minutos"
-#define D_FAILED_TO_START "Falha ao iníciar"
+#define D_FAILED_TO_START "Falha ao iniciar"
 #define D_PATCH_ISSUE_2186 "Questão 2186"
 #define D_CONNECTING_TO_AP "Ligando ao AP"
 #define D_IN_MODE "em modo"
@@ -239,8 +239,8 @@
 #define D_SYSLOG_HOST_NOT_FOUND "Anfitrião Syslog não encontrado"
 
 // settings.ino
-#define D_SAVED_TO_FLASH_AT "Guardado na flash em"
-#define D_LOADED_FROM_FLASH_AT "Lido da flash em"
+#define D_SAVED_TO_FLASH_AT "Guardado para flash em"
+#define D_LOADED_FROM_FLASH_AT "Carregado de flash em"
 #define D_USE_DEFAULTS "Usar predefinições"
 #define D_ERASED_SECTOR "Apagado setor"
 
@@ -302,9 +302,9 @@
 #define D_AP1_SSID "Rede WiFi"
 #define D_AP1_SSID_HELP "Type or Select your WiFi Network"
 #define D_AP2_SSID "Rede WiFi 2"
-#define D_AP2_SSID_HELP "Digite ou selecione sua rede WiFi"
-#define D_AP_PASSWORD "Palavra Chave do WiFi"
-#define D_AP_PASSWORD_HELP "Digite sua Palavra Chave do WiFi"
+#define D_AP2_SSID_HELP "Escreva ou selecione sua rede WiFi"
+#define D_AP_PASSWORD "Palavra-passe do WiFi"
+#define D_AP_PASSWORD_HELP "Escreva a palavra-passe do WiFi"
 #define D_SELECT_YOUR_WIFI_NETWORK "Selecione sua Rede WiFi"
 #define D_SHOW_MORE_WIFI_NETWORKS "Procure todas as Redes WiFi"
 #define D_SHOW_MORE_OPTIONS "Mais Opções"
@@ -317,21 +317,21 @@
 #define D_CLIENT "Cliente"
 #define D_FULL_TOPIC "Tópico completo"
 
-#define D_LOGGING_PARAMETERS "Parametros para registro"
-#define D_SERIAL_LOG_LEVEL "Nível de registro na porta série"
-#define D_MQTT_LOG_LEVEL "Nível de registro MQTT"
-#define D_WEB_LOG_LEVEL "Nível de registro WEB"
-#define D_SYS_LOG_LEVEL "Nível de registro do Syslog"
+#define D_LOGGING_PARAMETERS "Parâmetros do registo"
+#define D_SERIAL_LOG_LEVEL "Nível de registo na porta série"
+#define D_MQTT_LOG_LEVEL "Nível de registo MQTT"
+#define D_WEB_LOG_LEVEL "Nível de registo WEB"
+#define D_SYS_LOG_LEVEL "Nível de registo do Syslog"
 #define D_MORE_DEBUG "Depurar mais"
 #define D_SYSLOG_HOST "Anfitrião Syslog"
 #define D_SYSLOG_PORT "Porta Syslog"
 #define D_TELEMETRY_PERIOD "Período de Telemetria"
 
-#define D_OTHER_PARAMETERS "Outros parametros"
+#define D_OTHER_PARAMETERS "Outros parâmetros"
 #define D_TEMPLATE "Modelo"
 #define D_ACTIVATE "Ativar"
-#define D_DEVICE_NAME "Device Name"
-#define D_WEB_ADMIN_PASSWORD "Palavra Chave do Admin WEB"
+#define D_DEVICE_NAME "Nome do dispositivo"
+#define D_WEB_ADMIN_PASSWORD "Palavra-passe do Admin WEB"
 #define D_MQTT_ENABLE "MQTT habilitado"
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_HTTP_API "HTTP API"
@@ -355,7 +355,7 @@
 #define D_PROGRAM_VERSION "Versão do Programa"
 #define D_BUILD_DATE_AND_TIME "Data e Hora de criação"
 #define D_CORE_AND_SDK_VERSION "Versão Core/SDK"
-#define D_FLASH_WRITE_COUNT "Contagem de gravação da flash"
+#define D_FLASH_WRITE_COUNT "Contagem de gravações da flash"
 #define D_MAC_ADDRESS "Endereço MAC"
 #define D_MQTT_HOST "Servidor MQTT"
 #define D_MQTT_PORT "Porta MQTT"
@@ -379,13 +379,13 @@
 #define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Envio Iniciado"
 #define D_UPGRADE_STARTED "Atualização Iniciada"
-#define D_UPLOAD_DONE "Atualização Finalizada"
-#define D_UPLOAD_TRANSFER "Upload transfer"
-#define D_TRANSFER_STARTED "Transfer started"
+#define D_UPLOAD_DONE "Envio Finalizada"
+#define D_UPLOAD_TRANSFER "Envio iniciado"
+#define D_TRANSFER_STARTED "Transferência iniciada"
 #define D_UPLOAD_ERR_1 "Nenhum ficheiro selecionado"
 #define D_UPLOAD_ERR_2 "Não existe espaço disponível"
-#define D_UPLOAD_ERR_3 "Invalid file signature"
-#define D_UPLOAD_ERR_4 "O tamanho do programa e maior do que o tamanho real da flash"
+#define D_UPLOAD_ERR_3 "Assinatura do ficheiro inválida"
+#define D_UPLOAD_ERR_4 "O tamanho do programa é maior do que o tamanho real da flash"
 #define D_UPLOAD_ERR_5 "Comparação incorreta do buffer de upload"
 #define D_UPLOAD_ERR_6 "Falha no envio. Habilitar registro 3"
 #define D_UPLOAD_ERR_7 "Envio cancelado"
@@ -395,12 +395,12 @@
 #define D_UPLOAD_ERR_11 "Falha ao apagar o chip de RF"
 #define D_UPLOAD_ERR_12 "Falha ao escrever no chip de RF"
 #define D_UPLOAD_ERR_13 "Falha ao descodificar o firmware RF"
-#define D_UPLOAD_ERR_14 "Not compatible"
+#define D_UPLOAD_ERR_14 "Não compatível"
 #define D_UPLOAD_ERROR_CODE "Código de erro do envio"
 
 #define D_ENTER_COMMAND "Inserir comando"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Habilitar weblog 2 se resposta esperada"
-#define D_NEED_USER_AND_PASSWORD "Necessário user=<nome utilizador>&password=<palavra chave>"
+#define D_NEED_USER_AND_PASSWORD "Necessário user=<utilizador>&password=<palavra-passe>"
 
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifique a impressão digital TLS..."
@@ -431,7 +431,7 @@
 #define D_3_RESPONSE_PACKETS_SENT "3 pacotes de resposta enviados"
 
 // xdrv_07_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Parametros Domoticz"
+#define D_DOMOTICZ_PARAMETERS "Parâmetros Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Chave idx"
 #define D_DOMOTICZ_SWITCH_IDX "Interruptor idx"
@@ -484,30 +484,30 @@
 #define D_KNX_RX_SCENE "KNX SCENE RX"
 
 // xdrv_23_zigbee
-#define D_ZIGBEE_PERMITJOIN_ACTIVE "Devices allowed to join"
-#define D_ZIGBEE_MAPPING_TITLE "Tasmota Zigbee Mapping"
-#define D_ZIGBEE_NOT_STARTED "Zigbee not started"
-#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Mapping in progress (%d s. remaining)"
-#define D_ZIGBEE_MAPPING_NOT_PRESENT "No mapping"
-#define D_ZIGBEE_MAP_REFRESH "Zigbee Map Refresh"
-#define D_ZIGBEE_MAP   "Zigbee Map"
+#define D_ZIGBEE_PERMITJOIN_ACTIVE "Dispositivos autorizados a participar"
+#define D_ZIGBEE_MAPPING_TITLE "Mapeamento Tasmota Zigbee"
+#define D_ZIGBEE_NOT_STARTED "Zigbee não inicializado"
+#define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "A decorrer mapeamento (%d s. remaining)"
+#define D_ZIGBEE_MAPPING_NOT_PRESENT "Sem mapeamento"
+#define D_ZIGBEE_MAP_REFRESH "Atualizar mapeamento Zigbee"
+#define D_ZIGBEE_MAP   "Mapa Zigbee"
 #define D_ZIGBEE_PERMITJOIN "Zigbee Permit Join"
-#define D_ZIGBEE_GENERATE_KEY "generating random Zigbee network key"
-#define D_ZIGBEE_UNKNOWN_DEVICE "Unknown device"
-#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unknown attribute"
-#define D_ZIGBEE_INVALID_PARAM "Invalid parameter"
-#define D_ZIGBEE_MISSING_PARAM "Missing parameters"
-#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unknown attribute name (ignored): %s"
-#define D_ZIGBEE_TOO_MANY_CLUSTERS "No more than one cluster id per command"
-#define D_ZIGBEE_WRONG_DELIMITER "Wrong delimiter for payload"
-#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unrecognized zigbee command: %s"
-#define D_ZIGBEE_TOO_MANY_COMMANDS "Only 1 command allowed (%d)"
-#define D_ZIGBEE_NO_ATTRIBUTE "No attribute in list"
-#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Unsupported attribute type"
+#define D_ZIGBEE_GENERATE_KEY "A gerar chave aleatória de rede Zigbee"
+#define D_ZIGBEE_UNKNOWN_DEVICE "dispositivo desconhecido"
+#define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Atributo desconhecido"
+#define D_ZIGBEE_INVALID_PARAM "Parâmetro inválido"
+#define D_ZIGBEE_MISSING_PARAM "Parâmetros em falta"
+#define D_ZIGBEE_UNKNWON_ATTRIBUTE "Atributo de nome desconhecido (ignorado): %s"
+#define D_ZIGBEE_TOO_MANY_CLUSTERS "Apenas um cluster id por comando"
+#define D_ZIGBEE_WRONG_DELIMITER "Delimitador de payload inválido"
+#define D_ZIGBEE_UNRECOGNIZED_COMMAND "Comando zigbee desconhecido: %s"
+#define D_ZIGBEE_TOO_MANY_COMMANDS "Permitido apenas 1 comando (%d)"
+#define D_ZIGBEE_NO_ATTRIBUTE "Lista sem atributo"
+#define D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE "Tipo de atributo não suportado"
 #define D_ZIGBEE_JSON_REQUIRED "Config requires JSON objects"
-#define D_ZIGBEE_RESET_1_OR_2 "1 or 2 to reset"
-#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM found at address"
-#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Randomizing Zigbee parameters, please check with 'ZbConfig'"
+#define D_ZIGBEE_RESET_1_OR_2 "1 ou 2 para reset"
+#define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "ZBBridge EEPROM encontrada no edereço"
+#define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Randomização de parâmetros Zigbee, por-favor verifique a 'ZbConfig'"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
@@ -549,12 +549,12 @@
 #define D_PARTICALS_BEYOND "Partículas"
 
 // xsns_27_apds9960.ino
-#define D_GESTURE "Gesture"
-#define D_COLOR_RED "Red"
-#define D_COLOR_GREEN "Green"
-#define D_COLOR_BLUE "Blue"
+#define D_GESTURE "Gesto"
+#define D_COLOR_RED "Vermelho"
+#define D_COLOR_GREEN "Verde"
+#define D_COLOR_BLUE "Azul"
 #define D_CCT "CCT"
-#define D_PROXIMITY "Proximity"
+#define D_PROXIMITY "Proximidade"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
@@ -615,8 +615,8 @@
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nenhum"
-#define D_SENSOR_USER          "User"
-#define D_SENSOR_OPTION        "Option"
+#define D_SENSOR_USER          "Utilizador"
+#define D_SENSOR_OPTION        "Opção"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -632,8 +632,8 @@
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
 #define D_SENSOR_WS2812        "WS2812"
-#define D_SENSOR_DFR562        "MP3 Player"
-#define D_SENSOR_DFR562_BUSY   "MP3 Busy"
+#define D_SENSOR_DFR562        "Leitor de MP3"
+#define D_SENSOR_DFR562_BUSY   "MP3 Ocupado"
 #define D_SENSOR_IRSEND        "IRsend"
 #define D_SENSOR_SWITCH        "Interruptor"  // Suffix "1"
 #define D_SENSOR_BUTTON        "Botão"      // Suffix "1"
@@ -642,7 +642,7 @@
 #define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Contador"   // Suffix "1"
-#define D_SENSOR_INTERRUPT     "Interrupt"
+#define D_SENSOR_INTERRUPT     "Interromper"
 #define D_SENSOR_INPUT         "Entrada"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
@@ -951,8 +951,8 @@
 #define D_TOTAL_REACTIVE  "Reactivo total"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
-#define D_TOTAL_ACTIVE    "Total Active"
-#define D_RESETTABLE_TOTAL_ACTIVE    "Total Active (RST)"
+#define D_TOTAL_ACTIVE    "Total Ativo"
+#define D_RESETTABLE_TOTAL_ACTIVE    "Total Ativo (RST)"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "Voltagem PV1"
@@ -968,9 +968,9 @@
 #define D_SOLAX_MODE_1    "Verificando"
 #define D_SOLAX_MODE_2    "Trabalhando"
 #define D_SOLAX_MODE_3    "Falha"
-#define D_SOLAX_MODE_4    "Permanent Failure"  // to be translated
-#define D_SOLAX_MODE_5    "Software Update"  // to be translated
-#define D_SOLAX_MODE_6    "Selftest"  // to be translated
+#define D_SOLAX_MODE_4    "Falha permanente"
+#define D_SOLAX_MODE_5    "Atualização de software"
+#define D_SOLAX_MODE_6    "Auto teste"
 #define D_SOLAX_ERROR_0   "Nenhum código de erro"
 #define D_SOLAX_ERROR_1   "Falha devido a perda de rede"
 #define D_SOLAX_ERROR_2   "Falha devido a perda de tensão"
@@ -982,17 +982,17 @@
 #define D_SOLAX_ERROR_8   "Outra falha no dispositivo"
 
 //xdrv_10_scripter.ino
-#define D_CONFIGURE_SCRIPT     "Edit script"
-#define D_SCRIPT               "edit script"
-#define D_SDCARD_UPLOAD        "file upload"
-#define D_UFSDIR               "ufs directory"
-#define D_UPL_DONE             "Done"
-#define D_SCRIPT_CHARS_LEFT    "chars left"
-#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_CONFIGURE_SCRIPT     "Editar script"
+#define D_SCRIPT               "editar script"
+#define D_SDCARD_UPLOAD        "enviar ficheiro"
+#define D_UFSDIR               "diretório ufs"
+#define D_UPL_DONE             "Feito"
+#define D_SCRIPT_CHARS_LEFT    "caracteres restantes"
+#define D_SCRIPT_CHARS_NO_MORE "sem mais caracteres"
 #define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "script enable"
-#define D_SCRIPT_UPLOAD        "Upload"
-#define D_SCRIPT_UPLOAD_FILES  "Upload files"
+#define D_SCRIPT_ENABLE        "habilitar script"
+#define D_SCRIPT_UPLOAD        "Enviar"
+#define D_SCRIPT_UPLOAD_FILES  "Enviar ficheiros"
 
 //xdrv_50_filesystem.ino
 #define D_MANAGE_FILE_SYSTEM   "Gerenciar sistema de arquivos"
@@ -1005,81 +1005,81 @@
 #define D_SHOW_HIDDEN_FILES    "Mostrar arquivos ocultos"
 
 //xsns_67_as3935.ino
-#define D_AS3935_GAIN "gain:"
-#define D_AS3935_ENERGY "energy:"
-#define D_AS3935_DISTANCE "distance:"
-#define D_AS3935_DISTURBER "disturber:"
+#define D_AS3935_GAIN "ganho:"
+#define D_AS3935_ENERGY "energia:"
+#define D_AS3935_DISTANCE "distância:"
+#define D_AS3935_DISTURBER "distúrbio:"
 #define D_AS3935_VRMS "µVrms:"
 #define D_AS3935_APRX "aprx.:"
-#define D_AS3935_AWAY "away"
-#define D_AS3935_LIGHT "lightning"
-#define D_AS3935_OUT "lightning out of range"
-#define D_AS3935_NOT "distance not determined"
-#define D_AS3935_ABOVE "lightning overhead"
-#define D_AS3935_NOISE "noise detected"
-#define D_AS3935_DISTDET "disturber detected"
-#define D_AS3935_INTNOEV "Interrupt with no Event!"
+#define D_AS3935_AWAY "ausente"
+#define D_AS3935_LIGHT "relâmpago"
+#define D_AS3935_OUT "relâmpago fora de alcance"
+#define D_AS3935_NOT "distância não determinada"
+#define D_AS3935_ABOVE "relâmpago acima"
+#define D_AS3935_NOISE "barulho detetado"
+#define D_AS3935_DISTDET "distúrbio detetado"
+#define D_AS3935_INTNOEV "Interrupção sem evento!"
 #define D_AS3935_FLICKER "IRQ flicker!"
-#define D_AS3935_POWEROFF "Power Off"
-#define D_AS3935_NOMESS "listening..."
+#define D_AS3935_POWEROFF "Desligar"
+#define D_AS3935_NOMESS "a ouvir..."
 #define D_AS3935_ON "On"
 #define D_AS3935_OFF "Off"
 #define D_AS3935_INDOORS "Indoors"
 #define D_AS3935_OUTDOORS "Outdoors"
-#define D_AS3935_CAL_FAIL "calibration failed"
-#define D_AS3935_CAL_OK "calibration set to:"
+#define D_AS3935_CAL_FAIL "calibração falhada"
+#define D_AS3935_CAL_OK "calibrado para:"
 
 //xsns_68_opentherm.ino
 #define D_SENSOR_BOILER_OT_RX   "OpenTherm RX"
 #define D_SENSOR_BOILER_OT_TX   "OpenTherm TX"
 
 // xnrg_15_teleinfo Denky (Teleinfo)
-#define D_CONTRACT        "Contract"
-#define D_POWER_LOAD      "Power load"
-#define D_CURRENT_TARIFF  "Current Tariff"
-#define D_TARIFF          "Tariff"
+#define D_CONTRACT        "Contrato"
+#define D_POWER_LOAD      "Carga energética"
+#define D_CURRENT_TARIFF  "Tarifa atual"
+#define D_TARIFF          "Tarifa"
 #define D_OVERLOAD        "ADPS"
-#define D_MAX_POWER       "Max Power"
-#define D_MAX_CURRENT     "Max Current"
+#define D_MAX_POWER       "Energia Max"
+#define D_MAX_CURRENT     "Corrente Max"
 
 // xsns_79_as608.ino
-#define D_FP_ENROLL_PLACEFINGER "Place finger"
-#define D_FP_ENROLL_REMOVEFINGER "Remove finger"
-#define D_FP_ENROLL_PLACESAMEFINGER "Place same finger again"
-#define D_FP_ENROLL_RETRY "Error so retry"
-#define D_FP_ENROLL_RESTART "Restart"
-#define D_FP_ENROLL_ERROR "Error"
-#define D_FP_ENROLL_RESET "Reset"
-#define D_FP_ENROLL_ACTIVE "Active"
-#define D_FP_ENROLL_INACTIVE "Inactive"
+#define D_FP_ENROLL_PLACEFINGER "Colocar dedo"
+#define D_FP_ENROLL_REMOVEFINGER "Tirar dedo"
+#define D_FP_ENROLL_PLACESAMEFINGER "Coloque o mesmo dedo"
+#define D_FP_ENROLL_RETRY "Erro, tente novamente"
+#define D_FP_ENROLL_RESTART "Reiniciar"
+#define D_FP_ENROLL_ERROR "Erro"
+#define D_FP_ENROLL_RESET "Redefinir"
+#define D_FP_ENROLL_ACTIVE "Ativo"
+#define D_FP_ENROLL_INACTIVE "Inativo"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR "Comms error"    // 0x01 Error when receiving data package
+#define D_FP_PACKETRECIEVEERR "Erro de comunicação"    // 0x01 Error when receiving data package
 #define D_FP_NOFINGER ""                       // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL "Imaging error"         // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS "Image too messy"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL "Fingerprint too small" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH "No match"                // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND "Did not find a match"   // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH "Fingerprint did not match" // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION "Bad location"        // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL "DB range error"      // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL "Upload feature error" // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL "Packet response error" // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL "Upload error"         // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL "Delete error"         // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL "DB Clear error"      // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL "Password error"         // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE "Image invalid"      // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR "Flash write error"      // 0x18 Error when writing flash
-#define D_FP_INVALIDREG "Invalid number"       // 0x1A Invalid register number
-#define D_FP_ADDRCODE "Address code"           // 0x20 Address code
-#define D_FP_PASSVERIFY "Password verified"    // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR "Error"              // Any other error
+#define D_FP_IMAGEFAIL "Erro na impressão"         // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS "Impressão desalinhada"       // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL "Impressão muito pequena" // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH "Sem correspondência"                // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND "Correspondência não encontrada"   // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH "Impressão não correspondida" // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION "Erro da localização do edereço"        // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL "Erro de intervalo BD"      // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL "Erro no enviar da template" // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL "Erro no pacote de resposta" // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL "Erro ao enviar"         // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL "Erro ao eliminar"         // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL "Erro a limpar BD"      // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL "Erro na palavra-passe"         // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE "Imagem invalida"      // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR "Erro de escrita flash"      // 0x18 Error when writing flash
+#define D_FP_INVALIDREG "Número inválido"       // 0x1A Invalid register number
+#define D_FP_ADDRCODE "Código de edereço"           // 0x20 Address code
+#define D_FP_PASSVERIFY "Palavra-passe verificada"    // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR "Erro"              // Any other error
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Flowrate"
-#define D_FLOWRATEMETER_AMOUNT_TODAY "Amount Today"
-#define D_FLOWRATEMETER_DURATION_TODAY "Duration Today"
+#define D_FLOWRATEMETER_AMOUNT_TODAY "Quantidade Hoje"
+#define D_FLOWRATEMETER_DURATION_TODAY "Duração Hoje"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
@@ -1096,7 +1096,7 @@
 #define D_NEOPOOL_MACH_HAY                "Hay"
 #define D_NEOPOOL_FILTRATION_MANUAL       "Manual"            // Filtration modes
 #define D_NEOPOOL_FILTRATION_AUTO         "Auto"
-#define D_NEOPOOL_FILTRATION_HEATING      "Heating"
+#define D_NEOPOOL_FILTRATION_HEATING      "Aquecimento"
 #define D_NEOPOOL_FILTRATION_SMART        "Smart"
 #define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
 #define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
@@ -1118,7 +1118,7 @@
 #define D_NEOPOOL_RELAY_RX                "Nível de Redox"
 #define D_NEOPOOL_RELAY_CL                "Bomba de cloro"
 #define D_NEOPOOL_RELAY_CD                "Condutividade"
-#define D_NEOPOOL_RELAY_HEATING           "Heating"
+#define D_NEOPOOL_RELAY_HEATING           "Aquecimento"
 #define D_NEOPOOL_RELAY_UV                "UV"
 #define D_NEOPOOL_RELAY_VALVE             "Valve"
 #define D_NEOPOOL_RELAY_AUX               "Aux"
