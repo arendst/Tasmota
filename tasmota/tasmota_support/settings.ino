@@ -838,6 +838,7 @@ void SettingsDefaultSet2(void) {
   SOBitfield3  flag3 = { 0 };
   SOBitfield4  flag4 = { 0 };
   SOBitfield5  flag5 = { 0 };
+  SOBitfield6  flag6 = { 0 };
   SysMBitfield1  flag2 = { 0 };
   SysMBitfield2  mbflag2 = { 0 };
 
@@ -992,6 +993,7 @@ void SettingsDefaultSet2(void) {
   flag5.mqtt_status_retain |= MQTT_STATUS_RETAIN;
   flag5.mqtt_switches |= MQTT_SWITCHES;
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
+  flag6.mqtt_disable_sserialrec |= MQTT_DISABLE_SSERIALRECEIVED;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
@@ -1254,6 +1256,7 @@ void SettingsDefaultSet2(void) {
   Settings->flag3 = flag3;
   Settings->flag4 = flag4;
   Settings->flag5 = flag5;
+  Settings->flag6 = flag6;
 }
 
 void SettingsDefaultSet3(void) {
