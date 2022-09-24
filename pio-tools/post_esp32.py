@@ -43,12 +43,12 @@ sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
 FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
-if "CORE32SOLO1" in extra_flags:
+if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
-    #print ("-----extra_flags----", extra_flags)
+    print ("Build with Solo1 framework")
 elif "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
-    #print ("-----build_flags----", build_flags)
+    print ("Build with ITEAD framework")
 
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
