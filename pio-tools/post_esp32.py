@@ -43,7 +43,7 @@ sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
 FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
-if "CORE32SOLO1" in extra_flags:
+if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
     # enable next line when one Platform PR is done!
     #FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
     print ("Build with Solo1 framework")
