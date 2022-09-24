@@ -202,7 +202,8 @@ a_setoption = [[
     "(MQTT) Retain on Status"
     ],[
     "(ESP32) Show ESP32 internal temperature sensor",
-    "","","",
+    "(MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -320,7 +321,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.1.1.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.1.1.2 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
