@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Tasmota Core32 from 2.0.4.1 to 2.0.5
 - IRremoteESP8266 library from v2.8.3 to v2.8.4
 - Zigbee report unprocessed attributes
+- Platformio one Platform for all Tasmota frameworks Core32 2.0.5 (#16644)
 
 ### Fixed
 
