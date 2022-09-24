@@ -65,7 +65,9 @@ enum Ade7953_16BitRegisters {
   ADE7953_CONFIG,                  // 0x102   R/W  16  U   0x8004      Configuration register (see Table 18)
   ADE7953_CF1DEN,                  // 0x103   R/W  16  U   0x003F      CF1 frequency divider denominator. When modifying this register, two sequential write operations must be performed to ensure that the write is successful.
   ADE7953_CF2DEN,                  // 0x104   R/W  16  U   0x003F      CF2 frequency divider denominator. When modifying this register, two sequential write operations must be performed to ensure that the write is successful.
-  ADE7953_CFMODE = 0x107,          // 0x107   R/W  16  U   0x0300      CF output selection (see Table 19)
+  ADE7953_RESERVED_0X105,          // 0x105
+  ADE7953_RESERVED_0X106,          // 0x106
+  ADE7953_CFMODE,                  // 0x107   R/W  16  U   0x0300      CF output selection (see Table 19)
   ADE7943_PHCALA,                  // 0x108   R/W  16  S   0x0000      Phase calibration register (Current Channel A). This register is in sign magnitude format.
   ADE7943_PHCALB,                  // 0x109   R/W  16  S   0x0000      Phase calibration register (Current Channel B). This register is in sign magnitude format.
   ADE7943_PFA,                     // 0x10A   R    16  S   0x0000      Power factor (Current Channel A)
@@ -76,7 +78,10 @@ enum Ade7953_16BitRegisters {
 };
 
 enum Ade7953_32BitRegisters {
+  // Register Name                    Addres  R/W  Bt  Ty  Default     Description
+  // ----------------------------     ------  ---  --  --  ----------  --------------------------------------------------------------------
   ADE7953_ACCMODE = 0x301,         // 0x301   R/W  24  U   0x000000    Accumulation mode (see Table 21)
+
   ADE7953_AVA = 0x310,             // 0x310   R    24  S   0x000000    Instantaneous apparent power (Current Channel A)
   ADE7953_BVA,                     // 0x311   R    24  S   0x000000    Instantaneous apparent power (Current Channel B)
   ADE7953_AWATT,                   // 0x312   R    24  S   0x000000    Instantaneous active power (Current Channel A)
@@ -86,10 +91,12 @@ enum Ade7953_32BitRegisters {
   ADE7953_IA,                      // 0x316   R    24  S   0x000000    Instantaneous current (Current Channel A)
   ADE7953_IB,                      // 0x317   R    24  S   0x000000    Instantaneous current (Current Channel B)
   ADE7953_V,                       // 0x318   R    24  S   0x000000    Instantaneous voltage (voltage channel)
-  ADE7953_IRMSA = 0x31A,           // 0x31A   R    24  U   0x000000    IRMS register (Current Channel A)
+  ADE7953_RESERVED_0X319,          // 0x319
+  ADE7953_IRMSA,                   // 0x31A   R    24  U   0x000000    IRMS register (Current Channel A)
   ADE7953_IRMSB,                   // 0x31B   R    24  U   0x000000    IRMS register (Current Channel B)
   ADE7953_VRMS,                    // 0x31C   R    24  U   0x000000    VRMS register
-  ADE7953_AENERGYA = 0x31E,        // 0x31E   R    24  S   0x000000    Active energy (Current Channel A)
+  ADE7953_RESERVED_0X31D,          // 0x31D
+  ADE7953_AENERGYA,                // 0x31E   R    24  S   0x000000    Active energy (Current Channel A)
   ADE7953_AENERGYB,                // 0x31F   R    24  S   0x000000    Active energy (Current Channel B)
   ADE7953_RENERGYA,                // 0x320   R    24  S   0x000000    Reactive energy (Current Channel A)
   ADE7953_RENERGYB,                // 0x321   R    24  S   0x000000    Reactive energy (Current Channel B)
@@ -109,14 +116,17 @@ enum Ade7953_32BitRegisters {
   ADE7953_IRQENB,                  // 0x32F   R/W  24  U   0x000000    Interrupt enable (Current Channel B, see Table 24)
   ADE7953_IRQSTATB,                // 0x330   R    24  U   0x000000    Interrupt status (Current Channel B, see Table 25)
   ADE7953_RSTIRQSTATB,             // 0x331   R    24  U   0x000000    Reset interrupt status (Current Channel B)
+
   ADE7953_CRC = 0x37F,             // 0x37F   R    32  U   0xFFFFFFFF  Checksum
   ADE7953_AIGAIN,                  // 0x380   R/W  24  U   0x400000    Current channel gain (Current Channel A)
   ADE7953_AVGAIN,                  // 0x381   R/W  24  U   0x400000    Voltage channel gain
   ADE7953_AWGAIN,                  // 0x382   R/W  24  U   0x400000    Active power gain (Current Channel A)
   ADE7953_AVARGAIN,                // 0x383   R/W  24  U   0x400000    Reactive power gain (Current Channel A)
   ADE7953_AVAGAIN,                 // 0x384   R/W  24  U   0x400000    Apparent power gain (Current Channel A)
-  ADE7953_AIRMSOS = 0x386,         // 0x386   R/W  24  S   0x000000    IRMS offset (Current Channel A)
-  ADE7953_VRMSOS = 0x388,          // 0x388   R/W  24  S   0x000000    VRMS offset
+  ADE7953_RESERVED_0X385,          // 0x385
+  ADE7953_AIRMSOS,                 // 0x386   R/W  24  S   0x000000    IRMS offset (Current Channel A)
+  ADE7953_RESERVED_0X387,          // 0x387
+  ADE7953_VRMSOS,                  // 0x388   R/W  24  S   0x000000    VRMS offset
   ADE7953_AWATTOS,                 // 0x389   R/W  24  S   0x000000    Active power offset correction (Current Channel A)
   ADE7953_AVAROS,                  // 0x38A   R/W  24  S   0x000000    Reactive power offset correction (Current Channel A)
   ADE7953_AVAOS,                   // 0x38B   R/W  24  S   0x000000    Apparent power offset correction (Current Channel A)
@@ -125,8 +135,11 @@ enum Ade7953_32BitRegisters {
   ADE7953_BWGAIN,                  // 0x38E   R/W  24  U   0x400000    Active power gain (Current Channel B)
   ADE7953_BVARGAIN,                // 0x38F   R/W  24  U   0x400000    Reactive power gain (Current Channel B)
   ADE7953_BVAGAIN,                 // 0x390   R/W  24  U   0x400000    Apparent power gain (Current Channel B)
-  ADE7953_BIRMSOS = 0x392,         // 0x392   R/W  24  S   0x000000    IRMS offset (Current Channel B)
-  ADE7953_BWATTOS = 0x395,         // 0x395   R/W  24  S   0x000000    Active power offset correction (Current Channel B)
+  ADE7953_RESERVED_0X391,          // 0x391
+  ADE7953_BIRMSOS,                 // 0x392   R/W  24  S   0x000000    IRMS offset (Current Channel B)
+  ADE7953_RESERVED_0X393,          // 0x393
+  ADE7953_RESERVED_0X394,          // 0x394
+  ADE7953_BWATTOS,                 // 0x395   R/W  24  S   0x000000    Active power offset correction (Current Channel B)
   ADE7953_BVAROS,                  // 0x396   R/W  24  S   0x000000    Reactive power offset correction (Current Channel B)
   ADE7953_BVAOS                    // 0x397   R/W  24  S   0x000000    Apparent power offset correction (Current Channel B)
 };
@@ -259,10 +272,24 @@ void Ade7953Init(void) {
     regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
 #endif  // ADE7953_DEBUG
   for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
-    Ade7953Write(Ade7953CalibRegs[i], Ade7953.calib_data[i]);
+    if (i >= ADE7943_CAL_PHCALA) {
+      int16_t phasecal = Ade7953.calib_data[i];
+      if (phasecal < 0) {
+        phasecal = abs(phasecal) + 0x200;  // Add sign magnitude
+      }
+      Ade7953Write(Ade7953CalibRegs[i], phasecal);
+    } else {
+      Ade7953Write(Ade7953CalibRegs[i], Ade7953.calib_data[i]);
+    }
   }
   for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
     regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
+    if (i >= ADE7943_CAL_PHCALA) {
+      if (regs[i] >= 0x0200) {
+        regs[i] &= 0x01FF;                 // Clear sign magnitude
+        regs[i] *= -1;                     // Make negative
+      }
+    }
   }
 #ifdef ADE7953_DEBUG
   AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: CalibRegs V %06X, aI %06X, bI %06X, aW %06X, bW %06X, aVA %06X, bVA %06X, aVAr %06X, bVAr %06X, aP %06X, bP %06X"),
@@ -402,9 +429,9 @@ bool Ade7953SetDefaults(const char* json) {
   JsonParserObject angles = root[PSTR("angles")].getObject();
   if (angles) {
     val = angles[PSTR("angle0")];
-    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALA] = val.getUInt(); }
+    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALA] = val.getInt(); }
     val = angles[PSTR("angle1")];
-    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALB] = val.getUInt(); }
+    if (val) { Ade7953.calib_data[ADE7943_CAL_PHCALB] = val.getInt(); }
   }
   JsonParserObject powers = root[PSTR("powers")].getObject();
   if (powers) {
