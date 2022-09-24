@@ -205,19 +205,9 @@ void Ina226Init()
   Ina226Info_t *p = Ina226Info;
 
   //AddLog( LOG_LEVEL_NONE, "Ina226Init");
-//  AddLog( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(TSettings));
-
-//  if (!TasmotaGlobal.i2c_enabled)
-//    AddLog(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
-
 
   // Clear Ina226 info data
-
-  for (i = 0; i < 4; i++){
-    *p = {0};
-  }
-
-  //AddLog( LOG_LEVEL_NONE, PSTR("Sizeof Ina226Cfg: %d" ), sizeof(Ina226Cfg));
+  memset(Ina226Info, 0, sizeof(Ina226Info));
 
   // Detect devices
 
@@ -461,7 +451,6 @@ bool Ina226CommandSensor()
       case 3: // Set full scale VBus
         vbus_fs = CharToFloat(params[1]);
         Ina226Info[device].vbus_lsb = vbus_fs / 32768.0;
-        AddLog(LOG_LEVEL_INFO, PSTR("INA226[%d]: VBusFS=%_f, LSB=%_f"), device, vbus_fs, Ina226Info[device].vbus_lsb);
         show_config = true;
         break;
 
