@@ -172,7 +172,7 @@ const uint16_t Ade7953CalibRegs[] {
   ADE7943_PHCALB
 };
 
-// 24-bit data registers
+// 24-bit data registers Shelly 2.5
 const uint16_t Ade7953Registers[] {
   ADE7953_IRMSB,   // IRMSB - RMS current channel B (Relay 1)
   ADE7953_BWATT,   // BWATT - Active power channel B
@@ -183,6 +183,21 @@ const uint16_t Ade7953Registers[] {
   ADE7953_AVA,     // AVA - Apparent power channel A
   ADE7953_AVAR,    // AVAR - Reactive power channel A
   ADE7953_VRMS,    // VRMS - RMS voltage (Both relays)
+  ADE7943_Period,  // Period - 16-bit unsigned period register
+  ADE7953_ACCMODE  // ACCMODE - Accumulation mode
+};
+
+// 24-bit data registers Shelly EM
+const uint16_t Ade7953RegistersShellyEM[] {
+  ADE7953_IRMSA,   // IRMSA - RMS current channel A
+  ADE7953_AWATT,   // AWATT - Active power channel A
+  ADE7953_AVA,     // AVA - Apparent power channel A
+  ADE7953_AVAR,    // AVAR - Reactive power channel A
+  ADE7953_IRMSB,   // IRMSB - RMS current channel B
+  ADE7953_BWATT,   // BWATT - Active power channel B
+  ADE7953_BVA,     // BVA - Apparent power channel B
+  ADE7953_BVAR,    // BVAR - Reactive power channel B
+  ADE7953_VRMS,    // VRMS - RMS voltage (Both channels)
   ADE7943_Period,  // Period - 16-bit unsigned period register
   ADE7953_ACCMODE  // ACCMODE - Accumulation mode
 };
@@ -303,7 +318,7 @@ void Ade7953GetData(void) {
   uint32_t acc_mode;
   int32_t reg[2][4];
   for (uint32_t i = 0; i < sizeof(Ade7953Registers)/sizeof(uint16_t); i++) {
-    int32_t value = Ade7953Read(Ade7953Registers[i]);
+    int32_t value = Ade7953Read((ADE7953_SHELLY_25 == Ade7953.model) ? Ade7953Registers[i] : Ade7953RegistersShellyEM[i]);
     if (8 == i) {
       Ade7953.voltage_rms = value;  // RMS voltage (Both relays)
     } else if (9 == i) {
@@ -362,10 +377,10 @@ void Ade7953GetData(void) {
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if ((acc_mode & APSIGN[channel]) != 0) {
-          Energy.active_power[channel] = Energy.active_power[channel] * -1;
+          Energy.active_power[channel] *= -1;
         }
         if ((acc_mode & VARSIGN[channel]) != 0) {
-          Energy.reactive_power[channel] = Energy.reactive_power[channel] * -1;
+          Energy.reactive_power[channel] *= -1;
         }
       }
       divider = (Ade7953.calib_data[ADE7953_CAL_AVAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
