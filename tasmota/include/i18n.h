@@ -751,6 +751,9 @@
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 
+// Commands xsns_05_ds18x20.ino
+#define D_CMND_DS_ALIAS "DS18Alias"
+
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"
 #define D_JSON_UVB_INTENSITY  "UvbIntensity"
