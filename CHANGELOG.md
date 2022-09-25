@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee support for decimal Voltage/Current/Power on power metering plugs
 - Command ``UrlFetch <url>`` to download a file to filesystem
 - Zigbee basic support for Green Power
+- Berry add ``introspect.setmodule(name:string, value:any) -> nil``
 
 ### Changed
 - ESP32 Increase number of button GPIOs from 8 to 28 (#16518)
