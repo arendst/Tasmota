@@ -28,8 +28,8 @@
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
 //#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
       
-#define DS18x20_USE_ID_ALIAS
-/* Use alias for fixed sensor name in scripts by autoexec. Command: DS18Alias XXXXXXXXXXXXXXXX,N where XXXXXXXXXXXXXXXX full serial and N number 1-255
+/* #define DS18x20_USE_ID_ALIAS in my_user_config.h or user_config_override.h
+  * Use alias for fixed sensor name in scripts by autoexec. Command: DS18Alias XXXXXXXXXXXXXXXX,N where XXXXXXXXXXXXXXXX full serial and N number 1-255
   * Result in JSON:  "DS18Alias_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
   * add 8 bytes used memory
 */
