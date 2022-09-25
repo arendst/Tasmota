@@ -308,21 +308,6 @@ float Ina226ReadShunt_i(uint8_t device)
 }
 
 /*
-* Read the calculated power
-*/
-
-float Ina226ReadPower_w(uint8_t device)
-{
-  uint8_t addr = Ina226Info[device].address;
-  int16_t reg_shunt_i = I2cReadS16( addr, INA226_REG_POWER);
-
-  float result = ((float) reg_shunt_i) * (Ina226Info[device].i_lsb * 25.0);
-
-  return result;
-}
-
-
-/*
 * Read voltage, shunt voltage, current, and power registerd for a given device
 */
 
@@ -331,7 +316,7 @@ void Ina226Read(uint8_t device)
   //AddLog( LOG_LEVEL_NONE, "Ina226Read");
   voltages[device] = Ina226ReadBus_v(device);
   currents[device] = Ina226ReadShunt_i(device);
-  powers[device] = Ina226ReadPower_w(device);
+  powers[device] = voltages[device] * currents[device];
   //AddLog( LOG_LEVEL_NONE, "INA226 Device %d", device );
   //_debug_fval("Voltage", voltages[device]);
   //_debug_fval("Current", currents[device]);
