@@ -388,8 +388,8 @@ void ButtonHandler(void) {
 
         if (NOT_PRESSED == button) {
           Button.hold_timer[button_index] = 0;
-          if (Settings->flag3.mqtt_buttons && PRESSED == Button.last_state[button_index] && !Button.press_counter[button_index]) { // SetOption73 (0) - Decouple button from relay and send just mqtt topic
-            MqttButtonTopic(button_index + 1, 6, 0);
+          if (Settings->flag3.mqtt_buttons && (PRESSED == Button.last_state[button_index]) && !Button.press_counter[button_index]) { // SetOption73 (0) - Decouple button from relay and send just mqtt topic
+            MqttButtonTopic(button_index +1, 6, 0);
           }
         } else {
           Button.hold_timer[button_index]++;
