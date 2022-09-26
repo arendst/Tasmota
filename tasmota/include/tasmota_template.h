@@ -447,7 +447,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_A4988_MSS    3
 #define MAX_WEBCAM_DATA  8
 #define MAX_WEBCAM_HSD   3
-#define MAX_SM2135_DAT   7
+#define MAX_SM2135_DAT   10
 #define MAX_SM2335_DAT   16
 
 const uint16_t kGpioNiceList[] PROGMEM = {
