@@ -201,14 +201,14 @@ bool Sm2135SetChannels(void) {
   if (light_type &2) {          // Set RGB
     Sm2135SetRGB(cur_col[0], cur_col[1], cur_col[2]);
     if (!light_type &1) {
-      delay(1);
+//      delay(1);
       Sm2135SetCW(0, 0);        // Clear CW
     }
   }
   if (light_type &1) {          // Set CW
     if (!light_type &2) {
-      Sm2135SetRGB(0, 0, 0);    // CLear RGB
-      delay(1);
+      Sm2135SetRGB(0, 0, 0);    // Clear RGB
+//      delay(1);
     }
     Sm2135SetCW(cur_col[3], cur_col[4]);
   }
