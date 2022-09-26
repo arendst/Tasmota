@@ -35,7 +35,7 @@ const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between b
 const uint8_t BUTTON_AC_PERIOD = (20 + BUTTON_FAST_PROBE_INTERVAL - 1) / BUTTON_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
 
 const char kMultiPress[] PROGMEM =
-  "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|";
+  "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|CLEAR|";
 
 #include <Ticker.h>
 
@@ -388,6 +388,9 @@ void ButtonHandler(void) {
 
         if (NOT_PRESSED == button) {
           Button.hold_timer[button_index] = 0;
+          if (Settings->flag3.mqtt_buttons && PRESSED == Button.last_state[button_index] && !Button.press_counter[button_index]) { // SetOption73 (0) - Decouple button from relay and send just mqtt topic
+            MqttButtonTopic(button_index + 1, 6, 0);
+          }
         } else {
           Button.hold_timer[button_index]++;
           if (Settings->flag.button_single) {                  // SetOption13 (0) - Allow only single button press for immediate action
