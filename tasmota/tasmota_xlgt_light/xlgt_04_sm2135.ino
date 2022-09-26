@@ -155,42 +155,59 @@ bool Sm2135SetChannels(void) {
     Sm2135Stop();
     return true;
   }
-
-  uint32_t light_type = 3;      // RGB and CW
   if (Sm2135.model < 2) {       // Only allow one of two options due to power supply
-    if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
-      light_type = 1;           // CW only
+    // Only set RGB values if Warm and Cold White are zero
+    // Force Warm and Cold to zero
+    if ((0 == cur_col[3]) && (0 == cur_col[4])) {
+      Sm2135Start(SM2135_ADDR_MC);
+      Sm2135Write(Sm2135.current);
+      Sm2135Write(SM2135_RGB);
+      if (Sm2135.model &1) {      // SM2135_WCBGR
+        Sm2135Write(cur_col[2]);  // Blue
+        Sm2135Write(cur_col[1]);  // Green
+        Sm2135Write(cur_col[0]);  // Red
+      } else {                    // SM2135_WCGRB
+        Sm2135Write(cur_col[1]);  // Green
+        Sm2135Write(cur_col[0]);  // Red
+        Sm2135Write(cur_col[2]);  // Blue
+      }
+      Sm2135Stop();
+      delay(1);
+      Sm2135Start(SM2135_ADDR_MC);
+      Sm2135Write(Sm2135.current);
+      Sm2135Write(SM2135_CW);
+      Sm2135Stop();
+      delay(1);
+      Sm2135Start(SM2135_ADDR_C);
+      Sm2135Write(0);    // Warm
+      Sm2135Write(0);    // Cold
+      Sm2135Stop();
     } else {
-      light_type = 2;           // RGB only
+      Sm2135Start(SM2135_ADDR_MC);
+      Sm2135Write(Sm2135.current);
+      Sm2135Write(SM2135_RGB);
+      if (Sm2135.model &1) {      // SM2135_WCBGR
+        Sm2135Write(0);           // Blue
+        Sm2135Write(0);           // Green
+        Sm2135Write(0);           // Red
+      } else {                    // SM2135_WCGRB
+        Sm2135Write(0);           // Green
+        Sm2135Write(0);           // Red
+        Sm2135Write(0);           // Blue
+      }
+      Sm2135Stop();
+      delay(1);
+      Sm2135Start(SM2135_ADDR_MC);
+      Sm2135Write(Sm2135.current);
+      Sm2135Write(SM2135_CW);
+      Sm2135Stop();
+      delay(1);
+      Sm2135Start(SM2135_ADDR_C);
+      Sm2135Write(cur_col[4]);    // Warm
+      Sm2135Write(cur_col[3]);    // Cold
+      Sm2135Stop();
     }
   }
-  if (light_type &2) {          // Set RGB
-    Sm2135Start(SM2135_ADDR_MC);
-    Sm2135Write(Sm2135.current);
-    Sm2135Write(SM2135_RGB);
-    if (Sm2135.model &1) {      // SM2135_WCBGR
-      Sm2135Write(cur_col[2]);  // Blue
-      Sm2135Write(cur_col[1]);  // Green
-      Sm2135Write(cur_col[0]);  // Red
-    } else {                    // SM2135_WCGRB
-      Sm2135Write(cur_col[1]);  // Green
-      Sm2135Write(cur_col[0]);  // Red
-      Sm2135Write(cur_col[2]);  // Blue
-    }
-    Sm2135Stop();
-  }
-  if (light_type &1) {          // Set CW
-    Sm2135Start(SM2135_ADDR_MC);
-    Sm2135Write(Sm2135.current);
-    Sm2135Write(SM2135_CW);
-    Sm2135Stop();
-    delay(1);
-    Sm2135Start(SM2135_ADDR_C);
-    Sm2135Write(cur_col[4]);    // Warm
-    Sm2135Write(cur_col[3]);    // Cold
-    Sm2135Stop();
-  }
-
   return true;
 }
 
