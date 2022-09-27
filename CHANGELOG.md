@@ -3,7 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.1.2]
+## [12.1.1.3]
+### Added
+
+### Changed
+
+### Fixed
+- ESP32 touch button multi-press and hold detection (#16596)
+
+### Removed
+
+## [12.1.1.2] 20220927
 ### Added
 - Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
 - Berry automated solidification of code
@@ -21,10 +31,6 @@ All notable changes to this project will be documented in this file.
 - IRremoteESP8266 library from v2.8.3 to v2.8.4
 - Zigbee report unprocessed attributes
 - Platformio one Platform for all Tasmota frameworks Core32 2.0.5 (#16644)
-
-### Fixed
-
-### Removed
 
 ## [12.1.1.1] 20220910
 ### Added

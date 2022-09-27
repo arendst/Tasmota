@@ -46,7 +46,11 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
-   "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
+   "|Info|" 
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+  D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|"
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+  D_CMND_CPU_FREQUENCY
 #endif  // ESP32
 #endif   //FIRMWARE_MINIMAL_ONLY
   ;
@@ -81,7 +85,11 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS
   &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
-  , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
+  , &CmndInfo, 
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+  &CmndTouchCal, &CmndTouchThres, 
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+  &CmndCpuFrequency
 #endif  // ESP32
 #endif   //FIRMWARE_MINIMAL_ONLY
   };
@@ -2608,6 +2616,7 @@ void CmndCpuFrequency(void) {
   ResponseCmndNumber(getCpuFrequencyMhz());
 }
 
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
 void CmndTouchCal(void) {
   if (XdrvMailbox.payload >= 0) {
     if (XdrvMailbox.payload == 0) {
@@ -2630,12 +2639,6 @@ void CmndTouchThres(void) {
   }
   ResponseCmndNumber(TOUCH_BUTTON.pin_threshold);
 }
-
-void CmndTouchNum(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
-    TOUCH_BUTTON.hit_threshold = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(TOUCH_BUTTON.hit_threshold);
-}
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
 #endif  // ESP32

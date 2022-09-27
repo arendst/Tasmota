@@ -465,7 +465,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
 #ifdef ESP32
   AGPIO(GPIO_KEY1_INV_PD) + MAX_KEYS,
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
   AGPIO(GPIO_KEY1_TC) + MAX_KEYS,       // Touch button
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 #endif
   AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
   AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,

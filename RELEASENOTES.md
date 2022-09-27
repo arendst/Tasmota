@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.1.1.2
+## Changelog v12.1.1.3
 ### Added
 - Command ``SetOption46 0..255`` to add 0..255 * 10 milliseconds power on delay before initializing I/O [#15438](https://github.com/arendst/Tasmota/issues/15438)
 - Command ``SetOption146 1`` to enable display of ESP32 internal temperature
@@ -148,5 +148,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Button response delay regression from v12.0.2.4 [#16319](https://github.com/arendst/Tasmota/issues/16319)
 - Lost module name in GUI regression from v12.0.2.4 - 20220803 [#16324](https://github.com/arendst/Tasmota/issues/16324)
 - Removed whitespace from JSON values with no decimals [#16365](https://github.com/arendst/Tasmota/issues/16365)
+- ESP32 touch button multi-press and hold detection [#16596](https://github.com/arendst/Tasmota/issues/16596)
 
 ### Removed
