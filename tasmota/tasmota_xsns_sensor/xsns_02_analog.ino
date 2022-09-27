@@ -45,10 +45,14 @@
 #define ANALOG_V33                    3.3              // ESP8266 / ESP32 Analog voltage
 #define ANALOG_T0                     TO_KELVIN(25.0)  // 25 degrees Celsius in Kelvin (= 298.15)
 
-// Shelly 2.5 NTC Thermistor
+// Mode 0 : Shelly 2.5 NTC Thermistor
 // 3V3 --- ANALOG_NTC_BRIDGE_RESISTANCE ---v--- NTC --- Gnd
 //                                         |
 //                                        ADC0
+// Mode 1 : NTC towards 3V3 (Sinilink Thermostat Relay Board (XY-WFT1)
+// 3V3 --- NTC ---v--- ANALOG_NTC_BRIDGE_RESISTANCE --- Gnd
+//          |
+//         ADC0
 #define ANALOG_NTC_BRIDGE_RESISTANCE  32000            // NTC Voltage bridge resistor
 #define ANALOG_NTC_RESISTANCE         10000            // NTC Resistance
 #define ANALOG_NTC_B_COEFFICIENT      3350             // NTC Beta Coefficient
@@ -203,6 +207,7 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
       Adc[idx].param2 = ANALOG_NTC_RESISTANCE;
       Adc[idx].param3 = ANALOG_NTC_B_COEFFICIENT * 10000;
+      Adc[idx].param4 = 0; // Default to Shelly mode with NTC towards GND
     }
     else if (ADC_LIGHT == Adc[idx].type) {
       Adc[idx].param1 = ANALOG_LDR_BRIDGE_RESISTANCE;
@@ -496,6 +501,9 @@ void AdcEverySecond(void) {
       // double Rt = (adc * Adc[idx].param1 * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (double)adc * MAX_ADC_V);
       // MAX_ADC_V in ESP8266 is 1
       // MAX_ADC_V in ESP32 is 3.3
+      if (Adc[idx].param4) { // Alternate mode
+        adc = ANALOG_RANGE - adc;
+      }
 #ifdef ESP8266
       double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE * ANALOG_V33 - (double)adc);  // Shelly param1 = 32000 (ANALOG_NTC_BRIDGE_RESISTANCE)
 #else
@@ -710,7 +718,8 @@ void CmndAdcParam(void) {
         AdcGetSettings(idx);
         if (ArgC() > 3) {  // Process parameter entry
           char argument[XdrvMailbox.data_len];
-          // AdcParam 2, 32000, 10000, 3350
+          // AdcParam 2, 32000, 10000, 3350        ADC_TEMP Shelly mode
+          // AdcParam 2, 32000, 10000, 3350, 1     ADC_TEMP Alternate mode
           // AdcParam 3, 10000, 12518931, -1.405
           // AdcParam 4, 128, 0, 0
           // AdcParam 5, 128, 0, 0
@@ -725,6 +734,12 @@ void CmndAdcParam(void) {
             Adc[idx].param4 = abs(strtol(ArgV(argument, 5), nullptr, 10));
           } else {
             Adc[idx].param3 = (int)(CharToFloat(ArgV(argument, 4)) * 10000);
+            if (ArgC() > 4) {
+              Adc[idx].param4 = (int)(CharToFloat(ArgV(argument, 5)) * 10000);
+            }
+            else{
+              Adc[idx].param4 = 0;
+            }
           }
           if (ADC_PH == XdrvMailbox.payload) {
             float phLow = CharToFloat(ArgV(argument, 2));
