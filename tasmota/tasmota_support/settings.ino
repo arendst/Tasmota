@@ -976,9 +976,9 @@ void SettingsDefaultSet2(void) {
   flag.button_swap |= KEY_SWAP_DOUBLE_PRESS;
   flag.button_single |= KEY_ONLY_SINGLE_PRESS;
   Settings->param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
-#ifdef ESP32
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
   Settings->touch_threshold = ESP32_TOUCH_THRESHOLD;
-#endif
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
   // Switch
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings->switchmode[i] = SWITCH_MODE; }
@@ -1576,11 +1576,11 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0C000204) {  // 12.0.2.4
       Settings->param[P_BISTABLE_PULSE] = APP_BISTABLE_PULSE;
     }
-#ifdef ESP32
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
     if (Settings->version < 0x0C010103) {  // 12.1.1.3
       Settings->touch_threshold = ESP32_TOUCH_THRESHOLD;
     }
-#endif
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
     Settings->version = VERSION;
     SettingsSave(1);
