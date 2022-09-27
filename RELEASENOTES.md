@@ -125,6 +125,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support of optional file calib.dat on ADE7953 based energy monitors like Shelly EM [#16486](https://github.com/arendst/Tasmota/issues/16486)
 - Support for Ethernet in ESP32 safeboot firmware [#16388](https://github.com/arendst/Tasmota/issues/16388)
 - ESP32-S3 support for internal temperature sensor
+- ESP32-S2 and ESP32-S3 touch input support
 - Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
 - Berry automated solidification of code
 

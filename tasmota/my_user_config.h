@@ -1015,6 +1015,13 @@
 
 #define SET_ESP32_STACK_SIZE  (8 * 1024)         // Set the stack size for Tasmota. The default value is 8192 for Arduino, some builds might need to increase it
 
+#ifdef SOC_TOUCH_VERSION_1
+  #define ESP32_TOUCH_THRESHOLD   40
+#endif
+#ifdef SOC_TOUCH_VERSION_2
+  #define ESP32_TOUCH_THRESHOLD   40000
+#endif
+
 #define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
 
 //#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)

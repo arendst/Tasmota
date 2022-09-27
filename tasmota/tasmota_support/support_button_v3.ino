@@ -25,10 +25,7 @@
  * Inspired by (https://github.com/OLIMEX/olimex-iot-firmware-esp8266/blob/master/olimex/user/user_switch2.c)
 \*********************************************************************************************/
 
-#define MAX_RELAY_BUTTON1       5  // Max number of relay controlled by BUTTON1
-
-#define TOUCH_PIN_THRESHOLD     12 // Smaller value will treated as button press
-#define TOUCH_HIT_THRESHOLD     3  // successful hits to filter out noise
+#define MAX_RELAY_BUTTON1       5            // Max number of relay controlled by BUTTON1
 
 const uint8_t BUTTON_PROBE_INTERVAL = 10;      // Time in milliseconds between button input probe
 const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between button input probe for AC detection
@@ -63,7 +60,6 @@ struct BUTTON {
 struct TOUCH_BUTTON {
   uint32_t touch_mask = 0;                   // Touch flag (1 = enabled)
   uint32_t calibration = 0;                  // Bitfield
-  uint32_t pin_threshold = TOUCH_PIN_THRESHOLD;
   uint8_t hits[MAX_KEYS] = { 0 };            // Hits in a row to filter out noise
 } TOUCH_BUTTON;
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
@@ -121,7 +117,11 @@ void ButtonProbe(void) {
     if (bitRead(TOUCH_BUTTON.touch_mask, i)) {
       if (ac_detect || bitRead(TOUCH_BUTTON.calibration, i +1)) { continue; }  // Touch is slow. Takes 21mS to read
       uint32_t value = touchRead(Pin(GPIO_KEY1, i));
-      button_not_activated = ((value == 0) || (value > TOUCH_BUTTON.pin_threshold));
+#ifdef SOC_TOUCH_VERSION_2
+      button_not_activated = (value < Settings->touch_threshold);  // ESPS3 No touch = 24200, Touch > 40000
+#else
+      button_not_activated = ((value == 0) || (value > Settings->touch_threshold));  // ESP32 No touch = 74, Touch < 40
+#endif
     } else
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
     button_not_activated = (digitalRead(Pin(GPIO_KEY1, i)) != bitRead(Button.inverted_mask, i));
@@ -306,7 +306,11 @@ void ButtonHandler(void) {
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
       if (bitRead(TOUCH_BUTTON.touch_mask, button_index) && bitRead(TOUCH_BUTTON.calibration, button_index +1)) {  // Touch
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
-        if ((_value > 0) && (_value < TOUCH_BUTTON.pin_threshold)) {  // Probably read-error (0)
+#ifdef SOC_TOUCH_VERSION_2
+        if (_value > Settings->touch_threshold) {  // ESPS3 No touch = 24200, Touch = 100000
+#else
+        if ((_value > 0) && (_value < Settings->touch_threshold)) {  // ESP32 No touch = 74, Touch = 20 (Probably read-error (0))
+#endif
           TOUCH_BUTTON.hits[button_index]++;
         } else {
           TOUCH_BUTTON.hits[button_index] = 0;

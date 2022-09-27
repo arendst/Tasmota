@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [12.1.1.3]
 ### Added
+- ESP32-S2 and ESP32-S3 touch input support
 
 ### Changed
 

@@ -46,7 +46,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
-   "|Info|" 
+   "|Info|"
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
   D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|"
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
@@ -85,9 +85,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS
   &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
-  , &CmndInfo, 
+  , &CmndInfo,
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
-  &CmndTouchCal, &CmndTouchThres, 
+  &CmndTouchCal, &CmndTouchThres,
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   &CmndCpuFrequency
 #endif  // ESP32
@@ -2634,10 +2634,10 @@ void CmndTouchCal(void) {
 }
 
 void CmndTouchThres(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32000)) {
-    TOUCH_BUTTON.pin_threshold = XdrvMailbox.payload;
+  if (XdrvMailbox.data_len > 0) {
+    Settings->touch_threshold = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(TOUCH_BUTTON.pin_threshold);
+  ResponseCmndNumber(Settings->touch_threshold);
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
