@@ -18,17 +18,8 @@
 # - 0xe0000 | ~\Tasmota\.pio\build\<env name>/firmware.bin
 # - 0x3b0000| ~\Tasmota\.pio\build\<env name>/littlefs.bin
 
-Import("env")
-
 env = DefaultEnvironment()
 platform = env.PioPlatform()
-board = env.BoardConfig()
-extra_flags = board.get("build.extra_flags", "")
-extra_flags = [element.replace("-D", " ") for element in extra_flags]
-extra_flags = ''.join(extra_flags)
-build_flags = env.GetProjectOption("build_flags")
-build_flags = [element.replace("-D", " ") for element in build_flags]
-build_flags = ''.join(build_flags)
 
 from genericpath import exists
 import os
@@ -42,13 +33,15 @@ import subprocess
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
-FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
+extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
+build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
+
 if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
-    print ("Building with Solo1 framework")
-elif "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
+elif "CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
-    print ("Building with ITEAD framework")
+else:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
 
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
