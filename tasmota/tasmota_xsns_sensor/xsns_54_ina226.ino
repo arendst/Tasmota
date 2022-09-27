@@ -30,7 +30,7 @@
 *    a. Sensor54 11 [shunt resistance in ohms] e.g. Sensor54 11 0.1
 *    b. Sensor54 12 [full scale current in amperes] e.g. Sensor54 12 3.0
 *    c. Sensor54 2 saves the settings and restarts Tasmota. The device should show up after the system boots again.
-*
+* 6. *Optional* Set full scale voltage if using a voltage divider to allow reading of voltages greater than 36v. e.g. Sensor54 13 81.92
 *
 * This driver will not probe I2C bus for INA226 devices unless the full scale current is set for a device number.
 * It will map device numbers as follows:
@@ -61,7 +61,7 @@
 *
 * Sensor54 1 Rescan for devices and return the number of INA226 found.
 * Sensor54 2 Save the configuration and restart
-*
+* Sensor54 <n>3 Set INA226 channel <n> full scale voltage, floating point. e.g. Sensor54 13 81.92. Useful for systems where voltage exceeds max of 36v, using a voltage divider.
 *
 */
 
