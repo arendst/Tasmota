@@ -202,7 +202,7 @@ enum SspmMachineStates { SPM_NONE,                 // Do nothing
 enum SspmDisplayModes { SPM_DISPLAY_ROTATE, SPM_DISPLAY_ROTATE_POWERED_ON, SPM_DISPLAY_TABS, SPM_DISPLAY_MAX_OPTION };
 
 const char kSSPMTriggers[] PROGMEM = "Tasmota|Device|Overload|Overtemp";
-const char kSSPMOverload[] PROGMEM = "Tbd1|Voltage|Current|Power|Tbd2|Tbd3|Tbd4";
+const char kSSPMOverload[] PROGMEM = "Tbd1|Voltage|Current|Power|Surge|Tbd6|Tbd7";
 
 #include <TasmotaSerial.h>
 TasmotaSerial *SspmSerial;
@@ -1459,10 +1459,12 @@ void SSPMHandleReceivedData(void) {
         aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 0f 00 14 00 8b 34 32 37 39 37 34 13 4b 35 36 37 00 00 00 00 00 00 00 05 e7 4b  - At 02:50:30
         aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 0f 00 14 00 8b 34 32 37 39 37 34 13 4b 35 36 37 20 00 00 00 00 00 00 06 fe 09  - At 08:40:52
         aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 0f 00 14 00 8b 34 32 37 39 37 34 13 4b 35 36 37 00 00 00 00 00 00 00 07 26 ca  - At 08:40:58
-        Marker  |                                   |Ac|Cm|Size |St|Module id                          |  |Vo|Cu|Po|  |  |  |Ix|Chksm|
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 0F 00 14 00 25 6C 47 31 36 39 37 09 54 39 30 30 00 00 00 00 10 00 00 14 9A 66  - Response after L1 current surge overload powered off
+        Marker  |                                   |Ac|Cm|Size |St|Module id                          |  |Vo|Cu|Po|Su|  |  |Ix|Chksm|
         32..38 - Bitmask channel 01 = 1, 02 = 2, 04 = 3, 08 = 4 (Max border)
         32..38 - Bitmask channel 10 = 1, 20 = 2, 40 = 3, 80 = 4 (Min border)
         Cu - Current
+        Su - Current Surge or Inrush (See https://github.com/arendst/Tasmota/discussions/15695#discussioncomment-3747975)
         Vo - Voltage
         Po - Power
         Ot - Overtemp
@@ -1479,7 +1481,7 @@ void SSPMHandleReceivedData(void) {
             uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[20] << 8 | SspmBuffer[21]);
             bool more = false;
             char border[2][4] = { "Max","Min" };
-            char stemp[10];   // "Tbd1|Voltage|Current|Power|Tbd2|Tbd3|Tbd4"
+            char stemp[10];   // "Tbd1|Voltage|Current|Power|Surge|Tbd6|Tbd7"
             Response_P(PSTR("{\"SSPMOverload\":"));
             for (uint32_t i = 0; i < 7; i++) {
               uint32_t channel = SspmBuffer[32 +i];
@@ -1487,7 +1489,7 @@ void SSPMHandleReceivedData(void) {
                 if (channel &1) {
                   uint32_t relay = (module << 2) +(j & 3);
                   uint32_t idx = (j >> 2) & 1;
-                  ResponseAppend_P(PSTR("%s{\"L%d\":\"%s%s\"}"), (more)?",":"[", relay +1, border[idx], GetTextIndexed(stemp, sizeof(stemp), i, kSSPMOverload));
+                  ResponseAppend_P(PSTR("%s{\"L%d\":\"%s%s\"}"), (more)?",":"[", relay +1, (4==i)?"":border[idx], GetTextIndexed(stemp, sizeof(stemp), i, kSSPMOverload));
                   more = true;
                 }
                 channel >>= 1;
