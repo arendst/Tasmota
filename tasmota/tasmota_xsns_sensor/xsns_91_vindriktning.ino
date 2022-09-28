@@ -107,44 +107,17 @@ bool VindriktningReadData(void) {
 
 /*********************************************************************************************/
 
-void VindriktningWriteData(uint8_t cmd_len, const uint8_t *cmd_data) {
+void VindriktningSendRequest() { // command for PM1006 sensor - request PM values
 
-  uint8_t tx_buffer[5];
-  int len = 0;
-  int i = 0;
-  uint8_t sum = 0;
-
-  if (cmd_len > 2) {
-    AddLog(LOG_LEVEL_ERROR, PSTR("VDN: VINDRIKTNING PM1006 command too long"));
-    return;
-  }
-
-  tx_buffer[len++] = 0x11; // PM1006 header
-  tx_buffer[len++] = cmd_len; // command length
-  for (i = 0; i < cmd_len; i++) {
-    tx_buffer[len++] = cmd_data[i];
-  }
-  
-  for (i = 0; i < len; i++) { // calculate PM1006 checksum
-    sum += tx_buffer[i];
-  }
-
-  tx_buffer[len++] = (256 - sum) & 0xFF;
+  uint8_t tx_request[] = {0x11, 0x02, 0x0B, 0x01, 0xE1}; // see https://threadreaderapp.com/thread/1415291684569632768.html
 
   if (PinUsed(GPIO_VINDRIKTNING_TX)) {
-    VindriktningSerial->write(tx_buffer, len);
+    VindriktningSerial->write(tx_request, sizeof(tx_request));
   } else {
     AddLog(LOG_LEVEL_ERROR, PSTR("VDN: Can not send data to VINDRIKTNING PM1006, VINDRIKTNING Tx pin not configured"));
   }
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("VDN: Tx %*_H"), len, tx_buffer);
-}
-
-void VindriktningSendRequest() {
-
-  uint8_t cmd[] = {0x0B, 0x01}; // PM1006 command
-    
-  VindriktningWriteData(2, cmd);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("VDN: Tx %*_H"), sizeof(tx_request), tx_request);
 }
 
 /*********************************************************************************************/
