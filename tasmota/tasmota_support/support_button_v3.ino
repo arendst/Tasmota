@@ -31,8 +31,7 @@ const uint8_t BUTTON_PROBE_INTERVAL = 10;      // Time in milliseconds between b
 const uint8_t BUTTON_FAST_PROBE_INTERVAL = 2;  // Time in milliseconds between button input probe for AC detection
 const uint8_t BUTTON_AC_PERIOD = (20 + BUTTON_FAST_PROBE_INTERVAL - 1) / BUTTON_FAST_PROBE_INTERVAL;   // Duration of an AC wave in probe intervals
 
-const char kMultiPress[] PROGMEM =
-  "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|CLEAR|";
+const char kMultiPress[] PROGMEM = "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|CLEAR|";
 
 #include <Ticker.h>
 
@@ -61,7 +60,7 @@ struct TOUCH_BUTTON {
   uint32_t touch_mask = 0;                   // Touch flag (1 = enabled)
   uint32_t calibration = 0;                  // Bitfield
   uint8_t hits[MAX_KEYS] = { 0 };            // Hits in a row to filter out noise
-} TOUCH_BUTTON;
+} TouchButton;
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
 /********************************************************************************************/
@@ -80,7 +79,7 @@ void ButtonInvertFlag(uint32_t button_bit) {
 
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
 void ButtonTouchFlag(uint32_t button_bit) {
-  bitSet(TOUCH_BUTTON.touch_mask, button_bit);
+  bitSet(TouchButton.touch_mask, button_bit);
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
@@ -114,8 +113,8 @@ void ButtonProbe(void) {
 
     bool button_not_activated;
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
-    if (bitRead(TOUCH_BUTTON.touch_mask, i)) {
-      if (ac_detect || bitRead(TOUCH_BUTTON.calibration, i +1)) { continue; }  // Touch is slow. Takes 21mS to read
+    if (bitRead(TouchButton.touch_mask, i)) {
+      if (ac_detect || bitRead(TouchButton.calibration, i +1)) { continue; }  // Touch is slow. Takes 21mS to read
       uint32_t value = touchRead(Pin(GPIO_KEY1, i));
 #ifdef SOC_TOUCH_VERSION_2
       button_not_activated = (value < Settings->touch_threshold);  // ESPS3 No touch = 24200, Touch > 40000
@@ -291,7 +290,7 @@ void ButtonHandler(void) {
     if (!button_index && ((SONOFF_DUAL == TasmotaGlobal.module_type) || (CH4 == TasmotaGlobal.module_type))) {
       button_present = 1;
       if (Button.dual_code) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), Button.dual_code);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Code %04X"), Button.dual_code);
         button = PRESSED;
         if (0xF500 == Button.dual_code) {                      // Button hold
           Button.hold_timer[button_index] = (loops_per_second * Settings->param[P_HOLD_TIME] / 10) -1;  // SetOption32 (40)
@@ -304,18 +303,18 @@ void ButtonHandler(void) {
     if (PinUsed(GPIO_KEY1, button_index)) {
 
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
-      if (bitRead(TOUCH_BUTTON.touch_mask, button_index) && bitRead(TOUCH_BUTTON.calibration, button_index +1)) {  // Touch
+      if (bitRead(TouchButton.touch_mask, button_index) && bitRead(TouchButton.calibration, button_index +1)) {  // Touch
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
 #ifdef SOC_TOUCH_VERSION_2
         if (_value > Settings->touch_threshold) {  // ESPS3 No touch = 24200, Touch = 100000
 #else
         if ((_value > 0) && (_value < Settings->touch_threshold)) {  // ESP32 No touch = 74, Touch = 20 (Probably read-error (0))
 #endif
-          TOUCH_BUTTON.hits[button_index]++;
+          TouchButton.hits[button_index]++;
         } else {
-          TOUCH_BUTTON.hits[button_index] = 0;
+          TouchButton.hits[button_index] = 0;
         }
-        AddLog(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index +1, _value, TOUCH_BUTTON.hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
+        AddLog(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index +1, _value, TouchButton.hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
         continue;
       } else
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
@@ -345,12 +344,12 @@ void ButtonHandler(void) {
 
         bool button_pressed = false;
         if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Button%d level 1-0"), button_index +1);
           Button.hold_timer[button_index] = loops_per_second;
           button_pressed = true;
         }
         if ((NOT_PRESSED == button) && (PRESSED == Button.last_state[button_index])) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
+          AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Button%d level 0-1"), button_index +1);
           if (!Button.hold_timer[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
@@ -369,7 +368,7 @@ void ButtonHandler(void) {
 
           if (Settings->flag.button_single) {                  // SetOption13 (0) - Allow only single button press for immediate action,
             if (!Settings->flag3.mqtt_buttons) {               // SetOption73 (0) - Decouple button from relay and send just mqtt topic
-              AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
+              AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Button%d immediate"), button_index +1);
               if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
               }
@@ -378,7 +377,7 @@ void ButtonHandler(void) {
             }
           } else {
             Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
-            AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, Button.press_counter[button_index]);
+            AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Button%d multi-press %d"), button_index +1, Button.press_counter[button_index]);
             Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
           TasmotaGlobal.blinks = 201;
@@ -476,7 +475,7 @@ void ButtonHandler(void) {
 #endif  // ESP8266
                           if ((Button.press_counter[button_index] > 1) && valid_relay && (Button.press_counter[button_index] <= MAX_RELAY_BUTTON1)) {
                             ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);   // Execute Toggle command internally
-//                            AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
+//                            AddLog(LOG_LEVEL_DEBUG, PSTR("BTN: Relay%d found on GPIO%d"), Button.press_counter[button_index], Pin(GPIO_REL1, Button.press_counter[button_index]-1));
                           }
                         }
                       }

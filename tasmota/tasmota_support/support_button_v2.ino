@@ -28,8 +28,7 @@
 #define TOUCH_PIN_THRESHOLD     12 // Smaller value will treated as button press
 #define TOUCH_HIT_THRESHOLD     3  // successful hits to filter out noise
 
-const char kMultiPress[] PROGMEM =
-  "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|CLEAR|";
+const char kMultiPress[] PROGMEM = "|SINGLE|DOUBLE|TRIPLE|QUAD|PENTA|CLEAR|";
 
 struct BUTTON {
   uint32_t debounce = 0;                     // Button debounce timer
@@ -58,7 +57,7 @@ struct TOUCH_BUTTON {
   uint32_t calibration = 0;                  // Bitfield
   uint32_t pin_threshold = TOUCH_PIN_THRESHOLD;
   uint8_t hit_threshold = TOUCH_HIT_THRESHOLD;
-} TOUCH_BUTTON;
+} TouchButton;
 #endif  // ESP32
 
 /********************************************************************************************/
@@ -171,9 +170,9 @@ void ButtonHandler(void) {
         uint32_t _value = touchRead(Pin(GPIO_KEY1, button_index));
         button = NOT_PRESSED;
         if (_value != 0) {                                     // Probably read-error
-          if (_value < TOUCH_BUTTON.pin_threshold) {
-            if (++Button.touch_hits[button_index] > TOUCH_BUTTON.hit_threshold) {
-              if (!bitRead(TOUCH_BUTTON.calibration, button_index+1)) {
+          if (_value < TouchButton.pin_threshold) {
+            if (++Button.touch_hits[button_index] > TouchButton.hit_threshold) {
+              if (!bitRead(TouchButton.calibration, button_index+1)) {
                 button = PRESSED;
               }
             }
@@ -183,7 +182,7 @@ void ButtonHandler(void) {
         } else {
           Button.touch_hits[button_index] = 0;
         }
-        if (bitRead(TOUCH_BUTTON.calibration, button_index+1)) {
+        if (bitRead(TouchButton.calibration, button_index+1)) {
           AddLog(LOG_LEVEL_INFO, PSTR("PLOT: %u, %u, %u,"), button_index+1, _value, Button.touch_hits[button_index]);  // Button number (1..4), value, continuous hits under threshold
         }
       } else

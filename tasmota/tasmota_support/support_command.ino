@@ -2620,16 +2620,16 @@ void CmndCpuFrequency(void) {
 void CmndTouchCal(void) {
   if (XdrvMailbox.payload >= 0) {
     if (XdrvMailbox.payload == 0) {
-      TOUCH_BUTTON.calibration = 0;
+      TouchButton.calibration = 0;
     }
     else if (XdrvMailbox.payload < MAX_KEYS + 1) {
-      TOUCH_BUTTON.calibration = bitSet(TOUCH_BUTTON.calibration, XdrvMailbox.payload);
+      TouchButton.calibration = bitSet(TouchButton.calibration, XdrvMailbox.payload);
     }
     else if (XdrvMailbox.payload == 255) {
-      TOUCH_BUTTON.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
+      TouchButton.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
     }
   }
-  ResponseCmndNumber(TOUCH_BUTTON.calibration);
+  ResponseCmndNumber(TouchButton.calibration);
   AddLog(LOG_LEVEL_INFO, PSTR("Button Touchvalue Hits,"));
 }
 
