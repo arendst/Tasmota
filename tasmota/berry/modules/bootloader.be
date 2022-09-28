@@ -28,7 +28,7 @@ class bootloader
     # address to flash the bootloader
     var addr = self.get_bootloader_address()
     if addr == nil    raise "internal_error", "can't find address for bootloader" end
-    
+
     var cl = webclient()
     cl.begin(url)
     var r = cl.GET()

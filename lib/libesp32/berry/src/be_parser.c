@@ -914,7 +914,7 @@ static void call_single_string_expr(bparser *parser, bexpdesc *e)
     if (e->type == ETMEMBER) {
         push_error(parser, "method not allowed for string prefix");
     }
-    
+
     base = be_code_nextreg(finfo, e); /* allocate a new base reg if not at top already */
     simple_expr(parser, &arg);
     be_code_nextreg(finfo, &arg);  /* move result to next reg */
@@ -1039,7 +1039,7 @@ static void assign_expr(bparser *parser)
         /* undeclared symbol */
         parser->lexer.linenumber = line;
         check_var(parser, &e);
-    } 
+    }
 }
 
 /* conditional expression */

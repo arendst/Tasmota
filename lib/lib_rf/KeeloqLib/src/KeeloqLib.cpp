@@ -54,5 +54,5 @@ unsigned long Keeloq::decrypt( const unsigned long data )
   }
   return x;
  }
- 
+
 

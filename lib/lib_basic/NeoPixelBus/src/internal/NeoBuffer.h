@@ -113,7 +113,7 @@ public:
             for (int16_t x = 0; x < wSrc; x++)
             {
                 uint16_t indexDest = layoutMap(xDest + x, yDest + y);
- 
+
                 if (indexDest < destPixelCount)
                 {
                     const uint8_t* pSrc = T_BUFFER_METHOD::ColorFeature::getPixelAddress(_method.Pixels(), pixelIndex(xSrc + x, ySrc + y));
@@ -145,7 +145,7 @@ public:
         for (uint16_t indexPixel = 0; indexPixel < countPixels; indexPixel++)
         {
             typename T_BUFFER_METHOD::ColorObject color;
-            
+
             shader.Apply(indexPixel, (uint8_t*)(&color), _method.Pixels() + (indexPixel * _method.PixelSize()));
 
             T_BUFFER_METHOD::ColorFeature::applyPixelColor(destBuffer.Pixels, indexPixel, color);

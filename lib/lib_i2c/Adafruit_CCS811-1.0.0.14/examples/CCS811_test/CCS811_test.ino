@@ -1,5 +1,5 @@
 /***************************************************************************
-  This is a library for the CCS811 air 
+  This is a library for the CCS811 air
 
   This sketch reads the sensor
 
@@ -22,9 +22,9 @@ Adafruit_CCS811 ccs;
 
 void setup() {
   Serial.begin(9600);
-  
+
   Serial.println("CCS811 test");
-  
+
   if(!ccs.begin()){
     Serial.println("Failed to start sensor! Please check your wiring.");
     while(1);

@@ -65,7 +65,7 @@ bool convertGPDF_data(class Z_attribute_list &attr_list, uint16_t shortaddr, uin
     case 0x51:  cluster = 0x0101; cmd = 0x01;                                 break;    // Door Lock - Unlock Door
     default: break;
   }
-  
+
   if (cluster != 0xFFFF) {
     convertClusterSpecific(attr_list, cluster, cmd, false, shortaddr, 0xF2, arg);
     parsed = true;
@@ -197,7 +197,7 @@ bool convertGPDF_ChannelRequest(class Z_attribute_list &attr_list, uint16_t shor
 
   uint8_t gpd_next_channel = gpd_channel_toggling & 0x0F;
   uint8_t gpd_second_next_channel = (gpd_channel_toggling >> 4) & 0x0F;
-  
+
   Response_P(PSTR("{\"ZbGPDFChannelRequest\":{"
                   "\"nextchannel\":%i," "\"secondnextchannel\":%i,"
                   "}}"),
@@ -210,7 +210,7 @@ bool convertGPDF_ChannelRequest(class Z_attribute_list &attr_list, uint16_t shor
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "%s"), ResponseData());
   }
 
-  return true; 
+  return true;
 }
 
 // Parse a GPDF (Green Power Data Frame) tunnelled by a Green Power Proxy
@@ -285,7 +285,7 @@ bool convertGPCommissioningNotification(class Z_attribute_list &attr_list, uint1
   Response_P(PSTR("{\"" D_JSON_ZIGBEEGP_RECEIVED "\":{"
                   "\"srcaddr\":\"0x%04X\"," "\"wasbroadcast\":%d," "\"zclcmd\":\"GP_COMMISSIONING_NOTIFICATION\","
                   "\"gpoptions\":\"0x%04X\","
-                  "\"appid\":%i," "\"rxaftertx\":%i," "\"seclevel\":%i," "\"sectype\":%i," "\"secfailed\":%i," 
+                  "\"appid\":%i," "\"rxaftertx\":%i," "\"seclevel\":%i," "\"sectype\":%i," "\"secfailed\":%i,"
                   "\"bidircap\":%i," "\"proxyinfo\":%i,"
                   "\"gpsrcid\":\"0x%_X\"," "\"gpfrmcounter\":\"0x%04X\","
                   "\"gpproxy\":\"0x%04X\"," "\"gpplqi\":%i," "\"gpmic\":\"0x%08X\","

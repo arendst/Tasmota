@@ -531,7 +531,7 @@ public:
     is_valid = (buffer != nullptr) && (len > 0);
   }
 #endif // ESP8266
-  
+
 
   // ==================================================
   inline bool valid(void) const { return is_valid; }       // does the file exist?

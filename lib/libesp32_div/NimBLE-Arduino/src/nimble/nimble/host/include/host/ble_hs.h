@@ -377,7 +377,7 @@ void ble_hs_deinit(void);
  *                                  HAL_RESET_[...] codes or an
  *                                  implementation-defined value.
  *
- * @return                      SYSDOWN_IN_PROGRESS. 
+ * @return                      SYSDOWN_IN_PROGRESS.
  */
 int ble_hs_shutdown(int reason);
 

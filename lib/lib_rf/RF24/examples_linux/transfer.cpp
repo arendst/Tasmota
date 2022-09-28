@@ -59,8 +59,8 @@ RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_24, BCM2835_SPI_SPEED_8MHZ);
 //RF24 radio(115,0);
 
 //BBB Alternate, with mraa
-// CE pin = (Header P9, Pin 13) = 59 = 13 + 46 
-//Note: Specify SPI BUS 0 or 1 instead of CS pin number. 
+// CE pin = (Header P9, Pin 13) = 59 = 13 + 46
+//Note: Specify SPI BUS 0 or 1 instead of CS pin number.
 //RF24 radio(59,0);
 
 /**************************************************************/
@@ -130,21 +130,21 @@ int main(int argc, char** argv){
 		printf("Initiating Basic Data Transfer\n\r");
 
 		long int cycles = 10000; 					//Change this to a higher or lower number.
-		
+
 		// unsigned long pauseTime = millis();		//Uncomment if autoAck == 1 ( NOACK )
 		startTime = millis();
-	
+
 		for(int i=0; i<cycles; i++){        		//Loop through a number of cycles
       			data[0] = i;                        //Change the first byte of the payload for identification
       			if(!radio.writeFast(&data,32)){     //Write to the FIFO buffers
         			counter++;                      //Keep count of failed payloads
       			}
 
-				
+
 				//This is only required when NO ACK ( enableAutoAck(0) ) payloads are used
 		/*		if(millis() - pauseTime > 3){       // Need to drop out of TX mode every 4ms if sending a steady stream of multicast data
-					pauseTime = millis();		    
-					radio.txStandBy();				// This gives the PLL time to sync back up	
+					pauseTime = millis();
+					radio.txStandBy();				// This gives the PLL time to sync back up
 				}
 		*/
 		}

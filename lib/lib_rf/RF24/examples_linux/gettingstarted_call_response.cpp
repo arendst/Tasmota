@@ -61,8 +61,8 @@ RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_24, BCM2835_SPI_SPEED_8MHZ);
 //RF24 radio(115,0);
 
 //BBB Alternate, with mraa
-// CE pin = (Header P9, Pin 13) = 59 = 13 + 46 
-//Note: Specify SPI BUS 0 or 1 instead of CS pin number. 
+// CE pin = (Header P9, Pin 13) = 59 = 13 + 46
+//Note: Specify SPI BUS 0 or 1 instead of CS pin number.
 //RF24 radio(59,0);
 
 /********** User Config *********/
@@ -152,14 +152,14 @@ while (1){
 
   if ( role == role_pong_back ) {
     uint8_t pipeNo, gotByte;           		        // Declare variables for the pipe and the byte received
-    if( radio.available(&pipeNo)){               	// Read all available payloads      
+    if( radio.available(&pipeNo)){               	// Read all available payloads
       radio.read( &gotByte, 1 );
 													// Since this is a call-response. Respond directly with an ack payload.
 	  gotByte += 1;  								// Ack payloads are much more efficient than switching to transmit mode to respond to a call
-	  radio.writeAckPayload(pipeNo,&gotByte, 1 );   // This can be commented out to send empty payloads.	  
+	  radio.writeAckPayload(pipeNo,&gotByte, 1 );   // This can be commented out to send empty payloads.
       printf("Loaded next response %d \n\r", gotByte);
 	  delay(900); //Delay after a response to minimize CPU usage on RPi
-				  //Expects a payload every second      
+				  //Expects a payload every second
    }
  }
 

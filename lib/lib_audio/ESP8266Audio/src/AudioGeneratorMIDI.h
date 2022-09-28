@@ -1,7 +1,7 @@
 /*
   AudioGeneratorMIDI
   Audio output generator that plays MIDI files using a SF2 SoundFont
-    
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

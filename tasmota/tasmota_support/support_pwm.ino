@@ -94,7 +94,7 @@ void PwmApplyGPIO(bool force_update_all) {
 
       // compute phase
       if (TasmotaGlobal.pwm_phase[i] >= 0) {
-        pwm_phase = TasmotaGlobal.pwm_phase[i]; // if explicit set explicitly, 
+        pwm_phase = TasmotaGlobal.pwm_phase[i]; // if explicit set explicitly,
       } else if (Settings->flag5.pwm_force_same_phase) {
         pwm_phase = 0;                          // if auto-phase is off
       } else {

@@ -1,7 +1,7 @@
 /*
   AudioGeneratorMIDI
   Audio output generator that plays MIDI files using an SF2 SoundFont
-    
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -525,7 +525,7 @@ bool AudioGeneratorMIDI::begin(AudioFileSource *src, AudioOutput *out)
   samplesToPlay = 0;
   numSamplesRendered = 0;
   sentSamplesRendered = 0;
-  
+
   sawEOF = false;
   return running;
 }
@@ -581,7 +581,7 @@ done:
 
   return running;
 }
- 
+
 bool AudioGeneratorMIDI::stop()
 {
   StopMIDI();

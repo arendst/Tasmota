@@ -25,7 +25,7 @@
 AudioOutputFilterBiquad::AudioOutputFilterBiquad(AudioOutput *sink)
 {
   this->sink = sink;
-  
+
   type = bq_type_lowpass;
   a0 = 1.0;
   a1 = a2 = b1 = b2 = 0.0;
@@ -38,7 +38,7 @@ AudioOutputFilterBiquad::AudioOutputFilterBiquad(AudioOutput *sink)
 AudioOutputFilterBiquad::AudioOutputFilterBiquad(int type, float Fc, float Q, float peakGain, AudioOutput *sink)
 {
   this->sink = sink;
-  
+
   SetBiquad(type, Fc, Q, peakGain);
   z1 = z2 = 0.0;
 }
@@ -113,7 +113,7 @@ void AudioOutputFilterBiquad::CalcBiquad()
       b1 = 2 * (K * K - 1) * norm;
       b2 = (1 - K / Q + K * K) * norm;
       break;
-      
+
     case bq_type_highpass:
       norm = 1 / (1 + K / Q + K * K);
       a0 = 1 * norm;
@@ -122,7 +122,7 @@ void AudioOutputFilterBiquad::CalcBiquad()
       b1 = 2 * (K * K - 1) * norm;
       b2 = (1 - K / Q + K * K) * norm;
       break;
-      
+
     case bq_type_bandpass:
       norm = 1 / (1 + K / Q + K * K);
       a0 = K / Q * norm;
@@ -131,7 +131,7 @@ void AudioOutputFilterBiquad::CalcBiquad()
       b1 = 2 * (K * K - 1) * norm;
       b2 = (1 - K / Q + K * K) * norm;
       break;
-      
+
     case bq_type_notch:
       norm = 1 / (1 + K / Q + K * K);
       a0 = (1 + K * K) * norm;
@@ -140,7 +140,7 @@ void AudioOutputFilterBiquad::CalcBiquad()
       b1 = a1;
       b2 = (1 - K / Q + K * K) * norm;
       break;
-      
+
     case bq_type_peak:
       if (peakGain >= 0) {    // boost
         norm = 1 / (1 + 1/Q * K + K * K);
@@ -231,7 +231,7 @@ bool AudioOutputFilterBiquad::ConsumeSample(int16_t sample[2])
   int64_t rightOutput = ((rightSample * i_a0) >> BQ_SHIFT) + i_rz1;
   i_rz1 = ((rightSample * i_a1) >> BQ_SHIFT) + i_rz2 - ((i_b1 * rightOutput) >> BQ_SHIFT);
   i_rz2 = ((rightSample * i_a2) >> BQ_SHIFT) - ((i_b2 * rightOutput) >> BQ_SHIFT);
-  
+
   int16_t out[2];
   out[LEFTCHANNEL] = (int16_t)(leftOutput >> BQ_SHIFT);
   out[RIGHTCHANNEL] = (int16_t)(rightOutput >> BQ_SHIFT);

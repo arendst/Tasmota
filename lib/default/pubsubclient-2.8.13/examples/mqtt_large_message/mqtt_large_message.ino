@@ -107,7 +107,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
         break;
       };
     }
-  
+
     // Now we can start to publish the message
     client.beginPublish("greenBottles/lyrics", msgLen, false);
     for (int i = bottleCount; i > 0; i--) {

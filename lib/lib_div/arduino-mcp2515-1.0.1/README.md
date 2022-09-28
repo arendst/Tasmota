@@ -101,7 +101,7 @@ MCP2515::ERROR sendMessage(const MCP2515::TXBn txbn, const struct can_frame *fra
 MCP2515::ERROR sendMessage(const struct can_frame *frame);
 ```
 
-This is a function to send data onto the bus. 
+This is a function to send data onto the bus.
 
 For example, In the 'send' example, we have:
 
@@ -114,7 +114,7 @@ frame.data[1] = 0xFF;
 frame.data[2] = 0xFF;
 frame.data[3] = 0xFF;
 
-/* send out the message to the bus and 
+/* send out the message to the bus and
 tell other devices this is a standard frame from 0x00. */
 mcp2515.sendMessage(&frame);
 ```
@@ -126,7 +126,7 @@ frame.can_dlc = 2;
 frame.data[0] = 0xFF;
 frame.data[1] = 0xFF;
 
-/* send out the message to the bus using second TX buffer and 
+/* send out the message to the bus using second TX buffer and
 tell other devices this is a extended frame from 0x12345678. */
 mcp2515.sendMessage(MCP2515::TXB1, &frame);
 ```
@@ -162,28 +162,28 @@ Example of interrupt based read
 ```C++
 bool interrupt = false;
 struct can_frame frame;
-	
+
 void irqHandler() {
     interrupt = true;
 }
-	
+
 void setup() {
     ...
     attachInterrupt(0, irqHandler, FALLING);
 }
-	
+
 void loop() {
     if (interrupt) {
         interrupt = false;
-       
+
         uint8_t irq = mcp2515.getInterrupts();
-        
+
         if (irq & MCP2515::CANINTF_RX0IF) {
             if (mcp2515.readMessage(MCP2515::RXB0, &frame) == MCP2515::ERROR_OK) {
                 // frame contains received from RXB0 message
             }
         }
-            
+
         if (irq & MCP2515::CANINTF_RX1IF) {
             if (mcp2515.readMessage(MCP2515::RXB1, &frame) == MCP2515::ERROR_OK) {
                 // frame contains received from RXB1 message
@@ -222,7 +222,7 @@ Example implementation of CanHacker (lawicel) protocol based device: [https://gi
 <br>
 For more information, please refer to [wiki page](http://www.seeedstudio.com/wiki/CAN-BUS_Shield).
 
-    
+
 ----
 
 This software is written by loovee ([luweicong@seeed.cc](luweicong@seeed.cc "luweicong@seeed.cc")) for seeed studio,<br>

@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: sbrhfadj.c,v 1.3 2005/05/24 16:01:55 albertofloyd Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: sbrhfadj.c,v 1.3 2005/05/24 16:01:55 albertofloyd Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -48,14 +48,14 @@
 
 /* invBandTab[i] = 1.0 / (i + 1), Q31 */
 static const int invBandTab[64] PROGMEM = {
-	0x7fffffff, 0x40000000, 0x2aaaaaab, 0x20000000, 0x1999999a, 0x15555555, 0x12492492, 0x10000000, 
-	0x0e38e38e, 0x0ccccccd, 0x0ba2e8ba, 0x0aaaaaab, 0x09d89d8a, 0x09249249, 0x08888889, 0x08000000, 
-	0x07878788, 0x071c71c7, 0x06bca1af, 0x06666666, 0x06186186, 0x05d1745d, 0x0590b216, 0x05555555, 
-	0x051eb852, 0x04ec4ec5, 0x04bda12f, 0x04924925, 0x0469ee58, 0x04444444, 0x04210842, 0x04000000, 
-	0x03e0f83e, 0x03c3c3c4, 0x03a83a84, 0x038e38e4, 0x03759f23, 0x035e50d8, 0x03483483, 0x03333333, 
-	0x031f3832, 0x030c30c3, 0x02fa0be8, 0x02e8ba2f, 0x02d82d83, 0x02c8590b, 0x02b93105, 0x02aaaaab, 
-	0x029cbc15, 0x028f5c29, 0x02828283, 0x02762762, 0x026a439f, 0x025ed098, 0x0253c825, 0x02492492, 
-	0x023ee090, 0x0234f72c, 0x022b63cc, 0x02222222, 0x02192e2a, 0x02108421, 0x02082082, 0x02000000, 
+	0x7fffffff, 0x40000000, 0x2aaaaaab, 0x20000000, 0x1999999a, 0x15555555, 0x12492492, 0x10000000,
+	0x0e38e38e, 0x0ccccccd, 0x0ba2e8ba, 0x0aaaaaab, 0x09d89d8a, 0x09249249, 0x08888889, 0x08000000,
+	0x07878788, 0x071c71c7, 0x06bca1af, 0x06666666, 0x06186186, 0x05d1745d, 0x0590b216, 0x05555555,
+	0x051eb852, 0x04ec4ec5, 0x04bda12f, 0x04924925, 0x0469ee58, 0x04444444, 0x04210842, 0x04000000,
+	0x03e0f83e, 0x03c3c3c4, 0x03a83a84, 0x038e38e4, 0x03759f23, 0x035e50d8, 0x03483483, 0x03333333,
+	0x031f3832, 0x030c30c3, 0x02fa0be8, 0x02e8ba2f, 0x02d82d83, 0x02c8590b, 0x02b93105, 0x02aaaaab,
+	0x029cbc15, 0x028f5c29, 0x02828283, 0x02762762, 0x026a439f, 0x025ed098, 0x0253c825, 0x02492492,
+	0x023ee090, 0x0234f72c, 0x022b63cc, 0x02222222, 0x02192e2a, 0x02108421, 0x02082082, 0x02000000,
 };
 
 /**************************************************************************************
@@ -231,7 +231,7 @@ static const int limGainTab[4] PROGMEM = {0x20138ca7, 0x40000000, 0x7fb27dce, 0x
  *              index of current channel (0 for SCE, 0 or 1 for CPE)
  *              index of current envelope
  *              index of current limiter band
- *              number of fraction bits in dequantized envelope 
+ *              number of fraction bits in dequantized envelope
  *                (max = Q(FBITS_OUT_DQ_ENV - 6) = Q23, can go negative)
  *
  * Outputs:     updated gainMax, gainMaxFBits, and sumEOrigMapped in PSInfoSBR struct
@@ -478,7 +478,7 @@ static void CalcComponentGains(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFre
 		if (env != psi->la && env != sbrChan->laPrev && sm == 0)
 			psi->sumQM += (qm >> ACC_SCALE);
 
-		/* eCurr * gain^2 same as gain^2, before division by eCurr 
+		/* eCurr * gain^2 same as gain^2, before division by eCurr
 		 * (but note that gain != 0 even if eCurr == 0, since it's divided by eps)
 		 */
 		if (eCurr)
@@ -489,7 +489,7 @@ static void CalcComponentGains(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFre
 /**************************************************************************************
  * Function:    ApplyBoost
  *
- * Description: calculate and apply boost factor for envelope, sinusoids, and noise 
+ * Description: calculate and apply boost factor for envelope, sinusoids, and noise
  *                in this limiter band (4.6.18.7.5)
  *
  * Inputs:      initialized PSInfoSBR struct
@@ -517,7 +517,7 @@ static void ApplyBoost(PSInfoSBR *psi, SBRFreq *sbrFreq, int lim, int fbitsDQ)
 	sumEOrigMapped = psi->sumEOrigMapped >> 1;
 	r = (psi->sumECurrGLim >> 1) + (psi->sumSM >> 1) + (psi->sumQM >> 1);	/* 1 GB fine (sm and qm are mutually exclusive in acc) */
 	if (r < (1 << (31-28))) {
-		/* any non-zero numerator * 1/EPS_0 is > GBOOST_MAX 
+		/* any non-zero numerator * 1/EPS_0 is > GBOOST_MAX
 		 * round very small r to zero to avoid scaling problems
 		 */
 		gBoost = (sumEOrigMapped == 0 ? (1 << 28) : GBOOST_MAX);
@@ -587,7 +587,7 @@ static void ApplyBoost(PSInfoSBR *psi, SBRFreq *sbrFreq, int lim, int fbitsDQ)
 /**************************************************************************************
  * Function:    CalcGain
  *
- * Description: calculate and apply proper gain to HF components in one envelope 
+ * Description: calculate and apply proper gain to HF components in one envelope
  *                (4.6.18.7.5)
  *
  * Inputs:      initialized PSInfoSBR struct
@@ -623,7 +623,7 @@ static void CalcGain(PSInfoSBR *psi, SBRHeader *sbrHdr, SBRGrid *sbrGrid, SBRFre
 
 /* hSmooth table from 4.7.18.7.6, format = Q31 */
 static const int hSmoothCoef[MAX_NUM_SMOOTH_COEFS] PROGMEM = {
-	0x2aaaaaab, 0x2697a512, 0x1becfa68, 0x0ebdb043, 0x04130598, 
+	0x2aaaaaab, 0x2697a512, 0x1becfa68, 0x0ebdb043, 0x04130598,
 };
 
 /**************************************************************************************
@@ -643,7 +643,7 @@ static const int hSmoothCoef[MAX_NUM_SMOOTH_COEFS] PROGMEM = {
  * Outputs:     complete reconstructed subband QMF samples for this envelope
  *
  * Return:      none
- * 
+ *
  * Notes:       ensures that output has >= MIN_GBITS_IN_QMFS guard bits,
  *                so it's not necessary to check anything in the synth QMF
  **************************************************************************************/
@@ -660,7 +660,7 @@ static void MapHF(PSInfoSBR *psi, SBRHeader *sbrHdr, SBRGrid *sbrGrid, SBRFreq *
 
 	if (hfReset)
 		noiseTabIndex = 2;	/* starts at 1, double since complex */
-	hSL = (sbrHdr->smoothMode ? 0 : 4); 
+	hSL = (sbrHdr->smoothMode ? 0 : 4);
 
 	if (hfReset) {
 		for (i = 0; i < hSL; i++) {
@@ -679,7 +679,7 @@ static void MapHF(PSInfoSBR *psi, SBRHeader *sbrHdr, SBRGrid *sbrGrid, SBRFreq *
 	iEnd =   sbrGrid->envTimeBorder[env+1];
 	for (i = iStart; i < iEnd; i++) {
 		/* save new values in temp buffers (delay)
-		 * we only store MAX_NUM_SMOOTH_COEFS most recent values, 
+		 * we only store MAX_NUM_SMOOTH_COEFS most recent values,
 		 *   so don't keep storing the same value over and over
 		 */
 		if (i - iStart < MAX_NUM_SMOOTH_COEFS) {
@@ -747,7 +747,7 @@ static void MapHF(PSInfoSBR *psi, SBRHeader *sbrHdr, SBRGrid *sbrGrid, SBRFreq *
 				noiseTabIndex += 2;		/* noise filtered by 0, but still need to bump index */
 			} else {
 				/* add scaled signal and scaled noise */
-				qFilt = psi->qFiltLast[m];	
+				qFilt = psi->qFiltLast[m];
 				n = noiseTab[noiseTabIndex++];
 				smre = MULSHIFT32(n, qFilt) >> (FBITS_QLIM_BOOST - 1 - FBITS_OUT_QMFA);
 
@@ -782,12 +782,12 @@ static void MapHF(PSInfoSBR *psi, SBRHeader *sbrHdr, SBRGrid *sbrGrid, SBRFreq *
 		if (gbMask >> (31 - MIN_GBITS_IN_QMFS)) {
 			XBuf = psi->XBuf[i + HF_ADJ][sbrFreq->kStart];
 			for (m = 0; m < sbrFreq->numQMFBands; m++) {
-				xre = XBuf[0];	xim = XBuf[1];	
-				CLIP_2N(xre, (31 - MIN_GBITS_IN_QMFS));	
-				CLIP_2N(xim, (31 - MIN_GBITS_IN_QMFS));	
+				xre = XBuf[0];	xim = XBuf[1];
+				CLIP_2N(xre, (31 - MIN_GBITS_IN_QMFS));
+				CLIP_2N(xim, (31 - MIN_GBITS_IN_QMFS));
 				*XBuf++ = xre;	*XBuf++ = xim;
-			}	
-			CLIP_2N(gbMask, (31 - MIN_GBITS_IN_QMFS));	
+			}
+			CLIP_2N(gbMask, (31 - MIN_GBITS_IN_QMFS));
 		}
 		gbIdx = ((i + HF_ADJ) >> 5) & 0x01;
 		sbrChan->gbMask[gbIdx] |= gbMask;

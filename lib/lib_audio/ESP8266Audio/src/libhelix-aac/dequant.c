@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: dequant.c,v 1.2 2005/05/20 18:05:41 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: dequant.c,v 1.2 2005/05/20 18:05:41 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -49,7 +49,7 @@
 #define	SF_OFFSET			100
 
 /* pow(2, i/4.0) for i = [0,1,2,3], format = Q30 */
-static const int pow14[4] PROGMEM = { 
+static const int pow14[4] PROGMEM = {
 	0x40000000, 0x4c1bf829, 0x5a82799a, 0x6ba27e65
 };
 
@@ -64,39 +64,39 @@ static const int pow43_14[4][16] PROGMEM = {
 	0x36f23fa5, 0x3d227bd3, 0x437be656, 0x49fc823c, /* Q25 */
 	},
 	{
-	0x00000000, 0x1306fe0a, 0x2ff221af, 0x52538f52, 
-	0x0f1a1bf4, 0x1455ccc2, 0x19ee62a8, 0x1fd92396, 
-	0x260dfc14, 0x2c8694d8, 0x333dcb29, 0x3a2f5c7a, 
-	0x4157aed5, 0x48b3aaa3, 0x50409f76, 0x57fc3010, 
+	0x00000000, 0x1306fe0a, 0x2ff221af, 0x52538f52,
+	0x0f1a1bf4, 0x1455ccc2, 0x19ee62a8, 0x1fd92396,
+	0x260dfc14, 0x2c8694d8, 0x333dcb29, 0x3a2f5c7a,
+	0x4157aed5, 0x48b3aaa3, 0x50409f76, 0x57fc3010,
 	},
 	{
-	0x00000000, 0x16a09e66, 0x39047c0f, 0x61e734aa, 
-	0x11f59ac4, 0x182ec633, 0x1ed66a45, 0x25dfc55a, 
-	0x2d413ccd, 0x34f3462d, 0x3cefc603, 0x4531ab69, 
-	0x4db4adf8, 0x56752054, 0x5f6fcfcd, 0x68a1eca1, 
+	0x00000000, 0x16a09e66, 0x39047c0f, 0x61e734aa,
+	0x11f59ac4, 0x182ec633, 0x1ed66a45, 0x25dfc55a,
+	0x2d413ccd, 0x34f3462d, 0x3cefc603, 0x4531ab69,
+	0x4db4adf8, 0x56752054, 0x5f6fcfcd, 0x68a1eca1,
 	},
 	{
-	0x00000000, 0x1ae89f99, 0x43ce3e4b, 0x746d57b2, 
-	0x155b8109, 0x1cc21cdc, 0x24ac1839, 0x2d0a479e, 
-	0x35d13f33, 0x3ef80748, 0x48775c93, 0x524938cd, 
-	0x5c68841d, 0x66d0df0a, 0x717e7bfe, 0x7c6e0305, 
+	0x00000000, 0x1ae89f99, 0x43ce3e4b, 0x746d57b2,
+	0x155b8109, 0x1cc21cdc, 0x24ac1839, 0x2d0a479e,
+	0x35d13f33, 0x3ef80748, 0x48775c93, 0x524938cd,
+	0x5c68841d, 0x66d0df0a, 0x717e7bfe, 0x7c6e0305,
 	},
 };
 
 /* pow(j, 4.0 / 3.0) for j = [16,17,18,...,63], format = Q23 */
 static const int pow43[48] PROGMEM = {
-	0x1428a2fa, 0x15db1bd6, 0x1796302c, 0x19598d85, 
-	0x1b24e8bb, 0x1cf7fcfa, 0x1ed28af2, 0x20b4582a, 
-	0x229d2e6e, 0x248cdb55, 0x26832fda, 0x28800000, 
-	0x2a832287, 0x2c8c70a8, 0x2e9bc5d8, 0x30b0ff99, 
-	0x32cbfd4a, 0x34eca001, 0x3712ca62, 0x393e6088, 
-	0x3b6f47e0, 0x3da56717, 0x3fe0a5fc, 0x4220ed72, 
-	0x44662758, 0x46b03e7c, 0x48ff1e87, 0x4b52b3f3, 
-	0x4daaebfd, 0x5007b497, 0x5268fc62, 0x54ceb29c, 
-	0x5738c721, 0x59a72a59, 0x5c19cd35, 0x5e90a129, 
-	0x610b9821, 0x638aa47f, 0x660db90f, 0x6894c90b, 
-	0x6b1fc80c, 0x6daeaa0d, 0x70416360, 0x72d7e8b0, 
-	0x75722ef9, 0x78102b85, 0x7ab1d3ec, 0x7d571e09, 
+	0x1428a2fa, 0x15db1bd6, 0x1796302c, 0x19598d85,
+	0x1b24e8bb, 0x1cf7fcfa, 0x1ed28af2, 0x20b4582a,
+	0x229d2e6e, 0x248cdb55, 0x26832fda, 0x28800000,
+	0x2a832287, 0x2c8c70a8, 0x2e9bc5d8, 0x30b0ff99,
+	0x32cbfd4a, 0x34eca001, 0x3712ca62, 0x393e6088,
+	0x3b6f47e0, 0x3da56717, 0x3fe0a5fc, 0x4220ed72,
+	0x44662758, 0x46b03e7c, 0x48ff1e87, 0x4b52b3f3,
+	0x4daaebfd, 0x5007b497, 0x5268fc62, 0x54ceb29c,
+	0x5738c721, 0x59a72a59, 0x5c19cd35, 0x5e90a129,
+	0x610b9821, 0x638aa47f, 0x660db90f, 0x6894c90b,
+	0x6b1fc80c, 0x6daeaa0d, 0x70416360, 0x72d7e8b0,
+	0x75722ef9, 0x78102b85, 0x7ab1d3ec, 0x7d571e09,
 };
 
 /* sqrt(0.5), format = Q31 */
@@ -109,7 +109,7 @@ static const int pow43[48] PROGMEM = {
  * Relative error < 1E-7
  * Coefs are scaled by 4, 2, 1, 0.5, 0.25
  */
- 
+
 //fb
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
@@ -122,7 +122,7 @@ static const int pow2exp[8] PROGMEM = { 14, 13, 11, 10, 9, 7, 6, 5 };
 
 /* pow2exp[i] = pow(2, i*4/3) fraction */
 static const int pow2frac[8] PROGMEM = {
-	0x6597fa94, 0x50a28be6, 0x7fffffff, 0x6597fa94, 
+	0x6597fa94, 0x50a28be6, 0x7fffffff, 0x6597fa94,
 	0x50a28be6, 0x7fffffff, 0x6597fa94, 0x50a28be6
 };
 
@@ -168,7 +168,7 @@ static int DequantBlock(int *inbuf, int nSamps, int scale)
 	 * tab16[j] = Q28 for j = [0,3]
 	 * tab4[x] = x^(4.0/3.0) * 2^(0.25*scale), Q(FBITS_OUT_DQ_OFF)
 	 */
-	shift = 28 - scalei;	
+	shift = 28 - scalei;
 	if (shift > 31) {
 		tab4[0] = tab4[1] = tab4[2] = tab4[3] = 0;
 	} else if (shift <= 0) {
@@ -205,7 +205,7 @@ static int DequantBlock(int *inbuf, int nSamps, int scale)
 				shift = 25 - scalei;
 			} else if (x < 64) {
 				/* result: y = Q21 (pow43tab[j] = Q23, scalef = Q30) */
-				y = pow43[x-16];	
+				y = pow43[x-16];
 				shift = 21 - scalei;
 				y = MULSHIFT32(y, scalef);
 			} else {
@@ -239,7 +239,7 @@ static int DequantBlock(int *inbuf, int nSamps, int scale)
 				y = MULSHIFT32(y, x) + coef[4];
 				y = MULSHIFT32(y, pow2frac[shift]) << 3;
 
-				/* fractional scale 
+				/* fractional scale
 				 * result: y = Q21 (pow43tab[j] = Q23, scalef = Q30)
 				 */
 				y = MULSHIFT32(y, scalef);	/* now y is Q24 */
@@ -306,7 +306,7 @@ int Dequantize(AACDecInfo *aacDecInfo, int ch)
 		return ERR_AAC_NULL_POINTER;
 	psi = (PSInfoBase *)(aacDecInfo->psInfoBase);
 	icsInfo = (ch == 1 && psi->commonWin == 1) ? &(psi->icsInfo[0]) : &(psi->icsInfo[ch]);
-		
+
 	if (icsInfo->winSequence == 2) {
 		sfbTab = sfBandTabShort + sfBandTabShortOffset[psi->sampRateIdx];
 		nSamps = NSAMPS_SHORT;
@@ -324,7 +324,7 @@ int Dequantize(AACDecInfo *aacDecInfo, int ch)
 	for (gp = 0; gp < icsInfo->numWinGroup; gp++) {
 		for (win = 0; win < icsInfo->winGroupLen[gp]; win++) {
 			for (sfb = 0; sfb < icsInfo->maxSFB; sfb++) {
-				/* dequantize one scalefactor band (not necessary if codebook is intensity or PNS) 
+				/* dequantize one scalefactor band (not necessary if codebook is intensity or PNS)
 				 * for zero codebook, still run dequantizer in case non-zero pulse data was added
 				 */
 				cb = (int)(sfbCodeBook[sfb]);

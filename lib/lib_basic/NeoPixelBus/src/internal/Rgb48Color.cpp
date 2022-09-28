@@ -151,11 +151,11 @@ Rgb48Color Rgb48Color::LinearBlend(const Rgb48Color& left, const Rgb48Color& rig
         left.B + ((right.B - left.B) * progress));
 }
 
-Rgb48Color Rgb48Color::BilinearBlend(const Rgb48Color& c00, 
-    const Rgb48Color& c01, 
-    const Rgb48Color& c10, 
-    const Rgb48Color& c11, 
-    float x, 
+Rgb48Color Rgb48Color::BilinearBlend(const Rgb48Color& c00,
+    const Rgb48Color& c01,
+    const Rgb48Color& c10,
+    const Rgb48Color& c11,
+    float x,
     float y)
 {
     float v00 = (1.0f - x) * (1.0f - y);

@@ -839,7 +839,7 @@ typedef struct {
   uint8_t       free_f63[13];              // F63 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
-  uint32_t      touch_threshold;           // F70  
+  uint32_t      touch_threshold;           // F70
   SOBitfield6   flag6;                     // F74
   uint16_t      flowratemeter_calibration[2];// F78
   int32_t       energy_kWhexport_ph[3];    // F7C

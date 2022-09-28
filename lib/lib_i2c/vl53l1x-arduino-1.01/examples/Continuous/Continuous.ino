@@ -20,7 +20,7 @@ void setup()
     Serial.println("Failed to detect and initialize sensor!");
     while (1);
   }
-  
+
   // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
   // You can change these settings to adjust the performance of the sensor, but
   // the minimum timing budget is 20 ms for short distance mode and 33 ms for

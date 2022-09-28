@@ -64,7 +64,7 @@ struct ble_hs_stop_listener {
  *                              BLE_HS_EALREADY: Host already stopped; the
  *                                  provided callback does *not* get called.
  */
-int ble_hs_stop(struct ble_hs_stop_listener *listener, 
+int ble_hs_stop(struct ble_hs_stop_listener *listener,
                 ble_hs_stop_fn *fn, void *arg);
 
 #endif

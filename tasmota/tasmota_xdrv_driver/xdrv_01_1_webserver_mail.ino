@@ -24,8 +24,8 @@
  *
  * if email body consist of a single * and scripter is present
  * and a section >m is found, the lines in this section (until #) are sent as email body
- * 
- * Some mail servers do not accept the IP address in the HELO (or EHLO) message but only a fully qualified 
+ *
+ * Some mail servers do not accept the IP address in the HELO (or EHLO) message but only a fully qualified
  * domain name (FQDN). To overcome this, use the following define to override this behavior and enter the desired FQDN
  * #define EMAIL_USER_DOMAIN "googlemail.com"
  *

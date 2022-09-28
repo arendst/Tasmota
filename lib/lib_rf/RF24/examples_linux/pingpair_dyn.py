@@ -2,9 +2,9 @@
 
 #
 # Example using Dynamic Payloads
-# 
+#
 #  This is an example of how to use payloads of a varying (dynamic) size.
-# 
+#
 
 from __future__ import print_function
 import time

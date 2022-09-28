@@ -1,7 +1,7 @@
 /*
   AudioFileSourceID3
   ID3 filter that extracts any ID3 fields and sends to CB function
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ class AudioFileSourceID3 : public AudioFileSource
   public:
     AudioFileSourceID3(AudioFileSource *src);
     virtual ~AudioFileSourceID3() override;
-    
+
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual bool seek(int32_t pos, int dir) override;
     virtual bool close() override;

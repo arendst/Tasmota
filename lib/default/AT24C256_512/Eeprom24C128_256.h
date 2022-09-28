@@ -10,7 +10,7 @@
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option) any
  * later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
@@ -44,7 +44,7 @@
 class Eeprom24C128_256
 {
     public:
-    
+
         /******************************************************************//**
          * \fn Eeprom24C128_256(byte deviceAddress)
          *
@@ -61,11 +61,11 @@ class Eeprom24C128_256
          * \fn void initialize()
          *
          * \brief Initialize library abnd TWI bus.
-         * 
+         *
          * If several devices are connected to TWI bus, this method mustn't be
          * called. TWI bus must be initialized out of this library using
          * Wire.begin() method.
-         **********************************************************************/        
+         **********************************************************************/
         void
         initialize();
 
@@ -87,13 +87,13 @@ class Eeprom24C128_256
             word    address,
             byte    data
         );
-        
+
         /******************************************************************//**
          * \fn void writeBytes(
          * word     address,
          * word     length,
          * byte*    p_data)
-         * 
+         *
          * \brief Write bytes in EEPROM memory.
          *
          * \param       address Start address.
@@ -107,10 +107,10 @@ class Eeprom24C128_256
             word    length,
             byte*   p_data
         );
-        
+
         /******************************************************************//**
          * \fn byte readByte(word address)
-         * 
+         *
          * \brief Read a byte in EEPROM memory.
          *
          * \param   address Address.
@@ -142,7 +142,7 @@ class Eeprom24C128_256
             word    length,
             byte*   p_buffer
         );
-        
+
     private:
 
         byte m_deviceAddress;
@@ -209,4 +209,3 @@ class Eeprom24C128_256
 };
 
 #endif // Eeprom24C128_256_h
-

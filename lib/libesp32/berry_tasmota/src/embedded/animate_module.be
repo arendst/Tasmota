@@ -125,7 +125,7 @@ class Animate_engine
           end
           self.ins_time = cur_time - (sub_index - ins.duration)
         end
-      
+
       # Invalid
       else
         raise "internal_error", "unknown instruction"

@@ -17,7 +17,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *stri
   if (isUnicode) {
     string += 2;
   }
-  
+
   while (*string) {
     char a = *(string++);
     if (isUnicode) {

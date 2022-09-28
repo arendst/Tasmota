@@ -10,7 +10,7 @@ class macro_table:
 
     def __init__(self):
         self.map = {}
-    
+
     # def readfile(self, filename):
     #     with open(filename) as f:
     #         return f.read()
@@ -19,7 +19,7 @@ class macro_table:
         if len(s) == 0:             return 1    # defined a macro name but no content, considered true
         if not s[0].isnumeric():    return 1
         return int_safe(s)
-    
+
     def scan_file(self, filename):
         str = ""
         with open(filename) as f:
@@ -28,7 +28,7 @@ class macro_table:
         for it in r:
             # print(f"> it0:{it[0]} it1:{it[1]}")
             self.map[it[0]] = self.parse_value(it[1])
-    
+
     def query(self, s):
         r = macro_table.pat_query.search(s)
         value = False
@@ -47,4 +47,3 @@ if __name__ == '__main__':
     # from hash_map import *
     pat = re.compile("(?:\\n|$)\\s*#define\\s+(\\w+)[ \\t]+(\\w+)", re.MULTILINE)
     s = "aaa\n#define A 1  // a \n  #define B 2\n#define C \n#define D 0 \n  #define E     11 \na"
-    

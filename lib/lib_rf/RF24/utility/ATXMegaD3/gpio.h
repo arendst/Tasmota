@@ -10,7 +10,7 @@
  *
  * @defgroup Porting_GPIO Porting: GPIO
  *
- * 
+ *
  * @{
  */
 #ifndef GPIO_H
@@ -25,12 +25,12 @@ public:
  	/* Constants */
 	static const int DIRECTION_OUT = 1;
 	static const int DIRECTION_IN = 0;
-	
+
 	static const int OUTPUT_HIGH = 1;
 	static const int OUTPUT_LOW = 0;
-		
+
 	GPIO();
-	
+
 	/**
 	 * Similar to Arduino pinMode(pin,mode);
      * @param port
@@ -38,7 +38,7 @@ public:
      */
 	static void open(int port, int DDR);
 	/**
-	 * 
+	 *
      * @param port
      */
 	static void close(int port);
@@ -52,12 +52,12 @@ public:
 	* Similar to Arduino digitalWrite(pin,state);
 	* @param port
 	* @param value
-	*/	
-	static void write(int port,int value);	
-	
+	*/
+	static void write(int port,int value);
+
 	virtual ~GPIO();
 
 };
 
 #endif	/* GPIO_H */
-/*@}*/	
+/*@}*/

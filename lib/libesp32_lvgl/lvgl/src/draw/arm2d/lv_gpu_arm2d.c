@@ -1144,7 +1144,7 @@ static void lv_draw_arm2d_img_decoded(struct _lv_draw_ctx_t * draw_ctx,
                 source_center.iY = draw_dsc->pivot.y;
 
 
-                if((LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED == cf) || 
+                if((LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED == cf) ||
                    (LV_IMG_CF_TRUE_COLOR == cf)) {
                     arm_2d_tile_transform_with_opacity(
                         &source_tile,
@@ -1160,7 +1160,7 @@ static void lv_draw_arm2d_img_decoded(struct _lv_draw_ctx_t * draw_ctx,
                 }
     #if defined(__ARM_2D_CFG_SUPPORT_COLOUR_CHANNEL_ACCESS__)          \
                 &&  __ARM_2D_CFG_SUPPORT_COLOUR_CHANNEL_ACCESS__
-                else if((LV_IMG_CF_TRUE_COLOR_ALPHA == cf) && 
+                else if((LV_IMG_CF_TRUE_COLOR_ALPHA == cf) &&
                         (LV_COLOR_DEPTH == 32)) {
                     arm_2d_tile_transform_with_src_mask_and_opacity(
                         &source_tile,

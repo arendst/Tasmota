@@ -1,4 +1,4 @@
-// To recreate the data below, use the Paint.Net plugin "Arduino Progmem NeoPixel FileType" 
+// To recreate the data below, use the Paint.Net plugin "Arduino Progmem NeoPixel FileType"
 // to save as/export the included Cylon.pdn
 // Paint.Net - http://www.getpaint.net/download.html#download
 // Plugin - http://forums.getpaint.net/index.php?/topic/107921-arduino-neopixel-sketch-exporter/

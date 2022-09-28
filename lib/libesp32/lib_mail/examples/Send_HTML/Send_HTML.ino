@@ -3,14 +3,14 @@
 /**
  * This example will send the Email in
  * the html version.
- * 
- * 
+ *
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -36,7 +36,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -87,35 +87,35 @@ void setup()
   ESP_Mail_Session session;
 
   /** ########################################################
-   * Some properties of SMTPSession data and parameters pass to 
+   * Some properties of SMTPSession data and parameters pass to
    * SMTP_Message class accept the pointer to constant char
-   * i.e. const char*. 
-   * 
-   * You may assign a string literal to that properties or function 
+   * i.e. const char*.
+   *
+   * You may assign a string literal to that properties or function
    * like below example.
-   *   
+   *
    * session.login.user_domain = "mydomain.net";
    * session.login.user_domain = String("mydomain.net").c_str();
-   * 
+   *
    * or
-   * 
+   *
    * String doman = "mydomain.net";
    * session.login.user_domain = domain.c_str();
-   * 
+   *
    * And
-   * 
+   *
    * String name = "Jack " + String("dawson");
    * String email = "jack_dawson" + String(123) + "@mail.com";
-   * 
+   *
    * message.addRecipient(name.c_str(), email.c_str());
-   * 
+   *
    * message.addHeader(String("Message-ID: <abcde.fghij@gmail.com>").c_str());
-   * 
+   *
    * or
-   * 
+   *
    * String header = "Message-ID: <abcde.fghij@gmail.com>";
    * message.addHeader(header.c_str());
-   * 
+   *
    * ###########################################################
   */
 

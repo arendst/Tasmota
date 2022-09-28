@@ -5,7 +5,7 @@ on: [pull_request, push, repository_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -23,7 +23,7 @@ jobs:
       run: python3 ci/build_platform.py main_platforms
 
     - name: clang
-      run: python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -r . 
+      run: python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -r .
 
     - name: doxygen
       env:

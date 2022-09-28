@@ -1,8 +1,8 @@
 /********************************************************************
  * Tasmota lib
- * 
+ *
  * To use: `import re`
- * 
+ *
  * Regex using re1.5
  *******************************************************************/
 #include "be_constobj.h"
@@ -211,7 +211,7 @@ int re_pattern_split_run(bvm *vm, ByteProg *code, const char *hay, int split_lim
     subj.begin = sub[1];
     split_limit--;
   }
-  be_pop(vm, 1);    // remove list 
+  be_pop(vm, 1);    // remove list
   be_return(vm);    // return list object
 }
 
@@ -269,7 +269,7 @@ module re (scope: global) {
   matchall, func(be_re_match_all)
   split, func(be_re_split)
 }
-@const_object_info_end 
+@const_object_info_end
 
 @const_object_info_begin
 class be_class_re_pattern (scope: global, name: re_pattern) {

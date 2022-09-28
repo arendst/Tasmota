@@ -250,7 +250,7 @@ int be_char2hex(int c)
  *                    |  '- - -'                 |
  *                    |                          |
  *                    +- 0x or 0X ---hex_digits--+
- * 
+ *
  *******************************************************************/
 BERRY_API bint be_str2int(const char *str, const char **endstr)
 {
@@ -287,13 +287,13 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
 /*******************************************************************
  * the function be_str2real():
  * >>-+------------+--+-----+--+-digits--+---+--+--------+-+------->
- *    '-whitespace-'  +- + -+  |         '-.-'  '-digits-' |   
- *                    '- - -'  '-.--digits-----------------'   
- * 
+ *    '-whitespace-'  +- + -+  |         '-.-'  '-digits-' |
+ *                    '- - -'  '-.--digits-----------------'
+ *
  * >--+------------------------+----------------------------------><
- *    '-+-e-+--+-----+--digits-'   
- *      '-E-'  +- + -+             
- *             '- - -'  
+ *    '-+-e-+--+-----+--digits-'
+ *      '-E-'  +- + -+
+ *             '- - -'
  *******************************************************************/
 BERRY_API breal be_str2real(const char *str, const char **endstr)
 {
@@ -343,7 +343,7 @@ BERRY_API breal be_str2real(const char *str, const char **endstr)
  **/
 BERRY_API const char *be_str2num(bvm *vm, const char *str)
 {
-    const char *sout; 
+    const char *sout;
     bint c, vint = be_str2int(str, &sout);
     c = *sout;
     if (c == '.' || c == 'e' || c == 'E') {

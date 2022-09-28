@@ -176,7 +176,7 @@ int uECC_sign(const uint8_t *private_key, const uint8_t *message_hash,
 		// computing k as modular reduction of _random (see FIPS 186.4 B.5.1):
 		uECC_vli_mmod(k, _random, curve->n, BITS_TO_WORDS(curve->num_n_bits));
 
-		if (uECC_sign_with_k(private_key, message_hash, hash_size, k, signature, 
+		if (uECC_sign_with_k(private_key, message_hash, hash_size, k, signature,
 		    curve)) {
 			return 1;
 		}

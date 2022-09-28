@@ -50,7 +50,7 @@ What works and not?
 ----------
 
 * **Works**
-  
+
   #. Communication (Crypto1) with MIFARE Classic (1k, 4k, Mini).
   #. Communication (Crypto1) with MIFARE Classic compatible PICCs.
   #. Firmware self check of MFRC522.
@@ -64,7 +64,7 @@ What works and not?
   #. More than 2 modules, require a multiplexer `#191 <https://github.com/miguelbalboa/rfid/issues/191#issuecomment-242631153>`_.
 
 * **Doesn't work**
-  
+
   #. MIFARE DESFire, MIFARE DESFire EV1/EV2, not supported by software.
   #. Communication with 3DES or AES, not supported by software.
   #. Peer-to-peer (ISO/IEC 18092), not `supported by hardware`_.
@@ -75,7 +75,7 @@ What works and not?
   #. Power reduction modes `#269 <https://github.com/miguelbalboa/rfid/issues/269>`_, not supported by software.
   #. I2C instead of SPI `#240 <https://github.com/miguelbalboa/rfid/issues/240>`_, not supported by software.
   #. UART instead of SPI `#281 <https://github.com/miguelbalboa/rfid/issues/281>`_, not supported by software.
-  
+
 * **Need more?**
 
   #. If software: code it and make a pull request.
@@ -170,7 +170,7 @@ The following table shows the typical pin layout used:
 
 .. [1] Configurable, typically defined as RST_PIN in sketch/program.
 .. [2] Configurable, typically defined as SS_PIN in sketch/program.
-.. [3] The SDA pin might be labeled SS on some/older MFRC522 boards. 
+.. [3] The SDA pin might be labeled SS on some/older MFRC522 boards.
 .. [4] Source: https://github.com/miguelbalboa/rfid/issues/111#issuecomment-420433658 .
 
 Important: If your micro controller supports multiple SPI interfaces, the library only uses the **default (first) SPI** of the Arduino framework.
@@ -222,10 +222,10 @@ Protocols
 * The protocol is defined in ISO/IEC 14443-3:2011 Part 3 Type A.
 
   * Details are found in chapter 6 *"Type A – Initialization and anticollision"*.
-  
+
   * See http://wg8.de/wg8n1496_17n3613_Ballot_FCD14443-3.pdf for a free version
     of the final draft (which might be outdated in some areas).
-    
+
   * The reader does not support ISO/IEC 14443-3 Type B.
 
 
@@ -273,14 +273,14 @@ Troubleshooting
 
 
 * **My tag/card doesn't work.**
-  
+
   #. Distance between antenna and token too large (>1cm).
   #. You got the wrong type PICC. Is it really 13.56 MHz? Is it really a Mifare Type A?
   #. NFC tokens are not supported. Some may work.
   #. Animal RFID tags are not supported. They use a different frequency (125 kHz).
   #. Hardware may be corrupted, most products are from china and sometimes the quality is really poor. Contact your seller.
   #. Newer versions of Mifare cards like DESFire/Ultralight maybe not work according to missing authentication, see `security`_ or different `protocol`_.
-  #. Some boards bought from Chinese manufactures do not use the best components and this can affect the detection of different types of tag/card. In some of these boards, the L1 and L2 inductors do not have a high enough current so the signal generated is not enough to get Ultralight C and NTAG203 tags to work, replacing those with same inductance (2.2uH) but higher operating current inductors should make things work smoothly. Also, in some of those boards the  harmonic and matching circuit needs to be tuned, for this replace C4 and C5 with 33pf capacitors and you are all set. (Source: `Mikro Elektronika`_) 
+  #. Some boards bought from Chinese manufactures do not use the best components and this can affect the detection of different types of tag/card. In some of these boards, the L1 and L2 inductors do not have a high enough current so the signal generated is not enough to get Ultralight C and NTAG203 tags to work, replacing those with same inductance (2.2uH) but higher operating current inductors should make things work smoothly. Also, in some of those boards the  harmonic and matching circuit needs to be tuned, for this replace C4 and C5 with 33pf capacitors and you are all set. (Source: `Mikro Elektronika`_)
 
 * **My mobile phone doesn't recognize the MFRC522** or **my MFRC522 can't read data from other MFRC522**
 
@@ -336,12 +336,12 @@ Dependency
 
   * From: Arduino IDE / target specific
   * License: (target: Arduino) GNU Lesser General Public License 2.1
-  
+
 * **SPI.h**
 
   * From: Arduino IDE / target specific
   * License: (target: Arduino) GNU Lesser General Public License 2.1
-  
+
 * **stdint.h**
 
   * From: Arduino IDE / Compiler and target specific
@@ -367,7 +367,7 @@ Maintained by Rotzbua from 2016 until 2020.
 .. _arduino: https://arduino.cc/
 .. _ebay: https://www.ebay.com/
 .. _iso/iec 14443a: https://en.wikipedia.org/wiki/ISO/IEC_14443
-.. _iso/iec 14443-3\:2011 part 3: 
+.. _iso/iec 14443-3\:2011 part 3:
 .. _nxp mfrc522: https://www.nxp.com/documents/data_sheet/MFRC522.pdf
 .. _broken: https://eprint.iacr.org/2008/166
 .. _supported by hardware: https://web.archive.org/web/20151210045625/http://www.nxp.com/documents/leaflet/939775017564.pdf

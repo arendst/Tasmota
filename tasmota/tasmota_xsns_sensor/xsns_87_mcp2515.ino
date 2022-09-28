@@ -132,7 +132,7 @@ void MCP2515_Init(void) {
     AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set module bitrate"));
     mcp2515_init_status = 0;
   }
-  
+
   if (mcp2515_init_status && MCP2515::ERROR_OK != mcp2515->setNormalMode()) {
     AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set normal mode"));
     mcp2515_init_status = 0;

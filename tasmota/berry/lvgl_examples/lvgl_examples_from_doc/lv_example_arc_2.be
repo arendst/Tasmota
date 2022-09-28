@@ -6,7 +6,7 @@ class ArcLoader
     def init()
         self.a = 270
     end
-        
+
     def arc_loader_cb(tim,arc)
         # print(tim,arc)
         self.a += 5

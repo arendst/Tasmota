@@ -46,7 +46,7 @@ bool AudioOutputSTDIO::begin()
   unlink(filename);
   f = fopen(filename, "wb+");
   if (!f) return false;
-  
+
   // We'll fix the header up when we close the file
   fwrite(wavHeader, sizeof(wavHeader), 1, f);
   return true;
@@ -117,4 +117,4 @@ bool AudioOutputSTDIO::stop()
 }
 
 #endif
- 
+

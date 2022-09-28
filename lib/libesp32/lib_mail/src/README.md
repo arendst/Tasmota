@@ -72,7 +72,7 @@ param **`flags`** The flag list to set.
 param **`closeSession`** The option to close the IMAP session after add flag.
 
 return **`boolean`** The boolean value indicates the success of operation.
- 
+
 ```C++
 bool addFlag(IMAPSession *imap, int msgUID, const char *flags, bool closeSession);
 ```
@@ -215,7 +215,7 @@ void debug(int level);
 
 #### Get the list of all the mailbox folders since the TCP session was opened and user was authenticated.
 
-param **`folders`** The FoldersCollection class that contains the collection of the 
+param **`folders`** The FoldersCollection class that contains the collection of the
 FolderInfo structured data.
 
 return **`boolean`** The boolean value which indicates the success of operation.
@@ -232,7 +232,7 @@ bool getFolders(FoldersCollection &folders);
 
 param **`folderName`** The known mailbox folder name. The default name is INBOX.
 
-param **`readOnly`** The option to open the mailbox for read only. Set this option to false when you wish 
+param **`readOnly`** The option to open the mailbox for read only. Set this option to false when you wish
 to modify the Flags using the setFlag, addFlag and removeFlag functions.
 
 return **`boolean`** The boolean value which indicates the success of operation.
@@ -245,11 +245,11 @@ bool selectFolder(const char *folderName, bool readOnly = true);
 
 
 
-#### Open the mailbox folder to read or search the mesages. 
+#### Open the mailbox folder to read or search the mesages.
 
 param **`folderName`** The name of known mailbox folder to be opened.
 
-param **`readOnly`** The option to open the mailbox for reading only. Set this option to false when you wish 
+param **`readOnly`** The option to open the mailbox for reading only. Set this option to false when you wish
 to modify the flags using the setFlag, addFlag and removeFlag functions.
 
 return **`boolean`** The boolean value which indicates the success of operation.
@@ -262,7 +262,7 @@ bool openFolder(const char *folderName, bool readOnly = true);
 
 
 
-#### Close the mailbox folder that was opened. 
+#### Close the mailbox folder that was opened.
 
 param **`folderName`** The mailbox folder name.
 
@@ -277,7 +277,7 @@ bool closeFolder(const char *folderName);
 
 
 
-#### Create folder. 
+#### Create folder.
 
 param **`folderName`** The name of folder to create.
 
@@ -292,7 +292,7 @@ bool createFolder(const char *folderName);
 
 
 
-#### Delete folder. 
+#### Delete folder.
 
 param **`folderName`** The name of folder to delete..
 
@@ -307,7 +307,7 @@ bool deleteFolder(const char *folderName);
 
 
 
-#### Copy the messages to the defined mailbox folder. 
+#### Copy the messages to the defined mailbox folder.
 
 param **`toCopy`** The pointer to the MessageList class that contains the list of messages to copy.
 
@@ -323,7 +323,7 @@ bool copyMessages(MessageList *toCopy, const char *dest);
 
 
 
-#### Delete the messages in the opened mailbox folder. 
+#### Delete the messages in the opened mailbox folder.
 
 param **`toDelete`** The pointer to the MessageList class that contains the list of messages to delete.
 
@@ -365,7 +365,7 @@ bool headerOnly();
 
 #### Get the message list from search or fetch the Emails
 
-return **`The IMAP_MSG_List structured`** data which contains the text and html contents, 
+return **`The IMAP_MSG_List structured`** data which contains the text and html contents,
 attachments, inline images, embedded rfc822 messages details for each message.
 
 ```C++
@@ -378,7 +378,7 @@ IMAP_MSG_List data();
 
 #### Get the details of the selected or opned mailbox folder
 
-return **`The SelectedFolderInfo class`** instance which contains the info about flags, total messages, next UID,  
+return **`The SelectedFolderInfo class`** instance which contains the info about flags, total messages, next UID,
 earch count and the available messages count.
 
 ```C++
@@ -416,7 +416,7 @@ void empty();
 
 The following functions are available from the SMTP Session class.
 
-This class is similar to the IMAP session class, used for controlling SMTP transports 
+This class is similar to the IMAP session class, used for controlling SMTP transports
 and retrieving the data from the SMTP server.
 
 
@@ -602,7 +602,7 @@ void addAttachment(SMTP_Attachment &att);
 
 
 
-#### To add parallel attachment to the message. 
+#### To add parallel attachment to the message.
 
 param **`att`** The SMTP_Attachment data item
 
@@ -768,7 +768,7 @@ This propery has the sub properties
 
 ###### [const char*] return_path - The sender Email address to return the message.
 
-###### [int] notify - The Delivery Status Notifications enumeration e.g. 
+###### [int] notify - The Delivery Status Notifications enumeration e.g.
 
 esp_mail_smtp_notify_never = 0,
 
@@ -776,7 +776,7 @@ esp_mail_smtp_notify_success = 1,
 
 esp_mail_smtp_notify_failure = 2, and
 
-esp_mail_smtp_notify_delay = 4 
+esp_mail_smtp_notify_delay = 4
 
 ```C++
 esp_mail_smtp_msg_response_t response;
@@ -1209,7 +1209,7 @@ esp_mail_sesson_cert_config_t certificate;
 
 The following properties are available from the IMAP_Config data type.
 
-This data type is used for storing the IMAP transport and operating options to 
+This data type is used for storing the IMAP transport and operating options to
 control and store the operation result e.g. the messahe contents from search and fetch.
 
 
@@ -1247,7 +1247,7 @@ This property has the sub properties
 
 ##### [size_t] msg_size - The maximum size of the memory buffer to store the message content.
 
-This is only limit for data to be stored in the IMAPSession. 
+This is only limit for data to be stored in the IMAPSession.
 
 ##### [size_t] attachment_size - The maximum size of each attachment to download.
 
@@ -1326,7 +1326,7 @@ esp_mail_imap_storage_config_t storage;
 
 The following properties are available from the IMAP_Config data type.
 
-This data type is used for storing the IMAP transport and operating options to 
+This data type is used for storing the IMAP transport and operating options to
 control and store the operation result e.g. the messahe contents from search and fetch.
 
 
@@ -1608,27 +1608,27 @@ std::vector<IMAP_MSG_Item> rfc822;
 ## Search Criteria
 
 Search crieria is used for searching the mailbox for messages that match
-the given searching criteria.  
+the given searching criteria.
 
-Searching criteria consist of one or more search keys. When multiple keys are 
-specified, the result is the intersection (AND function) of all the messages 
-that match those keys.  
+Searching criteria consist of one or more search keys. When multiple keys are
+specified, the result is the intersection (AND function) of all the messages
+that match those keys.
 
 Example:
 
- **`DELETED FROM "SMITH" SINCE 1-Feb-1994`** refers 
-to all deleted messages from Smith that were placed in the mailbox since 
-February 1, 1994.  
+ **`DELETED FROM "SMITH" SINCE 1-Feb-1994`** refers
+to all deleted messages from Smith that were placed in the mailbox since
+February 1, 1994.
 
-A search key can also be a parenthesized list of one or more search keys 
+A search key can also be a parenthesized list of one or more search keys
 (e.g., for use with the OR and NOT keys).
 
 **`SINCE 10-Feb-2019`**  will search all messages that received since 10 Feb 2019
 
-**`UID SEARCH ALL`**  will seach all message which will return the message UID 
+**`UID SEARCH ALL`**  will seach all message which will return the message UID
 that can be use later for fetch one or more messages.
 
- 
+
 The following keywords can be used for the search criteria.
 
 
@@ -1656,7 +1656,7 @@ The following keywords can be used for the search criteria.
 
 and that contains the specified string	in the text of the header (what comes after the colon).
 
-If the string to search is zero-length, this matches all messages that have a header line with 
+If the string to search is zero-length, this matches all messages that have a header line with
 
 the specified field-name regardless of	the contents.
 
@@ -1698,7 +1698,7 @@ This is functionally equivalent to **"(RECENT UNSEEN)"**.
 
 **TO** - Messages that contain the specified string in the envelope structure's TO field.
 
-**UID** - Messages with unique identifiers corresponding to the specified unique identifier set.  
+**UID** - Messages with unique identifiers corresponding to the specified unique identifier set.
 
 Sequence set ranges are permitted.
 

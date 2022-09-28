@@ -171,7 +171,7 @@ void SerialBridgeInput(void) {
        XdrvRulesProcess(0);
     } else {
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-    }    
+    }
     serial_bridge_in_byte_counter = 0;
   }
 }

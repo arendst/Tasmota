@@ -30,10 +30,10 @@ extern Renderer *renderer;
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import display
  * display.start(string) -> comptr or nil if failed
- * 
+ *
 \*********************************************************************************************/
 int be_ntv_display_start(struct bvm *vm) {
 #ifdef USE_UNIVERSAL_DISPLAY

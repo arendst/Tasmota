@@ -3,7 +3,7 @@
  *
  * Created: 22/1/2016 15:28:48
  *  Author: akatran
- */ 
+ */
 
 #include "gpio_helper.h"
 

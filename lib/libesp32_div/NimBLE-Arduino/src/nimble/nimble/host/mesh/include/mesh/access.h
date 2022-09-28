@@ -424,7 +424,7 @@ struct bt_mesh_model_pub {
 	 *  will be called periodically and is expected to update
 	 *  @ref bt_mesh_model_pub.msg with a valid publication
 	 *  message.
-	 * 
+	 *
 	 *  If the callback returns non-zero, the publication is skipped
 	 *  and will resume on the next periodic publishing interval.
 	 *
@@ -489,7 +489,7 @@ struct bt_mesh_model_cb {
 	 *
 	 *  @note If the model stores any persistent data, this needs to be
 	 *  erased manually.
-	 * 
+	 *
 	 * @param model Model this callback belongs to.
 	 */
 	void (*const reset)(struct bt_mesh_model *model);

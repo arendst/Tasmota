@@ -1,8 +1,8 @@
 /*
   This is a minimal sketch without using the library at all but only works for
-  the 10 pole dip switch sockets. It saves a lot of memory and thus might be 
+  the 10 pole dip switch sockets. It saves a lot of memory and thus might be
   very useful to use with ATTinys :)
-  
+
   https://github.com/sui77/rc-switch/
 */
 
@@ -17,7 +17,7 @@ void loop() {
     delay(2000);
 
     RCLswitch(0b010001000010);  // DIPs an Steckdose: 0100010000 Aus:10
-    delay(2000);    
+    delay(2000);
 }
 
 void RCLswitch(uint16_t code) {
@@ -30,7 +30,7 @@ void RCLswitch(uint16_t code) {
                 RCLtransmit(3,1);
             }
         }
-        RCLtransmit(1,31);    
+        RCLtransmit(1,31);
     }
 }
 

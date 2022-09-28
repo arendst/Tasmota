@@ -1951,7 +1951,7 @@ void LightAnimate(void)
             Light.fade_start_10[channel_ct] = Light.fade_end_10[channel_ct];
           }
         }
-      
+
         Light.fade_running = true;
         Light.fade_duration = 0;    // set the value to zero to force a recompute
         Light.fade_start = 0;

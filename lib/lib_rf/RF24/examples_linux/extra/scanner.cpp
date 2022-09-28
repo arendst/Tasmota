@@ -4,11 +4,11 @@
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  version 2 as published by the Free Software Foundation.
- 
- 
+
+
  03/17/2013 : Charles-Henri Hallard (http://hallard.me)
               Modified to use with Arduipi board http://hallard.me/arduipi
-						  Changed to use modified bcm2835 and RF24 library 
+						  Changed to use modified bcm2835 and RF24 library
 
  */
 
@@ -39,10 +39,10 @@ using namespace std;
 //RF24 radio(RPI_V2_GPIO_P1_22, RPI_V2_GPIO_P1_18, BCM2835_SPI_SPEED_1MHZ);
 
 // Setup for GPIO 22 CE and CE0 CSN with SPI Speed @ 4Mhz
-//RF24 radio(RPI_V2_GPIO_P1_15, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_4MHZ); 
+//RF24 radio(RPI_V2_GPIO_P1_15, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_4MHZ);
 
 // Setup for GPIO 22 CE and CE1 CSN with SPI Speed @ 8Mhz
-//RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_24, BCM2835_SPI_SPEED_8MHZ);  
+//RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_24, BCM2835_SPI_SPEED_8MHZ);
 
 // Generic setup
 RF24 radio(22, 0);
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   // Setup and configure rf radio
   //
   radio.begin();
-	
+
   radio.setAutoAck(false);
 
   // Get into standby mode
@@ -83,22 +83,22 @@ int main(int argc, char** argv)
 
   // Print out header, high then low digit
   int i = 0;
-	
+
   while ( i < num_channels )
   {
     printf("%x",i>>4);
     ++i;
   }
   printf("\n");
-	
+
   i = 0;
   while ( i < num_channels )
   {
     printf("%x",i&0xf);
     ++i;
   }
-  printf("\n");       
-	
+  printf("\n");
+
   // forever loop
   while(1)
   {

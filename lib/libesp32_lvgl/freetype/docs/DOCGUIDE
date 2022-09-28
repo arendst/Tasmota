@@ -154,7 +154,7 @@ above for consistency.
 
 Note that there may be cases where having two asterisks or underscores
 in a line may lead to text being picked up as italics or bold.
-Although unintentional, this is correct markdown behavior. 
+Although unintentional, this is correct markdown behavior.
 
 For inline code, wrap the sequence with backticks (see below).  This
 renders symbols correctly without modifications.  If a symbol is
@@ -201,7 +201,7 @@ Other sub-sections can be linked with the `@` symbol:
 
     @description:
       While FreeType's CFF driver doesn't expose API functions by
-      itself, it is possible to control its behaviour with 
+      itself, it is possible to control its behaviour with
       @FT_Property_Set and @FT_Property_Get.
 
 If a field in the `values` table of another sub-section is linked, the

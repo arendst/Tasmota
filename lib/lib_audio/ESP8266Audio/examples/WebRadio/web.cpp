@@ -1,7 +1,7 @@
 /*
   PsychoPlug
   ESP8266 based remote outlet with standalone timer and MQTT integration
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -103,7 +103,7 @@ void Base64Decode(char *str)
   dest = str;
 
   if (strlen(str)%4) return; // Not multiple of 4 == error
-  
+
   while (*str) {
     uint8_t a = b64lut(*(str++));
     uint8_t b = b64lut(*(str++));
@@ -165,7 +165,7 @@ bool WebReadRequest(WiFiClient *client, char *reqBuff, int reqBuffLen, char **ur
   int wlen = client->readBytesUntil('\r', reqBuff, reqBuffLen-1);
   reqBuff[wlen] = 0;
 
-  
+
   // Delete HTTP version (well, anything after the 2nd space)
   char *ptr = reqBuff;
   while (*ptr && *ptr!=' ') ptr++;
@@ -179,7 +179,7 @@ bool WebReadRequest(WiFiClient *client, char *reqBuff, int reqBuffLen, char **ur
   char *qp;
   if (!memcmp_P(reqBuff, PSTR("GET "), 4)) {
     client->flush(); // Don't need anything here...
-    
+
     // Break into URL and form data
     url = reqBuff+4;
     while (*url && *url=='/') url++; // Strip off leading /s
@@ -223,9 +223,9 @@ bool WebReadRequest(WiFiClient *client, char *reqBuff, int reqBuffLen, char **ur
 bool ParseParam(char **paramStr, char **name, char **value)
 {
   char *data = *paramStr;
- 
+
   if (*data==0) return false;
-  
+
   char *namePtr = data;
   while ((*data != 0) && (*data != '=') && (*data != '&')) data++;
   if (*data) { *data = 0; data++; }
@@ -233,7 +233,7 @@ bool ParseParam(char **paramStr, char **name, char **value)
   if  (*data == '=') data++;
   while ((*data != 0) && (*data != '=') && (*data != '&')) data++;
   if (*data) { *data = 0; data++;}
-  
+
   *paramStr = data;
   *name = namePtr;
   *value = valPtr;

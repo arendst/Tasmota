@@ -1,37 +1,37 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
@@ -90,7 +90,7 @@ static int DecodeHuffmanPairs(int *xy, int nVals, int tabIdx, int bitsLeft, unsi
 	unsigned short cw, *tBase, *tCurr;
 	unsigned int cache;
 
-	if(nVals <= 0) 
+	if(nVals <= 0)
 		return 0;
 
 	if (bitsLeft < 0)
@@ -204,7 +204,7 @@ static int DecodeHuffmanPairs(int *xy, int nVals, int tabIdx, int bitsLeft, unsi
 				}
 				cachedBits -= len;
 				cache <<= len;
-			
+
 				x = GetCWX(cw);
 				y = GetCWY(cw);
 
@@ -280,9 +280,9 @@ static int DecodeHuffmanPairs(int *xy, int nVals, int tabIdx, int bitsLeft, unsi
  * Outputs:     quadruples of decoded coefficients in vwxy
  *              updated BitStreamInfo struct
  *
- * Return:      index of the first "zero_part" value (index of the first sample 
+ * Return:      index of the first "zero_part" value (index of the first sample
  *                of the quad word after which all samples are 0)
- * 
+ *
  * Notes:        si_huff.bit tests every vwxy output in both quad tables
  **************************************************************************************/
 // no improvement with section=data
@@ -373,9 +373,9 @@ static int DecodeHuffmanQuads(int *vwxy, int nVals, int tabIdx, int bitsLeft, un
  *              updated bitOffset
  *
  * Return:      length (in bytes) of Huffman codes
- *              bitOffset also returned in parameter (0 = MSB, 7 = LSB of 
+ *              bitOffset also returned in parameter (0 = MSB, 7 = LSB of
  *                byte located at buf + offset)
- *              -1 if null input pointers, huffBlockBits < 0, or decoder runs 
+ *              -1 if null input pointers, huffBlockBits < 0, or decoder runs
  *                out of bits prematurely (invalid bitstream)
  **************************************************************************************/
 // .data about 1ms faster per frame
@@ -451,13 +451,13 @@ static int DecodeHuffmanQuads(int *vwxy, int nVals, int tabIdx, int bitsLeft, un
 	ASSERT(hi->nonZeroBound[ch] <= MAX_NSAMP);
 	for (i = hi->nonZeroBound[ch]; i < MAX_NSAMP; i++)
 		hi->huffDecBuf[ch][i] = 0;
-	
+
 	/* If bits used for 576 samples < huffBlockBits, then the extras are considered
-	 *  to be stuffing bits (throw away, but need to return correct bitstream position) 
+	 *  to be stuffing bits (throw away, but need to return correct bitstream position)
 	 */
 	buf += (bitsLeft + *bitOffset) >> 3;
 	*bitOffset = (bitsLeft + *bitOffset) & 0x07;
-	
+
 	return (buf - startBuf);
 }
 

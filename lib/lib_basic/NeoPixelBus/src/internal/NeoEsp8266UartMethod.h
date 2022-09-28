@@ -53,7 +53,7 @@ public:
 };
 
 // this template method class is used to track the data being sent on the uart
-// when using our own UART ISR 
+// when using our own UART ISR
 // used with NeoEsp8266Uart and NeoEsp8266AsyncUart classes
 //
 class NeoEsp8266UartInterruptContext : NeoEsp8266UartContext
@@ -77,12 +77,12 @@ public:
 private:
     volatile const uint8_t* _asyncBuff;
     volatile const uint8_t* _asyncBuffEnd;
-    volatile static NeoEsp8266UartInterruptContext* s_uartInteruptContext[2]; 
+    volatile static NeoEsp8266UartInterruptContext* s_uartInteruptContext[2];
 
     static void IRAM_ATTR Isr(void* param);
 };
 
-// this template feature class is used a base for all others and contains 
+// this template feature class is used a base for all others and contains
 // common methods
 //
 class UartFeatureBase
@@ -95,7 +95,7 @@ protected:
 
         if (!invert)
         {
-            // For normal operations, 
+            // For normal operations,
             // Invert the TX voltage associated with logic level so:
             //    - A logic level 0 will generate a Vcc signal
             //    - A logic level 1 will generate a Gnd signal
@@ -134,7 +134,7 @@ public:
     }
 };
 
-// this template method class is used a base for all others and contains 
+// this template method class is used a base for all others and contains
 // common properties and methods
 //
 // used by NeoEsp8266Uart and NeoEsp8266AsyncUart
@@ -237,14 +237,14 @@ protected:
         }
         // detach context, which will disable intr, may disable ISR
         _context.Detach(T_UARTFEATURE::Index);
-        
+
         free(_dataSending);
     }
 
     void IRAM_ATTR InitializeUart(uint32_t uartBaud, bool invert)
     {
         T_UARTFEATURE::Init(uartBaud, invert);
-     
+
         // attach the context, which will enable the ISR
         _context.Attach(T_UARTFEATURE::Index);
     }
@@ -252,7 +252,7 @@ protected:
     void UpdateUart(bool maintainBufferConsistency)
     {
         // Instruct ESP8266 hardware uart to send the pixels asynchronously
-        _context.StartSending(T_UARTFEATURE::Index, 
+        _context.StartSending(T_UARTFEATURE::Index,
             _data,
             _data + _sizeData);
 
@@ -417,7 +417,7 @@ private:
     };
 };
 
-// uart 0 
+// uart 0
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedWs2812x, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>, NeoEsp8266UartNotInverted> NeoEsp8266Uart0Ws2812xMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedSk6812, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>, NeoEsp8266UartNotInverted> NeoEsp8266Uart0Sk6812Method;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedTm1814, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart0Tm1814Method;
@@ -479,7 +479,7 @@ typedef NeoEsp8266AsyncUart1Sk6812Method NeoEsp8266AsyncUart1Lc8812Method;
 
 // inverted
 //
-// uart 0 
+// uart 0
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedWs2812x, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart0Ws2812xInvertedMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedSk6812, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart0Sk6812InvertedMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedTm1814, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>, NeoEsp8266UartNotInverted> NeoEsp8266Uart0Tm1814InvertedMethod;
@@ -497,7 +497,7 @@ typedef NeoEsp8266Uart0Sk6812InvertedMethod NeoEsp8266Uart0Lc8812InvertedMethod;
 // uart 1
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedWs2812x, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart1Ws2812xInvertedMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedSk6812, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart1Sk6812InvertedMethod;
-typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedTm1814, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartNotInverted> NeoEsp8266Uart1Tm1814InvertedMethod; 
+typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedTm1814, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartNotInverted> NeoEsp8266Uart1Tm1814InvertedMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedTm1829, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartNotInverted> NeoEsp8266Uart1Tm1829InvertedMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedApa106, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart1Apa106InvertedMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeed800Kbps, NeoEsp8266Uart<UartFeature1, NeoEsp8266UartContext>, NeoEsp8266UartInverted> NeoEsp8266Uart1800KbpsInvertedMethod;

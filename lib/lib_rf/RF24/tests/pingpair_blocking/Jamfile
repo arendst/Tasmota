@@ -1,6 +1,6 @@
 # (1) Project Information
 
-PROJECT_LIBS 	= SPI RF24 ; 
+PROJECT_LIBS 	= SPI RF24 ;
 PROJECT_DIRS	= $(PWD) ;
 
 # (2) Board Information
@@ -26,19 +26,19 @@ PORT_u2 	= /dev/ttyUSB2 ;
 # (4) Location of AVR tools
 #
 # This configuration assumes using avr-tools that were obtained separate from the Arduino
-# distribution. 
+# distribution.
 
-if $(OS) = MACOSX 
+if $(OS) = MACOSX
 {
 	AVR_BIN 	?= /usr/local/avrtools/bin ;
 	AVR_ETC 	= /usr/local/avrtools/etc ;
-	AVR_INCLUDE	= /usr/local/avrtools/include ; 
+	AVR_INCLUDE	= /usr/local/avrtools/include ;
 }
 else
 {
 	AVR_BIN 	?= /usr/bin ;
 	AVR_INCLUDE 	= /usr/lib/avr/include ;
-	AVR_ETC 	= /etc ; 
+	AVR_ETC 	= /etc ;
 }
 
 # (5) Directories where Arduino core and libraries are located
@@ -50,7 +50,7 @@ SKETCH_LIB      = $(HOME)/Source/Arduino/libraries ;
 
 #
 # --------------------------------------------------
-# Below this line usually never needs to be modified 
+# Below this line usually never needs to be modified
 #
 
 # Tool locations
@@ -118,9 +118,9 @@ else
 
 actions Pde
 {
-	echo "#include <$(ARDUINO_H)>" > $(<) 
+	echo "#include <$(ARDUINO_H)>" > $(<)
 	echo "#line 1 \"$(>)\"" >> $(<)
-	cat $(>) >> $(<) 
+	cat $(>) >> $(<)
 }
 
 rule C++Pde

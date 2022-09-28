@@ -38,7 +38,7 @@ Version 2.3.3 ESP32 Stickbreaker 06MAY2019
 Version 2.3.1 ESP32 everslick 30APR2018
   add IRAM_ATTR attribute to write_bit/read_bit to fix icache miss delay
   https://github.com/espressif/arduino-esp32/issues/1335
-  
+
 Version 2.3 ESP32 stickbreaker 28DEC2017
   adjust to use portENTER_CRITICAL(&mux) instead of noInterrupts();
   adjust to use portEXIT_CRITICAL(&mux) instead of Interrupts();
@@ -195,7 +195,7 @@ uint8_t OneWire::reset(void)
         if (--retries == 0) return 0;
         delayMicroseconds(2);
     } while ( !DIRECT_READ(reg, mask));
- 
+
     t_noInterrupts();
     DIRECT_WRITE_LOW(reg, mask);
     DIRECT_MODE_OUTPUT(reg, mask);  // drive output low
@@ -431,7 +431,7 @@ uint8_t OneWire::search(uint8_t *newAddr, bool search_mode /* = true */)
          // read a bit and its complement
          id_bit = read_bit();
          cmp_id_bit = read_bit();
- 
+
          // check for no devices on 1-wire
          if ((id_bit == 1) && (cmp_id_bit == 1))
             break;

@@ -38,7 +38,7 @@
  *
  * 27.08.2020 support for AHT20 added. Now, the AHT20 should support standard I2C Protokoll
  *            and allows other I2C Devices on the bus but have only one I2C Address (0x38)
- * 14.09.2021 support AHT20 without enabling AHT1x 
+ * 14.09.2021 support AHT20 without enabling AHT1x
  *
  * AHT20 I2C Address: 0x38
 \*********************************************************************************************/

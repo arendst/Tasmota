@@ -1,17 +1,17 @@
 /**************************************************************************/
-/*! 
+/*!
     @file     Adafruit_TSL2591.h
     @author   KT0WN (adafruit.com)
 
     This is a library for the Adafruit TSL2591 breakout board
-    This library works with the Adafruit TSL2591 breakout 
+    This library works with the Adafruit TSL2591 breakout
     ----> https://www.adafruit.com/products/1980
-	
-    Check out the links above for our tutorials and wiring diagrams 
+
+    Check out the links above for our tutorials and wiring diagrams
     These chips use I2C to communicate
- 
-    Adafruit invests time and resources providing this open source code, 
-    please support Adafruit and open-source hardware by purchasing 
+
+    Adafruit invests time and resources providing this open source code,
+    please support Adafruit and open-source hardware by purchasing
     products from Adafruit!
 */
 /**************************************************************************/
@@ -50,7 +50,7 @@ tsl2591Gain_t;
 
 
 /**************************************************************************/
-/*! 
+/*!
     @brief  Class that stores state and functions for interacting with TSL2591 Light Sensor
 */
 /**************************************************************************/
@@ -58,7 +58,7 @@ class Adafruit_TSL2591
 {
  public:
   Adafruit_TSL2591();
-  
+
   boolean   begin   ( void );
   void      enable  ( void );
   void      disable ( void );

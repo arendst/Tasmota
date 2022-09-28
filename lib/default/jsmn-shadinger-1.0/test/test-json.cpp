@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
   }
   printf("==================\n");
   JsonParserObject root = parser.getRootObject();
-  
+
   for (const auto key : root) {
     // printf("Index = %ld\n", parser.index(key));
     JsonParserToken value = key.getValue();

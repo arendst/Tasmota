@@ -207,7 +207,7 @@ void analogWriteFreqRange(int32_t freq, int32_t range, int32_t pin) {
   _analogInit();      // make sure the mapping array is initialized
   uint32_t timer0_freq = timer_freq_hz[0];          // global values
   uint8_t  timer0_res = timer_duty_resolution[0];
-  
+
   int32_t timer = 0;
   int32_t res = timer0_res;
   if (pin < 0) {
@@ -233,7 +233,7 @@ void analogWriteFreqRange(int32_t freq, int32_t range, int32_t pin) {
       if (timer != 0) {
         ledcSetTimer(chan, 0);
         timer = 0;
-      } 
+      }
       // else nothing to change
     } else {
       // specific (non-global) values, require a specific timer
@@ -293,7 +293,7 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
     AddLog(LOG_LEVEL_INFO, "PWM: no more PWM (ledc) channel for GPIO %i", pin);
     return -1;
   }
-  
+
   // new channel attached to pin
   pin_to_channel[pin] = chan + 1;
 

@@ -3,7 +3,7 @@
    Ported to Arduino ESP32 by pcbreflux
 */
 
- 
+
 /*
    Create a BLE server that will send periodic iBeacon frames.
    The design of creating the BLE server is:
@@ -13,7 +13,7 @@
    4. wait
    5. Stop advertising.
    6. deep sleep
-   
+
 */
 
 
@@ -61,16 +61,16 @@ void setBeacon() {
   oBeacon.setMinor(bootcount&0xFFFF);
   BLEAdvertisementData oAdvertisementData = BLEAdvertisementData();
   BLEAdvertisementData oScanResponseData = BLEAdvertisementData();
-  
+
   oAdvertisementData.setFlags(0x04); // BR_EDR_NOT_SUPPORTED 0x04
-  
+
   std::string strServiceData = "";
-  
+
   strServiceData += (char)26;     // Len
   strServiceData += (char)0xFF;   // Type
-  strServiceData += oBeacon.getData(); 
+  strServiceData += oBeacon.getData();
   oAdvertisementData.addData(strServiceData);
-  
+
   pAdvertising->setAdvertisementData(oAdvertisementData);
   pAdvertising->setScanResponseData(oScanResponseData);
   /**  pAdvertising->setAdvertisementType(ADV_TYPE_NONCONN_IND);
@@ -85,7 +85,7 @@ void setBeacon() {
 
 void setup() {
 
-    
+
   Serial.begin(115200);
   gettimeofday(&now, NULL);
 
@@ -94,7 +94,7 @@ void setup() {
   Serial.printf("deep sleep (%lds since last reset, %lds since last boot)\n",now.tv_sec,now.tv_sec-last);
 
   last = now.tv_sec;
-  
+
   // Create the BLE Device
   BLEDevice::init("");
 
@@ -102,7 +102,7 @@ void setup() {
   // BLEServer *pServer = BLEDevice::createServer(); // <-- no longer required to instantiate BLEServer, less flash and ram usage
 
   pAdvertising = BLEDevice::getAdvertising();
-  
+
   setBeacon();
    // Start advertising
   pAdvertising->start();

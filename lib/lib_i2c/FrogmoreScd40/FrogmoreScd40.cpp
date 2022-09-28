@@ -28,7 +28,7 @@ SOFTWARE.
 #include <twi.h>
 #include <FrogmoreScd40.h>
 
-// References are made to Sensirion datasheet at 
+// References are made to Sensirion datasheet at
 // https://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/9.5_CO2/Sensirion_CO2_Sensors_SCD4x_Datasheet.pdf
 //
 // Basic Commands Chapter 3.5
@@ -77,7 +77,7 @@ char scd40log_data[180];
 // helper and private functions
 
 /*---------------------------------------------------------------------------
- Function : medianfilter() 
+ Function : medianfilter()
  In : pointer to array of SCD40_MEDIAN_FILTER_SIZE values
  Out : a uint16_t which is the middle value of the array
  Job : search of the median
@@ -464,7 +464,7 @@ int FrogmoreScd40::readMeasurement(
     }
     // tempCO2 = 0 occurs after Measure_single_shot_RHT_only; no reason for error like for SCD30, but don't add to history,
     // and take care to handle special case where no CO2 measurement was seen yet
-    if (tempCO2 > 0) 
+    if (tempCO2 > 0)
     {
         // add tempCO2 measurement to history
         if (co2NewDataLocation < 0)

@@ -200,7 +200,7 @@ bool hydrateDevicesData(void) {
 
     SBuffer buf(dev_record_len);
     buf.setLen(dev_record_len);
-    
+
     ret = f.readBytes(buf.getBuffer(), dev_record_len);
     if (ret != dev_record_len) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid device data information, aborting"));
@@ -257,7 +257,7 @@ void hibernateAllData(void) {
     }
     size_t buf_len = f.getCursor();
     f.close();
-    
+
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZbData - %d bytes written to %s"), buf_len, storage_class);
   }
 }

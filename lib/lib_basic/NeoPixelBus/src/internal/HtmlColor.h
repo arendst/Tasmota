@@ -122,7 +122,7 @@ struct HtmlColor
     //
     // returns - zero if failed, or the number of chars parsed
     //
-    // It will stop parsing name when a null terminator is reached, 
+    // It will stop parsing name when a null terminator is reached,
     // nameSize is reached, no match is found in the name/color pair table, or
     // a non-alphanumeric is read like seperators or whitespace.
     //
@@ -229,7 +229,7 @@ struct HtmlColor
                             if (ch2 == '\0' && !isalnum(ch1))
                             {
                                 // the string continues but is not part of a
-                                // valid color name, 
+                                // valid color name,
                                 // ends in white space, deliminator, etc
                                 result = 0;
                             }
@@ -252,12 +252,12 @@ struct HtmlColor
     }
 
     template <typename T_HTMLCOLORNAMES> size_t Parse(const char* name)
-    { 
+    {
         return Parse<T_HTMLCOLORNAMES>(name, MAX_HTML_COLOR_NAME_LEN + 1);
     }
 
     template <typename T_HTMLCOLORNAMES> size_t Parse(String const &name)
-    { 
+    {
         return Parse<T_HTMLCOLORNAMES>(name.c_str(), name.length() + 1);
     }
 
@@ -330,7 +330,7 @@ struct HtmlColor
     }
 
     // ------------------------------------------------------------------------
-    // Color member (0-0xffffff) where 
+    // Color member (0-0xffffff) where
     // 0xff0000 is red
     // 0x00ff00 is green
     // 0x0000ff is blue

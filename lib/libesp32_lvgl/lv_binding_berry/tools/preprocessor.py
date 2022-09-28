@@ -49,7 +49,7 @@ def clean_source(raw):
 # ################################################################################
 
 lv_src_prefix = "../../lvgl/src/"
-lv_fun_globs = [ 
+lv_fun_globs = [
                   "lv_api*.h",
                   "widgets/*.h",   # all widgets
                   # "extra/widgets/*/*.h",
@@ -137,9 +137,9 @@ for header_name in headers_names:
 
     # parse individual
     for fun in fun_defs:
-      # remove LV_ATTRIBUTE_FAST_MEM 
+      # remove LV_ATTRIBUTE_FAST_MEM
       fun = re.sub('LV_ATTRIBUTE_FAST_MEM ', '', fun)
-      # remove LV_ATTRIBUTE_TIMER_HANDLER 
+      # remove LV_ATTRIBUTE_TIMER_HANDLER
       fun = re.sub('LV_ATTRIBUTE_TIMER_HANDLER ', '', fun)
       exclude = False
       for exclude_prefix in ["typedef", "_LV_", "LV_"]:
@@ -150,7 +150,7 @@ for header_name in headers_names:
       fun_name = re.search('\s(\w+)\([^\(]*$', fun)
       if fun_name != None:
         fun_name = fun_name.group(1)    # we now have the function name
-        
+
         # exclude specific names
         for exclude_pattern in [
               "^_",    # skip if function name starts with '_'
@@ -175,7 +175,7 @@ for header_name in headers_names:
             ]:
           if re.search(exclude_pattern, fun_name): exclude = True
         if exclude: continue
-      
+
       print(fun)
   print()
 
@@ -186,7 +186,7 @@ sys.stdout.close()
 # ################################################################################
 
 lv_src_prefix = "../../lvgl/src/"
-lv_fun_globs = [ 
+lv_fun_globs = [
                   "core/*.h",
                   "draw/*.h",
                   "hal/*.h",

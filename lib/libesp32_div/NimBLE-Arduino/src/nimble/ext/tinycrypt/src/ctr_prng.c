@@ -108,24 +108,24 @@ static void tc_ctr_prng_update(TCCtrPrng_t * const ctx, uint8_t const * const pr
 
 		/* 10.2.1.2 step 5 */
 		(void)tc_aes128_set_encrypt_key(&ctx->key, temp);
-    
+
 		/* 10.2.1.2 step 6 */
 		memcpy(ctx->V, &(temp[TC_AES_KEY_SIZE]), TC_AES_BLOCK_SIZE);
 	}
 }
 
-int tc_ctr_prng_init(TCCtrPrng_t * const ctx, 
+int tc_ctr_prng_init(TCCtrPrng_t * const ctx,
 		     uint8_t const * const entropy,
-		     unsigned int entropyLen, 
+		     unsigned int entropyLen,
 		     uint8_t const * const personalization,
 		     unsigned int pLen)
 {
-	int result = TC_CRYPTO_FAIL;	
+	int result = TC_CRYPTO_FAIL;
 	unsigned int i;
 	uint8_t personalization_buf[TC_AES_KEY_SIZE + TC_AES_BLOCK_SIZE] = {0U};
 	uint8_t seed_material[TC_AES_KEY_SIZE + TC_AES_BLOCK_SIZE];
 	uint8_t zeroArr[TC_AES_BLOCK_SIZE] = {0U};
-  
+
 	if (0 != personalization) {
 		/* 10.2.1.3.1 step 1 */
 		unsigned int len = pLen;
@@ -149,8 +149,8 @@ int tc_ctr_prng_init(TCCtrPrng_t * const ctx,
 
 		/* 10.2.1.3.1 step 5 */
 		memset(ctx->V,   0x00, sizeof ctx->V);
-    
-		/* 10.2.1.3.1 step 6 */    
+
+		/* 10.2.1.3.1 step 6 */
 		tc_ctr_prng_update(ctx, seed_material);
 
 		/* 10.2.1.3.1 step 7 */
@@ -161,7 +161,7 @@ int tc_ctr_prng_init(TCCtrPrng_t * const ctx,
 	return result;
 }
 
-int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx, 
+int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx,
 			uint8_t const * const entropy,
 			unsigned int entropyLen,
 			uint8_t const * const additional_input,
@@ -182,7 +182,7 @@ int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx,
 		/* 10.2.1.4.1 step 2 */
 		memcpy(additional_input_buf, additional_input, len);
 	}
-	
+
 	unsigned int seedlen = (unsigned int)TC_AES_KEY_SIZE + (unsigned int)TC_AES_BLOCK_SIZE;
 	if ((0 != ctx) && (entropyLen >= seedlen)) {
 		/* 10.2.1.4.1 step 3 */
@@ -209,10 +209,10 @@ int tc_ctr_prng_generate(TCCtrPrng_t * const ctx,
 			unsigned int outlen)
 {
 	/* 2^48 - see section 10.2.1 */
-	static const uint64_t MAX_REQS_BEFORE_RESEED = 0x1000000000000ULL; 
+	static const uint64_t MAX_REQS_BEFORE_RESEED = 0x1000000000000ULL;
 
-	/* 2^19 bits - see section 10.2.1 */ 
-	static const unsigned int MAX_BYTES_PER_REQ = 65536U; 
+	/* 2^19 bits - see section 10.2.1 */
+	static const unsigned int MAX_BYTES_PER_REQ = 65536U;
 
 	unsigned int result = TC_CRYPTO_FAIL;
 
@@ -231,11 +231,11 @@ int tc_ctr_prng_generate(TCCtrPrng_t * const ctx,
 				memcpy(additional_input_buf, additional_input, len);
 				tc_ctr_prng_update(ctx, additional_input_buf);
 			}
-      
+
 			/* 10.2.1.5.1 step 3 - implicit */
 
 			/* 10.2.1.5.1 step 4 */
-			unsigned int len = 0U;      
+			unsigned int len = 0U;
 			while (len < outlen) {
 				unsigned int blocklen = outlen - len;
 				uint8_t output_block[TC_AES_BLOCK_SIZE];
@@ -245,7 +245,7 @@ int tc_ctr_prng_generate(TCCtrPrng_t * const ctx,
 
 				/* 10.2.1.5.1 step 4.2 */
 				(void)tc_aes_encrypt(output_block, ctx->V, &ctx->key);
-      
+
 				/* 10.2.1.5.1 step 4.3/step 5 */
 				if (blocklen > TC_AES_BLOCK_SIZE) {
 					blocklen = TC_AES_BLOCK_SIZE;
@@ -254,7 +254,7 @@ int tc_ctr_prng_generate(TCCtrPrng_t * const ctx,
 
 				len += blocklen;
 			}
-      
+
 			/* 10.2.1.5.1 step 6 */
 			tc_ctr_prng_update(ctx, additional_input_buf);
 

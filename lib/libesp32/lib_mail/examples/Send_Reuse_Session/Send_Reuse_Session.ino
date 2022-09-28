@@ -3,13 +3,13 @@
 /**
  * This example will send multiple messages which
  * the session was keep open during sending.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -36,7 +36,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -169,11 +169,11 @@ void setup()
   if (!MailClient.sendMail(&smtp, &message, false))
     Serial.println("Error sending Email, " + smtp.errorReason());
 
- 
+
   /* To clear all message data */
   //message.clear();
 
-  /** Clear primary recipients, Cc recipients, Bcc recipients, custom headers 
+  /** Clear primary recipients, Cc recipients, Bcc recipients, custom headers
    * attachments and inline images
   */
   message.clearRecipients();
@@ -191,7 +191,7 @@ void setup()
 
   message.html.content = "<p>This is the <span style=\"color:#ff0000;\">second message</span>.</p>";
   message.html.charSet = "us-ascii";
-  
+
   message.html.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
 
   message.text.content = "This is the second message";

@@ -4,13 +4,13 @@
  * This example will send the Email in plain text version
  * with rfc822 message attachment which the rfc822 message
  * also contains its attachement.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -39,7 +39,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -80,7 +80,7 @@ void setup()
   Serial.println("Connect to NTP server and set the device time\r\nPlease wait...\r\n");
   float timeZone = 3;//GMT+3
   float daylightOffset = 0;
-  
+
   /* Set the device time */
   MailClient.Time.setClock(timeZone, daylightOffset);
 
@@ -166,7 +166,7 @@ void setup()
   /* The attachment data item */
   SMTP_Attachment att;
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, BLOB data, BLOB data size,
    * and transfer encoding
   */
@@ -191,7 +191,7 @@ void setup()
       j = 0;
   }
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, BLOB data, BLOB data size.
    * The default transfer encoding is base64.
   */

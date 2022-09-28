@@ -66,7 +66,7 @@ public:
         *pSet++ = (SettingsObject::LimitCurrent(settings.RedTenthMilliAmpere) - SettingsObject::MinCurrent) / 5;
         *pSet++ = (SettingsObject::LimitCurrent(settings.GreenTenthMilliAmpere) - SettingsObject::MinCurrent) / 5;
         *pSet++ = (SettingsObject::LimitCurrent(settings.BlueTenthMilliAmpere) - SettingsObject::MinCurrent) / 5;
-        
+
         uint8_t* pC1 = pData;
 
         // C2
@@ -113,7 +113,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -126,6 +126,6 @@ public:
 
         return color;
     }
-    
+
 };
 

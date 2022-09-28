@@ -1,7 +1,7 @@
 /*
   AudioGeneratorMP3
   Wrap libmad MP3 library to play audio
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -62,7 +62,7 @@ AudioGeneratorMP3::~AudioGeneratorMP3()
     free(synth);
     free(frame);
     free(stream);
-  } 
+  }
 }
 
 
@@ -182,7 +182,7 @@ bool AudioGeneratorMP3::GetOneSample(int16_t sample[2])
     output->SetChannels(synth->pcm.channels);
     lastChannels = synth->pcm.channels;
   }
-    
+
   // If we're here, we have one decoded frame and sent 0 or more samples out
   if (samplePtr < synth->pcm.length) {
     sample[AudioOutput::LEFTCHANNEL ] = synth->pcm.samples[0][samplePtr];
@@ -190,7 +190,7 @@ bool AudioGeneratorMP3::GetOneSample(int16_t sample[2])
     samplePtr++;
   } else {
     samplePtr = 0;
-    
+
     switch ( mad_synth_frame_onens(synth, frame, nsCount++) ) {
         case MAD_FLOW_STOP:
         case MAD_FLOW_BREAK: audioLogger->printf_P(PSTR("msf1ns failed\n"));
@@ -335,14 +335,14 @@ bool AudioGeneratorMP3::begin(AudioFileSource *source, AudioOutput *output)
       return false;
     }
   }
- 
+
   mad_stream_init(stream);
   mad_frame_init(frame);
   mad_synth_init(synth);
   synth->pcm.length = 0;
   mad_stream_options(stream, 0); // TODO - add options support
   madInitted = true;
- 
+
   running = true;
   return true;
 }

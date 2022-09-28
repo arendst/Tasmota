@@ -1,4 +1,4 @@
-// WARNING:  This file contains code that is more than likely already 
+// WARNING:  This file contains code that is more than likely already
 // exposed from the Esp32 Arduino API.  It will be removed once integration is complete.
 //
 // Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if defined(ARDUINO_ARCH_ESP32) 
+#if defined(ARDUINO_ARCH_ESP32)
 
 #include "sdkconfig.h" // this sets useful config symbols, like CONFIG_IDF_TARGET_ESP32C3
 
@@ -63,7 +63,7 @@
 #define I2S_DMA_BLOCK_COUNT_DEFAULT      16
 // 24 bytes gives us enough time if we use single stage idle
 // with the two stage idle we can use the minimum of 4 bytes
-#define I2S_DMA_SILENCE_SIZE     4*1 
+#define I2S_DMA_SILENCE_SIZE     4*1
 #define I2S_DMA_SILENCE_BLOCK_COUNT  3 // two front, one back
 #define I2S_DMA_QUEUE_COUNT 2
 
@@ -249,12 +249,12 @@ bool i2sWriteDone(uint8_t bus_num) {
     return (I2S[bus_num].is_sending_data == I2s_Is_Idle);
 }
 
-void i2sInit(uint8_t bus_num, 
-        uint32_t bits_per_sample, 
-        uint32_t sample_rate, 
-        i2s_tx_chan_mod_t chan_mod, 
-        i2s_tx_fifo_mod_t fifo_mod, 
-        size_t dma_count, 
+void i2sInit(uint8_t bus_num,
+        uint32_t bits_per_sample,
+        uint32_t sample_rate,
+        i2s_tx_chan_mod_t chan_mod,
+        i2s_tx_fifo_mod_t fifo_mod,
+        size_t dma_count,
         size_t dma_len) {
     if (bus_num >= I2S_NUM_MAX) {
         return;
@@ -271,7 +271,7 @@ void i2sInit(uint8_t bus_num,
 // (I2S_NUM_MAX == 2)
     if (bus_num) {
         periph_module_enable(PERIPH_I2S1_MODULE);
-    } else 
+    } else
 #endif
     {
         periph_module_enable(PERIPH_I2S0_MODULE);
@@ -347,7 +347,7 @@ void i2sInit(uint8_t bus_num,
 
     i2sSetSampleRate(bus_num, sample_rate, bits_per_sample);
 
-    //  enable intr in cpu // 
+    //  enable intr in cpu //
     int i2sIntSource;
 
 #if !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
@@ -430,7 +430,7 @@ void IRAM_ATTR i2sDmaISR(void* arg)
 {
     i2s_bus_t* dev = (i2s_bus_t*)(arg);
 
-    if (dev->bus->int_st.out_eof) 
+    if (dev->bus->int_st.out_eof)
     {
  //       i2s_dma_item_t* item = (i2s_dma_item_t*)(dev->bus->out_eof_des_addr);
         if (dev->is_sending_data == I2s_Is_Pending)
@@ -456,7 +456,7 @@ size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free
     }
     size_t blockSize = len;
 
-    i2s_dma_item_t* item = &I2S[bus_num].dma_items[0]; 
+    i2s_dma_item_t* item = &I2S[bus_num].dma_items[0];
     size_t dataLeft = len;
     uint8_t* pos = data;
 
@@ -464,7 +464,7 @@ size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free
     item += 2;
 
     while (dataLeft) {
-        
+
         blockSize = dataLeft;
         if (blockSize > I2S_DMA_MAX_DATA_LEN) {
             blockSize = I2S_DMA_MAX_DATA_LEN;
@@ -486,7 +486,7 @@ size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free
     item = &I2S[bus_num].dma_items[1];
     item->next = &I2S[bus_num].dma_items[2];
     I2S[bus_num].is_sending_data = I2s_Is_Sending;
-        
+
 
     xQueueReset(I2S[bus_num].tx_queue);
     xQueueSend(I2S[bus_num].tx_queue, (void*)&I2S[bus_num].dma_items[0], 10);
@@ -495,5 +495,5 @@ size_t i2sWrite(uint8_t bus_num, uint8_t* data, size_t len, bool copy, bool free
 }
 
 #endif // !defined(CONFIG_IDF_TARGET_ESP32C3)
-#endif // defined(ARDUINO_ARCH_ESP32) 
+#endif // defined(ARDUINO_ARCH_ESP32)
 

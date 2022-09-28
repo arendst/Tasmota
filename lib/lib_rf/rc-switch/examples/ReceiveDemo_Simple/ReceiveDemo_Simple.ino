@@ -1,6 +1,6 @@
 /*
   Simple example for receiving
-  
+
   https://github.com/sui77/rc-switch/
 */
 
@@ -15,7 +15,7 @@ void setup() {
 
 void loop() {
   if (mySwitch.available()) {
-    
+
     Serial.print("Received ");
     Serial.print( mySwitch.getReceivedValue() );
     Serial.print(" / ");

@@ -1,7 +1,7 @@
 /*
   AudioFileStream
   Convert an AudioFileSource* to a Stream*
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

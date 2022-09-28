@@ -1,7 +1,7 @@
 /*
   AudioGeneratorOpus
   Audio output generator that plays Opus audio files
-    
+
   Copyright (C) 2020  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

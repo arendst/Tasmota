@@ -4,7 +4,7 @@
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  version 2 as published by the Free Software Foundation.
- 
+
  TMRh20 2014 - Updates to the library allow sleeping both in TX and RX modes:
       TX Mode: The radio can be powered down (.9uA current) and the Arduino slept using the watchdog timer
       RX Mode: The radio can be left in standby mode (22uA current) and the Arduino slept using an interrupt pin
@@ -118,19 +118,19 @@ void setup(){
 
 void loop(){
 
-  
+
   if (role == role_ping_out)  {                     // Ping out role.  Repeatedly send the current time
     radio.powerUp();                                // Power up the radio after sleeping
     radio.stopListening();                          // First, stop listening so we can talk.
-                         
-    unsigned long time = millis();                  // Take the time, and send it.                     
+
+    unsigned long time = millis();                  // Take the time, and send it.
     Serial.print(F("Now sending... "));
     Serial.println(time);
-    
+
     radio.write( &time, sizeof(unsigned long) );
 
     radio.startListening();                         // Now, continue listening
-    
+
     unsigned long started_waiting_at = millis();    // Wait here until we get a response, or timeout (250ms)
     bool timeout = false;
     while ( ! radio.available()  ){
@@ -139,19 +139,19 @@ void loop(){
           break;
         }
     }
-    
+
     if ( timeout ) {                                // Describe the results
         Serial.println(F("Failed, response timed out."));
     } else {
         unsigned long got_time;                     // Grab the response, compare, and send to debugging spew
         radio.read( &got_time, sizeof(unsigned long) );
-    
+
         printf("Got response %lu, round-trip delay: %lu\n\r",got_time,millis()-got_time);
     }
 
     // Shut down the system
     delay(500);                     // Experiment with some delay here to see if it has an effect
-                                    // Power down the radio.  
+                                    // Power down the radio.
     radio.powerDown();              // NOTE: The radio MUST be powered back up again manually
 
                                     // Sleep the MCU.
@@ -163,16 +163,16 @@ void loop(){
 
   // Pong back role.  Receive each packet, dump it out, and send it back
   if ( role == role_pong_back ) {
-    
+
     if ( radio.available() ) {                                  // if there is data ready
-      
+
         unsigned long got_time;
         while (radio.available()) {                             // Dump the payloads until we've gotten everything
           radio.read( &got_time, sizeof(unsigned long) );       // Get the payload, and see if this was the last one.
                                                                 // Spew it.  Include our time, because the ping_out millis counter is unreliable
           printf("Got payload %lu @ %lu...",got_time,millis()); // due to it sleeping
         }
-     
+
         radio.stopListening();                                  // First, stop listening so we can talk
         radio.write( &got_time, sizeof(unsigned long) );        // Send the final one back.
         Serial.println(F("Sent response."));
@@ -220,7 +220,7 @@ void do_sleep(void)
   WDTCSR |= _BV(WDIE);
   sleep_mode();                        // System sleeps here
                                        // The WDT_vect interrupt wakes the MCU from here
-  sleep_disable();                     // System continues execution here when watchdog timed out  
-  detachInterrupt(0);  
-  WDTCSR &= ~_BV(WDIE);  
+  sleep_disable();                     // System continues execution here when watchdog timed out
+  detachInterrupt(0);
+  WDTCSR &= ~_BV(WDIE);
 }

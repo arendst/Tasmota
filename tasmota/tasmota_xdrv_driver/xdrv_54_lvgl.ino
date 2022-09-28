@@ -170,7 +170,7 @@ extern "C" {
   int lvbe_fseek(lvbe_FILE * stream, long int offset, int origin ) {
     File * f_ptr = (File*) stream;
     // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fseek(%p, %i, %i)", f_ptr, offset, origin);
-    
+
     fs::SeekMode mode = fs::SeekMode::SeekSet;
     if (SEEK_CUR == origin) {
       mode = fs::SeekMode::SeekCur;

@@ -2874,7 +2874,7 @@ FT_BEGIN_HEADER
    *
    *     If the font is 'tricky' (see @FT_FACE_FLAG_TRICKY for more), using
    *     `FT_LOAD_NO_SCALE` usually yields meaningless outlines because the
-   *     subglyphs must be scaled and positioned with hinting instructions. 
+   *     subglyphs must be scaled and positioned with hinting instructions.
    *     This can be solved by loading the font without `FT_LOAD_NO_SCALE`
    *     and setting the character size to `font->units_per_EM`.
    *

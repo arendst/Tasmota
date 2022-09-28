@@ -10,8 +10,8 @@ end
 class A
     static a    #- deprecated syntax -#
     def init() self.b = 2 end
-    def f() end 
-    var b 
+    def f() end
+    var b
     static var c, s, r  #- preferred syntax -#
 end
 

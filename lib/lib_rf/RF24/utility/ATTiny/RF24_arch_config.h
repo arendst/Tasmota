@@ -7,7 +7,7 @@
 #ifndef __RF24_ARCH_CONFIG_H__
 #define __RF24_ARCH_CONFIG_H__
 
-  /*** USER DEFINES:  ***/  
+  /*** USER DEFINES:  ***/
   //#define FAILURE_HANDLING
   //#define MINIMAL
   /**********************/
@@ -22,13 +22,13 @@
   #else
 	#include <Arduino.h>
   #endif
-  #include <stddef.h>  
-  
+  #include <stddef.h>
+
   // Include the header file for SPI functions ( Main SPI code is contained in RF24.cpp for simplicity )
   #include "spi.h"
 
   #define _SPI SPI
-  
+
   #ifdef SERIAL_DEBUG
 	#define IF_SERIAL_DEBUG(x) ({x;})
   #else
@@ -40,8 +40,8 @@
 
   #include <avr/pgmspace.h>
   #define PRIPSTR "%S"
-  
-  
+
+
 
 #endif // __RF24_ARCH_CONFIG_H__
 

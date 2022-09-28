@@ -112,7 +112,7 @@ void one_failed(void)
 }
 
 //
-// Setup 
+// Setup
 //
 
 void setup(void)
@@ -181,7 +181,7 @@ void setup(void)
   else
   {
     //Otherwise, default radio config
-    
+
     // Optional: Increase CRC length for improved reliability
     radio.setCRCLength(RF24_CRC_16);
 
@@ -208,10 +208,10 @@ void setup(void)
   // Config 4 tests out a higher pipe ##
   if (configuration == '4' && role == role_sender)
   {
-    // Set top 4 bytes of the address in pipe 1 
+    // Set top 4 bytes of the address in pipe 1
     radio.openReadingPipe(1,pipe & 0xFFFFFFFF00ULL);
 
-    // indicate the pipe to use 
+    // indicate the pipe to use
     pipe_number = 5;
   }
   else if ( role == role_sender )
@@ -272,7 +272,7 @@ char *prbuf_in = prbuf;
 char *prbuf_out = prbuf;
 
 //
-// Loop 
+// Loop
 //
 
 static uint32_t message_count = 0;
@@ -300,10 +300,10 @@ void loop(void)
     next_payload_size += payload_size_increments_by;
     if ( next_payload_size > max_payload_size )
       next_payload_size = min_payload_size;
-    
+
     // Try again soon
     delay(interval);
-    
+
     // Timeout if we have not received anything back ever
     if ( ! last_message_count && millis() > interval * 100 )
     {
@@ -315,7 +315,7 @@ void loop(void)
   //
   // Receiver role: Does nothing!  All the work is in IRQ
   //
-  
+
   //
   // Spew print buffer
   //
@@ -326,7 +326,7 @@ void loop(void)
     Serial.write(reinterpret_cast<uint8_t*>(prbuf_out),write_length);
     prbuf_out += write_length;
   }
-  
+
   //
   // Stop the test if we're done and report results
   //
@@ -386,7 +386,7 @@ void check_radio(void)
     {
       radio.read(&message_count,sizeof(message_count));
       prbuf_in += sprintf(prbuf_in,"Ack:%lu ",message_count);
- 
+
       // is this ack what we were expecting?  to account
       // for failures, we simply want to make sure we get a
       // DIFFERENT ack every time.
@@ -409,15 +409,15 @@ void check_radio(void)
       // Get this payload and dump it
       size_t len = max_payload_size;
       memset(receive_payload,0,max_payload_size);
-      
+
       if ( configuration == '3' ){
 	len = next_payload_size;
       }else{
 	len = radio.getDynamicPayloadSize();
       }
-      
+
       radio.read( receive_payload, len );
-      
+
       // Put a zero at the end for easy printing
       receive_payload[len] = 0;
 

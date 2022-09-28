@@ -76,13 +76,13 @@ emit(Regexp *r)
 		emit(r->left);
 		emit(r->right);
 		break;
-	
+
 	case Lit:
 		pc->opcode = Char;
 		pc->c = r->ch;
 		pc++;
 		break;
-	
+
 	case Dot:
 		pc++->opcode = Any;
 		break;
@@ -96,7 +96,7 @@ emit(Regexp *r)
 		pc->n = 2*r->n + 1;
 		pc++;
 		break;
-	
+
 	case Quest:
 		pc->opcode = Split;
 		p1 = pc++;
@@ -147,10 +147,10 @@ void
 printprog(Prog *p)
 {
 	Inst *pc, *e;
-	
+
 	pc = p->start;
 	e = p->start + p->len;
-	
+
 	for(; pc < e; pc++) {
 		switch(pc->opcode) {
 		default:

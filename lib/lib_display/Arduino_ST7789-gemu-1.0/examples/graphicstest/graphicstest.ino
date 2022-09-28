@@ -1,7 +1,7 @@
 /***************************************************
   This is a library for the ST7789 IPS SPI display.
 
-  Originally written by Limor Fried/Ladyada for 
+  Originally written by Limor Fried/Ladyada for
   Adafruit Industries.
 
   Modified by Ananev Ilia
@@ -12,7 +12,7 @@
 #include <SPI.h>
 
 #define TFT_DC    8
-#define TFT_RST   9 
+#define TFT_RST   9
 #define TFT_CS    10 // only for displays with CS pin
 #define TFT_MOSI  11   // for hardware SPI data pin (all of available pins)
 #define TFT_SCLK  13   // for hardware SPI sclk pin (all of available pins)

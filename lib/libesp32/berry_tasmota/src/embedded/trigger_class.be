@@ -22,7 +22,7 @@ class Trigger
       return self.o.next()
     end
   end
-  
+
   def time_reached()
     if self.o && self.trig > 0
       return self.o.time_reached(self.trig)

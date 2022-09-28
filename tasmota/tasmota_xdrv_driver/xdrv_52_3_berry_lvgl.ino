@@ -99,16 +99,16 @@ extern void lv_ex_get_started_1(void);
 
 extern "C" {
 
-  
+
 }
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import power
- * 
+ *
  * power.read() -> map
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
 
@@ -338,7 +338,7 @@ extern "C" {
     if (font_entry->size == 0) {
       be_raisef(vm, "value_error", "unknown font size '%s-%i'", name, size);
     }
-    
+
     be_find_global_or_module_member(vm, "lv.lv_font");
     be_pushcomptr(vm, (void*)font_entry->font);
     be_call(vm, 1);
@@ -379,7 +379,7 @@ extern "C" {
 
   /*********************************************************************************************\
    * LVGL Start
-   * 
+   *
    * Calls uDisplay and starts LVGL
   \*********************************************************************************************/
   // lv.start(instance, instance) -> nil
@@ -410,9 +410,9 @@ extern "C" {
 
   /*********************************************************************************************\
    * LVGL Input Devices
-   * 
+   *
    * Calls uDisplay and starts LVGL
-   * 
+   *
    * lv.register_button_encoder([inv: bool]) -> nil
   \*********************************************************************************************/
   void lvbe_encoder_with_keys_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
@@ -552,7 +552,7 @@ extern "C" {
 
       // redraw screen
       lv_obj_invalidate(lv_scr_act());
-      lv_refr_now(lv_disp_get_default());            
+      lv_refr_now(lv_disp_get_default());
 
       glue->stopScreenshot();
       f.close();

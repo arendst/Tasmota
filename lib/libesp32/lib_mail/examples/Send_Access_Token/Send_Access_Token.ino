@@ -2,13 +2,13 @@
 
 /**
  *This example will log in with the SASL XOAUTH2 mechanisme using OAuth2.0 access token.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -29,7 +29,7 @@
 
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -42,22 +42,22 @@
 /** The OAuth2.0 access token
  * The generation, exchange and refresh of the access token are not available
  * in this library.
- * 
+ *
  * To test this using GMail, get the OAuth2.0 access token from this web site
  * https://developers.google.com/oauthplayground/
- * 
+ *
  * You can use the ESP Signer library to generate OAuth2.0 access token
  * The library is available here https://github.com/mobizt/ESP-Signer
- * 
+ *
  * 1. Select the following scope (in Step 1) from Gmail API V1
  * https://mail.google.com/
  * https://mail.google.com/
- * 
+ *
  * 2. Click Authorize APIs button.
  * 3. Cick Exchangeauthorization code for tokens.
  * 4. From the response, look at access_token from the JSON payload node.
  * 5. Copy that access token and paste to the AUTHOR_ACCESS_TOKEN value.
- * 
+ *
  * The token will be expired in 3600 seconds (1 Hr).
  * The AUTHOR_EMAIL above is the Email address that you granted to access the Gmail services.
 */
@@ -90,7 +90,7 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /** Enable the debug via Serial port 
+  /** Enable the debug via Serial port
      * none debug or 0
      * basic debug or 1
     */

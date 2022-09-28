@@ -1,7 +1,7 @@
 /*
   AudioGenerator
   Base class of an audio output generator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

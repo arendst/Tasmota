@@ -7,7 +7,7 @@
  */
 
 /**
- * Example Nordic FOB Receiver 
+ * Example Nordic FOB Receiver
  *
  * This is an example of how to use the RF24 class to receive signals from the
  * Sparkfun Nordic FOB.  Thanks to Kirk Mower for providing test hardware.
@@ -39,7 +39,7 @@ struct payload_t
   uint8_t empty;
 };
 
-const char* button_names[] = { "Up", "Down", "Left", "Right", "Center" }; 
+const char* button_names[] = { "Up", "Down", "Left", "Right", "Center" };
 const int num_buttons = 5;
 
 //
@@ -108,7 +108,7 @@ void loop(void)
       // is sent 'big-endian', so we have to flip it.
       printf("#%05u Buttons ",flip_endian(payload.id));
 
-      // Print the name of each button 
+      // Print the name of each button
       int i = num_buttons;
       while (i--)
       {

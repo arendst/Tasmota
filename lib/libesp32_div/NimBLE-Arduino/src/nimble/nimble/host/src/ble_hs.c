@@ -880,9 +880,9 @@ ble_hs_deinit(void)
     ble_npl_event_deinit(&ble_hs_ev_start_stage2);
 
     ble_mqueue_deinit(&ble_hs_rx_q);
-    
+
     ble_hs_flow_deinit();
-    
+
     ble_hs_stop_deinit();
 
 #if BLE_MONITOR

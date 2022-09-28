@@ -27,7 +27,7 @@
  *     v1.0 - First release
  *
  * changes by Martin Wagner for tasmota project:
- *  
+ *
  * - the libary supports variabel I2C address
  *
  */

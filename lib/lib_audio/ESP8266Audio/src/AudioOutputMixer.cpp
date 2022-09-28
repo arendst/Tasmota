@@ -1,7 +1,7 @@
 /*
   AudioOutputMixer
   Simple mixer which can combine multiple inputs to a single output stream
-  
+
   Copyright (C) 2018  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -156,7 +156,7 @@ bool AudioOutputMixer::begin(int id)
     return true;
   }
 }
-  
+
 AudioOutputMixerStub *AudioOutputMixer::NewInput()
 {
   for (int i=0; i<maxStubs; i++) {

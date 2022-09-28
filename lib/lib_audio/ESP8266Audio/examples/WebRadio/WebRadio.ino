@@ -1,7 +1,7 @@
 /*
   WebRadio Example
   Very simple HTML app to control web streaming
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -116,7 +116,7 @@ Change URL: <input type="text" name="url">
 void HandleIndex(WiFiClient *client)
 {
   char buff[sizeof(BODY) + sizeof(title) + sizeof(status) + sizeof(url) + 3*2];
-  
+
   Serial.printf_P(PSTR("Sending INDEX...Free mem=%d\n"), ESP.getFreeHeap());
   WebHeaders(client, NULL);
   WebPrintf(client, DOCTYPE);
@@ -144,7 +144,7 @@ void HandleVolume(WiFiClient *client, char *params)
 {
   char *namePtr;
   char *valPtr;
-  
+
   while (ParseParam(&params, &namePtr, &valPtr)) {
     ParamInt("vol", volume);
   }
@@ -221,7 +221,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *str)
   const char *ptr = reinterpret_cast<const char *>(cbData);
   (void) isUnicode; // Punt this ball for now
   (void) ptr;
-  if (strstr_P(type, PSTR("Title"))) { 
+  if (strstr_P(type, PSTR("Title"))) {
     strncpy(title, str, sizeof(title));
     title[sizeof(title)-1] = 0;
   } else {
@@ -266,7 +266,7 @@ void setup()
   WiFi.disconnect();
   WiFi.softAPdisconnect(true);
   WiFi.mode(WIFI_STA);
-  
+
   WiFi.begin(ssid, password);
 
   // Try forever
@@ -275,13 +275,13 @@ void setup()
     delay(1000);
   }
   Serial.printf_P(PSTR("Connected\n"));
-  
+
   Serial.printf_P(PSTR("Go to http://"));
   Serial.print(WiFi.localIP());
   Serial.printf_P(PSTR("/ to control the web radio.\n"));
 
   server.begin();
-  
+
   strcpy_P(url, PSTR("none"));
   strcpy_P(status, PSTR("OK"));
   strcpy_P(title, PSTR("Idle"));
@@ -306,7 +306,7 @@ void StartNewURL()
   Serial.printf_P(PSTR("After stop...Free mem=%d\n"), ESP.getFreeHeap());
   SaveSettings();
   Serial.printf_P(PSTR("Saved settings\n"));
-  
+
   file = new AudioFileSourceICYStream(url);
   Serial.printf_P(PSTR("created icystream\n"));
   file->RegisterMetadataCB(MDCallback, NULL);
@@ -397,13 +397,13 @@ void loop()
     retryms = 0;
     newUrl = true;
   }
-  
+
   if (newUrl) {
     StartNewURL();
   }
 
   PumpDecoder();
-  
+
   char *reqUrl;
   char *params;
   WiFiClient client = server.available();

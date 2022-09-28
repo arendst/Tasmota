@@ -4,7 +4,7 @@
 // If the last pixel is on, then the colors being shown are color corrected.
 // It will show Red grandiant, Green grandiant, Blue grandiant, a White grandiant, and
 // then repeat.
-// 
+//
 // This will demonstrate the use of the NeoGamma class
 //
 //
@@ -61,7 +61,7 @@ void loop()
     HslColor startColor;
     HslColor stopColor;
 
-    // red color 
+    // red color
     startColor = HslColor(0.0f, 1.0f, 0.0f);
     stopColor = HslColor(0.0f, 1.0f, 0.5f);
     DrawPixels(true, startColor, stopColor);
@@ -69,7 +69,7 @@ void loop()
     DrawPixels(false, startColor, stopColor);
     delay(5000);
 
-    // green color 
+    // green color
     startColor = HslColor(0.33f, 1.0f, 0.0f);
     stopColor = HslColor(0.33f, 1.0f, 0.5f);
     DrawPixels(true, startColor, stopColor);
@@ -77,7 +77,7 @@ void loop()
     DrawPixels(false, startColor, stopColor);
     delay(5000);
 
-    // blue color 
+    // blue color
     startColor = HslColor(0.66f, 1.0f, 0.0f);
     stopColor = HslColor(0.66f, 1.0f, 0.5f);
     DrawPixels(true, startColor, stopColor);
@@ -85,7 +85,7 @@ void loop()
     DrawPixels(false, startColor, stopColor);
     delay(5000);
 
-    // white color 
+    // white color
     startColor = HslColor(0.0f, 0.0f, 0.0f);
     stopColor = HslColor(0.0f, 0.0f, 0.5f);
     DrawPixels(true, startColor, stopColor);

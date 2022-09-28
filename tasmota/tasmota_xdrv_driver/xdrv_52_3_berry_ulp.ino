@@ -68,7 +68,7 @@ extern "C" {
   }
 
   // `ULP.adc_config(channel:int, attenuation:int, width:int) -> nil`
-  // 
+  //
   // enums: channel 0-7, attenuation 0-3, width  0-3
   void be_ULP_adc_config(struct bvm *vm, adc1_channel_t channel, adc_atten_t attenuation, adc_bits_width_t width) {
     esp_err_t err = adc1_config_channel_atten(channel, attenuation);
@@ -82,9 +82,9 @@ extern "C" {
 
   /**
    * @brief Load a Berry byte buffer containing a ULP program as raw byte data
-   * 
+   *
    * @param vm as `ULP.load(code:bytes) -> nil`
-   * @return void 
+   * @return void
    */
   void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size) {
     // AddLog(LOG_LEVEL_INFO, "ULP: load addr=%p size=%i %*_H", buf, size/4, size, buf);
@@ -103,7 +103,7 @@ extern "C" {
 
     if (wake_up_s) {
       AddLog(LOG_LEVEL_INFO, PSTR("ULP: will wake up in %u seconds."), wake_up_s);
-      esp_sleep_enable_timer_wakeup(wake_up_s * 1000000);    
+      esp_sleep_enable_timer_wakeup(wake_up_s * 1000000);
     }
     esp_sleep_enable_ulp_wakeup();
     esp_deep_sleep_start();

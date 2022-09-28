@@ -51,7 +51,7 @@ Has 16 pages of 4 bytes = 64 bytes.
     Pages 0 + 1 is used for the 7-byte UID.
     Page 2 contains the last check digit for the UID, one byte manufacturer internal data, and the lock bytes (see https://www.nxp.com/documents/data_sheet/MF0ICU1.pdf section 8.5.2)
     Page 3 is OTP, One Time Programmable bits. Once set to 1 they cannot revert to 0.
-    Pages 4-15 are read/write unless blocked by the lock bytes in page 2. 
+    Pages 4-15 are read/write unless blocked by the lock bytes in page 2.
 
 ## MIFARE Ultralight C (MF0ICU2):
 
@@ -60,8 +60,8 @@ Has 48 pages of 4 bytes = 192 bytes.
     Pages 0 + 1 is used for the 7-byte UID.
     Page 2 contains the last check digit for the UID, one byte manufacturer internal data, and the lock bytes (see https://www.nxp.com/documents/data_sheet/MF0ICU1.pdf section 8.5.2)
     Page 3 is OTP, One Time Programmable bits. Once set to 1 they cannot revert to 0.
-    Pages 4-39 are read/write unless blocked by the lock bytes in page 2. 
+    Pages 4-39 are read/write unless blocked by the lock bytes in page 2.
     Page 40 Lock bytes
     Page 41 16 bit one way counter
     Pages 42-43 Authentication configuration
-    Pages 44-47 Authentication key 
+    Pages 44-47 Authentication key

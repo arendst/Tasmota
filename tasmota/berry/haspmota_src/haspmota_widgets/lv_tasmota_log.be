@@ -35,7 +35,7 @@ class lv_tasmota_log : lv.obj
     self.add_event_cb( / -> self._size_changed(), lv.EVENT_SIZE_CHANGED, 0)
     self.add_event_cb( / -> self._size_changed(), lv.EVENT_STYLE_CHANGED, 0)
     self.add_event_cb( / -> tasmota.remove_driver(self), lv.EVENT_DELETE, 0)
-    
+
   	self.lines = []
   	self.line_len = 0
   	self.log_reader = tasmota_log_reader()

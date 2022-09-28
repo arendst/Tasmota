@@ -1,7 +1,7 @@
 /*
   AudioFileSourcePROGMEM
   Store a "file" as a PROGMEM array and use it as audio source data
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -66,7 +66,7 @@ bool AudioFileSourcePROGMEM::close()
   progmemLen = 0;
   filePointer = 0;
   return true;
-}  
+}
 
 bool AudioFileSourcePROGMEM::seek(int32_t pos, int dir)
 {

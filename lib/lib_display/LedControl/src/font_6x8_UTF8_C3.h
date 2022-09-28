@@ -4,11 +4,11 @@
 /**
  * additional characters to font_6x8_base.h
  * 512 bytes
- * 
+ *
  */
 
 /*
-UTF8 after 0xC3 
+UTF8 after 0xC3
     …0	…1	…2	…3	…4	…5	…6	…7	…8	…9	…A	…B	…C	…D	…E	…F
 8…	À	Á	Â	Ã	Ä	Å	Æ	Ç	È	É	Ê	Ë	Ì	Í	Î	Ï
 9…	Ð	Ñ	Ò	Ó	Ô	Õ	Ö	×	Ø	Ù	Ú	Û	Ü	Ý	Þ	ß
@@ -86,7 +86,7 @@ const char font_UTF_C3_80_BF[0xC0-0x80][8] = {
         0b00010100,
         0b00010111,
         0b00000000,
-    }, // 0x86 Æ 
+    }, // 0x86 Æ
     {
         0b00001110,
         0b00010001,

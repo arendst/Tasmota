@@ -149,12 +149,12 @@ void CrashDumpClear(void)
  * Save crash information in RTC memory
  * This function is called automatically if ESP8266 suffers an exception
  * It should be kept quick / consise to be able to execute before hardware wdt may kick in
- * 
+ *
  * https://github.com/espressif/esp-idf/blob/dd491ee8513689191421943b737a31c159c91d17/components/esp_system/panic.c#L217
  * https://github.com/espressif/esp-idf/blob/8131d6f46d690e9cb60cc5cd457863cc5479351f/components/esp_system/port/panic_handler.c
  * https://github.com/espressif/esp-idf/issues/5163#issuecomment-617666293
  * https://github.com/memfault/memfault-firmware-sdk/blob/70f2d4ed6884d907d4b39da99434b762209ba568/ports/esp_idf/memfault/CMakeLists.txt#L79
- * 
+ *
  */
 // extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end )
 // esp_err_t IRAM_ATTR esp_backtrace_print(int depth)
@@ -356,5 +356,5 @@ void CrashDump(void)
 {
 }
 
-#endif 
+#endif
 #endif

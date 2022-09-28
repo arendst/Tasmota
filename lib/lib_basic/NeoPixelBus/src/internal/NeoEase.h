@@ -213,7 +213,7 @@ public:
         {
             return (-0.5f * (cos(PI * (unitValue-0.5f)) + 1.0f));
         }
-        
+
     }
 
     static float ExponentialIn(float unitValue)

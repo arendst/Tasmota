@@ -1,25 +1,25 @@
 /*
   AudioOutputSPDIF
-  
+
   S/PDIF output via I2S
-  
+
   Needs transceiver from CMOS level to either optical or coaxial interface
   See: https://www.epanorama.net/documents/audio/spdif.html
 
-  Original idea and sources: 
+  Original idea and sources:
     Forum thread dicussing implementation
       https://forum.pjrc.com/threads/28639-S-pdif
-    Teensy Audio Library 
+    Teensy Audio Library
       https://github.com/PaulStoffregen/Audio/blob/master/output_spdif2.cpp
-   
+
   Adapted for ESP8266Audio
 
-  NOTE: This module operates I2S at 4x sampling rate, as it needs to 
-        send out each bit as two output symbols, packed into 
+  NOTE: This module operates I2S at 4x sampling rate, as it needs to
+        send out each bit as two output symbols, packed into
         32-bit words. Even for mono sound, S/PDIF is specified minimum
-        for 2 channels, each as 32-bits sub-frame. This drains I2S 
-        buffers 4x more quickly so you may need 4x bigger output 
-        buffers than usual, configurable with 'dma_buf_count' 
+        for 2 channels, each as 32-bits sub-frame. This drains I2S
+        buffers 4x more quickly so you may need 4x bigger output
+        buffers than usual, configurable with 'dma_buf_count'
         constructor parameter.
 
   Copyright (C) 2020 Ivan Kostoski
@@ -49,7 +49,7 @@
 #include "AudioOutputSPDIF.h"
 
 // BMC (Biphase Mark Coded) values (bit order reversed, i.e. LSB first)
-static const uint16_t spdif_bmclookup[256] PROGMEM = { 
+static const uint16_t spdif_bmclookup[256] PROGMEM = {
 	0xcccc, 0x4ccc, 0x2ccc, 0xaccc, 0x34cc, 0xb4cc, 0xd4cc, 0x54cc,
 	0x32cc, 0xb2cc, 0xd2cc, 0x52cc, 0xcacc, 0x4acc, 0x2acc, 0xaacc,
 	0x334c, 0xb34c, 0xd34c, 0x534c, 0xcb4c, 0x4b4c, 0x2b4c, 0xab4c,
@@ -91,7 +91,7 @@ AudioOutputSPDIF::AudioOutputSPDIF(int dout_pin, int port, int dma_buf_count)
   // Configure ESP32 I2S to roughly compatible to ESP8266 peripheral
   i2s_config_t i2s_config_spdif = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-    .sample_rate = 88200, // 2 x sampling_rate 
+    .sample_rate = 88200, // 2 x sampling_rate
     .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, // 32bit words
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT, // Right than left
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 2, 0)
@@ -175,14 +175,14 @@ bool AudioOutputSPDIF::SetRate(int hz)
 #if defined(ESP32)
   if (i2s_set_sample_rates((i2s_port_t)portNo, adjustedHz) == ESP_OK) {
     if (adjustedHz == 88200) {
-      // Manually fix the APLL rate for 44100. 
+      // Manually fix the APLL rate for 44100.
       // See: https://github.com/espressif/esp-idf/issues/2634
       // sdm0 = 28, sdm1 = 8, sdm2 = 5, odir = 0 -> 88199.977
-      rtc_clk_apll_enable(1, 28, 8, 5, 0); 
+      rtc_clk_apll_enable(1, 28, 8, 5, 0);
     }
   } else {
     audioLogger->println("ERROR changing S/PDIF sample rate");
-  } 
+  }
 #elif defined(ESP8266)
   I2SDriver.setRate(adjustedHz);
   audioLogger->printf_P(PSTR("S/PDIF rate set: %.3f\n"), I2SDriver.getActualRate()/4);
@@ -228,16 +228,16 @@ bool AudioOutputSPDIF::ConsumeSample(int16_t sample[2])
   ms[1] = sample[1];
   MakeSampleStereo16(ms);
 
-  // S/PDIF encoding: 
+  // S/PDIF encoding:
   //   http://www.hardwarebook.info/S/PDIF
-  // Original sources: Teensy Audio Library 
+  // Original sources: Teensy Audio Library
   //   https://github.com/PaulStoffregen/Audio/blob/master/output_spdif2.cpp
-  // 
+  //
   // Order of bits, before BMC encoding, from the definition of SPDIF format
   //   PPPP AAAA  SSSS SSSS  SSSS SSSS  SSSS VUCP
   // are sent rearanged as
   //   VUCP PPPP  AAAA 0000  SSSS SSSS  SSSS SSSS
-  // This requires a bit less shifting as 16 sample bits align and can be 
+  // This requires a bit less shifting as 16 sample bits align and can be
   // BMC encoded with two table lookups (and at the same time flipped to LSB first).
   // There is no separate word-clock, so hopefully the receiver won't notice.
 
@@ -258,7 +258,7 @@ bool AudioOutputSPDIF::ConsumeSample(int16_t sample[2])
     buf[1] = VUCP_PREAMBLE_M | aux;
   }
 
-  uint16_t sample_right = Amplify(ms[RIGHTCHANNEL]); 
+  uint16_t sample_right = Amplify(ms[RIGHTCHANNEL]);
   // BMC encode right channel, similar as above
   hi = pgm_read_word(&spdif_bmclookup[(uint8_t)(sample_right >> 8)]);
   lo = pgm_read_word(&spdif_bmclookup[(uint8_t)sample_right]);
@@ -272,7 +272,7 @@ bool AudioOutputSPDIF::ConsumeSample(int16_t sample[2])
   size_t bytes_written;
   esp_err_t ret = i2s_write((i2s_port_t)portNo, (const char*)&buf, 8 * channels, &bytes_written, 0);
   // If we didn't write all bytes, return false early and do not increment frame_num
-  if ((ret != ESP_OK) || (bytes_written != (8 * channels))) return false;  
+  if ((ret != ESP_OK) || (bytes_written != (8 * channels))) return false;
 #elif defined(ESP8266)
   if (!I2SDriver.writeInterleaved(buf)) return false;
 #endif

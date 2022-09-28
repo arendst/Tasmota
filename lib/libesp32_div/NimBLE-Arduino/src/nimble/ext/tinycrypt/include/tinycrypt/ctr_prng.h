@@ -69,7 +69,7 @@ extern "C" {
 
 typedef struct {
 	/* updated each time another BLOCKLEN_BYTES bytes are produced */
-	uint8_t V[TC_AES_BLOCK_SIZE]; 
+	uint8_t V[TC_AES_BLOCK_SIZE];
 
 	/* updated whenever the PRNG is reseeded */
 	struct tc_aes_key_sched_struct key;
@@ -98,9 +98,9 @@ typedef struct {
  *  @param plen IN -- personalization length in bytes
  *
  */
-int tc_ctr_prng_init(TCCtrPrng_t * const ctx, 
+int tc_ctr_prng_init(TCCtrPrng_t * const ctx,
 		     uint8_t const * const entropy,
-		     unsigned int entropyLen, 
+		     unsigned int entropyLen,
 		     uint8_t const * const personalization,
 		     unsigned int pLen);
 
@@ -123,7 +123,7 @@ int tc_ctr_prng_init(TCCtrPrng_t * const ctx,
  *  @param additional_input IN -- additional input to the prng (may be null)
  *  @param additionallen IN -- additional input length in bytes
  */
-int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx, 
+int tc_ctr_prng_reseed(TCCtrPrng_t * const ctx,
 		       uint8_t const * const entropy,
 		       unsigned int entropyLen,
 		       uint8_t const * const additional_input,

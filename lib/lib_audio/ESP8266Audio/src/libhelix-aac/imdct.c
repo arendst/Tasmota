@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: imdct.c,v 1.1 2005/02/26 01:47:35 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: imdct.c,v 1.1 2005/02/26 01:47:35 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -96,11 +96,11 @@
 			f0 = MULSHIFT32(w0, in);
 			f1 = MULSHIFT32(w1, in);
 
-			in = *over0;	
+			in = *over0;
 			*pcm0 = CLIPTOSHORT( (in - f0 + RND_VAL) >> FBITS_OUT_IMDCT );
 			pcm0 += nChans;
 
-			in = *over1;	
+			in = *over1;
 			*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 			pcm1 -= nChans;
 
@@ -119,11 +119,11 @@
 			f0 = MULSHIFT32(w0, in);
 			f1 = MULSHIFT32(w1, in);
 
-			in = *over0;	
+			in = *over0;
 			*pcm0 = CLIPTOSHORT( (in - f0 + RND_VAL) >> FBITS_OUT_IMDCT );
 			pcm0 += nChans;
 
-			in = *over1;	
+			in = *over1;
 			*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 			pcm1 -= nChans;
 
@@ -182,11 +182,11 @@
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*pcm0 = CLIPTOSHORT( (in - f0 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm0 += nChans;
 
-		in = *over1;	
+		in = *over1;
 		*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm1 -= nChans;
 
@@ -207,11 +207,11 @@
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*pcm0 = CLIPTOSHORT( (in - f0 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm0 += nChans;
 
-		in = *over1;	
+		in = *over1;
 		*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm1 -= nChans;
 
@@ -269,11 +269,11 @@
 		in = *buf0++;
 		f1 = in >> 1;	/* scale since skipping multiply by Q31 */
 
-		in = *over0;	
+		in = *over0;
 		*pcm0 = CLIPTOSHORT( (in + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm0 += nChans;
 
-		in = *over1;	
+		in = *over1;
 		*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm1 -= nChans;
 
@@ -294,16 +294,16 @@
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*pcm0 = CLIPTOSHORT( (in - f0 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm0 += nChans;
 
-		in = *over1;	
+		in = *over1;
 		*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm1 -= nChans;
 
 		w0 = *wndCurr++;
-		w1 = *wndCurr++;	
+		w1 = *wndCurr++;
 		in = *buf1--;
 
 		*over1-- = MULSHIFT32(w0, in);
@@ -367,11 +367,11 @@
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*pcm0 = CLIPTOSHORT( (in - f0 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm0 += nChans;
 
-		in = *over1;	
+		in = *over1;
 		*pcm1 = CLIPTOSHORT( (in + f1 + RND_VAL) >> FBITS_OUT_IMDCT );
 		pcm1 -= nChans;
 
@@ -384,9 +384,9 @@
 		*over0++ = MULSHIFT32(w1, in);
 	} while (over0 < over1);
 
-	/* pcm[576-703] = Wc[128-255] * block0[128-255] + Wc[0-127] * block1[0-127] + overlap[576-703] 
-	 * pcm[704-831] = Wc[128-255] * block1[128-255] + Wc[0-127] * block2[0-127] + overlap[704-831] 
-	 * pcm[832-959] = Wc[128-255] * block2[128-255] + Wc[0-127] * block3[0-127] + overlap[832-959] 
+	/* pcm[576-703] = Wc[128-255] * block0[128-255] + Wc[0-127] * block1[0-127] + overlap[576-703]
+	 * pcm[704-831] = Wc[128-255] * block1[128-255] + Wc[0-127] * block2[0-127] + overlap[704-831]
+	 * pcm[832-959] = Wc[128-255] * block2[128-255] + Wc[0-127] * block3[0-127] + overlap[832-959]
 	 */
 	for (i = 0; i < 3; i++) {
 		pcm0 += 64 * nChans;
@@ -422,7 +422,7 @@
 		} while (over0 < over1);
 	}
 
-	/* pcm[960-1023] = Wc[128-191] * block3[128-191] + Wc[0-63]   * block4[0-63] + overlap[960-1023]  
+	/* pcm[960-1023] = Wc[128-191] * block3[128-191] + Wc[0-63]   * block4[0-63] + overlap[960-1023]
 	 * over[0-63]    = Wc[192-255] * block3[192-255] + Wc[64-127] * block4[64-127]
 	 */
 	pcm0 += 64 * nChans;
@@ -451,12 +451,12 @@
 		*over1-- = MULSHIFT32(w0, in);	/* save in overlap[128-191] */
 		*over0++ = MULSHIFT32(w1, in);	/* save in overlap[64-127] */
 	} while (over0 < over1);
-	
+
 	/* over0 now points at overlap[128] */
-	
-	/* over[64-191]   = Wc[128-255] * block4[128-255] + Wc[0-127] * block5[0-127] 
+
+	/* over[64-191]   = Wc[128-255] * block4[128-255] + Wc[0-127] * block5[0-127]
 	 * over[192-319]  = Wc[128-255] * block5[128-255] + Wc[0-127] * block6[0-127]
-	 * over[320-447]  = Wc[128-255] * block6[128-255] + Wc[0-127] * block7[0-127]  
+	 * over[320-447]  = Wc[128-255] * block6[128-255] + Wc[0-127] * block7[0-127]
 	 * over[448-576]  = Wc[128-255] * block7[128-255]
 	 */
 	for (i = 0; i < 3; i++) {
@@ -483,7 +483,7 @@
 		} while (over0 < over1);
 	}
 
-	/* over[576-1024] = 0 */ 
+	/* over[576-1024] = 0 */
 	i = 448;
 	over0 += 64;
 	do {
@@ -510,9 +510,9 @@
  *
  * Return:      0 if successful, -1 if error
  *
- * Notes:       If AAC_ENABLE_SBR is defined at compile time then window + overlap 
+ * Notes:       If AAC_ENABLE_SBR is defined at compile time then window + overlap
  *                does NOT clip to 16-bit PCM and does NOT interleave channels
- *              If AAC_ENABLE_SBR is NOT defined at compile time, then window + overlap 
+ *              If AAC_ENABLE_SBR is NOT defined at compile time, then window + overlap
  *                does clip to 16-bit PCM and interleaves channels
  *              If SBR is enabled at compile time, but we don't know whether it is
  *                actually used for this frame (e.g. the first frame of a stream),
@@ -545,7 +545,7 @@ int IMDCT(AACDecInfo *aacDecInfo, int ch, int chOut, short *outbuf)
 	}
 
 #ifdef AAC_ENABLE_SBR
-	/* window, overlap-add, don't clip to short (send to SBR decoder) 
+	/* window, overlap-add, don't clip to short (send to SBR decoder)
 	 * store the decoded 32-bit samples in top half (second AAC_MAX_NSAMPS samples) of coef buffer
 	 */
 	if (icsInfo->winSequence == 0)

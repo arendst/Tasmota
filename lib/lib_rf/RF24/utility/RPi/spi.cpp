@@ -10,7 +10,7 @@ SPI::SPI() {
 }
 
 void SPI::begin( int busNo ) {
-    if(!bcmIsInitialized){	  
+    if(!bcmIsInitialized){
       if (!bcm2835_init()){
 		return;
 	  }

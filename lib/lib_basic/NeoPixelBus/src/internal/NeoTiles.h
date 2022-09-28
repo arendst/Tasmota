@@ -103,7 +103,7 @@ public:
 
         if (x < 0 || x >= totalWidth || y < 0 || y >= totalHeight)
         {
-            return NeoTopologyHint_OutOfBounds; 
+            return NeoTopologyHint_OutOfBounds;
         }
 
         uint16_t localIndex;

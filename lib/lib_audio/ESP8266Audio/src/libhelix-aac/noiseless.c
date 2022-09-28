@@ -1,46 +1,46 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: noiseless.c,v 1.1 2005/02/26 01:47:35 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: noiseless.c,v 1.1 2005/02/26 01:47:35 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
  * Jon Recker (jrecker@real.com)
  * February 2005
  *
- * noiseless.c - decode channel info, scalefactors, quantized coefficients, 
+ * noiseless.c - decode channel info, scalefactors, quantized coefficients,
  *                 scalefactor band codebook, and TNS coefficients from bitstream
  **************************************************************************************/
 
@@ -57,7 +57,7 @@
  * Description: decode individual channel stream info
  *
  * Inputs:      BitStreamInfo struct pointing to start of ICS info
- *                (14496-3, table 4.4.6) 
+ *                (14496-3, table 4.4.6)
  *              sample rate index
  *
  * Outputs:     updated icsInfo struct
@@ -79,11 +79,11 @@
 		icsInfo->winGroupLen[0] = 1;
 		mask = 0x40;	/* start with bit 6 */
 		for (g = 0; g < 7; g++) {
-			if (icsInfo->sfGroup & mask)	{ 
+			if (icsInfo->sfGroup & mask)	{
 				icsInfo->winGroupLen[icsInfo->numWinGroup - 1]++;
-			} else { 
-				icsInfo->numWinGroup++; 
-				icsInfo->winGroupLen[icsInfo->numWinGroup - 1] = 1; 
+			} else {
+				icsInfo->numWinGroup++;
+				icsInfo->winGroupLen[icsInfo->numWinGroup - 1] = 1;
 			}
 			mask >>= 1;
 		}
@@ -106,7 +106,7 @@
 /**************************************************************************************
  * Function:    DecodeSectionData
  *
- * Description: decode section data (scale factor band groupings and 
+ * Description: decode section data (scale factor band groupings and
  *                associated Huffman codebooks)
  *
  * Inputs:      BitStreamInfo struct pointing to start of ICS info
@@ -214,7 +214,7 @@ static int DecodeOneScaleFactor(BitStreamInfo *bsi)
 			is += val;
 			*scaleFactors++ = (short)is;
 		} else if (sfbCB == 13) {
-			/* PNS - first energy is directly coded, rest are Huffman coded (npf = noise_pcm_flag) */ 
+			/* PNS - first energy is directly coded, rest are Huffman coded (npf = noise_pcm_flag) */
 			if (npf) {
 				val = GetBits(bsi, 9);
 				npf = 0;
@@ -366,7 +366,7 @@ static void DecodeGainControlInfo(BitStreamInfo *bsi, int winSequence, GainContr
 {
 	int bd, wd, ad;
 	int locBits, locBitsZero, maxWin;
-	
+
 	gi->maxBand = GetBits(bsi, 2);
 	maxWin =      (int)gainBits[winSequence][0];
 	locBitsZero = (int)gainBits[winSequence][1];
@@ -390,10 +390,10 @@ static void DecodeGainControlInfo(BitStreamInfo *bsi, int winSequence, GainContr
  *
  * Inputs:      platform specific info struct
  *              BitStreamInfo struct pointing to start of individual channel stream
- *                (14496-3, table 4.4.24) 
+ *                (14496-3, table 4.4.24)
  *              index of current channel
  *
- * Outputs:     updated section data, scale factor data, pulse data, TNS data, 
+ * Outputs:     updated section data, scale factor data, pulse data, TNS data,
  *                and gain control data
  *
  * Return:      none
@@ -415,7 +415,7 @@ static void DecodeICS(PSInfoBase *psi, BitStreamInfo *bsi, int ch)
 	DecodeSectionData(bsi, icsInfo->winSequence, icsInfo->numWinGroup, icsInfo->maxSFB, psi->sfbCodeBook[ch]);
 
 	DecodeScaleFactors(bsi, icsInfo->numWinGroup, icsInfo->maxSFB, globalGain, psi->sfbCodeBook[ch], psi->scaleFactors[ch]);
-	
+
 	pi = &psi->pulseInfo[ch];
 	pi->pulseDataPresent = GetBits(bsi, 1);
 	if (pi->pulseDataPresent)
@@ -461,7 +461,7 @@ int DecodeNoiselessData(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOff
 		return ERR_AAC_NULL_POINTER;
 	psi = (PSInfoBase *)(aacDecInfo->psInfoBase);
 	icsInfo = (ch == 1 && psi->commonWin == 1) ? &(psi->icsInfo[0]) : &(psi->icsInfo[ch]);
-	
+
 	SetBitstreamPointer(&bsi, (*bitsAvail+7) >> 3, *buf);
 	GetBits(&bsi, *bitOffset);
 

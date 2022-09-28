@@ -17,7 +17,7 @@ AudioOutputI2S *out;
 
 void setup()
 {
-  WiFi.mode(WIFI_OFF); 
+  WiFi.mode(WIFI_OFF);
   Serial.begin(115200);
   delay(1000);
   SPIFFS.begin();

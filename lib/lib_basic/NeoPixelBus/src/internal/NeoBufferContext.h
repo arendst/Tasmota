@@ -26,11 +26,11 @@ License along with NeoPixel.  If not, see
 #pragma once
 
 // This is used to allow a template classes that share common buffer concept to
-// be able to pass that common information to functions 
+// be able to pass that common information to functions
 // The template classes just need to expose a conversion operator to this type
 template <typename T_COLOR_FEATURE> struct NeoBufferContext
 {
-    NeoBufferContext(uint8_t* pixels, 
+    NeoBufferContext(uint8_t* pixels,
         size_t sizePixels) :
         Pixels(pixels),
         SizePixels(sizePixels)
@@ -44,5 +44,5 @@ template <typename T_COLOR_FEATURE> struct NeoBufferContext
 
     uint8_t* Pixels;
     const size_t SizePixels;
-    
+
 };

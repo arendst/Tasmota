@@ -4,7 +4,7 @@ Bernhard Schelling.   https://github.com/schellingb/TinySoundFont
 TinySoundFont lets you use a SoundFont2 library (sampled MIDI instruments)
 to play high quality music with a single #include.
 
-Porting and modifications done by Earle F. Philhower, III 
+Porting and modifications done by Earle F. Philhower, III
 <earlephilhower@yahoo.com> and released under the GPL v3 or later.
 
 The changes to allow it to work on the ESP8266 consisted mostly in making

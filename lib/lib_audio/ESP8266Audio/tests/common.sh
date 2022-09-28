@@ -183,7 +183,7 @@ if [ "$BUILD_TYPE" = "build" ]; then
 elif [ "$BUILD_TYPE" = "build_esp32" ]; then
     install_arduino
     install_esp32 "$HOME/arduino_ide"
-    export ide_path=$HOME/arduino_ide 
+    export ide_path=$HOME/arduino_ide
     export FQBN="espressif:esp32:esp32:PSRAM=enabled,PartitionScheme=huge_app"
     export GITHUB_WORKSPACE="$TRAVIS_BUILD_DIR"
     export GITHUB_REPOSITORY="$TRAVIS_REPO_SLUG"

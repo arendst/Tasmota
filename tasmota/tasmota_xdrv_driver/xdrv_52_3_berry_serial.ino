@@ -25,11 +25,11 @@
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import wire
- * 
+ *
  * wire.get_free_heap() -> int
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   TasmotaSerial * b_serial_get(struct bvm *vm) {

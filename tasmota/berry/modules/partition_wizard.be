@@ -33,7 +33,7 @@ class Partition_wizard_UI
         tasmota.set_timer(5000, /-> self.do_safeboot_partitioning())  # delay by 5 s
       end
       tasmota.add_rule("Wifi#Connected=1", continue_after_5s, "parwiz_5s")
-      
+
     end
   end
 
@@ -182,7 +182,7 @@ class Partition_wizard_UI
       webserver.content_send("<form action='/part_wiz' method='post' ")
       webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
       webserver.content_send("<p></p><button name='max_fs' class='button bred'>Resize FS to max</button></form></p>")
-      
+
       webserver.content_send("<p></p></fieldset><p></p>")
     elif self.has_factory_layout(p)
       # else propose to expand or shrink the file system
@@ -201,7 +201,7 @@ class Partition_wizard_UI
         webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
         webserver.content_send(string.format("<input type='number' min='64' max='%d' step='64' name='fs_size' value='%i'>", fs_max_size_k, current_fs_size_k))
         webserver.content_send("<p></p><button name='resize_fs' class='button bred'>Resize FS</button></form></p>")
-        
+
         webserver.content_send("<p></p></fieldset><p></p>")
       end
     end
@@ -341,7 +341,7 @@ class Partition_wizard_UI
   # - string if ERROR, indicating the error
   def test_step_4(p)
     import string
-    
+
     return false
     # var app0 = p.get_ota_slot(0)
     # if app0.get_image_size() > (self.app_size_min * 1024)        return "`app0` is too small for `safeboot`" end
@@ -352,7 +352,7 @@ class Partition_wizard_UI
     import string
     var size_left = sz
     var offset = 0
-  
+
     tasmota.log(string.format("UPL: Copy flash from 0x%06X to 0x%06X (size: %ikB)", from_addr, to_addr, sz / 1024), 2)
     while size_left > 0
       var b = flash.read(from_addr + offset, 4096)
@@ -500,7 +500,7 @@ class Partition_wizard_UI
                                          safeboot_url))
 
     webserver.content_send("<p></p><button name='factory' class='button bred'>Start migration</button></form></p>")
-    
+
     webserver.content_send("<p></p></fieldset><p></p>")
   end
 
@@ -603,13 +603,13 @@ class Partition_wizard_UI
     import string
     import partition_core
     import persist
-    
+
 
     #- check that the partition is valid -#
     var p = partition_core.Partition()
 
     try
-      
+
       #---------------------------------------------------------------------#
       # Resize FS to max
       #---------------------------------------------------------------------#
@@ -637,10 +637,10 @@ class Partition_wizard_UI
         var fs = p.slots[-1]
         var last_app = p.slots[-2]
         if (last_app.get_image_size() <= 0)  raise "internal_error", "last `app` partition has no firmware" end
-      
+
         var max_fs_start_k = self.get_max_fs_start_k(p)
         var flash_size_k = self.get_max_flash_size_k(p)
-        
+
         var fs_max_size_k = flash_size_k - max_fs_start_k
         var current_fs_size_k = self.get_cur_fs_size_k(p)
 
@@ -666,7 +666,7 @@ class Partition_wizard_UI
       elif webserver.has_arg("factory")
         var ota_url = webserver.arg("o1")
         var safeboot_url = webserver.arg("o2")
-        
+
         if safeboot_url != nil && safeboot_url != ""
           persist.safeboot_url = safeboot_url
           persist.save()

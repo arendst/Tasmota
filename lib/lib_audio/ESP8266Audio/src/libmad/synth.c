@@ -855,7 +855,7 @@ enum mad_flow synth_half(struct mad_synth *synth, struct mad_frame const *frame,
         pcm1 += 8;
 
         phase = (phase + 1) % 16;
-        
+
       }
     }
     if (output_func) {

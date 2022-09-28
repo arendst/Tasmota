@@ -69,7 +69,7 @@ corresponding header file.
   * Type of primitive: Pseudo-random number generator (128-bit strength).
   * Standard Specification: NIST SP 800-90A.
   * Requires: AES-128.
-  
+
 * ECC-DH:
 
   * Type of primitive: Key exchange based on curve NIST p-256.
@@ -103,15 +103,15 @@ Important Remarks
 The cryptographic implementations in TinyCrypt library have some limitations.
 Some of these limitations are inherent to the cryptographic primitives
 themselves, while others are specific to TinyCrypt. These limitations were accepted
-in order to meet its design goals (in special, minimal code size) and to better 
-serve applications targeting constrained devices in general. Some of these 
+in order to meet its design goals (in special, minimal code size) and to better
+serve applications targeting constrained devices in general. Some of these
 limitations are discussed in-depth below.
 
 General Remarks
 ***************
 
 * TinyCrypt does **not** intend to be fully side-channel resistant. Due to the
-  variety of side-channel attacks, many of them only relevant to certain 
+  variety of side-channel attacks, many of them only relevant to certain
   platforms. In this sense, instead of penalizing all library users with
   side-channel countermeasures such as increasing the overall code size,
   TinyCrypt only implements certain generic timing-attack countermeasures.
@@ -236,7 +236,7 @@ Specific Remarks
 * ECC-DH and ECC-DSA:
 
   * TinyCrypt ECC implementation is based on micro-ecc (see
-    https://github.com/kmackay/micro-ecc). In the original micro-ecc 
+    https://github.com/kmackay/micro-ecc). In the original micro-ecc
     documentation, there is an important remark about the way integers are
     represented:
 

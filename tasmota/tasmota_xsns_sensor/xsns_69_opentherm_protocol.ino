@@ -32,7 +32,7 @@ typedef union {
         uint8_t notSupported : 1; // If set, boiler does not support this command
         uint8_t supported : 1;    // Set if at least one response were successfull
         uint8_t retryCount : 2;   // Retry counter before notSupported flag being set
-        uint8_t skip : 1;       // Only manual call        
+        uint8_t skip : 1;       // Only manual call
     };
 } OpenThermParamFlags;
 
@@ -445,7 +445,7 @@ void sns_opentherm_tele_oem_diag(struct OpenThermCommandT *self)
 unsigned long sns_opentherm_send_blor(struct OpenThermCommandT *self, struct OT_BOILER_STATUS_T *status)
 {
     AddLog(LOG_LEVEL_ERROR, PSTR("[OTH]: Call Boiler Lock-out Reset"));
-    
+
     self->m_flags.skip = true; // Disable future calls of this command
 
     unsigned int data = 1; //1 : “BLOR”= Boiler Lock-out Reset command
@@ -453,7 +453,7 @@ unsigned long sns_opentherm_send_blor(struct OpenThermCommandT *self, struct OT_
     return OpenTherm::buildRequest(OpenThermMessageType::OPTH_WRITE_DATA, OpenThermMessageID::Command, data);
 }
 
-bool sns_opentherm_call_blor() 
+bool sns_opentherm_call_blor()
 {
     for (int i = 0; i < SNS_OT_COMMANDS_COUNT; ++i)
     {

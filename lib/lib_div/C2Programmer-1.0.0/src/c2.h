@@ -71,7 +71,7 @@ inline void C2D_enable(bool oe) {
 
 // Commands for FPCTL register
 #define C2FPCTL_ENABLE0          0x02
-#define C2FPCTL_CORE_HALT        0x04 
+#define C2FPCTL_CORE_HALT        0x04
 #define C2FPCTL_ENABLE1          0x01
 
 // Commands for FPDAT register

@@ -1,8 +1,8 @@
 # esp8266-AC-control
 
-This is just a web interface for the IRremoteESP8266 library.  
+This is just a web interface for the IRremoteESP8266 library.
 
-![Web Gui Preview](https://github.com/mariusmotea/esp8266-AC-control/raw/master/printscreen.png)  
+![Web Gui Preview](https://github.com/mariusmotea/esp8266-AC-control/raw/master/printscreen.png)
 
 
 ## Instructions:
@@ -16,8 +16,8 @@ This is just a web interface for the IRremoteESP8266 library.
  - Connect the board to your wifi network (look for "AC Remote Control" SSID and follow WiFi Manager wizard)
 
  - Upload web application files in SPIFFS storage using build in web form located at /file-upload path.
- 
- 
+
+
 ## REST API:
 
 Browser console will show the ajax calls to ESP8266 board. Running configuration can be displayed with GET request to /state path, any value can be changed with http PUT request to same path.
@@ -40,4 +40,4 @@ Use mobile phone camera to see if the led is sending any IR signals when buttons
 
 ## Credits:
 
-Interface: https://github.com/ael-code/daikin-control  
+Interface: https://github.com/ael-code/daikin-control

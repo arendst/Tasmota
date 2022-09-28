@@ -7,9 +7,9 @@
  */
 
 /**
- * Example using Dynamic Payloads 
+ * Example using Dynamic Payloads
  *
- * This is an example of how to use payloads of a varying (dynamic) size. 
+ * This is an example of how to use payloads of a varying (dynamic) size.
  */
 
 #include <SPI.h>
@@ -105,14 +105,14 @@ void setup(void)
   //
 
   Serial.begin(115200);
-  
+
   Serial.println(F("RF24/examples/pingpair_multi_dyn/"));
   Serial.print(F("ROLE: "));
   Serial.println(role_friendly_name[role]);
-  
+
   Serial.print(F("MULTICAST: "));
   Serial.println(multicast ? F("true (unreliable)") : F("false (reliable)"));
-  
+
   //
   // Setup and configure rf radio
   //
@@ -210,7 +210,7 @@ void loop(void)
       Serial.print(F(" value="));
       Serial.println(receive_payload);
     }
-    
+
     // Update size for next time.
     next_payload_size += payload_size_increments_by;
     if ( next_payload_size > max_payload_size )

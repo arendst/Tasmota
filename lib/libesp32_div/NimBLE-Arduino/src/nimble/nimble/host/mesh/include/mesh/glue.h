@@ -551,7 +551,7 @@ settings_load(void)
 struct k_mem_slab {
     /**
      * _wait_q_t is not required now, as we don't implement zephyr timeouts -
-     * if slab couldn't be allocated, we simply return error  
+     * if slab couldn't be allocated, we simply return error
      */
     uint32_t num_blocks; /** number of memory blocks available for allocation */
     size_t block_size; /** size of single block */

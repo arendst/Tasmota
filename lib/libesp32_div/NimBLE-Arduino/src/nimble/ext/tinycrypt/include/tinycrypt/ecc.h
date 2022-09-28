@@ -483,7 +483,7 @@ void uECC_vli_modAdd(uECC_word_t *result,  const uECC_word_t *left,
  * @param max_words IN -- number of words
  * @return number of bits in given vli
  */
-bitcount_t uECC_vli_numBits(const uECC_word_t *vli, 
+bitcount_t uECC_vli_numBits(const uECC_word_t *vli,
 			    const wordcount_t max_words);
 
 /*

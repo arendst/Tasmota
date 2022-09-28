@@ -1,11 +1,11 @@
 /********************************************************************
  * Berry module `hue`
- * 
+ *
  * Management of virtual lights for use with Alexa-Hue emulation
- * 
+ *
  * To use: `import hue`
- * 
- * 
+ *
+ *
  *******************************************************************/
 
 #if defined(USE_EMULATION) && defined(USE_EMULATION_HUE)

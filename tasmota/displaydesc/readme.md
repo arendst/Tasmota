@@ -1,4 +1,4 @@
-Display Descriptor files for use with universal display driver. 
+Display Descriptor files for use with universal display driver.
 
 Options to select a display driver:
 
@@ -11,7 +11,7 @@ Options to select a display driver:
   copy descriptor to rule buffer number 3 but do not enable rule 3
   (descriptor may not contain ANY spaces in this mode)
 4. compile the descriptor into driver.
-  
+
   convert the file to a string and place it into your `user_config_override.h` file
 
   Example:

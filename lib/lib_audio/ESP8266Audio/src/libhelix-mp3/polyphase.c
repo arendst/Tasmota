@@ -1,37 +1,37 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
@@ -41,7 +41,7 @@
  * polyphase.c - final stage of subband transform (polyphase synthesis filter)
  *
  * This is the C reference version using __int64
- * Look in the appropriate subdirectories for optimized asm implementations 
+ * Look in the appropriate subdirectories for optimized asm implementations
  *   (e.g. arm/asmpoly.s)
  **************************************************************************************/
 
@@ -49,20 +49,20 @@
 #include "assembly.h"
 
 /* input to Polyphase = Q(DQ_FRACBITS_OUT-2), gain 2 bits in convolution
- *  we also have the implicit bias of 2^15 to add back, so net fraction bits = 
+ *  we also have the implicit bias of 2^15 to add back, so net fraction bits =
  *    DQ_FRACBITS_OUT - 2 - 2 - 15
  *  (see comment on Dequantize() for more info)
  */
-#define DEF_NFRACBITS	(DQ_FRACBITS_OUT - 2 - 2 - 15)	
+#define DEF_NFRACBITS	(DQ_FRACBITS_OUT - 2 - 2 - 15)
 #define CSHIFT	12	/* coefficients have 12 leading sign bits for early-terminating mulitplies */
 
 static __inline short ClipToShort(int x, int fracBits)
 {
 	int sign;
-	
+
 	/* assumes you've already rounded (x += (1 << (fracBits-1))) */
 	x >>= fracBits;
-	
+
 	/* Ken's trick: clips to [-32768, 32767] */
 	sign = x >> 31;
 	if (sign != (x >> 15))
@@ -99,7 +99,7 @@ static __inline short ClipToShort(int x, int fracBits)
  *              number of "extra shifts" (vbuf format = Q(DQ_FRACBITS_OUT-2))
  *              pointer to start of vbuf (preserved from last call)
  *              start of filter coefficient table (in proper, shuffled order)
- *              no minimum number of guard bits is required for input vbuf 
+ *              no minimum number of guard bits is required for input vbuf
  *                (see additional scaling comments below)
  *
  * Outputs:     32 samples of one channel of decoded PCM data, (i.e. Q16.0)
@@ -110,7 +110,7 @@ static __inline short ClipToShort(int x, int fracBits)
  *                (note max filter gain - see polyCoef[] comments)
  **************************************************************************************/
 void PolyphaseMono(short *pcm, int *vbuf, const int *coefBase)
-{	
+{
 	int i;
 	const int *coef;
 	int *vb1;
@@ -211,7 +211,7 @@ void PolyphaseMono(short *pcm, int *vbuf, const int *coefBase)
  *              number of "extra shifts" (vbuf format = Q(DQ_FRACBITS_OUT-2))
  *              pointer to start of vbuf (preserved from last call)
  *              start of filter coefficient table (in proper, shuffled order)
- *              no minimum number of guard bits is required for input vbuf 
+ *              no minimum number of guard bits is required for input vbuf
  *                (see additional scaling comments below)
  *
  * Outputs:     32 samples of two channels of decoded PCM data, (i.e. Q16.0)

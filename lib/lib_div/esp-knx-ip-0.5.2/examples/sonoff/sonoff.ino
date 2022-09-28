@@ -71,7 +71,7 @@ void setup()
   // Register the config options
   hostname_id = knx.config_register_string("Hostname", 20, String("sonoff"));
   type_id = knx.config_register_options("Type", type_options, SONOFF_TYPE_BASIC);
-  
+
   channels[0].status_ga_id = knx.config_register_ga("Channel 1 Status GA");
   channels[1].status_ga_id = knx.config_register_ga("Channel 2 Status GA", is_4ch_or_4ch_pro);
   channels[2].status_ga_id = knx.config_register_ga("Channel 3 Status GA", is_4ch_or_4ch_pro);

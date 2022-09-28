@@ -178,17 +178,17 @@ int detachInterrupt (int pin)
 	char  pinS [8];
     const char *modeS = "none";
 	pid_t pid ;
-	
+
 	if (!pthread_cancel(threadId[pin])) //Cancel the thread
 	{
 	 return 0;
 	}
-	
+
 	if (!close(sysFds[pin])) //Close filehandle
 	{
 		return 0;
 	}
-	
+
 	/* Set wiringPi to 'none' interrupt mode */
 
     sprintf (pinS, "%d", pin) ;
@@ -213,7 +213,7 @@ int detachInterrupt (int pin)
     }
     else                // Parent, wait
       wait (NULL) ;
-	  
+
 	return 1;
 }
 

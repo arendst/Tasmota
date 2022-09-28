@@ -307,7 +307,7 @@ static int hap_pair_verify_process_finish(pair_verify_ctx_t *pv_ctx, uint8_t *bu
     memset(newnonce, 0, sizeof newnonce);
     memcpy(newnonce+4, PV_NONCE2, 8);
     int ret;
-    ret = crypto_aead_chacha20poly1305_ietf_decrypt_detached(edata, NULL, edata, edata_len - POLY_AUTHTAG_LEN, edata + edata_len - POLY_AUTHTAG_LEN, NULL, 0, newnonce, pv_ctx->hkdf_key); 
+    ret = crypto_aead_chacha20poly1305_ietf_decrypt_detached(edata, NULL, edata, edata_len - POLY_AUTHTAG_LEN, edata + edata_len - POLY_AUTHTAG_LEN, NULL, 0, newnonce, pv_ctx->hkdf_key);
     if (ret != 0) {
 		ESP_MFI_DEBUG(ESP_MFI_DEBUG_ERR, "Decryption error");
 		hap_prepare_error_tlv(STATE_M4, kTLVError_Authentication, buf, bufsize, outlen);

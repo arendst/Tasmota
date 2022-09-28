@@ -4,7 +4,7 @@
   Output is locked at 8khz as that's that the hardcoded LPC coefficients are built around
 
   Based on the Talkie Arduino library by Peter Knight, https://github.com/going-digital/Talkie
-    
+
   Copyright (C) 2020 Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -87,7 +87,7 @@ bool AudioGeneratorTalkie::begin(AudioFileSource *source, AudioOutput *output)
     frameLeft = 0;
     running = false;
   }
-  
+
   if (!output->SetRate( 8000 )) return false;
   if (!output->SetBitsPerSample( 16 )) return false;
   if (!output->SetChannels( 2 )) return false;
@@ -131,7 +131,7 @@ bool AudioGeneratorTalkie::loop()
       if (!output->ConsumeSample(r)) break;
     }
   }
-  
+
 done:
   if (file) file->loop();
   output->loop();
@@ -240,7 +240,7 @@ bool AudioGeneratorTalkie::genOneFrame() {
   }
 
   frameLeft = 8000 / 40;
-  
+
   return (energy == 0xf); // Last frame will return true
 }
 
@@ -283,7 +283,7 @@ int16_t AudioGeneratorTalkie::genOneSample()
   // Output clamp
   if (u0 > 511) u0 = 511;
   if (u0 < -512) u0 = -512;
-  
+
   // Lattice filter reverse path
   x9 = x8 + (((int16_t)synthK9*u8) >> 7);
   x8 = x7 + (((int16_t)synthK8*u7) >> 7);

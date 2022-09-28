@@ -471,7 +471,7 @@ BERRY_API void be_getsuper(bvm *vm, int index)
 }
 
 static bclass* _getclass(bvalue *v)
-{ 
+{
     if (var_isinstance(v)) {
         binstance *ins = var_toobj(v);
         return be_instance_class(ins);

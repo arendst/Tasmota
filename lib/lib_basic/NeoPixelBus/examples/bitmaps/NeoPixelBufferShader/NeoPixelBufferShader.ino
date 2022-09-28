@@ -11,7 +11,7 @@ const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignore
 // three element GRB pixels, change to your needs
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
 
-// the buffer object, 
+// the buffer object,
 // defined to use memory with the same feature as the strip
 // initialized with the same number of pixels as our strip
 NeoBuffer<NeoBufferMethod<NeoGrbFeature>> image(8,8,NULL);
@@ -51,11 +51,11 @@ public:
   {
     // we don't care what the index is so we ignore it
     //
-    // to apply our brightness shader, 
-    // use the source color, modify, and apply to the destination 
-    
+    // to apply our brightness shader,
+    // use the source color, modify, and apply to the destination
+
     // for every byte in the pixel,
-    // scale the source value by the brightness and 
+    // scale the source value by the brightness and
     // store it in the destination byte
     const uint8_t* pSrcEnd = pSrc + T_COLOR_FEATURE::PixelSize;
     while (pSrc != pSrcEnd)
@@ -76,9 +76,9 @@ public:
   {
     return _brightness;
   }
-  
+
 private:
-  uint8_t _brightness;    
+  uint8_t _brightness;
 };
 
 // create an instance of our shader object with the same feature as our buffer
@@ -100,10 +100,10 @@ void setup()
     strip.Begin();
     strip.Show();
 
-    // dibs do not default to any color, 
+    // dibs do not default to any color,
     // so clear it to black if you aren't going to draw
     // into every pixel
-    image.ClearTo(Black); 
+    image.ClearTo(Black);
 
     // draw a pattern into the image
     uint8_t x = 0;
@@ -123,7 +123,7 @@ void setup()
     image.SetPixelColor(x++, y, BrightCyan);
     image.SetPixelColor(x++, y, BrightBlue);
     image.SetPixelColor(x++, y, BrightPurple);
-    
+
     Serial.println();
     Serial.println("Running...");
 
@@ -134,7 +134,7 @@ void loop()
 {
   // we increment by delta every 30ms
   delay(30);
-  
+
   // update the brightness in shader
   //
   uint8_t brightness = shader.getBrightness();
@@ -150,10 +150,10 @@ void loop()
   // modify and apply
   brightness += delta;
   shader.setBrightness(brightness);
-  
+
   Serial.println(brightness);
-   
-  
+
+
   // render the image using the shader and then call Show()
   // these two should be called together in order
   //

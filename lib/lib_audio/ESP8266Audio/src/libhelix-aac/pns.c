@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: pns.c,v 1.2 2005/03/10 17:01:56 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: pns.c,v 1.2 2005/03/10 17:01:56 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -91,7 +91,7 @@ static unsigned int Get32BitVal(unsigned int *last)
  * Return:      x = Q29, range = (1, 2)
  *
  * Notes:       guaranteed to converge and not overflow for any r in this range
- *              
+ *
  *              xn+1  = xn - f(xn)/f'(xn)
  *              f(x)  = 1/sqrt(r) - x = 0 (find root)
  *                    = 1/x^2 - r
@@ -118,7 +118,7 @@ static int InvRootR(int r)
 		xn = MULSHIFT32(xn, t) << (6 - 1);		/* Q29 = (Q29*Q26 << 6), and -1 for division by 2 */
 	}
 
-	/* clip to range (1.0, 2.0) 
+	/* clip to range (1.0, 2.0)
 	 * (because of rounding, this can converge to xn slightly > 2.0 when r is near 0.25)
 	 */
 	if (xn >> 30)
@@ -144,12 +144,12 @@ static int ScaleNoiseVector(int *coef, int nVals, int sf)
 {
 
 /* pow(2, i/4.0) for i = [0,1,2,3], format = Q30 */
-static const int pow14[4] PROGMEM = { 
+static const int pow14[4] PROGMEM = {
 	0x40000000, 0x4c1bf829, 0x5a82799a, 0x6ba27e65
 };
 
 	int i, c, spec, energy, sq, scalef, scalei, invSqrtEnergy, z, gbMask;
-	
+
 	energy = 0;
 	for (i = 0; i < nVals; i++) {
 		spec = coef[i];
@@ -167,7 +167,7 @@ static const int pow14[4] PROGMEM = {
 	scalef = pow14[sf & 0x3];
 	scalei = (sf >> 2) + FBITS_OUT_DQ_OFF;
 
-	/* energy has implied factor of 2^-8 since we shifted the accumulator 
+	/* energy has implied factor of 2^-8 since we shifted the accumulator
 	 * normalize energy to range [0.25, 1.0), calculate 1/sqrt(1), and denormalize
 	 *   i.e. divide input by 2^(30-z) and convert to Q30
 	 *        output of 1/sqrt(i) now has extra factor of 2^((30-z)/2)
@@ -198,7 +198,7 @@ static const int pow14[4] PROGMEM = {
 			coef[i] = c;
 		}
 	} else {
-		/* for scalei <= 16, no clipping possible (coef[i] is < 2^15 before scaling) 
+		/* for scalei <= 16, no clipping possible (coef[i] is < 2^15 before scaling)
 		 * for scalei > 16, just saturate exponent (rare)
 		 *   scalef is close to full-scale (since we normalized invSqrtEnergy)
 		 * remember, we are just producing noise here
@@ -231,7 +231,7 @@ static const int pow14[4] PROGMEM = {
 static void GenerateNoiseVector(int *coef, int *last, int nVals)
 {
 	int i;
-	
+
 	for (i = 0; i < nVals; i++)
 		coef[i] = ((signed int)Get32BitVal((unsigned int *)last)) >> 16;
 }
@@ -281,16 +281,16 @@ int PNS(AACDecInfo *aacDecInfo, int ch)
 	unsigned char *msMaskPtr;
 	PSInfoBase *psi;
 	ICSInfo *icsInfo;
-	
+
 	/* validate pointers */
 	if (!aacDecInfo || !aacDecInfo->psInfoBase)
 		return -1;
 	psi = (PSInfoBase *)(aacDecInfo->psInfoBase);
 	icsInfo = (ch == 1 && psi->commonWin == 1) ? &(psi->icsInfo[0]) : &(psi->icsInfo[ch]);
-	
+
 	if (!psi->pnsUsed[ch])
 		return 0;
-	
+
 	if (icsInfo->winSequence == 2) {
 		sfbTab = sfBandTabShort + sfBandTabShortOffset[psi->sampRateIdx];
 		nSamps = NSAMPS_SHORT;
@@ -302,19 +302,19 @@ int PNS(AACDecInfo *aacDecInfo, int ch)
 	sfbCodeBook = psi->sfbCodeBook[ch];
 	scaleFactors = psi->scaleFactors[ch];
 	checkCorr = (aacDecInfo->currBlockID == AAC_ID_CPE && psi->commonWin == 1 ? 1 : 0);
-	
+
 	gbMask = 0;
 	for (gp = 0; gp < icsInfo->numWinGroup; gp++) {
 		for (win = 0; win < icsInfo->winGroupLen[gp]; win++) {
 			msMaskPtr = psi->msMaskBits + ((gp*icsInfo->maxSFB) >> 3);
 			msMaskOffset = ((gp*icsInfo->maxSFB) & 0x07);
 			msMask = (*msMaskPtr++) >> msMaskOffset;
-			
+
 			for (sfb = 0; sfb < icsInfo->maxSFB; sfb++) {
 				width = sfbTab[sfb+1] - sfbTab[sfb];
 				if (sfbCodeBook[sfb] == 13) {
 					if (ch == 0) {
-						/* generate new vector, copy into ch 1 if it's possible that the channels will be correlated 
+						/* generate new vector, copy into ch 1 if it's possible that the channels will be correlated
 						 * if ch 1 has PNS enabled for this SFB but it's uncorrelated (i.e. ms_used == 0),
 						 *    the copied values will be overwritten when we process ch 1
 						 */
@@ -334,7 +334,7 @@ int PNS(AACDecInfo *aacDecInfo, int ch)
 					gbMask |= ScaleNoiseVector(coef, width, psi->scaleFactors[ch][gp*icsInfo->maxSFB + sfb]);
 				}
 				coef += width;
-				
+
 				/* get next mask bit (should be branchless on ARM) */
 				msMask >>= 1;
 				if (++msMaskOffset == 8) {
@@ -347,11 +347,11 @@ int PNS(AACDecInfo *aacDecInfo, int ch)
 		sfbCodeBook += icsInfo->maxSFB;
 		scaleFactors += icsInfo->maxSFB;
 	}
-	
+
 	/* update guard bit count if necessary */
 	gb = CLZ(gbMask) - 1;
 	if (psi->gbCurrent[ch] > gb)
 		psi->gbCurrent[ch] = gb;
-	
+
 	return 0;
 }

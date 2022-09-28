@@ -18,7 +18,7 @@ typedef struct {
 } GFXglyph;
 
 /// Data stored for FONT AS A WHOLE
-typedef struct { 
+typedef struct {
 	uint8_t  *bitmap;      ///< Glyph bitmaps, concatenated
 	GFXglyph *glyph;       ///< Glyph array
 	uint8_t   first;       ///< ASCII extents (first char)

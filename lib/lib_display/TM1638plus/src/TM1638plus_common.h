@@ -1,5 +1,5 @@
 /*
-* Project Name: TM1638plus 
+* Project Name: TM1638plus
 * File: TM1638plus_common.h
 * Description: header  file for common data and functions between model 1 and 2 classes
 * Arduino library TM1638plus
@@ -23,19 +23,19 @@
 #define TM_SEG_ADR 0xC0  // leftmost segment Address C0 C2 C4 C6 C8 CA CC CE
 #define TM_LEDS_ADR 0xC1  // Leftmost LED address C1 C3 C5 C7 C9 CB CD CF
 #define TM_BRIGHT_ADR 0x88 // Brightness address
-#define TM_BRIGHT_MASK 0x07 // Brightness mask 
-#define TM_DEFAULT_BRIGHTNESS 0x02 //can be 0x00 to 0x07 
+#define TM_BRIGHT_MASK 0x07 // Brightness mask
+#define TM_DEFAULT_BRIGHTNESS 0x02 //can be 0x00 to 0x07
 #define TM_DISPLAY_SIZE 8 //size of display
 
 #define TM_ASCII_OFFSET 32 // Ascii table offset to jump over first missing 32 chars
 #define TM_HEX_OFFSET   16 // Ascii table offset to reach number position
-#define TM_DOT_MASK_DEC    128 // 0x80 Mask to  switch on decimal point in seven seg.   
+#define TM_DOT_MASK_DEC    128 // 0x80 Mask to  switch on decimal point in seven seg.
 
 #define TM_RED_LED 0x02 // Model 3
 #define TM_GREEN_LED 0x01 // Model 3
 #define TM_OFF_LED 0x00
 
-// font , map of ASCII values/table to 7-segment, offset to position 32. 
+// font , map of ASCII values/table to 7-segment, offset to position 32.
 const  PROGMEM unsigned char SevenSeg[] = {
   0x00, /* (space) */
   0x86, /* ! */
@@ -128,20 +128,20 @@ const  PROGMEM unsigned char SevenSeg[] = {
   0x76, /* x */
   0x6E, /* y */
   0x5B, /* z */
- // Note : Removed last 4 characters to reduce program size as of v 1.3.0 
+ // Note : Removed last 4 characters to reduce program size as of v 1.3.0
 //  0x46, /* { */
 //  0x30, /* | */
 //  0x70, /* } */
-//  0x01, /* ~ */ 
+//  0x01, /* ~ */
 };
 
-// Class for some common functions 
+// Class for some common functions
 class TM1638plus_common{
 
 public:
-	// Constructor 
+	// Constructor
 	TM1638plus_common();
-	
+
 	//  Used instead of arduino function "shiftin" when _HIGH_FREQ is set to true
 	uint8_t  HighFreqshiftin(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder) ;
 	 //  Used instead of arduino function "shiftOut" when _HIGH_FREQ is set to true

@@ -40,7 +40,7 @@ addthread(ThreadList *l, Thread t, Subject *input, const char *sp)
 	*t.pc |= 0x80;
 	l->t[l->n] = t;
 	l->n++;
-	
+
 	switch(*t.pc & 0x7f) {
 	case Jmp:
 		off = (signed char)t.pc[1];
@@ -89,7 +89,7 @@ re1_5_thompsonvm(ByteProg *prog, Subject *input, const char **subp, int nsubp, i
 	len = prog->len;
 	clist = threadlist(len);
 	nlist = threadlist(len);
-	
+
 	if(nsubp >= 1)
 		subp[0] = input->begin;
 	cleanmarks(prog);

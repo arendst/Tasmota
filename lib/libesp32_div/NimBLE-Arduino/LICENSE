@@ -215,5 +215,5 @@ under the following license:
 This product bundles tinycrypt, which is available under the "3-clause BSD"
 license. For details, and bundled files see:
     * ext/tinycrypt/LICENSE
-    
+
 This product partly derives from esp32-snippets; Copyright 2017 Neil Kolban.

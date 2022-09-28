@@ -1,8 +1,8 @@
 /********************************************************************
  * Tasmota lib
- * 
+ *
  * To use: `import display`
- * 
+ *
  * Initialize Universal Display driver
  *******************************************************************/
 #include "be_constobj.h"

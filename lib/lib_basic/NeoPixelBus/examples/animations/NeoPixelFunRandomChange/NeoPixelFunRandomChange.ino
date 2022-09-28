@@ -2,7 +2,7 @@
 // This example will randomly select a number pixels and then
 // start an animation to blend them from their current color to
 // randomly selected a color
-// 
+//
 
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
@@ -11,10 +11,10 @@ const uint16_t PixelCount = 16; // make sure to set this to the number of pixels
 const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignored for Esp8266
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
-// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.  
+// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 // There are other Esp8266 alternative methods that provide more pin options, but also have
 // other side effects.
-// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods 
+// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
 NeoPixelAnimator animations(PixelCount); // NeoPixel animation management object
 
@@ -74,7 +74,7 @@ void PickRandom(float luminance)
 
         // pick random time and random color
         // we use HslColor object as it allows us to easily pick a color
-        // with the same saturation and luminance 
+        // with the same saturation and luminance
         uint16_t time = random(100, 400);
         animationState[pixel].StartingColor = strip.GetPixelColor(pixel);
         animationState[pixel].EndingColor = HslColor(random(360) / 360.0f, 1.0f, luminance);
@@ -104,7 +104,7 @@ void loop()
     }
     else
     {
-        // no animations runnning, start some 
+        // no animations runnning, start some
         //
         PickRandom(0.2f); // 0.0 = black, 0.25 is normal, 0.5 is bright
     }

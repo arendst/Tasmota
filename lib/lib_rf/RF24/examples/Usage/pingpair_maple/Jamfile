@@ -28,7 +28,7 @@ else if $(TOOLSET) = devkit
 }
 else if $(TOOLSET) = maple
 {
-	TOOLS_PATH	= /opt/Maple/Resources/Java/hardware/tools/arm/bin ; 
+	TOOLS_PATH	= /opt/Maple/Resources/Java/hardware/tools/arm/bin ;
 	TOOLS_ARCH	= arm-none-eabi- ;
 }
 else if $(TOOLSET) = ports
@@ -48,13 +48,13 @@ DEFINES  	+= VECT_TAB_FLASH BOARD_$(BOARD) MCU_$(CHIP) ERROR_LED_PORT=GPIOC ERRO
 OPTIM		= -Os ;
 MFLAGS		= cpu=$(MCU) thumb arch=armv7-m ;
 CCFLAGS  	= -Wall -m$(MFLAGS) -g -nostdlib -ffunction-sections -fdata-sections -Wl,--gc-sections ;
-C++FLAGS  	= $(CCFLAGS) -fno-rtti -fno-exceptions ; 
+C++FLAGS  	= $(CCFLAGS) -fno-rtti -fno-exceptions ;
 LINKFLAGS  	+= -m$(MFLAGS) -Xlinker --gc-sections ;
 DFUFLAGS	= -a1 -d 0x1eaf:0x0003 -R ;
 
 MAPLE_DIR	= $(HOME)/Source/SAM3U/libmaple ;
 MAPLE_LIBS	= Servo LiquidCrystal Wire FreeRTOS ;
-MAPLE_SUBDIRS	= wirish wirish/comm wirish/boards libmaple libmaple/usb libmaple/usb/usb_lib ; 
+MAPLE_SUBDIRS	= wirish wirish/comm wirish/boards libmaple libmaple/usb libmaple/usb/usb_lib ;
 
 SKETCH_DIR	= $(HOME)/Source/Arduino ;
 SKETCH_LIBS	= RF24 ;
@@ -62,7 +62,7 @@ SKETCH_LIBS	= RF24 ;
 MODULE_DIRS	= . $(MAPLE_DIR)/$(MAPLE_SUBDIRS) $(MAPLE_DIR)/libraries/$(MAPLE_LIBS) $(SKETCH_DIR)/libraries/$(SKETCH_LIBS) ;
 HDRS		= $(MODULE_DIRS) ;
 LOCATE_TARGET	= out/$(TOOLSET) ;
-LOCATE_SOURCE	= $(LOCATE_TARGET) ; 
+LOCATE_SOURCE	= $(LOCATE_TARGET) ;
 
 rule Pde
 {
@@ -82,9 +82,9 @@ else
 
 actions Pde
 {
-	echo "#include <$(ARDUINO_H)>" > $(<) 
+	echo "#include <$(ARDUINO_H)>" > $(<)
 	echo "#line 1 \"$(>)\"" >> $(<)
-	cat $(>) >> $(<) 
+	cat $(>) >> $(<)
 }
 
 rule C++Pde
@@ -165,14 +165,14 @@ rule Main
 }
 
 # Modules
-MODULES	= [ GLOB $(MODULE_DIRS) : *.pde *.c *.cpp *.S ] ; 
+MODULES	= [ GLOB $(MODULE_DIRS) : *.pde *.c *.cpp *.S ] ;
 
 # Main output executable
 MAIN		= $(PWD:B).elf ;
 
 # Linker script
 LINK_DIR	= $(MAPLE_DIR)/support/ld ;
-LINKSCRIPT	= $(LINK_DIR)/$(BOARD)/flash.ld ; 
+LINKSCRIPT	= $(LINK_DIR)/$(BOARD)/flash.ld ;
 
 # Bring in the map and link script
 LINKFLAGS	+= -Wl,-Map=$(LOCATE_TARGET)/$(MAIN:B).map -T$(LINKSCRIPT) -L$(LINK_DIR) ;

@@ -158,7 +158,7 @@ public:
 class NeoEsp8266DmaSpeedApa106 : public NeoEsp8266DmaSpeedBase
 {
 public:
-    const static uint32_t I2sClockDivisor = 4; 
+    const static uint32_t I2sClockDivisor = 4;
     const static uint32_t I2sBaseClockDivisor = 16;
     const static uint32_t ByteSendTimeUs = 17; // us it takes to send a single pixel element
     const static uint32_t ResetTimeUs = 50;
@@ -268,7 +268,7 @@ protected:
                 slc_queue_item* finished_item = (slc_queue_item*)SLCRXEDA;
 
                 // data block has pending data waiting to send, prepare it
-                // point last state block to top 
+                // point last state block to top
                 (finished_item + 1)->next_link_ptr = s_this->_i2sBufDesc;
 
                 s_this->_dmaState = NeoDmaState_Sending;
@@ -329,7 +329,7 @@ public:
         s_this = this; // store this for the ISR
     }
 
-    NeoEsp8266DmaMethodBase(uint8_t pin, uint16_t pixelCount, size_t elementSize, size_t settingsSize) : 
+    NeoEsp8266DmaMethodBase(uint8_t pin, uint16_t pixelCount, size_t elementSize, size_t settingsSize) :
         NeoEsp8266DmaMethodBase(pixelCount, elementSize, settingsSize)
     {
     }
@@ -418,7 +418,7 @@ public:
 
         // start off in sending state as that is what it will be all setup to be
         // for the interrupt
-        _dmaState = NeoDmaState_Sending; 
+        _dmaState = NeoDmaState_Sending;
 
         SLCC0 |= SLCRXLR | SLCTXLR;
         SLCC0 &= ~(SLCRXLR | SLCTXLR);
@@ -436,10 +436,10 @@ public:
         // an error at us otherwise. Just feed it any random descriptor.
         SLCTXL &= ~(SLCTXLAM << SLCTXLA); // clear TX descriptor address
         // set TX descriptor address. any random desc is OK, we don't use TX but it needs to be valid
-        SLCTXL |= (uint32)&(_i2sBufDesc[_i2sBufDescCount-1]) << SLCTXLA; 
+        SLCTXL |= (uint32)&(_i2sBufDesc[_i2sBufDescCount-1]) << SLCTXLA;
         SLCRXL &= ~(SLCRXLAM << SLCRXLA); // clear RX descriptor address
         // set RX descriptor address.  use first of the data addresses
-        SLCRXL |= (uint32)&(_i2sBufDesc[0]) << SLCRXLA; 
+        SLCRXL |= (uint32)&(_i2sBufDesc[0]) << SLCRXLA;
 
         ETS_SLC_INTR_ATTACH(i2s_slc_isr, NULL);
         SLCIE = SLCIRXEOF; // Enable only for RX EOF interrupt
@@ -460,10 +460,10 @@ public:
         I2SC &= ~(I2SRST);
 
         // Set RX/TX FIFO_MOD=0 and disable DMA (FIFO only)
-        I2SFC &= ~(I2SDE | (I2STXFMM << I2STXFM) | (I2SRXFMM << I2SRXFM)); 
+        I2SFC &= ~(I2SDE | (I2STXFMM << I2STXFM) | (I2SRXFMM << I2SRXFM));
         I2SFC |= I2SDE; //Enable DMA
         // Set RX/TX CHAN_MOD=0
-        I2SCC &= ~((I2STXCMM << I2STXCM) | (I2SRXCMM << I2SRXCM)); 
+        I2SCC &= ~((I2STXCMM << I2STXCM) | (I2SRXCMM << I2SRXCM));
 
         // set the rate
         uint32_t i2s_clock_div = T_SPEED::I2sClockDivisor & I2SCDM;
@@ -484,7 +484,7 @@ public:
             yield();
         }
         FillBuffers();
-        
+
         // toggle state so the ISR reacts
         _dmaState = NeoDmaState_Pending;
     }
@@ -504,7 +504,7 @@ public:
     }
 
 private:
-    const size_t  _sizeData;    // Size of '_data' buffer 
+    const size_t  _sizeData;    // Size of '_data' buffer
     uint8_t*  _data;        // Holds LED color values
 
     size_t _i2sBufferSize; // total size of _i2sBuffer
@@ -541,7 +541,7 @@ private:
         I2SC |= I2SRST;
         I2SC &= ~(I2SRST);
 
-        
+
         SLCIC = 0xFFFFFFFF;
         SLCIE = 0;
         SLCTXL &= ~(SLCTXLAM << SLCTXLA); // clear TX descriptor address

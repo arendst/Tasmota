@@ -21,7 +21,7 @@ types = {
   "u32"    :  4,
   "u16"    :  2,
   "u8"     :  1,
-  
+
   # explicit little endian
   "le_i32" : 14,
   "le_i16" : 12,
@@ -29,7 +29,7 @@ types = {
   "le_u32" :  4,
   "le_u16" :  2,
   "le_u8"  :  1,
-  
+
   # big endian
   "be_i32" : -14,
   "be_i16" : -12,
@@ -37,15 +37,15 @@ types = {
   "be_u32" :  -4,
   "be_u16" :  -2,
   "be_u8"  :  -1,
-  
+
   # floating point
   "float32"  : 5,
   "double64" : 10,
-  
+
   # pointer
   "ptr32"  :  9,
   "ptr64"  : -9,
-  
+
   # bitfields (always unsigned)
   "bf_x"   : 0, # generic bitfield
   "bf_0"   : 100, # serves as base
@@ -348,7 +348,7 @@ class structure:
 
     self.align(size_in_bytes)       # force alignment
     offset = self.cur_offset    # prepare variable for capture in closure
-    
+
     self.mapping[name] = [offset, 0, 0, type, instance_mapping]
 
     self.cur_offset += size_in_bytes    # next offset
@@ -360,9 +360,9 @@ class structure:
 
     self.align(size_in_bytes)       # force alignment
     offset = self.cur_offset    # prepare variable for capture in closure
-    
+
     self.mapping[name] = [offset, 0, 0, type, instance_mapping]
-    
+
     self.cur_offset += size_in_bytes    # next offset
 
   def parse_float(self, name, type, instance_mapping):  # can be 1/2/4
@@ -372,7 +372,7 @@ class structure:
 
     self.align(size_in_bytes)       # force alignment
     offset = self.cur_offset    # prepare variable for capture in closure
-    
+
     self.mapping[name] = [offset, 0, 0, type, instance_mapping]
 
     self.cur_offset += size_in_bytes    # next offset

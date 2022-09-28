@@ -875,7 +875,7 @@
 	security or bug fixes will be provided for those versions.  See
 
 	  https://devguide.python.org/#status-of-python-branches
-	
+
 	for more information.
 
 	* Jamfile (RefDoc): Add `site' parameter.

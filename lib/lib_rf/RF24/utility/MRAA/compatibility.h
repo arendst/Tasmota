@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   compatiblity.h
  * Author: purinda
  *
@@ -11,7 +11,7 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-	
+
 #include <stddef.h>
 #include <time.h>
 #include <sys/time.h>

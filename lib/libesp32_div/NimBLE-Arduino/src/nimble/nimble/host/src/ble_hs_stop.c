@@ -217,7 +217,7 @@ ble_hs_stop_begin(struct ble_hs_stop_listener *listener,
 }
 
 int
-ble_hs_stop(struct ble_hs_stop_listener *listener, 
+ble_hs_stop(struct ble_hs_stop_listener *listener,
             ble_hs_stop_fn *fn, void *arg)
 {
     int rc;

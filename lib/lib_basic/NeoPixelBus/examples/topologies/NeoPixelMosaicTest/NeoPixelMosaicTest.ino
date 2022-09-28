@@ -27,7 +27,7 @@ const uint8_t TileWidth = 4;  // laid out in 4 panels x 2 panels mosaic
 const uint8_t TileHeight = 2;
 
 const uint16_t PixelCount = PanelWidth * PanelHeight * TileWidth * TileHeight;
-const uint8_t PixelPin = 2;  
+const uint8_t PixelPin = 2;
 
 NeoMosaic <MyPanelLayout> mosaic(
     PanelWidth,
@@ -45,7 +45,7 @@ RgbColor blue(0, 0, 128);
 RgbColor white(128);
 // if using NeoRgbwFeature above, use this white instead to use
 // the correct white element of the LED
-//RgbwColor white(128); 
+//RgbwColor white(128);
 RgbColor black(0);
 
 const uint16_t left = 0;

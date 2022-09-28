@@ -29,13 +29,13 @@ void setup() {
   BLEService *pService = pServer->createService(SERVICE_UUID);
   BLECharacteristic *pCharacteristic = pService->createCharacteristic(
                                         CHARACTERISTIC_UUID,
-                                  /***** Enum Type NIMBLE_PROPERTY now *****      
+                                  /***** Enum Type NIMBLE_PROPERTY now *****
                                         BLECharacteristic::PROPERTY_READ   |
-                                        BLECharacteristic::PROPERTY_WRITE  
+                                        BLECharacteristic::PROPERTY_WRITE
                                         );
                                   *****************************************/
                                         NIMBLE_PROPERTY::READ |
-                                        NIMBLE_PROPERTY::WRITE 
+                                        NIMBLE_PROPERTY::WRITE
                                        );
 
   pCharacteristic->setValue("Hello World says Neil");

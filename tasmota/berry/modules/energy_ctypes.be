@@ -109,7 +109,7 @@ energy_struct = [
     [bol, "max_voltage_flag"],
     [bol, "min_current_flag"],
     [bol, "max_current_flag"],
-    
+
 # #ifdef USE_ENERGY_POWER_LIMIT
     [uint16, "mplh_counter"],
     [uint16, "mplw_counter"],

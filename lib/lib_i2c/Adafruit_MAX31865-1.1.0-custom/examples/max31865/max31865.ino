@@ -1,16 +1,16 @@
-/*************************************************** 
+/***************************************************
   This is a library for the Adafruit PT100/P1000 RTD Sensor w/MAX31865
 
   Designed specifically to work with the Adafruit RTD Sensor
   ----> https://www.adafruit.com/products/3328
 
-  This sensor uses SPI to communicate, 4 pins are required to  
+  This sensor uses SPI to communicate, 4 pins are required to
   interface
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
+  Adafruit invests time and resources providing this open source code,
+  please support Adafruit and open-source hardware by purchasing
   products from Adafruit!
 
-  Written by Limor Fried/Ladyada for Adafruit Industries.  
+  Written by Limor Fried/Ladyada for Adafruit Industries.
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
@@ -50,22 +50,22 @@ void loop() {
   if (fault) {
     Serial.print("Fault 0x"); Serial.println(fault, HEX);
     if (fault & MAX31865_FAULT_HIGHTHRESH) {
-      Serial.println("RTD High Threshold"); 
+      Serial.println("RTD High Threshold");
     }
     if (fault & MAX31865_FAULT_LOWTHRESH) {
-      Serial.println("RTD Low Threshold"); 
+      Serial.println("RTD Low Threshold");
     }
     if (fault & MAX31865_FAULT_REFINLOW) {
-      Serial.println("REFIN- > 0.85 x Bias"); 
+      Serial.println("REFIN- > 0.85 x Bias");
     }
     if (fault & MAX31865_FAULT_REFINHIGH) {
-      Serial.println("REFIN- < 0.85 x Bias - FORCE- open"); 
+      Serial.println("REFIN- < 0.85 x Bias - FORCE- open");
     }
     if (fault & MAX31865_FAULT_RTDINLOW) {
-      Serial.println("RTDIN- < 0.85 x Bias - FORCE- open"); 
+      Serial.println("RTDIN- < 0.85 x Bias - FORCE- open");
     }
     if (fault & MAX31865_FAULT_OVUV) {
-      Serial.println("Under/Over voltage"); 
+      Serial.println("Under/Over voltage");
     }
     max.clearFault();
   }

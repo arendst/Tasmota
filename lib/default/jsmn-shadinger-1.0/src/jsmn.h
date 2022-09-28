@@ -109,9 +109,9 @@ JSMN_API int jsmn_parse(jsmn_parser *parser, const char *js, const size_t len,
                         jsmntok_t *tokens, const unsigned int num_tokens);
 
 /**
- * 
+ *
  * In-place json unescape
- * 
+ *
  */
 void json_unescape(char* string);
 

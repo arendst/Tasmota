@@ -3,7 +3,7 @@
  *
  * Created: 20/1/2016 11:57:21
  *  Author: akatran
- */ 
+ */
 
 //#include "gpio_helper.h"
 #include "gpio.h"
@@ -18,7 +18,7 @@ void GPIO::open(int port, int DDR)
 		p->DIRCLR=pin;
 	}else if (DDR==1)
 	{
-		p->DIRSET = pin;	
+		p->DIRSET = pin;
 	}
 }
 
@@ -43,8 +43,8 @@ void GPIO::write(int port,int value)
 		p->OUTCLR=pin;
 	}else if (value==1)
 	{
-		p->OUTSET = pin;	
+		p->OUTSET = pin;
 	}
-	
+
 }
 

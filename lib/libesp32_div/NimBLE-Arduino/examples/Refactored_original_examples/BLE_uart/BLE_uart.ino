@@ -5,7 +5,7 @@
 
    Create a BLE server that, once we receive a connection, will send periodic notifications.
    The service advertises itself as: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
-   Has a characteristic of: 6E400002-B5A3-F393-E0A9-E50E24DCCA9E - used for receiving data with "WRITE" 
+   Has a characteristic of: 6E400002-B5A3-F393-E0A9-E50E24DCCA9E - used for receiving data with "WRITE"
    Has a characteristic of: 6E400003-B5A3-F393-E0A9-E50E24DCCA9E - used to send data with  "NOTIFY"
 
    The design of creating the BLE server is:
@@ -17,7 +17,7 @@
    6. Start advertising.
 
    In this example rxValue is the data received (only accessible inside that function).
-   And txValue is the data to be sent, in this example just a byte incremented every second. 
+   And txValue is the data to be sent, in this example just a byte incremented every second.
 */
 
 /** NimBLE differences highlighted in comment blocks **/
@@ -45,7 +45,7 @@ uint8_t txValue = 0;
 
 
 /**  None of these are required as they will be handled by the library with defaults. **
- **                       Remove as you see fit for your needs                        */  
+ **                       Remove as you see fit for your needs                        */
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
@@ -58,12 +58,12 @@ class MyServerCallbacks: public BLEServerCallbacks {
   ****** Note: these are the same return values as defaults ********/
     uint32_t onPassKeyRequest(){
       Serial.println("Server PassKeyRequest");
-      return 123456; 
+      return 123456;
     }
 
     bool onConfirmPIN(uint32_t pass_key){
       Serial.print("The passkey YES/NO number: ");Serial.println(pass_key);
-      return true; 
+      return true;
     }
 
     void onAuthenticationComplete(ble_gap_conn_desc desc){
@@ -105,27 +105,27 @@ void setup() {
   // Create a BLE Characteristic
   pTxCharacteristic = pService->createCharacteristic(
                                         CHARACTERISTIC_UUID_TX,
-                                    /******* Enum Type NIMBLE_PROPERTY now *******      
+                                    /******* Enum Type NIMBLE_PROPERTY now *******
                                         BLECharacteristic::PROPERTY_NOTIFY
                                         );
-                                    **********************************************/  
+                                    **********************************************/
                                         NIMBLE_PROPERTY::NOTIFY
                                        );
-                                    
-  /***************************************************   
-   NOTE: DO NOT create a 2902 descriptor 
-   it will be created automatically if notifications 
+
+  /***************************************************
+   NOTE: DO NOT create a 2902 descriptor
+   it will be created automatically if notifications
    or indications are enabled on a characteristic.
-   
+
    pCharacteristic->addDescriptor(new BLE2902());
-  ****************************************************/                  
+  ****************************************************/
 
   BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(
                                             CHARACTERISTIC_UUID_RX,
-                                    /******* Enum Type NIMBLE_PROPERTY now *******       
+                                    /******* Enum Type NIMBLE_PROPERTY now *******
                                             BLECharacteristic::PROPERTY_WRITE
                                             );
-                                    *********************************************/  
+                                    *********************************************/
                                             NIMBLE_PROPERTY::WRITE
                                             );
 

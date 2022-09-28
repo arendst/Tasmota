@@ -21,7 +21,7 @@ AudioOutputMixerStub *stub[2];
 
 void setup()
 {
-  WiFi.mode(WIFI_OFF); 
+  WiFi.mode(WIFI_OFF);
   Serial.begin(115200);
   delay(1000);
   Serial.printf("WAV start\n");
@@ -42,7 +42,7 @@ void loop()
 {
   static uint32_t start = 0;
   static bool go = false;
-  
+
   if (!start) start = millis();
 
   if (wav[0]->isRunning()) {

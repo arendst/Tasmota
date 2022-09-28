@@ -43,7 +43,7 @@ void board_start(const char* program_name)
 extern "C" int _write (int file, char * ptr, int len)
 {
   if ( (file != 1) && (file != 2) )
-    return 0; 
+    return 0;
   else
     SerialUSB.write(ptr,len);
   return len;

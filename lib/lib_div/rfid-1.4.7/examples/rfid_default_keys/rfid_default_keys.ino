@@ -2,15 +2,15 @@
  * ----------------------------------------------------------------------------
  * This is a MFRC522 library example; see https://github.com/miguelbalboa/rfid
  * for further details and other examples.
- * 
+ *
  * NOTE: The library file MFRC522.h has a lot of useful info. Please read it.
- * 
+ *
  * Released into the public domain.
  * ----------------------------------------------------------------------------
- * Example sketch/program which will try the most used default keys listed in 
+ * Example sketch/program which will try the most used default keys listed in
  * https://code.google.com/p/mfcuk/wiki/MifareClassicDefaultKeys to dump the
  * block 0 of a MIFARE RFID card using a RFID-RC522 reader.
- * 
+ *
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
@@ -134,7 +134,7 @@ void loop() {
     Serial.print(F("PICC type: "));
     MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     Serial.println(mfrc522.PICC_GetTypeName(piccType));
-    
+
     // Try the known default keys
     MFRC522::MIFARE_Key key;
     for (byte k = 0; k < NR_KNOWN_KEYS; k++) {
@@ -148,7 +148,7 @@ void loop() {
             // no need to try other keys for this PICC
             break;
         }
-        
+
         // http://arduino.stackexchange.com/a/14316
         if ( ! mfrc522.PICC_IsNewCardPresent())
             break;

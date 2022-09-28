@@ -2,24 +2,24 @@
 
 /**
  * Copyright (c) 2011 panStamp <contact@panstamp.com>
- * 
+ *
  * This file is part of the panStamp project.
- * 
+ *
  * panStamp  is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * any later version.
- * 
+ *
  * panStamp is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with panStamp; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
  * USA
- * 
+ *
  * Author: Daniel Berenguer
  * Creation date: 03/03/2011
  */
@@ -55,7 +55,7 @@ const byte paTable[8] = {0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 /**
  * CC1101
- * 
+ *
  * Class constructor
  */
 CC1101::CC1101(void)
@@ -70,7 +70,7 @@ CC1101::CC1101(void)
 
 /**
  * wakeUp
- * 
+ *
  * Wake up CC1101 from Power Down state
  */
 void CC1101::wakeUp(void)
@@ -82,13 +82,13 @@ void CC1101::wakeUp(void)
 
 /**
  * writeReg
- * 
+ *
  * Write single register into the CC1101 IC via SPI
- * 
+ *
  * 'regAddr'	Register address
  * 'value'	Value to be writen
  */
-void CC1101::writeReg(byte regAddr, byte value) 
+void CC1101::writeReg(byte regAddr, byte value)
 {
   cc1101_Select();                      // Select CC1101
   wait_Miso();                          // Wait until MISO goes low
@@ -99,9 +99,9 @@ void CC1101::writeReg(byte regAddr, byte value)
 
 /**
  * writeBurstReg
- * 
+ *
  * Write multiple registers into the CC1101 IC via SPI
- * 
+ *
  * 'regAddr'	Register address
  * 'buffer'	Data to be writen
  * 'len'	Data length
@@ -109,26 +109,26 @@ void CC1101::writeReg(byte regAddr, byte value)
 void CC1101::writeBurstReg(byte regAddr, byte* buffer, byte len)
 {
   byte addr, i;
-  
+
   addr = regAddr | WRITE_BURST;         // Enable burst transfer
   cc1101_Select();                      // Select CC1101
   wait_Miso();                          // Wait until MISO goes low
   spi.transfer(addr);                       // Send register address
-  
+
   for(i=0 ; i<len ; i++)
     spi.transfer(buffer[i]);                // Send value
 
-  cc1101_Deselect();                    // Deselect CC1101  
+  cc1101_Deselect();                    // Deselect CC1101
 }
 
 /**
  * cmdStrobe
- * 
+ *
  * Send command strobe to the CC1101 IC via SPI
- * 
+ *
  * 'cmd'	Command strobe
- */     
-void CC1101::cmdStrobe(byte cmd) 
+ */
+void CC1101::cmdStrobe(byte cmd)
 {
   cc1101_Select();                      // Select CC1101
   wait_Miso();                          // Wait until MISO goes low
@@ -138,12 +138,12 @@ void CC1101::cmdStrobe(byte cmd)
 
 /**
  * readReg
- * 
+ *
  * Read CC1101 register via SPI
- * 
+ *
  * 'regAddr'	Register address
  * 'regType'	Type of register: CC1101_CONFIG_REGISTER or CC1101_STATUS_REGISTER
- * 
+ *
  * Return:
  * 	Data byte returned by the CC1101 IC
  */
@@ -163,17 +163,17 @@ byte CC1101::readReg(byte regAddr, byte regType)
 
 /**
  * readBurstReg
- * 
+ *
  * Read burst data from CC1101 via SPI
- * 
+ *
  * 'buffer'	Buffer where to copy the result to
  * 'regAddr'	Register address
  * 'len'	Data length
  */
-void CC1101::readBurstReg(byte * buffer, byte regAddr, byte len) 
+void CC1101::readBurstReg(byte * buffer, byte regAddr, byte len)
 {
   byte addr, i;
-  
+
   addr = regAddr | READ_BURST;
   cc1101_Select();                      // Select CC1101
   wait_Miso();                          // Wait until MISO goes low
@@ -185,10 +185,10 @@ void CC1101::readBurstReg(byte * buffer, byte regAddr, byte len)
 
 /**
  * reset
- * 
+ *
  * Reset CC1101
  */
-void CC1101::reset(void) 
+void CC1101::reset(void)
 {
   cc1101_Deselect();                    // Deselect CC1101
   delayMicroseconds(5);
@@ -209,10 +209,10 @@ void CC1101::reset(void)
 
 /**
  * setCCregs
- * 
+ *
  * Configure CC1101 registers
  */
-void CC1101::setCCregs(void) 
+void CC1101::setCCregs(void)
 {
   writeReg(CC1101_IOCFG2,  CC1101_DEFVAL_IOCFG2);
   writeReg(CC1101_IOCFG1,  CC1101_DEFVAL_IOCFG1);
@@ -230,7 +230,7 @@ void CC1101::setCCregs(void)
 
   // Set default frequency channel
   setChannel(channel);
-  
+
   writeReg(CC1101_FSCTRL1,  CC1101_DEFVAL_FSCTRL1);
   writeReg(CC1101_FSCTRL0,  CC1101_DEFVAL_FSCTRL0);
 
@@ -268,7 +268,7 @@ void CC1101::setCCregs(void)
   writeReg(CC1101_TEST2,  CC1101_DEFVAL_TEST2);
   writeReg(CC1101_TEST1,  CC1101_DEFVAL_TEST1);
   writeReg(CC1101_TEST0,  CC1101_DEFVAL_TEST0);
-  
+
   // Send empty packet
   CCPACKET packet;
   packet.length = 0;
@@ -277,7 +277,7 @@ void CC1101::setCCregs(void)
 
 /**
  * init
- * 
+ *
  * Initialize CC1101 radio
  *
  * @param freq Carrier frequency
@@ -285,7 +285,7 @@ void CC1101::setCCregs(void)
 void CC1101::init(uint8_t freq)
 {
   carrierFreq = freq;
-  
+
   spi.begin();                           // Initialize SPI interface
   pinMode(PORT_GDO0, INPUT);                 // Config GDO0 as input
 
@@ -298,13 +298,13 @@ void CC1101::init(uint8_t freq)
 
 /**
  * setSyncWord
- * 
+ *
  * Set synchronization word
- * 
+ *
  * 'syncH'	Synchronization word - High byte
  * 'syncL'	Synchronization word - Low byte
  */
-void CC1101::setSyncWord(uint8_t syncH, uint8_t syncL) 
+void CC1101::setSyncWord(uint8_t syncH, uint8_t syncL)
 {
   writeReg(CC1101_SYNC1, syncH);
   writeReg(CC1101_SYNC0, syncL);
@@ -314,24 +314,24 @@ void CC1101::setSyncWord(uint8_t syncH, uint8_t syncL)
 
 /**
  * setSyncWord (overriding method)
- * 
+ *
  * Set synchronization word
- * 
+ *
  * 'syncH'	Synchronization word - pointer to 2-byte array
  */
-void CC1101::setSyncWord(byte *sync) 
+void CC1101::setSyncWord(byte *sync)
 {
   CC1101::setSyncWord(sync[0], sync[1]);
 }
 
 /**
  * setDevAddress
- * 
+ *
  * Set device address
- * 
+ *
  * @param addr	Device address
  */
-void CC1101::setDevAddress(byte addr) 
+void CC1101::setDevAddress(byte addr)
 {
   writeReg(CC1101_ADDR, addr);
   devAddress = addr;
@@ -339,12 +339,12 @@ void CC1101::setDevAddress(byte addr)
 
 /**
  * setChannel
- * 
+ *
  * Set frequency channel
- * 
+ *
  * 'chnl'	Frequency channel
  */
-void CC1101::setChannel(byte chnl) 
+void CC1101::setChannel(byte chnl)
 {
   writeReg(CC1101_CHANNR,  chnl);
   channel = chnl;
@@ -352,9 +352,9 @@ void CC1101::setChannel(byte chnl)
 
 /**
  * setCarrierFreq
- * 
+ *
  * Set carrier frequency
- * 
+ *
  * 'freq'	New carrier frequency
  */
 void CC1101::setCarrierFreq(byte freq)
@@ -382,16 +382,16 @@ void CC1101::setCarrierFreq(byte freq)
       writeReg(CC1101_FREQ0,  CC1101_DEFVAL_FREQ0_868);
       break;
   }
-   
-  carrierFreq = freq;  
+
+  carrierFreq = freq;
 }
 
 /**
  * setPowerDownState
- * 
+ *
  * Put CC1101 into power-down state
  */
-void CC1101::setPowerDownState() 
+void CC1101::setPowerDownState()
 {
   // Comming from RX state, we need to enter the IDLE state first
   cmdStrobe(CC1101_SIDLE);
@@ -401,9 +401,9 @@ void CC1101::setPowerDownState()
 
 /**
  * sendData
- * 
+ *
  * Send data packet via RF
- * 
+ *
  * 'packet'	Packet to be transmitted. First byte is the destination address
  *
  *  Return:
@@ -414,7 +414,7 @@ bool CC1101::sendData(CCPACKET packet)
 {
   byte marcState;
   bool res = false;
- 
+
   // Declare to be in Tx state. This will avoid receiving packets whilst
   // transmitting
   rfState = RFSTATE_TX;
@@ -479,11 +479,11 @@ bool CC1101::sendData(CCPACKET packet)
 
 /**
  * receiveData
- * 
+ *
  * Read data packet from RX FIFO
  *
  * 'packet'	Container for the packet received
- * 
+ *
  * Return:
  * 	Amount of bytes received
  */
@@ -527,7 +527,7 @@ byte CC1101::receiveData(CCPACKET * packet)
 
 /**
  * setRxState
- * 
+ *
  * Enter Rx state
  */
 void CC1101::setRxState(void)
@@ -538,7 +538,7 @@ void CC1101::setRxState(void)
 
 /**
  * setTxState
- * 
+ *
  * Enter Tx state
  */
 void CC1101::setTxState(void)

@@ -48,7 +48,7 @@ bool XPT2046_Touchscreen::begin(SPIClass &wspi)
 #define FLEXSPI_SETTING     FlexIOSPISettings(2000000, MSBFIRST, SPI_MODE0)
 bool XPT2046_Touchscreen::begin(FlexIOSPI &wflexspi)
 {
-	_pspi = nullptr; // make sure we dont use this one... 
+	_pspi = nullptr; // make sure we dont use this one...
 	_pflexspi = &wflexspi;
 	_pflexspi->begin();
 	pinMode(csPin, OUTPUT);
@@ -144,7 +144,7 @@ void XPT2046_Touchscreen::update()
 		data[5] = _pspi->transfer16(0) >> 3;
 		digitalWrite(csPin, HIGH);
 		_pspi->endTransaction();
-	}	
+	}
 #if defined(_FLEXIO_SPI_H_)
 	else if (_pflexspi) {
 		_pflexspi->beginTransaction(FLEXSPI_SETTING);
@@ -169,7 +169,7 @@ void XPT2046_Touchscreen::update()
 
 	}
 #endif
-	// If we do not have either _pspi or _pflexspi than bail. 
+	// If we do not have either _pspi or _pflexspi than bail.
 	else return;
 
 	//Serial.printf("z=%d  ::  z1=%d,  z2=%d  ", z, z1, z2);
@@ -183,14 +183,14 @@ void XPT2046_Touchscreen::update()
 		return;
 	}
 	zraw = z;
-	
+
 	// Average pair with least distance between each measured x then y
 	//Serial.printf("    z1=%d,z2=%d  ", z1, z2);
 	//Serial.printf("p=%d,  %d,%d  %d,%d  %d,%d", zraw,
 		//data[0], data[1], data[2], data[3], data[4], data[5]);
 	int16_t x = besttwoavg( data[0], data[2], data[4] );
 	int16_t y = besttwoavg( data[1], data[3], data[5] );
-	
+
 	//Serial.printf("    %d,%d", x, y);
 	//Serial.println();
 	if (z >= Z_THRESHOLD) {

@@ -1,8 +1,8 @@
 // NeoPixelFunLoop
-// This example will move a trail of light around a series of pixels.  
-// A ring formation of pixels looks best.  
+// This example will move a trail of light around a series of pixels.
+// A ring formation of pixels looks best.
 // The trail will have a slowly fading tail.
-// 
+//
 // This will demonstrate the use of the RotateRight method.
 //
 
@@ -81,7 +81,7 @@ void setup()
     DrawTailPixels();
 
     // we use the index 0 animation to time how often we rotate all the pixels
-    animations.StartAnimation(0, 66, LoopAnimUpdate); 
+    animations.StartAnimation(0, 66, LoopAnimUpdate);
 }
 
 

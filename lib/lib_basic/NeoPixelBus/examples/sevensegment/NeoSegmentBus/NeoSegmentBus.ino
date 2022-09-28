@@ -23,7 +23,7 @@ void setup()
 
     delay(500);
     strip.SetString(0, "3.14", brightness);
-    strip.Show(); 
+    strip.Show();
 }
 
 void loop()

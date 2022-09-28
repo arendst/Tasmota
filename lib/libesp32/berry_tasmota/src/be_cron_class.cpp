@@ -1,9 +1,9 @@
 /********************************************************************
  * Light_state class - abstract light state
- * 
+ *
  * Handles all states and events for a virtual light.
  * Can be eventually subclassed to handle a physical light.
- * 
+ *
  *******************************************************************/
 
 #include "be_constobj.h"

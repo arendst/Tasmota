@@ -1,7 +1,7 @@
 // NeoPixelFunFadeInOut
 // This example will randomly pick a color and fade all pixels to that color, then
 // it will fade them to black and restart over
-// 
+//
 // This example demonstrates the use of a single animation channel to animate all
 // the pixels at once.
 //
@@ -13,10 +13,10 @@ const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignore
 const uint8_t AnimationChannels = 1; // we only need one as all the pixels are animated at once
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
-// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.  
+// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 // There are other Esp8266 alternative methods that provide more pin options, but also have
 // other side effects.
-// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods 
+// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
 NeoPixelAnimator animations(AnimationChannels); // NeoPixel animation management object
 
@@ -87,7 +87,7 @@ void FadeInFadeOutRinseRepeat(float luminance)
 
         animations.StartAnimation(0, time, BlendAnimUpdate);
     }
-    else 
+    else
     {
         // fade to black
         uint16_t time = random(600, 700);
@@ -120,7 +120,7 @@ void loop()
     }
     else
     {
-        // no animation runnning, start some 
+        // no animation runnning, start some
         //
         FadeInFadeOutRinseRepeat(0.2f); // 0.0 = black, 0.25 is normal, 0.5 is bright
     }

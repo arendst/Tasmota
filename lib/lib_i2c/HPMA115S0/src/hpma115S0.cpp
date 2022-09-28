@@ -135,7 +135,7 @@ boolean HPMA115S0::ReadParticleMeasurement(unsigned int * pm2_5, unsigned int * 
       // HPMA115C0 Compact devices
       _pm2_5 = dataBuf[2] * 256 + dataBuf[3];
       _pm10 = dataBuf[6] * 256 + dataBuf[7];
-    } 
+    }
     *pm2_5 = _pm2_5;
     *pm10 = _pm10;
     // Serial.println("PS- PM 2.5: " + String(_pm2_5) + " ug/m3" );

@@ -92,10 +92,10 @@ public:
         }
 
         _wire.beginTransaction();
-        
+
         // data
         _wire.transmitBytes(_data, _sizeData);
-        
+
         _wire.endTransaction();
 
         // save EOD time for latch on next call

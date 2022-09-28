@@ -1,7 +1,7 @@
 # zigbee zcl_attributes class
 #
 # f = open("zcl_attribute.c","w") solidify.dump(zcl_attribute,true,f) solidify.dump(zcl_attribute_list,true,f) f.close()
-#  
+#
 
 class zcl_attribute_ntv end
 class zcl_attribute_list_ntv end
@@ -89,7 +89,7 @@ class zcl_attribute : zcl_attribute_ntv
       super(self).setmember(k, v)
     end
   end
-  
+
   # tomap() extended
   def tomap()
     var m = super(self).tomap()
@@ -186,7 +186,7 @@ class zcl_attribute_list : zcl_attribute_list_ntv
       return super(self).member(k)
     end
   end
-  
+
   def setmember(k, v)
     if k == "groupaddr"
       self._groupaddr = (v != nil) ? v : 0xFFFF

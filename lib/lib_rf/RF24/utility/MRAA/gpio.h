@@ -1,6 +1,6 @@
-/* 
+/*
  * TMRh20 2015
- * 
+ *
  */
 
 #ifndef RF24_ARCH_GPIO_H
@@ -19,40 +19,40 @@ class GPIO {
 public:
 
 	/* Constants */
-		
+
 	GPIO();
 	virtual ~GPIO();
-	
+
 	/**
 	 * Sets up GPIO on the CE & CS pins
      * @param ce_pin
      * @param cs_pin
-     */	 
+     */
 	void begin(uint8_t ce_pin, uint8_t cs_pin);
-	
+
 	/**
-	 * 
+	 *
      * @param port
      * @param DDR
      */
 	void open(int port, int DDR);
 	/**
-	 * 
+	 *
      * @param port
      */
 	void close(int port);
 	/**
-	 * 
+	 *
      * @param port
      * @param value
      */
 	int read(int port);
 	/**
-	* 
+	*
 	* @param port
 	* @param value
-	*/	
-	void write(int port,int value);	
+	*/
+	void write(int port,int value);
 
 private:
 	int gpio_ce_pin; /** ce_pin value of the RF24 device **/

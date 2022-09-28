@@ -1,7 +1,7 @@
 // NeoPixelCylon
-// This example will move a Cylon Red Eye back and forth across the 
+// This example will move a Cylon Red Eye back and forth across the
 // the full collection of pixels on the strip.
-// 
+//
 // This will demonstrate the use of the NeoEase animation ease methods; that provide
 // simulated acceleration to the animations.
 //

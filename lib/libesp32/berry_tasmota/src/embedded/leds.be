@@ -30,7 +30,7 @@ class Leds : Leds_ntv
   # leds:int = number of leds of the strip
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
   # typ:int (optional) = Type of LED, defaults to WS2812 RGB
-  # rmt:int (optional) = RMT hardware channel to use, leave default unless you have a good reason 
+  # rmt:int (optional) = RMT hardware channel to use, leave default unless you have a good reason
   def init(leds, gpio_phy, typ, rmt)   # rmt is optional
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
     self.leds = int(leds)
@@ -176,18 +176,18 @@ class Leds : Leds_ntv
     class Leds_segment
       var strip
       var offset, leds
-    
+
       def init(strip, offset, leds)
         self.strip = strip
         self.offset = int(offset)
         self.leds = int(leds)
       end
-    
+
       def clear()
         self.clear_to(0x000000)
         self.show()
       end
-    
+
       def begin()
         # do nothing, already being handled by physical strip
       end
@@ -249,7 +249,7 @@ class Leds : Leds_ntv
       var offset
       var h, w
       var alternate     # are rows in alternate mode (even/odd are reversed)
-    
+
       def init(strip, w, h, offset)
         self.strip = strip
         self.offset = offset
@@ -257,12 +257,12 @@ class Leds : Leds_ntv
         self.w = w
         self.alternate = false
       end
-    
+
       def clear()
         self.clear_to(0x000000)
         self.show()
       end
-    
+
       def begin()
         # do nothing, already being handled by physical strip
       end
