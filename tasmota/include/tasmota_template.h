@@ -172,7 +172,7 @@ enum UserSelectablePins {
   GPIO_INTERRUPT,
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_HRG15_TX, GPIO_HRG15_RX,        // Hydreon RG-15 rain sensor serial interface
-  GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial Tx
+  GPIO_VINDRIKTNING_RX,                // IKEA VINDRIKTNING Serial Rx
   GPIO_BL0939_RX,                      // BL0939 Serial interface (Dual R3 v2)
   GPIO_BL0942_RX,                      // BL0942 Serial interface
   GPIO_HM330X_SET,                     // HM330X SET pin (sleep when low)
