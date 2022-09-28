@@ -31,7 +31,7 @@ typedef unsigned char byte;
 enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
 char us_vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
 char us_vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
-char us_sets[][11] = 
+char us_sets[][11] =
                   {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
                    {  0, 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
                    {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},

@@ -63,7 +63,7 @@ BERRY_API void* be_realloc(bvm *vm, void *ptr, size_t old_size, size_t new_size)
         if (!ptr || (old_size == 0)) {
             block = malloc_from_pool(vm, new_size);
         }
-    
+
         /* Case 2: deallocate */
         else if (new_size == 0) {
 #if BE_USE_DEBUG_GC

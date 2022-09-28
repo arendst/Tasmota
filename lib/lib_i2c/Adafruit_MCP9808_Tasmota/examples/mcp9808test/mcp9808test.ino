@@ -19,7 +19,7 @@ void setup() {
   Serial.begin(9600);
   while (!Serial); //waits for serial terminal to be open, necessary in newer arduino boards.
   Serial.println("MCP9808 demo");
-  
+
   // Make sure the sensor is found, you can also pass in a different i2c
   // address with tempsensor.begin(0x19) for example, also can be left in blank for default address use
   // Also there is a table with all addres possible for this sensor, you can connect multiple sensors
@@ -37,7 +37,7 @@ void setup() {
     Serial.println("Couldn't find MCP9808! Check your connections and verify the address is correct.");
     while (1);
   }
-    
+
    Serial.println("Found MCP9808!");
 
   tempsensor.setResolution(3); // sets the resolution mode of reading, the modes are defined in the table bellow:
@@ -57,10 +57,10 @@ void loop() {
   Serial.println (tempsensor.getResolution());
   float c = tempsensor.readTempC();
   float f = tempsensor.readTempF();
-  Serial.print("Temp: "); 
-  Serial.print(c, 4); Serial.print("*C\t and "); 
+  Serial.print("Temp: ");
+  Serial.print(c, 4); Serial.print("*C\t and ");
   Serial.print(f, 4); Serial.println("*F.");
-  
+
   delay(2000);
   Serial.println("Shutdown MCP9808.... ");
   tempsensor.shutdown_wake(1); // shutdown MSP9808 - power consumption ~0.1 mikro Ampere, stops temperature sampling

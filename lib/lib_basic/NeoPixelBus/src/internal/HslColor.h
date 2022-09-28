@@ -29,7 +29,7 @@ License along with NeoPixel.  If not, see
 
 // ------------------------------------------------------------------------
 // HslColor represents a color object that is represented by Hue, Saturation, Lightness
-// component values.  It contains helpful color routines to manipulate the 
+// component values.  It contains helpful color routines to manipulate the
 // color.
 // ------------------------------------------------------------------------
 struct HslColor
@@ -109,7 +109,7 @@ struct HslColor
     };
 
     // ------------------------------------------------------------------------
-    // Hue, Saturation, Lightness color members 
+    // Hue, Saturation, Lightness color members
     // ------------------------------------------------------------------------
     float H;
     float S;

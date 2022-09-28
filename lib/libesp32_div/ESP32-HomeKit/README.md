@@ -3,7 +3,7 @@ Arduino library version of espressif's official [esp-homekit-sdk](https://github
 
 Currently, only for ESP32 with hardware acceleration. ESP32-S2, ESP32-C3 and future IDF based chips are all on the way.
 
-Tested on my ESP32 board, works fine. 
+Tested on my ESP32 board, works fine.
 
 The performance is awesome!!!
 
@@ -13,10 +13,10 @@ The serial log is [here](https://raw.github.com/Mixiaoxiao/Arduino-HomeKit-ESP/m
 
 ``111-11-111``
 
-## Manual Installation 
+## Manual Installation
 
 Refer to the official guide: [Manual installation](https://www.arduino.cc/en/guide/libraries#toc5)
-Note: this library will not publish the release version for Arduino IDE. 
+Note: this library will not publish the release version for Arduino IDE.
 
 
 #### Manual Installation for Windows

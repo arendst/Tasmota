@@ -26,14 +26,14 @@
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 extern "C" {
 
 /********************************************************************
 **  MI32 - sensor specific functions
-********************************************************************/ 
+********************************************************************/
 
   extern uint32_t MI32numberOfDevices();
   extern const char * MI32getDeviceName(uint32_t slot);
@@ -46,11 +46,11 @@ extern "C" {
     return MI32numberOfDevices();
   }
 
-  void be_MI32_set_bat(int slot, int bat_val){    
+  void be_MI32_set_bat(int slot, int bat_val){
     MI32setBatteryForSlot(slot,bat_val);
   }
 
-  const char* be_MI32_get_name(int slot){    
+  const char* be_MI32_get_name(int slot){
     return  MI32getDeviceName(slot);
   }
 
@@ -63,18 +63,18 @@ extern "C" {
     return buffer;
   }
 
-  void be_MI32_set_hum(int slot, int hum_val){    
+  void be_MI32_set_hum(int slot, int hum_val){
     MI32setHumidityForSlot(slot,hum_val);
   }
 
-  void be_MI32_set_temp(int slot, int temp_val){    
+  void be_MI32_set_temp(int slot, int temp_val){
     MI32setTemperatureForSlot(slot,temp_val);
   }
 
 
 /********************************************************************
 **  BLE - generic BLE functions
-********************************************************************/ 
+********************************************************************/
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
   extern bool MI32runBerryConnection(uint8_t operation, bbool response);
@@ -86,7 +86,7 @@ extern "C" {
 
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
-  void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){    
+  void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){
     MI32setBerryConnCB(function,buffer);
   }
 
@@ -123,7 +123,7 @@ extern "C" {
   }
 
   void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes);
-  void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes){    
+  void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes){
     bool _discoverAttributes = false;
     if(discoverAttributes){
       _discoverAttributes = discoverAttributes ;
@@ -135,7 +135,7 @@ extern "C" {
 
   void be_BLE_set_characteristic(struct bvm *vm, const char *Chr);
   void be_BLE_set_characteristic(struct bvm *vm, const char *Chr){
-      
+
     if (MI32setBerryCtxChr(Chr)) return;
 
     be_raisef(vm, "ble_error", "BLE: could not set characteristic");
@@ -143,7 +143,7 @@ extern "C" {
 
   void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response);
   void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response){
-    bool _response = false;    
+    bool _response = false;
     if(response){
       _response = response;
     }
@@ -153,7 +153,7 @@ extern "C" {
   }
 
   void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){    
+  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
     if(!be_BLE_MAC_size(vm, size)){
       return;
     }
@@ -162,12 +162,12 @@ extern "C" {
       _type = type;
     }
     if(MI32addMACtoBlockList(buf, _type)) return;
-  
+
   be_raisef(vm, "ble_error", "BLE: could not block MAC");
   }
 
   void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-  void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){    
+  void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
     if(!be_BLE_MAC_size(vm, size)){
       return;
     }

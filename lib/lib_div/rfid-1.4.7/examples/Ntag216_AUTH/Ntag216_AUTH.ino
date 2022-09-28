@@ -8,7 +8,7 @@
  * 4.- Finally we need to write an access record in order to READ protect the card this step is optional only if you want to read protect also write 80 + 00 + 00 + 00 to 0xE4
  * After completing all these steps you will nee to authenticate first in order to read or write ant page after the first page you selected to protect.
  * To disengage protection just write the page (0xE3) to 00 + 00 + 00 + FF that going to remove all protection.
- * 
+ *
  * @author GARGANTUA from RoboCreators.com & paradoxalabs.com
  * @license Released into the public domain.
  */
@@ -16,7 +16,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define RST_PIN    9   // 
+#define RST_PIN    9   //
 #define SS_PIN    10    //
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance

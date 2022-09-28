@@ -1,7 +1,7 @@
 /*
   AudioOutput
   Base class of an audio output player
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 
 #include "AudioOutput.h"
 
-class AudioOutputNull : public AudioOutput 
+class AudioOutputNull : public AudioOutput
 {
   public:
     AudioOutputNull() {};

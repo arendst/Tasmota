@@ -1,6 +1,6 @@
 /*
   A simple RCSwitch/Ethernet/Webserver demo
-  
+
   https://github.com/sui77/rc-switch/
 */
 
@@ -18,7 +18,7 @@ RCSwitch mySwitch = RCSwitch();
 int RCTransmissionPin = 7;
 
 // More to do...
-// You should also modify the processCommand() and 
+// You should also modify the processCommand() and
 // httpResponseHome() functions to fit your needs.
 
 
@@ -105,7 +105,7 @@ void httpResponse414(EthernetClient c) {
 }
 
 /**
- * Process HTTP requests, parse first request header line and 
+ * Process HTTP requests, parse first request header line and
  * call processCommand with GET query string (everything after
  * the ? question mark in the URL).
  */
@@ -147,7 +147,7 @@ char*  httpServer() {
     // give the web browser time to receive the data
     delay(1);
     client.stop();
-    
+
     return sReturnCommand;
   }
   return '\0';

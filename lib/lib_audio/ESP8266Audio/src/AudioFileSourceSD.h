@@ -1,7 +1,7 @@
 /*
   AudioFileSourceSPIFFS
   Input SD card "file" to be used by AudioGenerator
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ class AudioFileSourceSD : public AudioFileSource
     AudioFileSourceSD();
     AudioFileSourceSD(const char *filename);
     virtual ~AudioFileSourceSD() override;
-    
+
     virtual bool open(const char *filename) override;
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual bool seek(int32_t pos, int dir) override;

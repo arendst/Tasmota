@@ -31,7 +31,7 @@ call('doxygen')
 os.system("python gen-dxd.py")
 
 # http://stackoverflow.com/questions/12772927/specifying-an-online-image-in-sphinx-restructuredtext-format
-# 
+#
 suppress_warnings = ['image.nonlocal_uri']
 
 # -- General configuration ------------------------------------------------

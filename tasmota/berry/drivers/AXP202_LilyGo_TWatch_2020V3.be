@@ -44,7 +44,7 @@ class AXP202_LilyGo_TWatch_2020V3 : AXP202
       tasmota.add_driver(self)
     end
   end
-  
+
   # enable power to audio chip
   def audio_enable(en)
     self.set_ldo_enable(4, en)

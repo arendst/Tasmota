@@ -17,7 +17,7 @@ class Wire
     end
     return ret
   end
-  
+
   def write_bytes(addr,reg,b)
     self._begin_transmission(addr)
     self._write(reg)

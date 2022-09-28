@@ -5,11 +5,11 @@
                          to be sent in capital letters from the Tasmota device.
                          Upon receiving ON/OFF the client will turn the LED on/off
                          respectively.
-                         
+
                          A second function callback is also attached which will
                          respond with a JSON message on Tasmota Teleperiod when
                          requested from the Tasmota device.
-                         
+
   Copyright (C) 2019  Andre Thomas
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

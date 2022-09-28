@@ -47,7 +47,7 @@ do
         end
     end
 
-    def repl() 
+    def repl()
         while true
             var fun = parse()
             if fun != nil

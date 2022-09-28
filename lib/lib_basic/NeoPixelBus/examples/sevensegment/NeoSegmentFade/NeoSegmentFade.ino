@@ -4,7 +4,7 @@
 //
 // See https://shop.idlehandsdev.com/products/addressable-7-segment-display for a hardware example
 //
-// This example will print current seconds since start of the Arduino 
+// This example will print current seconds since start of the Arduino
 // with a digit animating a circling path for each second
 //
 
@@ -27,7 +27,7 @@ enum Animation
     Animation_COUNT
 };
 
-NeoPixelAnimator animations(Animation_COUNT); 
+NeoPixelAnimator animations(Animation_COUNT);
 
 void CycleAnimation(const AnimationParam& param)
 {
@@ -36,31 +36,31 @@ void CycleAnimation(const AnimationParam& param)
     // instant a digit with that segment on
     SevenSegDigit digit(bitfield, brightness);
     // apply it to the strip
-    strip.SetPixelColor(CycleDigit, digit); 
+    strip.SetPixelColor(CycleDigit, digit);
 }
 
 // for the animation of fading the new number in, we use
-// two digit DIBs (Device Independant Bitmaps) of SevenSegDigit to blend with; 
+// two digit DIBs (Device Independant Bitmaps) of SevenSegDigit to blend with;
 // each sized one less than the strip due to the first is a used for the cycle
 // animation.
 typedef NeoDib<SevenSegDigit> SevenSegDib;
 
-SevenSegDib StartingDigits(DigitCount - 1); 
+SevenSegDib StartingDigits(DigitCount - 1);
 SevenSegDib EndingDigits(DigitCount - 1);
 
 // shader class that will do the "string" blending
 //
-class DigitBlendShader 
+class DigitBlendShader
 {
 public:
     // this shader always renders and doesn't track a dirty state
     bool IsDirty() const
-    { 
+    {
         return true;
     }
 
-    void ResetDirty() 
-    {  
+    void ResetDirty()
+    {
     }
 
     SevenSegDigit Apply(uint16_t indexDigit, SevenSegDigit digit)
@@ -88,8 +88,8 @@ void FadeAnimation(const AnimationParam& param)
     // set the shader property BlendAmount to the animation progress
     blendShader.BlendAmount = param.progress;
     // apply it to the strip at the SecondsDigit location
-    EndingDigits.Render<SevenSegmentFeature, DigitBlendShader>(strip, 
-        blendShader, 
+    EndingDigits.Render<SevenSegmentFeature, DigitBlendShader>(strip,
+        blendShader,
         SecondsDigit);
 }
 
@@ -100,7 +100,7 @@ void setup()
     lastSeconds = millis() / 1000;
 
     strip.Begin();
-    strip.Show(); 
+    strip.Show();
 
     // init animation Dibs as cleared
     StartingDigits.ClearTo(0);
@@ -110,14 +110,14 @@ void setup()
 void loop()
 {
     uint32_t seconds = millis() / 1000;
-    
+
     // when the seconds change, start animations for the update
     //
     if (seconds != lastSeconds)
     {
         // copy last animation ending digits as starting digits
         StartingDigits = EndingDigits;
-        
+
         // format and display new value in ending digits dib
         String display(seconds);
         SevenSegDigit::SetString<SevenSegDib>(EndingDigits,

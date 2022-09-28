@@ -55,7 +55,7 @@ struct BitmapInfoHeader
 
 enum BmpCompression
 {
-    BI_Rgb, 
+    BI_Rgb,
     BI_Rle8,
     BI_Rle4,
     BI_Bitfields,
@@ -79,7 +79,7 @@ public:
         _bottomToTop(true)
     {
     }
- 
+
     ~NeoBitmapFile()
     {
         _file.close();
@@ -171,11 +171,11 @@ public:
         return _height;
     };
 
-    typename T_COLOR_FEATURE::ColorObject GetPixelColor(int16_t x, int16_t y) 
+    typename T_COLOR_FEATURE::ColorObject GetPixelColor(int16_t x, int16_t y)
     {
         if (x < 0 || x >= _width || y < 0 || y >= _height)
         {
-            // Pixel # is out of bounds, this will get converted to a 
+            // Pixel # is out of bounds, this will get converted to a
             // color object type initialized to 0 (black)
             return 0;
         }
@@ -185,7 +185,7 @@ public:
         {
             return 0;
         }
-        
+
         return color;
     };
 
@@ -219,7 +219,7 @@ public:
             }
         }
     }
-    
+
     void Blt(NeoBufferContext<T_COLOR_FEATURE> destBuffer,
         uint16_t indexPixel,
         int16_t xSrc,
@@ -285,7 +285,7 @@ public:
         NeoShaderNop<typename T_COLOR_FEATURE::ColorObject> shaderNop;
 
         Render<NeoShaderNop<typename T_COLOR_FEATURE::ColorObject>>(destBuffer,
-            shaderNop, 
+            shaderNop,
             xDest,
             yDest,
             xSrc,

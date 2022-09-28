@@ -638,7 +638,7 @@ static int mod_set(bool vnd, int argc, char **argv, char *val)
 	}
 
 	if (!strcmp(argv[1], "data")) {
-		return mod_data_set(mod, argv[1], val);	
+		return mod_data_set(mod, argv[1], val);
 	}
 
 	BT_WARN("Unknown module key %s", argv[1]);

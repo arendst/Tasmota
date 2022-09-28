@@ -78,7 +78,7 @@ ESP_Mail_CertStore::ESP_Mail_CertInfo ESP_Mail_CertStore::_preprocessCert(uint32
   return ci;
 }
 
-// The certs.ar file is a UNIX ar format file, concatenating all the 
+// The certs.ar file is a UNIX ar format file, concatenating all the
 // individual certificates into a single blob in a space-efficient way.
 int ESP_Mail_CertStore::initCertStore(FS &fs, const char *indexFileName, const char *dataFileName) {
   int count = 0;

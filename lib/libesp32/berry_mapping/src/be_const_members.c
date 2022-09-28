@@ -1,17 +1,17 @@
 /*********************************************************************************************\
  * Add const virtual members to classes and modules from C static tables
- * 
+ *
  * This allows to creates hundreds of constant members (integers, strings...)
  * stored in a C array instead of explicit berry members.
- * 
+ *
  * It has the following advantages:
  * - consumes much less flash memory, especially with hundreds of members
  * - allows C preprocessor to compute the value at compile time (instead of pure numerical numbers)
  * - allows to compute pointer addresses to C structures
- * 
+ *
  * Takes a pointer to be_const_member_t array and size
  * Returns true if a match was found. In such case the result is on Berry stack
- * 
+ *
  * Encoding depend on prefix (which is skipped when matching names):
  * - `COLOR_WHITE` int value
  * - `$SYMBOL_OK"` string pointer
@@ -27,10 +27,10 @@
 /*********************************************************************************************\
  * Takes a pointer to be_const_member_t array and size
  * Returns true if a match was found. In such case the result is on Berry stack
- * 
+ *
  * Can be called directly by `member()` function, takes the name of the member from
  * berry stack at position 1.
- * 
+ *
  * Encoding depend on prefix (which is skipped when matching names):
  * - `COLOR_WHITE` int value
  * - `$SYMBOL_OK"` string pointer
@@ -38,7 +38,7 @@
  * - `@func` Berry native function
  * - `*my_func` native function - the function is called and return value passed back.
  *              This allows to create dynamic virtual members that are the result of a call.
- * 
+ *
  * The array must be lexically sorted, but the sort function must ignore the prefix `$`, `&`, `*`
 \*********************************************************************************************/
 static bbool be_const_member_dual(bvm *vm, const be_const_member_t * definitions, size_t def_len, bbool is_method) {

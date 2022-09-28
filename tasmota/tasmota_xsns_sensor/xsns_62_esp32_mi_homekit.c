@@ -201,7 +201,7 @@ static void MI32_bridge_thread_entry(void *p)
                 hap_serv_set_bulk_read_cb(service, MI32_bridge_read_callback);
                 hap_acc_add_serv(accessory, service);
                 MI32saveHAPhandles(i,0x0f,hap_serv_get_char_by_uuid(service, HAP_CHAR_UUID_MOTION_DETECTED));
-                
+
                 service = hap_serv_battery_service_create(50,0,0);
                 hap_serv_set_bulk_read_cb(service, MI32_bridge_read_callback);
                 hap_acc_add_serv(accessory, service);
@@ -331,7 +331,7 @@ void mi_homekit_update_value(void* handle, float value, uint32_t type){
             new_val.b = (value > 0.0f);
             break;
         default:
-          new_val.f = value;  
+          new_val.f = value;
     }
 	int ret = hap_char_update_val((hap_char_t *)handle, &new_val);
     // if(ret!= HAP_SUCCESS){

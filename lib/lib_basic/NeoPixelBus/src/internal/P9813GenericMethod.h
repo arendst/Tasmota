@@ -81,18 +81,18 @@ public:
     {
         const uint8_t startFrame[4] = { 0x00 };
         const uint8_t endFrame[4] = { 0x00 };
-        
+
         _wire.beginTransaction();
 
         // start frame
         _wire.transmitBytes(startFrame, sizeof(startFrame));
-        
+
         // data
         _wire.transmitBytes(_data, _sizeData);
-        
-        // end frame 
-        _wire.transmitBytes(endFrame, sizeof(endFrame));        
-        
+
+        // end frame
+        _wire.transmitBytes(endFrame, sizeof(endFrame));
+
         _wire.endTransaction();
     }
 

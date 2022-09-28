@@ -4,7 +4,7 @@
 
   Based on the Rtttl Arduino library by James BM, https://github.com/spicajames/Rtttl
   Based on the gist from Daniel Hall https://gist.github.com/smarthall/1618800
-  
+
   Copyright (C) 2018  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -64,7 +64,7 @@ bool AudioGeneratorRTTTL::loop()
     }
     samplesSent = 0;
   }
-  
+
   // Try and send out the remainder of the existing note, one per loop()
   if (ttlSamplesPerWaveFP10 == 0) { // Mute
     int16_t mute[2] = {0, 0};
@@ -111,7 +111,7 @@ bool AudioGeneratorRTTTL::ReadInt(int *dest)
   *dest = t;
   return true;
 }
-  
+
 
 bool AudioGeneratorRTTTL::ParseHeader()
 {
@@ -269,7 +269,7 @@ bool AudioGeneratorRTTTL::begin(AudioFileSource *source, AudioOutput *output)
   if (!output) return false;
   this->output = output;
   if (!file->isOpen()) return false; // Error
-  
+
   len = file->getSize();
   buff = (char *)malloc(len);
   if (!buff) return false;
@@ -287,6 +287,6 @@ bool AudioGeneratorRTTTL::begin(AudioFileSource *source, AudioOutput *output)
   if (!output->begin()) return false;
 
   running = true;
-  
+
   return true;
 }

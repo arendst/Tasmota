@@ -102,7 +102,7 @@ public:
   uint8_t minor_rel = 0;
   uint8_t maint_rel = 0;
   uint32_t revision = 0;
-  
+
   // Energy scan
   int8_t energy[USE_ZIGBEE_CHANNEL_COUNT];
 

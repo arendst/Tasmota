@@ -20,7 +20,7 @@
 #include <stdint.h>
 
 #define SCALEALPHA 0.000001
-    
+
 typedef struct
     {
         int16_t kVdd;
@@ -38,20 +38,20 @@ typedef struct
         float KsTa;
         float ksTo[5];
         int16_t ct[5];
-        uint16_t alpha[768];    
+        uint16_t alpha[768];
         uint8_t alphaScale;
-        int16_t offset[768];    
+        int16_t offset[768];
         int8_t kta[768];
-        uint8_t ktaScale;    
+        uint8_t ktaScale;
         int8_t kv[768];
         uint8_t kvScale;
         float cpAlpha[2];
         int16_t cpOffset[2];
-        float ilChessC[3]; 
+        float ilChessC[3];
         uint16_t brokenPixels[5];
-        uint16_t outlierPixels[5];  
+        uint16_t outlierPixels[5];
     } paramsMLX90640;
-    
+
     int MLX90640_DumpEE(uint8_t slaveAddr, uint16_t *eeData);
     int MLX90640_SynchFrame(uint8_t slaveAddr);
     // int MLX90640_TriggerMeasurement(uint8_t slaveAddr);
@@ -63,12 +63,12 @@ typedef struct
     void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, float emissivity, float tr, float *result, uint8_t _part);
     int MLX90640_SetResolution(uint8_t slaveAddr, uint8_t resolution);
     int MLX90640_GetCurResolution(uint8_t slaveAddr);
-    int MLX90640_SetRefreshRate(uint8_t slaveAddr, uint8_t refreshRate);   
-    int MLX90640_GetRefreshRate(uint8_t slaveAddr);  
+    int MLX90640_SetRefreshRate(uint8_t slaveAddr, uint8_t refreshRate);
+    int MLX90640_GetRefreshRate(uint8_t slaveAddr);
     int MLX90640_GetSubPageNumber(uint16_t *frameData);
-    int MLX90640_GetCurMode(uint8_t slaveAddr); 
+    int MLX90640_GetCurMode(uint8_t slaveAddr);
     int MLX90640_SetInterleavedMode(uint8_t slaveAddr);
     int MLX90640_SetChessMode(uint8_t slaveAddr);
     void MLX90640_BadPixelsCorrection(uint16_t *pixels, float *to, int mode, paramsMLX90640 *params);
-    
+
 #endif

@@ -15,7 +15,7 @@ You will need:
 Then in your code instantiate an AudioOutput object, ->begin() it, and then simply create the SAM object and call Say().
 
 ## About SAM
-SAM is a very basic speech synthesizer originally developed in 1979 and ported to the Commodore 64.  It was designed to run on very low memory 8-bit processors, and as such is a great for the ESP8266 with it's limited RAM.  
+SAM is a very basic speech synthesizer originally developed in 1979 and ported to the Commodore 64.  It was designed to run on very low memory 8-bit processors, and as such is a great for the ESP8266 with it's limited RAM.
 
 The quality of speech isn't phenomenal.  To paraphrase Samuel Johnson, "It is not done well; but you are surprised to find it done at all."  The same could be said of the decompiled, disassembled, C-translated source code.
 

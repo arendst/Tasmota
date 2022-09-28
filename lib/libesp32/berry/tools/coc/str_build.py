@@ -17,7 +17,7 @@ class str_build:
         self.buckets = []
         for i in range(size):
             self.buckets.append([])
-        
+
         self.keywords()     # add keywords to self.map
 
         self.make_ceil("", 0)   # add empty string as it is always useful
@@ -34,13 +34,13 @@ class str_build:
         prefix = path + "/be_const_strtab"
         self.writefile(prefix + "_def.h", self.build_table_def())
         self.writefile(prefix + ".h", self.build_table_ext())
-    
+
     def get_count(self):            # compute the total size by adding sizes of each bucket
         size = 0
         for bucket in self.buckets:
             size += len(bucket)
         return size
-    
+
     def keywords(self):
         opif = 50
         tab = {
@@ -58,7 +58,7 @@ class str_build:
         }
         for key, v in tab.items():
             self.map[key] = v
-    
+
     def make_ceil(self, name, extra):
         info = str_info()
         info.hash = hashcode(name)
@@ -76,7 +76,7 @@ class str_build:
         if buf != text:
             with open(filename, "w") as f:
                 f.write(text)
-    
+
     def build_table_def(self):
         strings = {}
         for bucket in self.buckets:
@@ -95,7 +95,7 @@ class str_build:
                 istr += str(info.hash) + "u, " + str(info.extra) + ", "
                 istr += str(len(info.str)) + ", " + next + ");\n"
                 strings[info.str] = istr
-        
+
         ostr = ""
         for s in sorted(strings.keys()):
             ostr += strings[s]

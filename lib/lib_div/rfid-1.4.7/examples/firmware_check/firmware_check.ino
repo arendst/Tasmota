@@ -3,13 +3,13 @@
  * Example sketch/program to test your firmware.
  * --------------------------------------------------------------------------------------------------------------------
  * This is a MFRC522 library example; for further details and other examples see: https://github.com/miguelbalboa/rfid
- * 
+ *
  * This example test the firmware of your MFRC522 reader module, only known version can be checked. If the test passed
  * it do not mean that your module is faultless! Some modules have bad or broken antennas or the PICC is broken.
- * 
+ *
  * @author Rotzbua
  * @license Released into the public domain.
- * 
+ *
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
@@ -39,7 +39,7 @@ void setup() {
   while (!Serial);      // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
   SPI.begin();          // Init SPI bus
   mfrc522.PCD_Init();   // Init MFRC522 module
-  
+
   Serial.println(F("*****************************"));
   Serial.println(F("MFRC522 Digital self test"));
   Serial.println(F("*****************************"));

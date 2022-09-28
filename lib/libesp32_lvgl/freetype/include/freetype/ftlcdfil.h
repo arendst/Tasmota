@@ -44,7 +44,7 @@ FT_BEGIN_HEADER
    *   API to control subpixel rendering.
    *
    * @description:
-   *   FreeType provides two alternative subpixel rendering technologies. 
+   *   FreeType provides two alternative subpixel rendering technologies.
    *   Should you define `FT_CONFIG_OPTION_SUBPIXEL_RENDERING` in your
    *   `ftoption.h` file, this enables ClearType-style rendering.
    *   Otherwise, Harmony LCD rendering is enabled.  These technologies are

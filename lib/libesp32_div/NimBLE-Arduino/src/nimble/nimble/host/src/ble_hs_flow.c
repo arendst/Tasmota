@@ -237,7 +237,7 @@ ble_hs_flow_startup(void)
 
     /* Remove previous event from queue, if any*/
     ble_npl_eventq_remove(ble_hs_evq_get(), &ble_hs_flow_ev);
-   
+
 
     /* Assume failure. */
     ble_hci_trans_set_acl_free_cb(NULL, NULL);

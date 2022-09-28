@@ -40,7 +40,7 @@ class Z_attribute_synonym Z_plugin_matchAttributeSynonym(const char *model, cons
   attr_syn = g_plugin_templates.matchAttributeSynonym(model == nullptr ? "" : model,
                                             manufacturer == nullptr ? "" : manufacturer,
                                             cluster, attribute);
-  
+
   Z_attribute_synonym syn;
   if (attr_syn != nullptr) {
     syn = *attr_syn;
@@ -53,7 +53,7 @@ Z_attribute_match Z_plugin_matchAttributeById(const char *model, const char *man
   attr_tmpl =  g_plugin_templates.matchAttributeById(model == nullptr ? "" : model,
                                             manufacturer == nullptr ? "" : manufacturer,
                                             cluster, attribute);
-  
+
   Z_attribute_match attr;
   if (attr_tmpl != nullptr) {
     attr.cluster = attr_tmpl->cluster;
@@ -76,7 +76,7 @@ Z_attribute_match Z_plugin_matchAttributeByName(const char *model, const char *m
     attr_tmpl =  g_plugin_templates.matchAttributeByName(model == nullptr ? "" : model,
                                               manufacturer == nullptr ? "" : manufacturer,
                                               name);
-    
+
     if (attr_tmpl != nullptr) {
       attr.cluster = attr_tmpl->cluster;
       attr.attribute = attr_tmpl->attribute;
@@ -279,7 +279,7 @@ bool ZbLoad(const char *filename_raw) {
               AddLog(LOG_LEVEL_DEBUG, "ZIG: ZbLoad unrecognized modifier '%s'", token);
             }
           }
-          
+
           // token contains the name of the attribute
           Z_plugin_attribute & plugin_attr = tmpl->attributes.addToLast();
           plugin_attr.cluster = cluster_id;

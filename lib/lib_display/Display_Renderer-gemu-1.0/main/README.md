@@ -2,7 +2,7 @@
 
 ### This test code shows how to use ESP32 driver e-Paper displays
 * Support for **Waveshare 2.7inch e-Paper HAT** based ePaper modules in 4-wire SPI mode
- 
+
 #### e-paper functions:
 
  * **Graphics drawing functions**:
@@ -23,11 +23,11 @@
 
 * **Fonts**:
   * Support for **font8**,**font12**,**font16**,**font20**,**font24**, fonts embeded
-  
+
 * **String write function**:
   * **EPD_print**  Write text to display.
 * **Images**:
-  * Can display the image form C array 
+  * Can display the image form C array
 
 #### Connecting the display
   * mosi: 23 (display DIN)
@@ -35,21 +35,21 @@
   * CS:  5 (display CS)
   * DC: 26 (display DC)
   * RST: 27 (display RESET)
-  * BUSY: 32 (display BUSY output)	
-  
+  * BUSY: 32 (display BUSY output)
+
 #### How to build
-	
+
   `make menuconfig`
 
   Make and flash the example.
 
   `make all && make flash`
-  
-#### Test:
- * Dispaly espressif logo for 2s 
- * display the random value on e-paper, refresh 5s 
 
- 
+#### Test:
+ * Dispaly espressif logo for 2s
+ * display the random value on e-paper, refresh 5s
+
+
 
 
 

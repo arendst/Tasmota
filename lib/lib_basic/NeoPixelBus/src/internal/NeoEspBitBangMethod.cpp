@@ -28,7 +28,7 @@ License along with NeoPixel.  If not, see
 
 #include <Arduino.h>
 
-// ESP32C3 I2S is not supported yet 
+// ESP32C3 I2S is not supported yet
 #if !defined(CONFIG_IDF_TARGET_ESP32C3)
 
 static inline uint32_t getCycleCount(void)

@@ -14,7 +14,7 @@
  *	BSD license (see license.txt)
  *
  * changes by Martin Wagner for tasmota project:
- *  
+ *
  * - the libary supports variabel I2C address
  *
  */

@@ -46,7 +46,7 @@ extern const bclass be_class_map;
 
 /********************************************************************\
  * Encode string to identifiers
- * 
+ *
  * `_X` is used as an escape marker
 \********************************************************************/
 static unsigned toidentifier_length(const char *s)
@@ -106,7 +106,7 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *c
 {
     // compact first
     be_map_compact(vm, map);
-    
+
     logfmt("    be_nested_map(%i,\n", map->count);
 
     logfmt("    ( (struct bmapnode*) &(const bmapnode[]) {\n");
@@ -377,7 +377,7 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char 
 }
 
 static void m_solidify_closure(bvm *vm, bbool str_literal, bclosure *cl, const char * classname, void* fout)
-{   
+{
     bproto *pr = cl->proto;
     const char * func_name = str(pr->name);
 

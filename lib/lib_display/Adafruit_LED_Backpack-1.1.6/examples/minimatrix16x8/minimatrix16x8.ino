@@ -1,18 +1,18 @@
-/*************************************************** 
+/***************************************************
   This is a library for our I2C LED Backpacks & FeatherWings
 
   Designed specifically to work with the Adafruit 16x8 LED Matrix FeatherWing
 
-  These displays use I2C to communicate, 2 pins are required to 
+  These displays use I2C to communicate, 2 pins are required to
   interface. There are multiple selectable I2C addresses. For backpacks
   with 2 Address Select pins: 0x70, 0x71, 0x72 or 0x73. For backpacks
   with 3 Address Select pins: 0x70 thru 0x77
 
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
+  Adafruit invests time and resources providing this open source code,
+  please support Adafruit and open-source hardware by purchasing
   products from Adafruit!
 
-  Written by Limor Fried/Ladyada for Adafruit Industries.  
+  Written by Limor Fried/Ladyada for Adafruit Industries.
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
@@ -26,7 +26,7 @@ void setup() {
   //while (!Serial);
   Serial.begin(9600);
   Serial.println("16x8 LED Mini Matrix Test");
-  
+
   matrix.begin(0x70);  // pass in the address
 }
 
@@ -60,12 +60,12 @@ static const uint8_t PROGMEM
     B00111100 };
 
 void loop() {
-  
+
   matrix.clear();
   matrix.drawBitmap(0, 0, smile_bmp, 8, 8, LED_ON);
   matrix.writeDisplay();
   delay(500);
-  
+
   matrix.clear();
   matrix.drawBitmap(0, 8, neutral_bmp, 8, 8, LED_ON);
   matrix.writeDisplay();
@@ -77,7 +77,7 @@ void loop() {
   delay(500);
 
 
-  matrix.drawPixel(0, 0, LED_ON);  
+  matrix.drawPixel(0, 0, LED_ON);
   matrix.writeDisplay();  // write the changes we just made to the display
   delay(500);
 

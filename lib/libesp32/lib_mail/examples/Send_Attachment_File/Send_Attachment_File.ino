@@ -1,17 +1,17 @@
 
 
 /**
- * This example will send the Email with attachments and 
+ * This example will send the Email with attachments and
  * inline images stored in flash and SD card.
- * 
+ *
  * The html and text version messages will be sent.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -39,7 +39,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -81,8 +81,8 @@ void setup()
 
   /** In case the SD card/adapter was used for the file storagge, the SPI pins can be configure from
    * MailClient.sdBegin function which may be different for ESP32 and ESP8266
-   * For ESP32, assign all of SPI pins  
-   * MailClient.sdBegin(14,2,15,13) 
+   * For ESP32, assign all of SPI pins
+   * MailClient.sdBegin(14,2,15,13)
    * Which SCK = 14, MISO = 2, MOSI = 15 and SS = 13
    * And for ESP8266, assign the CS pins of SPI port
    * MailClient.sdBegin(15)
@@ -153,7 +153,7 @@ void setup()
       SPIFFS.remove("/green.png");
     if (SPIFFS.exists("/bin2.dat"))
       SPIFFS.remove("/bin2.dat");
-      
+
     Serial.println("Preparing SPIFFS attachments...");
 
     const char *greenImg = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAoUlEQVR42u3RAQ0AMAgAoJviyWxtAtNYwzmoQGT/eqwRQoQgRAhChCBECEKECBGCECEIEYIQIQgRghCECEGIEIQIQYgQhCBECEKEIEQIQoQgBCFCECIEIUIQIgQhCBGCECEIEYIQIQhBiBCECEGIEIQIQQhChCBECEKEIEQIQhAiBCFCECIEIUIQghAhCBGCECEIEYIQIUKEIEQIQoQg5LoBBaDPbQYiMoMAAAAASUVORK5CYII=";
@@ -215,35 +215,35 @@ void setup()
   ESP_Mail_Session session;
 
   /** ########################################################
-   * Some properties of SMTPSession data and parameters pass to 
+   * Some properties of SMTPSession data and parameters pass to
    * SMTP_Message class accept the pointer to constant char
-   * i.e. const char*. 
-   * 
-   * You may assign a string literal to that properties or function 
+   * i.e. const char*.
+   *
+   * You may assign a string literal to that properties or function
    * like below example.
-   *   
+   *
    * session.login.user_domain = "mydomain.net";
    * session.login.user_domain = String("mydomain.net").c_str();
-   * 
+   *
    * or
-   * 
+   *
    * String doman = "mydomain.net";
    * session.login.user_domain = domain.c_str();
-   * 
+   *
    * And
-   * 
+   *
    * String name = "Jack " + String("dawson");
    * String email = "jack_dawson" + String(123) + "@mail.com";
-   * 
+   *
    * message.addRecipient(name.c_str(), email.c_str());
-   * 
+   *
    * message.addHeader(String("Message-ID: <abcde.fghij@gmail.com>").c_str());
-   * 
+   *
    * or
-   * 
+   *
    * String header = "Message-ID: <abcde.fghij@gmail.com>";
    * message.addHeader(header.c_str());
-   * 
+   *
    * ###########################################################
   */
 
@@ -316,7 +316,7 @@ void setup()
   /* The attachment data item */
   SMTP_Attachment att;
 
-  /** Set the inline image info e.g. 
+  /** Set the inline image info e.g.
    * file name, MIME type, file path, file storage type,
    * transfer encoding and content encoding
   */
@@ -324,10 +324,10 @@ void setup()
   att.descr.mime = "image/png";
   att.file.path = "/orange.png";
 
-  /** The file storage type e.g. 
-   * esp_mail_file_storage_type_none, 
-   * esp_mail_file_storage_type_flash, and 
-   * esp_mail_file_storage_type_sd 
+  /** The file storage type e.g.
+   * esp_mail_file_storage_type_none,
+   * esp_mail_file_storage_type_flash, and
+   * esp_mail_file_storage_type_sd
   */
   att.file.storage_type = esp_mail_file_storage_type_sd;
 
@@ -343,7 +343,7 @@ void setup()
   /* Add inline image to the message */
   message.addInlineImage(att);
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, file path, file storage type,
    * transfer encoding and content encoding
   */
@@ -357,7 +357,7 @@ void setup()
   /* Add attachment to the message */
   message.addAttachment(att);
 
-  /** Set the inline image info e.g. 
+  /** Set the inline image info e.g.
    * file name, MIME type, file path, file storage type,
    * transfer encoding and content encoding
   */
@@ -370,7 +370,7 @@ void setup()
   att.descr.content_encoding = Content_Transfer_Encoding::enc_base64;
   message.addInlineImage(att);
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, file path, file storage type,
    * transfer encoding and content encoding
   */

@@ -4,7 +4,7 @@
  *
  *  Created: on February 7 2021
  *      Author: H2zero
- * 
+ *
 */
 
 #include <NimBLEDevice.h>
@@ -18,15 +18,15 @@ static uint32_t count = 0;
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting BLE work!");
-  
+
   NimBLEDevice::init("svc data");
 }
 
 void loop() {
   pAdvertising->stop();
-  pAdvertising->setServiceData(dataUuid, std::string((char*)&count, sizeof(count)));  
+  pAdvertising->setServiceData(dataUuid, std::string((char*)&count, sizeof(count)));
   pAdvertising->start();
-  
+
   Serial.printf("Advertising count = %d\n", count);
   count++;
   delay(5000);

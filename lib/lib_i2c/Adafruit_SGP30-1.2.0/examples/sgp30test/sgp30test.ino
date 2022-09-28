@@ -51,7 +51,7 @@ void loop() {
   }
   Serial.print("Raw H2 "); Serial.print(sgp.rawH2); Serial.print(" \t");
   Serial.print("Raw Ethanol "); Serial.print(sgp.rawEthanol); Serial.println("");
- 
+
   delay(1000);
 
   counter++;

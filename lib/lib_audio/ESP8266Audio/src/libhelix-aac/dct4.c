@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: dct4.c,v 1.1 2005/02/26 01:47:34 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: dct4.c,v 1.1 2005/02/26 01:47:34 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -73,7 +73,7 @@ static void PreMultiply(int tabidx, int *zbuf1)
 	int *zbuf2;
 	const int *csptr;
 
-	nmdct = nmdctTab[tabidx];		
+	nmdct = nmdctTab[tabidx];
 	zbuf2 = zbuf1 + nmdct - 1;
 	csptr = cos4sin4tab + cos4sin4tabOffset[tabidx];
 
@@ -133,7 +133,7 @@ static void PostMultiply(int tabidx, int *fft1)
 	int *fft2;
 	const int *csptr;
 
-	nmdct = nmdctTab[tabidx];		
+	nmdct = nmdctTab[tabidx];
 	csptr = cos1sin1tab;
 	skipFactor = postSkip[tabidx];
 	fft2 = fft1 + nmdct - 1;
@@ -194,16 +194,16 @@ static void PostMultiply(int tabidx, int *fft1)
 	int *zbuf2;
 	const int *csptr;
 
-	nmdct = nmdctTab[tabidx];		
+	nmdct = nmdctTab[tabidx];
 	zbuf2 = zbuf1 + nmdct - 1;
 	csptr = cos4sin4tab + cos4sin4tabOffset[tabidx];
 
 	/* whole thing should fit in registers - verify that compiler does this */
 	for (i = nmdct >> 2; i != 0; i--) {
 		/* cps2 = (cos+sin), sin2 = sin, cms2 = (cos-sin) */
-		cps2a = *csptr++;	
+		cps2a = *csptr++;
 		sin2a = *csptr++;
-		cps2b = *csptr++;	
+		cps2b = *csptr++;
 		sin2b = *csptr++;
 
 		ar1 = *(zbuf1 + 0) >> es;
@@ -252,7 +252,7 @@ static void PostMultiply(int tabidx, int *fft1)
 	int *fft2;
 	const int *csptr;
 
-	nmdct = nmdctTab[tabidx];		
+	nmdct = nmdctTab[tabidx];
 	csptr = cos1sin1tab;
 	skipFactor = postSkip[tabidx];
 	fft2 = fft1 + nmdct - 1;
@@ -270,12 +270,12 @@ static void PostMultiply(int tabidx, int *fft1)
 		ai2 = *(fft2 + 0);
 
 		t = MULSHIFT32(sin2, ar1 + ai1);
-		z = t - MULSHIFT32(cs2, ai1);	
-		CLIP_2N_SHIFT(z, es);	 
+		z = t - MULSHIFT32(cs2, ai1);
+		CLIP_2N_SHIFT(z, es);
 		*fft2-- = z;
 		cs2 -= 2*sin2;
-		z = t + MULSHIFT32(cs2, ar1);	
-		CLIP_2N_SHIFT(z, es);	 
+		z = t + MULSHIFT32(cs2, ar1);
+		CLIP_2N_SHIFT(z, es);
 		*fft1++ = z;
 
 		cs2 = *csptr++;
@@ -285,12 +285,12 @@ static void PostMultiply(int tabidx, int *fft1)
 		ar2 = *fft2;
 		ai2 = -ai2;
 		t = MULSHIFT32(sin2, ar2 + ai2);
-		z = t - MULSHIFT32(cs2, ai2);	
-		CLIP_2N_SHIFT(z, es);	 
+		z = t - MULSHIFT32(cs2, ai2);
+		CLIP_2N_SHIFT(z, es);
 		*fft2-- = z;
 		cs2 -= 2*sin2;
-		z = t + MULSHIFT32(cs2, ar2);	
-		CLIP_2N_SHIFT(z, es);	 
+		z = t + MULSHIFT32(cs2, ar2);
+		CLIP_2N_SHIFT(z, es);
 		*fft1++ = z;
 		cs2 += 2*sin2;
 	}
@@ -310,7 +310,7 @@ static void PostMultiply(int tabidx, int *fft1)
  * Return:      none
  *
  * Notes:       operates in-place
- *              if number of guard bits in input is < GBITS_IN_DCT4, the input is 
+ *              if number of guard bits in input is < GBITS_IN_DCT4, the input is
  *                scaled (>>) before the DCT4 and rescaled (<<, with clipping) after
  *                the DCT4 (rare)
  *              the output has FBITS_LOST_DCT4 fewer fraction bits than the input

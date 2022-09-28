@@ -12,7 +12,7 @@
    4. wait
    5. Stop advertising.
    6. deep sleep
-   
+
 */
 
 #include "NimBLEDevice.h"
@@ -26,7 +26,7 @@
 #define GPIO_DEEP_SLEEP_DURATION 10     // sleep x seconds and then wake up
 
 // UUID 1 128-Bit (may use linux tool uuidgen or random numbers via https://www.uuidgenerator.net/)
-#define BEACON_UUID "8ec76ea3-6668-48da-9866-75be8bc86f4d" 
+#define BEACON_UUID "8ec76ea3-6668-48da-9866-75be8bc86f4d"
 
 RTC_DATA_ATTR static time_t last;    // remember last boot in RTC Memory
 RTC_DATA_ATTR static uint32_t bootcount; // remember number of boots in RTC Memory

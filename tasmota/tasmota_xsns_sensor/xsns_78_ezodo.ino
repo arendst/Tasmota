@@ -41,7 +41,7 @@ struct EZODO : public EZOStruct {
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DO "\":%s" ), name, str);
       ResponseJsonEnd();
-    
+
 #ifdef USE_WEBSERVER
     }else {
       WSContentSend_PD(HTTP_SNS_DO, name, str);

@@ -37,11 +37,11 @@ void HslColor::_RgbToHsl(float r, float g, float b, HslColor* color)
     float h, s, l;
     l = (max + min) / 2.0f;
 
-    if (max == min) 
+    if (max == min)
     {
         h = s = 0.0f;
     }
-    else 
+    else
     {
         float d = max - min;
         s = (l > 0.5f) ? d / (2.0f - (max + min)) : d / (max + min);

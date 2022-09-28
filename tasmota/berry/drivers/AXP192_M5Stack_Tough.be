@@ -37,7 +37,7 @@ class AXP192_M5Stack_Tough : AXP192
 
       # turn on lcd backlight
       self.set_ldo_enable(3, true)
-  
+
       self.touch_reset(true)
 
       # set charging current to 100mA
@@ -45,7 +45,7 @@ class AXP192_M5Stack_Tough : AXP192
 
       # AXP192 GPIO4 - TBC what this does really?
       self.write8(0x95, self.read8(0X95) & 0x72 | 0x84)
-  
+
       # Button parameter setting
       # Current:
       #   Boot time = 512ms
@@ -54,7 +54,7 @@ class AXP192_M5Stack_Tough : AXP192
       #   PWROK signal delay after power on = 64ms
       #   Shutdown duration setting = 4s
       self.write8(0x34, 0x4C)
-  
+
       # parameter buttons
       #  Start time: 512ms
       #  Long press: 1s
@@ -73,7 +73,7 @@ class AXP192_M5Stack_Tough : AXP192
       # Bit 1: APS voltage ADC enable
       # Bit 0: TS pin ADC function enable
       self.write8(0x82, 0xFF)
-  
+
       # Reset LCD Controller
       self.set_lcd_reset(false)
       tasmota.delay(100)   # wait for 100ms

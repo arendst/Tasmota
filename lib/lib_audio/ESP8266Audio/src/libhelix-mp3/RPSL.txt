@@ -319,7 +319,7 @@ choose to license such Licensor Modifications under this License, or on
 different terms from those contained in this License or may choose not to
 license them at all.
 
-11. Termination. 
+11. Termination.
 
 11.1 Term and Termination. The term of this License is perpetual unless
 terminated as provided below. This License and the rights granted hereunder will
@@ -419,7 +419,7 @@ and all related documents be drafted in English. Les parties ont exig&eacute;
 que le pr&eacute;sent contrat et tous les documents connexes soient
 r&eacute;dig&eacute;s en anglais.
 
-								EXHIBIT A.  
+								EXHIBIT A.
 
 "Copyright &copy; 1995-2002
 RealNetworks, Inc. and/or its licensors. All Rights Reserved.
@@ -444,16 +444,16 @@ IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING
 WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
 
-Contributor(s): ____________________________________ 
+Contributor(s): ____________________________________
 
 Technology Compatibility Kit Test
-Suite(s) Location (if licensed under the RCSL): ______________________________ 
+Suite(s) Location (if licensed under the RCSL): ______________________________
 
 Object Code Notice: Helix DNA Client technology included. Copyright (c)
 RealNetworks, Inc., 1995-2002. All rights reserved.
 
 
-								EXHIBIT B 
+								EXHIBIT B
 
 Compatible Source Licenses for the RealNetworks Public Source License. The
 following list applies to the most recent version of the license as of October
@@ -502,9 +502,9 @@ code does not violate either the RPSL or the Compatible Source License.
 The latest version of this list can be found at:
 https://www.helixcommunity.org/content/complicense
 
-								EXHIBIT C 
+								EXHIBIT C
 
-RealNetworks' Trademark policy.  
+RealNetworks' Trademark policy.
 
 RealNetworks defines the following trademarks collectively as "Licensor
 Trademarks": "RealNetworks", "RealPlayer", "RealJukebox", "RealSystem",

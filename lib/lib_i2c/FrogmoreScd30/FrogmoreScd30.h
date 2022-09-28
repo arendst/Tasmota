@@ -43,7 +43,7 @@ class FrogmoreScd30
         FrogmoreScd30() {};
         // Constructors
         // the SCD30 only lists a single i2c address, so not necesary to specify
-        // 
+        //
         void begin(void);
         void begin(uint8_t _i2cAddress);
         void begin(TwoWire *pWire);

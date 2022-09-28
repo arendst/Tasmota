@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: sbrimdct.c,v 1.1 2005/02/26 01:47:35 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: sbrimdct.c,v 1.1 2005/02/26 01:47:35 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -85,10 +85,10 @@ void DecWindowOverlapNoClip(int *buf0, int *over0, int *out0, int winTypeCurr, i
 			f0 = MULSHIFT32(w0, in);
 			f1 = MULSHIFT32(w1, in);
 
-			in = *over0;	
+			in = *over0;
 			*out0++ = in - f0;
 
-			in = *over1;	
+			in = *over1;
 			*out1-- = in + f1;
 
 			in = *buf1--;
@@ -106,10 +106,10 @@ void DecWindowOverlapNoClip(int *buf0, int *over0, int *out0, int winTypeCurr, i
 			f0 = MULSHIFT32(w0, in);
 			f1 = MULSHIFT32(w1, in);
 
-			in = *over0;	
+			in = *over0;
 			*out0++ = in - f0;
 
-			in = *over1;	
+			in = *over1;
 			*out1-- = in + f1;
 
 			w0 = *wndCurr++;
@@ -160,10 +160,10 @@ void DecWindowOverlapLongStartNoClip(int *buf0, int *over0, int *out0, int winTy
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*out0++ = in - f0;
 
-		in = *over1;	
+		in = *over1;
 		*out1-- = in + f1;
 
 		in = *buf1--;
@@ -183,10 +183,10 @@ void DecWindowOverlapLongStartNoClip(int *buf0, int *over0, int *out0, int winTy
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*out0++ = in - f0;
 
-		in = *over1;	
+		in = *over1;
 		*out1-- = in + f1;
 
 		w0 = *wndCurr++;	/* W[0], W[1], ... --> W[255], W[254], ... */
@@ -236,10 +236,10 @@ void DecWindowOverlapLongStopNoClip(int *buf0, int *over0, int *out0, int winTyp
 		in = *buf0++;
 		f1 = in >> 1;	/* scale since skipping multiply by Q31 */
 
-		in = *over0;	
+		in = *over0;
 		*out0++ = in;
 
-		in = *over1;	
+		in = *over1;
 		*out1-- = in + f1;
 
 		w0 = *wndCurr++;
@@ -259,14 +259,14 @@ void DecWindowOverlapLongStopNoClip(int *buf0, int *over0, int *out0, int winTyp
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*out0++ = in - f0;
 
-		in = *over1;	
+		in = *over1;
 		*out1-- = in + f1;
 
 		w0 = *wndCurr++;
-		w1 = *wndCurr++;	
+		w1 = *wndCurr++;
 		in = *buf1--;
 
 		*over1-- = MULSHIFT32(w0, in);
@@ -323,10 +323,10 @@ void DecWindowOverlapShortNoClip(int *buf0, int *over0, int *out0, int winTypeCu
 		f0 = MULSHIFT32(w0, in);
 		f1 = MULSHIFT32(w1, in);
 
-		in = *over0;	
+		in = *over0;
 		*out0++ = in - f0;
 
-		in = *over1;	
+		in = *over1;
 		*out1-- = in + f1;
 
 		w0 = *wndCurr++;
@@ -338,9 +338,9 @@ void DecWindowOverlapShortNoClip(int *buf0, int *over0, int *out0, int winTypeCu
 		*over0++ = MULSHIFT32(w1, in);
 	} while (over0 < over1);
 
-	/* pcm[576-703] = Wc[128-255] * block0[128-255] + Wc[0-127] * block1[0-127] + overlap[576-703] 
-	 * pcm[704-831] = Wc[128-255] * block1[128-255] + Wc[0-127] * block2[0-127] + overlap[704-831] 
-	 * pcm[832-959] = Wc[128-255] * block2[128-255] + Wc[0-127] * block3[0-127] + overlap[832-959] 
+	/* pcm[576-703] = Wc[128-255] * block0[128-255] + Wc[0-127] * block1[0-127] + overlap[576-703]
+	 * pcm[704-831] = Wc[128-255] * block1[128-255] + Wc[0-127] * block2[0-127] + overlap[704-831]
+	 * pcm[832-959] = Wc[128-255] * block2[128-255] + Wc[0-127] * block3[0-127] + overlap[832-959]
 	 */
 	for (i = 0; i < 3; i++) {
 		out0 += 64;
@@ -374,7 +374,7 @@ void DecWindowOverlapShortNoClip(int *buf0, int *over0, int *out0, int winTypeCu
 		} while (over0 < over1);
 	}
 
-	/* pcm[960-1023] = Wc[128-191] * block3[128-191] + Wc[0-63]   * block4[0-63] + overlap[960-1023]  
+	/* pcm[960-1023] = Wc[128-191] * block3[128-191] + Wc[0-63]   * block4[0-63] + overlap[960-1023]
 	 * over[0-63]    = Wc[192-255] * block3[192-255] + Wc[64-127] * block4[64-127]
 	 */
 	out0 += 64;
@@ -402,12 +402,12 @@ void DecWindowOverlapShortNoClip(int *buf0, int *over0, int *out0, int winTypeCu
 		*over1-- = MULSHIFT32(w0, in);	/* save in overlap[128-191] */
 		*over0++ = MULSHIFT32(w1, in);	/* save in overlap[64-127] */
 	} while (over0 < over1);
-	
+
 	/* over0 now points at overlap[128] */
-	
-	/* over[64-191]   = Wc[128-255] * block4[128-255] + Wc[0-127] * block5[0-127] 
+
+	/* over[64-191]   = Wc[128-255] * block4[128-255] + Wc[0-127] * block5[0-127]
 	 * over[192-319]  = Wc[128-255] * block5[128-255] + Wc[0-127] * block6[0-127]
-	 * over[320-447]  = Wc[128-255] * block6[128-255] + Wc[0-127] * block7[0-127]  
+	 * over[320-447]  = Wc[128-255] * block6[128-255] + Wc[0-127] * block7[0-127]
 	 * over[448-576]  = Wc[128-255] * block7[128-255]
 	 */
 	for (i = 0; i < 3; i++) {
@@ -434,7 +434,7 @@ void DecWindowOverlapShortNoClip(int *buf0, int *over0, int *out0, int winTypeCu
 		} while (over0 < over1);
 	}
 
-	/* over[576-1024] = 0 */ 
+	/* over[576-1024] = 0 */
 	i = 448;
 	over0 += 64;
 	do {

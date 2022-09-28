@@ -93,7 +93,7 @@ struct tsf_stream
 
 	// Function pointer will be called to skip ahead over 'count' bytes
 	int (*close)(void* data);
-	
+
 	// Function pointer will be called to skip ahead over 'count' bytes
 	int (*size)(void* data);
 };
@@ -315,7 +315,7 @@ struct tsf
 
 	struct tsf_hydra *hydra;
 
-	// Cached sample read 
+	// Cached sample read
 	short *buffer[TSF_BUFFS];
 	int offset[TSF_BUFFS];
 	int timestamp[TSF_BUFFS];
@@ -361,7 +361,7 @@ static int tsf_stream_cached_read(void* v, void* ptr, unsigned int size)
 				i = -1; // Restart the for() at block 0 after postincrement
 			}
 		}
-		
+
 		int repl = 0;
 		for (int i=1; i < d->buffs; i++) {
 			if (d->timestamp[i] < d->timestamp[repl]) repl = i;
@@ -425,7 +425,7 @@ static int tsf_stream_cached_close(void* v)
 /* Wraps an existing stream with a caching layer.  First create the stream you need, then
    call this to create a new stream.  Use this new stream only, and when done close() will
    close both this stream as well as the wrapped one. */
-TSFDEF struct tsf_stream *tsf_stream_wrap_cached(struct tsf_stream *stream, int buffs, int buffsize, struct tsf_stream *dest) 
+TSFDEF struct tsf_stream *tsf_stream_wrap_cached(struct tsf_stream *stream, int buffs, int buffsize, struct tsf_stream *dest)
 {
 	struct tsf_stream_cached_data *s = (struct tsf_stream_cached_data*)TSF_MALLOC(sizeof(*s));
 	s->buffs  = buffs;
@@ -851,7 +851,7 @@ static void tsf_region_envtosecs(struct tsf_envelope* p, TSF_BOOL sustainIsGain)
 	// to keep the values in timecents so we can calculate it during startNote
 	if (!p->keynumToHold)  p->hold  = (p->hold  < -11950.0f ? 0.0f : tsf_timecents2Secsf(p->hold));
 	if (!p->keynumToDecay) p->decay = (p->decay < -11950.0f ? 0.0f : tsf_timecents2Secsf(p->decay));
-	
+
 	if (p->sustain < 0.0f) p->sustain = 0.0f;
 	else if (sustainIsGain) p->sustain = tsf_decibelsToGain(-p->sustain / 10.0f);
 	else p->sustain = 1.0f - (p->sustain / 1000.0f);
@@ -1492,7 +1492,7 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
 
     gainMono = noteGain * v->ampenv.level;
     short gainMonoFP = gainMono * 32767;
-    
+
     // Update EG.
     tsf_voice_envelope_process(&v->ampenv, blockSamples, f->outSampleRate);
     if (updateModEnv) tsf_voice_envelope_process(&v->modenv, blockSamples, f->outSampleRate);
@@ -1605,7 +1605,7 @@ TSFDEF tsf* tsf_load(struct tsf_stream* stream)
 		res->presets = (struct tsf_preset*)TSF_MALLOC(res->presetNum * sizeof(struct tsf_preset));
 		TSF_MEMSET(res->presets, 0, res->presetNum * sizeof(struct tsf_preset));
 		res->fontSamplesOffset = fontSamplesOffset;
- 		res->fontSampleCount = fontSampleCount; 
+ 		res->fontSampleCount = fontSampleCount;
 		res->outSampleRate = 44100.0f;
 		res->hydra = (struct tsf_hydra*)TSF_MALLOC(sizeof(struct tsf_hydra));
 		TSF_MEMCPY(res->hydra, &hydra, sizeof(*res->hydra));
@@ -1833,7 +1833,7 @@ TSFDEF void tsf_render_short(tsf* f, short* buffer, int samples, int flag_mixing
 	tsf_render_float(f, f->outputSamples, samples, TSF_FALSE);
 
 	floatSamples = f->outputSamples;
-	if (flag_mixing) 
+	if (flag_mixing)
 		while (buffer != bufferEnd)
 		{
 			float v = *floatSamples++;

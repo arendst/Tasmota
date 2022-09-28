@@ -344,9 +344,9 @@ static void proxy_cfg(struct bt_mesh_proxy_client *client)
 
 	rx.local_match = 1U;
 
-		if (bt_mesh_rpl_check(&rx, NULL)) {	
-			BT_WARN("Replay: src 0x%04x dst 0x%04x seq 0x%06x",	
-					rx.ctx.addr, rx.ctx.recv_dst, rx.seq);	
+		if (bt_mesh_rpl_check(&rx, NULL)) {
+			BT_WARN("Replay: src 0x%04x dst 0x%04x seq 0x%06x",
+					rx.ctx.addr, rx.ctx.recv_dst, rx.seq);
 		goto done;
 	}
 
@@ -651,7 +651,7 @@ static void proxy_disconnected(uint16_t conn_handle, int reason)
 {
 	int i;
 
-	BT_DBG("conn handle %u reason 0x%02x", conn_handle, reason);	
+	BT_DBG("conn handle %u reason 0x%02x", conn_handle, reason);
 	conn_count--;
 
 	for (i = 0; i < ARRAY_SIZE(clients); i++) {

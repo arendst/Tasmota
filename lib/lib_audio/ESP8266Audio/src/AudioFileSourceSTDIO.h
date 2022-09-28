@@ -2,7 +2,7 @@
   AudioFileSourceSTDIO
   Input SPIFFS "file" to be used by AudioGenerator
   Only for host-based testing, not Arduino
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ class AudioFileSourceSTDIO : public AudioFileSource
     AudioFileSourceSTDIO();
     AudioFileSourceSTDIO(const char *filename);
     virtual ~AudioFileSourceSTDIO() override;
-    
+
     virtual bool open(const char *filename) override;
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual bool seek(int32_t pos, int dir) override;

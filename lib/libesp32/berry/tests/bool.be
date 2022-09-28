@@ -17,7 +17,7 @@ def test(a, b)
 end
 test(true, true)
 
-# bug in unary 
+# bug in unary
 def f(i)
     var j = !i       # bug if i is erroneously modified
     return i

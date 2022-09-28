@@ -96,7 +96,7 @@ extern size_t esp_mpi_hardware_words(size_t words);
 extern void esp_mpi_enable_hardware_hw_op( void );
 extern void esp_mpi_disable_hardware_hw_op( void );
 extern void esp_mpi_read_result_hw_op(mbedtls_mpi *Z, size_t z_words);
-extern void esp_mpi_mult_mpi_failover_mod_mult_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t num_words);   
+extern void esp_mpi_mult_mpi_failover_mod_mult_hw_op(const mbedtls_mpi *X, const mbedtls_mpi *Y, size_t num_words);
 #endif //CONFIG_IDF_TARGET_ESP32C3
 
 #endif

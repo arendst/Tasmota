@@ -122,7 +122,7 @@
 
   DisplayScrollText     text [, num_loops]
 
-                              Displays scrolling text indefinitely, until another Display- command (other than DisplayScrollText 
+                              Displays scrolling text indefinitely, until another Display- command (other than DisplayScrollText
                               or DisplayScrollDelay is issued). Optionally, stop scrolling after num_loops iterations.
 
 
@@ -650,7 +650,7 @@ void TM1637ScrollText(void)
     if(TM1637Data.scroll_counter_max != 0 && (TM1637Data.scroll_counter >= TM1637Data.scroll_counter_max)) {
       TM1637Data.scroll = false;
       return;
-    }    
+    }
   }
   uint8_t rawBytes[1];
   for (uint32_t i = 0, j = TM1637Data.scroll_index; i < 1 + strlen(TM1637Data.scroll_text); i++, j++)
@@ -990,7 +990,7 @@ void TM1637ShowTime()
   uint8_t hr = RtcTime.hour;
   uint8_t mn = RtcTime.minute;
   uint8_t sc = RtcTime.second;
-  
+
   if (!TM1637Data.clock_24)
   {
     if (hr > 12)
@@ -1006,7 +1006,7 @@ void TM1637ShowTime()
   {
     tm[0] = ' ';
   }
-  
+
   if (TM1637 == TM1637Data.display_type)
   {
     uint8_t rawBytes[1];

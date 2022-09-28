@@ -1,6 +1,6 @@
 /*
  * Write personal data of a MIFARE RFID card using a RFID-RC522 reader
- * Uses MFRC522 - Library to use ARDUINO RFID MODULE KIT 13.56 MHZ WITH TAGS SPI W AND R BY COOQROBOT. 
+ * Uses MFRC522 - Library to use ARDUINO RFID MODULE KIT 13.56 MHZ WITH TAGS SPI W AND R BY COOQROBOT.
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
  *             Reader/PCD   Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
@@ -16,7 +16,7 @@
  * Arduino
  * PCD (Proximity Coupling Device): NXP MFRC522 Contactless Reader IC
  * PICC (Proximity Integrated Circuit Card): A card or tag using the ISO 14443A interface, eg Mifare or NTAG203.
- * The reader can be found on eBay for around 5 dollars. Search for "mf-rc522" on ebay.com. 
+ * The reader can be found on eBay for around 5 dollars. Search for "mf-rc522" on ebay.com.
  */
 
 #include <SPI.h>

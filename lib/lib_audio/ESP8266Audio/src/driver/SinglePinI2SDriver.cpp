@@ -1,16 +1,16 @@
 /*
-  SinglePinI2SDriver  
+  SinglePinI2SDriver
   ESP8266Audio I2S Minimal driver
 
   Most of this code is taken and reworked from ESP8266 Arduino core,
   which itself is reworked from Espessif's I2S examples.
   Original code is licensed under LGPL 2.1 or above
- 
+
   Reasons for rewrite:
   - Non-configurable size of DMA buffers
   - We only need GPIO3 connected to I2SO_DATA
-  - No API to queue data from ISR. Callbacks are unusable 
-    as i2s_write_* functions are not in IRAM and may re-enable 
+  - No API to queue data from ISR. Callbacks are unusable
+    as i2s_write_* functions are not in IRAM and may re-enable
     SLC interrupt before returning
   - ISR overhead is not needed
 
@@ -57,7 +57,7 @@ bool SinglePinI2SDriver::begin(uint8_t bufCount, uint16_t bufSize)
   configureSLC();
   startI2S();
 
-  // Send out at least one buffer, so we have valid address of 
+  // Send out at least one buffer, so we have valid address of
   // finished descriptor in SLCRXEDA
   head = &descriptors[0];
   head->owner = 1;
@@ -76,7 +76,7 @@ void SinglePinI2SDriver::stop()
   stopI2S();
 }
 
-bool SinglePinI2SDriver::allocateBuffers() 
+bool SinglePinI2SDriver::allocateBuffers()
 {
   // Allocate output (RXLINK) descriptors and bufferss
   if (descriptors) return true;
@@ -117,13 +117,13 @@ void SinglePinI2SDriver::freeBuffers(int allocated)
 
 void SinglePinI2SDriver::zeroBuffers()
 {
-  for(int i = 0; i < bufCount; i++) {    
+  for(int i = 0; i < bufCount; i++) {
     auto descriptor = &descriptors[i];
     ets_memset((void *)descriptor->buf_ptr, 0, bufSize * sizeof(uint32_t));
   }
 }
 
-inline void SinglePinI2SDriver::advanceHead(const SLCDecriptor *lastSent) 
+inline void SinglePinI2SDriver::advanceHead(const SLCDecriptor *lastSent)
 {
   if (headPos >= bufSize) {
     head->owner = 1; // Owned by SLC
@@ -131,14 +131,14 @@ inline void SinglePinI2SDriver::advanceHead(const SLCDecriptor *lastSent)
     head->owner = 0; // Owned by CPU
     headPos = 0;
     // If SLC stopped, fill-up the buffers before (re)starting
-    if (isSLCStopped() && (head->next_link_ptr == lastSent)) { 
+    if (isSLCStopped() && (head->next_link_ptr == lastSent)) {
       underflowCount++;
       startSLC();
     }
   }
 }
 
-bool SinglePinI2SDriver::write(uint32_t sample) 
+bool SinglePinI2SDriver::write(uint32_t sample)
 {
   auto lastSent = lastSentDescriptor();
   if (isSLCRunning() && (lastSent->next_link_ptr == head)) return false;
@@ -147,7 +147,7 @@ bool SinglePinI2SDriver::write(uint32_t sample)
   return true;
 };
 
-bool SinglePinI2SDriver::writeInterleaved(uint32_t samples[4]) 
+bool SinglePinI2SDriver::writeInterleaved(uint32_t samples[4])
 {
   auto lastSent = lastSentDescriptor();
   if (isSLCRunning() && (lastSent->next_link_ptr == head)) return false;
@@ -243,9 +243,9 @@ void SinglePinI2SDriver::startI2S()
   I2SIE = 0;
   I2SC &= ~(I2SRST);
   I2SC |= I2SRST;
-  I2SC &= ~(I2SRST);  
-  // I2STXFMM, I2SRXFMM=0 => 16-bit, dual channel data 
-  I2SFC &= ~(I2SDE | (I2STXFMM << I2STXFM) | (I2SRXFMM << I2SRXFM)); 
+  I2SC &= ~(I2SRST);
+  // I2STXFMM, I2SRXFMM=0 => 16-bit, dual channel data
+  I2SFC &= ~(I2SDE | (I2STXFMM << I2STXFM) | (I2SRXFMM << I2SRXFM));
   I2SFC |= I2SDE; // Enable DMA
   // I2STXCMM, I2SRXCMM=0 => Dual channel mode, RX/TX CHAN_MOD=0
   I2SCC &= ~((I2STXCMM << I2STXCM) | (I2SRXCMM << I2SRXCM));
@@ -253,7 +253,7 @@ void SinglePinI2SDriver::startI2S()
   currentRate = 0;
   setRate(44100);
   // Start I2S peripheral
-  I2SC |= I2STXS; 
+  I2SC |= I2STXS;
 }
 
 void SinglePinI2SDriver::stopI2S()

@@ -19,8 +19,8 @@ void setup() {
 void loop() {
   Serial.println("\n\nTransfer test");
   for (uint16_t x=0; x<=0xFF; x++) {
-    uint8_t i = x;   
-    Serial.print("0x"); Serial.print(i, HEX); 
+    uint8_t i = x;
+    Serial.print("0x"); Serial.print(i, HEX);
     spi_dev.read(&i, 1, i);
     Serial.print("/"); Serial.print(i, HEX);
     Serial.print(", ");

@@ -1,37 +1,37 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
@@ -64,7 +64,7 @@ static const char SFLenTab[16][2] = {
  *                granule/channel
  *              vector of scfsi flags from side info, length = 4 (MAX_SCFBD)
  *              index of current granule
- *              ScaleFactorInfoSub from granule 0 (for granule 1, if scfsi[i] is set, 
+ *              ScaleFactorInfoSub from granule 0 (for granule 1, if scfsi[i] is set,
  *                then we just replicate the scale factors from granule 0 in the
  *                i'th set of scalefactor bands)
  *
@@ -74,7 +74,7 @@ static const char SFLenTab[16][2] = {
  * Return:      none
  *
  * Notes:       set order of short blocks to s[band][window] instead of s[window][band]
- *                so that we index through consecutive memory locations when unpacking 
+ *                so that we index through consecutive memory locations when unpacking
  *                (make sure dequantizer follows same convention)
  *              Illegal Intensity Position = 7 (always) for MPEG1 scale factors
  **************************************************************************************/
@@ -82,14 +82,14 @@ static void UnpackSFMPEG1(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoS
 {
 	int sfb;
 	int slen0, slen1;
-	
+
 	/* these can be 0, so make sure GetBits(bsi, 0) returns 0 (no >> 32 or anything) */
 	slen0 = (int)SFLenTab[sis->sfCompress][0];
 	slen1 = (int)SFLenTab[sis->sfCompress][1];
-	
+
 	if (sis->blockType == 2) {
 		/* short block, type 2 (implies winSwitchFlag == 1) */
-		if (sis->mixedBlock) {          
+		if (sis->mixedBlock) {
 			/* do long block portion */
 			for (sfb = 0; sfb < 8; sfb++)
 				sfis->l[sfb] =    (char)GetBits(bsi, slen0);
@@ -117,14 +117,14 @@ static void UnpackSFMPEG1(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoS
 		/* long blocks, type 0, 1, or 3 */
 		if(gr == 0) {
 			/* first granule */
-			for (sfb = 0;  sfb < 11; sfb++) 
+			for (sfb = 0;  sfb < 11; sfb++)
 				sfis->l[sfb] = (char)GetBits(bsi, slen0);
-			for (sfb = 11; sfb < 21; sfb++) 
+			for (sfb = 11; sfb < 21; sfb++)
 				sfis->l[sfb] = (char)GetBits(bsi, slen1);
 			return;
 		} else {
 			/* second granule
-			 * scfsi: 0 = different scalefactors for each granule, 1 = copy sf's from granule 0 into granule 1 
+			 * scfsi: 0 = different scalefactors for each granule, 1 = copy sf's from granule 0 into granule 1
 			 * for block type == 2, scfsi is always 0
 			 */
 			sfb = 0;
@@ -155,11 +155,11 @@ static void UnpackSFMPEG1(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoS
  */
 static const char NRTab[6][3][4] = {
 	/* non-intensity stereo */
-	{	{6, 5, 5, 5},		
-		{3, 3, 3, 3},	/* includes / 3 */	
+	{	{6, 5, 5, 5},
+		{3, 3, 3, 3},	/* includes / 3 */
 		{6, 3, 3, 3},   /* includes / 3 except for first entry */
 	},
-	{	{6, 5, 7, 3}, 
+	{	{6, 5, 7, 3},
 		{3, 3, 4, 2},
 		{6, 3, 4, 2},
 	},
@@ -172,7 +172,7 @@ static const char NRTab[6][3][4] = {
 		{4, 4, 4, 0},
 		{6, 5, 4, 0},
 	},
-	{	{6, 6, 6, 3}, 
+	{	{6, 6, 6, 3},
 		{4, 3, 3, 2},
 		{6, 4, 3, 2},
 	},
@@ -190,7 +190,7 @@ static const char NRTab[6][3][4] = {
  * Inputs:      BitStreamInfo, SideInfoSub, ScaleFactorInfoSub structs for this
  *                granule/channel
  *              index of current granule and channel
- *              ScaleFactorInfoSub from this granule 
+ *              ScaleFactorInfoSub from this granule
  *              modeExt field from frame header, to tell whether intensity stereo is on
  *              ScaleFactorJS struct for storing IIP info used in Dequant()
  *
@@ -202,7 +202,7 @@ static const char NRTab[6][3][4] = {
  *
  * Notes:       Illegal Intensity Position = (2^slen) - 1 for MPEG2 scale factors
  *
- * TODO:        optimize the / and % stuff (only do one divide, get modulo x 
+ * TODO:        optimize the / and % stuff (only do one divide, get modulo x
  *                with (x / m) * m, etc.)
  **************************************************************************************/
 static void UnpackSFMPEG2(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoSub *sfis, int gr, int ch, int modeExt, ScaleFactorJS *sfjs)
@@ -243,13 +243,13 @@ static void UnpackSFMPEG2(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoS
 			slen[2] = slen[3] = 0;
 			if (sis->mixedBlock) {
 				/* adjust for long/short mix logic (see comment above in NRTab[] definition) */
-				slen[2] = slen[1];  
+				slen[2] = slen[1];
 				slen[1] = slen[0];
-			}  
+			}
 			preFlag = 1;
 			sfcIdx = 2;
 		}
-	} else {    
+	} else {
 		/* intensity stereo ch = 1 (right) */
 		intensityScale = sfCompress & 0x01;
 		sfCompress >>= 1;
@@ -277,10 +277,10 @@ static void UnpackSFMPEG2(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoS
 			sfcIdx = 5;
 		}
 	}
-	
+
 	/* set index based on block type: (0,1,3) --> 0, (2 non-mixed) --> 1, (2 mixed) ---> 2 */
 	btIdx = 0;
-	if (sis->blockType == 2) 
+	if (sis->blockType == 2)
 		btIdx = (sis->mixedBlock ? 2 : 1);
 	for (i = 0; i < 4; i++)
 		nr[i] = (int)NRTab[sfcIdx][btIdx][i];
@@ -305,7 +305,7 @@ static void UnpackSFMPEG2(BitStreamInfo *bsi, SideInfoSub *sis, ScaleFactorInfoS
 			}
 			sfb = 3;  /* start sfb for short */
 			nrIdx = 1;
-		} else {      
+		} else {
 			/* all short blocks, so start nr, sfb at 0 */
 			sfb = 0;
 			nrIdx = 0;
@@ -376,9 +376,9 @@ int UnpackScaleFactors(MP3DecInfo *mp3DecInfo, unsigned char *buf, int *bitOffse
 	if (*bitOffset)
 		GetBits(bsi, *bitOffset);
 
-	if (fh->ver == MPEG1) 
+	if (fh->ver == MPEG1)
 		UnpackSFMPEG1(bsi, &si->sis[gr][ch], &sfi->sfis[gr][ch], si->scfsi[ch], gr, &sfi->sfis[0][ch]);
-	else 
+	else
 		UnpackSFMPEG2(bsi, &si->sis[gr][ch], &sfi->sfis[gr][ch], gr, ch, fh->modeExt, &sfi->sfjs);
 
 	mp3DecInfo->part23Length[gr][ch] = si->sis[gr][ch].part23Length;

@@ -1,4 +1,4 @@
-  
+
 #ifndef __RF24_INCLUDES_H__
 #define __RF24_INCLUDES_H__
 
@@ -6,6 +6,6 @@
   	  #define MRAA
   #endif
   #include "MRAA/RF24_arch_config.h"
-   
-  
+
+
 #endif

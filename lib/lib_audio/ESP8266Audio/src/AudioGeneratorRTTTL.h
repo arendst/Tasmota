@@ -4,7 +4,7 @@
 
   Based on the Rtttl Arduino library by James BM, https://github.com/spicajames/Rtttl
   Based on the gist from Daniel Hall https://gist.github.com/smarthall/1618800
-    
+
   Copyright (C) 2018  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@ class AudioGeneratorRTTTL : public AudioGenerator
     bool ReadInt(int *dest);
     bool ParseHeader();
     bool GetNextNote();
-    
+
   protected:
     uint16_t rate;
 

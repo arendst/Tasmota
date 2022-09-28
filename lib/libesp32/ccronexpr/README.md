@@ -55,7 +55,7 @@ Timezones
 ---------
 
 This implementation does not support explicit timezones handling. By default all dates are
-processed as UTC (GMT) dates without timezone infomation. 
+processed as UTC (GMT) dates without timezone infomation.
 
 To use local dates (current system timezone) instead of GMT compile with `-DCRON_USE_LOCAL_TIME`, example:
 

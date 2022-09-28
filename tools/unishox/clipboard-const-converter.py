@@ -58,9 +58,9 @@ for pos in qm:
         # print(text[lastel+1:pos:])
     lastel = pos
 
-print("####### Parsing intput:")  
+print("####### Parsing intput:")
 print("Const char name: ",const_name)
-print('####### Cleaned input:')  
+print('####### Cleaned input:')
 print(input)
 
 #construct output (taken from shadinger)
@@ -93,7 +93,7 @@ for out_real in range(8,out_len+16,16):
 print("the optimal case would be raw bytes + 8, real difference: ", in_real - out_real, "bytes")
 # https://www.geeksforgeeks.org/break-list-chunks-size-n-python/
 def chunked(my_list, n):
-    return [my_list[i * n:(i + 1) * n] for i in range((len(my_list) + n - 1) // n )]  
+    return [my_list[i * n:(i + 1) * n] for i in range((len(my_list) + n - 1) // n )]
 
 # split in chunks of 20 characters
 chunks = chunked(out_bytes, 20)
@@ -102,7 +102,7 @@ lines_raw = [ "\"\\x" + "\\x".join( [ '{:02X}'.format(b) for b in chunk ] ) + "\
 line_complete = "const char " + const_name + "_COMPRESSED" +"[] PROGMEM = " + ("\n" + " "*29).join(lines_raw) + ";"
 lines = "const size_t " + const_name +"_SIZE = {size};\n{lines}".format(size=in_len, lines=line_complete)
 
-print('####### Final output:')  
+print('####### Final output:')
 print(lines)
 
 definition = "#define  " + const_name +  "       Decompress(" + const_name + "_COMPRESSED" + "," + const_name +"_SIZE" + ").c_str()"

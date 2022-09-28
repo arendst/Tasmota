@@ -219,7 +219,7 @@ struct {
   uint8_t HKinfoMsg = 0;
   char hk_setup_code[11];
 #endif //USE_MI_HOMEKIT
-  void *beConnCB; 
+  void *beConnCB;
   void *beAdvCB;
   uint8_t *beAdvBuf;
   uint8_t infoMsg = 0;

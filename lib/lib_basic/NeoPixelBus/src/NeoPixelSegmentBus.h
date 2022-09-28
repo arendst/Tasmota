@@ -29,7 +29,7 @@ License along with NeoPixel.  If not, see
 
 #include "NeoPixelBus.h"
 
-template<typename T_COLOR_FEATURE, typename T_METHOD> class NeoPixelSegmentBus : 
+template<typename T_COLOR_FEATURE, typename T_METHOD> class NeoPixelSegmentBus :
     public NeoPixelBus<T_COLOR_FEATURE, T_METHOD>
 {
 public:
@@ -43,9 +43,9 @@ public:
     {
     }
 
-    void SetString(uint16_t indexDigit, 
-        const char* str, 
-        uint8_t brightness, 
+    void SetString(uint16_t indexDigit,
+        const char* str,
+        uint8_t brightness,
         uint8_t defaultBrightness = 0)
     {
         T_COLOR_FEATURE::ColorObject::SetString(*this,
@@ -55,9 +55,9 @@ public:
             defaultBrightness);
     }
 
-    void SetString(uint16_t indexDigit, 
-        const String& str, 
-        uint8_t brightness, 
+    void SetString(uint16_t indexDigit,
+        const String& str,
+        uint8_t brightness,
         uint8_t defaultBrightness = 0)
     {
         SetString(indexDigit, str.c_str(), brightness, defaultBrightness);

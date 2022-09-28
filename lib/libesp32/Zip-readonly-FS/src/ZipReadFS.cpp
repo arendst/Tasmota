@@ -37,7 +37,7 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 time_t dos2unixtime(uint32_t dostime)
      /* Return the Unix time_t value (GMT/UTC time) for the DOS format (local)
       * time dostime, where dostime is a four byte value (date in most
-      * significant word, time in least significant word), see dostime() 
+      * significant word, time in least significant word), see dostime()
       * function.
       */
 {
@@ -59,7 +59,7 @@ time_t dos2unixtime(uint32_t dostime)
 
 /********************************************************************
 ** Zip file parser
-** 
+**
 ********************************************************************/
 template <typename T> class LList;
 
@@ -119,7 +119,7 @@ protected:
 
 /********************************************************************
 ** Neutral file overlay
-** 
+**
 ********************************************************************/
 
 class ZipReadFileImpl;
@@ -181,7 +181,7 @@ protected:
 
 /********************************************************************
 ** Subfile implementation
-** 
+**
 ** Takes a `File` object of the ZIP archive
 ** First byte in archive and len
 ********************************************************************/
@@ -390,7 +390,7 @@ bool ZipArchive::parse(void) {
 
 /********************************************************************
 ** Encapsulation of FS and File to piggyback on Arduino
-** 
+**
 ********************************************************************/
 
 /* get the FS corresponding to the prefix, typically /sd/ for sdcard */

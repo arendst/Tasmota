@@ -1,9 +1,9 @@
 #pragma once
 
 /*-------------------------------------------------------------------------
-NeoRingTopology provides a mapping feature of a 2d polar cordinate to a 
+NeoRingTopology provides a mapping feature of a 2d polar cordinate to a
 linear 1d cordinate.
-It is used to map a series of concentric rings of NeoPixels to a index on 
+It is used to map a series of concentric rings of NeoPixels to a index on
 the NeoPixelBus.
 
 Written by Michael C. Miller.
@@ -38,7 +38,7 @@ public:
 
     uint16_t Map(uint8_t ring, uint16_t pixel) const
     {
-        if (pixel >= getPixelCountAtRing(ring)) 
+        if (pixel >= getPixelCountAtRing(ring))
         {
             return 0; // invalid ring and/or pixel argument, always return a valid value, the first one
         }
@@ -48,7 +48,7 @@ public:
 
     uint16_t MapProbe(uint8_t ring, uint16_t pixel) const
     {
-        if (pixel >= getPixelCountAtRing(ring)) 
+        if (pixel >= getPixelCountAtRing(ring))
         {
             return getPixelCount(); // total count, out of bounds
         }
@@ -65,7 +65,7 @@ public:
         {
             ringPixel = 0;
         }
-        else 
+        else
         {
             uint16_t count = getPixelCountAtRing(ring);
             if (ringPixel >= count)
@@ -83,12 +83,12 @@ public:
         return ringPixel % getPixelCountAtRing(ring);
     }
 
-    uint8_t getCountOfRings() const 
+    uint8_t getCountOfRings() const
     {
         return T_LAYOUT::_ringCount() - 1; // minus one as the Rings includes the extra value
     }
 
-    uint16_t getPixelCountAtRing(uint8_t ring) const 
+    uint16_t getPixelCountAtRing(uint8_t ring) const
     {
         if (ring >= getCountOfRings())
         {

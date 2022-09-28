@@ -32,7 +32,7 @@ License along with NeoPixel.  If not, see
 
 // ------------------------------------------------------------------------
 // Rgb16Color represents a color object that is represented by Red, Green, Blue
-// component values stored in a single 16 bit value using 565 model.  
+// component values stored in a single 16 bit value using 565 model.
 // It contains helpful color routines to manipulate the color.
 // ------------------------------------------------------------------------
 struct Rgb16Color : RgbColorBase
@@ -42,7 +42,7 @@ struct Rgb16Color : RgbColorBase
     // ------------------------------------------------------------------------
     // Construct a Rgb16Color using R, G, B values (0-255)
     // ------------------------------------------------------------------------
-    Rgb16Color(uint8_t r, uint8_t g, uint8_t b) 
+    Rgb16Color(uint8_t r, uint8_t g, uint8_t b)
     {
         setR(r);
         setG(g);
@@ -54,7 +54,7 @@ struct Rgb16Color : RgbColorBase
     // This works well for creating gray tone colors
     // (0) = black, (255) = white, (128) = gray
     // ------------------------------------------------------------------------
-    Rgb16Color(uint8_t brightness) 
+    Rgb16Color(uint8_t brightness)
     {
         setR(brightness);
         setG(brightness);
@@ -62,7 +62,7 @@ struct Rgb16Color : RgbColorBase
     };
 
     // ------------------------------------------------------------------------
-    // Construct a Rgb16Color using a single 16bit encoded value 
+    // Construct a Rgb16Color using a single 16bit encoded value
     // CAUTION: the color value must follow a 5/6/5 encoding model otherwise an
     // incorrect color will be generated
     // ------------------------------------------------------------------------
@@ -175,7 +175,7 @@ struct Rgb16Color : RgbColorBase
     // ------------------------------------------------------------------------
     // Dim will return a new color that is blended to black with the given ratio
     // ratio - (0-255) where 255 will return the original color and 0 will return black
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     Rgb16Color Dim(uint8_t ratio) const
@@ -189,7 +189,7 @@ struct Rgb16Color : RgbColorBase
     // ------------------------------------------------------------------------
     // Brighten will return a new color that is blended to white with the given ratio
     // ratio - (0-255) where 255 will return the original color and 0 will return white
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     Rgb16Color Brighten(uint8_t ratio) const
@@ -243,7 +243,7 @@ struct Rgb16Color : RgbColorBase
 
         return Rgb16Color(result.R, result.G, result.B);
     };
-    
+
     // ------------------------------------------------------------------------
     // BilinearBlend between four colors by the amount defined by 2d variable
     // c00 - upper left quadrant color

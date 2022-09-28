@@ -2,7 +2,7 @@
   AudioFileSourceSTDIO
   Input STDIO "file" to be used by AudioGenerator
   Only for hot-based testing
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

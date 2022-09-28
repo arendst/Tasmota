@@ -2,18 +2,18 @@
  * ----------------------------------------------------------------------------
  * This is a MFRC522 library example; see https://github.com/miguelbalboa/rfid
  * for further details and other examples.
- * 
+ *
  * NOTE: The library file MFRC522.h has a lot of useful info. Please read it.
- * 
+ *
  * Released into the public domain.
  * ----------------------------------------------------------------------------
  * This sample shows how to setup blocks on a MIFARE Classic PICC (= card/tag)
  * to be in "Value Block" mode: in this mode the operations Increment/Decrement,
  * Restore and Transfer can be used.
- * 
+ *
  * BEWARE: Data will be written to the PICC, in sector #1 (blocks #4 to #7).
- * 
- * 
+ *
+ *
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
@@ -25,7 +25,7 @@
  * SPI MOSI    MOSI         11 / ICSP-4   51        D11        ICSP-4           16
  * SPI MISO    MISO         12 / ICSP-1   50        D12        ICSP-1           14
  * SPI SCK     SCK          13 / ICSP-3   52        D13        ICSP-3           15
- * 
+ *
  */
 
 #include <SPI.h>
@@ -57,7 +57,7 @@ void setup() {
     Serial.print(F("Using key (for A and B):"));
     dump_byte_array(key.keyByte, MFRC522::MF_KEY_SIZE);
     Serial.println();
-    
+
     Serial.println(F("BEWARE: Data will be written to the PICC, in sector #1"));
 }
 
@@ -113,7 +113,7 @@ void loop() {
     Serial.println(F("Current data in sector:"));
     mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
     Serial.println();
-    
+
     // We need a sector trailer that defines blocks 5 and 6 as Value Blocks and enables key B
     // The last block in a sector (block #3 for Mifare Classic 1K) is the Sector Trailer.
     // See http://www.nxp.com/documents/data_sheet/MF1S503x.pdf sections 8.6 and 8.7:

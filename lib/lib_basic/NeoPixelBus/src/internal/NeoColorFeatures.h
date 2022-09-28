@@ -31,7 +31,7 @@ class Neo3Elements
 public:
     static const size_t PixelSize = 3;
 
-    static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel) 
+    static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel)
     {
         return pPixels + indexPixel * PixelSize;
     }
@@ -89,7 +89,7 @@ class Neo4Elements
 public:
     static const size_t PixelSize = 4;
 
-    static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel) 
+    static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel)
     {
         return pPixels + indexPixel * PixelSize;
     }
@@ -128,7 +128,7 @@ public:
         uint32_t* pEnd = pDest + count;
         while (pDest < pEnd)
         {
-            *pDest++ = pgm_read_dword(pSrc++); 
+            *pDest++ = pgm_read_dword(pSrc++);
         }
     }
 
@@ -147,7 +147,7 @@ public:
     typedef RgbwColor ColorObject;
 };
 
- 
+
 class Neo3ElementsNoSettings : public Neo3Elements
 {
 public:
@@ -213,7 +213,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -225,7 +225,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 class NeoGrbwFeature : public Neo4ElementsNoSettings
@@ -254,7 +254,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -267,7 +267,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 class NeoRgbwFeature : public Neo4ElementsNoSettings
@@ -295,7 +295,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -308,7 +308,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 class NeoRgbFeature : public Neo3ElementsNoSettings
@@ -334,7 +334,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -346,7 +346,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 class NeoBrgFeature : public Neo3ElementsNoSettings
@@ -372,7 +372,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -384,7 +384,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 class NeoRbgFeature : public Neo3ElementsNoSettings
@@ -411,7 +411,7 @@ public:
         return color;
     }
 
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -423,5 +423,5 @@ public:
 
         return color;
     }
-    
+
 };

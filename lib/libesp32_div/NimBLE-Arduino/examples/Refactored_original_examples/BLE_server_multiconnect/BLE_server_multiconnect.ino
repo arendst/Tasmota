@@ -44,7 +44,7 @@ uint32_t value = 0;
 
 
 /**  None of these are required as they will be handled by the library with defaults. **
- **                       Remove as you see fit for your needs                        */  
+ **                       Remove as you see fit for your needs                        */
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
@@ -58,12 +58,12 @@ class MyServerCallbacks: public BLEServerCallbacks {
   ****** Note: these are the same return values as defaults ********/
     uint32_t onPassKeyRequest(){
       Serial.println("Server PassKeyRequest");
-      return 123456; 
+      return 123456;
     }
 
     bool onConfirmPIN(uint32_t pass_key){
       Serial.print("The passkey YES/NO number: ");Serial.println(pass_key);
-      return true; 
+      return true;
     }
 
     void onAuthenticationComplete(ble_gap_conn_desc desc){
@@ -90,13 +90,13 @@ void setup() {
   // Create a BLE Characteristic
   pCharacteristic = pService->createCharacteristic(
                       CHARACTERISTIC_UUID,
-                /******* Enum Type NIMBLE_PROPERTY now *******     
+                /******* Enum Type NIMBLE_PROPERTY now *******
                       BLECharacteristic::PROPERTY_READ   |
                       BLECharacteristic::PROPERTY_WRITE  |
                       BLECharacteristic::PROPERTY_NOTIFY |
                       BLECharacteristic::PROPERTY_INDICATE
                     );
-                **********************************************/    
+                **********************************************/
                       NIMBLE_PROPERTY::READ   |
                       NIMBLE_PROPERTY::WRITE  |
                       NIMBLE_PROPERTY::NOTIFY |
@@ -105,11 +105,11 @@ void setup() {
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
-  /***************************************************   
-   NOTE: DO NOT create a 2902 descriptor 
-   it will be created automatically if notifications 
+  /***************************************************
+   NOTE: DO NOT create a 2902 descriptor
+   it will be created automatically if notifications
    or indications are enabled on a characteristic.
-   
+
    pCharacteristic->addDescriptor(new BLE2902());
   ****************************************************/
 

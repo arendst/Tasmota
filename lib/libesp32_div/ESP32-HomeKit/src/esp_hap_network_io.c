@@ -175,7 +175,7 @@ int hap_decrypt_data(hap_decrypt_frame_t *frame, hap_secure_session_t *session,
         memcpy(newnonce+4, session->decrypt_nonce, 8);
         ret = crypto_aead_chacha20poly1305_ietf_decrypt_detached(frame->data, NULL, frame->data, frame->pkt_size,
                     &frame->data[frame->bytes_read], aad, 2, newnonce, session->decrypt_key);
-        if (ret != 0) { 
+        if (ret != 0) {
 			ESP_MFI_DEBUG(ESP_MFI_DEBUG_INFO, "AEAD decryption failure");
 			printf("---- error 3 ----\n");
 			return hap_decrypt_error(session);

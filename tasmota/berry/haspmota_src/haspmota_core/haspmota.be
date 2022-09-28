@@ -9,7 +9,7 @@
 # How to solidify (needs an ESP32 with PSRAM)
 #-
 
-import path 
+import path
 path.remove("haspmota.bec")
 import solidify
 var haspmota
@@ -195,7 +195,7 @@ class lvh_obj
 
   #################################################################################
   # Parses a color attribute
-  # 
+  #
   # `parse_color(hex:string) -> color:int` (as 24 bits RGB int)
   #
   # Parses colors in multiple forms:
@@ -218,7 +218,7 @@ class lvh_obj
         # var c_int = string.byte(c)
         if c == "#"             continue end  # skip '#' prefix if any
         if c == "x" || c == "X" continue end  # skip 'x' or 'X'
-    
+
         if c >= "A" && c <= "F"
           val = (val << 4) | string.byte(c) - 55
         elif c >= "0" && c <= "9"
@@ -272,7 +272,7 @@ class lvh_obj
   #####################################################################
   # General Setters and Getters
   #####################################################################
-  
+
   #====================================================================
   # get LVGL encapsulated object
   #====================================================================
@@ -732,7 +732,7 @@ class lvh_obj
 
     # next check if there is a mapping to an LVGL attribute
     if self._attr_map.contains(k)
-      
+
       var kv = self._attr_map[k]
       f = introspect.get(self._lv_obj, "set_" + kv)
       # if the attribute contains 'color', convert to lv_color
@@ -1236,7 +1236,7 @@ class lvh_page
   #####################################################################
   # General Setters and Getters
   #####################################################################
-  
+
   #====================================================================
   # retrieve lvgl screen object for this page
   #====================================================================
@@ -1409,7 +1409,7 @@ class HASPmota
     # apply theme to layer_top, but keep it transparent
     lv.theme_apply(lv.layer_top())
     lv.layer_top().set_style_bg_opa(0,0)
-    
+
     self.lvh_pages = {}
     # load from JSONL
     self._load(templ_name)
@@ -1436,7 +1436,7 @@ class HASPmota
   #####################################################################
   # General Setters and Getters
   #####################################################################
-  
+
   #====================================================================
   # return the current page as `lvh_page` object
   #====================================================================
@@ -1452,13 +1452,13 @@ class HASPmota
     import json
     #- pages -#
     self.lvh_page_cur_idx = 1
-    var lvh_page_class = self.lvh_page 
+    var lvh_page_class = self.lvh_page
     self.lvh_pages[1] = lvh_page_class(1, self)   # always create page #1
 
     var f = open(templ_name,"r")
     var f_content =  f.read()
     f.close()
-    
+
     var jsonl = string.split(f_content, "\n")
     f = nil   # allow deallocation
     f_content = nil
@@ -1708,7 +1708,7 @@ class HASPmota
 
       if parent_id != nil
         var parent_obj = lvh_page_cur.get_obj(parent_id)        # get parent object
-        if parent_obj != nil   parent_lvgl = parent_obj._lv_obj end  # parent 
+        if parent_obj != nil   parent_lvgl = parent_obj._lv_obj end  # parent
       end
       if parent_lvgl == nil
         parent_lvgl = lvh_page_cur.get_scr()   # if not parent, use the current page screen
@@ -1742,13 +1742,13 @@ class HASPmota
         print("HSP: cannot find object of type " + str(obj_type))
         return
       end
-      
+
       # instanciate the object, passing the lvgl screen as parent object
       obj_lvh = obj_class(parent_lvgl, page, jline, lv_instance)
 
       # add object to page object
       lvh_page_cur.set_obj(obj_id, obj_lvh)
-      
+
       # create a global variable for this object of form p<page>b<id>, ex p1b2
       var glob_name = string.format("p%ib%i", lvh_page_cur.id(), obj_id)
       global.(glob_name) = obj_lvh
@@ -1758,7 +1758,7 @@ class HASPmota
       print("HSP: cannot specify 'obj' for 'id':0")
       return
     end
-    
+
     # if id==0, retrieve the 'scr' object of the current page
     if obj_id == 0
       obj_lvh = self.get_page_cur().get_obj(0)   # get object id '0'

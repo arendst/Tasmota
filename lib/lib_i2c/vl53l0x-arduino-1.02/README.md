@@ -84,7 +84,7 @@ This library is intended to provide a quicker and easier way to get started usin
   Returns the current I&sup2;C address.
 
 * `bool init(bool io_2v8 = true)`<br>
-  Iniitializes and configures the sensor. If the optional argument `io_2v8` is true (the default if not specified), the sensor is configured for 2V8 mode (2.8 V I/O); if false, the sensor is left in 1V8 mode. The return value is a boolean indicating whether the initialization completed successfully. 
+  Iniitializes and configures the sensor. If the optional argument `io_2v8` is true (the default if not specified), the sensor is configured for 2V8 mode (2.8 V I/O); if false, the sensor is left in 1V8 mode. The return value is a boolean indicating whether the initialization completed successfully.
 
 * `void writeReg(uint8_t reg, uint8_t value)`<br>
   Writes an 8-bit sensor register with the given value.

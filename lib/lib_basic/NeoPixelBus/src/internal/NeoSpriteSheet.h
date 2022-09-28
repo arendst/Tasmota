@@ -125,7 +125,7 @@ public:
             for (int16_t srcX = 0; srcX < SpriteWidth(); srcX++)
             {
                 uint16_t indexDest = layoutMap(srcX + x, srcY + y);
- 
+
                 if (indexDest < destPixelCount)
                 {
                     const uint8_t* pSrc = T_BUFFER_METHOD::ColorFeature::getPixelAddress(_method.Pixels(), pixelIndex(indexSprite, srcX, srcY));

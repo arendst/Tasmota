@@ -19,19 +19,19 @@
 
 /*******************************************************************************************\
  * Universal TouchScreen driver, extensible via Berry
- * 
+ *
  * API:
  *   void Touch_Init() - TODO
- * 
+ *
  *   uint32_t Touch_Status(int32_t sel)
  *     0: return 1 if TSGlobal.touched
  *     1: return x
  *     2: return y
  *    -1: return raw x (before conersion for resistive)
  *    -2: return raw y
- * 
+ *
  *   void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y))
- * 
+ *
  *   void TS_RotConvert(int16_t *x, int16_t *y) - calls the renderer's rotation converter
 \*******************************************************************************************/
 

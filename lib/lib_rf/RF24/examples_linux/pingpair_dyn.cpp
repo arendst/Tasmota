@@ -55,8 +55,8 @@ RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_24, BCM2835_SPI_SPEED_8MHZ);
 //RF24 radio(115,0);
 
 //BBB Alternate, with mraa
-// CE pin = (Header P9, Pin 13) = 59 = 13 + 46 
-//Note: Specify SPI BUS 0 or 1 instead of CS pin number. 
+// CE pin = (Header P9, Pin 13) = 59 = 13 + 46
+//Note: Specify SPI BUS 0 or 1 instead of CS pin number.
 //RF24 radio(59,0);
 
 /**************************************************************/

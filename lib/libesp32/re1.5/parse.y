@@ -144,7 +144,7 @@ parse(char *s)
 		yyerror("did not parse");
 	if(parsed_regexp == nil)
 		yyerror("parser nil");
-		
+
 	r = reg(Paren, parsed_regexp, nil);	// $0 parens
 	return r;
 	dotstar = reg(Star, reg(Dot, nil, nil), nil);
@@ -156,7 +156,7 @@ Regexp*
 reg(int type, Regexp *left, Regexp *right)
 {
 	Regexp *r;
-	
+
 	r = mal(sizeof *r);
 	r->type = type;
 	r->left = left;
@@ -171,7 +171,7 @@ printre(Regexp *r)
 	default:
 		printf("???");
 		break;
-	
+
 	case Alt:
 		printf("Alt(");
 		printre(r->left);
@@ -187,11 +187,11 @@ printre(Regexp *r)
 		printre(r->right);
 		printf(")");
 		break;
-	
+
 	case Lit:
 		printf("Lit(%c)", r->ch);
 		break;
-	
+
 	case Dot:
 		printf("Dot");
 		break;
@@ -201,7 +201,7 @@ printre(Regexp *r)
 		printre(r->left);
 		printf(")");
 		break;
-	
+
 	case Star:
 		if(r->n)
 			printf("Ng");
@@ -209,7 +209,7 @@ printre(Regexp *r)
 		printre(r->left);
 		printf(")");
 		break;
-	
+
 	case Plus:
 		if(r->n)
 			printf("Ng");
@@ -217,7 +217,7 @@ printre(Regexp *r)
 		printre(r->left);
 		printf(")");
 		break;
-	
+
 	case Quest:
 		if(r->n)
 			printf("Ng");

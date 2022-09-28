@@ -150,7 +150,7 @@ static mu_bn_t *calculate_x(char *bytes_salt, int salt_len, const char *username
 	SHA512Input(&ctx, (unsigned char *)":", 1);
 	SHA512Input(&ctx, (unsigned char *)pass, pass_len);
 	SHA512Result(&ctx, digest);
-	
+
 	SHA512Reset(&ctx);
 	SHA512Input(&ctx, (unsigned char *)bytes_salt, salt_len);
 	SHA512Input(&ctx, digest, sizeof(digest));
@@ -268,7 +268,7 @@ int __mu_srp_srv_pubkey(mu_srp_handle_t *hd, char **bytes_B, int *len_B)
 		hd->b = NULL;
 	}
 	return -1;
-	
+
 }
 
 int mu_srp_srv_pubkey(mu_srp_handle_t *hd, const char *username, const char *pass, int pass_len, int salt_len,
@@ -293,7 +293,7 @@ int mu_srp_srv_pubkey(mu_srp_handle_t *hd, const char *username, const char *pas
 	if (! x)
 		goto error;
 	hex_dbg_bn("x", x);
-	
+
 	/* v = g^x % N */
 	hd->v = mu_bn_new();
 	if (! hd->v)
@@ -414,7 +414,7 @@ int mu_srp_get_session_key(mu_srp_handle_t *hd, char *bytes_A, int len_A, char *
 	SHA512_hash((unsigned char *)bytes_S, len_S, (unsigned char *)hd->session_key);
 	*bytes_key = hd->session_key;
 	*len_key = SHA512HashSize;
-	
+
 	free(bytes_S);
 	mu_bn_free(vu);
 	mu_bn_free(avu);
@@ -461,7 +461,7 @@ int mu_srp_exchange_proofs(mu_srp_handle_t *hd, const char *username, char *byte
 
 	unsigned char hash_I[SHA512HashSize];
 	SHA512_hash((unsigned char *)username, strlen(username), (unsigned char *)hash_I);
-	
+
 	SHA512Context ctx;
 	unsigned char digest[SHA512HashSize];
 	SHA512Reset(&ctx);

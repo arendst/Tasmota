@@ -24,7 +24,7 @@ void setup()
   //HP303BPressureSensor.begin(Wire, 0x76);
   //Use the commented line below instead to use the default I2C address.
   HP303BPressureSensor.begin();
-  
+
   int16_t ret = HP303BPressureSensor.setInterruptPolarity(1);
   ret = HP303BPressureSensor.setInterruptSources(1, 0, 0);
   //clear interrupt flag by reading

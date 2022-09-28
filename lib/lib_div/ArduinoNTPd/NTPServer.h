@@ -5,7 +5,7 @@
  * Author: Mooneer Salem <mooneer@gmail.com>
  * License: New BSD License
  */
- 
+
 #ifndef NTP_SERVER_H
 #define NTP_SERVER_H
 
@@ -16,18 +16,18 @@ public:
     {
         timeServerPort_=Port;
     }
-    
+
     /*
      * Begins listening for NTP requests.
      */
     bool beginListening(void);
-    
-    
+
+
     /*
      * Processes a single NTP request.
      */
     bool processOneRequest(uint32_t utc, uint32_t millisecs);
-    
+
 private:
     WiFiUDP timeServerPort_;
 };

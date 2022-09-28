@@ -28,7 +28,7 @@ For Nordic devices, this library provides access to a completely open source and
 `#include "NimBLEDevice.h"` at the beginning of your sketch.
 
 # Platformio installation
-* Open platformio.ini, a project configuration file located in the root of PlatformIO project.  
+* Open platformio.ini, a project configuration file located in the root of PlatformIO project.
 * Add the following line to the lib_deps option of [env:] section:
 ```
 h2zero/NimBLE-Arduino@^1.4.0

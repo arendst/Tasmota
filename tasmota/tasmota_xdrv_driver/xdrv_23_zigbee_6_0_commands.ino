@@ -536,9 +536,9 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Tuya Zigbee specific protocol
- * 
+ *
 \*********************************************************************************************/
 // Parse a sinlge attribute value and convert to human readable JSON attribute value
 void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
@@ -599,9 +599,9 @@ bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t clus
 }
 
 /*********************************************************************************************\
- * 
+ *
  * Find commands
- * 
+ *
 \*********************************************************************************************/
 // Find the command details by command name
 // Only take commands outgoing, i.e. direction == 0
@@ -696,9 +696,9 @@ uint32_t ZigbeeAliasOrNumber(const char *state_text) {
 
 
 /*********************************************************************************************\
- * 
+ *
  * Send Zigbee commands
- * 
+ *
 \*********************************************************************************************/
 
 #endif // USE_ZIGBEE

@@ -49,7 +49,7 @@ class zb_coord : zb_coord_ntv
     if zcl_attribute_list_ptr != nullptr
       attr_list = self.zcl_attribute_list(zcl_attribute_list_ptr)
     end
-    
+
     #print(string.format(">ZIG: cmd=%s data_type=%s data=%s idx=%i", event_type, data_type, str(data), idx))
 
     var i = 0
@@ -69,7 +69,7 @@ class zb_coord : zb_coord_ntv
       end
       i += 1
     end
-      
+
   end
 
 end

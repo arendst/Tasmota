@@ -143,7 +143,7 @@ static bstring** save_members(bvm *vm, void *fp, bclass *c, int nvar)
                 proto = var_toobj(value);
                 save_proto(vm, fp, proto); /* only save prototype */
             } else if (var_isclosure(value)) { /* the method is a closure */
-                proto = cast(bclosure *, var_toobj(value))->proto;            
+                proto = cast(bclosure *, var_toobj(value))->proto;
                 save_proto(vm, fp, proto); /* only save prototype */
             } else if (var_isnil(value)) {
                 /* this is a static member (nil default) */

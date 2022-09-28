@@ -16,7 +16,7 @@ antiburn.init = def (m)
             self.running = false
         end
         def start()
-            if self.running 
+            if self.running
                 return
             else
                 lv.start()
@@ -43,7 +43,7 @@ antiburn.init = def (m)
                 self.running = false
                 self.scr_antiburn.del()
                 self.scr_antiburn = nil
-            end    
+            end
         end
     end
     return Antiburn()

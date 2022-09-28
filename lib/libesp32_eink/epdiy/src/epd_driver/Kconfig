@@ -22,7 +22,7 @@ menu "E-Paper Driver"
 
         config EPD_DISPLAY_TYPE_ED133UT2
             bool "ED133UT2"
-        
+
         config EPD_DISPLAY_TYPE_ED047TC1
             bool "ED047TC1 (LILYGO 4.7 inch)"
 

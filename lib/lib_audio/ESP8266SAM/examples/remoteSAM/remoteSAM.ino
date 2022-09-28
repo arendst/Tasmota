@@ -34,7 +34,7 @@ void setup()
   MDNS.begin(NAME);
   MDNS.addService("http", "tcp", 80);
   NBNS.begin(NAME);
-  
+
   server.on(UriBraces("/say/{}"), []() {
     String message_encoded = server.pathArg(0);
     String message_decoded = urldecode(message_encoded);
@@ -43,10 +43,10 @@ void setup()
     Serial.println(message_encoded);
     Serial.println(message_decoded);
     Serial.println(message);
-    
+
     ESP8266SAM *sam = new ESP8266SAM;
     sam->Say(out, message);
-    delete sam;    
+    delete sam;
     server.send(200, "text/plain", "OK");
   });
 

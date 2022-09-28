@@ -3,15 +3,15 @@
 /**
  * This example will send the Email with inline images stored in flash memory.
  * The message content stores as HTML data in flash memory
- * 
+ *
  * The html and text version messages will be sent.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -39,7 +39,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -212,7 +212,7 @@ void setup()
     /** The file storage type e.g.
      * esp_mail_file_storage_type_none,
      * esp_mail_file_storage_type_flash, and
-     * esp_mail_file_storage_type_sd 
+     * esp_mail_file_storage_type_sd
     */
     att.file.storage_type = esp_mail_file_storage_type_flash;
 

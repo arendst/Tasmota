@@ -11,8 +11,8 @@ UPLOAD_RATE 	= 57600 ;
 AVRDUDE_PROTOCOL = stk500v1 ;
 COM 		= 33 ;
 
-# Host-specific overrides for locations 
-if $(OS) = MACOSX 
+# Host-specific overrides for locations
+if $(OS) = MACOSX
 {
 ARDUINO_VERSION	= 22 ;
 OLD_DIR 	= /opt/arduino-0021 ;
@@ -41,8 +41,8 @@ AVRDUDE 	= $(AVR_TOOLS_PATH)/avrdude ;
 
 DEFINES  	= F_CPU=$(F_CPU)L ARDUINO=$(ARDUINO_VERSION) VERSION_H HAL=1 ;
 CTUNING  	= -ffunction-sections -fdata-sections ;
-CXXTUNING  	= -fno-exceptions -fno-strict-aliasing ; 
-ASFLAGS  	= -mmcu=$(MCU) ; 
+CXXTUNING  	= -fno-exceptions -fno-strict-aliasing ;
+ASFLAGS  	= -mmcu=$(MCU) ;
 CFLAGS  	= -Os -Wall -Wextra $(ASFLAGS) $(CTUNING) ;
 CXXFLAGS  	= $(CFLAGS) $(CXXTUNING) ;
 LDFLAGS  	= -Os -lm -Wl,--gc-sections -mmcu=atmega328p ;
@@ -95,7 +95,7 @@ rule AvrAsm
 
 actions AvrAsm
 {
-  $(AVR_AS) $(ASFLAGS) -o $(<) $(>) 
+  $(AVR_AS) $(ASFLAGS) -o $(<) $(>)
 }
 
 rule AvrCc
@@ -110,7 +110,7 @@ rule AvrCc
 
 actions AvrCc
 {
-  $(AVR_CC) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CFLAGS) $(>) 
+  $(AVR_CC) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CFLAGS) $(>)
 }
 
 rule AvrC++
@@ -125,7 +125,7 @@ rule AvrC++
 
 actions AvrC++
 {
-  $(AVR_CXX) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CXXFLAGS) $(>) 
+  $(AVR_CXX) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CXXFLAGS) $(>)
 }
 
 rule AvrAsmFromC++
@@ -140,7 +140,7 @@ rule AvrAsmFromC++
 
 actions AvrAsmFromC++
 {
-  $(AVR_CXX) -S -fverbose-asm -o $(<) $(CCHDRS) $(CCDEFS) $(CXXFLAGS) $(>) 
+  $(AVR_CXX) -S -fverbose-asm -o $(<) $(CCHDRS) $(CCDEFS) $(CXXFLAGS) $(>)
 }
 
 rule Pde
@@ -152,9 +152,9 @@ rule Pde
 
 actions Pde
 {
-  echo "#include <WProgram.h>" > $(<) 
+  echo "#include <WProgram.h>" > $(<)
   echo "#line 1 \"$(>)\"" >> $(<)
-  cat $(>) >> $(<) 
+  cat $(>) >> $(<)
 }
 
 rule AvrPde
@@ -177,7 +177,7 @@ rule AvrObject
 
 rule AvrObjects
 {
-  for _I in $(<) 
+  for _I in $(<)
   {
     AvrObject $(OUT_DIR)/$(_I:B).o : $(_I) ;
   }
@@ -194,7 +194,7 @@ rule AvrMainFromObjects
 
 actions AvrMainFromObjects
 {
-  $(AVR_LD) $(LDFLAGS) -o $(<) $(>) 
+  $(AVR_LD) $(LDFLAGS) -o $(<) $(>)
 }
 
 rule AvrMain
@@ -247,7 +247,7 @@ OUT_NATIVE      = $(OUT_DIR_NATIVE)/$(PROJECT_NAME) ;
 NATIVE_CORE    = $(SKETCH_DIR)/hardware/native ;
 HDRS = $(NATIVE_CORE) $(HDRS) ;
 NATIVE_CORE_MODULES = [ GLOB $(NATIVE_CORE) : *.c *.cpp ] ;
-NATIVE_MODULES  = ; 
+NATIVE_MODULES  = ;
 DEFINES += NATIVE ;
 
 rule NativePde
@@ -263,11 +263,11 @@ rule UserObject
   {
   case *.pde : NativePde $(<) : $(>) ;
   }
-} 
+}
 
 rule Objects
 {
-  for _I in $(<) 
+  for _I in $(<)
   {
     local _O = $(OUT_DIR_NATIVE)/$(_I:B).o ;
     Object $(_O) : $(_I) ;
@@ -282,12 +282,12 @@ rule Main
 
 actions C++
 {
-  c++ -c -o $(<) $(CCHDRS) $(CCDEFS) $(>) 
+  c++ -c -o $(<) $(CCHDRS) $(CCDEFS) $(>)
 }
 
-actions Link 
+actions Link
 {
-  c++  -o $(<) $(>) 
+  c++  -o $(<) $(>)
 }
 
 

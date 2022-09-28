@@ -3,17 +3,17 @@
 #include <Arduino.h>
 
 void MPU_accel::I2C_Read_NBytes(uint8_t driver_Addr, uint8_t start_Addr, uint8_t number_Bytes, uint8_t *read_Buffer){
-    
+
   myWire->beginTransmission(driver_Addr);
-  myWire->write(start_Addr);  
+  myWire->write(start_Addr);
   myWire->endTransmission(false);
   uint8_t i = 0;
   myWire->requestFrom(driver_Addr,number_Bytes);
-  
+
   //! Put read results in the Rx buffer
   while (myWire->available()) {
     read_Buffer[i++] = myWire->read();
-  }        
+  }
 }
 
 void MPU_accel::I2C_Write_NBytes(uint8_t driver_Addr, uint8_t start_Addr, uint8_t number_Bytes, uint8_t *write_Buffer){
@@ -28,7 +28,7 @@ void MPU_accel::I2C_Write_NBytes(uint8_t driver_Addr, uint8_t start_Addr, uint8_
 int MPU_accel::Init(void){
   unsigned char tempdata[1];
   unsigned char regdata;
-    
+
   I2C_Read_NBytes(MPU6886_ADDRESS, MPU6886_WHOAMI, 1, tempdata);
   const uint8_t whoami = tempdata[0];
   if (whoami == 0x19) {
@@ -39,7 +39,7 @@ int MPU_accel::Init(void){
     return -1;
   }
   delay(1);
-  
+
   regdata = 0x00;
   I2C_Write_NBytes(MPU6886_ADDRESS, MPU6886_PWR_MGMT_1, 1, &regdata);
   delay(10);
@@ -99,9 +99,9 @@ int MPU_accel::Init(void){
 
 void MPU_accel::getAccelAdc(int16_t* ax, int16_t* ay, int16_t* az){
 
-   uint8_t buf[6];  
+   uint8_t buf[6];
    I2C_Read_NBytes(MPU6886_ADDRESS,MPU6886_ACCEL_XOUT_H,6,buf);
-   
+
    *ax=((int16_t)buf[0]<<8)|buf[1];
    *ay=((int16_t)buf[2]<<8)|buf[3];
    *az=((int16_t)buf[4]<<8)|buf[5];
@@ -111,19 +111,19 @@ void MPU_accel::getGyroAdc(int16_t* gx, int16_t* gy, int16_t* gz){
 
   uint8_t buf[6];
   I2C_Read_NBytes(MPU6886_ADDRESS,MPU6886_GYRO_XOUT_H,6,buf);
-  
-  *gx=((uint16_t)buf[0]<<8)|buf[1];  
-  *gy=((uint16_t)buf[2]<<8)|buf[3];  
+
+  *gx=((uint16_t)buf[0]<<8)|buf[1];
+  *gy=((uint16_t)buf[2]<<8)|buf[3];
   *gz=((uint16_t)buf[4]<<8)|buf[5];
-  
+
 }
 
 void MPU_accel::getTempAdc(int16_t *t){
-  
-  uint8_t buf[2];  
+
+  uint8_t buf[2];
   I2C_Read_NBytes(MPU6886_ADDRESS,MPU6886_TEMP_OUT_H,2,buf);
-  
-  *t=((uint16_t)buf[0]<<8)|buf[1];  
+
+  *t=((uint16_t)buf[0]<<8)|buf[1];
 }
 
 
@@ -131,7 +131,7 @@ void MPU_accel::getTempAdc(int16_t *t){
 // //!俯仰，航向，横滚：pitch，yaw，roll，指三维空间中飞行器的旋转状态。
 // void MPU_accel::getAhrsData(float *pitch,float *roll,float *yaw){
 
-//   float accX = 0; 
+//   float accX = 0;
 //   float accY = 0;
 //   float accZ = 0;
 
@@ -142,7 +142,7 @@ void MPU_accel::getTempAdc(int16_t *t){
 
 //   getGyroData(&gyroX,&gyroY,&gyroZ);
 //   getAccelData(&accX,&accY,&accZ);
-  
+
 //   MahonyAHRSupdateIMU(gyroX * DEG_TO_RAD, gyroY * DEG_TO_RAD, gyroZ * DEG_TO_RAD, accX, accY, accZ,pitch,roll,yaw);
 
 // }
@@ -177,7 +177,7 @@ void MPU_accel::getAres(){
    switch (Acscale)
    {
    // Possible accelerometer scales (and their register bit settings) are:
-   // 2 Gs (00), 4 Gs (01), 8 Gs (10), and 16 Gs  (11). 
+   // 2 Gs (00), 4 Gs (01), 8 Gs (10), and 16 Gs  (11).
    // Here's a bit of an algorith to calculate DPS/(ADC tick) based on that 2-bit value:
     case AFS_2G:
           aRes = 2.0/32768.0;
@@ -198,11 +198,11 @@ void MPU_accel::getAres(){
   }
 
 }
- 
+
 void MPU_accel::SetGyroFsr(Gscale scale)
 {
     //return IIC_Write_Byte(MPU_GYRO_CFG_REG,scale<<3);//设置陀螺仪满量程范围
-    unsigned char regdata;	
+    unsigned char regdata;
     regdata = (scale<<3);
     I2C_Write_NBytes(MPU6886_ADDRESS, MPU6886_GYRO_CONFIG, 1, &regdata);
     delay(10);
@@ -213,7 +213,7 @@ void MPU_accel::SetGyroFsr(Gscale scale)
 
 void MPU_accel::SetAccelFsr(Ascale scale)
 {
-    unsigned char regdata;	
+    unsigned char regdata;
     regdata = (scale<<3);
     I2C_Write_NBytes(MPU6886_ADDRESS, MPU6886_ACCEL_CONFIG, 1, &regdata);
     delay(10);
@@ -251,7 +251,7 @@ void MPU_accel::getAccelData(float* ax, float* ay, float* az){
   *az = (float)accZ * aRes;
 
 }
-      
+
 // x/y/z are in dps - degrees per second
 // avoiding costly float calculations
 void MPU_accel::getGyroDataInt(int16_t* ax, int16_t* ay, int16_t* az) {
@@ -278,9 +278,9 @@ void MPU_accel::getGyroData(float* gx, float* gy, float* gz){
 }
 
 void MPU_accel::getTempData(float *t){
-  
+
   int16_t temp = 0;
   getTempAdc(&temp);
-  
+
   *t = (float)temp / 326.8 + 25.0;
 }

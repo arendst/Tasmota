@@ -590,7 +590,7 @@ lv_anim_ntv = [            # valid LVGL8.3
     [uint8_t_1, "playback_now"],
     [uint8_t_1, "run_round"],
     [uint8_t_1, "start_cb_called"],
-    
+
 ]
 lv_anim_ntv = ct.structure(lv_anim_ntv, "lv_anim_ntv")
 

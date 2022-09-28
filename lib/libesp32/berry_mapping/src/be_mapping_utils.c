@@ -59,7 +59,7 @@ void be_map_insert_list_uint8(bvm *vm, const char *key, const uint8_t *value, si
 
 /*********************************************************************************************\
  * Binary search for dynamic attributes
- * 
+ *
  * Names need to be sorted
 \*********************************************************************************************/
 // binary search within an array of sorted strings

@@ -29,11 +29,11 @@ License along with NeoPixel.  If not, see
 enum NeoTm1914_Mode
 {
     NeoTm1914_Mode_DinFdinAutoSwitch,  // Switches between DIN and FDIN on any signal pause > 300ms
-    NeoTm1914_Mode_DinOnly, // DIN input pin used exclusively 
-    NeoTm1914_Mode_FdinOnly  // FDIN input pin used exclusively 
+    NeoTm1914_Mode_DinOnly, // DIN input pin used exclusively
+    NeoTm1914_Mode_FdinOnly  // FDIN input pin used exclusively
 };
 
-class NeoTm1914Settings 
+class NeoTm1914Settings
 {
 public:
     NeoTm1914Settings(NeoTm1914_Mode mode = NeoTm1914_Mode_DinOnly)  :
@@ -119,7 +119,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -131,7 +131,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 

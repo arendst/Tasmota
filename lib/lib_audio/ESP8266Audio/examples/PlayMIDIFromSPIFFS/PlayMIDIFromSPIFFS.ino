@@ -22,7 +22,7 @@ void setup()
   const char *soundfont = "/1mgm.sf2";
   const char *midifile = "/furelise.mid";
 
-  WiFi.mode(WIFI_OFF); 
+  WiFi.mode(WIFI_OFF);
 
   Serial.begin(115200);
   SPIFFS.begin();
@@ -31,7 +31,7 @@ void setup()
   audioLogger = &Serial;
   sf2 = new AudioFileSourceSPIFFS(soundfont);
   mid = new AudioFileSourceSPIFFS(midifile);
-  
+
   dac = new AudioOutputI2S();
   midi = new AudioGeneratorMIDI();
   midi->SetSoundfont(sf2);

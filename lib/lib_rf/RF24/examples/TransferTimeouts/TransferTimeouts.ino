@@ -11,7 +11,7 @@ TMRh20 2014
  and auto-reUse functionality enabled. This sketch demonstrates how a user can extend
  the auto-retry functionality to any chosen time period, preventing data loss and ensuring
  the consistency of data.
- 
+
  This sketh demonstrates use of the writeBlocking() functionality, and extends the standard
  retry functionality of the radio. Payloads will be auto-retried until successful or the
  extended timeout period is reached.
@@ -37,7 +37,7 @@ const uint64_t pipes[2] = { 0xABCDABCD71LL, 0x544d52687CLL };   // Radio pipe ad
 byte data[32];                           //Data buffer
 
 volatile unsigned long counter;
-unsigned long rxTimer,startTime, stopTime, payloads = 0;  
+unsigned long rxTimer,startTime, stopTime, payloads = 0;
 bool TX=1,RX=0,role=0, transferInProgress = 0;
 
 
@@ -54,21 +54,21 @@ void setup(void) {
   radio.setRetries(2,15);                  // Optionally, increase the delay between retries. Want the number of auto-retries as high as possible (15)
   radio.setCRCLength(RF24_CRC_16);         // Set CRC length to 16-bit to ensure quality of data
   radio.openWritingPipe(pipes[0]);         // Open the default reading and writing pipe
-  radio.openReadingPipe(1,pipes[1]);       
-  
+  radio.openReadingPipe(1,pipes[1]);
+
   radio.startListening();                 // Start listening
   radio.printDetails();                   // Dump the configuration of the rf unit for debugging
-  
+
   printf("\n\rRF24/examples/Transfer Rates/\n\r");
   printf("*** PRESS 'T' to begin transmitting to the other node\n\r");
-  
-  randomSeed(analogRead(0));              //Seed for random number generation  
+
+  randomSeed(analogRead(0));              //Seed for random number generation
   for(int i=0; i<32; i++){
      data[i] = random(255);               //Load the buffer with random data
   }
   radio.powerUp();                        //Power up the radio
 
-  
+
 }
 
 
@@ -76,56 +76,56 @@ void setup(void) {
 void loop(void){
 
 
-  if(role == TX){    
-    delay(2000);                                              // Pause for a couple seconds between transfers    
+  if(role == TX){
+    delay(2000);                                              // Pause for a couple seconds between transfers
     printf("Initiating Extended Timeout Data Transfer\n\r");
 
-    unsigned long cycles = 1000;                              // Change this to a higher or lower number. This is the number of payloads that will be sent.   
-    
-    unsigned long transferCMD[] = {'H','S',cycles };          // Indicate to the other radio that we are starting, and provide the number of payloads that will be sent 
+    unsigned long cycles = 1000;                              // Change this to a higher or lower number. This is the number of payloads that will be sent.
+
+    unsigned long transferCMD[] = {'H','S',cycles };          // Indicate to the other radio that we are starting, and provide the number of payloads that will be sent
     radio.writeFast(&transferCMD,12);                         // Send the transfer command
     if(radio.txStandBy(timeoutPeriod)){                       // If transfer initiation was successful, do the following
-   
+
         startTime = millis();                                 // For calculating transfer rate
         boolean timedOut = 0;                                 // Boolean for keeping track of failures
-      
+
         for(int i=0; i<cycles; i++){                          // Loop through a number of cycles
           data[0] = i;                                        // Change the first byte of the payload for identification
-       
+
           if(!radio.writeBlocking(&data,32,timeoutPeriod)){   // If retries are failing and the user defined timeout is exceeded
               timedOut = 1;                                   // Indicate failure
               counter = cycles;                               // Set the fail count to maximum
               break;                                          // Break out of the for loop
-          }  
-        }    
-  
-   
+          }
+        }
+
+
         stopTime = millis();                                  // Capture the time of completion or failure
-   
+
        //This should be called to wait for completion and put the radio in standby mode after transmission, returns 0 if data still in FIFO (timed out), 1 if success
        if(timedOut){ radio.txStandBy(); }                     //Partially blocking standby, blocks until success or max retries. FIFO flushed if auto timeout reached
        else{ radio.txStandBy(timeoutPeriod);     }            //Standby, block until FIFO empty (sent) or user specified timeout reached. FIFO flushed if user timeout reached.
-   
-   }else{                                             
+
+   }else{
        Serial.println("Communication not established");       //If unsuccessful initiating transfer, exit and retry later
-   } 
-    
+   }
+
    float rate = cycles * 32 / (stopTime - startTime);         //Display results:
-    
+
    Serial.print("Transfer complete at "); Serial.print(rate); printf(" KB/s \n\r");
    Serial.print(counter);
    Serial.print(" of ");
    Serial.print(cycles); Serial.println(" Packets Failed to Send");
-   counter = 0;   
-    
+   counter = 0;
+
    }
-  
-  
-  
-if(role == RX){  
-  
+
+
+
+if(role == RX){
+
   if(!transferInProgress){                       // If a bulk data transfer has not been started
-     if(radio.available()){                      
+     if(radio.available()){
         radio.read(&data,32);                    //Read any available payloads for analysis
 
         if(data[0] == 'H' && data[4] == 'S'){    // If a bulk data transfer command has been received
@@ -144,7 +144,7 @@ if(role == RX){
      }else
      if(millis() - rxTimer > timeoutPeriod){    // If no data available, check the timeout period
        Serial.println("Transfer Failed");       // If per-payload timeout exceeeded, end the transfer
-       transferInProgress = 0; 
+       transferInProgress = 0;
      }else
      if(counter >= payloads){                   // If the specified number of payloads is reached, transfer is completed
       startTime = millis() - startTime;         // Calculate the total time spent during transfer
@@ -154,12 +154,12 @@ if(role == RX){
       Serial.println(" KB/s");
       printf("Payload Count: %d \n\r", counter);
       transferInProgress = 0;                   // End the transfer as complete
-    }     
+    }
   }
-  
-   
+
+
   }
-  
+
   //
   // Change roles
   //
@@ -178,9 +178,9 @@ if(role == RX){
     else if ( c == 'R' && role == TX )
     {
       radio.openWritingPipe(pipes[0]);
-      radio.openReadingPipe(1,pipes[1]); 
+      radio.openReadingPipe(1,pipes[1]);
       radio.startListening();
-      printf("*** CHANGING TO RECEIVE ROLE -- PRESS 'T' TO SWITCH BACK\n\r");      
+      printf("*** CHANGING TO RECEIVE ROLE -- PRESS 'T' TO SWITCH BACK\n\r");
       role = RX;                // Become the primary receiver (pong back)
     }
   }

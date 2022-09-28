@@ -156,7 +156,7 @@ char* be_hue_light_state(class LightStateClass* l) {
     "%s\"alert\":\"none\","
     "\"effect\":\"none\","
     "\"reachable\":%s}";
-  
+
   bool      power = l->getPower();
   bool      reachable = l->getReachable();
   uint8_t   colormode = l->getColorMode();

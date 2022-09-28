@@ -23,7 +23,7 @@ void setup() {
 int counter = 0;
 void loop() {
   uint16_t raw;
-  
+
   raw = sgp.measureRaw();
 
   Serial.print("Measurement: ");

@@ -108,9 +108,9 @@ public:
 protected:
     static void encodePixel(uint8_t c1, uint8_t c2, uint8_t c3, uint16_t* color555)
     {
-        *color555 = (0x8000 | 
-                ((c1 & 0xf8) << 7) | 
-                ((c2 & 0xf8) << 2) | 
+        *color555 = (0x8000 |
+                ((c1 & 0xf8) << 7) |
+                ((c2 & 0xf8) << 2) |
                 ((c3 & 0xf8) >> 3));
     }
 

@@ -1,8 +1,8 @@
 /********************************************************************
  * Callback module
- * 
+ *
  * To use: `import cb`
- * 
+ *
  *******************************************************************/
 #include "be_constobj.h"
 
@@ -14,7 +14,7 @@
 
 /*********************************************************************************************\
  * Callback structures
- * 
+ *
  * We allow 4 parameters, or 3 if method (first arg is `self`)
  * This could be extended if needed
 \*********************************************************************************************/
@@ -92,10 +92,10 @@ static be_callback_handler_list_t *be_callback_handler_list_head = &be_callback_
 
 /*********************************************************************************************\
  * `add_handler`: Add an external handler to `make_cb()`
- * 
+ *
  * This is typically used by LVGL mapping to handle widget callbacks, the handler
  * needs to record additional infomation to disambiguate the call
- * 
+ *
  * arg1: function (or closure)
 \*********************************************************************************************/
 static int32_t be_cb_add_handler(bvm *vm) {
@@ -120,9 +120,9 @@ static int32_t be_cb_add_handler(bvm *vm) {
 
 /*********************************************************************************************\
  * `list_handlers`: List all cb handlers registered for this VM
- * 
+ *
  * Used for debugging only
- * 
+ *
  * No args
 \*********************************************************************************************/
 static int32_t be_cb_list_handlers(bvm *vm) {
@@ -141,10 +141,10 @@ static int32_t be_cb_list_handlers(bvm *vm) {
 
 /*********************************************************************************************\
  * `make_cb`: high-level call for creating a callback.
- * 
+ *
  * This function is called by `be_mapping` when generating a callback with a type name.
  * LVGL typically needs to register typed callbacks
- * 
+ *
  * arg1: function (or closure)
  * arg2: type name for callback (optional)
  * argN: any other callback specific arguments (unlimited number, passed as-is)
@@ -180,7 +180,7 @@ static int32_t be_cb_make_cb(bvm *vm) {
 
 /*********************************************************************************************\
  * `gen_cb`: Generate a new callback
- * 
+ *
  * arg1: function (or closure)
 \*********************************************************************************************/
 static int32_t be_cb_gen_cb(bvm *vm) {
@@ -210,7 +210,7 @@ static int32_t be_cb_gen_cb(bvm *vm) {
 
 /*********************************************************************************************\
  * `get_cb_list`: Return the list of callbacks for this vm
- * 
+ *
 \*********************************************************************************************/
 static int32_t be_cb_get_cb_list(bvm *vm) {
   be_newobject(vm, "list");
@@ -228,12 +228,12 @@ static int32_t be_cb_get_cb_list(bvm *vm) {
     }
   }
   be_pop(vm, 1);
-  be_return(vm);       
+  be_return(vm);
 }
 
 /*********************************************************************************************\
  * Callback structures
- * 
+ *
  * We allow 4 parameters, or 3 if method (first arg is `self`)
  * This could be extended if needed
 \*********************************************************************************************/

@@ -46,7 +46,7 @@ void setup() {
   // Do not call knx.load() for static config, it will try to load config from EEPROM which we don't have here
 
   // Init sensor
-  if (!bme.begin(0x76)) {  
+  if (!bme.begin(0x76)) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
   }
 
@@ -78,7 +78,7 @@ void setup() {
 
 void loop() {
   knx.loop();
-  
+
   unsigned long now = millis();
 
   if (next_change < now)

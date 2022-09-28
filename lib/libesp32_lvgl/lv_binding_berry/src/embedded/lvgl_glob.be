@@ -15,7 +15,7 @@ class LVGL_glob
   var widget_ctor_cb
   var widget_dtor_cb
   var widget_event_cb       # callback object that calls `widget_event_impl(object, event)`
-  
+
   var widget_struct_default
   var widget_struct_by_class
 
@@ -118,8 +118,8 @@ class LVGL_glob
     import cb
     # print('>> make_cb', f, name, obj)
     # record the object, whatever the callback
-    
-    if name  == "lv_event_cb"    
+
+    if name  == "lv_event_cb"
       self.register_obj(obj)                # keep a record of the object to prevent from being gc'ed
       var rank = self.add_cb_event_closure(obj._p, f)
       # if self.cb_event_closure.contains(obj._p)
@@ -292,7 +292,7 @@ _lvgl = LVGL_glob()
 #       self.line_dsc.round_start = 1
 #       self.line_dsc.round_end = 1
 #       self.line_dsc.width = bar
-      
+
 #       var on_color = self.get_style_line_color(lv.PART_MAIN | lv.STATE_DEFAULT)
 #       var off_color = self.get_style_bg_color(lv.PART_MAIN | lv.STATE_DEFAULT)
 

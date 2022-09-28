@@ -38,13 +38,13 @@ class AXP192_M5Stack_Core2 : AXP192
 
       # turn green led on
       self.set_led(true)
-  
+
       # set charging current to 100mA
       self.set_chg_current(0) # 0 = 100mA
 
       # AXP192 GPIO4 - TBC what this does really?
       self.write8(0x95, self.read8(0X95) & 0x72 | 0x84)
-  
+
       # Button parameter setting
       # Current:
       #   Boot time = 512ms
@@ -53,7 +53,7 @@ class AXP192_M5Stack_Core2 : AXP192
       #   PWROK signal delay after power on = 64ms
       #   Shutdown duration setting = 4s
       self.write8(0x34, 0x4C)
-  
+
       # ADC all-on
       # Bit 7: Battery voltage ADC enable
       # Bit 6: Battery current ADC enable
@@ -64,7 +64,7 @@ class AXP192_M5Stack_Core2 : AXP192
       # Bit 1: APS voltage ADC enable
       # Bit 0: TS pin ADC function enable
       self.write8(0x82, 0xFF)
-  
+
       # Reset LCD Controller
       self.set_lcd_reset(false)
       tasmota.delay(100)   # wait for 100ms

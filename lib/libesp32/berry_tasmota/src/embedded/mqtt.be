@@ -4,7 +4,7 @@
 
 #-
 
-import path 
+import path
 path.remove("mqtt.bec")
 import solidify
 load('mqtt.be')
@@ -113,7 +113,7 @@ class MQTT : MQTT_ntv
   # if topic == nil, unsuscribe to all
   def unsubscribe(topic)
     if self.topics == nil  return end                 # nothing to do
-    
+
     var i = 0
     while i < size(self.topics)
       if topic == nil || self.topics[i].fulltopic == topic

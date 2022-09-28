@@ -11,17 +11,17 @@
     <Properties>
       <Property Id="Microsoft.VisualStudio.Code.Engine" Value="^1.15.1" />
       <Property Id="Microsoft.VisualStudio.Code.ExtensionDependencies" Value="" />
-      
-      
-      
-      
-      
+
+
+
+
+
       <Property Id="Microsoft.VisualStudio.Services.GitHubFlavoredMarkdown" Value="true" />
-      
-      
+
+
     </Properties>
-    
-    
+
+
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Code"/>

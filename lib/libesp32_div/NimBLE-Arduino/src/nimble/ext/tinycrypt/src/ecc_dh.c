@@ -1,6 +1,6 @@
 /* ec_dh.c - TinyCrypt implementation of EC-DH */
 
-/* 
+/*
  * Copyright (c) 2014, Kenneth MacKay
  * All rights reserved.
  *

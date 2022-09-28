@@ -105,20 +105,20 @@ void Bp5758dStop(void) {
 
 /********************************************************************************************/
 
-bool Bp5758dSetChannels(void) {  
+bool Bp5758dSetChannels(void) {
   uint16_t *cur_col_10 = (uint16_t*)XdrvMailbox.command;
-    
+
   // If we receive 0 for all channels, we'll assume that the lightbulb is off, and activate BP5758d's sleep mode.
   if (cur_col_10[0]==0 && cur_col_10[1]==0 && cur_col_10[2]==0 && cur_col_10[3]==0 && cur_col_10[4]==0) {
     Bp5758dStart(BP5758D_ADDR_SLEEP);
     Bp5758dStop();
     return true;
   }
-    
+
   // Even though we could address changing channels only, in practice we observed that the lightbulb always sets all channels.
   Bp5758dStart(BP5758D_ADDR_OUT1_GL);
   // Brigtness values are transmitted as two bytes. The light-bulb accepts a 10-bit integer (0-1023) as an input value.
-  // The first 5bits of this input are transmitted in second byte, the second 5bits in the first byte.  
+  // The first 5bits of this input are transmitted in second byte, the second 5bits in the first byte.
   Bp5758dWrite((uint8_t)(cur_col_10[0] & 0x1F));  //Red
   Bp5758dWrite((uint8_t)(cur_col_10[0] >> 5));
   Bp5758dWrite((uint8_t)(cur_col_10[1] & 0x1F)); //Green
@@ -129,7 +129,7 @@ bool Bp5758dSetChannels(void) {
   Bp5758dWrite((uint8_t)(cur_col_10[4] >> 5));
   Bp5758dWrite((uint8_t)(cur_col_10[3] & 0x1F)); //Warm
   Bp5758dWrite((uint8_t)(cur_col_10[3] >> 5));
-  
+
   Bp5758dStop();
   return true;
 }

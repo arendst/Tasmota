@@ -1,5 +1,5 @@
- Copyright (c) 1995-2004 RealNetworks, Inc. All Rights Reserved.  
-        
+ Copyright (c) 1995-2004 RealNetworks, Inc. All Rights Reserved.
+
  The contents of this directory, and (except where otherwise
  indicated) the directories included within this directory, are
  subject to the current version of the RealNetworks Public Source
@@ -13,18 +13,18 @@
  this directory, the RCSL.  Please see the applicable RPSL or RCSL for
  the rights, obligations and limitations governing use of the contents
  of the directory.
- 
+
  This directory is part of the Helix DNA Technology. RealNetworks is
  the developer of the Original Code and owns the copyrights in the
  portions it created.
-   
+
  This directory, and the directories included with this directory, are
  distributed and made available on an 'AS IS' basis, WITHOUT WARRANTY
  OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY
  DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY
  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
  QUIET ENJOYMENT OR NON-INFRINGEMENT.
-  
- Technology Compatibility Kit Test Suite(s) Location:  
-    http://www.helixcommunity.org/content/tck  
+
+ Technology Compatibility Kit Test Suite(s) Location:
+    http://www.helixcommunity.org/content/tck
 

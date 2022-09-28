@@ -39,7 +39,7 @@ class Partition_info
     end
     return b
   end
-    
+
   #
   def init(raw)
     if raw == nil || !issubclass(bytes, raw)    # no payload, empty partition information
@@ -68,7 +68,7 @@ class Partition_info
       import string
       raise  "internal_error", string.format("invalid magic number %02X", magic)
     end
-    
+
   end
 
   # check if the parition is an OTA partition
@@ -95,10 +95,10 @@ class Partition_info
       var addr = self.start
       var magic_byte = flash.read(addr, 1).get(0, 1)
       if magic_byte != 0xE9 return -1 end
-      
+
       var seg_count = flash.read(addr+1, 1).get(0, 1)
       # print("Segment count", seg_count)
-      
+
       var seg_offset = addr + 0x20 # sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) = 24 + 8
 
       for seg_num:0..seg_count-1
@@ -273,14 +273,14 @@ class Partition_otadata
       seq_max = self.seq1
       block_act = 1
     end
-    
+
     #- compute the next sequence number -#
     var actual_ota = (seq_max - 1) % (self.maxota + 1)
     if actual_ota != n    #- change only if different -#
       if n > actual_ota   seq_max += n - actual_ota
       else                seq_max += (self.maxota + 1) - actual_ota + n
       end
-      
+
       #- update internal structure -#
       if block_act == 1       #- current block is 1, so update block 0 -#
         self.seq0 = seq_max
@@ -323,7 +323,7 @@ class Partition_otadata
     #- check the block number to save, 0 or 1. Choose the highest ota_seq -#
     var block_to_save = -1    #- invalid -#
     var seq_to_save = -1      #- invalid value -#
-    
+
     # check seq0
     if self.seq0 != nil
       seq_to_save = self.seq0
@@ -343,7 +343,7 @@ class Partition_otadata
     bytes_to_save.add(seq_to_save, 4)
     bytes_to_save += bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
     bytes_to_save.add(self.crc32_ota_seq(seq_to_save), 4)
-    
+
     #- erase flash area and write -#
     flash.erase(offset_to_save, 0x1000)
     flash.write(offset_to_save, bytes_to_save)
@@ -493,7 +493,7 @@ class Partition
     var b = bytes("00")  #- flash memory: we can turn bits from '1' to '0' -#
     flash.write(spiffs.start         , b)    #- block #0 -#
     flash.write(spiffs.start + 0x1000, b)    #- block #1 -#
-  end  
+  end
 end
 partition.Partition = Partition
 
@@ -553,7 +553,7 @@ class Partition_manager_UI
         webserver.content_send("</form></p>")
       end
     end
-    
+
     webserver.content_send("<p></p></fieldset><p></p>")
   end
 
@@ -568,7 +568,7 @@ class Partition_manager_UI
                                          slot.start / 0x1000))
 
     webserver.content_send(string.format("<p><b>Partition size:</b> %i KB</p>", slot.size / 1024))
-    
+
     if free_mem != nil
       webserver.content_send(string.format("<p><b>Max size: </b>%i KB</p>", (slot.size + free_mem) / 1024))
       webserver.content_send(string.format("<p><b>Unallocated: </b>%i KB</p>", free_mem / 1024))
@@ -642,7 +642,7 @@ class Partition_manager_UI
       webserver.content_send(string.format("<input type='number' min='%d' max='%d' step='64' name='app1' value='%i'>", self.app_size_min, self.app_size_max, app1_size_kb))
 
       webserver.content_send("<p></p><button name='resize' class='button bred'>Resize Partitions</button></form></p>")
-  
+
     end
   end
   #######################################################################
@@ -717,7 +717,7 @@ class Partition_manager_UI
         var spiffs_slot = p.slots[-1]   # last slot
 
         var spiffs_max_size = ((tasmota.memory()['flash'] - (spiffs_slot.start / 1024)) / 16) * 16
-        
+
         if spiffs_slot == nil || !spiffs_slot.is_spiffs() raise "value_error", "Last slot is not FS type" end
         var flash_size_kb = tasmota.memory()['flash']
         if spiffs_size_kb < 0 || spiffs_size_kb > spiffs_max_size

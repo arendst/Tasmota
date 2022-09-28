@@ -63,7 +63,7 @@ void setup()
   WiFi.disconnect();
   WiFi.softAPdisconnect(true);
   WiFi.mode(WIFI_STA);
-  
+
   WiFi.begin(ssid, password);
 
   // Try forever

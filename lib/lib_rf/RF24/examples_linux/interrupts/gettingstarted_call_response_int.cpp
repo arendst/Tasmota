@@ -46,18 +46,18 @@ uint8_t counter = 1;                                                          //
 volatile bool gotResponse = false;
 
 void intHandler(){
-    
+
   if ( role == role_pong_back ) {
     uint8_t pipeNo, gotByte;           		        // Declare variables for the pipe and the byte received
-    if( radio.available(&pipeNo)){               	// Read all available payloads      
+    if( radio.available(&pipeNo)){               	// Read all available payloads
       radio.read( &gotByte, 1 );
 													// Since this is a call-response. Respond directly with an ack payload.
 	  gotByte += 1;  								// Ack payloads are much more efficient than switching to transmit mode to respond to a call
-	  radio.writeAckPayload(pipeNo,&gotByte, 1 );   // This can be commented out to send empty payloads.	  
+	  radio.writeAckPayload(pipeNo,&gotByte, 1 );   // This can be commented out to send empty payloads.
       printf("Loaded next response %d \n\r", gotByte);
-   
+
     }
-  }    
+  }
 }
 
 int main(int argc, char** argv){
@@ -98,10 +98,10 @@ int main(int argc, char** argv){
     }
 	radio.startListening();
 	radio.writeAckPayload(1,&counter,1);
-    
+
     radio.maskIRQ(1,1,0); //Mask tx_ok & tx_fail interrupts
     attachInterrupt(interruptPin, INT_EDGE_FALLING, intHandler); //Attach interrupt to bcm pin 23
-    
+
 // forever loop
 while (1){
 
@@ -120,7 +120,7 @@ while (1){
         if(!radio.available()){                             // If nothing in the buffer, we got an ack but it is blank
             printf("Got blank response. round-trip delay: %lu ms\n\r",millis()-time);
         }else{
-            
+
             while(radio.available() ){                      // If an ack with payload was received
                 radio.read( &gotByte, 1 );                  // Read it, and display the response time
                 printf("Got response %d, round-trip delay: %lu ms\n\r",gotByte,millis()-time);

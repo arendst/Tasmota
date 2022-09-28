@@ -5,7 +5,7 @@
 // Included but commented out are examples of configuring a NeoPixelBus for
 // different color order including an extra white channel, different data speeds, and
 // for Esp8266 different methods to send the data.
-// NOTE: You will need to make sure to pick the one for your platform 
+// NOTE: You will need to make sure to pick the one for your platform
 //
 //
 // There is serial output of the current state so you can confirm and follow along
@@ -22,12 +22,12 @@ const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignore
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
 //NeoPixelBus<NeoRgbFeature, Neo400KbpsMethod> strip(PixelCount, PixelPin);
 
-// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.  
+// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 // There are other Esp8266 alternative methods that provide more pin options, but also have
 // other side effects.
-// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods 
+// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
-// You can also use one of these for Esp8266, 
+// You can also use one of these for Esp8266,
 // each having their own restrictions
 //
 // These two are the same as above as the DMA method is the default
@@ -36,7 +36,7 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
 //NeoPixelBus<NeoRgbFeature, NeoEsp8266Dma400KbpsMethod> strip(PixelCount, PixelPin);
 
 // Uart method is good for the Esp-01 or other pin restricted modules
-// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods 
+// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 // NOTE: These will ignore the PIN and use GPI02 pin
 //NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
 //NeoPixelBus<NeoRgbFeature, NeoEsp8266Uart1400KbpsMethod> strip(PixelCount, PixelPin);
@@ -87,7 +87,7 @@ void loop()
 
     Serial.println("Colors R, G, B, W...");
 
-    // set the colors, 
+    // set the colors,
     // if they don't match in order, you need to use NeoGrbFeature feature
     strip.SetPixelColor(0, red);
     strip.SetPixelColor(1, green);
@@ -115,7 +115,7 @@ void loop()
 
     Serial.println("HSL Colors R, G, B, W...");
 
-    // set the colors, 
+    // set the colors,
     // if they don't match in order, you may need to use NeoGrbFeature feature
     strip.SetPixelColor(0, hslRed);
     strip.SetPixelColor(1, hslGreen);

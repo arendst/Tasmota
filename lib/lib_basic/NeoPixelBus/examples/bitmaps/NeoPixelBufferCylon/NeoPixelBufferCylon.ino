@@ -1,17 +1,17 @@
 // NeoPixelBufferCylon
-// This example will move a Cylon Red Eye back and forth across the 
-// the full collection of pixels on the strip. 
+// This example will move a Cylon Red Eye back and forth across the
+// the full collection of pixels on the strip.
 //
-// This will demonstrate the use of the NeoVerticalSpriteSheet 
-// 
+// This will demonstrate the use of the NeoVerticalSpriteSheet
+//
 
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
 
 // The actual image is contained in the data structure in one of the Cylon*.h files
 // You will need to use the one that has the same color feature as your NeoPixelBus
-// There are two provided, but you can create your own easily enough using 
-// free versions of Paint.Net and the plugin 
+// There are two provided, but you can create your own easily enough using
+// free versions of Paint.Net and the plugin
 #include "CylonGrb.h"
 typedef NeoGrbFeature MyPixelColorFeature;
 
@@ -19,7 +19,7 @@ typedef NeoGrbFeature MyPixelColorFeature;
 // typedef NeoGrbwFeature MyPixelColorFeature;
 
 const uint16_t PixelCount = 16; // the sample images are meant for 16 pixels
-const uint16_t PixelPin = 2;  
+const uint16_t PixelPin = 2;
 const uint16_t AnimCount = 1; // we only need one
 
 NeoPixelBus<MyPixelColorFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);

@@ -13,7 +13,7 @@ private:
 public:
     Stream();
     virtual size_t write(uint8_t);
-    
+
     virtual bool error();
     virtual void expect(uint8_t *buf, size_t size);
     virtual uint16_t length();

@@ -167,11 +167,11 @@ RgbColor RgbColor::LinearBlend(const RgbColor& left, const RgbColor& right, floa
         left.B + ((right.B - left.B) * progress));
 }
 
-RgbColor RgbColor::BilinearBlend(const RgbColor& c00, 
-    const RgbColor& c01, 
-    const RgbColor& c10, 
-    const RgbColor& c11, 
-    float x, 
+RgbColor RgbColor::BilinearBlend(const RgbColor& c00,
+    const RgbColor& c01,
+    const RgbColor& c10,
+    const RgbColor& c11,
+    float x,
     float y)
 {
     float v00 = (1.0f - x) * (1.0f - y);

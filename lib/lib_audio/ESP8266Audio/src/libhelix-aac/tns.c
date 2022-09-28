@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: tns.c,v 1.2 2005/05/24 16:01:55 albertofloyd Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: tns.c,v 1.2 2005/05/24 16:01:55 albertofloyd Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -81,14 +81,14 @@ static const int invQuant4[16] PROGMEM = {
  * Outputs:     LPC coefficients in Q(FBITS_LPC_COEFS), in 'a'
  *
  * Return:      none
- * 
+ *
  * Notes:       assumes no guard bits in input transform coefficients
- *              a[i] = Q(FBITS_LPC_COEFS), don't store a0 = 1.0 
- *                (so a[0] = first delay tap, etc.) 
- *              max abs(a[i]) < log2(order), so for max order = 20 a[i] < 4.4 
- *                (up to 3 bits of gain) so a[i] has at least 31 - FBITS_LPC_COEFS - 3 
+ *              a[i] = Q(FBITS_LPC_COEFS), don't store a0 = 1.0
+ *                (so a[0] = first delay tap, etc.)
+ *              max abs(a[i]) < log2(order), so for max order = 20 a[i] < 4.4
+ *                (up to 3 bits of gain) so a[i] has at least 31 - FBITS_LPC_COEFS - 3
  *                guard bits
- *              to ensure no intermediate overflow in all-pole filter, set 
+ *              to ensure no intermediate overflow in all-pole filter, set
  *                FBITS_LPC_COEFS such that number of guard bits >= log2(max order)
  **************************************************************************************/
 static void DecodeLPCCoefs(int order, int res, signed char *filtCoef, int *a, int *b)
@@ -104,7 +104,7 @@ static void DecodeLPCCoefs(int order, int res, signed char *filtCoef, int *a, in
 		t = invQuantTab[filtCoef[m] & 0x0f];	/* t = Q31 */
 		for (i = 0; i < m; i++)
 			b[i] = a[i] - (MULSHIFT32(t, a[m-i-1]) << 1);
-		for (i = 0; i < m; i++) 
+		for (i = 0; i < m; i++)
 			a[i] = b[i];
 		a[m] = t >> (31 - FBITS_LPC_COEFS);
 	}
@@ -125,7 +125,7 @@ static void DecodeLPCCoefs(int order, int res, signed char *filtCoef, int *a, in
  * Outputs:     filtered transform coefficients
  *
  * Return:      guard bit mask (OR of abs value of all filtered transform coefs)
- * 
+ *
  * Notes:       assumes no guard bits in input transform coefficients
  *              gains 0 int bits
  *              history buffer does not need to be preserved between regions
@@ -147,7 +147,7 @@ static int FilterRegion(int size, int dir, int order, int *audioCoef, int *a, in
 		y = *audioCoef;
 		sum64.r.hi32 = y >> (32 - FBITS_LPC_COEFS);
 		sum64.r.lo32 = y << FBITS_LPC_COEFS;
-		 
+
 		/* sum64 += (a1*y[n-1] + a2*y[n-2] + ... + a[order-1]*y[n-(order-1)]) */
         for (j = order - 1; j > 0; j--) {
 			sum64.w64 = MADD64(sum64.w64, hist[j], a[j]);
@@ -188,7 +188,7 @@ int TNSFilter(AACDecInfo *aacDecInfo, int ch)
 	int win, winLen, nWindows, nSFB, filt, bottom, top, order, maxOrder, dir;
 	int start, end, size, tnsMaxBand, numFilt, gbMask;
 	int *audioCoef;
-	unsigned char *filtLength, *filtOrder, *filtRes, *filtDir; 
+	unsigned char *filtLength, *filtOrder, *filtRes, *filtDir;
 	signed char *filtCoef;
 	const unsigned /*char*/ int *tnsMaxBandTab;
 	const /*short*/ int *sfbTab;

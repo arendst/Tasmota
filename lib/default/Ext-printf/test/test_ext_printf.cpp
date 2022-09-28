@@ -77,7 +77,7 @@ void test_ext_snprintf_P(void) {
   // String string("Foobar");
   // ext_snprintf_P(c, sizeof(c), "String 0x%08X %_s", &string, &string);
   // Serial.printf("--> out=%s\n", c);
-  
+
   // ext_snprintf_P(c, sizeof(c), "StringFunc 0x%08X %_S", &test_string, &test_string);
   // Serial.printf("--> out=%s\n", c);
 
@@ -95,7 +95,7 @@ void test_ext_snprintf_P(void) {
 // {
 //   Serial.printf("%s\n", format);
 // }
- 
+
 // template<typename T, typename... Targs>
 // void tprintf(const char* format, T value, Targs... Fargs) // recursive variadic function
 // {

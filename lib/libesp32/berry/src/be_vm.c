@@ -1230,7 +1230,7 @@ static void prep_closure(bvm *vm, int pos, int argc, int mode)
         blist *list = var_toobj(vm->top-1);  /* get low-level BE_LIST structure */
         v = vm->reg + proto->argc - 1;  /* last argument */
         for (; v < vm->reg + argc; v++) {
-            be_list_push(vm, list, v); /* push all varargs into list */       
+            be_list_push(vm, list, v); /* push all varargs into list */
         }
         *(vm->reg + proto->argc - 1) = *(vm->top-2);  /* change the vararg argument to now contain the list instance */
         vm->top = vm->stack + top_save_offset;  /* restore top of stack pointer */

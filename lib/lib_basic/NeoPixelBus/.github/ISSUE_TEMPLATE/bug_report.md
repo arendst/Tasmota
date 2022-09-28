@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**NOTE:  If you are seeking help or have questions, this is NOT the place to do it.**  For questions and support, jump on Gitter and ask away.  
+**NOTE:  If you are seeking help or have questions, this is NOT the place to do it.**  For questions and support, jump on Gitter and ask away.
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Makuna/NeoPixelBus?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 **Describe the bug**
@@ -31,7 +31,7 @@ A clear and concise description of what you expected to happen.
 
 **Minimal Sketch that reproduced the problem:**
 If an example will demonstrate the problem, list which example you used.
-If its your sketch, take the time to remove unneeded parts and minimize it to the smallest sketch that reproduces the problem.  Then include the sketch here using `code` markup.  Start with a line with three single left quotes and then end with a line with three single left quotes. 
+If its your sketch, take the time to remove unneeded parts and minimize it to the smallest sketch that reproduces the problem.  Then include the sketch here using `code` markup.  Start with a line with three single left quotes and then end with a line with three single left quotes.
 
 **Additional context**
 Add any other context about the problem here.

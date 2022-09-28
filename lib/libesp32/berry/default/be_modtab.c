@@ -116,7 +116,7 @@ BERRY_LOCAL const bntvmodule* const be_module_table[] = {
     &be_native_module(cb),
 
     /* user-defined modules register start */
-    
+
     &be_native_module(python_compat),
     &be_native_module(path),
     &be_native_module(mqtt),
@@ -268,7 +268,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 
 #ifdef USE_LVGL
     &be_native_class(LVGL_glob),
-    
+
     &be_native_class(lv_signal_bars),
     &be_native_class(lv_wifi_bars),
     &be_native_class(lv_wifi_bars_icon),
@@ -304,7 +304,7 @@ extern void be_load_ctypes_energy_definitions_lib(bvm *vm);
 BERRY_API void be_load_custom_libs(bvm *vm)
 {
     (void)vm;   /* prevent a compiler warning */
-    
+
     /* add here custom libs */
 #if !BE_USE_PRECOMPILED_OBJECT
     /* be_load_xxxlib(vm); */

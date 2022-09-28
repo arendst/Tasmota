@@ -28,7 +28,7 @@ const char kInternalError[] PROGMEM = "intenal_error";
 
 /*********************************************************************************************\
  * LVGL top level virtual members
- * 
+ *
  * Responds to virtual constants
 \*********************************************************************************************/
 extern "C" {

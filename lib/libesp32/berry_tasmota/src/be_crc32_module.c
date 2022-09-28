@@ -1,8 +1,8 @@
 /********************************************************************
  * Berry module `webserver`
- * 
+ *
  * To use: `import webserver`
- * 
+ *
  * Allows to respond to HTTP request
  *******************************************************************/
 #include "be_constobj.h"

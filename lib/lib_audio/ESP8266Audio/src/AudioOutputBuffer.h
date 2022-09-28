@@ -1,7 +1,7 @@
 /*
   AudioOutputBuffer
   Adds additional bufferspace to the output chain
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ class AudioOutputBuffer : public AudioOutput
     virtual bool begin() override;
     virtual bool ConsumeSample(int16_t sample[2]) override;
     virtual bool stop() override;
-    
+
   protected:
     AudioOutput *sink;
     int buffSize;

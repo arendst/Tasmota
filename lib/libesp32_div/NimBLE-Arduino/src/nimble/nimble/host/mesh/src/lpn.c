@@ -715,7 +715,7 @@ static bool sub_update(uint8_t op)
 
 	req.xact = lpn->xact_next++;
 
-	if (bt_mesh_ctl_send(&tx, op, &req, 1 + g * 2, 
+	if (bt_mesh_ctl_send(&tx, op, &req, 1 + g * 2,
 						 &req_sent_cb, NULL) < 0) {
 		group_zero(lpn->pending);
 		return false;

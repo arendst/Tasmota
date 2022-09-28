@@ -18,10 +18,10 @@
 */
 
 /*
-To generate a version of this file containing data for your root certificate, 
-run the following command from a Linux or Cygwin bash shell, assuming that a 
+To generate a version of this file containing data for your root certificate,
+run the following command from a Linux or Cygwin bash shell, assuming that a
 copy of brssl (or brssl.exe) is in the directory where the EasyRSA shell script
-is located. 
+is located.
 
 ./brssl ta pki/ca.crt | sed -e '/br_x509/,+999 d' >local_ca_data.h
 
@@ -36,7 +36,7 @@ Be sure to generate both files: local_ca_data.h, and local_ca_descriptor.h
 
 //
 // this is what the result will look like, except there will be
-// a lot of data bytes defined in the first three arrays 
+// a lot of data bytes defined in the first three arrays
 //
 static const unsigned char PROGMEM TA0_DN[] = {
 	// variable number of bytes go here (typically 100-140 or so) for the DN

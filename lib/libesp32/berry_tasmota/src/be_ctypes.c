@@ -295,7 +295,7 @@ int be_ctypes_setmember(bvm *vm) {
             v = be_tocomptr(vm, 3);
         } else {
             v = be_tostring(vm, 3);
-        }         
+        }
         be_pushint(vm, (int32_t) v);
         be_moveto(vm, -1, 3);
         be_pop(vm, 1);

@@ -24,10 +24,10 @@
  * argument checking.
  * Found here: https://www.reddit.com/r/C_Programming/comments/ud3xrv/
  * conditional_preprocessor_macro_anyone/
- * 
+ *
  * Usage:
  * COND(<define_to_test>[||/&&<more_define>...], <true_result>, <false_result>)
- * 
+ *
  * NB: If __VA_OPT__ macro not supported, the <true_result> will be expanded!
  */
 /// @cond TEST

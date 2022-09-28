@@ -15,7 +15,7 @@
   #include <iostream>
   #include <unistd.h>
   #include <stdlib.h>
-  
+
   //#include <UtilTime.h> // Precompiled arduino x86 based utiltime for timing functions
 
   // GCC a Arduino Missing
@@ -26,7 +26,7 @@
   #define pgm_read_byte(p) (*(p))
   #define pgm_read_ptr(p) (*(p))
   #define _SPI spi
-  
+
   #define RF24_LINUX
   //typedef uint16_t prog_uint16_t;
   #define PSTR(x) (x)
@@ -41,7 +41,7 @@
   #else
 	#define IF_SERIAL_DEBUG(x)
   #endif
-  
+
   #define digitalWrite(pin, value) gpio.write(pin, value)
   #define digitalRead(pin) GPIO::read(pin)
   #define pinMode(pin, direction) gpio.open(pin, direction)
@@ -52,9 +52,9 @@
 	#define delayMicroseconds(usec) __usleep(usec)
 	#define millis() __millis()
   #endif
-  
+
   #define INPUT mraa::DIR_IN
-  #define OUTPUT mraa::DIR_OUT  
+  #define OUTPUT mraa::DIR_OUT
 
   // SPI defines for ARDUINO API
   #define MSBFIRST 1

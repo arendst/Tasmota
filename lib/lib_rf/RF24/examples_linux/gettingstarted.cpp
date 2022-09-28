@@ -69,8 +69,8 @@ RF24 radio(22,0);
 //RF24 radio(115,0);
 
 //BBB Alternate, with mraa
-// CE pin = (Header P9, Pin 13) = 59 = 13 + 46 
-//Note: Specify SPI BUS 0 or 1 instead of CS pin number. 
+// CE pin = (Header P9, Pin 13) = 59 = 13 + 46
+//Note: Specify SPI BUS 0 or 1 instead of CS pin number.
 //RF24 radio(59,0);
 
 /********** User Config *********/
@@ -126,9 +126,9 @@ int main(int argc, char** argv){
       radio.openWritingPipe(pipes[1]);
       radio.openReadingPipe(1,pipes[0]);
     }
-	
+
 	radio.startListening();
-	
+
 	// forever loop
 	while (1)
 	{
@@ -182,7 +182,7 @@ int main(int argc, char** argv){
 
 		if ( role == role_pong_back )
 		{
-			
+
 			// if there is data ready
 			if ( radio.available() )
 			{
@@ -194,7 +194,7 @@ int main(int argc, char** argv){
 					radio.read( &got_time, sizeof(unsigned long) );
 				}
 				radio.stopListening();
-				
+
 				radio.write( &got_time, sizeof(unsigned long) );
 
 				// Now, resume listening so we catch the next packets.
@@ -202,11 +202,11 @@ int main(int argc, char** argv){
 
 				// Spew it
 				printf("Got payload(%d) %lu...\n",sizeof(unsigned long), got_time);
-				
+
 				delay(925); //Delay after payload responded to, minimize RPi CPU time
-				
+
 			}
-		
+
 		}
 
 	} // forever loop

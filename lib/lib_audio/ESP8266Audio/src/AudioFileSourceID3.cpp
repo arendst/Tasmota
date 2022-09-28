@@ -1,7 +1,7 @@
 /*
   AudioFileSourceID3
   ID3 filter that extracts any ID3 fields and sends to CB function
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

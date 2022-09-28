@@ -22,21 +22,21 @@ Building It
 
 If you want to build a board right now, there are two possible routes:
 
- - Use the new v5 PCB (`hardware/epaper-breakout/gerbers_v5.zip`). 
+ - Use the new v5 PCB (`hardware/epaper-breakout/gerbers_v5.zip`).
    **So far, I only tested a prototype of it. The newest gerbers should work, but are untested!**
    **If you have tested them, please let me know!**
    The BOM is available at (`hardware/epaper-breakout/BOM.csv`).
-   Positioning files for SMT assembly are available at (`hardware/epaper-breakout/gerbers/epaper-breakout-top-pos.csv`). 
+   Positioning files for SMT assembly are available at (`hardware/epaper-breakout/gerbers/epaper-breakout-top-pos.csv`).
    Please double check the part positioning and Rotation with your assembly service!
    More information on the order process and where to find parts is in the [documentation](https://epdiy.readthedocs.io/en/latest/getting_started.html#getting-your-board).
- 
+
    Make sure to select the `V5` board revision in `idf.py menuconfig` when building the examples.
- 
+
  - Use the old v4 PCB (`hardware/epaper-breakout/gerbers_v4.zip`). This is a bit more fresh, but should work.
    The BOM is available at (`hardware/epaper-breakout/BOM.csv`).
-   Positioning files for SMT assembly are available at (`hardware/epaper-breakout/gerbers/epaper-breakout-top-pos.csv`). 
+   Positioning files for SMT assembly are available at (`hardware/epaper-breakout/gerbers/epaper-breakout-top-pos.csv`).
    Please double check the part positioning and Rotation with your assembly service!
- 
+
    Make sure to select the `V4` board revision in `idf.py menuconfig` when building the examples.
 
 Gettings Started
@@ -88,7 +88,7 @@ The following list is compiled from past experiences and GitHub issues:
  * **The existing image fades / darkens when updating a partial screen region.** Make sure the VCOM voltage is [calibrated](https://epdiy.readthedocs.io/en/latest/getting_started.html#calibrate-vcom) for your specific display.
  * **The second third of the image is replaced with the last third.** This seems to be a timing issue we could not yet quite figure out the reason for. For a workarround or suggestions please [join the discussion](https://github.com/vroland/epdiy/issues/15).
  * **The ESP does not boot correctly when external periperals are connected.** Make sure not to pull GPIO12 high during boot, as it is a strapping pin internal voltage selection (https://github.com/vroland/epdiy/issues/17).
- 
+
 More on E-Paper Displays
 ------------------------
 

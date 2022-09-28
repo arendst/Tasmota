@@ -19,12 +19,12 @@ typedef enum {
     I2S_FIFO_16BIT_DUAL, I2S_FIFO_16BIT_SINGLE, I2S_FIFO_32BIT_DUAL, I2S_FIFO_32BIT_SINGLE
 } i2s_tx_fifo_mod_t;
 
-void i2sInit(uint8_t bus_num, 
-    uint32_t bits_per_sample, 
-    uint32_t sample_rate, 
-    i2s_tx_chan_mod_t chan_mod, 
-    i2s_tx_fifo_mod_t fifo_mod, 
-    size_t dma_count, 
+void i2sInit(uint8_t bus_num,
+    uint32_t bits_per_sample,
+    uint32_t sample_rate,
+    i2s_tx_chan_mod_t chan_mod,
+    i2s_tx_fifo_mod_t fifo_mod,
+    size_t dma_count,
     size_t dma_len);
 
 void i2sSetPins(uint8_t bus_num, int8_t out, bool invert);

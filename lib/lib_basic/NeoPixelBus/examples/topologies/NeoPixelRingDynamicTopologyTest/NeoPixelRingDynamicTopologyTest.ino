@@ -48,9 +48,9 @@ public:
     }
 
 protected:
-    uint16_t* Rings; 
+    uint16_t* Rings;
     uint8_t RingCount;
-    
+
     uint8_t _ringCount() const
     {
         return RingCount;
@@ -98,18 +98,18 @@ void loop()
     Serial.println("First pixel in each ring is Red.");
     Serial.println("Middle pixel in each ring is Green.");
     Serial.println("Last Pixel in each ring is Blue.");
-    
+
 
     // use the topo to map the 2d polar cordinate to the pixel
     // and use that to SetPixelColor
     for (uint16_t ring = 0; ring < topo.getCountOfRings(); ring++)
     {
         // first pixel in each ring is red
-        strip.SetPixelColor(topo.Map(ring, 0), red); 
+        strip.SetPixelColor(topo.Map(ring, 0), red);
         // last pixel in each ring is blue
-        strip.SetPixelColor(topo.Map(ring, topo.getPixelCountAtRing(ring) - 1), blue); 
+        strip.SetPixelColor(topo.Map(ring, topo.getPixelCountAtRing(ring) - 1), blue);
         // middle pixel in each ring is green
-        strip.SetPixelColor(topo.Map(ring, topo.getPixelCountAtRing(ring) / 2), green); 
+        strip.SetPixelColor(topo.Map(ring, topo.getPixelCountAtRing(ring) / 2), green);
     }
     strip.Show();
 

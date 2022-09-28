@@ -33,7 +33,7 @@ struct RgbwColor;
 
 // ------------------------------------------------------------------------
 // RgbColor represents a color object that is represented by Red, Green, Blue
-// component values.  It contains helpful color routines to manipulate the 
+// component values.  It contains helpful color routines to manipulate the
 // color.
 // ------------------------------------------------------------------------
 struct RgbColor : RgbColorBase
@@ -114,7 +114,7 @@ struct RgbColor : RgbColorBase
     // ------------------------------------------------------------------------
     // Dim will return a new color that is blended to black with the given ratio
     // ratio - (0-255) where 255 will return the original color and 0 will return black
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     RgbColor Dim(uint8_t ratio) const;
@@ -122,7 +122,7 @@ struct RgbColor : RgbColorBase
     // ------------------------------------------------------------------------
     // Brighten will return a new color that is blended to white with the given ratio
     // ratio - (0-255) where 255 will return the original color and 0 will return white
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     RgbColor Brighten(uint8_t ratio) const;
@@ -149,7 +149,7 @@ struct RgbColor : RgbColorBase
     //     and a value between will blend the color weighted linearly between them
     // ------------------------------------------------------------------------
     static RgbColor LinearBlend(const RgbColor& left, const RgbColor& right, float progress);
-    
+
     // ------------------------------------------------------------------------
     // BilinearBlend between four colors by the amount defined by 2d variable
     // c00 - upper left quadrant color
@@ -159,11 +159,11 @@ struct RgbColor : RgbColorBase
     // x - unit value (0.0 - 1.0) that defines the blend progress in horizontal space
     // y - unit value (0.0 - 1.0) that defines the blend progress in vertical space
     // ------------------------------------------------------------------------
-    static RgbColor BilinearBlend(const RgbColor& c00, 
-        const RgbColor& c01, 
-        const RgbColor& c10, 
-        const RgbColor& c11, 
-        float x, 
+    static RgbColor BilinearBlend(const RgbColor& c00,
+        const RgbColor& c01,
+        const RgbColor& c10,
+        const RgbColor& c11,
+        float x,
         float y);
 
     uint32_t CalcTotalTenthMilliAmpere(const SettingsObject& settings)
@@ -178,7 +178,7 @@ struct RgbColor : RgbColorBase
     }
 
     // ------------------------------------------------------------------------
-    // Red, Green, Blue color members (0-255) where 
+    // Red, Green, Blue color members (0-255) where
     // (0,0,0) is black and (255,255,255) is white
     // ------------------------------------------------------------------------
     uint8_t R;
@@ -194,7 +194,7 @@ private:
     }
 
     inline static uint8_t _elementBrighten(uint8_t value, uint8_t ratio)
-    { 
+    {
         uint16_t element = ((static_cast<uint16_t>(value) + 1) << 8) / (static_cast<uint16_t>(ratio) + 1);
 
         if (element > Max)

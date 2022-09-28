@@ -1,20 +1,20 @@
-/*************************************************** 
+/***************************************************
   This is a library for our I2C LED Backpacks
 
-  Designed specifically to work with the Adafruit LED Matrix backpacks 
+  Designed specifically to work with the Adafruit LED Matrix backpacks
   ----> http://www.adafruit.com/products/
   ----> http://www.adafruit.com/products/
 
-  These displays use I2C to communicate, 2 pins are required to 
+  These displays use I2C to communicate, 2 pins are required to
   interface. There are multiple selectable I2C addresses. For backpacks
   with 2 Address Select pins: 0x70, 0x71, 0x72 or 0x73. For backpacks
   with 3 Address Select pins: 0x70 thru 0x77
 
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
+  Adafruit invests time and resources providing this open source code,
+  please support Adafruit and open-source hardware by purchasing
   products from Adafruit!
 
-  Written by Limor Fried/Ladyada for Adafruit Industries.  
+  Written by Limor Fried/Ladyada for Adafruit Industries.
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 
@@ -84,7 +84,7 @@ static const uint16_t alphafonttable[] PROGMEM =  {
 0b0001001011001000,
 0b0011101000000000,
 0b0001011100000000,
-0b0000000000000000, //  
+0b0000000000000000, //
 0b0000000000000110, // !
 0b0000001000100000, // "
 0b0001001011001110, // #
@@ -144,7 +144,7 @@ static const uint16_t alphafonttable[] PROGMEM =  {
 0b0001010100000000, // Y
 0b0000110000001001, // Z
 0b0000000000111001, // [
-0b0010000100000000, // 
+0b0010000100000000, //
 0b0000000000001111, // ]
 0b0000110000000011, // ^
 0b0000000000001000, // _
@@ -186,14 +186,14 @@ void Adafruit_LEDBackpack::setBrightness(uint8_t b) {
   if (b > 15) b = 15;
   Wire.beginTransmission(i2c_addr);
   Wire.write(HT16K33_CMD_BRIGHTNESS | b);
-  Wire.endTransmission();  
+  Wire.endTransmission();
 }
 
 void Adafruit_LEDBackpack::blinkRate(uint8_t b) {
   Wire.beginTransmission(i2c_addr);
   if (b > 3) b = 0; // turn off if not sure
-  
-  Wire.write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1)); 
+
+  Wire.write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1));
   Wire.endTransmission();
 }
 
@@ -209,7 +209,7 @@ void Adafruit_LEDBackpack::begin(uint8_t _addr = 0x70) {
   Wire.write(0x21);  // turn on oscillator
   Wire.endTransmission();
   blinkRate(HT16K33_BLINK_OFF);
-  
+
   setBrightness(15); // max brightness
 }
 
@@ -218,10 +218,10 @@ void Adafruit_LEDBackpack::writeDisplay(void) {
   Wire.write((uint8_t)0x00); // start at address $00
 
   for (uint8_t i=0; i<8; i++) {
-    Wire.write(displaybuffer[i] & 0xFF);    
-    Wire.write(displaybuffer[i] >> 8);    
+    Wire.write(displaybuffer[i] & 0xFF);
+    Wire.write(displaybuffer[i] >> 8);
   }
-  Wire.endTransmission();  
+  Wire.endTransmission();
 }
 
 void Adafruit_LEDBackpack::clear(void) {
@@ -262,16 +262,16 @@ Adafruit_24bargraph::Adafruit_24bargraph(void) {
 
 void Adafruit_24bargraph::setBar(uint8_t bar, uint8_t color) {
   uint16_t a, c;
- 
+
   if (bar < 12)
     c = bar / 4;
-  else 
+  else
     c = (bar - 12) / 4;
 
   a = bar % 4;
   if (bar >= 12)
     a += 4;
-    
+
   //Serial.print("Ano = "); Serial.print(a); Serial.print(" Cath = "); Serial.println(c);
   if (color == LED_RED) {
     // Turn on red LED.
@@ -289,7 +289,7 @@ void Adafruit_24bargraph::setBar(uint8_t bar, uint8_t color) {
     displaybuffer[c] |= _BV(a+8);
     // Turn off red LED.
     displaybuffer[c] &= ~_BV(a);
-  } 
+  }
 }
 
 
@@ -348,7 +348,7 @@ void Adafruit_8x16minimatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
   case 2:
     if (y >= 8) {
       x += 8;
-      y -= 8; 
+      y -= 8;
     }
      _swap_int16_t(x, y);
     break;
@@ -356,7 +356,7 @@ void Adafruit_8x16minimatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
     x = 16 - x - 1;
     if (x >= 8) {
       x -= 8;
-      y += 8; 
+      y += 8;
     }
     break;
   case 0:
@@ -364,7 +364,7 @@ void Adafruit_8x16minimatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
     x = 8 - x - 1;
     if (y >= 8) {
       x += 8;
-      y -= 8; 
+      y -= 8;
     }
      _swap_int16_t(x, y);
     break;
@@ -372,7 +372,7 @@ void Adafruit_8x16minimatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
     y = 8 - y - 1;
     if (x >= 8) {
       x -= 8;
-      y += 8; 
+      y += 8;
     }
     break;
   }
@@ -581,7 +581,7 @@ void Adafruit_7segment::drawColon(boolean state) {
 void Adafruit_7segment::writeColon(void) {
     Wire.beginTransmission(i2c_addr);
     Wire.write((uint8_t)0x04); // start at address $02
-    
+
     Wire.write(displaybuffer[2] & 0xFF);
     Wire.write(displaybuffer[2] >> 8);
 
@@ -604,46 +604,46 @@ void Adafruit_7segment::printNumber(long n, uint8_t base)
     printFloat(n, 0, base);
 }
 
-void Adafruit_7segment::printFloat(double n, uint8_t fracDigits, uint8_t base) 
-{ 
+void Adafruit_7segment::printFloat(double n, uint8_t fracDigits, uint8_t base)
+{
   uint8_t numericDigits = 4;   // available digits on display
   boolean isNegative = false;  // true if the number is negative
-  
+
   // is the number negative?
   if(n < 0) {
     isNegative = true;  // need to draw sign later
     --numericDigits;    // the sign will take up one digit
     n *= -1;            // pretend the number is positive
   }
-  
+
   // calculate the factor required to shift all fractional digits
   // into the integer part of the number
   double toIntFactor = 1.0;
   for(int i = 0; i < fracDigits; ++i) toIntFactor *= base;
-  
+
   // create integer containing digits to display by applying
   // shifting factor and rounding adjustment
   uint32_t displayNumber = n * toIntFactor + 0.5;
-  
+
   // calculate upper bound on displayNumber given
   // available digits on display
   uint32_t tooBig = 1;
   for(int i = 0; i < numericDigits; ++i) tooBig *= base;
-  
+
   // if displayNumber is too large, try fewer fractional digits
   while(displayNumber >= tooBig) {
     --fracDigits;
     toIntFactor /= base;
     displayNumber = n * toIntFactor + 0.5;
   }
-  
+
   // did toIntFactor shift the decimal off the display?
   if (toIntFactor < 1) {
     printError();
   } else {
     // otherwise, display the number
     int8_t displayPos = 4;
-    
+
     if (displayNumber)  //if displayNumber is not 0
     {
       for(uint8_t i = 0; displayNumber || i <= fracDigits; ++i) {
@@ -656,10 +656,10 @@ void Adafruit_7segment::printFloat(double n, uint8_t fracDigits, uint8_t base)
     else {
       writeDigitNum(displayPos--, 0, false);
     }
-  
+
     // display negative sign if negative
     if(isNegative) writeDigitRaw(displayPos--, 0x40);
-  
+
     // clear remaining display positions
     while(displayPos >= 0) writeDigitRaw(displayPos--, 0x00);
   }

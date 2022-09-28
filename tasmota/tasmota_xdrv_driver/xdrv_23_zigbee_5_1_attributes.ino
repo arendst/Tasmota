@@ -50,7 +50,7 @@ enum Z_DataTypes {
   Ztuya5    = Zuint32
 };
 
-const char Z_DATATYPES[] PROGMEM = 
+const char Z_DATATYPES[] PROGMEM =
   "nodata|"
   "data8|data16|data24|data32|data40|data48|data56|data64|"
   "bool|"
@@ -271,7 +271,7 @@ EF00_0372,last_irrigation_duration
 //
 class Z_plugin_attribute {
 public:
-  
+
   Z_plugin_attribute(void) :
     type(Zunk),
     multiplier(1), divider(1), base(0),
@@ -304,7 +304,7 @@ public:
     cluster(0xFFFF), attribute(0xFFFF), new_cluster(0xFFFF), new_attribute(0xFFFF),
     multiplier(1), divider(1), base(0)
     {};
-  
+
   void set(uint16_t cluster, uint16_t attribute, uint16_t new_cluster, uint16_t new_attribute,
           int8_t multiplier = 1, int8_t divider = 1, int16_t base = 0) {
     this->cluster = cluster;
@@ -542,7 +542,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zint16,   Cx0002, 0x0012,  Z_(HighTempThreshold),           Cm1, 0 },
   { Zuint24,  Cx0002, 0x0013,  Z_(LowTempDwellTripPoint),           Cm1, 0 },
   { Zuint24,  Cx0002, 0x0014,  Z_(HighTempDwellTripPoint),           Cm1, 0 },
-  
+
   // Identify cluster
   { Zuint16,  Cx0003, 0x0000,  Z_(IdentifyTime),         Cm1, 0 },
 
@@ -774,7 +774,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { Zmap8,    Cx0021, 0x0020,  Z_(SharedSecurityKeyType),Cm1, 0 },
   { Zkey128,  Cx0021, 0x0021,  Z_(SharedSecurityKey),    Cm1, 0 },
   { Zkey128,  Cx0021, 0x0022,  Z_(LinkKey),  Cm1, 0 },
-  
+
   // Shade Configuration cluster
   { Zuint16,  Cx0100, 0x0000,  Z_(PhysicalClosedLimit),  Cm1, 0 },
   { Zuint8,   Cx0100, 0x0001,  Z_(MotorStepSize),        Cm1, 0 },

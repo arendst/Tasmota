@@ -1,22 +1,22 @@
 /**
  * This example showed how to copy messages from the opened mailbox folder to other folder.
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
 
 /** To receive Email using Gmail, IMAP option should be enabled. https://support.google.com/mail/answer/7126229?hl=en
  * and also https://accounts.google.com/b/0/DisplayUnlockCaptcha
- * 
+ *
 */
 
-/** For ESP8266, with BearSSL WiFi Client 
+/** For ESP8266, with BearSSL WiFi Client
  * The memory reserved for completed valid SSL response from IMAP is 16 kbytes which
- * may cause your device out of memory reset in case the memory 
+ * may cause your device out of memory reset in case the memory
  * allocation error.
 */
 
@@ -34,7 +34,7 @@
 /* The imap host name e.g. imap.gmail.com for GMail or outlook.office365.com for Outlook */
 #define IMAP_HOST "################"
 
-/** The imap port e.g. 
+/** The imap port e.g.
  * 143  or esp_mail_imap_port_143
  * 993 or esp_mail_imap_port_993
 */
@@ -75,7 +75,7 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /** Enable the debug via Serial port 
+    /** Enable the debug via Serial port
      * none debug or 0
      * basic debug or 1
     */

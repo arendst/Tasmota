@@ -138,7 +138,7 @@ signatureType signatures [] =
         128,          // page size (for committing)
         0xC6,         // fuse low byte: external full-swing crystal
         0xde,         // fuse high byte: SPI enable, brown-out detection at 2.7V
-        0xf8,         // fuse extended byte: boot into bootloader, 512 byte bootloader  
+        0xf8,         // fuse extended byte: boot into bootloader, 512 byte bootloader
         0xcf },       // lock bits: SPM is not allowed to write to the Boot Loader section.
 };  // end of signatures
 
@@ -342,14 +342,14 @@ void writeBootloader ()
                 commitPage (oldPage);
                 oldPage = thisPage;
             }
-            
+
             unsigned char c1 = pgm_read_byte(bootloader + i);
             unsigned char c2 = pgm_read_byte(bootloader + i+1);
-            
+
             writeFlash (addr + i, c1);
             writeFlash (addr + i + 1, c2);
         }  // end while doing each word
-        
+
         Serial.println();
 
         // commit final page

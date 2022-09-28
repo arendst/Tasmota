@@ -1,24 +1,24 @@
 /**
  * This example will search all Emails in the opened mailbox folder.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
 
 /** To receive Email using Gmail, IMAP option should be enabled. https://support.google.com/mail/answer/7126229?hl=en
  * and also https://accounts.google.com/b/0/DisplayUnlockCaptcha
- * 
+ *
 */
 
-/** For ESP8266, with BearSSL WiFi Client 
+/** For ESP8266, with BearSSL WiFi Client
  * The memory reserved for completed valid SSL response from IMAP is 16 kbytes which
- * may cause your device out of memory reset in case the memory 
+ * may cause your device out of memory reset in case the memory
  * allocation error.
 */
 
@@ -36,7 +36,7 @@
 /* The imap host name e.g. imap.gmail.com for GMail or outlook.office365.com for Outlook */
 #define IMAP_HOST "################"
 
-/** The imap port e.g. 
+/** The imap port e.g.
  * 143  or esp_mail_imap_port_143
  * 993 or esp_mail_imap_port_993
 */
@@ -89,7 +89,7 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /** Enable the debug via Serial port 
+    /** Enable the debug via Serial port
      * none debug or 0
      * basic debug or 1
     */
@@ -113,16 +113,16 @@ void setup()
 
     /** ########################################################
      * Some properties of IMAP_Config and ESP_Mail_Session data
-     * accept the pointer to constant char i.e. const char*. 
-     * 
-     * You may assign a string literal to that properties like 
+     * accept the pointer to constant char i.e. const char*.
+     *
+     * You may assign a string literal to that properties like
      * below example.
-     *   
+     *
      * config.search.criteria = String("UID SEARCH ALL").c_str();
-     * 
+     *
      * String folder = "INBOX";
      * imap.selectFolder(folder.c_str());
-     * 
+     *
      * ###########################################################
     */
 
@@ -138,23 +138,23 @@ void setup()
     /* Message UID to fetch or read */
     config.fetch.uid = "";
 
-    /** Search criteria 
-     * 
-     * A search key can also be a parenthesized list of one or more search keys 
-     * (e.g., for use with the OR and NOT keys). 
-     * 
+    /** Search criteria
+     *
+     * A search key can also be a parenthesized list of one or more search keys
+     * (e.g., for use with the OR and NOT keys).
+     *
      * Since IMAP protocol uses Polish notation, the search criteria which in the polish notation form can be.
-     * 
+     *
      * To search the message from "someone@email.com" with the subject "my subject" since 1 Jan 2021, your search criteria can be
      * UID SEARCH (OR SUBJECT "my subject" FROM "someone@email.com") SINCE "Fri, 1 Jan 2021 21:52:25 -0800"
-     * 
+     *
      * To search the message from "mail1@domain.com" or from "mail2@domain.com", the search criteria will be
-     * UID SEARCH OR FROM mail1@domain.com FROM mail2@domain.com 
-     * 
+     * UID SEARCH OR FROM mail1@domain.com FROM mail2@domain.com
+     *
      * For more details on using parentheses, AND, OR and NOT search keys in search criteria.
      * https://www.limilabs.com/blog/imap-search-requires-parentheses
-     * 
-     * 
+     *
+     *
     */
     config.search.criteria = "UID SEARCH ALL";
 
@@ -166,12 +166,12 @@ void setup()
 
     /** The file storage type e.g.
      * esp_mail_file_storage_type_none,
-     * esp_mail_file_storage_type_flash, and 
-     * esp_mail_file_storage_type_sd 
+     * esp_mail_file_storage_type_flash, and
+     * esp_mail_file_storage_type_sd
     */
     config.storage.type = esp_mail_file_storage_type_flash;
 
-    /** Set to download heades, text and html messaeges, 
+    /** Set to download heades, text and html messaeges,
      * attachments and inline images respectively.
     */
     config.download.header = true;
@@ -180,7 +180,7 @@ void setup()
     config.download.attachment = true;
     config.download.inlineImg = true;
 
-    /** Set to enable the results i.e. html and text messaeges 
+    /** Set to enable the results i.e. html and text messaeges
      * which the content stored in the IMAPSession object is limited
      * by the option config.limit.msg_size.
      * The whole message can be download through config.download.text
@@ -198,14 +198,14 @@ void setup()
     /* Set the limit of number of messages in the search results */
     config.limit.search = 5;
 
-    /** Set the maximum size of message stored in 
+    /** Set the maximum size of message stored in
      * IMAPSession object in byte
     */
     config.limit.msg_size = 512;
 
     /** Set the maximum attachments and inline images files size
-     * that can be downloaded in byte. 
-     * The file which its size is largger than this limit may be saved 
+     * that can be downloaded in byte.
+     * The file which its size is largger than this limit may be saved
      * as truncated file.
     */
     config.limit.attachment_size = 1024 * 1024 * 5;
@@ -225,7 +225,7 @@ void setup()
     /*  {Optional] */
     printSelectedMailboxInfo(imap);
 
-    /** Read or search the Email and keep the TCP session to open 
+    /** Read or search the Email and keep the TCP session to open
      * The second parameter is for close the session.
     */
     MailClient.readMail(&imap, false);
@@ -233,7 +233,7 @@ void setup()
     /* Clear all stored data in IMAPSession object */
     imap.empty();
 
-    /** Open or select other mailbox folder 
+    /** Open or select other mailbox folder
      * The folder that previousely opened will be closed
     */
     if (imap.selectFolder("Junk"))

@@ -45,20 +45,20 @@ uint8_t counter = 1;                                                          //
 uint32_t timer = 0;
 
 void intHandler(){
-  
+
   bool tx_ok,tx_fail,rx;
   radio.whatHappened(tx_ok,tx_fail,rx);
-  
+
   if(tx_fail){
       printf("Sending failed.\n\r");
   }
-  
+
   if(role == role_ping_out && tx_ok){
     if(!radio.available()){
       printf("Got blank response. round-trip delay: %u ms\n\r",millis()-timer);
     }
   }
-  
+
   if(role == role_ping_out ){
     while(radio.available() ){
       uint8_t gotByte;
@@ -67,22 +67,22 @@ void intHandler(){
       counter++;
     }
   }
-    
+
   if ( role == role_pong_back){
     if(tx_ok) {
         printf("Ack Payload Sent\n");
-    }  
+    }
     uint8_t pipeNo, gotByte;
-    if( radio.available(&pipeNo)){   
+    if( radio.available(&pipeNo)){
       radio.read( &gotByte, 1 );
 
 	  gotByte += 1;
 	  radio.writeAckPayload(pipeNo,&gotByte, 1 );
       printf("Loaded next response %d \n\r", gotByte);
-   
+
    }
  }
-    
+
 }
 
 
@@ -124,9 +124,9 @@ int main(int argc, char** argv){
     }
 	radio.startListening();
 	radio.writeAckPayload(1,&counter,1);
-    
+
     attachInterrupt(interruptPin, INT_EDGE_FALLING, intHandler); //Attach interrupt to bcm pin 23
-    
+
 // forever loop
 while (1){
 

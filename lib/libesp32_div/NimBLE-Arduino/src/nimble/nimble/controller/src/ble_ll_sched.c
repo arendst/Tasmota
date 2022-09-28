@@ -17,7 +17,7 @@
  * under the License.
  */
 #ifndef ESP_PLATFORM
- 
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>

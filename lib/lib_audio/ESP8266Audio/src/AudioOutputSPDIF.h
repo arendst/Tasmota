@@ -1,17 +1,17 @@
 /*
   AudioOutputSPDIF
-  
+
   S/PDIF output via I2S
-  
+
   Needs transceiver from CMOS level to either optical or coaxial interface
   See: https://www.epanorama.net/documents/audio/spdif.html
 
-  Original idea and sources: 
+  Original idea and sources:
     Forum thread dicussing implementation
       https://forum.pjrc.com/threads/28639-S-pdif
-    Teensy Audio Library 
+    Teensy Audio Library
       https://github.com/PaulStoffregen/Audio/blob/master/output_spdif2.cpp
-   
+
   Adapted for ESP8266Audio
 
   Copyright (C) 2020 Ivan Kostoski

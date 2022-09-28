@@ -21,7 +21,7 @@ Documentation
 =============
 
 J'ai écrit un article [dédié][10] sur cette librairie, vous pouvez aussi voir les [catégories][6] associées à la téléinfo sur mon [blog][7].
-Pour les commentaires et le support vous pouvez allez sur le [forum][8] dédié ou dans la [communauté][9] 
+Pour les commentaires et le support vous pouvez allez sur le [forum][8] dédié ou dans la [communauté][9]
 
 Sketch d'exemples
 =================
@@ -45,7 +45,7 @@ Si vous êtes une entreprise et que vous souhaitez participer car vous utilisez 
 
 Divers
 ======
-Vous pouvez aller voir les nouveautés et autres projets sur [blog][7] 
+Vous pouvez aller voir les nouveautés et autres projets sur [blog][7]
 
 [1]: http://www.erdf.fr/sites/default/files/ERDF-NOI-CPT_02E.pdf
 [2]: http://learn.adafruit.com/arduino-tips-tricks-and-techniques/arduino-libraries

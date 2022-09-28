@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------
-NeoPixel library helper functions for LPD8806 using general Pins 
+NeoPixel library helper functions for LPD8806 using general Pins
 
 Written by Michael C. Miller.
 
@@ -41,7 +41,7 @@ public:
 
     Lpd8806MethodBase(uint8_t pinClock, uint8_t pinData, uint16_t pixelCount, size_t elementSize, size_t settingsSize) :
         _sizeData(pixelCount * elementSize + settingsSize),
-        _sizeFrame((pixelCount + 31) / 32), 
+        _sizeFrame((pixelCount + 31) / 32),
         _wire(pinClock, pinData)
     {
         _data = static_cast<uint8_t*>(malloc(_sizeData));
@@ -87,16 +87,16 @@ public:
         {
             _wire.transmitByte(0x00);
         }
-        
+
         // data
         _wire.transmitBytes(_data, _sizeData);
-        
-        // end frame 
+
+        // end frame
         for (size_t frameByte = 0; frameByte < _sizeFrame; frameByte++)
         {
             _wire.transmitByte(0xff);
         }
-    
+
         _wire.endTransaction();
     }
 

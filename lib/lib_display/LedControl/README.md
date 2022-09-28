@@ -9,13 +9,13 @@ Documentation for the library is on the [Github Project Pages](http://wayoda.git
 
 Download
 --------
-The lastest binary version of the Library is always available from the 
-[LedControl Release Page](https://github.com/wayoda/LedControl/releases) 
+The lastest binary version of the Library is always available from the
+[LedControl Release Page](https://github.com/wayoda/LedControl/releases)
 
 
 Install
 -------
-The library can be installed using the [standard Arduino library install procedure](http://arduino.cc/en/Guide/Libraries#.UwxndHX5PtY)  
+The library can be installed using the [standard Arduino library install procedure](http://arduino.cc/en/Guide/Libraries#.UwxndHX5PtY)
 
 
 

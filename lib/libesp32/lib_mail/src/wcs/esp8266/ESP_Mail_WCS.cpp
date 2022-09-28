@@ -1,6 +1,6 @@
 /*
   Customized version of WiFiClientSecure.cpp v1.0.1
-  
+
   WiFiClientBearSSL- SSL client/server for esp8266 using BearSSL libraries
   - Mostly compatible with Arduino WiFi shield library and standard
     WiFiClient/ServerSecure (except for certificate handling).
@@ -557,10 +557,10 @@ namespace ESP_Mail
 
         if (!blocking && len > availForWrite)
         {
-          /* 
+          /*
            writes on WiFiClient will block if len > availableForWrite()
            this is needed to prevent available() calls from blocking
-           on dropped connections 
+           on dropped connections
         */
           len = availForWrite;
         }

@@ -1,7 +1,7 @@
 The RCSL is made up of a base agreement and a few Attachments.
 
 For Research and Development use, you agree to the terms of the
-RCSL R&D License (base RCSL and Attachments A, B, and C) 
+RCSL R&D License (base RCSL and Attachments A, B, and C)
 
 For Commercial Use (either distribution or internal commercial
 deployment) of the Helix DNA with or without support for RealNetworks'

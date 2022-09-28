@@ -7,7 +7,7 @@ Extended advertising allows for much more capability and flexibility.
 
 * New PHY's (physical layers) that allow for faster data rate (2M PHY) or long range/slower data rates (CODED PHY) as well as the original 1M PHY.
 
-* New periodic advertising, allowing the scanning device to sync with the advertisements of a beacon. This allows for the scanning device to sleep or perform other tasks before the next expected advertisement is sent, preserving cpu cycles and power (To be implemented).  
+* New periodic advertising, allowing the scanning device to sync with the advertisements of a beacon. This allows for the scanning device to sleep or perform other tasks before the next expected advertisement is sent, preserving cpu cycles and power (To be implemented).
 <br/>
 
 ## Enabling extended advertising

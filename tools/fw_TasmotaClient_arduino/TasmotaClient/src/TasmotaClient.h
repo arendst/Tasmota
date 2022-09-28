@@ -1,8 +1,8 @@
 /*
   TasmotaClient.h - Library for microcontrollers enslaved by Tasmota
-  
+
   Copyright (C) 2019  Andre Thomas
-  
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -83,7 +83,7 @@ class TasmotaClient {
      // Send telemetry data back to the Tasmota device
      void SendTele(char *data);
      // Used internally (should probably be moved to private:)
-     uint8_t waitforbytes(uint16_t num, uint16_t timeout);     
+     uint8_t waitforbytes(uint16_t num, uint16_t timeout);
      // Used internally to process incoming ClientSend command
      void ProcessSend(uint8_t sz);
      // Used internally to decode and process incoming commands from the Tasmota device

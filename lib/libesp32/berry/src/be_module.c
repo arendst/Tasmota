@@ -332,7 +332,7 @@ int be_module_attr(bvm *vm, bmodule *module, bstring *attr, bvalue *dst)
             be_dofunc(vm, top, 1); /* call method 'method' */
             vm->top -= 2;
             *dst = *vm->top;   /* copy result to R(A) */
-            
+
             int type = var_type(dst);
             if (type == BE_MODULE) {
                 /* check if the module is named `undefined` */

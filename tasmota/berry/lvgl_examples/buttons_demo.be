@@ -57,7 +57,7 @@ def create_btn_relay(label)
   btn.set_pos(30, 30)
   btn.set_size(hres - 60, 60)
   btn.add_style(btn_style, lv.PART_MAIN | lv.STATE_DEFAULT)   # style of button
-  btn.add_flag(lv.OBJ_FLAG_CHECKABLE)                           # enable toggle mode   
+  btn.add_flag(lv.OBJ_FLAG_CHECKABLE)                           # enable toggle mode
   btn_label = lv.label(btn)
   btn_label.center()
   btn_label.set_text(label)

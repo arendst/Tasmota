@@ -6,7 +6,7 @@
  *  Copyright (C) Waveshare     September 9 2017
  *
  *   @author     :   Updated by krzychb@gazeta,pl
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documnetation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -35,7 +35,7 @@
 #define UNCOLORED   1
 
 unsigned char image[4736];
-Paint paint(image, 0, 0);    // width should be the multiple of 8 
+Paint paint(image, 0, 0);    // width should be the multiple of 8
 Epd epd;
 
 void setup() {

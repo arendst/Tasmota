@@ -114,7 +114,7 @@ void RFC2047_Decoder::rfc2047DecodeWord(char *d, const char *s, size_t dlen)
 	    c2 = base64val(pp[1]);
 	    *pd++ = (c1 << 2) | ((c2 >> 4) & 0x3);
 	    if (--len == 0) break;
-	    
+
 	    if (pp[2] == '=') break;
 
 	    c3 = base64val(pp[2]);
@@ -212,10 +212,10 @@ void RFC2047_Decoder::safe_realloc(void **p, size_t siz)
 }
 
 void RFC2047_Decoder::safe_free(void *ptr)
-{ 
+{
   void **p = (void **)ptr;
   if (*p)
-  { 
+  {
     free (*p);
     *p = 0;
   }

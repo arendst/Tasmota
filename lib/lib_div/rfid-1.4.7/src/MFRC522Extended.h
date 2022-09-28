@@ -10,7 +10,7 @@
 #include "MFRC522.h"
 
 class MFRC522Extended : public MFRC522 {
-		
+
 public:
 	// ISO/IEC 14443-4 bit rates
 	enum TagBitRates : byte {
@@ -52,7 +52,7 @@ public:
 	typedef struct {
 		uint16_t	atqa;
 		Uid			uid;
-		Ats		    ats; 
+		Ats		    ats;
 
 		// For Block PCB
 		bool blockNumber;
@@ -70,17 +70,17 @@ public:
 			byte *data;
 		} inf;
 	} PcbBlock;
-	
+
 	// Member variables
 	TagInfo tag;
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Contructors
 	/////////////////////////////////////////////////////////////////////////////////////
 	MFRC522Extended() : MFRC522() {};
 	MFRC522Extended(uint8_t rst) : MFRC522(rst) {};
 	MFRC522Extended(uint8_t ss, uint8_t rst) : MFRC522(ss, rst) {};
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for communicating with PICCs
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ public:
 	StatusCode PICC_RequestATS(Ats *ats);
 	StatusCode PICC_PPS();	                                                  // PPS command without bitrate parameter
 	StatusCode PICC_PPS(TagBitRates sendBitRate, TagBitRates receiveBitRate); // Different D values
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Functions for communicating with ISO/IEC 14433-4 cards
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +96,7 @@ public:
 	StatusCode TCL_Transceive(TagInfo * tag, byte *sendData, byte sendLen, byte *backData = NULL, byte *backLen = NULL);
 	StatusCode TCL_TransceiveRBlock(TagInfo *tag, bool ack, byte *backData = NULL, byte *backLen = NULL);
 	StatusCode TCL_Deselect(TagInfo *tag);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Support functions
 	/////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ public:
 	void PICC_DumpDetailsToSerial(TagInfo *tag);
 	using MFRC522::PICC_DumpDetailsToSerial; // make old PICC_DumpDetailsToSerial(Uid *uid) available, otherwise would be hidden by PICC_DumpDetailsToSerial(TagInfo *tag)
 	void PICC_DumpISO14443_4(TagInfo *tag);
-	
+
 	/////////////////////////////////////////////////////////////////////////////////////
 	// Convenience functions - does not add extra functionality
 	/////////////////////////////////////////////////////////////////////////////////////

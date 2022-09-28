@@ -153,7 +153,7 @@ void IRAM_ATTR NeoEsp8266UartInterruptContext::Isr(void* param)
                 // Fill the FIFO with new data
                 s_uartInteruptContext[uartNum]->_asyncBuff = FillUartFifo(
                     uartNum,
-                    s_uartInteruptContext[uartNum]->_asyncBuff, 
+                    s_uartInteruptContext[uartNum]->_asyncBuff,
                     s_uartInteruptContext[uartNum]->_asyncBuffEnd);
 
                 // Disable TX interrupt when done
@@ -162,7 +162,7 @@ void IRAM_ATTR NeoEsp8266UartInterruptContext::Isr(void* param)
                     // clear the TX FIFO Empty
                     USIE(uartNum) &= ~(1 << UIFE);
                 }
-                
+
                 // Clear all interrupts flags (just in case)
                 USIC(uartNum) = 0xffff;
             }

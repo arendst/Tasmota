@@ -484,7 +484,7 @@ MCP2515::ERROR MCP2515::setFilterMask(const MASK mask, const bool ext, const uin
     if (res != ERROR_OK) {
         return res;
     }
-    
+
     uint8_t tbufdata[4];
     prepareId(tbufdata, ext, ulData);
 
@@ -497,7 +497,7 @@ MCP2515::ERROR MCP2515::setFilterMask(const MASK mask, const bool ext, const uin
     }
 
     setRegisters(reg, tbufdata, 4);
-    
+
     return ERROR_OK;
 }
 
@@ -682,7 +682,7 @@ void MCP2515::clearRXnOVR(void)
 		clearInterrupts();
 		//modifyRegister(MCP_CANINTF, CANINTF_ERRIF, 0);
 	}
-	
+
 }
 
 void MCP2515::clearMERR()

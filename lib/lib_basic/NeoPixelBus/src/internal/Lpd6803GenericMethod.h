@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------
-NeoPixel library helper functions for LPD6803 using general Pins 
+NeoPixel library helper functions for LPD6803 using general Pins
 
 Written by Michael C. Miller.
 
@@ -86,17 +86,17 @@ public:
 
         // start frame
         _wire.transmitBytes(startFrame, sizeof(startFrame));
-        
+
         // data
         _wire.transmitBytes(_data, _sizeData);
-        
-        // end frame 
+
+        // end frame
         // one bit for every pixel with no less than 1 byte
         for (size_t frameByte = 0; frameByte < _sizeFrame; frameByte++)
         {
             _wire.transmitByte(0x00);
         }
-    
+
         _wire.endTransaction();
     }
 

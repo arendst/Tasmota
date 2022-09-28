@@ -360,7 +360,7 @@ extern "C" {
       case Za_type::Za_str:
         be_pushstring(vm, attr->val.sval);
         break;
-        
+
       case Za_type::Za_obj:
         zat_zcl_attribute_list_inner(vm, attr->val.objval);
         break;

@@ -5,7 +5,7 @@
  * \cond HIDDEN_SYMBOLS
  * Class declaration for SPI helper files
  */
- 
+
 #include <stdio.h>
 #include <Arduino.h>
 #include <avr/pgmspace.h>

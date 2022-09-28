@@ -105,7 +105,7 @@
                                                  // with just one relay then this will be 1.
                                                  // USE_TIMEPROP will be automativally included. You must set the output as
                                                  // explained in xdrv_48_timeprop.ino
-                                                 // To disable, override to false in user_config_override.h. If USE_TIMEPROP is 
+                                                 // To disable, override to false in user_config_override.h. If USE_TIMEPROP is
                                                  // not explicitly defined, then it will not be added by default.
 
    #define PID_USE_LOCAL_SENSOR                  // If defined then the local sensor will be used for pv. Leave undefined if

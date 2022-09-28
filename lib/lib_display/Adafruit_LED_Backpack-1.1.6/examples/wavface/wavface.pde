@@ -204,10 +204,10 @@ int8_t
 
 void setup() {
 
-  Serial.begin(9600);           
-  
+  Serial.begin(9600);
+
   Serial.println(F("WAV face"));
-  
+
   if(!card.init())        Serial.println(F("Card init. failed!"));
   if(!vol.init(card))     Serial.println(F("No partition!"));
   if(!root.openRoot(vol)) Serial.println(F("Couldn't open dir"));

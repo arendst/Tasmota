@@ -30,7 +30,7 @@ License along with NeoPixel.  If not, see
 
 // ------------------------------------------------------------------------
 // HsbColor represents a color object that is represented by Hue, Saturation, Brightness
-// component values.  It contains helpful color routines to manipulate the 
+// component values.  It contains helpful color routines to manipulate the
 // color.
 // ------------------------------------------------------------------------
 struct HsbColor
@@ -108,7 +108,7 @@ struct HsbColor
     };
 
     // ------------------------------------------------------------------------
-    // Hue, Saturation, Brightness color members 
+    // Hue, Saturation, Brightness color members
     // ------------------------------------------------------------------------
 
     float H;

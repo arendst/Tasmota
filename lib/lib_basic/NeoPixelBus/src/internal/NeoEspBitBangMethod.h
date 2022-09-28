@@ -28,7 +28,7 @@ License along with NeoPixel.  If not, see
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 
-// ESP32C3 I2S is not supported yet 
+// ESP32C3 I2S is not supported yet
 #if !defined(CONFIG_IDF_TARGET_ESP32C3)
 
 #if defined(ARDUINO_ARCH_ESP8266)
@@ -72,8 +72,8 @@ public:
 class NeoEspSpeed400Mhz
 {
 public:
-    const static uint32_t T0H = (F_CPU / 2000000 - CYCLES_LOOPTEST); 
-    const static uint32_t T1H = (F_CPU /  833333 - CYCLES_LOOPTEST); 
+    const static uint32_t T0H = (F_CPU / 2000000 - CYCLES_LOOPTEST);
+    const static uint32_t T1H = (F_CPU /  833333 - CYCLES_LOOPTEST);
     const static uint32_t Period = (F_CPU / 400000 - CYCLES_LOOPTEST);
 };
 
@@ -154,7 +154,7 @@ public:
 class NeoEspBitBangSpeed800Kbps : public NeoEspBitBangBase<NeoEspSpeed800Mhz, NeoEspPinset>
 {
 public:
-    static const uint32_t ResetTimeUs = 50; 
+    static const uint32_t ResetTimeUs = 50;
 };
 
 class NeoEspBitBangSpeed400Kbps : public NeoEspBitBangBase<NeoEspSpeed400Mhz, NeoEspPinset>
@@ -275,11 +275,11 @@ public:
 
         portENTER_CRITICAL(&updateMux);
 #else
-        noInterrupts(); 
+        noInterrupts();
 #endif
 
         T_SPEED::send_pixels(_data, _data + _sizeData, _pin);
-        
+
 #if defined(ARDUINO_ARCH_ESP32)
         portEXIT_CRITICAL(&updateMux);
 #else
