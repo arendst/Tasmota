@@ -164,7 +164,7 @@ void setup()
     GetLocalTime(&tmstruct, 5000);
     delay(100);
   } while (tmstruct.tm_year < 100);
-  
+
   audioLogger = &Serial;
   out = new AudioOutputI2S();
   talkie = new AudioGeneratorTalkie();

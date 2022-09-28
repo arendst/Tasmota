@@ -19,7 +19,7 @@ BME680 is an integrated environmental sensor developed specifically for mobile a
 - Altitude tracking and calories expenditure for sports activities
 
 #### Important links:
-For more information, please refer to: 
+For more information, please refer to:
 
 - [BME680 Product page](https://www.bosch-sensortec.com/bst/products/all_products/bme680)
 - [BME680 & BME688 Github page](https://github.com/BoschSensortec/BME68x-Sensor-API)

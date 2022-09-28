@@ -58,7 +58,7 @@ typedef struct {
     hap_char_t *chars;
     hap_acc_t  *parent;
     hap_serv_t *next_serv;
-    
+
     hap_serv_write_t write_cb;
     hap_serv_read_t read_cb;
     hap_serv_bulk_read_t bulk_read;

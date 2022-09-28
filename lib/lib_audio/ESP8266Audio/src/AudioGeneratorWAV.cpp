@@ -1,7 +1,7 @@
 /*
   AudioGeneratorWAV
   Audio output generator that reads 8 and 16-bit WAV files
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify

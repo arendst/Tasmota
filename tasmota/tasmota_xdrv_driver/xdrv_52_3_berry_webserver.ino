@@ -52,7 +52,7 @@ extern "C" {
       const char * needle = be_tostring(vm, 1);
 
       int32_t constant_idx = be_map_bin_search(needle, &webserver_constants[0].name, sizeof(webserver_constants[0]), ARRAY_SIZE(webserver_constants));
-    
+
       if (constant_idx >= 0) {
         // we did have a match, low == high
         be_pushint(vm, webserver_constants[constant_idx].value);
@@ -66,9 +66,9 @@ extern "C" {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import webserver
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: `webserver.on(prefix:string, callback:closure) -> nil`
@@ -232,7 +232,7 @@ extern "C" {
     be_pushint(vm, Webserver->args());
     be_return(vm);
   }
-  
+
   // Berry: `webserver.arg(int or string) -> string`
   //
   // takes either an int (index 0..args-1) or a string (name of arg)

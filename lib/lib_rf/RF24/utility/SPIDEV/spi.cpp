@@ -30,9 +30,9 @@ bool spiIsInitialized = 0;
 void SPI::begin(int busNo,uint32_t spi_speed){
 
     if(spiIsInitialized){
-       return; 
+       return;
     }
-    
+
     /* set spidev accordingly to busNo like:
      * busNo = 23 -> /dev/spidev2.3
      *

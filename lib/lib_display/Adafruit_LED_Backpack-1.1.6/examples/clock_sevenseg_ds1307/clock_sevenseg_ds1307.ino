@@ -11,8 +11,8 @@
 // ----> http://www.adafruit.com/products/878
 // ----> https://www.adafruit.com/products/264
 //
-// Adafruit invests time and resources providing this open source code, 
-// please support Adafruit and open-source hardware by purchasing 
+// Adafruit invests time and resources providing this open source code,
+// please support Adafruit and open-source hardware by purchasing
 // products from Adafruit!
 //
 // Written by Tony DiCola for Adafruit Industries.
@@ -73,7 +73,7 @@ void setup() {
     // This line sets the DS1307 time to the exact date and time the
     // sketch was compiled:
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // Alternatively you can set the RTC with an explicit date & time, 
+    // Alternatively you can set the RTC with an explicit date & time,
     // for example to set January 21, 2014 at 3am you would uncomment:
     //rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
   }
@@ -81,7 +81,7 @@ void setup() {
 
 void loop() {
   // Loop function runs over and over again to implement the clock logic.
-  
+
   // Check if it's the top of the hour and get a new time reading
   // from the DS1307.  This helps keep the clock accurate by fixing
   // any drift.

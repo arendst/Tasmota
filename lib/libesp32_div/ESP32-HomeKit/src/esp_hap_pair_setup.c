@@ -379,7 +379,7 @@ static int hap_pair_setup_process_exchange(pair_setup_ctx_t *ps_ctx, uint8_t *bu
     memset(newnonce, 0, sizeof newnonce);
     memcpy(newnonce+4, (uint8_t *) PS_NONCE3, 8);
     crypto_aead_chacha20poly1305_ietf_encrypt_detached(subtlv, &subtlv[subtlv_len], &mlen, subtlv,
-                subtlv_len, NULL, 0, NULL, newnonce, ps_ctx->session_key); 
+                subtlv_len, NULL, 0, NULL, newnonce, ps_ctx->session_key);
 	hex_dbg_with_name("send_encrypt_data", subtlv, subtlv_len + 16);
 
 	/* Construct the response M6 */

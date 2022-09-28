@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: filefmt.c,v 1.1 2005/02/26 01:47:34 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: filefmt.c,v 1.1 2005/02/26 01:47:34 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -83,10 +83,10 @@ int UnpackADTSHeader(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffset
 
 	/* verify that first 12 bits of header are syncword */
 	if (GetBits(&bsi, 12) != 0x0fff) {
-		return ERR_AAC_INVALID_ADTS_HEADER; 
+		return ERR_AAC_INVALID_ADTS_HEADER;
 	}
 
-	/* fixed fields - should not change from frame to frame */ 
+	/* fixed fields - should not change from frame to frame */
 	fhADTS->id =               GetBits(&bsi, 1);
 	fhADTS->layer =            GetBits(&bsi, 2);
 	fhADTS->protectBit =       GetBits(&bsi, 1);
@@ -97,7 +97,7 @@ int UnpackADTSHeader(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffset
 	fhADTS->origCopy =         GetBits(&bsi, 1);
 	fhADTS->home =             GetBits(&bsi, 1);
 
-	/* variable fields - can change from frame to frame */ 
+	/* variable fields - can change from frame to frame */
 	fhADTS->copyBit =          GetBits(&bsi, 1);
 	fhADTS->copyStart =        GetBits(&bsi, 1);
 	fhADTS->frameLength =      GetBits(&bsi, 13);
@@ -158,7 +158,7 @@ int UnpackADTSHeader(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffset
  * Inputs:      valid AACDecInfo struct
  *              pointer to start of raw_data_block
  *              bit offset
- *              bits available 
+ *              bits available
  *
  * Outputs:     updated number of channels
  *
@@ -197,7 +197,7 @@ int GetADTSChannelMapping(AACDecInfo *aacDecInfo, unsigned char *buf, int bitOff
 	if (nChans <= 0)
 		return ERR_AAC_CHANNEL_MAP;
 
-	/* update number of channels in codec state and user-accessible info structs */ 
+	/* update number of channels in codec state and user-accessible info structs */
 	psi->nChans = nChans;
 	aacDecInfo->nChans = psi->nChans;
 	psi->useImpChanMap = 1;
@@ -292,7 +292,7 @@ static int GetSampleRateIdxADIF(ProgConfigElement *fhPCE, int nPCE)
  * Description: parse the ADIF file header and initialize decoder state
  *
  * Inputs:      valid AACDecInfo struct
- *              double pointer to buffer with complete ADIF header 
+ *              double pointer to buffer with complete ADIF header
  *                (starting at 'A' in 'ADIF' tag)
  *              pointer to bit offset
  *              pointer to number of valid bits remaining in inbuf
@@ -357,7 +357,7 @@ int UnpackADIFHeader(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffset
 	/* check validity of header */
 	if (psi->nChans < 0 || psi->sampRateIdx < 0 || psi->sampRateIdx >= NUM_SAMPLE_RATES)
 		return ERR_AAC_INVALID_ADIF_HEADER;
-								
+
 	/* syntactic element fields will be read from bitstream for each element */
 	aacDecInfo->prevBlockID = AAC_ID_INVALID;
 	aacDecInfo->currBlockID = AAC_ID_INVALID;
@@ -387,7 +387,7 @@ int UnpackADIFHeader(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffset
  * Description: set internal state variables for decoding a stream of raw data blocks
  *
  * Inputs:      valid AACDecInfo struct
- *              flag indicating source of parameters (from previous headers or passed 
+ *              flag indicating source of parameters (from previous headers or passed
  *                explicitly by caller)
  *              number of channels
  *              sample rate
@@ -397,8 +397,8 @@ int UnpackADIFHeader(AACDecInfo *aacDecInfo, unsigned char **buf, int *bitOffset
  *
  * Return:      0 if successful, error code (< 0) if error
  *
- * Notes:       if copyLast == 1, then psi->nChans, psi->sampRateIdx, and 
- *                aacDecInfo->profile are not changed (it's assumed that we already 
+ * Notes:       if copyLast == 1, then psi->nChans, psi->sampRateIdx, and
+ *                aacDecInfo->profile are not changed (it's assumed that we already
  *                set them, such as by a previous call to UnpackADTSHeader())
  *              if copyLast == 0, then the parameters we passed in are used instead
  **************************************************************************************/
@@ -477,7 +477,7 @@ int PrepareRawBlock(AACDecInfo *aacDecInfo)
  *
  * Return:      0 if successful, error code (< 0) if error
  *
- * Notes:       only need to clear data which is persistent between frames 
+ * Notes:       only need to clear data which is persistent between frames
  *                (such as overlap buffer)
  **************************************************************************************/
 int FlushCodec(AACDecInfo *aacDecInfo)
@@ -488,7 +488,7 @@ int FlushCodec(AACDecInfo *aacDecInfo)
 	if (!aacDecInfo || !aacDecInfo->psInfoBase)
 		return ERR_AAC_NULL_POINTER;
 	psi = (PSInfoBase *)(aacDecInfo->psInfoBase);
-	
+
 	ClearBuffer(psi->overlap, AAC_MAX_NCHANS * AAC_MAX_NSAMPS * sizeof(int));
 	ClearBuffer(psi->prevWinShape, AAC_MAX_NCHANS * sizeof(int));
 

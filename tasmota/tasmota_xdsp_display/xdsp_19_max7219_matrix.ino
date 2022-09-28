@@ -25,8 +25,8 @@
   Connect the MAX7219 display module's pins to any free GPIOs of the ESP8266 or ESP32 module.
   VCC should be 5V. Depending on the number of used modules and the brightness, the used current can be more than 500 mA.
 
-  Connect the 5 outgoing pins (VCC, GND, DI, CS, CLK) of the first module to the next one. 
-  With this you can connect up to 32 modules. 
+  Connect the 5 outgoing pins (VCC, GND, DI, CS, CLK) of the first module to the next one.
+  With this you can connect up to 32 modules.
   To extend the display hieght, multiple rows are supported. Each module row starts from left to right.
 
   Assign the pins as follows from Tasmota's GUI:
@@ -47,8 +47,8 @@
 
   Now, the following "Display" commands can be used:
 
-  DisplayText  text 
-    Sends the text to the display. 
+  DisplayText  text
+    Sends the text to the display.
     If the text fits into the display, it is shown in the center.
     Otherwise it scrolls to the left and repeats as long it is cleared or new "DisplayText" overwrites it.
 
@@ -60,7 +60,7 @@
     1: slow, 2: medium 3: fast blinking
 
   Power [ON|OFF]
-    Sitches the display on or off. When "off", the display buffer is not cleared and will be shown again when after "Power ON". 
+    Sitches the display on or off. When "off", the display buffer is not cleared and will be shown again when after "Power ON".
     Other display commands are still active when off.
 
   DisplayClear
@@ -86,7 +86,7 @@
             "DisplayClock 2"     // 24 hr format
             "DisplayClock 0"     // turn off clock; please use additional cammand: DisplayMode 0
 
-  If you would like to use the UTF8 latin1 character set, it cam be added by copile option: 
+  If you would like to use the UTF8 latin1 character set, it cam be added by copile option:
   #define USE_UTF8_LATIN1
 
 \*********************************************************************************************/
@@ -145,7 +145,7 @@ bool MAX7291Matrix_initDriver(void)
 bool MAX7291Matrix_init(void)
 {
     Settings->display_mode = 0; // text mode
-    LedMatrix_settings.show_clock = 0; // no 
+    LedMatrix_settings.show_clock = 0; // no
     LedMatrix_settings.blink_delay = 0; // no blinking
 
     int intensity = GetDisplayDimmer16(); // 0..15
@@ -159,8 +159,8 @@ bool MAX7291Matrix_init(void)
     else
     {
         // default for most 32x8 modules
-        Settings->display_rotate = LedMatrix::ORIENTATION_UPSIDE_DOWN; 
-        max7219_Matrix->setOrientation( LedMatrix::ORIENTATION_UPSIDE_DOWN ); 
+        Settings->display_rotate = LedMatrix::ORIENTATION_UPSIDE_DOWN;
+        max7219_Matrix->setOrientation( LedMatrix::ORIENTATION_UPSIDE_DOWN );
     }
     AddLog(LOG_LEVEL_INFO, PSTR("MTX: MAX7291Matrix_init orientation: %d, intensity: %d"), Settings->display_rotate, intensity);
     return true;
@@ -169,8 +169,8 @@ bool MAX7291Matrix_init(void)
 bool MAX7291Matrix_setText(bool clearBefore=true)
 {
     if(Settings->display_mode != 0) MAX7291Matrix_init();
-    LedMatrix_settings.blink_delay = 0; // no blinking    
-    return max7219_Matrix->drawText(XdrvMailbox.data, clearBefore); 
+    LedMatrix_settings.blink_delay = 0; // no blinking
+    return max7219_Matrix->drawText(XdrvMailbox.data, clearBefore);
 }
 
 // FUNC_DISPLAY_SCROLLDELAY
@@ -236,7 +236,7 @@ bool MAX7291Matrix_setBlinkRate()
     }
     if (XdrvMailbox.payload)
         LedMatrix_settings.blink_delay = 20 / XdrvMailbox.payload; // 1: once per second; 2: twice per second; 3: three times per second
-    else    
+    else
         LedMatrix_settings.blink_delay  = 0; // do not blink
     return true;
 }
@@ -363,7 +363,7 @@ bool Xdsp19(uint8_t function)
                 result = MAX7291Matrix_showTime();
             }
             break;
-#endif // USE_DISPLAY_MODES1TO5            
+#endif // USE_DISPLAY_MODES1TO5
 
         default:
             result = false;

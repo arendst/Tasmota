@@ -1,8 +1,8 @@
 // NeoPixelBuffer
 // This example will animate pixels using a bitmap stored on a SD card
-// 
 //
-// This will demonstrate the use of the NeoBitmapFile object 
+//
+// This will demonstrate the use of the NeoBitmapFile object
 // NOTE:  The images provided in the example directory should be copied to
 // the root of the SD card so the below code will find it.
 // NOTE:  This sample and the included images were built for a 144 pixel strip so
@@ -11,8 +11,8 @@
 
 #include <NeoPixelBus.h>
 #include <NeoPixelAnimator.h>
-#include <SPI.h> 
-#include <SD.h> 
+#include <SPI.h>
+#include <SD.h>
 
 const int chipSelect = D8; // make sure to set this to your SD carder reader CS
 
@@ -29,7 +29,7 @@ NeoPixelBus<MyPixelColorFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
 NeoPixelAnimator animations(AnimCount); // NeoPixel animation management object
 
 // our NeoBitmapFile will use the same color feature as NeoPixelBus and
-// we want it to use the SD File object 
+// we want it to use the SD File object
 NeoBitmapFile<MyPixelColorFeature, File> image;
 
 uint16_t animState;
@@ -68,7 +68,7 @@ void setup() {
     Serial.println("card initialized.");
 
     // open the file
-    File bitmapFile = SD.open("strings.bmp"); 
+    File bitmapFile = SD.open("strings.bmp");
     if (!bitmapFile)
     {
         Serial.println("File open fail, or not present");

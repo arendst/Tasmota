@@ -150,7 +150,7 @@ void IEM3000Every250ms(void)
         case 10:
           Energy.import_active[0] = value;
           break;
-        
+
         case 11:
           Energy.import_active[1] = value;
           break;

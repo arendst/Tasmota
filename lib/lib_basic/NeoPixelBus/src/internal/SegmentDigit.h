@@ -58,7 +58,7 @@ public:
 
 // ------------------------------------------------------------------------
 // SevenSegDigit represents a color object that is represented by the segments
-// of a 7 segment LED display digit.  It contains helpful routines to manipulate 
+// of a 7 segment LED display digit.  It contains helpful routines to manipulate
 // and set the elements.
 //
 // The order represents the physical LED location starting at A, through to G, then
@@ -70,7 +70,7 @@ struct SevenSegDigit
     typedef NeoSevenSegCurrentSettings SettingsObject;
 
     // ------------------------------------------------------------------------
-    // Construct a SevenSegDigit using 
+    // Construct a SevenSegDigit using
     //   the default brightness to apply to all segments
     // ------------------------------------------------------------------------
     SevenSegDigit(uint8_t defaultBrightness)
@@ -79,7 +79,7 @@ struct SevenSegDigit
     }
 
     // ------------------------------------------------------------------------
-    // Construct a SevenSegDigit using 
+    // Construct a SevenSegDigit using
     //   a bitmask for the segment (bit order is  ".gfedcba")
     //   the brightness to apply to them, (0-255)
     //   the default brightness to apply to those not set in the bitmask (0-255)
@@ -87,7 +87,7 @@ struct SevenSegDigit
     SevenSegDigit(uint8_t bitmask, uint8_t brightness, uint8_t defaultBrightness = 0);
 
     // ------------------------------------------------------------------------
-    // Construct a SevenSegDigit using 
+    // Construct a SevenSegDigit using
     //   a char that will get mapped to the segments,
     //   the brightness to apply to them, (0-255)
     //   the default brightness to apply to those not set in the bitmask (0-255)
@@ -168,11 +168,11 @@ struct SevenSegDigit
         return total;
     }
 
-    template <typename T_SET_TARGET> 
-    static void SetString(T_SET_TARGET& target, 
-            uint16_t indexDigit, 
-            const char* str, 
-            uint8_t brightness, 
+    template <typename T_SET_TARGET>
+    static void SetString(T_SET_TARGET& target,
+            uint16_t indexDigit,
+            const char* str,
+            uint8_t brightness,
             uint8_t defaultBrightness = 0)
     {
         if (str == nullptr)
@@ -198,7 +198,7 @@ struct SevenSegDigit
             bool special = false;
             char value = *pIter--;
 
-            // must always be merged by previous char 
+            // must always be merged by previous char
             // (the one to the right)
             // so if repeated ignore it
             //
@@ -221,7 +221,7 @@ struct SevenSegDigit
             }
 
             // check next char for colon
-            // 
+            //
             if (pIter >= pFirst && (*pIter == ':' || *pIter == ';'))
             {
                 // the colon is custom extension using the decimal AND the special

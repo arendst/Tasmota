@@ -2,7 +2,7 @@
  - Example of I2C driver written in Berry
  -
  - Support for MPU6886 device found in M5Stack
- - Alternative to xsns_85_mpu6886.ino 
+ - Alternative to xsns_85_mpu6886.ino
  -#
 
 class MPU6886_9250 : I2C_Driver

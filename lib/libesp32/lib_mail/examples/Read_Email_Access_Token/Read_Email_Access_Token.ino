@@ -1,24 +1,24 @@
 /**
  * This example will log in with the SASL XOAUTH2 mechanisme using OAuth2.0 access token.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
 
 /** To receive Email using Gmail, IMAP option should be enabled. https://support.google.com/mail/answer/7126229?hl=en
  * and also https://accounts.google.com/b/0/DisplayUnlockCaptcha
- * 
+ *
 */
 
-/** For ESP8266, with BearSSL WiFi Client 
+/** For ESP8266, with BearSSL WiFi Client
  * The memory reserved for completed valid SSL response from IMAP is 16 kbytes which
- * may cause your device out of memory reset in case the memory 
+ * may cause your device out of memory reset in case the memory
  * allocation error.
 */
 
@@ -36,7 +36,7 @@
 /* The imap host name e.g. imap.gmail.com for GMail or outlook.office365.com for Outlook */
 #define IMAP_HOST "################"
 
-/** The imap port e.g. 
+/** The imap port e.g.
  * 143  or esp_mail_imap_port_143
  * 993 or esp_mail_imap_port_993
 */
@@ -48,19 +48,19 @@
 /** The OAuth2.0 access token
  * The generation, exchange and refresh of the access token are not available
  * in this library.
- * 
+ *
  * To test this using GMail, get the OAuth2.0 access token from this web site
  * https://developers.google.com/oauthplayground/
- * 
+ *
  * 1. Select the following scope (in Step 1) from Gmail API V1
  * https://mail.google.com/
  * https://mail.google.com/
- * 
+ *
  * 2. Click Authorize APIs button.
  * 3. Cick Exchangeauthorization code for tokens.
  * 4. From the response, look at access_token from the JSON payload node.
  * 5. Copy that access token and paste to the AUTHOR_ACCESS_TOKEN value.
- * 
+ *
  * The token will be expired in 3600 seconds (1 Hr).
  * The AUTHOR_EMAIL above is the Email address that you granted to access the Gmail services.
 */
@@ -109,7 +109,7 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /** Enable the debug via Serial port 
+    /** Enable the debug via Serial port
      * none debug or 0
      * basic debug or 1
     */
@@ -158,12 +158,12 @@ void setup()
 
     /** The file storage type e.g.
      * esp_mail_file_storage_type_none,
-     * esp_mail_file_storage_type_flash, and 
-     * esp_mail_file_storage_type_sd 
+     * esp_mail_file_storage_type_flash, and
+     * esp_mail_file_storage_type_sd
     */
     config.storage.type = esp_mail_file_storage_type_flash;
 
-    /** Set to download heades, text and html messaeges, 
+    /** Set to download heades, text and html messaeges,
      * attachments and inline images respectively.
     */
     config.download.header = true;
@@ -172,7 +172,7 @@ void setup()
     config.download.attachment = true;
     config.download.inlineImg = true;
 
-    /** Set to enable the results i.e. html and text messaeges 
+    /** Set to enable the results i.e. html and text messaeges
      * which the content stored in the IMAPSession object is limited
      * by the option config.limit.msg_size.
      * The whole message can be download through config.download.text
@@ -190,14 +190,14 @@ void setup()
     /* Set the limit of number of messages in the search results */
     config.limit.search = 5;
 
-    /** Set the maximum size of message stored in 
+    /** Set the maximum size of message stored in
      * IMAPSession object in byte
     */
     config.limit.msg_size = 512;
 
     /** Set the maximum attachments and inline images files size
-     * that can be downloaded in byte. 
-     * The file which its size is largger than this limit may be saved 
+     * that can be downloaded in byte.
+     * The file which its size is largger than this limit may be saved
      * as truncated file.
     */
     config.limit.attachment_size = 1024 * 1024 * 5;

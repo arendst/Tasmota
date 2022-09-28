@@ -1,7 +1,7 @@
 
 libmad=../../src/libmad/decoder.c ../../src/libmad/frame.c ../../src/libmad/bit.c ../../src/libmad/stream.c ../../src/libmad/fixed.c \
 ../../src/libmad/timer.c ../../src/libmad/layer3.c ../../src/libmad/synth.c ../../src/libmad/huffman.c ../../src/libmad/version.c
- 
+
 
 libhelix_mp3=../../src/libhelix-mp3/dequant.c ../../src/libhelix-mp3/mp3dec.c ../../src/libhelix-mp3/stproc.c \
 ../../src/libhelix-mp3/hufftabs.c ../../src/libhelix-mp3/dct32.c ../../src/libhelix-mp3/trigtabs.c \

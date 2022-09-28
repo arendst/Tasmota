@@ -292,7 +292,7 @@ int32_t ttgo_sleeptime;
       SettingsSaveAll();
       RtcSettingsSave();
       ttgo_globs.lenergy = true;
-      setCpuFrequencyMhz(10); 
+      setCpuFrequencyMhz(10);
       xEventGroupSetBits(ttgo_globs.isr_group, WATCH_FLAG_SLEEP_MODE);
       gpio_wakeup_enable ((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
       gpio_wakeup_enable ((gpio_num_t)BMA423_INT1, GPIO_INTR_HIGH_LEVEL);

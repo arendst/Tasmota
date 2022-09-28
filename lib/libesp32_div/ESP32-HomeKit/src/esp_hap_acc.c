@@ -102,7 +102,7 @@ hap_acc_t *hap_acc_create(hap_acc_cfg_t *acc_cfg)
     if (acc_cfg->hw_rev) {
         ret |= hap_serv_add_char(hs, hap_char_string_create(HAP_CHAR_UUID_HARDWARE_REVISION, HAP_CHAR_PERM_PR, acc_cfg->hw_rev));
     }
-    
+
     if (ret) {
         goto acc_create_fail;
     }
@@ -270,16 +270,16 @@ int hap_acc_get_info(hap_acc_cfg_t *acc_cfg)
 
     hap_char_t *hc = hap_serv_get_char_by_uuid(hs, HAP_CHAR_UUID_NAME);
     acc_cfg->name = ((__hap_char_t *)hc)->val.s;
-    
+
     hc = hap_serv_get_char_by_uuid(hs, HAP_CHAR_UUID_MODEL);
     acc_cfg->model = ((__hap_char_t *)hc)->val.s;
-    
+
     hc = hap_serv_get_char_by_uuid(hs, HAP_CHAR_UUID_MANUFACTURER);
     acc_cfg->manufacturer = ((__hap_char_t *)hc)->val.s;
 
     hc = hap_serv_get_char_by_uuid(hs, HAP_CHAR_UUID_SERIAL_NUMBER);
     acc_cfg->serial_num = ((__hap_char_t *)hc)->val.s;
-    
+
     hc = hap_serv_get_char_by_uuid(hs, HAP_CHAR_UUID_FIRMWARE_REVISION);
     acc_cfg->fw_rev = ((__hap_char_t *)hc)->val.s;
 

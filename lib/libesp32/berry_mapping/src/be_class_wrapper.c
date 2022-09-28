@@ -1,9 +1,9 @@
 /*********************************************************************************************\
  * Class wrappers for native objects
- * 
+ *
  * These class are simple wrappers (containers) for a pointer of an external object.
  * The pointer is stored interanlly by the class.
- * 
+ *
  * The constructor of this class must accept the first argument to be `comptr`,
  * in such case, the constructor must store the pointer.
  * The class is not supposed to free the object at `deinit` time.
@@ -18,7 +18,7 @@ typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intpt
 
 /*********************************************************************************************\
  * Converision from real <-> int
- * 
+ *
  * Warning, works only if sizeof(intptr_t) == sizeof(breal)
  * On ESP32, int=32bits, real=float (32bits)
 \*********************************************************************************************/
@@ -36,10 +36,10 @@ static breal intasreal(intptr_t v) {
 
 /*********************************************************************************************\
  * Create an object of `class_name` given an external poinrt `ptr`.
- * 
+ *
  * Instanciates the class and calls `init()` with `ptr` wrapped in `comptr` as single arg.
  * Both arguments but nost bu NULL.
- * 
+ *
  * On return, the created instance is top of stack.
 \*********************************************************************************************/
 void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr) {
@@ -59,18 +59,18 @@ void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr) {
 
 /*********************************************************************************************\
  * Find an object by global or composite name.
- * 
+ *
  * I.e. `lv.lv_object` will check for a global called `lv` and a member `lv_object`
- * 
+ *
  * Only supports one level of depth, meaning a class within a module.
  * Does not check the type of the object found.
- * 
+ *
  * Arguments:
  *   `name`: can be NULL, in such case considers the member as not found
- * 
+ *
  * Case 1: (no dot in name) `lv_wifi_bars` will look for a global variable `lv_wifi_bars`
  * Case 2: (dot in name) `lvgl.lv_obj` will get global `lvgl` and look for `lv_obj` within this module
- * 
+ *
  * Returns the number of elements pushed on the stack: 1 for module, 2 for instance method, 0 if not found
 \*********************************************************************************************/
 int be_find_global_or_module_member(bvm *vm, const char * name) {
@@ -122,18 +122,18 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
 
 /*********************************************************************************************\
  * Automatically parse Berry stack and call the C function accordingly
- * 
+ *
  * This function takes the n incoming arguments and pushes them as arguments
  * on the stack for the C function:
  * - be_int -> int32_t
  * - be_bool -> int32_t with value 0/1
  * - be_string -> const char *
  * - be_instance -> gets the member "_p" and pushes as void*
- * 
+ *
  * This works because C silently ignores any unwanted arguments.
  * There is a strong requirements that all ints and pointers are 32 bits.
  * Float is not supported but could be added. Double cannot be supported because they are 64 bits
- * 
+ *
  * Optional argument:
  * - return_type: the C function return value is int32_t and is converted to the
  *   relevant Berry object depending on this char:
@@ -144,7 +144,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   's' be_str
  *   '$' be_str but the buffer must be `free()`ed
  *   '&' bytes() object, pointer to buffer returned, and size passed with an additional (size_t*) argument
- * 
+ *
  * - arg_type: optionally check the types of input arguments, or throw an error
  *   string of argument types, '[' indicates that the following parameters are optional
  *   '.' don't care
@@ -158,7 +158,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
  *   'lv_obj' be_instance of type or subtype
  *   '^lv_event_cb^' callback of a named class - will call `_lvgl.gen_cb(arg_type, closure, self)` and expects a callback address in return
  *   '@': pass a pointer to the Berry VM (virtual parameter added, must be the first argument)
- * 
+ *
  * Ex: ".ii" takes 3 arguments, first one is any type, followed by 2 ints
 \*********************************************************************************************/
 // general form of lv_obj_t* function, up to 4 parameters
@@ -171,7 +171,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
   int ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
-  
+
   // berry_log_C(">> 0 idx=%i arg_type=%s", idx, arg_type ? arg_type : "NULL");
   if (arg_type == NULL) { arg_type = "."; }    // if no type provided, replace with wildchar
   size_t arg_type_len = strlen(arg_type);
@@ -223,7 +223,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     type_ok = type_ok || (arg_type[0] == provided_type && arg_type[1] == 0);      // or type is a match (single char only)
     type_ok = type_ok || (ret == 0 && arg_type_len != 1);     // or NULL is accepted for an instance
     type_ok = type_ok || (ret == 0 && arg_type[0] == 's' && arg_type[1] == 0);  // accept nil for string, can be dangerous
-    
+
     if (!type_ok) {
       be_raisef(vm, "type_error", "Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
     }
@@ -276,7 +276,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
 
 /*********************************************************************************************\
  * Calling any LVGL function with auto-mapping
- * 
+ *
 \*********************************************************************************************/
 
 // check input parameters, and create callbacks if needed
@@ -421,13 +421,13 @@ int be_call_ctype_func(bvm *vm, const void *definition) {
 
 /*********************************************************************************************\
  * Call a C function with auto-mapping
- * 
+ *
  * Arguments:
  *   vm: pointer to Berry vm (as ususal)
  *   func: pointer to C function
  *   return_type: how to convert the result into a Berry type
  *   arg_type: string describing the optional and mandatory parameters
- * 
+ *
  * Note: the C function mapping supports max 8 arguments and does not directly support
  *       pointers to values (although it is possible to mimick with classes)
 \*********************************************************************************************/

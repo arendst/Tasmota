@@ -49,10 +49,10 @@ void loop() {
 
   uint16_t irq = veml.interruptStatus();
   if (irq & VEML7700_INTERRUPT_LOW) {
-    Serial.println("** Low threshold"); 
+    Serial.println("** Low threshold");
   }
   if (irq & VEML7700_INTERRUPT_HIGH) {
-    Serial.println("** High threshold"); 
+    Serial.println("** High threshold");
   }
   delay(500);
 }

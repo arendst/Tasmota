@@ -76,9 +76,9 @@ String wc_UrlEncode(const String& text) {
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import webclient
- * 
+ *
 \*********************************************************************************************/
 extern "C" {
   // Berry: ``
@@ -547,7 +547,7 @@ extern "C" {
         be_raisef(vm, "internal_error", "failed, written %i bytes vs %i", written, size);
       }
       AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "flash writing succesful");
-      
+
       be_pushint(vm, written);
       be_return(vm);  /* return code */
     }

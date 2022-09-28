@@ -145,6 +145,18 @@ void MCP2515_Init(void) {
     }
     AddLog(LOG_LEVEL_INFO, PSTR("CAN: Initialized"));
 
+<<<<<<< HEAD
+=======
+  if (MCP2515::ERROR_OK != mcp2515->setBitrate(MCP2515_BITRATE, MCP2515_CLOCK)) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set module bitrate"));
+    mcp2515_init_status = 0;
+  }
+
+  if (mcp2515_init_status && MCP2515::ERROR_OK != mcp2515->setNormalMode()) {
+    AddLog(LOG_LEVEL_ERROR, PSTR("MCP2515: Failed to set normal mode"));
+    mcp2515_init_status = 0;
+  }
+>>>>>>> cb8391571 (Remove trailing whitespaces)
 #ifdef MCP2515_BMS_FREEDWON
   // TODO: Filter CAN bus messages
   //mcp2515->setFilterMask();

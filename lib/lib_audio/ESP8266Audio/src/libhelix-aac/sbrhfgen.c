@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: sbrhfgen.c,v 1.2 2005/05/19 20:45:20 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: sbrhfgen.c,v 1.2 2005/05/19 20:45:20 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -50,8 +50,8 @@
 #define MAG_16			(16 * (1 << (32 - (2*(32-FBITS_LPCOEFS)))))		/* i.e. 16 in Q26 format */
 #define RELAX_COEF		0x7ffff79c	/* 1.0 / (1.0 + 1e-6), Q31 */
 
-/* newBWTab[prev invfMode][curr invfMode], format = Q31 (table 4.158) 
- * sample file which uses all of these: al_sbr_sr_64_2_fsaac32.aac 
+/* newBWTab[prev invfMode][curr invfMode], format = Q31 (table 4.158)
+ * sample file which uses all of these: al_sbr_sr_64_2_fsaac32.aac
  */
 static const int newBWTab[4][4] PROGMEM = {
 	{0x00000000, 0x4ccccccd, 0x73333333, 0x7d70a3d7},
@@ -65,7 +65,7 @@ static const int newBWTab[4][4] PROGMEM = {
  *
  * Description: kernel of covariance matrix calculation for p01, p11, p12, p22
  *
- * Inputs:      buffer of low-freq samples, starting at time index = 0, 
+ * Inputs:      buffer of low-freq samples, starting at time index = 0,
  *                freq index = patch subband
  *
  * Outputs:     64-bit accumulators for p01re, p01im, p12re, p12im, p11re, p22re
@@ -146,7 +146,7 @@ void CVKernel1(int *XBuf, int *accBuf)
  *
  * Description: calculate covariance matrix for p01, p12, p11, p22 (4.6.18.6.2)
  *
- * Inputs:      buffer of low-freq samples, starting at time index 0, 
+ * Inputs:      buffer of low-freq samples, starting at time index 0,
  *                freq index = patch subband
  *
  * Outputs:     complex covariance elements p01re, p01im, p12re, p12im, p11re, p22re
@@ -227,7 +227,7 @@ static int CalcCovariance1(int *XBuf, int *p01reN, int *p01imN, int *p12reN, int
  *
  * Description: kernel of covariance matrix calculation for p02
  *
- * Inputs:      buffer of low-freq samples, starting at time index = 0, 
+ * Inputs:      buffer of low-freq samples, starting at time index = 0,
  *                freq index = patch subband
  *
  * Outputs:     64-bit accumulators for p02re, p02im stored in accBuf
@@ -286,7 +286,7 @@ void CVKernel2(int *XBuf, int *accBuf)
  *
  * Description: calculate covariance matrix for p02 (4.6.18.6.2)
  *
- * Inputs:      buffer of low-freq samples, starting at time index = 0, 
+ * Inputs:      buffer of low-freq samples, starting at time index = 0,
  *                freq index = patch subband
  *
  * Outputs:     complex covariance element p02re, p02im
@@ -326,7 +326,7 @@ static int CalcCovariance2(int *XBuf, int *p02reN, int *p02imN)
 
 	if (n <= 30) {
 		loShift = (30 - n);
-		*p02reN = p02re.r.lo32 << loShift;	
+		*p02reN = p02re.r.lo32 << loShift;
 		*p02imN = p02im.r.lo32 << loShift;
 		return -(loShift + 2*FBITS_OUT_QMFA);
 	} else if (n < 32 + 30) {
@@ -337,7 +337,7 @@ static int CalcCovariance2(int *XBuf, int *p02reN, int *p02imN)
 		return (loShift - 2*FBITS_OUT_QMFA);
 	} else {
 		hiShift = n - (32 + 30);
-		*p02reN = p02re.r.hi32 >> hiShift;	
+		*p02reN = p02re.r.hi32 >> hiShift;
 		*p02imN = p02im.r.hi32 >> hiShift;
 		return (32 - 2*FBITS_OUT_QMFA - hiShift);
 	}
@@ -350,7 +350,7 @@ static int CalcCovariance2(int *XBuf, int *p02reN, int *p02imN)
  *
  * Description: calculate linear prediction coefficients for one subband (4.6.18.6.2)
  *
- * Inputs:      buffer of low-freq samples, starting at time index = 0, 
+ * Inputs:      buffer of low-freq samples, starting at time index = 0,
  *                freq index = patch subband
  *              number of guard bits in input sample buffer
  *
@@ -380,7 +380,7 @@ static void CalcLPCoefs(int *XBuf, int *a0re, int *a0im, int *a1re, int *a1im, i
 		}
 		XBuf -= (2*64*(NUM_TIME_SLOTS*SAMPLES_PER_SLOT + 6 + 2));
 	}
-	
+
 	/* calculate covariance elements */
 	n1 = CalcCovariance1(XBuf, &p01re, &p01im, &p12re, &p12im, &p11re, &p22re);
 	n2 = CalcCovariance2(XBuf, &p02re, &p02im);
@@ -459,9 +459,9 @@ static void CalcLPCoefs(int *XBuf, int *a0re, int *a0im, int *a1re, int *a1im, i
 			*a0re = tre << (FBITS_LPCOEFS - 25 + nd);	/* i.e. convert Q(25 - nd) to Q(29) */
 			*a0im = tim << (FBITS_LPCOEFS - 25 + nd);
 		}
-	} 
+	}
 
-	/* see 4.6.18.6.2 - if magnitude of a0 or a1 >= 4 then a0 = a1 = 0 
+	/* see 4.6.18.6.2 - if magnitude of a0 or a1 >= 4 then a0 = a1 = 0
 	 * i.e. a0re < 4, a0im < 4, a1re < 4, a1im < 4
 	 * Q29*Q29 = Q26
 	 */
@@ -519,7 +519,7 @@ void GenerateHighFreq(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFreq, SBRCha
 
 		if (t < 0x02000000)	/* below 0.015625, clip to 0 */
 			t = 0;
-		if (t > 0x7f800000)	/* clip to 0.99609375 */  
+		if (t > 0x7f800000)	/* clip to 0.99609375 */
 			t = 0x7f800000;
 
 		/* save curr as prev for next time */
@@ -535,7 +535,7 @@ void GenerateHighFreq(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFreq, SBRCha
 	g = 0;
 	bw = sbrChan->chirpFact[g];
 	bwsq = MULSHIFT32(bw, bw) << 1;
-	
+
 	gbMask = (sbrChan->gbMask[0] | sbrChan->gbMask[1]);	/* older 32 | newer 8 */
 	gb = CLZ(gbMask) - 1;
 
@@ -547,7 +547,7 @@ void GenerateHighFreq(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFreq, SBRCha
 				bw = sbrChan->chirpFact[g];		/* Q31 */
 				bwsq = MULSHIFT32(bw, bw) << 1;	/* Q31 */
 			}
-		
+
 			p = sbrFreq->patchStartSubband[currPatch] + x;	/* low QMF band */
 			XBufHi = psi->XBuf[iStart][k];
 			if (bw) {
@@ -569,14 +569,14 @@ void GenerateHighFreq(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFreq, SBRCha
 				XBufLo += (64*2);
 
 				for (i = iStart; i < iEnd; i++) {
-					/* a0re/im, a1re/im are Q28 with at least 1 GB, 
-					 *   so the summing for AACre/im is fine (1 GB in, plus 1 from MULSHIFT32) 
+					/* a0re/im, a1re/im are Q28 with at least 1 GB,
+					 *   so the summing for AACre/im is fine (1 GB in, plus 1 from MULSHIFT32)
 					 */
 					ACCre = MULSHIFT32(x2re, a1re) - MULSHIFT32(x2im, a1im);
 					ACCim = MULSHIFT32(x2re, a1im) + MULSHIFT32(x2im, a1re);
 					x2re = x1re;
 					x2im = x1im;
-					
+
 					ACCre += MULSHIFT32(x1re, a0re) - MULSHIFT32(x1im, a0im);
 					ACCim += MULSHIFT32(x1re, a0im) + MULSHIFT32(x1im, a0re);
 					x1re = XBufLo[0];	/* RE{XBuf[n]} */
@@ -604,7 +604,7 @@ void GenerateHighFreq(PSInfoSBR *psi, SBRGrid *sbrGrid, SBRFreq *sbrFreq, SBRCha
 				for (i = iStart; i < iEnd; i++) {
 					XBufHi[0] = XBufLo[0];
 					XBufHi[1] = XBufLo[1];
-					XBufLo += (64*2); 
+					XBufLo += (64*2);
 					XBufHi += (64*2);
 				}
 			}

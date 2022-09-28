@@ -171,11 +171,11 @@ RgbwColor RgbwColor::LinearBlend(const RgbwColor& left, const RgbwColor& right, 
         left.W + ((right.W - left.W) * progress) );
 }
 
-RgbwColor RgbwColor::BilinearBlend(const RgbwColor& c00, 
-    const RgbwColor& c01, 
-    const RgbwColor& c10, 
-    const RgbwColor& c11, 
-    float x, 
+RgbwColor RgbwColor::BilinearBlend(const RgbwColor& c00,
+    const RgbwColor& c01,
+    const RgbwColor& c10,
+    const RgbwColor& c11,
+    float x,
     float y)
 {
     float v00 = (1.0f - x) * (1.0f - y);

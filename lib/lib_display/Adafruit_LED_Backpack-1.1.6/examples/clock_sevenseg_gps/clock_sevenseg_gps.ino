@@ -11,8 +11,8 @@
 // ----> http://www.adafruit.com/products/878
 // ----> http://www.adafruit.com/products/746
 //
-// Adafruit invests time and resources providing this open source code, 
-// please support Adafruit and open-source hardware by purchasing 
+// Adafruit invests time and resources providing this open source code,
+// please support Adafruit and open-source hardware by purchasing
 // products from Adafruit!
 //
 // Written by Tony DiCola for Adafruit Industries.
@@ -44,8 +44,8 @@
 // Create display and GPS objects.  These are global variables that
 // can be accessed from both the setup and loop function below.
 Adafruit_7segment clockDisplay = Adafruit_7segment();
-SoftwareSerial gpsSerial(8, 7);  // GPS breakout/shield will use a 
-                                 // software serial connection with 
+SoftwareSerial gpsSerial(8, 7);  // GPS breakout/shield will use a
+                                 // software serial connection with
                                  // TX = pin 8 and RX = pin 7.
 Adafruit_GPS gps(&gpsSerial);
 
@@ -69,7 +69,7 @@ void setup() {
 
   // Use a 1 hz, once a second, update rate.
   gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-  
+
   // Enable the interrupt to parse GPS data.
   enableGPSInterrupt();
 }
@@ -81,7 +81,7 @@ void loop() {
   if (gps.newNMEAreceived()) {
     gps.parse(gps.lastNMEA());
   }
-  
+
   // Grab the current hours, minutes, seconds from the GPS.
   // This will only be set once the GPS has a fix!  Make sure to add
   // a coin cell battery so the GPS will save the time between power-up/down.
@@ -96,7 +96,7 @@ void loop() {
   }
   int minutes = gps.minute;
   int seconds = gps.seconds;
-  
+
   // Show the time on the display by turning it into a numeric
   // value, like 3:30 turns into 330, by multiplying the hour by
   // 100 and then adding the minutes.
@@ -139,7 +139,7 @@ void loop() {
   clockDisplay.writeDisplay();
 
   // Loop code is finished, it will jump back to the start of the loop
-  // function again! Don't add any delays because the parsing needs to 
+  // function again! Don't add any delays because the parsing needs to
   // happen all the time!
 }
 

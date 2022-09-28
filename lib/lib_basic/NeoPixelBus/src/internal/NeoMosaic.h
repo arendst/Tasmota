@@ -3,7 +3,7 @@
 /*-------------------------------------------------------------------------
 Mosiac provides a mapping feature of a 2d cordinate to linear 1d cordinate
 It is used to map tiles of matricies of NeoPixels to a index on the NeoPixelBus
-where the the matricies use a set of prefered topology and the tiles of 
+where the the matricies use a set of prefered topology and the tiles of
 those matricies use the RowMajorAlternating layout
 
 Written by Michael C. Miller.
@@ -32,12 +32,12 @@ License along with NeoPixel.  If not, see
 
 //-----------------------------------------------------------------------------
 // class NeoMosaic
-// Complex Tile layout class that reduces distance of the interconnects between 
+// Complex Tile layout class that reduces distance of the interconnects between
 // the tiles by using different rotations of the layout at specific locations
 //
 // T_LAYOUT = the layout used for matrix panel (rotation is ignored)
 //
-// NOTE:  The tiles in the mosaic are always laid out using RowMajorAlternating 
+// NOTE:  The tiles in the mosaic are always laid out using RowMajorAlternating
 //
 //-----------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ public:
         {
             result = NeoTopologyHint_InPanel;
         }
-        
+
         return result;
     }
 

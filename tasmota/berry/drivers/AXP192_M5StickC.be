@@ -19,7 +19,7 @@ class AXP192_M5StickC : AXP192
 
       # set charging current to 100mA
       self.set_chg_current(0) # 0 = 100mA
-      
+
       # esp32 power voltage was set to 3.3v
       self.set_esp_voltage(3300)
 
@@ -56,7 +56,7 @@ class AXP192_M5StickC : AXP192
 
       # Set Power off voltage 3.0v
       self.write8(0x31, self.read8(0x31) & 0xF8 | 0x04)
-      
+
       # ADC all-on
       # Bit 7: Battery voltage ADC enable
       # Bit 6: Battery current ADC enable
@@ -90,7 +90,7 @@ class AXP192_M5StickC : AXP192
   def set_lcd_reset(state)
     self.set_ldo_enable(3, state)
   end
-  
+
   # Dimmer in percentage
   def set_displaydimmer(x)
     var v = tasmota.scale_uint(x, 0, 100, 2500, 3300)

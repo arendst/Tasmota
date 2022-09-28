@@ -1,37 +1,37 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
@@ -61,11 +61,11 @@
  *
  * Notes:       assume at least 1 GB in input
  **************************************************************************************/
-void MidSideProc(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, int mOut[2])  
+void MidSideProc(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, int mOut[2])
 {
 	int i, xr, xl, mOutL, mOutR;
-	
-	/* L = (M+S)/sqrt(2), R = (M-S)/sqrt(2) 
+
+	/* L = (M+S)/sqrt(2), R = (M-S)/sqrt(2)
 	 * NOTE: 1/sqrt(2) done in DequantChannel() - see comments there
 	 */
 	mOutL = mOutR = 0;
@@ -103,7 +103,7 @@ void MidSideProc(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, int mOut[2])
  * TODO:        combine MPEG1/2 into one function (maybe)
  *              make sure all the mixed-block and IIP logic is right
  **************************************************************************************/
-void IntensityProcMPEG1(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh, ScaleFactorInfoSub *sfis, 
+void IntensityProcMPEG1(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh, ScaleFactorInfoSub *sfis,
 						CriticalBandInfo *cbi, int midSideFlag, int mixFlag, int mOut[2])
 {
 	int i=0, j=0, n=0, cb=0, w=0;
@@ -144,7 +144,7 @@ void IntensityProcMPEG1(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh
 			fl = ISFIIP[midSideFlag][0];
 			fr = ISFIIP[midSideFlag][1];
 		} else {
-			fl = isfTab[isf];	
+			fl = isfTab[isf];
 			fr = isfTab[6] - isfTab[isf];
 		}
 
@@ -182,7 +182,7 @@ void IntensityProcMPEG1(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh
 	}
 	mOut[0] = mOutL;
 	mOut[1] = mOutR;
-	
+
 	return;
 }
 
@@ -210,7 +210,7 @@ void IntensityProcMPEG1(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh
  *              make sure all the mixed-block and IIP logic is right
  *                probably redo IIP logic to be simpler
  **************************************************************************************/
-void IntensityProcMPEG2(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh, ScaleFactorInfoSub *sfis, 
+void IntensityProcMPEG2(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh, ScaleFactorInfoSub *sfis,
 						CriticalBandInfo *cbi, ScaleFactorJS *sfjs, int midSideFlag, int mixFlag, int mOut[2])
 {
 	int i, j, k, n, r, cb, w;
@@ -221,14 +221,14 @@ void IntensityProcMPEG2(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh
 	int cbStartL, cbStartS, cbEndL, cbEndS;
 
 	(void)mixFlag;
-	
+
 	isfTab = (int *)ISFMpeg2[sfjs->intensityScale][midSideFlag];
 	mOutL = mOutR = 0;
 
 	/* fill buffer with illegal intensity positions (depending on slen) */
 	for (k = r = 0; r < 4; r++) {
 		tmp = (1 << sfjs->slen[r]) - 1;
-		for (j = 0; j < sfjs->nr[r]; j++, k++) 
+		for (j = 0; j < sfjs->nr[r]; j++, k++)
 			il[k] = tmp;
 	}
 
@@ -259,7 +259,7 @@ void IntensityProcMPEG2(int x[MAX_NCHAN][MAX_NSAMP], int nSamps, FrameHeader *fh
 
 			/* early exit once we've used all the non-zero samples */
 			sampsLeft -= n;
-			if (sampsLeft == 0)		
+			if (sampsLeft == 0)
 				break;
 		}
 	} else {

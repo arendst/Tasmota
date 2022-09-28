@@ -1,7 +1,7 @@
 /*
   AudioFileSourceBuffer
   Double-buffered input file using system RAM
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ class AudioFileSourceBuffer : public AudioFileSource
     AudioFileSourceBuffer(AudioFileSource *in, uint32_t bufferBytes);
     AudioFileSourceBuffer(AudioFileSource *in, void *buffer, uint32_t bufferBytes); // Pre-allocated buffer by app
     virtual ~AudioFileSourceBuffer() override;
-    
+
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual bool seek(int32_t pos, int dir) override;
     virtual bool close() override;

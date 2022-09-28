@@ -28,7 +28,7 @@ Only ATXMega256D3 is supported right now!
 ## Notes
 The millisecond functionality is based on the TCE0 so don't use these pins as IO.
 
-The operating frequency of the uC is 32MHz. If else change the TCE0 registers appropriatly in function **__start_timer()** in **compatibility.c** file for your frequency. 
+The operating frequency of the uC is 32MHz. If else change the TCE0 registers appropriatly in function **__start_timer()** in **compatibility.c** file for your frequency.
 
 
 ## Usage
@@ -45,7 +45,7 @@ Declare the rf24 radio with **RF24 radio(XMEGA_PORTC_PIN3, XMEGA_SPI_PORT_C);**
 
 First parameter is the CE pin which can be any available pin on the uC.
 
-Second parameter is the CS which can be on port C (**XMEGA_SPI_PORT_C**) or on port D (**XMEGA_SPI_PORT_D**). 
+Second parameter is the CS which can be on port C (**XMEGA_SPI_PORT_C**) or on port D (**XMEGA_SPI_PORT_D**).
 
 Call the **__start_timer()** to start the millisecond timer.
 

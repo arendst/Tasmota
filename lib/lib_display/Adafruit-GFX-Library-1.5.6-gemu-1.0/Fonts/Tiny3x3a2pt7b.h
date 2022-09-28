@@ -7,7 +7,7 @@
 ** “CHECKER” (https://fontstruct.com/fontstructions/show/2391) by Wolf grant
 ** Grant, which is licensed under a Creative Commons Attribution Non-commercial
 ** Share Alike license (http://creativecommons.org/licenses/by-nc-sa/3.0/).
-* 
+*
 * Converted by eadmaster with fontconvert
 **/
 

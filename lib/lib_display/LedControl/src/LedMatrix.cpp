@@ -1,7 +1,7 @@
 /*
  *    LedMatrix.h - Extends the Library LedControl for multiple 8x8 LED dot matrix maxDevices, based on MAX7219/MAX7221
  *    Copyright (c) 2021 Michael Beuss
- * 
+ *
  *    Permission is hereby granted, free of charge, to any person
  *    obtaining a copy of this software and associated documentation
  *    files (the "Software"), to deal in the Software without
@@ -10,10 +10,10 @@
  *    copies of the Software, and to permit persons to whom the
  *    Software is furnished to do so, subject to the following
  *    conditions:
- * 
- *    This permission notice shall be included in all copies or 
+ *
+ *    This permission notice shall be included in all copies or
  *    substantial portions of the Software.
- * 
+ *
  *    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  *    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  *    OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -188,7 +188,7 @@ int LedMatrix::countChars( const char* utfText)
     for( int i = 0; (i<TEXT_BUFFER_SIZE && utfText[i]!=0); i++)
     {
         char c = utfText[i];
-        if( c < 0xC0) 
+        if( c < 0xC0)
         {
             // 1 byte UTF sequence
         }
@@ -348,17 +348,17 @@ void LedMatrix::refresh()
                 }
             }
         }
-        setRow_allDevices(deviceRow, deviceDataBuff); 
+        setRow_allDevices(deviceRow, deviceDataBuff);
     }
 }
 
 // private functions
 /**
- * @brief 
- * 
+ * @brief
+ *
  * @param fontChar defines the pixelrows of a character. const char fontChar[charHeight]
- * @param x 
- * @param y 
+ * @param x
+ * @param y
  */
 bool LedMatrix::drawCharAt( const char* fontChar, const int x, const int y)
 {

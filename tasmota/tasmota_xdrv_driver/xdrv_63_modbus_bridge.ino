@@ -35,10 +35,10 @@
  *
  *   -- Write multiple coils --
  *   ModbusSend {"deviceaddress": 1, "functioncode": 15, "startaddress": 1, "type":"bit", "count":4, "values":[1,0,1,1]}
- * 
- * Info for modbusBridgeTCPServer: 
+ *
+ * Info for modbusBridgeTCPServer:
  *    https://ipc2u.com/articles/knowledge-base/detailed-description-of-the-modbus-tcp-protocol-with-command-examples/
- * 
+ *
  * Info for modbus serial communications:
  *    https://ozeki.hu/p_5879-mobdbus-function-code-4-read-input-registers.html
  *    https://www.modbustools.com/modbus.html
@@ -274,7 +274,7 @@ void ModbusBridgeHandle(void)
           nrOfBytes += 1;
           client.write(header, 9);
         }
-        else if (buffer[1] <= 2) 
+        else if (buffer[1] <= 2)
         {
           header[4] = modbusBridge.byteCount >> 8;
           header[5] = modbusBridge.byteCount + 3;
@@ -284,7 +284,7 @@ void ModbusBridgeHandle(void)
           client.write(buffer + 3, modbusBridge.byteCount); // Don't send CRC
           nrOfBytes += modbusBridge.byteCount;
         }
-        else if (buffer[1] <= 4) 
+        else if (buffer[1] <= 4)
         {
           header[4] = modbusBridge.byteCount >> 8;
           header[5] = modbusBridge.byteCount + 3;
@@ -656,8 +656,8 @@ void ModbusTCPHandle(void)
         if (mbfunctioncode <= 2)
         {
           count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
-          modbusBridge.byteCount = ((count - 1) >> 3) + 1; 
-          modbusBridge.dataCount = ((count - 1) >> 4) + 1; 
+          modbusBridge.byteCount = ((count - 1) >> 3) + 1;
+          modbusBridge.dataCount = ((count - 1) >> 4) + 1;
         }
         else if (mbfunctioncode <= 4)
         {
@@ -674,10 +674,10 @@ void ModbusTCPHandle(void)
           modbusBridge.dataCount = 1;
 
           writeData = (uint16_t *)malloc((byteCount / 2)+1);
-          
+
           if ((mbfunctioncode == 15) || (mbfunctioncode == 16)) count = (uint16_t)((((uint16_t)modbusBridgeTCP.tcp_buf[10]) << 8) | ((uint16_t)modbusBridgeTCP.tcp_buf[11]));
           else count = 1;
-          
+
           for (uint16_t dataPointer = 0; dataPointer < byteCount; dataPointer++)
           {
             if (dataPointer % 2 == 0)
@@ -685,7 +685,7 @@ void ModbusTCPHandle(void)
               writeData[dataPointer / 2] = (uint16_t)(((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + dataPointer]) << 8);
             }
             else
-            { 
+            {
               writeData[dataPointer / 2] |= ((uint16_t)modbusBridgeTCP.tcp_buf[dataStartByte + dataPointer]);
             }
           }
@@ -889,7 +889,7 @@ void CmndModbusBridgeSend(void)
             writeData[jsonDataArrayPointer / 2] = (int8_t)jsonDataArray[jsonDataArrayPointer / 2].getInt(0) << 8;
           if (modbusBridge.dataCount != writeDataSize / 2) errorcode = ModbusBridgeError::wrongcount;
           break;
-        
+
         case ModbusBridgeType::mb_hex:
         case ModbusBridgeType::mb_raw:
         case ModbusBridgeType::mb_uint8:
@@ -899,31 +899,31 @@ void CmndModbusBridgeSend(void)
             writeData[jsonDataArrayPointer / 2] = (uint8_t)jsonDataArray[jsonDataArrayPointer].getUInt(0) << 8;
           if (modbusBridge.dataCount != writeDataSize / 2) errorcode = ModbusBridgeError::wrongcount;
           break;
-        
+
         case ModbusBridgeType::mb_int16:
-          writeData[jsonDataArrayPointer] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0)) 
+          writeData[jsonDataArrayPointer] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0))
             : (int16_t)jsonDataArray[jsonDataArrayPointer].getInt(0);
           break;
-        
+
         case ModbusBridgeType::mb_uint16:
-          writeData[jsonDataArrayPointer] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0)) 
+          writeData[jsonDataArrayPointer] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0))
             : (int16_t)jsonDataArray[jsonDataArrayPointer].getUInt(0);
           break;
-        
+
         case ModbusBridgeType::mb_int32:
-          writeData[(jsonDataArrayPointer * 2)] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0)) 
+          writeData[(jsonDataArrayPointer * 2)] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0))
             : (int16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16);
-          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16) 
+          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getInt(0) >> 16)
             : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getInt(0));
           break;
-        
+
         case ModbusBridgeType::mb_uint32:
-          writeData[(jsonDataArrayPointer * 2)] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0)) 
+          writeData[(jsonDataArrayPointer * 2)] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0))
             : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16);
-          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16) 
+          writeData[(jsonDataArrayPointer * 2) + 1] = bitMode ? swap_endian16(jsonDataArray[jsonDataArrayPointer].getUInt(0) >> 16)
             : (uint16_t)(jsonDataArray[jsonDataArrayPointer].getUInt(0));
           break;
-        
+
         case ModbusBridgeType::mb_float:
           // TODO
         default:
@@ -954,12 +954,12 @@ void CmndModbusBridgeSend(void)
 
   uint8_t error = tasmotaModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.dataCount, writeData);
   free(writeData);
- 
+
   if (error)
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver send error %u"), error);
     return;
-  } 
+  }
   ResponseCmndDone();
 }
 

@@ -1,37 +1,37 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
@@ -55,20 +55,20 @@
  *                UnpackScaleFactors(), and DecodeHuffman() (for this granule)
  *              index of current granule
  *
- * Outputs:     dequantized and reordered coefficients in hi->huffDecBuf 
+ * Outputs:     dequantized and reordered coefficients in hi->huffDecBuf
  *                (one granule-worth, all channels), format = Q26
  *              operates in-place on huffDecBuf but also needs di->workBuf
  *              updated hi->nonZeroBound index for both channels
  *
  * Return:      0 on success, -1 if null input pointers
  *
- * Notes:       In calling output Q(DQ_FRACBITS_OUT), we assume an implicit bias 
- *                of 2^15. Some (floating-point) reference implementations factor this 
- *                into the 2^(0.25 * gain) scaling explicitly. But to avoid precision 
- *                loss, we don't do that. Instead take it into account in the final 
+ * Notes:       In calling output Q(DQ_FRACBITS_OUT), we assume an implicit bias
+ *                of 2^15. Some (floating-point) reference implementations factor this
+ *                into the 2^(0.25 * gain) scaling explicitly. But to avoid precision
+ *                loss, we don't do that. Instead take it into account in the final
  *                round to PCM (>> by 15 less than we otherwise would have).
- *              Equivalently, we can think of the dequantized coefficients as 
- *                Q(DQ_FRACBITS_OUT - 15) with no implicit bias. 
+ *              Equivalently, we can think of the dequantized coefficients as
+ *                Q(DQ_FRACBITS_OUT - 15) with no implicit bias.
  **************************************************************************************/
 int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 {
@@ -81,7 +81,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 	CriticalBandInfo *cbi;
 
 	/* validate pointers */
-	if (!mp3DecInfo || !mp3DecInfo->FrameHeaderPS || !mp3DecInfo->SideInfoPS || !mp3DecInfo->ScaleFactorInfoPS || 
+	if (!mp3DecInfo || !mp3DecInfo->FrameHeaderPS || !mp3DecInfo->SideInfoPS || !mp3DecInfo->ScaleFactorInfoPS ||
 		!mp3DecInfo->HuffmanInfoPS || !mp3DecInfo->DequantInfoPS)
 		return -1;
 
@@ -97,7 +97,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 
 	/* dequantize all the samples in each channel */
 	for (ch = 0; ch < mp3DecInfo->nChans; ch++) {
-		hi->gb[ch] = DequantChannel(hi->huffDecBuf[ch], di->workBuf, &hi->nonZeroBound[ch], fh, 
+		hi->gb[ch] = DequantChannel(hi->huffDecBuf[ch], di->workBuf, &hi->nonZeroBound[ch], fh,
 			&si->sis[gr][ch], &sfi->sfis[gr][ch], &cbi[ch]);
 	}
 
@@ -123,7 +123,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 			/* intensity stereo enabled - run mid-side up to start of right zero region */
 			if (cbi[1].cbType == 0)
 				nSamps = fh->sfBand->l[cbi[1].cbEndL + 1];
-			else 
+			else
 				nSamps = 3 * fh->sfBand->s[cbi[1].cbEndSMax + 1];
 		} else {
 			/* intensity stereo disabled - run mid-side on whole spectrum */
@@ -136,7 +136,7 @@ int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 	if (fh->modeExt & 0x01) {
 		nSamps = hi->nonZeroBound[0];
 		if (fh->ver == MPEG1) {
-			IntensityProcMPEG1(hi->huffDecBuf, nSamps, fh, &sfi->sfis[gr][1], di->cbi, 
+			IntensityProcMPEG1(hi->huffDecBuf, nSamps, fh, &sfi->sfis[gr][1], di->cbi,
 				fh->modeExt >> 1, si->sis[gr][1].mixedBlock, mOut);
 		} else {
 			IntensityProcMPEG2(hi->huffDecBuf, nSamps, fh, &sfi->sfis[gr][1], di->cbi, &sfi->sfjs,

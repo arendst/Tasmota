@@ -10,7 +10,7 @@
  It will reconnect to the server if the connection is lost using a blocking
  reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
  achieve the same result without blocking the main loop.
- 
+
 */
 
 #include <SPI.h>

@@ -98,7 +98,7 @@ class DotStar4Elements
 public:
     static const size_t PixelSize = 4;
 
-    static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel) 
+    static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel)
     {
         return pPixels + indexPixel * PixelSize;
     }
@@ -269,7 +269,7 @@ public:
 
         return color;
     }
-    
+
     static ColorObject retrievePixelColor_P(PGM_VOID_P pPixels, uint16_t indexPixel)
     {
         ColorObject color;
@@ -282,7 +282,7 @@ public:
 
         return color;
     }
-    
+
 };
 
 class DotStarGrbFeature : public DotStar3ElementsNoSettings

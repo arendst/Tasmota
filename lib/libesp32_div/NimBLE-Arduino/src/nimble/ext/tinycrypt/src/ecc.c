@@ -612,7 +612,7 @@ void vli_mmod_fast_secp256r1(unsigned int *result, unsigned int*product)
 		}
 		while (carry < 0);
 	} else  {
-		while (carry || 
+		while (carry ||
 		       uECC_vli_cmp_unsafe(curve_secp256r1.p, result, NUM_ECC_WORDS) != 1) {
 			carry -= uECC_vli_sub(result, result, curve_secp256r1.p, NUM_ECC_WORDS);
 		}
@@ -729,7 +729,7 @@ static void XYcZ_addC(uECC_word_t * X1, uECC_word_t * Y1,
 void EccPoint_mult(uECC_word_t * result, const uECC_word_t * point,
 		   const uECC_word_t * scalar,
 		   const uECC_word_t * initial_Z,
-		   bitcount_t num_bits, uECC_Curve curve) 
+		   bitcount_t num_bits, uECC_Curve curve)
 {
 	/* R0 and R1 */
 	uECC_word_t Rx[2][NUM_ECC_WORDS];

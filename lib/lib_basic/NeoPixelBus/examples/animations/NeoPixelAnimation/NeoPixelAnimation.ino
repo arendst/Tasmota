@@ -3,11 +3,11 @@
 // the current color to the new color over a random small amount of time, using
 // a randomly selected animation curve.
 // It will repeat this process once all pixels have finished the animation
-// 
+//
 // This will demonstrate the use of the NeoPixelAnimator extended time feature.
 // This feature allows for different time scales to be used, allowing slow extended
 // animations to be created.
-// 
+//
 // This will demonstrate the use of the NeoEase animation ease methods; that provide
 // simulated acceleration to the animations.
 //
@@ -15,7 +15,7 @@
 // animation state and function definition inline.  This is not available on AVR
 // Arduinos; but the AVR compatible code is also included for comparison.
 //
-// The example includes some serial output that you can follow along with as it 
+// The example includes some serial output that you can follow along with as it
 // does the animation.
 //
 
@@ -26,10 +26,10 @@ const uint16_t PixelCount = 4; // make sure to set this to the number of pixels 
 const uint8_t PixelPin = 2;  // make sure to set this to the correct pin, ignored for Esp8266
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
-// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.  
+// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 // There are other Esp8266 alternative methods that provide more pin options, but also have
 // other side effects.
-// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods 
+// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
 // NeoPixel animation time management object
 NeoPixelAnimator animations(PixelCount, NEO_CENTISECONDS);
@@ -39,10 +39,10 @@ NeoPixelAnimator animations(PixelCount, NEO_CENTISECONDS);
 //
 // since the normal animation time range is only about 65 seconds, by passing timescale value
 // to the NeoPixelAnimator constructor we can increase the time range, but we also increase
-// the time between the animation updates.   
+// the time between the animation updates.
 // NEO_CENTISECONDS will update the animations every 100th of a second rather than the default
 // of a 1000th of a second, but the time range will now extend from about 65 seconds to about
-// 10.9 minutes.  But you must remember that the values passed to StartAnimations are now 
+// 10.9 minutes.  But you must remember that the values passed to StartAnimations are now
 // in centiseconds.
 //
 // Possible values from 1 to 32768, and there some helpful constants defined as...
@@ -61,7 +61,7 @@ struct MyAnimationState
 {
     RgbColor StartingColor;  // the color the animation starts at
     RgbColor EndingColor; // the color the animation will end at
-    AnimEaseFunction Easeing; // the acceleration curve it will use 
+    AnimEaseFunction Easeing; // the acceleration curve it will use
 };
 
 MyAnimationState animationState[PixelCount];

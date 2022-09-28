@@ -176,7 +176,7 @@ void Ads1115Detect(void)
   // Set default mode and range
   Ads1115.channels = ADS1115_SINGLE_CHANNELS;
   Ads1115.range = ADS1115_REG_CONFIG_PGA_6_144V;
-  
+
   for (uint32_t i = 0; i < sizeof(Ads1115.addresses); i++) {
     if (!Ads1115.found[i]) {
       Ads1115.address = Ads1115.addresses[i];

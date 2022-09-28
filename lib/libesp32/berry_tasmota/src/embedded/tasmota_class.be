@@ -33,7 +33,7 @@ class Tasmota
     try
       import debug
       self._debug_present = true
-    except .. 
+    except ..
     end
     # declare `UrlFetch` command
     self.add_cmd('UrlFetch', def (cmd, idx, payload, payload_json) self.urlfetch_cmd(cmd, idx, payload, payload_json) end)
@@ -158,7 +158,7 @@ class Tasmota
     var save_cmd_res = self.cmd_res     # save initial state (for reentrance)
     if self._rules || save_cmd_res != nil  # if there is a rule handler, or we record rule results
       import json
-      
+
       self.cmd_res = nil                  # disable sunsequent recording of results
       var ret = false
 
@@ -268,7 +268,7 @@ class Tasmota
       end
     end
   end
-  
+
   # crontab style recurring events
   def add_cron(pattern,f,id)
     self.check_not_method(f)
@@ -497,7 +497,7 @@ class Tasmota
       end
       # print("f_time",f_time,"f_time_bec",f_time_bec,"suffix_bec",suffix_bec)
     end
-    
+
     # recall the working directory
     if f_archive
       self.wd = f_prefix + "#"
@@ -668,13 +668,13 @@ class Tasmota
     self.cmd_res = true      # signal buffer capture
 
     self._cmd(command)
-    
+
     var ret = nil
     if self.cmd_res != true       # unchanged
       ret = self.cmd_res
     end
     self.cmd_res = save_cmd_res       # restore previous state
-    
+
     return ret
   end
 
@@ -716,14 +716,14 @@ class Tasmota
     var g = 255
     # we take brightness at 100%, brightness should be set separately
     hue = hue % 360   # normalize to 0..359
-  
+
     if sat > 0
       var i = hue / 60    # quadrant 0..5
       var f = hue % 60    # 0..59
       var p = 255 - sat
       var q = tasmota.scale_uint(f, 0, 60, 255, p)    # 0..59
       var t = tasmota.scale_uint(f, 0, 60, p, 255)
-  
+
       if   i == 0
         # r = 255
         g = t
@@ -750,7 +750,7 @@ class Tasmota
         b = q
       end
     end
-  
+
     return (r << 16) | (g << 8) | b
   end
 

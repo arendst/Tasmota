@@ -4,7 +4,7 @@
 
 This is the Adafruit SGP40 Gas / Air Quality  I2C sensor library
 
-Tested and works great with the Aadafruit SGP40 Breakout Board 
+Tested and works great with the Aadafruit SGP40 Breakout Board
   * http://www.adafruit.com/products/4829
 
 This chip uses I2C to communicate, 2 pins are required to interface
@@ -32,7 +32,7 @@ https://learn.adafruit.com/the-well-automated-arduino-library/doxygen
 https://learn.adafruit.com/the-well-automated-arduino-library/doxygen-tips
 
 ## Formatting and clang-format
-This library uses [`clang-format`](https://releases.llvm.org/download.html) to standardize the formatting of `.cpp` and `.h` files. 
+This library uses [`clang-format`](https://releases.llvm.org/download.html) to standardize the formatting of `.cpp` and `.h` files.
 Contributions should be formatted using `clang-format`:
 
 The `-i` flag will make the changes to the file.

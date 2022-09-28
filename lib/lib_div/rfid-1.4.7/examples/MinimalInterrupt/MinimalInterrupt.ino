@@ -2,15 +2,15 @@
  * ----------------------------------------------------------------------------
  * This is a MFRC522 library example; see https://github.com/miguelbalboa/rfid
  * for further details and other examples.
- * 
+ *
  * NOTE: The library file MFRC522.h has a lot of useful info. Please read it.
- * 
+ *
  * Released into the public domain.
  * ----------------------------------------------------------------------------
  * Minimal example how to use the interrupts to read the UID of a MIFARE Classic PICC
  * (= card/tag).
- * 
- * 
+ *
+ *
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
@@ -23,7 +23,7 @@
  * SPI MOSI    MOSI         11 / ICSP-4   51        D11        ICSP-4           16
  * SPI MISO    MISO         12 / ICSP-1   50        D12        ICSP-1           14
  * SPI SCK     SCK          13 / ICSP-3   52        D13        ICSP-3           15
- * 
+ *
  */
 
 #include <SPI.h>

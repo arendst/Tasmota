@@ -6,23 +6,23 @@
 # Comment that will be sent if an issue is judged to be closed.
 comment: >-
   This issue has been automatically closed because the PROBLEM REPORT TEMPLATE is missing or incomplete.
-  
+
   Filling the template is required so standard questions don't need to be asked again each time.
   Our ability to provide assistance is greatly hampered if few minutes are not taken to complete the issue template
   with the requested information. The details requested potentially affect which options to pursue. The small amount
   of time you will spend completing the template will also help the volunteers, providing assistance to you, to reduce
   the time required to help you.
-  
+
   Please, could you be so kind on completing the [PROBLEM REPORT TEMPLATE](https://github.com/arendst/Tasmota/issues/new/choose) in order to have more information so as to properly help you?
 
   Thank you for taking the time to report, hopefully it can be resolved soon.
-  
+
   [Docs](https://tasmota.github.io/docs/) for more information.
-  
+
   [Discussions](https://github.com/arendst/Tasmota/discussions) for Questions, Feature Requests and Projects.
-  
-  [Chat](https://discord.gg/Ks2Kzd4) for more users experience.  
- 
+
+  [Chat](https://discord.gg/Ks2Kzd4) for more users experience.
+
   Please check the [Code of Conduct](https://github.com/arendst/Tasmota/blob/development/CODE_OF_CONDUCT.md) and the [Contributing Guideline and Policy](https://github.com/arendst/Tasmota/blob/development/CONTRIBUTING.md)
 
 issueConfigs:
@@ -32,12 +32,12 @@ issueConfigs:
   - "PROBLEM DESCRIPTION"
   - "REQUESTED INFORMATION"
   - "TO REPRODUCE"
-  - "EXPECTED BEHAVIOUR" 
+  - "EXPECTED BEHAVIOUR"
 - content:
 # template 2: feature request
   - "Have you looked for this feature in other issues and in the docs"
   - "Describe the solution you'd like"
-  
+
 # Optional configuration:
 #
 # whether the keywords are case-insensitive

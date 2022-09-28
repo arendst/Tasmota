@@ -30,27 +30,27 @@ License along with NeoPixel.  If not, see
 // https://en.wikichip.org/wiki/seven-segment_display/representing_letters
 //
 const uint8_t SevenSegDigit::DecodeNumbers[] = {
-    // 0     1     2     3     4     5     6     7     8     9 
+    // 0     1     2     3     4     5     6     7     8     9
     0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F };
 
 const uint8_t SevenSegDigit::DecodeAlphaCaps[] = {
-    // A     B     C     D     E     F     G  
+    // A     B     C     D     E     F     G
     0x77, 0x7F, 0x39, 0x00, 0x79, 0x71, 0x3D,
-    // H     I     J     K     L     M     N    
+    // H     I     J     K     L     M     N
     0x76, 0x30, 0x1E, 0x00, 0x38, 0x00, 0x00,
-    // O     P     Q     R     S 
+    // O     P     Q     R     S
     0x3F, 0x73, 0x00, 0x00, 0x6D,
-    // T     U     V     W     X     Y     Z  
+    // T     U     V     W     X     Y     Z
     0x00, 0x3E, 0x00, 0x00, 0x76, 0x00, 0x00 };
 
 const uint8_t SevenSegDigit::DecodeAlpha[] = {
-    // a     b     c     d     e     f     g  
+    // a     b     c     d     e     f     g
     0x00, 0x7C, 0x58, 0x5E, 0x00, 0x00, 0x00,
-    // h     i     j     k     l     m     n 
+    // h     i     j     k     l     m     n
     0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-    // o     p     q     r     s     
+    // o     p     q     r     s
     0x5C, 0x00, 0x67, 0x50, 0x00,
-    // t     u     v     w     x     y     z 
+    // t     u     v     w     x     y     z
     0x78, 0x1C, 0x00, 0x00, 0x00, 0x6E, 0x00 };
 
 const uint8_t SevenSegDigit::DecodeSpecial[] = {

@@ -14,7 +14,7 @@ LinkedList<int> myList = LinkedList<int>();
 
 void setup()
 {
-	
+
 	Serial.begin(9600);
 	Serial.println("Hello!");
 

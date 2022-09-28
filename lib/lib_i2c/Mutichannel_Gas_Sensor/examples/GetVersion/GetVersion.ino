@@ -8,10 +8,10 @@ void setup()
 {
     Serial.begin(115200);
     gas.begin(SENSOR_ADDR);
-    
+
     unsigned char version = gas.getVersion();
     Serial.print("Version = ");
-    Serial.println(version);    
+    Serial.println(version);
 }
 
 void loop()

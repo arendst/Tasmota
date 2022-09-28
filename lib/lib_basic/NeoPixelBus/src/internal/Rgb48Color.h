@@ -33,7 +33,7 @@ License along with NeoPixel.  If not, see
 
 // ------------------------------------------------------------------------
 // Rgb48Color represents a color object that is represented by Red, Green, Blue
-// component values.  It contains helpful color routines to manipulate the 
+// component values.  It contains helpful color routines to manipulate the
 // color.
 // ------------------------------------------------------------------------
 struct Rgb48Color : RgbColorBase
@@ -61,7 +61,7 @@ struct Rgb48Color : RgbColorBase
     // ------------------------------------------------------------------------
     // Construct a Rgb48Color using RgbColor
     // ------------------------------------------------------------------------
-    Rgb48Color(const RgbColor& color) 
+    Rgb48Color(const RgbColor& color)
     {
         R = (color.R == 0) ? 0 : (color.R << 8 | 0xff);
         G = (color.G == 0) ? 0 : (color.G << 8 | 0xff);
@@ -113,7 +113,7 @@ struct Rgb48Color : RgbColorBase
     // ------------------------------------------------------------------------
     // Dim will return a new color that is blended to black with the given ratio
     // ratio - (0-65535) where 65535 will return the original color and 0 will return black
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     Rgb48Color Dim(uint16_t ratio) const;
@@ -121,7 +121,7 @@ struct Rgb48Color : RgbColorBase
     // ------------------------------------------------------------------------
     // Brighten will return a new color that is blended to white with the given ratio
     // ratio - (0-65535) where 65535 will return the original color and 0 will return white
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     Rgb48Color Brighten(uint16_t ratio) const;
@@ -148,7 +148,7 @@ struct Rgb48Color : RgbColorBase
     //     and a value between will blend the color weighted linearly between them
     // ------------------------------------------------------------------------
     static Rgb48Color LinearBlend(const Rgb48Color& left, const Rgb48Color& right, float progress);
-    
+
     // ------------------------------------------------------------------------
     // BilinearBlend between four colors by the amount defined by 2d variable
     // c00 - upper left quadrant color
@@ -158,11 +158,11 @@ struct Rgb48Color : RgbColorBase
     // x - unit value (0.0 - 1.0) that defines the blend progress in horizontal space
     // y - unit value (0.0 - 1.0) that defines the blend progress in vertical space
     // ------------------------------------------------------------------------
-    static Rgb48Color BilinearBlend(const Rgb48Color& c00, 
-        const Rgb48Color& c01, 
-        const Rgb48Color& c10, 
-        const Rgb48Color& c11, 
-        float x, 
+    static Rgb48Color BilinearBlend(const Rgb48Color& c00,
+        const Rgb48Color& c01,
+        const Rgb48Color& c10,
+        const Rgb48Color& c11,
+        float x,
         float y);
 
     uint32_t CalcTotalTenthMilliAmpere(const SettingsObject& settings)
@@ -177,7 +177,7 @@ struct Rgb48Color : RgbColorBase
     }
 
     // ------------------------------------------------------------------------
-    // Red, Green, Blue color members (0-65535) where 
+    // Red, Green, Blue color members (0-65535) where
     // (0,0,0) is black and (65535,65535,65535) is white
     // ------------------------------------------------------------------------
     uint16_t R;
@@ -193,7 +193,7 @@ private:
     }
 
     inline static uint16_t _elementBrighten(uint16_t value, uint16_t ratio)
-    { 
+    {
         uint32_t element = ((static_cast<uint32_t>(value) + 1) << 8) / (static_cast<uint32_t>(ratio) + 1);
 
         if (element > Max)

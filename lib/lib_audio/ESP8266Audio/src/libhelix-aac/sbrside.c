@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: sbrside.c,v 1.2 2005/05/24 16:01:55 albertofloyd Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: sbrside.c,v 1.2 2005/05/24 16:01:55 albertofloyd Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -145,7 +145,7 @@ static const unsigned char cLog2[9] = {0, 0, 1, 2, 2, 3, 3, 3, 3};
  *
  * Inputs:      BitStreamInfo struct pointing to start of SBR grid
  *              initialized SBRHeader struct for this SCE/CPE block
- * 
+ *
  * Outputs:     initialized SBRGrid struct for this channel
  *
  * Return:      none
@@ -157,7 +157,7 @@ static void UnpackSBRGrid(BitStreamInfo *bsi, SBRHeader *sbrHdr, SBRGrid *sbrGri
 	unsigned char relBorder0[3], relBorder1[3], relBorder[3];
 	unsigned char numRelBorder0, numRelBorder1, numRelBorder, numRelLead=0, numRelTrail;
 	unsigned char absBordLead=0, absBordTrail=0, absBorder;
-	
+
 	sbrGrid->ampResFrame = sbrHdr->ampRes;
 	sbrGrid->frameClass = GetBits(bsi, 2);
 	switch (sbrGrid->frameClass) {
@@ -319,12 +319,12 @@ static void UnpackSBRGrid(BitStreamInfo *bsi, SBRHeader *sbrHdr, SBRGrid *sbrGri
  * Inputs:      BitStreamInfo struct pointing to start of dt/df flags
  *              number of envelopes
  *              number of noise floors
- * 
+ *
  * Outputs:     delta flags for envelope and noise floors
  *
  * Return:      none
  **************************************************************************************/
-static void UnpackDeltaTimeFreq(BitStreamInfo *bsi, int numEnv, unsigned char *deltaFlagEnv, 
+static void UnpackDeltaTimeFreq(BitStreamInfo *bsi, int numEnv, unsigned char *deltaFlagEnv,
 								int numNoiseFloors, unsigned char *deltaFlagNoise)
 {
 	int env, noiseFloor;
@@ -343,14 +343,14 @@ static void UnpackDeltaTimeFreq(BitStreamInfo *bsi, int numEnv, unsigned char *d
  *
  * Inputs:      BitStreamInfo struct pointing to start of invf flags
  *              number of noise floor bands
- * 
+ *
  * Outputs:     invf flags for noise floor bands
  *
  * Return:      none
  **************************************************************************************/
 static void UnpackInverseFilterMode(BitStreamInfo *bsi, int numNoiseFloorBands, unsigned char *mode)
 {
-	int n;	
+	int n;
 
 	for (n = 0; n < numNoiseFloorBands; n++)
 		mode[n] = GetBits(bsi, 2);
@@ -363,7 +363,7 @@ static void UnpackInverseFilterMode(BitStreamInfo *bsi, int numNoiseFloorBands, 
  *
  * Inputs:      BitStreamInfo struct pointing to start of sinusoid flags
  *              number of high resolution SBR subbands (nHigh)
- * 
+ *
  * Outputs:     sinusoid flags for each SBR subband, zero-filled above nHigh
  *
  * Return:      none
@@ -389,7 +389,7 @@ static void UnpackSinusoids(BitStreamInfo *bsi, int nHigh, int addHarmonicFlag, 
  * Description: copy grid parameters from left to right for channel coupling
  *
  * Inputs:      initialized SBRGrid struct for left channel
- * 
+ *
  * Outputs:     initialized SBRGrid struct for right channel
  *
  * Return:      none
@@ -423,7 +423,7 @@ static void CopyCouplingGrid(SBRGrid *sbrGridLeft, SBRGrid *sbrGridRight)
  *
  * Inputs:      invf flags for left channel
  *              number of noise floor bands
- * 
+ *
  * Outputs:     invf flags for right channel
  *
  * Return:      none
@@ -439,14 +439,14 @@ static void CopyCouplingInverseFilterMode(int numNoiseFloorBands, unsigned char 
 /**************************************************************************************
  * Function:    UnpackSBRSingleChannel
  *
- * Description: unpack sideband info (grid, delta flags, invf flags, envelope and 
+ * Description: unpack sideband info (grid, delta flags, invf flags, envelope and
  *                noise floor configuration, sinusoids) for a single channel
  *
  * Inputs:      BitStreamInfo struct pointing to start of sideband info
  *              initialized PSInfoSBR struct (after parsing SBR header and building
  *                frequency tables)
  *              base output channel (range = [0, nChans-1])
- * 
+ *
  * Outputs:     updated PSInfoSBR struct (SBRGrid and SBRChan)
  *
  * Return:      none
@@ -472,7 +472,7 @@ void UnpackSBRSingleChannel(BitStreamInfo *bsi, PSInfoSBR *psi, int chBase)
 
 	sbrChanL->addHarmonicFlag[1] = GetBits(bsi, 1);
 	UnpackSinusoids(bsi, sbrFreq->nHigh, sbrChanL->addHarmonicFlag[1], sbrChanL->addHarmonic[1]);
-	
+
 	psi->extendedDataPresent = GetBits(bsi, 1);
 	if (psi->extendedDataPresent) {
 		psi->extendedDataSize = GetBits(bsi, 4);
@@ -492,14 +492,14 @@ void UnpackSBRSingleChannel(BitStreamInfo *bsi, PSInfoSBR *psi, int chBase)
 /**************************************************************************************
  * Function:    UnpackSBRChannelPair
  *
- * Description: unpack sideband info (grid, delta flags, invf flags, envelope and 
+ * Description: unpack sideband info (grid, delta flags, invf flags, envelope and
  *                noise floor configuration, sinusoids) for a channel pair
  *
  * Inputs:      BitStreamInfo struct pointing to start of sideband info
  *              initialized PSInfoSBR struct (after parsing SBR header and building
  *                frequency tables)
  *              base output channel (range = [0, nChans-1])
- * 
+ *
  * Outputs:     updated PSInfoSBR struct (SBRGrid and SBRChan for both channels)
  *
  * Return:      none
@@ -528,7 +528,7 @@ void UnpackSBRChannelPair(BitStreamInfo *bsi, PSInfoSBR *psi, int chBase)
 
 		UnpackInverseFilterMode(bsi, sbrFreq->numNoiseFloorBands, sbrChanL->invfMode[1]);
 		CopyCouplingInverseFilterMode(sbrFreq->numNoiseFloorBands, sbrChanL->invfMode[1], sbrChanR->invfMode[1]);
-		
+
 		DecodeSBREnvelope(bsi, psi, sbrGridL, sbrFreq, sbrChanL, 0);
 		DecodeSBRNoise(bsi, psi, sbrGridL, sbrFreq, sbrChanL, 0);
 		DecodeSBREnvelope(bsi, psi, sbrGridR, sbrFreq, sbrChanR, 1);

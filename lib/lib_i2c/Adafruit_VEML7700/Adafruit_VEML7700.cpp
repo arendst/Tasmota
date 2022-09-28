@@ -58,10 +58,10 @@ boolean Adafruit_VEML7700::begin(TwoWire *theWire) {
   Interrupt_Status = new Adafruit_I2CRegister(i2c_dev, VEML7700_INTERRUPTSTATUS, 2, LSBFIRST);
 
   ALS_Shutdown = new Adafruit_I2CRegisterBits(ALS_Config, 1, 0);  // # bits, bit_shift
-  ALS_Interrupt_Enable = new Adafruit_I2CRegisterBits(ALS_Config, 1, 1); 
-  ALS_Persistence = new Adafruit_I2CRegisterBits(ALS_Config, 2, 4); 
-  ALS_Integration_Time = new Adafruit_I2CRegisterBits(ALS_Config, 4, 6); 
-  ALS_Gain = new Adafruit_I2CRegisterBits(ALS_Config, 2, 11); 
+  ALS_Interrupt_Enable = new Adafruit_I2CRegisterBits(ALS_Config, 1, 1);
+  ALS_Persistence = new Adafruit_I2CRegisterBits(ALS_Config, 2, 4);
+  ALS_Integration_Time = new Adafruit_I2CRegisterBits(ALS_Config, 4, 6);
+  ALS_Gain = new Adafruit_I2CRegisterBits(ALS_Config, 2, 11);
   PowerSave_Enable = new Adafruit_I2CRegisterBits(Power_Saving, 1, 0);
   PowerSave_Mode = new Adafruit_I2CRegisterBits(Power_Saving, 2, 1);
 
@@ -79,14 +79,14 @@ boolean Adafruit_VEML7700::begin(TwoWire *theWire) {
 float Adafruit_VEML7700::normalize_resolution(float value) {
   // adjust for gain (1x is normalized)
   switch (getGain()) {
-  case VEML7700_GAIN_2:  
+  case VEML7700_GAIN_2:
     value /= 2.0;  break;
-  case VEML7700_GAIN_1_4: 
+  case VEML7700_GAIN_1_4:
     value *= 4; break;
   case VEML7700_GAIN_1_8:
     value *= 8; break;
   }
-  
+
   // adjust for integrationtime (100ms is normalized)
   switch (getIntegrationTime()) {
   case VEML7700_IT_25MS:
@@ -118,14 +118,14 @@ float Adafruit_VEML7700::readLux() {
  */
 float Adafruit_VEML7700::readLuxNormalized() {
   float lux = readLux();
-  
+
   // user-provided correction for non-linearities at high lux/white values:
   // https://forums.adafruit.com/viewtopic.php?f=19&t=152997&p=758582#p759346
   if ((getGain() == VEML7700_GAIN_1_8) && (getIntegrationTime() == VEML7700_IT_25MS)){
     lux = 6.0135e-13f * pow(lux,4) -  9.3924e-9f * pow(lux,3) + 8.1488e-5f * pow(lux,2) + 1.0023f * lux;
   }
- 
-  return lux;  
+
+  return lux;
 }
 
 /*!
@@ -198,7 +198,7 @@ bool Adafruit_VEML7700::interruptEnabled(void) {
 /*!
  *    @brief Set the ALS IRQ persistance setting
  *    @param pers Persistance constant, can be VEML7700_PERS_1, VEML7700_PERS_2,
- *    VEML7700_PERS_4 or VEML7700_PERS_8   
+ *    VEML7700_PERS_4 or VEML7700_PERS_8
  */
 void Adafruit_VEML7700::setPersistence(uint8_t pers) {
   ALS_Persistence->write(pers);
@@ -207,7 +207,7 @@ void Adafruit_VEML7700::setPersistence(uint8_t pers) {
 /*!
  *    @brief Get the ALS IRQ persistance setting
  *    @returns Persistance constant, can be VEML7700_PERS_1, VEML7700_PERS_2,
- *    VEML7700_PERS_4 or VEML7700_PERS_8   
+ *    VEML7700_PERS_4 or VEML7700_PERS_8
  */
 uint8_t Adafruit_VEML7700::getPersistence(void) {
   return ALS_Persistence->read();
@@ -215,8 +215,8 @@ uint8_t Adafruit_VEML7700::getPersistence(void) {
 
 /*!
  *    @brief Set ALS integration time
- *    @param it Can be VEML7700_IT_100MS, VEML7700_IT_200MS, VEML7700_IT_400MS, 
- *    VEML7700_IT_800MS, VEML7700_IT_50MS or VEML7700_IT_25MS    
+ *    @param it Can be VEML7700_IT_100MS, VEML7700_IT_200MS, VEML7700_IT_400MS,
+ *    VEML7700_IT_800MS, VEML7700_IT_50MS or VEML7700_IT_25MS
  */
 void Adafruit_VEML7700::setIntegrationTime(uint8_t it) {
   ALS_Integration_Time->write(it);
@@ -224,8 +224,8 @@ void Adafruit_VEML7700::setIntegrationTime(uint8_t it) {
 
 /*!
  *    @brief Get ALS integration time
- *    @returns IT index, can be VEML7700_IT_100MS, VEML7700_IT_200MS, VEML7700_IT_400MS, 
- *    VEML7700_IT_800MS, VEML7700_IT_50MS or VEML7700_IT_25MS    
+ *    @returns IT index, can be VEML7700_IT_100MS, VEML7700_IT_200MS, VEML7700_IT_400MS,
+ *    VEML7700_IT_800MS, VEML7700_IT_50MS or VEML7700_IT_25MS
  */
 uint8_t Adafruit_VEML7700::getIntegrationTime(void) {
   return ALS_Integration_Time->read();

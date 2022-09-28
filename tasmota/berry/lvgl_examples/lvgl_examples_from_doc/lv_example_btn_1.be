@@ -7,7 +7,7 @@ def event_handler(obj, evt)
         print("Value changed seen")
     end
 end
-        
+
 # create a simple button
 btn1 = lv.btn(lv.scr_act())
 

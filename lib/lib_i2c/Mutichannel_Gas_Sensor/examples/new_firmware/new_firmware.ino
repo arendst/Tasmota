@@ -16,7 +16,7 @@
 #define DEFAULT_I2C_ADDR 0x04
 #define DBG                     1
 // EEPROM ADDRESS
-#define ADDR_IS_SET             0           // if this is the first time to run, if 1126, set 
+#define ADDR_IS_SET             0           // if this is the first time to run, if 1126, set
 #define ADDR_FACTORY_ADC_NH3    2
 #define ADDR_FACTORY_ADC_CO     4
 #define ADDR_FACTORY_ADC_NO2    6
@@ -113,11 +113,11 @@ void updateValue()
     static unsigned long timer_s = millis();
     if(millis()-timer_s < 1000)return;
     timer_s = millis();
-    
+
     ADC_RES0 = getAnalog(pin_NH3);
     ADC_RES1 = getAnalog(pin_CO);
     ADC_RES2 = getAnalog(pin_NO2);
-    
+
     raw_adc[0] = ADC_RES0>>8;
     raw_adc[1] = ADC_RES0;
     raw_adc[2] = ADC_RES1>>8;
@@ -195,14 +195,14 @@ void receiveCallback(int dtaCount)
     {
         recvCmd = Wire.read();
         unsigned int dta[3];
-        
+
         for(int i=0; i<3; i++)
         {
             dta[i] = Wire.read();
             dta[i] <<= 8;
             dta[i] += Wire.read();
         }
-       
+
         if(recvCmd == CMD_SET_R0_ADC)
         {
             eeprom_write(ADDR_USER_ADC_HN3, dta[0]);
@@ -221,50 +221,50 @@ void requestCallback()
         Wire.write(&raw_adc[0], 2);             // HIGH FIRST
 
         break;
-        
+
         case CMD_ADC_RES1:                      // CO
         Wire.write(&raw_adc[2], 2);             // HIGH FIRST
         break;
-        
+
         case CMD_ADC_RES2:                      // NO2
         Wire.write(&raw_adc[4], 2);             // HIGH FIRST
         break;
-        
+
         case CMD_ADC_RESALL:
         Wire.write(raw_adc, 6);
         break;
-        
+
         case CMD_READ_EEPROM:
         rcDta[0] = EEPROM.read(recvDta);
         rcDta[1] = EEPROM.read(recvDta+1);
         Wire.write(rcDta, 2);
         break;
-        
+
         case CMD_GET_R0_ADC:
-        
+
         rcDta[0] = EEPROM.read(ADDR_USER_ADC_HN3);
         rcDta[1] = EEPROM.read(ADDR_USER_ADC_HN3+1);
         rcDta[2] = EEPROM.read(ADDR_USER_ADC_CO);
         rcDta[3] = EEPROM.read(ADDR_USER_ADC_CO+1);
         rcDta[4] = EEPROM.read(ADDR_USER_ADC_NO2);
         rcDta[5] = EEPROM.read(ADDR_USER_ADC_NO2+1);
-        
+
         Wire.write(rcDta, 6);
-        
+
         break;
-        
+
         case CMD_GET_R0_ADC_FACTORY:
-        
+
         rcDta[0] = EEPROM.read(ADDR_FACTORY_ADC_NH3);
         rcDta[1] = EEPROM.read(ADDR_FACTORY_ADC_NH3+1);
         rcDta[2] = EEPROM.read(ADDR_FACTORY_ADC_CO);
         rcDta[3] = EEPROM.read(ADDR_FACTORY_ADC_CO+1);
         rcDta[4] = EEPROM.read(ADDR_FACTORY_ADC_NO2);
         rcDta[5] = EEPROM.read(ADDR_FACTORY_ADC_NO2+1);
-        
+
         Wire.write(rcDta, 6);
         break;
-        
+
         default:;
     }
 }

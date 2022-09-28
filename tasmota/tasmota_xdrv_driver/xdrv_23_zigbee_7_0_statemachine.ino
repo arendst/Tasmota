@@ -225,11 +225,11 @@ ZBR(ZBS_W_ALL_CHANN, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, CONF_CHANLIST,0x00, 0x00
                 /*0x00, 0x08, 0x00, 0x00*/ )				// 21098400000400F8FF7F
 
 // Configure BDB Channels
-ZBR(ZBS_W_BDB_CHANN, Z_SREQ | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, 0x01 /*primary*/, 
+ZBR(ZBS_W_BDB_CHANN, Z_SREQ | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, 0x01 /*primary*/,
                 Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
                 /*0x00, 0x08, 0x00, 0x00*/ )				// 2F0801xxxxxxxx
 // Configure BDB Channels secondary channel to zeroes
-ZBM(ZBS_W_BDB_CHANN2, Z_SREQ | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, 0x00 /*secondary*/, 
+ZBM(ZBS_W_BDB_CHANN2, Z_SREQ | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, 0x00 /*secondary*/,
                 0x00, 0x08, 0x00, 0x00 )				// 2F080000000000
 ZBM(ZBR_W_BDB_CHANN_OK, Z_SRSP | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, Z_SUCCESS )				// 6F0800
 
@@ -327,7 +327,7 @@ ZBM(ZBS_AF_REGISTER0B, Z_SREQ | Z_AF, AF_REGISTER, 0x0B /* endpoint */, Z_B0(Z_P
                         0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
                         0x00 /* AppNumInClusters */, 0x00 /* AppNumOutClusters */)
 // Green Power endpoint 242 0xF2
-ZBM(ZBS_AF_REGISTERF2, Z_SREQ | Z_AF, AF_REGISTER, 0xF2 /* endpoint */, Z_B0(Z_PROF_GP), Z_B1(Z_PROF_GP),    // 
+ZBM(ZBS_AF_REGISTERF2, Z_SREQ | Z_AF, AF_REGISTER, 0xF2 /* endpoint */, Z_B0(Z_PROF_GP), Z_B1(Z_PROF_GP),    //
                         0x05, 0x61 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
                         0x00 /* AppNumInClusters */,
                         0x01 /* AppNumOutClusters */,
@@ -395,7 +395,7 @@ void ZNP_UpdateConfig(uint8_t zb_channel, uint16_t zb_pan_id, uint64_t zb_ext_pa
                   Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
                   /*0x00, 0x08, 0x00, 0x00*/ )				// 210984000004xxxxxxxx
   // Write BDB Channel ID - ZStack3 specific
-  ZBW(ZBS_W_BDB_CHANN, Z_SREQ | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, 0x01 /*primary*/, 
+  ZBW(ZBS_W_BDB_CHANN, Z_SREQ | Z_APP_CNF, Z_APP_CNF_BDB_SET_CHANNEL, 0x01 /*primary*/,
                   Z_B0(zb_channel_mask), Z_B1(zb_channel_mask), Z_B2(zb_channel_mask), Z_B3(zb_channel_mask),
                   /*0x00, 0x08, 0x00, 0x00*/ )				// 2F0801xxxxxxxx
   // Write precfgkey

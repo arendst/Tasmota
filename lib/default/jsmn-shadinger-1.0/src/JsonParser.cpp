@@ -39,7 +39,7 @@ static int32_t asc2byte(char chr) {
  *
  * To remove code, exponents are not parsed
  * (commented out below, just in case we need them after all)
- * 
+ *
  * Moved to double to be able to parse 32 bits int as well without loss in accuracy
 \*********************************************************************************************/
 // Inspired from https://searchcode.com/codesearch/view/22115068/

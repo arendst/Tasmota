@@ -1,7 +1,7 @@
 /********************************************************************
  * Tasmota I2S audio classes
- * 
- * 
+ *
+ *
  *******************************************************************/
 #include "be_constobj.h"
 
@@ -150,7 +150,7 @@ int32_t be_audio_output_consume_silence(struct bvm *vm) {
 #include "AudioOutputI2S.h"
 
 extern "C" {
-  
+
 #include "be_fixed_be_class_AudioOutput.h"
 #include "be_fixed_be_class_AudioOutputI2S.h"
 #include "be_fixed_be_class_AudioGenerator.h"

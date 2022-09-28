@@ -1,7 +1,7 @@
 /*
   AudioGeneratorFLAC
   Audio output generator that plays FLAC audio files
-    
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@ bool AudioGeneratorFLAC::begin(AudioFileSource *source, AudioOutput *output)
 
   flac = FLAC__stream_decoder_new();
   if (!flac) return false;
-  
+
   (void)FLAC__stream_decoder_set_md5_checking(flac, false);
 
   FLAC__StreamDecoderInitStatus ret = FLAC__stream_decoder_init_stream(flac, _read_cb, _seek_cb, _tell_cb, _length_cb, _eof_cb, _write_cb, _metadata_cb, _error_cb, reinterpret_cast<void*>(this) );
@@ -96,19 +96,19 @@ bool AudioGeneratorFLAC::loop()
 
     // Check for some weird case where above didn't give any data
     if (buffPtr == buffLen) {
-      goto done; // At some point the flac better error and we'll return 
+      goto done; // At some point the flac better error and we'll return
     }
     if (bitsPerSample <= 16) {
-      lastSample[AudioOutput::LEFTCHANNEL] = buff[0][buffPtr] & 0xffff; 
-      if (channels==2) lastSample[AudioOutput::RIGHTCHANNEL] = buff[1][buffPtr] & 0xffff; 
+      lastSample[AudioOutput::LEFTCHANNEL] = buff[0][buffPtr] & 0xffff;
+      if (channels==2) lastSample[AudioOutput::RIGHTCHANNEL] = buff[1][buffPtr] & 0xffff;
       else lastSample[AudioOutput::RIGHTCHANNEL] = lastSample[AudioOutput::LEFTCHANNEL];
     } else if (bitsPerSample <= 24) {
-      lastSample[AudioOutput::LEFTCHANNEL] = (buff[0][buffPtr]>>8) & 0xffff; 
-      if (channels==2) lastSample[AudioOutput::RIGHTCHANNEL] = (buff[1][buffPtr]>>8) & 0xffff; 
+      lastSample[AudioOutput::LEFTCHANNEL] = (buff[0][buffPtr]>>8) & 0xffff;
+      if (channels==2) lastSample[AudioOutput::RIGHTCHANNEL] = (buff[1][buffPtr]>>8) & 0xffff;
       else lastSample[AudioOutput::RIGHTCHANNEL] = lastSample[AudioOutput::LEFTCHANNEL];
     } else {
-      lastSample[AudioOutput::LEFTCHANNEL] = (buff[0][buffPtr]>>16) & 0xffff; 
-      if (channels==2) lastSample[AudioOutput::RIGHTCHANNEL] = (buff[1][buffPtr]>>16) & 0xffff; 
+      lastSample[AudioOutput::LEFTCHANNEL] = (buff[0][buffPtr]>>16) & 0xffff;
+      if (channels==2) lastSample[AudioOutput::RIGHTCHANNEL] = (buff[1][buffPtr]>>16) & 0xffff;
       else lastSample[AudioOutput::RIGHTCHANNEL] = lastSample[AudioOutput::LEFTCHANNEL];
     }
     buffPtr++;

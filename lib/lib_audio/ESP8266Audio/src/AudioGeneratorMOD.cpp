@@ -1,7 +1,7 @@
 /*
   AudioGeneratorMOD
   Audio output generator that plays Amiga MOD tracker files
-    
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 #include "AudioGeneratorMOD.h"
 
-/* 
+/*
    Ported/hacked out from STELLARPLAYER by Ronen K.
    http://mobile4dev.blogspot.com/2012/11/stellaris-launchpad-mod-player.html
    A version exists in GitHub at https://github.com/steveway/stellarplayer
@@ -107,12 +107,12 @@ done:
 bool AudioGeneratorMOD::begin(AudioFileSource *source, AudioOutput *out)
 {
   if (running) stop();
-  
+
   if (!source) return false;
   file = source;
   if (!out) return false;
   output = out;
-  
+
   if (!file->isOpen()) return false; // Can't read the file!
 
   // Set the output values properly

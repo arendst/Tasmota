@@ -37,9 +37,9 @@ xx 2020, v1.4.8
 - Added soft power control functions @Bill2462
 - Fixed typo in example ReadAndWrite.ino @Drachenfrucht1
 - Fixed grammar @KiddieD
-- Fixed infinite loop in example AccessControl.ino @mads256c 
+- Fixed infinite loop in example AccessControl.ino @mads256c
 - Fixed 0-index key ID equals to 0 fails in AccessControl.ino @thoaitrieu
-- Changed type boolean to bool for a more common use @Rotzbua 
+- Changed type boolean to bool for a more common use @Rotzbua
 - Fixed wrong var names in PICC_Select MFRC522.cpp @tuyethoa08041997
 - Fixed hang PCD_Init() on non-arduino boards @heziegl
 - Fixed possible infinite loop PCD_Reset() @psgreco
@@ -55,7 +55,7 @@ xx 2020, v1.4.8
 - Added deprecate and compiler warnings @Rotzbua
 
 8 Apr 2017, v1.3.5
-- Updated "AccessControl.ino", bugs fixed and alternate wipe button polling method without using other library @beyondszine reviewed by @omersiar 
+- Updated "AccessControl.ino", bugs fixed and alternate wipe button polling method without using other library @beyondszine reviewed by @omersiar
 - Updated README notice about port for esp8266 @mmmmar
 
 7 Apr 2017, v1.3.4
@@ -123,7 +123,7 @@ xx 2020, v1.4.8
 03 Jan 2016, v1.1.4
 - Added Authentication with Ntag 213,215,216 returns the pACK MFRC522::PCD_NTAG216_AUTH @Gargantuanman
 - Starting to use versions http://semver.org/
-- Continuous Integration @ivankravets 
+- Continuous Integration @ivankravets
 - functions return MFRC522::StatusCode and MFRC522::PICC_Type instead of generic byte @rotzbua
 - removed int-values of MFRC522::StatusCode and MFRC522::PICC_Type @rotzbua
 

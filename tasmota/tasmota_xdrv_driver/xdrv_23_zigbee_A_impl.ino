@@ -1353,7 +1353,7 @@ void CmndZbSave(void) {
 void CmndZbLoad(void) {
   // can be called before Zigbee is initialized
   TrimSpace(XdrvMailbox.data);
-  
+
   bool ret = true;;
   if (strcmp(XdrvMailbox.data, "*") == 0) {
     ZbAutoload();
@@ -1374,7 +1374,7 @@ void CmndZbLoad(void) {
 void CmndZbUnload(void) {
   // can be called before Zigbee is initialized
   TrimSpace(XdrvMailbox.data);
-  
+
   bool ret = ZbUnload(XdrvMailbox.data);
   if (ret) {
     ResponseCmndDone();
@@ -1430,9 +1430,9 @@ void CmndZbenroll(void) {
     int enrollEndpoint = atoi(ArgV(argument, 2));
 
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
-    
+
     Z_SendCIEZoneEnrollResponse(device.shortaddr, 0, 500, enrollEndpoint, 1);
-    
+
     ResponseCmndDone();
   } else {
     ResponseCmndError();
@@ -1448,9 +1448,9 @@ void CmndZbcie(void) {
     int enrollEndpoint = atoi(ArgV(argument, 2));
 
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
-    
+
     Z_WriteCIEAddress(device.shortaddr, 0, 500, enrollEndpoint, 0);
-    
+
     ResponseCmndDone();
   } else {
     ResponseCmndError();
@@ -2192,7 +2192,7 @@ void ZigbeeShow(bool json)
           uint32_t color;
           uint16_t val = convert_seconds_to_dhm(now - device.last_seen, &unit, &color);
           if (val < 100) {
-            snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],                         
+            snprintf_P(dhm, sizeof(dhm), msg[ZB_WEB_LAST_SEEN],
                                          (color & 0xFF0000) >> 16, (color & 0x00FF00) >> 8, (color & 0x0000FF),
                                          val, unit);
           }

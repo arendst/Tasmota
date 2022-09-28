@@ -825,7 +825,7 @@ void UfsListDir(char *path, uint8_t depth) {
           editpath[0]=0;
   #endif // GUI_TRASH_FILE
           ext_snprintf_P(npath, sizeof(npath), UFS_FORM_SDC_HREF, ppe, epe);
-          WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, epe, 
+          WSContentSend_P(UFS_FORM_SDC_DIRb, hiddable ? UFS_FORM_SDC_DIR_HIDDABLE : UFS_FORM_SDC_DIR_NORMAL, npath, epe,
                           HtmlEscape(name).c_str(), tstr.c_str(), entry.size(), delpath, editpath);
         }
         entry.close();

@@ -47,7 +47,7 @@ int lv_x_tostring(bvm *vm) {
 
 /*********************************************************************************************\
  * Support for lv_style `init()`
- * 
+ *
  * Either encapsulate the pointer passed as `comptr` as arg1
  * Or allocate a new empty style structure in memory. In this case, it is never freed.
 \*********************************************************************************************/
@@ -75,7 +75,7 @@ int lv_be_style_init(bvm *vm) {
 
 /*********************************************************************************************\
  * Support for lv_anim `init()`
- * 
+ *
  * Either encapsulate the pointer passed as `comptr` as arg1
  * Or allocate a new empty style structure in memory. In this case, it is never freed.
 \*********************************************************************************************/
@@ -263,7 +263,7 @@ lv_ts_calibration_t * lv_get_ts_calibration(void) {
 
 /*********************************************************************************************\
  * LVGL top level virtual members
- * 
+ *
  * Responds to virtual constants
 \*********************************************************************************************/
 

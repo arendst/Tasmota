@@ -22,14 +22,14 @@
 To use this, add the following to your user_config_override.h
 #define USE_WIFI_RANGE_EXTENDER
 
-Additionally, for the ESP8266, PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH must be 
+Additionally, for the ESP8266, PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH must be
 set in your build options.
 For example, in your platfromio_tasmota_cenv.ini, you will need an entry such as:
 [env:tasmota-rangeextender]
 build_flags = ${common.build_flags}
               -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
 
-For the ESP32, the arduino-esp32 library must be at least version 2, with 
+For the ESP32, the arduino-esp32 library must be at least version 2, with
 CONFIG_LWIP_IP_FORWARD option set, and optionally CONFIG_LWIP_IPV4_NAPT.
 
 If you want to support NAPT (removing the need for routes on a core router):

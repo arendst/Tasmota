@@ -12,7 +12,7 @@ class zb_device
                          classname(self), self.shortaddr,
                          la.get(4,4), la.get(0,4),
                          self.name, self.model, self.manufacturer)
-    return 
+    return
   end
 
 end

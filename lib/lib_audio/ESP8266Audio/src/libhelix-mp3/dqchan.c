@@ -1,37 +1,37 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
@@ -51,47 +51,47 @@ typedef int ARRAY3[3];	/* for short-block reordering */
 static const char preTab[22] = { 0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,3,3,3,2,0 };
 
 /* pow(2,-i/4) for i=0..3, Q31 format */
-const int pow14[4] PROGMEM = { 
+const int pow14[4] PROGMEM = {
 	0x7fffffff, 0x6ba27e65, 0x5a82799a, 0x4c1bf829
 };
 
 /* pow(2,-i/4) * pow(j,4/3) for i=0..3 j=0..15, Q25 format */
 const int pow43_14[4][16] PROGMEM = {
 {	0x00000000, 0x10000000, 0x285145f3, 0x453a5cdb, /* Q28 */
-	0x0cb2ff53, 0x111989d6, 0x15ce31c8, 0x1ac7f203, 
-	0x20000000, 0x257106b9, 0x2b16b4a3, 0x30ed74b4, 
+	0x0cb2ff53, 0x111989d6, 0x15ce31c8, 0x1ac7f203,
+	0x20000000, 0x257106b9, 0x2b16b4a3, 0x30ed74b4,
 	0x36f23fa5, 0x3d227bd3, 0x437be656, 0x49fc823c, },
 
-{	0x00000000, 0x0d744fcd, 0x21e71f26, 0x3a36abd9, 
-	0x0aadc084, 0x0e610e6e, 0x12560c1d, 0x168523cf, 
-	0x1ae89f99, 0x1f7c03a4, 0x243bae49, 0x29249c67, 
+{	0x00000000, 0x0d744fcd, 0x21e71f26, 0x3a36abd9,
+	0x0aadc084, 0x0e610e6e, 0x12560c1d, 0x168523cf,
+	0x1ae89f99, 0x1f7c03a4, 0x243bae49, 0x29249c67,
 	0x2e34420f, 0x33686f85, 0x38bf3dff, 0x3e370182, },
 
-{	0x00000000, 0x0b504f33, 0x1c823e07, 0x30f39a55, 
-	0x08facd62, 0x0c176319, 0x0f6b3522, 0x12efe2ad, 
-	0x16a09e66, 0x1a79a317, 0x1e77e301, 0x2298d5b4, 
+{	0x00000000, 0x0b504f33, 0x1c823e07, 0x30f39a55,
+	0x08facd62, 0x0c176319, 0x0f6b3522, 0x12efe2ad,
+	0x16a09e66, 0x1a79a317, 0x1e77e301, 0x2298d5b4,
 	0x26da56fc, 0x2b3a902a, 0x2fb7e7e7, 0x3450f650, },
 
-{	0x00000000, 0x09837f05, 0x17f910d7, 0x2929c7a9, 
-	0x078d0dfa, 0x0a2ae661, 0x0cf73154, 0x0fec91cb, 
-	0x1306fe0a, 0x16434a6c, 0x199ee595, 0x1d17ae3d, 
+{	0x00000000, 0x09837f05, 0x17f910d7, 0x2929c7a9,
+	0x078d0dfa, 0x0a2ae661, 0x0cf73154, 0x0fec91cb,
+	0x1306fe0a, 0x16434a6c, 0x199ee595, 0x1d17ae3d,
 	0x20abd76a, 0x2459d551, 0x28204fbb, 0x2bfe1808, },
 };
 
 /* pow(j,4/3) for j=16..63, Q23 format */
 const int pow43[] PROGMEM = {
-	0x1428a2fa, 0x15db1bd6, 0x1796302c, 0x19598d85, 
-	0x1b24e8bb, 0x1cf7fcfa, 0x1ed28af2, 0x20b4582a, 
-	0x229d2e6e, 0x248cdb55, 0x26832fda, 0x28800000, 
-	0x2a832287, 0x2c8c70a8, 0x2e9bc5d8, 0x30b0ff99, 
-	0x32cbfd4a, 0x34eca001, 0x3712ca62, 0x393e6088, 
-	0x3b6f47e0, 0x3da56717, 0x3fe0a5fc, 0x4220ed72, 
-	0x44662758, 0x46b03e7c, 0x48ff1e87, 0x4b52b3f3, 
-	0x4daaebfd, 0x5007b497, 0x5268fc62, 0x54ceb29c, 
-	0x5738c721, 0x59a72a59, 0x5c19cd35, 0x5e90a129, 
-	0x610b9821, 0x638aa47f, 0x660db90f, 0x6894c90b, 
-	0x6b1fc80c, 0x6daeaa0d, 0x70416360, 0x72d7e8b0, 
-	0x75722ef9, 0x78102b85, 0x7ab1d3ec, 0x7d571e09, 
+	0x1428a2fa, 0x15db1bd6, 0x1796302c, 0x19598d85,
+	0x1b24e8bb, 0x1cf7fcfa, 0x1ed28af2, 0x20b4582a,
+	0x229d2e6e, 0x248cdb55, 0x26832fda, 0x28800000,
+	0x2a832287, 0x2c8c70a8, 0x2e9bc5d8, 0x30b0ff99,
+	0x32cbfd4a, 0x34eca001, 0x3712ca62, 0x393e6088,
+	0x3b6f47e0, 0x3da56717, 0x3fe0a5fc, 0x4220ed72,
+	0x44662758, 0x46b03e7c, 0x48ff1e87, 0x4b52b3f3,
+	0x4daaebfd, 0x5007b497, 0x5268fc62, 0x54ceb29c,
+	0x5738c721, 0x59a72a59, 0x5c19cd35, 0x5e90a129,
+	0x610b9821, 0x638aa47f, 0x660db90f, 0x6894c90b,
+	0x6b1fc80c, 0x6daeaa0d, 0x70416360, 0x72d7e8b0,
+	0x75722ef9, 0x78102b85, 0x7ab1d3ec, 0x7d571e09,
 };
 
 /* sqrt(0.5) in Q31 format */
@@ -112,7 +112,7 @@ static const unsigned int poly43hi[5] PROGMEM = { 0x10852163, 0xd333f6a4, 0x46e9
 const int pow2exp[8] PROGMEM = { 14, 13, 11, 10, 9, 7, 6, 5 };
 
 const int pow2frac[8] PROGMEM = {
-	0x6597fa94, 0x50a28be6, 0x7fffffff, 0x6597fa94, 
+	0x6597fa94, 0x50a28be6, 0x7fffffff, 0x6597fa94,
 	0x50a28be6, 0x7fffffff, 0x6597fa94, 0x50a28be6
 };
 
@@ -125,7 +125,7 @@ const int pow2frac[8] PROGMEM = {
  * Inputs:      input buffer of decode Huffman codewords (signed-magnitude)
  *              output buffer of same length (in-place (outbuf = inbuf) is allowed)
  *              number of samples
- *              
+ *
  * Outputs:     dequantized samples in Q25 format
  *
  * Return:      bitwise-OR of the unsigned outputs (for guard bit calculations)
@@ -136,7 +136,7 @@ const int pow2frac[8] PROGMEM = {
 	int scalef, scalei, shift;
 	int sx, x, y;
 	int mask = 0;
-	const int *tab16; 
+	const int *tab16;
 	const unsigned int *coef;
 
 	tab16 = pow43_14[scale & 0x3];
@@ -241,9 +241,9 @@ const int pow2frac[8] PROGMEM = {
  *
  * Return:      minimum number of guard bits in dequantized sampleBuf
  *
- * Notes:       dequantized samples in Q(DQ_FRACBITS_OUT) format 
+ * Notes:       dequantized samples in Q(DQ_FRACBITS_OUT) format
  **************************************************************************************/
-/* __attribute__ ((section (".data"))) */ int DequantChannel(int *sampleBuf, int *workBuf, int *nonZeroBound, FrameHeader *fh, SideInfoSub *sis, 
+/* __attribute__ ((section (".data"))) */ int DequantChannel(int *sampleBuf, int *workBuf, int *nonZeroBound, FrameHeader *fh, SideInfoSub *sis,
 					ScaleFactorInfoSub *sfis, CriticalBandInfo *cbi)
 {
 	int i, j, w, cb;
@@ -252,15 +252,15 @@ const int pow2frac[8] PROGMEM = {
 	int globalGain, gainI;
 	int cbMax[3];
 	ARRAY3 *buf;    /* short block reorder */
-	
+
 	/* set default start/end points for short/long blocks - will update with non-zero cb info */
 	if (sis->blockType == 2) {
 		// cbStartL = 0;
-		if (sis->mixedBlock) { 
-			cbEndL = (fh->ver == MPEG1 ? 8 : 6); 
-			cbStartS = 3; 
+		if (sis->mixedBlock) {
+			cbEndL = (fh->ver == MPEG1 ? 8 : 6);
+			cbStartS = 3;
 		} else {
-			cbEndL = 0; 
+			cbEndL = 0;
 			cbStartS = 0;
 		}
 		cbEndS = 13;
@@ -282,7 +282,7 @@ const int pow2frac[8] PROGMEM = {
 	sfactMultiplier = 2 * (sis->sfactScale + 1);
 
 	/* offset globalGain by -2 if midSide enabled, for 1/sqrt(2) used in MidSideProc()
-	 *  (DequantBlock() does 0.25 * gainI so knocking it down by two is the same as 
+	 *  (DequantBlock() does 0.25 * gainI so knocking it down by two is the same as
 	 *   dividing every sample by sqrt(2) = multiplying by 2^-.5)
 	 */
 	globalGain = sis->globalGain;
@@ -301,11 +301,11 @@ const int pow2frac[8] PROGMEM = {
 		i += nSamps;
 
 		/* update highest non-zero critical band */
-		if (nonZero) 
+		if (nonZero)
 			cbMax[0] = cb;
 		gbMask |= nonZero;
 
-		if (i >= *nonZeroBound) 
+		if (i >= *nonZeroBound)
 			break;
 	}
 
@@ -316,9 +316,9 @@ const int pow2frac[8] PROGMEM = {
 	cbi->cbEndSMax = 0;
 
 	/* early exit if no short blocks */
-	if (cbStartS >= 12) 
+	if (cbStartS >= 12)
 		return CLZ(gbMask) - 1;
-	
+
 	/* short blocks */
 	cbMax[2] = cbMax[1] = cbMax[0] = cbStartS;
 	for (cb = cbStartS; cb < cbEndS; cb++) {
@@ -347,11 +347,11 @@ const int pow2frac[8] PROGMEM = {
 
 		ASSERT(3*nSamps <= MAX_REORDER_SAMPS);
 
-		if (i >= *nonZeroBound) 
+		if (i >= *nonZeroBound)
 			break;
 	}
 
-	/* i = last non-zero INPUT sample processed, which corresponds to highest possible non-zero 
+	/* i = last non-zero INPUT sample processed, which corresponds to highest possible non-zero
 	 *     OUTPUT sample (after reorder)
 	 * however, the original nzb is no longer necessarily true
 	 *   for each cb, buf[][] is updated with 3*nSamps samples (i increases 3*nSamps each time)

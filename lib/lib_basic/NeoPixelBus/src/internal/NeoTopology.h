@@ -46,7 +46,7 @@ public:
     }
 
     uint16_t Map(int16_t x, int16_t y) const
-    {   
+    {
         if (x >= _width)
         {
             x = _width - 1;
@@ -75,12 +75,12 @@ public:
         return T_LAYOUT::Map(_width, _height, x, y);
     }
 
-    uint16_t getWidth() const 
+    uint16_t getWidth() const
     {
         return _width;
     }
 
-    uint16_t getHeight() const 
+    uint16_t getHeight() const
     {
         return _height;
     }

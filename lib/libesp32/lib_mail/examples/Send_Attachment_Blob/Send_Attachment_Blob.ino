@@ -1,17 +1,17 @@
 
 
 /**
- * This example will send the Email with attachments and 
+ * This example will send the Email with attachments and
  * inline images stored in heap and flash memories.
- * 
+ *
  * The html and text version messages will be sent.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -40,7 +40,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -157,7 +157,7 @@ void setup()
   /* The attachment data item */
   SMTP_Attachment att;
 
-  /** Set the inline image info e.g. 
+  /** Set the inline image info e.g.
    * file name, MIME type, BLOB data, BLOB data size,
    * transfer encoding (should be base64 for inline image)
   */
@@ -170,7 +170,7 @@ void setup()
   /* Add inline image to the message */
   message.addInlineImage(att);
 
-  /** Set the inline image info e.g. 
+  /** Set the inline image info e.g.
    * file name, MIME type, BLOB data, BLOB data size.
    * The default transfer encoding is base64.
   */
@@ -184,7 +184,7 @@ void setup()
   /* Add inline image to the message */
   message.addInlineImage(att);
 
-  /** Set the inline image info e.g. 
+  /** Set the inline image info e.g.
    * file name, MIME type, BLOB data, BLOB data size.
    * The default transfer encoding is base64.
   */
@@ -210,7 +210,7 @@ void setup()
       j = 0;
   }
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, BLOB data, BLOB data size.
    * The default transfer encoding is base64.
   */

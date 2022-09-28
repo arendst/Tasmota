@@ -55,7 +55,7 @@ public:
             send_data_8mhz_800_PortB(data, sizeData, pinMask);
 
 #elif (F_CPU >= 11100000UL) && (F_CPU <= 14300000UL)  // 12Mhz CPU
-#ifdef PORTD // PORTD 
+#ifdef PORTD // PORTD
         if (port == &PORTD)
             send_data_12mhz_800_PortD(data, sizeData, pinMask);
         else if (port == &PORTB)
@@ -68,7 +68,7 @@ public:
 #error "CPU SPEED NOT SUPPORTED"
 #endif
     }
-    
+
 };
 
 class NeoAvrSpeedWs2812x :  public NeoAvrSpeed800KbpsBase
@@ -202,12 +202,12 @@ public:
     }
 
 private:
-    const size_t  _sizeData;     // size of _data below       
+    const size_t  _sizeData;     // size of _data below
     const uint8_t _pin;         // output pin number
 
     uint32_t _endTime;       // Latch timing reference
     uint8_t* _data;        // Holds data stream which include LED color values and other settings as needed
-    
+
     volatile uint8_t* _port;         // Output PORT register
     uint8_t  _pinMask;      // Output PORT bitmask
 };

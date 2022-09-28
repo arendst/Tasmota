@@ -108,9 +108,9 @@ void SM2335Stop(void) {
 
 /********************************************************************************************/
 
-bool SM2335SetChannels(void) {  
+bool SM2335SetChannels(void) {
   uint16_t *cur_col_10 = (uint16_t*)XdrvMailbox.command;
-    
+
   // If we receive 0 for all channels, we'll assume that the lightbulb is off, and activate SM2335's standby mode.
   if (cur_col_10[0] == 0 && cur_col_10[1] == 0 && cur_col_10[2] == 0 && cur_col_10[3] == 0 && cur_col_10[4] == 0) {
     SM2335Start(SM2335_ADDR_STANDBY);
@@ -121,7 +121,7 @@ bool SM2335SetChannels(void) {
     SM2335Stop();
     return true;
   }
-    
+
   // Write the header activating all 5 channels
   SM2335Start(SM2335_ADDR_START_5CH);
   // Set the current defined in ModuleSelected.

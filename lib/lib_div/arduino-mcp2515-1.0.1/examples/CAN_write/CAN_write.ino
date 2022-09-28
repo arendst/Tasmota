@@ -29,25 +29,25 @@ void setup() {
   canMsg2.data[5] = 0x00;
   canMsg2.data[6] = 0x00;
   canMsg2.data[7] = 0xA0;
-  
+
   while (!Serial);
   Serial.begin(115200);
   SPI.begin();
-  
+
   mcp2515.reset();
   mcp2515.setBitrate(CAN_125KBPS);
   mcp2515.setNormalMode();
-  
+
   Serial.println("Example: Write to CAN");
 }
 
 void loop() {
-  
+
   mcp2515.sendMessage(&canMsg1);
   mcp2515.sendMessage(&canMsg2);
 
   Serial.println("Messages sent");
-  
+
   delay(100);
 
 }

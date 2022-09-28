@@ -251,12 +251,12 @@ void IRAM_ATTR TX2xStartRead(void)
 #ifdef USE_TX23_WIND_SENSOR
       if ((chk == tx2x_sd) && (0x1b==tx2x_sa) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) {
 #else
-      if 
+      if
       #ifdef USE_TX20_WIND_SENSOR
-      ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511)) 
+      ((chk == tx2x_sd) && (tx2x_sb==tx2x_se) && (tx2x_sc==tx2x_sf) && (tx2x_sc < 511))
       #endif
       #ifdef USE_WS2300_WIND_SENSOR
-      ((chk == tx2x_sd) && (tx2x_sc < 511)) 
+      ((chk == tx2x_sd) && (tx2x_sc < 511))
       #endif
       {
 #endif

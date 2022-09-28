@@ -185,11 +185,11 @@ public:
     {
         size_t dmaBlockCount = (_i2sBufferSize + I2S_DMA_MAX_DATA_LEN - 1) / I2S_DMA_MAX_DATA_LEN;
 
-        i2sInit(_bus.I2sBusNumber, 
-            16, 
-            T_SPEED::I2sSampleRate, 
-            I2S_CHAN_STEREO, 
-            I2S_FIFO_16BIT_DUAL, 
+        i2sInit(_bus.I2sBusNumber,
+            16,
+            T_SPEED::I2sSampleRate,
+            I2S_CHAN_STEREO,
+            I2S_FIFO_16BIT_DUAL,
             dmaBlockCount,
             0);
         i2sSetPins(_bus.I2sBusNumber, _pin, T_INVERT::Inverted);
@@ -223,7 +223,7 @@ public:
     }
 
 private:
-    const size_t  _sizeData;    // Size of '_data' buffer 
+    const size_t  _sizeData;    // Size of '_data' buffer
     const uint8_t _pin;            // output pin number
     const T_BUS _bus; // holds instance for multi bus support
 
@@ -232,7 +232,7 @@ private:
     uint32_t _i2sBufferSize; // total size of _i2sBuffer
     uint8_t* _i2sBuffer;  // holds the DMA buffer that is referenced by _i2sBufDesc
 
-    void construct(uint16_t pixelCount, size_t elementSize, size_t settingsSize) 
+    void construct(uint16_t pixelCount, size_t elementSize, size_t settingsSize)
     {
         // DMA is too fast to support a single pixel and maintain consistency
         if (pixelCount < 2)

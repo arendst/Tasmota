@@ -10,7 +10,7 @@ Sub*
 newsub(int n)
 {
 	Sub *s;
-	
+
 	s = freesub;
 	if(s != nil)
 		freesub = (Sub*)s->sub[0];

@@ -1,7 +1,7 @@
 /*
   ESP8266SAM
   Port of SAM to the ESP8266
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ void ESP8266SAM::OutputByte(unsigned char b)
   sample[1] = s16;
   while (!output->ConsumeSample(sample)) yield();
 }
-  
+
 bool ESP8266SAM::Say(AudioOutput *out, const char *str)
 {
   if (!str || strlen(str)>254) return false; // Only can speak up to 1 page worth of data...
@@ -51,7 +51,7 @@ bool ESP8266SAM::Say(AudioOutput *out, const char *str)
       // allocation failed!
       return false;
   }
-  
+
   // These are fixed by the synthesis routines
   out->SetRate(22050);
   out->SetBitsPerSample(8);

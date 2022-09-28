@@ -73,7 +73,7 @@ return_types = {
   "lv_textarea_style_t": "i",
   "lv_slider_type_t": "i",
   "lv_spinner_type_t": "i",
-  "lv_spinner_dir_t": "i",  
+  "lv_spinner_dir_t": "i",
   "lv_blend_mode_t": "i",
   "lv_grad_dir_t": "i",
   "lv_border_side_t": "i",
@@ -293,7 +293,7 @@ with open(lv_widgets_file) as f:
             else:
               # remove the trailing '_t' of type name if any
               ga_type = re.sub(r"_t$", "", ga_type)
-            
+
             # if the type is a single letter, we just add it
             if len(ga_type) == 1 and ga_type != 'C':  # callbacks are different
               c_args += ga_type
@@ -487,7 +487,7 @@ print("""
 /********************************************************************
  * Generated code, don't edit
  *******************************************************************/
- 
+
  /********************************************************************
  * Tasmota LVGL classes for widgets
  *******************************************************************/
@@ -528,7 +528,7 @@ for subtype, flv in lv.items():
   for f in flv:
     c_func_name = f[0]
     print(f"extern int {c_func_name}(bvm *vm);")
-  
+
   print()
 
 for subtype, flv in lv.items():

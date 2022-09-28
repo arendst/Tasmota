@@ -50,7 +50,7 @@ public:
 class Lpd88063Elements : public Lpd88063ElementsNoSettings
 {
 public:
-    static const size_t PixelSize = 3; 
+    static const size_t PixelSize = 3;
 
 
     static uint8_t* getPixelAddress(uint8_t* pPixels, uint16_t indexPixel)

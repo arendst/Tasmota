@@ -1,7 +1,7 @@
 /*
   AudioFileSourceHTTPStream
   Connect to a HTTP based streaming service
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@ class AudioFileSourceHTTPStream : public AudioFileSource
     AudioFileSourceHTTPStream();
     AudioFileSourceHTTPStream(const char *url);
     virtual ~AudioFileSourceHTTPStream() override;
-    
+
     virtual bool open(const char *url) override;
     virtual uint32_t read(void *data, uint32_t len) override;
     virtual uint32_t readNonBlock(void *data, uint32_t len) override;

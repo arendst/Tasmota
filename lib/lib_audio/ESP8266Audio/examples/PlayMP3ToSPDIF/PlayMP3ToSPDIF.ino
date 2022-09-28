@@ -7,11 +7,11 @@
 #include "AudioOutputSPDIF.h"
 #include "AudioGeneratorMP3.h"
 
-// To run, set your ESP8266 build to 160MHz, and include a SPIFFS partition 
+// To run, set your ESP8266 build to 160MHz, and include a SPIFFS partition
 // big enough to hold your MP3 file. Find suitable MP3 file from i.e.
 // https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/audio-samples.html
-// and download it into 'data' directory. Use the "Tools->ESP8266/ESP32 Sketch Data Upload" 
-// menu to write the MP3 to SPIFFS. Then upload the sketch normally. 
+// and download it into 'data' directory. Use the "Tools->ESP8266/ESP32 Sketch Data Upload"
+// menu to write the MP3 to SPIFFS. Then upload the sketch normally.
 
 AudioFileSourceSPIFFS *file;
 AudioFileSourceID3 *id3;
@@ -27,7 +27,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *stri
   if (isUnicode) {
     string += 2;
   }
-  
+
   while (*string) {
     char a = *(string++);
     if (isUnicode) {
@@ -47,8 +47,8 @@ void setup()
   Serial.println();
   audioLogger = &Serial;
   SPIFFS.begin();
-  file = new AudioFileSourceSPIFFS(); 
-  id3 = NULL; 
+  file = new AudioFileSourceSPIFFS();
+  id3 = NULL;
   out = new AudioOutputSPDIF();
   mp3 = new AudioGeneratorMP3();
   String fileName = "";
@@ -56,7 +56,7 @@ void setup()
   // Find first MP3 file in SPIFF and play it
 
 #ifdef ESP32
-  File dir, root = SPIFFS.open("/");  
+  File dir, root = SPIFFS.open("/");
   while ((dir = root.openNextFile())) {
     if (String(dir.name()).endsWith(".mp3")) {
       if (file->open(dir.name())) {

@@ -21,10 +21,10 @@ void*
 mal(int n)
 {
 	void *v;
-	
+
 	v = malloc(n);
 	if(v == nil)
 		re1_5_fatal("out of memory");
 	memset(v, 0, n);
 	return v;
-}	
+}

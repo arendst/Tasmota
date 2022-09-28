@@ -4,7 +4,7 @@
 #
 #-
 
-import path 
+import path
 path.remove("lv_tasmota_widgets.bec")
 load('lv_tasmota_widgets.be')
 
@@ -121,7 +121,7 @@ class lv_signal_arcs : lv_obj
 
     if code == lv.EVENT_DRAW_MAIN
       var draw_ctx = lv.draw_ctx(event.param)
-    
+
       # get coordinates of object
       self.get_coords(self.area)
       var x_ofs = self.area.x1

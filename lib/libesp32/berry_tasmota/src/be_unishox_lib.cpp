@@ -1,8 +1,8 @@
 /********************************************************************
  * Berry module `unishox`
- * 
+ *
  * To use: `import unishox`
- * 
+ *
  * Allows to respond to HTTP request
  *******************************************************************/
 
@@ -17,10 +17,10 @@ extern Unishox compressor;
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import unishox
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 static int be_ntv_unishox_compress(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments

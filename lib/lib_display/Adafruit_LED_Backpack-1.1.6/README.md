@@ -5,14 +5,14 @@
 
 MCU               | Tested Works | Doesn't Work | Not Tested  | Notes
 ----------------- | :----------: | :----------: | :---------: | -----
-Atmega328 @ 16MHz |      X       |             |            | 
-Atmega328 @ 12MHz |      X       |             |            | 
-Atmega32u4 @ 16MHz |      X       |             |            | 
-Atmega32u4 @ 8MHz |      X       |             |            | 
-ESP8266           |      X       |             |            | 
-Atmega2560 @ 16MHz |      X       |             |            | 
+Atmega328 @ 16MHz |      X       |             |            |
+Atmega328 @ 12MHz |      X       |             |            |
+Atmega32u4 @ 16MHz |      X       |             |            |
+Atmega32u4 @ 8MHz |      X       |             |            |
+ESP8266           |      X       |             |            |
+Atmega2560 @ 16MHz |      X       |             |            |
 ATSAM3X8E         |      X       |             |            | Use SDA/SCL on pins 20 &amp; 21
-ATSAM21D          |      X       |             |            | 
+ATSAM21D          |      X       |             |            |
 ATtiny85 @ 16MHz  |      X       |             |            | Use 0 for SDA, 2 for SCL, examples may need Serial references removed
 ATtiny85 @ 8MHz   |      X       |             |            | Use 0 for SDA, 2 for SCL, examples may need Serial references removed
 

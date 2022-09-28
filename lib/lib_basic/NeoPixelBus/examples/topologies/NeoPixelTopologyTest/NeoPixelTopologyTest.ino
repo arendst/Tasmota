@@ -40,7 +40,7 @@ RgbColor blue(0, 0, 128);
 RgbColor white(128);
 // if using NeoRgbwFeature above, use this white instead to use
 // the correct white element of the LED
-//RgbwColor white(128); 
+//RgbwColor white(128);
 RgbColor black(0);
 
 const uint16_t left = 0;

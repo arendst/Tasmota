@@ -1,20 +1,20 @@
-/*************************************************** 
+/***************************************************
   This is a library for our I2C LED Backpacks
 
-  Designed specifically to work with the Adafruit LED Matrix backpacks 
+  Designed specifically to work with the Adafruit LED Matrix backpacks
   ----> http://www.adafruit.com/products/
   ----> http://www.adafruit.com/products/
 
-  These displays use I2C to communicate, 2 pins are required to 
+  These displays use I2C to communicate, 2 pins are required to
   interface. There are multiple selectable I2C addresses. For backpacks
   with 2 Address Select pins: 0x70, 0x71, 0x72 or 0x73. For backpacks
   with 3 Address Select pins: 0x70 thru 0x77
 
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
+  Adafruit invests time and resources providing this open source code,
+  please support Adafruit and open-source hardware by purchasing
   products from Adafruit!
 
-  Written by Limor Fried/Ladyada for Adafruit Industries.  
+  Written by Limor Fried/Ladyada for Adafruit Industries.
   MIT license, all text above must be included in any redistribution
  ****************************************************/
 #ifndef Adafruit_LEDBackpack_h
@@ -37,7 +37,7 @@
 #define LED_RED 1
 #define LED_YELLOW 2
 #define LED_GREEN 3
- 
+
 
 
 #define HT16K33_BLINK_CMD 0x80
@@ -62,7 +62,7 @@ class Adafruit_LEDBackpack {
   void writeDisplay(void);
   void clear(void);
 
-  uint16_t displaybuffer[8]; 
+  uint16_t displaybuffer[8];
 
   void init(uint8_t a);
  protected:
@@ -154,7 +154,7 @@ class Adafruit_7segment : public Adafruit_LEDBackpack {
   void println(unsigned long, int = DEC);
   void println(double, int = 2);
   void println(void);
-  
+
   void writeDigitRaw(uint8_t x, uint8_t bitmask);
   void writeDigitNum(uint8_t x, uint8_t num, boolean dot = false);
   void drawColon(boolean state);
@@ -163,7 +163,7 @@ class Adafruit_7segment : public Adafruit_LEDBackpack {
   void printError(void);
 
   void writeColon(void);
-    
+
  private:
   uint8_t position;
 };

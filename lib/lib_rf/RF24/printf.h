@@ -29,15 +29,15 @@ int serial_putc( char c, FILE * )
 
 void printf_begin(void)
 {
-  #if defined (ARDUINO_ARCH_AVR)  
+  #if defined (ARDUINO_ARCH_AVR)
     fdevopen( &serial_putc, 0 );
-    
+
   #elif defined (__ARDUINO_X86__)
     //JESUS - For reddirect stdout to /dev/ttyGS0 (Serial Monitor port)
     stdout = freopen("/dev/ttyGS0","w",stdout);
     delay(500);
     printf("redirecting to Serial...");
-    
+
   #endif
 }
 

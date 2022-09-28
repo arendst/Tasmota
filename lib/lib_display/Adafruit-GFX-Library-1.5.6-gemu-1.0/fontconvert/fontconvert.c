@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 	// Insert font size and 7/8 bit.  fontName was alloc'd w/extra
 	// space to allow this, we're not sprintfing into Forbidden Zone.
 	sprintf(ptr, "%dpt%db", size, (last > 127) ? 8 : 7);
-	// Space and punctuation chars in name replaced w/ underscores.  
+	// Space and punctuation chars in name replaced w/ underscores.
 	for(i=0; (c=fontName[i]); i++) {
 		if(isspace(c) || ispunct(c)) fontName[i] = '_';
 	}
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "FreeType init error: %d", err);
 		return err;
 	}
-	
+
 	// Use TrueType engine version 35, without subpixel rendering.
 	// This improves clarity of fonts since this library does not
 	// support rendering multiple levels of gray in a glyph.
@@ -126,8 +126,8 @@ int main(int argc, char *argv[]) {
 	FT_UInt interpreter_version = TT_INTERPRETER_VERSION_35;
 	FT_Property_Set( library, "truetype",
                                   "interpreter-version",
-                                  &interpreter_version );	
-	
+                                  &interpreter_version );
+
 	if((err = FT_New_Face(library, argv[1], 0, &face))) {
 		fprintf(stderr, "Font load error: %d", err);
 		FT_Done_FreeType(library);

@@ -1,7 +1,7 @@
 /*
   AudioGeneratorMP3
   Audio output generator using the Helix MP3 decoder
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -151,12 +151,12 @@ bool AudioGeneratorMP3a::begin(AudioFileSource *source, AudioOutput *output)
   if (!file->isOpen()) return false; // Error
 
   output->begin();
-  
+
   // AAC always comes out at 16 bits
   output->SetBitsPerSample(16);
-  
+
   running = true;
-  
+
   return true;
 }
 

@@ -106,7 +106,7 @@ autoconf_module.init = def (m)
     def load_templates()
       import string
       import json
-      try 
+      try
         var url = string.format("https://raw.githubusercontent.com/tasmota/autoconf/main/%s_manifest.json", tasmota.arch())
         tasmota.log(string.format("CFG: loading '%s'", url), 3)
         # load the template
@@ -154,7 +154,7 @@ autoconf_module.init = def (m)
       webserver.content_start('Auto-configuration')
       webserver.content_send_style()
       webserver.content_send("<p><small>&nbsp;(This feature requires an internet connection)</small></p>")
-      
+
       var cur_module = self.get_current_module_path()
       var cur_module_display = cur_module ? string.tr(self.get_current_module_name(), "_", " ") : self._error ? "&lt;Error: apply new or remove&gt;" : "&lt;None&gt;"
 
@@ -268,7 +268,7 @@ autoconf_module.init = def (m)
       webserver.on('/ac', / -> self.page_autoconf_mgr(), webserver.HTTP_GET)
       webserver.on('/ac', / -> self.page_autoconf_ctl(), webserver.HTTP_POST)
     end
-    
+
 
     # reset the configuration information (but don't restart)
     # i.e. remove any autoconf file
@@ -369,7 +369,7 @@ autoconf_module.init = def (m)
         self.run_bat(fname)
         tasmota.log("CFG: ran  "+fname, 3)
       end
-      
+
       # Step 4. if 'autoexec.be' is present, load it
       fname = self._archive + '#autoexec.be'
       if path.exists(fname)

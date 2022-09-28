@@ -1,7 +1,7 @@
 /*
   AudioGeneratorOpus
   Audio output generator that plays Opus audio files
-    
+
   Copyright (C) 2020  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -92,8 +92,8 @@ bool AudioGeneratorOpus::loop()
      buffLen = ret * 2;
     }
 
-    lastSample[AudioOutput::LEFTCHANNEL] = buff[buffPtr] & 0xffff; 
-    lastSample[AudioOutput::RIGHTCHANNEL] = buff[buffPtr+1] & 0xffff; 
+    lastSample[AudioOutput::LEFTCHANNEL] = buff[buffPtr] & 0xffff;
+    lastSample[AudioOutput::RIGHTCHANNEL] = buff[buffPtr+1] & 0xffff;
     buffPtr += 2;
   } while (running && output->ConsumeSample(lastSample));
 

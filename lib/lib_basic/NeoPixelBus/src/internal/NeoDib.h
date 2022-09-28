@@ -163,7 +163,7 @@ public:
         Dirty();
     };
 
-    template <typename T_COLOR_FEATURE, typename T_SHADER> 
+    template <typename T_COLOR_FEATURE, typename T_SHADER>
     void Render(NeoBufferContext<T_COLOR_FEATURE> destBuffer, T_SHADER& shader, uint16_t destIndexPixel = 0)
     {
         if (IsDirty() || shader.IsDirty())

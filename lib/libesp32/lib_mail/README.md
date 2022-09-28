@@ -137,7 +137,7 @@ The supportedd MMU build flags in PlatformIO.
 
    Disables default configuration and expects user-specified flags
 
-   
+
 ### Test code for MMU
 
 ```cpp
@@ -145,7 +145,7 @@ The supportedd MMU build flags in PlatformIO.
 #include <Arduino.h>
 #include <umm_malloc/umm_heap_select.h>
 
-void setup() 
+void setup()
 {
   Serial.begin(74880);
   HeapSelectIram ephemeral;

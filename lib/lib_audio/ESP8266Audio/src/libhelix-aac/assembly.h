@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: assembly.h,v 1.7 2005/11/10 00:04:40 margotm Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: assembly.h,v 1.7 2005/11/10 00:04:40 margotm Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -42,9 +42,9 @@
  *
  * assembly.h - inline assembly language functions and prototypes
  *
- * MULSHIFT32(x, y) 		signed multiply of two 32-bit integers (x and y), 
+ * MULSHIFT32(x, y) 		signed multiply of two 32-bit integers (x and y),
  *                            returns top 32-bits of 64-bit result
- * CLIPTOSHORT(x)			convert 32-bit integer to 16-bit short, 
+ * CLIPTOSHORT(x)			convert 32-bit integer to 16-bit short,
  *                            clipping to [-32768, 32767]
  * FASTABS(x)               branchless absolute value of signed integer x
  * CLZ(x)                   count leading zeros on signed integer x
@@ -61,7 +61,7 @@
 
 #pragma warning( disable : 4035 )	/* complains about inline asm not returning a value */
 
-static __inline int MULSHIFT32(int x, int y)	
+static __inline int MULSHIFT32(int x, int y)
 {
     __asm {
 		mov		eax, x
@@ -82,7 +82,7 @@ static __inline short CLIPTOSHORT(int x)
 	return (short)x;
 }
 
-static __inline int FASTABS(int x) 
+static __inline int FASTABS(int x)
 {
 	int sign;
 
@@ -122,7 +122,7 @@ typedef union _U64 {
 	Word64 w64;
 	struct {
 		/* x86 = little endian */
-		unsigned int lo32; 
+		unsigned int lo32;
 		signed int   hi32;
 	} r;
 } U64;
@@ -163,7 +163,7 @@ static __inline short CLIPTOSHORT(int x)
 	return (short)x;
 }
 
-static __inline int FASTABS(int x) 
+static __inline int FASTABS(int x)
 {
 	int sign;
 
@@ -204,7 +204,7 @@ typedef union _U64 {
 	Word64 w64;
 	struct {
 		/* ARM WinCE = little endian */
-		unsigned int lo32; 
+		unsigned int lo32;
 		signed int   hi32;
 	} r;
 } U64;
@@ -228,8 +228,8 @@ Word64 MADD64(Word64 sum64, int x, int y);
 static __inline int MULSHIFT32(int x, int y)
 {
     /* rules for smull RdLo, RdHi, Rm, Rs:
-     *   RdHi != Rm 
-     *   RdLo != Rm 
+     *   RdHi != Rm
+     *   RdLo != Rm
      *   RdHi != RdLo
      */
     int zlow;
@@ -252,7 +252,7 @@ static __inline short CLIPTOSHORT(int x)
 	return (short)x;
 }
 
-static __inline int FASTABS(int x) 
+static __inline int FASTABS(int x)
 {
 	int sign;
 
@@ -282,8 +282,8 @@ static __inline int CLZ(int x)
 	return numZeros;
 
 /* ARM code would look like this, but do NOT use inline asm in ADS for this,
-   because you can't safely use the status register flags intermixed with C code 
- 
+   because you can't safely use the status register flags intermixed with C code
+
 	__asm {
 	    mov		numZeros, #1
 		tst		x, 0xffff0000
@@ -306,7 +306,7 @@ static __inline int CLZ(int x)
 	while (!(x & 0x80000000)) {
 		numZeros++;
 		x <<= 1;
-	} 
+	}
 */
 }
 
@@ -316,18 +316,18 @@ typedef union _U64 {
 	Word64 w64;
 	struct {
 		/* ARM ADS = little endian */
-		unsigned int lo32; 
+		unsigned int lo32;
 		signed int   hi32;
 	} r;
 } U64;
 
-static __inline Word64 MADD64(Word64 sum64, int x, int y) 
+static __inline Word64 MADD64(Word64 sum64, int x, int y)
 {
 	U64 u;
 	u.w64 = sum64;
-	
+
 	__asm {
-    	smlal u.r.lo32, u.r.hi32, x, y 
+    	smlal u.r.lo32, u.r.hi32, x, y
 	}
 
 	return u.w64;
@@ -345,7 +345,7 @@ static inline int MULSHIFT32(int x, int y)
     return y;
 }
 /*
-static inline short CLIPTOSHORT(int x) 
+static inline short CLIPTOSHORT(int x)
 {
 	int sign;
 
@@ -356,8 +356,8 @@ static inline short CLIPTOSHORT(int x)
 
 	return (short)x;
 }
-*/	
-static inline short CLIPTOSHORT(int x) 
+*/
+static inline short CLIPTOSHORT(int x)
 {
 	asm ("ssat %0, #16, %1" : "=r" (x) : "r" (x));
 	return x;
@@ -375,7 +375,7 @@ clip to [-2^n, 2^n-1], valid range of n = [1, 30]
 }
 
 /* From coder.h, ORIGINAL:
- do y <<= n, clipping to range [-2^30, 2^30 - 1] (i.e. output has one guard bit) 
+ do y <<= n, clipping to range [-2^30, 2^30 - 1] (i.e. output has one guard bit)
 */
 //TODO (FB) Is there a better way ?
 #define CLIP_2N_SHIFT(y, n) {                   \
@@ -438,7 +438,7 @@ static __inline__ int MULSHIFT32(int x, int y)
     int z;
 
     z = (Word64)x * (Word64)y >> 32;
-    
+
 	return z;
 }
 
@@ -454,7 +454,7 @@ static __inline short CLIPTOSHORT(int x)
 	return (short)x;
 }
 
-static __inline int FASTABS(int x) 
+static __inline int FASTABS(int x)
 {
 	int sign;
 
@@ -509,7 +509,7 @@ static __inline__ int MULSHIFT32(int x, int y)
     int z;
 
     z = (Word64)x * (Word64)y >> 32;
-    
+
 	return z;
 }
 
@@ -525,7 +525,7 @@ static __inline short CLIPTOSHORT(int x)
 	return (short)x;
 }
 
-static __inline int FASTABS(int x) 
+static __inline int FASTABS(int x)
 {
 	int sign;
 
@@ -558,14 +558,14 @@ static __inline int CLZ(int x)
 typedef union _U64 {
 	Word64 w64;
 	struct {
-#if defined(__XTENSA__) || defined (__riscv)		
+#if defined(__XTENSA__) || defined (__riscv)
 		unsigned int lo32;
 		signed int   hi32;
 #else
 		/* PowerPC = big endian */
 		signed int   hi32;
 		unsigned int lo32;
-#endif		
+#endif
 	} r;
 } U64;
 
@@ -588,7 +588,7 @@ clip to [-2^n, 2^n-1], valid range of n = [1, 30]
 }
 
 /* From coder.h, ORIGINAL:
- do y <<= n, clipping to range [-2^30, 2^30 - 1] (i.e. output has one guard bit) 
+ do y <<= n, clipping to range [-2^30, 2^30 - 1] (i.e. output has one guard bit)
 */
 //TODO (FB) Is there a better way ?
 #define CLIP_2N_SHIFT(y, n) {                   \
@@ -622,7 +622,7 @@ clip to [-2^n, 2^n-1], valid range of n = [1, 30]
 
 #ifndef CLIP_2N_SHIFT
 /* From coder.h, ORIGINAL:
- do y <<= n, clipping to range [-2^30, 2^30 - 1] (i.e. output has one guard bit) 
+ do y <<= n, clipping to range [-2^30, 2^30 - 1] (i.e. output has one guard bit)
 */
 //TODO (FB) Is there a better way ?
 #define CLIP_2N_SHIFT(y, n) {                   \

@@ -1,4 +1,4 @@
-# ESP8266Audio - supports ESP8266 & ESP32 & Raspberry Pi RP2040[![Gitter](https://badges.gitter.im/ESP8266Audio/community.svg)](https://gitter.im/ESP8266Audio/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
+# ESP8266Audio - supports ESP8266 & ESP32 & Raspberry Pi RP2040[![Gitter](https://badges.gitter.im/ESP8266Audio/community.svg)](https://gitter.im/ESP8266Audio/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 Arduino library for parsing and decoding MOD, WAV, MP3, FLAC, MIDI, AAC, and RTTL files and playing them on an I2S DAC or even using a software-simulated delta-sigma DAC with dynamic 32x-128x oversampling.
 
 ESP8266 is fully supported and most mature, but ESP32 is also mostly there with built-in DAC as well as external ones.
@@ -84,7 +84,7 @@ void setup()
 void loop()
 {
   if (mp3->isRunning()) {
-    if (!mp3->loop()) mp3->stop(); 
+    if (!mp3->loop()) mp3->stop();
   } else {
     Serial.printf("MP3 done\n");
     delay(1000);
@@ -162,7 +162,7 @@ AudioOutputNull:  Just dumps samples to /dev/null.  Used for speed testing as it
 ## I2S DACs
 I've used both the Adafruit [I2S +3W amp DAC](https://www.adafruit.com/product/3006) and a generic PCM5102 based DAC with success.  The biggest problems I've seen from users involve pinouts from the ESP8266 for GPIO and hooking up all necessary pins on the DAC board. The essential pins are:
 
-I2S pin | Common label* | ESP8266 pin 
+I2S pin | Common label* | ESP8266 pin
 --------|---------------|-------------
 LRC     | D4            | GPIO2
 BCLK    | D8            | GPIO15
@@ -196,7 +196,7 @@ Use the `AudioOutputI2S*No*DAC` object instead of the `AudioOutputI2S` in your c
                             +-|--|--|-+    | P|
                               |  |  +------+ E|
                               |  |         | A|
-ESP8266-GND ------------------+  |  +------+ K| 
+ESP8266-GND ------------------+  |  +------+ K|
                                  |  |      | E|
 ESP8266-I2SOUT (Rx) -----/\/\/\--+  |      \ R|
                                     |       +-|
@@ -237,15 +237,15 @@ If you've built the amp but are not getting any sound, @msmcmickey wrote up a ve
 2. If connected properly, do you have ~5 volts between the collector and emitter?
 3.  Was the transistor possibly damaged/overheated during soldering, or by connecting it improperly? Out-of-circuit diode check voltage drop test using a multimeter from base->emitter and base->collector should be between .5 and .7 volts. If it's shorted or open or conducting in both directions, then replace it and make sure it's connected properly.
 
-## SPDIF optical output 
-The proper way would be using optical TOSLINK transmitter (i.e. TOTXxxx). For testing, you can try with ~660nm red LED and resistor. Same as your basic Blink project with external LED, just that the LED will blink a bit faster. 
+## SPDIF optical output
+The proper way would be using optical TOSLINK transmitter (i.e. TOTXxxx). For testing, you can try with ~660nm red LED and resistor. Same as your basic Blink project with external LED, just that the LED will blink a bit faster.
 ```
                 ____
-ESP Pin -------|____|--------+ 
-                             | 
-                            --- 
-                             V LED 
-                            --- 
+ESP Pin -------|____|--------+
+                             |
+                            ---
+                             V LED
+                            ---
                              |
 Ground  ---------------------+
 ```

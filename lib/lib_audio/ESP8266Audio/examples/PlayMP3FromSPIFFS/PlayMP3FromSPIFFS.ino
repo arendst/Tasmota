@@ -12,7 +12,7 @@
 
 // To run, set your ESP8266 build to 160MHz, and include a SPIFFS of 512KB or greater.
 // Use the "Tools->ESP8266/ESP32 Sketch Data Upload" menu to write the MP3 to SPIFFS
-// Then upload the sketch normally.  
+// Then upload the sketch normally.
 
 // pno_cs from https://ccrma.stanford.edu/~jos/pasp/Sound_Examples.html
 
@@ -31,7 +31,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *stri
   if (isUnicode) {
     string += 2;
   }
-  
+
   while (*string) {
     char a = *(string++);
     if (isUnicode) {
@@ -46,7 +46,7 @@ void MDCallback(void *cbData, const char *type, bool isUnicode, const char *stri
 
 void setup()
 {
-  WiFi.mode(WIFI_OFF); 
+  WiFi.mode(WIFI_OFF);
   Serial.begin(115200);
   delay(1000);
   SPIFFS.begin();

@@ -3,7 +3,7 @@
  *
  * Created: 22/1/2016 15:29:12
  *  Author: akatran
- */ 
+ */
 
 
 #ifndef GPIO_HELPER_H_

@@ -3,12 +3,12 @@
  * Example sketch/program to fix a broken UID changeable MIFARE cards.
  * --------------------------------------------------------------------------------------------------------------------
  * This is a MFRC522 library example; for further details and other examples see: https://github.com/miguelbalboa/rfid
- * 
+ *
  * This sample shows how to fix a broken UID changeable MIFARE cards that have a corrupted sector 0.
- * 
+ *
  * @author Tom Clement
  * @license Released into the public domain.
- * 
+ *
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
@@ -38,7 +38,7 @@ void setup() {
   SPI.begin();         // Init SPI bus
   mfrc522.PCD_Init();  // Init MFRC522 card
   Serial.println(F("Warning: this example clears your mifare UID, use with care!"));
-  
+
   // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;

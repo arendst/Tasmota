@@ -479,7 +479,7 @@ uint8_t sns_opentherm_read_flags(char *data, uint32_t len)
 // flag value, however, this command does not update the settings.
 #define D_CMND_SET_HOT_WATER_ENABLED "dhw"
 
-// BLOR - Reset boiler 
+// BLOR - Reset boiler
 #define D_CMND_BLLOR "blor"
 
 const char kOpenThermCommands[] PROGMEM = D_PRFX_OTHERM "|" D_CMND_OTHERM_BOILER_SETPOINT "|" D_CMND_OTHERM_DHW_SETPOINT

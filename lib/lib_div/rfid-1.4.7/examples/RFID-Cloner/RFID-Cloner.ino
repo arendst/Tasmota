@@ -1,11 +1,11 @@
 /*
- * Copy the RFID card data into variables and then 
+ * Copy the RFID card data into variables and then
  * scan the second empty card to copy all the data
  * ----------------------------------------------------------------------------
- * Example sketch/program which will try the most used default keys listed in 
+ * Example sketch/program which will try the most used default keys listed in
  * https://code.google.com/p/mfcuk/wiki/MifareClassicDefaultKeys to dump the
  * block 0 of a MIFARE RFID card using a RFID-RC522 reader.
- * 
+ *
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
@@ -32,7 +32,7 @@ byte buffer[18];
 byte block;
 byte waarde[64][16];
 MFRC522::StatusCode status;
-    
+
 MFRC522::MIFARE_Key key;
 
 // Number of known default keys (hard-coded)
@@ -70,7 +70,7 @@ void setup() {
 
 
  //Via seriele monitor de bytes uitlezen in hexadecimaal
- 
+
 void dump_byte_array(byte *buffer, byte bufferSize) {
     for (byte i = 0; i < bufferSize; i++) {
         Serial.print(buffer[i] < 0x10 ? " 0" : " ");
@@ -92,13 +92,13 @@ void dump_byte_array1(byte *buffer, byte bufferSize) {
  *
  * @return true when the given key worked, false otherwise.
  */
- 
+
 bool try_key(MFRC522::MIFARE_Key *key)
 {
     bool result = false;
-    
+
     for(byte block = 0; block < 64; block++){
-      
+
     // Serial.println(F("Authenticating using key A..."));
     status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
@@ -120,29 +120,29 @@ bool try_key(MFRC522::MIFARE_Key *key)
         Serial.print(F("Success with key:"));
         dump_byte_array((*key).keyByte, MFRC522::MF_KEY_SIZE);
         Serial.println();
-        
+
         // Dump block data
         Serial.print(F("Block ")); Serial.print(block); Serial.print(F(":"));
         dump_byte_array1(buffer, 16); //omzetten van hex naar ASCI
         Serial.println();
-        
+
         for (int p = 0; p < 16; p++) //De 16 bits uit de block uitlezen
         {
           waarde [block][p] = buffer[p];
           Serial.print(waarde[block][p]);
           Serial.print(" ");
         }
-        
+
         }
     }
     Serial.println();
-    
+
     Serial.println("1.Read card \n2.Write to card \n3.Copy the data.");
 
     mfrc522.PICC_HaltA();       // Halt PICC
     mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
     return result;
-    
+
     start();
 }
 
@@ -151,17 +151,17 @@ bool try_key(MFRC522::MIFARE_Key *key)
  */
 void loop() {
   start();
-    
+
 }
 
 void start(){
   choice = Serial.read();
-  
+
   if(choice == '1')
   {
     Serial.println("Read the card");
     keuze1();
-      
+
     }
     else if(choice == '2')
     {
@@ -176,24 +176,24 @@ void start(){
 }
 
 void keuze2(){ //Test waardes in blokken
-  
+
   for(block = 4; block <= 62; block++){
     if(block == 7 || block == 11 || block == 15 || block == 19 || block == 23 || block == 27 || block == 31 || block == 35 || block == 39 || block == 43 || block == 47 || block == 51 || block == 55 || block == 59){
       block ++;
     }
-  
-  Serial.print(F("Writing data into block ")); 
+
+  Serial.print(F("Writing data into block "));
   Serial.print(block);
   Serial.println("\n");
-  
+
     for(int j = 0; j < 16; j++){
       Serial.print(waarde[block][j]);
       Serial.print(" ");
     }
     Serial.println("\n");
-    
+
   }
-  
+
   Serial.println("1.Read card \n2.Write to card \n3.Copy the data.");
   start();
 }
@@ -215,7 +215,7 @@ Serial.println("Insert new card...");
     Serial.print(F("PICC type: "));
     MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     Serial.println(mfrc522.PICC_GetTypeName(piccType));
-    
+
     // Try the known default keys
     /*MFRC522::MIFARE_Key key;
     for (byte k = 0; k < NR_KNOWN_KEYS; k++) {
@@ -233,7 +233,7 @@ Serial.println("Insert new card...");
       i++;
     }
     block = i;
-    
+
       // Authenticate using key A
     Serial.println(F("Authenticating using key A..."));
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
@@ -242,7 +242,7 @@ Serial.println("Insert new card...");
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }
-    
+
     // Authenticate using key B
     Serial.println(F("Authenticating again using key B..."));
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, block, &key, &(mfrc522.uid));
@@ -251,28 +251,28 @@ Serial.println("Insert new card...");
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }
-    
+
     // Write data to the block
-    Serial.print(F("Writing data into block ")); 
+    Serial.print(F("Writing data into block "));
     Serial.print(block);
     Serial.println("\n");
-          
-    dump_byte_array(waarde[block], 16); 
-    
-          
+
+    dump_byte_array(waarde[block], 16);
+
+
      status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(block, waarde[block], 16);
       if (status != MFRC522::STATUS_OK) {
         Serial.print(F("MIFARE_Write() failed: "));
         Serial.println(mfrc522.GetStatusCodeName(status));
       }
-    
-        
+
+
      Serial.println("\n");
-     
+
   }
   mfrc522.PICC_HaltA();       // Halt PICC
   mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
-  
+
   Serial.println("1.Read card \n2.Write to card \n3.Copy the data.");
   start();
 }
@@ -294,7 +294,7 @@ void keuze1(){ //Read card
     Serial.print(F("PICC type: "));
     MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     Serial.println(mfrc522.PICC_GetTypeName(piccType));
-    
+
     // Try the known default keys
     MFRC522::MIFARE_Key key;
     for (byte k = 0; k < NR_KNOWN_KEYS; k++) {

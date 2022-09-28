@@ -1,6 +1,6 @@
 PROJECT_NAME 	= $(PWD:B) ;
 PROJECT_DIR 	= . ;
-PROJECT_LIBS = SPI RF24 ; 
+PROJECT_LIBS = SPI RF24 ;
 
 OUT_DIR = ojam ;
 F_CPU 		= 16000000 ;
@@ -11,8 +11,8 @@ UPLOAD_RATE 	= 57600 ;
 AVRDUDE_PROTOCOL = stk500v1 ;
 COM 		= 33 ;
 
-# Host-specific overrides for locations 
-if $(OS) = MACOSX 
+# Host-specific overrides for locations
+if $(OS) = MACOSX
 {
 ARDUINO_VERSION	= 22 ;
 OLD_DIR 	= /opt/arduino-0021 ;
@@ -39,7 +39,7 @@ AVRDUDE 	= $(AVR_TOOLS_PATH)/avrdude ;
 
 DEFINES  	= F_CPU=$(F_CPU)L ARDUINO=$(ARDUINO_VERSION) VERSION_H ;
 CTUNING  	= -ffunction-sections -fdata-sections ;
-CXXTUNING  	= -fno-exceptions -fno-strict-aliasing ; 
+CXXTUNING  	= -fno-exceptions -fno-strict-aliasing ;
 CFLAGS  	= -Os -Wall -Wextra -mmcu=$(MCU) $(CTUNING) ;
 CXXFLAGS  	= $(CFLAGS) $(CXXTUNING) ;
 LDFLAGS  	= -Os -lm -Wl,--gc-sections -mmcu=atmega328p ;
@@ -91,7 +91,7 @@ rule AvrCc
 
 actions AvrCc
 {
-  $(AVR_CC) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CFLAGS) $(>) 
+  $(AVR_CC) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CFLAGS) $(>)
 }
 
 rule AvrC++
@@ -106,7 +106,7 @@ rule AvrC++
 
 actions AvrC++
 {
-  $(AVR_CXX) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CXXFLAGS) $(>) 
+  $(AVR_CXX) -c -o $(<) $(CCHDRS) $(CCDEFS) $(CXXFLAGS) $(>)
 }
 
 rule Pde
@@ -119,9 +119,9 @@ rule Pde
 
 actions Pde
 {
-  echo "#include <WProgram.h>" > $(<) 
+  echo "#include <WProgram.h>" > $(<)
   echo "#line 1 \"$(>)\"" >> $(<)
-  cat $(>) >> $(<) 
+  cat $(>) >> $(<)
 }
 
 rule AvrPde
@@ -143,7 +143,7 @@ rule AvrObject
 
 rule AvrObjects
 {
-  for _I in $(<) 
+  for _I in $(<)
   {
     AvrObject $(OUT_DIR)/$(_I:B).o : $(_I) ;
   }
@@ -160,7 +160,7 @@ rule AvrMainFromObjects
 
 actions AvrMainFromObjects
 {
-  $(AVR_LD) $(LDFLAGS) -o $(<) $(>) 
+  $(AVR_LD) $(LDFLAGS) -o $(<) $(>)
 }
 
 rule AvrMain

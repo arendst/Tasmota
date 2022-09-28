@@ -1,5 +1,5 @@
 /*
-* Project Name: TM1638 
+* Project Name: TM1638
 * File: TM1638plus.cpp
 * Description: source file arduino  library for TM1638 module(LED & KEY). Model 1 & Model 3
 * Author: Gavin Lyons.
@@ -70,7 +70,7 @@ void TM1638plus::setLEDs(uint16_t ledvalues)
 
     if ((ledvalues & (1 << LEDposition)) != 0) {
       colour |= TM_RED_LED; //scan lower byte, set Red if one
-    } 
+    }
 
     if ((ledvalues & (1 << (LEDposition + 8))) != 0) {
       colour |= TM_GREEN_LED; //scan upper byte, set green if one
@@ -84,7 +84,7 @@ void TM1638plus::setLEDs(uint16_t ledvalues)
 void TM1638plus::displayIntNum(unsigned long number, boolean leadingZeros)
 {
   char values[TM_DISPLAY_SIZE + 1];
-  snprintf(values, TM_DISPLAY_SIZE + 1, leadingZeros ? "%08ld" : "%ld", number); 
+  snprintf(values, TM_DISPLAY_SIZE + 1, leadingZeros ? "%08ld" : "%ld", number);
   displayText(values);
 }
 
@@ -94,7 +94,7 @@ void TM1638plus::DisplayDecNumNibble(uint16_t  numberUpper, uint16_t numberLower
   char valuesUpper[TM_DISPLAY_SIZE + 1];
   char valuesLower[TM_DISPLAY_SIZE/2 + 1];
   snprintf(valuesUpper, TM_DISPLAY_SIZE/2 + 1, leadingZeros ? "%04d" : "%d", numberUpper);
-  snprintf(valuesLower, TM_DISPLAY_SIZE/2 + 1, leadingZeros ? "%04d" : "%d", numberLower); 
+  snprintf(valuesLower, TM_DISPLAY_SIZE/2 + 1, leadingZeros ? "%04d" : "%d", numberLower);
   strcat(valuesUpper ,valuesLower);
   displayText(valuesUpper);
 }
@@ -114,7 +114,7 @@ void TM1638plus::displayText(const char *text) {
 }
 
 
-void TM1638plus::displayASCIIwDot(uint8_t position, uint8_t ascii) { 
+void TM1638plus::displayASCIIwDot(uint8_t position, uint8_t ascii) {
     // add 128 or 0x080 0b1000000 to turn on decimal point/dot in seven seg
   display7Seg(position, pgm_read_byte(&SevenSeg[ascii- TM_ASCII_OFFSET]) + TM_DOT_MASK_DEC);
 }
@@ -124,25 +124,25 @@ void TM1638plus::display7Seg(uint8_t position, uint8_t value) { // call 7-segmen
   digitalWrite(_STROBE_IO, LOW);
   sendData(TM_SEG_ADR + (position << 1));
   sendData(value);
-  digitalWrite(_STROBE_IO, HIGH); 
+  digitalWrite(_STROBE_IO, HIGH);
 }
 
 
 void TM1638plus::displayASCII(uint8_t position, uint8_t ascii) {
   display7Seg(position, pgm_read_byte(&SevenSeg[ascii - TM_ASCII_OFFSET]));
 }
- 
-void TM1638plus::displayHex(uint8_t position, uint8_t hex) 
+
+void TM1638plus::displayHex(uint8_t position, uint8_t hex)
 {
     uint8_t offset = 0;
     if (hex <= 9)
     {
         display7Seg(position, pgm_read_byte(&SevenSeg[hex + TM_HEX_OFFSET]));
-        // 16 is offset in reduced ASCII table for 0 
+        // 16 is offset in reduced ASCII table for 0
     }else if ((hex >= 10) && (hex <=15))
     {
         // Calculate offset in reduced ASCII table for AbCDeF
-        switch(hex) 
+        switch(hex)
         {
          case 10: offset = 'A'; break;
          case 11: offset = 'b'; break;
@@ -153,7 +153,7 @@ void TM1638plus::displayHex(uint8_t position, uint8_t hex)
         }
         display7Seg(position, pgm_read_byte(&SevenSeg[offset-TM_ASCII_OFFSET]));
     }
-    
+
 }
 
 
@@ -161,24 +161,24 @@ uint8_t TM1638plus::readButtons()
 {
   uint8_t buttons = 0;
   uint8_t v =0;
-  
+
   digitalWrite(_STROBE_IO, LOW);
   sendData(TM_BUTTONS_MODE);
-  pinMode(_DATA_IO, INPUT);  
+  pinMode(_DATA_IO, INPUT);
 
   for (uint8_t i = 0; i < 4; i++)
   {
-    
+
     if  (_HIGH_FREQ == false)
         v = shiftIn(_DATA_IO, _CLOCK_IO, LSBFIRST) << i;
     else
         v = TM_common.HighFreqshiftin(_DATA_IO, _CLOCK_IO, LSBFIRST) << i;
- 
+
     buttons |= v;
   }
 
   pinMode(_DATA_IO, OUTPUT);
-  digitalWrite(_STROBE_IO, HIGH); 
+  digitalWrite(_STROBE_IO, HIGH);
   return buttons;
 }
 

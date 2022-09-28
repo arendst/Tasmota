@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-/* 
+/*
  * File:   ccronexpr.c
  * Author: alex
- * 
+ *
  * Created on February 24, 2015, 9:35 AM
  */
 
@@ -621,7 +621,7 @@ static char** split_str(const char* str, char del, size_t* len_out) {
         stlen += 1;
         if (stlen >= CRON_MAX_STR_LEN_TO_SPLIT) goto return_error;
     }
-    
+
     for (i = 0; i < stlen; i++) {
         int c = str[i];
         if (del == str[i]) {
@@ -958,7 +958,7 @@ void cron_parse_expr(const char* expression, cron_expr* target, const char** err
 
     goto return_res;
 
-    return_res: 
+    return_res:
     free_splitted(fields, len);
 }
 

@@ -28,13 +28,13 @@ class block_builder:
         if depend(obj, macro):
             self.block.type = obj.type
             self.block.attr = obj.attr
-            
+
             if "name" in obj.attr:
                 if not self.get_strings_literal(self.block):
                     self.strtab.append(obj.attr["name"])
                 else:
                     self.strtab_weak.append(obj.attr["name"])
-            
+
             for key in obj.data_ordered:
                 second = obj.data[key]
                 if second.depend == None or macro.query(second.depend):
@@ -44,7 +44,7 @@ class block_builder:
                     else:
                         self.strtab_weak.append(key)
                     self.block.data_ordered.append(key)
-    
+
     def block_tostring(self, block):
         ostr = ""
         if block.type == "map":
@@ -63,14 +63,14 @@ class block_builder:
         map_name = block.name + "_map"
         if len(block.data) > 0:
             ostr += self.map_tostring(block, map_name, True, self.get_strings_literal(block)) + "\n"
-        
+
         ostr += self.scope(block) + " be_define_const_class(\n    "
         ostr += block.name + ",\n    "
         ostr += str(hmap.var_count()) + ",\n    "
         ostr += self.get_super(block) + ",\n    "
         ostr += self.name(block) + "\n);\n"
         return ostr
-    
+
     def map_tostring(self, block, name, local, literal):
         hmap = hash_map(block.data)
         entlist = hmap.entry_list()
@@ -93,7 +93,7 @@ class block_builder:
         ostr += name + ",\n    "
         ostr += str(len(entlist)) + "\n);\n"
         return ostr
-    
+
     def vartab_tostring(self, block):
         ostr = ""
         varvec = []
@@ -104,7 +104,7 @@ class block_builder:
             varvec.append(block.data[key])
             idxblk.data[key] = "int(" + str(index) + ")"
             index += 1
-        
+
         ostr += self.map_tostring(idxblk, block.name + "_map", True, False) + "\n"
         ostr += "static const bvalue __vlist_array[] = {\n";
         for it in varvec:
@@ -115,7 +115,7 @@ class block_builder:
         ostr += block.name + "_vector,\n    __vlist_array,\n    "
         ostr += str(len(varvec)) + "\n);\n"
         return ostr
-    
+
     def module_tostring(self, block):
         ostr = ""
         name = "m_lib" + block.name
@@ -143,7 +143,7 @@ class block_builder:
             return "(bclass *)&" + block.attr["super"]
         else:
             return "NULL"
-    
+
     def get_strings_literal(self, block):
         if "strings" in block.attr:
             a = block.attr["strings"]
@@ -156,7 +156,7 @@ class block_builder:
             return block.attr["name"]
         else:
             return block.name
-    
+
     def writefile(self, filename, text):
         otext = "#include \"be_constobj.h\"\n\n" + text
         with open(filename, "w") as f:
@@ -169,4 +169,3 @@ class block_builder:
         else:
             name = self.block.name
         self.writefile(path + "/be_fixed_" + name + ".h", s)
-        

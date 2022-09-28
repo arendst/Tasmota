@@ -5,13 +5,13 @@ Many improvements have been made to this library vs the original, this is a brie
 * [Server](#server)
 * [Advertising](#advertising)
 * [Client](#client)
-* [General](#general)  
+* [General](#general)
 <br/>
 
 <a name="server"></a>
 # Server
 
-`NimBLEService::NimBLEService::createCharacteristic` takes a 3rd parameter to specify the maximum data size that can be stored by the characteristic. This allows for limiting the RAM use of the characteristic in cases where small amounts of data are expected.  
+`NimBLEService::NimBLEService::createCharacteristic` takes a 3rd parameter to specify the maximum data size that can be stored by the characteristic. This allows for limiting the RAM use of the characteristic in cases where small amounts of data are expected.
 <br/>
 
 `NimBLECharacteristic::setValue(const T &s)`
@@ -54,12 +54,12 @@ This will send the struct to the receiving client when read or a notification se
 
 **Advertising will automatically start when a client disconnects.**
 
-A new method `NimBLEServer::advertiseOnDisconnect(bool)` has been implemented to control this, true(default) = enabled.  
+A new method `NimBLEServer::advertiseOnDisconnect(bool)` has been implemented to control this, true(default) = enabled.
 <br/>
 
 `NimBLEServer::removeService` takes an additional parameter `bool deleteSvc` that if true will delete the service and all characteristics / descriptors belonging to it and invalidating any pointers to them.
 
-If false the service is only removed from visibility by clients. The pointers to the service and it's characteristics / descriptors will remain valid and the service can be re-added in the future using `NimBLEServer::addService`.  
+If false the service is only removed from visibility by clients. The pointers to the service and it's characteristics / descriptors will remain valid and the service can be re-added in the future using `NimBLEServer::addService`.
 <br/>
 
 <a name="advertising"></a>
@@ -70,7 +70,7 @@ Now takes 2 optional parameters, the first is the duration to advertise for (in 
 
 This provides an opportunity to update the advertisement data if desired.
 
-Also now returns a bool value to indicate if advertising successfully started or not.  
+Also now returns a bool value to indicate if advertising successfully started or not.
 <br/>
 
 <a name="client"></a>
@@ -100,7 +100,7 @@ struct my_struct{
 Has been **deprecated** as now the internally stored characteristic value is updated when notification/indication is received.
 
 `NimBLERemoteCharacteristic::subscribe` and `NimBLERemoteCharacteristic::unsubscribe` have been implemented to replace it.
-A callback is no longer required to get the most recent value unless timing is important. Instead, the application can call `NimBLERemoteCharacteristic::getValue` to get the last updated value any time.  
+A callback is no longer required to get the most recent value unless timing is important. Instead, the application can call `NimBLERemoteCharacteristic::getValue` to get the last updated value any time.
 <br/>
 
 The `notify_callback` function is now defined as a `std::function` to take advantage of using `std::bind` to specify a class member function for the callback.
@@ -116,14 +116,14 @@ notify_callback callback = std::bind(&<ClassName>::<memberFunctionCallbackName>,
 `NimBLERemoteCharacteristic::readValue` and `NimBLERemoteCharacteristic::getValue` take an optional timestamp parameter which will update it's value with
 the time the last value was received.
 
-> NimBLEClient::getService  
-> NimBLERemoteService::getCharacteristic  
+> NimBLEClient::getService
+> NimBLERemoteService::getCharacteristic
 > NimBLERemoteCharacteristic::getDescriptor
 
 These methods will now check the respective vectors for the attribute object and, if not found, will retrieve (only)
 the specified attribute from the peripheral.
 
-These changes allow more control for the user to manage the resources used for the attributes.  
+These changes allow more control for the user to manage the resources used for the attributes.
 <br/>
 
 `NimBLEClient::connect()` can now be called without an address or advertised device parameter. This will connect to the device with the address previously set when last connected or set with `NimBLEDevice::setPeerAddress()`.
@@ -141,7 +141,7 @@ New constructor for `NimBLEUUID(uint32_t, uint16_t, uint16_t, uint64_t)` added t
 Security/pairing operations are now handled in the respective `NimBLEClientCallbacks` and `NimBLEServerCallbacks` classes, `NimBLESecurity`(deprecated) remains for backward compatibility.
 
 Configuration options have been added to add or remove debugging information, when disabled (default) significantly reduces binary size.
-In ESP-IDF the options are in menuconfig: `Main menu -> ESP-NimBLE-cpp configuration`.  
+In ESP-IDF the options are in menuconfig: `Main menu -> ESP-NimBLE-cpp configuration`.
 For Arduino the options must be commented / uncommented in nimconfig.h.
 
 Characteristics and descriptors now use the `NimBLEAttValue` class to store their data. This is a polymorphic container class capable of converting to/from many different types efficiently. See: [#286](https://github.com/h2zero/NimBLE-Arduino/pull/286)

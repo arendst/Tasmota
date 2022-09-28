@@ -30,13 +30,13 @@ Build the tests using the provided `Makefile`:
 
     $ make
 
-This will create a set of executables in `./bin/`. Run each of these executables to test the corresponding functionality. 
+This will create a set of executables in `./bin/`. Run each of these executables to test the corresponding functionality.
 
 *Note:* the `connect_spec` and `keepalive_spec` tests involve testing keepalive timers so naturally take a few minutes to run through.
 
 ## Arduino tests
 
-*Note:* INO Tool doesn't currently play nicely with Arduino 1.5. This has broken this test suite. 
+*Note:* INO Tool doesn't currently play nicely with Arduino 1.5. This has broken this test suite.
 
 Without a suitable arduino plugged in, the test suite will only check the
 example sketches compile cleanly against the library.
@@ -52,7 +52,7 @@ test case is built, uploaded and then the tests run.
 ### Running
 
 The test suite _does not_ run an MQTT server - it is assumed to be running already.
- 
+
     $ python testsuite.py
 
 A summary of activity is printed to the console. More comprehensive logs are written
@@ -67,7 +67,7 @@ The test case must follow these conventions:
  - sub-class `unittest.TestCase`
  - provide the class methods `setUpClass` and `tearDownClass` (TODO: make this optional)
  - all test method names begin with `test_`
- 
+
 The suite will call the `setUpClass` method _before_ uploading the sketch. This
 allows any test setup to be performed before the sketch runs - such as connecting
 a client and subscribing to topics.

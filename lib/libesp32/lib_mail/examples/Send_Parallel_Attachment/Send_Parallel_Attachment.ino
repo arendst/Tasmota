@@ -1,19 +1,19 @@
 
 
 /**
- * This example will send the Email with media as parallen attachments 
+ * This example will send the Email with media as parallen attachments
  * e.g. audio and images and play or display them simultaneously on the Email client.
- * 
+ *
  * This depends on the Mail client supports.
- * 
+ *
  * The html and text version messages will be sent.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -43,7 +43,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -160,7 +160,7 @@ void setup()
   /* The attachment data item */
   SMTP_Attachment att;
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, file path, file storage type,
    * transfer encoding and content encoding
   */
@@ -171,7 +171,7 @@ void setup()
   att.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
   message.addParallelAttachment(att);
 
-  /** Set the attachment info e.g. 
+  /** Set the attachment info e.g.
    * file name, MIME type, file path, file storage type,
    * transfer encoding and content encoding
   */

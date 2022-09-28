@@ -1,7 +1,7 @@
 /*
   AudioOutputULP
   Outputs to ESP32 DAC through the ULP, freeing I2S for other uses
-  
+
   Copyright (C) 2020  Martin Laclaustra, based on bitluni's code
 
   This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@ bool AudioOutputULP::begin()
     //totalSampleWords += 512;
     //dacTableStart2 = dacTableStart1;
   }
-  
+
   //calculate the actual ULP clock
   unsigned long rtc_8md256_period = rtc_clk_cal(RTC_CAL_8MD256, 1000);
   unsigned long rtc_fast_freq_hz = 1000000ULL * (1 << RTC_CLK_CAL_FRACT) * 256 / rtc_8md256_period;
@@ -71,7 +71,7 @@ bool AudioOutputULP::begin()
   int loopCycles = 134;
   int loopHalfCycles1 = 90;
   int loopHalfCycles2 = 44;
-  
+
   Serial.print("Real RTC clock: ");
   Serial.println(rtc_fast_freq_hz);
 
@@ -81,10 +81,10 @@ bool AudioOutputULP::begin()
     dt = (rtc_fast_freq_hz / hertz) - loopHalfCycles1;
     dt2 = (rtc_fast_freq_hz / hertz) - loopHalfCycles2;
   }
-  
+
   Serial.print("dt: ");
   Serial.println(dt);
-  
+
   Serial.print("dt2: ");
   Serial.println(dt2);
 
@@ -140,7 +140,7 @@ bool AudioOutputULP::begin()
   //  this is how to get the opcodes
   //  for(int i = 0; i < size; i++)
   //    Serial.println(RTC_SLOW_MEM[i], HEX);
-  
+
   //create DAC opcode tables
   switch(activeDACs){
     case 1:
@@ -175,7 +175,7 @@ bool AudioOutputULP::begin()
   //set all samples to 128 (silence)
   for(int i = 0; i < totalSampleWords; i++)
     RTC_SLOW_MEM[bufferStart + i] = 0x8080;
-    
+
   //start
   RTC_SLOW_MEM[indexAddress] = 0;
   ulp_run(0);
@@ -245,7 +245,7 @@ bool AudioOutputULP::stop()
   size_t load_addr = 0;
   size_t size = sizeof(stopulp)/sizeof(ulp_insn_t);
   ulp_process_macros_and_load(load_addr, stopulp, &size);
-  
+
   //start
   ulp_run(0);
 

@@ -1,16 +1,16 @@
 
 
 /**
- * This example will send the Email which the 
+ * This example will send the Email which the
  * message html and text body will be embedded as
  * attachment or inline content.
- * 
+ *
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
@@ -37,7 +37,7 @@
 */
 #define SMTP_HOST "################"
 
-/** The smtp port e.g. 
+/** The smtp port e.g.
  * 25  or esp_mail_smtp_port_25
  * 465 or esp_mail_smtp_port_465
  * 587 or esp_mail_smtp_port_587
@@ -129,7 +129,7 @@ void setup()
   /* The name of embedded file */
   message.html.embed.filename = "test.html";
 
-  /** The embedded type 
+  /** The embedded type
    * esp_mail_smtp_embed_message_type_attachment or 0
    * esp_mail_smtp_embed_message_type_inline or 1
   */
@@ -156,7 +156,7 @@ void setup()
 
   /* Set the custom message header */
   message.addHeader("Message-ID: <abcde.fghij@gmail.com>");
-  
+
 
   /* Connect to server with the session config */
   if (!smtp.connect(&session))

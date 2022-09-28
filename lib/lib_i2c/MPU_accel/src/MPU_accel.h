@@ -14,7 +14,7 @@
 #include <Wire.h>
 #include <Arduino.h>
 
-#define MPU6886_ADDRESS           0x68 
+#define MPU6886_ADDRESS           0x68
 #define MPU6886_WHOAMI            0x75
 #define MPU6886_ACCEL_INTEL_CTRL  0x69
 #define MPU6886_SMPLRT_DIV        0x19
@@ -48,7 +48,7 @@
 
 //#define G (9.8)
 #define RtA     57.324841
-#define AtR    	0.0174533	
+#define AtR    	0.0174533
 #define Gyro_Gr	0.0010653
 
 class MPU_accel {

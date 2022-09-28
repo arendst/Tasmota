@@ -1,9 +1,9 @@
 /****************************************************************************************************************************\
-* Arduino project "TheoTinySensor" Copyright 2013 Theo Arends 
-* This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License 
+* Arduino project "TheoTinySensor" Copyright 2013 Theo Arends
+* This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
 * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
 * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 ******************************************************************************************************************************
 
@@ -11,7 +11,7 @@
 * Purpose        : Arduino Source code for Sensor based on Atmel ATTiny85, running on 8MHz
 * Version        : R109 - DS18B20 and BH1750 and Vcc test
 * Date           : 20140502
-* 
+*
 * This code turns an Atmel ATTiny85 chip into a Sensor using the TheoV2 protocol.
 * This code is not of any use without running a Unit within RF range to receive sensor data.
 \***************************************************************************************************************/
@@ -24,7 +24,7 @@
 //*****************************************************************************
 
 #ifdef THEO_TEST
-  #define CHANNEL               0                // 0 - 7, 0 discard by plugin 
+  #define CHANNEL               0                // 0 - 7, 0 discard by plugin
   #define SEND_DELAY            2                // Send Delay in multiples of 4 seconds, so 2 = 2x4=8 seconds
   #define VCC_LOOP              2
 #else
@@ -39,18 +39,18 @@
 //*****************************************************************************
 
 #define DALLAS_PIN              1                // data to DS18B20, fysieke pin 6 on ATTiny85
-#define BH1750_ADDRESS       0x23                // i2c address BH1750 
+#define BH1750_ADDRESS       0x23                // i2c address BH1750
 
 #define RF_TransmitDataPin      4                // data to RF Transmitter, fysieke pin 3 on ATTiny85
 
-// ATMEL ATTINY85 
-// AI=Analog Input 
-//                         o-\/-+ 
-//                 reset  1|    |8  VCC 
+// ATMEL ATTINY85
+// AI=Analog Input
+//                         o-\/-+
+//                 reset  1|    |8  VCC
 //    Pin 3   (AI 3) PB3  2|    |7  PB2 (AI 1) Pin 2 - SCL
 //    Pin 4   (AI 2) PB4  3|    |6  PB1 PWM Pin 1 - PCINT1
 //                   GND  4|    |5  PB0 PWM Pin 0 - SDA
-//                         +----+ 
+//                         +----+
 
 // Used by DS18B20
 #include <OneWire.h>                             // http://www.pjrc.com/teensy/arduino_libraries/OneWire.zip
@@ -101,7 +101,7 @@ void loop()
 #include <avr/wdt.h>
 
 void Watchdog_setup(int ii)
-{  
+{
   // 0=16ms, 1=32ms, 2=64ms, 3=125ms, 4=250ms, 5=500ms, 6=1s, 7=2s, 8=4s, 9=8s
   // The prescale value is held in bits 5,2,1,0
   // This block moves ii into these bits
@@ -110,7 +110,7 @@ void Watchdog_setup(int ii)
   bb=ii & 7;
   if (ii > 7) bb|= (1<<5);
   bb|= (1<<WDCE);
-  
+
   MCUSR &= ~(1<<WDRF);                           // Reset the watchdog reset flag
   WDTCR |= (1<<WDCE) | (1<<WDE);                 // Start timed sequence
   WDTCR = bb;                                    // Set new watchdog timeout value
@@ -119,9 +119,9 @@ void Watchdog_setup(int ii)
 
 void Watchdog_sleep(int waitCounter)
 {
-  while (waitCounter != 0) 
+  while (waitCounter != 0)
   {
-    bitClear(ADCSRA,ADEN);                       // Switch Analog to Digital converter OFF 
+    bitClear(ADCSRA,ADEN);                       // Switch Analog to Digital converter OFF
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);         // Set sleep mode
     sleep_mode();                                // System sleeps here
     waitCounter--;
@@ -135,7 +135,7 @@ void Watchdog_delay(int prescale)
   Watchdog_setup(8);
 }
 
-ISR(WDT_vect) 
+ISR(WDT_vect)
 {
   // Don't do anything here but we must include this
   // block of code otherwise the interrupt calls an
@@ -148,7 +148,7 @@ ISR(WDT_vect)
 #define RF_PULSE_0               500             // PWM: Tijdsduur van de puls bij verzenden van een '0' in uSec.
 #define RF_PULSE_MID            1000             // PWM: Pulsen langer zijn '1'
 #define RF_PULSE_1              1500             // PWM: Tijdsduur van de puls bij verzenden van een '1' in uSec. (3x RF_PULSE_0)
-#define RF_SPACE                 500             // PWM: Tijdsduur van de space tussen de bitspuls bij verzenden van een '1' in uSec.   
+#define RF_SPACE                 500             // PWM: Tijdsduur van de space tussen de bitspuls bij verzenden van een '1' in uSec.
 #define TransmitRepeat             2
 
 void SendData(int payload1, int payload2)
@@ -164,8 +164,8 @@ void SendData(int payload1, int payload2)
   } DataBlock;
   byte Size = sizeof(DataBlock);
 
-  DataBlock.Type     = SENSOR_TYPE;  
-  DataBlock.Channel  = CHANNEL;  
+  DataBlock.Type     = SENSOR_TYPE;
+  DataBlock.Channel  = CHANNEL;
   if (VccTest >= VCC_LOOP)                       // Do not run the Vcc test too often to save Battery power
   {
     VccTest = 0;
@@ -178,7 +178,7 @@ void SendData(int payload1, int payload2)
   DataBlock.Payload2 = payload2;
   byte c = 0, *B = (byte*)&DataBlock;            // bereken checksum: crc-8 uit bovenstaande bytes in de struct
   for (byte x = 1; x < Size; x++)
-    c +=*(B+x); 
+    c +=*(B+x);
   DataBlock.Checksum = c;
 
   pinMode(RF_TransmitDataPin, OUTPUT);
@@ -186,23 +186,23 @@ void SendData(int payload1, int payload2)
   for (byte y = 0; y < TransmitRepeat; y++)      // herhaal verzenden RF code
   {
     digitalWrite(RF_TransmitDataPin, HIGH);      // 1
-    delayMicroseconds(RF_PULSE_1 * 4); 
+    delayMicroseconds(RF_PULSE_1 * 4);
     digitalWrite(RF_TransmitDataPin, LOW);       // 0
-    delayMicroseconds(RF_SPACE * 2); 
+    delayMicroseconds(RF_SPACE * 2);
     for (byte x = 0; x < Size; x++)
     {
       for (byte Bit = 0; Bit <= 7; Bit++)
       {
         digitalWrite(RF_TransmitDataPin, HIGH);  // 1
         if ((*(B + x) >> Bit) & 1)
-          delayMicroseconds(RF_PULSE_1); 
-        else 
-          delayMicroseconds(RF_PULSE_0); 
+          delayMicroseconds(RF_PULSE_1);
+        else
+          delayMicroseconds(RF_PULSE_0);
         digitalWrite(RF_TransmitDataPin, LOW);   // 0
-        delayMicroseconds(RF_SPACE); 
+        delayMicroseconds(RF_SPACE);
       }
     }
-    delayMicroseconds(RF_PULSE_1 * 10); 
+    delayMicroseconds(RF_PULSE_1 * 10);
   }
 }
 
@@ -217,8 +217,8 @@ byte ReadVcc()
   ADMUX = 0x0C;                                  // use VCC and internal bandgap (ATTiny85)
   delayMicroseconds(250);                        // delay substantially improves accuracy
   bitSet(ADCSRA, ADSC);                          // start conversion
-  while (bit_is_set(ADCSRA, ADSC));              // wait until ADSC is clear 
-  bitClear(ADCSRA, ADEN);                        // Switch Analog to Digital converter OFF 
+  while (bit_is_set(ADCSRA, ADSC));              // wait until ADSC is clear
+  bitClear(ADCSRA, ADEN);                        // Switch Analog to Digital converter OFF
   result = ADCW;
   return result ? VREF_35 / result : 0;          // 35 = 3.5V
 }
@@ -247,7 +247,7 @@ byte GetDS18B20(int &temperature)
   ds.write(0x44);                                // Start conversion
   Watchdog_delay(6);                             // Wait 750ms. Here 1 second
   ds.reset();                                    // Read DS18B20
-  ds.skip();    
+  ds.skip();
   ds.write(0xBE);                                // Read scratchpad
   lsb = ds.read();
   msb = ds.read();

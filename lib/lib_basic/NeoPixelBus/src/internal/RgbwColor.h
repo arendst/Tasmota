@@ -33,7 +33,7 @@ struct HsbColor;
 
 // ------------------------------------------------------------------------
 // RgbwColor represents a color object that is represented by Red, Green, Blue
-// component values and an extra White component.  It contains helpful color 
+// component values and an extra White component.  It contains helpful color
 // routines to manipulate the color.
 // ------------------------------------------------------------------------
 struct RgbwColor
@@ -114,7 +114,7 @@ struct RgbwColor
     };
 
     // ------------------------------------------------------------------------
-    // Returns if the color components are all zero, the white component maybe 
+    // Returns if the color components are all zero, the white component maybe
     // anything
     // ------------------------------------------------------------------------
     bool IsColorLess() const
@@ -131,7 +131,7 @@ struct RgbwColor
     // ------------------------------------------------------------------------
     // Dim will return a new color that is blended to black with the given ratio
     // ratio - (0-255) where 255 will return the original color and 0 will return black
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     RgbwColor Dim(uint8_t ratio) const;
@@ -139,7 +139,7 @@ struct RgbwColor
     // ------------------------------------------------------------------------
     // Brighten will return a new color that is blended to white with the given ratio
     // ratio - (0-255) where 255 will return the original color and 0 will return white
-    // 
+    //
     // NOTE: This is a simple linear blend
     // ------------------------------------------------------------------------
     RgbwColor Brighten(uint8_t ratio) const;
@@ -166,7 +166,7 @@ struct RgbwColor
     //     and a value between will blend the color weighted linearly between them
     // ------------------------------------------------------------------------
     static RgbwColor LinearBlend(const RgbwColor& left, const RgbwColor& right, float progress);
-    
+
     // ------------------------------------------------------------------------
     // BilinearBlend between four colors by the amount defined by 2d variable
     // c00 - upper left quadrant color
@@ -176,11 +176,11 @@ struct RgbwColor
     // x - unit value (0.0 - 1.0) that defines the blend progress in horizontal space
     // y - unit value (0.0 - 1.0) that defines the blend progress in vertical space
     // ------------------------------------------------------------------------
-    static RgbwColor BilinearBlend(const RgbwColor& c00, 
-        const RgbwColor& c01, 
-        const RgbwColor& c10, 
-        const RgbwColor& c11, 
-        float x, 
+    static RgbwColor BilinearBlend(const RgbwColor& c00,
+        const RgbwColor& c01,
+        const RgbwColor& c10,
+        const RgbwColor& c11,
+        float x,
         float y);
 
     uint16_t CalcTotalTenthMilliAmpere(const SettingsObject& settings)
@@ -196,7 +196,7 @@ struct RgbwColor
     }
 
     // ------------------------------------------------------------------------
-    // Red, Green, Blue, White color members (0-255) where 
+    // Red, Green, Blue, White color members (0-255) where
     // (0,0,0,0) is black and (255,255,255, 0) and (0,0,0,255) is white
     // Note (255,255,255,255) is extreme bright white
     // ------------------------------------------------------------------------

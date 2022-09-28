@@ -307,7 +307,7 @@ public:
 class NeoNrf52xPwmN
 {
 public:
-    NeoNrf52xPwmN(NeoBusChannel channel) 
+    NeoNrf52xPwmN(NeoBusChannel channel)
     {
         NRF_PWM_Type* PWM[] = {
     NRF_PWM0,

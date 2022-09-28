@@ -41,7 +41,7 @@ Examples of unacceptable behavior by participants include:
 
 The goal of the standards and moderation guidelines outlined here is to build
 and maintain a respectful community. We ask that you don’t just aim to be
-"technically unimpeachable", but rather try to be your best self. 
+"technically unimpeachable", but rather try to be your best self.
 
 We value many things beyond technical expertise, including collaboration and
 supporting others within our community. Providing a positive experience for

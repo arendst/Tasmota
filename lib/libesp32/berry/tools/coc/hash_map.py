@@ -2,10 +2,10 @@ import copy
 from coc_string import *
 
 # resize a list, from https://stackoverflow.com/a/8850956
-def list_resize_entry(l, newsize, filling=None):                                                                                  
-    if newsize > len(l):                                                                                 
-        l.extend([entry() for x in range(len(l), newsize)])                                                 
-    else:                                                                                                
+def list_resize_entry(l, newsize, filling=None):
+    if newsize > len(l):
+        l.extend([entry() for x in range(len(l), newsize)])
+    else:
         del l[newsize:]
 
 class entry:
@@ -13,7 +13,7 @@ class entry:
         self.key = ""
         self.value = ""
         self.next = hash_map.NODE_EMPTY
-    
+
     def __repr__(self):
         return f"<entry object; key='{self.key}', value='{self.value}', next={self.next}>"
 
@@ -29,13 +29,13 @@ class hash_map:
         self.resize(2)
         for key in sorted(map.keys()):
             self.insert(key, map[key])
-    
+
     def __repr__(self):
         return f"<hash_map object; count={self.count}, bucket={self.bucket}, lastfree={self.lastfree}>"
 
     def is_empty(self, ent):
         return ent.next == hash_map.NODE_EMPTY
-    
+
     def resize(self, size):
         bucket = copy.deepcopy(self.bucket)
         list_resize_entry(self.bucket, size)
@@ -55,14 +55,14 @@ class hash_map:
             prev = self.bucket[next]
         if next == hash_map.NODE_NULL: return None
         return prev
-    
+
     def nextfree(self):
         while self.lastfree >= 0:
             if self.bucket[self.lastfree].next == hash_map.NODE_EMPTY:
                 return self.lastfree
             self.lastfree -= 1
         return -1
-    
+
     def find(self, key):
         hash = hashcode(key)
         null = entry()
@@ -73,7 +73,7 @@ class hash_map:
             if slot.next == hash_map.NODE_NULL: return null
             slot = self.bucket[slot.next]
         return slot
-    
+
     def insert_p(self, key, value):
         slot = self.bucket[hashcode(key) % len(self.bucket)]
         #print(f"slot={slot}, index={hashcode(key) % len(self.bucket)}")
@@ -110,7 +110,7 @@ class hash_map:
                 self.resize(len(self.bucket) * 2)
             self.insert_p(key, value)
             self.count += 1
-    
+
     #################################################################################
     # Compute entries in the hash for modules or classes
     #################################################################################
@@ -123,12 +123,12 @@ class hash_map:
         else:
             ent.value = "be_const_" + ent.value
         return (ent, var_count)
-    
+
     #  generate the final map
     def entry_list(self):
         l = []
         var_count = 0
-        
+
         self.resize(self.count)
         for it in self.bucket:
             (ent, var_count) = self.entry_modify(it, var_count)
@@ -137,7 +137,7 @@ class hash_map:
             # # ex: ent=<entry object; key='check_privileged_access2', value='be_const_func(w_webserver_check_privileged_access_ntv, "b", "")', next=-1> var_count=0
             l.append(ent)
         return l
-    
+
     def var_count(self):
         count = 0
 

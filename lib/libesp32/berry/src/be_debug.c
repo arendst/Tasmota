@@ -57,7 +57,7 @@ void be_print_inst(binstruction ins, int pc, void* fout)
         be_fwrite(fout, __lbuf, strlen(__lbuf));
     } else {
         be_writestring(__lbuf);
-    }                            
+    }
     switch (op) {
     case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
     case OP_MOD: case OP_LT: case OP_LE: case OP_EQ:
@@ -142,7 +142,7 @@ void be_print_inst(binstruction ins, int pc, void* fout)
         be_fwrite(fout, __lbuf, strlen(__lbuf));
     } else {
         be_writestring(__lbuf);
-    }                   
+    }
 }
 #endif
 

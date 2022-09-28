@@ -9,7 +9,7 @@ class lv_wifi_graph : lv.chart
 
   def init(parent)
     super(self).init(parent)
-    
+
     self.set_style_bg_color(lv.color(0x000000), lv.PART_MAIN | lv.STATE_DEFAULT)
     self.set_style_bg_opa(100, lv.PART_MAIN | lv.STATE_DEFAULT)
     self.set_style_border_color(lv.color(0x0099EE), lv.PART_MAIN | lv.STATE_DEFAULT)
@@ -21,12 +21,12 @@ class lv_wifi_graph : lv.chart
     self.set_range(lv.CHART_AXIS_PRIMARY_Y, 0, 100)
     self.set_div_line_count(0,0)		# no lines
     self.set_type(lv.CHART_TYPE_LINE)
-    
+
     self.set_style_size(0, lv.PART_INDICATOR) # don't show dots
     self.set_style_line_rounded(true, lv.PART_ITEMS)
     self.set_style_line_width(2, lv.PART_ITEMS) # don't show dots
     self.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
-    
+
     self.set_point_count(40)
 
     self.ser1 = self.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)

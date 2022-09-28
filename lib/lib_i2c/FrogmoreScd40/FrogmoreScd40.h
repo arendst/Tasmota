@@ -1,4 +1,4 @@
-/* 
+/*
   FrogmoreScd40.cpp - SCD40/SCD41 I2C CO2(+temp+RH) sensor support for Tasmota,
                       based on frogmore42's FrogmoreScd30.cpp
 
@@ -50,7 +50,7 @@ class FrogmoreScd40
         FrogmoreScd40() {};
         // Constructors
         // the SCD40 only lists a single i2c address, so not necesary to specify
-        // 
+        //
         void begin(void);
         void begin(uint8_t _i2cAddress);
         void begin(TwoWire *pWire);

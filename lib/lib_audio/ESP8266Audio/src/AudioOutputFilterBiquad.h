@@ -1,7 +1,7 @@
 /*
   AudioOutputFilterBiquad
   Implements a Biquad filter
-  
+
   Copyright (C) 2012  Nigel Redmon
   Copyright (C) 2021  William Bérubé
 

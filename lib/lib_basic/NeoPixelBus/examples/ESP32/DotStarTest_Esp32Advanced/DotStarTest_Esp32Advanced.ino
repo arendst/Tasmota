@@ -20,13 +20,13 @@
 
     // If you set useSpiAlternatePins true, then these pins will be used instead.  Any output-capable GPIO can be used.
     const uint8_t DotClockPin = 18;
-    const uint8_t DotDataPin = 23;  
+    const uint8_t DotDataPin = 23;
     const int8_t DotChipSelectPin = -1; // -1 means the chip select signal won't be output, freeing up one pin compared to useSpiAlternatePins=false
 
     // for software bit bang (only use if neither SPI peripheral is available)
     //NeoPixelBus<DotStarBgrFeature, DotStarMethod> strip(PixelCount, DotClockPin, DotDataPin);
 
-    // for hardware SPI (best performance) with default SPI peripheral 
+    // for hardware SPI (best performance) with default SPI peripheral
     NeoPixelBus<DotStarBgrFeature, DotStarSpiMethod> strip(PixelCount);
 
     // DotStarSpiMethod defaults to 10MHz clock speed.  For other speeds, replace "DotStarSpiMethod" with another method specifying speed, e.g. "DotStarSpi2MhzMethod" (see wiki for more details)
@@ -45,7 +45,7 @@
 
     // If you set useSpiAlternatePins2 true, then these pins will be used instead.  Any output-capable GPIO can be used.
     const uint8_t DotClockPin2 = 14;
-    const uint8_t DotDataPin2 = 13;  
+    const uint8_t DotDataPin2 = 13;
     const int8_t DotChipSelectPin2 = -1; // -1 means the chip select signal won't be output, freeing up one pin compared to useSpiAlternatePins2=false
 
     // for hardware SPI (best performance) with alternate SPI peripheral
@@ -112,7 +112,7 @@ void loop()
 
 #if (USE_DEFAULT_SPI_PORT == 1)
     Serial.println("Default SPI Colors R, G, B, W...");
-    // set the colors, 
+    // set the colors,
     strip.SetPixelColor(0, red);
     strip.SetPixelColor(1, green);
     strip.SetPixelColor(2, blue);
@@ -122,7 +122,7 @@ void loop()
 
 #if (USE_ALTERNATE_SPI_PORT == 1)
     Serial.println("Alt SPI Colors W, B, G, R...");
-    // set the colors, 
+    // set the colors,
     strip2.SetPixelColor(0, white);
     strip2.SetPixelColor(1, blue);
     strip2.SetPixelColor(2, green);

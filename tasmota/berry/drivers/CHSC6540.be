@@ -1,7 +1,7 @@
 #-
  - I2C driver for the Touch Screen driver CHSC6540 of the M5Stack Tough
  -
- - This is based on 
+ - This is based on
  - https://github.com/m5stack/M5Tough/blob/master/src/M5Touch.cpp
  - https://github.com/m5stack/M5Tough/blob/master/src/M5Touch.h
  -#
@@ -10,7 +10,7 @@
   var tp_int    # gpio used as INT - going low when the screen is touched
   # prevous values
   var touched, x, y   # previous values (bool, int, int) to be repeated when not touched
-  
+
   def init()
     # set current values
     self.x = 0

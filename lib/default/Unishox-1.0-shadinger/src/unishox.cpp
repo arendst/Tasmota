@@ -12,17 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * @author Arundale R.
  *
  */
 
 /*
- * 
+ *
  * This is a highly modified and optimized version of Unishox
- * for Tasmota, aimed at compressing `Rules` which are typically 
+ * for Tasmota, aimed at compressing `Rules` which are typically
  * short strings from 50 to 500 bytes.
- * 
+ *
  * - moved to C++ (but still C-style)
  * - c_95[] and l_95[] are pre-computed
  * - all arrays in PROGMEM
@@ -39,7 +39,7 @@
  * - combined c_95[] and l_95[] to a single array to save space
  * - Changed mapping of some characters in Set3, Set4 and Set4A, favoring frequent characters in rules and javascript
  * - Added escape mechanism to ensure we never output NULL char. The marker is 0x2A which looked rare in preliminary tests
- * 
+ *
  * @author Stephan Hadinger
  *
  */
@@ -68,7 +68,7 @@ enum {SHX_STATE_1 = 1, SHX_STATE_2};    // removed Unicode state
 
 enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
 // changed mapping in Set3, Set4, Set4A to accomodate frequencies in Rules and Javascript
-static char sets[][11] PROGMEM = 
+static char sets[][11] PROGMEM =
                   {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
                    {  0, 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
                    {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},
@@ -82,7 +82,7 @@ static char sets[][11] PROGMEM =
 // First 2 bits 00, Next 3 bits indicate index of code from 0,
 // last 3 bits indicate code length in bits
 //                0,            1,            2,            3,            4,
-static char us_vcode[32] PROGMEM = 
+static char us_vcode[32] PROGMEM =
                  {2 + (0 << 3), 3 + (3 << 3), 3 + (1 << 3), 4 + (6 << 3), 0,
 //                5,            6,            7,            8, 9, 10
                   4 + (4 << 3), 3 + (2 << 3), 4 + (8 << 3), 0, 0,  0,
@@ -271,7 +271,7 @@ int32_t Unishox::unishox_compress(const char *p_in, size_t p_len, char *p_out, s
         while (rpt_count < len && in[rpt_count] == c_in)
           rpt_count++;
         rpt_count -= l;
-        
+
         if (state == SHX_STATE_2 || is_all_upper) {
           is_all_upper = 0;
           state = SHX_STATE_1;

@@ -40,7 +40,7 @@ addthread(ThreadList *l, Thread t, Subject *input, const char *sp)
 		return;	// already on list
 	}
 	*t.pc |= 0x80;
-	
+
 	switch(*t.pc & 0x7f) {
 	default:
 		l->t[l->n] = t;
@@ -88,7 +88,7 @@ re1_5_pikevm(ByteProg *prog, Subject *input, const char **subp, int nsubp, int i
 	const char *sp;
 	Sub *sub, *matched;
 
-	matched = nil;	
+	matched = nil;
 	for(i=0; i<nsubp; i++)
 		subp[i] = nil;
 	sub = newsub(nsubp);
@@ -98,7 +98,7 @@ re1_5_pikevm(ByteProg *prog, Subject *input, const char **subp, int nsubp, int i
 	len = prog->len;
 	clist = threadlist(len);
 	nlist = threadlist(len);
-	
+
 	cleanmarks(prog);
 	addthread(clist, thread(HANDLE_ANCHORED(prog->insts, is_anchored), sub), input, input->begin);
 	matched = 0;

@@ -199,7 +199,7 @@ class cc2652_flasher
     # check buffer
     var sz = b[0]
     if size(b) < sz || sz < 2    raise "serial_error", "buffer too small" end
-    # 
+    #
     var payload = b[2..sz-1]
 
     var checksum = 0
@@ -216,7 +216,7 @@ class cc2652_flasher
   #  b: logical bytes() to send
   #  no_response: true if ignore any response, or ignore to get a response
   def send(b, no_response)
-    # compute 
+    # compute
     var payload = self.encode_payload(b)
     if self.debug print("sending:", payload) end
     self.ser.write(payload)
@@ -326,7 +326,7 @@ class cc2652_flasher
   def flash_crc32(addr, len)
     return self.cmd_crc32(addr, len)
   end
-  
+
   def flash_erase()
     self.cmd_bank_erase()
   end
@@ -348,11 +348,11 @@ class cc2652_flasher
 
     ret = self.cmd_download(addr, size(data))
     #print(">cmd_download", r)
-    
+
     var ack
     ack = self.cmd_get_status()
     if ack != 0x40    raise "serial_error", string.format("command failed: 0x%02X - 0x%06X (%i)", ack, addr, sz) end
-    
+
     ret = self.cmd_send_data(data)
 
     ack = self.cmd_get_status()
@@ -364,7 +364,7 @@ class cc2652_flasher
   def flash_dump_to_file(filename, addr, len)
     var offset = addr
     var f
-    
+
     try
       f = open(filename,"w")
       while len > 0

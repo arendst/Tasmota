@@ -1,6 +1,6 @@
 # LVGL + Berry
 
-This repo contains a full binding of LVGL to the Berry language. This project is similar to the Micropython+lvgl project in its spirit, and provides easy to use scripting for lvgl on embedded devices. It is used by the Tasmota open-source project for ESP32 based devices. 
+This repo contains a full binding of LVGL to the Berry language. This project is similar to the Micropython+lvgl project in its spirit, and provides easy to use scripting for lvgl on embedded devices. It is used by the Tasmota open-source project for ESP32 based devices.
 
 **Supported version**: LVGL 8.2.0
 
@@ -81,7 +81,7 @@ colw.set_pos(20,30)
 
 As a general rule:
 
-- calls to general APIs are mapped to module `lv`. E.g. `lv_get_hor_res()` translates to 
+- calls to general APIs are mapped to module `lv`. E.g. `lv_get_hor_res()` translates to
 - enums are also mapped to module `lv`
 - widgets constructors are classes in module `lv`
 - calls to widgets are object methods (skip the first argument which is implicit)

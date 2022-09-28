@@ -118,7 +118,7 @@ public:
     {
         if (indexPixel >= PixelCount())
         {
-            // Pixel # is out of bounds, this will get converted to a 
+            // Pixel # is out of bounds, this will get converted to a
             // color object type initialized to 0 (black)
             return 0;
         }
@@ -130,7 +130,7 @@ public:
     {
         if (x < 0 || x >= _width || y < 0 || y >= _height)
         {
-            // Pixel # is out of bounds, this will get converted to a 
+            // Pixel # is out of bounds, this will get converted to a
             // color object type initialized to 0 (black)
             return 0;
         }
@@ -221,7 +221,7 @@ public:
     {
         if (indexPixel >= PixelCount())
         {
-            // Pixel # is out of bounds, this will get converted to a 
+            // Pixel # is out of bounds, this will get converted to a
             // color object type initialized to 0 (black)
             return 0;
         }
@@ -233,7 +233,7 @@ public:
     {
         if (x < 0 || x >= _width || y < 0 || y >= _height)
         {
-            // Pixel # is out of bounds, this will get converted to a 
+            // Pixel # is out of bounds, this will get converted to a
             // color object type initialized to 0 (black)
             return 0;
         }

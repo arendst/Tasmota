@@ -49,7 +49,7 @@ class Partition_info
     end
     return b
   end
-    
+
   # Init the Parition information structure, either from a bytes() buffer or an empty if no buffer is provided
   def init(raw)
     self.type = 0
@@ -79,7 +79,7 @@ class Partition_info
       import string
       raise  "internal_error", string.format("invalid magic number %02X", magic)
     end
-    
+
   end
 
   # check if the parition is an OTA partition
@@ -113,10 +113,10 @@ class Partition_info
       var sz = self.sz
       var magic_byte = flash.read(addr, 1).get(0, 1)
       if magic_byte != 0xE9 return -1 end
-      
+
       var seg_count = flash.read(addr+1, 1).get(0, 1)
       # print("Segment count", seg_count)
-      
+
       var seg_offset = addr + 0x20 # sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) = 24 + 8
 
       var seg_num = 0
@@ -283,14 +283,14 @@ class Partition_otadata
       seq_max = self.seq1
       block_act = 1
     end
-    
+
     #- compute the next sequence number -#
     var actual_ota = (seq_max - 1) % (self.maxota + 1)
     if actual_ota != n    #- change only if different -#
       if n > actual_ota   seq_max += n - actual_ota
       else                seq_max += (self.maxota + 1) - actual_ota + n
       end
-      
+
       #- update internal structure -#
       if block_act == 1       #- current block is 1, so update block 0 -#
         self.seq0 = seq_max
@@ -333,7 +333,7 @@ class Partition_otadata
     #- check the block number to save, 0 or 1. Choose the highest ota_seq -#
     var block_to_save = -1    #- invalid -#
     var seq_to_save = -1      #- invalid value -#
-    
+
     # check seq0
     if self.seq0 != nil
       seq_to_save = self.seq0
@@ -353,7 +353,7 @@ class Partition_otadata
     bytes_to_save.add(seq_to_save, 4)
     bytes_to_save += bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
     bytes_to_save.add(self.crc32_ota_seq(seq_to_save), 4)
-    
+
     #- erase flash area and write -#
     flash.erase(offset_to_save, 0x1000)
     flash.write(offset_to_save, bytes_to_save)

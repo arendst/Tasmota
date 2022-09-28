@@ -1714,16 +1714,16 @@ uint16_t Adafruit_SPITFT::color565(uint8_t red, uint8_t green, uint8_t blue) {
 void Adafruit_SPITFT::sendCommand(uint8_t commandByte, uint8_t *dataBytes, uint8_t numDataBytes) {
     SPI_BEGIN_TRANSACTION();
     if(_cs >= 0) SPI_CS_LOW();
-  
+
     SPI_DC_LOW(); // Command mode
     spiWrite(commandByte); // Send the command byte
-  
+
     SPI_DC_HIGH();
     for (int i=0; i<numDataBytes; i++) {
       spiWrite(*dataBytes); // Send the data bytes
       dataBytes++;
     }
-  
+
     if(_cs >= 0) SPI_CS_HIGH();
     SPI_END_TRANSACTION();
 }
@@ -1737,15 +1737,15 @@ void Adafruit_SPITFT::sendCommand(uint8_t commandByte, uint8_t *dataBytes, uint8
 void Adafruit_SPITFT::sendCommand(uint8_t commandByte, const uint8_t *dataBytes, uint8_t numDataBytes) {
     SPI_BEGIN_TRANSACTION();
     if(_cs >= 0) SPI_CS_LOW();
-  
+
     SPI_DC_LOW(); // Command mode
     spiWrite(commandByte); // Send the command byte
-  
+
     SPI_DC_HIGH();
     for (int i=0; i<numDataBytes; i++) {
       spiWrite(pgm_read_byte(dataBytes++)); // Send the data bytes
     }
-  
+
     if(_cs >= 0) SPI_CS_HIGH();
     SPI_END_TRANSACTION();
 }
@@ -1996,7 +1996,7 @@ inline void Adafruit_SPITFT::SPI_SCK_HIGH(void) {
     *swspi.sckPortSet = swspi.sckPinMask;
     #if defined(__IMXRT1052__) || defined(__IMXRT1062__)  // Teensy 4.x
     for(volatile uint8_t i=0; i<1; i++);
-    #endif  
+    #endif
   #endif
  #else  // !HAS_PORT_SET_CLR
     *swspi.sckPort   |= swspi.sckPinMaskSet;
@@ -2021,7 +2021,7 @@ inline void Adafruit_SPITFT::SPI_SCK_LOW(void) {
     *swspi.sckPortClr = swspi.sckPinMask;
     #if defined(__IMXRT1052__) || defined(__IMXRT1062__)  // Teensy 4.x
     for(volatile uint8_t i=0; i<1; i++);
-    #endif  
+    #endif
   #endif
  #else  // !HAS_PORT_SET_CLR
     *swspi.sckPort   &= swspi.sckPinMaskClr;

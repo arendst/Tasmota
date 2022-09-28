@@ -107,7 +107,7 @@
 
   # Set voltage on DC-DC 2/3
   #   dcdc: 2/3 (warning some C libs start at 0)
-  #   voltage: 
+  #   voltage:
   def set_dc_voltage(dcdc, voltage)
     if dcdc < 2 || dcdc > 3 return end
     var v

@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: huffman.c,v 1.2 2005/05/24 16:01:55 albertofloyd Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: huffman.c,v 1.2 2005/05/24 16:01:55 albertofloyd Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -59,9 +59,9 @@
  *
  * Notes:       assumes canonical Huffman codes:
  *                first CW always 0, we have "count" CW's of length "nBits" bits
- *                starting CW for codes of length nBits+1 = 
+ *                starting CW for codes of length nBits+1 =
  *                  (startCW[nBits] + count[nBits]) << 1
- *                if there are no codes at nBits, then we just keep << 1 each time 
+ *                if there are no codes at nBits, then we just keep << 1 each time
  *                  (since count[nBits] = 0)
  **************************************************************************************/
 /* __attribute__ ((section (".data"))) */ int DecodeHuffmanScalar(const signed short *huffTab, const HuffInfo *huffTabInfo, unsigned int bitBuf, signed int *val)
@@ -84,7 +84,7 @@
 		shift--;
 		t = (bitBuf >> shift) - start;
 	} while (t >= count);
-	
+
 	*val = (signed int)pgm_read_word(&map[t]);
 	return (countPtr - huffTabInfo->count);
 }
@@ -253,7 +253,7 @@ static void UnpackZeros(int nVals, int *coef)
 		bitBuf <<= nCodeBits;
 		nSignBits = GET_ESC_SIGNBITS(val);
 		AdvanceBitstream(bsi, nCodeBits + nSignBits);
-	
+
 		if (y == 16) {
 			n = 4;
 			while (GetBits(bsi, 1) == 1)
@@ -284,7 +284,7 @@ static void UnpackZeros(int nVals, int *coef)
  *
  * Inputs:      platform specific info struct
  *              BitStreamInfo struct pointing to start of spectral data
- *                (14496-3, table 4.4.29) 
+ *                (14496-3, table 4.4.29)
  *              index of current channel
  *
  * Outputs:     decoded, quantized coefficients for this channel
@@ -313,7 +313,7 @@ static void UnpackZeros(int nVals, int *coef)
 	for (sfb = 0; sfb < icsInfo->maxSFB; sfb++) {
 		cb = *sfbCodeBook++;
 		nVals = sfbTab[sfb+1] - sfbTab[sfb];
-		
+
 		if (cb == 0)
 			UnpackZeros(nVals, coef);
 		else if (cb <= 4)
@@ -355,7 +355,7 @@ static void UnpackZeros(int nVals, int *coef)
  *
  * Inputs:      platform specific info struct
  *              BitStreamInfo struct pointing to start of spectral data
- *                (14496-3, table 4.4.29) 
+ *                (14496-3, table 4.4.29)
  *              index of current channel
  *
  * Outputs:     decoded, quantized coefficients for this channel
@@ -395,7 +395,7 @@ static void UnpackZeros(int nVals, int *coef)
 					UnpackPairsNoEsc(bsi, cb, nVals, coef + offset);
 				else if (cb == 11)
 					UnpackPairsEsc(bsi, cb, nVals, coef + offset);
-				else 
+				else
 					UnpackZeros(nVals, coef + offset);
 			}
 			coef += nVals;

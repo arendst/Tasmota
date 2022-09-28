@@ -16,10 +16,10 @@ class Keeloq
     Keeloq(
 		const unsigned long keyHigh,
 		const unsigned long keyLow );
-		
+
     unsigned long encrypt( const unsigned long data );
     unsigned long decrypt( const unsigned long data );
-    
+
   private:
     unsigned long _keyHigh;
 	unsigned long _keyLow;

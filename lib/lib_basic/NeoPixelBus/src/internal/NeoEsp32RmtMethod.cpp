@@ -40,7 +40,7 @@ License along with NeoPixel.  If not, see
 // which would be 32x larger than the primary buffer
 //
 // NOTE:  This was moved from the template below to here to workaround a GCC bug
-//  That bug is that the IRAM_ATTR attribute (any attributes) is lost on template classes.  
+//  That bug is that the IRAM_ATTR attribute (any attributes) is lost on template classes.
 //
 //  Further, it was removed from the header to support current Esp32 release
 //  which will need to be removed when the latest GitHub branchis released

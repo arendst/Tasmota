@@ -9,7 +9,7 @@
  *
  * @defgroup Porting_SPI Porting: SPI
  *
- * 
+ *
  * @{
  */
 
@@ -27,7 +27,7 @@
 //#include <sys/ioctl.h>
 //#include <inttypes.h>
 //#include <linux/types.h>
-//#include <linux/spi/spidev.h> 
+//#include <linux/spi/spidev.h>
 
 #define SPI_SS_bm (1<<4) /* SPI SS pin mask 4 */
 #define SPI_MOSI_bm (1<<5) /* SPI MOSI pin mask 5 */
@@ -43,9 +43,9 @@ public:
 
 	/**
 	* SPI constructor
-	*/	 
+	*/
 	SPI();
-	
+
 	/**
 	* Start SPI
 	* @param port is the SPI port (XMEGA_SPI_PORT_C for SPI on PORTC, XMEGA_SPI_PORT_D on PORTD etc).
@@ -57,7 +57,7 @@ public:
 	* @return Data returned via spi
 	*/
 	uint8_t transfer(uint8_t tx_);
-	
+
 	/**
 	* Transfer a buffer of data
 	* @param tbuf Transmit buffer
@@ -70,19 +70,19 @@ public:
 	* Transfer a buffer of data without an rx buffer
 	* @param buf Pointer to a buffer of data
 	* @param len Length of the data
-	*/	
+	*/
 	void transfern(char* buf, uint32_t len);
-	
+
 	virtual ~SPI();
 
 private:
-    
+
 	/** Default SPI device */
 	SPI_t * device;
 	/* Port of the SPI */
 	PORT_t * port;
 
-	void init();	
+	void init();
 };
 
 #endif /*__XMEGASPI_H__*/

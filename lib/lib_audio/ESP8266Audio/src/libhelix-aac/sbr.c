@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: sbr.c,v 1.3 2005/05/24 16:01:55 albertofloyd Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: sbr.c,v 1.3 2005/05/24 16:01:55 albertofloyd Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -82,7 +82,7 @@ static void InitSBRState(PSInfoSBR *psi)
 		psi->sbrChan[ch].laPrev = -1;
 	}
 }
- 
+
 /**************************************************************************************
  * Function:    InitSBR
  *
@@ -174,7 +174,7 @@ void FreeSBR(AACDecInfo *aacDecInfo)
  * Return:      0 if successful, error code (< 0) if error
  *
  * Notes:       SBR payload should be in aacDecInfo->fillBuf
- *              returns with no error if fill buffer is not an SBR extension block, 
+ *              returns with no error if fill buffer is not an SBR extension block,
  *                or if current block is not a fill block (e.g. for LFE upsampling)
  **************************************************************************************/
 int DecodeSBRBitstream(AACDecInfo *aacDecInfo, int chBase)
@@ -194,7 +194,7 @@ int DecodeSBRBitstream(AACDecInfo *aacDecInfo, int chBase)
 	SetBitstreamPointer(&bsi, aacDecInfo->fillCount, aacDecInfo->fillBuf);
 	if (GetBits(&bsi, 4) != (unsigned int)aacDecInfo->fillExtType)
 		return ERR_AAC_SBR_BITSTREAM;
-	
+
 	if (aacDecInfo->fillExtType == EXT_SBR_DATA_CRC)
 		psi->crcCheckWord = GetBits(&bsi, 10);
 
@@ -210,7 +210,7 @@ int DecodeSBRBitstream(AACDecInfo *aacDecInfo, int chBase)
 		/* reset flag = 1 if header values changed */
 		if (UnpackSBRHeader(&bsi, &(psi->sbrHdr[chBase])))
 			psi->sbrChan[chBase].reset = 1;
-	
+
 		/* first valid SBR header should always trigger CalcFreqTables(), since psi->reset was set in InitSBR() */
 		if (psi->sbrChan[chBase].reset)
 			CalcFreqTables(&(psi->sbrHdr[chBase+0]), &(psi->sbrFreq[chBase]), psi->sampRateIdx);
@@ -219,7 +219,7 @@ int DecodeSBRBitstream(AACDecInfo *aacDecInfo, int chBase)
 		if (aacDecInfo->prevBlockID == AAC_ID_CPE)
 			psi->sbrChan[chBase+1].reset = psi->sbrChan[chBase+0].reset;
 	}
-	
+
 
 	/* if no header has been received, upsample only */
 	if (psi->sbrHdr[chBase].count == 0)
@@ -269,7 +269,7 @@ int DecodeSBRData(AACDecInfo *aacDecInfo, int chBase, short *outbuf)
 	if (!aacDecInfo || !aacDecInfo->psInfoSBR)
 		return ERR_AAC_NULL_POINTER;
 	psi = (PSInfoSBR *)(aacDecInfo->psInfoSBR);
-	
+
 	/* same header and freq tables for both channels in CPE */
 	sbrHdr =  &(psi->sbrHdr[chBase]);
 	sbrFreq = &(psi->sbrFreq[chBase]);
@@ -279,13 +279,13 @@ int DecodeSBRData(AACDecInfo *aacDecInfo, int chBase, short *outbuf)
 		chBlock = 1;
 		upsampleOnly = 1;
 	} else if (aacDecInfo->currBlockID == AAC_ID_FIL) {
-		if (aacDecInfo->prevBlockID == AAC_ID_SCE) 
+		if (aacDecInfo->prevBlockID == AAC_ID_SCE)
 			chBlock = 1;
 		else if (aacDecInfo->prevBlockID == AAC_ID_CPE)
 			chBlock = 2;
 		else
 			return ERR_AAC_NONE;
-		
+
 		upsampleOnly = (sbrHdr->count == 0 ? 1 : 0);
 		if (aacDecInfo->fillExtType != EXT_SBR_DATA && aacDecInfo->fillExtType != EXT_SBR_DATA_CRC)
 			return ERR_AAC_NONE;
@@ -300,7 +300,7 @@ int DecodeSBRData(AACDecInfo *aacDecInfo, int chBase, short *outbuf)
 	}
 
 	for (ch = 0; ch < chBlock; ch++) {
-		sbrGrid = &(psi->sbrGrid[chBase + ch]);	
+		sbrGrid = &(psi->sbrGrid[chBase + ch]);
 		sbrChan = &(psi->sbrChan[chBase + ch]);
 
 		if (aacDecInfo->rawSampleBuf[ch] == 0 || aacDecInfo->rawSampleBytes != 4)
@@ -319,10 +319,10 @@ int DecodeSBRData(AACDecInfo *aacDecInfo, int chBase, short *outbuf)
 		/* step 1 - analysis QMF */
 		qmfaBands = sbrFreq->kStart;
 		for (l = 0; l < 32; l++) {
-			gbMask = QMFAnalysis(inbuf + l*32, psi->delayQMFA[chBase + ch], psi->XBuf[l + HF_GEN][0], 
+			gbMask = QMFAnalysis(inbuf + l*32, psi->delayQMFA[chBase + ch], psi->XBuf[l + HF_GEN][0],
 				aacDecInfo->rawSampleFBits, &(psi->delayIdxQMFA[chBase + ch]), qmfaBands);
 
-			gbIdx = ((l + HF_GEN) >> 5) & 0x01;	
+			gbIdx = ((l + HF_GEN) >> 5) & 0x01;
 			sbrChan->gbMask[gbIdx] |= gbMask;	/* gbIdx = (0 if i < 32), (1 if i >= 32) */
 		}
 
@@ -379,7 +379,7 @@ int DecodeSBRData(AACDecInfo *aacDecInfo, int chBase, short *outbuf)
 
 		/* save delay */
 		for (l = 0; l < HF_GEN; l++) {
-			for (k = 0; k < 64; k++) {		
+			for (k = 0; k < 64; k++) {
 				psi->XBufDelay[chBase + ch][l][k][0] = psi->XBuf[l+32][k][0];
 				psi->XBufDelay[chBase + ch][l][k][1] = psi->XBuf[l+32][k][1];
 			}

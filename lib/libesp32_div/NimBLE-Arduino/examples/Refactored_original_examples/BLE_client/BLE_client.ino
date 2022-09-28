@@ -5,7 +5,7 @@
  * updated by chegewara
  * updated for NimBLE by H2zero
  */
- 
+
 /** NimBLE differences highlighted in comment blocks **/
 
 /*******original********
@@ -38,7 +38,7 @@ static void notifyCallback(
 }
 
 /**  None of these are required as they will be handled by the library with defaults. **
- **                       Remove as you see fit for your needs                        */  
+ **                       Remove as you see fit for your needs                        */
 class MyClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pclient) {
   }
@@ -51,11 +51,11 @@ class MyClientCallback : public BLEClientCallbacks {
 ****** Note: these are the same return values as defaults ********/
   uint32_t onPassKeyRequest(){
     Serial.println("Client PassKeyRequest");
-    return 123456; 
+    return 123456;
   }
   bool onConfirmPIN(uint32_t pass_key){
     Serial.print("The passkey YES/NO number: ");Serial.println(pass_key);
-    return true; 
+    return true;
   }
 
   void onAuthenticationComplete(ble_gap_conn_desc desc){
@@ -67,7 +67,7 @@ class MyClientCallback : public BLEClientCallbacks {
 bool connectToServer() {
     Serial.print("Forming a connection to ");
     Serial.println(myDevice->getAddress().toString().c_str());
-    
+
     BLEClient*  pClient  = BLEDevice::createClient();
     Serial.println(" - Created client");
 
@@ -119,9 +119,9 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
  /**
    * Called for each advertising BLE server.
    */
-   
+
 /*** Only a reference to the advertised device is passed now
-  void onResult(BLEAdvertisedDevice advertisedDevice) { **/     
+  void onResult(BLEAdvertisedDevice advertisedDevice) { **/
   void onResult(BLEAdvertisedDevice* advertisedDevice) {
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice->toString().c_str());
@@ -166,7 +166,7 @@ void setup() {
 void loop() {
 
   // If the flag "doConnect" is true then we have scanned for and found the desired
-  // BLE Server with which we wish to connect.  Now we connect to it.  Once we are 
+  // BLE Server with which we wish to connect.  Now we connect to it.  Once we are
   // connected we set the connected flag to be true.
   if (doConnect == true) {
     if (connectToServer()) {
@@ -182,13 +182,13 @@ void loop() {
   if (connected) {
     String newValue = "Time since boot: " + String(millis()/1000);
     Serial.println("Setting new characteristic value to \"" + newValue + "\"");
-    
+
     // Set the characteristic's value to be the array of bytes that is actually a string.
     /*** Note: write / read value now returns true if successful, false otherwise - try again or disconnect ***/
     pRemoteCharacteristic->writeValue(newValue.c_str(), newValue.length());
   }else if(doScan){
     BLEDevice::getScan()->start(0);  // this is just eample to start scan after disconnect, most likely there is better way to do it in arduino
   }
-  
+
   delay(1000); // Delay a second between loops.
 } // End of loop

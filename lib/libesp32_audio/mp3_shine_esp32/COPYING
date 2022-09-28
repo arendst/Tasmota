@@ -133,7 +133,7 @@ such a program is covered only if its contents constitute a work based
 on the Library (independent of the use of the Library in a tool for
 writing it).  Whether that is true depends on what the Library does
 and what the program that uses the Library does.
-  
+
   1. You may copy and distribute verbatim copies of the Library's
 complete source code as you receive it, in any medium, provided that
 you conspicuously and appropriately publish on each copy an
@@ -463,8 +463,8 @@ convey the exclusion of warranty; and each file should have at least the
     Library General Public License for more details.
 
     You should have received a copy of the GNU Library General Public
-    License along with this library; if not, write to the 
-    Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
+    License along with this library; if not, write to the
+    Free Software Foundation, Inc., 59 Temple Place - Suite 330,
     Boston, MA  02111-1307  USA.
 
 Also add information on how to contact you by electronic and paper mail.

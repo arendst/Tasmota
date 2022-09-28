@@ -187,7 +187,7 @@ static int handle_result(bvm *vm, int res)
     case BE_EXIT: /* return exit code */
         return be_toindex(vm, -1);
     case BE_IO_ERROR:
-        be_writestring("error: "); 
+        be_writestring("error: ");
         be_writestring(be_tostring(vm, -1));
         be_writenewline();
         return -2;
@@ -286,7 +286,7 @@ static void push_args(bvm *vm, int argc, char *argv[])
     be_pop(vm, 1);
 }
 
-/* 
+/*
  * command format: berry [options] [script [args]]
  *  command options:
  *   -i: enter interactive mode after executing 'script'

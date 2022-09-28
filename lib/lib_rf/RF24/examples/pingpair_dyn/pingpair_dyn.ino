@@ -7,9 +7,9 @@
  */
 
 /**
- * Example using Dynamic Payloads 
+ * Example using Dynamic Payloads
  *
- * This is an example of how to use payloads of a varying (dynamic) size. 
+ * This is an example of how to use payloads of a varying (dynamic) size.
  */
 
 #include <SPI.h>
@@ -87,7 +87,7 @@ void setup(void)
   //
 
   Serial.begin(115200);
-  
+
   Serial.println(F("RF24/examples/pingpair_dyn/"));
   Serial.print(F("ROLE: "));
   Serial.println(role_friendly_name[role]);
@@ -175,12 +175,12 @@ void loop(void)
     {
       // Grab the response, compare, and send to debugging spew
       uint8_t len = radio.getDynamicPayloadSize();
-      
+
       // If a corrupt dynamic payload is received, it will be flushed
       if(!len){
-        return; 
+        return;
       }
-      
+
       radio.read( receive_payload, len );
 
       // Put a zero at the end for easy printing
@@ -192,7 +192,7 @@ void loop(void)
       Serial.print(F(" value="));
       Serial.println(receive_payload);
     }
-    
+
     // Update size for next time.
     next_payload_size += payload_size_increments_by;
     if ( next_payload_size > max_payload_size )
@@ -214,12 +214,12 @@ void loop(void)
 
       // Fetch the payload, and see if this was the last one.
       uint8_t len = radio.getDynamicPayloadSize();
-      
+
       // If a corrupt dynamic payload is received, it will be flushed
       if(!len){
-        continue; 
+        continue;
       }
-      
+
       radio.read( receive_payload, len );
 
       // Put a zero at the end for easy printing

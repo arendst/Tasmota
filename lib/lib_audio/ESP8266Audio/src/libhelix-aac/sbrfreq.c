@@ -1,39 +1,39 @@
-/* ***** BEGIN LICENSE BLOCK *****  
- * Source last modified: $Id: sbrfreq.c,v 1.2 2005/05/20 18:05:41 jrecker Exp $ 
- *   
- * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.  
- *       
- * The contents of this file, and the files included with this file, 
- * are subject to the current version of the RealNetworks Public 
- * Source License (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the current version of the RealNetworks Community 
- * Source License (the "RCSL") available at 
- * http://www.helixcommunity.org/content/rcsl, in which case the RCSL 
- * will apply. You may also obtain the license terms directly from 
- * RealNetworks.  You may not use this file except in compliance with 
- * the RPSL or, if you have a valid RCSL with RealNetworks applicable 
- * to this file, the RCSL.  Please see the applicable RPSL or RCSL for 
- * the rights, obligations and limitations governing use of the 
- * contents of the file. 
- *   
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the 
- * portions it created. 
- *   
- * This file, and the files included with this file, is distributed 
- * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY 
- * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS 
- * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES 
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET 
- * ENJOYMENT OR NON-INFRINGEMENT. 
- *  
- * Technology Compatibility Kit Test Suite(s) Location:  
- *    http://www.helixcommunity.org/content/tck  
- *  
- * Contributor(s):  
- *   
- * ***** END LICENSE BLOCK ***** */  
+/* ***** BEGIN LICENSE BLOCK *****
+ * Source last modified: $Id: sbrfreq.c,v 1.2 2005/05/20 18:05:41 jrecker Exp $
+ *
+ * Portions Copyright (c) 1995-2005 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file,
+ * are subject to the current version of the RealNetworks Public
+ * Source License (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the current version of the RealNetworks Community
+ * Source License (the "RCSL") available at
+ * http://www.helixcommunity.org/content/rcsl, in which case the RCSL
+ * will apply. You may also obtain the license terms directly from
+ * RealNetworks.  You may not use this file except in compliance with
+ * the RPSL or, if you have a valid RCSL with RealNetworks applicable
+ * to this file, the RCSL.  Please see the applicable RPSL or RCSL for
+ * the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the
+ * portions it created.
+ *
+ * This file, and the files included with this file, is distributed
+ * and made available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS
+ * ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ * ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point HE-AAC decoder
@@ -66,8 +66,8 @@ static void BubbleSort(unsigned char *v, int nItems)
 	while (nItems >= 2) {
 		for (i = 0; i < nItems-1; i++) {
 			if (v[i+1] < v[i]) {
-				t = v[i+1];	
-				v[i+1] = v[i];	
+				t = v[i+1];
+				v[i+1] = v[i];
 				v[i] = t;
 			}
 		}
@@ -128,7 +128,7 @@ static unsigned char VMax(unsigned char *v, int nItems)
 /**************************************************************************************
  * Function:    CalcFreqMasterScaleZero
  *
- * Description: calculate master frequency table when freqScale == 0 
+ * Description: calculate master frequency table when freqScale == 0
  *                (4.6.18.3.2.1, figure 4.39)
  *
  * Inputs:      alterScale flag
@@ -194,7 +194,7 @@ static const int invWarpTab[2] PROGMEM = {0x40000000, 0x313b13b1};
 /**************************************************************************************
  * Function:    CalcFreqMasterScale
  *
- * Description: calculate master frequency table when freqScale > 0 
+ * Description: calculate master frequency table when freqScale > 0
  *                (4.6.18.3.2.1, figure 4.39)
  *
  * Inputs:      alterScale flag
@@ -229,12 +229,12 @@ static int CalcFreqMaster(unsigned char *freqMaster, int freqScale, int alterSca
 		twoRegions = 0;
 		k1 = k2;
 	}
-	
+
 	/* tested for all k0 = [5, 64], k1 = [k0, 64], freqScale = [1,3] */
 	t = (log2Tab[k1] - log2Tab[k0]) >> 3;				/* log2(k1/k0), Q28 to Q25 */
 	nBands0 = 2 * (((bands * t) + (1 << 24)) >> 25);	/* multiply by bands/2, round to nearest int (mBandTab has factor of 1/2 rolled in) */
 
-	/* tested for all valid combinations of k0, k1, nBands (from sampRate, freqScale, alterScale) 
+	/* tested for all valid combinations of k0, k1, nBands (from sampRate, freqScale, alterScale)
 	 * roundoff error can be a problem with fixpt (e.g. pCurr = 12.499999 instead of 12.50003)
 	 *   because successive multiplication always undershoots a little bit, but this
 	 *   doesn't occur in any of the ratios we encounter from the valid k0/k1 bands in the spec
@@ -267,7 +267,7 @@ static int CalcFreqMaster(unsigned char *freqMaster, int freqScale, int alterSca
 	t = (log2Tab[k2] - log2Tab[k1]) >> 3;		/* log2(k1/k0), Q28 to Q25 */
 	t = MULSHIFT32(bands * t, invWarp) << 2;	/* multiply by bands/2, divide by warp factor, keep Q25 */
 	nBands1 = 2 * ((t + (1 << 24)) >> 25);		/* round to nearest int */
-				
+
 	/* see comments above for calculations in first region */
 	t = RatioPowInv(k2, k1, nBands1);
 	pCurr = k1 << 24;
@@ -292,7 +292,7 @@ static int CalcFreqMaster(unsigned char *freqMaster, int freqScale, int alterSca
 	}
 	BubbleSort(vDelta, nBands1);
 
-	/* fill master frequency table with bands from second region 
+	/* fill master frequency table with bands from second region
 	 * Note: freqMaster[nBands0] = k1
 	 */
 	for (k = 1; k <= nBands1; k++)
@@ -307,7 +307,7 @@ static int CalcFreqMaster(unsigned char *freqMaster, int freqScale, int alterSca
  * Description: calculate high resolution frequency table (4.6.18.3.2.2)
  *
  * Inputs:      master frequency table
- *              number of bands in master frequency table 
+ *              number of bands in master frequency table
  *              crossover band from header
  *
  * Outputs:     high resolution frequency table
@@ -322,7 +322,7 @@ static int CalcFreqHigh(unsigned char *freqHigh, unsigned char *freqMaster, int 
 
 	for (k = 0; k <= nHigh; k++)
 		freqHigh[k] = freqMaster[k + crossOverBand];
-	
+
 	return nHigh;
 }
 
@@ -332,7 +332,7 @@ static int CalcFreqHigh(unsigned char *freqHigh, unsigned char *freqMaster, int 
  * Description: calculate low resolution frequency table (4.6.18.3.2.2)
  *
  * Inputs:      high resolution frequency table
- *              number of bands in high resolution frequency table 
+ *              number of bands in high resolution frequency table
  *
  * Outputs:     low resolution frequency table
  *
@@ -408,7 +408,7 @@ static int CalcFreqNoise(unsigned char *freqNoise, unsigned char *freqLow, int n
  *
  * Return:      number of patches
  **************************************************************************************/
-static int BuildPatches(unsigned char *patchNumSubbands, unsigned char *patchStartSubband, unsigned char *freqMaster, 
+static int BuildPatches(unsigned char *patchNumSubbands, unsigned char *patchStartSubband, unsigned char *freqMaster,
 						int nMaster, int k0, int kStart, int numQMFBands, int sampRateIdx)
 {
 	int i, j, k;
@@ -529,7 +529,7 @@ static void RemoveFreq(unsigned char *freq, int nFreq, int removeIdx)
  *
  * Return:      number of bands in limiter frequency table
  **************************************************************************************/
-static int CalcFreqLimiter(unsigned char *freqLimiter, unsigned char *patchNumSubbands, unsigned char *freqLow, 
+static int CalcFreqLimiter(unsigned char *freqLimiter, unsigned char *patchNumSubbands, unsigned char *freqLow,
 						   int nLow, int kStart, int limiterBands, int numPatches)
 {
 	int k, bands, nLimiter, nOctaves;
@@ -632,7 +632,7 @@ int CalcFreqTables(SBRHeader *sbrHdr, SBRFreq *sbrFreq, int sampRateIdx)
 	sbrFreq->numNoiseFloorBands = CalcFreqNoise(sbrFreq->freqNoise, sbrFreq->freqLow, sbrFreq->nLow, sbrFreq->kStart, k2, sbrHdr->noiseBands);
 
 	/* calculate limiter table */
-	sbrFreq->numPatches = BuildPatches(sbrFreq->patchNumSubbands, sbrFreq->patchStartSubband, sbrFreq->freqMaster, 
+	sbrFreq->numPatches = BuildPatches(sbrFreq->patchNumSubbands, sbrFreq->patchStartSubband, sbrFreq->freqMaster,
 		sbrFreq->nMaster, k0, sbrFreq->kStart, sbrFreq->numQMFBands, sampRateIdx);
 	sbrFreq->nLimiter = CalcFreqLimiter(sbrFreq->freqLimiter, sbrFreq->patchNumSubbands, sbrFreq->freqLow, sbrFreq->nLow, sbrFreq->kStart,
 		sbrHdr->limiterBands, sbrFreq->numPatches);

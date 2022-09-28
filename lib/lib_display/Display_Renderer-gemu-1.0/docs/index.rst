@@ -1,4 +1,4 @@
-ESP-IDF Component Documentation 
+ESP-IDF Component Documentation
 ===============================
 
 Component: epaper-29-ws

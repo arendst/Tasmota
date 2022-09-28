@@ -167,7 +167,7 @@ private:
 
         uint16_t _duration;
         uint16_t _remaining;
-       
+
         AnimUpdateCallback _fnCallback;
     };
 

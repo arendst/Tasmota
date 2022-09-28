@@ -10,7 +10,7 @@ or more devices with one of the supported chipsets:
  - SC5262 / SC5272
  - HX2262 / HX2272
  - PT2262 / PT2272
- - EV1527 / RT1527 / FP1527 / HS1527 
+ - EV1527 / RT1527 / FP1527 / HS1527
  - Intertechno outlets
  - HT6P20X
 

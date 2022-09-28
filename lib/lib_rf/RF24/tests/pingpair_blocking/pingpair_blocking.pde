@@ -128,7 +128,7 @@ void setup(void)
   while (! Serial.available() ) {}
   configuration = Serial.read();
   printf("Configuration\t = %c\n\r",configuration);
-   
+
   //
   // Setup and configure rf radio
   //
@@ -166,7 +166,7 @@ void setup(void)
   //
 
   radio.printDetails();
-  
+
   if ( role == role_pong_back )
     printf("\n\r+OK ");
 }
@@ -242,7 +242,7 @@ void loop(void)
 
       // First, stop listening so we can talk
       radio.stopListening();
-      
+
               // Spew it
         printf("Got payload %lu...",got_time);
 
@@ -255,7 +255,7 @@ void loop(void)
 
     }
   }
-  
+
   //
   // Stop the test if we're done and report results
   //

@@ -34,7 +34,7 @@ version 2 as published by the Free Software Foundation.
                    NC      PB4  3|    |6  PB1 --- nRF24L01 MOSI, pin6  1n4148 |
     nRF24L01 GND, pin1 -x- GND  4|    |5  PB0 --- nRF24L01 MISO, pin7         |
                         |        +----+                                       |
-                        |-----------------------------------------------||----x-- nRF24L01 CSN, pin4 
+                        |-----------------------------------------------||----x-- nRF24L01 CSN, pin4
                                                                        10nF
 
     ATtiny24/44/84 Pin map with CE_PIN 8 and CSN_PIN 7
@@ -74,7 +74,7 @@ void setup() {
 }
 
 void loop(void){
-  
+
   radio.stopListening(); // First, stop listening so we can talk.
   payload++;
   radio.write( &payload, sizeof(unsigned long) );

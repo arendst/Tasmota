@@ -1,10 +1,10 @@
 // NeoPixelFunLoop
-// This example will move a trail of light around a series of pixels.  
-// A ring formation of pixels looks best.  
+// This example will move a trail of light around a series of pixels.
+// A ring formation of pixels looks best.
 // The trail will have a slowly fading tail.
-// 
+//
 // This will demonstrate the use of the NeoPixelAnimator.
-// It shows the advanced use an animation to control the modification and 
+// It shows the advanced use an animation to control the modification and
 // starting of other animations.
 // It also shows the normal use of animating colors.
 // It also demonstrates the ability to share an animation channel rather than
@@ -26,10 +26,10 @@ const uint16_t NextPixelMoveDuration = 1000 / PixelCount; // how fast we move th
 NeoGamma<NeoGammaTableMethod> colorGamma; // for any fade animations, best to correct gamma
 
 NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
-// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.  
+// For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
 // There are other Esp8266 alternative methods that provide more pin options, but also have
 // other side effects.
-// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods 
+// for details see wiki linked here https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
 // what is stored for state is specific to the need, in this case, the colors and
 // the pixel to animate;
@@ -76,7 +76,7 @@ void FadeOutAnimUpdate(const AnimationParam& param)
         animationState[param.index].EndingColor,
         param.progress);
     // apply the color to the strip
-    strip.SetPixelColor(animationState[param.index].IndexPixel, 
+    strip.SetPixelColor(animationState[param.index].IndexPixel,
         colorGamma.Correct(updatedColor));
 }
 
@@ -90,7 +90,7 @@ void LoopAnimUpdate(const AnimationParam& param)
         animations.RestartAnimation(param.index);
 
         // pick the next pixel inline to start animating
-        // 
+        //
         frontPixel = (frontPixel + 1) % PixelCount; // increment and wrap
         if (frontPixel == 0)
         {

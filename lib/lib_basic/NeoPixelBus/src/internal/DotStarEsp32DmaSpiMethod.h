@@ -124,7 +124,7 @@ public:
         {
             deinitSpiDevice();
             esp_err_t ret = spi_bus_free(T_SPIBUS::SpiHostDevice);
-            ESP_ERROR_CHECK(ret);            
+            ESP_ERROR_CHECK(ret);
         }
         free(_data);
         free(_dmadata);

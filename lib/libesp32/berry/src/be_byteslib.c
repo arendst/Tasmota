@@ -111,38 +111,38 @@ static unsigned int decode_base64(unsigned char input[], unsigned char output[])
 static unsigned char binary_to_base64(unsigned char v) {
   // Capital letters - 'A' is ascii 65 and base64 0
   if(v < 26) return v + 'A';
-  
+
   // Lowercase letters - 'a' is ascii 97 and base64 26
   if(v < 52) return v + 71;
-  
+
   // Digits - '0' is ascii 48 and base64 52
   if(v < 62) return v - 4;
-  
+
   // '+' is ascii 43 and base64 62
   if(v == 62) return '+';
-  
+
   // '/' is ascii 47 and base64 63
   if(v == 63) return '/';
-  
+
   return 64;
 }
 
 static unsigned char base64_to_binary(unsigned char c) {
   // Capital letters - 'A' is ascii 65 and base64 0
   if('A' <= c && c <= 'Z') return c - 'A';
-  
+
   // Lowercase letters - 'a' is ascii 97 and base64 26
   if('a' <= c && c <= 'z') return c - 71;
-  
+
   // Digits - '0' is ascii 48 and base64 52
   if('0' <= c && c <= '9') return c + 4;
-  
+
   // '+' is ascii 43 and base64 62
   if(c == '+') return 62;
-  
+
   // '/' is ascii 47 and base64 63
   if(c == '/') return 63;
-  
+
   return 255;
 }
 
@@ -152,15 +152,15 @@ static unsigned int encode_base64_length(unsigned int input_length) {
 
 static unsigned int decode_base64_length(unsigned char input[]) {
   unsigned char *start = input;
-  
+
   while(base64_to_binary(input[0]) < 64) {
     ++input;
   }
-  
+
   unsigned int input_length = input - start;
-  
+
   unsigned int output_length = input_length/4*3;
-  
+
   switch(input_length % 4) {
     default: return output_length;
     case 2: return output_length + 1;
@@ -170,18 +170,18 @@ static unsigned int decode_base64_length(unsigned char input[]) {
 
 static unsigned int encode_base64(unsigned char input[], unsigned int input_length, unsigned char output[]) {
   unsigned int full_sets = input_length/3;
-  
+
   // While there are still full sets of 24 bits...
   for(unsigned int i = 0; i < full_sets; ++i) {
     output[0] = binary_to_base64(                         input[0] >> 2);
     output[1] = binary_to_base64((input[0] & 0x03) << 4 | input[1] >> 4);
     output[2] = binary_to_base64((input[1] & 0x0F) << 2 | input[2] >> 6);
     output[3] = binary_to_base64( input[2] & 0x3F);
-    
+
     input += 3;
     output += 4;
   }
-  
+
   switch(input_length % 3) {
     case 0:
       output[0] = '\0';
@@ -201,23 +201,23 @@ static unsigned int encode_base64(unsigned char input[], unsigned int input_leng
       output[4] = '\0';
       break;
   }
-  
+
   return encode_base64_length(input_length);
 }
 
 static unsigned int decode_base64(unsigned char input[], unsigned char output[]) {
   unsigned int output_length = decode_base64_length(input);
-  
+
   // While there are still full sets of 24 bits...
   for(unsigned int i = 2; i < output_length; i += 3) {
     output[0] = base64_to_binary(input[0]) << 2 | base64_to_binary(input[1]) >> 4;
     output[1] = base64_to_binary(input[1]) << 4 | base64_to_binary(input[2]) >> 2;
     output[2] = base64_to_binary(input[2]) << 6 | base64_to_binary(input[3]);
-    
+
     input += 4;
     output += 3;
   }
-  
+
   switch(output_length % 3) {
     case 1:
       output[0] = base64_to_binary(input[0]) << 2 | base64_to_binary(input[1]) >> 4;
@@ -227,7 +227,7 @@ static unsigned int decode_base64(unsigned char input[], unsigned char output[])
       output[1] = base64_to_binary(input[1]) << 4 | base64_to_binary(input[2]) >> 2;
       break;
   }
-  
+
   return output_length;
 }
 
@@ -525,7 +525,7 @@ static void bytes_new_object(bvm *vm, size_t size)
 
 /*
  * constructor for bytes()
- * Arg0 is always self 
+ * Arg0 is always self
  *
  * Option 1: main use
  *    Arg1: string - a string representing the bytes in HEX
@@ -555,7 +555,7 @@ static int m_init(bvm *vm)
     } else if (argc > 2 && be_isint(vm, 3)) {
         size_arg = be_toint(vm, 3);  /* raw size arg, can be positive or negative */
     }
-    
+
     if (argc > 1 && be_iscomptr(vm, 2)) {
         if (size_arg) {
             attr.len = (size_arg < 0) ? -size_arg : size_arg;
@@ -597,13 +597,13 @@ static int m_init(bvm *vm)
             }
         }
     }
-    
+
     /* allocate */
     bytes_realloc(vm, &attr, attr.size); /* allocate new buffer */
     if (!attr.bufptr) {
         be_throw(vm, BE_MALLOC_FAIL);
     }
-    
+
     if (hex_in) {
         buf_add_hex(&attr, hex_in, strlen(hex_in));
     }
@@ -769,7 +769,7 @@ static int m_fromstring(bvm *vm)
 /*
  * Add an int made of 1, 2 or 4 bytes, in little or big endian
  * `add(value:int[, size:int = 1]) -> instance`
- * 
+ *
  * size: may be 1, 2, 4 (little endian), or -1, -2, -4 (big endian)
  *       obvisouly -1 is idntical to 1
  *       size==0 does nothing
@@ -806,7 +806,7 @@ static int m_add(bvm *vm)
 /*
  * Get an int made of 1, 2 or 4 bytes, in little or big endian
  * `get(index:int[, size:int = 1]) -> int`
- * 
+ *
  * size: may be 1, 2, 4 (little endian), or -1, -2, -4 (big endian)
  *       obvisouly -1 is identical to 1
  *       0 returns nil
@@ -889,7 +889,7 @@ static int m_getu(bvm *vm)
 /*
  * Set an int made of 1, 2 or 4 bytes, in little or big endian
  * `set(index:int, value:int[, size:int = 1]) -> nil`
- * 
+ *
  * size: may be 1, 2, 4 (little endian), or -1, -2, -4 (big endian)
  *       obvisouly -1 is identical to 1
  *       0 returns nil
@@ -926,7 +926,7 @@ static int m_set(bvm *vm)
 /*
  * Set a 32 bits float
  * `setfloat(index:int, value:real or int [, big_endian:bool]) -> nil`
- * 
+ *
  */
 static int m_setfloat(bvm *vm)
 {
@@ -1008,7 +1008,7 @@ static int m_item(bvm *vm)
                 buf_add1(&attr2, attr.bufptr[lower]);
             }
             m_write_attributes(vm, -1, &attr2);  /* update instance */
-            be_return(vm);    
+            be_return(vm);
         }
     }
     be_raise(vm, "index_error", "bytes index out of range");
@@ -1149,9 +1149,9 @@ static int m_nequal(bvm *vm)
 
 /*
  * Converts bytes() to a base64 string
- * 
+ *
  * Note: there are no line breaks inserted
- * 
+ *
  * `b.tob64() -> string`
  */
 static int m_tob64(bvm *vm)
@@ -1171,7 +1171,7 @@ static int m_tob64(bvm *vm)
 
 /*
  * Converts base63 to bytes()
- * 
+ *
  * `bytes().fromb64() -> bytes()`
  */
 static int m_fromb64(bvm *vm)
@@ -1203,7 +1203,7 @@ static int m_fromb64(bvm *vm)
 
 /*
  * Converts hex to bytes()
- * 
+ *
  * `bytes().fromhexx() -> bytes()`
  */
 static int m_fromhex(bvm *vm)
@@ -1231,7 +1231,7 @@ static int m_fromhex(bvm *vm)
         }
         attr.len = 0;
         buf_add_hex(&attr, s + from, s_len - from);
-        
+
         be_pop(vm, 1); /* remove arg to leave instance */
         m_write_attributes(vm, 1, &attr);  /* update instance */
         be_pop(vm, be_top(vm) - 1);     /* leave instance on stack */
@@ -1248,10 +1248,10 @@ static int m_fromhex(bvm *vm)
 /*
  * Retrieve the memory address of the raw buffer
  * to be used in C functions.
- * 
+ *
  * Note: the address is guaranteed not to move unless you
  * resize the buffer
- * 
+ *
  * `_buffer() -> comptr`
  */
 static int m_buffer(bvm *vm)
@@ -1264,7 +1264,7 @@ static int m_buffer(bvm *vm)
 /*
  * Returns `btrue` if the buffer is mapped to memory
  * or `bfalse` if memory was allocated by us.
- * 
+ *
  * `ismapped() -> bool`
  */
 static int m_is_mapped(bvm *vm)
@@ -1277,11 +1277,11 @@ static int m_is_mapped(bvm *vm)
 
 /*
  * Change the pointer to a mapped buffer.
- * 
+ *
  * This call does nothing if the buffer is not mapped (i.e. memory is managed externally)
- * 
+ *
  * It is typically used to reuse existing Berry object and avoid a complete reallocation
- * 
+ *
  * `_change_buffer(comptr) -> comptr`
  */
 static int m_change_buffer(bvm *vm)
@@ -1366,29 +1366,29 @@ class Bytes : bytes
   def getbits(offset_bits, len_bits)
     if len_bits <= 0 || len_bits > 32 raise "value_error", "length in bits must be between 0 and 32" end
     var ret = 0
-  
+
     var offset_bytes = offset_bits >> 3
     offset_bits = offset_bits % 8
 
     var bit_shift = 0                   #- bit number to write to -#
-  
+
     while (len_bits > 0)
       var block_bits = 8 - offset_bits    # how many bits to read in the current block (block = byte) -#
       if block_bits > len_bits  block_bits = len_bits end
-  
+
       var mask = ( (1<<block_bits) - 1) << offset_bits
       ret = ret | ( ((self[offset_bytes] & mask) >> offset_bits) << bit_shift)
-  
+
       #- move the input window -#
       bit_shift += block_bits
       len_bits -= block_bits
       offset_bits = 0                   #- start at full next byte -#
       offset_bytes += 1
     end
-  
+
     return ret
   end
-  
+
   #-------------------------------------------------------------
   #- 'setbits' function
   #-
@@ -1405,15 +1405,15 @@ class Bytes : bytes
     val = int(val)      #- convert bool or others to int -#
     var offset_bytes = offset_bits >> 3
     offset_bits = offset_bits % 8
-  
+
     while (len_bits > 0)
       var block_bits = 8 - offset_bits    #- how many bits to write in the current block (block = byte) -#
       if block_bits > len_bits  block_bits = len_bits end
-  
+
       var mask_val = (1<<block_bits) - 1  #- mask to the n bits to get for this block -#
       var mask_b_inv = 0xFF - (mask_val << offset_bits)
       self[offset_bytes] = (self[offset_bytes] & mask_b_inv) | ((val & mask_val) << offset_bits)
-  
+
       #- move the input window -#
       val >>= block_bits
       len_bits -= block_bits

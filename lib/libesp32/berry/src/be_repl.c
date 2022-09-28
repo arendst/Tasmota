@@ -65,7 +65,7 @@ static int compile(bvm *vm, char *line, breadline getl, bfreeline freel)
 static int call_script(bvm *vm)
 {
     int res = be_pcall(vm, 0); /* call the main function */
-    switch (res) { 
+    switch (res) {
     case BE_OK: /* execution succeed */
         if (!be_isnil(vm, -1)) { /* print return value when it's not nil */
             be_dumpvalue(vm, -1);

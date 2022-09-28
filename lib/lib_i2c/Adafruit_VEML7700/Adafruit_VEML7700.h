@@ -14,7 +14,7 @@
  *	BSD license (see license.txt)
  */
 
-/* 
+/*
  * change from device111 for Tasmota
  * Add alternativ Pow function for readLuxNormalized() and readWhiteNormalized()
  */
@@ -89,7 +89,7 @@ public:
   bool powerSaveEnabled(void);
   void setPowerSaveMode(uint8_t mode);
   uint8_t getPowerSaveMode(void);
-  
+
   void setLowThreshold(uint16_t value);
   uint16_t getLowThreshold(void);
   void setHighThreshold(uint16_t value);
@@ -105,9 +105,9 @@ public:
   float readWhiteNormalized();
 
 private:
-  Adafruit_I2CRegister *ALS_Config, *ALS_Data, *White_Data, 
+  Adafruit_I2CRegister *ALS_Config, *ALS_Data, *White_Data,
     *ALS_HighThreshold, *ALS_LowThreshold, *Power_Saving, *Interrupt_Status;
-  Adafruit_I2CRegisterBits *ALS_Shutdown, *ALS_Interrupt_Enable, 
+  Adafruit_I2CRegisterBits *ALS_Shutdown, *ALS_Interrupt_Enable,
     *ALS_Persistence, *ALS_Integration_Time, *ALS_Gain,
     *PowerSave_Enable, *PowerSave_Mode;
 

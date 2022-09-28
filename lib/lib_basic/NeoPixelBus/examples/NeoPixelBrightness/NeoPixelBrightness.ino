@@ -1,10 +1,10 @@
 // NeoPixelBrightness
 // This example will cycle brightness from high to low of
-// three pixels colored Red, Green, Blue.  
-// This demonstrates the use of the NeoPixelBrightnessBus 
+// three pixels colored Red, Green, Blue.
+// This demonstrates the use of the NeoPixelBrightnessBus
 // with integrated brightness support
 //
-// There is serial output of the current state so you can 
+// There is serial output of the current state so you can
 // confirm and follow along
 //
 
@@ -24,7 +24,7 @@ NeoPixelBrightnessBus<NeoRgbFeature, Neo800KbpsMethod> strip(PixelCount, PixelPi
 
 // you loose the original color the lower the dim value used
 // here due to quantization
-const uint8_t c_MinBrightness = 8; 
+const uint8_t c_MinBrightness = 8;
 const uint8_t c_MaxBrightness = 255;
 
 int8_t direction; // current direction of dimming
@@ -43,7 +43,7 @@ void setup()
     strip.Show();
 
     direction = -1; // default to dim first
-    
+
     Serial.println();
     Serial.println("Running...");
 
@@ -51,7 +51,7 @@ void setup()
     strip.SetPixelColor(0, red);
     strip.SetPixelColor(1, green);
     strip.SetPixelColor(2, blue);
-  
+
     strip.Show();
 }
 
@@ -60,7 +60,7 @@ void loop()
 {
     uint8_t brightness = strip.GetBrightness();
     Serial.println(brightness);
-    
+
     delay(100);
 
     // swap diection of dim when limits are reached

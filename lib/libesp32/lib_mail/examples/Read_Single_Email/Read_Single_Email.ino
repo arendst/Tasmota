@@ -1,23 +1,23 @@
 /**
  * This example will fetch or read the Email which the known message UID
  * was used for fetching.
- * 
+ *
  * Email: suwatchai@outlook.com
- * 
+ *
  * Github: https://github.com/mobizt/ESP-Mail-Client
- * 
+ *
  * Copyright (c) 2021 mobizt
  *
 */
 
 /** To receive Email using Gmail, IMAP option should be enabled. https://support.google.com/mail/answer/7126229?hl=en
  * and also https://accounts.google.com/b/0/DisplayUnlockCaptcha
- * 
+ *
 */
 
-/** For ESP8266, with BearSSL WiFi Client 
+/** For ESP8266, with BearSSL WiFi Client
  * The memory reserved for completed valid SSL response from IMAP is 16 kbytes which
- * may cause your device out of memory reset in case the memory 
+ * may cause your device out of memory reset in case the memory
  * allocation error.
 */
 
@@ -35,7 +35,7 @@
 /* The imap host name e.g. imap.gmail.com for GMail or outlook.office365.com for Outlook */
 #define IMAP_HOST "################"
 
-/** The imap port e.g. 
+/** The imap port e.g.
  * 143  or esp_mail_imap_port_143
  * 993 or esp_mail_imap_port_993
 */
@@ -88,7 +88,7 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    /** Enable the debug via Serial port 
+    /** Enable the debug via Serial port
      * none debug or 0
      * basic debug or 1
     */
@@ -112,16 +112,16 @@ void setup()
 
     /** ########################################################
      * Some properties of IMAP_Config and ESP_Mail_Session data
-     * accept the pointer to constant char i.e. const char*. 
-     * 
-     * You may assign a string literal to that properties like 
+     * accept the pointer to constant char i.e. const char*.
+     *
+     * You may assign a string literal to that properties like
      * below example.
-     *   
+     *
      * config.storage.saved_path = String("/email_data").c_str();
-     * 
+     *
      * String folder = "INBOX";
      * imap.selectFolder(folder.c_str());
-     * 
+     *
      * ###########################################################
     */
 
@@ -152,12 +152,12 @@ void setup()
 
     /** The file storage type e.g.
      * esp_mail_file_storage_type_none,
-     * esp_mail_file_storage_type_flash, and 
-     * esp_mail_file_storage_type_sd 
+     * esp_mail_file_storage_type_flash, and
+     * esp_mail_file_storage_type_sd
     */
     config.storage.type = esp_mail_file_storage_type_flash;
 
-    /** Set to download heades, text and html messaeges, 
+    /** Set to download heades, text and html messaeges,
      * attachments and inline images respectively.
     */
     config.download.header = true;
@@ -166,7 +166,7 @@ void setup()
     config.download.attachment = true;
     config.download.inlineImg = true;
 
-    /** Set to enable the results i.e. html and text messaeges 
+    /** Set to enable the results i.e. html and text messaeges
      * which the content stored in the IMAPSession object is limited
      * by the option config.limit.msg_size.
      * The whole message can be download through config.download.text
@@ -184,14 +184,14 @@ void setup()
     /* Set the limit of number of messages in the search results */
     config.limit.search = 5;
 
-    /** Set the maximum size of message stored in 
+    /** Set the maximum size of message stored in
      * IMAPSession object in byte
     */
     config.limit.msg_size = 512;
 
     /** Set the maximum attachments and inline images files size
-     * that can be downloaded in byte. 
-     * The file which its size is largger than this limit may be saved 
+     * that can be downloaded in byte.
+     * The file which its size is largger than this limit may be saved
      * as truncated file.
     */
     config.limit.attachment_size = 1024 * 1024 * 5;

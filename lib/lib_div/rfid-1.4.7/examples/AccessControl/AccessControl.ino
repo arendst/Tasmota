@@ -426,13 +426,13 @@ void deleteID( byte a[] ) {
 }
 
 ///////////////////////////////////////// Check Bytes   ///////////////////////////////////
-bool checkTwo ( byte a[], byte b[] ) {   
+bool checkTwo ( byte a[], byte b[] ) {
   for ( uint8_t k = 0; k < 4; k++ ) {   // Loop 4 times
     if ( a[k] != b[k] ) {     // IF a != b then false, because: one fails, all fail
        return false;
     }
   }
-  return true;  
+  return true;
 }
 
 ///////////////////////////////////////// Find Slot   ///////////////////////////////////

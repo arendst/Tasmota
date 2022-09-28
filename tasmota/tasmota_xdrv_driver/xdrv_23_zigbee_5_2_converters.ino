@@ -1040,7 +1040,7 @@ void ZCLFrame::parseReadConfigAttributes(uint16_t shortaddr, Z_attribute_list& a
           // decode Reportable Change
           Z_attribute &attr_change = attr_2.addAttributePMEM(PSTR("ReportableChange"));
           i += parseSingleAttribute(attr_change, payload, i, attr_type);
-          
+
           if ((multiplier != 1 && multiplier != 0) || (divider != 1 && divider != 0) || (base != 0)) {
             float fval = attr_change.getFloat();
             if (multiplier != 1 && multiplier != 0) {

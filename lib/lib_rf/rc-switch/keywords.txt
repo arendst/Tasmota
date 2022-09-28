@@ -28,7 +28,7 @@ send			KEYWORD2
 ##########
 enableReceive		KEYWORD2
 disableReceive		KEYWORD2
-available		KEYWORD2	
+available		KEYWORD2
 resetAvailable		KEYWORD2
 setReceiveTolerance	KEYWORD2
 getReceivedValue	KEYWORD2

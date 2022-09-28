@@ -1,44 +1,44 @@
-/* ***** BEGIN LICENSE BLOCK ***** 
- * Version: RCSL 1.0/RPSL 1.0 
- *  
- * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved. 
- *      
- * The contents of this file, and the files included with this file, are 
- * subject to the current version of the RealNetworks Public Source License 
- * Version 1.0 (the "RPSL") available at 
- * http://www.helixcommunity.org/content/rpsl unless you have licensed 
- * the file under the RealNetworks Community Source License Version 1.0 
- * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl, 
- * in which case the RCSL will apply. You may also obtain the license terms 
- * directly from RealNetworks.  You may not use this file except in 
- * compliance with the RPSL or, if you have a valid RCSL with RealNetworks 
- * applicable to this file, the RCSL.  Please see the applicable RPSL or 
- * RCSL for the rights, obligations and limitations governing use of the 
- * contents of the file.  
- *  
- * This file is part of the Helix DNA Technology. RealNetworks is the 
- * developer of the Original Code and owns the copyrights in the portions 
- * it created. 
- *  
- * This file, and the files included with this file, is distributed and made 
- * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER 
- * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES, 
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS 
- * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT. 
- * 
- * Technology Compatibility Kit Test Suite(s) Location: 
- *    http://www.helixcommunity.org/content/tck 
- * 
- * Contributor(s): 
- *  
- * ***** END LICENSE BLOCK ***** */ 
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: RCSL 1.0/RPSL 1.0
+ *
+ * Portions Copyright (c) 1995-2002 RealNetworks, Inc. All Rights Reserved.
+ *
+ * The contents of this file, and the files included with this file, are
+ * subject to the current version of the RealNetworks Public Source License
+ * Version 1.0 (the "RPSL") available at
+ * http://www.helixcommunity.org/content/rpsl unless you have licensed
+ * the file under the RealNetworks Community Source License Version 1.0
+ * (the "RCSL") available at http://www.helixcommunity.org/content/rcsl,
+ * in which case the RCSL will apply. You may also obtain the license terms
+ * directly from RealNetworks.  You may not use this file except in
+ * compliance with the RPSL or, if you have a valid RCSL with RealNetworks
+ * applicable to this file, the RCSL.  Please see the applicable RPSL or
+ * RCSL for the rights, obligations and limitations governing use of the
+ * contents of the file.
+ *
+ * This file is part of the Helix DNA Technology. RealNetworks is the
+ * developer of the Original Code and owns the copyrights in the portions
+ * it created.
+ *
+ * This file, and the files included with this file, is distributed and made
+ * available on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND REALNETWORKS HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ *
+ * Technology Compatibility Kit Test Suite(s) Location:
+ *    http://www.helixcommunity.org/content/tck
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
 
 /**************************************************************************************
  * Fixed-point MP3 decoder
  * Jon Recker (jrecker@real.com), Ken Cooke (kenc@real.com)
  * June 2003
  *
- * dct32.c - optimized implementations of 32-point DCT for matrixing stage of 
+ * dct32.c - optimized implementations of 32-point DCT for matrixing stage of
  *             polyphase filter
  **************************************************************************************/
 
@@ -116,7 +116,7 @@ static const int dcttab[48] PROGMEM = {
 /**************************************************************************************
  * Function:    FDCT32
  *
- * Description: Ken's highly-optimized 32-point DCT (radix-4 + radix-8) 
+ * Description: Ken's highly-optimized 32-point DCT (radix-4 + radix-8)
  *
  * Inputs:      input buffer, length = 32 samples
  *              require at least 6 guard bits in input vector x to avoid possibility
@@ -134,7 +134,7 @@ static const int dcttab[48] PROGMEM = {
  *                for the polyphase filterbank
  *              fully unrolled stage 1, for max precision (scale the 1/cos() factors
  *                differently, depending on magnitude)
- *              guard bit analysis verified by exhaustive testing of all 2^32 
+ *              guard bit analysis verified by exhaustive testing of all 2^32
  *                combinations of max pos/max neg values in x[]
  *
  * TODO:        code organization and optimization for ARM
@@ -150,7 +150,7 @@ static const int dcttab[48] PROGMEM = {
     int b0, b1, b2, b3, b4, b5, b6, b7;
 	int *d;
 
-	/* scaling - ensure at least 6 guard bits for DCT 
+	/* scaling - ensure at least 6 guard bits for DCT
 	 * (in practice this is already true 99% of time, so this code is
 	 *  almost never triggered)
 	 */
@@ -161,7 +161,7 @@ static const int dcttab[48] PROGMEM = {
 			buf[i] >>= es;
 	}
 
-	/* first pass */    
+	/* first pass */
 	D32FP(0, 1, 5, 1);
 	D32FP(1, 1, 3, 1);
 	D32FP(2, 1, 3, 1);
@@ -203,7 +203,7 @@ static const int dcttab[48] PROGMEM = {
 	/* sample 0 - always delayed one block */
 	d = dest + 64*16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
 	s = buf[ 0];				d[0] = d[8] = s;
-    
+
 	/* samples 16 to 31 */
 	d = dest + offset + (oddBlock ? VBUF_LENGTH  : 0);
 
@@ -267,7 +267,7 @@ static const int dcttab[48] PROGMEM = {
 	if (es) {
 		d = dest + 64*16 + ((offset - oddBlock) & 7) + (oddBlock ? 0 : VBUF_LENGTH);
 		s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);
-	
+
 		d = dest + offset + (oddBlock ? VBUF_LENGTH  : 0);
 		for (i = 16; i <= 31; i++) {
 			s = d[0];	CLIP_2N(s, 31 - es);	d[0] = d[8] = (s << es);	d += 64;

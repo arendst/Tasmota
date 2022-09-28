@@ -81,26 +81,26 @@ public:
     {
         const uint8_t startFrame[4] = { 0x00 };
         const uint8_t resetFrame[4] = { 0x00 };
-        
+
         _wire.beginTransaction();
 
         // start frame
         _wire.transmitBytes(startFrame, sizeof(startFrame));
-        
+
         // data
         _wire.transmitBytes(_data, _sizeData);
 
        // reset frame
         _wire.transmitBytes(resetFrame, sizeof(resetFrame));
-        
-        // end frame 
-        
+
+        // end frame
+
         // one bit for every two pixels with no less than 1 byte
         for (size_t endFrameByte = 0; endFrameByte < _sizeEndFrame; endFrameByte++)
         {
             _wire.transmitByte(0x00);
         }
-        
+
         _wire.endTransaction();
     }
 

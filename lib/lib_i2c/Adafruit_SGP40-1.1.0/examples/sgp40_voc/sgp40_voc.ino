@@ -30,7 +30,7 @@ int counter = 0;
 void loop() {
   uint16_t sraw;
   int32_t voc_index;
-  
+
   float t = sht31.readTemperature();
   Serial.print("Temp *C = "); Serial.print(t); Serial.print("\t\t");
   float h = sht31.readHumidity();

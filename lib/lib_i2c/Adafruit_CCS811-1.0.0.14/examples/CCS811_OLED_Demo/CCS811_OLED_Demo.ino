@@ -1,7 +1,7 @@
-/* This demo shows how to display the CCS811 readings on an Adafruit I2C OLED. 
+/* This demo shows how to display the CCS811 readings on an Adafruit I2C OLED.
  * (We used a Feather + OLED FeatherWing)
  */
- 
+
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -12,14 +12,14 @@
 Adafruit_CCS811 ccs;
 Adafruit_SSD1306 display = Adafruit_SSD1306();
 
-void setup() {  
+void setup() {
   Serial.begin(115200);
 
   if(!ccs.begin()){
     Serial.println("Failed to start sensor! Please check your wiring.");
     while(1);
   }
-  
+
   // by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
 
@@ -37,7 +37,7 @@ void setup() {
   while(!ccs.available());
   float temp = ccs.calculateTemperature();
   ccs.setTempOffset(temp - 25.0);
-  
+
   Serial.println("IO test");
 
   // text display tests
@@ -57,13 +57,13 @@ void loop() {
       float eCO2 = ccs.geteCO2();
       display.print(eCO2);
       Serial.print(eCO2);
-      
+
       display.print(" ppm\nTVOC: ");
-      Serial.print(" ppm, TVOC: ");      
+      Serial.print(" ppm, TVOC: ");
       float TVOC = ccs.getTVOC();
       display.print(TVOC);
       Serial.print(TVOC);
-      
+
       Serial.print(" ppb   Temp:");
       display.print(" ppb\nTemp: ");
       Serial.println(temp);

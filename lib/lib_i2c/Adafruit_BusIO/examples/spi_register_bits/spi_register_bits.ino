@@ -1,4 +1,4 @@
-/*************************************************** 
+/***************************************************
 
   This is an example for how to use Adafruit_BusIO_RegisterBits from Adafruit_BusIO library.
 
@@ -7,15 +7,15 @@
   uisng a MAX31865 RTD-to-Digital Converter
   ----> https://datasheets.maximintegrated.com/en/ds/MAX31865.pdf
 
-  This sensor uses SPI to communicate, 4 pins are required to  
+  This sensor uses SPI to communicate, 4 pins are required to
   interface.
   A fifth pin helps to detect when a new conversion is ready.
 
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
+  Adafruit invests time and resources providing this open source code,
+  please support Adafruit and open-source hardware by purchasing
   products from Adafruit!
 
-  Example written (2020/3) by Andreas Hardtung/AnHard.  
+  Example written (2020/3) by Andreas Hardtung/AnHard.
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
@@ -130,7 +130,7 @@ void setup() {
   // Set ratio range.
   // Setting the temperatures would need some more calculation - not related to Adafruit_BusIO_RegisterBits.
   uint16_t ratio = rRatio_bits.read();
-  maxRratio_bits.write( (ratio < 0x8fffu-1000u) ? ratio + 1000u : 0x8fffu ); 
+  maxRratio_bits.write( (ratio < 0x8fffu-1000u) ? ratio + 1000u : 0x8fffu );
   minRratio_bits.write( (ratio >         1000u) ? ratio - 1000u : 0u      );
 
   printConfig();

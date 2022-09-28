@@ -30,7 +30,7 @@ void setup()
   // combined length of clientId, username and password exceed this use the
   // following to increase the buffer size:
   // client.setBufferSize(255);
-  
+
   if (client.connect("arduinoClient", "testuser", "testpass")) {
     client.publish("outTopic","hello world");
     client.subscribe("inTopic");

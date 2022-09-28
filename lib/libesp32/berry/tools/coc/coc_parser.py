@@ -42,28 +42,28 @@ class coc_parser:
             self.text = self.text[r.end(0):]        # keep only after pattern
             func = self.parsers[r[0]]                # retrieve function for matched
             func()                                  # call function
-    
+
     # def scan_const_string(self):
     #     r = re.match(r"\w*", self.text)
     #     if r:
     #         self.text = self.text[r.end(0)]
     #         self.strtab.append(r[0])
-    
+
     def skip_space(self):
         r = re.match(r"\s+", self.text)
         if r:
             self.text = self.text[r.end(0):]
-    
+
     def parse_char_base(self, c, necessary):
         res = self.text[0] == c
         if not res and necessary:   print(self.text); raise "error"
         if res: self.text = self.text[1:]
         return res
-    
+
     def parse_char(self, c, necessary = False):
         self.skip_space()
         return self.parse_char_base(c, necessary)
-    
+
     def skip_char(self, c):
         self.parse_char(c, True)
 
@@ -109,7 +109,7 @@ class coc_parser:
             obj = self.parse_block()
             self.objects.append(obj)
             if self.parse_char("@"): break
-        
+
         end_text = "const_object_info_end"
         if not str.startswith(self.text, end_text): raise "error"
         self.text = self.text[len(end_text):]
@@ -156,7 +156,7 @@ class coc_parser:
         self.skip_char(":")
         value = self.parse_word()
         obj.attr[key] = value
-    
+
     #################################################################################
     # Parse the body definition of a class, module...
     #################################################################################
@@ -166,7 +166,7 @@ class coc_parser:
             while True:
                 self.parse_body_item(obj)
                 if self.parse_char("}"): break
-    
+
     #################################################################################
     # Parse each line item in the module/class/vartab
     #################################################################################

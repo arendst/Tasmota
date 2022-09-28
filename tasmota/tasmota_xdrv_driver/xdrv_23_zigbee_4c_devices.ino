@@ -183,7 +183,7 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
 
 /*********************************************************************************************\
  * Write Devices in EEPROM/File/Flash
- * 
+ *
  * Writes the preamble and all devices in the Univ_Write_File structure.
  * Does not close the file at the end.
  * Returns true if succesful.

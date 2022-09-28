@@ -11,7 +11,7 @@ const uint16_t PixelCount = 4; // this example assumes 4 pixels, making it small
 
 // make sure to set this to the correct pins
 const uint8_t DotClockPin = 2;
-const uint8_t DotDataPin = 3;  
+const uint8_t DotDataPin = 3;
 
 #define colorSaturation 128
 
@@ -33,7 +33,7 @@ RgbColor white(colorSaturation);
 RgbColor black(0);
 
 // for use with RGB DotStars when using the luminance/brightness global value
-// note that its range is only 0 - 31 (31 is full bright) and 
+// note that its range is only 0 - 31 (31 is full bright) and
 // also note that it is not useful for POV displays as it will cause more flicker
 RgbwColor redL(colorSaturation, 0, 0, 31); // use white value to store luminance
 RgbwColor greenL(0, colorSaturation, 0, 31); // use white value to store luminance
@@ -65,7 +65,7 @@ void loop()
 
     Serial.println("Colors R, G, B, W...");
 
-    // set the colors, 
+    // set the colors,
     strip.SetPixelColor(0, red);
     strip.SetPixelColor(1, green);
     strip.SetPixelColor(2, blue);

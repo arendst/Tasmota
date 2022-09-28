@@ -17,7 +17,7 @@ void output(unsigned long decimal, unsigned int length, unsigned int delay, unsi
   Serial.print(" microseconds");
   Serial.print(" Protocol: ");
   Serial.println(protocol);
-  
+
   Serial.print("Raw data: ");
   for (unsigned int i=0; i<= length*2; i++) {
     Serial.print(raw[i]);
@@ -49,7 +49,7 @@ static const char* bin2tristate(const char* bin) {
 }
 
 static char * dec2binWzerofill(unsigned long Dec, unsigned int bitLength) {
-  static char bin[64]; 
+  static char bin[64];
   unsigned int i=0;
 
   while (Dec > 0) {
@@ -65,6 +65,6 @@ static char * dec2binWzerofill(unsigned long Dec, unsigned int bitLength) {
     }
   }
   bin[bitLength] = '\0';
-  
+
   return bin;
 }

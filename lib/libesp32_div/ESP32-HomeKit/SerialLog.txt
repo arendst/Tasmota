@@ -4,7 +4,7 @@ WiFi connecting...
 WiFi connected, IP: 192.168.6.134
 [   1657] Keystore initialised
 [   1662] Accessory is not Paired with any controller
-[   1664] Database initialised. Accessory Device ID: 90:60:09:AB:F0:1D 
+[   1664] Database initialised. Accessory Device ID: 90:60:09:AB:F0:1D
 [   1664] HAP Initialization succeeded. Version : 4.0
 [   1670] MFi auth not supported. Falling back to HAP_MFI_AUTH_NONE
 [   1675] Setup ID: ES32

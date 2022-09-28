@@ -1,7 +1,7 @@
 /*
   AudioGeneratorMP3
   Wrap libmad MP3 library to play audio
-    
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -44,7 +44,7 @@ class AudioGeneratorMP3 : public AudioGenerator
     static constexpr int preAllocFrameSize () { return (sizeof(struct mad_frame) + 7) & ~7; }
     static constexpr int preAllocSynthSize () { return (sizeof(struct mad_synth) + 7) & ~7; }
 
-  protected:   
+  protected:
     void *preallocateSpace = nullptr;
     int preallocateSize = 0;
     void *preallocateStreamSpace = nullptr;
@@ -60,7 +60,7 @@ class AudioGeneratorMP3 : public AudioGenerator
     int lastBuffLen;
     unsigned int lastRate;
     int lastChannels;
-    
+
     // Decoding bits
     bool madInitted;
     struct mad_stream *stream;

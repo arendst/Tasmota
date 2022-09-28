@@ -47,7 +47,7 @@ persist_module.init = def (m)
       self._p = {}
       self._dirty = true
     end
-    
+
     def remove(k)
         self._p.remove(k)
         self._dirty = true
@@ -123,7 +123,7 @@ persist_module.init = def (m)
       var sep = nil
       for k:v.keys()
         if sep != nil  f.write(sep) end
-        
+
         f.write(json.dump(str(k)))
         f.write(':')
         self.json_fdump_any(f, v[k])

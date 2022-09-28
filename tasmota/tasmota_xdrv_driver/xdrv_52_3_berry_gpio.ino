@@ -28,10 +28,10 @@
 #endif
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
+ *
  * import gpio
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 extern "C" {
 
@@ -102,7 +102,7 @@ extern "C" {
     }
     be_raise(vm, kTypeError, nullptr);
   }
-  
+
   int gp_digital_read(bvm *vm);
   int gp_digital_read(bvm *vm)  {
     int32_t argc = be_top(vm); // Get the number of arguments

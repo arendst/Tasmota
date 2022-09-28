@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
  *
- * Permission is hereby granted, free of charge, to any person obtaining 
+ * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
  * without limitation the rights to use, copy, modify, merge, publish,
@@ -9,12 +9,12 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * The above copyright notice and this permission notice shall be 
+ * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
@@ -215,7 +215,7 @@ typedef struct {
  * length as the modulus (actual modulus length, without extra leading
  * zeros in the modulus representation in memory). If the length does
  * not match, then this function returns 0 and `x[]` is unmodified.
- * 
+ *
  * It `xlen` is correct, then `x[]` is modified. Returned value is 1
  * on success, 0 on error. Error conditions include an oversized `x[]`
  * (the array has the same length as the modulus, but the numerical value
@@ -326,7 +326,7 @@ typedef uint32_t (*br_rsa_pkcs1_vrfy)(const unsigned char *x, size_t xlen,
  * \return  1 on success, 0 on error.
  */
 typedef uint32_t (*br_rsa_pss_vrfy)(const unsigned char *x, size_t xlen,
-	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
 	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
 
 /**
@@ -604,7 +604,7 @@ uint32_t br_rsa_i32_pkcs1_vrfy(const unsigned char *x, size_t xlen,
  * \return  1 on success, 0 on error.
  */
 uint32_t br_rsa_i32_pss_vrfy(const unsigned char *x, size_t xlen,
-	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
 	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
 
 /**
@@ -705,7 +705,7 @@ uint32_t br_rsa_i31_pkcs1_vrfy(const unsigned char *x, size_t xlen,
  * \return  1 on success, 0 on error.
  */
 uint32_t br_rsa_i31_pss_vrfy(const unsigned char *x, size_t xlen,
-	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
 	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
 
 /**
@@ -818,7 +818,7 @@ uint32_t br_rsa_i62_pkcs1_vrfy(const unsigned char *x, size_t xlen,
  * \return  1 on success, 0 on error.
  */
 uint32_t br_rsa_i62_pss_vrfy(const unsigned char *x, size_t xlen,
-	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
 	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
 
 /**
@@ -995,7 +995,7 @@ uint32_t br_rsa_i15_pkcs1_vrfy(const unsigned char *x, size_t xlen,
  * \return  1 on success, 0 on error.
  */
 uint32_t br_rsa_i15_pss_vrfy(const unsigned char *x, size_t xlen,
-	const br_hash_class *hf_data, const br_hash_class *hf_mgf1, 
+	const br_hash_class *hf_data, const br_hash_class *hf_mgf1,
 	const void *hash, size_t salt_len, const br_rsa_public_key *pk);
 
 /**

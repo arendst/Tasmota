@@ -1,5 +1,5 @@
 /*
-  SinglePinI2SDriver  
+  SinglePinI2SDriver
   ESP8266Audio I2S Minimal driver
 
   Copyright (C) 2020 Ivan Kostoski
@@ -74,8 +74,8 @@ class SinglePinI2SDriver
 
     // (Re)Start transmission ("TX" DMA always needed to be enabled)
     static inline void startSLC() { SLCTXL |= SLCTXLS; SLCRXL |= SLCRXLS; }
-    static inline uint32_t isSLCRunning() { return (SLCRXS & SLCRXF); };  
-    static inline uint32_t isSLCStopped() { return (SLCRXS & SLCRXE); }; 
+    static inline uint32_t isSLCRunning() { return (SLCRXS & SLCRXF); };
+    static inline uint32_t isSLCStopped() { return (SLCRXS & SLCRXE); };
     static inline SLCDecriptor *lastSentDescriptor() { return (SLCDecriptor*)SLCRXEDA; }
 };
 

@@ -51,7 +51,7 @@ public:
     //
     // to apply our brightness shader, modify the original color and return the color we want
     // blend from black (_brightness == 0.0) to the original color (_brightness == 1.0)
-    
+
     return RgbColor::LinearBlend(Black, original, (float)_brightness / 255.0f);
   }
 
@@ -67,9 +67,9 @@ public:
   {
     return _brightness;
   }
-  
+
 private:
-  uint8_t _brightness;    
+  uint8_t _brightness;
 };
 
 // create an instance of our shader object
@@ -91,10 +91,10 @@ void setup()
     strip.Begin();
     strip.Show();
 
-    // dibs do not default to any color, 
+    // dibs do not default to any color,
     // so clear it to black if you aren't going to draw
     // into every pixel
-    image.ClearTo(Black); 
+    image.ClearTo(Black);
 
     // draw a pattern into the image
     uint8_t index = 0;
@@ -114,7 +114,7 @@ void setup()
     image.SetPixelColor(index++, BrightCyan);
     image.SetPixelColor(index++, BrightBlue);
     image.SetPixelColor(index++, BrightPurple);
-    
+
     Serial.println();
     Serial.println("Running...");
 
@@ -125,7 +125,7 @@ void loop()
 {
   // we increment by delta every 30ms
   delay(30);
-  
+
   // update the brightness in shader
   //
   uint8_t brightness = shader.getBrightness();
@@ -141,10 +141,10 @@ void loop()
   // modify and apply
   brightness += delta;
   shader.setBrightness(brightness);
-  
+
   Serial.println(brightness);
-   
-  
+
+
   // render the image using the shader and then call Show()
   // these two should be called together in order
   //

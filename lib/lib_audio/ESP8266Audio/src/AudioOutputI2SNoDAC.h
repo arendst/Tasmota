@@ -1,7 +1,7 @@
 /*
   AudioOutputI2SNoDAC
   Audio player using SW delta-sigma to generate "analog" on I2S data
-  
+
   Copyright (C) 2017  Earle F. Philhower, III
 
   This program is free software: you can redistribute it and/or modify
@@ -29,9 +29,9 @@ class AudioOutputI2SNoDAC : public AudioOutputI2S
     virtual ~AudioOutputI2SNoDAC() override;
     virtual bool begin() override { return AudioOutputI2S::begin(false); }
     virtual bool ConsumeSample(int16_t sample[2]) override;
-    
+
     bool SetOversampling(int os);
-    
+
   protected:
     virtual int AdjustI2SRate(int hz) override { return hz * oversample/32; }
     uint8_t oversample;
