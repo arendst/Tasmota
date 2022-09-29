@@ -556,6 +556,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MCP2515
   AGPIO(GPIO_MCP2515_CS),
 #endif  // USE_MCP2515
+#ifdef USE_CANSNIFFER
+  AGPIO(GPIO_MCP2515_CS),
+#endif  // USE_MCP2515
 #endif  // USE_SPI
 
 #if defined(USE_SDCARD) && defined(ESP32)
