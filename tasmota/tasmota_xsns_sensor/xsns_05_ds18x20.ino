@@ -27,6 +27,12 @@
 
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
 //#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
+      
+/* #define DS18x20_USE_ID_ALIAS in my_user_config.h or user_config_override.h
+  * Use alias for fixed sensor name in scripts by autoexec. Command: DS18Alias XXXXXXXXXXXXXXXX,N where XXXXXXXXXXXXXXXX full serial and N number 1-255
+  * Result in JSON:  "DS18Alias_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
+  * add 8 bytes used memory
+*/
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
@@ -54,6 +60,9 @@ struct {
   uint8_t address[8];
   uint8_t index;
   uint8_t valid;
+#ifdef DS18x20_USE_ID_ALIAS
+  uint8_t alias;
+#endif //DS18x20_USE_ID_ALIAS  
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 
 struct {
@@ -325,6 +334,9 @@ void Ds18x20Init(void) {
       for (uint32_t j = 6; j > 0; j--) {
         ids[DS18X20Data.sensors] = ids[DS18X20Data.sensors] << 8 | ds18x20_sensor[DS18X20Data.sensors].address[j];
       }
+#ifdef DS18x20_USE_ID_ALIAS      
+      ds18x20_sensor[DS18X20Data.sensors].alias=0;
+#endif
       DS18X20Data.sensors++;
     }
   }
@@ -434,7 +446,15 @@ void Ds18x20Name(uint8_t sensor) {
     }
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
+#ifdef DS18x20_USE_ID_ALIAS
+    if (ds18x20_sensor[sensor].alias) {
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Alias%c%d"), IndexSeparator(), ds18x20_sensor[sensor].alias);
+    } else {
+#endif
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
+#ifdef DS18x20_USE_ID_ALIAS
+    }
+#endif
 #endif
   }
 }
@@ -513,6 +533,47 @@ void Ds18x20Show(bool json) {
   }
 }
 
+#ifdef DS18x20_USE_ID_ALIAS
+const char kds18Commands[] PROGMEM = "|"  // No prefix
+  D_CMND_DS_ALIAS;
+
+void (* const DSCommand[])(void) PROGMEM = {
+  &CmndDSAlias };
+
+void CmndDSAlias(void) {
+  uint8_t tmp;
+  uint8_t sensor=255;
+  char argument[XdrvMailbox.data_len];
+  char address[17];
+  
+  if (ArgC()==2) {
+    tmp=atoi(ArgV(argument, 2));
+    ArgV(argument,1);
+
+    for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+      for (uint32_t j = 0; j < 8; j++) {
+        sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);
+      }
+      if (!strncmp(argument,address,12)) {
+        ds18x20_sensor[i].alias=tmp;
+        break;
+      }
+    }
+  }
+  Response_P(PSTR("{"));
+  for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+    Ds18x20Name(i);
+    char address[17];
+    for (uint32_t j = 0; j < 8; j++) {
+      sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);  // Skip sensor type and crc
+    }
+    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"),DS18X20Data.name, address);
+    if (i < DS18X20Data.sensors-1) {ResponseAppend_P(PSTR(","));}
+  }
+  ResponseAppend_P(PSTR("}"));
+}
+#endif // DS18x20_USE_ID_ALIAS
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -536,6 +597,11 @@ bool Xsns05(uint8_t function) {
         Ds18x20Show(0);
         break;
 #endif  // USE_WEBSERVER
+#ifdef DS18x20_USE_ID_ALIAS
+      case FUNC_COMMAND:
+        result = DecodeCommand(kds18Commands, DSCommand);
+        break;
+#endif // DS18x20_USE_ID_ALIAS
     }
   }
   return result;
