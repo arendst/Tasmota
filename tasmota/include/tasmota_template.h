@@ -553,7 +553,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDCARD
   AGPIO(GPIO_SDCARD_CS),                // SDCard in SPI mode
 #endif  // USE_SDCARD
-#ifdef USE_MCP2515
+#if defined(USE_MCP2515) || defined(USE_CANSNIFFER)
   AGPIO(GPIO_MCP2515_CS),
 #endif  // USE_MCP2515
 #endif  // USE_SPI

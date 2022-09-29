@@ -286,7 +286,7 @@ a_features = [[
     "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
     "USE_BP5758D","USE_HYT","USE_SM2335","USE_DISPLAY_TM1621_SONOFF"
     ],[
-    "USE_SGP40","USE_LUXV30B","","",
+    "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","",
     "","","","",
     "","","","",
     "","","","",
