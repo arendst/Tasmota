@@ -45,17 +45,32 @@
 
 /*********************************************************************************************/
 
-//#define ADE7953_DEBUG
+//#define ADE7953_DUMP_REGS
 
 #define ADE7953_PREF            1540         // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
 #define ADE7953_UREF            26000        // 4194304 / (26000 / 10000) = 1613194 (= VGAIN)
-#define ADE7953_IREF            10000        // 4194304 / (10000 / 10000) = 4194303 (= IGAIN, needs to be less than 4194304 in order to use calib.dat)
+#define ADE7953_IREF            10000        // 4194304 / (10000 / 10000) = 4194303 (= IGAIN, needs to be different than 4194304 in order to use calib.dat)
 
 // Default calibration parameters can be overridden by a rule as documented above.
-#define ADE7953_GAIN_DEFAULT    4194304      // = 0x400000
-#define ADE7953_PHCAL_DEFAULT   0
+#define ADE7953_GAIN_DEFAULT    4194304      // = 0x400000 range 2097152 (min) to 6291456 (max)
+#define ADE7953_PHCAL_DEFAULT   0            // = range -383 to 383
 
 enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM };
+
+enum Ade7953_8BitRegisters {
+  // Register Name                    Addres  R/W  Bt  Ty  Default     Description
+  // ----------------------------     ------  ---  --  --  ----------  --------------------------------------------------------------------
+  ADE7953_SAGCYC = 0x000,          // 0x000   R/W  8   U   0x00        Sag line cycles
+  ADE7953_DISNOLOAD,               // 0x001   R/W  8   U   0x00        No-load detection disable (see Table 16)
+  ADE7953_RESERVED_0X002,          // 0x002
+  ADE7953_RESERVED_0X003,          // 0x003
+  ADE7953_LCYCMODE,                // 0x004   R/W  8   U   0x40        Line cycle accumulation mode configuration (see Table 17)
+  ADE7953_RESERVED_0X005,          // 0x005
+  ADE7953_RESERVED_0X006,          // 0x006
+  ADE7953_PGA_V,                   // 0x007   R/W  8   U   0x00        Voltage channel gain configuration (Bits[2:0])
+  ADE7953_PGA_IA,                  // 0x008   R/W  8   U   0x00        Current Channel A gain configuration (Bits[2:0])
+  ADE7953_PGA_IB                   // 0x009   R/W  8   U   0x00        Current Channel B gain configuration (Bits[2:0])
+};
 
 enum Ade7953_16BitRegisters {
   // Register Name                    Addres  R/W  Bt  Ty  Default     Description
@@ -273,19 +288,38 @@ int32_t Ade7953Read(uint16_t reg) {
 	return response;
 }
 
+#ifdef ADE7953_DUMP_REGS
+void Ade7953DumpRegs(void) {
+  char data[200] = { 0 };  // Size Regs 0x380..397 = (6 (24-bit) + 1 (,)) * 24 = 168chars
+  for (uint32_t i = 0; i < 10; i++) {
+    int32_t value = Ade7953Read(ADE7953_SAGCYC + i);
+    snprintf_P(data, sizeof(data), PSTR("%s%s%02X"), data, (i)?",":"", value);  // 8-bit regs
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x000..009 %s"), data);
+  data[0] = '\0';
+  for (uint32_t i = 0; i < 15; i++) {
+    int32_t value = Ade7953Read(ADE7953_ZXTOUT + i);
+    snprintf_P(data, sizeof(data), PSTR("%s%s%04X"), data, (i)?",":"", value);  // 16-bit regs
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x100..10E %s"), data);
+  data[0] = '\0';
+  for (uint32_t i = 0; i < 24; i++) {
+    int32_t value = Ade7953Read(ADE7953_AIGAIN + i);
+    snprintf_P(data, sizeof(data), PSTR("%s%s%06X"), data, (i)?",":"", value);  // 24-bit regs
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x380..397 %s"), data);
+}
+#endif  // ADE7953_DUMP_REGS
+
 void Ade7953Init(void) {
+#ifdef ADE7953_DUMP_REGS
+  Ade7953DumpRegs();
+#endif  // ADE7953_DUMP_REGS
+
   Ade7953Write(ADE7953_CONFIG, 0x0004);    // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
   Ade7953Write(0x0FE, 0x00AD);             // Unlock register 0x120
   Ade7953Write(0x120, 0x0030);             // Configure optimum setting
 
-  int32_t regs[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
-#ifdef ADE7953_DEBUG
-  for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
-    regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
-  }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: CalibRegs V %06X, aI %06X, bI %06X, aW %06X, bW %06X, aVA %06X, bVA %06X, aVAr %06X, bVAr %06X, aP %06X, bP %06X"),
-    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
-#endif  // ADE7953_DEBUG
   for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
     if (i >= ADE7943_CAL_PHCALA) {
       int16_t phasecal = Ade7953.calib_data[i];
@@ -297,6 +331,7 @@ void Ade7953Init(void) {
       Ade7953Write(Ade7953CalibRegs[i], Ade7953.calib_data[i]);
     }
   }
+  int32_t regs[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
   for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
     regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
     if (i >= ADE7943_CAL_PHCALA) {
@@ -306,12 +341,11 @@ void Ade7953Init(void) {
       }
     }
   }
-#ifdef ADE7953_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: CalibRegs V %06X, aI %06X, bI %06X, aW %06X, bW %06X, aVA %06X, bVA %06X, aVAr %06X, bVAr %06X, aP %06X, bP %06X"),
-    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
-#endif  // ADE7953_DEBUG
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs V %d, aI %d, bI %d, aW %d, bW %d, aVA %d, bVA %d, aVAr %d, bVAr %d, aP %d, bP %d"),
     regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
+#ifdef ADE7953_DUMP_REGS
+  Ade7953DumpRegs();
+#endif  // ADE7953_DUMP_REGS
 }
 
 void Ade7953GetData(void) {
