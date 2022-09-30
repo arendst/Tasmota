@@ -290,24 +290,33 @@ int32_t Ade7953Read(uint16_t reg) {
 
 #ifdef ADE7953_DUMP_REGS
 void Ade7953DumpRegs(void) {
-  char data[200] = { 0 };  // Size Regs 0x380..397 = (6 (24-bit) + 1 (,)) * 24 = 168chars
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE:                  SAGCYC DISNOLD  Resrvd  Resrvd LCYCMOD  Resrvd  Resrvd    PGAV   PGAIA   PGAIB"));
+  char data[200] = { 0 };
   for (uint32_t i = 0; i < 10; i++) {
     int32_t value = Ade7953Read(ADE7953_SAGCYC + i);
-    snprintf_P(data, sizeof(data), PSTR("%s%s%02X"), data, (i)?",":"", value);  // 8-bit regs
+    snprintf_P(data, sizeof(data), PSTR("%s      %02X"), data, value);  // 8-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x000..009 %s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x000..009%s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE:                  ZXTOUT LINECYC  CONFIG  CF1DEN  CF2DEN  Resrvd  Resrvd  CFMODE  PHCALA  PHCALB     PFA     PFB  ANGLEA  ANGLEB  Period"));
   data[0] = '\0';
   for (uint32_t i = 0; i < 15; i++) {
     int32_t value = Ade7953Read(ADE7953_ZXTOUT + i);
-    snprintf_P(data, sizeof(data), PSTR("%s%s%04X"), data, (i)?",":"", value);  // 16-bit regs
+    snprintf_P(data, sizeof(data), PSTR("%s    %04X"), data, value);  // 16-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x100..10E %s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x100..10E%s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE:                   IGAIN   VGAIN   WGAIN VARGAIN  VAGAIN  Resrvd  IRMSOS  Resrvd  VRMSOS  WATTOS   VAROS    VAOS"));
   data[0] = '\0';
-  for (uint32_t i = 0; i < 24; i++) {
+  for (uint32_t i = 0; i < 12; i++) {
     int32_t value = Ade7953Read(ADE7953_AIGAIN + i);
-    snprintf_P(data, sizeof(data), PSTR("%s%s%06X"), data, (i)?",":"", value);  // 24-bit regs
+    snprintf_P(data, sizeof(data), PSTR("%s  %06X"), data, value);  // 24-bit regs
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x380..397 %s"), data);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x380..38B%s"), data);
+  data[0] = '\0';
+  for (uint32_t i = 0; i < 12; i++) {
+    int32_t value = Ade7953Read(ADE7953_BIGAIN + i);
+    snprintf_P(data, sizeof(data), PSTR("%s  %06X"), data, value);  // 24-bit regs
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Regs 0x38C..397%s"), data);
 }
 #endif  // ADE7953_DUMP_REGS
 
