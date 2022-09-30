@@ -51,8 +51,8 @@
 //                                        ADC0
 // Mode 1 : NTC towards 3V3 (Sinilink Thermostat Relay Board (XY-WFT1)
 // 3V3 --- NTC ---v--- ANALOG_NTC_BRIDGE_RESISTANCE --- Gnd
-//          |
-//         ADC0
+//                |
+//               ADC0
 #define ANALOG_NTC_BRIDGE_RESISTANCE  32000            // NTC Voltage bridge resistor
 #define ANALOG_NTC_RESISTANCE         10000            // NTC Resistance
 #define ANALOG_NTC_B_COEFFICIENT      3350             // NTC Beta Coefficient
@@ -831,7 +831,7 @@ void CmndAdcParam(void) {
       }
       char param3[33];
       dtostrfd(((double)Adc[idx].param3)/10000, precision, param3);
-      ResponseAppend_P(PSTR(",%s"), param3);
+      ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
     }
     ResponseAppend_P(PSTR("]}"));
   }
