@@ -98,6 +98,9 @@ void Scd30Update(void) {
             Scd30.loop_count = 0;
             Scd30.data_valid = true;
             Scd30.good_measure_count++;
+#ifdef USE_LIGHT
+            LightSetSignal(CO2_LOW, CO2_HIGH, Scd30.co2);
+#endif  // USE_LIGHT
             break;
 
           case ERROR_SCD30_NO_DATA:

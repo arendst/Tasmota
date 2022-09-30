@@ -166,6 +166,9 @@ void Scd40Update(void)
           scd40Loop_count = 0;
           scd40IsDataValid = true;
           scd40GoodMeas_count++;
+#ifdef USE_LIGHT
+          LightSetSignal(CO2_LOW, CO2_HIGH, scd40_CO2);
+#endif  // USE_LIGHT
           break;
 
         case ERROR_SCD40_NO_DATA:
