@@ -25,14 +25,6 @@
     ],
     "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
     "upload": {
-      "arduino": {
-        "flash_extra_images": [
-          [
-            "0x10000",
-            "variants/tasmota/tasmota32c3cdc-safeboot.bin"
-          ]
-        ]
-      },
       "flash_size": "4MB",
       "maximum_ram_size": 327680,
       "maximum_size": 4194304,
