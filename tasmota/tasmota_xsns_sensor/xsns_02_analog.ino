@@ -51,8 +51,8 @@
 //                                        ADC0
 // Mode 1 : NTC towards 3V3 (Sinilink Thermostat Relay Board (XY-WFT1)
 // 3V3 --- NTC ---v--- ANALOG_NTC_BRIDGE_RESISTANCE --- Gnd
-//          |
-//         ADC0
+//                |
+//               ADC0
 #define ANALOG_NTC_BRIDGE_RESISTANCE  32000            // NTC Voltage bridge resistor
 #define ANALOG_NTC_RESISTANCE         10000            // NTC Resistance
 #define ANALOG_NTC_B_COEFFICIENT      3350             // NTC Beta Coefficient
@@ -501,13 +501,19 @@ void AdcEverySecond(void) {
       // double Rt = (adc * Adc[idx].param1 * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (double)adc * MAX_ADC_V);
       // MAX_ADC_V in ESP8266 is 1
       // MAX_ADC_V in ESP32 is 3.3
-      if (Adc[idx].param4) { // Alternate mode
-        adc = ANALOG_RANGE - adc;
-      }
+      double Rt;
 #ifdef ESP8266
-      double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE * ANALOG_V33 - (double)adc);  // Shelly param1 = 32000 (ANALOG_NTC_BRIDGE_RESISTANCE)
+      if (Adc[idx].param4) { // Alternate mode
+        Rt = (double)Adc[idx].param1 * (ANALOG_RANGE * ANALOG_V33 - (double)adc) / (double)adc;
+      } else {
+        Rt = (double)Adc[idx].param1 * (double)adc / (ANALOG_RANGE * ANALOG_V33 - (double)adc);
+      }
 #else
-      double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE - (double)adc);
+      if (Adc[idx].param4) { // Alternate mode
+        Rt = (double)Adc[idx].param1 * (ANALOG_RANGE - (double)adc) / (double)adc;
+      } else {
+        Rt = (double)Adc[idx].param1 * (double)adc / (ANALOG_RANGE - (double)adc);
+      }
 #endif
       double BC = (double)Adc[idx].param3 / 10000;                                      // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
       double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Adc[idx].param2));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
@@ -825,7 +831,7 @@ void CmndAdcParam(void) {
       }
       char param3[33];
       dtostrfd(((double)Adc[idx].param3)/10000, precision, param3);
-      ResponseAppend_P(PSTR(",%s"), param3);
+      ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
     }
     ResponseAppend_P(PSTR("]}"));
   }
