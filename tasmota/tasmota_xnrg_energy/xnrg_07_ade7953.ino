@@ -161,6 +161,7 @@ enum Ade7953_32BitRegisters {
 
 enum Ade7953CalibrationRegisters {
   ADE7953_CAL_AVGAIN,
+  ADE7953_CAL_BVGAIN,
   ADE7953_CAL_AIGAIN,
   ADE7953_CAL_BIGAIN,
   ADE7953_CAL_AWGAIN,
@@ -175,6 +176,7 @@ enum Ade7953CalibrationRegisters {
 
 const uint16_t Ade7953CalibRegs[] {
   ADE7953_AVGAIN,
+  ADE7953_BVGAIN,
   ADE7953_AIGAIN,
   ADE7953_BIGAIN,
   ADE7953_AWGAIN,
@@ -350,8 +352,8 @@ void Ade7953Init(void) {
       }
     }
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs V %d, aI %d, bI %d, aW %d, bW %d, aVA %d, bVA %d, aVAr %d, bVAr %d, aP %d, bP %d"),
-    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10]);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs aV %d, bV %d, aI %d, bI %d, aW %d, bW %d, aVA %d, bVA %d, aVAr %d, bVAr %d, aP %d, bP %d"),
+    regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], regs[11]);
 #ifdef ADE7953_DUMP_REGS
   Ade7953DumpRegs();
 #endif  // ADE7953_DUMP_REGS
@@ -382,8 +384,8 @@ void Ade7953GetData(void) {
   }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
     Ade7953.voltage_rms, Ade7953.period,
-    reg[0][0], reg[0][1], reg[0][2], reg[0][3],
-    reg[1][0], reg[1][1], reg[1][2], reg[1][3]);
+    reg[0][0], reg[0][1], reg[0][2], reg[0][3],   // IRMS, WATT, VA, VAR
+    reg[1][0], reg[1][1], reg[1][2], reg[1][3]);  // IRMS, WATT, VA, VAR
 
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
@@ -414,9 +416,9 @@ void Ade7953GetData(void) {
 
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
-      divider = (Ade7953.calib_data[ADE7953_CAL_AWGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[ADE7953_CAL_AWGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
-      divider = (Ade7953.calib_data[ADE7953_CAL_AVARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[ADE7953_CAL_AVARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if ((acc_mode & APSIGN[channel]) != 0) {
@@ -426,7 +428,7 @@ void Ade7953GetData(void) {
           Energy.reactive_power[channel] *= -1;
         }
       }
-      divider = (Ade7953.calib_data[ADE7953_CAL_AVAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[ADE7953_CAL_AVAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
       Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
@@ -478,7 +480,10 @@ bool Ade7953SetDefaults(const char* json) {
   JsonParserObject rms = root[PSTR("rms")].getObject();
   if (rms) {
     val = rms[PSTR("voltage")];
-    if (val) { Ade7953.calib_data[ADE7953_CAL_AVGAIN] = val.getInt(); }
+    if (val) {
+      Ade7953.calib_data[ADE7953_CAL_AVGAIN] = val.getInt();
+      Ade7953.calib_data[ADE7953_CAL_BVGAIN] = Ade7953.calib_data[ADE7953_CAL_AVGAIN];
+    }
     val = rms[PSTR("current_a")];
     if (val) { Ade7953.calib_data[ADE7953_CAL_AIGAIN] = val.getInt(); }
     val = rms[PSTR("current_b")];
