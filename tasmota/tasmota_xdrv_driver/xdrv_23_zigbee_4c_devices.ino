@@ -358,11 +358,11 @@ bool loadZigbeeDevices(void) {
 #ifdef USE_ZIGBEE_EEPROM
   if (zigbee.eeprom_ready) {
     f.init(ZIGB_NAME4);                   // try v4 first
-    if (!f.valid) {
+    if (!f.valid()) {
       f.init(ZIGB_NAME2);                 // else try v2
-      if (f.valid) { file_version = 2; }  // v2 found
+      if (f.valid()) { file_version = 2; }  // v2 found
     }
-    if (f.valid) {
+    if (f.valid()) {
       storage_class = PSTR("EEPROM");
     }
   }
