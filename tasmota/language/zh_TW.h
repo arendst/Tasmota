@@ -564,6 +564,13 @@
 #define D_GY_AXIS "陀螺儀 Y-軸"
 #define D_GZ_AXIS "陀螺儀 Z-軸"
 
+// xsns_33_QMC5883L.ino
+#define D_MX "Compass X-Axis"
+#define D_MY "Compass Y-Axis"
+#define D_MZ "Compass Z-Axis"
+#define D_HG "Compass Heading"
+#define D_MAGNETICFLD "Magnetic Field Strength"
+
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "移除重量"
 #define D_HX_CAL_REFERENCE "載入參考重量"
@@ -911,6 +918,7 @@
 #define D_UNIT_MICROMETER "微米"
 #define D_UNIT_MICROSECOND "微秒"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "毫安培"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"

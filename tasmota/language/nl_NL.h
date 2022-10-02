@@ -564,6 +564,13 @@
 #define D_GY_AXIS "Gyro Y-as"
 #define D_GZ_AXIS "Gyro Z-as"
 
+// xsns_33_QMC5883L.ino
+#define D_MX "Compass X-Axis"
+#define D_MY "Compass Y-Axis"
+#define D_MZ "Compass Z-Axis"
+#define D_HG "Compass Heading"
+#define D_MAGNETICFLD "Magnetic Field Strength"
+
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Verwijder gewicht"
 #define D_HX_CAL_REFERENCE "Plaats ijkgewicht"
@@ -911,6 +918,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"

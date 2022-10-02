@@ -564,6 +564,13 @@
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
 
+// xsns_33_QMC5883L.ino
+#define D_MX "Compass X-Axis"
+#define D_MY "Compass Y-Axis"
+#define D_MZ "Compass Z-Axis"
+#define D_HG "Compass Heading"
+#define D_MAGNETICFLD "Magnetic Field Strength"
+
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "중량 제거"
 #define D_HX_CAL_REFERENCE "참조 중량 로드"
@@ -911,6 +918,7 @@
 #define D_UNIT_MICROMETER "마이크로미터"
 #define D_UNIT_MICROSECOND "마이크로초"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"

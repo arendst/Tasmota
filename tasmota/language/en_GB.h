@@ -918,7 +918,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
-#define D_UNIT_MICROTESLA "uT"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
