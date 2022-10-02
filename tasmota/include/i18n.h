@@ -233,6 +233,11 @@
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
 #define D_JSON_RAW "Raw"
+#define D_JSON_MX "Compass X-Axis"
+#define D_JSON_MY "Compass Y-Axis"
+#define D_JSON_MZ "Compass Z-Axis"
+#define D_JSON_HEADING "Compass Heading"
+#define D_JSON_MAGNETICFLD "Magnetic Induction"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"

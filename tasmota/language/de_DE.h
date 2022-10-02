@@ -564,6 +564,13 @@
 #define D_GY_AXIS "Gyroskop Y-Achse"
 #define D_GZ_AXIS "Gyroskop Z-Achse"
 
+// xsns_33_QMC5883L.ino
+#define D_MX "Kompass X-Achse"
+#define D_MY "Kompass Y-Achse"
+#define D_MZ "Kompass Z-Achse"
+#define D_HG "Kompass Richtung"
+#define D_MAGNETICFLD "Magnet Feld Stärke"
+
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Wägegut entfernen"
 #define D_HX_CAL_REFERENCE "Referenzgewicht auflegen"
@@ -911,6 +918,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "uT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"

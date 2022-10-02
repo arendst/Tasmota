@@ -105,3 +105,4 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   68  | USE_HYT             | xsns_97 | HYTxxx   | 0x28        | Temperature and Humidity sensor
   69  | USE_SGP40           | xsns_98 | SGP40    | 0x59        | Gas (TVOC) and air quality
   70  | USE_LUXV30B         | xsns_99 | LUXV30B  | 0x4A        | DFRobot SEN0390 V30B lux sensor
+  71  | USE_QMC5883L        | xsns_33 | QMC5883L | 0x0D        | Magnetic Field Sensor

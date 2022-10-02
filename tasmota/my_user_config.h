@@ -715,6 +715,8 @@
                                                  // Reference: https://cdn-learn.adafruit.com/downloads/pdf/adafruit-led-backpack.pdf
     // #define SEVENSEG_ADDRESS1     0x70      // No longer used.  Use MTX_ADDRESS1 - MTX_ADDRESS8 instead to specify I2C address of sevenseg displays
 //    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] [I2cDriver6] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
+    #define USE_                         // have a compass sensor
+      #define USE_QMC5883L_Temp 22               // compass sensor temperatur are not calibrated (only relativ measurement) and need an absolute ground value in °C (see datasheet)
 #endif  // USE_I2C
 
 
