@@ -816,6 +816,114 @@ const Z_Data & Z_Data_Set::find(Z_Data_Type type, uint8_t ep) const {
 }
 
 /*********************************************************************************************\
+ * Class used to store friendly names of endpoints
+\*********************************************************************************************/
+class Z_EP_Name {
+public:
+  Z_EP_Name() :
+    endpoint(0),
+    name(nullptr)
+  {}
+
+  inline const char * getName(void) const { return name != nullptr ? name : PSTR(""); }
+  void setName(const char *new_name);
+
+  ~Z_EP_Name() { if (name) free(name); }
+
+public:
+  uint8_t             endpoint;
+  char *              name;
+};
+
+
+class Z_EP_Name_list : public LList<Z_EP_Name> {
+public:
+
+  // INVARIANT: there is at most one entry for any `endpoint` value
+  // INVARIANT: if an entry exists, then the name is not null nor empty string
+
+  // we don't need explicit constructor, the superclass handles it
+
+  // add or change an ep name, or remove if set to empty string
+  void setEPName(uint8_t ep, const char * name) {
+    if (name == nullptr || strlen_P(name) == 0) {
+      this->removeEPName(ep);
+      return;
+    }
+    for (auto & epn : *this) {
+      if (epn.endpoint == ep) {
+        epn.setName(name);
+        return;     // found it, exit
+      }
+    }
+    // ep not found, create it
+    Z_EP_Name & epn = this->addToLast();
+    epn.endpoint = ep;
+    epn.setName(name);
+  }
+
+  // remove ep name from list
+  void removeEPName(uint8_t ep) {
+    for (auto & epn : *this) {
+      if (epn.endpoint == ep) {
+        this->remove(&epn);
+        return;     // found it, exit
+      }
+    }
+
+  }
+
+  // find a endpoint by name, or return 0 if not found
+  uint8_t findEPName(const char * name) const {
+    if (name == nullptr || strlen_P(name) == 0) { return 0; }
+    for (const auto & epn : *this) {
+      if (strcasecmp(epn.name, name) == 0) { return epn.endpoint; }
+    }
+    return 0;    // not found
+  }
+
+  // get ep name, or return nullptr if none
+  const char * getEPName(uint8_t ep) const {
+    for (auto & epn : *this) {
+      if (epn.endpoint == ep) {
+        return epn.name;
+      }
+    }
+    return nullptr;
+  }
+
+  // Publish endpoint names if any as `"Names":{"2":"name2","3":"name3"}`
+  String tojson(void) const {
+    String s;
+    if (!this->isEmpty()) {
+      s += '{';
+      bool first = true;
+      for (const auto & epn : *this) {
+        if (!first) { s += ','; }
+        s += '"';
+        s += epn.endpoint;
+        s += F("\":\"");
+        s += EscapeJSONString(epn.name);
+        s += '"';
+        first = false;
+      }
+      s += '}';
+    }
+    return s;
+  }
+
+  // append to JSON
+  void ResponseAppend(void) const {
+    String s = tojson();
+    if (s.length() > 0) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAMES "\":%s"), s.c_str());
+    }
+  }
+};
+
+
+
+/*********************************************************************************************\
  * Structures for Rules variables related to the last received message
 \*********************************************************************************************/
 const size_t endpoints_max = 8;         // we limit to 8 endpoints
@@ -832,6 +940,8 @@ public:
   uint32_t              defer_last_message_sent;
 
   uint8_t               endpoints[endpoints_max];   // static array to limit memory consumption, list of endpoints until 0x00 or end of array
+  // List of names for endpoints
+  Z_EP_Name_list        ep_names;
   // Used for attribute reporting
   Z_attribute_list      attr_list;
   // sequence number for Zigbee frames
@@ -927,15 +1037,18 @@ public:
   bool addEndpoint(uint8_t endpoint);
   void clearEndpoints(void);
   uint32_t countEndpoints(void) const;    // return the number of known endpoints (0 if unknown)
+  bool setEPName(uint8_t ep, const char * name);
 
   void setManufId(const char * str);
   void setModelId(const char * str);
   void setFriendlyName(const char * str);
+  void setFriendlyEPName(uint8_t ep, const char * str); // ability to have friendly names for endpoints
 
   void setLastSeenNow(void);
 
   // multiple function to dump part of the Device state into JSON
   void jsonAddDeviceNamme(Z_attribute_list & attr_list) const;
+  void jsonAddEPName(Z_attribute_list & attr_list) const;
   void jsonAddIEEE(Z_attribute_list & attr_list) const;
   void jsonAddModelManuf(Z_attribute_list & attr_list) const;
   void jsonAddEndpoints(Z_attribute_list & attr_list) const;
@@ -963,8 +1076,6 @@ public:
   }
 
   void setLightChannels(int8_t channels);
-
-protected:
 
   static void setStringAttribute(char*& attr, const char * str);
 };
@@ -1032,7 +1143,7 @@ public:
   // - 0x<shortaddr> = the device's short address
   Z_Device & isKnownLongAddrDevice(uint64_t  longaddr) const;
   Z_Device & isKnownIndexDevice(uint32_t index) const;
-  Z_Device & isKnownFriendlyNameDevice(const char * name) const;
+  Z_Device & isKnownFriendlyNameDevice(const char * name, uint8_t * ep = nullptr) const;
 
   Z_Device & findShortAddr(uint16_t shortaddr);
   const Z_Device & findShortAddr(uint16_t shortaddr) const;
@@ -1044,6 +1155,7 @@ public:
   inline bool foundDevice(const Z_Device & device) const { return device.valid(); }
 
   int32_t findFriendlyName(const char * name) const;
+  int32_t findFriendlyNameOrEPName(const char * name, uint8_t * ep) const;
   uint64_t getDeviceLongAddr(uint16_t shortaddr) const;
 
   uint8_t findFirstEndpoint(uint16_t shortaddr) const;
@@ -1110,7 +1222,7 @@ public:
   void clean(void);   // avoid writing to flash the last changes
 
   // Find device by name, can be short_addr, long_addr, number_in_array or name
-  Z_Device & parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr = nullptr, int32_t mailbox_payload = 0);
+  Z_Device & parseDeviceFromName(const char * param, uint16_t * parsed_shortaddr = nullptr, uint8_t * ep = nullptr, int32_t mailbox_payload = 0);
 
   bool isTuyaProtocol(uint16_t shortaddr, uint8_t ep = 0) const;
 

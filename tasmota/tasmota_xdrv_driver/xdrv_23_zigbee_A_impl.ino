@@ -744,7 +744,7 @@ void CmndZbSend(void) {
   JsonParserToken val_device = root[PSTR(D_CMND_ZIGBEE_DEVICE)];
   if (val_device) {
     uint16_t parsed_shortaddr = BAD_SHORTADDR;
-    zcl.shortaddr = zigbee_devices.parseDeviceFromName(val_device.getStr(), &parsed_shortaddr).shortaddr;
+    zcl.shortaddr = zigbee_devices.parseDeviceFromName(val_device.getStr(), &parsed_shortaddr, &zcl.dstendpoint).shortaddr;
     if (!zcl.validShortaddr()) {
       if (parsed_shortaddr != BAD_SHORTADDR) {
         // we still got a short address
@@ -768,8 +768,16 @@ void CmndZbSend(void) {
 
   // read other parameters
   zcl.cluster = root.getUInt(PSTR(D_CMND_ZIGBEE_CLUSTER), zcl.cluster);
-  zcl.dstendpoint = root.getUInt(PSTR(D_CMND_ZIGBEE_ENDPOINT), zcl.dstendpoint);
   zcl.manuf = root.getUInt(PSTR(D_CMND_ZIGBEE_MANUF), zcl.manuf);
+
+  // read dest endpoint and check if it's not in conflict with ep name
+  uint8_t json_endpoint = root.getUInt(PSTR(D_CMND_ZIGBEE_ENDPOINT), 0);
+  if (zcl.dstendpoint && json_endpoint && zcl.dstendpoint != json_endpoint) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ZIG: conflicting endpoints, from name:%i from json:%i"), zcl.dstendpoint, json_endpoint);
+    ResponseCmndChar_P(PSTR(D_ZIGBEE_CONFLICTING_ENDPOINTS));
+    return;
+  }
+  zcl.dstendpoint = root.getUInt(PSTR(D_CMND_ZIGBEE_ENDPOINT), zcl.dstendpoint);
 
   // infer endpoint
   if (!zcl.validShortaddr()) {
@@ -1003,7 +1011,7 @@ void CmndZbUnbind(void) {
 //
 void CmndZbLeave(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload).shortaddr;
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload).shortaddr;
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
 #ifdef USE_ZIGBEE_ZNP
@@ -1035,7 +1043,7 @@ void CmndZbLeave(void) {
 void CmndZbBindState_or_Map(bool map) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
   uint16_t parsed_shortaddr;;
-  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, &parsed_shortaddr, XdrvMailbox.payload).shortaddr;
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, &parsed_shortaddr, nullptr, XdrvMailbox.payload).shortaddr;
   if (BAD_SHORTADDR == shortaddr) {
     if ((map) && (parsed_shortaddr != shortaddr)) {
       shortaddr = parsed_shortaddr;   // allow a non-existent address when ZbMap
@@ -1111,7 +1119,7 @@ void CmndZbProbe(void) {
 //
 void CmndZbProbeOrPing(boolean probe) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload).shortaddr;
+  uint16_t shortaddr = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload).shortaddr;
   if (BAD_SHORTADDR == shortaddr) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
   // set a timer for Reachable - 2s default value
@@ -1140,26 +1148,40 @@ void CmndZbName(void) {
   //  ZbName <device_id>                 - display the current friendly name
   //  ZbName <device_id>,                - remove friendly name
   //
+  // New:
+  //  ZbName <device_id>,<friendlyname>,<ep> - assign a friendly name to a endpoint
+  //  ZbName <device_id>,,<ep>               - remove name to endpoint
+  //
   // Where <device_id> can be: short_addr, long_addr, device_index, friendly_name
 
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
 
   // check if parameters contain a comma ','
-  char *p;
-  strtok_r(XdrvMailbox.data, ",", &p);
+  char *p = XdrvMailbox.data;
+  char *device_id = strsep(&p, ",");       // zigbee identifier
+  bool has_comma = (p != nullptr);
+  char *new_friendlyname = strsep(&p, ",");    // friendly name
+  int32_t ep = (p != nullptr) ? strtol(p, nullptr, 10) : 0;          // get endpoint number, or `0` if none
 
   // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // it's the only case where we create a new device
+  Z_Device & device = zigbee_devices.parseDeviceFromName(device_id, nullptr, nullptr, XdrvMailbox.payload);  // it's the only case where we create a new device
   if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
-  if (p == nullptr) {
+  if (!has_comma) {
     const char * friendlyName = device.friendlyName;
-    Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), device.shortaddr, friendlyName ? friendlyName : "");
   } else {
-    if (strlen(p) > 32) { p[32] = 0x00; }     // truncate to 32 chars max
-    device.setFriendlyName(p);
-    Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), device.shortaddr, p);
+    if (new_friendlyname != nullptr && strlen(new_friendlyname) > 32) { new_friendlyname[32] = 0x00; }     // truncate to 32 chars max
+    if (ep == 0) {
+      device.setFriendlyName(new_friendlyname);
+    } else {
+      if (!device.setEPName(ep, new_friendlyname)) {
+        ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_ENDPOINT)); return;
+      }
+    }
   }
+  Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), device.shortaddr, device.friendlyName ? device.friendlyName : "");
+  device.ep_names.ResponseAppend();
+  ResponseAppend_P(PSTR("}}"));
 }
 
 //
@@ -1181,7 +1203,7 @@ void CmndZbModelId(void) {
   strtok_r(XdrvMailbox.data, ",", &p);
 
   // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
   if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
   if (p != nullptr) {
@@ -1208,7 +1230,7 @@ void CmndZbLight(void) {
   strtok_r(XdrvMailbox.data, ", ", &p);
 
   // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
   if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
   if (p) {
@@ -1252,7 +1274,7 @@ void CmndZbOccupancy(void) {
   strtok_r(XdrvMailbox.data, ", ", &p);
 
   // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
   if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
   int8_t occupancy_time = -1;
@@ -1279,7 +1301,7 @@ void CmndZbOccupancy(void) {
 //
 void CmndZbForget(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
   if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
   // everything is good, we can send the command
@@ -1309,7 +1331,7 @@ void CmndZbInfo(void) {
       CmndZbInfo_inner(device);
     }
   } else {    // try JSON
-    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
     // everything is good, we can send the command
@@ -1426,7 +1448,7 @@ void CmndZbenroll(void) {
 
   if ((XdrvMailbox.data_len) && (ArgC() > 1)) {  // Process parameter entry
     char argument[XdrvMailbox.data_len];
-    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1), nullptr, XdrvMailbox.payload);
+    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1), nullptr, nullptr, XdrvMailbox.payload);
     int enrollEndpoint = atoi(ArgV(argument, 2));
 
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
@@ -1444,7 +1466,7 @@ void CmndZbcie(void) {
 
   if ((XdrvMailbox.data_len) && (ArgC() > 1)) {  // Process parameter entry
     char argument[XdrvMailbox.data_len];
-    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1), nullptr, XdrvMailbox.payload);
+    Z_Device & device = zigbee_devices.parseDeviceFromName(ArgV(argument, 1), nullptr, nullptr, XdrvMailbox.payload);
     int enrollEndpoint = atoi(ArgV(argument, 2));
 
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
@@ -1512,7 +1534,7 @@ void CmndZbRestore(void) {
     // do a sanity check, the first byte must equal the length of the buffer
     if (buf.get8(0) == buf.len()) {
       // good, we can hydrate
-      hydrateSingleDevice(buf);
+      hydrateSingleDevice(buf, 4);
     } else {
       ResponseCmndChar_P(PSTR("Restore failed"));
       return;
@@ -1684,7 +1706,7 @@ void CmndZbStatus(void) {
     if (0 == XdrvMailbox.index) {
       dump = zigbee_devices.dumpCoordinator();
     } else {
-      Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);
+      Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);
       if (XdrvMailbox.data_len > 0) {
         if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
         dump = zigbee_devices.dumpDevice(XdrvMailbox.index, device);
@@ -1716,7 +1738,7 @@ void CmndZbData(void) {
     strtok_r(XdrvMailbox.data, ",", &p);
 
     // parse first part, <device_id>
-    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+    Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
     if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
     if (p) {

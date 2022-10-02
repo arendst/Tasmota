@@ -77,6 +77,32 @@
 // uint8[] - list of configuration bytes, 0xFF marks the end
 // i.e. 0xFF-0xFF marks the end of the array of endpoints
 //
+// =======================
+// v4 which provides more extensibility
+// File structure: (all values are little Endian)
+//
+// uint8 - number of devices, 0xFF indicates invalid file (or erased Flash?)
+// [Array of devices, max to number of devices]
+// [starts at offset = 3]
+// uint16 - length of the device record, including the length field - allows to jump to next device
+
+// [mandatory device data]
+// uint16 - short address
+// uint64 - long IEEE address
+//
+// str    - ModelID (null terminated C string, 32 chars max)
+// str    - Manuf   (null terminated C string, 32 chars max)
+// str    - FriendlyName   (null terminated C string, 32 chars max)
+// 
+// [Array of endpoints]
+// uint8   - endpoint number, 0xFF marks the end of endpoints
+// uint8   - length of the endpoint information, excuding length byte and endpoint number
+// uint8[] - list of configuration bytes, 0xFF marks the end
+// str     - (optional) FriendlyName for this endpoint (null terminated C string, 32 chars max), 0x00 if none
+//
+// [extended attributes]
+// : any other data until `length of the device record` is reached
+//
 
 
 // Memory footprint
@@ -139,9 +165,9 @@ bool hibernateDeviceConfiguration(SBuffer & buf, const class Z_Data_Set & data, 
  * Only supports v2 (not the legacy old one long forgotten)
 \*********************************************************************************************/
 SBuffer hibernateDevice(const struct Z_Device &device) {
-  SBuffer buf(128);
+  SBuffer buf(256);
 
-  buf.add8(0x00);     // overall length, will be updated later
+  buf.add16(0x0000);     // overall length, will be updated later
   buf.add16(device.shortaddr);
   buf.add64(device.longaddr);
 
@@ -159,18 +185,36 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
 
   // check if we need to write fake endpoint 0x00
   buf.add8(0x00);
+  uint32_t ep0_len_offset = buf.len();   // mark where to update the ep data length
+  buf.add8(0x00);  
   if (hibernateDeviceConfiguration(buf, device.data, 0)) {
     buf.add8(0xFF); // end of configuration
+    buf.add8(0x00); // empty ep friendly name, as it would duplicate the global friendly name
+    // update the lenght of ep0_data_lenth
+    buf.set8(ep0_len_offset, buf.len() - ep0_len_offset - 1);
   } else {
-    buf.setLen(buf.len()-1);    // remove 1 byte header
+    buf.setLen(buf.len()-2);    // remove 2 bytes header
   }
   // scan endpoints
   for (uint32_t i=0; i<endpoints_max; i++) {
     uint8_t endpoint = device.endpoints[i];
     if (0x00 == endpoint) { break; }
     buf.add8(endpoint);
+    uint32_t ep_len_offset = buf.len();   // mark where to update the ep data length
+    buf.add8(0x00);  
     hibernateDeviceConfiguration(buf, device.data, endpoint);
     buf.add8(0xFF); // end of configuration
+    const char * ep_name = device.ep_names.getEPName(endpoint);
+    if (ep_name != nullptr) {
+      size_t len = strlen(ep_name);
+      if (len > 32) { len = 32; }       // max 32 chars
+      buf.addBuffer(ep_name, len);
+      buf.add8(0x00);     // end of string marker
+    } else {
+      buf.add8(0x00); // no endpoint name
+    }
+    // update the lenght of ep0_data_lenth
+    buf.set8(ep_len_offset, buf.len() - ep_len_offset - 1);
   }
   buf.add8(0xFF); // end of endpoints
 
@@ -184,6 +228,8 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
 /*********************************************************************************************\
  * Write Devices in EEPROM/File/Flash
  * 
+ * Updated to v4 format
+ * 
  * Writes the preamble and all devices in the Univ_Write_File structure.
  * Does not close the file at the end.
  * Returns true if succesful.
@@ -193,9 +239,10 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
 bool hibernateDevices(Univ_Write_File & write_data);
 bool hibernateDevices(Univ_Write_File & write_data) {
   // first prefix is number of devices
-  uint8_t devices_size = zigbee_devices.devicesSize();
+  size_t devices_size = zigbee_devices.devicesSize();
   if (devices_size > 250) { devices_size = 250; }         // arbitrarily limit to 250 devices in EEPROM instead of 32 in Flash
-  write_data.writeBytes(&devices_size, sizeof(devices_size));
+  uint8_t devices_size8 = devices_size;
+  write_data.writeBytes((uint8_t*)&devices_size8, sizeof(devices_size8)); // write number of devices in file
 
   for (const auto & device : zigbee_devices.getDevices()) {
     const SBuffer buf = hibernateDevice(device);
@@ -224,10 +271,10 @@ const char * hydrateSingleString(const SBuffer & buf, uint32_t *d) {
  * hydrateSingleDevice
  *
  * Transforms a binary representation to a Zigbee device
- * Supports only v2
+ * Supports only v2 and v4
 \*********************************************************************************************/
-void hydrateSingleDevice(const SBuffer & buf_d) {
-  uint32_t d = 1;   // index in device buffer
+void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
+  uint32_t d = 0;   // index in device buffer
   uint16_t shortaddr = buf_d.get16(d);  d += 2;
   uint64_t longaddr  = buf_d.get64(d);  d += 8;
   size_t   buf_len = buf_d.len();
@@ -244,23 +291,52 @@ void hydrateSingleDevice(const SBuffer & buf_d) {
 
   if (d >= buf_len) { return; }
 
-  // Hue bulbtype - if present
-    while (d < buf_len) {
+  // Read per-endpoint information
+  while (d < buf_len) {
     uint8_t ep = buf_d.get8(d++);
     if (0xFF == ep) { break; }        // ep 0xFF marks the end of the endpoints
-    if (ep > 240) { ep = 0xFF; }      // ep == 0xFF means ignore
+    if (ep > 240 && ep != 0xF2) { ep = 0xFF; }      // ep == 0xFF means ignore
     device.addEndpoint(ep);           // it will ignore invalid endpoints
-    while (d < buf_len) {
-      uint8_t config_type = buf_d.get8(d++);
-      if (0xFF == config_type) { break; }                                // 0xFF marks the end of congiguration
-      uint8_t config = config_type & 0x0F;
-      Z_Data_Type type = (Z_Data_Type) (config_type >> 4);
-      // set the configuration
-      if (ep != 0xFF) {
-        Z_Data & z_data = device.data.getByType(type, ep);
-        if (&z_data != nullptr) {
-          z_data.setConfig(config);
-          Z_Data_Set::updateData(z_data);
+    
+    if (version == 4) {
+      if (d >= buf_len) { break; }    // end of buffer
+      uint8_t ep_len = buf_d.get8(d++);
+      if (d + ep_len > buf_len) { break; }    // buffer is too small to contain the announced data
+
+      while (d < buf_len) {
+        uint8_t config_type = buf_d.get8(d++);
+        if (0xFF == config_type) { break; }                                // 0xFF marks the end of congiguration
+        uint8_t config = config_type & 0x0F;
+        Z_Data_Type type = (Z_Data_Type) (config_type >> 4);
+        // set the configuration
+        if (ep != 0xFF) {
+          Z_Data & z_data = device.data.getByType(type, ep);
+          if (&z_data != nullptr) {
+            z_data.setConfig(config);
+            Z_Data_Set::updateData(z_data);
+          }
+        }
+      }
+      // ability to have additional fields here
+      // friendly name for ep
+      if (d < buf_len) {
+        device.setFriendlyEPName(ep, hydrateSingleString(buf_d, &d));
+      }
+      // additional information comes here
+    } else {
+      // version == 2
+      while (d < buf_len) {
+        uint8_t config_type = buf_d.get8(d++);
+        if (0xFF == config_type) { break; }                                // 0xFF marks the end of congiguration
+        uint8_t config = config_type & 0x0F;
+        Z_Data_Type type = (Z_Data_Type) (config_type >> 4);
+        // set the configuration
+        if (ep != 0xFF) {
+          Z_Data & z_data = device.data.getByType(type, ep);
+          if (&z_data != nullptr) {
+            z_data.setConfig(config);
+            Z_Data_Set::updateData(z_data);
+          }
         }
       }
     }
@@ -277,11 +353,18 @@ void hydrateSingleDevice(const SBuffer & buf_d) {
 bool loadZigbeeDevices(void) {
   Univ_Read_File f;   // universal reader
   const char * storage_class = PSTR("");
+  uint32_t file_version = 4;        // currently supporting v3 and v4
 
 #ifdef USE_ZIGBEE_EEPROM
   if (zigbee.eeprom_ready) {
-    f.init(ZIGB_NAME2);
-    storage_class = PSTR("EEPROM");
+    f.init(ZIGB_NAME4);                   // try v4 first
+    if (!f.valid()) {
+      f.init(ZIGB_NAME2);                 // else try v2
+      if (f.valid()) { file_version = 2; }  // v2 found
+    }
+    if (f.valid()) {
+      storage_class = PSTR("EEPROM");
+    }
   }
 #endif // USE_ZIGBEE_EEPROM
 
@@ -289,15 +372,11 @@ bool loadZigbeeDevices(void) {
   File file;
   if (!f.valid() && dfsp) {
     file = dfsp->open(TASM_FILE_ZIGBEE, "r");
+    if (!file) {
+      file = dfsp->open(TASM_FILE_ZIGBEE_LEGACY_V2, "r");
+      if (file)  { file_version = 2; }  // v2 found
+    }
     if (file) {
-      uint32_t signature = 0x0000;
-      file.read((uint8_t*)&signature, 4);
-      if (signature == ZIGB_NAME2) {
-        // skip another 4 bytes
-        file.read((uint8_t*)&signature, 4);
-      } else {
-        file.seek(0);  // seek back to beginning of file
-      }
       f.init(&file);
       storage_class = PSTR("File System");
     }
@@ -314,10 +393,10 @@ bool loadZigbeeDevices(void) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "Zigbee signature in Flash: %08X - %d"), flashdata.name, flashdata.len);
 
     // Check the signature
-    if ( ((flashdata.name == ZIGB_NAME1) || (flashdata.name == ZIGB_NAME2))
+    if ( ((flashdata.name == ZIGB_NAME2) || (flashdata.name == ZIGB_NAME4))
         && (flashdata.len > 0)) {
       uint16_t buf_len = flashdata.len;
-      // uint32_t version = (flashdata.name == ZIGB_NAME2) ? 2 : 1;
+      if (flashdata.name == ZIGB_NAME2) { file_version = 2; }  // v2 found
       f.init(z_dev_start + sizeof(Z_Flashentry), buf_len);
       storage_class = PSTR("Flash");
     }
@@ -338,26 +417,25 @@ bool loadZigbeeDevices(void) {
 
   uint32_t k = 1;   // byte index in global buffer
   for (uint32_t i = 0; (i < num_devices) && (k < file_len); i++) {
-    uint8_t dev_record_len = 0;
-    f.readBytes(&dev_record_len, sizeof(dev_record_len));
-    // int32_t ret = ZFS::readBytes(ZIGB_NAME2, &dev_record_len, 1, k, 1);
+    uint16_t dev_record_len = 0;
+    size_t dev_record_len_bytes = file_version >= 4 ? 2 : 1;
+    f.readBytes((uint8_t*)&dev_record_len, dev_record_len_bytes);   // starting with v4, length is 2 bytes
     if (dev_record_len == 0) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid device information, aborting"));
       zigbee_devices.clean();   // don't write back to Flash what we just loaded
       return false;
     }
-    SBuffer buf(dev_record_len);
-    buf.setLen(dev_record_len);
-    buf.set8(0, dev_record_len);    // push the first byte (len including this first byte)
-    int32_t ret = f.readBytes(buf.buf(1), dev_record_len - 1);
-    // ret = ZFS::readBytes(ZIGB_NAME2, buf.getBuffer(), dev_record_len, k, dev_record_len);
-    if (ret != dev_record_len - 1) {
+    SBuffer buf(dev_record_len - dev_record_len_bytes);
+    buf.setLen(dev_record_len - dev_record_len_bytes);
+    buf.set8(0, dev_record_len - dev_record_len_bytes);    // push the first byte (len including this first byte)
+    int32_t ret = f.readBytes(buf.buf(), dev_record_len - dev_record_len_bytes);
+    if (ret != dev_record_len - dev_record_len_bytes) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Invalid device information, aborting"));
       zigbee_devices.clean();   // don't write back to Flash what we just loaded
       return false;
     }
 
-    hydrateSingleDevice(buf);
+    hydrateSingleDevice(buf, file_version);
 
     // next iteration
     k += dev_record_len;
@@ -377,6 +455,7 @@ void saveZigbeeDevices(void) {
   Univ_Write_File f;
   const char * storage_class = PSTR("");
 
+// TODO can we prioritize filesystem instead of eeprom?
 #ifdef USE_ZIGBEE_EEPROM
   if (!f.valid() && zigbee.eeprom_ready) {
     f.init(ZIGB_NAME2);
