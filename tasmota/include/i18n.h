@@ -623,6 +623,7 @@
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
   #define D_JSON_ZIGBEE_NAME "Name"
+  #define D_JSON_ZIGBEE_NAMES "Names"
   #define D_JSON_ZIGBEE_CONFIRM "ZbConfirm"
 #define D_CMND_ZIGBEE_NAME "Name"
 #define D_CMND_ZIGBEE_MODELID "ModelId"
