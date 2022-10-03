@@ -582,7 +582,6 @@ void DisplayText(void)
             // pad field with spaces fxx
             var = atoiv(cp, &fill);
             cp += var;
-            linebuf[fill] = 0;
             break;
 #ifdef USE_UFILESYS
           case 'P':

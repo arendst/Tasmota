@@ -33,6 +33,10 @@ uint8_t ctouch_counter;
 extern FS *ffsp;
 #endif
 
+
+enum {GPIO_DP_RES=GPIO_SENSOR_END-1,GPIO_DP_CS,GPIO_DP_RS,GPIO_DP_WR,GPIO_DP_RD,GPIO_DPAR0,GPIO_DPAR1,GPIO_DPAR2,GPIO_DPAR3,GPIO_DPAR4,GPIO_DPAR5,GPIO_DPAR6,GPIO_DPAR7,GPIO_DPAR8,GPIO_DPAR9,GPIO_DPAR10,GPIO_DPAR11,GPIO_DPAR12,GPIO_DPAR13,GPIO_DPAR14,GPIO_DPAR15};
+
+
 #ifndef USE_DISPLAY
 uint8_t color_type;
 uint16_t fg_color;
@@ -45,7 +49,6 @@ extern uint16_t bg_color;
 #endif
 
 #define DISPDESC_SIZE 1000
-
 
 void Core2DisplayPower(uint8_t on);
 void Core2DisplayDim(uint8_t dim);
@@ -228,6 +231,44 @@ int8_t cs;
       }
     }
 
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+    int8_t xp, xm, yp, ym;
+    cp = strstr(ddesc, "PAR,");
+    if (cp) {
+      cp += 4;
+      // 8 or 16 bus
+      uint8_t mode = strtol(cp, &cp, 10);
+      cp++;
+
+      replacepin(&cp, Pin(GPIO_DP_RES));
+      xm = replacepin(&cp, Pin(GPIO_DP_CS));
+      yp = replacepin(&cp, Pin(GPIO_DP_RS));
+      replacepin(&cp, Pin(GPIO_DP_WR));
+      replacepin(&cp, Pin(GPIO_DP_RD));
+      replacepin(&cp, Pin(GPIO_BACKLIGHT));
+
+      ym = replacepin(&cp, Pin(GPIO_DPAR0));
+      xp = replacepin(&cp, Pin(GPIO_DPAR1));
+
+      replacepin(&cp, Pin(GPIO_DPAR2));
+      replacepin(&cp, Pin(GPIO_DPAR3));
+      replacepin(&cp, Pin(GPIO_DPAR4));
+      replacepin(&cp, Pin(GPIO_DPAR5));
+      replacepin(&cp, Pin(GPIO_DPAR6));
+      replacepin(&cp, Pin(GPIO_DPAR7));
+
+      if (mode == 16) {
+        replacepin(&cp, Pin(GPIO_DPAR8));
+        replacepin(&cp, Pin(GPIO_DPAR9));
+        replacepin(&cp, Pin(GPIO_DPAR10));
+        replacepin(&cp, Pin(GPIO_DPAR11));
+        replacepin(&cp, Pin(GPIO_DPAR12));
+        replacepin(&cp, Pin(GPIO_DPAR13));
+        replacepin(&cp, Pin(GPIO_DPAR14));
+        replacepin(&cp, Pin(GPIO_DPAR15));
+      }
+    }
+#endif // CONFIG_IDF_TARGET_ESP32S3
 /*
     File fp;
     fp = ffsp->open("/dump.txt", "w");
@@ -292,6 +333,16 @@ int8_t cs;
 	    XPT2046_Touch_Init(touch_cs);
     }
 #endif // USE_XPT2046
+
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+#ifdef SIMPLE_RES_TOUCH
+    cp = strstr(ddesc, ":TR,");
+    if (cp) {
+      cp += 4;
+      Simple_ResTouch_Init(xp, xm, yp, ym);
+    }
+#endif
+#endif
 
     uint8_t inirot = Settings->display_rotate;
 
