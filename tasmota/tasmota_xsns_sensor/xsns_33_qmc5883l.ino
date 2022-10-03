@@ -230,36 +230,19 @@ bool      ready = false;
 uint8_t   i2c_address = QMC5883L_ADDR;
 } QMC5883L;
 
-void writeRegister(uint8_t reg, uint8_t val)
-{
-  Wire.beginTransmission(QMC5883L.i2c_address); // start talking
-  Wire.write(reg);
-  Wire.write(val);
-  Wire.endTransmission();
-}
-
-int readRegister(uint8_t reg, uint8_t count)
-{
-  Wire.beginTransmission(QMC5883L.i2c_address);
-  Wire.write(reg);
-  Wire.endTransmission();
-
-  Wire.requestFrom(QMC5883L.i2c_address, count);
-  int n = Wire.available();
-  if (n != count) return 0;
-  return n;
-}
-
 // Initialise the device
 void QMC5883L_Init()
 {
   if (!I2cSetDevice(QMC5883L.i2c_address)) { return; }
   I2cSetActiveFound(QMC5883L.i2c_address, "QMC5883L");
   // reset QMC5883L
-  writeRegister(QMC5883L_CONFIG2,QMC5883L_CONFIG2_RESET);  // Software Reset
-  writeRegister(QMC5883L_RESET, 0x01);
+  if (I2cWrite8(QMC5883L.i2c_address, QMC5883L_CONFIG2, QMC5883L_CONFIG2_RESET) == false) return; // Software Reset
+  // writeRegister(QMC5883L_CONFIG2,QMC5883L_CONFIG2_RESET);  // Software Reset
+  //writeRegister(QMC5883L_RESET, 0x01);
+  if (I2cWrite8(QMC5883L.i2c_address, QMC5883L_RESET, 0x01) == false) return;
   // write config
-  writeRegister(QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_10HZ | QMC5883L_CONFIG_CONT);
+  //writeRegister(QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_10HZ | QMC5883L_CONFIG_CONT);
+  if (I2cWrite8(QMC5883L.i2c_address, QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_10HZ | QMC5883L_CONFIG_CONT) == false) return;
   QMC5883L.ready = true;
 }
 
@@ -267,16 +250,23 @@ void QMC5883L_Init()
 void QMC5883L_read_data(void)
 {
   if(QMC5883L.ready != true) return;
-
+  uint8_t data = 0;
   // check if chip is ready to provice data
-  if (!readRegister(QMC5883L_STATUS, 1))  return; // read error
-  if (!(Wire.read() & QMC5883L_STATUS_DRDY)) return;  // chip not yet ready, next round try again
+  //if (!readRegister(QMC5883L_STATUS, 1))  return; // read error
+  if (!I2cValidRead8(&data, QMC5883L.i2c_address, QMC5883L_STATUS))  return; // read error
+ 
+  //if (!(Wire.read() & QMC5883L_STATUS_DRDY)) return;  // chip not yet ready, next round try again
+  if (!(data & QMC5883L_STATUS_DRDY)) return;  // chip not yet ready, next round try again
   
   // QMC5883 reading data
-  if (readRegister(QMC5883L_X_LSB, 6) != 6)  return; // read error, select LSB register
-  QMC5883L.MX = Wire.read() | (Wire.read() << 8);
-  QMC5883L.MY = Wire.read() | (Wire.read() << 8);
-  QMC5883L.MZ = Wire.read() | (Wire.read() << 8);
+  //if (readRegister(QMC5883L_X_LSB, 6) != 6)  return; // read error, select LSB register
+  //QMC5883L.MX = Wire.read() | (Wire.read() << 8);
+  //QMC5883L.MY = Wire.read() | (Wire.read() << 8);
+  //QMC5883L.MZ = Wire.read() | (Wire.read() << 8);
+
+  if (I2cValidReadS16(&QMC5883L.MX, QMC5883L.i2c_address, QMC5883L_X_LSB) == false)  return; // read error, select LSB register
+  if (I2cValidReadS16(&QMC5883L.MY, QMC5883L.i2c_address, QMC5883L_Y_LSB) == false)  return; // read error, select LSB register
+  if (I2cValidReadS16(&QMC5883L.MZ, QMC5883L.i2c_address, QMC5883L_Z_LSB) == false)  return; // read error, select LSB register
 
   int16_t x = QMC5883L.MX;
   int16_t y = QMC5883L.MY;
@@ -302,12 +292,12 @@ void QMC5883L_read_data(void)
 
   // calculate scalar magnetic induction
   QMC5883L.scalar = sqrt((QMC5883L.MX * QMC5883L.MX) + (QMC5883L.MY * QMC5883L.MY) + (QMC5883L.MZ * QMC5883L.MZ));
-
-  // get temperature
-  if (readRegister(QMC5883L_TEMP_LSB, 2) != 2)   return; // read error
-  int16_t t = 0;
-  t = Wire.read() | (Wire.read() << 8);
-  QMC5883L.temp = (t / 100) + USE_QMC5883L_Temp;
+ 
+   // get temperature
+  //if (readRegister(QMC5883L_TEMP_LSB, 2) != 2)   return; // read error
+  if (I2cValidReadS16(&QMC5883L.temp, QMC5883L.i2c_address, QMC5883L_TEMP_LSB) == false)  return; // read error, select LSB register
+  //t = Wire.read() | (Wire.read() << 8);
+  QMC5883L.temp = (QMC5883L.temp / 100) + USE_QMC5883L_Temp;
 }
 
 /*********************************************************************************************\
