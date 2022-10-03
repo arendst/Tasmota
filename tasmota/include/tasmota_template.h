@@ -195,6 +195,7 @@ enum UserSelectablePins {
   GPIO_REL1_BI, GPIO_REL1_BI_INV,      // 8 x Relays bistable
   GPIO_I2S_MCLK,
   GPIO_MBR_TX, GPIO_MBR_RX,            // Modbus Bridge Serial interface
+  GPIO_ADE7953_RST,                    // ADE7953 Reset
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage
@@ -437,6 +438,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RELAY "_b|" D_SENSOR_RELAY "_bi|"
   D_SENSOR_I2S_MCLK "|"
   D_SENSOR_MBR_TX "|" D_SENSOR_MBR_RX "|"
+  D_SENSOR_ADE7953_RST "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -770,6 +772,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #if defined(USE_I2C) && defined(USE_ADE7953)
   AGPIO(GPIO_ADE7953_IRQ) + 2,  // ADE7953 IRQ
+  AGPIO(GPIO_ADE7953_RST),    // ADE7953 Reset
 #endif
 #ifdef USE_CSE7761
   AGPIO(GPIO_CSE7761_TX),     // CSE7761 Serial interface (Dual R3)

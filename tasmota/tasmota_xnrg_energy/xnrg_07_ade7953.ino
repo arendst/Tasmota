@@ -21,10 +21,12 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy used in Shelly 2.5 (model 0) and Shelly EM (model 1)
+ * ADE7953 - Energy used in Shelly 2.5 (model 0) , Shelly EM (model 1) and Shelly Plus 2PM (model 1)
  *
  * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
  * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,0,1],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly Plus 2PM PCB v0.1.5","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3457,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
+ * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3457,0,0,0,0,0,0,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
@@ -190,7 +192,7 @@ const uint16_t Ade7953CalibRegs[] {
 };
 
 // 24-bit data registers Shelly 2.5
-const uint16_t Ade7953Registers[] {
+const uint16_t Ade7953RegistersAis2Bis1[] {
   ADE7953_IRMSB,   // IRMSB - RMS current channel B (Relay 1)
   ADE7953_BWATT,   // BWATT - Active power channel B
   ADE7953_BVA,     // BVA - Apparent power channel B
@@ -204,8 +206,8 @@ const uint16_t Ade7953Registers[] {
   ADE7953_ACCMODE  // ACCMODE - Accumulation mode
 };
 
-// 24-bit data registers Shelly EM
-const uint16_t Ade7953RegistersShellyEM[] {
+// 24-bit data registers Shelly EM and Plus 2PM
+const uint16_t Ade7953RegistersAis1Bis2[] {
   ADE7953_IRMSA,   // IRMSA - RMS current channel A
   ADE7953_AWATT,   // AWATT - Active power channel A
   ADE7953_AVA,     // AVA - Apparent power channel A
@@ -362,8 +364,8 @@ void Ade7953Init(void) {
 void Ade7953GetData(void) {
   uint32_t acc_mode;
   int32_t reg[2][4];
-  for (uint32_t i = 0; i < sizeof(Ade7953Registers)/sizeof(uint16_t); i++) {
-    int32_t value = Ade7953Read((ADE7953_SHELLY_25 == Ade7953.model) ? Ade7953Registers[i] : Ade7953RegistersShellyEM[i]);
+  for (uint32_t i = 0; i < sizeof(Ade7953RegistersAis2Bis1)/sizeof(uint16_t); i++) {
+    int32_t value = Ade7953Read((ADE7953_SHELLY_25 == Ade7953.model) ? Ade7953RegistersAis2Bis1[i] : Ade7953RegistersAis1Bis2[i]);
     if (8 == i) {
       Ade7953.voltage_rms = value;  // RMS voltage (Both relays)
     } else if (9 == i) {
@@ -546,14 +548,22 @@ void Ade7953DrvInit(void) {
   if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
     uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
     pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
-    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 (Shelly 2.5), 1 (Shelly EM)
+    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM)
 
+    int pin_reset = Pin(GPIO_ADE7953_RST);        // -1 if not defined
+#ifdef ESP8266
     if (ADE7953_SHELLY_EM == Ade7953.model) {
-      pinMode(16, OUTPUT);                        // Reset pin ADE7953
-      digitalWrite(16, 0);
+      if (-1 == pin_reset) {
+        pin_reset = 16;
+      }
+    }
+#endif
+    if (pin_reset > -1) {
+      pinMode(pin_reset, OUTPUT);                 // Reset pin ADE7953
+      digitalWrite(pin_reset, 0);
       delay(1);
-      digitalWrite(16, 1);
-      pinMode(16, INPUT);
+      digitalWrite(pin_reset, 1);
+      pinMode(pin_reset, INPUT);
     }
 
     delay(100);                                   // Need 100mS to init ADE7953
