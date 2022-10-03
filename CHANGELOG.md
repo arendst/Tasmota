@@ -3,17 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.1.3]
+## [12.1.1.4]
 ### Added
-- ESP32-S2 and ESP32-S3 touch input support
-- Zigbee friendly names per endpoint
-
+- Support for Shelly Plus 2PM using template ``{"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3457,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}``
 ### Changed
 
 ### Fixed
-- ESP32 touch button multi-press and hold detection (#16596)
 
 ### Removed
+
+## [12.1.1.3] 20221003
+### Added
+- ESP32-S2 and ESP32-S3 touch button support
+- Zigbee friendly names per endpoint
+
+### Fixed
+- ESP32 touch button multi-press and hold detection (#16596)
 
 ## [12.1.1.2] 20220927
 ### Added
