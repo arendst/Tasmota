@@ -266,7 +266,7 @@ void QMC5883L_Init()
 //Read the magnetic data
 void QMC5883L_read_data(void)
 {
-  if(!QMC5883L.ready) return;
+  if(QMC5883L.ready != true) return;
 
   // check if chip is ready to provice data
   if (!readRegister(QMC5883L_STATUS, 1))  return; // read error
@@ -324,7 +324,7 @@ const char HTTP_SNS_QMC5883L[] PROGMEM =
     "{s}QMC5883L " D_TEMPERATURE "{m}%d " D_UNIT_DEGREE D_UNIT_CELSIUS "{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 const char HTTP_SNS_QMC5883L_ERROR[] PROGMEM =
-  "{s}QMC5883L {m} %s {e}";
+    "{s}QMC5883L {m} %s {e}";
 #endif
 
 
@@ -332,7 +332,7 @@ void QMC5883L_Show(uint8_t json)
 {
   if (json) 
   {
-    if (!QMC5883L.ready)
+    if (QMC5883L.ready != true)
     {
       AddLog(LOG_LEVEL_INFO, PSTR("QMC5883L: " D_ERROR " %x" ), QMC5883L.status);
       return;
@@ -345,17 +345,14 @@ void QMC5883L_Show(uint8_t json)
 #ifdef USE_WEBSERVER
   else 
   {
-    switch(QMC5883L.ready)
+    if (QMC5883L.ready != true)
     {
-        case true:
-          WSContentSend_PD(HTTP_SNS_QMC5883L, QMC5883L.MX, QMC5883L.MY, QMC5883L.MZ, QMC5883L.scalar, QMC5883L.HG, QMC5883L.temp);
-          break;
-        case false:
-          WSContentSend_PD(HTTP_SNS_QMC5883L_ERROR, D_START);
-          break;
-        default:
-          WSContentSend_PD(HTTP_SNS_QMC5883L_ERROR, D_ERROR);
+        WSContentSend_PD(HTTP_SNS_QMC5883L_ERROR, D_ERROR);    
     }
+    else
+    {
+        WSContentSend_PD(HTTP_SNS_QMC5883L, QMC5883L.MX, QMC5883L.MY, QMC5883L.MZ, QMC5883L.scalar, QMC5883L.HG, QMC5883L.temp);
+    }    
   }
 #endif
 }
@@ -371,13 +368,14 @@ bool Xsns33(byte function)
     return false;
   }
 
-  bool result = false;
-
   if (FUNC_INIT == function) {
     QMC5883L_Init();
   }
-  else if (QMC5883L.ready) {
-    switch (function) {
+  else 
+  if (QMC5883L.ready == true) 
+  {
+    switch (function) 
+    {
       case FUNC_JSON_APPEND:
         QMC5883L_Show(1);
         break;
@@ -391,7 +389,7 @@ bool Xsns33(byte function)
 #endif  // USE_WEBSERVER
     }
   }
-  return result;
+  return true;
 }
 #endif // USE_QMC5883L
 #endif // USE_I2C
