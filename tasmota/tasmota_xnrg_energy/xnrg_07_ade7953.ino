@@ -21,12 +21,12 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy used in Shelly 2.5 (model 0) , Shelly EM (model 1) and Shelly Plus 2PM (model 1)
+ * ADE7953 - Energy used in Shelly 2.5 (model 0), Shelly EM (model 1) and Shelly Plus 2PM (model 2)
  *
  * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
  * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,0,1],"FLAG":0,"BASE":18}
- * {"NAME":"Shelly Plus 2PM PCB v0.1.5","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3457,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
- * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3457,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
+ * {"NAME":"Shelly Plus 2PM PCB v0.1.5","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3458,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
+ * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
@@ -57,7 +57,7 @@
 #define ADE7953_GAIN_DEFAULT    4194304      // = 0x400000 range 2097152 (min) to 6291456 (max)
 #define ADE7953_PHCAL_DEFAULT   0            // = range -383 to 383
 
-enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM };
+enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM };
 
 enum Ade7953_8BitRegisters {
   // Register Name                    Addres  R/W  Bt  Ty  Default     Description
@@ -548,7 +548,7 @@ void Ade7953DrvInit(void) {
   if (PinUsed(GPIO_ADE7953_IRQ, GPIO_ANY)) {      // Irq on GPIO16 is not supported...
     uint32_t pin_irq = Pin(GPIO_ADE7953_IRQ, GPIO_ANY);
     pinMode(pin_irq, INPUT);                      // Related to resetPins() - Must be set to input
-    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM)
+    Ade7953.model = GetPin(pin_irq) - AGPIO(GPIO_ADE7953_IRQ);  // 0 (1 = Shelly 2.5), 1 (2 = Shelly EM), 2 (3 = Shelly Plus 2PM)
 
     int pin_reset = Pin(GPIO_ADE7953_RST);        // -1 if not defined
 #ifdef ESP8266

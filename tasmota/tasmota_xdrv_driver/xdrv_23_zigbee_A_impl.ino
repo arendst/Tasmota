@@ -1218,7 +1218,7 @@ void CmndZbModelId(void) {
 // Specify, read or erase a Light type for Hue/Alexa integration
 void CmndZbLight(void) {
   // Syntax is:
-  //  ZbLight <device_id>,<x>            - assign a bulb type 0-5
+  //  ZbLight <device_id>,<x>            - assign a bulb type 0-5, or -1 to remove
   //  ZbLight <device_id>                - display the current bulb type and status
   //
   // Where <device_id> can be: short_addr, long_addr, device_index, friendly_name
@@ -1226,18 +1226,20 @@ void CmndZbLight(void) {
   if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
 
   // check if parameters contain a comma ','
-  char *p;
-  strtok_r(XdrvMailbox.data, ", ", &p);
+  char *p = XdrvMailbox.data;
+  char *device_id = strsep(&p, ",");       // zigbee identifier
+  char *bulbtype_str = strsep(&p, ",");    // friendly name
+  int32_t ep = (p != nullptr) ? strtol(p, nullptr, 10) : 0;          // get endpoint number, or `0` if none
 
   // parse first part, <device_id>
-  Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
+  Z_Device & device = zigbee_devices.parseDeviceFromName(device_id, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
   if (!device.valid()) { ResponseCmndChar_P(PSTR(D_ZIGBEE_UNKNOWN_DEVICE)); return; }
 
-  if (p) {
-    int8_t bulbtype = strtol(p, nullptr, 10);
+  if (bulbtype_str != nullptr) {
+    int8_t bulbtype = strtol(bulbtype_str, nullptr, 10);
     if (bulbtype > 5)  { bulbtype = 5; }
     if (bulbtype < -1) { bulbtype = -1; }
-    device.setLightChannels(bulbtype);
+    device.setLightChannels(bulbtype, ep);   // assign by default to first endpoint, or 0 if no endpoint known
   }
   Z_attribute_list attr_list;
   device.jsonLightState(attr_list);
@@ -1271,7 +1273,7 @@ void CmndZbOccupancy(void) {
 
   // check if parameters contain a comma ','
   char *p;
-  strtok_r(XdrvMailbox.data, ", ", &p);
+  strtok_r(XdrvMailbox.data, ",", &p);
 
   // parse first part, <device_id>
   Z_Device & device = zigbee_devices.parseDeviceFromName(XdrvMailbox.data, nullptr, nullptr, XdrvMailbox.payload);  // in case of short_addr, it must be already registered
