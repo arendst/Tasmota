@@ -264,12 +264,15 @@ void QMC5883L_read_data(void)
   //QMC5883L.MY = Wire.read() | (Wire.read() << 8);
   //QMC5883L.MZ = Wire.read() | (Wire.read() << 8);
 
-  if (I2cValidReadS16(&QMC5883L.MX, QMC5883L.i2c_address, QMC5883L_X_LSB) == false)  return; // read error, select LSB register
-  if (I2cValidReadS16(&QMC5883L.MY, QMC5883L.i2c_address, QMC5883L_Y_LSB) == false)  return; // read error, select LSB register
+  int16_t x = 0;
+  int16_t y = 0;
+  
+  if (I2cValidReadS16(&x, QMC5883L.i2c_address, QMC5883L_X_LSB) == false)  return; // read error, select LSB register
+  if (I2cValidReadS16(&y, QMC5883L.i2c_address, QMC5883L_Y_LSB) == false)  return; // read error, select LSB register
   if (I2cValidReadS16(&QMC5883L.MZ, QMC5883L.i2c_address, QMC5883L_Z_LSB) == false)  return; // read error, select LSB register
 
-  int16_t x = QMC5883L.MX;
-  int16_t y = QMC5883L.MY;
+  QMC5883L.MX = x;
+  QMC5883L.MY = y;
 
   // calculate azimut, heading
   if(x < QMC5883L.xlow) QMC5883L.xlow = x;
