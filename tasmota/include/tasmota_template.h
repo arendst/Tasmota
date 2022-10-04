@@ -768,10 +768,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HJL_CF),         // HJL-01/BL0937 CF power
 #endif
 #if defined(USE_I2C) && defined(USE_ADE7880)
-  AGPIO(GPIO_ADE7880_IRQ) + 2,  // ADE7880 IRQ
+  AGPIO(GPIO_ADE7880_IRQ) + 2,  // ADE7880 IRQ - (1 = IRQ1, 2 = IRQ2)
 #endif
 #if defined(USE_I2C) && defined(USE_ADE7953)
-  AGPIO(GPIO_ADE7953_IRQ) + 2,  // ADE7953 IRQ
+  AGPIO(GPIO_ADE7953_IRQ) + 3,  // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM)
   AGPIO(GPIO_ADE7953_RST),    // ADE7953 Reset
 #endif
 #ifdef USE_CSE7761
