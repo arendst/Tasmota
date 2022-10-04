@@ -496,7 +496,10 @@ const uint8_t meter[]=
 // 672 bytes extra RAM with SML_MAX_VARS = 16
 // default compile on, but must be enabled by descriptor flag 16
 // may be undefined if RAM must be saved
+
+#ifndef SML_NO_MEDIAN_FILTER
 #define USE_SML_MEDIAN_FILTER
+#endif
 
 // max number of vars , may be adjusted
 #ifndef SML_MAX_VARS
@@ -1648,18 +1651,20 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
       if (iob == 0x40) {
         meter_spos[meters] = 0;
       } else if (iob == 0x0d) {
-        uint16_t crc = KS_calculateCRC(&smltbuf[meters][0], meter_spos[meters]);
-        if (!crc) {
-          uint8_t *ucp = &smltbuf[meters][0];
-          for (uint16_t cnt = 0; cnt < meter_spos[meters]; cnt++) {
-            uint8_t iob = smltbuf[meters][cnt];
-            if (iob == 0x1b) {
-              *ucp++ = smltbuf[meters][cnt + 1] ^ 0xff;
-              cnt++;
-            } else {
-              *ucp++ = iob;
-            }
+        uint8_t index = 0;
+        uint8_t *ucp = &smltbuf[meters][0];
+        for (uint16_t cnt = 0; cnt < meter_spos[meters]; cnt++) {
+          uint8_t iob = smltbuf[meters][cnt];
+          if (iob == 0x1b) {
+            *ucp++ = smltbuf[meters][cnt + 1] ^ 0xff;
+            cnt++;
+          } else {
+            *ucp++ = iob;
           }
+          index++;
+        }
+        uint16_t crc = KS_calculateCRC(&smltbuf[meters][0],index);
+        if (!crc) {
           SML_Decode(meters);
         }
         sml_empty_receiver(meters);
@@ -2125,13 +2130,13 @@ void SML_Decode(uint8_t index) {
               mp += 4;
               // decode the mantissa
               uint32_t x = 0;
-              for (uint16_t i = 0; i < cp[5]; i++) {
+              for (uint16_t i = 0; i < cp[1]; i++) {
                 x <<= 8;
-                x |= cp[i + 7];
+                x |= cp[i + 3];
               }
               // decode the exponent
-              int32_t i = cp[6] & 0x3f;
-              if (cp[6] & 0x40) {
+              int32_t i = cp[2] & 0x3f;
+              if (cp[2] & 0x40) {
                 i = -i;
               };
               //float ifl = pow(10, i);
@@ -2139,10 +2144,11 @@ void SML_Decode(uint8_t index) {
               for (uint16_t x = 1; x <= i; ++x) {
                 ifl *= 10;
               }
-              if (cp[6] & 0x80) {
+              if (cp[2] & 0x80) {
                 ifl = -ifl;
               }
               mbus_dval = (double )(x * ifl);
+
             } else if (!strncmp(mp, "bcd", 3)) {
               mp += 3;
               uint8_t digits = strtol((char*)mp, (char**)&mp, 10);
@@ -2283,6 +2289,14 @@ void SML_Decode(uint8_t index) {
                 meter_id[mindex][p] = *cp++;
               }
               meter_id[mindex][p] = 0;
+            } else if (meter_desc_p[mindex].type == 'k') {
+              // 220901
+              uint32_t date = mbus_dval;
+              uint8_t year = date / 10000; // = 22
+              date -= year * 10000;
+              uint8_t month = date / 100; // = 09
+              uint8_t day = date % 100; // = 01
+              sprintf(&meter_id[mindex][0],"%02d.%02d.%02d",day, month, year);
             } else {
               sml_getvalue(cp,mindex);
             }
@@ -2493,7 +2507,7 @@ void SML_Show(boolean json) {
           continue;
         }
         // skip compare section
-        cp=strchr(mp, '@');
+        cp = strchr(mp, '@');
         if (cp) {
           cp++;
           tststr:
