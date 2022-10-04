@@ -972,7 +972,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const SBuffer &buf) {
                   );
   // query the state of the bulb (for Alexa)
   uint32_t wait_ms = 2000;    // wait for 2s
-  Z_Query_Bulb(nwkAddr, wait_ms);
+  Z_Query_Bulb(nwkAddr, 0xFF, wait_ms);    // 0xFF means iterate on all endpoints
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   // Continue the discovery process and auto-binding only if the device was unknown or if PermitJoin is ongoing
@@ -2118,24 +2118,39 @@ int32_t Z_Load_Data(uint8_t value) {
   return 0;                              // continue
 }
 
+static void Z_Query_Bulb_inner(uint16_t shortaddr, uint8_t ep, uint32_t &wait_ms) {
+  const uint32_t inter_message_ms = 100;    // wait 100ms between messages
+  if (ep == 0) { ep = zigbee_devices.findFirstEndpoint(shortaddr); }
+  if (ep) {
+    if (0 <= zigbee_devices.getHueBulbtype(shortaddr, ep)) {
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, ep, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, ep, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, ep, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, ep, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+      wait_ms += 1000;              // wait 1 second between devices
+    }
+  }
+}
+
 //
 // Query the state of a bulb (light) if its type allows it
 //
-void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
-  const uint32_t inter_message_ms = 100;    // wait 100ms between messages
-
-  if (0 <= zigbee_devices.getHueBulbtype(shortaddr)) {
-    uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
-
-    if (endpoint) {   // send only if we know the endpoint
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
-      wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
-      wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
-      wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
-      wait_ms += 1000;              // wait 1 second between devices
+// ep==0 is default endpoint
+// ep==0xFF iterates on all endpoints
+void Z_Query_Bulb(uint16_t shortaddr, uint8_t ep, uint32_t &wait_ms) {
+  if (ep != 0xFF) {
+    Z_Query_Bulb_inner(shortaddr, ep, wait_ms);   // try a single endpoint
+  } else {
+    // iterate on all endpoints
+    const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+    if (!device.valid()) { return; }
+    for (uint32_t i = 0; i < endpoints_max; i++) {
+      ep = device.endpoints[i];
+      if (ep == 0) { break; }
+      Z_Query_Bulb_inner(shortaddr, ep, wait_ms);   // try a single endpoint
     }
   }
 }
@@ -2173,7 +2188,7 @@ int32_t Z_Query_Bulbs(uint8_t value) {
     uint32_t wait_ms = 1000;                  // start with 1.0 s delay
     for (uint32_t i = 0; i < zigbee_devices.devicesSize(); i++) {
       const Z_Device &device = zigbee_devices.devicesAt(i);
-      Z_Query_Bulb(device.shortaddr, wait_ms);
+      Z_Query_Bulb(device.shortaddr, 0xFF, wait_ms);   // 0xFF means all endpoints
     }
   }
   return 0;                              // continue

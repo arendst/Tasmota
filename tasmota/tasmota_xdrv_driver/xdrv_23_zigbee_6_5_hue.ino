@@ -23,7 +23,7 @@
 // Add global functions for Hue Emulation
 
 // idx: index in the list of zigbee_devices
-void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, String *response) {
+void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t ep, uint8_t local_light_subtype, String *response) {
   static const char HUE_LIGHTS_STATUS_JSON1_SUFFIX_ZIGBEE[] PROGMEM =
     "%s\"alert\":\"none\","
     "\"effect\":\"none\","
@@ -41,7 +41,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
   uint32_t echo_gen = findEchoGeneration();   // 1 for 1st gen =+ Echo Dot 2nd gen, 2 for 2nd gen and above
 
   const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
-  const Z_Data_Light & light = device.data.find<Z_Data_Light>();
+  const Z_Data_Light & light = device.data.find<Z_Data_Light>(ep);
   if (&light != &z_data_unk) {
     bri = light.getDimmer();
     colormode = light.getColorMode();
@@ -51,7 +51,7 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
     x = light.getX();
     y = light.getY();
   }
-  power = device.getPower();
+  power = device.getPower(ep);
   reachable = device.getReachable();
 
   if (bri > 254)   bri = 254;    // Philips Hue bri is between 1 and 254
@@ -89,29 +89,45 @@ void HueLightStatus1Zigbee(uint16_t shortaddr, uint8_t local_light_subtype, Stri
   free(buf);
 }
 
-void HueLightStatus2Zigbee(uint16_t shortaddr, String *response)
+void HueLightStatus2Zigbee(uint16_t shortaddr, uint8_t ep, String *response)
 {
   const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
   const char * friendlyName = device.friendlyName;
   const char * modelId = device.modelId;
   const char * manufacturerId = device.manufacturerId;
-  char shortaddrname[8];
-  snprintf_P(shortaddrname, sizeof(shortaddrname), PSTR("0x%04X"), shortaddr);
 
-  char* buf = HueLightStatus2Generic((friendlyName) ? friendlyName : shortaddrname,
+  char name[32+4];
+  const char * local_friendfly_name = device.ep_names.getEPName(ep != 0 ? ep : device.endpoints[0]);    // try endpoint, if `0` then found nothing
+  if (local_friendfly_name != nullptr) {
+    snprintf_P(name, sizeof(name), PSTR("%s"), local_friendfly_name);
+  } else if (friendlyName != nullptr) {
+    if (ep == 0 || ep == device.endpoints[0]) {   // default endpoint, no suffix
+      snprintf_P(name, sizeof(name), PSTR("%s"), friendlyName);
+    } else {                                      // no endpoint specific name so add suffix
+      snprintf_P(name, sizeof(name), PSTR("%s-%i"), friendlyName, ep);
+    }
+  } else {
+    if (ep == 0 || ep == device.endpoints[0]) {   // default endpoint, no suffix
+      snprintf_P(name, sizeof(name), PSTR("0x%04X"), shortaddr);
+    } else {
+      snprintf_P(name, sizeof(name), PSTR("0x%04X-%i"), shortaddr, ep);
+    }
+  }
+  
+  char* buf = HueLightStatus2Generic(name,
               (modelId) ? modelId : PSTR("Unknown"),
               (manufacturerId) ? manufacturerId : PSTR("Tasmota"),
-              GetHueDeviceId(shortaddr).c_str());
+              GetHueDeviceId(shortaddr, ep).c_str());
   *response += buf;
   free(buf);
 }
 
-int32_t ZigbeeHueStatus(String * response, uint16_t shortaddr) {
-  int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
+int32_t ZigbeeHueStatus(String * response, uint16_t shortaddr, uint8_t ep) {
+  int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr, ep);
   if (bulbtype >= 0) {  // respond only if eligible
     *response += F("{\"state\":");
-    HueLightStatus1Zigbee(shortaddr, zigbee_devices.getHueBulbtype(shortaddr), response);
-    HueLightStatus2Zigbee(shortaddr, response);
+    HueLightStatus1Zigbee(shortaddr, ep, zigbee_devices.getHueBulbtype(shortaddr, ep), response);
+    HueLightStatus2Zigbee(shortaddr, ep, response);
     return 200;
   } else {
     return -3;
@@ -120,40 +136,51 @@ int32_t ZigbeeHueStatus(String * response, uint16_t shortaddr) {
 
 void ZigbeeCheckHue(String & response, bool * appending) {
   uint32_t zigbee_num = zigbee_devices.devicesSize();
-  for (uint32_t i = 0; i < zigbee_num; i++) {
-    uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
-    int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
-
-    if (bulbtype >= 0) {
-      // this bulb is advertized
-      if (*appending) { response += ","; }
-      response += "\"";
-      response += EncodeLightIdZigbee(0, shortaddr);
-      response += F("\":{\"state\":");
-      HueLightStatus1Zigbee(shortaddr, bulbtype, &response);    // TODO
-      HueLightStatus2Zigbee(shortaddr, &response);
-      *appending = true;
+  for (uint32_t idx = 0; idx < zigbee_num; idx++) {
+    const Z_Device & device = zigbee_devices.devicesAt(idx);
+    uint16_t shortaddr = device.shortaddr;
+    
+    for (uint32_t i = 0; i < endpoints_max; i++) {
+      uint8_t ep = device.endpoints[i];
+      if (i > 0 && ep == 0) { break; }
+      int8_t bulbtype = device.getHueBulbtype(ep);
+      if (bulbtype >= 0) {
+        // this bulb is advertized
+        if (*appending) { response += ","; }
+        response += "\"";
+        response += EncodeLightIdZigbee((i == 0) ? 0 : ep, shortaddr);
+        response += F("\":{\"state\":");
+        HueLightStatus1Zigbee(shortaddr, ep, bulbtype, &response);
+        HueLightStatus2Zigbee(shortaddr, (i == 0) ? 0 : ep, &response); // if first endpoint ,announce as `0`
+        *appending = true;
+      }
     }
   }
 }
 
 void ZigbeeHueGroups(String * lights) {
   uint32_t zigbee_num = zigbee_devices.devicesSize();
-  for (uint32_t i = 0; i < zigbee_num; i++) {
-    uint16_t shortaddr = zigbee_devices.devicesAt(i).shortaddr;
-    int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
+  for (uint32_t idx = 0; idx < zigbee_num; idx++) {
+    const Z_Device & device = zigbee_devices.devicesAt(idx);
+    uint16_t shortaddr = device.shortaddr;
 
-    if (bulbtype >= 0) {
-      *lights += ",\"";
-      *lights += EncodeLightIdZigbee(0, shortaddr);
-      *lights += "\"";
+    for (uint32_t i = 0; i < endpoints_max; i++) {
+      uint8_t ep = device.endpoints[i];
+      if (i > 0 && ep == 0) { break; }                  // no more endpoints
+      int8_t bulbtype = device.getHueBulbtype(ep);
+      if (bulbtype >= 0) {
+        *lights += ",\"";
+        *lights += EncodeLightIdZigbee((i == 0) ? 0 : ep, shortaddr); // if first endpont, announce as `0`
+        *lights += "\"";
+      }
     }
   }
 }
 
-void ZigbeeSendHue(uint16_t shortaddr, uint16_t cluster, uint8_t cmd, const SBuffer & s) {
+void ZigbeeSendHue(uint16_t shortaddr, uint8_t ep, uint16_t cluster, uint8_t cmd, const SBuffer & s) {
   ZCLFrame zcl(s.len());
   zcl.shortaddr = shortaddr;
+  zcl.dstendpoint = ep;       // if set to `0`, we will use the first endpoint
   zcl.cluster = cluster;
   zcl.cmd = cmd;
   zcl.clusterSpecific = true;
@@ -165,69 +192,69 @@ void ZigbeeSendHue(uint16_t shortaddr, uint16_t cluster, uint8_t cmd, const SBuf
 
 // Send commands
 // Power On/Off
-void ZigbeeHuePower(uint16_t shortaddr, bool power) {
+void ZigbeeHuePower(uint16_t shortaddr, uint8_t ep, bool power) {
   SBuffer s(0);
-  ZigbeeSendHue(shortaddr, 0x0006, power ? 1 : 0, s);
-  zigbee_devices.getShortAddr(shortaddr).setPower(power, 0);
+  ZigbeeSendHue(shortaddr, ep, 0x0006, power ? 1 : 0, s);
+  zigbee_devices.getShortAddr(shortaddr).setPower(power, ep);
 }
 
 // Dimmer
-void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t dimmer) {
+void ZigbeeHueDimmer(uint16_t shortaddr, uint8_t ep, uint8_t dimmer) {
   if (dimmer > 0xFE) { dimmer = 0xFE; }
   SBuffer s(4);
   s.add8(dimmer);
   s.add16(0x000A);    // transition time = 1s
-  ZigbeeSendHue(shortaddr, 0x0008, 0x04, s);
-  zigbee_devices.getLight(shortaddr).setDimmer(dimmer);
+  ZigbeeSendHue(shortaddr, ep, 0x0008, 0x04, s);
+  zigbee_devices.getLight(shortaddr, ep).setDimmer(dimmer);
 }
 
 // CT
-void ZigbeeHueCT(uint16_t shortaddr, uint16_t ct) {
+void ZigbeeHueCT(uint16_t shortaddr, uint8_t ep, uint16_t ct) {
   if (ct > 0xFEFF) { ct = 0xFEFF; }
   SBuffer s(4);
   s.add16(ct);
   s.add16(0x000A);    // transition time = 1s
-  ZigbeeSendHue(shortaddr, 0x0300, 0x0A, s);
-  Z_Data_Light & light = zigbee_devices.getLight(shortaddr);
+  ZigbeeSendHue(shortaddr, ep, 0x0300, 0x0A, s);
+  Z_Data_Light & light = zigbee_devices.getLight(shortaddr, ep);
   light.setColorMode(2);      // "ct"
   light.setCT(ct);
 }
 
 // XY
-void ZigbeeHueXY(uint16_t shortaddr, uint16_t x, uint16_t y) {
+void ZigbeeHueXY(uint16_t shortaddr, uint8_t ep, uint16_t x, uint16_t y) {
   if (x > 0xFEFF) { x = 0xFEFF; }
   if (y > 0xFEFF) { y = 0xFEFF; }
   SBuffer s(8);
   s.add16(x);
   s.add16(y);
   s.add16(0x000A);    // transition time = 1s
-  ZigbeeSendHue(shortaddr, 0x0300, 0x07, s);
-  Z_Data_Light & light = zigbee_devices.getLight(shortaddr);
+  ZigbeeSendHue(shortaddr, ep, 0x0300, 0x07, s);
+  Z_Data_Light & light = zigbee_devices.getLight(shortaddr, ep);
   light.setColorMode(1);      // "xy"
   light.setX(x);
   light.setY(y);
 }
 
 // HueSat
-void ZigbeeHueHS(uint16_t shortaddr, uint16_t hue, uint8_t sat) {
+void ZigbeeHueHS(uint16_t shortaddr, uint8_t ep, uint16_t hue, uint8_t sat) {
   uint8_t hue8 = changeUIntScale(hue, 0, 360, 0, 254);
   if (sat > 0xFE) { sat = 0xFE; }
   SBuffer s(4);
   s.add8(hue8);
   s.add8(sat);
   s.add16(0);
-  ZigbeeSendHue(shortaddr, 0x0300, 0x06, s);
-  Z_Data_Light & light = zigbee_devices.getLight(shortaddr);
+  ZigbeeSendHue(shortaddr, ep, 0x0300, 0x06, s);
+  Z_Data_Light & light = zigbee_devices.getLight(shortaddr, ep);
   light.setColorMode(0);      // "hs"
   light.setSat(sat);
   light.setHue(hue);
 }
 
-int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint, String &response) {
+int32_t ZigbeeHandleHue(uint16_t shortaddr, uint8_t ep, uint32_t device_id, uint8_t endpoint, String &response) {
   uint8_t  bri, sat;
   uint16_t ct, hue;
 
-  int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr);
+  int8_t bulbtype = zigbee_devices.getHueBulbtype(shortaddr, ep);
   if (bulbtype < 0) {  // respond only if eligible
     response = F("{}");
     return 200;
@@ -259,9 +286,9 @@ int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint
                  device_id, on ? PSTR("true") : PSTR("false"));
 
       if (on) {
-        ZigbeeHuePower(shortaddr, 0x01);
+        ZigbeeHuePower(shortaddr, ep, 0x01);
       } else {
-        ZigbeeHuePower(shortaddr, 0x00);
+        ZigbeeHuePower(shortaddr, ep, 0x00);
       }
       response += buf;
       resp = true;
@@ -280,7 +307,7 @@ int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint
       if (LST_SINGLE <= bulbtype) {
         // extend bri value if set to max
         if (254 <= bri) { bri = 255; }
-        ZigbeeHueDimmer(shortaddr, bri);
+        ZigbeeHueDimmer(shortaddr, ep, bri);
       }
       resp = true;
     }
@@ -304,7 +331,7 @@ int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint
       resp = true;
       uint16_t xi = x * 65536.0f;
       uint16_t yi = y * 65536.0f;
-      ZigbeeHueXY(shortaddr, xi, yi);
+      ZigbeeHueXY(shortaddr, ep, xi, yi);
     }
     bool huesat_changed = false;
 
@@ -342,7 +369,7 @@ int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint
         huesat_changed = true;
       }
       if (huesat_changed) {
-        ZigbeeHueHS(shortaddr, hue, sat);
+        ZigbeeHueHS(shortaddr, ep, hue, sat);
       }
       resp = true;
     }
@@ -358,7 +385,7 @@ int32_t ZigbeeHandleHue(uint16_t shortaddr, uint32_t device_id, uint8_t endpoint
                  device_id, PSTR("ct"), ct);
       response += buf;
       if ((LST_COLDWARM == bulbtype) || (LST_RGBW <= bulbtype)) {
-        ZigbeeHueCT(shortaddr, ct);
+        ZigbeeHueCT(shortaddr, ep, ct);
       }
       resp = true;
     }

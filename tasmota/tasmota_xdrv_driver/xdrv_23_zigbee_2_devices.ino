@@ -1010,7 +1010,7 @@ public:
 
   inline void setReachable(bool _reachable)   { reachable = _reachable; }
   inline bool getReachable(void)        const { return reachable; }
-  inline bool getPower(uint8_t ep =0)   const;
+  inline bool getPower(uint8_t ep = 0)  const;
 
   inline bool isRouter(void)            const { return is_router; }
   inline bool isCoordinator(void)       const { return 0x0000 == shortaddr; }
@@ -1066,8 +1066,8 @@ public:
   void setPower(bool power_on, uint8_t ep = 0);
 
   // If light, returns the number of channels, or 0xFF if unknown
-  int8_t getLightChannels(void)        const {
-    const Z_Data_Light & light = data.find<Z_Data_Light>(0);
+  int8_t getLightChannels(uint8_t ep = 0)        const {
+    const Z_Data_Light & light = data.find<Z_Data_Light>(ep);
     if (&light != &z_data_unk) {
       return light.getConfig();
     } else {
@@ -1075,7 +1075,16 @@ public:
     }
   }
 
-  void setLightChannels(int8_t channels);
+  int8_t getHueBulbtype(uint8_t ep = 0) const {
+    int8_t light_profile = getLightChannels(ep);
+    if (0x00 == (light_profile & 0xF0)) {
+      return (light_profile & 0x07);
+    } else {
+      // not a bulb
+      return -1;
+    }
+  }
+  void setLightChannels(int8_t channels, uint8_t ep);
 
   static void setStringAttribute(char*& attr, const char * str);
 };
@@ -1097,9 +1106,10 @@ typedef enum Z_Def_Category {
   Z_CAT_PERMIT_JOIN,          // timer to signal the end of the PermitJoin period
   // Below will clear based on device + cluster pair.
   Z_CLEAR_DEVICE_CLUSTER,
-  Z_CAT_READ_CLUSTER,
+  // none for now
   // Below will clear based on device + cluster + endpoint
   Z_CLEAR_DEVICE_CLUSTER_ENDPOINT,
+  Z_CAT_READ_CLUSTER,
   Z_CAT_EP_DESC,              // read endpoint descriptor to gather clusters
   Z_CAT_BIND,                 // send auto-binding to coordinator
   Z_CAT_CONFIG_ATTR,          // send a config attribute reporting request
@@ -1183,10 +1193,10 @@ public:
   int32_t deviceRestore(JsonParserObject json);
 
   // Hue support
-  int8_t getHueBulbtype(uint16_t shortaddr) const ;
+  int8_t getHueBulbtype(uint16_t shortaddr, uint8_t ep = 0) const ;
   void hideHueBulb(uint16_t shortaddr, bool hidden);
   bool isHueBulbHidden(uint16_t shortaddr) const ;
-  Z_Data_Light & getLight(uint16_t shortaddr);
+  Z_Data_Light & getLight(uint16_t shortaddr, uint8_t ep = 0);
 
   // device is reachable
   void deviceWasReached(uint16_t shortaddr);

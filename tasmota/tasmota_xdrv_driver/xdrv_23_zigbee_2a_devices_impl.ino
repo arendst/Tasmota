@@ -413,38 +413,47 @@ uint8_t Z_Devices::getNextSeqNumber(uint16_t shortaddr) {
 }
 
 // returns: dirty flag, did we change the value of the object
-void Z_Device::setLightChannels(int8_t channels) {
-  if (channels >= 0) {
+void Z_Device::setLightChannels(int8_t channels, uint8_t ep) {
+  if (channels >= 0) { 
+    if (ep) {   // if ep is not zero, the endpoint must exist
+      bool found = false;
+      for (uint32_t i = 0; i < endpoints_max; i++) {
+        if (ep == endpoints[i]) { found = true; break; }
+      }
+      if (!found) {
+        AddLog(LOG_LEVEL_INFO, D_LOG_ZIGBEE "cannot set light type to unknown ep=%i", ep);
+        return;
+      }
+    } else {
+      // if ep == 0, use first endpoint, or zero if no endpoint is known
+      ep = endpoints[0];
+    }
     // retrieve of create light object
-    Z_Data_Light & light = data.get<Z_Data_Light>(0);
+    Z_Data_Light & light = data.get<Z_Data_Light>(ep);
     if (channels != light.getConfig()) {
       light.setConfig(channels);
       zigbee_devices.dirty();
     }
-    Z_Data_OnOff & onoff = data.get<Z_Data_OnOff>(0);
+    Z_Data_OnOff & onoff = data.get<Z_Data_OnOff>(ep);
     (void)onoff;
   } else {
     // remove light / onoff object if any
     for (auto & data_elt : data) {
       if ((data_elt.getType() == Z_Data_Type::Z_Light) ||
           (data_elt.getType() == Z_Data_Type::Z_OnOff)) {
-        // remove light object
-        data.remove(&data_elt);
-      zigbee_devices.dirty();
+        if (ep == 0 || data_elt.getEndpoint() == ep) {    // if remove ep==0 then remove all definitions
+          // remove light object
+          data.remove(&data_elt);
+          zigbee_devices.dirty();
+        }
       }
     }
   }
 }
 
-int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr) const {
+int8_t Z_Devices::getHueBulbtype(uint16_t shortaddr, uint8_t ep) const {
   const Z_Device &device = findShortAddr(shortaddr);
-  int8_t light_profile = device.getLightChannels();
-  if (0x00 == (light_profile & 0xF0)) {
-    return (light_profile & 0x07);
-  } else {
-    // not a bulb
-    return -1;
-  }
+  return device.getHueBulbtype(ep);
 }
 
 void Z_Devices::hideHueBulb(uint16_t shortaddr, bool hidden) {
@@ -1001,8 +1010,8 @@ int32_t Z_Devices::deviceRestore(JsonParserObject json) {
   return 0;
 }
 
-Z_Data_Light & Z_Devices::getLight(uint16_t shortaddr) {
-  return getShortAddr(shortaddr).data.get<Z_Data_Light>();
+Z_Data_Light & Z_Devices::getLight(uint16_t shortaddr, uint8_t ep) {
+  return getShortAddr(shortaddr).data.get<Z_Data_Light>(ep);
 }
 
 bool Z_Devices::isTuyaProtocol(uint16_t shortaddr, uint8_t ep) const {

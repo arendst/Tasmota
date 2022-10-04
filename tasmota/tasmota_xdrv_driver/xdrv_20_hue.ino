@@ -415,12 +415,14 @@ const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\
 
 /********************************************************************************************/
 
-String GetHueDeviceId(uint16_t id)
+String GetHueDeviceId(uint16_t id, uint8_t ep = 0)
 {
   char s[32];
   String deviceid = WiFi.macAddress();
   deviceid.toLowerCase();
-  snprintf(s, sizeof(s), "%s:%02x:11-%02x", deviceid.c_str(), (id >> 8) & 0xFF, id & 0xFF);
+  if (0x11 == ep) { ep = 0xFE; }    // avoid collision with 0x11 which is used as default for `0`
+  if (0 == ep) { ep = 0x11; }   // if ep is zero, revert to original value
+  snprintf(s, sizeof(s), "%s:%02x:%02X-%02x", deviceid.c_str(), (id >> 8) & 0xFF, ep, id & 0xFF);
   return String(s);  // 5c:cf:7f:13:9f:3d:00:11-01
 }
 
@@ -989,7 +991,7 @@ void HueLights(String *path_req)
     uint16_t shortaddr;
     device = DecodeLightIdZigbee(device_id, &shortaddr);  // device is endpoint when in Zigbee mode
     if (shortaddr) {
-      code = ZigbeeHandleHue(shortaddr, device_id, device, response);
+      code = ZigbeeHandleHue(shortaddr, device, device_id, device, response);
       goto exit;
     }
 #endif // USE_ZIGBEE
@@ -1022,7 +1024,7 @@ void HueLights(String *path_req)
     uint16_t shortaddr;
     device = DecodeLightIdZigbee(device_id, &shortaddr);
     if (shortaddr) {
-      code = ZigbeeHueStatus(&response, shortaddr);
+      code = ZigbeeHueStatus(&response, shortaddr, device);
       goto exit;
     }
 #endif // USE_ZIGBEE
