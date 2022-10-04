@@ -496,7 +496,10 @@ const uint8_t meter[]=
 // 672 bytes extra RAM with SML_MAX_VARS = 16
 // default compile on, but must be enabled by descriptor flag 16
 // may be undefined if RAM must be saved
+
+#ifndef SML_NO_MEDIAN_FILTER
 #define USE_SML_MEDIAN_FILTER
+#endif
 
 // max number of vars , may be adjusted
 #ifndef SML_MAX_VARS
