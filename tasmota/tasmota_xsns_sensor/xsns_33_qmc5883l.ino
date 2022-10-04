@@ -286,7 +286,6 @@ void QMC5883L_Show(uint8_t json)
 #ifdef USE_WEBSERVER
   else 
   {
-
     WSContentSend_PD(HTTP_SNS_QMC5883L, QMC5883L->MX, QMC5883L->MY, QMC5883L->MZ, QMC5883L->scalar, QMC5883L->temp);
   }
 #endif
