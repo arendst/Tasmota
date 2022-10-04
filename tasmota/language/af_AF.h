@@ -565,11 +565,10 @@
 #define D_GZ_AXIS "Gyro Z-Axis"
 
 // xsns_33_QMC5883L.ino
-#define D_MX "Compass X-Axis"
-#define D_MY "Compass Y-Axis"
-#define D_MZ "Compass Z-Axis"
-#define D_HG "Compass Heading"
-#define D_MAGNETICFLD "Magnetic Field Strength"
+#define D_MX "Induction X-Axis"
+#define D_MY "Induction Y-Axis"
+#define D_MZ "Induction Z-Axis"
+#define D_MAGNETICFLD "Magnetic Induction"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Verwyder gewig"

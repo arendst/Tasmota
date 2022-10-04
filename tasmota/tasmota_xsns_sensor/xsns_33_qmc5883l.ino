@@ -214,93 +214,50 @@
 /* Mode values for the CONFIG2 register */
 #define QMC5883L_CONFIG2_RESET          0b10000000
 
-/* Apparently M_PI isn't available in all environments. */
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327950288
-#endif
+    // data field
+struct QMC5883L_s
+{
+  int16_t   MX, MY, MZ;
+  int16_t   temp;
+  uint16_t  scalar;
+} *QMC5883L = nullptr;
 
-// data field
-struct {
-int16_t   MX = 0, MY = 0, MZ = 0, HG = 0;
-int16_t   xhigh = 0, yhigh = 0, xlow = 0, ylow = 0;
-int16_t   temp = 0;
-uint16_t  scalar = 0;
-uint8_t   status;
-bool      ready = false;
-uint8_t   i2c_address = QMC5883L_ADDR;
-} QMC5883L;
 
 // Initialise the device
 void QMC5883L_Init()
 {
-  if (!I2cSetDevice(QMC5883L.i2c_address)) { return; }
-  I2cSetActiveFound(QMC5883L.i2c_address, "QMC5883L");
+  if (!I2cSetDevice(QMC5883L_ADDR)) 
+  { 
+    return; 
+  }
+  I2cSetActiveFound(QMC5883L_ADDR, "QMC5883L");
   // reset QMC5883L
-  if (I2cWrite8(QMC5883L.i2c_address, QMC5883L_CONFIG2, QMC5883L_CONFIG2_RESET) == false) return; // Software Reset
-  // writeRegister(QMC5883L_CONFIG2,QMC5883L_CONFIG2_RESET);  // Software Reset
-  //writeRegister(QMC5883L_RESET, 0x01);
-  if (I2cWrite8(QMC5883L.i2c_address, QMC5883L_RESET, 0x01) == false) return;
+  if (I2cWrite8(QMC5883L_ADDR, QMC5883L_CONFIG2, QMC5883L_CONFIG2_RESET) == false)
+    return; // Software Reset
+  if (I2cWrite8(QMC5883L_ADDR, QMC5883L_RESET, 0x01) == false)
+    return;
   // write config
-  //writeRegister(QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_10HZ | QMC5883L_CONFIG_CONT);
-  if (I2cWrite8(QMC5883L.i2c_address, QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_10HZ | QMC5883L_CONFIG_CONT) == false) return;
-  QMC5883L.ready = true;
+  if (I2cWrite8(QMC5883L_ADDR, QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_100HZ | QMC5883L_CONFIG_CONT) == false)
+    return;
+  QMC5883L = (QMC5883L_s*) calloc(1, sizeof(struct QMC5883L_s));
 }
 
 //Read the magnetic data
 void QMC5883L_read_data(void)
 {
-  if(QMC5883L.ready != true) return;
-  uint8_t data = 0;
   // check if chip is ready to provice data
-  //if (!readRegister(QMC5883L_STATUS, 1))  return; // read error
-  if (!I2cValidRead8(&data, QMC5883L.i2c_address, QMC5883L_STATUS))  return; // read error
- 
-  //if (!(Wire.read() & QMC5883L_STATUS_DRDY)) return;  // chip not yet ready, next round try again
-  if (!(data & QMC5883L_STATUS_DRDY)) return;  // chip not yet ready, next round try again
-  
-  // QMC5883 reading data
-  //if (readRegister(QMC5883L_X_LSB, 6) != 6)  return; // read error, select LSB register
-  //QMC5883L.MX = Wire.read() | (Wire.read() << 8);
-  //QMC5883L.MY = Wire.read() | (Wire.read() << 8);
-  //QMC5883L.MZ = Wire.read() | (Wire.read() << 8);
+  if (!(I2cRead8(QMC5883L_ADDR, QMC5883L_STATUS) & QMC5883L_STATUS_DRDY))
+    return; // chip not yet ready, next round try again
 
-  int16_t x = 0;
-  int16_t y = 0;
-  
-  if (I2cValidReadS16(&x, QMC5883L.i2c_address, QMC5883L_X_LSB) == false)  return; // read error, select LSB register
-  if (I2cValidReadS16(&y, QMC5883L.i2c_address, QMC5883L_Y_LSB) == false)  return; // read error, select LSB register
-  if (I2cValidReadS16(&QMC5883L.MZ, QMC5883L.i2c_address, QMC5883L_Z_LSB) == false)  return; // read error, select LSB register
-
-  QMC5883L.MX = x;
-  QMC5883L.MY = y;
-
-  // calculate azimut, heading
-  if(x < QMC5883L.xlow) QMC5883L.xlow = x;
-  if(x > QMC5883L.xhigh) QMC5883L.xhigh = x;
-  if(y < QMC5883L.ylow) QMC5883L.ylow = y;
-  if(y > QMC5883L.yhigh) QMC5883L.yhigh = y;
-
-  /* Bail out if not enough data is available. */
-  if( QMC5883L.xlow == QMC5883L.xhigh || QMC5883L.ylow == QMC5883L.yhigh ) return;
-  /* Recenter the measurement by subtracting the average */
-  x -= (QMC5883L.xhigh + QMC5883L.xlow) / 2;
-  y -= (QMC5883L.yhigh + QMC5883L.ylow) / 2;
-  /* Rescale the measurement to the range observed. */
-  float fx = (float) x / (QMC5883L.xhigh - QMC5883L.xlow);
-  float fy = (float) y / (QMC5883L.yhigh - QMC5883L.ylow);
-
-  x = -atan2(fy, fx) * 180.0 / M_PI;
-  x += 180;  // no negative numbers
-  QMC5883L.HG = x;
+  QMC5883L->MX = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_X_LSB); // select LSB register
+  QMC5883L->MY = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_Y_LSB);
+  QMC5883L->MZ = I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_Z_LSB);
 
   // calculate scalar magnetic induction
-  QMC5883L.scalar = sqrt((QMC5883L.MX * QMC5883L.MX) + (QMC5883L.MY * QMC5883L.MY) + (QMC5883L.MZ * QMC5883L.MZ));
- 
-   // get temperature
-  //if (readRegister(QMC5883L_TEMP_LSB, 2) != 2)   return; // read error
-  if (I2cValidReadS16(&QMC5883L.temp, QMC5883L.i2c_address, QMC5883L_TEMP_LSB) == false)  return; // read error, select LSB register
-  //t = Wire.read() | (Wire.read() << 8);
-  QMC5883L.temp = (QMC5883L.temp / 100) + USE_QMC5883L_Temp;
+  QMC5883L->scalar = sqrt((QMC5883L->MX * QMC5883L->MX) + (QMC5883L->MY * QMC5883L->MY) + (QMC5883L->MZ * QMC5883L->MZ));
+
+  // get temperature
+  QMC5883L->temp = (I2cReadS16_LE(QMC5883L_ADDR, QMC5883L_TEMP_LSB) / 100) + QMC5883L_TEMP_SHIFT;
 }
 
 /*********************************************************************************************\
@@ -313,7 +270,6 @@ const char HTTP_SNS_QMC5883L[] PROGMEM =
     "{s}QMC5883L " D_MY "{m}%d " D_UNIT_MICROTESLA "{e}"                        // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
     "{s}QMC5883L " D_MZ "{m}%d " D_UNIT_MICROTESLA "{e}"                        // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
     "{s}QMC5883L " D_MAGNETICFLD "{m}%d " D_UNIT_MICROTESLA "{e}"               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-    "{s}QMC5883L " D_HG "{m}%d " D_UNIT_DEGREE "{e}"                            // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
     "{s}QMC5883L " D_TEMPERATURE "{m}%d " D_UNIT_DEGREE D_UNIT_CELSIUS "{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 const char HTTP_SNS_QMC5883L_ERROR[] PROGMEM =
@@ -325,27 +281,13 @@ void QMC5883L_Show(uint8_t json)
 {
   if (json) 
   {
-    if (QMC5883L.ready != true)
-    {
-      AddLog(LOG_LEVEL_INFO, PSTR("QMC5883L: " D_ERROR " %x" ), QMC5883L.status);
-      return;
-    }
-    else 
-    {
-      ResponseAppend_P(PSTR(",\"QMC5883L\":{\"" D_JSON_MX "\":%d,\"" D_JSON_MY "\":%d,\"" D_JSON_MZ "\":%d,\"" D_JSON_MAGNETICFLD "\":%u,\"" D_JSON_HEADING "\":%d,\"" D_JSON_TEMPERATURE "\":%d}"), QMC5883L.MX, QMC5883L.MY, QMC5883L.MZ, QMC5883L.scalar, QMC5883L.HG, QMC5883L.temp);
-    }
+    ResponseAppend_P(PSTR(",\"QMC5883L\":{\"" D_JSON_MX "\":%d,\"" D_JSON_MY "\":%d,\"" D_JSON_MZ "\":%d,\"" D_JSON_MAGNETICFLD "\":%u,\"" D_JSON_TEMPERATURE "\":%d}"), QMC5883L->MX, QMC5883L->MY, QMC5883L->MZ, QMC5883L->scalar, QMC5883L->temp);
   }
 #ifdef USE_WEBSERVER
   else 
   {
-    if (QMC5883L.ready != true)
-    {
-        WSContentSend_PD(HTTP_SNS_QMC5883L_ERROR, D_ERROR);    
-    }
-    else
-    {
-        WSContentSend_PD(HTTP_SNS_QMC5883L, QMC5883L.MX, QMC5883L.MY, QMC5883L.MZ, QMC5883L.scalar, QMC5883L.HG, QMC5883L.temp);
-    }    
+
+    WSContentSend_PD(HTTP_SNS_QMC5883L, QMC5883L->MX, QMC5883L->MY, QMC5883L->MZ, QMC5883L->scalar, QMC5883L->temp);
   }
 #endif
 }
@@ -361,26 +303,22 @@ bool Xsns33(byte function)
     return false;
   }
 
-  if (FUNC_INIT == function) {
-    QMC5883L_Init();
-  }
-  else 
-  if (QMC5883L.ready == true) 
+  switch (function) 
   {
-    switch (function) 
-    {
-      case FUNC_JSON_APPEND:
-        QMC5883L_Show(1);
-        break;
-      case FUNC_EVERY_SECOND:
-        QMC5883L_read_data();
-        break;
+    case FUNC_INIT:
+      QMC5883L_Init();
+      break;
+    case FUNC_JSON_APPEND:
+      QMC5883L_Show(1);
+      break;
+    case FUNC_EVERY_SECOND:
+      QMC5883L_read_data();
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        QMC5883L_Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      QMC5883L_Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return true;
 }

@@ -565,11 +565,10 @@
 #define D_GZ_AXIS "Gyroskop Z-Achse"
 
 // xsns_33_QMC5883L.ino
-#define D_MX "Kompass X-Achse"
-#define D_MY "Kompass Y-Achse"
-#define D_MZ "Kompass Z-Achse"
-#define D_HG "Kompass Richtung"
-#define D_MAGNETICFLD "Magnet Feld Stärke"
+#define D_MX "Magnetfeld X-Achse"
+#define D_MY "Magnetfeld Y-Achse"
+#define D_MZ "Magnetfeld Z-Achse"
+#define D_MAGNETICFLD "Magnetfeldstärke"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Wägegut entfernen"
