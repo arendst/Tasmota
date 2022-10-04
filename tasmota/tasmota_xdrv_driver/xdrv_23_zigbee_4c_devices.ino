@@ -458,7 +458,7 @@ void saveZigbeeDevices(void) {
 // TODO can we prioritize filesystem instead of eeprom?
 #ifdef USE_ZIGBEE_EEPROM
   if (!f.valid() && zigbee.eeprom_ready) {
-    f.init(ZIGB_NAME2);
+    f.init(ZIGB_NAME4);
     storage_class = PSTR("EEPROM");
   }
 #endif
@@ -506,7 +506,7 @@ void saveZigbeeDevices(void) {
     ESP.flashRead(z_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) spi_buffer, SPI_FLASH_SEC_SIZE);
 
     Z_Flashentry *flashdata = (Z_Flashentry*)(spi_buffer + z_block_offset);
-    flashdata->name = ZIGB_NAME2;     // v2
+    flashdata->name = ZIGB_NAME4;     // v4
     flashdata->len = buf_len;
     flashdata->start = 0;
 
