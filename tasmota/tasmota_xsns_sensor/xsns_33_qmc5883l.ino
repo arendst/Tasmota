@@ -220,12 +220,15 @@ struct QMC5883L_s
   int16_t   MX, MY, MZ;
   int16_t   temp;
   uint16_t  scalar;
+  bool      ready;
 } *QMC5883L = nullptr;
 
 
 // Initialise the device
 void QMC5883L_Init()
 {
+  QMC5883L = (QMC5883L_s *)calloc(1, sizeof(struct QMC5883L_s));
+  QMC5883L->ready = false;
   if (!I2cSetDevice(QMC5883L_ADDR)) 
   { 
     return; 
@@ -239,7 +242,7 @@ void QMC5883L_Init()
   // write config
   if (I2cWrite8(QMC5883L_ADDR, QMC5883L_CONFIG, QMC5883L_CONFIG_OS256 | QMC5883L_CONFIG_8GAUSS | QMC5883L_CONFIG_100HZ | QMC5883L_CONFIG_CONT) == false)
     return;
-  QMC5883L = (QMC5883L_s*) calloc(1, sizeof(struct QMC5883L_s));
+  QMC5883L->ready = true;
 }
 
 //Read the magnetic data
@@ -301,12 +304,14 @@ bool Xsns33(byte function)
   {
     return false;
   }
-
-  switch (function) 
+  if (FUNC_INIT == function)
   {
-    case FUNC_INIT:
-      QMC5883L_Init();
-      break;
+    QMC5883L_Init();
+  }
+  else if (QMC5883L->ready == true)
+  {
+    switch (function)
+    {
     case FUNC_JSON_APPEND:
       QMC5883L_Show(1);
       break;
@@ -318,6 +323,7 @@ bool Xsns33(byte function)
       QMC5883L_Show(0);
       break;
 #endif  // USE_WEBSERVER
+    }
   }
   return true;
 }
