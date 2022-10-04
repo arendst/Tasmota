@@ -116,6 +116,10 @@ String GetDeviceHardwareRevision(void) {
   return GetDeviceHardware();
 }
 
+String GetCodeCores(void) {
+  return F("");
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -931,6 +935,14 @@ String GetDeviceHardwareRevision(void) {
   result += revision;                    // ESP32-C3 rev.3
 
   return result;
+}
+
+String GetCodeCores(void) {
+#if defined(CORE32SOLO1)
+  return F("single-core");
+#else
+  return F("");
+#endif
 }
 
 /*
