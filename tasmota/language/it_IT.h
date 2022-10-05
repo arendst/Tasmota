@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 31.08.2022
+ * Updated until v9.4.0.1 - Last update 05.10.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -495,12 +495,12 @@
 #define D_ZIGBEE_GENERATE_KEY                "Generazione chiave casuale rete Zigbee"
 #define D_ZIGBEE_UNKNOWN_DEVICE              "Dispositivo sconosciuto"
 #define D_ZIGBEE_UNKNOWN_ATTRIBUTE           "Attributo sconosciuto"
-#define D_ZIGBEE_UNKNOWN_ENDPOINT "Unknown endpoint"
+#define D_ZIGBEE_UNKNOWN_ENDPOINT            "Punto finale sconosciuto"
 #define D_ZIGBEE_INVALID_PARAM               "Parametro non valido"
 #define D_ZIGBEE_MISSING_PARAM               "Parametro mancante"
 #define D_ZIGBEE_UNKNWON_ATTRIBUTE           "Nome sconosciuto attributo (ignorato): %s"
 #define D_ZIGBEE_TOO_MANY_CLUSTERS           "Non più di un ID cluster per comando"
-#define D_ZIGBEE_CONFLICTING_ENDPOINTS "Conflicting destination endpoints"
+#define D_ZIGBEE_CONFLICTING_ENDPOINTS       "Conflitto punto finale destinazione"
 #define D_ZIGBEE_WRONG_DELIMITER             "Delimitatore errato carico utile"
 #define D_ZIGBEE_UNRECOGNIZED_COMMAND        "Comando Zigbee non riconosciuto: %s"
 #define D_ZIGBEE_TOO_MANY_COMMANDS           "È consentito solo 1 comando (%d)"
@@ -567,10 +567,10 @@
 #define D_GZ_AXIS "Giroscopio asse Z"
 
 // xsns_33_QMC5883L.ino
-#define D_MX "Induction X-Axis"
-#define D_MY "Induction Y-Axis"
-#define D_MZ "Induction Z-Axis"
-#define D_MAGNETICFLD "Magnetic Induction"
+#define D_MX           "Asse X induzione"
+#define D_MY           "Asse Y induzione"
+#define D_MZ           "Asse Z induzione"
+#define D_MAGNETICFLD  "Induzione magnetica"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE     "Rimuovi peso"
