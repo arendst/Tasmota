@@ -109,12 +109,16 @@
 #include "esp_camera.h"
 #include "sensor.h"
 #include "fb_gfx.h"
-#include "camera_pins.h"
 
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
 
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
+
+#ifndef WC_XCLK
+#define WC_XCLK 20000000
+#endif
+
 
 #ifndef MAX_PICSTORE
 #define MAX_PICSTORE 4
@@ -375,9 +379,8 @@ uint32_t WcSetup(int32_t fsiz) {
   config.ledc_channel = (ledc_channel_t) ledc_channel;
   AddLog(LOG_LEVEL_DEBUG_MORE, "CAM: XCLK on GPIO %i using ledc channel %i", config.pin_xclk, config.ledc_channel);
   config.ledc_timer = LEDC_TIMER_0;
-  config.xclk_freq_hz = 20000000;
+  config.xclk_freq_hz = WC_XCLK;
   config.pixel_format = PIXFORMAT_JPEG;
-
 
   //esp_log_level_set("*", ESP_LOG_INFO);
 
@@ -398,15 +401,7 @@ uint32_t WcSetup(int32_t fsiz) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM not found"));
   }
 
-//  AddLog(LOG_LEVEL_INFO, PSTR("CAM: heap check 1: %d"),ESP_getFreeHeap());
-
-  // stupid workaround camera diver eats up static ram should prefer PSRAM
-  // so we steal static ram to force driver to alloc PSRAM
-//  uint32_t maxfram = ESP.getMaxAllocHeap();
-//  void *x=malloc(maxfram-4096);
-  void *x = 0;
   esp_err_t err = esp_camera_init(&config);
-  if (x) { free(x); }
 
   if (err != ESP_OK) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
@@ -430,7 +425,9 @@ uint32_t WcSetup(int32_t fsiz) {
 
   WcApplySettings();
 
-  AddLog(LOG_LEVEL_INFO, PSTR("CAM: Initialized"));
+  camera_sensor_info_t *info = esp_camera_sensor_get_info(&wc_s->id);
+
+  AddLog(LOG_LEVEL_INFO, PSTR("CAM: %s Initialized"), info->name);
 
   Wc.up = 1;
   if (psram) { Wc.up = 2; }
@@ -741,14 +738,24 @@ void HandleImage(void) {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   uint32_t bnum = Webserver->arg(F("p")).toInt();
-  if ((bnum < 0) || (bnum > MAX_PICSTORE)) { bnum= 1; }
+  if ((bnum < 0) || (bnum > MAX_PICSTORE)) { bnum = 1; }
+  uint32_t fsiz = Webserver->arg(F("s")).toInt();
+  if ((fsiz < 0) || (fsiz > 13)) { fsiz = 1; }
+
   WiFiClient client = Webserver->client();
   String response = "HTTP/1.1 200 OK\r\n";
   response += "Content-disposition: inline; filename=cap.jpg\r\n";
   response += "Content-type: image/jpeg\r\n\r\n";
   Webserver->sendContent(response);
+  sensor_t * wc_s = esp_camera_sensor_get();
+  uint8_t sres = Settings->webcam_config.resolution;
 
   if (!bnum) {
+    if (fsiz  && fsiz != sres) {
+      wc_s->set_framesize(wc_s, (framesize_t)fsiz);
+      WcApplySettings();
+    }
+
     size_t _jpg_buf_len = 0;
     uint8_t * _jpg_buf = NULL;
     camera_fb_t *wc_fb = 0;
@@ -778,6 +785,11 @@ void HandleImage(void) {
   }
   client.stop();
 
+  // restore framesize
+  if (fsiz  && fsiz != sres) {
+    wc_s->set_framesize(wc_s, (framesize_t)sres);
+    WcApplySettings();
+  }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CAM: Sending image #: %d"), bnum+1);
 }
 
@@ -962,7 +974,11 @@ uint32_t WcSetStreamserver(uint32_t flag) {
 
 void WcInterruptControl() {
   WcSetStreamserver(Settings->webcam_config.stream);
-  WcSetup(Settings->webcam_config.resolution);
+  if (!Settings->webcam_config.stream) {
+    WcSetup(-1);
+  } else {
+    WcSetup(Settings->webcam_config.resolution);
+  }
 }
 
 /*********************************************************************************************/
@@ -1039,6 +1055,7 @@ void WcShowStream(void) {
   }
 }
 
+
 void WcInit(void) {
   if (!Settings->webcam_config.data) {
     Settings->webcam_config.stream = 1;
@@ -1052,6 +1069,11 @@ void WcInit(void) {
     WcSetDefaults(1);
     Settings->webcam_config2.upgraded = 1;
   }
+  if (!WcSetup(Settings->webcam_config.resolution)) {
+    Settings->webcam_config.stream = 0;
+  }
+
+
 }
 
 /*********************************************************************************************\
@@ -1157,7 +1179,9 @@ void CmndWebcam(void) {
 void CmndWebcamStream(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings->webcam_config.stream = XdrvMailbox.payload;
-    if (!Settings->webcam_config.stream) { WcInterruptControl(); }  // Stop stream
+    if (!Settings->webcam_config.stream) {
+      WcInterruptControl();  // Stop stream
+    }
   }
   ResponseCmndStateText(Settings->webcam_config.stream);
 }
