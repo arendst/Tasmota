@@ -1,5 +1,6 @@
 #- embedded class for LVGL globals -#
 
+#@ solidify:LVGL_glob,weak
 #- This class stores all globals used by LVGL and cannot be stored in the solidified module -#
 #- this limits the globals to a single value '_lvgl' -#
 class LVGL_glob
@@ -231,7 +232,7 @@ class LVGL_glob
   end
 end
 
-_lvgl = LVGL_glob()
+# _lvgl = LVGL_glob()
 
 # class lv_custom_widget : lv.lv_obj
 #   # static widget_width_def

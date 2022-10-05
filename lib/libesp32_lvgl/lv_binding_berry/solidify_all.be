@@ -1,4 +1,4 @@
-#! ../berry/berry -s -g
+#! ../../libesp32/berry/berry -s -g
 #
 # Berry solidify files
 #
@@ -17,13 +17,15 @@ import re
 var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,"
             "lv_clock,lv_clock_icon,lv_signal_arcs,lv_signal_bars,lv_wifi_arcs_icon,lv_wifi_arcs,"
             "lv_wifi_bars_icon,lv_wifi_bars,"
-            "_lvgl"
+            "_lvgl,"
+            "cb"
 
 for g:string.split(globs, ",")
   global.(g) = nil
 end
 
 var prefix_dir = "src/embedded/"
+var files_in = ['lv.be', 'lvgl_glob.be','lvgl_extra.be']
 var prefix_out = "src/solidify/"
 
 def clean_directory(dir)
@@ -78,7 +80,8 @@ end
 
 clean_directory(prefix_out)
 
-var src_file_list = os.listdir(prefix_dir)
+#var src_file_list = os.listdir(prefix_dir)
+var src_file_list = files_in
 for src_file : src_file_list
   if src_file[0] == '.'  continue end
   parse_file(src_file, prefix_out)

@@ -1,5 +1,6 @@
 # classes for extra components
 
+#@ solidify:lv_extra,weak
 var lv_extra = module("lv_extra")
 
 class lv_coord_arr : bytes
