@@ -834,8 +834,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_SPI) && defined(USE_CANSNIFFER)
     feature9 |= 0x00000004;  // xsns_87_can_sniffer.ino
 #endif
-//    feature9 |= 0x00000008;
-
+#if defined(USE_I2C) && defined(USE_QMC5883L)
+    feature9 |= 0x00000008;  // xsns_33_qmc5882l.ino
+#endif
 //    feature9 |= 0x00000010;
 //    feature9 |= 0x00000020;
 //    feature9 |= 0x00000040;

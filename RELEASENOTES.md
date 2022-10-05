@@ -116,9 +116,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``UrlFetch <url>`` to download a file to filesystem
 - Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
 - Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
+- Support for Shelly Plus 2PM
 - Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)
 - Support for DFRobot SEN0390 V30B ambient light sensor [#16105](https://github.com/arendst/Tasmota/issues/16105)
+- Support for QMC5883L magnetic induction sensor by Helge Scheunemann [#16714](https://github.com/arendst/Tasmota/issues/16714)
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - Zigbee basic support for Green Power [#16407](https://github.com/arendst/Tasmota/issues/16407)
 - Zigbee friendly names per endpoint
