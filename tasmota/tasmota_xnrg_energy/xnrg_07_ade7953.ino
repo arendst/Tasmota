@@ -35,27 +35,29 @@
  * Optionally allowing users to tweak calibration registers:
  * - In addition to possible rules add a rule containing the calib.dat string like:
  *   - rule3 on file#calib.dat do {"angles":{"angle0":180,"angle1":176}} endon
- *   - rule3 on file#calib.dat do {"rms":{"current_a":4194303,"current_b":4194303,"voltage":1613194},"angles":{"angle0":0,"angle1":0},"powers":{"totactive":{"a":2723574,"b":2723574},"apparent":{"a":2723574,"b":2723574},"reactive":{"a":2723574,"b":2723574}}} endon
+ *   - rule3 on file#calib.dat do {"rms":{"current_a":4194303,"current_b":4194303,"voltage":1613194},"angles":{"angle0":200,"angle1":200},"powers":{"totactive":{"a":2723574,"b":2723574},"apparent":{"a":2723574,"b":2723574},"reactive":{"a":2723574,"b":2723574}}} endon
  * - Restart Tasmota and obeserve that the results seem calibrated as Tasmota now uses the information from calib.dat
  * To restore standard calibration using commands like VoltSet remove above entry from rule3
 \*********************************************************************************************/
 
-#define XNRG_07                 7
-#define XI2C_07                 7  // See I2CDEVICES.md
+#define XNRG_07                   7
+#define XI2C_07                   7  // See I2CDEVICES.md
 
-#define ADE7953_ADDR            0x38
+#define ADE7953_ADDR              0x38
 
 /*********************************************************************************************/
 
 //#define ADE7953_DUMP_REGS
 
-#define ADE7953_PREF            1540         // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
-#define ADE7953_UREF            26000        // 4194304 / (26000 / 10000) = 1613194 (= VGAIN)
-#define ADE7953_IREF            10000        // 4194304 / (10000 / 10000) = 4194303 (= IGAIN, needs to be different than 4194304 in order to use calib.dat)
+#define ADE7953_PREF              1540       // 4194304 / (1540 / 1000) = 2723574 (= WGAIN, VAGAIN and VARGAIN)
+#define ADE7953_UREF              26000      // 4194304 / (26000 / 10000) = 1613194 (= VGAIN)
+#define ADE7953_IREF              10000      // 4194304 / (10000 / 10000) = 4194303 (= IGAIN, needs to be different than 4194304 in order to use calib.dat)
 
 // Default calibration parameters can be overridden by a rule as documented above.
-#define ADE7953_GAIN_DEFAULT    4194304      // = 0x400000 range 2097152 (min) to 6291456 (max)
-#define ADE7953_PHCAL_DEFAULT   0            // = range -383 to 383
+#define ADE7953_GAIN_DEFAULT      4194304    // = 0x400000 range 2097152 (min) to 6291456 (max)
+
+#define ADE7953_PHCAL_DEFAULT     0          // = range -383 to 383 - Default phase calibration for Shunts
+#define ADE7953_PHCAL_DEFAULT_CT  200        // = range -383 to 383 - Default phase calibration for Current Transformers (Shelly EM)
 
 enum Ade7953Models { ADE7953_SHELLY_25, ADE7953_SHELLY_EM, ADE7953_SHELLY_PLUS_2PM };
 
@@ -530,7 +532,7 @@ void Ade7953Defaults(void) {
     if (i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t) -2) {
       Ade7953.calib_data[i] = ADE7953_GAIN_DEFAULT;
     } else {
-      Ade7953.calib_data[i] = ADE7953_PHCAL_DEFAULT;
+      Ade7953.calib_data[i] = (ADE7953_SHELLY_EM == Ade7953.model) ? ADE7953_PHCAL_DEFAULT_CT : ADE7953_PHCAL_DEFAULT;
     }
   }
 
