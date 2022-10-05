@@ -410,10 +410,13 @@ class lvh_obj
   #  `toggle` attributes mapped to STATE_CHECKED
   #====================================================================
   def set_toggle(t)
-    import string
-    t = string.toupper(str(t))
-    if t == "TRUE"  t = true end
-    if t == "FALSE" t = false end
+    if type(t) == 'string'
+      import string
+      t = string.toupper(str(t))
+      if   t == "TRUE"  t = true
+      elif t == "FALSE" t = false
+      end
+    end
     if t
       self._lv_obj.add_state(lv.STATE_CHECKED)
     else
@@ -953,6 +956,13 @@ end
 class lvh_switch : lvh_obj
   static _lv_class = lv.switch
   static _lv_part2_selector = lv.PART_KNOB
+  # map val to toggle
+  def set_val(t)
+    return self.set_toggle(t)
+  end
+  def get_val()
+    return self.get_toggle()
+  end
 end
 
 #====================================================================
