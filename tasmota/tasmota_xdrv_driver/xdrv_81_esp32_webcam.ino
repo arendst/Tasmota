@@ -109,6 +109,7 @@
 #include "esp_camera.h"
 #include "sensor.h"
 #include "fb_gfx.h"
+#include "camera_pins.h"
 
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
