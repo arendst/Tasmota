@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for QMC5883L magnetic induction sensor by Helge Scheunemann (#16714)
 
 ### Changed
+- ESP32 LVGL library from v8.3.0 to v8.3.2
 
 ### Fixed
 
