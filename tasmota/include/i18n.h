@@ -233,7 +233,10 @@
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
 #define D_JSON_RAW "Raw"
-
+#define D_JSON_MX "XaxisInduction"
+#define D_JSON_MY "YaxisInduction"
+#define D_JSON_MZ "ZaxisInduction"
+#define D_JSON_MAGNETICFLD "MagneticInduction"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"

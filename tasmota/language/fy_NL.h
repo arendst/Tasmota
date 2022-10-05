@@ -566,6 +566,12 @@
 #define D_GY_AXIS "Gyro Y-as"
 #define D_GZ_AXIS "Gyro Z-as"
 
+// xsns_33_QMC5883L.ino
+#define D_MX "Induction X-Axis"
+#define D_MY "Induction Y-Axis"
+#define D_MZ "Induction Z-Axis"
+#define D_MAGNETICFLD "Magnetic Induction"
+
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Gewicht fuortsmite"
 #define D_HX_CAL_REFERENCE "Pleats kalibraasje gewicht"
@@ -914,6 +920,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
