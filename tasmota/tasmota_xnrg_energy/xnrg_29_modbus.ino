@@ -194,6 +194,7 @@ bool EnergyModbusReadRegisters(void) {
 //  rule3 on file#modbus do {"name":"SDM230","baud":2400,"config":8N1","address":1,"function":4,"voltage":0,"current":6,"active_power":12,"apparent_power":18,"reactive_power":24,"power_factor":30,"frequency":70,"import_active_energy":342} endon
 //  rule3 on file#modbus do {"name":"SDM230 test1","baud":2400,"config":8N1","address":1,"function":4,"voltage":[0,0,0],"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":[70,70,70],"import_active_energy":[342,342,342]} endon
 //  rule3 on file#modbus do {"name":"SDM230 test2","baud":2400,"config":8N1","address":1,"function":4,"voltage":[0,0,0],"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":70,"import_active_energy":[342,342,342]} endon
+//  rule3 on file#modbus do {"name":"SDM230 test2","baud":2400,"config":8N1","address":1,"function":4,"voltage":0,"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":70,"import_active_energy":[342,342,342]} endon
 
   const char* json = modbus.c_str();
   uint32_t len = strlen(json) +1;
@@ -257,10 +258,12 @@ bool EnergyModbusReadRegisters(void) {
       phase++;
     }
     if (phase) {
+      if (phase > Energy.phase_count) {
+        Energy.phase_count = phase;
+      }
       switch(names) {
         case NRG_MBS_VOLTAGE:
           Energy.voltage_available = true;       // Enable if voltage is measured
-          Energy.phase_count = phase;
           if (1 == phase) {
             Energy.voltage_common = true;        // Use common voltage
           }
