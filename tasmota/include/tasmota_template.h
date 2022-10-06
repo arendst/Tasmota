@@ -196,9 +196,10 @@ enum UserSelectablePins {
   GPIO_I2S_MCLK,
   GPIO_MBR_TX, GPIO_MBR_RX,            // Modbus Bridge Serial interface
   GPIO_ADE7953_RST,                    // ADE7953 Reset
+  GPIO_NRG_MBS_TX, GPIO_NRG_MBS_RX,    // Generic Energy Modbus device
   GPIO_SENSOR_END };
 
-// Error as warning to rethink GPIO usage
+// Error as warning to rethink GPIO usage with max 2045
 static_assert(GPIO_SENSOR_END < 2000, "Too many UserSelectablePins");
 
 enum ProgramSelectablePins {
@@ -439,6 +440,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_MCLK "|"
   D_SENSOR_MBR_TX "|" D_SENSOR_MBR_RX "|"
   D_SENSOR_ADE7953_RST "|"
+  D_SENSOR_NRG_MBS_TX "|" D_SENSOR_NRG_MBS_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -798,6 +800,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_PZEM_DC
   AGPIO(GPIO_PZEM017_RX),     // PZEM-003,017 Serial Modbus interface
+#endif
+#ifdef USE_MODBUS_ENERGY
+  AGPIO(GPIO_NRG_MBS_TX),     // Generic Energy Modbus device
+  AGPIO(GPIO_NRG_MBS_RX),
 #endif
 #ifdef USE_SDM120
   AGPIO(GPIO_SDM120_TX),      // SDM120 Serial interface

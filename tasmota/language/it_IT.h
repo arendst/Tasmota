@@ -685,6 +685,8 @@
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
 #define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
+#define D_SENSOR_NRG_MBS_TX             "NrgModbus - TX"
+#define D_SENSOR_NRG_MBS_RX             "NrgModbus - RX"
 #define D_SENSOR_SDM72_TX               "SDM72 - TX"
 #define D_SENSOR_SDM72_RX               "SDM72 - RX"
 #define D_SENSOR_SDM120_TX              "SDMx20 - TX"
