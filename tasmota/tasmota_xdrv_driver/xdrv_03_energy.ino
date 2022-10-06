@@ -1053,6 +1053,9 @@ void EnergyDrvInit(void) {
 
   TasmotaGlobal.energy_driver = ENERGY_NONE;
   XnrgCall(FUNC_PRE_INIT);             // Find first energy driver
+  if (TasmotaGlobal.energy_driver) {
+    AddLog(LOG_LEVEL_INFO, PSTR("NRG: Init driver %d"), TasmotaGlobal.energy_driver);
+  }
 }
 
 void EnergySnsInit(void)
