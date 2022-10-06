@@ -764,8 +764,8 @@
   #define SR04_MAX_SENSOR_DISTANCE  500          // Set sensor max detection distance
 //#define USE_DYP                                  // Add support for DYP ME-007 ultrasonic distance sensor, serial port version (+0k5 code)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
-//#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+3k code)
-//#define USE_MODBUS_BRIDGE_TCP                    // Add support for software Modbus TCP Bridge (Also enable Modbus Bridge!) (? code)
+//#define USE_MODBUS_BRIDGE                        // Add support for software Modbus Bridge (+4.5k code)
+//#define USE_MODBUS_BRIDGE_TCP                    // Add support for software Modbus TCP Bridge (also enable Modbus TCP Bridge) (+2k code)
 //#define USE_TCP_BRIDGE                           //  Add support for Serial to TCP bridge (+1.3k code)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, pause, stop, track, volume and reset
   #define MP3_VOLUME           30                // Set the startup volume on init, the range can be 0..100(max)
