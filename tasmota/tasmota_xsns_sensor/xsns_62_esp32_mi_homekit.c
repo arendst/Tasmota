@@ -32,6 +32,7 @@ static bool MIBridgeWasNeverConnected = true;
 
 #define CONFIG_EXAMPLE_SETUP_ID "MI32"
 
+#define UNKNOWN_MI  0
 #define FLORA       1
 #define MJ_HT_V1    2
 #define LYWSD02     3
@@ -140,6 +141,7 @@ static void MI32_bridge_thread_entry(void *p)
     /* Create and add the Accessory to the Bridge object*/
     uint32_t _numDevices = MI32numberOfDevices();
     for (uint32_t i = 0; i < _numDevices; i++) {
+        if(MI32getDeviceType(i) == UNKNOWN_MI) continue;
         char *accessory_name = MI32getDeviceName(i);
         char _serialNum[4] = {0};
         snprintf(_serialNum,sizeof(_serialNum),"%u", i);
