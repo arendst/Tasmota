@@ -23,21 +23,28 @@
  * Generic Modbus energy meter - experimental (but works on my SDM230)
  *
  * Using a rule file called modbus allows to easy configure modbus energy monitor devices.
- * See examples below
  *
  * Works:
- * rule3 on file#modbus do {"name":"SDM230","baud":2400,"config":8N1","address":1,"function":4,"voltage":0,"current":6,"active_power":12,"apparent_power":18,"reactive_power":24,"power_factor":30,"frequency":70,"import_active_energy":342} endon
+ * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"ImportActive":342,"ExportActive":0x004A} endon
+ * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"ImportActive":0x0156,"ExportActive":0x004A} endon
+ *
  *
  * Test set:
- * rule3 on file#modbus do {"name":"SDM230 test1","baud":2400,"config":8N1","address":1,"function":4,"voltage":[0,0,0],"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":[70,70,70],"import_active_energy":[342,342,342]} endon
- * rule3 on file#modbus do {"name":"SDM230 test2","baud":2400,"config":8N1","address":1,"function":4,"voltage":[0,0,0],"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":70,"import_active_energy":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"ImportActive":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test2","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"ImportActive":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"ImportActive":[342,342,342]} endon
 \*********************************************************************************************/
 
 #define XNRG_29                  29
 
-#define ENERGY_MODBUS_SPEED      9600    // default Modbus baudrate
+#define ENERGY_MODBUS_SPEED      9600     // default Modbus baudrate
 #define ENERGY_MODBUS_CONFIG     TS_SERIAL_8N1
-#define ENERGY_MODBUS_ADDR       1       // default Modbus device_address
+#define ENERGY_MODBUS_ADDR       1        // default Modbus device_address
+#define ENERGY_MODBUS_FUNC       0x04     // default Modbus function code
+
+//#define ENERGY_MODBUS_DEBUG
+
+const uint16_t nrg_mbs_reg_not_used = 1;  // Odd number 1 is unused register
 
 enum EnergyModbusRegisters { NRG_MBS_VOLTAGE,
                              NRG_MBS_CURRENT,
@@ -50,38 +57,26 @@ enum EnergyModbusRegisters { NRG_MBS_VOLTAGE,
                              NRG_MBS_EXPORT_ACTIVE_ENERGY,
                              NRG_MBS_MAX_REGS };
 
-const char kEnergyModbusValues[] PROGMEM = "voltage|"
-                                           "current|"
-                                           "active_power|"
-                                           "apparent_power|"
-                                           "reactive_power|"
-                                           "power_factor|"
-                                           "frequency|"
-                                           "import_active_energy|"
-                                           "export_active_energy";
+const char kEnergyModbusValues[] PROGMEM = D_JSON_VOLTAGE "|"              // Voltage
+                                           D_JSON_CURRENT "|"              // Current
+                                           D_JSON_POWERUSAGE "|"           // Power
+                                           D_JSON_APPARENT_POWERUSAGE "|"  // ApparentPower
+                                           D_JSON_REACTIVE_POWERUSAGE "|"  // ReactivePower
+                                           D_JSON_POWERFACTOR "|"          // Factor
+                                           D_JSON_FREQUENCY "|"            // Frequency
+                                           D_JSON_IMPORT_ACTIVE "|"        // ImportActive
+                                           D_JSON_EXPORT_ACTIVE "|"        // ExportActive
+                                           ;
 
 #include <TasmotaModbus.h>
 TasmotaModbus *EnergyModbus;
 
 struct NRGMODBUS {
-/*
-  uint16_t voltage[ENERGY_MAX_PHASES];
-  uint16_t current[ENERGY_MAX_PHASES];
-  uint16_t active_power[ENERGY_MAX_PHASES];
-  uint16_t apparent_power[ENERGY_MAX_PHASES];
-  uint16_t reactive_power[ENERGY_MAX_PHASES];
-  uint16_t power_factor[ENERGY_MAX_PHASES];
-  uint16_t frequency[ENERGY_MAX_PHASES];
-  uint16_t import_active[ENERGY_MAX_PHASES];
-  uint16_t export_active[ENERGY_MAX_PHASES];
-*/
-  uint16_t register_address[NRG_MBS_MAX_REGS][ENERGY_MAX_PHASES];
-
   uint32_t serial_bps;
   uint32_t serial_config;
+  uint16_t register_address[NRG_MBS_MAX_REGS][ENERGY_MAX_PHASES];
   uint8_t device_address;
   uint8_t function;
-
   uint8_t phase;
   uint8_t state;
   uint8_t retry;
@@ -173,7 +168,7 @@ void EnergyModbusLoop(void) {
             break;
           }
         }
-      } while (NrgModbus->register_address[NrgModbus->state][NrgModbus->phase] == 1);
+      } while (NrgModbus->register_address[NrgModbus->state][NrgModbus->phase] == nrg_mbs_reg_not_used);
     }
   } // end data ready
 
@@ -188,53 +183,48 @@ void EnergyModbusLoop(void) {
 bool EnergyModbusReadRegisters(void) {
 #ifdef USE_RULES
   String modbus = RuleLoadFile("MODBUS");
-  if (!modbus.length()) { return false; }
+  if (!modbus.length()) { return false; }        // File not found
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: File '%s'"), modbus.c_str());
-
-//  rule3 on file#modbus do {"name":"SDM230","baud":2400,"config":8N1","address":1,"function":4,"voltage":0,"current":6,"active_power":12,"apparent_power":18,"reactive_power":24,"power_factor":30,"frequency":70,"import_active_energy":342} endon
-//  rule3 on file#modbus do {"name":"SDM230 test1","baud":2400,"config":8N1","address":1,"function":4,"voltage":[0,0,0],"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":[70,70,70],"import_active_energy":[342,342,342]} endon
-//  rule3 on file#modbus do {"name":"SDM230 test2","baud":2400,"config":8N1","address":1,"function":4,"voltage":[0,0,0],"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":70,"import_active_energy":[342,342,342]} endon
-//  rule3 on file#modbus do {"name":"SDM230 test2","baud":2400,"config":8N1","address":1,"function":4,"voltage":0,"current":[6,6,6],"active_power":[12,12,12],"apparent_power":[18,18,18],"reactive_power":[24,24,24],"power_factor":[30,30,30],"frequency":70,"import_active_energy":[342,342,342]} endon
 
   const char* json = modbus.c_str();
   uint32_t len = strlen(json) +1;
-  if (len < 7) { return false; }
+  if (len < 7) { return false; }                 // Invalid JSON
 
   char json_buffer[len];
   memcpy(json_buffer, json, len);                // Keep original safe
   JsonParser parser(json_buffer);
   JsonParserObject root = parser.getRootObject();
-  if (!root) { return false; }
+  if (!root) { return false; }                   // Invalid JSON
 
   NrgModbus = (NRGMODBUS *)calloc(sizeof(struct NRGMODBUS), 1);
-  if (NrgModbus == nullptr) { return false; }
+  if (NrgModbus == nullptr) { return false; }    // Unable to allocate variabvles on heap
 
   // Init defaults
   NrgModbus->serial_bps = ENERGY_MODBUS_SPEED;
   NrgModbus->serial_config = ENERGY_MODBUS_CONFIG;
   NrgModbus->device_address = ENERGY_MODBUS_ADDR;
-  NrgModbus->function = 0x04;
-  for (uint32_t i = 0; i < 9; i++) {
+  NrgModbus->function = ENERGY_MODBUS_FUNC;
+  for (uint32_t i = 0; i < NRG_MBS_MAX_REGS; i++) {
     for (uint32_t j = 0; j < ENERGY_MAX_PHASES; j++) {
-      NrgModbus->register_address[i][j] = 1;     // Not used
+      NrgModbus->register_address[i][j] = nrg_mbs_reg_not_used;
     }
   }
 
   JsonParserToken val;
-  val = root[PSTR("baud")];
+  val = root[PSTR("Baud")];
   if (val) {
     NrgModbus->serial_bps = val.getInt();        // 2400
   }
-  val = root[PSTR("config")];
+  val = root[PSTR("Config")];
   if (val) {
     const char *serial_config = val.getStr();    // 8N1
     NrgModbus->serial_config = ConvertSerialConfig(ParseSerialConfig(serial_config));
   }
-  val = root[PSTR("address")];
+  val = root[PSTR("Address")];
   if (val) {
     NrgModbus->device_address = val.getInt();    // 1
   }
-  val = root[PSTR("function")];
+  val = root[PSTR("Function")];
   if (val) {
     NrgModbus->function = val.getInt();          // 4
   }
@@ -276,9 +266,15 @@ bool EnergyModbusReadRegisters(void) {
             Energy.frequency_common = true;      // Use common frequency
           }
           break;
+        case NRG_MBS_IMPORT_ACTIVE_ENERGY:
+          Settings->flag3.hardware_energy_total = 1;  // SetOption72 - Enable hardware energy total counter as reference (#6561)
+          break;
       }
     }
   }
+#ifdef ENERGY_MODBUS_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Registers %*_H"), sizeof(NrgModbus->register_address), NrgModbus->register_address);
+#endif
 
 //  NrgModbus->state = 0;    // Set by calloc()
 //  NrgModbus->phase = 0;
