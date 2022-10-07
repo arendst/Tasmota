@@ -282,7 +282,6 @@ static int add_to_field(struct tm* calendar, int field, int val) {
         calendar->tm_hour = calendar->tm_hour + val;
         break;
     case CRON_CF_DAY_OF_WEEK: /* mkgmtime ignores this field */
-        break;
     case CRON_CF_DAY_OF_MONTH:
         calendar->tm_mday = calendar->tm_mday + val;
         break;
