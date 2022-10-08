@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee Alexa/Hue emulation, support multiple switches on separate endpoints
 - Support for QMC5883L magnetic induction sensor by Helge Scheunemann (#16714)
 - LVGL/HASPmota add tiny "pixel perfect" fonts for small screens
+- HASPmota support for TTF fonts
 
 ### Changed
 - ESP32 LVGL library from v8.3.0 to v8.3.2
