@@ -20,19 +20,64 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_MODBUS_ENERGY
 /*********************************************************************************************\
- * Generic Modbus energy meter - experimental (but works on my SDM230)
+ * Generic Modbus energy meter
  *
- * Using a rule file called modbus allows to easy configure modbus energy monitor devices.
+ * Using a rule file called modbus allows to easy configure modbus energy monitor devices up to three phases.
  *
- * Works:
- * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"ImportActive":342,"ExportActive":0x004A} endon
- * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"ImportActive":0x0156,"ExportActive":0x004A} endon
+ * Value pair description:
+ * {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A}
+ * Modbus config parameters:
+ *   Name          - Name of energy monitoring device
+ *   Baud          - Baudrate of device modbus interface
+ *   Config        - Serial config parameters like 8N1 - 8 databits, No parity, 1 stop bit
+ *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01))
+ *   Function      - Modbus function code to access two registers
+ * Tasmota default embedded register names:
+ *   Voltage       - Voltage register entered as decimal or hexadecimal for one phase (0x0000) or up to three phases ([0x0000,0x0002,0x0004])
+ *   Current       - Current register entered as decimal or hexadecimal for one phase (0x0006) or up to three phases ([0x0006,0x0008,0x000A])
+ *   Power         - Active power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010])
+ *   ApparentPower - Apparent power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010])
+ *   ReactivePower - Reactive power register entered as decimal or hexadecimal for one phase (0x0018) or up to three phases ([0x0018,0x001A,0x001C])
+ *   Factor        - Power factor register entered as decimal or hexadecimal for one phase (0x001E) or up to three phases ([0x001E,0x0020,0x0022])
+ *   Frequency     - Frequency register entered as decimal or hexadecimal for one phase (0x0046) or up to three phases ([0x0046,0x0048,0x004A])
+ *   Total         - Total active energy register entered as decimal or hexadecimal for one phase (0x0156) or up to three phases ([0x015A,0x015C,0x015E])
+ *   ExportActive  - Export active energy register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ * Optional user defined registers:
+ *   User          - Additional user defined registers
+ *   Value pair description:
+ *   "User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}
+ *     R           - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *     J           - JSON register name (preferrably without spaces like "PhaseAngle")
+ *     G           - GUI register name
+ *     U           - GUI unit name
+ *     D           - Number of decimals for floating point presentation
  *
+ * Example using default Energy registers:
+ * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A} endon
+ * rule3 on file#modbus do {"Name":"SDM230 with hex registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"Total":0x0156,"ExportActive":0x004A} endon
+ *
+ * Example using default Energy registers and some user defined registers:
+ * rule3 on file#modbus do {"Name":"SDM230 with one user register","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}} endon
+ * rule3 on file#modbus do {"Name":"SDM230 with two user registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ *
+ * Note:
+ * - To enter long rules using a serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 512.
+ * - Changes to rule file are only executed on restart
+ *
+ * Restrictions:
+ * - Supports Modbus floating point registers
+ * - Max number of uer defined registers is defined by one rule buffer (511 characters uncompressed, around 800 characters compressed)
+ *
+ * To do:
+ * - Support all three rule slots
+ * - Support other modbus register like integers
  *
  * Test set:
- * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"ImportActive":[342,342,342]} endon
- * rule3 on file#modbus do {"Name":"SDM230 test2","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"ImportActive":[342,342,342]} endon
- * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"ImportActive":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"Total":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test2","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test4","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":[0x004E,0x004E,0x004E],"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test5","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":[0x004E,0x004E,0x004E],"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
 \*********************************************************************************************/
 
 #define XNRG_29                  29
@@ -53,7 +98,7 @@ enum EnergyModbusRegisters { NRG_MBS_VOLTAGE,
                              NRG_MBS_REACTIVE_POWER,
                              NRG_MBS_POWER_FACTOR,
                              NRG_MBS_FREQUENCY,
-                             NRG_MBS_IMPORT_ACTIVE_ENERGY,
+                             NRG_MBS_TOTAL_ENERGY,
                              NRG_MBS_EXPORT_ACTIVE_ENERGY,
                              NRG_MBS_MAX_REGS };
 
@@ -64,7 +109,7 @@ const char kEnergyModbusValues[] PROGMEM = D_JSON_VOLTAGE "|"              // Vo
                                            D_JSON_REACTIVE_POWERUSAGE "|"  // ReactivePower
                                            D_JSON_POWERFACTOR "|"          // Factor
                                            D_JSON_FREQUENCY "|"            // Frequency
-                                           D_JSON_IMPORT_ACTIVE "|"        // ImportActive
+                                           D_JSON_TOTAL "|"                // Total
                                            D_JSON_EXPORT_ACTIVE "|"        // ExportActive
                                            ;
 
@@ -77,14 +122,30 @@ struct NRGMODBUS {
   uint16_t register_address[NRG_MBS_MAX_REGS][ENERGY_MAX_PHASES];
   uint8_t device_address;
   uint8_t function;
+  uint8_t user_adds;
   uint8_t phase;
   uint8_t state;
   uint8_t retry;
+  bool mutex;
 } *NrgModbus = nullptr;
+
+typedef struct NRGMODBUSUSER {
+  float register_data[ENERGY_MAX_PHASES];
+  uint16_t register_address[ENERGY_MAX_PHASES];
+  uint8_t resolution;
+  String json_name;
+  String gui_name;
+  String gui_unit;
+} NrgModbusUser_t;
+NrgModbusUser_t* NrgModbusUser = nullptr;
 
 /*********************************************************************************************/
 
 void EnergyModbusLoop(void) {
+  if (NrgModbus->mutex) { return; }
+  NrgModbus->mutex = 1;
+
+  uint16_t register_address;
   bool data_ready = EnergyModbus->ReceiveReady();
 
   if (data_ready) {
@@ -148,12 +209,16 @@ void EnergyModbusLoop(void) {
         case NRG_MBS_FREQUENCY:
           Energy.frequency[NrgModbus->phase] = value;        // 50.0 Hz
           break;
-        case NRG_MBS_IMPORT_ACTIVE_ENERGY:
+        case NRG_MBS_TOTAL_ENERGY:
           Energy.import_active[NrgModbus->phase] = value;    // 6.216 kWh => used in EnergyUpdateTotal()
           break;
         case NRG_MBS_EXPORT_ACTIVE_ENERGY:
           Energy.export_active[NrgModbus->phase] = value;    // 478.492 kWh
           break;
+        default:
+          if (NrgModbusUser) {
+            NrgModbusUser[NrgModbus->state - NRG_MBS_MAX_REGS].register_data[NrgModbus->phase] = value;
+          }
       }
 
       do {
@@ -161,24 +226,93 @@ void EnergyModbusLoop(void) {
         if (NrgModbus->phase == Energy.phase_count) {
           NrgModbus->phase = 0;
           NrgModbus->state++;
-          if (NrgModbus->state == NRG_MBS_MAX_REGS) {
+          if (NrgModbus->state == NRG_MBS_MAX_REGS + NrgModbus->user_adds) {
             NrgModbus->state = 0;
             NrgModbus->phase = 0;
             EnergyUpdateTotal();                 // update every cycle after all registers have been read
             break;
           }
         }
-      } while (NrgModbus->register_address[NrgModbus->state][NrgModbus->phase] == nrg_mbs_reg_not_used);
+        delay(0);
+        register_address = (NrgModbus->state < NRG_MBS_MAX_REGS) ? NrgModbus->register_address[NrgModbus->state][NrgModbus->phase] :
+                                                                   NrgModbusUser[NrgModbus->state - NRG_MBS_MAX_REGS].register_address[NrgModbus->phase];
+      } while (register_address == nrg_mbs_reg_not_used);
     }
   } // end data ready
 
   if (0 == NrgModbus->retry || data_ready) {
     NrgModbus->retry = 5;
-    EnergyModbus->Send(NrgModbus->device_address, NrgModbus->function, NrgModbus->register_address[NrgModbus->state][NrgModbus->phase], 2);
+    register_address = (NrgModbus->state < NRG_MBS_MAX_REGS) ? NrgModbus->register_address[NrgModbus->state][NrgModbus->phase] :
+                                                               NrgModbusUser[NrgModbus->state - NRG_MBS_MAX_REGS].register_address[NrgModbus->phase];
+    EnergyModbus->Send(NrgModbus->device_address, NrgModbus->function, register_address, 2);
   } else {
     NrgModbus->retry--;
   }
+  NrgModbus->mutex = 0;
 }
+
+#ifdef USE_RULES
+bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add_index) {
+  // {"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3}
+  JsonParserToken val;
+  val = user_add_value[PSTR("R")];               // Register address
+  uint32_t phase = 0;
+  if (val.isArray()) {
+    JsonParserArray address_arr = val.getArray();
+    for (auto value : address_arr) {
+      NrgModbusUser[add_index].register_address[phase] = value.getUInt();
+      phase++;
+      if (phase == ENERGY_MAX_PHASES) { break; }
+    }
+  } else if (val) {
+    NrgModbusUser[add_index].register_address[0] = val.getUInt();
+    phase++;
+  } else {
+    return false;
+  }
+  if (phase > Energy.phase_count) {
+    Energy.phase_count = phase;
+  }
+  val = user_add_value[PSTR("J")];               // JSON value name
+  if (val) {
+    NrgModbusUser[add_index].json_name = val.getStr();
+  } else {
+    return false;
+  }
+  val = user_add_value[PSTR("G")];               // GUI value name
+  if (val) {
+    NrgModbusUser[add_index].gui_name = val.getStr();
+  } else {
+    return false;
+  }
+  val = user_add_value[PSTR("U")];               // GUI value Unit
+  if (val) {
+    NrgModbusUser[add_index].gui_unit = val.getStr();
+  } else {
+    return false;
+  }
+  val = user_add_value[PSTR("D")];               // Decimal resolution
+  if (val) {
+    NrgModbusUser[add_index].resolution = val.getUInt();
+  } else {
+    return false;
+  }
+
+#ifdef ENERGY_MODBUS_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d, R [%04X,%04X,%04X], J '%s', G '%s', U '%s', D %d"),
+    add_index,
+    NrgModbusUser[add_index].register_address[0],
+    NrgModbusUser[add_index].register_address[1],
+    NrgModbusUser[add_index].register_address[2],
+    NrgModbusUser[add_index].json_name.c_str(),
+    NrgModbusUser[add_index].gui_name.c_str(),
+    NrgModbusUser[add_index].gui_unit.c_str(),
+    NrgModbusUser[add_index].resolution);
+#endif
+
+  return true;
+}
+#endif  // USE_RULES
 
 bool EnergyModbusReadRegisters(void) {
 #ifdef USE_RULES
@@ -196,8 +330,8 @@ bool EnergyModbusReadRegisters(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return false; }                   // Invalid JSON
 
-  NrgModbus = (NRGMODBUS *)calloc(sizeof(struct NRGMODBUS), 1);
-  if (NrgModbus == nullptr) { return false; }    // Unable to allocate variabvles on heap
+  NrgModbus = (NRGMODBUS *)calloc(1, sizeof(struct NRGMODBUS));
+  if (NrgModbus == nullptr) { return false; }    // Unable to allocate variables on heap
 
   // Init defaults
   NrgModbus->serial_bps = ENERGY_MODBUS_SPEED;
@@ -222,32 +356,33 @@ bool EnergyModbusReadRegisters(void) {
   }
   val = root[PSTR("Address")];
   if (val) {
-    NrgModbus->device_address = val.getInt();    // 1
+    NrgModbus->device_address = val.getUInt();   // 1
   }
   val = root[PSTR("Function")];
   if (val) {
-    NrgModbus->function = val.getInt();          // 4
+    NrgModbus->function = val.getUInt();         // 4
   }
 
   char register_name[32];
-  uint32_t phase;
   Energy.voltage_available = false;              // Disable voltage is measured
   Energy.current_available = false;              // Disable current is measured
   for (uint32_t names = 0; names < NRG_MBS_MAX_REGS; names++) {
-    phase = 0;
     val = root[GetTextIndexed(register_name, sizeof(register_name), names, kEnergyModbusValues)];
-    if (val.isArray()) {
-      JsonParserArray arr = val.getArray();
-      for (auto value : arr) {
-        NrgModbus->register_address[names][phase] = value.getUInt();
+    if (val) {
+      // "Voltage":0
+      // "Voltage":[0,0,0]
+      uint32_t phase = 0;
+      if (val.isArray()) {
+        JsonParserArray arr = val.getArray();
+        for (auto value : arr) {
+          NrgModbus->register_address[names][phase] = value.getUInt();
+          phase++;
+          if (phase == ENERGY_MAX_PHASES) { break; }
+        }
+      } else if (val) {
+        NrgModbus->register_address[names][0] = val.getUInt();
         phase++;
-        if (phase == ENERGY_MAX_PHASES) { break; }
       }
-    } else if (val) {
-      NrgModbus->register_address[names][phase] = val.getUInt();
-      phase++;
-    }
-    if (phase) {
       if (phase > Energy.phase_count) {
         Energy.phase_count = phase;
       }
@@ -266,14 +401,65 @@ bool EnergyModbusReadRegisters(void) {
             Energy.frequency_common = true;      // Use common frequency
           }
           break;
-        case NRG_MBS_IMPORT_ACTIVE_ENERGY:
+        case NRG_MBS_TOTAL_ENERGY:
           Settings->flag3.hardware_energy_total = 1;  // SetOption72 - Enable hardware energy total counter as reference (#6561)
           break;
       }
+
+#ifdef ENERGY_MODBUS_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d, R [%04X,%04X,%04X]"),
+        names,
+        NrgModbus->register_address[names][0],
+        NrgModbus->register_address[names][1],
+        NrgModbus->register_address[names][2]);
+#endif
+
     }
   }
+
+  NrgModbus->user_adds = 0;
+  // "User":{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3}
+  // "User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]
+  val = root[PSTR("User")];
+  if (val) {
+    NrgModbus->user_adds = 1;
+    if (val.isArray()) {
+      NrgModbus->user_adds = val.size();
+    }
+    NrgModbusUser = (NrgModbusUser_t*)calloc(NrgModbus->user_adds, sizeof(NrgModbusUser_t));
+    if (NrgModbusUser) {
+      // Init defaults
+      for (uint32_t i = 0; i < NrgModbus->user_adds; i++) {
+        for (uint32_t j = 0; j < ENERGY_MAX_PHASES; j++) {
+          NrgModbusUser[i].register_address[j] = nrg_mbs_reg_not_used;
+          NrgModbusUser[i].register_data[j] = NAN;
+        }
+      }
+      if (val.isArray()) {
+        JsonParserArray user_adds_arr = val.getArray();
+        uint32_t add_index = 0;
+        for (auto user_add_values : user_adds_arr) {
+          if (!user_add_values.isObject()) { break; }
+          if (EnergyModbusReadUserRegisters(user_add_values.getObject(), add_index)) {
+            add_index++;
+          } else {
+            NrgModbus->user_adds--;
+          }
+        }
+      } else if (val) {
+        if (val.isObject()) {
+          if (!EnergyModbusReadUserRegisters(val.getObject(), 0)) {
+            NrgModbus->user_adds--;
+          }
+        }
+      }
+    } else {
+      NrgModbus->user_adds = 0;
+    }
+  }
+
 #ifdef ENERGY_MODBUS_DEBUG
-  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Registers %*_H"), sizeof(NrgModbus->register_address), NrgModbus->register_address);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: RAM usage %d + %d"), sizeof(struct NRGMODBUS), NrgModbus->user_adds * sizeof(NrgModbusUser_t));
 #endif
 
 //  NrgModbus->state = 0;    // Set by calloc()
@@ -311,6 +497,60 @@ void EnergyModbusDrvInit(void) {
 }
 
 /*********************************************************************************************\
+ * Additional presentation
+\*********************************************************************************************/
+
+void EnergyModbusReset(void) {
+  for (uint32_t i = 0; i < NrgModbus->user_adds; i++) {
+    for (uint32_t j = 0; j < ENERGY_MAX_PHASES; j++) {
+      if (NrgModbusUser[i].register_address[0] != nrg_mbs_reg_not_used) {
+        NrgModbusUser[i].register_data[j] = 0;
+      }
+    }
+  }
+}
+
+void EnergyModbusShow(bool json) {
+  char value_chr[TOPSZ];
+  for (uint32_t i = 0; i < NrgModbus->user_adds; i++) {
+/*
+#ifdef ENERGY_MODBUS_DEBUG
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d, R [%04X,%04X,%04X], J '%s', G '%s', U '%s', D %d, V [%3_f,%3_f,%3_f]"),
+      i,
+      NrgModbusUser[i].register_address[0],
+      NrgModbusUser[i].register_address[1],
+      NrgModbusUser[i].register_address[2],
+      NrgModbusUser[i].json_name.c_str(),
+      NrgModbusUser[i].gui_name.c_str(),
+      NrgModbusUser[i].gui_unit.c_str(),
+      NrgModbusUser[i].resolution,
+      &NrgModbusUser[i].register_data[0],
+      &NrgModbusUser[i].register_data[1],
+      &NrgModbusUser[i].register_data[2]);
+#endif
+*/
+    if ((NrgModbusUser[i].register_address[0] != nrg_mbs_reg_not_used) && !isnan(NrgModbusUser[i].register_data[0])) {
+      float values[ENERGY_MAX_PHASES];
+      for (uint32_t j = 0; j < ENERGY_MAX_PHASES; j++) {
+        values[j] = NrgModbusUser[i].register_data[j];
+      }
+      if (json) {
+        ResponseAppend_P(PSTR(",\"%s\":%s"),
+          NrgModbusUser[i].json_name.c_str(),
+          EnergyFormat(value_chr, values, NrgModbusUser[i].resolution));
+#ifdef USE_WEBSERVER
+      } else {
+        WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"),
+          NrgModbusUser[i].gui_name.c_str(),
+          WebEnergyFormat(value_chr, values, NrgModbusUser[i].resolution),
+          NrgModbusUser[i].gui_unit.c_str());
+#endif  // USE_WEBSERVER
+      }
+    }
+  }
+}
+
+/*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
@@ -318,12 +558,23 @@ bool Xnrg29(uint8_t function) {
   bool result = false;
 
   switch (function) {
-//    case FUNC_EVERY_250_MSECOND:
     case FUNC_EVERY_200_MSECOND:
       EnergyModbusLoop();
       break;
+    case FUNC_JSON_APPEND:
+      EnergyModbusShow(1);
+      break;
+#ifdef USE_WEBSERVER
+#ifdef USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_COL_SENSOR:
+#else   // not USE_ENERGY_COLUMN_GUI
+    case FUNC_WEB_SENSOR:
+#endif  // USE_ENERGY_COLUMN_GUI
+      EnergyModbusShow(0);
+      break;
+#endif  // USE_WEBSERVER
     case FUNC_ENERGY_RESET:
-//      EnergyModbusReset();
+      EnergyModbusReset();
       break;
     case FUNC_INIT:
       EnergyModbusSnsInit();

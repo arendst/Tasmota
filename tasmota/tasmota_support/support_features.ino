@@ -837,7 +837,9 @@ void ResponseAppendFeatures(void)
 #if defined(USE_I2C) && defined(USE_QMC5883L)
     feature9 |= 0x00000008;  // xsns_33_qmc5882l.ino
 #endif
-//    feature9 |= 0x00000010;
+#if defined(USE_ENERGY_SENSOR) && defined(USE_MODBUS_ENERGY)
+    feature9 |= 0x00000010;  // xnrg_29_modbus.ino
+#endif
 //    feature9 |= 0x00000020;
 //    feature9 |= 0x00000040;
 //    feature9 |= 0x00000080;

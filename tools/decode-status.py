@@ -287,7 +287,7 @@ a_features = [[
     "USE_BP5758D","USE_HYT","USE_SM2335","USE_DISPLAY_TM1621_SONOFF"
     ],[
     "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","USE_QMC5883L",
-    "","","","",
+    "USE_MODBUS_ENERGY","","","",
     "","","","",
     "","","","",
     "","","","",
