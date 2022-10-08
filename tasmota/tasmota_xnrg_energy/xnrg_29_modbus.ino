@@ -44,24 +44,34 @@
  *   ExportActive  - Export active energy register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
  * Optional user defined registers:
  *   User          - Additional user defined registers
- *   Value pair description:
- *   "User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}
- *     R           - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
- *     J           - JSON register name (preferrably without spaces like "PhaseAngle")
- *     G           - GUI register name
- *     U           - GUI unit name
- *     D           - Number of decimals for floating point presentation
+ *                   Value pair description:
+ *                   "User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}
+ *                   R - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *                   J - JSON register name (preferrably without spaces like "PhaseAngle")
+ *                   G - GUI register name
+ *                   U - GUI unit name
+ *                   D - Number of decimals for floating point presentation or a code correspondig to Tasmota resolution command settings:
+ *                       21 - VoltRes (V)
+ *                       22 - AmpRes (A)
+ *                       23 - WattRes (W, VA, VAr)
+ *                       24 - EnergyRes (kWh, kVAh, kVArh)
+ *                       25 - FreqRes (Hz)
+ *                       26 - TempRes (C, F)
+ *                       27 - HumRes (%)
+ *                       28 - PressRes (hPa, mmHg)
+ *                       29 - WeightRes (Kg)
  *
  * Example using default Energy registers:
  * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A} endon
  * rule3 on file#modbus do {"Name":"SDM230 with hex registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"Total":0x0156,"ExportActive":0x004A} endon
+ * rule3 on file#modbus do {"Name":"SDM72","Baud":9600,"Config":8N1","Address":0x01,"Function":0x04,"Power":0x0034,"Total":0x0156,"ExportActive":0x004A,"User":[{"R":0x0502,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x0502,"J":"ExportPower","G":"Export Power","U":"W","D":23},{"R":0x0500,"J":"ImportPower","G":"Import Power","U":"W","D":23}]} endon
  *
  * Example using default Energy registers and some user defined registers:
  * rule3 on file#modbus do {"Name":"SDM230 with one user register","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}} endon
  * rule3 on file#modbus do {"Name":"SDM230 with two user registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  *
  * Note:
- * - To enter long rules using a serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 512.
+ * - To enter long rules using the serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 512
  * - Changes to rule file are only executed on restart
  *
  * Restrictions:
@@ -76,7 +86,7 @@
  * rule3 on file#modbus do {"Name":"SDM230 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":[70,70,70],"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test2","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
- * rule3 on file#modbus do {"Name":"SDM230 test4","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":[0x004E,0x004E,0x004E],"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"SDM230 test4","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test5","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":[0x004E,0x004E,0x004E],"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
 \*********************************************************************************************/
 
@@ -88,8 +98,19 @@
 #define ENERGY_MODBUS_FUNC       0x04     // default Modbus function code
 
 //#define ENERGY_MODBUS_DEBUG
+//#define ENERGY_MODBUS_DEBUG_SHOW
 
 const uint16_t nrg_mbs_reg_not_used = 1;  // Odd number 1 is unused register
+
+enum EnergyModbusResolutions { NRG_RES_VOLTAGE = 21,         // V
+                               NRG_RES_CURRENT,              // A
+                               NRG_RES_POWER,                // W, VA, VAr
+                               NRG_RES_ENERGY,               // kWh, kVAh, kVArh
+                               NRG_RES_FREQUENCY,            // Hz
+                               NRG_RES_TEMPERATURE,          // C, F
+                               NRG_RES_HUMIDITY,             // %
+                               NRG_RES_PRESSURE,             // hPa, mmHg
+                               NRG_RES_WEIGHT };             // Kg
 
 enum EnergyModbusRegisters { NRG_MBS_VOLTAGE,
                              NRG_MBS_CURRENT,
@@ -510,11 +531,37 @@ void EnergyModbusReset(void) {
   }
 }
 
+uint32_t EnergyModbusResolution(uint32_t resolution) {
+  if (resolution >= NRG_RES_VOLTAGE) {
+    switch (resolution) {
+      case NRG_RES_VOLTAGE:
+        return Settings->flag2.voltage_resolution;
+      case NRG_RES_CURRENT:
+        return Settings->flag2.current_resolution;
+      case NRG_RES_POWER:
+        return Settings->flag2.wattage_resolution;
+      case NRG_RES_ENERGY:
+        return Settings->flag2.energy_resolution;
+      case NRG_RES_FREQUENCY:
+        return Settings->flag2.frequency_resolution;
+      case NRG_RES_TEMPERATURE:
+        return Settings->flag2.temperature_resolution;
+      case NRG_RES_HUMIDITY:
+        return Settings->flag2.humidity_resolution;
+      case NRG_RES_PRESSURE:
+        return Settings->flag2.pressure_resolution;
+      case NRG_RES_WEIGHT:
+        return Settings->flag2.weight_resolution;
+    }
+  }
+  return resolution;
+}
+
 void EnergyModbusShow(bool json) {
   char value_chr[TOPSZ];
   for (uint32_t i = 0; i < NrgModbus->user_adds; i++) {
-/*
-#ifdef ENERGY_MODBUS_DEBUG
+
+#ifdef ENERGY_MODBUS_DEBUG_SHOW
     AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Idx %d, R [%04X,%04X,%04X], J '%s', G '%s', U '%s', D %d, V [%3_f,%3_f,%3_f]"),
       i,
       NrgModbusUser[i].register_address[0],
@@ -528,21 +575,25 @@ void EnergyModbusShow(bool json) {
       &NrgModbusUser[i].register_data[1],
       &NrgModbusUser[i].register_data[2]);
 #endif
-*/
+
     if ((NrgModbusUser[i].register_address[0] != nrg_mbs_reg_not_used) && !isnan(NrgModbusUser[i].register_data[0])) {
       float values[ENERGY_MAX_PHASES];
       for (uint32_t j = 0; j < ENERGY_MAX_PHASES; j++) {
         values[j] = NrgModbusUser[i].register_data[j];
       }
+      uint32_t resolution = EnergyModbusResolution(NrgModbusUser[i].resolution);
+
+#ifdef ENERGY_MODBUS_DEBUG_SHOW
+      AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: resolution %d -> %d"), NrgModbusUser[i].resolution, resolution);
+#endif
+
       if (json) {
-        ResponseAppend_P(PSTR(",\"%s\":%s"),
-          NrgModbusUser[i].json_name.c_str(),
-          EnergyFormat(value_chr, values, NrgModbusUser[i].resolution));
+        ResponseAppend_P(PSTR(",\"%s\":%s"), NrgModbusUser[i].json_name.c_str(), EnergyFormat(value_chr, values, resolution));
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(PSTR("{s}%s{m}%s %s{e}"),
           NrgModbusUser[i].gui_name.c_str(),
-          WebEnergyFormat(value_chr, values, NrgModbusUser[i].resolution),
+          WebEnergyFormat(value_chr, values, resolution),
           NrgModbusUser[i].gui_unit.c_str());
 #endif  // USE_WEBSERVER
       }
