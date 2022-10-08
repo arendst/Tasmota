@@ -535,20 +535,35 @@ class lvh_obj
       end
     elif type(t) == 'string'
       import string
+      import re
       # look for 'A:name.font' style font file name
       var drive_split = string.split(t, ':', 1)
       var fn_split = string.split(t, '-')
-      if size(drive_split) > 1 && size(drive_split[0]) == 1
+
+      var name = t
+      var sz = 0
+      var is_ttf = false
+      var is_binary = (size(drive_split) > 1 && size(drive_split[0]))
+
+      if size(fn_split) >= 2
+        sz = int(fn_split[-1])
+        name = fn_split[0..-2].concat('-')    # rebuild the font name
+      end
+      if re.match(".*\\.ttf$", name)
+        # ttf font
+        name = string.split(name, ':')[-1]      # remove A: if any
+        is_ttf = true
+      end
+
+      if is_ttf
+        font = lv.load_freetype_font(name, sz, 0)
+      elif is_binary
         # font is from disk
         font = lv.load_font(t)
-      elif size(fn_split) >= 2      # it does contain '-'
-        var sz = int(fn_split[-1])
-        var name = fn_split[0..-2].concat('-')    # rebuild the font name
-        if sz > 0 && size(name) > 0              # looks good, let's have a try
-          try
-            font = lv.font_embedded(name, sz)
-          except ..
-          end
+      elif sz > 0 && size(name) > 0              # looks good, let's have a try
+        try
+          font = lv.font_embedded(name, sz)
+        except ..
         end
       end
     end
