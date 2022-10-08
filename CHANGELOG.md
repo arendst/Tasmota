@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for Shelly Plus 2PM using template ``{"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}``
 - Zigbee Alexa/Hue emulation, support multiple switches on separate endpoints
 - Support for QMC5883L magnetic induction sensor by Helge Scheunemann (#16714)
+- LVGL/HASPmota add tiny "pixel perfect" fonts for small screens
 
 ### Changed
 - ESP32 LVGL library from v8.3.0 to v8.3.2
