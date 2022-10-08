@@ -36,7 +36,7 @@ extern "C" {
 ********************************************************************/ 
 
   extern uint32_t MI32numberOfDevices();
-  extern const char * MI32getDeviceName(uint32_t slot);
+  extern char * MI32getDeviceName(uint32_t slot);
   extern void MI32setBatteryForSlot(uint32_t slot, uint8_t value);
   extern void MI32setHumidityForSlot(uint32_t slot, float value);
   extern void MI32setTemperatureForSlot(uint32_t slot, float value);
