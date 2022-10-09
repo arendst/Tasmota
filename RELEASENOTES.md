@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - Zigbee basic support for Green Power [#16407](https://github.com/arendst/Tasmota/issues/16407)
 - Zigbee friendly names per endpoint
+- Zigbee Alexa/Hue emulation, support multiple switches on separate endpoints [#16718](https://github.com/arendst/Tasmota/issues/16718)
 - Flowrate meter flow amount/duration, show values in table format [#16385](https://github.com/arendst/Tasmota/issues/16385)
 - Support of optional file calib.dat on ADE7953 based energy monitors like Shelly EM [#16486](https://github.com/arendst/Tasmota/issues/16486)
 - Support for Ethernet in ESP32 safeboot firmware [#16388](https://github.com/arendst/Tasmota/issues/16388)
@@ -131,14 +132,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32-S2 and ESP32-S3 touch button support
 - Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
 - Berry automated solidification of code
+- LVGL/HASPmota add tiny "pixel perfect" fonts for small screens [#16758](https://github.com/arendst/Tasmota/issues/16758)
+- HASPmota support for TTF fonts [#16759](https://github.com/arendst/Tasmota/issues/16759)
 
 ### Breaking Changed
 
 ### Changed
-- ESP32 NimBLE library from v1.3.6 to v1.4.0
 - IRremoteESP8266 library from v2.8.2 to v2.8.4
-- Tasmota Core32 from 2.0.4.1 to 2.0.5
 - TasmotaModbus library from v3.5.0 to v3.6.0 [#16351](https://github.com/arendst/Tasmota/issues/16351)
+- ESP32 NimBLE library from v1.3.6 to v1.4.0
+- ESP32 LVGL library from v8.3.0 to v8.3.2
+- ESP32 Tasmota Core32 from 2.0.4.1 to 2.0.5
 - Button debouncing V3 by adopting switch debounce code [#16339](https://github.com/arendst/Tasmota/issues/16339)
 - Thermostat max allowed temperature from 100 to 200C [#16363](https://github.com/arendst/Tasmota/issues/16363)
 - Using command ``SerialBuffer`` raise max allowed buffer size to 2048 characters [#16374](https://github.com/arendst/Tasmota/issues/16374)

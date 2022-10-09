@@ -514,15 +514,14 @@ extern "C" {
       // write BMP header
       static const uint8_t bmp_sign[] = { 0x42, 0x4d };   // BM = Windows
       f.write(bmp_sign, sizeof(bmp_sign));
-      size_t bmp_size = bmp_width * bmp_height * LV_COLOR_DEPTH / 8 + 0x44;
+      size_t bmp_size = bmp_width * bmp_height * LV_COLOR_DEPTH / 8 + 0x42;
       f.write((uint8_t*)&bmp_size, sizeof(bmp_size));
       uint32_t zero = 0;
       f.write((uint8_t*) &zero, sizeof(zero));  // reserved 4-bytes
-      uint32_t bmp_offset_to_pixels = 0x44;  // TODO
+      uint32_t bmp_offset_to_pixels = 0x42;  // TODO
       f.write((uint8_t*) &bmp_offset_to_pixels, sizeof(bmp_offset_to_pixels));
 
-      // DIB Header BITMAPINFOHEADER
-      size_t bmp_dib_header_size = 52;                    // BITMAPV2INFOHEADER
+      size_t bmp_dib_header_size = 0x28;
       f.write((uint8_t*) &bmp_dib_header_size, sizeof(bmp_dib_header_size));
 
       f.write((uint8_t*) &bmp_width, sizeof(bmp_width));
@@ -530,13 +529,15 @@ extern "C" {
 
       // rest of header
       // BITMAPV2INFOHEADER = 52 bytes header, 40 bytes sub-header
-      static const uint8_t bmp_dib_header[] = {
+      static const uint8_t bmp_dib_header1[] = {
         0x01, 0x00,                       // planes
           16, 0x00,                       // bits per pixel = 16
         0x03, 0x00, 0x00, 0x00,           // compression = BI_BITFIELDS uncrompressed
-        0x00, 0x00, 0x00, 0x00,           // Image size, 0 is valid for BI_RGB (uncompressed) TODO
-        0x00, 0x00, 0x00, 0x00,           // X pixels per meter
-        0x00, 0x00, 0x00, 0x00,           // Y pixels per meter
+      };
+
+      static const uint8_t bmp_dib_header2[] = {
+        0xC4, 0xE0, 0x00, 0x00,           // X pixels per meter
+        0xC4, 0xE0, 0x00, 0x00,           // Y pixels per meter
         0x00, 0x00, 0x00, 0x00,           // Colors in table
         0x00, 0x00, 0x00, 0x00,           // Important color count
 
@@ -544,10 +545,10 @@ extern "C" {
         0x00, 0xF8, 0x00, 0x00,           // Red channel mask
         0xE0, 0x07, 0x00, 0x00,           // Green channel mask
         0x1F, 0x00, 0x00, 0x00,           // Blue channel mask
-
-        0x00, 0x00,                       // Padding to align on 4 bytes boundary
       };
-      f.write(bmp_dib_header, sizeof(bmp_dib_header));
+      f.write(bmp_dib_header1, sizeof(bmp_dib_header1));
+      f.write((uint8_t*)&bmp_size, sizeof(bmp_size));
+      f.write(bmp_dib_header2, sizeof(bmp_dib_header2));
       // now we can write the pixels array
 
       // redraw screen

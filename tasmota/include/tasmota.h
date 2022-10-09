@@ -196,8 +196,9 @@ const uint8_t OTA_ATTEMPTS = 10;            // Number of times to try fetching t
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
 #endif  // ESP8266
 
-const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in Tasmota serial command buffer
-const uint16_t MIN_INPUT_BUFFER_SIZE = 256;     // Max number of characters in Tasmota serial command buffer
+//const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in Tasmota serial command buffer
+const uint16_t INPUT_BUFFER_SIZE = 800;     // Max number of characters in Tasmota serial command buffer
+const uint16_t MIN_INPUT_BUFFER_SIZE = 256;  // Max number of characters in Tasmota serial command buffer
 const uint16_t MAX_INPUT_BUFFER_SIZE = 2048; // Max number of characters in Arduino serial command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command

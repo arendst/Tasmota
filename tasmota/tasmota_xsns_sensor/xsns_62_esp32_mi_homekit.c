@@ -18,7 +18,7 @@ static int MI32_accessory_identify(hap_acc_t *ha);
 static void MI32_bridge_thread_entry(void *p);
 
 extern uint32_t MI32numberOfDevices();
-extern const char *MI32getDeviceName(uint32_t slot);
+extern char *MI32getDeviceName(uint32_t slot);
 extern uint32_t MI32getDeviceType(uint32_t slot);
 extern void MI32saveHAPhandles(uint32_t slot, uint32_t type, void* handle);
 extern void MI32passHapEvent(uint32_t event);
@@ -32,6 +32,7 @@ static bool MIBridgeWasNeverConnected = true;
 
 #define CONFIG_EXAMPLE_SETUP_ID "MI32"
 
+#define UNKNOWN_MI  0
 #define FLORA       1
 #define MJ_HT_V1    2
 #define LYWSD02     3
@@ -48,6 +49,7 @@ static bool MIBridgeWasNeverConnected = true;
 #define SJWS01L     14
 #define PVVX        15
 #define YLKG08      16
+#define YLAI003     17
 
 /*********************************************************************************************\
  * Homekit
@@ -139,7 +141,8 @@ static void MI32_bridge_thread_entry(void *p)
     /* Create and add the Accessory to the Bridge object*/
     uint32_t _numDevices = MI32numberOfDevices();
     for (uint32_t i = 0; i < _numDevices; i++) {
-        char *accessory_name = (char*)MI32getDeviceName(i);
+        if(MI32getDeviceType(i) == UNKNOWN_MI) continue;
+        char *accessory_name = MI32getDeviceName(i);
         char _serialNum[4] = {0};
         snprintf(_serialNum,sizeof(_serialNum),"%u", i);
 
