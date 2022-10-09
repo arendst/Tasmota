@@ -342,18 +342,43 @@ public:
     manufacturer = (const char*)_manuf;
   }
 
+  // check if a matches b, return true if so
+  //
+  // Special behavior:
+  // - return true if `a` is empty or null
+  // - return false if `b` is null
+  // - matches start of `a` if `a` ends with `'*'`
+  // - exact match otherwise
+  static bool matchStar(const char *_a, const char *_b) {
+    if (_a == nullptr || *_a == '\0') { return true; }
+    if (_b == nullptr) { return false; }
+
+    const char *a = _a;
+    const char *b = _b;
+    while (1) {
+      if (a[0] == '*' && a[1] == '\0') {  // pattern ends with '*'
+        return true;    // matches worked until now, accept match
+      }
+      if (*a != *b) {
+        return false;
+      }
+      if (*a == '\0') {
+        return true;
+      }
+      a++;
+      b++;
+    }
+  }
+
   bool match(const char *match_model, const char *match_manuf) const {
     bool match = true;
-    if (model.length() > 0) {
-      if (!model.equals(match_model)) {
-        match = false;
-      }
+    if (!matchStar(model.c_str(), match_model)) {
+      match = false;
     }
-    if (manufacturer.length() > 0) {
-      if (!manufacturer.equals(match_manuf)) {
+    if (!matchStar(manufacturer.c_str(), match_manuf)) {
         match = false;
-      }
     }
+    // AddLog(LOG_LEVEL_DEBUG, ">match device(%s, %s) compared to (%s, %s) = %i", match_model, match_manuf, model.c_str(), manufacturer.c_str(), match);
     return match;
   }
 
