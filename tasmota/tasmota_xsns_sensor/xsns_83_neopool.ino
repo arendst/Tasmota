@@ -126,7 +126,9 @@ enum NeoPoolRegister {
   MBF_CELL_RUNTIME_POL_CHANGES_HIGH,      // 0x0219*        undocumented - cell runtime polarity changes (32 bit) - high word
   MBF_HIDRO_MODULE_VERSION = 0x0280,      // 0x0280         undocumented - Hydrolysis module version
   MBF_HIDRO_MODULE_CONNECTIVITY = 0x0281, // 0x0281         undocumented - Hydrolysis module connection quality (in myriad: 0..10000)
-  MBF_SET_MANUAL_CTRL = 0x0289,           // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
+  MBF_SET_COUNTDOWN_KEY_AUX_OFF = 0x0287, // 0x0287  mask   undocumented - switch AUX1-4 OFF - only for AUX which is assigned as AUX and set to MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode  - see MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX*
+  MBF_SET_COUNTDOWN_KEY_AUX_ON,           // 0x0288  mask   undocumented - switch AUX1-4 ON  - only for AUX which is assigned as AUX and set to MBV_PAR_CTIMER_COUNTDOWN_KEY_* mode - see MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX*
+  MBF_SET_MANUAL_CTRL,                    // 0x0289         undocumented - write a 1 before manual control MBF_RELAY_STATE, after done write 0 and do MBF_EXEC
   MBF_ESCAPE = 0x0297,                    // 0x0297         undocumented - A write operation to this register is the same as using the ESC button on main screen - clears error
   MBF_SAVE_TO_EEPROM = 0x02F0,            // 0x02F0         A write operation to this register starts a EEPROM storage operation immediately. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
   MBF_EXEC = 0x02F5,                      // 0x02F5         undocumented - immediately take over settings - a write operation to this register take over the previous written data
@@ -503,18 +505,25 @@ enum NeoPoolConstAndBitMask {
   MBV_PAR_CTIMER_ALWAYS_OFF               = 4,      // Relay assigned to this timer always off
   MBV_PAR_CTIMER_COUNTDOWN_KEY_PLUS       = 0x0105, // Timer in countdown mode using + key
   MBV_PAR_CTIMER_COUNTDOWN_KEY_MINUS      = 0x0205, // Timer in countdown mode using - key
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_ARROWDOWN  = 0x0405, // Timer in countdown mode using arrow-down key
+
+  // MBF_SET_COUNTDOWN_KEY_AUX_* mask:
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX1       = 0x0100, // Aux1 ON/OFF, when MBV_TIMER_OFFMB_TIMER_ENABLE is set to MBV_PAR_CTIMER_COUNTDOWN_KEY_*
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX2       = 0x0200, // Aux2 ON/OFF, when MBV_TIMER_OFFMB_TIMER_ENABLE is set to MBV_PAR_CTIMER_COUNTDOWN_KEY_*
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX3       = 0x0400, // Aux3 ON/OFF, when MBV_TIMER_OFFMB_TIMER_ENABLE is set to MBV_PAR_CTIMER_COUNTDOWN_KEY_*
+  MBV_PAR_CTIMER_COUNTDOWN_KEY_AUX4       = 0x0800, // Aux4 ON/OFF, when MBV_TIMER_OFFMB_TIMER_ENABLE is set to MBV_PAR_CTIMER_COUNTDOWN_KEY_*
 
   // MBV_TIMER_OFFMB_TIMER_FUNCTION codes:
   MBV_PAR_CTIMER_FCT_FILTRATION           = 0x0001, // Filtration function of the system
   MBV_PAR_CTIMER_FCT_LIGHTING             = 0x0002, // Lighting function of the system
   MBV_PAR_CTIMER_FCT_HEATING              = 0x0004, // Heating function of the system
-  MBV_PAR_CTIMER_FCT_AUXREL1              = 0x0100, // Auxiliary function assigned to relay 1
-  MBV_PAR_CTIMER_FCT_AUXREL2              = 0x0200, // Auxiliary function assigned to relay 2
-  MBV_PAR_CTIMER_FCT_AUXREL3              = 0x0400, // Auxiliary function assigned to relay 3
-  MBV_PAR_CTIMER_FCT_AUXREL4              = 0x0800, // Auxiliary function assigned to relay 4
-  MBV_PAR_CTIMER_FCT_AUXREL5              = 0x1000, // Auxiliary function assigned to relay 5
-  MBV_PAR_CTIMER_FCT_AUXREL6              = 0x2000, // Auxiliary function assigned to relay 6
-  MBV_PAR_CTIMER_FCT_AUXREL7              = 0x4000, // Auxiliary function assigned to relay 7
+  MBV_PAR_CTIMER_FCT_AUXREL1              = 0x0100, // Function assigned to relay 1 (Filtration)
+  MBV_PAR_CTIMER_FCT_AUXREL2              = 0x0200, // Function assigned to relay 2 (Light)
+  MBV_PAR_CTIMER_FCT_AUXREL3              = 0x0400, // Function assigned to relay 3 (Heating)
+  MBV_PAR_CTIMER_FCT_AUXREL4              = 0x0800, // Function assigned to relay 4 (AUX1)
+  MBV_PAR_CTIMER_FCT_AUXREL5              = 0x1000, // Function assigned to relay 5 (AUX2)
+  MBV_PAR_CTIMER_FCT_AUXREL6              = 0x2000, // Function assigned to relay 6 (AUX3)
+  MBV_PAR_CTIMER_FCT_AUXREL7              = 0x4000, // Function assigned to relay 7 (AUX4)
 
   // MBF_PAR_UICFG_SOUND
   MBMSK_PAR_SOUND_CLICK                   = 0x0001, //  0 Click sounds every time a key is pressed
