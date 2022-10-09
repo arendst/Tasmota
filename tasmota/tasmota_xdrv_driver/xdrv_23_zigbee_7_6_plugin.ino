@@ -58,7 +58,7 @@ Z_attribute_match Z_plugin_matchAttributeById(const char *model, const char *man
   if (attr_tmpl != nullptr) {
     attr.cluster = attr_tmpl->cluster;
     attr.attribute = attr_tmpl->attribute;
-    attr.name = attr_tmpl->name.c_str();
+    attr.name = attr_tmpl->name;
     attr.zigbee_type = attr_tmpl->type;
     attr.multiplier = attr_tmpl->multiplier;
     attr.divider = attr_tmpl->divider;
@@ -80,7 +80,7 @@ Z_attribute_match Z_plugin_matchAttributeByName(const char *model, const char *m
     if (attr_tmpl != nullptr) {
       attr.cluster = attr_tmpl->cluster;
       attr.attribute = attr_tmpl->attribute;
-      attr.name = attr_tmpl->name.c_str();
+      attr.name = attr_tmpl->name;
       attr.zigbee_type = attr_tmpl->type;
       attr.multiplier = attr_tmpl->multiplier;
       attr.divider = attr_tmpl->divider;
@@ -203,11 +203,11 @@ bool ZbLoad(const char *filename_raw) {
         char *token = strtok_r(rest, ",", &rest);
         Z_plugin_matcher & matcher = tmpl->matchers.addToLast();
         if (token != nullptr) {
-          matcher.model = token;
+          matcher.setModel(token);
         }
         token = strtok_r(rest, ",", &rest);
         if (token != nullptr) {
-          matcher.manufacturer = token;
+          matcher.setManuf(token);
         }
       } else {
         if (tmpl == nullptr) {
@@ -285,7 +285,7 @@ bool ZbLoad(const char *filename_raw) {
           plugin_attr.cluster = cluster_id;
           plugin_attr.attribute = attr_id;
           plugin_attr.type = type_id;
-          plugin_attr.name = name;
+          plugin_attr.setName(name);
           plugin_attr.multiplier = multiplier;
           plugin_attr.divider = divider;
           plugin_attr.base = base;
@@ -413,7 +413,7 @@ void ZbLoadDump(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
     } else {
       for (const Z_plugin_matcher & matcher : tmpl.matchers) {
-        ext_snprintf_P(buf, sizeof(buf), ":%s,%s", matcher.model.c_str(), matcher.manufacturer.c_str());
+        ext_snprintf_P(buf, sizeof(buf), ":%s,%s", matcher.model ? matcher.model : "", matcher.manufacturer ? matcher.manufacturer : "");
         AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
     }
@@ -430,6 +430,7 @@ void ZbLoadDump(void) {
           Z_getTypeByNumber(type_str, sizeof(type_str), attr.type);
           ext_snprintf_P(buf, sizeof(buf), "%s%%%s", buf, type_str);
         }
+        ext_snprintf_P(buf, sizeof(buf), "%s,%s", buf, attr.name);
         Z_AppendModifiers(buf, sizeof(buf), attr.multiplier, attr.divider, attr.base, attr.manuf);
         AddLog(LOG_LEVEL_INFO, PSTR("%s"), buf);
       }
