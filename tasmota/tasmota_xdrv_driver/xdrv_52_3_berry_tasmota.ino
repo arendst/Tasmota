@@ -265,6 +265,7 @@ extern "C" {
     be_map_insert_int(vm, "min", t->tm_min);
     be_map_insert_int(vm, "sec", t->tm_sec);
     be_map_insert_int(vm, "weekday", t->tm_wday);
+    be_map_insert_int(vm, "epoch", mktime(t));
     if (unparsed) be_map_insert_str(vm, "unparsed", unparsed);
     be_pop(vm, 1);
   }
