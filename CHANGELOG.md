@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 LVGL library from v8.3.0 to v8.3.2
+- Increase serial console fixed input buffer size from 520 to 800
 
 ### Fixed
 
