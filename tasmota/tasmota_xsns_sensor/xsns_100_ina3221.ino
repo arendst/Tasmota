@@ -349,9 +349,9 @@ void Ina3221Show(bool json)
 {
   char name[FLOATSZ];
   char temp[FLOATSZ];
-  char voltage[3*FLOATSZ+3] = "";
-  char current[3*FLOATSZ+3] = "";
-  char power[3*FLOATSZ+3] = "";
+  char voltage[3*FLOATSZ+3];
+  char current[3*FLOATSZ+3];
+  char power[3*FLOATSZ+3];
 
   if (json) {
     // data
@@ -360,9 +360,10 @@ void Ina3221Show(bool json)
       if (!enabled_chan) continue;
 
       if (Ina3221count > 1)
-        snprintf_P(name, sizeof(name), PSTR("%s%c%d"), INA3221_TYPE, IndexSeparator(), device);
+        snprintf_P(name, sizeof(name), PSTR("%s%c%d"), INA3221_TYPE, IndexSeparator(), device +1);
       else
         snprintf_P(name, sizeof(name), PSTR("%s"), INA3221_TYPE);
+      voltage[0] = current[0] = power[0] = '\0';
 
       for (int chan=0 ; enabled_chan ; chan++, enabled_chan>>=1) {
         if (0x01 & enabled_chan) {
@@ -372,12 +373,17 @@ void Ina3221Show(bool json)
           strncat(current, temp, sizeof(voltage));
           dtostrfd(Ina3221Data[device].chan[chan].voltage * Ina3221Data[device].chan[chan].current, Settings->flag2.wattage_resolution, temp);
           strncat(power, temp, sizeof(voltage));
-          if (0xFE & enabled_chan) {
-            strncat(voltage, ",", sizeof(voltage));
-            strncat(current, ",", sizeof(voltage));
-            strncat(power, ",", sizeof(voltage));
-          }
         } //if enabled
+        else {
+          strncat(voltage, "null", sizeof(voltage));
+          strncat(current, "null", sizeof(voltage));
+          strncat(power, "null", sizeof(voltage));
+        }
+        if (0xFE & enabled_chan) {
+          strncat(voltage, ",", sizeof(voltage));
+          strncat(current, ",", sizeof(voltage));
+          strncat(power, ",", sizeof(voltage));
+        }
       } // for channel
       ResponseAppend_P(PSTR(",\"%s\":{\"Id\":\"0x%02x\",\"" D_JSON_VOLTAGE "\":[%s],\"" D_JSON_CURRENT "\":[%s],\"" D_JSON_POWERUSAGE "\":[%s]}"),
                       name, Ina3221Data[device].i2caddr, voltage, current, power);
@@ -399,7 +405,7 @@ void Ina3221Show(bool json)
       for (int chan=0 ; enabled_chan ; chan++, enabled_chan>>=1) {
         if (0x01 & enabled_chan) {
           if (Ina3221count > 1)
-            snprintf_P(name, sizeof(name), PSTR("%s%c%d:%d"), INA3221_TYPE, IndexSeparator(), device, chan);
+            snprintf_P(name, sizeof(name), PSTR("%s%c%d:%d"), INA3221_TYPE, IndexSeparator(), device +1, chan);
           else
             snprintf_P(name, sizeof(name), PSTR("%s:%d"), INA3221_TYPE, chan);
           dtostrfd(Ina3221Data[device].chan[chan].voltage, Settings->flag2.voltage_resolution, voltage);
