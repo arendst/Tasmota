@@ -64,14 +64,16 @@
  * Example using default Energy registers:
  * rule3 on file#modbus do {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A} endon
  * rule3 on file#modbus do {"Name":"SDM230 with hex registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0x0000,"Current":0x0006,"Power":0x000C,"ApparentPower":0x0012,"ReactivePower":0x0018,"Factor":0x001E,"Frequency":0x0046,"Total":0x0156,"ExportActive":0x004A} endon
- * rule3 on file#modbus do {"Name":"SDM72","Baud":9600,"Config":8N1","Address":0x01,"Function":0x04,"Power":0x0034,"Total":0x0156,"ExportActive":0x004A,"User":[{"R":0x0502,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x0502,"J":"ExportPower","G":"Export Power","U":"W","D":23},{"R":0x0500,"J":"ImportPower","G":"Import Power","U":"W","D":23}]} endon
+ * rule3 on file#modbus do {"Name":"DDSU666","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":0x2000,"Current":0x2002,"Power":0x2004,"ReactivePower":0x2006,"Factor":0x200A,"Frequency":0x200E,"Total":0x4000,"ExportActive":0x400A} endon
  *
  * Example using default Energy registers and some user defined registers:
- * rule3 on file#modbus do {"Name":"SDM230 with one user register","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}} endon
+ * rule3 on file#modbus do {"Name":"SDM72","Baud":9600,"Config":8N1","Address":0x01,"Function":0x04,"Power":0x0034,"Total":0x0156,"ExportActive":0x004A,"User":[{"R":0x0502,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x0502,"J":"ExportPower","G":"Export Power","U":"W","D":23},{"R":0x0500,"J":"ImportPower","G":"Import Power","U":"W","D":23}]} endon
+ * rule3 on file#modbus do {"Name":"SDM120","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x0048,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x004C,"J":"ImportReactive","G":"Import Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM230 with two user registers","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"SDM630","Baud":9600,"Config":8N1","Address":1,"Function":4,"Voltage":[0,2,4],"Current":[6,8,10],"Power":[12,14,16],"ApparentPower":[18,20,22],"ReactivePower":[24,26,28],"Factor":[30,32,34],"Frequency":70,"Total":342,"ExportActive":[352,354,356],"User":{"R":[346,348,350],"J":"ImportActive","G":"Import Active","U":"kWh","D":24}} endon
  *
  * Note:
- * - To enter long rules using the serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 512
+ * - To enter long rules using the serial console and solve error "Serial buffer overrun" you might need to enlarge the serial input buffer with command serialbuffer 800
  * - Changes to rule file are only executed on restart
  *
  * Restrictions:
@@ -88,14 +90,18 @@
  * rule3 on file#modbus do {"Name":"SDM230 test3","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":[6,6,6],"Power":[12,12,12],"ApparentPower":[18,18,18],"ReactivePower":[24,24,24],"Factor":[30,30,30],"Frequency":70,"Total":[342,342,342]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test4","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
  * rule3 on file#modbus do {"Name":"SDM230 test5","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":[0,0,0],"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":[0x004E,0x004E,0x004E],"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":3},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
+ * rule3 on file#modbus do {"Name":"SDM120 test1","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A,"User":[{"R":0x0048,"J":"ImportActive","G":"Import Active","U":"kWh","D":24},{"R":0x004E,"J":"ExportReactive","G":"Export Reactive","U":"kVArh","D":24},{"R":0x004C,"J":"ImportReactive","G":"Import Reactive","U":"kVArh","D":24},{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}]} endon
 \*********************************************************************************************/
 
 #define XNRG_29                  29
 
-#define ENERGY_MODBUS_SPEED      9600     // default Modbus baudrate
-#define ENERGY_MODBUS_CONFIG     TS_SERIAL_8N1
-#define ENERGY_MODBUS_ADDR       1        // default Modbus device_address
-#define ENERGY_MODBUS_FUNC       0x04     // default Modbus function code
+#define ENERGY_MODBUS_SPEED      9600           // Default Modbus baudrate
+#define ENERGY_MODBUS_CONFIG     TS_SERIAL_8N1  // Default Modbus serial configuration
+#define ENERGY_MODBUS_ADDR       1              // Default Modbus device_address
+#define ENERGY_MODBUS_FUNC       0x04           // Default Modbus function code
+
+#define ENERGY_MODBUS_UNITS      ""             // Default user GUI unit
+#define ENERGY_MODBUS_DECIMALS   0              // Default user decimal resolution
 
 //#define ENERGY_MODBUS_DEBUG
 //#define ENERGY_MODBUS_DEBUG_SHOW
@@ -136,6 +142,8 @@ const char kEnergyModbusValues[] PROGMEM = D_JSON_VOLTAGE "|"              // Vo
 
 #include <TasmotaModbus.h>
 TasmotaModbus *EnergyModbus;
+#include <Ticker.h>
+Ticker ticker_energy_modbus;
 
 struct NRGMODBUS {
   uint32_t serial_bps;
@@ -164,14 +172,16 @@ NrgModbusUser_t* NrgModbusUser = nullptr;
 
 void EnergyModbusLoop(void) {
   if (NrgModbus->mutex) { return; }
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: EnergyModbusLoop() entry"));
+
   NrgModbus->mutex = 1;
 
   uint16_t register_address;
   bool data_ready = EnergyModbus->ReceiveReady();
 
   if (data_ready) {
-    uint8_t buffer[14];  // At least 5 + (2 * 2) = 9
-
+    uint8_t buffer[9];  // At least 5 + (2 * 2) = 9
     uint32_t error = EnergyModbus->ReceiveBuffer(buffer, 2);
 
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Modbus register %d, phase %d, rcvd %*_H"),
@@ -244,10 +254,10 @@ void EnergyModbusLoop(void) {
 
       do {
         NrgModbus->phase++;
-        if (NrgModbus->phase == Energy.phase_count) {
+        if (NrgModbus->phase >= Energy.phase_count) {
           NrgModbus->phase = 0;
           NrgModbus->state++;
-          if (NrgModbus->state == NRG_MBS_MAX_REGS + NrgModbus->user_adds) {
+          if (NrgModbus->state >= NRG_MBS_MAX_REGS + NrgModbus->user_adds) {
             NrgModbus->state = 0;
             NrgModbus->phase = 0;
             EnergyUpdateTotal();                 // update every cycle after all registers have been read
@@ -262,14 +272,23 @@ void EnergyModbusLoop(void) {
   } // end data ready
 
   if (0 == NrgModbus->retry || data_ready) {
-    NrgModbus->retry = 5;
+    NrgModbus->retry = 1;
     register_address = (NrgModbus->state < NRG_MBS_MAX_REGS) ? NrgModbus->register_address[NrgModbus->state][NrgModbus->phase] :
                                                                NrgModbusUser[NrgModbus->state - NRG_MBS_MAX_REGS].register_address[NrgModbus->phase];
     EnergyModbus->Send(NrgModbus->device_address, NrgModbus->function, register_address, 2);
   } else {
     NrgModbus->retry--;
+
+#ifdef ENERGY_MODBUS_DEBUG
+    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Modbus state %d retry %d"), NrgModbus->state, NrgModbus->retry);
+#endif
+
   }
+  delay(0);
   NrgModbus->mutex = 0;
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: EnergyModbusLoop() exit"));
+
 }
 
 #ifdef USE_RULES
@@ -283,7 +302,7 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
     for (auto value : address_arr) {
       NrgModbusUser[add_index].register_address[phase] = value.getUInt();
       phase++;
-      if (phase == ENERGY_MAX_PHASES) { break; }
+      if (phase >= ENERGY_MAX_PHASES) { break; }
     }
   } else if (val) {
     NrgModbusUser[add_index].register_address[0] = val.getUInt();
@@ -306,17 +325,15 @@ bool EnergyModbusReadUserRegisters(JsonParserObject user_add_value, uint32_t add
   } else {
     return false;
   }
+  NrgModbusUser[add_index].gui_unit = ENERGY_MODBUS_UNITS;
   val = user_add_value[PSTR("U")];               // GUI value Unit
   if (val) {
     NrgModbusUser[add_index].gui_unit = val.getStr();
-  } else {
-    return false;
   }
+  NrgModbusUser[add_index].resolution = ENERGY_MODBUS_DECIMALS;
   val = user_add_value[PSTR("D")];               // Decimal resolution
   if (val) {
     NrgModbusUser[add_index].resolution = val.getUInt();
-  } else {
-    return false;
   }
 
 #ifdef ENERGY_MODBUS_DEBUG
@@ -398,7 +415,7 @@ bool EnergyModbusReadRegisters(void) {
         for (auto value : arr) {
           NrgModbus->register_address[names][phase] = value.getUInt();
           phase++;
-          if (phase == ENERGY_MAX_PHASES) { break; }
+          if (phase >= ENERGY_MAX_PHASES) { break; }
         }
       } else if (val) {
         NrgModbus->register_address[names][0] = val.getUInt();
@@ -464,17 +481,20 @@ bool EnergyModbusReadRegisters(void) {
           if (EnergyModbusReadUserRegisters(user_add_values.getObject(), add_index)) {
             add_index++;
           } else {
+            AddLog(LOG_LEVEL_INFO, PSTR("NRG: Dropped JSON user input %d"), add_index +1);
             NrgModbus->user_adds--;
           }
         }
       } else if (val) {
         if (val.isObject()) {
           if (!EnergyModbusReadUserRegisters(val.getObject(), 0)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("NRG: Dropped JSON user input"));
             NrgModbus->user_adds--;
           }
         }
       }
     } else {
+      // Unable to allocate variables on heap
       NrgModbus->user_adds = 0;
     }
   }
@@ -505,6 +525,7 @@ void EnergyModbusSnsInit(void) {
     uint8_t result = EnergyModbus->Begin(NrgModbus->serial_bps, NrgModbus->serial_config);
     if (result) {
       if (2 == result) { ClaimSerial(); }
+      ticker_energy_modbus.attach_ms(150, EnergyModbusLoop);
       return;
     }
   }
@@ -609,9 +630,12 @@ bool Xnrg29(uint8_t function) {
   bool result = false;
 
   switch (function) {
-    case FUNC_EVERY_200_MSECOND:
+/*
+    case FUNC_EVERY_200_MSECOND:     // Energy ticker interrupt
+//    case FUNC_EVERY_250_MSECOND:     // Tasmota dispatcher
       EnergyModbusLoop();
       break;
+*/
     case FUNC_JSON_APPEND:
       EnergyModbusShow(1);
       break;
