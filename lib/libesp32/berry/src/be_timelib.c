@@ -37,6 +37,7 @@ static int m_dump(bvm *vm)
         time_insert(vm, "min", t->tm_min);
         time_insert(vm, "sec", t->tm_sec);
         time_insert(vm, "weekday", t->tm_wday);
+        time_insert(vm, "epoch", ts);
         be_pop(vm, 1);
         be_return(vm);
     }
