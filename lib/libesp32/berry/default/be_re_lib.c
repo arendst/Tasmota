@@ -67,6 +67,7 @@ const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbo
 
   int sub_els = (code->sub + 1) * 2;
   const char *sub[sub_els];
+  memset(sub, 0, sub_els * sizeof sub[0]);
 
   if (!re1_5_recursiveloopprog(code, &subj, sub, sub_els, is_anchored)) {
     be_pushnil(vm);
@@ -74,12 +75,13 @@ const char *be_re_match_search_run(bvm *vm, ByteProg *code, const char *hay, bbo
   }
 
   be_newobject(vm, "list");
-  int k;
-  for(k = sub_els; k > 0; k--)
-    if(sub[k-1])
-      break;
+  int k = sub_els;
   for (int i = 0; i < k; i += 2) {
+    if (sub[i] == nil || sub[i+1] == nil) {
+      be_pushnil(vm);
+    } else {
     be_pushnstring(vm, sub[i], sub[i+1] - sub[i]);
+    }
     be_data_push(vm, -2);
     be_pop(vm, 1);
   }
