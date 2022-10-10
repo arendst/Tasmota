@@ -461,6 +461,8 @@ void setup(void) {
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
+  TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
+//  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
   TasConsole.begin(115200);    // Will always be 115200 bps
 #if !ARDUINO_USB_MODE
   USB.begin();                 // This needs a serial console with DTR/DSR support
