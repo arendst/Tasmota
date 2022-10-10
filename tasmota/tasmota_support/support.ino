@@ -1994,11 +1994,19 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 }
 
 void ClaimSerial(void) {
+#ifdef ESP32
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#ifdef USE_USB_CDC_CONSOLE
+  return;              // USB console does not use serial
+#endif  // USE_USB_CDC_CONSOLE
+#endif  // ESP32C3, S2 or S3
+#endif  // ESP32
   TasmotaGlobal.serial_local = true;
   AddLog(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   TasmotaGlobal.baudrate = GetSerialBaudrate();
   Settings->baudrate = TasmotaGlobal.baudrate / 300;
+
 }
 
 void SerialSendRaw(char *codes)
