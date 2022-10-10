@@ -200,6 +200,7 @@ bool Ina3221SetConfig(uint8_t addr)
   return true;
 }
 
+#ifdef USE_DEEPSLEEP
 bool Ina3221PowerDown(uint8_t device)
 {
   uint8_t addr = Ina3221Data[device].i2caddr;
@@ -212,6 +213,7 @@ bool Ina3221PowerDown(uint8_t device)
 
   return true;
 }
+#endif
 
 void Ina3221SetShunt(uint8_t device, uint8_t channel, float shunt)
 {
@@ -222,36 +224,29 @@ void Ina3221SetShunt(uint8_t device, uint8_t channel, float shunt)
     Ina3221Data[device].enabled_chan &= ~(1<<channel);
 }
 
-float Ina3221GetShuntVoltage(uint8_t device, uint8_t channel)
-{
-  uint8_t addr = Ina3221Data[device].i2caddr;
-  // raw shunt voltage (16-bit signed integer, so +-32767)
-  int16_t shunt_voltage = I2cReadS16(addr, INA3221_REG_SHUNT_VOLTAGE_CH(channel));
-  DEBUG_SENSOR_LOG(D_INA3221 ":GetShuntVoltage: RegSh[%d:%d](0x%02X) = 0x%04X = %d", device, channel, INA3221_REG_SHUNT_VOLTAGE_CH(channel), shunt_voltage, shunt_voltage);
-  // convert to shunt voltage in V
-  return INA3221C_SHUNT_ADC_LSB * (float)(shunt_voltage >> 3);
-}
-
-float Ina3221GetBusVoltage(uint8_t device, uint8_t channel)
-{
-  uint8_t addr = Ina3221Data[device].i2caddr;
-  int16_t bus_voltage = I2cReadS16(addr, INA3221_REG_BUS_VOLTAGE_CH(channel));
-  DEBUG_SENSOR_LOG(D_INA3221 ":GetBusVoltage: RegVBus[%d:%d](0x%02X) = 0x%04X = %d", device, channel, INA3221_REG_BUS_VOLTAGE_CH(channel), bus_voltage, bus_voltage);
-  // Convert to VBus voltage in V
-  return  INA3221C_BUS_ADC_LSB * (float)(bus_voltage >> 3);
-}
-
 bool Ina3221Read(uint8_t device, uint8_t channel)
 {
-  Ina3221Data[device].chan[channel].voltage = Ina3221GetBusVoltage(device, channel);
-  if (Ina3221Data[device].chan[channel].shunt > 0.0)
-    Ina3221Data[device].chan[channel].current = Ina3221GetShuntVoltage(device, channel) / Ina3221Data[device].chan[channel].shunt;
-  else
-    Ina3221Data[device].chan[channel].current = INFINITY;
+  uint8_t addr = Ina3221Data[device].i2caddr;
+  int16_t bus_voltage, shunt_voltage;
+  struct INA3221_Channel_Data *pChannel = &Ina3221Data[device].chan[channel];
+
+  bus_voltage = I2cReadS16(addr, INA3221_REG_BUS_VOLTAGE_CH(channel));
+  DEBUG_SENSOR_LOG(D_INA3221 ":GetBusVoltage: RegVBus[%d:%d](0x%02X) = 0x%04X = %d", device, channel, INA3221_REG_BUS_VOLTAGE_CH(channel), bus_voltage, bus_voltage);
+  // Convert to VBus voltage in V
+  pChannel->voltage = INA3221C_BUS_ADC_LSB * (float)(bus_voltage >> 3);
+
+  if (pChannel->shunt > 0.0) {
+    shunt_voltage = I2cReadS16(addr, INA3221_REG_SHUNT_VOLTAGE_CH(channel));
+    DEBUG_SENSOR_LOG(D_INA3221 ":GetShuntVoltage: RegSh[%d:%d](0x%02X) = 0x%04X = %d", device, channel, INA3221_REG_SHUNT_VOLTAGE_CH(channel), shunt_voltage, shunt_voltage);
+    // convert to shunt voltage in V
+    pChannel->current = INA3221C_SHUNT_ADC_LSB * (float)(shunt_voltage >> 3) / pChannel->shunt;
+  } else {
+    pChannel->current = INFINITY;
+  }
 
   #ifdef DEBUG_TASMOTA_SENSOR
-  dtostrfd(Ina3221Data[device].chan[channel].voltage,5,_ina3221_dbg1);
-  dtostrfd(Ina3221Data[device].chan[channel].current,5,_ina3221_dbg2);
+  dtostrfd(pChannel->voltage,5,_ina3221_dbg1);
+  dtostrfd(pChannel->current,5,_ina3221_dbg2);
   DEBUG_SENSOR_LOG(D_INA3221 ":Read[%d:%d]: V=%sV, I=%sA", device, channel, _ina3221_dbg1, _ina3221_dbg2);
   #endif
 
