@@ -181,7 +181,7 @@ bool Ina3221SetConfig(uint8_t addr)
       || (manufacturer_id != INA3221_MANUFACTURER_ID)
       || !I2cValidRead16(&die_id, addr, INA3221_REG_DIE_ID)
       || (die_id != INA3221_DIE_ID)) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_INA3221 ":Skipping device at addr:0x%02X is not an " D_INA3221), addr);
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_INA3221 ":Skipping device at addr:0x%02X not an " D_INA3221), addr);
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_INA3221 ":SetConfig: manId=0x%04X, dieId=0x%04X"), manufacturer_id, die_id);
         return false;
       }
