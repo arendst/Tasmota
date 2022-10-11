@@ -407,7 +407,7 @@ int NimBLEDevice::getPower(esp_ble_power_type_t powerType) {
         case ESP_PWR_LVL_N6:
             return -6;
         case ESP_PWR_LVL_N3:
-            return -6;
+            return -3;
         case ESP_PWR_LVL_N0:
             return 0;
         case ESP_PWR_LVL_P3:
