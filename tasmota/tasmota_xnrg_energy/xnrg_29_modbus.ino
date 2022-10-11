@@ -108,7 +108,7 @@
 
 #define ENERGY_MODBUS_DECIMALS    0                    // Default user decimal resolution
 
-#define ENERGY_MODBUS_DEBUG
+//#define ENERGY_MODBUS_DEBUG
 //#define ENERGY_MODBUS_DEBUG_SHOW
 
 const uint16_t nrg_mbs_reg_not_used = 1;               // Odd number 1 is unused register
@@ -381,7 +381,7 @@ void EnergyModbusLoop(void) {
   if (TheoTest) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: EnergyModbusLoop() exit"));
   }
-*/  
+*/
 }
 
 #ifdef USE_RULES
