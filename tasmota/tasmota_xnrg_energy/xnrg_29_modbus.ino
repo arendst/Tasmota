@@ -28,29 +28,55 @@
  * {"Name":"SDM230","Baud":2400,"Config":8N1","Address":1,"Function":4,"Voltage":0,"Current":6,"Power":12,"ApparentPower":18,"ReactivePower":24,"Factor":30,"Frequency":70,"Total":342,"ExportActive":0x004A}
  * Modbus config parameters:
  *   Name          - Name of energy monitoring device
- *   Baud          - Baudrate of device modbus interface
+ *   Baud          - Baudrate of device modbus interface - optional. default is 9600
  *   Config        - Serial config parameters like 8N1 - 8 databits, No parity, 1 stop bit
- *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01))
- *   Function      - Modbus function code to access two registers
+ *   Address       - Modbus device address entered as decimal (1) or hexadecimal (0x01)) - optional default = 1
+ *   Function      - Modbus function code to access two registers - optional. default = 4
  * Tasmota default embedded register names:
- *   Voltage       - Voltage register entered as decimal or hexadecimal for one phase (0x0000) or up to three phases ([0x0000,0x0002,0x0004])
- *   Current       - Current register entered as decimal or hexadecimal for one phase (0x0006) or up to three phases ([0x0006,0x0008,0x000A])
- *   Power         - Active power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010])
- *   ApparentPower - Apparent power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010])
- *   ReactivePower - Reactive power register entered as decimal or hexadecimal for one phase (0x0018) or up to three phases ([0x0018,0x001A,0x001C])
- *   Factor        - Power factor register entered as decimal or hexadecimal for one phase (0x001E) or up to three phases ([0x001E,0x0020,0x0022])
- *   Frequency     - Frequency register entered as decimal or hexadecimal for one phase (0x0046) or up to three phases ([0x0046,0x0048,0x004A])
- *   Total         - Total active energy register entered as decimal or hexadecimal for one phase (0x0156) or up to three phases ([0x015A,0x015C,0x015E])
- *   ExportActive  - Export active energy register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *   Voltage       - Voltage register entered as decimal or hexadecimal for one phase (0x0000) or up to three phases ([0x0000,0x0002,0x0004]) or
+ *                   Additional defined parameters
+ *                   Value pair description:
+ *                   {"R":0,"T":0,"M":1}
+ *                   R - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *                   T - Datatype - optional. default is 0 - float:
+ *                       0 - float
+ *                       1 = 2-byte signed
+ *                       2 = 4-byte signed
+ *                       3 = 2-byte unsigned
+ *                       4 = 4-byte unsigned
+ *                   M - Divider allowing to devide the read register by 1, 10, 100, 1000 etc. - optional. default = 1
+ *   Current       - Current register entered as decimal or hexadecimal for one phase (0x0006) or up to three phases ([0x0006,0x0008,0x000A]) or
+ *                   See additional defines like voltage.
+ *   Power         - Active power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010]) or
+ *                   See additional defines like voltage.
+ *   ApparentPower - Apparent power register entered as decimal or hexadecimal for one phase (0x000C) or up to three phases ([0x000C,0x000E,0x0010]) or
+ *                   See additional defines like voltage.
+ *   ReactivePower - Reactive power register entered as decimal or hexadecimal for one phase (0x0018) or up to three phases ([0x0018,0x001A,0x001C]) or
+ *                   See additional defines like voltage.
+ *   Factor        - Power factor register entered as decimal or hexadecimal for one phase (0x001E) or up to three phases ([0x001E,0x0020,0x0022]) or
+ *                   See additional defines like voltage.
+ *   Frequency     - Frequency register entered as decimal or hexadecimal for one phase (0x0046) or up to three phases ([0x0046,0x0048,0x004A]) or
+ *                   See additional defines like voltage.
+ *   Total         - Total active energy register entered as decimal or hexadecimal for one phase (0x0156) or up to three phases ([0x015A,0x015C,0x015E]) or
+ *                   See additional defines like voltage.
+ *   ExportActive  - Export active energy register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164]) or
+ *                   See additional defines like voltage.
  * Optional user defined registers:
  *   User          - Additional user defined registers
  *                   Value pair description:
- *                   "User":{"R":0x0024,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}
+ *                   "User":{"R":0x0024,"T":0,"M":1,"J":"PhaseAngle","G":"Phase Angle","U":"Deg","D":2}
  *                   R - Modbus register entered as decimal or hexadecimal for one phase (0x0160) or up to three phases ([0x0160,0x0162,0x0164])
+ *                   T - Datatype - optional. default is 0 - float:
+ *                       0 - float
+ *                       1 = 2-byte signed
+ *                       2 = 4-byte signed
+ *                       3 = 2-byte unsigned
+ *                       4 = 4-byte unsigned
+ *                   M - Divider allowing to devide the read register by 1, 10, 100, 1000 etc. - optional. default = 1
  *                   J - JSON register name (preferrably without spaces like "PhaseAngle")
  *                   G - GUI register name
  *                   U - GUI unit name
- *                   D - Number of decimals for floating point presentation or a code correspondig to Tasmota resolution command settings:
+ *                   D - Number of decimals for floating point presentation (0 to 20) or a code correspondig to Tasmota resolution command settings:
  *                       21 - VoltRes (V)
  *                       22 - AmpRes (A)
  *                       23 - WattRes (W, VA, VAr)
@@ -108,6 +134,8 @@
 
 #define ENERGY_MODBUS_DECIMALS    0                    // Default user decimal resolution
 
+#define ENERGY_MODBUS_TICKER                           // Enable for ESP8266 when using softwareserial solving most modbus serial retries
+
 //#define ENERGY_MODBUS_DEBUG
 //#define ENERGY_MODBUS_DEBUG_SHOW
 
@@ -154,36 +182,11 @@ const char kEnergyModbusValues[] PROGMEM = D_JSON_VOLTAGE "|"              // Vo
 
 #include <TasmotaModbus.h>
 TasmotaModbus *EnergyModbus;
+
+#ifdef ENERGY_MODBUS_TICKER
 #include <Ticker.h>
 Ticker ticker_energy_modbus;
-/*
-struct NRGMODBUS {
-  uint32_t serial_bps;
-  uint32_t serial_config;
-  uint16_t register_divider[NRG_MBS_MAX_REGS];
-  uint16_t register_address[NRG_MBS_MAX_REGS][ENERGY_MAX_PHASES];
-  uint8_t register_datatype[NRG_MBS_MAX_REGS];
-  uint8_t device_address;
-  uint8_t function;
-  uint8_t user_adds;
-  uint8_t phase;
-  uint8_t state;
-  uint8_t retry;
-  bool mutex;
-} *NrgModbus = nullptr;
-
-typedef struct NRGMODBUSUSER {
-  float register_data[ENERGY_MAX_PHASES];
-  uint16_t register_divider;
-  uint16_t register_address[ENERGY_MAX_PHASES];
-  uint8_t register_datatype;
-  uint8_t resolution;
-  String json_name;
-  String gui_name;
-  String gui_unit;
-} NrgModbusUser_t;
-NrgModbusUser_t* NrgModbusUser = nullptr;
-*/
+#endif  // ENERGY_MODBUS_TICKER
 
 struct NRGMBSPARAM {
   uint32_t serial_bps;
@@ -203,7 +206,7 @@ typedef struct NRGMBSREGISTER {
   uint16_t divider;
   uint32_t datatype;
 } NrgMbsRegister_t;
-NrgMbsRegister_t* NrgMbsReg = nullptr;
+NrgMbsRegister_t *NrgMbsReg = nullptr;
 
 typedef struct NRGMBSUSER {
   float data[ENERGY_MAX_PHASES];
@@ -212,7 +215,7 @@ typedef struct NRGMBSUSER {
   char* gui_unit;
   uint32_t resolution;
 } NrgMbsUser_t;
-NrgMbsUser_t* NrgMbsUser = nullptr;
+NrgMbsUser_t *NrgMbsUser = nullptr;
 
 /*********************************************************************************************/
 
@@ -231,14 +234,11 @@ char* SetStr(const char* str) {
 /*********************************************************************************************/
 
 void EnergyModbusLoop(void) {
+#ifdef ENERGY_MODBUS_TICKER
+  if (NrgMbsParam.mutex || TasmotaGlobal.ota_state_flag) { return; }
+#else
   if (NrgMbsParam.mutex) { return; }
-
-/*
-  if (TheoTest) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: EnergyModbusLoop() entry"));
-  }
-*/
-
+#endif  // ENERGY_MODBUS_TICKER
   NrgMbsParam.mutex = 1;
 
   uint32_t register_count;
@@ -376,12 +376,6 @@ void EnergyModbusLoop(void) {
   }
   delay(0);
   NrgMbsParam.mutex = 0;
-
-/*
-  if (TheoTest) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: EnergyModbusLoop() exit"));
-  }
-*/
 }
 
 #ifdef USE_RULES
@@ -687,7 +681,11 @@ void EnergyModbusSnsInit(void) {
     uint8_t result = EnergyModbus->Begin(NrgMbsParam.serial_bps, NrgMbsParam.serial_config);
     if (result) {
       if (2 == result) { ClaimSerial(); }
+
+#ifdef ENERGY_MODBUS_TICKER
       ticker_energy_modbus.attach_ms(200, EnergyModbusLoop);
+#endif  // ENERGY_MODBUS_TICKER
+
       return;
     }
   }
@@ -793,12 +791,12 @@ bool Xnrg29(uint8_t function) {
   bool result = false;
 
   switch (function) {
-/*
-    case FUNC_EVERY_200_MSECOND:     // Energy ticker interrupt
-//    case FUNC_EVERY_250_MSECOND:     // Tasmota dispatcher
+#ifndef ENERGY_MODBUS_TICKER
+//    case FUNC_EVERY_200_MSECOND:     // Energy ticker interrupt
+    case FUNC_EVERY_250_MSECOND:     // Tasmota dispatcher
       EnergyModbusLoop();
       break;
-*/
+#endif  // No ENERGY_MODBUS_TICKER
     case FUNC_JSON_APPEND:
       EnergyModbusShow(1);
       break;
