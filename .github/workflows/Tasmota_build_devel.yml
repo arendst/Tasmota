@@ -66,7 +66,7 @@ jobs:
           pip install -U platformio
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: firmware
           path: ./build_output
@@ -91,7 +91,7 @@ jobs:
           pip install -U platformio
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: firmware
           path: ./build_output
