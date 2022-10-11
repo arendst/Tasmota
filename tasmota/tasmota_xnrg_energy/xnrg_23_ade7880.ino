@@ -738,7 +738,7 @@ const char HTTP_ADE7880_CURRENT[] PROGMEM = "{s}" D_CURRENT_NEUTRAL "{m}%s " D_U
 #endif  // USE_WEBSERVER
 
 void Ade7880Show(bool json) {
-  char value_chr[TOPSZ];
+  char value_chr[GUISZ];
 
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_NEUTRAL "\":%s"),
