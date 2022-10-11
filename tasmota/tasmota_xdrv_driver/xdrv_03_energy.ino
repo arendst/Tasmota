@@ -181,12 +181,12 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     }
   }
 #ifdef USE_ENERGY_COLUMN_GUI
-  ext_snprintf_P(result, TOPSZ *2, PSTR("</td>"));       // Skip first column
+  ext_snprintf_P(result, GUISZ, PSTR("</td>"));       // Skip first column
   if ((Energy.phase_count > 1) && single) {              // Need to set colspan so need new columns
     // </td><td colspan='3' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td colspan='5' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td colspan='7' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
-    ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+    ext_snprintf_P(result, GUISZ, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
       result, (Energy.phase_count *2) -1, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("center"), resolution, &input[0]);
   } else {
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
@@ -194,11 +194,11 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+      ext_snprintf_P(result, GUISZ, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
         result, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("left"), resolution, &input[i]);
     }
   }
-  ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td>"), result);
+  ext_snprintf_P(result, GUISZ, PSTR("%s<td>"), result);
 #else  // not USE_ENERGY_COLUMN_GUI
   uint32_t index = (single) ? 1 : Energy.phase_count;    // 1,2,3
   result[0] = '\0';
@@ -1166,9 +1166,9 @@ void EnergyShow(bool json) {
     energy_tariff = true;
   }
 
-  char value_chr[TOPSZ * 2];   // Used by EnergyFormatIndex
-  char value2_chr[TOPSZ * 2];
-  char value3_chr[TOPSZ * 2];
+  char value_chr[GUISZ];   // Used by EnergyFormatIndex
+  char value2_chr[GUISZ];
+  char value3_chr[GUISZ];
 
   if (json) {
     bool show_energy_period = (0 == TasmotaGlobal.tele_period);
