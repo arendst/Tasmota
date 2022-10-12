@@ -1,6 +1,7 @@
 #include "CRtspSession.h"
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 CRtspSession::CRtspSession(SOCKET aRtspClient, CStreamer * aStreamer) : m_RtspClient(aRtspClient),m_Streamer(aStreamer)
 {
@@ -47,6 +48,8 @@ bool CRtspSession::ParseRtspRequest(char const * aRequest, unsigned aRequestSize
     char * TmpPtr;
     char CP[128]; //static char CP[1024];
     char * pCP;
+    int Length;
+
 
     ClientPortPtr = strstr(CurRequest,"client_port");
     if (ClientPortPtr != nullptr)
@@ -55,7 +58,12 @@ bool CRtspSession::ParseRtspRequest(char const * aRequest, unsigned aRequestSize
         if (TmpPtr != nullptr)
         {
             TmpPtr[0] = 0x00;
-            strcpy(CP,ClientPortPtr);
+            Length = strlen(ClientPortPtr);
+            if (Length > 128)
+            {
+                Length = 128;
+            }
+            strncpy(CP,ClientPortPtr, Length);
             pCP = strstr(CP,"=");
             if (pCP != nullptr)
             {
