@@ -24,11 +24,20 @@
  * ADE7953 - Energy used in Shelly 2.5 (model 0), Shelly EM (model 1) and Shelly Plus 2PM (model 2)
  *
  * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
- * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,0,1],"FLAG":0,"BASE":18}
+ * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
  * {"NAME":"Shelly Plus 2PM PCB v0.1.5","GPIO":[320,0,192,0,0,0,1,1,225,224,0,0,0,0,193,0,0,0,0,0,0,608,3840,32,0,0,0,0,0,640,0,0,3458,4736,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,32000,40000,3350"}
  * {"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}
  *
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
+ *
+ * Model differences:
+ * Function                        Model1  Model2  Model3
+ * ------------------------------  ------  ------  -------
+ * Shelly                          2.5     EM      Plus2PM
+ * Swapped channel A/B             Yes     No      No
+ * Show negative (reactive) power  No      Yes     No
+ * Default phasecal                0       200     0
+ * Default reset pin on ESP8266    -       16      -
  *
  * I2C Address: 0x38
  *********************************************************************************************
@@ -378,30 +387,20 @@ void Ade7953GetData(void) {
       Ade7953.period = value;       // Period
     } else if (10 == i) {
       acc_mode = value;             // Accumulation mode
-/*
-      if (ADE7953_SHELLY_25 == Ade7953.model) {     // Shelly 2.5 - Swap channel B values due to hardware connection
-//        if (acc_mode & APSIGN[0]) { acc_mode &= ~APSIGN[0]; } else { acc_mode |= APSIGN[0]; }
-//        if (acc_mode & VARSIGN[0]) { acc_mode &= ~VARSIGN[0]; } else { acc_mode |= VARSIGN[0]; }
-        acc_mode ^= (APSIGN[0] | VARSIGN[0]);
-//        acc_mode ^= 0xA00;
-      }
-*/
     } else {
-      reg[i >> 2][i &3] = value;
+      reg[i >> 2][i &3] = value;    // IRMS, WATT, VA, VAR
     }
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d], 0x%06X"),
-    Ade7953.voltage_rms, Ade7953.period,
-    reg[0][0], reg[0][1], reg[0][2], reg[0][3],   // IRMS, WATT, VA, VAR
-    reg[1][0], reg[1][1], reg[1][2], reg[1][3],   // IRMS, WATT, VA, VAR
-    acc_mode);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
+    acc_mode, Ade7953.voltage_rms, Ade7953.period,
+    reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
 
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
   for (uint32_t channel = 0; channel < 2; channel++) {
     Ade7953.current_rms[channel] = reg[channel][0];
-    if (Ade7953.current_rms[channel] < 2000) {           // No load threshold (20mA)
+    if (Ade7953.current_rms[channel] < 2000) {    // No load threshold (20mA)
       Ade7953.current_rms[channel] = 0;
       Ade7953.active_power[channel] = 0;
     } else {
@@ -410,13 +409,6 @@ void Ade7953GetData(void) {
       reactive_power[channel] = ((acc_mode & VARNLOAD[channel]) != 0) ? 0 : abs(reg[channel][3]);
     }
   }
-
-  uint32_t current_rms_sum = Ade7953.current_rms[0] + Ade7953.current_rms[1];
-
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: U %d, C %d, I %d + %d = %d, P %d + %d"),
-    Ade7953.voltage_rms, Ade7953.period,
-    Ade7953.current_rms[0], Ade7953.current_rms[1], current_rms_sum,
-    Ade7953.active_power[0], Ade7953.active_power[1]);
 
   if (Energy.power_on) {  // Powered on
     float divider = (Ade7953.calib_data[ADE7953_CAL_AVGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : Settings->energy_voltage_calibration;
