@@ -225,13 +225,13 @@ const uint16_t Ade7953RegistersAis1Bis2[] {
 
 // Active power
 const uint16_t APSIGN[] {
-  0x800, //Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
-  0x400  //Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+  0x0400, //Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x0800  //Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
 };
 // Reactive power
 const uint16_t VARSIGN[] {
-  0x200, //Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
-  0x100  //Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+  0x1000, //Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x2000  //Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
 };
 
 struct Ade7953 {

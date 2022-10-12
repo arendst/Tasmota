@@ -149,6 +149,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Button debouncing V3 by adopting switch debounce code [#16339](https://github.com/arendst/Tasmota/issues/16339)
 - Thermostat max allowed temperature from 100 to 200C [#16363](https://github.com/arendst/Tasmota/issues/16363)
 - Using command ``SerialBuffer`` raise max allowed buffer size to 2048 characters [#16374](https://github.com/arendst/Tasmota/issues/16374)
+- Swap Shelly EM internal channels A and B to match P1 and P2 [#16486](https://github.com/arendst/Tasmota/issues/16486)
 - Zigbee report unprocessed attributes
 - ESP32 Increase number of button GPIOs from 8 to 28 [#16518](https://github.com/arendst/Tasmota/issues/16518)
 - ESP32 Platformio one Platform for all Tasmota frameworks Core32 2.0.5 [#16644](https://github.com/arendst/Tasmota/issues/16644)

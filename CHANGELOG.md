@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 ### Removed
+- Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
 
 ## [12.1.1.4] 20221012
 ### Added
@@ -25,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 LVGL library from v8.3.0 to v8.3.2
 - Increase serial console fixed input buffer size from 520 to 800
+- Swap Shelly EM internal channels A and B to match P1 and P2 (#16486)
 
 ## [12.1.1.3] 20221003
 ### Added
