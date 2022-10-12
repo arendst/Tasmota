@@ -268,8 +268,7 @@ typedef union {
     uint32_t spare25 : 1;                  // bit 25
     uint32_t spare26 : 1;                  // bit 26
     uint32_t spare27 : 1;                  // bit 27
-    uint32_t spare28 : 1;                  // bit 28
-    uint32_t spare29 : 1;                  // bit 29
+    uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) - 
     uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
   };
 } SysMBitfield2;

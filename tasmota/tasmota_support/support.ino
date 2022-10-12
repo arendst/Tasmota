@@ -550,6 +550,17 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
+char* SetStr(const char* str) {
+  if (nullptr == str) { str = PSTR(""); }       // nullptr is considered empty string
+  size_t str_len = strlen(str);
+  if (0 == str_len) { return EmptyStr; }        // return empty string
+
+  char* new_str = (char*) malloc(str_len + 1);
+  if (nullptr == new_str) { return EmptyStr; }  // return empty string
+  strlcpy(new_str, str, str_len + 1);
+  return new_str;
+}
+
 bool StrCaseStr_P(const char* source, const char* search) {
   char case_source[strlen_P(source) +1];
   UpperCase_P(case_source, source);

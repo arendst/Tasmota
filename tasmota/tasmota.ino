@@ -226,6 +226,8 @@ bool tasconsole_serial = true;
 HardwareSerial TasConsole = Serial;         // Only serial interface
 #endif  // ESP32
 
+char EmptyStr[1] = { 0 };                   // Provide a pointer destination to an empty char string
+
 struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
   uint32_t baudrate;                        // Current Serial baudrate

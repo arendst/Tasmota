@@ -1214,6 +1214,10 @@ void SettingsDefaultSet2(void) {
   Settings->longitude = (int)((double)LONGITUDE * 1000000);
   SettingsResetStd();
   SettingsResetDst();
+//  if (DAWN_NORMAL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 0; }
+  if (DAWN_CIVIL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 1; }
+  else if (DAWN_NAUTIC == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 2; }
+  else if (DAWN_ASTRONOMIC == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 3; }
 
   Settings->button_debounce = KEY_DEBOUNCE_TIME;
   Settings->switch_debounce = SWITCH_DEBOUNCE_TIME;
@@ -1260,6 +1264,7 @@ void SettingsDefaultSet2(void) {
   Settings->flag4 = flag4;
   Settings->flag5 = flag5;
   Settings->flag6 = flag6;
+  Settings->mbflag2 = mbflag2;
 }
 
 void SettingsDefaultSet3(void) {
@@ -1581,6 +1586,12 @@ void SettingsDelta(void) {
       Settings->touch_threshold = ESP32_TOUCH_THRESHOLD;
     }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+    if (Settings->version < 0x0C010105) {  // 12.1.1.5
+ //  if (DAWN_NORMAL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle = 0; }
+      if (DAWN_CIVIL == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 1; }
+      else if (DAWN_NAUTIC == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 2; }
+      else if (DAWN_ASTRONOMIC == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 3; }
+    }
 
     Settings->version = VERSION;
     SettingsSave(1);

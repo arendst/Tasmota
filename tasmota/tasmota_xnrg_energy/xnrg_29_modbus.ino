@@ -219,20 +219,6 @@ NrgMbsUser_t *NrgMbsUser = nullptr;
 
 /*********************************************************************************************/
 
-char EmptyStr[1] = { 0 };
-
-char* SetStr(const char* str) {
-  if (nullptr == str) { str = PSTR(""); }  // nullptr is considered empty string
-  size_t str_len = strlen(str);
-  if (0 == str_len) { return EmptyStr; }   // return empty string
-
-  char* new_str = (char*) malloc(str_len + 1);
-  strlcpy(new_str, str, str_len + 1);
-  return new_str;
-}
-
-/*********************************************************************************************/
-
 void EnergyModbusLoop(void) {
 #ifdef ENERGY_MODBUS_TICKER
   if (NrgMbsParam.mutex || TasmotaGlobal.ota_state_flag) { return; }

@@ -203,7 +203,7 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
   uint32_t index = (single) ? 1 : Energy.phase_count;    // 1,2,3
   result[0] = '\0';
   for (uint32_t i = 0; i < index; i++) {
-    ext_snprintf_P(result, TOPSZ, PSTR("%s%s%*_f"), result, (i)?" / ":"", resolution, &input[i]);
+    ext_snprintf_P(result, GUISZ, PSTR("%s%s%*_f"), result, (i)?" / ":"", resolution, &input[i]);
   }
 #endif  // USE_ENERGY_COLUMN_GUI
   return result;

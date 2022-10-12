@@ -3,7 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.1.4]
+## [12.1.1.5]
+### Added
+- Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical (#16795)
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [12.1.1.4] 20221012
 ### Added
 - Support for Shelly Plus 2PM using template ``{"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}``
 - Zigbee Alexa/Hue emulation, support multiple switches on separate endpoints (#16718)
@@ -15,10 +25,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 LVGL library from v8.3.0 to v8.3.2
 - Increase serial console fixed input buffer size from 520 to 800
-
-### Fixed
-
-### Removed
 
 ## [12.1.1.3] 20221003
 ### Added

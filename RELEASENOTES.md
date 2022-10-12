@@ -116,11 +116,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``UrlFetch <url>`` to download a file to filesystem
 - Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
 - Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
+- Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical [#16795](https://github.com/arendst/Tasmota/issues/16795)
 - Support for Shelly Plus 2PM
 - Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)
 - Support for DFRobot SEN0390 V30B ambient light sensor [#16105](https://github.com/arendst/Tasmota/issues/16105)
 - Support for QMC5883L magnetic induction sensor by Helge Scheunemann [#16714](https://github.com/arendst/Tasmota/issues/16714)
+- Support for Modbus Energy Monitoring devices using a rule file. See ``xnrg_29_modbus.ino`` for more information
 - Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` [#16252](https://github.com/arendst/Tasmota/issues/16252)
 - Zigbee basic support for Green Power [#16407](https://github.com/arendst/Tasmota/issues/16407)
 - Zigbee friendly names per endpoint
@@ -143,6 +145,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
 - ESP32 LVGL library from v8.3.0 to v8.3.2
 - ESP32 Tasmota Core32 from 2.0.4.1 to 2.0.5
+- Increase serial console input buffer size from 520 to 800
 - Button debouncing V3 by adopting switch debounce code [#16339](https://github.com/arendst/Tasmota/issues/16339)
 - Thermostat max allowed temperature from 100 to 200C [#16363](https://github.com/arendst/Tasmota/issues/16363)
 - Using command ``SerialBuffer`` raise max allowed buffer size to 2048 characters [#16374](https://github.com/arendst/Tasmota/issues/16374)
