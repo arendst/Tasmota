@@ -225,13 +225,17 @@ const uint16_t Ade7953RegistersAis1Bis2[] {
 
 // Active power
 const uint16_t APSIGN[] {
-  0x0400, //Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
-  0x0800  //Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+  0x0400,    // Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x0800     // Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
 };
 // Reactive power
 const uint16_t VARSIGN[] {
-  0x1000, //Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
-  0x2000  //Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+  0x1000,    // Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
+  0x2000     // Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
+};
+const uint32_t VARNLOAD[] {
+  0x040000,  // Bit 18 (21 bits) in ACCMODE Register for channel A (0 - out of no-load, 1 - no-load)
+  0x200000   // Bit 21 (21 bits) in ACCMODE Register for channel B (0 - out of no-load, 1 - no-load)
 };
 
 struct Ade7953 {
@@ -386,10 +390,11 @@ void Ade7953GetData(void) {
       reg[i >> 2][i &3] = value;
     }
   }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, %d, [%d, %d, %d, %d], [%d, %d, %d, %d], 0x%06X"),
     Ade7953.voltage_rms, Ade7953.period,
     reg[0][0], reg[0][1], reg[0][2], reg[0][3],   // IRMS, WATT, VA, VAR
-    reg[1][0], reg[1][1], reg[1][2], reg[1][3]);  // IRMS, WATT, VA, VAR
+    reg[1][0], reg[1][1], reg[1][2], reg[1][3],   // IRMS, WATT, VA, VAR
+    acc_mode);
 
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
@@ -402,7 +407,7 @@ void Ade7953GetData(void) {
     } else {
       Ade7953.active_power[channel] = abs(reg[channel][1]);
       apparent_power[channel] = abs(reg[channel][2]);
-      reactive_power[channel] = abs(reg[channel][3]);
+      reactive_power[channel] = ((acc_mode & VARNLOAD[channel]) != 0) ? 0 : abs(reg[channel][3]);
     }
   }
 
