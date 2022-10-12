@@ -2399,7 +2399,7 @@ void TuyaSensorsShow(bool json)
             WSContentSend_PD(HTTP_SNS_GAS, "", pTuya->Sensors[8]);
             break;
           case 80:
-            WSContentSend_PD(PSTR("{s}" D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"), Tuya.Sensors[9]);
+            WSContentSend_PD(PSTR("{s}" D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"), pTuya->Sensors[9]);
             break;
           case 81:
           case 82:
