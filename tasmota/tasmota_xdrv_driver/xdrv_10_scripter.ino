@@ -4769,7 +4769,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto strexit;
         }
         if (!strncmp(vname, "topic", 5)) {
-          if (sp) strlcpy(sp, SettingsText(SET_MQTT_TOPIC), glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp, TasmotaGlobal.mqtt_topic, glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_SCRIPT_TIMER
