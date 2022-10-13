@@ -21,7 +21,7 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_ADE7953
 /*********************************************************************************************\
- * ADE7953 - Energy used in Shelly 2.5 (model 0), Shelly EM (model 1) and Shelly Plus 2PM (model 2)
+ * ADE7953 - Energy used in Shelly 2.5 (model 1), Shelly EM (model 2) and Shelly Plus 2PM (model 3)
  *
  * {"NAME":"Shelly 2.5","GPIO":[320,0,32,0,224,193,0,0,640,192,608,225,3456,4736],"FLAG":0,"BASE":18}
  * {"NAME":"Shelly EM","GPIO":[0,0,0,0,0,0,0,0,640,3457,608,224,8832,1],"FLAG":0,"BASE":18}
@@ -31,13 +31,15 @@
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
  * Model differences:
- * Function                        Model1  Model2  Model3
- * ------------------------------  ------  ------  -------
+ * Function                        Model1  Model2  Model3   Remark
+ * ------------------------------  ------  ------  -------  -------------------------------------------------
  * Shelly                          2.5     EM      Plus2PM
- * Swapped channel A/B             Yes     No      No
- * Show negative (reactive) power  No      Yes     No
- * Default phasecal                0       200     0
- * Default reset pin on ESP8266    -       16      -
+ * Current measurement device      shunt   CT      shunt    CT = Current Transformer
+ * Swapped channel A/B             Yes     No      No       Defined by hardware design - Fixed by Tasmota
+ * Support Export Active           No      Yes     No       Only EM supports correct negative value detection
+ * Show negative (reactive) power  No      Yes     No       Only EM supports correct negative value detection
+ * Default phase calibration       0       200     0        CT needs different phase calibration than shunts
+ * Default reset pin on ESP8266    -       16      -        Legacy support. Replaced by GPIO ADE7953RST
  *
  * I2C Address: 0x38
  *********************************************************************************************
@@ -202,23 +204,7 @@ const uint16_t Ade7953CalibRegs[] {
   ADE7943_PHCALB
 };
 
-// 24-bit data registers Shelly 2.5
-const uint16_t Ade7953RegistersAis2Bis1[] {
-  ADE7953_IRMSB,   // IRMSB - RMS current channel B (Relay 1)
-  ADE7953_BWATT,   // BWATT - Active power channel B
-  ADE7953_BVA,     // BVA - Apparent power channel B
-  ADE7953_BVAR,    // BVAR - Reactive power channel B
-  ADE7953_IRMSA,   // IRMSA - RMS current channel A (Relay 2)
-  ADE7953_AWATT,   // AWATT - Active power channel A
-  ADE7953_AVA,     // AVA - Apparent power channel A
-  ADE7953_AVAR,    // AVAR - Reactive power channel A
-  ADE7953_VRMS,    // VRMS - RMS voltage (Both relays)
-  ADE7943_Period,  // Period - 16-bit unsigned period register
-  ADE7953_ACCMODE  // ACCMODE - Accumulation mode
-};
-
-// 24-bit data registers Shelly EM and Plus 2PM
-const uint16_t Ade7953RegistersAis1Bis2[] {
+const uint16_t Ade7953Registers[] {
   ADE7953_IRMSA,   // IRMSA - RMS current channel A
   ADE7953_AWATT,   // AWATT - Active power channel A
   ADE7953_AVA,     // AVA - Apparent power channel A
@@ -232,21 +218,6 @@ const uint16_t Ade7953RegistersAis1Bis2[] {
   ADE7953_ACCMODE  // ACCMODE - Accumulation mode
 };
 
-// Active power
-const uint16_t APSIGN[] {
-  0x0400,    // Bit 10 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
-  0x0800     // Bit 11 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
-};
-// Reactive power
-const uint16_t VARSIGN[] {
-  0x1000,    // Bit 12 (21 bits) in ACCMODE Register for channel A (0 - positive, 1 - negative)
-  0x2000     // Bit 13 (21 bits) in ACCMODE Register for channel B (0 - positive, 1 - negative)
-};
-const uint32_t VARNLOAD[] {
-  0x040000,  // Bit 18 (21 bits) in ACCMODE Register for channel A (0 - out of no-load, 1 - no-load)
-  0x200000   // Bit 21 (21 bits) in ACCMODE Register for channel B (0 - out of no-load, 1 - no-load)
-};
-
 struct Ade7953 {
   uint32_t voltage_rms = 0;
   uint32_t period = 0;
@@ -254,7 +225,7 @@ struct Ade7953 {
   uint32_t active_power[2] = { 0, 0 };
   int32_t calib_data[sizeof(Ade7953CalibRegs)/sizeof(uint16_t)];
   uint8_t init_step = 0;
-  uint8_t model = 0;          // 0 = Shelly 2.5, 1 = Shelly EM
+  uint8_t model = 0;                              // 0 = Shelly 2.5, 1 = Shelly EM, 2 = Shelly Plus 2PM
 } Ade7953;
 
 int Ade7953RegSize(uint16_t reg) {
@@ -281,10 +252,10 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
     Wire.write((reg >> 8) & 0xFF);
     Wire.write(reg & 0xFF);
     while (size--) {
-      Wire.write((val >> (8 * size)) & 0xFF);  // Write data, MSB first
+      Wire.write((val >> (8 * size)) & 0xFF);     // Write data, MSB first
     }
     Wire.endTransmission();
-    delayMicroseconds(5);    // Bus-free time minimum 4.7us
+    delayMicroseconds(5);                         // Bus-free time minimum 4.7us
   }
 }
 
@@ -344,15 +315,15 @@ void Ade7953Init(void) {
   Ade7953DumpRegs();
 #endif  // ADE7953_DUMP_REGS
 
-  Ade7953Write(ADE7953_CONFIG, 0x0004);    // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
-  Ade7953Write(0x0FE, 0x00AD);             // Unlock register 0x120
-  Ade7953Write(0x120, 0x0030);             // Configure optimum setting
+  Ade7953Write(ADE7953_CONFIG, 0x0004);           // Locking the communication interface (Clear bit COMM_LOCK), Enable HPF
+  Ade7953Write(0x0FE, 0x00AD);                    // Unlock register 0x120
+  Ade7953Write(0x120, 0x0030);                    // Configure optimum setting
 
   for (uint32_t i = 0; i < sizeof(Ade7953CalibRegs)/sizeof(uint16_t); i++) {
     if (i >= ADE7943_CAL_PHCALA) {
       int16_t phasecal = Ade7953.calib_data[i];
       if (phasecal < 0) {
-        phasecal = abs(phasecal) + 0x200;  // Add sign magnitude
+        phasecal = abs(phasecal) + 0x200;         // Add sign magnitude
       }
       Ade7953Write(Ade7953CalibRegs[i], phasecal);
     } else {
@@ -364,8 +335,8 @@ void Ade7953Init(void) {
     regs[i] = Ade7953Read(Ade7953CalibRegs[i]);
     if (i >= ADE7943_CAL_PHCALA) {
       if (regs[i] >= 0x0200) {
-        regs[i] &= 0x01FF;                 // Clear sign magnitude
-        regs[i] *= -1;                     // Make negative
+        regs[i] &= 0x01FF;                        // Clear sign magnitude
+        regs[i] *= -1;                            // Make negative
       }
     }
   }
@@ -379,16 +350,17 @@ void Ade7953Init(void) {
 void Ade7953GetData(void) {
   uint32_t acc_mode;
   int32_t reg[2][4];
-  for (uint32_t i = 0; i < sizeof(Ade7953RegistersAis2Bis1)/sizeof(uint16_t); i++) {
-    int32_t value = Ade7953Read((ADE7953_SHELLY_25 == Ade7953.model) ? Ade7953RegistersAis2Bis1[i] : Ade7953RegistersAis1Bis2[i]);
+  for (uint32_t i = 0; i < sizeof(Ade7953Registers)/sizeof(uint16_t); i++) {
+    int32_t value = Ade7953Read(Ade7953Registers[i]);
     if (8 == i) {
-      Ade7953.voltage_rms = value;  // RMS voltage (Both relays)
+      Ade7953.voltage_rms = value;                // RMS voltage (both channels)
     } else if (9 == i) {
-      Ade7953.period = value;       // Period
+      Ade7953.period = value;                     // Period
     } else if (10 == i) {
-      acc_mode = value;             // Accumulation mode
+      acc_mode = value;                           // Accumulation mode
     } else {
-      reg[i >> 2][i &3] = value;    // IRMS, WATT, VA, VAR
+      uint32_t reg_index = i >> 2;                // 0 or 1
+      reg[(ADE7953_SHELLY_25 == Ade7953.model) ? !reg_index : reg_index][i &3] = value;  // IRMS, WATT, VA, VAR
     }
   }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: ACCMODE 0x%06X, VRMS %d, Period %d, IRMS %d, %d, WATT %d, %d, VA %d, %d, VAR %d, %d"),
@@ -407,13 +379,13 @@ void Ade7953GetData(void) {
       Ade7953.active_power[channel] = abs(reg[channel][1]);
       apparent_power[channel] = abs(reg[channel][2]);
       reactive_power[channel] = abs(reg[channel][3]);
-      if ((ADE7953_SHELLY_EM == Ade7953.model) && ((acc_mode & VARNLOAD[channel]) != 0)) {
+      if ((ADE7953_SHELLY_EM == Ade7953.model) && (bitRead(acc_mode, 18 +(channel * 3)))) {  // VARNLOAD
         reactive_power[channel] = 0;
       }
     }
   }
 
-  if (Energy.power_on) {  // Powered on
+  if (Energy.power_on) {                          // Powered on
     float divider = (Ade7953.calib_data[ADE7953_CAL_AVGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : Settings->energy_voltage_calibration;
     Energy.voltage[0] = (float)Ade7953.voltage_rms / divider;
     Energy.frequency[0] = 223750.0f / ((float)Ade7953.period + 1);
@@ -425,10 +397,10 @@ void Ade7953GetData(void) {
       divider = (Ade7953.calib_data[ADE7953_CAL_AVARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
-        if ((acc_mode & APSIGN[channel]) != 0) {
+        if (bitRead(acc_mode, 10 +channel)) {     // APSIGN
           Energy.active_power[channel] *= -1;
         }
-        if ((acc_mode & VARSIGN[channel]) != 0) {
+        if (bitRead(acc_mode, 12 +channel)) {     // VARSIGN
           Energy.reactive_power[channel] *= -1;
         }
       }
@@ -468,10 +440,10 @@ bool Ade7953SetDefaults(const char* json) {
   // {"angles":{"angle0":180,"angle1":176}}
   // {"rms":{"current_a":4194303,"current_b":4194303,"voltage":1613194},"angles":{"angle0":0,"angle1":0},"powers":{"totactive":{"a":2723574,"b":2723574},"apparent":{"a":2723574,"b":2723574},"reactive":{"a":2723574,"b":2723574}}}
   uint32_t len = strlen(json) +1;
-  if (len < 7) { return false; }          // Too short
+  if (len < 7) { return false; }                  // Too short
 
   char json_buffer[len];
-  memcpy(json_buffer, json, len);         // Keep original safe
+  memcpy(json_buffer, json, len);                 // Keep original safe
   JsonParser parser(json_buffer);
   JsonParserObject root = parser.getRootObject();
   if (!root) {
