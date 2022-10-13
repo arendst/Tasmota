@@ -345,10 +345,9 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_sscb_scl = Pin(GPIO_WEBCAM_SIOC);  // SIOC_GPIO_NUM;
     config.pin_pwdn = Pin(GPIO_WEBCAM_PWDN);       // PWDN_GPIO_NUM;
     config.pin_reset = Pin(GPIO_WEBCAM_RESET);    // RESET_GPIO_NUM;
-
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: User template"));
-  } else {
-    // defaults to AI THINKER
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Template pin config"));
+  } else if (Y2_GPIO_NUM != -1) {
+    // Modell is set in camera_pins.h
     config.pin_d0 = Y2_GPIO_NUM;
     config.pin_d1 = Y3_GPIO_NUM;
     config.pin_d2 = Y4_GPIO_NUM;
@@ -365,19 +364,22 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_sscb_scl = SIOC_GPIO_NUM;
     config.pin_pwdn = PWDN_GPIO_NUM;
     config.pin_reset = RESET_GPIO_NUM;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Default template"));
-  }
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Compile flag pin config"));
+  } else {
+    // no valid config found -> abort
+    AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: No pin config"));
+    return 0;
+}
 
   int32_t ledc_channel = analogAttach(config.pin_xclk);
   if (ledc_channel < 0) {
-    AddLog(LOG_LEVEL_ERROR, "CAM: cannot allocated ledc cahnnel, remove a PWM GPIO");
+    AddLog(LOG_LEVEL_ERROR, "CAM: cannot allocated ledc channel, remove a PWM GPIO");
   }
   config.ledc_channel = (ledc_channel_t) ledc_channel;
   AddLog(LOG_LEVEL_DEBUG_MORE, "CAM: XCLK on GPIO %i using ledc channel %i", config.pin_xclk, config.ledc_channel);
   config.ledc_timer = LEDC_TIMER_0;
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
-
 
   //esp_log_level_set("*", ESP_LOG_INFO);
 
@@ -398,15 +400,7 @@ uint32_t WcSetup(int32_t fsiz) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: PSRAM not found"));
   }
 
-//  AddLog(LOG_LEVEL_INFO, PSTR("CAM: heap check 1: %d"),ESP_getFreeHeap());
-
-  // stupid workaround camera diver eats up static ram should prefer PSRAM
-  // so we steal static ram to force driver to alloc PSRAM
-//  uint32_t maxfram = ESP.getMaxAllocHeap();
-//  void *x=malloc(maxfram-4096);
-  void *x = 0;
   esp_err_t err = esp_camera_init(&config);
-  if (x) { free(x); }
 
   if (err != ESP_OK) {
     AddLog(LOG_LEVEL_INFO, PSTR("CAM: Init failed with error 0x%x"), err);
