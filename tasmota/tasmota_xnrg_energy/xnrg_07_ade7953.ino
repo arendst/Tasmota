@@ -584,6 +584,9 @@ void Ade7953DrvInit(void) {
       Energy.voltage_common = true;               // Use common voltage
       Energy.frequency_common = true;             // Use common frequency
       Energy.use_overtemp = true;                 // Use global temperature for overtemp detection
+      if (ADE7953_SHELLY_EM == Ade7953.model) {
+        Energy.local_energy_active_export = true;
+      }
       TasmotaGlobal.energy_driver = XNRG_07;
     }
   }
