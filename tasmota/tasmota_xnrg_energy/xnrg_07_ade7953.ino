@@ -406,13 +406,10 @@ void Ade7953GetData(void) {
     } else {
       Ade7953.active_power[channel] = abs(reg[channel][1]);
       apparent_power[channel] = abs(reg[channel][2]);
-
-      uint32_t swapped_channel = channel;
-      if (ADE7953_SHELLY_25 == Ade7953.model) {
-        swapped_channel = ~channel;
+      reactive_power[channel] = abs(reg[channel][3]);
+      if ((ADE7953_SHELLY_EM == Ade7953.model) && ((acc_mode & VARNLOAD[channel]) != 0)) {
+        reactive_power[channel] = 0;
       }
-
-      reactive_power[channel] = ((acc_mode & VARNLOAD[swapped_channel]) != 0) ? 0 : abs(reg[channel][3]);
     }
   }
 
