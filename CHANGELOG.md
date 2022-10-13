@@ -3,16 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.1.5]
+## [12.1.1.6]
 ### Added
-- Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical (#16795)
+- Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
 
 ### Changed
 
 ### Fixed
 
 ### Removed
-- Display of energy values in GUI use columns when define ``USE_ENERGY_COLUMN_GUI`` is enabled (default)
+
+## [12.1.1.5] 20221013
+### Added
+- Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical (#16795)
 
 ## [12.1.1.4] 20221012
 ### Added

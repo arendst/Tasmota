@@ -856,6 +856,7 @@ void SettingsDefaultSet2(void) {
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
+  Settings->webcam_clk = 20;
 #endif  // ESP32
 
   flag.stop_flash_rotate |= APP_FLASH_CYCLE;
@@ -1592,6 +1593,11 @@ void SettingsDelta(void) {
       else if (DAWN_NAUTIC == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 2; }
       else if (DAWN_ASTRONOMIC == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 3; }
     }
+#ifdef ESP32
+    if (Settings->version < 0x0C010106) {  // 12.1.1.6
+      Settings->webcam_clk = 20;
+    }
+#endif  // ESP32
 
     Settings->version = VERSION;
     SettingsSave(1);

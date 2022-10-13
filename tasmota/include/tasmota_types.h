@@ -587,7 +587,6 @@ typedef struct {
   uint8_t       eth_address;               // 45E
   uint8_t       module;                    // 45F
   WebCamCfg     webcam_config;             // 460
-
   uint8_t       ws_width[3];               // 464
   char          serial_delimiter;          // 467
   uint8_t       seriallog_level;           // 468
@@ -726,8 +725,7 @@ typedef struct {
   mytmplt8285   ex_user_template8;         // 72F  14 bytes (ESP8266) - Free since 9.0.0.1
 #endif  // ESP8266
 #ifdef ESP32
-  uint8_t       free_esp32_72f[1];         // 72F
-
+  uint8_t       webcam_clk;                // 72F
   WebCamCfg2    webcam_config2;            // 730
 
   uint8_t       free_esp32_734[9];         // 734

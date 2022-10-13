@@ -107,7 +107,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v12.1.1.4
+## Changelog v12.1.1.6
 ### Added
 - Command ``SetOption46 0..255`` to add 0..255 * 10 milliseconds power on delay before initializing I/O [#15438](https://github.com/arendst/Tasmota/issues/15438)
 - Command ``SetOption146 1`` to enable display of ESP32 internal temperature
@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
 - Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
 - Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical [#16795](https://github.com/arendst/Tasmota/issues/16795)
+- Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
 - Support for Shelly Plus 2PM
 - Support for SGP40 gas and air quality sensor [#16341](https://github.com/arendst/Tasmota/issues/16341)
 - Support for Modbus writing using ModbusBridge by JeroenSt [#16351](https://github.com/arendst/Tasmota/issues/16351)

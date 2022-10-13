@@ -378,7 +378,8 @@ uint32_t WcSetup(int32_t fsiz) {
   config.ledc_channel = (ledc_channel_t) ledc_channel;
   AddLog(LOG_LEVEL_DEBUG_MORE, "CAM: XCLK on GPIO %i using ledc channel %i", config.pin_xclk, config.ledc_channel);
   config.ledc_timer = LEDC_TIMER_0;
-  config.xclk_freq_hz = 20000000;
+//  config.xclk_freq_hz = 20000000;
+  config.xclk_freq_hz = Settings->webcam_clk * 1000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
   //esp_log_level_set("*", ESP_LOG_INFO);
@@ -1092,6 +1093,7 @@ void WcInit(void) {
 #define D_CMND_RTSP "Rtsp"
 
 #define D_CMND_WC_AUTH "Auth"
+#define D_CMND_WC_CLK "Clock"
 
 const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   "|" D_CMND_WC_STREAM "|" D_CMND_WC_RESOLUTION "|" D_CMND_WC_MIRROR "|" D_CMND_WC_FLIP "|"
@@ -1100,7 +1102,7 @@ const char kWCCommands[] PROGMEM =  D_PRFX_WEBCAM "|"  // Prefix
   D_CMND_WC_AEC_VALUE "|" D_CMND_WC_AE_LEVEL "|" D_CMND_WC_AEC2 "|" D_CMND_WC_AGC "|"
   D_CMND_WC_AGC_GAIN "|" D_CMND_WC_GAINCEILING "|" D_CMND_WC_RAW_GMA "|" D_CMND_WC_LENC "|"
   D_CMND_WC_WPC "|" D_CMND_WC_DCW "|" D_CMND_WC_BPC "|" D_CMND_WC_COLORBAR "|" D_CMND_WC_FEATURE "|"
-  D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT "|" D_CMND_WC_AUTH
+  D_CMND_WC_SETDEFAULTS "|" D_CMND_WC_STATS "|" D_CMND_WC_INIT "|" D_CMND_WC_AUTH "|" D_CMND_WC_CLK
 #ifdef ENABLE_RTSPSERVER
   "|" D_CMND_RTSP
 #endif // ENABLE_RTSPSERVER
@@ -1113,7 +1115,7 @@ void (* const WCCommand[])(void) PROGMEM = {
   &CmndWebcamAELevel, &CmndWebcamAEC2, &CmndWebcamAGC, &CmndWebcamAGCGain, &CmndWebcamGainCeiling,
   &CmndWebcamGammaCorrect, &CmndWebcamLensCorrect, &CmndWebcamWPC, &CmndWebcamDCW, &CmndWebcamBPC,
   &CmndWebcamColorbar, &CmndWebcamFeature, &CmndWebcamSetDefaults,
-  &CmndWebcamStats, &CmndWebcamInit, &CmndWebcamAuth
+  &CmndWebcamStats, &CmndWebcamInit, &CmndWebcamAuth, &CmndWebcamClock
 #ifdef ENABLE_RTSPSERVER
   , &CmndWebRtsp
 #endif // ENABLE_RTSPSERVER
@@ -1353,6 +1355,13 @@ void CmndWebcamAuth(void){
     Settings->webcam_config2.auth = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->webcam_config2.auth);
+}
+
+void CmndWebcamClock(void){
+  if((XdrvMailbox.payload >= 10) && (XdrvMailbox.payload <= 200)){
+    Settings->webcam_clk = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings->webcam_clk);
 }
 
 void CmndWebcamInit(void) {
