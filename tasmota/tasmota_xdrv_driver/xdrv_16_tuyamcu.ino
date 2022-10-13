@@ -420,9 +420,9 @@ void CmndTuyaSend(void) {
       Settings->tuyamcu_topic = !Settings->tuyamcu_topic;
       AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaMCU Stat Topic %s"), (Settings->tuyamcu_topic ? PSTR("enabled") : PSTR("disabled")));
       break;
-        }
-        ResponseCmndDone();
-      }
+  }
+  ResponseCmndDone();
+}
 
 
 void CmdTuyaSetDimDelay(void) {
@@ -1603,7 +1603,7 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
     case TUYA_TYPE_RAW: {
 #ifdef USE_ENERGY_SENSOR
         if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER_COMBINED) {
-        if (dpDataLen == 8) {
+        if (dpDataLen >= 8) {
           // data is pTuya->buffer[dpidStart + 4];
           uint16_t tmpVol = data[4 - 4] << 8 | data[5 - 4];
           uint16_t tmpCur = data[7 - 4] << 8 | data[8 - 4];
