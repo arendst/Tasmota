@@ -204,19 +204,31 @@
 #undef USE_I2C
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
-#undef USE_COUNTER
+#undef USE_DOMOTICZ
+#undef USE_LIGHT
+#undef USE_SERIAL_BRIDGE
+#undef ROTARY_V1
 #undef USE_IR_REMOTE
+#undef USE_ADC
 #undef USE_AC_ZERO_CROSS_DIMMER
 #undef USE_PWM_DIMMER
+#undef USE_PWM_DIMMER_REMOTE
 #undef USE_TUYA_MCU
 #undef USE_EMULATION_HUE
 #undef USE_EMULATION_WEMO
+#undef USE_BUZZER
 #undef USE_ARILUX_RF
 #undef USE_DS18x20
+#undef USE_BMP
+#undef USE_DHT
+#undef USE_BH1750
 #undef USE_WS2812
 #undef USE_ENERGY_SENSOR
+#undef USE_SHUTTER
+#undef USE_DEVICE_GROUPS
 //#undef USE_BERRY                                 // Disable Berry scripting language
 #undef USE_MI_ESP32                             // (ESP32 only) Disable support for ESP32 as a BLE-bridge (+9k2 mem, +292k flash)
+#undef USE_BLE_ESP32
 #endif  // FIRMWARE_WEBCAM
 
 /*********************************************************************************************\
