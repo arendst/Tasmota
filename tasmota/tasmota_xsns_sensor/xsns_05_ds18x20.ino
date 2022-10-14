@@ -63,7 +63,19 @@ struct {
 #ifdef DS18x20_USE_ID_ALIAS
   uint8_t alias;
 #endif //DS18x20_USE_ID_ALIAS  
+#ifdef DS18x20_MULTI_GPIOs
+  int8_t pins_id = 0; 
+#endif //DS18x20_MULTI_GPIOs
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
+
+#ifdef DS18x20_MULTI_GPIOs
+struct {
+  int8_t pin = 0;            // Shelly GPIO3 input only
+  int8_t pin_out = 0;        // Shelly GPIO00 output only
+  bool dual_mode = false;    // Single pin mode
+} ds18x20_gpios[MAX_DSB];
+uint8_t ds18x20_ngpio = 0;    // Count of GPIO found
+#endif
 
 struct {
 #ifdef W1_PARASITE_POWER
@@ -301,15 +313,7 @@ bool OneWireCrc8(uint8_t *addr) {
 /********************************************************************************************/
 
 void Ds18x20Init(void) {
-  DS18X20Data.pin = Pin(GPIO_DSB);
   DS18X20Data.input_mode = Settings->flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
-
-  if (PinUsed(GPIO_DSB_OUT)) {
-    DS18X20Data.pin_out = Pin(GPIO_DSB_OUT);
-    DS18X20Data.dual_mode = true;    // Dual pins mode as used by Shelly
-    pinMode(DS18X20Data.pin_out, OUTPUT);
-    pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
-  }
 
   onewire_last_discrepancy = 0;
   onewire_last_device_flag = false;
@@ -320,6 +324,39 @@ void Ds18x20Init(void) {
 
   uint64_t ids[DS18X20_MAX_SENSORS];
   DS18X20Data.sensors = 0;
+
+#ifdef DS18x20_MULTI_GPIOs
+uint8_t pins;
+  for (pins = 0; pins < MAX_DSB; pins++) {
+    if (PinUsed(GPIO_DSB, pins)) {
+    ds18x20_gpios[pins].pin = Pin(GPIO_DSB, pins);
+
+      if (PinUsed(GPIO_DSB_OUT, pins)) {
+        ds18x20_gpios[pins].dual_mode = true;
+        ds18x20_gpios[pins].pin_out = Pin(GPIO_DSB_OUT, pins);
+      }
+    ds18x20_ngpio++;
+    }
+  }
+  for (pins = 0; pins < ds18x20_ngpio; pins++) {
+    DS18X20Data.pin = ds18x20_gpios[pins].pin;
+    DS18X20Data.dual_mode = ds18x20_gpios[pins].dual_mode;
+    if (ds18x20_gpios[pins].dual_mode) {
+      DS18X20Data.pin_out = ds18x20_gpios[pins].pin_out;
+      pinMode(DS18X20Data.pin_out, OUTPUT);
+      pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
+    }
+#else
+  DS18X20Data.pin = Pin(GPIO_DSB);
+
+  if (PinUsed(GPIO_DSB_OUT)) {
+    DS18X20Data.pin_out = Pin(GPIO_DSB_OUT);
+    DS18X20Data.dual_mode = true;    // Dual pins mode as used by Shelly
+    pinMode(DS18X20Data.pin_out, OUTPUT);
+    pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
+  }
+#endif  //DS18x20_MULTI_GPIOs
+
   while (DS18X20Data.sensors < DS18X20_MAX_SENSORS) {
     if (!OneWireSearch(ds18x20_sensor[DS18X20Data.sensors].address)) {
       break;
@@ -337,9 +374,16 @@ void Ds18x20Init(void) {
 #ifdef DS18x20_USE_ID_ALIAS      
       ds18x20_sensor[DS18X20Data.sensors].alias=0;
 #endif
+#ifdef DS18x20_MULTI_GPIOs
+      ds18x20_sensor[DS18X20Data.sensors].pins_id = pins;
+#endif //DS18x20_MULTI_GPIOs
       DS18X20Data.sensors++;
     }
   }
+#ifdef DS18x20_MULTI_GPIOs
+  }
+#endif  //DS18x20_MULTI_GPIOs
+
   for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
     for (uint32_t j = i + 1; j < DS18X20Data.sensors; j++) {
       if (ids[ds18x20_sensor[i].index] > ids[ds18x20_sensor[j].index]) {  // Sort ascending
@@ -351,6 +395,12 @@ void Ds18x20Init(void) {
 }
 
 void Ds18x20Convert(void) {
+#ifdef DS18x20_MULTI_GPIOs
+  for (uint8_t i = 0; i < ds18x20_ngpio; i++) {
+    DS18X20Data.pin = ds18x20_gpios[i].pin;
+    DS18X20Data.dual_mode = ds18x20_gpios[i].dual_mode;
+    DS18X20Data.pin_out = ds18x20_gpios[i].pin_out;
+#endif
   OneWireReset();
 #ifdef W1_PARASITE_POWER
   // With parasite power address one sensor at a time
@@ -362,6 +412,9 @@ void Ds18x20Convert(void) {
 #endif
   OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
 //  delay(750);                          // 750ms should be enough for 12bit conv
+#ifdef DS18x20_MULTI_GPIOs
+  }
+#endif
 }
 
 bool Ds18x20Read(uint8_t sensor) {
@@ -369,6 +422,11 @@ bool Ds18x20Read(uint8_t sensor) {
   uint8_t data[9];
   int8_t sign = 1;
 
+#ifdef DS18x20_MULTI_GPIOs
+  DS18X20Data.pin = ds18x20_gpios[ds18x20_sensor[sensor].pins_id].pin;
+  DS18X20Data.pin_out = ds18x20_gpios[ds18x20_sensor[sensor].pins_id].pin_out;
+  DS18X20Data.dual_mode = ds18x20_gpios[ds18x20_sensor[sensor].pins_id].dual_mode;
+#endif
   uint8_t index = ds18x20_sensor[sensor].index;
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
   for (uint32_t retry = 0; retry < 3; retry++) {
@@ -580,8 +638,8 @@ void CmndDSAlias(void) {
 
 bool Xsns05(uint8_t function) {
   bool result = false;
-
-  if (PinUsed(GPIO_DSB)) {
+  
+  if (PinUsed(GPIO_DSB,GPIO_ANY)) {
     switch (function) {
       case FUNC_INIT:
         Ds18x20Init();

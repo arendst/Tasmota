@@ -661,8 +661,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DHT11_OUT),      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
 #endif
 #ifdef USE_DS18x20
+#ifdef DS18x20_MULTI_GPIOs
+  AGPIO(GPIO_DSB) + MAX_DSB,            // Single wire DS18B20 or DS18S20
+  AGPIO(GPIO_DSB_OUT) + MAX_DSB,        // Pseudo Single wire DS18B20 or DS18S20
+#else
   AGPIO(GPIO_DSB),            // Single wire DS18B20 or DS18S20
   AGPIO(GPIO_DSB_OUT),        // Pseudo Single wire DS18B20 or DS18S20
+#endif //DS18x20_MULTI_GPIOs
 #endif
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),          // LMT01, count pulses on GPIO

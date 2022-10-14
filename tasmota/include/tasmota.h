@@ -303,6 +303,9 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define XPT2046_MAXX			3895
 #define XPT2046_MINY			346
 #define	XPT2046_MAXY			3870
+
+// Max number GPIO for DS18x20_MULTI_GPIOs
+#define MAX_DSB 4
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/
