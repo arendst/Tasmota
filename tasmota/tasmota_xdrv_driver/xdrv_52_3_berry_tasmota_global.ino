@@ -33,11 +33,12 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_tasmota_global_struct = {
     sizeof(TasmotaGlobal),  /* size in bytes */
-    3,  /* number of elements */
+    4,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[3]) {
+    (const be_ctypes_structure_item_t[4]) {
       { "devices_present", offsetof(TasmotaGlobal_t, devices_present), 0, 0, ctypes_u8, 0 },
       { "fast_loop_enabled", offsetof(TasmotaGlobal_t, berry_fast_loop_enabled), 0, 0, ctypes_u8, 0 },
+      { "restart_flag", offsetof(TasmotaGlobal_t, restart_flag), 0, 0, ctypes_u8, 0 },
       { "sleep", offsetof(TasmotaGlobal_t, sleep), 0, 0, ctypes_u8, 0 },
   }};
 
