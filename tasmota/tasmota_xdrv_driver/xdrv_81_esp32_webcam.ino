@@ -1360,6 +1360,7 @@ void CmndWebcamAuth(void){
 void CmndWebcamClock(void){
   if((XdrvMailbox.payload >= 10) && (XdrvMailbox.payload <= 200)){
     Settings->webcam_clk = XdrvMailbox.payload;
+    WcInterruptControl();
   }
   ResponseCmndNumber(Settings->webcam_clk);
 }
