@@ -1,4 +1,4 @@
-
+#@ solidify:uuid
 uuid = module("uuid")
 uuid.uuid4 = def ()
   import string

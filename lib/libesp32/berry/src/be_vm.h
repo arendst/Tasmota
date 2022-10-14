@@ -105,7 +105,9 @@ struct bvm {
     struct bgc gc;
     bctypefunc ctypefunc; /* handler to ctype_func */
     bbyte compopt; /* compilation options */
+    int32_t bytesmaxsize; /* max allowed size for bytes() object, default 32kb but can be increased */
     bobshook obshook;
+    bmicrosfnct microsfnct; /* fucntion to get time as a microsecond resolution */
 #if BE_USE_PERF_COUNTERS
     uint32_t counter_ins; /* instructions counter */
     uint32_t counter_enter; /* counter for times the VM was entered */
@@ -116,6 +118,24 @@ struct bvm {
     uint32_t counter_exc; /* counter for raised exceptions */
     uint32_t counter_gc_kept; /* counter for objects scanned by last gc */
     uint32_t counter_gc_freed; /* counter for objects freed by last gc */
+
+    uint32_t micros_gc0;
+    uint32_t micros_gc1;
+    uint32_t micros_gc2;
+    uint32_t micros_gc3;
+    uint32_t micros_gc4;
+    uint32_t micros_gc5;
+
+    uint32_t gc_mark_string;
+    uint32_t gc_mark_class;
+    uint32_t gc_mark_proto;
+    uint32_t gc_mark_instance;
+    uint32_t gc_mark_map;
+    uint32_t gc_mark_list;
+    uint32_t gc_mark_closure;
+    uint32_t gc_mark_ntvclos;
+    uint32_t gc_mark_module;
+    uint32_t gc_mark_comobj;
 #endif
 #if BE_USE_DEBUG_HOOK
     bvalue hook;

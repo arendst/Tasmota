@@ -34,6 +34,9 @@ struct EZOCO2 : public EZOStruct {
     // sensor has a 10s warmup period
     if (TasmotaGlobal.uptime >= 10) {
       CO2 = atoi(data);
+#ifdef USE_LIGHT
+      LightSetSignal(CO2_LOW, CO2_HIGH, CO2);
+#endif  // USE_LIGHT
     }
   }
 

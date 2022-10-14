@@ -373,7 +373,7 @@ void InfluxDbProcessJson(bool use_copy = false) {
 }
 
 void InfluxDbProcess(bool use_copy) {
-  if (Settings->sbflag1.influxdb_sensor) {
+  if (Settings->sbflag1.influxdb_sensor) {  // IfxSensor
     InfluxDbProcessJson(use_copy);
   }
 }
@@ -476,9 +476,9 @@ void CmndInfluxDbState(void) {
 
 void CmndInfluxDbSensor(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings->sbflag1.influxdb_sensor = XdrvMailbox.payload;
+    Settings->sbflag1.influxdb_sensor = XdrvMailbox.payload;  // IfxSensor
   }
-  ResponseCmndStateText(Settings->sbflag1.influxdb_sensor);
+  ResponseCmndStateText(Settings->sbflag1.influxdb_sensor);  // IfxSensor
 }
 
 void CmndInfluxDbLog(void) {

@@ -152,8 +152,8 @@
 #define D_PROGRAM_FLASH_SIZE "Μέγεθος προγράμματος στη Flash"
 #define D_PROGRAM_SIZE "Μέγεθος προγράμματος"
 #define D_PROJECT "Έργο"
-#define D_RAIN "Rain"
-#define D_RANGE "Range"
+#define D_RAIN "Βροχή"
+#define D_RANGE "Εύρος"
 #define D_RECEIVED "Ελήφθη"
 #define D_RESTART "Επανεκκίνηση"
 #define D_RESTARTING "Επανεκκινεί"
@@ -171,7 +171,7 @@
 #define D_SUBSCRIBE_TO "Εγγραφή στο"
 #define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Επιτυχές"
-#define D_SUNRISE "Σούρουπο"
+#define D_SUNRISE "Ανατολή Ηλίου"
 #define D_SUNSET "Ηλιοβασίλεμα"
 #define D_TEMPERATURE "Θερμοκρασία"
 #define D_TO "έως"
@@ -264,7 +264,7 @@
 #define D_CONFIGURATION "Ρυθμίσεις"
 #define D_INFORMATION "Πληροφορίες"
 #define D_FIRMWARE_UPGRADE "Αναβάθμιση"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Διαχείριση"
 #define D_CONSOLE "Κονσόλα"
 #define D_CONFIRM_RESTART "Επιβεβαίωση επανεκκίνησης"
 
@@ -495,10 +495,12 @@
 #define D_ZIGBEE_GENERATE_KEY "generating random Zigbee network key"
 #define D_ZIGBEE_UNKNOWN_DEVICE "Unknown device"
 #define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Unknown attribute"
+#define D_ZIGBEE_UNKNOWN_ENDPOINT "Unknown endpoint"
 #define D_ZIGBEE_INVALID_PARAM "Invalid parameter"
 #define D_ZIGBEE_MISSING_PARAM "Missing parameters"
 #define D_ZIGBEE_UNKNWON_ATTRIBUTE "Unknown attribute name (ignored): %s"
 #define D_ZIGBEE_TOO_MANY_CLUSTERS "No more than one cluster id per command"
+#define D_ZIGBEE_CONFLICTING_ENDPOINTS "Conflicting destination endpoints"
 #define D_ZIGBEE_WRONG_DELIMITER "Wrong delimiter for payload"
 #define D_ZIGBEE_UNRECOGNIZED_COMMAND "Unrecognized zigbee command: %s"
 #define D_ZIGBEE_TOO_MANY_COMMANDS "Only 1 command allowed (%d)"
@@ -563,6 +565,12 @@
 #define D_GX_AXIS "Gyro X-Axis"
 #define D_GY_AXIS "Gyro Y-Axis"
 #define D_GZ_AXIS "Gyro Z-Axis"
+
+// xsns_33_QMC5883L.ino
+#define D_MX "Induction X-Axis"
+#define D_MY "Induction Y-Axis"
+#define D_MZ "Induction Z-Axis"
+#define D_MAGNETICFLD "Magnetic Induction"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Απομακρύνετε το βαρίδιο"
@@ -677,6 +685,8 @@
 #define D_SENSOR_MBR_RX        "ModBr Rx"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri/TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech/RX"
+#define D_SENSOR_NRG_MBS_TX    "NrgModbus Tx"
+#define D_SENSOR_NRG_MBS_RX    "NrgModbus Rx"
 #define D_SENSOR_SDM72_TX      "SDM72 Tx"
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
@@ -755,6 +765,7 @@
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7880_IRQ   "ADE7880 IRQ"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_ADE7953_RST   "ADE7953 RST"
 #define D_SENSOR_BUZZER        "Buzzer"
 #define D_SENSOR_DISP_RESET    "Display Rst"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
@@ -911,6 +922,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
@@ -934,6 +946,7 @@
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 #define D_UNIT_LITER_PER_MINUTE "l/min"
 #define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
+#define D_UNIT_CUBIC_METER "m³"
 
 #define D_NEW_ADDRESS          "Setting address to"
 #define D_OUT_OF_RANGE         "Out of Range"
@@ -1077,6 +1090,8 @@
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Flowrate"
+#define D_FLOWRATEMETER_AMOUNT_TODAY "Amount Today"
+#define D_FLOWRATEMETER_DURATION_TODAY "Duration Today"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

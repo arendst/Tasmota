@@ -1459,6 +1459,18 @@ bool findNextVariableValue(char * &pVarname, float &value)
     uint32_t index = sVarName.substring(5).toInt();
     if (index > 0 && index <= MAX_TIMERS) {
       value = Settings->timer[index -1].time;
+#if defined(USE_SUNRISE)
+      // Correct %timerN% values for sunrise/sunset timers
+      if ((1 == Settings->timer[index -1].mode) || (2 == Settings->timer[index -1].mode)) {
+        // in this context, time variable itself is merely an offset, with <720 being negative
+        value += -720 + SunMinutes(Settings->timer[index -1].mode -1);
+        if (2 == Settings->timer[index -1].mode) {
+          // To aid rule comparative statements, sunset past midnight (high lattitudes) is expressed past 24h00
+          // So sunset at 00h45 is at 24h45
+          if (value < 360) { value += 1440; }
+        }
+      }
+#endif  // USE_SUNRISE
     }
 #if defined(USE_SUNRISE)
   } else if (sVarName.equals(F("SUNRISE"))) {

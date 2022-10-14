@@ -1941,6 +1941,17 @@ void LightAnimate(void)
           memcpy(Light.fade_start_10, Light.fade_cur_10, sizeof(Light.fade_start_10));
         }
         memcpy(Light.fade_end_10, cur_col_10, sizeof(Light.fade_start_10));
+
+        // check if PWM CT is enabled, we need a special handling of CT #16454
+        int32_t channel_ct = ChannelCT();
+        int32_t channel_white = ChannelWhite_when_PWMCT();
+        if (channel_ct >= 0 && channel_white >= 0) {
+          if (Light.fade_start_10[channel_white] == 0) {
+            // if fading from black, change the start CT to the target, otherwise we will have a wrong fade
+            Light.fade_start_10[channel_ct] = Light.fade_end_10[channel_ct];
+          }
+        }
+      
         Light.fade_running = true;
         Light.fade_duration = 0;    // set the value to zero to force a recompute
         Light.fade_start = 0;
@@ -1977,17 +1988,30 @@ bool isChannelGammaCorrected(uint32_t channel) {
   return true;
 }
 
-// is the channel a regular PWM or ColorTemp control
-bool isChannelCT(uint32_t channel) {
+// Returns the channel number for PWM CT if any, or -1 if none
+int32_t ChannelCT(void) {
 #ifdef ESP8266
   if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
 #else
   if (Settings->flag4.pwm_ct_mode) {
 #endif  // ESP8266
-    if ((LST_COLDWARM == Light.subtype) && (1 == channel)) { return true; }   // PMW reserved for CT
-    if ((LST_RGBCW == Light.subtype) && (4 == channel)) { return true; }   // PMW reserved for CT
+    if (LST_COLDWARM == Light.subtype) { return 1; }   // PMW reserved for CT
+    if (LST_RGBCW == Light.subtype) { return 4; }   // PMW reserved for CT
   }
-  return false;
+  return -1;
+}
+
+// Returns the white channel when PWM CT is enabled -- needed to check for brightness #16454
+int32_t ChannelWhite_when_PWMCT(void) {
+#ifdef ESP8266
+  if ((PHILIPS == TasmotaGlobal.module_type) || (Settings->flag4.pwm_ct_mode)) {
+#else
+  if (Settings->flag4.pwm_ct_mode) {
+#endif  // ESP8266
+    if (LST_COLDWARM == Light.subtype) { return 0; }
+    if (LST_RGBCW == Light.subtype) { return 3; }
+  }
+  return -1;
 }
 
 // Calculate the Gamma correction, if any, for fading, using the fast Gamma curve (10 bits in+out)
@@ -2130,6 +2154,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   // now apply the actual PWM values, adjusted and remapped 10-bits range
   if (TasmotaGlobal.light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
 
+    int32_t channel_ct = ChannelCT();  // Channel for PWM CT or -1 if no CT or regular CT
 #ifdef USE_PWM_DIMMER
     uint16_t max_col = 0;
 #ifdef USE_I2C
@@ -2150,14 +2175,16 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
       if (PinUsed(GPIO_PWM1, i)) {
         //AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d"), i, cur_col_10[i]);
         uint16_t cur_col = cur_col_10[i + Light.pwm_offset];
-        if (!isChannelCT(i)) {   // if CT don't use pwm_min and pwm_max
+        if (i != channel_ct) {   // if CT don't use pwm_min and pwm_max
           cur_col = cur_col > 0 ? changeUIntScale(cur_col, 0, Settings->pwm_range, Light.pwm_min, Light.pwm_max) : 0;   // shrink to the range of pwm_min..pwm_max
         }
         if (!Settings->flag4.zerocross_dimmer) {
 #ifdef ESP32
           TasmotaGlobal.pwm_value[i] = cur_col;   // mark the new expected value
+          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", i, cur_col);
 #else // ESP32
           analogWrite(Pin(GPIO_PWM1, i), bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
+          // AddLog(LOG_LEVEL_DEBUG_MORE, "analogWrite-%i 0x%03X", bitRead(TasmotaGlobal.pwm_inverted, i) ? Settings->pwm_range - cur_col : cur_col);
 #endif // ESP32
         }
       }

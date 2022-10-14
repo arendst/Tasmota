@@ -2,8 +2,7 @@ var antiburn = module('antiburn')
 
 antiburn.init = def (m)
     class Antiburn
-        var scr_original
-        var scr_antiburn
+        var antiburn            # the lv_obj object used as a plain color
         var running
         static colors = [
             0x000000,
@@ -20,29 +19,43 @@ antiburn.init = def (m)
                 return
             else
                 lv.start()
-                self.scr_original = lv.scr_act()
-                self.scr_antiburn = lv.obj(0)
-                lv.scr_load(self.scr_antiburn)
-                self.scr_antiburn.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
+
+                if self.antiburn == nil
+                    var antiburn = lv.obj(lv.layer_top())
+                    antiburn.set_style_radius(0, 0)
+                    antiburn.set_style_border_width(0, 0)
+                    antiburn.set_style_bg_opa(255, 0)
+                    antiburn.set_pos(0, 0)
+                    antiburn.set_width(lv.get_hor_res())
+                    antiburn.set_height(lv.get_ver_res())
+                    
+                    antiburn.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
+                    self.antiburn = antiburn
+                end
+                self.antiburn.set_style_bg_opa(255, 0)
+                self.antiburn.add_flag(lv.OBJ_FLAG_CLICKABLE)
+                self.antiburn.move_foreground()
+
                 self.running = true
                 self.cycle(0)
             end
         end
         def cycle(i)
-            if !self.running return end
+            if !self.running || self.antiburn == nil return nil end
             if i < 30
-                self.scr_antiburn.set_style_bg_color(lv.color_hex(self.colors[i % 5]), 0)
+                self.antiburn.set_style_bg_color(lv.color_hex(self.colors[i % 5]), 0)
                 tasmota.set_timer(1000, /->self.cycle(i+1))
             else
                 self.stop()
             end
         end
         def stop()
-            if self.running && self.scr_antiburn != nil
-                lv.scr_load(self.scr_original)
+            if self.running && self.antiburn != nil
+                self.antiburn.set_style_bg_opa(0, 0)
+                self.antiburn.clear_flag(lv.OBJ_FLAG_CLICKABLE)
                 self.running = false
-                self.scr_antiburn.del()
-                self.scr_antiburn = nil
+                self.antiburn.del()
+                self.antiburn = nil
             end    
         end
     end

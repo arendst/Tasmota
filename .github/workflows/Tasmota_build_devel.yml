@@ -59,13 +59,14 @@ jobs:
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
+          pip install wheel
           pip install -U platformio
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: firmware
           path: ./build_output
@@ -83,13 +84,14 @@ jobs:
         with:
           ref: development
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
+          pip install wheel
           pip install -U platformio
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: firmware
           path: ./build_output
@@ -99,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: firmware
         path: ./mv_firmware

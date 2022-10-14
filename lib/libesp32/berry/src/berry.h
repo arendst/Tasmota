@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 /* do not modify the version number! */
-#define BERRY_VERSION           "1.0.0"
+#define BERRY_VERSION           "1.1.0"
 
 #if BE_STACK_TOTAL_MAX < BE_STACK_FREE_MIN * 2
 #error "The value of the macro BE_STACK_TOTAL_MAX is too small."
@@ -411,6 +411,7 @@ typedef void(*bntvhook)(bvm *vm, bhookinfo *info);
 /* Observability hook */
 
 typedef void(*bobshook)(bvm *vm, int event, ...);
+typedef uint32_t(*bmicrosfnct)(void);
 enum beobshookevents {
   BE_OBS_PCALL_ERROR,     /* called when be_callp() returned an error, most likely an exception */
   BE_OBS_GC_START,        /* start of GC, arg = allocated size */
@@ -562,6 +563,7 @@ BERRY_API void be_vm_delete(bvm *vm);
 
 /* Observability hook */
 BERRY_API void be_set_obs_hook(bvm *vm, bobshook hook);
+BERRY_API void be_set_obs_micros(bvm *vm, bmicrosfnct micros);
 BERRY_API void be_set_ctype_func_hanlder(bvm *vm, bctypefunc handler);
 BERRY_API bctypefunc be_get_ctype_func_hanlder(bvm *vm);
 

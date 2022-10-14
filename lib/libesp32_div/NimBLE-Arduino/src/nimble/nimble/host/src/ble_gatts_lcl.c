@@ -24,6 +24,7 @@
 #include "nimble/nimble/include/nimble/ble.h"
 #include "ble_hs_priv.h"
 
+#if NIMBLE_BLE_CONNECT
 static const ble_uuid_t *uuid_ccc =
         BLE_UUID16_DECLARE(BLE_GATT_DSC_CLT_CFG_UUID16);
 
@@ -209,3 +210,4 @@ ble_gatts_show_local(void)
     ble_gatts_lcl_svc_foreach(ble_gatt_show_local_svc, NULL);
 }
 
+#endif

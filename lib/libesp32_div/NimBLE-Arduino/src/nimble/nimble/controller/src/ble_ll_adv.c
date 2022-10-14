@@ -144,6 +144,7 @@ struct ble_ll_adv_sm
     uint8_t aux_index : 1;
     uint8_t aux_first_pdu : 1;
     uint8_t aux_not_scanned : 1;
+    uint8_t aux_dropped : 1;
     struct ble_mbuf_hdr *rx_ble_hdr;
     struct os_mbuf **aux_data;
     struct ble_ll_adv_aux aux[2];
@@ -698,7 +699,7 @@ ble_ll_adv_put_syncinfo(struct ble_ll_adv_sm *advsm,
     dptr[8] = advsm->periodic_chanmap[4] & 0x1f;
 
     /* SCA (3 bits) */
-    dptr[8] |= MYNEWT_VAL(BLE_LL_MASTER_SCA) << 5;
+    dptr[8] |= BLE_LL_SCA_ENUM << 5;
 
     /* AA (4 bytes) */
     put_le32(&dptr[9], advsm->periodic_access_addr);
@@ -1282,7 +1283,7 @@ ble_ll_adv_secondary_tx_start_cb(struct ble_ll_sched_item *sch)
     rc = ble_phy_tx_set_start_time(txstart, sch->remainder);
     if (rc) {
         STATS_INC(ble_ll_stats, adv_late_starts);
-        goto adv_tx_done;
+        goto adv_aux_dropped;
     }
 
 #if MYNEWT_VAL(BLE_LL_CFG_FEAT_LE_ENCRYPTION)
@@ -1317,7 +1318,7 @@ ble_ll_adv_secondary_tx_start_cb(struct ble_ll_sched_item *sch)
     /* Transmit advertisement */
     rc = ble_phy_tx(pducb, advsm, end_trans);
     if (rc) {
-        goto adv_tx_done;
+        goto adv_aux_dropped;
     }
 
     /* Enable/disable whitelisting based on filter policy */
@@ -1335,7 +1336,8 @@ ble_ll_adv_secondary_tx_start_cb(struct ble_ll_sched_item *sch)
 
     return BLE_LL_SCHED_STATE_RUNNING;
 
-adv_tx_done:
+adv_aux_dropped:
+    advsm->aux_dropped = 1;
     ble_ll_adv_tx_done(advsm);
     return BLE_LL_SCHED_STATE_DONE;
 }
@@ -1390,7 +1392,7 @@ ble_ll_adv_aux_calculate(struct ble_ll_adv_sm *advsm,
                                            g_ble_ll_conn_params.num_used_chans,
                                            g_ble_ll_conn_params.master_chan_map);
 #else
-    aux->chan = ble_ll_utils_remapped_channel(rand() % BLE_PHY_NUM_DATA_CHANS,
+    aux->chan = ble_ll_utils_remapped_channel(ble_ll_rand() % BLE_PHY_NUM_DATA_CHANS,
                                               g_ble_ll_conn_params.master_chan_map);
 #endif
 
@@ -1567,6 +1569,7 @@ ble_ll_adv_aux_schedule_first(struct ble_ll_adv_sm *advsm)
     advsm->aux_index = 0;
     advsm->aux_first_pdu = 1;
     advsm->aux_not_scanned = 0;
+    advsm->aux_dropped = 0;
 
     aux = AUX_CURRENT(advsm);
     ble_ll_adv_aux_calculate(advsm, aux, 0);
@@ -1866,7 +1869,7 @@ ble_ll_adv_update_did(struct ble_ll_adv_sm *advsm)
      * the previously used value.
      */
     do {
-        advsm->adi = (advsm->adi & 0xf000) | (rand() & 0x0fff);
+        advsm->adi = (advsm->adi & 0xf000) | (ble_ll_rand() & 0x0fff);
     } while (old_adi == advsm->adi);
 }
 #endif
@@ -2557,11 +2560,11 @@ ble_ll_adv_sm_start_periodic(struct ble_ll_adv_sm *advsm)
     advsm->periodic_num_used_chans = g_ble_ll_conn_params.num_used_chans;
     advsm->periodic_event_cntr = 0;
     /* for chaining we start with random counter as we share access addr */
-    advsm->periodic_chain_event_cntr = rand();
+    advsm->periodic_chain_event_cntr = ble_ll_rand();
     advsm->periodic_access_addr = ble_ll_utils_calc_access_addr();
     advsm->periodic_channel_id = ((advsm->periodic_access_addr & 0xffff0000) >> 16) ^
                                  (advsm->periodic_access_addr & 0x0000ffff);
-    advsm->periodic_crcinit = rand() & 0xffffff;
+    advsm->periodic_crcinit = ble_ll_rand() & 0xffffff;
 
     usecs = (uint32_t)advsm->periodic_adv_itvl_max * BLE_LL_ADV_PERIODIC_ITVL;
     ticks = os_cputime_usecs_to_ticks(usecs);
@@ -2750,7 +2753,7 @@ ble_ll_adv_sm_start(struct ble_ll_adv_sm *advsm)
      */
     earliest_start_time = ble_ll_rfmgmt_enable_now();
 
-    start_delay_us = rand() % (BLE_LL_ADV_DELAY_MS_MAX * 1000);
+    start_delay_us = ble_ll_rand() % (BLE_LL_ADV_DELAY_MS_MAX * 1000);
     advsm->adv_pdu_start_time = os_cputime_get32() +
                                 os_cputime_usecs_to_ticks(start_delay_us);
 
@@ -4032,8 +4035,8 @@ ble_ll_adv_periodic_send_sync_ind(struct ble_ll_adv_sm *advsm,
 
     /* SID, AType, SCA */
     sync_ind[24] = (advsm->adi >> 12);
-    sync_ind[24] |= !!(advsm->flags & BLE_LL_ADV_SM_FLAG_TX_ADD) << 4 ;
-    sync_ind[24] |= MYNEWT_VAL(BLE_LL_MASTER_SCA) << 5;
+    sync_ind[24] |= !!(advsm->flags & BLE_LL_ADV_SM_FLAG_TX_ADD) << 4;
+    sync_ind[24] |= BLE_LL_SCA_ENUM << 5;
 
     /* PHY */
     sync_ind[25] = (0x01 << (advsm->sec_phy - 1));
@@ -4848,6 +4851,11 @@ ble_ll_adv_sec_done(struct ble_ll_adv_sm *advsm)
 
     /* We don't need RF anymore */
     ble_ll_rfmgmt_release();
+
+    if (advsm->aux_dropped) {
+        ble_ll_adv_drop_event(advsm);
+        return;
+    }
 
     if (advsm->aux_not_scanned) {
         ble_ll_sched_rmv_elem(&aux_next->sch);

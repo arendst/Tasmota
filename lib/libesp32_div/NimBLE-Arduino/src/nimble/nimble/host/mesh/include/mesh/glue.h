@@ -62,15 +62,6 @@
 extern "C" {
 #endif
 
-#define u8_t    uint8_t
-#define s8_t    int8_t
-#define u16_t   uint16_t
-#define s16_t   int16_t
-#define u32_t   uint32_t
-#define u64_t   uint64_t
-#define s64_t   int64_t
-#define s32_t   int32_t
-
 /** @brief Helper to declare elements of bt_data arrays
  *
  *  This macro is mainly for creating an array of struct bt_data
@@ -84,7 +75,7 @@ extern "C" {
     { \
         .type = (_type), \
         .data_len = (_data_len), \
-        .data = (const u8_t *)(_data), \
+        .data = (const uint8_t *)(_data), \
     }
 
 /** @brief Helper to declare elements of bt_data arrays
@@ -96,8 +87,8 @@ extern "C" {
  *  @param _bytes Variable number of single-byte parameters
  */
 #define BT_DATA_BYTES(_type, _bytes...) \
-    BT_DATA(_type, ((u8_t []) { _bytes }), \
-        sizeof((u8_t []) { _bytes }))
+    BT_DATA(_type, ((uint8_t []) { _bytes }), \
+        sizeof((uint8_t []) { _bytes }))
 
 /* EIR/AD data type definitions */
 #define BT_DATA_FLAGS                   0x01 /* AD flags */
@@ -130,9 +121,13 @@ extern "C" {
 
 #define sys_put_be16(a,b) put_be16(b, a)
 #define sys_put_le16(a,b) put_le16(b, a)
+#define sys_put_le24(a,b) put_le24(b, a)
+#define sys_put_be24(a,b) put_be24(b, a)
 #define sys_put_be32(a,b) put_be32(b, a)
 #define sys_get_be16(a) get_be16(a)
+#define sys_get_be24(a) get_be24(a)
 #define sys_get_le16(a) get_le16(a)
+#define sys_get_le24(a) get_le24(a)
 #define sys_get_be32(a) get_be32(a)
 #define sys_cpu_to_be16(a) htobe16(a)
 #define sys_cpu_to_be32(a) htobe32(a)
@@ -207,9 +202,9 @@ typedef ble_addr_t bt_addr_le_t;
 
 struct net_buf_simple_state {
     /** Offset of the data pointer from the beginning of the storage */
-    u16_t offset;
+    uint16_t offset;
     /** Length of data */
-    u16_t len;
+    uint16_t len;
 };
 
 static inline struct os_mbuf * NET_BUF_SIMPLE(uint16_t size)
@@ -249,6 +244,14 @@ static inline void net_buf_simple_init(struct os_mbuf *buf,
     buf->om_len = 0;
 }
 
+#define net_buf_simple_init_with_data(buf, data, size)  \
+    os_mbuf_copyinto(buf, 0, data, size);
+
+static inline void net_buf_simple_reset(struct os_mbuf *om)
+{
+    net_buf_simple_init(om, 0);
+}
+
 void net_buf_put(struct ble_npl_eventq *fifo, struct os_mbuf *buf);
 void * net_buf_ref(struct os_mbuf *om);
 void net_buf_unref(struct os_mbuf *om);
@@ -259,18 +262,20 @@ uint32_t net_buf_simple_pull_le32(struct os_mbuf *om);
 uint8_t net_buf_simple_pull_u8(struct os_mbuf *om);
 void net_buf_simple_add_le16(struct os_mbuf *om, uint16_t val);
 void net_buf_simple_add_be16(struct os_mbuf *om, uint16_t val);
+void net_buf_simple_add_le24(struct os_mbuf *om, uint32_t val);
 void net_buf_simple_add_u8(struct os_mbuf *om, uint8_t val);
 void net_buf_simple_add_be32(struct os_mbuf *om, uint32_t val);
 void net_buf_simple_add_le32(struct os_mbuf *om, uint32_t val);
 void net_buf_add_zeros(struct os_mbuf *om, uint8_t len);
 void net_buf_simple_push_le16(struct os_mbuf *om, uint16_t val);
 void net_buf_simple_push_be16(struct os_mbuf *om, uint16_t val);
+void net_buf_simple_push_be24(struct os_mbuf *om, uint32_t val);
 void net_buf_simple_push_u8(struct os_mbuf *om, uint8_t val);
 void *net_buf_simple_pull(struct os_mbuf *om, uint8_t len);
 void *net_buf_simple_pull_mem(struct os_mbuf *om, uint8_t len);
 void *net_buf_simple_add(struct os_mbuf *om, uint8_t len);
 bool k_fifo_is_empty(struct ble_npl_eventq *q);
-void *net_buf_get(struct ble_npl_eventq *fifo,s32_t t);
+void *net_buf_get(struct ble_npl_eventq *fifo,int32_t t);
 uint8_t *net_buf_simple_push(struct os_mbuf *om, uint8_t len);
 void net_buf_reserve(struct os_mbuf *om, size_t reserve);
 
@@ -282,7 +287,7 @@ void net_buf_reserve(struct os_mbuf *om, size_t reserve);
 #define net_buf_clone(a, b) os_mbuf_dup(a)
 #define net_buf_add_be32(a, b) net_buf_simple_add_be32(a, b)
 #define net_buf_add_be16(a, b) net_buf_simple_add_be16(a, b)
-#define net_buf_pull(a, b) net_buf_simple_pull(a, b)
+#define net_buf_pull(a, b) net_buf_simple_pull_mem(a, b)
 #define net_buf_pull_mem(a, b) net_buf_simple_pull_mem(a, b)
 #define net_buf_pull_u8(a) net_buf_simple_pull_u8(a)
 #define net_buf_pull_be16(a) net_buf_simple_pull_be16(a)
@@ -290,14 +295,22 @@ void net_buf_reserve(struct os_mbuf *om, size_t reserve);
 
 #define BT_GATT_CCC_NOTIFY BLE_GATT_CHR_PROP_NOTIFY
 
+#ifndef MIN
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
 /** Description of different data types that can be encoded into
   * advertising data. Used to form arrays that are passed to the
   * bt_le_adv_start() function.
   */
 struct bt_data {
-    u8_t type;
-    u8_t data_len;
-    const u8_t *data;
+    uint8_t type;
+    uint8_t data_len;
+    const uint8_t *data;
 };
 
 struct bt_pub_key_cb {
@@ -309,18 +322,24 @@ struct bt_pub_key_cb {
      *
      *  @param key The local public key, or NULL in case of no key.
      */
-    void (*func)(const u8_t key[64]);
+    void (*func)(const uint8_t key[64]);
 
     struct bt_pub_key_cb *_next;
 };
 
-typedef void (*bt_dh_key_cb_t)(const u8_t key[32]);
-int bt_dh_key_gen(const u8_t remote_pk[64], bt_dh_key_cb_t cb);
+typedef void (*bt_dh_key_cb_t)(const uint8_t key[32]);
+int bt_dh_key_gen(const uint8_t remote_pk[64], bt_dh_key_cb_t cb);
 int bt_pub_key_gen(struct bt_pub_key_cb *new_cb);
 uint8_t *bt_pub_key_get(void);
 int bt_rand(void *buf, size_t len);
 const char * bt_hex(const void *buf, size_t len);
 int bt_encrypt_be(const uint8_t *key, const uint8_t *plaintext, uint8_t *enc_data);
+int bt_ccm_decrypt(const uint8_t key[16], uint8_t nonce[13], const uint8_t *enc_data,
+		   size_t len, const uint8_t *aad, size_t aad_len,
+		   uint8_t *plaintext, size_t mic_size);
+int bt_ccm_encrypt(const uint8_t key[16], uint8_t nonce[13], const uint8_t *enc_data,
+		   size_t len, const uint8_t *aad, size_t aad_len,
+		   uint8_t *plaintext, size_t mic_size);
 void bt_mesh_register_gatt(void);
 int bt_le_adv_start(const struct ble_gap_adv_params *param,
                     const struct bt_data *ad, size_t ad_len,
@@ -334,9 +353,10 @@ struct k_delayed_work {
 void k_work_init(struct ble_npl_callout *work, ble_npl_event_fn handler);
 void k_delayed_work_init(struct k_delayed_work *w, ble_npl_event_fn *f);
 void k_delayed_work_cancel(struct k_delayed_work *w);
+bool k_delayed_work_pending(struct k_delayed_work *w);
 void k_delayed_work_submit(struct k_delayed_work *w, uint32_t ms);
 int64_t k_uptime_get(void);
-u32_t k_uptime_get_32(void);
+uint32_t k_uptime_get_32(void);
 void k_sleep(int32_t duration);
 void k_work_submit(struct ble_npl_callout *w);
 void k_work_add_arg(struct ble_npl_callout *w, void *arg);
@@ -366,18 +386,18 @@ static inline void sys_memcpy_swap(void *dst, const void *src, size_t length)
     src += length - 1;
 
     for (; length > 0; length--) {
-        *((u8_t *)dst++) = *((u8_t *)src--);
+        *((uint8_t *)dst++) = *((uint8_t *)src--);
     }
 }
 
 #define popcount(x) __builtin_popcount(x)
 
-static inline unsigned int find_lsb_set(u32_t op)
+static inline unsigned int find_lsb_set(uint32_t op)
 {
     return __builtin_ffs(op);
 }
 
-static inline unsigned int find_msb_set(u32_t op)
+static inline unsigned int find_msb_set(uint32_t op)
 {
     if (!op)
         return 0;
@@ -385,43 +405,61 @@ static inline unsigned int find_msb_set(u32_t op)
     return 32 - __builtin_clz(op);
 }
 
-#define CONFIG_BT_MESH_FRIEND               BLE_MESH_FRIEND
-#define CONFIG_BT_MESH_GATT_PROXY           BLE_MESH_GATT_PROXY
-#define CONFIG_BT_MESH_IV_UPDATE_TEST       BLE_MESH_IV_UPDATE_TEST
-#define CONFIG_BT_MESH_LOW_POWER            BLE_MESH_LOW_POWER
-#define CONFIG_BT_MESH_LPN_AUTO             BLE_MESH_LPN_AUTO
-#define CONFIG_BT_MESH_LPN_ESTABLISHMENT    BLE_MESH_LPN_ESTABLISHMENT
-#define CONFIG_BT_MESH_PB_ADV               BLE_MESH_PB_ADV
-#define CONFIG_BT_MESH_PB_GATT              BLE_MESH_PB_GATT
-#define CONFIG_BT_MESH_PROV                 BLE_MESH_PROV
-#define CONFIG_BT_MESH_PROXY                BLE_MESH_PROXY
-#define CONFIG_BT_TESTING                   BLE_MESH_TESTING
-#define CONFIG_BT_SETTINGS                  BLE_MESH_SETTINGS
-#define CONFIG_SETTINGS                     BLE_MESH_SETTINGS
-#define CONFIG_BT_MESH_PROVISIONER          BLE_MESH_PROVISIONER
+#define CONFIG_BT_MESH_FRIEND                 BLE_MESH_FRIEND
+#define CONFIG_BT_MESH_GATT_PROXY             BLE_MESH_GATT_PROXY
+#define CONFIG_BT_MESH_IV_UPDATE_TEST         BLE_MESH_IV_UPDATE_TEST
+#define CONFIG_BT_MESH_LOW_POWER              BLE_MESH_LOW_POWER
+#define CONFIG_BT_MESH_LPN_SUB_ALL_NODES_ADDR BLE_MESH_LPN_SUB_ALL_NODES_ADDR
+#define CONFIG_BT_MESH_LPN_AUTO               BLE_MESH_LPN_AUTO
+#define CONFIG_BT_MESH_LPN_ESTABLISHMENT      BLE_MESH_LPN_ESTABLISHMENT
+#define CONFIG_BT_MESH_PB_ADV                 BLE_MESH_PB_ADV
+#define CONFIG_BT_MESH_PB_GATT                BLE_MESH_PB_GATT
+#define CONFIG_BT_MESH_PROV                   BLE_MESH_PROV
+#define CONFIG_BT_MESH_PROXY                  BLE_MESH_PROXY
+#define CONFIG_BT_TESTING                     BLE_MESH_TESTING
+#define CONFIG_BT_SETTINGS                    BLE_MESH_SETTINGS
+#define CONFIG_SETTINGS                       BLE_MESH_SETTINGS
+#define CONFIG_BT_MESH_PROVISIONER            BLE_MESH_PROVISIONER
+#define CONFIG_BT_MESH_PROV_DEVICE            BLE_MESH_PROV_DEVICE
+#define CONFIG_BT_MESH_CDB                    BLE_MESH_CDB
 
 /* Above flags are used with IS_ENABLED macro */
 #define IS_ENABLED(config) MYNEWT_VAL(config)
 
-#define CONFIG_BT_MESH_LPN_GROUPS           MYNEWT_VAL(BLE_MESH_LPN_GROUPS)
-#define CONFIG_BT_MESH_ADV_BUF_COUNT        MYNEWT_VAL(BLE_MESH_ADV_BUF_COUNT)
-#define CONFIG_BT_MESH_FRIEND_QUEUE_SIZE    MYNEWT_VAL(BLE_MESH_FRIEND_QUEUE_SIZE)
-#define CONFIG_BT_MESH_FRIEND_RECV_WIN      MYNEWT_VAL(BLE_MESH_FRIEND_RECV_WIN)
-#define CONFIG_BT_MESH_LPN_POLL_TIMEOUT     MYNEWT_VAL(BLE_MESH_LPN_POLL_TIMEOUT)
-#define CONFIG_BT_MESH_MODEL_GROUP_COUNT    MYNEWT_VAL(BLE_MESH_MODEL_GROUP_COUNT)
-#define CONFIG_BT_MESH_MODEL_KEY_COUNT      MYNEWT_VAL(BLE_MESH_MODEL_KEY_COUNT)
-#define CONFIG_BT_MESH_NODE_ID_TIMEOUT      MYNEWT_VAL(BLE_MESH_NODE_ID_TIMEOUT)
-#define CONFIG_BT_MAX_CONN                  MYNEWT_VAL(BLE_MAX_CONNECTIONS)
-#define CONFIG_BT_MESH_SEQ_STORE_RATE       MYNEWT_VAL(BLE_MESH_SEQ_STORE_RATE)
-#define CONFIG_BT_MESH_RPL_STORE_TIMEOUT    MYNEWT_VAL(BLE_MESH_RPL_STORE_TIMEOUT)
-#define CONFIG_BT_MESH_APP_KEY_COUNT        MYNEWT_VAL(BLE_MESH_APP_KEY_COUNT)
-#define CONFIG_BT_MESH_SUBNET_COUNT         MYNEWT_VAL(BLE_MESH_SUBNET_COUNT)
-#define CONFIG_BT_MESH_STORE_TIMEOUT        MYNEWT_VAL(BLE_MESH_STORE_TIMEOUT)
-#define CONFIG_BT_MESH_IVU_DIVIDER          MYNEWT_VAL(BLE_MESH_IVU_DIVIDER)
-#define CONFIG_BT_DEVICE_NAME               MYNEWT_VAL(BLE_MESH_DEVICE_NAME)
-#define CONFIG_BT_MESH_TX_SEG_MAX           MYNEWT_VAL(BLE_MESH_TX_SEG_MAX)
-#define CONFIG_BT_MESH_LABEL_COUNT          MYNEWT_VAL(BLE_MESH_LABEL_COUNT)
-#define CONFIG_BT_MESH_NODE_COUNT           MYNEWT_VAL(BLE_MESH_NODE_COUNT)
+#define CONFIG_BT_MESH_LPN_GROUPS                MYNEWT_VAL(BLE_MESH_LPN_GROUPS)
+#define CONFIG_BT_MESH_ADV_BUF_COUNT             MYNEWT_VAL(BLE_MESH_ADV_BUF_COUNT)
+#define CONFIG_BT_MESH_SEG_BUFS                  MYNEWT_VAL(BLE_MESH_SEG_BUFS )
+#define CONFIG_BT_MESH_FRIEND_QUEUE_SIZE         MYNEWT_VAL(BLE_MESH_FRIEND_QUEUE_SIZE)
+#define CONFIG_BT_MESH_FRIEND_RECV_WIN           MYNEWT_VAL(BLE_MESH_FRIEND_RECV_WIN)
+#define CONFIG_BT_MESH_LPN_POLL_TIMEOUT          MYNEWT_VAL(BLE_MESH_LPN_POLL_TIMEOUT)
+#define CONFIG_BT_MESH_MODEL_GROUP_COUNT         MYNEWT_VAL(BLE_MESH_MODEL_GROUP_COUNT)
+#define CONFIG_BT_MESH_MODEL_KEY_COUNT           MYNEWT_VAL(BLE_MESH_MODEL_KEY_COUNT)
+#define CONFIG_BT_MESH_NODE_ID_TIMEOUT           MYNEWT_VAL(BLE_MESH_NODE_ID_TIMEOUT)
+#define CONFIG_BT_MAX_CONN                       MYNEWT_VAL(BLE_MAX_CONNECTIONS)
+#define CONFIG_BT_MESH_SEQ_STORE_RATE            MYNEWT_VAL(BLE_MESH_SEQ_STORE_RATE)
+#define CONFIG_BT_MESH_RPL_STORE_TIMEOUT         MYNEWT_VAL(BLE_MESH_RPL_STORE_TIMEOUT)
+#define CONFIG_BT_MESH_APP_KEY_COUNT             MYNEWT_VAL(BLE_MESH_APP_KEY_COUNT)
+#define CONFIG_BT_MESH_SUBNET_COUNT              MYNEWT_VAL(BLE_MESH_SUBNET_COUNT)
+#define CONFIG_BT_MESH_STORE_TIMEOUT             MYNEWT_VAL(BLE_MESH_STORE_TIMEOUT)
+#define CONFIG_BT_MESH_IVU_DIVIDER               MYNEWT_VAL(BLE_MESH_IVU_DIVIDER)
+#define CONFIG_BT_DEVICE_NAME                    MYNEWT_VAL(BLE_MESH_DEVICE_NAME)
+#define CONFIG_BT_RX_SEG_MAX                     MYNEWT_VAL(BLE_MESH_RX_SEG_MAX)
+#define CONFIG_BT_MESH_TX_SEG_MAX                MYNEWT_VAL(BLE_MESH_TX_SEG_MAX)
+#define CONFIG_BT_MESH_RX_SEG_MAX                MYNEWT_VAL(BLE_MESH_RX_SEG_MAX)
+#define CONFIG_BT_MESH_RX_SEG_MSG_COUNT          MYNEWT_VAL(BLE_MESH_RX_SEG_MSG_COUNT)
+#define CONFIG_BT_MESH_LABEL_COUNT               MYNEWT_VAL(BLE_MESH_LABEL_COUNT)
+#define CONFIG_BT_MESH_NODE_COUNT                MYNEWT_VAL(BLE_MESH_CDB_NODE_COUNT)
+#define CONFIG_BT_GATT_PROXY_ENABLED             MYNEWT_VAL(BLE_MESH_GATT_PROXY_ENABLED)
+#define CONFIG_BT_MESH_DEFAULT_TTL               MYNEWT_VAL(BLE_MESH_DEFAULT_TTL)
+#define CONFIG_BT_MESH_NETWORK_TRANSMIT_COUNT    MYNEWT_VAL(BLE_MESH_NETWORK_TRANSMIT_COUNT)
+#define CONFIG_BT_MESH_NETWORK_TRANSMIT_INTERVAL MYNEWT_VAL(BLE_MESH_NETWORK_TRANSMIT_INTERVAL)
+#define CONFIG_BT_MESH_RELAY_ENABLED             MYNEWT_VAL(BLE_MESH_RELAY_ENABLED)
+#define CONFIG_BT_MESH_RELAY_RETRANSMIT_INTERVAL MYNEWT_VAL(BLE_MESH_RELAY_RETRANSMIT_INTERVAL)
+#define CONFIG_BT_MESH_BEACON_ENABLED            MYNEWT_VAL(BLE_MESH_BEACON_ENABLED)
+#define CONFIG_BT_MESH_FRIEND_ENABLED            MYNEWT_VAL(BLE_MESH_FRIEND_ENABLED)
+#define CONFIG_BT_MESH_RELAY                     MYNEWT_VAL(BLE_MESH_RELAY)
+#define CONFIG_BT_MESH_RELAY_RETRANSMIT_COUNT    MYNEWT_VAL(BLE_MESH_RELAY_RETRANSMIT_COUNT)
+#define CONFIG_BT_MESH_GATT_PROXY_ENABLED        MYNEWT_VAL(BLE_MESH_GATT_PROXY_ENABLED)
 
 #define printk console_printf
 
@@ -437,7 +475,7 @@ static inline void k_sem_init(struct k_sem *sem, unsigned int initial_count,
 	ble_npl_sem_init(sem, initial_count);
 }
 
-static inline int k_sem_take(struct k_sem *sem, s32_t timeout)
+static inline int k_sem_take(struct k_sem *sem, int32_t timeout)
 {
 	uint32_t ticks;
 
@@ -459,8 +497,8 @@ static inline void k_sem_give(struct k_sem *sem)
 static inline int net_buf_id(struct os_mbuf *buf)
 {
 	struct os_mbuf_pool *pool = buf->om_omp;
-	u8_t *pool_start = (u8_t *)pool->omp_pool->mp_membuf_addr;
-	u8_t *buf_ptr = (u8_t *)buf;
+	uint8_t *pool_start = (uint8_t *)pool->omp_pool->mp_membuf_addr;
+	uint8_t *buf_ptr = (uint8_t *)buf;
 
 	return (buf_ptr - pool_start) / BUF_SIZE(pool);
 }
@@ -505,6 +543,46 @@ settings_load(void)
 #endif /* MYNEWT_VAL(MYNEWT_VAL_BLE_MESH_SETTINGS) */
 
 #define BUILD_ASSERT(cond) _Static_assert(cond, "")
+
+
+/* Memory slabs/blocks */
+
+/** Memory slab structure */
+struct k_mem_slab {
+    /**
+     * _wait_q_t is not required now, as we don't implement zephyr timeouts -
+     * if slab couldn't be allocated, we simply return error  
+     */
+    uint32_t num_blocks; /** number of memory blocks available for allocation */
+    size_t block_size; /** size of single block */
+	/**
+     * buffer for blocks - must be alligned to N-byte, where N is a power of 2.
+     * Minimal size of buffer is num_blocks * block_size
+     */
+    char *buffer;
+	char *free_list; /** list of free memory blocks */
+	uint32_t num_used; /** count of used memory blocks */
+};
+
+struct k_mem_block_id {
+	uint32_t pool : 8;
+	uint32_t level : 4;
+	uint32_t block : 20;
+};
+
+struct k_mem_block {
+	void *data;
+	struct k_mem_block_id id;
+};
+
+extern void k_mem_slab_free(struct k_mem_slab *slab, void **mem);
+extern int k_mem_slab_alloc(struct k_mem_slab *slab, void **mem);
+static inline uint32_t k_mem_slab_num_free_get(struct k_mem_slab *slab)
+{
+	return slab->num_blocks - slab->num_used;
+}
+
+int create_free_list(struct k_mem_slab *slab);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,8 @@
 # class containing all registered Alexa/Hue lights
 #
 # simulates a Hue bridge containing multiple lights
+
+#@ solidify:hue_bridge
 var hue_bridge = module("hue_bridge")
 
 hue_bridge.init = def (m)

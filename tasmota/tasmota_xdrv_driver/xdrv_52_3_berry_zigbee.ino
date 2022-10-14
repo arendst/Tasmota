@@ -69,7 +69,7 @@ extern "C" {
     return d->batt_percent == 255 ? -1 : d->batt_percent;
   }
   int32_t zd_battery_lastseen(const class Z_Device* d) {
-    return 0;   // TODO not yet known
+    return d->batt_last_seen;   // TODO not yet known
   }
 }
 
@@ -166,8 +166,8 @@ extern "C" {
     be_return(vm);
   }
 
-  int32_t callBerryZigbeeDispatcher(const char* cmd, const char* type, void* data, int32_t idx);
-  int32_t callBerryZigbeeDispatcher(const char* cmd, const char* type, void* data, int32_t idx) {
+  int32_t callBerryZigbeeDispatcher(const char* event, const class ZCLFrame* zcl_frame, const class Z_attribute_list* attr_list, int32_t idx);
+  int32_t callBerryZigbeeDispatcher(const char* event, const class ZCLFrame* zcl_frame, const class Z_attribute_list* attr_list, int32_t idx) {
     int32_t ret = 0;
     bvm *vm = berry.vm;
 
@@ -178,9 +178,9 @@ extern "C" {
       be_getmethod(vm, -1, PSTR("dispatch"));   // method dispatch
       if (!be_isnil(vm, -1)) {
         be_pushvalue(vm, -2); // add instance as first arg
-        be_pushstring(vm, cmd != nullptr ? cmd : "");
-        be_pushstring(vm, type != nullptr ? type : "");
-        be_pushcomptr(vm, data);
+        be_pushstring(vm, event != nullptr ? event : "");
+        be_pushcomptr(vm, (void*) zcl_frame);
+        be_pushcomptr(vm, (void*) attr_list);
         be_pushint(vm, idx);
         BrTimeoutStart();
         ret = be_pcall(vm, 5);   // 5 arguments
@@ -205,7 +205,7 @@ extern "C" {
 }
 
 /*********************************************************************************************\
- * Mapping for zcl_message
+ * Mapping for zcl_frame_ntv
  *
 \*********************************************************************************************/
 extern "C" {
@@ -235,6 +235,53 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * Mapping for zcl_attribute_ntv
+ *
+\*********************************************************************************************/
+extern "C" {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"   // avoid warnings since we're using offsetof() in a risky way
+
+  extern const be_ctypes_structure_t be_zigbee_zcl_attribute_list_struct = {
+    sizeof(Z_attribute_list),  /* size in bytes */
+    3,  /* number of elements */
+    nullptr,
+    (const be_ctypes_structure_item_t[3]) {
+      { "_groupaddr", offsetof(Z_attribute_list, group_id), 0, 0, ctypes_u16, 0 },
+      { "_lqi", offsetof(Z_attribute_list, lqi), 0, 0, ctypes_u8, 0 },
+      { "_src_ep", offsetof(Z_attribute_list, src_ep), 0, 0, ctypes_u8, 0 },
+  }};
+
+  extern const be_ctypes_structure_t be_zigbee_zcl_attribute_struct = {
+    sizeof(Z_attribute),  /* size in bytes */
+    10,  /* number of elements */
+    nullptr,
+    (const be_ctypes_structure_item_t[10]) {
+      { "_attr_id", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u16, 0 },
+      { "_cluster", offsetof(Z_attribute, cluster), 0, 0, ctypes_u16, 0 },
+      { "_cmd", offsetof(Z_attribute, attr_id), 0, 0, ctypes_u8, 0 },       // low 8 bits of attr_id
+      { "_cmd_general", offsetof(Z_attribute, attr_id) + 1, 1, 1, ctypes_u8, 0 },       // bit #1 of byte+1
+      { "_direction", offsetof(Z_attribute, attr_id) + 1, 0, 1, ctypes_u8, 0 },         // bit #0 of byte+1
+      { "_iscmd", offsetof(Z_attribute, key_is_cmd), 0, 0, ctypes_u8, 0 },
+      { "attr_multiplier", offsetof(Z_attribute, attr_multiplier), 0, 0, ctypes_i8, 0 },
+      { "attr_divider", offsetof(Z_attribute, attr_divider), 0, 0, ctypes_i8, 0 },
+      { "attr_type", offsetof(Z_attribute, attr_type), 0, 0, ctypes_u8, 0 },
+      // { "key", offsetof(Z_attribute, key), 0, 0, ctypes_ptr32, 0 },
+      // { "key_is_pmem", offsetof(Z_attribute, key_is_pmem), 0, 0, ctypes_u8, 0 },
+      // { "key_is_str", offsetof(Z_attribute, key_is_str), 0, 0, ctypes_u8, 0 },
+      { "key_suffix", offsetof(Z_attribute, key_suffix), 0, 0, ctypes_u8, 0 },
+      // { "type", offsetof(Z_attribute, type), 0, 0, ctypes_u8, 0 },
+      // { "val_float", offsetof(Z_attribute, val), 0, 0, ctypes_float, 0 },
+      // { "val_i32", offsetof(Z_attribute, val), 0, 0, ctypes_i32, 0 },
+      // { "val_str_raw", offsetof(Z_attribute, val_str_raw), 0, 0, ctypes_u8, 0 },
+      // { "val_ptr", offsetof(Z_attribute, val), 0, 0, ctypes_ptr32, 0 },
+      // { "val_u32", offsetof(Z_attribute, val), 0, 0, ctypes_u32, 0 },
+  }};
+
+#pragma GCC diagnostic pop
+}
+
+/*********************************************************************************************\
  * Functions for zcl_frame
  *
 \*********************************************************************************************/
@@ -255,6 +302,296 @@ extern "C" {
     sbuf.reserve(len_bytes);  // make sure it's large enough
     sbuf.setLen(0);           // clear content
     sbuf.addBuffer(bytes, len_bytes); // add content of bytes() buffer
+  }
+}
+
+/*********************************************************************************************\
+ * Functions for zcl_attribute
+ *
+\*********************************************************************************************/
+extern "C" {
+  extern const bclass be_class_zcl_attribute_list;
+  extern const bclass be_class_zcl_attribute;
+  extern const bclass be_class_zcl_attribute_ntv;
+
+  void zat_zcl_attribute(struct bvm *vm, const Z_attribute *attr);
+
+  // Pushes the Z_attribute_list on the stack as a simple list
+  // Adds the output on top of stack and does not change rest of stack (stack size incremented by 1)
+  void zat_zcl_attribute_list_inner(struct bvm *vm, const Z_attribute_list* attrlist) {
+    be_newobject(vm, "list");
+
+    for (const auto & attr : *attrlist) {
+      zat_zcl_attribute(vm, &attr);
+      be_data_push(vm, -2);
+      be_pop(vm, 1);
+    }
+    be_pop(vm, 1);
+  }
+
+  // Pushes the Z_attribute on the stack as `zcl_attribute_ntv`
+  void zat_zcl_attribute(struct bvm *vm, const Z_attribute *attr) {
+    be_pushntvclass(vm, &be_class_zcl_attribute);
+    be_pushcomptr(vm, (void*) attr);
+
+    // instantiate
+    be_call(vm, 1);     // 1 parameter
+    be_pop(vm, 1);
+  }
+
+  // Get typed value from zcl_attributes
+  int be_zigbee_zcl_attribute_ntv_get_val(struct bvm *vm) {
+    const Z_attribute *attr = (const Z_attribute*) be_tobytes(vm, 1, NULL);
+    // value
+    switch (attr->type) {
+      case Za_type::Za_bool:
+        be_pushbool(vm, attr->val.uval32 ? btrue : bfalse);
+        break;
+      case Za_type::Za_uint:
+      case Za_type::Za_int:
+        be_pushint(vm, attr->val.ival32);
+        break;
+      case Za_type::Za_float:
+        be_pushreal(vm, (breal)attr->val.fval);
+        break;
+      case Za_type::Za_raw:
+        be_pushbytes(vm, attr->val.bval->getBuffer(), attr->val.bval->len());
+        break;
+      case Za_type::Za_str:
+        be_pushstring(vm, attr->val.sval);
+        break;
+        
+      case Za_type::Za_obj:
+        zat_zcl_attribute_list_inner(vm, attr->val.objval);
+        break;
+
+      case Za_type::Za_arr:
+        // json_format = true;
+        if (attr->val.arrval) {
+          String arrval = attr->val.arrval->toString();
+          be_module_load(vm, be_newstr(vm, "json"));
+          be_getmember(vm, -1, "load");
+          be_remove(vm, -2);      // remove module 'json'
+          be_pushstring(vm, arrval.c_str());
+          be_call(vm, 1);
+          be_pop(vm, 1);
+        } else {
+          // push empty list
+          be_newobject(vm, "list");
+          be_pop(vm, 1);
+        }
+        break;
+
+      case Za_type::Za_none:
+      default:
+        be_pushnil(vm);
+        break;
+    }
+
+    be_return(vm);
+  }
+
+  // Initialize the Z_attribute_list memory zone with provided address
+  int be_zigbee_zcl_attribute_list_ntv_init(struct bvm *vm) {
+    size_t len;
+    Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, &len);
+    attr_list = new(attr_list) Z_attribute_list();   // "placement new" to provide a fixed address https://isocpp.org/wiki/faq/dtors#placement-new
+    be_return_nil(vm);
+  }
+
+  // Deinitialize the Z_attribute_list memory zone with provided address
+  int be_zigbee_zcl_attribute_list_ntv_deinit(struct bvm *vm) {
+    size_t len;
+    Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, &len);
+    if (attr_list) {
+      attr_list->~Z_attribute_list();
+    }
+    be_return_nil(vm);
+  }
+
+  // Size
+  int be_zigbee_zcl_attribute_list_ntv_size(struct bvm *vm) {
+    Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, nullptr);
+    be_pushint(vm, attr_list->length());
+    be_return(vm);
+  }
+
+  // Item
+  int be_zigbee_zcl_attribute_list_ntv_item(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2) {
+      int32_t idx = be_toint(vm, 2);
+      Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, nullptr);
+      const Z_attribute* attr = attr_list->at(idx);
+      if (attr) {
+        zat_zcl_attribute(vm, attr);
+        be_return(vm);
+      }
+    }
+    be_return_nil(vm);
+  }
+
+  // new_head
+  int be_zigbee_zcl_attribute_list_ntv_new_head(struct bvm *vm) {
+    Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, nullptr);
+    Z_attribute &attr = attr_list->addHead();
+    zat_zcl_attribute(vm, &attr);
+    be_return(vm);
+  }
+
+  // new_tail
+  int be_zigbee_zcl_attribute_list_ntv_new_tail(struct bvm *vm) {
+    Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, nullptr);
+    Z_attribute &attr = attr_list->addToLast();
+    zat_zcl_attribute(vm, &attr);
+    be_return(vm);
+  }
+
+  // Remove
+  int be_zigbee_zcl_attribute_list_ntv_remove(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2) {
+      int32_t idx = be_toint(vm, 2);
+      Z_attribute_list *attr_list = (Z_attribute_list*) be_tobytes(vm, 1, nullptr);
+      const Z_attribute* attr = attr_list->at(idx);
+      if (attr) {
+        attr_list->remove(attr);
+      }
+    }
+    be_return_nil(vm);
+  }
+
+  // Initialize the Z_attribute memory zone with provided address
+  int be_zigbee_zcl_attribute_ntv_init(struct bvm *vm) {
+    size_t len;
+    Z_attribute *attr = (Z_attribute*) be_tobytes(vm, 1, &len);
+    attr = new(attr) Z_attribute();   // "placement new" to provide a fixed address https://isocpp.org/wiki/faq/dtors#placement-new
+    be_return_nil(vm);
+  }
+
+  // Deinitialize the Z_attribute memory zone with provided address
+  int be_zigbee_zcl_attribute_ntv_deinit(struct bvm *vm) {
+    size_t len;
+    Z_attribute *attr = (Z_attribute*) be_tobytes(vm, 1, &len);
+    if (attr) {
+      attr->~Z_attribute();
+    }
+    be_return_nil(vm);
+  }
+
+  // Set typed value from zcl_attributes
+  int be_zigbee_zcl_attribute_ntv_set_val(struct bvm *vm) {
+    int32_t argc = be_top(vm);
+    if (argc >= 2) {
+      Z_attribute *attr = (Z_attribute*) be_tobytes(vm, 1, NULL);
+
+      if (be_isnil(vm, 2)) {
+        attr->setNone();
+      } else if (be_isbool(vm, 2)) {
+        attr->setBool(be_tobool(vm, 2));
+      } else if (be_isint(vm, 2)) {
+        attr->setInt(be_toint(vm, 2));
+      } else if (be_isreal(vm, 2)) {
+        attr->setFloat(be_toreal(vm, 2));
+      } else if (be_isstring(vm, 2)) {
+        attr->setStr(be_tostring(vm, 2));
+      } else if (be_isbytes(vm, 2)) {
+        size_t len;
+        const void* buf = be_tobytes(vm, 2, &len);
+        attr->setRaw(buf, len);
+      }
+    }
+
+    be_return(vm);
+  }
+
+  // returns the key as string or `nil` if no string key. Suffix is not appended
+  int be_zigbee_zcl_attribute_ntv_get_key(struct bvm *vm) {
+    const Z_attribute *attr = (const Z_attribute*) be_tobytes(vm, 1, NULL);
+    if (attr->key_is_str)  {
+      be_pushstring(vm, attr->key);
+    } else {
+      be_pushnil(vm);
+    }
+    be_return(vm);
+  }
+
+  // set string key, or remove if `nil` or no parameter
+  int be_zigbee_zcl_attribute_ntv_set_key(struct bvm *vm) {
+    Z_attribute *attr = (Z_attribute*) be_tobytes(vm, 1, NULL);
+    int32_t argc = be_top(vm);
+    if (argc >= 2 && be_isstring(vm, 2)) {
+      const char* key = be_tostring(vm, 2);
+      attr->setKeyName(key, false);
+    } else {
+      attr->setKeyId(attr->cluster, attr->attr_id);
+    }
+    be_return_nil(vm);
+  }
+}
+
+extern "C" {
+  int zigbee_test_attr(struct bvm *vm) {
+    int32_t mode = be_toint(vm, 2);
+    if (mode < 10) {
+      //
+    } else {
+      Z_attribute *a = new Z_attribute();
+      if (mode == 10) {
+        a->setKeyId(1111, 2222);
+        a->setUInt(1337);
+      } else if (mode == 11) {
+        a->setKeyName("super_attribute");
+        a->key_suffix = 2;
+        a->setFloat(3.14);
+      } else if (mode == 12) {
+        a->setKeyName("array");
+        a->newJsonArray();
+        a->val.arrval->add(-1);
+        a->val.arrval->addStr("foo");
+        a->val.arrval->addStr("bar");
+        a->val.arrval->addStr("bar\"baz\'toto");
+      } else if (mode == 13) {
+        a->setKeyName("list");
+        a->newAttrList();
+        Z_attribute &subattr1 = a->val.objval->addAttribute(10,20);
+        subattr1.setStr("sub1");
+        Z_attribute &subattr2 = a->val.objval->addAttribute(11,21);
+        subattr2.setStr("sub2");
+      }
+      zat_zcl_attribute(vm, a);
+    }
+    be_return(vm);
+  }
+
+
+  // Creates a zcl_attributes from Z_attribute_list
+  // Adds the output on top of stack and does not change rest of stack (stack size incremented by 1)
+  void zat_zcl_attribute_list(struct bvm *vm, uint16_t shortaddr, const Z_attribute_list* attr_list) {
+    be_pushntvclass(vm, &be_class_zcl_attribute_list);
+    be_pushcomptr(vm, (void*) attr_list);
+    // // instantiate
+    be_call(vm, 1);     // 1 parameter
+    be_pop(vm, 1);
+
+    if (shortaddr != BAD_SHORTADDR) {
+      be_pushint(vm, shortaddr);
+      be_setmember(vm, -2, "shortaddr");
+      be_pop(vm, 1);
+    }
+  }
+
+  int zigbee_test_msg(struct bvm *vm) {
+    Z_attribute_list attr_list;
+
+    attr_list.lqi = 250;
+    Z_attribute &subattr1 = attr_list.addAttribute(10,20);
+    subattr1.setStr("sub1");
+    Z_attribute &subattr2 = attr_list.addAttribute(11,21);
+    subattr2.setStr("sub2");
+
+    zat_zcl_attribute_list(vm, 100, &attr_list);
+    be_return(vm);
   }
 }
 

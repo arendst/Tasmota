@@ -33,6 +33,8 @@
  * {"NAME":"LE LampUX 907001-US","GPIO":[0,0,0,0,0,0,0,0,4066,0,4032,0,0,0],"FLAG":0,"BASE":18}
  * Fitop 10W RGBCCT Bulb (BA60H-W0080-RCBW-E7)
  * {"NAME":"Fitop 10W RGBCCT","GPIO":[1,1,1,1,1,4032,1,1,4069,1,1,1,1,1],"FLAG":0,"BASE":18,"CMND":"RGBWWTable 167,102,109,255,255"}
+ * Qualitel RGBCCT converted with ESP-12F (#16626)
+ * {"NAME":"Qualitel RGBWC","GPIO":[0,0,0,0,0,0,0,0,4032,4072,0,0,0,0],"FLAG":0,"BASE":18}
 \*********************************************************************************************/
 
 #define XLGT_04             4
@@ -60,13 +62,24 @@
 #define SM2135_55MA         0x09
 #define SM2135_60MA         0x0A
 
-enum Sm2135Color { SM2135_WCGRB, SM2135_WCBGR, SM2135_WCGRBHI, SM2135_WCBGRHI, SM2135_WCGRB15W, SM2135_WCBGR15W, SM2135_WCBRG_SETALL };
+enum Sm2135Color { SM2135_WCGRB,         //  1 (4064) - Action LSC GRB (20mA) and CW (15mA)
+                   SM2135_WCBGR,         //  2 (4065) - Polux BGR (20mA) and CW (15mA)
+                   SM2135_WCGRBHI,       //  3 (4066) - GRB (20mA) and CW (30mA)
+                   SM2135_WCBGRHI,       //  4 (4067) - BGR (20mA) and CW (30mA)
+                   SM2135_WCGRB15W,      //  5 (4068) - LE LampUX 907001-US GRB (45mA) and CW (60mA)
+                   SM2135_WCBGR15W,      //  6 (4069) - BGR (45mA) and CW (60mA)
+                   SM2135_WCBRG_SETALL,  //  7 (4070) - Fitop 10W RGBCCT BRG (15mA) and CW (40mA)
+                   SM2135_RESERVED_8,    //  8 (4071) - Reserved - currently fallsback to 2
+                   SM2135_WCGRB_ALL,     //  9 (4072) - GRB (20mA) and CW (15mA) like 1 but reset either RGB or CW
+                   SM2135_WCBGR_ALL      // 10 (4073) - BGR (20mA) and CW (15mA) like 2 but reset either RGB or CW
+                 };
 
 struct SM2135 {
   uint8_t clk = 0;
   uint8_t data = 0;
   uint8_t current;
   uint8_t model = SM2135_WCGRB;
+  bool grbcw;
 } Sm2135;
 
 /*********************************************************************************************\
@@ -136,9 +149,36 @@ void Sm2135Stop(void) {
 
 /********************************************************************************************/
 
+void Sm2135SetRGB(uint32_t red, uint32_t green, uint32_t blue) {
+  Sm2135Start(SM2135_ADDR_MC);
+  Sm2135Write(Sm2135.current);
+  Sm2135Write(SM2135_RGB);
+  if (Sm2135.model &1) {      // SM2135_WCBGR
+    Sm2135Write(blue);
+    Sm2135Write(green);
+    Sm2135Write(red);
+  } else {                    // SM2135_WCGRB
+    Sm2135Write(green);
+    Sm2135Write(red);
+    Sm2135Write(blue);
+  }
+  Sm2135Stop();
+}
+
+void Sm2135SetCW(uint32_t cold, uint32_t warm) {
+  Sm2135Start(SM2135_ADDR_MC);
+  Sm2135Write(Sm2135.current);
+  Sm2135Write(SM2135_CW);
+  Sm2135Stop();
+  delay(1);
+  Sm2135Start(SM2135_ADDR_C);
+  Sm2135Write(warm);
+  Sm2135Write(cold);
+  Sm2135Stop();
+}
+
 bool Sm2135SetChannels(void) {
   uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
-  uint8_t data[6];
 
   // Fitop bulbs have the behaviour that they store previous states if not explicitly overwritten.
   // Example: If set to RGB then CCT, this bulb keeps RGB-led's on, even though they should be cleared.
@@ -147,50 +187,37 @@ bool Sm2135SetChannels(void) {
     Sm2135Start(SM2135_ADDR_MC);
     Sm2135Write(Sm2135.current);
     Sm2135Write(SM2135_RGB);
-    Sm2135Write(cur_col[2]);  // Blue
-    Sm2135Write(cur_col[0]);  // Red
-    Sm2135Write(cur_col[1]);  // Green
-    Sm2135Write(cur_col[4]);  // Warm
-    Sm2135Write(cur_col[3]);  // Cold
+    Sm2135Write(cur_col[2]);    // Blue
+    Sm2135Write(cur_col[0]);    // Red
+    Sm2135Write(cur_col[1]);    // Green
+    Sm2135Write(cur_col[4]);    // Warm
+    Sm2135Write(cur_col[3]);    // Cold
     Sm2135Stop();
     return true;
   }
 
   uint32_t light_type = 3;      // RGB and CW
   if (Sm2135.model < 2) {       // Only allow one of two options due to power supply
-    if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
-      light_type = 1;           // CW only
-    } else {
+    if ((0 == cur_col[3]) && (0 == cur_col[4])) {
       light_type = 2;           // RGB only
+    } else {
+      light_type = 1;           // CW only
     }
   }
   if (light_type &2) {          // Set RGB
-    Sm2135Start(SM2135_ADDR_MC);
-    Sm2135Write(Sm2135.current);
-    Sm2135Write(SM2135_RGB);
-    if (Sm2135.model &1) {      // SM2135_WCBGR
-      Sm2135Write(cur_col[2]);  // Blue
-      Sm2135Write(cur_col[1]);  // Green
-      Sm2135Write(cur_col[0]);  // Red
-    } else {                    // SM2135_WCGRB
-      Sm2135Write(cur_col[1]);  // Green
-      Sm2135Write(cur_col[0]);  // Red
-      Sm2135Write(cur_col[2]);  // Blue
+    Sm2135SetRGB(cur_col[0], cur_col[1], cur_col[2]);
+  } else {
+    if (Sm2135.grbcw) {
+      Sm2135SetRGB(0, 0, 0);    // Clear RGB
     }
-    Sm2135Stop();
   }
   if (light_type &1) {          // Set CW
-    Sm2135Start(SM2135_ADDR_MC);
-    Sm2135Write(Sm2135.current);
-    Sm2135Write(SM2135_CW);
-    Sm2135Stop();
-    delay(1);
-    Sm2135Start(SM2135_ADDR_C);
-    Sm2135Write(cur_col[4]);    // Warm
-    Sm2135Write(cur_col[3]);    // Cold
-    Sm2135Stop();
+    Sm2135SetCW(cur_col[3], cur_col[4]);
+  } else {
+    if (Sm2135.grbcw) {
+      Sm2135SetCW(0, 0);        // Clear CW
+    }
   }
-
   return true;
 }
 
@@ -201,7 +228,7 @@ void Sm2135ModuleSelected(void)
     Sm2135.data = Pin(GPIO_SM2135_DAT, GPIO_ANY);
 
     // See #define MAX_SM2135_DAT 7 in tasmota_template.h
-    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 6
+    Sm2135.model = GetPin(Sm2135.data) - AGPIO(GPIO_SM2135_DAT);  // 0 .. 9
 
     // Legacy support of model selection
     if (PinUsed(GPIO_SWT1)) {
@@ -214,16 +241,21 @@ void Sm2135ModuleSelected(void)
     //                RGB current         CW current
     Sm2135.current = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
     switch (Sm2135.model) {
-      case SM2135_WCBRG_SETALL:      // SM2135 Dat 7 - values copied from tuya implementation
-        Sm2135.current = (SM2135_15MA << 4) | SM2135_40MA;
-        break;
-      case SM2135_WCGRBHI:      // SM2135 Dat 3
-      case SM2135_WCBGRHI:      // SM2135 Dat 4
+      case SM2135_WCGRBHI:       // SM2135 Dat 3
+      case SM2135_WCBGRHI:       // SM2135 Dat 4
         Sm2135.current = (SM2135_20MA << 4) | SM2135_30MA;
         break;
-      case SM2135_WCGRB15W:     // SM2135 Dat 5
-      case SM2135_WCBGR15W:     // SM2135 Dat 6
+      case SM2135_WCGRB15W:      // SM2135 Dat 5
+      case SM2135_WCBGR15W:      // SM2135 Dat 6
         Sm2135.current = (SM2135_45MA << 4) | SM2135_60MA;
+        break;
+      case SM2135_WCBRG_SETALL:  // SM2135 Dat 7 - values copied from tuya implementation
+        Sm2135.current = (SM2135_15MA << 4) | SM2135_40MA;
+        break;
+      case SM2135_WCGRB_ALL:     // SM2135 Dat 9
+      case SM2135_WCBGR_ALL:     // SM2135 Dat 10
+        Sm2135.model -= SM2135_WCGRB_ALL;
+        Sm2135.grbcw = true;
         break;
     }
 

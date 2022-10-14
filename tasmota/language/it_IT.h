@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 19.07.2022
+ * Updated until v9.4.0.1 - Last update 05.10.2022
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -495,10 +495,12 @@
 #define D_ZIGBEE_GENERATE_KEY                "Generazione chiave casuale rete Zigbee"
 #define D_ZIGBEE_UNKNOWN_DEVICE              "Dispositivo sconosciuto"
 #define D_ZIGBEE_UNKNOWN_ATTRIBUTE           "Attributo sconosciuto"
+#define D_ZIGBEE_UNKNOWN_ENDPOINT            "Punto finale sconosciuto"
 #define D_ZIGBEE_INVALID_PARAM               "Parametro non valido"
 #define D_ZIGBEE_MISSING_PARAM               "Parametro mancante"
 #define D_ZIGBEE_UNKNWON_ATTRIBUTE           "Nome sconosciuto attributo (ignorato): %s"
 #define D_ZIGBEE_TOO_MANY_CLUSTERS           "Non più di un ID cluster per comando"
+#define D_ZIGBEE_CONFLICTING_ENDPOINTS       "Conflitto punto finale destinazione"
 #define D_ZIGBEE_WRONG_DELIMITER             "Delimitatore errato carico utile"
 #define D_ZIGBEE_UNRECOGNIZED_COMMAND        "Comando Zigbee non riconosciuto: %s"
 #define D_ZIGBEE_TOO_MANY_COMMANDS           "È consentito solo 1 comando (%d)"
@@ -563,6 +565,12 @@
 #define D_GX_AXIS "Giroscopio asse X"
 #define D_GY_AXIS "Giroscopio asse Y"
 #define D_GZ_AXIS "Giroscopio asse Z"
+
+// xsns_33_QMC5883L.ino
+#define D_MX           "Asse X induzione"
+#define D_MY           "Asse Y induzione"
+#define D_MZ           "Asse Z induzione"
+#define D_MAGNETICFLD  "Induzione magnetica"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE     "Rimuovi peso"
@@ -677,6 +685,8 @@
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
 #define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
 #define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
+#define D_SENSOR_NRG_MBS_TX             "NrgModbus - TX"
+#define D_SENSOR_NRG_MBS_RX             "NrgModbus - RX"
 #define D_SENSOR_SDM72_TX               "SDM72 - TX"
 #define D_SENSOR_SDM72_RX               "SDM72 - RX"
 #define D_SENSOR_SDM120_TX              "SDMx20 - TX"
@@ -753,6 +763,7 @@
 #define D_SENSOR_HRE_DATA               "HRE - Dati"
 #define D_SENSOR_ADE7880_IRQ            "ADE7880 - IRQ"
 #define D_SENSOR_ADE7953_IRQ            "ADE7953 - IRQ"
+#define D_SENSOR_ADE7953_RST            "ADE7953 - RST"
 #define D_SENSOR_BUZZER                 "Cicalino"
 #define D_SENSOR_DISP_RESET             "Display - RESET"
 #define D_SENSOR_ZIGBEE_TXD             "Zigbee - TX"
@@ -911,6 +922,7 @@
 #define D_UNIT_MICROMETER                 "µm"
 #define D_UNIT_MICROSECOND                "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM        "µS/cm"
+#define D_UNIT_MICROTESLA                 "µT"
 #define D_UNIT_MILLIAMPERE                "mA"
 #define D_UNIT_MILLILITERS                "ml"
 #define D_UNIT_MILLIMETER                 "mm"
@@ -934,6 +946,7 @@
 #define D_UNIT_WATT_METER_QUADRAT         "W/m²"
 #define D_UNIT_LITER_PER_MINUTE           "l/min"
 #define D_UNIT_CUBICMETER_PER_HOUR        "m³/ora"
+#define D_UNIT_CUBIC_METER                "m³"
 
 #define D_NEW_ADDRESS          "Imposta indirizzo a"
 #define D_OUT_OF_RANGE         "Fuori intervallo"
@@ -1076,7 +1089,9 @@
 #define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
 
 // xsns_96_flowratemeter.ino
-#define D_FLOWRATEMETER_NAME "Portata"
+#define D_FLOWRATEMETER_NAME              "Portata"
+#define D_FLOWRATEMETER_AMOUNT_TODAY      "Valore odierno"
+#define D_FLOWRATEMETER_DURATION_TODAY    "Durata odierna"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"             // Machine names

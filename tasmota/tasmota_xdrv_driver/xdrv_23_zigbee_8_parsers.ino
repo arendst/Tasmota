@@ -666,7 +666,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
 const uint8_t Z_bindings[] PROGMEM = {
   Cx0001, Cx0006, Cx0008, Cx0102, Cx0201, Cx0300,
   Cx0400, Cx0402, Cx0403, Cx0405, Cx0406,
-  Cx0500,
+  Cx0500, Cx0B04,
 };
 
 int32_t Z_ClusterToCxBinding(uint16_t cluster) {
@@ -712,6 +712,11 @@ void Z_AutoBindDefer(uint16_t shortaddr, uint8_t endpoint, const SBuffer &buf,
     zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_READ_ATTRIBUTE, 0x0001, &Z_SendSingleAttributeRead);
     zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_CIE_ATTRIBUTE, 0 /* value */, &Z_WriteCIEAddress);
     zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0500, endpoint, Z_CAT_CIE_ENROLL, 1 /* zone */, &Z_SendCIEZoneEnrollResponse);
+  }
+
+  // if Plug, request the multipliers and divisors for Voltage, Current and Power
+  if (bitRead(cluster_in_map, Z_ClusterToCxBinding(0x0B04))) {
+    zigbee_devices.queueTimer(shortaddr, 0 /* groupaddr */, 2000, 0x0B04, endpoint, Z_CAT_READ_ATTRIBUTE, 0 /* ignore */, &Z_SendSinglePlugMulDivAttributesRead);
   }
 
   // enqueue bind requests
@@ -967,7 +972,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const SBuffer &buf) {
                   );
   // query the state of the bulb (for Alexa)
   uint32_t wait_ms = 2000;    // wait for 2s
-  Z_Query_Bulb(nwkAddr, wait_ms);
+  Z_Query_Bulb(nwkAddr, 0xFF, wait_ms);    // 0xFF means iterate on all endpoints
 
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   // Continue the discovery process and auto-binding only if the device was unknown or if PermitJoin is ongoing
@@ -1419,6 +1424,27 @@ void Z_SendSingleAttributeRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t 
 }
 
 //
+// Send single attribute read request in Timer
+//
+void Z_SendSinglePlugMulDivAttributesRead(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
+  ZCLFrame zcl(12);   // message is 12 bytes
+  zcl.shortaddr = shortaddr;
+  zcl.cluster = 0x0B04;
+  zcl.dstendpoint = endpoint;
+  zcl.cmd = ZCL_READ_ATTRIBUTES;
+  zcl.clusterSpecific = false;
+  zcl.needResponse = true;
+  zcl.direct = false;   // discover route
+  zcl.payload.add16(0x0600);
+  zcl.payload.add16(0x0601);
+  zcl.payload.add16(0x0602);
+  zcl.payload.add16(0x0603);
+  zcl.payload.add16(0x0604);
+  zcl.payload.add16(0x0605);
+  zigbeeZCLSendCmd(zcl);
+}
+
+//
 // Write CIE address
 //
 void Z_WriteCIEAddress(uint16_t shortaddr, uint16_t groupaddr, uint16_t cluster, uint8_t endpoint, uint32_t value) {
@@ -1553,25 +1579,24 @@ void Z_AutoConfigReportingForCluster(uint16_t shortaddr, uint16_t groupaddr, uin
       uint16_t max_interval = pgm_read_word(&(Z_autoAttributeReporting[i].max_interval));
       float  report_change_raw = Z_autoAttributeReporting[i].report_change;
       double report_change = report_change_raw;
-      uint8_t attr_type;
-      int8_t  multiplier;
+      // uint8_t attr_type;
+      // int8_t  multiplier;
 
-      const __FlashStringHelper* attr_name = zigbeeFindAttributeById(cluster, attr_id, &attr_type, &multiplier);
-
-      if (attr_name) {
+      Z_attribute_match attr_matched = Z_findAttributeMatcherById(shortaddr, cluster, attr_id, false);
+      if (attr_matched.found()) {
         if (comma) { ResponseAppend_P(PSTR(",")); }
         comma = true;
-        ResponseAppend_P(PSTR("\"%s\":{\"MinInterval\":%d,\"MaxInterval\":%d"), attr_name, min_interval, max_interval);
+        ResponseAppend_P(PSTR("\"%s\":{\"MinInterval\":%d,\"MaxInterval\":%d"), attr_matched.name, min_interval, max_interval);
 
         buf.add8(0);            // direction, always 0
         buf.add16(attr_id);
-        buf.add8(attr_type);
+        buf.add8(attr_matched.zigbee_type);
         buf.add16(min_interval);
         buf.add16(max_interval);
-        if (!Z_isDiscreteDataType(attr_type)) {   // report_change is only valid for non-discrete data types (numbers)
-          ZbApplyMultiplier(report_change, multiplier);
+        if (!Z_isDiscreteDataType(attr_matched.zigbee_type)) {   // report_change is only valid for non-discrete data types (numbers)
+          ZbApplyMultiplierForWrites(report_change, attr_matched.multiplier, attr_matched.divider, attr_matched.base);
           // encode value
-          int32_t res = encodeSingleAttribute(buf, report_change, "", attr_type);
+          int32_t res = encodeSingleAttribute(buf, report_change, "", attr_matched.zigbee_type);
           if (res < 0) {
             AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "internal error, unsupported attribute type"));
           } else {
@@ -1651,7 +1676,7 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
 #ifdef USE_BERRY
   // Berry pre-process messages
-  callBerryZigbeeDispatcher("incoming", "zcl_frame", &zcl_received, 0);
+  callBerryZigbeeDispatcher("frame_received", &zcl_received, nullptr, srcaddr);
 #endif // USE_BERRY
 
   // create the device entry if it does not exist and if it's not the local device
@@ -1673,37 +1698,62 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
     attr_list.group_id = groupid;
   }
 
-  if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_DEFAULT_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseResponse();   // Zigbee general "Default Response", publish ZbResponse message
+  // uint8_t cmdid = zcl_received.getCmdId();
+  bool cmd_ignore = false;      // ignore the command in later processing
+
+  if (zcl_received.isClusterSpecificCommand()) {
+    // Cluster-specific command
+    zcl_received.parseClusterSpecificCommand(attr_list);
+    Z_Query_Battery(srcaddr);   // do battery auto-probing when receiving commands
   } else {
-    // Build the ZbReceive list
-    if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId() || ZCL_WRITE_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
+    // General cluster command
+    switch (zcl_received.getCmdId()) {
+      case ZCL_DEFAULT_RESPONSE:
+        zcl_received.parseResponse();   // Zigbee general "Default Response", publish ZbResponse message
+        cmd_ignore = true;
+        break;
+      case ZCL_REPORT_ATTRIBUTES:
+      case ZCL_WRITE_ATTRIBUTES:
+        zcl_received.parseReportAttributes(attr_list);    // Zigbee report attributes from sensors
 
-      // since we receive a sensor value, and the device is still awake,
-      // try to read the battery value
-      if (clusterid != 0x0001) {    // avoid sending Battery probe if we already received info from cluster 0x0001
-        Z_Query_Battery(srcaddr);
-      }
-      if (clusterid && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) { defer_attributes = true; }  // don't defer system Cluster=0 messages or Write Attribute
-    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseReadAttributesResponse(attr_list);
-      if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
-    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES == zcl_received.getCmdId())) {
-      zcl_received.parseReadAttributes(attr_list);
-      // never defer read_attributes, so the auto-responder can send response back on a per cluster basis
-    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_REPORTING_CONFIGURATION_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseReadConfigAttributes(attr_list);
-    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_CONFIGURE_REPORTING_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseConfigAttributes(attr_list);
-    } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_WRITE_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
-      zcl_received.parseWriteAttributesResponse(attr_list);
-    } else if (zcl_received.isClusterSpecificCommand()) {
-      zcl_received.parseClusterSpecificCommand(attr_list);
-      Z_Query_Battery(srcaddr);   // do battery auto-probing when receiving commands
+        // since we receive a sensor value, and the device is still awake,
+        // try to read the battery value
+        if (clusterid != 0x0001) {    // avoid sending Battery probe if we already received info from cluster 0x0001
+          Z_Query_Battery(srcaddr);
+        }
+        if (clusterid && zcl_received.getCmdId() == ZCL_REPORT_ATTRIBUTES) { defer_attributes = true; }  // defer attributes reporting except for cluster 0x0000 or Write Attribute
+        break;
+      case ZCL_READ_ATTRIBUTES_RESPONSE:
+        zcl_received.parseReadAttributesResponse(attr_list);
+        if (clusterid) { defer_attributes = true; }  // defer attributes reporting except for cluster 0x0000
+        break;
+      case ZCL_READ_ATTRIBUTES:
+        zcl_received.parseReadAttributes(srcaddr, attr_list);
+        // never defer read_attributes, so the auto-responder can send response back on a per cluster basis
+        break;
+      case ZCL_READ_REPORTING_CONFIGURATION_RESPONSE:
+        zcl_received.parseReadConfigAttributes(srcaddr, attr_list);
+        break;
+      case ZCL_CONFIGURE_REPORTING_RESPONSE:
+        zcl_received.parseConfigAttributes(srcaddr, attr_list);
+        break;
+      case ZCL_WRITE_ATTRIBUTES_RESPONSE:
+        zcl_received.parseWriteAttributesResponse(attr_list);
+        break;
+      default:
+        attr_list.addAttributeCmd(clusterid, zcl_received.getCmdId(), zcl_received.getDirection(), true /* general command */).setBuf(zcl_received.payload, 0, zcl_received.payload.len());
+        break;
     }
+  }
 
+  // unless attributes are ignored, post-process and publish them
+  if (!cmd_ignore) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":{%s}}"), srcaddr, attr_list.toString(false, false).c_str()); // don't include battery
+
+#ifdef USE_BERRY
+    // Berry pre-process messages
+    callBerryZigbeeDispatcher("attributes_raw", &zcl_received, &attr_list, srcaddr);
+#endif // USE_BERRY
 
     // discard the message if it was sent by us (broadcast or group loopback)
     if (srcaddr == localShortAddr) {
@@ -1713,9 +1763,15 @@ void Z_IncomingMessage(class ZCLFrame &zcl_received) {
 
     zcl_received.generateSyntheticAttributes(attr_list);
     zcl_received.removeInvalidAttributes(attr_list);
+    zcl_received.applySynonymAttributes(attr_list);
     zcl_received.computeSyntheticAttributes(attr_list);
     zcl_received.generateCallBacks(attr_list);      // set deferred callbacks, ex: Occupancy
     Z_postProcessAttributes(srcaddr, zcl_received.getSrcEndpoint(), attr_list);
+
+#ifdef USE_BERRY
+    // Berry pre-process messages
+    callBerryZigbeeDispatcher("attributes_refined", &zcl_received, &attr_list, srcaddr);
+#endif // USE_BERRY
 
     if (defer_attributes) {
       // Prepare for publish
@@ -2062,24 +2118,39 @@ int32_t Z_Load_Data(uint8_t value) {
   return 0;                              // continue
 }
 
+static void Z_Query_Bulb_inner(uint16_t shortaddr, uint8_t ep, uint32_t &wait_ms) {
+  const uint32_t inter_message_ms = 100;    // wait 100ms between messages
+  if (ep == 0) { ep = zigbee_devices.findFirstEndpoint(shortaddr); }
+  if (ep) {
+    if (0 <= zigbee_devices.getHueBulbtype(shortaddr, ep)) {
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, ep, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, ep, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, ep, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
+      wait_ms += inter_message_ms;
+      zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, ep, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
+      wait_ms += 1000;              // wait 1 second between devices
+    }
+  }
+}
+
 //
 // Query the state of a bulb (light) if its type allows it
 //
-void Z_Query_Bulb(uint16_t shortaddr, uint32_t &wait_ms) {
-  const uint32_t inter_message_ms = 100;    // wait 100ms between messages
-
-  if (0 <= zigbee_devices.getHueBulbtype(shortaddr)) {
-    uint8_t endpoint = zigbee_devices.findFirstEndpoint(shortaddr);
-
-    if (endpoint) {   // send only if we know the endpoint
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0006, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
-      wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0008, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
-      wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0 /* groupaddr */, wait_ms, 0x0300, endpoint, Z_CAT_READ_CLUSTER, 0 /* value */, &Z_ReadAttrCallback);
-      wait_ms += inter_message_ms;
-      zigbee_devices.setTimer(shortaddr, 0, wait_ms + Z_CAT_REACHABILITY_TIMEOUT, 0, endpoint, Z_CAT_REACHABILITY, 0 /* value */, &Z_Unreachable);
-      wait_ms += 1000;              // wait 1 second between devices
+// ep==0 is default endpoint
+// ep==0xFF iterates on all endpoints
+void Z_Query_Bulb(uint16_t shortaddr, uint8_t ep, uint32_t &wait_ms) {
+  if (ep != 0xFF) {
+    Z_Query_Bulb_inner(shortaddr, ep, wait_ms);   // try a single endpoint
+  } else {
+    // iterate on all endpoints
+    const Z_Device & device = zigbee_devices.findShortAddr(shortaddr);
+    if (!device.valid()) { return; }
+    for (uint32_t i = 0; i < endpoints_max; i++) {
+      ep = device.endpoints[i];
+      if (ep == 0) { break; }
+      Z_Query_Bulb_inner(shortaddr, ep, wait_ms);   // try a single endpoint
     }
   }
 }
@@ -2117,10 +2188,19 @@ int32_t Z_Query_Bulbs(uint8_t value) {
     uint32_t wait_ms = 1000;                  // start with 1.0 s delay
     for (uint32_t i = 0; i < zigbee_devices.devicesSize(); i++) {
       const Z_Device &device = zigbee_devices.devicesAt(i);
-      Z_Query_Bulb(device.shortaddr, wait_ms);
+      Z_Query_Bulb(device.shortaddr, 0xFF, wait_ms);   // 0xFF means all endpoints
     }
   }
   return 0;                              // continue
+}
+
+//
+// Z_ZbAutoload - autoload all definitions from filesystem
+// files with ending '.zb' suffix
+//
+int32_t Z_ZbAutoload(uint8_t value) {
+  ZbAutoload();
+  return 0;
 }
 
 //
@@ -2193,7 +2273,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
         break;
     }
     if (!attr.isNone()) {
-      Z_parseAttributeKey(attr, cluster);
+      Z_parseAttributeKey(shortaddr, attr, cluster);
       attr_list.addAttribute(cluster, attr_id) = attr;
     }
   }
@@ -2214,7 +2294,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
                                           ",\"Endpoint\":%d"
                                           ",\"Response\":%s}"
                                           ),
-                                          shortaddr, cluster, _srcendpoint,
+                                          shortaddr, cluster, srcendpoint,
                                           attr_list.toString().c_str());
 
     // send
@@ -2222,7 +2302,7 @@ void ZCLFrame::autoResponder(const uint16_t *attr_list_ids, size_t attr_len) {
     ZCLFrame zcl(buf.len());   // message is 4 bytes
     zcl.shortaddr = shortaddr;
     zcl.cluster = cluster;
-    zcl.dstendpoint = _srcendpoint;
+    zcl.dstendpoint = srcendpoint;
     zcl.cmd = ZCL_READ_ATTRIBUTES_RESPONSE;
     zcl.clusterSpecific = false;  /* not cluster specific */
     zcl.needResponse = false;     /* noresponse */

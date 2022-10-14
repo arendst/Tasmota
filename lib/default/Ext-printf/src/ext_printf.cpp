@@ -335,7 +335,8 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
                 if (isnan(number) || isinf(number)) {
                   new_val_str = "null";
                 } else {
-                  dtostrf(*(float*)cur_val, (decimals + 2), decimals, hex);
+                  uint32_t len = (decimals) ? decimals +2 : 1;
+                  dtostrf(*(float*)cur_val, len, decimals, hex);
 
                   if (truncate) {
                     uint32_t last = strlen(hex) - 1;

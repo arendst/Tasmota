@@ -85,8 +85,8 @@ float NimBLEEddystoneTLM::getTemp() {
 } // getTemp
 
 /**
- * @brief Get the count of advertisments sent.
- * @return The number of advertisments.
+ * @brief Get the count of advertisements sent.
+ * @return The number of advertisements.
  */
 uint32_t NimBLEEddystoneTLM::getCount() {
     return ENDIAN_CHANGE_U32(m_eddystoneData.advCount);
@@ -94,8 +94,8 @@ uint32_t NimBLEEddystoneTLM::getCount() {
 
 
 /**
- * @brief Get the advertisment time.
- * @return The advertisment time.
+ * @brief Get the advertisement time.
+ * @return The advertisement time.
  */
 uint32_t NimBLEEddystoneTLM::getTime() {
     return (ENDIAN_CHANGE_U32(m_eddystoneData.tmil)) / 10;
@@ -158,7 +158,7 @@ std::string NimBLEEddystoneTLM::toString() {
 
 
 /**
- * @brief Set the raw data for the beacon advertisment.
+ * @brief Set the raw data for the beacon advertisement.
  * @param [in] data The raw data to advertise.
  */
 void NimBLEEddystoneTLM::setData(const std::string &data) {
@@ -208,8 +208,8 @@ void NimBLEEddystoneTLM::setTemp(float temp) {
 
 
 /**
- * @brief Set the advertisment count.
- * @param [in] advCount The advertisment number.
+ * @brief Set the advertisement count.
+ * @param [in] advCount The advertisement number.
  */
 void NimBLEEddystoneTLM::setCount(uint32_t advCount) {
     m_eddystoneData.advCount = advCount;
@@ -217,8 +217,8 @@ void NimBLEEddystoneTLM::setCount(uint32_t advCount) {
 
 
 /**
- * @brief Set the advertisment time.
- * @param [in] tmil The advertisment time in milliseconds.
+ * @brief Set the advertisement time.
+ * @param [in] tmil The advertisement time in milliseconds.
  */
 void NimBLEEddystoneTLM::setTime(uint32_t tmil) {
     m_eddystoneData.tmil = tmil;

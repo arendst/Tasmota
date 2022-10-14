@@ -88,43 +88,49 @@ enum class Za_type : uint8_t {
 class Z_attribute {
 public:
 
-  // attribute key, either cluster+attribute_id or plain name
-  union {
-    struct {
-      uint16_t cluster;
-      uint16_t attr_id;
-    }                   id;
-    char              * key;
-  } key;
+  // cluster+attribute_id and/or plain name
+  uint16_t cluster;               // only valid if both cluster and attr_id are not 0xFFFF
+  uint16_t attr_id;               // only valid if both cluster and attr_id are not 0xFFFF
+  char*    key;                   // only valid if `key_is_str` is true. Should not be freed if `key_is_pmem` is true
   // attribute value
   union {
     uint32_t            uval32;
     int32_t             ival32;
     float               fval;
     SBuffer*            bval;
-    char*               sval;
-    class Z_attribute_list   * objval;
-    class JsonGeneratorArray * arrval;
+    char*               sval;     // string should be freed
+    class Z_attribute_list   * objval;  // contains a list of attributes, should be printed as a map (although it's just a list internally)
+    class JsonGeneratorArray * arrval;  // contains a JSON string representing an array of values
   } val;
   Za_type       type;             // uint8_t in size, type of attribute, see above
   bool          key_is_str;       // is the key a string?
   bool          key_is_pmem;      // is the string in progmem, so we don't need to make a copy
   bool          val_str_raw;      // if val is String, it is raw JSON and should not be escaped
+  bool          key_is_cmd;       // if command, cmd_id is the low 8 bits of attr_id.
+                                  // Bit #8 is `0` command sent to device or `1` command received from device
+                                  // Bit #9 is `0` command is cluster specific, or `1` general_command
   uint8_t       key_suffix;       // append a suffix to key (default is 1, explicitly output if >1)
   uint8_t       attr_type;        // [opt] type of the attribute, default to Zunk (0xFF)
-  uint8_t       attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
+  int8_t        attr_multiplier;  // [opt] multiplier for attribute, defaults to 0x01 (no change)
+  int8_t        attr_divider;     // [opt] divider
+  uint16_t      manuf;            // manufacturer id (0 if none)
 
   // Constructor with all defaults
   Z_attribute():
-    key{ .id = { 0x0000, 0x0000 } },
+    cluster(0xFFFF),
+    attr_id(0xFFFF),
+    key(nullptr),
     val{ .uval32 = 0x0000 },
     type(Za_type::Za_none),
     key_is_str(false),
     key_is_pmem(false),
     val_str_raw(false),
+    key_is_cmd(false),
     key_suffix(1),
     attr_type(0xFF),
-    attr_multiplier(1)
+    attr_multiplier(1),
+    attr_divider(1),
+    manuf(0)
     {};
 
   Z_attribute(const Z_attribute & rhs) {
@@ -156,6 +162,7 @@ public:
   void setKeyName(const char * _key, const char * _key2);
 
   void setKeyId(uint16_t cluster, uint16_t attr_id);
+  void setCmdId(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general);
 
   // Setters
   void setNone(void);
@@ -164,6 +171,7 @@ public:
   void setInt(int32_t _val);
   void setFloat(float _val);
 
+  void setRaw(const void* buf, size_t len);
   void setBuf(const SBuffer &buf, size_t index, size_t len);
 
   // specific formatters
@@ -201,7 +209,8 @@ public:
   const char * getStr(void) const;
 
   bool equalsKey(const Z_attribute & attr2, bool ignore_key_suffix = false) const;
-  bool equalsKey(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) const;
+  bool equalsId(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) const;
+  bool equalsCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix = 0) const;
   bool equalsKey(const char * name, uint8_t suffix = 0) const;
   bool equalsVal(const Z_attribute & attr2) const;
   bool equals(const Z_attribute & attr2) const;
@@ -263,6 +272,9 @@ public:
   // Add attribute to the list, given cluster and attribute id
   Z_attribute & addAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0);
 
+  // ZCL command
+  Z_attribute & addAttributeCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix = 0);
+
   // Add attribute to the list, given name
   Z_attribute & addAttribute(const char * name, bool pmem = false, uint8_t suffix = 0);
   Z_attribute & addAttribute(const char * name, const char * name2, uint8_t suffix = 0);
@@ -282,11 +294,15 @@ public:
 
   // find if attribute with same key already exists, return null if not found
   const Z_attribute * findAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) const;
+  const Z_attribute * findAttributeCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix = 0) const;
   const Z_attribute * findAttribute(const char * name, uint8_t suffix = 0) const;
-  const Z_attribute * findAttribute(const Z_attribute &attr) const;   // suffis always count here
+  const Z_attribute * findAttribute(const Z_attribute &attr) const;   // suffix always count here
   // non-const variants
   inline Z_attribute * findAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0) {
     return (Z_attribute*) ((const Z_attribute_list*)this)->findAttribute(cluster, attr_id, suffix);
+  }
+  inline Z_attribute * findAttributeCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix = 0) {
+    return (Z_attribute*) ((const Z_attribute_list*)this)->findAttributeCmd(cluster, cmd_id, direction, cmd_general, suffix);
   }
   inline Z_attribute * findAttribute(const char * name, uint8_t suffix = 0) {
     return (Z_attribute*) (((const Z_attribute_list*)this)->findAttribute(name, suffix));
@@ -302,6 +318,7 @@ public:
   // if suffix == 0, we don't care and find the first match
   Z_attribute & findOrCreateAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix = 0);
   Z_attribute & findOrCreateAttribute(const char * name, uint8_t suffix = 0);
+  Z_attribute & findOrCreateCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix = 0);
   // always care about suffix
   Z_attribute & findOrCreateAttribute(const Z_attribute &attr);
   // replace attribute with new value, suffix does care
@@ -324,8 +341,8 @@ Z_attribute & Z_attribute_list::addAttributePMEM(const char * name) {
 
 // free any allocated memoruy for keys
 void Z_attribute::freeKey(void) {
-  if (key_is_str && key.key && !key_is_pmem) { delete[] key.key; }
-  key.key = nullptr;
+  if (key_is_str && key && !key_is_pmem) { delete[] key; }
+  key = nullptr;
 }
 
 // set key name
@@ -334,7 +351,7 @@ void Z_attribute::setKeyName(const char * _key, bool pmem) {
   key_is_str = true;
   key_is_pmem = pmem;
   if (pmem) {
-    key.key = (char*) _key;
+    key = (char*) _key;
   } else {
     setKeyName(_key, nullptr);
   }
@@ -349,19 +366,28 @@ void Z_attribute::setKeyName(const char * _key, const char * _key2) {
     if (_key2) {
       key_len += strlen_P(_key2);
     }
-    key.key = new char[key_len+1];
-    strcpy_P(key.key, _key);
+    key = new char[key_len+1];
+    strcpy_P(key, _key);
     if (_key2) {
-      strcat_P(key.key, _key2);
+      strcat_P(key, _key2);
     }
   }
 }
 
-void Z_attribute::setKeyId(uint16_t cluster, uint16_t attr_id) {
+void Z_attribute::setKeyId(uint16_t _cluster, uint16_t _attr_id) {
   freeKey();
   key_is_str = false;
-  key.id.cluster = cluster;
-  key.id.attr_id = attr_id;
+  cluster = _cluster;
+  attr_id = _attr_id;
+  key_is_cmd = false;
+}
+
+void Z_attribute::setCmdId(uint16_t _cluster, uint8_t _cmd_id, bool direction, bool cmd_general) {
+  freeKey();
+  key_is_str = false;
+  cluster = _cluster;
+  attr_id = _cmd_id | (direction ? 0x100 : 0x000) | (cmd_general ? 0x200 : 0x000);
+  key_is_cmd = true;
 }
 
 // Setters
@@ -389,6 +415,15 @@ void Z_attribute::setFloat(float _val) {
   freeVal();     // free any previously allocated memory
   val.fval = _val;
   type = Za_type::Za_float;
+}
+
+void Z_attribute::setRaw(const void* buf, size_t len) {
+  freeVal();
+  if (len) {
+    val.bval = new SBuffer(len);
+    val.bval->addBuffer((const uint8_t*)buf, len);
+  }
+  type = Za_type::Za_raw;
 }
 
 void Z_attribute::setBuf(const SBuffer &buf, size_t index, size_t len) {
@@ -512,10 +547,11 @@ bool Z_attribute::equalsKey(const Z_attribute & attr2, bool ignore_key_suffix) c
   // check if keys are equal
   if (key_is_str != attr2.key_is_str) { return false; }
   if (key_is_str) {
-    if (strcmp_PP(key.key, attr2.key.key)) { return false; }
+    if (strcmp_PP(key, attr2.key)) { return false; }
   } else {
-    if ((key.id.cluster != attr2.key.id.cluster) ||
-        (key.id.attr_id != attr2.key.id.attr_id)) { return false; }
+    if ((this->cluster != attr2.cluster) ||
+        (this->attr_id != attr2.attr_id) ||
+        (this->key_is_cmd != attr2.key_is_cmd)) { return false; }
   }
   if (!ignore_key_suffix) {
     if (key_suffix != attr2.key_suffix) { return false; }
@@ -523,14 +559,26 @@ bool Z_attribute::equalsKey(const Z_attribute & attr2, bool ignore_key_suffix) c
   return true;
 }
 
-bool Z_attribute::equalsKey(uint16_t cluster, uint16_t attr_id, uint8_t suffix) const {
-  if (!key_is_str) {
-    if ((key.id.cluster == cluster) && (key.id.attr_id == attr_id)) {
-      if (suffix) {
-        if (key_suffix == suffix) { return true; }
-      } else {
-        return true;
-      }
+bool Z_attribute::equalsId(uint16_t _cluster, uint16_t _attr_id, uint8_t suffix) const {
+  if (key_is_cmd || key_is_str) { return false; }
+  if ((this->cluster == _cluster) && (this->attr_id == _attr_id)) {
+    if (suffix) {
+      if (key_suffix == suffix) { return true; }
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Z_attribute::equalsCmd(uint16_t _cluster, uint8_t _cmd_id, bool _direction, bool cmd_general, uint8_t suffix) const {
+  if (!key_is_cmd || key_is_str) { return false; }
+  uint16_t _attr_id = _cmd_id | (_direction ? 0x100 : 0x000) | (cmd_general ? 0x200 : 0x000);
+  if ((this->cluster == _cluster) && (this->attr_id == _attr_id)) {
+    if (suffix) {
+      if (key_suffix == suffix) { return true; }
+    } else {
+      return true;
     }
   }
   return false;
@@ -538,7 +586,7 @@ bool Z_attribute::equalsKey(uint16_t cluster, uint16_t attr_id, uint8_t suffix) 
 
 bool Z_attribute::equalsKey(const char * name, uint8_t suffix) const {
   if (key_is_str) {
-    if (0 == strcmp_PP(key.key, name)) {
+    if (0 == strcmp_PP(key, name)) {
       if (suffix) {
         if (key_suffix == suffix) { return true; }
       } else {
@@ -578,14 +626,22 @@ String Z_attribute::toString(bool prefix_comma) const {
   res += '"';
   // compute the attribute name
   if (key_is_str) {
-    if (key.key) { res += EscapeJSONString(key.key); }
+    if (key) { res += EscapeJSONString(key); }
     else         { res += F("null"); }   // shouldn't happen
     if (key_suffix > 1) {
       res += key_suffix;
     }
   } else {
     char attr_name[12];
-    snprintf_P(attr_name, sizeof(attr_name), PSTR("%04X/%04X"), key.id.cluster, key.id.attr_id);
+    if (!key_is_cmd) {  // regular attribute
+      snprintf_P(attr_name, sizeof(attr_name), PSTR("%04X/%04X"), this->cluster, this->attr_id);
+    } else {            // cmd
+      bool direction = (this->attr_id & 0x100);
+      bool cmd_general = (this->attr_id & 0x200);
+      uint8_t cmd_id = this->attr_id & 0xFF;
+      char cmd_char = cmd_general ? (direction ? '^' : '_') : (direction ? '?' : '!');
+      snprintf_P(attr_name, sizeof(attr_name), PSTR("%04X%c%02X"), this->cluster, cmd_char, cmd_id);
+    }
     res += attr_name;
     if (key_suffix > 1) {
       res += '+';
@@ -709,29 +765,30 @@ void Z_attribute::freeVal(void) {
 }
 
 void Z_attribute::deepCopy(const Z_attribute & rhs) {
-  // copy key
-  if (!rhs.key_is_str) {
-    key.id.cluster = rhs.key.id.cluster;
-    key.id.attr_id = rhs.key.id.attr_id;
-  } else {
+  // copy cluster anymays
+  cluster = rhs.cluster;
+  attr_id = rhs.attr_id;
+  if (rhs.key_is_str) {
     if (rhs.key_is_pmem) {
-      key.key = rhs.key.key;      // PMEM, don't copy
+      key = rhs.key;      // PMEM, don't copy
     } else {
-      key.key = nullptr;
-      if (rhs.key.key) {
-        size_t key_len = strlen_P(rhs.key.key);
+      key = nullptr;
+      if (rhs.key) {
+        size_t key_len = strlen_P(rhs.key);
         if (key_len) {
-          key.key = new char[key_len+1];
-          strcpy_P(key.key, rhs.key.key);
+          key = new char[key_len+1];
+          strcpy_P(key, rhs.key);
         }
       }
     }
   }
   key_is_str = rhs.key_is_str;
   key_is_pmem = rhs.key_is_pmem;
+  key_is_cmd = rhs.key_is_cmd;
   key_suffix = rhs.key_suffix;
   attr_type = rhs.attr_type;
   attr_multiplier = rhs.attr_multiplier;
+  attr_divider = rhs.attr_divider;
   // copy value
   copyVal(rhs);
   // don't touch next pointer
@@ -745,10 +802,21 @@ void Z_attribute::deepCopy(const Z_attribute & rhs) {
 // add a cluster/attr_id attribute at the end of the list
 Z_attribute & Z_attribute_list::addAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix) {
   Z_attribute & attr = addToLast();
-  attr.key.id.cluster = cluster;
-  attr.key.id.attr_id = attr_id;
+  attr.cluster = cluster;
+  attr.attr_id = attr_id;
   attr.key_is_str = false;
-  if (!suffix) { attr.key_suffix = countAttribute(attr.key.id.cluster, attr.key.id.attr_id); }
+  if (!suffix) { attr.key_suffix = countAttribute(attr.cluster, attr.attr_id); }
+  else { attr.key_suffix = suffix; }
+  return attr;
+}
+
+// add a cluster/cmd_id attribute at the end of the list
+Z_attribute & Z_attribute_list::addAttributeCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix) {
+  Z_attribute & attr = addToLast();
+  attr.cluster = cluster;
+  attr.attr_id = cmd_id | (direction ? 0x100 : 0) | (cmd_general ? 0x200 : 0x000);
+  attr.key_is_cmd = true;
+  if (!suffix) { attr.key_suffix = countAttribute(attr.cluster, attr.attr_id); }
   else { attr.key_suffix = suffix; }
   return attr;
 }
@@ -757,7 +825,7 @@ Z_attribute & Z_attribute_list::addAttribute(uint16_t cluster, uint16_t attr_id,
 Z_attribute & Z_attribute_list::addAttribute(const char * name, bool pmem, uint8_t suffix) {
   Z_attribute & attr = addToLast();
   attr.setKeyName(name, pmem);
-  if (!suffix) { attr.key_suffix = countAttribute(attr.key.key); }
+  if (!suffix) { attr.key_suffix = countAttribute(attr.key); }
   else { attr.key_suffix = suffix; }
   return attr;
 }
@@ -765,7 +833,7 @@ Z_attribute & Z_attribute_list::addAttribute(const char * name, bool pmem, uint8
 Z_attribute & Z_attribute_list::addAttribute(const char * name, const char * name2, uint8_t suffix) {
   Z_attribute & attr = addToLast();
   attr.setKeyName(name, name2);
-  if (!suffix) { attr.key_suffix = countAttribute(attr.key.key); }
+  if (!suffix) { attr.key_suffix = countAttribute(attr.key); }
   else { attr.key_suffix = suffix; }
   return attr;
 }
@@ -815,30 +883,44 @@ String Z_attribute_list::toString(bool enclose_brackets, bool include_battery) c
 const Z_attribute * Z_attribute_list::findAttribute(const Z_attribute &attr) const {
   uint8_t  suffix = attr.key_suffix;
   if (attr.key_is_str) {
-    return findAttribute(attr.key.key, suffix);
+    return findAttribute(attr.key, suffix);
+  } else if (!attr.key_is_cmd) {
+    return findAttribute(attr.cluster, attr.attr_id, suffix);
   } else {
-    return findAttribute(attr.key.id.cluster, attr.key.id.attr_id, suffix);
+    return findAttributeCmd(attr.cluster, attr.attr_id & 0xFF, attr.attr_id & 0x100 ? true : false, attr.attr_id & 0x200 ? true : false, suffix);
   }
 }
 
 const Z_attribute * Z_attribute_list::findAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix) const {
   for (const auto & attr : *this) {
-    if (attr.equalsKey(cluster, attr_id, suffix)) { return &attr; }
+    if (attr.equalsId(cluster, attr_id, suffix) && !attr.key_is_cmd) { return &attr; }
   }
   return nullptr;
 }
 size_t Z_attribute_list::countAttribute(uint16_t cluster, uint16_t attr_id) const {
   size_t count = 0;
   for (const auto & attr : *this) {
-    if (attr.equalsKey(cluster, attr_id, 0)) { count++; }
+    if (attr.equalsId(cluster, attr_id, 0)) { count++; }
   }
   return count;
+}
+
+const Z_attribute * Z_attribute_list::findAttributeCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix) const {
+  for (const auto & attr : *this) {
+    if (attr.equalsCmd(cluster, cmd_id, direction, cmd_general, suffix)) { return &attr; }
+  }
+  return nullptr;
 }
 
 // return the existing attribute or create a new one
 Z_attribute & Z_attribute_list::findOrCreateAttribute(uint16_t cluster, uint16_t attr_id, uint8_t suffix) {
   Z_attribute * found = findAttribute(cluster, attr_id, suffix);
   return found ? *found : addAttribute(cluster, attr_id, suffix);
+}
+
+Z_attribute & Z_attribute_list::findOrCreateCmd(uint16_t cluster, uint8_t cmd_id, bool direction, bool cmd_general, uint8_t suffix) {
+  Z_attribute * found = findAttributeCmd(cluster, cmd_id, direction, cmd_general, suffix);
+  return found ? *found : addAttributeCmd(cluster, cmd_id, direction, cmd_general, suffix);
 }
 
 const Z_attribute * Z_attribute_list::findAttribute(const char * name, uint8_t suffix) const {
@@ -862,8 +944,10 @@ Z_attribute & Z_attribute_list::findOrCreateAttribute(const char * name, uint8_t
 
 // same but passing a Z_attribute as key
 Z_attribute & Z_attribute_list::findOrCreateAttribute(const Z_attribute &attr) {
-  Z_attribute & ret = attr.key_is_str ? findOrCreateAttribute(attr.key.key, attr.key_suffix)
-                                      : findOrCreateAttribute(attr.key.id.cluster, attr.key.id.attr_id, attr.key_suffix);
+  Z_attribute & ret = attr.key_is_str ? findOrCreateAttribute(attr.key, attr.key_suffix)
+                                      : attr.key_is_cmd ?
+                                            findOrCreateCmd(attr.cluster, attr.attr_id & 0xFF, attr.attr_id & 0x100 ? true : false, attr.attr_id & 0x200 ? true : false, attr.key_suffix)
+                                          : findOrCreateAttribute(attr.cluster, attr.attr_id, attr.key_suffix);
   ret.key_suffix = attr.key_suffix;
   return ret;
 }

@@ -115,7 +115,7 @@ void Sr04TModeDetect(void) {
   if (!PinUsed(GPIO_SR04_ECHO)) { return; }
 
   int sr04_echo_pin = Pin(GPIO_SR04_ECHO);
-  int sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);   // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
+  int sr04_trig_pin = Pin(GPIO_SR04_TRIG);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_TRIG as -1
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
   if (sonar_serial && sonar_serial->begin(9600)) {
@@ -135,14 +135,17 @@ void Sr04TModeDetect(void) {
       delete sonar_serial;
       sonar_serial = nullptr;
     }
+    sr04_trig_pin = (PinUsed(GPIO_SR04_TRIG)) ? Pin(GPIO_SR04_TRIG) : Pin(GPIO_SR04_ECHO);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_ECHO only
     sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, SR04_MAX_SENSOR_DISTANCE);
     delay(100); // give time to inizialise, preventing ping_median fails
     if (!sonar || !sonar->ping_median(5)) {
       SR04.type = SR04_MODE_NONE;
     }
   } else {
-    if (sonar_serial->hardwareSerial()) {
-      ClaimSerial();
+    if (sonar_serial) {
+      if (sonar_serial->hardwareSerial()) {
+        ClaimSerial();
+      }
     }
   }
 

@@ -495,10 +495,12 @@
 #define D_ZIGBEE_GENERATE_KEY "Gerando chave randomizada de rede Zigbee" // "generating random Zigbee network key"
 #define D_ZIGBEE_UNKNOWN_DEVICE "Dispositivo desconhecido" // "Unknown device"
 #define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Atributo desconhecido" // "Unknown attribute"
+#define D_ZIGBEE_UNKNOWN_ENDPOINT "Unknown endpoint"
 #define D_ZIGBEE_INVALID_PARAM "Parametro inválido" // "Invalid parameter"
 #define D_ZIGBEE_MISSING_PARAM "Parametros faltantes" // "Missing parameters"
 #define D_ZIGBEE_UNKNWON_ATTRIBUTE "Nome desconhecido atribuido (ignorado) %s" // "Unknown attribute name (ignored): %s"
 #define D_ZIGBEE_TOO_MANY_CLUSTERS "Usar somente um Cluster ID por comando" // "No more than one cluster id per command"
+#define D_ZIGBEE_CONFLICTING_ENDPOINTS "Conflicting destination endpoints"
 #define D_ZIGBEE_WRONG_DELIMITER "Delimitador incorreto para a carga" // "Wrong delimiter for payload"
 #define D_ZIGBEE_UNRECOGNIZED_COMMAND "Comando Zigbee não reconhecido: %s" // "Unrecognized zigbee command: %s"
 #define D_ZIGBEE_TOO_MANY_COMMANDS "Somente 1 comando permitido (%d)" // "Only 1 command allowed (%d)"
@@ -563,6 +565,12 @@
 #define D_GX_AXIS "Giro Eixo-X"
 #define D_GY_AXIS "Giro Eixo-Y"
 #define D_GZ_AXIS "Giro Eixo-Z"
+
+// xsns_33_QMC5883L.ino
+#define D_MX "Induction X-Axis"
+#define D_MY "Induction Y-Axis"
+#define D_MZ "Induction Z-Axis"
+#define D_MAGNETICFLD "Magnetic Induction"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Remover calibragem"
@@ -677,6 +685,8 @@
 #define D_SENSOR_MBR_RX        "ModBr Rx"
 #define D_SENSOR_SR04_TRIG     "SR04 Tri/TX"
 #define D_SENSOR_SR04_ECHO     "SR04 Ech/RX"
+#define D_SENSOR_NRG_MBS_TX    "NrgModbus Tx"
+#define D_SENSOR_NRG_MBS_RX    "NrgModbus Rx"
 #define D_SENSOR_SDM72_TX      "SDM72 Tx"
 #define D_SENSOR_SDM72_RX      "SDM72 Rx"
 #define D_SENSOR_SDM120_TX     "SDMx20 Tx"
@@ -755,6 +765,7 @@
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7880_IRQ   "ADE7880 IRQ"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_ADE7953_RST   "ADE7953 RST"
 #define D_SENSOR_BUZZER        "Buzzer"
 #define D_SENSOR_DISP_RESET    "Display Rst"
 #define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
@@ -911,6 +922,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MICROSIEMENS_PER_CM "µS/cm"
+#define D_UNIT_MICROTESLA "µT"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLILITERS "ml"
 #define D_UNIT_MILLIMETER "mm"
@@ -934,6 +946,7 @@
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
 #define D_UNIT_LITER_PER_MINUTE "l/min"
 #define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
+#define D_UNIT_CUBIC_METER "m³"
 
 #define D_NEW_ADDRESS          "Mudança de endereço para"
 #define D_OUT_OF_RANGE         "Fora de Alcance"
@@ -1077,6 +1090,8 @@
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Flowrate"
+#define D_FLOWRATEMETER_AMOUNT_TODAY "Amount Today"
+#define D_FLOWRATEMETER_DURATION_TODAY "Duration Today"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names

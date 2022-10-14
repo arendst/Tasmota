@@ -12,6 +12,7 @@
 // Supports:
 //   Brand: Samsung,  Model: UA55H6300 TV (SAMSUNG)
 //   Brand: Samsung,  Model: BN59-01178B TV remote (SAMSUNG)
+//   Brand: Samsung,  Model: UE40K5510AUXRU TV (SAMSUNG)
 //   Brand: Samsung,  Model: DB63-03556X003 remote
 //   Brand: Samsung,  Model: DB93-16761C remote
 //   Brand: Samsung,  Model: IEC-R03 remote

@@ -2334,7 +2334,7 @@ void HandleInformation(void)
   // }2 = </th><td>
   WSContentSend_P(HTTP_SCRIPT_INFO_BEGIN);
   WSContentSend_P(PSTR("<table style='width:100%%'><tr><th>"));
-  WSContentSend_P(PSTR(D_PROGRAM_VERSION "}2%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name);
+  WSContentSend_P(PSTR(D_PROGRAM_VERSION "}2%s%s%s"), TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str());
   WSContentSend_P(PSTR("}1" D_BUILD_DATE_AND_TIME "}2%s"), GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_CORE_RELEASE "/%s"), ESP.getSdkVersion());
   WSContentSend_P(PSTR("}1" D_UPTIME "}2%s"), GetUptime().c_str());
@@ -2444,9 +2444,15 @@ void HandleInformation(void)
 
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_ESP_CHIP_ID "}2%d (%s)"), ESP_getChipId(), GetDeviceHardwareRevision().c_str());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X"), ESP_getFlashChipId());
-  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP_getFlashChipRealSize() / 1024);
-  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP.getFlashChipSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_ID "}20x%06X (%s)"), ESP_getFlashChipId(), ESP_getFlashChipMode().c_str());
+#ifdef ESP32
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP.getFlashChipSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP_getFlashChipMagicSize() / 1024);
+#endif // ESP32
+#ifdef ESP8266
+  WSContentSend_P(PSTR("}1" D_FLASH_CHIP_SIZE "}2%d KB"), ESP.getFlashChipRealSize() / 1024);
+  WSContentSend_P(PSTR("}1" D_PROGRAM_FLASH_SIZE "}2%d KB"), ESP_getFlashChipSize() / 1024);
+#endif // ESP8266
   WSContentSend_P(PSTR("}1" D_PROGRAM_SIZE "}2%d KB"), ESP_getSketchSize() / 1024);
   WSContentSend_P(PSTR("}1" D_FREE_PROGRAM_SPACE "}2%d KB"), ESP_getFreeSketchSpace() / 1024);
 #ifdef ESP32

@@ -416,6 +416,8 @@ void SetPowerOnState(void)
     }
   }
 
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("PWR: PowerOnState %d restored"), Settings->poweronstate);
+
   // Issue #526 and #909
   uint32_t port = 0;
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
@@ -1991,10 +1993,12 @@ void GpioInit(void)
         ButtonInvertFlag(mpin - AGPIO(GPIO_KEY1_INV_PD));    //  0 .. 3
         mpin -= (AGPIO(GPIO_KEY1_INV_PD) - AGPIO(GPIO_KEY1));
       }
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
       else if ((mpin >= AGPIO(GPIO_KEY1_TC)) && (mpin < (AGPIO(GPIO_KEY1_TC) + MAX_KEYS))) {
         ButtonTouchFlag(mpin - AGPIO(GPIO_KEY1_TC));  //  0 .. 3
         mpin -= (AGPIO(GPIO_KEY1_TC) - AGPIO(GPIO_KEY1));
       }
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 #endif //ESP32
       else if ((mpin >= AGPIO(GPIO_REL1_INV)) && (mpin < (AGPIO(GPIO_REL1_INV) + MAX_RELAYS))) {
         bitSet(TasmotaGlobal.rel_inverted, mpin - AGPIO(GPIO_REL1_INV));
@@ -2159,6 +2163,8 @@ void GpioInit(void)
       pinMode(Pin(GPIO_INPUT, i), INPUT);
     }
   }
+
+  delay(Settings->param[P_POWER_ON_DELAY] * 10);  // SetOption46 - Allow Wemos D1 power to stabilize before starting I2C polling for devices powered locally
 
 #ifdef USE_I2C
   TasmotaGlobal.i2c_enabled = (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA));

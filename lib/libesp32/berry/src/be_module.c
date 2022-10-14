@@ -245,7 +245,7 @@ static bvalue* load_cached(bvm *vm, bstring *path)
     return v;
 }
 
-static void cache_module(bvm *vm, bstring *name)
+void be_cache_module(bvm *vm, bstring *name)
 {
     bvalue *v;
     if (vm->module.loaded == NULL) {
@@ -282,7 +282,7 @@ int be_module_load(bvm *vm, bstring *path)
         if (res == BE_OK) {
             /* on first load of the module, try running the '()' function */
             module_init(vm);
-            cache_module(vm, path);
+            be_cache_module(vm, path);
         }
     }
     return res;

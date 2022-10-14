@@ -51,8 +51,8 @@ ble_ll_utils_calc_access_addr(void)
     aa = 0;
     while (1) {
         /* Get two, 16-bit random numbers */
-        aa_low = rand() & 0xFFFF;
-        aa_high = rand() & 0xFFFF;
+        aa_low = ble_ll_rand() & 0xFFFF;
+        aa_high = ble_ll_rand() & 0xFFFF;
 
         /* All four bytes cannot be equal */
         if (aa_low == aa_high) {
@@ -293,8 +293,7 @@ ble_ll_utils_calc_window_widening(uint32_t anchor_point,
     time_since_last_anchor = (int32_t)(anchor_point - last_anchor_point);
     if (time_since_last_anchor > 0) {
         delta_msec = os_cputime_ticks_to_usecs(time_since_last_anchor) / 1000;
-        total_sca_ppm = g_ble_sca_ppm_tbl[master_sca] +
-                                          MYNEWT_VAL(BLE_LL_OUR_SCA);
+        total_sca_ppm = g_ble_sca_ppm_tbl[master_sca] + MYNEWT_VAL(BLE_LL_SCA);
         window_widening = (total_sca_ppm * delta_msec) / 1000;
     }
 

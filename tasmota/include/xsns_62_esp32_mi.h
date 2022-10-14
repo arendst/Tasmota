@@ -230,6 +230,7 @@ struct mi_sensor_t{
   uint8_t lastCnt; //device generated counter of the packet
   uint8_t shallSendMQTT;
   uint8_t MAC[6];
+  uint16_t PID;
   uint8_t *key;
   uint32_t lastTimeSeen;
   union {
@@ -335,6 +336,7 @@ const char kMI32_Commands[] PROGMEM = D_CMND_MI32 "|Key|Cfg|Option";
 
 void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Cfg, &CmndMi32Option };
 
+#define UNKNOWN_MI  0
 #define FLORA       1
 #define MJ_HT_V1    2
 #define LYWSD02     3
@@ -351,8 +353,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Cfg, &Cmnd
 #define SJWS01L     14
 #define PVVX        15
 #define YLKG08      16
+#define YLAI003     17
 
-#define MI32_TYPES    16 //count this manually
+#define MI32_TYPES    17 //count this manually
 
 const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
@@ -369,29 +372,11 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x098b, // MCCGQ02
                                   0x0863, // SJWS01L
                                   0x944a, // PVVX -> this is a fake ID
-                                  0x03b6  // YLKG08 and YLKG07 - version w/wo mains
+                                  0x03b6, // YLKG08 and YLKG07 - version w/wo mains
+                                  0x07bf, // YLAI003
                                   };
 
-const char kMI32DeviceType1[] PROGMEM = "Flora";
-const char kMI32DeviceType2[] PROGMEM = "MJ_HT_V1";
-const char kMI32DeviceType3[] PROGMEM = "LYWSD02";
-const char kMI32DeviceType4[] PROGMEM = "LYWSD03";
-const char kMI32DeviceType5[] PROGMEM = "CGG1";
-const char kMI32DeviceType6[] PROGMEM = "CGD1";
-const char kMI32DeviceType7[] PROGMEM = "NLIGHT";
-const char kMI32DeviceType8[] PROGMEM = "MJYD2S";
-const char kMI32DeviceType9[] PROGMEM = "YLYK01"; //old name yeerc
-const char kMI32DeviceType10[] PROGMEM ="MHOC401";
-const char kMI32DeviceType11[] PROGMEM ="MHOC303";
-const char kMI32DeviceType12[] PROGMEM ="ATC";
-const char kMI32DeviceType13[] PROGMEM ="MCCGQ02";
-const char kMI32DeviceType14[] PROGMEM ="SJWS01L";
-const char kMI32DeviceType15[] PROGMEM ="PVVX";
-const char kMI32DeviceType16[] PROGMEM ="YLKG08";
-const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType1,kMI32DeviceType2,kMI32DeviceType3,kMI32DeviceType4,
-                                          kMI32DeviceType5,kMI32DeviceType6,kMI32DeviceType7,kMI32DeviceType8,
-                                          kMI32DeviceType9,kMI32DeviceType10,kMI32DeviceType11,kMI32DeviceType12,
-                                          kMI32DeviceType13,kMI32DeviceType14,kMI32DeviceType15,kMI32DeviceType16};
+const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003"};
 
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 

@@ -18,8 +18,6 @@
 # - 0xe0000 | ~\Tasmota\.pio\build\<env name>/firmware.bin
 # - 0x3b0000| ~\Tasmota\.pio\build\<env name>/littlefs.bin
 
-Import("env")
-
 env = DefaultEnvironment()
 platform = env.PioPlatform()
 
@@ -35,7 +33,16 @@ import subprocess
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
-FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
+extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
+build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
+
+if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
+elif "CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
+else:
+    FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
+
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
 def esp32_create_chip_string(chip):
@@ -135,10 +142,12 @@ def esp32_create_combined_bin(source, target, env):
     flash_freq = env.BoardConfig().get("build.f_flash", "40000000L")
     flash_freq = str(flash_freq).replace("L", "")
     flash_freq = str(int(int(flash_freq) / 1000000)) + "m"
-    flash_mode = env.BoardConfig().get("build.flash_mode", "dout")
-    if flash_mode == "qio":
+    flash_mode = env.BoardConfig().get("build.flash_mode", "dio")
+    memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
+
+    if flash_mode == "qio" or flash_mode == "qout":
         flash_mode = "dio"
-    elif flash_mode == "qout":
+    if memory_type == "opi_opi" or memory_type == "opi_qspi":
         flash_mode = "dout"
     cmd = [
         "--chip",
@@ -168,7 +177,9 @@ def esp32_create_combined_bin(source, target, env):
     else:
         print("Upload new safeboot binary only")
 
-    if(fs_offset != -1):
+#    if(fs_offset != -1):
+    upload_port = env.subst("$UPLOAD_PORT")
+    if("upload-tasmota.php" not in upload_port) and (fs_offset != -1):
         fs_bin = join(env.subst("$BUILD_DIR"),"littlefs.bin")
         if exists(fs_bin):
             before_reset = env.BoardConfig().get("upload.before_reset", "default_reset")

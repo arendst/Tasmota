@@ -22,10 +22,13 @@ var classes = [
   "bar", "slider", "arc", "textarea", "dropdown",
   "qrcode"
 ]
+var f = open("haspmota.c", "w")
 for c:classes
-  solidify.dump(haspmota.HASPmota.("lvh_"+c), true)
+  solidify.dump(haspmota.HASPmota.("lvh_"+c), true, f)
 end
-solidify.dump(haspmota, true)
+solidify.dump(haspmota, true, f)
+f.close()
+print("Ok")
 
 -#
 var haspmota = module("haspmota")
@@ -407,10 +410,13 @@ class lvh_obj
   #  `toggle` attributes mapped to STATE_CHECKED
   #====================================================================
   def set_toggle(t)
-    import string
-    t = string.toupper(str(t))
-    if t == "TRUE"  t = true end
-    if t == "FALSE" t = false end
+    if type(t) == 'string'
+      import string
+      t = string.toupper(str(t))
+      if   t == "TRUE"  t = true
+      elif t == "FALSE" t = false
+      end
+    end
     if t
       self._lv_obj.add_state(lv.STATE_CHECKED)
     else
@@ -529,20 +535,35 @@ class lvh_obj
       end
     elif type(t) == 'string'
       import string
+      import re
       # look for 'A:name.font' style font file name
       var drive_split = string.split(t, ':', 1)
       var fn_split = string.split(t, '-')
-      if size(drive_split) > 1 && size(drive_split[0]) == 1
+
+      var name = t
+      var sz = 0
+      var is_ttf = false
+      var is_binary = (size(drive_split) > 1 && size(drive_split[0]))
+
+      if size(fn_split) >= 2
+        sz = int(fn_split[-1])
+        name = fn_split[0..-2].concat('-')    # rebuild the font name
+      end
+      if re.match(".*\\.ttf$", name)
+        # ttf font
+        name = string.split(name, ':')[-1]      # remove A: if any
+        is_ttf = true
+      end
+
+      if is_ttf
+        font = lv.load_freetype_font(name, sz, 0)
+      elif is_binary
         # font is from disk
         font = lv.load_font(t)
-      elif size(fn_split) >= 2      # it does contain '-'
-        var sz = int(fn_split[-1])
-        var name = fn_split[0..-2].concat('-')    # rebuild the font name
-        if sz > 0 && size(name) > 0              # looks good, let's have a try
-          try
-            font = lv.font_embedded(name, sz)
-          except ..
-          end
+      elif sz > 0 && size(name) > 0              # looks good, let's have a try
+        try
+          font = lv.font_embedded(name, sz)
+        except ..
         end
       end
     end
@@ -738,11 +759,15 @@ class lvh_obj
       end
       # print("f=", f, v, kv, self._lv_obj, self)
       if type(f) == 'function'
-        if string.find(kv, "style_") == 0
-          # style function need a selector as second parameter
-          f(self._lv_obj, v, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
-        else
-          f(self._lv_obj, v)
+        try
+          if string.find(kv, "style_") == 0
+            # style function need a selector as second parameter
+            f(self._lv_obj, v, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+          else
+            f(self._lv_obj, v)
+          end
+        except .. as e, m
+          raise e, m + " for " + k
         end
         return
       else
@@ -829,6 +854,7 @@ class lvh_obj
 
     # print(">> rule matched", "val=", val)
     var val_n = real(val)         # force float type
+    if val_n == nil  return false end   # if the matched value is not a number, ignore
     var func = self._val_rule_function
     if func != nil
       try
@@ -945,6 +971,13 @@ end
 class lvh_switch : lvh_obj
   static _lv_class = lv.switch
   static _lv_part2_selector = lv.PART_KNOB
+  # map val to toggle
+  def set_val(t)
+    return self.set_toggle(t)
+  end
+  def get_val()
+    return self.get_toggle()
+  end
 end
 
 #====================================================================
@@ -952,6 +985,7 @@ end
 #====================================================================
 class lvh_spinner : lvh_arc
   static _lv_class = lv.spinner
+  var _anim_start, _anim_end        # the two raw (lv_anim_ntv) objects used for the animation
 
   # init
   # - create the LVGL encapsulated object
@@ -963,13 +997,30 @@ class lvh_spinner : lvh_arc
     var speed = jline.find("speed", 1000)
     self._lv_obj = lv.spinner(parent, speed, angle)
     self.post_init()
+    # do some black magic to get the two lv_anim objects used to animate the spinner
+    var anim_start = lv.anim_get(self._lv_obj, self._lv_obj._arc_anim_start_angle)
+    var anim_end = lv.anim_get(self._lv_obj, self._lv_obj._arc_anim_end_angle)
+    # convert to a ctype C structure via pointer
+    self._anim_start = lv.anim_ntv(anim_start._p)
+    self._anim_end = lv.anim_ntv(anim_end._p)
   end
 
-  # ignore attributes, spinner can't be changed once created
-  def set_angle(t) end
-  def get_angle() end
-  def set_speed(t) end
-  def get_speed() end
+  def set_angle(t)
+    t = int(t)
+    self._anim_end.start_value = t
+    self._anim_end.end_value = t + 360
+  end
+  def get_angle()
+    return self._anim_end.start_value - self._anim_start.start_value
+  end
+  def set_speed(t)
+    t = int(t)
+    self._anim_start.time = t
+    self._anim_end.time = t
+  end
+  def get_speed()
+    return self._anim_start.time
+  end
 end
 
 #====================================================================
@@ -1000,11 +1051,11 @@ class lvh_qrcode : lvh_obj
   def init(parent, page, jline)
     self._page = page
 
-    var size = jline.find("qr_size", 100)
+    var sz = jline.find("qr_size", 100)
     var dark_col = self.parse_color(jline.find("qr_dark_color", "#000000"))
     var light_col = self.parse_color(jline.find("qr_light_color", "#FFFFFF"))
 
-    self._lv_obj = lv.qrcode(parent, size, dark_col, light_col)
+    self._lv_obj = lv.qrcode(parent, sz, dark_col, light_col)
     self.post_init()
   end
 

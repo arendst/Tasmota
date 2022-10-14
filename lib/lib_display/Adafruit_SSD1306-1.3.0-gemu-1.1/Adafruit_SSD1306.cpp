@@ -570,6 +570,13 @@ boolean Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, boolean reset,
       SSD1306_SETCONTRAST };              // 0x81
     ssd1306_commandList(init4d, sizeof(init4d));
     ssd1306_command1((vccstate == SSD1306_EXTERNALVCC) ? 0x9F : 0xCF);
+  } else if((WIDTH == 72) && (HEIGHT == 40)) {
+    static const uint8_t PROGMEM init4d[] = {
+      SSD1306_SETCOMPINS,                 // 0xDA
+      0x12,
+      SSD1306_SETCONTRAST };              // 0x81
+    ssd1306_commandList(init4d, sizeof(init4d));
+    ssd1306_command1((vccstate == SSD1306_EXTERNALVCC) ? 0x9F : 0xCF);
   } else {
     // Other screen varieties -- TBD
   }
@@ -931,6 +938,9 @@ void Adafruit_SSD1306::display(void) {
   if ((64 == WIDTH) && (48 == HEIGHT)) {    // for 64x48, we need to shift by 32 in both directions
     col_start += 32;
     col_end += 32;
+  } else if ((72 == WIDTH) && (40 == HEIGHT)) {    // for 72x40, we need to shift by 27 in both directions
+    col_start += 27;
+    col_end += 27;
   }
 
   TRANSACTION_START

@@ -46,7 +46,11 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // USE_DEVICE_GROUPS
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON
 #ifdef ESP32
-   "|Info|" D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|" D_CMND_TOUCH_NUM "|" D_CMND_CPU_FREQUENCY
+   "|Info|"
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+  D_CMND_TOUCH_CAL "|" D_CMND_TOUCH_THRES "|"
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+  D_CMND_CPU_FREQUENCY
 #endif  // ESP32
 #endif   //FIRMWARE_MINIMAL_ONLY
   ;
@@ -81,7 +85,11 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // USE_DEVICE_GROUPS
   &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson
 #ifdef ESP32
-  , &CmndInfo, &CmndTouchCal, &CmndTouchThres, &CmndTouchNum, &CmndCpuFrequency
+  , &CmndInfo,
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+  &CmndTouchCal, &CmndTouchThres,
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+  &CmndCpuFrequency
 #endif  // ESP32
 #endif   //FIRMWARE_MINIMAL_ONLY
   };
@@ -403,9 +411,11 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
   bool binary_data = (index > 199);        // Suppose binary data on topic index > 199
   if (!binary_data) {
-    while (*dataBuf && isspace(*dataBuf)) {
-      dataBuf++;                           // Skip leading spaces in data
-      data_len--;
+    if (strstr_P(type, PSTR("SERIALSEND")) == nullptr) {  // Do not skip leading spaces on (s)serialsend
+      while (*dataBuf && isspace(*dataBuf)) {
+        dataBuf++;                           // Skip leading spaces in data
+        data_len--;
+      }
     }
   }
 
@@ -651,7 +661,7 @@ void CmndStatusResponse(uint32_t index) {
       all_status.replace("}{", ",");
       char cmnd_status[10];  // STATUS11
       snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "0"));
-      MqttPublishPayloadPrefixTopicRulesProcess_P(STAT, cmnd_status, all_status.c_str());
+      MqttPublishPayloadPrefixTopicRulesProcess_P(STAT, cmnd_status, all_status.c_str(), Settings->flag5.mqtt_status_retain);
       all_status = (const char*) nullptr;
     } else {
       if (0 == index) { all_status = ""; }
@@ -662,7 +672,7 @@ void CmndStatusResponse(uint32_t index) {
     char cmnd_status[10];  // STATUS11
     char number[4] = { 0 };
     snprintf_P(cmnd_status, sizeof(cmnd_status), PSTR(D_CMND_STATUS "%s"), (index) ? itoa(index, number, 10) : "");
-    MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status);
+    MqttPublishPrefixTopicRulesProcess_P(STAT, cmnd_status, Settings->flag5.mqtt_status_retain);
   }
 }
 
@@ -698,7 +708,7 @@ void CmndStatus(void)
                           D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\""
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d,\""
-                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d}}"),
+                          D_CMND_INFORETAIN "\":%d,\"" D_CMND_STATERETAIN "\":%d,\"" D_CMND_STATUSRETAIN "\":%d}}"),
                           ModuleNr(), EscapeJSONString(SettingsText(SET_DEVICENAME)).c_str(), stemp, TasmotaGlobal.mqtt_topic,
                           SettingsText(SET_MQTT_BUTTON_TOPIC), TasmotaGlobal.power, Settings->poweronstate, Settings->ledstate,
                           Settings->ledmask, Settings->save_data,
@@ -710,7 +720,9 @@ void CmndStatus(void)
                           Settings->flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
                           Settings->flag.mqtt_power_retain,    // CMND_POWERRETAIN
                           Settings->flag5.mqtt_info_retain,    // CMND_INFORETAIN
-                          Settings->flag5.mqtt_state_retain);  // CMND_STATERETAIN
+                          Settings->flag5.mqtt_state_retain,   // CMND_STATERETAIN
+                          Settings->flag5.mqtt_status_retain   // CMND_STATUSRETAIN
+                          );
     CmndStatusResponse(0);
   }
 
@@ -733,14 +745,14 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (2 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\""
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\""
 #ifdef ESP8266
                           ",\"" D_JSON_BOOTVERSION "\":%d"
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
                           "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
                           "%s}}"),
-                          TasmotaGlobal.version, TasmotaGlobal.image_name, GetBuildDateAndTime().c_str()
+                          TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str(), GetBuildDateAndTime().c_str()
 #ifdef ESP8266
                           , ESP.getBootVersion()
 #endif
@@ -768,14 +780,17 @@ void CmndStatus(void)
 #endif  // ESP32
                           D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d"
                           ",\"" D_JSON_FLASHCHIPID "\":\"%06X\""
-                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":%d"),
+                          ",\"FlashFrequency\":%d,\"" D_JSON_FLASHMODE "\":\"%s\""),
                           ESP_getSketchSize()/1024, ESP_getFreeSketchSpace()/1024, ESP_getFreeHeap1024(),
 #ifdef ESP32
                           uxTaskGetStackHighWaterMark(nullptr) / 1024, ESP.getPsramSize()/1024, ESP.getFreePsram()/1024,
+                          ESP_getFlashChipMagicSize()/1024, ESP.getFlashChipSize()/1024
 #endif  // ESP32
-                          ESP.getFlashChipSize()/1024, ESP_getFlashChipRealSize()/1024
+#ifdef ESP8266
+                          ESP_getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024
+#endif // ESP8266
                           , ESP_getFlashChipId()
-                          , ESP.getFlashChipSpeed()/1000000, ESP.getFlashChipMode());
+                          , ESP.getFlashChipSpeed()/1000000, ESP_getFlashChipMode().c_str());
     ResponseAppendFeatures();
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
@@ -1828,15 +1843,18 @@ void CmndSerialConfig(void)
 
 void CmndSerialBuffer(void) {
   // Allow non-pesistent serial receive buffer size change
-  //   between 256 (default) and 520 (INPUT_BUFFER_SIZE) characters
+  //   between MIN_INPUT_BUFFER_SIZE and MAX_INPUT_BUFFER_SIZE characters
   size_t size = 0;
   if (XdrvMailbox.data_len > 0) {
     size = XdrvMailbox.payload;
-    if (XdrvMailbox.payload < 256) {
-      size = 256;
-    }
-    if ((1 == XdrvMailbox.payload) || (XdrvMailbox.payload > INPUT_BUFFER_SIZE)) {
+    if (1 == XdrvMailbox.payload) {
       size = INPUT_BUFFER_SIZE;
+    }
+    else if (XdrvMailbox.payload < MIN_INPUT_BUFFER_SIZE) {
+      size = MIN_INPUT_BUFFER_SIZE;
+    }
+    else if (XdrvMailbox.payload > MAX_INPUT_BUFFER_SIZE) {
+      size = MAX_INPUT_BUFFER_SIZE;
     }
     Serial.setRxBufferSize(size);
   }
@@ -2600,39 +2618,29 @@ void CmndCpuFrequency(void) {
   ResponseCmndNumber(getCpuFrequencyMhz());
 }
 
-void CmndTouchCal(void)
-{
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+void CmndTouchCal(void) {
   if (XdrvMailbox.payload >= 0) {
-    if (XdrvMailbox.payload < MAX_KEYS + 1) TOUCH_BUTTON.calibration = bitSet(TOUCH_BUTTON.calibration, XdrvMailbox.payload);
-    if (XdrvMailbox.payload == 0) TOUCH_BUTTON.calibration = 0;
-    if (XdrvMailbox.payload == 255) TOUCH_BUTTON.calibration = 255; // all pinss
+    if (XdrvMailbox.payload == 0) {
+      TouchButton.calibration = 0;
+    }
+    else if (XdrvMailbox.payload < MAX_KEYS + 1) {
+      TouchButton.calibration = bitSet(TouchButton.calibration, XdrvMailbox.payload);
+    }
+    else if (XdrvMailbox.payload == 255) {
+      TouchButton.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
+    }
   }
-  Response_P(PSTR("{\"" D_CMND_TOUCH_CAL "\": %u"), TOUCH_BUTTON.calibration);
-  ResponseJsonEnd();
+  ResponseCmndNumber(TouchButton.calibration);
   AddLog(LOG_LEVEL_INFO, PSTR("Button Touchvalue Hits,"));
 }
 
-void CmndTouchThres(void)
-{
-  if (XdrvMailbox.payload >= 0) {
-    if (XdrvMailbox.payload<256){
-      TOUCH_BUTTON.pin_threshold = XdrvMailbox.payload;
-    }
+void CmndTouchThres(void) {
+  if (XdrvMailbox.data_len > 0) {
+    Settings->touch_threshold = XdrvMailbox.payload;
   }
-  Response_P(PSTR("{\"" D_CMND_TOUCH_THRES "\": %u"), TOUCH_BUTTON.pin_threshold);
-  ResponseJsonEnd();
+  ResponseCmndNumber(Settings->touch_threshold);
 }
-
-void CmndTouchNum(void)
-{
-  if (XdrvMailbox.payload >= 0) {
-    if (XdrvMailbox.payload<32){
-      TOUCH_BUTTON.hit_threshold = XdrvMailbox.payload;
-    }
-  }
-  Response_P(PSTR("{\"" D_CMND_TOUCH_NUM "\": %u"), TOUCH_BUTTON.hit_threshold);
-  ResponseJsonEnd();
-
-}
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
 #endif  // ESP32

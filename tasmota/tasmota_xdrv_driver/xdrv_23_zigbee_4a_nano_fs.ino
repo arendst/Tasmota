@@ -22,8 +22,9 @@
 // #define Z_EEPROM_DEBUG
 
 
-const static uint32_t ZIGB_NAME1 = 0x3167697A; // 'zig1' little endian
+// const static uint32_t ZIGB_NAME1 = 0x3167697A; // 'zig1' little endian
 const static uint32_t ZIGB_NAME2 = 0x3267697A; // 'zig2' little endian, v2
+const static uint32_t ZIGB_NAME4 = 0x3467697A; // 'zig4' little endian, v2
 const static uint32_t ZIGB_DATA2 = 0x32746164; // 'dat2' little endian, v2
 extern FS *dfsp;
 extern "C" uint32_t _FS_end;
@@ -32,7 +33,7 @@ bool flash_valid(void) {
   return (((uint32_t)&_FS_end) > 0x40280000) && (((uint32_t)&_FS_end) < 0x402FF000);
 }
 
-void hydrateSingleDevice(const SBuffer & buf_d);
+void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version);
 
 #ifdef USE_ZIGBEE_EEPROM
 // The EEPROM is 64KB in size with individually writable bytes.

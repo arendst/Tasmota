@@ -63,6 +63,28 @@ void IRArgoAC::begin(void) { _irsend.begin(); }
 void IRArgoAC::send(const uint16_t repeat) {
   _irsend.sendArgo(getRaw(), kArgoStateLength, repeat);
 }
+
+/// Send current room temperature for the iFeel feature as a silent IR
+/// message (no acknowledgement from the device).
+/// @param[in] temp The temperature in degrees celsius.
+/// @param[in] repeat Nr. of times the message will be repeated.
+void IRArgoAC::sendSensorTemp(const uint8_t temp, const uint16_t repeat) {
+    uint8_t tempc = temp - kArgoTempDelta;
+    uint8_t check = 52 + tempc;
+    uint8_t end = 0b011;
+
+    ArgoProtocol data;
+    data.raw[0] = 0b10101100;
+    data.raw[1] = 0b11110101;
+    data.raw[2] = (tempc << 3) | (check >> 5);
+    data.raw[3] = (check << 3) | end;
+    for (uint8_t i = 4; i < kArgoStateLength; i++) data.raw[i] = 0x0;
+    uint8_t sum = IRArgoAC::calcChecksum(data.raw, kArgoStateLength);
+    data.raw[10] = 0b00000010;
+    data.Sum = sum;
+
+    _irsend.sendArgo(data.raw, kArgoStateLength, repeat);
+}
 #endif  // SEND_ARGO
 
 /// Verify the checksum is valid for a given state.

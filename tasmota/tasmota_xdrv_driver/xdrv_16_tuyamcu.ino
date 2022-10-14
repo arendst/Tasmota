@@ -154,27 +154,29 @@ TuyaSend2 11,100 -> Sends integer (Type 2) data 100 to dpId 11 (Max data length 
 TuyaSend2 11,0xAABBCCDD -> Sends 4 bytes (Type 2) data to dpId 11 (Max data length 4 bytes)
 TuyaSend3 11,ThisIsTheData -> Sends the supplied string (Type 3) to dpId 11 ( Max data length not-known)
 TuyaSend4 11,1 -> Sends enum (Type 4) data 1 to dpId 11 (Max data length 1 bytes)
-TuyaSend5 11,ABCD -> Sends an HEX string (Type 3) data to dpId 
+TuyaSend5 11,ABCD -> Sends an HEX string (Type 3) data to dpId
 TuyaSend6 11,ABCD -> Sends raw (Type 0) data to dpId
 
 */
 
 void CmndTuyaSend(void) {
-  if (XdrvMailbox.index > 5 && XdrvMailbox.index < 8) {
+  if (XdrvMailbox.index > 6 && XdrvMailbox.index < 8) {
     return;
   }
   if (XdrvMailbox.index == 0) {
     TuyaRequestState(0);
+    ResponseCmndDone();
   } else if (XdrvMailbox.index == 8) {
     TuyaRequestState(8);
+    ResponseCmndDone();
   } else if (XdrvMailbox.index == 9) { // TuyaSend Topic Toggle
     Settings->tuyamcu_topic = !Settings->tuyamcu_topic;
     AddLog(LOG_LEVEL_INFO, PSTR("TYA: TuyaMCU Stat Topic %s"), (Settings->tuyamcu_topic ? PSTR("enabled") : PSTR("disabled")));
-
+    ResponseCmndDone();
   } else {
     if (XdrvMailbox.data_len > 0) {
       char *p;
-      char *data;
+      char *data = nullptr;
       uint8_t i = 0;
       uint8_t dpId = 0;
       for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 2; str = strtok_r(nullptr, ", ", &p)) {
@@ -186,22 +188,25 @@ void CmndTuyaSend(void) {
         i++;
       }
 
-      if (1 == XdrvMailbox.index) {
-        TuyaSendBool(dpId, strtoul(data, nullptr, 0));
-      } else if (2 == XdrvMailbox.index) {
-        TuyaSendValue(dpId, strtoull(data, nullptr, 0));
-      } else if (3 == XdrvMailbox.index) {
-        TuyaSendString(dpId, data);
-      } else if (5 == XdrvMailbox.index) {
-        TuyaSendHexString(dpId, data);
-      } else if (4 == XdrvMailbox.index) {
-        TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
-      } else if (6 == XdrvMailbox.index) {
-        TuyaSendRaw(dpId, data);
+      if (data) {
+        if (1 == XdrvMailbox.index) {
+          TuyaSendBool(dpId, strtoul(data, nullptr, 0));
+        } else if (2 == XdrvMailbox.index) {
+          TuyaSendValue(dpId, strtoull(data, nullptr, 0));
+        } else if (3 == XdrvMailbox.index) {
+          TuyaSendString(dpId, data);
+        } else if (5 == XdrvMailbox.index) {
+          TuyaSendHexString(dpId, data);
+        } else if (4 == XdrvMailbox.index) {
+          TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
+        } else if (6 == XdrvMailbox.index) {
+          TuyaSendRaw(dpId, data);
+        }
+        ResponseCmndDone();
       }
     }
   }
-  ResponseCmndDone();
+//  {"TuyaSend":"error"}
 }
 
 // TuyaMcu fnid,dpid
@@ -517,7 +522,7 @@ static uint16_t convertHexStringtoBytes (uint8_t * dest, char src[], uint16_t sr
   if (NULL == dest || NULL == src || 0 == src_len){
     return 0;
   }
-  
+
   char hexbyte[3];
   hexbyte[2] = 0;
   uint16_t i;
@@ -797,7 +802,7 @@ void TuyaProcessStatePacket(void) {
     if (Tuya.buffer[dpidStart + 1] == 0) {
 #ifdef USE_ENERGY_SENSOR
         if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER_COMBINED) {
-          if (dpDataLen == 8) {
+          if (dpDataLen >= 8) {
             uint16_t tmpVol = Tuya.buffer[dpidStart + 4] << 8 | Tuya.buffer[dpidStart + 5];
             uint16_t tmpCur = Tuya.buffer[dpidStart + 7] << 8 | Tuya.buffer[dpidStart + 8];
             uint16_t tmpPow = Tuya.buffer[dpidStart + 10] << 8 | Tuya.buffer[dpidStart + 11];
@@ -1301,13 +1306,13 @@ void TuyaSerialInput(void)
           if (TuyaExcludeCMDsFromMQTT[cmdsID] == Tuya.buffer[3]) {
             isCmdToSuppress = true;
             break;
-          }  
+          }
         }
         if (!(isCmdToSuppress && Settings->flag5.tuya_exclude_from_mqtt)) {  // SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see TuyaExcludeCMDsFromMQTT) if SetOption66 is active
           MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
         } else {
           AddLog(LOG_LEVEL_DEBUG, ResponseData());
-        }      
+        }
       } else {
         AddLog(LOG_LEVEL_DEBUG, ResponseData());
       }

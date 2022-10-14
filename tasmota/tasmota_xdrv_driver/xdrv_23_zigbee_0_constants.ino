@@ -923,6 +923,8 @@ enum Z_App_Profiles {
   Z_PROF_TA = 0x0107,     // Telecom Applications
   Z_PROF_PHHC = 0x0108,   // Personal Home & Hospital Care
   Z_PROF_AMI = 0x0109,    // Advanced Metering Initiative
+  // Green Power
+  Z_PROF_GP = 0xa1e0,     // Green Power profile
 };
 
 enum Z_Device_Ids {
@@ -1128,6 +1130,46 @@ enum ZCL_Global_Commands {
   ZCL_DISCOVER_ATTRIBUTES = 0x0c,
   ZCL_DISCOVER_ATTRIBUTES_RESPONSE = 0x0d
 };
+
+enum ZCL_GP_Commands_Received {
+  ZGP_NOTIFICATION = 0x00,
+  ZGP_PAIRING_SEARCH = 0x01,
+  ZGP_TUNNELING_STOP = 0x03,
+  ZGP_COMMISSIONING_NOTIFICATION = 0x04,
+  ZGP_TRANSLATION_TABLE_UPDATE = 0x07,
+  ZGP_TRANSLATION_TABLE_REQUEST = 0x08,
+  ZGP_PAIRING_CONFIGURATION = 0x09,
+};
+
+enum ZCL_GP_Commands_Generated {
+  ZGP_NOTIFICATION_RESPONSE = 0x00,
+  ZGP_PAIRING = 0x01,
+  ZGP_PROXY_COMMISSIONING_MODE = 0x02,
+  ZGP_RESPONSE = 0x06,
+  ZGP_TRANSLATION_TABLE_RESPONSE = 0x08,
+};
+
+enum ZCL_GPDF_Cmd {
+  ZGP_IDENTIFY = 0x00,
+  ZGP_SCENE_0 = 0x10,
+  // ...
+  ZGP_OFF = 0x20,
+  ZGP_ON = 0x21,
+  ZGP_TOGGLE = 0x22,
+  ZGP_RELEASE = 0x23,
+  ZGP_MOVE_UP = 0x30,
+  ZGP_MOVE_DOWN = 0x31,
+  //
+  //TODO
+  ZGP_COMMISSIONING = 0xE0,
+  ZGP_CHANNEL_REQUEST = 0xE3,
+  // Commands sent to GPD
+  ZGP_COMMISSIONING_REPLY = 0xF0,
+  ZGP_WRITE_ATTRIBUTES = 0xF1,
+  ZGP_READ_ATTRIBUTES = 0xF2,
+  ZGP_CHANNEL_CONFIGURATION = 0xF3,
+};
+
 
 #define Z_(s) Zo_ ## s
 

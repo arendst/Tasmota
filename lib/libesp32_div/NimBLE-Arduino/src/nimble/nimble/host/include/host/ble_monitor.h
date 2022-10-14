@@ -32,6 +32,7 @@ extern "C" {
 int ble_monitor_log(int level, const char *fmt, ...);
 
 int ble_monitor_out(int c);
+void ble_monitor_deinit(void);
 
 #ifdef __cplusplus
 }

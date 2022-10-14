@@ -1,5 +1,54 @@
 # Release Notes
 
+## _v2.8.4 (20220918)_
+
+**[Bug Fixes]**
+ - [Bugfix] Handle gcc unsupported __VA_OPT___ macro (#1880 #1881)
+
+
+## _v2.8.3 (20220915)_
+
+**[Bug Fixes]**
+- Fix `#if` for DECODE_COOLIX48 (#1796)
+- Add missing `prev`s to `decodeToState()` (#1783)
+
+**[Features]**
+- Add `pause()` function to ESP32 when receiving. (#1871)
+- ARGO: Argo add `sendSensorTemp()` (#1858 #1859)
+- HAIER_AC160: Experimental detail support. (#1852 #1804)
+- BOSCH144: Add IRac class support (#1841)
+- Mitsubishi_AC: update left vane in `IRac` class (#1837)
+- Basic support for Daikin 312bit/39byte A/C protocol. (#1836 #1829)
+- Experimental basic support for Sanyo AC 152 bit protocol. (#1828 #1826)
+- GREE: Add model support for `YX1FSF`/Soleus Air Windown A/C (#1823 #1821)
+- Experimental basic support for Bosch 144bit protocol. (#1822 #1787)
+- Experimental basic support for TCL AC 96 bit protocol. (#1820 #1810)
+- Add basic support for clima-butler (52bit) RCS-SD43UWI (#1815 #1812)
+- TOTO: An experimental _(s)wipe_ at support for Toto Toilets. (#1811 #1806)
+- CARRIER_AC128: Experimental Basic support for Carrier AC 128bit protocol. (#1798 #1797)
+- HAIER_AC160: Add basic support for Haier 160bit protocol. (#1805 #1804)
+- DAIKIN: Add basic support for 200-bit Daikin protocol. (#1803 #1802)
+- FUJITSU: Improve handling of 10C Heat mode. (#1788 #1780)
+- FUJITSU: Improve handling of short (command only) messages. (#1784 #1780)
+
+**[Misc]**
+- Improve the `_IRREMOTEESP8266_VERSION_VAL` macro (#1875 #1870)
+- SONY: Update supported devices. (#1872)
+- SAMSUNG: Update supported devices (#1873)
+- NEC: Update supported devices (#1874)
+- Give IRmacros.h smaller scope to avoid impacting projects using IRremoteESP8266 (#1857 #1853 #1851)
+- Inhibit protocol names for not-included protocols (#1853 #1851)
+- Test out codeql static analysis (#1842)
+- Remove pylint disable=no-self-use (#1817)
+- Fujitsu General: update supported devices (#1813)
+- DAIKIN: Update supported devices (#1808 #1807)
+- Fujitsu: Update supported remote info. (#1801 #1794)
+- DAIKIN128: Update supported devices (#1754)
+- Voltas: Add link to manual for 122LZF A/C. (#1800 #1799 #1238)
+- Daikin128: Additional unit test. (#1795 #1754)
+- MIDEA: Update supported devices (#1791 #1790)
+
+
 ## _v2.8.2 (20220314)_
 
 **[Bug Fixes]**

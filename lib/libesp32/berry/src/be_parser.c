@@ -469,6 +469,12 @@ static int new_upval(bvm *vm, bfuncinfo *finfo, bstring *name, bexpdesc *var)
 static void new_var(bparser *parser, bstring *name, bexpdesc *var)
 {
     bfuncinfo *finfo = parser->finfo;
+    if (comp_is_strict(parser->vm)) {
+        /* check if we are masking a builtin */
+        if (be_builtin_find(parser->vm, name) >= 0) {
+            push_error(parser, "strict: redefinition of builtin '%s'", str(name));
+        }
+    }
     if (finfo->prev || finfo->binfo->prev || parser->islocal) {
         init_exp(var, ETLOCAL, 0);
         var->v.idx = new_localvar(parser, name); /* if local, contains the index in current local var list */
@@ -982,7 +988,6 @@ static void compound_assign(bparser *parser, int op, bexpdesc *l, bexpdesc *r)
 /* A new implicit local variable is created if no global has the same name (excluding builtins) */
 /* This means that you can override a builtin silently */
 /* This also means that a function cannot create a global, they must preexist or create with `global` module */
-/* TODO add warning in strict mode */
 static int check_newvar(bparser *parser, bexpdesc *e)
 {
     if (e->type == ETGLOBAL) {

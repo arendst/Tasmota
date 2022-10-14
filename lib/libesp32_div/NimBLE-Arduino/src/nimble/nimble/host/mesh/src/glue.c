@@ -18,9 +18,9 @@
  */
 
 #include "nimble/porting/nimble/include/syscfg/syscfg.h"
-#if MYNEWT_VAL(BLE_MESH)
-
 #define MESH_LOG_MODULE BLE_MESH_LOG
+
+#if MYNEWT_VAL(BLE_MESH)
 
 #include "../include/mesh/glue.h"
 #include "adv.h"
@@ -32,7 +32,7 @@
 #include "base64/base64.h"
 #endif
 
-extern u8_t g_mesh_addr_type;
+extern uint8_t g_mesh_addr_type;
 
 #if MYNEWT_VAL(BLE_EXT_ADV)
 /* Store configuration for different bearers */
@@ -46,8 +46,8 @@ bt_hex(const void *buf, size_t len)
 {
     static const char hex[] = "0123456789abcdef";
     static char hexbufs[4][137];
-    static u8_t curbuf;
-    const u8_t *b = buf;
+    static uint8_t curbuf;
+    const uint8_t *b = buf;
     char *str;
     int i;
 
@@ -240,6 +240,14 @@ net_buf_simple_add_be16(struct os_mbuf *om, uint16_t val)
 }
 
 void
+net_buf_simple_add_le24(struct os_mbuf *om, uint32_t val)
+{
+    val = htole32(val);
+    os_mbuf_append(om, &val, 3);
+    ASSERT_NOT_CHAIN(om);
+}
+
+void
 net_buf_simple_add_be32(struct os_mbuf *om, uint32_t val)
 {
     val = htobe32(val);
@@ -290,6 +298,22 @@ net_buf_simple_push_be16(struct os_mbuf *om, uint16_t val)
 
     if (om->om_pkthdr_len) {
         OS_MBUF_PKTHDR(om)->omp_len += 2;
+    }
+    ASSERT_NOT_CHAIN(om);
+}
+
+void
+net_buf_simple_push_be24(struct os_mbuf *om, uint32_t val)
+{
+    uint8_t headroom = om->om_data - &om->om_databuf[om->om_pkthdr_len];
+
+    assert(headroom >= 3);
+    om->om_data -= 3;
+    put_be24(om->om_data, val);
+    om->om_len += 3;
+
+    if (om->om_pkthdr_len) {
+        OS_MBUF_PKTHDR(om)->omp_len += 3;
     }
     ASSERT_NOT_CHAIN(om);
 }
@@ -358,7 +382,7 @@ k_fifo_is_empty(struct ble_npl_eventq *q)
     return ble_npl_eventq_is_empty(q);
 }
 
-void * net_buf_get(struct ble_npl_eventq *fifo, s32_t t)
+void * net_buf_get(struct ble_npl_eventq *fifo, int32_t t)
 {
     struct ble_npl_event *ev = ble_npl_eventq_get(fifo, 0);
 
@@ -407,6 +431,12 @@ k_delayed_work_init(struct k_delayed_work *w, ble_npl_event_fn *f)
 #else
     ble_npl_callout_init(&w->work, ble_npl_eventq_dflt_get(), f, NULL);
 #endif
+}
+
+bool
+k_delayed_work_pending(struct k_delayed_work *w)
+{
+    return ble_npl_callout_is_active(&w->work);
 }
 
 void
@@ -465,7 +495,7 @@ int64_t k_uptime_get(void)
     return ble_npl_time_ticks_to_ms32(ble_npl_time_get());
 }
 
-u32_t k_uptime_get_32(void)
+uint32_t k_uptime_get_32(void)
 {
     return k_uptime_get();
 }
@@ -484,7 +514,7 @@ static uint8_t priv[32];
 static bool has_pub = false;
 
 int
-bt_dh_key_gen(const u8_t remote_pk[64], bt_dh_key_cb_t cb)
+bt_dh_key_gen(const uint8_t remote_pk[64], bt_dh_key_cb_t cb)
 {
     uint8_t dh[32];
 
@@ -535,7 +565,7 @@ bt_pub_key_get(void)
 }
 
 static int
-set_ad(const struct bt_data *ad, size_t ad_len, u8_t *buf, u8_t *buf_len)
+set_ad(const struct bt_data *ad, size_t ad_len, uint8_t *buf, uint8_t *buf_len)
 {
     int i;
 
@@ -871,6 +901,52 @@ void net_buf_slist_merge_slist(struct net_buf_slist_t *list,
 	}
 }
 
+/** Memory slab methods */
+extern void  k_mem_slab_free(struct k_mem_slab *slab, void **mem)
+{
+    **(char ***)mem = slab->free_list;
+    slab->free_list = *(char **)mem;
+    slab->num_used--;
+}
+
+extern int k_mem_slab_alloc(struct k_mem_slab *slab, void **mem)
+{
+	int result;
+
+	if (slab->free_list != NULL) {
+		/* take a free block */
+		*mem = slab->free_list;
+		slab->free_list = *(char **)(slab->free_list);
+		slab->num_used++;
+		result = 0;
+	} else {
+		*mem = NULL;
+		result = -ENOMEM;
+	}
+	return result;
+}
+
+int create_free_list(struct k_mem_slab *slab)
+{
+	uint32_t j;
+	char *p;
+
+    if(((slab->block_size | (uintptr_t)slab->buffer) &
+				(sizeof(void *) - 1)) != 0) {
+		return -EINVAL;
+	}
+
+	slab->free_list = NULL;
+	p = slab->buffer;
+
+	for (j = 0U; j < slab->num_blocks; j++) {
+		*(char **)p = slab->free_list;
+		slab->free_list = p;
+		p += slab->block_size;
+	}
+	return 0;
+}
+
 #if MYNEWT_VAL(BLE_MESH_SETTINGS)
 
 int settings_bytes_from_str(char *val_str, void *vp, int *len)
@@ -892,4 +968,4 @@ char *settings_str_from_bytes(const void *vp, int vp_len,
 }
 
 #endif /* MYNEWT_VAL(BLE_MESH_SETTINGS) */
-#endif
+#endif /* MYNEWT_VAL(BLE_MESH) */

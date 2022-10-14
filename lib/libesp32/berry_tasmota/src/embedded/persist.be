@@ -7,6 +7,7 @@
   solidify.dump(persist_module.init)
   # copy and paste into `be_persist_lib.c`
 -#
+#@ solidify:persist_module
 var persist_module = module("persist")
 
 persist_module.init = def (m)

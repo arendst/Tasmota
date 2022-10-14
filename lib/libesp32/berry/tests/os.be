@@ -12,10 +12,10 @@ assert(os.path.join('abc', '/de', 'fghij') == '/de/fghij')
 assert(os.path.join('abc', 'xyz', '/de', 'fghij') == '/de/fghij')
 
 # os.path.split test
-def split(str, list)
-    var res = os.path.split(str)
-    assert(res[0] == list[0] && res[1] == list[1],
-        'unexpected results: ' .. res .. ', reference value: ' .. list)
+def split(st, lst)
+    var res = os.path.split(st)
+    assert(res[0] == lst[0] && res[1] == lst[1],
+        'unexpected results: ' .. res .. ', reference value: ' .. lst)
 end
 
 split('/', ['/', ''])
@@ -31,10 +31,10 @@ split('abcd////ef/////', ['abcd////ef', ''])
 split('abcd////ef', ['abcd', 'ef'])
 
 # os.path.splitext test
-def splitext(str, list)
-    var res = os.path.splitext(str)
-    assert(res[0] == list[0] && res[1] == list[1],
-        'unexpected results: ' .. res .. ', reference value: ' .. list)
+def splitext(st, lst)
+    var res = os.path.splitext(st)
+    assert(res[0] == lst[0] && res[1] == lst[1],
+        'unexpected results: ' .. res .. ', reference value: ' .. lst)
 end
 
 splitext('a.b', ['a', '.b'])

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define console_printf printf
+#define console_printf(_fmt, ...) printf(_fmt, ##__VA_ARGS__)
 
 #ifdef __cplusplus
 }

@@ -19,27 +19,37 @@
 
 #include "nimble/nimble/host/include/host/ble_hs.h"
 #include "../include/host/util/util.h"
+#include "../../src/ble_hs_hci_priv.h"
 
-#if MYNEWT_VAL(BLE_CONTROLLER)
-#include "nimble/nimble/controller/include/controller/ble_hw.h"
+#if SOC_ESP_NIMBLE_CONTROLLER
+#include "esp_bt.h"
 #endif
 
 static int
 ble_hs_util_load_rand_addr(ble_addr_t *addr)
 {
-    /* XXX: It is unfortunate that the function to retrieve the random address
-     * is in the controller package.  A host-only device ought to be able to
-     * automically restore a random address.
-     */
-#if MYNEWT_VAL(BLE_CONTROLLER)
+#if MYNEWT_VAL(BLE_HCI_VS)
+    struct ble_hci_vs_rd_static_addr_rp rsp;
     int rc;
 
-    rc = ble_hw_get_static_addr(addr);
+    rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_VENDOR,
+                                      BLE_HCI_OCF_VS_RD_STATIC_ADDR),
+                           NULL, 0, &rsp, sizeof(rsp));
     if (rc == 0) {
+        addr->type = BLE_ADDR_RANDOM;
+        memcpy(addr->val, rsp.addr, sizeof(addr->val));
         return 0;
     }
 #endif
 
+#if SOC_ESP_NIMBLE_CONTROLLER
+    int rc;
+
+    rc = esp_ble_hw_get_static_addr((esp_ble_addr_t *)addr);
+    if (rc == 0) {
+        return 0;
+    }
+#endif
     return BLE_HS_ENOADDR;
 }
 

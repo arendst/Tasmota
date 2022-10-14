@@ -37,7 +37,22 @@
 
 /* Octet 10 */
 #define BLE_SUPP_CMD_RD_TX_PWR              (0 << 2)
-#define BLE_LL_SUPP_CMD_OCTET_10            (BLE_SUPP_CMD_RD_TX_PWR)
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_CTRL_TO_HOST_FLOW_CONTROL)
+#define BLE_SUPP_CMD_SET_CTRL_TO_HOST_FLOW  (1 << 5)
+#define BLE_SUPP_CMD_HOST_BUFFER_SIZE       (1 << 6)
+#define BLE_SUPP_CMD_HOST_NUM_COMP_PACKETS  (1 << 7)
+#else
+#define BLE_SUPP_CMD_SET_CTRL_TO_HOST_FLOW  (0 << 5)
+#define BLE_SUPP_CMD_HOST_BUFFER_SIZE       (0 << 6)
+#define BLE_SUPP_CMD_HOST_NUM_COMP_PACKETS  (0 << 7)
+#endif
+#define BLE_LL_SUPP_CMD_OCTET_10            \
+(                                           \
+    BLE_SUPP_CMD_RD_TX_PWR              |   \
+    BLE_SUPP_CMD_SET_CTRL_TO_HOST_FLOW  |   \
+    BLE_SUPP_CMD_HOST_BUFFER_SIZE       |   \
+    BLE_SUPP_CMD_HOST_NUM_COMP_PACKETS      \
+)
 
 /* Octet 14 */
 #define BLE_SUPP_CMD_RD_LOC_VER             (1 << 3)
@@ -405,10 +420,77 @@
 #define BLE_SUPP_CMD_LE_PADV_SYNC_TRANSFER_PARAMS (0 << 0)
 #define BLE_SUPP_CMD_LE_PADV_DEFAULT_SYNC_TRANSFER_PARAMS (0 << 1)
 #endif
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+#define BLE_SUPP_CMD_LE_READ_BUF_SIZE_V2    (1 << 5)
+#define BLE_SUPP_CMD_LE_READ_ISO_TX_SYNC    (1 << 6)
+#define BLE_SUPP_CMD_LE_SET_CIG_PARAM       (1 << 7)
+#else
+#define BLE_SUPP_CMD_LE_READ_BUF_SIZE_V2    (0 << 5)
+#define BLE_SUPP_CMD_LE_READ_ISO_TX_SYNC    (0 << 6)
+#define BLE_SUPP_CMD_LE_SET_CIG_PARAM       (0 << 7)
+#endif
+
 #define BLE_LL_SUPP_CMD_OCTET_41                        \
 (                                                       \
-    BLE_SUPP_CMD_LE_PADV_SYNC_TRANSFER_PARAMS |         \
-    BLE_SUPP_CMD_LE_PADV_DEFAULT_SYNC_TRANSFER_PARAMS   \
+    BLE_SUPP_CMD_LE_PADV_SYNC_TRANSFER_PARAMS         | \
+    BLE_SUPP_CMD_LE_PADV_DEFAULT_SYNC_TRANSFER_PARAMS | \
+    BLE_SUPP_CMD_LE_READ_BUF_SIZE_V2                  | \
+    BLE_SUPP_CMD_LE_READ_ISO_TX_SYNC                  | \
+    BLE_SUPP_CMD_LE_SET_CIG_PARAM                       \
+)
+
+/* Octet 42 */
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_ISO)
+#define BLE_SUPP_CMD_LE_SET_CIG_PARAM_TEST  (1 << 0)
+#define BLE_SUPP_CMD_LE_CREATE_CIS          (1 << 1)
+#define BLE_SUPP_CMD_LE_REMOVE_CIG          (1 << 2)
+#define BLE_SUPP_CMD_LE_ACCEPT_CIS_REQ      (1 << 3)
+#define BLE_SUPP_CMD_LE_REJECT_CIS_REQ      (1 << 4)
+#define BLE_SUPP_CMD_LE_CREATE_BIG          (1 << 5)
+#define BLE_SUPP_CMD_LE_CREATE_BIG_TEST     (1 << 6)
+#define BLE_SUPP_CMD_LE_TERMINATE_BIG       (1 << 7)
+#else
+#define BLE_SUPP_CMD_LE_SET_CIG_PARAM_TEST  (0 << 0)
+#define BLE_SUPP_CMD_LE_CREATE_CIS          (0 << 1)
+#define BLE_SUPP_CMD_LE_REMOVE_CIG          (0 << 2)
+#define BLE_SUPP_CMD_LE_ACCEPT_CIS_REQ      (0 << 3)
+#define BLE_SUPP_CMD_LE_REJECT_CIS_REQ      (0 << 4)
+#define BLE_SUPP_CMD_LE_CREATE_BIG          (0 << 5)
+#define BLE_SUPP_CMD_LE_CREATE_BIG_TEST     (0 << 6)
+#define BLE_SUPP_CMD_LE_TERMINATE_BIG       (0 << 7)
+#endif
+#define BLE_LL_SUPP_CMD_OCTET_42         \
+(                                        \
+    BLE_SUPP_CMD_LE_SET_CIG_PARAM_TEST | \
+    BLE_SUPP_CMD_LE_CREATE_CIS         | \
+    BLE_SUPP_CMD_LE_REMOVE_CIG         | \
+    BLE_SUPP_CMD_LE_ACCEPT_CIS_REQ     | \
+    BLE_SUPP_CMD_LE_REJECT_CIS_REQ     | \
+    BLE_SUPP_CMD_LE_CREATE_BIG         | \
+    BLE_SUPP_CMD_LE_CREATE_BIG_TEST    | \
+    BLE_SUPP_CMD_LE_TERMINATE_BIG        \
+)
+
+/* Octet 43 */
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+#define BLE_SUPP_CMD_LE_REQUEST_PEER_SCA (1 << 2)
+#else
+#define BLE_SUPP_CMD_LE_REQUEST_PEER_SCA (0 << 0)
+#endif
+#define BLE_LL_SUPP_CMD_OCTET_43                        \
+(                                                       \
+    BLE_SUPP_CMD_LE_REQUEST_PEER_SCA  \
+)
+
+/* Octet 44 */
+#if MYNEWT_VAL(BLE_VERSION) >= 52
+#define BLE_SUPP_CMD_LE_SET_HOST_FEATURE (1 << 0)
+#else
+#define BLE_SUPP_CMD_LE_SET_HOST_FEATURE (0 << 0)
+#endif
+#define BLE_LL_SUPP_CMD_OCTET_44                        \
+(                                                       \
+    BLE_SUPP_CMD_LE_SET_HOST_FEATURE  \
 )
 
 /* Defines the array of supported commands */
@@ -456,6 +538,9 @@ const uint8_t g_ble_ll_supp_cmds[BLE_LL_SUPP_CMD_LEN] =
     BLE_LL_SUPP_CMD_OCTET_39,
     BLE_LL_SUPP_CMD_OCTET_40,           /* Octet 40 */
     BLE_LL_SUPP_CMD_OCTET_41,
+    BLE_LL_SUPP_CMD_OCTET_42,
+    BLE_LL_SUPP_CMD_OCTET_43,
+    BLE_LL_SUPP_CMD_OCTET_44,
 };
 
 #endif

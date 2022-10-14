@@ -11,6 +11,7 @@
 
 // Supports:
 //   Brand: Sony,  Model: HT-CT380 Soundbar (Uses 38kHz & 3 repeats)
+//   Brand: Sony,  Model: HT-SF150 Soundbar (Uses 38kHz & 3 repeats)
 
 #include <algorithm>
 #include "IRrecv.h"

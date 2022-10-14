@@ -244,9 +244,9 @@ void Sdm230Show(bool json) {
 */
 
 void Sdm230Show(bool json) {
-  char value_chr[TOPSZ];
-  char value2_chr[TOPSZ];
-  char value3_chr[TOPSZ];
+  char value_chr[GUISZ];
+  char value2_chr[GUISZ];
+  char value3_chr[GUISZ];
 
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_POWERMAX "\":%s,\"" D_JSON_RESETTABLE_TOTAL_ACTIVE "\":%s"),

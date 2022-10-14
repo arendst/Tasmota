@@ -112,7 +112,6 @@ extern "C" {
  *
  */
 
-
 /*
  * Circular queue declarations.
  */
@@ -216,4 +215,4 @@ struct {								\
 }
 #endif
 
-#endif /* !_QUEUE_H_ */
+#endif /* !_SYS_QUEUE_H_ */

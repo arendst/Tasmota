@@ -225,6 +225,8 @@ static inline int ble_ll_phy_to_phy_mode(int phy, int phy_options)
     if (phy == BLE_PHY_CODED && phy_options == BLE_HCI_LE_PHY_CODED_S2_PREF) {
         phy_mode = BLE_PHY_MODE_CODED_500KBPS;
     }
+#else
+    (void)phy_options;
 #endif
 
     return phy_mode;

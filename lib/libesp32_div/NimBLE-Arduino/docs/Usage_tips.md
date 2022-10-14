@@ -2,7 +2,7 @@
 
 ## Put BLE functions in a task running on the NimBLE stack core
 
-When commands are sent to the stack from a differnt core they can experience delays in execution.  
+When commands are sent to the stack from a different core they can experience delays in execution.  
 This library detects this and invokes the esp32 IPC to reroute these commands through the correct core but this also increases overhead.  
 Therefore it is highly recommended to create tasks for BLE to run on the same core, the macro `CONFIG_BT_NIMBLE_PINNED_TO_CORE` can be used to set the core.
 <br/>  
@@ -13,12 +13,12 @@ When a client instance has been created and has connected to a peer device and i
 If you are periodically connecting to the same devices and you have deleted the client instance or the services when connecting again it will cause a retrieval of that information from the peer again.  
 This results in significant energy drain on the battery of the devices, fragments heap, and reduces connection performance.  
   
-Client instances in this library use approximately 20% of the original bluedroid library, deleteing them will provide much less gain than it did before.  
+Client instances in this library use approximately 20% of the original bluedroid library, deleting them will provide much less gain than it did before.  
 
 It is recommended to retain the client instance in cases where the time between connecting to the same device is less than 5 minutes.  
 <br/>  
 
-## Only retrieve the services and characteriscs needed
+## Only retrieve the services and characteristics needed
 
 As a client the use of `NimBLEClient::getServices` or `NimBLERemoteService::getCharacteristics` and using `true` for the parameter should be limited to devices that are not known.  
 Instead `NimBLEClient::getService(NimBLEUUID)` or `NimBLERemoteService::getCharacteristic(NimBLEUUID)` should be used to access certain attributes that are useful to the application.  

@@ -14,6 +14,8 @@
 //   Brand: Duux,  Model: Blizzard Smart 10K / DXMA04 A/C
 //   Brand: Duux,  Model: YJ-A081 TR Remote
 //   Brand: Silan Microelectronics,  Model: SC6121-001 IC
+//   Brand: BBK,  Model: SP550S 5.1 sound system
+//   Brand: Tanix,  Model: TX3 mini Android TV Box
 
 #ifndef IR_NEC_H_
 #define IR_NEC_H_

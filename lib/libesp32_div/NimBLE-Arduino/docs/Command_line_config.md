@@ -23,7 +23,7 @@ characteristic or descriptor is constructed before a value is read/notifed.
 Increasing this will reduce reallocations but increase memory footprint.  
 Default value is 20. Range: 1 : 512 (BLE_ATT_ATTR_MAX_LEN)  
  <br/>
-
+ 
 `CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU`  
 
 Sets the default MTU size.  
@@ -140,3 +140,41 @@ Set the task stack size for the NimBLE core.
 - Default is 4096  
 <br/>
 
+`CONFIG_NIMBLE_STACK_USE_MEM_POOLS`
+
+ Enable the use of memory pools for stack operations. This will use slightly more RAM but may provide more stability.
+ 
+- Options: 0 or 1, default is disabled (0)  
+<br/>
+
+### Extended advertising settings, For use with ESP32C3, ESP32S3, ESP32H2 ONLY!
+ 
+`CONFIG_BT_NIMBLE_EXT_ADV`
+
+Set to 1 to enable extended advertising features.
+<br/>
+
+`CONFIG_BT_NIMBLE_MAX_EXT_ADV_INSTANCES`
+
+Sets the max number of extended advertising instances 
+- Range: 0 - 4
+- Default is 1
+<br/>
+
+`CONFIG_BT_NIMBLE_MAX_EXT_ADV_DATA_LEN`
+
+Set the max extended advertising data size,
+- Range: 31 - 1650
+- Default is 255
+<br/>
+
+`CONFIG_BT_NIMBLE_ENABLE_PERIODIC_ADV`
+
+Set to 1 to enable periodic advertising.
+<br/>
+
+`CONFIG_BT_NIMBLE_MAX_PERIODIC_SYNCS`
+
+Set the maximum number of periodically synced devices.
+- Range: 1 - 8
+- Default is 1

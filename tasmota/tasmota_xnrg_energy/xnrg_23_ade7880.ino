@@ -570,7 +570,10 @@ bool Ade7880SetDefaults(const char* json) {
   memcpy(json_buffer, json, len);         // Keep original safe
   JsonParser parser(json_buffer);
   JsonParserObject root = parser.getRootObject();
-  if (!root) { return false; }
+  if (!root) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("A78: Invalid JSON"));
+    return false;
+  }
 
   // All parameters are optional allowing for partial changes
   JsonParserToken val = root[PSTR("freq")];
@@ -735,7 +738,7 @@ const char HTTP_ADE7880_CURRENT[] PROGMEM = "{s}" D_CURRENT_NEUTRAL "{m}%s " D_U
 #endif  // USE_WEBSERVER
 
 void Ade7880Show(bool json) {
-  char value_chr[TOPSZ];
+  char value_chr[GUISZ];
 
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_NEUTRAL "\":%s"),

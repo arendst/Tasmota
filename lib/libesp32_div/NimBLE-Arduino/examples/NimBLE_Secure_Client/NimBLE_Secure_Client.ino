@@ -1,5 +1,5 @@
 /** NimBLE_Secure_Client Demo:
- *  
+ *
  * This example demonstrates the secure passkey protected conenction and communication between an esp32 server and an esp32 client.
  * Please note that esp32 stores auth info in nvs memory. After a successful connection it is possible that a passkey change will be ineffective.
  * To avoid this clear the memory of the esp32's between security testings. esptool.py is capable of this, example: esptool.py --port /dev/ttyUSB0 erase_flash.
@@ -7,7 +7,7 @@
  *  Created: on Jan 08 2021
  *      Author: mblasee
  */
- 
+
 #include <NimBLEDevice.h>
 
 class ClientCallbacks : public NimBLEClientCallbacks
@@ -28,7 +28,11 @@ void setup()
   Serial.println("Starting NimBLE Client");
 
   NimBLEDevice::init("");
-  NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+#ifdef ESP_PLATFORM
+    NimBLEDevice::setPower(ESP_PWR_LVL_P9); /** +9db */
+#else
+    NimBLEDevice::setPower(9); /** +9db */
+#endif
   NimBLEDevice::setSecurityAuth(true, true, true);
   NimBLEDevice::setSecurityIOCap(BLE_HS_IO_KEYBOARD_ONLY);
   NimBLEScan *pScan = NimBLEDevice::getScan();
@@ -53,7 +57,7 @@ void setup()
         if (pService != nullptr)
         {
           NimBLERemoteCharacteristic *pNonSecureCharacteristic = pService->getCharacteristic("1234");
-          
+
           if (pNonSecureCharacteristic != nullptr)
           {
             // Testing to read a non secured characteristic, you should be able to read this even if you have mismatching passkeys.
@@ -68,11 +72,11 @@ void setup()
           {
             // Testing to read a secured characteristic, you should be able to read this only if you have matching passkeys, otherwise you should
             // get an error like this. E NimBLERemoteCharacteristic: "<< readValue rc=261"
-            // This means you are trying to do something without the proper permissions. 
+            // This means you are trying to do something without the proper permissions.
             std::string value = pSecureCharacteristic->readValue();
             // print or do whatever you need with the value
             Serial.println(value.c_str());
-          }      
+          }
         }
       }
       else

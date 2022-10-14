@@ -87,6 +87,8 @@ struct ENERGY {
   float daily_sum;                              // 123.123 kWh
   float total_sum;                              // 12345.12345 kWh total energy
   float yesterday_sum;                          // 123.123 kWh
+  float daily_sum_import_balanced;              // 123.123 kWh
+  float daily_sum_export_balanced;              // 123.123 kWh
 
   int32_t kWhtoday_delta[ENERGY_MAX_PHASES];    // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
   int32_t kWhtoday_offset[ENERGY_MAX_PHASES];   // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
@@ -179,12 +181,12 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     }
   }
 #ifdef USE_ENERGY_COLUMN_GUI
-  ext_snprintf_P(result, TOPSZ *2, PSTR("</td>"));       // Skip first column
+  ext_snprintf_P(result, GUISZ, PSTR("</td>"));       // Skip first column
   if ((Energy.phase_count > 1) && single) {              // Need to set colspan so need new columns
     // </td><td colspan='3' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td colspan='5' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td colspan='7' style='text-align:right'>1.23</td><td>&nbsp;</td><td>
-    ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+    ext_snprintf_P(result, GUISZ, PSTR("%s<td colspan='%d' style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
       result, (Energy.phase_count *2) -1, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("center"), resolution, &input[0]);
   } else {
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
@@ -192,16 +194,16 @@ char* WebEnergyFormat(char* result, float* input, uint32_t resolution, uint32_t 
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     // </td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td style='text-align:right'>1.23</td><td>&nbsp;</td><td>
     for (uint32_t i = 0; i < Energy.phase_count; i++) {
-      ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
+      ext_snprintf_P(result, GUISZ, PSTR("%s<td style='text-align:%s'>%*_f</td><td>&nbsp;</td>"),
         result, (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("left"), resolution, &input[i]);
     }
   }
-  ext_snprintf_P(result, TOPSZ *2, PSTR("%s<td>"), result);
+  ext_snprintf_P(result, GUISZ, PSTR("%s<td>"), result);
 #else  // not USE_ENERGY_COLUMN_GUI
   uint32_t index = (single) ? 1 : Energy.phase_count;    // 1,2,3
   result[0] = '\0';
   for (uint32_t i = 0; i < index; i++) {
-    ext_snprintf_P(result, TOPSZ, PSTR("%s%s%*_f"), result, (i)?" / ":"", resolution, &input[i]);
+    ext_snprintf_P(result, GUISZ, PSTR("%s%s%*_f"), result, (i)?" / ":"", resolution, &input[i]);
   }
 #endif  // USE_ENERGY_COLUMN_GUI
   return result;
@@ -238,10 +240,12 @@ void EnergyUpdateToday(void) {
   Energy.total_sum = 0.0f;
   Energy.yesterday_sum = 0.0f;
   Energy.daily_sum = 0.0f;
+  int32_t delta_sum_balanced = 0;
 
   for (uint32_t i = 0; i < Energy.phase_count; i++) {
     if (abs(Energy.kWhtoday_delta[i]) > 1000) {
       int32_t delta = Energy.kWhtoday_delta[i] / 1000;
+      delta_sum_balanced += delta;
       Energy.kWhtoday_delta[i] -= (delta * 1000);
       Energy.kWhtoday[i] += delta;
       if (delta < 0) {     // Export energy
@@ -259,6 +263,12 @@ void EnergyUpdateToday(void) {
     Energy.total_sum += Energy.total[i];
     Energy.yesterday_sum += (float)Settings->energy_kWhyesterday_ph[i] / 100000;
     Energy.daily_sum += Energy.daily[i];
+  }
+
+  if (delta_sum_balanced > 0) {
+    Energy.daily_sum_import_balanced += (float)delta_sum_balanced / 100000;
+  } else {
+    Energy.daily_sum_export_balanced += (float)abs(delta_sum_balanced) / 100000;
   }
 
   if (RtcTime.valid){ // We calc the difference only if we have a valid RTC time.
@@ -353,6 +363,8 @@ void Energy200ms(void)
           RtcSettings.energy_kWhtoday_ph[i] = 0;
           Energy.start_energy[i] = 0;
 //        Energy.kWhtoday_delta = 0;                                 // dont zero this, we need to carry the remainder over to tomorrow
+          Energy.daily_sum_import_balanced = 0.0;
+          Energy.daily_sum_export_balanced = 0.0;
         }
         EnergyUpdateToday();
 #if defined(USE_ENERGY_MARGIN_DETECTION) && defined(USE_ENERGY_POWER_LIMIT)
@@ -1041,6 +1053,9 @@ void EnergyDrvInit(void) {
 
   TasmotaGlobal.energy_driver = ENERGY_NONE;
   XnrgCall(FUNC_PRE_INIT);             // Find first energy driver
+  if (TasmotaGlobal.energy_driver) {
+    AddLog(LOG_LEVEL_INFO, PSTR("NRG: Init driver %d"), TasmotaGlobal.energy_driver);
+  }
 }
 
 void EnergySnsInit(void)
@@ -1151,9 +1166,9 @@ void EnergyShow(bool json) {
     energy_tariff = true;
   }
 
-  char value_chr[TOPSZ * 2];   // Used by EnergyFormatIndex
-  char value2_chr[TOPSZ * 2];
-  char value3_chr[TOPSZ * 2];
+  char value_chr[GUISZ];   // Used by EnergyFormatIndex
+  char value2_chr[GUISZ];
+  char value3_chr[GUISZ];
 
   if (json) {
     bool show_energy_period = (0 == TasmotaGlobal.tele_period);
@@ -1185,8 +1200,10 @@ void EnergyShow(bool json) {
 */
 
     if (!isnan(Energy.export_active[0])) {
-      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
-        EnergyFormat(value_chr, Energy.export_active, Settings->flag2.energy_resolution));
+      ResponseAppend_P(PSTR(",\"" D_JSON_TODAY_SUM_IMPORT "\":%s,\"" D_JSON_TODAY_SUM_EXPORT "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s"),
+        EnergyFormat(value_chr, &Energy.daily_sum_import_balanced, Settings->flag2.energy_resolution, 1),
+        EnergyFormat(value2_chr, &Energy.daily_sum_export_balanced, Settings->flag2.energy_resolution, 1),
+        EnergyFormat(value3_chr, Energy.export_active, Settings->flag2.energy_resolution));
       if (energy_tariff) {
         ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT D_CMND_TARIFF "\":%s"),
           EnergyFormat(value_chr, energy_return, Settings->flag2.energy_resolution, 6));

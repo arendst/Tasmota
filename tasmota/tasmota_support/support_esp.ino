@@ -65,6 +65,10 @@ uint32_t ESP_getFlashChipRealSize(void) {
   return ESP.getFlashChipRealSize();
 }
 
+uint32_t ESP_getFlashChipSize(void) {
+  return ESP.getFlashChipSize();
+}
+
 void ESP_Restart(void) {
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
@@ -112,6 +116,10 @@ String GetDeviceHardwareRevision(void) {
   return GetDeviceHardware();
 }
 
+String GetCodeCores(void) {
+  return F("");
+}
+
 #endif
 
 /*********************************************************************************************\
@@ -121,6 +129,8 @@ String GetDeviceHardwareRevision(void) {
 #ifdef ESP32
 
 #include "bootloader_flash.h"
+#include "soc/soc.h"
+#include "soc/spi_reg.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
 #if CONFIG_IDF_TARGET_ESP32
   #ifdef CORE32SOLO1
@@ -310,17 +320,22 @@ extern "C" {
 #if ESP_IDF_VERSION_MAJOR > 3       // IDF 4+
   #if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
     #include "esp32/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
   #elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
     #include "esp32s2/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
   #elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
     #include "esp32s3/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
   #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
     #include "esp32c3/rom/spi_flash.h"
+    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
   #else
     #error Target CONFIG_IDF_TARGET is not supported
   #endif
 #else // ESP32 Before IDF 4.0
   #include "rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x1000
 #endif
 
 uint32_t EspProgramSize(const char *label) {
@@ -518,6 +533,33 @@ uint32_t ESP_getChipId(void) {
   return id;
 }
 
+uint32_t ESP_getFlashChipMagicSize(void)
+{
+    esp_image_header_t fhdr;
+    if(ESP.flashRead(ESP_FLASH_IMAGE_BASE, (uint32_t*)&fhdr, sizeof(esp_image_header_t)) && fhdr.magic != ESP_IMAGE_HEADER_MAGIC) {
+        return 0;
+    }
+    return ESP_magicFlashChipSize(fhdr.spi_size);
+}
+
+uint32_t ESP_magicFlashChipSize(uint8_t byte)
+{
+    switch(byte & 0x0F) {
+    case 0x0: // 8 MBit (1MB)
+        return 1048576;
+    case 0x1: // 16 MBit (2MB)
+        return 2097152;
+    case 0x2: // 32 MBit (4MB)
+        return 4194304;
+    case 0x3: // 64 MBit (8MB)
+        return 8388608;
+    case 0x4: // 128 MBit (16MB)
+        return 16777216;
+    default: // fail?
+        return 0;
+    }
+}
+
 uint32_t ESP_getSketchSize(void) {
   static uint32_t sketchsize = 0;
 
@@ -554,19 +596,6 @@ int32_t ESP_getHeapFragmentation(void) {
   int32_t free_maxmem = 100 - (int32_t)(ESP_getMaxAllocHeap() * 100 / ESP_getFreeHeap());
   if (free_maxmem < 0) { free_maxmem = 0; }
   return free_maxmem;
-}
-
-uint32_t ESP_getFlashChipId(void)
-{
-  uint32_t id = bootloader_read_flash_id();
-  id = ((id & 0xff) << 16) | ((id >> 16) & 0xff) | (id & 0xff00);
-  return id;
-}
-
-uint32_t ESP_getFlashChipRealSize(void)
-{
-  uint32_t id = (ESP_getFlashChipId() >> 16) & 0xFF;
-  return 2 << (id - 1);
 }
 
 void ESP_Restart(void) {
@@ -647,26 +676,7 @@ void *special_malloc32(uint32_t size) {
 }
 
 float CpuTemperature(void) {
-#ifdef CONFIG_IDF_TARGET_ESP32
   return (float)temperatureRead();  // In Celsius
-/*
-  // These jumps are not stable either. Sometimes it jumps to 77.3
-  float t = (float)temperatureRead();  // In Celsius
-  if (t > 81) { t = t - 27.2; }        // Fix temp jump observed on some ESP32 like DualR3
-  return t;
-*/
-#else
-  #ifndef CONFIG_IDF_TARGET_ESP32S3
-    // Currently (20210801) repeated calls to temperatureRead() on ESP32C3 and ESP32S2 result in IDF error messages
-    static float t = NAN;
-    if (isnan(t)) {
-      t = (float)temperatureRead();  // In Celsius
-    }
-    return t;
-  #else
-    return NAN;
-  #endif
-#endif
 }
 
 /*
@@ -784,7 +794,9 @@ typedef struct {
       case 3:
         if (single_core) { return F("ESP32-S0WD-OEM"); }   // Max 160MHz, Single core, QFN 5*5, Xiaomi Yeelight
         else {             return F("ESP32-D0WD-OEM"); }   // Max 240MHz, Dual core, QFN 5*5
-      case 4:              return F("ESP32-U4WDH");        // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-MINI-1, ESP32-DevKitM-1
+      case 4:
+        if (single_core) { return F("ESP32-U4WDH-S"); }    // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-MINI-1, ESP32-DevKitM-1
+        else {             return F("ESP32-U4WDH-D"); }    // Max 240MHz, Dual core, QFN 5*5, 4MB embedded flash
       case 5:
         if (rev3)        { return F("ESP32-PICO-V3"); }    // Max 240MHz, Dual core, LGA 7*7, ESP32-PICO-V3-ZERO, ESP32-PICO-V3-ZERO-DevKit
         else {             return F("ESP32-PICO-D4"); }    // Max 240MHz, Dual core, LGA 7*7, 4MB embedded flash, ESP32-PICO-KIT
@@ -925,6 +937,14 @@ String GetDeviceHardwareRevision(void) {
   return result;
 }
 
+String GetCodeCores(void) {
+#if defined(CORE32SOLO1)
+  return F("single-core");
+#else
+  return F("");
+#endif
+}
+
 /*
  * ESP32 v1 and v2 needs some special patches to use PSRAM.
  * Standard Tasmota 32 do not include those patches.
@@ -970,6 +990,25 @@ float ESP_getFreeHeap1024(void) {
   return ((float)ESP_getFreeHeap()) / 1024;
 }
 */
+
+const char kFlashModes[] PROGMEM = "QIO|QOUT|DIO|DOUT|Fast|Slow";
+/*
+typedef enum {
+    FM_QIO = 0x00,
+    FM_QOUT = 0x01,
+    FM_DIO = 0x02,
+    FM_DOUT = 0x03,
+    FM_FAST_READ = 0x04,
+    FM_SLOW_READ = 0x05,
+    FM_UNKNOWN = 0xff
+} FlashMode_t;
+*/
+String ESP_getFlashChipMode(void) {
+  uint32_t flash_mode = ESP.getFlashChipMode();
+  if (flash_mode > 5) { flash_mode = 3; }
+  char stemp[6];
+  return GetTextIndexed(stemp, sizeof(stemp), flash_mode, kFlashModes);
+}
 
 /*********************************************************************************************\
  * High entropy hardware random generator

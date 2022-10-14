@@ -749,7 +749,7 @@ uint32_t CfgTime(void) {
 void SettingsErase(uint8_t type) {
   /*
     For Arduino core and SDK:
-    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
+    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP_getFlashChipSize).
     Addresses above SDK recognized size (up to ESP.getFlashChipRealSize) are not accessable.
     For Esptool:
     The only way to erase whole flash is esptool which uses direct SPI writes to flash.
@@ -779,7 +779,7 @@ void SettingsErase(uint8_t type) {
 */
     EsptoolErase(_sectorStart, FLASH_FS_START);
     _sectorStart = EEPROM_LOCATION;
-    _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
+    _sectorEnd = ESP_getFlashChipSize() / SPI_FLASH_SEC_SIZE;  // Flash size as seen by SDK
   }
   else if (3 == type) {    // QPC Reached = QPC and Tasmota and SDK parameter area (0x0F3xxx - 0x0FFFFF)
 #ifdef USE_UFILESYS
@@ -838,6 +838,7 @@ void SettingsDefaultSet2(void) {
   SOBitfield3  flag3 = { 0 };
   SOBitfield4  flag4 = { 0 };
   SOBitfield5  flag5 = { 0 };
+  SOBitfield6  flag6 = { 0 };
   SysMBitfield1  flag2 = { 0 };
   SysMBitfield2  mbflag2 = { 0 };
 
@@ -855,6 +856,7 @@ void SettingsDefaultSet2(void) {
 #else
   Settings->config_version = 1;  // ESP32
 #endif  // CONFIG_IDF_TARGET_ESP32S3
+  Settings->webcam_clk = 20;
 #endif  // ESP32
 
   flag.stop_flash_rotate |= APP_FLASH_CYCLE;
@@ -975,6 +977,9 @@ void SettingsDefaultSet2(void) {
   flag.button_swap |= KEY_SWAP_DOUBLE_PRESS;
   flag.button_single |= KEY_ONLY_SINGLE_PRESS;
   Settings->param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+  Settings->touch_threshold = ESP32_TOUCH_THRESHOLD;
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 
   // Switch
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings->switchmode[i] = SWITCH_MODE; }
@@ -989,8 +994,10 @@ void SettingsDefaultSet2(void) {
   flag.mqtt_sensor_retain |= MQTT_SENSOR_RETAIN;
   flag5.mqtt_info_retain |= MQTT_INFO_RETAIN;
   flag5.mqtt_state_retain |= MQTT_STATE_RETAIN;
+  flag5.mqtt_status_retain |= MQTT_STATUS_RETAIN;
   flag5.mqtt_switches |= MQTT_SWITCHES;
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
+  flag6.mqtt_disable_sserialrec |= MQTT_DISABLE_SSERIALRECEIVED;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
   flag3.time_append_timezone |= MQTT_APPEND_TIMEZONE;
@@ -1208,6 +1215,10 @@ void SettingsDefaultSet2(void) {
   Settings->longitude = (int)((double)LONGITUDE * 1000000);
   SettingsResetStd();
   SettingsResetDst();
+//  if (DAWN_NORMAL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 0; }
+  if (DAWN_CIVIL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 1; }
+  else if (DAWN_NAUTIC == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 2; }
+  else if (DAWN_ASTRONOMIC == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle |= 3; }
 
   Settings->button_debounce = KEY_DEBOUNCE_TIME;
   Settings->switch_debounce = SWITCH_DEBOUNCE_TIME;
@@ -1237,6 +1248,7 @@ void SettingsDefaultSet2(void) {
   flag4.zigbee_distinct_topics |= ZIGBEE_DISTINCT_TOPICS;
   flag4.remove_zbreceived |= ZIGBEE_RMV_ZBRECEIVED;
   flag4.zb_index_ep |= ZIGBEE_INDEX_EP;
+  flag4.zb_topic_fname |= ZIGBEE_TOPIC_FNAME;
   flag4.mqtt_tls |= MQTT_TLS_ENABLED;
   flag4.mqtt_no_retain |= MQTT_NO_RETAIN;
 
@@ -1252,6 +1264,8 @@ void SettingsDefaultSet2(void) {
   Settings->flag3 = flag3;
   Settings->flag4 = flag4;
   Settings->flag5 = flag5;
+  Settings->flag6 = flag6;
+  Settings->mbflag2 = mbflag2;
 }
 
 void SettingsDefaultSet3(void) {
@@ -1568,6 +1582,22 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0C000204) {  // 12.0.2.4
       Settings->param[P_BISTABLE_PULSE] = APP_BISTABLE_PULSE;
     }
+#if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
+    if (Settings->version < 0x0C010103) {  // 12.1.1.3
+      Settings->touch_threshold = ESP32_TOUCH_THRESHOLD;
+    }
+#endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+    if (Settings->version < 0x0C010105) {  // 12.1.1.5
+ //  if (DAWN_NORMAL == SUNRISE_DAWN_ANGLE) { mbflag2.sunrise_dawn_angle = 0; }
+      if (DAWN_CIVIL == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 1; }
+      else if (DAWN_NAUTIC == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 2; }
+      else if (DAWN_ASTRONOMIC == SUNRISE_DAWN_ANGLE) { Settings->mbflag2.sunrise_dawn_angle = 3; }
+    }
+#ifdef ESP32
+    if (Settings->version < 0x0C010106) {  // 12.1.1.6
+      Settings->webcam_clk = 20;
+    }
+#endif  // ESP32
 
     Settings->version = VERSION;
     SettingsSave(1);

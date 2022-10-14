@@ -17,12 +17,12 @@
  * under the License.
  */
 
- /**
-  * @addtogroup OSKernel
-  * @{
-  *   @defgroup OSCPUTime High Resolution Timers
-  *   @{
-  */
+/**
+ * @addtogroup OSKernel
+ * @{
+ *   @defgroup OSCPUTime High Resolution Timers
+ *   @{
+ */
 
 #ifndef H_OS_CPUTIME_
 #define H_OS_CPUTIME_
@@ -33,7 +33,6 @@ extern "C" {
 
 #include "../syscfg/syscfg.h"
 #include "../hal/hal_timer.h"
-#include "os.h"
 
 /*
  * NOTE: these definitions allow one to override the cputime frequency used.
@@ -56,6 +55,7 @@ extern "C" {
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 8192       ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 16384      ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 32768      ||  \
+      MYNEWT_VAL(OS_CPUTIME_FREQ) == 32000      ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 65536      ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 131072     ||  \
       MYNEWT_VAL(OS_CPUTIME_FREQ) == 262144     ||  \
@@ -88,9 +88,9 @@ extern struct os_cputime_data g_os_cputime;
 #define CPUTIME_LT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) < 0)
 /** evaluates to true if t1 is after t2 in time */
 #define CPUTIME_GT(__t1, __t2) ((int32_t)   ((__t1) - (__t2)) > 0)
-/** evaluates to true if t1 is after t2 in time */
-#define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
 /** evaluates to true if t1 is on or after t2 in time */
+#define CPUTIME_GEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) >= 0)
+/** evaluates to true if t1 is on or before t2 in time */
 #define CPUTIME_LEQ(__t1, __t2) ((int32_t)  ((__t1) - (__t2)) <= 0)
 
 /**
@@ -188,7 +188,7 @@ void os_cputime_delay_usecs(uint32_t usecs);
  * @param arg   Pointer to data object to pass to timer.
  */
 void os_cputime_timer_init(struct hal_timer *timer, hal_timer_cb fp,
-        void *arg);
+                           void *arg);
 
 /**
  * Start a cputimer that will expire at 'cputime'. If cputime has already

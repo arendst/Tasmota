@@ -230,6 +230,30 @@ void BerryObservability(bvm *vm, int event...) {
                                 vm_usage, vm_usage2, vm_freed, vm_scanned, gc_elapsed,
                                 slots_used_before_gc, slots_allocated_before_gc,
                                 slots_used_after_gc, slots_allocated_after_gc);
+
+        // Add more in-deptch metrics
+        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC timing (us) 1:%i 2:%i 3:%i 4:%i 5:%i total:%i",
+            vm->micros_gc1 - vm->micros_gc0,
+            vm->micros_gc2 - vm->micros_gc1,
+            vm->micros_gc3 - vm->micros_gc2,
+            vm->micros_gc4 - vm->micros_gc3,
+            vm->micros_gc5 - vm->micros_gc4,
+            vm->micros_gc5 - vm->micros_gc0
+        );
+        AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_BERRY "GC by type "
+            "string:%i class:%i proto:%i instance:%i map:%i "
+            "list:%i closure:%i ntvclos:%i module:%i comobj:%i",
+            vm->gc_mark_string,
+            vm->gc_mark_class,
+            vm->gc_mark_proto,
+            vm->gc_mark_instance,
+            vm->gc_mark_map,
+            vm->gc_mark_list,
+            vm->gc_mark_closure,
+            vm->gc_mark_ntvclos,
+            vm->gc_mark_module,
+            vm->gc_mark_comobj
+        );
         // make new threshold tighter when we reach high memory usage
         if (!UsePSRAM() && vm->gc.threshold > 20*1024) {
           vm->gc.threshold = vm->gc.usage + 10*1024;    // increase by only 10 KB
@@ -287,9 +311,14 @@ void BerryInit(void) {
   do {
     berry.vm = be_vm_new(); /* create a virtual machine instance */
     be_set_obs_hook(berry.vm, &BerryObservability);  /* attach observability hook */
+    be_set_obs_micros(berry.vm, (bmicrosfnct)&micros);
     comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
     comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler, equivalent of `import strict` */
     be_set_ctype_func_hanlder(berry.vm, be_call_ctype_func);
+
+    if (UsePSRAM()) {     // if PSRAM is available, raise the max size to 512kb
+      berry.vm->bytesmaxsize = 512 * 1024;
+    }
 
     be_load_custom_libs(berry.vm);  // load classes and modules
 
