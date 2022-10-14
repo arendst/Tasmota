@@ -44,9 +44,10 @@ extern "C" {
 
   extern const be_ctypes_structure_t be_tasmota_settings_struct = {
     sizeof(TSettings),  /* size in bytes */
-    1,  /* number of elements */
+    2,  /* number of elements */
     nullptr,
-    (const be_ctypes_structure_item_t[1]) {
+    (const be_ctypes_structure_item_t[2]) {
+      { "bootcount", offsetof(TSettings, bootcount), 0, 0, ctypes_u16, 0 },
       { "sleep", offsetof(TSettings, sleep), 0, 0, ctypes_u8, 0 },
   }};
 
