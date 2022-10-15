@@ -16,6 +16,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
+//  #define W1_PARASITE_POWER                      // Optimize for parasite powered sensors
+  #define DS18x20_USE_ID_ALIAS                   // Add support aliasing for DS18x20 sensors. See comments in xsns_05 files (+0k5 code)
+  #define DS18x20_MULTI_GPIOs                      // Add support multiple GPIOs for DS18x20 sensors (+0k2 code)
 
 #ifdef ESP8266
 #ifdef USE_DS18x20
@@ -58,14 +62,14 @@ struct {
   float temp_sum;
   uint16_t numread;
   uint8_t address[8];
-  uint8_t index;
-  uint8_t valid;
 #ifdef DS18x20_USE_ID_ALIAS
   uint8_t alias;
 #endif //DS18x20_USE_ID_ALIAS  
 #ifdef DS18x20_MULTI_GPIOs
   int8_t pins_id = 0; 
 #endif //DS18x20_MULTI_GPIOs
+  uint8_t index;
+  uint8_t valid;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 
 #ifdef DS18x20_MULTI_GPIOs
@@ -315,15 +319,9 @@ bool OneWireCrc8(uint8_t *addr) {
 void Ds18x20Init(void) {
   DS18X20Data.input_mode = Settings->flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
 
-  onewire_last_discrepancy = 0;
-  onewire_last_device_flag = false;
-  onewire_last_family_discrepancy = 0;
-  for (uint32_t i = 0; i < 8; i++) {
-    onewire_rom_id[i] = 0;
-  }
-
   uint64_t ids[DS18X20_MAX_SENSORS];
   DS18X20Data.sensors = 0;
+  ds18x20_ngpio=0;
 
 #ifdef DS18x20_MULTI_GPIOs
 uint8_t pins;
@@ -338,6 +336,7 @@ uint8_t pins;
     ds18x20_ngpio++;
     }
   }
+
   for (pins = 0; pins < ds18x20_ngpio; pins++) {
     DS18X20Data.pin = ds18x20_gpios[pins].pin;
     DS18X20Data.dual_mode = ds18x20_gpios[pins].dual_mode;
@@ -356,6 +355,13 @@ uint8_t pins;
     pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
   }
 #endif  //DS18x20_MULTI_GPIOs
+
+  onewire_last_discrepancy = 0;
+  onewire_last_device_flag = false;
+  onewire_last_family_discrepancy = 0;
+  for (uint32_t i = 0; i < 8; i++) {
+    onewire_rom_id[i] = 0;
+  }
 
   while (DS18X20Data.sensors < DS18X20_MAX_SENSORS) {
     if (!OneWireSearch(ds18x20_sensor[DS18X20Data.sensors].address)) {
@@ -384,6 +390,7 @@ uint8_t pins;
   }
 #endif  //DS18x20_MULTI_GPIOs
 
+//#ifndef DS18x20_MULTI_GPIOs
   for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
     for (uint32_t j = i + 1; j < DS18X20Data.sensors; j++) {
       if (ids[ds18x20_sensor[i].index] > ids[ds18x20_sensor[j].index]) {  // Sort ascending
@@ -391,6 +398,7 @@ uint8_t pins;
       }
     }
   }
+//#endif
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
 }
 
@@ -422,12 +430,12 @@ bool Ds18x20Read(uint8_t sensor) {
   uint8_t data[9];
   int8_t sign = 1;
 
-#ifdef DS18x20_MULTI_GPIOs
-  DS18X20Data.pin = ds18x20_gpios[ds18x20_sensor[sensor].pins_id].pin;
-  DS18X20Data.pin_out = ds18x20_gpios[ds18x20_sensor[sensor].pins_id].pin_out;
-  DS18X20Data.dual_mode = ds18x20_gpios[ds18x20_sensor[sensor].pins_id].dual_mode;
-#endif
   uint8_t index = ds18x20_sensor[sensor].index;
+#ifdef DS18x20_MULTI_GPIOs
+  DS18X20Data.pin = ds18x20_gpios[ds18x20_sensor[index].pins_id].pin;
+  DS18X20Data.pin_out = ds18x20_gpios[ds18x20_sensor[index].pins_id].pin_out;
+  DS18X20Data.dual_mode = ds18x20_gpios[ds18x20_sensor[index].pins_id].dual_mode;
+#endif
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
   for (uint32_t retry = 0; retry < 3; retry++) {
     OneWireReset();
