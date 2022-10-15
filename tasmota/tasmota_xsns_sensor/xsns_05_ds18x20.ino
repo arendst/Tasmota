@@ -2,6 +2,7 @@
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends
+  Supplement by md5sum-as
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,10 +17,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
-//  #define W1_PARASITE_POWER                      // Optimize for parasite powered sensors
-  #define DS18x20_USE_ID_ALIAS                   // Add support aliasing for DS18x20 sensors. See comments in xsns_05 files (+0k5 code)
-  #define DS18x20_MULTI_GPIOs                      // Add support multiple GPIOs for DS18x20 sensors (+0k2 code)
 
 #ifdef ESP8266
 #ifdef USE_DS18x20
@@ -34,7 +31,7 @@
       
 /* #define DS18x20_USE_ID_ALIAS in my_user_config.h or user_config_override.h
   * Use alias for fixed sensor name in scripts by autoexec. Command: DS18Alias XXXXXXXXXXXXXXXX,N where XXXXXXXXXXXXXXXX full serial and N number 1-255
-  * Result in JSON:  "DS18Alias_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
+  * Result in JSON:  "DS18Sens_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
   * add 8 bytes used memory
 */
 
@@ -512,15 +509,14 @@ void Ds18x20Name(uint8_t sensor) {
     }
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
+uint8_t print_ind = sensor +1;
 #ifdef DS18x20_USE_ID_ALIAS
     if (ds18x20_sensor[sensor].alias) {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Alias%c%d"), IndexSeparator(), ds18x20_sensor[sensor].alias);
-    } else {
-#endif
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
-#ifdef DS18x20_USE_ID_ALIAS
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens"));
+      print_ind = ds18x20_sensor[sensor].alias;
     }
 #endif
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), print_ind);
 #endif
   }
 }
