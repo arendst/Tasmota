@@ -241,7 +241,7 @@ float Ina219GetBusVoltage_V(uint16_t addr, uint8_t model)
 
 bool Ina219Read(void)
 {
-  for (int i=0; i<Ina219Count; i++) {
+  for (int i=0 ; i < Ina219Count; i++) {
     uint16_t addr = Ina219Data[i].addr;
     if (!addr) { continue; }
     float bus_voltage_V = Ina219GetBusVoltage_V(addr, Ina219Data[i].model);
@@ -274,7 +274,7 @@ bool Ina219CommandSensor(void)
 
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
     Settings->ina219_mode = XdrvMailbox.payload;
-    for (int i=0; i<Ina219Count; i++) {
+    for (int i=0; i < Ina219Count; i++) {
       float shunt = INA219_SHUNT_RESISTOR;
       if (ArgC() > (i +1)) {
         shunt = CharToFloat(ArgV(argument, 2 +i));
