@@ -2,8 +2,7 @@
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends
-  Supplement by md5sum-as (https://github.com/md5sum-as)
-
+ 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -16,6 +15,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  Updated by md5sum-as (https://github.com/md5sum-as)
 */
 
 #ifdef ESP8266
@@ -59,14 +60,14 @@ struct {
   float temp_sum;
   uint16_t numread;
   uint8_t address[8];
+  uint8_t index;
+  uint8_t valid;
 #ifdef DS18x20_USE_ID_ALIAS
   uint8_t alias;
 #endif //DS18x20_USE_ID_ALIAS  
 #ifdef DS18x20_MULTI_GPIOs
   int8_t pins_id = 0; 
 #endif //DS18x20_MULTI_GPIOs
-  uint8_t index;
-  uint8_t valid;
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
 
 #ifdef DS18x20_MULTI_GPIOs
