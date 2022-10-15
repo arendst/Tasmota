@@ -319,9 +319,9 @@ void Ds18x20Init(void) {
 
   uint64_t ids[DS18X20_MAX_SENSORS];
   DS18X20Data.sensors = 0;
-  ds18x20_ngpio=0;
 
 #ifdef DS18x20_MULTI_GPIOs
+  ds18x20_ngpio=0;
 uint8_t pins;
   for (pins = 0; pins < MAX_DSB; pins++) {
     if (PinUsed(GPIO_DSB, pins)) {
