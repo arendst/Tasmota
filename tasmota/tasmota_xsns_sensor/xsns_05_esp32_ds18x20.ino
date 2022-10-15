@@ -223,15 +223,14 @@ void Ds18x20Name(uint8_t sensor) {
     }
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
+uint8_t print_ind = sensor +1;
 #ifdef DS18x20_USE_ID_ALIAS
     if (ds18x20_sensor[sensor].alias) {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Alias%c%d"), IndexSeparator(), ds18x20_sensor[sensor].alias);
-    } else {
-#endif
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
-#ifdef DS18x20_USE_ID_ALIAS
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens"));
+      print_ind = ds18x20_sensor[sensor].alias;
     }
 #endif
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), print_ind);
 #endif
   }
 }
