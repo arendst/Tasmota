@@ -2,7 +2,7 @@
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
   Copyright (C) 2021  Theo Arends
-  Supplement by md5sum-as
+  Supplement by md5sum-as (https://github.com/md5sum-as)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
