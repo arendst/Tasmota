@@ -205,7 +205,6 @@
 #undef USE_HOME_ASSISTANT
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 #undef USE_DOMOTICZ
-#undef USE_LIGHT
 #undef USE_SERIAL_BRIDGE
 #undef ROTARY_V1
 #undef USE_IR_REMOTE
