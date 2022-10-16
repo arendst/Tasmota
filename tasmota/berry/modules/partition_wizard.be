@@ -123,6 +123,9 @@ class Partition_wizard_UI
       elif flash_size_real_m == 4      flash_size_code = 0x20
       elif flash_size_real_m == 8      flash_size_code = 0x30
       elif flash_size_real_m == 16     flash_size_code = 0x40
+      elif flash_size_real_m == 32     flash_size_code = 0x50
+      elif flash_size_real_m == 64     flash_size_code = 0x60
+      elif flash_size_real_m == 128    flash_size_code = 0x70
       end
 
       if flash_size_code != nil
