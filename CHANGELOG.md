@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.1.1.6]
 ### Added
 - Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
+- Automatically resize FS to max flash size at initial boot (ESP32x)
 
 ### Changed
 
