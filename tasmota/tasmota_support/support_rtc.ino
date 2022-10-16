@@ -43,10 +43,12 @@ struct RTC {
   uint32_t standard_time = 0;
   uint32_t midnight = 0;
   uint32_t restart_time = 0;
+  uint32_t nanos = 0;
   uint32_t millis = 0;
 //  uint32_t last_sync = 0;
   int32_t time_timezone = 0;
   bool time_synced = false;
+  bool last_synced = false;
   bool midnight_now = false;
   bool user_time_entry = false;               // Override NTP by user setting
 } Rtc;
@@ -235,10 +237,13 @@ uint32_t RtcMillis(void) {
   return (millis() - Rtc.millis) % 1000;
 }
 
-void BreakTime(uint32_t time_input, TIME_T &tm) {
+void BreakNanoTime(uint32_t time_input, uint32_t time_nanos, TIME_T &tm) {
 // break the given time_input into time components
 // this is a more compact version of the C library localtime function
 // note that year is offset from 1970 !!!
+
+  time_input += time_nanos / 1000000000U;
+  tm.nanos = time_nanos % 1000000000U;
 
   uint8_t year;
   uint8_t month;
@@ -288,6 +293,10 @@ void BreakTime(uint32_t time_input, TIME_T &tm) {
   tm.month = month + 1;      // jan is month 1
   tm.day_of_month = time + 1;         // day of month
   tm.valid = (time_input > START_VALID_TIME);  // 2016-01-01
+}
+
+void BreakTime(uint32_t time_input, TIME_T &tm) {
+  BreakNanoTime(time_input, 0, tm);
 }
 
 uint32_t MakeTime(TIME_T &tm) {
@@ -403,6 +412,7 @@ void RtcSecond(void) {
     mutex = true;
 
     Rtc.time_synced = false;
+    Rtc.last_synced = true;
     last_sync = Rtc.utc_time;
 
     if (Rtc.restart_time == 0) {
@@ -420,7 +430,13 @@ void RtcSecond(void) {
       TasmotaGlobal.rules_flag.time_set = 1;
     }
   } else {
-    Rtc.utc_time++;  // Increment every second
+    if (Rtc.last_synced) {
+      Rtc.last_synced = false;
+      uint32_t nanos = Rtc.nanos + (millis() - Rtc.millis) * 1000000U;
+      Rtc.utc_time += nanos / 1000000000U;
+      Rtc.nanos = nanos % 1000000000U;
+    } else
+      Rtc.utc_time++;  // Increment every second
   }
   Rtc.millis = millis();
 
@@ -442,7 +458,7 @@ void RtcSecond(void) {
     }
   }
 
-  BreakTime(Rtc.local_time, RtcTime);
+  BreakNanoTime(Rtc.local_time, Rtc.nanos, RtcTime);
   if (RtcTime.valid) {
     if (!Rtc.midnight) {
       Rtc.midnight = Rtc.local_time - (RtcTime.hour * 3600) - (RtcTime.minute * 60) - RtcTime.second;
