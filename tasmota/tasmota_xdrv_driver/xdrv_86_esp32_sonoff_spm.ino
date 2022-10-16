@@ -1037,6 +1037,16 @@ void SSPMAddModule(void) {
 
 /*********************************************************************************************/
 
+void SSPMLogResult(uint32_t command, uint32_t status) {
+  if (1 == status) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Command %d not supported"), command);
+  } else if (2 == status) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Command %d timeout"), command);
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Command %d result %d"), command, status);
+  }
+}
+
 void SSPMHandleReceivedData(void) {
   /*
    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
@@ -1047,7 +1057,7 @@ void SSPMHandleReceivedData(void) {
   uint32_t command = SspmBuffer[16];                                 // Cm
   uint32_t expected_bytes = (SspmBuffer[17] << 8) + SspmBuffer[18];  // Size
   // 0 - OK
-  // 1 -
+  // 1 - Not supported
   // 2 - Timeout
   // 3 - Log empty
   // 4 -
@@ -1061,7 +1071,7 @@ void SSPMHandleReceivedData(void) {
   if (ack) {
     // Responses from ARM (Acked)
     if (status > 0) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Command %d result %d"), command, status);
+      SSPMLogResult(command, status);
     }
     switch(command) {
       case SSPM_FUNC_FIND:
@@ -1469,10 +1479,8 @@ void SSPMHandleReceivedData(void) {
         P4 - Relay4 power on state (0 = On, 1 = Off, 2 = Laststate)
         */
         Sspm->module_selected--;
-        if (!status && (0x05 == expected_bytes)) {
-          for (uint32_t i = 0; i < 4; i++) {
-            Sspm->poweron_state[Sspm->module_selected][i] = SspmBuffer[20 +i];
-          }
+        for (uint32_t i = 0; i < 4; i++) {
+          Sspm->poweron_state[Sspm->module_selected][i] = (!status && (expected_bytes >= 0x05)) ? SspmBuffer[20 +i] : 1;
         }
         if (Sspm->module_selected > 0) {
           SSPMSendGetModuleState(Sspm->module_selected -1);
@@ -1575,7 +1583,7 @@ void SSPMHandleReceivedData(void) {
         Ot - Overtemp
         */
         if (status > 0) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("SPM: Command %d result %d"), command, status);
+          SSPMLogResult(command, status);
         }
         else if (0x14 == expected_bytes) {                // Overload/Overtemp triggered
           uint32_t any_bit_set = 0;
@@ -2582,20 +2590,26 @@ void CmndSSPMSend(void) {
 
 void CmndSSPMPowerOnState(void) {
   // SspmPowerOnState2 0|1|2 - Set relay2 power on state (0 = Off, 1 = On, 2 = Saved)
-  if (Sspm->relay_version > SSPM_VERSION_1_0_0) {
-    uint32_t max_index = (Sspm->module_max *4) +1;
-    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < max_index)) {
-      uint32_t module = (XdrvMailbox.index -1) >>2;
-      uint32_t relay = (XdrvMailbox.index -1) &3;
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
-        if (XdrvMailbox.payload < 2) { XdrvMailbox.payload = !XdrvMailbox.payload; }  // Swap Tasmota power off (0) with Sonoff (1)
-        Sspm->poweron_state[module][relay] = XdrvMailbox.payload;
-        SSPMSendSetPowerOnState(module);
-      }
-      uint32_t poweron_state = Sspm->poweron_state[module][relay];
-      if (poweron_state < 2) { poweron_state = !poweron_state; }  // Swap Sonoff power off (1) with Tasmota (0)
-      ResponseCmndIdxNumber(poweron_state);
+  uint32_t max_index = Sspm->module_max *4;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= max_index)) {
+    uint32_t module = (XdrvMailbox.index -1) >>2;
+    uint32_t relay = (XdrvMailbox.index -1) &3;
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+      if (XdrvMailbox.payload < 2) { XdrvMailbox.payload = !XdrvMailbox.payload; }  // Swap Tasmota power off (0) with Sonoff (1)
+      Sspm->poweron_state[module][relay] = XdrvMailbox.payload;
+      SSPMSendSetPowerOnState(module);
     }
+    Response_P(PSTR("{\"%s\":["), XdrvMailbox.command);
+    bool more = false;
+    for (uint32_t module = 0; module < Sspm->module_max; module++) {
+      for (uint32_t relay = 0; relay < 4; relay++) {
+        uint32_t poweron_state = Sspm->poweron_state[module][relay];
+        if (poweron_state < 2) { poweron_state = !poweron_state; }  // Swap Sonoff power off (1) with Tasmota (0)
+        ResponseAppend_P(PSTR("%s%d"), (more)?",":"", poweron_state);
+        more = true;
+      }
+    }
+    ResponseAppend_P(PSTR("]}"));
   }
 }
 
