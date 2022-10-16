@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Command ``UrlFetch <url>`` to download a file to filesystem
 - Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
 - Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
+- Command ``SspmPowerOnState<relay> 0|1|2`` to set Sonoff SPM 4Relay module v1.2.0 power on state overruling tasmota global power on state. 0 = Off, 1 = On, 2 = Saved state [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical [#16795](https://github.com/arendst/Tasmota/issues/16795)
 - Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
 - Support for Shelly Plus 2PM
@@ -133,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 - Support for Ethernet in ESP32 safeboot firmware [#16388](https://github.com/arendst/Tasmota/issues/16388)
 - ESP32-S3 support for internal temperature sensor
 - ESP32-S2 and ESP32-S3 touch button support
+- ESP32 Automatically resize FS to max flash size at initial boot [#16838](https://github.com/arendst/Tasmota/issues/16838)
 - Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
 - Berry automated solidification of code
 - LVGL/HASPmota add tiny "pixel perfect" fonts for small screens [#16758](https://github.com/arendst/Tasmota/issues/16758)

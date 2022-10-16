@@ -2478,10 +2478,14 @@ void CmndWifi(void)
       WifiEnable();
 #endif
     }
-#ifdef ESP8266
   } else if ((XdrvMailbox.payload >= 2) && (XdrvMailbox.payload <= 4)) {
-    WiFi.setPhyMode(WiFiPhyMode_t(XdrvMailbox.payload - 1));  // 1-B/2-BG/3-BGN
+    // Wifi 2 = B
+    // Wifi 3 = BG
+    // Wifi 4 = BGN
+#ifdef ESP32
+    Wifi.phy_mode = XdrvMailbox.payload - 1;
 #endif
+    WiFi.setPhyMode(WiFiPhyMode_t(XdrvMailbox.payload - 1));  // 1-B/2-BG/3-BGN
   }
   Response_P(PSTR("{\"" D_JSON_WIFI "\":\"%s\",\"" D_JSON_WIFI_MODE "\":\"11%c\"}"), GetStateText(Settings->flag4.network_wifi), pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
 }

@@ -32,6 +32,11 @@
 #define WIFI_LIGHT_SLEEP	1
 #define WIFI_MODEM_SLEEP	2
 
+typedef enum WiFiPhyMode
+{
+    WIFI_PHY_MODE_11B = 1, WIFI_PHY_MODE_11G = 2, WIFI_PHY_MODE_11N = 3
+} WiFiPhyMode_t;
+
 class WiFiClass32 : public WiFiClass
 {
 public:
@@ -41,6 +46,7 @@ public:
     }
     static void setSleepMode(int iSleepMode);
     static int getPhyMode();
+    static bool setPhyMode(WiFiPhyMode_t mode);
 
     static void wps_disable();
     static void setOutputPower(int n);
