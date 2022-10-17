@@ -985,13 +985,12 @@ uint64_t WifiGetNtp(void) {
         ntp_server_id++;                            // Next server next time
         return 0;
       }
-
-      uint32_t highWord = word(packet_buffer[44], packet_buffer[45]);
-      uint32_t lowWord = word(packet_buffer[46], packet_buffer[47]);
-
-      uint32_t currentNano = (((uint64_t)(highWord << 16 | lowWord)) * 1000000000) >> 32;
-
-      return (((uint64_t) secs_since_1900) - 2208988800UL) * 1000000000 + currentNano;
+      uint32_t tmp_fraction = (uint32_t)packet_buffer[44] << 24;
+      tmp_fraction |= (uint32_t)packet_buffer[45] << 16;
+      tmp_fraction |= (uint32_t)packet_buffer[46] << 8;
+      tmp_fraction |= (uint32_t)packet_buffer[47];
+      uint32_t fraction = (((uint64_t)tmp_fraction) * 1000000000) >> 32;
+      return (((uint64_t)secs_since_1900) - 2208988800UL) * 1000000000 + fraction;
     }
     delay(10);
   }
