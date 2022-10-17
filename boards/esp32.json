@@ -10,7 +10,7 @@
       "flash_mode": "dio",
       "mcu": "esp32",
       "variant": "esp32",
-      "partitions": "partitions/esp32_partition_app1856k_fs1344k.csv"
+      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
     },
     "connectivity": [
       "wifi",
@@ -25,7 +25,7 @@
       "arduino",
       "espidf"
     ],
-    "name": "Espressif Generic ESP32 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+    "name": "Espressif Generic ESP32 >= 4M Flash PSRAM, Tasmota 2880k Code/OTA, 320k FS",
     "upload": {
       "arduino": {
         "flash_extra_images": [
