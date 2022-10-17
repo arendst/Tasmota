@@ -10,7 +10,7 @@
       "flash_mode": "dio",
       "mcu": "esp32c3",
       "variant": "esp32c3",
-      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
+      "partitions": "partitions/esp32_partition_app1856k_fs320k.csv"
     },
     "connectivity": [
       "wifi",
@@ -23,16 +23,8 @@
       "arduino",
       "espidf"
     ],
-    "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+    "name": "Espressif Generic ESP32-C3 4M Flash, Tasmota 1856k Code/OTA, 320k FS",
     "upload": {
-      "arduino": {
-        "flash_extra_images": [
-          [
-            "0x10000",
-            "variants/tasmota/tasmota32c3cdc-safeboot.bin"
-          ]
-        ]
-      },
       "flash_size": "4MB",
       "maximum_ram_size": 327680,
       "maximum_size": 4194304,
