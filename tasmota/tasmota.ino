@@ -158,6 +158,7 @@ RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
 #endif  // ESP32
 
 struct TIME_T {
+  uint32_t      nanos;
   uint8_t       second;
   uint8_t       minute;
   uint8_t       hour;

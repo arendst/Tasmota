@@ -878,13 +878,15 @@ void WifiPollNtp() {
 
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NTP: Sync time..."));
     ntp_run_time = millis();
-    uint32_t ntp_time = WifiGetNtp();
+    uint64_t ntp_nanos = WifiGetNtp();
+    uint32_t ntp_time = ntp_nanos / 1000000000;
     ntp_run_time = (millis() - ntp_run_time) / 1000;
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Runtime %d"), ntp_run_time);
     if (ntp_run_time < 5) { ntp_run_time = 0; }  // DNS timeout is around 10s
 
     if (ntp_time > START_VALID_TIME) {
       Rtc.utc_time = ntp_time;
+      Rtc.nanos = ntp_nanos % 1000000000;
       ntp_sync_minute = 60;             // Sync so block further requests
       RtcSync("NTP");
     } else {
@@ -893,7 +895,7 @@ void WifiPollNtp() {
   }
 }
 
-uint32_t WifiGetNtp(void) {
+uint64_t WifiGetNtp(void) {
   static uint8_t ntp_server_id = 0;
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("NTP: Start NTP Sync %d ..."), ntp_server_id);
@@ -983,7 +985,13 @@ uint32_t WifiGetNtp(void) {
         ntp_server_id++;                            // Next server next time
         return 0;
       }
-      return secs_since_1900 - 2208988800UL;
+
+      uint32_t highWord = word(packet_buffer[44], packet_buffer[45]);
+      uint32_t lowWord = word(packet_buffer[46], packet_buffer[47]);
+
+      uint32_t currentNano = (((uint64_t)(highWord << 16 | lowWord)) * 1000000000) >> 32;
+
+      return (((uint64_t) secs_since_1900) - 2208988800UL) * 1000000000 + currentNano;
     }
     delay(10);
   }
