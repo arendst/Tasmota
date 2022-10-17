@@ -5,7 +5,7 @@
       "memory_type": "qio_opi"
     },
     "core": "esp32",
-    "extra_flags": "-DCAMERA_MODEL_TTGO_T_CAM_SIM -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DARDUINO_USB_CDC_ON_BOOT=0 -DARDUINO_USB_MSC_ON_BOOT=0 -DARDUINO_USB_DFU_ON_BOOT=0 -DUSE_USB_CDC_CONSOLE -DESP32_16M -DESP32S3",
+    "extra_flags": "-DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DARDUINO_USB_CDC_ON_BOOT=0 -DARDUINO_USB_MSC_ON_BOOT=0 -DARDUINO_USB_DFU_ON_BOOT=0 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "qio",
@@ -17,7 +17,7 @@
     ],
     "mcu": "esp32s3",
     "variant": "esp32s3",
-    "partitions": "partitions/esp32_partition_app2944k_fs10M.csv"
+    "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
   },
   "connectivity": [
     "wifi",
@@ -35,15 +35,23 @@
     "espidf",
     "arduino"
   ],
-  "name": "LilyGo T-SIMCAM ESP32-S3 16M Flash 8MB OPI PSRAM, Tasmota 2944k Code/OTA, 10M FS",
+  "name": "Espressif Generic ESP32-S3 >= 4M Flash OPI PSRAM, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {
-    "flash_size": "16MB",
+    "arduino": {
+      "flash_extra_images": [
+        [
+          "0x10000",
+          "variants/tasmota/tasmota32s3-safeboot.bin"
+        ]
+      ]
+    },
+    "flash_size": "4MB",
     "maximum_ram_size": 327680,
-    "maximum_size": 16777216,
+    "maximum_size": 4194304,
     "require_upload_port": true,
     "before_reset": "usb_reset",
     "speed": 460800
   },
-  "url": "https://github.com/Xinyuan-LilyGO/LilyGo-Camera-Series",
-  "vendor": "LilyGo"
+  "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/",
+  "vendor": "Espressif"
 }
