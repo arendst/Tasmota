@@ -446,6 +446,7 @@ const char kSensorNames[] PROGMEM =
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
+// Max number of GPIOs
 #define MAX_MAX31865S    6
 #define MAX_FLOWRATEMETER 2
 #define MAX_A4988_MSS    3
@@ -453,6 +454,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_WEBCAM_HSD   3
 #define MAX_SM2135_DAT   10
 #define MAX_SM2335_DAT   16
+#define MAX_DSB          4
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -661,18 +663,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DHT11_OUT),      // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
 #endif
 #ifdef USE_DS18x20
-#ifdef DS18x20_MULTI_GPIOs
-  AGPIO(GPIO_DSB) + MAX_DSB,            // Single wire DS18B20 or DS18S20
-#ifdef ESP8266 // ESP32 don't support dual pin mode
-  AGPIO(GPIO_DSB_OUT) + MAX_DSB,        // Pseudo Single wire DS18B20 or DS18S20
-#endif
-#else
-  AGPIO(GPIO_DSB),            // Single wire DS18B20 or DS18S20
-#ifdef ESP8266 // ESP32 don't support dual pin mode
-  AGPIO(GPIO_DSB_OUT),        // Pseudo Single wire DS18B20 or DS18S20
-#endif
-#endif //DS18x20_MULTI_GPIOs
-#endif
+  AGPIO(GPIO_DSB) + MAX_DSB,  // Single wire DS18B20 or DS18S20
+#ifdef ESP8266
+  AGPIO(GPIO_DSB_OUT) + MAX_DSB,  // Pseudo Single wire DS18B20 or DS18S20
+#endif  // ESP8266
+#endif  // USE_DS18x20
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),          // LMT01, count pulses on GPIO
 #endif
