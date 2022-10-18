@@ -5,12 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ## [12.2.0.1]
 ### Added
+- DS18x20 support on up to four GPIOs by md5sum-as (#16833)
 
 ### Breaking Changed
 
 ### Changed
+- DS18x20 ``DS18Alias`` to ``DS18Sens`` (#16833)
 
 ### Fixed
+- BP5758D red channel corruption regression from v12.1.1.6 (#16850)
 
 ### Removed
 

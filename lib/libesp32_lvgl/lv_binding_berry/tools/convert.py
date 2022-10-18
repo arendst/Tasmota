@@ -38,6 +38,7 @@ return_types = {
   "char *": "c",
   "uint8_t *": "c",
   "const char *": "s",
+  "retchar *": "s",
   "constchar *": "s",       # special construct
   "lv_obj_user_data_t": "i",
 
@@ -245,6 +246,7 @@ with open(lv_widgets_file) as f:
     l_raw = re.sub('static ', '', l_raw)
     l_raw = re.sub('inline ', '', l_raw)
     l_raw = re.sub('const\s+char\s*\*', 'constchar *', l_raw)
+    l_raw = re.sub('^char\s*\*', 'retchar *', l_raw)    # special case for returning a char*
     l_raw = re.sub('const ', '', l_raw)
     l_raw = re.sub('struct ', '', l_raw)
     if (len(l_raw) == 0): continue

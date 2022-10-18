@@ -109,11 +109,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmo
 
 ## Changelog v12.2.0.1
 ### Added
+- DS18x20 support on up to four GPIOs by md5sum-as [#16833](https://github.com/arendst/Tasmota/issues/16833)
 
 ### Breaking Changed
 
 ### Changed
+- DS18x20 ``DS18Alias`` to ``DS18Sens`` [#16833](https://github.com/arendst/Tasmota/issues/16833)
 
 ### Fixed
+- BP5758D red channel corruption regression from v12.1.1.6 [#16850](https://github.com/arendst/Tasmota/issues/16850)
 
 ### Removed

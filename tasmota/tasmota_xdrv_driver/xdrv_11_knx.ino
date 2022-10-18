@@ -491,7 +491,7 @@ void KNX_INIT(void)
     device_param[KNX_HUMIDITY-1].show = true;
   }
 #ifdef USE_DS18x20
-  if (PinUsed(GPIO_DSB)) {
+  if (PinUsed(GPIO_DSB, GPIO_ANY)) {
     device_param[KNX_TEMPERATURE-1].show = true;
   }
 #endif

@@ -987,9 +987,12 @@ bool CmndTM1637Clock(void)
 \*********************************************************************************************/
 void TM1637ShowTime()
 {
-  uint8_t hr = RtcTime.hour;
-  uint8_t mn = RtcTime.minute;
-  uint8_t sc = RtcTime.second;
+  struct TIME_T t = RtcTime;
+  BreakNanoTime(Rtc.local_time, Rtc.nanos + (millis() - Rtc.millis) * 1000000, t);
+  uint8_t hr = t.hour;
+  uint8_t mn = t.minute;
+  uint8_t sc = t.second;
+  uint16_t ms = t.nanos / 1000000;
   
   if (!TM1637Data.clock_24)
   {
@@ -1009,12 +1012,14 @@ void TM1637ShowTime()
   
   if (TM1637 == TM1637Data.display_type)
   {
+    uint8_t colon = ms > 500? 0: 128;
     uint8_t rawBytes[1];
-    for (uint32_t i = 0; i < 4; i++)
+    uint8_t width = Settings->display_width >= 6? 6: 4;
+    for (uint32_t i = 0; i < width; i++)
     {
       rawBytes[0] = tm1637display->encode(tm[i]);
-      if ((millis() % 1000) > 500 && (i == 1))
-        rawBytes[0] = rawBytes[0] | 128;
+      if (i == 1 || (i == 3 && width > 4))
+        rawBytes[0] = rawBytes[0] | colon;
       tm1637display->printRaw(rawBytes, 1, TM1637Data.digit_order[i]);
     }
   }
