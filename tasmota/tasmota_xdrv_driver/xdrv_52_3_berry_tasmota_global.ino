@@ -36,6 +36,7 @@ extern "C" {
     4,  /* number of elements */
     nullptr,
     (const be_ctypes_structure_item_t[4]) {
+      // Warning: fields below need to be in alphabetical order
       { "devices_present", offsetof(TasmotaGlobal_t, devices_present), 0, 0, ctypes_u8, 0 },
       { "fast_loop_enabled", offsetof(TasmotaGlobal_t, berry_fast_loop_enabled), 0, 0, ctypes_u8, 0 },
       { "restart_flag", offsetof(TasmotaGlobal_t, restart_flag), 0, 0, ctypes_u8, 0 },
@@ -47,6 +48,7 @@ extern "C" {
     2,  /* number of elements */
     nullptr,
     (const be_ctypes_structure_item_t[2]) {
+      // Warning: fields below need to be in alphabetical order
       { "bootcount", offsetof(TSettings, bootcount), 0, 0, ctypes_u16, 0 },
       { "sleep", offsetof(TSettings, sleep), 0, 0, ctypes_u8, 0 },
   }};

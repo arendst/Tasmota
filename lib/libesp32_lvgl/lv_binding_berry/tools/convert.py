@@ -35,7 +35,7 @@ return_types = {
   "int32_t": "i",
   "void *": ".",
   "const void *": ".",
-  "char *": "c",
+  "char *": "s",
   "uint8_t *": "c",
   "const char *": "s",
   "constchar *": "s",       # special construct
