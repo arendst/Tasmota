@@ -1910,6 +1910,14 @@ void MI32sendEnergyWidget(){
   }
 }
 #endif //USE_MI_ESP32_ENERGY
+#ifdef USE_WEBCAM
+void MI32sendCamWidget(){
+    if (Wc.CamServer && Wc.up) {
+      WSContentSend_P(PSTR("<img class='box' id='cam' src='http://%_I:81/stream'>"),
+        (uint32_t)WiFi.localIP());
+    }
+}
+#endif //USE_WEBCAM
 
 void MI32sendWidget(uint32_t slot){
   auto _sensor = MIBLEsensors[slot];
@@ -2044,6 +2052,9 @@ void MI32InitGUI(void){
 #ifdef USE_MI_ESP32_ENERGY
   MI32sendEnergyWidget();
 #endif //USE_MI_ESP32_ENERGY
+#ifdef USE_WEBCAM
+  MI32sendCamWidget();
+#endif //USE_WEBCAM 
   WSContentSend_P(PSTR("</div>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
