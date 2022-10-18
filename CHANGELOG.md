@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- BP5758D red channel corruption regression from v12.1.1.6 (#16850)
 
 ### Removed
 
