@@ -2,7 +2,7 @@
   xsns_05_esp32_ds18x20.ino - DS18x20 temperature sensor support for ESP32 Tasmota
 
   Copyright (C) 2021  Heiko Krupp and Theo Arends
-
+ 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -15,8 +15,9 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 
+  Updated by md5sum-as (https://github.com/md5sum-as)
+*/
 
 #ifdef ESP32
 #ifdef USE_DS18x20
@@ -59,8 +60,18 @@ struct {
   uint8_t valid;
 #ifdef DS18x20_USE_ID_ALIAS
   uint8_t alias;
-#endif //DS18x20_USE_ID_ALIAS  
+#endif //DS18x20_USE_ID_ALIAS
+#ifdef DS18x20_MULTI_GPIOs
+  int8_t pins_id = 0; 
+#endif //DS18x20_MULTI_GPIOs
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
+
+#include <OneWire.h>
+
+#ifdef DS18x20_MULTI_GPIOs
+OneWire *ds18x20_gpios[MAX_DSB];
+uint8_t ds18x20_ngpio = 0;    // Count of GPIO found
+#endif
 
 struct {
   char name[17];
@@ -69,13 +80,20 @@ struct {
 
 /********************************************************************************************/
 
-#include <OneWire.h>
-
 OneWire *ds = nullptr;
 
 void Ds18x20Init(void) {
-  ds = new OneWire(Pin(GPIO_DSB));
 
+#ifdef DS18x20_MULTI_GPIOs
+  for (uint8_t pins = 0; pins < MAX_DSB; pins++) {
+    if (PinUsed(GPIO_DSB, pins)) { 
+      ds18x20_gpios[pins] = new OneWire(Pin(GPIO_DSB,pins));
+      ds18x20_ngpio++;
+    }
+  }
+#else
+  ds = new OneWire(Pin(GPIO_DSB));
+#endif 
   Ds18x20Search();
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
 }
@@ -84,8 +102,12 @@ void Ds18x20Search(void) {
   uint8_t num_sensors=0;
   uint8_t sensor = 0;
 
+#ifdef DS18x20_MULTI_GPIOs
+ for (uint8_t pins=0; pins < ds18x20_ngpio; pins++) {
+  ds=ds18x20_gpios[pins];
+#endif
   ds->reset_search();
-  for (num_sensors = 0; num_sensors < DS18X20_MAX_SENSORS; num_sensors) {
+  for (num_sensors; num_sensors < DS18X20_MAX_SENSORS; num_sensors) {
     if (!ds->search(ds18x20_sensor[num_sensors].address)) {
       ds->reset_search();
       break;
@@ -99,9 +121,16 @@ void Ds18x20Search(void) {
 #ifdef DS18x20_USE_ID_ALIAS      
       ds18x20_sensor[num_sensors].alias=0;
 #endif
+#ifdef DS18x20_MULTI_GPIOs
+      ds18x20_sensor[num_sensors].pins_id = pins;
+#endif //DS18x20_MULTI_GPIOs
       num_sensors++;
     }
   }
+#ifdef DS18x20_MULTI_GPIOs
+ }
+#endif //DS18x20_MULTI_GPIOs
+
   for (uint32_t i = 0; i < num_sensors; i++) {
     ds18x20_sensor[i].index = i;
   }
@@ -116,10 +145,17 @@ void Ds18x20Search(void) {
 }
 
 void Ds18x20Convert(void) {
+#ifdef DS18x20_MULTI_GPIOs
+ for (uint8_t i = 0; i < ds18x20_ngpio; i++) {
+  ds=ds18x20_gpios[i];
+#endif
   ds->reset();
   ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
   ds->write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
 //  delay(750);                   // 750ms should be enough for 12bit conv
+#ifdef DS18x20_MULTI_GPIOs
+ }
+#endif
 }
 
 bool Ds18x20Read(uint8_t sensor, float &t) {
@@ -130,7 +166,9 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
 
   uint8_t index = ds18x20_sensor[sensor].index;
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
-
+#ifdef DS18x20_MULTI_GPIOs
+  ds=ds18x20_gpios[ds18x20_sensor[index].pins_id];
+#endif
   ds->reset();
   ds->select(ds18x20_sensor[index].address);
   ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
@@ -185,15 +223,14 @@ void Ds18x20Name(uint8_t sensor) {
     }
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
+uint8_t print_ind = sensor +1;
 #ifdef DS18x20_USE_ID_ALIAS
     if (ds18x20_sensor[sensor].alias) {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Alias%c%d"), IndexSeparator(), ds18x20_sensor[sensor].alias);
-    } else {
-#endif
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
-#ifdef DS18x20_USE_ID_ALIAS
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens"));
+      print_ind = ds18x20_sensor[sensor].alias;
     }
 #endif
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), print_ind);
 #endif
   }
 }
@@ -315,7 +352,7 @@ void CmndDSAlias(void) {
 bool Xsns05(uint8_t function) {
   bool result = false;
 
-  if (PinUsed(GPIO_DSB)) {
+  if (PinUsed(GPIO_DSB,GPIO_ANY)) {
     switch (function) {
       case FUNC_INIT:
         Ds18x20Init();
