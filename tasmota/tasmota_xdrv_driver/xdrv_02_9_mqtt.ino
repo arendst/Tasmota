@@ -522,11 +522,30 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 //    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Connection lost or message too large"));
     return false;
   }
+
   uint32_t written = MqttClient.write(payload, plength);
   if (written != plength) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Message too large"));
     return false;
   }
+/*
+  // Solves #6525??
+  const uint8_t* write_buf = payload;
+  uint32_t bytes_remaining = plength;
+  uint32_t bytes_to_write;
+  uint32_t written;
+  while (bytes_remaining > 0) {
+    bytes_to_write = (bytes_remaining > 256) ? 256 : bytes_remaining;
+    written = MqttClient.write(write_buf, bytes_to_write);
+    if (written != bytes_to_write) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Message too large"));
+      return false;
+    }
+    write_buf += written;
+    bytes_remaining -= written;
+  }
+*/
+
   MqttClient.endPublish();
 
   yield();  // #3313

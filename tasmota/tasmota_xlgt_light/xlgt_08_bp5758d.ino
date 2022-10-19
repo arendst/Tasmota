@@ -29,7 +29,7 @@
 #define XLGT_08             8
 
 // Layout: Bits B[7:8]=10 (address selection identification bits), B[5:6] sleep mode if set to 00, B[0:4] Address selection
-#define BP5758D_ADDR_SLEEP   0x86  //10 00 0110: Sleep mode bits set (OUT1 gray-scale level setup selected, ignored by chip)
+#define BP5758D_ADDR_SLEEP   0x80  //10 00 xxxx: Set to sleep mode
 #define BP5758D_ADDR_SETUP   0x90  //10 01 0000: OUT1-5 enable/disable setup - used during init
 #define BP5758D_ADDR_OUT1_CR 0x91  //10 01 0001: OUT1 current range
 #define BP5758D_ADDR_OUT2_CR 0x92  //10 01 0010: OUT2 current range
@@ -44,6 +44,7 @@
 
 // Output enabled (OUT1-5, represented by lower 5 bits)
 #define BP5758D_ENABLE_OUTPUTS_ALL 0x1F
+#define BP5758D_DISABLE_OUTPUTS_ALL 0x00
 
 // Current values: Bit 6 to 0 represent 30mA, 32mA, 16mA, 8mA, 4mA, 2mA, 1mA respectively
 #define BP5758D_10MA 0x0A // 0 0001010
@@ -106,13 +107,25 @@ void Bp5758dStop(void) {
 /********************************************************************************************/
 
 bool Bp5758dSetChannels(void) {  
+  static bool bIsSleeping = false; //Save sleep state of Lamp  
   uint16_t *cur_col_10 = (uint16_t*)XdrvMailbox.command;
     
   // If we receive 0 for all channels, we'll assume that the lightbulb is off, and activate BP5758d's sleep mode.
   if (cur_col_10[0]==0 && cur_col_10[1]==0 && cur_col_10[2]==0 && cur_col_10[3]==0 && cur_col_10[4]==0) {
+    Bp5758dStart(BP5758D_ADDR_SETUP);
+    Bp5758dWrite(BP5758D_DISABLE_OUTPUTS_ALL);
+    Bp5758dStop();
     Bp5758dStart(BP5758D_ADDR_SLEEP);
     Bp5758dStop();
+    bIsSleeping = true;
     return true;
+  }
+
+  if (bIsSleeping) {
+    bIsSleeping = false; //No need to run it every time a val gets changed
+    Bp5758dStart(BP5758D_ADDR_SETUP); //Sleep mode gets disabled too since bits 5:6 get set to 01
+    Bp5758dWrite(BP5758D_ENABLE_OUTPUTS_ALL); //Set all outputs to ON
+    Bp5758dStop();
   }
     
   // Even though we could address changing channels only, in practice we observed that the lightbulb always sets all channels.

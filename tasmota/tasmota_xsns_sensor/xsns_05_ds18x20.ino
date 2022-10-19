@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
-  Copyright (C) 2021  Theo Arends
+  Copyright (C) 2021  Theo Arends and md5sum-as (https://github.com/md5sum-as)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@
 #define XSNS_05              5
 
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
-//#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
-      
+//#define DS18x20_USE_ID_AS_NAME     // Use last 3 bytes for naming of sensors
+
 /* #define DS18x20_USE_ID_ALIAS in my_user_config.h or user_config_override.h
   * Use alias for fixed sensor name in scripts by autoexec. Command: DS18Alias XXXXXXXXXXXXXXXX,N where XXXXXXXXXXXXXXXX full serial and N number 1-255
-  * Result in JSON:  "DS18Alias_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
+  * Result in JSON:  "DS18Sens_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
   * add 8 bytes used memory
 */
 
@@ -45,7 +45,7 @@
 #define W1_WRITE_SCRATCHPAD  0x4E
 #define W1_READ_SCRATCHPAD   0xBE
 
-#ifndef DS18X20_MAX_SENSORS // DS18X20_MAX_SENSORS fallback to 8 if not defined in user_config_override.h
+#ifndef DS18X20_MAX_SENSORS         // DS18X20_MAX_SENSORS fallback to 8 if not defined in user_config_override.h
 #define DS18X20_MAX_SENSORS  8
 #endif
 
@@ -60,10 +60,17 @@ struct {
   uint8_t address[8];
   uint8_t index;
   uint8_t valid;
+  int8_t pins_id;
 #ifdef DS18x20_USE_ID_ALIAS
   uint8_t alias;
-#endif //DS18x20_USE_ID_ALIAS  
+#endif  // DS18x20_USE_ID_ALIAS
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
+
+struct {
+  int8_t pin = 0;            // Shelly GPIO3 input only
+  int8_t pin_out = 0;        // Shelly GPIO00 output only
+  bool dual_mode = false;    // Single pin mode
+} ds18x20_gpios[MAX_DSB];
 
 struct {
 #ifdef W1_PARASITE_POWER
@@ -71,7 +78,8 @@ struct {
   uint8_t current_sensor = 0;
 #endif
   char name[17];
-  uint8_t sensors = 0;
+  uint8_t sensors;
+  uint8_t gpios;             // Count of GPIO found
   uint8_t input_mode = 0;    // INPUT or INPUT_PULLUP (=2)
   int8_t pin = 0;            // Shelly GPIO3 input only
   int8_t pin_out = 0;        // Shelly GPIO00 output only
@@ -301,45 +309,62 @@ bool OneWireCrc8(uint8_t *addr) {
 /********************************************************************************************/
 
 void Ds18x20Init(void) {
-  DS18X20Data.pin = Pin(GPIO_DSB);
-  DS18X20Data.input_mode = Settings->flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+  DS18X20Data.gpios = 0;
+  for (uint32_t pins = 0; pins < MAX_DSB; pins++) {
+    if (PinUsed(GPIO_DSB, pins)) {
+      ds18x20_gpios[pins].pin = Pin(GPIO_DSB, pins);
 
-  if (PinUsed(GPIO_DSB_OUT)) {
-    DS18X20Data.pin_out = Pin(GPIO_DSB_OUT);
-    DS18X20Data.dual_mode = true;    // Dual pins mode as used by Shelly
-    pinMode(DS18X20Data.pin_out, OUTPUT);
-    pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
-  }
-
-  onewire_last_discrepancy = 0;
-  onewire_last_device_flag = false;
-  onewire_last_family_discrepancy = 0;
-  for (uint32_t i = 0; i < 8; i++) {
-    onewire_rom_id[i] = 0;
+      if (PinUsed(GPIO_DSB_OUT, pins)) {
+        ds18x20_gpios[pins].dual_mode = true;
+        ds18x20_gpios[pins].pin_out = Pin(GPIO_DSB_OUT, pins);
+      }
+      DS18X20Data.gpios++;
+    }
   }
 
   uint64_t ids[DS18X20_MAX_SENSORS];
   DS18X20Data.sensors = 0;
-  while (DS18X20Data.sensors < DS18X20_MAX_SENSORS) {
-    if (!OneWireSearch(ds18x20_sensor[DS18X20Data.sensors].address)) {
-      break;
+  DS18X20Data.input_mode = Settings->flag3.ds18x20_internal_pullup ? INPUT_PULLUP : INPUT;  // SetOption74 - Enable internal pullup for single DS18x20 sensor
+
+  for (uint32_t pins = 0; pins < DS18X20Data.gpios; pins++) {
+    DS18X20Data.pin = ds18x20_gpios[pins].pin;
+    DS18X20Data.dual_mode = ds18x20_gpios[pins].dual_mode;
+    if (ds18x20_gpios[pins].dual_mode) {
+      DS18X20Data.pin_out = ds18x20_gpios[pins].pin_out;
+      pinMode(DS18X20Data.pin_out, OUTPUT);
+      pinMode(DS18X20Data.pin, DS18X20Data.input_mode);
     }
-    if (OneWireCrc8(ds18x20_sensor[DS18X20Data.sensors].address) &&
-       ((ds18x20_sensor[DS18X20Data.sensors].address[0] == DS18S20_CHIPID) ||
-        (ds18x20_sensor[DS18X20Data.sensors].address[0] == DS1822_CHIPID) ||
-        (ds18x20_sensor[DS18X20Data.sensors].address[0] == DS18B20_CHIPID) ||
-        (ds18x20_sensor[DS18X20Data.sensors].address[0] == MAX31850_CHIPID))) {
-      ds18x20_sensor[DS18X20Data.sensors].index = DS18X20Data.sensors;
-      ids[DS18X20Data.sensors] = ds18x20_sensor[DS18X20Data.sensors].address[0];  // Chip id
-      for (uint32_t j = 6; j > 0; j--) {
-        ids[DS18X20Data.sensors] = ids[DS18X20Data.sensors] << 8 | ds18x20_sensor[DS18X20Data.sensors].address[j];
+
+    onewire_last_discrepancy = 0;
+    onewire_last_device_flag = false;
+    onewire_last_family_discrepancy = 0;
+    for (uint32_t i = 0; i < 8; i++) {
+      onewire_rom_id[i] = 0;
+    }
+
+    while (DS18X20Data.sensors < DS18X20_MAX_SENSORS) {
+      if (!OneWireSearch(ds18x20_sensor[DS18X20Data.sensors].address)) {
+        break;
       }
-#ifdef DS18x20_USE_ID_ALIAS      
-      ds18x20_sensor[DS18X20Data.sensors].alias=0;
+      if (OneWireCrc8(ds18x20_sensor[DS18X20Data.sensors].address) &&
+        ((ds18x20_sensor[DS18X20Data.sensors].address[0] == DS18S20_CHIPID) ||
+          (ds18x20_sensor[DS18X20Data.sensors].address[0] == DS1822_CHIPID) ||
+          (ds18x20_sensor[DS18X20Data.sensors].address[0] == DS18B20_CHIPID) ||
+          (ds18x20_sensor[DS18X20Data.sensors].address[0] == MAX31850_CHIPID))) {
+        ds18x20_sensor[DS18X20Data.sensors].index = DS18X20Data.sensors;
+        ids[DS18X20Data.sensors] = ds18x20_sensor[DS18X20Data.sensors].address[0];  // Chip id
+        for (uint32_t j = 6; j > 0; j--) {
+          ids[DS18X20Data.sensors] = ids[DS18X20Data.sensors] << 8 | ds18x20_sensor[DS18X20Data.sensors].address[j];
+        }
+#ifdef DS18x20_USE_ID_ALIAS
+        ds18x20_sensor[DS18X20Data.sensors].alias=0;
 #endif
-      DS18X20Data.sensors++;
+        ds18x20_sensor[DS18X20Data.sensors].pins_id = pins;
+        DS18X20Data.sensors++;
+      }
     }
   }
+
   for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
     for (uint32_t j = i + 1; j < DS18X20Data.sensors; j++) {
       if (ids[ds18x20_sensor[i].index] > ids[ds18x20_sensor[j].index]) {  // Sort ascending
@@ -347,21 +372,27 @@ void Ds18x20Init(void) {
       }
     }
   }
+
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
 }
 
 void Ds18x20Convert(void) {
-  OneWireReset();
+  for (uint8_t i = 0; i < DS18X20Data.gpios; i++) {
+    DS18X20Data.pin = ds18x20_gpios[i].pin;
+    DS18X20Data.dual_mode = ds18x20_gpios[i].dual_mode;
+    DS18X20Data.pin_out = ds18x20_gpios[i].pin_out;
+    OneWireReset();
 #ifdef W1_PARASITE_POWER
-  // With parasite power address one sensor at a time
-  if (++DS18X20Data.current_sensor >= DS18X20Data.sensors)
-    DS18X20Data.current_sensor = 0;
-  OneWireSelect(ds18x20_sensor[DS18X20Data.current_sensor].address);
+    // With parasite power address one sensor at a time
+    if (++DS18X20Data.current_sensor >= DS18X20Data.sensors)
+      DS18X20Data.current_sensor = 0;
+    OneWireSelect(ds18x20_sensor[DS18X20Data.current_sensor].address);
 #else
-  OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
+    OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
 #endif
-  OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
-//  delay(750);                          // 750ms should be enough for 12bit conv
+    OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
+//    delay(750);                          // 750ms should be enough for 12bit conv
+  }
 }
 
 bool Ds18x20Read(uint8_t sensor) {
@@ -370,6 +401,9 @@ bool Ds18x20Read(uint8_t sensor) {
   int8_t sign = 1;
 
   uint8_t index = ds18x20_sensor[sensor].index;
+  DS18X20Data.pin = ds18x20_gpios[ds18x20_sensor[index].pins_id].pin;
+  DS18X20Data.pin_out = ds18x20_gpios[ds18x20_sensor[index].pins_id].pin_out;
+  DS18X20Data.dual_mode = ds18x20_gpios[ds18x20_sensor[index].pins_id].dual_mode;
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
   for (uint32_t retry = 0; retry < 3; retry++) {
     OneWireReset();
@@ -446,15 +480,14 @@ void Ds18x20Name(uint8_t sensor) {
     }
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
+uint8_t print_ind = sensor +1;
 #ifdef DS18x20_USE_ID_ALIAS
     if (ds18x20_sensor[sensor].alias) {
-      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Alias%c%d"), IndexSeparator(), ds18x20_sensor[sensor].alias);
-    } else {
-#endif
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
-#ifdef DS18x20_USE_ID_ALIAS
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens"));
+      print_ind = ds18x20_sensor[sensor].alias;
     }
 #endif
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), print_ind);
 #endif
   }
 }
@@ -545,7 +578,7 @@ void CmndDSAlias(void) {
   uint8_t sensor=255;
   char argument[XdrvMailbox.data_len];
   char address[17];
-  
+
   if (ArgC()==2) {
     tmp=atoi(ArgV(argument, 2));
     ArgV(argument,1);
@@ -581,7 +614,7 @@ void CmndDSAlias(void) {
 bool Xsns05(uint8_t function) {
   bool result = false;
 
-  if (PinUsed(GPIO_DSB)) {
+  if (PinUsed(GPIO_DSB, GPIO_ANY)) {
     switch (function) {
       case FUNC_INIT:
         Ds18x20Init();

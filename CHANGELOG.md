@@ -3,15 +3,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.1.1.6]
+## [12.2.0.1]
 ### Added
-- Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
+- DS18x20 support on up to four GPIOs by md5sum-as (#16833)
+
+### Breaking Changed
 
 ### Changed
+- DS18x20 ``DS18Alias`` to ``DS18Sens`` (#16833)
+- Compiling with reduced boards manifests in favour of Autoconfig (#16848)
+- Add NeoPool ``NPFiltration 2`` toggle cmnd (#16859)
 
 ### Fixed
+- BP5758D red channel corruption regression from v12.1.1.6 (#16850)
 
 ### Removed
+
+## [Released]
+
+## [12.2.0] 20221017
+- Release Patrick
+
+## [12.1.1.6] 20221017
+### Added
+- Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
+- ESP32 Automatically resize FS to max flash size at initial boot (#16838)
+- Command ``SspmPowerOnState<relay> 0|1|2`` to set Sonoff SPM 4Relay module v1.2.0 power on state overruling tasmota  global power on state. 0 = Off, 1 = On, 2 = Saved state (#13447)
+- Support for Flash size 32/64/128 MB in Partition Wizard and auto-resize
 
 ## [12.1.1.5] 20221013
 ### Added
@@ -87,8 +105,6 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 NimBLE library from v1.3.6 to v1.4.0
-
-## [Released]
 
 ## [12.1.1] 20220825
 - Release Patricia

@@ -506,6 +506,108 @@ class Partition
     self.otadata.save()
   end
 
+  # Internal: returns which flash sector contains the partition definition
+  # Returns 0 or 1, or `nil` if something went wrong
+  # Note: partition flash sector vary from ESP32 to ESP32C3/S3
+  static def get_flash_definition_sector()
+    import flash
+    for i:0..1
+      var offset = i * 0x1000
+      if flash.read(offset, 1) == bytes('E9')   return offset end
+    end
+  end  
+
+  # Internal: returns the maximum flash size possible
+  # Returns max flash size ok kB
+  def get_max_flash_size_k()
+    var flash_size_k = tasmota.memory()['flash']
+    var flash_size_real_k = tasmota.memory().find("flash_real", flash_size_k)
+    if (flash_size_k != flash_size_real_k) && self.get_flash_definition_sector() != nil
+      flash_size_k = flash_size_real_k    # try to expand the flash size definition
+    end
+    return flash_size_k
+  end
+
+  # Internal: returns the unallocated flash size (in kB) beyond the file-system
+  # this indicates that the file-system can be extended (although erased at the same time)
+  def get_unallocated_k()
+    var last_slot = self.slots[-1]
+    if last_slot.is_spiffs()
+      # verify that last slot is filesystem
+      var flash_size_k = self.get_max_flash_size_k()
+      var partition_end_k = (last_slot.start + last_slot.sz) / 1024   # last kb used for fs
+      if  partition_end_k < flash_size_k
+        return flash_size_k - partition_end_k
+      end
+    end
+    return 0
+  end
+
+  #- ---------------------------------------------------------------------- -#
+  #- Resize flash definition if needed
+  #- ---------------------------------------------------------------------- -#
+  def resize_max_flash_size_k()
+    var flash_size_k = tasmota.memory()['flash']
+    var flash_size_real_k = tasmota.memory().find("flash_real", flash_size_k)
+    var flash_definition_sector = self.get_flash_definition_sector()
+    if (flash_size_k != flash_size_real_k) && flash_definition_sector != nil
+      import flash
+      import string
+
+      flash_size_k = flash_size_real_k    # try to expand the flash size definition
+
+      var flash_def = flash.read(flash_definition_sector, 4)
+      var size_before = flash_def[3]
+
+      var flash_size_code
+      var flash_size_real_m = flash_size_real_k / 1024    # size in MB
+      if   flash_size_real_m == 1      flash_size_code = 0x00
+      elif flash_size_real_m == 2      flash_size_code = 0x10
+      elif flash_size_real_m == 4      flash_size_code = 0x20
+      elif flash_size_real_m == 8      flash_size_code = 0x30
+      elif flash_size_real_m == 16     flash_size_code = 0x40
+      elif flash_size_real_m == 32     flash_size_code = 0x50
+      elif flash_size_real_m == 64     flash_size_code = 0x60
+      elif flash_size_real_m == 128    flash_size_code = 0x70
+      end
+
+      if flash_size_code != nil
+        # apply the update
+        var old_def = flash_def[3]
+        flash_def[3] = (flash_def[3] & 0x0F) | flash_size_code
+        flash.write(flash_definition_sector, flash_def)
+        tasmota.log(string.format("UPL: changing flash definition from 0x02X to 0x%02X", old_def, flash_def[3]), 3)
+      else
+        raise "internal_error", "wrong flash size "+str(flash_size_real_m)
+      end
+    end
+  end
+
+  # Called at first boot
+  # Try to expand FS to max of flash size
+  def resize_fs_to_max()
+    import string
+    try
+      var unallocated = self.get_unallocated_k()
+      if unallocated <= 0     return nil end
+
+      tasmota.log(string.format("BRY: Trying to expand FS by %i kB", unallocated), 2)
+
+      self.resize_max_flash_size_k()   # resize if needed
+      # since unallocated succeeded, we know the last slot is FS
+      var fs_slot = self.slots[-1]
+      fs_slot.sz += unallocated * 1024
+      self.save()
+      self.invalidate_spiffs()   # erase SPIFFS or data is corrupt
+
+      # restart
+      tasmota.global.restart_flag = 2
+      tasmota.log("BRY: Successfully resized FS, restarting", 2)
+    except .. as e, m
+      tasmota.log(string.format("BRY: Exception> '%s' - %s", e, m), 2)
+    end
+  end
+
   #- invalidate SPIFFS partition to force format at next boot -#
   #- we simply erase the first byte of the first 2 blocks in the SPIFFS partition -#
   def invalidate_spiffs()

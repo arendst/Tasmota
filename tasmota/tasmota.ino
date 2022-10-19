@@ -114,6 +114,7 @@ struct WIFI {
   uint8_t wifi_test_counter = 0;
   uint16_t save_data_counter = 0;
   uint8_t old_wificonfig = MAX_WIFI_OPTION; // means "nothing yet saved here"
+  uint8_t phy_mode = 0;
   bool wifi_test_AP_TIMEOUT = false;
   bool wifi_Test_Restart = false;
   bool wifi_Test_Save_SSID2 = false;
@@ -157,6 +158,7 @@ RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
 #endif  // ESP32
 
 struct TIME_T {
+  uint32_t      nanos;
   uint8_t       second;
   uint8_t       minute;
   uint8_t       hour;
