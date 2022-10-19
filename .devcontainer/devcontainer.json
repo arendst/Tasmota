@@ -1,0 +1,54 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json
+{
+  "name": "PlatformIO",
+  "build": {
+    "dockerfile": "Dockerfile",
+    // Update 'VARIANT' to pick a Python version: 3, 3.9, 3.8, 3.7, 3.6.
+    // Append -bullseye or -buster to pin to an OS version.
+    // Use -bullseye variants on local on arm64/Apple Silicon.
+    "args": {
+      "VARIANT": "3.9-bullseye",
+      "PIO_VERSION": "6.1.3"
+    }
+  },
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      // Set *default* container specific settings.json values on container create.
+      "settings": {
+        // Use fixed port for pio home
+        "platformio-ide.pioHomeServerHttpPort": 8008,
+        "platformio-ide.disablePIOHomeStartup": true
+      },
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        "ms-vscode.cpptools",
+        "platformio.platformio-ide"
+      ]
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [
+    // PIO Home is blank if its port isn't exposed from within the container.
+    8008
+  ],
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "gcc -v",
+
+  // Comment out this line to run as root instead.
+  "remoteUser": "vscode",
+  // Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+  // "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+  "runArgs": [
+    // --privileged grants access to /dev on host. Arduino will most likely be /dev/ttysN
+    "--privileged"
+  ],
+  "mounts": [
+    // Mount the host's device to this container's.
+    "source=/dev,target=/dev,type=bind,consistency=consistent"
+  ],
+  "postCreateCommand": "mkdir -p $HOME/Documents/PlatformIO && ln -s $(pwd) $HOME/Documents/PlatformIO/Projects"
+  //"postAttachCommand": "sudo service udev restart"
+}
