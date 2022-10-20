@@ -47,7 +47,7 @@ void MGSv2Prepare(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_MGS_GAS[] PROGMEM = "{s}MGSv2 %s{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_MGS_V2_GAS[] PROGMEM = "{s}MGSv2 %s{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_WEBSERVER
 
 void MGSv2Show(bool json)
@@ -60,10 +60,10 @@ void MGSv2Show(bool json)
     ResponseAppend_P(PSTR(",\"CO\":%d"), gasGMXXX.measure_CO());
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_MGS_GAS, "NO2", gasGMXXX.measure_NO2());
-    WSContentSend_PD(HTTP_MGS_GAS, "C2H5OH", gasGMXXX.measure_C2H5OH());
-    WSContentSend_PD(HTTP_MGS_GAS, "VOC", gasGMXXX.measure_VOC());
-    WSContentSend_PD(HTTP_MGS_GAS, "CO", gasGMXXX.measure_CO());
+    WSContentSend_PD(HTTP_MGS_V2_GAS, "NO2", gasGMXXX.measure_NO2());
+    WSContentSend_PD(HTTP_MGS_V2_GAS, "C2H5OH", gasGMXXX.measure_C2H5OH());
+    WSContentSend_PD(HTTP_MGS_V2_GAS, "VOC", gasGMXXX.measure_VOC());
+    WSContentSend_PD(HTTP_MGS_V2_GAS, "CO", gasGMXXX.measure_CO());
 #endif // USE_WEBSERVER
   }
 }
