@@ -1,0 +1,8 @@
+build:
+  tags:
+    - nas
+  script:
+    - wget -c https://files.seeedstudio.com/arduino/seeed-arduino-ci.sh
+    - chmod +x seeed-arduino-ci.sh
+    - bash $PWD/seeed-arduino-ci.sh test
+

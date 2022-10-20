@@ -1,0 +1,21 @@
+
+language: generic
+dist: bionic
+sudo: false
+cache:
+  directories:
+    - ~/arduino_ide
+    - ~/.arduino15/packages/
+
+before_install:
+   - wget -c https://files.seeedstudio.com/arduino/seeed-arduino-ci.sh
+
+script:
+   - chmod +x seeed-arduino-ci.sh
+   - cat $PWD/seeed-arduino-ci.sh
+   - bash $PWD/seeed-arduino-ci.sh test
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change

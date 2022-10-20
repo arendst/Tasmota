@@ -1,0 +1,33 @@
+  
+#######################################
+# Syntax Coloring Map For Grove multichannel_gas_sensor V2.0
+#######################################
+Multichannel_Gas_GMXXX	KEYWORD1
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+gas	KEYWORD1
+GAS_GMXXX	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+getGM102B	KEYWORD2
+getGM302B	KEYWORD2
+getGM402B	KEYWORD2
+getGM502B	KEYWORD2
+getGM702B	KEYWORD2
+getGM802B	KEYWORD2
+
+preheated	KEYWORD2
+unPreheated	KEYWORD2
+changeGMXXXAddr	KEYWORD2
+calcVol	KEYWORD2
+setAddress	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
