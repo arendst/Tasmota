@@ -1,4 +1,0 @@
-<map id="IRGoodweatherAc" name="IRGoodweatherAc">
-<area shape="rect" id="node1" title="Class for handling detailed Goodweather A/C messages." alt="" coords="5,95,144,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="41,5,108,32"/>
-</map>

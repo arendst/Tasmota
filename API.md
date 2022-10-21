@@ -14,8 +14,8 @@ Callback Id                 | Bool | xdrv | xsns | xnrg | xlgt | Description
 ----------------------------|------|------|------|------|------|----------------------------------
 FUNC_SETTINGS_OVERRIDE      |      |  x   |      |      |      | Override start-up settings
 FUNC_PIN_STATE              |  x   |  1   |  2   |      |      | At GPIO configuration
-FUNC_MODULE_INIT            |  x   |  1   |      |      |  2   | Init module specific parameters
-FUNC_PRE_INIT               |      |  1   |      |  2   |      | Once GPIO have been established
+FUNC_MODULE_INIT            |  x   |  3   |  1   |      |  2   | Init module specific parameters
+FUNC_PRE_INIT               |      |  1   |  3   |  2   |      | Once GPIO have been established
 FUNC_INIT                   |      |  1   |  3   |  2   |      | At end of initialisation
 FUNC_LOOP                   |      |  1   |  2   |      |      | In main loop
 FUNC_EVERY_50_MSECOND       |      |  1   |  2   |      |      |
@@ -34,7 +34,7 @@ FUNC_COMMAND_SENSOR         |  x   |      |  x   |      |      | When command Se
 FUNC_MQTT_SUBSCRIBE         |      |  x   |      |      |      | At end of MQTT subscriptions
 FUNC_MQTT_INIT              |      |  x   |      |      |      | Once at end of MQTT connection
 FUNC_MQTT_DATA              |  x   |  x   |      |      |      | Before decoding command
-FUNC_SET_POWER              |      |  x   |      |      |      | Before setting relays
+FUNC_SET_POWER              |      |  1   |  2   |      |      | Before setting relays
 FUNC_SET_DEVICE_POWER       |  x   |  x   |      |      |      | Set relay
 FUNC_SHOW_SENSOR            |      |  x   |      |      |      | When FUNC_JSON_APPEND completes
 FUNC_ANY_KEY                |      |  x   |      |      |      |
@@ -49,6 +49,8 @@ FUNC_WEB_ADD_MAIN_BUTTON    |      |  1   |  2   |      |      | Add a main butt
 FUNC_WEB_ADD_HANDLER        |      |  1   |  2   |      |      | Add a webserver handler
 FUNC_SET_CHANNELS           |      |  2   |      |      |  1   |
 FUNC_SET_SCHEME             |      |      |      |      |  x   |
+FUNC_HOTPLUG_SCAN           |      |      |  x   |      |      |
+FUNC_DEVICE_GROUP_ITEM      |      |  x   |      |      |      |
 
 The numbers represent the sequence of execution
 
@@ -89,12 +91,15 @@ CFG: Loaded from flash at FB, Count 1581
 xdrv - FUNC_SETTINGS_OVERRIDE
 xdrv - FUNC_PIN_STATE
 xsns - FUNC_PIN_STATE
+xsns - FUNC_MODULE_INIT
 xdrv - FUNC_MODULE_INIT
 xlgt - FUNC_MODULE_INIT
 xdrv - FUNC_PRE_INIT
 xnrg - FUNC_PRE_INIT
+xsns - FUNC_PRE_INIT
 SRC: Restart
 xdrv - FUNC_SET_POWER
+xsns - FUNC_SET_POWER
 xlgt - FUNC_SET_CHANNELS
 xdrv - FUNC_SET_DEVICE_POWER
 Project tasmota Wemos 2 Version 7.0.0.3(tasmota)-STAGE

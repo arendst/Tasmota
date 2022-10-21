@@ -1,3 +1,0 @@
-//
-// Compat with ESP32
-//

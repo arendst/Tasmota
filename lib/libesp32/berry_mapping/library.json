@@ -1,0 +1,17 @@
+{
+    "name": "Berry mapping to C",
+    "version": "1.0",
+    "description": "Mapping to C functions",
+    "license": "MIT",
+    "homepage": "https://github.com/berry-lang/berry_mapping",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "authors":
+    {
+      "name": "Stephan Hadinger",
+      "maintainer": true
+    },
+    "build": {
+      "flags": [ "-I$PROJECT_DIR/include" ]
+    }
+  }

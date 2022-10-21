@@ -1,0 +1,1244 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="API Reference Documentation for FreeType-2.10.4">
+      
+      
+      
+        <meta name="author" content="FreeType Contributors">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="images/favico.ico">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
+    
+    
+      
+        <title>Error Enumerations - FreeType-2.10.4 API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/application.adb8469c.css">
+      
+        <link rel="stylesheet" href="assets/stylesheets/application-palette.a8b3c06d.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#4caf50">
+      
+    
+    
+      <script src="assets/javascripts/modernizr.86422ebf.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Noto Serif","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="stylesheets/extra.css">
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="green" data-md-color-accent="green">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#error-enumerations" tabindex="0" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="." title="FreeType-2.10.4 API Reference" aria-label="FreeType-2.10.4 API Reference" class="md-header-nav__button md-logo">
+          
+            <img alt="logo" src="images/favico.ico" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              FreeType-2.10.4 API Reference
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Error Enumerations
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main" role="main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="." title="FreeType-2.10.4 API Reference" class="md-nav__button md-logo">
+      
+        <img alt="logo" src="images/favico.ico" width="48" height="48">
+      
+    </a>
+    FreeType-2.10.4 API Reference
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="index.html" title="TOC" class="md-nav__link">
+      TOC
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="ft2-index.html" title="Index" class="md-nav__link">
+      Index
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      General Remarks
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        General Remarks
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-header_inclusion.html" title="FreeType's header inclusion scheme" class="md-nav__link">
+      FreeType's header inclusion scheme
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-user_allocation.html" title="User allocation" class="md-nav__link">
+      User allocation
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Core API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Core API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-version.html" title="FreeType Version" class="md-nav__link">
+      FreeType Version
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-basic_types.html" title="Basic Data Types" class="md-nav__link">
+      Basic Data Types
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-base_interface.html" title="Base Interface" class="md-nav__link">
+      Base Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_variants.html" title="Unicode Variation Sequences" class="md-nav__link">
+      Unicode Variation Sequences
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-color_management.html" title="Glyph Color Management" class="md-nav__link">
+      Glyph Color Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-layer_management.html" title="Glyph Layer Management" class="md-nav__link">
+      Glyph Layer Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_management.html" title="Glyph Management" class="md-nav__link">
+      Glyph Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-mac_specific.html" title="Mac Specific Interface" class="md-nav__link">
+      Mac Specific Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-sizes_management.html" title="Size Management" class="md-nav__link">
+      Size Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-header_file_macros.html" title="Header File Macros" class="md-nav__link">
+      Header File Macros
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Format-Specific API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Format-Specific API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-multiple_masters.html" title="Multiple Masters" class="md-nav__link">
+      Multiple Masters
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-truetype_tables.html" title="TrueType Tables" class="md-nav__link">
+      TrueType Tables
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-type1_tables.html" title="Type 1 Tables" class="md-nav__link">
+      Type 1 Tables
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-sfnt_names.html" title="SFNT Names" class="md-nav__link">
+      SFNT Names
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bdf_fonts.html" title="BDF and PCF Files" class="md-nav__link">
+      BDF and PCF Files
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cid_fonts.html" title="CID Fonts" class="md-nav__link">
+      CID Fonts
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-pfr_fonts.html" title="PFR Fonts" class="md-nav__link">
+      PFR Fonts
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-winfnt_fonts.html" title="Window FNT Files" class="md-nav__link">
+      Window FNT Files
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-font_formats.html" title="Font Formats" class="md-nav__link">
+      Font Formats
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gasp_table.html" title="Gasp Table" class="md-nav__link">
+      Gasp Table
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Controlling FreeType Modules
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Controlling FreeType Modules
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-auto_hinter.html" title="The auto-hinter" class="md-nav__link">
+      The auto-hinter
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cff_driver.html" title="The CFF driver" class="md-nav__link">
+      The CFF driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-t1_cid_driver.html" title="The Type 1 and CID drivers" class="md-nav__link">
+      The Type 1 and CID drivers
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-tt_driver.html" title="The TrueType driver" class="md-nav__link">
+      The TrueType driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-pcf_driver.html" title="The PCF driver" class="md-nav__link">
+      The PCF driver
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-properties.html" title="Driver properties" class="md-nav__link">
+      Driver properties
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-parameter_tags.html" title="Parameter Tags" class="md-nav__link">
+      Parameter Tags
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-lcd_rendering.html" title="Subpixel Rendering" class="md-nav__link">
+      Subpixel Rendering
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Cache Sub-System
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Cache Sub-System
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-cache_subsystem.html" title="Cache Sub-System" class="md-nav__link">
+      Cache Sub-System
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Support API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Support API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-computations.html" title="Computations" class="md-nav__link">
+      Computations
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-list_processing.html" title="List Processing" class="md-nav__link">
+      List Processing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-outline_processing.html" title="Outline Processing" class="md-nav__link">
+      Outline Processing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-quick_advance.html" title="Quick retrieval of advance values" class="md-nav__link">
+      Quick retrieval of advance values
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bitmap_handling.html" title="Bitmap Handling" class="md-nav__link">
+      Bitmap Handling
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-raster.html" title="Scanline Converter" class="md-nav__link">
+      Scanline Converter
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-glyph_stroker.html" title="Glyph Stroker" class="md-nav__link">
+      Glyph Stroker
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-system_interface.html" title="System Interface" class="md-nav__link">
+      System Interface
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-module_management.html" title="Module Management" class="md-nav__link">
+      Module Management
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gzip.html" title="GZIP Streams" class="md-nav__link">
+      GZIP Streams
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-lzw.html" title="LZW Streams" class="md-nav__link">
+      LZW Streams
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-bzip2.html" title="BZIP2 Streams" class="md-nav__link">
+      BZIP2 Streams
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" checked>
+    
+    <label class="md-nav__link" for="nav-9">
+      Error Codes
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        Error Codes
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Error Enumerations
+      </label>
+    
+    <a href="ft2-error_enumerations.html" title="Error Enumerations" class="md-nav__link md-nav__link--active">
+      Error Enumerations
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_error_string" class="md-nav__link">
+    FT_Error_String
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-error_code_values.html" title="Error Code Values" class="md-nav__link">
+      Error Code Values
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
+    
+    <label class="md-nav__link" for="nav-10">
+      Miscellaneous
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-10">
+        Miscellaneous
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-gx_validation.html" title="TrueTypeGX/AAT Validation" class="md-nav__link">
+      TrueTypeGX/AAT Validation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-incremental.html" title="Incremental Loading" class="md-nav__link">
+      Incremental Loading
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-truetype_engine.html" title="The TrueType Engine" class="md-nav__link">
+      The TrueType Engine
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ft2-ot_validation.html" title="OpenType Validation" class="md-nav__link">
+      OpenType Validation
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synopsis" class="md-nav__link">
+    Synopsis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ft_error_string" class="md-nav__link">
+    FT_Error_String
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <p><a href="https://www.freetype.org">FreeType</a> &raquo; <a href="../">Docs</a> &raquo; <a href="index.html#error-codes">Error Codes</a> &raquo; Error Enumerations</p>
+<hr />
+<h1 id="error-enumerations">Error Enumerations<a class="headerlink" href="#error-enumerations" title="Permanent link">&para;</a></h1>
+<h2 id="synopsis">Synopsis<a class="headerlink" href="#synopsis" title="Permanent link">&para;</a></h2>
+<p>The header file <code>fterrors.h</code> (which is automatically included by <code>freetype.h</code> defines the handling of FreeType's enumeration constants. It can also be used to generate error message strings with a small macro trick explained below.</p>
+<p><strong>Error Formats</strong></p>
+<p>The configuration macro <code>FT_CONFIG_OPTION_USE_MODULE_ERRORS</code> can be defined in <code>ftoption.h</code> in order to make the higher byte indicate the module where the error has happened (this is not compatible with standard builds of FreeType&nbsp;2, however). See the file <code>ftmoderr.h</code> for more details.</p>
+<p><strong>Error Message Strings</strong></p>
+<p>Error definitions are set up with special macros that allow client applications to build a table of error message strings. The strings are not included in a normal build of FreeType&nbsp;2 to save space (most client applications do not use them).</p>
+<p>To do so, you have to define the following macros before including this file.
+<div class="highlight"><pre><span></span><code>  FT_ERROR_START_LIST
+</code></pre></div></p>
+<p>This macro is called before anything else to define the start of the error list. It is followed by several <code>FT_ERROR_DEF</code> calls.
+<div class="highlight"><pre><span></span><code>  FT_ERROR_DEF( e, v, s )
+</code></pre></div></p>
+<p>This macro is called to define one single error. &lsquo;e&rsquo; is the error code identifier (e.g., <code>Invalid_Argument</code>), &lsquo;v&rsquo; is the error's numerical value, and &lsquo;s&rsquo; is the corresponding error string.
+<div class="highlight"><pre><span></span><code>  FT_ERROR_END_LIST
+</code></pre></div></p>
+<p>This macro ends the list.</p>
+<p>Additionally, you have to undefine <code>FTERRORS_H_</code> before #including this file.</p>
+<p>Here is a simple example.
+<div class="highlight"><pre><span></span><code>  #undef FTERRORS_H_
+  #define FT_ERRORDEF( e, v, s )  { e, s },
+  #define FT_ERROR_START_LIST     {
+  #define FT_ERROR_END_LIST       { 0, NULL } };
+
+  const struct
+  {
+    int          err_code;
+    const char*  err_msg;
+  } ft_errors[] =
+
+  #include &lt;freetype/fterrors.h&gt;
+</code></pre></div></p>
+<p>An alternative to using an array is a switch statement.
+<div class="highlight"><pre><span></span><code>  #undef FTERRORS_H_
+  #define FT_ERROR_START_LIST     switch ( error_code ) {
+  #define FT_ERRORDEF( e, v, s )    case v: return s;
+  #define FT_ERROR_END_LIST       }
+</code></pre></div></p>
+<p>If you use <code>FT_CONFIG_OPTION_USE_MODULE_ERRORS</code>, <code>error_code</code> should be replaced with <code>FT_ERROR_BASE(error_code)</code> in the last example.</p>
+<h2 id="ft_error_string">FT_Error_String<a class="headerlink" href="#ft_error_string" title="Permanent link">&para;</a></h2>
+<p>Defined in FT_ERRORS_H (freetype/fterrors.h).</p>
+<div class = "codehilite"><pre><code>  FT_EXPORT( <span class="keyword">const</span> <span class="keyword">char</span>* )
+  <b>FT_Error_String</b>( <a href="ft2-basic_types.html#ft_error">FT_Error</a>  error_code );
+
+FT_END_HEADER
+
+
+#<span class="keyword">endif</span> /* FT_ERR_PROTOS_DEFINED */
+
+#<span class="keyword">endif</span> /* FT_INCLUDE_ERR_PROTOS */
+
+#<span class="keyword">endif</span> /* !(FTERRORS_H_ &amp;&amp; __FTERRORS_H__) */
+
+
+/* END */
+</code></pre></div>
+
+<p>Retrieve the description of a valid FreeType error code.</p>
+<h4>input</h4>
+
+<table class="fields">
+<tr><td class="val" id="error_code">error_code</td><td class="desc">
+<p>A valid FreeType error code.</p>
+</td></tr>
+</table>
+
+<h4>return</h4>
+
+<p>A C&nbsp;string or <code>NULL</code>, if any error occurred.</p>
+<h4>note</h4>
+
+<p>FreeType has to be compiled with <code>FT_CONFIG_OPTION_ERROR_STRINGS</code> or <code>FT_DEBUG_LEVEL_ERROR</code> to get meaningful descriptions. &lsquo;error_string&rsquo; will be <code>NULL</code> otherwise.</p>
+<p>Module identification will be ignored:
+<div class="highlight"><pre><span></span><code>  <span class="n">strcmp</span><span class="p">(</span> <span class="n">FT_Error_String</span><span class="p">(</span>  <span class="n">FT_Err_Unknown_File_Format</span> <span class="p">),</span>
+          <span class="n">FT_Error_String</span><span class="p">(</span> <span class="n">BDF_Err_Unknown_File_Format</span> <span class="p">)</span> <span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">;</span>
+</code></pre></div></p>
+<hr>
+                
+                  
+                
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="ft2-bzip2.html" title="BZIP2 Streams" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                BZIP2 Streams
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="ft2-error_code_values.html" title="Error Code Values" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Error Code Values
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright 2020 <a href = "https://www.freetype.org/license.html">The FreeType Project</a>.
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="assets/javascripts/application.c33a9706.js"></script>
+      
+      <script>app.initialize({version:"1.1",url:{base:"."}})</script>
+      
+        <script src="javascripts/extra.js"></script>
+      
+    
+  </body>
+</html>

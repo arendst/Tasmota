@@ -1,0 +1,17 @@
+{
+  "name":"LVGL_assets",
+  "description":"Assets for LVGL on ESP32",
+  "keywords":"lvgl, display",
+  "authors":
+  {
+    "name": "xx",
+    "maintainer": true
+  },
+  "version": "7.0",
+  "license": "MIT License",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "build": {
+    "flags": [ "-DLV_LVGL_H_INCLUDE_SIMPLE" ]
+  }
+}

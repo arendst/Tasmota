@@ -1,0 +1,23 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  Unit_Tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install the Google test suite
+      env:
+        MAKEFLAGS: "-j 2"
+      run: (cd test; make install-googletest)
+    - name: Build and run the library unit tests.
+      env:
+        MAKEFLAGS: "-j 2"
+      run: (cd test; make run)
+    - name: Build and run the tools unit tests.
+      env:
+        MAKEFLAGS: "-j 2"
+      run: (cd tools; make all; make run_tests)

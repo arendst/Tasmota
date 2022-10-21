@@ -1,0 +1,16 @@
+{
+  "name": "ESP Mail Client",
+  "version": "1.2.0",
+  "keywords": "communication, email, imap, smtp, esp32, esp8266, arduino",
+  "description": "Mail Client Arduino Library for Espressif ESP32 and ESP8266 devices. This library allows the ESP32 and ESP8266 devices to send and read Email with the many options and features e.g. the attachments, inline images, embeded rfc822 messages are supported for upload when sending and download when reading the Emails.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mobizt/ESP-Mail-Client.git"
+  },
+  "authors": [{
+    "name": "Mobizt",
+    "email": "suwatchai@outlook.com"
+  }],
+  "frameworks": "arduino",
+  "platforms": "espressif32, espressif8266"
+}

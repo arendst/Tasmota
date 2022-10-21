@@ -3,7 +3,7 @@
 """
   serial-plotter.py - for Tasmota
 
-  Copyright (C) 2020  Christian Baars
+  Copyright (C) 2021  Christian Baars
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -189,4 +189,3 @@ text_box.on_submit(submit)
 
 if ser.is_open==True:
   plt.show()
-  

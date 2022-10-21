@@ -1,0 +1,18 @@
+{
+    "name": "ESP KNX IP Library",
+    "keywords": "knx, ethernet, mqtt, m2m, iot",
+    "description": "ESP8266 library for KNX/IP communication.",
+    "authors": [
+        {
+            "name": "Nico Weichbrodt",
+            "maintainer": true
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/envy/esp-knx-ip.git"
+    },
+    "version": "0.5.2",
+    "frameworks": "arduino",
+    "platforms": ["espressif8266", "espressif32"]
+}

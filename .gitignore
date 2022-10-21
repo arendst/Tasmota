@@ -1,24 +1,32 @@
 ## OS specific ########
 .DS_Store
 .fuse_hidden*
+
+## Compilation artefacts ########
 *.pyc
+*.d
+*.o
+*.gcno
+*.gcda
 
 ## Project files ######
-.pioenvs
-.piolibdeps
+.platformio
+.pio
 .clang_complete
 .gcc-flags.json
 .cache
+data
+unpacked_fs
 tasmota/user_config_override.h
 build
-build_output
+build_output/*
 firmware.map
 firmware.asm
-tasmota*.bin
-tasmota*.bin.gz
-tasmota*.map
+tasmota/tasmota.ino.cpp
 platformio_override.ini
 platformio_tasmota_cenv.ini
+lib/libesp32/berry/generate/*
+lib/libesp32/berry/berry
 
 ## Visual Studio Code specific ######
 .vscode
