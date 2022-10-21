@@ -197,6 +197,7 @@ enum UserSelectablePins {
   GPIO_MBR_TX, GPIO_MBR_RX,            // Modbus Bridge Serial interface
   GPIO_ADE7953_RST,                    // ADE7953 Reset
   GPIO_NRG_MBS_TX, GPIO_NRG_MBS_RX,    // Generic Energy Modbus device
+  GPIO_ADE7953_CS,                     // ADE7953 SPI Chip Select
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -441,6 +442,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MBR_TX "|" D_SENSOR_MBR_RX "|"
   D_SENSOR_ADE7953_RST "|"
   D_SENSOR_NRG_MBS_TX "|" D_SENSOR_NRG_MBS_RX "|"
+  D_SENSOR_ADE7953_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -776,10 +778,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_I2C) && defined(USE_ADE7880)
   AGPIO(GPIO_ADE7880_IRQ) + 2,  // ADE7880 IRQ - (1 = IRQ1, 2 = IRQ2)
 #endif
-#if defined(USE_I2C) && defined(USE_ADE7953)
-  AGPIO(GPIO_ADE7953_IRQ) + 3,  // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM)
+#ifdef USE_ADE7953
+#if defined(USE_I2C) || defined(USE_SPI)
+  AGPIO(GPIO_ADE7953_IRQ) + 5,  // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM)
   AGPIO(GPIO_ADE7953_RST),    // ADE7953 Reset
-#endif
+#ifdef USE_SPI
+  AGPIO(GPIO_ADE7953_CS),     // ADE7953 SPI Chip Select
+#endif  // USE_SPI
+#endif  // USE_I2C or USE_SPI
+#endif  // USE_ADE7953
 #ifdef USE_CSE7761
   AGPIO(GPIO_CSE7761_TX),     // CSE7761 Serial interface (Dual R3)
   AGPIO(GPIO_CSE7761_RX),     // CSE7761 Serial interface (Dual R3)
