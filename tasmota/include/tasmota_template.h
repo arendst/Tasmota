@@ -783,7 +783,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_ADE7953_IRQ) + 5,  // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM)
   AGPIO(GPIO_ADE7953_RST),    // ADE7953 Reset
 #ifdef USE_SPI
-  AGPIO(GPIO_ADE7953_CS),     // ADE7953 SPI Chip Select
+  AGPIO(GPIO_ADE7953_CS) + 2,  // ADE7953 SPI Chip Select (1 = CS1 (1PM, 2PM), 2 = CS2 (2PM))
 #endif  // USE_SPI
 #endif  // USE_I2C or USE_SPI
 #endif  // USE_ADE7953
