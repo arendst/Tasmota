@@ -35,7 +35,9 @@
 
 #define XSNS_06          6
 
+#ifndef DHT_MAX_SENSORS
 #define DHT_MAX_SENSORS  4
+#endif
 #define DHT_MAX_RETRY    8
 
 uint8_t dht_data[5];
