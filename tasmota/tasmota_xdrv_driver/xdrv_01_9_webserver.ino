@@ -341,6 +341,14 @@ const char HTTP_FORM_END[] PROGMEM =
   "<button name='save' type='submit' class='button bgrn'>" D_SAVE "</button>"
   "</form></fieldset>";
 
+#ifdef ESP8266
+#define D_UPLOAD_ACCEPT " accept='.bin,.bin.gz,.hex,.ota'"
+#elif defined(ESP32)
+#define D_UPLOAD_ACCEPT " accept='.bin,.hex'"
+#else
+#define D_UPLOAD_ACCEPT ""
+#endif
+
 const char HTTP_FORM_RST[] PROGMEM =
   "<div id='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_RESTORE_CONFIGURATION "&nbsp;</b></legend>";
@@ -354,7 +362,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
 const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
-  "<br><input type='file' name='u2'><br>"
+  "<br><input type='file' name='u2'" D_UPLOAD_ACCEPT "><br>"
   "<br><button type='submit' "
   "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.submit();'"
     ">" D_START " %s</button></form>"
@@ -365,7 +373,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
 // upload via factory partition
 const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
   "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
-  "<br><input type='file' name='u2'><br>"
+  "<br><input type='file' name='u2'" D_UPLOAD_ACCEPT "><br>"
   "<br><button type='submit' "
   "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;return upl(this);'"
     ">" D_START " %s</button></form>"
