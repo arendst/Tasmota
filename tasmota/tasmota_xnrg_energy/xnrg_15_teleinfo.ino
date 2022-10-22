@@ -409,10 +409,19 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
             }
 
-            // Contract subscribed (Power)
-            else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
+            // Contract subscribed (I Max)
+            else if (ilabel == LABEL_ISOUSC)
             {
                 isousc = atoi( me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+            }
+
+            // Contract subscribed (Power in KVA)
+            else if (ilabel == LABEL_PREF)
+            {
+                // Convert KVA to A
+                isousc  = atoi( me->value) * 5  ;
+
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
