@@ -21,17 +21,47 @@
 #define _NIMBLE_PORT_FREERTOS_H
 
 #include "nimble/nimble/include/nimble/nimble_npl.h"
+#include "nimble/porting/nimble/include/syscfg/syscfg.h"
+
+#ifdef ESP_PLATFORM
+#include "esp_err.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifdef ESP_PLATFORM
+/**
+ * @brief esp_nimble_enable - Initialize the NimBLE host task
+ *
+ * @param host_task
+ * @return esp_err_t
+ */
+esp_err_t esp_nimble_enable(void *host_task);
+
+/**
+ * @brief esp_nimble_disable - Disable the NimBLE host task
+ *
+ * @return esp_err_t
+ */
+esp_err_t esp_nimble_disable(void);
+#endif
+
 void nimble_port_freertos_init(TaskFunction_t host_task_fn);
 void nimble_port_freertos_deinit(void);
+
+#if CONFIG_NIMBLE_STACK_USE_MEM_POOLS
+void npl_freertos_funcs_init(void);
+void npl_freertos_funcs_deinit(void);
+int npl_freertos_mempool_init(void);
+struct npl_funcs_t * npl_freertos_funcs_get(void);
+#endif
+
 #ifndef ESP_PLATFORM
 UBaseType_t nimble_port_freertos_get_ll_hwm(void);
-#endif
 UBaseType_t nimble_port_freertos_get_hs_hwm(void);
+#endif
 
 #ifdef __cplusplus
 }

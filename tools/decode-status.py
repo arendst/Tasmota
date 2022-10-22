@@ -197,9 +197,13 @@ a_setoption = [[
     "(MQTT) MQTT clean session (0 = default) or persistent session (1)",
     "(GUI) Disable display of GUI module name (1)",
     "(Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)",
-    "","",""
+    "(Zigbee) Disable Battery auto-probe and using auto-binding",
+    "(Zigbee) Include time in `ZbReceived` messages like other sensors",
+    "(MQTT) Retain on Status"
     ],[
-    "","","","",
+    "(ESP32) Show ESP32 internal temperature sensor",
+    "(MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -282,8 +286,8 @@ a_features = [[
     "USE_PCF85363","USE_DS3502","USE_IMPROV","USE_FLOWRATEMETER",
     "USE_BP5758D","USE_HYT","USE_SM2335","USE_DISPLAY_TM1621_SONOFF"
     ],[
-    "","","","",
-    "","","","",
+    "USE_SGP40","USE_LUXV30B","USE_CANSNIFFER","USE_QMC5883L",
+    "USE_MODBUS_ENERGY","","","",
     "","","","",
     "","","","",
     "","","","",
@@ -317,7 +321,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v12.0.2.4 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v12.1.1.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

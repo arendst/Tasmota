@@ -176,12 +176,12 @@ uint16_t MP3_Checksum(uint8_t *array)
  * define serial tx port fixed with 9600 baud
 \*********************************************************************************************/
 
-void MP3PlayerInit(void) 
+void MP3PlayerInit(void)
 {
   MP3Player = new TasmotaSerial(-1, Pin(GPIO_MP3_DFR562));
 
   // start serial communication fixed to 9600 baud
-  if (MP3Player->begin(9600)) 
+  if (MP3Player->begin(9600))
   {
     MP3Player->flush();
     delay(1000);
@@ -192,7 +192,7 @@ void MP3PlayerInit(void)
   }
 
   if (PinUsed(GPIO_MP3_DFR562_BUSY))                // optional MP3 player busy pin...
-  {  
+  {
       pinMode(Pin(GPIO_MP3_DFR562_BUSY), INPUT);    // set pin to Input
   }
 
@@ -208,10 +208,10 @@ void MP3PlayerInit(void)
  * only track,play,stop and volume supported
 \*********************************************************************************************/
 
-void MP3_SendCmd(uint8_t *scmd, uint8_t len) 
+void MP3_SendCmd(uint8_t *scmd, uint8_t len)
 {
 uint16_t sum = 0;
-  for (uint32_t cnt = 0; cnt < len; cnt++) 
+  for (uint32_t cnt = 0; cnt < len; cnt++)
   {
     sum += scmd[cnt];
   }
@@ -219,12 +219,12 @@ uint16_t sum = 0;
   MP3Player->write(scmd, len + 1);
 }
 
-void MP3_CMD(uint8_t mp3cmd, uint16_t val) 
+void MP3_CMD(uint8_t mp3cmd, uint16_t val)
 {
   uint8_t scmd[8];
   uint8_t len = 0;
   scmd[0]=0xAA;
-  switch (mp3cmd) 
+  switch (mp3cmd)
   {
     case MP3_CMD_TRACK:
       scmd[1]=0x07;
@@ -268,7 +268,7 @@ void MP3_CMD(uint8_t mp3cmd, uint16_t val)
  * {0x7e      , 0xff   , 6     , 0      , 0/1     , 0       , 0       , 0       , 0       , 0xef    };
 \*********************************************************************************************/
 
-void MP3_CMD(uint8_t mp3cmd,uint16_t val) 
+void MP3_CMD(uint8_t mp3cmd,uint16_t val)
 {
   uint8_t i       = 0;
   uint8_t cmd[10] = {0x7e,0xff,6,0,0,0,0,0,0,0xef}; // fill array
@@ -281,7 +281,7 @@ void MP3_CMD(uint8_t mp3cmd,uint16_t val)
   cmd[8]          = chks;                           // checksum low byte
   MP3Player->write(cmd, sizeof(cmd));               // write mp3 data array to player
   delay(1000);
-  if (mp3cmd == MP3_CMD_RESET) 
+  if (mp3cmd == MP3_CMD_RESET)
   {
     MP3_CMD(MP3_CMD_VOLUME, MP3_VOLUME);            // after reset set volume depending on the entry in the my_user_config.h
   }
@@ -293,17 +293,17 @@ void MP3_CMD(uint8_t mp3cmd,uint16_t val)
  * check the MP3 commands
 \*********************************************************************************************/
 
-bool MP3PlayerCmd(void) 
+bool MP3PlayerCmd(void)
 {
   char command[CMDSZ];
   bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_MP3);
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len))  // prefix
-  { 
+  {
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kMP3_Commands);
 
-    switch (command_code) 
+    switch (command_code)
     {
       case CMND_MP3_TRACK:
       case CMND_MP3_FOLDER:     // <-------- trl
@@ -312,7 +312,7 @@ bool MP3PlayerCmd(void)
       case CMND_MP3_DEVICE:
       case CMND_MP3_DAC:
         // play a track, set volume, select EQ, specify file device
-        if (XdrvMailbox.data_len > 0) 
+        if (XdrvMailbox.data_len > 0)
         {
           if (command_code == CMND_MP3_TRACK)  { MP3_CMD(MP3_CMD_TRACK,  XdrvMailbox.payload); }
           if (command_code == CMND_MP3_FOLDER) { MP3_CMD(MP3_CMD_FOLDER, XdrvMailbox.payload); }      // <-------- trl
@@ -340,7 +340,7 @@ bool MP3PlayerCmd(void)
 
 #ifdef USE_DY_SV17F
       case CMND_MP3_PLAY:
-        if (XdrvMailbox.data_len > 0) 
+        if (XdrvMailbox.data_len > 0)
         {
           uint8_t scmd[64];
           scmd[0] = 0xAA;
@@ -358,10 +358,10 @@ bool MP3PlayerCmd(void)
           }
           MP3_SendCmd(scmd, XdrvMailbox.data_len + 4);
           Response_P(S_JSON_COMMAND_SVALUE, command, XdrvMailbox.data);
-        } else 
+        } else
         {
           MP3_CMD(MP3_CMD_PLAY, 0);
-          Response_P(S_JSON_MP3_COMMAND, command, XdrvMailbox.payload)
+          Response_P(S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
         }
         break;
 #endif // USE_DY_SV17F
@@ -371,7 +371,7 @@ bool MP3PlayerCmd(void)
     	  serviced = false;
     	break;
     }
-  } else 
+  } else
     {
       return false;
     }
@@ -382,7 +382,7 @@ void MP3_EVERY_SECOND(void)
 {
 
 if (PinUsed(GPIO_MP3_DFR562_BUSY))                // optional MP3 player busy pin...      // <-------- trl
-  {      
+  {
   // Low is busy... we are using this format to allow Berry to receive a busy event
   MP2BusyFlag = digitalRead(Pin(GPIO_MP3_DFR562_BUSY));
   Response_P(PSTR("{\"MP3Player\":{\"MP3Busy\":%u}}"), MP2BusyFlag);
@@ -399,9 +399,9 @@ bool Xdrv14(uint8_t function)
 {
   bool result = false;
 
-  if (PinUsed(GPIO_MP3_DFR562)) 
+  if (PinUsed(GPIO_MP3_DFR562))
   {
-    switch (function) 
+    switch (function)
     {
       case FUNC_PRE_INIT:
         MP3PlayerInit();                              // init and start communication

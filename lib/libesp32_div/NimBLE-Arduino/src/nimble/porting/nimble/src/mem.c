@@ -261,7 +261,7 @@ mem_init_mbuf_pool(void *mem, struct os_mempool *mempool,
  *         frag = mem_split_frag(&rsp, get_mtu(), frag_alloc, NULL);
  *         if (frag == NULL) {
  *             os_mbuf_free_chain(rsp);
- *             return SYS_ENOMEM;
+ *             return OS_ENOMEM;
  *         }
  *         send_packet(frag)
  *     }
@@ -319,4 +319,27 @@ mem_split_frag(struct os_mbuf **om, uint16_t max_frag_sz,
 err:
     os_mbuf_free_chain(frag);
     return NULL;
+}
+
+/**
+ * Applies a pullup operation to the supplied mbuf and returns a pointer to the
+ * start of the mbuf data.  This is simply a convenience function which allows
+ * the user to access the mbuf data without a cast.  On failure, the provided
+ * mbuf is freed.
+ *
+ * @param om                    The mbuf to pull up.
+ * @param len                   The size of the object to pull up.
+ *
+ * @return                      The start of the pulled-up mbuf data.
+ */
+void *
+mem_pullup_obj(struct os_mbuf **om, uint16_t len)
+{
+    *om = os_mbuf_pullup(*om, len);
+    if (*om == NULL) {
+        return NULL;
+    }
+
+    return (*om)->om_data;
+
 }

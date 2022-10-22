@@ -315,16 +315,23 @@ ZBM(ZBR_ZDO_ACTIVEEPREQ, Z_SRSP | Z_ZDO, ZDO_ACTIVE_EP_REQ, Z_SUCCESS)  // 65050
 // Change #14819 - we now allow some EP to be alreaady declared
 ZBM(ZBR_ZDO_ACTIVEEPRSP_SUCESS, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP, 0x00, 0x00 /* srcAddr */, Z_SUCCESS)  // 45050000xxxx - no Ep running
 ZBM(ZBR_ZDO_ACTIVEEPRSP_OK, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP, 0x00, 0x00 /* srcAddr */, Z_SUCCESS,
-    0x00, 0x00 /* nwkaddr */, 0x02 /* activeepcount */, 0x0B, 0x01 /* the actual endpoints */)  // 25050000 - no Ep running
+    0x00, 0x00 /* nwkaddr */, 0x03 /* activeepcount */, 0xF2, 0x0B, 0x01 /* the actual endpoints */)  // 4585000000000003F20B01
 
 // Z_AF:register profile:104, ep:01
 ZBM(ZBS_AF_REGISTER01, Z_SREQ | Z_AF, AF_REGISTER, 0x01 /* endpoint */, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),    // 24000401050000000000
                         0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
-                        0x00 /* AppNumInClusters */, 0x00 /* AppNumInClusters */)
+                        0x00 /* AppNumInClusters */, 0x00 /* AppNumOutClusters */)
 ZBM(ZBR_AF_REGISTER,   Z_SRSP | Z_AF, AF_REGISTER, Z_SUCCESS)   // 640000
+ZBM(ZBR_AF_REGISTER_NOERROR,   Z_SRSP | Z_AF, AF_REGISTER)   // 6400xx  -- don't abort if an error occurs
 ZBM(ZBS_AF_REGISTER0B, Z_SREQ | Z_AF, AF_REGISTER, 0x0B /* endpoint */, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),    // 2400040B050000000000
                         0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
-                        0x00 /* AppNumInClusters */, 0x00 /* AppNumInClusters */)
+                        0x00 /* AppNumInClusters */, 0x00 /* AppNumOutClusters */)
+// Green Power endpoint 242 0xF2
+ZBM(ZBS_AF_REGISTERF2, Z_SREQ | Z_AF, AF_REGISTER, 0xF2 /* endpoint */, Z_B0(Z_PROF_GP), Z_B1(Z_PROF_GP),    // 
+                        0x05, 0x61 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
+                        0x00 /* AppNumInClusters */,
+                        0x01 /* AppNumOutClusters */,
+                        0x21,0x00)    // 0x0021
 // Z_AF:register profile:104, ep:01 - main clusters for router or device
 ZBM(ZBS_AF_REGISTER_ALL, Z_SREQ | Z_AF, AF_REGISTER, 0x01 /* endpoint */, Z_B0(Z_PROF_HA), Z_B1(Z_PROF_HA),    // 24000401050000000000
                         0x05, 0x00 /* AppDeviceId */, 0x00 /* AppDevVer */, 0x00 /* LatencyReq */,
@@ -333,7 +340,7 @@ ZBM(ZBS_AF_REGISTER_ALL, Z_SREQ | Z_AF, AF_REGISTER, 0x01 /* endpoint */, Z_B0(Z
                         0x07,0x00,  0x08,0x00,  0x0A,0x00,  0x02,0x01,      // 0x0007, 0x0008, 0x000A, 0X0102
                         0x00,0x03,  0x00,0x04,  0x02,0x04,  0x03,0x04,      // 0x0300, 0x0400, 0x0402, 0x0403
                         0x05,0x04,  0x06,0x04,                              // 0x0405, 0x0406
-                        0x00 /* AppNumInClusters */)
+                        0x00 /* AppNumOutClusters */)
 
 // Z_ZDO:mgmtPermitJoinReq
 ZBM(ZBS_PERMITJOINREQ_CLOSE, Z_SREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_REQ, 0x02 /* AddrMode */,   // 25360200000000
@@ -467,7 +474,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, kConfiguredCoord)
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)          // set any failure to ABORT
     ZI_SEND(ZBS_STARTUPFROMAPP)                   // start coordinator
-    ZI_WAIT_RECV(5000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
+    ZI_WAIT_RECV(10000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
     ZI_WAIT_UNTIL_FUNC(20000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started, max 20s
     ZI_GOTO(ZIGBEE_LABEL_COORD_STARTED)
 
@@ -487,7 +494,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(2000, ZBR_W_BDB_CHANN_OK)
     // all is good, we can start
     ZI_SEND(ZBS_BDB_START_COMMIS)                 // start coordinator
-    ZI_WAIT_RECV(5000, ZBR_BDB_START_COMMIS)      // wait for sync ack of command
+    ZI_WAIT_RECV(10000, ZBR_BDB_START_COMMIS)      // wait for sync ack of command
     ZI_WAIT_UNTIL_FUNC(20000, AREQ_STARTUPFROMAPP, &ZNP_ReceiveStateChange)      // wait for async message that coordinator started, max 20s
 
   // ======================================================================
@@ -506,14 +513,17 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
     ZI_SEND(ZBS_AF_REGISTER0B)                    // Z_AF register for endpoint 0B, profile 0x0104 Home Automation
     ZI_WAIT_RECV(1000, ZBR_AF_REGISTER)
+    ZI_SEND(ZBS_AF_REGISTERF2)                    // Z_AF register for endpoint F2, profile 0xa1e0 Green Power
+    ZI_WAIT_RECV(1000, ZBR_AF_REGISTER_NOERROR)   // don't abort if endpoint F2 was not accepted
     // Write again channels, see https://github.com/Koenkk/zigbee-herdsman/blob/37bea20ba04ee5d4938abc21a7569b43f831de32/src/adapter/z-stack/adapter/startZnp.ts#L244-L245
     ZI_SEND(ZBS_W_CHANN)                          // write CHANNEL
     ZI_WAIT_RECV(1000, ZBR_WNV_OK)
 
     // redo Z_ZDO:activeEpReq to check that Ep are available
-    ZI_SEND(ZBS_ZDO_ACTIVEEPREQ)                  // Z_ZDO:activeEpReq
-    ZI_WAIT_RECV(1000, ZBR_ZDO_ACTIVEEPREQ)
-    ZI_WAIT_UNTIL(1000, ZBR_ZDO_ACTIVEEPRSP_OK)
+    // This is not really necessary and will fail if F2 was not allowed
+    // ZI_SEND(ZBS_ZDO_ACTIVEEPREQ)                  // Z_ZDO:activeEpReq
+    // ZI_WAIT_RECV(1000, ZBR_ZDO_ACTIVEEPREQ)
+    // ZI_WAIT_UNTIL(1000, ZBR_ZDO_ACTIVEEPRSP_OK)
     ZI_SEND(ZBS_PERMITJOINREQ_CLOSE)              // Closing the Permit Join
     ZI_WAIT_RECV(1000, ZBR_PERMITJOINREQ)
     ZI_WAIT_UNTIL(1000, ZBR_PERMITJOIN_AREQ_RSP)
@@ -529,6 +539,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Load_Data, 0)
     ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
@@ -966,6 +977,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Load_Data, 0)
     ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)

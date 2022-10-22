@@ -1,5 +1,6 @@
 # class Leds_animator
 
+#@ solidify:Leds_animator,weak
 class Leds_animator
   var strip         # neopixelbus object
   var pixel_count   # number of pixels in the strip

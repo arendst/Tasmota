@@ -1,0 +1,7 @@
+{
+    "name": "WM8960",
+    "description": "Audio codec",
+    "keywords": "ESP8266, ESP32, MP3, AAC, WAV, MOD, FLAC, RTTTL, MIDI, I2S, DAC, Delta-Sigma, TTS",
+    "version": "1.0.0",
+    "frameworks": "Arduino"
+}

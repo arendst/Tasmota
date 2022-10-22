@@ -172,6 +172,8 @@ bool hasACState(const decode_type_t protocol) {
     // This is kept sorted by name
     case AMCOR:
     case ARGO:
+    case BOSCH144:
+    case CARRIER_AC128:
     case CORONA_AC:
     case DAIKIN:
     case DAIKIN128:
@@ -179,12 +181,15 @@ bool hasACState(const decode_type_t protocol) {
     case DAIKIN160:
     case DAIKIN176:
     case DAIKIN2:
+    case DAIKIN200:
     case DAIKIN216:
+    case DAIKIN312:
     case ELECTRA_AC:
     case FUJITSU_AC:
     case GREE:
     case HAIER_AC:
     case HAIER_AC_YRW02:
+    case HAIER_AC160:
     case HAIER_AC176:
     case HITACHI_AC:
     case HITACHI_AC1:
@@ -209,7 +214,9 @@ bool hasACState(const decode_type_t protocol) {
     case SAMSUNG_AC:
     case SANYO_AC:
     case SANYO_AC88:
+    case SANYO_AC152:
     case SHARP_AC:
+    case TCL96AC:
     case TCL112AC:
     case TEKNOPOINT:
     case TOSHIBA_AC:
@@ -605,9 +612,10 @@ namespace irutils {
         break;
       case decode_type_t::GREE:
         switch (model) {
-          case gree_ac_remote_model_t::YAW1F: return kYaw1fStr;
-          case gree_ac_remote_model_t::YBOFB: return kYbofbStr;
-          default:                            return kUnknownStr;
+          case gree_ac_remote_model_t::YAW1F:  return kYaw1fStr;
+          case gree_ac_remote_model_t::YBOFB:  return kYbofbStr;
+          case gree_ac_remote_model_t::YX1FSF: return kYx1fsfStr;
+          default:                             return kUnknownStr;
         }
         break;
       case decode_type_t::HAIER_AC176:

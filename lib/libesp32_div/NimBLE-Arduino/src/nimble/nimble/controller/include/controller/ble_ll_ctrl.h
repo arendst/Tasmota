@@ -39,7 +39,9 @@ extern "C" {
 #define BLE_LL_CTRL_PROC_LE_PING        (7)
 #define BLE_LL_CTRL_PROC_DATA_LEN_UPD   (8)
 #define BLE_LL_CTRL_PROC_PHY_UPDATE     (9)
-#define BLE_LL_CTRL_PROC_NUM            (10)
+#define BLE_LL_CTRL_PROC_SCA_UPDATE     (10)
+#define BLE_LL_CTRL_PROC_CIS_CREATE     (11)
+#define BLE_LL_CTRL_PROC_NUM            (12)
 #define BLE_LL_CTRL_PROC_IDLE           (255)
 
 /* Checks if a particular control procedure is running */
@@ -54,45 +56,51 @@ extern "C" {
  *  -> Opcode   (1 byte)
  *  -> Data     (0 - 26 bytes)
  */
-#define BLE_LL_CTRL_CONN_UPDATE_IND     (0)
-#define BLE_LL_CTRL_CHANNEL_MAP_REQ     (1)
-#define BLE_LL_CTRL_TERMINATE_IND       (2)
-#define BLE_LL_CTRL_ENC_REQ             (3)
-#define BLE_LL_CTRL_ENC_RSP             (4)
-#define BLE_LL_CTRL_START_ENC_REQ       (5)
-#define BLE_LL_CTRL_START_ENC_RSP       (6)
-#define BLE_LL_CTRL_UNKNOWN_RSP         (7)
-#define BLE_LL_CTRL_FEATURE_REQ         (8)
-#define BLE_LL_CTRL_FEATURE_RSP         (9)
-#define BLE_LL_CTRL_PAUSE_ENC_REQ       (10)
-#define BLE_LL_CTRL_PAUSE_ENC_RSP       (11)
-#define BLE_LL_CTRL_VERSION_IND         (12)
-#define BLE_LL_CTRL_REJECT_IND          (13)
-#define BLE_LL_CTRL_SLAVE_FEATURE_REQ   (14)
-#define BLE_LL_CTRL_CONN_PARM_REQ       (15)
-#define BLE_LL_CTRL_CONN_PARM_RSP       (16)
-#define BLE_LL_CTRL_REJECT_IND_EXT      (17)
-#define BLE_LL_CTRL_PING_REQ            (18)
-#define BLE_LL_CTRL_PING_RSP            (19)
-#define BLE_LL_CTRL_LENGTH_REQ          (20)
-#define BLE_LL_CTRL_LENGTH_RSP          (21)
-#define BLE_LL_CTRL_PHY_REQ             (22)
-#define BLE_LL_CTRL_PHY_RSP             (23)
-#define BLE_LL_CTRL_PHY_UPDATE_IND      (24)
-#define BLE_LL_CTRL_MIN_USED_CHAN_IND   (25)
-#define BLE_LL_CTRL_CTE_REQ             (26)
-#define BLE_LL_CTRL_CTE_RSP             (27)
-#define BLE_LL_CTRL_PERIODIC_SYNC_IND   (28)
-#define BLE_LL_CTRL_CLOCK_ACCURACY_REQ  (29)
-#define BLE_LL_CTRL_CLOCK_ACCURACY_RSP  (30)
+#define BLE_LL_CTRL_CONN_UPDATE_IND     (0x00)
+#define BLE_LL_CTRL_CHANNEL_MAP_REQ     (0x01)
+#define BLE_LL_CTRL_TERMINATE_IND       (0x02)
+#define BLE_LL_CTRL_ENC_REQ             (0x03)
+#define BLE_LL_CTRL_ENC_RSP             (0x04)
+#define BLE_LL_CTRL_START_ENC_REQ       (0x05)
+#define BLE_LL_CTRL_START_ENC_RSP       (0x06)
+#define BLE_LL_CTRL_UNKNOWN_RSP         (0x07)
+#define BLE_LL_CTRL_FEATURE_REQ         (0x08)
+#define BLE_LL_CTRL_FEATURE_RSP         (0x09)
+#define BLE_LL_CTRL_PAUSE_ENC_REQ       (0x0A)
+#define BLE_LL_CTRL_PAUSE_ENC_RSP       (0x0B)
+#define BLE_LL_CTRL_VERSION_IND         (0x0C)
+#define BLE_LL_CTRL_REJECT_IND          (0x0D)
+#define BLE_LL_CTRL_SLAVE_FEATURE_REQ   (0x0E)
+#define BLE_LL_CTRL_CONN_PARM_REQ       (0x0F)
+#define BLE_LL_CTRL_CONN_PARM_RSP       (0x10)
+#define BLE_LL_CTRL_REJECT_IND_EXT      (0x11)
+#define BLE_LL_CTRL_PING_REQ            (0x12)
+#define BLE_LL_CTRL_PING_RSP            (0x13)
+#define BLE_LL_CTRL_LENGTH_REQ          (0x14)
+#define BLE_LL_CTRL_LENGTH_RSP          (0x15)
+#define BLE_LL_CTRL_PHY_REQ             (0x16)
+#define BLE_LL_CTRL_PHY_RSP             (0x17)
+#define BLE_LL_CTRL_PHY_UPDATE_IND      (0x18)
+#define BLE_LL_CTRL_MIN_USED_CHAN_IND   (0x19)
+#define BLE_LL_CTRL_CTE_REQ             (0x1A)
+#define BLE_LL_CTRL_CTE_RSP             (0x1B)
+#define BLE_LL_CTRL_PERIODIC_SYNC_IND   (0x1C)
+#define BLE_LL_CTRL_CLOCK_ACCURACY_REQ  (0x1D)
+#define BLE_LL_CTRL_CLOCK_ACCURACY_RSP  (0x1E)
+#define BLE_LL_CTRL_CIS_REQ             (0x1F)
+#define BLE_LL_CTRL_CIS_RSP             (0x20)
+#define BLE_LL_CTRL_CIS_IND             (0x21)
+#define BLE_LL_CTRL_CIS_TERMINATE_IND   (0x22)
 
 /* Maximum opcode value */
-#define BLE_LL_CTRL_OPCODES             (BLE_LL_CTRL_CLOCK_ACCURACY_RSP + 1)
+#define BLE_LL_CTRL_OPCODES             (BLE_LL_CTRL_CIS_TERMINATE_IND + 1)
 
 extern const uint8_t g_ble_ll_ctrl_pkt_lengths[BLE_LL_CTRL_OPCODES];
 
 /* Maximum LL control PDU size */
-#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PERIODIC_ADV_SYNC_TRANSFER)
+#if MYNEWT_VAL(BLE_ISO)
+#define BLE_LL_CTRL_MAX_PDU_LEN         (42)
+#elif MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_PERIODIC_ADV_SYNC_TRANSFER)
 #define BLE_LL_CTRL_MAX_PDU_LEN         (35)
 #else
 #define BLE_LL_CTRL_MAX_PDU_LEN         (27)
@@ -261,6 +269,12 @@ struct ble_ll_len_req
 #define BLE_LL_CTRL_CLOCK_ACCURACY_REQ_LEN  (1)
 #define BLE_LL_CTRL_CLOCK_ACCURACY_RSP_LEN  (1)
 
+/* BLE ISO */
+#define BLE_LL_CTRL_CIS_REQ_LEN         (42)
+#define BLE_LL_CTRL_CIS_RSP_LEN         (8)
+#define BLE_LL_CTRL_CIS_IND_LEN         (15)
+#define BLE_LL_CTRL_CIS_TERMINATE_LEN   (3)
+
 /* API */
 struct ble_ll_conn_sm;
 void ble_ll_ctrl_proc_start(struct ble_ll_conn_sm *connsm, int ctrl_proc);
@@ -305,6 +319,11 @@ void ble_ll_hci_ev_send_vendor_err(const char *file, uint32_t line);
 
 uint8_t ble_ll_ctrl_phy_tx_transition_get(uint8_t phy_mask);
 uint8_t ble_ll_ctrl_phy_from_phy_mask(uint8_t phy_mask);
+
+#if MYNEWT_VAL(BLE_LL_CFG_FEAT_LL_SCA_UPDATE)
+void ble_ll_hci_ev_sca_update(struct ble_ll_conn_sm *connsm,
+                              uint8_t status, uint8_t peer_sca);
+#endif
 
 #ifdef __cplusplus
 }

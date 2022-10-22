@@ -853,6 +853,12 @@ void ShutterButtonHandler(void)
   }
 
   if (NOT_PRESSED == button) {
+    if (Shutter[shutter_index].direction && Button.hold_timer[button_index] > 0) {
+      XdrvMailbox.index = shutter_index +1;
+      XdrvMailbox.payload = XdrvMailbox.index;
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d, hold %d, dir %d, index %d, payload %d"), shutter_index+1, button_index+1, Button.hold_timer[button_index],Shutter[shutter_index].direction,XdrvMailbox.index,XdrvMailbox.payload);
+      CmndShutterStop();
+    }
     Button.hold_timer[button_index] = 0;
   } else {
     Button.hold_timer[button_index]++;
@@ -980,6 +986,10 @@ void ShutterButtonHandler(void)
                 XdrvMailbox.payload = XdrvMailbox.index;
                 CmndShutterToggle();
               } else {
+		if (position == ShutterRealToPercentPosition(Shutter[XdrvMailbox.index-1].real_position, XdrvMailbox.index-1) ) {
+                  Shutter[XdrvMailbox.index -1].tilt_target_pos = position==0? Shutter[XdrvMailbox.index -1].tilt_config[0]:(position==100?Shutter[XdrvMailbox.index -1].tilt_config[1]:Shutter[XdrvMailbox.index -1].tilt_target_pos);
+                  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d -> Endpoint movement detected at %d. Set Tilt: %d"), shutter_index+1, position, Shutter[XdrvMailbox.index -1].tilt_target_pos);
+                }
                 CmndShutterPosition();
               }
               if (Settings->shutter_button[button_index] & ((0x01<<26)<<pos_press_index)) {

@@ -1,5 +1,5 @@
 /*
-  xdrv_55_touch.ino - Touch contolers
+  xdrv_55_touch.ino - Touch controllers
 
   Copyright (C) 2021 Gerhard Mutz, Theo Arends & Stephan Hadinger
 
@@ -19,24 +19,24 @@
 
 /*******************************************************************************************\
  * Universal TouchScreen driver, extensible via Berry
- * 
+ *
  * API:
  *   void Touch_Init() - TODO
- * 
+ *
  *   uint32_t Touch_Status(int32_t sel)
  *     0: return 1 if TSGlobal.touched
  *     1: return x
  *     2: return y
- *    -1: return raw x (before conersion for resistive)
+ *    -1: return raw x (before conversion for resistive)
  *    -2: return raw y
- * 
+ *
  *   void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y))
- * 
+ *
  *   void TS_RotConvert(int16_t *x, int16_t *y) - calls the renderer's rotation converter
 \*******************************************************************************************/
 
 
-#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS)
+#if defined(USE_LVGL_TOUCHSCREEN) || defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_TOUCH_BUTTONS) || defined(SIMPLE_RES_TOUCH)
 
 #ifdef USE_DISPLAY_LVGL_ONLY
 #undef USE_TOUCH_BUTTONS
@@ -73,6 +73,7 @@ TSGlobal_t TSGlobal;
 
 bool FT5206_found = false;
 bool XPT2046_found = false;
+bool SRES_found = false;
 
 #ifndef MAX_TOUCH_BUTTONS
 #define MAX_TOUCH_BUTTONS 16
@@ -130,6 +131,58 @@ uint32_t Touch_Status(int32_t sel) {
 #ifdef USE_M5STACK_CORE2
 uint8_t tbstate[3];
 #endif // USE_M5STACK_CORE2
+
+
+// simple resistive touch pins
+// with dma it should check for active transfers
+// so currently dont use dma
+#ifdef SIMPLE_RES_TOUCH
+struct RES_TOUCH {
+  int8_t xplus;
+  int8_t xminus;
+  int8_t yplus;
+  int8_t yminus;
+  uint16_t xp;
+  uint16_t yp;
+} sres_touch;
+
+void Simple_ResTouch_Init(int8_t xp, int8_t xm, int8_t yp, int8_t ym) {
+  sres_touch.xplus = xp; // d1
+  sres_touch.xminus = xm; // cs
+  sres_touch.yplus = yp; // rs
+  sres_touch.yminus = ym; // d0
+  SRES_found = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("TS: simple resistive touch init"));
+}
+
+#define SRES_THRESHOLD 500
+
+bool SRES_touched() {
+  uint32_t val = renderer->get_sr_touch(sres_touch.xplus, sres_touch.xminus, sres_touch.yplus, sres_touch.yminus);
+  if (val == 0) {
+    return false;
+  }
+  sres_touch.xp = val >> 16;
+  sres_touch.yp  = val & 0xffff;
+
+  int16_t xp = sres_touch.xp;
+  int16_t yp = sres_touch.yp;
+
+  //AddLog(LOG_LEVEL_INFO, "TS x=%i y=%i)", xp, yp);
+
+  if (xp > SRES_THRESHOLD && yp > SRES_THRESHOLD) {
+    return 1;
+  }
+  return 0;
+}
+
+int16_t SRES_x() {
+  return sres_touch.xp;
+}
+int16_t SRES_y() {
+  return sres_touch.yp;
+}
+#endif
 
 #ifdef USE_FT5206
 #include <FT5206.h>
@@ -189,10 +242,19 @@ int16_t XPT2046_y() {
 }
 #endif  // USE_XPT2046
 
-
-
 void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   static bool was_touched = false;    // flag used to log the data sent when the screen was just released
+
+
+#ifdef SIMPLE_RES_TOUCH
+  if (SRES_found) {
+    TSGlobal.touched = SRES_touched();
+    if (TSGlobal.touched) {
+      TSGlobal.raw_touch_xp = SRES_x();
+      TSGlobal.raw_touch_yp = SRES_y();
+    }
+  }
+#endif
 
 #ifdef USE_FT5206
   if (FT5206_found) {
@@ -213,6 +275,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
     }
   }
 #endif // USE_XPT2046
+
   TSGlobal.touch_xp = TSGlobal.raw_touch_xp;
   TSGlobal.touch_yp = TSGlobal.raw_touch_yp;
 
@@ -270,6 +333,8 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
   }
 }
 
+extern uint8_t GT911_found;
+
 #ifdef USE_TOUCH_BUTTONS
 void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
 #ifdef USE_FT5206
@@ -278,11 +343,19 @@ void Touch_MQTT(uint8_t index, const char *cp, uint32_t val) {
 #ifdef USE_XPT2046
   if (XPT2046_found) ResponseTime_P(PSTR(",\"XPT2046\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
 #endif  // USE_XPT2046
+#ifdef USE_GT911
+  if (GT911_found) ResponseTime_P(PSTR(",\"GT911\":{\"%s%d\":\"%d\"}}"), cp, index+1, val);
+#endif  // USE_XPT2046
   MqttPublishTeleSensor();
+}
+
+void EP_Drawbutton(uint32_t count) {
+  renderer->ep_update_area(buttons[count]->spars.xp, buttons[count]->spars.yp, buttons[count]->spars.xs, buttons[count]->spars.ys, 3);
 }
 
 void Touch_RDW_BUTT(uint32_t count, uint32_t pwr) {
   buttons[count]->xdrawButton(pwr);
+  EP_Drawbutton(count);
   if (pwr) buttons[count]->vpower.on_off = 1;
   else buttons[count]->vpower.on_off = 0;
 }
@@ -293,8 +366,8 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
   uint8_t vbutt=0;
 
   if (!renderer) return;
-    if (TSGlobal.touched) {
-      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), pLoc.x, pLoc.y);
+    if (touched) {
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("touch after convert %d - %d"), touch_x, touch_y);
       // now must compare with defined buttons
       for (uint8_t count = 0; count < MAX_TOUCH_BUTTONS; count++) {
         if (buttons[count]) {
@@ -307,8 +380,8 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
                   if (!buttons[count]->vpower.is_virtual) {
                     uint8_t pwr=bitRead(TasmotaGlobal.power, rbutt);
                     if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
-                      ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
                       Touch_RDW_BUTT(count, !pwr);
+                      ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
                     }
                   } else {
                     // virtual button
@@ -323,7 +396,9 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
                       cp="PBT";
                     }
                     buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
+                    EP_Drawbutton(count);
                     Touch_MQTT(count, cp, buttons[count]->vpower.on_off);
+
                   }
                 }
               }
@@ -337,6 +412,7 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
             // slider
             if (buttons[count]->didhit(touch_x, touch_y)) {
               uint16_t value = buttons[count]->UpdateSlider(touch_x, touch_y);
+              EP_Drawbutton(count);
               Touch_MQTT(count, "SLD", value);
             }
           }
@@ -356,6 +432,7 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
                 buttons[count]->vpower.on_off = 0;
                 Touch_MQTT(count,"PBT", buttons[count]->vpower.on_off);
                 buttons[count]->xdrawButton(buttons[count]->vpower.on_off);
+                EP_Drawbutton(count);
               }
             }
           }
@@ -371,8 +448,6 @@ void CheckTouchButtons(bool touched, int16_t touch_x, int16_t touch_y) {
         }
       }
     }
-    TSGlobal.raw_touch_xp = TSGlobal.touch_xp = 0;
-    TSGlobal.raw_touch_yp = TSGlobal.touch_yp = 0;
   }
 }
 #endif // USE_TOUCH_BUTTONS
@@ -391,7 +466,7 @@ bool Xdrv55(uint8_t function) {
     case FUNC_INIT:
       break;
     case FUNC_EVERY_100_MSECOND:
-      if (FT5206_found || XPT2046_found) {
+      if (FT5206_found || XPT2046_found || SRES_found) {
         Touch_Check(TS_RotConvert);
       }
       break;

@@ -13,19 +13,19 @@
 #include "../include/mesh/model_cli.h"
 #include "mesh_priv.h"
 
-static s32_t msg_timeout = K_SECONDS(5);
+static int32_t msg_timeout = K_SECONDS(5);
 
 static struct bt_mesh_gen_model_cli *gen_onoff_cli;
 static struct bt_mesh_gen_model_cli *gen_level_cli;
 
-static u8_t transaction_id = 0;
+static uint8_t transaction_id = 0;
 
 struct gen_onoff_param {
-    u8_t *state;
+    uint8_t *state;
 };
 
 struct gen_level_param {
-    s16_t *level;
+    int16_t *level;
 };
 
 static void gen_onoff_status(struct bt_mesh_model *model,
@@ -34,7 +34,7 @@ static void gen_onoff_status(struct bt_mesh_model *model,
 {
 	struct bt_mesh_gen_model_cli *cli = model->user_data;
 	struct gen_onoff_param *param;
-	u8_t state;
+	uint8_t state;
 
 
 	BT_DBG("net_idx 0x%04x app_idx 0x%04x src 0x%04x len %u: %s",
@@ -64,7 +64,7 @@ static void gen_level_status(struct bt_mesh_model *model,
 {
 	struct bt_mesh_gen_model_cli *cli = model->user_data;
 	struct gen_level_param *param;
-	s16_t level;
+	int16_t level;
 
 
 	BT_DBG("net_idx 0x%04x app_idx 0x%04x src 0x%04x len %u: %s",
@@ -140,7 +140,7 @@ const struct bt_mesh_model_cb bt_mesh_gen_level_cli_cb = {
 	.init = level_cli_init,
 };
 
-static int cli_wait(struct bt_mesh_gen_model_cli *cli, void *param, u32_t op)
+static int cli_wait(struct bt_mesh_gen_model_cli *cli, void *param, uint32_t op)
 {
 	int err;
 
@@ -157,8 +157,8 @@ static int cli_wait(struct bt_mesh_gen_model_cli *cli, void *param, u32_t op)
 	return err;
 }
 
-int bt_mesh_gen_onoff_get(u16_t net_idx, u16_t addr, u16_t app_idx,
-			  u8_t *state)
+int bt_mesh_gen_onoff_get(uint16_t net_idx, uint16_t addr, uint16_t app_idx,
+			  uint8_t *state)
 {
 	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 0 + 4);
 	struct bt_mesh_msg_ctx ctx = {
@@ -186,8 +186,8 @@ done:
 	return err;
 }
 
-int bt_mesh_gen_onoff_set(u16_t net_idx, u16_t addr, u16_t app_idx,
-			  u8_t val, u8_t *state)
+int bt_mesh_gen_onoff_set(uint16_t net_idx, uint16_t addr, uint16_t app_idx,
+			  uint8_t val, uint8_t *state)
 {
 	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 2 + 4);
 	struct bt_mesh_msg_ctx ctx = {
@@ -229,8 +229,8 @@ done:
 	return err;
 }
 
-int bt_mesh_gen_level_get(u16_t net_idx, u16_t addr, u16_t app_idx,
-			  s16_t *level)
+int bt_mesh_gen_level_get(uint16_t net_idx, uint16_t addr, uint16_t app_idx,
+			  int16_t *level)
 {
 	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 0 + 4);
 	struct bt_mesh_msg_ctx ctx = {
@@ -258,8 +258,8 @@ done:
 	return err;
 }
 
-int bt_mesh_gen_level_set(u16_t net_idx, u16_t addr, u16_t app_idx,
-			  s16_t val, s16_t *state)
+int bt_mesh_gen_level_set(uint16_t net_idx, uint16_t addr, uint16_t app_idx,
+			  int16_t val, int16_t *state)
 {
 	struct os_mbuf *msg = NET_BUF_SIMPLE(2 + 3 + 4);
 	struct bt_mesh_msg_ctx ctx = {

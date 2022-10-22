@@ -3,19 +3,142 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.0.2.4]
+## [12.2.0.1]
+### Added
+- DS18x20 support on up to four GPIOs by md5sum-as (#16833)
+
+### Breaking Changed
+
+### Changed
+- DS18x20 ``DS18Alias`` to ``DS18Sens`` (#16833)
+- Compiling with reduced boards manifests in favour of Autoconfig (#16848)
+- Add NeoPool ``NPFiltration 2`` toggle cmnd (#16859)
+
+### Fixed
+- BP5758D red channel corruption regression from v12.1.1.6 (#16850)
+
+### Removed
+
+## [Released]
+
+## [12.2.0] 20221017
+- Release Patrick
+
+## [12.1.1.6] 20221017
+### Added
+- Command ``WcClock 10..200`` set webcam clock in MHz. Default is 20
+- ESP32 Automatically resize FS to max flash size at initial boot (#16838)
+- Command ``SspmPowerOnState<relay> 0|1|2`` to set Sonoff SPM 4Relay module v1.2.0 power on state overruling tasmota  global power on state. 0 = Off, 1 = On, 2 = Saved state (#13447)
+- Support for Flash size 32/64/128 MB in Partition Wizard and auto-resize
+
+## [12.1.1.5] 20221013
+### Added
+- Command ``Sunrise 0..3`` to select sunrise dawn angle between Normal, Civil, Nautical or Astronomical (#16795)
+
+## [12.1.1.4] 20221012
+### Added
+- Support for Shelly Plus 2PM using template ``{"NAME":"Shelly Plus 2PM PCB v0.1.9","GPIO":[320,0,0,0,32,192,0,0,225,224,0,0,0,0,193,0,0,0,0,0,0,608,640,3458,0,0,0,0,0,9472,0,4736,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,10000,10000,3350"}``
+- Zigbee Alexa/Hue emulation, support multiple switches on separate endpoints (#16718)
+- Support for QMC5883L magnetic induction sensor by Helge Scheunemann (#16714)
+- LVGL/HASPmota add tiny "pixel perfect" fonts for small screens (#16758)
+- HASPmota support for TTF fonts (#16759)
+- Support for Modbus Energy Monitoring devices using a rule file. See ``xnrg_29_modbus.ino`` for more information
+
+### Changed
+- ESP32 LVGL library from v8.3.0 to v8.3.2
+- Increase serial console fixed input buffer size from 520 to 800
+- Swap Shelly EM internal channels A and B to match P1 and P2 (#16486)
+
+## [12.1.1.3] 20221003
+### Added
+- ESP32-S2 and ESP32-S3 touch button support
+- Zigbee friendly names per endpoint
+
+### Fixed
+- ESP32 touch button multi-press and hold detection (#16596)
+
+## [12.1.1.2] 20220927
+### Added
+- Berry has persistent MQTT subscriptions: auto-subscribe at (re)connection
+- Berry automated solidification of code
+- Support of optional file calib.dat on ADE7953 based energy monitors like Shelly EM (#16486)
+- Command ``SetOption46 0..255`` to add 0..255 * 10 milliseconds power on delay before initializing I/O (#15438)
+- Zigbee support for decimal Voltage/Current/Power on power metering plugs
+- Command ``UrlFetch <url>`` to download a file to filesystem
+- Zigbee basic support for Green Power
+- Berry add ``introspect.setmodule(name:string, value:any) -> nil``
+
+### Changed
+- ESP32 Increase number of button GPIOs from 8 to 28 (#16518)
+- IRremoteESP8266 library from v2.8.2 to v2.8.3
+- Tasmota Core32 from 2.0.4.1 to 2.0.5
+- IRremoteESP8266 library from v2.8.3 to v2.8.4
+- Zigbee report unprocessed attributes
+- Platformio one Platform for all Tasmota frameworks Core32 2.0.5 (#16644)
+
+## [12.1.1.1] 20220910
+### Added
+- Support for SGP40 gas and air quality sensor (#16341)
+- Support for Modbus writing using ModbusBridge by JeroenSt (#16351)
+- Support for Ethernet in ESP32 safeboot firmware (#16388)
+- Flowrate meter flow amount/duration, show values in table format (#16385)
+- Zigbee prepare for Green Power support (#16407)
+- Command ``SetOption146 1`` to enable display of ESP32 internal temperature
+- Support for DFRobot SEN0390 V30B ambient light sensor (#16105)
+- Command ``DspSpeed 2..127`` to control message rotation speed on display of POWR3xxD and THR3xxD
+- Command ``DspLine<1|2> <index>,<unit>,<index>,<unit>,...`` to select message(s) on display of POWR3xxD and THR3xxD
+
+### Changed
+- TasmotaModbus library from v3.5.0 to v3.6.0 (#16351)
+- Button debouncing V3 by adopting switch debounce code (#16339)
+- Thermostat max allowed temperature from 100 to 200C (#16363)
+- Using command ``SerialBuffer`` raise max allowed buffer size to 2048 characters (#16374)
+
+### Fixed
+- Removed whitespace from JSON values with no decimals (#16365)
+
+## [12.1.0.1] 20220825
+### Added
+- Zigbee device plugin mechanism with commands ``ZbLoad``, ``ZbUnload`` and ``ZbLoadDump`` (#16252)
+- ESP32-S3 support for internal temperature sensor
+- Command ``StatusRetain`` (#11109)
+
+### Changed
+- ESP32 NimBLE library from v1.3.6 to v1.4.0
+
+## [12.1.1] 20220825
+- Release Patricia
+
+### Fixed
+- RTC not detected when lights are present (#16242)
+- DNS lookup for .local domains (#16273)
+- Button response delay regression from v12.0.2.4 (#16319)
+- Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
+
+## [12.1.0] 20220818
+- Release Patricia
+
+## [12.0.2.4] 20220818
 ### Added
 - Command ``SetOption45 1..250`` to change default bistable latching relay pulse length of 40 milliseconds
 - Support for Modbus bridge adding commands ``ModbusSend``, ``ModbusBaudrate`` and ``ModbusSerialConfig`` (#16013)
-- Support for multiple `IRsend` GPIOs
-- Zigbee added recording of when the battery was last reported
+- Support for multiple ``IRsend`` GPIOs (#16138)
+- Zigbee added recording of when the battery was last reported (#16146)
+- Zigbee add Battery auto-probe (can be disabled with ``SetOption143 1``) (#16148)
+- Zigbee include "BatteryPercentage" in all messages
+- Commands ``WifiScan`` and ``WifiTest`` (#16141)
+- Support for Catalan language translations by Albert Gonzalez (#16145)
+- Zigbee ``SetOption144 1`` includes a timestamp in `ZbReceived` messages
 
 ### Changed
-- ESP32 LVGL library from v8.2.0 to v8.3.0
+- ESP32 LVGL library from v8.2.0 to v8.3.0 (#16019)
+- Tasmota ESP32 Arduino core from v2.0.4 to v2.0.4.1 (#16110)
+- TasmotaModbus library from v3.4.0 to v3.5.0 (#16245)
 
 ### Fixed
-
-### Removed
+- Restore EnergyToday after using command ``restart 2`` and power cycle (#16118)
+- Fixed IR crash on ESP32 (#16173)
+- Zigbee fix Tuya for writing attributes
 
 ## [12.0.2.3] 20220716
 ### Added
@@ -40,8 +163,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 SendMail not working over ethernet (#15794)
-
-## [Released]
 
 ## [12.0.2] 20220620
 - Release Paul

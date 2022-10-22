@@ -187,6 +187,8 @@
 #define D_JSON_TEMPERATURE_UNIT "TempUnit"
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
+#define D_JSON_TODAY_SUM_EXPORT "TodaySumExport"
+#define D_JSON_TODAY_SUM_IMPORT "TodaySumImport"
 #define D_JSON_TOTAL "Total"
 #define D_JSON_TOTAL_USAGE "TotalUsage"
 #define D_JSON_TOTAL_REACTIVE "TotalReactive"
@@ -207,6 +209,11 @@
 #define D_JSON_WEIGHT "Weight"
 #define D_JSON_WIFI "Wifi"
 #define D_JSON_WIFI_MODE "Mode"
+#define D_JSON_NOT_STARTED "Not Started"
+#define D_JSON_SCANNING "Scanning"
+#define D_JSON_TESTING "Testing"
+#define D_JSON_BUSY "Busy"
+#define D_JSON_ENCRYPTION "Encryption"
 #define D_JSON_WRONG "Wrong"
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
@@ -225,7 +232,11 @@
 #define D_JSON_RESETTABLE_TOTAL_ACTIVE "ResetTotalActive"
 #define D_JSON_SIGNALSTRENGTH "SignalStrength"
 #define D_JSON_CHIPTEMPERATURE "ChipTemperature"
-
+#define D_JSON_RAW "Raw"
+#define D_JSON_MX "XaxisInduction"
+#define D_JSON_MY "YaxisInduction"
+#define D_JSON_MZ "ZaxisInduction"
+#define D_JSON_MAGNETICFLD "MagneticInduction"
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
@@ -309,6 +320,8 @@
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"
 #define D_CMND_WIFI "Wifi"
+#define D_CMND_WIFISCAN "WiFiScan"
+#define D_CMND_WIFITEST "WiFiTest"
 #define D_CMND_ETHERNET "Ethernet"
 #define D_CMND_WIFICONFIG "WifiConfig"
   #define D_WCFG_0_RESTART "Restart"
@@ -409,6 +422,7 @@
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_INFORETAIN "InfoRetain"
 #define D_CMND_STATERETAIN "StateRetain"
+#define D_CMND_STATUSRETAIN "StatusRetain"
 #define D_CMND_PUBLISH "Publish"
 #define D_CMND_FILEUPLOAD "FileUpload"
 #define D_CMND_FILEDOWNLOAD "FileDownload"
@@ -575,6 +589,7 @@
 #define D_CMND_TIMERS "Timers"
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
+#define D_CMND_SUNRISE "Sunrise"
 
 // Commands xdrv_23_zigbee.ino
 #define D_PRFX_ZB "Zb"
@@ -608,9 +623,11 @@
   #define D_JSON_ZIGBEE_EZSP_SENT "ZbEZSPSent"
   #define D_JSON_ZIGBEE_EZSP_SENT_RAW "ZbEZSPSentRaw"
   #define D_JSON_ZIGBEEZCL_RECEIVED "ZbZCLReceived"
+  #define D_JSON_ZIGBEEGP_RECEIVED "ZbGPReceived"
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZbZCLRawReceived"
   #define D_JSON_ZIGBEE_DEVICE "Device"
   #define D_JSON_ZIGBEE_NAME "Name"
+  #define D_JSON_ZIGBEE_NAMES "Names"
   #define D_JSON_ZIGBEE_CONFIRM "ZbConfirm"
 #define D_CMND_ZIGBEE_NAME "Name"
 #define D_CMND_ZIGBEE_MODELID "ModelId"
@@ -621,6 +638,7 @@
 #define D_CMND_ZIGBEE_SAVE "Save"
   #define D_CMND_ZIGBEE_LINKQUALITY "LinkQuality"
   #define D_CMND_ZIGBEE_CLUSTER "Cluster"
+  #define D_CMND_ZIGBEE_BATTPERCENT "BatteryPercentage"
   #define D_CMND_ZIGBEE_ENDPOINT "Endpoint"
   #define D_CMND_ZIGBEE_GROUP "Group"
   #define D_CMND_ZIGBEE_MANUF "Manuf"
@@ -664,6 +682,9 @@
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
 #define D_CMND_ZIGBEE_CIE "CIE"
 #define D_CMND_ZIGBEE_ENROLL "Enroll"
+#define D_CMND_ZIGBEE_LOAD "Load"
+#define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
+#define D_CMND_ZIGBEE_UNLOAD "Unload"
 
 // Commands xdrv_25_A4988_Stepper.ino
 #define D_CMND_MOTOR "MOTOR"
@@ -734,6 +755,9 @@
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
+
+// Commands xsns_05_ds18x20.ino
+#define D_CMND_DS_ALIAS "DS18Alias"
 
 // xsns_70_veml6075.ino
 #define D_JSON_UVA_INTENSITY "UvaIntensity"

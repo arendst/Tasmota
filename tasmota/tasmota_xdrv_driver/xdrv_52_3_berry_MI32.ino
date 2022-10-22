@@ -36,80 +36,39 @@ extern "C" {
 ********************************************************************/ 
 
   extern uint32_t MI32numberOfDevices();
-  extern const char * MI32getDeviceName(uint32_t slot);
+  extern char * MI32getDeviceName(uint32_t slot);
   extern void MI32setBatteryForSlot(uint32_t slot, uint8_t value);
   extern void MI32setHumidityForSlot(uint32_t slot, float value);
   extern void MI32setTemperatureForSlot(uint32_t slot, float value);
   extern uint8_t * MI32getDeviceMAC(uint32_t slot);
 
-  int be_MI32_devices(bvm *vm);
-  int be_MI32_devices(bvm *vm) {
-    uint32_t devices  = MI32numberOfDevices();
-    be_pushint(vm, devices);
-    be_return(vm);
+  int be_MI32_devices(void) {
+    return MI32numberOfDevices();
   }
 
-  int be_MI32_set_bat(bvm *vm);
-  int be_MI32_set_bat(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_isint(vm, 2) && be_isint(vm, 3)) {
-      uint32_t slot = be_toint(vm, 2);
-      int32_t bat_val = be_toint(vm, 3);
-      MI32setBatteryForSlot(slot,bat_val);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_MI32_set_bat(int slot, int bat_val){    
+    MI32setBatteryForSlot(slot,bat_val);
   }
 
-  int be_MI32_get_name(bvm *vm);
-  int be_MI32_get_name(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 2)) {
-      uint32_t slot = be_toint(vm, 2);
-      const char * name = MI32getDeviceName(slot);
-      be_pushstring(vm,name);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  const char* be_MI32_get_name(int slot){    
+    return  MI32getDeviceName(slot);
   }
 
-  int be_MI32_get_MAC(bvm *vm);
-  int be_MI32_get_MAC(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 2)) {
-      uint32_t slot = be_toint(vm, 2);
-      uint8_t *buffer = MI32getDeviceMAC(slot);
-      size_t len = 6;
-      if(buffer != NULL) {
-        be_pushbytes(vm,buffer,len);
-        be_return(vm); // Return
-      }
+  uint8_t *be_MI32_get_MAC(int32_t slot, size_t *size){
+    *size = 6;
+    uint8_t * buffer = MI32getDeviceMAC(slot);
+    if(buffer == nullptr){
+      *size = 0;
     }
-    be_raise(vm, kTypeError, nullptr);
+    return buffer;
   }
 
-  int be_MI32_set_hum(bvm *vm);
-  int be_MI32_set_hum(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_isint(vm, 2) && be_isreal(vm, 3)) {
-      uint32_t slot = be_toint(vm, 2);
-      float hum_val = be_toreal(vm, 3);
-      MI32setHumidityForSlot(slot,hum_val);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_MI32_set_hum(int slot, int hum_val){    
+    MI32setHumidityForSlot(slot,hum_val);
   }
 
-  int be_MI32_set_temp(bvm *vm);
-  int be_MI32_set_temp(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_isint(vm, 2) && be_isreal(vm, 3)) {
-      uint32_t slot = be_toint(vm, 2);
-      float temp_val = be_toreal(vm, 3);
-      MI32setTemperatureForSlot(slot,temp_val);
-      be_return(vm); // Return
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_MI32_set_temp(int slot, int temp_val){    
+    MI32setTemperatureForSlot(slot,temp_val);
   }
 
 
@@ -118,121 +77,107 @@ extern "C" {
 ********************************************************************/ 
   extern void MI32setBerryAdvCB(void* function, uint8_t *buffer);
   extern void MI32setBerryConnCB(void* function, uint8_t *buffer);
-  extern bool MI32runBerryConnection(uint8_t operation, bool response);
-  extern bool MI32setBerryCtxSvc(const char *Svc, bool discoverAttributes);
+  extern bool MI32runBerryConnection(uint8_t operation, bbool response);
+  extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
   extern bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type);
   extern bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type);
 
 
-  int be_BLE_reg_conn_cb(bvm *vm);
-  int be_BLE_reg_conn_cb(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_iscomptr(vm, 2)) {
-      void* cb = be_tocomptr(vm, 2);
-      size_t len;
-      uint8_t * buf = (uint8_t*)be_tobytes(vm, 3, &len);
-      MI32setBerryConnCB(cb,buf);
-      be_return(vm);
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
+  void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){    
+    MI32setBerryConnCB(function,buffer);
   }
 
-  int be_BLE_reg_adv_cb(bvm *vm);
-  int be_BLE_reg_adv_cb(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 3 && be_iscomptr(vm, 2)) {
-      void* cb = be_tocomptr(vm, 2);
-      size_t len;
-      uint8_t * buf = (uint8_t*)be_tobytes(vm, 3, &len);
-      MI32setBerryAdvCB(cb,buf);
-      be_return(vm); // Return
+  void be_BLE_reg_adv_cb(void* function, uint8_t *buffer);
+  void be_BLE_reg_adv_cb(void* function, uint8_t *buffer){
+    if(function == 0){
+      MI32setBerryAdvCB(NULL,NULL);
     }
-    else if(argc == 2 && be_isint(vm, 2)){
-      if(be_toint(vm, 2) == 0){
-        MI32setBerryAdvCB(NULL,NULL);
-        be_return(vm); // Return
-      }
+    else if(buffer){
+      MI32setBerryAdvCB(function,buffer);
     }
-    be_raise(vm, kTypeError, nullptr);
   }
 
-  int be_BLE_set_MAC(bvm *vm);
-  int be_BLE_set_MAC(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc > 1 && be_isbytes(vm, 2)) {
-      size_t len = 6;
-      uint8_t type = 0;
-      if(argc == 3 && be_isint(vm, 3)){
-        type = be_toint(vm,3);
-      }
-      if (MI32setBerryCtxMAC((uint8_t*)be_tobytes(vm, 2, &len),type)) be_return(vm);
+  bool be_BLE_MAC_size(struct bvm *vm, size_t size){
+    if(size != 6){
+       be_raisef(vm, "ble_error", "BLE: wrong size of MAC");
+       return false;
     }
-    be_raise(vm, kTypeError, nullptr);
+    return true;
   }
 
-  int be_BLE_set_service(bvm *vm);
-  int be_BLE_set_service(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc > 1 && be_isstring(vm, 2)) {
-      bool discoverAttributes = false;
-      if(argc == 3 && be_isint(vm, 3)){
-        discoverAttributes = be_toint(vm,3)>0;
-      }
-      if (MI32setBerryCtxSvc(be_tostring(vm, 2),discoverAttributes)) be_return(vm);
+  void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
+  void be_BLE_set_MAC(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
+    if(!be_BLE_MAC_size(vm, size)){
+      return;
     }
-    be_raise(vm, kTypeError, nullptr);
+    uint8_t _type = 0;
+    if(type){
+      _type = type;
+    }
+    if (MI32setBerryCtxMAC(buf,_type)) return;
+
+    be_raisef(vm, "ble_error", "BLE: could not set MAC");
   }
 
-  int be_BLE_set_characteristic(bvm *vm);
-  int be_BLE_set_characteristic(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isstring(vm, 2)) {
-      if (MI32setBerryCtxChr(be_tostring(vm, 2))) be_return(vm);
+  void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes);
+  void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes){    
+    bool _discoverAttributes = false;
+    if(discoverAttributes){
+      _discoverAttributes = discoverAttributes ;
     }
-    be_raise(vm, kTypeError, nullptr);
+    if (MI32setBerryCtxSvc(Svc,_discoverAttributes)) return;
+
+    be_raisef(vm, "ble_error", "BLE: could not set service");
   }
 
-  int be_BLE_run(bvm *vm);
-  int be_BLE_run(bvm *vm){    
-    int32_t argc = be_top(vm); // Get the number of arguments
-    if ((argc > 1) && be_isint(vm, 2)) {
-      bool response = false;
-      if(argc == 3 && be_isint(vm, 3)){
-        response = be_toint(vm,3)>0;
-      }
-      if (MI32runBerryConnection(be_toint(vm, 2),response)) be_return(vm);
-    }
-    be_raise(vm, kTypeError, nullptr);
+  void be_BLE_set_characteristic(struct bvm *vm, const char *Chr);
+  void be_BLE_set_characteristic(struct bvm *vm, const char *Chr){
+      
+    if (MI32setBerryCtxChr(Chr)) return;
+
+    be_raisef(vm, "ble_error", "BLE: could not set characteristic");
   }
 
-  int be_BLE_adv_block(bvm *vm);
-  int be_BLE_adv_block(bvm *vm){    
-  int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc > 1 && be_isbytes(vm, 2)) {
-      size_t len = 6;
-      uint8_t type = 0;
-      if(argc == 3 && be_isint(vm, 3)){
-        type = be_toint(vm,3);
-      }
-    if(MI32addMACtoBlockList((uint8_t*)be_tobytes(vm, 2, &len),type)) be_return(vm);
-  }
-  be_raise(vm, kTypeError, nullptr);
+  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response);
+  void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response){
+    bool _response = false;    
+    if(response){
+      _response = response;
+    }
+    if (MI32runBerryConnection(operation,_response)) return;
+
+    be_raisef(vm, "ble_error", "BLE: could not run operation");
   }
 
-  int be_BLE_adv_watch(bvm *vm);
-  int be_BLE_adv_watch(bvm *vm){    
-  int32_t argc = be_top(vm); // Get the number of arguments
-  if (argc > 1 && be_isbytes(vm, 2)) {
-    size_t len = 6;
-    uint8_t type = 0;
-    if(argc == 3 && be_isint(vm, 3)){
-      type = be_toint(vm,3);
+  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
+  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){    
+    if(!be_BLE_MAC_size(vm, size)){
+      return;
     }
-    if (MI32addMACtoWatchList((uint8_t*)be_tobytes(vm, 2, &len),type)) be_return(vm);
+    uint8_t _type = 0;
+    if(type){
+      _type = type;
+    }
+    if(MI32addMACtoBlockList(buf, _type)) return;
+  
+  be_raisef(vm, "ble_error", "BLE: could not block MAC");
   }
-  be_raise(vm, kTypeError, nullptr);
+
+  void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
+  void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){    
+    if(!be_BLE_MAC_size(vm, size)){
+      return;
+    }
+    uint8_t _type = 0;
+    if(type){
+      _type = type;
+    }
+    if(MI32addMACtoWatchList(buf, _type)) return;
+
+  be_raisef(vm, "ble_error", "BLE: could not add MAC to watch list");
   }
 
 } //extern "C"
@@ -247,7 +192,7 @@ BLE.set_svc
 BLE.set_chr
 
 BLE.set_MAC
-BLE.run(op)
+BLE.run(op, optional: bool response)
 be_BLE_op:
 1 read
 2 write

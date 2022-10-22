@@ -1,5 +1,6 @@
 #- embedded class for LVGL globals -#
 
+#@ solidify:LVGL_glob,weak
 #- This class stores all globals used by LVGL and cannot be stored in the solidified module -#
 #- this limits the globals to a single value '_lvgl' -#
 class LVGL_glob
@@ -31,9 +32,16 @@ class LVGL_glob
   end
 
   #- register an lv.lv_* object in the mapping -#
+  #
+  # returns `true` if it was already present, false instead
   def register_obj(obj)
     if self.cb_obj == nil    self.cb_obj = {} end
-    self.cb_obj[obj._p] = obj
+    if self.cb_obj.contains(obj._p)
+      return true
+    else
+      self.cb_obj[obj._p] = obj
+      return false
+    end
   end
 
   # get event callback by rank number, expand the list if needed
@@ -114,13 +122,32 @@ class LVGL_glob
     end
   end
 
+  # remove all references to an object when `lv.EVENT_DELETE` is triggered
+  def remove_cb(obj)
+    import introspect
+    var obj_ptr = obj._p
+    # print(">>> DELETE",obj,obj_ptr)
+    self.deregister_obj(obj_ptr)
+    # print(self.cb_event_closure)
+  end
+
+  #
+  # Warning: `make_cb` is called by `cb.gen_cb()` as a cb handler.
+  # Calling back `cb.gen_cb()` should be done with caution to avoid infinite loops.
+  #
   def make_cb(f, obj, name)
+    # fast exit if not for us
+    if name == nil return nil end
+
     import cb
     # print('>> make_cb', f, name, obj)
     # record the object, whatever the callback
     
-    if name  == "lv_event_cb"    
-      self.register_obj(obj)                # keep a record of the object to prevent from being gc'ed
+    if name  == "lv_event_cb"
+      var first_cb = !self.register_obj(obj)                # keep a record of the object to prevent from being gc'ed
+      if first_cb                                           # first time we register a CB for this object, register also a DELETE event
+        obj.add_event_cb(/ o -> self.remove_cb(o), lv.EVENT_DELETE, 0)
+      end
       var rank = self.add_cb_event_closure(obj._p, f)
       # if self.cb_event_closure.contains(obj._p)
       #   tasmota.log("LVG: object:" + str(obj) + "has already an event callback", 2)
@@ -231,7 +258,7 @@ class LVGL_glob
   end
 end
 
-_lvgl = LVGL_glob()
+# _lvgl = LVGL_glob()
 
 # class lv_custom_widget : lv.lv_obj
 #   # static widget_width_def

@@ -25,7 +25,7 @@
 #include "ble_l2cap_coc_priv.h"
 #include "ble_l2cap_sig_priv.h"
 
-#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0
+#if MYNEWT_VAL(BLE_L2CAP_COC_MAX_NUM) != 0 && NIMBLE_BLE_CONNECT
 
 #define BLE_L2CAP_SDU_SIZE              2
 
@@ -73,7 +73,7 @@ ble_l2cap_coc_create_server(uint16_t psm, uint16_t mtu,
 
     srv = ble_l2cap_coc_srv_alloc();
     if (!srv) {
-            return BLE_HS_ENOMEM;
+        return BLE_HS_ENOMEM;
     }
 
     srv->psm = psm;
@@ -392,6 +392,8 @@ ble_l2cap_event_coc_unstalled(struct ble_l2cap_chan *chan, int status)
     chan->cb(&event, chan->cb_arg);
 }
 
+/* WARNING: this function is called from different task contexts. We expect the
+ * host to be locked (ble_hs_lock()) before entering this function! */
 static int
 ble_l2cap_coc_continue_tx(struct ble_l2cap_chan *chan)
 {
@@ -406,6 +408,7 @@ ble_l2cap_coc_continue_tx(struct ble_l2cap_chan *chan)
     /* If there is no data to send, just return success */
     tx = &chan->coc_tx;
     if (!tx->sdu) {
+        ble_hs_unlock();
         return 0;
     }
 
@@ -440,6 +443,7 @@ ble_l2cap_coc_continue_tx(struct ble_l2cap_chan *chan)
             BLE_HS_LOG(DEBUG, "Sending SDU len=%d\n", OS_MBUF_PKTLEN(tx->sdu));
             rc = os_mbuf_append(txom, &l, sizeof(uint16_t));
             if (rc) {
+                rc = BLE_HS_ENOMEM;
                 BLE_HS_LOG(DEBUG, "Could not append data rc=%d", rc);
                 goto failed;
             }
@@ -452,44 +456,48 @@ ble_l2cap_coc_continue_tx(struct ble_l2cap_chan *chan)
         rc = os_mbuf_appendfrom(txom, tx->sdu, tx->data_offset,
                                 len - sdu_size_offset);
         if (rc) {
+            rc = BLE_HS_ENOMEM;
             BLE_HS_LOG(DEBUG, "Could not append data rc=%d", rc);
-           goto failed;
+            goto failed;
         }
 
-        ble_hs_lock();
         conn = ble_hs_conn_find_assert(chan->conn_handle);
         rc = ble_l2cap_tx(conn, chan, txom);
-        ble_hs_unlock();
 
         if (rc) {
-          /* txom is consumed by l2cap */
-          txom = NULL;
-          goto failed;
+            /* txom is consumed by l2cap */
+            txom = NULL;
+            goto failed;
         } else {
-            tx->credits --;
+            tx->credits--;
             tx->data_offset += len - sdu_size_offset;
         }
 
         BLE_HS_LOG(DEBUG, "Sent %d bytes, credits=%d, to send %d bytes \n",
-                  len, tx->credits, OS_MBUF_PKTLEN(tx->sdu)- tx->data_offset );
+                  len, tx->credits, OS_MBUF_PKTLEN(tx->sdu)- tx->data_offset);
 
         if (tx->data_offset == OS_MBUF_PKTLEN(tx->sdu)) {
-                BLE_HS_LOG(DEBUG, "Complete package sent\n");
-                os_mbuf_free_chain(tx->sdu);
-                tx->sdu = 0;
-                tx->data_offset = 0;
-                if (tx->flags & BLE_L2CAP_COC_FLAG_STALLED) {
-                    ble_l2cap_event_coc_unstalled(chan, 0);
-                    tx->flags &= ~BLE_L2CAP_COC_FLAG_STALLED;
-                }
-                break;
+            BLE_HS_LOG(DEBUG, "Complete package sent\n");
+            os_mbuf_free_chain(tx->sdu);
+            tx->sdu = NULL;
+            tx->data_offset = 0;
+            break;
         }
     }
 
     if (tx->sdu) {
         /* Not complete SDU sent, wait for credits */
         tx->flags |= BLE_L2CAP_COC_FLAG_STALLED;
+        ble_hs_unlock();
         return BLE_HS_ESTALLED;
+    }
+
+    if (tx->flags & BLE_L2CAP_COC_FLAG_STALLED) {
+        tx->flags &= ~BLE_L2CAP_COC_FLAG_STALLED;
+        ble_hs_unlock();
+        ble_l2cap_event_coc_unstalled(chan, 0);
+    } else {
+        ble_hs_unlock();
     }
 
     return 0;
@@ -497,10 +505,14 @@ ble_l2cap_coc_continue_tx(struct ble_l2cap_chan *chan)
 failed:
     os_mbuf_free_chain(tx->sdu);
     tx->sdu = NULL;
+
     os_mbuf_free_chain(txom);
     if (tx->flags & BLE_L2CAP_COC_FLAG_STALLED) {
-        ble_l2cap_event_coc_unstalled(chan, rc);
         tx->flags &= ~BLE_L2CAP_COC_FLAG_STALLED;
+        ble_hs_unlock();
+        ble_l2cap_event_coc_unstalled(chan, rc);
+    } else {
+        ble_hs_unlock();
     }
 
     return rc;
@@ -535,7 +547,8 @@ ble_l2cap_coc_le_credits_update(uint16_t conn_handle, uint16_t dcid,
     }
 
     chan->coc_tx.credits += credits;
-    ble_hs_unlock();
+
+    /* leave the host locked on purpose when ble_l2cap_coc_continue_tx() */
     ble_l2cap_coc_continue_tx(chan);
 }
 
@@ -584,18 +597,22 @@ ble_l2cap_coc_send(struct ble_l2cap_chan *chan, struct os_mbuf *sdu_tx)
 {
     struct ble_l2cap_coc_endpoint *tx;
 
-    tx = &chan->coc_tx;
 
-    if (tx->sdu) {
-        return BLE_HS_EBUSY;
-    }
+    tx = &chan->coc_tx;
 
     if (OS_MBUF_PKTLEN(sdu_tx) > tx->mtu) {
         return BLE_HS_EBADDATA;
     }
 
+    ble_hs_lock();
+    if (tx->sdu) {
+        ble_hs_unlock();
+        return BLE_HS_EBUSY;
+    }
     tx->sdu = sdu_tx;
 
+
+    /* leave the host locked on purpose when ble_l2cap_coc_continue_tx() */
     return ble_l2cap_coc_continue_tx(chan);
 }
 

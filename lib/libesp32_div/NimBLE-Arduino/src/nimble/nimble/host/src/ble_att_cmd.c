@@ -26,6 +26,7 @@
 #include "nimble/nimble/host/include/host/ble_uuid.h"
 #include "ble_hs_priv.h"
 
+#if NIMBLE_BLE_CONNECT
 void *
 ble_att_cmd_prepare(uint8_t opcode, size_t len, struct os_mbuf *txom)
 {
@@ -634,3 +635,5 @@ ble_att_indicate_rsp_write(void *payload, int len)
     ble_att_init_write(BLE_ATT_OP_INDICATE_RSP, payload,
                        BLE_ATT_INDICATE_RSP_SZ, len);
 }
+
+#endif

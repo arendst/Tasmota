@@ -1,7 +1,7 @@
 /*
   xsns_05_esp32_ds18x20.ino - DS18x20 temperature sensor support for ESP32 Tasmota
 
-  Copyright (C) 2021  Heiko Krupp and Theo Arends
+  Copyright (C) 2021  Heiko Krupp, Theo Arends and md5sum-as (https://github.com/md5sum-as)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifdef ESP32
 #ifdef USE_DS18x20
 /*********************************************************************************************\
@@ -26,7 +25,13 @@
 
 #define XSNS_05              5
 
-//#define DS18x20_USE_ID_AS_NAME      // Use last 3 bytes for naming of sensors
+//#define DS18x20_USE_ID_AS_NAME     // Use last 3 bytes for naming of sensors
+
+/* #define DS18x20_USE_ID_ALIAS in my_user_config.h or user_config_override.h
+  * Use alias for fixed sensor name in scripts by autoexec. Command: DS18Alias XXXXXXXXXXXXXXXX,N where XXXXXXXXXXXXXXXX full serial and N number 1-255
+  * Result in JSON:  "DS18Alias_2":{"Id":"000003287CD8","Temperature":26.3} (example with N=2)
+  * add 8 bytes used memory
+*/
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
 #define DS1822_CHIPID        0x22  // +/-2C 12-bit
@@ -37,7 +42,7 @@
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
 
-#ifndef DS18X20_MAX_SENSORS // DS18X20_MAX_SENSORS fallback to 8 if not defined in user_config_override.h
+#ifndef DS18X20_MAX_SENSORS         // DS18X20_MAX_SENSORS fallback to 8 if not defined in user_config_override.h
 #define DS18X20_MAX_SENSORS  8
 #endif
 
@@ -51,45 +56,63 @@ struct {
   uint8_t address[8];
   uint8_t index;
   uint8_t valid;
+  int8_t pins_id;
+#ifdef DS18x20_USE_ID_ALIAS
+  uint8_t alias;
+#endif //DS18x20_USE_ID_ALIAS
 } ds18x20_sensor[DS18X20_MAX_SENSORS];
+
+#include <OneWire.h>
+OneWire *ds = nullptr;
+OneWire *ds18x20_gpios[MAX_DSB];
 
 struct {
   char name[17];
-  uint8_t sensors = 0;
+  uint8_t sensors;
+  uint8_t gpios;    // Count of GPIO found
 } DS18X20Data;
 
 /********************************************************************************************/
 
-#include <OneWire.h>
-
-OneWire *ds = nullptr;
-
 void Ds18x20Init(void) {
-  ds = new OneWire(Pin(GPIO_DSB));
-
+  DS18X20Data.gpios = 0;
+  for (uint32_t pins = 0; pins < MAX_DSB; pins++) {
+    if (PinUsed(GPIO_DSB, pins)) {
+      ds18x20_gpios[pins] = new OneWire(Pin(GPIO_DSB, pins));
+      DS18X20Data.gpios++;
+    }
+  }
   Ds18x20Search();
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), DS18X20Data.sensors);
 }
 
 void Ds18x20Search(void) {
-  uint8_t num_sensors=0;
+  uint8_t num_sensors = 0;
   uint8_t sensor = 0;
 
-  ds->reset_search();
-  for (num_sensors = 0; num_sensors < DS18X20_MAX_SENSORS; num_sensors) {
-    if (!ds->search(ds18x20_sensor[num_sensors].address)) {
-      ds->reset_search();
-      break;
-    }
-    // If CRC Ok and Type DS18S20, DS1822, DS18B20 or MAX31850
-    if ((OneWire::crc8(ds18x20_sensor[num_sensors].address, 7) == ds18x20_sensor[num_sensors].address[7]) &&
-       ((ds18x20_sensor[num_sensors].address[0] == DS18S20_CHIPID) ||
-        (ds18x20_sensor[num_sensors].address[0] == DS1822_CHIPID) ||
-        (ds18x20_sensor[num_sensors].address[0] == DS18B20_CHIPID) ||
-        (ds18x20_sensor[num_sensors].address[0] == MAX31850_CHIPID))) {
-      num_sensors++;
+  for (uint8_t pins = 0; pins < DS18X20Data.gpios; pins++) {
+    ds = ds18x20_gpios[pins];
+    ds->reset_search();
+    for (num_sensors; num_sensors < DS18X20_MAX_SENSORS; num_sensors) {
+      if (!ds->search(ds18x20_sensor[num_sensors].address)) {
+        ds->reset_search();
+        break;
+      }
+      // If CRC Ok and Type DS18S20, DS1822, DS18B20 or MAX31850
+      if ((OneWire::crc8(ds18x20_sensor[num_sensors].address, 7) == ds18x20_sensor[num_sensors].address[7]) &&
+        ((ds18x20_sensor[num_sensors].address[0] == DS18S20_CHIPID) ||
+          (ds18x20_sensor[num_sensors].address[0] == DS1822_CHIPID) ||
+          (ds18x20_sensor[num_sensors].address[0] == DS18B20_CHIPID) ||
+          (ds18x20_sensor[num_sensors].address[0] == MAX31850_CHIPID))) {
+#ifdef DS18x20_USE_ID_ALIAS
+        ds18x20_sensor[num_sensors].alias=0;
+#endif
+        ds18x20_sensor[num_sensors].pins_id = pins;
+        num_sensors++;
+      }
     }
   }
+
   for (uint32_t i = 0; i < num_sensors; i++) {
     ds18x20_sensor[i].index = i;
   }
@@ -104,10 +127,13 @@ void Ds18x20Search(void) {
 }
 
 void Ds18x20Convert(void) {
-  ds->reset();
-  ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
-  ds->write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
-//  delay(750);                   // 750ms should be enough for 12bit conv
+  for (uint32_t i = 0; i < DS18X20Data.gpios; i++) {
+    ds = ds18x20_gpios[i];
+    ds->reset();
+    ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
+    ds->write(W1_CONVERT_TEMP);    // start conversion, no parasite power on at the end
+//    delay(750);                   // 750ms should be enough for 12bit conv
+  }
 }
 
 bool Ds18x20Read(uint8_t sensor, float &t) {
@@ -118,7 +144,7 @@ bool Ds18x20Read(uint8_t sensor, float &t) {
 
   uint8_t index = ds18x20_sensor[sensor].index;
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
-
+  ds = ds18x20_gpios[ds18x20_sensor[index].pins_id];
   ds->reset();
   ds->select(ds18x20_sensor[index].address);
   ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
@@ -173,7 +199,14 @@ void Ds18x20Name(uint8_t sensor) {
     }
     snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%s"), DS18X20Data.name, IndexSeparator(), address);
 #else
-    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), sensor +1);
+uint8_t print_ind = sensor +1;
+#ifdef DS18x20_USE_ID_ALIAS
+    if (ds18x20_sensor[sensor].alias) {
+      snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("DS18Sens"));
+      print_ind = ds18x20_sensor[sensor].alias;
+    }
+#endif
+    snprintf_P(DS18X20Data.name, sizeof(DS18X20Data.name), PSTR("%s%c%d"), DS18X20Data.name, IndexSeparator(), print_ind);
 #endif
   }
 }
@@ -247,6 +280,47 @@ void Ds18x20Show(bool json) {
   }
 }
 
+#ifdef DS18x20_USE_ID_ALIAS
+const char kds18Commands[] PROGMEM = "|"  // No prefix
+  D_CMND_DS_ALIAS;
+
+void (* const DSCommand[])(void) PROGMEM = {
+  &CmndDSAlias };
+
+void CmndDSAlias(void) {
+  uint8_t tmp;
+  uint8_t sensor=255;
+  char argument[XdrvMailbox.data_len];
+  char address[17];
+
+  if (ArgC()==2) {
+    tmp=atoi(ArgV(argument, 2));
+    ArgV(argument,1);
+
+    for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+      for (uint32_t j = 0; j < 8; j++) {
+        sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);
+      }
+      if (!strncmp(argument,address,12)) {
+        ds18x20_sensor[i].alias=tmp;
+        break;
+      }
+    }
+  }
+  Response_P(PSTR("{"));
+  for (uint32_t i = 0; i < DS18X20Data.sensors; i++) {
+    Ds18x20Name(i);
+    char address[17];
+    for (uint32_t j = 0; j < 8; j++) {
+      sprintf(address+2*j, "%02X", ds18x20_sensor[i].address[7-j]);  // Skip sensor type and crc
+    }
+    ResponseAppend_P(PSTR("\"%s\":{\"" D_JSON_ID "\":\"%s\"}"),DS18X20Data.name, address);
+    if (i < DS18X20Data.sensors-1) {ResponseAppend_P(PSTR(","));}
+  }
+  ResponseAppend_P(PSTR("}"));
+}
+#endif // DS18x20_USE_ID_ALIAS
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -254,7 +328,7 @@ void Ds18x20Show(bool json) {
 bool Xsns05(uint8_t function) {
   bool result = false;
 
-  if (PinUsed(GPIO_DSB)) {
+  if (PinUsed(GPIO_DSB, GPIO_ANY)) {
     switch (function) {
       case FUNC_INIT:
         Ds18x20Init();
@@ -270,6 +344,11 @@ bool Xsns05(uint8_t function) {
         Ds18x20Show(0);
         break;
 #endif  // USE_WEBSERVER
+#ifdef DS18x20_USE_ID_ALIAS
+      case FUNC_COMMAND:
+        result = DecodeCommand(kds18Commands, DSCommand);
+        break;
+#endif // DS18x20_USE_ID_ALIAS
     }
   }
   return result;

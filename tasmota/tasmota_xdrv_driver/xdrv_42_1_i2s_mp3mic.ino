@@ -19,32 +19,42 @@
 
 
 #ifdef ESP32
-#if defined(USE_SHINE) && ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
+#if ( (defined(USE_I2S_AUDIO) && defined(USE_I2S_MIC)) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX) )
 
-#define MP3_BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
 uint32_t SpeakerMic(uint8_t spkr) {
 esp_err_t err = ESP_OK;
 
+#ifndef USE_I2S_COMMON_IO
 
+  if (audio_i2s.mode == spkr) {
+    return 0;
+  }
   if (spkr == MODE_SPK) {
-    if (audio_i2s.mic_port == 0) {
+
+    if (audio_i2s.i2s_port == audio_i2s.mic_port) {
+      if (audio_i2s.mode != MODE_SPK) {
+        i2s_driver_uninstall(audio_i2s.mic_port);
+      }
       I2S_Init_0();
-      audio_i2s.out->SetGain(((float)(audio_i2s.is2_volume-2)/100.0)*4.0);
+      audio_i2s.out->SetGain(((float)(audio_i2s.is2_volume - 2) / 100.0) * 4.0);
       audio_i2s.out->stop();
     }
+    audio_i2s.mode = spkr;
     return 0;
   }
 
   // set micro
-  if (audio_i2s.mic_port == 0) {
+  if (audio_i2s.i2s_port == audio_i2s.mic_port) {
     // close audio out
     if (audio_i2s.out) {
       audio_i2s.out->stop();
       delete audio_i2s.out;
       audio_i2s.out = nullptr;
     }
-    i2s_driver_uninstall(audio_i2s.i2s_port);
+    if (audio_i2s.mode == MODE_SPK) {
+      i2s_driver_uninstall(audio_i2s.i2s_port);
+    }
   }
 
   // config mic
@@ -55,24 +65,26 @@ esp_err_t err = ESP_OK;
       .channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
       .communication_format = I2S_COMM_FORMAT_I2S,
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+      //.dma_buf_count = 8,
       .dma_buf_count = 2,
       //.dma_buf_len = 128,
       .dma_buf_len = 1024,
       .use_apll = 0, // Use audio PLL
       .tx_desc_auto_clear     = true,
-      .fixed_mclk             = 0,
+      .fixed_mclk             = 12000000,
       .mclk_multiple          = I2S_MCLK_MULTIPLE_DEFAULT,  // I2S_MCLK_MULTIPLE_128
       .bits_per_chan          = I2S_BITS_PER_CHAN_16BIT
   };
 
-#ifdef ESP32S3_BOX
+
+#ifdef USE_I2S_MIC
+  // mic select to GND
   i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
   i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
 #endif
 
-#ifdef USE_I2S_MIC
-  // mic select to GND
-  i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+#ifdef ESP32S3_BOX
+  i2s_config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
   i2s_config.communication_format = I2S_COMM_FORMAT_STAND_I2S;
 #endif
 
@@ -104,15 +116,17 @@ esp_err_t err = ESP_OK;
   }
   err += i2s_set_clk(audio_i2s.mic_port, audio_i2s.mic_rate, I2S_BITS_PER_SAMPLE_16BIT, mode);
 
+#endif // USE_I2S_COMMON_IO
+
+  audio_i2s.mode = spkr;
+
   return err;
 }
 
-
 #ifdef USE_SHINE
+
 #include <layer3.h>
 #include <types.h>
-
-#define MP3HANDLECLIENT audio_i2s.MP3Server->handleClient();
 
 // micro to mp3 file or stream
 void mic_task(void *arg){
@@ -144,7 +158,9 @@ void mic_task(void *arg){
     audio_i2s.client.setTimeout(3);
     audio_i2s.client.print("HTTP/1.1 200 OK\r\n"
     "Content-Type: audio/mpeg;\r\n\r\n");
-    MP3HANDLECLIENT
+
+   //  Webserver->send(200, "application/octet-stream", "");
+    //"Content-Type: audio/mp3;\r\n\r\n");
   }
 
   shine_set_config_mpeg_defaults(&config.mpeg);
@@ -183,6 +199,13 @@ void mic_task(void *arg){
   while (!audio_i2s.mic_stop) {
       uint32_t bytes_read;
       i2s_read(audio_i2s.mic_port, (char *)buffer, bytesize, &bytes_read, (100 / portTICK_RATE_MS));
+
+      if (audio_i2s.mic_gain > 1) {
+        // set gain
+        for (uint32_t cnt = 0; cnt < bytes_read / 2; cnt++) {
+          buffer[cnt] *= audio_i2s.mic_gain;
+        }
+      }
       ucp = shine_encode_buffer_interleaved(s, buffer, &written);
 
       if (!audio_i2s.use_stream) {
@@ -192,7 +215,7 @@ void mic_task(void *arg){
         }
       } else {
         audio_i2s.client.write((const char*)ucp, written);
-        MP3HANDLECLIENT
+
         if (!audio_i2s.client.connected()) {
           break;
         }
@@ -206,7 +229,6 @@ void mic_task(void *arg){
     mp3_out.write(ucp, written);
   } else {
     audio_i2s.client.write((const char*)ucp, written);
-    MP3HANDLECLIENT
   }
 
 
@@ -223,13 +245,12 @@ exit:
 
   if (audio_i2s.use_stream) {
     audio_i2s.client.stop();
-    MP3HANDLECLIENT
   }
 
   SpeakerMic(MODE_SPK);
   audio_i2s.mic_stop = 0;
   audio_i2s.mic_error = error;
-  AddLog(LOG_LEVEL_INFO, PSTR("mp3task error: %d"), error);
+  AddLog(LOG_LEVEL_INFO, PSTR("mp3task result code: %d"), error);
   audio_i2s.mic_task_h = 0;
   audio_i2s.recdur = 0;
   audio_i2s.stream_active = 0;
@@ -291,7 +312,16 @@ void Cmd_MicRec(void) {
   }
 
 }
-
 #endif // USE_SHINE
+
+
+// mic gain in factor not percent
+void Cmd_MicGain(void) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 256)) {
+      audio_i2s.mic_gain = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(audio_i2s.mic_gain);
+}
+
 #endif // USE_I2S_AUDIO
 #endif // ESP32

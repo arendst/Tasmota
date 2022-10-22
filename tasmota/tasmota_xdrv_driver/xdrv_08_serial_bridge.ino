@@ -28,7 +28,7 @@
 #define USE_SERIAL_BRIDGE_TEE
 
 #ifdef ESP8266
-const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
+const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = MIN_INPUT_BUFFER_SIZE;
 #else
 const uint16_t SERIAL_BRIDGE_BUFFER_SIZE = INPUT_BUFFER_SIZE;
 #endif
@@ -167,7 +167,11 @@ void SerialBridgeInput(void) {
     }
     ResponseJsonEnd();
 
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+    if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
+       XdrvRulesProcess(0);
+    } else {
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+    }    
     serial_bridge_in_byte_counter = 0;
   }
 }

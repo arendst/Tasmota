@@ -899,7 +899,7 @@ const be_ntv_func_def_t lv_label_func[] = {
   { "get_letter_pos", { (const void*) &lv_label_get_letter_pos, "", "(lv.lv_obj)i(lv.lv_point)" } },
   { "get_long_mode", { (const void*) &lv_label_get_long_mode, "i", "(lv.lv_obj)" } },
   { "get_recolor", { (const void*) &lv_label_get_recolor, "b", "(lv.lv_obj)" } },
-  { "get_text", { (const void*) &lv_label_get_text, "c", "(lv.lv_obj)" } },
+  { "get_text", { (const void*) &lv_label_get_text, "s", "(lv.lv_obj)" } },
   { "get_text_selection_end", { (const void*) &lv_label_get_text_selection_end, "i", "(lv.lv_obj)" } },
   { "get_text_selection_start", { (const void*) &lv_label_get_text_selection_start, "i", "(lv.lv_obj)" } },
   { "ins_text", { (const void*) &lv_label_ins_text, "", "(lv.lv_obj)is" } },

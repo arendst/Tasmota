@@ -158,6 +158,60 @@ ble_hs_hci_util_set_data_len(uint16_t conn_handle, uint16_t tx_octets,
 }
 
 int
+ble_hs_hci_util_read_sugg_def_data_len(uint16_t *out_sugg_max_tx_octets,
+                                       uint16_t *out_sugg_max_tx_time)
+{
+    struct ble_hci_le_rd_sugg_def_data_len_rp rsp;
+    int rc;
+
+    rc = ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_LE,
+                                      BLE_HCI_OCF_LE_RD_SUGG_DEF_DATA_LEN),
+                           NULL, 0, &rsp, sizeof(rsp));
+    if (rc != 0) {
+        return rc;
+    }
+
+    *out_sugg_max_tx_octets = le16toh(rsp.max_tx_octets);
+    *out_sugg_max_tx_time = le16toh(rsp.max_tx_time);
+
+    if (*out_sugg_max_tx_octets < BLE_HCI_SUGG_DEF_DATALEN_TX_OCTETS_MIN ||
+        *out_sugg_max_tx_octets > BLE_HCI_SUGG_DEF_DATALEN_TX_OCTETS_MAX) {
+        BLE_HS_LOG(WARN, "received suggested maximum tx octets is out of range\n");
+    }
+
+    if (*out_sugg_max_tx_time < BLE_HCI_SUGG_DEF_DATALEN_TX_TIME_MIN ||
+        *out_sugg_max_tx_time > BLE_HCI_SUGG_DEF_DATALEN_TX_TIME_MAX) {
+        BLE_HS_LOG(WARN, "received suggested maximum tx time is out of range\n");
+    }
+
+    return 0;
+}
+
+int
+ble_hs_hci_util_write_sugg_def_data_len(uint16_t sugg_max_tx_octets,
+                                        uint16_t sugg_max_tx_time)
+{
+    struct ble_hci_le_wr_sugg_def_data_len_cp cmd;
+
+    if (sugg_max_tx_octets < BLE_HCI_SUGG_DEF_DATALEN_TX_OCTETS_MIN ||
+        sugg_max_tx_octets > BLE_HCI_SUGG_DEF_DATALEN_TX_OCTETS_MAX) {
+        return BLE_HS_EINVAL;
+    }
+
+    if (sugg_max_tx_time < BLE_HCI_SUGG_DEF_DATALEN_TX_TIME_MIN ||
+        sugg_max_tx_time > BLE_HCI_SUGG_DEF_DATALEN_TX_TIME_MAX) {
+        return BLE_HS_EINVAL;
+    }
+
+    cmd.max_tx_octets = htole16(sugg_max_tx_octets);
+    cmd.max_tx_time = htole16(sugg_max_tx_time);
+
+    return ble_hs_hci_cmd_tx(BLE_HCI_OP(BLE_HCI_OGF_LE,
+                                        BLE_HCI_OCF_LE_WR_SUGG_DEF_DATA_LEN),
+                             &cmd, sizeof(cmd), NULL, 0);
+}
+
+int
 ble_hs_hci_util_data_hdr_strip(struct os_mbuf *om,
                                struct hci_data_hdr *out_hdr)
 {

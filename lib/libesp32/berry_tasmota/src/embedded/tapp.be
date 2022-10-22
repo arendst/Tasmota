@@ -3,6 +3,7 @@
 
 var tapp_module = module("tapp")
 
+#@ solidify:tapp_module
 tapp_module.init = def (m)
 
   class Tapp

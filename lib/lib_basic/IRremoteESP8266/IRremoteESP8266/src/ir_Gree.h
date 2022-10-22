@@ -1,9 +1,10 @@
-// Copyright 2016 David Conran
+// Copyright 2016-2022 David Conran
 
 /// @file
 /// @brief Support for Gree A/C protocols.
 /// @see https://github.com/ToniA/arduino-heatpumpir/blob/master/GreeHeatpumpIR.h
 /// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1508
+/// @see https://github.com/crankyoldgit/IRremoteESP8266/issues/1821
 
 // Supports:
 //   Brand: Ultimate,  Model: Heat Pump
@@ -15,6 +16,7 @@
 //   Brand: Gree,  Model: YAA1FBF remote
 //   Brand: Gree,  Model: YB1F2F remote
 //   Brand: Gree,  Model: YAN1F1 remote
+//   Brand: Gree,  Model: YX1F2F remote (YX1FSF)
 //   Brand: Gree,  Model: VIR09HP115V1AH A/C
 //   Brand: Gree,  Model: VIR12HP230V1AH A/C
 //   Brand: Amana,  Model: PBC093G00CC A/C
@@ -23,6 +25,7 @@
 //   Brand: Cooper & Hunter,  Model: CH-S09FTXG A/C
 //   Brand: Vailland,  Model: YACIFB remote
 //   Brand: Vailland,  Model: VAI5-035WNI A/C
+//   Brand: Soleus Air,  Model: window A/C (YX1FSF)
 
 #ifndef IR_GREE_H_
 #define IR_GREE_H_
@@ -86,11 +89,12 @@ union GreeProtocol{
 
 // Constants
 
-const uint8_t kGreeAuto = 0;
-const uint8_t kGreeCool = 1;
-const uint8_t kGreeDry  = 2;
-const uint8_t kGreeFan  = 3;
-const uint8_t kGreeHeat = 4;
+const uint8_t kGreeAuto  = 0;
+const uint8_t kGreeCool  = 1;
+const uint8_t kGreeDry   = 2;
+const uint8_t kGreeFan   = 3;
+const uint8_t kGreeHeat  = 4;
+const uint8_t kGreeEcono = 5;
 
 const uint8_t kGreeFanAuto = 0;
 const uint8_t kGreeFanMin  = 1;

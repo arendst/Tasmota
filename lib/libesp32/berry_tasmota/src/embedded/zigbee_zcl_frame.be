@@ -4,6 +4,7 @@
 
 class zcl_frame_ntv end
 
+#@ solidify:zcl_frame,weak
 class zcl_frame : zcl_frame_ntv
   var no_bytes
 

@@ -96,6 +96,30 @@
 
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
+struct WIFI {
+  uint32_t last_event = 0;                 // Last wifi connection event
+  uint32_t downtime = 0;                   // Wifi down duration
+  uint16_t link_count = 0;                 // Number of wifi re-connect
+  uint8_t counter;
+  uint8_t retry_init;
+  uint8_t retry;
+  uint8_t max_retry;
+  uint8_t status;
+  uint8_t config_type = 0;
+  uint8_t config_counter = 0;
+  uint8_t scan_state;
+  uint8_t bssid[6];
+  int8_t best_network_db;
+  uint8_t wifiTest = WIFI_NOT_TESTING;
+  uint8_t wifi_test_counter = 0;
+  uint16_t save_data_counter = 0;
+  uint8_t old_wificonfig = MAX_WIFI_OPTION; // means "nothing yet saved here"
+  uint8_t phy_mode = 0;
+  bool wifi_test_AP_TIMEOUT = false;
+  bool wifi_Test_Restart = false;
+  bool wifi_Test_Save_SSID2 = false;
+} Wifi;
+
 typedef struct {
   uint16_t      valid;                     // 280  (RTC memory offset 100 - sizeof(RTCRBT))
   uint8_t       fast_reboot_count;         // 282
@@ -110,8 +134,8 @@ typedef struct {
   uint16_t      valid;                     // 290  (RTC memory offset 100)
   uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
-  uint32_t      energy_kWhtoday;           // 294
-  uint32_t      energy_kWhtotal;           // 298
+  uint32_t      ex_energy_kWhtoday;        // 294
+  uint32_t      ex_energy_kWhtotal;        // 298
   volatile uint32_t pulse_counter[MAX_COUNTERS];  // 29C - See #9521 why volatile
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
@@ -134,6 +158,7 @@ RTC_NOINIT_ATTR TRtcSettings RtcDataSettings;
 #endif  // ESP32
 
 struct TIME_T {
+  uint32_t      nanos;
   uint8_t       second;
   uint8_t       minute;
   uint8_t       hour;
@@ -202,6 +227,8 @@ bool tasconsole_serial = true;
 #else   // No ESP32
 HardwareSerial TasConsole = Serial;         // Only serial interface
 #endif  // ESP32
+
+char EmptyStr[1] = { 0 };                   // Provide a pointer destination to an empty char string
 
 struct TasmotaGlobal_t {
   uint32_t global_update;                   // Timestamp of last global temperature and humidity update
@@ -438,6 +465,8 @@ void setup(void) {
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
+  TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
+//  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
   TasConsole.begin(115200);    // Will always be 115200 bps
 #if !ARDUINO_USB_MODE
   USB.begin();                 // This needs a serial console with DTR/DSR support

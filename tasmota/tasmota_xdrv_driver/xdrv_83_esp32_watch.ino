@@ -23,7 +23,6 @@
 #include <axp20x.h>
 #include <i2c_bus.h>
 #include <bma.h>
-#include <soc/rtc.h>
 
 #define XDRV_83           83
 
@@ -71,7 +70,7 @@ struct TTGO_globs {
 void TTGO_Init(void) {
   ttgo_globs.ttgo_power = new AXP20X_Class();
   ttgo_globs.i2c = new I2CBus();
-  initPower();
+  TTGO_initPower();
 
 #ifdef USE_BMA423
   ttgo_globs.bma = new BMA(*ttgo_globs.i2c);
@@ -119,7 +118,7 @@ void TTGO_Init(void) {
 #endif // USE_BMA423
 }
 
-void initPower(void) {
+void TTGO_initPower(void) {
   int ret = ttgo_globs.ttgo_power->begin(axpReadBytes, axpWriteBytes);
   if (ret == AXP_FAIL) {
       //DBGX("AXP Power begin failed");
@@ -247,14 +246,14 @@ void TTGO_WebShow(uint32_t json) {
 }
 
 
-void enableLDO3(bool en = true) {
+void TTGO_enableLDO3(bool en = true) {
   if (!ttgo_globs.ttgo_power) return;
   ttgo_globs.ttgo_power->setLDO3Mode(1);
   ttgo_globs.ttgo_power->setPowerOutPut(AXP202_LDO3, en);
 }
 
-void TTGO_audio_power(bool power) {
-    enableLDO3(power);
+void TTGO_audio_power(bool power) { // Not every watch has audio
+    TTGO_enableLDO3(power);
 }
 
 const char TTGO_Commands[] PROGMEM = "TTGO|"
@@ -293,7 +292,7 @@ int32_t ttgo_sleeptime;
       SettingsSaveAll();
       RtcSettingsSave();
       ttgo_globs.lenergy = true;
-      rtc_clk_cpu_freq_set(RTC_CPU_FREQ_2M);
+      setCpuFrequencyMhz(10); 
       xEventGroupSetBits(ttgo_globs.isr_group, WATCH_FLAG_SLEEP_MODE);
       gpio_wakeup_enable ((gpio_num_t)AXP202_INT, GPIO_INTR_LOW_LEVEL);
       gpio_wakeup_enable ((gpio_num_t)BMA423_INT1, GPIO_INTR_HIGH_LEVEL);
@@ -319,7 +318,7 @@ int32_t ttgo_sleeptime;
 
     if (ttgo_sleeptime) {
       ttgo_globs.lenergy = false;
-      rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
+      setCpuFrequencyMhz(240);
 #ifdef USE_DISPLAY
       DisplayOnOff(1);
 #endif
@@ -342,7 +341,7 @@ uint8_t data;
     if (bits & WATCH_FLAG_SLEEP_EXIT) {
         if (ttgo_globs.lenergy) {
             ttgo_globs.lenergy = false;
-            rtc_clk_cpu_freq_set(RTC_CPU_FREQ_240M);
+            setCpuFrequencyMhz(240);
 #ifdef USE_DISPLAY
             DisplayOnOff(1);
 #endif

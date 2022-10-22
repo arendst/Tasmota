@@ -79,6 +79,12 @@ public:
       _buf->buf[offset] = data;
     }
   }
+  void set16(const size_t offset, const uint16_t data) {
+    if (offset + 1 < _buf->len) {
+      _buf->buf[offset] = data & 0xFF;
+      _buf->buf[offset+1] = (data >> 8) & 0xFF;
+    }
+  }
 
   size_t add8(const uint8_t data) {           // append 8 bits value
     if (_buf->len < _buf->size) {       // do we have room for 1 byte

@@ -81,7 +81,14 @@ struct ble_mbuf_hdr_rxinfo
 #endif
 };
 
-/* Flag definitions for rxinfo  */
+/*
+ * Flag definitions for rxinfo
+ *
+ * Note: it's ok to have symbols with the same values as long as they cannot be
+ *       set for the same PDU (e.g. one use by scanner, other one used by
+ *       connection)
+ */
+#define BLE_MBUF_HDR_F_CONN_CREDIT      (0x8000)
 #define BLE_MBUF_HDR_F_IGNORED          (0x8000)
 #define BLE_MBUF_HDR_F_SCAN_REQ_TXD     (0x4000)
 #define BLE_MBUF_HDR_F_INITA_RESOLVED   (0x2000)

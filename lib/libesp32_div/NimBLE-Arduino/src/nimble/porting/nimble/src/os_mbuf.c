@@ -34,6 +34,7 @@
  */
 
 #include "../include/os/os.h"
+#include "../include/os/os_trace_api.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -243,13 +244,17 @@ os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
 {
     struct os_mbuf *om;
 
+    os_trace_api_u32x2(OS_TRACE_ID_MBUF_GET, (uint32_t)omp,
+                       (uint32_t)(uintptr_t)leadingspace);
+
     if (leadingspace > omp->omp_databuf_len) {
-        goto err;
+        om = NULL;
+        goto done;
     }
 
     om = os_memblock_get(omp->omp_pool);
     if (!om) {
-        goto err;
+        goto done;
     }
 
     SLIST_NEXT(om, om_next) = NULL;
@@ -259,9 +264,9 @@ os_mbuf_get(struct os_mbuf_pool *omp, uint16_t leadingspace)
     om->om_data = (&om->om_databuf[0] + leadingspace);
     om->om_omp = omp;
 
-    return (om);
-err:
-    return (NULL);
+done:
+    os_trace_api_ret_u32(OS_TRACE_ID_MBUF_GET, (uint32_t)(uintptr_t)om);
+    return om;
 }
 
 struct os_mbuf *
@@ -271,10 +276,14 @@ os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t user_pkthdr_len)
     struct os_mbuf_pkthdr *pkthdr;
     struct os_mbuf *om;
 
+    os_trace_api_u32x2(OS_TRACE_ID_MBUF_GET_PKTHDR, (uint32_t)(uintptr_t)omp,
+                       (uint32_t)user_pkthdr_len);
+
     /* User packet header must fit inside mbuf */
     pkthdr_len = user_pkthdr_len + sizeof(struct os_mbuf_pkthdr);
     if ((pkthdr_len > omp->omp_databuf_len) || (pkthdr_len > 255)) {
-        return NULL;
+        om = NULL;
+        goto done;
     }
 
     om = os_mbuf_get(omp, 0);
@@ -288,6 +297,8 @@ os_mbuf_get_pkthdr(struct os_mbuf_pool *omp, uint8_t user_pkthdr_len)
         STAILQ_NEXT(pkthdr, omp_next) = NULL;
     }
 
+done:
+    os_trace_api_ret_u32(OS_TRACE_ID_MBUF_GET_PKTHDR, (uint32_t)(uintptr_t)om);
     return om;
 }
 
@@ -296,15 +307,19 @@ os_mbuf_free(struct os_mbuf *om)
 {
     int rc;
 
+    os_trace_api_u32(OS_TRACE_ID_MBUF_FREE, (uint32_t)(uintptr_t)om);
+
     if (om->om_omp != NULL) {
         rc = os_memblock_put(om->om_omp->omp_pool, om);
         if (rc != 0) {
-            goto err;
+            goto done;
         }
     }
 
-    return (0);
-err:
+    rc = 0;
+
+done:
+    os_trace_api_ret_u32(OS_TRACE_ID_MBUF_FREE, (uint32_t)rc);
     return (rc);
 }
 
@@ -314,19 +329,23 @@ os_mbuf_free_chain(struct os_mbuf *om)
     struct os_mbuf *next;
     int rc;
 
+    os_trace_api_u32(OS_TRACE_ID_MBUF_FREE_CHAIN, (uint32_t)(uintptr_t)om);
+
     while (om != NULL) {
         next = SLIST_NEXT(om, om_next);
 
         rc = os_mbuf_free(om);
         if (rc != 0) {
-            goto err;
+            goto done;
         }
 
         om = next;
     }
 
-    return (0);
-err:
+    rc = 0;
+
+done:
+    os_trace_api_ret_u32(OS_TRACE_ID_MBUF_FREE_CHAIN, (uint32_t)rc);
     return (rc);
 }
 
@@ -348,6 +367,22 @@ _os_mbuf_copypkthdr(struct os_mbuf *new_buf, struct os_mbuf *old_buf)
     new_buf->om_data = new_buf->om_databuf + old_buf->om_pkthdr_len;
 }
 
+uint16_t
+os_mbuf_len(const struct os_mbuf *om)
+{
+    uint16_t len;
+
+    len = 0;
+    while (om != NULL) {
+        len += om->om_len;
+        om = SLIST_NEXT(om, om_next);
+    }
+
+    return len;
+}
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
 int
 os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 {
@@ -385,10 +420,7 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
         memcpy(OS_MBUF_DATA(last, uint8_t *) + last->om_len , data, space);
 
         last->om_len += space;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpointer-arith"
         data += space;
-#pragma GCC diagnostic pop
         remainder -= space;
     }
 
@@ -403,10 +435,7 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 
         new->om_len = min(omp->omp_databuf_len, remainder);
         memcpy(OS_MBUF_DATA(new, void *), data, new->om_len);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpointer-arith"
         data += new->om_len;
-#pragma GCC diagnostic pop
         remainder -= new->om_len;
         SLIST_NEXT(last, om_next) = new;
         last = new;
@@ -427,6 +456,7 @@ os_mbuf_append(struct os_mbuf *om, const void *data,  uint16_t len)
 err:
     return (rc);
 }
+#pragma GCC diagnostic pop
 
 int
 os_mbuf_appendfrom(struct os_mbuf *dst, const struct os_mbuf *src,
@@ -636,6 +666,9 @@ os_mbuf_adj(struct os_mbuf *mp, int req_len)
     }
 }
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
 int
 os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 {
@@ -657,13 +690,10 @@ os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
 
         chunk_sz = min(om->om_len - om_off, len - data_off);
         if (chunk_sz > 0) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpointer-arith"
             rc = memcmp(om->om_data + om_off, data + data_off, chunk_sz);
             if (rc != 0) {
                 return rc;
             }
-#pragma GCC diagnostic pop
         }
 
         data_off += chunk_sz;
@@ -679,6 +709,7 @@ os_mbuf_cmpf(const struct os_mbuf *om, int off, const void *data, int len)
         }
     }
 }
+#pragma GCC diagnostic pop
 
 int
 os_mbuf_cmpm(const struct os_mbuf *om1, uint16_t offset1,
@@ -1044,6 +1075,93 @@ os_mbuf_trim_front(struct os_mbuf *om)
     }
 
     return om;
+}
+
+int
+os_mbuf_widen(struct os_mbuf *om, uint16_t off, uint16_t len)
+{
+    struct os_mbuf *first_new;
+    struct os_mbuf *edge_om;
+    struct os_mbuf *prev;
+    struct os_mbuf *cur;
+    uint16_t rem_len;
+    uint16_t sub_off;
+    int rc;
+
+    /* Locate the mbuf and offset within the chain where the gap will be
+     * inserted.
+     */
+    edge_om = os_mbuf_off(om, off, &sub_off);
+    if (edge_om == NULL) {
+        return OS_EINVAL;
+    }
+
+    /* If the mbuf has sufficient capacity for the gap, just make room within
+     * the mbuf.
+     */
+    if (OS_MBUF_TRAILINGSPACE(edge_om) >= len) {
+        memmove(edge_om->om_data + sub_off + len,
+                edge_om->om_data + sub_off,
+                edge_om->om_len - sub_off);
+        edge_om->om_len += len;
+        if (OS_MBUF_IS_PKTHDR(om)) {
+            OS_MBUF_PKTHDR(om)->omp_len += len;
+        }
+        return 0;
+    }
+
+    /* Otherwise, allocate new mbufs until the chain has sufficient capacity
+     * for the gap.
+     */
+    rem_len = len;
+    first_new = NULL;
+    prev = NULL;
+    while (rem_len > 0) {
+        cur = os_mbuf_get(om->om_omp, 0);
+        if (cur == NULL) {
+            /* Free only the mbufs that this function allocated. */
+            os_mbuf_free_chain(first_new);
+            return OS_ENOMEM;
+        }
+
+        /* Remember the start of the chain of new mbufs. */
+        if (first_new == NULL) {
+            first_new = cur;
+        }
+
+        if (rem_len > OS_MBUF_TRAILINGSPACE(cur)) {
+            cur->om_len = OS_MBUF_TRAILINGSPACE(cur);
+        } else {
+            cur->om_len = rem_len;
+        }
+        rem_len -= cur->om_len;
+
+        if (prev != NULL) {
+            SLIST_NEXT(prev, om_next) = cur;
+        }
+        prev = cur;
+    }
+
+    /* Move the misplaced data from the edge mbuf over to the right side of the
+     * gap.
+     */
+    rc = os_mbuf_append(prev, edge_om->om_data + sub_off,
+                        edge_om->om_len - sub_off);
+    if (rc != 0) {
+        os_mbuf_free_chain(first_new);
+        return OS_ENOMEM;
+    }
+    edge_om->om_len = sub_off;
+
+    /* Insert the gap into the chain. */
+    SLIST_NEXT(prev, om_next) = SLIST_NEXT(edge_om, om_next);
+    SLIST_NEXT(edge_om, om_next) = first_new;
+
+    if (OS_MBUF_IS_PKTHDR(om)) {
+        OS_MBUF_PKTHDR(om)->omp_len += len;
+    }
+
+    return 0;
 }
 
 struct os_mbuf *

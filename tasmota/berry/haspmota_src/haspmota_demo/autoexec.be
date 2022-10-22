@@ -11,7 +11,7 @@ import lv_tasmota_info
 import lv_wifi_graph
 
 import haspmota
-haspmota.start(false, "haspmota_demo.tapp#pages.jsonl")
+haspmota.start(false, tasmota.wd + "pages.jsonl")
 
 var prev_day = -1
 def set_watch()

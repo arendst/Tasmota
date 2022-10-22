@@ -69,7 +69,11 @@ NimBLEServer*   NimBLEDevice::m_pServer = nullptr;
 uint32_t        NimBLEDevice::m_passkey = 123456;
 bool            NimBLEDevice::m_synced = false;
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+#  if CONFIG_BT_NIMBLE_EXT_ADV
+NimBLEExtAdvertising* NimBLEDevice::m_bleAdvertising = nullptr;
+#  else
 NimBLEAdvertising* NimBLEDevice::m_bleAdvertising = nullptr;
+#  endif
 #endif
 
 gap_event_handler           NimBLEDevice::m_customGapHandler = nullptr;
@@ -114,6 +118,45 @@ uint8_t                     NimBLEDevice::m_scanFilterMode = CONFIG_BTDM_SCAN_DU
 
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+#  if CONFIG_BT_NIMBLE_EXT_ADV
+/**
+ * @brief Get the instance of the advertising object.
+ * @return A pointer to the advertising object.
+ */
+NimBLEExtAdvertising* NimBLEDevice::getAdvertising() {
+    if(m_bleAdvertising == nullptr) {
+        m_bleAdvertising = new NimBLEExtAdvertising();
+    }
+    return m_bleAdvertising;
+}
+
+
+/**
+ * @brief Convenience function to begin advertising.
+ * @param [in] inst_id The extended advertisement instance ID to start.
+ * @param [in] duration How long to advertise for in milliseconds, 0 = forever (default).
+ * @param [in] max_events Maximum number of advertisement events to send, 0 = no limit (default).
+ * @return True if advertising started successfully.
+ */
+bool NimBLEDevice::startAdvertising(uint8_t inst_id,
+                                    int duration,
+                                    int max_events) {
+    return getAdvertising()->start(inst_id, duration, max_events);
+} // startAdvertising
+
+
+/**
+ * @brief Convenience function to stop advertising a data set.
+ * @param [in] inst_id The extended advertisement instance ID to stop advertising.
+ * @return True if advertising stopped successfully.
+ */
+bool NimBLEDevice::stopAdvertising(uint8_t inst_id) {
+    return getAdvertising()->stop(inst_id);
+} // stopAdvertising
+
+#  endif
+
+#  if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
 /**
  * @brief Get the instance of the advertising object.
  * @return A pointer to the advertising object.
@@ -128,17 +171,19 @@ NimBLEAdvertising* NimBLEDevice::getAdvertising() {
 
 /**
  * @brief Convenience function to begin advertising.
+ * @return True if advertising started successfully.
  */
-void NimBLEDevice::startAdvertising() {
-    getAdvertising()->start();
+bool NimBLEDevice::startAdvertising() {
+    return getAdvertising()->start();
 } // startAdvertising
-
+#  endif
 
 /**
- * @brief Convenience function to stop advertising.
+ * @brief Convenience function to stop all advertising.
+ * @return True if advertising stopped successfully.
  */
-void NimBLEDevice::stopAdvertising() {
-    getAdvertising()->stop();
+bool NimBLEDevice::stopAdvertising() {
+    return getAdvertising()->stop();
 } // stopAdvertising
 #endif // #if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
 
@@ -362,7 +407,7 @@ int NimBLEDevice::getPower(esp_ble_power_type_t powerType) {
         case ESP_PWR_LVL_N6:
             return -6;
         case ESP_PWR_LVL_N3:
-            return -6;
+            return -3;
         case ESP_PWR_LVL_N0:
             return 0;
         case ESP_PWR_LVL_P3:
@@ -757,7 +802,7 @@ void NimBLEDevice::onSync(void)
     }
 #endif
 
-    // Yield for houskeeping before returning to operations.
+    // Yield for housekeeping before returning to operations.
     // Occasionally triggers exception without.
     taskYIELD();
 
@@ -806,7 +851,7 @@ void NimBLEDevice::init(const std::string &deviceName) {
         esp_err_t errRc = ESP_OK;
 
 #ifdef CONFIG_ENABLE_ARDUINO_DEPENDS
-        // make sure the linker includes esp32-hal-bt.c so ardruino init doesn't release BLE memory.
+        // make sure the linker includes esp32-hal-bt.c so Arduino init doesn't release BLE memory.
         btStarted();
 #endif
 

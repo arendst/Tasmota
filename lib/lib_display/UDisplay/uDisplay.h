@@ -5,12 +5,38 @@
 #include <renderer.h>
 #include <Wire.h>
 #include <SPI.h>
+
+
+#ifdef ESP32
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+#define USE_ESP32_S3
+#endif
+#endif
+
 #ifdef ESP32
 #include "driver/spi_master.h"
 #endif
 
+#ifdef USE_ESP32_S3
+#include <esp_lcd_panel_io.h>
+#include "esp_private/gdma.h"
+#include <hal/gpio_ll.h>
+#include <hal/lcd_hal.h>
+#include <soc/lcd_cam_reg.h>
+#include <soc/lcd_cam_struct.h>
+static inline volatile uint32_t* get_gpio_hi_reg(int_fast8_t pin) { return (pin & 32) ? &GPIO.out1_w1ts.val : &GPIO.out_w1ts; }
+//static inline volatile uint32_t* get_gpio_hi_reg(int_fast8_t pin) { return (volatile uint32_t*)((pin & 32) ? 0x60004014 : 0x60004008) ; } // workaround Eratta
+static inline volatile uint32_t* get_gpio_lo_reg(int_fast8_t pin) { return (pin & 32) ? &GPIO.out1_w1tc.val : &GPIO.out_w1tc; }
+//static inline volatile uint32_t* get_gpio_lo_reg(int_fast8_t pin) { return (volatile uint32_t*)((pin & 32) ? 0x60004018 : 0x6000400C) ; }
+static inline bool gpio_in(int_fast8_t pin) { return ((pin & 32) ? GPIO.in1.data : GPIO.in) & (1 << (pin & 31)); }
+static inline void gpio_hi(int_fast8_t pin) { if (pin >= 0) *get_gpio_hi_reg(pin) = 1 << (pin & 31); } // ESP_LOGI("LGFX", "gpio_hi: %d", pin); }
+static inline void gpio_lo(int_fast8_t pin) { if (pin >= 0) *get_gpio_lo_reg(pin) = 1 << (pin & 31); } // ESP_LOGI("LGFX", "gpio_lo: %d", pin); }
+#endif
+
 #define _UDSP_I2C 1
 #define _UDSP_SPI 2
+#define _UDSP_PAR8 3
+#define _UDSP_PAR16 4
 
 #define UDISP1_WHITE 1
 #define UDISP1_BLACK 0
@@ -76,6 +102,22 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 
 #define LUTMAXSIZE 64
 
+#ifdef USE_ESP32_S3
+struct esp_lcd_i80_bus_t {
+    int bus_id;            // Bus ID, index from 0
+    portMUX_TYPE spinlock; // spinlock used to protect i80 bus members(hal, device_list, cur_trans)
+    lcd_hal_context_t hal; // Hal object
+    size_t bus_width;      // Number of data lines
+    intr_handle_t intr;    // LCD peripheral interrupt handle
+    void* pm_lock; // Power management lock
+    size_t num_dma_nodes;  // Number of DMA descriptors
+    uint8_t *format_buffer;  // The driver allocates an internal buffer for DMA to do data format transformer
+    size_t resolution_hz;    // LCD_CLK resolution, determined by selected clock source
+    gdma_channel_handle_t dma_chan; // DMA channel handle
+};
+#endif
+
+
 class uDisplay : public Renderer {
  public:
   uDisplay(char *);
@@ -110,11 +152,11 @@ class uDisplay : public Renderer {
    void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
    uint32_t str2c(char **sp, char *vp, uint32_t len);
    void i2c_command(uint8_t val);
-   void spi_command_one(uint8_t val);
-   void spi_command(uint8_t val);
-   void spi_data8(uint8_t val);
-   void spi_data16(uint16_t val);
-   void spi_data32(uint32_t val);
+   void ulcd_command_one(uint8_t val);
+   void ulcd_command(uint8_t val);
+   void ulcd_data8(uint8_t val);
+   void ulcd_data16(uint16_t val);
+   void ulcd_data32(uint32_t val);
    void write8(uint8_t val);
    void write8_slow(uint8_t val);
    void write9(uint8_t val, uint8_t dc);
@@ -226,6 +268,44 @@ class uDisplay : public Renderer {
    int16_t rotmap_ymin;
    int16_t rotmap_ymax;
    void pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap = false);
+
+#ifdef USE_ESP32_S3
+   int8_t par_cs;
+   int8_t par_rs;
+   int8_t par_wr;
+   int8_t par_rd;
+
+   int8_t par_dbl[8];
+   int8_t par_dbh[8];
+
+   esp_lcd_i80_bus_handle_t _i80_bus = nullptr;
+   gdma_channel_handle_t _dma_chan;
+   lldesc_t *_dmadesc = nullptr;
+   uint32_t _dmadesc_size = 0;
+   uint32_t _clock_reg_value;
+   void calcClockDiv(uint32_t* div_a, uint32_t* div_b, uint32_t* div_n, uint32_t* clkcnt, uint32_t baseClock, uint32_t targetFreq);
+   void _alloc_dmadesc(size_t len);
+   void _setup_dma_desc_links(const uint8_t *data, int32_t len);
+   void pb_beginTransaction(void);
+   void pb_endTransaction(void);
+   void pb_wait(void);
+   bool pb_busy(void);
+   void _pb_init_pin(bool);
+   bool pb_writeCommand(uint32_t data, uint_fast8_t bit_length);
+   void pb_writeData(uint32_t data, uint_fast8_t bit_length);
+   void pb_pushPixels(uint16_t* data, uint32_t length, bool swap_bytes, bool use_dma);
+   void pb_writeBytes(const uint8_t* data, uint32_t length, bool use_dma);
+   void _send_align_data(void);
+   volatile lcd_cam_dev_t* _dev;
+   uint32_t* _cache_flip;
+   static constexpr size_t CACHE_SIZE = 256;
+   uint32_t _cache[2][CACHE_SIZE / sizeof(uint32_t)];
+   bool _has_align_data;
+   uint8_t _align_data;
+   void cs_control(bool level);
+   uint32_t get_sr_touch(uint32_t xp, uint32_t xm, uint32_t yp, uint32_t ym);
+#endif
+
 #ifdef ESP32
    // dma section
    bool DMA_Enabled = false;

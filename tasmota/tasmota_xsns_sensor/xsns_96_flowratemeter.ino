@@ -25,34 +25,35 @@
 #define XSNS_96                       96
 
 
-
 #define FLOWRATEMETER_WEIGHT_AVG_SAMPLE   20  // number of samples for smooth weigted average
 #define FLOWRATEMETER_MIN_FREQ             1  // Hz
 
-#define D_JSON_FLOWRATEMETER_RATE         "Rate"
-#define D_JSON_FLOWRATEMETER_VALUE        "Value"
-#define D_JSON_FLOWRATEMETER_UNIT         "Unit"
-#define D_JSON_FLOWRATEMETER_VALUE_AVG    "average"
-#define D_JSON_FLOWRATEMETER_VALUE_RAW    "raw"
+#define D_JSON_FLOWRATEMETER_RATE           "Rate"
+#define D_JSON_FLOWRATEMETER_VALUE          "Source"
+#define D_JSON_FLOWRATEMETER_UNIT           "Unit"
+#define D_JSON_FLOWRATEMETER_AMOUNT_TODAY   "AmountToday"
+#define D_JSON_FLOWRATEMETER_AMOUNT_UNIT    "AmountUnit"
+#define D_JSON_FLOWRATEMETER_DURATION_TODAY "DurationToday"
+#define D_JSON_FLOWRATEMETER_VALUE_AVG      "average"
+#define D_JSON_FLOWRATEMETER_VALUE_RAW      "raw"
 
 
-
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_FLOWRATEMETER[] PROGMEM =
-   "{s}" D_FLOWRATEMETER_NAME "-%d{m}%*_f %s{e}"
-   ;
-#endif  // USE_WEBSERVER
-
+#define FLOWRATEMETER_INVALID (uint32_t)-1
 
 int32_t flowratemeter_period[MAX_FLOWRATEMETER] = {0};
 float   flowratemeter_period_avg[MAX_FLOWRATEMETER] = {0};
 uint32_t flowratemeter_count[MAX_FLOWRATEMETER] = {0};
-volatile uint32_t flowratemeter_last_irq[MAX_FLOWRATEMETER] = {0};
+volatile uint32_t flowratemeter_last_irq[MAX_FLOWRATEMETER] = {FLOWRATEMETER_INVALID};
 
-bool flowratemeter_valuesread = false;
+int32_t flowratemeter_period_sum[MAX_FLOWRATEMETER];
+int32_t flowratemeter_period_sum_dT[MAX_FLOWRATEMETER];
+int32_t flowratemeter_period_duration[MAX_FLOWRATEMETER];
+
+
 bool flowratemeter_raw_value = false;
 
 
+#define FlowRateMeterIsValid(time, meter) flowratemeter_last_irq[meter] != FLOWRATEMETER_INVALID && flowratemeter_last_irq[meter] < time
 
 void IRAM_ATTR FlowRateMeterIR(uint16_t irq)
 {
@@ -62,12 +63,16 @@ void IRAM_ATTR FlowRateMeterIR(uint16_t irq)
   GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
 #endif
   if (irq < MAX_FLOWRATEMETER) {
-    if ((time - flowratemeter_last_irq[irq]) < (1000000 / FLOWRATEMETER_MIN_FREQ)) {
-      flowratemeter_period[irq] = time - flowratemeter_last_irq[irq];
-    } else {
-      flowratemeter_period[irq] = 0;
+    if (FlowRateMeterIsValid(time, irq)) {
+      if ((time - flowratemeter_last_irq[irq]) < (1000000 / FLOWRATEMETER_MIN_FREQ)) {
+        flowratemeter_period_sum_dT[irq] = millis();
+        flowratemeter_period_sum[irq]++;
+        flowratemeter_period[irq] = time - flowratemeter_last_irq[irq];
+        flowratemeter_period_duration[irq] += flowratemeter_period[irq] / 100;
+      } else {
+        flowratemeter_period[irq] = 0;
+      }
     }
-    flowratemeter_valuesread = true;
     flowratemeter_last_irq[irq] = time;
   }
 }
@@ -81,20 +86,36 @@ void IRAM_ATTR FlowRateMeter2IR(void)
   FlowRateMeterIR(1);
 }
 
+void FlowRateMeterMidnightReset(void)
+{
+  uint32_t t = millis();
+  for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+    flowratemeter_period_sum[i] = 0;
+    flowratemeter_period_duration[i] = 0;
+    flowratemeter_period_sum_dT[i] = t;
+  }
+}
+
 void FlowRateMeterRead(void)
 {
   for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
-    if ((micros() - flowratemeter_last_irq[i]) >= (1000000 / FLOWRATEMETER_MIN_FREQ)) {
-      flowratemeter_period[i] = 0;
-      flowratemeter_period_avg[i] = 0;
-    }
+    uint32_t time = micros();
+    if (PinUsed(GPIO_FLOWRATEMETER_IN, i) && FlowRateMeterIsValid(time, i)) {
+      if ((time - flowratemeter_last_irq[i]) >= (1000000 / FLOWRATEMETER_MIN_FREQ)) {
+        // invalid in case of pulse outage
+        flowratemeter_period[i] = 0;
+        flowratemeter_period_avg[i] = 0;
+        flowratemeter_count[i] = 0;
+        flowratemeter_last_irq[i] = FLOWRATEMETER_INVALID;
+      }
 
-    // exponentially weighted average
-    if (flowratemeter_count[i] <= FLOWRATEMETER_WEIGHT_AVG_SAMPLE) {
-      flowratemeter_count[i]++;
+      // exponentially weighted average
+      if (flowratemeter_count[i] <= FLOWRATEMETER_WEIGHT_AVG_SAMPLE) {
+        flowratemeter_count[i]++;
+      }
+      flowratemeter_period_avg[i] -= flowratemeter_period_avg[i] / flowratemeter_count[i];
+      flowratemeter_period_avg[i] += float(flowratemeter_period[i]) / flowratemeter_count[i];
     }
-    flowratemeter_period_avg[i] -= flowratemeter_period_avg[i] / flowratemeter_count[i];
-    flowratemeter_period_avg[i] += float(flowratemeter_period[i]) / flowratemeter_count[i];
   }
 }
 
@@ -102,7 +123,7 @@ void FlowRateMeterInit(void)
 {
   void (* irq_service[MAX_FLOWRATEMETER])(void)= {FlowRateMeter1IR, FlowRateMeter2IR};
 
-  flowratemeter_valuesread = false;
+  FlowRateMeterMidnightReset();
   for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
     if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
       pinMode(Pin(GPIO_FLOWRATEMETER_IN, i), INPUT);
@@ -111,49 +132,138 @@ void FlowRateMeterInit(void)
   }
 }
 
-void FlowRateMeterShow(bool json)
+void FlowRateMeterGetValue(uint32_t meter, float *rate_float, float *amount_today)
 {
-  if (json) {
-    ResponseAppend_P(PSTR(",\"" D_FLOWRATEMETER_NAME "\":{\"" D_JSON_FLOWRATEMETER_RATE "\":["));
-  }
-
-  for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
-    float flowratemeter_rate_avg_float = 0;
-
-    if (flowratemeter_period[i]) {
-      flowratemeter_rate_avg_float =
-        ((Settings->SensorBits1.flowratemeter_unit ? (1000000.0 / 1000.0) : (1000000 / 60.0)) / 2.0)
-        / (flowratemeter_raw_value ? flowratemeter_period[i] : flowratemeter_period_avg[i])
-        * (Settings->flowratemeter_calibration[i] ? (float)Settings->flowratemeter_calibration[i] : 1000.0);
-    }
-
-    if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
-      if (json) {
-        ResponseAppend_P(PSTR("%s%*_f"),
-          i ? PSTR(",") : PSTR(""),
-          Settings->flag2.frequency_resolution, &flowratemeter_rate_avg_float
-        );
-
-#ifdef USE_WEBSERVER
-      } else {
-        WSContentSend_PD(HTTP_SNS_FLOWRATEMETER,
-          i+1,
-          Settings->flag2.frequency_resolution, &flowratemeter_rate_avg_float,
-          Settings->SensorBits1.flowratemeter_unit ? D_UNIT_CUBICMETER_PER_HOUR : D_UNIT_LITER_PER_MINUTE
-        );
-#endif  // USE_WEBSERVER
-      }
+  if (nullptr != rate_float) {
+    *rate_float = 0;
+    if (meter < MAX_FLOWRATEMETER && flowratemeter_period[meter]) {
+      *rate_float =
+        (1000000.0 / 60.0 / 2.0)
+        / (flowratemeter_raw_value ? flowratemeter_period[meter] : flowratemeter_period_avg[meter])
+        * (Settings->flowratemeter_calibration[meter] ? (float)Settings->flowratemeter_calibration[meter] : 1000.0);
     }
   }
-  if (json) {
-    ResponseAppend_P(PSTR("],\"" D_JSON_FLOWRATEMETER_VALUE "\":\"%s\""),
-        flowratemeter_raw_value ? PSTR(D_JSON_FLOWRATEMETER_VALUE_RAW) : PSTR(D_JSON_FLOWRATEMETER_VALUE_AVG)
-    );
-    ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\"}"),
-      Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE)
-    );
+
+  if (nullptr != amount_today) {
+    *amount_today = 0;
+    if (meter < MAX_FLOWRATEMETER && flowratemeter_period_sum[meter]) {
+      uint32_t _flowratemeter_period = (uint32_t)((float)flowratemeter_period_sum_dT[meter] / (float)flowratemeter_period_sum[meter] * 1000.0);
+      float lmin = (((1000000.0 / 60.0) / 2.0) / _flowratemeter_period * (Settings->flowratemeter_calibration[meter] ? (float)Settings->flowratemeter_calibration[meter] : 1000.0));
+      *amount_today = (lmin / 60000) * flowratemeter_period_sum_dT[meter];
+    }
   }
 }
+
+void FlowRateMeterShow(bool json)
+{
+  uint16_t flowmeter_count = 0;
+  const char* open_square_bracket;
+  const char* close_square_bracket;
+  float flowratemeter_rate_float[MAX_FLOWRATEMETER];
+  float floatrate_amount_today[MAX_FLOWRATEMETER];
+
+  for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+    FlowRateMeterGetValue(i, &flowratemeter_rate_float[i], &floatrate_amount_today[i]);
+    if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+      flowmeter_count++;
+    }
+  }
+  if (flowmeter_count > 1) {
+    open_square_bracket = PSTR("[");
+    close_square_bracket = PSTR("]");
+  } else {
+    open_square_bracket = PSTR("");
+    close_square_bracket = PSTR("");
+  }
+
+  if (json) {
+    ResponseAppend_P(PSTR(",\"" D_FLOWRATEMETER_NAME "\":{\"" D_JSON_FLOWRATEMETER_RATE "\":%s"), open_square_bracket);
+    for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+      if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+        float rate = Settings->SensorBits1.flowratemeter_unit ? flowratemeter_rate_float[i] * 60 / 1000 : flowratemeter_rate_float[i];
+        ResponseAppend_P(PSTR("%s%*_f"), i ? PSTR(",") : PSTR(""), Settings->flag2.frequency_resolution, &rate);
+      }
+    }
+    ResponseAppend_P(PSTR("%s,\"" D_JSON_FLOWRATEMETER_AMOUNT_TODAY "\":%s"), close_square_bracket, open_square_bracket);
+    for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+      if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+        float amount_today = Settings->SensorBits1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
+        ResponseAppend_P(PSTR("%s%*_f"), i ? PSTR(",") : PSTR(""), Settings->flag2.frequency_resolution, &amount_today);
+      }
+    }
+    ResponseAppend_P(PSTR("%s,\"" D_JSON_FLOWRATEMETER_DURATION_TODAY "\":%s"), close_square_bracket, open_square_bracket);
+    for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+      if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+        ResponseAppend_P(PSTR("%s%ld"), i ? PSTR(",") : PSTR(""), flowratemeter_period_duration[i] / 10000);
+      }
+    }
+    ResponseAppend_P(PSTR("%s,\"" D_JSON_FLOWRATEMETER_VALUE "\":\"%s\""),
+      close_square_bracket,
+      flowratemeter_raw_value ? PSTR(D_JSON_FLOWRATEMETER_VALUE_RAW) : PSTR(D_JSON_FLOWRATEMETER_VALUE_AVG)
+    );
+    ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_AMOUNT_UNIT "\":\"%s\""),
+      Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS));
+    ResponseAppend_P(PSTR(",\"" D_JSON_FLOWRATEMETER_UNIT "\":\"%s\"}"),
+      Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE));
+#ifdef USE_WEBSERVER
+    } else {
+      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+      if (flowmeter_count > 1) {
+        // head
+        WSContentSend_PD(PSTR("{s}&nbsp;</th>&nbsp;<th></th>"));
+        for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+          if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+            WSContentSend_PD(PSTR("<th style=\"text-align:%s\">%d</th><th>&nbsp;</th>"),
+              Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+              i+1
+            );
+          }
+        }
+        WSContentSend_PD(PSTR("<th> </th></tr>"));
+      }
+
+      // Flowrate
+      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME "{m}&nbsp;</td>"));
+      for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+        if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+          float rate = Settings->SensorBits1.flowratemeter_unit ? flowratemeter_rate_float[i] * 60 / 1000 : flowratemeter_rate_float[i];
+          WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f</td><td>&nbsp;</td>"),
+            Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+            Settings->flag2.frequency_resolution, &rate
+          );
+        }
+      }
+      WSContentSend_PD(PSTR("<td>%s{e}"), Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBICMETER_PER_HOUR) : PSTR(D_UNIT_LITER_PER_MINUTE));
+
+      // Amount today
+      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME " " D_FLOWRATEMETER_AMOUNT_TODAY "{m}&nbsp;</td>"));
+      for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+        if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+          float amount_today = Settings->SensorBits1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
+          WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%*_f</td><td>&nbsp;</td>"),
+            Settings->flag5.gui_table_align ? PSTR("right") : PSTR("center"),
+            Settings->flag2.frequency_resolution, &amount_today
+          );
+        }
+      }
+      WSContentSend_PD(PSTR("<td>%s{e}"), Settings->SensorBits1.flowratemeter_unit ? PSTR(D_UNIT_CUBIC_METER) : PSTR(D_UNIT_LITERS));
+
+      // Duration today
+      WSContentSend_PD(PSTR("{s}" D_FLOWRATEMETER_NAME " " D_FLOWRATEMETER_DURATION_TODAY "{m}&nbsp;</td>"));
+      for (uint32_t i = 0; i < MAX_FLOWRATEMETER; i++) {
+        if (PinUsed(GPIO_FLOWRATEMETER_IN, i)) {
+          float amount_today = Settings->SensorBits1.flowratemeter_unit ? floatrate_amount_today[i] / 1000 : floatrate_amount_today[i];
+          WSContentSend_PD(PSTR("<td style=\"text-align:%s\">%s</td><td>&nbsp;</td>"),
+            (Settings->flag5.gui_table_align)?PSTR("right"):PSTR("center"),
+            GetDuration(flowratemeter_period_duration[i] / 10000).c_str()
+          );
+        }
+      }
+      WSContentSend_PD(PSTR("<td>{e}"));
+#endif  // USE_WEBSERVER
+  }
+}
+
 
 /*********************************************************************************************\
  * Supported commands for Sensor96:
@@ -245,6 +355,9 @@ bool Xsns96(uint8_t function)
     switch (function) {
       case FUNC_INIT:
         FlowRateMeterInit();
+        break;
+      case FUNC_SAVE_AT_MIDNIGHT:
+        FlowRateMeterMidnightReset();
         break;
       case FUNC_EVERY_250_MSECOND:
         FlowRateMeterRead();

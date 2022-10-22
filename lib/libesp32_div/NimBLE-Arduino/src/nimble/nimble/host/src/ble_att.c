@@ -21,6 +21,7 @@
 #include <errno.h>
 #include "ble_hs_priv.h"
 
+#if NIMBLE_BLE_CONNECT
 static uint16_t ble_att_preferred_mtu_val;
 
 /** Dispatch table for incoming ATT requests.  Sorted by op code. */
@@ -587,3 +588,5 @@ ble_att_init(void)
 
     return 0;
 }
+
+#endif

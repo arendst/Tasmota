@@ -29,6 +29,12 @@ ble_mqueue_init(struct ble_mqueue *mq, ble_npl_event_fn *ev_fn, void *ev_arg)
     return (0);
 }
 
+void
+ble_mqueue_deinit(struct ble_mqueue *mq)
+{
+    ble_npl_event_deinit(&mq->ev);
+}
+
 struct os_mbuf *
 ble_mqueue_get(struct ble_mqueue *mq)
 {

@@ -138,7 +138,9 @@ int ble_hci_trans_hs_acl_tx(struct os_mbuf *om)
 {
     uint16_t len = 0;
     uint8_t data[MYNEWT_VAL(BLE_ACL_BUF_SIZE) + 3], rc = 0;
+#ifndef CONFIG_FREERTOS_UNICORE
     bool tx_using_nimble_core = 0;
+#endif
     /* If this packet is zero length, just free it */
     if (OS_MBUF_PKTLEN(om) == 0) {
         os_mbuf_free_chain(om);

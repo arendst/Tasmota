@@ -143,6 +143,8 @@ int ble_mqueue_init(struct ble_mqueue *mq, ble_npl_event_fn *ev_fn, void *ev_arg
 struct os_mbuf *ble_mqueue_get(struct ble_mqueue *mq);
 int ble_mqueue_put(struct ble_mqueue *mq, struct ble_npl_eventq *evq, struct os_mbuf *om);
 
+void ble_gap_npl_sync_lost(struct ble_npl_event *ev);
+
 #if MYNEWT_VAL(BLE_HS_DEBUG)
     #define BLE_HS_DBG_ASSERT(x) assert(x)
     #define BLE_HS_DBG_ASSERT_EVAL(x) assert(x)

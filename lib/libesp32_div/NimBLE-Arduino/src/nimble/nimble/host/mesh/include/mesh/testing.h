@@ -33,13 +33,13 @@ extern "C" {
  *  Allows access to Bluetooth stack internals, not exposed by public API.
  */
 struct bt_test_cb {
-	void (*mesh_net_recv)(u8_t ttl, u8_t ctl, u16_t src, u16_t dst,
+	void (*mesh_net_recv)(uint8_t ttl, uint8_t ctl, uint16_t src, uint16_t dst,
 			      const void *payload, size_t payload_len);
-	void (*mesh_model_bound)(u16_t addr, struct bt_mesh_model *model,
-				 u16_t key_idx);
-	void (*mesh_model_unbound)(u16_t addr, struct bt_mesh_model *model,
-				   u16_t key_idx);
-	void (*mesh_prov_invalid_bearer)(u8_t opcode);
+	void (*mesh_model_bound)(uint16_t addr, struct bt_mesh_model *model,
+				 uint16_t key_idx);
+	void (*mesh_model_unbound)(uint16_t addr, struct bt_mesh_model *model,
+				   uint16_t key_idx);
+	void (*mesh_prov_invalid_bearer)(uint8_t opcode);
 	void (*mesh_trans_incomp_timer_exp)(void);
 
 	sys_snode_t node;
@@ -66,7 +66,7 @@ void bt_test_cb_unregister(struct bt_test_cb *cb);
  *
  *  @return Zero on success or (negative) error code otherwise.
  */
-int bt_test_mesh_lpn_group_add(u16_t group);
+int bt_test_mesh_lpn_group_add(uint16_t group);
 
 /** Send Friend Subscription List Remove message.
  *
@@ -79,7 +79,7 @@ int bt_test_mesh_lpn_group_add(u16_t group);
  *
  *  @return Zero on success or (negative) error code otherwise.
  */
-int bt_test_mesh_lpn_group_remove(u16_t *groups, size_t groups_count);
+int bt_test_mesh_lpn_group_remove(uint16_t *groups, size_t groups_count);
 
 /** Clear replay protection list cache.
  *
@@ -87,12 +87,12 @@ int bt_test_mesh_lpn_group_remove(u16_t *groups, size_t groups_count);
  */
 int bt_test_mesh_rpl_clear(void);
 
-u8_t mod_bind(struct bt_mesh_model *model, u16_t key_idx);
-u8_t mod_unbind(struct bt_mesh_model *model, u16_t key_idx, bool store);
+uint8_t mod_bind(struct bt_mesh_model *model, uint16_t key_idx);
+uint8_t mod_unbind(struct bt_mesh_model *model, uint16_t key_idx, bool store);
 int cmd_mesh_init(int argc, char *argv[]);
 
 int bt_test_shell_init(void);
-int bt_test_bind_app_key_to_model(struct bt_mesh_model *model, u16_t key_idx, u16_t id);
+int bt_test_bind_app_key_to_model(struct bt_mesh_model *model, uint16_t key_idx, uint16_t id);
 
 /**
  * @}

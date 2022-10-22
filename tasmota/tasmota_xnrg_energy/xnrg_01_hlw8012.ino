@@ -211,6 +211,9 @@ void HlwEverySecond(void) {
     uint32_t hlw_len;
 
     if (Hlw.energy_period_counter) {
+
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HLW: EPC %u, CFlen %d usec"), Hlw.energy_period_counter, Hlw.cf_pulse_length);
+
       hlw_len = 10000 * 100 / Hlw.energy_period_counter;  // Add *100 to fix rounding on loads at 3.6kW (#9160)
       Hlw.energy_period_counter = 0;
       if (hlw_len) {

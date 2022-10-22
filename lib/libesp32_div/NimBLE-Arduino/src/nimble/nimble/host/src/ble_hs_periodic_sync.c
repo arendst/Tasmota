@@ -55,6 +55,9 @@ ble_hs_periodic_sync_free(struct ble_hs_periodic_sync *psync)
         return;
     }
 
+    if((psync->lost_ev).event != NULL)
+        ble_npl_event_deinit(&psync->lost_ev);
+
 #if MYNEWT_VAL(BLE_HS_DEBUG)
     memset(psync, 0xff, sizeof *psync);
 #endif

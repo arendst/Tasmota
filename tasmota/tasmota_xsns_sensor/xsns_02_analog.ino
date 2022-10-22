@@ -45,10 +45,14 @@
 #define ANALOG_V33                    3.3              // ESP8266 / ESP32 Analog voltage
 #define ANALOG_T0                     TO_KELVIN(25.0)  // 25 degrees Celsius in Kelvin (= 298.15)
 
-// Shelly 2.5 NTC Thermistor
+// Mode 0 : Shelly 2.5 NTC Thermistor
 // 3V3 --- ANALOG_NTC_BRIDGE_RESISTANCE ---v--- NTC --- Gnd
 //                                         |
 //                                        ADC0
+// Mode 1 : NTC towards 3V3 (Sinilink Thermostat Relay Board (XY-WFT1)
+// 3V3 --- NTC ---v--- ANALOG_NTC_BRIDGE_RESISTANCE --- Gnd
+//                |
+//               ADC0
 #define ANALOG_NTC_BRIDGE_RESISTANCE  32000            // NTC Voltage bridge resistor
 #define ANALOG_NTC_RESISTANCE         10000            // NTC Resistance
 #define ANALOG_NTC_B_COEFFICIENT      3350             // NTC Beta Coefficient
@@ -112,7 +116,7 @@
 #define ANALOG_PH_DECIMAL_MULTIPLIER              100.0
 
 // MQ-X sensor (MQ-02, MQ-03, MQ-04, MQ-05, MQ-06, MQ-07, MQ-08, MQ-09, MQ-131, MQ-135)
-//         
+//
 // A0  -------------------
 //                        |
 // GND -----------        |
@@ -121,7 +125,7 @@
 //        |       |       |
 //       3V3     GND     ADC  <- (A0 for nodemcu, wemos; GPIO34,35,36,39 and other analog IN/OUT pin for esp32)
 //means mq type (ex for mq-02 use 2, mq-131 use 131)
-#define ANALOG_MQ_TYPE                            2 
+#define ANALOG_MQ_TYPE                            2
 //exponential regression a params
 #define ANALOG_MQ_A                               574.25
 //exponential regression b params
@@ -134,13 +138,13 @@
   CO     | 521853 | -3.821
   Alcohol| 0.3934 | -1.504
   Benzene| 4.8387 | -2.68
-  Hexane | 7585.3 | -2.849  
+  Hexane | 7585.3 | -2.849
   NOx    | -462.43 | -2.204
   CL2    | 47.209 | -1.186
   O3     | 23.943 | -1.11
 */
 //ratio for alarm, NOT USED yet (RS / R0 = 15 ppm)
-#define ANALOG_MQ_RatioMQCleanAir                 15.0        
+#define ANALOG_MQ_RatioMQCleanAir                 15.0
 // Multiplier used to store pH with 2 decimal places in a non decimal datatype
 #define ANALOG_MQ_DECIMAL_MULTIPLIER              100.0
 // lenght of filter
@@ -203,6 +207,7 @@ void AdcInitParams(uint8_t idx) {
       Adc[idx].param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
       Adc[idx].param2 = ANALOG_NTC_RESISTANCE;
       Adc[idx].param3 = ANALOG_NTC_B_COEFFICIENT * 10000;
+      Adc[idx].param4 = 0; // Default to Shelly mode with NTC towards GND
     }
     else if (ADC_LIGHT == Adc[idx].type) {
       Adc[idx].param1 = ANALOG_LDR_BRIDGE_RESISTANCE;
@@ -387,7 +392,7 @@ void AddSampleMq(uint32_t idx){
   if (Adc[idx].indexOfPointer==-1)
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Init samples for mq-sensor"));
-    for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+    for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++)
       Adc[idx].mq_samples[i] = _adc;
   }
   else
@@ -402,9 +407,9 @@ float AdcGetMq(uint32_t idx) {
   float avg = 0.0;
   float _RL = 10; //Value in KiloOhms
   float _R0 = 10;
-  for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++) 
+  for (int i = 0; i < ANALOG_MQ_SAMPLES; i ++)
     avg += Adc[idx].mq_samples[i];
-  float voltage = (avg / ANALOG_MQ_SAMPLES) * ANALOG_V33 / ((FastPrecisePow(2, ANALOG_RESOLUTION)) - 1);
+  float voltage = (avg / ANALOG_MQ_SAMPLES) * ANALOG_V33 / ANALOG_RANGE;
 
   float _RS_Calc = ((ANALOG_V33 * _RL) / voltage) -_RL; //Get value of RS in a gas
   if (_RS_Calc < 0)  _RS_Calc = 0; //No negative values accepted.
@@ -496,10 +501,19 @@ void AdcEverySecond(void) {
       // double Rt = (adc * Adc[idx].param1 * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (double)adc * MAX_ADC_V);
       // MAX_ADC_V in ESP8266 is 1
       // MAX_ADC_V in ESP32 is 3.3
+      double Rt;
 #ifdef ESP8266
-      double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE * ANALOG_V33 - (double)adc);  // Shelly param1 = 32000 (ANALOG_NTC_BRIDGE_RESISTANCE)
+      if (Adc[idx].param4) { // Alternate mode
+        Rt = (double)Adc[idx].param1 * (ANALOG_RANGE * ANALOG_V33 - (double)adc) / (double)adc;
+      } else {
+        Rt = (double)Adc[idx].param1 * (double)adc / (ANALOG_RANGE * ANALOG_V33 - (double)adc);
+      }
 #else
-      double Rt = (adc * Adc[idx].param1) / (ANALOG_RANGE - (double)adc);
+      if (Adc[idx].param4) { // Alternate mode
+        Rt = (double)Adc[idx].param1 * (ANALOG_RANGE - (double)adc) / (double)adc;
+      } else {
+        Rt = (double)Adc[idx].param1 * (double)adc / (ANALOG_RANGE - (double)adc);
+      }
 #endif
       double BC = (double)Adc[idx].param3 / 10000;                                      // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
       double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Adc[idx].param2));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
@@ -710,7 +724,8 @@ void CmndAdcParam(void) {
         AdcGetSettings(idx);
         if (ArgC() > 3) {  // Process parameter entry
           char argument[XdrvMailbox.data_len];
-          // AdcParam 2, 32000, 10000, 3350
+          // AdcParam 2, 32000, 10000, 3350        ADC_TEMP Shelly mode
+          // AdcParam 2, 32000, 10000, 3350, 1     ADC_TEMP Alternate mode
           // AdcParam 3, 10000, 12518931, -1.405
           // AdcParam 4, 128, 0, 0
           // AdcParam 5, 128, 0, 0
@@ -725,6 +740,12 @@ void CmndAdcParam(void) {
             Adc[idx].param4 = abs(strtol(ArgV(argument, 5), nullptr, 10));
           } else {
             Adc[idx].param3 = (int)(CharToFloat(ArgV(argument, 4)) * 10000);
+            if (ArgC() > 4) {
+              Adc[idx].param4 = (int)(CharToFloat(ArgV(argument, 5)) * 10000);
+            }
+            else{
+              Adc[idx].param4 = 0;
+            }
           }
           if (ADC_PH == XdrvMailbox.payload) {
             float phLow = CharToFloat(ArgV(argument, 2));
@@ -810,7 +831,7 @@ void CmndAdcParam(void) {
       }
       char param3[33];
       dtostrfd(((double)Adc[idx].param3)/10000, precision, param3);
-      ResponseAppend_P(PSTR(",%s"), param3);
+      ResponseAppend_P(PSTR(",%s,%d"), param3, Adc[idx].param4);
     }
     ResponseAppend_P(PSTR("]}"));
   }

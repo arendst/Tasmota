@@ -185,8 +185,8 @@ const char HTTP_ENERGY_SDM72[] PROGMEM =
 void Sdm72Show(bool json) {
   if (isnan(Sdm72.total_active)) { return; }
 
-  char value_chr[TOPSZ];
-  char value2_chr[TOPSZ];
+  char value_chr[GUISZ];
+  char value2_chr[GUISZ];
 
   if (json) {
      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_POWER "\":%s,\"" D_JSON_IMPORT_POWER "\":%s"),
