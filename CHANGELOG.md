@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [12.2.0.1]
 ### Added
 - DS18x20 support on up to four GPIOs by md5sum-as (#16833)
+- Berry add `bytes().setbytes()`
 
 ### Breaking Changed
 

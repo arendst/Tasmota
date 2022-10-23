@@ -949,6 +949,50 @@ static int m_setfloat(bvm *vm)
     be_return_nil(vm);
 }
 
+/*
+ * Fills a buffer with another buffer.
+ *
+ * This is meant to be very flexible and avoid loops
+ * 
+ * `setbytes(index:int, fill:bytes [, from:int, len:int]) -> nil`
+ * 
+ */
+#include <stdio.h>
+static int m_setbytes(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
+    check_ptr(vm, &attr);
+    if (argc >=3 && be_isint(vm, 2) && (be_isbytes(vm, 3))) {
+        int32_t idx = be_toint(vm, 2);
+        size_t from_len_total;
+        const uint8_t* buf_ptr = (const uint8_t*) be_tobytes(vm, 3, &from_len_total);
+        if (idx < 0) { idx = 0; }
+        if ((size_t)idx >= attr.len) { idx = attr.len; }
+
+        int32_t from_byte = 0;
+        if (argc >= 4 && be_isint(vm, 4)) {
+            from_byte = be_toint(vm, 4);
+            if (from_byte < 0) { from_byte = 0; }
+            if ((size_t)from_byte >= from_len_total) { from_byte = from_len_total; }
+        }
+
+        int32_t from_len = from_len_total - from_byte;
+        if (argc >= 5 && be_isint(vm, 5)) {
+            from_len = be_toint(vm, 5);
+            if (from_len < 0) { from_len = 0; }
+            if (from_len >= from_len_total) { from_len = from_len_total; }
+        }
+        if ((size_t) idx + (size_t)from_len >= attr.len) { from_len = attr.len - idx; }
+
+        // all parameters ok
+        if (from_len > 0) {
+            memmove(attr.bufptr + idx, buf_ptr + from_byte, from_len);
+        }
+    }
+    be_return_nil(vm);
+}
+
 static int m_setitem(bvm *vm)
 {
     int argc = be_top(vm);
@@ -1575,6 +1619,7 @@ void be_load_byteslib(bvm *vm)
         { "geti", m_geti },
         { "set", m_set },
         { "seti", m_set },      // setters for signed and unsigned are identical
+        { "setbytes", m_setbytes },
         { "getfloat", m_getfloat },
         { "setfloat", m_setfloat },
         { "item", m_item },
@@ -1621,6 +1666,7 @@ class be_class_bytes (scope: global, name: bytes) {
     setfloat, func(m_setfloat)
     set, func(m_set)
     seti, func(m_set)
+    setbytes, func(m_setbytes)
     item, func(m_item)
     setitem, func(m_setitem)
     size, func(m_size)
