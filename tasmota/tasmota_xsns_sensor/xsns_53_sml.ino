@@ -1820,12 +1820,28 @@ char *skip_double(char *cp) {
   return 0;
 }
 
+uint8_t byte_destuff (uint8_t typ, uint8_t **cp, uint8_t index)
+{
+  uint8_t retval = *(*cp + index);
+
+  if (typ == 'k')
+  {
+    if (*(*cp + index) == 0x1b)
+    {
+      retval = ~*(*cp + index + 1);
+      (*cp)++;
+    }
+  }
+  return retval;
+}
+	
 
 void SML_Decode(uint8_t index) {
   const char *mp=(const char*)meter_p;
   int8_t mindex;
   uint8_t *cp;
   uint8_t dindex = 0, vindex = 0;
+  uint8_t destuff_typ = ' ';
   delay(0);
 
   while (mp != NULL) {
@@ -2016,8 +2032,15 @@ void SML_Decode(uint8_t index) {
                   cp += skip;
                 }
               }
-            } else if (!strncmp(mp, "UUuuUUuu", 8)) {
-              uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+            } else if (*mp == 'k') {
+               mp++;
+               destuff_typ = 'k';
+	    } else if (!strncmp(mp, "UUuuUUuu", 8)) {
+              //uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+              uint32_t val = byte_destuff (destuff_typ, &cp, 0) << 24;
+              val |= byte_destuff (destuff_typ, &cp, 1) << 16;
+              val |= byte_destuff (destuff_typ, &cp, 2) << 8;
+              val |= byte_destuff (destuff_typ, &cp, 3);	    
               mp += 8;
               cp += 4;
               if (*mp == 's') {
@@ -2039,7 +2062,9 @@ void SML_Decode(uint8_t index) {
               ebus_dval = val;
               mbus_dval = val;
             } else if (!strncmp(mp, "UUuu", 4)) {
-              uint16_t val = cp[1] | (cp[0]<<8);
+//              uint16_t val = cp[1] | (cp[0]<<8);
+              uint16_t val = byte_destuff (destuff_typ, &cp, 0) << 8;
+              val |= byte_destuff (destuff_typ, &cp, 1);
               mbus_dval = val;
               ebus_dval = val;
               mp += 4;
@@ -2073,7 +2098,9 @@ void SML_Decode(uint8_t index) {
               mp += 4;
               cp += 2;
             } else if (!strncmp(mp, "uu", 2)) {
-              uint8_t val = *cp++;
+//              uint8_t val = *cp++;
+              uint8_t val = byte_destuff (destuff_typ, &cp, 0);
+              cp++;
               mbus_dval = val;
               ebus_dval = val;
               mp += 2;
