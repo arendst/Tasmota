@@ -104,7 +104,7 @@
  *
  * Restrictions:
  * - Supports Modbus floating point registers
- * - Max number of uer defined registers is defined by one rule buffer (511 characters uncompressed, around 800 characters compressed)
+ * - Max number of user defined registers is defined by one rule buffer (511 characters uncompressed, around 800 characters compressed)
  *
  * To do:
  * - Support all three rule slots
