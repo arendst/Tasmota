@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - DS18x20 support on up to four GPIOs by md5sum-as (#16833)
 - Berry add `bytes().setbytes()` (#16892)
 - Support for Shelly Pro 1/2 (#16773)
+- Add Zigbee router firmware for Sonoff ZBBridgePro (#16900)
 
 ### Breaking Changed
 
