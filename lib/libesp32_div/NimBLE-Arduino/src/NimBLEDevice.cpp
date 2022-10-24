@@ -971,6 +971,15 @@ void NimBLEDevice::deinit(bool clearAll) {
     }
 } // deinit
 
+/**
+ * @brief Set the BLEDevice's name
+ * @param [in] deviceName The device name of the device.
+ */
+/* STATIC */
+void NimBLEDevice::setDeviceName(const std::string &deviceName) {
+    ble_svc_gap_device_name_set(deviceName.c_str());
+} // setDeviceName
+
 
 /**
  * @brief Check if the initialization is complete.
