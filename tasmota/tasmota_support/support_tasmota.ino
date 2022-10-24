@@ -518,9 +518,12 @@ void SetLedPowerAll(uint32_t state)
 }
 
 void SetLedLink(uint32_t state) {
-#ifdef USE_SHELLY_PRO
-  if (ShellyProLedLink(state)) { return; }
-#endif  // USE_SHELLY_PRO
+#ifdef ESP32
+  uint32_t index = XdrvMailbox.index;
+  XdrvMailbox.index = state;
+  XdrvCall(FUNC_LED_LINK);
+  XdrvMailbox.index = index;
+#endif  // ESP32
   int led_pin = Pin(GPIO_LEDLNK);
   uint32_t led_inv = TasmotaGlobal.ledlnk_inverted;
   if (-1 == led_pin) {                    // Legacy - LED1 is status

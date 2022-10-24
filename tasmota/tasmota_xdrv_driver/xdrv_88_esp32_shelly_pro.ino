@@ -27,6 +27,9 @@
  * {"NAME":"Shelly Pro 2","GPIO":[0,0,0,0,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,0,0,0,32,0,0,160,161],"FLAG":0,"BASE":1}
  *
  * Shelly Pro uses SPI to control one 74HC595 for relays/leds and one ADE7953 (1PM) or two ADE7953 (2PM) for energy monitoring
+ *
+ * Testset
+ * {"NAME":"Shelly Pro 2PM (POC)","GPIO":[1,0,1,0,768,1,0,0,672,704,736,1,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,32,1,1,160,161],"FLAG":0,"BASE":1}
 \*********************************************************************************************/
 
 #define XDRV_88           88
@@ -87,18 +90,10 @@ void ShellyProPower(void) {
   ShellyProUpdate();
 }
 
-/*********************************************************************************************\
- * External called functions
-\*********************************************************************************************/
-
-bool ShellyProLedLink(uint32_t state) {
-  if (SPro.detected) {
-    // bit 2 = blue, 3 = green, 4 = red
-    SPro.ledlink = (state) ? 0x18 : 0x1C;       // Blue on (wifi link) or all off
-    ShellyProUpdate();
-    return true;
-  }
-  return false;
+void ShellyProLedLink(void) {
+  // bit 2 = blue, 3 = green, 4 = red
+  SPro.ledlink = (XdrvMailbox.index) ? 0x18 : 0x1C;       // Blue on (wifi link) or all off
+  ShellyProUpdate();
 }
 
 /*********************************************************************************************\
@@ -114,6 +109,9 @@ bool Xdrv88(uint8_t function) {
       switch (function) {
         case FUNC_SET_POWER:
           ShellyProPower();
+          break;
+        case FUNC_LED_LINK:
+          ShellyProLedLink();
           break;
       }
     }
