@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 ## [12.2.0.1]
 ### Added
 - DS18x20 support on up to four GPIOs by md5sum-as (#16833)
+- Berry add `bytes().setbytes()` (#16892)
+- Support for Shelly Pro 1/2 (#16773)
+- Add Zigbee router firmware for Sonoff ZBBridgePro (#16900)
+- Prepare for DMX Artnet support on ESP32
 
 ### Breaking Changed
 
@@ -13,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` (#16833)
 - Compiling with reduced boards manifests in favour of Autoconfig (#16848)
 - Add NeoPool ``NPFiltration 2`` toggle cmnd (#16859)
+- ESP32 NimBLE library from v1.4.0 to v1.4.1 (#16775)
 
 ### Fixed
 - BP5758D red channel corruption regression from v12.1.1.6 (#16850)

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2022-10-23
+
+### Fixed
+ - Compile warning removed for esp32c3
+ - NimBLEDevice::getPower incorrect value when power level is -3db.
+ - Failed pairing when already in progress.
+
+### Changed
+ - Revert previous change that forced writing with response when subscribing in favor of allowing the application to decide.
+
+### Added
+ - Added NimBLEHIDDevice::batteryLevel.
+ - Added NimBLEDevice::setDeviceName allowing for changing the device name while the BLE stack is active.
+ - CI build tests.
+ - Missing items in CHANGELOG that were not recorded correctly
+
 ## [1.4.0] - 2022-07-10
 
 ### Fixed
@@ -11,6 +27,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Updated NimBLE core to use the v1.4.0 branch of esp-nimble.
 - AD flags are no longer set in the advertisements of non-connectable beacons, freeing up 3 bytes of advertisement room.
+- Config option CONFIG_BT_NIMBLE_DEBUG replaced with CONFIG_BT_NIMBLE_LOG_LEVEL (see src/nimconfig.h for usage)
+- Config option CONFIG_NIMBLE_CPP_ENABLE_ADVERTISMENT_TYPE_TEXT renamed to CONFIG_NIMBLE_CPP_ENABLE_ADVERTISEMENT_TYPE_TEXT
+- Config option CONFIG_BT_NIMBLE_TASK_STACK_SIZE renamed to CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE
 
 ### Added
 - Preliminary support for non-esp devices, NRF51 and NRF52 devices supported with [n-able arduino core](https://github.com/h2zero/n-able-Arduino)

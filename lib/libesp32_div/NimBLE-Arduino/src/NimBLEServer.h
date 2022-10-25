@@ -58,7 +58,8 @@ public:
                                             int duration = 0,
                                             int max_events = 0);
     bool                   stopAdvertising(uint8_t inst_id);
-#else
+#endif
+#if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
     NimBLEAdvertising*     getAdvertising();
     bool                   startAdvertising();
 #endif
