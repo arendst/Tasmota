@@ -86,7 +86,7 @@ struct PN532 {
 #ifdef USE_PN532_DATA_FUNCTION
   uint8_t newdata[16];
   uint8_t function = 0;
-  uint8_t newdata_len = 0;
+//  uint8_t newdata_len = 0;
   uint32_t pwd_auth=0x64636261;
   uint16_t pwd_pack=0x6665;
   uint32_t pwd_auth_new;
@@ -586,16 +586,6 @@ void PN532_ScanForTag(void) {
     if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
       uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
       if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
-        if (mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
-          for (uint32_t i = 0;i < sizeof(card_datas);i++) {
-            if (!isprint(card_datas[i])) {
-              // do not output non-printable characters to the console 
-              card_datas[i] = 0;
-            }
-          }
-        } else {
-          card_datas[0] = 0;
-        }
         if (Pn532.function == 1) { // erase block 1 of card
           memset(card_datas,0,sizeof(card_datas));
           if (mifareclassic_WriteDataBlock(1, (uint8_t *)card_datas)) {
@@ -609,6 +599,16 @@ void PN532_ScanForTag(void) {
             success = true;
             AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
           }
+        }
+        if (mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
+          for (uint32_t i = 0;i < sizeof(card_datas);i++) {
+            if (!isprint(card_datas[i])) {
+              // do not output non-printable characters to the console 
+              card_datas[i] = 0;
+            }
+          }
+        } else {
+          card_datas[0] = 0;
         }
       } else {
         sprintf_P(card_datas, PSTR("AUTHFAIL"));
