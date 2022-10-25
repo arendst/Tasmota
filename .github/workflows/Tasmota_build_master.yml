@@ -59,6 +59,8 @@ jobs:
           ref: master
       - name: Set up Python
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -84,6 +86,8 @@ jobs:
           ref: master
       - name: Set up Python
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
