@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry add `bytes().setbytes()` (#16892)
 - Support for Shelly Pro 1/2 (#16773)
 - Add Zigbee router firmware for Sonoff ZBBridgePro (#16900)
+- Prepare for DMX Artnet support on ESP32
 
 ### Breaking Changed
 
