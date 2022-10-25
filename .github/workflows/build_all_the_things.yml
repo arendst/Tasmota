@@ -46,7 +46,7 @@ jobs:
           path: ./build_output
 
   os-check-mac:
-    runs-on: macos-latest
+    runs-on: macOS-12
     if: github.repository == 'arendst/Tasmota'
     strategy:
       fail-fast: true
