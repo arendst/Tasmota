@@ -421,7 +421,7 @@ uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   return 1;
 }
 
-uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
+bool mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the first command */
   for (uint8_t i = 0; i < 2; i++) {
     Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
@@ -432,14 +432,14 @@ uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
 
   /* Send the command */
     if (PN532_writeCommand(Pn532.packetbuffer, 20)) {
-      return 0;
+      return false;
     }
   /* Read the response packet */
     if (0 >= PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer))) {
-      return 0;
+      return false;
     }
   }
-  return 1;
+  return true;
 }
 
 uint8_t ntag21x_probe (void) {
@@ -575,6 +575,12 @@ void PN532_ScanForTag(void) {
             if (memcmp(uid, nuid, sizeof(uid))==0) {
               if (ntag21x_auth()) {str_pwd=PWD_OK;} else {str_pwd=PWD_NOK;}
               if (!ntag21x_read32(card_datas, sizeof(card_datas))) card_datas[0]=0;
+              if (Pn532.command == 1) {
+                /* Erase */
+              } else 
+              if (Pn532.command == 2) {
+                /* Write */
+              }
             }
           }
         }
@@ -587,20 +593,17 @@ void PN532_ScanForTag(void) {
         }
       }
     } else
-    if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
+    if (uid_len == 4) { // Lets try to read blocks 1 & 2 of the mifare classic card for more information
       uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
       if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
-        if (Pn532.function == 1) { // erase block 1 of card
+        if (Pn532.function == 1) { // erase blocks 1 & 2 of card
           memset(card_datas,0,sizeof(card_datas));
-          if (mifareclassic_WriteDataBlock(1, (uint8_t *)card_datas)) {
-            success = true;
+          if ((success=mifareclassic_WriteDataBlock(1, (uint8_t *)card_datas))) {
             AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase success"));
           }
         } else
         if (Pn532.function == 2) {
-          memcpy(&card_datas,&Pn532.newdata,sizeof(card_datas));
-          if (mifareclassic_WriteDataBlock(1, (uint8_t *)card_datas)) {
-            success = true;
+          if ((success=mifareclassic_WriteDataBlock(1, Pn532.newdata))) {
             AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
           }
         }
