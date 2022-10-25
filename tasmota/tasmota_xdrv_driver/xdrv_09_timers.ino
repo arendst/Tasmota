@@ -253,10 +253,10 @@ uint16_t TimerGetTimeOfDay(uint8_t index)
   int16_t xtime = xtimer.time;
 #ifdef USE_SUNRISE
   if (xtimer.mode) {
-  if (xtime >= 12*60) xtime = 12*60 - xtime;
-  xtime += (int16_t)SunMinutes(xtimer.mode-1);
-  if (xtime <      0) xtime += 24*60;
-  if (xtime >= 24*60) xtime -= 24*60;
+    ApplyTimerOffsets(&xtimer);
+    xtime = xtimer.time;
+    if (xtime==2047 && xtimer.mode==1) xtime *= -1; // Sun always has already rises
+    if (xtime==2046 && xtimer.mode==2) xtime *= -1; // Sun always has already set   
   }
 #endif
 return xtime;
