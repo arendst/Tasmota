@@ -671,7 +671,7 @@ bool PN532_Command(void) {
   if (!strncmp_P(argument,PSTR("ERASE"),5)) {
     Pn532.function = 1; // Block 1 of next card/tag will be reset to 0x00...
     AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
-    ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"E\"}}"));
+    ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"ERASE\"}}"));
     return serviced;
   } else
   if (!strncmp_P(argument,PSTR("WRITE"),5)) {
@@ -685,7 +685,7 @@ bool PN532_Command(void) {
       if (strlen(argument)>32) argument[32]=0;
       Pn532.function = 2;
       AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), argument);
-      ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
+      ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"WRITE\"}}"));
       return serviced;
     }
   } else
