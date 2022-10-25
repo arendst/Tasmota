@@ -18,7 +18,6 @@
 */
 #define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
   #define USE_PN532_DATA_FUNCTION                // Add sensor40 command support for erase, setting data block content (+1k7 code, 388 bytes mem)
-//  #define USE_PN532_DATA_RAW                     // Allow DATA block to be used by non-alpha-numberic data (+ 80 bytes code, 48 bytes ram)
 
 #ifdef USE_PN532_HSU
 /*********************************************************************************************\
@@ -85,9 +84,9 @@ struct PN532 {
   bool present = false;         // Maintain detection flag
   uint16_t atqa;
 #ifdef USE_PN532_DATA_FUNCTION
-  uint8_t newdata[33];
+  uint8_t newdata[16];
   uint8_t function = 0;
-//  uint8_t newdata_len = 0;
+  uint8_t newdata_len = 0;
   uint32_t pwd_auth=0x64636261;
   uint16_t pwd_pack=0x6665;
   uint32_t pwd_auth_new;
@@ -587,58 +586,29 @@ void PN532_ScanForTag(void) {
     if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
       uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
       if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
-        uint8_t card_data[16];
-        if (mifareclassic_ReadDataBlock(1, card_data)) {
-#ifdef USE_PN532_DATA_RAW
-          memcpy(&card_datas,&card_data,sizeof(card_data));
-#else
-          for (uint32_t i = 0;i < sizeof(card_data);i++) {
-            if (isprint(card_data[i])) {
-              card_datas[i] = char(card_data[i]);
-            } else {
-              card_datas[i] = '\0';
+        if (mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
+          for (uint32_t i = 0;i < sizeof(card_datas);i++) {
+            if (!isprint(card_datas[i])) {
+              // do not output non-printable characters to the console 
+              card_datas[i] = 0;
             }
           }
-#endif  // USE_PN532_DATA_RAW
+        } else {
+          card_datas[0] = 0;
         }
         if (Pn532.function == 1) { // erase block 1 of card
-//TODO : Test
-          for (uint32_t i = 0;i<16;i++) {
-            card_data[i] = 0x00;
-          }
-          if (mifareclassic_WriteDataBlock(1, card_data)) {
+          memset(card_datas,0,sizeof(card_datas));
+          if (mifareclassic_WriteDataBlock(1, (uint8_t *)card_datas)) {
             success = true;
             AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Erase success"));
-            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
           }
-        }
+        } else
         if (Pn532.function == 2) {
-#ifdef USE_PN532_DATA_RAW
-          memcpy(&card_data,&Pn532.newdata,sizeof(card_data));
-          if (mifareclassic_WriteDataBlock(1, card_data)) {
+          memcpy(&card_datas,&Pn532.newdata,sizeof(card_datas));
+          if (mifareclassic_WriteDataBlock(1, (uint8_t *)card_datas)) {
             success = true;
             AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
-            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
           }
-#else
-          bool IsAlphaNumeric = true;
-          for (uint32_t i = 0;i < Pn532.newdata_len;i++) {
-            if (!isprint(Pn532.newdata[i])) {
-              IsAlphaNumeric = false;
-            }
-          }
-          if (IsAlphaNumeric) {
-            memcpy(&card_data,&Pn532.newdata,Pn532.newdata_len);
-            card_data[Pn532.newdata_len] = '\0'; // Enforce null termination
-            if (mifareclassic_WriteDataBlock(1, card_data)) {
-              success = true;
-              AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data write successful"));
-              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
-            }
-          } else {
-            AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Data must be alphanumeric"));
-          }
-#endif  // USE_PN532_DATA_RAW
         }
       } else {
         sprintf_P(card_datas, PSTR("AUTHFAIL"));
@@ -713,10 +683,12 @@ bool PN532_Command(void) {
         return serviced;
       }
       ArgV(argument, 2);
-      Pn532.newdata_len = strlen(argument);
-      if (Pn532.newdata_len > 15) { Pn532.newdata_len = 15; }
-      memcpy(&Pn532.newdata,&argument,Pn532.newdata_len);
-      Pn532.newdata[Pn532.newdata_len] = 0x00; // Null terminate the string
+//      Pn532.newdata_len = strlen(argument);
+//      if (Pn532.newdata_len > 15) { Pn532.newdata_len = 15; }
+//      memcpy(&Pn532.newdata,&argument,Pn532.newdata_len);
+//      Pn532.newdata[Pn532.newdata_len] = 0x00; // Null terminate the string
+      strncpy((char *)Pn532.newdata,argument,sizeof(Pn532.newdata));
+      Pn532.newdata[sizeof(Pn532.newdata)-1]=0;
       Pn532.function = 2;
       AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), Pn532.newdata);
       ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
