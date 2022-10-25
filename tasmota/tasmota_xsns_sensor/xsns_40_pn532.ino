@@ -82,11 +82,10 @@ struct PN532 {
   uint8_t command = 0;          // Carry command code between functions
   uint8_t scantimer = 0;        // Prevent multiple successful reads within 2 second window
   bool present = false;         // Maintain detection flag
-  uint16_t atqa;
 #ifdef USE_PN532_DATA_FUNCTION
-  uint8_t newdata[16];
+  uint16_t atqa;
+  uint8_t newdata[32];
   uint8_t function = 0;
-//  uint8_t newdata_len = 0;
   uint32_t pwd_auth=0x64636261;
   uint16_t pwd_pack=0x6665;
   uint32_t pwd_auth_new;
@@ -601,12 +600,13 @@ void PN532_ScanForTag(void) {
           }
         }
         if (mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
-          for (uint32_t i = 0;i < sizeof(card_datas);i++) {
+          for (uint32_t i = 0; i < 16;i++) {
             if (!isprint(card_datas[i])) {
               // do not output non-printable characters to the console 
               card_datas[i] = 0;
             }
           }
+          card_datas[16] = 0;
         } else {
           card_datas[0] = 0;
         }
@@ -661,13 +661,6 @@ bool PN532_Command(void) {
     return serviced;
   }
   char argument[XdrvMailbox.data_len];
-/*
-  for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
-    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
-    if (',' == XdrvMailbox.data[ca]) { paramcount++; }
-  }
-*/
-//  UpperCase(XdrvMailbox.data,XdrvMailbox.data);
   ArgV(argument, 1);
   UpperCase(argument,argument);
   if (!strcmp(argument,"E")) {
@@ -683,14 +676,10 @@ bool PN532_Command(void) {
         return serviced;
       }
       ArgV(argument, 2);
-//      Pn532.newdata_len = strlen(argument);
-//      if (Pn532.newdata_len > 15) { Pn532.newdata_len = 15; }
-//      memcpy(&Pn532.newdata,&argument,Pn532.newdata_len);
-//      Pn532.newdata[Pn532.newdata_len] = 0x00; // Null terminate the string
       strncpy((char *)Pn532.newdata,argument,sizeof(Pn532.newdata));
-      Pn532.newdata[sizeof(Pn532.newdata)-1]=0;
+      if (strlen(argument)>16) argument[16]=0;
       Pn532.function = 2;
-      AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), Pn532.newdata);
+      AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), argument);
       ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
       return serviced;
     }
