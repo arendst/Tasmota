@@ -395,46 +395,51 @@ uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t 
 
 uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the command */
-  Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
-  Pn532.packetbuffer[1] = 1;                      /* Card number */
-  Pn532.packetbuffer[2] = MIFARE_CMD_READ;        /* Mifare Read command = 0x30 */
-  Pn532.packetbuffer[3] = blockNumber;            /* Block Number (0..63 for 1K, 0..255 for 4K) */
+  for (uint8_t i = 0; i < 2; i++) {
+    Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
+    Pn532.packetbuffer[1] = 1;                      /* Card number */
+    Pn532.packetbuffer[2] = MIFARE_CMD_READ;        /* Mifare Read command = 0x30 */
+    Pn532.packetbuffer[3] = blockNumber + i;        /* Block Number (0..63 for 1K, 0..255 for 4K) */
 
-  /* Send the command */
-  if (PN532_writeCommand(Pn532.packetbuffer, 4)) {
-    return 0;
+    /* Send the command */
+    if (PN532_writeCommand(Pn532.packetbuffer, 4)) {
+      return 0;
+    }
+
+    /* Read the response packet */
+    PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
+
+    /* If byte 8 isn't 0x00 we probably have an error */
+    if (Pn532.packetbuffer[0] != 0x00) {
+      return 0;
+    }
+
+    /* Copy the 16 data bytes to the output buffer        */
+    /* Block content starts at byte 9 of a valid response */
+    memcpy (&data[i<<4], &Pn532.packetbuffer[1], 16);
   }
-
-  /* Read the response packet */
-  PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
-
-  /* If byte 8 isn't 0x00 we probably have an error */
-  if (Pn532.packetbuffer[0] != 0x00) {
-    return 0;
-  }
-
-  /* Copy the 16 data bytes to the output buffer        */
-  /* Block content starts at byte 9 of a valid response */
-  memcpy (data, &Pn532.packetbuffer[1], 16);
-
   return 1;
 }
 
 uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the first command */
-  Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
-  Pn532.packetbuffer[1] = 1;                      /* Card number */
-  Pn532.packetbuffer[2] = MIFARE_CMD_WRITE;       /* Mifare Write command = 0xA0 */
-  Pn532.packetbuffer[3] = blockNumber;            /* Block Number (0..63 for 1K, 0..255 for 4K) */
-  memcpy(&Pn532.packetbuffer[4], data, 16);       /* Data Payload */
+  for (uint8_t i = 0; i < 2; i++) {
+    Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
+    Pn532.packetbuffer[1] = 1;                      /* Card number */
+    Pn532.packetbuffer[2] = MIFARE_CMD_WRITE;       /* Mifare Write command = 0xA0 */
+    Pn532.packetbuffer[3] = blockNumber + i;        /* Block Number (0..63 for 1K, 0..255 for 4K) */
+    memcpy(&Pn532.packetbuffer[4], &data[i<<4], 16);       /* Data Payload */
 
   /* Send the command */
-  if (PN532_writeCommand(Pn532.packetbuffer, 20)) {
-    return 0;
-  }
-
+    if (PN532_writeCommand(Pn532.packetbuffer, 20)) {
+      return 0;
+    }
   /* Read the response packet */
-  return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
+    if (0 >= PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer))) {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 uint8_t ntag21x_probe (void) {
@@ -600,13 +605,13 @@ void PN532_ScanForTag(void) {
           }
         }
         if (mifareclassic_ReadDataBlock(1, (uint8_t *)card_datas)) {
-          for (uint32_t i = 0; i < 16;i++) {
+          for (uint32_t i = 0; i < 32;i++) {
             if (!isprint(card_datas[i])) {
               // do not output non-printable characters to the console 
               card_datas[i] = 0;
             }
           }
-          card_datas[16] = 0;
+          card_datas[32] = 0;
         } else {
           card_datas[0] = 0;
         }
@@ -663,13 +668,13 @@ bool PN532_Command(void) {
   char argument[XdrvMailbox.data_len];
   ArgV(argument, 1);
   UpperCase(argument,argument);
-  if (!strcmp(argument,"E")) {
+  if (!strncmp_P(argument,PSTR("ERASE"),5)) {
     Pn532.function = 1; // Block 1 of next card/tag will be reset to 0x00...
     AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
     ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"E\"}}"));
     return serviced;
   } else
-  if (!strcmp(argument,"S")) {
+  if (!strncmp_P(argument,PSTR("WRITE"),5)) {
     if (ArgC() > 1) {
       if (XdrvMailbox.data[XdrvMailbox.data_len-1] == ',') {
         serviced = false;
@@ -677,7 +682,7 @@ bool PN532_Command(void) {
       }
       ArgV(argument, 2);
       strncpy((char *)Pn532.newdata,argument,sizeof(Pn532.newdata));
-      if (strlen(argument)>16) argument[16]=0;
+      if (strlen(argument)>32) argument[32]=0;
       Pn532.function = 2;
       AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), argument);
       ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
