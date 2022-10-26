@@ -472,29 +472,6 @@ uint8_t ntag21x_probe (void) {
   return result; //Return configuration page address
 }
 
-bool ntag21x_read32(char *out, uint8_t out_len) {
-  
-  if (out_len<33) return false;
-
-  Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
-  Pn532.packetbuffer[1] = NTAG21X_CMD_FAST_READ;
-  Pn532.packetbuffer[2] = 0x04; // first page
-  Pn532.packetbuffer[3] = 0x0b; // last page
-  if (PN532_writeCommand(Pn532.packetbuffer, 4)) {
-    return false;
-  }
-  if ((PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)))<33){
-    return false;
-  }
-
-  if (Pn532.packetbuffer[0]!=0) {
-    return false;
-  }
-  memcpy(out,&Pn532.packetbuffer[1],out_len);
-  out[32]=0;
-  return true;
-}
-
 bool ntag21x_auth(void) {
   Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
   Pn532.packetbuffer[1] = NTAG21X_CMD_PWD_AUTH;
@@ -512,41 +489,26 @@ bool ntag21x_auth(void) {
   return memcmp(&Pn532.packetbuffer[1],&Pn532.pwd_pack,2)==0;
 }
 
-bool ntag20x_read32(char *out, uint8_t out_len) {
+bool ntag2xx_read32(char *out, uint8_t out_len) {
   
   if (out_len<33) return false;
+  for (uint8_t i = 0; i < 2; i++) {
+    Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
+    Pn532.packetbuffer[1] = NTAG21X_CMD_READ;
+    Pn532.packetbuffer[2] = 0x04 << i; // first page
 
-  Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
-  Pn532.packetbuffer[1] = NTAG21X_CMD_READ;
-  Pn532.packetbuffer[2] = 0x04; // first page
-
-  if (PN532_writeCommand(Pn532.packetbuffer, 3)) {
-    return false;
+    if (PN532_writeCommand(Pn532.packetbuffer, 3)) {
+      return false;
+    }
+    if ((PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)))<17){
+      return false;
+    }
+    if (Pn532.packetbuffer[0]!=0) {
+      return false;
+    }
+    memcpy(&out[i<<4],&Pn532.packetbuffer[1],16);
   }
-  if ((PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)))<17){
-    return false;
-  }
-  if (Pn532.packetbuffer[0]!=0) {
-    return false;
-  }
-  memcpy(out,&Pn532.packetbuffer[1],16);
-
-  Pn532.packetbuffer[0] = PN532_COMMAND_INCOMMUNICATETHRU;
-  Pn532.packetbuffer[1] = NTAG21X_CMD_READ;
-  Pn532.packetbuffer[2] = 0x08; // first page
-
-  if (PN532_writeCommand(Pn532.packetbuffer, 3)) {
-    return false;
-  }
-  if ((PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)))<17){
-    return false;
-  }
-  if (Pn532.packetbuffer[0]!=0) {
-    return false;
-  }
-  memcpy(&out[16],&Pn532.packetbuffer[1],16);
   out[32]=0;
-
   return true;
 }
 
@@ -570,11 +532,11 @@ void PN532_ScanForTag(void) {
       if ((confPage=ntag21x_probe())>0) {
         /* NTAG EV1 found*/
         str_pwd=PWD_NONE;
-        if (!ntag21x_read32(card_datas, sizeof(card_datas))) {
+        if (!ntag2xx_read32(card_datas, sizeof(card_datas))) {
           if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, nuid, &nuid_len)) {
             if (memcmp(uid, nuid, sizeof(uid))==0) {
               if (ntag21x_auth()) {str_pwd=PWD_OK;} else {str_pwd=PWD_NOK;}
-              if (!ntag21x_read32(card_datas, sizeof(card_datas))) card_datas[0]=0;
+              if (!ntag2xx_read32(card_datas, sizeof(card_datas))) card_datas[0]=0;
               if (Pn532.command == 1) {
                 /* Erase */
               } else 
@@ -588,7 +550,7 @@ void PN532_ScanForTag(void) {
       } else {
         if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, nuid, &nuid_len)) {
           if (memcmp(uid, nuid, sizeof(uid))==0) {
-            if (!ntag20x_read32(card_datas, sizeof(card_datas))) card_datas[0]=0;
+            if (!ntag2xx_read32(card_datas, sizeof(card_datas))) card_datas[0]=0;
           }
         }
       }
