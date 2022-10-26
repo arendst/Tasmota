@@ -3,15 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [12.2.0.1]
+## [12.2.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- Prepare for extended calibration and move some persistent data (PowerLow)
+
+### Fixed
+
+### Removed
+
+## [12.2.0.1] 20221026
 ### Added
 - DS18x20 support on up to four GPIOs by md5sum-as (#16833)
 - Berry add `bytes().setbytes()` (#16892)
 - Support for Shelly Pro 1/1PM and 2/2PM (#16773)
 - Add Zigbee router firmware for Sonoff ZBBridgePro (#16900)
 - Prepare for DMX Artnet support on ESP32
-
-### Breaking Changed
 
 ### Changed
 - DS18x20 ``DS18Alias`` to ``DS18Sens`` (#16833)
@@ -21,8 +31,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - BP5758D red channel corruption regression from v12.1.1.6 (#16850)
-
-### Removed
 
 ## [Released]
 
