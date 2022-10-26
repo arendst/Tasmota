@@ -106,11 +106,12 @@ void ShellyProLedLink(void) {
   - Yellow light indicator will be on if in STA mode and connected to a Wi-Fi network.
   - Green light indicator will be on if in STA mode and connected to a Wi-Fi network and to the Shelly Cloud.
   - The light indicator will be flashing Red/Blue if OTA update is in progress.
-  Tasmota default behaviour
+  Tasmota behaviour
   - Blue light indicator will blink if no wifi or mqtt.
+  - Green light indicator will be on if in STA mode and connected to a Wi-Fi network.
   */
   SPro.last_update = TasmotaGlobal.uptime;
-  uint32_t ledlink = 0x1C;
+  uint32_t ledlink = 0x1C;                                         // All leds off
   if (XdrvMailbox.index) { ledlink &= 0xFB; }                      // Blue blinks if wifi/mqtt lost
   if (!TasmotaGlobal.global_state.wifi_down) { ledlink &= 0xF7; }  // Green On
   ShellyProUpdateLedLink(ledlink);
