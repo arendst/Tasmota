@@ -33,15 +33,22 @@ import subprocess
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
+github_actions = os.getenv('GITHUB_ACTIONS')
 extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
 build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
 
 if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
+    if github_actions and os.path.exists("./firmware/firmware"):
+        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-solo1/variants/tasmota")
 elif "CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
+    if github_actions and os.path.exists("./firmware/firmware"):
+        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-ITEAD/variants/tasmota")
 else:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
+    if github_actions and os.path.exists("./firmware/firmware"):
+        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduinoespressif32/variants/tasmota")
 
 variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
 
