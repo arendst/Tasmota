@@ -396,9 +396,9 @@ uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
   Pn532.packetbuffer[1] = 1;                      /* Card number */
   Pn532.packetbuffer[2] = MIFARE_CMD_READ;        /* Mifare Read command = 0x30 */
-  Pn532.packetbuffer[3] = blockNumber;        /* Block Number (0..63 for 1K, 0..255 for 4K) */
+  Pn532.packetbuffer[3] = blockNumber;            /* Block Number (0..63 for 1K, 0..255 for 4K) */
 
-    /* Send the command */
+  /* Send the command */
   if (PN532_writeCommand(Pn532.packetbuffer, 4)) {
     return 0;
   }
@@ -414,27 +414,25 @@ uint8_t mifareclassic_ReadDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Copy the 16 data bytes to the output buffer        */
   /* Block content starts at byte 9 of a valid response */
   memcpy (data, &Pn532.packetbuffer[1], 16);
+
   return 1;
 }
 
-bool mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
+uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   /* Prepare the first command */
   Pn532.packetbuffer[0] = PN532_COMMAND_INDATAEXCHANGE;
   Pn532.packetbuffer[1] = 1;                      /* Card number */
   Pn532.packetbuffer[2] = MIFARE_CMD_WRITE;       /* Mifare Write command = 0xA0 */
-  Pn532.packetbuffer[3] = blockNumber;        /* Block Number (0..63 for 1K, 0..255 for 4K) */
+  Pn532.packetbuffer[3] = blockNumber;            /* Block Number (0..63 for 1K, 0..255 for 4K) */
   memcpy(&Pn532.packetbuffer[4], data, 16);       /* Data Payload */
 
   /* Send the command */
   if (PN532_writeCommand(Pn532.packetbuffer, 20)) {
-    return false;
-  }
-  /* Read the response packet */
-  if (PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)) < 1) {
-    return false;
+    return 0;
   }
 
-  return true;
+  /* Read the response packet */
+return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
 }
 
 uint8_t ntag21x_probe (void) {
