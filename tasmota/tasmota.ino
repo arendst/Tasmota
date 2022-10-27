@@ -559,6 +559,7 @@ void setup(void) {
             bitWrite(Settings->rule_enabled, i, 0);  // Disable rules causing boot loop
           }
         }
+        Settings->flag4.network_wifi = 1;            // Enable wifi if disabled
       }
       if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +2) {  // Restarted 4 times
         Settings->rule_enabled = 0;                  // Disable all rules

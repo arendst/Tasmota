@@ -370,8 +370,8 @@ void Ade7953Init(void) {
     Ade7953Write(0x0FE, 0x00AD);                     // Unlock register 0x120
     Ade7953Write(0x120, 0x0030);                     // Configure optimum setting
 #ifdef USE_ESP32_SPI
-    int32_t value = Ade7953Read(0x702);              // Silicon version
-    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Chip%d version %d"), chip +1, value);
+//    int32_t value = Ade7953Read(0x702);              // Silicon version
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("ADE: Chip%d version %d"), chip +1, value);
 #endif  // USE_ESP32_SPI
   }
 
@@ -645,8 +645,8 @@ void Ade7953DrvInit(void) {
       }
     } else {
 #endif  // USE_ESP32_SPI
-      if (!I2cSetDevice(ADE7953_ADDR)) { 
-        return; 
+      if (!I2cSetDevice(ADE7953_ADDR)) {
+        return;
       }
       I2cSetActiveFound(ADE7953_ADDR, "ADE7953");
 #ifdef USE_ESP32_SPI

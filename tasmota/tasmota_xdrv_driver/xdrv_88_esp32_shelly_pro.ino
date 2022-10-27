@@ -85,6 +85,18 @@ void ShellyProPreInit(void) {
   }
 }
 
+void ShellyProInit(void) {
+  int pin_lan_reset = 5;                    // GPIO5 = LAN8720 nRST
+//  delay(30);                                // (t-purstd) This pin must be brought low for a minimum of 25 mS after power on
+  digitalWrite(pin_lan_reset, 0);
+  pinMode(pin_lan_reset, OUTPUT);
+  delay(1);                                 // (t-rstia) This pin must be brought low for a minimum of 100 uS
+  digitalWrite(pin_lan_reset, 1);
+
+  AddLog(LOG_LEVEL_INFO, PSTR("HDW: Shelly Pro %d%s initialized"),
+    TasmotaGlobal.devices_present, (PinUsed(GPIO_ADE7953_CS))?"PM":"");
+}
+
 void ShellyProPower(void) {
   SPro.power = XdrvMailbox.index &3;
   ShellyProUpdate();
@@ -146,6 +158,9 @@ bool Xdrv88(uint8_t function) {
           break;
         case FUNC_LED_LINK:
           ShellyProLedLink();
+          break;
+        case FUNC_INIT:
+          ShellyProInit();
           break;
       }
     }
