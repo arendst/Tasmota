@@ -55,7 +55,7 @@ public:
 	void	pnp(uint8_t sig, uint16_t vid, uint16_t pid, uint16_t version);
 	//NimBLECharacteristic*	hidInfo();
 	void	hidInfo(uint8_t country, uint8_t flags);
-	//NimBLECharacteristic* 	batteryLevel();
+	NimBLECharacteristic* 	batteryLevel();
 	void 	setBatteryLevel(uint8_t level);
 
 

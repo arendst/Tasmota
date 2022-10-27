@@ -17,7 +17,8 @@ class Leds_animator
     #
     self.clear()        # clear all leds first
     #
-    tasmota.add_driver(self)
+    tasmota.add_fast_loop(/-> self.fast_loop())
+    # it may be useful to reduce Sleep time here
   end
 
   def add_anim(anim)
@@ -43,7 +44,7 @@ class Leds_animator
     return self.bri
   end
 
-  def every_50ms()
+  def fast_loop()
     if self.running
       # run animators first
       var i = 0

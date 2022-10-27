@@ -1,11 +1,12 @@
 name: Build_firmware_master
 
 on:
+  workflow_dispatch:      # Manually start a workflow
   push:
     branches: master
     paths-ignore:
-    - '.github/**' # Ignore changes towards the .github directory
-    - '**.md' # Do no build if *.md files changes
+    - '.github/**'        # Ignore changes towards the .github directory
+    - '**.md'             # Do no build if *.md files changes
 
 # Ensures that only one deploy task per branch/environment will run at a time.
 concurrency:
@@ -13,6 +14,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  safeboot-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant:
+          - tasmota32solo1-safeboot
+          - tasmota32-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c3cdc-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s2cdc-safeboot
+          - tasmota32s3-safeboot
+          - tasmota32s3cdc-safeboot
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - name: Upload safeboot firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware_safeboot
+          path: ./build_output
+
   base-images:
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
@@ -30,6 +66,34 @@ jobs:
           - tasmota-sensors
           - tasmota-zbbridge
           - tasmota-zigbee
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Run PlatformIO
+        run: platformio run -e ${{ matrix.variant }}
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: ./build_output
+
+  base32-images:
+    needs: safeboot-images
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant:
           - tasmota32
           - tasmota32-zbbrdgpro
           - tasmota32-webcam
@@ -45,32 +109,36 @@ jobs:
           - tasmota32s3
           - tasmota32s3cdc
           - tasmota32solo1
-          - tasmota32solo1-safeboot
-          - tasmota32-safeboot
-          - tasmota32c3-safeboot
-          - tasmota32c3cdc-safeboot
-          - tasmota32s2-safeboot
-          - tasmota32s2cdc-safeboot
-          - tasmota32s3-safeboot
-          - tasmota32s3cdc-safeboot
     steps:
       - uses: actions/checkout@v3
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
           pip install -U platformio
+      - name: Download safeboot firmwares
+        uses: actions/download-artifact@v3
+        with:
+          name: firmware_safeboot
+          path: ./firmware
+      - name: Display downloaded files
+        run: |
+          ls -R ./firmware/
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
-      - uses: actions/upload-artifact@v3
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: firmware
           path: ./build_output
 
   language-images:
+    needs: safeboot-images
     runs-on: ubuntu-latest
     if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
@@ -83,14 +151,25 @@ jobs:
         with:
           ref: master
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Install dependencies
         run: |
           pip install wheel
           pip install -U platformio
+      - name: Download safeboot firmwares
+        uses: actions/download-artifact@v3
+        with:
+          name: firmware_safeboot
+          path: ./firmware
+      - name: Display downloaded files
+        run: |
+          ls -R ./firmware/
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
-      - uses: actions/upload-artifact@v3
+      - name: Upload language firmware artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: firmware
           path: ./build_output
@@ -108,7 +187,7 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: jason2866/action-gh-release@v1.1
       #if: startsWith(github.ref, 'refs/tags/')
       with:
         tag_name: ${{ github.run_number }}

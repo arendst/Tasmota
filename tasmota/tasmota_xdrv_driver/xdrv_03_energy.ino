@@ -1036,6 +1036,9 @@ void CmndMaxEnergyStart(void) {
 
 void EnergyDrvInit(void) {
   memset(&Energy, 0, sizeof(Energy));  // Reset all to 0 and false;
+//  Energy.voltage_common = false;
+//  Energy.frequency_common = false;
+//  Energy.use_overtemp = false;
   for (uint32_t phase = 0; phase < ENERGY_MAX_PHASES; phase++) {
     Energy.apparent_power[phase] = NAN;
     Energy.reactive_power[phase] = NAN;

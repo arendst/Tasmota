@@ -202,3 +202,26 @@ assert(b == bytes())
 b = bytes("FFFEAABBCC")
 assert(b.tohex() == "FFFEAABBCC")
 assert(bytes().tohex() == "")
+
+# assign buffer to bytes
+var a0 = bytes("112233445566778899")
+b = bytes("aabbccddeeff")
+
+a = a0.copy()
+a.setbytes(0, b)            # assign from start
+assert(a == bytes('AABBCCDDEEFF778899'))
+a = a0.copy()
+a.setbytes(0, b, 0, 0)      # zero len
+assert(a == a0)
+a = a0.copy()
+a.setbytes(100, b)          # index out of range
+assert(a == a0)
+a = a0.copy()
+a.setbytes(6, b)          # entire buffer not fitting
+assert(a == bytes('112233445566AABBCC'))
+a = a0.copy()
+a.setbytes(6, b, 2, 2)
+assert(a == bytes('112233445566CCDD99'))
+a = b.copy()
+a.setbytes(0, a0)
+assert(a == bytes('112233445566'))

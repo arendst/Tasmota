@@ -409,10 +409,19 @@ void DataCallback(struct _ValueList * me, uint8_t  flags)
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: Contract changed, now '%s'"), me->value);
             }
 
-            // Contract subscribed (Power)
-            else if (ilabel == LABEL_ISOUSC || ilabel == LABEL_PREF)
+            // Contract subscribed (I Max)
+            else if (ilabel == LABEL_ISOUSC)
             {
                 isousc = atoi( me->value);
+                AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
+            }
+
+            // Contract subscribed (Power in KVA)
+            else if (ilabel == LABEL_PREF)
+            {
+                // Convert KVA to A
+                isousc  = atoi( me->value) * 5  ;
+
                 AddLog(LOG_LEVEL_DEBUG, PSTR("TIC: ISousc set to %d"), isousc);
             }
 
@@ -877,7 +886,7 @@ const char HTTP_ENERGY_ID_TELEINFO[] PROGMEM =  "{s}ID{m}%s{e}" ;
 const char HTTP_ENERGY_INDEX_TELEINFO[] PROGMEM =  "{s}%s{m}%s " D_UNIT_WATTHOUR "{e}" ;
 const char HTTP_ENERGY_PAPP_TELEINFO[] PROGMEM =  "{s}" D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}" ;
 //const char HTTP_ENERGY_IINST_TELEINFO[] PROGMEM =  "{s}" D_CURRENT "%s{m}%d " D_UNIT_AMPERE "{e}" ;
-const char HTTP_ENERGY_TARIF_TELEINFO[] PROGMEM =  "{s}" D_CURRENT_TARIFF "{m}Heures %s{e}" ;
+const char HTTP_ENERGY_TARIF_TELEINFO[] PROGMEM =  "{s}" D_CURRENT_TARIFF "{m}%s%s{e}" ;
 const char HTTP_ENERGY_CONTRAT_TELEINFO[] PROGMEM =  "{s}" D_CONTRACT "{m}%s %d" D_UNIT_AMPERE "{e}" ;
 const char HTTP_ENERGY_LOAD_TELEINFO[] PROGMEM =  "{s}" D_POWER_LOAD "{m}%d" D_UNIT_PERCENT "{e}" ;
 const char HTTP_ENERGY_IMAX_TELEINFO[] PROGMEM =  "{s}" D_MAX_CURRENT "{m}%d" D_UNIT_AMPERE "{e}" ;
@@ -967,7 +976,11 @@ void TInfoShow(bool json)
 
             if (tarif) {
                 GetTextIndexed(name, sizeof(name), tarif-1, kTarifName);
-                WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO, name);
+                if (tinfo_mode==TINFO_MODE_STANDARD ) {
+                    WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO, "", name);
+                } else {
+                    WSContentSend_P(HTTP_ENERGY_TARIF_TELEINFO, "Heures ", name);
+                }
             }
             if (contrat && isousc) {
                 int percent = (int) ((Energy.current[0]*100.0f) / isousc) ;
