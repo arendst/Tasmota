@@ -432,7 +432,7 @@ uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data) {
   }
 
   /* Read the response packet */
-return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
+  return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
 }
 
 uint8_t ntag21x_probe (void) {
