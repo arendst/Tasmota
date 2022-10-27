@@ -83,8 +83,8 @@ struct PN532 {
   uint8_t command = 0;          // Carry command code between functions
   uint8_t scantimer = 0;        // Prevent multiple successful reads within 2 second window
   bool present = false;         // Maintain detection flag
-#ifdef USE_PN532_DATA_FUNCTION
   uint16_t atqa;
+#ifdef USE_PN532_DATA_FUNCTION
   uint8_t newdata[32];
   uint8_t function = 0;
   uint32_t pwd_auth=0x64636261;
@@ -336,15 +336,6 @@ bool PN532_SAMConfig(void) {
   return (0 < PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer)));
 }
 
-void PN532_inRelease(void) {
-  Pn532.packetbuffer[0] = PN532_COMMAND_INRELEASE;
-  Pn532.packetbuffer[1] = 1;
-  if (PN532_writeCommand(Pn532.packetbuffer, 2)) {
-    return;
-  }
-  PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
-}
-
 /* void PN532_inSelect(void) {
   Pn532.packetbuffer[0] = PN532_COMMAND_INSELECT;
   Pn532.packetbuffer[1] = 1;
@@ -355,6 +346,15 @@ void PN532_inRelease(void) {
 } */
 
 #ifdef USE_PN532_DATA_FUNCTION
+
+void PN532_inRelease(void) {
+  Pn532.packetbuffer[0] = PN532_COMMAND_INRELEASE;
+  Pn532.packetbuffer[1] = 1;
+  if (PN532_writeCommand(Pn532.packetbuffer, 2)) {
+    return;
+  }
+  PN532_readResponse(Pn532.packetbuffer, sizeof(Pn532.packetbuffer));
+}
 
 uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData) {
   uint8_t i;
@@ -679,12 +679,12 @@ void PN532_ScanForTag(void) {
       ResponseAppend_P(PSTR(",\"Auth\":\"NOk\""));
     }
     ResponseAppend_P(PSTR("}}"));
+    PN532_inRelease(); 
 #else
     ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), Pn532.uids);
 #endif  // USE_PN532_DATA_FUNCTION
     MqttPublishTeleSensor();
 
-    PN532_inRelease(); 
     Pn532.scantimer = 7; // Ignore tags found for two seconds
   }
 }
@@ -706,7 +706,7 @@ bool PN532_Command(void) {
   if (!strncmp_P(argument,PSTR("ERASE"),5)) {
     memset(Pn532.newdata,0,sizeof(Pn532.newdata));
     Pn532.function = 1; // Block 1 of next card/tag will be reset to 0x00...
-    AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Next scanned tag data block 1 will be erased"));
+    AddLog(LOG_LEVEL_INFO, PSTR("NFC: PN532 - Next scanned tag data block  will be erased"));
     ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"ERASE\"}}"));
     return serviced;
   } else
