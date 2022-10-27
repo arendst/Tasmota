@@ -201,9 +201,11 @@ const uint16_t Ade7953CalibRegs[2][ADE7953_CALIBREGS] {
 
 const uint8_t  ADE7953_REGISTERS = 6;
 const uint16_t Ade7953Registers[2][ADE7953_REGISTERS] {
-  { ADE7953_IRMSA, ADE7953_AWATT, ADE7953_AVA, ADE7953_AVAR, ADE7953_VRMS, ADE7943_Period },
-  { ADE7953_IRMSB, ADE7953_BWATT, ADE7953_BVA, ADE7953_BVAR, ADE7953_VRMS, ADE7943_Period }
+  { ADE7953_IRMSA, ADE7953_AENERGYA, ADE7953_APENERGYA, ADE7953_RENERGYA, ADE7953_VRMS, ADE7943_Period },
+  { ADE7953_IRMSB, ADE7953_AENERGYB, ADE7953_APENERGYB, ADE7953_RENERGYB, ADE7953_VRMS, ADE7943_Period }
 };
+
+const float ADE7953_LSB_PER_WATTSECOND = 2.5;
 
 struct Ade7953 {
   uint32_t voltage_rms[2] = { 0, 0 };
@@ -466,9 +468,9 @@ void Ade7953GetData(void) {
       Energy.frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
       divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : Settings->energy_voltage_calibration;
       Energy.voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : (Settings->energy_power_calibration / 10);
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : (Settings->energy_power_calibration / 10);
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if (bitRead(acc_mode, 10 +channel)) {        // APSIGN
@@ -478,7 +480,7 @@ void Ade7953GetData(void) {
           Energy.reactive_power[channel] *= -1;
         }
       }
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? ADE7953_LSB_PER_WATTSECOND : (Settings->energy_power_calibration / 10);
       Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
