@@ -1683,7 +1683,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
         meter_spos[meters] = 0;
       }
       // modbus
-      if (meter_spos[meters] >= 8) {
+      if (meter_spos[meters] >= 3) {
         uint32_t mlen = smltbuf[meters][2] + 5;
         if (mlen > SML_BSIZ) mlen = SML_BSIZ;
         if (meter_spos[meters] >= mlen) {
