@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Prepare for extended calibration and move some persistent data (PowerLow)
+- Tasmota ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
 
 ### Fixed
 
