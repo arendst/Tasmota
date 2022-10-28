@@ -1034,6 +1034,10 @@
 
 #define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
 
+#define USE_DALI                              // Add support for DALI
+    #define DALI_IN_INVERT  0                 // DALI RX inverted ?
+    #define DALI_OUT_INVERT  0                // DALI TX inverted ?
+
 //#define USE_SONOFF_SPM                           // Add support for ESP32 based Sonoff Smart Stackable Power Meter (+11k code)
 //#define USE_DISPLAY_TM1621_SONOFF                // Add support for TM1621 dsiplay driver used by Sonoff POWR3xxD and THR3xxD
 
