@@ -511,6 +511,13 @@
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "Znaleziono ZBBridge EEPROM na adresie"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "Losowanie parametrów Zigbee, proszę sprawdzić 'ZbConfig'"
 
+// xdrv_89_dali.ino
+#define D_SENSOR_DALI_RX                  "Dali RX"
+#define D_SENSOR_DALI_TX                  "Dali TX"
+#define D_CONFIGURE_DALI                  "Config DALI"
+#define D_CMND_DALI_POWER                 "power"
+#define D_CMND_DALI_DIMMER                "dim"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia dzisiaj"
 #define D_ENERGY_YESTERDAY "Energia wczoraj"

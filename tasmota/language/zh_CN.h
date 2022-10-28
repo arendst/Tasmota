@@ -511,6 +511,13 @@
 #define D_ZIGBEE_EEPROM_FOUND_AT_ADDRESS "找到 ZBBridge EEPROM, 地址:"
 #define D_ZIGBEE_RANDOMIZING_ZBCONFIG "正在随机化 Zigbee 参数, 请通过 'ZbConfig' 检查"
 
+// xdrv_89_dali.ino
+#define D_SENSOR_DALI_RX                  "Dali RX"
+#define D_SENSOR_DALI_TX                  "Dali TX"
+#define D_CONFIGURE_DALI                  "Config DALI"
+#define D_CMND_DALI_POWER                 "power"
+#define D_CMND_DALI_DIMMER                "dim"
+
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用电量"
 #define D_ENERGY_YESTERDAY "昨日用电量"
