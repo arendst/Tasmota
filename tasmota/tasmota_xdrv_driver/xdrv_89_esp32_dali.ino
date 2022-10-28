@@ -31,6 +31,10 @@
 
 #define XDRV_89              89
 
+#ifndef DALI_TIMER
+    #define DALI_TIMER 0    // Default timer
+#endif
+
 #define BROADCAST_DP        0b11111110 // 0xFE
 #define DALI_TOPIC          "DALI"
 
@@ -52,19 +56,6 @@ enum DALI_Commands {         // commands for Console
   CMND_DALI_PWR,
   CMND_DALI_DIM,
 };
-
-/* Private variables ---------------------------------------------------------*/
-// Data variables
-// uint16_t send_dali_data;     // data to send to DALI bus
-// uint16_t received_dali_data; // data received from DALI bus
-// Processing variables
-// uint8_t flag;        // DALI status flag
-// uint8_t bit_count;   // nr of rec/send bits
-// uint16_t tick_count; // nr of ticks of the timer
-
-// bool bit_value;   // value of actual bit
-// bool actual_val;  // bit value in this tick of timer
-// bool former_val;  // bit value in previous tick of timer
 
 struct DALI {
     // Data variables
@@ -390,7 +381,7 @@ void DaliPreInit() {
 	digitalWrite(Pin(GPIO_DALI_TX), HIGH);
 	pinMode(Pin(GPIO_DALI_RX), INPUT);
 
-	DALI_timer = timerBegin(0, 13, true);
+	DALI_timer = timerBegin(DALI_TIMER, 13, true);
     timerAttachInterrupt(DALI_timer, &DALI_Tick_Handler, true);
     timerAlarmWrite(DALI_timer, 641, true);
     
