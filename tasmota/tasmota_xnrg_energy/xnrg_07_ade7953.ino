@@ -274,7 +274,7 @@ void Ade7953Write(uint16_t reg, uint32_t val) {
 }
 
 int32_t Ade7953Read(uint16_t reg) {
-	uint32_t response = 0;
+  uint32_t response = 0;
 
   int size = Ade7953RegSize(reg);
   if (size) {
@@ -306,7 +306,7 @@ int32_t Ade7953Read(uint16_t reg) {
     }
 #endif  // USE_ESP32_SPI
   }
-	return response;
+  return response;
 }
 
 #ifdef ADE7953_DUMP_REGS
@@ -441,6 +441,11 @@ void Ade7953GetData(void) {
     acc_mode, reg[0][4], reg[1][4], reg[0][5], reg[1][5],
     reg[0][0], reg[1][0], reg[0][1], reg[1][1], reg[0][2], reg[1][2], reg[0][3], reg[1][3]);
 
+  // If the device is initializing, we read the energy registers to reset them, but don't report the values as the first read may be inaccurate
+  if (Ade7953.init_step) {
+    return;
+  }
+
   uint32_t apparent_power[2] = { 0, 0 };
   uint32_t reactive_power[2] = { 0, 0 };
 
@@ -495,14 +500,15 @@ void Ade7953GetData(void) {
 }
 
 void Ade7953EnergyEverySecond(void) {
-	if (Ade7953.init_step) {
+  if (Ade7953.init_step) {
     if (1 == Ade7953.init_step) {
       Ade7953Init();
-	  }
+      Ade7953GetData();
+    }
     Ade7953.init_step--;
-	}	else {
-		Ade7953GetData();
-	}
+  } else {
+    Ade7953GetData();
+  }
 }
 
 /*********************************************************************************************/
