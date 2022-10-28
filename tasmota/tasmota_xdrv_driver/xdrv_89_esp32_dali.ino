@@ -42,10 +42,6 @@ enum
     DALI_ERROR
 };
 
-struct DALI {
-  bool present = false;
-} Dali;
-
 // http and json defines
 #define D_NAME_DALI "DALI"
 
@@ -59,16 +55,29 @@ enum DALI_Commands {         // commands for Console
 
 /* Private variables ---------------------------------------------------------*/
 // Data variables
-uint16_t send_dali_data;     // data to send to DALI bus
-uint16_t received_dali_data; // data received from DALI bus
+// uint16_t send_dali_data;     // data to send to DALI bus
+// uint16_t received_dali_data; // data received from DALI bus
 // Processing variables
-uint8_t flag;        // DALI status flag
-uint8_t bit_count;   // nr of rec/send bits
-uint16_t tick_count; // nr of ticks of the timer
+// uint8_t flag;        // DALI status flag
+// uint8_t bit_count;   // nr of rec/send bits
+// uint16_t tick_count; // nr of ticks of the timer
 
-bool bit_value;   // value of actual bit
-bool actual_val;  // bit value in this tick of timer
-bool former_val;  // bit value in previous tick of timer
+// bool bit_value;   // value of actual bit
+// bool actual_val;  // bit value in this tick of timer
+// bool former_val;  // bit value in previous tick of timer
+
+struct DALI {
+    // Data variables
+    uint16_t send_dali_data;     // data to send to DALI bus
+    uint16_t received_dali_data; // data received from DALI bus
+    // Processing variables
+    uint8_t flag;        // DALI status flag
+    uint8_t bit_count;   // nr of rec/send bits
+    uint16_t tick_count; // nr of ticks of the timer
+    bool former_val;     // bit value in previous tick of timer
+
+    bool present = false;// DALI initialized
+} Dali;
 
 hw_timer_t *DALI_timer = NULL;
 
@@ -83,11 +92,11 @@ hw_timer_t *DALI_timer = NULL;
 */
 void IRAM_ATTR DALI_Tick_Handler(void)
 {
-    if (get_flag() == DALI_RECEIVING_DATA)
+    if (getDaliFlag() == DALI_RECEIVING_DATA)
     {
         receive_tick();
     }
-    else if (get_flag() == DALI_SENDING_DATA)
+    else if (getDaliFlag() == DALI_SENDING_DATA)
     {
         send_tick();
     }
@@ -99,7 +108,7 @@ void IRAM_ATTR DALI_Tick_Handler(void)
 * @retval None
 */
 void enableDaliRxInterrupt() {
-    flag = DALI_NO_ACTION;
+    Dali.flag = DALI_NO_ACTION;
     timerAlarmDisable(DALI_timer);
     attachInterrupt(Pin(GPIO_DALI_RX), receiveDaliData, FALLING);
 }
@@ -119,9 +128,9 @@ void disableRxInterrupt() {
 * @param  None
 * @retval uint8_t flag
 */
-uint8_t get_flag(void)
+uint8_t getDaliFlag(void)
 {
-  return flag;
+  return Dali.flag;
 }
 
 /**
@@ -130,7 +139,7 @@ uint8_t get_flag(void)
 * @retval uint8_t flag
 */
 void DataReceivedCallback() {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Received: %d %d"), received_dali_data>>9, received_dali_data&0xff);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Received: %d %d"), Dali.received_dali_data>>9, Dali.received_dali_data&0xff);
 }
 
 /*************** R E C E I V E * P R O C E D U R E S *******/
@@ -143,12 +152,12 @@ void DataReceivedCallback() {
 void receiveDaliData()
 {
     // null variables
-    received_dali_data = 0;
-    bit_count = 0;
-    tick_count = 0;
-    former_val = true;
+    Dali.received_dali_data = 0;
+    Dali.bit_count = 0;
+    Dali.tick_count = 0;
+    Dali.former_val = true;
 
-    flag = DALI_RECEIVING_DATA;
+    Dali.flag = DALI_RECEIVING_DATA;
     
 	disableRxInterrupt();
 }
@@ -176,63 +185,62 @@ bool get_DALIIN(void)
 void receive_tick(void)
 {
     // four ticks per bit
-    actual_val = get_DALIIN();
-    tick_count++;
+    bool actual_val = get_DALIIN();
+    Dali.tick_count++;
     
     // edge detected
-    if(actual_val != former_val)
+    if(actual_val != Dali.former_val)
     {
-        switch(bit_count)
+        switch(Dali.bit_count)
         {
             case 0:
-                if (tick_count > 2)
+                if (Dali.tick_count > 2)
                 {
-                    tick_count = 0;
-                    bit_count  = 1; // start bit
+                    Dali.tick_count = 0;
+                    Dali.bit_count  = 1; // start bit
                 }
                 break;
             case 17:      // 1st stop bit
-                if(tick_count > 6) { // stop bit error, no edge should exist
-                    flag = DALI_ERROR;
+                if(Dali.tick_count > 6) { // stop bit error, no edge should exist
+                    Dali.flag = DALI_ERROR;
 				}
                 break;
             default:      // other bits
-                if(tick_count > 6)
+                if(Dali.tick_count > 6)
                 {
-                    received_dali_data |= (actual_val << (16-bit_count));
-                    bit_count++;
-                    tick_count = 0;
+                    Dali.received_dali_data |= (actual_val << (16-Dali.bit_count));
+                    Dali.bit_count++;
+                    Dali.tick_count = 0;
                 }
                 break;
         }
     }else // voltage level stable
     {
-        switch(bit_count)
+        switch(Dali.bit_count)
         {
             case 0:
-                if(tick_count==8) {	// too long start bit
-                    flag = DALI_ERROR;
-					Serial.println("Too long start bit.");
+                if(Dali.tick_count==8) {	// too long start bit
+                    Dali.flag = DALI_ERROR;
 				}
                 break;
             case 17:
                 // First stop bit
-                if (tick_count==8)
+                if (Dali.tick_count==8)
                 {
                     if (actual_val==0) // wrong level of stop bit
                     {
-                        flag = DALI_ERROR;
+                        Dali.flag = DALI_ERROR;
                     }
                     else
                     {
-                        bit_count++;
-                        tick_count = 0;
+                        Dali.bit_count++;
+                        Dali.tick_count = 0;
                     }
                 }
                 break;
             case 18:
                 // Second stop bit
-                if (tick_count==8)
+                if (Dali.tick_count==8)
                 {
                     enableDaliRxInterrupt();
                     DataReceivedCallback();
@@ -240,15 +248,15 @@ void receive_tick(void)
                 }
                 break;
             default: // normal bits
-                if(tick_count==10)
+                if(Dali.tick_count==10)
                 { // too long delay before edge
-                    flag = DALI_ERROR;
+                    Dali.flag = DALI_ERROR;
                 }
                 break;
         }
     }
-    former_val = actual_val;
-    if(flag==DALI_ERROR)
+    Dali.former_val = actual_val;
+    if(getDaliFlag() == DALI_ERROR)
     {
 		enableDaliRxInterrupt();
     }
@@ -285,12 +293,12 @@ bool get_DALIOUT(void)
 */
 void sendDaliData(uint8_t firstByte, uint8_t secondByte)
 {
-	send_dali_data = firstByte << 8;
-	send_dali_data += secondByte & 0xff;
-	bit_count = 0;
-	tick_count = 0;
+	Dali.send_dali_data = firstByte << 8;
+	Dali.send_dali_data += secondByte & 0xff;
+	Dali.bit_count = 0;
+	Dali.tick_count = 0;
 
-    flag = DALI_SENDING_DATA;
+    Dali.flag = DALI_SENDING_DATA;
 
 	disableRxInterrupt();
 }
@@ -307,67 +315,67 @@ void sendDaliData(uint8_t firstByte, uint8_t secondByte)
 void send_tick(void)
 {
 	// access to the routine just every 4 ticks = every half bit
-	if ((tick_count & 0x03) == 0)
+	if ((Dali.tick_count & 0x03) == 0)
 	{
-		if (tick_count < 160)
+		if (Dali.tick_count < 160)
 		{
 			// settling time between forward and backward frame
-			if (tick_count < 24)
+			if (Dali.tick_count < 24)
 			{
-				tick_count++;
+				Dali.tick_count++;
 				return;
 			}
 
 			// start of the start bit
-			if (tick_count == 24)
+			if (Dali.tick_count == 24)
 			{
 				//   GPIOB->ODR ^= GPIO_ODR_7;
 				set_DALIOUT(false);
-				tick_count++;
+				Dali.tick_count++;
 				return;
 			}
 
 			// edge of the start bit
 			// 28 ticks = 28/9600 = 2,92ms = delay between forward and backward message frame
-			if (tick_count == 28)
+			if (Dali.tick_count == 28)
 			{
 				set_DALIOUT(true);
-				tick_count++;
+				Dali.tick_count++;
 				return;
 			}
 
 			// bit value (edge) selection
-			bit_value = (bool)((send_dali_data >> (15 - bit_count)) & 0x01);
+			bool bit_value = (bool)((Dali.send_dali_data >> (15 - Dali.bit_count)) & 0x01);
 
 			// Every half bit -> Manchester coding
-			if (!((tick_count - 24) & 0x0007))
+			if (!((Dali.tick_count - 24) & 0x0007))
 			{									// div by 8
 				if (get_DALIOUT() == bit_value) // former value of bit = new value of bit
 					set_DALIOUT((bool)(1 - bit_value));
 			}
 
 			// Generate edge for actual bit
-			if (!((tick_count - 28) & 0x0007))
+			if (!((Dali.tick_count - 28) & 0x0007))
 			{
 				set_DALIOUT(bit_value);
-				bit_count++;
+				Dali.bit_count++;
 			}
 		}
 		else
 		{ // end of data byte, start of stop bits
-			if (tick_count == 160)
+			if (Dali.tick_count == 160)
 			{
 				set_DALIOUT(true); // start of stop bit
 			}
 
 			// end of stop bits, no settling time
-			if (tick_count == 176)
+			if (Dali.tick_count == 176)
 			{
 				enableDaliRxInterrupt();
 			}
 		}
 	}
-	tick_count++;
+	Dali.tick_count++;
 
 	return;
 }
