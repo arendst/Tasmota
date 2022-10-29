@@ -463,12 +463,16 @@ void Ade7953GetData(void) {
     for (uint32_t channel = 0; channel < 2; channel++) {
       Energy.data_valid[channel] = 0;
 
+      float power_calibration = ((channel) ? Settings->energy_power_calibration2 : Settings->energy_power_calibration) / 10;
+      float voltage_calibration = (channel) ? Settings->energy_voltage_calibration2 : Settings->energy_voltage_calibration;
+      float current_calibration = ((channel) ? Settings->energy_current_calibration2 : Settings->energy_current_calibration) * 10;
+
       Energy.frequency[channel] = 223750.0f / ((float)reg[channel][5] + 1);
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : Settings->energy_voltage_calibration;
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VGAIN] != ADE7953_GAIN_DEFAULT) ? 10000 : voltage_calibration;
       Energy.voltage[channel] = (float)Ade7953.voltage_rms[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_WGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : power_calibration;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / divider;
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VARGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : power_calibration;
       Energy.reactive_power[channel] = (float)reactive_power[channel] / divider;
       if (ADE7953_SHELLY_EM == Ade7953.model) {
         if (bitRead(acc_mode, 10 +channel)) {        // APSIGN
@@ -478,12 +482,12 @@ void Ade7953GetData(void) {
           Energy.reactive_power[channel] *= -1;
         }
       }
-      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : (Settings->energy_power_calibration / 10);
+      divider = (Ade7953.calib_data[channel][ADE7953_CAL_VAGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 44 : power_calibration;
       Energy.apparent_power[channel] = (float)apparent_power[channel] / divider;
       if (0 == Energy.active_power[channel]) {
         Energy.current[channel] = 0;
       } else {
-        divider = (Ade7953.calib_data[channel][ADE7953_CAL_IGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : (Settings->energy_current_calibration * 10);
+        divider = (Ade7953.calib_data[channel][ADE7953_CAL_IGAIN + channel] != ADE7953_GAIN_DEFAULT) ? 100000 : current_calibration;
         Energy.current[channel] = (float)Ade7953.current_rms[channel] / divider;
         Energy.kWhtoday_delta[channel] += Energy.active_power[channel] * 1000 / 36;
       }
@@ -657,6 +661,9 @@ void Ade7953DrvInit(void) {
       Settings->energy_power_calibration = ADE7953_PREF;
       Settings->energy_voltage_calibration = ADE7953_UREF;
       Settings->energy_current_calibration = ADE7953_IREF;
+      Settings->energy_power_calibration2 = ADE7953_PREF;
+      Settings->energy_voltage_calibration2 = ADE7953_UREF;
+      Settings->energy_current_calibration2 = ADE7953_IREF;
     }
 
     Ade7953Defaults();
@@ -705,21 +712,21 @@ bool Ade7953Command(void) {
   else if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {       // Between 1W and 2000W
-        Settings->energy_power_calibration = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
+        XdrvMailbox.payload = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
       }
     }
   }
   else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.voltage_rms[channel]) {
       if ((value > 10000) && (value < 26000)) {      // Between 100V and 260V
-        Settings->energy_voltage_calibration = (Ade7953.voltage_rms[channel] * 100) / value;  // 0.00 V
+        XdrvMailbox.payload = (Ade7953.voltage_rms[channel] * 100) / value;  // 0.00 V
       }
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && Ade7953.current_rms[channel]) {
       if ((value > 2000) && (value < 1000000)) {     // Between 20mA and 10A
-        Settings->energy_current_calibration = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
+        XdrvMailbox.payload = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
       }
     }
   }

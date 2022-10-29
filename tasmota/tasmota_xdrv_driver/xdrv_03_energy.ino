@@ -637,11 +637,6 @@ void EnergyEverySecond(void)
  * Commands
 \*********************************************************************************************/
 
-void EnergyCommandCalResponse(uint32_t nvalue) {
-  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR("%sCal"), XdrvMailbox.command);
-  ResponseCmndNumber(nvalue);
-}
-
 void ResponseCmndEnergyTotalYesterdayToday(void) {
   char value_chr[TOPSZ];   // Used by EnergyFormatIndex
   char value2_chr[TOPSZ];
@@ -835,71 +830,101 @@ void CmndTariff(void) {
     GetStateText(Settings->flag3.energy_weekend));             // CMND_TARIFF
 }
 
+void EnergyCommandCalSetResponse(uint32_t cal_type) {
+  if (XdrvMailbox.payload > 999) {
+    uint32_t channel = ((2 == XdrvMailbox.index) && (2 == Energy.phase_count)) ? 1 : 0;
+    if (channel) {
+      switch (cal_type) {
+        case 0: Settings->energy_power_calibration2 = XdrvMailbox.payload; break;
+        case 1: Settings->energy_voltage_calibration2 = XdrvMailbox.payload; break;
+        case 2: Settings->energy_current_calibration2 = XdrvMailbox.payload; break;
+        case 3: Settings->energy_frequency_calibration = XdrvMailbox.payload; break;
+      }
+    } else {
+      switch (cal_type) {
+        case 0: Settings->energy_power_calibration = XdrvMailbox.payload; break;
+        case 1: Settings->energy_voltage_calibration = XdrvMailbox.payload; break;
+        case 2: Settings->energy_current_calibration = XdrvMailbox.payload; break;
+        case 3: Settings->energy_frequency_calibration = XdrvMailbox.payload; break;
+      }
+    }
+  }
+  if (3 == cal_type) {
+    ResponseAppend_P(PSTR("%d}"), Settings->energy_frequency_calibration);
+  } else {
+    uint32_t cal_array[2][3];
+    memcpy(&cal_array, &Settings->energy_power_calibration, 24);
+    if (2 == Energy.phase_count) {
+      ResponseAppend_P(PSTR("[%d,%d]}"), cal_array[0][cal_type], cal_array[1][cal_type]);
+    } else {
+      ResponseAppend_P(PSTR("%d}"), cal_array[0][cal_type]);
+    }
+  }
+}
+
+void EnergyCommandCalResponse(uint32_t cal_type) {
+  Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
+  EnergyCommandCalSetResponse(cal_type);
+}
+
+void EnergyCommandSetCalResponse(uint32_t cal_type) {
+  Response_P(PSTR("{\"%sCal\":"), XdrvMailbox.command);
+  EnergyCommandCalSetResponse(cal_type);
+}
+
 void CmndPowerCal(void) {
   Energy.command_code = CMND_POWERCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_power_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_power_calibration);
+    EnergyCommandCalResponse(0);
   }
 }
 
 void CmndVoltageCal(void) {
   Energy.command_code = CMND_VOLTAGECAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_voltage_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_voltage_calibration);
+    EnergyCommandCalResponse(1);
   }
 }
 
 void CmndCurrentCal(void) {
   Energy.command_code = CMND_CURRENTCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_current_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_current_calibration);
+    EnergyCommandCalResponse(2);
   }
 }
 
 void CmndFrequencyCal(void) {
   Energy.command_code = CMND_FREQUENCYCAL;
   if (XnrgCall(FUNC_COMMAND)) {  // microseconds
-    if (XdrvMailbox.payload > 999) {
-      Settings->energy_frequency_calibration = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings->energy_frequency_calibration);
+    EnergyCommandCalResponse(3);
   }
 }
 
 void CmndPowerSet(void) {
   Energy.command_code = CMND_POWERSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Watt
-    EnergyCommandCalResponse(Settings->energy_power_calibration);
+    EnergyCommandSetCalResponse(0);
   }
 }
 
 void CmndVoltageSet(void) {
   Energy.command_code = CMND_VOLTAGESET;
   if (XnrgCall(FUNC_COMMAND)) {  // Volt
-    EnergyCommandCalResponse(Settings->energy_voltage_calibration);
+    EnergyCommandSetCalResponse(1);
   }
 }
 
 void CmndCurrentSet(void) {
   Energy.command_code = CMND_CURRENTSET;
   if (XnrgCall(FUNC_COMMAND)) {  // milliAmpere
-    EnergyCommandCalResponse(Settings->energy_current_calibration);
+    EnergyCommandSetCalResponse(2);
   }
 }
 
 void CmndFrequencySet(void) {
   Energy.command_code = CMND_FREQUENCYSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Hz
-    EnergyCommandCalResponse(Settings->energy_frequency_calibration);
+    EnergyCommandSetCalResponse(3);
   }
 }
 

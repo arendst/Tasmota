@@ -602,7 +602,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_active_power) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 100);
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
-        Settings->energy_power_calibration = value;
+        XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_POWER;
         McpGetCalibration();
       }
@@ -612,7 +612,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_voltage_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
-        Settings->energy_voltage_calibration = value;
+        XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_VOLTAGE;
         McpGetCalibration();
       }
@@ -622,7 +622,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_current_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
-        Settings->energy_current_calibration = value;
+        XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_CURRENT;
         McpGetCalibration();
       }
@@ -632,7 +632,7 @@ bool McpCommand(void)
     if (XdrvMailbox.data_len && mcp_line_frequency) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 1000);
       if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz
-        Settings->energy_frequency_calibration = value;
+        XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_FREQUENCY;
         McpGetFrequency();
       }
