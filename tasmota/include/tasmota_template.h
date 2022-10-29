@@ -198,9 +198,7 @@ enum UserSelectablePins {
   GPIO_ADE7953_RST,                    // ADE7953 Reset
   GPIO_NRG_MBS_TX, GPIO_NRG_MBS_RX,    // Generic Energy Modbus device
   GPIO_ADE7953_CS,                     // ADE7953 SPI Chip Select
-#ifdef ESP32
   GPIO_DALI_RX, GPIO_DALI_TX,          // Dali
-#endif
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -446,9 +444,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7953_RST "|"
   D_SENSOR_NRG_MBS_TX "|" D_SENSOR_NRG_MBS_RX "|"
   D_SENSOR_ADE7953_CS "|"
-#ifdef ESP32
   D_SENSOR_DALI_RX "|" D_SENSOR_DALI_TX "|"
-#endif
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
