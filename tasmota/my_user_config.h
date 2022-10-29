@@ -1034,7 +1034,7 @@
 
 #define USE_ESP32_SENSORS                        // Add support for ESP32 temperature and optional hall effect sensor
 
-#define USE_DALI                              // Add support for DALI
+// #define USE_DALI                              // Add support for DALI
     #define DALI_IN_INVERT  0                 // DALI RX inverted ?
     #define DALI_OUT_INVERT  0                // DALI TX inverted ?
     #define DALI_TIMER 0                      // ESP32 hardware timer number 0-3 !!! timer 3 used in xdrv_10_scripter.ino !!!
