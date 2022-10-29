@@ -5,14 +5,16 @@ All notable changes to this project will be documented in this file.
 
 ## [12.2.0.2]
 ### Added
+- Support for Digital Addressable Lighting Interface (DALI) by Andrei Kazmirtsuk (#16938)
 
 ### Breaking Changed
 
 ### Changed
-- Prepare for extended calibration and move some persistent data (PowerLow)
-- Tasmota ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
+- Prepare for two phase power calibration and move some persistent data (PowerLow)
+- ESP32 Framework (Core) from v2.0.5 to v2.0.5.2
 
 ### Fixed
+- Deduplicate code and fix %timer n% rule regression from v12.2.0 (#16914)
 
 ### Removed
 
