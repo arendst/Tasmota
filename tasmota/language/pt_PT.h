@@ -515,8 +515,6 @@
 #define D_SENSOR_DALI_RX                  "Dali RX"
 #define D_SENSOR_DALI_TX                  "Dali TX"
 #define D_CONFIGURE_DALI                  "Config DALI"
-#define D_CMND_DALI_POWER                 "power"
-#define D_CMND_DALI_DIMMER                "dim"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Consumo energético de hoje"
